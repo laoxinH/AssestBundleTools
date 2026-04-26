@@ -74,15 +74,6 @@ public sealed partial class ShellPage : Page
             return;
         }
 
-        // 启动阶段优先尝试恢复最近一次活动且仍可用的工作区；
-        // 若恢复条件不满足，再回到控制台，让用户手动选择。
-        if (App.CurrentApp.AppPreferencesService.RestoreLastWorkspaceOnStartup &&
-            App.CurrentApp.WorkspaceContextService.TryGetLastActiveWorkspaceNavigationRequest(out var workspaceNavigationRequest))
-        {
-            NavigateTo(ShellNavigationKeys.Workbench, workspaceNavigationRequest, updateSelection: true);
-            return;
-        }
-
         NavigateTo(ShellNavigationKeys.LaunchGuide, parameter: null, updateSelection: true);
     }
 
@@ -105,6 +96,24 @@ public sealed partial class ShellPage : Page
     internal void NavigateToSection(string navigationKey, object? parameter = null)
     {
         NavigateTo(navigationKey, parameter, updateSelection: true);
+    }
+
+    /// <summary>
+    /// 当前窗口已经持有目标工作区时，外部激活只需切回工作台即可，
+    /// 避免重复带参数导航导致页面整页重建。
+    /// </summary>
+    internal void ActivateCurrentWorkspace()
+    {
+        NavigateTo(ShellNavigationKeys.Workbench, parameter: null, updateSelection: true);
+    }
+
+    /// <summary>
+    /// 当外部进程要求当前窗口承载某个工作区时，统一由 Shell 执行导航。
+    /// </summary>
+    internal void NavigateToWorkspace(WorkspaceNavigationRequest navigationRequest)
+    {
+        ArgumentNullException.ThrowIfNull(navigationRequest);
+        NavigateTo(ShellNavigationKeys.Workbench, navigationRequest, updateSelection: true);
     }
 
     /// <summary>
@@ -144,11 +153,26 @@ public sealed partial class ShellPage : Page
             return CreateNavigationTarget(ShellNavigationKeys.Workbench);
         }
 
+        // 如果当前窗口已经持有已加载工作区，则允许在不重复传入导航参数的情况下
+        // 直接从控制台态回到工作台。这样既能支持“已打开工作区再次激活”，
+        // 也能支持用户通过导航入口显式返回当前工作台。
+        if (navigationKey == ShellNavigationKeys.Workbench &&
+            HasRegisteredWorkspace())
+        {
+            SetWindowMode(ShellWindowMode.Workspace);
+            return CreateNavigationTarget(ShellNavigationKeys.Workbench);
+        }
+
         return _windowMode switch
         {
             ShellWindowMode.Workspace => ResolveWorkspaceModeTarget(navigationKey),
             _ => ResolveLaunchGuideModeTarget(navigationKey)
         };
+    }
+
+    private bool HasRegisteredWorkspace()
+    {
+        return !string.IsNullOrWhiteSpace(_hostWindow?.RegisteredWorkspaceKey);
     }
 
     private ShellNavigationTarget ResolveLaunchGuideModeTarget(string navigationKey)

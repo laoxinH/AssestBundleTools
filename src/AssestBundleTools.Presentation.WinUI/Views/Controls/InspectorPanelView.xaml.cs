@@ -64,13 +64,29 @@ public sealed partial class InspectorPanelView : UserControl
         UndoReplacementRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// 内层详情切换保持单选语义，点击后统一回写到同一个 SectionIndex，
+    /// 避免控件自己的开关行为把“当前选中页”状态打散。
+    /// </summary>
+    private void OnSectionRadioButtonChecked(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is null || sender is not RadioButton { Tag: string sectionTag })
+        {
+            return;
+        }
+
+        if (int.TryParse(sectionTag, out var sectionIndex))
+        {
+            ViewModel.SelectedSectionIndex = sectionIndex;
+        }
+    }
+
     private void ApplyLocalizedText()
     {
-        OverviewTab.Header = UiText.Get("InspectorPanelView.OverviewTab.Header");
-        PreviewTab.Header = UiText.Get("InspectorPanelView.PreviewTab.Header");
-        DependenciesTab.Header = UiText.Get("InspectorPanelView.DependenciesTab.Header");
-        ReplacementTab.Header = UiText.Get("InspectorPanelView.ReplacementTab.Header");
-        ChangesTab.Header = UiText.Get("InspectorPanelView.ChangesTab.Header");
+        DetailsSectionButton.Content = UiText.Get("InspectorPanelView.DetailsTab.Header");
+        DependenciesSectionButton.Content = UiText.Get("InspectorPanelView.DependenciesTab.Header");
+        ReplacementSectionButton.Content = UiText.Get("InspectorPanelView.ReplacementTab.Header");
+        ChangesSectionButton.Content = UiText.Get("InspectorPanelView.ChangesTab.Header");
 
         EmptyStateTitleText.Text = UiText.Get("InspectorPanelView.EmptyStateTitleText.Text");
         AssetNameLabelText.Text = UiText.Get("InspectorPanelView.AssetNameLabelText.Text");

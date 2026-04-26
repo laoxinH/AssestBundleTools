@@ -66,6 +66,13 @@
 & 'C:\Program Files\Microsoft Visual Studio\18\Professional\MSBuild\Current\Bin\MSBuild.exe' 'AssestBundleTools.sln' /t:Build /p:Configuration=Debug /p:UseSharedCompilation=false /p:BuildInParallel=false /m:1 /nr:false /nologo
 ```
 
+如果 WinUI 应用当前仍在运行，默认输出目录中的 DLL 可能被占用。
+这时建议改用单独的验证输出目录，避免 `MSB3021 / MSB3027`：
+
+```powershell
+& 'C:\Program Files\Microsoft Visual Studio\18\Professional\MSBuild\Current\Bin\MSBuild.exe' 'AssestBundleTools.sln' /t:Build /p:Configuration=Debug /p:Platform=x64 /p:UseSharedCompilation=false /p:BuildInParallel=false /m:1 /nr:false /nologo /p:OutDir=c:\Users\thixi\source\repos\AssestBundleTools\AssestBundleTools\artifacts\validation\tab-context-menu\
+```
+
 参数说明：
 
 - `UseSharedCompilation=false`：关闭 Roslyn 共享编译进程，降低环境差异导致的偶发问题
@@ -84,6 +91,7 @@ $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find 'MSBui
 
 - 当前命令用于“日常命令行编译验证”，默认不额外强制平台参数
 - 如果需要专门验证 `Debug | x64`，建议先停止正在运行的应用或结束 VS 调试会话，否则 WinUI 输出目录可能被锁定，触发 `MSB3021 / MSB3027`
+- 如果不方便停止当前运行实例，可直接改用上面的 `OutDir` 方案，把验证产物输出到独立目录
 - 当前环境下可能仍会出现 `MSB3774`（缺少 `Microsoft.UniversalCRT.Debug`）警告，但它不影响这条验证命令完成构建
 
 ## 6. 什么时候切换到 x86

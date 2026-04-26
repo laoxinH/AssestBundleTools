@@ -51,6 +51,8 @@ public sealed class BundleExplorerViewModel : ObservableObject
     private readonly IPathNavigationService _pathNavigationService;
     private readonly List<BundleGroupViewModel> _allBundleGroups = new();
     private readonly Dictionary<string, BundleNodeViewModel> _bundleLookup = new(StringComparer.Ordinal);
+    private readonly ObservableCollection<AssetDocumentTabViewModel> _emptyAssetTabs = [];
+    private readonly InspectorPanelViewModel _emptyInspector;
     private bool _isInitialized;
     private bool _isBusy;
     private bool _hasWorkspace;
@@ -60,15 +62,12 @@ public sealed class BundleExplorerViewModel : ObservableObject
     private WorkspaceSummaryDto? _workspaceSummary;
     private BundleDocumentTabViewModel? _activeBundleTab;
     private BundleNodeViewModel? _selectedBundleNode;
-    private AssetDetailsDto? _selectedAssetDetails;
-    private FileReplacementCandidateDto? _pendingFileReplacementCandidate;
-    private WorkspaceReplacementCandidateDto? _pendingWorkspaceReplacementCandidate;
-    private bool _canEditSelectedAsset;
     private bool _isRestoringWorkspaceBrowserState;
     private CancellationTokenSource? _workspaceBrowserStatePersistenceCts;
     private WorkspaceNavigationRequest? _activeWorkspaceNavigationRequest;
-    private long _previewRequestVersion;
     private int _primaryPaneStateSynchronizationDepth;
+    private int _assetDocumentStateSynchronizationDepth;
+    private int _assetDocumentHostSynchronizationDepth;
 
     public BundleExplorerViewModel(
         IWorkspaceBrowserService workspaceBrowserService,
@@ -92,7 +91,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         _pathNavigationService = pathNavigationService ?? throw new ArgumentNullException(nameof(pathNavigationService));
 
         PrimaryPane = new AssetPaneViewModel();
-        Inspector = new InspectorPanelViewModel();
+        _emptyInspector = new InspectorPanelViewModel();
         PrimaryPane.SupportsBatchExtractionQuickAction = true;
 
         RefreshCommand = new AsyncRelayCommand(
@@ -101,7 +100,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
         PrimaryPane.ReplaceAssetTypeOptions(CreateAssetTypeOptions());
         PrimaryPane.ConfigurePane(PaneId.New(), GetString(ResourceKeys.BundleExplorerPrimaryPaneTitle), GetString(ResourceKeys.BundleExplorerNoAssets));
-        Inspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
+        _emptyInspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
         UpdateWorkspaceState(hasWorkspace: false);
         RefreshWorkspaceStatusChips();
     }
@@ -114,7 +113,17 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     public AssetPaneViewModel PrimaryPane { get; }
 
-    public InspectorPanelViewModel Inspector { get; }
+    public ObservableCollection<AssetDocumentTabViewModel> CurrentAssetTabs =>
+        ActiveBundleTab?.AssetTabs ?? _emptyAssetTabs;
+
+    public AssetDocumentTabViewModel? ActiveAssetDocumentTab => ActiveBundleTab?.ActiveAssetTab;
+
+    public bool HasAssetDocumentTabs => CurrentAssetTabs.Count > 0;
+
+    public Visibility AssetDocumentTabStripVisibility =>
+        HasAssetDocumentTabs ? Visibility.Visible : Visibility.Collapsed;
+
+    public InspectorPanelViewModel Inspector => ActiveAssetDocumentTab?.Inspector ?? _emptyInspector;
 
     public AsyncRelayCommand RefreshCommand { get; }
 
@@ -248,6 +257,12 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     public bool HasOpenTabs => _activeBundleTab is not null;
 
+    /// <summary>
+    /// 右侧资产文档标签宿主在切换资源包标签时，会经历一次 ItemsSource 重绑。
+    /// 这段时间内需要抑制控件把“默认第一项”反向写回状态。
+    /// </summary>
+    public bool IsSynchronizingAssetDocumentHostSelection => _assetDocumentHostSynchronizationDepth > 0;
+
     public BundleDocumentTabViewModel? ActiveBundleTab
     {
         get => _activeBundleTab;
@@ -256,18 +271,31 @@ public sealed class BundleExplorerViewModel : ObservableObject
             if (SetProperty(ref _activeBundleTab, value))
             {
                 OnPropertyChanged(nameof(HasOpenTabs));
+                NotifyAssetDocumentHostStateChanged();
                 RefreshWorkspaceStatusChips();
             }
         }
     }
 
-    public bool HasSelectedAsset => _selectedAssetDetails is not null;
+    public bool HasSelectedAsset => TryGetActiveAssetDocumentDetails(out _, out _);
 
-    public bool CanExtractSelectedAsset => !IsBusy && _canEditSelectedAsset && _selectedAssetDetails?.CanExtract == true;
+    public bool CanExtractSelectedAsset =>
+        TryGetActiveAssetDocumentDetails(out var assetTab, out var details) &&
+        !IsBusy &&
+        assetTab.CanEdit &&
+        details.CanExtract;
 
-    public bool CanSelectFileReplacementSource => !IsBusy && _canEditSelectedAsset && _selectedAssetDetails?.CanReplaceFromFile == true;
+    public bool CanSelectFileReplacementSource =>
+        TryGetActiveAssetDocumentDetails(out var assetTab, out var details) &&
+        !IsBusy &&
+        assetTab.CanEdit &&
+        details.CanReplaceFromFile;
 
-    public bool CanSelectWorkspaceReplacementSource => !IsBusy && _canEditSelectedAsset && _selectedAssetDetails?.CanReplaceFromWorkspace == true;
+    public bool CanSelectWorkspaceReplacementSource =>
+        TryGetActiveAssetDocumentDetails(out var assetTab, out var details) &&
+        !IsBusy &&
+        assetTab.CanEdit &&
+        details.CanReplaceFromWorkspace;
 
     public bool CanToggleBundleSearch => HasWorkspace && !IsBusy;
 
@@ -360,6 +388,130 @@ public sealed class BundleExplorerViewModel : ObservableObject
         CaptureActiveTabState();
     }
 
+    public async Task ActivateAssetDocumentTabAsync(AssetDocumentTabViewModel? assetTab)
+    {
+        if (assetTab is null || ActiveBundleTab is null)
+        {
+            return;
+        }
+
+        await SetActiveAssetDocumentTabAsync(
+            ActiveBundleTab,
+            assetTab,
+            synchronizePaneSelection: true,
+            writeLog: false);
+    }
+
+    public async Task CloseAssetDocumentTabAsync(AssetDocumentTabViewModel? assetTab)
+    {
+        if (assetTab is null || ActiveBundleTab is null)
+        {
+            return;
+        }
+
+        var ownerTab = ActiveBundleTab;
+        var removedIndex = ownerTab.AssetTabs.IndexOf(assetTab);
+        if (removedIndex < 0)
+        {
+            return;
+        }
+
+        var wasActive = ReferenceEquals(ownerTab.ActiveAssetTab, assetTab);
+        ownerTab.RemoveAssetTab(assetTab);
+
+        if (!wasActive)
+        {
+            NotifyAssetDocumentHostStateChanged();
+            RequestWorkspaceBrowserStatePersistence();
+            return;
+        }
+
+        if (ownerTab.ActiveAssetTab is not null)
+        {
+            await SetActiveAssetDocumentTabAsync(
+                ownerTab,
+                ownerTab.ActiveAssetTab,
+                synchronizePaneSelection: true,
+                writeLog: false);
+            return;
+        }
+
+        PrimaryPane.ClearSelection();
+        NotifyAssetDocumentHostStateChanged();
+        RequestWorkspaceBrowserStatePersistence();
+    }
+
+    /// <summary>
+    /// 在当前活动资源包下，仅保留指定资产详情标签。
+    /// 这样可以快速收拢右侧详情区，同时保留用户明确选中的目标上下文。
+    /// </summary>
+    public async Task CloseOtherAssetDocumentTabsAsync(AssetDocumentTabViewModel? assetTab)
+    {
+        if (assetTab is null || ActiveBundleTab is null)
+        {
+            return;
+        }
+
+        var ownerTab = ActiveBundleTab;
+        if (!ownerTab.AssetTabs.Contains(assetTab))
+        {
+            return;
+        }
+
+        if (ownerTab.AssetTabs.Count <= 1)
+        {
+            if (!ReferenceEquals(ownerTab.ActiveAssetTab, assetTab))
+            {
+                await SetActiveAssetDocumentTabAsync(
+                    ownerTab,
+                    assetTab,
+                    synchronizePaneSelection: true,
+                    writeLog: false);
+            }
+
+            return;
+        }
+
+        var tabsToRemove = ownerTab.AssetTabs
+            .Where(openedTab => !ReferenceEquals(openedTab, assetTab))
+            .ToArray();
+
+        foreach (var tabToRemove in tabsToRemove)
+        {
+            ownerTab.RemoveAssetTab(tabToRemove);
+        }
+
+        if (!ReferenceEquals(ownerTab.ActiveAssetTab, assetTab))
+        {
+            await SetActiveAssetDocumentTabAsync(
+                ownerTab,
+                assetTab,
+                synchronizePaneSelection: true,
+                writeLog: false);
+            return;
+        }
+
+        NotifyAssetDocumentHostStateChanged();
+        RequestWorkspaceBrowserStatePersistence();
+    }
+
+    /// <summary>
+    /// 清空当前资源包下所有已打开的资产详情标签。
+    /// 关闭后同时清空列表焦点，避免旧选中项立刻把详情标签重新打开。
+    /// </summary>
+    public Task CloseAllAssetDocumentTabsAsync()
+    {
+        if (ActiveBundleTab is null || ActiveBundleTab.AssetTabs.Count == 0)
+        {
+            return Task.CompletedTask;
+        }
+
+        ClearCurrentInspectorHostState(clearAssetTabs: true);
+        PrimaryPane.ClearSelection();
+        RequestWorkspaceBrowserStatePersistence();
+        return Task.CompletedTask;
+    }
+
     public async Task RefreshPrimaryPaneAsync()
     {
         if (IsSynchronizingPrimaryPaneState)
@@ -430,6 +582,74 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
         var nextIndex = Math.Min(removedIndex, BundleTabs.Count - 1);
         await SetActiveBundleTabAsync(BundleTabs[nextIndex], writeSelectionLog: false);
+    }
+
+    /// <summary>
+    /// 保留指定资源包标签，关闭当前工作区中的其他资源包标签。
+    /// 如果保留目标当前并非活动标签，也会一并切换过去，避免关闭后焦点落到不可预期的位置。
+    /// </summary>
+    public async Task CloseOtherBundleTabsAsync(BundleDocumentTabViewModel? tab)
+    {
+        if (tab is null)
+        {
+            return;
+        }
+
+        var retainedTab = BundleTabs.FirstOrDefault(existingTab => ReferenceEquals(existingTab, tab));
+        if (retainedTab is null)
+        {
+            return;
+        }
+
+        if (BundleTabs.Count <= 1)
+        {
+            if (!ReferenceEquals(ActiveBundleTab, retainedTab) && _workspaceSummary is not null)
+            {
+                CaptureActiveTabState();
+                await SetActiveBundleTabAsync(retainedTab, writeSelectionLog: false);
+            }
+
+            return;
+        }
+
+        if (ActiveBundleTab is not null && !ReferenceEquals(ActiveBundleTab, retainedTab))
+        {
+            CaptureActiveTabState();
+        }
+
+        var tabsToRemove = BundleTabs
+            .Where(existingTab => !ReferenceEquals(existingTab, retainedTab))
+            .ToArray();
+
+        foreach (var tabToRemove in tabsToRemove)
+        {
+            BundleTabs.Remove(tabToRemove);
+        }
+
+        if (!ReferenceEquals(ActiveBundleTab, retainedTab))
+        {
+            await SetActiveBundleTabAsync(retainedTab, writeSelectionLog: false);
+            return;
+        }
+
+        RefreshWorkspaceStatusChips();
+        RequestWorkspaceBrowserStatePersistence();
+    }
+
+    /// <summary>
+    /// 关闭当前工作区中所有资源包标签，并把页面浏览上下文重置回“未打开标签”的稳定状态。
+    /// </summary>
+    public Task CloseAllBundleTabsAsync()
+    {
+        if (BundleTabs.Count == 0)
+        {
+            return Task.CompletedTask;
+        }
+
+        CaptureActiveTabState();
+        BundleTabs.Clear();
+        ClearActiveTabState();
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -788,10 +1008,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
         if (bundleNode is null)
         {
             pane.ClearItems(GetString(ResourceKeys.BundleExplorerNoAssets));
-            if (clearInspectorOnEmpty)
+            if (clearInspectorOnEmpty && ReferenceEquals(pane, PrimaryPane))
             {
-                ClearSelectedAssetState();
-                Inspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
+                ClearCurrentInspectorHostState(clearAssetTabs: true);
             }
 
             return;
@@ -806,6 +1025,12 @@ public sealed class BundleExplorerViewModel : ObservableObject
             bundleNode,
             clearInspectorOnEmpty,
             preferredSelectedAssetId);
+
+        if (ReferenceEquals(pane, PrimaryPane))
+        {
+            await SynchronizeInspectorWithActiveBundleTabAsync(writeLog: false);
+        }
+
         _appLogService.AppendInfo(_localizationService.GetFormattedString(
             ResourceKeys.BundleExplorerLogFilterApplied,
             pane.PaneTitle,
@@ -833,10 +1058,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
         if (!TryGetValue(assetListResult, out var assetList))
         {
             pane.ClearItems(GetString(ResourceKeys.BundleExplorerNoAssets));
-            if (clearInspectorOnEmpty)
+            if (clearInspectorOnEmpty && ReferenceEquals(pane, PrimaryPane))
             {
-                ClearSelectedAssetState();
-                Inspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
+                ClearCurrentInspectorHostState(clearAssetTabs: true);
             }
 
             return;
@@ -854,16 +1078,6 @@ public sealed class BundleExplorerViewModel : ObservableObject
                 ? null
                 : new AssetId(preferredSelectedAssetId));
 
-        if (pane.SelectedAsset is not null)
-        {
-            await SelectAssetAsync(pane, pane.SelectedAsset, writeLog: true);
-        }
-        else if (clearInspectorOnEmpty)
-        {
-            ClearSelectedAssetState();
-            Inspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
-        }
-
         _appLogService.AppendInfo(_localizationService.GetFormattedString(
             ResourceKeys.BundleExplorerLogBundleLoaded,
             pane.PaneTitle,
@@ -873,21 +1087,198 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     private async Task HandleAssetSelectionAsync(AssetPaneViewModel pane)
     {
-        if (pane.SelectedAsset is null)
+        if (!ReferenceEquals(pane, PrimaryPane))
         {
-            if (ReferenceEquals(pane, PrimaryPane))
-            {
-                ClearSelectedAssetState();
-                Inspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
-            }
-
             return;
         }
 
-        await SelectAssetAsync(pane, pane.SelectedAsset, writeLog: true);
+        if (IsSynchronizingPrimaryPaneState)
+        {
+            return;
+        }
+
+        if (IsSynchronizingAssetDocumentState)
+        {
+            CaptureActiveTabState();
+            return;
+        }
+
+        if (pane.SelectedAsset is null)
+        {
+            return;
+        }
+
+        if (ActiveBundleTab is null)
+        {
+            return;
+        }
+
+        await OpenOrActivateAssetDocumentTabAsync(
+            ActiveBundleTab,
+            pane.SelectedAsset,
+            writeLog: true);
     }
 
-    private async Task SelectAssetAsync(AssetPaneViewModel pane, AssetListEntryViewModel entry, bool writeLog)
+    /// <summary>
+    /// 当资源包标签页被切换、恢复或刷新后，
+    /// 统一在这里决定右侧应该继续显示哪个资产详情标签。
+    /// </summary>
+    private async Task SynchronizeInspectorWithActiveBundleTabAsync(bool writeLog)
+    {
+        if (ActiveBundleTab is null)
+        {
+            ClearCurrentInspectorHostState(clearAssetTabs: false);
+            return;
+        }
+
+        // 资源列表为空并不等于“当前详情上下文失效”。
+        // 这里常见于用户切换搜索或资源类型筛选后暂时没有命中项，
+        // 此时应优先保留已经打开的资产详情标签，而不是把它们一并关闭。
+        var preferredAssetTab = ResolvePreferredAssetDocumentTab(ActiveBundleTab);
+        if (preferredAssetTab is not null)
+        {
+            // 只有当资源仍在当前列表里可见时，才回写列表选中态。
+            // 若当前列表为空或该资源被筛选隐藏，则保持详情标签独立存在。
+            var shouldSynchronizePaneSelection = PrimaryPane.Items.Count > 0 &&
+                                                 (PrimaryPane.SelectedAsset is null ||
+                                                  !PrimaryPane.SelectedAsset.Item.AssetId.Equals(preferredAssetTab.AssetId));
+            await SetActiveAssetDocumentTabAsync(
+                ActiveBundleTab,
+                preferredAssetTab,
+                synchronizePaneSelection: shouldSynchronizePaneSelection,
+                writeLog: writeLog);
+            return;
+        }
+
+        if (PrimaryPane.Items.Count == 0 || PrimaryPane.SelectedAsset is null)
+        {
+            ClearCurrentInspectorHostState(clearAssetTabs: false);
+            return;
+        }
+
+        await OpenOrActivateAssetDocumentTabAsync(
+            ActiveBundleTab,
+            PrimaryPane.SelectedAsset,
+            writeLog: writeLog);
+    }
+
+    private AssetDocumentTabViewModel? ResolvePreferredAssetDocumentTab(BundleDocumentTabViewModel bundleTab)
+    {
+        if (bundleTab.ActiveAssetTab is not null)
+        {
+            return bundleTab.ActiveAssetTab;
+        }
+
+        if (PrimaryPane.SelectedAsset is not null)
+        {
+            return bundleTab.TryGetAssetTab(PrimaryPane.SelectedAsset.Item.AssetId, out var existingAssetTab)
+                ? existingAssetTab
+                : null;
+        }
+
+        // 当当前列表因筛选暂时没有选中项时，仍优先保留已有详情标签，
+        // 避免“列表为空”把右侧资产文档上下文误清空。
+        return bundleTab.AssetTabs.FirstOrDefault();
+    }
+
+    private async Task OpenOrActivateAssetDocumentTabAsync(
+        BundleDocumentTabViewModel bundleTab,
+        AssetListEntryViewModel entry,
+        bool writeLog)
+    {
+        ArgumentNullException.ThrowIfNull(bundleTab);
+        ArgumentNullException.ThrowIfNull(entry);
+
+        if (!bundleTab.TryGetAssetTab(entry.Item.AssetId, out var assetTab))
+        {
+            assetTab = CreateAssetDocumentTab(
+                entry.Item.BundleId,
+                entry.Item.AssetId,
+                entry.Item.Name);
+            bundleTab.AddAssetTab(assetTab, activate: false);
+        }
+
+        ArgumentNullException.ThrowIfNull(assetTab);
+
+        await SetActiveAssetDocumentTabAsync(
+            bundleTab,
+            assetTab,
+            synchronizePaneSelection: false,
+            writeLog: writeLog);
+    }
+
+    private AssetDocumentTabViewModel CreateAssetDocumentTab(
+        BundleId bundleId,
+        AssetId assetId,
+        string assetName)
+    {
+        var tab = new AssetDocumentTabViewModel(
+            bundleId,
+            assetId,
+            assetName);
+        tab.Inspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
+        return tab;
+    }
+
+    private async Task SetActiveAssetDocumentTabAsync(
+        BundleDocumentTabViewModel bundleTab,
+        AssetDocumentTabViewModel assetTab,
+        bool synchronizePaneSelection,
+        bool writeLog)
+    {
+        ArgumentNullException.ThrowIfNull(bundleTab);
+        ArgumentNullException.ThrowIfNull(assetTab);
+
+        var wasAlreadyActiveAssetTab = ReferenceEquals(bundleTab.ActiveAssetTab, assetTab);
+        bundleTab.SetActiveAssetTab(assetTab);
+
+        if (wasAlreadyActiveAssetTab)
+        {
+            // 筛选刷新、同标签回切等场景不应把右侧详情宿主整块当成“新标签”重绑，
+            // 否则会导致图片预览闪烁并把详情页滚动位置重置。
+            assetTab.CanEdit = ReferenceEquals(bundleTab, ActiveBundleTab);
+            NotifyActionStates();
+        }
+        else
+        {
+            NotifyAssetDocumentHostStateChanged();
+        }
+
+        if (synchronizePaneSelection)
+        {
+            BeginAssetDocumentStateSynchronization();
+            try
+            {
+                if (!PrimaryPane.TrySelectAsset(assetTab.AssetId))
+                {
+                    PrimaryPane.ClearSelection();
+                }
+            }
+            finally
+            {
+                EndAssetDocumentStateSynchronization();
+            }
+        }
+
+        if (CanReuseLoadedAssetDocumentTabContent(assetTab))
+        {
+            if (writeLog && assetTab.Details is not null)
+            {
+                AppendAssetFocusedLog(assetTab.Details);
+            }
+
+            RequestWorkspaceBrowserStatePersistence();
+            return;
+        }
+
+        await LoadAssetDocumentTabAsync(bundleTab, assetTab, writeLog);
+        RequestWorkspaceBrowserStatePersistence();
+    }
+
+    private async Task LoadAssetDocumentTabAsync(
+        BundleDocumentTabViewModel bundleTab,
+        AssetDocumentTabViewModel assetTab,
+        bool writeLog)
     {
         if (_workspaceSummary is null)
         {
@@ -897,9 +1288,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
         var openResult = await _workspaceBrowserService.OpenAssetInPaneAsync(
             new OpenAssetInPaneCommand(
                 WorkspaceId: _workspaceSummary.WorkspaceId,
-                BundleId: entry.Item.BundleId,
-                AssetId: entry.Item.AssetId,
-                PaneId: pane.PaneId));
+                BundleId: assetTab.BundleId,
+                AssetId: assetTab.AssetId,
+                PaneId: assetTab.PaneId));
 
         if (!TryGetValue(openResult, out _))
         {
@@ -909,50 +1300,128 @@ public sealed class BundleExplorerViewModel : ObservableObject
         var detailsResult = await _workspaceBrowserService.GetAssetDetailsAsync(
             new GetAssetDetailsQuery(
                 WorkspaceId: _workspaceSummary.WorkspaceId,
-                BundleId: entry.Item.BundleId,
-                AssetId: entry.Item.AssetId));
+                BundleId: assetTab.BundleId,
+                AssetId: assetTab.AssetId));
 
         if (!TryGetValue(detailsResult, out var details))
         {
             return;
         }
 
-        var isSameTargetAsset = _selectedAssetDetails is not null &&
-                                _selectedAssetDetails.BundleId.Equals(details.BundleId) &&
-                                _selectedAssetDetails.AssetId.Equals(details.AssetId);
+        ApplyAssetDocumentTab(
+            bundleTab,
+            assetTab,
+            details);
 
-        if (!isSameTargetAsset)
-        {
-            _pendingFileReplacementCandidate = null;
-            _pendingWorkspaceReplacementCandidate = null;
-        }
-
-        ApplyInspector(
-            details,
-            isSameTargetAsset ? _pendingWorkspaceReplacementCandidate : null,
-            isSameTargetAsset ? _pendingFileReplacementCandidate : null,
-            enableActions: ReferenceEquals(pane, PrimaryPane));
-        var previewRequestVersion = BeginPreviewRequest();
-        Inspector.SetPreviewLoading(GetString(ResourceKeys.InspectorPreviewLoadingText));
-        _ = LoadInspectorPreviewAsync(details, previewRequestVersion);
-
-        if (ReferenceEquals(pane, PrimaryPane))
-        {
-            CaptureActiveTabState();
-        }
+        var previewRequestVersion = assetTab.BeginPreviewRequest();
+        assetTab.Inspector.SetPreviewLoading(GetString(ResourceKeys.InspectorPreviewLoadingText));
+        _ = LoadInspectorPreviewAsync(assetTab, details, previewRequestVersion);
 
         if (writeLog)
         {
-            _appLogService.AppendInfo(_localizationService.GetFormattedString(
-                ResourceKeys.BundleExplorerLogAssetFocused,
-                pane.PaneTitle,
-                details.Name));
+            AppendAssetFocusedLog(details);
         }
+    }
+
+    /// <summary>
+    /// 资产文档标签已经持有详情与预览状态时，激活该标签应尽量直接复用现有内容。
+    /// 这样筛选变化只刷新列表，不会重新闪烁图片预览，也不会打断用户当前浏览位置。
+    /// </summary>
+    private static bool CanReuseLoadedAssetDocumentTabContent(AssetDocumentTabViewModel assetTab)
+    {
+        ArgumentNullException.ThrowIfNull(assetTab);
+
+        return assetTab.Details is { } details &&
+               details.BundleId.Equals(assetTab.BundleId) &&
+               details.AssetId.Equals(assetTab.AssetId);
+    }
+
+    private void AppendAssetFocusedLog(AssetDetailsDto details)
+    {
+        ArgumentNullException.ThrowIfNull(details);
+
+        _appLogService.AppendInfo(_localizationService.GetFormattedString(
+            ResourceKeys.BundleExplorerLogAssetFocused,
+            PrimaryPane.PaneTitle,
+            details.Name));
+    }
+
+    private void ApplyAssetDocumentTab(
+        BundleDocumentTabViewModel bundleTab,
+        AssetDocumentTabViewModel assetTab,
+        AssetDetailsDto details)
+    {
+        ArgumentNullException.ThrowIfNull(bundleTab);
+        ArgumentNullException.ThrowIfNull(assetTab);
+        ArgumentNullException.ThrowIfNull(details);
+
+        assetTab.ApplyDetails(details);
+        assetTab.CanEdit = ReferenceEquals(bundleTab, ActiveBundleTab);
+
+        assetTab.Inspector.Apply(
+            assetName: details.Name,
+            bundleDisplayName: ResolveBundleDisplayName(details.BundleId),
+            assetTypeText: ResolveAssetTypeDisplayName(details.AssetType, details.AssetTypeDisplayName),
+            assetPath: details.AssetPath,
+            containerPath: details.ContainerPath,
+            sizeText: FormatSize(ResolveDisplaySizeInBytes(details.SizeInBytes, details.PreferredDisplaySizeInBytes)),
+            pathIdText: details.PathId.ToString(CultureInfo.InvariantCulture),
+            extractCapabilityText: details.CanExtract
+                ? GetString(ResourceKeys.InspectorCapabilityAvailable)
+                : GetString(ResourceKeys.InspectorCapabilityUnavailable),
+            fileReplacementCapabilityText: details.CanReplaceFromFile
+                ? GetString(ResourceKeys.InspectorCapabilityAvailable)
+                : GetString(ResourceKeys.InspectorCapabilityUnavailable),
+            workspaceReplacementCapabilityText: details.CanReplaceFromWorkspace
+                ? GetString(ResourceKeys.InspectorCapabilityAvailable)
+                : GetString(ResourceKeys.InspectorCapabilityUnavailable),
+            replacementSourceText: BuildReplacementSourceText(
+                details,
+                assetTab.PendingWorkspaceReplacementCandidate,
+                assetTab.PendingFileReplacementCandidate),
+            replacementStatusText: BuildReplacementStatusText(
+                details,
+                assetTab.PendingWorkspaceReplacementCandidate,
+                assetTab.PendingFileReplacementCandidate),
+            changeSummaryText: BuildChangeSummaryText(details),
+            canExtract: assetTab.CanEdit && !IsBusy && details.CanExtract,
+            canSelectFileReplacementSource: assetTab.CanEdit && !IsBusy && details.CanReplaceFromFile,
+            canSelectReplacementSource: assetTab.CanEdit && !IsBusy && details.CanReplaceFromWorkspace,
+            canApplyReplacement: assetTab.CanEdit && !IsBusy &&
+                                 (assetTab.PendingWorkspaceReplacementCandidate is not null ||
+                                  assetTab.PendingFileReplacementCandidate is not null),
+            canUndoReplacement: assetTab.CanEdit && !IsBusy && HasAppliedReplacement(details),
+            assetDependencies: details.Dependencies.Select(MapDependency),
+            referencedByDependencies: (details.ReferencedBy ?? Array.Empty<AssetDependencyDto>())
+                .Select(MapDependency),
+            dependencyClosureItems: (details.DependencyClosure ?? Array.Empty<AssetDependencyDto>())
+                .Select(MapDependency),
+            bundleExternalDependencies: (details.BundleExternalDependencies ?? Array.Empty<BundleExternalDependencyDto>())
+                .Select(MapBundleExternalDependency));
+
+        NotifyActionStates();
+    }
+
+    private void ClearCurrentInspectorHostState(bool clearAssetTabs)
+    {
+        if (clearAssetTabs)
+        {
+            ActiveBundleTab?.ClearAssetTabs();
+        }
+        else
+        {
+            ActiveBundleTab?.SetActiveAssetTab(null);
+        }
+
+        _emptyInspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
+        NotifyAssetDocumentHostStateChanged();
     }
 
     public async Task ExtractSelectedAssetAsync()
     {
-        if (IsBusy || _workspaceSummary is null || _selectedAssetDetails is null)
+        if (IsBusy ||
+            _workspaceSummary is null ||
+            !TryGetActiveAssetDocumentDetails(out var assetTab, out var details))
         {
             return;
         }
@@ -963,8 +1432,8 @@ public sealed class BundleExplorerViewModel : ObservableObject
             var result = await _workspaceBrowserService.ExtractAssetAsync(
                 new ExtractAssetCommand(
                     _workspaceSummary.WorkspaceId,
-                    _selectedAssetDetails.BundleId,
-                    _selectedAssetDetails.AssetId));
+                    details.BundleId,
+                    details.AssetId));
 
             if (!TryGetValue(result, out var extractionResult))
             {
@@ -1066,7 +1535,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     public async Task SelectWorkspaceReplacementSourceAsync()
     {
-        if (IsBusy || _workspaceSummary is null || _selectedAssetDetails is null)
+        if (IsBusy ||
+            _workspaceSummary is null ||
+            !TryGetActiveAssetDocumentDetails(out var assetTab, out var details))
         {
             return;
         }
@@ -1077,8 +1548,8 @@ public sealed class BundleExplorerViewModel : ObservableObject
             var result = await _workspaceBrowserService.GetWorkspaceReplacementCandidatesAsync(
                 new GetWorkspaceReplacementCandidatesQuery(
                     _workspaceSummary.WorkspaceId,
-                    _selectedAssetDetails.BundleId,
-                    _selectedAssetDetails.AssetId));
+                    details.BundleId,
+                    details.AssetId));
 
             if (!TryGetValue(result, out var candidates))
             {
@@ -1086,19 +1557,14 @@ public sealed class BundleExplorerViewModel : ObservableObject
             }
 
             var selectedCandidate = candidates[0];
-            _pendingFileReplacementCandidate = null;
-            _pendingWorkspaceReplacementCandidate = selectedCandidate;
-            ApplyInspector(
-                _selectedAssetDetails,
-                _pendingWorkspaceReplacementCandidate,
-                pendingFileCandidate: null,
-                enableActions: _canEditSelectedAsset);
+            assetTab.UpdatePendingWorkspaceReplacementCandidate(selectedCandidate);
+            ApplyAssetDocumentTab(ActiveBundleTab!, assetTab, details);
 
             _appLogService.AppendInfo(_localizationService.GetFormattedString(
                 ResourceKeys.BundleExplorerLogReplacementSourceSelected,
                 selectedCandidate.SourceBundleDisplayName,
                 selectedCandidate.SourceAssetName,
-                _selectedAssetDetails.Name));
+                details.Name));
 
             ShowOperationNotification(
                 GetString(ResourceKeys.AppNotificationInfoTitle),
@@ -1115,7 +1581,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     public async Task SelectFileReplacementSourceAsync()
     {
-        if (IsBusy || _workspaceSummary is null || _selectedAssetDetails is null)
+        if (IsBusy ||
+            _workspaceSummary is null ||
+            !TryGetActiveAssetDocumentDetails(out var assetTab, out var details))
         {
             return;
         }
@@ -1126,7 +1594,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
             string? selectedFilePath;
             try
             {
-                selectedFilePath = await _filePickerService.PickReplacementSourceFileAsync(_selectedAssetDetails.AssetType);
+                selectedFilePath = await _filePickerService.PickReplacementSourceFileAsync(details.AssetType);
             }
             catch (Exception ex)
             {
@@ -1145,15 +1613,15 @@ public sealed class BundleExplorerViewModel : ObservableObject
             {
                 _appLogService.AppendInfo(_localizationService.GetFormattedString(
                     ResourceKeys.BundleExplorerLogFileReplacementSelectionCancelled,
-                    _selectedAssetDetails.Name));
+                    details.Name));
                 return;
             }
 
             var result = await _workspaceBrowserService.GetFileReplacementCandidateAsync(
                 new GetFileReplacementCandidateQuery(
                     _workspaceSummary.WorkspaceId,
-                    _selectedAssetDetails.BundleId,
-                    _selectedAssetDetails.AssetId,
+                    details.BundleId,
+                    details.AssetId,
                     selectedFilePath));
 
             if (!TryGetValue(result, out var candidate))
@@ -1161,19 +1629,14 @@ public sealed class BundleExplorerViewModel : ObservableObject
                 return;
             }
 
-            _pendingWorkspaceReplacementCandidate = null;
-            _pendingFileReplacementCandidate = candidate;
-            ApplyInspector(
-                _selectedAssetDetails,
-                pendingWorkspaceCandidate: null,
-                pendingFileCandidate: _pendingFileReplacementCandidate,
-                enableActions: _canEditSelectedAsset);
+            assetTab.UpdatePendingFileReplacementCandidate(candidate);
+            ApplyAssetDocumentTab(ActiveBundleTab!, assetTab, details);
 
             _appLogService.AppendInfo(_localizationService.GetFormattedString(
                 ResourceKeys.BundleExplorerLogFileReplacementSourceSelected,
                 candidate.SourceFileName,
                 candidate.SourceFilePath,
-                _selectedAssetDetails.Name));
+                details.Name));
 
             ShowOperationNotification(
                 GetString(ResourceKeys.AppNotificationInfoTitle),
@@ -1190,7 +1653,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     public async Task ApplyPendingReplacementAsync()
     {
-        if (IsBusy || _workspaceSummary is null || _selectedAssetDetails is null)
+        if (IsBusy ||
+            _workspaceSummary is null ||
+            !TryGetActiveAssetDocumentDetails(out var assetTab, out var details))
         {
             return;
         }
@@ -1198,15 +1663,15 @@ public sealed class BundleExplorerViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            if (_pendingFileReplacementCandidate is not null)
+            if (assetTab.PendingFileReplacementCandidate is not null)
             {
                 var fileResult = await _workspaceBrowserService.ReplaceAssetFromFileAsync(
                     new ReplaceAssetFromFileCommand(
                         _workspaceSummary.WorkspaceId,
-                        _selectedAssetDetails.BundleId,
-                        _selectedAssetDetails.AssetId,
-                        _pendingFileReplacementCandidate.SourceFilePath,
-                        _pendingFileReplacementCandidate.SourceAssetType));
+                        details.BundleId,
+                        details.AssetId,
+                        assetTab.PendingFileReplacementCandidate.SourceFilePath,
+                        assetTab.PendingFileReplacementCandidate.SourceAssetType));
 
                 if (!TryGetValue(fileResult, out var fileReplacementResult))
                 {
@@ -1226,13 +1691,12 @@ public sealed class BundleExplorerViewModel : ObservableObject
                         fileReplacementResult.TargetAssetName),
                     AppNotificationSeverity.Success);
 
-                _pendingFileReplacementCandidate = null;
-                _pendingWorkspaceReplacementCandidate = null;
+                assetTab.ClearPendingReplacementCandidates();
                 await RefreshPrimaryPaneAsync();
                 return;
             }
 
-            if (_pendingWorkspaceReplacementCandidate is null)
+            if (assetTab.PendingWorkspaceReplacementCandidate is null)
             {
                 return;
             }
@@ -1240,10 +1704,10 @@ public sealed class BundleExplorerViewModel : ObservableObject
             var workspaceResult = await _workspaceBrowserService.ReplaceAssetFromWorkspaceAsync(
                 new ReplaceAssetFromWorkspaceCommand(
                     _workspaceSummary.WorkspaceId,
-                    _selectedAssetDetails.BundleId,
-                    _selectedAssetDetails.AssetId,
-                    _pendingWorkspaceReplacementCandidate.SourceBundleId,
-                    _pendingWorkspaceReplacementCandidate.SourceAssetId));
+                    details.BundleId,
+                    details.AssetId,
+                    assetTab.PendingWorkspaceReplacementCandidate.SourceBundleId,
+                    assetTab.PendingWorkspaceReplacementCandidate.SourceAssetId));
 
             if (!TryGetValue(workspaceResult, out var replacementResult))
             {
@@ -1263,8 +1727,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
                     replacementResult.TargetAssetName),
                 AppNotificationSeverity.Success);
 
-            _pendingWorkspaceReplacementCandidate = null;
-            _pendingFileReplacementCandidate = null;
+            assetTab.ClearPendingReplacementCandidates();
             await RefreshPrimaryPaneAsync();
         }
         finally
@@ -1275,7 +1738,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     public async Task UndoAppliedReplacementAsync()
     {
-        if (IsBusy || _workspaceSummary is null || _selectedAssetDetails is null)
+        if (IsBusy ||
+            _workspaceSummary is null ||
+            !TryGetActiveAssetDocumentDetails(out var assetTab, out var details))
         {
             return;
         }
@@ -1286,8 +1751,8 @@ public sealed class BundleExplorerViewModel : ObservableObject
             var result = await _workspaceBrowserService.UndoAssetReplacementAsync(
                 new UndoAssetReplacementCommand(
                     _workspaceSummary.WorkspaceId,
-                    _selectedAssetDetails.BundleId,
-                    _selectedAssetDetails.AssetId));
+                    details.BundleId,
+                    details.AssetId));
 
             if (!TryGetValue(result, out var undoResult))
             {
@@ -1305,8 +1770,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
                     undoResult.TargetAssetName),
                 AppNotificationSeverity.Informational);
 
-            _pendingFileReplacementCandidate = null;
-            _pendingWorkspaceReplacementCandidate = null;
+            assetTab.ClearPendingReplacementCandidates();
             await RefreshPrimaryPaneAsync();
         }
         finally
@@ -1429,44 +1893,54 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     private async Task SetActiveBundleTabAsync(BundleDocumentTabViewModel tab, bool writeSelectionLog)
     {
-        ActiveBundleTab = tab;
-        SetSelectedBundle(FindBundleNode(tab.BundleId));
-        var bundleNode = FindBundleNode(tab.BundleId);
-
-        BeginPrimaryPaneStateSynchronization();
+        BeginAssetDocumentHostSynchronization();
         try
         {
-            tab.ApplyToPane(PrimaryPane);
+            ActiveBundleTab = tab;
+            SetSelectedBundle(FindBundleNode(tab.BundleId));
+            var bundleNode = FindBundleNode(tab.BundleId);
 
-            if (bundleNode is null)
+            BeginPrimaryPaneStateSynchronization();
+            try
             {
-                ClearActiveTabState();
+                tab.ApplyToPane(PrimaryPane);
+
+                if (bundleNode is null)
+                {
+                    ClearActiveTabState();
+                    return;
+                }
+
+                await LoadBundleIntoPaneAsync(
+                    PrimaryPane,
+                    bundleNode,
+                    clearInspectorOnEmpty: true,
+                    preferredSelectedAssetId: tab.SelectedAssetId);
+            }
+            finally
+            {
+                EndPrimaryPaneStateSynchronization();
+            }
+
+            await SynchronizeInspectorWithActiveBundleTabAsync(writeLog: writeSelectionLog);
+
+            if (!writeSelectionLog)
+            {
+                RequestWorkspaceBrowserStatePersistence();
                 return;
             }
 
-            await LoadBundleIntoPaneAsync(
-                PrimaryPane,
-                bundleNode,
-                clearInspectorOnEmpty: true,
-                preferredSelectedAssetId: tab.SelectedAssetId);
+            _appLogService.AppendInfo(_localizationService.GetFormattedString(
+                ResourceKeys.BundleExplorerLogBundleLoaded,
+                PrimaryPane.PaneTitle,
+                bundleNode.DisplayName,
+                PrimaryPane.Items.Count));
+            RequestWorkspaceBrowserStatePersistence();
         }
         finally
         {
-            EndPrimaryPaneStateSynchronization();
+            EndAssetDocumentHostSynchronization();
         }
-
-        if (!writeSelectionLog)
-        {
-            RequestWorkspaceBrowserStatePersistence();
-            return;
-        }
-
-        _appLogService.AppendInfo(_localizationService.GetFormattedString(
-            ResourceKeys.BundleExplorerLogBundleLoaded,
-            PrimaryPane.PaneTitle,
-            bundleNode.DisplayName,
-            PrimaryPane.Items.Count));
-        RequestWorkspaceBrowserStatePersistence();
     }
 
     private void CaptureActiveTabState()
@@ -1493,13 +1967,47 @@ public sealed class BundleExplorerViewModel : ObservableObject
         _primaryPaneStateSynchronizationDepth--;
     }
 
+    private bool IsSynchronizingAssetDocumentState => _assetDocumentStateSynchronizationDepth > 0;
+
+    private void BeginAssetDocumentStateSynchronization()
+    {
+        _assetDocumentStateSynchronizationDepth++;
+    }
+
+    private void EndAssetDocumentStateSynchronization()
+    {
+        if (_assetDocumentStateSynchronizationDepth <= 0)
+        {
+            _assetDocumentStateSynchronizationDepth = 0;
+            return;
+        }
+
+        _assetDocumentStateSynchronizationDepth--;
+    }
+
+    private void BeginAssetDocumentHostSynchronization()
+    {
+        _assetDocumentHostSynchronizationDepth++;
+    }
+
+    private void EndAssetDocumentHostSynchronization()
+    {
+        if (_assetDocumentHostSynchronizationDepth <= 0)
+        {
+            _assetDocumentHostSynchronizationDepth = 0;
+            return;
+        }
+
+        _assetDocumentHostSynchronizationDepth--;
+    }
+
     private void ClearActiveTabState()
     {
         ActiveBundleTab = null;
         SetSelectedBundle(null);
-        ClearSelectedAssetState();
+        _emptyInspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
         PrimaryPane.ClearItems(ResolvePrimaryPaneEmptyStateText());
-        Inspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
+        NotifyAssetDocumentHostStateChanged();
         RequestWorkspaceBrowserStatePersistence();
     }
 
@@ -1662,7 +2170,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         _workspaceContextService.ClearCurrentWorkspace();
         UpdateWorkspaceState(hasWorkspace: false);
         SetSelectedBundle(null);
-        ClearSelectedAssetState();
+        _emptyInspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
         _allBundleGroups.Clear();
         BundleGroups.Clear();
         BundleTabs.Clear();
@@ -1798,6 +2306,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
                 selectedAssetId: tabState.SelectedAssetId,
                 showModifiedOnly: tabState.ShowModifiedOnly,
                 showPreviewableOnly: tabState.ShowPreviewableOnly);
+            tab.RestoreAssetTabs(
+                RestoreAssetTabsForBundle(bundleNode.BundleId, tabState.OpenAssetTabs),
+                tabState.ActiveAssetTabId);
 
             BundleTabs.Add(tab);
             restoredTabs.Add(tab);
@@ -1910,7 +2421,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
                 .ToArray(),
             ActiveBundleTabId: activeTab?.BundleId.Value,
             LastBundleId: activeTab?.BundleId.Value,
-            LastAssetId: activeTab?.SelectedAssetId);
+            LastAssetId: activeTab?.ActiveAssetTab?.AssetId.Value ?? activeTab?.SelectedAssetId);
     }
 
     private WorkspaceMetadataBundleTabDto CreateBundleTabMetadata(BundleDocumentTabViewModel tab)
@@ -1923,7 +2434,50 @@ public sealed class BundleExplorerViewModel : ObservableObject
             SearchKeyword: tab.SearchKeyword,
             AssetTypeFilter: tab.SelectedAssetType?.ToString(),
             ShowModifiedOnly: tab.ShowModifiedOnly,
-            ShowPreviewableOnly: tab.ShowPreviewableOnly);
+            ShowPreviewableOnly: tab.ShowPreviewableOnly,
+            OpenAssetTabs: tab.AssetTabs
+                .Select(CreateAssetTabMetadata)
+                .ToArray(),
+            ActiveAssetTabId: tab.ActiveAssetTab?.DocumentId);
+    }
+
+    private IReadOnlyList<AssetDocumentTabViewModel> RestoreAssetTabsForBundle(
+        BundleId bundleId,
+        IReadOnlyList<WorkspaceMetadataAssetTabDto>? assetTabStates)
+    {
+        if (assetTabStates is null || assetTabStates.Count == 0)
+        {
+            return Array.Empty<AssetDocumentTabViewModel>();
+        }
+
+        var restoredTabs = new List<AssetDocumentTabViewModel>(assetTabStates.Count);
+        var restoredAssetIds = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var assetTabState in assetTabStates)
+        {
+            if (string.IsNullOrWhiteSpace(assetTabState.AssetId) ||
+                !restoredAssetIds.Add(assetTabState.AssetId))
+            {
+                continue;
+            }
+
+            var assetTab = CreateAssetDocumentTab(
+                bundleId,
+                new AssetId(assetTabState.AssetId),
+                assetTabState.AssetName);
+            assetTab.RestoreSelectedInspectorSection(assetTabState.SelectedInspectorSection);
+            restoredTabs.Add(assetTab);
+        }
+
+        return restoredTabs;
+    }
+
+    private WorkspaceMetadataAssetTabDto CreateAssetTabMetadata(AssetDocumentTabViewModel tab)
+    {
+        return new WorkspaceMetadataAssetTabDto(
+            AssetId: tab.AssetId.Value,
+            AssetName: tab.DisplayName,
+            SelectedInspectorSection: tab.Inspector.SelectedSectionKey);
     }
 
     private void CancelWorkspaceBrowserStatePersistence()
@@ -2142,74 +2696,23 @@ public sealed class BundleExplorerViewModel : ObservableObject
             "\uE9CA"));
     }
 
-    private void ApplyInspector(
+    private async Task LoadInspectorPreviewAsync(
+        AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
-        WorkspaceReplacementCandidateDto? pendingWorkspaceCandidate,
-        FileReplacementCandidateDto? pendingFileCandidate,
-        bool enableActions)
-    {
-        _selectedAssetDetails = details;
-        _canEditSelectedAsset = enableActions;
-        Inspector.Apply(
-            assetName: details.Name,
-            bundleDisplayName: ResolveBundleDisplayName(details.BundleId),
-            assetTypeText: ResolveAssetTypeDisplayName(details.AssetType, details.AssetTypeDisplayName),
-            assetPath: details.AssetPath,
-            containerPath: details.ContainerPath,
-            sizeText: FormatSize(ResolveDisplaySizeInBytes(details.SizeInBytes, details.PreferredDisplaySizeInBytes)),
-            pathIdText: details.PathId.ToString(CultureInfo.InvariantCulture),
-            extractCapabilityText: details.CanExtract
-                ? GetString(ResourceKeys.InspectorCapabilityAvailable)
-                : GetString(ResourceKeys.InspectorCapabilityUnavailable),
-            fileReplacementCapabilityText: details.CanReplaceFromFile
-                ? GetString(ResourceKeys.InspectorCapabilityAvailable)
-                : GetString(ResourceKeys.InspectorCapabilityUnavailable),
-            workspaceReplacementCapabilityText: details.CanReplaceFromWorkspace
-                ? GetString(ResourceKeys.InspectorCapabilityAvailable)
-                : GetString(ResourceKeys.InspectorCapabilityUnavailable),
-            replacementSourceText: BuildReplacementSourceText(details, pendingWorkspaceCandidate, pendingFileCandidate),
-            replacementStatusText: BuildReplacementStatusText(details, pendingWorkspaceCandidate, pendingFileCandidate),
-            changeSummaryText: BuildChangeSummaryText(details),
-            canExtract: enableActions && !IsBusy && details.CanExtract,
-            canSelectFileReplacementSource: enableActions && !IsBusy && details.CanReplaceFromFile,
-            canSelectReplacementSource: enableActions && !IsBusy && details.CanReplaceFromWorkspace,
-            canApplyReplacement: enableActions && !IsBusy && (pendingWorkspaceCandidate is not null || pendingFileCandidate is not null),
-            canUndoReplacement: enableActions && !IsBusy && HasAppliedReplacement(details),
-            assetDependencies: details.Dependencies.Select(MapDependency),
-            referencedByDependencies: (details.ReferencedBy ?? Array.Empty<AssetDependencyDto>())
-                .Select(MapDependency),
-            dependencyClosureItems: (details.DependencyClosure ?? Array.Empty<AssetDependencyDto>())
-                .Select(MapDependency),
-            bundleExternalDependencies: (details.BundleExternalDependencies ?? Array.Empty<BundleExternalDependencyDto>())
-                .Select(MapBundleExternalDependency));
-
-        NotifyActionStates();
-    }
-
-    private void ClearSelectedAssetState()
-    {
-        BeginPreviewRequest();
-        _selectedAssetDetails = null;
-        _pendingFileReplacementCandidate = null;
-        _pendingWorkspaceReplacementCandidate = null;
-        _canEditSelectedAsset = false;
-        NotifyActionStates();
-    }
-
-    private async Task LoadInspectorPreviewAsync(AssetDetailsDto details, long previewRequestVersion)
+        long previewRequestVersion)
     {
         if (!TryCreateAssetPreviewQuery(details, out var previewQuery))
         {
-            if (IsPreviewRequestCurrent(details, previewRequestVersion))
+            if (assetTab.IsPreviewRequestCurrent(details, previewRequestVersion))
             {
-                Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
+                assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
             }
 
             return;
         }
 
         var previewResult = await _workspaceBrowserService.GetAssetPreviewAsync(previewQuery);
-        if (previewResult.IsCancelled || !IsPreviewRequestCurrent(details, previewRequestVersion))
+        if (previewResult.IsCancelled || !assetTab.IsPreviewRequestCurrent(details, previewRequestVersion))
         {
             return;
         }
@@ -2220,14 +2723,14 @@ public sealed class BundleExplorerViewModel : ObservableObject
                 ResourceKeys.BundleExplorerLogAssetPreviewFailedFormat,
                 details.Name,
                 FormatFirstErrorMessage(previewResult.Errors)));
-            Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
+            assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
             return;
         }
 
         var preview = previewResult.Value;
         if (preview.PreferredDisplaySizeInBytes is { } preferredDisplaySizeInBytes && preferredDisplaySizeInBytes > 0)
         {
-            Inspector.OverrideSizeText(FormatSize(preferredDisplaySizeInBytes));
+            assetTab.Inspector.OverrideSizeText(FormatSize(preferredDisplaySizeInBytes));
         }
 
         try
@@ -2237,7 +2740,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
                 case AssetPreviewKind.Image:
                 {
                     var imageSource = await CreatePreviewImageSourceAsync(preview.BinaryContent);
-                    if (!IsPreviewRequestCurrent(details, previewRequestVersion))
+                    if (!assetTab.IsPreviewRequestCurrent(details, previewRequestVersion))
                     {
                         return;
                     }
@@ -2248,50 +2751,50 @@ public sealed class BundleExplorerViewModel : ObservableObject
                             ResourceKeys.BundleExplorerLogAssetPreviewFailedFormat,
                             details.Name,
                             "Image payload could not be decoded."));
-                        Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
-                        ApplyPreviewDiagnostic(preview.Diagnostic);
+                        assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
+                        ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                         return;
                     }
 
-                    Inspector.ApplyImagePreview(imageSource, preview.PreviewInfoText);
-                    ApplyPreviewDiagnostic(preview.Diagnostic);
+                    assetTab.Inspector.ApplyImagePreview(imageSource, preview.PreviewInfoText);
+                    ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
                 }
                 case AssetPreviewKind.Text:
                 {
                     if (string.IsNullOrWhiteSpace(preview.TextContent))
                     {
-                        Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
-                        ApplyPreviewDiagnostic(preview.Diagnostic);
+                        assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
+                        ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                         return;
                     }
 
-                    Inspector.ApplyTextPreview(preview.TextContent, preview.PreviewInfoText);
-                    ApplyPreviewDiagnostic(preview.Diagnostic);
+                    assetTab.Inspector.ApplyTextPreview(preview.TextContent, preview.PreviewInfoText);
+                    ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
                 }
                 case AssetPreviewKind.Summary:
                 {
                     if (string.IsNullOrWhiteSpace(preview.TextContent))
                     {
-                        Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
-                        ApplyPreviewDiagnostic(preview.Diagnostic);
+                        assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
+                        ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                         return;
                     }
 
-                    Inspector.ApplySummaryPreview(preview.TextContent, preview.PreviewInfoText);
-                    ApplyPreviewDiagnostic(preview.Diagnostic);
+                    assetTab.Inspector.ApplySummaryPreview(preview.TextContent, preview.PreviewInfoText);
+                    ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
                 }
                 default:
-                    Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
-                    ApplyPreviewDiagnostic(preview.Diagnostic);
+                    assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
+                    ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
             }
         }
         catch (Exception ex)
         {
-            if (!IsPreviewRequestCurrent(details, previewRequestVersion))
+            if (!assetTab.IsPreviewRequestCurrent(details, previewRequestVersion))
             {
                 return;
             }
@@ -2300,8 +2803,8 @@ public sealed class BundleExplorerViewModel : ObservableObject
                 ResourceKeys.BundleExplorerLogAssetPreviewFailedFormat,
                 details.Name,
                 ex.Message));
-            Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
-            ApplyPreviewDiagnostic(preview.Diagnostic);
+            assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
+            ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
         }
     }
 
@@ -2348,20 +2851,6 @@ public sealed class BundleExplorerViewModel : ObservableObject
         return true;
     }
 
-    private bool IsPreviewRequestCurrent(AssetDetailsDto details, long previewRequestVersion)
-    {
-        return _previewRequestVersion == previewRequestVersion &&
-               _selectedAssetDetails is not null &&
-               _selectedAssetDetails.BundleId.Equals(details.BundleId) &&
-               _selectedAssetDetails.AssetId.Equals(details.AssetId);
-    }
-
-    private long BeginPreviewRequest()
-    {
-        _previewRequestVersion++;
-        return _previewRequestVersion;
-    }
-
     private static async Task<BitmapImage?> CreatePreviewImageSourceAsync(byte[]? imagePayload)
     {
         if (imagePayload is not { Length: > 0 })
@@ -2388,9 +2877,11 @@ public sealed class BundleExplorerViewModel : ObservableObject
     /// 应用层预览诊断只暴露稳定枚举和原始 detail，
     /// 真正面向用户的中文文案在 Presentation 层完成映射，便于后续工作台和诊断页复用同一份诊断语义。
     /// </summary>
-    private void ApplyPreviewDiagnostic(AssetPreviewDiagnosticDto diagnostic)
+    private void ApplyPreviewDiagnostic(
+        InspectorPanelViewModel inspector,
+        AssetPreviewDiagnosticDto diagnostic)
     {
-        Inspector.ApplyPreviewDiagnostic(
+        inspector.ApplyPreviewDiagnostic(
             cacheStatusText: GetPreviewCacheStatusText(diagnostic.CacheStatus),
             fallbackReasonText: GetPreviewFallbackReasonText(diagnostic.FallbackReason),
             diagnosticDetailText: string.IsNullOrWhiteSpace(diagnostic.Detail)
@@ -2658,6 +3149,16 @@ public sealed class BundleExplorerViewModel : ObservableObject
         NotifyActionStates();
     }
 
+    private void NotifyAssetDocumentHostStateChanged()
+    {
+        OnPropertyChanged(nameof(CurrentAssetTabs));
+        OnPropertyChanged(nameof(ActiveAssetDocumentTab));
+        OnPropertyChanged(nameof(HasAssetDocumentTabs));
+        OnPropertyChanged(nameof(AssetDocumentTabStripVisibility));
+        OnPropertyChanged(nameof(Inspector));
+        NotifyActionStates();
+    }
+
     private void NotifyActionStates()
     {
         SyncInspectorActionStates();
@@ -2673,7 +3174,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     /// </summary>
     private void SyncInspectorActionStates()
     {
-        if (!Inspector.HasSelection || _selectedAssetDetails is null)
+        if (!TryGetActiveAssetDocumentDetails(out var assetTab, out var details))
         {
             Inspector.CanExtract = false;
             Inspector.CanSelectFileReplacementSource = false;
@@ -2683,10 +3184,28 @@ public sealed class BundleExplorerViewModel : ObservableObject
             return;
         }
 
-        Inspector.CanExtract = !IsBusy && _canEditSelectedAsset && _selectedAssetDetails.CanExtract;
-        Inspector.CanSelectFileReplacementSource = !IsBusy && _canEditSelectedAsset && _selectedAssetDetails.CanReplaceFromFile;
-        Inspector.CanSelectReplacementSource = !IsBusy && _canEditSelectedAsset && _selectedAssetDetails.CanReplaceFromWorkspace;
-        Inspector.CanApplyReplacement = !IsBusy && _canEditSelectedAsset && (_pendingWorkspaceReplacementCandidate is not null || _pendingFileReplacementCandidate is not null);
-        Inspector.CanUndoReplacement = !IsBusy && _canEditSelectedAsset && HasAppliedReplacement(_selectedAssetDetails);
+        Inspector.CanExtract = !IsBusy && assetTab.CanEdit && details.CanExtract;
+        Inspector.CanSelectFileReplacementSource = !IsBusy && assetTab.CanEdit && details.CanReplaceFromFile;
+        Inspector.CanSelectReplacementSource = !IsBusy && assetTab.CanEdit && details.CanReplaceFromWorkspace;
+        Inspector.CanApplyReplacement = !IsBusy &&
+                                       assetTab.CanEdit &&
+                                       (assetTab.PendingWorkspaceReplacementCandidate is not null ||
+                                        assetTab.PendingFileReplacementCandidate is not null);
+        Inspector.CanUndoReplacement = !IsBusy && assetTab.CanEdit && HasAppliedReplacement(details);
+    }
+
+    private bool TryGetActiveAssetDocumentDetails(
+        [NotNullWhen(true)] out AssetDocumentTabViewModel? assetTab,
+        [NotNullWhen(true)] out AssetDetailsDto? details)
+    {
+        assetTab = ActiveAssetDocumentTab;
+        if (assetTab?.Details is null)
+        {
+            details = null;
+            return false;
+        }
+
+        details = assetTab.Details;
+        return true;
     }
 }

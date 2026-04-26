@@ -1,6 +1,7 @@
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common;
+using System.Collections.ObjectModel;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
 
@@ -22,6 +23,7 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
     private bool _showModifiedOnly;
     private bool _showPreviewableOnly;
     private bool _isPreview;
+    private AssetDocumentTabViewModel? _activeAssetTab;
 
     public BundleDocumentTabViewModel(
         BundleId bundleId,
@@ -93,6 +95,18 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         private set => SetProperty(ref _isPreview, value);
     }
 
+    /// <summary>
+    /// 右侧资产详情标签页属于当前资源包标签页的页面级子状态。
+    /// 这样在切换资源包标签时，可以完整保留其对应的资产详情浏览上下文。
+    /// </summary>
+    public ObservableCollection<AssetDocumentTabViewModel> AssetTabs { get; } = new();
+
+    public AssetDocumentTabViewModel? ActiveAssetTab
+    {
+        get => _activeAssetTab;
+        private set => SetProperty(ref _activeAssetTab, value);
+    }
+
     public void CaptureFromPane(AssetPaneViewModel pane)
     {
         ArgumentNullException.ThrowIfNull(pane);
@@ -152,6 +166,7 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         ShowModifiedOnly = false;
         ShowPreviewableOnly = false;
         IsPreview = isPreview;
+        ClearAssetTabs();
     }
 
     public void PromoteToPinnedTab()
@@ -162,5 +177,79 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         }
 
         IsPreview = false;
+    }
+
+    public bool TryGetAssetTab(AssetId assetId, out AssetDocumentTabViewModel? assetTab)
+    {
+        assetTab = AssetTabs.FirstOrDefault(tab => tab.AssetId.Equals(assetId));
+        return assetTab is not null;
+    }
+
+    public void AddAssetTab(AssetDocumentTabViewModel assetTab, bool activate)
+    {
+        ArgumentNullException.ThrowIfNull(assetTab);
+
+        if (!AssetTabs.Contains(assetTab))
+        {
+            AssetTabs.Add(assetTab);
+        }
+
+        if (activate)
+        {
+            SetActiveAssetTab(assetTab);
+        }
+    }
+
+    public void SetActiveAssetTab(AssetDocumentTabViewModel? assetTab)
+    {
+        if (assetTab is not null && !AssetTabs.Contains(assetTab))
+        {
+            AssetTabs.Add(assetTab);
+        }
+
+        ActiveAssetTab = assetTab;
+    }
+
+    public void RestoreAssetTabs(
+        IEnumerable<AssetDocumentTabViewModel> assetTabs,
+        string? activeAssetTabId)
+    {
+        ArgumentNullException.ThrowIfNull(assetTabs);
+
+        AssetTabs.Clear();
+
+        AssetDocumentTabViewModel? activeAssetTab = null;
+        foreach (var assetTab in assetTabs)
+        {
+            AssetTabs.Add(assetTab);
+            if (activeAssetTab is null &&
+                string.Equals(assetTab.DocumentId, activeAssetTabId, StringComparison.Ordinal))
+            {
+                activeAssetTab = assetTab;
+            }
+        }
+
+        ActiveAssetTab = activeAssetTab ?? AssetTabs.FirstOrDefault();
+    }
+
+    public void RemoveAssetTab(AssetDocumentTabViewModel assetTab)
+    {
+        ArgumentNullException.ThrowIfNull(assetTab);
+
+        if (!AssetTabs.Remove(assetTab))
+        {
+            return;
+        }
+
+        if (ReferenceEquals(ActiveAssetTab, assetTab))
+        {
+            ActiveAssetTab = AssetTabs.FirstOrDefault();
+        }
+    }
+
+    public void ClearAssetTabs()
+    {
+        AssetTabs.Clear();
+        ActiveAssetTab = null;
     }
 }

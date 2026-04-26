@@ -8,6 +8,153 @@
     xmlns:viewModels="using:AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer"
     mc:Ignorable="d">
 
+    <UserControl.Resources>
+        <Style
+            x:Key="InspectorSectionSegmentButtonStyle"
+            TargetType="RadioButton">
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="MinWidth" Value="58" />
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="UseSystemFocusVisuals" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border
+                            x:Name="RootBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="10">
+                            <Grid>
+                                <Border
+                                    x:Name="CheckedBackground"
+                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                    CornerRadius="10"
+                                    Opacity="0" />
+                                <Border
+                                    x:Name="HoverOverlay"
+                                    Background="{ThemeResource SubtleFillColorTertiaryBrush}"
+                                    CornerRadius="10"
+                                    Opacity="0" />
+                                <Border
+                                    x:Name="PressedOverlay"
+                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                    CornerRadius="10"
+                                    Opacity="0" />
+                                <Border
+                                    x:Name="SelectionStroke"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="10"
+                                    Opacity="0" />
+                                <TextBlock
+                                    x:Name="LabelTextBlock"
+                                    Margin="{TemplateBinding Padding}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="11.5"
+                                    FontWeight="SemiBold"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{TemplateBinding Content}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal" />
+                                    <VisualState x:Name="PointerOver">
+                                        <Storyboard>
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="HoverOverlay"
+                                                Storyboard.TargetProperty="Opacity"
+                                                To="1"
+                                                Duration="0:0:0.12" />
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="PressedOverlay"
+                                                Storyboard.TargetProperty="Opacity"
+                                                To="0"
+                                                Duration="0:0:0" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <Storyboard>
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="HoverOverlay"
+                                                Storyboard.TargetProperty="Opacity"
+                                                To="0"
+                                                Duration="0:0:0" />
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="PressedOverlay"
+                                                Storyboard.TargetProperty="Opacity"
+                                                To="1"
+                                                Duration="0:0:0.08" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled">
+                                        <Storyboard>
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="RootBorder"
+                                                Storyboard.TargetProperty="Opacity"
+                                                To="0.45"
+                                                Duration="0:0:0" />
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                                <VisualStateGroup x:Name="CheckStates">
+                                    <VisualState x:Name="Unchecked">
+                                        <Storyboard>
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="CheckedBackground"
+                                                Storyboard.TargetProperty="Opacity"
+                                                To="0"
+                                                Duration="0:0:0.12" />
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="SelectionStroke"
+                                                Storyboard.TargetProperty="Opacity"
+                                                To="0"
+                                                Duration="0:0:0.12" />
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="LabelTextBlock"
+                                                Storyboard.TargetProperty="Foreground">
+                                                <DiscreteObjectKeyFrame
+                                                    KeyTime="0"
+                                                    Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            </ObjectAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Checked">
+                                        <Storyboard>
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="CheckedBackground"
+                                                Storyboard.TargetProperty="Opacity"
+                                                To="1"
+                                                Duration="0:0:0.12" />
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="SelectionStroke"
+                                                Storyboard.TargetProperty="Opacity"
+                                                To="1"
+                                                Duration="0:0:0.12" />
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="LabelTextBlock"
+                                                Storyboard.TargetProperty="Foreground">
+                                                <DiscreteObjectKeyFrame
+                                                    KeyTime="0"
+                                                    Value="{ThemeResource TextFillColorPrimaryBrush}" />
+                                            </ObjectAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
         <Border
             Padding="14"
@@ -28,258 +175,297 @@
         <Grid
             MinHeight="0"
             Visibility="{x:Bind ViewModel.DetailsVisibility, Mode=OneWay}">
-            <Grid RowSpacing="8">
+            <Grid RowSpacing="6">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <TabView
+                <ScrollViewer
                     Grid.Row="0"
-                    MinHeight="0"
-                    IsAddTabButtonVisible="False">
-                    <TabView.TabItems>
-                        <TabViewItem x:Name="OverviewTab">
-                            <ScrollViewer>
-                                <StackPanel Padding="8" Spacing="8">
-                                    <Border
-                                        Padding="12"
-                                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                        CornerRadius="10">
-                                        <StackPanel Spacing="8">
-                                            <Grid ColumnSpacing="8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="AssetNameLabelText" FontWeight="SemiBold" />
-                                                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.AssetName, Mode=OneWay}" TextWrapping="WrapWholeWords" />
-                                            </Grid>
+                    Margin="8,0,8,0"
+                    HorizontalScrollBarVisibility="Auto"
+                    HorizontalScrollMode="Enabled"
+                    VerticalScrollBarVisibility="Disabled"
+                    VerticalScrollMode="Disabled"
+                    ZoomMode="Disabled">
+                    <Border
+                        Padding="3"
+                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                        CornerRadius="10">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <RadioButton
+                                x:Name="DetailsSectionButton"
+                                GroupName="InspectorSectionGroup"
+                                Tag="0"
+                                Checked="OnSectionRadioButtonChecked"
+                                Style="{StaticResource InspectorSectionSegmentButtonStyle}"
+                                IsChecked="{x:Bind ViewModel.IsDetailsSectionSelected, Mode=OneWay}" />
+                            <RadioButton
+                                x:Name="DependenciesSectionButton"
+                                GroupName="InspectorSectionGroup"
+                                Tag="1"
+                                Checked="OnSectionRadioButtonChecked"
+                                Style="{StaticResource InspectorSectionSegmentButtonStyle}"
+                                IsChecked="{x:Bind ViewModel.IsDependenciesSectionSelected, Mode=OneWay}" />
+                            <RadioButton
+                                x:Name="ReplacementSectionButton"
+                                GroupName="InspectorSectionGroup"
+                                Tag="2"
+                                Checked="OnSectionRadioButtonChecked"
+                                Style="{StaticResource InspectorSectionSegmentButtonStyle}"
+                                IsChecked="{x:Bind ViewModel.IsReplacementSectionSelected, Mode=OneWay}" />
+                            <RadioButton
+                                x:Name="ChangesSectionButton"
+                                GroupName="InspectorSectionGroup"
+                                Tag="3"
+                                Checked="OnSectionRadioButtonChecked"
+                                Style="{StaticResource InspectorSectionSegmentButtonStyle}"
+                                IsChecked="{x:Bind ViewModel.IsChangesSectionSelected, Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+                </ScrollViewer>
 
-                                            <Grid ColumnSpacing="8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="AssetTypeLabelText" FontWeight="SemiBold" />
-                                                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.AssetTypeText, Mode=OneWay}" />
-                                            </Grid>
+                <Grid
+                    Grid.Row="1"
+                    MinHeight="0">
+                    <ScrollViewer
+                        MinHeight="0"
+                        Visibility="{x:Bind ViewModel.DetailsSectionVisibility, Mode=OneWay}">
+                        <StackPanel Padding="8" Spacing="8">
+                            <Border
+                                Height="320"
+                                Padding="12"
+                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="12">
+                                <Grid>
+                                    <StackPanel
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="10"
+                                        Visibility="{x:Bind ViewModel.PreviewLoadingVisibility, Mode=OneWay}">
+                                        <ProgressRing
+                                            Width="30"
+                                            Height="30"
+                                            IsActive="True" />
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{x:Bind ViewModel.PreviewStatusText, Mode=OneWay}"
+                                            TextAlignment="Center"
+                                            TextWrapping="WrapWholeWords" />
+                                    </StackPanel>
 
-                                            <Grid ColumnSpacing="8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="BundleLabelText" FontWeight="SemiBold" />
-                                                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.BundleDisplayName, Mode=OneWay}" TextWrapping="WrapWholeWords" />
-                                            </Grid>
+                                    <StackPanel
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="10"
+                                        Visibility="{x:Bind ViewModel.PreviewMessageVisibility, Mode=OneWay}">
+                                        <FontIcon
+                                            FontFamily="Segoe Fluent Icons"
+                                            Glyph="&#xE7BA;"
+                                            FontSize="26" />
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{x:Bind ViewModel.PreviewStatusText, Mode=OneWay}"
+                                            TextAlignment="Center"
+                                            TextWrapping="WrapWholeWords" />
+                                    </StackPanel>
 
-                                            <Grid ColumnSpacing="8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="AssetPathLabelText" FontWeight="SemiBold" />
-                                                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.AssetPath, Mode=OneWay}" TextWrapping="WrapWholeWords" />
-                                            </Grid>
+                                    <Grid
+                                        Margin="8"
+                                        Visibility="{x:Bind ViewModel.PreviewImageVisibility, Mode=OneWay}">
+                                        <Image
+                                            HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Stretch"
+                                            Stretch="Uniform"
+                                            Source="{x:Bind ViewModel.PreviewImageSource, Mode=OneWay}" />
+                                    </Grid>
 
-                                            <Grid
-                                                ColumnSpacing="8"
-                                                Visibility="{x:Bind ViewModel.ContainerPathVisibility, Mode=OneWay}">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="ContainerPathLabelText" FontWeight="SemiBold" />
-                                                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.ContainerPath, Mode=OneWay}" TextWrapping="WrapWholeWords" />
-                                            </Grid>
+                                    <ScrollViewer
+                                        HorizontalScrollBarVisibility="Auto"
+                                        HorizontalScrollMode="Enabled"
+                                        VerticalScrollBarVisibility="Auto"
+                                        VerticalScrollMode="Enabled"
+                                        ZoomMode="Disabled"
+                                        Visibility="{x:Bind ViewModel.PreviewTextVisibility, Mode=OneWay}">
+                                        <TextBlock
+                                            FontFamily="Cascadia Mono"
+                                            FontSize="13"
+                                            Text="{x:Bind ViewModel.PreviewText, Mode=OneWay}"
+                                            TextWrapping="Wrap" />
+                                    </ScrollViewer>
 
-                                            <Grid ColumnSpacing="8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="AssetSizeLabelText" FontWeight="SemiBold" />
-                                                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.SizeText, Mode=OneWay}" />
-                                            </Grid>
+                                    <ScrollViewer
+                                        HorizontalScrollBarVisibility="Disabled"
+                                        HorizontalScrollMode="Disabled"
+                                        VerticalScrollBarVisibility="Auto"
+                                        VerticalScrollMode="Enabled"
+                                        ZoomMode="Disabled"
+                                        Visibility="{x:Bind ViewModel.PreviewSummaryVisibility, Mode=OneWay}">
+                                        <TextBlock
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{x:Bind ViewModel.PreviewText, Mode=OneWay}"
+                                            TextWrapping="WrapWholeWords" />
+                                    </ScrollViewer>
+                                </Grid>
+                            </Border>
 
-                                            <Grid
-                                                ColumnSpacing="8"
-                                                Visibility="{x:Bind ViewModel.PathIdVisibility, Mode=OneWay}">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="PathIdLabelText" FontWeight="SemiBold" />
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    FontFamily="Cascadia Mono"
-                                                    Text="{x:Bind ViewModel.PathIdText, Mode=OneWay}"
-                                                    TextWrapping="WrapWholeWords" />
-                                            </Grid>
-                                        </StackPanel>
-                                    </Border>
+                            <Border
+                                Padding="12"
+                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="10">
+                                <StackPanel Spacing="8">
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="AssetNameLabelText" FontWeight="SemiBold" />
+                                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.AssetName, Mode=OneWay}" TextWrapping="WrapWholeWords" />
+                                    </Grid>
+
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="AssetTypeLabelText" FontWeight="SemiBold" />
+                                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.AssetTypeText, Mode=OneWay}" />
+                                    </Grid>
+
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="BundleLabelText" FontWeight="SemiBold" />
+                                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.BundleDisplayName, Mode=OneWay}" TextWrapping="WrapWholeWords" />
+                                    </Grid>
+
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="AssetPathLabelText" FontWeight="SemiBold" />
+                                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.AssetPath, Mode=OneWay}" TextWrapping="WrapWholeWords" />
+                                    </Grid>
+
+                                    <Grid
+                                        ColumnSpacing="8"
+                                        Visibility="{x:Bind ViewModel.ContainerPathVisibility, Mode=OneWay}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="ContainerPathLabelText" FontWeight="SemiBold" />
+                                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.ContainerPath, Mode=OneWay}" TextWrapping="WrapWholeWords" />
+                                    </Grid>
+
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="AssetSizeLabelText" FontWeight="SemiBold" />
+                                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.SizeText, Mode=OneWay}" />
+                                    </Grid>
+
+                                    <Grid
+                                        ColumnSpacing="8"
+                                        Visibility="{x:Bind ViewModel.PathIdVisibility, Mode=OneWay}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="PathIdLabelText" FontWeight="SemiBold" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            FontFamily="Cascadia Mono"
+                                            Text="{x:Bind ViewModel.PathIdText, Mode=OneWay}"
+                                            TextWrapping="WrapWholeWords" />
+                                    </Grid>
                                 </StackPanel>
-                            </ScrollViewer>
-                        </TabViewItem>
+                            </Border>
 
-                        <TabViewItem x:Name="PreviewTab">
-                            <ScrollViewer>
-                                <StackPanel Padding="8" Spacing="8">
-                                    <Border
-                                        Height="320"
-                                        Padding="12"
-                                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                        CornerRadius="12">
-                                        <Grid>
-                                            <StackPanel
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                Spacing="10"
-                                                Visibility="{x:Bind ViewModel.PreviewLoadingVisibility, Mode=OneWay}">
-                                                <ProgressRing
-                                                    Width="30"
-                                                    Height="30"
-                                                    IsActive="True" />
-                                                <TextBlock
-                                                    HorizontalAlignment="Center"
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Text="{x:Bind ViewModel.PreviewStatusText, Mode=OneWay}"
-                                                    TextAlignment="Center"
-                                                    TextWrapping="WrapWholeWords" />
-                                            </StackPanel>
-
-                                            <StackPanel
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                Spacing="10"
-                                                Visibility="{x:Bind ViewModel.PreviewMessageVisibility, Mode=OneWay}">
-                                                <FontIcon
-                                                    FontFamily="Segoe Fluent Icons"
-                                                    Glyph="&#xE7BA;"
-                                                    FontSize="26" />
-                                                <TextBlock
-                                                    HorizontalAlignment="Center"
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Text="{x:Bind ViewModel.PreviewStatusText, Mode=OneWay}"
-                                                    TextAlignment="Center"
-                                                    TextWrapping="WrapWholeWords" />
-                                            </StackPanel>
-
-                                            <Grid
-                                                Margin="8"
-                                                Visibility="{x:Bind ViewModel.PreviewImageVisibility, Mode=OneWay}">
-                                                <Image
-                                                    HorizontalAlignment="Stretch"
-                                                    VerticalAlignment="Stretch"
-                                                    Stretch="Uniform"
-                                                    Source="{x:Bind ViewModel.PreviewImageSource, Mode=OneWay}" />
-                                            </Grid>
-
-                                            <ScrollViewer
-                                                HorizontalScrollBarVisibility="Auto"
-                                                HorizontalScrollMode="Enabled"
-                                                VerticalScrollBarVisibility="Auto"
-                                                VerticalScrollMode="Enabled"
-                                                ZoomMode="Disabled"
-                                                Visibility="{x:Bind ViewModel.PreviewTextVisibility, Mode=OneWay}">
-                                                <TextBlock
-                                                    FontFamily="Cascadia Mono"
-                                                    FontSize="13"
-                                                    Text="{x:Bind ViewModel.PreviewText, Mode=OneWay}"
-                                                    TextWrapping="Wrap" />
-                                            </ScrollViewer>
-
-                                            <ScrollViewer
-                                                HorizontalScrollBarVisibility="Disabled"
-                                                HorizontalScrollMode="Disabled"
-                                                VerticalScrollBarVisibility="Auto"
-                                                VerticalScrollMode="Enabled"
-                                                ZoomMode="Disabled"
-                                                Visibility="{x:Bind ViewModel.PreviewSummaryVisibility, Mode=OneWay}">
-                                                <TextBlock
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Text="{x:Bind ViewModel.PreviewText, Mode=OneWay}"
-                                                    TextWrapping="WrapWholeWords" />
-                                            </ScrollViewer>
-                                        </Grid>
-                                    </Border>
-
-                                    <Border
-                                        Padding="12"
-                                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                        CornerRadius="10"
-                                        Visibility="{x:Bind ViewModel.PreviewInfoVisibility, Mode=OneWay}">
-                                        <StackPanel Spacing="6">
-                                            <TextBlock
-                                                x:Name="PreviewInfoSectionTitleText"
-                                                Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                            <TextBlock
-                                                Text="{x:Bind ViewModel.PreviewInfoText, Mode=OneWay}"
-                                                TextWrapping="WrapWholeWords" />
-                                        </StackPanel>
-                                    </Border>
-
-                                    <Border
-                                        Padding="12"
-                                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                        CornerRadius="10"
-                                        Visibility="{x:Bind ViewModel.PreviewDiagnosticVisibility, Mode=OneWay}">
-                                        <StackPanel Spacing="8">
-                                            <TextBlock
-                                                x:Name="PreviewDiagnosticTitleText"
-                                                Style="{ThemeResource BodyStrongTextBlockStyle}" />
-
-                                            <Grid
-                                                ColumnSpacing="8"
-                                                Visibility="{x:Bind ViewModel.PreviewCacheStatusVisibility, Mode=OneWay}">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="PreviewCacheStatusLabelText" FontWeight="SemiBold" />
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    Text="{x:Bind ViewModel.PreviewCacheStatusText, Mode=OneWay}"
-                                                    TextWrapping="WrapWholeWords" />
-                                            </Grid>
-
-                                            <Grid
-                                                ColumnSpacing="8"
-                                                Visibility="{x:Bind ViewModel.PreviewFallbackReasonVisibility, Mode=OneWay}">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="PreviewFallbackReasonLabelText" FontWeight="SemiBold" />
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    Text="{x:Bind ViewModel.PreviewFallbackReasonText, Mode=OneWay}"
-                                                    TextWrapping="WrapWholeWords" />
-                                            </Grid>
-
-                                            <Grid
-                                                ColumnSpacing="8"
-                                                Visibility="{x:Bind ViewModel.PreviewDiagnosticDetailVisibility, Mode=OneWay}">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="PreviewDiagnosticDetailLabelText" FontWeight="SemiBold" />
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    Text="{x:Bind ViewModel.PreviewDiagnosticDetailText, Mode=OneWay}"
-                                                    TextWrapping="WrapWholeWords" />
-                                            </Grid>
-                                        </StackPanel>
-                                    </Border>
+                            <Border
+                                Padding="12"
+                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="10"
+                                Visibility="{x:Bind ViewModel.PreviewInfoVisibility, Mode=OneWay}">
+                                <StackPanel Spacing="6">
+                                    <TextBlock
+                                        x:Name="PreviewInfoSectionTitleText"
+                                        Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock
+                                        Text="{x:Bind ViewModel.PreviewInfoText, Mode=OneWay}"
+                                        TextWrapping="WrapWholeWords" />
                                 </StackPanel>
-                            </ScrollViewer>
-                        </TabViewItem>
+                            </Border>
 
-                        <TabViewItem x:Name="DependenciesTab">
-                            <ScrollViewer>
-                                <StackPanel Padding="8" Spacing="8">
+                            <Border
+                                Padding="12"
+                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="10"
+                                Visibility="{x:Bind ViewModel.PreviewDiagnosticVisibility, Mode=OneWay}">
+                                <StackPanel Spacing="8">
+                                    <TextBlock
+                                        x:Name="PreviewDiagnosticTitleText"
+                                        Style="{ThemeResource BodyStrongTextBlockStyle}" />
+
+                                    <Grid
+                                        ColumnSpacing="8"
+                                        Visibility="{x:Bind ViewModel.PreviewCacheStatusVisibility, Mode=OneWay}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="PreviewCacheStatusLabelText" FontWeight="SemiBold" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Text="{x:Bind ViewModel.PreviewCacheStatusText, Mode=OneWay}"
+                                            TextWrapping="WrapWholeWords" />
+                                    </Grid>
+
+                                    <Grid
+                                        ColumnSpacing="8"
+                                        Visibility="{x:Bind ViewModel.PreviewFallbackReasonVisibility, Mode=OneWay}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="PreviewFallbackReasonLabelText" FontWeight="SemiBold" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Text="{x:Bind ViewModel.PreviewFallbackReasonText, Mode=OneWay}"
+                                            TextWrapping="WrapWholeWords" />
+                                    </Grid>
+
+                                    <Grid
+                                        ColumnSpacing="8"
+                                        Visibility="{x:Bind ViewModel.PreviewDiagnosticDetailVisibility, Mode=OneWay}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="PreviewDiagnosticDetailLabelText" FontWeight="SemiBold" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Text="{x:Bind ViewModel.PreviewDiagnosticDetailText, Mode=OneWay}"
+                                            TextWrapping="WrapWholeWords" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <ScrollViewer
+                        MinHeight="0"
+                        Visibility="{x:Bind ViewModel.DependenciesSectionVisibility, Mode=OneWay}">
+                        <StackPanel Padding="8" Spacing="8">
                                     <Border
                                         Padding="12"
                                         Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
@@ -458,13 +644,13 @@
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                             TextWrapping="WrapWholeWords" />
                                     </Border>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </TabViewItem>
+                        </StackPanel>
+                    </ScrollViewer>
 
-                        <TabViewItem x:Name="ReplacementTab">
-                            <ScrollViewer>
-                                <StackPanel Padding="8" Spacing="8">
+                    <ScrollViewer
+                        MinHeight="0"
+                        Visibility="{x:Bind ViewModel.ReplacementSectionVisibility, Mode=OneWay}">
+                        <StackPanel Padding="8" Spacing="8">
                                     <Border
                                         Padding="12"
                                         Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
@@ -548,13 +734,13 @@
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                         Text="{x:Bind ViewModel.ReplacementStatusText, Mode=OneWay}"
                                         TextWrapping="WrapWholeWords" />
-                                </StackPanel>
-                            </ScrollViewer>
-                        </TabViewItem>
+                        </StackPanel>
+                    </ScrollViewer>
 
-                        <TabViewItem x:Name="ChangesTab">
-                            <ScrollViewer>
-                                <StackPanel Padding="8" Spacing="8">
+                    <ScrollViewer
+                        MinHeight="0"
+                        Visibility="{x:Bind ViewModel.ChangesSectionVisibility, Mode=OneWay}">
+                        <StackPanel Padding="8" Spacing="8">
                                     <Border
                                         Padding="12"
                                         Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
@@ -582,14 +768,12 @@
                                             Text="{x:Bind ViewModel.ChangeSummaryText, Mode=OneWay}"
                                             TextWrapping="WrapWholeWords" />
                                     </Border>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </TabViewItem>
-                    </TabView.TabItems>
-                </TabView>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
 
                 <Border
-                    Grid.Row="1"
+                    Grid.Row="2"
                     Margin="8,0,8,8"
                     Padding="12"
                     Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"

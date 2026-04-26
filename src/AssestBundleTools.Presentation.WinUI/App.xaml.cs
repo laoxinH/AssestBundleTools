@@ -21,6 +21,7 @@ using AssestBundleTools.Infrastructure.Settings.Persistence;
 using AssestBundleTools.Infrastructure.Workspace.Importing;
 using AssestBundleTools.Infrastructure.Workspace.Persistence;
 using AssestBundleTools.Infrastructure.Workspace.Runtime;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Shell;
 using System.Diagnostics;
 
 namespace AssestBundleTools.Presentation.WinUI;
@@ -31,8 +32,6 @@ namespace AssestBundleTools.Presentation.WinUI;
 public partial class App : Microsoft.UI.Xaml.Application
 {
     private readonly List<MainWindow> _windows = [];
-    private readonly Dictionary<string, MainWindow> _workspaceWindows = new(StringComparer.Ordinal);
-    private readonly Dictionary<MainWindow, string> _windowWorkspaceKeys = new();
     private MainWindow? _activeWindow;
     private IAssetBundleDecryptorRegistry _assetBundleDecryptorRegistry;
 
@@ -159,6 +158,11 @@ public partial class App : Microsoft.UI.Xaml.Application
                 workspaceMetadataStoreFactory: workspaceMetadataStoreFactory);
             StartupDiagnostics.Log("Workspace context service created.");
 
+            StartupDiagnostics.Log("Creating workspace process coordinator service.");
+            WorkspaceProcessCoordinatorService = new WorkspaceProcessCoordinatorService();
+            WorkspaceProcessCoordinatorService.WorkspaceActivationRequested += OnWorkspaceProcessActivationRequested;
+            StartupDiagnostics.Log("Workspace process coordinator service created.");
+
             StartupDiagnostics.Log("Creating file picker service.");
             FilePickerService = new WinUIFilePickerService(() => _activeWindow);
             StartupDiagnostics.Log("File picker service created.");
@@ -196,7 +200,7 @@ public partial class App : Microsoft.UI.Xaml.Application
             StartupDiagnostics.Log("Workspace dialog service created.");
 
             StartupDiagnostics.Log("Creating workspace window service.");
-            WorkspaceWindowService = new WorkspaceWindowService();
+            WorkspaceWindowService = new WorkspaceWindowService(WorkspaceProcessCoordinatorService);
             StartupDiagnostics.Log("Workspace window service created.");
 
             StartupDiagnostics.Log("Creating app notification service.");
@@ -244,6 +248,8 @@ public partial class App : Microsoft.UI.Xaml.Application
 
     public IWorkspaceContextService WorkspaceContextService { get; }
 
+    public IWorkspaceProcessCoordinatorService WorkspaceProcessCoordinatorService { get; }
+
     public IFilePickerService FilePickerService { get; }
 
     public IPathNavigationService PathNavigationService { get; }
@@ -284,7 +290,15 @@ public partial class App : Microsoft.UI.Xaml.Application
 
         try
         {
-            var window = CreateMainWindow();
+            var launchRequest = ResolveInitialLaunchRequest();
+            if (WorkspaceProcessCoordinatorService.TryRedirectLaunchToExistingProcess(launchRequest))
+            {
+                StartupDiagnostics.Log("Launch redirected to an existing workspace process.");
+                Exit();
+                return;
+            }
+
+            var window = CreateMainWindow(launchRequest);
             StartupDiagnostics.Log("MainWindow created.");
 
             window.Activate();
@@ -305,78 +319,88 @@ public partial class App : Microsoft.UI.Xaml.Application
     }
 
     /// <summary>
-    /// 尝试把已经承载目标工作区的窗口激活到前台。
-    /// 当前仅按稳定工作区键去重，避免“新建窗口模式”不断派生相同工作区副本。
+    /// 统一处理“工作区是否已经打开”的激活逻辑：
+    /// 1. 先检查当前进程中的窗口是否已经承载该工作区；
+    /// 2. 若没有，再尝试激活其他进程中的既有实例。
+    /// 这样控制台页和工作台页都不需要各自维护一套同进程/跨进程判断。
     /// </summary>
-    public bool TryActivateWindowForWorkspace(WorkspaceNavigationRequest navigationRequest)
+    public bool TryActivateOpenedWorkspace(WorkspaceNavigationRequest navigationRequest)
     {
         ArgumentNullException.ThrowIfNull(navigationRequest);
 
         var workspaceKey = CreateWorkspaceKey(navigationRequest);
-        if (string.IsNullOrWhiteSpace(workspaceKey))
+        if (!string.IsNullOrWhiteSpace(workspaceKey))
         {
-            return false;
-        }
-
-        if (!_workspaceWindows.TryGetValue(workspaceKey, out var window) ||
-            !_windows.Contains(window))
-        {
-            _workspaceWindows.Remove(workspaceKey);
-            if (window is not null)
+            var targetWindow = FindWindowByWorkspaceKey(workspaceKey);
+            if (targetWindow is not null)
             {
-                _windowWorkspaceKeys.Remove(window);
+                return TryActivateWorkspaceWindow(targetWindow, navigationRequest);
             }
-
-            return false;
         }
 
-        _activeWindow = window;
-        window.Activate();
-        return true;
+        return WorkspaceProcessCoordinatorService.TryActivateExistingWorkspace(navigationRequest);
     }
 
     /// <summary>
-    /// 记录“哪个主窗口当前承载哪个工作区”。
-    /// 页面层只需在工作区真正绑定成功后调用这里，窗口去重与清理则统一由 App 管理。
+    /// 当前窗口尚未承载任何工作区时，首次打开工作区应优先复用当前窗口。
+    /// 这样“新建窗口”偏好不会在应用刚启动、控制台还是空白态时立刻派生第二个主进程，
+    /// 更符合桌面应用首次进入工作台的直觉行为。
+    /// </summary>
+    public bool ShouldReuseCurrentWindowForFirstWorkspace(MainWindow? window)
+    {
+        return window is not null &&
+               string.IsNullOrWhiteSpace(window.RegisteredWorkspaceKey);
+    }
+
+    /// <summary>
+    /// 判断某个窗口当前是否已经承载了指定工作区。
+    /// 该判断无副作用，可用于在弹出“打开方式询问框”之前先做短路决策。
+    /// </summary>
+    public bool DoesWindowHostWorkspace(
+        MainWindow? window,
+        WorkspaceNavigationRequest navigationRequest)
+    {
+        ArgumentNullException.ThrowIfNull(navigationRequest);
+
+        if (window is null || string.IsNullOrWhiteSpace(window.RegisteredWorkspaceKey))
+        {
+            return false;
+        }
+
+        var workspaceKey = CreateWorkspaceKey(navigationRequest);
+        return !string.IsNullOrWhiteSpace(workspaceKey) &&
+               string.Equals(window.RegisteredWorkspaceKey, workspaceKey, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// 页面层只在工作区真正绑定成功后回写当前窗口的承载关系，
+    /// 进程级占用与跨进程激活则统一由协调服务管理。
     /// </summary>
     public string RegisterWindowWorkspace(MainWindow window, WorkspaceNavigationRequest navigationRequest)
     {
         ArgumentNullException.ThrowIfNull(window);
         ArgumentNullException.ThrowIfNull(navigationRequest);
 
-        var workspaceKey = CreateWorkspaceKey(navigationRequest);
+        var normalizedNavigationRequest = navigationRequest with
+        {
+            OpenTarget = WorkspaceOpenTarget.CurrentWindow
+        };
+        var workspaceKey = CreateWorkspaceKey(normalizedNavigationRequest);
         if (string.IsNullOrWhiteSpace(workspaceKey))
         {
-            UnregisterWindowWorkspace(window);
+            WorkspaceProcessCoordinatorService.ClearWorkspaceRegistration();
             return string.Empty;
         }
 
-        UnregisterWindowWorkspace(window);
-        if (_workspaceWindows.TryGetValue(workspaceKey, out var existingWindow) &&
-            !ReferenceEquals(existingWindow, window))
-        {
-            _windowWorkspaceKeys.Remove(existingWindow);
-        }
-
-        _workspaceWindows[workspaceKey] = window;
-        _windowWorkspaceKeys[window] = workspaceKey;
+        _activeWindow = window;
+        WorkspaceProcessCoordinatorService.RegisterWorkspace(normalizedNavigationRequest);
         return workspaceKey;
     }
 
     public void UnregisterWindowWorkspace(MainWindow window)
     {
         ArgumentNullException.ThrowIfNull(window);
-
-        if (!_windowWorkspaceKeys.Remove(window, out var workspaceKey))
-        {
-            return;
-        }
-
-        if (_workspaceWindows.TryGetValue(workspaceKey, out var registeredWindow) &&
-            ReferenceEquals(registeredWindow, window))
-        {
-            _workspaceWindows.Remove(workspaceKey);
-        }
+        WorkspaceProcessCoordinatorService.ClearWorkspaceRegistration();
     }
 
     private void RegisterWindow(MainWindow window)
@@ -418,6 +442,114 @@ public partial class App : Microsoft.UI.Xaml.Application
         return WorkspaceCatalogKeyFactory.CreateWorkspaceKey(
             navigationRequest.SourcePath,
             navigationRequest.WorkspaceDataRootPath);
+    }
+
+    /// <summary>
+    /// 启动入口统一在这里决定首屏导航目标。
+    /// 这样“命令行启动 / 自动恢复上次工作区 / 默认控制台页”三类入口
+    /// 都能在创建主窗口前先完成跨进程去重判断。
+    /// </summary>
+    private ShellLaunchRequest? ResolveInitialLaunchRequest()
+    {
+        if (ShellLaunchArgumentCodec.TryParseCurrentProcessLaunchRequest(out var launchRequest))
+        {
+            return launchRequest;
+        }
+
+        if (AppPreferencesService.RestoreLastWorkspaceOnStartup &&
+            WorkspaceContextService.TryGetLastActiveWorkspaceNavigationRequest(out var workspaceNavigationRequest))
+        {
+            return new ShellLaunchRequest(
+                NavigationKey: ShellNavigationKeys.Workbench,
+                NavigationParameter: workspaceNavigationRequest);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// 其他进程命中“该工作区已在当前进程中打开”后，
+    /// 最终会通过这里把窗口带到前台并切回工作台。
+    /// </summary>
+    private void OnWorkspaceProcessActivationRequested(
+        object? sender,
+        WorkspaceProcessActivationRequestedEventArgs e)
+    {
+        var targetWindow = _activeWindow ?? _windows.LastOrDefault();
+        if (targetWindow is null)
+        {
+            return;
+        }
+
+        void ActivateWindow() => ActivateWorkspaceInCurrentProcess(targetWindow, e.NavigationRequest);
+
+        var dispatcherQueue = targetWindow.DispatcherQueue;
+        if (dispatcherQueue.HasThreadAccess)
+        {
+            ActivateWindow();
+            return;
+        }
+
+        if (!dispatcherQueue.TryEnqueue(ActivateWindow))
+        {
+            StartupDiagnostics.Log("Failed to enqueue cross-process workspace activation to the UI thread.");
+        }
+    }
+
+    private void ActivateWorkspaceInCurrentProcess(
+        MainWindow window,
+        WorkspaceNavigationRequest navigationRequest)
+    {
+        _activeWindow = window;
+        window.ActivateFromExternalWorkspaceRequest(navigationRequest);
+    }
+
+    /// <summary>
+    /// 优先返回当前激活窗口，确保“已打开工作区再次打开”时能复用最贴近用户上下文的窗口。
+    /// </summary>
+    private MainWindow? FindWindowByWorkspaceKey(string workspaceKey)
+    {
+        if (_activeWindow is not null &&
+            string.Equals(_activeWindow.RegisteredWorkspaceKey, workspaceKey, StringComparison.Ordinal))
+        {
+            return _activeWindow;
+        }
+
+        for (var index = _windows.Count - 1; index >= 0; index--)
+        {
+            var window = _windows[index];
+            if (string.Equals(window.RegisteredWorkspaceKey, workspaceKey, StringComparison.Ordinal))
+            {
+                return window;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// 同进程激活也统一走窗口分发，避免未来若激活请求来自后台线程时直接触碰 UI。
+    /// </summary>
+    private bool TryActivateWorkspaceWindow(
+        MainWindow window,
+        WorkspaceNavigationRequest navigationRequest)
+    {
+        void ActivateWindow() => ActivateWorkspaceInCurrentProcess(window, navigationRequest);
+
+        var dispatcherQueue = window.DispatcherQueue;
+        if (dispatcherQueue.HasThreadAccess)
+        {
+            ActivateWindow();
+            return true;
+        }
+
+        var enqueued = dispatcherQueue.TryEnqueue(ActivateWindow);
+        if (!enqueued)
+        {
+            StartupDiagnostics.Log("Failed to enqueue same-process workspace activation to the UI thread.");
+        }
+
+        return enqueued;
     }
 
     /// <summary>

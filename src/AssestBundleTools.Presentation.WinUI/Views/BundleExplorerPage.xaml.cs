@@ -43,6 +43,7 @@ public sealed partial class BundleExplorerPage : Page
     private CancellationTokenSource? _bundlePaneTransitionCts;
     private WorkspaceNavigationRequest? _workspaceNavigationRequest;
     private bool _isWorkspaceImportDragActive;
+    private bool _isSynchronizingAssetDocumentTabSelection;
 
     public BundleExplorerPage()
     {
@@ -206,6 +207,78 @@ public sealed partial class BundleExplorerPage : Page
         {
             await ViewModel.CloseBundleTabAsync(dataContextTab);
         }
+    }
+
+    private void OnBundleTabContextFlyoutOpening(object sender, object e)
+    {
+        ConfigureTabContextFlyout(
+            sender as MenuFlyout,
+            closeOtherMenuItemName: "CloseOtherBundleTabsMenuItem",
+            closeAllMenuItemName: "CloseAllBundleTabsMenuItem",
+            tabCount: ViewModel.BundleTabs.Count);
+    }
+
+    private async void OnCloseOtherBundleTabsMenuItemClick(object sender, RoutedEventArgs e)
+    {
+        if (TryGetTaggedValue(sender, out BundleDocumentTabViewModel? bundleTab))
+        {
+            await ViewModel.CloseOtherBundleTabsAsync(bundleTab);
+        }
+    }
+
+    private async void OnCloseAllBundleTabsMenuItemClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.CloseAllBundleTabsAsync();
+    }
+
+    private async void OnAssetDocumentTabViewSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_isSynchronizingAssetDocumentTabSelection ||
+            ViewModel.IsSynchronizingAssetDocumentHostSelection)
+        {
+            return;
+        }
+
+        if (AssetDocumentTabView.SelectedItem is AssetDocumentTabViewModel assetTab)
+        {
+            await ViewModel.ActivateAssetDocumentTabAsync(assetTab);
+        }
+    }
+
+    private async void OnAssetDocumentTabViewTabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
+    {
+        if (args.Item is AssetDocumentTabViewModel assetTab)
+        {
+            await ViewModel.CloseAssetDocumentTabAsync(assetTab);
+            return;
+        }
+
+        if (args.Tab is FrameworkElement { DataContext: AssetDocumentTabViewModel dataContextTab })
+        {
+            await ViewModel.CloseAssetDocumentTabAsync(dataContextTab);
+        }
+    }
+
+    private void OnAssetDocumentTabContextFlyoutOpening(object sender, object e)
+    {
+        ConfigureTabContextFlyout(
+            sender as MenuFlyout,
+            closeOtherMenuItemName: "CloseOtherAssetDocumentTabsMenuItem",
+            closeAllMenuItemName: "CloseAllAssetDocumentTabsMenuItem",
+            tabCount: ViewModel.CurrentAssetTabs.Count);
+    }
+
+    private async void OnCloseOtherAssetDocumentTabsMenuItemClick(object sender, RoutedEventArgs e)
+    {
+        if (TryGetTaggedValue(sender, out AssetDocumentTabViewModel? assetTab))
+        {
+            await ViewModel.CloseOtherAssetDocumentTabsAsync(assetTab);
+        }
+    }
+
+    private async void OnCloseAllAssetDocumentTabsMenuItemClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.CloseAllAssetDocumentTabsAsync();
     }
 
     private void OnBundleSearchToggleButtonClick(object sender, RoutedEventArgs e)
@@ -386,6 +459,19 @@ public sealed partial class BundleExplorerPage : Page
             }
 
             DispatcherQueue.TryEnqueue(SynchronizeWindowWorkspaceRegistration);
+            return;
+        }
+
+        if (e.PropertyName is nameof(BundleExplorerViewModel.CurrentAssetTabs) or
+            nameof(BundleExplorerViewModel.ActiveAssetDocumentTab))
+        {
+            if (DispatcherQueue.HasThreadAccess)
+            {
+                SynchronizeAssetDocumentTabSelection();
+                return;
+            }
+
+            DispatcherQueue.TryEnqueue(SynchronizeAssetDocumentTabSelection);
         }
     }
 
@@ -452,6 +538,81 @@ public sealed partial class BundleExplorerPage : Page
         WorkspaceImportDropOverlay.Visibility = isVisible
             ? Visibility.Visible
             : Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// 两组标签的右键菜单文案与启用策略保持一致，
+    /// 因此统一在页面层做一次配置，避免资源包标签和资产详情标签各写一套重复逻辑。
+    /// </summary>
+    private static void ConfigureTabContextFlyout(
+        MenuFlyout? flyout,
+        string closeOtherMenuItemName,
+        string closeAllMenuItemName,
+        int tabCount)
+    {
+        if (flyout is null)
+        {
+            return;
+        }
+
+        var closeOtherMenuItem = FindMenuFlyoutItem(flyout, closeOtherMenuItemName);
+        if (closeOtherMenuItem is not null)
+        {
+            closeOtherMenuItem.Text = UiText.Get("BundleExplorerPage.TabContext.CloseOther.Text");
+            closeOtherMenuItem.IsEnabled = tabCount > 1;
+        }
+
+        var closeAllMenuItem = FindMenuFlyoutItem(flyout, closeAllMenuItemName);
+        if (closeAllMenuItem is not null)
+        {
+            closeAllMenuItem.Text = UiText.Get("BundleExplorerPage.TabContext.CloseAll.Text");
+            closeAllMenuItem.IsEnabled = tabCount > 0;
+        }
+    }
+
+    private static MenuFlyoutItem? FindMenuFlyoutItem(MenuFlyout flyout, string itemName)
+    {
+        ArgumentNullException.ThrowIfNull(flyout);
+        ArgumentException.ThrowIfNullOrWhiteSpace(itemName);
+
+        return flyout.Items
+            .OfType<MenuFlyoutItem>()
+            .FirstOrDefault(item => string.Equals(item.Name, itemName, StringComparison.Ordinal));
+    }
+
+    private static bool TryGetTaggedValue<TValue>(
+        object sender,
+        [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out TValue? value)
+        where TValue : class
+    {
+        value = (sender as FrameworkElement)?.Tag as TValue;
+        return value is not null;
+    }
+
+    /// <summary>
+    /// WinUI 的 TabView 在切换 ItemsSource 时可能会先回落到第一项，
+    /// 这里显式把控件选中态对齐回 ViewModel 中已记录的活动资产标签，
+    /// 避免资源包切换时把“当前详情标签”误写成第一项。
+    /// </summary>
+    private void SynchronizeAssetDocumentTabSelection()
+    {
+        if (_isSynchronizingAssetDocumentTabSelection)
+        {
+            return;
+        }
+
+        _isSynchronizingAssetDocumentTabSelection = true;
+        try
+        {
+            if (!ReferenceEquals(AssetDocumentTabView.SelectedItem, ViewModel.ActiveAssetDocumentTab))
+            {
+                AssetDocumentTabView.SelectedItem = ViewModel.ActiveAssetDocumentTab;
+            }
+        }
+        finally
+        {
+            _isSynchronizingAssetDocumentTabSelection = false;
+        }
     }
 
     /// <summary>
@@ -601,13 +762,28 @@ public sealed partial class BundleExplorerPage : Page
 
     /// <summary>
     /// 复用与控制台页一致的工作区打开策略。
-    /// 当前窗口打开时统一交回 Shell 处理，保证导航选中状态与页面实例同步更新。
+    /// 若目标工作区已在任一已运行窗口中承载，则优先激活既有实例；
+    /// 否则再决定是当前窗口跳转，还是启动新的主进程。
     /// </summary>
     private void OpenWorkspace(WorkspaceNavigationRequest? request)
     {
         if (request is null)
         {
             return;
+        }
+
+        if (App.CurrentApp.TryActivateOpenedWorkspace(request))
+        {
+            return;
+        }
+
+        // 工作台页在“尚未绑定任何工作区”的空态下，也遵循与控制台一致的首次复用规则，
+        // 避免第一份工作区因为偏好是“新建窗口”而额外派生新进程。
+        if (request.OpenTarget == WorkspaceOpenTarget.NewWindow &&
+            TryGetHostWindow(out var hostWindow) &&
+            App.CurrentApp.ShouldReuseCurrentWindowForFirstWorkspace(hostWindow))
+        {
+            request = request with { OpenTarget = WorkspaceOpenTarget.CurrentWindow };
         }
 
         if (request.OpenTarget == WorkspaceOpenTarget.NewWindow)

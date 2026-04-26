@@ -249,6 +249,17 @@ public sealed class AssetPaneViewModel : ObservableObject
     }
 
     /// <summary>
+    /// 主动清空当前窗格的选中状态。
+    /// 主要用于详情标签被关闭后同步回退列表焦点，避免旧选中项立即重新打开详情。
+    /// </summary>
+    public void ClearSelection()
+    {
+        SelectedAssets.Clear();
+        SelectedAsset = null;
+        NotifySelectionStateChanged();
+    }
+
+    /// <summary>
     /// 恢复标签页上一次记录的列表浏览状态。
     /// 当前阶段只恢复搜索、类型筛选和本地展示筛选，不恢复完整多选集。
     /// </summary>
@@ -267,7 +278,8 @@ public sealed class AssetPaneViewModel : ObservableObject
 
     /// <summary>
     /// 按资源标识恢复主选中项。
-    /// 如果目标资源已经不在当前筛选结果中，则保持默认选中逻辑。
+    /// 如果目标资源已经不在当前筛选结果中，则保持空选中，
+    /// 避免程序自动把焦点跳到筛选结果第一项。
     /// </summary>
     public bool TrySelectAsset(AssetId assetId)
     {
@@ -297,7 +309,8 @@ public sealed class AssetPaneViewModel : ObservableObject
 
     /// <summary>
     /// 将应用层返回的完整结果集重新映射到当前窗格的展示集合。
-    /// 这里会尽量保留用户原先的选中项，减少切换筛选时的跳动感。
+    /// 这里会尽量保留用户原先的选中项；
+    /// 如果旧选中项已经不在当前结果里，则保持空选中，不再自动回退到第一项。
     /// </summary>
     private void ApplyLocalFilters(AssetId? preferredSelectedAssetId = null)
     {
@@ -317,7 +330,7 @@ public sealed class AssetPaneViewModel : ObservableObject
         SelectedAssets.Clear();
         SelectedAsset = desiredSelectedAssetId is { } assetId
             ? Items.FirstOrDefault(item => item.Item.AssetId.Equals(assetId))
-            : Items.FirstOrDefault();
+            : null;
 
         if (SelectedAsset is not null)
         {

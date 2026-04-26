@@ -574,6 +574,7 @@ Presentation 根据资源键:
 - `WorkspaceSessionRegistry` 不承担最近工作区持久化
 - `WorkspaceCatalogStore` 不直接持有大体量运行时资产数据
 - `WorkspaceContextService` 只协调当前 UI 会话中的活动工作区和摘要列表
+- 同一工作区的多窗口承载默认通过“多进程 + 跨进程激活”实现，而不是继续在同一进程内叠加多个共享 `CurrentWorkspace` 的主窗口
 - 页面切换工作区时，先切活动工作区，再重新查询页面数据
 
 ## 12. 测试建议
@@ -620,6 +621,8 @@ Presentation 根据资源键:
 1. `Application` 层部分 Handler 仍保留默认回退到 `InMemoryWorkspaceSessionRegistry.Shared` 的构造方式，后续应统一改为显式构造注入，避免应用层偷偷依赖具体实现。
 2. `Presentation` 层的 `WorkspaceContextService` 当前仍直接调用 `IWorkspaceCatalogStore / IWorkspaceMetadataStoreFactory` 读写目录摘要与浏览状态，后续应把这部分持久化收敛为明确的 Application Use Case。
 3. `Presentation` 层的 `WorkspaceBrowserService / WorkspaceCatalogService` 当前仍直接持有具体 Handler 类型，后续可继续评估是否收口为更稳定的应用层网关接口，减少 UI 对用例实现细节的耦合。
+4. 当前工作区进程占用是在工作区加载成功后才完成注册；若后续需要进一步消除极端并发启动下的重复打开竞态，可将其前移到加载前预占用，并补失败回滚。
+5. 当前默认不走“窗口级 `WorkspaceContextService` 重构”路线；若未来要支持“一进程多工作区并行”，应单独重构窗口作用域上下文，而不是继续扩散当前全局工作区模型。
 
 后续处理原则：
 

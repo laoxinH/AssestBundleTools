@@ -20,6 +20,7 @@ TestResults/
 packages/
 .nuget-packages/
 .artifacts/
+artifacts/
 .build-check/
 .codex-dotnet/
 .dotnet/

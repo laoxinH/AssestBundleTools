@@ -11,6 +11,11 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
 /// </summary>
 public sealed class InspectorPanelViewModel : ObservableObject
 {
+    private const string DetailsSectionKey = "details";
+    private const string DependenciesSectionKey = "dependencies";
+    private const string ReplacementSectionKey = "replacement";
+    private const string ChangesSectionKey = "changes";
+
     private string _emptyStateText = string.Empty;
     private string _assetName = string.Empty;
     private string _bundleDisplayName = string.Empty;
@@ -40,6 +45,7 @@ public sealed class InspectorPanelViewModel : ObservableObject
     private bool _canApplyReplacement;
     private bool _canUndoReplacement;
     private bool _hasSelection;
+    private int _selectedSectionIndex;
 
     public string EmptyStateText
     {
@@ -174,7 +180,7 @@ public sealed class InspectorPanelViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 用于右侧“替换 / 概览”区展示当前资源的可提取能力。
+    /// 用于右侧“替换 / 详情”区展示当前资源的可提取能力。
     /// 这里使用已经本地化后的展示文本，避免把文案拼装逻辑放回 XAML。
     /// </summary>
     public string ExtractCapabilityText
@@ -243,6 +249,33 @@ public sealed class InspectorPanelViewModel : ObservableObject
         set => SetProperty(ref _canUndoReplacement, value);
     }
 
+    /// <summary>
+    /// 右侧详情区的页签位置属于页面级浏览状态，
+    /// 因此这里直接把选中的索引挂在 ViewModel 上，便于运行期切换和工作区恢复复用。
+    /// </summary>
+    public int SelectedSectionIndex
+    {
+        get => _selectedSectionIndex;
+        set
+        {
+            var normalizedSectionIndex = NormalizeSectionIndex(value);
+            if (SetProperty(ref _selectedSectionIndex, normalizedSectionIndex))
+            {
+                NotifySectionSelectionStateChanged();
+            }
+        }
+    }
+
+    public string SelectedSectionKey => GetSectionKey(SelectedSectionIndex);
+
+    public bool IsDetailsSectionSelected => SelectedSectionIndex == 0;
+
+    public bool IsDependenciesSectionSelected => SelectedSectionIndex == 1;
+
+    public bool IsReplacementSectionSelected => SelectedSectionIndex == 2;
+
+    public bool IsChangesSectionSelected => SelectedSectionIndex == 3;
+
     public ObservableCollection<AssetDependencyViewModel> AssetDependencies { get; } = new();
 
     public ObservableCollection<AssetDependencyViewModel> ReferencedByDependencies { get; } = new();
@@ -272,6 +305,14 @@ public sealed class InspectorPanelViewModel : ObservableObject
     public Visibility DetailsVisibility => HasSelection ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility EmptyStateVisibility => HasSelection ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility DetailsSectionVisibility => SelectedSectionIndex == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility DependenciesSectionVisibility => SelectedSectionIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility ReplacementSectionVisibility => SelectedSectionIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility ChangesSectionVisibility => SelectedSectionIndex == 3 ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility AssetDependenciesVisibility => AssetDependencies.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
@@ -502,6 +543,11 @@ public sealed class InspectorPanelViewModel : ObservableObject
             : sizeText.Trim();
     }
 
+    public void RestoreSelectedSection(string? sectionKey)
+    {
+        SelectedSectionIndex = GetSectionIndex(sectionKey);
+    }
+
     public void ApplyImagePreview(ImageSource imageSource, string? previewInfoText = null)
     {
         ArgumentNullException.ThrowIfNull(imageSource);
@@ -570,10 +616,61 @@ public sealed class InspectorPanelViewModel : ObservableObject
         OnPropertyChanged(nameof(PreviewDiagnosticDetailVisibility));
     }
 
+    /// <summary>
+    /// 分段切换条和内容区显隐都依赖同一组选中状态。
+    /// 当前详情页已经把“概览 + 预览”合并到同一页，因此恢复时也要兼容旧版 overview / preview 键。
+    /// </summary>
+    private void NotifySectionSelectionStateChanged()
+    {
+        OnPropertyChanged(nameof(SelectedSectionKey));
+        OnPropertyChanged(nameof(IsDetailsSectionSelected));
+        OnPropertyChanged(nameof(IsDependenciesSectionSelected));
+        OnPropertyChanged(nameof(IsReplacementSectionSelected));
+        OnPropertyChanged(nameof(IsChangesSectionSelected));
+        OnPropertyChanged(nameof(DetailsSectionVisibility));
+        OnPropertyChanged(nameof(DependenciesSectionVisibility));
+        OnPropertyChanged(nameof(ReplacementSectionVisibility));
+        OnPropertyChanged(nameof(ChangesSectionVisibility));
+    }
+
     private static string NormalizePreviewInfoText(string? previewInfoText) =>
         string.IsNullOrWhiteSpace(previewInfoText)
             ? string.Empty
             : previewInfoText.Trim();
+
+    private static int GetSectionIndex(string? sectionKey)
+    {
+        return sectionKey?.Trim().ToLowerInvariant() switch
+        {
+            "overview" => 0,
+            "preview" => 0,
+            DependenciesSectionKey => 1,
+            ReplacementSectionKey => 2,
+            ChangesSectionKey => 3,
+            _ => 0
+        };
+    }
+
+    private static string GetSectionKey(int sectionIndex)
+    {
+        return NormalizeSectionIndex(sectionIndex) switch
+        {
+            1 => DependenciesSectionKey,
+            2 => ReplacementSectionKey,
+            3 => ChangesSectionKey,
+            _ => DetailsSectionKey
+        };
+    }
+
+    private static int NormalizeSectionIndex(int sectionIndex)
+    {
+        return sectionIndex switch
+        {
+            < 0 => 0,
+            > 3 => 3,
+            _ => sectionIndex
+        };
+    }
 
     private static string NormalizeDisplayContainerPath(string assetPath, string containerPath)
     {

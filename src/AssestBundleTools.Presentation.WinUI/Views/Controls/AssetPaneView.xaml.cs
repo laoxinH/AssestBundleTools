@@ -24,6 +24,7 @@ public sealed partial class AssetPaneView : UserControl
             new PropertyMetadata(null, OnViewModelChanged));
 
     private AssetPaneViewModel? _observedViewModel;
+    private bool _isSynchronizingSelectionFromViewModel;
 
     public AssetPaneView()
     {
@@ -59,6 +60,11 @@ public sealed partial class AssetPaneView : UserControl
 
     private void OnAssetListSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (_isSynchronizingSelectionFromViewModel)
+        {
+            return;
+        }
+
         if (ViewModel is not null)
         {
             ViewModel.UpdateSelection(
@@ -143,36 +149,44 @@ public sealed partial class AssetPaneView : UserControl
             return;
         }
 
-        var targetSelection = ViewModel.SelectedAsset;
-        if (targetSelection is null)
+        _isSynchronizingSelectionFromViewModel = true;
+        try
         {
-            if (AssetListView.SelectedItem is not null || AssetListView.SelectedItems.Count > 0)
+            var targetSelection = ViewModel.SelectedAsset;
+            if (targetSelection is null)
             {
-                AssetListView.SelectedItem = null;
-                AssetListView.SelectedItems.Clear();
+                if (AssetListView.SelectedItem is not null || AssetListView.SelectedItems.Count > 0)
+                {
+                    AssetListView.SelectedItem = null;
+                    AssetListView.SelectedItems.Clear();
+                }
+
+                return;
             }
 
-            return;
-        }
+            if (!ViewModel.Items.Contains(targetSelection))
+            {
+                return;
+            }
 
-        if (!ViewModel.Items.Contains(targetSelection))
+            if (!ReferenceEquals(AssetListView.SelectedItem, targetSelection))
+            {
+                AssetListView.SelectedItem = targetSelection;
+            }
+
+            if (AssetListView.SelectedItems.Count != 1 ||
+                !ReferenceEquals(AssetListView.SelectedItems[0], targetSelection))
+            {
+                AssetListView.SelectedItems.Clear();
+                AssetListView.SelectedItems.Add(targetSelection);
+            }
+
+            AssetListView.ScrollIntoView(targetSelection);
+        }
+        finally
         {
-            return;
+            _isSynchronizingSelectionFromViewModel = false;
         }
-
-        if (!ReferenceEquals(AssetListView.SelectedItem, targetSelection))
-        {
-            AssetListView.SelectedItem = targetSelection;
-        }
-
-        if (AssetListView.SelectedItems.Count != 1 ||
-            !ReferenceEquals(AssetListView.SelectedItems[0], targetSelection))
-        {
-            AssetListView.SelectedItems.Clear();
-            AssetListView.SelectedItems.Add(targetSelection);
-        }
-
-        AssetListView.ScrollIntoView(targetSelection);
     }
 
     private void ApplyLocalizedText()

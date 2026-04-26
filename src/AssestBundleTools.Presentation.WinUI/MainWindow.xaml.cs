@@ -1,6 +1,7 @@
 using AssestBundleTools.Presentation.WinUI.Diagnostics;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
+using AssestBundleTools.Application.Workspace.Services;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using AssestBundleTools.Presentation.WinUI.Views;
@@ -19,6 +20,8 @@ namespace AssestBundleTools.Presentation.WinUI;
 /// </summary>
 public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
 {
+    private const int SwShow = 5;
+    private const int SwRestore = 9;
     private readonly ILocalizationService _localizationService;
     private readonly ShellLaunchRequest? _launchRequest;
     private AppWindow? _appWindow;
@@ -166,11 +169,85 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
         App.CurrentApp.UnregisterWindowWorkspace(this);
     }
 
+    /// <summary>
+    /// 响应其他进程发来的“激活这个工作区”请求。
+    /// 如果当前窗口本来就承载该工作区，则只切回工作台；
+    /// 否则按显式请求导航到目标工作区。
+    /// </summary>
+    internal void ActivateFromExternalWorkspaceRequest(WorkspaceNavigationRequest navigationRequest)
+    {
+        ArgumentNullException.ThrowIfNull(navigationRequest);
+
+        BringToFront();
+
+        if (WindowContentHost.Content is not ShellPage shellPage)
+        {
+            return;
+        }
+
+        var workspaceKey = WorkspaceCatalogKeyFactory.CreateWorkspaceKey(
+            navigationRequest.SourcePath,
+            navigationRequest.WorkspaceDataRootPath);
+
+        if (!string.IsNullOrWhiteSpace(RegisteredWorkspaceKey) &&
+            string.Equals(RegisteredWorkspaceKey, workspaceKey, StringComparison.Ordinal))
+        {
+            shellPage.ActivateCurrentWorkspace();
+            return;
+        }
+
+        shellPage.NavigateToWorkspace(navigationRequest);
+    }
+
+    /// <summary>
+    /// 尽量把窗口恢复到前台。
+    /// WinUI 的 <see cref="Window.Activate"/> 足以覆盖大部分场景，
+    /// 这里额外补一层 Win32 前台恢复，避免跨进程激活时只闪任务栏而不真正置顶。
+    /// </summary>
+    internal void BringToFront()
+    {
+        try
+        {
+            var windowHandle = WindowNative.GetWindowHandle(this);
+            if (windowHandle != IntPtr.Zero)
+            {
+                if (IsIconic(windowHandle))
+                {
+                    ShowWindow(windowHandle, SwRestore);
+                }
+                else
+                {
+                    ShowWindow(windowHandle, SwShow);
+                }
+
+                SetForegroundWindow(windowHandle);
+            }
+        }
+        catch (Exception ex)
+        {
+            StartupDiagnostics.Log($"Bringing window to front failed: {ex}");
+        }
+
+        Activate();
+    }
+
     private void UpdateTitleBarInsetColumns(AppWindowTitleBar titleBar)
     {
         LeftInsetColumn.Width = new GridLength(titleBar.LeftInset);
         RightInsetColumn.Width = new GridLength(titleBar.RightInset);
     }
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ShowWindow(nint hWnd, int nCmdShow);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetForegroundWindow(nint hWnd);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsIconic(nint hWnd);
 
     /// <summary>
     /// 当启动过程中的页面初始化失败时，提供一个最小可视诊断页，

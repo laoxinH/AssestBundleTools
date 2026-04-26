@@ -15,4 +15,6 @@ public sealed record WorkspaceMetadataBundleTabDto(
     string SearchKeyword,
     string? AssetTypeFilter,
     bool ShowModifiedOnly,
-    bool ShowPreviewableOnly);
+    bool ShowPreviewableOnly,
+    IReadOnlyList<WorkspaceMetadataAssetTabDto>? OpenAssetTabs = null,
+    string? ActiveAssetTabId = null);

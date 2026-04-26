@@ -414,6 +414,12 @@
   <data name="BundleExplorerPage.BundleNodeRemoveMenuItem.Text" xml:space="preserve">
     <value>从工作区移除</value>
   </data>
+  <data name="BundleExplorerPage.TabContext.CloseOther.Text" xml:space="preserve">
+    <value>关闭其他</value>
+  </data>
+  <data name="BundleExplorerPage.TabContext.CloseAll.Text" xml:space="preserve">
+    <value>关闭全部</value>
+  </data>
   <data name="BundleExplorerPage.RefreshButton.Content" xml:space="preserve">
     <value>刷新</value>
   </data>
@@ -600,11 +606,8 @@
   <data name="AssetPaneView.EmptyStateHintText.Text" xml:space="preserve">
     <value>切换左侧 Bundle 节点或调整当前筛选条件后，这里会刷新为对应窗格的资源列表。</value>
   </data>
-  <data name="InspectorPanelView.OverviewTab.Header" xml:space="preserve">
-    <value>概览</value>
-  </data>
-  <data name="InspectorPanelView.PreviewTab.Header" xml:space="preserve">
-    <value>预览</value>
+  <data name="InspectorPanelView.DetailsTab.Header" xml:space="preserve">
+    <value>详情</value>
   </data>
   <data name="InspectorPanelView.ReplacementTab.Header" xml:space="preserve">
     <value>替换</value>
@@ -1327,7 +1330,7 @@
     <value>当前还没有打开任何资源包标签页，请从左侧资源包列表单击一个资源包开始浏览。</value>
   </data>
   <data name="BundleExplorer.Inspector.EmptyState" xml:space="preserve">
-    <value>选择一个资源后，这里会显示概览、提取、工作区替换、文件替换和变更摘要。</value>
+    <value>选择一个资源后，这里会显示详情、提取、工作区替换、文件替换和变更摘要。</value>
   </data>
   <data name="BundleExplorer.Selection.None" xml:space="preserve">
     <value>尚未选择资源</value>

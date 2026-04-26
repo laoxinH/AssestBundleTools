@@ -414,6 +414,12 @@
   <data name="BundleExplorerPage.BundleNodeRemoveMenuItem.Text" xml:space="preserve">
     <value>Remove from workspace</value>
   </data>
+  <data name="BundleExplorerPage.TabContext.CloseOther.Text" xml:space="preserve">
+    <value>Close Others</value>
+  </data>
+  <data name="BundleExplorerPage.TabContext.CloseAll.Text" xml:space="preserve">
+    <value>Close All</value>
+  </data>
   <data name="BundleExplorerPage.RefreshButton.Content" xml:space="preserve">
     <value>Refresh</value>
   </data>
@@ -600,11 +606,8 @@
   <data name="AssetPaneView.EmptyStateHintText.Text" xml:space="preserve">
     <value>Switch a bundle on the left or adjust the current filters to refresh the asset list shown in this pane.</value>
   </data>
-  <data name="InspectorPanelView.OverviewTab.Header" xml:space="preserve">
-    <value>Overview</value>
-  </data>
-  <data name="InspectorPanelView.PreviewTab.Header" xml:space="preserve">
-    <value>Preview</value>
+  <data name="InspectorPanelView.DetailsTab.Header" xml:space="preserve">
+    <value>Details</value>
   </data>
   <data name="InspectorPanelView.ReplacementTab.Header" xml:space="preserve">
     <value>Replace</value>
@@ -1327,7 +1330,7 @@
     <value>No bundle tabs are open yet. Click a bundle on the left to start browsing.</value>
   </data>
   <data name="BundleExplorer.Inspector.EmptyState" xml:space="preserve">
-    <value>Select an asset to view the overview, extraction actions, workspace replacement state, file replacement state, and change summary.</value>
+    <value>Select an asset to view details, extraction actions, workspace replacement state, file replacement state, and change summary.</value>
   </data>
   <data name="BundleExplorer.Selection.None" xml:space="preserve">
     <value>No asset selected</value>

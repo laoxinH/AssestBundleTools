@@ -1210,7 +1210,20 @@
                             <DataTemplate x:DataType="viewModels:BundleDocumentTabViewModel">
                                 <TabViewItem
                                     Header="{x:Bind DisplayName}"
-                                    ToolTipService.ToolTip="{x:Bind LogicalPath}" />
+                                    ToolTipService.ToolTip="{x:Bind LogicalPath}">
+                                    <TabViewItem.ContextFlyout>
+                                        <MenuFlyout Opening="OnBundleTabContextFlyoutOpening">
+                                            <MenuFlyoutItem
+                                                x:Name="CloseOtherBundleTabsMenuItem"
+                                                Click="OnCloseOtherBundleTabsMenuItemClick"
+                                                Tag="{Binding}" />
+                                            <MenuFlyoutItem
+                                                x:Name="CloseAllBundleTabsMenuItem"
+                                                Click="OnCloseAllBundleTabsMenuItemClick"
+                                                Tag="{Binding}" />
+                                        </MenuFlyout>
+                                    </TabViewItem.ContextFlyout>
+                                </TabViewItem>
                             </DataTemplate>
                         </TabView.TabItemTemplate>
                     </TabView>
@@ -1230,8 +1243,9 @@
                 Style="{StaticResource SettingsSectionCardStyle}">
                 <Grid
                     MinHeight="0"
-                    RowSpacing="10">
+                    RowSpacing="8">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
@@ -1240,8 +1254,42 @@
                         x:Name="RightPanelTitleText"
                         Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
 
-                    <controls:InspectorPanelView
+                    <TabView
+                        x:Name="AssetDocumentTabView"
                         Grid.Row="1"
+                        Margin="-2,-2,-2,0"
+                        CanDragTabs="False"
+                        CanReorderTabs="False"
+                        IsAddTabButtonVisible="False"
+                        SelectedItem="{x:Bind ViewModel.ActiveAssetDocumentTab, Mode=OneWay}"
+                        TabCloseRequested="OnAssetDocumentTabViewTabCloseRequested"
+                        TabItemsSource="{x:Bind ViewModel.CurrentAssetTabs, Mode=OneWay}"
+                        SelectionChanged="OnAssetDocumentTabViewSelectionChanged"
+                        Visibility="{x:Bind ViewModel.AssetDocumentTabStripVisibility, Mode=OneWay}">
+                        <TabView.TabItemTemplate>
+                            <DataTemplate x:DataType="viewModels:AssetDocumentTabViewModel">
+                                <TabViewItem
+                                    Header="{x:Bind DisplayName}"
+                                    ToolTipService.ToolTip="{x:Bind ToolTipText}">
+                                    <TabViewItem.ContextFlyout>
+                                        <MenuFlyout Opening="OnAssetDocumentTabContextFlyoutOpening">
+                                            <MenuFlyoutItem
+                                                x:Name="CloseOtherAssetDocumentTabsMenuItem"
+                                                Click="OnCloseOtherAssetDocumentTabsMenuItemClick"
+                                                Tag="{Binding}" />
+                                            <MenuFlyoutItem
+                                                x:Name="CloseAllAssetDocumentTabsMenuItem"
+                                                Click="OnCloseAllAssetDocumentTabsMenuItemClick"
+                                                Tag="{Binding}" />
+                                        </MenuFlyout>
+                                    </TabViewItem.ContextFlyout>
+                                </TabViewItem>
+                            </DataTemplate>
+                        </TabView.TabItemTemplate>
+                    </TabView>
+
+                    <controls:InspectorPanelView
+                        Grid.Row="2"
                         ExtractRequested="OnInspectorExtractRequested"
                         SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
                         SelectReplacementSourceRequested="OnInspectorSelectReplacementSourceRequested"

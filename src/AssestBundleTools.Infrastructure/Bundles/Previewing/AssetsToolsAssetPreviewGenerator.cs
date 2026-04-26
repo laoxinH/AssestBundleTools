@@ -24,7 +24,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
     private const string PreviewPixelEncoding = "RGBA8";
     private const string PreviewContainerEncoding = "PNG";
 
-    public string GeneratorVersion => "assetstools.preview/4";
+    public string GeneratorVersion => "assetstools.preview/5";
 
     public Task<Result<AssetPreviewContentDto>> GenerateAsync(
         AssetPreviewBuildRequestDto request,
@@ -160,7 +160,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
             return shaderPreview;
         }
 
-        return BuildSummaryPreview(assetInfo, baseField, classId, request);
+        return BuildSummaryPreview(assetInfo, baseField, classId);
     }
 
     private static bool TryBuildTexturePreview(
@@ -428,23 +428,11 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
     private static AssetPreviewContentDto BuildSummaryPreview(
         AssetFileInfo assetInfo,
         AssetTypeValueField baseField,
-        AssetClassID classId,
-        AssetPreviewBuildRequestDto request)
+        AssetClassID classId)
     {
-        var displayContainerPath = ResolveDisplayContainerPath(request.AssetPath, request.ContainerPath);
-        var lines = new List<string>
-        {
-            $"类型: {request.AssetTypeDisplayName}",
-            $"资源名称: {request.AssetName}",
-            $"资源路径: {request.AssetPath}",
-            $"PathId: {request.PathId.ToString(CultureInfo.InvariantCulture)}",
-            $"大小: {FormatByteSize(request.SizeInBytes) ?? $"{request.SizeInBytes.ToString("N0", CultureInfo.InvariantCulture)} B"}"
-        };
-
-        if (!string.IsNullOrWhiteSpace(displayContainerPath))
-        {
-            lines.Add($"容器路径: {displayContainerPath}");
-        }
+        // 详情页已经统一展示通用身份信息，
+        // 摘要预览这里只保留类型专属补充字段，避免和“名称 / 路径 / PathId / 大小”重复。
+        var lines = new List<string>();
 
         switch (classId)
         {
@@ -582,23 +570,6 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         AddLine(lines, "源纹理尺寸", FormatTextureDimensions(textureField));
         AddLine(lines, "源纹理格式 ID", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(textureField, "m_TextureFormat")));
         return string.Join(Environment.NewLine, lines);
-    }
-
-    private static string? ResolveDisplayContainerPath(string assetPath, string? containerPath)
-    {
-        if (string.IsNullOrWhiteSpace(containerPath))
-        {
-            return null;
-        }
-
-        var normalizedContainerPath = containerPath.Trim().Replace('\\', '/');
-        var normalizedAssetPath = string.IsNullOrWhiteSpace(assetPath)
-            ? string.Empty
-            : assetPath.Trim().Replace('\\', '/');
-
-        return string.Equals(normalizedContainerPath, normalizedAssetPath, StringComparison.OrdinalIgnoreCase)
-            ? null
-            : normalizedContainerPath;
     }
 
     private static int CountArray(AssetTypeValueField baseField, params string[] path)

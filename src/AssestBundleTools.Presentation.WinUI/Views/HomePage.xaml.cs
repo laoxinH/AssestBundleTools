@@ -171,42 +171,69 @@ public sealed partial class HomePage : Page
             return;
         }
 
-        var openTarget = await ResolveRecentWorkspaceOpenTargetAsync(workspaceItem.DisplayName);
+        var request = new WorkspaceNavigationRequest(
+            SourcePath: workspaceItem.SourcePath,
+            WorkspaceDisplayName: workspaceItem.DisplayName,
+            WorkspaceDataRootPath: workspaceItem.WorkspaceDataRootPath,
+            OpenTarget: WorkspaceOpenTarget.CurrentWindow);
+        var openTarget = await ResolveRecentWorkspaceOpenTargetAsync(request);
         if (!openTarget.HasValue)
         {
             return;
         }
 
-        OpenWorkspace(new WorkspaceNavigationRequest(
-            SourcePath: workspaceItem.SourcePath,
-            WorkspaceDisplayName: workspaceItem.DisplayName,
-            WorkspaceDataRootPath: workspaceItem.WorkspaceDataRootPath,
-            OpenTarget: openTarget.Value));
+        OpenWorkspace(request with { OpenTarget = openTarget.Value });
     }
 
-    private async Task<WorkspaceOpenTarget?> ResolveRecentWorkspaceOpenTargetAsync(string workspaceDisplayName)
+    /// <summary>
+    /// “每次询问”并不意味着任何场景都必须弹框。
+    /// 若当前窗口尚未加载工作区，或当前窗口本来就承载着目标工作区，
+    /// 这两种场景的结果都应当稳定落到“当前窗口打开”，无需再向用户重复确认。
+    /// </summary>
+    private async Task<WorkspaceOpenTarget?> ResolveRecentWorkspaceOpenTargetAsync(WorkspaceNavigationRequest navigationRequest)
     {
+        if (TryGetHostWindow(out var hostWindow) &&
+            (App.CurrentApp.ShouldReuseCurrentWindowForFirstWorkspace(hostWindow) ||
+             App.CurrentApp.DoesWindowHostWorkspace(hostWindow, navigationRequest)))
+        {
+            return WorkspaceOpenTarget.CurrentWindow;
+        }
+
         return App.CurrentApp.AppPreferencesService.RecentWorkspaceOpenBehavior switch
         {
             RecentWorkspaceOpenBehavior.NewWindow => WorkspaceOpenTarget.NewWindow,
             RecentWorkspaceOpenBehavior.AskEveryTime when XamlRoot is not null =>
                 await App.CurrentApp.WorkspaceDialogService.RequestWorkspaceOpenTargetAsync(
                     XamlRoot,
-                    workspaceDisplayName),
+                    navigationRequest.WorkspaceDisplayName),
             RecentWorkspaceOpenBehavior.AskEveryTime => null,
             _ => WorkspaceOpenTarget.CurrentWindow
         };
     }
 
     /// <summary>
-    /// 根据用户选择决定在当前窗口跳转，还是派生一个新的主窗口。
-    /// 当前窗口打开时会优先走 Shell 级导航，保持侧边栏选中状态同步。
+    /// 根据用户选择决定在当前窗口跳转，还是派生一个新的应用进程。
+    /// 若目标工作区已在任一已运行窗口中承载，则优先激活已有实例，避免重复打开同一工作区。
     /// </summary>
     private void OpenWorkspace(WorkspaceNavigationRequest? request)
     {
         if (request is null)
         {
             return;
+        }
+
+        if (App.CurrentApp.TryActivateOpenedWorkspace(request))
+        {
+            return;
+        }
+
+        // 控制台首次进入工作区时，即便用户偏好是“新建窗口”，
+        // 只要当前窗口还是空白态，就优先直接复用当前窗口进入工作台。
+        if (request.OpenTarget == WorkspaceOpenTarget.NewWindow &&
+            TryGetHostWindow(out var hostWindow) &&
+            App.CurrentApp.ShouldReuseCurrentWindowForFirstWorkspace(hostWindow))
+        {
+            request = request with { OpenTarget = WorkspaceOpenTarget.CurrentWindow };
         }
 
         if (request.OpenTarget == WorkspaceOpenTarget.NewWindow)
@@ -232,6 +259,25 @@ public sealed partial class HomePage : Page
             if (current is ShellPage shellPage)
             {
                 shellPage.NavigateToSection(navigationKey, parameter);
+                return true;
+            }
+
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        return false;
+    }
+
+    private bool TryGetHostWindow([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out AssestBundleTools.Presentation.WinUI.MainWindow? hostWindow)
+    {
+        hostWindow = null;
+        DependencyObject? current = this;
+
+        while (current is not null)
+        {
+            if (current is ShellPage shellPage && shellPage.HostWindow is not null)
+            {
+                hostWindow = shellPage.HostWindow;
                 return true;
             }
 
