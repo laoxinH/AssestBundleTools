@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="AssestBundleTools.Presentation.WinUI.Views.Shared.AppNotificationPresenter"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Border
+        x:Name="NotificationHost"
+        Width="520"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Top"
+        Margin="0,6,0,0"
+        Padding="0"
+        Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        BorderThickness="1"
+        CornerRadius="14"
+        Opacity="0"
+        Visibility="Collapsed">
+        <Border.RenderTransform>
+            <TranslateTransform x:Name="NotificationTranslateTransform" />
+        </Border.RenderTransform>
+
+        <Grid ColumnSpacing="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="4" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Border
+                x:Name="NotificationAccentBar"
+                CornerRadius="14,0,0,14" />
+
+            <Border
+                x:Name="NotificationIconBackground"
+                Grid.Column="1"
+                Width="34"
+                Height="34"
+                Margin="14,12,10,12"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                CornerRadius="999">
+                <FontIcon
+                    x:Name="NotificationIcon"
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="15"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+            </Border>
+
+            <StackPanel
+                Grid.Column="2"
+                Margin="0,12,10,12"
+                Spacing="2">
+                <TextBlock
+                    x:Name="NotificationTitleText"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                <TextBlock
+                    x:Name="NotificationMessageText"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="WrapWholeWords" />
+            </StackPanel>
+
+            <Button
+                x:Name="NotificationCloseButton"
+                Grid.Column="3"
+                Width="24"
+                Height="24"
+                Margin="0,0,12,0"
+                Padding="0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="Transparent"
+                BorderBrush="Transparent"
+                BorderThickness="0"
+                CornerRadius="999"
+                Click="OnNotificationCloseButtonClick">
+                <Button.Resources>
+                    <SolidColorBrush
+                        x:Key="ButtonBackground"
+                        Color="Transparent" />
+                    <SolidColorBrush
+                        x:Key="ButtonBackgroundPointerOver"
+                        Color="#11000000" />
+                    <SolidColorBrush
+                        x:Key="ButtonBackgroundPressed"
+                        Color="#16000000" />
+                    <SolidColorBrush
+                        x:Key="ButtonBorderBrush"
+                        Color="Transparent" />
+                    <SolidColorBrush
+                        x:Key="ButtonBorderBrushPointerOver"
+                        Color="Transparent" />
+                    <SolidColorBrush
+                        x:Key="ButtonBorderBrushPressed"
+                        Color="Transparent" />
+                </Button.Resources>
+                <Path
+                    Width="10"
+                    Height="10"
+                    Data="M 1 1 L 9 9 M 9 1 L 1 9"
+                    Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                    StrokeEndLineCap="Round"
+                    StrokeLineJoin="Round"
+                    StrokeStartLineCap="Round"
+                    StrokeThickness="1.4" />
+            </Button>
+        </Grid>
+    </Border>
+</UserControl>

@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AssestBundleTools.Application/AssestBundleTools.Application.csproj" />
+    <Project Path="src/AssestBundleTools.Domain/AssestBundleTools.Domain.csproj" />
+    <Project Path="src/AssestBundleTools.Infrastructure/AssestBundleTools.Infrastructure.csproj" />
+    <Project Path="src/AssestBundleTools.Presentation.WinUI/AssestBundleTools.Presentation.WinUI.csproj">
+      <Platform Project="x86" />
+    </Project>
+  </Folder>
+</Solution>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="AssestBundleTools.Presentation.WinUI.Views.Controls.AssetBundleDecryptorEditorDialogContent"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <Style
+            x:Key="DecryptorEditorValidationTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{ThemeResource SystemFillColorCriticalBrush}" />
+            <Setter Property="TextWrapping" Value="WrapWholeWords" />
+            <Setter Property="Visibility" Value="Collapsed" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer
+        x:Name="FormScrollViewer"
+        MaxHeight="680"
+        HorizontalScrollMode="Disabled"
+        HorizontalScrollBarVisibility="Disabled"
+        VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="16">
+            <Border
+                Style="{StaticResource SettingsInsetCardStyle}"
+                Padding="18">
+                <StackPanel Spacing="12">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Spacing="6">
+                            <TextBlock
+                                x:Name="DecryptorIdLabelText"
+                                Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
+                            <TextBox x:Name="DecryptorIdTextBox" />
+                            <TextBlock
+                                x:Name="DecryptorIdValidationTextBlock"
+                                Style="{StaticResource DecryptorEditorValidationTextStyle}" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="6">
+                            <TextBlock
+                                x:Name="DecryptorDisplayNameLabelText"
+                                Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
+                            <TextBox x:Name="DecryptorDisplayNameTextBox" />
+                            <TextBlock
+                                x:Name="DecryptorDisplayNameValidationTextBlock"
+                                Style="{StaticResource DecryptorEditorValidationTextStyle}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Spacing="6">
+                            <TextBlock
+                                x:Name="DecryptorVersionLabelText"
+                                Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
+                            <TextBox x:Name="DecryptorVersionTextBox" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="6">
+                            <TextBlock
+                                x:Name="DecryptorTimeoutLabelText"
+                                Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
+                            <TextBox x:Name="DecryptorTimeoutTextBox" InputScope="Number" />
+                            <TextBlock
+                                x:Name="DecryptorTimeoutValidationTextBlock"
+                                Style="{StaticResource DecryptorEditorValidationTextStyle}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock
+                            x:Name="DecryptorDescriptionLabelText"
+                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
+                        <TextBox
+                            x:Name="DecryptorDescriptionTextBox"
+                            AcceptsReturn="True"
+                            MinHeight="70"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border
+                Style="{StaticResource SettingsInsetCardStyle}"
+                Padding="18">
+                <StackPanel Spacing="12">
+                    <StackPanel Spacing="6">
+                        <TextBlock
+                            x:Name="DecryptorExecutablePathLabelText"
+                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
+                        <TextBox x:Name="DecryptorExecutablePathTextBox" />
+                        <TextBlock
+                            x:Name="DecryptorExecutablePathValidationTextBlock"
+                            Style="{StaticResource DecryptorEditorValidationTextStyle}" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock
+                            x:Name="DecryptorWorkingDirectoryPathLabelText"
+                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
+                        <TextBox x:Name="DecryptorWorkingDirectoryPathTextBox" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <CheckBox x:Name="SupportsAutoDetectionCheckBox" />
+                        <CheckBox x:Name="IsFallbackCheckBox" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border
+                Style="{StaticResource SettingsInsetCardStyle}"
+                Padding="18">
+                <StackPanel Spacing="12">
+                    <StackPanel Spacing="6">
+                        <TextBlock
+                            x:Name="DecryptorProbeArgumentsLabelText"
+                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
+                        <TextBox
+                            x:Name="DecryptorProbeArgumentsTextBox"
+                            AcceptsReturn="True"
+                            MinHeight="92"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock
+                            x:Name="DecryptorDecryptArgumentsLabelText"
+                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
+                        <TextBox
+                            x:Name="DecryptorDecryptArgumentsTextBox"
+                            AcceptsReturn="True"
+                            MinHeight="120"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            x:Name="DecryptorDecryptArgumentsValidationTextBlock"
+                            Style="{StaticResource DecryptorEditorValidationTextStyle}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

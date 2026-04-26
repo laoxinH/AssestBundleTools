@@ -1,0 +1,1749 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PackageDisplayName" xml:space="preserve">
+    <value>AssestBundleTools</value>
+    <comment>应用包显示名称</comment>
+  </data>
+  <data name="PackageDescription" xml:space="preserve">
+    <value>Unity AB 资产包处理工具</value>
+    <comment>应用包描述</comment>
+  </data>
+  <data name="PackagePublisherDisplayName" xml:space="preserve">
+    <value>thixi</value>
+    <comment>发布者显示名称</comment>
+  </data>
+  <data name="MainWindow.Title" xml:space="preserve">
+    <value>AssestBundleTools</value>
+    <comment>主窗口标题</comment>
+  </data>
+  <data name="MainWindow.Subtitle" xml:space="preserve">
+    <value>Unity AssetBundle 工作台</value>
+    <comment>主窗口副标题</comment>
+  </data>
+  <data name="Shell.Pane.Title" xml:space="preserve">
+    <value>工作区导航</value>
+  </data>
+  <data name="Shell.Pane.Subtitle" xml:space="preserve">
+    <value>启动、工作台与诊断</value>
+  </data>
+  <data name="Shell.ConsoleNavItem.Content" xml:space="preserve">
+    <value>控制台</value>
+  </data>
+  <data name="Shell.WorkbenchNavItem.Content" xml:space="preserve">
+    <value>工作台</value>
+  </data>
+  <data name="Shell.BatchTasksNavItem.Content" xml:space="preserve">
+    <value>批处理任务</value>
+  </data>
+  <data name="Shell.SettingsDiagnosticsNavItem.Content" xml:space="preserve">
+    <value>设置与诊断</value>
+  </data>
+  <data name="Shell.Header.LaunchGuide" xml:space="preserve">
+    <value>控制台</value>
+  </data>
+  <data name="Shell.Header.Workbench" xml:space="preserve">
+    <value>工作台</value>
+  </data>
+  <data name="Shell.Header.BatchTasks" xml:space="preserve">
+    <value>批处理任务</value>
+  </data>
+  <data name="Shell.Header.SettingsDiagnostics" xml:space="preserve">
+    <value>设置与诊断</value>
+  </data>
+  <data name="Shell.Description.LaunchGuide" xml:space="preserve">
+    <value>用于新建、打开和恢复工作区的控制台视图，也可从工作台返回这里重新整理工作区入口。</value>
+  </data>
+  <data name="Shell.Description.Workbench" xml:space="preserve">
+    <value>正式工作页面，承载资源包列表、标签页、资产列表与资源详情。</value>
+  </data>
+  <data name="Shell.Description.BatchTasks" xml:space="preserve">
+    <value>用于集中承接变更摘要、保存前预览，以及后续批量提取、批量替换和保存前校验任务。</value>
+  </data>
+  <data name="Shell.Description.SettingsDiagnostics" xml:space="preserve">
+    <value>用于集中查看详细日志、环境检查结果，并在后续接入语言与诊断相关设置。</value>
+  </data>
+  <data name="HomePage.PageTitleText.Text" xml:space="preserve">
+    <value>控制台</value>
+  </data>
+  <data name="HomePage.PageSubtitleText.Text" xml:space="preserve">
+    <value>从这里创建、打开或恢复工作区。确认后会进入正式工作台；如果需要切换入口，也可以从工作台返回这里继续操作。</value>
+  </data>
+  <data name="HomePage.BadgeText.Text" xml:space="preserve">
+    <value>控制台</value>
+  </data>
+  <data name="HomePage.QuickActionsTitleText.Text" xml:space="preserve">
+    <value>快速开始</value>
+  </data>
+  <data name="HomePage.NewWorkspaceButton.Content" xml:space="preserve">
+    <value>新建工作区</value>
+  </data>
+  <data name="HomePage.OpenWorkspaceButton.Content" xml:space="preserve">
+    <value>打开工作区</value>
+  </data>
+  <data name="HomePage.OpenLatestWorkspaceButton.Content" xml:space="preserve">
+    <value>打开最近工作区</value>
+  </data>
+  <data name="HomePage.QuickActionHintText.Text" xml:space="preserve">
+    <value>新建或打开工作区时，会先进入一个集中配置面板。确认后当前窗口会切换到正式工作台；如果选择新建窗口，则会在新的主窗口中直接进入对应工作区。</value>
+  </data>
+  <data name="HomePage.RecentOpenedTitleText.Text" xml:space="preserve">
+    <value>工作区列表</value>
+  </data>
+  <data name="HomePage.RecentActivityTitleText.Text" xml:space="preserve">
+    <value>最近操作</value>
+  </data>
+  <data name="HomePage.RecentWorkspaceEmptyState.Text" xml:space="preserve">
+    <value>还没有已登记的工作区。你可以先新建一个工作区，或选择一个已有目录开始。</value>
+  </data>
+  <data name="HomePage.RecentActivityEmptyState.Text" xml:space="preserve">
+    <value>还没有最近操作记录。后续打开工作区和执行操作后，这里会显示摘要。</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.CurrentBadge" xml:space="preserve">
+    <value>当前</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.RegisteredBadge" xml:space="preserve">
+    <value>已登记</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.Source.Format" xml:space="preserve">
+    <value>来源：{0}</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.DataRoot.Format" xml:space="preserve">
+    <value>数据目录：{0}</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.DataRoot.NotSpecified" xml:space="preserve">
+    <value>未指定</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.LastActivated.Format" xml:space="preserve">
+    <value>最近激活：{0}</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.PinButton.ToolTip" xml:space="preserve">
+    <value>固定工作区</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.UnpinButton.ToolTip" xml:space="preserve">
+    <value>取消固定工作区</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.DeleteButton.ToolTip" xml:space="preserve">
+    <value>删除该工作区记录</value>
+  </data>
+  <data name="HomePage.DeleteWorkspace.FailedMessage" xml:space="preserve">
+    <value>删除工作区记录失败，请在“设置与诊断”中查看详细日志。</value>
+  </data>
+  <data name="HomePage.DeleteWorkspace.SucceededMessage.Format" xml:space="preserve">
+    <value>已从列表中移除工作区“{0}”。</value>
+  </data>
+  <data name="HomePage.PinWorkspace.FailedMessage" xml:space="preserve">
+    <value>更新工作区固定状态失败，请在“设置与诊断”中查看详细日志。</value>
+  </data>
+  <data name="HomePage.PinWorkspace.PinnedMessage.Format" xml:space="preserve">
+    <value>已固定工作区“{0}”。</value>
+  </data>
+  <data name="HomePage.PinWorkspace.UnpinnedMessage.Format" xml:space="preserve">
+    <value>已取消固定工作区“{0}”。</value>
+  </data>
+  <data name="Workspace.Badge.Pinned" xml:space="preserve">
+    <value>已固定</value>
+  </data>
+  <data name="Workspace.Badge.Unavailable" xml:space="preserve">
+    <value>不可用</value>
+  </data>
+  <data name="Workspace.Availability.MissingSource.Format" xml:space="preserve">
+    <value>来源目录暂不可用：{0}</value>
+  </data>
+  <data name="Workspace.Availability.MissingDataRoot.Format" xml:space="preserve">
+    <value>工作区数据目录暂不可用：{0}</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTarget.CurrentWindow" xml:space="preserve">
+    <value>当前窗口</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTarget.NewWindow" xml:space="preserve">
+    <value>新建窗口</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTarget.Title" xml:space="preserve">
+    <value>打开工作区</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTarget.PrimaryButton" xml:space="preserve">
+    <value>确认</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTarget.CloseButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTarget.Description.Format" xml:space="preserve">
+    <value>请选择工作区“{0}”的打开方式。</value>
+  </data>
+  <data name="WorkspaceDialog.Delete.Title" xml:space="preserve">
+    <value>删除工作区记录</value>
+  </data>
+  <data name="WorkspaceDialog.Delete.PrimaryButton" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="WorkspaceDialog.Delete.CloseButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="WorkspaceDialog.Delete.Description.Format" xml:space="preserve">
+    <value>将从最近工作区列表中移除“{0}”，并清理工具生成的工作区元数据文件。数据目录：{1}。不会删除你选择的数据目录本身或原始 AB 资源。</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.New.Title" xml:space="preserve">
+    <value>新建工作区</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.Title" xml:space="preserve">
+    <value>打开工作区</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.New.PrimaryButton" xml:space="preserve">
+    <value>创建并打开</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.PrimaryButton" xml:space="preserve">
+    <value>确认并打开</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.CloseButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.New.Description" xml:space="preserve">
+    <value>像 IDE 创建项目一样，在一个配置面板中完成工作区目录、名称和打开方式设置。名称会优先根据目录自动生成；如果该目录里已经存在工作区，则会继续提示你直接打开还是重置后重新创建。</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.Description" xml:space="preserve">
+    <value>从目录导入并打开已有工作区。这里不会创建新工作区，也不会修改已有工作区名称；只有当所选目录中确实存在可识别的工作区元数据时，才允许继续打开。</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Workspace.Name.Header" xml:space="preserve">
+    <value>工作区名称</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Workspace.Name.Placeholder" xml:space="preserve">
+    <value>请输入工作区名称</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Workspace.Name.ReadOnlyPlaceholder" xml:space="preserve">
+    <value>选择工作区目录后自动显示</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Workspace.Name.NotDetectedPlaceholder" xml:space="preserve">
+    <value>当前目录未检测到工作区</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Workspace.Name.AmbiguousPlaceholder" xml:space="preserve">
+    <value>检测到多个工作区，无法自动确认</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.DataRoot.SectionTitle" xml:space="preserve">
+    <value>工作区数据目录</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.DataRoot.SectionTitle" xml:space="preserve">
+    <value>工作区目录</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.DataRoot.SectionHint" xml:space="preserve">
+    <value>该目录用于存放工具生成的工作区元数据、恢复状态和后续缓存。工作区名称会优先读取该目录中已有的工作区名称，否则自动退回到目录名。建议为每个工作区使用独立目录，方便后续恢复与迁移。</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.DataRoot.SectionHint" xml:space="preserve">
+    <value>请选择一个已经包含工作区元数据的目录。当前入口只负责从目录导入并打开现有工作区；如果该目录尚未进入最近工作区索引，系统会在打开成功后自动补登记。</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.DataRoot.Path.Header" xml:space="preserve">
+    <value>数据保存目录</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.DataRoot.Path.Header" xml:space="preserve">
+    <value>工作区目录</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.DataRoot.Path.Placeholder" xml:space="preserve">
+    <value>请选择或输入工作区数据保存目录</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.DataRoot.Path.Placeholder" xml:space="preserve">
+    <value>请选择或输入已有工作区目录</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.DataRoot.BrowseButton" xml:space="preserve">
+    <value>浏览目录</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.OpenTarget.SectionTitle" xml:space="preserve">
+    <value>打开方式</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.OpenTarget.SectionHint" xml:space="preserve">
+    <value>根据当前任务选择在当前窗口继续，或保留当前界面并用新窗口并行处理。</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Summary.SectionTitle" xml:space="preserve">
+    <value>配置摘要</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Summary.WorkspaceName.Label" xml:space="preserve">
+    <value>工作区名称</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Summary.DataRootPath.Label" xml:space="preserve">
+    <value>数据路径</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.Summary.DataRootPath.Label" xml:space="preserve">
+    <value>工作区目录</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Summary.PendingValue" xml:space="preserve">
+    <value>等待设置</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Validation.WorkspaceNameRequired" xml:space="preserve">
+    <value>请先填写工作区名称。</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Validation.DataRootRequired" xml:space="preserve">
+    <value>请先选择工作区数据保存目录。</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Validation.OpenWorkspaceDirectoryRequired" xml:space="preserve">
+    <value>请先选择已有工作区所在目录。</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Validation.OpenWorkspaceNotFound" xml:space="preserve">
+    <value>所选目录中未检测到可打开的工作区。请改用“新建工作区”，或重新选择正确的工作区目录。</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Validation.MultipleWorkspacesDetected.Format" xml:space="preserve">
+    <value>该目录中检测到 {0} 个工作区元数据，当前向导无法安全判断要打开哪一个。请改用更具体的工作区目录。</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Validation.OpenWorkspaceNotFoundInline" xml:space="preserve">
+    <value>所选目录中未检测到工作区，请重新选择一个已有工作区目录。</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Validation.MultipleWorkspacesDetectedInline.Format" xml:space="preserve">
+    <value>该目录下检测到 {0} 个工作区，当前无法确认要打开哪一个。</value>
+  </data>
+  <data name="WorkspaceDialog.ExistingWorkspace.Title" xml:space="preserve">
+    <value>检测到已有工作区</value>
+  </data>
+  <data name="WorkspaceDialog.ExistingWorkspace.Description.Format" xml:space="preserve">
+    <value>所选目录已包含工作区“{0}”。你可以直接打开它，或重置该工作区后重新创建。重置只会清理工具生成的元数据、缓存和变更暂存，不会删除目录本身。目录：{1}</value>
+  </data>
+  <data name="WorkspaceDialog.ExistingWorkspace.OpenButton" xml:space="preserve">
+    <value>直接打开</value>
+  </data>
+  <data name="WorkspaceDialog.ExistingWorkspace.ResetButton" xml:space="preserve">
+    <value>重置工作区</value>
+  </data>
+  <data name="WorkspaceDialog.ExistingWorkspace.CloseButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTargetDescription.CurrentWindow" xml:space="preserve">
+    <value>替换当前窗口中的工作区上下文，适合快速切换任务。</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTargetDescription.NewWindow" xml:space="preserve">
+    <value>保留当前窗口状态，并在新的主窗口中打开工作区，适合并行对比。</value>
+  </data>
+  <data name="Workspace.Source.NotImported" xml:space="preserve">
+    <value>尚未导入资源</value>
+  </data>
+  <data name="StartupFallback.Title" xml:space="preserve">
+    <value>启动诊断视图</value>
+  </data>
+  <data name="StartupFallback.Description" xml:space="preserve">
+    <value>主界面在启动过程中初始化失败，应用已保留在最小诊断视图中，方便继续排查问题。</value>
+  </data>
+  <data name="StartupFallback.Exception.Format" xml:space="preserve">
+    <value>异常类型：{0}</value>
+  </data>
+  <data name="StartupFallback.Message.Format" xml:space="preserve">
+    <value>异常消息：{0}</value>
+  </data>
+  <data name="StartupFallback.LogFile.Format" xml:space="preserve">
+    <value>启动日志：{0}</value>
+  </data>
+  <data name="BundleExplorerPage.PageTitleText.Text" xml:space="preserve">
+    <value>工作台</value>
+  </data>
+  <data name="BundleExplorerPage.PageEyebrowText.Text" xml:space="preserve">
+    <value>主工作区 / 资源浏览</value>
+  </data>
+  <data name="BundleExplorerPage.NewWorkspaceButton.Content" xml:space="preserve">
+    <value>新建工作区</value>
+  </data>
+  <data name="BundleExplorerPage.OpenFileButton.Content" xml:space="preserve">
+    <value>打开文件</value>
+  </data>
+  <data name="BundleExplorerPage.OpenWorkspaceButton.Content" xml:space="preserve">
+    <value>打开工作区</value>
+  </data>
+  <data name="BundleExplorerPage.ReturnToConsoleButton.Content" xml:space="preserve">
+    <value>返回控制台</value>
+  </data>
+  <data name="BundleExplorerPage.BundleImportFileButton.ToolTip" xml:space="preserve">
+    <value>导入资源包文件</value>
+  </data>
+  <data name="BundleExplorerPage.BundleImportDirectoryButton.ToolTip" xml:space="preserve">
+    <value>导入资源包目录</value>
+  </data>
+  <data name="BundleExplorerPage.BundleNodeOpenContainingLocationMenuItem.Text" xml:space="preserve">
+    <value>打开所在位置</value>
+  </data>
+  <data name="BundleExplorerPage.BundleNodeRemoveMenuItem.Text" xml:space="preserve">
+    <value>从工作区移除</value>
+  </data>
+  <data name="BundleExplorerPage.RefreshButton.Content" xml:space="preserve">
+    <value>刷新</value>
+  </data>
+  <data name="BundleExplorerPage.BatchExtractButton.Content" xml:space="preserve">
+    <value>批量提取</value>
+  </data>
+  <data name="BundleExplorerPage.SaveAsBundleButton.Content" xml:space="preserve">
+    <value>保存为新包</value>
+  </data>
+  <data name="BundleExplorerPage.GlobalSearchTextBox.PlaceholderText" xml:space="preserve">
+    <value>全局搜索（后续接入）</value>
+  </data>
+  <data name="BundleExplorerPage.LeftPanelTitleText.Text" xml:space="preserve">
+    <value>资源包列表</value>
+  </data>
+  <data name="BundleExplorerPage.BundleSearchTextBox.PlaceholderText" xml:space="preserve">
+    <value>搜索资源包名称或路径</value>
+  </data>
+  <data name="BundleExplorerPage.BundleSearchToggleButton.OpenToolTip" xml:space="preserve">
+    <value>展开资源包搜索</value>
+  </data>
+  <data name="BundleExplorerPage.BundleSearchToggleButton.CloseToolTip" xml:space="preserve">
+    <value>收起资源包搜索</value>
+  </data>
+  <data name="BundleExplorerPage.BundlePaneCollapseButton.CollapseToolTip" xml:space="preserve">
+    <value>收起资源包列表</value>
+  </data>
+  <data name="BundleExplorerPage.BundlePaneCollapseButton.ExpandToolTip" xml:space="preserve">
+    <value>展开资源包列表</value>
+  </data>
+  <data name="BundleExplorerPage.CollapsedBundlePane.BundleCountLabelText.Text" xml:space="preserve">
+    <value>资源包</value>
+  </data>
+  <data name="BundleExplorerPage.CollapsedBundlePane.GroupCountLabelText.Text" xml:space="preserve">
+    <value>分组</value>
+  </data>
+  <data name="BundleExplorerPage.CollapsedBundlePane.SelectionLabelText.Text" xml:space="preserve">
+    <value>当前</value>
+  </data>
+  <data name="BundleExplorerPage.CollapsedBundlePane.ImportFileButton.Text" xml:space="preserve">
+    <value>文件导入</value>
+  </data>
+  <data name="BundleExplorerPage.CollapsedBundlePane.ImportDirectoryButton.Text" xml:space="preserve">
+    <value>目录导入</value>
+  </data>
+  <data name="AppNotification.SuccessTitle" xml:space="preserve">
+    <value>操作完成</value>
+  </data>
+  <data name="AppNotification.InfoTitle" xml:space="preserve">
+    <value>提示</value>
+  </data>
+  <data name="AppNotification.WarningTitle" xml:space="preserve">
+    <value>请注意</value>
+  </data>
+  <data name="AppNotification.ErrorTitle" xml:space="preserve">
+    <value>操作失败</value>
+  </data>
+  <data name="AppNotification.CloseButton.ToolTip" xml:space="preserve">
+    <value>关闭提示</value>
+  </data>
+  <data name="WorkspaceImport.Button.Files.Text" xml:space="preserve">
+    <value>文件导入</value>
+  </data>
+  <data name="WorkspaceImport.Button.Directory.Text" xml:space="preserve">
+    <value>目录导入</value>
+  </data>
+  <data name="WorkspaceImport.Log.BundleFilesRegistered.Format" xml:space="preserve">
+    <value>已为工作区“{0}”登记 {1} 个资源包文件，本次新增 {2} 条来源记录。</value>
+  </data>
+  <data name="WorkspaceImport.Log.BundleDirectoryRegistered.Format" xml:space="preserve">
+    <value>已为工作区“{0}”登记目录“{1}”，当前共记录 {2} 条导入来源。</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDropRegistered.Format" xml:space="preserve">
+    <value>已为工作区“{0}”登记拖拽导入：{1} 个文件、{2} 个目录，当前共记录 {3} 条导入来源。</value>
+  </data>
+  <data name="WorkspaceImport.Log.Processed.Format" xml:space="preserve">
+    <value>工作区“{0}”已刷新导入索引：{1} 条来源、发现 {2} 个文件、初筛排除 {3} 个、新建索引 {4} 个资源包，复用缓存 {5} 个，读取跳过 {6} 个，失败 {7} 个。</value>
+  </data>
+  <data name="WorkspaceImport.Log.AutoDetectionSummary.Format" xml:space="preserve">
+    <value>工作区“{0}”本次导入使用自动识别，最终选择解密器“{1}”。探测候选 {2} 个，待判定文件 {3} 个。</value>
+  </data>
+  <data name="WorkspaceImport.Log.AutoDetectionFallbackSummary.Format" xml:space="preserve">
+    <value>工作区“{0}”本次导入使用自动识别，但未命中可用候选，已回退到解密器“{1}”。探测候选 {2} 个，待判定文件 {3} 个。</value>
+  </data>
+  <data name="WorkspaceImport.Log.AutoDetectionProbe.Format" xml:space="preserve">
+    <value>自动识别候选“{0}”（{1}）：命中 {2} 项，成功探测 {3} 项，总置信度 {4}{5}</value>
+  </data>
+  <data name="WorkspaceImport.Log.AutoDetectionProbe.SelectedSuffix" xml:space="preserve">
+    <value>，已选中</value>
+  </data>
+  <data name="WorkspaceImport.Log.AutoDetectionProbeMessage.Format" xml:space="preserve">
+    <value>自动识别候选“{0}”补充信息：{1}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Issue.CandidateScreenedOut.Format" xml:space="preserve">
+    <value>导入源已在自动识别前置阶段筛除。来源：{0}。逻辑路径：{1}。详情：{2}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Issue.DecryptionFailed.Format" xml:space="preserve">
+    <value>资源包导入失败，解密阶段未通过。来源：{0}。逻辑路径：{1}。解密器：{2}。</value>
+  </data>
+  <data name="WorkspaceImport.Log.Issue.ReaderRejected.Format" xml:space="preserve">
+    <value>资源包导入已跳过，当前读取器无法识别解密结果。来源：{0}。逻辑路径：{1}。解密器：{2}。详情：{3}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Issue.ReadFailed.Format" xml:space="preserve">
+    <value>资源包导入失败，读取阶段未通过。来源：{0}。逻辑路径：{1}。解密器：{2}。</value>
+  </data>
+  <data name="WorkspaceImport.Log.Issue.ErrorDetail.Format" xml:space="preserve">
+    <value>详细错误：{0}（错误码：{1}）</value>
+  </data>
+  <data name="WorkspaceImport.Log.Cache.SourceFingerprintChanged.Format" xml:space="preserve">
+    <value>资源包缓存已失效，来源文件状态发生变化。来源：{0}。逻辑路径：{1}。详情：{2}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Cache.DecryptorChanged.Format" xml:space="preserve">
+    <value>资源包缓存已失效，当前解密器与缓存记录不一致。来源：{0}。逻辑路径：{1}。详情：{2}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Cache.DecryptorVersionChanged.Format" xml:space="preserve">
+    <value>资源包缓存已失效，解密器版本发生变化。来源：{0}。逻辑路径：{1}。详情：{2}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Cache.ToolVersionChanged.Format" xml:space="preserve">
+    <value>资源包缓存已失效，当前工具缓存架构版本已更新。来源：{0}。逻辑路径：{1}。详情：{2}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Cache.ParserVersionChanged.Format" xml:space="preserve">
+    <value>资源包缓存已失效，当前 Reader 不再支持旧解析版本。来源：{0}。逻辑路径：{1}。详情：{2}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Cache.SourceRemoved.Format" xml:space="preserve">
+    <value>资源包缓存已清理，因为该来源已不再属于当前工作区。来源：{0}。逻辑路径：{1}。</value>
+  </data>
+  <data name="WorkspaceImport.Notification.BundleFilesRegistered.Format" xml:space="preserve">
+    <value>已将 {1} 个文件登记到工作区“{0}”。</value>
+  </data>
+  <data name="WorkspaceImport.Notification.BundleDirectoryRegistered.Format" xml:space="preserve">
+    <value>已将目录“{1}”登记到工作区“{0}”。</value>
+  </data>
+  <data name="WorkspaceImport.Notification.DragDropRegistered.Format" xml:space="preserve">
+    <value>已登记拖拽导入到工作区“{0}”：{1} 个文件、{2} 个目录。</value>
+  </data>
+  <data name="WorkspaceImport.Notification.Processed.Format" xml:space="preserve">
+    <value>已刷新工作区“{0}”：初筛排除 {1} 个，新建索引 {2} 个资源包，复用缓存 {3} 个，读取跳过 {4} 个，失败 {5} 个。</value>
+  </data>
+  <data name="WorkspaceImport.DropOverlay.Title" xml:space="preserve">
+    <value>拖拽资源包到这里</value>
+  </data>
+  <data name="WorkspaceImport.DropOverlay.Hint" xml:space="preserve">
+    <value>将资源包文件或目录拖到资源包列表区域，后续会在当前工作区中统一导入。</value>
+  </data>
+  <data name="BundleExplorerPage.CenterPanelTitleText.Text" xml:space="preserve">
+    <value>资产列表</value>
+  </data>
+  <data name="BundleExplorerPage.RightPanelTitleText.Text" xml:space="preserve">
+    <value>资源详情</value>
+  </data>
+  <data name="AssetPaneView.CurrentBundleLabelText.Text" xml:space="preserve">
+    <value>当前 Bundle：</value>
+  </data>
+  <data name="AssetPaneView.SearchTextBox.PlaceholderText" xml:space="preserve">
+    <value>搜索资源名称或路径</value>
+  </data>
+  <data name="AssetPaneView.ModifiedOnlyToggleButton.Content" xml:space="preserve">
+    <value>仅已修改</value>
+  </data>
+  <data name="AssetPaneView.PreviewOnlyToggleButton.Content" xml:space="preserve">
+    <value>仅可预览</value>
+  </data>
+  <data name="AssetPaneView.MultiSelectionLabelText.Text" xml:space="preserve">
+    <value>已选中</value>
+  </data>
+  <data name="AssetPaneView.MultiSelectionUnitText.Text" xml:space="preserve">
+    <value>项</value>
+  </data>
+  <data name="AssetPaneView.BatchExtractSelectedButton.Content" xml:space="preserve">
+    <value>提取选中</value>
+  </data>
+  <data name="AssetPaneView.AssetNameHeaderText.Text" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="AssetPaneView.AssetTypeHeaderText.Text" xml:space="preserve">
+    <value>类型</value>
+  </data>
+  <data name="AssetPaneView.AssetSizeHeaderText.Text" xml:space="preserve">
+    <value>大小</value>
+  </data>
+  <data name="AssetPaneView.AssetStateHeaderText.Text" xml:space="preserve">
+    <value>状态</value>
+  </data>
+  <data name="AssetPaneView.EmptyStateHintText.Text" xml:space="preserve">
+    <value>切换左侧 Bundle 节点或调整当前筛选条件后，这里会刷新为对应窗格的资源列表。</value>
+  </data>
+  <data name="InspectorPanelView.OverviewTab.Header" xml:space="preserve">
+    <value>概览</value>
+  </data>
+  <data name="InspectorPanelView.PreviewTab.Header" xml:space="preserve">
+    <value>预览</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementTab.Header" xml:space="preserve">
+    <value>替换</value>
+  </data>
+  <data name="InspectorPanelView.DependenciesTab.Header" xml:space="preserve">
+    <value>依赖</value>
+  </data>
+  <data name="InspectorPanelView.ChangesTab.Header" xml:space="preserve">
+    <value>变更</value>
+  </data>
+  <data name="InspectorPanelView.EmptyStateTitleText.Text" xml:space="preserve">
+    <value>等待选择资源</value>
+  </data>
+  <data name="InspectorPanelView.AssetNameLabelText.Text" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="InspectorPanelView.AssetTypeLabelText.Text" xml:space="preserve">
+    <value>类型</value>
+  </data>
+  <data name="InspectorPanelView.BundleLabelText.Text" xml:space="preserve">
+    <value>所属 Bundle</value>
+  </data>
+  <data name="InspectorPanelView.AssetPathLabelText.Text" xml:space="preserve">
+    <value>资源路径</value>
+  </data>
+  <data name="InspectorPanelView.ContainerPathLabelText.Text" xml:space="preserve">
+    <value>容器路径</value>
+  </data>
+  <data name="InspectorPanelView.AssetSizeLabelText.Text" xml:space="preserve">
+    <value>大小</value>
+  </data>
+  <data name="InspectorPanelView.PathIdLabelText.Text" xml:space="preserve">
+    <value>PathId</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfoLabelText.Text" xml:space="preserve">
+    <value>预览信息</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnosticTitleText.Text" xml:space="preserve">
+    <value>预览诊断</value>
+  </data>
+  <data name="InspectorPanelView.PreviewCacheStatusLabelText.Text" xml:space="preserve">
+    <value>缓存状态</value>
+  </data>
+  <data name="InspectorPanelView.PreviewFallbackReasonLabelText.Text" xml:space="preserve">
+    <value>回退原因</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnosticDetailLabelText.Text" xml:space="preserve">
+    <value>诊断详情</value>
+  </data>
+  <data name="InspectorPanelView.AssetDependenciesTitleText.Text" xml:space="preserve">
+    <value>资产依赖</value>
+  </data>
+  <data name="InspectorPanelView.ReferencedByTitleText.Text" xml:space="preserve">
+    <value>反向引用</value>
+  </data>
+  <data name="InspectorPanelView.DependencyClosureTitleText.Text" xml:space="preserve">
+    <value>依赖闭包</value>
+  </data>
+  <data name="InspectorPanelView.BundleExternalDependenciesTitleText.Text" xml:space="preserve">
+    <value>Bundle 外部依赖</value>
+  </data>
+  <data name="InspectorPanelView.OverviewQuickActionsTitleText.Text" xml:space="preserve">
+    <value>快速操作</value>
+  </data>
+  <data name="InspectorPanelView.OverviewQuickActionsHintText.Text" xml:space="preserve">
+    <value>当前阶段已接入单资源提取、工作区候选替换、应用替换与撤销骨架；文件替换和批量操作会在后续里程碑继续补齐。</value>
+  </data>
+  <data name="InspectorPanelView.ExtractButton.Content" xml:space="preserve">
+    <value>提取</value>
+  </data>
+  <data name="InspectorPanelView.SelectReplacementButton.Content" xml:space="preserve">
+    <value>工作区来源</value>
+  </data>
+  <data name="InspectorPanelView.SelectFileReplacementButton.Content" xml:space="preserve">
+    <value>选择文件来源</value>
+  </data>
+  <data name="InspectorPanelView.ApplyReplacementButton.Content" xml:space="preserve">
+    <value>应用替换</value>
+  </data>
+  <data name="InspectorPanelView.UndoReplacementButton.Content" xml:space="preserve">
+    <value>撤销</value>
+  </data>
+  <data name="InspectorPanelView.PreviewSurfaceTitleText.Text" xml:space="preserve">
+    <value>预览区骨架</value>
+  </data>
+  <data name="InspectorPanelView.PreviewPlaceholderText.Text" xml:space="preserve">
+    <value>预览面板骨架已经预留，后续会根据资产类型接入图片、文本、音频等预览器。</value>
+  </data>
+  <data name="InspectorPanelView.PreviewLoadingText.Text" xml:space="preserve">
+    <value>正在生成资源预览...</value>
+  </data>
+  <data name="InspectorPanelView.PreviewUnavailableText.Text" xml:space="preserve">
+    <value>当前资源暂时无法显示可视预览，下面会提供文本或摘要信息。</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementTargetTitleText.Text" xml:space="preserve">
+    <value>当前目标资源</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementSourceTitleText.Text" xml:space="preserve">
+    <value>替换来源</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementSourcePlaceholderText.Text" xml:space="preserve">
+    <value>等待从文件选择器或后续跨标签页拖拽填充来源信息。当前阶段已经接入真实文件选择，应用前仍会先进入待确认状态。</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementCompatibilityTitleText.Text" xml:space="preserve">
+    <value>能力与兼容性占位</value>
+  </data>
+  <data name="InspectorPanelView.ExtractCapabilityLabelText.Text" xml:space="preserve">
+    <value>可提取</value>
+  </data>
+  <data name="InspectorPanelView.FileReplacementCapabilityLabelText.Text" xml:space="preserve">
+    <value>文件替换</value>
+  </data>
+  <data name="InspectorPanelView.WorkspaceReplacementCapabilityLabelText.Text" xml:space="preserve">
+    <value>工作区替换</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementPlaceholderText.Text" xml:space="preserve">
+    <value>替换页签将用于展示文件替换、跨工作区拖拽替换和兼容性检查结果。</value>
+  </data>
+  <data name="InspectorPanelView.DependenciesEmptyStateText.Text" xml:space="preserve">
+    <value>当前资源没有可显示的直接依赖、反向引用、依赖闭包或 Bundle 外部依赖。</value>
+  </data>
+  <data name="InspectorPanelView.ChangeSummaryTitleText.Text" xml:space="preserve">
+    <value>当前项变更摘要</value>
+  </data>
+  <data name="InspectorPanelView.ChangesPlaceholderText.Text" xml:space="preserve">
+    <value>变更页签后续会展示候选替换、已确认修改和保存前摘要。</value>
+  </data>
+  <data name="InspectorPanelView.Capability.Available" xml:space="preserve">
+    <value>可用</value>
+  </data>
+  <data name="InspectorPanelView.Capability.Unavailable" xml:space="preserve">
+    <value>暂不可用</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementSource.None" xml:space="preserve">
+    <value>尚未选择任何替换来源</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementSource.Candidate.Format" xml:space="preserve">
+    <value>待应用工作区来源：{0} / {1}（{2}）</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementSource.Applied.Format" xml:space="preserve">
+    <value>当前工作区来源：{0} / {1}（{2}）</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementSource.FileCandidate.Format" xml:space="preserve">
+    <value>待应用文件：{0}（{2}） | 路径：{1}</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementSource.FileApplied.Format" xml:space="preserve">
+    <value>当前文件来源：{0}（{2}） | 路径：{1}</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementStatus.None" xml:space="preserve">
+    <value>尚未应用替换</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementStatus.Pending.Format" xml:space="preserve">
+    <value>已选择工作区候选来源：{0}，等待应用</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementStatus.Applied.Format" xml:space="preserve">
+    <value>已应用来自“{0}”的工作区替换</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementStatus.FilePending.Format" xml:space="preserve">
+    <value>已选择文件来源：{0}，等待应用</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementStatus.FileApplied.Format" xml:space="preserve">
+    <value>已应用来自“{0}”的文件替换</value>
+  </data>
+  <data name="InspectorPanelView.ChangeSummary.None" xml:space="preserve">
+    <value>当前资源还没有提取或替换记录。</value>
+  </data>
+  <data name="InspectorPanelView.ChangeSummary.ExtractOnly.Format" xml:space="preserve">
+    <value>最近一次提取时间：{0}</value>
+  </data>
+  <data name="InspectorPanelView.ChangeSummary.ReplacementOnly.Format" xml:space="preserve">
+    <value>已应用工作区替换：{0} / {1}</value>
+  </data>
+  <data name="InspectorPanelView.ChangeSummary.ReplacementAndExtract.Format" xml:space="preserve">
+    <value>已应用工作区替换：{0} / {1}，最近一次提取时间：{2}</value>
+  </data>
+  <data name="InspectorPanelView.ChangeSummary.FileReplacementOnly.Format" xml:space="preserve">
+    <value>已应用文件替换：{0}</value>
+  </data>
+  <data name="InspectorPanelView.ChangeSummary.FileReplacementAndExtract.Format" xml:space="preserve">
+    <value>已应用文件替换：{0}，最近一次提取时间：{1}</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.Hit" xml:space="preserve">
+    <value>命中缓存</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.Missing" xml:space="preserve">
+    <value>缓存缺失</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.IdentityChanged" xml:space="preserve">
+    <value>资源标识变化</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.SourceFingerprintChanged" xml:space="preserve">
+    <value>来源指纹变化</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.GeneratorVersionChanged" xml:space="preserve">
+    <value>预览生成器版本变化</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.None" xml:space="preserve">
+    <value>无</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.MissingLocator" xml:space="preserve">
+    <value>定位信息缺失</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.DecryptorResolveFailed" xml:space="preserve">
+    <value>解密器不可用</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.DecryptionFailed" xml:space="preserve">
+    <value>解密失败</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.GenerationFailed" xml:space="preserve">
+    <value>预览生成失败</value>
+  </data>
+  <data name="InspectorPanelView.DependencyMetadataWithPathId.Format" xml:space="preserve">
+    <value>{0} · PathId {1}</value>
+  </data>
+  <data name="InspectorPanelView.DependencyDepth.Format" xml:space="preserve">
+    <value>依赖深度：{0} 跳</value>
+  </data>
+  <data name="InspectorPanelView.BundleExternalDependencyKind.ArchiveSerializedFile" xml:space="preserve">
+    <value>外部序列化文件（Archive 引用）</value>
+  </data>
+  <data name="InspectorPanelView.BundleExternalDependencyKind.FilePath" xml:space="preserve">
+    <value>外部文件路径引用</value>
+  </data>
+  <data name="InspectorPanelView.BundleExternalDependencyKind.Unknown" xml:space="preserve">
+    <value>外部依赖（未分类）</value>
+  </data>
+  <data name="LogPanel.AllFilterButton.Content" xml:space="preserve">
+    <value>全部</value>
+  </data>
+  <data name="LogPanel.InfoFilterButton.Content" xml:space="preserve">
+    <value>信息</value>
+  </data>
+  <data name="LogPanel.WarningFilterButton.Content" xml:space="preserve">
+    <value>警告</value>
+  </data>
+  <data name="LogPanel.ErrorFilterButton.Content" xml:space="preserve">
+    <value>错误</value>
+  </data>
+  <data name="LogPanel.ClearButton.Content" xml:space="preserve">
+    <value>清空</value>
+  </data>
+  <data name="BatchTasksPage.PageTitleText.Text" xml:space="preserve">
+    <value>批处理任务</value>
+  </data>
+  <data name="BatchTasksPage.PageEyebrowText.Text" xml:space="preserve">
+    <value>批量处理 / 变更摘要</value>
+  </data>
+  <data name="BatchTasksPage.PageSubtitleText.Text" xml:space="preserve">
+    <value>这里集中承接当前工作区的提取记录、批量提取预览、批量替换承载、待保存修改和保存前预览；右侧会同步显示最近批处理动作的结构化结果明细。</value>
+  </data>
+  <data name="BatchTasksPage.WorkspaceOverviewTitleText.Text" xml:space="preserve">
+    <value>当前工作区概览</value>
+  </data>
+  <data name="BatchTasksPage.WorkspaceOverviewHintText.Text" xml:space="preserve">
+    <value>这里汇总当前主工作区已经形成的变更状态，作为后续批量任务和保存摘要的统一入口。</value>
+  </data>
+  <data name="BatchTasksPage.RefreshButton.Content" xml:space="preserve">
+    <value>刷新摘要</value>
+  </data>
+  <data name="BatchTasksPage.EmptyStateTitleText.Text" xml:space="preserve">
+    <value>还没有可汇总的工作区</value>
+  </data>
+  <data name="BatchTasksPage.EmptyStateBodyText.Text" xml:space="preserve">
+    <value>请先在工作台中加载工作区并进行资源浏览、提取或替换，这里才会显示对应的批处理摘要。</value>
+  </data>
+  <data name="BatchTasksPage.SummaryTitleText.Text" xml:space="preserve">
+    <value>变更统计</value>
+  </data>
+  <data name="BatchTasksPage.SummaryHintText.Text" xml:space="preserve">
+    <value>当前阶段按工作区修改、提取记录、工作区替换和文件替换四个维度汇总，为后续真实批处理与保存结果打底。</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractTitleText.Text" xml:space="preserve">
+    <value>批量提取预览</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractHintText.Text" xml:space="preserve">
+    <value>按当前工作区与资源类型筛选汇总候选项。当前执行只回写提取记录，不执行真实文件导出。</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractScopeLabelText.Text" xml:space="preserve">
+    <value>提取范围</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractAssetTypeLabelText.Text" xml:space="preserve">
+    <value>资源类型</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractOutputDirectoryLabelText.Text" xml:space="preserve">
+    <value>建议输出目录</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractFileNamePolicyLabelText.Text" xml:space="preserve">
+    <value>文件命名</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractConflictPolicyLabelText.Text" xml:space="preserve">
+    <value>冲突策略</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractEmptyText.Text" xml:space="preserve">
+    <value>当前筛选条件下没有可参与批量提取的资源。</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractExecuteButton.Content" xml:space="preserve">
+    <value>开始批量提取</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractLastRunLabelText.Text" xml:space="preserve">
+    <value>最近执行</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceTitleText.Text" xml:space="preserve">
+    <value>批量替换承载</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceHintText.Text" xml:space="preserve">
+    <value>按当前工作区中已进入替换队列的资源汇总。当前执行只做校验与结果回执，不重复执行真实写回。</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceScopeLabelText.Text" xml:space="preserve">
+    <value>替换范围</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceSourceFilterLabelText.Text" xml:space="preserve">
+    <value>替换来源</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceEmptyText.Text" xml:space="preserve">
+    <value>当前筛选条件下没有可参与批量替换骨架的资源。</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceExecuteButton.Content" xml:space="preserve">
+    <value>执行批量替换骨架</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceLastRunLabelText.Text" xml:space="preserve">
+    <value>最近执行</value>
+  </data>
+  <data name="BatchTasksPage.SavePreviewTitleText.Text" xml:space="preserve">
+    <value>保存前摘要</value>
+  </data>
+  <data name="BatchTasksPage.SavePreviewHintText.Text" xml:space="preserve">
+    <value>这里预览“保存为新包”时将输出哪些资源包和目标路径。当前阶段先稳定预览承载，不执行真实写入。</value>
+  </data>
+  <data name="BatchTasksPage.SavePreviewOutputDirectoryLabelText.Text" xml:space="preserve">
+    <value>输出目录</value>
+  </data>
+  <data name="BatchTasksPage.SavePreviewFileNamePolicyLabelText.Text" xml:space="preserve">
+    <value>文件名策略</value>
+  </data>
+  <data name="BatchTasksPage.SavePreviewEmptyText.Text" xml:space="preserve">
+    <value>当前工作区还没有待保存变更。后续形成提取、替换或修改后，这里会生成对应的保存前摘要。</value>
+  </data>
+  <data name="BatchTasksPage.SavePreviewRiskTitleText.Text" xml:space="preserve">
+    <value>风险提示</value>
+  </data>
+  <data name="BatchTasksPage.SaveExecuteButton.Content" xml:space="preserve">
+    <value>执行保存骨架</value>
+  </data>
+  <data name="BatchTasksPage.SaveLastRunLabelText.Text" xml:space="preserve">
+    <value>最近执行</value>
+  </data>
+  <data name="BatchTasksPage.StageNoteTitleText.Text" xml:space="preserve">
+    <value>当前阶段承载</value>
+  </data>
+  <data name="BatchTasksPage.StageNoteBodyText.Text" xml:space="preserve">
+    <value>本页目前聚焦“汇总”和“承载”，已接入批量提取骨架、批量替换骨架、保存骨架与结果明细，真实文件导出和真实写包仍将在后续阶段继续接入。</value>
+  </data>
+  <data name="BatchTasksPage.TaskResultsTitleText.Text" xml:space="preserve">
+    <value>任务结果明细</value>
+  </data>
+  <data name="BatchTasksPage.TaskResultsHintText.Text" xml:space="preserve">
+    <value>这里只保留最近批处理动作的结构化结果摘要，详细日志仍集中在“设置与诊断”。</value>
+  </data>
+  <data name="BatchTasksPage.TaskResultsEmptyText.Text" xml:space="preserve">
+    <value>执行批量提取、批量替换或保存骨架后，这里会显示最近结果。</value>
+  </data>
+  <data name="BatchTasksPage.RecentChangesTitleText.Text" xml:space="preserve">
+    <value>最近变更记录</value>
+  </data>
+  <data name="BatchTasksPage.RecentChangesHintText.Text" xml:space="preserve">
+    <value>按最近一次提取或替换时间倒序显示，方便后续进入保存摘要前快速复核。</value>
+  </data>
+  <data name="BatchTasksPage.NoChangesText.Text" xml:space="preserve">
+    <value>当前工作区还没有已记录的提取或替换变更。</value>
+  </data>
+  <data name="BatchTasksPage.WorkspaceOverview.Empty" xml:space="preserve">
+    <value>当前还没有活动工作区。</value>
+  </data>
+  <data name="BatchTasksPage.WorkspaceOverview.Format" xml:space="preserve">
+    <value>工作区：{0} | Bundle 数量：{1} | 资源数量：{2} | 来源：{3}</value>
+  </data>
+  <data name="BatchTasksPage.ChangeSummary.Empty" xml:space="preserve">
+    <value>尚无可显示的工作区变更摘要。</value>
+  </data>
+  <data name="BatchTasksPage.ChangeSummary.Format" xml:space="preserve">
+    <value>当前共记录 {0} 项变更，其中 {1} 项待保存修改、{2} 项带有提取记录、{3} 项来自工作区替换、{4} 项来自文件替换。</value>
+  </data>
+  <data name="BatchTasksPage.Summary.TotalChanges.Title" xml:space="preserve">
+    <value>总变更项</value>
+  </data>
+  <data name="BatchTasksPage.Summary.TotalChanges.Description" xml:space="preserve">
+    <value>当前工作区里已进入批处理视角的资源项数量。</value>
+  </data>
+  <data name="BatchTasksPage.Summary.Modified.Title" xml:space="preserve">
+    <value>待保存修改</value>
+  </data>
+  <data name="BatchTasksPage.Summary.Modified.Description" xml:space="preserve">
+    <value>这些资源已经发生修改，后续会进入保存摘要与输出流程。</value>
+  </data>
+  <data name="BatchTasksPage.Summary.Extracted.Title" xml:space="preserve">
+    <value>提取记录</value>
+  </data>
+  <data name="BatchTasksPage.Summary.Extracted.Description" xml:space="preserve">
+    <value>当前会话中至少发生过一次提取的资源数量。</value>
+  </data>
+  <data name="BatchTasksPage.Summary.Replaced.Title" xml:space="preserve">
+    <value>工作区替换</value>
+  </data>
+  <data name="BatchTasksPage.Summary.Replaced.Description" xml:space="preserve">
+    <value>当前由工作区内其他资源替换得到的资源数量。</value>
+  </data>
+  <data name="BatchTasksPage.Summary.FileReplaced.Title" xml:space="preserve">
+    <value>文件替换</value>
+  </data>
+  <data name="BatchTasksPage.Summary.FileReplaced.Description" xml:space="preserve">
+    <value>当前由外部文件来源替换得到的资源数量。</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.Scope.Format" xml:space="preserve">
+    <value>当前工作区：{0}</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.Scope.Empty" xml:space="preserve">
+    <value>当前没有可提取的工作区范围。</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.OutputDirectory.Empty" xml:space="preserve">
+    <value>尚未生成建议提取目录。</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.Empty" xml:space="preserve">
+    <value>当前筛选条件下没有可批量提取的资源。</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.FileNamePolicy.RetainOriginal" xml:space="preserve">
+    <value>按资源原名称输出</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.ConflictPolicy.SkipDuplicates" xml:space="preserve">
+    <value>跳过同名冲突项</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.Summary.Format" xml:space="preserve">
+    <value>当前共筛选出 {0} 个资源，分布于 {1} 个资源包，预计总大小 {2}。</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.BundlePlanSummary.Format" xml:space="preserve">
+    <value>共 {0} 个资源，预计总大小 {1}</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.LastRun.None" xml:space="preserve">
+    <value>尚未执行批量提取。</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.LastRun.Format" xml:space="preserve">
+    <value>最近一次已标记 {0} 个资源、覆盖 {1} 个资源包，完成时间：{2}</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.Log.Executed.Format" xml:space="preserve">
+    <value>已执行批量提取骨架，标记 {0} 个资源、覆盖 {1} 个资源包，建议输出目录：{2}</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.Scope.Format" xml:space="preserve">
+    <value>当前工作区：{0}</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.Scope.Empty" xml:space="preserve">
+    <value>当前没有可批量替换的工作区范围。</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.Empty" xml:space="preserve">
+    <value>当前筛选条件下没有可批量替换的资源。</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.Summary.Format" xml:space="preserve">
+    <value>当前共汇总 {0} 个资源，分布于 {1} 个资源包，其中工作区替换 {2} 项、文件替换 {3} 项。</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.BundlePlanSummary.Format" xml:space="preserve">
+    <value>共 {0} 项资源，其中工作区替换 {1} 项、文件替换 {2} 项。</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.LastRun.None" xml:space="preserve">
+    <value>尚未执行批量替换骨架。</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.LastRun.Format" xml:space="preserve">
+    <value>最近一次已汇总 {0} 个资源、覆盖 {1} 个资源包，其中工作区替换 {2} 项、文件替换 {3} 项，完成时间：{4}</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.Log.Executed.Format" xml:space="preserve">
+    <value>已执行批量替换骨架，处理 {0} 个资源、覆盖 {1} 个资源包，来源筛选：{2}</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceSourceFilter.All" xml:space="preserve">
+    <value>全部来源</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceSourceFilter.Workspace" xml:space="preserve">
+    <value>仅工作区替换</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceSourceFilter.File" xml:space="preserve">
+    <value>仅文件替换</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.OutputDirectory.Empty" xml:space="preserve">
+    <value>尚未生成建议输出目录。</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.FileNamePolicy.RetainOriginal" xml:space="preserve">
+    <value>保留原资源包文件名</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.Empty" xml:space="preserve">
+    <value>当前没有可预览的保存输出项。</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.Summary.Format" xml:space="preserve">
+    <value>当前计划写出 {0} 个资源包，共覆盖 {1} 项变更，建议输出目录：{2}</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.BundlePlanSummary.Format" xml:space="preserve">
+    <value>共 {0} 项变更，其中待保存修改 {1} 项、提取记录 {2} 项、工作区替换 {3} 项、文件替换 {4} 项。</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.Risk.NoOverwrite" xml:space="preserve">
+    <value>当前方案默认另存为新包，不直接覆盖原始资源包。</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.Risk.ConflictDeferred" xml:space="preserve">
+    <value>输出目录冲突检查和命名冲突处理将在后续保存能力阶段正式接入。</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.Risk.ExecutionDeferred" xml:space="preserve">
+    <value>当前页面只负责保存前预览和摘要承载，真实写包动作暂未启用。</value>
+  </data>
+  <data name="BatchTasksPage.SaveExecution.LastRun.None" xml:space="preserve">
+    <value>尚未执行保存骨架。</value>
+  </data>
+  <data name="BatchTasksPage.SaveExecution.LastRun.Format" xml:space="preserve">
+    <value>最近一次已验证 {0} 个资源包、覆盖 {1} 项变更，完成时间：{2}</value>
+  </data>
+  <data name="BatchTasksPage.SaveExecution.Log.Executed.Format" xml:space="preserve">
+    <value>已执行保存骨架，计划输出 {0} 个资源包、覆盖 {1} 项变更，建议输出目录：{2}</value>
+  </data>
+  <data name="BatchTasksPage.TaskResultStatusCompleted" xml:space="preserve">
+    <value>已完成</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.BatchExtract.Title" xml:space="preserve">
+    <value>批量提取</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.BatchExtract.Summary.Format" xml:space="preserve">
+    <value>已标记 {0} 个资源，覆盖 {1} 个资源包。</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.BatchExtract.Detail.Format" xml:space="preserve">
+    <value>建议输出目录：{0}</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.BatchReplace.Title" xml:space="preserve">
+    <value>批量替换</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.BatchReplace.Summary.Format" xml:space="preserve">
+    <value>已汇总 {0} 个资源，覆盖 {1} 个资源包。</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.BatchReplace.Detail.Format" xml:space="preserve">
+    <value>来源筛选：{0}；工作区替换 {1} 项；文件替换 {2} 项。</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.Save.Title" xml:space="preserve">
+    <value>保存骨架</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.Save.Summary.Format" xml:space="preserve">
+    <value>已验证 {0} 个资源包，覆盖 {1} 项变更。</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.Save.Detail.Format" xml:space="preserve">
+    <value>建议输出目录：{0}</value>
+  </data>
+  <data name="BatchTasksPage.ChangeState.WorkspaceReplacementAndExtracted" xml:space="preserve">
+    <value>工作区替换 + 已提取</value>
+  </data>
+  <data name="BatchTasksPage.ChangeState.WorkspaceReplacementOnly" xml:space="preserve">
+    <value>工作区替换</value>
+  </data>
+  <data name="BatchTasksPage.ChangeState.FileReplacementAndExtracted" xml:space="preserve">
+    <value>文件替换 + 已提取</value>
+  </data>
+  <data name="BatchTasksPage.ChangeState.FileReplacementOnly" xml:space="preserve">
+    <value>文件替换</value>
+  </data>
+  <data name="BatchTasksPage.ChangeState.ModifiedAndExtracted" xml:space="preserve">
+    <value>已修改 + 已提取</value>
+  </data>
+  <data name="BatchTasksPage.ChangeState.ExtractedOnly" xml:space="preserve">
+    <value>已提取</value>
+  </data>
+  <data name="BatchTasksPage.ChangeState.ModifiedOnly" xml:space="preserve">
+    <value>已修改</value>
+  </data>
+  <data name="BatchTasksPage.ChangeDetail.WorkspaceReplacementAndExtracted.Format" xml:space="preserve">
+    <value>工作区来源：{0} / {1}，最近提取时间：{2}</value>
+  </data>
+  <data name="BatchTasksPage.ChangeDetail.WorkspaceReplacementOnly.Format" xml:space="preserve">
+    <value>工作区来源：{0} / {1}</value>
+  </data>
+  <data name="BatchTasksPage.ChangeDetail.FileReplacementAndExtracted.Format" xml:space="preserve">
+    <value>文件来源：{0}，最近提取时间：{1}</value>
+  </data>
+  <data name="BatchTasksPage.ChangeDetail.FileReplacementOnly.Format" xml:space="preserve">
+    <value>文件来源：{0} | 路径：{1}</value>
+  </data>
+  <data name="BatchTasksPage.ChangeDetail.ExtractedOnly.Format" xml:space="preserve">
+    <value>最近提取时间：{0}</value>
+  </data>
+  <data name="BatchTasksPage.ChangeDetail.ModifiedOnly" xml:space="preserve">
+    <value>当前项已进入工作区修改队列。</value>
+  </data>
+  <data name="BatchTasksPage.ChangeTime.Unknown" xml:space="preserve">
+    <value>时间未记录</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PageTitleText.Text" xml:space="preserve">
+    <value>设置与诊断</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PageEyebrowText.Text" xml:space="preserve">
+    <value>偏好 / 日志 / 诊断</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PageSubtitleText.Text" xml:space="preserve">
+    <value>这里统一承接详细运行日志、后续语言切换、日志导出与环境诊断信息；主工作区只保留必要的即时操作反馈。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceStatusTitleText.Text" xml:space="preserve">
+    <value>活动工作区</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceStatusHintText.Text" xml:space="preserve">
+    <value>这里同步显示当前窗口会话所依赖的活动工作区摘要，便于在批处理、诊断和后续保存链路里确认上下文是否正确。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ActiveWorkspaceEmptyText.Text" xml:space="preserve">
+    <value>当前没有活动工作区。进入工作台并打开工作区后，这里会自动同步显示当前会话摘要。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ActiveWorkspaceSessionSummary.Format" xml:space="preserve">
+    <value>当前会话已加载 {0} 个资源包 / {1} 个资源，打开时间：{2}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceCatalogTitleText.Text" xml:space="preserve">
+    <value>工作区目录</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceCatalogHintText.Text" xml:space="preserve">
+    <value>这里展示应用级登记的工作区目录项，并区分当前活动项、已保留会话项和仅元数据恢复的最近项。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceCatalogSummary.Format" xml:space="preserve">
+    <value>已登记 {0} 个工作区，其中 {1} 个仍保留会话状态。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceCatalogEmptyText.Text" xml:space="preserve">
+    <value>当前还没有已登记工作区。创建或打开工作区后，这里会显示最近目录摘要。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceBadge.LiveSession" xml:space="preserve">
+    <value>已加载</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.StartupBehaviorTitleText.Text" xml:space="preserve">
+    <value>启动与窗口行为</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.StartupBehaviorHintText.Text" xml:space="preserve">
+    <value>这里集中管理启动恢复和控制台最近工作区的打开策略，避免把窗口行为分散到多个页面和临时弹框中。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartupToggle.Header" xml:space="preserve">
+    <value>启动时恢复上次工作区</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartupToggle.Description" xml:space="preserve">
+    <value>开启后，应用启动时会优先恢复最近一次活动且仍可用的工作区；关闭后，应用始终先进入控制台。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Label" xml:space="preserve">
+    <value>控制台最近工作区打开方式</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Description" xml:space="preserve">
+    <value>用于控制从控制台再次打开最近工作区时的默认窗口策略，可固定复用当前窗口、固定派生新窗口，或每次再次确认。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Option.CurrentWindow" xml:space="preserve">
+    <value>默认当前</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Option.NewWindow" xml:space="preserve">
+    <value>默认新建</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Option.AskEveryTime" xml:space="preserve">
+    <value>每次询问</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage" xml:space="preserve">
+    <value>保存启动恢复偏好失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.SaveFailedMessage" xml:space="preserve">
+    <value>保存最近工作区打开方式失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ResponsibilityTitleText.Text" xml:space="preserve">
+    <value>页面职责</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ResponsibilityBodyText.Text" xml:space="preserve">
+    <value>主工作区不再承载大块日志面板，而是把详细记录集中到这里，减少浏览、选择和检查资源时的视觉打断。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DiagnosticsTitleText.Text" xml:space="preserve">
+    <value>后续扩展</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DiagnosticsBodyText.Text" xml:space="preserve">
+    <value>后续将在这里继续补语言切换、主题策略、环境检查、日志导出与调试开关，保持“设置”和“诊断”职责集中。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.LogCenterTitleText.Text" xml:space="preserve">
+    <value>详细日志中心</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.LogCenterHintText.Text" xml:space="preserve">
+    <value>这里会持续记录工作区加载、资源定位、标签页切换与异常信息，方便后续定位问题和导出诊断结果。</value>
+  </data>
+  <data name="Diagnostics.Log.EmptyState" xml:space="preserve">
+    <value>这里会显示应用级运行日志、错误记录以及后续导出的诊断信息。</value>
+  </data>
+  <data name="BundleExplorer.StageStatus.Text" xml:space="preserve">
+    <value>当前阶段聚焦主工作区浏览、VS Code 风格标签页浏览、资产列表多选提取、单资源替换骨架与多工作区上下文收口，真实文件打开、工作区切换界面与保存流程将在后续里程碑继续补齐。</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.BundleSearchNoMatch.Format" xml:space="preserve">
+    <value>未找到与“{0}”匹配的资源包，请尝试其他关键词。</value>
+  </data>
+  <data name="BundleExplorer.CollapsedPane.SelectedBundleShort.None" xml:space="preserve">
+    <value>--</value>
+  </data>
+  <data name="BundleExplorer.Status.Workspace.Label" xml:space="preserve">
+    <value>工作区</value>
+  </data>
+  <data name="BundleExplorer.Status.BundleCount.Label" xml:space="preserve">
+    <value>资源包</value>
+  </data>
+  <data name="BundleExplorer.Status.AssetCount.Label" xml:space="preserve">
+    <value>资源</value>
+  </data>
+  <data name="BundleExplorer.Status.Source.Label" xml:space="preserve">
+    <value>来源</value>
+  </data>
+  <data name="BundleExplorer.Status.WorkspaceSessionCount.Label" xml:space="preserve">
+    <value>已登记工作区</value>
+  </data>
+  <data name="BundleExplorer.Status.OpenTabCount.Label" xml:space="preserve">
+    <value>已打开标签页</value>
+  </data>
+  <data name="BundleExplorer.Status.Selection.Label" xml:space="preserve">
+    <value>当前选中</value>
+  </data>
+  <data name="BundleExplorer.Status.NotLoaded" xml:space="preserve">
+    <value>尚未加载</value>
+  </data>
+  <data name="BundleExplorer.Pane.PrimaryTitle" xml:space="preserve">
+    <value>资产列表</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.NoWorkspace" xml:space="preserve">
+    <value>尚未加载任何工作区。请先新建工作区或打开已有工作区，再开始浏览资源。</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.EmptyWorkspace" xml:space="preserve">
+    <value>当前工作区还是空的，尚未导入任何资源包。后续可通过拖拽导入或浏览器导入把 AB 资源加入工作区。</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.NoAssets" xml:space="preserve">
+    <value>当前 Bundle 在此筛选条件下没有可显示的资源。</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.NoOpenTabs" xml:space="preserve">
+    <value>当前还没有打开任何资源包标签页，请从左侧资源包列表单击一个资源包开始浏览。</value>
+  </data>
+  <data name="BundleExplorer.Inspector.EmptyState" xml:space="preserve">
+    <value>选择一个资源后，这里会显示概览、提取、工作区替换、文件替换和变更摘要。</value>
+  </data>
+  <data name="BundleExplorer.Selection.None" xml:space="preserve">
+    <value>尚未选择资源</value>
+  </data>
+  <data name="BundleExplorer.Selection.Multiple.Format" xml:space="preserve">
+    <value>已选中 {0} 项，当前焦点：{1}</value>
+  </data>
+  <data name="BundleExplorer.Log.EmptyState" xml:space="preserve">
+    <value>这里会显示加载、切换、定位资源等流程日志。</value>
+  </data>
+  <data name="BundleExplorer.Log.Initializing" xml:space="preserve">
+    <value>正在初始化工作区和浏览骨架。</value>
+  </data>
+  <data name="BundleExplorer.Log.WorkspaceLoaded" xml:space="preserve">
+    <value>工作区“{0}”已加载，共 {1} 个 Bundle、{2} 个资源。</value>
+  </data>
+  <data name="BundleExplorer.Log.BundleFileImportRequested" xml:space="preserve">
+    <value>已触发资源包文件导入入口，真实 AB 文件选择与导入将在后续阶段接入。</value>
+  </data>
+  <data name="BundleExplorer.Log.BundleDirectoryImportRequested" xml:space="preserve">
+    <value>已触发资源包目录导入入口，真实目录扫描与批量导入将在后续阶段接入。</value>
+  </data>
+  <data name="BundleExplorer.Log.BundleLoaded" xml:space="preserve">
+    <value>{0} 已切换到 {1}，当前列表共 {2} 项。</value>
+  </data>
+  <data name="BundleExplorer.Log.BundleRemoved" xml:space="preserve">
+    <value>已将资源包“{0}”从当前工作区移除。</value>
+  </data>
+  <data name="BundleExplorer.Log.AssetFocused" xml:space="preserve">
+    <value>{0} 已聚焦资源：{1}</value>
+  </data>
+  <data name="BundleExplorer.Log.AssetPreviewFailed.Format" xml:space="preserve">
+    <value>资源“{0}”的预览加载失败：{1}</value>
+  </data>
+  <data name="BundleExplorer.Log.FilterApplied" xml:space="preserve">
+    <value>{0} 已按当前筛选条件重新加载 {1}。</value>
+  </data>
+  <data name="BundleExplorer.Log.AssetExtracted" xml:space="preserve">
+    <value>已提取资源“{0}”，建议输出路径：{1}</value>
+  </data>
+  <data name="BundleExplorer.Log.BatchAssetsExtracted" xml:space="preserve">
+    <value>已批量提取 {0} 项资源，首个建议输出路径：{1}</value>
+  </data>
+  <data name="BundleExplorer.Log.ReplacementSourceSelected" xml:space="preserve">
+    <value>已为“{2}”选择工作区替换源：{0} / {1}</value>
+  </data>
+  <data name="BundleExplorer.Log.FileReplacementSelectionCancelled" xml:space="preserve">
+    <value>已取消为“{0}”选择文件替换来源。</value>
+  </data>
+  <data name="BundleExplorer.Log.FilePickerOpenFailed.Format" xml:space="preserve">
+    <value>打开文件选择器失败，当前操作已中止。异常类型：{0}</value>
+  </data>
+  <data name="BundleExplorer.Log.FileReplacementSourceSelected" xml:space="preserve">
+    <value>已为“{2}”选择文件替换来源：{0} | 路径：{1}</value>
+  </data>
+  <data name="BundleExplorer.Log.FileReplacementApplied" xml:space="preserve">
+    <value>已将“{0}”替换为文件 {1}（{2}）</value>
+  </data>
+  <data name="BundleExplorer.Log.ReplacementApplied" xml:space="preserve">
+    <value>已将“{0}”替换为 {1} / {2}</value>
+  </data>
+  <data name="BundleExplorer.Log.ReplacementUndone" xml:space="preserve">
+    <value>已撤销资源“{0}”的已应用替换</value>
+  </data>
+  <data name="BundleExplorer.Notification.WorkspaceLoaded" xml:space="preserve">
+    <value>已加载工作区“{0}”，共 {1} 个 Bundle、{2} 个资源。</value>
+  </data>
+  <data name="BundleExplorer.Notification.BundleFileImportRequested" xml:space="preserve">
+    <value>文件导入入口已准备好，真实资源包文件选择与导入将在后续阶段接入。</value>
+  </data>
+  <data name="BundleExplorer.Notification.BundleDirectoryImportRequested" xml:space="preserve">
+    <value>目录导入入口已准备好，真实目录扫描与批量导入将在后续阶段接入。</value>
+  </data>
+  <data name="BundleExplorer.Notification.BundleRemoved" xml:space="preserve">
+    <value>已从工作区移除资源包：{0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.BundleOpenLocationFailed" xml:space="preserve">
+    <value>无法打开资源包“{0}”的所在位置。</value>
+  </data>
+  <data name="BundleExplorer.Notification.AssetExtracted" xml:space="preserve">
+    <value>已完成资源提取：{0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.BatchAssetsExtracted" xml:space="preserve">
+    <value>已完成 {0} 项资源的提取标记。</value>
+  </data>
+  <data name="BundleExplorer.Notification.ReplacementSourceSelected" xml:space="preserve">
+    <value>已选中工作区替换源：{0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.FilePickerOpenFailed" xml:space="preserve">
+    <value>无法打开文件选择器，请检查当前应用状态后重试。</value>
+  </data>
+  <data name="BundleExplorer.Notification.FileReplacementSourceSelected" xml:space="preserve">
+    <value>已选中文件来源：{0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.FileReplacementApplied" xml:space="preserve">
+    <value>已应用文件替换：{0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.ReplacementApplied" xml:space="preserve">
+    <value>已应用工作区替换：{0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.ReplacementUndone" xml:space="preserve">
+    <value>已撤销替换：{0}</value>
+  </data>
+  <data name="AssetTypeFilter.All" xml:space="preserve">
+    <value>全部类型</value>
+  </data>
+  <data name="AssetType.Display.Unknown" xml:space="preserve">
+    <value>未知</value>
+  </data>
+  <data name="AssetType.Display.Texture2D" xml:space="preserve">
+    <value>Texture2D</value>
+  </data>
+  <data name="AssetType.Display.Sprite" xml:space="preserve">
+    <value>Sprite</value>
+  </data>
+  <data name="AssetType.Display.TextAsset" xml:space="preserve">
+    <value>TextAsset</value>
+  </data>
+  <data name="AssetType.Display.AudioClip" xml:space="preserve">
+    <value>AudioClip</value>
+  </data>
+  <data name="AssetType.Display.Mesh" xml:space="preserve">
+    <value>Mesh</value>
+  </data>
+  <data name="AssetType.Display.Material" xml:space="preserve">
+    <value>Material</value>
+  </data>
+  <data name="AssetState.Original" xml:space="preserve">
+    <value>原始</value>
+  </data>
+  <data name="AssetState.Modified" xml:space="preserve">
+    <value>已修改</value>
+  </data>
+  <data name="Error.Workspace.Open.PathRequired" xml:space="preserve">
+    <value>打开工作区前需要提供路径。</value>
+  </data>
+  <data name="Error.Workspace.Query.WorkspaceIdRequired" xml:space="preserve">
+    <value>查询工作区前需要提供工作区标识。</value>
+  </data>
+  <data name="Error.Workspace.Import.WorkspaceKeyRequired" xml:space="preserve">
+    <value>登记工作区导入来源前需要提供工作区键。</value>
+  </data>
+  <data name="Error.Workspace.Import.DataRootPathRequired" xml:space="preserve">
+    <value>登记工作区导入来源前需要提供工作区数据目录。</value>
+  </data>
+  <data name="Error.Workspace.Import.PathsRequired" xml:space="preserve">
+    <value>请至少选择一个要登记到工作区的文件或目录。</value>
+  </data>
+  <data name="Error.Workspace.Import.BundleSourcePathRequired" xml:space="preserve">
+    <value>从工作区移除资源包前需要提供资源包来源路径。</value>
+  </data>
+  <data name="Error.Bundle.Query.BundleIdRequired" xml:space="preserve">
+    <value>查询 Bundle 前需要提供 Bundle 标识。</value>
+  </data>
+  <data name="Error.Asset.Query.AssetIdRequired" xml:space="preserve">
+    <value>查询资源前需要提供资源标识。</value>
+  </data>
+  <data name="Error.Workspace.OpenAsset.PaneIdRequired" xml:space="preserve">
+    <value>在窗格中打开资源前需要提供窗格标识。</value>
+  </data>
+  <data name="Error.Workspace.Query.NotFound" xml:space="preserve">
+    <value>未找到工作区：{0}</value>
+  </data>
+  <data name="Error.Bundle.Query.NotFound" xml:space="preserve">
+    <value>未找到 Bundle：{0}</value>
+  </data>
+  <data name="Error.Asset.Query.NotFound" xml:space="preserve">
+    <value>未找到资源：{0}</value>
+  </data>
+  <data name="Error.Asset.Replace.NoCompatibleSource" xml:space="preserve">
+    <value>当前资源没有可用的同类型工作区替换源：{0}</value>
+  </data>
+  <data name="Error.Asset.Replace.TypeMismatch" xml:space="preserve">
+    <value>替换源类型 {0} 与目标类型 {1} 不兼容。</value>
+  </data>
+  <data name="Error.Asset.Replace.NoAppliedChange" xml:space="preserve">
+    <value>当前资源没有可撤销的已应用替换：{0}</value>
+  </data>
+  <data name="Error.Asset.Replace.SourceFilePathRequired" xml:space="preserve">
+    <value>应用文件替换前需要提供文件路径。</value>
+  </data>
+  <data name="Error.Asset.Replace.NoBatchCandidates" xml:space="preserve">
+    <value>当前工作区在给定筛选条件下没有可执行批量替换骨架的资源：{0}</value>
+  </data>
+  <data name="Error.Asset.Extract.NoBatchCandidates" xml:space="preserve">
+    <value>当前筛选条件下没有可执行批量提取的候选资源：{0}</value>
+  </data>
+  <data name="Error.Bundle.Save.NoCandidates" xml:space="preserve">
+    <value>当前工作区没有可执行保存骨架的资源包：{0}</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.Failed" xml:space="preserve">
+    <value>资源包解密失败。解密器：{0}。详情：{1}</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.InvalidResult" xml:space="preserve">
+    <value>资源包解密结果无效。解密器：{0}。详情：{1}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorCatalogTitleText.Text" xml:space="preserve">
+    <value>解密器管理</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorCatalogHintText.Text" xml:space="preserve">
+    <value>管理工作区可复用的资源包解密器定义。保存后，新建工作区可以直接选择这些解密器。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorCatalogEmptyText.Text" xml:space="preserve">
+    <value>当前还没有可管理的解密器定义。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorCatalogAddButton.Content" xml:space="preserve">
+    <value>新增解密器</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorCatalogRefreshButton.Content" xml:space="preserve">
+    <value>刷新目录</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorEditButton.Content" xml:space="preserve">
+    <value>编辑</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorDeleteButton.Content" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorBadge.BuiltIn" xml:space="preserve">
+    <value>内置</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorBadge.ReadOnly" xml:space="preserve">
+    <value>只读</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorBadge.UserManaged" xml:space="preserve">
+    <value>用户定义</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorVersion.Format" xml:space="preserve">
+    <value>版本：{0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorExecutablePath.Format" xml:space="preserve">
+    <value>可执行入口：{0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorManifestPath.Format" xml:space="preserve">
+    <value>清单文件：{0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorDelete.Title" xml:space="preserve">
+    <value>删除解密器</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorDelete.Description.Format" xml:space="preserve">
+    <value>确认删除解密器“{0}”吗？标识：{1}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorDelete.PrimaryButton" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorDelete.CloseButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorLoadFailedMessage" xml:space="preserve">
+    <value>解密器目录加载失败。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorSaveSucceededMessage.Format" xml:space="preserve">
+    <value>已保存解密器：{0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorSaveFailedMessage" xml:space="preserve">
+    <value>解密器保存失败。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorDeleteSucceededMessage.Format" xml:space="preserve">
+    <value>已删除解密器：{0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorDeleteFailedMessage" xml:space="preserve">
+    <value>解密器删除失败。</value>
+  </data>
+  <data name="BundleExplorer.Status.CurrentDecryptor.Label" xml:space="preserve">
+    <value>当前解密器</value>
+  </data>
+  <data name="AssetBundleDecryptor.BuiltIn.AutoDetect.DisplayName" xml:space="preserve">
+    <value>自动识别</value>
+  </data>
+  <data name="AssetBundleDecryptor.BuiltIn.AutoDetect.Description" xml:space="preserve">
+    <value>导入时自动探测当前工作区应统一使用的解密器；如果没有命中项，则回退为直通读取。</value>
+  </data>
+  <data name="AssetBundleDecryptor.BuiltIn.PassThrough.DisplayName" xml:space="preserve">
+    <value>直通</value>
+  </data>
+  <data name="AssetBundleDecryptor.BuiltIn.PassThrough.Description" xml:space="preserve">
+    <value>不对资源包做变换，直接把原始文件交给读取器。</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Title.New" xml:space="preserve">
+    <value>新增解密器</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Title.Edit.Format" xml:space="preserve">
+    <value>编辑解密器：{0}</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.PrimaryButton" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.CloseButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Id.Label" xml:space="preserve">
+    <value>解密器标识</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Id.Placeholder" xml:space="preserve">
+    <value>例如：game.example.decryptor</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.DisplayName.Label" xml:space="preserve">
+    <value>显示名称</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.DisplayName.Placeholder" xml:space="preserve">
+    <value>例如：Example Game Decryptor</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Version.Label" xml:space="preserve">
+    <value>版本</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Version.Placeholder" xml:space="preserve">
+    <value>例如：1.0.0</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Description.Label" xml:space="preserve">
+    <value>说明</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Description.Placeholder" xml:space="preserve">
+    <value>简要说明这个解密器适用于什么场景</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.ExecutablePath.Label" xml:space="preserve">
+    <value>可执行入口</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.ExecutablePath.Placeholder" xml:space="preserve">
+    <value>例如：python 或 decryptor.exe</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.WorkingDirectoryPath.Label" xml:space="preserve">
+    <value>工作目录</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.WorkingDirectoryPath.Placeholder" xml:space="preserve">
+    <value>留空则跟随清单目录</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Timeout.Label" xml:space="preserve">
+    <value>超时时间（毫秒）</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Timeout.Placeholder" xml:space="preserve">
+    <value>例如：15000</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.ProbeArguments.Label" xml:space="preserve">
+    <value>探测参数</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.ProbeArguments.Placeholder" xml:space="preserve">
+    <value>每行一个参数，可留空</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.DecryptArguments.Label" xml:space="preserve">
+    <value>解密参数</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.DecryptArguments.Placeholder" xml:space="preserve">
+    <value>每行一个参数，至少保留一行</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.SupportsAutoDetection.Label" xml:space="preserve">
+    <value>支持自动识别</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.IsFallback.Label" xml:space="preserve">
+    <value>作为回退解密器</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Validation.IdRequired" xml:space="preserve">
+    <value>请输入解密器标识。</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Validation.DisplayNameRequired" xml:space="preserve">
+    <value>请输入显示名称。</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Validation.ExecutablePathRequired" xml:space="preserve">
+    <value>请输入可执行入口路径或命令。</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Validation.TimeoutInvalid" xml:space="preserve">
+    <value>超时时间必须大于 0。</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Validation.DecryptArgumentsRequired" xml:space="preserve">
+    <value>请至少提供一条解密参数。</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Decryptor.Header" xml:space="preserve">
+    <value>工作区解密器</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Decryptor.Hint" xml:space="preserve">
+    <value>为当前工作区选择默认解密器，后续导入资源包时会统一使用这项配置。</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.Decryptor.Hint" xml:space="preserve">
+    <value>已有工作区会沿用元数据中保存的解密器配置。</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Summary.Decryptor.Label" xml:space="preserve">
+    <value>解密器</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.IdRequired" xml:space="preserve">
+    <value>请输入解密器标识。</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.DisplayNameRequired" xml:space="preserve">
+    <value>请输入解密器显示名称。</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.ExecutablePathRequired" xml:space="preserve">
+    <value>请输入可执行入口路径或命令。</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.DecryptArgumentsRequired" xml:space="preserve">
+    <value>请至少提供一条解密参数。</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.TimeoutInvalid" xml:space="preserve">
+    <value>解密器超时时间必须大于 0。</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.NotFound" xml:space="preserve">
+    <value>未找到解密器定义：{0}</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.ReadOnly" xml:space="preserve">
+    <value>解密器为只读定义，不能直接修改：{0}</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.AlreadyExists" xml:space="preserve">
+    <value>已存在同标识的解密器定义：{0}</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.SaveFailed" xml:space="preserve">
+    <value>解密器保存失败。详情：{0}</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.DeleteFailed" xml:space="preserve">
+    <value>解密器删除失败。详情：{0}</value>
+  </data>
+  <data name="Error.Workspace.Import.MetadataNotFound" xml:space="preserve">
+    <value>未找到工作区元数据，无法继续导入：{0}</value>
+  </data>
+  <data name="Error.Workspace.Open.DataRootPathRequired" xml:space="preserve">
+    <value>打开工作区前必须提供工作区数据目录。</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.FallbackNotFound" xml:space="preserve">
+    <value>未找到可用的回退解密器，请先在设置中检查解密器配置。</value>
+  </data>
+  <data name="Error.Bundle.Read.Failed" xml:space="preserve">
+    <value>资源包读取失败：{0}。详情：{1}</value>
+  </data>
+</root>

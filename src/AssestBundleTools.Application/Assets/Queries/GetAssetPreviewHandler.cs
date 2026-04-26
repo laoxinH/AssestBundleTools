@@ -1,0 +1,415 @@
+using System.Security.Cryptography;
+using System.Text;
+using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Common.Abstractions;
+using AssestBundleTools.Application.Common.Errors;
+using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Application.Workspace.Internal;
+using AssestBundleTools.Application.Workspace.Services;
+using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Common.Errors;
+
+namespace AssestBundleTools.Application.Assets.Queries;
+
+/// <summary>
+/// 处理单个资源预览查询请求。
+/// </summary>
+/// <remarks>
+/// 该用例负责把“索引缓存定位 + 预览缓存命中/写回 + 真实生成器调用”组织成稳定流程，
+/// 让 Presentation 层只消费统一的预览读模型。
+/// </remarks>
+public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>>
+{
+    private const string TextContentType = "text/plain; charset=utf-8";
+
+    private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
+    private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
+    private readonly IAssetBundleDecryptorRegistry _assetBundleDecryptorRegistry;
+    private readonly IAssetPreviewGenerator _assetPreviewGenerator;
+
+    public GetAssetPreviewHandler(
+        IWorkspaceSessionRegistry workspaceSessionRegistry,
+        IWorkspaceDataStoreFactory workspaceDataStoreFactory,
+        IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
+        IAssetPreviewGenerator assetPreviewGenerator)
+    {
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
+        _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
+        _assetBundleDecryptorRegistry = assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry));
+        _assetPreviewGenerator = assetPreviewGenerator ?? throw new ArgumentNullException(nameof(assetPreviewGenerator));
+    }
+
+    public async Task<Result<AssetPreviewDto>> HandleAsync(
+        GetAssetPreviewQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Result<AssetPreviewDto>.Cancelled();
+        }
+
+        if (string.IsNullOrWhiteSpace(query.WorkspaceId.Value))
+        {
+            return Result<AssetPreviewDto>.Failure(ApplicationErrors.WorkspaceIdRequired());
+        }
+
+        if (string.IsNullOrWhiteSpace(query.WorkspaceKey))
+        {
+            return Result<AssetPreviewDto>.Failure(ApplicationErrors.WorkspaceCatalogKeyRequired());
+        }
+
+        if (string.IsNullOrWhiteSpace(query.WorkspaceDataRootPath))
+        {
+            return Result<AssetPreviewDto>.Failure(ApplicationErrors.WorkspaceOpenDataRootPathRequired());
+        }
+
+        if (string.IsNullOrWhiteSpace(query.BundleId.Value))
+        {
+            return Result<AssetPreviewDto>.Failure(ApplicationErrors.BundleIdRequired());
+        }
+
+        if (string.IsNullOrWhiteSpace(query.AssetId.Value))
+        {
+            return Result<AssetPreviewDto>.Failure(ApplicationErrors.AssetIdRequired());
+        }
+
+        if (!_workspaceSessionRegistry.ContainsWorkspace(query.WorkspaceId))
+        {
+            return Result<AssetPreviewDto>.Failure(ApplicationErrors.WorkspaceNotFound(query.WorkspaceId));
+        }
+
+        if (!_workspaceSessionRegistry.ContainsBundle(query.WorkspaceId, query.BundleId))
+        {
+            return Result<AssetPreviewDto>.Failure(ApplicationErrors.BundleNotFound(query.BundleId));
+        }
+
+        if (!_workspaceSessionRegistry.ContainsAsset(query.WorkspaceId, query.BundleId, query.AssetId))
+        {
+            return Result<AssetPreviewDto>.Failure(ApplicationErrors.AssetNotFound(query.AssetId));
+        }
+
+        var bundleIndexCacheStore = _workspaceDataStoreFactory.CreateBundleIndexCacheStore(query.WorkspaceDataRootPath);
+        var previewCacheStore = _workspaceDataStoreFactory.CreatePreviewCacheStore(query.WorkspaceDataRootPath);
+        var bundleCacheEntry = bundleIndexCacheStore.LoadAll(query.WorkspaceKey)
+            .FirstOrDefault(entry => string.Equals(entry.BundleId, query.BundleId.Value, StringComparison.Ordinal));
+        if (bundleCacheEntry is null)
+        {
+            return Result<AssetPreviewDto>.Failure(ApplicationErrors.BundleNotFound(query.BundleId));
+        }
+
+        var assetCacheEntry = bundleCacheEntry.Assets
+            .FirstOrDefault(entry => string.Equals(entry.AssetId, query.AssetId.Value, StringComparison.Ordinal));
+        if (assetCacheEntry is null)
+        {
+            return Result<AssetPreviewDto>.Failure(ApplicationErrors.AssetNotFound(query.AssetId));
+        }
+
+        var previewCacheKey = CreatePreviewCacheKey(bundleCacheEntry.BundleCacheKey, assetCacheEntry.AssetId);
+        var cachedPreviewPayload = previewCacheStore.Load(query.WorkspaceKey, previewCacheKey);
+        var cacheEvaluation = EvaluatePreviewCache(
+            bundleCacheEntry,
+            assetCacheEntry,
+            previewCacheKey,
+            cachedPreviewPayload);
+        if (cacheEvaluation.IsHit && cacheEvaluation.Payload is not null)
+        {
+            return Result<AssetPreviewDto>.Success(MapPreviewDto(
+                query,
+                cacheEvaluation.Payload.Descriptor,
+                cacheEvaluation.Payload.Content,
+                isFromCache: true,
+                diagnostic: new AssetPreviewDiagnosticDto(
+                    CacheStatus: AssetPreviewCacheStatusKind.Hit,
+                    FallbackReason: AssetPreviewFallbackReasonKind.None)));
+        }
+
+        if (string.IsNullOrWhiteSpace(assetCacheEntry.SerializedFileName))
+        {
+            return Result<AssetPreviewDto>.Success(BuildFallbackSummaryPreview(
+                query,
+                assetCacheEntry,
+                "Preview metadata is missing. Reimport the bundle to rebuild cache locators.",
+                new AssetPreviewDiagnosticDto(
+                    CacheStatus: cacheEvaluation.CacheStatus,
+                    FallbackReason: AssetPreviewFallbackReasonKind.MissingLocator,
+                    Detail: "Serialized file locator is missing from bundle index cache.")));
+        }
+
+        var decryptorResult = WorkspaceAssetBundleDecryptorResolver.Resolve(
+            _assetBundleDecryptorRegistry,
+            bundleCacheEntry.DecryptorId);
+        if (!decryptorResult.IsSuccess || decryptorResult.Value is null)
+        {
+            return Result<AssetPreviewDto>.Success(BuildFallbackSummaryPreview(
+                query,
+                assetCacheEntry,
+                "Unable to resolve the configured decryptor for this bundle.",
+                new AssetPreviewDiagnosticDto(
+                    CacheStatus: cacheEvaluation.CacheStatus,
+                    FallbackReason: AssetPreviewFallbackReasonKind.DecryptorResolveFailed,
+                    Detail: BuildErrorDetail("Unable to resolve configured decryptor.", decryptorResult.Errors))));
+        }
+
+        var decryptionResult = await decryptorResult.Value.DecryptAsync(
+            new AssetBundleDecryptionRequestDto(
+                SourcePath: bundleCacheEntry.SourceFingerprint.SourcePath,
+                WorkspaceKey: query.WorkspaceKey,
+                WorkspaceDataRootPath: query.WorkspaceDataRootPath),
+            cancellationToken);
+        if (decryptionResult.IsCancelled)
+        {
+            return Result<AssetPreviewDto>.Cancelled();
+        }
+
+        if (!decryptionResult.IsSuccess || decryptionResult.Value is null)
+        {
+            return Result<AssetPreviewDto>.Success(BuildFallbackSummaryPreview(
+                query,
+                assetCacheEntry,
+                "Unable to decrypt the bundle for preview generation.",
+                new AssetPreviewDiagnosticDto(
+                    CacheStatus: cacheEvaluation.CacheStatus,
+                    FallbackReason: AssetPreviewFallbackReasonKind.DecryptionFailed,
+                    Detail: BuildErrorDetail("Bundle decryption failed during preview generation.", decryptionResult.Errors))));
+        }
+
+        var buildRequest = new AssetPreviewBuildRequestDto(
+            ResolvedBundlePath: decryptionResult.Value.ResolvedBundlePath,
+            AssetId: assetCacheEntry.AssetId,
+            AssetName: assetCacheEntry.AssetName,
+            AssetPath: assetCacheEntry.AssetPath,
+            ContainerPath: assetCacheEntry.ContainerPath,
+            AssetType: ParseAssetType(assetCacheEntry.AssetType),
+            AssetTypeDisplayName: ResolveAssetTypeDisplayName(assetCacheEntry),
+            SizeInBytes: assetCacheEntry.SizeInBytes,
+            SerializedFileName: assetCacheEntry.SerializedFileName,
+            PathId: assetCacheEntry.PathId);
+
+        var previewContentResult = await _assetPreviewGenerator.GenerateAsync(buildRequest, cancellationToken);
+        if (previewContentResult.IsCancelled)
+        {
+            return Result<AssetPreviewDto>.Cancelled();
+        }
+
+        if (!previewContentResult.IsSuccess || previewContentResult.Value is null)
+        {
+            return Result<AssetPreviewDto>.Success(BuildFallbackSummaryPreview(
+                query,
+                assetCacheEntry,
+                "Unable to parse preview content from the selected bundle.",
+                new AssetPreviewDiagnosticDto(
+                    CacheStatus: cacheEvaluation.CacheStatus,
+                    FallbackReason: AssetPreviewFallbackReasonKind.GenerationFailed,
+                    Detail: BuildErrorDetail("Preview generator failed to parse asset content.", previewContentResult.Errors))));
+        }
+
+        var generatedAtUtc = DateTimeOffset.UtcNow;
+        var previewContent = previewContentResult.Value;
+        var descriptor = new PreviewCacheDescriptorDto(
+            WorkspaceKey: query.WorkspaceKey,
+            PreviewCacheKey: previewCacheKey,
+            BundleCacheKey: bundleCacheEntry.BundleCacheKey,
+            AssetId: assetCacheEntry.AssetId,
+            PreviewKind: previewContent.Kind.ToString(),
+            ContentType: previewContent.ContentType,
+            RelativePayloadPath: ResolvePayloadFileName(previewCacheKey, previewContent),
+            SourceFingerprint: bundleCacheEntry.SourceFingerprint,
+            GeneratedAtUtc: generatedAtUtc,
+            GeneratorVersion: _assetPreviewGenerator.GeneratorVersion,
+            PreviewInfoText: previewContent.PreviewInfoText,
+            PreferredDisplaySizeInBytes: previewContent.PreferredDisplaySizeInBytes);
+        previewCacheStore.Save(new PreviewCachePayloadDto(descriptor, previewContent.Content));
+
+        return Result<AssetPreviewDto>.Success(MapPreviewDto(
+            query,
+            descriptor,
+            previewContent.Content,
+            isFromCache: false,
+            diagnostic: new AssetPreviewDiagnosticDto(
+                CacheStatus: cacheEvaluation.CacheStatus,
+                FallbackReason: AssetPreviewFallbackReasonKind.None,
+                Detail: cacheEvaluation.Detail)));
+    }
+
+    private PreviewCacheEvaluationResult EvaluatePreviewCache(
+        BundleIndexCacheEntryDto bundleCacheEntry,
+        BundleIndexAssetCacheEntryDto assetCacheEntry,
+        string previewCacheKey,
+        PreviewCachePayloadDto? previewCachePayload)
+    {
+        if (previewCachePayload?.Descriptor is null)
+        {
+            return new PreviewCacheEvaluationResult(
+                IsHit: false,
+                Payload: null,
+                CacheStatus: AssetPreviewCacheStatusKind.Missing,
+                Detail: "Preview cache descriptor or payload was not found.");
+        }
+
+        var descriptor = previewCachePayload.Descriptor;
+        var sourceMatches = WorkspaceFileFingerprintComparer.Matches(
+            descriptor.SourceFingerprint,
+            bundleCacheEntry.SourceFingerprint);
+        if (!string.Equals(descriptor.PreviewCacheKey, previewCacheKey, StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(descriptor.BundleCacheKey, bundleCacheEntry.BundleCacheKey, StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(descriptor.AssetId, assetCacheEntry.AssetId, StringComparison.Ordinal) ||
+            !sourceMatches)
+        {
+            var cacheStatus = sourceMatches
+                ? AssetPreviewCacheStatusKind.IdentityChanged
+                : AssetPreviewCacheStatusKind.SourceFingerprintChanged;
+            var detail = sourceMatches
+                ? "Preview cache identity no longer matches the current bundle or asset."
+                : "Preview cache source fingerprint no longer matches the current bundle source.";
+            return new PreviewCacheEvaluationResult(
+                IsHit: false,
+                Payload: null,
+                CacheStatus: cacheStatus,
+                Detail: detail);
+        }
+
+        if (!string.Equals(descriptor.GeneratorVersion, _assetPreviewGenerator.GeneratorVersion, StringComparison.OrdinalIgnoreCase))
+        {
+            return new PreviewCacheEvaluationResult(
+                IsHit: false,
+                Payload: null,
+                CacheStatus: AssetPreviewCacheStatusKind.GeneratorVersionChanged,
+                Detail: $"Preview cache generator version '{descriptor.GeneratorVersion}' no longer matches current version '{_assetPreviewGenerator.GeneratorVersion}'.");
+        }
+
+        // 预览缓存和资源包索引缓存一样，属于“缓存命中识别”的一部分。
+        // 这里只在资源身份、来源指纹和生成器版本都仍然一致时才复用旧预览，
+        // 避免资源包更新后继续误用过期缩略图或文本摘要。
+        return new PreviewCacheEvaluationResult(
+            IsHit: true,
+            Payload: previewCachePayload,
+            CacheStatus: AssetPreviewCacheStatusKind.Hit,
+            Detail: null);
+    }
+
+    private static AssetPreviewDto MapPreviewDto(
+        GetAssetPreviewQuery query,
+        PreviewCacheDescriptorDto descriptor,
+        byte[] content,
+        bool isFromCache,
+        AssetPreviewDiagnosticDto diagnostic)
+    {
+        var previewKind = Enum.TryParse<AssetPreviewKind>(descriptor.PreviewKind, ignoreCase: true, out var parsedPreviewKind)
+            ? parsedPreviewKind
+            : AssetPreviewKind.Summary;
+
+        return previewKind == AssetPreviewKind.Image
+            ? new AssetPreviewDto(
+                WorkspaceId: query.WorkspaceId,
+                BundleId: query.BundleId,
+                AssetId: query.AssetId,
+                Kind: previewKind,
+                ContentType: descriptor.ContentType,
+                BinaryContent: content,
+                TextContent: null,
+                PreviewInfoText: descriptor.PreviewInfoText,
+                PreferredDisplaySizeInBytes: descriptor.PreferredDisplaySizeInBytes,
+                IsFromCache: isFromCache,
+                GeneratedAtUtc: descriptor.GeneratedAtUtc,
+                Diagnostic: diagnostic)
+            : new AssetPreviewDto(
+                WorkspaceId: query.WorkspaceId,
+                BundleId: query.BundleId,
+                AssetId: query.AssetId,
+                Kind: previewKind,
+                ContentType: descriptor.ContentType,
+                BinaryContent: null,
+                TextContent: Encoding.UTF8.GetString(content),
+                PreviewInfoText: descriptor.PreviewInfoText,
+                PreferredDisplaySizeInBytes: descriptor.PreferredDisplaySizeInBytes,
+                IsFromCache: isFromCache,
+                GeneratedAtUtc: descriptor.GeneratedAtUtc,
+                Diagnostic: diagnostic);
+    }
+
+    private static AssetPreviewDto BuildFallbackSummaryPreview(
+        GetAssetPreviewQuery query,
+        BundleIndexAssetCacheEntryDto assetCacheEntry,
+        string reason,
+        AssetPreviewDiagnosticDto diagnostic)
+    {
+        var summaryText = string.Join(Environment.NewLine, new[]
+        {
+            $"Preview unavailable: {reason}",
+            $"Type: {ResolveAssetTypeDisplayName(assetCacheEntry)}",
+            $"Asset: {assetCacheEntry.AssetName}",
+            $"Path: {assetCacheEntry.AssetPath}"
+        });
+
+        return new AssetPreviewDto(
+            WorkspaceId: query.WorkspaceId,
+            BundleId: query.BundleId,
+            AssetId: query.AssetId,
+            Kind: AssetPreviewKind.Summary,
+            ContentType: TextContentType,
+            BinaryContent: null,
+            TextContent: summaryText,
+            PreviewInfoText: null,
+            PreferredDisplaySizeInBytes: null,
+            IsFromCache: false,
+            GeneratedAtUtc: DateTimeOffset.UtcNow,
+            Diagnostic: diagnostic);
+    }
+
+    private static string BuildErrorDetail(string summary, IReadOnlyList<AppError> errors)
+    {
+        if (errors.Count == 0)
+        {
+            return summary;
+        }
+
+        var errorDetails = string.Join("; ", errors.Select(static error => $"{error.Code}: {error.MessageToken}"));
+        return $"{summary} {errorDetails}";
+    }
+
+    private static string CreatePreviewCacheKey(string bundleCacheKey, string assetId)
+    {
+        var normalizedKey = $"{bundleCacheKey.ToLowerInvariant()}::{assetId.ToLowerInvariant()}";
+        var bytes = Encoding.UTF8.GetBytes(normalizedKey);
+        return Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+    }
+
+    private static string ResolvePayloadFileName(string previewCacheKey, AssetPreviewContentDto previewContent)
+    {
+        var fileName = previewContent.Kind switch
+        {
+            AssetPreviewKind.Image => "payload.png",
+            _ => "payload.txt"
+        };
+
+        return Path.Combine(previewCacheKey, fileName);
+    }
+
+    private static AssetType ParseAssetType(string assetType)
+    {
+        return Enum.TryParse<AssetType>(assetType, ignoreCase: true, out var parsedAssetType)
+            ? parsedAssetType
+            : AssetType.Unknown;
+    }
+
+    private static string ResolveAssetTypeDisplayName(BundleIndexAssetCacheEntryDto assetCacheEntry)
+    {
+        if (!string.IsNullOrWhiteSpace(assetCacheEntry.AssetTypeDisplayName))
+        {
+            return assetCacheEntry.AssetTypeDisplayName.Trim();
+        }
+
+        return string.IsNullOrWhiteSpace(assetCacheEntry.AssetType)
+            ? AssetType.Unknown.ToString()
+            : assetCacheEntry.AssetType.Trim();
+    }
+
+    private sealed record PreviewCacheEvaluationResult(
+        bool IsHit,
+        PreviewCachePayloadDto? Payload,
+        AssetPreviewCacheStatusKind CacheStatus,
+        string? Detail);
+}

@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    统一 Debug 构建行为，保证跨项目断点、调用栈和符号加载更稳定，
+    便于当前阶段先做 WinUI UI 链路的初步调试。
+  -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+</Project>

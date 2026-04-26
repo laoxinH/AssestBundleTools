@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="AssestBundleTools.Presentation.WinUI.Views.Shared.LogPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewModels="using:AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer"
+    mc:Ignorable="d">
+
+    <Grid RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock
+                Style="{ThemeResource BodyStrongTextBlockStyle}"
+                Text="{x:Bind ViewModel.SummaryText, Mode=OneWay}" />
+            <Button x:Name="AllFilterButton" x:Uid="LogPanel.AllFilterButton" Grid.Column="1" IsEnabled="False" />
+            <Button x:Name="InfoFilterButton" x:Uid="LogPanel.InfoFilterButton" Grid.Column="2" IsEnabled="False" />
+            <Button x:Name="WarningFilterButton" x:Uid="LogPanel.WarningFilterButton" Grid.Column="3" IsEnabled="False" />
+            <Button x:Name="ErrorFilterButton" x:Uid="LogPanel.ErrorFilterButton" Grid.Column="4" IsEnabled="False" />
+            <Button x:Name="ClearButton" x:Uid="LogPanel.ClearButton" Grid.Column="5" Click="OnClearButtonClick" />
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <ListView
+                ItemsSource="{x:Bind ViewModel.Entries, Mode=OneWay}"
+                Visibility="{x:Bind ViewModel.EntriesVisibility, Mode=OneWay}">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:LogEntryViewModel">
+                        <Grid ColumnSpacing="12" Padding="4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind TimestampText}" />
+                            <TextBlock Grid.Column="1" Text="{x:Bind Message}" TextWrapping="WrapWholeWords" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <Border
+                Padding="12"
+                Visibility="{x:Bind ViewModel.EmptyStateVisibility, Mode=OneWay}">
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.EmptyStateText, Mode=OneWay}"
+                    TextWrapping="WrapWholeWords" />
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

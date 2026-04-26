@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "AssestBundleTools (Unpackaged Debug)": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ABT_ENVIRONMENT": "Development",
+        "ABT_DEBUG_PROFILE": "UnpackagedDebug"
+      }
+    },
+    "AssestBundleTools (Package Debug)": {
+      "commandName": "MsixPackage",
+      "environmentVariables": {
+        "ABT_ENVIRONMENT": "Development",
+        "ABT_DEBUG_PROFILE": "PackageDebug"
+      }
+    }
+  }
+}

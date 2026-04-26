@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Application
+    x:Class="AssestBundleTools.Presentation.WinUI.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:AssestBundleTools.Presentation.WinUI">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style
+                x:Key="SettingsSectionCardStyle"
+                TargetType="Border">
+                <Setter
+                    Property="Background"
+                    Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                <Setter
+                    Property="BorderBrush"
+                    Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter
+                    Property="BorderThickness"
+                    Value="1" />
+                <Setter
+                    Property="CornerRadius"
+                    Value="24" />
+            </Style>
+
+            <Style
+                x:Key="SettingsInsetCardStyle"
+                TargetType="Border">
+                <Setter
+                    Property="Background"
+                    Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
+                <Setter
+                    Property="BorderBrush"
+                    Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter
+                    Property="BorderThickness"
+                    Value="1" />
+                <Setter
+                    Property="CornerRadius"
+                    Value="18" />
+            </Style>
+
+            <Style
+                x:Key="SettingsRowButtonStyle"
+                TargetType="Button">
+                <Setter
+                    Property="Background"
+                    Value="{ThemeResource SubtleFillColorTransparentBrush}" />
+                <Setter
+                    Property="BorderBrush"
+                    Value="{ThemeResource SubtleFillColorTransparentBrush}" />
+                <Setter
+                    Property="BorderThickness"
+                    Value="0" />
+                <Setter
+                    Property="CornerRadius"
+                    Value="14" />
+                <Setter
+                    Property="HorizontalAlignment"
+                    Value="Stretch" />
+                <Setter
+                    Property="HorizontalContentAlignment"
+                    Value="Stretch" />
+                <Setter
+                    Property="Padding"
+                    Value="0" />
+                <Setter
+                    Property="MinHeight"
+                    Value="56" />
+            </Style>
+
+            <Style
+                x:Key="WorkspaceCommandButtonStyle"
+                TargetType="Button">
+                <Setter
+                    Property="Background"
+                    Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                <Setter
+                    Property="BorderBrush"
+                    Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
+                <Setter
+                    Property="BorderThickness"
+                    Value="1" />
+                <Setter
+                    Property="CornerRadius"
+                    Value="12" />
+                <Setter
+                    Property="Padding"
+                    Value="14,0" />
+                <Setter
+                    Property="MinHeight"
+                    Value="40" />
+                <Setter
+                    Property="MinWidth"
+                    Value="104" />
+                <Setter
+                    Property="HorizontalAlignment"
+                    Value="Left" />
+                <Setter
+                    Property="VerticalAlignment"
+                    Value="Bottom" />
+                <Setter
+                    Property="HorizontalContentAlignment"
+                    Value="Center" />
+                <Setter
+                    Property="FontWeight"
+                    Value="SemiBold" />
+            </Style>
+
+            <Style
+                x:Key="WorkspaceInlineActionButtonStyle"
+                TargetType="Button">
+                <Setter
+                    Property="Background"
+                    Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+                <Setter
+                    Property="BorderBrush"
+                    Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter
+                    Property="BorderThickness"
+                    Value="1" />
+                <Setter
+                    Property="CornerRadius"
+                    Value="10" />
+                <Setter
+                    Property="Padding"
+                    Value="12,0" />
+                <Setter
+                    Property="MinHeight"
+                    Value="38" />
+                <Setter
+                    Property="MinWidth"
+                    Value="110" />
+                <Setter
+                    Property="HorizontalAlignment"
+                    Value="Left" />
+                <Setter
+                    Property="HorizontalContentAlignment"
+                    Value="Stretch" />
+                <Setter
+                    Property="VerticalAlignment"
+                    Value="Center" />
+                <Setter
+                    Property="FontWeight"
+                    Value="SemiBold" />
+            </Style>
+
+            <Style
+                x:Key="WorkspaceFieldLabelTextStyle"
+                TargetType="TextBlock">
+                <Setter
+                    Property="FontSize"
+                    Value="13" />
+                <Setter
+                    Property="FontWeight"
+                    Value="SemiBold" />
+                <Setter
+                    Property="Foreground"
+                    Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Setter
+                    Property="TextWrapping"
+                    Value="WrapWholeWords" />
+            </Style>
+
+            <Style
+                x:Key="WorkspacePillSurfaceStyle"
+                TargetType="Border">
+                <Setter
+                    Property="Background"
+                    Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
+                <Setter
+                    Property="BorderBrush"
+                    Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter
+                    Property="BorderThickness"
+                    Value="1" />
+                <Setter
+                    Property="CornerRadius"
+                    Value="18" />
+                <Setter
+                    Property="Padding"
+                    Value="14,10" />
+            </Style>
+
+            <Style
+                x:Key="WorkspacePageTitleTextStyle"
+                TargetType="TextBlock">
+                <Setter
+                    Property="FontSize"
+                    Value="26" />
+                <Setter
+                    Property="FontWeight"
+                    Value="SemiBold" />
+                <Setter
+                    Property="TextWrapping"
+                    Value="WrapWholeWords" />
+            </Style>
+
+            <Style
+                x:Key="WorkspaceSectionTitleTextStyle"
+                TargetType="TextBlock">
+                <Setter
+                    Property="FontSize"
+                    Value="15" />
+                <Setter
+                    Property="FontWeight"
+                    Value="SemiBold" />
+                <Setter
+                    Property="TextWrapping"
+                    Value="WrapWholeWords" />
+            </Style>
+
+            <Style
+                x:Key="WorkspacePaneTitleTextStyle"
+                TargetType="TextBlock">
+                <Setter
+                    Property="FontSize"
+                    Value="14" />
+                <Setter
+                    Property="FontWeight"
+                    Value="SemiBold" />
+                <Setter
+                    Property="TextWrapping"
+                    Value="WrapWholeWords" />
+            </Style>
+
+            <Style
+                x:Key="ExplorerTreeItemButtonStyle"
+                TargetType="Button">
+                <Setter
+                    Property="Background"
+                    Value="Transparent" />
+                <Setter
+                    Property="BorderBrush"
+                    Value="Transparent" />
+                <Setter
+                    Property="BorderThickness"
+                    Value="0" />
+                <Setter
+                    Property="CornerRadius"
+                    Value="8" />
+                <Setter
+                    Property="Padding"
+                    Value="0" />
+                <Setter
+                    Property="MinHeight"
+                    Value="40" />
+                <Setter
+                    Property="HorizontalAlignment"
+                    Value="Stretch" />
+                <Setter
+                    Property="HorizontalContentAlignment"
+                    Value="Stretch" />
+            </Style>
+
+            <Style
+                x:Key="ExplorerTreeBadgeStyle"
+                TargetType="Border">
+                <Setter
+                    Property="Background"
+                    Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
+                <Setter
+                    Property="BorderBrush"
+                    Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter
+                    Property="BorderThickness"
+                    Value="1" />
+                <Setter
+                    Property="CornerRadius"
+                    Value="10" />
+                <Setter
+                    Property="Padding"
+                    Value="10,5" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

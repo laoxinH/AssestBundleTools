@@ -1,0 +1,54 @@
+# Visual Studio / WinUI
+.vs/
+*.user
+*.suo
+*.userosscache
+*.rsuser
+
+# .NET build outputs
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+ARM/
+ARM64/
+TestResults/
+
+# NuGet / local SDK caches
+packages/
+.nuget-packages/
+.artifacts/
+.build-check/
+.codex-dotnet/
+.dotnet/
+.dotnet_cli/
+.dotnet-cli/
+.dotnet-home/
+.tmp_sln2/
+
+# Local logs / diagnostics
+*.log
+build-logs/
+msbuild-full.log
+infra-restore-diag.log
+infra-diagnostic-latest.log
+app-build.log
+infra-build.log
+ui-build.log
+winui-build.log
+build-decryptor-feature.log
+
+# Temporary / local helper files
+*.tmp
+*.temp
+*.cache
+temp-test.txt
+*.prepathfix
+
+# Local git metadata workarounds
+.git_blocked_probe/
+_gitprobe/
+_gitrepo/
+_gitrepo_probe/

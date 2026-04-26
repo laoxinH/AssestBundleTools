@@ -1,0 +1,1749 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PackageDisplayName" xml:space="preserve">
+    <value>AssestBundleTools</value>
+    <comment>Package display name</comment>
+  </data>
+  <data name="PackageDescription" xml:space="preserve">
+    <value>Unity AB asset bundle processing tool</value>
+    <comment>Package description</comment>
+  </data>
+  <data name="PackagePublisherDisplayName" xml:space="preserve">
+    <value>thixi</value>
+    <comment>Publisher display name</comment>
+  </data>
+  <data name="MainWindow.Title" xml:space="preserve">
+    <value>AssestBundleTools</value>
+    <comment>Main window title</comment>
+  </data>
+  <data name="MainWindow.Subtitle" xml:space="preserve">
+    <value>Unity AssetBundle Workspace</value>
+    <comment>Main window subtitle</comment>
+  </data>
+  <data name="Shell.Pane.Title" xml:space="preserve">
+    <value>Workspace Navigation</value>
+  </data>
+  <data name="Shell.Pane.Subtitle" xml:space="preserve">
+    <value>Launch, Workbench, and Diagnostics</value>
+  </data>
+  <data name="Shell.ConsoleNavItem.Content" xml:space="preserve">
+    <value>Console</value>
+  </data>
+  <data name="Shell.WorkbenchNavItem.Content" xml:space="preserve">
+    <value>Workbench</value>
+  </data>
+  <data name="Shell.BatchTasksNavItem.Content" xml:space="preserve">
+    <value>Batch Tasks</value>
+  </data>
+  <data name="Shell.SettingsDiagnosticsNavItem.Content" xml:space="preserve">
+    <value>Settings &amp; Diagnostics</value>
+  </data>
+  <data name="Shell.Header.LaunchGuide" xml:space="preserve">
+    <value>Console</value>
+  </data>
+  <data name="Shell.Header.Workbench" xml:space="preserve">
+    <value>Workbench</value>
+  </data>
+  <data name="Shell.Header.BatchTasks" xml:space="preserve">
+    <value>Batch Tasks</value>
+  </data>
+  <data name="Shell.Header.SettingsDiagnostics" xml:space="preserve">
+    <value>Settings &amp; Diagnostics</value>
+  </data>
+  <data name="Shell.Description.LaunchGuide" xml:space="preserve">
+    <value>The console page for creating, opening, and resuming workspaces. The workbench can also return here when you need to reorganize entry actions.</value>
+  </data>
+  <data name="Shell.Description.Workbench" xml:space="preserve">
+    <value>The main working page for bundle lists, tabs, asset lists, and asset details.</value>
+  </data>
+  <data name="Shell.Description.BatchTasks" xml:space="preserve">
+    <value>The central place for change summaries, pre-save previews, and later bulk extraction, bulk replacement, and pre-save validation tasks.</value>
+  </data>
+  <data name="Shell.Description.SettingsDiagnostics" xml:space="preserve">
+    <value>The centralized place for detailed logs, environment checks, and later language and diagnostics settings.</value>
+  </data>
+  <data name="HomePage.PageTitleText.Text" xml:space="preserve">
+    <value>Console</value>
+  </data>
+  <data name="HomePage.PageSubtitleText.Text" xml:space="preserve">
+    <value>Create, open, or resume a workspace here. After confirmation, the window enters the workbench; when needed, the workbench can return here to re-organize workspace entry actions.</value>
+  </data>
+  <data name="HomePage.BadgeText.Text" xml:space="preserve">
+    <value>Console</value>
+  </data>
+  <data name="HomePage.QuickActionsTitleText.Text" xml:space="preserve">
+    <value>Quick Start</value>
+  </data>
+  <data name="HomePage.NewWorkspaceButton.Content" xml:space="preserve">
+    <value>New Workspace</value>
+  </data>
+  <data name="HomePage.OpenWorkspaceButton.Content" xml:space="preserve">
+    <value>Open Workspace</value>
+  </data>
+  <data name="HomePage.OpenLatestWorkspaceButton.Content" xml:space="preserve">
+    <value>Open Latest Workspace</value>
+  </data>
+  <data name="HomePage.QuickActionHintText.Text" xml:space="preserve">
+    <value>When creating or opening a workspace, the app uses a single setup panel. After confirmation, the current window switches to the workbench; if a new window is chosen, that workspace opens directly in a new main window.</value>
+  </data>
+  <data name="HomePage.RecentOpenedTitleText.Text" xml:space="preserve">
+    <value>Workspace List</value>
+  </data>
+  <data name="HomePage.RecentActivityTitleText.Text" xml:space="preserve">
+    <value>Recent Activity</value>
+  </data>
+  <data name="HomePage.RecentWorkspaceEmptyState.Text" xml:space="preserve">
+    <value>No registered workspaces yet. Create one first, or pick an existing directory to get started.</value>
+  </data>
+  <data name="HomePage.RecentActivityEmptyState.Text" xml:space="preserve">
+    <value>No recent activity yet. Once a workspace is opened and actions are performed, summaries will appear here.</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.CurrentBadge" xml:space="preserve">
+    <value>Current</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.RegisteredBadge" xml:space="preserve">
+    <value>Registered</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.Source.Format" xml:space="preserve">
+    <value>Source: {0}</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.DataRoot.Format" xml:space="preserve">
+    <value>Data root: {0}</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.DataRoot.NotSpecified" xml:space="preserve">
+    <value>Not specified</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.LastActivated.Format" xml:space="preserve">
+    <value>Last activated: {0}</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.PinButton.ToolTip" xml:space="preserve">
+    <value>Pin workspace</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.UnpinButton.ToolTip" xml:space="preserve">
+    <value>Unpin workspace</value>
+  </data>
+  <data name="HomePage.RecentWorkspace.DeleteButton.ToolTip" xml:space="preserve">
+    <value>Remove this workspace record</value>
+  </data>
+  <data name="HomePage.DeleteWorkspace.FailedMessage" xml:space="preserve">
+    <value>Failed to remove the workspace record. Check Settings &amp; Diagnostics for details.</value>
+  </data>
+  <data name="HomePage.DeleteWorkspace.SucceededMessage.Format" xml:space="preserve">
+    <value>Removed workspace &quot;{0}&quot; from the list.</value>
+  </data>
+  <data name="HomePage.PinWorkspace.FailedMessage" xml:space="preserve">
+    <value>Failed to update the pinned state of the workspace. Check Settings &amp; Diagnostics for details.</value>
+  </data>
+  <data name="HomePage.PinWorkspace.PinnedMessage.Format" xml:space="preserve">
+    <value>Pinned workspace &quot;{0}&quot;.</value>
+  </data>
+  <data name="HomePage.PinWorkspace.UnpinnedMessage.Format" xml:space="preserve">
+    <value>Unpinned workspace &quot;{0}&quot;.</value>
+  </data>
+  <data name="Workspace.Badge.Pinned" xml:space="preserve">
+    <value>Pinned</value>
+  </data>
+  <data name="Workspace.Badge.Unavailable" xml:space="preserve">
+    <value>Unavailable</value>
+  </data>
+  <data name="Workspace.Availability.MissingSource.Format" xml:space="preserve">
+    <value>Source directory unavailable: {0}</value>
+  </data>
+  <data name="Workspace.Availability.MissingDataRoot.Format" xml:space="preserve">
+    <value>Workspace data directory unavailable: {0}</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTarget.CurrentWindow" xml:space="preserve">
+    <value>Current window</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTarget.NewWindow" xml:space="preserve">
+    <value>New window</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTarget.Title" xml:space="preserve">
+    <value>Open Workspace</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTarget.PrimaryButton" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTarget.CloseButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTarget.Description.Format" xml:space="preserve">
+    <value>Choose how to open workspace &quot;{0}&quot;.</value>
+  </data>
+  <data name="WorkspaceDialog.Delete.Title" xml:space="preserve">
+    <value>Remove Workspace Record</value>
+  </data>
+  <data name="WorkspaceDialog.Delete.PrimaryButton" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="WorkspaceDialog.Delete.CloseButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="WorkspaceDialog.Delete.Description.Format" xml:space="preserve">
+    <value>This removes &quot;{0}&quot; from the recent workspace list and deletes the tool-generated workspace metadata file. Data root: {1}. The selected data directory itself and the original AB resources will not be deleted.</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.New.Title" xml:space="preserve">
+    <value>New Workspace</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.Title" xml:space="preserve">
+    <value>Open Workspace</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.New.PrimaryButton" xml:space="preserve">
+    <value>Create and Open</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.PrimaryButton" xml:space="preserve">
+    <value>Confirm and Open</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.CloseButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.New.Description" xml:space="preserve">
+    <value>Like an IDE project wizard, this panel keeps the workspace directory, name, and open target visible in one place. The name is suggested from the selected directory, and if that directory already contains a workspace, the wizard will ask whether to open it directly or reset it and create again.</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.Description" xml:space="preserve">
+    <value>Import and open an existing workspace from a directory. This flow does not create a new workspace and does not rename an existing one; it only continues when recognizable workspace metadata is found in the selected directory.</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Workspace.Name.Header" xml:space="preserve">
+    <value>Workspace name</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Workspace.Name.Placeholder" xml:space="preserve">
+    <value>Enter a workspace name</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Workspace.Name.ReadOnlyPlaceholder" xml:space="preserve">
+    <value>Displayed automatically after a workspace directory is selected</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Workspace.Name.NotDetectedPlaceholder" xml:space="preserve">
+    <value>No workspace was detected in the selected directory</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Workspace.Name.AmbiguousPlaceholder" xml:space="preserve">
+    <value>Multiple workspaces detected and cannot be resolved automatically</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.DataRoot.SectionTitle" xml:space="preserve">
+    <value>Workspace Data Directory</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.DataRoot.SectionTitle" xml:space="preserve">
+    <value>Workspace Directory</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.DataRoot.SectionHint" xml:space="preserve">
+    <value>This directory stores tool-generated workspace metadata, restore state, and later cache files. The workspace name is first loaded from any existing workspace found there; otherwise the directory name is used. A dedicated folder per workspace is recommended for clearer recovery and migration.</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.DataRoot.SectionHint" xml:space="preserve">
+    <value>Select a directory that already contains workspace metadata. This entry only imports and opens an existing workspace; if the directory is not yet in the recent workspace index, it will be registered automatically after the workspace opens successfully.</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.DataRoot.Path.Header" xml:space="preserve">
+    <value>Data directory</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.DataRoot.Path.Header" xml:space="preserve">
+    <value>Workspace directory</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.DataRoot.Path.Placeholder" xml:space="preserve">
+    <value>Select or enter the workspace data directory</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.DataRoot.Path.Placeholder" xml:space="preserve">
+    <value>Select or enter an existing workspace directory</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.DataRoot.BrowseButton" xml:space="preserve">
+    <value>Browse Folder</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.OpenTarget.SectionTitle" xml:space="preserve">
+    <value>Open Target</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.OpenTarget.SectionHint" xml:space="preserve">
+    <value>Choose whether to continue in the current window or keep the current view and open the workspace in a new window.</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Summary.SectionTitle" xml:space="preserve">
+    <value>Configuration Summary</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Summary.WorkspaceName.Label" xml:space="preserve">
+    <value>Workspace name</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Summary.DataRootPath.Label" xml:space="preserve">
+    <value>Data path</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.Summary.DataRootPath.Label" xml:space="preserve">
+    <value>Workspace directory</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Summary.PendingValue" xml:space="preserve">
+    <value>Waiting for input</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Validation.WorkspaceNameRequired" xml:space="preserve">
+    <value>Please enter a workspace name first.</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Validation.DataRootRequired" xml:space="preserve">
+    <value>Please choose the workspace data directory first.</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Validation.OpenWorkspaceDirectoryRequired" xml:space="preserve">
+    <value>Please choose the directory that contains the existing workspace first.</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Validation.OpenWorkspaceNotFound" xml:space="preserve">
+    <value>No openable workspace was detected in the selected directory. Use "New Workspace" instead, or choose the correct workspace directory.</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Validation.MultipleWorkspacesDetected.Format" xml:space="preserve">
+    <value>{0} workspace metadata files were detected in this directory, so the wizard cannot safely decide which one to open. Choose a more specific workspace directory.</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Validation.OpenWorkspaceNotFoundInline" xml:space="preserve">
+    <value>No workspace was detected in the selected directory. Choose an existing workspace directory.</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Validation.MultipleWorkspacesDetectedInline.Format" xml:space="preserve">
+    <value>{0} workspaces were detected in this directory, so the app cannot determine which one to open.</value>
+  </data>
+  <data name="WorkspaceDialog.ExistingWorkspace.Title" xml:space="preserve">
+    <value>Existing Workspace Detected</value>
+  </data>
+  <data name="WorkspaceDialog.ExistingWorkspace.Description.Format" xml:space="preserve">
+    <value>The selected directory already contains workspace "{0}". You can open it directly, or reset that workspace and create again. Reset only removes tool-generated metadata, cache, and staged changes. Directory: {1}</value>
+  </data>
+  <data name="WorkspaceDialog.ExistingWorkspace.OpenButton" xml:space="preserve">
+    <value>Open Existing</value>
+  </data>
+  <data name="WorkspaceDialog.ExistingWorkspace.ResetButton" xml:space="preserve">
+    <value>Reset Workspace</value>
+  </data>
+  <data name="WorkspaceDialog.ExistingWorkspace.CloseButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTargetDescription.CurrentWindow" xml:space="preserve">
+    <value>Replaces the current window workspace context and is best for quick task switching.</value>
+  </data>
+  <data name="WorkspaceDialog.OpenTargetDescription.NewWindow" xml:space="preserve">
+    <value>Keeps the current window intact and opens the workspace in a new main window for side-by-side work.</value>
+  </data>
+  <data name="Workspace.Source.NotImported" xml:space="preserve">
+    <value>No resources imported yet</value>
+  </data>
+  <data name="StartupFallback.Title" xml:space="preserve">
+    <value>Startup Diagnostic View</value>
+  </data>
+  <data name="StartupFallback.Description" xml:space="preserve">
+    <value>The main shell failed during startup. The app has remained open in a minimal diagnostic view so the issue can be investigated.</value>
+  </data>
+  <data name="StartupFallback.Exception.Format" xml:space="preserve">
+    <value>Exception: {0}</value>
+  </data>
+  <data name="StartupFallback.Message.Format" xml:space="preserve">
+    <value>Message: {0}</value>
+  </data>
+  <data name="StartupFallback.LogFile.Format" xml:space="preserve">
+    <value>Startup log: {0}</value>
+  </data>
+  <data name="BundleExplorerPage.PageTitleText.Text" xml:space="preserve">
+    <value>Workbench</value>
+  </data>
+  <data name="BundleExplorerPage.PageEyebrowText.Text" xml:space="preserve">
+    <value>Main Workspace / Asset Browsing</value>
+  </data>
+  <data name="BundleExplorerPage.NewWorkspaceButton.Content" xml:space="preserve">
+    <value>New Workspace</value>
+  </data>
+  <data name="BundleExplorerPage.OpenFileButton.Content" xml:space="preserve">
+    <value>Open File</value>
+  </data>
+  <data name="BundleExplorerPage.OpenWorkspaceButton.Content" xml:space="preserve">
+    <value>Open Workspace</value>
+  </data>
+  <data name="BundleExplorerPage.ReturnToConsoleButton.Content" xml:space="preserve">
+    <value>Back To Console</value>
+  </data>
+  <data name="BundleExplorerPage.BundleImportFileButton.ToolTip" xml:space="preserve">
+    <value>Import bundle files</value>
+  </data>
+  <data name="BundleExplorerPage.BundleImportDirectoryButton.ToolTip" xml:space="preserve">
+    <value>Import bundle directory</value>
+  </data>
+  <data name="BundleExplorerPage.BundleNodeOpenContainingLocationMenuItem.Text" xml:space="preserve">
+    <value>Open containing folder</value>
+  </data>
+  <data name="BundleExplorerPage.BundleNodeRemoveMenuItem.Text" xml:space="preserve">
+    <value>Remove from workspace</value>
+  </data>
+  <data name="BundleExplorerPage.RefreshButton.Content" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="BundleExplorerPage.BatchExtractButton.Content" xml:space="preserve">
+    <value>Batch Extract</value>
+  </data>
+  <data name="BundleExplorerPage.SaveAsBundleButton.Content" xml:space="preserve">
+    <value>Save As New Bundle</value>
+  </data>
+  <data name="BundleExplorerPage.GlobalSearchTextBox.PlaceholderText" xml:space="preserve">
+    <value>Global search (coming later)</value>
+  </data>
+  <data name="BundleExplorerPage.LeftPanelTitleText.Text" xml:space="preserve">
+    <value>Bundles</value>
+  </data>
+  <data name="BundleExplorerPage.BundleSearchTextBox.PlaceholderText" xml:space="preserve">
+    <value>Search bundle name or path</value>
+  </data>
+  <data name="BundleExplorerPage.BundleSearchToggleButton.OpenToolTip" xml:space="preserve">
+    <value>Expand bundle search</value>
+  </data>
+  <data name="BundleExplorerPage.BundleSearchToggleButton.CloseToolTip" xml:space="preserve">
+    <value>Collapse bundle search</value>
+  </data>
+  <data name="BundleExplorerPage.BundlePaneCollapseButton.CollapseToolTip" xml:space="preserve">
+    <value>Collapse bundle list</value>
+  </data>
+  <data name="BundleExplorerPage.BundlePaneCollapseButton.ExpandToolTip" xml:space="preserve">
+    <value>Expand bundle list</value>
+  </data>
+  <data name="BundleExplorerPage.CollapsedBundlePane.BundleCountLabelText.Text" xml:space="preserve">
+    <value>Bundles</value>
+  </data>
+  <data name="BundleExplorerPage.CollapsedBundlePane.GroupCountLabelText.Text" xml:space="preserve">
+    <value>Groups</value>
+  </data>
+  <data name="BundleExplorerPage.CollapsedBundlePane.SelectionLabelText.Text" xml:space="preserve">
+    <value>Current</value>
+  </data>
+  <data name="BundleExplorerPage.CollapsedBundlePane.ImportFileButton.Text" xml:space="preserve">
+    <value>File Import</value>
+  </data>
+  <data name="BundleExplorerPage.CollapsedBundlePane.ImportDirectoryButton.Text" xml:space="preserve">
+    <value>Folder Import</value>
+  </data>
+  <data name="AppNotification.SuccessTitle" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="AppNotification.InfoTitle" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="AppNotification.WarningTitle" xml:space="preserve">
+    <value>Attention</value>
+  </data>
+  <data name="AppNotification.ErrorTitle" xml:space="preserve">
+    <value>Action Failed</value>
+  </data>
+  <data name="AppNotification.CloseButton.ToolTip" xml:space="preserve">
+    <value>Dismiss notification</value>
+  </data>
+  <data name="WorkspaceImport.Button.Files.Text" xml:space="preserve">
+    <value>Import Files</value>
+  </data>
+  <data name="WorkspaceImport.Button.Directory.Text" xml:space="preserve">
+    <value>Import Folder</value>
+  </data>
+  <data name="WorkspaceImport.Log.BundleFilesRegistered.Format" xml:space="preserve">
+    <value>Registered {1} bundle files for workspace \"{0}\". Added {2} new source records in this pass.</value>
+  </data>
+  <data name="WorkspaceImport.Log.BundleDirectoryRegistered.Format" xml:space="preserve">
+    <value>Registered bundle directory \"{1}\" for workspace \"{0}\". The workspace now tracks {2} import sources.</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDropRegistered.Format" xml:space="preserve">
+    <value>Registered drag-and-drop import items for workspace \"{0}\": {1} files and {2} folders. The workspace now tracks {3} import sources.</value>
+  </data>
+  <data name="WorkspaceImport.Log.Processed.Format" xml:space="preserve">
+    <value>Refreshed the import index for workspace \"{0}\": {1} sources, {2} discovered files, {3} screened out early, {4} bundles re-indexed, {5} cache hits reused, {6} read-stage skips, {7} failures.</value>
+  </data>
+  <data name="WorkspaceImport.Log.AutoDetectionSummary.Format" xml:space="preserve">
+    <value>Workspace \"{0}\" used auto-detection for this import and selected decryptor \"{1}\". Probed {2} candidates across {3} unresolved files.</value>
+  </data>
+  <data name="WorkspaceImport.Log.AutoDetectionFallbackSummary.Format" xml:space="preserve">
+    <value>Workspace \"{0}\" used auto-detection for this import, but no candidate matched. Fell back to decryptor \"{1}\". Probed {2} candidates across {3} unresolved files.</value>
+  </data>
+  <data name="WorkspaceImport.Log.AutoDetectionProbe.Format" xml:space="preserve">
+    <value>Auto-detection candidate \"{0}\" ({1}): matched {2}, successful probes {3}, total confidence {4}{5}</value>
+  </data>
+  <data name="WorkspaceImport.Log.AutoDetectionProbe.SelectedSuffix" xml:space="preserve">
+    <value>, selected</value>
+  </data>
+  <data name="WorkspaceImport.Log.AutoDetectionProbeMessage.Format" xml:space="preserve">
+    <value>Auto-detection candidate \"{0}\" detail: {1}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Issue.CandidateScreenedOut.Format" xml:space="preserve">
+    <value>The import source was screened out before bundle processing. Source: {0}. Logical path: {1}. Detail: {2}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Issue.DecryptionFailed.Format" xml:space="preserve">
+    <value>Bundle import failed during decryption. Source: {0}. Logical path: {1}. Decryptor: {2}.</value>
+  </data>
+  <data name="WorkspaceImport.Log.Issue.ReaderRejected.Format" xml:space="preserve">
+    <value>Bundle import was skipped because no registered reader recognized the decrypted output. Source: {0}. Logical path: {1}. Decryptor: {2}. Detail: {3}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Issue.ReadFailed.Format" xml:space="preserve">
+    <value>Bundle import failed during read. Source: {0}. Logical path: {1}. Decryptor: {2}.</value>
+  </data>
+  <data name="WorkspaceImport.Log.Issue.ErrorDetail.Format" xml:space="preserve">
+    <value>Error detail: {0} (Code: {1})</value>
+  </data>
+  <data name="WorkspaceImport.Log.Cache.SourceFingerprintChanged.Format" xml:space="preserve">
+    <value>Bundle cache was invalidated because the source file state changed. Source: {0}. Logical path: {1}. Detail: {2}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Cache.DecryptorChanged.Format" xml:space="preserve">
+    <value>Bundle cache was invalidated because the current decryptor no longer matches the cached entry. Source: {0}. Logical path: {1}. Detail: {2}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Cache.DecryptorVersionChanged.Format" xml:space="preserve">
+    <value>Bundle cache was invalidated because the decryptor version changed. Source: {0}. Logical path: {1}. Detail: {2}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Cache.ToolVersionChanged.Format" xml:space="preserve">
+    <value>Bundle cache was invalidated because the workspace cache schema version changed. Source: {0}. Logical path: {1}. Detail: {2}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Cache.ParserVersionChanged.Format" xml:space="preserve">
+    <value>Bundle cache was invalidated because the current reader no longer supports the cached parser version. Source: {0}. Logical path: {1}. Detail: {2}</value>
+  </data>
+  <data name="WorkspaceImport.Log.Cache.SourceRemoved.Format" xml:space="preserve">
+    <value>Bundle cache was removed because this source is no longer registered in the workspace. Source: {0}. Logical path: {1}.</value>
+  </data>
+  <data name="WorkspaceImport.Notification.BundleFilesRegistered.Format" xml:space="preserve">
+    <value>Registered {1} files for workspace \"{0}\".</value>
+  </data>
+  <data name="WorkspaceImport.Notification.BundleDirectoryRegistered.Format" xml:space="preserve">
+    <value>Registered directory \"{1}\" for workspace \"{0}\".</value>
+  </data>
+  <data name="WorkspaceImport.Notification.DragDropRegistered.Format" xml:space="preserve">
+    <value>Registered drag-and-drop items for workspace \"{0}\": {1} files and {2} folders.</value>
+  </data>
+  <data name="WorkspaceImport.Notification.Processed.Format" xml:space="preserve">
+    <value>Refreshed workspace \"{0}\": {1} screened out, {2} bundles re-indexed, {3} cache hits reused, {4} read-stage skips, {5} failed.</value>
+  </data>
+  <data name="WorkspaceImport.DropOverlay.Title" xml:space="preserve">
+    <value>Drop bundle items here</value>
+  </data>
+  <data name="WorkspaceImport.DropOverlay.Hint" xml:space="preserve">
+    <value>Drop bundle files or folders onto the bundle list area to queue import for the current workspace.</value>
+  </data>
+  <data name="BundleExplorerPage.CenterPanelTitleText.Text" xml:space="preserve">
+    <value>Asset List</value>
+  </data>
+  <data name="BundleExplorerPage.RightPanelTitleText.Text" xml:space="preserve">
+    <value>Asset Details</value>
+  </data>
+  <data name="AssetPaneView.CurrentBundleLabelText.Text" xml:space="preserve">
+    <value>Current Bundle:</value>
+  </data>
+  <data name="AssetPaneView.SearchTextBox.PlaceholderText" xml:space="preserve">
+    <value>Search asset name or path</value>
+  </data>
+  <data name="AssetPaneView.ModifiedOnlyToggleButton.Content" xml:space="preserve">
+    <value>Modified Only</value>
+  </data>
+  <data name="AssetPaneView.PreviewOnlyToggleButton.Content" xml:space="preserve">
+    <value>Preview Only</value>
+  </data>
+  <data name="AssetPaneView.MultiSelectionLabelText.Text" xml:space="preserve">
+    <value>Selected</value>
+  </data>
+  <data name="AssetPaneView.MultiSelectionUnitText.Text" xml:space="preserve">
+    <value>items</value>
+  </data>
+  <data name="AssetPaneView.BatchExtractSelectedButton.Content" xml:space="preserve">
+    <value>Extract Selected</value>
+  </data>
+  <data name="AssetPaneView.AssetNameHeaderText.Text" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="AssetPaneView.AssetTypeHeaderText.Text" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="AssetPaneView.AssetSizeHeaderText.Text" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="AssetPaneView.AssetStateHeaderText.Text" xml:space="preserve">
+    <value>State</value>
+  </data>
+  <data name="AssetPaneView.EmptyStateHintText.Text" xml:space="preserve">
+    <value>Switch a bundle on the left or adjust the current filters to refresh the asset list shown in this pane.</value>
+  </data>
+  <data name="InspectorPanelView.OverviewTab.Header" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="InspectorPanelView.PreviewTab.Header" xml:space="preserve">
+    <value>Preview</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementTab.Header" xml:space="preserve">
+    <value>Replace</value>
+  </data>
+  <data name="InspectorPanelView.DependenciesTab.Header" xml:space="preserve">
+    <value>Dependencies</value>
+  </data>
+  <data name="InspectorPanelView.ChangesTab.Header" xml:space="preserve">
+    <value>Changes</value>
+  </data>
+  <data name="InspectorPanelView.EmptyStateTitleText.Text" xml:space="preserve">
+    <value>Waiting For Selection</value>
+  </data>
+  <data name="InspectorPanelView.AssetNameLabelText.Text" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="InspectorPanelView.AssetTypeLabelText.Text" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="InspectorPanelView.BundleLabelText.Text" xml:space="preserve">
+    <value>Bundle</value>
+  </data>
+  <data name="InspectorPanelView.AssetPathLabelText.Text" xml:space="preserve">
+    <value>Asset Path</value>
+  </data>
+  <data name="InspectorPanelView.ContainerPathLabelText.Text" xml:space="preserve">
+    <value>Container Path</value>
+  </data>
+  <data name="InspectorPanelView.AssetSizeLabelText.Text" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="InspectorPanelView.PathIdLabelText.Text" xml:space="preserve">
+    <value>PathId</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfoLabelText.Text" xml:space="preserve">
+    <value>Preview Info</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnosticTitleText.Text" xml:space="preserve">
+    <value>Preview Diagnostics</value>
+  </data>
+  <data name="InspectorPanelView.PreviewCacheStatusLabelText.Text" xml:space="preserve">
+    <value>Cache Status</value>
+  </data>
+  <data name="InspectorPanelView.PreviewFallbackReasonLabelText.Text" xml:space="preserve">
+    <value>Fallback Reason</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnosticDetailLabelText.Text" xml:space="preserve">
+    <value>Diagnostic Detail</value>
+  </data>
+  <data name="InspectorPanelView.AssetDependenciesTitleText.Text" xml:space="preserve">
+    <value>Asset Dependencies</value>
+  </data>
+  <data name="InspectorPanelView.ReferencedByTitleText.Text" xml:space="preserve">
+    <value>Referenced By</value>
+  </data>
+  <data name="InspectorPanelView.DependencyClosureTitleText.Text" xml:space="preserve">
+    <value>Dependency Closure</value>
+  </data>
+  <data name="InspectorPanelView.BundleExternalDependenciesTitleText.Text" xml:space="preserve">
+    <value>Bundle External Dependencies</value>
+  </data>
+  <data name="InspectorPanelView.OverviewQuickActionsTitleText.Text" xml:space="preserve">
+    <value>Quick Actions</value>
+  </data>
+  <data name="InspectorPanelView.OverviewQuickActionsHintText.Text" xml:space="preserve">
+    <value>This milestone already wires in the single-asset extract flow plus workspace candidate selection, apply, and undo skeletons. File replacement and batch operations will be added in later milestones.</value>
+  </data>
+  <data name="InspectorPanelView.ExtractButton.Content" xml:space="preserve">
+    <value>Extract</value>
+  </data>
+  <data name="InspectorPanelView.SelectReplacementButton.Content" xml:space="preserve">
+    <value>Workspace Source</value>
+  </data>
+  <data name="InspectorPanelView.SelectFileReplacementButton.Content" xml:space="preserve">
+    <value>Select File Source</value>
+  </data>
+  <data name="InspectorPanelView.ApplyReplacementButton.Content" xml:space="preserve">
+    <value>Apply Replacement</value>
+  </data>
+  <data name="InspectorPanelView.UndoReplacementButton.Content" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="InspectorPanelView.PreviewSurfaceTitleText.Text" xml:space="preserve">
+    <value>Preview Surface Skeleton</value>
+  </data>
+  <data name="InspectorPanelView.PreviewPlaceholderText.Text" xml:space="preserve">
+    <value>The preview tab skeleton is ready. Image, text, audio, and other type-specific previewers will plug in later.</value>
+  </data>
+  <data name="InspectorPanelView.PreviewLoadingText.Text" xml:space="preserve">
+    <value>Generating asset preview...</value>
+  </data>
+  <data name="InspectorPanelView.PreviewUnavailableText.Text" xml:space="preserve">
+    <value>This asset does not currently have a visual preview. Text or summary information will be shown instead.</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementTargetTitleText.Text" xml:space="preserve">
+    <value>Current Target Asset</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementSourceTitleText.Text" xml:space="preserve">
+    <value>Replacement Source</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementSourcePlaceholderText.Text" xml:space="preserve">
+    <value>Source information is populated from the file picker today and can later be extended with cross-tab drag sources. To reduce accidental edits, replacement still enters a pending confirmation state before it becomes effective.</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementCompatibilityTitleText.Text" xml:space="preserve">
+    <value>Capability &amp; Compatibility Placeholder</value>
+  </data>
+  <data name="InspectorPanelView.ExtractCapabilityLabelText.Text" xml:space="preserve">
+    <value>Extract</value>
+  </data>
+  <data name="InspectorPanelView.FileReplacementCapabilityLabelText.Text" xml:space="preserve">
+    <value>File Replacement</value>
+  </data>
+  <data name="InspectorPanelView.WorkspaceReplacementCapabilityLabelText.Text" xml:space="preserve">
+    <value>Workspace Replacement</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementPlaceholderText.Text" xml:space="preserve">
+    <value>The replacement tab will later host file replacement, cross-workspace drag replacement, and compatibility checks.</value>
+  </data>
+  <data name="InspectorPanelView.DependenciesEmptyStateText.Text" xml:space="preserve">
+    <value>No direct dependencies, reverse references, dependency closure, or bundle-level external dependencies are available for this selection.</value>
+  </data>
+  <data name="InspectorPanelView.ChangeSummaryTitleText.Text" xml:space="preserve">
+    <value>Current Item Change Summary</value>
+  </data>
+  <data name="InspectorPanelView.ChangesPlaceholderText.Text" xml:space="preserve">
+    <value>The changes tab will later summarize pending replacements, confirmed edits, and pre-save outputs.</value>
+  </data>
+  <data name="InspectorPanelView.Capability.Available" xml:space="preserve">
+    <value>Available</value>
+  </data>
+  <data name="InspectorPanelView.Capability.Unavailable" xml:space="preserve">
+    <value>Unavailable</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementSource.None" xml:space="preserve">
+    <value>No replacement source selected yet</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementSource.Candidate.Format" xml:space="preserve">
+    <value>Pending workspace source: {0} / {1} ({2})</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementSource.Applied.Format" xml:space="preserve">
+    <value>Current workspace source: {0} / {1} ({2})</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementSource.FileCandidate.Format" xml:space="preserve">
+    <value>Pending file: {0} ({2}) | Path: {1}</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementSource.FileApplied.Format" xml:space="preserve">
+    <value>Current file source: {0} ({2}) | Path: {1}</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementStatus.None" xml:space="preserve">
+    <value>No replacement has been applied</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementStatus.Pending.Format" xml:space="preserve">
+    <value>Workspace candidate selected: {0}. Apply to continue</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementStatus.Applied.Format" xml:space="preserve">
+    <value>Workspace replacement applied from "{0}"</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementStatus.FilePending.Format" xml:space="preserve">
+    <value>File source selected: {0}. Apply to continue</value>
+  </data>
+  <data name="InspectorPanelView.ReplacementStatus.FileApplied.Format" xml:space="preserve">
+    <value>File replacement applied from "{0}"</value>
+  </data>
+  <data name="InspectorPanelView.ChangeSummary.None" xml:space="preserve">
+    <value>No extraction or replacement record is available for this asset yet.</value>
+  </data>
+  <data name="InspectorPanelView.ChangeSummary.ExtractOnly.Format" xml:space="preserve">
+    <value>Last extracted at: {0}</value>
+  </data>
+  <data name="InspectorPanelView.ChangeSummary.ReplacementOnly.Format" xml:space="preserve">
+    <value>Workspace replacement applied: {0} / {1}</value>
+  </data>
+  <data name="InspectorPanelView.ChangeSummary.ReplacementAndExtract.Format" xml:space="preserve">
+    <value>Workspace replacement applied: {0} / {1}. Last extracted at: {2}</value>
+  </data>
+  <data name="InspectorPanelView.ChangeSummary.FileReplacementOnly.Format" xml:space="preserve">
+    <value>File replacement applied: {0}</value>
+  </data>
+  <data name="InspectorPanelView.ChangeSummary.FileReplacementAndExtract.Format" xml:space="preserve">
+    <value>File replacement applied: {0}. Last extracted at: {1}</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.Hit" xml:space="preserve">
+    <value>Cache hit</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.Missing" xml:space="preserve">
+    <value>Cache missing</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.IdentityChanged" xml:space="preserve">
+    <value>Asset identity changed</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.SourceFingerprintChanged" xml:space="preserve">
+    <value>Source fingerprint changed</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.GeneratorVersionChanged" xml:space="preserve">
+    <value>Generator version changed</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.None" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.MissingLocator" xml:space="preserve">
+    <value>Missing locator</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.DecryptorResolveFailed" xml:space="preserve">
+    <value>Decryptor unavailable</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.DecryptionFailed" xml:space="preserve">
+    <value>Decryption failed</value>
+  </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.GenerationFailed" xml:space="preserve">
+    <value>Preview generation failed</value>
+  </data>
+  <data name="InspectorPanelView.DependencyMetadataWithPathId.Format" xml:space="preserve">
+    <value>{0} · PathId {1}</value>
+  </data>
+  <data name="InspectorPanelView.DependencyDepth.Format" xml:space="preserve">
+    <value>Dependency depth: {0} hop(s)</value>
+  </data>
+  <data name="InspectorPanelView.BundleExternalDependencyKind.ArchiveSerializedFile" xml:space="preserve">
+    <value>External serialized file (archive reference)</value>
+  </data>
+  <data name="InspectorPanelView.BundleExternalDependencyKind.FilePath" xml:space="preserve">
+    <value>External file path reference</value>
+  </data>
+  <data name="InspectorPanelView.BundleExternalDependencyKind.Unknown" xml:space="preserve">
+    <value>External dependency (unclassified)</value>
+  </data>
+  <data name="LogPanel.AllFilterButton.Content" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="LogPanel.InfoFilterButton.Content" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="LogPanel.WarningFilterButton.Content" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="LogPanel.ErrorFilterButton.Content" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="LogPanel.ClearButton.Content" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="BatchTasksPage.PageTitleText.Text" xml:space="preserve">
+    <value>Batch Tasks</value>
+  </data>
+  <data name="BatchTasksPage.PageEyebrowText.Text" xml:space="preserve">
+    <value>Batch Processing / Change Summary</value>
+  </data>
+  <data name="BatchTasksPage.PageSubtitleText.Text" xml:space="preserve">
+    <value>This page now aggregates extraction records, bulk extraction previews, bulk replacement surfaces, pending save changes, and pre-save previews from the current workspace. The right side also shows structured recent batch-task results.</value>
+  </data>
+  <data name="BatchTasksPage.WorkspaceOverviewTitleText.Text" xml:space="preserve">
+    <value>Current Workspace Overview</value>
+  </data>
+  <data name="BatchTasksPage.WorkspaceOverviewHintText.Text" xml:space="preserve">
+    <value>This section summarizes the change state already formed in the active workspace and serves as the future entry for batch tasks and save summaries.</value>
+  </data>
+  <data name="BatchTasksPage.RefreshButton.Content" xml:space="preserve">
+    <value>Refresh Summary</value>
+  </data>
+  <data name="BatchTasksPage.EmptyStateTitleText.Text" xml:space="preserve">
+    <value>No Workspace To Summarize Yet</value>
+  </data>
+  <data name="BatchTasksPage.EmptyStateBodyText.Text" xml:space="preserve">
+    <value>Load a workspace in the workbench and perform browsing, extraction, or replacement first. This page will then show the corresponding batch summary.</value>
+  </data>
+  <data name="BatchTasksPage.SummaryTitleText.Text" xml:space="preserve">
+    <value>Change Metrics</value>
+  </data>
+  <data name="BatchTasksPage.SummaryHintText.Text" xml:space="preserve">
+    <value>This milestone summarizes workspace modifications, extraction records, workspace replacements, and file replacements to stabilize the later batch-task and save flows.</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractTitleText.Text" xml:space="preserve">
+    <value>Bulk Extraction Preview</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractHintText.Text" xml:space="preserve">
+    <value>Filter and summarize candidates by workspace scope and asset type. The current execution only writes extraction records back to the workspace and does not export real files.</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractScopeLabelText.Text" xml:space="preserve">
+    <value>Scope</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractAssetTypeLabelText.Text" xml:space="preserve">
+    <value>Asset Type</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractOutputDirectoryLabelText.Text" xml:space="preserve">
+    <value>Suggested Output Directory</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractFileNamePolicyLabelText.Text" xml:space="preserve">
+    <value>File Naming</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractConflictPolicyLabelText.Text" xml:space="preserve">
+    <value>Conflict Policy</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractEmptyText.Text" xml:space="preserve">
+    <value>No assets are available for bulk extraction under the current filter.</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractExecuteButton.Content" xml:space="preserve">
+    <value>Run Bulk Extraction</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtractLastRunLabelText.Text" xml:space="preserve">
+    <value>Last Run</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceTitleText.Text" xml:space="preserve">
+    <value>Bulk Replacement Surface</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceHintText.Text" xml:space="preserve">
+    <value>This section aggregates assets that already entered the replacement queue in the current workspace. The current execution validates and summarizes them without replaying real writes.</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceScopeLabelText.Text" xml:space="preserve">
+    <value>Scope</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceSourceFilterLabelText.Text" xml:space="preserve">
+    <value>Replacement Source</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceEmptyText.Text" xml:space="preserve">
+    <value>No assets are available for the bulk replacement skeleton under the current filter.</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceExecuteButton.Content" xml:space="preserve">
+    <value>Run Bulk Replacement Skeleton</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceLastRunLabelText.Text" xml:space="preserve">
+    <value>Last Run</value>
+  </data>
+  <data name="BatchTasksPage.SavePreviewTitleText.Text" xml:space="preserve">
+    <value>Pre-save Summary</value>
+  </data>
+  <data name="BatchTasksPage.SavePreviewHintText.Text" xml:space="preserve">
+    <value>This area previews which bundles would be written and where they would go during “Save As New Bundle”. For now it stabilizes the preview surface only and does not perform any real write.</value>
+  </data>
+  <data name="BatchTasksPage.SavePreviewOutputDirectoryLabelText.Text" xml:space="preserve">
+    <value>Output Directory</value>
+  </data>
+  <data name="BatchTasksPage.SavePreviewFileNamePolicyLabelText.Text" xml:space="preserve">
+    <value>File Name Policy</value>
+  </data>
+  <data name="BatchTasksPage.SavePreviewEmptyText.Text" xml:space="preserve">
+    <value>No pending save changes exist in the current workspace yet. Once extraction, replacement, or modification is recorded, the pre-save summary will appear here.</value>
+  </data>
+  <data name="BatchTasksPage.SavePreviewRiskTitleText.Text" xml:space="preserve">
+    <value>Risk Notes</value>
+  </data>
+  <data name="BatchTasksPage.SaveExecuteButton.Content" xml:space="preserve">
+    <value>Run Save Skeleton</value>
+  </data>
+  <data name="BatchTasksPage.SaveLastRunLabelText.Text" xml:space="preserve">
+    <value>Last Run</value>
+  </data>
+  <data name="BatchTasksPage.StageNoteTitleText.Text" xml:space="preserve">
+    <value>Current Stage Scope</value>
+  </data>
+  <data name="BatchTasksPage.StageNoteBodyText.Text" xml:space="preserve">
+    <value>This page currently focuses on aggregation and task surfaces. It now includes bulk extraction, bulk replacement, save skeletons, and structured result details, while real file export and bundle writing remain for later milestones.</value>
+  </data>
+  <data name="BatchTasksPage.TaskResultsTitleText.Text" xml:space="preserve">
+    <value>Task Result Details</value>
+  </data>
+  <data name="BatchTasksPage.TaskResultsHintText.Text" xml:space="preserve">
+    <value>This panel keeps only recent structured batch-task summaries. Detailed logs still belong in Settings &amp; Diagnostics.</value>
+  </data>
+  <data name="BatchTasksPage.TaskResultsEmptyText.Text" xml:space="preserve">
+    <value>Run bulk extraction, bulk replacement, or the save skeleton to populate recent result details here.</value>
+  </data>
+  <data name="BatchTasksPage.RecentChangesTitleText.Text" xml:space="preserve">
+    <value>Recent Changes</value>
+  </data>
+  <data name="BatchTasksPage.RecentChangesHintText.Text" xml:space="preserve">
+    <value>Items are sorted by the latest extraction or replacement activity so they can be reviewed quickly before the later save summary flow.</value>
+  </data>
+  <data name="BatchTasksPage.NoChangesText.Text" xml:space="preserve">
+    <value>No recorded extraction or replacement changes are available in the current workspace yet.</value>
+  </data>
+  <data name="BatchTasksPage.WorkspaceOverview.Empty" xml:space="preserve">
+    <value>No active workspace is available.</value>
+  </data>
+  <data name="BatchTasksPage.WorkspaceOverview.Format" xml:space="preserve">
+    <value>Workspace: {0} | Bundles: {1} | Assets: {2} | Source: {3}</value>
+  </data>
+  <data name="BatchTasksPage.ChangeSummary.Empty" xml:space="preserve">
+    <value>No workspace change summary is available yet.</value>
+  </data>
+  <data name="BatchTasksPage.ChangeSummary.Format" xml:space="preserve">
+    <value>{0} change items are currently tracked: {1} pending-save modifications, {2} extraction records, {3} workspace replacements, and {4} file replacements.</value>
+  </data>
+  <data name="BatchTasksPage.Summary.TotalChanges.Title" xml:space="preserve">
+    <value>Total Change Items</value>
+  </data>
+  <data name="BatchTasksPage.Summary.TotalChanges.Description" xml:space="preserve">
+    <value>The number of assets currently visible from the batch-processing perspective.</value>
+  </data>
+  <data name="BatchTasksPage.Summary.Modified.Title" xml:space="preserve">
+    <value>Pending Save Changes</value>
+  </data>
+  <data name="BatchTasksPage.Summary.Modified.Description" xml:space="preserve">
+    <value>These assets have been modified and will later flow into save summary and output steps.</value>
+  </data>
+  <data name="BatchTasksPage.Summary.Extracted.Title" xml:space="preserve">
+    <value>Extraction Records</value>
+  </data>
+  <data name="BatchTasksPage.Summary.Extracted.Description" xml:space="preserve">
+    <value>The number of assets that have been extracted at least once in the current session.</value>
+  </data>
+  <data name="BatchTasksPage.Summary.Replaced.Title" xml:space="preserve">
+    <value>Workspace Replacements</value>
+  </data>
+  <data name="BatchTasksPage.Summary.Replaced.Description" xml:space="preserve">
+    <value>The number of assets currently replaced by other assets from the same workspace.</value>
+  </data>
+  <data name="BatchTasksPage.Summary.FileReplaced.Title" xml:space="preserve">
+    <value>File Replacements</value>
+  </data>
+  <data name="BatchTasksPage.Summary.FileReplaced.Description" xml:space="preserve">
+    <value>The number of assets currently replaced by an external file source.</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.Scope.Format" xml:space="preserve">
+    <value>Current workspace: {0}</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.Scope.Empty" xml:space="preserve">
+    <value>No extractable workspace scope is available.</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.OutputDirectory.Empty" xml:space="preserve">
+    <value>No suggested extraction directory is available yet.</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.Empty" xml:space="preserve">
+    <value>No assets are available for bulk extraction under the current filter.</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.FileNamePolicy.RetainOriginal" xml:space="preserve">
+    <value>Use original asset names</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.ConflictPolicy.SkipDuplicates" xml:space="preserve">
+    <value>Skip duplicate names</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.Summary.Format" xml:space="preserve">
+    <value>{0} assets are currently selected across {1} bundles, with an estimated total size of {2}.</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.BundlePlanSummary.Format" xml:space="preserve">
+    <value>{0} assets, estimated total size {1}</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.LastRun.None" xml:space="preserve">
+    <value>Bulk extraction has not been run yet.</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.LastRun.Format" xml:space="preserve">
+    <value>The last run marked {0} assets across {1} bundles. Completed at: {2}</value>
+  </data>
+  <data name="BatchTasksPage.BatchExtract.Log.Executed.Format" xml:space="preserve">
+    <value>Executed the bulk extraction skeleton and marked {0} assets across {1} bundles. Suggested output directory: {2}</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.Scope.Format" xml:space="preserve">
+    <value>Current workspace: {0}</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.Scope.Empty" xml:space="preserve">
+    <value>No bulk-replacement workspace scope is available.</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.Empty" xml:space="preserve">
+    <value>No assets are available for bulk replacement under the current filter.</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.Summary.Format" xml:space="preserve">
+    <value>{0} assets are currently aggregated across {1} bundles, including {2} workspace replacements and {3} file replacements.</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.BundlePlanSummary.Format" xml:space="preserve">
+    <value>{0} assets in total: {1} workspace replacements and {2} file replacements.</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.LastRun.None" xml:space="preserve">
+    <value>Bulk replacement skeleton has not been run yet.</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.LastRun.Format" xml:space="preserve">
+    <value>The last run summarized {0} assets across {1} bundles, including {2} workspace replacements and {3} file replacements. Completed at: {4}</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplace.Log.Executed.Format" xml:space="preserve">
+    <value>Executed the bulk replacement skeleton for {0} assets across {1} bundles. Source filter: {2}</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceSourceFilter.All" xml:space="preserve">
+    <value>All Sources</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceSourceFilter.Workspace" xml:space="preserve">
+    <value>Workspace Only</value>
+  </data>
+  <data name="BatchTasksPage.BatchReplaceSourceFilter.File" xml:space="preserve">
+    <value>File Only</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.OutputDirectory.Empty" xml:space="preserve">
+    <value>No suggested output directory is available yet.</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.FileNamePolicy.RetainOriginal" xml:space="preserve">
+    <value>Retain original bundle file names</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.Empty" xml:space="preserve">
+    <value>There are no save output items to preview yet.</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.Summary.Format" xml:space="preserve">
+    <value>{0} bundles are currently planned for output, covering {1} tracked changes. Suggested output directory: {2}</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.BundlePlanSummary.Format" xml:space="preserve">
+    <value>{0} tracked changes in total: {1} pending-save modifications, {2} extraction records, {3} workspace replacements, and {4} file replacements.</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.Risk.NoOverwrite" xml:space="preserve">
+    <value>The current strategy always writes to a new output location and does not overwrite original bundles.</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.Risk.ConflictDeferred" xml:space="preserve">
+    <value>Output-directory conflict checks and collision handling will be formally connected in the later save milestone.</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.Risk.ExecutionDeferred" xml:space="preserve">
+    <value>This page currently provides only the pre-save preview surface. Real bundle writing is not enabled yet.</value>
+  </data>
+  <data name="BatchTasksPage.SaveExecution.LastRun.None" xml:space="preserve">
+    <value>Save skeleton has not been run yet.</value>
+  </data>
+  <data name="BatchTasksPage.SaveExecution.LastRun.Format" xml:space="preserve">
+    <value>The last run verified {0} bundles covering {1} tracked changes. Completed at: {2}</value>
+  </data>
+  <data name="BatchTasksPage.SaveExecution.Log.Executed.Format" xml:space="preserve">
+    <value>Executed the save skeleton for {0} bundles covering {1} tracked changes. Suggested output directory: {2}</value>
+  </data>
+  <data name="BatchTasksPage.TaskResultStatusCompleted" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.BatchExtract.Title" xml:space="preserve">
+    <value>Bulk Extraction</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.BatchExtract.Summary.Format" xml:space="preserve">
+    <value>Marked {0} assets across {1} bundles.</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.BatchExtract.Detail.Format" xml:space="preserve">
+    <value>Suggested output directory: {0}</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.BatchReplace.Title" xml:space="preserve">
+    <value>Bulk Replacement</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.BatchReplace.Summary.Format" xml:space="preserve">
+    <value>Summarized {0} assets across {1} bundles.</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.BatchReplace.Detail.Format" xml:space="preserve">
+    <value>Source filter: {0}; {1} workspace replacements; {2} file replacements.</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.Save.Title" xml:space="preserve">
+    <value>Save Skeleton</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.Save.Summary.Format" xml:space="preserve">
+    <value>Verified {0} bundles covering {1} tracked changes.</value>
+  </data>
+  <data name="BatchTasksPage.TaskResult.Save.Detail.Format" xml:space="preserve">
+    <value>Suggested output directory: {0}</value>
+  </data>
+  <data name="BatchTasksPage.ChangeState.WorkspaceReplacementAndExtracted" xml:space="preserve">
+    <value>Workspace Replace + Extracted</value>
+  </data>
+  <data name="BatchTasksPage.ChangeState.WorkspaceReplacementOnly" xml:space="preserve">
+    <value>Workspace Replace</value>
+  </data>
+  <data name="BatchTasksPage.ChangeState.FileReplacementAndExtracted" xml:space="preserve">
+    <value>File Replace + Extracted</value>
+  </data>
+  <data name="BatchTasksPage.ChangeState.FileReplacementOnly" xml:space="preserve">
+    <value>File Replace</value>
+  </data>
+  <data name="BatchTasksPage.ChangeState.ModifiedAndExtracted" xml:space="preserve">
+    <value>Modified + Extracted</value>
+  </data>
+  <data name="BatchTasksPage.ChangeState.ExtractedOnly" xml:space="preserve">
+    <value>Extracted</value>
+  </data>
+  <data name="BatchTasksPage.ChangeState.ModifiedOnly" xml:space="preserve">
+    <value>Modified</value>
+  </data>
+  <data name="BatchTasksPage.ChangeDetail.WorkspaceReplacementAndExtracted.Format" xml:space="preserve">
+    <value>Workspace source: {0} / {1}; last extracted at: {2}</value>
+  </data>
+  <data name="BatchTasksPage.ChangeDetail.WorkspaceReplacementOnly.Format" xml:space="preserve">
+    <value>Workspace source: {0} / {1}</value>
+  </data>
+  <data name="BatchTasksPage.ChangeDetail.FileReplacementAndExtracted.Format" xml:space="preserve">
+    <value>File source: {0}; last extracted at: {1}</value>
+  </data>
+  <data name="BatchTasksPage.ChangeDetail.FileReplacementOnly.Format" xml:space="preserve">
+    <value>File source: {0} | Path: {1}</value>
+  </data>
+  <data name="BatchTasksPage.ChangeDetail.ExtractedOnly.Format" xml:space="preserve">
+    <value>Last extracted at: {0}</value>
+  </data>
+  <data name="BatchTasksPage.ChangeDetail.ModifiedOnly" xml:space="preserve">
+    <value>This item has entered the workspace modification queue.</value>
+  </data>
+  <data name="BatchTasksPage.ChangeTime.Unknown" xml:space="preserve">
+    <value>Time not recorded</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PageTitleText.Text" xml:space="preserve">
+    <value>Settings &amp; Diagnostics</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PageEyebrowText.Text" xml:space="preserve">
+    <value>Preferences / Logs / Diagnostics</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PageSubtitleText.Text" xml:space="preserve">
+    <value>This page now centralizes detailed runtime logs and will continue to host language switching, log export, and environment diagnostics. The main workspace keeps only lightweight action feedback.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceStatusTitleText.Text" xml:space="preserve">
+    <value>Active Workspace</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceStatusHintText.Text" xml:space="preserve">
+    <value>This area mirrors the active workspace summary used by the current window so batch tasks, diagnostics, and later save flows can verify the correct context.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ActiveWorkspaceEmptyText.Text" xml:space="preserve">
+    <value>No active workspace is loaded. After you open a workspace in the workbench, its session summary will appear here automatically.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ActiveWorkspaceSessionSummary.Format" xml:space="preserve">
+    <value>The current session has loaded {0} bundles / {1} assets. Opened at: {2}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceCatalogTitleText.Text" xml:space="preserve">
+    <value>Workspace Catalog</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceCatalogHintText.Text" xml:space="preserve">
+    <value>This area shows application-level registered workspaces and distinguishes the current active item, retained live sessions, and metadata-only recent entries.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceCatalogSummary.Format" xml:space="preserve">
+    <value>{0} workspaces are registered, and {1} still retain live session state.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceCatalogEmptyText.Text" xml:space="preserve">
+    <value>No registered workspaces yet. After you create or open one, recent catalog entries will appear here.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceBadge.LiveSession" xml:space="preserve">
+    <value>Loaded</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.StartupBehaviorTitleText.Text" xml:space="preserve">
+    <value>Startup &amp; Window Behavior</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.StartupBehaviorHintText.Text" xml:space="preserve">
+    <value>This section keeps startup restore and console recent-workspace opening behavior in one place, instead of scattering window rules across dialogs and pages.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartupToggle.Header" xml:space="preserve">
+    <value>Restore last workspace on startup</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartupToggle.Description" xml:space="preserve">
+    <value>When enabled, the app restores the most recently active available workspace during startup. When disabled, the app always opens in the console first.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Label" xml:space="preserve">
+    <value>Console recent-workspace open behavior</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Description" xml:space="preserve">
+    <value>Controls how recent workspaces reopen from the console: always reuse the current window, always open a new one, or ask every time.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Option.CurrentWindow" xml:space="preserve">
+    <value>Default current</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Option.NewWindow" xml:space="preserve">
+    <value>Default new window</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Option.AskEveryTime" xml:space="preserve">
+    <value>Ask every time</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage" xml:space="preserve">
+    <value>Failed to save the startup restore preference. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.SaveFailedMessage" xml:space="preserve">
+    <value>Failed to save the recent-workspace opening behavior. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ResponsibilityTitleText.Text" xml:space="preserve">
+    <value>Page Role</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ResponsibilityBodyText.Text" xml:space="preserve">
+    <value>The main workspace no longer carries a large log surface. Detailed records are gathered here so browsing, selecting, and inspecting assets stays focused.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DiagnosticsTitleText.Text" xml:space="preserve">
+    <value>Next Milestones</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DiagnosticsBodyText.Text" xml:space="preserve">
+    <value>Later milestones will expand this page with language switching, theme strategy, environment checks, log export, and debugging toggles.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.LogCenterTitleText.Text" xml:space="preserve">
+    <value>Detailed Log Center</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.LogCenterHintText.Text" xml:space="preserve">
+    <value>This area continuously records workspace loading, asset focus changes, tab switches, and exception details for troubleshooting and export.</value>
+  </data>
+  <data name="Diagnostics.Log.EmptyState" xml:space="preserve">
+    <value>Application-level runtime logs, error records, and later diagnostic exports will appear here.</value>
+  </data>
+  <data name="BundleExplorer.StageStatus.Text" xml:space="preserve">
+    <value>This stage focuses on stabilizing the main workspace browsing flow, VS Code-like tab browsing, list multi-select extraction, single-asset replacement scaffolding, and the multi-workspace context shell. Real file open, workspace switching UI, and save flows will continue in later milestones.</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.BundleSearchNoMatch.Format" xml:space="preserve">
+    <value>No bundles matched "{0}". Try a different keyword.</value>
+  </data>
+  <data name="BundleExplorer.CollapsedPane.SelectedBundleShort.None" xml:space="preserve">
+    <value>--</value>
+  </data>
+  <data name="BundleExplorer.Status.Workspace.Label" xml:space="preserve">
+    <value>Workspace</value>
+  </data>
+  <data name="BundleExplorer.Status.BundleCount.Label" xml:space="preserve">
+    <value>Bundles</value>
+  </data>
+  <data name="BundleExplorer.Status.AssetCount.Label" xml:space="preserve">
+    <value>Assets</value>
+  </data>
+  <data name="BundleExplorer.Status.Source.Label" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="BundleExplorer.Status.WorkspaceSessionCount.Label" xml:space="preserve">
+    <value>Registered Workspaces</value>
+  </data>
+  <data name="BundleExplorer.Status.OpenTabCount.Label" xml:space="preserve">
+    <value>Open Tabs</value>
+  </data>
+  <data name="BundleExplorer.Status.Selection.Label" xml:space="preserve">
+    <value>Selection</value>
+  </data>
+  <data name="BundleExplorer.Status.NotLoaded" xml:space="preserve">
+    <value>Not loaded</value>
+  </data>
+  <data name="BundleExplorer.Pane.PrimaryTitle" xml:space="preserve">
+    <value>Asset List</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.NoWorkspace" xml:space="preserve">
+    <value>No workspace is loaded yet. Create a new workspace or open an existing one before browsing resources.</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.EmptyWorkspace" xml:space="preserve">
+    <value>This workspace is still empty and does not contain any imported bundles yet. Later, AB resources can be added through drag-and-drop import or browser-based import.</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.NoAssets" xml:space="preserve">
+    <value>No assets are available for the current bundle and filter combination.</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.NoOpenTabs" xml:space="preserve">
+    <value>No bundle tabs are open yet. Click a bundle on the left to start browsing.</value>
+  </data>
+  <data name="BundleExplorer.Inspector.EmptyState" xml:space="preserve">
+    <value>Select an asset to view the overview, extraction actions, workspace replacement state, file replacement state, and change summary.</value>
+  </data>
+  <data name="BundleExplorer.Selection.None" xml:space="preserve">
+    <value>No asset selected</value>
+  </data>
+  <data name="BundleExplorer.Selection.Multiple.Format" xml:space="preserve">
+    <value>{0} items selected, focus: {1}</value>
+  </data>
+  <data name="BundleExplorer.Log.EmptyState" xml:space="preserve">
+    <value>Logs for loading, switching, and focusing assets will appear here.</value>
+  </data>
+  <data name="BundleExplorer.Log.Initializing" xml:space="preserve">
+    <value>Initializing the workspace and bundle browsing shell.</value>
+  </data>
+  <data name="BundleExplorer.Log.WorkspaceLoaded" xml:space="preserve">
+    <value>Workspace "{0}" loaded with {1} bundles and {2} assets.</value>
+  </data>
+  <data name="BundleExplorer.Log.BundleFileImportRequested" xml:space="preserve">
+    <value>The bundle file import entry was triggered. Real AB file picking and import will be connected in a later milestone.</value>
+  </data>
+  <data name="BundleExplorer.Log.BundleDirectoryImportRequested" xml:space="preserve">
+    <value>The bundle directory import entry was triggered. Real directory scanning and bulk import will be connected in a later milestone.</value>
+  </data>
+  <data name="BundleExplorer.Log.BundleLoaded" xml:space="preserve">
+    <value>{0} switched to {1} with {2} visible items.</value>
+  </data>
+  <data name="BundleExplorer.Log.BundleRemoved" xml:space="preserve">
+    <value>Removed bundle "{0}" from the current workspace.</value>
+  </data>
+  <data name="BundleExplorer.Log.AssetFocused" xml:space="preserve">
+    <value>{0} focused asset: {1}</value>
+  </data>
+  <data name="BundleExplorer.Log.AssetPreviewFailed.Format" xml:space="preserve">
+    <value>Failed to load preview for asset "{0}": {1}</value>
+  </data>
+  <data name="BundleExplorer.Log.FilterApplied" xml:space="preserve">
+    <value>{0} reloaded {1} with the current filters.</value>
+  </data>
+  <data name="BundleExplorer.Log.AssetExtracted" xml:space="preserve">
+    <value>Extracted asset "{0}". Suggested output path: {1}</value>
+  </data>
+  <data name="BundleExplorer.Log.BatchAssetsExtracted" xml:space="preserve">
+    <value>Extracted {0} assets in bulk. First suggested output path: {1}</value>
+  </data>
+  <data name="BundleExplorer.Log.ReplacementSourceSelected" xml:space="preserve">
+    <value>Selected a workspace replacement source for "{2}": {0} / {1}</value>
+  </data>
+  <data name="BundleExplorer.Log.FileReplacementSelectionCancelled" xml:space="preserve">
+    <value>Cancelled selecting a file replacement source for "{0}".</value>
+  </data>
+  <data name="BundleExplorer.Log.FilePickerOpenFailed.Format" xml:space="preserve">
+    <value>Opening the file picker failed and the current action was stopped. Exception type: {0}</value>
+  </data>
+  <data name="BundleExplorer.Log.FileReplacementSourceSelected" xml:space="preserve">
+    <value>Selected a file replacement source for "{2}": {0} | Path: {1}</value>
+  </data>
+  <data name="BundleExplorer.Log.FileReplacementApplied" xml:space="preserve">
+    <value>Replaced "{0}" with file {1} ({2})</value>
+  </data>
+  <data name="BundleExplorer.Log.ReplacementApplied" xml:space="preserve">
+    <value>Replaced "{0}" with {1} / {2}</value>
+  </data>
+  <data name="BundleExplorer.Log.ReplacementUndone" xml:space="preserve">
+    <value>Undid the applied replacement for "{0}"</value>
+  </data>
+  <data name="BundleExplorer.Notification.WorkspaceLoaded" xml:space="preserve">
+    <value>Workspace "{0}" loaded with {1} bundles and {2} assets.</value>
+  </data>
+  <data name="BundleExplorer.Notification.BundleFileImportRequested" xml:space="preserve">
+    <value>The file import entry is ready. Real bundle file picking and import will be connected in a later milestone.</value>
+  </data>
+  <data name="BundleExplorer.Notification.BundleDirectoryImportRequested" xml:space="preserve">
+    <value>The folder import entry is ready. Real directory scanning and bulk import will be connected in a later milestone.</value>
+  </data>
+  <data name="BundleExplorer.Notification.BundleRemoved" xml:space="preserve">
+    <value>Removed bundle from workspace: {0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.BundleOpenLocationFailed" xml:space="preserve">
+    <value>Unable to open the containing folder for bundle "{0}".</value>
+  </data>
+  <data name="BundleExplorer.Notification.AssetExtracted" xml:space="preserve">
+    <value>Asset extracted: {0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.BatchAssetsExtracted" xml:space="preserve">
+    <value>Marked {0} assets as extracted.</value>
+  </data>
+  <data name="BundleExplorer.Notification.ReplacementSourceSelected" xml:space="preserve">
+    <value>Workspace replacement source selected: {0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.FilePickerOpenFailed" xml:space="preserve">
+    <value>Unable to open the file picker. Check the current app state and try again.</value>
+  </data>
+  <data name="BundleExplorer.Notification.FileReplacementSourceSelected" xml:space="preserve">
+    <value>File source selected: {0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.FileReplacementApplied" xml:space="preserve">
+    <value>File replacement applied: {0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.ReplacementApplied" xml:space="preserve">
+    <value>Workspace replacement applied: {0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.ReplacementUndone" xml:space="preserve">
+    <value>Replacement undone: {0}</value>
+  </data>
+  <data name="AssetTypeFilter.All" xml:space="preserve">
+    <value>All Types</value>
+  </data>
+  <data name="AssetType.Display.Unknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="AssetType.Display.Texture2D" xml:space="preserve">
+    <value>Texture2D</value>
+  </data>
+  <data name="AssetType.Display.Sprite" xml:space="preserve">
+    <value>Sprite</value>
+  </data>
+  <data name="AssetType.Display.TextAsset" xml:space="preserve">
+    <value>TextAsset</value>
+  </data>
+  <data name="AssetType.Display.AudioClip" xml:space="preserve">
+    <value>AudioClip</value>
+  </data>
+  <data name="AssetType.Display.Mesh" xml:space="preserve">
+    <value>Mesh</value>
+  </data>
+  <data name="AssetType.Display.Material" xml:space="preserve">
+    <value>Material</value>
+  </data>
+  <data name="AssetState.Original" xml:space="preserve">
+    <value>Original</value>
+  </data>
+  <data name="AssetState.Modified" xml:space="preserve">
+    <value>Modified</value>
+  </data>
+  <data name="Error.Workspace.Open.PathRequired" xml:space="preserve">
+    <value>A path is required before opening a workspace.</value>
+  </data>
+  <data name="Error.Workspace.Query.WorkspaceIdRequired" xml:space="preserve">
+    <value>A workspace id is required before querying a workspace.</value>
+  </data>
+  <data name="Error.Workspace.Import.WorkspaceKeyRequired" xml:space="preserve">
+    <value>A workspace key is required before registering workspace import sources.</value>
+  </data>
+  <data name="Error.Workspace.Import.DataRootPathRequired" xml:space="preserve">
+    <value>A workspace data root path is required before registering workspace import sources.</value>
+  </data>
+  <data name="Error.Workspace.Import.PathsRequired" xml:space="preserve">
+    <value>Select at least one file or directory to register with the workspace.</value>
+  </data>
+  <data name="Error.Workspace.Import.BundleSourcePathRequired" xml:space="preserve">
+    <value>A bundle source path is required before removing it from the workspace.</value>
+  </data>
+  <data name="Error.Bundle.Query.BundleIdRequired" xml:space="preserve">
+    <value>A bundle id is required before querying a bundle.</value>
+  </data>
+  <data name="Error.Asset.Query.AssetIdRequired" xml:space="preserve">
+    <value>An asset id is required before querying an asset.</value>
+  </data>
+  <data name="Error.Workspace.OpenAsset.PaneIdRequired" xml:space="preserve">
+    <value>A pane id is required before opening an asset in a pane.</value>
+  </data>
+  <data name="Error.Workspace.Query.NotFound" xml:space="preserve">
+    <value>Workspace not found: {0}</value>
+  </data>
+  <data name="Error.Bundle.Query.NotFound" xml:space="preserve">
+    <value>Bundle not found: {0}</value>
+  </data>
+  <data name="Error.Asset.Query.NotFound" xml:space="preserve">
+    <value>Asset not found: {0}</value>
+  </data>
+  <data name="Error.Asset.Replace.NoCompatibleSource" xml:space="preserve">
+    <value>No compatible workspace replacement source is available for this asset: {0}</value>
+  </data>
+  <data name="Error.Asset.Replace.TypeMismatch" xml:space="preserve">
+    <value>The source type {0} is not compatible with the target type {1}.</value>
+  </data>
+  <data name="Error.Asset.Replace.NoAppliedChange" xml:space="preserve">
+    <value>No applied replacement is available to undo for this asset: {0}</value>
+  </data>
+  <data name="Error.Asset.Replace.SourceFilePathRequired" xml:space="preserve">
+    <value>A file path is required before applying a file replacement.</value>
+  </data>
+  <data name="Error.Asset.Replace.NoBatchCandidates" xml:space="preserve">
+    <value>No assets are available for the bulk replacement skeleton in the current workspace under the selected filter: {0}</value>
+  </data>
+  <data name="Error.Asset.Extract.NoBatchCandidates" xml:space="preserve">
+    <value>No candidates are available for bulk extraction under the current filter: {0}</value>
+  </data>
+  <data name="Error.Bundle.Save.NoCandidates" xml:space="preserve">
+    <value>No bundles are available for the save skeleton in the current workspace: {0}</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.Failed" xml:space="preserve">
+    <value>Bundle decryption failed. Decryptor: {0}. Detail: {1}</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.InvalidResult" xml:space="preserve">
+    <value>The bundle decryption result is invalid. Decryptor: {0}. Detail: {1}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorCatalogTitleText.Text" xml:space="preserve">
+    <value>Decryptor Catalog</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorCatalogHintText.Text" xml:space="preserve">
+    <value>Manage reusable bundle decryptor definitions. Saved decryptors are available when creating a new workspace.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorCatalogEmptyText.Text" xml:space="preserve">
+    <value>No manageable decryptor definitions are available yet.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorCatalogAddButton.Content" xml:space="preserve">
+    <value>Add Decryptor</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorCatalogRefreshButton.Content" xml:space="preserve">
+    <value>Refresh Catalog</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorEditButton.Content" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorDeleteButton.Content" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorBadge.BuiltIn" xml:space="preserve">
+    <value>Built-in</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorBadge.ReadOnly" xml:space="preserve">
+    <value>Read-only</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorBadge.UserManaged" xml:space="preserve">
+    <value>User Managed</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorVersion.Format" xml:space="preserve">
+    <value>Version: {0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorExecutablePath.Format" xml:space="preserve">
+    <value>Executable: {0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorManifestPath.Format" xml:space="preserve">
+    <value>Manifest: {0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorDelete.Title" xml:space="preserve">
+    <value>Delete Decryptor</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorDelete.Description.Format" xml:space="preserve">
+    <value>Delete decryptor "{0}"? Identifier: {1}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorDelete.PrimaryButton" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorDelete.CloseButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorLoadFailedMessage" xml:space="preserve">
+    <value>Failed to load the decryptor catalog.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorSaveSucceededMessage.Format" xml:space="preserve">
+    <value>Saved decryptor: {0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorSaveFailedMessage" xml:space="preserve">
+    <value>Failed to save the decryptor.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorDeleteSucceededMessage.Format" xml:space="preserve">
+    <value>Deleted decryptor: {0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DecryptorDeleteFailedMessage" xml:space="preserve">
+    <value>Failed to delete the decryptor.</value>
+  </data>
+  <data name="BundleExplorer.Status.CurrentDecryptor.Label" xml:space="preserve">
+    <value>Current Decryptor</value>
+  </data>
+  <data name="AssetBundleDecryptor.BuiltIn.AutoDetect.DisplayName" xml:space="preserve">
+    <value>Auto Detect</value>
+  </data>
+  <data name="AssetBundleDecryptor.BuiltIn.AutoDetect.Description" xml:space="preserve">
+    <value>Probe the workspace import sources and choose one decryptor for the workspace; fall back to pass-through when nothing matches.</value>
+  </data>
+  <data name="AssetBundleDecryptor.BuiltIn.PassThrough.DisplayName" xml:space="preserve">
+    <value>Pass Through</value>
+  </data>
+  <data name="AssetBundleDecryptor.BuiltIn.PassThrough.Description" xml:space="preserve">
+    <value>Do not transform the bundle source; pass it directly to the reader.</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Title.New" xml:space="preserve">
+    <value>Add Decryptor</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Title.Edit.Format" xml:space="preserve">
+    <value>Edit Decryptor: {0}</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.PrimaryButton" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.CloseButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Id.Label" xml:space="preserve">
+    <value>Identifier</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Id.Placeholder" xml:space="preserve">
+    <value>For example: game.example.decryptor</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.DisplayName.Label" xml:space="preserve">
+    <value>Display Name</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.DisplayName.Placeholder" xml:space="preserve">
+    <value>For example: Example Game Decryptor</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Version.Label" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Version.Placeholder" xml:space="preserve">
+    <value>For example: 1.0.0</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Description.Label" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Description.Placeholder" xml:space="preserve">
+    <value>Describe when this decryptor should be used</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.ExecutablePath.Label" xml:space="preserve">
+    <value>Executable</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.ExecutablePath.Placeholder" xml:space="preserve">
+    <value>For example: python or decryptor.exe</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.WorkingDirectoryPath.Label" xml:space="preserve">
+    <value>Working Directory</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.WorkingDirectoryPath.Placeholder" xml:space="preserve">
+    <value>Leave empty to use the manifest directory</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Timeout.Label" xml:space="preserve">
+    <value>Timeout (ms)</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Timeout.Placeholder" xml:space="preserve">
+    <value>For example: 15000</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.ProbeArguments.Label" xml:space="preserve">
+    <value>Probe Arguments</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.ProbeArguments.Placeholder" xml:space="preserve">
+    <value>One argument per line. Optional.</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.DecryptArguments.Label" xml:space="preserve">
+    <value>Decrypt Arguments</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.DecryptArguments.Placeholder" xml:space="preserve">
+    <value>One argument per line. At least one line is required.</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.SupportsAutoDetection.Label" xml:space="preserve">
+    <value>Supports auto detection</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.IsFallback.Label" xml:space="preserve">
+    <value>Use as fallback decryptor</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Validation.IdRequired" xml:space="preserve">
+    <value>Enter a decryptor identifier.</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Validation.DisplayNameRequired" xml:space="preserve">
+    <value>Enter a display name.</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Validation.ExecutablePathRequired" xml:space="preserve">
+    <value>Enter an executable path or command.</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Validation.TimeoutInvalid" xml:space="preserve">
+    <value>The timeout must be greater than 0.</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Validation.DecryptArgumentsRequired" xml:space="preserve">
+    <value>Provide at least one decrypt argument.</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Decryptor.Header" xml:space="preserve">
+    <value>Workspace Decryptor</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Decryptor.Hint" xml:space="preserve">
+    <value>Select the default decryptor for this workspace. Future bundle imports will use this configuration.</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Open.Decryptor.Hint" xml:space="preserve">
+    <value>Existing workspaces continue using the decryptor saved in their metadata.</value>
+  </data>
+  <data name="WorkspaceDialog.Setup.Summary.Decryptor.Label" xml:space="preserve">
+    <value>Decryptor</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.IdRequired" xml:space="preserve">
+    <value>Enter a decryptor identifier.</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.DisplayNameRequired" xml:space="preserve">
+    <value>Enter a decryptor display name.</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.ExecutablePathRequired" xml:space="preserve">
+    <value>Enter an executable path or command.</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.DecryptArgumentsRequired" xml:space="preserve">
+    <value>Provide at least one decrypt argument.</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.TimeoutInvalid" xml:space="preserve">
+    <value>The decryptor timeout must be greater than 0.</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.NotFound" xml:space="preserve">
+    <value>Decryptor definition not found: {0}</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.ReadOnly" xml:space="preserve">
+    <value>The decryptor definition is read-only and cannot be modified: {0}</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.AlreadyExists" xml:space="preserve">
+    <value>A decryptor definition with the same identifier already exists: {0}</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.SaveFailed" xml:space="preserve">
+    <value>Failed to save the decryptor. Detail: {0}</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.Catalog.DeleteFailed" xml:space="preserve">
+    <value>Failed to delete the decryptor. Detail: {0}</value>
+  </data>
+  <data name="Error.Workspace.Import.MetadataNotFound" xml:space="preserve">
+    <value>Workspace metadata was not found and import cannot continue: {0}</value>
+  </data>
+  <data name="Error.Workspace.Open.DataRootPathRequired" xml:space="preserve">
+    <value>A workspace data root path is required before opening the workspace.</value>
+  </data>
+  <data name="Error.Bundle.Decryptor.FallbackNotFound" xml:space="preserve">
+    <value>No fallback decryptor is available. Check the decryptor configuration in Settings.</value>
+  </data>
+  <data name="Error.Bundle.Read.Failed" xml:space="preserve">
+    <value>Failed to read bundle: {0}. Detail: {1}</value>
+  </data>
+</root>

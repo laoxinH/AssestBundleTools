@@ -1,0 +1,68 @@
+using AssestBundleTools.Application.Common.Abstractions;
+using AssestBundleTools.Application.Common.Errors;
+using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Saving.Dtos;
+using AssestBundleTools.Application.Saving.Services;
+using AssestBundleTools.Application.Workspace.Services;
+
+namespace AssestBundleTools.Application.Saving.Queries;
+
+/// <summary>
+/// 为批处理页和后续保存摘要页提供保存前预览读模型。
+/// </summary>
+public sealed class GetWorkspaceSavePreviewHandler : IQueryHandler<GetWorkspaceSavePreviewQuery, Result<WorkspaceSavePreviewDto>>
+{
+    private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
+
+    public GetWorkspaceSavePreviewHandler(IWorkspaceSessionRegistry? workspaceSessionRegistry = null)
+    {
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? InMemoryWorkspaceSessionRegistry.Shared;
+    }
+
+    public Task<Result<WorkspaceSavePreviewDto>> HandleAsync(
+        GetWorkspaceSavePreviewQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromResult(Result<WorkspaceSavePreviewDto>.Cancelled());
+        }
+
+        if (string.IsNullOrWhiteSpace(query.WorkspaceId.Value))
+        {
+            return Task.FromResult(Result<WorkspaceSavePreviewDto>.Failure(ApplicationErrors.WorkspaceIdRequired()));
+        }
+
+        if (!_workspaceSessionRegistry.ContainsWorkspace(query.WorkspaceId))
+        {
+            return Task.FromResult(Result<WorkspaceSavePreviewDto>.Failure(ApplicationErrors.WorkspaceNotFound(query.WorkspaceId)));
+        }
+
+        var plan = WorkspaceSavePlanner.BuildPlan(_workspaceSessionRegistry, query.WorkspaceId, query.OutputDirectory);
+        var bundlePlans = plan.BundlePlans
+            .Select(bundlePlan => new WorkspaceSaveBundlePlanDto(
+                BundleId: bundlePlan.BundleId,
+                BundleDisplayName: bundlePlan.BundleDisplayName,
+                OutputFilePath: bundlePlan.OutputFilePath,
+                ChangeCount: bundlePlan.ChangeCount,
+                ModifiedAssetCount: bundlePlan.ModifiedAssetCount,
+                ExtractedAssetCount: bundlePlan.ExtractedAssetCount,
+                WorkspaceReplacementCount: bundlePlan.WorkspaceReplacementCount,
+                FileReplacementCount: bundlePlan.FileReplacementCount))
+            .ToArray();
+
+        var preview = new WorkspaceSavePreviewDto(
+            WorkspaceId: plan.WorkspaceId,
+            WorkspaceDisplayName: plan.WorkspaceDisplayName,
+            OutputDirectory: plan.OutputDirectory,
+            PlannedBundleCount: bundlePlans.Length,
+            TotalChangeCount: plan.TotalChangeCount,
+            ModifiedAssetCount: plan.ModifiedAssetCount,
+            ExtractedAssetCount: plan.ExtractedAssetCount,
+            WorkspaceReplacementCount: plan.WorkspaceReplacementCount,
+            FileReplacementCount: plan.FileReplacementCount,
+            BundlePlans: bundlePlans);
+
+        return Task.FromResult(Result<WorkspaceSavePreviewDto>.Success(preview));
+    }
+}
