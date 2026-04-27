@@ -632,6 +632,7 @@ Presentation 根据资源键:
 6. `Infrastructure` 层的预览构建组件、音频转码主链路以及 Reader / Preview 失败原因当前都已优先返回结构化字段、原因码和参数；剩余待收口点主要是外部工具 stderr / stdout、个别启动期异常明文展示与少量壳层异常文案，不应继续扩散为直接面向用户的句子拼装。
 7. `tests/` 目录目前仍只有占位说明，尚未落地 `Domain / Application / Infrastructure` 测试项目，也未建立本地化资源完整性校验；这一点当前不满足本文档的测试建议。
 8. `Presentation.WinUI` 项目当前仍直接引用 `Infrastructure`，并在组合根之外保留少量对具体持久化类型的直接依赖；若后续继续保留“组合根例外”，应在架构文档中显式声明边界，否则需要继续收口为抽象依赖。
+9. `Presentation` 层的 `BundleExplorerViewModel` 已完成第一轮拆分：左侧资源包窗格状态与资源包/资产标签工作区状态已分别下沉到 `BundleExplorerBundlePaneViewModel`、`BundleExplorerDocumentWorkspaceViewModel`；但资源详情装载、预览/替换编排与工作区恢复流程仍偏重，后续应继续把它收缩为页面级外观/协调器，而不是继续堆积为巨型 ViewModel。
 
 后续处理原则：
 
@@ -668,6 +669,7 @@ Presentation 根据资源键:
 - 音频转码器与内置直通解密器已去除直接面向用户的内建说明文本，内置解密器显示语义统一回到稳定标识并由展示层本地化。
 - 外部音频转码与外部解密进程当前已进一步区分“外部工具原始输出”和“宿主程序自身失败原因”：前者只作为回退文本保留，后者统一收敛为稳定消息令牌或标准错误令牌。
 - WinUI 壳层中的文件选择器、跨进程启动协议、工作区新进程启动失败与“缺少回退解密器”等异常当前已统一资源化；启动兜底页也不再直接显示 `exception.Message` 原文。
+- `BundleExplorerViewModel` 已完成第一轮结构收缩：资源包浏览左栏与标签工作区状态已拆入独立子 ViewModel，并由主 ViewModel 退回为兼容旧绑定入口的外观/编排层。
 
 因此，当前阶段更准确的判断应为：
 

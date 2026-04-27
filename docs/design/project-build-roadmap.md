@@ -810,6 +810,7 @@ src/AssestBundleTools.Application/
 - 已完成一轮架构高优先级收口：`Application` 侧已移除 `InMemoryWorkspaceSessionRegistry.Shared` 默认回退，并把工作区导入链路中的文件系统探测能力抽象为应用层端口，由 `Infrastructure` 统一提供实现
 - 已完成一轮用户文本资源化高优先级收口：工作区导入自动识别、Reader 直检与预览诊断 detail 已改为展示层统一本地化；当前剩余热点主要是外部工具原始执行输出与少量异常分支
 - 已完成一轮用户文本资源化第三阶段收口：解密器设置页保存/删除失败与工作台预览显示兜底日志已移除原始异常直透；当前剩余热点主要是外部工具原始执行输出与启动期异常展示
+- 已完成 `BundleExplorerViewModel` 第一轮拆分：左侧资源包窗格状态与资源包/资产标签工作区状态已分别下沉到独立子 ViewModel，主工作台 ViewModel 开始收缩为页面级外观与流程编排层
 - 当前 M9 剩余主线收口为富预览扩展，优先顺序为 `AudioClip -> SpriteAtlas -> Mesh -> Material / Font / AnimationClip`
 
 ## 10. 架构代办事项
@@ -821,5 +822,6 @@ src/AssestBundleTools.Application/
 3. 当前工作区进程占用是在“工作区真正加载成功后”注册；若后续要彻底压缩极端并发启动下的重复打开竞态，可把这层注册前移到加载前预占用，并补失败回滚。
 4. “窗口级 `WorkspaceContextService` 重构”当前已不再作为主路线；若未来确实要支持“一进程多工作区并行”，应单独立项做窗口作用域上下文，而不是在现有单工作区进程模型上继续叠兼容。
 5. 当前 `AudioClip` 的 `FSB5` 播放能力优先依赖外部 `vgmstream-cli`；若未来确实需要“完全无外部依赖”的部署形态，应在保留现有独立音频转码端口的前提下，单独补一轮内建 `FSB5` 部分 codec 支持，而不是把编解码逻辑直接塞回 Preview UI 或 Reader。
+6. `BundleExplorerViewModel` 当前虽然已拆出资源包窗格与文档标签工作区两个子 ViewModel，但资源详情装载、预览/替换编排与工作区恢复流程仍偏重；后续应继续拆出工作区壳层状态或资产工作流子 ViewModel，避免重新回到巨型页面 ViewModel。
 
 这些事项当前不阻塞 M9 主线，但后续在缓存失效、预览链路和保存输出继续推进前，应择机完成第一轮收口。

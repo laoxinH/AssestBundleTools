@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using AssestBundleTools.Application.Bundles;
@@ -48,29 +49,19 @@ public sealed class BundleExplorerViewModel : ObservableObject
     private readonly IFilePickerService _filePickerService;
     private readonly IWorkspaceContextService _workspaceContextService;
     private readonly IWorkspaceImportCoordinatorService _workspaceImportCoordinatorService;
-    private readonly IAssetBundleDecryptorRegistry _assetBundleDecryptorRegistry;
     private readonly IPathNavigationService _pathNavigationService;
     private readonly LocalizedValueFormatter _localizedValueFormatter;
     private readonly AssetPreviewDisplayFormatter _assetPreviewDisplayFormatter;
-    private readonly List<BundleGroupViewModel> _allBundleGroups = new();
-    private readonly Dictionary<string, BundleNodeViewModel> _bundleLookup = new(StringComparer.Ordinal);
-    private readonly ObservableCollection<AssetDocumentTabViewModel> _emptyAssetTabs = [];
+    private readonly BundleExplorerWorkspaceShellViewModel _workspaceShell;
+    private readonly BundleExplorerBundlePaneViewModel _bundlePane;
+    private readonly BundleExplorerDocumentWorkspaceViewModel _documentWorkspace;
     private readonly InspectorPanelViewModel _emptyInspector;
     private bool _isInitialized;
     private bool _isBusy;
-    private bool _hasWorkspace;
-    private bool _isBundlePaneCollapsed;
-    private bool _isBundleSearchExpanded;
-    private string _bundleSearchKeyword = string.Empty;
-    private WorkspaceSummaryDto? _workspaceSummary;
-    private BundleDocumentTabViewModel? _activeBundleTab;
-    private BundleNodeViewModel? _selectedBundleNode;
     private bool _isRestoringWorkspaceBrowserState;
     private CancellationTokenSource? _workspaceBrowserStatePersistenceCts;
-    private WorkspaceNavigationRequest? _activeWorkspaceNavigationRequest;
     private int _primaryPaneStateSynchronizationDepth;
     private int _assetDocumentStateSynchronizationDepth;
-    private int _assetDocumentHostSynchronizationDepth;
 
     public BundleExplorerViewModel(
         IWorkspaceBrowserService workspaceBrowserService,
@@ -90,10 +81,19 @@ public sealed class BundleExplorerViewModel : ObservableObject
         _filePickerService = filePickerService ?? throw new ArgumentNullException(nameof(filePickerService));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _workspaceImportCoordinatorService = workspaceImportCoordinatorService ?? throw new ArgumentNullException(nameof(workspaceImportCoordinatorService));
-        _assetBundleDecryptorRegistry = assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry));
         _pathNavigationService = pathNavigationService ?? throw new ArgumentNullException(nameof(pathNavigationService));
         _localizedValueFormatter = new LocalizedValueFormatter(_localizationService);
         _assetPreviewDisplayFormatter = new AssetPreviewDisplayFormatter(_localizationService);
+        _workspaceShell = new BundleExplorerWorkspaceShellViewModel(
+            _localizationService,
+            _workspaceContextService,
+            assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry)));
+        _workspaceShell.PropertyChanged += OnWorkspaceShellPropertyChanged;
+        _bundlePane = new BundleExplorerBundlePaneViewModel(_localizationService);
+        _bundlePane.PropertyChanged += OnBundlePanePropertyChanged;
+        _bundlePane.BrowserStateChanged += OnBundlePaneBrowserStateChanged;
+        _documentWorkspace = new BundleExplorerDocumentWorkspaceViewModel();
+        _documentWorkspace.PropertyChanged += OnDocumentWorkspacePropertyChanged;
 
         PrimaryPane = new AssetPaneViewModel();
         _emptyInspector = new InspectorPanelViewModel();
@@ -106,27 +106,25 @@ public sealed class BundleExplorerViewModel : ObservableObject
         PrimaryPane.ReplaceAssetTypeOptions(CreateAssetTypeOptions());
         PrimaryPane.ConfigurePane(PaneId.New(), GetString(ResourceKeys.BundleExplorerPrimaryPaneTitle), GetString(ResourceKeys.BundleExplorerNoAssets));
         _emptyInspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
-        UpdateWorkspaceState(hasWorkspace: false);
-        RefreshWorkspaceStatusChips();
+        _bundlePane.UpdateInteractionState(HasWorkspace, IsBusy);
     }
 
-    public ObservableCollection<BundleGroupViewModel> BundleGroups { get; } = new();
+    public ObservableCollection<BundleGroupViewModel> BundleGroups => _bundlePane.BundleGroups;
 
-    public ObservableCollection<BundleDocumentTabViewModel> BundleTabs { get; } = new();
+    public ObservableCollection<BundleDocumentTabViewModel> BundleTabs => _documentWorkspace.BundleTabs;
 
-    public ObservableCollection<WorkspaceStatusChipViewModel> WorkspaceStatusChips { get; } = new();
+    public ObservableCollection<WorkspaceStatusChipViewModel> WorkspaceStatusChips => _workspaceShell.WorkspaceStatusChips;
 
     public AssetPaneViewModel PrimaryPane { get; }
 
     public ObservableCollection<AssetDocumentTabViewModel> CurrentAssetTabs =>
-        ActiveBundleTab?.AssetTabs ?? _emptyAssetTabs;
+        _documentWorkspace.CurrentAssetTabs;
 
-    public AssetDocumentTabViewModel? ActiveAssetDocumentTab => ActiveBundleTab?.ActiveAssetTab;
+    public AssetDocumentTabViewModel? ActiveAssetDocumentTab => _documentWorkspace.ActiveAssetDocumentTab;
 
-    public bool HasAssetDocumentTabs => CurrentAssetTabs.Count > 0;
+    public bool HasAssetDocumentTabs => _documentWorkspace.HasAssetDocumentTabs;
 
-    public Visibility AssetDocumentTabStripVisibility =>
-        HasAssetDocumentTabs ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility AssetDocumentTabStripVisibility => _documentWorkspace.AssetDocumentTabStripVisibility;
 
     public InspectorPanelViewModel Inspector => ActiveAssetDocumentTab?.Inspector ?? _emptyInspector;
 
@@ -140,6 +138,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
             if (SetProperty(ref _isBusy, value))
             {
                 PrimaryPane.IsBusy = value;
+                _bundlePane.UpdateInteractionState(HasWorkspace, value);
                 NotifyCommandStates();
                 OnPropertyChanged(nameof(CanToggleBundleSearch));
                 OnPropertyChanged(nameof(CanToggleBundlePaneCollapse));
@@ -147,135 +146,57 @@ public sealed class BundleExplorerViewModel : ObservableObject
         }
     }
 
-    public bool HasWorkspace
-    {
-        get => _hasWorkspace;
-        private set
-        {
-            if (SetProperty(ref _hasWorkspace, value))
-            {
-                OnPropertyChanged(nameof(WorkspaceContentVisibility));
-                OnPropertyChanged(nameof(WorkspaceEmptyStateVisibility));
-                OnPropertyChanged(nameof(BundlePaneEmptyStateText));
-                OnPropertyChanged(nameof(BundlePaneEmptyStateVisibility));
-                OnPropertyChanged(nameof(BundleListVisibility));
-                OnPropertyChanged(nameof(BundleSearchEmptyStateVisibility));
-                OnPropertyChanged(nameof(CanToggleBundleSearch));
-                OnPropertyChanged(nameof(CanToggleBundlePaneCollapse));
-                RefreshWorkspaceStatusChips();
-                NotifyCommandStates();
-            }
-        }
-    }
+    public bool HasWorkspace => _workspaceShell.HasWorkspace;
 
     /// <summary>
     /// 控制左侧资源包列表是否收缩为窄条摘要。
     /// 收缩后仍保留工作区概况与当前选中资源包摘要，
     /// 这样可以把更多横向空间让给资产列表和右侧详情区。
     /// </summary>
-    public bool IsBundlePaneCollapsed
-    {
-        get => _isBundlePaneCollapsed;
-        private set
-        {
-            if (SetProperty(ref _isBundlePaneCollapsed, value))
-            {
-                OnPropertyChanged(nameof(BundlePaneCollapseToolTip));
-            }
-        }
-    }
+    public bool IsBundlePaneCollapsed => _bundlePane.IsBundlePaneCollapsed;
 
-    public bool IsBundleSearchExpanded
-    {
-        get => _isBundleSearchExpanded;
-        private set
-        {
-            if (SetProperty(ref _isBundleSearchExpanded, value))
-            {
-                OnPropertyChanged(nameof(BundleSearchToggleGlyph));
-                OnPropertyChanged(nameof(BundleSearchToggleToolTip));
-            }
-        }
-    }
+    public bool IsBundleSearchExpanded => _bundlePane.IsBundleSearchExpanded;
 
     public string BundleSearchKeyword
     {
-        get => _bundleSearchKeyword;
-        set
-        {
-            if (SetProperty(ref _bundleSearchKeyword, value))
-            {
-                OnPropertyChanged(nameof(BundleSearchEmptyStateText));
-                ApplyBundleGroupFilter();
-                RequestWorkspaceBrowserStatePersistence();
-            }
-        }
+        get => _bundlePane.BundleSearchKeyword;
+        set => _bundlePane.SetBundleSearchKeyword(value);
     }
 
-    public string BundleSearchToggleGlyph => IsBundleSearchExpanded ? "\uE711" : "\uE721";
+    public string BundleSearchToggleGlyph => _bundlePane.BundleSearchToggleGlyph;
 
-    public string BundleSearchToggleToolTip => IsBundleSearchExpanded
-        ? GetString(ResourceKeys.BundleExplorerPageBundleSearchToggleButtonCloseToolTip)
-        : GetString(ResourceKeys.BundleExplorerPageBundleSearchToggleButtonOpenToolTip);
+    public string BundleSearchToggleToolTip => _bundlePane.BundleSearchToggleToolTip;
 
-    public string BundlePaneCollapseToolTip => IsBundlePaneCollapsed
-        ? GetString(ResourceKeys.BundleExplorerPageBundlePaneCollapseButtonExpandToolTip)
-        : GetString(ResourceKeys.BundleExplorerPageBundlePaneCollapseButtonCollapseToolTip);
+    public string BundlePaneCollapseToolTip => _bundlePane.BundlePaneCollapseToolTip;
 
-    public string BundleSearchEmptyStateText =>
-        _localizationService.GetFormattedString(
-            ResourceKeys.BundleExplorerBundleSearchEmptyStateFormat,
-            string.IsNullOrWhiteSpace(BundleSearchKeyword) ? GetString(ResourceKeys.BundleExplorerSelectionNone) : BundleSearchKeyword.Trim());
+    public string BundleSearchEmptyStateText => _bundlePane.BundleSearchEmptyStateText;
 
-    public Visibility WorkspaceContentVisibility => HasWorkspace ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility WorkspaceContentVisibility => _workspaceShell.WorkspaceContentVisibility;
 
-    public Visibility WorkspaceEmptyStateVisibility => HasWorkspace ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility WorkspaceEmptyStateVisibility => _workspaceShell.WorkspaceEmptyStateVisibility;
 
     /// <summary>
     /// 左侧资源包区域的空状态文案。
     /// 未打开工作区时提示用户先创建或打开工作区；
     /// 已打开但尚未导入资源时，则明确提示当前是空工作区。
     /// </summary>
-    public string BundlePaneEmptyStateText => HasWorkspace
-        ? GetString(ResourceKeys.BundleExplorerEmptyWorkspace)
-        : GetString(ResourceKeys.BundleExplorerNoWorkspace);
+    public string BundlePaneEmptyStateText => _bundlePane.BundlePaneEmptyStateText;
 
-    public Visibility BundlePaneEmptyStateVisibility =>
-        !HasWorkspace || (HasWorkspace && _allBundleGroups.Count == 0)
-            ? Visibility.Visible
-            : Visibility.Collapsed;
+    public Visibility BundlePaneEmptyStateVisibility => _bundlePane.BundlePaneEmptyStateVisibility;
 
-    public Visibility BundleListVisibility => HasWorkspace && BundleGroups.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility BundleListVisibility => _bundlePane.BundleListVisibility;
 
-    public Visibility BundleSearchEmptyStateVisibility =>
-        HasWorkspace &&
-        _allBundleGroups.Count > 0 &&
-        BundleGroups.Count == 0 &&
-        !string.IsNullOrWhiteSpace(BundleSearchKeyword)
-            ? Visibility.Visible
-            : Visibility.Collapsed;
+    public Visibility BundleSearchEmptyStateVisibility => _bundlePane.BundleSearchEmptyStateVisibility;
 
-    public bool HasOpenTabs => _activeBundleTab is not null;
+    public bool HasOpenTabs => _documentWorkspace.HasOpenTabs;
 
     /// <summary>
     /// 右侧资产文档标签宿主在切换资源包标签时，会经历一次 ItemsSource 重绑。
     /// 这段时间内需要抑制控件把“默认第一项”反向写回状态。
     /// </summary>
-    public bool IsSynchronizingAssetDocumentHostSelection => _assetDocumentHostSynchronizationDepth > 0;
+    public bool IsSynchronizingAssetDocumentHostSelection => _documentWorkspace.IsSynchronizingAssetDocumentHostSelection;
 
-    public BundleDocumentTabViewModel? ActiveBundleTab
-    {
-        get => _activeBundleTab;
-        private set
-        {
-            if (SetProperty(ref _activeBundleTab, value))
-            {
-                OnPropertyChanged(nameof(HasOpenTabs));
-                NotifyAssetDocumentHostStateChanged();
-                RefreshWorkspaceStatusChips();
-            }
-        }
-    }
+    public BundleDocumentTabViewModel? ActiveBundleTab => _documentWorkspace.ActiveBundleTab;
 
     public bool HasSelectedAsset => TryGetActiveAssetDocumentDetails(out _, out _);
 
@@ -297,29 +218,24 @@ public sealed class BundleExplorerViewModel : ObservableObject
         assetTab.CanEdit &&
         details.CanReplaceFromWorkspace;
 
-    public bool CanToggleBundleSearch => HasWorkspace && !IsBusy;
+    public bool CanToggleBundleSearch => _bundlePane.CanToggleBundleSearch;
 
-    public bool CanToggleBundlePaneCollapse => HasWorkspace && !IsBusy;
+    public bool CanToggleBundlePaneCollapse => _bundlePane.CanToggleBundlePaneCollapse;
 
-    public string CollapsedBundlePaneBundleCountText => GetVisibleBundleCount().ToString(CultureInfo.CurrentCulture);
+    public string CollapsedBundlePaneBundleCountText => _bundlePane.CollapsedBundlePaneBundleCountText;
 
-    public string CollapsedBundlePaneGroupCountText => BundleGroups.Count.ToString(CultureInfo.CurrentCulture);
+    public string CollapsedBundlePaneGroupCountText => _bundlePane.CollapsedBundlePaneGroupCountText;
 
-    public string CollapsedBundlePaneSelectedBundleShortText => BuildCollapsedBundlePaneSelectedBundleShortText();
+    public string CollapsedBundlePaneSelectedBundleShortText => _bundlePane.CollapsedBundlePaneSelectedBundleShortText;
 
-    public string CollapsedBundlePaneSelectedBundleToolTip =>
-        _selectedBundleNode?.DisplayName ?? GetString(ResourceKeys.BundleExplorerSelectionNone);
+    public string CollapsedBundlePaneSelectedBundleToolTip => _bundlePane.CollapsedBundlePaneSelectedBundleToolTip;
 
     /// <summary>
     /// 向页面层提供“当前实际已绑定工作区”的稳定导航参数。
     /// 这样窗口注册逻辑可以依赖成功加载后的结果，而不是依赖页面传入的临时请求。
     /// </summary>
-    public bool TryGetCurrentWorkspaceNavigationRequest([NotNullWhen(true)] out WorkspaceNavigationRequest? workspaceNavigationRequest)
-    {
-        workspaceNavigationRequest = _activeWorkspaceNavigationRequest
-                                     ?? BuildNavigationRequestFromWorkspaceSummary(_workspaceSummary);
-        return workspaceNavigationRequest is not null;
-    }
+    public bool TryGetCurrentWorkspaceNavigationRequest([NotNullWhen(true)] out WorkspaceNavigationRequest? workspaceNavigationRequest) =>
+        _workspaceShell.TryGetCurrentWorkspaceNavigationRequest(out workspaceNavigationRequest);
 
     public async Task InitializeAsync(WorkspaceNavigationRequest? workspaceNavigationRequest = null)
     {
@@ -336,7 +252,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
             return;
         }
 
-        if (TryGetCurrentWorkspaceSessionContext(out var currentWorkspaceSummary, out var currentNavigationRequest))
+        if (_workspaceShell.TryGetCurrentWorkspaceSessionContext(out var currentWorkspaceSummary, out var currentNavigationRequest))
         {
             await BindWorkspaceAsync(
                 clearExistingLogs: true,
@@ -350,16 +266,16 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     public async Task RefreshAsync()
     {
-        if (_workspaceSummary is not null)
+        if (_workspaceShell.WorkspaceSummary is not null)
         {
             await BindWorkspaceAsync(
                 clearExistingLogs: false,
-                workspaceSummary: _workspaceSummary,
-                workspaceNavigationRequest: _activeWorkspaceNavigationRequest);
+                workspaceSummary: _workspaceShell.WorkspaceSummary,
+                workspaceNavigationRequest: _workspaceShell.ActiveWorkspaceNavigationRequest);
             return;
         }
 
-        if (TryGetCurrentWorkspaceSessionContext(out var currentWorkspaceSummary, out var currentNavigationRequest))
+        if (_workspaceShell.TryGetCurrentWorkspaceSessionContext(out var currentWorkspaceSummary, out var currentNavigationRequest))
         {
             await BindWorkspaceAsync(
                 clearExistingLogs: true,
@@ -368,9 +284,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
             return;
         }
 
-        if (_activeWorkspaceNavigationRequest is not null)
+        if (_workspaceShell.ActiveWorkspaceNavigationRequest is not null)
         {
-            await LoadWorkspaceAsync(clearExistingLogs: true, _activeWorkspaceNavigationRequest);
+            await LoadWorkspaceAsync(clearExistingLogs: true, _workspaceShell.ActiveWorkspaceNavigationRequest);
             return;
         }
 
@@ -531,14 +447,14 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     public async Task ActivateBundleTabAsync(BundleDocumentTabViewModel? tab)
     {
-        if (tab is null || _workspaceSummary is null)
+        if (tab is null || _workspaceShell.WorkspaceSummary is null)
         {
             return;
         }
 
         if (ReferenceEquals(ActiveBundleTab, tab))
         {
-            SetSelectedBundle(FindBundleNode(tab.BundleId));
+            _bundlePane.SetSelectedBundle(_bundlePane.FindBundleNode(tab.BundleId));
             return;
         }
 
@@ -553,7 +469,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(orderedTabs);
 
-        if (!ObservableCollectionOrderHelper.Reorder(BundleTabs, orderedTabs))
+        if (!_documentWorkspace.ReorderBundleTabs(orderedTabs))
         {
             return;
         }
@@ -569,7 +485,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(orderedTabs);
 
-        if (ActiveBundleTab is null || !ActiveBundleTab.ReorderAssetTabs(orderedTabs))
+        if (!_documentWorkspace.ReorderActiveAssetTabs(orderedTabs))
         {
             return;
         }
@@ -602,7 +518,6 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
         if (!wasActive)
         {
-            RefreshWorkspaceStatusChips();
             RequestWorkspaceBrowserStatePersistence();
             return;
         }
@@ -630,7 +545,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
         if (BundleTabs.Count <= 1)
         {
-            if (!ReferenceEquals(ActiveBundleTab, retainedTab) && _workspaceSummary is not null)
+            if (!ReferenceEquals(ActiveBundleTab, retainedTab) && _workspaceShell.WorkspaceSummary is not null)
             {
                 await SetActiveBundleTabAsync(retainedTab, writeSelectionLog: false);
             }
@@ -653,7 +568,6 @@ public sealed class BundleExplorerViewModel : ObservableObject
             return;
         }
 
-        RefreshWorkspaceStatusChips();
         RequestWorkspaceBrowserStatePersistence();
     }
 
@@ -679,19 +593,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     /// </summary>
     public void ToggleBundleSearch()
     {
-        if (!CanToggleBundleSearch)
-        {
-            return;
-        }
-
-        if (IsBundleSearchExpanded)
-        {
-            BundleSearchKeyword = string.Empty;
-            IsBundleSearchExpanded = false;
-            return;
-        }
-
-        IsBundleSearchExpanded = true;
+        _bundlePane.ToggleBundleSearch();
     }
 
     /// <summary>
@@ -700,18 +602,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     /// </summary>
     public void ToggleBundlePaneCollapsed()
     {
-        if (!CanToggleBundlePaneCollapse)
-        {
-            return;
-        }
-
-        if (!IsBundlePaneCollapsed)
-        {
-            BundleSearchKeyword = string.Empty;
-            IsBundleSearchExpanded = false;
-        }
-
-        IsBundlePaneCollapsed = !IsBundlePaneCollapsed;
+        _bundlePane.ToggleBundlePaneCollapsed();
     }
 
     /// <summary>
@@ -876,9 +767,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
                 _appLogService.Clear();
             }
 
-            var resolvedNavigationRequest = workspaceNavigationRequest
-                                            ?? _activeWorkspaceNavigationRequest
-                                            ?? BuildNavigationRequestFromWorkspaceSummary(_workspaceContextService.CurrentWorkspaceSummary);
+            var resolvedNavigationRequest = _workspaceShell.ResolveNavigationRequest(workspaceNavigationRequest);
             if (resolvedNavigationRequest is null)
             {
                 ResetWorkspaceToEmptyState();
@@ -941,7 +830,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
             _appLogService.AppendInfo(GetString(ResourceKeys.BundleExplorerLogInitializing));
 
             var resolvedNavigationRequest = workspaceNavigationRequest
-                                            ?? BuildNavigationRequestFromWorkspaceSummary(workspaceSummary);
+                                            ?? _workspaceShell.ResolveNavigationRequest(workspaceNavigationRequest);
             if (resolvedNavigationRequest is null)
             {
                 ResetWorkspaceToEmptyState();
@@ -961,21 +850,13 @@ public sealed class BundleExplorerViewModel : ObservableObject
         WorkspaceNavigationRequest resolvedNavigationRequest,
         bool showLoadedNotification)
     {
-        var resolvedWorkspaceDataRootPath = resolvedNavigationRequest.WorkspaceDataRootPath;
-
-        _workspaceSummary = workspaceSummary;
-        _activeWorkspaceNavigationRequest = resolvedNavigationRequest with
-        {
-            SourcePath = workspaceSummary.SourcePath,
-            WorkspaceDisplayName = workspaceSummary.DisplayName,
-            WorkspaceDataRootPath = resolvedWorkspaceDataRootPath ?? string.Empty
-        };
+        var appliedNavigationRequest = _workspaceShell.ApplyWorkspace(workspaceSummary, resolvedNavigationRequest);
+        var resolvedWorkspaceDataRootPath = appliedNavigationRequest.WorkspaceDataRootPath;
 
         _workspaceContextService.RegisterOrActivateWorkspace(
             workspaceSummary,
             resolvedWorkspaceDataRootPath,
-            resolvedNavigationRequest.AssetBundleDecryptorId);
-        UpdateWorkspaceState(hasWorkspace: true);
+            appliedNavigationRequest.AssetBundleDecryptorId);
         PrimaryPane.ConfigurePane(
             workspaceSummary.ActivePaneId,
             GetString(ResourceKeys.BundleExplorerPrimaryPaneTitle),
@@ -990,13 +871,12 @@ public sealed class BundleExplorerViewModel : ObservableObject
             return;
         }
 
-        RebuildBundleGroups(bundleTree);
-        BundleTabs.Clear();
-        ActiveBundleTab = null;
+        _bundlePane.RebuildBundleGroups(bundleTree);
+        _documentWorkspace.Clear();
 
         if (!await TryRestoreWorkspaceBrowserStateAsync())
         {
-            var firstBundle = BundleGroups.SelectMany(static group => group.Bundles).FirstOrDefault();
+            var firstBundle = _bundlePane.GetFirstVisibleBundle();
             if (firstBundle is not null)
             {
                 await OpenBundleAsync(firstBundle, openAsPinnedTab: false);
@@ -1031,26 +911,26 @@ public sealed class BundleExplorerViewModel : ObservableObject
         bool showLoadedNotification,
         bool allowBusyReentry = false)
     {
-        if (_activeWorkspaceNavigationRequest is null)
+        if (_workspaceShell.ActiveWorkspaceNavigationRequest is null)
         {
             return;
         }
 
         await LoadWorkspaceAsync(
             clearExistingLogs: false,
-            workspaceNavigationRequest: _activeWorkspaceNavigationRequest,
+            workspaceNavigationRequest: _workspaceShell.ActiveWorkspaceNavigationRequest,
             showLoadedNotification: showLoadedNotification,
             allowBusyReentry: allowBusyReentry);
     }
 
     private async Task RefreshPaneAsync(AssetPaneViewModel pane, bool clearInspectorOnEmpty)
     {
-        if (_workspaceSummary is null)
+        if (_workspaceShell.WorkspaceSummary is null)
         {
             return;
         }
 
-        var bundleNode = FindBundleNodeByDisplayName(pane.CurrentBundleDisplayName);
+        var bundleNode = _bundlePane.FindBundleNodeByDisplayName(pane.CurrentBundleDisplayName);
         if (bundleNode is null)
         {
             pane.ClearItems(GetString(ResourceKeys.BundleExplorerNoAssets));
@@ -1089,14 +969,14 @@ public sealed class BundleExplorerViewModel : ObservableObject
         bool clearInspectorOnEmpty,
         string? preferredSelectedAssetId = null)
     {
-        if (_workspaceSummary is null)
+        if (_workspaceShell.WorkspaceSummary is null)
         {
             return;
         }
 
         var assetListResult = await _workspaceBrowserService.LoadAssetListAsync(
             new LoadAssetListQuery(
-                WorkspaceId: _workspaceSummary.WorkspaceId,
+                WorkspaceId: _workspaceShell.WorkspaceSummary.WorkspaceId,
                 BundleId: bundleNode.BundleId,
                 SearchKeyword: NormalizeSearchKeyword(pane.SearchKeyword),
                 AssetTypeFilter: pane.SelectedAssetTypeOption?.AssetType));
@@ -1326,14 +1206,14 @@ public sealed class BundleExplorerViewModel : ObservableObject
         AssetDocumentTabViewModel assetTab,
         bool writeLog)
     {
-        if (_workspaceSummary is null)
+        if (_workspaceShell.WorkspaceSummary is null)
         {
             return;
         }
 
         var openResult = await _workspaceBrowserService.OpenAssetInPaneAsync(
             new OpenAssetInPaneCommand(
-                WorkspaceId: _workspaceSummary.WorkspaceId,
+                WorkspaceId: _workspaceShell.WorkspaceSummary.WorkspaceId,
                 BundleId: assetTab.BundleId,
                 AssetId: assetTab.AssetId,
                 PaneId: assetTab.PaneId));
@@ -1345,7 +1225,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
         var detailsResult = await _workspaceBrowserService.GetAssetDetailsAsync(
             new GetAssetDetailsQuery(
-                WorkspaceId: _workspaceSummary.WorkspaceId,
+                WorkspaceId: _workspaceShell.WorkspaceSummary.WorkspaceId,
                 BundleId: assetTab.BundleId,
                 AssetId: assetTab.AssetId));
 
@@ -1406,7 +1286,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
         assetTab.Inspector.Apply(
             assetName: details.Name,
-            bundleDisplayName: ResolveBundleDisplayName(details.BundleId),
+            bundleDisplayName: _bundlePane.ResolveBundleDisplayName(details.BundleId),
             assetTypeText: ResolveAssetTypeDisplayName(details.AssetType, details.AssetTypeDisplayName),
             assetPath: details.AssetPath,
             containerPath: details.ContainerPath,
@@ -1466,7 +1346,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     public async Task ExtractSelectedAssetAsync()
     {
         if (IsBusy ||
-            _workspaceSummary is null ||
+            _workspaceShell.WorkspaceSummary is null ||
             !TryGetActiveAssetDocumentDetails(out var assetTab, out var details))
         {
             return;
@@ -1477,7 +1357,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         {
             var result = await _workspaceBrowserService.ExtractAssetAsync(
                 new ExtractAssetCommand(
-                    _workspaceSummary.WorkspaceId,
+                    _workspaceShell.WorkspaceSummary.WorkspaceId,
                     details.BundleId,
                     details.AssetId));
 
@@ -1513,7 +1393,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     /// </summary>
     public async Task ExtractSelectedAssetsAsync()
     {
-        if (IsBusy || _workspaceSummary is null)
+        if (IsBusy || _workspaceShell.WorkspaceSummary is null)
         {
             return;
         }
@@ -1538,7 +1418,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
             {
                 var result = await _workspaceBrowserService.ExtractAssetAsync(
                     new ExtractAssetCommand(
-                        _workspaceSummary.WorkspaceId,
+                        _workspaceShell.WorkspaceSummary.WorkspaceId,
                         entry.Item.BundleId,
                         entry.Item.AssetId));
 
@@ -1582,7 +1462,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     public async Task SelectWorkspaceReplacementSourceAsync()
     {
         if (IsBusy ||
-            _workspaceSummary is null ||
+            _workspaceShell.WorkspaceSummary is null ||
             !TryGetActiveAssetDocumentDetails(out var assetTab, out var details))
         {
             return;
@@ -1593,7 +1473,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         {
             var result = await _workspaceBrowserService.GetWorkspaceReplacementCandidatesAsync(
                 new GetWorkspaceReplacementCandidatesQuery(
-                    _workspaceSummary.WorkspaceId,
+                    _workspaceShell.WorkspaceSummary.WorkspaceId,
                     details.BundleId,
                     details.AssetId));
 
@@ -1628,7 +1508,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     public async Task SelectFileReplacementSourceAsync()
     {
         if (IsBusy ||
-            _workspaceSummary is null ||
+            _workspaceShell.WorkspaceSummary is null ||
             !TryGetActiveAssetDocumentDetails(out var assetTab, out var details))
         {
             return;
@@ -1665,7 +1545,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
             var result = await _workspaceBrowserService.GetFileReplacementCandidateAsync(
                 new GetFileReplacementCandidateQuery(
-                    _workspaceSummary.WorkspaceId,
+                    _workspaceShell.WorkspaceSummary.WorkspaceId,
                     details.BundleId,
                     details.AssetId,
                     selectedFilePath));
@@ -1700,7 +1580,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     public async Task ApplyPendingReplacementAsync()
     {
         if (IsBusy ||
-            _workspaceSummary is null ||
+            _workspaceShell.WorkspaceSummary is null ||
             !TryGetActiveAssetDocumentDetails(out var assetTab, out var details))
         {
             return;
@@ -1713,7 +1593,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
             {
                 var fileResult = await _workspaceBrowserService.ReplaceAssetFromFileAsync(
                     new ReplaceAssetFromFileCommand(
-                        _workspaceSummary.WorkspaceId,
+                        _workspaceShell.WorkspaceSummary.WorkspaceId,
                         details.BundleId,
                         details.AssetId,
                         assetTab.PendingFileReplacementCandidate.SourceFilePath,
@@ -1749,7 +1629,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
             var workspaceResult = await _workspaceBrowserService.ReplaceAssetFromWorkspaceAsync(
                 new ReplaceAssetFromWorkspaceCommand(
-                    _workspaceSummary.WorkspaceId,
+                    _workspaceShell.WorkspaceSummary.WorkspaceId,
                     details.BundleId,
                     details.AssetId,
                     assetTab.PendingWorkspaceReplacementCandidate.SourceBundleId,
@@ -1785,7 +1665,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     public async Task UndoAppliedReplacementAsync()
     {
         if (IsBusy ||
-            _workspaceSummary is null ||
+            _workspaceShell.WorkspaceSummary is null ||
             !TryGetActiveAssetDocumentDetails(out var assetTab, out var details))
         {
             return;
@@ -1796,7 +1676,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         {
             var result = await _workspaceBrowserService.UndoAssetReplacementAsync(
                 new UndoAssetReplacementCommand(
-                    _workspaceSummary.WorkspaceId,
+                    _workspaceShell.WorkspaceSummary.WorkspaceId,
                     details.BundleId,
                     details.AssetId));
 
@@ -1825,38 +1705,6 @@ public sealed class BundleExplorerViewModel : ObservableObject
         }
     }
 
-    private void RebuildBundleGroups(IEnumerable<BundleTreeNodeDto> bundleTree)
-    {
-        _allBundleGroups.Clear();
-        _bundleLookup.Clear();
-
-        foreach (var groupNode in bundleTree.Where(static node => node.IsVirtualFolder))
-        {
-            var bundles = groupNode.Children
-                .Where(static child => !child.IsVirtualFolder)
-                .Select(child =>
-                {
-                    var node = new BundleNodeViewModel(
-                        child.BundleId,
-                        child.DisplayName,
-                        child.LogicalPath,
-                        child.SourcePath,
-                        child.AssetCount);
-
-                    _bundleLookup[node.BundleId.Value] = node;
-                    return node;
-                })
-                .ToArray();
-
-            if (bundles.Length > 0)
-            {
-                _allBundleGroups.Add(new BundleGroupViewModel(groupNode.DisplayName, bundles));
-            }
-        }
-
-        ApplyBundleGroupFilter();
-    }
-
     /// <summary>
     /// 统一处理资源包标签页打开策略。
     /// 当前主交互已经收敛为“单击左侧资源包列表即打开固定标签页”，
@@ -1866,84 +1714,24 @@ public sealed class BundleExplorerViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(bundleNode);
 
-        if (_workspaceSummary is null)
+        if (_workspaceShell.WorkspaceSummary is null)
         {
             return;
         }
 
-        if (TryGetBundleTab(bundleNode.BundleId, out var existingTab))
-        {
-            if (openAsPinnedTab)
-            {
-                existingTab.PromoteToPinnedTab();
-            }
-
-            await SetActiveBundleTabAsync(existingTab, writeSelectionLog: false);
-            return;
-        }
-
-        if (openAsPinnedTab)
-        {
-            var pinnedTab = CreateBundleTab(bundleNode, isPreview: false);
-            BundleTabs.Add(pinnedTab);
-            await SetActiveBundleTabAsync(pinnedTab, writeSelectionLog: false);
-            return;
-        }
-
-        if (ActiveBundleTab is { IsPreview: true } previewTab)
-        {
-            previewTab.RebindBundle(
-                bundleNode.BundleId,
-                bundleNode.DisplayName,
-                bundleNode.LogicalPath,
-                isPreview: true);
-
-            await SetActiveBundleTabAsync(previewTab, writeSelectionLog: false);
-            return;
-        }
-
-        var newPreviewTab = CreateBundleTab(bundleNode, isPreview: true);
-        BundleTabs.Add(newPreviewTab);
-        await SetActiveBundleTabAsync(newPreviewTab, writeSelectionLog: false);
-    }
-
-    private BundleNodeViewModel? FindBundleNodeByDisplayName(string displayName) =>
-        _allBundleGroups
-            .SelectMany(static group => group.Bundles)
-            .FirstOrDefault(bundle => string.Equals(bundle.DisplayName, displayName, StringComparison.OrdinalIgnoreCase));
-
-    private BundleNodeViewModel? FindBundleNodeByLogicalPath(string logicalPath) =>
-        _allBundleGroups
-            .SelectMany(static group => group.Bundles)
-            .FirstOrDefault(bundle => string.Equals(bundle.LogicalPath, logicalPath, StringComparison.OrdinalIgnoreCase));
-
-    private BundleNodeViewModel? FindBundleNode(BundleId bundleId) =>
-        _bundleLookup.TryGetValue(bundleId.Value, out var bundleNode)
-            ? bundleNode
-            : null;
-
-    private BundleDocumentTabViewModel CreateBundleTab(BundleNodeViewModel bundleNode, bool isPreview) =>
-        new(
-            bundleNode.BundleId,
-            bundleNode.DisplayName,
-            bundleNode.LogicalPath,
-            isPreview);
-
-    private bool TryGetBundleTab(BundleId bundleId, [NotNullWhen(true)] out BundleDocumentTabViewModel? bundleTab)
-    {
-        bundleTab = BundleTabs.FirstOrDefault(tab => tab.BundleId.Equals(bundleId));
-        return bundleTab is not null;
+        var targetTab = _documentWorkspace.OpenBundle(bundleNode, openAsPinnedTab);
+        await SetActiveBundleTabAsync(targetTab, writeSelectionLog: false);
     }
 
     private async Task SetActiveBundleTabAsync(BundleDocumentTabViewModel tab, bool writeSelectionLog)
     {
         CaptureCurrentBundleTabStateBeforeActivation(tab);
-        BeginAssetDocumentHostSynchronization();
+        _documentWorkspace.BeginAssetDocumentHostSynchronization();
         try
         {
-            ActiveBundleTab = tab;
-            SetSelectedBundle(FindBundleNode(tab.BundleId));
-            var bundleNode = FindBundleNode(tab.BundleId);
+            _documentWorkspace.SetActiveBundleTab(tab);
+            var bundleNode = _bundlePane.FindBundleNode(tab.BundleId);
+            _bundlePane.SetSelectedBundle(bundleNode);
 
             BeginPrimaryPaneStateSynchronization();
             try
@@ -1984,7 +1772,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         }
         finally
         {
-            EndAssetDocumentHostSynchronization();
+            _documentWorkspace.EndAssetDocumentHostSynchronization();
         }
     }
 
@@ -2051,26 +1839,10 @@ public sealed class BundleExplorerViewModel : ObservableObject
         _assetDocumentStateSynchronizationDepth--;
     }
 
-    private void BeginAssetDocumentHostSynchronization()
-    {
-        _assetDocumentHostSynchronizationDepth++;
-    }
-
-    private void EndAssetDocumentHostSynchronization()
-    {
-        if (_assetDocumentHostSynchronizationDepth <= 0)
-        {
-            _assetDocumentHostSynchronizationDepth = 0;
-            return;
-        }
-
-        _assetDocumentHostSynchronizationDepth--;
-    }
-
     private void ClearActiveTabState()
     {
-        ActiveBundleTab = null;
-        SetSelectedBundle(null);
+        _documentWorkspace.SetActiveBundleTab(null);
+        _bundlePane.SetSelectedBundle(null);
         _emptyInspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
         PrimaryPane.ClearItems(ResolvePrimaryPaneEmptyStateText());
         NotifyAssetDocumentHostStateChanged();
@@ -2089,7 +1861,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     private AssetDependencyViewModel MapDependency(AssetDependencyDto dependency) =>
         new(
             Name: dependency.Name,
-            BundleName: ResolveBundleDisplayName(dependency.BundleId),
+            BundleName: _bundlePane.ResolveBundleDisplayName(dependency.BundleId),
             MetadataText: BuildDependencyMetadataText(dependency),
             SupplementaryText: BuildDependencySupplementaryText(dependency));
 
@@ -2172,11 +1944,6 @@ public sealed class BundleExplorerViewModel : ObservableObject
         };
     }
 
-    private string ResolveBundleDisplayName(BundleId bundleId) =>
-        _bundleLookup.TryGetValue(bundleId.Value, out var bundleNode)
-            ? bundleNode.DisplayName
-            : bundleId.Value;
-
     private IEnumerable<AssetTypeOptionViewModel> CreateAssetTypeOptions()
     {
         return new[]
@@ -2213,96 +1980,15 @@ public sealed class BundleExplorerViewModel : ObservableObject
         return GetAssetTypeDisplayName(assetType);
     }
 
-    private void UpdateWorkspaceState(bool hasWorkspace)
-    {
-        HasWorkspace = hasWorkspace;
-        if (!hasWorkspace)
-        {
-            if (!string.IsNullOrWhiteSpace(BundleSearchKeyword))
-            {
-                BundleSearchKeyword = string.Empty;
-            }
-
-            IsBundleSearchExpanded = false;
-            IsBundlePaneCollapsed = false;
-        }
-    }
-
     private void ResetWorkspaceToEmptyState()
     {
         CancelWorkspaceBrowserStatePersistence();
-        _activeWorkspaceNavigationRequest = null;
-        _workspaceSummary = null;
+        _workspaceShell.Reset();
         _workspaceContextService.ClearCurrentWorkspace();
-        UpdateWorkspaceState(hasWorkspace: false);
-        SetSelectedBundle(null);
         _emptyInspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
-        _allBundleGroups.Clear();
-        BundleGroups.Clear();
-        BundleTabs.Clear();
+        _bundlePane.Clear();
+        _documentWorkspace.Clear();
         ClearActiveTabState();
-        NotifyBundleCollectionStateChanged();
-    }
-
-    /// <summary>
-    /// 尝试获取当前已经打开的活动工作区会话。
-    /// 成功时说明当前页面可以直接绑定现有会话，而不必重新执行“打开工作区”流程。
-    /// </summary>
-    private bool TryGetCurrentWorkspaceSessionContext(
-        [NotNullWhen(true)] out WorkspaceSummaryDto? workspaceSummary,
-        [NotNullWhen(true)] out WorkspaceNavigationRequest? workspaceNavigationRequest)
-    {
-        workspaceSummary = _workspaceContextService.CurrentWorkspaceSummary;
-        if (workspaceSummary is null)
-        {
-            workspaceNavigationRequest = null;
-            return false;
-        }
-
-        workspaceNavigationRequest = BuildNavigationRequestFromWorkspaceSummary(workspaceSummary);
-        return workspaceNavigationRequest is not null;
-    }
-
-    private WorkspaceNavigationRequest? BuildNavigationRequestFromWorkspaceSummary(WorkspaceSummaryDto? workspaceSummary)
-    {
-        if (workspaceSummary is null)
-        {
-            return null;
-        }
-
-        var currentWorkspaceEntry = _workspaceContextService.WorkspaceEntries.FirstOrDefault(entry =>
-            string.Equals(
-                entry.WorkspaceSummary?.WorkspaceId.Value,
-                workspaceSummary.WorkspaceId.Value,
-                StringComparison.Ordinal));
-
-        return new WorkspaceNavigationRequest(
-            SourcePath: workspaceSummary.SourcePath,
-            WorkspaceDisplayName: workspaceSummary.DisplayName,
-            WorkspaceDataRootPath: currentWorkspaceEntry?.WorkspaceDataRootPath ?? string.Empty,
-            OpenTarget: WorkspaceOpenTarget.CurrentWindow,
-            AssetBundleDecryptorId: currentWorkspaceEntry?.AssetBundleDecryptorId);
-    }
-
-    private string ResolveCurrentDecryptorDisplayName()
-    {
-        var decryptorId = _activeWorkspaceNavigationRequest?.AssetBundleDecryptorId;
-        if (string.IsNullOrWhiteSpace(decryptorId) ||
-            string.Equals(decryptorId, AssetBundleDecryptorIds.BuiltInAutoDetect, StringComparison.OrdinalIgnoreCase))
-        {
-            decryptorId = _workspaceContextService.WorkspaceEntries
-                .FirstOrDefault(entry =>
-                    string.Equals(
-                        entry.WorkspaceSummary?.WorkspaceId.Value,
-                        _workspaceSummary?.WorkspaceId.Value,
-                        StringComparison.Ordinal))?
-                .AssetBundleDecryptorId;
-        }
-
-        return AssetBundleDecryptorDisplayText.GetDisplayName(
-            _localizationService,
-            _assetBundleDecryptorRegistry,
-            decryptorId);
     }
 
     /// <summary>
@@ -2320,8 +2006,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         _isRestoringWorkspaceBrowserState = true;
         try
         {
-            BundleSearchKeyword = browserState.BundleSearchKeyword ?? string.Empty;
-            IsBundleSearchExpanded = !string.IsNullOrWhiteSpace(BundleSearchKeyword);
+            _bundlePane.RestoreSearchState(browserState.BundleSearchKeyword);
 
             var restoredTabs = RestoreBundleTabsFromBrowserState(browserState);
             if (restoredTabs.Count == 0)
@@ -2358,14 +2043,18 @@ public sealed class BundleExplorerViewModel : ObservableObject
                 continue;
             }
 
-            var bundleNode = FindBundleNode(new BundleId(tabState.BundleId)) ??
-                             FindBundleNodeByLogicalPath(tabState.LogicalPath);
+            var bundleNode = _bundlePane.FindBundleNode(new BundleId(tabState.BundleId)) ??
+                             _bundlePane.FindBundleNodeByLogicalPath(tabState.LogicalPath);
             if (bundleNode is null)
             {
                 continue;
             }
 
-            var tab = CreateBundleTab(bundleNode, tabState.IsPreview);
+            var tab = new BundleDocumentTabViewModel(
+                bundleNode.BundleId,
+                bundleNode.DisplayName,
+                bundleNode.LogicalPath,
+                tabState.IsPreview);
             tab.RestoreViewState(
                 searchKeyword: tabState.SearchKeyword,
                 selectedAssetType: ParseAssetTypeFilter(tabState.AssetTypeFilter),
@@ -2390,13 +2079,17 @@ public sealed class BundleExplorerViewModel : ObservableObject
             return false;
         }
 
-        var bundleNode = FindBundleNode(new BundleId(browserState.LastBundleId));
+        var bundleNode = _bundlePane.FindBundleNode(new BundleId(browserState.LastBundleId));
         if (bundleNode is null)
         {
             return false;
         }
 
-        var restoredTab = CreateBundleTab(bundleNode, isPreview: true);
+        var restoredTab = new BundleDocumentTabViewModel(
+            bundleNode.BundleId,
+            bundleNode.DisplayName,
+            bundleNode.LogicalPath,
+            isPreview: true);
         restoredTab.RestoreViewState(
             searchKeyword: browserState.AssetSearchKeyword,
             selectedAssetType: ParseAssetTypeFilter(browserState.AssetTypeFilter),
@@ -2415,7 +2108,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     /// </summary>
     private void RequestWorkspaceBrowserStatePersistence()
     {
-        if (_workspaceSummary is null || _isRestoringWorkspaceBrowserState)
+        if (_workspaceShell.WorkspaceSummary is null || _isRestoringWorkspaceBrowserState)
         {
             return;
         }
@@ -2451,7 +2144,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     private void PersistWorkspaceBrowserStateNow()
     {
-        if (_workspaceSummary is null || _isRestoringWorkspaceBrowserState)
+        if (_workspaceShell.WorkspaceSummary is null || _isRestoringWorkspaceBrowserState)
         {
             return;
         }
@@ -2462,7 +2155,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     private void PersistWorkspaceBrowserStateCore()
     {
-        if (_workspaceSummary is null)
+        if (_workspaceShell.WorkspaceSummary is null)
         {
             return;
         }
@@ -2570,182 +2263,11 @@ public sealed class BundleExplorerViewModel : ObservableObject
             : null;
     }
 
-    private void SetSelectedBundle(BundleNodeViewModel? bundleNode)
-    {
-        if (ReferenceEquals(_selectedBundleNode, bundleNode))
-        {
-            return;
-        }
-
-        if (_selectedBundleNode is not null)
-        {
-            _selectedBundleNode.IsSelected = false;
-        }
-
-        _selectedBundleNode = bundleNode;
-        if (_selectedBundleNode is not null)
-        {
-            _selectedBundleNode.IsSelected = true;
-        }
-
-        NotifyCollapsedBundlePaneSummaryChanged();
-    }
-
-    /// <summary>
-    /// 根据资源包搜索关键字重建左侧可见分组。
-    /// 过滤只影响浏览可见性，不改变工作区中真正加载的资源包集合。
-    /// </summary>
-    private void ApplyBundleGroupFilter()
-    {
-        var searchKeyword = NormalizeSearchKeyword(BundleSearchKeyword);
-        BundleGroups.Clear();
-
-        foreach (var group in _allBundleGroups)
-        {
-            var visibleBundles = GroupMatchesSearch(group, searchKeyword)
-                ? group.Bundles.ToArray()
-                : group.Bundles
-                    .Where(bundle => BundleMatchesSearch(bundle, searchKeyword))
-                    .ToArray();
-
-            if (visibleBundles.Length > 0)
-            {
-                BundleGroups.Add(new BundleGroupViewModel(group.DisplayName, visibleBundles));
-            }
-        }
-
-        NotifyBundleCollectionStateChanged();
-    }
-
-    private void NotifyBundleCollectionStateChanged()
-    {
-        OnPropertyChanged(nameof(BundlePaneEmptyStateVisibility));
-        OnPropertyChanged(nameof(BundleListVisibility));
-        OnPropertyChanged(nameof(BundleSearchEmptyStateVisibility));
-        NotifyCollapsedBundlePaneSummaryChanged();
-    }
-
     private string ResolvePrimaryPaneEmptyStateText()
-    {
-        if (!HasWorkspace)
-        {
-            return GetString(ResourceKeys.BundleExplorerNoWorkspace);
-        }
-
-        return _allBundleGroups.Count == 0
-            ? GetString(ResourceKeys.BundleExplorerEmptyWorkspace)
-            : GetString(ResourceKeys.BundleExplorerNoOpenTabs);
-    }
-
-    private int GetVisibleBundleCount() => BundleGroups.Sum(static group => group.Bundles.Count);
-
-    /// <summary>
-    /// 收缩窄条依赖的都是派生摘要字段，
-    /// 因此在资源包集合或当前选中资源包变化时集中刷新即可。
-    /// </summary>
-    private void NotifyCollapsedBundlePaneSummaryChanged()
-    {
-        OnPropertyChanged(nameof(CollapsedBundlePaneBundleCountText));
-        OnPropertyChanged(nameof(CollapsedBundlePaneGroupCountText));
-        OnPropertyChanged(nameof(CollapsedBundlePaneSelectedBundleShortText));
-        OnPropertyChanged(nameof(CollapsedBundlePaneSelectedBundleToolTip));
-    }
-
-    /// <summary>
-    /// 为收缩态窄条生成一个简短的资源包缩写，
-    /// 既尽量保留辨识度，也避免长文件名把窄条挤坏。
-    /// </summary>
-    private string BuildCollapsedBundlePaneSelectedBundleShortText()
-    {
-        if (string.IsNullOrWhiteSpace(_selectedBundleNode?.DisplayName))
-        {
-            return GetString(ResourceKeys.BundleExplorerCollapsedPaneSelectedBundleShortNone);
-        }
-
-        var displayName = _selectedBundleNode.DisplayName.Trim();
-        var normalizedDisplayName = displayName.EndsWith(".ab", StringComparison.OrdinalIgnoreCase)
-            ? displayName[..^3]
-            : displayName;
-
-        var compactText = new string(normalizedDisplayName
-            .Where(static character => !char.IsWhiteSpace(character) && character is not '_' and not '-')
-            .ToArray());
-
-        if (string.IsNullOrWhiteSpace(compactText))
-        {
-            return GetString(ResourceKeys.BundleExplorerCollapsedPaneSelectedBundleShortNone);
-        }
-
-        var shortText = compactText.Length > 2
-            ? compactText[..2]
-            : compactText;
-
-        return shortText.ToUpper(CultureInfo.CurrentCulture);
-    }
-
-    private bool GroupMatchesSearch(BundleGroupViewModel group, string? searchKeyword) =>
-        searchKeyword is not null &&
-        group.DisplayName.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase);
-
-    private bool BundleMatchesSearch(BundleNodeViewModel bundle, string? searchKeyword)
-    {
-        if (searchKeyword is null)
-        {
-            return true;
-        }
-
-        return bundle.DisplayName.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase) ||
-               bundle.LogicalPath.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase) ||
-               bundle.BundleId.Value.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase);
-    }
-
-    /// <summary>
-    /// 将顶部工作区摘要拆成若干标签，降低密集长句对浏览区域的视觉干扰。
-    /// </summary>
-    private void RefreshWorkspaceStatusChips()
-    {
-        WorkspaceStatusChips.Clear();
-
-        if (_workspaceSummary is null)
-        {
-            WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
-                GetString(ResourceKeys.BundleExplorerStatusWorkspaceLabel),
-                GetString(ResourceKeys.BundleExplorerStatusNotLoaded),
-                "\uE8B7"));
-
-            WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
-                GetString(ResourceKeys.BundleExplorerStatusWorkspaceSessionCountLabel),
-                _workspaceContextService.WorkspaceEntryCount.ToString(CultureInfo.CurrentCulture),
-                "\uE71D"));
-
-            WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
-                GetString(ResourceKeys.BundleExplorerStatusCurrentDecryptorLabel),
-                GetString(ResourceKeys.BundleExplorerStatusNotLoaded),
-                "\uE9CA"));
-            return;
-        }
-
-        WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
-            GetString(ResourceKeys.BundleExplorerStatusWorkspaceLabel),
-            _workspaceSummary.DisplayName,
-            "\uE8B7"));
-        WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
-            GetString(ResourceKeys.BundleExplorerStatusBundleCountLabel),
-            _workspaceSummary.BundleCount.ToString(CultureInfo.CurrentCulture),
-            "\uE8B7"));
-        WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
-            GetString(ResourceKeys.BundleExplorerStatusAssetCountLabel),
-            _workspaceSummary.AssetCount.ToString(CultureInfo.CurrentCulture),
-            "\uE8A5"));
-        WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
-            GetString(ResourceKeys.BundleExplorerStatusWorkspaceSessionCountLabel),
-            _workspaceContextService.WorkspaceEntryCount.ToString(CultureInfo.CurrentCulture),
-            "\uE71D"));
-        WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
-            GetString(ResourceKeys.BundleExplorerStatusCurrentDecryptorLabel),
-            ResolveCurrentDecryptorDisplayName(),
-            "\uE9CA"));
-    }
+        => _bundlePane.ResolvePrimaryPaneEmptyStateText(
+            noWorkspaceText: GetString(ResourceKeys.BundleExplorerNoWorkspace),
+            emptyWorkspaceText: GetString(ResourceKeys.BundleExplorerEmptyWorkspace),
+            noOpenTabsText: GetString(ResourceKeys.BundleExplorerNoOpenTabs));
 
     private async Task LoadInspectorPreviewAsync(
         AssetDocumentTabViewModel assetTab,
@@ -2922,16 +2444,17 @@ public sealed class BundleExplorerViewModel : ObservableObject
             return true;
         }
 
-        if (_activeWorkspaceNavigationRequest is null ||
-            string.IsNullOrWhiteSpace(_activeWorkspaceNavigationRequest.WorkspaceDataRootPath))
+        var activeWorkspaceNavigationRequest = _workspaceShell.ActiveWorkspaceNavigationRequest;
+        if (activeWorkspaceNavigationRequest is null ||
+            string.IsNullOrWhiteSpace(activeWorkspaceNavigationRequest.WorkspaceDataRootPath))
         {
             previewQuery = null;
             return false;
         }
 
         var workspaceKey = WorkspaceCatalogKeyFactory.CreateWorkspaceKey(
-            _activeWorkspaceNavigationRequest.SourcePath,
-            _activeWorkspaceNavigationRequest.WorkspaceDataRootPath);
+            activeWorkspaceNavigationRequest.SourcePath,
+            activeWorkspaceNavigationRequest.WorkspaceDataRootPath);
         if (string.IsNullOrWhiteSpace(workspaceKey))
         {
             previewQuery = null;
@@ -2941,7 +2464,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         previewQuery = new GetAssetPreviewQuery(
             WorkspaceId: details.WorkspaceId,
             WorkspaceKey: workspaceKey,
-            WorkspaceDataRootPath: _activeWorkspaceNavigationRequest.WorkspaceDataRootPath,
+            WorkspaceDataRootPath: activeWorkspaceNavigationRequest.WorkspaceDataRootPath,
             BundleId: details.BundleId,
             AssetId: details.AssetId);
         return true;
@@ -3267,12 +2790,76 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     private void NotifyAssetDocumentHostStateChanged()
     {
-        OnPropertyChanged(nameof(CurrentAssetTabs));
-        OnPropertyChanged(nameof(ActiveAssetDocumentTab));
-        OnPropertyChanged(nameof(HasAssetDocumentTabs));
-        OnPropertyChanged(nameof(AssetDocumentTabStripVisibility));
-        OnPropertyChanged(nameof(Inspector));
-        NotifyActionStates();
+        _documentWorkspace.NotifyAssetDocumentHostStateChanged();
+    }
+
+    private void OnBundlePaneBrowserStateChanged(object? sender, EventArgs eventArgs)
+    {
+        RequestWorkspaceBrowserStatePersistence();
+    }
+
+    /// <summary>
+    /// 主页面仍保留兼容旧绑定入口，因此这里把子 ViewModel 的状态变化桥接回外观层属性。
+    /// 等页面绑定逐步迁移到更细粒度对象后，这层桥接可以继续收缩。
+    /// </summary>
+    private void OnBundlePanePropertyChanged(object? sender, PropertyChangedEventArgs eventArgs)
+    {
+        if (string.IsNullOrWhiteSpace(eventArgs.PropertyName))
+        {
+            return;
+        }
+
+        OnPropertyChanged(eventArgs.PropertyName);
+    }
+
+    private void OnWorkspaceShellPropertyChanged(object? sender, PropertyChangedEventArgs eventArgs)
+    {
+        if (string.IsNullOrWhiteSpace(eventArgs.PropertyName))
+        {
+            return;
+        }
+
+        switch (eventArgs.PropertyName)
+        {
+            case nameof(BundleExplorerWorkspaceShellViewModel.HasWorkspace):
+                _bundlePane.UpdateInteractionState(HasWorkspace, IsBusy);
+                NotifyCommandStates();
+                OnPropertyChanged(nameof(HasWorkspace));
+                break;
+            case nameof(BundleExplorerWorkspaceShellViewModel.WorkspaceContentVisibility):
+                OnPropertyChanged(nameof(WorkspaceContentVisibility));
+                break;
+            case nameof(BundleExplorerWorkspaceShellViewModel.WorkspaceEmptyStateVisibility):
+                OnPropertyChanged(nameof(WorkspaceEmptyStateVisibility));
+                break;
+            case nameof(BundleExplorerWorkspaceShellViewModel.WorkspaceStatusChips):
+                OnPropertyChanged(nameof(WorkspaceStatusChips));
+                break;
+        }
+    }
+
+    private void OnDocumentWorkspacePropertyChanged(object? sender, PropertyChangedEventArgs eventArgs)
+    {
+        if (string.IsNullOrWhiteSpace(eventArgs.PropertyName))
+        {
+            return;
+        }
+
+        OnPropertyChanged(eventArgs.PropertyName);
+
+        switch (eventArgs.PropertyName)
+        {
+            case nameof(BundleExplorerDocumentWorkspaceViewModel.ActiveBundleTab):
+            case nameof(BundleExplorerDocumentWorkspaceViewModel.HasOpenTabs):
+                break;
+            case nameof(BundleExplorerDocumentWorkspaceViewModel.CurrentAssetTabs):
+            case nameof(BundleExplorerDocumentWorkspaceViewModel.ActiveAssetDocumentTab):
+            case nameof(BundleExplorerDocumentWorkspaceViewModel.HasAssetDocumentTabs):
+            case nameof(BundleExplorerDocumentWorkspaceViewModel.AssetDocumentTabStripVisibility):
+                OnPropertyChanged(nameof(Inspector));
+                NotifyActionStates();
+                break;
+        }
     }
 
     private void NotifyActionStates()
