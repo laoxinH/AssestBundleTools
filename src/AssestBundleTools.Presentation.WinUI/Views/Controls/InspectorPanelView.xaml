@@ -10,148 +10,361 @@
 
     <UserControl.Resources>
         <Style
-            x:Key="InspectorSectionSegmentButtonStyle"
-            TargetType="RadioButton">
-            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="10,5" />
-            <Setter Property="MinWidth" Value="58" />
-            <Setter Property="MinHeight" Value="32" />
-            <Setter Property="HorizontalAlignment" Value="Left" />
-            <Setter Property="UseSystemFocusVisuals" Value="False" />
-            <Setter Property="Template">
+            x:Key="InspectorInfoCardBorderStyle"
+            TargetType="Border">
+            <Setter
+                Property="Background"
+                Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
+            <Setter
+                Property="BorderBrush"
+                Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter
+                Property="BorderThickness"
+                Value="1" />
+            <Setter
+                Property="CornerRadius"
+                Value="12" />
+        </Style>
+
+        <Style
+            x:Key="InspectorInfoCardHeaderButtonStyle"
+            TargetType="Button">
+            <Setter
+                Property="Background"
+                Value="Transparent" />
+            <Setter
+                Property="BorderBrush"
+                Value="Transparent" />
+            <Setter
+                Property="BorderThickness"
+                Value="0" />
+            <Setter
+                Property="Padding"
+                Value="10,8" />
+            <Setter
+                Property="CornerRadius"
+                Value="10" />
+            <Setter
+                Property="HorizontalAlignment"
+                Value="Stretch" />
+            <Setter
+                Property="HorizontalContentAlignment"
+                Value="Stretch" />
+        </Style>
+
+        <Style
+            x:Key="InspectorInfoCardCopyButtonStyle"
+            TargetType="Button">
+            <Setter
+                Property="Background"
+                Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter
+                Property="BorderBrush"
+                Value="Transparent" />
+            <Setter
+                Property="BorderThickness"
+                Value="0" />
+            <Setter
+                Property="Padding"
+                Value="0" />
+            <Setter
+                Property="Width"
+                Value="30" />
+            <Setter
+                Property="Height"
+                Value="30" />
+            <Setter
+                Property="CornerRadius"
+                Value="15" />
+            <Setter
+                Property="HorizontalAlignment"
+                Value="Right" />
+            <Setter
+                Property="VerticalAlignment"
+                Value="Top" />
+        </Style>
+
+        <Style
+            x:Key="InspectorInfoCardTitleTextStyle"
+            TargetType="TextBlock">
+            <Setter
+                Property="FontSize"
+                Value="14" />
+            <Setter
+                Property="FontWeight"
+                Value="SemiBold" />
+            <Setter
+                Property="TextWrapping"
+                Value="WrapWholeWords" />
+        </Style>
+
+        <Style
+            x:Key="InspectorInfoCardSummaryTextStyle"
+            TargetType="TextBlock">
+            <Setter
+                Property="FontSize"
+                Value="12" />
+            <Setter
+                Property="Foreground"
+                Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter
+                Property="TextWrapping"
+                Value="WrapWholeWords" />
+        </Style>
+
+        <Style
+            x:Key="InspectorInfoRowLabelTextStyle"
+            TargetType="TextBlock">
+            <Setter
+                Property="Margin"
+                Value="0,0,12,0" />
+            <Setter
+                Property="FontSize"
+                Value="12.5" />
+            <Setter
+                Property="FontWeight"
+                Value="SemiBold" />
+            <Setter
+                Property="Foreground"
+                Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter
+                Property="TextWrapping"
+                Value="WrapWholeWords" />
+        </Style>
+
+        <Style
+            x:Key="InspectorInfoRowValueTextStyle"
+            TargetType="TextBlock">
+            <Setter
+                Property="FontSize"
+                Value="12.5" />
+            <Setter
+                Property="IsTextSelectionEnabled"
+                Value="True" />
+            <Setter
+                Property="TextWrapping"
+                Value="WrapWholeWords" />
+        </Style>
+
+        <Style
+            x:Key="InspectorPreviewSurfaceBorderStyle"
+            TargetType="Border">
+            <Setter
+                Property="Background"
+                Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter
+                Property="BorderBrush"
+                Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter
+                Property="BorderThickness"
+                Value="1" />
+            <Setter
+                Property="CornerRadius"
+                Value="12" />
+        </Style>
+
+        <Style
+            x:Key="InspectorPreviewActionButtonStyle"
+            TargetType="Button">
+            <Setter
+                Property="Width"
+                Value="32" />
+            <Setter
+                Property="Height"
+                Value="32" />
+            <Setter
+                Property="MinWidth"
+                Value="32" />
+            <Setter
+                Property="MinHeight"
+                Value="32" />
+            <Setter
+                Property="Padding"
+                Value="0" />
+            <Setter
+                Property="UseSystemFocusVisuals"
+                Value="False" />
+            <Setter
+                Property="CornerRadius"
+                Value="10" />
+            <Setter
+                Property="Background"
+                Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter
+                Property="Foreground"
+                Value="{ThemeResource TextFillColorPrimaryBrush}" />
+            <Setter
+                Property="BorderBrush"
+                Value="Transparent" />
+            <Setter
+                Property="BorderThickness"
+                Value="0" />
+            <Setter
+                Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Border
-                            x:Name="RootBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="Transparent"
-                            BorderThickness="1"
-                            CornerRadius="10">
-                            <Grid>
-                                <Border
-                                    x:Name="CheckedBackground"
-                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                    CornerRadius="10"
-                                    Opacity="0" />
-                                <Border
-                                    x:Name="HoverOverlay"
-                                    Background="{ThemeResource SubtleFillColorTertiaryBrush}"
-                                    CornerRadius="10"
-                                    Opacity="0" />
-                                <Border
-                                    x:Name="PressedOverlay"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    CornerRadius="10"
-                                    Opacity="0" />
-                                <Border
-                                    x:Name="SelectionStroke"
-                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="10"
-                                    Opacity="0" />
-                                <TextBlock
-                                    x:Name="LabelTextBlock"
-                                    Margin="{TemplateBinding Padding}"
+                    <ControlTemplate TargetType="Button">
+                        <Grid Background="Transparent">
+                            <Border
+                                x:Name="PreviewActionSurface"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{TemplateBinding CornerRadius}"
+                                RenderTransformOrigin="0.5,0.5">
+                                <Border.RenderTransform>
+                                    <CompositeTransform x:Name="PreviewActionSurfaceTransform" />
+                                </Border.RenderTransform>
+                                <ContentPresenter
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
-                                    FontSize="11.5"
-                                    FontWeight="SemiBold"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="{TemplateBinding Content}"
-                                    TextTrimming="CharacterEllipsis" />
-                            </Grid>
+                                    Content="{TemplateBinding Content}"
+                                    ContentTemplate="{TemplateBinding ContentTemplate}" />
+                            </Border>
+
                             <VisualStateManager.VisualStateGroups>
                                 <VisualStateGroup x:Name="CommonStates">
                                     <VisualState x:Name="Normal" />
                                     <VisualState x:Name="PointerOver">
                                         <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="PreviewActionSurface"
+                                                Storyboard.TargetProperty="Background">
+                                                <DiscreteObjectKeyFrame
+                                                    KeyTime="0"
+                                                    Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="PreviewActionSurface"
+                                                Storyboard.TargetProperty="BorderBrush">
+                                                <DiscreteObjectKeyFrame
+                                                    KeyTime="0"
+                                                    Value="{ThemeResource ControlStrokeColorSecondaryBrush}" />
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="PreviewActionSurface"
+                                                Storyboard.TargetProperty="BorderThickness">
+                                                <DiscreteObjectKeyFrame
+                                                    KeyTime="0"
+                                                    Value="1" />
+                                            </ObjectAnimationUsingKeyFrames>
                                             <DoubleAnimation
-                                                Storyboard.TargetName="HoverOverlay"
-                                                Storyboard.TargetProperty="Opacity"
-                                                To="1"
-                                                Duration="0:0:0.12" />
-                                            <DoubleAnimation
-                                                Storyboard.TargetName="PressedOverlay"
-                                                Storyboard.TargetProperty="Opacity"
-                                                To="0"
-                                                Duration="0:0:0" />
+                                                Storyboard.TargetName="PreviewActionSurfaceTransform"
+                                                Storyboard.TargetProperty="TranslateY"
+                                                To="-0.5"
+                                                Duration="0:0:0.08"
+                                                EnableDependentAnimation="True" />
                                         </Storyboard>
                                     </VisualState>
                                     <VisualState x:Name="Pressed">
                                         <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="PreviewActionSurface"
+                                                Storyboard.TargetProperty="Background">
+                                                <DiscreteObjectKeyFrame
+                                                    KeyTime="0"
+                                                    Value="{ThemeResource SubtleFillColorTertiaryBrush}" />
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="PreviewActionSurface"
+                                                Storyboard.TargetProperty="BorderBrush">
+                                                <DiscreteObjectKeyFrame
+                                                    KeyTime="0"
+                                                    Value="{ThemeResource ControlStrokeColorSecondaryBrush}" />
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="PreviewActionSurface"
+                                                Storyboard.TargetProperty="BorderThickness">
+                                                <DiscreteObjectKeyFrame
+                                                    KeyTime="0"
+                                                    Value="1" />
+                                            </ObjectAnimationUsingKeyFrames>
                                             <DoubleAnimation
-                                                Storyboard.TargetName="HoverOverlay"
-                                                Storyboard.TargetProperty="Opacity"
-                                                To="0"
-                                                Duration="0:0:0" />
-                                            <DoubleAnimation
-                                                Storyboard.TargetName="PressedOverlay"
-                                                Storyboard.TargetProperty="Opacity"
+                                                Storyboard.TargetName="PreviewActionSurfaceTransform"
+                                                Storyboard.TargetProperty="TranslateY"
                                                 To="1"
-                                                Duration="0:0:0.08" />
+                                                Duration="0:0:0.06"
+                                                EnableDependentAnimation="True" />
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="PreviewActionSurfaceTransform"
+                                                Storyboard.TargetProperty="ScaleX"
+                                                To="0.96"
+                                                Duration="0:0:0.06"
+                                                EnableDependentAnimation="True" />
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="PreviewActionSurfaceTransform"
+                                                Storyboard.TargetProperty="ScaleY"
+                                                To="0.96"
+                                                Duration="0:0:0.06"
+                                                EnableDependentAnimation="True" />
                                         </Storyboard>
                                     </VisualState>
                                     <VisualState x:Name="Disabled">
                                         <Storyboard>
                                             <DoubleAnimation
-                                                Storyboard.TargetName="RootBorder"
+                                                Storyboard.TargetName="PreviewActionSurface"
                                                 Storyboard.TargetProperty="Opacity"
                                                 To="0.45"
                                                 Duration="0:0:0" />
                                         </Storyboard>
                                     </VisualState>
                                 </VisualStateGroup>
-                                <VisualStateGroup x:Name="CheckStates">
-                                    <VisualState x:Name="Unchecked">
-                                        <Storyboard>
-                                            <DoubleAnimation
-                                                Storyboard.TargetName="CheckedBackground"
-                                                Storyboard.TargetProperty="Opacity"
-                                                To="0"
-                                                Duration="0:0:0.12" />
-                                            <DoubleAnimation
-                                                Storyboard.TargetName="SelectionStroke"
-                                                Storyboard.TargetProperty="Opacity"
-                                                To="0"
-                                                Duration="0:0:0.12" />
-                                            <ObjectAnimationUsingKeyFrames
-                                                Storyboard.TargetName="LabelTextBlock"
-                                                Storyboard.TargetProperty="Foreground">
-                                                <DiscreteObjectKeyFrame
-                                                    KeyTime="0"
-                                                    Value="{ThemeResource TextFillColorSecondaryBrush}" />
-                                            </ObjectAnimationUsingKeyFrames>
-                                        </Storyboard>
-                                    </VisualState>
-                                    <VisualState x:Name="Checked">
-                                        <Storyboard>
-                                            <DoubleAnimation
-                                                Storyboard.TargetName="CheckedBackground"
-                                                Storyboard.TargetProperty="Opacity"
-                                                To="1"
-                                                Duration="0:0:0.12" />
-                                            <DoubleAnimation
-                                                Storyboard.TargetName="SelectionStroke"
-                                                Storyboard.TargetProperty="Opacity"
-                                                To="1"
-                                                Duration="0:0:0.12" />
-                                            <ObjectAnimationUsingKeyFrames
-                                                Storyboard.TargetName="LabelTextBlock"
-                                                Storyboard.TargetProperty="Foreground">
-                                                <DiscreteObjectKeyFrame
-                                                    KeyTime="0"
-                                                    Value="{ThemeResource TextFillColorPrimaryBrush}" />
-                                            </ObjectAnimationUsingKeyFrames>
-                                        </Storyboard>
-                                    </VisualState>
-                                </VisualStateGroup>
                             </VisualStateManager.VisualStateGroups>
-                        </Border>
+                        </Grid>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <Style
+            x:Key="InspectorAudioTransportButtonStyle"
+            BasedOn="{StaticResource DefaultButtonStyle}"
+            TargetType="Button">
+            <Setter
+                Property="Width"
+                Value="34" />
+            <Setter
+                Property="Height"
+                Value="34" />
+            <Setter
+                Property="MinWidth"
+                Value="34" />
+            <Setter
+                Property="MinHeight"
+                Value="34" />
+            <Setter
+                Property="Padding"
+                Value="0" />
+            <Setter
+                Property="CornerRadius"
+                Value="10" />
+        </Style>
+
+        <Style
+            x:Key="InspectorAudioBadgeBorderStyle"
+            TargetType="Border">
+            <Setter
+                Property="Padding"
+                Value="10,6" />
+            <Setter
+                Property="Background"
+                Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter
+                Property="CornerRadius"
+                Value="10" />
+        </Style>
+
+        <Style
+            x:Key="InspectorAudioBadgeTextStyle"
+            TargetType="TextBlock">
+            <Setter
+                Property="FontSize"
+                Value="11.5" />
+            <Setter
+                Property="FontWeight"
+                Value="SemiBold" />
+            <Setter
+                Property="TextWrapping"
+                Value="WrapWholeWords" />
         </Style>
     </UserControl.Resources>
 
@@ -200,28 +413,28 @@
                                 GroupName="InspectorSectionGroup"
                                 Tag="0"
                                 Checked="OnSectionRadioButtonChecked"
-                                Style="{StaticResource InspectorSectionSegmentButtonStyle}"
+                                Style="{StaticResource CompactSegmentRadioButtonStyle}"
                                 IsChecked="{x:Bind ViewModel.IsDetailsSectionSelected, Mode=OneWay}" />
                             <RadioButton
                                 x:Name="DependenciesSectionButton"
                                 GroupName="InspectorSectionGroup"
                                 Tag="1"
                                 Checked="OnSectionRadioButtonChecked"
-                                Style="{StaticResource InspectorSectionSegmentButtonStyle}"
+                                Style="{StaticResource CompactSegmentRadioButtonStyle}"
                                 IsChecked="{x:Bind ViewModel.IsDependenciesSectionSelected, Mode=OneWay}" />
                             <RadioButton
                                 x:Name="ReplacementSectionButton"
                                 GroupName="InspectorSectionGroup"
                                 Tag="2"
                                 Checked="OnSectionRadioButtonChecked"
-                                Style="{StaticResource InspectorSectionSegmentButtonStyle}"
+                                Style="{StaticResource CompactSegmentRadioButtonStyle}"
                                 IsChecked="{x:Bind ViewModel.IsReplacementSectionSelected, Mode=OneWay}" />
                             <RadioButton
                                 x:Name="ChangesSectionButton"
                                 GroupName="InspectorSectionGroup"
                                 Tag="3"
                                 Checked="OnSectionRadioButtonChecked"
-                                Style="{StaticResource InspectorSectionSegmentButtonStyle}"
+                                Style="{StaticResource CompactSegmentRadioButtonStyle}"
                                 IsChecked="{x:Bind ViewModel.IsChangesSectionSelected, Mode=OneWay}" />
                         </StackPanel>
                     </Border>
@@ -235,11 +448,32 @@
                         Visibility="{x:Bind ViewModel.DetailsSectionVisibility, Mode=OneWay}">
                         <StackPanel Padding="8" Spacing="8">
                             <Border
-                                Height="320"
+                                Height="{x:Bind ViewModel.PreviewSurfaceHeight, Mode=OneWay}"
+                                MinHeight="{x:Bind ViewModel.PreviewSurfaceMinHeight, Mode=OneWay}"
                                 Padding="12"
-                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                CornerRadius="12">
-                                <Grid>
+                                Style="{StaticResource InspectorPreviewSurfaceBorderStyle}">
+                                <Grid RowSpacing="8">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <Grid Grid.Row="0">
+                                        <Button
+                                            x:Name="OpenPreviewLocationButton"
+                                            HorizontalAlignment="Right"
+                                            Click="OnOpenPreviewLocationButtonClick"
+                                            IsEnabled="{x:Bind ViewModel.CanOpenPreviewLocation, Mode=OneWay}"
+                                            Style="{StaticResource InspectorPreviewActionButtonStyle}"
+                                            Visibility="{x:Bind ViewModel.PreviewOpenLocationVisibility, Mode=OneWay}">
+                                            <FontIcon
+                                                FontFamily="Segoe Fluent Icons"
+                                                FontSize="14"
+                                                Glyph="&#xE838;" />
+                                        </Button>
+                                    </Grid>
+
+                                    <Grid Grid.Row="1">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -285,31 +519,167 @@
                                     </Grid>
 
                                     <StackPanel
-                                        Margin="12"
+                                        Margin="8,0,8,8"
                                         HorizontalAlignment="Stretch"
-                                        VerticalAlignment="Center"
-                                        Spacing="12"
+                                        VerticalAlignment="Stretch"
+                                        Spacing="10"
                                         Visibility="{x:Bind ViewModel.PreviewAudioVisibility, Mode=OneWay}">
-                                        <StackPanel
-                                            HorizontalAlignment="Center"
-                                            Spacing="6">
-                                            <FontIcon
-                                                FontFamily="Segoe Fluent Icons"
-                                                Glyph="&#xE8D6;"
-                                                FontSize="28" />
-                                            <TextBlock
-                                                HorizontalAlignment="Center"
-                                                FontWeight="SemiBold"
-                                                Text="{x:Bind ViewModel.AssetName, Mode=OneWay}"
-                                                TextAlignment="Center"
-                                                TextTrimming="CharacterEllipsis" />
-                                        </StackPanel>
+                                        <Grid ColumnSpacing="10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Border
+                                                Width="40"
+                                                Height="40"
+                                                Background="{ThemeResource AccentFillColorSecondaryBrush}"
+                                                CornerRadius="12">
+                                                <FontIcon
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    FontFamily="Segoe Fluent Icons"
+                                                    FontSize="18"
+                                                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                                    Glyph="&#xE8D6;" />
+                                            </Border>
+
+                                            <StackPanel
+                                                Grid.Column="1"
+                                                Spacing="2">
+                                                <TextBlock
+                                                    FontSize="18"
+                                                    FontWeight="SemiBold"
+                                                    Text="{x:Bind ViewModel.AssetName, Mode=OneWay}"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    TextWrapping="WrapWholeWords" />
+                                                <TextBlock
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    Text="{x:Bind ViewModel.AudioPreviewSizeSummaryText, Mode=OneWay}"
+                                                    TextWrapping="WrapWholeWords"
+                                                    Visibility="{x:Bind ViewModel.AudioPreviewSizeSummaryVisibility, Mode=OneWay}" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Grid
+                                            ColumnSpacing="6"
+                                            RowSpacing="6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+
+                                            <Border
+                                                Grid.Row="0"
+                                                Grid.Column="0"
+                                                Style="{StaticResource InspectorAudioBadgeBorderStyle}"
+                                                Visibility="{x:Bind ViewModel.AudioPreviewContainerBadgeVisibility, Mode=OneWay}">
+                                                <TextBlock
+                                                    Style="{StaticResource InspectorAudioBadgeTextStyle}"
+                                                    Text="{x:Bind ViewModel.AudioPreviewContainerBadgeText, Mode=OneWay}" />
+                                            </Border>
+
+                                            <Border
+                                                Grid.Row="0"
+                                                Grid.Column="1"
+                                                Style="{StaticResource InspectorAudioBadgeBorderStyle}"
+                                                Visibility="{x:Bind ViewModel.AudioPreviewDurationBadgeVisibility, Mode=OneWay}">
+                                                <TextBlock
+                                                    Style="{StaticResource InspectorAudioBadgeTextStyle}"
+                                                    Text="{x:Bind ViewModel.AudioPreviewDurationBadgeText, Mode=OneWay}" />
+                                            </Border>
+
+                                            <Border
+                                                Grid.Row="1"
+                                                Grid.Column="0"
+                                                Style="{StaticResource InspectorAudioBadgeBorderStyle}"
+                                                Visibility="{x:Bind ViewModel.AudioPreviewChannelBadgeVisibility, Mode=OneWay}">
+                                                <TextBlock
+                                                    Style="{StaticResource InspectorAudioBadgeTextStyle}"
+                                                    Text="{x:Bind ViewModel.AudioPreviewChannelBadgeText, Mode=OneWay}" />
+                                            </Border>
+
+                                            <Border
+                                                Grid.Row="1"
+                                                Grid.Column="1"
+                                                Style="{StaticResource InspectorAudioBadgeBorderStyle}"
+                                                Visibility="{x:Bind ViewModel.AudioPreviewFrequencyBadgeVisibility, Mode=OneWay}">
+                                                <TextBlock
+                                                    Style="{StaticResource InspectorAudioBadgeTextStyle}"
+                                                    Text="{x:Bind ViewModel.AudioPreviewFrequencyBadgeText, Mode=OneWay}" />
+                                            </Border>
+                                        </Grid>
 
                                         <MediaPlayerElement
-                                            AreTransportControlsEnabled="True"
+                                            x:Name="AudioPreviewPlayer"
+                                            Width="1"
+                                            Height="1"
+                                            AreTransportControlsEnabled="False"
                                             AutoPlay="False"
-                                            HorizontalAlignment="Stretch"
+                                            HorizontalAlignment="Left"
+                                            IsHitTestVisible="False"
+                                            Opacity="0.01"
                                             Source="{x:Bind ViewModel.PreviewAudioSource, Mode=OneWay}" />
+
+                                        <Grid RowSpacing="8">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+
+                                            <Grid
+                                                Grid.Row="0"
+                                                ColumnSpacing="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Button
+                                                    x:Name="AudioTransportPlayPauseButton"
+                                                    Click="OnAudioTransportPlayPauseButtonClick"
+                                                    Style="{StaticResource InspectorAudioTransportButtonStyle}">
+                                                    <FontIcon
+                                                        x:Name="AudioTransportPlayPauseIcon"
+                                                        FontFamily="Segoe Fluent Icons"
+                                                        FontSize="14"
+                                                        Glyph="&#xE768;" />
+                                                </Button>
+
+                                                <Button
+                                                    x:Name="AudioTransportResetButton"
+                                                    Grid.Column="1"
+                                                    Click="OnAudioTransportResetButtonClick"
+                                                    Style="{StaticResource InspectorAudioTransportButtonStyle}">
+                                                    <FontIcon
+                                                        FontFamily="Segoe Fluent Icons"
+                                                        FontSize="14"
+                                                        Glyph="&#xE72C;" />
+                                                </Button>
+
+                                                <TextBlock
+                                                    x:Name="AudioTransportTimeText"
+                                                    Grid.Column="3"
+                                                    VerticalAlignment="Center"
+                                                    FontFamily="Cascadia Mono"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    Text="00:00 / 00:00" />
+                                            </Grid>
+
+                                            <Slider
+                                                x:Name="AudioTransportPositionSlider"
+                                                Grid.Row="1"
+                                                Minimum="0"
+                                                Maximum="1"
+                                                StepFrequency="0.1"
+                                                ValueChanged="OnAudioTransportPositionSliderValueChanged" />
+                                        </Grid>
                                     </StackPanel>
 
                                     <ScrollViewer
@@ -339,154 +709,119 @@
                                             TextWrapping="WrapWholeWords" />
                                     </ScrollViewer>
                                 </Grid>
+                                </Grid>
                             </Border>
 
-                            <Border
-                                Padding="12"
-                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                CornerRadius="10">
-                                <StackPanel Spacing="8">
-                                    <Grid ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock x:Name="AssetNameLabelText" FontWeight="SemiBold" />
-                                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.AssetName, Mode=OneWay}" TextWrapping="WrapWholeWords" />
-                                    </Grid>
+                            <StackPanel Spacing="6">
+                                <TextBlock
+                                    x:Name="InformationSectionTitleText"
+                                    Style="{StaticResource WorkspacePaneTitleTextStyle}" />
 
-                                    <Grid ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock x:Name="AssetTypeLabelText" FontWeight="SemiBold" />
-                                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.AssetTypeText, Mode=OneWay}" />
-                                    </Grid>
+                                <ItemsControl ItemsSource="{x:Bind ViewModel.InformationCards, Mode=OneWay}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="viewModels:InspectorInfoCardViewModel">
+                                            <Border
+                                                Margin="0,0,0,8"
+                                                Style="{StaticResource InspectorInfoCardBorderStyle}">
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
 
-                                    <Grid ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock x:Name="BundleLabelText" FontWeight="SemiBold" />
-                                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.BundleDisplayName, Mode=OneWay}" TextWrapping="WrapWholeWords" />
-                                    </Grid>
+                                                    <Grid
+                                                        Grid.Row="0"
+                                                        Padding="6,6,6,4"
+                                                        ColumnSpacing="6">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
 
-                                    <Grid ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock x:Name="AssetPathLabelText" FontWeight="SemiBold" />
-                                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.AssetPath, Mode=OneWay}" TextWrapping="WrapWholeWords" />
-                                    </Grid>
+                                                        <Button
+                                                            Grid.Column="0"
+                                                            Click="OnInspectorInfoCardHeaderButtonClick"
+                                                            Style="{StaticResource InspectorInfoCardHeaderButtonStyle}">
+                                                            <Grid ColumnSpacing="10">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                </Grid.ColumnDefinitions>
 
-                                    <Grid
-                                        ColumnSpacing="8"
-                                        Visibility="{x:Bind ViewModel.ContainerPathVisibility, Mode=OneWay}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock x:Name="ContainerPathLabelText" FontWeight="SemiBold" />
-                                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.ContainerPath, Mode=OneWay}" TextWrapping="WrapWholeWords" />
-                                    </Grid>
+                                                                <FontIcon
+                                                                    VerticalAlignment="Center"
+                                                                    FontFamily="Segoe Fluent Icons"
+                                                                    FontSize="12"
+                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                    Glyph="{x:Bind ExpandGlyph, Mode=OneWay}" />
 
-                                    <Grid ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock x:Name="AssetSizeLabelText" FontWeight="SemiBold" />
-                                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.SizeText, Mode=OneWay}" />
-                                    </Grid>
+                                                                <StackPanel
+                                                                    Grid.Column="1"
+                                                                    Spacing="2">
+                                                                    <TextBlock
+                                                                        Style="{StaticResource InspectorInfoCardTitleTextStyle}"
+                                                                        Text="{x:Bind Title, Mode=OneWay}" />
+                                                                    <TextBlock
+                                                                        Style="{StaticResource InspectorInfoCardSummaryTextStyle}"
+                                                                        Text="{x:Bind SummaryText, Mode=OneWay}"
+                                                                        Visibility="{x:Bind SummaryVisibility, Mode=OneWay}" />
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Button>
 
-                                    <Grid
-                                        ColumnSpacing="8"
-                                        Visibility="{x:Bind ViewModel.PathIdVisibility, Mode=OneWay}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock x:Name="PathIdLabelText" FontWeight="SemiBold" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            FontFamily="Cascadia Mono"
-                                            Text="{x:Bind ViewModel.PathIdText, Mode=OneWay}"
-                                            TextWrapping="WrapWholeWords" />
-                                    </Grid>
-                                </StackPanel>
-                            </Border>
+                                                        <Button
+                                                            Grid.Column="1"
+                                                            Click="OnInspectorInfoCardCopyButtonClick"
+                                                            Style="{StaticResource InspectorInfoCardCopyButtonStyle}"
+                                                            ToolTipService.ToolTip="{x:Bind CopyToolTipText, Mode=OneWay}">
+                                                            <FontIcon
+                                                                FontFamily="Segoe Fluent Icons"
+                                                                Glyph="&#xE8C8;" />
+                                                        </Button>
+                                                    </Grid>
 
-                            <Border
-                                Padding="12"
-                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                CornerRadius="10"
-                                Visibility="{x:Bind ViewModel.PreviewInfoVisibility, Mode=OneWay}">
-                                <StackPanel Spacing="6">
-                                    <TextBlock
-                                        x:Name="PreviewInfoSectionTitleText"
-                                        Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                    <TextBlock
-                                        Text="{x:Bind ViewModel.PreviewInfoText, Mode=OneWay}"
-                                        TextWrapping="WrapWholeWords" />
-                                </StackPanel>
-                            </Border>
+                                                    <Border
+                                                        Grid.Row="1"
+                                                        Margin="12,0,12,0"
+                                                        Background="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                        Height="1"
+                                                        Visibility="{x:Bind ContentVisibility, Mode=OneWay}" />
 
-                            <Border
-                                Padding="12"
-                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                CornerRadius="10"
-                                Visibility="{x:Bind ViewModel.PreviewDiagnosticVisibility, Mode=OneWay}">
-                                <StackPanel Spacing="8">
-                                    <TextBlock
-                                        x:Name="PreviewDiagnosticTitleText"
-                                        Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                                    <ItemsControl
+                                                        Grid.Row="2"
+                                                        Margin="12,6,12,12"
+                                                        ItemsSource="{x:Bind Rows, Mode=OneWay}"
+                                                        Visibility="{x:Bind ContentVisibility, Mode=OneWay}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate x:DataType="viewModels:InspectorInfoRowViewModel">
+                                                                <Grid
+                                                                    Margin="0,0,0,8"
+                                                                    ColumnSpacing="0">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                        <ColumnDefinition Width="*" />
+                                                                    </Grid.ColumnDefinitions>
 
-                                    <Grid
-                                        ColumnSpacing="8"
-                                        Visibility="{x:Bind ViewModel.PreviewCacheStatusVisibility, Mode=OneWay}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock x:Name="PreviewCacheStatusLabelText" FontWeight="SemiBold" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            Text="{x:Bind ViewModel.PreviewCacheStatusText, Mode=OneWay}"
-                                            TextWrapping="WrapWholeWords" />
-                                    </Grid>
+                                                                    <TextBlock
+                                                                        Style="{StaticResource InspectorInfoRowLabelTextStyle}"
+                                                                        Text="{x:Bind Label, Mode=OneTime}"
+                                                                        Visibility="{x:Bind LabelVisibility, Mode=OneTime}" />
 
-                                    <Grid
-                                        ColumnSpacing="8"
-                                        Visibility="{x:Bind ViewModel.PreviewFallbackReasonVisibility, Mode=OneWay}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock x:Name="PreviewFallbackReasonLabelText" FontWeight="SemiBold" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            Text="{x:Bind ViewModel.PreviewFallbackReasonText, Mode=OneWay}"
-                                            TextWrapping="WrapWholeWords" />
-                                    </Grid>
-
-                                    <Grid
-                                        ColumnSpacing="8"
-                                        Visibility="{x:Bind ViewModel.PreviewDiagnosticDetailVisibility, Mode=OneWay}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock x:Name="PreviewDiagnosticDetailLabelText" FontWeight="SemiBold" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            Text="{x:Bind ViewModel.PreviewDiagnosticDetailText, Mode=OneWay}"
-                                            TextWrapping="WrapWholeWords" />
-                                    </Grid>
-                                </StackPanel>
-                            </Border>
+                                                                    <TextBlock
+                                                                        Grid.Column="1"
+                                                                        Style="{StaticResource InspectorInfoRowValueTextStyle}"
+                                                                        Text="{x:Bind Value, Mode=OneTime}" />
+                                                                </Grid>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
 

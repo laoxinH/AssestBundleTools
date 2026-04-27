@@ -97,7 +97,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
         RefreshCommand = new AsyncRelayCommand(
             executeAsync: RefreshAsync,
-            canExecute: () => !IsBusy);
+            canExecute: () => HasWorkspace && !IsBusy);
 
         PrimaryPane.ReplaceAssetTypeOptions(CreateAssetTypeOptions());
         PrimaryPane.ConfigurePane(PaneId.New(), GetString(ResourceKeys.BundleExplorerPrimaryPaneTitle), GetString(ResourceKeys.BundleExplorerNoAssets));
@@ -159,6 +159,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
                 OnPropertyChanged(nameof(CanToggleBundleSearch));
                 OnPropertyChanged(nameof(CanToggleBundlePaneCollapse));
                 RefreshWorkspaceStatusChips();
+                NotifyCommandStates();
             }
         }
     }
@@ -192,12 +193,6 @@ public sealed class BundleExplorerViewModel : ObservableObject
             }
         }
     }
-
-    /// <summary>
-    /// 当前阶段摘要文本。
-    /// 这里保留为一条短说明，避免再次回到“大段状态说明”造成的拥挤感。
-    /// </summary>
-    public string StageStatusText => GetString(ResourceKeys.BundleExplorerStageStatusText);
 
     public string BundleSearchKeyword
     {
@@ -751,6 +746,31 @@ public sealed class BundleExplorerViewModel : ObservableObject
             var message = _localizationService.GetFormattedString(
                 ResourceKeys.BundleExplorerNotificationBundleOpenLocationFailed,
                 bundleNode.DisplayName);
+            _appLogService.AppendWarning(message);
+            ShowOperationNotification(
+                GetString(ResourceKeys.AppNotificationWarningTitle),
+                message,
+                AppNotificationSeverity.Warning);
+        }
+    }
+
+    /// <summary>
+    /// 预览文件定位属于当前详情标签页的通用预览动作。
+    /// 这里统一读取当前检查器持有的预览缓存 payload 路径，避免图片、音频、文本各自复制一套打开逻辑。
+    /// </summary>
+    public void OpenCurrentPreviewLocation()
+    {
+        if (!TryGetActiveAssetDocumentDetails(out _, out var details) ||
+            string.IsNullOrWhiteSpace(Inspector.PreviewPayloadFilePath))
+        {
+            return;
+        }
+
+        if (!_pathNavigationService.TryOpenContainingFolder(Inspector.PreviewPayloadFilePath))
+        {
+            var message = _localizationService.GetFormattedString(
+                ResourceKeys.BundleExplorerNotificationPreviewOpenLocationFailed,
+                details.Name);
             _appLogService.AppendWarning(message);
             ShowOperationNotification(
                 GetString(ResourceKeys.AppNotificationWarningTitle),
@@ -2014,10 +2034,10 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     private AssetListEntryViewModel MapAssetEntry(AssetListItemDto item) =>
         new(
-            Item: item,
-            AssetTypeText: ResolveAssetTypeDisplayName(item.AssetType, item.AssetTypeDisplayName),
-            SizeText: FormatSize(ResolveDisplaySizeInBytes(item.SizeInBytes, item.PreferredDisplaySizeInBytes)),
-            StateText: item.IsModified
+            item: item,
+            assetTypeText: ResolveAssetTypeDisplayName(item.AssetType, item.AssetTypeDisplayName),
+            sizeText: FormatSize(ResolveDisplaySizeInBytes(item.SizeInBytes, item.PreferredDisplaySizeInBytes)),
+            stateText: item.IsModified
                 ? GetString(ResourceKeys.AssetStateModified)
                 : GetString(ResourceKeys.AssetStateOriginal));
 
@@ -2654,11 +2674,6 @@ public sealed class BundleExplorerViewModel : ObservableObject
                 "\uE71D"));
 
             WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
-                GetString(ResourceKeys.BundleExplorerStatusOpenTabCountLabel),
-                BundleTabs.Count.ToString(CultureInfo.CurrentCulture),
-                "\uE7C3"));
-
-            WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
                 GetString(ResourceKeys.BundleExplorerStatusCurrentDecryptorLabel),
                 GetString(ResourceKeys.BundleExplorerStatusNotLoaded),
                 "\uE9CA"));
@@ -2680,16 +2695,6 @@ public sealed class BundleExplorerViewModel : ObservableObject
         WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
             GetString(ResourceKeys.BundleExplorerStatusWorkspaceSessionCountLabel),
             _workspaceContextService.WorkspaceEntryCount.ToString(CultureInfo.CurrentCulture),
-            "\uE71D"));
-        WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
-            GetString(ResourceKeys.BundleExplorerStatusOpenTabCountLabel),
-            BundleTabs.Count.ToString(CultureInfo.CurrentCulture),
-            "\uE7C3"));
-        WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
-            GetString(ResourceKeys.BundleExplorerStatusSourceLabel),
-            string.IsNullOrWhiteSpace(_workspaceSummary.SourcePath)
-                ? GetString(ResourceKeys.WorkspaceSourceNotImported)
-                : _workspaceSummary.SourcePath,
             "\uE71D"));
         WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
             GetString(ResourceKeys.BundleExplorerStatusCurrentDecryptorLabel),
@@ -2757,7 +2762,10 @@ public sealed class BundleExplorerViewModel : ObservableObject
                         return;
                     }
 
-                    assetTab.Inspector.ApplyImagePreview(imageSource, preview.PreviewInfoText);
+                    assetTab.Inspector.ApplyImagePreview(
+                        imageSource,
+                        preview.PreviewInfoText,
+                        preview.PreviewPayloadFilePath);
                     ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
                 }
@@ -2770,7 +2778,10 @@ public sealed class BundleExplorerViewModel : ObservableObject
                         return;
                     }
 
-                    assetTab.Inspector.ApplyTextPreview(preview.TextContent, preview.PreviewInfoText);
+                    assetTab.Inspector.ApplyTextPreview(
+                        preview.TextContent,
+                        preview.PreviewInfoText,
+                        preview.PreviewPayloadFilePath);
                     ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
                 }
@@ -2797,7 +2808,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
                     assetTab.Inspector.ApplyAudioPreview(
                         audioPreviewSource.MediaSource,
                         audioPreviewSource.Stream,
-                        preview.PreviewInfoText);
+                        preview.PreviewInfoText,
+                        preview.PreferredDisplaySizeInBytes,
+                        preview.PreviewPayloadFilePath);
                     ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
                 }
@@ -2810,7 +2823,10 @@ public sealed class BundleExplorerViewModel : ObservableObject
                         return;
                     }
 
-                    assetTab.Inspector.ApplySummaryPreview(preview.TextContent, preview.PreviewInfoText);
+                    assetTab.Inspector.ApplySummaryPreview(
+                        preview.TextContent,
+                        preview.PreviewInfoText,
+                        preview.PreviewPayloadFilePath);
                     ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
                 }

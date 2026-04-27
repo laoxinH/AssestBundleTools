@@ -19,6 +19,7 @@ public sealed record AssetPreviewDto(
     string ContentType,
     byte[]? BinaryContent,
     string? TextContent,
+    string? PreviewPayloadFilePath,
     string? PreviewInfoText,
     long? PreferredDisplaySizeInBytes,
     bool IsFromCache,

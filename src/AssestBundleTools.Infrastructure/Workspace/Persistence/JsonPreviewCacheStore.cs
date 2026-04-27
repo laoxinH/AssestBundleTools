@@ -75,6 +75,30 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
         return descriptors;
     }
 
+    public string? ResolvePayloadFilePath(PreviewCacheDescriptorDto descriptor)
+    {
+        ArgumentNullException.ThrowIfNull(descriptor);
+
+        if (string.IsNullOrWhiteSpace(descriptor.WorkspaceKey) ||
+            string.IsNullOrWhiteSpace(descriptor.PreviewCacheKey) ||
+            string.IsNullOrWhiteSpace(descriptor.RelativePayloadPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            return _storagePaths.GetPreviewPayloadFilePath(
+                descriptor.WorkspaceKey,
+                descriptor.PreviewCacheKey,
+                descriptor.RelativePayloadPath);
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
+    }
+
     public void Save(PreviewCachePayloadDto previewCachePayload)
     {
         ArgumentNullException.ThrowIfNull(previewCachePayload);

@@ -46,20 +46,156 @@
         </Style>
 
         <Style
-            x:Key="WorkspaceActionChipButtonStyle"
-            BasedOn="{StaticResource DefaultButtonStyle}"
+            x:Key="WorkbenchTitleIconButtonStyle"
+            BasedOn="{StaticResource ExplorerToolbarIconButtonStyle}"
+            TargetType="Button">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="MinWidth" Value="32" />
+            <Setter Property="MinHeight" Value="32" />
+        </Style>
+
+        <Style
+            x:Key="WorkspaceChipIconBadgeStyle"
+            TargetType="Border">
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorSecondaryBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <!-- 工作台顶部所有操作入口统一走同一套 chip 模板，
+             避免主操作、次级操作各自维护一套外观与状态。 -->
+        <Style
+            x:Key="WorkspaceChipButtonBaseStyle"
             TargetType="Button">
             <Setter Property="Padding" Value="0" />
             <Setter Property="Margin" Value="0" />
-            <Setter Property="MinHeight" Value="48" />
-            <Setter Property="MinWidth" Value="152" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
             <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="UseSystemFocusVisuals" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid Background="Transparent">
+                            <Border
+                                x:Name="SurfaceBorder"
+                                Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{TemplateBinding CornerRadius}"
+                                RenderTransformOrigin="0.5,0.5">
+                                <Border.RenderTransform>
+                                    <CompositeTransform x:Name="SurfaceTransform" />
+                                </Border.RenderTransform>
+                                <ContentPresenter
+                                    HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    Content="{TemplateBinding Content}"
+                                    ContentTemplate="{TemplateBinding ContentTemplate}"
+                                    ContentTransitions="{TemplateBinding ContentTransitions}" />
+                            </Border>
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal" />
+                                    <VisualState x:Name="PointerOver">
+                                        <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="SurfaceBorder"
+                                                Storyboard.TargetProperty="Background">
+                                                <DiscreteObjectKeyFrame
+                                                    KeyTime="0"
+                                                    Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="SurfaceBorder"
+                                                Storyboard.TargetProperty="BorderBrush">
+                                                <DiscreteObjectKeyFrame
+                                                    KeyTime="0"
+                                                    Value="{ThemeResource ControlStrokeColorSecondaryBrush}" />
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="SurfaceTransform"
+                                                Storyboard.TargetProperty="TranslateY"
+                                                To="-1"
+                                                Duration="0:0:0.10"
+                                                EnableDependentAnimation="True" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="SurfaceBorder"
+                                                Storyboard.TargetProperty="Background">
+                                                <DiscreteObjectKeyFrame
+                                                    KeyTime="0"
+                                                    Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="SurfaceBorder"
+                                                Storyboard.TargetProperty="BorderBrush">
+                                                <DiscreteObjectKeyFrame
+                                                    KeyTime="0"
+                                                    Value="{ThemeResource ControlStrokeColorSecondaryBrush}" />
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="SurfaceTransform"
+                                                Storyboard.TargetProperty="TranslateY"
+                                                To="0.5"
+                                                Duration="0:0:0.08"
+                                                EnableDependentAnimation="True" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled">
+                                        <Storyboard>
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="SurfaceBorder"
+                                                Storyboard.TargetProperty="Opacity"
+                                                To="0.55"
+                                                Duration="0:0:0" />
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style
+            x:Key="WorkspacePrimaryActionChipButtonStyle"
+            BasedOn="{StaticResource WorkspaceChipButtonBaseStyle}"
+            TargetType="Button">
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="MinHeight" Value="44" />
+            <Setter Property="MinWidth" Value="118" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style
+            x:Key="WorkspaceSecondaryActionChipButtonStyle"
+            BasedOn="{StaticResource WorkspaceChipButtonBaseStyle}"
+            TargetType="Button">
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="MinWidth" Value="92" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         </Style>
 
         <Style
@@ -105,261 +241,253 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid ColumnSpacing="16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Spacing="4">
-                <TextBlock
-                    x:Name="PageEyebrowText"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        <StackPanel Spacing="4">
+            <TextBlock
+                x:Name="PageEyebrowText"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <StackPanel
+                Orientation="Horizontal"
+                Spacing="8">
                 <TextBlock
                     x:Name="PageTitleText"
+                    VerticalAlignment="Center"
                     Style="{StaticResource WorkspacePageTitleTextStyle}" />
+                <Button
+                    x:Name="ReturnToConsoleIconButton"
+                    Click="OnReturnToConsoleIconButtonClick"
+                    Style="{StaticResource WorkbenchTitleIconButtonStyle}"
+                    VerticalAlignment="Center">
+                    <FontIcon
+                        FontFamily="Segoe Fluent Icons"
+                        FontSize="14"
+                        Glyph="&#xE72B;" />
+                </Button>
             </StackPanel>
+        </StackPanel>
 
-            <ScrollViewer
-                Grid.Column="1"
-                HorizontalScrollBarVisibility="Auto"
-                HorizontalScrollMode="Auto"
-                HorizontalAlignment="Right"
-                VerticalScrollBarVisibility="Disabled"
-                ZoomMode="Disabled">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button
-                        x:Name="ReturnToConsoleButton"
-                        Click="OnReturnToConsoleButtonClick" />
-                    <Button
-                        x:Name="OpenFileButton"
-                        IsEnabled="False" />
-                    <Button
-                        x:Name="RefreshButton"
-                        Command="{x:Bind ViewModel.RefreshCommand}" />
-                    <Button
-                        x:Name="BatchExtractButton"
-                        Click="OnBatchExtractButtonClick"
-                        IsEnabled="{x:Bind ViewModel.HasWorkspace, Mode=OneWay}" />
-                    <Button
-                        x:Name="SaveAsBundleButton"
-                        Click="OnSaveAsBundleButtonClick"
-                        IsEnabled="{x:Bind ViewModel.HasWorkspace, Mode=OneWay}" />
-                </StackPanel>
-            </ScrollViewer>
-        </Grid>
-
-        <Border
+        <ScrollViewer
             Grid.Row="1"
-            Padding="14,12"
-            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-            CornerRadius="12">
-            <StackPanel Spacing="10">
-                <TextBlock
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="{x:Bind ViewModel.StageStatusText, Mode=OneWay}"
-                    TextWrapping="WrapWholeWords" />
+            HorizontalScrollBarVisibility="Auto"
+            HorizontalScrollMode="Enabled"
+            VerticalScrollBarVisibility="Disabled"
+            VerticalScrollMode="Disabled"
+            ZoomMode="Disabled">
+            <StackPanel
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button
+                    x:Name="CreateWorkspaceChipButton"
+                    Style="{StaticResource WorkspacePrimaryActionChipButtonStyle}"
+                    Click="OnNewWorkspaceButtonClick">
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                <ScrollViewer
-                    HorizontalScrollBarVisibility="Auto"
-                    HorizontalScrollMode="Enabled"
-                    VerticalScrollBarVisibility="Disabled"
-                    VerticalScrollMode="Disabled"
-                    ZoomMode="Disabled">
-                    <StackPanel
-                        Orientation="Horizontal"
-                        Spacing="8">
-                        <Button
-                            x:Name="CreateWorkspaceChipButton"
-                            Style="{StaticResource WorkspaceActionChipButtonStyle}"
-                            Click="OnNewWorkspaceButtonClick"
-                            PointerPressed="OnWorkspaceActionChipPointerPressed"
-                            PointerReleased="OnWorkspaceActionChipPointerReleased"
-                            PointerExited="OnWorkspaceActionChipPointerExited"
-                            PointerCanceled="OnWorkspaceActionChipPointerCanceled">
-                            <Button.Resources>
-                                <SolidColorBrush
-                                    x:Key="ButtonBackground"
-                                    Color="Transparent" />
-                                <SolidColorBrush
-                                    x:Key="ButtonBackgroundPointerOver"
-                                    Color="#0C000000" />
-                                <SolidColorBrush
-                                    x:Key="ButtonBackgroundPressed"
-                                    Color="#16000000" />
-                                <SolidColorBrush
-                                    x:Key="ButtonBorderBrush"
-                                    Color="Transparent" />
-                                <SolidColorBrush
-                                    x:Key="ButtonBorderBrushPointerOver"
-                                    Color="Transparent" />
-                                <SolidColorBrush
-                                    x:Key="ButtonBorderBrushPressed"
-                                    Color="Transparent" />
-                            </Button.Resources>
+                        <Border
+                            x:Name="CreateWorkspaceChipIconBorder"
+                            Style="{StaticResource WorkspaceChipIconBadgeStyle}">
+                            <FontIcon
+                                x:Name="CreateWorkspaceChipIcon"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="11"
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                Glyph="&#xE710;" />
+                        </Border>
+
+                        <TextBlock
+                            x:Name="CreateWorkspaceChipText"
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                </Button>
+
+                <Button
+                    x:Name="OpenWorkspaceChipButton"
+                    Style="{StaticResource WorkspacePrimaryActionChipButtonStyle}"
+                    Click="OnOpenWorkspaceButtonClick">
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border
+                            x:Name="OpenWorkspaceChipIconBorder"
+                            Style="{StaticResource WorkspaceChipIconBadgeStyle}">
+                            <FontIcon
+                                x:Name="OpenWorkspaceChipIcon"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="11"
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                Glyph="&#xE838;" />
+                        </Border>
+
+                        <TextBlock
+                            x:Name="OpenWorkspaceChipText"
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                </Button>
+
+                <Button
+                    x:Name="RefreshChipButton"
+                    Command="{x:Bind ViewModel.RefreshCommand}"
+                    IsEnabled="{x:Bind ViewModel.HasWorkspace, Mode=OneWay}"
+                    Style="{StaticResource WorkspaceSecondaryActionChipButtonStyle}">
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource WorkspaceChipIconBadgeStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="11"
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                Glyph="&#xE72C;" />
+                        </Border>
+
+                        <TextBlock
+                            x:Name="RefreshChipText"
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                            FontSize="12.5"
+                            FontWeight="SemiBold"
+                            TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                </Button>
+
+                <Button
+                    x:Name="BatchExtractChipButton"
+                    Click="OnBatchExtractChipButtonClick"
+                    IsEnabled="{x:Bind ViewModel.HasWorkspace, Mode=OneWay}"
+                    Style="{StaticResource WorkspaceSecondaryActionChipButtonStyle}">
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource WorkspaceChipIconBadgeStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="11"
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                Glyph="&#xE896;" />
+                        </Border>
+
+                        <TextBlock
+                            x:Name="BatchExtractChipText"
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                            FontSize="12.5"
+                            FontWeight="SemiBold"
+                            TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                </Button>
+
+                <Button
+                    x:Name="SaveAsBundleChipButton"
+                    Click="OnSaveAsBundleChipButtonClick"
+                    IsEnabled="{x:Bind ViewModel.HasWorkspace, Mode=OneWay}"
+                    Style="{StaticResource WorkspaceSecondaryActionChipButtonStyle}">
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource WorkspaceChipIconBadgeStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="11"
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                Glyph="&#xE74E;" />
+                        </Border>
+
+                        <TextBlock
+                            x:Name="SaveAsBundleChipText"
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                            FontSize="12.5"
+                            FontWeight="SemiBold"
+                            TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                </Button>
+
+                <ItemsControl
+                    Margin="4,0,0,0"
+                    ItemsSource="{x:Bind ViewModel.WorkspaceStatusChips, Mode=OneWay}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="viewModels:WorkspaceStatusChipViewModel">
                             <Border
-                                Padding="12,10"
-                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                BorderThickness="1"
-                                CornerRadius="12">
-                                <Grid ColumnSpacing="10">
+                                Margin="0,0,8,0"
+                                Padding="10,7"
+                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                CornerRadius="10">
+                                <Grid ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
-                                    <Border
-                                        x:Name="CreateWorkspaceChipIconBorder"
-                                        Width="28"
-                                        Height="28"
-                                        VerticalAlignment="Center"
-                                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                        BorderBrush="{ThemeResource ControlStrokeColorSecondaryBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="9">
-                                        <FontIcon
-                                            x:Name="CreateWorkspaceChipIcon"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            FontFamily="Segoe Fluent Icons"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                            Glyph="&#xE710;" />
-                                    </Border>
+                                    <FontIcon
+                                        Margin="0,1,0,0"
+                                        FontFamily="Segoe Fluent Icons"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Glyph="{x:Bind Glyph}" />
 
-                                    <TextBlock
-                                        x:Name="CreateWorkspaceChipText"
+                                    <StackPanel
                                         Grid.Column="1"
-                                        VerticalAlignment="Center"
-                                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                        FontSize="13"
-                                        FontWeight="SemiBold"
-                                        TextTrimming="CharacterEllipsis" />
+                                        Spacing="1">
+                                        <TextBlock
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            FontSize="11"
+                                            Text="{x:Bind Label}" />
+                                        <TextBlock
+                                            MaxWidth="220"
+                                            FontSize="13"
+                                            FontWeight="SemiBold"
+                                            Text="{x:Bind Value}"
+                                            TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
                                 </Grid>
                             </Border>
-                        </Button>
-
-                        <Button
-                            x:Name="OpenWorkspaceChipButton"
-                            Style="{StaticResource WorkspaceActionChipButtonStyle}"
-                            Click="OnOpenWorkspaceButtonClick"
-                            PointerPressed="OnWorkspaceActionChipPointerPressed"
-                            PointerReleased="OnWorkspaceActionChipPointerReleased"
-                            PointerExited="OnWorkspaceActionChipPointerExited"
-                            PointerCanceled="OnWorkspaceActionChipPointerCanceled">
-                            <Button.Resources>
-                                <SolidColorBrush
-                                    x:Key="ButtonBackground"
-                                    Color="Transparent" />
-                                <SolidColorBrush
-                                    x:Key="ButtonBackgroundPointerOver"
-                                    Color="#0C000000" />
-                                <SolidColorBrush
-                                    x:Key="ButtonBackgroundPressed"
-                                    Color="#16000000" />
-                                <SolidColorBrush
-                                    x:Key="ButtonBorderBrush"
-                                    Color="Transparent" />
-                                <SolidColorBrush
-                                    x:Key="ButtonBorderBrushPointerOver"
-                                    Color="Transparent" />
-                                <SolidColorBrush
-                                    x:Key="ButtonBorderBrushPressed"
-                                    Color="Transparent" />
-                            </Button.Resources>
-                            <Border
-                                Padding="12,10"
-                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                BorderThickness="1"
-                                CornerRadius="12">
-                                <Grid ColumnSpacing="10">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <Border
-                                        x:Name="OpenWorkspaceChipIconBorder"
-                                        Width="28"
-                                        Height="28"
-                                        VerticalAlignment="Center"
-                                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                        BorderBrush="{ThemeResource ControlStrokeColorSecondaryBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="9">
-                                        <FontIcon
-                                            x:Name="OpenWorkspaceChipIcon"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            FontFamily="Segoe Fluent Icons"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                            Glyph="&#xE838;" />
-                                    </Border>
-
-                                    <TextBlock
-                                        x:Name="OpenWorkspaceChipText"
-                                        Grid.Column="1"
-                                        VerticalAlignment="Center"
-                                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                        FontSize="13"
-                                        FontWeight="SemiBold"
-                                        TextTrimming="CharacterEllipsis" />
-                                </Grid>
-                            </Border>
-                        </Button>
-
-                        <ItemsControl ItemsSource="{x:Bind ViewModel.WorkspaceStatusChips, Mode=OneWay}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="viewModels:WorkspaceStatusChipViewModel">
-                                    <Border
-                                        Margin="0,0,8,0"
-                                        Padding="10,7"
-                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                        CornerRadius="10">
-                                        <Grid ColumnSpacing="8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-
-                                            <FontIcon
-                                                Margin="0,1,0,0"
-                                                FontFamily="Segoe Fluent Icons"
-                                                FontSize="12"
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Glyph="{x:Bind Glyph}" />
-
-                                            <StackPanel
-                                                Grid.Column="1"
-                                                Spacing="1">
-                                                <TextBlock
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    FontSize="11"
-                                                    Text="{x:Bind Label}" />
-                                                <TextBlock
-                                                    MaxWidth="220"
-                                                    FontSize="13"
-                                                    FontWeight="SemiBold"
-                                                    Text="{x:Bind Value}"
-                                                    TextTrimming="CharacterEllipsis" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </ScrollViewer>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </StackPanel>
-        </Border>
+        </ScrollViewer>
 
         <Grid
             x:Name="BundleWorkspaceGrid"
@@ -1291,6 +1419,7 @@
                     <controls:InspectorPanelView
                         Grid.Row="2"
                         ExtractRequested="OnInspectorExtractRequested"
+                        OpenPreviewLocationRequested="OnInspectorOpenPreviewLocationRequested"
                         SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
                         SelectReplacementSourceRequested="OnInspectorSelectReplacementSourceRequested"
                         ApplyReplacementRequested="OnInspectorApplyReplacementRequested"

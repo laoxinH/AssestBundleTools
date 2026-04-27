@@ -11,6 +11,8 @@ public interface IPreviewCacheStore
 
     IReadOnlyList<PreviewCacheDescriptorDto> LoadDescriptors(string workspaceKey);
 
+    string? ResolvePayloadFilePath(PreviewCacheDescriptorDto descriptor);
+
     void Save(PreviewCachePayloadDto previewCachePayload);
 
     void Delete(string workspaceKey, string previewCacheKey);

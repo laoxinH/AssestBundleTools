@@ -4,14 +4,12 @@ using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Shell;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Windows.ApplicationModel.DataTransfer;
-using UiColor = Windows.UI.Color;
 
 namespace AssestBundleTools.Presentation.WinUI.Views;
 
@@ -27,9 +25,6 @@ public sealed partial class BundleExplorerPage : Page
     private const double BundleSearchHostExpandedHeight = 40d;
     private const double BundlePaneCollapsedWidth = 76d;
     private const double BundlePaneTransitionDurationMilliseconds = 240d;
-    private static readonly SolidColorBrush WorkspaceActionChipPressedBackgroundBrush = new(UiColor.FromArgb(0xFF, 0x36, 0x36, 0x39));
-    private static readonly SolidColorBrush WorkspaceActionChipPressedBorderBrush = new(UiColor.FromArgb(0x26, 0xFF, 0xFF, 0xFF));
-    private static readonly SolidColorBrush WorkspaceActionChipPressedForegroundBrush = new(Colors.White);
     private static readonly GridLength ExpandedBundlePaneColumnWidth = new(1.08, GridUnitType.Star);
     private static readonly GridLength ExpandedAssetPaneColumnWidth = new(1.56, GridUnitType.Star);
     private static readonly GridLength ExpandedInspectorPaneColumnWidth = new(1.36, GridUnitType.Star);
@@ -60,7 +55,6 @@ public sealed partial class BundleExplorerPage : Page
 
         InitializeComponent();
         ApplyLocalizedText();
-        ResetWorkspaceActionChipIconVisualState();
         InitializeBundlePaneAnimations();
         InitializeBundleSearchAnimations();
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
@@ -104,26 +98,6 @@ public sealed partial class BundleExplorerPage : Page
 
         var request = await App.CurrentApp.WorkspaceDialogService.RequestOpenWorkspaceFromDirectoryAsync(XamlRoot);
         OpenWorkspace(request);
-    }
-
-    private void OnWorkspaceActionChipPointerPressed(object sender, PointerRoutedEventArgs e)
-    {
-        UpdateWorkspaceActionChipIconPressedState(sender, isPressed: true);
-    }
-
-    private void OnWorkspaceActionChipPointerReleased(object sender, PointerRoutedEventArgs e)
-    {
-        UpdateWorkspaceActionChipIconPressedState(sender, isPressed: false);
-    }
-
-    private void OnWorkspaceActionChipPointerExited(object sender, PointerRoutedEventArgs e)
-    {
-        UpdateWorkspaceActionChipIconPressedState(sender, isPressed: false);
-    }
-
-    private void OnWorkspaceActionChipPointerCanceled(object sender, PointerRoutedEventArgs e)
-    {
-        UpdateWorkspaceActionChipIconPressedState(sender, isPressed: false);
     }
 
     private async void OnBundleNodeButtonClick(object sender, RoutedEventArgs e)
@@ -374,12 +348,12 @@ public sealed partial class BundleExplorerPage : Page
         ViewModel.ToggleBundlePaneCollapsed();
     }
 
-    private void OnBatchExtractButtonClick(object sender, RoutedEventArgs e)
+    private void OnBatchExtractChipButtonClick(object sender, RoutedEventArgs e)
     {
         Frame?.Navigate(typeof(BatchTasksPage));
     }
 
-    private void OnReturnToConsoleButtonClick(object sender, RoutedEventArgs e)
+    private void OnReturnToConsoleIconButtonClick(object sender, RoutedEventArgs e)
     {
         if (TryNavigateFromShell(ShellNavigationKeys.LaunchGuide))
         {
@@ -389,7 +363,7 @@ public sealed partial class BundleExplorerPage : Page
         Frame?.Navigate(typeof(HomePage));
     }
 
-    private void OnSaveAsBundleButtonClick(object sender, RoutedEventArgs e)
+    private void OnSaveAsBundleChipButtonClick(object sender, RoutedEventArgs e)
     {
         Frame?.Navigate(typeof(BatchTasksPage));
     }
@@ -397,6 +371,11 @@ public sealed partial class BundleExplorerPage : Page
     private async void OnInspectorExtractRequested(object sender, EventArgs e)
     {
         await ViewModel.ExtractSelectedAssetAsync();
+    }
+
+    private void OnInspectorOpenPreviewLocationRequested(object sender, EventArgs e)
+    {
+        ViewModel.OpenCurrentPreviewLocation();
     }
 
     private async void OnPrimaryPaneBatchExtractRequested(object sender, EventArgs e)
@@ -497,11 +476,10 @@ public sealed partial class BundleExplorerPage : Page
         PageTitleText.Text = UiText.Get("BundleExplorerPage.PageTitleText.Text");
         CreateWorkspaceChipText.Text = UiText.Get(ResourceKeys.BundleExplorerPageNewWorkspaceButton);
         OpenWorkspaceChipText.Text = UiText.Get(ResourceKeys.BundleExplorerPageOpenWorkspaceButton);
-        ReturnToConsoleButton.Content = UiText.Get(ResourceKeys.BundleExplorerPageReturnToConsoleButton);
-        OpenFileButton.Content = UiText.Get("BundleExplorerPage.OpenFileButton.Content");
-        RefreshButton.Content = UiText.Get("BundleExplorerPage.RefreshButton.Content");
-        BatchExtractButton.Content = UiText.Get("BundleExplorerPage.BatchExtractButton.Content");
-        SaveAsBundleButton.Content = UiText.Get("BundleExplorerPage.SaveAsBundleButton.Content");
+        ToolTipService.SetToolTip(ReturnToConsoleIconButton, UiText.Get(ResourceKeys.BundleExplorerPageReturnToConsoleButton));
+        RefreshChipText.Text = UiText.Get("BundleExplorerPage.RefreshButton.Content");
+        BatchExtractChipText.Text = UiText.Get("BundleExplorerPage.BatchExtractButton.Content");
+        SaveAsBundleChipText.Text = UiText.Get("BundleExplorerPage.SaveAsBundleButton.Content");
         LeftPanelTitleText.Text = UiText.Get("BundleExplorerPage.LeftPanelTitleText.Text");
         BundleSearchTextBox.PlaceholderText = UiText.Get(ResourceKeys.BundleExplorerPageBundleSearchTextBoxPlaceholder);
         ToolTipService.SetToolTip(
@@ -613,60 +591,6 @@ public sealed partial class BundleExplorerPage : Page
         {
             _isSynchronizingAssetDocumentTabSelection = false;
         }
-    }
-
-    /// <summary>
-    /// 工作区入口按钮默认保持白色图标底。
-    /// 当前仅在“按下”瞬间让图标底变深，悬停反馈则交给整个标签按钮承载。
-    /// </summary>
-    private void ResetWorkspaceActionChipIconVisualState()
-    {
-        ResetWorkspaceActionChipIconVisualState(
-            CreateWorkspaceChipIconBorder,
-            CreateWorkspaceChipIcon);
-        ResetWorkspaceActionChipIconVisualState(
-            OpenWorkspaceChipIconBorder,
-            OpenWorkspaceChipIcon);
-    }
-
-    private void UpdateWorkspaceActionChipIconPressedState(object sender, bool isPressed)
-    {
-        if (ReferenceEquals(sender, CreateWorkspaceChipButton))
-        {
-            ApplyWorkspaceActionChipIconPressedState(
-                CreateWorkspaceChipIconBorder,
-                CreateWorkspaceChipIcon,
-                isPressed);
-            return;
-        }
-
-        if (ReferenceEquals(sender, OpenWorkspaceChipButton))
-        {
-            ApplyWorkspaceActionChipIconPressedState(
-                OpenWorkspaceChipIconBorder,
-                OpenWorkspaceChipIcon,
-                isPressed);
-        }
-    }
-
-    private void ApplyWorkspaceActionChipIconPressedState(Border iconBorder, FontIcon icon, bool isPressed)
-    {
-        if (isPressed)
-        {
-            iconBorder.Background = WorkspaceActionChipPressedBackgroundBrush;
-            iconBorder.BorderBrush = WorkspaceActionChipPressedBorderBrush;
-            icon.Foreground = WorkspaceActionChipPressedForegroundBrush;
-            return;
-        }
-
-        ResetWorkspaceActionChipIconVisualState(iconBorder, icon);
-    }
-
-    private static void ResetWorkspaceActionChipIconVisualState(Border iconBorder, FontIcon icon)
-    {
-        iconBorder.ClearValue(Border.BackgroundProperty);
-        iconBorder.ClearValue(Border.BorderBrushProperty);
-        icon.ClearValue(FontIcon.ForegroundProperty);
     }
 
     /// <summary>

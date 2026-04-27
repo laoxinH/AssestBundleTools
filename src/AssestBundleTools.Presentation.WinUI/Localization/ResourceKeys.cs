@@ -310,14 +310,11 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsLogCenterTitle = "SettingsDiagnosticsPage.LogCenterTitleText.Text";
     public const string SettingsDiagnosticsLogCenterHint = "SettingsDiagnosticsPage.LogCenterHintText.Text";
 
-    public const string BundleExplorerStageStatusText = "BundleExplorer.StageStatus.Text";
     public const string BundleExplorerBundleSearchEmptyStateFormat = "BundleExplorer.EmptyState.BundleSearchNoMatch.Format";
     public const string BundleExplorerStatusWorkspaceLabel = "BundleExplorer.Status.Workspace.Label";
     public const string BundleExplorerStatusBundleCountLabel = "BundleExplorer.Status.BundleCount.Label";
     public const string BundleExplorerStatusAssetCountLabel = "BundleExplorer.Status.AssetCount.Label";
-    public const string BundleExplorerStatusSourceLabel = "BundleExplorer.Status.Source.Label";
     public const string BundleExplorerStatusWorkspaceSessionCountLabel = "BundleExplorer.Status.WorkspaceSessionCount.Label";
-    public const string BundleExplorerStatusOpenTabCountLabel = "BundleExplorer.Status.OpenTabCount.Label";
     public const string BundleExplorerStatusCurrentDecryptorLabel = "BundleExplorer.Status.CurrentDecryptor.Label";
     public const string BundleExplorerStatusSelectionLabel = "BundleExplorer.Status.Selection.Label";
     public const string BundleExplorerStatusNotLoaded = "BundleExplorer.Status.NotLoaded";
@@ -353,6 +350,7 @@ public static class ResourceKeys
     public const string BundleExplorerNotificationBundleDirectoryImportRequested = "BundleExplorer.Notification.BundleDirectoryImportRequested";
     public const string BundleExplorerNotificationBundleRemoved = "BundleExplorer.Notification.BundleRemoved";
     public const string BundleExplorerNotificationBundleOpenLocationFailed = "BundleExplorer.Notification.BundleOpenLocationFailed";
+    public const string BundleExplorerNotificationPreviewOpenLocationFailed = "BundleExplorer.Notification.PreviewOpenLocationFailed";
     public const string BundleExplorerNotificationAssetExtracted = "BundleExplorer.Notification.AssetExtracted";
     public const string BundleExplorerNotificationBatchAssetsExtracted = "BundleExplorer.Notification.BatchAssetsExtracted";
     public const string BundleExplorerNotificationReplacementSourceSelected = "BundleExplorer.Notification.ReplacementSourceSelected";
@@ -416,6 +414,8 @@ public static class ResourceKeys
     public const string WorkspaceDialogSetupDecryptorHint = "WorkspaceDialog.Setup.Decryptor.Hint";
     public const string WorkspaceDialogSetupOpenDecryptorHint = "WorkspaceDialog.Setup.Open.Decryptor.Hint";
     public const string WorkspaceDialogSetupSummaryDecryptorLabel = "WorkspaceDialog.Setup.Summary.Decryptor.Label";
+    public const string AssetPaneViewSearchToggleButtonOpenToolTip = "AssetPaneView.SearchToggleButton.OpenToolTip";
+    public const string AssetPaneViewSearchToggleButtonCloseToolTip = "AssetPaneView.SearchToggleButton.CloseToolTip";
     public const string AssetPaneViewMultiSelectionLabel = "AssetPaneView.MultiSelectionLabelText.Text";
     public const string AssetPaneViewMultiSelectionUnit = "AssetPaneView.MultiSelectionUnitText.Text";
     public const string AssetPaneViewBatchExtractSelectedButton = "AssetPaneView.BatchExtractSelectedButton.Content";
@@ -447,6 +447,14 @@ public static class ResourceKeys
     public const string AssetStateModified = "AssetState.Modified";
     public const string InspectorCapabilityAvailable = "InspectorPanelView.Capability.Available";
     public const string InspectorCapabilityUnavailable = "InspectorPanelView.Capability.Unavailable";
+    public const string InspectorInformationSectionTitle = "InspectorPanelView.InformationSectionTitleText.Text";
+    public const string InspectorBasicInfoTitle = "InspectorPanelView.BasicInfoTitleText.Text";
+    public const string InspectorInfoCardCopyToolTip = "InspectorPanelView.InfoCardCopyButton.ToolTip";
+    public const string InspectorInfoCardItemCountFormat = "InspectorPanelView.InfoCardItemCount.Format";
+    public const string InspectorPreviewOpenLocationToolTip = "InspectorPanelView.PreviewOpenLocationButton.ToolTip";
+    public const string InspectorAudioTransportPlayToolTip = "InspectorPanelView.AudioTransport.Play.ToolTip";
+    public const string InspectorAudioTransportPauseToolTip = "InspectorPanelView.AudioTransport.Pause.ToolTip";
+    public const string InspectorAudioTransportResetToolTip = "InspectorPanelView.AudioTransport.Reset.ToolTip";
     public const string InspectorPreviewLoadingText = "InspectorPanelView.PreviewLoadingText.Text";
     public const string InspectorPreviewUnavailableText = "InspectorPanelView.PreviewUnavailableText.Text";
     public const string InspectorReplacementSourceNone = "InspectorPanelView.ReplacementSource.None";

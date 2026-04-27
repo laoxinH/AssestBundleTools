@@ -22,6 +22,7 @@ public sealed class AssetPaneViewModel : ObservableObject
     private string _currentBundleDisplayName = string.Empty;
     private string _searchKeyword = string.Empty;
     private string _emptyStateText = string.Empty;
+    private bool _isSearchExpanded;
     private bool _showModifiedOnly;
     private bool _showPreviewableOnly;
     private bool _supportsBatchExtractionQuickAction;
@@ -59,6 +60,22 @@ public sealed class AssetPaneViewModel : ObservableObject
         set => SetProperty(ref _searchKeyword, value);
     }
 
+    /// <summary>
+    /// 控制资产列表搜索框是否处于展开状态。
+    /// 该状态只属于当前窗格展示层，不参与应用层业务决策。
+    /// </summary>
+    public bool IsSearchExpanded
+    {
+        get => _isSearchExpanded;
+        private set
+        {
+            if (SetProperty(ref _isSearchExpanded, value))
+            {
+                OnPropertyChanged(nameof(SearchToggleGlyph));
+            }
+        }
+    }
+
     public string EmptyStateText
     {
         get => _emptyStateText;
@@ -94,6 +111,7 @@ public sealed class AssetPaneViewModel : ObservableObject
             if (SetProperty(ref _isBusy, value))
             {
                 OnPropertyChanged(nameof(CanBatchExtractSelectedAssets));
+                OnPropertyChanged(nameof(CanToggleSearch));
             }
         }
     }
@@ -169,6 +187,10 @@ public sealed class AssetPaneViewModel : ObservableObject
         !IsBusy &&
         HasMultipleSelection;
 
+    public bool CanToggleSearch => !IsBusy && _sourceItems.Count > 0;
+
+    public string SearchToggleGlyph => IsSearchExpanded ? "\uE711" : "\uE721";
+
     public Visibility ListVisibility => Items.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility EmptyStateVisibility => Items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -215,6 +237,7 @@ public sealed class AssetPaneViewModel : ObservableObject
         EmptyStateText = emptyStateText;
         _sourceItems.Clear();
         _sourceItems.AddRange(items);
+        OnPropertyChanged(nameof(CanToggleSearch));
         ApplyLocalFilters(preferredSelectedAssetId);
     }
 
@@ -226,8 +249,31 @@ public sealed class AssetPaneViewModel : ObservableObject
         Items.Clear();
         SelectedAssets.Clear();
         SelectedAsset = null;
+        IsSearchExpanded = false;
+        OnPropertyChanged(nameof(CanToggleSearch));
         NotifySelectionStateChanged();
         NotifyListStateChanged();
+    }
+
+    /// <summary>
+    /// 切换资产列表搜索框的展开状态。
+    /// 收起时同步清空关键字，让列表快速回到完整浏览结果。
+    /// </summary>
+    public void ToggleSearch()
+    {
+        if (!CanToggleSearch)
+        {
+            return;
+        }
+
+        if (IsSearchExpanded)
+        {
+            SearchKeyword = string.Empty;
+            IsSearchExpanded = false;
+            return;
+        }
+
+        IsSearchExpanded = true;
     }
 
     /// <summary>
@@ -270,6 +316,7 @@ public sealed class AssetPaneViewModel : ObservableObject
         bool showPreviewableOnly)
     {
         SearchKeyword = searchKeyword;
+        IsSearchExpanded = !string.IsNullOrWhiteSpace(searchKeyword);
         ShowModifiedOnly = showModifiedOnly;
         ShowPreviewableOnly = showPreviewableOnly;
         SelectedAssetTypeOption = AssetTypeOptions.FirstOrDefault(option => option.AssetType == selectedAssetType)
@@ -343,9 +390,27 @@ public sealed class AssetPaneViewModel : ObservableObject
 
     private void NotifySelectionStateChanged()
     {
+        UpdateItemSelectionState();
         OnPropertyChanged(nameof(SelectedAssetCount));
         OnPropertyChanged(nameof(HasMultipleSelection));
         OnPropertyChanged(nameof(CanBatchExtractSelectedAssets));
         OnPropertyChanged(nameof(MultiSelectionQuickActionsVisibility));
+    }
+
+    /// <summary>
+    /// 列表行的视觉选中态直接从真实选择集合派生，
+    /// 避免模板自己猜选中状态，后续扩展多选视觉时也更容易统一维护。
+    /// </summary>
+    private void UpdateItemSelectionState()
+    {
+        foreach (var item in _sourceItems)
+        {
+            item.IsSelected = false;
+        }
+
+        foreach (var item in SelectedAssets)
+        {
+            item.IsSelected = true;
+        }
     }
 }

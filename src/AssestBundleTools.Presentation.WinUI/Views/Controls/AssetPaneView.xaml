@@ -6,69 +6,224 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewModels="using:AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d">
 
-    <Grid RowSpacing="8">
+    <UserControl.Resources>
+        <Style
+            x:Key="AssetPaneToolbarIconButtonStyle"
+            BasedOn="{StaticResource DefaultButtonStyle}"
+            TargetType="Button">
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="MinWidth" Value="36" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style
+            x:Key="AssetPaneFilterComboBoxStyle"
+            BasedOn="{StaticResource DefaultComboBoxStyle}"
+            TargetType="ComboBox">
+            <Setter Property="MinWidth" Value="88" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+        </Style>
+
+        <!-- 左侧筛选区也使用分段容器，和右侧详情区的标签切换保持统一视觉。 -->
+        <Style
+            x:Key="AssetPaneSegmentHostStyle"
+            TargetType="Border">
+            <Setter Property="Padding" Value="3" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
+            <Setter Property="CornerRadius" Value="10" />
+        </Style>
+
+        <Style
+            x:Key="AssetPaneListViewItemStyle"
+            TargetType="ListViewItem">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="UseSystemFocusVisuals" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListViewItem">
+                        <!-- 资产列表行已经在 DataTemplate 内自绘选中、悬停和按压层，
+                             这里改为极简容器模板，避免系统默认高亮再叠一层矩形状态。 -->
+                        <ContentPresenter
+                            Padding="{TemplateBinding Padding}"
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            ContentTransitions="{TemplateBinding ContentTransitions}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style
+            x:Key="AssetPaneTableHeaderTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="TextAlignment" Value="Left" />
+            <Setter Property="TextWrapping" Value="NoWrap" />
+        </Style>
+
+        <Style
+            x:Key="AssetPanePrimaryNameTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12.75" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="TextWrapping" Value="NoWrap" />
+        </Style>
+
+        <Style
+            x:Key="AssetPaneSecondaryPathTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="TextWrapping" Value="NoWrap" />
+        </Style>
+
+        <Style
+            x:Key="AssetPaneBodyCellTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="TextAlignment" Value="Left" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="TextWrapping" Value="NoWrap" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid RowSpacing="6">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Spacing="2">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-                <TextBlock
-                    x:Name="CurrentBundleLabelText"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <TextBlock
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="{x:Bind ViewModel.CurrentBundleDisplayName, Mode=OneWay}"
-                    TextWrapping="WrapWholeWords" />
-            </StackPanel>
-        </StackPanel>
-
         <Grid
-            Grid.Row="1"
+            Grid.Row="0"
             ColumnSpacing="6">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="1.15*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
+
+            <StackPanel
+                Grid.Column="0"
+                Orientation="Horizontal"
+                Spacing="6">
+                <ComboBox
+                    x:Name="FilterComboBox"
+                    ItemsSource="{x:Bind ViewModel.AssetTypeOptions, Mode=OneWay}"
+                    SelectedItem="{x:Bind ViewModel.SelectedAssetTypeOption, Mode=TwoWay}"
+                    SelectionChanged="OnFilterSelectionChanged"
+                    Style="{StaticResource AssetPaneFilterComboBoxStyle}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="viewModels:AssetTypeOptionViewModel">
+                            <TextBlock Text="{x:Bind DisplayName}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <Border Style="{StaticResource AssetPaneSegmentHostStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <ToggleButton
+                            x:Name="ModifiedOnlyToggleButton"
+                            Checked="OnModifiedOnlyToggleButtonChecked"
+                            Content="Modified Only"
+                            IsChecked="{x:Bind ViewModel.ShowModifiedOnly, Mode=OneWay}"
+                            Unchecked="OnModifiedOnlyToggleButtonUnchecked"
+                            Style="{StaticResource CompactSegmentToggleButtonStyle}" />
+
+                        <ToggleButton
+                            x:Name="PreviewOnlyToggleButton"
+                            Checked="OnPreviewOnlyToggleButtonChecked"
+                            Content="Preview Only"
+                            IsChecked="{x:Bind ViewModel.ShowPreviewableOnly, Mode=OneWay}"
+                            Unchecked="OnPreviewOnlyToggleButtonUnchecked"
+                            Style="{StaticResource CompactSegmentToggleButtonStyle}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <Button
+                x:Name="SearchToggleButton"
+                Grid.Column="1"
+                Click="OnSearchToggleButtonClick"
+                IsEnabled="{x:Bind ViewModel.CanToggleSearch, Mode=OneWay}"
+                Style="{StaticResource AssetPaneToolbarIconButtonStyle}"
+                VerticalAlignment="Center">
+                <Button.Resources>
+                    <SolidColorBrush
+                        x:Key="ButtonBackground"
+                        Color="Transparent" />
+                    <SolidColorBrush
+                        x:Key="ButtonBackgroundPointerOver"
+                        Color="#10000000" />
+                    <SolidColorBrush
+                        x:Key="ButtonBackgroundPressed"
+                        Color="#16000000" />
+                    <SolidColorBrush
+                        x:Key="ButtonBorderBrush"
+                        Color="Transparent" />
+                    <SolidColorBrush
+                        x:Key="ButtonBorderBrushPointerOver"
+                        Color="Transparent" />
+                    <SolidColorBrush
+                        x:Key="ButtonBorderBrushPressed"
+                        Color="Transparent" />
+                </Button.Resources>
+                <FontIcon
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="16"
+                    Glyph="{x:Bind ViewModel.SearchToggleGlyph, Mode=OneWay}" />
+            </Button>
+        </Grid>
+
+        <Border
+            x:Name="SearchHost"
+            Grid.Row="1"
+            Height="0"
+            Opacity="0"
+            Visibility="Collapsed">
+            <Border.RenderTransform>
+                <TranslateTransform x:Name="SearchTranslateTransform" Y="-6" />
+            </Border.RenderTransform>
 
             <TextBox
                 x:Name="SearchTextBox"
                 Text="{x:Bind ViewModel.SearchKeyword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 TextChanged="OnSearchTextChanged" />
-
-            <ComboBox
-                x:Name="FilterComboBox"
-                Grid.Column="1"
-                ItemsSource="{x:Bind ViewModel.AssetTypeOptions, Mode=OneWay}"
-                SelectedItem="{x:Bind ViewModel.SelectedAssetTypeOption, Mode=TwoWay}"
-                SelectionChanged="OnFilterSelectionChanged">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="viewModels:AssetTypeOptionViewModel">
-                        <TextBlock Text="{x:Bind DisplayName}" />
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
-
-            <ToggleButton
-                x:Name="ModifiedOnlyToggleButton"
-                Grid.Column="2"
-                IsChecked="{x:Bind ViewModel.ShowModifiedOnly, Mode=TwoWay}"
-                MinWidth="96" />
-
-            <ToggleButton
-                x:Name="PreviewOnlyToggleButton"
-                Grid.Column="3"
-                IsChecked="{x:Bind ViewModel.ShowPreviewableOnly, Mode=TwoWay}"
-                MinWidth="96" />
-        </Grid>
+        </Border>
 
         <Grid
             Grid.Row="2"
@@ -105,46 +260,28 @@
                 IsEnabled="{x:Bind ViewModel.CanBatchExtractSelectedAssets, Mode=OneWay}" />
         </Grid>
 
-        <Grid
-            Grid.Row="3"
-            ColumnSpacing="8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2.5*" />
-                <ColumnDefinition Width="1.2*" />
-                <ColumnDefinition Width="1*" />
-                <ColumnDefinition Width="1*" />
-            </Grid.ColumnDefinitions>
-
-            <TextBlock
-                x:Name="AssetNameHeaderText"
-                FontWeight="SemiBold" />
-            <TextBlock
-                x:Name="AssetTypeHeaderText"
-                Grid.Column="1"
-                FontWeight="SemiBold" />
-            <TextBlock
-                x:Name="AssetSizeHeaderText"
-                Grid.Column="2"
-                FontWeight="SemiBold" />
-            <TextBlock
-                x:Name="AssetStateHeaderText"
-                Grid.Column="3"
-                FontWeight="SemiBold" />
-        </Grid>
-
-        <Grid Grid.Row="4">
+        <Grid Grid.Row="3">
             <ListView
                 x:Name="AssetListView"
                 HorizontalContentAlignment="Stretch"
                 ItemsSource="{x:Bind ViewModel.Items, Mode=OneWay}"
+                ItemContainerStyle="{StaticResource AssetPaneListViewItemStyle}"
                 SelectedItem="{x:Bind ViewModel.SelectedAsset, Mode=TwoWay}"
                 SelectionMode="Extended"
                 SelectionChanged="OnAssetListSelectionChanged"
                 Visibility="{x:Bind ViewModel.ListVisibility, Mode=OneWay}">
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="viewModels:AssetListEntryViewModel">
+                <!-- 表头放进 ListView.Header，确保它和数据行共享同一内容宽度，
+                     避免垂直滚动条出现后，外置表头与数据列产生位移。 -->
+                <ListView.Header>
+                    <Grid Padding="4,0,4,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
                         <Grid
-                            Padding="4,5"
+                            Grid.Column="2"
                             ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="2.5*" />
@@ -153,26 +290,110 @@
                                 <ColumnDefinition Width="1*" />
                             </Grid.ColumnDefinitions>
 
-                            <StackPanel Spacing="2">
-                                <TextBlock
-                                    Text="{x:Bind Item.Name}"
-                                    TextTrimming="CharacterEllipsis" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="{x:Bind Item.AssetPath}"
-                                    TextTrimming="CharacterEllipsis" />
-                            </StackPanel>
-
                             <TextBlock
+                                x:Name="AssetNameHeaderText"
+                                Style="{StaticResource AssetPaneTableHeaderTextStyle}" />
+                            <TextBlock
+                                x:Name="AssetTypeHeaderText"
                                 Grid.Column="1"
-                                Text="{x:Bind AssetTypeText}"
-                                TextTrimming="CharacterEllipsis" />
+                                Style="{StaticResource AssetPaneTableHeaderTextStyle}" />
                             <TextBlock
+                                x:Name="AssetSizeHeaderText"
                                 Grid.Column="2"
-                                Text="{x:Bind SizeText}" />
+                                Style="{StaticResource AssetPaneTableHeaderTextStyle}" />
                             <TextBlock
+                                x:Name="AssetStateHeaderText"
                                 Grid.Column="3"
-                                Text="{x:Bind StateText}" />
+                                Style="{StaticResource AssetPaneTableHeaderTextStyle}" />
+                        </Grid>
+                    </Grid>
+                </ListView.Header>
+
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:AssetListEntryViewModel">
+                        <Grid
+                            Padding="4,4,4,5"
+                            PointerEntered="OnAssetRowPointerEntered"
+                            PointerExited="OnAssetRowPointerExited"
+                            PointerPressed="OnAssetRowPointerPressed"
+                            PointerReleased="OnAssetRowPointerReleased"
+                            PointerCanceled="OnAssetRowPointerCanceled">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border
+                                Grid.ColumnSpan="3"
+                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                CornerRadius="6"
+                                Opacity="{x:Bind SelectionBackgroundOpacity, Mode=OneWay}" />
+
+                            <Border
+                                x:Name="AssetRowHoverOverlay"
+                                Grid.ColumnSpan="3"
+                                Background="#11000000"
+                                CornerRadius="6"
+                                IsHitTestVisible="False"
+                                Opacity="0" />
+
+                            <Border
+                                x:Name="AssetRowPressedOverlay"
+                                Grid.ColumnSpan="3"
+                                Background="#19000000"
+                                CornerRadius="6"
+                                IsHitTestVisible="False"
+                                Opacity="0" />
+
+                            <Border
+                                Width="2"
+                                Margin="0,8,0,8"
+                                HorizontalAlignment="Left"
+                                Background="{ThemeResource TextFillColorPrimaryBrush}"
+                                CornerRadius="1"
+                                Visibility="{x:Bind SelectionIndicatorVisibility, Mode=OneWay}" />
+
+                            <Grid
+                                Grid.Column="2"
+                                ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2.5*" />
+                                    <ColumnDefinition Width="1.2*" />
+                                    <ColumnDefinition Width="1*" />
+                                    <ColumnDefinition Width="1*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Spacing="1">
+                                    <TextBlock
+                                        PointerEntered="OnAssetNamePointerEntered"
+                                        PointerExited="OnAssetNamePointerExited"
+                                        PointerPressed="OnAssetNamePointerPressed"
+                                        Unloaded="OnAssetNameTextBlockUnloaded"
+                                        Style="{StaticResource AssetPanePrimaryNameTextStyle}"
+                                        Text="{x:Bind DisplayName}">
+                                        <ToolTipService.ToolTip>
+                                            <controls:ToolTip Content="{x:Bind DisplayNameToolTipText}" />
+                                        </ToolTipService.ToolTip>
+                                    </TextBlock>
+                                    <TextBlock
+                                        Style="{StaticResource AssetPaneSecondaryPathTextStyle}"
+                                        Text="{x:Bind DisplayAssetPath}" />
+                                </StackPanel>
+
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Style="{StaticResource AssetPaneBodyCellTextStyle}"
+                                    Text="{x:Bind AssetTypeText}" />
+                                <TextBlock
+                                    Grid.Column="2"
+                                    Style="{StaticResource AssetPaneBodyCellTextStyle}"
+                                    Text="{x:Bind SizeText}" />
+                                <TextBlock
+                                    Grid.Column="3"
+                                    Style="{StaticResource AssetPaneBodyCellTextStyle}"
+                                    Text="{x:Bind StateText}" />
+                            </Grid>
                         </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>

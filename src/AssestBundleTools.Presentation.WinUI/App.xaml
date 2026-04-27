@@ -276,6 +276,1010 @@
                     Property="Padding"
                     Value="10,5" />
             </Style>
+
+            <SolidColorBrush
+                x:Key="SegmentedSelectedBackgroundBrush"
+                Color="#FF3B3B3D" />
+            <SolidColorBrush
+                x:Key="SegmentedSelectedBorderBrush"
+                Color="#FF3B3B3D" />
+            <SolidColorBrush
+                x:Key="SegmentedSelectedHoverOverlayBrush"
+                Color="#14FFFFFF" />
+            <SolidColorBrush
+                x:Key="SegmentedSelectedPressedOverlayBrush"
+                Color="#14000000" />
+
+            <Style
+                x:Key="CompactSegmentRadioButtonStyle"
+                TargetType="RadioButton">
+                <Setter
+                    Property="Background"
+                    Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+                <Setter
+                    Property="BorderBrush"
+                    Value="Transparent" />
+                <Setter
+                    Property="BorderThickness"
+                    Value="0" />
+                <Setter
+                    Property="Padding"
+                    Value="10,5" />
+                <Setter
+                    Property="MinWidth"
+                    Value="58" />
+                <Setter
+                    Property="MinHeight"
+                    Value="32" />
+                <Setter
+                    Property="HorizontalAlignment"
+                    Value="Left" />
+                <Setter
+                    Property="UseSystemFocusVisuals"
+                    Value="False" />
+                <Setter
+                    Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Border
+                                x:Name="RootBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="Transparent"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                                <Grid>
+                                    <Border
+                                        x:Name="CheckedBackground"
+                                        Background="{StaticResource SegmentedSelectedBackgroundBrush}"
+                                        CornerRadius="10"
+                                        Opacity="0" />
+                                    <Border
+                                        x:Name="HoverOverlay"
+                                        Background="{ThemeResource SubtleFillColorTertiaryBrush}"
+                                        CornerRadius="10"
+                                        Opacity="0" />
+                                    <Border
+                                        x:Name="PressedOverlay"
+                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                        CornerRadius="10"
+                                        Opacity="0" />
+                                    <Border
+                                        x:Name="SelectionStroke"
+                                        BorderBrush="{StaticResource SegmentedSelectedBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="10"
+                                        Opacity="0" />
+                                    <TextBlock
+                                        x:Name="LabelTextBlock"
+                                        Margin="{TemplateBinding Padding}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="11.5"
+                                        FontWeight="SemiBold"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{TemplateBinding Content}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver">
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="HoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.12" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="PressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="HoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="PressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.08" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0.45"
+                                                    Duration="0:0:0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="CheckStates">
+                                        <VisualState x:Name="Unchecked">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="BorderBrush">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedBackground"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.12" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="SelectionStroke"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.12" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="LabelTextBlock"
+                                                    Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Checked">
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedBackground"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.12" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="SelectionStroke"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.12" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="LabelTextBlock"
+                                                    Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- 让筛选切换与右侧详情分段按钮保持一致的几何和状态语言。 -->
+            <Style
+                x:Key="CompactSegmentToggleButtonStyle"
+                TargetType="ToggleButton">
+                <Setter
+                    Property="Background"
+                    Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                <Setter
+                    Property="Foreground"
+                    Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Setter
+                    Property="BorderBrush"
+                    Value="Transparent" />
+                <Setter
+                    Property="BorderThickness"
+                    Value="1" />
+                <Setter
+                    Property="Padding"
+                    Value="10,5" />
+                <Setter
+                    Property="MinWidth"
+                    Value="58" />
+                <Setter
+                    Property="MinHeight"
+                    Value="32" />
+                <Setter
+                    Property="CornerRadius"
+                    Value="10" />
+                <Setter
+                    Property="HorizontalAlignment"
+                    Value="Left" />
+                <Setter
+                    Property="FontSize"
+                    Value="11.5" />
+                <Setter
+                    Property="FontWeight"
+                    Value="SemiBold" />
+                <Setter
+                    Property="UseSystemFocusVisuals"
+                    Value="False" />
+                <Setter
+                    Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border
+                                x:Name="RootBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{TemplateBinding CornerRadius}"
+                                AutomationProperties.AccessibilityView="Raw">
+                                <Grid>
+                                    <Border
+                                        x:Name="CheckedBackground"
+                                        Background="{StaticResource SegmentedSelectedBackgroundBrush}"
+                                        CornerRadius="{TemplateBinding CornerRadius}"
+                                        Opacity="0" />
+                                    <Border
+                                        x:Name="HoverOverlay"
+                                        Background="{ThemeResource SubtleFillColorTertiaryBrush}"
+                                        CornerRadius="{TemplateBinding CornerRadius}"
+                                        Opacity="0" />
+                                    <Border
+                                        x:Name="PressedOverlay"
+                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                        CornerRadius="{TemplateBinding CornerRadius}"
+                                        Opacity="0" />
+                                    <Border
+                                        x:Name="CheckedHoverOverlay"
+                                        Background="{StaticResource SegmentedSelectedHoverOverlayBrush}"
+                                        CornerRadius="{TemplateBinding CornerRadius}"
+                                        Opacity="0" />
+                                    <Border
+                                        x:Name="CheckedPressedOverlay"
+                                        Background="{StaticResource SegmentedSelectedPressedOverlayBrush}"
+                                        CornerRadius="{TemplateBinding CornerRadius}"
+                                        Opacity="0" />
+                                    <Border
+                                        x:Name="SelectionStroke"
+                                        BorderBrush="{StaticResource SegmentedSelectedBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="{TemplateBinding CornerRadius}"
+                                        Opacity="0" />
+                                    <TextBlock
+                                        x:Name="LabelTextBlock"
+                                        Margin="{TemplateBinding Padding}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="{TemplateBinding FontSize}"
+                                        FontWeight="{TemplateBinding FontWeight}"
+                                        Foreground="{TemplateBinding Foreground}"
+                                        Text="{TemplateBinding Content}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal">
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="BorderBrush">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="Transparent" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedBackground"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="HoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="PressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedHoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedPressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="SelectionStroke"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.10" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="LabelTextBlock"
+                                                    Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+
+                                        <VisualState x:Name="PointerOver">
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="BorderBrush">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="Transparent" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedBackground"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="HoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="PressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedHoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedPressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="SelectionStroke"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.10" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="LabelTextBlock"
+                                                    Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource TextFillColorPrimaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="BorderBrush">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="Transparent" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedBackground"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="HoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="PressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedHoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedPressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="SelectionStroke"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="LabelTextBlock"
+                                                    Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource TextFillColorPrimaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource ControlFillColorDisabledBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="BorderBrush">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0.45"
+                                                    Duration="0:0:0" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedBackground"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="HoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="PressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedHoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedPressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="SelectionStroke"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="LabelTextBlock"
+                                                    Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource TextFillColorDisabledBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+
+                                        <VisualState x:Name="Checked">
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="BorderBrush">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="Transparent" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedBackground"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="HoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="PressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedHoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedPressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="SelectionStroke"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.10" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="LabelTextBlock"
+                                                    Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+
+                                        <VisualState x:Name="CheckedPointerOver">
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="BorderBrush">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="Transparent" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedBackground"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="HoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="PressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedHoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedPressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="SelectionStroke"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.10" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="LabelTextBlock"
+                                                    Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+
+                                        <VisualState x:Name="CheckedPressed">
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="BorderBrush">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="Transparent" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedBackground"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="HoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="PressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedHoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedPressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="SelectionStroke"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.08" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="LabelTextBlock"
+                                                    Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+
+                                        <VisualState x:Name="CheckedDisabled">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="BorderBrush">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="Transparent" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0.45"
+                                                    Duration="0:0:0" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedBackground"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="HoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="PressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedHoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedPressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="SelectionStroke"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.08" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="LabelTextBlock"
+                                                    Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource TextOnAccentFillColorDisabled}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+
+                                        <VisualState x:Name="Indeterminate">
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="BorderBrush">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedBackground"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="HoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="PressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedHoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedPressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="LabelTextBlock"
+                                                    Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+
+                                        <VisualState x:Name="IndeterminatePointerOver">
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="BorderBrush">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedBackground"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="HoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="PressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedHoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.10" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedPressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="LabelTextBlock"
+                                                    Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource TextFillColorPrimaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+
+                                        <VisualState x:Name="IndeterminatePressed">
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="BorderBrush">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedBackground"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="HoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="PressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedHoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedPressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="LabelTextBlock"
+                                                    Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource TextFillColorPrimaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+
+                                        <VisualState x:Name="IndeterminateDisabled">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource ControlFillColorDisabledBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="BorderBrush">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="RootBorder"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0.45"
+                                                    Duration="0:0:0" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedBackground"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="HoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="PressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedHoverOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="CheckedPressedOverlay"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0:0:0.08" />
+                                                <ObjectAnimationUsingKeyFrames
+                                                    Storyboard.TargetName="LabelTextBlock"
+                                                    Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame
+                                                        KeyTime="0"
+                                                        Value="{ThemeResource TextFillColorDisabledBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

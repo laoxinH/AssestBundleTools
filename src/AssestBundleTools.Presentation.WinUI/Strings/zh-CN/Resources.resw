@@ -393,9 +393,6 @@
   <data name="BundleExplorerPage.NewWorkspaceButton.Content" xml:space="preserve">
     <value>新建工作区</value>
   </data>
-  <data name="BundleExplorerPage.OpenFileButton.Content" xml:space="preserve">
-    <value>打开文件</value>
-  </data>
   <data name="BundleExplorerPage.OpenWorkspaceButton.Content" xml:space="preserve">
     <value>打开工作区</value>
   </data>
@@ -570,11 +567,14 @@
   <data name="BundleExplorerPage.RightPanelTitleText.Text" xml:space="preserve">
     <value>资源详情</value>
   </data>
-  <data name="AssetPaneView.CurrentBundleLabelText.Text" xml:space="preserve">
-    <value>当前 Bundle：</value>
-  </data>
   <data name="AssetPaneView.SearchTextBox.PlaceholderText" xml:space="preserve">
     <value>搜索资源名称或路径</value>
+  </data>
+  <data name="AssetPaneView.SearchToggleButton.OpenToolTip" xml:space="preserve">
+    <value>展开资源搜索</value>
+  </data>
+  <data name="AssetPaneView.SearchToggleButton.CloseToolTip" xml:space="preserve">
+    <value>收起资源搜索</value>
   </data>
   <data name="AssetPaneView.ModifiedOnlyToggleButton.Content" xml:space="preserve">
     <value>仅已修改</value>
@@ -641,6 +641,30 @@
   </data>
   <data name="InspectorPanelView.PathIdLabelText.Text" xml:space="preserve">
     <value>PathId</value>
+  </data>
+  <data name="InspectorPanelView.InformationSectionTitleText.Text" xml:space="preserve">
+    <value>资源信息</value>
+  </data>
+  <data name="InspectorPanelView.BasicInfoTitleText.Text" xml:space="preserve">
+    <value>基础信息</value>
+  </data>
+  <data name="InspectorPanelView.InfoCardCopyButton.ToolTip" xml:space="preserve">
+    <value>复制此卡片信息</value>
+  </data>
+  <data name="InspectorPanelView.InfoCardItemCount.Format" xml:space="preserve">
+    <value>{0} 项</value>
+  </data>
+  <data name="InspectorPanelView.PreviewOpenLocationButton.ToolTip" xml:space="preserve">
+    <value>打开预览文件所在位置</value>
+  </data>
+  <data name="InspectorPanelView.AudioTransport.Play.ToolTip" xml:space="preserve">
+    <value>播放</value>
+  </data>
+  <data name="InspectorPanelView.AudioTransport.Pause.ToolTip" xml:space="preserve">
+    <value>暂停</value>
+  </data>
+  <data name="InspectorPanelView.AudioTransport.Reset.ToolTip" xml:space="preserve">
+    <value>复位到开头</value>
   </data>
   <data name="InspectorPanelView.PreviewInfoLabelText.Text" xml:space="preserve">
     <value>预览信息</value>
@@ -1284,9 +1308,6 @@
   <data name="Diagnostics.Log.EmptyState" xml:space="preserve">
     <value>这里会显示应用级运行日志、错误记录以及后续导出的诊断信息。</value>
   </data>
-  <data name="BundleExplorer.StageStatus.Text" xml:space="preserve">
-    <value>当前阶段聚焦主工作区浏览、VS Code 风格标签页浏览、资产列表多选提取、单资源替换骨架与多工作区上下文收口，真实文件打开、工作区切换界面与保存流程将在后续里程碑继续补齐。</value>
-  </data>
   <data name="BundleExplorer.EmptyState.BundleSearchNoMatch.Format" xml:space="preserve">
     <value>未找到与“{0}”匹配的资源包，请尝试其他关键词。</value>
   </data>
@@ -1302,14 +1323,8 @@
   <data name="BundleExplorer.Status.AssetCount.Label" xml:space="preserve">
     <value>资源</value>
   </data>
-  <data name="BundleExplorer.Status.Source.Label" xml:space="preserve">
-    <value>来源</value>
-  </data>
   <data name="BundleExplorer.Status.WorkspaceSessionCount.Label" xml:space="preserve">
     <value>已登记工作区</value>
-  </data>
-  <data name="BundleExplorer.Status.OpenTabCount.Label" xml:space="preserve">
-    <value>已打开标签页</value>
   </data>
   <data name="BundleExplorer.Status.Selection.Label" xml:space="preserve">
     <value>当前选中</value>
@@ -1412,6 +1427,9 @@
   </data>
   <data name="BundleExplorer.Notification.BundleOpenLocationFailed" xml:space="preserve">
     <value>无法打开资源包“{0}”的所在位置。</value>
+  </data>
+  <data name="BundleExplorer.Notification.PreviewOpenLocationFailed" xml:space="preserve">
+    <value>无法打开预览文件“{0}”的所在位置。</value>
   </data>
   <data name="BundleExplorer.Notification.AssetExtracted" xml:space="preserve">
     <value>已完成资源提取：{0}</value>

@@ -393,9 +393,6 @@
   <data name="BundleExplorerPage.NewWorkspaceButton.Content" xml:space="preserve">
     <value>New Workspace</value>
   </data>
-  <data name="BundleExplorerPage.OpenFileButton.Content" xml:space="preserve">
-    <value>Open File</value>
-  </data>
   <data name="BundleExplorerPage.OpenWorkspaceButton.Content" xml:space="preserve">
     <value>Open Workspace</value>
   </data>
@@ -570,11 +567,14 @@
   <data name="BundleExplorerPage.RightPanelTitleText.Text" xml:space="preserve">
     <value>Asset Details</value>
   </data>
-  <data name="AssetPaneView.CurrentBundleLabelText.Text" xml:space="preserve">
-    <value>Current Bundle:</value>
-  </data>
   <data name="AssetPaneView.SearchTextBox.PlaceholderText" xml:space="preserve">
     <value>Search asset name or path</value>
+  </data>
+  <data name="AssetPaneView.SearchToggleButton.OpenToolTip" xml:space="preserve">
+    <value>Expand asset search</value>
+  </data>
+  <data name="AssetPaneView.SearchToggleButton.CloseToolTip" xml:space="preserve">
+    <value>Collapse asset search</value>
   </data>
   <data name="AssetPaneView.ModifiedOnlyToggleButton.Content" xml:space="preserve">
     <value>Modified Only</value>
@@ -641,6 +641,30 @@
   </data>
   <data name="InspectorPanelView.PathIdLabelText.Text" xml:space="preserve">
     <value>PathId</value>
+  </data>
+  <data name="InspectorPanelView.InformationSectionTitleText.Text" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="InspectorPanelView.BasicInfoTitleText.Text" xml:space="preserve">
+    <value>Basic Information</value>
+  </data>
+  <data name="InspectorPanelView.InfoCardCopyButton.ToolTip" xml:space="preserve">
+    <value>Copy This Card</value>
+  </data>
+  <data name="InspectorPanelView.InfoCardItemCount.Format" xml:space="preserve">
+    <value>{0} item(s)</value>
+  </data>
+  <data name="InspectorPanelView.PreviewOpenLocationButton.ToolTip" xml:space="preserve">
+    <value>Open preview file location</value>
+  </data>
+  <data name="InspectorPanelView.AudioTransport.Play.ToolTip" xml:space="preserve">
+    <value>Play</value>
+  </data>
+  <data name="InspectorPanelView.AudioTransport.Pause.ToolTip" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="InspectorPanelView.AudioTransport.Reset.ToolTip" xml:space="preserve">
+    <value>Reset to start</value>
   </data>
   <data name="InspectorPanelView.PreviewInfoLabelText.Text" xml:space="preserve">
     <value>Preview Info</value>
@@ -1284,9 +1308,6 @@
   <data name="Diagnostics.Log.EmptyState" xml:space="preserve">
     <value>Application-level runtime logs, error records, and later diagnostic exports will appear here.</value>
   </data>
-  <data name="BundleExplorer.StageStatus.Text" xml:space="preserve">
-    <value>This stage focuses on stabilizing the main workspace browsing flow, VS Code-like tab browsing, list multi-select extraction, single-asset replacement scaffolding, and the multi-workspace context shell. Real file open, workspace switching UI, and save flows will continue in later milestones.</value>
-  </data>
   <data name="BundleExplorer.EmptyState.BundleSearchNoMatch.Format" xml:space="preserve">
     <value>No bundles matched "{0}". Try a different keyword.</value>
   </data>
@@ -1302,14 +1323,8 @@
   <data name="BundleExplorer.Status.AssetCount.Label" xml:space="preserve">
     <value>Assets</value>
   </data>
-  <data name="BundleExplorer.Status.Source.Label" xml:space="preserve">
-    <value>Source</value>
-  </data>
   <data name="BundleExplorer.Status.WorkspaceSessionCount.Label" xml:space="preserve">
     <value>Registered Workspaces</value>
-  </data>
-  <data name="BundleExplorer.Status.OpenTabCount.Label" xml:space="preserve">
-    <value>Open Tabs</value>
   </data>
   <data name="BundleExplorer.Status.Selection.Label" xml:space="preserve">
     <value>Selection</value>
@@ -1412,6 +1427,9 @@
   </data>
   <data name="BundleExplorer.Notification.BundleOpenLocationFailed" xml:space="preserve">
     <value>Unable to open the containing folder for bundle "{0}".</value>
+  </data>
+  <data name="BundleExplorer.Notification.PreviewOpenLocationFailed" xml:space="preserve">
+    <value>Unable to open the containing folder for preview "{0}".</value>
   </data>
   <data name="BundleExplorer.Notification.AssetExtracted" xml:space="preserve">
     <value>Asset extracted: {0}</value>
