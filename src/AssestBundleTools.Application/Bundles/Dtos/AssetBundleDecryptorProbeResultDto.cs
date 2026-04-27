@@ -1,3 +1,5 @@
+using AssestBundleTools.Application.Common.Messages;
+
 namespace AssestBundleTools.Application.Bundles.Dtos;
 
 /// <summary>
@@ -7,4 +9,4 @@ public sealed record AssetBundleDecryptorProbeResultDto(
     bool IsSuccessful,
     bool IsMatch,
     int Confidence,
-    string? Message);
+    LocalizedMessageDto? DiagnosticMessage);

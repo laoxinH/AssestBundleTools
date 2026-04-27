@@ -1,6 +1,7 @@
 using AssestBundleTools.Application.Bundles;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Common.Messages;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Workspace.Dtos;
 
@@ -56,7 +57,8 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
                     issueDiagnostics.Add(CreateScreenedOutDiagnostic(
                         discoveredFile,
                         decryptorId: null,
-                        detail: inspectionResult.Detail ?? "Source was rejected during import-source inspection."));
+                        detailMessage: inspectionResult.DetailMessage ?? new LocalizedMessageDto(
+                            WorkspaceImportMessageTokens.ScreeningSourceRejectedDuringInspection)));
                     break;
                 default:
                     unresolvedFiles.Add(discoveredFile);
@@ -160,8 +162,8 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
             }
 
             var detail = decryptorResolution.UsedAutoDetection
-                ? "Source was not recognized as a plain bundle, and no decryptor matched it during auto-detection."
-                : "Source was not recognized as a plain bundle, and the configured decryptor cannot probe encrypted bundles.";
+                ? new LocalizedMessageDto(WorkspaceImportMessageTokens.ScreeningAutoDetectionNoDecryptorMatch)
+                : new LocalizedMessageDto(WorkspaceImportMessageTokens.ScreeningConfiguredDecryptorProbeUnsupported);
             foreach (var unresolvedFile in unresolvedFiles)
             {
                 issueDiagnostics.Add(CreateScreenedOutDiagnostic(
@@ -202,7 +204,7 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
             }
 
             var detail = !fileResultsByPath.TryGetValue(unresolvedFile.SourcePath, out var unmatchedResult)
-                ? "Source was not covered by decryptor probe results."
+                ? new LocalizedMessageDto(WorkspaceImportMessageTokens.ScreeningProbeResultMissing)
                 : BuildProbeRejectedDetail(unmatchedResult);
             issueDiagnostics.Add(CreateScreenedOutDiagnostic(
                 unresolvedFile,
@@ -214,29 +216,25 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
     private static WorkspaceImportIssueDiagnosticDto CreateScreenedOutDiagnostic(
         DiscoveredWorkspaceImportFileDto discoveredFile,
         string? decryptorId,
-        string detail)
+        LocalizedMessageDto? detailMessage)
     {
         return new WorkspaceImportIssueDiagnosticDto(
             SourcePath: discoveredFile.SourcePath,
             LogicalPath: discoveredFile.LogicalPath,
             Kind: WorkspaceImportIssueKind.CandidateScreenedOut,
             DecryptorId: decryptorId,
-            Detail: detail,
+            DetailMessage: detailMessage,
             Errors: Array.Empty<Domain.Common.Errors.AppError>());
     }
 
-    private static string BuildProbeRejectedDetail(WorkspaceImportDecryptorProbeFileResult fileResult)
+    private static LocalizedMessageDto BuildProbeRejectedDetail(WorkspaceImportDecryptorProbeFileResult fileResult)
     {
         if (!fileResult.IsSuccessful)
         {
-            return string.IsNullOrWhiteSpace(fileResult.Message)
-                ? "Decryptor probe failed for this source."
-                : $"Decryptor probe failed: {fileResult.Message}";
+            return fileResult.Message ?? new LocalizedMessageDto(WorkspaceImportMessageTokens.ScreeningProbeFailed);
         }
 
-        return string.IsNullOrWhiteSpace(fileResult.Message)
-            ? "Decryptor probe did not match this source."
-            : $"Decryptor probe did not match this source: {fileResult.Message}";
+        return fileResult.Message ?? new LocalizedMessageDto(WorkspaceImportMessageTokens.ScreeningProbeDidNotMatch);
     }
 
     private static string? NormalizeDecryptorId(string? decryptorId)

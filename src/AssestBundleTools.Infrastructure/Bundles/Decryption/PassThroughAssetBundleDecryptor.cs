@@ -33,7 +33,7 @@ public sealed class PassThroughAssetBundleDecryptor : IAssetBundleDecryptor
             IsSuccessful: fileExists,
             IsMatch: fileExists,
             Confidence: fileExists ? 1 : 0,
-            Message: null));
+            DiagnosticMessage: null));
     }
 
     public Task<Result<AssetBundleDecryptionResultDto>> DecryptAsync(
@@ -49,7 +49,7 @@ public sealed class PassThroughAssetBundleDecryptor : IAssetBundleDecryptor
             ResolvedBundlePath: Path.GetFullPath(request.SourcePath),
             ProducedDerivedFile: false,
             BundleFingerprint: AssetBundleFileFingerprintFactory.Create(request.SourcePath),
-            Message: null);
+            DiagnosticMessage: null);
 
         return Task.FromResult(Result<AssetBundleDecryptionResultDto>.Success(result));
     }

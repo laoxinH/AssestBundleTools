@@ -1,3 +1,5 @@
+using AssestBundleTools.Application.Common.Messages;
+
 namespace AssestBundleTools.Application.Assets.Dtos;
 
 /// <summary>
@@ -9,7 +11,7 @@ public sealed record AudioPayloadTranscodeResultDto(
     AudioPayloadTranscoderDescriptorDto? Transcoder,
     string? ContentType,
     byte[]? Content,
-    string? Message = null)
+    LocalizedMessageDto? DiagnosticMessage = null)
 {
     public bool IsSuccess =>
         Status == AudioPayloadTranscodeStatusKind.Succeeded &&

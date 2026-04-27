@@ -49,7 +49,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         if (!File.Exists(request.ResolvedBundlePath))
         {
             return Result<AssetPreviewContentDto>.Failure(
-                ApplicationErrors.BundleReadFailed(request.ResolvedBundlePath, "Preview source bundle does not exist."));
+                ApplicationErrors.BundleSourceMissing(request.ResolvedBundlePath));
         }
 
         var assetsManager = new AssetsManager
@@ -68,20 +68,20 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
             if (serializedFile is null)
             {
                 return Result<AssetPreviewContentDto>.Failure(
-                    ApplicationErrors.BundleReadFailed(request.ResolvedBundlePath, "Serialized file locator was not found."));
+                    ApplicationErrors.BundlePreviewSerializedFileLocatorMissing(request.ResolvedBundlePath));
             }
 
             if (!AssetsToolsFieldReader.TryFindAssetInfoByPathId(serializedFile, request.PathId, out var assetInfo))
             {
                 return Result<AssetPreviewContentDto>.Failure(
-                    ApplicationErrors.BundleReadFailed(request.ResolvedBundlePath, "Asset locator was not found."));
+                    ApplicationErrors.BundlePreviewAssetLocatorMissing(request.ResolvedBundlePath));
             }
 
             var baseField = AssetsToolsFieldReader.TryGetBaseField(assetsManager, serializedFile, assetInfo);
             if (baseField is null)
             {
                 return Result<AssetPreviewContentDto>.Failure(
-                    ApplicationErrors.BundleReadFailed(request.ResolvedBundlePath, "Asset field tree could not be loaded."));
+                    ApplicationErrors.BundlePreviewFieldTreeUnavailable(request.ResolvedBundlePath));
             }
 
             var classId = ResolveClassId(assetInfo.TypeId);
@@ -101,10 +101,10 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         {
             return Result<AssetPreviewContentDto>.Cancelled();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Result<AssetPreviewContentDto>.Failure(
-                ApplicationErrors.BundleReadFailed(request.ResolvedBundlePath, ex.Message));
+                ApplicationErrors.BundlePreviewGenerationFailed(request.ResolvedBundlePath));
         }
         finally
         {

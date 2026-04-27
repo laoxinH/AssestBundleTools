@@ -72,6 +72,6 @@ public sealed class FallbackAssetBundleReader : IAssetBundleReader
         }
 
         return Result<AssetBundleReadResultDto>.Failure(
-            ApplicationErrors.BundleReadFailed(request.BundlePath, "No registered reader could process the bundle."));
+            ApplicationErrors.BundleReadNoCompatibleReader(request.BundlePath));
     }
 }

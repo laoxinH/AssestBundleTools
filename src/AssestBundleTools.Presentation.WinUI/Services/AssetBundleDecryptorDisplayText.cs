@@ -45,7 +45,7 @@ public static class AssetBundleDecryptorDisplayText
         ArgumentNullException.ThrowIfNull(localizationService);
         ArgumentNullException.ThrowIfNull(decryptorRegistry);
 
-        var descriptor = ResolveDescriptor(decryptorRegistry, decryptorId);
+        var descriptor = ResolveDescriptor(localizationService, decryptorRegistry, decryptorId);
         return GetDisplayName(localizationService, descriptor);
     }
 
@@ -74,7 +74,7 @@ public static class AssetBundleDecryptorDisplayText
         ArgumentNullException.ThrowIfNull(localizationService);
         ArgumentNullException.ThrowIfNull(decryptorRegistry);
 
-        var descriptor = ResolveDescriptor(decryptorRegistry, decryptorId);
+        var descriptor = ResolveDescriptor(localizationService, decryptorRegistry, decryptorId);
         return GetDescription(localizationService, descriptor);
     }
 
@@ -101,9 +101,12 @@ public static class AssetBundleDecryptorDisplayText
     }
 
     private static AssetBundleDecryptorDescriptorDto ResolveDescriptor(
+        ILocalizationService localizationService,
         IAssetBundleDecryptorRegistry decryptorRegistry,
         string? decryptorId)
     {
+        ArgumentNullException.ThrowIfNull(localizationService);
+
         if (string.Equals(
                 decryptorId?.Trim(),
                 AssetBundleDecryptorIds.BuiltInAutoDetect,
@@ -138,7 +141,7 @@ public static class AssetBundleDecryptorDisplayText
         }
 
         return decryptorRegistry.GetAll().FirstOrDefault(static decryptor => decryptor.Descriptor.IsFallback)?.Descriptor
-               ?? throw new InvalidOperationException("A fallback asset bundle decryptor is required.");
+               ?? throw PresentationExceptionFactory.CreateFallbackDecryptorRequiredException(localizationService);
     }
 
     private static bool IsBuiltInPassThrough(AssetBundleDecryptorDescriptorDto descriptor)

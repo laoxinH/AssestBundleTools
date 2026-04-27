@@ -1,5 +1,6 @@
 using System.Text;
 using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Common.Messages;
 
 namespace AssestBundleTools.Infrastructure.Bundles.Reading;
 
@@ -22,7 +23,7 @@ internal static class UnityAssetBundleFileInspector
         {
             return new AssetBundleSourceInspectionResultDto(
                 AssetBundleSourceInspectionKind.Rejected,
-                "Source file does not exist.");
+                new LocalizedMessageDto(WorkspaceImportMessageTokens.SourceInspectionSourceFileMissing));
         }
 
         try
@@ -32,21 +33,21 @@ internal static class UnityAssetBundleFileInspector
             {
                 return new AssetBundleSourceInspectionResultDto(
                     AssetBundleSourceInspectionKind.Rejected,
-                    "Source file does not exist.");
+                    new LocalizedMessageDto(WorkspaceImportMessageTokens.SourceInspectionSourceFileMissing));
             }
 
             if (fileInfo.Length <= 0)
             {
                 return new AssetBundleSourceInspectionResultDto(
                     AssetBundleSourceInspectionKind.Rejected,
-                    "Source file is empty.");
+                    new LocalizedMessageDto(WorkspaceImportMessageTokens.SourceInspectionSourceFileEmpty));
             }
         }
         catch (Exception)
         {
             return new AssetBundleSourceInspectionResultDto(
                 AssetBundleSourceInspectionKind.Rejected,
-                "Source file metadata could not be read.");
+                new LocalizedMessageDto(WorkspaceImportMessageTokens.SourceInspectionSourceMetadataUnreadable));
         }
 
         var extension = Path.GetExtension(bundlePath);
@@ -54,7 +55,9 @@ internal static class UnityAssetBundleFileInspector
         {
             return new AssetBundleSourceInspectionResultDto(
                 AssetBundleSourceInspectionKind.Bundle,
-                $"Matched known bundle extension: {extension}.");
+                new LocalizedMessageDto(
+                    WorkspaceImportMessageTokens.SourceInspectionMatchedKnownExtension,
+                    [extension]));
         }
 
         var header = TryReadHeader(bundlePath);
@@ -63,12 +66,14 @@ internal static class UnityAssetBundleFileInspector
         {
             return new AssetBundleSourceInspectionResultDto(
                 AssetBundleSourceInspectionKind.Bundle,
-                $"Matched known bundle header: {matchedHeader}.");
+                new LocalizedMessageDto(
+                    WorkspaceImportMessageTokens.SourceInspectionMatchedKnownHeader,
+                    [matchedHeader]));
         }
 
         return new AssetBundleSourceInspectionResultDto(
             AssetBundleSourceInspectionKind.Undetermined,
-            "No known plain bundle signature was found.");
+            new LocalizedMessageDto(WorkspaceImportMessageTokens.SourceInspectionNoKnownPlainSignature));
     }
 
     public static bool CanTreatAsBundle(string bundlePath)

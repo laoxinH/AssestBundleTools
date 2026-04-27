@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Common.Messages;
 using AssestBundleTools.Domain.Common.Errors;
 
 namespace AssestBundleTools.Application.Workspace.Dtos;
@@ -10,5 +11,5 @@ public sealed record WorkspaceImportIssueDiagnosticDto(
     string LogicalPath,
     WorkspaceImportIssueKind Kind,
     string? DecryptorId,
-    string? Detail,
+    LocalizedMessageDto? DetailMessage,
     IReadOnlyList<AppError> Errors);

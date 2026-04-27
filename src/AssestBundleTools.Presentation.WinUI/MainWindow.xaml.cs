@@ -292,9 +292,8 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
                                 },
                                 new TextBlock
                                 {
-                                    Text = _localizationService.GetFormattedString(
-                                        ResourceKeys.StartupFallbackMessageFormat,
-                                        exception.Message),
+                                    Text = _localizationService.GetRequiredString(
+                                        ResourceKeys.StartupFallbackMessageLogged),
                                     TextWrapping = TextWrapping.WrapWholeWords
                                 },
                                 new TextBlock

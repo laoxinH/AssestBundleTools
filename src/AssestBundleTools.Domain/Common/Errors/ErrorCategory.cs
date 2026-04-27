@@ -9,12 +9,14 @@ public enum ErrorCategory
     NotFound = 1,
     Conflict = 2,
     Unsupported = 3,
-    PermissionDenied = 4,
-    ExternalDependency = 5,
-    IoFailure = 6,
-    ParseFailure = 7,
-    SerializationFailure = 8,
-    Concurrency = 9,
-    Cancelled = 10,
-    Unknown = 11
+    Configuration = 4,
+    PermissionDenied = 5,
+    ExternalDependency = 6,
+    IoFailure = 7,
+    ParseFailure = 8,
+    SerializationFailure = 9,
+    Concurrency = 10,
+    Cancelled = 11,
+    Timeout = 12,
+    Unknown = 13
 }

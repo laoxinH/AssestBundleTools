@@ -378,8 +378,8 @@
   <data name="StartupFallback.Exception.Format" xml:space="preserve">
     <value>异常类型：{0}</value>
   </data>
-  <data name="StartupFallback.Message.Format" xml:space="preserve">
-    <value>异常消息：{0}</value>
+  <data name="StartupFallback.MessageLogged" xml:space="preserve">
+    <value>详细异常消息已写入启动日志，请结合日志继续排查。</value>
   </data>
   <data name="StartupFallback.LogFile.Format" xml:space="preserve">
     <value>启动日志：{0}</value>
@@ -524,6 +524,96 @@
   </data>
   <data name="WorkspaceImport.Log.Issue.ErrorDetail.Format" xml:space="preserve">
     <value>详细错误：{0}（错误码：{1}）</value>
+  </data>
+  <data name="WorkspaceImport.Detail.SourceInspection.SourceFileMissing" xml:space="preserve">
+    <value>来源文件不存在。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.SourceInspection.SourceFileEmpty" xml:space="preserve">
+    <value>来源文件为空。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.SourceInspection.SourceMetadataUnreadable" xml:space="preserve">
+    <value>无法读取来源文件元数据。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.SourceInspection.MatchedKnownExtension" xml:space="preserve">
+    <value>命中已知资源包扩展名：{0}。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.SourceInspection.MatchedKnownHeader" xml:space="preserve">
+    <value>命中已知资源包头标识：{0}。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.SourceInspection.NoKnownPlainSignature" xml:space="preserve">
+    <value>未发现已知的明文资源包特征。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Screening.SourceRejectedDuringInspection" xml:space="preserve">
+    <value>导入源在前置直检阶段被判定为无效。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Screening.AutoDetectionNoDecryptorMatch" xml:space="preserve">
+    <value>来源未识别为明文资源包，且自动识别阶段没有命中可用解密器。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Screening.ConfiguredDecryptorProbeUnsupported" xml:space="preserve">
+    <value>来源未识别为明文资源包，且当前指定解密器不支持探测加密资源包。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Screening.ProbeResultMissing" xml:space="preserve">
+    <value>当前来源未出现在解密器探测结果中。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Screening.ProbeFailed" xml:space="preserve">
+    <value>解密器探测失败。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Screening.ProbeDidNotMatch" xml:space="preserve">
+    <value>解密器探测未命中当前来源。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Reader.NoRegisteredReaderRecognizedOutput" xml:space="preserve">
+    <value>当前没有已注册 Reader 能识别解密输出：{0}</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Cache.CacheMiss" xml:space="preserve">
+    <value>当前来源不存在可直接复用的资源包索引缓存。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Cache.SourceFingerprintChanged" xml:space="preserve">
+    <value>缓存记录的来源指纹已与当前导入文件不一致。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Cache.DecryptorChanged" xml:space="preserve">
+    <value>缓存解密器“{0}”与当前解密器“{1}”不一致。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Cache.DecryptorVersionChanged" xml:space="preserve">
+    <value>缓存解密器版本“{0}”与当前版本“{1}”不一致。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Cache.ToolVersionChanged" xml:space="preserve">
+    <value>缓存工具版本“{0}”与当前版本“{1}”不一致。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Cache.ParserVersionChanged" xml:space="preserve">
+    <value>缓存解析版本“{0}”已不受当前 Reader 版本“{1}”支持。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Cache.SourceRemoved" xml:space="preserve">
+    <value>缓存已移除，因为该来源不再属于当前工作区。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.DecryptorProbe.AutoDetectionDisabled" xml:space="preserve">
+    <value>当前解密器未启用自动识别探测。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.DecryptorProbe.ResultFileMissing" xml:space="preserve">
+    <value>解密器未生成探测结果文件。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.DecryptorProbe.ResultFileInvalid" xml:space="preserve">
+    <value>解密器探测结果文件无法解析。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.DecryptorProbe.ProcessExited" xml:space="preserve">
+    <value>解密器探测进程以退出码 {0} 结束。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.DecryptorProbe.ProcessTimedOut" xml:space="preserve">
+    <value>解密器探测进程在 {0} 毫秒后超时。</value>
+  </data>
+  <data name="WorkspaceImport.Detail.DecryptorProbe.ExecutionFailed" xml:space="preserve">
+    <value>解密器探测进程无法执行，请检查解密器路径、权限或运行时依赖。</value>
+  </data>
+  <data name="AudioTranscoding.Detail.ProcessExited" xml:space="preserve">
+    <value>{0} 以退出码 {1} 结束。</value>
+  </data>
+  <data name="AudioTranscoding.Detail.ProcessTimedOut" xml:space="preserve">
+    <value>{0} 在 {1} 毫秒后超时。</value>
+  </data>
+  <data name="AudioTranscoding.Detail.ExecutionFailed" xml:space="preserve">
+    <value>{0} 无法执行，请检查工具路径、权限或运行时依赖。</value>
+  </data>
+  <data name="WorkspaceImport.Log.Cache.CacheMiss.Format" xml:space="preserve">
+    <value>资源包缓存未命中。来源：{0}。逻辑路径：{1}。详情：{2}</value>
   </data>
   <data name="WorkspaceImport.Log.Cache.SourceFingerprintChanged.Format" xml:space="preserve">
     <value>资源包缓存已失效，来源文件状态发生变化。来源：{0}。逻辑路径：{1}。详情：{2}</value>
@@ -1647,6 +1737,9 @@
   <data name="BundleExplorer.Preview.AudioDecodeFailed" xml:space="preserve">
     <value>音频预览载荷解码失败。</value>
   </data>
+  <data name="BundleExplorer.Preview.UnexpectedDisplayFailure" xml:space="preserve">
+    <value>预览展示阶段发生未预期错误。</value>
+  </data>
   <data name="Common.UnexpectedFailure" xml:space="preserve">
     <value>发生未预期的失败。</value>
   </data>
@@ -1814,6 +1907,42 @@
   </data>
   <data name="Error.Bundle.Decrypt.InvalidResult" xml:space="preserve">
     <value>资源包解密结果无效。解密器：{0}。详情：{1}</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.ArgumentsRequired" xml:space="preserve">
+    <value>资源包解密器“{0}”缺少解密参数配置。</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.ResultFileMissing" xml:space="preserve">
+    <value>资源包解密器“{0}”未生成结果文件。</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.ResultFileInvalid" xml:space="preserve">
+    <value>资源包解密器“{0}”生成的结果文件无法解析。</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.OutputMissing" xml:space="preserve">
+    <value>资源包解密器“{0}”未生成可读取的输出文件。</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.ProcessExited" xml:space="preserve">
+    <value>资源包解密器“{0}”以退出码 {1} 结束。</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.TimedOut" xml:space="preserve">
+    <value>资源包解密器“{0}”在 {1} 毫秒后超时。</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.ExecutionFailed" xml:space="preserve">
+    <value>资源包解密器“{0}”无法执行，请检查可执行路径、权限或运行时依赖。</value>
+  </data>
+  <data name="Error.Presentation.OwnerWindowUnavailable" xml:space="preserve">
+    <value>当前窗口尚未就绪，暂时无法打开选择器。</value>
+  </data>
+  <data name="Error.Presentation.UnsupportedLaunchNavigationParameter" xml:space="preserve">
+    <value>进程启动载荷当前仅支持工作区导航参数。</value>
+  </data>
+  <data name="Error.Presentation.StartWorkspaceProcessFailed" xml:space="preserve">
+    <value>无法为该工作区启动新的应用进程。</value>
+  </data>
+  <data name="Error.Presentation.CurrentProcessPathUnavailable" xml:space="preserve">
+    <value>当前应用进程路径不可用。</value>
+  </data>
+  <data name="Error.Presentation.FallbackDecryptorRequired" xml:space="preserve">
+    <value>必须存在一个回退资源包解密器。</value>
   </data>
   <data name="SettingsDiagnosticsPage.DecryptorCatalogTitleText.Text" xml:space="preserve">
     <value>解密器管理</value>
@@ -2019,11 +2148,14 @@
   <data name="Error.Bundle.Decryptor.Catalog.AlreadyExists" xml:space="preserve">
     <value>已存在同标识的解密器定义：{0}</value>
   </data>
+  <data name="Error.Bundle.Decryptor.Catalog.SaveVerificationFailed" xml:space="preserve">
+    <value>解密器已写入，但保存校验未通过：{0}</value>
+  </data>
   <data name="Error.Bundle.Decryptor.Catalog.SaveFailed" xml:space="preserve">
-    <value>解密器保存失败。详情：{0}</value>
+    <value>解密器保存失败，请稍后重试或查看设置与诊断。</value>
   </data>
   <data name="Error.Bundle.Decryptor.Catalog.DeleteFailed" xml:space="preserve">
-    <value>解密器删除失败。详情：{0}</value>
+    <value>解密器删除失败，请稍后重试或查看设置与诊断。</value>
   </data>
   <data name="Error.Workspace.Import.MetadataNotFound" xml:space="preserve">
     <value>未找到工作区元数据，无法继续导入：{0}</value>
@@ -2034,7 +2166,31 @@
   <data name="Error.Bundle.Decryptor.FallbackNotFound" xml:space="preserve">
     <value>未找到可用的回退解密器，请先在设置中检查解密器配置。</value>
   </data>
+  <data name="Error.Bundle.SourceMissing" xml:space="preserve">
+    <value>未找到资源包文件：{0}</value>
+  </data>
+  <data name="Error.Bundle.Read.FormatUnrecognized" xml:space="preserve">
+    <value>无法识别该资源包格式，当前无法继续读取：{0}</value>
+  </data>
+  <data name="Error.Bundle.Read.NoCompatibleReader" xml:space="preserve">
+    <value>当前没有可用的 Reader 能处理该资源包：{0}</value>
+  </data>
+  <data name="Error.Bundle.Read.Unexpected" xml:space="preserve">
+    <value>读取资源包时发生未预期错误：{0}</value>
+  </data>
   <data name="Error.Bundle.Read.Failed" xml:space="preserve">
     <value>资源包读取失败：{0}。详情：{1}</value>
+  </data>
+  <data name="Error.Bundle.Preview.SerializedFileLocatorMissing" xml:space="preserve">
+    <value>无法定位生成预览所需的序列化文件：{0}</value>
+  </data>
+  <data name="Error.Bundle.Preview.AssetLocatorMissing" xml:space="preserve">
+    <value>无法定位生成预览所需的目标资源：{0}</value>
+  </data>
+  <data name="Error.Bundle.Preview.FieldTreeUnavailable" xml:space="preserve">
+    <value>无法加载资源字段树，因此无法继续生成预览：{0}</value>
+  </data>
+  <data name="Error.Bundle.Preview.GenerationFailed" xml:space="preserve">
+    <value>生成资源预览时发生未预期错误：{0}</value>
   </data>
 </root>

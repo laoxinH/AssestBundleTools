@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using AssestBundleTools.Presentation.WinUI.Localization;
 
 namespace AssestBundleTools.Presentation.WinUI.Services;
 
@@ -18,11 +19,14 @@ internal static class ShellLaunchArgumentCodec
         return TryParseLaunchRequest(commandLineArguments, out launchRequest);
     }
 
-    public static string CreateArgumentToken(ShellLaunchRequest launchRequest)
+    public static string CreateArgumentToken(
+        ShellLaunchRequest launchRequest,
+        ILocalizationService localizationService)
     {
         ArgumentNullException.ThrowIfNull(launchRequest);
+        ArgumentNullException.ThrowIfNull(localizationService);
 
-        var payload = CreatePayload(launchRequest);
+        var payload = CreatePayload(launchRequest, localizationService);
         var json = JsonSerializer.Serialize(payload, SerializerOptions);
         var encodedPayload = EncodeToBase64Url(json);
         return $"{LaunchPayloadArgumentPrefix}{encodedPayload}";
@@ -72,13 +76,15 @@ internal static class ShellLaunchArgumentCodec
         return false;
     }
 
-    private static ShellLaunchPayload CreatePayload(ShellLaunchRequest launchRequest)
+    private static ShellLaunchPayload CreatePayload(
+        ShellLaunchRequest launchRequest,
+        ILocalizationService localizationService)
     {
         WorkspaceNavigationRequest? workspaceNavigationRequest = null;
         if (launchRequest.NavigationParameter is not null)
         {
             workspaceNavigationRequest = launchRequest.NavigationParameter as WorkspaceNavigationRequest
-                ?? throw new NotSupportedException("Only workspace navigation parameters are supported for process launch payloads.");
+                ?? throw PresentationExceptionFactory.CreateUnsupportedLaunchNavigationParameterException(localizationService);
         }
 
         return new ShellLaunchPayload(

@@ -73,13 +73,13 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
         if (!File.Exists(request.BundlePath))
         {
             return Task.FromResult(Result<AssetBundleReadResultDto>.Failure(
-                ApplicationErrors.BundleReadFailed(request.BundlePath, "Bundle file does not exist.")));
+                ApplicationErrors.BundleSourceMissing(request.BundlePath)));
         }
 
         if (!CanRead(request.BundlePath))
         {
             return Task.FromResult(Result<AssetBundleReadResultDto>.Failure(
-                ApplicationErrors.BundleReadFailed(request.BundlePath, "Bundle format is not recognized by the AssetsTools reader.")));
+                ApplicationErrors.BundleReadFormatUnrecognized(request.BundlePath)));
         }
 
         try
@@ -100,10 +100,10 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
         {
             return Task.FromResult(Result<AssetBundleReadResultDto>.Cancelled());
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Task.FromResult(Result<AssetBundleReadResultDto>.Failure(
-                ApplicationErrors.BundleReadFailed(request.BundlePath, ex.Message)));
+                ApplicationErrors.BundleReadUnexpected(request.BundlePath)));
         }
     }
 

@@ -378,8 +378,8 @@
   <data name="StartupFallback.Exception.Format" xml:space="preserve">
     <value>Exception: {0}</value>
   </data>
-  <data name="StartupFallback.Message.Format" xml:space="preserve">
-    <value>Message: {0}</value>
+  <data name="StartupFallback.MessageLogged" xml:space="preserve">
+    <value>The detailed exception message has been written to the startup log.</value>
   </data>
   <data name="StartupFallback.LogFile.Format" xml:space="preserve">
     <value>Startup log: {0}</value>
@@ -524,6 +524,96 @@
   </data>
   <data name="WorkspaceImport.Log.Issue.ErrorDetail.Format" xml:space="preserve">
     <value>Error detail: {0} (Code: {1})</value>
+  </data>
+  <data name="WorkspaceImport.Detail.SourceInspection.SourceFileMissing" xml:space="preserve">
+    <value>Source file does not exist.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.SourceInspection.SourceFileEmpty" xml:space="preserve">
+    <value>Source file is empty.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.SourceInspection.SourceMetadataUnreadable" xml:space="preserve">
+    <value>Source file metadata could not be read.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.SourceInspection.MatchedKnownExtension" xml:space="preserve">
+    <value>Matched known bundle extension: {0}.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.SourceInspection.MatchedKnownHeader" xml:space="preserve">
+    <value>Matched known bundle header: {0}.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.SourceInspection.NoKnownPlainSignature" xml:space="preserve">
+    <value>No known plain bundle signature was found.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Screening.SourceRejectedDuringInspection" xml:space="preserve">
+    <value>The import source was rejected during pre-screening.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Screening.AutoDetectionNoDecryptorMatch" xml:space="preserve">
+    <value>The source was not recognized as a plain bundle, and no decryptor matched it during auto-detection.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Screening.ConfiguredDecryptorProbeUnsupported" xml:space="preserve">
+    <value>The source was not recognized as a plain bundle, and the configured decryptor cannot probe encrypted bundles.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Screening.ProbeResultMissing" xml:space="preserve">
+    <value>The source was not covered by the decryptor probe results.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Screening.ProbeFailed" xml:space="preserve">
+    <value>Decryptor probe failed.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Screening.ProbeDidNotMatch" xml:space="preserve">
+    <value>Decryptor probe did not match this source.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Reader.NoRegisteredReaderRecognizedOutput" xml:space="preserve">
+    <value>No registered reader recognized the decrypted bundle output: {0}</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Cache.CacheMiss" xml:space="preserve">
+    <value>No reusable bundle index cache was found for this source.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Cache.SourceFingerprintChanged" xml:space="preserve">
+    <value>The cached source fingerprint no longer matches the current import file.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Cache.DecryptorChanged" xml:space="preserve">
+    <value>Cached decryptor \"{0}\" no longer matches current decryptor \"{1}\".</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Cache.DecryptorVersionChanged" xml:space="preserve">
+    <value>Cached decryptor version \"{0}\" no longer matches current version \"{1}\".</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Cache.ToolVersionChanged" xml:space="preserve">
+    <value>Cached tool version \"{0}\" no longer matches current version \"{1}\".</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Cache.ParserVersionChanged" xml:space="preserve">
+    <value>Cached parser version \"{0}\" is not supported by current reader version \"{1}\".</value>
+  </data>
+  <data name="WorkspaceImport.Detail.Cache.SourceRemoved" xml:space="preserve">
+    <value>The cache was removed because this source is no longer registered in the workspace.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.DecryptorProbe.AutoDetectionDisabled" xml:space="preserve">
+    <value>Auto-detection is disabled for this decryptor.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.DecryptorProbe.ResultFileMissing" xml:space="preserve">
+    <value>The decryptor did not produce a probe result file.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.DecryptorProbe.ResultFileInvalid" xml:space="preserve">
+    <value>The decryptor probe result file could not be parsed.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.DecryptorProbe.ProcessExited" xml:space="preserve">
+    <value>The decryptor probe process exited with code {0}.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.DecryptorProbe.ProcessTimedOut" xml:space="preserve">
+    <value>The decryptor probe process timed out after {0} ms.</value>
+  </data>
+  <data name="WorkspaceImport.Detail.DecryptorProbe.ExecutionFailed" xml:space="preserve">
+    <value>The decryptor probe process could not be executed. Check the decryptor path, permissions, or runtime dependencies.</value>
+  </data>
+  <data name="AudioTranscoding.Detail.ProcessExited" xml:space="preserve">
+    <value>{0} exited with code {1}.</value>
+  </data>
+  <data name="AudioTranscoding.Detail.ProcessTimedOut" xml:space="preserve">
+    <value>{0} timed out after {1} ms.</value>
+  </data>
+  <data name="AudioTranscoding.Detail.ExecutionFailed" xml:space="preserve">
+    <value>{0} could not be executed. Check the tool path, permissions, or runtime dependencies.</value>
+  </data>
+  <data name="WorkspaceImport.Log.Cache.CacheMiss.Format" xml:space="preserve">
+    <value>Bundle cache was not found for this source. Source: {0}. Logical path: {1}. Detail: {2}</value>
   </data>
   <data name="WorkspaceImport.Log.Cache.SourceFingerprintChanged.Format" xml:space="preserve">
     <value>Bundle cache was invalidated because the source file state changed. Source: {0}. Logical path: {1}. Detail: {2}</value>
@@ -1647,6 +1737,9 @@
   <data name="BundleExplorer.Preview.AudioDecodeFailed" xml:space="preserve">
     <value>Audio preview payload could not be decoded.</value>
   </data>
+  <data name="BundleExplorer.Preview.UnexpectedDisplayFailure" xml:space="preserve">
+    <value>An unexpected error occurred while presenting the preview.</value>
+  </data>
   <data name="Common.UnexpectedFailure" xml:space="preserve">
     <value>Unexpected failure.</value>
   </data>
@@ -1814,6 +1907,42 @@
   </data>
   <data name="Error.Bundle.Decrypt.InvalidResult" xml:space="preserve">
     <value>The bundle decryption result is invalid. Decryptor: {0}. Detail: {1}</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.ArgumentsRequired" xml:space="preserve">
+    <value>Bundle decryptor "{0}" is missing decrypt arguments.</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.ResultFileMissing" xml:space="preserve">
+    <value>Bundle decryptor "{0}" did not produce a result file.</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.ResultFileInvalid" xml:space="preserve">
+    <value>Bundle decryptor "{0}" produced a result file that could not be parsed.</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.OutputMissing" xml:space="preserve">
+    <value>Bundle decryptor "{0}" did not produce a readable output file.</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.ProcessExited" xml:space="preserve">
+    <value>Bundle decryptor "{0}" exited with code {1}.</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.TimedOut" xml:space="preserve">
+    <value>Bundle decryptor "{0}" timed out after {1} ms.</value>
+  </data>
+  <data name="Error.Bundle.Decrypt.ExecutionFailed" xml:space="preserve">
+    <value>Bundle decryptor "{0}" could not be executed. Check the executable path, permissions, or runtime dependencies.</value>
+  </data>
+  <data name="Error.Presentation.OwnerWindowUnavailable" xml:space="preserve">
+    <value>The current window is not available yet, so the picker cannot be opened.</value>
+  </data>
+  <data name="Error.Presentation.UnsupportedLaunchNavigationParameter" xml:space="preserve">
+    <value>Only workspace navigation parameters are supported for process launch payloads.</value>
+  </data>
+  <data name="Error.Presentation.StartWorkspaceProcessFailed" xml:space="preserve">
+    <value>A new application process for the workspace could not be started.</value>
+  </data>
+  <data name="Error.Presentation.CurrentProcessPathUnavailable" xml:space="preserve">
+    <value>The current application process path is not available.</value>
+  </data>
+  <data name="Error.Presentation.FallbackDecryptorRequired" xml:space="preserve">
+    <value>A fallback asset bundle decryptor is required.</value>
   </data>
   <data name="SettingsDiagnosticsPage.DecryptorCatalogTitleText.Text" xml:space="preserve">
     <value>Decryptor Catalog</value>
@@ -2019,11 +2148,14 @@
   <data name="Error.Bundle.Decryptor.Catalog.AlreadyExists" xml:space="preserve">
     <value>A decryptor definition with the same identifier already exists: {0}</value>
   </data>
+  <data name="Error.Bundle.Decryptor.Catalog.SaveVerificationFailed" xml:space="preserve">
+    <value>The decryptor was written, but the save verification failed: {0}</value>
+  </data>
   <data name="Error.Bundle.Decryptor.Catalog.SaveFailed" xml:space="preserve">
-    <value>Failed to save the decryptor. Detail: {0}</value>
+    <value>Failed to save the decryptor. Try again later or check Settings and Diagnostics.</value>
   </data>
   <data name="Error.Bundle.Decryptor.Catalog.DeleteFailed" xml:space="preserve">
-    <value>Failed to delete the decryptor. Detail: {0}</value>
+    <value>Failed to delete the decryptor. Try again later or check Settings and Diagnostics.</value>
   </data>
   <data name="Error.Workspace.Import.MetadataNotFound" xml:space="preserve">
     <value>Workspace metadata was not found and import cannot continue: {0}</value>
@@ -2034,7 +2166,31 @@
   <data name="Error.Bundle.Decryptor.FallbackNotFound" xml:space="preserve">
     <value>No fallback decryptor is available. Check the decryptor configuration in Settings.</value>
   </data>
+  <data name="Error.Bundle.SourceMissing" xml:space="preserve">
+    <value>The bundle file was not found: {0}</value>
+  </data>
+  <data name="Error.Bundle.Read.FormatUnrecognized" xml:space="preserve">
+    <value>The bundle format is not recognized and cannot be read: {0}</value>
+  </data>
+  <data name="Error.Bundle.Read.NoCompatibleReader" xml:space="preserve">
+    <value>No compatible reader is available for this bundle: {0}</value>
+  </data>
+  <data name="Error.Bundle.Read.Unexpected" xml:space="preserve">
+    <value>An unexpected error occurred while reading the bundle: {0}</value>
+  </data>
   <data name="Error.Bundle.Read.Failed" xml:space="preserve">
     <value>Failed to read bundle: {0}. Detail: {1}</value>
+  </data>
+  <data name="Error.Bundle.Preview.SerializedFileLocatorMissing" xml:space="preserve">
+    <value>The serialized file required for preview generation could not be located: {0}</value>
+  </data>
+  <data name="Error.Bundle.Preview.AssetLocatorMissing" xml:space="preserve">
+    <value>The target asset required for preview generation could not be located: {0}</value>
+  </data>
+  <data name="Error.Bundle.Preview.FieldTreeUnavailable" xml:space="preserve">
+    <value>The asset field tree could not be loaded, so preview generation cannot continue: {0}</value>
+  </data>
+  <data name="Error.Bundle.Preview.GenerationFailed" xml:space="preserve">
+    <value>An unexpected error occurred while generating the asset preview: {0}</value>
   </data>
 </root>

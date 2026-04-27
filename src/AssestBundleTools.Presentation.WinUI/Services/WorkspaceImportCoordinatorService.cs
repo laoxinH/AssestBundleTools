@@ -266,7 +266,7 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
                 _appLogService.AppendInfo(_localizationService.GetFormattedString(
                     ResourceKeys.WorkspaceImportLogAutoDetectionProbeMessageFormat,
                     probeDiagnostic.DecryptorDisplayName,
-                    sampleMessage));
+                    LocalizedMessageDisplayFormatter.Format(sampleMessage, _localizationService)));
             }
         }
     }
@@ -277,31 +277,36 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
         {
             var message = cacheDiagnostic.Kind switch
             {
+                WorkspaceImportCacheDecisionKind.CacheMiss => _localizationService.GetFormattedString(
+                    ResourceKeys.WorkspaceImportLogCacheMissFormat,
+                    cacheDiagnostic.SourcePath,
+                    cacheDiagnostic.LogicalPath,
+                    LocalizedMessageDisplayFormatter.Format(cacheDiagnostic.DetailMessage, _localizationService)),
                 WorkspaceImportCacheDecisionKind.SourceFingerprintChanged => _localizationService.GetFormattedString(
                     ResourceKeys.WorkspaceImportLogCacheSourceFingerprintChangedFormat,
                     cacheDiagnostic.SourcePath,
                     cacheDiagnostic.LogicalPath,
-                    cacheDiagnostic.Detail ?? string.Empty),
+                    LocalizedMessageDisplayFormatter.Format(cacheDiagnostic.DetailMessage, _localizationService)),
                 WorkspaceImportCacheDecisionKind.DecryptorChanged => _localizationService.GetFormattedString(
                     ResourceKeys.WorkspaceImportLogCacheDecryptorChangedFormat,
                     cacheDiagnostic.SourcePath,
                     cacheDiagnostic.LogicalPath,
-                    cacheDiagnostic.Detail ?? string.Empty),
+                    LocalizedMessageDisplayFormatter.Format(cacheDiagnostic.DetailMessage, _localizationService)),
                 WorkspaceImportCacheDecisionKind.DecryptorVersionChanged => _localizationService.GetFormattedString(
                     ResourceKeys.WorkspaceImportLogCacheDecryptorVersionChangedFormat,
                     cacheDiagnostic.SourcePath,
                     cacheDiagnostic.LogicalPath,
-                    cacheDiagnostic.Detail ?? string.Empty),
+                    LocalizedMessageDisplayFormatter.Format(cacheDiagnostic.DetailMessage, _localizationService)),
                 WorkspaceImportCacheDecisionKind.ToolVersionChanged => _localizationService.GetFormattedString(
                     ResourceKeys.WorkspaceImportLogCacheToolVersionChangedFormat,
                     cacheDiagnostic.SourcePath,
                     cacheDiagnostic.LogicalPath,
-                    cacheDiagnostic.Detail ?? string.Empty),
+                    LocalizedMessageDisplayFormatter.Format(cacheDiagnostic.DetailMessage, _localizationService)),
                 WorkspaceImportCacheDecisionKind.ParserVersionChanged => _localizationService.GetFormattedString(
                     ResourceKeys.WorkspaceImportLogCacheParserVersionChangedFormat,
                     cacheDiagnostic.SourcePath,
                     cacheDiagnostic.LogicalPath,
-                    cacheDiagnostic.Detail ?? string.Empty),
+                    LocalizedMessageDisplayFormatter.Format(cacheDiagnostic.DetailMessage, _localizationService)),
                 WorkspaceImportCacheDecisionKind.SourceRemoved => _localizationService.GetFormattedString(
                     ResourceKeys.WorkspaceImportLogCacheSourceRemovedFormat,
                     cacheDiagnostic.SourcePath,
@@ -328,7 +333,7 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
                     ResourceKeys.WorkspaceImportLogIssueCandidateScreenedOutFormat,
                     issueDiagnostic.SourcePath,
                     issueDiagnostic.LogicalPath,
-                    issueDiagnostic.Detail ?? string.Empty),
+                    LocalizedMessageDisplayFormatter.Format(issueDiagnostic.DetailMessage, _localizationService)),
                 WorkspaceImportIssueKind.DecryptionFailed => _localizationService.GetFormattedString(
                     ResourceKeys.WorkspaceImportLogIssueDecryptionFailedFormat,
                     issueDiagnostic.SourcePath,
@@ -339,13 +344,13 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
                     issueDiagnostic.SourcePath,
                     issueDiagnostic.LogicalPath,
                     ResolveDecryptorDisplayName(issueDiagnostic.DecryptorId),
-                    issueDiagnostic.Detail ?? string.Empty),
+                    LocalizedMessageDisplayFormatter.Format(issueDiagnostic.DetailMessage, _localizationService)),
                 WorkspaceImportIssueKind.ReadFailed => _localizationService.GetFormattedString(
                     ResourceKeys.WorkspaceImportLogIssueReadFailedFormat,
                     issueDiagnostic.SourcePath,
                     issueDiagnostic.LogicalPath,
                     ResolveDecryptorDisplayName(issueDiagnostic.DecryptorId)),
-                _ => issueDiagnostic.Detail ?? issueDiagnostic.SourcePath
+                _ => LocalizedMessageDisplayFormatter.Format(issueDiagnostic.DetailMessage, _localizationService)
             };
 
             switch (issueDiagnostic.Kind)

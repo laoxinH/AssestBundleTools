@@ -1,3 +1,5 @@
+using AssestBundleTools.Application.Common.Messages;
+
 namespace AssestBundleTools.Application.Workspace.Dtos;
 
 /// <summary>
@@ -10,4 +12,4 @@ public sealed record WorkspaceImportDecryptorProbeDiagnosticDto(
     int SuccessfulProbeCount,
     int TotalConfidence,
     bool WasSelected,
-    IReadOnlyList<string> SampleMessages);
+    IReadOnlyList<LocalizedMessageDto> SampleMessages);

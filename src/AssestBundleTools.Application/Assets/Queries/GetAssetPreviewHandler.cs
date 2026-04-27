@@ -6,12 +6,12 @@ using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
+using AssestBundleTools.Application.Common.Messages;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Internal;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
-using AssestBundleTools.Domain.Common.Errors;
 
 namespace AssestBundleTools.Application.Assets.Queries;
 
@@ -139,7 +139,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 new AssetPreviewDiagnosticDto(
                     CacheStatus: cacheEvaluation.CacheStatus,
                     FallbackReason: AssetPreviewFallbackReasonKind.MissingLocator,
-                    Detail: null)));
+                    DetailMessage: null)));
         }
 
         var decryptorResult = WorkspaceAssetBundleDecryptorResolver.Resolve(
@@ -153,7 +153,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 new AssetPreviewDiagnosticDto(
                     CacheStatus: cacheEvaluation.CacheStatus,
                     FallbackReason: AssetPreviewFallbackReasonKind.DecryptorResolveFailed,
-                    Detail: BuildTechnicalErrorDetail(decryptorResult.Errors))));
+                    DetailMessage: AppErrorLocalizedMessageMapper.CreateFromFirstError(decryptorResult.Errors))));
         }
 
         var decryptionResult = await decryptorResult.Value.DecryptAsync(
@@ -175,7 +175,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 new AssetPreviewDiagnosticDto(
                     CacheStatus: cacheEvaluation.CacheStatus,
                     FallbackReason: AssetPreviewFallbackReasonKind.DecryptionFailed,
-                    Detail: BuildTechnicalErrorDetail(decryptionResult.Errors))));
+                    DetailMessage: AppErrorLocalizedMessageMapper.CreateFromFirstError(decryptionResult.Errors))));
         }
 
         var buildRequest = new AssetPreviewBuildRequestDto(
@@ -206,7 +206,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 new AssetPreviewDiagnosticDto(
                     CacheStatus: cacheEvaluation.CacheStatus,
                     FallbackReason: AssetPreviewFallbackReasonKind.GenerationFailed,
-                    Detail: BuildTechnicalErrorDetail(previewContentResult.Errors))));
+                    DetailMessage: AppErrorLocalizedMessageMapper.CreateFromFirstError(previewContentResult.Errors))));
         }
 
         var generatedAtUtc = DateTimeOffset.UtcNow;
@@ -238,7 +238,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             diagnostic: new AssetPreviewDiagnosticDto(
                 CacheStatus: cacheEvaluation.CacheStatus,
                 FallbackReason: AssetPreviewFallbackReasonKind.None,
-                Detail: cacheEvaluation.Detail)));
+                DetailMessage: cacheEvaluation.DetailMessage)));
     }
 
     private PreviewCacheEvaluationResult EvaluatePreviewCache(
@@ -253,7 +253,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 IsHit: false,
                 Payload: null,
                 CacheStatus: AssetPreviewCacheStatusKind.Missing,
-                Detail: null);
+                DetailMessage: null);
         }
 
         var descriptor = previewCachePayload.Descriptor;
@@ -272,7 +272,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 IsHit: false,
                 Payload: null,
                 CacheStatus: cacheStatus,
-                Detail: null);
+                DetailMessage: null);
         }
 
         if (!string.Equals(descriptor.GeneratorVersion, _assetPreviewGenerator.GeneratorVersion, StringComparison.OrdinalIgnoreCase))
@@ -281,7 +281,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 IsHit: false,
                 Payload: null,
                 CacheStatus: AssetPreviewCacheStatusKind.GeneratorVersionChanged,
-                Detail: null);
+                DetailMessage: null);
         }
 
         var audioTranscoderEvaluation = EvaluateAudioTranscoderCache(descriptor, assetCacheEntry);
@@ -297,7 +297,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             IsHit: true,
             Payload: previewCachePayload,
             CacheStatus: AssetPreviewCacheStatusKind.Hit,
-            Detail: null);
+            DetailMessage: null);
     }
 
     private PreviewCacheEvaluationResult EvaluateAudioTranscoderCache(
@@ -313,7 +313,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                     IsHit: false,
                     Payload: null,
                     CacheStatus: AssetPreviewCacheStatusKind.AudioTranscoderChanged,
-                    Detail: null);
+                    DetailMessage: null);
             }
 
             if (!string.Equals(currentDescriptor.Version, descriptor.AudioTranscoderVersion, StringComparison.OrdinalIgnoreCase))
@@ -322,14 +322,14 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                     IsHit: false,
                     Payload: null,
                     CacheStatus: AssetPreviewCacheStatusKind.AudioTranscoderChanged,
-                    Detail: null);
+                    DetailMessage: null);
             }
 
             return new PreviewCacheEvaluationResult(
                 IsHit: true,
                 Payload: null,
                 CacheStatus: AssetPreviewCacheStatusKind.Hit,
-                Detail: null);
+                DetailMessage: null);
         }
 
         // 音频摘要若是在“无转码器”环境下生成，后续安装转码器后应允许自动重建，
@@ -343,14 +343,14 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 IsHit: false,
                 Payload: null,
                 CacheStatus: AssetPreviewCacheStatusKind.AudioTranscoderChanged,
-                Detail: null);
+                DetailMessage: null);
         }
 
         return new PreviewCacheEvaluationResult(
             IsHit: true,
             Payload: null,
             CacheStatus: AssetPreviewCacheStatusKind.Hit,
-            Detail: null);
+            DetailMessage: null);
     }
 
     private static AssetPreviewDto MapPreviewDto(
@@ -420,16 +420,6 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             Diagnostic: diagnostic);
     }
 
-    private static string? BuildTechnicalErrorDetail(IReadOnlyList<AppError> errors)
-    {
-        if (errors.Count == 0)
-        {
-            return null;
-        }
-
-        return string.Join("; ", errors.Select(static error => $"{error.Code}: {error.MessageToken}"));
-    }
-
     private static string CreatePreviewCacheKey(string bundleCacheKey, string assetId)
     {
         var normalizedKey = $"{bundleCacheKey.ToLowerInvariant()}::{assetId.ToLowerInvariant()}";
@@ -491,5 +481,5 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         bool IsHit,
         PreviewCachePayloadDto? Payload,
         AssetPreviewCacheStatusKind CacheStatus,
-        string? Detail);
+        LocalizedMessageDto? DetailMessage);
 }

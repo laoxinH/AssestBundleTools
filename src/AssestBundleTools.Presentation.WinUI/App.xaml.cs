@@ -167,12 +167,12 @@ public partial class App : Microsoft.UI.Xaml.Application
             StartupDiagnostics.Log("Workspace context service created.");
 
             StartupDiagnostics.Log("Creating workspace process coordinator service.");
-            WorkspaceProcessCoordinatorService = new WorkspaceProcessCoordinatorService();
+            WorkspaceProcessCoordinatorService = new WorkspaceProcessCoordinatorService(LocalizationService);
             WorkspaceProcessCoordinatorService.WorkspaceActivationRequested += OnWorkspaceProcessActivationRequested;
             StartupDiagnostics.Log("Workspace process coordinator service created.");
 
             StartupDiagnostics.Log("Creating file picker service.");
-            FilePickerService = new WinUIFilePickerService(() => _activeWindow);
+            FilePickerService = new WinUIFilePickerService(() => _activeWindow, LocalizationService);
             StartupDiagnostics.Log("File picker service created.");
 
             StartupDiagnostics.Log("Creating path navigation service.");
@@ -238,8 +238,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         }
         catch (Exception ex)
         {
-            StartupDiagnostics.Log($"App constructor failed with exception: {ex.GetType().Name}: {ex.Message}");
-            StartupDiagnostics.Log($"Stack trace: {ex.StackTrace}");
+            StartupDiagnostics.Log($"App constructor failed with exception: {ex}");
             throw;
         }
     }

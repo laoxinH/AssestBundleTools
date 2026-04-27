@@ -1,6 +1,7 @@
 using AssestBundleTools.Application.Bundles;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Common.Messages;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Workspace.Dtos;
@@ -142,7 +143,7 @@ internal static class WorkspaceAssetBundleDecryptorResolver
         var matchedFileCount = 0;
         var successfulProbeCount = 0;
         var totalConfidence = 0;
-        var sampleMessages = new List<string>(capacity: 3);
+        var sampleMessages = new List<LocalizedMessageDto>(capacity: 3);
         var fileResults = new List<WorkspaceImportDecryptorProbeFileResult>(discoveredFiles.Count);
 
         foreach (var discoveredFile in discoveredFiles)
@@ -169,7 +170,7 @@ internal static class WorkspaceAssetBundleDecryptorResolver
                     IsSuccessful: false,
                     IsMatch: false,
                     Confidence: 0,
-                    Message: null);
+                    DiagnosticMessage: null);
             }
 
             fileResults.Add(new WorkspaceImportDecryptorProbeFileResult(
@@ -177,8 +178,8 @@ internal static class WorkspaceAssetBundleDecryptorResolver
                 IsSuccessful: probeResult.IsSuccessful,
                 IsMatch: probeResult.IsMatch,
                 Confidence: Math.Clamp(probeResult.Confidence, 0, 100),
-                Message: probeResult.Message));
-            CollectSampleMessage(sampleMessages, probeResult.Message);
+                Message: probeResult.DiagnosticMessage));
+            CollectSampleMessage(sampleMessages, probeResult.DiagnosticMessage);
 
             if (probeResult.IsSuccessful)
             {
@@ -232,20 +233,35 @@ internal static class WorkspaceAssetBundleDecryptorResolver
             StringComparison.OrdinalIgnoreCase);
     }
 
-    private static void CollectSampleMessage(ICollection<string> messages, string? message)
+    private static void CollectSampleMessage(ICollection<LocalizedMessageDto> messages, LocalizedMessageDto? message)
     {
-        if (messages.Count >= 3 || string.IsNullOrWhiteSpace(message))
+        if (messages.Count >= 3 || message is null)
         {
             return;
         }
 
-        var normalizedMessage = message.Trim();
-        if (messages.Contains(normalizedMessage, StringComparer.OrdinalIgnoreCase))
+        var fingerprint = BuildMessageFingerprint(message);
+        if (messages.Any(existingMessage => string.Equals(
+                BuildMessageFingerprint(existingMessage),
+                fingerprint,
+                StringComparison.OrdinalIgnoreCase)))
         {
             return;
         }
 
-        messages.Add(normalizedMessage);
+        messages.Add(message);
+    }
+
+    private static string BuildMessageFingerprint(LocalizedMessageDto message)
+    {
+        if (!string.IsNullOrWhiteSpace(message.MessageToken))
+        {
+            return message.Arguments is { Count: > 0 }
+                ? $"{message.MessageToken}|{string.Join("|", message.Arguments)}"
+                : message.MessageToken;
+        }
+
+        return message.FallbackText?.Trim() ?? string.Empty;
     }
 
     private static WorkspaceImportAutoDetectionDiagnosticDto CreateAutoDetectionDiagnostic(
@@ -292,7 +308,7 @@ internal sealed record WorkspaceImportDecryptorProbeSummary(
     int MatchedFileCount,
     int SuccessfulProbeCount,
     int TotalConfidence,
-    IReadOnlyList<string> SampleMessages,
+    IReadOnlyList<LocalizedMessageDto> SampleMessages,
     IReadOnlyList<WorkspaceImportDecryptorProbeFileResult> FileResults);
 
 internal sealed record WorkspaceImportDecryptorProbeFileResult(
@@ -300,4 +316,4 @@ internal sealed record WorkspaceImportDecryptorProbeFileResult(
     bool IsSuccessful,
     bool IsMatch,
     int Confidence,
-    string? Message);
+    LocalizedMessageDto? Message);

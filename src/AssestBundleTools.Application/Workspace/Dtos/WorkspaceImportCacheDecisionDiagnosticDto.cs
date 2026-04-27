@@ -1,3 +1,5 @@
+using AssestBundleTools.Application.Common.Messages;
+
 namespace AssestBundleTools.Application.Workspace.Dtos;
 
 /// <summary>
@@ -8,4 +10,4 @@ public sealed record WorkspaceImportCacheDecisionDiagnosticDto(
     string LogicalPath,
     string BundleCacheKey,
     WorkspaceImportCacheDecisionKind Kind,
-    string? Detail = null);
+    LocalizedMessageDto? DetailMessage = null);

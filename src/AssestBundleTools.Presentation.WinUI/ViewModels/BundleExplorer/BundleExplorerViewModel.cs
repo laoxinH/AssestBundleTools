@@ -2888,7 +2888,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
                     return;
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             if (!assetTab.IsPreviewRequestCurrent(details, previewRequestVersion))
             {
@@ -2898,7 +2898,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
             _appLogService.AppendWarning(_localizationService.GetFormattedString(
                 ResourceKeys.BundleExplorerLogAssetPreviewFailedFormat,
                 details.Name,
-                ex.Message));
+                GetString(ResourceKeys.BundleExplorerPreviewUnexpectedDisplayFailure)));
             assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
             ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
         }
@@ -3000,7 +3000,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 应用层预览诊断只暴露稳定枚举和原始 detail，
+    /// 应用层预览诊断只暴露稳定枚举和结构化 detail message，
     /// 真正面向用户的中文文案在 Presentation 层完成映射，便于后续工作台和诊断页复用同一份诊断语义。
     /// </summary>
     private void ApplyPreviewDiagnostic(
@@ -3010,9 +3010,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
         inspector.ApplyPreviewDiagnostic(
             cacheStatusText: GetPreviewCacheStatusText(diagnostic.CacheStatus),
             fallbackReasonText: GetPreviewFallbackReasonText(diagnostic.FallbackReason),
-            diagnosticDetailText: string.IsNullOrWhiteSpace(diagnostic.Detail)
-                ? string.Empty
-                : diagnostic.Detail.Trim());
+            diagnosticDetailText: LocalizedMessageDisplayFormatter.Format(
+                diagnostic.DetailMessage,
+                _localizationService));
     }
 
     private string GetPreviewCacheStatusText(AssetPreviewCacheStatusKind cacheStatus)

@@ -54,10 +54,10 @@ public sealed class DeleteAssetBundleDecryptorHandler
             _catalogStore.DeleteUserManagedDecryptor(decryptorId);
             return Task.FromResult(Result.Success());
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Task.FromResult(Result.Failure(
-                ApplicationErrors.BundleDecryptorCatalogDeleteFailed(ex.Message)));
+                ApplicationErrors.BundleDecryptorCatalogDeleteFailed()));
         }
     }
 }

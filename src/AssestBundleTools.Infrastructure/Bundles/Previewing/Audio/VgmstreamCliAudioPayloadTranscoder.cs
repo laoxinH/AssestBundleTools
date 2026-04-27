@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Common.Messages;
 
 namespace AssestBundleTools.Infrastructure.Bundles.Previewing.Audio;
 
@@ -11,6 +12,9 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
     private const string TranscoderId = "audio.vgmstream-cli";
     private const string TranscoderDisplayName = "vgmstream-cli";
     private const int TimeoutMilliseconds = 20000;
+    private const string WavContentType = "audio/wav";
+    private const string DefaultVersionText = "Unknown";
+    private const string DefaultPayloadFileName = "audio_payload";
 
     private readonly IReadOnlyList<string> _executableCandidates;
 
@@ -61,7 +65,7 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
                 Transcoder: null,
                 ContentType: null,
                 Content: null,
-                Message: null);
+                DiagnosticMessage: null);
         }
 
         var executablePath = ResolveExecutablePath();
@@ -73,7 +77,7 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
                 Transcoder: null,
                 ContentType: null,
                 Content: null,
-                Message: null);
+                DiagnosticMessage: null);
         }
 
         var descriptor = new AudioPayloadTranscoderDescriptorDto(
@@ -107,7 +111,7 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
                     Transcoder: descriptor,
                     ContentType: null,
                     Content: null,
-                    Message: executionResult.Detail);
+                    DiagnosticMessage: executionResult.DiagnosticMessage);
             }
 
             if (!File.Exists(outputFilePath))
@@ -118,7 +122,7 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
                     Transcoder: descriptor,
                     ContentType: null,
                     Content: null,
-                    Message: null);
+                    DiagnosticMessage: null);
             }
 
             var outputContent = await File.ReadAllBytesAsync(outputFilePath, cancellationToken);
@@ -130,16 +134,16 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
                     Transcoder: descriptor,
                     ContentType: null,
                     Content: null,
-                    Message: null);
+                    DiagnosticMessage: null);
             }
 
             return new AudioPayloadTranscodeResultDto(
                 Status: AudioPayloadTranscodeStatusKind.Succeeded,
                 Issue: AudioPayloadTranscodeIssueKind.None,
                 Transcoder: descriptor,
-                ContentType: "audio/wav",
+                ContentType: WavContentType,
                 Content: outputContent,
-                Message: executionResult.Detail);
+                DiagnosticMessage: null);
         }
         finally
         {
@@ -148,7 +152,7 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
         }
     }
 
-    private async Task<(bool IsSuccess, string? Detail)> ExecuteProcessAsync(
+    private async Task<AudioTranscodeExecutionResult> ExecuteProcessAsync(
         string executablePath,
         string inputFilePath,
         string outputFilePath,
@@ -189,10 +193,21 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
             var detail = NormalizeProcessDetail(standardError, standardOutput);
 
             return process.ExitCode == 0
-                ? (true, detail)
-                : (false, string.IsNullOrWhiteSpace(detail)
-                    ? $"vgmstream-cli exited with code {process.ExitCode}."
-                    : detail);
+                ? new AudioTranscodeExecutionResult(
+                    IsSuccess: true,
+                    DiagnosticMessage: null)
+                : string.IsNullOrWhiteSpace(detail)
+                    ? new AudioTranscodeExecutionResult(
+                        IsSuccess: false,
+                        DiagnosticMessage: new LocalizedMessageDto(
+                            AudioTranscodingMessageTokens.ProcessExited,
+                            [
+                                TranscoderDisplayName,
+                                process.ExitCode.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                            ]))
+                    : new AudioTranscodeExecutionResult(
+                        IsSuccess: false,
+                        DiagnosticMessage: new LocalizedMessageDto(FallbackText: detail));
         }
         catch (OperationCanceledException)
             when (timeoutCancellationTokenSource is not null &&
@@ -200,17 +215,28 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
                   !cancellationToken.IsCancellationRequested)
         {
             TryTerminateProcess(process);
-            return (false, $"vgmstream-cli timed out after {TimeoutMilliseconds} ms.");
+            return new AudioTranscodeExecutionResult(
+                IsSuccess: false,
+                DiagnosticMessage: new LocalizedMessageDto(
+                    AudioTranscodingMessageTokens.ProcessTimedOut,
+                    [
+                        TranscoderDisplayName,
+                        TimeoutMilliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                    ]));
         }
         catch (OperationCanceledException)
         {
             TryTerminateProcess(process);
             throw;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             TryTerminateProcess(process);
-            return (false, ex.Message);
+            return new AudioTranscodeExecutionResult(
+                IsSuccess: false,
+                DiagnosticMessage: new LocalizedMessageDto(
+                    AudioTranscodingMessageTokens.ExecutionFailed,
+                    [TranscoderDisplayName]));
         }
         finally
         {
@@ -304,7 +330,7 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
             ? fileVersionInfo.ProductVersion!.Trim()
             : !string.IsNullOrWhiteSpace(fileVersionInfo.FileVersion)
                 ? fileVersionInfo.FileVersion!.Trim()
-                : "unknown";
+                : DefaultVersionText;
 
         // 把文件长度和时间戳一起纳入版本指纹，避免外部工具未更新显式版本号时缓存误命中。
         return $"{baseVersion}+{fileInfo.Length.ToString(System.Globalization.CultureInfo.InvariantCulture)}-{fileInfo.LastWriteTimeUtc.ToFileTimeUtc().ToString(System.Globalization.CultureInfo.InvariantCulture)}";
@@ -324,7 +350,7 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
 
     private static string SanitizeFileComponent(string value)
     {
-        var fallbackValue = string.IsNullOrWhiteSpace(value) ? "audio_payload" : value.Trim();
+        var fallbackValue = string.IsNullOrWhiteSpace(value) ? DefaultPayloadFileName : value.Trim();
         var sanitizedChars = fallbackValue
             .Select(ch => Path.GetInvalidFileNameChars().Contains(ch) ? '_' : ch)
             .ToArray();
@@ -365,4 +391,12 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
             // 终止失败时保留原始异常或超时信息。
         }
     }
+
+    /// <summary>
+    /// 转码执行结果只返回“宿主可控”的结构化诊断消息。
+    /// 若外部工具自身给出了 stderr / stdout，则仍作为回退文本保留，避免丢失排障线索。
+    /// </summary>
+    private readonly record struct AudioTranscodeExecutionResult(
+        bool IsSuccess,
+        LocalizedMessageDto? DiagnosticMessage);
 }

@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Common.Messages;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Workspace.Commands;
@@ -120,7 +121,7 @@ internal sealed class WorkspaceImportProcessingCoordinator
                     LogicalPath: discoveredFile.LogicalPath,
                     BundleCacheKey: bundleCacheKey,
                     Kind: WorkspaceImportCacheDecisionKind.CacheMiss,
-                    Detail: "No reusable bundle index cache was found for this source."));
+                    DetailMessage: new LocalizedMessageDto(WorkspaceImportMessageTokens.CacheCacheMiss)));
             }
             else
             {
@@ -135,7 +136,7 @@ internal sealed class WorkspaceImportProcessingCoordinator
                     LogicalPath: discoveredFile.LogicalPath,
                     BundleCacheKey: bundleCacheKey,
                     Kind: reuseDecision.Kind,
-                    Detail: reuseDecision.Detail));
+                    DetailMessage: reuseDecision.DetailMessage));
 
                 if (reuseDecision.CanReuse)
                 {
@@ -169,7 +170,7 @@ internal sealed class WorkspaceImportProcessingCoordinator
                     LogicalPath: discoveredFile.LogicalPath,
                     Kind: WorkspaceImportIssueKind.DecryptionFailed,
                     DecryptorId: decryptor.Descriptor.Id,
-                    Detail: null,
+                    DetailMessage: null,
                     Errors: decryptionResult.Errors));
                 continue;
             }
@@ -182,7 +183,7 @@ internal sealed class WorkspaceImportProcessingCoordinator
                     LogicalPath: discoveredFile.LogicalPath,
                     Kind: WorkspaceImportIssueKind.ReaderRejected,
                     DecryptorId: decryptionResult.Value.Decryptor.Id,
-                    Detail: CreateReaderRejectedDetail(decryptionResult.Value.ResolvedBundlePath),
+                    DetailMessage: CreateReaderRejectedDetail(decryptionResult.Value.ResolvedBundlePath),
                     Errors: Array.Empty<AppError>()));
                 continue;
             }
@@ -202,7 +203,7 @@ internal sealed class WorkspaceImportProcessingCoordinator
                     LogicalPath: discoveredFile.LogicalPath,
                     Kind: WorkspaceImportIssueKind.ReadFailed,
                     DecryptorId: decryptionResult.Value.Decryptor.Id,
-                    Detail: null,
+                    DetailMessage: null,
                     Errors: readResult.Errors));
                 continue;
             }
@@ -260,7 +261,7 @@ internal sealed class WorkspaceImportProcessingCoordinator
                 LogicalPath: staleCacheEntry.LogicalPath,
                 BundleCacheKey: staleCacheEntry.BundleCacheKey,
                 Kind: WorkspaceImportCacheDecisionKind.SourceRemoved,
-                Detail: "Cached bundle index was removed because the source is no longer registered in this workspace."));
+                DetailMessage: new LocalizedMessageDto(WorkspaceImportMessageTokens.CacheSourceRemoved)));
             DeleteBundleArtifacts(
                 command.WorkspaceKey,
                 staleCacheEntry.BundleCacheKey,
@@ -300,9 +301,11 @@ internal sealed class WorkspaceImportProcessingCoordinator
                 IssueDiagnostics: issueDiagnostics,
                 ProcessedAtUtc: processedAtUtc));
     }
-    private static string CreateReaderRejectedDetail(string resolvedBundlePath)
+    private static LocalizedMessageDto CreateReaderRejectedDetail(string resolvedBundlePath)
     {
-        return $"No registered reader recognized the decrypted bundle output: {resolvedBundlePath}";
+        return new LocalizedMessageDto(
+            WorkspaceImportMessageTokens.ReaderNoRegisteredReaderRecognizedOutput,
+            [resolvedBundlePath]);
     }
 
     private static Dictionary<string, List<string>> BuildPreviewCacheKeysByBundle(

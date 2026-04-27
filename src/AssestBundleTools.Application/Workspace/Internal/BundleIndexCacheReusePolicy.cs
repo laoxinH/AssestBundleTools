@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Common.Messages;
 using AssestBundleTools.Application.Workspace.Dtos;
 
 namespace AssestBundleTools.Application.Workspace.Internal;
@@ -29,7 +30,7 @@ internal static class BundleIndexCacheReusePolicy
             return new BundleIndexCacheReuseDecision(
                 CanReuse: false,
                 Kind: WorkspaceImportCacheDecisionKind.SourceFingerprintChanged,
-                Detail: "Cached source fingerprint no longer matches the current import file.");
+                DetailMessage: new LocalizedMessageDto(WorkspaceImportMessageTokens.CacheSourceFingerprintChanged));
         }
 
         if (!string.Equals(cacheEntry.DecryptorId, decryptorDescriptor.Id, StringComparison.OrdinalIgnoreCase))
@@ -37,7 +38,9 @@ internal static class BundleIndexCacheReusePolicy
             return new BundleIndexCacheReuseDecision(
                 CanReuse: false,
                 Kind: WorkspaceImportCacheDecisionKind.DecryptorChanged,
-                Detail: $"Cached decryptor '{cacheEntry.DecryptorId ?? "(none)"}' no longer matches current decryptor '{decryptorDescriptor.Id}'.");
+                DetailMessage: new LocalizedMessageDto(
+                    WorkspaceImportMessageTokens.CacheDecryptorChanged,
+                    [cacheEntry.DecryptorId ?? string.Empty, decryptorDescriptor.Id]));
         }
 
         if (!string.Equals(cacheEntry.DecryptorVersion, decryptorDescriptor.Version, StringComparison.OrdinalIgnoreCase))
@@ -45,7 +48,9 @@ internal static class BundleIndexCacheReusePolicy
             return new BundleIndexCacheReuseDecision(
                 CanReuse: false,
                 Kind: WorkspaceImportCacheDecisionKind.DecryptorVersionChanged,
-                Detail: $"Cached decryptor version '{cacheEntry.DecryptorVersion ?? "(none)"}' no longer matches current version '{decryptorDescriptor.Version}'.");
+                DetailMessage: new LocalizedMessageDto(
+                    WorkspaceImportMessageTokens.CacheDecryptorVersionChanged,
+                    [cacheEntry.DecryptorVersion ?? string.Empty, decryptorDescriptor.Version]));
         }
 
         if (!string.Equals(cacheEntry.ToolVersion, currentToolVersion, StringComparison.OrdinalIgnoreCase))
@@ -53,7 +58,9 @@ internal static class BundleIndexCacheReusePolicy
             return new BundleIndexCacheReuseDecision(
                 CanReuse: false,
                 Kind: WorkspaceImportCacheDecisionKind.ToolVersionChanged,
-                Detail: $"Cached tool version '{cacheEntry.ToolVersion}' no longer matches current version '{currentToolVersion}'.");
+                DetailMessage: new LocalizedMessageDto(
+                    WorkspaceImportMessageTokens.CacheToolVersionChanged,
+                    [cacheEntry.ToolVersion, currentToolVersion]));
         }
 
         if (!reader.SupportsCacheParserVersion(cacheEntry.ParserVersion))
@@ -61,17 +68,19 @@ internal static class BundleIndexCacheReusePolicy
             return new BundleIndexCacheReuseDecision(
                 CanReuse: false,
                 Kind: WorkspaceImportCacheDecisionKind.ParserVersionChanged,
-                Detail: $"Cached parser version '{cacheEntry.ParserVersion}' is not supported by current reader version '{reader.CacheParserVersion}'.");
+                DetailMessage: new LocalizedMessageDto(
+                    WorkspaceImportMessageTokens.CacheParserVersionChanged,
+                    [cacheEntry.ParserVersion, reader.CacheParserVersion]));
         }
 
         return new BundleIndexCacheReuseDecision(
             CanReuse: true,
             Kind: WorkspaceImportCacheDecisionKind.Reused,
-            Detail: null);
+            DetailMessage: null);
     }
 }
 
 internal sealed record BundleIndexCacheReuseDecision(
     bool CanReuse,
     WorkspaceImportCacheDecisionKind Kind,
-    string? Detail);
+    LocalizedMessageDto? DetailMessage);

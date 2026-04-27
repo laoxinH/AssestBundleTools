@@ -74,15 +74,15 @@ public sealed class UpsertAssetBundleDecryptorHandler
             if (savedEntry is null)
             {
                 return Task.FromResult(Result<AssetBundleDecryptorCatalogEntryDto>.Failure(
-                    ApplicationErrors.BundleDecryptorCatalogSaveFailed("Saved entry was not found after persistence.")));
+                    ApplicationErrors.BundleDecryptorCatalogSaveVerificationFailed(command.Definition.Id.Trim())));
             }
 
             return Task.FromResult(Result<AssetBundleDecryptorCatalogEntryDto>.Success(savedEntry));
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Task.FromResult(Result<AssetBundleDecryptorCatalogEntryDto>.Failure(
-                ApplicationErrors.BundleDecryptorCatalogSaveFailed(ex.Message)));
+                ApplicationErrors.BundleDecryptorCatalogSaveFailed()));
         }
     }
 

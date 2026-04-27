@@ -1,3 +1,5 @@
+using AssestBundleTools.Application.Common.Messages;
+
 namespace AssestBundleTools.Application.Bundles.Dtos;
 
 /// <summary>
@@ -5,4 +7,4 @@ namespace AssestBundleTools.Application.Bundles.Dtos;
 /// </summary>
 public sealed record AssetBundleSourceInspectionResultDto(
     AssetBundleSourceInspectionKind Kind,
-    string? Detail = null);
+    LocalizedMessageDto? DetailMessage = null);

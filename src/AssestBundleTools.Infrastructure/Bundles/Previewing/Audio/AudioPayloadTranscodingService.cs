@@ -80,7 +80,7 @@ public sealed class AudioPayloadTranscodingService : IAudioPayloadTranscodingSer
             Transcoder: null,
             ContentType: null,
             Content: null,
-            Message: null);
+            DiagnosticMessage: null);
     }
 
     private static IReadOnlyList<IAudioPayloadTranscoderBackend> CreateDefaultBackends()

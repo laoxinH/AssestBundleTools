@@ -16,6 +16,7 @@ namespace AssestBundleTools.Infrastructure.Bundles.Previewing.Internal;
 internal static class AssetsToolsAudioClipPreviewBuilder
 {
     private const string TextContentType = "text/plain; charset=utf-8";
+    private const string DefaultPayloadBaseName = "audio_payload";
 
     public static AudioClipPreviewSource BuildPreviewSource(
         BundleFileInstance bundleInstance,
@@ -114,7 +115,7 @@ internal static class AssetsToolsAudioClipPreviewBuilder
         if (string.IsNullOrWhiteSpace(baseName))
         {
             baseName = string.IsNullOrWhiteSpace(previewSource.Metadata.Name)
-                ? "audio_payload"
+                ? DefaultPayloadBaseName
                 : previewSource.Metadata.Name.Trim();
         }
 

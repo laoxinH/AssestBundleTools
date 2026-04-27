@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Workspace.Services;
+using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Diagnostics;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -26,8 +27,14 @@ public sealed class WorkspaceProcessCoordinatorService : IWorkspaceProcessCoordi
     private CancellationTokenSource? _activationListenerCts;
     private Task? _activationListenerTask;
     private string? _registeredWorkspaceKey;
+    private readonly ILocalizationService _localizationService;
 
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
+
+    public WorkspaceProcessCoordinatorService(ILocalizationService localizationService)
+    {
+        _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+    }
 
     public event EventHandler<WorkspaceProcessActivationRequestedEventArgs>? WorkspaceActivationRequested;
 
@@ -188,12 +195,12 @@ public sealed class WorkspaceProcessCoordinatorService : IWorkspaceProcessCoordi
             WorkingDirectory = AppContext.BaseDirectory,
             UseShellExecute = false
         };
-        startInfo.ArgumentList.Add(ShellLaunchArgumentCodec.CreateArgumentToken(launchRequest));
+        startInfo.ArgumentList.Add(ShellLaunchArgumentCodec.CreateArgumentToken(launchRequest, _localizationService));
 
         var process = Process.Start(startInfo);
         if (process is null)
         {
-            throw new InvalidOperationException("Failed to start a new application process for the workspace.");
+            throw PresentationExceptionFactory.CreateStartWorkspaceProcessFailedException(_localizationService);
         }
     }
 
@@ -334,11 +341,11 @@ public sealed class WorkspaceProcessCoordinatorService : IWorkspaceProcessCoordi
         }
     }
 
-    private static string ResolveCurrentProcessPath()
+    private string ResolveCurrentProcessPath()
     {
         return Environment.ProcessPath
             ?? Process.GetCurrentProcess().MainModule?.FileName
-            ?? throw new InvalidOperationException("The current process path is not available.");
+            ?? throw PresentationExceptionFactory.CreateCurrentProcessPathUnavailableException(_localizationService);
     }
 
     private static string CreateWorkspaceKey(WorkspaceNavigationRequest navigationRequest)

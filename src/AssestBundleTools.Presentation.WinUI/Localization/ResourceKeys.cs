@@ -106,7 +106,7 @@ public static class ResourceKeys
     public const string StartupFallbackTitle = "StartupFallback.Title";
     public const string StartupFallbackDescription = "StartupFallback.Description";
     public const string StartupFallbackExceptionFormat = "StartupFallback.Exception.Format";
-    public const string StartupFallbackMessageFormat = "StartupFallback.Message.Format";
+    public const string StartupFallbackMessageLogged = "StartupFallback.MessageLogged";
     public const string StartupFallbackLogFileFormat = "StartupFallback.LogFile.Format";
     public const string AppNotificationSuccessTitle = "AppNotification.SuccessTitle";
     public const string AppNotificationInfoTitle = "AppNotification.InfoTitle";
@@ -136,6 +136,7 @@ public static class ResourceKeys
     public const string WorkspaceImportLogIssueReaderRejectedFormat = "WorkspaceImport.Log.Issue.ReaderRejected.Format";
     public const string WorkspaceImportLogIssueReadFailedFormat = "WorkspaceImport.Log.Issue.ReadFailed.Format";
     public const string WorkspaceImportLogIssueErrorDetailFormat = "WorkspaceImport.Log.Issue.ErrorDetail.Format";
+    public const string WorkspaceImportLogCacheMissFormat = "WorkspaceImport.Log.Cache.CacheMiss.Format";
     public const string WorkspaceImportLogCacheSourceFingerprintChangedFormat = "WorkspaceImport.Log.Cache.SourceFingerprintChanged.Format";
     public const string WorkspaceImportLogCacheDecryptorChangedFormat = "WorkspaceImport.Log.Cache.DecryptorChanged.Format";
     public const string WorkspaceImportLogCacheDecryptorVersionChangedFormat = "WorkspaceImport.Log.Cache.DecryptorVersionChanged.Format";
@@ -368,6 +369,7 @@ public static class ResourceKeys
     public const string BundleExplorerNotificationReplacementUndone = "BundleExplorer.Notification.ReplacementUndone";
     public const string BundleExplorerPreviewImageDecodeFailed = "BundleExplorer.Preview.ImageDecodeFailed";
     public const string BundleExplorerPreviewAudioDecodeFailed = "BundleExplorer.Preview.AudioDecodeFailed";
+    public const string BundleExplorerPreviewUnexpectedDisplayFailure = "BundleExplorer.Preview.UnexpectedDisplayFailure";
     public const string BundleExplorerPageBundleSearchTextBoxPlaceholder = "BundleExplorerPage.BundleSearchTextBox.PlaceholderText";
     public const string BundleExplorerPageNewWorkspaceButton = "BundleExplorerPage.NewWorkspaceButton.Content";
     public const string BundleExplorerPageOpenWorkspaceButton = "BundleExplorerPage.OpenWorkspaceButton.Content";
@@ -437,12 +439,27 @@ public static class ResourceKeys
     public const string ErrorBundleDecryptorCatalogNotFound = "Error.Bundle.Decryptor.Catalog.NotFound";
     public const string ErrorBundleDecryptorCatalogReadOnly = "Error.Bundle.Decryptor.Catalog.ReadOnly";
     public const string ErrorBundleDecryptorCatalogAlreadyExists = "Error.Bundle.Decryptor.Catalog.AlreadyExists";
+    public const string ErrorBundleDecryptorCatalogSaveVerificationFailed = "Error.Bundle.Decryptor.Catalog.SaveVerificationFailed";
     public const string ErrorBundleDecryptorCatalogSaveFailed = "Error.Bundle.Decryptor.Catalog.SaveFailed";
     public const string ErrorBundleDecryptorCatalogDeleteFailed = "Error.Bundle.Decryptor.Catalog.DeleteFailed";
     public const string ErrorWorkspaceImportMetadataNotFound = "Error.Workspace.Import.MetadataNotFound";
     public const string ErrorWorkspaceOpenDataRootPathRequired = "Error.Workspace.Open.DataRootPathRequired";
     public const string ErrorBundleDecryptorFallbackNotFound = "Error.Bundle.Decryptor.FallbackNotFound";
+    public const string ErrorBundleSourceMissing = "Error.Bundle.SourceMissing";
+    public const string ErrorBundleDecryptExecutionFailed = "Error.Bundle.Decrypt.ExecutionFailed";
+    public const string ErrorBundleReadFormatUnrecognized = "Error.Bundle.Read.FormatUnrecognized";
+    public const string ErrorBundleReadNoCompatibleReader = "Error.Bundle.Read.NoCompatibleReader";
+    public const string ErrorBundleReadUnexpected = "Error.Bundle.Read.Unexpected";
     public const string ErrorBundleReadFailed = "Error.Bundle.Read.Failed";
+    public const string ErrorBundlePreviewSerializedFileLocatorMissing = "Error.Bundle.Preview.SerializedFileLocatorMissing";
+    public const string ErrorBundlePreviewAssetLocatorMissing = "Error.Bundle.Preview.AssetLocatorMissing";
+    public const string ErrorBundlePreviewFieldTreeUnavailable = "Error.Bundle.Preview.FieldTreeUnavailable";
+    public const string ErrorBundlePreviewGenerationFailed = "Error.Bundle.Preview.GenerationFailed";
+    public const string ErrorPresentationOwnerWindowUnavailable = "Error.Presentation.OwnerWindowUnavailable";
+    public const string ErrorPresentationUnsupportedLaunchNavigationParameter = "Error.Presentation.UnsupportedLaunchNavigationParameter";
+    public const string ErrorPresentationStartWorkspaceProcessFailed = "Error.Presentation.StartWorkspaceProcessFailed";
+    public const string ErrorPresentationCurrentProcessPathUnavailable = "Error.Presentation.CurrentProcessPathUnavailable";
+    public const string ErrorPresentationFallbackDecryptorRequired = "Error.Presentation.FallbackDecryptorRequired";
 
     public const string AssetTypeFilterAll = "AssetTypeFilter.All";
     public const string AssetTypeDisplayUnknown = "AssetType.Display.Unknown";

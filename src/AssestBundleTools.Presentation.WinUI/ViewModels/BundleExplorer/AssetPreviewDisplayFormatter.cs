@@ -18,6 +18,7 @@ internal sealed class AssetPreviewDisplayFormatter
     private const string PreviewMessageResourceKeyPrefix = "InspectorPanelView.PreviewMessage.";
     private const string PreviewMessageResourceKeySuffix = ".Text";
     private const string PreviewInfoValueResourceKeyPrefix = "InspectorPanelView.PreviewInfoValue.";
+    private const string UnknownSentinelText = "Unknown";
 
     private readonly ILocalizationService _localizationService;
     private readonly LocalizedValueFormatter _localizedValueFormatter;
@@ -141,7 +142,7 @@ internal sealed class AssetPreviewDisplayFormatter
                 $"{PreviewInfoValueResourceKeyPrefix}AudioPayloadSource.{item.TextValue.Trim()}");
         }
 
-        if (string.Equals(item.TextValue.Trim(), "Unknown", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(item.TextValue.Trim(), UnknownSentinelText, StringComparison.OrdinalIgnoreCase))
         {
             return _localizationService.GetRequiredString($"{PreviewInfoValueResourceKeyPrefix}Common.Unknown");
         }

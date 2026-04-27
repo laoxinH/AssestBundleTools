@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Common.Messages;
 using AssestBundleTools.Application.Workspace.Dtos;
 
 namespace AssestBundleTools.Application.Bundles.Dtos;
@@ -10,4 +11,4 @@ public sealed record AssetBundleDecryptionResultDto(
     string ResolvedBundlePath,
     bool ProducedDerivedFile,
     WorkspaceFileFingerprintDto BundleFingerprint,
-    string? Message);
+    LocalizedMessageDto? DiagnosticMessage);

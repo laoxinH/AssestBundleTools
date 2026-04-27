@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Replacement.Services;
 using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Presentation.WinUI.Localization;
 using Microsoft.UI.Xaml;
 using System.Linq;
 using Windows.Storage.Pickers;
@@ -13,10 +14,14 @@ namespace AssestBundleTools.Presentation.WinUI.Services;
 public sealed class WinUIFilePickerService : IFilePickerService
 {
     private readonly Func<Window?> _ownerWindowAccessor;
+    private readonly ILocalizationService _localizationService;
 
-    public WinUIFilePickerService(Func<Window?> ownerWindowAccessor)
+    public WinUIFilePickerService(
+        Func<Window?> ownerWindowAccessor,
+        ILocalizationService localizationService)
     {
         _ownerWindowAccessor = ownerWindowAccessor ?? throw new ArgumentNullException(nameof(ownerWindowAccessor));
+        _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
     }
 
     public async Task<string?> PickWorkspaceDataDirectoryAsync(CancellationToken cancellationToken = default)
@@ -31,11 +36,7 @@ public sealed class WinUIFilePickerService : IFilePickerService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var ownerWindow = _ownerWindowAccessor();
-        if (ownerWindow is null)
-        {
-            throw new InvalidOperationException("The owner window is not available for file picker initialization.");
-        }
+        var ownerWindow = RequireOwnerWindow();
 
         var picker = new FileOpenPicker
         {
@@ -75,11 +76,7 @@ public sealed class WinUIFilePickerService : IFilePickerService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var ownerWindow = _ownerWindowAccessor();
-        if (ownerWindow is null)
-        {
-            throw new InvalidOperationException("The owner window is not available for file picker initialization.");
-        }
+        var ownerWindow = RequireOwnerWindow();
 
         var picker = new FileOpenPicker
         {
@@ -101,11 +98,7 @@ public sealed class WinUIFilePickerService : IFilePickerService
 
     private FolderPicker CreateFolderPicker()
     {
-        var ownerWindow = _ownerWindowAccessor();
-        if (ownerWindow is null)
-        {
-            throw new InvalidOperationException("The owner window is not available for folder picker initialization.");
-        }
+        var ownerWindow = RequireOwnerWindow();
 
         var picker = new FolderPicker
         {
@@ -115,5 +108,15 @@ public sealed class WinUIFilePickerService : IFilePickerService
         picker.FileTypeFilter.Add("*");
         InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(ownerWindow));
         return picker;
+    }
+
+    /// <summary>
+    /// 文件/目录选择器依赖已创建的宿主窗口句柄。
+    /// 若当前窗口尚未就绪，直接抛出资源化异常，避免少量壳层英文继续散落。
+    /// </summary>
+    private Window RequireOwnerWindow()
+    {
+        return _ownerWindowAccessor()
+               ?? throw PresentationExceptionFactory.CreateOwnerWindowUnavailableException(_localizationService);
     }
 }

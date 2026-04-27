@@ -165,12 +165,104 @@ public static class ApplicationErrors
                 ("DecryptorId", decryptorId),
                 ("Detail", detail)));
 
+    public static AppError BundleDecryptionArgumentsRequired(string decryptorId) =>
+        new(
+            code: "Bundle.Decrypt.ArgumentsRequired",
+            category: ErrorCategory.Configuration,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Decrypt.ArgumentsRequired",
+            parameters: CreateParameters(("DecryptorId", decryptorId)));
+
+    public static AppError BundleDecryptionResultFileMissing(string decryptorId) =>
+        new(
+            code: "Bundle.Decrypt.ResultFileMissing",
+            category: ErrorCategory.ParseFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Decrypt.ResultFileMissing",
+            parameters: CreateParameters(("DecryptorId", decryptorId)));
+
+    public static AppError BundleDecryptionResultFileInvalid(string decryptorId) =>
+        new(
+            code: "Bundle.Decrypt.ResultFileInvalid",
+            category: ErrorCategory.ParseFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Decrypt.ResultFileInvalid",
+            parameters: CreateParameters(("DecryptorId", decryptorId)));
+
+    public static AppError BundleDecryptionOutputMissing(string decryptorId) =>
+        new(
+            code: "Bundle.Decrypt.OutputMissing",
+            category: ErrorCategory.NotFound,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Decrypt.OutputMissing",
+            parameters: CreateParameters(("DecryptorId", decryptorId)));
+
+    public static AppError BundleDecryptionProcessExited(string decryptorId, int exitCode) =>
+        new(
+            code: "Bundle.Decrypt.ProcessExited",
+            category: ErrorCategory.ExternalDependency,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Decrypt.ProcessExited",
+            parameters: CreateParameters(
+                ("DecryptorId", decryptorId),
+                ("ExitCode", exitCode.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+
+    public static AppError BundleDecryptionTimedOut(string decryptorId, int timeoutMs) =>
+        new(
+            code: "Bundle.Decrypt.TimedOut",
+            category: ErrorCategory.Timeout,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Decrypt.TimedOut",
+            parameters: CreateParameters(
+                ("DecryptorId", decryptorId),
+                ("TimeoutMs", timeoutMs.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+
+    public static AppError BundleDecryptionExecutionFailed(string decryptorId) =>
+        new(
+            code: "Bundle.Decrypt.ExecutionFailed",
+            category: ErrorCategory.ExternalDependency,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Decrypt.ExecutionFailed",
+            parameters: CreateParameters(("DecryptorId", decryptorId)));
+
     public static AppError BundleDecryptorFallbackNotFound() =>
         new(
             code: "Bundle.Decryptor.FallbackNotFound",
             category: ErrorCategory.NotFound,
             severity: ErrorSeverity.Error,
             messageToken: "Error.Bundle.Decryptor.FallbackNotFound");
+
+    public static AppError BundleSourceMissing(string bundlePath) =>
+        new(
+            code: "Bundle.SourceMissing",
+            category: ErrorCategory.NotFound,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.SourceMissing",
+            parameters: CreateParameters(("BundlePath", bundlePath)));
+
+    public static AppError BundleReadFormatUnrecognized(string bundlePath) =>
+        new(
+            code: "Bundle.Read.FormatUnrecognized",
+            category: ErrorCategory.Unsupported,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Read.FormatUnrecognized",
+            parameters: CreateParameters(("BundlePath", bundlePath)));
+
+    public static AppError BundleReadNoCompatibleReader(string bundlePath) =>
+        new(
+            code: "Bundle.Read.NoCompatibleReader",
+            category: ErrorCategory.Unsupported,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Read.NoCompatibleReader",
+            parameters: CreateParameters(("BundlePath", bundlePath)));
+
+    public static AppError BundleReadUnexpected(string bundlePath) =>
+        new(
+            code: "Bundle.Read.Unexpected",
+            category: ErrorCategory.Unknown,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Read.Unexpected",
+            parameters: CreateParameters(("BundlePath", bundlePath)));
 
     public static AppError BundleReadFailed(string bundlePath, string? detail = null) =>
         new(
@@ -181,6 +273,38 @@ public static class ApplicationErrors
             parameters: CreateParameters(
                 ("BundlePath", bundlePath),
                 ("Detail", detail)));
+
+    public static AppError BundlePreviewSerializedFileLocatorMissing(string bundlePath) =>
+        new(
+            code: "Bundle.Preview.SerializedFileLocatorMissing",
+            category: ErrorCategory.NotFound,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Preview.SerializedFileLocatorMissing",
+            parameters: CreateParameters(("BundlePath", bundlePath)));
+
+    public static AppError BundlePreviewAssetLocatorMissing(string bundlePath) =>
+        new(
+            code: "Bundle.Preview.AssetLocatorMissing",
+            category: ErrorCategory.NotFound,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Preview.AssetLocatorMissing",
+            parameters: CreateParameters(("BundlePath", bundlePath)));
+
+    public static AppError BundlePreviewFieldTreeUnavailable(string bundlePath) =>
+        new(
+            code: "Bundle.Preview.FieldTreeUnavailable",
+            category: ErrorCategory.ParseFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Preview.FieldTreeUnavailable",
+            parameters: CreateParameters(("BundlePath", bundlePath)));
+
+    public static AppError BundlePreviewGenerationFailed(string bundlePath) =>
+        new(
+            code: "Bundle.Preview.GenerationFailed",
+            category: ErrorCategory.Unknown,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Preview.GenerationFailed",
+            parameters: CreateParameters(("BundlePath", bundlePath)));
 
     public static AppError BundleDecryptorCatalogIdRequired() =>
         new(
@@ -241,21 +365,27 @@ public static class ApplicationErrors
             messageToken: "Error.Bundle.Decryptor.Catalog.AlreadyExists",
             parameters: CreateParameters(("DecryptorId", decryptorId)));
 
-    public static AppError BundleDecryptorCatalogSaveFailed(string? detail = null) =>
+    public static AppError BundleDecryptorCatalogSaveVerificationFailed(string decryptorId) =>
+        new(
+            code: "Bundle.Decryptor.Catalog.SaveVerificationFailed",
+            category: ErrorCategory.SerializationFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Decryptor.Catalog.SaveVerificationFailed",
+            parameters: CreateParameters(("DecryptorId", decryptorId)));
+
+    public static AppError BundleDecryptorCatalogSaveFailed() =>
         new(
             code: "Bundle.Decryptor.Catalog.SaveFailed",
-            category: ErrorCategory.ExternalDependency,
+            category: ErrorCategory.IoFailure,
             severity: ErrorSeverity.Error,
-            messageToken: "Error.Bundle.Decryptor.Catalog.SaveFailed",
-            parameters: CreateParameters(("Detail", detail)));
+            messageToken: "Error.Bundle.Decryptor.Catalog.SaveFailed");
 
-    public static AppError BundleDecryptorCatalogDeleteFailed(string? detail = null) =>
+    public static AppError BundleDecryptorCatalogDeleteFailed() =>
         new(
             code: "Bundle.Decryptor.Catalog.DeleteFailed",
-            category: ErrorCategory.ExternalDependency,
+            category: ErrorCategory.IoFailure,
             severity: ErrorSeverity.Error,
-            messageToken: "Error.Bundle.Decryptor.Catalog.DeleteFailed",
-            parameters: CreateParameters(("Detail", detail)));
+            messageToken: "Error.Bundle.Decryptor.Catalog.DeleteFailed");
 
     public static AppError SourceFilePathRequired() =>
         new(

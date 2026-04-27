@@ -628,8 +628,8 @@ Presentation 根据资源键:
 2. `Presentation` 层的 `WorkspaceBrowserService / WorkspaceCatalogService` 当前仍直接持有具体 Handler 类型，后续可继续评估是否收口为更稳定的应用层网关接口，减少 UI 对用例实现细节的耦合。
 3. 当前工作区进程占用是在工作区加载成功后才完成注册；若后续需要进一步消除极端并发启动下的重复打开竞态，可将其前移到加载前预占用，并补失败回滚。
 4. 当前默认不走“窗口级 `WorkspaceContextService` 重构”路线；若未来要支持“一进程多工作区并行”，应单独重构窗口作用域上下文，而不是继续扩散当前全局工作区模型。
-5. 用户文本资源化当前已完成检查器 / 预览主链路的第一轮收口，但仍有剩余硬编码集中在工作区导入探测、解密器 `probe`、Reader 直检与少量技术诊断细节；代表性热点文件包括 `WorkspaceImportCandidateScreeningCoordinator`、`UnityAssetBundleFileInspector` 与 `ExternalProcessAssetBundleDecryptor`，后续应继续改为资源键、原因码或结构化消息参数。
-6. `Infrastructure` 层的预览构建组件与音频转码主链路已改为优先返回结构化字段、原因码和参数；剩余待收口点主要在导入 / 探测类诊断，不应继续扩散为直接面向用户的句子拼装。
+5. 用户文本资源化当前已完成检查器 / 预览主链路、工作区导入探测、Reader 直检、预览诊断 detail 以及解密器设置页保存/删除失败提示的三轮收口；当前剩余热点已进一步缩小到“外部工具原始执行输出”和“少量启动 / 壳层异常文案”，代表性文件包括 `VgmstreamCliAudioPayloadTranscoder`、`ExternalProcessAssetBundleDecryptor`、`MainWindow` 与少量 WinUI 服务异常抛出点，后续应继续改为资源键、原因码或结构化消息参数。
+6. `Infrastructure` 层的预览构建组件、音频转码主链路以及 Reader / Preview 失败原因当前都已优先返回结构化字段、原因码和参数；剩余待收口点主要是外部工具 stderr / stdout、个别启动期异常明文展示与少量壳层异常文案，不应继续扩散为直接面向用户的句子拼装。
 7. `tests/` 目录目前仍只有占位说明，尚未落地 `Domain / Application / Infrastructure` 测试项目，也未建立本地化资源完整性校验；这一点当前不满足本文档的测试建议。
 8. `Presentation.WinUI` 项目当前仍直接引用 `Infrastructure`，并在组合根之外保留少量对具体持久化类型的直接依赖；若后续继续保留“组合根例外”，应在架构文档中显式声明边界，否则需要继续收口为抽象依赖。
 
@@ -652,7 +652,7 @@ Presentation 根据资源键:
 
 当前仍未完全满足规范的高优先级问题：
 
-- 用户可见文本尚未彻底资源化，但残留范围已明显收敛，当前主要集中在工作区导入 / 解密探测 / Reader 直检相关诊断。
+- 用户可见文本资源化主链路已基本收口；当前主要剩余的是少量内部哨兵值、资源键集中管理细节，以及调试日志格式的一致性优化，而不再是工作区导入、预览、启动兜底或 WinUI 壳层对用户可见文本的直接硬编码。
 - `Presentation` 层仍有部分持久化与具体 Handler 耦合，尚未完全退回到更稳定的应用层网关或 Use Case 边界。
 - 测试体系尚未建立，尤其缺少 `Domain / Application` 单元测试与资源完整性校验。
 
@@ -661,14 +661,19 @@ Presentation 根据资源键:
 - `Application` Handler 中对 `InMemoryWorkspaceSessionRegistry.Shared` 的默认回退已移除，统一改为显式构造注入。
 - 工作区导入登记与导入处理链路中的 `File.Exists / Directory.Exists / FileInfo` 已抽象为应用层端口，并由 `Infrastructure` 提供文件系统实现。
 - 预览查询链路已从 `PreviewInfoText` 文本拼装收敛为 `PreviewInfoItems + PreviewMessage + Diagnostic` 结构化 DTO，`Presentation` 统一负责本地化格式化。
+- 工作区导入自动识别、解密器 `probe`、缓存诊断和 Reader 拒绝原因当前已统一改为 `LocalizedMessageDto` 结构化消息，由展示层统一本地化输出。
+- 预览诊断 `Detail` 已进一步从裸字符串收敛为结构化消息；Reader 直检与预览生成阶段的稳定失败原因也已抬升为标准错误令牌，不再由 `Infrastructure` 直接拼英文说明。
+- 解密器设置页中的“保存失败 / 删除失败 / 保存后校验失败”已改为标准错误令牌；工作台预览显示层的兜底日志也不再直接输出 `ex.Message`。
 - `Presentation` 已新增共享值格式化器，`BundleExplorer / BatchTasks / Inspector` 的字节大小展示不再各自硬编码 `MB / KB / B`。
 - 音频转码器与内置直通解密器已去除直接面向用户的内建说明文本，内置解密器显示语义统一回到稳定标识并由展示层本地化。
+- 外部音频转码与外部解密进程当前已进一步区分“外部工具原始输出”和“宿主程序自身失败原因”：前者只作为回退文本保留，后者统一收敛为稳定消息令牌或标准错误令牌。
+- WinUI 壳层中的文件选择器、跨进程启动协议、工作区新进程启动失败与“缺少回退解密器”等异常当前已统一资源化；启动兜底页也不再直接显示 `exception.Message` 原文。
 
 因此，当前阶段更准确的判断应为：
 
 - **架构方向正确，主体分层基本成立。**
 - **但距离“完全符合 code-architecture-guidelines”仍有明确收口工作。**
 - 后续架构收口优先级建议保持为：
-  1. 工作区导入 / 解密探测 / Reader 直检诊断的资源化与结构化
+  1. `Presentation` 资源键集中管理与少量内部哨兵值的进一步清理
   2. `Presentation` 持久化与具体 Handler 耦合收口
   3. 建立最小可运行测试骨架

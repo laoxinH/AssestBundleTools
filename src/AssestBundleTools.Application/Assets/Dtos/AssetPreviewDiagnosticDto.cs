@@ -1,3 +1,5 @@
+using AssestBundleTools.Application.Common.Messages;
+
 namespace AssestBundleTools.Application.Assets.Dtos;
 
 /// <summary>
@@ -10,4 +12,4 @@ namespace AssestBundleTools.Application.Assets.Dtos;
 public sealed record AssetPreviewDiagnosticDto(
     AssetPreviewCacheStatusKind CacheStatus,
     AssetPreviewFallbackReasonKind FallbackReason,
-    string? Detail = null);
+    LocalizedMessageDto? DetailMessage = null);

@@ -35,13 +35,13 @@ public sealed class HeuristicAssetBundleReader : IAssetBundleReader
         if (!File.Exists(request.BundlePath))
         {
             return Task.FromResult(Result<AssetBundleReadResultDto>.Failure(
-                ApplicationErrors.BundleReadFailed(request.BundlePath, "Bundle file does not exist.")));
+                ApplicationErrors.BundleSourceMissing(request.BundlePath)));
         }
 
         if (!CanRead(request.BundlePath))
         {
             return Task.FromResult(Result<AssetBundleReadResultDto>.Failure(
-                ApplicationErrors.BundleReadFailed(request.BundlePath, "Bundle format is not recognized by the heuristic reader.")));
+                ApplicationErrors.BundleReadFormatUnrecognized(request.BundlePath)));
         }
 
         var logicalPath = UnityAssetBundleFileInspector.NormalizeLogicalPath(request.LogicalPath, request.BundlePath);
