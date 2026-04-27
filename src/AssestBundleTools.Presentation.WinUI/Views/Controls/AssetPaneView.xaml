@@ -46,15 +46,6 @@
             <Setter Property="HorizontalAlignment" Value="Left" />
         </Style>
 
-        <!-- 左侧筛选区也使用分段容器，和右侧详情区的标签切换保持统一视觉。 -->
-        <Style
-            x:Key="AssetPaneSegmentHostStyle"
-            TargetType="Border">
-            <Setter Property="Padding" Value="3" />
-            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
-            <Setter Property="CornerRadius" Value="10" />
-        </Style>
-
         <Style
             x:Key="AssetPaneListViewItemStyle"
             TargetType="ListViewItem">
@@ -154,25 +145,23 @@
                     </ComboBox.ItemTemplate>
                 </ComboBox>
 
-                <Border Style="{StaticResource AssetPaneSegmentHostStyle}">
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <ToggleButton
-                            x:Name="ModifiedOnlyToggleButton"
-                            Checked="OnModifiedOnlyToggleButtonChecked"
-                            Content="Modified Only"
-                            IsChecked="{x:Bind ViewModel.ShowModifiedOnly, Mode=OneWay}"
-                            Unchecked="OnModifiedOnlyToggleButtonUnchecked"
-                            Style="{StaticResource CompactSegmentToggleButtonStyle}" />
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <ToggleButton
+                        x:Name="ModifiedOnlyToggleButton"
+                        Checked="OnModifiedOnlyToggleButtonChecked"
+                        Content="Modified Only"
+                        IsChecked="{x:Bind ViewModel.ShowModifiedOnly, Mode=OneWay}"
+                        Unchecked="OnModifiedOnlyToggleButtonUnchecked"
+                        Style="{StaticResource CompactSegmentToggleButtonStyle}" />
 
-                        <ToggleButton
-                            x:Name="PreviewOnlyToggleButton"
-                            Checked="OnPreviewOnlyToggleButtonChecked"
-                            Content="Preview Only"
-                            IsChecked="{x:Bind ViewModel.ShowPreviewableOnly, Mode=OneWay}"
-                            Unchecked="OnPreviewOnlyToggleButtonUnchecked"
-                            Style="{StaticResource CompactSegmentToggleButtonStyle}" />
-                    </StackPanel>
-                </Border>
+                    <ToggleButton
+                        x:Name="PreviewOnlyToggleButton"
+                        Checked="OnPreviewOnlyToggleButtonChecked"
+                        Content="Preview Only"
+                        IsChecked="{x:Bind ViewModel.ShowPreviewableOnly, Mode=OneWay}"
+                        Unchecked="OnPreviewOnlyToggleButtonUnchecked"
+                        Style="{StaticResource CompactSegmentToggleButtonStyle}" />
+                </StackPanel>
             </StackPanel>
 
             <Button

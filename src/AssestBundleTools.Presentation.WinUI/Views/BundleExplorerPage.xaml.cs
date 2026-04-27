@@ -183,6 +183,16 @@ public sealed partial class BundleExplorerPage : Page
         }
     }
 
+    private void OnBundleTabViewTabDragCompleted(TabView sender, TabViewTabDragCompletedEventArgs args)
+    {
+        if (!TryBuildTabOrderSnapshot(sender, out IReadOnlyList<BundleDocumentTabViewModel> orderedTabs))
+        {
+            return;
+        }
+
+        ViewModel.ReorderBundleTabs(orderedTabs);
+    }
+
     private void OnBundleTabContextFlyoutOpening(object sender, object e)
     {
         ConfigureTabContextFlyout(
@@ -231,6 +241,16 @@ public sealed partial class BundleExplorerPage : Page
         {
             await ViewModel.CloseAssetDocumentTabAsync(dataContextTab);
         }
+    }
+
+    private void OnAssetDocumentTabViewTabDragCompleted(TabView sender, TabViewTabDragCompletedEventArgs args)
+    {
+        if (!TryBuildTabOrderSnapshot(sender, out IReadOnlyList<AssetDocumentTabViewModel> orderedTabs))
+        {
+            return;
+        }
+
+        ViewModel.ReorderActiveAssetDocumentTabs(orderedTabs);
     }
 
     private void OnAssetDocumentTabContextFlyoutOpening(object sender, object e)
@@ -452,6 +472,40 @@ public sealed partial class BundleExplorerPage : Page
 
             DispatcherQueue.TryEnqueue(SynchronizeAssetDocumentTabSelection);
         }
+    }
+
+    /// <summary>
+    /// WinUI 在 TabItemsSource 模式下，拖拽完成后的最终顺序仍保存在 TabView 当前容器顺序里。
+    /// 这里统一把容器或其 DataContext 解析回页面级 ViewModel，再交给上层做集合重排与持久化。
+    /// </summary>
+    private static bool TryBuildTabOrderSnapshot<TTabViewModel>(
+        TabView tabView,
+        out IReadOnlyList<TTabViewModel> orderedTabs)
+        where TTabViewModel : class
+    {
+        ArgumentNullException.ThrowIfNull(tabView);
+
+        var resolvedItems = new List<TTabViewModel>(tabView.TabItems.Count);
+        foreach (var item in tabView.TabItems)
+        {
+            if (item is TTabViewModel typedItem)
+            {
+                resolvedItems.Add(typedItem);
+                continue;
+            }
+
+            if (item is FrameworkElement { DataContext: TTabViewModel dataContextItem })
+            {
+                resolvedItems.Add(dataContextItem);
+                continue;
+            }
+
+            orderedTabs = Array.Empty<TTabViewModel>();
+            return false;
+        }
+
+        orderedTabs = resolvedItems;
+        return true;
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)

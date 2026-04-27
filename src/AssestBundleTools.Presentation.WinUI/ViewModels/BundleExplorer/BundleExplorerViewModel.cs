@@ -538,8 +538,39 @@ public sealed class BundleExplorerViewModel : ObservableObject
             return;
         }
 
-        CaptureActiveTabState();
         await SetActiveBundleTabAsync(tab, writeSelectionLog: false);
+    }
+
+    /// <summary>
+    /// 资源包标签顺序属于工作台页面级浏览状态。
+    /// 视图层拖拽完成后只上报最终顺序，真正的集合重排和后续状态持久化在这里统一处理。
+    /// </summary>
+    public void ReorderBundleTabs(IReadOnlyList<BundleDocumentTabViewModel> orderedTabs)
+    {
+        ArgumentNullException.ThrowIfNull(orderedTabs);
+
+        if (!ObservableCollectionOrderHelper.Reorder(BundleTabs, orderedTabs))
+        {
+            return;
+        }
+
+        RequestWorkspaceBrowserStatePersistence();
+    }
+
+    /// <summary>
+    /// 右侧资产详情标签顺序归属当前活动资源包标签页。
+    /// 拖拽重排后保持当前活动标签不变，只更新集合顺序并写回工作区浏览状态。
+    /// </summary>
+    public void ReorderActiveAssetDocumentTabs(IReadOnlyList<AssetDocumentTabViewModel> orderedTabs)
+    {
+        ArgumentNullException.ThrowIfNull(orderedTabs);
+
+        if (ActiveBundleTab is null || !ActiveBundleTab.ReorderAssetTabs(orderedTabs))
+        {
+            return;
+        }
+
+        RequestWorkspaceBrowserStatePersistence();
     }
 
     public async Task CloseBundleTabAsync(BundleDocumentTabViewModel? tab)
@@ -556,10 +587,6 @@ public sealed class BundleExplorerViewModel : ObservableObject
         }
 
         var wasActive = ReferenceEquals(ActiveBundleTab, tab);
-        if (wasActive)
-        {
-            CaptureActiveTabState();
-        }
 
         BundleTabs.RemoveAt(removedIndex);
 
@@ -601,16 +628,10 @@ public sealed class BundleExplorerViewModel : ObservableObject
         {
             if (!ReferenceEquals(ActiveBundleTab, retainedTab) && _workspaceSummary is not null)
             {
-                CaptureActiveTabState();
                 await SetActiveBundleTabAsync(retainedTab, writeSelectionLog: false);
             }
 
             return;
-        }
-
-        if (ActiveBundleTab is not null && !ReferenceEquals(ActiveBundleTab, retainedTab))
-        {
-            CaptureActiveTabState();
         }
 
         var tabsToRemove = BundleTabs
@@ -1859,7 +1880,6 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
         if (openAsPinnedTab)
         {
-            CaptureActiveTabState();
             var pinnedTab = CreateBundleTab(bundleNode, isPreview: false);
             BundleTabs.Add(pinnedTab);
             await SetActiveBundleTabAsync(pinnedTab, writeSelectionLog: false);
@@ -1878,7 +1898,6 @@ public sealed class BundleExplorerViewModel : ObservableObject
             return;
         }
 
-        CaptureActiveTabState();
         var newPreviewTab = CreateBundleTab(bundleNode, isPreview: true);
         BundleTabs.Add(newPreviewTab);
         await SetActiveBundleTabAsync(newPreviewTab, writeSelectionLog: false);
@@ -1914,6 +1933,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     private async Task SetActiveBundleTabAsync(BundleDocumentTabViewModel tab, bool writeSelectionLog)
     {
+        CaptureCurrentBundleTabStateBeforeActivation(tab);
         BeginAssetDocumentHostSynchronization();
         try
         {
@@ -1964,10 +1984,31 @@ public sealed class BundleExplorerViewModel : ObservableObject
         }
     }
 
-    private void CaptureActiveTabState()
+    /// <summary>
+    /// 资源包标签切换前统一先抓取当前主窗格状态。
+    /// 这样左侧资源包列表和顶部资源包标签会共用同一条保存链路，
+    /// 避免“关闭某个筛选后切到别处，又被旧的开启态覆盖回来”。
+    /// </summary>
+    private void CaptureCurrentBundleTabStateBeforeActivation(BundleDocumentTabViewModel nextTab)
+    {
+        ArgumentNullException.ThrowIfNull(nextTab);
+
+        if (ActiveBundleTab is null || ReferenceEquals(ActiveBundleTab, nextTab))
+        {
+            return;
+        }
+
+        CaptureActiveTabState(requestPersistence: false);
+    }
+
+    private void CaptureActiveTabState(bool requestPersistence = true)
     {
         ActiveBundleTab?.CaptureFromPane(PrimaryPane);
-        RequestWorkspaceBrowserStatePersistence();
+
+        if (requestPersistence)
+        {
+            RequestWorkspaceBrowserStatePersistence();
+        }
     }
 
     private bool IsSynchronizingPrimaryPaneState => _primaryPaneStateSynchronizationDepth > 0;

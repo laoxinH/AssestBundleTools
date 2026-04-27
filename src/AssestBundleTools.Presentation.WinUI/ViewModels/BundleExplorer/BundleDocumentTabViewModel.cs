@@ -232,6 +232,17 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         ActiveAssetTab = activeAssetTab ?? AssetTabs.FirstOrDefault();
     }
 
+    /// <summary>
+    /// 资产文档标签的展示顺序属于当前资源包标签页的页面级状态。
+    /// 拖拽重排后在这里统一回写到底层集合，便于后续随工作区元数据一起恢复。
+    /// </summary>
+    public bool ReorderAssetTabs(IReadOnlyList<AssetDocumentTabViewModel> orderedAssetTabs)
+    {
+        ArgumentNullException.ThrowIfNull(orderedAssetTabs);
+
+        return ObservableCollectionOrderHelper.Reorder(AssetTabs, orderedAssetTabs);
+    }
+
     public void RemoveAssetTab(AssetDocumentTabViewModel assetTab)
     {
         ArgumentNullException.ThrowIfNull(assetTab);

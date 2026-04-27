@@ -478,7 +478,7 @@
                     Value="{ThemeResource TextFillColorSecondaryBrush}" />
                 <Setter
                     Property="BorderBrush"
-                    Value="Transparent" />
+                    Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
                 <Setter
                     Property="BorderThickness"
                     Value="1" />
@@ -581,7 +581,7 @@
                                                     Storyboard.TargetProperty="BorderBrush">
                                                     <DiscreteObjectKeyFrame
                                                         KeyTime="0"
-                                                        Value="Transparent" />
+                                                        Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
                                                 </ObjectAnimationUsingKeyFrames>
                                                 <DoubleAnimation
                                                     Storyboard.TargetName="CheckedBackground"
@@ -642,7 +642,7 @@
                                                     Storyboard.TargetProperty="BorderBrush">
                                                     <DiscreteObjectKeyFrame
                                                         KeyTime="0"
-                                                        Value="Transparent" />
+                                                        Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
                                                 </ObjectAnimationUsingKeyFrames>
                                                 <DoubleAnimation
                                                     Storyboard.TargetName="CheckedBackground"
@@ -703,7 +703,7 @@
                                                     Storyboard.TargetProperty="BorderBrush">
                                                     <DiscreteObjectKeyFrame
                                                         KeyTime="0"
-                                                        Value="Transparent" />
+                                                        Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
                                                 </ObjectAnimationUsingKeyFrames>
                                                 <DoubleAnimation
                                                     Storyboard.TargetName="CheckedBackground"
