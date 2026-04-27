@@ -50,6 +50,8 @@ public sealed class BundleExplorerViewModel : ObservableObject
     private readonly IWorkspaceImportCoordinatorService _workspaceImportCoordinatorService;
     private readonly IAssetBundleDecryptorRegistry _assetBundleDecryptorRegistry;
     private readonly IPathNavigationService _pathNavigationService;
+    private readonly LocalizedValueFormatter _localizedValueFormatter;
+    private readonly AssetPreviewDisplayFormatter _assetPreviewDisplayFormatter;
     private readonly List<BundleGroupViewModel> _allBundleGroups = new();
     private readonly Dictionary<string, BundleNodeViewModel> _bundleLookup = new(StringComparer.Ordinal);
     private readonly ObservableCollection<AssetDocumentTabViewModel> _emptyAssetTabs = [];
@@ -90,6 +92,8 @@ public sealed class BundleExplorerViewModel : ObservableObject
         _workspaceImportCoordinatorService = workspaceImportCoordinatorService ?? throw new ArgumentNullException(nameof(workspaceImportCoordinatorService));
         _assetBundleDecryptorRegistry = assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry));
         _pathNavigationService = pathNavigationService ?? throw new ArgumentNullException(nameof(pathNavigationService));
+        _localizedValueFormatter = new LocalizedValueFormatter(_localizationService);
+        _assetPreviewDisplayFormatter = new AssetPreviewDisplayFormatter(_localizationService);
 
         PrimaryPane = new AssetPaneViewModel();
         _emptyInspector = new InspectorPanelViewModel();
@@ -1406,7 +1410,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
             assetTypeText: ResolveAssetTypeDisplayName(details.AssetType, details.AssetTypeDisplayName),
             assetPath: details.AssetPath,
             containerPath: details.ContainerPath,
-            sizeText: FormatSize(ResolveDisplaySizeInBytes(details.SizeInBytes, details.PreferredDisplaySizeInBytes)),
+            sizeText: _localizedValueFormatter.FormatCompactByteSize(ResolveDisplaySizeInBytes(details.SizeInBytes, details.PreferredDisplaySizeInBytes)),
             pathIdText: details.PathId.ToString(CultureInfo.InvariantCulture),
             extractCapabilityText: details.CanExtract
                 ? GetString(ResourceKeys.InspectorCapabilityAvailable)
@@ -2077,7 +2081,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         new(
             item: item,
             assetTypeText: ResolveAssetTypeDisplayName(item.AssetType, item.AssetTypeDisplayName),
-            sizeText: FormatSize(ResolveDisplaySizeInBytes(item.SizeInBytes, item.PreferredDisplaySizeInBytes)),
+            sizeText: _localizedValueFormatter.FormatCompactByteSize(ResolveDisplaySizeInBytes(item.SizeInBytes, item.PreferredDisplaySizeInBytes)),
             stateText: item.IsModified
                 ? GetString(ResourceKeys.AssetStateModified)
                 : GetString(ResourceKeys.AssetStateOriginal));
@@ -2775,9 +2779,10 @@ public sealed class BundleExplorerViewModel : ObservableObject
         }
 
         var preview = previewResult.Value;
+        var previewInfoRows = _assetPreviewDisplayFormatter.BuildPreviewInfoRows(preview.PreviewInfoItems);
         if (preview.PreferredDisplaySizeInBytes is { } preferredDisplaySizeInBytes && preferredDisplaySizeInBytes > 0)
         {
-            assetTab.Inspector.OverrideSizeText(FormatSize(preferredDisplaySizeInBytes));
+            assetTab.Inspector.OverrideSizeText(_localizedValueFormatter.FormatCompactByteSize(preferredDisplaySizeInBytes));
         }
 
         try
@@ -2797,7 +2802,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
                         _appLogService.AppendWarning(_localizationService.GetFormattedString(
                             ResourceKeys.BundleExplorerLogAssetPreviewFailedFormat,
                             details.Name,
-                            "Image payload could not be decoded."));
+                            GetString(ResourceKeys.BundleExplorerPreviewImageDecodeFailed)));
                         assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
                         ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                         return;
@@ -2805,7 +2810,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
                     assetTab.Inspector.ApplyImagePreview(
                         imageSource,
-                        preview.PreviewInfoText,
+                        previewInfoRows,
                         preview.PreviewPayloadFilePath);
                     ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
@@ -2821,7 +2826,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
                     assetTab.Inspector.ApplyTextPreview(
                         preview.TextContent,
-                        preview.PreviewInfoText,
+                        previewInfoRows,
                         preview.PreviewPayloadFilePath);
                     ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
@@ -2840,7 +2845,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
                         _appLogService.AppendWarning(_localizationService.GetFormattedString(
                             ResourceKeys.BundleExplorerLogAssetPreviewFailedFormat,
                             details.Name,
-                            "Audio payload could not be decoded."));
+                            GetString(ResourceKeys.BundleExplorerPreviewAudioDecodeFailed)));
                         assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
                         ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                         return;
@@ -2849,15 +2854,21 @@ public sealed class BundleExplorerViewModel : ObservableObject
                     assetTab.Inspector.ApplyAudioPreview(
                         audioPreviewSource.MediaSource,
                         audioPreviewSource.Stream,
-                        preview.PreviewInfoText,
-                        preview.PreferredDisplaySizeInBytes,
+                        previewInfoRows,
+                        _assetPreviewDisplayFormatter.BuildAudioPreviewDisplayState(
+                            preview.PreviewInfoItems,
+                            preview.PreferredDisplaySizeInBytes),
                         preview.PreviewPayloadFilePath);
                     ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
                 }
                 case AssetPreviewKind.Summary:
                 {
-                    if (string.IsNullOrWhiteSpace(preview.TextContent))
+                    var summaryText = !string.IsNullOrWhiteSpace(preview.TextContent)
+                        ? preview.TextContent
+                        : _assetPreviewDisplayFormatter.BuildPreviewMessageText(preview.PreviewMessage);
+
+                    if (string.IsNullOrWhiteSpace(summaryText))
                     {
                         assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
                         ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
@@ -2865,8 +2876,8 @@ public sealed class BundleExplorerViewModel : ObservableObject
                     }
 
                     assetTab.Inspector.ApplySummaryPreview(
-                        preview.TextContent,
-                        preview.PreviewInfoText,
+                        summaryText,
+                        previewInfoRows,
                         preview.PreviewPayloadFilePath);
                     ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
@@ -3178,21 +3189,6 @@ public sealed class BundleExplorerViewModel : ObservableObject
         _appNotificationService.Show(title, message, severity);
     }
 
-    private string FormatSize(long sizeInBytes)
-    {
-        if (sizeInBytes >= 1024 * 1024)
-        {
-            return $"{sizeInBytes / 1024d / 1024d:F1} MB";
-        }
-
-        if (sizeInBytes >= 1024)
-        {
-            return $"{sizeInBytes / 1024d:F1} KB";
-        }
-
-        return $"{sizeInBytes:N0} B";
-    }
-
     private static long ResolveDisplaySizeInBytes(long sizeInBytes, long? preferredDisplaySizeInBytes)
     {
         return preferredDisplaySizeInBytes is { } preferredSize && preferredSize > 0
@@ -3252,7 +3248,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     {
         if (errors.Count == 0)
         {
-            return "unexpected failure";
+            return GetString(ResourceKeys.CommonUnexpectedFailure);
         }
 
         var firstError = errors[0];

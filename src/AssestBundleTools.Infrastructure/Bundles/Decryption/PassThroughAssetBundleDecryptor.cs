@@ -12,12 +12,12 @@ public sealed class PassThroughAssetBundleDecryptor : IAssetBundleDecryptor
 {
     public static AssetBundleDecryptorDescriptorDto DefaultDescriptor { get; } = new(
         Id: AssetBundleDecryptorIds.BuiltInPassThrough,
-        DisplayName: "Pass Through",
+        DisplayName: AssetBundleDecryptorIds.BuiltInPassThrough,
         Version: "1.0.0",
         Kind: AssetBundleDecryptorKind.BuiltIn,
         SupportsAutoDetection: false,
         IsFallback: true,
-        Description: "Do not transform the bundle source; pass it directly to the reader.");
+        Description: null);
 
     public AssetBundleDecryptorDescriptorDto Descriptor => DefaultDescriptor;
 
@@ -33,7 +33,7 @@ public sealed class PassThroughAssetBundleDecryptor : IAssetBundleDecryptor
             IsSuccessful: fileExists,
             IsMatch: fileExists,
             Confidence: fileExists ? 1 : 0,
-            Message: fileExists ? "Pass-through fallback available." : "Source file does not exist."));
+            Message: null));
     }
 
     public Task<Result<AssetBundleDecryptionResultDto>> DecryptAsync(
@@ -49,7 +49,7 @@ public sealed class PassThroughAssetBundleDecryptor : IAssetBundleDecryptor
             ResolvedBundlePath: Path.GetFullPath(request.SourcePath),
             ProducedDerivedFile: false,
             BundleFingerprint: AssetBundleFileFingerprintFactory.Create(request.SourcePath),
-            Message: "Source bundle was passed through without decryption.");
+            Message: null);
 
         return Task.FromResult(Result<AssetBundleDecryptionResultDto>.Success(result));
     }

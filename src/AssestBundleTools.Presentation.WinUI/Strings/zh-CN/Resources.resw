@@ -846,6 +846,264 @@
   <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.GenerationFailed" xml:space="preserve">
     <value>预览生成失败</value>
   </data>
+  <data name="InspectorPanelView.PreviewMessage.MetadataOnly.Text" xml:space="preserve">
+    <value>当前资源类型暂不提供富预览，下方信息卡已保留可用摘要字段。</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.MissingLocator.Text" xml:space="preserve">
+    <value>当前资源缺少预览定位信息，请重新导入该资源包以重建缓存定位器。</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.DecryptorResolveFailed.Text" xml:space="preserve">
+    <value>无法解析当前资源包绑定的解密器，暂时只能显示摘要状态。</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.DecryptionFailed.Text" xml:space="preserve">
+    <value>资源包在预览阶段解密失败，暂时无法生成可视预览。</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.GenerationFailed.Text" xml:space="preserve">
+    <value>预览生成器未能解析当前资源内容，暂时只能显示摘要状态。</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.AudioPayloadMissing.Text" xml:space="preserve">
+    <value>当前 AudioClip 未包含可读取的音频载荷，暂时只能显示摘要信息。</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.AudioUnknownContainerUnsupported.Text" xml:space="preserve">
+    <value>当前音频容器暂未识别，暂时只能显示摘要信息。</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.AudioUnsupportedContainer.Text" xml:space="preserve">
+    <value>当前音频容器 {0} 暂不支持直接播放，暂时只能显示摘要信息。</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.AudioFsb5RequiresExternalTranscode.Text" xml:space="preserve">
+    <value>当前音频容器为 FSB5，需要外部转码后才能播放；若转码不可用则会回退为摘要信息。</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.AudioTranscodeUnavailable.Text" xml:space="preserve">
+    <value>当前音频容器为 {0}，但未发现可用外部转码器，暂时只能显示摘要信息。</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.AudioTranscodeFailed.Text" xml:space="preserve">
+    <value>当前音频容器为 {0}，但外部转码失败，暂时只能显示摘要信息。</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.ImageDimensions.Label" xml:space="preserve">
+    <value>图像尺寸</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.PreviewPixelEncoding.Label" xml:space="preserve">
+    <value>预览像素格式</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.PreviewOutputFormat.Label" xml:space="preserve">
+    <value>输出格式</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SerializedObjectSize.Label" xml:space="preserve">
+    <value>资源记录大小</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureFormatId.Label" xml:space="preserve">
+    <value>纹理格式 ID</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureMipCount.Label" xml:space="preserve">
+    <value>Mip 数量</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureDecodedSize.Label" xml:space="preserve">
+    <value>解码后大小</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureOriginalDataSize.Label" xml:space="preserve">
+    <value>原始纹理数据大小</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureStreamDataSize.Label" xml:space="preserve">
+    <value>流数据大小</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureStreamDataPath.Label" xml:space="preserve">
+    <value>流数据来源</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureWidth.Label" xml:space="preserve">
+    <value>宽度</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureHeight.Label" xml:space="preserve">
+    <value>高度</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteTexturePathId.Label" xml:space="preserve">
+    <value>纹理 PathId</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpritePixelsPerUnit.Label" xml:space="preserve">
+    <value>每单位像素</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteTextureRect.Label" xml:space="preserve">
+    <value>纹理矩形</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteCropSize.Label" xml:space="preserve">
+    <value>裁切尺寸</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteCropOrigin.Label" xml:space="preserve">
+    <value>裁切起点</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteSourceTextureDimensions.Label" xml:space="preserve">
+    <value>源纹理尺寸</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteSourceTextureFormatId.Label" xml:space="preserve">
+    <value>源纹理格式 ID</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioContainer.Label" xml:space="preserve">
+    <value>音频容器</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioOriginalContainer.Label" xml:space="preserve">
+    <value>原始音频容器</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioOutputContainer.Label" xml:space="preserve">
+    <value>预览输出容器</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioTranscoder.Label" xml:space="preserve">
+    <value>预览转码器</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioTranscoderVersion.Label" xml:space="preserve">
+    <value>转码器版本</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioPayloadSource.Label" xml:space="preserve">
+    <value>载荷来源</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioPayloadFile.Label" xml:space="preserve">
+    <value>载荷文件</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioPayloadSize.Label" xml:space="preserve">
+    <value>音频载荷大小</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioLoadType.Label" xml:space="preserve">
+    <value>加载类型</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioChannels.Label" xml:space="preserve">
+    <value>声道数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioFrequency.Label" xml:space="preserve">
+    <value>采样频率</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioBitsPerSample.Label" xml:space="preserve">
+    <value>位深</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioDuration.Label" xml:space="preserve">
+    <value>时长</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioCompressionFormatId.Label" xml:space="preserve">
+    <value>压缩格式 ID</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioResourceStreamSize.Label" xml:space="preserve">
+    <value>资源流大小</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshSubMeshCount.Label" xml:space="preserve">
+    <value>子网格数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshBlendShapeCount.Label" xml:space="preserve">
+    <value>BlendShape 数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshBoneNameHashCount.Label" xml:space="preserve">
+    <value>骨骼名称哈希数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MaterialTexturePropertyCount.Label" xml:space="preserve">
+    <value>纹理属性数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MaterialFloatPropertyCount.Label" xml:space="preserve">
+    <value>浮点属性数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MaterialColorPropertyCount.Label" xml:space="preserve">
+    <value>颜色属性数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.GameObjectComponentCount.Label" xml:space="preserve">
+    <value>组件数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.GameObjectLayer.Label" xml:space="preserve">
+    <value>层级</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.GameObjectIsActive.Label" xml:space="preserve">
+    <value>启用状态</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MonoBehaviourEnabled.Label" xml:space="preserve">
+    <value>启用状态</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MonoBehaviourScriptPathId.Label" xml:space="preserve">
+    <value>脚本 PathId</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AnimationClipSampleRate.Label" xml:space="preserve">
+    <value>采样率</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AnimationClipIsLegacy.Label" xml:space="preserve">
+    <value>旧版模式</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AnimationClipEventCount.Label" xml:space="preserve">
+    <value>事件数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AnimatorControllerLayerCount.Label" xml:space="preserve">
+    <value>层数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AnimatorControllerParameterCount.Label" xml:space="preserve">
+    <value>参数数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.FontLineSpacing.Label" xml:space="preserve">
+    <value>行间距</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.FontDefaultSize.Label" xml:space="preserve">
+    <value>默认字号</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.FontAsciiStartOffset.Label" xml:space="preserve">
+    <value>ASCII 起始偏移</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteAtlasPackedSpriteCount.Label" xml:space="preserve">
+    <value>打包精灵数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.UnknownTypeId.Label" xml:space="preserve">
+    <value>类型 ID</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfoValue.AudioPayloadSource.Inline" xml:space="preserve">
+    <value>内嵌音频数据</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfoValue.AudioPayloadSource.BundleResource" xml:space="preserve">
+    <value>资源包附带 .resource</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfoValue.AudioPayloadSource.ExternalResource" xml:space="preserve">
+    <value>外部资源文件</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfoValue.Common.Unknown" xml:space="preserve">
+    <value>未知</value>
+  </data>
+  <data name="Common.ByteSize.Compact.Megabytes.Format" xml:space="preserve">
+    <value>{0} MB</value>
+  </data>
+  <data name="Common.ByteSize.Compact.Kilobytes.Format" xml:space="preserve">
+    <value>{0} KB</value>
+  </data>
+  <data name="Common.ByteSize.Compact.Bytes.Format" xml:space="preserve">
+    <value>{0} B</value>
+  </data>
+  <data name="Common.ByteSize.Detailed.MegabytesWithBytes.Format" xml:space="preserve">
+    <value>{0} MB ({1} 字节)</value>
+  </data>
+  <data name="Common.ByteSize.Detailed.KilobytesWithBytes.Format" xml:space="preserve">
+    <value>{0} KB ({1} 字节)</value>
+  </data>
+  <data name="Common.ByteSize.Detailed.Bytes.Format" xml:space="preserve">
+    <value>{0} B</value>
+  </data>
+  <data name="InspectorPanelView.DurationSeconds.Format" xml:space="preserve">
+    <value>{0} 秒</value>
+  </data>
+  <data name="InspectorPanelView.FrequencyHertz.Format" xml:space="preserve">
+    <value>{0} Hz</value>
+  </data>
+  <data name="InspectorPanelView.BitsPerSample.Format" xml:space="preserve">
+    <value>{0} bit</value>
+  </data>
+  <data name="InspectorPanelView.Boolean.True" xml:space="preserve">
+    <value>是</value>
+  </data>
+  <data name="InspectorPanelView.Boolean.False" xml:space="preserve">
+    <value>否</value>
+  </data>
+  <data name="InspectorPanelView.AudioPreview.OriginalSize.Format" xml:space="preserve">
+    <value>原始 {0}</value>
+  </data>
+  <data name="InspectorPanelView.AudioPreview.AssetSize.Format" xml:space="preserve">
+    <value>资源大小 {0}</value>
+  </data>
+  <data name="InspectorPanelView.AudioPreview.GeneratedSize.Format" xml:space="preserve">
+    <value>预览 {0}</value>
+  </data>
+  <data name="InspectorPanelView.AudioPreview.ChannelBadge.Format" xml:space="preserve">
+    <value>{0} 声道</value>
+  </data>
+  <data name="InspectorPanelView.AudioPreview.ContainerBadgeTranscoded.Format" xml:space="preserve">
+    <value>{0} -> {1}</value>
+  </data>
   <data name="InspectorPanelView.DependencyMetadataWithPathId.Format" xml:space="preserve">
     <value>{0} · PathId {1}</value>
   </data>
@@ -1382,6 +1640,15 @@
   </data>
   <data name="BundleExplorer.Log.AssetPreviewFailed.Format" xml:space="preserve">
     <value>资源“{0}”的预览加载失败：{1}</value>
+  </data>
+  <data name="BundleExplorer.Preview.ImageDecodeFailed" xml:space="preserve">
+    <value>图像预览载荷解码失败。</value>
+  </data>
+  <data name="BundleExplorer.Preview.AudioDecodeFailed" xml:space="preserve">
+    <value>音频预览载荷解码失败。</value>
+  </data>
+  <data name="Common.UnexpectedFailure" xml:space="preserve">
+    <value>发生未预期的失败。</value>
   </data>
   <data name="BundleExplorer.Log.FilterApplied" xml:space="preserve">
     <value>{0} 已按当前筛选条件重新加载 {1}。</value>

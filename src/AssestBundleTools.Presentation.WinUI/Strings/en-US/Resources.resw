@@ -846,6 +846,264 @@
   <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.GenerationFailed" xml:space="preserve">
     <value>Preview generation failed</value>
   </data>
+  <data name="InspectorPanelView.PreviewMessage.MetadataOnly.Text" xml:space="preserve">
+    <value>This asset type does not provide a rich preview yet. The information cards below still retain the available summary fields.</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.MissingLocator.Text" xml:space="preserve">
+    <value>Preview locator metadata is missing for this asset. Reimport the bundle to rebuild cache locators.</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.DecryptorResolveFailed.Text" xml:space="preserve">
+    <value>The configured decryptor for this bundle could not be resolved, so only a summary can be shown right now.</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.DecryptionFailed.Text" xml:space="preserve">
+    <value>Bundle decryption failed during preview generation, so a visual preview is not available right now.</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.GenerationFailed.Text" xml:space="preserve">
+    <value>The preview generator could not parse the current asset content, so only a summary can be shown right now.</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.AudioPayloadMissing.Text" xml:space="preserve">
+    <value>This AudioClip does not contain a readable audio payload, so only summary information is available.</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.AudioUnknownContainerUnsupported.Text" xml:space="preserve">
+    <value>The current audio container could not be identified, so only summary information is available.</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.AudioUnsupportedContainer.Text" xml:space="preserve">
+    <value>The current audio container {0} is not directly playable yet, so only summary information is available.</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.AudioFsb5RequiresExternalTranscode.Text" xml:space="preserve">
+    <value>The current audio container is FSB5 and requires external transcoding before playback; otherwise it falls back to summary information.</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.AudioTranscodeUnavailable.Text" xml:space="preserve">
+    <value>The current audio container is {0}, but no external transcoder is available, so only summary information is available.</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.AudioTranscodeFailed.Text" xml:space="preserve">
+    <value>The current audio container is {0}, but external transcoding failed, so only summary information is available.</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.ImageDimensions.Label" xml:space="preserve">
+    <value>Image Dimensions</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.PreviewPixelEncoding.Label" xml:space="preserve">
+    <value>Preview Pixel Encoding</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.PreviewOutputFormat.Label" xml:space="preserve">
+    <value>Output Format</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SerializedObjectSize.Label" xml:space="preserve">
+    <value>Serialized Object Size</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureFormatId.Label" xml:space="preserve">
+    <value>Texture Format ID</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureMipCount.Label" xml:space="preserve">
+    <value>Mip Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureDecodedSize.Label" xml:space="preserve">
+    <value>Decoded Size</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureOriginalDataSize.Label" xml:space="preserve">
+    <value>Original Texture Data Size</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureStreamDataSize.Label" xml:space="preserve">
+    <value>Stream Data Size</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureStreamDataPath.Label" xml:space="preserve">
+    <value>Stream Data Source</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureWidth.Label" xml:space="preserve">
+    <value>Width</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextureHeight.Label" xml:space="preserve">
+    <value>Height</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteTexturePathId.Label" xml:space="preserve">
+    <value>Texture PathId</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpritePixelsPerUnit.Label" xml:space="preserve">
+    <value>Pixels Per Unit</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteTextureRect.Label" xml:space="preserve">
+    <value>Texture Rect</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteCropSize.Label" xml:space="preserve">
+    <value>Crop Size</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteCropOrigin.Label" xml:space="preserve">
+    <value>Crop Origin</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteSourceTextureDimensions.Label" xml:space="preserve">
+    <value>Source Texture Dimensions</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteSourceTextureFormatId.Label" xml:space="preserve">
+    <value>Source Texture Format ID</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioContainer.Label" xml:space="preserve">
+    <value>Audio Container</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioOriginalContainer.Label" xml:space="preserve">
+    <value>Original Audio Container</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioOutputContainer.Label" xml:space="preserve">
+    <value>Preview Output Container</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioTranscoder.Label" xml:space="preserve">
+    <value>Preview Transcoder</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioTranscoderVersion.Label" xml:space="preserve">
+    <value>Transcoder Version</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioPayloadSource.Label" xml:space="preserve">
+    <value>Payload Source</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioPayloadFile.Label" xml:space="preserve">
+    <value>Payload File</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioPayloadSize.Label" xml:space="preserve">
+    <value>Audio Payload Size</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioLoadType.Label" xml:space="preserve">
+    <value>Load Type</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioChannels.Label" xml:space="preserve">
+    <value>Channels</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioFrequency.Label" xml:space="preserve">
+    <value>Sample Rate</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioBitsPerSample.Label" xml:space="preserve">
+    <value>Bit Depth</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioDuration.Label" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioCompressionFormatId.Label" xml:space="preserve">
+    <value>Compression Format ID</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AudioResourceStreamSize.Label" xml:space="preserve">
+    <value>Resource Stream Size</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshSubMeshCount.Label" xml:space="preserve">
+    <value>SubMesh Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshBlendShapeCount.Label" xml:space="preserve">
+    <value>BlendShape Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshBoneNameHashCount.Label" xml:space="preserve">
+    <value>Bone Name Hash Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MaterialTexturePropertyCount.Label" xml:space="preserve">
+    <value>Texture Property Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MaterialFloatPropertyCount.Label" xml:space="preserve">
+    <value>Float Property Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MaterialColorPropertyCount.Label" xml:space="preserve">
+    <value>Color Property Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.GameObjectComponentCount.Label" xml:space="preserve">
+    <value>Component Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.GameObjectLayer.Label" xml:space="preserve">
+    <value>Layer</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.GameObjectIsActive.Label" xml:space="preserve">
+    <value>Is Active</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MonoBehaviourEnabled.Label" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MonoBehaviourScriptPathId.Label" xml:space="preserve">
+    <value>Script PathId</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AnimationClipSampleRate.Label" xml:space="preserve">
+    <value>Sample Rate</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AnimationClipIsLegacy.Label" xml:space="preserve">
+    <value>Legacy Mode</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AnimationClipEventCount.Label" xml:space="preserve">
+    <value>Event Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AnimatorControllerLayerCount.Label" xml:space="preserve">
+    <value>Layer Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AnimatorControllerParameterCount.Label" xml:space="preserve">
+    <value>Parameter Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.FontLineSpacing.Label" xml:space="preserve">
+    <value>Line Spacing</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.FontDefaultSize.Label" xml:space="preserve">
+    <value>Default Size</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.FontAsciiStartOffset.Label" xml:space="preserve">
+    <value>ASCII Start Offset</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteAtlasPackedSpriteCount.Label" xml:space="preserve">
+    <value>Packed Sprite Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.UnknownTypeId.Label" xml:space="preserve">
+    <value>Type ID</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfoValue.AudioPayloadSource.Inline" xml:space="preserve">
+    <value>Inline audio data</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfoValue.AudioPayloadSource.BundleResource" xml:space="preserve">
+    <value>Bundle-attached .resource</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfoValue.AudioPayloadSource.ExternalResource" xml:space="preserve">
+    <value>External resource file</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfoValue.Common.Unknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="Common.ByteSize.Compact.Megabytes.Format" xml:space="preserve">
+    <value>{0} MB</value>
+  </data>
+  <data name="Common.ByteSize.Compact.Kilobytes.Format" xml:space="preserve">
+    <value>{0} KB</value>
+  </data>
+  <data name="Common.ByteSize.Compact.Bytes.Format" xml:space="preserve">
+    <value>{0} B</value>
+  </data>
+  <data name="Common.ByteSize.Detailed.MegabytesWithBytes.Format" xml:space="preserve">
+    <value>{0} MB ({1} bytes)</value>
+  </data>
+  <data name="Common.ByteSize.Detailed.KilobytesWithBytes.Format" xml:space="preserve">
+    <value>{0} KB ({1} bytes)</value>
+  </data>
+  <data name="Common.ByteSize.Detailed.Bytes.Format" xml:space="preserve">
+    <value>{0} B</value>
+  </data>
+  <data name="InspectorPanelView.DurationSeconds.Format" xml:space="preserve">
+    <value>{0} sec</value>
+  </data>
+  <data name="InspectorPanelView.FrequencyHertz.Format" xml:space="preserve">
+    <value>{0} Hz</value>
+  </data>
+  <data name="InspectorPanelView.BitsPerSample.Format" xml:space="preserve">
+    <value>{0} bit</value>
+  </data>
+  <data name="InspectorPanelView.Boolean.True" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="InspectorPanelView.Boolean.False" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="InspectorPanelView.AudioPreview.OriginalSize.Format" xml:space="preserve">
+    <value>Original {0}</value>
+  </data>
+  <data name="InspectorPanelView.AudioPreview.AssetSize.Format" xml:space="preserve">
+    <value>Asset size {0}</value>
+  </data>
+  <data name="InspectorPanelView.AudioPreview.GeneratedSize.Format" xml:space="preserve">
+    <value>Preview {0}</value>
+  </data>
+  <data name="InspectorPanelView.AudioPreview.ChannelBadge.Format" xml:space="preserve">
+    <value>{0} ch</value>
+  </data>
+  <data name="InspectorPanelView.AudioPreview.ContainerBadgeTranscoded.Format" xml:space="preserve">
+    <value>{0} -> {1}</value>
+  </data>
   <data name="InspectorPanelView.DependencyMetadataWithPathId.Format" xml:space="preserve">
     <value>{0} · PathId {1}</value>
   </data>
@@ -1382,6 +1640,15 @@
   </data>
   <data name="BundleExplorer.Log.AssetPreviewFailed.Format" xml:space="preserve">
     <value>Failed to load preview for asset "{0}": {1}</value>
+  </data>
+  <data name="BundleExplorer.Preview.ImageDecodeFailed" xml:space="preserve">
+    <value>Image preview payload could not be decoded.</value>
+  </data>
+  <data name="BundleExplorer.Preview.AudioDecodeFailed" xml:space="preserve">
+    <value>Audio preview payload could not be decoded.</value>
+  </data>
+  <data name="Common.UnexpectedFailure" xml:space="preserve">
+    <value>Unexpected failure.</value>
   </data>
   <data name="BundleExplorer.Log.FilterApplied" xml:space="preserve">
     <value>{0} reloaded {1} with the current filters.</value>

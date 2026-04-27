@@ -5,6 +5,7 @@ namespace AssestBundleTools.Application.Assets.Dtos;
 /// </summary>
 public sealed record AudioPayloadTranscodeResultDto(
     AudioPayloadTranscodeStatusKind Status,
+    AudioPayloadTranscodeIssueKind Issue,
     AudioPayloadTranscoderDescriptorDto? Transcoder,
     string? ContentType,
     byte[]? Content,

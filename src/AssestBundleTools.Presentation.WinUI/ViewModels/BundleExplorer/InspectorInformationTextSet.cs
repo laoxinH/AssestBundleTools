@@ -25,21 +25,21 @@ public sealed record InspectorInformationTextSet(
     public static InspectorInformationTextSet CreateFallback()
     {
         return new InspectorInformationTextSet(
-            BasicInfoTitle: "Basic Information",
-            PreviewInfoTitle: "Preview Information",
-            PreviewDiagnosticTitle: "Preview Diagnostics",
-            AssetNameLabel: "Name",
-            AssetTypeLabel: "Type",
-            BundleLabel: "Bundle",
-            AssetPathLabel: "Asset Path",
-            ContainerPathLabel: "Container Path",
-            AssetSizeLabel: "Size",
-            PathIdLabel: "PathId",
-            PreviewCacheStatusLabel: "Cache Status",
-            PreviewFallbackReasonLabel: "Fallback Reason",
-            PreviewDiagnosticDetailLabel: "Detail",
-            CopyToolTipText: "Copy",
-            ItemCountFormat: "{0} item(s)");
+            BasicInfoTitle: string.Empty,
+            PreviewInfoTitle: string.Empty,
+            PreviewDiagnosticTitle: string.Empty,
+            AssetNameLabel: string.Empty,
+            AssetTypeLabel: string.Empty,
+            BundleLabel: string.Empty,
+            AssetPathLabel: string.Empty,
+            ContainerPathLabel: string.Empty,
+            AssetSizeLabel: string.Empty,
+            PathIdLabel: string.Empty,
+            PreviewCacheStatusLabel: string.Empty,
+            PreviewFallbackReasonLabel: string.Empty,
+            PreviewDiagnosticDetailLabel: string.Empty,
+            CopyToolTipText: string.Empty,
+            ItemCountFormat: "{0}");
     }
 
     public string FormatItemCount(int count)

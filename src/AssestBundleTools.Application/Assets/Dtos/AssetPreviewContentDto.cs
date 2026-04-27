@@ -11,7 +11,8 @@ public sealed record AssetPreviewContentDto(
     AssetPreviewKind Kind,
     string ContentType,
     byte[] Content,
-    string? PreviewInfoText = null,
+    IReadOnlyList<AssetPreviewInfoItemDto>? PreviewInfoItems = null,
+    AssetPreviewMessageDto? PreviewMessage = null,
     long? PreferredDisplaySizeInBytes = null,
     string? AudioTranscoderId = null,
     string? AudioTranscoderVersion = null);

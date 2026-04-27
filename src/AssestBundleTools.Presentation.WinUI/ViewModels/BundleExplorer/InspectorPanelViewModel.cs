@@ -22,13 +22,6 @@ public sealed class InspectorPanelViewModel : ObservableObject
     private const string BasicInfoCardKey = "basic";
     private const string PreviewInfoCardKey = "preview-info";
     private const string PreviewDiagnosticCardKey = "preview-diagnostic";
-    private const string AudioInfoContainerLabel = "音频容器";
-    private const string AudioInfoOriginalContainerLabel = "原始音频容器";
-    private const string AudioInfoOutputContainerLabel = "预览输出容器";
-    private const string AudioInfoPayloadSizeLabel = "音频载荷大小";
-    private const string AudioInfoChannelsLabel = "声道数";
-    private const string AudioInfoFrequencyLabel = "采样频率";
-    private const string AudioInfoDurationLabel = "时长";
 
     private string _emptyStateText = string.Empty;
     private string _assetName = string.Empty;
@@ -38,7 +31,6 @@ public sealed class InspectorPanelViewModel : ObservableObject
     private string _containerPath = string.Empty;
     private string _sizeText = string.Empty;
     private string _pathIdText = string.Empty;
-    private string _previewInfoText = string.Empty;
     private string _previewStatusText = string.Empty;
     private string _previewText = string.Empty;
     private string _previewPayloadFilePath = string.Empty;
@@ -54,7 +46,6 @@ public sealed class InspectorPanelViewModel : ObservableObject
     private MediaSource? _previewAudioSource;
     private IRandomAccessStream? _previewAudioStream;
     private AssetPreviewKind _previewKind;
-    private long? _previewPreferredDisplaySizeInBytes;
     private bool _isPreviewLoading;
     private string _extractCapabilityText = string.Empty;
     private string _fileReplacementCapabilityText = string.Empty;
@@ -70,6 +61,7 @@ public sealed class InspectorPanelViewModel : ObservableObject
     private bool _hasSelection;
     private int _selectedSectionIndex;
     private InspectorInformationTextSet _informationTextSet = InspectorInformationTextSet.CreateFallback();
+    private IReadOnlyList<InspectorInfoRowViewModel> _previewInfoRows = Array.Empty<InspectorInfoRowViewModel>();
 
     public string EmptyStateText
     {
@@ -473,6 +465,7 @@ public sealed class InspectorPanelViewModel : ObservableObject
         ContainerPath = string.Empty;
         SizeText = string.Empty;
         PathIdText = string.Empty;
+        _previewInfoRows = Array.Empty<InspectorInfoRowViewModel>();
         ExtractCapabilityText = string.Empty;
         FileReplacementCapabilityText = string.Empty;
         WorkspaceReplacementCapabilityText = string.Empty;
@@ -525,7 +518,7 @@ public sealed class InspectorPanelViewModel : ObservableObject
         ContainerPath = NormalizeDisplayContainerPath(assetPath, containerPath);
         SizeText = sizeText;
         PathIdText = pathIdText;
-        _previewInfoText = string.Empty;
+        _previewInfoRows = Array.Empty<InspectorInfoRowViewModel>();
         ExtractCapabilityText = extractCapabilityText;
         FileReplacementCapabilityText = fileReplacementCapabilityText;
         WorkspaceReplacementCapabilityText = workspaceReplacementCapabilityText;
@@ -570,7 +563,7 @@ public sealed class InspectorPanelViewModel : ObservableObject
     public void SetPreviewLoading(string statusText)
     {
         ResetPreviewState();
-        _previewInfoText = string.Empty;
+        _previewInfoRows = Array.Empty<InspectorInfoRowViewModel>();
         PreviewStatusText = statusText;
         IsPreviewLoading = true;
         NotifyPreviewStateChanged();
@@ -580,7 +573,7 @@ public sealed class InspectorPanelViewModel : ObservableObject
     public void ShowPreviewMessage(string statusText)
     {
         ResetPreviewState();
-        _previewInfoText = string.Empty;
+        _previewInfoRows = Array.Empty<InspectorInfoRowViewModel>();
         PreviewStatusText = statusText;
         NotifyPreviewStateChanged();
         RebuildInformationCards();
@@ -616,14 +609,14 @@ public sealed class InspectorPanelViewModel : ObservableObject
 
     public void ApplyImagePreview(
         ImageSource imageSource,
-        string? previewInfoText = null,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
         string? previewPayloadFilePath = null)
     {
         ArgumentNullException.ThrowIfNull(imageSource);
 
         ResetPreviewState();
         _previewKind = AssetPreviewKind.Image;
-        _previewInfoText = NormalizePreviewInfoText(previewInfoText);
+        _previewInfoRows = CloneRows(previewInfoRows);
         PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
         PreviewImageSource = imageSource;
         NotifyPreviewStateChanged();
@@ -637,8 +630,8 @@ public sealed class InspectorPanelViewModel : ObservableObject
     public void ApplyAudioPreview(
         MediaSource audioSource,
         IRandomAccessStream audioStream,
-        string? previewInfoText = null,
-        long? preferredDisplaySizeInBytes = null,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
+        AudioPreviewDisplayState? audioPreviewDisplayState = null,
         string? previewPayloadFilePath = null)
     {
         ArgumentNullException.ThrowIfNull(audioSource);
@@ -646,24 +639,23 @@ public sealed class InspectorPanelViewModel : ObservableObject
 
         ResetPreviewState();
         _previewKind = AssetPreviewKind.Audio;
-        _previewInfoText = NormalizePreviewInfoText(previewInfoText);
-        _previewPreferredDisplaySizeInBytes = preferredDisplaySizeInBytes;
+        _previewInfoRows = CloneRows(previewInfoRows);
         PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
         _previewAudioStream = audioStream;
         PreviewAudioSource = audioSource;
-        RebuildAudioPreviewPresentation();
+        ApplyAudioPreviewDisplayState(audioPreviewDisplayState);
         NotifyPreviewStateChanged();
         RebuildInformationCards();
     }
 
     public void ApplyTextPreview(
         string textContent,
-        string? previewInfoText = null,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
         string? previewPayloadFilePath = null)
     {
         ResetPreviewState();
         _previewKind = AssetPreviewKind.Text;
-        _previewInfoText = NormalizePreviewInfoText(previewInfoText);
+        _previewInfoRows = CloneRows(previewInfoRows);
         PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
         PreviewText = textContent;
         NotifyPreviewStateChanged();
@@ -672,12 +664,12 @@ public sealed class InspectorPanelViewModel : ObservableObject
 
     public void ApplySummaryPreview(
         string summaryText,
-        string? previewInfoText = null,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
         string? previewPayloadFilePath = null)
     {
         ResetPreviewState();
         _previewKind = AssetPreviewKind.Summary;
-        _previewInfoText = NormalizePreviewInfoText(previewInfoText);
+        _previewInfoRows = CloneRows(previewInfoRows);
         PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
         PreviewText = summaryText;
         NotifyPreviewStateChanged();
@@ -703,11 +695,10 @@ public sealed class InspectorPanelViewModel : ObservableObject
         PreviewAudioSource = null;
         _previewAudioStream?.Dispose();
         _previewAudioStream = null;
-        _previewInfoText = string.Empty;
+        _previewInfoRows = Array.Empty<InspectorInfoRowViewModel>();
         _previewCacheStatusText = string.Empty;
         _previewFallbackReasonText = string.Empty;
         _previewDiagnosticDetailText = string.Empty;
-        _previewPreferredDisplaySizeInBytes = null;
         _previewKind = AssetPreviewKind.None;
         ClearAudioPreviewPresentation();
         NotifyPreviewStateChanged();
@@ -742,7 +733,7 @@ public sealed class InspectorPanelViewModel : ObservableObject
 
         InformationCards.Add(CreateBasicInfoCard(expandedStates));
 
-        var previewInfoRows = ParseStructuredRows(_previewInfoText);
+        var previewInfoRows = _previewInfoRows;
         if (previewInfoRows.Count > 0)
         {
             InformationCards.Add(CreateCard(
@@ -829,46 +820,6 @@ public sealed class InspectorPanelViewModel : ObservableObject
         AddRowIfHasValue(rows, _informationTextSet.PreviewCacheStatusLabel, _previewCacheStatusText);
         AddRowIfHasValue(rows, _informationTextSet.PreviewFallbackReasonLabel, _previewFallbackReasonText);
         AddRowIfHasValue(rows, _informationTextSet.PreviewDiagnosticDetailLabel, _previewDiagnosticDetailText);
-
-        return rows;
-    }
-
-    /// <summary>
-    /// 当前预览补充信息仍来自基础设施层生成的轻量文本，
-    /// 这里按“首个冒号分隔”为键值行，收口成统一卡片模型。
-    /// </summary>
-    private static List<InspectorInfoRowViewModel> ParseStructuredRows(string? text)
-    {
-        var rows = new List<InspectorInfoRowViewModel>();
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return rows;
-        }
-
-        var normalizedText = text.Replace("\r\n", "\n", StringComparison.Ordinal);
-        foreach (var rawLine in normalizedText.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            if (string.IsNullOrWhiteSpace(rawLine))
-            {
-                continue;
-            }
-
-            var delimiterIndex = rawLine.IndexOf(':');
-            if (delimiterIndex < 0)
-            {
-                delimiterIndex = rawLine.IndexOf('：');
-            }
-
-            if (delimiterIndex <= 0 || delimiterIndex >= rawLine.Length - 1)
-            {
-                rows.Add(new InspectorInfoRowViewModel(string.Empty, rawLine));
-                continue;
-            }
-
-            var label = rawLine[..delimiterIndex];
-            var value = rawLine[(delimiterIndex + 1)..];
-            AddRowIfHasValue(rows, label, value);
-        }
 
         return rows;
     }
@@ -961,51 +912,6 @@ public sealed class InspectorPanelViewModel : ObservableObject
             : normalizedContainerPath;
     }
 
-    /// <summary>
-    /// 音频预览区展示的是“便于快速判断能不能拿来做替换”的摘要，
-    /// 因此这里从通用 previewInfo 文本中提取少量关键字段，收敛成顶部播放器面板所需状态。
-    /// </summary>
-    private void RebuildAudioPreviewPresentation()
-    {
-        ClearAudioPreviewPresentation();
-
-        if (_previewKind != AssetPreviewKind.Audio)
-        {
-            return;
-        }
-
-        var rows = ParseStructuredRows(_previewInfoText);
-        var lookup = rows
-            .Where(static row => !string.IsNullOrWhiteSpace(row.Label) && !string.IsNullOrWhiteSpace(row.Value))
-            .GroupBy(static row => row.Label, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(static group => group.Key, static group => group.First().Value, StringComparer.OrdinalIgnoreCase);
-
-        var directContainer = GetPreviewInfoValue(lookup, AudioInfoContainerLabel);
-        var originalContainer = GetPreviewInfoValue(lookup, AudioInfoOriginalContainerLabel);
-        var outputContainer = GetPreviewInfoValue(lookup, AudioInfoOutputContainerLabel);
-        var payloadSize = GetPreviewInfoValue(lookup, AudioInfoPayloadSizeLabel);
-        var channelCount = GetPreviewInfoValue(lookup, AudioInfoChannelsLabel);
-        var frequency = GetPreviewInfoValue(lookup, AudioInfoFrequencyLabel);
-        var duration = GetPreviewInfoValue(lookup, AudioInfoDurationLabel);
-
-        var effectiveOriginalContainer = string.IsNullOrWhiteSpace(originalContainer)
-            ? directContainer
-            : originalContainer;
-        var effectiveOutputContainer = string.IsNullOrWhiteSpace(outputContainer)
-            ? directContainer
-            : outputContainer;
-        var isTranscodedPreview = !string.IsNullOrWhiteSpace(originalContainer) || !string.IsNullOrWhiteSpace(outputContainer);
-
-        AudioPreviewSizeSummaryText = BuildAudioSizeSummary(payloadSize, _previewPreferredDisplaySizeInBytes, isTranscodedPreview);
-        AudioPreviewContainerBadgeText = BuildAudioContainerBadgeText(
-            effectiveOriginalContainer,
-            effectiveOutputContainer,
-            isTranscodedPreview);
-        AudioPreviewDurationBadgeText = duration;
-        AudioPreviewChannelBadgeText = BuildAudioChannelBadgeText(channelCount);
-        AudioPreviewFrequencyBadgeText = frequency;
-    }
-
     private void ClearAudioPreviewPresentation()
     {
         AudioPreviewSizeSummaryText = string.Empty;
@@ -1024,71 +930,20 @@ public sealed class InspectorPanelViewModel : ObservableObject
         OnPropertyChanged(nameof(AudioPreviewFrequencyBadgeVisibility));
     }
 
-    private static string GetPreviewInfoValue(
-        IReadOnlyDictionary<string, string> lookup,
-        string label)
+    private void ApplyAudioPreviewDisplayState(AudioPreviewDisplayState? audioPreviewDisplayState)
     {
-        return lookup.TryGetValue(label, out var value)
-            ? value
-            : string.Empty;
+        AudioPreviewSizeSummaryText = audioPreviewDisplayState?.SizeSummaryText ?? string.Empty;
+        AudioPreviewContainerBadgeText = audioPreviewDisplayState?.ContainerBadgeText ?? string.Empty;
+        AudioPreviewDurationBadgeText = audioPreviewDisplayState?.DurationBadgeText ?? string.Empty;
+        AudioPreviewChannelBadgeText = audioPreviewDisplayState?.ChannelBadgeText ?? string.Empty;
+        AudioPreviewFrequencyBadgeText = audioPreviewDisplayState?.FrequencyBadgeText ?? string.Empty;
     }
 
-    private static string BuildAudioSizeSummary(
-        string payloadSize,
-        long? preferredDisplaySizeInBytes,
-        bool isTranscodedPreview)
+    private static IReadOnlyList<InspectorInfoRowViewModel> CloneRows(
+        IReadOnlyList<InspectorInfoRowViewModel>? rows)
     {
-        var segments = new List<string>();
-
-        if (!string.IsNullOrWhiteSpace(payloadSize))
-        {
-            segments.Add(isTranscodedPreview
-                ? $"原始 {payloadSize}"
-                : $"资源大小 {payloadSize}");
-        }
-
-        if (isTranscodedPreview && preferredDisplaySizeInBytes is > 0)
-        {
-            segments.Add($"预览 {FormatInspectorByteSize(preferredDisplaySizeInBytes.Value)}");
-        }
-
-        return string.Join("  ·  ", segments);
-    }
-
-    private static string BuildAudioContainerBadgeText(
-        string originalContainer,
-        string outputContainer,
-        bool isTranscodedPreview)
-    {
-        if (isTranscodedPreview &&
-            !string.IsNullOrWhiteSpace(originalContainer) &&
-            !string.IsNullOrWhiteSpace(outputContainer))
-        {
-            return $"{originalContainer} -> {outputContainer}";
-        }
-
-        return outputContainer;
-    }
-
-    private static string BuildAudioChannelBadgeText(string channelCount)
-    {
-        return string.IsNullOrWhiteSpace(channelCount)
-            ? string.Empty
-            : $"{channelCount} 声道";
-    }
-
-    private static string FormatInspectorByteSize(long sizeInBytes)
-    {
-        if (sizeInBytes >= 1024L * 1024L)
-        {
-            return $"{sizeInBytes / 1024d / 1024d:F1} MB ({sizeInBytes:N0} 字节)";
-        }
-
-        if (sizeInBytes >= 1024L)
-        {
-            return $"{sizeInBytes / 1024d:F1} KB ({sizeInBytes:N0} 字节)";
-        }
-
-        return $"{sizeInBytes:N0} B";
+        return rows is { Count: > 0 }
+            ? rows.ToArray()
+            : Array.Empty<InspectorInfoRowViewModel>();
     }
 }

@@ -76,10 +76,11 @@ public sealed class AudioPayloadTranscodingService : IAudioPayloadTranscodingSer
 
         return unavailableResult ?? new AudioPayloadTranscodeResultDto(
             Status: AudioPayloadTranscodeStatusKind.Unsupported,
+            Issue: AudioPayloadTranscodeIssueKind.None,
             Transcoder: null,
             ContentType: null,
             Content: null,
-            Message: "当前没有可处理该音频容器的外部转码器。");
+            Message: null);
     }
 
     private static IReadOnlyList<IAudioPayloadTranscoderBackend> CreateDefaultBackends()

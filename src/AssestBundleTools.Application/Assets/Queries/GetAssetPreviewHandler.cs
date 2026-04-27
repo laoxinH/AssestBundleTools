@@ -135,12 +135,11 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         {
             return Result<AssetPreviewDto>.Success(BuildFallbackSummaryPreview(
                 query,
-                assetCacheEntry,
-                "Preview metadata is missing. Reimport the bundle to rebuild cache locators.",
+                AssetPreviewMessageKey.MissingLocator,
                 new AssetPreviewDiagnosticDto(
                     CacheStatus: cacheEvaluation.CacheStatus,
                     FallbackReason: AssetPreviewFallbackReasonKind.MissingLocator,
-                    Detail: "Serialized file locator is missing from bundle index cache.")));
+                    Detail: null)));
         }
 
         var decryptorResult = WorkspaceAssetBundleDecryptorResolver.Resolve(
@@ -150,12 +149,11 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         {
             return Result<AssetPreviewDto>.Success(BuildFallbackSummaryPreview(
                 query,
-                assetCacheEntry,
-                "Unable to resolve the configured decryptor for this bundle.",
+                AssetPreviewMessageKey.DecryptorResolveFailed,
                 new AssetPreviewDiagnosticDto(
                     CacheStatus: cacheEvaluation.CacheStatus,
                     FallbackReason: AssetPreviewFallbackReasonKind.DecryptorResolveFailed,
-                    Detail: BuildErrorDetail("Unable to resolve configured decryptor.", decryptorResult.Errors))));
+                    Detail: BuildTechnicalErrorDetail(decryptorResult.Errors))));
         }
 
         var decryptionResult = await decryptorResult.Value.DecryptAsync(
@@ -173,12 +171,11 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         {
             return Result<AssetPreviewDto>.Success(BuildFallbackSummaryPreview(
                 query,
-                assetCacheEntry,
-                "Unable to decrypt the bundle for preview generation.",
+                AssetPreviewMessageKey.DecryptionFailed,
                 new AssetPreviewDiagnosticDto(
                     CacheStatus: cacheEvaluation.CacheStatus,
                     FallbackReason: AssetPreviewFallbackReasonKind.DecryptionFailed,
-                    Detail: BuildErrorDetail("Bundle decryption failed during preview generation.", decryptionResult.Errors))));
+                    Detail: BuildTechnicalErrorDetail(decryptionResult.Errors))));
         }
 
         var buildRequest = new AssetPreviewBuildRequestDto(
@@ -205,12 +202,11 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         {
             return Result<AssetPreviewDto>.Success(BuildFallbackSummaryPreview(
                 query,
-                assetCacheEntry,
-                "Unable to parse preview content from the selected bundle.",
+                AssetPreviewMessageKey.GenerationFailed,
                 new AssetPreviewDiagnosticDto(
                     CacheStatus: cacheEvaluation.CacheStatus,
                     FallbackReason: AssetPreviewFallbackReasonKind.GenerationFailed,
-                    Detail: BuildErrorDetail("Preview generator failed to parse asset content.", previewContentResult.Errors))));
+                    Detail: BuildTechnicalErrorDetail(previewContentResult.Errors))));
         }
 
         var generatedAtUtc = DateTimeOffset.UtcNow;
@@ -226,7 +222,8 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             SourceFingerprint: bundleCacheEntry.SourceFingerprint,
             GeneratedAtUtc: generatedAtUtc,
             GeneratorVersion: _assetPreviewGenerator.GeneratorVersion,
-            PreviewInfoText: previewContent.PreviewInfoText,
+            PreviewInfoItems: previewContent.PreviewInfoItems,
+            PreviewMessage: previewContent.PreviewMessage,
             PreferredDisplaySizeInBytes: previewContent.PreferredDisplaySizeInBytes,
             AudioTranscoderId: previewContent.AudioTranscoderId,
             AudioTranscoderVersion: previewContent.AudioTranscoderVersion);
@@ -256,7 +253,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 IsHit: false,
                 Payload: null,
                 CacheStatus: AssetPreviewCacheStatusKind.Missing,
-                Detail: "Preview cache descriptor or payload was not found.");
+                Detail: null);
         }
 
         var descriptor = previewCachePayload.Descriptor;
@@ -271,14 +268,11 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             var cacheStatus = sourceMatches
                 ? AssetPreviewCacheStatusKind.IdentityChanged
                 : AssetPreviewCacheStatusKind.SourceFingerprintChanged;
-            var detail = sourceMatches
-                ? "Preview cache identity no longer matches the current bundle or asset."
-                : "Preview cache source fingerprint no longer matches the current bundle source.";
             return new PreviewCacheEvaluationResult(
                 IsHit: false,
                 Payload: null,
                 CacheStatus: cacheStatus,
-                Detail: detail);
+                Detail: null);
         }
 
         if (!string.Equals(descriptor.GeneratorVersion, _assetPreviewGenerator.GeneratorVersion, StringComparison.OrdinalIgnoreCase))
@@ -287,7 +281,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 IsHit: false,
                 Payload: null,
                 CacheStatus: AssetPreviewCacheStatusKind.GeneratorVersionChanged,
-                Detail: $"Preview cache generator version '{descriptor.GeneratorVersion}' no longer matches current version '{_assetPreviewGenerator.GeneratorVersion}'.");
+                Detail: null);
         }
 
         var audioTranscoderEvaluation = EvaluateAudioTranscoderCache(descriptor, assetCacheEntry);
@@ -319,7 +313,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                     IsHit: false,
                     Payload: null,
                     CacheStatus: AssetPreviewCacheStatusKind.AudioTranscoderChanged,
-                    Detail: $"Audio transcoder '{descriptor.AudioTranscoderId}' is no longer available.");
+                    Detail: null);
             }
 
             if (!string.Equals(currentDescriptor.Version, descriptor.AudioTranscoderVersion, StringComparison.OrdinalIgnoreCase))
@@ -328,7 +322,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                     IsHit: false,
                     Payload: null,
                     CacheStatus: AssetPreviewCacheStatusKind.AudioTranscoderChanged,
-                    Detail: $"Audio transcoder version '{descriptor.AudioTranscoderVersion}' no longer matches current version '{currentDescriptor.Version}'.");
+                    Detail: null);
             }
 
             return new PreviewCacheEvaluationResult(
@@ -349,7 +343,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 IsHit: false,
                 Payload: null,
                 CacheStatus: AssetPreviewCacheStatusKind.AudioTranscoderChanged,
-                Detail: "Audio transcoder availability changed and cached summary preview should be rebuilt.");
+                Detail: null);
         }
 
         return new PreviewCacheEvaluationResult(
@@ -381,7 +375,8 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 BinaryContent: content,
                 TextContent: null,
                 PreviewPayloadFilePath: previewPayloadFilePath,
-                PreviewInfoText: descriptor.PreviewInfoText,
+                PreviewInfoItems: descriptor.PreviewInfoItems,
+                PreviewMessage: descriptor.PreviewMessage,
                 PreferredDisplaySizeInBytes: descriptor.PreferredDisplaySizeInBytes,
                 IsFromCache: isFromCache,
                 GeneratedAtUtc: descriptor.GeneratedAtUtc,
@@ -395,7 +390,8 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 BinaryContent: null,
                 TextContent: Encoding.UTF8.GetString(content),
                 PreviewPayloadFilePath: previewPayloadFilePath,
-                PreviewInfoText: descriptor.PreviewInfoText,
+                PreviewInfoItems: descriptor.PreviewInfoItems,
+                PreviewMessage: descriptor.PreviewMessage,
                 PreferredDisplaySizeInBytes: descriptor.PreferredDisplaySizeInBytes,
                 IsFromCache: isFromCache,
                 GeneratedAtUtc: descriptor.GeneratedAtUtc,
@@ -404,18 +400,9 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
 
     private static AssetPreviewDto BuildFallbackSummaryPreview(
         GetAssetPreviewQuery query,
-        BundleIndexAssetCacheEntryDto assetCacheEntry,
-        string reason,
+        AssetPreviewMessageKey messageKey,
         AssetPreviewDiagnosticDto diagnostic)
     {
-        var summaryText = string.Join(Environment.NewLine, new[]
-        {
-            $"Preview unavailable: {reason}",
-            $"Type: {ResolveAssetTypeDisplayName(assetCacheEntry)}",
-            $"Asset: {assetCacheEntry.AssetName}",
-            $"Path: {assetCacheEntry.AssetPath}"
-        });
-
         return new AssetPreviewDto(
             WorkspaceId: query.WorkspaceId,
             BundleId: query.BundleId,
@@ -423,24 +410,24 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             Kind: AssetPreviewKind.Summary,
             ContentType: TextContentType,
             BinaryContent: null,
-            TextContent: summaryText,
+            TextContent: null,
             PreviewPayloadFilePath: null,
-            PreviewInfoText: null,
+            PreviewInfoItems: Array.Empty<AssetPreviewInfoItemDto>(),
+            PreviewMessage: new AssetPreviewMessageDto(messageKey),
             PreferredDisplaySizeInBytes: null,
             IsFromCache: false,
             GeneratedAtUtc: DateTimeOffset.UtcNow,
             Diagnostic: diagnostic);
     }
 
-    private static string BuildErrorDetail(string summary, IReadOnlyList<AppError> errors)
+    private static string? BuildTechnicalErrorDetail(IReadOnlyList<AppError> errors)
     {
         if (errors.Count == 0)
         {
-            return summary;
+            return null;
         }
 
-        var errorDetails = string.Join("; ", errors.Select(static error => $"{error.Code}: {error.MessageToken}"));
-        return $"{summary} {errorDetails}";
+        return string.Join("; ", errors.Select(static error => $"{error.Code}: {error.MessageToken}"));
     }
 
     private static string CreatePreviewCacheKey(string bundleCacheKey, string assetId)

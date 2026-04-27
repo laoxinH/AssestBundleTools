@@ -10,7 +10,6 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
 {
     private const string TranscoderId = "audio.vgmstream-cli";
     private const string TranscoderDisplayName = "vgmstream-cli";
-    private const string TranscoderDescription = "使用外部 vgmstream-cli 将游戏音频容器转码为标准 WAV。";
     private const int TimeoutMilliseconds = 20000;
 
     private readonly IReadOnlyList<string> _executableCandidates;
@@ -44,7 +43,7 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
             Id: TranscoderId,
             DisplayName: TranscoderDisplayName,
             Version: ResolveVersion(executablePath),
-            Description: TranscoderDescription);
+            Description: null);
     }
 
     public async Task<AudioPayloadTranscodeResultDto> TryTranscodeAsync(
@@ -58,10 +57,11 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
         {
             return new AudioPayloadTranscodeResultDto(
                 Status: AudioPayloadTranscodeStatusKind.Failed,
+                Issue: AudioPayloadTranscodeIssueKind.EmptyPayload,
                 Transcoder: null,
                 ContentType: null,
                 Content: null,
-                Message: "音频载荷为空，无法执行外部转码。");
+                Message: null);
         }
 
         var executablePath = ResolveExecutablePath();
@@ -69,17 +69,18 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
         {
             return new AudioPayloadTranscodeResultDto(
                 Status: AudioPayloadTranscodeStatusKind.Unavailable,
+                Issue: AudioPayloadTranscodeIssueKind.BackendUnavailable,
                 Transcoder: null,
                 ContentType: null,
                 Content: null,
-                Message: "未找到 vgmstream-cli，可将其放到工具目录或加入 PATH。");
+                Message: null);
         }
 
         var descriptor = new AudioPayloadTranscoderDescriptorDto(
             Id: TranscoderId,
             DisplayName: TranscoderDisplayName,
             Version: ResolveVersion(executablePath),
-            Description: TranscoderDescription);
+            Description: null);
 
         var workingDirectoryPath = ResolveWorkingDirectory(request.WorkspaceKey, request.WorkspaceDataRootPath);
         Directory.CreateDirectory(workingDirectoryPath);
@@ -102,6 +103,7 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
             {
                 return new AudioPayloadTranscodeResultDto(
                     Status: AudioPayloadTranscodeStatusKind.Failed,
+                    Issue: AudioPayloadTranscodeIssueKind.ExecutionFailed,
                     Transcoder: descriptor,
                     ContentType: null,
                     Content: null,
@@ -112,10 +114,11 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
             {
                 return new AudioPayloadTranscodeResultDto(
                     Status: AudioPayloadTranscodeStatusKind.Failed,
+                    Issue: AudioPayloadTranscodeIssueKind.OutputMissing,
                     Transcoder: descriptor,
                     ContentType: null,
                     Content: null,
-                    Message: "vgmstream-cli 未生成预期的 WAV 输出文件。");
+                    Message: null);
             }
 
             var outputContent = await File.ReadAllBytesAsync(outputFilePath, cancellationToken);
@@ -123,14 +126,16 @@ internal sealed class VgmstreamCliAudioPayloadTranscoder : IAudioPayloadTranscod
             {
                 return new AudioPayloadTranscodeResultDto(
                     Status: AudioPayloadTranscodeStatusKind.Failed,
+                    Issue: AudioPayloadTranscodeIssueKind.OutputEmpty,
                     Transcoder: descriptor,
                     ContentType: null,
                     Content: null,
-                    Message: "vgmstream-cli 生成的 WAV 输出为空。");
+                    Message: null);
             }
 
             return new AudioPayloadTranscodeResultDto(
                 Status: AudioPayloadTranscodeStatusKind.Succeeded,
+                Issue: AudioPayloadTranscodeIssueKind.None,
                 Transcoder: descriptor,
                 ContentType: "audio/wav",
                 Content: outputContent,

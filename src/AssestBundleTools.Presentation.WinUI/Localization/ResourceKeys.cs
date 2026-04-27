@@ -113,6 +113,13 @@ public static class ResourceKeys
     public const string AppNotificationWarningTitle = "AppNotification.WarningTitle";
     public const string AppNotificationErrorTitle = "AppNotification.ErrorTitle";
     public const string AppNotificationCloseButtonToolTip = "AppNotification.CloseButton.ToolTip";
+    public const string CommonUnexpectedFailure = "Common.UnexpectedFailure";
+    public const string CommonByteSizeCompactMegabytesFormat = "Common.ByteSize.Compact.Megabytes.Format";
+    public const string CommonByteSizeCompactKilobytesFormat = "Common.ByteSize.Compact.Kilobytes.Format";
+    public const string CommonByteSizeCompactBytesFormat = "Common.ByteSize.Compact.Bytes.Format";
+    public const string CommonByteSizeDetailedMegabytesWithBytesFormat = "Common.ByteSize.Detailed.MegabytesWithBytes.Format";
+    public const string CommonByteSizeDetailedKilobytesWithBytesFormat = "Common.ByteSize.Detailed.KilobytesWithBytes.Format";
+    public const string CommonByteSizeDetailedBytesFormat = "Common.ByteSize.Detailed.Bytes.Format";
     public const string WorkspaceImportFilesButtonText = "WorkspaceImport.Button.Files.Text";
     public const string WorkspaceImportDirectoryButtonText = "WorkspaceImport.Button.Directory.Text";
     public const string WorkspaceImportLogBundleFilesRegisteredFormat = "WorkspaceImport.Log.BundleFilesRegistered.Format";
@@ -359,6 +366,8 @@ public static class ResourceKeys
     public const string BundleExplorerNotificationFileReplacementApplied = "BundleExplorer.Notification.FileReplacementApplied";
     public const string BundleExplorerNotificationReplacementApplied = "BundleExplorer.Notification.ReplacementApplied";
     public const string BundleExplorerNotificationReplacementUndone = "BundleExplorer.Notification.ReplacementUndone";
+    public const string BundleExplorerPreviewImageDecodeFailed = "BundleExplorer.Preview.ImageDecodeFailed";
+    public const string BundleExplorerPreviewAudioDecodeFailed = "BundleExplorer.Preview.AudioDecodeFailed";
     public const string BundleExplorerPageBundleSearchTextBoxPlaceholder = "BundleExplorerPage.BundleSearchTextBox.PlaceholderText";
     public const string BundleExplorerPageNewWorkspaceButton = "BundleExplorerPage.NewWorkspaceButton.Content";
     public const string BundleExplorerPageOpenWorkspaceButton = "BundleExplorerPage.OpenWorkspaceButton.Content";

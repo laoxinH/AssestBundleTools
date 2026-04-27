@@ -39,6 +39,7 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
     private readonly IWorkspaceBrowserService _workspaceBrowserService;
     private readonly IWorkspaceContextService _workspaceContextService;
     private readonly ILocalizationService _localizationService;
+    private readonly LocalizedValueFormatter _localizedValueFormatter;
     private readonly IAppLogService _appLogService;
     private readonly IWorkspaceImportCoordinatorService _workspaceImportCoordinatorService;
     private bool _isInitialized;
@@ -72,6 +73,7 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
         _workspaceBrowserService = workspaceBrowserService ?? throw new ArgumentNullException(nameof(workspaceBrowserService));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+        _localizedValueFormatter = new LocalizedValueFormatter(_localizationService);
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _workspaceImportCoordinatorService = workspaceImportCoordinatorService ?? throw new ArgumentNullException(nameof(workspaceImportCoordinatorService));
 
@@ -515,7 +517,7 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
                 ResourceKeys.BatchTasksBatchExtractSummaryFormat,
                 preview.CandidateAssetCount,
                 preview.CandidateBundleCount,
-                FormatSize(preview.TotalSizeInBytes))
+                _localizedValueFormatter.FormatCompactByteSize(preview.TotalSizeInBytes))
             : GetString(ResourceKeys.BatchTasksBatchExtractEmpty);
 
         BatchExtractionBundles.Clear();
@@ -526,7 +528,7 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
                 SummaryText: _localizationService.GetFormattedString(
                     ResourceKeys.BatchTasksBatchExtractBundlePlanSummaryFormat,
                     bundlePlan.AssetCount,
-                    FormatSize(bundlePlan.TotalSizeInBytes))));
+                    _localizedValueFormatter.FormatCompactByteSize(bundlePlan.TotalSizeInBytes))));
         }
 
         NotifyWorkspaceState();
@@ -897,21 +899,6 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
 
     private string FormatTimestamp(DateTimeOffset timestamp) =>
         timestamp.ToLocalTime().ToString("G", CultureInfo.CurrentCulture);
-
-    private string FormatSize(long sizeInBytes)
-    {
-        if (sizeInBytes >= 1024 * 1024)
-        {
-            return $"{sizeInBytes / 1024d / 1024d:F1} MB";
-        }
-
-        if (sizeInBytes >= 1024)
-        {
-            return $"{sizeInBytes / 1024d:F1} KB";
-        }
-
-        return $"{sizeInBytes:N0} B";
-    }
 
     private void ReplaceBatchExtractAssetTypeOptions(IEnumerable<AssetTypeOptionViewModel> options)
     {

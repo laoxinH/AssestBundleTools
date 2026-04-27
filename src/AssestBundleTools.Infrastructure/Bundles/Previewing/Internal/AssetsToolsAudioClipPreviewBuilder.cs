@@ -56,7 +56,7 @@ internal static class AssetsToolsAudioClipPreviewBuilder
             Kind: AssetPreviewKind.Audio,
             ContentType: previewSource.Container.ContentType,
             Content: previewSource.Payload.Content,
-            PreviewInfoText: BuildPreviewInfoText(previewSource),
+            PreviewInfoItems: BuildPreviewInfoItems(previewSource),
             PreferredDisplaySizeInBytes: previewSource.Payload.PayloadSizeInBytes);
     }
 
@@ -76,7 +76,7 @@ internal static class AssetsToolsAudioClipPreviewBuilder
             Kind: AssetPreviewKind.Audio,
             ContentType: transcodeResult.ContentType,
             Content: transcodeResult.Content,
-            PreviewInfoText: BuildPreviewInfoText(
+            PreviewInfoItems: BuildPreviewInfoItems(
                 previewSource,
                 outputContainerDisplayName: ResolveOutputContainerDisplayName(transcodeResult.ContentType),
                 transcoder: transcodeResult.Transcoder),
@@ -87,35 +87,16 @@ internal static class AssetsToolsAudioClipPreviewBuilder
 
     public static AssetPreviewContentDto BuildSummaryPreview(
         AudioClipPreviewSource previewSource,
-        string reason,
-        string? diagnosticDetail = null)
+        AssetPreviewMessageDto previewMessage)
     {
         ArgumentNullException.ThrowIfNull(previewSource);
-
-        var lines = new List<string>();
-        if (!string.IsNullOrWhiteSpace(reason))
-        {
-            lines.Add(reason.Trim());
-        }
-
-        if (!string.IsNullOrWhiteSpace(diagnosticDetail))
-        {
-            lines.Add(string.Empty);
-            lines.Add($"诊断详情: {diagnosticDetail.Trim()}");
-        }
-
-        var previewInfoText = BuildPreviewInfoText(previewSource);
-        if (!string.IsNullOrWhiteSpace(previewInfoText))
-        {
-            lines.Add(string.Empty);
-            lines.AddRange(previewInfoText.Split(Environment.NewLine, StringSplitOptions.None));
-        }
 
         return new AssetPreviewContentDto(
             Kind: AssetPreviewKind.Summary,
             ContentType: TextContentType,
-            Content: System.Text.Encoding.UTF8.GetBytes(string.Join(Environment.NewLine, lines)),
-            PreviewInfoText: null,
+            Content: Array.Empty<byte>(),
+            PreviewInfoItems: BuildPreviewInfoItems(previewSource),
+            PreviewMessage: previewMessage,
             PreferredDisplaySizeInBytes: previewSource.Payload?.PayloadSizeInBytes);
     }
 
@@ -157,19 +138,21 @@ internal static class AssetsToolsAudioClipPreviewBuilder
         return $"{SanitizeFileComponent(baseName)}{extension}";
     }
 
-    public static string BuildUnsupportedContainerReason(AudioClipPreviewSource previewSource)
+    public static AssetPreviewMessageDto BuildUnsupportedContainerMessage(AudioClipPreviewSource previewSource)
     {
         ArgumentNullException.ThrowIfNull(previewSource);
 
         return previewSource.Container.Kind switch
         {
-            AudioContainerKind.Fsb5 => "当前音频容器为 FSB5，需要外部转码后才能播放；若转码不可用则回退为摘要信息。",
-            AudioContainerKind.Unknown => "当前音频容器暂未识别，已回退为摘要信息。",
-            _ => $"当前音频容器 {previewSource.Container.DisplayName} 暂不支持直接播放，已回退为摘要信息。"
+            AudioContainerKind.Fsb5 => new AssetPreviewMessageDto(AssetPreviewMessageKey.AudioFsb5RequiresExternalTranscode),
+            AudioContainerKind.Unknown => new AssetPreviewMessageDto(AssetPreviewMessageKey.AudioUnknownContainerUnsupported),
+            _ => new AssetPreviewMessageDto(
+                AssetPreviewMessageKey.AudioUnsupportedContainer,
+                [previewSource.Container.DisplayName])
         };
     }
 
-    public static string BuildTranscodeFallbackReason(
+    public static AssetPreviewMessageDto BuildTranscodeFallbackMessage(
         AudioClipPreviewSource previewSource,
         AudioPayloadTranscodeResultDto transcodeResult)
     {
@@ -178,9 +161,13 @@ internal static class AssetsToolsAudioClipPreviewBuilder
 
         return transcodeResult.Status switch
         {
-            AudioPayloadTranscodeStatusKind.Unavailable => $"当前音频容器为 {previewSource.Container.DisplayName}，但未发现可用外部转码器，已回退为摘要信息。",
-            AudioPayloadTranscodeStatusKind.Failed => $"当前音频容器为 {previewSource.Container.DisplayName}，但外部转码失败，已回退为摘要信息。",
-            _ => BuildUnsupportedContainerReason(previewSource)
+            AudioPayloadTranscodeStatusKind.Unavailable => new AssetPreviewMessageDto(
+                AssetPreviewMessageKey.AudioTranscodeUnavailable,
+                [previewSource.Container.DisplayName]),
+            AudioPayloadTranscodeStatusKind.Failed => new AssetPreviewMessageDto(
+                AssetPreviewMessageKey.AudioTranscodeFailed,
+                [previewSource.Container.DisplayName]),
+            _ => BuildUnsupportedContainerMessage(previewSource)
         };
     }
 
@@ -384,47 +371,37 @@ internal static class AssetsToolsAudioClipPreviewBuilder
         };
     }
 
-    private static string BuildPreviewInfoText(
+    private static IReadOnlyList<AssetPreviewInfoItemDto> BuildPreviewInfoItems(
         AudioClipPreviewSource previewSource,
         string? outputContainerDisplayName = null,
         AudioPayloadTranscoderDescriptorDto? transcoder = null)
     {
-        var lines = new List<string>();
+        var items = new List<AssetPreviewInfoItemDto>();
 
         if (transcoder is null)
         {
-            AddLine(lines, "音频容器", previewSource.Container.DisplayName);
+            AddTextInfo(items, AssetPreviewInfoKey.AudioContainer, previewSource.Container.DisplayName);
         }
         else
         {
-            AddLine(lines, "原始音频容器", previewSource.Container.DisplayName);
-            AddLine(lines, "预览输出容器", outputContainerDisplayName);
-            AddLine(lines, "预览转码器", transcoder.DisplayName);
-            AddLine(lines, "转码器版本", transcoder.Version);
+            AddTextInfo(items, AssetPreviewInfoKey.AudioOriginalContainer, previewSource.Container.DisplayName);
+            AddTextInfo(items, AssetPreviewInfoKey.AudioOutputContainer, outputContainerDisplayName);
+            AddTextInfo(items, AssetPreviewInfoKey.AudioTranscoder, transcoder.DisplayName);
+            AddTextInfo(items, AssetPreviewInfoKey.AudioTranscoderVersion, transcoder.Version);
         }
 
-        AddLine(lines, "载荷来源", previewSource.Payload?.SourceKind switch
-        {
-            AudioPayloadSourceKind.Inline => "内嵌音频数据",
-            AudioPayloadSourceKind.BundleResource => "资源包附带 .resource",
-            AudioPayloadSourceKind.ExternalResource => "外部资源文件",
-            _ => null
-        });
-        AddLine(lines, "载荷文件", previewSource.Payload?.SourceDisplayName);
-        AddLine(lines, "音频载荷大小", FormatByteSize(previewSource.Payload?.PayloadSizeInBytes));
-        AddLine(lines, "资源记录大小", FormatByteSize(previewSource.Metadata.SerializedObjectSizeInBytes));
-        AddLine(lines, "加载类型", previewSource.Metadata.LoadType);
-        AddLine(lines, "声道数", previewSource.Metadata.Channels);
-        AddLine(lines, "采样频率", previewSource.Metadata.Frequency.HasValue
-            ? $"{previewSource.Metadata.Frequency.Value.ToString(CultureInfo.InvariantCulture)} Hz"
-            : null);
-        AddLine(lines, "位深", previewSource.Metadata.BitsPerSample.HasValue
-            ? $"{previewSource.Metadata.BitsPerSample.Value.ToString(CultureInfo.InvariantCulture)} bit"
-            : null);
-        AddLine(lines, "时长", FormatSeconds(previewSource.Metadata.LengthInSeconds));
-        AddLine(lines, "压缩格式 ID", previewSource.Metadata.CompressionFormat);
+        AddTextInfo(items, AssetPreviewInfoKey.AudioPayloadSource, previewSource.Payload?.SourceKind.ToString());
+        AddTextInfo(items, AssetPreviewInfoKey.AudioPayloadFile, previewSource.Payload?.SourceDisplayName);
+        AddByteSizeInfo(items, AssetPreviewInfoKey.AudioPayloadSize, previewSource.Payload?.PayloadSizeInBytes);
+        AddByteSizeInfo(items, AssetPreviewInfoKey.SerializedObjectSize, previewSource.Metadata.SerializedObjectSizeInBytes);
+        AddIntegerInfo(items, AssetPreviewInfoKey.AudioLoadType, previewSource.Metadata.LoadType);
+        AddIntegerInfo(items, AssetPreviewInfoKey.AudioChannels, previewSource.Metadata.Channels);
+        AddFrequencyInfo(items, AssetPreviewInfoKey.AudioFrequency, previewSource.Metadata.Frequency);
+        AddBitsInfo(items, AssetPreviewInfoKey.AudioBitsPerSample, previewSource.Metadata.BitsPerSample);
+        AddDurationInfo(items, AssetPreviewInfoKey.AudioDuration, previewSource.Metadata.LengthInSeconds);
+        AddIntegerInfo(items, AssetPreviewInfoKey.AudioCompressionFormatId, previewSource.Metadata.CompressionFormat);
 
-        return string.Join(Environment.NewLine, lines);
+        return items;
     }
 
     private static string? ResolveBundleEntryName(string resourceSource)
@@ -551,26 +528,100 @@ internal static class AssetsToolsAudioClipPreviewBuilder
         };
     }
 
-    private static void AddLine(ICollection<string> lines, string label, object? value)
+    private static void AddTextInfo(
+        ICollection<AssetPreviewInfoItemDto> items,
+        AssetPreviewInfoKey key,
+        string? value)
     {
-        if (value is null)
+        if (string.IsNullOrWhiteSpace(value))
         {
             return;
         }
 
-        var text = value switch
-        {
-            string stringValue when string.IsNullOrWhiteSpace(stringValue) => null,
-            string stringValue => stringValue,
-            _ => Convert.ToString(value, CultureInfo.InvariantCulture)
-        };
+        items.Add(new AssetPreviewInfoItemDto(
+            Key: key,
+            ValueKind: AssetPreviewInfoValueKind.Text,
+            TextValue: value.Trim()));
+    }
 
-        if (string.IsNullOrWhiteSpace(text))
+    private static void AddIntegerInfo(
+        ICollection<AssetPreviewInfoItemDto> items,
+        AssetPreviewInfoKey key,
+        int? value)
+    {
+        if (!value.HasValue)
         {
             return;
         }
 
-        lines.Add($"{label}: {text}");
+        items.Add(new AssetPreviewInfoItemDto(
+            Key: key,
+            ValueKind: AssetPreviewInfoValueKind.Integer,
+            Int64Value: value.Value));
+    }
+
+    private static void AddByteSizeInfo(
+        ICollection<AssetPreviewInfoItemDto> items,
+        AssetPreviewInfoKey key,
+        long? value)
+    {
+        if (!value.HasValue || value.Value <= 0)
+        {
+            return;
+        }
+
+        items.Add(new AssetPreviewInfoItemDto(
+            Key: key,
+            ValueKind: AssetPreviewInfoValueKind.ByteSize,
+            Int64Value: value.Value));
+    }
+
+    private static void AddFrequencyInfo(
+        ICollection<AssetPreviewInfoItemDto> items,
+        AssetPreviewInfoKey key,
+        int? value)
+    {
+        if (!value.HasValue)
+        {
+            return;
+        }
+
+        items.Add(new AssetPreviewInfoItemDto(
+            Key: key,
+            ValueKind: AssetPreviewInfoValueKind.FrequencyHertz,
+            Int64Value: value.Value));
+    }
+
+    private static void AddBitsInfo(
+        ICollection<AssetPreviewInfoItemDto> items,
+        AssetPreviewInfoKey key,
+        int? value)
+    {
+        if (!value.HasValue)
+        {
+            return;
+        }
+
+        items.Add(new AssetPreviewInfoItemDto(
+            Key: key,
+            ValueKind: AssetPreviewInfoValueKind.BitsPerSample,
+            Int64Value: value.Value));
+    }
+
+    private static void AddDurationInfo(
+        ICollection<AssetPreviewInfoItemDto> items,
+        AssetPreviewInfoKey key,
+        float? value)
+    {
+        if (!value.HasValue)
+        {
+            return;
+        }
+
+        items.Add(new AssetPreviewInfoItemDto(
+            Key: key,
+            ValueKind: AssetPreviewInfoValueKind.DurationSeconds,
+            NumberValue: value.Value));
     }
 
     private static string SanitizeFileComponent(string value)
@@ -579,33 +630,6 @@ internal static class AssetsToolsAudioClipPreviewBuilder
             .Select(ch => Path.GetInvalidFileNameChars().Contains(ch) ? '_' : ch)
             .ToArray();
         return new string(sanitizedChars);
-    }
-
-    private static string? FormatSeconds(float? value)
-    {
-        return value.HasValue
-            ? $"{value.Value.ToString("0.###", CultureInfo.InvariantCulture)} 秒"
-            : null;
-    }
-
-    private static string? FormatByteSize(long? value)
-    {
-        if (!value.HasValue || value.Value <= 0)
-        {
-            return null;
-        }
-
-        var rawValue = value.Value;
-        var compactText = rawValue switch
-        {
-            >= 1024L * 1024L => $"{rawValue / 1024d / 1024d:F1} MB",
-            >= 1024L => $"{rawValue / 1024d:F1} KB",
-            _ => $"{rawValue.ToString("N0", CultureInfo.InvariantCulture)} B"
-        };
-
-        return rawValue >= 1024L
-            ? $"{compactText} ({rawValue.ToString("N0", CultureInfo.InvariantCulture)} 字节)"
-            : compactText;
     }
 
     internal enum AudioPayloadSourceKind
@@ -643,7 +667,7 @@ internal static class AssetsToolsAudioClipPreviewBuilder
         string? ContentType,
         bool IsPlayable)
     {
-        public static AudioContainerProfile Unknown { get; } = new(AudioContainerKind.Unknown, "未知", null, false);
+        public static AudioContainerProfile Unknown { get; } = new(AudioContainerKind.Unknown, nameof(AudioContainerKind.Unknown), null, false);
 
         public static AudioContainerProfile Wav { get; } = new(AudioContainerKind.Wav, "WAV", "audio/wav", true);
 

@@ -190,7 +190,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         {
             return AssetsToolsAudioClipPreviewBuilder.BuildSummaryPreview(
                 previewSource,
-                "当前资源未包含可读取的音频载荷，已回退为摘要信息。");
+                new AssetPreviewMessageDto(AssetPreviewMessageKey.AudioPayloadMissing));
         }
 
         if (previewSource.Container.IsPlayable)
@@ -202,7 +202,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         {
             return AssetsToolsAudioClipPreviewBuilder.BuildSummaryPreview(
                 previewSource,
-                AssetsToolsAudioClipPreviewBuilder.BuildUnsupportedContainerReason(previewSource));
+                AssetsToolsAudioClipPreviewBuilder.BuildUnsupportedContainerMessage(previewSource));
         }
 
         var transcodeResult = await _audioPayloadTranscodingService.TryTranscodeAsync(
@@ -220,8 +220,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
 
         return AssetsToolsAudioClipPreviewBuilder.BuildSummaryPreview(
             previewSource,
-            AssetsToolsAudioClipPreviewBuilder.BuildTranscodeFallbackReason(previewSource, transcodeResult),
-            transcodeResult.Message);
+            AssetsToolsAudioClipPreviewBuilder.BuildTranscodeFallbackMessage(previewSource, transcodeResult));
     }
 
     private static bool TryBuildTexturePreview(
@@ -239,7 +238,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
 
         return TryEncodeTexturePreview(
             textureImage,
-            BuildTexturePreviewInfo(baseField, textureImage, request.SizeInBytes),
+            BuildTexturePreviewInfoItems(baseField, textureImage, request.SizeInBytes),
             AssetsToolsAssetDisplayMetadataResolver.ResolvePreferredDisplaySizeInBytes(AssetClassID.Texture2D, baseField),
             out previewContent);
     }
@@ -320,7 +319,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
 
         return TryEncodeTexturePreview(
             spriteImage,
-            BuildSpritePreviewInfo(baseField, textureField, spriteImage, pathId.Value, cropMetadata, request.SizeInBytes),
+            BuildSpritePreviewInfoItems(baseField, textureField, spriteImage, pathId.Value, cropMetadata, request.SizeInBytes),
             preferredDisplaySizeInBytes: null,
             out previewContent);
     }
@@ -390,7 +389,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
 
     private static bool TryEncodeTexturePreview(
         DecodedTextureImage textureImage,
-        string? previewInfoText,
+        IReadOnlyList<AssetPreviewInfoItemDto> previewInfoItems,
         long? preferredDisplaySizeInBytes,
         out AssetPreviewContentDto previewContent)
     {
@@ -402,7 +401,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
                 Kind: AssetPreviewKind.Image,
                 ContentType: PngContentType,
                 Content: EncodeRgbaPng(textureImage.Width, textureImage.Height, textureImage.RgbaPixels),
-                PreviewInfoText: previewInfoText,
+                PreviewInfoItems: previewInfoItems,
                 PreferredDisplaySizeInBytes: preferredDisplaySizeInBytes);
             return true;
         }
@@ -435,7 +434,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
             Kind: AssetPreviewKind.Text,
             ContentType: TextContentType,
             Content: Encoding.UTF8.GetBytes(TrimTextPreview(textContent)),
-            PreviewInfoText: null,
+            PreviewInfoItems: Array.Empty<AssetPreviewInfoItemDto>(),
             PreferredDisplaySizeInBytes: null);
         return true;
     }
@@ -480,10 +479,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         }
 
         return string.Concat(
-            normalizedText[..MaxTextPreviewCharacters],
-            Environment.NewLine,
-            Environment.NewLine,
-            "... (preview truncated)");
+            normalizedText[..MaxTextPreviewCharacters]);
     }
 
     private static AssetPreviewContentDto BuildSummaryPreview(
@@ -493,90 +489,91 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
     {
         // 详情页已经统一展示通用身份信息，
         // 摘要预览这里只保留类型专属补充字段，避免和“名称 / 路径 / PathId / 大小”重复。
-        var lines = new List<string>();
+        var items = new List<AssetPreviewInfoItemDto>();
 
         switch (classId)
         {
             case AssetClassID.AudioClip:
-                AddLine(lines, "加载类型", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_LoadType")));
-                AddLine(lines, "声道数", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_Channels")));
-                AddLine(lines, "采样频率", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_Frequency")));
-                AddLine(lines, "位深", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_BitsPerSample")));
-                AddLine(lines, "时长", FormatSeconds(AssetsToolsFieldReader.ReadFloat(AssetsToolsFieldReader.TryGetField(baseField, "m_Length"))));
-                AddLine(lines, "压缩格式 ID", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_CompressionFormat")));
-                AddLine(lines, "资源流大小", FormatByteSize(AssetsToolsFieldReader.ReadInt64(AssetsToolsFieldReader.TryGetField(baseField, "m_Resource", "m_Size"))));
+                AddIntegerInfo(items, AssetPreviewInfoKey.AudioLoadType, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_LoadType")));
+                AddIntegerInfo(items, AssetPreviewInfoKey.AudioChannels, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_Channels")));
+                AddFrequencyInfo(items, AssetPreviewInfoKey.AudioFrequency, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_Frequency")));
+                AddBitsInfo(items, AssetPreviewInfoKey.AudioBitsPerSample, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_BitsPerSample")));
+                AddDurationInfo(items, AssetPreviewInfoKey.AudioDuration, AssetsToolsFieldReader.ReadFloat(AssetsToolsFieldReader.TryGetField(baseField, "m_Length")));
+                AddIntegerInfo(items, AssetPreviewInfoKey.AudioCompressionFormatId, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_CompressionFormat")));
+                AddByteSizeInfo(items, AssetPreviewInfoKey.AudioResourceStreamSize, AssetsToolsFieldReader.ReadInt64(AssetsToolsFieldReader.TryGetField(baseField, "m_Resource", "m_Size")));
                 break;
 
             case AssetClassID.Mesh:
-                AddLine(lines, "子网格数", CountArray(baseField, "m_SubMeshes"));
-                AddLine(lines, "BlendShape 数", CountArray(baseField, "m_Shapes", "channels"));
-                AddLine(lines, "骨骼名称哈希数", CountArray(baseField, "m_BoneNameHashes"));
+                AddIntegerInfo(items, AssetPreviewInfoKey.MeshSubMeshCount, CountArray(baseField, "m_SubMeshes"));
+                AddIntegerInfo(items, AssetPreviewInfoKey.MeshBlendShapeCount, CountArray(baseField, "m_Shapes", "channels"));
+                AddIntegerInfo(items, AssetPreviewInfoKey.MeshBoneNameHashCount, CountArray(baseField, "m_BoneNameHashes"));
                 break;
 
             case AssetClassID.Material:
-                AddLine(lines, "纹理属性数", CountArray(baseField, "m_SavedProperties", "m_TexEnvs"));
-                AddLine(lines, "浮点属性数", CountArray(baseField, "m_SavedProperties", "m_Floats"));
-                AddLine(lines, "颜色属性数", CountArray(baseField, "m_SavedProperties", "m_Colors"));
+                AddIntegerInfo(items, AssetPreviewInfoKey.MaterialTexturePropertyCount, CountArray(baseField, "m_SavedProperties", "m_TexEnvs"));
+                AddIntegerInfo(items, AssetPreviewInfoKey.MaterialFloatPropertyCount, CountArray(baseField, "m_SavedProperties", "m_Floats"));
+                AddIntegerInfo(items, AssetPreviewInfoKey.MaterialColorPropertyCount, CountArray(baseField, "m_SavedProperties", "m_Colors"));
                 break;
 
             case AssetClassID.GameObject:
-                AddLine(lines, "组件数", CountArray(baseField, "m_Component"));
-                AddLine(lines, "层级", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_Layer")));
-                AddLine(lines, "启用状态", FormatBoolean(AssetsToolsFieldReader.ReadBoolean(AssetsToolsFieldReader.TryGetField(baseField, "m_IsActive"))));
+                AddIntegerInfo(items, AssetPreviewInfoKey.GameObjectComponentCount, CountArray(baseField, "m_Component"));
+                AddIntegerInfo(items, AssetPreviewInfoKey.GameObjectLayer, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_Layer")));
+                AddBooleanInfo(items, AssetPreviewInfoKey.GameObjectIsActive, AssetsToolsFieldReader.ReadBoolean(AssetsToolsFieldReader.TryGetField(baseField, "m_IsActive")));
                 break;
 
             case AssetClassID.MonoBehaviour:
-                AddLine(lines, "启用状态", FormatBoolean(AssetsToolsFieldReader.ReadBoolean(AssetsToolsFieldReader.TryGetField(baseField, "m_Enabled"))));
-                AddLine(lines, "脚本 PathId", AssetsToolsFieldReader.ReadInt64(AssetsToolsFieldReader.TryGetField(baseField, "m_Script", "m_PathID")));
+                AddBooleanInfo(items, AssetPreviewInfoKey.MonoBehaviourEnabled, AssetsToolsFieldReader.ReadBoolean(AssetsToolsFieldReader.TryGetField(baseField, "m_Enabled")));
+                AddInteger64Info(items, AssetPreviewInfoKey.MonoBehaviourScriptPathId, AssetsToolsFieldReader.ReadInt64(AssetsToolsFieldReader.TryGetField(baseField, "m_Script", "m_PathID")));
                 break;
 
             case AssetClassID.AnimationClip:
-                AddLine(lines, "采样率", FormatFloat(AssetsToolsFieldReader.ReadFloat(AssetsToolsFieldReader.TryGetField(baseField, "m_SampleRate"))));
-                AddLine(lines, "旧版模式", FormatBoolean(AssetsToolsFieldReader.ReadBoolean(AssetsToolsFieldReader.TryGetField(baseField, "m_Legacy"))));
-                AddLine(lines, "事件数", CountArray(baseField, "m_Events"));
+                AddDecimalInfo(items, AssetPreviewInfoKey.AnimationClipSampleRate, AssetsToolsFieldReader.ReadFloat(AssetsToolsFieldReader.TryGetField(baseField, "m_SampleRate")));
+                AddBooleanInfo(items, AssetPreviewInfoKey.AnimationClipIsLegacy, AssetsToolsFieldReader.ReadBoolean(AssetsToolsFieldReader.TryGetField(baseField, "m_Legacy")));
+                AddIntegerInfo(items, AssetPreviewInfoKey.AnimationClipEventCount, CountArray(baseField, "m_Events"));
                 break;
 
             case AssetClassID.AnimatorController:
-                AddLine(lines, "层数", CountArray(baseField, "m_AnimatorLayers"));
-                AddLine(lines, "参数数", CountArray(baseField, "m_AnimatorParameters"));
+                AddIntegerInfo(items, AssetPreviewInfoKey.AnimatorControllerLayerCount, CountArray(baseField, "m_AnimatorLayers"));
+                AddIntegerInfo(items, AssetPreviewInfoKey.AnimatorControllerParameterCount, CountArray(baseField, "m_AnimatorParameters"));
                 break;
 
             case AssetClassID.Font:
-                AddLine(lines, "行间距", FormatFloat(AssetsToolsFieldReader.ReadFloat(AssetsToolsFieldReader.TryGetField(baseField, "m_LineSpacing"))));
-                AddLine(lines, "默认字号", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_DefaultSize")));
-                AddLine(lines, "ASCII 起始偏移", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_AsciiStartOffset")));
+                AddDecimalInfo(items, AssetPreviewInfoKey.FontLineSpacing, AssetsToolsFieldReader.ReadFloat(AssetsToolsFieldReader.TryGetField(baseField, "m_LineSpacing")));
+                AddIntegerInfo(items, AssetPreviewInfoKey.FontDefaultSize, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_DefaultSize")));
+                AddIntegerInfo(items, AssetPreviewInfoKey.FontAsciiStartOffset, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_AsciiStartOffset")));
                 break;
 
             case AssetClassID.SpriteAtlas:
-                AddLine(lines, "打包精灵数", CountArray(baseField, "m_PackedSprites"));
+                AddIntegerInfo(items, AssetPreviewInfoKey.SpriteAtlasPackedSpriteCount, CountArray(baseField, "m_PackedSprites"));
                 break;
 
             case AssetClassID.Sprite:
-                AddLine(lines, "每单位像素", FormatFloat(AssetsToolsFieldReader.ReadFloat(AssetsToolsFieldReader.TryGetField(baseField, "m_PixelsToUnits"))));
-                AddLine(lines, "纹理 PathId", AssetsToolsFieldReader.ReadInt64(AssetsToolsFieldReader.TryGetField(baseField, "m_RD", "texture", "m_PathID")));
-                AddLine(lines, "纹理矩形", FormatRect(AssetsToolsFieldReader.TryGetField(baseField, "m_RD", "textureRect")));
+                AddDecimalInfo(items, AssetPreviewInfoKey.SpritePixelsPerUnit, AssetsToolsFieldReader.ReadFloat(AssetsToolsFieldReader.TryGetField(baseField, "m_PixelsToUnits")));
+                AddInteger64Info(items, AssetPreviewInfoKey.SpriteTexturePathId, AssetsToolsFieldReader.ReadInt64(AssetsToolsFieldReader.TryGetField(baseField, "m_RD", "texture", "m_PathID")));
+                AddTextInfo(items, AssetPreviewInfoKey.SpriteTextureRect, FormatRect(AssetsToolsFieldReader.TryGetField(baseField, "m_RD", "textureRect")));
                 break;
 
             case AssetClassID.Texture2D:
-                AddLine(lines, "宽度", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_Width")));
-                AddLine(lines, "高度", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_Height")));
-                AddLine(lines, "Mip 数量", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_MipCount")));
+                AddIntegerInfo(items, AssetPreviewInfoKey.TextureWidth, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_Width")));
+                AddIntegerInfo(items, AssetPreviewInfoKey.TextureHeight, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_Height")));
+                AddIntegerInfo(items, AssetPreviewInfoKey.TextureMipCount, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_MipCount")));
                 break;
 
             default:
-                AddLine(lines, "类型 ID", assetInfo.TypeId);
+                AddIntegerInfo(items, AssetPreviewInfoKey.UnknownTypeId, assetInfo.TypeId);
                 break;
         }
 
         return new AssetPreviewContentDto(
             Kind: AssetPreviewKind.Summary,
             ContentType: TextContentType,
-            Content: Encoding.UTF8.GetBytes(string.Join(Environment.NewLine, lines)),
-            PreviewInfoText: null,
+            Content: Array.Empty<byte>(),
+            PreviewInfoItems: items,
+            PreviewMessage: new AssetPreviewMessageDto(AssetPreviewMessageKey.MetadataOnly),
             PreferredDisplaySizeInBytes: null);
     }
 
-    private static string BuildTexturePreviewInfo(
+    private static IReadOnlyList<AssetPreviewInfoItemDto> BuildTexturePreviewInfoItems(
         AssetTypeValueField textureField,
         DecodedTextureImage textureImage,
         long serializedObjectSizeInBytes)
@@ -589,24 +586,21 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
                                         completeImageSize.Value > 0 &&
                                         (!hasDedicatedStreamSize || completeImageSize.Value != streamSizeValue);
 
-        var lines = new List<string>
-        {
-            $"图像尺寸: {textureImage.Width} x {textureImage.Height}",
-            $"预览像素格式: {PreviewPixelEncoding}",
-            $"输出格式: {PreviewContainerEncoding}"
-        };
-
-        AddLine(lines, "资源记录大小", FormatByteSize(serializedObjectSizeInBytes));
-        AddLine(lines, "纹理格式 ID", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(textureField, "m_TextureFormat")));
-        AddLine(lines, "Mip 数量", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(textureField, "m_MipCount")));
-        AddLine(lines, "解码后大小", FormatByteSize(textureImage.RgbaPixels.LongLength));
-        AddLine(lines, "原始纹理数据大小", hasStandaloneCompleteSize ? FormatByteSize(completeImageSize) : null);
-        AddLine(lines, "流数据大小", hasDedicatedStreamSize ? FormatByteSize(streamSize) : null);
-        AddLine(lines, "流数据来源", AssetsToolsFieldReader.ReadString(AssetsToolsFieldReader.TryGetField(textureField, "m_StreamData", "path")));
-        return string.Join(Environment.NewLine, lines);
+        var items = new List<AssetPreviewInfoItemDto>();
+        AddTextInfo(items, AssetPreviewInfoKey.ImageDimensions, FormatDimensions(textureImage.Width, textureImage.Height));
+        AddTextInfo(items, AssetPreviewInfoKey.PreviewPixelEncoding, PreviewPixelEncoding);
+        AddTextInfo(items, AssetPreviewInfoKey.PreviewOutputFormat, PreviewContainerEncoding);
+        AddByteSizeInfo(items, AssetPreviewInfoKey.SerializedObjectSize, serializedObjectSizeInBytes);
+        AddIntegerInfo(items, AssetPreviewInfoKey.TextureFormatId, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(textureField, "m_TextureFormat")));
+        AddIntegerInfo(items, AssetPreviewInfoKey.TextureMipCount, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(textureField, "m_MipCount")));
+        AddByteSizeInfo(items, AssetPreviewInfoKey.TextureDecodedSize, textureImage.RgbaPixels.LongLength);
+        AddByteSizeInfo(items, AssetPreviewInfoKey.TextureOriginalDataSize, hasStandaloneCompleteSize ? completeImageSize : null);
+        AddByteSizeInfo(items, AssetPreviewInfoKey.TextureStreamDataSize, hasDedicatedStreamSize ? streamSize : null);
+        AddTextInfo(items, AssetPreviewInfoKey.TextureStreamDataPath, AssetsToolsFieldReader.ReadString(AssetsToolsFieldReader.TryGetField(textureField, "m_StreamData", "path")));
+        return items;
     }
 
-    private static string BuildSpritePreviewInfo(
+    private static IReadOnlyList<AssetPreviewInfoItemDto> BuildSpritePreviewInfoItems(
         AssetTypeValueField spriteField,
         AssetTypeValueField textureField,
         DecodedTextureImage spriteImage,
@@ -614,26 +608,23 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         SpriteCropMetadata cropMetadata,
         long serializedObjectSizeInBytes)
     {
-        var lines = new List<string>
-        {
-            $"精灵尺寸: {spriteImage.Width} x {spriteImage.Height}",
-            $"预览像素格式: {PreviewPixelEncoding}",
-            $"输出格式: {PreviewContainerEncoding}"
-        };
-
-        AddLine(lines, "资源记录大小", FormatByteSize(serializedObjectSizeInBytes));
-        AddLine(lines, "纹理 PathId", texturePathId);
-        AddLine(lines, "每单位像素", FormatFloat(AssetsToolsFieldReader.ReadFloat(AssetsToolsFieldReader.TryGetField(spriteField, "m_PixelsToUnits"))));
-        AddLine(lines, "纹理矩形", FormatRect(AssetsToolsFieldReader.TryGetField(spriteField, "m_RD", "textureRect")));
-        AddLine(lines, "裁切尺寸", cropMetadata.PixelWidth > 0 && cropMetadata.PixelHeight > 0
-            ? $"{cropMetadata.PixelWidth.ToString(CultureInfo.InvariantCulture)} x {cropMetadata.PixelHeight.ToString(CultureInfo.InvariantCulture)}"
+        var items = new List<AssetPreviewInfoItemDto>();
+        AddTextInfo(items, AssetPreviewInfoKey.ImageDimensions, FormatDimensions(spriteImage.Width, spriteImage.Height));
+        AddTextInfo(items, AssetPreviewInfoKey.PreviewPixelEncoding, PreviewPixelEncoding);
+        AddTextInfo(items, AssetPreviewInfoKey.PreviewOutputFormat, PreviewContainerEncoding);
+        AddByteSizeInfo(items, AssetPreviewInfoKey.SerializedObjectSize, serializedObjectSizeInBytes);
+        AddInteger64Info(items, AssetPreviewInfoKey.SpriteTexturePathId, texturePathId);
+        AddDecimalInfo(items, AssetPreviewInfoKey.SpritePixelsPerUnit, AssetsToolsFieldReader.ReadFloat(AssetsToolsFieldReader.TryGetField(spriteField, "m_PixelsToUnits")));
+        AddTextInfo(items, AssetPreviewInfoKey.SpriteTextureRect, FormatRect(AssetsToolsFieldReader.TryGetField(spriteField, "m_RD", "textureRect")));
+        AddTextInfo(items, AssetPreviewInfoKey.SpriteCropSize, cropMetadata.PixelWidth > 0 && cropMetadata.PixelHeight > 0
+            ? FormatDimensions(cropMetadata.PixelWidth, cropMetadata.PixelHeight)
             : null);
-        AddLine(lines, "裁切起点", cropMetadata.Width > 0 && cropMetadata.Height > 0
+        AddTextInfo(items, AssetPreviewInfoKey.SpriteCropOrigin, cropMetadata.Width > 0 && cropMetadata.Height > 0
             ? FormattableString.Invariant($"x={cropMetadata.X:0.###}, y={cropMetadata.Y:0.###}")
             : null);
-        AddLine(lines, "源纹理尺寸", FormatTextureDimensions(textureField));
-        AddLine(lines, "源纹理格式 ID", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(textureField, "m_TextureFormat")));
-        return string.Join(Environment.NewLine, lines);
+        AddTextInfo(items, AssetPreviewInfoKey.SpriteSourceTextureDimensions, FormatTextureDimensions(textureField));
+        AddIntegerInfo(items, AssetPreviewInfoKey.SpriteSourceTextureFormatId, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(textureField, "m_TextureFormat")));
+        return items;
     }
 
     private static int CountArray(AssetTypeValueField baseField, params string[] path)
@@ -645,45 +636,148 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         return AssetsToolsFieldReader.CountChildren(arrayField);
     }
 
-    private static void AddLine(ICollection<string> lines, string label, object? value)
+    private static void AddTextInfo(
+        ICollection<AssetPreviewInfoItemDto> items,
+        AssetPreviewInfoKey key,
+        string? value)
     {
-        if (value is null)
+        if (string.IsNullOrWhiteSpace(value))
         {
             return;
         }
 
-        var text = value switch
-        {
-            string stringValue when string.IsNullOrWhiteSpace(stringValue) => null,
-            string stringValue => stringValue,
-            _ => Convert.ToString(value, CultureInfo.InvariantCulture)
-        };
+        items.Add(new AssetPreviewInfoItemDto(
+            Key: key,
+            ValueKind: AssetPreviewInfoValueKind.Text,
+            TextValue: value.Trim()));
+    }
 
-        if (string.IsNullOrWhiteSpace(text))
+    private static void AddIntegerInfo(
+        ICollection<AssetPreviewInfoItemDto> items,
+        AssetPreviewInfoKey key,
+        int? value)
+    {
+        if (!value.HasValue)
         {
             return;
         }
 
-        lines.Add($"{label}: {text}");
+        items.Add(new AssetPreviewInfoItemDto(
+            Key: key,
+            ValueKind: AssetPreviewInfoValueKind.Integer,
+            Int64Value: value.Value));
     }
 
-    private static string? FormatFloat(float? value)
+    private static void AddInteger64Info(
+        ICollection<AssetPreviewInfoItemDto> items,
+        AssetPreviewInfoKey key,
+        long? value)
     {
-        return value.HasValue
-            ? value.Value.ToString("0.###", CultureInfo.InvariantCulture)
-            : null;
+        if (!value.HasValue)
+        {
+            return;
+        }
+
+        items.Add(new AssetPreviewInfoItemDto(
+            Key: key,
+            ValueKind: AssetPreviewInfoValueKind.Integer,
+            Int64Value: value.Value));
     }
 
-    private static string? FormatSeconds(float? value)
+    private static void AddByteSizeInfo(
+        ICollection<AssetPreviewInfoItemDto> items,
+        AssetPreviewInfoKey key,
+        long? value)
     {
-        return value.HasValue
-            ? $"{value.Value.ToString("0.###", CultureInfo.InvariantCulture)} 秒"
-            : null;
+        if (!value.HasValue || value.Value <= 0)
+        {
+            return;
+        }
+
+        items.Add(new AssetPreviewInfoItemDto(
+            Key: key,
+            ValueKind: AssetPreviewInfoValueKind.ByteSize,
+            Int64Value: value.Value));
     }
 
-    private static string? FormatBoolean(bool? value)
+    private static void AddDecimalInfo(
+        ICollection<AssetPreviewInfoItemDto> items,
+        AssetPreviewInfoKey key,
+        float? value)
     {
-        return value.HasValue ? (value.Value ? "是" : "否") : null;
+        if (!value.HasValue)
+        {
+            return;
+        }
+
+        items.Add(new AssetPreviewInfoItemDto(
+            Key: key,
+            ValueKind: AssetPreviewInfoValueKind.Decimal,
+            NumberValue: value.Value));
+    }
+
+    private static void AddDurationInfo(
+        ICollection<AssetPreviewInfoItemDto> items,
+        AssetPreviewInfoKey key,
+        float? value)
+    {
+        if (!value.HasValue)
+        {
+            return;
+        }
+
+        items.Add(new AssetPreviewInfoItemDto(
+            Key: key,
+            ValueKind: AssetPreviewInfoValueKind.DurationSeconds,
+            NumberValue: value.Value));
+    }
+
+    private static void AddFrequencyInfo(
+        ICollection<AssetPreviewInfoItemDto> items,
+        AssetPreviewInfoKey key,
+        int? value)
+    {
+        if (!value.HasValue)
+        {
+            return;
+        }
+
+        items.Add(new AssetPreviewInfoItemDto(
+            Key: key,
+            ValueKind: AssetPreviewInfoValueKind.FrequencyHertz,
+            Int64Value: value.Value));
+    }
+
+    private static void AddBitsInfo(
+        ICollection<AssetPreviewInfoItemDto> items,
+        AssetPreviewInfoKey key,
+        int? value)
+    {
+        if (!value.HasValue)
+        {
+            return;
+        }
+
+        items.Add(new AssetPreviewInfoItemDto(
+            Key: key,
+            ValueKind: AssetPreviewInfoValueKind.BitsPerSample,
+            Int64Value: value.Value));
+    }
+
+    private static void AddBooleanInfo(
+        ICollection<AssetPreviewInfoItemDto> items,
+        AssetPreviewInfoKey key,
+        bool? value)
+    {
+        if (!value.HasValue)
+        {
+            return;
+        }
+
+        items.Add(new AssetPreviewInfoItemDto(
+            Key: key,
+            ValueKind: AssetPreviewInfoValueKind.Boolean,
+            BooleanValue: value.Value));
     }
 
     private static string? FormatRect(AssetTypeValueField? rectField)
@@ -718,25 +812,8 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         return $"{width.Value.ToString(CultureInfo.InvariantCulture)} x {height.Value.ToString(CultureInfo.InvariantCulture)}";
     }
 
-    private static string? FormatByteSize(long? value)
-    {
-        if (!value.HasValue || value.Value <= 0)
-        {
-            return null;
-        }
-
-        var rawValue = value.Value;
-        var compactText = rawValue switch
-        {
-            >= 1024L * 1024L => $"{rawValue / 1024d / 1024d:F1} MB",
-            >= 1024L => $"{rawValue / 1024d:F1} KB",
-            _ => $"{rawValue.ToString("N0", CultureInfo.InvariantCulture)} B"
-        };
-
-        return rawValue >= 1024L
-            ? $"{compactText} ({rawValue.ToString("N0", CultureInfo.InvariantCulture)} 字节)"
-            : compactText;
-    }
+    private static string FormatDimensions(int width, int height) =>
+        $"{width.ToString(CultureInfo.InvariantCulture)} x {height.ToString(CultureInfo.InvariantCulture)}";
 
     private static AssetClassID ResolveClassId(int rawTypeId)
     {

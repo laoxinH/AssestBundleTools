@@ -1,3 +1,5 @@
+using AssestBundleTools.Application.Assets.Dtos;
+
 namespace AssestBundleTools.Application.Workspace.Dtos;
 
 /// <summary>
@@ -18,7 +20,8 @@ public sealed record PreviewCacheDescriptorDto(
     WorkspaceFileFingerprintDto SourceFingerprint,
     DateTimeOffset GeneratedAtUtc,
     string GeneratorVersion,
-    string? PreviewInfoText = null,
+    IReadOnlyList<AssetPreviewInfoItemDto>? PreviewInfoItems = null,
+    AssetPreviewMessageDto? PreviewMessage = null,
     long? PreferredDisplaySizeInBytes = null,
     string? AudioTranscoderId = null,
     string? AudioTranscoderVersion = null);
