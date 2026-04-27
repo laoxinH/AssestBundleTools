@@ -7,6 +7,8 @@ namespace AssestBundleTools.Application.Assets.Dtos;
 /// </summary>
 public sealed record AssetPreviewBuildRequestDto(
     string ResolvedBundlePath,
+    string WorkspaceKey,
+    string WorkspaceDataRootPath,
     string AssetId,
     string AssetName,
     string AssetPath,

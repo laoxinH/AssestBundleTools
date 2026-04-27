@@ -26,6 +26,7 @@ using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Windows.Media.Core;
 using Windows.Storage.Streams;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
@@ -2773,6 +2774,33 @@ public sealed class BundleExplorerViewModel : ObservableObject
                     ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
                 }
+                case AssetPreviewKind.Audio:
+                {
+                    var audioPreviewSource = await CreatePreviewAudioSourceAsync(preview.BinaryContent, preview.ContentType);
+                    if (!assetTab.IsPreviewRequestCurrent(details, previewRequestVersion))
+                    {
+                        audioPreviewSource?.Stream.Dispose();
+                        return;
+                    }
+
+                    if (audioPreviewSource is null)
+                    {
+                        _appLogService.AppendWarning(_localizationService.GetFormattedString(
+                            ResourceKeys.BundleExplorerLogAssetPreviewFailedFormat,
+                            details.Name,
+                            "Audio payload could not be decoded."));
+                        assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
+                        ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
+                        return;
+                    }
+
+                    assetTab.Inspector.ApplyAudioPreview(
+                        audioPreviewSource.MediaSource,
+                        audioPreviewSource.Stream,
+                        preview.PreviewInfoText);
+                    ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
+                    return;
+                }
                 case AssetPreviewKind.Summary:
                 {
                     if (string.IsNullOrWhiteSpace(preview.TextContent))
@@ -2873,6 +2901,36 @@ public sealed class BundleExplorerViewModel : ObservableObject
         return bitmapImage;
     }
 
+    private static async Task<AudioPreviewSource?> CreatePreviewAudioSourceAsync(byte[]? audioPayload, string contentType)
+    {
+        if (audioPayload is not { Length: > 0 } || string.IsNullOrWhiteSpace(contentType))
+        {
+            return null;
+        }
+
+        var stream = new InMemoryRandomAccessStream();
+
+        try
+        {
+            using (var writer = new DataWriter(stream.GetOutputStreamAt(0)))
+            {
+                writer.WriteBytes(audioPayload);
+                await writer.StoreAsync();
+                await writer.FlushAsync();
+                writer.DetachStream();
+            }
+
+            stream.Seek(0);
+            var mediaSource = MediaSource.CreateFromStream(stream, contentType.Trim());
+            return new AudioPreviewSource(mediaSource, stream);
+        }
+        catch
+        {
+            stream.Dispose();
+            return null;
+        }
+    }
+
     /// <summary>
     /// 应用层预览诊断只暴露稳定枚举和原始 detail，
     /// 真正面向用户的中文文案在 Presentation 层完成映射，便于后续工作台和诊断页复用同一份诊断语义。
@@ -2898,6 +2956,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
             AssetPreviewCacheStatusKind.IdentityChanged => GetString(ResourceKeys.InspectorPreviewDiagnosticCacheStatusIdentityChanged),
             AssetPreviewCacheStatusKind.SourceFingerprintChanged => GetString(ResourceKeys.InspectorPreviewDiagnosticCacheStatusSourceFingerprintChanged),
             AssetPreviewCacheStatusKind.GeneratorVersionChanged => GetString(ResourceKeys.InspectorPreviewDiagnosticCacheStatusGeneratorVersionChanged),
+            AssetPreviewCacheStatusKind.AudioTranscoderChanged => GetString(ResourceKeys.InspectorPreviewDiagnosticCacheStatusAudioTranscoderChanged),
             _ => cacheStatus.ToString()
         };
     }
@@ -2962,6 +3021,10 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
         return GetString(ResourceKeys.InspectorReplacementSourceNone);
     }
+
+    private sealed record AudioPreviewSource(
+        MediaSource MediaSource,
+        IRandomAccessStream Stream);
 
     private string BuildReplacementStatusText(
         AssetDetailsDto details,

@@ -9,5 +9,6 @@ public enum AssetPreviewCacheStatusKind
     Missing = 1,
     IdentityChanged = 2,
     SourceFingerprintChanged = 3,
-    GeneratorVersionChanged = 4
+    GeneratorVersionChanged = 4,
+    AudioTranscoderChanged = 5
 }

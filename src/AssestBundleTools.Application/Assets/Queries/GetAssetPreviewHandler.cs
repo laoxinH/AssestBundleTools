@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Common.Abstractions;
@@ -29,17 +30,20 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
     private readonly IAssetBundleDecryptorRegistry _assetBundleDecryptorRegistry;
     private readonly IAssetPreviewGenerator _assetPreviewGenerator;
+    private readonly IAudioPayloadTranscodingService _audioPayloadTranscodingService;
 
     public GetAssetPreviewHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
         IWorkspaceDataStoreFactory workspaceDataStoreFactory,
         IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
-        IAssetPreviewGenerator assetPreviewGenerator)
+        IAssetPreviewGenerator assetPreviewGenerator,
+        IAudioPayloadTranscodingService audioPayloadTranscodingService)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
         _assetBundleDecryptorRegistry = assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry));
         _assetPreviewGenerator = assetPreviewGenerator ?? throw new ArgumentNullException(nameof(assetPreviewGenerator));
+        _audioPayloadTranscodingService = audioPayloadTranscodingService ?? throw new ArgumentNullException(nameof(audioPayloadTranscodingService));
     }
 
     public async Task<Result<AssetPreviewDto>> HandleAsync(
@@ -178,6 +182,8 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
 
         var buildRequest = new AssetPreviewBuildRequestDto(
             ResolvedBundlePath: decryptionResult.Value.ResolvedBundlePath,
+            WorkspaceKey: query.WorkspaceKey,
+            WorkspaceDataRootPath: query.WorkspaceDataRootPath,
             AssetId: assetCacheEntry.AssetId,
             AssetName: assetCacheEntry.AssetName,
             AssetPath: assetCacheEntry.AssetPath,
@@ -220,7 +226,9 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             GeneratedAtUtc: generatedAtUtc,
             GeneratorVersion: _assetPreviewGenerator.GeneratorVersion,
             PreviewInfoText: previewContent.PreviewInfoText,
-            PreferredDisplaySizeInBytes: previewContent.PreferredDisplaySizeInBytes);
+            PreferredDisplaySizeInBytes: previewContent.PreferredDisplaySizeInBytes,
+            AudioTranscoderId: previewContent.AudioTranscoderId,
+            AudioTranscoderVersion: previewContent.AudioTranscoderVersion);
         previewCacheStore.Save(new PreviewCachePayloadDto(descriptor, previewContent.Content));
 
         return Result<AssetPreviewDto>.Success(MapPreviewDto(
@@ -280,12 +288,71 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 Detail: $"Preview cache generator version '{descriptor.GeneratorVersion}' no longer matches current version '{_assetPreviewGenerator.GeneratorVersion}'.");
         }
 
+        var audioTranscoderEvaluation = EvaluateAudioTranscoderCache(descriptor, assetCacheEntry);
+        if (!audioTranscoderEvaluation.IsHit)
+        {
+            return audioTranscoderEvaluation;
+        }
+
         // 预览缓存和资源包索引缓存一样，属于“缓存命中识别”的一部分。
         // 这里只在资源身份、来源指纹和生成器版本都仍然一致时才复用旧预览，
         // 避免资源包更新后继续误用过期缩略图或文本摘要。
         return new PreviewCacheEvaluationResult(
             IsHit: true,
             Payload: previewCachePayload,
+            CacheStatus: AssetPreviewCacheStatusKind.Hit,
+            Detail: null);
+    }
+
+    private PreviewCacheEvaluationResult EvaluateAudioTranscoderCache(
+        PreviewCacheDescriptorDto descriptor,
+        BundleIndexAssetCacheEntryDto assetCacheEntry)
+    {
+        if (!string.IsNullOrWhiteSpace(descriptor.AudioTranscoderId))
+        {
+            var currentDescriptor = _audioPayloadTranscodingService.ResolveDescriptor(descriptor.AudioTranscoderId);
+            if (currentDescriptor is null)
+            {
+                return new PreviewCacheEvaluationResult(
+                    IsHit: false,
+                    Payload: null,
+                    CacheStatus: AssetPreviewCacheStatusKind.AudioTranscoderChanged,
+                    Detail: $"Audio transcoder '{descriptor.AudioTranscoderId}' is no longer available.");
+            }
+
+            if (!string.Equals(currentDescriptor.Version, descriptor.AudioTranscoderVersion, StringComparison.OrdinalIgnoreCase))
+            {
+                return new PreviewCacheEvaluationResult(
+                    IsHit: false,
+                    Payload: null,
+                    CacheStatus: AssetPreviewCacheStatusKind.AudioTranscoderChanged,
+                    Detail: $"Audio transcoder version '{descriptor.AudioTranscoderVersion}' no longer matches current version '{currentDescriptor.Version}'.");
+            }
+
+            return new PreviewCacheEvaluationResult(
+                IsHit: true,
+                Payload: null,
+                CacheStatus: AssetPreviewCacheStatusKind.Hit,
+                Detail: null);
+        }
+
+        // 音频摘要若是在“无转码器”环境下生成，后续安装转码器后应允许自动重建，
+        // 这样旧摘要才能升级为真实可播放预览，而不会长期卡在第一次回退结果上。
+        var isAudioSummaryPreview =
+            string.Equals(assetCacheEntry.AssetType, AssetType.AudioClip.ToString(), StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(descriptor.PreviewKind, AssetPreviewKind.Summary.ToString(), StringComparison.OrdinalIgnoreCase);
+        if (isAudioSummaryPreview && _audioPayloadTranscodingService.GetAvailableDescriptors().Count > 0)
+        {
+            return new PreviewCacheEvaluationResult(
+                IsHit: false,
+                Payload: null,
+                CacheStatus: AssetPreviewCacheStatusKind.AudioTranscoderChanged,
+                Detail: "Audio transcoder availability changed and cached summary preview should be rebuilt.");
+        }
+
+        return new PreviewCacheEvaluationResult(
+            IsHit: true,
+            Payload: null,
             CacheStatus: AssetPreviewCacheStatusKind.Hit,
             Detail: null);
     }
@@ -301,7 +368,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             ? parsedPreviewKind
             : AssetPreviewKind.Summary;
 
-        return previewKind == AssetPreviewKind.Image
+        return PreviewKindUsesBinaryPayload(previewKind)
             ? new AssetPreviewDto(
                 WorkspaceId: query.WorkspaceId,
                 BundleId: query.BundleId,
@@ -382,10 +449,30 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         var fileName = previewContent.Kind switch
         {
             AssetPreviewKind.Image => "payload.png",
+            AssetPreviewKind.Audio => $"payload{ResolveAudioPayloadExtension(previewContent.ContentType)}",
             _ => "payload.txt"
         };
 
         return Path.Combine(previewCacheKey, fileName);
+    }
+
+    private static bool PreviewKindUsesBinaryPayload(AssetPreviewKind previewKind)
+    {
+        return previewKind is AssetPreviewKind.Image or AssetPreviewKind.Audio;
+    }
+
+    private static string ResolveAudioPayloadExtension(string contentType)
+    {
+        return contentType.Trim().ToLowerInvariant() switch
+        {
+            "audio/wav" or "audio/wave" or "audio/x-wav" => ".wav",
+            "audio/ogg" => ".ogg",
+            "audio/mpeg" => ".mp3",
+            "audio/flac" => ".flac",
+            "audio/mp4" => ".m4a",
+            "audio/aac" => ".aac",
+            _ => ".bin"
+        };
     }
 
     private static AssetType ParseAssetType(string assetType)

@@ -16,6 +16,7 @@ using AssestBundleTools.Application.Workspace.Queries;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Infrastructure.Bundles.Decryption;
 using AssestBundleTools.Infrastructure.Bundles.Previewing;
+using AssestBundleTools.Infrastructure.Bundles.Previewing.Audio;
 using AssestBundleTools.Infrastructure.Bundles.Reading;
 using AssestBundleTools.Infrastructure.Settings.Persistence;
 using AssestBundleTools.Infrastructure.Workspace.Importing;
@@ -72,7 +73,8 @@ public partial class App : Microsoft.UI.Xaml.Application
             var assetBundleReader = new FallbackAssetBundleReader(
                 new AssetsToolsAssetBundleReader(),
                 new HeuristicAssetBundleReader());
-            var assetPreviewGenerator = new AssetsToolsAssetPreviewGenerator();
+            var audioPayloadTranscodingService = new AudioPayloadTranscodingService();
+            var assetPreviewGenerator = new AssetsToolsAssetPreviewGenerator(audioPayloadTranscodingService);
             var openWorkspaceHandler = new OpenWorkspaceHandler(
                 workspaceSessionRegistry: workspaceSessionRegistry,
                 workspaceMetadataStoreFactory: workspaceMetadataStoreFactory,
@@ -99,7 +101,8 @@ public partial class App : Microsoft.UI.Xaml.Application
                 workspaceSessionRegistry,
                 workspaceDataStoreFactory,
                 _assetBundleDecryptorRegistry,
-                assetPreviewGenerator);
+                assetPreviewGenerator,
+                audioPayloadTranscodingService);
             var getWorkspaceChangeSummaryHandler = new GetWorkspaceChangeSummaryHandler(workspaceSessionRegistry);
             var getWorkspaceSavePreviewHandler = new GetWorkspaceSavePreviewHandler(workspaceSessionRegistry);
             var saveWorkspaceAsNewBundleHandler = new SaveWorkspaceAsNewBundleHandler(workspaceSessionRegistry);

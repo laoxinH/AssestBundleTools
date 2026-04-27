@@ -284,6 +284,34 @@
                                             Source="{x:Bind ViewModel.PreviewImageSource, Mode=OneWay}" />
                                     </Grid>
 
+                                    <StackPanel
+                                        Margin="12"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Center"
+                                        Spacing="12"
+                                        Visibility="{x:Bind ViewModel.PreviewAudioVisibility, Mode=OneWay}">
+                                        <StackPanel
+                                            HorizontalAlignment="Center"
+                                            Spacing="6">
+                                            <FontIcon
+                                                FontFamily="Segoe Fluent Icons"
+                                                Glyph="&#xE8D6;"
+                                                FontSize="28" />
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                FontWeight="SemiBold"
+                                                Text="{x:Bind ViewModel.AssetName, Mode=OneWay}"
+                                                TextAlignment="Center"
+                                                TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+
+                                        <MediaPlayerElement
+                                            AreTransportControlsEnabled="True"
+                                            AutoPlay="False"
+                                            HorizontalAlignment="Stretch"
+                                            Source="{x:Bind ViewModel.PreviewAudioSource, Mode=OneWay}" />
+                                    </StackPanel>
+
                                     <ScrollViewer
                                         HorizontalScrollBarVisibility="Auto"
                                         HorizontalScrollMode="Enabled"

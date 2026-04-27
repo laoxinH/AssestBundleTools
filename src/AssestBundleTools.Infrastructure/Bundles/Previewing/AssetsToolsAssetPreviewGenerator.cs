@@ -6,10 +6,12 @@ using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 using AssetsTools.NET.Texture;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Infrastructure.Bundles.Internal;
+using AssestBundleTools.Infrastructure.Bundles.Previewing.Internal;
 
 namespace AssestBundleTools.Infrastructure.Bundles.Previewing;
 
@@ -24,9 +26,16 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
     private const string PreviewPixelEncoding = "RGBA8";
     private const string PreviewContainerEncoding = "PNG";
 
-    public string GeneratorVersion => "assetstools.preview/5";
+    private readonly IAudioPayloadTranscodingService _audioPayloadTranscodingService;
 
-    public Task<Result<AssetPreviewContentDto>> GenerateAsync(
+    public AssetsToolsAssetPreviewGenerator(IAudioPayloadTranscodingService audioPayloadTranscodingService)
+    {
+        _audioPayloadTranscodingService = audioPayloadTranscodingService ?? throw new ArgumentNullException(nameof(audioPayloadTranscodingService));
+    }
+
+    public string GeneratorVersion => "assetstools.preview/7";
+
+    public async Task<Result<AssetPreviewContentDto>> GenerateAsync(
         AssetPreviewBuildRequestDto request,
         CancellationToken cancellationToken = default)
     {
@@ -34,13 +43,13 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
 
         if (cancellationToken.IsCancellationRequested)
         {
-            return Task.FromResult(Result<AssetPreviewContentDto>.Cancelled());
+            return Result<AssetPreviewContentDto>.Cancelled();
         }
 
         if (!File.Exists(request.ResolvedBundlePath))
         {
-            return Task.FromResult(Result<AssetPreviewContentDto>.Failure(
-                ApplicationErrors.BundleReadFailed(request.ResolvedBundlePath, "Preview source bundle does not exist.")));
+            return Result<AssetPreviewContentDto>.Failure(
+                ApplicationErrors.BundleReadFailed(request.ResolvedBundlePath, "Preview source bundle does not exist."));
         }
 
         var assetsManager = new AssetsManager
@@ -58,26 +67,27 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
                 string.Equals(file.name, request.SerializedFileName, StringComparison.OrdinalIgnoreCase));
             if (serializedFile is null)
             {
-                return Task.FromResult(Result<AssetPreviewContentDto>.Failure(
-                    ApplicationErrors.BundleReadFailed(request.ResolvedBundlePath, "Serialized file locator was not found.")));
+                return Result<AssetPreviewContentDto>.Failure(
+                    ApplicationErrors.BundleReadFailed(request.ResolvedBundlePath, "Serialized file locator was not found."));
             }
 
             if (!AssetsToolsFieldReader.TryFindAssetInfoByPathId(serializedFile, request.PathId, out var assetInfo))
             {
-                return Task.FromResult(Result<AssetPreviewContentDto>.Failure(
-                    ApplicationErrors.BundleReadFailed(request.ResolvedBundlePath, "Asset locator was not found.")));
+                return Result<AssetPreviewContentDto>.Failure(
+                    ApplicationErrors.BundleReadFailed(request.ResolvedBundlePath, "Asset locator was not found."));
             }
 
             var baseField = AssetsToolsFieldReader.TryGetBaseField(assetsManager, serializedFile, assetInfo);
             if (baseField is null)
             {
-                return Task.FromResult(Result<AssetPreviewContentDto>.Failure(
-                    ApplicationErrors.BundleReadFailed(request.ResolvedBundlePath, "Asset field tree could not be loaded.")));
+                return Result<AssetPreviewContentDto>.Failure(
+                    ApplicationErrors.BundleReadFailed(request.ResolvedBundlePath, "Asset field tree could not be loaded."));
             }
 
             var classId = ResolveClassId(assetInfo.TypeId);
-            var previewContent = BuildPreviewContent(
+            var previewContent = await BuildPreviewContentAsync(
                 assetsManager,
+                bundleInstance,
                 serializedFile,
                 assetInfo,
                 baseField,
@@ -85,16 +95,16 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
                 request,
                 cancellationToken);
 
-            return Task.FromResult(Result<AssetPreviewContentDto>.Success(previewContent));
+            return Result<AssetPreviewContentDto>.Success(previewContent);
         }
         catch (OperationCanceledException)
         {
-            return Task.FromResult(Result<AssetPreviewContentDto>.Cancelled());
+            return Result<AssetPreviewContentDto>.Cancelled();
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Result<AssetPreviewContentDto>.Failure(
-                ApplicationErrors.BundleReadFailed(request.ResolvedBundlePath, ex.Message)));
+            return Result<AssetPreviewContentDto>.Failure(
+                ApplicationErrors.BundleReadFailed(request.ResolvedBundlePath, ex.Message));
         }
         finally
         {
@@ -125,8 +135,9 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         return serializedFiles;
     }
 
-    private static AssetPreviewContentDto BuildPreviewContent(
+    private async Task<AssetPreviewContentDto> BuildPreviewContentAsync(
         AssetsManager assetsManager,
+        BundleFileInstance bundleInstance,
         AssetsFileInstance serializedFile,
         AssetFileInfo assetInfo,
         AssetTypeValueField baseField,
@@ -148,6 +159,11 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
             return spritePreview;
         }
 
+        if (classId == AssetClassID.AudioClip)
+        {
+            return await BuildAudioPreviewAsync(bundleInstance, baseField, request, cancellationToken);
+        }
+
         if (classId == AssetClassID.TextAsset &&
             TryBuildTextPreview(baseField, "m_Script", out var textAssetPreview))
         {
@@ -161,6 +177,51 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         }
 
         return BuildSummaryPreview(assetInfo, baseField, classId);
+    }
+
+    private async Task<AssetPreviewContentDto> BuildAudioPreviewAsync(
+        BundleFileInstance bundleInstance,
+        AssetTypeValueField baseField,
+        AssetPreviewBuildRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var previewSource = AssetsToolsAudioClipPreviewBuilder.BuildPreviewSource(bundleInstance, baseField, request);
+        if (previewSource.Payload is null)
+        {
+            return AssetsToolsAudioClipPreviewBuilder.BuildSummaryPreview(
+                previewSource,
+                "当前资源未包含可读取的音频载荷，已回退为摘要信息。");
+        }
+
+        if (previewSource.Container.IsPlayable)
+        {
+            return AssetsToolsAudioClipPreviewBuilder.BuildDirectPlayablePreview(previewSource);
+        }
+
+        if (!AssetsToolsAudioClipPreviewBuilder.CanAttemptExternalTranscode(previewSource))
+        {
+            return AssetsToolsAudioClipPreviewBuilder.BuildSummaryPreview(
+                previewSource,
+                AssetsToolsAudioClipPreviewBuilder.BuildUnsupportedContainerReason(previewSource));
+        }
+
+        var transcodeResult = await _audioPayloadTranscodingService.TryTranscodeAsync(
+            new AudioPayloadTranscodeRequestDto(
+                Payload: previewSource.Payload.Content,
+                ContainerKind: previewSource.Container.Kind,
+                SourceFileName: AssetsToolsAudioClipPreviewBuilder.ResolveSuggestedTranscodeSourceFileName(previewSource),
+                WorkspaceKey: request.WorkspaceKey,
+                WorkspaceDataRootPath: request.WorkspaceDataRootPath),
+            cancellationToken);
+        if (transcodeResult.IsSuccess)
+        {
+            return AssetsToolsAudioClipPreviewBuilder.BuildTranscodedPreview(previewSource, transcodeResult);
+        }
+
+        return AssetsToolsAudioClipPreviewBuilder.BuildSummaryPreview(
+            previewSource,
+            AssetsToolsAudioClipPreviewBuilder.BuildTranscodeFallbackReason(previewSource, transcodeResult),
+            transcodeResult.Message);
     }
 
     private static bool TryBuildTexturePreview(
@@ -440,7 +501,10 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
                 AddLine(lines, "加载类型", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_LoadType")));
                 AddLine(lines, "声道数", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_Channels")));
                 AddLine(lines, "采样频率", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_Frequency")));
+                AddLine(lines, "位深", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_BitsPerSample")));
                 AddLine(lines, "时长", FormatSeconds(AssetsToolsFieldReader.ReadFloat(AssetsToolsFieldReader.TryGetField(baseField, "m_Length"))));
+                AddLine(lines, "压缩格式 ID", AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_CompressionFormat")));
+                AddLine(lines, "资源流大小", FormatByteSize(AssetsToolsFieldReader.ReadInt64(AssetsToolsFieldReader.TryGetField(baseField, "m_Resource", "m_Size"))));
                 break;
 
             case AssetClassID.Mesh:

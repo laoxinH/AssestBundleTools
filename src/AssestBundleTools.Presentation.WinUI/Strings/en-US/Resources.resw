@@ -804,6 +804,9 @@
   <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.GeneratorVersionChanged" xml:space="preserve">
     <value>Generator version changed</value>
   </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.AudioTranscoderChanged" xml:space="preserve">
+    <value>Audio transcoder changed</value>
+  </data>
   <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.None" xml:space="preserve">
     <value>None</value>
   </data>

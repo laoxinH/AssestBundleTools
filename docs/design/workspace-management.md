@@ -350,6 +350,8 @@ Presentation 层保留两个协同层次：
 - `sourceFingerprint`
 - `generatedAtUtc`
 - `generatorVersion`
+- `audioTranscoderId`（可选）
+- `audioTranscoderVersion`（可选）
 - `metadataSchemaVersion`（可选）
 - `previewInfoText`（可选）
   用于承载图片类预览的轻量附加信息，例如尺寸、裁切矩形、源格式标识等，避免把这类专属信息混回通用详情元数据。
@@ -517,10 +519,11 @@ Presentation 层保留两个协同层次：
 - 当前预览类型覆盖如下：
   - 图像预览：`Texture2D`、`Sprite`
   - 文本预览：`TextAsset`、`Shader`
+  - 音频预览：`AudioClip`（当前已支持标准音频容器直通播放，并对 `FSB5` 补上独立外部转码能力）
   - 结构化摘要预览：`AudioClip`、`Mesh`、`Material`、`GameObject`、`MonoBehaviour`、`AnimationClip`、`AnimatorController`、`Font`、`SpriteAtlas`
   - 通用摘要回退：其余可读取资源类型
 - 工作台检查器当前会直接展示资源 `PathId`，并在图片预览成功后展示尺寸、裁切矩形、像素编码与源格式标识等专属信息
-- 预览缓存当前按 `source fingerprint + generatorVersion` 校验命中，避免旧预览在资源包更新后继续误用
+- 预览缓存当前按 `source fingerprint + generatorVersion + audioTranscoderId + audioTranscoderVersion` 校验命中；对于曾因“无转码器”而回退成摘要的音频预览，在后续安装转码器后也会自动触发重建
 - 预览查询当前已补上结构化预览诊断：会把预览缓存命中 / 失效原因，以及 `定位信息缺失 / 解密器不可用 / 解密失败 / 预览生成失败` 等摘要回退原因统一沉到应用层 DTO
 - 当前真实 Reader 已补上第一轮依赖深读：会从序列化文件 `externals` 中提取资源包级外部依赖，并递归解析资源字段树中的 `PPtr` 引用，写入资产级依赖缓存
 - 工作台检查器当前已收敛为 `详情 / 依赖 / 替换 / 变更` 四页签；其中“详情”页统一承载预览画面、基础信息、预览补充信息与预览诊断，“依赖”页签已扩展为 `资产依赖 / 反向引用 / 依赖闭包 / Bundle 外部依赖` 四块
@@ -562,6 +565,10 @@ Presentation 层保留两个协同层次：
 真实内容预览的后续扩展建议单独按下面顺序推进，避免和当前已完成范围混淆：
 
 1. `AudioClip`
+   - 第一阶段已落地“容器识别 + 可播放载荷透传 + 摘要回退”主链路。
+   - 当前可直接播放 `WAV / OGG / MP3 / FLAC / M4A(MP4) / AAC` 等标准音频容器。
+   - 第二阶段已落地独立音频转码层：当前会优先通过外部 `vgmstream-cli` 把 `FSB5` 转为标准 `WAV` 后播放。
+   - 若 `vgmstream-cli` 不可用或转码失败，仍会稳定回退为摘要信息，并展示容器类型、载荷来源、载荷大小、采样率、声道、时长和压缩格式等信息。
 2. `SpriteAtlas`
 3. `Mesh`
 4. `Material / Font / AnimationClip` 的半可视化预览
@@ -584,6 +591,7 @@ Presentation 层保留两个协同层次：
 - 工作区默认解密器属于工作区元数据，由工作区向导设置，并在工作台状态标签中呈现
 - 导入入口先收口到 Presentation 共享协调服务，再通过 Application 层统一登记工作区导入来源，并进一步接到解密、读取和缓存写入链路
 - 真实导入前若需要解密，应先通过独立解密器扩展点把来源转换为可读取文件，再进入 `IAssetBundleReader`
+- `AudioClip` 等富预览若需要额外转码，应先通过独立音频转码层把载荷转换为标准可播放格式，再交给 Presentation 渲染
 - 自动识别默认按“导入源识别 -> 解密器识别 -> Reader 路径识别 -> 缓存命中识别”四层推进，而不是把所有判断都塞进 Reader 或 UI
 - 拖拽导入的页面桥接应优先挂在具体工作区区域，而不是整页根节点
 - AB 真实解析结果应优先写入独立缓存层，而不是写进工作区元数据文件

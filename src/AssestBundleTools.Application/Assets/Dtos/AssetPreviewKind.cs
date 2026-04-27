@@ -8,5 +8,6 @@ public enum AssetPreviewKind
     None = 0,
     Image = 1,
     Text = 2,
-    Summary = 3
+    Audio = 3,
+    Summary = 4
 }

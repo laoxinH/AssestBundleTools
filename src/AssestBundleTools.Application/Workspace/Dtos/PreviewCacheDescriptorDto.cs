@@ -19,4 +19,6 @@ public sealed record PreviewCacheDescriptorDto(
     DateTimeOffset GeneratedAtUtc,
     string GeneratorVersion,
     string? PreviewInfoText = null,
-    long? PreferredDisplaySizeInBytes = null);
+    long? PreferredDisplaySizeInBytes = null,
+    string? AudioTranscoderId = null,
+    string? AudioTranscoderVersion = null);

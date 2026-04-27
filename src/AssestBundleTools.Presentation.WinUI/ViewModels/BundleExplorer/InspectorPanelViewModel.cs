@@ -3,6 +3,8 @@ using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+using Windows.Media.Core;
+using Windows.Storage.Streams;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
 
@@ -31,6 +33,8 @@ public sealed class InspectorPanelViewModel : ObservableObject
     private string _previewFallbackReasonText = string.Empty;
     private string _previewDiagnosticDetailText = string.Empty;
     private ImageSource? _previewImageSource;
+    private MediaSource? _previewAudioSource;
+    private IRandomAccessStream? _previewAudioStream;
     private AssetPreviewKind _previewKind;
     private bool _isPreviewLoading;
     private string _extractCapabilityText = string.Empty;
@@ -171,6 +175,12 @@ public sealed class InspectorPanelViewModel : ObservableObject
     {
         get => _previewImageSource;
         private set => SetProperty(ref _previewImageSource, value);
+    }
+
+    public MediaSource? PreviewAudioSource
+    {
+        get => _previewAudioSource;
+        private set => SetProperty(ref _previewAudioSource, value);
     }
 
     public bool IsPreviewLoading
@@ -345,6 +355,14 @@ public sealed class InspectorPanelViewModel : ObservableObject
         !IsPreviewLoading &&
         _previewKind == AssetPreviewKind.Text &&
         !string.IsNullOrWhiteSpace(PreviewText)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    public Visibility PreviewAudioVisibility =>
+        HasSelection &&
+        !IsPreviewLoading &&
+        _previewKind == AssetPreviewKind.Audio &&
+        PreviewAudioSource is not null
             ? Visibility.Visible
             : Visibility.Collapsed;
 
@@ -559,6 +577,26 @@ public sealed class InspectorPanelViewModel : ObservableObject
         NotifyPreviewStateChanged();
     }
 
+    /// <summary>
+    /// 音频流需要在预览存活期间保持底层随机访问流不被回收，
+    /// 因此这里同时保存 <see cref="MediaSource"/> 和对应的源流句柄。
+    /// </summary>
+    public void ApplyAudioPreview(
+        MediaSource audioSource,
+        IRandomAccessStream audioStream,
+        string? previewInfoText = null)
+    {
+        ArgumentNullException.ThrowIfNull(audioSource);
+        ArgumentNullException.ThrowIfNull(audioStream);
+
+        ResetPreviewState();
+        _previewKind = AssetPreviewKind.Audio;
+        PreviewInfoText = NormalizePreviewInfoText(previewInfoText);
+        _previewAudioStream = audioStream;
+        PreviewAudioSource = audioSource;
+        NotifyPreviewStateChanged();
+    }
+
     public void ApplyTextPreview(string textContent, string? previewInfoText = null)
     {
         ResetPreviewState();
@@ -592,6 +630,9 @@ public sealed class InspectorPanelViewModel : ObservableObject
         PreviewStatusText = string.Empty;
         PreviewText = string.Empty;
         PreviewImageSource = null;
+        PreviewAudioSource = null;
+        _previewAudioStream?.Dispose();
+        _previewAudioStream = null;
         PreviewCacheStatusText = string.Empty;
         PreviewFallbackReasonText = string.Empty;
         PreviewDiagnosticDetailText = string.Empty;
@@ -604,6 +645,7 @@ public sealed class InspectorPanelViewModel : ObservableObject
         OnPropertyChanged(nameof(PreviewLoadingVisibility));
         OnPropertyChanged(nameof(PreviewImageVisibility));
         OnPropertyChanged(nameof(PreviewTextVisibility));
+        OnPropertyChanged(nameof(PreviewAudioVisibility));
         OnPropertyChanged(nameof(PreviewSummaryVisibility));
         OnPropertyChanged(nameof(PreviewMessageVisibility));
     }

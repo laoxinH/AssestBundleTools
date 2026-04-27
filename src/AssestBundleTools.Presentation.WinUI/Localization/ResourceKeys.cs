@@ -470,6 +470,7 @@ public static class ResourceKeys
     public const string InspectorPreviewDiagnosticCacheStatusIdentityChanged = "InspectorPanelView.PreviewDiagnostic.CacheStatus.IdentityChanged";
     public const string InspectorPreviewDiagnosticCacheStatusSourceFingerprintChanged = "InspectorPanelView.PreviewDiagnostic.CacheStatus.SourceFingerprintChanged";
     public const string InspectorPreviewDiagnosticCacheStatusGeneratorVersionChanged = "InspectorPanelView.PreviewDiagnostic.CacheStatus.GeneratorVersionChanged";
+    public const string InspectorPreviewDiagnosticCacheStatusAudioTranscoderChanged = "InspectorPanelView.PreviewDiagnostic.CacheStatus.AudioTranscoderChanged";
     public const string InspectorPreviewDiagnosticFallbackReasonNone = "InspectorPanelView.PreviewDiagnostic.FallbackReason.None";
     public const string InspectorPreviewDiagnosticFallbackReasonMissingLocator = "InspectorPanelView.PreviewDiagnostic.FallbackReason.MissingLocator";
     public const string InspectorPreviewDiagnosticFallbackReasonDecryptorResolveFailed = "InspectorPanelView.PreviewDiagnostic.FallbackReason.DecryptorResolveFailed";

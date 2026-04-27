@@ -804,6 +804,9 @@
   <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.GeneratorVersionChanged" xml:space="preserve">
     <value>预览生成器版本变化</value>
   </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.AudioTranscoderChanged" xml:space="preserve">
+    <value>音频转码器环境变化</value>
+  </data>
   <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.None" xml:space="preserve">
     <value>无</value>
   </data>

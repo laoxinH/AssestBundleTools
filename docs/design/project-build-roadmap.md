@@ -655,6 +655,7 @@ src/AssestBundleTools.Application/
 2. 先做 `AudioClip`
    - 这是识别价值最高、用户感知最强的一类真实内容预览。
    - 完成标准是“能稳定回退”：可解码时播放，不可解码时仍回退到结构化摘要，而不是直接失败。
+   - 当前已完成第二阶段：标准音频容器可直接播放，`FSB5` 会优先走独立音频转码层，经外部 `vgmstream-cli` 转为 `WAV` 后播放；当转码器缺失或执行失败时仍稳定回退到结构化摘要。
 3. 再做 `SpriteAtlas`
    - 该类型与现有图片预览链路最接近，能低风险复用已有 `Texture2D / Sprite` 能力。
 4. 最后做 `Mesh`
@@ -667,7 +668,7 @@ src/AssestBundleTools.Application/
 - 不允许让 WinUI 直接读取或解析 AB，所有预览内容都必须经 `Application -> IAssetPreviewGenerator -> PreviewCacheStore` 链路输出。
 - 不允许把音频波形、atlas 区域、模型默认相机等结构化数据继续塞进 `previewInfoText`；
   这类富预览元数据应进入独立 sidecar metadata。
-- 预览缓存的失效仍必须统一依赖 `source fingerprint + decryptorId + decryptorVersion + generatorVersion (+ metadata schema version)`。
+- 预览缓存的失效仍必须统一依赖 `source fingerprint + decryptorId + decryptorVersion + generatorVersion + audioTranscoderId + audioTranscoderVersion (+ metadata schema version)`。
 - 富预览阶段也必须保留结构化摘要回退，避免某个类型一旦无法解码就完全失去可浏览性。
 
 ## 5.11 M10 保存与重建能力
@@ -797,6 +798,7 @@ src/AssestBundleTools.Application/
 - 已完成 M9 当前子阶段中的依赖视图扩展：检查器依赖页已接入 `PathId` 展示、`CAB-*` 友好解析、反向引用与依赖闭包四类视图
 - 已完成 M9 当前子阶段中的工作区级 CAB 反查第一轮收口：检查器中的 Bundle 外部依赖在命中当前工作区上下文时，已可把 `CAB-*` 还原为具体资源包文件名
 - 已将“新窗口打开工作区”从同进程多窗口改为“新主进程承载工作区”，并补上启动参数解析、跨进程激活、同进程既有工作区直达工作台与启动期工作区重定向
+- 已完成 M9 富预览扩展的 `AudioClip` 第二阶段：预览链路已补齐 `AssetPreviewKind.Audio`，支持 `WAV / OGG / MP3 / FLAC / M4A(MP4) / AAC` 的可播放载荷透传，并对 `FSB5` 补上独立外部转码层；当前会优先通过 `vgmstream-cli` 转为 `WAV` 后播放，缺失转码器或转码失败时稳定回退到结构化摘要
 - 当前 M9 剩余主线收口为富预览扩展，优先顺序为 `AudioClip -> SpriteAtlas -> Mesh -> Material / Font / AnimationClip`
 
 ## 10. 架构代办事项
@@ -808,5 +810,6 @@ src/AssestBundleTools.Application/
 3. 继续评估 `WorkspaceBrowserService / WorkspaceCatalogService` 是否需要进一步收口为稳定的应用层网关，降低 Presentation 对具体 Handler 类型的依赖。
 4. 当前工作区进程占用是在“工作区真正加载成功后”注册；若后续要彻底压缩极端并发启动下的重复打开竞态，可把这层注册前移到加载前预占用，并补失败回滚。
 5. “窗口级 `WorkspaceContextService` 重构”当前已不再作为主路线；若未来确实要支持“一进程多工作区并行”，应单独立项做窗口作用域上下文，而不是在现有单工作区进程模型上继续叠兼容。
+6. 当前 `AudioClip` 的 `FSB5` 播放能力优先依赖外部 `vgmstream-cli`；若未来确实需要“完全无外部依赖”的部署形态，应在保留现有独立音频转码端口的前提下，单独补一轮内建 `FSB5` 部分 codec 支持，而不是把编解码逻辑直接塞回 Preview UI 或 Reader。
 
 这些事项当前不阻塞 M9 主线，但后续在缓存失效、预览链路和保存输出继续推进前，应择机完成第一轮收口。
