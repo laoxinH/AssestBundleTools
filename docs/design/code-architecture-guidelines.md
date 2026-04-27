@@ -618,16 +618,14 @@ Presentation 根据资源键:
 
 以下问题当前先记录为架构代办，不阻塞正在推进的 M9 功能链路：
 
-1. `Application` 层部分 Handler 仍保留默认回退到 `InMemoryWorkspaceSessionRegistry.Shared` 的构造方式，后续应统一改为显式构造注入，避免应用层偷偷依赖具体实现。
-2. `Presentation` 层的 `WorkspaceContextService` 当前仍直接调用 `IWorkspaceCatalogStore / IWorkspaceMetadataStoreFactory` 读写目录摘要与浏览状态，后续应把这部分持久化收敛为明确的 Application Use Case。
-3. `Presentation` 层的 `WorkspaceBrowserService / WorkspaceCatalogService` 当前仍直接持有具体 Handler 类型，后续可继续评估是否收口为更稳定的应用层网关接口，减少 UI 对用例实现细节的耦合。
-4. 当前工作区进程占用是在工作区加载成功后才完成注册；若后续需要进一步消除极端并发启动下的重复打开竞态，可将其前移到加载前预占用，并补失败回滚。
-5. 当前默认不走“窗口级 `WorkspaceContextService` 重构”路线；若未来要支持“一进程多工作区并行”，应单独重构窗口作用域上下文，而不是继续扩散当前全局工作区模型。
-6. `Application` 层当前仍存在直接使用 `File.Exists / Directory.Exists / FileInfo` 等具体文件系统 API 的情况，主要集中在导入登记、来源筛选和指纹生成链路；后续应抽象为应用层端口，由 `Infrastructure` 提供实现。
-7. 当前仍有一部分直接面向用户显示的文本没有完全资源化，既分布在 `Presentation` 层检查器、预览卡片，也分布在 `Infrastructure` 层预览与转码诊断；后续应统一改为资源键或结构化消息令牌，避免继续扩散硬编码文案。
-8. `Infrastructure` 层的部分预览构建组件当前仍直接拼装“可展示给用户”的说明文本，这与“基础设施不拼 UI 文本”的约束不完全一致；后续应优先返回结构化字段、原因码和参数，再由 `Presentation` 负责本地化展示。
-9. `tests/` 目录目前仍只有占位说明，尚未落地 `Domain / Application / Infrastructure` 测试项目，也未建立本地化资源完整性校验；这一点当前不满足本文档的测试建议。
-10. `Presentation.WinUI` 项目当前仍直接引用 `Infrastructure`，并在组合根之外保留少量对具体持久化类型的直接依赖；若后续继续保留“组合根例外”，应在架构文档中显式声明边界，否则需要继续收口为抽象依赖。
+1. `Presentation` 层的 `WorkspaceContextService` 当前仍直接调用 `IWorkspaceCatalogStore / IWorkspaceMetadataStoreFactory` 读写目录摘要与浏览状态，后续应把这部分持久化收敛为明确的 Application Use Case。
+2. `Presentation` 层的 `WorkspaceBrowserService / WorkspaceCatalogService` 当前仍直接持有具体 Handler 类型，后续可继续评估是否收口为更稳定的应用层网关接口，减少 UI 对用例实现细节的耦合。
+3. 当前工作区进程占用是在工作区加载成功后才完成注册；若后续需要进一步消除极端并发启动下的重复打开竞态，可将其前移到加载前预占用，并补失败回滚。
+4. 当前默认不走“窗口级 `WorkspaceContextService` 重构”路线；若未来要支持“一进程多工作区并行”，应单独重构窗口作用域上下文，而不是继续扩散当前全局工作区模型。
+5. 当前仍有一部分直接面向用户显示的文本没有完全资源化，既分布在 `Presentation` 层检查器、预览卡片，也分布在 `Infrastructure` 层预览与转码诊断；后续应统一改为资源键或结构化消息令牌，避免继续扩散硬编码文案。
+6. `Infrastructure` 层的部分预览构建组件当前仍直接拼装“可展示给用户”的说明文本，这与“基础设施不拼 UI 文本”的约束不完全一致；后续应优先返回结构化字段、原因码和参数，再由 `Presentation` 负责本地化展示。
+7. `tests/` 目录目前仍只有占位说明，尚未落地 `Domain / Application / Infrastructure` 测试项目，也未建立本地化资源完整性校验；这一点当前不满足本文档的测试建议。
+8. `Presentation.WinUI` 项目当前仍直接引用 `Infrastructure`，并在组合根之外保留少量对具体持久化类型的直接依赖；若后续继续保留“组合根例外”，应在架构文档中显式声明边界，否则需要继续收口为抽象依赖。
 
 后续处理原则：
 
@@ -648,17 +646,20 @@ Presentation 根据资源键:
 
 当前仍未完全满足规范的高优先级问题：
 
-- `Application` 层仍有具体文件系统 API 依赖，尚未完全收口到端口抽象。
 - 用户可见文本尚未彻底资源化，`Presentation` 与 `Infrastructure` 都还有硬编码展示文本残留。
 - `Presentation` 层仍有部分持久化与具体 Handler 耦合，尚未完全退回到更稳定的应用层网关或 Use Case 边界。
 - 测试体系尚未建立，尤其缺少 `Domain / Application` 单元测试与资源完整性校验。
+
+本日已完成的高优先级收口：
+
+- `Application` Handler 中对 `InMemoryWorkspaceSessionRegistry.Shared` 的默认回退已移除，统一改为显式构造注入。
+- 工作区导入登记与导入处理链路中的 `File.Exists / Directory.Exists / FileInfo` 已抽象为应用层端口，并由 `Infrastructure` 提供文件系统实现。
 
 因此，当前阶段更准确的判断应为：
 
 - **架构方向正确，主体分层基本成立。**
 - **但距离“完全符合 code-architecture-guidelines”仍有明确收口工作。**
 - 后续架构收口优先级建议保持为：
-  1. `Application` 文件系统依赖抽象化
-  2. 用户文本与预览诊断资源化 / 结构化
-  3. `Presentation` 持久化与具体 Handler 耦合收口
-  4. 建立最小可运行测试骨架
+  1. 用户文本与预览诊断资源化 / 结构化
+  2. `Presentation` 持久化与具体 Handler 耦合收口
+  3. 建立最小可运行测试骨架

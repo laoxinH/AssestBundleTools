@@ -13,9 +13,9 @@ public sealed class GetWorkspaceReplacementCandidatesHandler : IQueryHandler<Get
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
 
-    public GetWorkspaceReplacementCandidatesHandler(IWorkspaceSessionRegistry? workspaceSessionRegistry = null)
+    public GetWorkspaceReplacementCandidatesHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
     {
-        _workspaceSessionRegistry = workspaceSessionRegistry ?? InMemoryWorkspaceSessionRegistry.Shared;
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
     }
 
     public Task<Result<IReadOnlyList<WorkspaceReplacementCandidateDto>>> HandleAsync(

@@ -14,9 +14,9 @@ public sealed class GetWorkspaceBatchExtractionPreviewHandler : IQueryHandler<Ge
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
 
-    public GetWorkspaceBatchExtractionPreviewHandler(IWorkspaceSessionRegistry? workspaceSessionRegistry = null)
+    public GetWorkspaceBatchExtractionPreviewHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
     {
-        _workspaceSessionRegistry = workspaceSessionRegistry ?? InMemoryWorkspaceSessionRegistry.Shared;
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
     }
 
     public Task<Result<WorkspaceBatchExtractionPreviewDto>> HandleAsync(

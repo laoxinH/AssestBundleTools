@@ -13,9 +13,9 @@ public sealed class OpenAssetInPaneHandler : ICommandHandler<OpenAssetInPaneComm
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
 
-    public OpenAssetInPaneHandler(IWorkspaceSessionRegistry? workspaceSessionRegistry = null)
+    public OpenAssetInPaneHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
     {
-        _workspaceSessionRegistry = workspaceSessionRegistry ?? InMemoryWorkspaceSessionRegistry.Shared;
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
     }
 
     public Task<Result<AssetPaneContextDto>> HandleAsync(

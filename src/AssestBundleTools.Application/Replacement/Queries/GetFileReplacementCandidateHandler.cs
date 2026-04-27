@@ -15,9 +15,9 @@ public sealed class GetFileReplacementCandidateHandler : IQueryHandler<GetFileRe
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
 
-    public GetFileReplacementCandidateHandler(IWorkspaceSessionRegistry? workspaceSessionRegistry = null)
+    public GetFileReplacementCandidateHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
     {
-        _workspaceSessionRegistry = workspaceSessionRegistry ?? InMemoryWorkspaceSessionRegistry.Shared;
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
     }
 
     public Task<Result<FileReplacementCandidateDto>> HandleAsync(

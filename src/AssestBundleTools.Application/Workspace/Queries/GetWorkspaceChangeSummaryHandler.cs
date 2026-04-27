@@ -13,9 +13,9 @@ public sealed class GetWorkspaceChangeSummaryHandler : IQueryHandler<GetWorkspac
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
 
-    public GetWorkspaceChangeSummaryHandler(IWorkspaceSessionRegistry? workspaceSessionRegistry = null)
+    public GetWorkspaceChangeSummaryHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
     {
-        _workspaceSessionRegistry = workspaceSessionRegistry ?? InMemoryWorkspaceSessionRegistry.Shared;
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
     }
 
     public Task<Result<WorkspaceChangeSummaryDto>> HandleAsync(

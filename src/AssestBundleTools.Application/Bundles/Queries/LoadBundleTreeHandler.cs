@@ -13,9 +13,9 @@ public sealed class LoadBundleTreeHandler : IQueryHandler<LoadBundleTreeQuery, R
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
 
-    public LoadBundleTreeHandler(IWorkspaceSessionRegistry? workspaceSessionRegistry = null)
+    public LoadBundleTreeHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
     {
-        _workspaceSessionRegistry = workspaceSessionRegistry ?? InMemoryWorkspaceSessionRegistry.Shared;
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
     }
 
     public Task<Result<IReadOnlyList<BundleTreeNodeDto>>> HandleAsync(

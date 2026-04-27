@@ -1,4 +1,3 @@
-using System.IO;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
@@ -19,11 +18,16 @@ public sealed class RegisterWorkspaceImportHandler
     : ICommandHandler<RegisterWorkspaceImportCommand, Result<WorkspaceImportRegistrationResultDto>>
 {
     private readonly IWorkspaceMetadataStoreFactory _workspaceMetadataStoreFactory;
+    private readonly IWorkspaceImportFileSystemService _workspaceImportFileSystemService;
 
-    public RegisterWorkspaceImportHandler(IWorkspaceMetadataStoreFactory workspaceMetadataStoreFactory)
+    public RegisterWorkspaceImportHandler(
+        IWorkspaceMetadataStoreFactory workspaceMetadataStoreFactory,
+        IWorkspaceImportFileSystemService workspaceImportFileSystemService)
     {
         _workspaceMetadataStoreFactory = workspaceMetadataStoreFactory
             ?? throw new ArgumentNullException(nameof(workspaceMetadataStoreFactory));
+        _workspaceImportFileSystemService = workspaceImportFileSystemService
+            ?? throw new ArgumentNullException(nameof(workspaceImportFileSystemService));
     }
 
     public Task<Result<WorkspaceImportRegistrationResultDto>> HandleAsync(
@@ -86,7 +90,8 @@ public sealed class RegisterWorkspaceImportHandler
         foreach (var normalizedPath in normalizedPaths)
         {
             excludedBundleSourcePaths.Remove(normalizedPath);
-            var pathKind = ResolvePathKind(normalizedPath);
+            // 路径类型判断交给基础设施层实现，避免应用层直接感知具体文件系统 API。
+            var pathKind = _workspaceImportFileSystemService.ResolvePathKind(normalizedPath);
             if (pathKind == WorkspaceImportPathKind.File)
             {
                 fileCount++;
@@ -191,20 +196,5 @@ public sealed class RegisterWorkspaceImportHandler
             .Where(static path => !string.IsNullOrWhiteSpace(path))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
-    }
-
-    private static WorkspaceImportPathKind ResolvePathKind(string path)
-    {
-        if (File.Exists(path))
-        {
-            return WorkspaceImportPathKind.File;
-        }
-
-        if (Directory.Exists(path))
-        {
-            return WorkspaceImportPathKind.Directory;
-        }
-
-        return WorkspaceImportPathKind.Unknown;
     }
 }

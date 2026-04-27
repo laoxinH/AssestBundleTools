@@ -13,9 +13,9 @@ public sealed class ReplaceAssetFromWorkspaceHandler : ICommandHandler<ReplaceAs
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
 
-    public ReplaceAssetFromWorkspaceHandler(IWorkspaceSessionRegistry? workspaceSessionRegistry = null)
+    public ReplaceAssetFromWorkspaceHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
     {
-        _workspaceSessionRegistry = workspaceSessionRegistry ?? InMemoryWorkspaceSessionRegistry.Shared;
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
     }
 
     public Task<Result<AssetReplacementResultDto>> HandleAsync(

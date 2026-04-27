@@ -15,34 +15,29 @@ public sealed class OpenWorkspaceHandler : ICommandHandler<OpenWorkspaceCommand,
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly IWorkspaceMetadataStoreFactory _workspaceMetadataStoreFactory;
-    private readonly WorkspaceImportProcessingCoordinator? _workspaceImportProcessingCoordinator;
+    private readonly WorkspaceImportProcessingCoordinator _workspaceImportProcessingCoordinator;
 
     public OpenWorkspaceHandler(
-        IWorkspaceSessionRegistry? workspaceSessionRegistry = null,
-        IWorkspaceMetadataStoreFactory? workspaceMetadataStoreFactory = null,
-        IWorkspaceDataStoreFactory? workspaceDataStoreFactory = null,
-        IWorkspaceImportSourceDiscoveryService? workspaceImportSourceDiscoveryService = null,
-        IAssetBundleSourceInspector? assetBundleSourceInspector = null,
-        IAssetBundleDecryptorRegistry? assetBundleDecryptorRegistry = null,
-        IAssetBundleReader? assetBundleReader = null)
+        IWorkspaceSessionRegistry workspaceSessionRegistry,
+        IWorkspaceMetadataStoreFactory workspaceMetadataStoreFactory,
+        IWorkspaceDataStoreFactory workspaceDataStoreFactory,
+        IWorkspaceImportSourceDiscoveryService workspaceImportSourceDiscoveryService,
+        IWorkspaceImportFileSystemService workspaceImportFileSystemService,
+        IAssetBundleSourceInspector assetBundleSourceInspector,
+        IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
+        IAssetBundleReader assetBundleReader)
     {
-        _workspaceSessionRegistry = workspaceSessionRegistry ?? InMemoryWorkspaceSessionRegistry.Shared;
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _workspaceMetadataStoreFactory = workspaceMetadataStoreFactory
                                          ?? throw new ArgumentNullException(nameof(workspaceMetadataStoreFactory));
-        if (workspaceDataStoreFactory is not null &&
-            workspaceImportSourceDiscoveryService is not null &&
-            assetBundleSourceInspector is not null &&
-            assetBundleDecryptorRegistry is not null &&
-            assetBundleReader is not null)
-        {
-            _workspaceImportProcessingCoordinator = new WorkspaceImportProcessingCoordinator(
-                _workspaceMetadataStoreFactory,
-                workspaceDataStoreFactory,
-                workspaceImportSourceDiscoveryService,
-                assetBundleSourceInspector,
-                assetBundleDecryptorRegistry,
-                assetBundleReader);
-        }
+        _workspaceImportProcessingCoordinator = new WorkspaceImportProcessingCoordinator(
+            _workspaceMetadataStoreFactory,
+            workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory)),
+            workspaceImportSourceDiscoveryService ?? throw new ArgumentNullException(nameof(workspaceImportSourceDiscoveryService)),
+            workspaceImportFileSystemService ?? throw new ArgumentNullException(nameof(workspaceImportFileSystemService)),
+            assetBundleSourceInspector ?? throw new ArgumentNullException(nameof(assetBundleSourceInspector)),
+            assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry)),
+            assetBundleReader ?? throw new ArgumentNullException(nameof(assetBundleReader)));
     }
 
     public async Task<Result<WorkspaceSummaryDto>> HandleAsync(
@@ -75,7 +70,7 @@ public sealed class OpenWorkspaceHandler : ICommandHandler<OpenWorkspaceCommand,
 
         var metadataStore = _workspaceMetadataStoreFactory.Create(command.WorkspaceDataRootPath);
         var metadata = metadataStore.Load(workspaceKey);
-        if (metadata is not null && _workspaceImportProcessingCoordinator is not null)
+        if (metadata is not null)
         {
             var processingResult = await _workspaceImportProcessingCoordinator.ProcessAsync(
                 new ProcessWorkspaceImportsCommand(

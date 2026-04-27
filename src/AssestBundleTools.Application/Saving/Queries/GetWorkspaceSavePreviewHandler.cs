@@ -14,9 +14,9 @@ public sealed class GetWorkspaceSavePreviewHandler : IQueryHandler<GetWorkspaceS
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
 
-    public GetWorkspaceSavePreviewHandler(IWorkspaceSessionRegistry? workspaceSessionRegistry = null)
+    public GetWorkspaceSavePreviewHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
     {
-        _workspaceSessionRegistry = workspaceSessionRegistry ?? InMemoryWorkspaceSessionRegistry.Shared;
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
     }
 
     public Task<Result<WorkspaceSavePreviewDto>> HandleAsync(

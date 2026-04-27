@@ -19,9 +19,9 @@ public sealed class ExecuteWorkspaceBatchReplacementHandler : ICommandHandler<Ex
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
 
-    public ExecuteWorkspaceBatchReplacementHandler(IWorkspaceSessionRegistry? workspaceSessionRegistry = null)
+    public ExecuteWorkspaceBatchReplacementHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
     {
-        _workspaceSessionRegistry = workspaceSessionRegistry ?? InMemoryWorkspaceSessionRegistry.Shared;
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
     }
 
     public Task<Result<WorkspaceBatchReplacementResultDto>> HandleAsync(

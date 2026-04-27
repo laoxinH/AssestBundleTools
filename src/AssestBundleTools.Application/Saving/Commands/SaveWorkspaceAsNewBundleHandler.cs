@@ -18,9 +18,9 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
 
-    public SaveWorkspaceAsNewBundleHandler(IWorkspaceSessionRegistry? workspaceSessionRegistry = null)
+    public SaveWorkspaceAsNewBundleHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
     {
-        _workspaceSessionRegistry = workspaceSessionRegistry ?? InMemoryWorkspaceSessionRegistry.Shared;
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
     }
 
     public Task<Result<WorkspaceSaveExecutionResultDto>> HandleAsync(

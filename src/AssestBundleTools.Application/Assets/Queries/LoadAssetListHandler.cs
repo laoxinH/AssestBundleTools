@@ -13,9 +13,9 @@ public sealed class LoadAssetListHandler : IQueryHandler<LoadAssetListQuery, Res
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
 
-    public LoadAssetListHandler(IWorkspaceSessionRegistry? workspaceSessionRegistry = null)
+    public LoadAssetListHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
     {
-        _workspaceSessionRegistry = workspaceSessionRegistry ?? InMemoryWorkspaceSessionRegistry.Shared;
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
     }
 
     public Task<Result<AssetListResultDto>> HandleAsync(

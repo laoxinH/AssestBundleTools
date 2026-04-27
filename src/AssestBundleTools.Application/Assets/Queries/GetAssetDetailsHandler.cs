@@ -13,9 +13,9 @@ public sealed class GetAssetDetailsHandler : IQueryHandler<GetAssetDetailsQuery,
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
 
-    public GetAssetDetailsHandler(IWorkspaceSessionRegistry? workspaceSessionRegistry = null)
+    public GetAssetDetailsHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
     {
-        _workspaceSessionRegistry = workspaceSessionRegistry ?? InMemoryWorkspaceSessionRegistry.Shared;
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
     }
 
     public Task<Result<AssetDetailsDto>> HandleAsync(

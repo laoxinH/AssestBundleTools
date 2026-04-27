@@ -15,8 +15,6 @@ namespace AssestBundleTools.Application.Workspace.Services;
 /// </summary>
 public sealed class InMemoryWorkspaceSessionRegistry : IWorkspaceSessionRegistry
 {
-    public static InMemoryWorkspaceSessionRegistry Shared { get; } = new();
-
     private readonly object _syncRoot = new();
     private readonly Dictionary<string, WorkspaceSessionState> _workspaceStates = new(StringComparer.Ordinal);
 

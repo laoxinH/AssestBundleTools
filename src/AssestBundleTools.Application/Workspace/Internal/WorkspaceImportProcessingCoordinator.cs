@@ -1,4 +1,3 @@
-using System.IO;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Common.Errors;
@@ -20,6 +19,7 @@ internal sealed class WorkspaceImportProcessingCoordinator
     private readonly IWorkspaceMetadataStoreFactory _workspaceMetadataStoreFactory;
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
     private readonly IWorkspaceImportSourceDiscoveryService _workspaceImportSourceDiscoveryService;
+    private readonly IWorkspaceImportFileSystemService _workspaceImportFileSystemService;
     private readonly IAssetBundleReader _assetBundleReader;
     private readonly WorkspaceImportCandidateScreeningCoordinator _workspaceImportCandidateScreeningCoordinator;
 
@@ -27,6 +27,7 @@ internal sealed class WorkspaceImportProcessingCoordinator
         IWorkspaceMetadataStoreFactory workspaceMetadataStoreFactory,
         IWorkspaceDataStoreFactory workspaceDataStoreFactory,
         IWorkspaceImportSourceDiscoveryService workspaceImportSourceDiscoveryService,
+        IWorkspaceImportFileSystemService workspaceImportFileSystemService,
         IAssetBundleSourceInspector assetBundleSourceInspector,
         IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
         IAssetBundleReader assetBundleReader)
@@ -34,6 +35,7 @@ internal sealed class WorkspaceImportProcessingCoordinator
         _workspaceMetadataStoreFactory = workspaceMetadataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceMetadataStoreFactory));
         _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
         _workspaceImportSourceDiscoveryService = workspaceImportSourceDiscoveryService ?? throw new ArgumentNullException(nameof(workspaceImportSourceDiscoveryService));
+        _workspaceImportFileSystemService = workspaceImportFileSystemService ?? throw new ArgumentNullException(nameof(workspaceImportFileSystemService));
         _assetBundleReader = assetBundleReader ?? throw new ArgumentNullException(nameof(assetBundleReader));
         _workspaceImportCandidateScreeningCoordinator = new WorkspaceImportCandidateScreeningCoordinator(
             assetBundleSourceInspector ?? throw new ArgumentNullException(nameof(assetBundleSourceInspector)),
@@ -109,7 +111,8 @@ internal sealed class WorkspaceImportProcessingCoordinator
 
             var bundleCacheKey = WorkspaceImportPathUtility.CreateBundleCacheKey(discoveredFile.SourcePath);
             observedBundleCacheKeys.Add(bundleCacheKey);
-            var sourceFingerprint = CreateSourceFingerprint(discoveredFile.SourcePath);
+            // 来源指纹属于缓存命中识别输入，但文件系统访问能力仍由基础设施层提供。
+            var sourceFingerprint = _workspaceImportFileSystemService.CreateFingerprint(discoveredFile.SourcePath);
             if (!existingCacheEntries.TryGetValue(bundleCacheKey, out var existingCacheEntry))
             {
                 cacheDiagnostics.Add(new WorkspaceImportCacheDecisionDiagnosticDto(
@@ -297,19 +300,6 @@ internal sealed class WorkspaceImportProcessingCoordinator
                 IssueDiagnostics: issueDiagnostics,
                 ProcessedAtUtc: processedAtUtc));
     }
-
-    private static WorkspaceFileFingerprintDto CreateSourceFingerprint(string sourcePath)
-    {
-        var fileInfo = new FileInfo(sourcePath);
-        return new WorkspaceFileFingerprintDto(
-            SourcePath: fileInfo.FullName,
-            FileSizeInBytes: fileInfo.Exists ? fileInfo.Length : 0,
-            LastWriteTimeUtc: fileInfo.Exists
-                ? new DateTimeOffset(fileInfo.LastWriteTimeUtc, TimeSpan.Zero)
-                : DateTimeOffset.MinValue,
-            ContentHash: null);
-    }
-
     private static string CreateReaderRejectedDetail(string resolvedBundlePath)
     {
         return $"No registered reader recognized the decrypted bundle output: {resolvedBundlePath}";

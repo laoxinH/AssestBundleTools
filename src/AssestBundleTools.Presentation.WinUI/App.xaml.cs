@@ -69,6 +69,7 @@ public partial class App : Microsoft.UI.Xaml.Application
 
             StartupDiagnostics.Log("Creating application handlers.");
             var workspaceImportSourceDiscoveryService = new FileSystemWorkspaceImportSourceDiscoveryService();
+            var workspaceImportFileSystemService = new FileSystemWorkspaceImportFileSystemService();
             var assetBundleSourceInspector = new UnityAssetBundleSourceInspector();
             var assetBundleReader = new FallbackAssetBundleReader(
                 new AssetsToolsAssetBundleReader(),
@@ -80,14 +81,18 @@ public partial class App : Microsoft.UI.Xaml.Application
                 workspaceMetadataStoreFactory: workspaceMetadataStoreFactory,
                 workspaceDataStoreFactory: workspaceDataStoreFactory,
                 workspaceImportSourceDiscoveryService: workspaceImportSourceDiscoveryService,
+                workspaceImportFileSystemService: workspaceImportFileSystemService,
                 assetBundleSourceInspector: assetBundleSourceInspector,
                 assetBundleDecryptorRegistry: _assetBundleDecryptorRegistry,
                 assetBundleReader: assetBundleReader);
-            var registerWorkspaceImportHandler = new RegisterWorkspaceImportHandler(workspaceMetadataStoreFactory);
+            var registerWorkspaceImportHandler = new RegisterWorkspaceImportHandler(
+                workspaceMetadataStoreFactory,
+                workspaceImportFileSystemService);
             var processWorkspaceImportsHandler = new ProcessWorkspaceImportsHandler(
                 workspaceMetadataStoreFactory,
                 workspaceDataStoreFactory,
                 workspaceImportSourceDiscoveryService,
+                workspaceImportFileSystemService,
                 assetBundleSourceInspector,
                 _assetBundleDecryptorRegistry,
                 assetBundleReader);

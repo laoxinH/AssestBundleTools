@@ -17,9 +17,9 @@ public sealed class ExtractWorkspaceAssetsHandler : ICommandHandler<ExtractWorks
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
 
-    public ExtractWorkspaceAssetsHandler(IWorkspaceSessionRegistry? workspaceSessionRegistry = null)
+    public ExtractWorkspaceAssetsHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
     {
-        _workspaceSessionRegistry = workspaceSessionRegistry ?? InMemoryWorkspaceSessionRegistry.Shared;
+        _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
     }
 
     public Task<Result<WorkspaceBatchExtractionResultDto>> HandleAsync(

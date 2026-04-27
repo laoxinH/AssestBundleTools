@@ -799,17 +799,17 @@ src/AssestBundleTools.Application/
 - 已完成 M9 当前子阶段中的工作区级 CAB 反查第一轮收口：检查器中的 Bundle 外部依赖在命中当前工作区上下文时，已可把 `CAB-*` 还原为具体资源包文件名
 - 已将“新窗口打开工作区”从同进程多窗口改为“新主进程承载工作区”，并补上启动参数解析、跨进程激活、同进程既有工作区直达工作台与启动期工作区重定向
 - 已完成 M9 富预览扩展的 `AudioClip` 第二阶段：预览链路已补齐 `AssetPreviewKind.Audio`，支持 `WAV / OGG / MP3 / FLAC / M4A(MP4) / AAC` 的可播放载荷透传，并对 `FSB5` 补上独立外部转码层；当前会优先通过 `vgmstream-cli` 转为 `WAV` 后播放，缺失转码器或转码失败时稳定回退到结构化摘要
+- 已完成一轮架构高优先级收口：`Application` 侧已移除 `InMemoryWorkspaceSessionRegistry.Shared` 默认回退，并把工作区导入链路中的文件系统探测能力抽象为应用层端口，由 `Infrastructure` 统一提供实现
 - 当前 M9 剩余主线收口为富预览扩展，优先顺序为 `AudioClip -> SpriteAtlas -> Mesh -> Material / Font / AnimationClip`
 
 ## 10. 架构代办事项
 
 以下事项已确认存在，但当前先记入架构代办，后续结合功能推进时一并收口：
 
-1. 去掉 `Application` Handler 中对 `InMemoryWorkspaceSessionRegistry.Shared` 的默认回退，统一改为显式构造注入。
-2. 将 `WorkspaceContextService` 中直接读写 `WorkspaceCatalogStore / WorkspaceMetadataStore` 的逻辑下沉为 Application Use Case，减少 Presentation 对持久化细节的直接感知。
-3. 继续评估 `WorkspaceBrowserService / WorkspaceCatalogService` 是否需要进一步收口为稳定的应用层网关，降低 Presentation 对具体 Handler 类型的依赖。
-4. 当前工作区进程占用是在“工作区真正加载成功后”注册；若后续要彻底压缩极端并发启动下的重复打开竞态，可把这层注册前移到加载前预占用，并补失败回滚。
-5. “窗口级 `WorkspaceContextService` 重构”当前已不再作为主路线；若未来确实要支持“一进程多工作区并行”，应单独立项做窗口作用域上下文，而不是在现有单工作区进程模型上继续叠兼容。
-6. 当前 `AudioClip` 的 `FSB5` 播放能力优先依赖外部 `vgmstream-cli`；若未来确实需要“完全无外部依赖”的部署形态，应在保留现有独立音频转码端口的前提下，单独补一轮内建 `FSB5` 部分 codec 支持，而不是把编解码逻辑直接塞回 Preview UI 或 Reader。
+1. 将 `WorkspaceContextService` 中直接读写 `WorkspaceCatalogStore / WorkspaceMetadataStore` 的逻辑下沉为 Application Use Case，减少 Presentation 对持久化细节的直接感知。
+2. 继续评估 `WorkspaceBrowserService / WorkspaceCatalogService` 是否需要进一步收口为稳定的应用层网关，降低 Presentation 对具体 Handler 类型的依赖。
+3. 当前工作区进程占用是在“工作区真正加载成功后”注册；若后续要彻底压缩极端并发启动下的重复打开竞态，可把这层注册前移到加载前预占用，并补失败回滚。
+4. “窗口级 `WorkspaceContextService` 重构”当前已不再作为主路线；若未来确实要支持“一进程多工作区并行”，应单独立项做窗口作用域上下文，而不是在现有单工作区进程模型上继续叠兼容。
+5. 当前 `AudioClip` 的 `FSB5` 播放能力优先依赖外部 `vgmstream-cli`；若未来确实需要“完全无外部依赖”的部署形态，应在保留现有独立音频转码端口的前提下，单独补一轮内建 `FSB5` 部分 codec 支持，而不是把编解码逻辑直接塞回 Preview UI 或 Reader。
 
 这些事项当前不阻塞 M9 主线，但后续在缓存失效、预览链路和保存输出继续推进前，应择机完成第一轮收口。
