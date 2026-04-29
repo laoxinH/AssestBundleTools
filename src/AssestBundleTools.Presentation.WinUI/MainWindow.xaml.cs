@@ -57,6 +57,12 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
     internal string? RegisteredWorkspaceKey { get; private set; }
 
     /// <summary>
+    /// 记录当前窗口正在尝试加载、但尚未正式绑定成功的目标工作区键值。
+    /// 这样跨进程去重可以在页面加载期间也保持稳定。
+    /// </summary>
+    internal string? PendingWorkspaceKey { get; private set; }
+
+    /// <summary>
     /// 尝试初始化 Win11 风格的窗口标题栏。
     /// 这里把内容区域延伸到标题栏，以实现更接近系统设置页的无边框观感。
     /// 若当前环境不支持，也仅回退为默认标题栏，不阻断应用启动。
@@ -161,12 +167,44 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
     {
         ArgumentNullException.ThrowIfNull(navigationRequest);
         RegisteredWorkspaceKey = App.CurrentApp.RegisterWindowWorkspace(this, navigationRequest);
+        PendingWorkspaceKey = null;
+    }
+
+    /// <summary>
+    /// 在页面真正开始加载目标工作区前，先登记一个临时占位。
+    /// 若其他进程此时再次打开同一工作区，就会直接激活当前窗口，而不是重复派生新实例。
+    /// </summary>
+    internal bool PrepareWorkspaceLoad(WorkspaceNavigationRequest navigationRequest)
+    {
+        ArgumentNullException.ThrowIfNull(navigationRequest);
+
+        if (!App.CurrentApp.TryBeginWindowWorkspaceLoad(this, navigationRequest))
+        {
+            PendingWorkspaceKey = null;
+            return false;
+        }
+
+        var workspaceKey = WorkspaceCatalogKeyFactory.CreateWorkspaceKey(
+            navigationRequest.SourcePath,
+            navigationRequest.WorkspaceDataRootPath);
+        PendingWorkspaceKey = string.Equals(RegisteredWorkspaceKey, workspaceKey, StringComparison.Ordinal)
+            ? null
+            : workspaceKey;
+        return true;
     }
 
     internal void ClearRegisteredWorkspace()
     {
         RegisteredWorkspaceKey = null;
+        PendingWorkspaceKey = null;
         App.CurrentApp.UnregisterWindowWorkspace(this);
+    }
+
+    internal bool OwnsWorkspace(string workspaceKey)
+    {
+        return !string.IsNullOrWhiteSpace(workspaceKey) &&
+               (string.Equals(RegisteredWorkspaceKey, workspaceKey, StringComparison.Ordinal) ||
+                string.Equals(PendingWorkspaceKey, workspaceKey, StringComparison.Ordinal));
     }
 
     /// <summary>
@@ -189,8 +227,7 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
             navigationRequest.SourcePath,
             navigationRequest.WorkspaceDataRootPath);
 
-        if (!string.IsNullOrWhiteSpace(RegisteredWorkspaceKey) &&
-            string.Equals(RegisteredWorkspaceKey, workspaceKey, StringComparison.Ordinal))
+        if (OwnsWorkspace(workspaceKey))
         {
             shellPage.ActivateCurrentWorkspace();
             return;

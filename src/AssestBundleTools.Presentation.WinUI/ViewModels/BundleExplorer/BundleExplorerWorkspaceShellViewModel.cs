@@ -19,7 +19,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
 /// 这层只负责“当前有没有工作区、它的导航参数是什么、顶部状态标签如何展示”。
 /// 真正的导入、读取、预览和替换流程仍由外层编排 ViewModel 驱动，避免把流程控制和页面壳层状态继续混在一起。
 /// </remarks>
-public sealed class BundleExplorerWorkspaceShellViewModel : ObservableObject
+public sealed class BundleExplorerWorkspaceShellViewModel : ObservableObject, IBundleExplorerWorkspaceShellHost
 {
     private readonly ILocalizationService _localizationService;
     private readonly IWorkspaceContextService _workspaceContextService;
@@ -38,6 +38,8 @@ public sealed class BundleExplorerWorkspaceShellViewModel : ObservableObject
 
         RefreshWorkspaceStatusChips();
     }
+
+    internal event EventHandler<BundleExplorerPageStateChangedEventArgs<BundleExplorerWorkspaceShellPageStateChange>>? PageStateChanged;
 
     public ObservableCollection<WorkspaceStatusChipViewModel> WorkspaceStatusChips { get; } = new();
 
@@ -219,7 +221,21 @@ public sealed class BundleExplorerWorkspaceShellViewModel : ObservableObject
         OnPropertyChanged(nameof(WorkspaceEmptyStateVisibility));
         RefreshWorkspaceStatusChips();
         OnPropertyChanged(nameof(WorkspaceStatusChips));
+        NotifyPageStateChanged(
+            BundleExplorerWorkspaceShellPageStateChange.WorkspaceAvailability |
+            BundleExplorerWorkspaceShellPageStateChange.Presentation |
+            BundleExplorerWorkspaceShellPageStateChange.StatusChips);
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
+
+    private void NotifyPageStateChanged(BundleExplorerWorkspaceShellPageStateChange changeFlags)
+    {
+        if (changeFlags == BundleExplorerWorkspaceShellPageStateChange.None)
+        {
+            return;
+        }
+
+        PageStateChanged?.Invoke(this, new BundleExplorerPageStateChangedEventArgs<BundleExplorerWorkspaceShellPageStateChange>(changeFlags));
+    }
 }

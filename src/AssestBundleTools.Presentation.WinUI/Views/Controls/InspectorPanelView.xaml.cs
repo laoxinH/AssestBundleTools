@@ -133,68 +133,40 @@ public sealed partial class InspectorPanelView : UserControl
 
         view.DetachObservedViewModel(args.OldValue as InspectorPanelViewModel);
         view.AttachObservedViewModel(args.NewValue as InspectorPanelViewModel);
-        view.ApplyInformationTextSet(args.NewValue as InspectorPanelViewModel);
     }
 
     private void ApplyLocalizedText()
     {
-        DetailsSectionButton.Content = UiText.Get("InspectorPanelView.DetailsTab.Header");
-        DependenciesSectionButton.Content = UiText.Get("InspectorPanelView.DependenciesTab.Header");
-        ReplacementSectionButton.Content = UiText.Get("InspectorPanelView.ReplacementTab.Header");
-        ChangesSectionButton.Content = UiText.Get("InspectorPanelView.ChangesTab.Header");
+        DetailsSectionButton.Content = UiText.Get(ResourceKeys.InspectorDetailsTabHeader);
+        DependenciesSectionButton.Content = UiText.Get(ResourceKeys.InspectorDependenciesTabHeader);
+        ReplacementSectionButton.Content = UiText.Get(ResourceKeys.InspectorReplacementTabHeader);
+        ChangesSectionButton.Content = UiText.Get(ResourceKeys.InspectorChangesTabHeader);
 
-        EmptyStateTitleText.Text = UiText.Get("InspectorPanelView.EmptyStateTitleText.Text");
+        EmptyStateTitleText.Text = UiText.Get(ResourceKeys.InspectorEmptyStateTitle);
         InformationSectionTitleText.Text = UiText.Get(ResourceKeys.InspectorInformationSectionTitle);
-        AssetDependenciesTitleText.Text = UiText.Get("InspectorPanelView.AssetDependenciesTitleText.Text");
-        ReferencedByTitleText.Text = UiText.Get("InspectorPanelView.ReferencedByTitleText.Text");
-        DependencyClosureTitleText.Text = UiText.Get("InspectorPanelView.DependencyClosureTitleText.Text");
-        BundleExternalDependenciesTitleText.Text = UiText.Get("InspectorPanelView.BundleExternalDependenciesTitleText.Text");
-        DependenciesEmptyStateText.Text = UiText.Get("InspectorPanelView.DependenciesEmptyStateText.Text");
-        ReplacementTargetTitleText.Text = UiText.Get("InspectorPanelView.ReplacementTargetTitleText.Text");
-        ReplacementSourceTitleText.Text = UiText.Get("InspectorPanelView.ReplacementSourceTitleText.Text");
-        ReplacementCompatibilityTitleText.Text = UiText.Get("InspectorPanelView.ReplacementCompatibilityTitleText.Text");
-        ExtractCapabilityLabelText.Text = UiText.Get("InspectorPanelView.ExtractCapabilityLabelText.Text");
-        FileReplacementCapabilityLabelText.Text = UiText.Get("InspectorPanelView.FileReplacementCapabilityLabelText.Text");
-        WorkspaceReplacementCapabilityLabelText.Text = UiText.Get("InspectorPanelView.WorkspaceReplacementCapabilityLabelText.Text");
-        ChangeSummaryTitleText.Text = UiText.Get("InspectorPanelView.ChangeSummaryTitleText.Text");
+        AssetDependenciesTitleText.Text = UiText.Get(ResourceKeys.InspectorAssetDependenciesTitle);
+        ReferencedByTitleText.Text = UiText.Get(ResourceKeys.InspectorReferencedByTitle);
+        DependencyClosureTitleText.Text = UiText.Get(ResourceKeys.InspectorDependencyClosureTitle);
+        BundleExternalDependenciesTitleText.Text = UiText.Get(ResourceKeys.InspectorBundleExternalDependenciesTitle);
+        DependenciesEmptyStateText.Text = UiText.Get(ResourceKeys.InspectorDependenciesEmptyStateText);
+        ReplacementTargetTitleText.Text = UiText.Get(ResourceKeys.InspectorReplacementTargetTitle);
+        ReplacementSourceTitleText.Text = UiText.Get(ResourceKeys.InspectorReplacementSourceTitle);
+        ReplacementCompatibilityTitleText.Text = UiText.Get(ResourceKeys.InspectorReplacementCompatibilityTitle);
+        ExtractCapabilityLabelText.Text = UiText.Get(ResourceKeys.InspectorExtractCapabilityLabel);
+        FileReplacementCapabilityLabelText.Text = UiText.Get(ResourceKeys.InspectorFileReplacementCapabilityLabel);
+        WorkspaceReplacementCapabilityLabelText.Text = UiText.Get(ResourceKeys.InspectorWorkspaceReplacementCapabilityLabel);
+        ChangeSummaryTitleText.Text = UiText.Get(ResourceKeys.InspectorChangeSummaryTitle);
 
-        ExtractButton.Content = UiText.Get("InspectorPanelView.ExtractButton.Content");
-        SelectFileReplacementButton.Content = UiText.Get("InspectorPanelView.SelectFileReplacementButton.Content");
-        SelectReplacementButton.Content = UiText.Get("InspectorPanelView.SelectReplacementButton.Content");
-        ApplyReplacementButton.Content = UiText.Get("InspectorPanelView.ApplyReplacementButton.Content");
-        UndoReplacementButton.Content = UiText.Get("InspectorPanelView.UndoReplacementButton.Content");
+        ExtractButton.Content = UiText.Get(ResourceKeys.InspectorExtractButton);
+        SelectFileReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectFileReplacementButton);
+        SelectReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectReplacementButton);
+        ApplyReplacementButton.Content = UiText.Get(ResourceKeys.InspectorApplyReplacementButton);
+        UndoReplacementButton.Content = UiText.Get(ResourceKeys.InspectorUndoReplacementButton);
         ToolTipService.SetToolTip(OpenPreviewLocationButton, UiText.Get(ResourceKeys.InspectorPreviewOpenLocationToolTip));
         ToolTipService.SetToolTip(AudioTransportPlayPauseButton, UiText.Get(ResourceKeys.InspectorAudioTransportPlayToolTip));
         ToolTipService.SetToolTip(AudioTransportResetButton, UiText.Get(ResourceKeys.InspectorAudioTransportResetToolTip));
 
-        ApplyInformationTextSet(ViewModel);
         RefreshAudioTransportState();
-    }
-
-    private void ApplyInformationTextSet(InspectorPanelViewModel? viewModel)
-    {
-        if (viewModel is null)
-        {
-            return;
-        }
-
-        viewModel.ConfigureInformationText(
-            new InspectorInformationTextSet(
-                BasicInfoTitle: UiText.Get(ResourceKeys.InspectorBasicInfoTitle),
-                PreviewInfoTitle: UiText.Get("InspectorPanelView.PreviewInfoLabelText.Text"),
-                PreviewDiagnosticTitle: UiText.Get("InspectorPanelView.PreviewDiagnosticTitleText.Text"),
-                AssetNameLabel: UiText.Get("InspectorPanelView.AssetNameLabelText.Text"),
-                AssetTypeLabel: UiText.Get("InspectorPanelView.AssetTypeLabelText.Text"),
-                BundleLabel: UiText.Get("InspectorPanelView.BundleLabelText.Text"),
-                AssetPathLabel: UiText.Get("InspectorPanelView.AssetPathLabelText.Text"),
-                ContainerPathLabel: UiText.Get("InspectorPanelView.ContainerPathLabelText.Text"),
-                AssetSizeLabel: UiText.Get("InspectorPanelView.AssetSizeLabelText.Text"),
-                PathIdLabel: UiText.Get("InspectorPanelView.PathIdLabelText.Text"),
-                PreviewCacheStatusLabel: UiText.Get("InspectorPanelView.PreviewCacheStatusLabelText.Text"),
-                PreviewFallbackReasonLabel: UiText.Get("InspectorPanelView.PreviewFallbackReasonLabelText.Text"),
-                PreviewDiagnosticDetailLabel: UiText.Get("InspectorPanelView.PreviewDiagnosticDetailLabelText.Text"),
-                CopyToolTipText: UiText.Get(ResourceKeys.InspectorInfoCardCopyToolTip),
-                ItemCountFormat: UiText.Get(ResourceKeys.InspectorInfoCardItemCountFormat)));
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)

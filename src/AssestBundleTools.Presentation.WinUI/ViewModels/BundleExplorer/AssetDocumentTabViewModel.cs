@@ -27,7 +27,8 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
     public AssetDocumentTabViewModel(
         BundleId bundleId,
         AssetId assetId,
-        string displayName)
+        string displayName,
+        InspectorInformationTextSet inspectorInformationTextSet)
     {
         _bundleId = bundleId;
         _assetId = assetId;
@@ -36,7 +37,8 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
             : displayName.Trim();
         _toolTipText = _displayName;
         PaneId = PaneId.New();
-        Inspector = new InspectorPanelViewModel();
+        Inspector = new InspectorPanelViewModel(
+            inspectorInformationTextSet ?? throw new ArgumentNullException(nameof(inspectorInformationTextSet)));
     }
 
     public BundleId BundleId

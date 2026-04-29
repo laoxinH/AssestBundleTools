@@ -22,11 +22,11 @@ public interface IWorkspaceContextService
 
     bool HasCurrentWorkspace { get; }
 
-    IReadOnlyList<WorkspaceContextEntry> WorkspaceEntries { get; }
+    IReadOnlyList<WorkspaceContextEntryDto> WorkspaceEntries { get; }
 
     int WorkspaceEntryCount { get; }
 
-    bool TryGetCurrentWorkspaceEntry(out WorkspaceContextEntry? workspaceEntry);
+    bool TryGetCurrentWorkspaceEntry(out WorkspaceContextEntryDto? workspaceEntry);
 
     WorkspaceBrowserStateSnapshotDto? GetCurrentWorkspaceBrowserState();
 

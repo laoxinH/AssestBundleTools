@@ -2,12 +2,12 @@ using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
 
-namespace AssestBundleTools.Presentation.WinUI.Services;
+namespace AssestBundleTools.Application.Workspace.Services;
 
 /// <summary>
-/// 聚合工作区目录管理相关的应用层处理器。
+/// 聚合工作区目录相关用例，向 Presentation 暴露稳定入口。
 /// </summary>
-public interface IWorkspaceCatalogService
+public interface IWorkspaceCatalogGateway
 {
     Task<Result<WorkspaceCatalogSnapshotDto>> GetCatalogSnapshotAsync(CancellationToken cancellationToken = default);
 

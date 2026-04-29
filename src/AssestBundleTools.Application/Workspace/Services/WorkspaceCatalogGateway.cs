@@ -3,19 +3,19 @@ using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Queries;
 
-namespace AssestBundleTools.Presentation.WinUI.Services;
+namespace AssestBundleTools.Application.Workspace.Services;
 
 /// <summary>
-/// 将工作区目录管理的应用层处理器聚合为 Presentation 可直接使用的门面。
+/// 聚合工作区目录相关 Handler，避免 Presentation 直接感知具体用例实现。
 /// </summary>
-public sealed class WorkspaceCatalogService : IWorkspaceCatalogService
+public sealed class WorkspaceCatalogGateway : IWorkspaceCatalogGateway
 {
     private readonly GetWorkspaceCatalogSnapshotHandler _getWorkspaceCatalogSnapshotHandler;
     private readonly RegisterWorkspaceCatalogEntryHandler _registerWorkspaceCatalogEntryHandler;
     private readonly RemoveWorkspaceCatalogEntryHandler _removeWorkspaceCatalogEntryHandler;
     private readonly SetWorkspaceCatalogEntryPinnedStateHandler _setWorkspaceCatalogEntryPinnedStateHandler;
 
-    public WorkspaceCatalogService(
+    public WorkspaceCatalogGateway(
         GetWorkspaceCatalogSnapshotHandler getWorkspaceCatalogSnapshotHandler,
         RegisterWorkspaceCatalogEntryHandler registerWorkspaceCatalogEntryHandler,
         RemoveWorkspaceCatalogEntryHandler removeWorkspaceCatalogEntryHandler,

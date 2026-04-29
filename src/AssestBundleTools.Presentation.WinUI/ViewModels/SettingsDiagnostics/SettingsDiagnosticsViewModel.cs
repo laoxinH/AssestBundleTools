@@ -377,7 +377,7 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
     /// 当前先强调“当前活动 / 已加载会话 / 已登记目录项”三类状态，
     /// 为后续固定工作区、不可用状态表达预留稳定承载面。
     /// </summary>
-    private void ReplaceWorkspaceEntries(IReadOnlyList<WorkspaceContextEntry> entries)
+    private void ReplaceWorkspaceEntries(IReadOnlyList<WorkspaceContextEntryDto> entries)
     {
         var currentWorkspaceId = _workspaceContextService.CurrentWorkspaceSummary?.WorkspaceId.Value;
 

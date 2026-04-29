@@ -139,17 +139,21 @@ Domain 不负责：
 
 ### 3.2 Application
 
-Application 层拆成三部分：
+Application 层拆成四部分：
 
 1. `WorkspaceSessionRegistry`
    负责运行时工作区会话，承载当前已加载的数据和变更队列。
-2. `WorkspaceCatalog` / `WorkspaceMetadataStore`
-   负责工作区目录元数据读写与恢复。
-3. `BundleIndexCacheStore` / `PreviewCacheStore` / `WorkspaceChangeStore`
+2. `WorkspaceContextPersistenceService`
+   负责目录快照、工作区元数据与浏览状态的持久化抽象。
+3. `WorkspaceContextCatalogService`
+   负责最近工作区目录恢复、可用性语义、“上次活动工作区”恢复请求推导，以及激活/浏览状态元数据回写编排。
+4. `BundleIndexCacheStore` / `PreviewCacheStore` / `WorkspaceChangeStore`
    负责工作区数据目录中的可失效缓存与变更暂存。
 
 当前仓库里已经存在的 `IWorkspaceSessionRegistry` 继续承担第一部分职责。
-后续新增持久化能力时，应该补充独立接口，而不是继续把“最近工作区 / 目录索引 / 解析缓存”塞进 Session Registry。
+当前目录恢复与元数据编排也已经通过 `IWorkspaceContextPersistenceService / IWorkspaceContextCatalogService`
+从 Presentation 收口回 Application。
+后续新增持久化能力时，应该继续补充独立接口，而不是把“最近工作区 / 目录索引 / 解析缓存”塞进 Session Registry。
 
 ### 3.3 Infrastructure
 
@@ -170,7 +174,7 @@ Infrastructure 负责工作区元数据落盘。
 Presentation 层保留两个协同层次：
 
 1. `WorkspaceContextService`
-   负责当前活动工作区和已登记工作区摘要。
+   负责当前活动工作区、已登记工作区摘要，以及 Application 恢复请求到 Presentation 导航请求的窄映射。
 2. `BundleExplorer` 页面级标签页协调逻辑
    负责当前工作区内的资源包标签页状态。
 3. `WorkspaceImportCoordinatorService`
@@ -179,10 +183,13 @@ Presentation 层保留两个协同层次：
 
 补充约束：
 
+- 最近工作区目录恢复、可用性判断、“上次活动工作区”恢复请求推导，以及浏览状态/激活元数据回写编排
+  当前都停留在 Application 的 `IWorkspaceContextCatalogService` 后面，而不是继续堆在 WinUI 服务里
+- `WorkspaceContextService` 继续保持窄协调定位，不直接持有目录仓储、文件系统判断或工作区元数据落盘细节
 - 工作台中的拖拽导入桥接当前只挂在左侧资源包列表区域，不挂整页
 - 这样可以为后续资产列表、检查器等区域保留独立拖拽语义，而不让多个交互在页面根级别互相争抢
 
-这两层都不是持久化仓储。
+以上几个 Presentation 协同对象都不是持久化仓储。
 
 ## 4. 推荐存储结构
 
@@ -476,6 +483,8 @@ Presentation 层保留两个协同层次：
 当前实现已经收敛并完成以下稳定子集：
 
 - `WorkspaceContextService` 从“仅当前工作区”演进为“活动工作区 + 已登记工作区列表”
+- 最近工作区目录恢复、可用性语义、“上次活动工作区”恢复请求推导与浏览状态/激活元数据编排
+  当前已下沉到 Application 层的 `WorkspaceContextCatalogService`
 - `BundleExplorer` 在打开或刷新工作区时，把摘要登记到应用级工作区上下文
 - 主工作区内的资源包浏览扩展能力统一改为标签页
 - `Infrastructure` 已提供 `JsonWorkspaceCatalogStore / JsonWorkspaceMetadataStore`
@@ -497,6 +506,7 @@ Presentation 层保留两个协同层次：
 - “新建窗口打开工作区”当前已改为启动新的主进程，而不再在同一 `App` 进程内继续 `CreateMainWindow(...)`
 - 当前已补上显式启动参数解析：新进程会通过命令行负载接收 `Shell` 首屏导航请求，并在启动早期完成跨进程重定向判断
 - 当前已补上工作区级跨进程激活：运行中的工作区进程会按稳定 `workspaceKey` 注册实例占用，并接收后续“激活已有工作区窗口”的请求
+- 当前工作区窗口注册已完成第二轮稳定化：窗口会同时区分已正式绑定成功的 formal 工作区和正在加载中的 pending 工作区；目标工作区在真正加载前先做 pending 预登记，加载成功后晋升为 formal，加载失败时则清理 pending 并优先恢复此前已稳定存在的工作区上下文
 - Shell 已收敛为“控制台态 / 工作台态”两态模型：可根据当前状态动态承载控制台页或正式工作台，并支持从工作台返回控制台
 - 一级导航第一入口位会在控制台态显示“控制台”，进入工作台态后显示“工作台”
 - 统一导入协调服务当前已覆盖 `文件 / 目录 / 拖拽` 三类入口，工作台中的拖拽导入只作用于左侧资源包列表区域
@@ -561,7 +571,7 @@ Presentation 层保留两个协同层次：
 3. M9 当前已完成真实资产级读取、索引缓存复用、工作区级解密器自动识别、失败诊断、依赖深读与缓存诊断主链路收口
 4. 下一步进入富预览扩展：`AudioClip -> SpriteAtlas -> Mesh -> Material / Font / AnimationClip`
 5. 最后再评估是否需要引入可分享工作区文件
-6. 工作区窗口模型当前已按“跨进程隔离优先”落地；若后续要进一步提升稳定性，可继续把工作区实例占用注册前移到真正加载前，减少极端并发启动时的竞态窗口
+6. 工作区窗口模型当前已按“跨进程隔离优先 + formal/pending 双阶段注册”落地，并已补上 pending 注册 / 页面级失败回滚的首轮 `Presentation` 回归；后续若继续加强稳定性，更适合继续补跨进程窗口激活与重定向链路，而不是重新回退注册时机
 
 ### 9.1 预览扩展建议
 
@@ -587,6 +597,7 @@ Presentation 层保留两个协同层次：
 - 运行时会话和持久化元数据必须分离
 - 工作区目录索引默认存放在应用数据目录
 - 同一工作区的多窗口承载默认通过“多进程 + 跨进程激活”实现，而不是在同一进程内共享一个全局 `CurrentWorkspace`
+- 工作区实例占用默认采用“formal 正式注册 + pending 预登记 + 成功晋升 + 失败回滚”语义，避免加载中的目标工作区与已稳定存在的当前工作区互相覆盖
 - 单工作区元数据目录由用户显式选择
 - 相同来源路径默认合并为同一工作区条目
 - 页面只依赖活动工作区，不直接处理元数据文件

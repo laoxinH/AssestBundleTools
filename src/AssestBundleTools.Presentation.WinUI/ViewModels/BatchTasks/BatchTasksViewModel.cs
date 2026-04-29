@@ -14,6 +14,7 @@ using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Application.Saving.Queries;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Queries;
+using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
@@ -36,7 +37,7 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
 {
     private const int MaxRecentTaskResults = 8;
 
-    private readonly IWorkspaceBrowserService _workspaceBrowserService;
+    private readonly IWorkspaceBatchOperationsGateway _workspaceBatchOperationsGateway;
     private readonly IWorkspaceContextService _workspaceContextService;
     private readonly ILocalizationService _localizationService;
     private readonly LocalizedValueFormatter _localizedValueFormatter;
@@ -64,13 +65,13 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
     private string _saveLastRunText = string.Empty;
 
     public BatchTasksViewModel(
-        IWorkspaceBrowserService workspaceBrowserService,
+        IWorkspaceBatchOperationsGateway workspaceBatchOperationsGateway,
         IWorkspaceContextService workspaceContextService,
         ILocalizationService localizationService,
         IAppLogService appLogService,
         IWorkspaceImportCoordinatorService workspaceImportCoordinatorService)
     {
-        _workspaceBrowserService = workspaceBrowserService ?? throw new ArgumentNullException(nameof(workspaceBrowserService));
+        _workspaceBatchOperationsGateway = workspaceBatchOperationsGateway ?? throw new ArgumentNullException(nameof(workspaceBatchOperationsGateway));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _localizedValueFormatter = new LocalizedValueFormatter(_localizationService);
@@ -348,7 +349,7 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
         IsBusy = true;
         try
         {
-            var changeSummaryResult = await _workspaceBrowserService.GetWorkspaceChangeSummaryAsync(
+            var changeSummaryResult = await _workspaceBatchOperationsGateway.GetWorkspaceChangeSummaryAsync(
                 new GetWorkspaceChangeSummaryQuery(currentWorkspaceSummary.WorkspaceId));
 
             if (!TryGetValue(changeSummaryResult, out var summary))
@@ -356,7 +357,7 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            var savePreviewResult = await _workspaceBrowserService.GetWorkspaceSavePreviewAsync(
+            var savePreviewResult = await _workspaceBatchOperationsGateway.GetWorkspaceSavePreviewAsync(
                 new GetWorkspaceSavePreviewQuery(currentWorkspaceSummary.WorkspaceId));
 
             if (!TryGetValue(savePreviewResult, out var savePreview))
@@ -364,7 +365,7 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            var batchExtractionPreviewResult = await _workspaceBrowserService.GetWorkspaceBatchExtractionPreviewAsync(
+            var batchExtractionPreviewResult = await _workspaceBatchOperationsGateway.GetWorkspaceBatchExtractionPreviewAsync(
                 new GetWorkspaceBatchExtractionPreviewQuery(
                     currentWorkspaceSummary.WorkspaceId,
                     SelectedBatchExtractAssetTypeOption?.AssetType));
@@ -374,7 +375,7 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            var batchReplacementPreviewResult = await _workspaceBrowserService.GetWorkspaceBatchReplacementPreviewAsync(
+            var batchReplacementPreviewResult = await _workspaceBatchOperationsGateway.GetWorkspaceBatchReplacementPreviewAsync(
                 new GetWorkspaceBatchReplacementPreviewQuery(
                     currentWorkspaceSummary.WorkspaceId,
                     SelectedBatchReplaceSourceOption?.SourceKind ?? BatchReplacementSourceKind.All));
@@ -578,7 +579,7 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
         IsBusy = true;
         try
         {
-            var result = await _workspaceBrowserService.ExtractWorkspaceAssetsAsync(
+            var result = await _workspaceBatchOperationsGateway.ExtractWorkspaceAssetsAsync(
                 new ExtractWorkspaceAssetsCommand(
                     WorkspaceId: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceId,
                     AssetTypeFilter: SelectedBatchExtractAssetTypeOption?.AssetType));
@@ -627,7 +628,7 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
         IsBusy = true;
         try
         {
-            var result = await _workspaceBrowserService.ExecuteWorkspaceBatchReplacementAsync(
+            var result = await _workspaceBatchOperationsGateway.ExecuteWorkspaceBatchReplacementAsync(
                 new ExecuteWorkspaceBatchReplacementCommand(
                     WorkspaceId: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceId,
                     SourceFilter: SelectedBatchReplaceSourceOption?.SourceKind ?? BatchReplacementSourceKind.All));
@@ -673,7 +674,7 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
         IsBusy = true;
         try
         {
-            var result = await _workspaceBrowserService.SaveWorkspaceAsNewBundleAsync(
+            var result = await _workspaceBatchOperationsGateway.SaveWorkspaceAsNewBundleAsync(
                 new SaveWorkspaceAsNewBundleCommand(
                     WorkspaceId: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceId));
 

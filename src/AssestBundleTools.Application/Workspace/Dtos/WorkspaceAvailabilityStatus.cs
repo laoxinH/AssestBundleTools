@@ -1,4 +1,4 @@
-namespace AssestBundleTools.Presentation.WinUI.Services;
+namespace AssestBundleTools.Application.Workspace.Dtos;
 
 /// <summary>
 /// 表示工作区目录项当前的可用性状态。

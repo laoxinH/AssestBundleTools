@@ -23,11 +23,9 @@ public sealed class WorkspaceProcessCoordinatorService : IWorkspaceProcessCoordi
     private const int ActivationRetryCount = 6;
     private const int ActivationRetryDelayMilliseconds = 150;
     private readonly object _syncRoot = new();
-    private Mutex? _workspaceMutex;
-    private CancellationTokenSource? _activationListenerCts;
-    private Task? _activationListenerTask;
-    private string? _registeredWorkspaceKey;
     private readonly ILocalizationService _localizationService;
+    private WorkspaceProcessRegistration? _registeredWorkspace;
+    private WorkspaceProcessRegistration? _pendingWorkspace;
 
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
 
@@ -62,19 +60,84 @@ public sealed class WorkspaceProcessCoordinatorService : IWorkspaceProcessCoordi
             return false;
         }
 
-        if (!Mutex.TryOpenExisting(CreateMutexName(workspaceKey), out var existingMutex))
+        return TryActivateWorkspaceInOtherProcess(
+            workspaceKey,
+            normalizedRequest,
+            "Cross-process workspace activation attempted");
+    }
+
+    public bool TryBeginPendingWorkspaceRegistration(WorkspaceNavigationRequest navigationRequest)
+    {
+        ArgumentNullException.ThrowIfNull(navigationRequest);
+
+        var normalizedRequest = NormalizeNavigationRequest(navigationRequest);
+        var workspaceKey = CreateWorkspaceKey(normalizedRequest);
+        if (string.IsNullOrWhiteSpace(workspaceKey))
+        {
+            ClearPendingWorkspaceRegistration();
+            return false;
+        }
+
+        WorkspaceProcessRegistration? pendingToRelease = null;
+        var alreadyOwnedByCurrentProcess = false;
+
+        lock (_syncRoot)
+        {
+            if (MatchesWorkspace(_registeredWorkspace, workspaceKey))
+            {
+                alreadyOwnedByCurrentProcess = true;
+                if (_pendingWorkspace is not null &&
+                    !MatchesWorkspace(_pendingWorkspace, workspaceKey))
+                {
+                    pendingToRelease = _pendingWorkspace;
+                    _pendingWorkspace = null;
+                }
+            }
+            else if (MatchesWorkspace(_pendingWorkspace, workspaceKey))
+            {
+                alreadyOwnedByCurrentProcess = true;
+            }
+        }
+
+        if (alreadyOwnedByCurrentProcess)
+        {
+            ReleaseWorkspaceRegistration(pendingToRelease, "Workspace pending registration cleared");
+            return true;
+        }
+
+        if (TryActivateWorkspaceInOtherProcess(
+                workspaceKey,
+                normalizedRequest,
+                "Pending workspace registration matched an existing process"))
         {
             return false;
         }
 
-        existingMutex.Dispose();
-        var activationSucceeded = TrySendActivationRequest(
-            CreatePipeName(workspaceKey),
-            normalizedRequest);
+        var pendingRegistration = TryCreateWorkspaceRegistration(workspaceKey);
+        if (pendingRegistration is null)
+        {
+            var activationSucceeded = TryActivateWorkspaceInOtherProcess(
+                workspaceKey,
+                normalizedRequest,
+                "Pending workspace registration race matched an existing process");
+            if (!activationSucceeded)
+            {
+                StartupDiagnostics.Log(
+                    $"Pending workspace registration skipped because another process already owns it. WorkspaceKey={workspaceKey}.");
+            }
 
-        StartupDiagnostics.Log(
-            $"Cross-process workspace activation attempted. WorkspaceKey={workspaceKey}; Success={activationSucceeded}.");
-        return activationSucceeded;
+            return false;
+        }
+
+        lock (_syncRoot)
+        {
+            pendingToRelease = _pendingWorkspace;
+            _pendingWorkspace = pendingRegistration;
+        }
+
+        ReleaseWorkspaceRegistration(pendingToRelease, "Workspace pending registration cleared");
+        StartupDiagnostics.Log($"Workspace pending registration established. WorkspaceKey={workspaceKey}.");
+        return true;
     }
 
     public void RegisterWorkspace(WorkspaceNavigationRequest navigationRequest)
@@ -89,99 +152,94 @@ public sealed class WorkspaceProcessCoordinatorService : IWorkspaceProcessCoordi
             return;
         }
 
+        WorkspaceProcessRegistration? registeredToRelease = null;
+        WorkspaceProcessRegistration? pendingToRelease = null;
+        var alreadyRegistered = false;
+        var promotedPendingRegistration = false;
+
         lock (_syncRoot)
         {
-            if (string.Equals(_registeredWorkspaceKey, workspaceKey, StringComparison.Ordinal))
+            if (MatchesWorkspace(_registeredWorkspace, workspaceKey))
             {
-                return;
+                alreadyRegistered = true;
+                if (_pendingWorkspace is not null &&
+                    !MatchesWorkspace(_pendingWorkspace, workspaceKey))
+                {
+                    pendingToRelease = _pendingWorkspace;
+                    _pendingWorkspace = null;
+                }
+            }
+            else if (MatchesWorkspace(_pendingWorkspace, workspaceKey))
+            {
+                promotedPendingRegistration = true;
+                registeredToRelease = _registeredWorkspace;
+                _registeredWorkspace = _pendingWorkspace;
+                _pendingWorkspace = null;
             }
         }
 
-        ClearWorkspaceRegistration();
-
-        var mutexName = CreateMutexName(workspaceKey);
-        var workspaceMutex = new Mutex(initiallyOwned: true, mutexName, out var createdNew);
-        if (!createdNew)
+        if (alreadyRegistered)
         {
-            StartupDiagnostics.Log(
-                $"Workspace registration skipped because another process already owns it. WorkspaceKey={workspaceKey}.");
-            workspaceMutex.Dispose();
+            ReleaseWorkspaceRegistration(pendingToRelease, "Workspace pending registration cleared");
             return;
         }
 
-        var activationListenerCts = new CancellationTokenSource();
-        var activationListenerTask = Task.Run(() => ListenForActivationRequestsAsync(
-            CreatePipeName(workspaceKey),
-            activationListenerCts.Token));
+        if (promotedPendingRegistration)
+        {
+            ReleaseWorkspaceRegistration(registeredToRelease, "Workspace process registration cleared");
+            StartupDiagnostics.Log($"Workspace pending registration promoted to active registration. WorkspaceKey={workspaceKey}.");
+            return;
+        }
+
+        var registeredWorkspace = TryCreateWorkspaceRegistration(workspaceKey);
+        if (registeredWorkspace is null)
+        {
+            StartupDiagnostics.Log(
+                $"Workspace registration skipped because another process already owns it. WorkspaceKey={workspaceKey}.");
+            return;
+        }
 
         lock (_syncRoot)
         {
-            _workspaceMutex = workspaceMutex;
-            _activationListenerCts = activationListenerCts;
-            _activationListenerTask = activationListenerTask;
-            _registeredWorkspaceKey = workspaceKey;
+            registeredToRelease = _registeredWorkspace;
+            pendingToRelease = _pendingWorkspace;
+            _registeredWorkspace = registeredWorkspace;
+            _pendingWorkspace = null;
         }
 
+        ReleaseWorkspaceRegistration(pendingToRelease, "Workspace pending registration cleared");
+        ReleaseWorkspaceRegistration(registeredToRelease, "Workspace process registration cleared");
         StartupDiagnostics.Log($"Workspace process registration established. WorkspaceKey={workspaceKey}.");
+    }
+
+    public void ClearPendingWorkspaceRegistration()
+    {
+        WorkspaceProcessRegistration? pendingToRelease;
+
+        lock (_syncRoot)
+        {
+            pendingToRelease = _pendingWorkspace;
+            _pendingWorkspace = null;
+        }
+
+        ReleaseWorkspaceRegistration(pendingToRelease, "Workspace pending registration cleared");
     }
 
     public void ClearWorkspaceRegistration()
     {
-        Mutex? workspaceMutex;
-        CancellationTokenSource? activationListenerCts;
-        Task? activationListenerTask;
-        string? workspaceKey;
+        WorkspaceProcessRegistration? registeredToRelease;
+        WorkspaceProcessRegistration? pendingToRelease;
 
         lock (_syncRoot)
         {
-            workspaceMutex = _workspaceMutex;
-            activationListenerCts = _activationListenerCts;
-            activationListenerTask = _activationListenerTask;
-            workspaceKey = _registeredWorkspaceKey;
-
-            _workspaceMutex = null;
-            _activationListenerCts = null;
-            _activationListenerTask = null;
-            _registeredWorkspaceKey = null;
+            registeredToRelease = _registeredWorkspace;
+            pendingToRelease = _pendingWorkspace;
+            _registeredWorkspace = null;
+            _pendingWorkspace = null;
         }
 
-        activationListenerCts?.Cancel();
-        activationListenerCts?.Dispose();
-
-        if (workspaceMutex is not null)
-        {
-            try
-            {
-                workspaceMutex.ReleaseMutex();
-            }
-            catch (ApplicationException)
-            {
-                // 如果当前线程并未持有该互斥体，直接忽略即可；
-                // 这里的目标是尽量释放注册，而不是让清理流程抛出二次异常。
-            }
-
-            workspaceMutex.Dispose();
-        }
-
-        if (activationListenerTask is not null)
-        {
-            _ = activationListenerTask.ContinueWith(
-                static task =>
-                {
-                    if (task.IsFaulted && task.Exception is not null)
-                    {
-                        StartupDiagnostics.Log($"Workspace activation listener faulted: {task.Exception}");
-                    }
-                },
-                CancellationToken.None,
-                TaskContinuationOptions.None,
-                TaskScheduler.Default);
-        }
-
-        if (!string.IsNullOrWhiteSpace(workspaceKey))
-        {
-            StartupDiagnostics.Log($"Workspace process registration cleared. WorkspaceKey={workspaceKey}.");
-        }
+        ReleaseWorkspaceRegistration(pendingToRelease, "Workspace pending registration cleared");
+        ReleaseWorkspaceRegistration(registeredToRelease, "Workspace process registration cleared");
     }
 
     public void StartNewProcess(ShellLaunchRequest launchRequest)
@@ -337,8 +395,92 @@ public sealed class WorkspaceProcessCoordinatorService : IWorkspaceProcessCoordi
     {
         lock (_syncRoot)
         {
-            return string.Equals(_registeredWorkspaceKey, workspaceKey, StringComparison.Ordinal);
+            return MatchesWorkspace(_registeredWorkspace, workspaceKey) ||
+                   MatchesWorkspace(_pendingWorkspace, workspaceKey);
         }
+    }
+
+    private bool TryActivateWorkspaceInOtherProcess(
+        string workspaceKey,
+        WorkspaceNavigationRequest navigationRequest,
+        string logPrefix)
+    {
+        if (!Mutex.TryOpenExisting(CreateMutexName(workspaceKey), out var existingMutex))
+        {
+            return false;
+        }
+
+        existingMutex.Dispose();
+        var activationSucceeded = TrySendActivationRequest(
+            CreatePipeName(workspaceKey),
+            navigationRequest);
+
+        StartupDiagnostics.Log($"{logPrefix}. WorkspaceKey={workspaceKey}; Success={activationSucceeded}.");
+        return activationSucceeded;
+    }
+
+    private static bool MatchesWorkspace(WorkspaceProcessRegistration? registration, string workspaceKey)
+    {
+        return registration is not null &&
+               string.Equals(registration.WorkspaceKey, workspaceKey, StringComparison.Ordinal);
+    }
+
+    private WorkspaceProcessRegistration? TryCreateWorkspaceRegistration(string workspaceKey)
+    {
+        var workspaceMutex = new Mutex(initiallyOwned: true, CreateMutexName(workspaceKey), out var createdNew);
+        if (!createdNew)
+        {
+            workspaceMutex.Dispose();
+            return null;
+        }
+
+        var activationListenerCts = new CancellationTokenSource();
+        var activationListenerTask = Task.Run(() => ListenForActivationRequestsAsync(
+            CreatePipeName(workspaceKey),
+            activationListenerCts.Token));
+        return new WorkspaceProcessRegistration(
+            workspaceKey,
+            workspaceMutex,
+            activationListenerCts,
+            activationListenerTask);
+    }
+
+    private static void ReleaseWorkspaceRegistration(
+        WorkspaceProcessRegistration? registration,
+        string releaseLogPrefix)
+    {
+        if (registration is null)
+        {
+            return;
+        }
+
+        registration.ActivationListenerCts.Cancel();
+        registration.ActivationListenerCts.Dispose();
+
+        try
+        {
+            registration.WorkspaceMutex.ReleaseMutex();
+        }
+        catch (ApplicationException)
+        {
+            // 如果当前线程并未持有该互斥体，直接忽略即可；
+            // 这里的目标是尽量释放注册，而不是让清理流程抛出二次异常。
+        }
+
+        registration.WorkspaceMutex.Dispose();
+        _ = registration.ActivationListenerTask.ContinueWith(
+            static task =>
+            {
+                if (task.IsFaulted && task.Exception is not null)
+                {
+                    StartupDiagnostics.Log($"Workspace activation listener faulted: {task.Exception}");
+                }
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.None,
+            TaskScheduler.Default);
+
+        StartupDiagnostics.Log($"{releaseLogPrefix}. WorkspaceKey={registration.WorkspaceKey}.");
     }
 
     private string ResolveCurrentProcessPath()
@@ -363,5 +505,28 @@ public sealed class WorkspaceProcessCoordinatorService : IWorkspaceProcessCoordi
     private static string CreatePipeName(string workspaceKey)
     {
         return $"AssestBundleTools.Workspace.{workspaceKey}";
+    }
+
+    private sealed class WorkspaceProcessRegistration
+    {
+        public WorkspaceProcessRegistration(
+            string workspaceKey,
+            Mutex workspaceMutex,
+            CancellationTokenSource activationListenerCts,
+            Task activationListenerTask)
+        {
+            WorkspaceKey = workspaceKey ?? throw new ArgumentNullException(nameof(workspaceKey));
+            WorkspaceMutex = workspaceMutex ?? throw new ArgumentNullException(nameof(workspaceMutex));
+            ActivationListenerCts = activationListenerCts ?? throw new ArgumentNullException(nameof(activationListenerCts));
+            ActivationListenerTask = activationListenerTask ?? throw new ArgumentNullException(nameof(activationListenerTask));
+        }
+
+        public string WorkspaceKey { get; }
+
+        public Mutex WorkspaceMutex { get; }
+
+        public CancellationTokenSource ActivationListenerCts { get; }
+
+        public Task ActivationListenerTask { get; }
     }
 }

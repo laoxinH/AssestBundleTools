@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 
@@ -18,7 +19,7 @@ namespace AssestBundleTools.Presentation.WinUI.Services;
 public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordinatorService
 {
     private readonly IWorkspaceContextService _workspaceContextService;
-    private readonly IWorkspaceBrowserService _workspaceBrowserService;
+    private readonly IWorkspaceExplorerGateway _workspaceExplorerGateway;
     private readonly IFilePickerService _filePickerService;
     private readonly IAppLogService _appLogService;
     private readonly IAppNotificationService _appNotificationService;
@@ -26,14 +27,14 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
 
     public WorkspaceImportCoordinatorService(
         IWorkspaceContextService workspaceContextService,
-        IWorkspaceBrowserService workspaceBrowserService,
+        IWorkspaceExplorerGateway workspaceExplorerGateway,
         IFilePickerService filePickerService,
         IAppLogService appLogService,
         IAppNotificationService appNotificationService,
         ILocalizationService localizationService)
     {
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
-        _workspaceBrowserService = workspaceBrowserService ?? throw new ArgumentNullException(nameof(workspaceBrowserService));
+        _workspaceExplorerGateway = workspaceExplorerGateway ?? throw new ArgumentNullException(nameof(workspaceExplorerGateway));
         _filePickerService = filePickerService ?? throw new ArgumentNullException(nameof(filePickerService));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
@@ -115,13 +116,13 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
     }
 
     private async Task<bool> RegisterImportAsync(
-        WorkspaceContextEntry workspaceEntry,
+        WorkspaceContextEntryDto workspaceEntry,
         WorkspaceSummaryDto workspaceSummary,
         WorkspaceImportOriginKind importOrigin,
         IReadOnlyList<string> paths,
         CancellationToken cancellationToken)
     {
-        var result = await _workspaceBrowserService.RegisterWorkspaceImportAsync(
+        var result = await _workspaceExplorerGateway.RegisterWorkspaceImportAsync(
             new RegisterWorkspaceImportCommand(
                 WorkspaceKey: workspaceEntry.WorkspaceKey,
                 WorkspaceDataRootPath: workspaceEntry.WorkspaceDataRootPath,
@@ -142,7 +143,7 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
             return false;
         }
 
-        var processingResult = await _workspaceBrowserService.ProcessWorkspaceImportsAsync(
+        var processingResult = await _workspaceExplorerGateway.ProcessWorkspaceImportsAsync(
             new ProcessWorkspaceImportsCommand(
                 WorkspaceKey: workspaceEntry.WorkspaceKey,
                 WorkspaceDataRootPath: workspaceEntry.WorkspaceDataRootPath),

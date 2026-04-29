@@ -42,6 +42,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AssestBundleTools.Application\AssestBundleTools.Application.csproj" />
+    <!--
+      受控例外：Presentation 对 Infrastructure 的直接项目引用只服务于 Composition 目录中的组合根/适配器。
+      其余 View、ViewModel、普通 Service 不得直接引用 Infrastructure 命名空间或具体类型。
+    -->
     <ProjectReference Include="..\AssestBundleTools.Infrastructure\AssestBundleTools.Infrastructure.csproj" />
 
   </ItemGroup>

@@ -1,0 +1,763 @@
+using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Extraction.Dtos;
+using AssestBundleTools.Application.Replacement;
+using AssestBundleTools.Application.Replacement.Commands;
+using AssestBundleTools.Application.Replacement.Dtos;
+using AssestBundleTools.Application.Replacement.Queries;
+using AssestBundleTools.Application.Tests.Testing;
+using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Application.Workspace.Services;
+using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Bundles;
+using AssestBundleTools.Domain.Workspace;
+
+namespace AssestBundleTools.Application.Tests.Replacement;
+
+internal static class ReplacementWorkflowHandlerTests
+{
+    public static async Task GetFileReplacementCandidateHandler_ShouldPreferTargetAssetType_WhenSharedExtensionMatches()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.target");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            assetType: AssetType.Sprite,
+            assetName: "HeroSprite"));
+        var handler = new GetFileReplacementCandidateHandler(registry);
+
+        var result = await handler.HandleAsync(new GetFileReplacementCandidateQuery(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            "  C:\\Imports\\hero.png  "));
+
+        TestAssert.True(result.IsSuccess, "Shared image extension should still resolve to the target asset type.");
+        var candidate = result.Value ?? throw new InvalidOperationException("Expected replacement candidate.");
+        TestAssert.Equal("C:\\Imports\\hero.png", candidate.SourceFilePath, "Source file path should be trimmed.");
+        TestAssert.Equal("hero.png", candidate.SourceFileName, "Candidate should expose the source file name.");
+        TestAssert.Equal(AssetType.Sprite, candidate.SourceAssetType, "Shared image extensions should prefer the target asset type.");
+    }
+
+    public static async Task GetFileReplacementCandidateHandler_ShouldReturnFailure_WhenTargetAssetDoesNotExist()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            new BundleId("bundle.target"),
+            new AssetId("asset.existing"),
+            assetType: AssetType.Texture2D,
+            assetName: "ExistingTexture"));
+        var handler = new GetFileReplacementCandidateHandler(registry);
+
+        var result = await handler.HandleAsync(new GetFileReplacementCandidateQuery(
+            workspaceId,
+            new BundleId("bundle.target"),
+            new AssetId("asset.missing"),
+            "C:\\Imports\\hero.png"));
+
+        TestAssert.True(result.IsFailure, "Missing target asset should fail candidate lookup.");
+        TestAssert.Equal(
+            "Asset.Query.NotFound",
+            TestAssert.Single(result.Errors).Code,
+            "Failure should report the missing asset error.");
+    }
+
+    public static async Task GetFileReplacementCandidateHandler_ShouldReturnFailure_WhenSourceExtensionIsIncompatible()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.target");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            assetType: AssetType.TextAsset,
+            assetName: "ConfigText"));
+        var handler = new GetFileReplacementCandidateHandler(registry);
+
+        var result = await handler.HandleAsync(new GetFileReplacementCandidateQuery(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            "C:\\Imports\\hero.png"));
+
+        TestAssert.True(result.IsFailure, "Incompatible source file type should fail validation.");
+        TestAssert.Equal(
+            "Asset.Replace.TypeMismatch",
+            TestAssert.Single(result.Errors).Code,
+            "Failure should report the replacement type mismatch error.");
+    }
+
+    public static async Task GetWorkspaceReplacementCandidatesHandler_ShouldReturnFailure_WhenRegistryProvidesNoCandidates()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.target");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            assetType: AssetType.Texture2D,
+            assetName: "HeroTexture"));
+        registry.WorkspaceReplacementCandidates = Array.Empty<WorkspaceReplacementCandidateDto>();
+        var handler = new GetWorkspaceReplacementCandidatesHandler(registry);
+
+        var result = await handler.HandleAsync(new GetWorkspaceReplacementCandidatesQuery(
+            workspaceId,
+            targetBundleId,
+            targetAssetId));
+
+        TestAssert.True(result.IsFailure, "Missing compatible workspace candidates should fail.");
+        TestAssert.Equal(
+            "Asset.Replace.NoCompatibleSource",
+            TestAssert.Single(result.Errors).Code,
+            "Failure should report the compatible replacement source error.");
+    }
+
+    public static async Task GetWorkspaceReplacementCandidatesHandler_ShouldReturnFailure_WhenTargetAssetDoesNotExist()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            new BundleId("bundle.target"),
+            new AssetId("asset.existing"),
+            assetType: AssetType.Texture2D,
+            assetName: "ExistingTexture"));
+        var handler = new GetWorkspaceReplacementCandidatesHandler(registry);
+
+        var result = await handler.HandleAsync(new GetWorkspaceReplacementCandidatesQuery(
+            workspaceId,
+            new BundleId("bundle.target"),
+            new AssetId("asset.missing")));
+
+        TestAssert.True(result.IsFailure, "Missing target asset should fail candidate lookup.");
+        TestAssert.Equal(
+            "Asset.Query.NotFound",
+            TestAssert.Single(result.Errors).Code,
+            "Failure should report the missing asset error.");
+    }
+
+    public static async Task ReplaceAssetFromFileHandler_ShouldApplyReplacement_WhenTargetTypeMatches()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.target");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            assetType: AssetType.TextAsset,
+            assetName: "DialogueText"));
+        registry.TryReplaceAssetFromFileResult = new AssetFileReplacementResultDto(
+            WorkspaceId: workspaceId,
+            TargetBundleId: targetBundleId,
+            TargetAssetId: targetAssetId,
+            TargetAssetName: "DialogueText",
+            SourceFilePath: "C:\\Imports\\dialogue.txt",
+            SourceFileName: "dialogue.txt",
+            SourceAssetType: AssetType.TextAsset,
+            ReplacedAtUtc: new DateTimeOffset(2026, 4, 28, 15, 30, 0, TimeSpan.Zero));
+        var handler = new ReplaceAssetFromFileHandler(registry);
+
+        var result = await handler.HandleAsync(new ReplaceAssetFromFileCommand(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            "C:\\Imports\\dialogue.txt",
+            AssetType.TextAsset));
+
+        TestAssert.True(result.IsSuccess, "Matching file replacement should succeed.");
+        var replacement = result.Value ?? throw new InvalidOperationException("Expected replacement result.");
+        TestAssert.Equal("DialogueText", replacement.TargetAssetName, "Replacement result should round-trip target asset name.");
+        TestAssert.Equal("dialogue.txt", replacement.SourceFileName, "Replacement result should expose source file name.");
+        TestAssert.Equal(1, registry.TryReplaceAssetFromFileCallCount, "Registry file replacement should be invoked once.");
+        TestAssert.Equal("C:\\Imports\\dialogue.txt", registry.LastFileReplacementSourceFilePath, "Registry should receive the original source file path.");
+        TestAssert.Equal(AssetType.TextAsset, registry.LastFileReplacementSourceAssetType, "Registry should receive the validated source asset type.");
+    }
+
+    public static async Task ReplaceAssetFromFileHandler_ShouldReturnFailure_WhenSourceFilePathIsBlank()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.target");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            assetType: AssetType.TextAsset,
+            assetName: "DialogueText"));
+        var handler = new ReplaceAssetFromFileHandler(registry);
+
+        var result = await handler.HandleAsync(new ReplaceAssetFromFileCommand(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            " ",
+            AssetType.TextAsset));
+
+        TestAssert.True(result.IsFailure, "Blank source file path should fail validation.");
+        TestAssert.Equal(
+            "Asset.Replace.SourceFilePathRequired",
+            TestAssert.Single(result.Errors).Code,
+            "Failure should report the missing source file path error.");
+        TestAssert.Equal(0, registry.TryReplaceAssetFromFileCallCount, "Validation failure should not invoke the registry.");
+    }
+
+    public static async Task ReplaceAssetFromFileHandler_ShouldReturnFailure_WhenTargetAssetDoesNotExist()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var registry = new TestWorkspaceSessionRegistry();
+        var handler = new ReplaceAssetFromFileHandler(registry);
+
+        var result = await handler.HandleAsync(new ReplaceAssetFromFileCommand(
+            workspaceId,
+            new BundleId("bundle.target"),
+            new AssetId("asset.missing"),
+            "C:\\Imports\\dialogue.txt",
+            AssetType.TextAsset));
+
+        TestAssert.True(result.IsFailure, "Missing target asset should fail replacement.");
+        TestAssert.Equal(
+            "Asset.Query.NotFound",
+            TestAssert.Single(result.Errors).Code,
+            "Failure should report the missing target asset error.");
+        TestAssert.Equal(0, registry.TryReplaceAssetFromFileCallCount, "Missing asset should not invoke the registry.");
+    }
+
+    public static async Task ReplaceAssetFromWorkspaceHandler_ShouldApplyReplacement_WhenSourceAndTargetTypesMatch()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.target");
+        var sourceBundleId = new BundleId("bundle.source");
+        var sourceAssetId = new AssetId("asset.source");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            assetType: AssetType.Texture2D,
+            assetName: "HeroTexture"));
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            sourceBundleId,
+            sourceAssetId,
+            assetType: AssetType.Texture2D,
+            assetName: "EnemyTexture"));
+        registry.TryReplaceAssetFromWorkspaceResult = new AssetReplacementResultDto(
+            WorkspaceId: workspaceId,
+            TargetBundleId: targetBundleId,
+            TargetAssetId: targetAssetId,
+            TargetAssetName: "HeroTexture",
+            SourceBundleId: sourceBundleId,
+            SourceAssetId: sourceAssetId,
+            SourceBundleDisplayName: "Characters",
+            SourceAssetName: "EnemyTexture",
+            SourceAssetType: AssetType.Texture2D,
+            ReplacedAtUtc: new DateTimeOffset(2026, 4, 28, 15, 45, 0, TimeSpan.Zero));
+        var handler = new ReplaceAssetFromWorkspaceHandler(registry);
+
+        var result = await handler.HandleAsync(new ReplaceAssetFromWorkspaceCommand(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            sourceBundleId,
+            sourceAssetId));
+
+        TestAssert.True(result.IsSuccess, "Matching workspace replacement should succeed.");
+        var replacement = result.Value ?? throw new InvalidOperationException("Expected replacement result.");
+        TestAssert.Equal("EnemyTexture", replacement.SourceAssetName, "Replacement result should expose source asset name.");
+        TestAssert.Equal(1, registry.TryReplaceAssetFromWorkspaceCallCount, "Registry workspace replacement should be invoked once.");
+        TestAssert.Equal(sourceBundleId, registry.LastWorkspaceReplacementSourceBundleId, "Registry should receive source bundle id.");
+        TestAssert.Equal(sourceAssetId, registry.LastWorkspaceReplacementSourceAssetId, "Registry should receive source asset id.");
+    }
+
+    public static async Task ReplaceAssetFromWorkspaceHandler_ShouldReturnFailure_WhenSourceAssetDoesNotExist()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.target");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            assetType: AssetType.Texture2D,
+            assetName: "HeroTexture"));
+        var handler = new ReplaceAssetFromWorkspaceHandler(registry);
+
+        var result = await handler.HandleAsync(new ReplaceAssetFromWorkspaceCommand(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            new BundleId("bundle.source"),
+            new AssetId("asset.missing")));
+
+        TestAssert.True(result.IsFailure, "Missing source asset should fail replacement.");
+        TestAssert.Equal(
+            "Asset.Query.NotFound",
+            TestAssert.Single(result.Errors).Code,
+            "Failure should report the missing source asset error.");
+        TestAssert.Equal(0, registry.TryReplaceAssetFromWorkspaceCallCount, "Missing source asset should not invoke the registry.");
+    }
+
+    public static async Task ReplaceAssetFromWorkspaceHandler_ShouldReturnFailure_WhenSourceAndTargetTypesDoNotMatch()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.target");
+        var sourceBundleId = new BundleId("bundle.source");
+        var sourceAssetId = new AssetId("asset.source");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            assetType: AssetType.Texture2D,
+            assetName: "HeroTexture"));
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            sourceBundleId,
+            sourceAssetId,
+            assetType: AssetType.TextAsset,
+            assetName: "DialogueText"));
+        var handler = new ReplaceAssetFromWorkspaceHandler(registry);
+
+        var result = await handler.HandleAsync(new ReplaceAssetFromWorkspaceCommand(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            sourceBundleId,
+            sourceAssetId));
+
+        TestAssert.True(result.IsFailure, "Type mismatch should fail replacement.");
+        TestAssert.Equal(
+            "Asset.Replace.TypeMismatch",
+            TestAssert.Single(result.Errors).Code,
+            "Failure should report the replacement type mismatch error.");
+        TestAssert.Equal(0, registry.TryReplaceAssetFromWorkspaceCallCount, "Type mismatch should not invoke the registry.");
+    }
+
+    public static async Task UndoAssetReplacementHandler_ShouldReturnFailure_WhenNoAppliedReplacementExists()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.target");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            assetType: AssetType.Mesh,
+            assetName: "ArenaMesh"));
+        registry.TryUndoAssetReplacementReturnValue = false;
+        var handler = new UndoAssetReplacementHandler(registry);
+
+        var result = await handler.HandleAsync(new UndoAssetReplacementCommand(
+            workspaceId,
+            targetBundleId,
+            targetAssetId));
+
+        TestAssert.True(result.IsFailure, "Undo should fail when no applied replacement exists.");
+        TestAssert.Equal(
+            "Asset.Replace.NoAppliedChange",
+            TestAssert.Single(result.Errors).Code,
+            "Failure should report that no applied replacement exists.");
+        TestAssert.Equal(1, registry.TryUndoAssetReplacementCallCount, "Undo attempt should still hit the registry once.");
+    }
+
+    public static async Task UndoAssetReplacementHandler_ShouldReturnFailure_WhenTargetAssetDoesNotExist()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var registry = new TestWorkspaceSessionRegistry();
+        var handler = new UndoAssetReplacementHandler(registry);
+
+        var result = await handler.HandleAsync(new UndoAssetReplacementCommand(
+            workspaceId,
+            new BundleId("bundle.target"),
+            new AssetId("asset.missing")));
+
+        TestAssert.True(result.IsFailure, "Missing target asset should fail undo.");
+        TestAssert.Equal(
+            "Asset.Query.NotFound",
+            TestAssert.Single(result.Errors).Code,
+            "Failure should report the missing asset error.");
+        TestAssert.Equal(0, registry.TryUndoAssetReplacementCallCount, "Missing asset should not invoke the registry.");
+    }
+
+    public static async Task GetWorkspaceBatchReplacementPreviewHandler_ShouldGroupCandidates_ByBundleAndSourceFilter()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var registry = new TestWorkspaceSessionRegistry
+        {
+            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(
+                workspaceId,
+                [
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-b"),
+                        assetId: new AssetId("asset-1"),
+                        bundleDisplayName: "Zeta",
+                        assetName: "EnemyPortrait",
+                        workspaceReplacementSourceAssetName: "SourcePortrait"),
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-a"),
+                        assetId: new AssetId("asset-2"),
+                        bundleDisplayName: "Alpha",
+                        assetName: "ConfigText",
+                        fileReplacementSourceFileName: "config.json"),
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-a"),
+                        assetId: new AssetId("asset-3"),
+                        bundleDisplayName: "Alpha",
+                        assetName: "ThemeMusic",
+                        workspaceReplacementSourceAssetName: "SourceTheme",
+                        fileReplacementSourceFileName: "theme.ogg")
+                ])
+        };
+        var handler = new GetWorkspaceBatchReplacementPreviewHandler(registry);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPreviewQuery(
+            workspaceId,
+            BatchReplacementSourceKind.Workspace));
+
+        TestAssert.True(result.IsSuccess, "Workspace replacement preview should succeed.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(2, preview.CandidateAssetCount, "Workspace filter should keep only items with workspace replacement sources.");
+        TestAssert.Equal(2, preview.CandidateBundleCount, "Workspace filter should keep two bundles.");
+        TestAssert.Equal(2, preview.WorkspaceReplacementCount, "Workspace replacement count should reflect filtered items.");
+        TestAssert.Equal(1, preview.FileReplacementCount, "Filtered items should still expose file replacement overlap count.");
+        TestAssert.Equal(2, preview.BundlePlans.Count, "Preview should group filtered items by bundle.");
+
+        var firstBundlePlan = preview.BundlePlans[0];
+        TestAssert.Equal("Alpha", firstBundlePlan.BundleDisplayName, "Bundle plans should be ordered by bundle display name.");
+        TestAssert.Equal(1, firstBundlePlan.AssetCount, "Alpha bundle should keep the overlapping workspace replacement item only.");
+        TestAssert.Equal(1, firstBundlePlan.WorkspaceReplacementCount, "Alpha bundle should expose one workspace replacement.");
+        TestAssert.Equal(1, firstBundlePlan.FileReplacementCount, "Alpha bundle should expose one overlapping file replacement.");
+    }
+
+    public static async Task ExecuteWorkspaceBatchReplacementHandler_ShouldReturnFailure_WhenNoCandidatesMatchFilter()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var registry = new TestWorkspaceSessionRegistry
+        {
+            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(
+                workspaceId,
+                [
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-a"),
+                        assetId: new AssetId("asset-1"),
+                        bundleDisplayName: "Alpha",
+                        assetName: "HeroTexture",
+                        workspaceReplacementSourceAssetName: "SourceTexture")
+                ])
+        };
+        var handler = new ExecuteWorkspaceBatchReplacementHandler(registry);
+
+        var result = await handler.HandleAsync(new ExecuteWorkspaceBatchReplacementCommand(
+            workspaceId,
+            BatchReplacementSourceKind.File));
+
+        TestAssert.True(result.IsFailure, "Batch replacement should fail when no candidates match the source filter.");
+        TestAssert.Equal(
+            "Asset.Replace.NoBatchCandidates",
+            TestAssert.Single(result.Errors).Code,
+            "Failure should report that no batch candidates exist.");
+    }
+
+    public static async Task ExecuteWorkspaceBatchReplacementHandler_ShouldSummarizeProcessedCounts_WhenCandidatesExist()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var registry = new TestWorkspaceSessionRegistry
+        {
+            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(
+                workspaceId,
+                [
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-b"),
+                        assetId: new AssetId("asset-1"),
+                        bundleDisplayName: "Zeta",
+                        assetName: "EnemyPortrait",
+                        workspaceReplacementSourceAssetName: "SourcePortrait"),
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-a"),
+                        assetId: new AssetId("asset-2"),
+                        bundleDisplayName: "Alpha",
+                        assetName: "ConfigText",
+                        fileReplacementSourceFileName: "config.json"),
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-a"),
+                        assetId: new AssetId("asset-3"),
+                        bundleDisplayName: "Alpha",
+                        assetName: "ThemeMusic",
+                        workspaceReplacementSourceAssetName: "SourceTheme",
+                        fileReplacementSourceFileName: "theme.ogg")
+                ])
+        };
+        var handler = new ExecuteWorkspaceBatchReplacementHandler(registry);
+
+        var result = await handler.HandleAsync(new ExecuteWorkspaceBatchReplacementCommand(
+            workspaceId,
+            BatchReplacementSourceKind.All));
+
+        TestAssert.True(result.IsSuccess, "Batch replacement summary should succeed when candidates exist.");
+        var execution = result.Value ?? throw new InvalidOperationException("Expected batch replacement result.");
+        TestAssert.Equal(3, execution.ProcessedAssetCount, "All replacement-marked assets should be counted.");
+        TestAssert.Equal(2, execution.ProcessedBundleCount, "Processed bundle count should de-duplicate bundle ids.");
+        TestAssert.Equal(2, execution.WorkspaceReplacementCount, "Workspace replacement count should reflect matching items.");
+        TestAssert.Equal(2, execution.FileReplacementCount, "File replacement count should reflect matching items.");
+    }
+
+    private static WorkspaceId CreateWorkspaceId() => new("workspace-session-1");
+
+    private static AssetDetailsDto CreateAssetDetails(
+        WorkspaceId workspaceId,
+        BundleId bundleId,
+        AssetId assetId,
+        AssetType assetType,
+        string assetName)
+    {
+        return new AssetDetailsDto(
+            WorkspaceId: workspaceId,
+            BundleId: bundleId,
+            AssetId: assetId,
+            Name: assetName,
+            AssetPath: $"Assets/{assetName}",
+            ContainerPath: string.Empty,
+            AssetType: assetType,
+            SizeInBytes: 256,
+            PreferredDisplaySizeInBytes: 256,
+            PathId: 12345,
+            IsModified: false,
+            CanExtract: true,
+            CanReplaceFromFile: true,
+            CanReplaceFromWorkspace: true,
+            WorkspaceReplacementSourceBundleDisplayName: null,
+            WorkspaceReplacementSourceAssetName: null,
+            WorkspaceReplacementSourceAssetType: null,
+            FileReplacementSourceFileName: null,
+            FileReplacementSourcePath: null,
+            FileReplacementSourceAssetType: null,
+            LastExtractedAtUtc: null,
+            Dependencies: Array.Empty<AssetDependencyDto>());
+    }
+
+    private static WorkspaceChangeSummaryDto CreateWorkspaceChangeSummary(
+        WorkspaceId workspaceId,
+        IReadOnlyList<WorkspaceChangeItemDto> items)
+    {
+        return new WorkspaceChangeSummaryDto(
+            WorkspaceId: workspaceId,
+            WorkspaceDisplayName: "Workspace One",
+            SourcePath: "C:\\Workspaces\\WorkspaceOne",
+            BundleCount: items.Select(static item => item.BundleId.Value).Distinct(StringComparer.Ordinal).Count(),
+            AssetCount: items.Count,
+            TotalChangeCount: items.Count,
+            ModifiedAssetCount: items.Count,
+            ExtractedAssetCount: 0,
+            WorkspaceReplacementCount: items.Count(static item => !string.IsNullOrWhiteSpace(item.WorkspaceReplacementSourceAssetName)),
+            FileReplacementCount: items.Count(static item => !string.IsNullOrWhiteSpace(item.FileReplacementSourceFileName)),
+            Items: items);
+    }
+
+    private static WorkspaceChangeItemDto CreateChangeItem(
+        BundleId bundleId,
+        AssetId assetId,
+        string bundleDisplayName,
+        string assetName,
+        string? workspaceReplacementSourceAssetName = null,
+        string? fileReplacementSourceFileName = null)
+    {
+        var appliedAtUtc = new DateTimeOffset(2026, 4, 28, 16, 0, 0, TimeSpan.Zero);
+        return new WorkspaceChangeItemDto(
+            BundleId: bundleId,
+            AssetId: assetId,
+            BundleDisplayName: bundleDisplayName,
+            AssetName: assetName,
+            AssetType: AssetType.Texture2D,
+            IsModified: true,
+            LastExtractedAtUtc: null,
+            WorkspaceReplacementSourceBundleDisplayName: string.IsNullOrWhiteSpace(workspaceReplacementSourceAssetName) ? null : "SourceBundle",
+            WorkspaceReplacementSourceAssetName: workspaceReplacementSourceAssetName,
+            WorkspaceReplacementAppliedAtUtc: string.IsNullOrWhiteSpace(workspaceReplacementSourceAssetName) ? null : appliedAtUtc,
+            FileReplacementSourceFileName: fileReplacementSourceFileName,
+            FileReplacementSourcePath: string.IsNullOrWhiteSpace(fileReplacementSourceFileName) ? null : $"C:\\Imports\\{fileReplacementSourceFileName}",
+            FileReplacementAppliedAtUtc: string.IsNullOrWhiteSpace(fileReplacementSourceFileName) ? null : appliedAtUtc,
+            LastChangedAtUtc: appliedAtUtc);
+    }
+
+    private sealed class TestWorkspaceSessionRegistry : IWorkspaceSessionRegistry
+    {
+        private readonly Dictionary<(string BundleId, string AssetId), AssetDetailsDto> _assetDetails =
+            new();
+        private readonly HashSet<string> _bundleIds = new(StringComparer.Ordinal);
+
+        public bool ContainsWorkspaceResult { get; set; } = true;
+
+        public IReadOnlyList<WorkspaceReplacementCandidateDto> WorkspaceReplacementCandidates { get; set; } =
+            Array.Empty<WorkspaceReplacementCandidateDto>();
+
+        public AssetFileReplacementResultDto? TryReplaceAssetFromFileResult { get; set; }
+
+        public AssetReplacementResultDto? TryReplaceAssetFromWorkspaceResult { get; set; }
+
+        public AssetReplacementUndoResultDto? TryUndoAssetReplacementResult { get; set; }
+
+        public bool TryUndoAssetReplacementReturnValue { get; set; } = true;
+
+        public WorkspaceChangeSummaryDto? WorkspaceChangeSummary { get; set; }
+
+        public int TryReplaceAssetFromFileCallCount { get; private set; }
+
+        public int TryReplaceAssetFromWorkspaceCallCount { get; private set; }
+
+        public int TryUndoAssetReplacementCallCount { get; private set; }
+
+        public string? LastFileReplacementSourceFilePath { get; private set; }
+
+        public AssetType? LastFileReplacementSourceAssetType { get; private set; }
+
+        public BundleId? LastWorkspaceReplacementSourceBundleId { get; private set; }
+
+        public AssetId? LastWorkspaceReplacementSourceAssetId { get; private set; }
+
+        public void RegisterAssetDetails(AssetDetailsDto details)
+        {
+            _assetDetails[(details.BundleId.Value, details.AssetId.Value)] = details;
+            _bundleIds.Add(details.BundleId.Value);
+        }
+
+        public WorkspaceSummaryDto OpenWorkspace(WorkspaceSessionOpenRequestDto request) => throw new NotSupportedException();
+
+        public bool ContainsWorkspace(WorkspaceId workspaceId) => ContainsWorkspaceResult;
+
+        public bool ContainsBundle(WorkspaceId workspaceId, BundleId bundleId) => _bundleIds.Contains(bundleId.Value);
+
+        public bool ContainsAsset(WorkspaceId workspaceId, BundleId bundleId, AssetId assetId) =>
+            _assetDetails.ContainsKey((bundleId.Value, assetId.Value));
+
+        public bool TryGetBundleTree(WorkspaceId workspaceId, out IReadOnlyList<BundleTreeNodeDto> bundleTree)
+        {
+            bundleTree = null!;
+            throw new NotSupportedException();
+        }
+
+        public bool TryGetAssetList(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            string? searchKeyword,
+            AssetType? assetTypeFilter,
+            out AssetListResultDto? assetListResult)
+        {
+            assetListResult = null;
+            throw new NotSupportedException();
+        }
+
+        public bool TryGetAssetDetails(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            out AssetDetailsDto? assetDetails)
+        {
+            if (_assetDetails.TryGetValue((bundleId.Value, assetId.Value), out var value))
+            {
+                assetDetails = value;
+                return true;
+            }
+
+            assetDetails = null;
+            return false;
+        }
+
+        public bool TryGetWorkspaceChangeSummary(
+            WorkspaceId workspaceId,
+            out WorkspaceChangeSummaryDto? changeSummary)
+        {
+            changeSummary = WorkspaceChangeSummary;
+            return changeSummary is not null;
+        }
+
+        public bool TryExtractAsset(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            out AssetExtractionResultDto? extractionResult)
+        {
+            extractionResult = null;
+            throw new NotSupportedException();
+        }
+
+        public bool TryGetWorkspaceReplacementCandidates(
+            WorkspaceId workspaceId,
+            BundleId targetBundleId,
+            AssetId targetAssetId,
+            out IReadOnlyList<WorkspaceReplacementCandidateDto> candidates)
+        {
+            candidates = WorkspaceReplacementCandidates;
+            return candidates.Count > 0;
+        }
+
+        public bool TryReplaceAssetFromFile(
+            WorkspaceId workspaceId,
+            BundleId targetBundleId,
+            AssetId targetAssetId,
+            string sourceFilePath,
+            AssetType sourceAssetType,
+            out AssetFileReplacementResultDto? replacementResult)
+        {
+            TryReplaceAssetFromFileCallCount++;
+            LastFileReplacementSourceFilePath = sourceFilePath;
+            LastFileReplacementSourceAssetType = sourceAssetType;
+            replacementResult = TryReplaceAssetFromFileResult;
+            return replacementResult is not null;
+        }
+
+        public bool TryReplaceAssetFromWorkspace(
+            WorkspaceId workspaceId,
+            BundleId targetBundleId,
+            AssetId targetAssetId,
+            BundleId sourceBundleId,
+            AssetId sourceAssetId,
+            out AssetReplacementResultDto? replacementResult)
+        {
+            TryReplaceAssetFromWorkspaceCallCount++;
+            LastWorkspaceReplacementSourceBundleId = sourceBundleId;
+            LastWorkspaceReplacementSourceAssetId = sourceAssetId;
+            replacementResult = TryReplaceAssetFromWorkspaceResult;
+            return replacementResult is not null;
+        }
+
+        public bool TryUndoAssetReplacement(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            out AssetReplacementUndoResultDto? undoResult)
+        {
+            TryUndoAssetReplacementCallCount++;
+            undoResult = TryUndoAssetReplacementResult;
+            return TryUndoAssetReplacementReturnValue;
+        }
+
+        public bool TryOpenAssetInPane(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            PaneId paneId,
+            out AssetPaneContextDto? paneContext)
+        {
+            paneContext = null;
+            throw new NotSupportedException();
+        }
+    }
+}

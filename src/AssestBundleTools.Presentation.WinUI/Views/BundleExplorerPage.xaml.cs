@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Diagnostics;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
@@ -43,7 +42,9 @@ public sealed partial class BundleExplorerPage : Page
     public BundleExplorerPage()
     {
         ViewModel = new BundleExplorerViewModel(
-            App.CurrentApp.WorkspaceBrowserService,
+            App.CurrentApp.WorkspaceExplorerGateway,
+            App.CurrentApp.WorkspaceAssetInspectionGateway,
+            App.CurrentApp.WorkspaceAssetOperationGateway,
             App.CurrentApp.AppLogService,
             App.CurrentApp.AppNotificationService,
             App.CurrentApp.LocalizationService,
@@ -57,7 +58,9 @@ public sealed partial class BundleExplorerPage : Page
         ApplyLocalizedText();
         InitializeBundlePaneAnimations();
         InitializeBundleSearchAnimations();
-        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        ViewModel.WorkspaceShell.PageStateChanged += OnWorkspaceShellPageStateChanged;
+        ViewModel.BundlePane.PageStateChanged += OnBundlePanePageStateChanged;
+        ViewModel.DocumentWorkspace.PageStateChanged += OnDocumentWorkspacePageStateChanged;
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
@@ -68,7 +71,20 @@ public sealed partial class BundleExplorerPage : Page
     {
         await UpdateBundlePaneCollapseStateAsync(useTransitions: false);
         UpdateBundleSearchState(useTransitions: false);
-        await ViewModel.InitializeAsync(_workspaceNavigationRequest);
+
+        var navigationRequest = _workspaceNavigationRequest;
+        if (navigationRequest is not null &&
+            TryGetHostWindow(out var hostWindow) &&
+            !hostWindow.PrepareWorkspaceLoad(navigationRequest))
+        {
+            // 目标工作区在当前页真正开始加载前，已经被其他进程或窗口命中；
+            // 这里直接回退到当前已知会话，避免重复进入一轮新的加载与清空流程。
+            await ViewModel.InitializeAsync();
+            SynchronizeWindowWorkspaceRegistration();
+            return;
+        }
+
+        await ViewModel.InitializeAsync(navigationRequest);
         SynchronizeWindowWorkspaceRegistration();
     }
 
@@ -199,7 +215,7 @@ public sealed partial class BundleExplorerPage : Page
             sender as MenuFlyout,
             closeOtherMenuItemName: "CloseOtherBundleTabsMenuItem",
             closeAllMenuItemName: "CloseAllBundleTabsMenuItem",
-            tabCount: ViewModel.BundleTabs.Count);
+            tabCount: ViewModel.DocumentWorkspace.BundleTabs.Count);
     }
 
     private async void OnCloseOtherBundleTabsMenuItemClick(object sender, RoutedEventArgs e)
@@ -218,7 +234,7 @@ public sealed partial class BundleExplorerPage : Page
     private async void OnAssetDocumentTabViewSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_isSynchronizingAssetDocumentTabSelection ||
-            ViewModel.IsSynchronizingAssetDocumentHostSelection)
+            ViewModel.DocumentWorkspace.IsSynchronizingAssetDocumentHostSelection)
         {
             return;
         }
@@ -259,7 +275,7 @@ public sealed partial class BundleExplorerPage : Page
             sender as MenuFlyout,
             closeOtherMenuItemName: "CloseOtherAssetDocumentTabsMenuItem",
             closeAllMenuItemName: "CloseAllAssetDocumentTabsMenuItem",
-            tabCount: ViewModel.CurrentAssetTabs.Count);
+            tabCount: ViewModel.DocumentWorkspace.CurrentAssetTabs.Count);
     }
 
     private async void OnCloseOtherAssetDocumentTabsMenuItemClick(object sender, RoutedEventArgs e)
@@ -279,7 +295,7 @@ public sealed partial class BundleExplorerPage : Page
     {
         ViewModel.ToggleBundleSearch();
 
-        if (!ViewModel.IsBundleSearchExpanded)
+        if (!ViewModel.BundlePane.IsBundleSearchExpanded)
         {
             return;
         }
@@ -299,7 +315,7 @@ public sealed partial class BundleExplorerPage : Page
 
     private void OnWorkspaceImportDragOver(object sender, DragEventArgs e)
     {
-        var canAcceptImport = ViewModel.HasWorkspace &&
+        var canAcceptImport = ViewModel.WorkspaceShell.HasWorkspace &&
                               e.DataView.Contains(StandardDataFormats.StorageItems);
         e.AcceptedOperation = canAcceptImport
             ? DataPackageOperation.Copy
@@ -316,7 +332,7 @@ public sealed partial class BundleExplorerPage : Page
     {
         SetWorkspaceImportDropOverlayVisible(false);
 
-        if (!ViewModel.HasWorkspace ||
+        if (!ViewModel.WorkspaceShell.HasWorkspace ||
             !e.DataView.Contains(StandardDataFormats.StorageItems))
         {
             return;
@@ -423,55 +439,43 @@ public sealed partial class BundleExplorerPage : Page
         await ViewModel.UndoAppliedReplacementAsync();
     }
 
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnWorkspaceShellPageStateChanged(
+        object? sender,
+        BundleExplorerPageStateChangedEventArgs<BundleExplorerWorkspaceShellPageStateChange> e)
     {
-        if (e.PropertyName is nameof(BundleExplorerViewModel.IsBundleSearchExpanded))
+        if (!e.ChangeFlags.HasFlag(BundleExplorerWorkspaceShellPageStateChange.WorkspaceAvailability))
         {
-            if (DispatcherQueue.HasThreadAccess)
-            {
-                UpdateBundleSearchState();
-                return;
-            }
-
-            DispatcherQueue.TryEnqueue(UpdateBundleSearchState);
             return;
         }
 
-        if (e.PropertyName is nameof(BundleExplorerViewModel.IsBundlePaneCollapsed))
-        {
-            if (DispatcherQueue.HasThreadAccess)
-            {
-                _ = UpdateBundlePaneCollapseStateAsync();
-                return;
-            }
+        RunOnUiThread(SynchronizeWindowWorkspaceRegistration);
+    }
 
-            DispatcherQueue.TryEnqueue(() => _ = UpdateBundlePaneCollapseStateAsync());
+    private void OnBundlePanePageStateChanged(
+        object? sender,
+        BundleExplorerPageStateChangedEventArgs<BundleExplorerBundlePanePageStateChange> e)
+    {
+        if (e.ChangeFlags.HasFlag(BundleExplorerBundlePanePageStateChange.SearchChrome))
+        {
+            RunOnUiThread(UpdateBundleSearchState);
+        }
+
+        if (e.ChangeFlags.HasFlag(BundleExplorerBundlePanePageStateChange.PaneChrome))
+        {
+            RunOnUiThread(() => _ = UpdateBundlePaneCollapseStateAsync());
+        }
+    }
+
+    private void OnDocumentWorkspacePageStateChanged(
+        object? sender,
+        BundleExplorerPageStateChangedEventArgs<BundleExplorerDocumentWorkspacePageStateChange> e)
+    {
+        if (!e.ChangeFlags.HasFlag(BundleExplorerDocumentWorkspacePageStateChange.AssetDocumentHost))
+        {
             return;
         }
 
-        if (e.PropertyName is nameof(BundleExplorerViewModel.HasWorkspace))
-        {
-            if (DispatcherQueue.HasThreadAccess)
-            {
-                SynchronizeWindowWorkspaceRegistration();
-                return;
-            }
-
-            DispatcherQueue.TryEnqueue(SynchronizeWindowWorkspaceRegistration);
-            return;
-        }
-
-        if (e.PropertyName is nameof(BundleExplorerViewModel.CurrentAssetTabs) or
-            nameof(BundleExplorerViewModel.ActiveAssetDocumentTab))
-        {
-            if (DispatcherQueue.HasThreadAccess)
-            {
-                SynchronizeAssetDocumentTabSelection();
-                return;
-            }
-
-            DispatcherQueue.TryEnqueue(SynchronizeAssetDocumentTabSelection);
-        }
+        RunOnUiThread(SynchronizeAssetDocumentTabSelection);
     }
 
     /// <summary>
@@ -511,7 +515,9 @@ public sealed partial class BundleExplorerPage : Page
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         ViewModel.FlushWorkspaceBrowserState();
-        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        ViewModel.DocumentWorkspace.PageStateChanged -= OnDocumentWorkspacePageStateChanged;
+        ViewModel.BundlePane.PageStateChanged -= OnBundlePanePageStateChanged;
+        ViewModel.WorkspaceShell.PageStateChanged -= OnWorkspaceShellPageStateChanged;
         _bundleSearchShowStoryboard.Stop();
         _bundleSearchHideStoryboard.Stop();
         _bundlePaneExpandedShowStoryboard.Stop();
@@ -526,15 +532,15 @@ public sealed partial class BundleExplorerPage : Page
     /// </summary>
     private void ApplyLocalizedText()
     {
-        PageEyebrowText.Text = UiText.Get("BundleExplorerPage.PageEyebrowText.Text");
-        PageTitleText.Text = UiText.Get("BundleExplorerPage.PageTitleText.Text");
+        PageEyebrowText.Text = UiText.Get(ResourceKeys.BundleExplorerPageEyebrow);
+        PageTitleText.Text = UiText.Get(ResourceKeys.BundleExplorerPageTitle);
         CreateWorkspaceChipText.Text = UiText.Get(ResourceKeys.BundleExplorerPageNewWorkspaceButton);
         OpenWorkspaceChipText.Text = UiText.Get(ResourceKeys.BundleExplorerPageOpenWorkspaceButton);
         ToolTipService.SetToolTip(ReturnToConsoleIconButton, UiText.Get(ResourceKeys.BundleExplorerPageReturnToConsoleButton));
-        RefreshChipText.Text = UiText.Get("BundleExplorerPage.RefreshButton.Content");
-        BatchExtractChipText.Text = UiText.Get("BundleExplorerPage.BatchExtractButton.Content");
-        SaveAsBundleChipText.Text = UiText.Get("BundleExplorerPage.SaveAsBundleButton.Content");
-        LeftPanelTitleText.Text = UiText.Get("BundleExplorerPage.LeftPanelTitleText.Text");
+        RefreshChipText.Text = UiText.Get(ResourceKeys.BundleExplorerPageRefreshButton);
+        BatchExtractChipText.Text = UiText.Get(ResourceKeys.BundleExplorerPageBatchExtractButton);
+        SaveAsBundleChipText.Text = UiText.Get(ResourceKeys.BundleExplorerPageSaveAsBundleButton);
+        LeftPanelTitleText.Text = UiText.Get(ResourceKeys.BundleExplorerPageLeftPanelTitle);
         BundleSearchTextBox.PlaceholderText = UiText.Get(ResourceKeys.BundleExplorerPageBundleSearchTextBoxPlaceholder);
         ToolTipService.SetToolTip(
             BundleImportFileButton,
@@ -555,8 +561,8 @@ public sealed partial class BundleExplorerPage : Page
         CollapsedBundlePaneSelectionLabelText.Text = UiText.Get(ResourceKeys.BundleExplorerPageCollapsedBundlePaneSelectionLabelText);
         WorkspaceImportDropOverlayTitleText.Text = UiText.Get(ResourceKeys.WorkspaceImportDropOverlayTitle);
         WorkspaceImportDropOverlayHintText.Text = UiText.Get(ResourceKeys.WorkspaceImportDropOverlayHint);
-        CenterPanelTitleText.Text = UiText.Get("BundleExplorerPage.CenterPanelTitleText.Text");
-        RightPanelTitleText.Text = UiText.Get("BundleExplorerPage.RightPanelTitleText.Text");
+        CenterPanelTitleText.Text = UiText.Get(ResourceKeys.BundleExplorerPageCenterPanelTitle);
+        RightPanelTitleText.Text = UiText.Get(ResourceKeys.BundleExplorerPageRightPanelTitle);
     }
 
     private void SetWorkspaceImportDropOverlayVisible(bool isVisible)
@@ -590,14 +596,14 @@ public sealed partial class BundleExplorerPage : Page
         var closeOtherMenuItem = FindMenuFlyoutItem(flyout, closeOtherMenuItemName);
         if (closeOtherMenuItem is not null)
         {
-            closeOtherMenuItem.Text = UiText.Get("BundleExplorerPage.TabContext.CloseOther.Text");
+            closeOtherMenuItem.Text = UiText.Get(ResourceKeys.BundleExplorerPageTabContextCloseOtherText);
             closeOtherMenuItem.IsEnabled = tabCount > 1;
         }
 
         var closeAllMenuItem = FindMenuFlyoutItem(flyout, closeAllMenuItemName);
         if (closeAllMenuItem is not null)
         {
-            closeAllMenuItem.Text = UiText.Get("BundleExplorerPage.TabContext.CloseAll.Text");
+            closeAllMenuItem.Text = UiText.Get(ResourceKeys.BundleExplorerPageTabContextCloseAllText);
             closeAllMenuItem.IsEnabled = tabCount > 0;
         }
     }
@@ -636,9 +642,9 @@ public sealed partial class BundleExplorerPage : Page
         _isSynchronizingAssetDocumentTabSelection = true;
         try
         {
-            if (!ReferenceEquals(AssetDocumentTabView.SelectedItem, ViewModel.ActiveAssetDocumentTab))
+            if (!ReferenceEquals(AssetDocumentTabView.SelectedItem, ViewModel.DocumentWorkspace.ActiveAssetDocumentTab))
             {
-                AssetDocumentTabView.SelectedItem = ViewModel.ActiveAssetDocumentTab;
+                AssetDocumentTabView.SelectedItem = ViewModel.DocumentWorkspace.ActiveAssetDocumentTab;
             }
         }
         finally
@@ -908,7 +914,7 @@ public sealed partial class BundleExplorerPage : Page
 
         try
         {
-            var isCollapsed = ViewModel.IsBundlePaneCollapsed;
+            var isCollapsed = ViewModel.BundlePane.IsBundlePaneCollapsed;
 
             if (!useTransitions || !CanAnimateBundlePaneLayout())
             {
@@ -1207,7 +1213,7 @@ public sealed partial class BundleExplorerPage : Page
 
     private void UpdateBundleSearchState(bool useTransitions)
     {
-        if (ViewModel.IsBundleSearchExpanded)
+        if (ViewModel.BundlePane.IsBundleSearchExpanded)
         {
             _bundleSearchHideStoryboard.Stop();
             BundleSearchHost.Visibility = Visibility.Visible;
@@ -1245,7 +1251,7 @@ public sealed partial class BundleExplorerPage : Page
 
     private void OnBundleSearchHideCompleted(object? sender, object e)
     {
-        if (ViewModel.IsBundleSearchExpanded)
+        if (ViewModel.BundlePane.IsBundleSearchExpanded)
         {
             return;
         }
@@ -1254,6 +1260,19 @@ public sealed partial class BundleExplorerPage : Page
         BundleSearchHost.Height = 0;
         BundleSearchHost.Opacity = 0;
         BundleSearchTranslateTransform.Y = -6;
+    }
+
+    private void RunOnUiThread(Action action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        if (DispatcherQueue.HasThreadAccess)
+        {
+            action();
+            return;
+        }
+
+        DispatcherQueue.TryEnqueue(() => action());
     }
 
 }

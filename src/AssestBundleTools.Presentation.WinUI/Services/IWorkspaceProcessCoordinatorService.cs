@@ -20,7 +20,15 @@ public interface IWorkspaceProcessCoordinatorService : IDisposable
     /// </summary>
     bool TryActivateExistingWorkspace(WorkspaceNavigationRequest navigationRequest);
 
+    /// <summary>
+    /// 在工作区真正完成页面绑定前，先为目标工作区建立一次临时预登记。
+    /// 这样其他进程在加载窗口期间再次打开同一工作区时，也能命中既有实例并被重定向。
+    /// </summary>
+    bool TryBeginPendingWorkspaceRegistration(WorkspaceNavigationRequest navigationRequest);
+
     void RegisterWorkspace(WorkspaceNavigationRequest navigationRequest);
+
+    void ClearPendingWorkspaceRegistration();
 
     void ClearWorkspaceRegistration();
 

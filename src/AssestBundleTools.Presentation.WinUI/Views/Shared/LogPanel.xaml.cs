@@ -36,10 +36,10 @@ public sealed partial class LogPanel : UserControl
 
     private void ApplyLocalizedText()
     {
-        AllFilterButton.Content = UiText.Get("LogPanel.AllFilterButton.Content");
-        InfoFilterButton.Content = UiText.Get("LogPanel.InfoFilterButton.Content");
-        WarningFilterButton.Content = UiText.Get("LogPanel.WarningFilterButton.Content");
-        ErrorFilterButton.Content = UiText.Get("LogPanel.ErrorFilterButton.Content");
-        ClearButton.Content = UiText.Get("LogPanel.ClearButton.Content");
+        AllFilterButton.Content = UiText.Get(ResourceKeys.LogPanelAllFilterButtonContent);
+        InfoFilterButton.Content = UiText.Get(ResourceKeys.LogPanelInfoFilterButtonContent);
+        WarningFilterButton.Content = UiText.Get(ResourceKeys.LogPanelWarningFilterButtonContent);
+        ErrorFilterButton.Content = UiText.Get(ResourceKeys.LogPanelErrorFilterButtonContent);
+        ClearButton.Content = UiText.Get(ResourceKeys.LogPanelClearButtonContent);
     }
 }

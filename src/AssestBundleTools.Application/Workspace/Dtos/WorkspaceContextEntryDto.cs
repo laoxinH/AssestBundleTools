@@ -1,17 +1,16 @@
-using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Workspace;
 
-namespace AssestBundleTools.Presentation.WinUI.Services;
+namespace AssestBundleTools.Application.Workspace.Dtos;
 
 /// <summary>
-/// 表示应用级工作区上下文中登记的一项工作区摘要。
+/// 表示工作区上下文目录中的一个已解析条目。
 /// </summary>
 /// <remarks>
-/// 该类型同时兼顾“目录项摘要”和“当前会话里的活动工作区摘要”：
-/// 如果 <see cref="WorkspaceSummary"/> 为空，说明它只是从目录元数据恢复出来的最近项；
-/// 如果不为空，说明当前会话里已经真正打开了这个工作区。
+/// 该类型同时承载：
+/// 1. 最近工作区目录中的恢复摘要；
+/// 2. 当前应用会话里仍然保留的实时工作区摘要。
 /// </remarks>
-public sealed record WorkspaceContextEntry(
+public sealed record WorkspaceContextEntryDto(
     string WorkspaceKey,
     string DisplayName,
     string SourcePath,

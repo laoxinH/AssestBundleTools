@@ -87,6 +87,10 @@ tests/
 - 已补强资源包标签页的资产列表状态恢复链路，当前会缓存并恢复搜索、筛选与 `selectedAssetId`，切换标签页和重启后都能回到对应资源焦点
 - 已把工作台右侧详情区扩展为“资源包标签页内的资产文档标签”结构，当前会缓存并恢复已打开资产、活动资产标签与检查器页签位置，避免不同资源共用单一检查器实例
 - 已完成预览展示链路第一轮资源化收口：`PreviewInfoText` 已被结构化 `PreviewInfoItems / PreviewMessage / Diagnostic` 取代，尺寸单位等公共展示值也已收敛到共享本地化格式化器
+- 已完成工作台页面 ViewModel 第二轮拆分：工作区壳层、资源包左窗格、文档宿主与资产工作流已分别下沉到独立子 ViewModel，`BundleExplorerViewModel` 当前主要承担页面级协调与工作区恢复/持久化编排
+- 已完成 `BundleExplorerViewModel` 的 D-04 新一轮收口：在工作区浏览状态恢复/持久化节流、页面级结果反馈、工作区加载/重绑定编排以及资源包标签打开/激活/关闭/重排编排分别下沉到 `BundleExplorerBrowserStateCoordinator / BundleExplorerOperationFeedbackBridge / BundleExplorerWorkspaceBindingCoordinator / BundleExplorerBundleTabCoordinator` 之后，`BundleExplorerPage` 也已直接迁回 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 子状态宿主绑定，旧页面兼容透传属性与 `BundleExplorerPageStateBridge` 已移除，主类体量已由 `1258` 行降到约 `426` 行
+- 已完成 `BundleExplorerAssetWorkflowViewModel` 的 D-04 第六轮拆分：在 `Preview`、提取/替换动作、检查器投影、资产文档标签协调、资产文档宿主构造/清理以及主资产窗格加载/刷新/空态回退编排下沉之后，资产级命令入口与页面动作编排也已下沉到 `BundleExplorerAssetCommandCoordinator`，共享结果失败反馈继续统一复用 `BundleExplorerOperationFeedbackBridge`，主类当前约 `273` 行；当前 D-04 的主体偏差已完成收口，后续重点转向防止职责回灌与稳定页面内共享状态
+- 已完成 `BundleExplorer` 页面级共享状态的 D-03 第三轮收口：`BundleExplorerPage.xaml / BundleExplorerPage.xaml.cs` 当前已直接绑定或订阅 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 的语义化状态宿主，旧的 `BundleExplorerPageStateBridge` 已移除，不再继续保留页面兼容桥接层
 
 ## 3. 总体实施原则
 
@@ -613,7 +617,7 @@ src/AssestBundleTools.Application/
 - 工作台检查器当前已收敛为 `详情 / 依赖 / 替换 / 变更` 四页签；其中“详情”页统一承载预览画面、基础信息、预览补充信息与预览诊断，“依赖”页签会展示资产依赖、反向引用、依赖闭包和 Bundle 外部依赖
 - 工作台右侧当前已补上资产详情标签层，不同资产会独立打开为标签并按资源包标签页归属保存状态，为后续资产级扩展功能预留稳定承载面
 - 当前 M9 除“富预览扩展”外的主干代办已完成，下一步进入预览能力扩展阶段
-- 当前剩余的高优先级架构收口已进一步缩小到“少量内部哨兵值、资源键集中管理细节与调试日志格式统一”，而不再是检查器、预览、启动兜底或 WinUI 壳层的用户可见文本主链路
+- 当前剩余的高优先级架构收口已进一步缩小到“少量内部哨兵值、外部工具诊断回退与调试日志格式统一”，而不再是检查器、预览、启动兜底或 WinUI 壳层的用户可见文本主链路
 
 ### M9 预览能力下一阶段计划
 
@@ -718,6 +722,21 @@ src/AssestBundleTools.Application/
 - 设置页基础功能
 - 发布配置检查
 
+### 测试编写时机
+
+- 已稳定、已文档化的行为契约，以及确认过的回归缺陷，应在同一变更中补齐或更新自动化测试。
+- 仍处于骨架、占位或过渡态的流程，只测试当前已经实现并且文档已承认的行为，不提前冻结未来语义。
+- 当前替换与保存链路仍有部分能力停留在骨架阶段；在 `M10` 真实写包与最终持久化语义落地前，测试先覆盖候选解析、兼容性、摘要、保存前预览、资源包聚合、执行骨架结果和已定义失败即可。
+- 当真实写包、冲突处理、取消/回滚或更细粒度失败分类真正进入实现阶段时，需要在同一轮变更中同步补齐对应测试，而不是把未来契约提前写死在当前骨架测试里。
+
+### 测试分层与依赖限制
+
+- `Domain / Application / Infrastructure / Localization / Presentation` 五个测试项目应继续按分层职责各自收口，不用测试去绕过生产代码中的边界。
+- `Application.Tests` 默认通过 fake / stub / in-memory double 覆盖用例契约，不把 WinUI 或具体基础设施实现当作前提。
+- `Infrastructure.Tests` 可以使用受控临时目录验证持久化和适配器行为，但不承担页面级交互语义。
+- `Presentation.Tests` 覆盖 ViewModel、协调器、窗口/导航/回滚语义，不默认升级为真实外部工具或真实全链路端到端测试。
+- 默认最小回归集合不依赖网络、真实用户目录、机器全局状态或不可控外部工具安装状态；若未来需要更高层级集成验证，应单独显式定义。
+
 ### 完成标准
 
 - 核心模块有基础自动化测试
@@ -794,6 +813,9 @@ src/AssestBundleTools.Application/
 - 已把工作台拖拽导入桥接到与文件/目录导入相同的共享协调服务，并把拖拽接收范围限制在左侧资源包列表区域
 - 已把统一导入入口继续推进到 Application 层的“工作区导入来源登记”命令，并将轻量来源描述写入工作区元数据
 - 已将 `WorkspaceBrowserService / WorkspaceCatalogService` 的 Handler 组装收口到 `App` 组合根，避免在 Presentation 门面内部继续 `new Handler`
+- 已完成 `WorkspaceBrowserService / WorkspaceCatalogService` 的第一轮边界收口：Presentation 门面只依赖 `Application.Workspace.Services` 抽象，具体 Handler 扇出已统一回收到 Application
+- 已完成 `WorkspaceBrowserService` 的 D-02 第二轮收口：底层单一 `WorkspaceBrowserGateway` 已拆为 `WorkspaceExplorerGateway / WorkspaceAssetInspectionGateway / WorkspaceAssetOperationGateway / WorkspaceBatchOperationsGateway` 四个能力簇网关，`WorkspaceImportCoordinatorService`、`BatchTasksViewModel` 与多组 `BundleExplorer` 协调器也已改为依赖对应窄接口
+- 已完成 D-02 第三轮收口：`WorkspaceBrowserService / WorkspaceCatalogService` 已从主注入链移除，`App.xaml.cs` 当前直接暴露 `WorkspaceExplorer / AssetInspection / AssetOperation / BatchOperations / Catalog` 五组窄网关，`BundleExplorerPage`、`BatchTasksPage` 与 `HomePage` 也已按需直接消费对应接口
 - 已完成资源包解密扩展基础框架、工作区级解密器选择与解密器管理页，为“加密 AB -> 解密 -> Reader 读取”链路预留稳定插入点，并支持外部进程解密器清单的新增、编辑、删除与重新加载
 - 已开始把工作区已选解密器真正接到真实导入处理链路，并将真实导入文件写入 `BundleIndexCacheStore` 后再由缓存型会话驱动资源包列表
 - 已完成 M9 第二子阶段的第一轮落地：`AssetsTools.NET` 已接入到 Infrastructure Reader，资产列表与基础详情已来自真实 AB 解析结果
@@ -806,22 +828,46 @@ src/AssestBundleTools.Application/
 - 已完成 M9 当前子阶段中的依赖视图扩展：检查器依赖页已接入 `PathId` 展示、`CAB-*` 友好解析、反向引用与依赖闭包四类视图
 - 已完成 M9 当前子阶段中的工作区级 CAB 反查第一轮收口：检查器中的 Bundle 外部依赖在命中当前工作区上下文时，已可把 `CAB-*` 还原为具体资源包文件名
 - 已将“新窗口打开工作区”从同进程多窗口改为“新主进程承载工作区”，并补上启动参数解析、跨进程激活、同进程既有工作区直达工作台与启动期工作区重定向
+- 已完成 D-08 第二轮窗口模型收口：当前工作区打开链路已补上“formal 正式注册 + pending 预登记 + 成功晋升 + 失败回滚”，工作区加载失败时不再把原有工作区上下文一并清空
+- 已为 D-08 主链路补上首轮 `Presentation` 回归：`WorkspaceProcessCoordinatorServiceTests` 当前覆盖 pending 预登记 / 晋升 / 清理，`BundleExplorerWorkspaceBindingCoordinatorTests` 当前覆盖工作区加载失败时的恢复与空态回滚
 - 已完成 M9 富预览扩展的 `AudioClip` 第二阶段：预览链路已补齐 `AssetPreviewKind.Audio`，支持 `WAV / OGG / MP3 / FLAC / M4A(MP4) / AAC` 的可播放载荷透传，并对 `FSB5` 补上独立外部转码层；当前会优先通过 `vgmstream-cli` 转为 `WAV` 后播放，缺失转码器或转码失败时稳定回退到结构化摘要
 - 已完成一轮架构高优先级收口：`Application` 侧已移除 `InMemoryWorkspaceSessionRegistry.Shared` 默认回退，并把工作区导入链路中的文件系统探测能力抽象为应用层端口，由 `Infrastructure` 统一提供实现
+- 已完成 `WorkspaceContextService` 持久化边界第一轮收口：最近工作区目录快照、工作区元数据与浏览状态已统一下沉到 `Application.Workspace.Services.WorkspaceContextPersistenceService`，`Presentation` 不再直接触碰工作区仓储与 `Directory.Exists(...)`
+- 已完成 `WorkspaceContextService` 的 D-01 第三轮收口：最近工作区目录恢复、可用性映射、“上次活动工作区”恢复请求推导、激活元数据补齐与浏览状态回写编排已进一步下沉到 `Application.Workspace.Services.WorkspaceContextCatalogService`，主类体量已由约 `545` 行降至约 `261` 行
 - 已完成一轮用户文本资源化高优先级收口：工作区导入自动识别、Reader 直检与预览诊断 detail 已改为展示层统一本地化；当前剩余热点主要是外部工具原始执行输出与少量异常分支
 - 已完成一轮用户文本资源化第三阶段收口：解密器设置页保存/删除失败与工作台预览显示兜底日志已移除原始异常直透；当前剩余热点主要是外部工具原始执行输出与启动期异常展示
 - 已完成 `BundleExplorerViewModel` 第一轮拆分：左侧资源包窗格状态与资源包/资产标签工作区状态已分别下沉到独立子 ViewModel，主工作台 ViewModel 开始收缩为页面级外观与流程编排层
+- 已完成 `BundleExplorerViewModel` 的 D-04 后续收口：浏览状态恢复/持久化节流、页面级结果反馈、工作区加载/重绑定编排以及资源包标签打开/激活/关闭/重排已分别下沉到 `BundleExplorerBrowserStateCoordinator / BundleExplorerOperationFeedbackBridge / BundleExplorerWorkspaceBindingCoordinator / BundleExplorerBundleTabCoordinator`，`BundleExplorerPage` 也已直接迁回子状态宿主绑定，旧页面兼容透传属性与 `BundleExplorerPageStateBridge` 已移除，主类体量已从 `1258` 行降至约 `426` 行
+- 已完成 `BundleExplorerAssetWorkflowViewModel` 的 D-04 第六轮收口：预览加载/呈现、提取/替换/撤销动作、检查器投影、资产文档标签同步、主资产窗格加载/刷新/空态回退以及资产级命令入口/页面动作编排已分别拆为独立协作对象，共享结果失败反馈继续统一复用 `BundleExplorerOperationFeedbackBridge`，主类当前约 `273` 行；当前 D-04 的主要强风险已完成收口，后续更适合把注意力转向防止职责回灌，而不是重新扩大页面主类
+- 已完成 `BundleExplorer` 页面级共享状态的 D-03 第三轮收口：`BundleExplorerPage.xaml / BundleExplorerPage.xaml.cs` 已直接绑定或订阅 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 的语义化状态宿主，旧的 `BundleExplorerPageStateBridge` 已移除，检查器同步、资产命令态、左栏搜索/折叠态与文档宿主兼容属性刷新都已继续按状态宿主边界显式通知
+- 已完成 D-05 第一轮边界显式化：`Presentation -> Infrastructure` 的直接引用当前只允许出现在 `src/AssestBundleTools.Presentation.WinUI/Composition/` 目录，`App.xaml.cs` 与普通壳层服务已退回为消费组合结果或依赖 Presentation 窄抽象，并补上仓库级检查防止新的越界引用
+- 已完成 D-06 第一轮最小测试骨架：`tests/AssestBundleTools.Domain.Tests / AssestBundleTools.Application.Tests / AssestBundleTools.Localization.Tests` 已分别覆盖 `AppError`、`Result + 工作区目录关键 Handler` 以及 `zh-CN / en-US` 资源键一致性与 `ResourceKeys` 覆盖校验；后续测试重点转向扩展更多 `Application / Infrastructure` 关键路径
+- 已完成 D-06 第二轮最小测试骨架：`tests/AssestBundleTools.Infrastructure.Tests` 已建立与 `Application.Tests` 一致的零依赖控制台 runner，当前覆盖 `JsonWorkspaceCatalogStore / JsonWorkspaceMetadataStore` 的缺失文件空载入、保存回读与删除清理；`Localization.Tests` 也补上了 `Presentation -> Infrastructure` 与 `ResourceKeys` 集中管理边界检查，四层最小回归入口当前已经齐备
+- 已完成 D-06 第三轮回归补强：`tests/AssestBundleTools.Presentation.Tests` 已加入解决方案，并补上工作区进程占用与工作区恢复回滚两条 `Presentation` 关键路径，最小自动化回归当前已从四层骨架扩展到五层关键入口
+- 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前已补 `RemoveWorkspaceBundleHandler` 的元数据修正与缓存失效链路，`tests/AssestBundleTools.Infrastructure.Tests` 当前已补 `JsonPreviewCacheStore` 的预览缓存落盘/删除回归
+- 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补 `RegisterWorkspaceImportHandler` 的路径去重、更新计数、路径类型统计与排除列表修正
+- 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补 `ProcessWorkspaceImportsHandler` 的缓存复用命中、解密失败、Reader 拒绝、读取失败，以及陈旧 bundle / preview 缓存清理与 `SourceRemoved` 诊断
+- 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补 `GetAssetPreviewHandler` 的预览缓存命中、`SourceFingerprint / Identity / GeneratorVersion / AudioTranscoder` 失效重建、音频摘要在新转码器可用时的升级重建，以及预览解密失败、预览生成失败摘要回退链路
+- 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Infrastructure.Tests` 当前也已补 `JsonPreviewCacheStore` 在缺失 payload / 非法 payload path 下的容错加载、路径解析与描述文件清理
+- 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补替换链路中的文件候选类型解析、来源路径校验、缺失资源失败、类型不匹配、工作区候选空集失败、单资源文件/工作区替换、撤销替换，以及批量替换预览/执行摘要链路
+- 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补 `GetWorkspaceSavePreviewHandler / SaveWorkspaceAsNewBundleHandler` 的保存预览空态、资源包分组聚合、缺失工作区、无候选失败与执行摘要链路
+- 已完成 D-07 第二轮收口：宿主程序自身的启动/壳层异常提示与页面代码中残留的资源键字面量已继续收口到资源键常量和标准错误令牌；当前仅保留外部工具原始输出作为诊断回退文本，而不再作为主提示文案
 - 当前 M9 剩余主线收口为富预览扩展，优先顺序为 `AudioClip -> SpriteAtlas -> Mesh -> Material / Font / AnimationClip`
 
 ## 10. 架构代办事项
 
-以下事项已确认存在，但当前先记入架构代办，后续结合功能推进时一并收口：
+更细的现状登记、受影响文件与建议收口顺序，统一见
+[`implementation-deviation-register.md`](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/implementation-deviation-register.md)。
+本节只保留与路线图推进直接相关的高优先级收口项。
 
-1. 将 `WorkspaceContextService` 中直接读写 `WorkspaceCatalogStore / WorkspaceMetadataStore` 的逻辑下沉为 Application Use Case，减少 Presentation 对持久化细节的直接感知。
-2. 继续评估 `WorkspaceBrowserService / WorkspaceCatalogService` 是否需要进一步收口为稳定的应用层网关，降低 Presentation 对具体 Handler 类型的依赖。
-3. 当前工作区进程占用是在“工作区真正加载成功后”注册；若后续要彻底压缩极端并发启动下的重复打开竞态，可把这层注册前移到加载前预占用，并补失败回滚。
+以下事项当前已不再构成阻塞性偏差，但仍作为后续功能推进时需要持续守住的架构 guardrail：
+
+1. `WorkspaceContextService` 已完成第三轮收口；最近目录项恢复、可用性语义与“上次活动工作区”恢复请求已下沉到 `Application.Workspace.Services.IWorkspaceContextCatalogService`，后续重点转为防止新的目录编排语义重新回流到 Presentation。
+2. 工作区浏览能力注入面已完成第三轮收口；后续重点转为防止新的聚合总入口重新长回 Presentation，并继续保持页面根对象只依赖自己真正需要的能力簇接口。
+3. 工作区进程占用链路已完成 D-08 第二轮收口，并已补首轮 `Presentation` 回归；后续重点转为继续扩展跨进程窗口激活与重定向细节回归，而不是继续变更这条语义主线。
 4. “窗口级 `WorkspaceContextService` 重构”当前已不再作为主路线；若未来确实要支持“一进程多工作区并行”，应单独立项做窗口作用域上下文，而不是在现有单工作区进程模型上继续叠兼容。
 5. 当前 `AudioClip` 的 `FSB5` 播放能力优先依赖外部 `vgmstream-cli`；若未来确实需要“完全无外部依赖”的部署形态，应在保留现有独立音频转码端口的前提下，单独补一轮内建 `FSB5` 部分 codec 支持，而不是把编解码逻辑直接塞回 Preview UI 或 Reader。
-6. `BundleExplorerViewModel` 当前虽然已拆出资源包窗格与文档标签工作区两个子 ViewModel，但资源详情装载、预览/替换编排与工作区恢复流程仍偏重；后续应继续拆出工作区壳层状态或资产工作流子 ViewModel，避免重新回到巨型页面 ViewModel。
+6. `BundleExplorerViewModel` 当前约 `426` 行；在页面兼容透传属性面与 `BundleExplorerPageStateBridge` 一并移除之后，主类已重新回到常规手写业务类 `200-500` 行目标内，后续重点应转为“避免再把新的页面流程或兼容面回灌进主类”，而不是继续把它当作 D-04 的主要热点。
+7. 当前资产工作流子 `ViewModel` 已完成 D-03 第三轮 sibling / 页面状态收口与 D-04 第六轮体量收缩：`Preview / Modification Action / Inspector Projection / Asset Document Coordination / Asset Document Host / Asset Pane Coordination / Asset Command Coordination` 已分别下沉到 `BundleExplorerAssetPreviewCoordinator / BundleExplorerAssetModificationActionHandler / BundleExplorerAssetInspectorPresenter / BundleExplorerAssetDocumentTabCoordinator / BundleExplorerAssetDocumentHostCoordinator / BundleExplorerAssetPaneCoordinator / BundleExplorerAssetCommandCoordinator`；共享失败反馈继续统一复用 `BundleExplorerOperationFeedbackBridge`；`BundleExplorerPage` 也已直接绑定或订阅 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 的语义化状态宿主，旧页面兼容桥接层已移除；主类当前约 `273` 行，后续重点应转向防止职责回灌，而不是继续把命令逻辑堆回资产工作流主类。
 
-这些事项当前不阻塞 M9 主线，但后续在缓存失效、预览链路和保存输出继续推进前，应择机完成第一轮收口。
+这些事项当前不阻塞 M9 主线，但后续在缓存失效、预览链路和保存输出继续推进前，应择机完成后续收口。

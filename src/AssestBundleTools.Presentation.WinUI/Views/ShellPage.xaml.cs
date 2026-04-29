@@ -172,7 +172,8 @@ public sealed partial class ShellPage : Page
 
     private bool HasRegisteredWorkspace()
     {
-        return !string.IsNullOrWhiteSpace(_hostWindow?.RegisteredWorkspaceKey);
+        return !string.IsNullOrWhiteSpace(_hostWindow?.RegisteredWorkspaceKey) ||
+               !string.IsNullOrWhiteSpace(_hostWindow?.PendingWorkspaceKey);
     }
 
     private ShellNavigationTarget ResolveLaunchGuideModeTarget(string navigationKey)
@@ -230,8 +231,8 @@ public sealed partial class ShellPage : Page
     {
         PaneTitleText.Text = UiText.Get(ResourceKeys.ShellPaneTitle);
         PaneSubtitleText.Text = UiText.Get(ResourceKeys.ShellPaneSubtitle);
-        BatchTasksNavItem.Content = UiText.Get("Shell.BatchTasksNavItem.Content");
-        SettingsDiagnosticsNavItem.Content = UiText.Get("Shell.SettingsDiagnosticsNavItem.Content");
+        BatchTasksNavItem.Content = UiText.Get(ResourceKeys.ShellBatchTasksNavItemContent);
+        SettingsDiagnosticsNavItem.Content = UiText.Get(ResourceKeys.ShellSettingsDiagnosticsNavItemContent);
     }
 
     /// <summary>

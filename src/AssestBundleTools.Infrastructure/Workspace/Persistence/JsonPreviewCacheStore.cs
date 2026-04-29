@@ -33,10 +33,15 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
             return null;
         }
 
-        var payloadFilePath = _storagePaths.GetPreviewPayloadFilePath(
+        var payloadFilePath = TryResolvePayloadFilePath(
             workspaceKey,
             previewCacheKey,
             descriptor.RelativePayloadPath);
+        if (string.IsNullOrWhiteSpace(payloadFilePath))
+        {
+            return null;
+        }
+
         var payload = JsonWorkspaceFileStorageHelper.TryReadBytes(payloadFilePath);
         if (payload is null)
         {
@@ -86,17 +91,10 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
             return null;
         }
 
-        try
-        {
-            return _storagePaths.GetPreviewPayloadFilePath(
-                descriptor.WorkspaceKey,
-                descriptor.PreviewCacheKey,
-                descriptor.RelativePayloadPath);
-        }
-        catch (ArgumentException)
-        {
-            return null;
-        }
+        return TryResolvePayloadFilePath(
+            descriptor.WorkspaceKey,
+            descriptor.PreviewCacheKey,
+            descriptor.RelativePayloadPath);
     }
 
     public void Save(PreviewCachePayloadDto previewCachePayload)
@@ -136,11 +134,15 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
             return;
         }
 
-        JsonWorkspaceFileStorageHelper.DeleteFileIfExists(
-            _storagePaths.GetPreviewPayloadFilePath(workspaceKey, previewCacheKey, descriptor.RelativePayloadPath));
+        var payloadFilePath = TryResolvePayloadFilePath(workspaceKey, previewCacheKey, descriptor.RelativePayloadPath);
+        if (string.IsNullOrWhiteSpace(payloadFilePath))
+        {
+            return;
+        }
 
-        var payloadDirectoryPath = Path.GetDirectoryName(
-            _storagePaths.GetPreviewPayloadFilePath(workspaceKey, previewCacheKey, descriptor.RelativePayloadPath));
+        JsonWorkspaceFileStorageHelper.DeleteFileIfExists(payloadFilePath);
+
+        var payloadDirectoryPath = Path.GetDirectoryName(payloadFilePath);
         if (!string.IsNullOrWhiteSpace(payloadDirectoryPath) &&
             Directory.Exists(payloadDirectoryPath) &&
             !Directory.EnumerateFileSystemEntries(payloadDirectoryPath).Any())
@@ -158,5 +160,20 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
 
         JsonWorkspaceFileStorageHelper.DeleteDirectoryIfExists(
             _storagePaths.GetPreviewCacheDirectoryPath(workspaceKey));
+    }
+
+    private string? TryResolvePayloadFilePath(
+        string workspaceKey,
+        string previewCacheKey,
+        string relativePayloadPath)
+    {
+        try
+        {
+            return _storagePaths.GetPreviewPayloadFilePath(workspaceKey, previewCacheKey, relativePayloadPath);
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
     }
 }

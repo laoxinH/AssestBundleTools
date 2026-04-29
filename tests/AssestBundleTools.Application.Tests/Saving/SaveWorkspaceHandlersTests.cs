@@ -1,0 +1,357 @@
+using System.IO;
+using System.Linq;
+using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Extraction.Dtos;
+using AssestBundleTools.Application.Replacement.Dtos;
+using AssestBundleTools.Application.Saving.Commands;
+using AssestBundleTools.Application.Saving.Queries;
+using AssestBundleTools.Application.Tests.Testing;
+using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Application.Workspace.Services;
+using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Bundles;
+using AssestBundleTools.Domain.Workspace;
+
+namespace AssestBundleTools.Application.Tests.Saving;
+
+internal static class SaveWorkspaceHandlersTests
+{
+    public static async Task GetWorkspaceSavePreviewHandler_ShouldReturnFailure_WhenWorkspaceDoesNotExist()
+    {
+        var registry = new TestWorkspaceSessionRegistry
+        {
+            ContainsWorkspaceResult = false
+        };
+        var handler = new GetWorkspaceSavePreviewHandler(registry);
+
+        var result = await handler.HandleAsync(new GetWorkspaceSavePreviewQuery(new WorkspaceId("missing-workspace")));
+
+        TestAssert.True(result.IsFailure, "Missing workspace should fail.");
+        TestAssert.Equal(
+            "Workspace.Query.NotFound",
+            TestAssert.Single(result.Errors).Code,
+            "Failure should report the missing workspace error.");
+    }
+
+    public static async Task GetWorkspaceSavePreviewHandler_ShouldReturnEmptyPreview_WhenWorkspaceHasNoChangeSummary()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var handler = new GetWorkspaceSavePreviewHandler(new TestWorkspaceSessionRegistry());
+
+        var result = await handler.HandleAsync(new GetWorkspaceSavePreviewQuery(workspaceId));
+
+        TestAssert.True(result.IsSuccess, "Preview should still succeed when the workspace has no staged save changes.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(0, preview.PlannedBundleCount, "Empty workspace should not produce bundle plans.");
+        TestAssert.Equal(0, preview.TotalChangeCount, "Empty workspace should not report staged changes.");
+        TestAssert.Empty(preview.BundlePlans, "Empty workspace should expose an empty save plan.");
+    }
+
+    public static async Task GetWorkspaceSavePreviewHandler_ShouldGroupBundlePlans_AndResolveDefaultOutputDirectory()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var registry = new TestWorkspaceSessionRegistry
+        {
+            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(
+                workspaceId,
+                [
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-zeta"),
+                        assetId: new AssetId("asset-1"),
+                        bundleDisplayName: "zeta.ab",
+                        assetName: "EnemyPortrait",
+                        isModified: true,
+                        extracted: true,
+                        workspaceReplacementSourceAssetName: "SourcePortrait"),
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-alpha"),
+                        assetId: new AssetId("asset-2"),
+                        bundleDisplayName: "Alpha.ab",
+                        assetName: "ConfigText",
+                        isModified: true,
+                        fileReplacementSourceFileName: "config.json"),
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-alpha"),
+                        assetId: new AssetId("asset-3"),
+                        bundleDisplayName: "Alpha.ab",
+                        assetName: "ThemeMusic",
+                        isModified: false,
+                        fileReplacementSourceFileName: "theme.ogg")
+                ])
+        };
+        var handler = new GetWorkspaceSavePreviewHandler(registry);
+
+        var result = await handler.HandleAsync(new GetWorkspaceSavePreviewQuery(workspaceId));
+
+        TestAssert.True(result.IsSuccess, "Save preview should succeed when staged changes exist.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(Path.Combine("Outputs", "Workspace One"), preview.OutputDirectory, "Default output directory should be derived from the workspace display name.");
+        TestAssert.Equal(2, preview.PlannedBundleCount, "Preview should group staged changes by bundle.");
+        TestAssert.Equal(3, preview.TotalChangeCount, "Preview should carry forward total staged change count.");
+        TestAssert.Equal(2, preview.ModifiedAssetCount, "Preview should carry forward modified asset count.");
+        TestAssert.Equal(1, preview.ExtractedAssetCount, "Preview should carry forward extracted asset count.");
+        TestAssert.Equal(1, preview.WorkspaceReplacementCount, "Preview should carry forward workspace replacement count.");
+        TestAssert.Equal(2, preview.FileReplacementCount, "Preview should carry forward file replacement count.");
+        TestAssert.Equal(2, preview.BundlePlans.Count, "Preview should expose one bundle plan per affected bundle.");
+
+        var firstPlan = preview.BundlePlans[0];
+        TestAssert.Equal("Alpha.ab", firstPlan.BundleDisplayName, "Bundle plans should be ordered by display name.");
+        TestAssert.Equal(Path.Combine(preview.OutputDirectory, "Alpha.ab"), firstPlan.OutputFilePath, "Bundle output path should combine the default directory and bundle display name.");
+        TestAssert.Equal(2, firstPlan.ChangeCount, "Alpha bundle should aggregate both staged changes.");
+        TestAssert.Equal(1, firstPlan.ModifiedAssetCount, "Alpha bundle should count modified assets within the bundle.");
+        TestAssert.Equal(0, firstPlan.ExtractedAssetCount, "Alpha bundle should report extracted assets within the bundle.");
+        TestAssert.Equal(0, firstPlan.WorkspaceReplacementCount, "Alpha bundle should report workspace replacements within the bundle.");
+        TestAssert.Equal(2, firstPlan.FileReplacementCount, "Alpha bundle should report file replacements within the bundle.");
+
+        var secondPlan = preview.BundlePlans[1];
+        TestAssert.Equal("zeta.ab", secondPlan.BundleDisplayName, "Second bundle plan should preserve the remaining bundle.");
+        TestAssert.Equal(1, secondPlan.ChangeCount, "Zeta bundle should expose its single staged change.");
+        TestAssert.Equal(1, secondPlan.ModifiedAssetCount, "Zeta bundle should count its modified asset.");
+        TestAssert.Equal(1, secondPlan.ExtractedAssetCount, "Zeta bundle should report extracted assets within the bundle.");
+        TestAssert.Equal(1, secondPlan.WorkspaceReplacementCount, "Zeta bundle should report workspace replacements within the bundle.");
+        TestAssert.Equal(0, secondPlan.FileReplacementCount, "Zeta bundle should report file replacements within the bundle.");
+    }
+
+    public static async Task SaveWorkspaceAsNewBundleHandler_ShouldReturnFailure_WhenWorkspaceDoesNotExist()
+    {
+        var registry = new TestWorkspaceSessionRegistry
+        {
+            ContainsWorkspaceResult = false
+        };
+        var handler = new SaveWorkspaceAsNewBundleHandler(registry);
+
+        var result = await handler.HandleAsync(new SaveWorkspaceAsNewBundleCommand(new WorkspaceId("missing-workspace")));
+
+        TestAssert.True(result.IsFailure, "Missing workspace should fail.");
+        TestAssert.Equal(
+            "Workspace.Query.NotFound",
+            TestAssert.Single(result.Errors).Code,
+            "Failure should report the missing workspace error.");
+    }
+
+    public static async Task SaveWorkspaceAsNewBundleHandler_ShouldReturnFailure_WhenNoBundlePlansExist()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var registry = new TestWorkspaceSessionRegistry
+        {
+            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(workspaceId, Array.Empty<WorkspaceChangeItemDto>())
+        };
+        var handler = new SaveWorkspaceAsNewBundleHandler(registry);
+
+        var result = await handler.HandleAsync(new SaveWorkspaceAsNewBundleCommand(workspaceId));
+
+        TestAssert.True(result.IsFailure, "Save execution should fail when no bundles are staged.");
+        TestAssert.Equal(
+            "Bundle.Save.NoCandidates",
+            TestAssert.Single(result.Errors).Code,
+            "Failure should report the missing save candidate error.");
+    }
+
+    public static async Task SaveWorkspaceAsNewBundleHandler_ShouldReturnExecutionSummary_WhenBundlePlansExist()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var registry = new TestWorkspaceSessionRegistry
+        {
+            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(
+                workspaceId,
+                [
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-zeta"),
+                        assetId: new AssetId("asset-1"),
+                        bundleDisplayName: "zeta.ab",
+                        assetName: "EnemyPortrait",
+                        isModified: true,
+                        extracted: true,
+                        workspaceReplacementSourceAssetName: "SourcePortrait"),
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-alpha"),
+                        assetId: new AssetId("asset-2"),
+                        bundleDisplayName: "Alpha.ab",
+                        assetName: "ConfigText",
+                        isModified: true,
+                        fileReplacementSourceFileName: "config.json")
+                ])
+        };
+        var handler = new SaveWorkspaceAsNewBundleHandler(registry);
+        var beforeExecution = DateTimeOffset.UtcNow;
+
+        var result = await handler.HandleAsync(new SaveWorkspaceAsNewBundleCommand(workspaceId, "  D:\\Exports  "));
+
+        var afterExecution = DateTimeOffset.UtcNow;
+        TestAssert.True(result.IsSuccess, "Save execution summary should succeed when bundle plans exist.");
+        var execution = result.Value ?? throw new InvalidOperationException("Expected save execution result.");
+        TestAssert.Equal(workspaceId, execution.WorkspaceId, "Execution result should preserve workspace id.");
+        TestAssert.Equal("Workspace One", execution.WorkspaceDisplayName, "Execution result should preserve workspace display name.");
+        TestAssert.Equal("D:\\Exports", execution.OutputDirectory, "Explicit output directory should be trimmed and preserved.");
+        TestAssert.Equal(2, execution.PlannedBundleCount, "Execution result should report the number of affected bundles.");
+        TestAssert.Equal(2, execution.TotalChangeCount, "Execution result should report the staged change count.");
+        TestAssert.True(
+            execution.CompletedAtUtc >= beforeExecution && execution.CompletedAtUtc <= afterExecution,
+            "Execution timestamp should be captured during handler execution.");
+    }
+
+    private static WorkspaceId CreateWorkspaceId() => new("workspace-save-1");
+
+    private static WorkspaceChangeSummaryDto CreateWorkspaceChangeSummary(
+        WorkspaceId workspaceId,
+        IReadOnlyList<WorkspaceChangeItemDto> items)
+    {
+        return new WorkspaceChangeSummaryDto(
+            WorkspaceId: workspaceId,
+            WorkspaceDisplayName: "Workspace One",
+            SourcePath: "C:\\Workspaces\\WorkspaceOne",
+            BundleCount: items.Select(static item => item.BundleId.Value).Distinct(StringComparer.Ordinal).Count(),
+            AssetCount: items.Count,
+            TotalChangeCount: items.Count,
+            ModifiedAssetCount: items.Count(static item => item.IsModified),
+            ExtractedAssetCount: items.Count(static item => item.LastExtractedAtUtc.HasValue),
+            WorkspaceReplacementCount: items.Count(static item => !string.IsNullOrWhiteSpace(item.WorkspaceReplacementSourceAssetName)),
+            FileReplacementCount: items.Count(static item => !string.IsNullOrWhiteSpace(item.FileReplacementSourceFileName)),
+            Items: items);
+    }
+
+    private static WorkspaceChangeItemDto CreateChangeItem(
+        BundleId bundleId,
+        AssetId assetId,
+        string bundleDisplayName,
+        string assetName,
+        bool isModified,
+        bool extracted = false,
+        string? workspaceReplacementSourceAssetName = null,
+        string? fileReplacementSourceFileName = null)
+    {
+        var changedAtUtc = new DateTimeOffset(2026, 4, 29, 9, 0, 0, TimeSpan.Zero);
+        var extractedAtUtc = extracted ? changedAtUtc.AddMinutes(-5) : (DateTimeOffset?)null;
+        return new WorkspaceChangeItemDto(
+            BundleId: bundleId,
+            AssetId: assetId,
+            BundleDisplayName: bundleDisplayName,
+            AssetName: assetName,
+            AssetType: AssetType.Texture2D,
+            IsModified: isModified,
+            LastExtractedAtUtc: extractedAtUtc,
+            WorkspaceReplacementSourceBundleDisplayName: string.IsNullOrWhiteSpace(workspaceReplacementSourceAssetName) ? null : "SourceBundle",
+            WorkspaceReplacementSourceAssetName: workspaceReplacementSourceAssetName,
+            WorkspaceReplacementAppliedAtUtc: string.IsNullOrWhiteSpace(workspaceReplacementSourceAssetName) ? null : changedAtUtc,
+            FileReplacementSourceFileName: fileReplacementSourceFileName,
+            FileReplacementSourcePath: string.IsNullOrWhiteSpace(fileReplacementSourceFileName) ? null : Path.Combine("C:\\Imports", fileReplacementSourceFileName),
+            FileReplacementAppliedAtUtc: string.IsNullOrWhiteSpace(fileReplacementSourceFileName) ? null : changedAtUtc,
+            LastChangedAtUtc: changedAtUtc);
+    }
+
+    private sealed class TestWorkspaceSessionRegistry : IWorkspaceSessionRegistry
+    {
+        public bool ContainsWorkspaceResult { get; set; } = true;
+
+        public WorkspaceChangeSummaryDto? WorkspaceChangeSummary { get; set; }
+
+        public WorkspaceSummaryDto OpenWorkspace(WorkspaceSessionOpenRequestDto request) => throw new NotSupportedException();
+
+        public bool ContainsWorkspace(WorkspaceId workspaceId) => ContainsWorkspaceResult;
+
+        public bool ContainsBundle(WorkspaceId workspaceId, BundleId bundleId) => throw new NotSupportedException();
+
+        public bool ContainsAsset(WorkspaceId workspaceId, BundleId bundleId, AssetId assetId) => throw new NotSupportedException();
+
+        public bool TryGetBundleTree(WorkspaceId workspaceId, out IReadOnlyList<BundleTreeNodeDto> bundleTree)
+        {
+            bundleTree = null!;
+            throw new NotSupportedException();
+        }
+
+        public bool TryGetAssetList(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            string? searchKeyword,
+            AssetType? assetTypeFilter,
+            out AssetListResultDto? assetListResult)
+        {
+            assetListResult = null;
+            throw new NotSupportedException();
+        }
+
+        public bool TryGetAssetDetails(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            out AssetDetailsDto? assetDetails)
+        {
+            assetDetails = null;
+            throw new NotSupportedException();
+        }
+
+        public bool TryGetWorkspaceChangeSummary(
+            WorkspaceId workspaceId,
+            out WorkspaceChangeSummaryDto? changeSummary)
+        {
+            changeSummary = WorkspaceChangeSummary;
+            return changeSummary is not null;
+        }
+
+        public bool TryExtractAsset(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            out AssetExtractionResultDto? extractionResult)
+        {
+            extractionResult = null;
+            throw new NotSupportedException();
+        }
+
+        public bool TryGetWorkspaceReplacementCandidates(
+            WorkspaceId workspaceId,
+            BundleId targetBundleId,
+            AssetId targetAssetId,
+            out IReadOnlyList<WorkspaceReplacementCandidateDto> candidates)
+        {
+            candidates = null!;
+            throw new NotSupportedException();
+        }
+
+        public bool TryReplaceAssetFromFile(
+            WorkspaceId workspaceId,
+            BundleId targetBundleId,
+            AssetId targetAssetId,
+            string sourceFilePath,
+            AssetType sourceAssetType,
+            out AssetFileReplacementResultDto? replacementResult)
+        {
+            replacementResult = null;
+            throw new NotSupportedException();
+        }
+
+        public bool TryReplaceAssetFromWorkspace(
+            WorkspaceId workspaceId,
+            BundleId targetBundleId,
+            AssetId targetAssetId,
+            BundleId sourceBundleId,
+            AssetId sourceAssetId,
+            out AssetReplacementResultDto? replacementResult)
+        {
+            replacementResult = null;
+            throw new NotSupportedException();
+        }
+
+        public bool TryUndoAssetReplacement(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            out AssetReplacementUndoResultDto? undoResult)
+        {
+            undoResult = null;
+            throw new NotSupportedException();
+        }
+
+        public bool TryOpenAssetInPane(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            PaneId paneId,
+            out AssetPaneContextDto? paneContext)
+        {
+            paneContext = null;
+            throw new NotSupportedException();
+        }
+    }
+}

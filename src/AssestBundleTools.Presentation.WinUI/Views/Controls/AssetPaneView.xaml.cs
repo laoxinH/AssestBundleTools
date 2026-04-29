@@ -519,17 +519,17 @@ public sealed partial class AssetPaneView : UserControl
 
     private void ApplyLocalizedText()
     {
-        SearchTextBox.PlaceholderText = UiText.Get("AssetPaneView.SearchTextBox.PlaceholderText");
-        ModifiedOnlyToggleButton.Content = UiText.Get("AssetPaneView.ModifiedOnlyToggleButton.Content");
-        PreviewOnlyToggleButton.Content = UiText.Get("AssetPaneView.PreviewOnlyToggleButton.Content");
+        SearchTextBox.PlaceholderText = UiText.Get(ResourceKeys.AssetPaneViewSearchTextBoxPlaceholder);
+        ModifiedOnlyToggleButton.Content = UiText.Get(ResourceKeys.AssetPaneViewModifiedOnlyToggleButtonContent);
+        PreviewOnlyToggleButton.Content = UiText.Get(ResourceKeys.AssetPaneViewPreviewOnlyToggleButtonContent);
         MultiSelectionLabelText.Text = UiText.Get(ResourceKeys.AssetPaneViewMultiSelectionLabel);
         MultiSelectionUnitText.Text = UiText.Get(ResourceKeys.AssetPaneViewMultiSelectionUnit);
         BatchExtractSelectedButton.Content = UiText.Get(ResourceKeys.AssetPaneViewBatchExtractSelectedButton);
-        AssetNameHeaderText.Text = UiText.Get("AssetPaneView.AssetNameHeaderText.Text");
-        AssetTypeHeaderText.Text = UiText.Get("AssetPaneView.AssetTypeHeaderText.Text");
-        AssetSizeHeaderText.Text = UiText.Get("AssetPaneView.AssetSizeHeaderText.Text");
-        AssetStateHeaderText.Text = UiText.Get("AssetPaneView.AssetStateHeaderText.Text");
-        EmptyStateHintText.Text = UiText.Get("AssetPaneView.EmptyStateHintText.Text");
+        AssetNameHeaderText.Text = UiText.Get(ResourceKeys.AssetPaneViewAssetNameHeaderText);
+        AssetTypeHeaderText.Text = UiText.Get(ResourceKeys.AssetPaneViewAssetTypeHeaderText);
+        AssetSizeHeaderText.Text = UiText.Get(ResourceKeys.AssetPaneViewAssetSizeHeaderText);
+        AssetStateHeaderText.Text = UiText.Get(ResourceKeys.AssetPaneViewAssetStateHeaderText);
+        EmptyStateHintText.Text = UiText.Get(ResourceKeys.AssetPaneViewEmptyStateHintText);
         UpdateSearchToggleToolTip();
     }
 

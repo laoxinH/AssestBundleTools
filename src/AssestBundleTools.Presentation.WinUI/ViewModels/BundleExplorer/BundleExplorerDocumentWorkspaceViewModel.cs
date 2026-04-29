@@ -13,11 +13,15 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
 /// 这个子 ViewModel 只负责文档宿主的集合、激活项和重排状态。
 /// 真正的资源加载、预览生成和替换流程仍由外层编排 ViewModel 统一协调。
 /// </remarks>
-public sealed class BundleExplorerDocumentWorkspaceViewModel : ObservableObject
+public sealed class BundleExplorerDocumentWorkspaceViewModel : ObservableObject, IBundleExplorerDocumentWorkspaceHost
 {
     private readonly ObservableCollection<AssetDocumentTabViewModel> _emptyAssetTabs = [];
     private BundleDocumentTabViewModel? _activeBundleTab;
     private int _assetDocumentHostSynchronizationDepth;
+
+    public event EventHandler? AssetDocumentHostStateChanged;
+
+    internal event EventHandler<BundleExplorerPageStateChangedEventArgs<BundleExplorerDocumentWorkspacePageStateChange>>? PageStateChanged;
 
     public ObservableCollection<BundleDocumentTabViewModel> BundleTabs { get; } = new();
 
@@ -48,6 +52,7 @@ public sealed class BundleExplorerDocumentWorkspaceViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(HasOpenTabs));
                 NotifyAssetDocumentHostStateChanged();
+                NotifyPageStateChanged(BundleExplorerDocumentWorkspacePageStateChange.ActiveBundleContext);
             }
         }
     }
@@ -119,6 +124,7 @@ public sealed class BundleExplorerDocumentWorkspaceViewModel : ObservableObject
     {
         _assetDocumentHostSynchronizationDepth++;
         OnPropertyChanged(nameof(IsSynchronizingAssetDocumentHostSelection));
+        NotifyPageStateChanged(BundleExplorerDocumentWorkspacePageStateChange.HostSynchronization);
     }
 
     public void EndAssetDocumentHostSynchronization()
@@ -127,11 +133,13 @@ public sealed class BundleExplorerDocumentWorkspaceViewModel : ObservableObject
         {
             _assetDocumentHostSynchronizationDepth = 0;
             OnPropertyChanged(nameof(IsSynchronizingAssetDocumentHostSelection));
+            NotifyPageStateChanged(BundleExplorerDocumentWorkspacePageStateChange.HostSynchronization);
             return;
         }
 
         _assetDocumentHostSynchronizationDepth--;
         OnPropertyChanged(nameof(IsSynchronizingAssetDocumentHostSelection));
+        NotifyPageStateChanged(BundleExplorerDocumentWorkspacePageStateChange.HostSynchronization);
     }
 
     public void Clear()
@@ -149,6 +157,8 @@ public sealed class BundleExplorerDocumentWorkspaceViewModel : ObservableObject
         OnPropertyChanged(nameof(ActiveAssetDocumentTab));
         OnPropertyChanged(nameof(HasAssetDocumentTabs));
         OnPropertyChanged(nameof(AssetDocumentTabStripVisibility));
+        AssetDocumentHostStateChanged?.Invoke(this, EventArgs.Empty);
+        NotifyPageStateChanged(BundleExplorerDocumentWorkspacePageStateChange.AssetDocumentHost);
     }
 
     private static BundleDocumentTabViewModel CreateBundleTab(BundleNodeViewModel bundleNode, bool isPreview) =>
@@ -157,4 +167,14 @@ public sealed class BundleExplorerDocumentWorkspaceViewModel : ObservableObject
             bundleNode.DisplayName,
             bundleNode.LogicalPath,
             isPreview);
+
+    private void NotifyPageStateChanged(BundleExplorerDocumentWorkspacePageStateChange changeFlags)
+    {
+        if (changeFlags == BundleExplorerDocumentWorkspacePageStateChange.None)
+        {
+            return;
+        }
+
+        PageStateChanged?.Invoke(this, new BundleExplorerPageStateChangedEventArgs<BundleExplorerDocumentWorkspacePageStateChange>(changeFlags));
+    }
 }

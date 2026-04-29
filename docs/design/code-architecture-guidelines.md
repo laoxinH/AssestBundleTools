@@ -233,45 +233,199 @@ UI 层特别注意：
 - 不直接操作保存流程
 - 只通过 `Application` 暴露的 Use Case 完成功能
 - `App` 或其他组合根负责组装 `Handler / Store / Service` 依赖
-- `WorkspaceBrowserService`、`WorkspaceCatalogService` 这类 Presentation 门面可以保留，但不应在内部继续 `new Handler`
+- 优先让页面或页面级协调器直接依赖 `Application` 的窄网关接口；若确实保留 Presentation 门面，它也只能作为语义适配层，不能在内部继续 `new Handler`
 
-## 5. 推荐的目录组织方式
+#### 4.4.1 组合根例外边界
 
-每层内部建议采用“按功能分目录”，而不是纯技术分堆。
+当前允许保留一个**受控例外**：
+
+- `src/AssestBundleTools.Presentation.WinUI/Composition/` 可以直接引用 `AssestBundleTools.Infrastructure`
+- 该目录只负责：
+  - 实例化具体 `Infrastructure` 实现
+  - 组装 `Application` Handler / Gateway
+  - 把基础设施细节适配回 `Presentation` 自己的窄抽象
+
+明确禁止：
+
+- `Composition/` 之外的 `Presentation` 文件直接 `using AssestBundleTools.Infrastructure.*`
+- `App.xaml.cs`、普通 `Service`、`View`、`ViewModel` 直接依赖 `Infrastructure` 具体类型
+- 为了图省事，把新的持久化、文件系统、Reader、Preview 具体实现继续散落到普通 UI 类中
+
+如果某个 Presentation 自有服务需要底层技术能力，但又不适合上升为 `Application` 端口，应：
+
+1. 先在 `Presentation` 内定义一个窄抽象  
+2. 再在 `Composition/` 中用基础设施具体实现做适配  
+3. 普通 UI 代码继续只依赖该窄抽象
+
+## 5. 推荐的目录组织方式与命名规则
+
+目录规范不仅约束 `BundleExplorer`，而且适用于整个解决方案。目录名和类型名应共同表达“这一组代码归谁拥有、承担什么职责”，避免目录语义和文件职责长期脱节。
+
+### 5.1 总体规则
+
+- 源码目录优先按“层 -> 功能 -> 角色”组织，而不是先按纯技术角色把全项目横向切碎。
+- 目录名统一使用 `PascalCase` 的稳定名词或名词短语，优先表达业务功能、外部集成边界或明确职责。
+- `bin/`、`obj/`、`.artifacts/`、`.build-check/` 都属于生成或检查产物目录，不计入项目逻辑结构。
+- 避免新建 `Helpers`、`Utils`、`Misc`、`Temp`、`Manager` 这类低语义目录；`Common` 只用于确实被多个功能共享、且暂时不适合归属到单一功能根的稳定内容。
+- 不要为了机械统一单复数而大规模重命名现有稳定目录；是否调整命名，应以语义清晰度、迁移成本和当前文档约束为准。
+
+### 5.2 解决方案顶层
+
+- `src/` 下每个项目目录对应一个稳定层或可独立构建的模块。
+- `tests/` 下测试项目按生产层所有权镜像命名，避免把所有测试揉进单一项目。
+- 新项目目录继续采用 `AssestBundleTools.<Layer>[.<Flavor>]` 这一命名模式。
+
+### 5.3 Application 层
+
+`Application` 内部继续采用“按功能分目录”的主结构。
+
+推荐形态：
+
+```text
+AssestBundleTools.Application/
+  Assets/
+    Commands/
+    Queries/
+    Dtos/
+  Bundles/
+    Commands/
+    Queries/
+    Dtos/
+    Services/
+  Extraction/
+    Commands/
+    Dtos/
+  Replacement/
+    Commands/
+    Queries/
+    Dtos/
+    Services/
+  Saving/
+    Commands/
+    Dtos/
+  Workspace/
+    Commands/
+    Queries/
+    Dtos/
+    Services/
+    Internal/
+  Common/
+```
+
+补充规则：
+
+- 顶层优先按功能根组织，如 `Assets`、`Bundles`、`Extraction`、`Replacement`、`Saving`、`Workspace`、`Common`。
+- 功能根下允许的常见子目录为 `Commands`、`Queries`、`Dtos`、`Services`、`Internal`。
+- 不要在 `Application` 根下再建横切型总目录，如全局 `Handlers/`、`Models/`、`Helpers/`。
+- `Common/` 仅放跨多个功能根复用、且不属于单一业务场景的应用层契约、结果模型或共享支持类型。
+
+### 5.4 Domain 层
+
+`Domain` 目录应按稳定业务概念组织，而不是先按纯技术角色总分堆。
+
+推荐形态：
+
+```text
+AssestBundleTools.Domain/
+  Assets/
+  Bundles/
+  Workspace/
+  Common/
+```
+
+补充规则：
+
+- `Domain` 顶层目录优先表达业务概念，如 `Assets`、`Bundles`、`Workspace`、`Common`。
+- 不要在整个 `Domain` 根下统一建 `Entities/`、`ValueObjects/`、`Enums/` 这类纯技术分类总目录；若单一功能根内部确有必要，可在该功能根内部局部细分。
+- `Common/` 只承载稳定的跨功能领域概念，不得混入基础设施、UI 或序列化实现暗示。
+
+### 5.5 Infrastructure 层
+
+`Infrastructure` 目录按外部集成边界和技术能力组织。
+
+推荐形态：
+
+```text
+AssestBundleTools.Infrastructure/
+  Bundles/
+    Decryption/
+    Previewing/
+    Reading/
+    Internal/
+  Settings/
+    Persistence/
+  Workspace/
+    Importing/
+    Persistence/
+    Runtime/
+```
+
+补充规则：
+
+- 顶层优先按功能或外部集成边界组织，如 `Bundles`、`Settings`、`Workspace`。
+- 第二层目录按能力或实现职责命名，如 `Reading`、`Previewing`、`Decryption`、`Importing`、`Persistence`、`Runtime`。
+- 适配器、持久化实现、Reader / Writer、缓存实现应放在其所属功能根下，不要集中堆到全局 `Adapters/`、`Repositories/`、`Utilities/`。
+- `Internal/` 只用于某个功能根内部不希望继续扩散的实现细节，不应用来收纳跨功能共享逻辑。
+
+### 5.6 Presentation.WinUI 层
+
+`Presentation.WinUI` 允许保留少量 WinUI 语义明确的顶层技术壳目录，但壳内仍要优先按功能组织。
+
+当前允许存在的顶层技术壳包括：
+
+- `Views`
+- `ViewModels`
+- `Services`
+- `Composition`
+- `Localization`
+- `Strings`
+- `Diagnostics`
+- `Assets`
+- `Properties`
+
+补充规则：
+
+- 这些顶层技术壳之下，优先按功能目录继续组织，如 `ViewModels/BundleExplorer`、`ViewModels/Home`、`ViewModels/Shell`。
+- `ViewModels/<Feature>/` 应理解为“该功能的 Presentation 代码包”，而不是“这里的每个文件都必须是 ViewModel”。
+- 只有直接参与绑定、通知或命令暴露的类型才应命名为 `*ViewModel`。
+- 不直接参与绑定的协作对象，应使用 `Coordinator`、`Presenter`、`Formatter`、`Resolver`、`Loader`、`ActionHandler`、`Contracts` 等更明确的职责命名；不要为了迎合目录名而伪装成 `ViewModel`。
+- 对于很小的功能范围，功能目录下可以临时并列放置少量协作对象；但当某个功能目录开始长期承载多类职责时，应继续在该功能目录内拆出明确子目录，如 `Bindings`、`Coordinators`、`Presenters`、`Formatting`、`Contracts`、`State`。
+- `Services/` 仅承载应用级或多功能共享的 Presentation 服务；功能局部工作流协作对象不应因为“也是服务”就提升到全局 `Services/`。
+- `Views/` 可以保留少量应用级页面文件；可复用控件放在 `Views/Controls/`，应用级共享视图表面放在 `Views/Shared/`，持续增长的功能视图族应优先落到 `Views/<Feature>/`。
+- 当前类似 `ViewModels/BundleExplorer/` 这样混合了 `ViewModel + Coordinator + Presenter + Formatter + Contract` 的目录，应视为可继续渐进收口的功能包过渡态；后续新增类型时，优先在该功能包内补齐明确子目录，而不是继续把不同角色平铺在同一层。
 
 示例：
 
 ```text
-AssestBundleTools.Application/
-  Workspace/
-    Commands/
-    Queries/
-    Dtos/
-  Bundles/
-    Queries/
-    Dtos/
-  Assets/
-    Commands/
-    Queries/
-    Dtos/
-  Replacement/
-    Commands/
-    Services/
-  Saving/
-    Commands/
-
-AssestBundleTools.Domain/
-  Workspace/
-  Bundles/
-  Assets/
-  Replacement/
-  Shared/
+AssestBundleTools.Presentation.WinUI/
+  ViewModels/
+    BundleExplorer/
+      Bindings/
+      Coordinators/
+      Presenters/
+      Formatting/
+      Contracts/
+    Home/
+  Views/
+    Controls/
+    Shared/
 ```
+
+### 5.7 Tests 层
+
+测试目录同样遵循“按生产所有权镜像，再按功能组织”的原则。
+
+推荐规则：
+
+- 测试项目名称继续镜像生产层，如 `AssestBundleTools.Application.Tests`、`AssestBundleTools.Presentation.Tests`。
+- 测试项目内部优先按生产功能根组织，如 `Assets`、`Workspace`、`Replacement`、`Saving`。
+- `Testing`、`TestDoubles`、`Architecture` 这类支持目录可以保留，但必须保持语义单一，不能逐渐演变成新的兜底堆放区。
 
 这样做的好处是：
 
 - 同一业务功能相关代码聚在一起
 - 后续新增资源类型或用例时不容易散乱
+- 目录语义、类型命名和架构边界可以相互印证
 - 拆分模块和编写测试更方便
 
 ## 6. 模块职责建议
@@ -374,6 +528,39 @@ WinUI 层建议统一采用 MVVM。
 - 在 code-behind 中写复杂逻辑
 - 在 ViewModel 中保留大量 UI 控件引用
 - 在 ViewModel 中直接做文件系统遍历
+
+### 8.1 ViewModel 之间的依赖边界
+
+`ViewModel` 不要求彼此完全隔离，但依赖关系必须单向、清晰、可维护。
+
+建议规则：
+
+- 允许页面根 `ViewModel` 组合多个子 `ViewModel`。
+- 允许子 `ViewModel` 依赖共享服务、共享状态对象或窄接口。
+- 子 `ViewModel` 不应反向依赖父 `ViewModel`。
+- 同级 `ViewModel` 默认不应直接依赖彼此的具体类型。
+- 若多个 `ViewModel` 需要协作，优先通过父级编排、共享状态对象、事件回调或窄接口完成，而不是直接互相调用大量方法。
+- `ViewModel` 依赖图必须保持无环，不允许双向依赖或循环依赖。
+
+可接受的结构：
+
+- 页面 `ViewModel` -> 子 `ViewModel`
+- 子 `ViewModel` -> `Service / Formatter / Coordinator / Host Interface`
+- 子 `ViewModel` -> 只读状态或明确归属的状态宿主
+
+应避免的结构：
+
+- A `ViewModel` <-> B `ViewModel`
+- 子 `ViewModel` -> 父 `ViewModel`
+- 同级 `ViewModel` 直接依赖多个 sibling `ViewModel` 的完整实现
+
+触发重构的信号：
+
+- 一个 `ViewModel` 需要频繁调用另一个 `ViewModel` 的很多公开方法
+- 一个 `ViewModel` 需要了解另一个 `ViewModel` 的大量内部状态细节
+- 为了协作而出现多个 `PropertyChanged` / 事件互相转发链
+
+这通常意味着职责边界尚未稳定，应进一步抽出共享状态模型、`Coordinator`、`Presenter` 或更窄的宿主接口。
 
 ## 9. 多语言与字符串规范
 
@@ -556,6 +743,118 @@ Presentation 根据资源键:
 - 一个文件尽量只放一个公开类型
 - 避免巨型 Service 或巨型 ViewModel
 
+### 10.4 单文件规模与拆分阈值
+
+为避免“单文件持续堆功能，最终退化为难以维护的巨型类”，本项目进一步约束手写业务代码文件的规模与拆分时机。
+
+建议阈值：
+
+- 常规手写业务类、Presenter、Coordinator、Handler、ViewModel 目标体量控制在 `200-500` 行。
+- 页面级 facade / orchestrator 型 `ViewModel` 允许略大，但软上限为 `600` 行。
+- 手写非生成代码文件达到 `800` 行时，视为必须拆分，不应继续直接堆加新功能。
+- 手写非生成代码文件超过 `1000` 行时，只能视为阶段性过渡状态，必须在架构文档或路线图中登记后续收口计划。
+
+除行数外，还应同时检查职责数量：
+
+- 一个类如果同时回答超过 `3` 个独立问题，应优先拆分，即使尚未超过行数阈值。
+- 一个类如果会因超过 `3` 类不同原因而频繁修改，也应拆分，即使当前实现仍可编译运行。
+- 构造函数注入依赖超过 `6` 个时，应触发职责审查，确认该类是否已经混入过多协作对象。
+
+对 `ViewModel` 的额外约束：
+
+- `ViewModel` 只保留可绑定状态、命令入口和少量页面级编排逻辑。
+- 只有直接参与 XAML 绑定、需要属性变更通知的对象才命名为 `ViewModel`。
+- 不直接参与绑定的逻辑，应优先拆为 `Coordinator`、`Presenter`、`Loader`、`ActionHandler`、`Formatter` 等更明确的协作对象，而不是继续堆进 `ViewModel`。
+
+推荐的拆分维度：
+
+- 列表/树/标签选择与状态同步
+- DTO 到检查器或卡片的展示投影
+- 预览查询、媒体对象构造与预览诊断
+- 提取、替换、保存、撤销等修改动作
+- 错误格式化、日志输出与通知反馈
+- 浏览状态持久化、恢复与节流保存
+
+超限后的处理原则：
+
+- 优先把“变化节奏不同”的逻辑拆开，而不是只按代码块长度机械切文件。
+- 优先抽离不需要直接属性通知的纯协作逻辑，避免生成更多“名为 ViewModel、实为工具箱”的类型。
+- 拆分后主类应退回为外观/协调器，而不是继续保留全部细节实现。
+- 若当前阶段因交付节奏暂时无法完全拆分，应在文档中明确登记为过渡状态，而不是默许其持续膨胀。
+
+### 10.5 通用逻辑抽取与 Helper 使用约束
+
+项目中的通用逻辑应主动收敛，避免“相似逻辑散落在多个页面/服务中各自演化”。
+
+建议规则：
+
+- 同一语义、同一变化原因的逻辑如果在两个及以上位置出现，应优先考虑抽取。
+- 抽取后的名称应体现业务职责，如 `Formatter`、`Mapper`、`Presenter`、`Coordinator`、`Resolver`，而不是笼统使用 `Helper`、`Utils`、`Common`。
+- 只有当逻辑确实是稳定、无状态、低语义负担的微型辅助时，才允许使用 `Helper` 命名。
+- 不应为了“看起来复用”而过早抽象明显仍在变化的流程；流程尚未稳定时，可先局部保留，但一旦出现第二处同构实现，应尽快收口。
+
+应避免：
+
+- 把无关逻辑持续堆进同一个 `Helper` / `Utils` 文件
+- 不同页面各自复制一份“几乎一样”的格式化、错误转换、状态判定或映射逻辑
+- 在多个 `ViewModel` 中各自手写同一套 `Result` 错误转日志 / 提示 / 本地化处理
+
+推荐做法：
+
+- 展示文本格式化统一抽到共享 `Formatter`
+- DTO 到展示模型的映射统一抽到 `Mapper / Presenter`
+- 多步骤页面流程统一抽到 `Coordinator / ActionHandler`
+- 错误到日志/通知的转换统一抽到共享反馈组件
+
+抽取原则：
+
+- 优先按“变化原因一致”抽取，而不是按“代码长得像”抽取
+- 优先抽离纯函数和无 UI 状态逻辑
+- 优先复用已有抽象，避免在不同目录再次定义相同职责的新类型
+
+### 10.6 UI 组件复用与定制边界
+
+UI 组件设计必须优先考虑项目级复用性，避免每个页面单独定义一套近似控件、样式或交互。
+
+建议规则：
+
+- 当一个 UI 元素具备相同语义、相同交互模式、相近视觉风格，并且预计会在两个及以上页面出现时，应优先抽为公共组件或公共样式。
+- 公共组件应通过参数、模板槽、样式资源或轻量状态配置支持变体，而不是复制一份新组件。
+- 只有在交互模型、信息密度、布局结构或视觉语义明显不同的情况下，才应单独定制新组件。
+
+项目级应优先统一的内容包括：
+
+- 标签按钮 / 标签组
+- 工具栏按钮与图标按钮
+- 空状态卡片
+- 信息卡片 / 信息行
+- 搜索框展开交互
+- 列表项选中态、悬停态、右键菜单基础结构
+
+应避免：
+
+- 每个页面单独写一套“看起来相似”的标签按钮 XAML
+- 同一类按钮在不同页面使用不同的圆角、间距、悬停态和激活态实现
+- 页面为了临时需求直接复制控件模板后局部修改，最终产生多个难以维护的变种
+
+推荐做法：
+
+- 先寻找现有公共样式、公共控件或共享资源字典
+- 若现有组件只差少量配置，应扩展参数，而不是新建一套
+- 页面级定制优先通过包装公共组件完成，而不是重新定义核心交互
+- 对需要长期复用的视觉模式，应沉淀为共享控件或共享样式资源
+
+判定是否应抽成公共组件的实用标准：
+
+- 已出现第 2 处复用需求
+- 后续路线图明确还会继续出现
+- 视觉和交互必须在多个页面保持一致
+- 修改一处后希望全局同步生效
+
+一句话原则：
+
+- 默认优先复用项目已有组件与样式；只有在明确需要独立语义或独立交互模型时，才允许重新定义。
+
 ## 11. 状态管理建议
 
 由于项目支持主窗口、多工作区和标签页浏览，必须尽早统一状态模型。
@@ -585,6 +884,8 @@ Presentation 根据资源键:
 
 ## 12. 测试建议
 
+测试本身也属于架构的一部分，不应以“只是测试”为理由绕过分层和依赖边界。
+
 至少保证以下测试边界：
 
 - `Domain` 层单元测试
@@ -593,10 +894,78 @@ Presentation 根据资源键:
 - 保存流程测试
 - 本地化资源完整性测试
 
+### 12.1 测试项目分层边界
+
+默认按测试项目承担如下职责：
+
+- `AssestBundleTools.Domain.Tests`
+  - 只覆盖领域规则、值对象、实体、领域服务和稳定领域错误/契约
+  - 不直接引用 WinUI、基础设施持久化实现或页面级协调逻辑
+- `AssestBundleTools.Application.Tests`
+  - 覆盖 Handler、Use Case、`Result` 语义、DTO 契约、工作流分支和应用层错误返回
+  - 通过 fake / stub / in-memory double 驱动应用层端口
+  - 不直接依赖 WinUI 页面对象，也不把基础设施实现细节写成应用层测试前提
+- `AssestBundleTools.Infrastructure.Tests`
+  - 覆盖序列化、持久化、目录布局、适配器行为和受控临时目录 IO
+  - 可以使用受控的临时文件系统，但不承担 WinUI 交互或页面状态语义验证
+- `AssestBundleTools.Localization.Tests`
+  - 覆盖资源键完整性、`ResourceKeys` 常量约束和仓库级架构 guardrail
+  - 适合承载“某些代码位置禁止出现某类字符串 / 命名空间引用”的静态检查
+- `AssestBundleTools.Presentation.Tests`
+  - 覆盖页面级协调器、ViewModel、窗口/导航/回滚语义，以及受控的展示层边界检查
+  - 不应在这里偷偷变成“真实 Reader + 真实缓存 + 真实页面”的大杂烩联动测试，除非该集成范围被明确声明
+
+总原则：
+
+- 测试不应成为穿透架构边界的后门
+- 低层测试不得向上攀附 WinUI
+- 展示层测试也不应无约束地把业务、基础设施、外部工具一次性全拉进来
+
+### 12.2 测试编写时机与契约冻结边界
+
+测试编写时机需要与实现成熟度一致：
+
+- 已稳定、已文档化的行为契约，以及高风险回归修复，应在同一变更中补齐或更新自动化测试。
+- 仍处于骨架、占位或过渡态的流程，只测试“当前已经实现且文档已承认”的行为，不要在测试里提前冻结未来写链路、冲突处理、取消态或更细粒度失败语义。
+- 当前替换与保存链路仍有一部分属于过渡实现，因此现阶段的最小要求是覆盖候选解析、兼容性、摘要、保存前预览、资源包聚合、执行骨架结果以及已定义失败；真实写包、最终持久化失败分类、取消/回滚等更深测试，应在对应实现和契约真正落地时随同补齐。
+
+### 12.3 测试依赖与副作用限制
+
+默认自动化测试应满足以下约束：
+
+- 不依赖网络访问
+- 不依赖机器上是否额外安装某个外部工具、命令行程序或 SDK 才能通过
+- 不读写真实用户目录、真实工作区目录或其他机器全局状态
+- 不依赖脆弱的 `Thread.Sleep(...)`、不可控时钟漂移或竞态时序
+- 若必须访问文件系统，应使用受控临时目录，并在测试内自行创建和清理
+
+如果未来确实需要“真实外部工具 / 真实跨进程 / 真实集成环境”级别的验证，应把它明确标成更高层级的集成测试，而不是默认塞进日常最小回归集合。
+
+### 12.4 断言风格限制
+
+测试应优先断言稳定契约和可观察结果，而不是偶发实现细节。
+
+建议优先断言：
+
+- `Result` 成败、错误码、消息键、结构化参数
+- DTO 字段、聚合摘要、状态变化、缓存是否命中/失效
+- 已文档化的页面级回滚、恢复、导航和 guardrail 行为
+
+建议避免：
+
+- 私有字段或临时内部结构
+- 纯属实现细节的调用顺序和调用次数
+- 尚未文档化的日志句子
+- 完整本地化整句文本，除非“这句文本本身”就是稳定契约
+
+### 12.5 本地化与架构 Guardrail 测试
+
 本地化资源完整性测试建议校验：
 
 - 关键资源键是否缺失
 - `zh-CN` 和 `en-US` 键集合是否一致
+- `Presentation` 是否绕过 `ResourceKeys` 直接写资源键字面量
+- `Presentation -> Infrastructure` 受控例外边界是否被新代码破坏
 
 ## 13. 实现前建议的落地顺序
 
@@ -622,17 +991,23 @@ Presentation 根据资源键:
 
 ## 15. 当前实现偏差待收口
 
+更细的偏差登记、受影响文件与建议收口方向，统一记录于
+[`implementation-deviation-register.md`](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/implementation-deviation-register.md)。
+本节继续只保留与当前架构规范直接相关的高优先级摘要。
+
 以下问题当前先记录为架构代办，不阻塞正在推进的 M9 功能链路：
 
-1. `Presentation` 层的 `WorkspaceContextService` 当前仍直接调用 `IWorkspaceCatalogStore / IWorkspaceMetadataStoreFactory` 读写目录摘要与浏览状态，后续应把这部分持久化收敛为明确的 Application Use Case。
-2. `Presentation` 层的 `WorkspaceBrowserService / WorkspaceCatalogService` 当前仍直接持有具体 Handler 类型，后续可继续评估是否收口为更稳定的应用层网关接口，减少 UI 对用例实现细节的耦合。
-3. 当前工作区进程占用是在工作区加载成功后才完成注册；若后续需要进一步消除极端并发启动下的重复打开竞态，可将其前移到加载前预占用，并补失败回滚。
+1. `WorkspaceContextService` 的目录快照、工作区元数据与浏览状态持久化已完成第一轮收口；其最近目录恢复、可用性映射、“上次活动工作区”恢复请求推导与激活元数据补齐也已在第三轮继续下沉到 `Application.Workspace.Services.IWorkspaceContextCatalogService`。当前重点已转为维持 `WorkspaceContextService` 的窄协调定位，防止目录编排语义重新回灌到 Presentation。
+2. 工作区浏览能力注入面已完成第三轮收口：原先的 `WorkspaceBrowserService / WorkspaceCatalogService` 薄门面已从主注入链退场，`App.xaml.cs` 当前直接暴露 `IWorkspaceExplorerGateway / IWorkspaceAssetInspectionGateway / IWorkspaceAssetOperationGateway / IWorkspaceBatchOperationsGateway / IWorkspaceCatalogGateway`，页面根对象与协调器按需依赖对应窄接口；后续重点转为防止新的聚合总入口重新长回 Presentation。
+3. 工作区窗口模型已完成 D-08 第二轮收口：当前采用“formal 正式注册 + pending 预登记 + 成功晋升 + 失败回滚”的进程占用语义；工作区加载前会先建立目标工作区的 pending 占用，加载成功后晋升为正式注册，加载失败时则优先恢复此前已稳定存在的工作区上下文。对应的 pending 占用与页面级恢复主路径，当前也已补上 `Presentation.Tests` 回归保护。
 4. 当前默认不走“窗口级 `WorkspaceContextService` 重构”路线；若未来要支持“一进程多工作区并行”，应单独重构窗口作用域上下文，而不是继续扩散当前全局工作区模型。
-5. 用户文本资源化当前已完成检查器 / 预览主链路、工作区导入探测、Reader 直检、预览诊断 detail 以及解密器设置页保存/删除失败提示的三轮收口；当前剩余热点已进一步缩小到“外部工具原始执行输出”和“少量启动 / 壳层异常文案”，代表性文件包括 `VgmstreamCliAudioPayloadTranscoder`、`ExternalProcessAssetBundleDecryptor`、`MainWindow` 与少量 WinUI 服务异常抛出点，后续应继续改为资源键、原因码或结构化消息参数。
-6. `Infrastructure` 层的预览构建组件、音频转码主链路以及 Reader / Preview 失败原因当前都已优先返回结构化字段、原因码和参数；剩余待收口点主要是外部工具 stderr / stdout、个别启动期异常明文展示与少量壳层异常文案，不应继续扩散为直接面向用户的句子拼装。
-7. `tests/` 目录目前仍只有占位说明，尚未落地 `Domain / Application / Infrastructure` 测试项目，也未建立本地化资源完整性校验；这一点当前不满足本文档的测试建议。
-8. `Presentation.WinUI` 项目当前仍直接引用 `Infrastructure`，并在组合根之外保留少量对具体持久化类型的直接依赖；若后续继续保留“组合根例外”，应在架构文档中显式声明边界，否则需要继续收口为抽象依赖。
-9. `Presentation` 层的 `BundleExplorerViewModel` 已完成第一轮拆分：左侧资源包窗格状态与资源包/资产标签工作区状态已分别下沉到 `BundleExplorerBundlePaneViewModel`、`BundleExplorerDocumentWorkspaceViewModel`；但资源详情装载、预览/替换编排与工作区恢复流程仍偏重，后续应继续把它收缩为页面级外观/协调器，而不是继续堆积为巨型 ViewModel。
+5. 用户文本资源化当前已完成第二轮宿主侧收口：检查器 / 预览主链路、工作区导入探测、Reader 直检、预览诊断 detail、解密器设置页失败提示、启动兜底页以及页面代码中残留的资源键字面量都已统一收口；当前有意保留的例外只剩外部工具原始执行输出或结果文件 `message` 作为诊断回退文本。
+6. `Infrastructure` 层的预览构建组件、音频转码主链路以及 Reader / Preview 失败原因当前都已优先返回结构化字段、原因码和参数；外部工具 `stderr / stdout` 当前只允许通过 `LocalizedMessageDto.FallbackText` 停留在诊断附属信息位置，不应再扩散为宿主程序直接面向用户的句子拼装。
+7. 测试体系已完成第三轮最小骨架：`Domain / Application / Infrastructure / Localization / Presentation` 五层当前都已有可执行回归入口，并已补上 `Presentation -> Infrastructure` 边界、`ResourceKeys` 集中管理、工作区窗口回滚主路径、预览缓存的音频摘要升级重建 / 脏 descriptor 容错回归、替换链路中的候选解析 / 来源路径校验 / 缺失资源失败 / 类型不匹配 / 单资源替换 / 撤销替换 / 批量替换摘要回归，以及保存链路中的保存前预览空态 / 资源包分组聚合 / 保存执行骨架主路径回归；当前剩余重点转为真实写包前置校验、跨进程激活与更细粒度结构化错误覆盖，而不再是“测试体系为空骨架”。
+8. `Presentation.WinUI` 项目当前仍直接引用 `Infrastructure`，但该例外现已显式收束到 `src/AssestBundleTools.Presentation.WinUI/Composition/` 目录：`App.xaml.cs` 与普通 `Service` 已不再直接依赖 `Infrastructure` 具体类型，并已有仓库级检查防止新的越界引用；后续应继续保持这一边界稳定，而不是重新扩散。
+9. `Presentation` 层的 `BundleExplorerViewModel` 已在子 ViewModel 拆分基础上继续完成多轮页面级收口：工作区壳层、左侧资源包窗格、资源包/资产标签宿主、资产窗格与检查器工作流已分别下沉到 `BundleExplorerWorkspaceShellViewModel`、`BundleExplorerBundlePaneViewModel`、`BundleExplorerDocumentWorkspaceViewModel`、`BundleExplorerAssetWorkflowViewModel`，工作区浏览状态恢复/持久化节流与页面级结果反馈已下沉到 `BundleExplorerBrowserStateCoordinator`、`BundleExplorerOperationFeedbackBridge`，工作区加载/重绑定与首屏恢复编排继续下沉到 `BundleExplorerWorkspaceBindingCoordinator`，资源包标签打开/激活/关闭/重排编排也已收口到 `BundleExplorerBundleTabCoordinator`；在此基础上，`BundleExplorerPage` 已直接绑定 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 子状态宿主，旧页面兼容透传属性面与 `BundleExplorerPageStateBridge` 已移除，当前主类已进一步退回为页面级外观、导入入口与少量浏览动作转发层。
+10. 按本文档新增的“单文件规模与拆分阈值”约束，超过 `800` 行的手写 `ViewModel` 应视为必须继续拆分的过渡状态。当前 `BundleExplorerAssetWorkflowViewModel` 已完成 D-04 第六轮体量收缩：`Preview` 加载/缓存呈现逻辑已下沉到 `BundleExplorerAssetPreviewCoordinator`，提取/替换/撤销等修改动作已下沉到 `BundleExplorerAssetModificationActionHandler`，检查器投影、替换状态格式化与依赖展示映射已下沉到 `BundleExplorerAssetInspectorPresenter`，资产文档标签同步、激活与活动资源装载编排已下沉到 `BundleExplorerAssetDocumentTabCoordinator`，资产文档宿主的构造、空态检查器初始化与宿主清理已下沉到 `BundleExplorerAssetDocumentHostCoordinator`，主资产窗格的加载/筛选刷新/空态回退编排已下沉到 `BundleExplorerAssetPaneCoordinator`，资产级命令入口与页面动作编排也已下沉到 `BundleExplorerAssetCommandCoordinator`，共享结果失败反馈统一复用 `BundleExplorerOperationFeedbackBridge`；当前主类体量约 `273` 行。`BundleExplorerViewModel` 也已继续由 `1258` 行降到约 `426` 行，并把浏览状态持久化、结果反馈、工作区绑定/恢复编排、资源包标签导航以及旧页面兼容面压缩职责下沉/收缩到专用协作对象或子状态宿主；两个核心 `ViewModel` 当前都已重新回到常规手写业务类 `200-500` 行目标内，后续重点转为防止职责重新回灌或兼容面回弹。
+11. `BundleExplorerAssetWorkflowViewModel` 当前已完成第三轮 sibling / 页面状态边界收口：除改依赖 `IBundleExplorerWorkspaceShellHost / IBundleExplorerBundlePaneHost / IBundleExplorerDocumentWorkspaceHost` 等窄接口宿主之外，`BundleExplorerPage.xaml / BundleExplorerPage.xaml.cs` 也已直接绑定或订阅 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 的语义化状态宿主；`BundleExplorerPageStateBridge` 已移除，不再保留页面兼容属性外观层；当前剩余重点已转为持续防止新流程回灌回父级主类，或重新长出新的页面兼容透传层。
 
 后续处理原则：
 
@@ -640,9 +1015,9 @@ Presentation 根据资源键:
 - 架构收口尽量与后续功能开发同向进行，避免为单次“纯重构”打断主链路
 - 收口过程中应同步清理默认单例回退和已失效的临时兼容代码
 
-## 16. 当前符合度审查结论（2026-04-27）
+## 16. 当前符合度审查结论（2026-04-28）
 
-基于 2026-04-27 的代码抽查，当前项目**已经建立了正确的大方向分层骨架，但尚未完全满足本规范的全部约束**。
+基于 2026-04-28 的代码抽查，当前项目**已经建立了正确的大方向分层骨架，但尚未完全满足本规范的全部约束**。
 
 当前已经基本满足的部分：
 
@@ -651,11 +1026,13 @@ Presentation 根据资源键:
 - WinUI 侧大部分页面行为已经通过 ViewModel、应用层 Handler 和展示服务进行组织，没有明显退回到“单文件堆叠式 UI 业务代码”。
 - 工作区、多标签页、导入、缓存、预览等核心链路已经开始围绕统一状态模型和用例编排收敛。
 
-当前仍未完全满足规范的高优先级问题：
+当前仍需持续守住的高优先级边界：
 
-- 用户可见文本资源化主链路已基本收口；当前主要剩余的是少量内部哨兵值、资源键集中管理细节，以及调试日志格式的一致性优化，而不再是工作区导入、预览、启动兜底或 WinUI 壳层对用户可见文本的直接硬编码。
-- `Presentation` 层仍有部分持久化与具体 Handler 耦合，尚未完全退回到更稳定的应用层网关或 Use Case 边界。
-- 测试体系尚未建立，尤其缺少 `Domain / Application` 单元测试与资源完整性校验。
+- 用户可见文本资源化主链路与 `ResourceKeys` 集中管理已完成第二轮收口；当前主要剩余的是少量内部哨兵值、外部工具诊断回退以及调试日志格式的一致性优化，而不再是工作区导入、预览、启动兜底或 WinUI 壳层对用户可见文本的直接硬编码。
+- `WorkspaceContextService` 已完成第三轮收口，主类本身已进一步收窄；最近目录恢复、可用性语义与“上次活动工作区”恢复请求推导当前已进入 `Application.Workspace.Services.IWorkspaceContextCatalogService`，当前重点转为防止新的目录编排语义重新回流到 Presentation，以及防止工作区浏览聚合宽接口重新长回 WinUI。
+- `Presentation -> Infrastructure` 的组合根例外边界已完成第一轮显式化：当前仅 `src/AssestBundleTools.Presentation.WinUI/Composition/` 允许直接装配基础设施实现，`App.xaml.cs` 与普通壳层服务已改回依赖组合结果或窄抽象；后续重点转为防止新的越界引用回流到常规 UI 代码。
+- `BundleExplorer` 相关子 `ViewModel` 之间已完成第三轮窄接口 / 页面状态收口；`BundleExplorerPage` 已直接绑定 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 子状态宿主，旧的 `BundleExplorerPageStateBridge` 与大部分父级兼容透传属性已移除；当前主要剩余的是保持页面级视图同步逻辑与浏览状态持久化入口继续停留在明确宿主边界内，避免重新把兼容面堆回父级主类。
+- 测试体系已完成第三轮最小骨架：`Domain` 的 `AppError`、`Application` 目录 Handler / `Result`、`Infrastructure` 的工作区目录与预览缓存持久化回归、`Localization` 中的资源完整性与 Presentation 架构边界检查，以及 `Presentation` 中的工作区窗口回滚主路径当前均已落地；其中预览链路已补上音频摘要在新转码器可用时的升级重建，以及缺失 payload / 非法 payload path 下的缓存容错回归；替换链路已补上文件候选类型解析、来源路径校验、缺失资源失败、类型不匹配、工作区候选空集失败、单资源替换、撤销替换与批量替换摘要回归；保存链路也已补上保存前预览空态 / 资源包分组聚合与保存执行骨架主路径回归；当前剩余重点转为扩展更完整的 `Application / Infrastructure / Presentation` 关键路径回归，而不再是完全空白状态。
 
 本日已完成的高优先级收口：
 
@@ -669,13 +1046,20 @@ Presentation 根据资源键:
 - 音频转码器与内置直通解密器已去除直接面向用户的内建说明文本，内置解密器显示语义统一回到稳定标识并由展示层本地化。
 - 外部音频转码与外部解密进程当前已进一步区分“外部工具原始输出”和“宿主程序自身失败原因”：前者只作为回退文本保留，后者统一收敛为稳定消息令牌或标准错误令牌。
 - WinUI 壳层中的文件选择器、跨进程启动协议、工作区新进程启动失败与“缺少回退解密器”等异常当前已统一资源化；启动兜底页也不再直接显示 `exception.Message` 原文。
-- `BundleExplorerViewModel` 已完成第一轮结构收缩：资源包浏览左栏与标签工作区状态已拆入独立子 ViewModel，并由主 ViewModel 退回为兼容旧绑定入口的外观/编排层。
+- `Presentation` 中残留的 `UiText.Get("...")` 资源键字面量当前已统一回收到 `ResourceKeys`，并新增仓库级测试阻止新的界面代码绕过资源键常量。
+- `WorkspaceContextService` 已完成 D-01 第三轮收口：最近目录恢复、可用性映射、“上次活动工作区”恢复请求推导、激活元数据补齐与浏览状态回写编排已下沉到 `Application.Workspace.Services.WorkspaceContextCatalogService`，主类体量已由约 `545` 行降至约 `261` 行。
+- 已完成 D-02 第三轮收口：`WorkspaceBrowserService / WorkspaceCatalogService` 已从主注入链移除，`BundleExplorerPage`、`BatchTasksPage`、`HomePage` 与对应根级对象当前直接消费 `WorkspaceExplorer / AssetInspection / AssetOperation / BatchOperations / Catalog` 五组窄网关；组合根不再额外制造一层空转发门面。
+- `BundleExplorerViewModel` 已继续完成一轮页面级收口：资源包浏览左栏、标签工作区状态、资产工作流、浏览状态协调、结果反馈桥接、工作区绑定编排以及资源包标签导航/关闭/激活已分别拆入独立子 ViewModel / 协作对象，`BundleExplorerPage` 也已直接迁回子状态宿主绑定，主类进一步退回为页面级外观与少量浏览动作转发层，当前约 `426` 行。
+- `BundleExplorer` 页面级共享状态已完成 D-03 第三轮收口：`BundleExplorerPage.xaml / BundleExplorerPage.xaml.cs` 已直接绑定或订阅 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 的语义化状态宿主，`BundleExplorerPageStateBridge` 已移除；浏览状态持久化仍通过窄事件入口汇总，后续应继续防止新的页面兼容透传属性回灌。
+- `BundleExplorerAssetWorkflowViewModel` 已完成 D-04 第六轮体量收缩：在 `Preview`、`Modification Action`、`Inspector Projection`、`Asset Document Coordination` 与 `Asset Pane Coordination` 之外，资产级命令入口与页面动作编排也已下沉到 `BundleExplorerAssetCommandCoordinator`，共享结果失败反馈统一复用 `BundleExplorerOperationFeedbackBridge`；主类当前约 `273` 行，`BundleExplorerViewModel` 当前约 `426` 行，二者都已重新回到常规手写业务类目标区间。当前若继续收口，重点应转向防止职责回灌和稳定页面内共享状态，而不是继续把页面命令入口碎片化。
+- 已完成 D-06 第三轮最小测试骨架：在 `Domain / Application / Infrastructure / Localization` 四层最小骨架之外，`tests/AssestBundleTools.Presentation.Tests` 也已补上 `WorkspaceProcessCoordinatorService` 与 `BundleExplorerWorkspaceBindingCoordinator` 的回归覆盖；同时 `Application.Tests / Infrastructure.Tests` 也已继续扩展到 `RegisterWorkspaceImportHandler` 的导入登记链路、`ProcessWorkspaceImportsHandler` 的缓存复用命中 / 解密失败 / Reader 拒绝 / 读取失败 / 陈旧缓存清理链路、`GetAssetPreviewHandler` 的预览缓存命中 / `SourceFingerprint / Identity / GeneratorVersion / AudioTranscoder` 失效重建 / 音频摘要升级重建 / 预览解密失败 / 生成失败摘要回退链路、`GetFileReplacementCandidateHandler / GetWorkspaceReplacementCandidatesHandler / ReplaceAssetFromFileHandler / ReplaceAssetFromWorkspaceHandler / UndoAssetReplacementHandler / GetWorkspaceBatchReplacementPreviewHandler / ExecuteWorkspaceBatchReplacementHandler` 的替换主链路回归、`RemoveWorkspaceBundleHandler` 的缓存失效链路，以及 `JsonPreviewCacheStore` 在缺失 payload / 非法 payload path 下的预览缓存持久化容错回归；当前测试收口重点已转向扩展保存链路、跨进程激活关键路径与更细粒度结构化错误校验，而不是继续维持空白。
 
 因此，当前阶段更准确的判断应为：
 
 - **架构方向正确，主体分层基本成立。**
-- **但距离“完全符合 code-architecture-guidelines”仍有明确收口工作。**
-- 后续架构收口优先级建议保持为：
-  1. `Presentation` 资源键集中管理与少量内部哨兵值的进一步清理
-  2. `Presentation` 持久化与具体 Handler 耦合收口
-  3. 建立最小可运行测试骨架
+- **截至 2026-04-29，D-01 ~ D-08 中除 D-06 的后续深层测试补齐外，其余非测试主体偏差已基本收口。**
+- **后续重点已转为守边界、防回弹，以及在功能扩展时继续沿现有协作对象演进。**
+- 后续演进优先级建议保持为：
+  1. 外部工具诊断回退与少量内部哨兵值的进一步清理
+  2. `BundleExplorer` 页面级共享状态宿主与页面命令协作对象继续防回灌，避免旧兼容透传层或大而全命令入口重新长回父级主类
+  3. 在现有最小测试骨架上继续扩展 `Application / Infrastructure` 回归

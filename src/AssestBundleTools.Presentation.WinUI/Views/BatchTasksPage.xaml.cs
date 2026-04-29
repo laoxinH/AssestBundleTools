@@ -13,7 +13,7 @@ public sealed partial class BatchTasksPage : Page
     public BatchTasksPage()
     {
         ViewModel = new BatchTasksViewModel(
-            App.CurrentApp.WorkspaceBrowserService,
+            App.CurrentApp.WorkspaceBatchOperationsGateway,
             App.CurrentApp.WorkspaceContextService,
             App.CurrentApp.LocalizationService,
             App.CurrentApp.AppLogService,

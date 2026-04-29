@@ -1,5 +1,3 @@
-using AssestBundleTools.Infrastructure.Settings.Persistence;
-
 namespace AssestBundleTools.Presentation.WinUI.Services;
 
 /// <summary>
@@ -10,10 +8,10 @@ public sealed class AppPreferencesService : IAppPreferencesService
     private const string CurrentWindowBehaviorKey = "currentWindow";
     private const string NewWindowBehaviorKey = "newWindow";
     private const string AskEveryTimeBehaviorKey = "askEveryTime";
-    private readonly JsonAppPreferencesStore _preferencesStore;
-    private AppPreferencesSnapshot _currentSnapshot;
+    private readonly IAppPreferencesPersistenceStore _preferencesStore;
+    private AppPreferencesPersistenceSnapshot _currentSnapshot;
 
-    public AppPreferencesService(JsonAppPreferencesStore preferencesStore)
+    internal AppPreferencesService(IAppPreferencesPersistenceStore preferencesStore)
     {
         _preferencesStore = preferencesStore ?? throw new ArgumentNullException(nameof(preferencesStore));
         _currentSnapshot = _preferencesStore.Load();

@@ -1,0 +1,283 @@
+using System.Diagnostics.CodeAnalysis;
+using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Presentation.WinUI.Localization;
+using AssestBundleTools.Presentation.WinUI.Services;
+
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+
+/// <summary>
+/// 聚合资产级命令的前置条件判定与页面动作编排，避免工作流主类继续堆积命令入口细节。
+/// </summary>
+internal sealed class BundleExplorerAssetCommandCoordinator
+{
+    private readonly IAppLogService _appLogService;
+    private readonly ILocalizationService _localizationService;
+    private readonly IPathNavigationService _pathNavigationService;
+    private readonly IBundleExplorerWorkspaceShellHost _workspaceShell;
+    private readonly AssetPaneViewModel _primaryPane;
+    private readonly BundleExplorerAssetModificationActionHandler _modificationActionHandler;
+    private readonly BundleExplorerOperationFeedbackBridge _operationFeedbackBridge;
+    private readonly Func<bool> _isBusyProvider;
+    private readonly Action<bool> _setBusyState;
+    private readonly Func<InspectorPanelViewModel> _getInspector;
+    private readonly Func<AssetDocumentTabViewModel?> _getActiveAssetDocumentTab;
+    private readonly Func<Task> _refreshPrimaryPaneAsync;
+    private readonly Action<AssetDocumentTabViewModel, AssetDetailsDto> _reapplyAssetDocumentState;
+
+    public BundleExplorerAssetCommandCoordinator(
+        IAppLogService appLogService,
+        ILocalizationService localizationService,
+        IPathNavigationService pathNavigationService,
+        IBundleExplorerWorkspaceShellHost workspaceShell,
+        AssetPaneViewModel primaryPane,
+        BundleExplorerAssetModificationActionHandler modificationActionHandler,
+        BundleExplorerOperationFeedbackBridge operationFeedbackBridge,
+        Func<bool> isBusyProvider,
+        Action<bool> setBusyState,
+        Func<InspectorPanelViewModel> getInspector,
+        Func<AssetDocumentTabViewModel?> getActiveAssetDocumentTab,
+        Func<Task> refreshPrimaryPaneAsync,
+        Action<AssetDocumentTabViewModel, AssetDetailsDto> reapplyAssetDocumentState)
+    {
+        _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
+        _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+        _pathNavigationService = pathNavigationService ?? throw new ArgumentNullException(nameof(pathNavigationService));
+        _workspaceShell = workspaceShell ?? throw new ArgumentNullException(nameof(workspaceShell));
+        _primaryPane = primaryPane ?? throw new ArgumentNullException(nameof(primaryPane));
+        _modificationActionHandler = modificationActionHandler ?? throw new ArgumentNullException(nameof(modificationActionHandler));
+        _operationFeedbackBridge = operationFeedbackBridge ?? throw new ArgumentNullException(nameof(operationFeedbackBridge));
+        _isBusyProvider = isBusyProvider ?? throw new ArgumentNullException(nameof(isBusyProvider));
+        _setBusyState = setBusyState ?? throw new ArgumentNullException(nameof(setBusyState));
+        _getInspector = getInspector ?? throw new ArgumentNullException(nameof(getInspector));
+        _getActiveAssetDocumentTab = getActiveAssetDocumentTab ?? throw new ArgumentNullException(nameof(getActiveAssetDocumentTab));
+        _refreshPrimaryPaneAsync = refreshPrimaryPaneAsync ?? throw new ArgumentNullException(nameof(refreshPrimaryPaneAsync));
+        _reapplyAssetDocumentState = reapplyAssetDocumentState ?? throw new ArgumentNullException(nameof(reapplyAssetDocumentState));
+    }
+
+    public bool HasSelectedAsset => TryGetActiveAssetDocumentState(out _, out _);
+
+    public bool CanExtractSelectedAsset => CanExecuteActiveAssetCommand(static (_, details) => details.CanExtract);
+
+    public bool CanSelectFileReplacementSource => CanExecuteActiveAssetCommand(static (_, details) => details.CanReplaceFromFile);
+
+    public bool CanSelectWorkspaceReplacementSource => CanExecuteActiveAssetCommand(static (_, details) => details.CanReplaceFromWorkspace);
+
+    public bool TryGetActiveAssetDocumentState(
+        [NotNullWhen(true)] out AssetDocumentTabViewModel? assetTab,
+        [NotNullWhen(true)] out AssetDetailsDto? details)
+    {
+        assetTab = _getActiveAssetDocumentTab();
+        if (assetTab?.Details is null)
+        {
+            details = null;
+            return false;
+        }
+
+        details = assetTab.Details;
+        return true;
+    }
+
+    public void OpenCurrentPreviewLocation()
+    {
+        if (!TryGetActiveAssetDocumentState(out _, out var details))
+        {
+            return;
+        }
+
+        var previewPayloadFilePath = _getInspector().PreviewPayloadFilePath;
+        if (string.IsNullOrWhiteSpace(previewPayloadFilePath))
+        {
+            return;
+        }
+
+        if (!_pathNavigationService.TryOpenContainingFolder(previewPayloadFilePath))
+        {
+            var message = _localizationService.GetFormattedString(
+                ResourceKeys.BundleExplorerNotificationPreviewOpenLocationFailed,
+                details.Name);
+            _appLogService.AppendWarning(message);
+            _operationFeedbackBridge.ShowOperationNotification(
+                GetString(ResourceKeys.AppNotificationWarningTitle),
+                message,
+                AppNotificationSeverity.Warning);
+        }
+    }
+
+    public async Task ExtractSelectedAssetAsync()
+    {
+        if (!TryGetActiveAssetCommandContext(
+                static (_, details) => details.CanExtract,
+                out var workspaceSummary,
+                out _,
+                out var details))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.ExtractSelectedAssetAsync(
+            workspaceSummary,
+            details,
+            _setBusyState,
+            _refreshPrimaryPaneAsync,
+            _operationFeedbackBridge.AppendResultFailure);
+    }
+
+    /// <summary>
+    /// 当前先按页面多选结果逐项复用单资源提取链路，后续若批量提取演进为独立用例，再继续下沉。
+    /// </summary>
+    public async Task ExtractSelectedAssetsAsync()
+    {
+        if (_isBusyProvider() || _workspaceShell.WorkspaceSummary is not { } workspaceSummary)
+        {
+            return;
+        }
+
+        var selectedEntries = _primaryPane.SelectedAssets
+            .GroupBy(static entry => entry.Item.AssetId.Value, StringComparer.Ordinal)
+            .Select(static group => group.First())
+            .ToArray();
+
+        if (selectedEntries.Length <= 1)
+        {
+            await ExtractSelectedAssetAsync();
+            return;
+        }
+
+        await _modificationActionHandler.ExtractSelectedAssetsAsync(
+            workspaceSummary,
+            selectedEntries,
+            _setBusyState,
+            _refreshPrimaryPaneAsync,
+            _operationFeedbackBridge.AppendResultFailure);
+    }
+
+    public async Task SelectWorkspaceReplacementSourceAsync()
+    {
+        if (!TryGetActiveAssetCommandContext(
+                static (_, details) => details.CanReplaceFromWorkspace,
+                out var workspaceSummary,
+                out var assetTab,
+                out var details))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.SelectWorkspaceReplacementSourceAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            _reapplyAssetDocumentState,
+            _setBusyState,
+            _operationFeedbackBridge.AppendResultFailure);
+    }
+
+    public async Task SelectFileReplacementSourceAsync()
+    {
+        if (!TryGetActiveAssetCommandContext(
+                static (_, details) => details.CanReplaceFromFile,
+                out var workspaceSummary,
+                out var assetTab,
+                out var details))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.SelectFileReplacementSourceAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            _reapplyAssetDocumentState,
+            _setBusyState,
+            _operationFeedbackBridge.AppendResultFailure);
+    }
+
+    public async Task ApplyPendingReplacementAsync()
+    {
+        if (!TryGetActiveAssetCommandContext(
+                static (assetTab, _) => assetTab.PendingWorkspaceReplacementCandidate is not null ||
+                                         assetTab.PendingFileReplacementCandidate is not null,
+                out var workspaceSummary,
+                out var assetTab,
+                out var details))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.ApplyPendingReplacementAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            _setBusyState,
+            _refreshPrimaryPaneAsync,
+            _operationFeedbackBridge.AppendResultFailure);
+    }
+
+    public async Task UndoAppliedReplacementAsync()
+    {
+        if (!TryGetActiveAssetCommandContext(
+                static (_, details) => HasAppliedReplacement(details),
+                out var workspaceSummary,
+                out var assetTab,
+                out var details))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.UndoAppliedReplacementAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            _setBusyState,
+            _refreshPrimaryPaneAsync,
+            _operationFeedbackBridge.AppendResultFailure);
+    }
+
+    private bool CanExecuteActiveAssetCommand(Func<AssetDocumentTabViewModel, AssetDetailsDto, bool> canExecute)
+    {
+        ArgumentNullException.ThrowIfNull(canExecute);
+        return !_isBusyProvider() &&
+               _workspaceShell.WorkspaceSummary is not null &&
+               TryGetActiveAssetDocumentState(out var assetTab, out var details) &&
+               assetTab.CanEdit &&
+               canExecute(assetTab, details);
+    }
+
+    /// <summary>
+    /// 资产级命令入口共用同一条前置条件判定，避免提取/替换/撤销各自散落重复 guard。
+    /// 真正的业务规则仍由能力位和应用层结果决定，这里只做页面级可执行性筛选。
+    /// </summary>
+    private bool TryGetActiveAssetCommandContext(
+        Func<AssetDocumentTabViewModel, AssetDetailsDto, bool> canExecute,
+        [NotNullWhen(true)] out WorkspaceSummaryDto? workspaceSummary,
+        [NotNullWhen(true)] out AssetDocumentTabViewModel? assetTab,
+        [NotNullWhen(true)] out AssetDetailsDto? details)
+    {
+        ArgumentNullException.ThrowIfNull(canExecute);
+
+        workspaceSummary = _workspaceShell.WorkspaceSummary;
+        if (_isBusyProvider() ||
+            workspaceSummary is null ||
+            !TryGetActiveAssetDocumentState(out assetTab, out details) ||
+            !assetTab.CanEdit ||
+            !canExecute(assetTab, details))
+        {
+            workspaceSummary = null;
+            assetTab = null;
+            details = null;
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool HasAppliedReplacement(AssetDetailsDto details)
+    {
+        ArgumentNullException.ThrowIfNull(details);
+
+        return !string.IsNullOrWhiteSpace(details.WorkspaceReplacementSourceAssetName) ||
+               !string.IsNullOrWhiteSpace(details.FileReplacementSourceFileName);
+    }
+
+    private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
+}

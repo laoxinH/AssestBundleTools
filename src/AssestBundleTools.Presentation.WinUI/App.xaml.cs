@@ -1,28 +1,10 @@
 using AssestBundleTools.Presentation.WinUI.Diagnostics;
+using AssestBundleTools.Presentation.WinUI.Composition;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
-using AssestBundleTools.Application.Bundles.Commands;
-using AssestBundleTools.Application.Bundles.Services;
-using AssestBundleTools.Application.Assets.Queries;
-using AssestBundleTools.Application.Bundles.Queries;
-using AssestBundleTools.Application.Extraction.Commands;
-using AssestBundleTools.Application.Extraction.Queries;
-using AssestBundleTools.Application.Replacement.Commands;
-using AssestBundleTools.Application.Replacement.Queries;
-using AssestBundleTools.Application.Saving.Commands;
-using AssestBundleTools.Application.Saving.Queries;
-using AssestBundleTools.Application.Workspace.Commands;
-using AssestBundleTools.Application.Workspace.Queries;
-using AssestBundleTools.Application.Workspace.Services;
-using AssestBundleTools.Infrastructure.Bundles.Decryption;
-using AssestBundleTools.Infrastructure.Bundles.Previewing;
-using AssestBundleTools.Infrastructure.Bundles.Previewing.Audio;
-using AssestBundleTools.Infrastructure.Bundles.Reading;
-using AssestBundleTools.Infrastructure.Settings.Persistence;
-using AssestBundleTools.Infrastructure.Workspace.Importing;
-using AssestBundleTools.Infrastructure.Workspace.Persistence;
-using AssestBundleTools.Infrastructure.Workspace.Runtime;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Shell;
+using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Workspace.Services;
 using System.Diagnostics;
 
 namespace AssestBundleTools.Presentation.WinUI;
@@ -35,6 +17,7 @@ public partial class App : Microsoft.UI.Xaml.Application
     private readonly List<MainWindow> _windows = [];
     private MainWindow? _activeWindow;
     private IAssetBundleDecryptorRegistry _assetBundleDecryptorRegistry;
+    private readonly Action _reloadAssetBundleDecryptorRegistry;
 
     public App()
     {
@@ -42,192 +25,30 @@ public partial class App : Microsoft.UI.Xaml.Application
 
         try
         {
-            var appPreferencesStore = new JsonAppPreferencesStore();
-            var workspaceCatalogStore = new JsonWorkspaceCatalogStore();
-            var workspaceMetadataStoreFactory = new JsonWorkspaceMetadataStoreFactory();
-            var workspaceDataStoreFactory = new JsonWorkspaceDataStoreFactory();
-            var workspaceSessionRegistry = new CachedWorkspaceSessionRegistry(workspaceDataStoreFactory);
-            var workspaceDataRootService = new JsonWorkspaceDataRootService(
-                workspaceMetadataStoreFactory,
-                workspaceDataStoreFactory);
+            var services = AppCompositionRoot.Build(new AppCompositionContext(
+                ActiveWindowAccessor: () => _activeWindow,
+                WorkspaceActivationRequestedHandler: OnWorkspaceProcessActivationRequested));
 
-            StartupDiagnostics.Log("Creating localization service.");
-            LocalizationService = new ResourceLocalizationService();
-            StartupDiagnostics.Log("Localization service created.");
-
-            StartupDiagnostics.Log("Creating app preferences service.");
-            AppPreferencesService = new AppPreferencesService(appPreferencesStore);
-            StartupDiagnostics.Log("App preferences service created.");
-
-            StartupDiagnostics.Log("Creating asset bundle decryptor registry.");
-            _assetBundleDecryptorRegistry = new ReloadableAssetBundleDecryptorRegistry();
-            StartupDiagnostics.Log("Asset bundle decryptor registry created.");
-
-            StartupDiagnostics.Log("Creating asset bundle decryptor catalog store.");
-            var assetBundleDecryptorCatalogStore = new FileSystemAssetBundleDecryptorCatalogStore();
-            StartupDiagnostics.Log("Asset bundle decryptor catalog store created.");
-
-            StartupDiagnostics.Log("Creating application handlers.");
-            var workspaceImportSourceDiscoveryService = new FileSystemWorkspaceImportSourceDiscoveryService();
-            var workspaceImportFileSystemService = new FileSystemWorkspaceImportFileSystemService();
-            var assetBundleSourceInspector = new UnityAssetBundleSourceInspector();
-            var assetBundleReader = new FallbackAssetBundleReader(
-                new AssetsToolsAssetBundleReader(),
-                new HeuristicAssetBundleReader());
-            var audioPayloadTranscodingService = new AudioPayloadTranscodingService();
-            var assetPreviewGenerator = new AssetsToolsAssetPreviewGenerator(audioPayloadTranscodingService);
-            var openWorkspaceHandler = new OpenWorkspaceHandler(
-                workspaceSessionRegistry: workspaceSessionRegistry,
-                workspaceMetadataStoreFactory: workspaceMetadataStoreFactory,
-                workspaceDataStoreFactory: workspaceDataStoreFactory,
-                workspaceImportSourceDiscoveryService: workspaceImportSourceDiscoveryService,
-                workspaceImportFileSystemService: workspaceImportFileSystemService,
-                assetBundleSourceInspector: assetBundleSourceInspector,
-                assetBundleDecryptorRegistry: _assetBundleDecryptorRegistry,
-                assetBundleReader: assetBundleReader);
-            var registerWorkspaceImportHandler = new RegisterWorkspaceImportHandler(
-                workspaceMetadataStoreFactory,
-                workspaceImportFileSystemService);
-            var processWorkspaceImportsHandler = new ProcessWorkspaceImportsHandler(
-                workspaceMetadataStoreFactory,
-                workspaceDataStoreFactory,
-                workspaceImportSourceDiscoveryService,
-                workspaceImportFileSystemService,
-                assetBundleSourceInspector,
-                _assetBundleDecryptorRegistry,
-                assetBundleReader);
-            var removeWorkspaceBundleHandler = new RemoveWorkspaceBundleHandler(
-                workspaceMetadataStoreFactory,
-                workspaceDataStoreFactory);
-            var loadBundleTreeHandler = new LoadBundleTreeHandler(workspaceSessionRegistry);
-            var loadAssetListHandler = new LoadAssetListHandler(workspaceSessionRegistry);
-            var getAssetDetailsHandler = new GetAssetDetailsHandler(workspaceSessionRegistry);
-            var getAssetPreviewHandler = new GetAssetPreviewHandler(
-                workspaceSessionRegistry,
-                workspaceDataStoreFactory,
-                _assetBundleDecryptorRegistry,
-                assetPreviewGenerator,
-                audioPayloadTranscodingService);
-            var getWorkspaceChangeSummaryHandler = new GetWorkspaceChangeSummaryHandler(workspaceSessionRegistry);
-            var getWorkspaceSavePreviewHandler = new GetWorkspaceSavePreviewHandler(workspaceSessionRegistry);
-            var saveWorkspaceAsNewBundleHandler = new SaveWorkspaceAsNewBundleHandler(workspaceSessionRegistry);
-            var extractAssetHandler = new ExtractAssetHandler(workspaceSessionRegistry);
-            var getWorkspaceBatchExtractionPreviewHandler = new GetWorkspaceBatchExtractionPreviewHandler(workspaceSessionRegistry);
-            var extractWorkspaceAssetsHandler = new ExtractWorkspaceAssetsHandler(workspaceSessionRegistry);
-            var getWorkspaceBatchReplacementPreviewHandler = new GetWorkspaceBatchReplacementPreviewHandler(workspaceSessionRegistry);
-            var executeWorkspaceBatchReplacementHandler = new ExecuteWorkspaceBatchReplacementHandler(workspaceSessionRegistry);
-            var getFileReplacementCandidateHandler = new GetFileReplacementCandidateHandler(workspaceSessionRegistry);
-            var getWorkspaceReplacementCandidatesHandler = new GetWorkspaceReplacementCandidatesHandler(workspaceSessionRegistry);
-            var replaceAssetFromFileHandler = new ReplaceAssetFromFileHandler(workspaceSessionRegistry);
-            var replaceAssetFromWorkspaceHandler = new ReplaceAssetFromWorkspaceHandler(workspaceSessionRegistry);
-            var undoAssetReplacementHandler = new UndoAssetReplacementHandler(workspaceSessionRegistry);
-            var openAssetInPaneHandler = new OpenAssetInPaneHandler(workspaceSessionRegistry);
-            var getWorkspaceCatalogSnapshotHandler = new GetWorkspaceCatalogSnapshotHandler(workspaceCatalogStore);
-            var registerWorkspaceCatalogEntryHandler = new RegisterWorkspaceCatalogEntryHandler(workspaceCatalogStore);
-            var removeWorkspaceCatalogEntryHandler = new RemoveWorkspaceCatalogEntryHandler(
-                workspaceCatalogStore,
-                workspaceMetadataStoreFactory,
-                workspaceDataStoreFactory);
-            var setWorkspaceCatalogEntryPinnedStateHandler = new SetWorkspaceCatalogEntryPinnedStateHandler(workspaceCatalogStore);
-            var getAssetBundleDecryptorCatalogEntriesHandler = new GetAssetBundleDecryptorCatalogEntriesHandler(assetBundleDecryptorCatalogStore);
-            var upsertAssetBundleDecryptorHandler = new UpsertAssetBundleDecryptorHandler(assetBundleDecryptorCatalogStore);
-            var deleteAssetBundleDecryptorHandler = new DeleteAssetBundleDecryptorHandler(assetBundleDecryptorCatalogStore);
-            StartupDiagnostics.Log("Application handlers created.");
-
-            StartupDiagnostics.Log("Creating workspace browser service.");
-            WorkspaceBrowserService = new WorkspaceBrowserService(
-                openWorkspaceHandler: openWorkspaceHandler,
-                registerWorkspaceImportHandler: registerWorkspaceImportHandler,
-                processWorkspaceImportsHandler: processWorkspaceImportsHandler,
-                removeWorkspaceBundleHandler: removeWorkspaceBundleHandler,
-                loadBundleTreeHandler: loadBundleTreeHandler,
-                loadAssetListHandler: loadAssetListHandler,
-                getAssetDetailsHandler: getAssetDetailsHandler,
-                getAssetPreviewHandler: getAssetPreviewHandler,
-                getWorkspaceChangeSummaryHandler: getWorkspaceChangeSummaryHandler,
-                getWorkspaceSavePreviewHandler: getWorkspaceSavePreviewHandler,
-                saveWorkspaceAsNewBundleHandler: saveWorkspaceAsNewBundleHandler,
-                extractAssetHandler: extractAssetHandler,
-                getWorkspaceBatchExtractionPreviewHandler: getWorkspaceBatchExtractionPreviewHandler,
-                extractWorkspaceAssetsHandler: extractWorkspaceAssetsHandler,
-                getWorkspaceBatchReplacementPreviewHandler: getWorkspaceBatchReplacementPreviewHandler,
-                executeWorkspaceBatchReplacementHandler: executeWorkspaceBatchReplacementHandler,
-                getFileReplacementCandidateHandler: getFileReplacementCandidateHandler,
-                getWorkspaceReplacementCandidatesHandler: getWorkspaceReplacementCandidatesHandler,
-                replaceAssetFromFileHandler: replaceAssetFromFileHandler,
-                replaceAssetFromWorkspaceHandler: replaceAssetFromWorkspaceHandler,
-                undoAssetReplacementHandler: undoAssetReplacementHandler,
-                openAssetInPaneHandler: openAssetInPaneHandler);
-            StartupDiagnostics.Log("Workspace browser service created.");
-
-            StartupDiagnostics.Log("Creating workspace context service.");
-            WorkspaceContextService = new WorkspaceContextService(
-                workspaceCatalogStore: workspaceCatalogStore,
-                workspaceMetadataStoreFactory: workspaceMetadataStoreFactory);
-            StartupDiagnostics.Log("Workspace context service created.");
-
-            StartupDiagnostics.Log("Creating workspace process coordinator service.");
-            WorkspaceProcessCoordinatorService = new WorkspaceProcessCoordinatorService(LocalizationService);
-            WorkspaceProcessCoordinatorService.WorkspaceActivationRequested += OnWorkspaceProcessActivationRequested;
-            StartupDiagnostics.Log("Workspace process coordinator service created.");
-
-            StartupDiagnostics.Log("Creating file picker service.");
-            FilePickerService = new WinUIFilePickerService(() => _activeWindow, LocalizationService);
-            StartupDiagnostics.Log("File picker service created.");
-
-            StartupDiagnostics.Log("Creating path navigation service.");
-            PathNavigationService = new WindowsExplorerPathNavigationService();
-            StartupDiagnostics.Log("Path navigation service created.");
-
-            StartupDiagnostics.Log("Creating workspace catalog service.");
-            WorkspaceCatalogService = new WorkspaceCatalogService(
-                getWorkspaceCatalogSnapshotHandler: getWorkspaceCatalogSnapshotHandler,
-                registerWorkspaceCatalogEntryHandler: registerWorkspaceCatalogEntryHandler,
-                removeWorkspaceCatalogEntryHandler: removeWorkspaceCatalogEntryHandler,
-                setWorkspaceCatalogEntryPinnedStateHandler: setWorkspaceCatalogEntryPinnedStateHandler);
-            StartupDiagnostics.Log("Workspace catalog service created.");
-
-            StartupDiagnostics.Log("Creating asset bundle decryptor catalog service.");
-            AssetBundleDecryptorCatalogService = new AssetBundleDecryptorCatalogService(
-                getEntriesHandler: getAssetBundleDecryptorCatalogEntriesHandler,
-                upsertHandler: upsertAssetBundleDecryptorHandler,
-                deleteHandler: deleteAssetBundleDecryptorHandler,
-                onCatalogChanged: ReloadAssetBundleDecryptorRegistry);
-            StartupDiagnostics.Log("Asset bundle decryptor catalog service created.");
-
-            StartupDiagnostics.Log("Creating app interaction feedback service.");
-            AppInteractionFeedbackService = new AppInteractionFeedbackService();
-            StartupDiagnostics.Log("App interaction feedback service created.");
-
-            StartupDiagnostics.Log("Creating workspace dialog service.");
-            WorkspaceDialogService = new WorkspaceDialogService(
-                LocalizationService,
-                workspaceDataRootService,
-                AppInteractionFeedbackService,
-                AssetBundleDecryptorRegistry);
-            StartupDiagnostics.Log("Workspace dialog service created.");
-
-            StartupDiagnostics.Log("Creating workspace window service.");
-            WorkspaceWindowService = new WorkspaceWindowService(WorkspaceProcessCoordinatorService);
-            StartupDiagnostics.Log("Workspace window service created.");
-
-            StartupDiagnostics.Log("Creating app notification service.");
-            AppNotificationService = new AppNotificationService();
-            StartupDiagnostics.Log("App notification service created.");
-
-            StartupDiagnostics.Log("Creating app log service.");
-            AppLogService = new AppLogService(LocalizationService);
-            StartupDiagnostics.Log("App log service created.");
-
-            StartupDiagnostics.Log("Creating workspace import coordinator service.");
-            WorkspaceImportCoordinatorService = new WorkspaceImportCoordinatorService(
-                WorkspaceContextService,
-                WorkspaceBrowserService,
-                FilePickerService,
-                AppLogService,
-                AppNotificationService,
-                LocalizationService);
-            StartupDiagnostics.Log("Workspace import coordinator service created.");
+            LocalizationService = services.LocalizationService;
+            AppPreferencesService = services.AppPreferencesService;
+            _assetBundleDecryptorRegistry = services.AssetBundleDecryptorRegistry;
+            _reloadAssetBundleDecryptorRegistry = services.ReloadAssetBundleDecryptorRegistry;
+            WorkspaceExplorerGateway = services.WorkspaceExplorerGateway;
+            WorkspaceAssetInspectionGateway = services.WorkspaceAssetInspectionGateway;
+            WorkspaceAssetOperationGateway = services.WorkspaceAssetOperationGateway;
+            WorkspaceBatchOperationsGateway = services.WorkspaceBatchOperationsGateway;
+            WorkspaceContextService = services.WorkspaceContextService;
+            WorkspaceProcessCoordinatorService = services.WorkspaceProcessCoordinatorService;
+            FilePickerService = services.FilePickerService;
+            PathNavigationService = services.PathNavigationService;
+            WorkspaceCatalogGateway = services.WorkspaceCatalogGateway;
+            AssetBundleDecryptorCatalogService = services.AssetBundleDecryptorCatalogService;
+            WorkspaceDialogService = services.WorkspaceDialogService;
+            AppInteractionFeedbackService = services.AppInteractionFeedbackService;
+            WorkspaceWindowService = services.WorkspaceWindowService;
+            AppNotificationService = services.AppNotificationService;
+            AppLogService = services.AppLogService;
+            WorkspaceImportCoordinatorService = services.WorkspaceImportCoordinatorService;
 
             RegisterGlobalExceptionHandlers();
             StartupDiagnostics.Log("Global exception handlers registered.");
@@ -251,7 +72,13 @@ public partial class App : Microsoft.UI.Xaml.Application
 
     public IAssetBundleDecryptorRegistry AssetBundleDecryptorRegistry => _assetBundleDecryptorRegistry;
 
-    public IWorkspaceBrowserService WorkspaceBrowserService { get; }
+    public IWorkspaceExplorerGateway WorkspaceExplorerGateway { get; }
+
+    public IWorkspaceAssetInspectionGateway WorkspaceAssetInspectionGateway { get; }
+
+    public IWorkspaceAssetOperationGateway WorkspaceAssetOperationGateway { get; }
+
+    public IWorkspaceBatchOperationsGateway WorkspaceBatchOperationsGateway { get; }
 
     public IWorkspaceContextService WorkspaceContextService { get; }
 
@@ -261,7 +88,7 @@ public partial class App : Microsoft.UI.Xaml.Application
 
     public IPathNavigationService PathNavigationService { get; }
 
-    public IWorkspaceCatalogService WorkspaceCatalogService { get; }
+    public IWorkspaceCatalogGateway WorkspaceCatalogGateway { get; }
 
     public IAssetBundleDecryptorCatalogService AssetBundleDecryptorCatalogService { get; }
 
@@ -280,14 +107,7 @@ public partial class App : Microsoft.UI.Xaml.Application
     public void ReloadAssetBundleDecryptorRegistry()
     {
         StartupDiagnostics.Log("Reloading asset bundle decryptor registry.");
-        if (_assetBundleDecryptorRegistry is ReloadableAssetBundleDecryptorRegistry reloadableRegistry)
-        {
-            reloadableRegistry.Reload();
-        }
-        else
-        {
-            _assetBundleDecryptorRegistry = new ReloadableAssetBundleDecryptorRegistry();
-        }
+        _reloadAssetBundleDecryptorRegistry();
         StartupDiagnostics.Log("Asset bundle decryptor registry reloaded.");
     }
 
@@ -338,7 +158,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         var workspaceKey = CreateWorkspaceKey(navigationRequest);
         if (!string.IsNullOrWhiteSpace(workspaceKey))
         {
-            var targetWindow = FindWindowByWorkspaceKey(workspaceKey);
+            var targetWindow = FindWindowByOwnedWorkspaceKey(workspaceKey);
             if (targetWindow is not null)
             {
                 return TryActivateWorkspaceWindow(targetWindow, navigationRequest);
@@ -356,7 +176,8 @@ public partial class App : Microsoft.UI.Xaml.Application
     public bool ShouldReuseCurrentWindowForFirstWorkspace(MainWindow? window)
     {
         return window is not null &&
-               string.IsNullOrWhiteSpace(window.RegisteredWorkspaceKey);
+               string.IsNullOrWhiteSpace(window.RegisteredWorkspaceKey) &&
+               string.IsNullOrWhiteSpace(window.PendingWorkspaceKey);
     }
 
     /// <summary>
@@ -376,7 +197,31 @@ public partial class App : Microsoft.UI.Xaml.Application
 
         var workspaceKey = CreateWorkspaceKey(navigationRequest);
         return !string.IsNullOrWhiteSpace(workspaceKey) &&
-               string.Equals(window.RegisteredWorkspaceKey, workspaceKey, StringComparison.Ordinal);
+               window.OwnsWorkspace(workspaceKey);
+    }
+
+    /// <summary>
+    /// 页面进入真正的工作区加载前，先在进程级建立一次临时预登记。
+    /// 这样其他窗口或进程即便在加载中再次命中同一工作区，也能稳定重定向到当前窗口。
+    /// </summary>
+    public bool TryBeginWindowWorkspaceLoad(MainWindow window, WorkspaceNavigationRequest navigationRequest)
+    {
+        ArgumentNullException.ThrowIfNull(window);
+        ArgumentNullException.ThrowIfNull(navigationRequest);
+
+        var normalizedNavigationRequest = navigationRequest with
+        {
+            OpenTarget = WorkspaceOpenTarget.CurrentWindow
+        };
+        var workspaceKey = CreateWorkspaceKey(normalizedNavigationRequest);
+        if (string.IsNullOrWhiteSpace(workspaceKey))
+        {
+            WorkspaceProcessCoordinatorService.ClearPendingWorkspaceRegistration();
+            return false;
+        }
+
+        _activeWindow = window;
+        return WorkspaceProcessCoordinatorService.TryBeginPendingWorkspaceRegistration(normalizedNavigationRequest);
     }
 
     /// <summary>
@@ -482,7 +327,11 @@ public partial class App : Microsoft.UI.Xaml.Application
         object? sender,
         WorkspaceProcessActivationRequestedEventArgs e)
     {
-        var targetWindow = _activeWindow ?? _windows.LastOrDefault();
+        var workspaceKey = CreateWorkspaceKey(e.NavigationRequest);
+        var targetWindow = !string.IsNullOrWhiteSpace(workspaceKey)
+            ? FindWindowByOwnedWorkspaceKey(workspaceKey)
+            : null;
+        targetWindow ??= _activeWindow ?? _windows.LastOrDefault();
         if (targetWindow is null)
         {
             return;
@@ -514,10 +363,10 @@ public partial class App : Microsoft.UI.Xaml.Application
     /// <summary>
     /// 优先返回当前激活窗口，确保“已打开工作区再次打开”时能复用最贴近用户上下文的窗口。
     /// </summary>
-    private MainWindow? FindWindowByWorkspaceKey(string workspaceKey)
+    private MainWindow? FindWindowByOwnedWorkspaceKey(string workspaceKey)
     {
         if (_activeWindow is not null &&
-            string.Equals(_activeWindow.RegisteredWorkspaceKey, workspaceKey, StringComparison.Ordinal))
+            _activeWindow.OwnsWorkspace(workspaceKey))
         {
             return _activeWindow;
         }
@@ -525,7 +374,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         for (var index = _windows.Count - 1; index >= 0; index--)
         {
             var window = _windows[index];
-            if (string.Equals(window.RegisteredWorkspaceKey, workspaceKey, StringComparison.Ordinal))
+            if (window.OwnsWorkspace(workspaceKey))
             {
                 return window;
             }

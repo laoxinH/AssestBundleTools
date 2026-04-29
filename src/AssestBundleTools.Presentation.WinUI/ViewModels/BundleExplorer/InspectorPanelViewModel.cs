@@ -60,8 +60,13 @@ public sealed class InspectorPanelViewModel : ObservableObject
     private bool _canUndoReplacement;
     private bool _hasSelection;
     private int _selectedSectionIndex;
-    private InspectorInformationTextSet _informationTextSet = InspectorInformationTextSet.CreateFallback();
+    private readonly InspectorInformationTextSet _informationTextSet;
     private IReadOnlyList<InspectorInfoRowViewModel> _previewInfoRows = Array.Empty<InspectorInfoRowViewModel>();
+
+    public InspectorPanelViewModel(InspectorInformationTextSet informationTextSet)
+    {
+        _informationTextSet = informationTextSet ?? throw new ArgumentNullException(nameof(informationTextSet));
+    }
 
     public string EmptyStateText
     {
@@ -448,12 +453,6 @@ public sealed class InspectorPanelViewModel : ObservableObject
         string.IsNullOrWhiteSpace(AudioPreviewFrequencyBadgeText)
             ? Visibility.Collapsed
             : Visibility.Visible;
-
-    public void ConfigureInformationText(InspectorInformationTextSet textSet)
-    {
-        _informationTextSet = textSet ?? throw new ArgumentNullException(nameof(textSet));
-        RebuildInformationCards();
-    }
 
     public void Clear(string emptyStateText)
     {

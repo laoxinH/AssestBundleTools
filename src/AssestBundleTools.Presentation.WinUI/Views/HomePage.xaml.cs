@@ -96,7 +96,7 @@ public sealed partial class HomePage : Page
             return;
         }
 
-        var setPinnedResult = await App.CurrentApp.WorkspaceCatalogService.SetWorkspaceEntryPinnedStateAsync(
+        var setPinnedResult = await App.CurrentApp.WorkspaceCatalogGateway.SetWorkspaceEntryPinnedStateAsync(
             new SetWorkspaceCatalogEntryPinnedStateCommand(
                 workspaceItem.WorkspaceKey,
                 !workspaceItem.IsPinned));
@@ -139,7 +139,7 @@ public sealed partial class HomePage : Page
             return;
         }
 
-        var removeResult = await App.CurrentApp.WorkspaceCatalogService.RemoveWorkspaceEntryAsync(
+        var removeResult = await App.CurrentApp.WorkspaceCatalogGateway.RemoveWorkspaceEntryAsync(
             new RemoveWorkspaceCatalogEntryCommand(workspaceItem.WorkspaceKey));
 
         if (!removeResult.IsSuccess)

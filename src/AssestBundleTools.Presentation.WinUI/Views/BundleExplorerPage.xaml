@@ -346,7 +346,7 @@
                 <Button
                     x:Name="RefreshChipButton"
                     Command="{x:Bind ViewModel.RefreshCommand}"
-                    IsEnabled="{x:Bind ViewModel.HasWorkspace, Mode=OneWay}"
+                    IsEnabled="{x:Bind ViewModel.WorkspaceShell.HasWorkspace, Mode=OneWay}"
                     Style="{StaticResource WorkspaceSecondaryActionChipButtonStyle}">
                     <Grid ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
@@ -378,7 +378,7 @@
                 <Button
                     x:Name="BatchExtractChipButton"
                     Click="OnBatchExtractChipButtonClick"
-                    IsEnabled="{x:Bind ViewModel.HasWorkspace, Mode=OneWay}"
+                    IsEnabled="{x:Bind ViewModel.WorkspaceShell.HasWorkspace, Mode=OneWay}"
                     Style="{StaticResource WorkspaceSecondaryActionChipButtonStyle}">
                     <Grid ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
@@ -410,7 +410,7 @@
                 <Button
                     x:Name="SaveAsBundleChipButton"
                     Click="OnSaveAsBundleChipButtonClick"
-                    IsEnabled="{x:Bind ViewModel.HasWorkspace, Mode=OneWay}"
+                    IsEnabled="{x:Bind ViewModel.WorkspaceShell.HasWorkspace, Mode=OneWay}"
                     Style="{StaticResource WorkspaceSecondaryActionChipButtonStyle}">
                     <Grid ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
@@ -441,7 +441,7 @@
 
                 <ItemsControl
                     Margin="4,0,0,0"
-                    ItemsSource="{x:Bind ViewModel.WorkspaceStatusChips, Mode=OneWay}">
+                    ItemsSource="{x:Bind ViewModel.WorkspaceShell.WorkspaceStatusChips, Mode=OneWay}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <StackPanel Orientation="Horizontal" />
@@ -548,7 +548,7 @@
                                 x:Name="BundleImportFileButton"
                                 Style="{StaticResource ExplorerToolbarIconButtonStyle}"
                                 Click="OnBundleImportFileButtonClick"
-                                IsEnabled="{x:Bind ViewModel.HasWorkspace, Mode=OneWay}">
+                                IsEnabled="{x:Bind ViewModel.WorkspaceShell.HasWorkspace, Mode=OneWay}">
                                 <Button.Resources>
                                     <SolidColorBrush
                                         x:Key="ButtonBackground"
@@ -600,7 +600,7 @@
                                 x:Name="BundleImportDirectoryButton"
                                 Style="{StaticResource ExplorerToolbarIconButtonStyle}"
                                 Click="OnBundleImportDirectoryButtonClick"
-                                IsEnabled="{x:Bind ViewModel.HasWorkspace, Mode=OneWay}">
+                                IsEnabled="{x:Bind ViewModel.WorkspaceShell.HasWorkspace, Mode=OneWay}">
                                 <Button.Resources>
                                     <SolidColorBrush
                                         x:Key="ButtonBackground"
@@ -652,8 +652,8 @@
                                 x:Name="BundleSearchToggleButton"
                                 Style="{StaticResource ExplorerToolbarIconButtonStyle}"
                                 Click="OnBundleSearchToggleButtonClick"
-                                IsEnabled="{x:Bind ViewModel.CanToggleBundleSearch, Mode=OneWay}"
-                                ToolTipService.ToolTip="{x:Bind ViewModel.BundleSearchToggleToolTip, Mode=OneWay}">
+                                IsEnabled="{x:Bind ViewModel.BundlePane.CanToggleBundleSearch, Mode=OneWay}"
+                                ToolTipService.ToolTip="{x:Bind ViewModel.BundlePane.BundleSearchToggleToolTip, Mode=OneWay}">
                                 <Button.Resources>
                                     <SolidColorBrush
                                         x:Key="ButtonBackground"
@@ -677,15 +677,15 @@
                                 <FontIcon
                                     FontFamily="Segoe Fluent Icons"
                                     FontSize="17"
-                                    Glyph="{x:Bind ViewModel.BundleSearchToggleGlyph, Mode=OneWay}" />
+                                    Glyph="{x:Bind ViewModel.BundlePane.BundleSearchToggleGlyph, Mode=OneWay}" />
                             </Button>
 
                             <Button
                                 x:Name="BundlePaneCollapseButton"
                                 Style="{StaticResource ExplorerToolbarIconButtonStyle}"
                                 Click="OnBundlePaneCollapseButtonClick"
-                                IsEnabled="{x:Bind ViewModel.CanToggleBundlePaneCollapse, Mode=OneWay}"
-                                ToolTipService.ToolTip="{x:Bind ViewModel.BundlePaneCollapseToolTip, Mode=OneWay}">
+                                IsEnabled="{x:Bind ViewModel.BundlePane.CanToggleBundlePaneCollapse, Mode=OneWay}"
+                                ToolTipService.ToolTip="{x:Bind ViewModel.BundlePane.BundlePaneCollapseToolTip, Mode=OneWay}">
                                 <Button.Resources>
                                     <SolidColorBrush
                                         x:Key="ButtonBackground"
@@ -731,7 +731,7 @@
 
                         <TextBox
                             x:Name="BundleSearchTextBox"
-                            Text="{x:Bind ViewModel.BundleSearchKeyword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{x:Bind ViewModel.BundlePane.BundleSearchKeyword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     </Border>
 
                     <Grid
@@ -740,21 +740,21 @@
                         <TextBlock
                             x:Name="NoWorkspaceText"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="{x:Bind ViewModel.BundlePaneEmptyStateText, Mode=OneWay}"
+                            Text="{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateText, Mode=OneWay}"
                             TextWrapping="WrapWholeWords"
-                            Visibility="{x:Bind ViewModel.BundlePaneEmptyStateVisibility, Mode=OneWay}" />
+                            Visibility="{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateVisibility, Mode=OneWay}" />
 
                         <TextBlock
                             x:Name="BundleSearchEmptyStateText"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="{x:Bind ViewModel.BundleSearchEmptyStateText, Mode=OneWay}"
+                            Text="{x:Bind ViewModel.BundlePane.BundleSearchEmptyStateText, Mode=OneWay}"
                             TextWrapping="WrapWholeWords"
-                            Visibility="{x:Bind ViewModel.BundleSearchEmptyStateVisibility, Mode=OneWay}" />
+                            Visibility="{x:Bind ViewModel.BundlePane.BundleSearchEmptyStateVisibility, Mode=OneWay}" />
 
                         <ScrollViewer
                             MinHeight="0"
-                            Visibility="{x:Bind ViewModel.BundleListVisibility, Mode=OneWay}">
-                            <ItemsControl ItemsSource="{x:Bind ViewModel.BundleGroups, Mode=OneWay}">
+                            Visibility="{x:Bind ViewModel.BundlePane.BundleListVisibility, Mode=OneWay}">
+                            <ItemsControl ItemsSource="{x:Bind ViewModel.BundlePane.BundleGroups, Mode=OneWay}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="viewModels:BundleGroupViewModel">
                                         <StackPanel Margin="0,0,0,10" Spacing="4">
@@ -952,8 +952,8 @@
                             HorizontalAlignment="Center"
                             VerticalAlignment="Top"
                             Click="OnBundlePaneCollapseButtonClick"
-                            IsEnabled="{x:Bind ViewModel.CanToggleBundlePaneCollapse, Mode=OneWay}"
-                            ToolTipService.ToolTip="{x:Bind ViewModel.BundlePaneCollapseToolTip, Mode=OneWay}">
+                            IsEnabled="{x:Bind ViewModel.BundlePane.CanToggleBundlePaneCollapse, Mode=OneWay}"
+                            ToolTipService.ToolTip="{x:Bind ViewModel.BundlePane.BundlePaneCollapseToolTip, Mode=OneWay}">
                             <Button.Resources>
                                 <SolidColorBrush
                                     x:Key="ButtonBackground"
@@ -999,7 +999,7 @@
                                 PointerPressed="OnCollapsedBundlePaneActionPointerPressed"
                                 PointerReleased="OnCollapsedBundlePaneActionPointerReleased"
                                 PointerCanceled="OnCollapsedBundlePaneActionPointerCanceled"
-                                IsEnabled="{x:Bind ViewModel.HasWorkspace, Mode=OneWay}">
+                                IsEnabled="{x:Bind ViewModel.WorkspaceShell.HasWorkspace, Mode=OneWay}">
                                 <Grid
                                     x:Name="CollapsedBundleImportFileActionSurface"
                                     MinHeight="54"
@@ -1087,7 +1087,7 @@
                                 PointerPressed="OnCollapsedBundlePaneActionPointerPressed"
                                 PointerReleased="OnCollapsedBundlePaneActionPointerReleased"
                                 PointerCanceled="OnCollapsedBundlePaneActionPointerCanceled"
-                                IsEnabled="{x:Bind ViewModel.HasWorkspace, Mode=OneWay}">
+                                IsEnabled="{x:Bind ViewModel.WorkspaceShell.HasWorkspace, Mode=OneWay}">
                                 <Grid
                                     x:Name="CollapsedBundleImportDirectoryActionSurface"
                                     MinHeight="54"
@@ -1183,7 +1183,7 @@
                                         HorizontalAlignment="Center"
                                         FontSize="18"
                                         FontWeight="SemiBold"
-                                        Text="{x:Bind ViewModel.CollapsedBundlePaneBundleCountText, Mode=OneWay}" />
+                                        Text="{x:Bind ViewModel.BundlePane.CollapsedBundlePaneBundleCountText, Mode=OneWay}" />
                                 </StackPanel>
                             </Border>
 
@@ -1204,7 +1204,7 @@
                                         HorizontalAlignment="Center"
                                         FontSize="16"
                                         FontWeight="SemiBold"
-                                        Text="{x:Bind ViewModel.CollapsedBundlePaneGroupCountText, Mode=OneWay}" />
+                                        Text="{x:Bind ViewModel.BundlePane.CollapsedBundlePaneGroupCountText, Mode=OneWay}" />
                                 </StackPanel>
                             </Border>
 
@@ -1215,7 +1215,7 @@
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                 BorderThickness="1"
                                 CornerRadius="10"
-                                ToolTipService.ToolTip="{x:Bind ViewModel.CollapsedBundlePaneSelectedBundleToolTip, Mode=OneWay}">
+                                ToolTipService.ToolTip="{x:Bind ViewModel.BundlePane.CollapsedBundlePaneSelectedBundleToolTip, Mode=OneWay}">
                                 <StackPanel
                                     HorizontalAlignment="Center"
                                     Spacing="3">
@@ -1228,7 +1228,7 @@
                                         HorizontalAlignment="Center"
                                         FontSize="16"
                                         FontWeight="SemiBold"
-                                        Text="{x:Bind ViewModel.CollapsedBundlePaneSelectedBundleShortText, Mode=OneWay}" />
+                                        Text="{x:Bind ViewModel.BundlePane.CollapsedBundlePaneSelectedBundleShortText, Mode=OneWay}" />
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -1330,10 +1330,10 @@
                         CanDragTabs="True"
                         CanReorderTabs="True"
                         IsAddTabButtonVisible="False"
-                        SelectedItem="{x:Bind ViewModel.ActiveBundleTab, Mode=OneWay}"
+                        SelectedItem="{x:Bind ViewModel.DocumentWorkspace.ActiveBundleTab, Mode=OneWay}"
                         TabDragCompleted="OnBundleTabViewTabDragCompleted"
                         TabCloseRequested="OnBundleTabViewTabCloseRequested"
-                        TabItemsSource="{x:Bind ViewModel.BundleTabs, Mode=OneWay}"
+                        TabItemsSource="{x:Bind ViewModel.DocumentWorkspace.BundleTabs, Mode=OneWay}"
                         SelectionChanged="OnBundleTabViewSelectionChanged">
                         <TabView.TabItemTemplate>
                             <DataTemplate x:DataType="viewModels:BundleDocumentTabViewModel">
@@ -1362,7 +1362,7 @@
                         AssetSelectionChanged="OnPrimaryPaneAssetSelectionChanged"
                         BatchExtractRequested="OnPrimaryPaneBatchExtractRequested"
                         FilterChanged="OnPrimaryPaneFilterChanged"
-                        ViewModel="{x:Bind ViewModel.PrimaryPane, Mode=OneWay}" />
+                        ViewModel="{x:Bind ViewModel.AssetWorkflow.PrimaryPane, Mode=OneWay}" />
                 </Grid>
             </Border>
 
@@ -1390,12 +1390,12 @@
                         CanDragTabs="True"
                         CanReorderTabs="True"
                         IsAddTabButtonVisible="False"
-                        SelectedItem="{x:Bind ViewModel.ActiveAssetDocumentTab, Mode=OneWay}"
+                        SelectedItem="{x:Bind ViewModel.DocumentWorkspace.ActiveAssetDocumentTab, Mode=OneWay}"
                         TabDragCompleted="OnAssetDocumentTabViewTabDragCompleted"
                         TabCloseRequested="OnAssetDocumentTabViewTabCloseRequested"
-                        TabItemsSource="{x:Bind ViewModel.CurrentAssetTabs, Mode=OneWay}"
+                        TabItemsSource="{x:Bind ViewModel.DocumentWorkspace.CurrentAssetTabs, Mode=OneWay}"
                         SelectionChanged="OnAssetDocumentTabViewSelectionChanged"
-                        Visibility="{x:Bind ViewModel.AssetDocumentTabStripVisibility, Mode=OneWay}">
+                        Visibility="{x:Bind ViewModel.DocumentWorkspace.AssetDocumentTabStripVisibility, Mode=OneWay}">
                         <TabView.TabItemTemplate>
                             <DataTemplate x:DataType="viewModels:AssetDocumentTabViewModel">
                                 <TabViewItem
@@ -1426,7 +1426,7 @@
                         SelectReplacementSourceRequested="OnInspectorSelectReplacementSourceRequested"
                         ApplyReplacementRequested="OnInspectorApplyReplacementRequested"
                         UndoReplacementRequested="OnInspectorUndoReplacementRequested"
-                        ViewModel="{x:Bind ViewModel.Inspector, Mode=OneWay}" />
+                        ViewModel="{x:Bind ViewModel.AssetWorkflow.Inspector, Mode=OneWay}" />
                 </Grid>
             </Border>
         </Grid>

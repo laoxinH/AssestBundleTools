@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Presentation.WinUI.Localization;
 
 namespace AssestBundleTools.Presentation.WinUI.Services;
@@ -8,7 +9,7 @@ namespace AssestBundleTools.Presentation.WinUI.Services;
 public static class WorkspaceEntryPresentationBuilder
 {
     public static WorkspaceEntryPresentationDescriptor Build(
-        WorkspaceContextEntry entry,
+        WorkspaceContextEntryDto entry,
         string? currentWorkspaceId,
         ILocalizationService localizationService)
     {
@@ -29,7 +30,7 @@ public static class WorkspaceEntryPresentationBuilder
     }
 
     private static string ResolvePrimaryBadgeText(
-        WorkspaceContextEntry entry,
+        WorkspaceContextEntryDto entry,
         bool isCurrentWorkspace,
         ILocalizationService localizationService)
     {
@@ -52,7 +53,7 @@ public static class WorkspaceEntryPresentationBuilder
     }
 
     private static string? ResolveSecondaryBadgeText(
-        WorkspaceContextEntry entry,
+        WorkspaceContextEntryDto entry,
         bool isCurrentWorkspace,
         ILocalizationService localizationService)
     {
@@ -70,7 +71,7 @@ public static class WorkspaceEntryPresentationBuilder
     }
 
     private static string? BuildAvailabilitySummary(
-        WorkspaceContextEntry entry,
+        WorkspaceContextEntryDto entry,
         ILocalizationService localizationService)
     {
         return entry.AvailabilityStatus switch

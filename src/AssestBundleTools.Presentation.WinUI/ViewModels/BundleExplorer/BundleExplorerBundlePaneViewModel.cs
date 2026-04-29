@@ -16,7 +16,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
 /// 这里只负责“资源包列表如何展示、如何筛选、当前高亮的是谁”。
 /// 不承载工作区加载、资源详情读取或预览编排逻辑，避免主页面 ViewModel 继续膨胀。
 /// </remarks>
-public sealed class BundleExplorerBundlePaneViewModel : ObservableObject
+public sealed class BundleExplorerBundlePaneViewModel : ObservableObject, IBundleExplorerBundlePaneHost
 {
     private readonly ILocalizationService _localizationService;
     private readonly List<BundleGroupViewModel> _allBundleGroups = new();
@@ -33,6 +33,8 @@ public sealed class BundleExplorerBundlePaneViewModel : ObservableObject
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
     }
 
+    internal event EventHandler<BundleExplorerPageStateChangedEventArgs<BundleExplorerBundlePanePageStateChange>>? PageStateChanged;
+
     /// <summary>
     /// 当左侧搜索关键字变化时通知上层持久化浏览状态。
     /// </summary>
@@ -48,6 +50,7 @@ public sealed class BundleExplorerBundlePaneViewModel : ObservableObject
             if (SetProperty(ref _isBundlePaneCollapsed, value))
             {
                 OnPropertyChanged(nameof(BundlePaneCollapseToolTip));
+                NotifyPageStateChanged(BundleExplorerBundlePanePageStateChange.PaneChrome);
             }
         }
     }
@@ -61,6 +64,7 @@ public sealed class BundleExplorerBundlePaneViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(BundleSearchToggleGlyph));
                 OnPropertyChanged(nameof(BundleSearchToggleToolTip));
+                NotifyPageStateChanged(BundleExplorerBundlePanePageStateChange.SearchChrome);
             }
         }
     }
@@ -68,13 +72,17 @@ public sealed class BundleExplorerBundlePaneViewModel : ObservableObject
     public string BundleSearchKeyword
     {
         get => _bundleSearchKeyword;
-        private set
+        set
         {
-            if (SetProperty(ref _bundleSearchKeyword, value))
+            var normalizedKeyword = value?.Trim() ?? string.Empty;
+            if (SetProperty(ref _bundleSearchKeyword, normalizedKeyword))
             {
                 OnPropertyChanged(nameof(BundleSearchEmptyStateText));
                 ApplyBundleGroupFilter();
                 BrowserStateChanged?.Invoke(this, EventArgs.Empty);
+                NotifyPageStateChanged(
+                    BundleExplorerBundlePanePageStateChange.SearchInput |
+                    BundleExplorerBundlePanePageStateChange.CollectionPresentation);
             }
         }
     }
@@ -154,11 +162,9 @@ public sealed class BundleExplorerBundlePaneViewModel : ObservableObject
         }
 
         NotifyContextDependentStateChanged();
-    }
-
-    public void SetBundleSearchKeyword(string? keyword)
-    {
-        BundleSearchKeyword = keyword?.Trim() ?? string.Empty;
+        NotifyPageStateChanged(
+            BundleExplorerBundlePanePageStateChange.InteractionState |
+            BundleExplorerBundlePanePageStateChange.CollectionPresentation);
     }
 
     /// <summary>
@@ -181,6 +187,9 @@ public sealed class BundleExplorerBundlePaneViewModel : ObservableObject
         BundleGroups.Clear();
         SetSelectedBundle(null);
         NotifyBundleCollectionStateChanged();
+        NotifyPageStateChanged(
+            BundleExplorerBundlePanePageStateChange.CollectionPresentation |
+            BundleExplorerBundlePanePageStateChange.SelectionSummary);
     }
 
     public void RebuildBundleGroups(IEnumerable<BundleTreeNodeDto> bundleTree)
@@ -215,6 +224,9 @@ public sealed class BundleExplorerBundlePaneViewModel : ObservableObject
         }
 
         ApplyBundleGroupFilter();
+        NotifyPageStateChanged(
+            BundleExplorerBundlePanePageStateChange.CollectionPresentation |
+            BundleExplorerBundlePanePageStateChange.SelectionSummary);
     }
 
     public void ToggleBundleSearch()
@@ -287,6 +299,7 @@ public sealed class BundleExplorerBundlePaneViewModel : ObservableObject
         }
 
         NotifyCollapsedBundlePaneSummaryChanged();
+        NotifyPageStateChanged(BundleExplorerBundlePanePageStateChange.SelectionSummary);
     }
 
     public string ResolveBundleDisplayName(BundleId bundleId) =>
@@ -433,4 +446,14 @@ public sealed class BundleExplorerBundlePaneViewModel : ObservableObject
     private int GetVisibleBundleCount() => BundleGroups.Sum(static group => group.Bundles.Count);
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
+
+    private void NotifyPageStateChanged(BundleExplorerBundlePanePageStateChange changeFlags)
+    {
+        if (changeFlags == BundleExplorerBundlePanePageStateChange.None)
+        {
+            return;
+        }
+
+        PageStateChanged?.Invoke(this, new BundleExplorerPageStateChangedEventArgs<BundleExplorerBundlePanePageStateChange>(changeFlags));
+    }
 }
