@@ -51,6 +51,7 @@
 | D-06 | 高 | 自动化测试覆盖深度仍待继续补强 | 第三轮已收口（当前剩余为深层回归补齐） |
 | D-07 | 中 | 用户文本资源化与结构化错误仍有残余热点 | 第二轮已收口（仅保留外部工具诊断回退） |
 | D-08 | 中 | 工作区进程占用注册时机仍偏后 | 第二轮已收口（预登记 + 晋升/回滚） |
+| D-09 | 中 | 工作区导入多线程扩展规范已定义但实现仍保持串行 | 已登记 |
 
 ## 4. 详细登记
 
@@ -58,7 +59,7 @@
 
 当前状态：
 
-- `src/AssestBundleTools.Presentation.WinUI/Services/WorkspaceContextService.cs`
+- `src/AssestBundleTools.Presentation.WinUI/Services/Workspace/WorkspaceContextService.cs`
   当前约 `261` 行。
 - `src/AssestBundleTools.Application/Workspace/Services/WorkspaceContextCatalogService.cs`
   当前约 `329` 行。
@@ -154,9 +155,10 @@
   - `BundleExplorerPage.xaml / BundleExplorerPage.xaml.cs` 已直接绑定或订阅 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 子状态宿主；
   - `BundleExplorerViewModel` 中大部分旧页面兼容透传属性已删除，仅保留页面级外观、入口命令与编排职责；
   - `BundleExplorerPageStateBridge` 已移除，旧页面兼容桥接层不再作为稳定结构继续存在；
+  - `BundleExplorerPage.xaml.cs` 已继续按页面协作职责拆为 `BundleExplorerPageNavigationCoordinator / BundleExplorerPagePaneLayoutCoordinator / BundleExplorerPageTabCoordinator / BundleExplorerPageChromeCoordinator`，页面主 code-behind 当前约 `362` 行，重新回到常规手写 UI 类目标区间；
   - 浏览状态持久化请求仍通过 `BundleExplorerBundlePaneViewModel.BrowserStateChanged` 这一条窄事件入口汇总。
 - 当前剩余过渡点：
-  - `BundleExplorerPage.xaml.cs` 仍会根据 `PageStateChanged` 做资源包窗格动画、工作区窗口注册与资产文档选中同步，这些属于页面视图行为，但后续仍要防止它们重新回流到父级 `ViewModel`；
+  - 页面级资源包窗格动画、工作区窗口注册与资产文档选中同步当前已停留在显式 page coordinator 边界内；后续仍要防止这些页面视图行为重新回灌到父级 `ViewModel`，或重新堆回单一巨型 code-behind；
   - 浏览状态持久化仍由父级汇总入口接收；若后续继续扩展页面共享状态，应继续优先落到明确状态宿主或语义事件。
 
 与规范冲突点：
@@ -167,7 +169,7 @@
 - 第一轮接口收口已经对齐了“不要直接吃 sibling 具体实现”这一点；
 - 第二轮收口已经把页面兼容属性刷新从多条通用 `PropertyChanged` 字符串转发链，收窄为更明确的页面状态语义通知；
 - 第三轮收口又进一步把旧页面绑定迁回子状态宿主边界，并移除了父级兼容桥接层；
-- 当前主要仍处于过渡态的，已经不再是父级兼容属性外观本身，而是页面级视图同步与浏览状态持久化入口仍需持续保持在明确边界内。
+- 当前主要仍处于过渡态的，已经不再是父级兼容属性外观本身，而是页面级视图同步/视觉行为协作对象与浏览状态持久化入口仍需持续保持在明确边界内。
 
 影响：
 
@@ -400,10 +402,58 @@
 - 保持当前“formal 注册 + pending 预登记 + 成功晋升 + 失败回滚”模型，不要再回退为“只有加载成功后才注册”；
 - 后续若继续加强这一块，更适合继续补跨进程激活重定向、事件派发与窗口定位链路的自动化回归，而不是重新调整语义边界。
 
+### D-09 工作区导入多线程扩展规范已定义但实现仍保持串行
+
+当前状态：
+
+- `src/AssestBundleTools.Application/Workspace/Internal/WorkspaceImportProcessingCoordinator.cs`
+  当前仍按单循环串行执行来源指纹、缓存复用判断、解密、Reader 读取、缓存保存与陈旧缓存清理。
+- `src/AssestBundleTools.Infrastructure/Bundles/Decryption/ExternalProcessAssetBundleDecryptor.cs`
+  当前工作目录与输出文件生成规则仍主要围绕“源文件名”展开，尚未升级为
+  `workspaceKey + decryptorId + bundleCacheKey` 级别的稳定隔离路径。
+- `docs/design/workspace-management.md`
+  当前已经把多线程导入正式收敛为：
+  - 同一 `workspaceKey` 只允许一个进行中的导入作业
+  - `串行计划 -> bundle 粒度有界并行 worker -> 串行提交`
+  - 默认 worker 并发度为 `1 / 2 / 3 / 4`，且每个工作区上限不超过 `4`
+- 也就是说，仓库规范已经明确，
+  但当前代码仍停留在“结构上适合扩展、实现上仍串行”的过渡态。
+
+与规范冲突点：
+
+- `workspace-management.md` 已明确：
+  - 多线程导入的并发边界必须停留在 `Application` 导入链路内部
+  - 同一工作区需要先有执行闸门，再允许 bundle 粒度有界并行
+  - 缓存写入、预览清理和元数据回写必须保持串行提交
+- 当前实现虽然没有违反这些规则，
+  但也还没有真正落地这些规则要求的执行闸门、三段模型与 staging 唯一路径。
+
+影响：
+
+- 当前实现仍然稳定，但无法安全地直接通过 `Parallel.ForEachAsync(...)`
+  之类方式把现有串行循环“原地并行化”；
+- 如果不先收口 staging 路径和共享状态边界，
+  后续并发导入很容易出现：
+  - 同名 bundle 派生文件覆写
+  - 共享统计/诊断集合竞争
+  - 缓存删除与缓存保存交错
+  - 工作区重新打开与手动导入刷新互相重叠
+
+建议收口方向：
+
+- 先补 `WorkspaceImportExecutionGate`，
+  统一保护手动导入、工作区重新打开时的自动刷新，以及后续缓存重建入口；
+- 再把导入协调器拆为 `PlanBuilder -> Worker Pool -> Committer`，
+  避免在现有串行协调器上直接叠加共享状态并发；
+- 把外部解密 staging 路径升级为 `workspaceKey + decryptorId + bundleCacheKey`
+  级别的唯一目录；
+- 最后按既定默认并发度规则打开 bundle 粒度有界并行，并同步补并发回归测试。
+
 ## 5. 建议的收口顺序
 
-本轮 D-01 ~ D-08 已按原推荐顺序完成阶段性收口。
-当前除 D-06 后续深层测试补齐外，其余非测试收口项已进入“维持边界、防止回弹”的阶段。
+本轮 D-01 ~ D-09 已按原推荐顺序完成阶段性梳理。
+当前除 D-06 后续深层测试补齐，以及 D-09 的多线程导入实现收口外，
+其余非测试收口项已进入“维持边界、防止回弹”的阶段。
 
 后续继续推进时，仍建议沿同一原则演进，而不是回头做一次性大重构：
 

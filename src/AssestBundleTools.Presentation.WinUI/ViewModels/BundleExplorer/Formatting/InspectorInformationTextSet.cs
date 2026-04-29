@@ -1,6 +1,11 @@
 using System.Globalization;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 
 /// <summary>
 /// 承载检查器信息卡所需的本地化标题与字段名。

@@ -24,4 +24,5 @@ public sealed record PreviewCacheDescriptorDto(
     AssetPreviewMessageDto? PreviewMessage = null,
     long? PreferredDisplaySizeInBytes = null,
     string? AudioTranscoderId = null,
-    string? AudioTranscoderVersion = null);
+    string? AudioTranscoderVersion = null,
+    AssetPreviewImageOverlayDto? ImageOverlay = null);

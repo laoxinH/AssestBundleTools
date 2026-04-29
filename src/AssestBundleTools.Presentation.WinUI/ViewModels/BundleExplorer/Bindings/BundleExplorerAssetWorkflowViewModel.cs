@@ -6,9 +6,14 @@ using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
-using AssestBundleTools.Presentation.WinUI.ViewModels.Common;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
 /// 承载资源列表、资产详情标签、检查器内容与预览/替换动作的编排状态。

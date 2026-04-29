@@ -226,7 +226,8 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             PreviewMessage: previewContent.PreviewMessage,
             PreferredDisplaySizeInBytes: previewContent.PreferredDisplaySizeInBytes,
             AudioTranscoderId: previewContent.AudioTranscoderId,
-            AudioTranscoderVersion: previewContent.AudioTranscoderVersion);
+            AudioTranscoderVersion: previewContent.AudioTranscoderVersion,
+            ImageOverlay: previewContent.ImageOverlay);
         previewCacheStore.Save(new PreviewCachePayloadDto(descriptor, previewContent.Content));
 
         return Result<AssetPreviewDto>.Success(MapPreviewDto(
@@ -380,7 +381,8 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 PreferredDisplaySizeInBytes: descriptor.PreferredDisplaySizeInBytes,
                 IsFromCache: isFromCache,
                 GeneratedAtUtc: descriptor.GeneratedAtUtc,
-                Diagnostic: diagnostic)
+                Diagnostic: diagnostic,
+                ImageOverlay: descriptor.ImageOverlay)
             : new AssetPreviewDto(
                 WorkspaceId: query.WorkspaceId,
                 BundleId: query.BundleId,
@@ -395,7 +397,8 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 PreferredDisplaySizeInBytes: descriptor.PreferredDisplaySizeInBytes,
                 IsFromCache: isFromCache,
                 GeneratedAtUtc: descriptor.GeneratedAtUtc,
-                Diagnostic: diagnostic);
+                Diagnostic: diagnostic,
+                ImageOverlay: descriptor.ImageOverlay);
     }
 
     private static AssetPreviewDto BuildFallbackSummaryPreview(
@@ -417,7 +420,8 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             PreferredDisplaySizeInBytes: null,
             IsFromCache: false,
             GeneratedAtUtc: DateTimeOffset.UtcNow,
-            Diagnostic: diagnostic);
+            Diagnostic: diagnostic,
+            ImageOverlay: null);
     }
 
     private static string CreatePreviewCacheKey(string bundleCacheKey, string assetId)

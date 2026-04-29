@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.Common;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 
 /// <summary>
 /// 为展示层的可观察集合提供稳定的顺序回写能力。

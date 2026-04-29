@@ -4,7 +4,12 @@ using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 
 /// <summary>
 /// 统一处理页面级结果失败、本地化错误消息和通知桥接。

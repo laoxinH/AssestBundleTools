@@ -3,7 +3,7 @@ using AssestBundleTools.Presentation.WinUI.ViewModels.BatchTasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace AssestBundleTools.Presentation.WinUI.Views;
+namespace AssestBundleTools.Presentation.WinUI.Views.BatchTasks;
 
 /// <summary>
 /// 承载工作区变更摘要、批量提取、批量替换和保存前摘要的批处理任务页。

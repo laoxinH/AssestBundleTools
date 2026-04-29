@@ -1,6 +1,6 @@
 using System.Windows.Input;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.Common;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 
 /// <summary>
 /// 封装异步命令，避免页面事件里反复手写相同的忙碌态判断。

@@ -19,10 +19,11 @@ using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
-using AssestBundleTools.Presentation.WinUI.ViewModels.Common;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using Microsoft.UI.Xaml;
 
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BatchTasks;
 
 /// <summary>
@@ -33,16 +34,16 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BatchTasks;
 /// 这一阶段已经补齐批量提取骨架、批量替换骨架、保存骨架与结果明细面板，
 /// 但仍不执行真实文件导出、真实替换写回或真实保存写包。
 /// </remarks>
-public sealed class BatchTasksViewModel : ObservableObject, IDisposable
+public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
 {
     private const int MaxRecentTaskResults = 8;
 
     private readonly IWorkspaceBatchOperationsGateway _workspaceBatchOperationsGateway;
     private readonly IWorkspaceContextService _workspaceContextService;
     private readonly ILocalizationService _localizationService;
-    private readonly LocalizedValueFormatter _localizedValueFormatter;
     private readonly IAppLogService _appLogService;
     private readonly IWorkspaceImportCoordinatorService _workspaceImportCoordinatorService;
+    private readonly BatchTasksPresentationPresenter _presentationPresenter;
     private bool _isInitialized;
     private bool _isBusy;
     private string? _activeWorkspaceId;
@@ -74,14 +75,11 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
         _workspaceBatchOperationsGateway = workspaceBatchOperationsGateway ?? throw new ArgumentNullException(nameof(workspaceBatchOperationsGateway));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
-        _localizedValueFormatter = new LocalizedValueFormatter(_localizationService);
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _workspaceImportCoordinatorService = workspaceImportCoordinatorService ?? throw new ArgumentNullException(nameof(workspaceImportCoordinatorService));
+        _presentationPresenter = new BatchTasksPresentationPresenter(this, _localizationService);
 
-        ReplaceBatchExtractAssetTypeOptions(CreateAssetTypeOptions());
-        ReplaceBatchReplacementSourceOptions(CreateBatchReplacementSourceOptions());
-        BatchExtractFileNamePolicyText = GetString(ResourceKeys.BatchTasksBatchExtractFileNamePolicyRetainOriginal);
-        BatchExtractConflictPolicyText = GetString(ResourceKeys.BatchTasksBatchExtractConflictPolicySkipDuplicates);
+        _presentationPresenter.InitializeStaticState();
         ResetWorkspaceScopedExecutionState(clearTaskResults: true);
 
         RefreshCommand = new AsyncRelayCommand(
@@ -336,7 +334,7 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
         var currentWorkspaceSummary = _workspaceContextService.CurrentWorkspaceSummary;
         if (currentWorkspaceSummary is null)
         {
-            ApplyNoWorkspaceState();
+            _presentationPresenter.ApplyNoWorkspaceState();
             return;
         }
 
@@ -385,10 +383,10 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            ApplyWorkspaceSummary(summary);
-            ApplyBatchExtractionPreview(batchExtractionPreview);
-            ApplyBatchReplacementPreview(batchReplacementPreview);
-            ApplySavePreview(savePreview);
+            _presentationPresenter.ApplyWorkspaceSummary(summary);
+            _presentationPresenter.ApplyBatchExtractionPreview(batchExtractionPreview);
+            _presentationPresenter.ApplyBatchReplacementPreview(batchReplacementPreview);
+            _presentationPresenter.ApplySavePreview(savePreview);
         }
         finally
         {
@@ -420,154 +418,6 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
         await _workspaceImportCoordinatorService.RequestBundleDirectoryImportAsync();
     }
 
-    private void ApplyNoWorkspaceState()
-    {
-        _activeWorkspaceId = null;
-        WorkspaceOverviewText = GetString(ResourceKeys.BatchTasksWorkspaceOverviewEmpty);
-        ChangeSummaryText = GetString(ResourceKeys.BatchTasksChangeSummaryEmpty);
-        BatchExtractScopeText = GetString(ResourceKeys.BatchTasksBatchExtractScopeEmpty);
-        BatchExtractOutputDirectoryText = GetString(ResourceKeys.BatchTasksBatchExtractOutputDirectoryEmpty);
-        BatchExtractSummaryText = GetString(ResourceKeys.BatchTasksBatchExtractEmpty);
-        BatchReplaceScopeText = GetString(ResourceKeys.BatchTasksBatchReplaceScopeEmpty);
-        BatchReplaceSummaryText = GetString(ResourceKeys.BatchTasksBatchReplaceEmpty);
-        SaveOutputDirectoryText = GetString(ResourceKeys.BatchTasksSavePreviewOutputDirectoryEmpty);
-        SaveFileNamePolicyText = GetString(ResourceKeys.BatchTasksSavePreviewFileNamePolicyRetainOriginal);
-        SavePreviewSummaryText = GetString(ResourceKeys.BatchTasksSavePreviewEmpty);
-        ResetWorkspaceScopedExecutionState(clearTaskResults: true);
-        SummaryCards.Clear();
-        RecentChanges.Clear();
-        BatchExtractionBundles.Clear();
-        BatchReplacementBundles.Clear();
-        SavePreviewBundles.Clear();
-        SaveRiskNotes.Clear();
-        NotifyWorkspaceState();
-    }
-
-    private void ApplyWorkspaceSummary(WorkspaceChangeSummaryDto summary)
-    {
-        var sourceText = string.IsNullOrWhiteSpace(summary.SourcePath)
-            ? GetString(ResourceKeys.WorkspaceSourceNotImported)
-            : summary.SourcePath;
-
-        WorkspaceOverviewText = _localizationService.GetFormattedString(
-            ResourceKeys.BatchTasksWorkspaceOverviewFormat,
-            summary.WorkspaceDisplayName,
-            summary.BundleCount,
-            summary.AssetCount,
-            sourceText);
-
-        ChangeSummaryText = _localizationService.GetFormattedString(
-            ResourceKeys.BatchTasksChangeSummaryFormat,
-            summary.TotalChangeCount,
-            summary.ModifiedAssetCount,
-            summary.ExtractedAssetCount,
-            summary.WorkspaceReplacementCount,
-            summary.FileReplacementCount);
-
-        SummaryCards.Clear();
-        SummaryCards.Add(new BatchTaskSummaryCardViewModel(
-            GetString(ResourceKeys.BatchTasksSummaryTotalChangesTitle),
-            summary.TotalChangeCount.ToString(),
-            GetString(ResourceKeys.BatchTasksSummaryTotalChangesDescription)));
-        SummaryCards.Add(new BatchTaskSummaryCardViewModel(
-            GetString(ResourceKeys.BatchTasksSummaryModifiedTitle),
-            summary.ModifiedAssetCount.ToString(),
-            GetString(ResourceKeys.BatchTasksSummaryModifiedDescription)));
-        SummaryCards.Add(new BatchTaskSummaryCardViewModel(
-            GetString(ResourceKeys.BatchTasksSummaryExtractedTitle),
-            summary.ExtractedAssetCount.ToString(),
-            GetString(ResourceKeys.BatchTasksSummaryExtractedDescription)));
-        SummaryCards.Add(new BatchTaskSummaryCardViewModel(
-            GetString(ResourceKeys.BatchTasksSummaryReplacedTitle),
-            summary.WorkspaceReplacementCount.ToString(),
-            GetString(ResourceKeys.BatchTasksSummaryReplacedDescription)));
-        SummaryCards.Add(new BatchTaskSummaryCardViewModel(
-            GetString(ResourceKeys.BatchTasksSummaryFileReplacedTitle),
-            summary.FileReplacementCount.ToString(),
-            GetString(ResourceKeys.BatchTasksSummaryFileReplacedDescription)));
-
-        RecentChanges.Clear();
-        foreach (var item in summary.Items)
-        {
-            RecentChanges.Add(new BatchTaskChangeItemViewModel(
-                AssetName: item.AssetName,
-                BundleDisplayName: item.BundleDisplayName,
-                AssetTypeText: GetAssetTypeDisplayName(item.AssetType),
-                StateText: BuildStateText(item),
-                DetailText: BuildDetailText(item),
-                TimeText: item.LastChangedAtUtc.HasValue
-                    ? FormatTimestamp(item.LastChangedAtUtc.Value)
-                    : GetString(ResourceKeys.BatchTasksChangeTimeUnknown)));
-        }
-
-        NotifyWorkspaceState();
-    }
-
-    /// <summary>
-    /// 应用批量提取预览结果。
-    /// 当前阶段只展示当前工作区范围、筛选后的候选数量和资源包级聚合结果。
-    /// </summary>
-    private void ApplyBatchExtractionPreview(WorkspaceBatchExtractionPreviewDto preview)
-    {
-        BatchExtractScopeText = _localizationService.GetFormattedString(
-            ResourceKeys.BatchTasksBatchExtractScopeFormat,
-            preview.WorkspaceDisplayName);
-        BatchExtractOutputDirectoryText = preview.SuggestedOutputDirectory;
-        BatchExtractSummaryText = preview.CandidateAssetCount > 0
-            ? _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksBatchExtractSummaryFormat,
-                preview.CandidateAssetCount,
-                preview.CandidateBundleCount,
-                _localizedValueFormatter.FormatCompactByteSize(preview.TotalSizeInBytes))
-            : GetString(ResourceKeys.BatchTasksBatchExtractEmpty);
-
-        BatchExtractionBundles.Clear();
-        foreach (var bundlePlan in preview.BundlePlans)
-        {
-            BatchExtractionBundles.Add(new BatchTaskExtractionBundleItemViewModel(
-                BundleDisplayName: bundlePlan.BundleDisplayName,
-                SummaryText: _localizationService.GetFormattedString(
-                    ResourceKeys.BatchTasksBatchExtractBundlePlanSummaryFormat,
-                    bundlePlan.AssetCount,
-                    _localizedValueFormatter.FormatCompactByteSize(bundlePlan.TotalSizeInBytes))));
-        }
-
-        NotifyWorkspaceState();
-    }
-
-    /// <summary>
-    /// 应用批量替换预览结果。
-    /// 当前阶段把工作区中已进入替换队列的资源聚合到批处理页，先稳定承载面与结果反馈。
-    /// </summary>
-    private void ApplyBatchReplacementPreview(WorkspaceBatchReplacementPreviewDto preview)
-    {
-        BatchReplaceScopeText = _localizationService.GetFormattedString(
-            ResourceKeys.BatchTasksBatchReplaceScopeFormat,
-            preview.WorkspaceDisplayName);
-        BatchReplaceSummaryText = preview.CandidateAssetCount > 0
-            ? _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksBatchReplaceSummaryFormat,
-                preview.CandidateAssetCount,
-                preview.CandidateBundleCount,
-                preview.WorkspaceReplacementCount,
-                preview.FileReplacementCount)
-            : GetString(ResourceKeys.BatchTasksBatchReplaceEmpty);
-
-        BatchReplacementBundles.Clear();
-        foreach (var bundlePlan in preview.BundlePlans)
-        {
-            BatchReplacementBundles.Add(new BatchTaskReplacementBundleItemViewModel(
-                BundleDisplayName: bundlePlan.BundleDisplayName,
-                SummaryText: _localizationService.GetFormattedString(
-                    ResourceKeys.BatchTasksBatchReplaceBundlePlanSummaryFormat,
-                    bundlePlan.AssetCount,
-                    bundlePlan.WorkspaceReplacementCount,
-                    bundlePlan.FileReplacementCount)));
-        }
-
-        NotifyWorkspaceState();
-    }
-
     private async Task RunBatchExtractAsync()
     {
         if (IsBusy || _workspaceContextService.CurrentWorkspaceSummary is null)
@@ -593,9 +443,9 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
                 ResourceKeys.BatchTasksBatchExtractLastRunFormat,
                 extractionResult.ExtractedAssetCount,
                 extractionResult.ExtractedBundleCount,
-                FormatTimestamp(extractionResult.CompletedAtUtc));
+                _presentationPresenter.FormatTimestamp(extractionResult.CompletedAtUtc));
 
-            AddTaskExecutionResult(CreateBatchExtractTaskResult(extractionResult));
+            AddTaskExecutionResult(_presentationPresenter.CreateBatchExtractTaskResult(extractionResult));
 
             _appLogService.AppendInfo(_localizationService.GetFormattedString(
                 ResourceKeys.BatchTasksBatchExtractLogExecutedFormat,
@@ -644,15 +494,15 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
                 replacementResult.ProcessedBundleCount,
                 replacementResult.WorkspaceReplacementCount,
                 replacementResult.FileReplacementCount,
-                FormatTimestamp(replacementResult.CompletedAtUtc));
+                _presentationPresenter.FormatTimestamp(replacementResult.CompletedAtUtc));
 
-            AddTaskExecutionResult(CreateBatchReplacementTaskResult(replacementResult));
+            AddTaskExecutionResult(_presentationPresenter.CreateBatchReplacementTaskResult(replacementResult));
 
             _appLogService.AppendInfo(_localizationService.GetFormattedString(
                 ResourceKeys.BatchTasksBatchReplaceLogExecutedFormat,
                 replacementResult.ProcessedAssetCount,
                 replacementResult.ProcessedBundleCount,
-                GetBatchReplacementSourceDisplayName(replacementResult.SourceFilter)));
+                _presentationPresenter.GetBatchReplacementSourceDisplayName(replacementResult.SourceFilter)));
         }
         finally
         {
@@ -687,9 +537,9 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
                 ResourceKeys.BatchTasksSaveExecutionLastRunFormat,
                 saveResult.PlannedBundleCount,
                 saveResult.TotalChangeCount,
-                FormatTimestamp(saveResult.CompletedAtUtc));
+                _presentationPresenter.FormatTimestamp(saveResult.CompletedAtUtc));
 
-            AddTaskExecutionResult(CreateSaveTaskResult(saveResult));
+            AddTaskExecutionResult(_presentationPresenter.CreateSaveTaskResult(saveResult));
 
             _appLogService.AppendInfo(_localizationService.GetFormattedString(
                 ResourceKeys.BatchTasksSaveExecutionLogExecutedFormat,
@@ -702,86 +552,6 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
             IsBusy = false;
         }
     }
-
-    /// <summary>
-    /// 应用保存前摘要读模型。
-    /// 当前阶段仍只展示预览，不执行真实写入，因此这里专注于“输出去向”和“将写出哪些资源包”。
-    /// </summary>
-    private void ApplySavePreview(WorkspaceSavePreviewDto preview)
-    {
-        SaveOutputDirectoryText = preview.OutputDirectory;
-        SaveFileNamePolicyText = GetString(ResourceKeys.BatchTasksSavePreviewFileNamePolicyRetainOriginal);
-        SavePreviewSummaryText = preview.PlannedBundleCount > 0
-            ? _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksSavePreviewSummaryFormat,
-                preview.PlannedBundleCount,
-                preview.TotalChangeCount,
-                preview.OutputDirectory)
-            : GetString(ResourceKeys.BatchTasksSavePreviewEmpty);
-
-        SavePreviewBundles.Clear();
-        foreach (var bundlePlan in preview.BundlePlans)
-        {
-            SavePreviewBundles.Add(new BatchTaskSaveBundleItemViewModel(
-                BundleDisplayName: bundlePlan.BundleDisplayName,
-                OutputPath: bundlePlan.OutputFilePath,
-                SummaryText: _localizationService.GetFormattedString(
-                    ResourceKeys.BatchTasksSavePreviewBundlePlanSummaryFormat,
-                    bundlePlan.ChangeCount,
-                    bundlePlan.ModifiedAssetCount,
-                    bundlePlan.ExtractedAssetCount,
-                    bundlePlan.WorkspaceReplacementCount,
-                    bundlePlan.FileReplacementCount)));
-        }
-
-        SaveRiskNotes.Clear();
-        SaveRiskNotes.Add(new BatchTaskTextItemViewModel(GetString(ResourceKeys.BatchTasksSavePreviewRiskNoOverwrite)));
-        SaveRiskNotes.Add(new BatchTaskTextItemViewModel(GetString(ResourceKeys.BatchTasksSavePreviewRiskConflictDeferred)));
-        SaveRiskNotes.Add(new BatchTaskTextItemViewModel(GetString(ResourceKeys.BatchTasksSavePreviewRiskExecutionDeferred)));
-
-        NotifyWorkspaceState();
-    }
-
-    private BatchTaskExecutionResultItemViewModel CreateBatchExtractTaskResult(WorkspaceBatchExtractionResultDto extractionResult) =>
-        new(
-            Title: GetString(ResourceKeys.BatchTasksTaskResultBatchExtractTitle),
-            SummaryText: _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksTaskResultBatchExtractSummaryFormat,
-                extractionResult.ExtractedAssetCount,
-                extractionResult.ExtractedBundleCount),
-            DetailText: _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksTaskResultBatchExtractDetailFormat,
-                extractionResult.SuggestedOutputDirectory),
-            StatusText: GetString(ResourceKeys.BatchTasksTaskResultStatusCompleted),
-            TimeText: FormatTimestamp(extractionResult.CompletedAtUtc));
-
-    private BatchTaskExecutionResultItemViewModel CreateBatchReplacementTaskResult(WorkspaceBatchReplacementResultDto replacementResult) =>
-        new(
-            Title: GetString(ResourceKeys.BatchTasksTaskResultBatchReplaceTitle),
-            SummaryText: _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksTaskResultBatchReplaceSummaryFormat,
-                replacementResult.ProcessedAssetCount,
-                replacementResult.ProcessedBundleCount),
-            DetailText: _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksTaskResultBatchReplaceDetailFormat,
-                GetBatchReplacementSourceDisplayName(replacementResult.SourceFilter),
-                replacementResult.WorkspaceReplacementCount,
-                replacementResult.FileReplacementCount),
-            StatusText: GetString(ResourceKeys.BatchTasksTaskResultStatusCompleted),
-            TimeText: FormatTimestamp(replacementResult.CompletedAtUtc));
-
-    private BatchTaskExecutionResultItemViewModel CreateSaveTaskResult(WorkspaceSaveExecutionResultDto saveResult) =>
-        new(
-            Title: GetString(ResourceKeys.BatchTasksTaskResultSaveTitle),
-            SummaryText: _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksTaskResultSaveSummaryFormat,
-                saveResult.PlannedBundleCount,
-                saveResult.TotalChangeCount),
-            DetailText: _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksTaskResultSaveDetailFormat,
-                saveResult.OutputDirectory),
-            StatusText: GetString(ResourceKeys.BatchTasksTaskResultStatusCompleted),
-            TimeText: FormatTimestamp(saveResult.CompletedAtUtc));
 
     /// <summary>
     /// 维护最近批处理结果面板，确保页面只保留有限条目，避免把右侧结果区膨胀成日志面板。
@@ -809,139 +579,6 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
             RecentTaskResults.Clear();
         }
     }
-
-    private string BuildStateText(WorkspaceChangeItemDto item)
-    {
-        var hasWorkspaceReplacement = !string.IsNullOrWhiteSpace(item.WorkspaceReplacementSourceAssetName);
-        var hasFileReplacement = !string.IsNullOrWhiteSpace(item.FileReplacementSourceFileName);
-        var hasExtraction = item.LastExtractedAtUtc.HasValue;
-
-        return (hasWorkspaceReplacement, hasFileReplacement, hasExtraction, item.IsModified) switch
-        {
-            (true, false, true, _) => GetString(ResourceKeys.BatchTasksChangeStateWorkspaceReplacementAndExtracted),
-            (true, false, false, _) => GetString(ResourceKeys.BatchTasksChangeStateWorkspaceReplacementOnly),
-            (false, true, true, _) => GetString(ResourceKeys.BatchTasksChangeStateFileReplacementAndExtracted),
-            (false, true, false, _) => GetString(ResourceKeys.BatchTasksChangeStateFileReplacementOnly),
-            (false, false, true, true) => GetString(ResourceKeys.BatchTasksChangeStateModifiedAndExtracted),
-            (false, false, true, false) => GetString(ResourceKeys.BatchTasksChangeStateExtractedOnly),
-            _ => GetString(ResourceKeys.BatchTasksChangeStateModifiedOnly)
-        };
-    }
-
-    private string BuildDetailText(WorkspaceChangeItemDto item)
-    {
-        var hasWorkspaceReplacement = !string.IsNullOrWhiteSpace(item.WorkspaceReplacementSourceAssetName) &&
-                                      !string.IsNullOrWhiteSpace(item.WorkspaceReplacementSourceBundleDisplayName);
-        var hasFileReplacement = !string.IsNullOrWhiteSpace(item.FileReplacementSourceFileName);
-        var hasExtraction = item.LastExtractedAtUtc.HasValue;
-
-        if (hasWorkspaceReplacement && hasExtraction)
-        {
-            return _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksChangeDetailWorkspaceReplacementAndExtractedFormat,
-                item.WorkspaceReplacementSourceBundleDisplayName!,
-                item.WorkspaceReplacementSourceAssetName!,
-                FormatTimestamp(item.LastExtractedAtUtc!.Value));
-        }
-
-        if (hasWorkspaceReplacement)
-        {
-            return _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksChangeDetailWorkspaceReplacementOnlyFormat,
-                item.WorkspaceReplacementSourceBundleDisplayName!,
-                item.WorkspaceReplacementSourceAssetName!);
-        }
-
-        if (hasFileReplacement && hasExtraction)
-        {
-            return _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksChangeDetailFileReplacementAndExtractedFormat,
-                item.FileReplacementSourceFileName!,
-                FormatTimestamp(item.LastExtractedAtUtc!.Value));
-        }
-
-        if (hasFileReplacement)
-        {
-            return _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksChangeDetailFileReplacementOnlyFormat,
-                item.FileReplacementSourceFileName!,
-                item.FileReplacementSourcePath ?? item.FileReplacementSourceFileName!);
-        }
-
-        if (hasExtraction)
-        {
-            return _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksChangeDetailExtractedOnlyFormat,
-                FormatTimestamp(item.LastExtractedAtUtc!.Value));
-        }
-
-        return GetString(ResourceKeys.BatchTasksChangeDetailModifiedOnly);
-    }
-
-    private string GetAssetTypeDisplayName(AssetType assetType) =>
-        assetType switch
-        {
-            AssetType.Texture2D => GetString(ResourceKeys.AssetTypeDisplayTexture2D),
-            AssetType.Sprite => GetString(ResourceKeys.AssetTypeDisplaySprite),
-            AssetType.TextAsset => GetString(ResourceKeys.AssetTypeDisplayTextAsset),
-            AssetType.AudioClip => GetString(ResourceKeys.AssetTypeDisplayAudioClip),
-            AssetType.Mesh => GetString(ResourceKeys.AssetTypeDisplayMesh),
-            AssetType.Material => GetString(ResourceKeys.AssetTypeDisplayMaterial),
-            _ => GetString(ResourceKeys.AssetTypeDisplayUnknown)
-        };
-
-    private string GetBatchReplacementSourceDisplayName(BatchReplacementSourceKind sourceKind) =>
-        sourceKind switch
-        {
-            BatchReplacementSourceKind.Workspace => GetString(ResourceKeys.BatchTasksBatchReplaceSourceFilterWorkspace),
-            BatchReplacementSourceKind.File => GetString(ResourceKeys.BatchTasksBatchReplaceSourceFilterFile),
-            _ => GetString(ResourceKeys.BatchTasksBatchReplaceSourceFilterAll)
-        };
-
-    private string FormatTimestamp(DateTimeOffset timestamp) =>
-        timestamp.ToLocalTime().ToString("G", CultureInfo.CurrentCulture);
-
-    private void ReplaceBatchExtractAssetTypeOptions(IEnumerable<AssetTypeOptionViewModel> options)
-    {
-        BatchExtractAssetTypeOptions.Clear();
-        foreach (var option in options)
-        {
-            BatchExtractAssetTypeOptions.Add(option);
-        }
-
-        SelectedBatchExtractAssetTypeOption = BatchExtractAssetTypeOptions.FirstOrDefault();
-    }
-
-    private void ReplaceBatchReplacementSourceOptions(IEnumerable<BatchReplacementSourceOptionViewModel> options)
-    {
-        BatchReplaceSourceOptions.Clear();
-        foreach (var option in options)
-        {
-            BatchReplaceSourceOptions.Add(option);
-        }
-
-        SelectedBatchReplaceSourceOption = BatchReplaceSourceOptions.FirstOrDefault();
-    }
-
-    private IEnumerable<AssetTypeOptionViewModel> CreateAssetTypeOptions() =>
-        new[]
-        {
-            new AssetTypeOptionViewModel(GetString(ResourceKeys.AssetTypeFilterAll), null),
-            new AssetTypeOptionViewModel(GetAssetTypeDisplayName(AssetType.Texture2D), AssetType.Texture2D),
-            new AssetTypeOptionViewModel(GetAssetTypeDisplayName(AssetType.Sprite), AssetType.Sprite),
-            new AssetTypeOptionViewModel(GetAssetTypeDisplayName(AssetType.TextAsset), AssetType.TextAsset),
-            new AssetTypeOptionViewModel(GetAssetTypeDisplayName(AssetType.AudioClip), AssetType.AudioClip),
-            new AssetTypeOptionViewModel(GetAssetTypeDisplayName(AssetType.Mesh), AssetType.Mesh),
-            new AssetTypeOptionViewModel(GetAssetTypeDisplayName(AssetType.Material), AssetType.Material)
-        };
-
-    private IEnumerable<BatchReplacementSourceOptionViewModel> CreateBatchReplacementSourceOptions() =>
-        new[]
-        {
-            new BatchReplacementSourceOptionViewModel(GetString(ResourceKeys.BatchTasksBatchReplaceSourceFilterAll), BatchReplacementSourceKind.All),
-            new BatchReplacementSourceOptionViewModel(GetString(ResourceKeys.BatchTasksBatchReplaceSourceFilterWorkspace), BatchReplacementSourceKind.Workspace),
-            new BatchReplacementSourceOptionViewModel(GetString(ResourceKeys.BatchTasksBatchReplaceSourceFilterFile), BatchReplacementSourceKind.File)
-        };
 
     private void NotifyWorkspaceState()
     {
@@ -1007,3 +644,4 @@ public sealed class BatchTasksViewModel : ObservableObject, IDisposable
         _appLogService.AppendError(message);
     }
 }
+

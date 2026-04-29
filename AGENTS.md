@@ -68,6 +68,8 @@ Do not move recent-workspace restore, availability semantics, last-active worksp
 - Regular handwritten business/UI classes should usually stay within `200-500` lines.
 - Page-level facade/orchestrator viewmodels have a soft limit of `600` lines.
 - `800+` lines are split-required transitional state; `1000+` lines are not acceptable as steady state.
+- If a current change pushes a touched handwritten file above a documented threshold, or leaves a touched oversize file in place, do not only report it; continue the same change with the required split/refactor when the docs already define a clear direction.
+- Only defer the structural fix when the correct split path is genuinely ambiguous or carries a meaningful product/architecture tradeoff that the docs do not already resolve; in that case, stop and ask the user instead of guessing.
 - Prefer explicit collaborator types such as `Coordinator`, `Presenter`, `Loader`, `Formatter`, `Mapper`, `Resolver`, and `ActionHandler`.
 - Parent/page viewmodels may compose child viewmodels.
 - Avoid sibling concrete coupling, child-to-parent concrete coupling, and cyclic viewmodel graphs.
@@ -76,6 +78,7 @@ For `BundleExplorer` specifically:
 
 - New page bindings and shared page state should prefer child state hosts or explicit coordinators.
 - Do not re-grow parent compatibility passthrough properties, bridge layers, or sibling concrete coupling for convenience.
+- After extracting child state hosts or collaborators, do not let future changes quietly re-aggregate their responsibilities back into the parent/page viewmodel.
 
 ## 5. Workspace, Browsing, and Preview Rules
 
@@ -116,6 +119,11 @@ While editing:
 
 After editing:
 
+- Run a post-change compliance review on the touched area before close-out.
+- Check touched handwritten files for line-count thresholds, responsibility drift, and whether a collaborator split is now required.
+- Check touched code against documented repository constraints such as dependency direction, directory placement, localization boundaries, preview/workspace rules, and Presentation/Infrastructure separation.
+- If a documented constraint is violated and the fix direction is already defined by repo docs, continue refactoring in the same change instead of reporting-and-deferring.
+- If the correct fix is not clearly defined by the docs, or there are multiple non-obvious paths with different tradeoffs, stop and discuss it with the user before inventing a new rule in code.
 - Update relevant design docs when behavior, constraints, or implementation status changes.
 - For phased work, sync current progress, what remains out of scope, and recommended next steps.
 - For user-requested bug fixes, UI tweaks, or discussion-driven adjustments, align with the user before promoting the conclusion into long-lived design docs.

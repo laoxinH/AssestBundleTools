@@ -1,10 +1,15 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using AssestBundleTools.Domain.Bundles;
-using AssestBundleTools.Presentation.WinUI.ViewModels.Common;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using Microsoft.UI.Xaml;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
 /// 维护工作台中“资源包标签 + 资产详情标签”的页面级浏览状态。

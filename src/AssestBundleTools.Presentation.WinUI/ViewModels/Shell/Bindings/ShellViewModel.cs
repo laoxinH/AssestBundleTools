@@ -1,7 +1,8 @@
 using AssestBundleTools.Presentation.WinUI.Localization;
-using AssestBundleTools.Presentation.WinUI.ViewModels.Common;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.Shell;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Shell.Contracts;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.Shell.Bindings;
 
 /// <summary>
 /// 维护应用外壳当前导航段落的标题与描述。

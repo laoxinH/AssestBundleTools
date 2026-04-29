@@ -72,6 +72,10 @@ internal static class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldReturnCachedPreview_WhenPreviewCacheStillMatches);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldRoundTripCachedImageOverlay_WhenPreviewCacheStillMatches),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldRoundTripCachedImageOverlay_WhenPreviewCacheStillMatches);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldRegeneratePreview_WhenGeneratorVersionChanges),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldRegeneratePreview_WhenGeneratorVersionChanges);
         await RunTestAsync(

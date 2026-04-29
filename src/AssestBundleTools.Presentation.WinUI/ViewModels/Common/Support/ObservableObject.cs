@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.Common;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 
 /// <summary>
 /// 为 WinUI 页面和控件提供最基础的属性变更通知能力。

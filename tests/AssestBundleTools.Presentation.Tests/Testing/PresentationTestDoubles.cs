@@ -15,8 +15,13 @@ using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
 
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 namespace AssestBundleTools.Presentation.Tests.Testing;
 
 internal sealed class TestLocalizationService : ILocalizationService
@@ -395,3 +400,4 @@ internal sealed class TestAssetBundleDecryptor : IAssetBundleDecryptor
         CancellationToken cancellationToken = default) =>
         throw new NotSupportedException();
 }
+

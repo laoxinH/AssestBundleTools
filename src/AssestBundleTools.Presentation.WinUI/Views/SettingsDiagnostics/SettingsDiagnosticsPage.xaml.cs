@@ -3,7 +3,7 @@ using AssestBundleTools.Presentation.WinUI.Views.SettingsDiagnostics.Controls;
 using AssestBundleTools.Presentation.WinUI.ViewModels.SettingsDiagnostics;
 using Microsoft.UI.Xaml.Controls;
 
-namespace AssestBundleTools.Presentation.WinUI.Views;
+namespace AssestBundleTools.Presentation.WinUI.Views.SettingsDiagnostics;
 
 /// <summary>
 /// 设置与诊断页面。

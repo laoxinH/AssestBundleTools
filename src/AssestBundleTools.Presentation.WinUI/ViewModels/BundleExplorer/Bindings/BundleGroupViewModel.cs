@@ -1,6 +1,11 @@
-using AssestBundleTools.Presentation.WinUI.ViewModels.Common;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
 /// 表示左侧工作区树中的一组 Bundle 节点。

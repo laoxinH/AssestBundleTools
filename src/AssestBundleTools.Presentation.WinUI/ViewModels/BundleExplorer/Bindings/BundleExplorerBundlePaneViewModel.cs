@@ -4,10 +4,15 @@ using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
-using AssestBundleTools.Presentation.WinUI.ViewModels.Common;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using Microsoft.UI.Xaml;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
 /// 维护资源包浏览左侧窗格的显示状态与检索上下文。
@@ -457,3 +462,4 @@ public sealed class BundleExplorerBundlePaneViewModel : ObservableObject, IBundl
         PageStateChanged?.Invoke(this, new BundleExplorerPageStateChangedEventArgs<BundleExplorerBundlePanePageStateChange>(changeFlags));
     }
 }
+

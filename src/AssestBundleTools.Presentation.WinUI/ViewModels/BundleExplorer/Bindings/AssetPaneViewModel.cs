@@ -1,10 +1,15 @@
 using System.Collections.ObjectModel;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Workspace;
-using AssestBundleTools.Presentation.WinUI.ViewModels.Common;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using Microsoft.UI.Xaml;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
 /// 表示中间区域一个资产窗格的全部展示状态。
@@ -84,7 +89,7 @@ public sealed class AssetPaneViewModel : ObservableObject
 
     /// <summary>
     /// 标识当前窗格是否承载“多选后提取选中”快捷操作。
-    /// 当前只在主工作区活动资产窗格中开放该入口，
+    /// 当前只在主工作区活动资产窗格中开放该入口。
     /// 避免把批量操作分散到其他只读承载区域。
     /// </summary>
     public bool SupportsBatchExtractionQuickAction
@@ -325,7 +330,7 @@ public sealed class AssetPaneViewModel : ObservableObject
 
     /// <summary>
     /// 按资源标识恢复主选中项。
-    /// 如果目标资源已经不在当前筛选结果中，则保持空选中，
+    /// 如果目标资源已经不在当前筛选结果中，则保持空选中。
     /// 避免程序自动把焦点跳到筛选结果第一项。
     /// </summary>
     public bool TrySelectAsset(AssetId assetId)
@@ -398,7 +403,7 @@ public sealed class AssetPaneViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 列表行的视觉选中态直接从真实选择集合派生，
+    /// 列表行的视觉选中态直接从真实选择集合派生。
     /// 避免模板自己猜选中状态，后续扩展多选视觉时也更容易统一维护。
     /// </summary>
     private void UpdateItemSelectionState()
@@ -414,3 +419,4 @@ public sealed class AssetPaneViewModel : ObservableObject
         }
     }
 }
+

@@ -3,7 +3,12 @@ using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.Services;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 
 /// <summary>
 /// 负责工作台页面浏览状态的恢复、快照构建与节流持久化。

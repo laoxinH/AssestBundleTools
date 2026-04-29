@@ -9,7 +9,12 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Media.Core;
 using Windows.Storage.Streams;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 
 /// <summary>
 /// 负责把应用层预览 DTO 转成检查器可直接渲染的 UI 状态。
@@ -114,8 +119,11 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
 
                     assetTab.Inspector.ApplyImagePreview(
                         imageSource,
+                        imageSource.PixelWidth,
+                        imageSource.PixelHeight,
                         previewInfoRows,
-                        preview.PreviewPayloadFilePath);
+                        preview.PreviewPayloadFilePath,
+                        _assetPreviewDisplayFormatter.BuildSpritePreviewOverlayDisplayState(preview));
                     ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
                 }

@@ -33,7 +33,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         _audioPayloadTranscodingService = audioPayloadTranscodingService ?? throw new ArgumentNullException(nameof(audioPayloadTranscodingService));
     }
 
-    public string GeneratorVersion => "assetstools.preview/7";
+    public string GeneratorVersion => "assetstools.preview/8";
 
     public async Task<Result<AssetPreviewContentDto>> GenerateAsync(
         AssetPreviewBuildRequestDto request,
@@ -240,6 +240,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
             textureImage,
             BuildTexturePreviewInfoItems(baseField, textureImage, request.SizeInBytes),
             AssetsToolsAssetDisplayMetadataResolver.ResolvePreferredDisplaySizeInBytes(AssetClassID.Texture2D, baseField),
+            imageOverlay: null,
             out previewContent);
     }
 
@@ -313,14 +314,13 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
             return false;
         }
 
-        var spriteImage = TryCropSpriteTexture(baseField, textureImage, out var croppedSpriteImage, out var cropMetadata)
-            ? croppedSpriteImage
-            : textureImage;
+        _ = TryCropSpriteTexture(baseField, textureImage, out _, out var cropMetadata);
 
         return TryEncodeTexturePreview(
-            spriteImage,
-            BuildSpritePreviewInfoItems(baseField, textureField, spriteImage, pathId.Value, cropMetadata, request.SizeInBytes),
+            textureImage,
+            BuildSpritePreviewInfoItems(baseField, textureField, textureImage, pathId.Value, cropMetadata, request.SizeInBytes),
             preferredDisplaySizeInBytes: null,
+            imageOverlay: BuildSpritePreviewImageOverlay(textureImage, cropMetadata),
             out previewContent);
     }
 
@@ -377,11 +377,11 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         }
 
         croppedImage = new DecodedTextureImage(cropWidth, cropHeight, croppedPixels);
+        var cropYFromTop = Math.Max(0, sourceImage.Height - (cropYFromBottom + cropHeight));
+
         cropMetadata = new SpriteCropMetadata(
-            X: x.Value,
-            Y: y.Value,
-            Width: width.Value,
-            Height: height.Value,
+            PixelX: cropX,
+            PixelYFromTop: cropYFromTop,
             PixelWidth: cropWidth,
             PixelHeight: cropHeight);
         return true;
@@ -391,6 +391,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         DecodedTextureImage textureImage,
         IReadOnlyList<AssetPreviewInfoItemDto> previewInfoItems,
         long? preferredDisplaySizeInBytes,
+        AssetPreviewImageOverlayDto? imageOverlay,
         out AssetPreviewContentDto previewContent)
     {
         previewContent = null!;
@@ -402,7 +403,8 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
                 ContentType: PngContentType,
                 Content: EncodeRgbaPng(textureImage.Width, textureImage.Height, textureImage.RgbaPixels),
                 PreviewInfoItems: previewInfoItems,
-                PreferredDisplaySizeInBytes: preferredDisplaySizeInBytes);
+                PreferredDisplaySizeInBytes: preferredDisplaySizeInBytes,
+                ImageOverlay: imageOverlay);
             return true;
         }
         catch (Exception)
@@ -603,28 +605,46 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
     private static IReadOnlyList<AssetPreviewInfoItemDto> BuildSpritePreviewInfoItems(
         AssetTypeValueField spriteField,
         AssetTypeValueField textureField,
-        DecodedTextureImage spriteImage,
+        DecodedTextureImage textureImage,
         long texturePathId,
         SpriteCropMetadata cropMetadata,
         long serializedObjectSizeInBytes)
     {
         var items = new List<AssetPreviewInfoItemDto>();
-        AddTextInfo(items, AssetPreviewInfoKey.ImageDimensions, FormatDimensions(spriteImage.Width, spriteImage.Height));
+        AddTextInfo(items, AssetPreviewInfoKey.ImageDimensions, FormatDimensions(textureImage.Width, textureImage.Height));
         AddTextInfo(items, AssetPreviewInfoKey.PreviewPixelEncoding, PreviewPixelEncoding);
         AddTextInfo(items, AssetPreviewInfoKey.PreviewOutputFormat, PreviewContainerEncoding);
         AddByteSizeInfo(items, AssetPreviewInfoKey.SerializedObjectSize, serializedObjectSizeInBytes);
         AddInteger64Info(items, AssetPreviewInfoKey.SpriteTexturePathId, texturePathId);
         AddDecimalInfo(items, AssetPreviewInfoKey.SpritePixelsPerUnit, AssetsToolsFieldReader.ReadFloat(AssetsToolsFieldReader.TryGetField(spriteField, "m_PixelsToUnits")));
-        AddTextInfo(items, AssetPreviewInfoKey.SpriteTextureRect, FormatRect(AssetsToolsFieldReader.TryGetField(spriteField, "m_RD", "textureRect")));
+        AddTextInfo(items, AssetPreviewInfoKey.SpriteTextureRect, FormatSpritePreviewRect(cropMetadata, spriteField));
         AddTextInfo(items, AssetPreviewInfoKey.SpriteCropSize, cropMetadata.PixelWidth > 0 && cropMetadata.PixelHeight > 0
             ? FormatDimensions(cropMetadata.PixelWidth, cropMetadata.PixelHeight)
             : null);
-        AddTextInfo(items, AssetPreviewInfoKey.SpriteCropOrigin, cropMetadata.Width > 0 && cropMetadata.Height > 0
-            ? FormattableString.Invariant($"x={cropMetadata.X:0.###}, y={cropMetadata.Y:0.###}")
+        AddTextInfo(items, AssetPreviewInfoKey.SpriteCropOrigin, cropMetadata.PixelWidth > 0 && cropMetadata.PixelHeight > 0
+            ? FormattableString.Invariant($"x={cropMetadata.PixelX}, y={cropMetadata.PixelYFromTop}")
             : null);
-        AddTextInfo(items, AssetPreviewInfoKey.SpriteSourceTextureDimensions, FormatTextureDimensions(textureField));
         AddIntegerInfo(items, AssetPreviewInfoKey.SpriteSourceTextureFormatId, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(textureField, "m_TextureFormat")));
         return items;
+    }
+
+    private static AssetPreviewImageOverlayDto? BuildSpritePreviewImageOverlay(
+        DecodedTextureImage textureImage,
+        SpriteCropMetadata cropMetadata)
+    {
+        if (cropMetadata.PixelWidth <= 0 || cropMetadata.PixelHeight <= 0)
+        {
+            return null;
+        }
+
+        return new AssetPreviewImageOverlayDto(
+            CanvasPixelWidth: textureImage.Width,
+            CanvasPixelHeight: textureImage.Height,
+            HighlightRegion: new AssetPreviewImageRegionDto(
+                X: cropMetadata.PixelX,
+                Y: cropMetadata.PixelYFromTop,
+                Width: cropMetadata.PixelWidth,
+                Height: cropMetadata.PixelHeight));
     }
 
     private static int CountArray(AssetTypeValueField baseField, params string[] path)
@@ -800,20 +820,21 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
             $"x={x.Value:0.###}, y={y.Value:0.###}, w={width.Value:0.###}, h={height.Value:0.###}");
     }
 
-    private static string? FormatTextureDimensions(AssetTypeValueField textureField)
-    {
-        var width = AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(textureField, "m_Width"));
-        var height = AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(textureField, "m_Height"));
-        if (!width.HasValue || !height.HasValue)
-        {
-            return null;
-        }
-
-        return $"{width.Value.ToString(CultureInfo.InvariantCulture)} x {height.Value.ToString(CultureInfo.InvariantCulture)}";
-    }
-
     private static string FormatDimensions(int width, int height) =>
         $"{width.ToString(CultureInfo.InvariantCulture)} x {height.ToString(CultureInfo.InvariantCulture)}";
+
+    private static string? FormatSpritePreviewRect(
+        SpriteCropMetadata cropMetadata,
+        AssetTypeValueField spriteField)
+    {
+        if (cropMetadata.PixelWidth > 0 && cropMetadata.PixelHeight > 0)
+        {
+            return FormattableString.Invariant(
+                $"x={cropMetadata.PixelX}, y={cropMetadata.PixelYFromTop}, w={cropMetadata.PixelWidth}, h={cropMetadata.PixelHeight}");
+        }
+
+        return FormatRect(AssetsToolsFieldReader.TryGetField(spriteField, "m_RD", "textureRect"));
+    }
 
     private static AssetClassID ResolveClassId(int rawTypeId)
     {
@@ -912,10 +933,8 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
     private readonly record struct DecodedTextureImage(int Width, int Height, byte[] RgbaPixels);
 
     private readonly record struct SpriteCropMetadata(
-        float X,
-        float Y,
-        float Width,
-        float Height,
+        int PixelX,
+        int PixelYFromTop,
         int PixelWidth,
         int PixelHeight);
 }

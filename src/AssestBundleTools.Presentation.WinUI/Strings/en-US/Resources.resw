@@ -747,6 +747,9 @@
   <data name="InspectorPanelView.PreviewOpenLocationButton.ToolTip" xml:space="preserve">
     <value>Open preview file location</value>
   </data>
+  <data name="InspectorPanelView.SpritePreviewOverlay.Badge.Format" xml:space="preserve">
+    <value>Crop x={0}, y={1} · {2} x {3}</value>
+  </data>
   <data name="InspectorPanelView.AudioTransport.Play.ToolTip" xml:space="preserve">
     <value>Play</value>
   </data>

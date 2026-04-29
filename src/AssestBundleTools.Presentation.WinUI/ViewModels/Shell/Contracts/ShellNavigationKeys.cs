@@ -1,4 +1,4 @@
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.Shell;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.Shell.Contracts;
 
 /// <summary>
 /// 集中定义应用外壳中的导航标识。

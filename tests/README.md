@@ -60,6 +60,17 @@
 - 不依赖脆弱的休眠等待、竞态时序或当前系统语言文案
 - 需要文件系统时，优先使用受控临时目录并在测试内自行清理
 
+命令行验证备注：
+
+- `AssestBundleTools.Application.Tests` 和 `AssestBundleTools.Infrastructure.Tests` 当前都是零依赖控制台 runner。
+  在受限终端或沙箱环境里执行 `dotnet run` / `dotnet test` 时，若默认用户目录不可写，先设置可写的 `DOTNET_CLI_HOME`，并建议同时设置 `DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1`。
+- `AssestBundleTools.Presentation.Tests` 项目固定为 `x86 / win-x86`。
+  若用 `MSBuild` 或 `dotnet test` 单独验证它，请显式使用 `Platform=x86`，否则容易因为引用链先产出 `x64` DLL 而触发 `MSB3270`。
+- `AssestBundleTools.Infrastructure.Tests` 会在解析引用前先构建 `src/AssestBundleTools.Infrastructure`，而 `Presentation.Tests` 也会带起同一组上游项目。
+  因此这两类验证不要并行跑；并行时容易争用 `src/*/obj` 或 `src/*/bin`，导致 `CS2012`、`MSB3021`、`MSB3027`。
+- 如果只是为了避开运行中进程或 DLL 文件锁，优先保留默认 `obj`，只在解决方案或项目构建时重定向 `OutDir`。
+  不建议把 `BaseIntermediateOutputPath` 当成通用解法；这次验证中它曾引出 `NETSDK1004` 和 `CS0579` 之类与真实代码无关的噪声错误。
+
 断言风格约束：
 
 - 优先断言稳定契约和可观察结果，例如 `Result`、错误码、消息键、结构化参数、DTO 字段、摘要和页面级状态变化

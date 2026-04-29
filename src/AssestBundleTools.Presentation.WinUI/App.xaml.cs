@@ -2,11 +2,12 @@ using AssestBundleTools.Presentation.WinUI.Diagnostics;
 using AssestBundleTools.Presentation.WinUI.Composition;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
-using AssestBundleTools.Presentation.WinUI.ViewModels.Shell;
 using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Workspace.Services;
 using System.Diagnostics;
 
+using AssestBundleTools.Presentation.WinUI.ViewModels.Shell.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Shell.Contracts;
 namespace AssestBundleTools.Presentation.WinUI;
 
 /// <summary>
@@ -146,10 +147,10 @@ public partial class App : Microsoft.UI.Xaml.Application
     }
 
     /// <summary>
-    /// 统一处理“工作区是否已经打开”的激活逻辑：
+    /// 统一处理“工作区是否已经打开”的激活逻辑。
     /// 1. 先检查当前进程中的窗口是否已经承载该工作区；
     /// 2. 若没有，再尝试激活其他进程中的既有实例。
-    /// 这样控制台页和工作台页都不需要各自维护一套同进程/跨进程判断。
+    /// 这样控制台页和工作台页都不需要各自维护一套同进程 / 跨进程判断。
     /// </summary>
     public bool TryActivateOpenedWorkspace(WorkspaceNavigationRequest navigationRequest)
     {
@@ -170,7 +171,7 @@ public partial class App : Microsoft.UI.Xaml.Application
 
     /// <summary>
     /// 当前窗口尚未承载任何工作区时，首次打开工作区应优先复用当前窗口。
-    /// 这样“新建窗口”偏好不会在应用刚启动、控制台还是空白态时立刻派生第二个主进程，
+    /// 这样“新建窗口”偏好不会在应用刚启动、控制台还是空白态时立刻派生第二个主进程。
     /// 更符合桌面应用首次进入工作台的直觉行为。
     /// </summary>
     public bool ShouldReuseCurrentWindowForFirstWorkspace(MainWindow? window)
@@ -225,7 +226,7 @@ public partial class App : Microsoft.UI.Xaml.Application
     }
 
     /// <summary>
-    /// 页面层只在工作区真正绑定成功后回写当前窗口的承载关系，
+    /// 页面层只在工作区真正绑定成功后回写当前窗口的承载关系。
     /// 进程级占用与跨进程激活则统一由协调服务管理。
     /// </summary>
     public string RegisterWindowWorkspace(MainWindow window, WorkspaceNavigationRequest navigationRequest)
@@ -298,7 +299,7 @@ public partial class App : Microsoft.UI.Xaml.Application
 
     /// <summary>
     /// 启动入口统一在这里决定首屏导航目标。
-    /// 这样“命令行启动 / 自动恢复上次工作区 / 默认控制台页”三类入口
+    /// 这样“命令行启动 / 自动恢复上次工作区 / 默认控制台页”三类入口，
     /// 都能在创建主窗口前先完成跨进程去重判断。
     /// </summary>
     private ShellLaunchRequest? ResolveInitialLaunchRequest()
@@ -445,3 +446,4 @@ public partial class App : Microsoft.UI.Xaml.Application
         Debug.WriteLine($"Unobserved task exception: {e.Exception}");
     }
 }
+

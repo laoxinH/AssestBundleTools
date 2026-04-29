@@ -2,7 +2,12 @@ using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Presentation.WinUI.Localization;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 
 /// <summary>
 /// 负责把结构化预览 DTO 转成检查器可直接消费的展示文本。
@@ -93,6 +98,38 @@ internal sealed class AssetPreviewDisplayFormatter
             DurationBadgeText: duration,
             ChannelBadgeText: BuildAudioChannelBadgeText(channelCount),
             FrequencyBadgeText: frequency);
+    }
+
+    public SpritePreviewOverlayDisplayState? BuildSpritePreviewOverlayDisplayState(AssetPreviewDto preview)
+    {
+        ArgumentNullException.ThrowIfNull(preview);
+
+        var overlay = preview.ImageOverlay;
+        var region = overlay?.HighlightRegion;
+        if (preview.Kind != AssetPreviewKind.Image ||
+            overlay is null ||
+            region is null ||
+            overlay.CanvasPixelWidth <= 0 ||
+            overlay.CanvasPixelHeight <= 0 ||
+            region.Width <= 0 ||
+            region.Height <= 0)
+        {
+            return null;
+        }
+
+        return new SpritePreviewOverlayDisplayState(
+            CanvasWidth: overlay.CanvasPixelWidth,
+            CanvasHeight: overlay.CanvasPixelHeight,
+            RegionX: region.X,
+            RegionY: region.Y,
+            RegionWidth: region.Width,
+            RegionHeight: region.Height,
+            BadgeText: _localizationService.GetFormattedString(
+                ResourceKeys.InspectorSpritePreviewOverlayBadgeFormat,
+                FormatOverlayNumber(region.X),
+                FormatOverlayNumber(region.Y),
+                FormatOverlayNumber(region.Width),
+                FormatOverlayNumber(region.Height)));
     }
 
     private string ResolvePreviewInfoLabel(AssetPreviewInfoKey key)
@@ -229,6 +266,11 @@ internal sealed class AssetPreviewDisplayFormatter
             .FirstOrDefault(candidate => candidate.Key == key)?
             .Int64Value;
     }
+
+    private static string FormatOverlayNumber(double value)
+    {
+        return value.ToString("0.###", CultureInfo.CurrentCulture);
+    }
 }
 
 /// <summary>
@@ -240,3 +282,15 @@ public sealed record AudioPreviewDisplayState(
     string DurationBadgeText,
     string ChannelBadgeText,
     string FrequencyBadgeText);
+
+/// <summary>
+/// 表示 Sprite 图片预览叠加裁切框所需的展示状态。
+/// </summary>
+public sealed record SpritePreviewOverlayDisplayState(
+    double CanvasWidth,
+    double CanvasHeight,
+    double RegionX,
+    double RegionY,
+    double RegionWidth,
+    double RegionHeight,
+    string BadgeText);

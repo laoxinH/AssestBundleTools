@@ -747,6 +747,9 @@
   <data name="InspectorPanelView.PreviewOpenLocationButton.ToolTip" xml:space="preserve">
     <value>打开预览文件所在位置</value>
   </data>
+  <data name="InspectorPanelView.SpritePreviewOverlay.Badge.Format" xml:space="preserve">
+    <value>裁切 x={0}, y={1} · {2} x {3}</value>
+  </data>
   <data name="InspectorPanelView.AudioTransport.Play.ToolTip" xml:space="preserve">
     <value>播放</value>
   </data>

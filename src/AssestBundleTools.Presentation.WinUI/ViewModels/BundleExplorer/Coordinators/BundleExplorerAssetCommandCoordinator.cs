@@ -4,7 +4,12 @@ using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 
 /// <summary>
 /// 聚合资产级命令的前置条件判定与页面动作编排，避免工作流主类继续堆积命令入口细节。
@@ -85,7 +90,7 @@ internal sealed class BundleExplorerAssetCommandCoordinator
             return;
         }
 
-        var previewPayloadFilePath = _getInspector().PreviewPayloadFilePath;
+        var previewPayloadFilePath = _getInspector().Preview.PreviewPayloadFilePath;
         if (string.IsNullOrWhiteSpace(previewPayloadFilePath))
         {
             return;

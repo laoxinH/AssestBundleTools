@@ -10,7 +10,12 @@ using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 
 /// <summary>
 /// 负责资产文档标签的激活、同步、加载与关闭编排。
@@ -113,10 +118,11 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         if (preferredAssetTab is not null)
         {
             // 只有当资源仍在当前列表里可见时，才回写列表选中态。
-            // 若当前列表为空或该资源被筛选隐藏，则保持详情标签独立存在。
-            var shouldSynchronizePaneSelection = _primaryPane.Items.Count > 0 &&
-                                                 (_primaryPane.SelectedAsset is null ||
-                                                  !_primaryPane.SelectedAsset.Item.AssetId.Equals(preferredAssetTab.AssetId));
+            // 若该资源已被筛选隐藏，则保持详情标签独立存在。
+            var shouldSynchronizePaneSelection =
+                _primaryPane.Items.Any(item => item.Item.AssetId.Equals(preferredAssetTab.AssetId)) &&
+                (_primaryPane.SelectedAsset is null ||
+                 !_primaryPane.SelectedAsset.Item.AssetId.Equals(preferredAssetTab.AssetId));
             await SetActiveAssetDocumentTabAsync(
                 activeBundleTab,
                 preferredAssetTab,
@@ -297,7 +303,7 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
                 : null;
         }
 
-        // 当当前列表因筛选暂时没有选中项时，仍优先保留已有详情标签，
+        // 当当前列表因筛选暂时没有选中项时，仍优先保留已有详情标签。
         // 避免“列表为空”把右侧资产文档上下文误清空。
         return bundleTab.AssetTabs.FirstOrDefault();
     }
@@ -487,3 +493,4 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         return false;
     }
 }
+

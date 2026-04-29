@@ -391,8 +391,11 @@ AssestBundleTools.Infrastructure/
 - 不直接参与绑定的协作对象，应使用 `Coordinator`、`Presenter`、`Formatter`、`Resolver`、`Loader`、`ActionHandler`、`Contracts` 等更明确的职责命名；不要为了迎合目录名而伪装成 `ViewModel`。
 - 对于很小的功能范围，功能目录下可以临时并列放置少量协作对象；但当某个功能目录开始长期承载多类职责时，应继续在该功能目录内拆出明确子目录，如 `Bindings`、`Coordinators`、`Presenters`、`Formatting`、`Contracts`、`ActionHandlers`、`State`。
 - `Services/` 仅承载应用级或多功能共享的 Presentation 服务；功能局部工作流协作对象不应因为“也是服务”就提升到全局 `Services/`。
+- 当 `Services/` 已长期承载多个稳定主题时，也应继续在壳内按稳定职责拆分，如 `Services/Feedback`、`Services/Preferences`、`Services/Platform`、`Services/Workspace`、`Services/AssetBundles`；不要把通知、偏好、工作区编排、平台适配和资源包展示辅助长期平铺在同一层。
 - `Views/` 可以保留少量应用级页面文件；可复用控件放在 `Views/Controls/`，应用级共享视图表面放在 `Views/Shared/`，持续增长的功能视图族应优先落到 `Views/<Feature>/`。
+- 当某个功能已经同时拥有页面和局部控件时，页面本身也应优先进入 `Views/<Feature>/`，不要继续把 `*Page` 平铺在 `Views/` 根目录；`ShellPage` 这类应用级壳页可保留在根目录。
 - 当某个控件明显只服务单一页面域时，应优先放到 `Views/<Feature>/Controls/`；`Views/Controls/` 更适合跨页面共享对话内容、通用控件或暂时无法归属到单一功能的视图片段。
+- 当页面 code-behind 开始长期承载明确的页面视图行为协作，如窗口注册、标签同步、局部动画或页面静态 chrome 同步时，应优先在 `Views/<Feature>/Coordinators/`、`Views/<Feature>/Presenters/` 等明确子目录中拆出页面协作对象，而不是继续把这些职责堆回单一 `*Page.xaml.cs`。
 - 仍处于 `ViewModels/<Feature>/` 根目录平铺多角色文件的区域，应视为可继续渐进收口的功能包过渡态；后续新增类型时，优先在该功能包内补齐明确子目录，而不是继续把不同角色平铺在同一层。
 - `ViewModels/Common/Support/` 这类共享 MVVM 基础支撑目录可以保留，但只应用于跨功能复用的稳定基类、命令封装和轻量支撑类型。
 
@@ -414,13 +417,27 @@ AssestBundleTools.Presentation.WinUI/
     Common/
       Support/
     Home/
+  Services/
+    Feedback/
+    Preferences/
+    Platform/
+    Workspace/
+    AssetBundles/
   Views/
+    BatchTasks/
+      BatchTasksPage.xaml
     BundleExplorer/
+      BundleExplorerPage.xaml
+      Coordinators/
       Controls/
+    Home/
+      HomePage.xaml
     SettingsDiagnostics/
+      SettingsDiagnosticsPage.xaml
       Controls/
     Controls/
     Shared/
+    ShellPage.xaml
 ```
 
 ### 5.7 Tests 层
@@ -766,6 +783,13 @@ Presentation 根据资源键:
 - 手写非生成代码文件达到 `800` 行时，视为必须拆分，不应继续直接堆加新功能。
 - 手写非生成代码文件超过 `1000` 行时，只能视为阶段性过渡状态，必须在架构文档或路线图中登记后续收口计划。
 
+执行语义：
+
+- 若当前变更触达的手写文件已经超过上述阈值，或本次修改导致其越过阈值，而文档已明确了推荐拆分方向，则该次变更应继续完成必要的拆分/收口，不应只在结项说明中报告后延。
+- “先报告、后续再说”只适用于拆分路径存在真实歧义，或不同拆分方案会带来明显产品/架构取舍，且现有文档尚未给出答案的情况；遇到这种情况应先和用户确认，而不是自行发明新边界。
+- 不允许仅通过 `partial`、区域折叠或机械搬运代码块来规避行数约束；若职责边界、依赖关系和变化原因没有变清晰，视为未完成拆分。
+- 对已拆出子状态宿主、`Coordinator`、`Presenter`、`ActionHandler` 的页面域，后续修改不得再把同类职责静默回灌到父级 `ViewModel`，也不得重新长出宽兼容透传层来掩盖耦合。
+
 除行数外，还应同时检查职责数量：
 
 - 一个类如果同时回答超过 `3` 个独立问题，应优先拆分，即使尚未超过行数阈值。
@@ -793,6 +817,25 @@ Presentation 根据资源键:
 - 优先抽离不需要直接属性通知的纯协作逻辑，避免生成更多“名为 ViewModel、实为工具箱”的类型。
 - 拆分后主类应退回为外观/协调器，而不是继续保留全部细节实现。
 - 若当前阶段因交付节奏暂时无法完全拆分，应在文档中明确登记为过渡状态，而不是默许其持续膨胀。
+
+### 10.4.1 修改后合规检查
+
+每次非琐碎修改结束后，应对本次触达范围执行一次最小合规检查，而不是仅以“代码能编译”作为完成标准。
+
+至少检查以下事项：
+
+- 触达的手写业务文件是否越过 `200-500 / 600 / 800 / 1000+` 约束，以及是否已经出现职责数量失控。
+- `ViewModel` 之间是否重新长出 sibling 具体类型依赖、子依赖父、循环依赖或宽兼容透传层。
+- 依赖方向是否仍满足 `Presentation -> Application -> Domain` 与 `Infrastructure -> Application + Domain`。
+- `Presentation.WinUI/Composition/` 之外是否重新出现 `Presentation -> Infrastructure` 直接引用。
+- 目录放置、命名和协作对象命名是否仍符合本文档约束，而不是把新类型塞进泛化目录或伪装成 `ViewModel`。
+- 用户可见文本、预览读取链路、工作区持久化/运行时边界是否重新违背既有规则。
+
+处理要求：
+
+- 若检查发现的是“文档已明确定义如何修正”的违规项，应在同一变更中继续修正，不应只登记已知问题后结束。
+- 若检查发现的问题涉及未定义边界、存在多个非显然拆分方向，或修正会改变产品行为/长期架构承诺，应先与用户确认。
+- 只有在文档未定义、且用户明确接受延后处理时，才允许把该问题保留为后续代办。
 
 ### 10.5 通用逻辑抽取与 Helper 使用约束
 
@@ -978,6 +1021,23 @@ UI 组件设计必须优先考虑项目级复用性，避免每个页面单独�
 - `zh-CN` 和 `en-US` 键集合是否一致
 - `Presentation` 是否绕过 `ResourceKeys` 直接写资源键字面量
 - `Presentation -> Infrastructure` 受控例外边界是否被新代码破坏
+
+### 12.6 修改后代码审查与 Guardrail 执行
+
+除自动化测试外，每次完成非琐碎修改后还应执行一轮面向文档约束的代码审查。
+
+建议把这轮审查视为交付关闭前的必做步骤，至少覆盖：
+
+- 本次触达文件是否命中 `10.4` 的体量阈值或职责失衡信号。
+- 本次改动是否破坏 `8.1` 的 `ViewModel` 依赖边界，或重新引入 sibling 具体耦合、子到父耦合、循环依赖。
+- 本次改动是否破坏 `4.x / 7` 的分层依赖方向、`Composition/` 例外边界和用户文本资源化要求。
+- 本次改动是否绕开了工作区、导入、预览、缓存等既有窄网关与受控流程。
+
+执行原则：
+
+- 文档已经明确定义的违规项，不应以“后续再整理”为常态处理方式；发现后应在同一变更继续修正。
+- 若文档尚未定义修正策略，或存在多个代价不同的修复路径，应停止猜测并先和用户确认。
+- 路线图中的功能完成，不应以牺牲上述 guardrail 为代价；结构收口本身属于完成定义的一部分。
 
 ## 13. 实现前建议的落地顺序
 

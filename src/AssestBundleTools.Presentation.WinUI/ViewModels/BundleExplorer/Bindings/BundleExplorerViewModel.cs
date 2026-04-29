@@ -10,17 +10,22 @@ using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
-using AssestBundleTools.Presentation.WinUI.ViewModels.Common;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
 /// 维护工作台页面的整体展示状态与页面级交互流程。
 /// </summary>
 /// <remarks>
-/// 当前主 ViewModel 主要承担页面级外观与协调职责：
-/// 负责工作区加载/恢复、资源包标签导航与浏览状态持久化，
-/// 而资产窗格、检查器和预览/替换动作已分别下沉到更细粒度的子 ViewModel。
+/// 当前 ViewModel 主要承担页面级外观与协调职责。
+/// 负责工作区加载、恢复、资源包标签导航与浏览状态持久化。
+/// 而资产窗格、检查器和预览、替换动作已分别下沉到更细粒度的子 ViewModel。
 /// </remarks>
 public sealed class BundleExplorerViewModel : ObservableObject
 {
@@ -238,7 +243,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         _assetWorkflow.CloseOtherAssetDocumentTabsAsync(assetTab);
 
     /// <summary>
-    /// 清空当前资源包下所有已打开的资产详情标签。
+    /// 清空当前活动资源包下所有已打开的资产详情标签。
     /// 关闭后同时清空列表焦点，避免旧选中项立刻把详情标签重新打开。
     /// </summary>
     public Task CloseAllAssetDocumentTabsAsync() => _assetWorkflow.CloseAllAssetDocumentTabsAsync();
@@ -321,7 +326,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 资源包导入入口统一交给共享协调服务处理，
+    /// 资源包导入入口统一交给共享协调服务处理。
     /// 当前阶段只收集来源并记录标准化反馈，为后续真实导入链路预留稳定边界。
     /// </summary>
     public async Task RequestBundleFileImportAsync(CancellationToken cancellationToken = default)
@@ -457,7 +462,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     public Task UndoAppliedReplacementAsync() => _assetWorkflow.UndoAppliedReplacementAsync();
 
     /// <summary>
-    /// 页面级交互仍有多处历史入口会请求浏览状态持久化，
+    /// 页面级交互仍有多处历史入口会请求浏览状态持久化。
     /// 这里保留一层薄封装，把触发统一转交给专用协调对象。
     /// </summary>
     private void RequestWorkspaceBrowserStatePersistence()
@@ -490,3 +495,4 @@ public sealed class BundleExplorerViewModel : ObservableObject
         RefreshCommand.NotifyCanExecuteChanged();
     }
 }
+

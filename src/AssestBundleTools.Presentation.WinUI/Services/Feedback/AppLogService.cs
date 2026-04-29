@@ -1,6 +1,11 @@
 using AssestBundleTools.Presentation.WinUI.Localization;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
 
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 namespace AssestBundleTools.Presentation.WinUI.Services;
 
 /// <summary>
@@ -32,3 +37,4 @@ public sealed class AppLogService : IAppLogService
 
     public void AppendError(string message) => LogPanel.Append(message);
 }
+

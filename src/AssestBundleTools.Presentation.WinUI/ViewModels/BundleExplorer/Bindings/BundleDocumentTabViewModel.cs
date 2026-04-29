@@ -1,15 +1,20 @@
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
-using AssestBundleTools.Presentation.WinUI.ViewModels.Common;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using System.Collections.ObjectModel;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
 /// 表示主工作区中一个已打开的资源包标签页。
 /// </summary>
 /// <remarks>
-/// 标签页只保存“当前资源包 + 当前列表浏览状态”这些页面级瞬时信息，
+/// 标签页只保存“当前资源包 + 当前列表浏览状态”这些页面级瞬时信息。
 /// 不直接承载真正的资源数据和替换结果，避免把工作区事实来源重新拆散。
 /// </remarks>
 public sealed class BundleDocumentTabViewModel : ObservableObject
@@ -148,6 +153,7 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
     }
 
     /// <summary>
+    /// <summary>
     /// 当系统仍需要复用预览态标签页时，
     /// 可以通过这里把该标签页重定向到新的资源包。
     /// </summary>
@@ -264,3 +270,4 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         ActiveAssetTab = null;
     }
 }
+

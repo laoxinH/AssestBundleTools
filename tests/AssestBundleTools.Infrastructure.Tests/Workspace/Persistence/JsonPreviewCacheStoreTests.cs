@@ -30,6 +30,13 @@ internal static class JsonPreviewCacheStoreTests
         TestAssert.Equal("audio/wav", payload.Descriptor.ContentType, "Content type should round-trip.");
         TestAssert.Equal("vgmstream", payload.Descriptor.AudioTranscoderId, "Transcoder id should round-trip.");
         TestAssert.Equal("1.0.0", payload.Descriptor.AudioTranscoderVersion, "Transcoder version should round-trip.");
+        var imageOverlay = TestAssert.NotNull(payload.Descriptor.ImageOverlay, "Image overlay should round-trip.");
+        TestAssert.Equal(256, imageOverlay.CanvasPixelWidth, "Image overlay canvas width should round-trip.");
+        TestAssert.Equal(128, imageOverlay.CanvasPixelHeight, "Image overlay canvas height should round-trip.");
+        TestAssert.Equal(24d, imageOverlay.HighlightRegion.X, "Image overlay x should round-trip.");
+        TestAssert.Equal(36d, imageOverlay.HighlightRegion.Y, "Image overlay y should round-trip.");
+        TestAssert.Equal(80d, imageOverlay.HighlightRegion.Width, "Image overlay width should round-trip.");
+        TestAssert.Equal(48d, imageOverlay.HighlightRegion.Height, "Image overlay height should round-trip.");
         TestAssert.Equal(4, payload.Content.Length, "Preview payload length should round-trip.");
         AssertBytesEqual(expectedContent, payload.Content, "Preview payload bytes should round-trip.");
 
@@ -180,7 +187,15 @@ internal static class JsonPreviewCacheStoreTests
                 Arguments: ["metadata-only"]),
             PreferredDisplaySizeInBytes: 2048,
             AudioTranscoderId: "vgmstream",
-            AudioTranscoderVersion: "1.0.0");
+            AudioTranscoderVersion: "1.0.0",
+            ImageOverlay: new AssetPreviewImageOverlayDto(
+                CanvasPixelWidth: 256,
+                CanvasPixelHeight: 128,
+                HighlightRegion: new AssetPreviewImageRegionDto(
+                    X: 24,
+                    Y: 36,
+                    Width: 80,
+                    Height: 48)));
     }
 
     private static void AssertBytesEqual(byte[] expected, byte[] actual, string message)

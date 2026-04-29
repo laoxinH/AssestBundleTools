@@ -94,6 +94,18 @@ $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find 'MSBui
 - 如果不方便停止当前运行实例，可直接改用上面的 `OutDir` 方案，把验证产物输出到独立目录
 - 当前环境下可能仍会出现 `MSB3774`（缺少 `Microsoft.UniversalCRT.Debug`）警告，但它不影响这条验证命令完成构建
 
+### 5.1 最近遇到的编译坑与处理方式
+
+- `AssestBundleTools.Presentation.Tests` 项目固定为 `x86 / win-x86`。
+  如果误用 `/p:Platform=x64` 去编它，容易触发 `MSB3270`，提示测试项目的 `x86` 与被引用 DLL 的 `AMD64` 架构不匹配。
+  这类展示层测试请改用 `/p:Platform=x86`，或直接使用项目自身默认平台。
+- 为了避开文件锁，优先只重定向 `OutDir`，不要顺手再加 `BaseIntermediateOutputPath`。
+  本仓库在跨项目验证时若同时改 `BaseIntermediateOutputPath`，曾出现 `NETSDK1004`（缺少 `project.assets.json`）以及 `CS0579`（重复程序集特性）这类由 restore / obj 隔离不完整带来的噪声。
+  当前更稳妥的做法仍是保留默认 `obj`，只在必要时改 `OutDir`。
+- 多个测试项目不要并行构建或并行跑各自的前置构建。
+  这次实际遇到过 `CS2012`、`MSB3021`、`MSB3027`，根因是不同命令同时写入 `src/*/obj` 或复制 `src/*/bin`。
+  继续使用 `BuildInParallel=false`、`/m:1`、`/nr:false`，并让 `Infrastructure` / `Presentation` 验证串行执行，会明显稳定很多。
+
 ## 6. 什么时候切换到 x86
 
 以下情况再考虑切换到 `Debug | x86`：
@@ -101,6 +113,7 @@ $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find 'MSBui
 - 需要验证特定第三方库仅支持 32 位
 - 需要复现仅在 x86 输出下出现的问题
 - 需要和历史工具链保持一致
+- 需要构建或执行 `AssestBundleTools.Presentation.Tests`
 
 如果没有这些前提，当前默认继续使用 `x64`。
 

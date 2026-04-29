@@ -1,4 +1,5 @@
-using AssestBundleTools.Presentation.WinUI.ViewModels.Shell;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Shell.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Shell.Contracts;
 
 namespace AssestBundleTools.Presentation.WinUI.Services;
 

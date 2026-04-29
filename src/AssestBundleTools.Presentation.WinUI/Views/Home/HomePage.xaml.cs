@@ -1,20 +1,23 @@
 using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
+using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Home;
-using AssestBundleTools.Presentation.WinUI.ViewModels.Shell;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
-namespace AssestBundleTools.Presentation.WinUI.Views;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Shell.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Shell.Contracts;
+namespace AssestBundleTools.Presentation.WinUI.Views.Home;
 
 /// <summary>
 /// 应用控制台页，负责承载最近工作区和工作区入口。
 /// </summary>
 /// <remarks>
 /// 该页在窗口处于控制台态时，作为一级入口承载“新建 / 打开 / 恢复工作区”等操作。
-/// 当前实现允许从正式工作台返回这里重新整理工作区入口，但不会清空现有活动工作区上下文。
+/// 当前实现允许从正式工作台返回这里重新整理工作区入口，
+/// 但不会清空现有活动工作区上下文。
 /// </remarks>
 public sealed partial class HomePage : Page
 {
@@ -161,7 +164,7 @@ public sealed partial class HomePage : Page
     }
 
     /// <summary>
-    /// 控制台中的最近工作区入口遵循用户偏好设置：
+    /// 控制台中的最近工作区入口遵循用户偏好设置。
     /// 默认当前窗口、新建窗口或每次询问三种策略都在这里统一收敛。
     /// </summary>
     private async Task OpenRecentWorkspaceAsync(HomeRecentWorkspaceItemViewModel workspaceItem)
@@ -333,3 +336,4 @@ public sealed partial class HomePage : Page
         App.CurrentApp.AppNotificationService.Show(title, message, severity);
     }
 }
+

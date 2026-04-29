@@ -1,6 +1,6 @@
 using System.Windows.Input;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.Common;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 
 /// <summary>
 /// 封装同步命令，供页面按钮、切换项等简单交互复用。

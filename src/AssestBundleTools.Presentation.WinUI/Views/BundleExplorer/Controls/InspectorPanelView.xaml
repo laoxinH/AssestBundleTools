@@ -5,7 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:viewModels="using:AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer"
+    xmlns:viewModels="using:AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -366,6 +366,46 @@
                 Property="TextWrapping"
                 Value="WrapWholeWords" />
         </Style>
+
+        <Style
+            x:Key="InspectorPreviewOverlayBadgeBorderStyle"
+            TargetType="Border">
+            <Setter
+                Property="Padding"
+                Value="12,8" />
+            <Setter
+                Property="Background"
+                Value="#E6111115" />
+            <Setter
+                Property="BorderBrush"
+                Value="{ThemeResource AccentFillColorDefaultBrush}" />
+            <Setter
+                Property="BorderThickness"
+                Value="1" />
+            <Setter
+                Property="CornerRadius"
+                Value="12" />
+        </Style>
+
+        <Style
+            x:Key="InspectorPreviewOverlayBadgeTextStyle"
+            TargetType="TextBlock">
+            <Setter
+                Property="FontFamily"
+                Value="Consolas" />
+            <Setter
+                Property="FontSize"
+                Value="13" />
+            <Setter
+                Property="FontWeight"
+                Value="SemiBold" />
+            <Setter
+                Property="Foreground"
+                Value="#FFF8FAFC" />
+            <Setter
+                Property="TextWrapping"
+                Value="WrapWholeWords" />
+        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -448,8 +488,8 @@
                         Visibility="{x:Bind ViewModel.DetailsSectionVisibility, Mode=OneWay}">
                         <StackPanel Padding="8" Spacing="8">
                             <Border
-                                Height="{x:Bind ViewModel.PreviewSurfaceHeight, Mode=OneWay}"
-                                MinHeight="{x:Bind ViewModel.PreviewSurfaceMinHeight, Mode=OneWay}"
+                                Height="{x:Bind ViewModel.Preview.PreviewSurfaceHeight, Mode=OneWay}"
+                                MinHeight="{x:Bind ViewModel.Preview.PreviewSurfaceMinHeight, Mode=OneWay}"
                                 Padding="12"
                                 Style="{StaticResource InspectorPreviewSurfaceBorderStyle}">
                                 <Grid RowSpacing="8">
@@ -463,9 +503,9 @@
                                             x:Name="OpenPreviewLocationButton"
                                             HorizontalAlignment="Right"
                                             Click="OnOpenPreviewLocationButtonClick"
-                                            IsEnabled="{x:Bind ViewModel.CanOpenPreviewLocation, Mode=OneWay}"
+                                            IsEnabled="{x:Bind ViewModel.Preview.CanOpenPreviewLocation, Mode=OneWay}"
                                             Style="{StaticResource InspectorPreviewActionButtonStyle}"
-                                            Visibility="{x:Bind ViewModel.PreviewOpenLocationVisibility, Mode=OneWay}">
+                                            Visibility="{x:Bind ViewModel.Preview.PreviewOpenLocationVisibility, Mode=OneWay}">
                                             <FontIcon
                                                 FontFamily="Segoe Fluent Icons"
                                                 FontSize="14"
@@ -478,7 +518,7 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         Spacing="10"
-                                        Visibility="{x:Bind ViewModel.PreviewLoadingVisibility, Mode=OneWay}">
+                                        Visibility="{x:Bind ViewModel.Preview.PreviewLoadingVisibility, Mode=OneWay}">
                                         <ProgressRing
                                             Width="30"
                                             Height="30"
@@ -486,7 +526,7 @@
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{x:Bind ViewModel.PreviewStatusText, Mode=OneWay}"
+                                            Text="{x:Bind ViewModel.Preview.PreviewStatusText, Mode=OneWay}"
                                             TextAlignment="Center"
                                             TextWrapping="WrapWholeWords" />
                                     </StackPanel>
@@ -495,7 +535,7 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         Spacing="10"
-                                        Visibility="{x:Bind ViewModel.PreviewMessageVisibility, Mode=OneWay}">
+                                        Visibility="{x:Bind ViewModel.Preview.PreviewMessageVisibility, Mode=OneWay}">
                                         <FontIcon
                                             FontFamily="Segoe Fluent Icons"
                                             Glyph="&#xE7BA;"
@@ -503,27 +543,75 @@
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{x:Bind ViewModel.PreviewStatusText, Mode=OneWay}"
+                                            Text="{x:Bind ViewModel.Preview.PreviewStatusText, Mode=OneWay}"
                                             TextAlignment="Center"
                                             TextWrapping="WrapWholeWords" />
                                     </StackPanel>
 
-                                    <Grid
-                                        Margin="8"
-                                        Visibility="{x:Bind ViewModel.PreviewImageVisibility, Mode=OneWay}">
-                                        <Image
-                                            HorizontalAlignment="Stretch"
-                                            VerticalAlignment="Stretch"
-                                            Stretch="Uniform"
-                                            Source="{x:Bind ViewModel.PreviewImageSource, Mode=OneWay}" />
-                                    </Grid>
+                <Grid
+                    x:Name="PreviewImageViewportHost"
+                    Margin="8"
+                    SizeChanged="OnPreviewImageViewportHostSizeChanged"
+                    Visibility="{x:Bind ViewModel.Preview.PreviewImageVisibility, Mode=OneWay}">
+                    <Viewbox
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Stretch="Uniform"
+                        StretchDirection="DownOnly">
+                        <Grid
+                            Width="{x:Bind ViewModel.Preview.PreviewImageCanvasWidth, Mode=OneWay}"
+                            Height="{x:Bind ViewModel.Preview.PreviewImageCanvasHeight, Mode=OneWay}">
+                            <Image
+                                Width="{x:Bind ViewModel.Preview.PreviewImageCanvasWidth, Mode=OneWay}"
+                                Height="{x:Bind ViewModel.Preview.PreviewImageCanvasHeight, Mode=OneWay}"
+                                Stretch="Fill"
+                                Source="{x:Bind ViewModel.Preview.PreviewImageSource, Mode=OneWay}" />
+                        </Grid>
+                    </Viewbox>
+
+                    <Canvas
+                        IsHitTestVisible="False"
+                        Visibility="{x:Bind ViewModel.Preview.PreviewImageOverlayVisibility, Mode=OneWay}">
+                        <Rectangle
+                            Canvas.Left="{x:Bind ViewModel.Preview.PreviewImageOverlayX, Mode=OneWay}"
+                            Canvas.Top="{x:Bind ViewModel.Preview.PreviewImageOverlayY, Mode=OneWay}"
+                            Width="{x:Bind ViewModel.Preview.PreviewImageOverlayWidth, Mode=OneWay}"
+                            Height="{x:Bind ViewModel.Preview.PreviewImageOverlayHeight, Mode=OneWay}"
+                            RadiusX="6"
+                            RadiusY="6"
+                            Fill="Transparent"
+                            Stroke="#CC101418"
+                            StrokeThickness="1.5" />
+
+                        <Rectangle
+                            Canvas.Left="{x:Bind ViewModel.Preview.PreviewImageOverlayX, Mode=OneWay}"
+                            Canvas.Top="{x:Bind ViewModel.Preview.PreviewImageOverlayY, Mode=OneWay}"
+                            Width="{x:Bind ViewModel.Preview.PreviewImageOverlayWidth, Mode=OneWay}"
+                            Height="{x:Bind ViewModel.Preview.PreviewImageOverlayHeight, Mode=OneWay}"
+                            RadiusX="6"
+                            RadiusY="6"
+                            Fill="Transparent"
+                            Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                            StrokeThickness="0.75" />
+
+                        <Border
+                            Style="{StaticResource InspectorPreviewOverlayBadgeBorderStyle}"
+                            Canvas.Left="{x:Bind ViewModel.Preview.PreviewImageOverlayLabelX, Mode=OneWay}"
+                            Canvas.Top="{x:Bind ViewModel.Preview.PreviewImageOverlayLabelY, Mode=OneWay}"
+                            MaxWidth="320">
+                            <TextBlock
+                                Style="{StaticResource InspectorPreviewOverlayBadgeTextStyle}"
+                                Text="{x:Bind ViewModel.Preview.PreviewImageOverlayLabelText, Mode=OneWay}" />
+                        </Border>
+                    </Canvas>
+                </Grid>
 
                                     <StackPanel
                                         Margin="8,0,8,8"
                                         HorizontalAlignment="Stretch"
                                         VerticalAlignment="Stretch"
                                         Spacing="10"
-                                        Visibility="{x:Bind ViewModel.PreviewAudioVisibility, Mode=OneWay}">
+                                        Visibility="{x:Bind ViewModel.Preview.PreviewAudioVisibility, Mode=OneWay}">
                                         <Grid ColumnSpacing="10">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto" />
@@ -555,9 +643,9 @@
                                                     TextWrapping="WrapWholeWords" />
                                                 <TextBlock
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Text="{x:Bind ViewModel.AudioPreviewSizeSummaryText, Mode=OneWay}"
+                                                    Text="{x:Bind ViewModel.Preview.AudioPreviewSizeSummaryText, Mode=OneWay}"
                                                     TextWrapping="WrapWholeWords"
-                                                    Visibility="{x:Bind ViewModel.AudioPreviewSizeSummaryVisibility, Mode=OneWay}" />
+                                                    Visibility="{x:Bind ViewModel.Preview.AudioPreviewSizeSummaryVisibility, Mode=OneWay}" />
                                             </StackPanel>
                                         </Grid>
 
@@ -577,40 +665,40 @@
                                                 Grid.Row="0"
                                                 Grid.Column="0"
                                                 Style="{StaticResource InspectorAudioBadgeBorderStyle}"
-                                                Visibility="{x:Bind ViewModel.AudioPreviewContainerBadgeVisibility, Mode=OneWay}">
+                                                Visibility="{x:Bind ViewModel.Preview.AudioPreviewContainerBadgeVisibility, Mode=OneWay}">
                                                 <TextBlock
                                                     Style="{StaticResource InspectorAudioBadgeTextStyle}"
-                                                    Text="{x:Bind ViewModel.AudioPreviewContainerBadgeText, Mode=OneWay}" />
+                                                    Text="{x:Bind ViewModel.Preview.AudioPreviewContainerBadgeText, Mode=OneWay}" />
                                             </Border>
 
                                             <Border
                                                 Grid.Row="0"
                                                 Grid.Column="1"
                                                 Style="{StaticResource InspectorAudioBadgeBorderStyle}"
-                                                Visibility="{x:Bind ViewModel.AudioPreviewDurationBadgeVisibility, Mode=OneWay}">
+                                                Visibility="{x:Bind ViewModel.Preview.AudioPreviewDurationBadgeVisibility, Mode=OneWay}">
                                                 <TextBlock
                                                     Style="{StaticResource InspectorAudioBadgeTextStyle}"
-                                                    Text="{x:Bind ViewModel.AudioPreviewDurationBadgeText, Mode=OneWay}" />
+                                                    Text="{x:Bind ViewModel.Preview.AudioPreviewDurationBadgeText, Mode=OneWay}" />
                                             </Border>
 
                                             <Border
                                                 Grid.Row="1"
                                                 Grid.Column="0"
                                                 Style="{StaticResource InspectorAudioBadgeBorderStyle}"
-                                                Visibility="{x:Bind ViewModel.AudioPreviewChannelBadgeVisibility, Mode=OneWay}">
+                                                Visibility="{x:Bind ViewModel.Preview.AudioPreviewChannelBadgeVisibility, Mode=OneWay}">
                                                 <TextBlock
                                                     Style="{StaticResource InspectorAudioBadgeTextStyle}"
-                                                    Text="{x:Bind ViewModel.AudioPreviewChannelBadgeText, Mode=OneWay}" />
+                                                    Text="{x:Bind ViewModel.Preview.AudioPreviewChannelBadgeText, Mode=OneWay}" />
                                             </Border>
 
                                             <Border
                                                 Grid.Row="1"
                                                 Grid.Column="1"
                                                 Style="{StaticResource InspectorAudioBadgeBorderStyle}"
-                                                Visibility="{x:Bind ViewModel.AudioPreviewFrequencyBadgeVisibility, Mode=OneWay}">
+                                                Visibility="{x:Bind ViewModel.Preview.AudioPreviewFrequencyBadgeVisibility, Mode=OneWay}">
                                                 <TextBlock
                                                     Style="{StaticResource InspectorAudioBadgeTextStyle}"
-                                                    Text="{x:Bind ViewModel.AudioPreviewFrequencyBadgeText, Mode=OneWay}" />
+                                                    Text="{x:Bind ViewModel.Preview.AudioPreviewFrequencyBadgeText, Mode=OneWay}" />
                                             </Border>
                                         </Grid>
 
@@ -623,7 +711,7 @@
                                             HorizontalAlignment="Left"
                                             IsHitTestVisible="False"
                                             Opacity="0.01"
-                                            Source="{x:Bind ViewModel.PreviewAudioSource, Mode=OneWay}" />
+                                            Source="{x:Bind ViewModel.Preview.PreviewAudioSource, Mode=OneWay}" />
 
                                         <Grid RowSpacing="8">
                                             <Grid.RowDefinitions>
@@ -688,11 +776,11 @@
                                         VerticalScrollBarVisibility="Auto"
                                         VerticalScrollMode="Enabled"
                                         ZoomMode="Disabled"
-                                        Visibility="{x:Bind ViewModel.PreviewTextVisibility, Mode=OneWay}">
+                                        Visibility="{x:Bind ViewModel.Preview.PreviewTextVisibility, Mode=OneWay}">
                                         <TextBlock
                                             FontFamily="Cascadia Mono"
                                             FontSize="13"
-                                            Text="{x:Bind ViewModel.PreviewText, Mode=OneWay}"
+                                            Text="{x:Bind ViewModel.Preview.PreviewText, Mode=OneWay}"
                                             TextWrapping="Wrap" />
                                     </ScrollViewer>
 
@@ -702,10 +790,10 @@
                                         VerticalScrollBarVisibility="Auto"
                                         VerticalScrollMode="Enabled"
                                         ZoomMode="Disabled"
-                                        Visibility="{x:Bind ViewModel.PreviewSummaryVisibility, Mode=OneWay}">
+                                        Visibility="{x:Bind ViewModel.Preview.PreviewSummaryVisibility, Mode=OneWay}">
                                         <TextBlock
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{x:Bind ViewModel.PreviewText, Mode=OneWay}"
+                                            Text="{x:Bind ViewModel.Preview.PreviewText, Mode=OneWay}"
                                             TextWrapping="WrapWholeWords" />
                                     </ScrollViewer>
                                 </Grid>
@@ -1166,3 +1254,4 @@
         </Grid>
     </Grid>
 </UserControl>
+

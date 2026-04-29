@@ -139,7 +139,7 @@ Domain 不负责：
 
 ### 3.2 Application
 
-Application 层拆成四部分：
+Application 层拆成五部分：
 
 1. `WorkspaceSessionRegistry`
    负责运行时工作区会话，承载当前已加载的数据和变更队列。
@@ -149,6 +149,8 @@ Application 层拆成四部分：
    负责最近工作区目录恢复、可用性语义、“上次活动工作区”恢复请求推导，以及激活/浏览状态元数据回写编排。
 4. `BundleIndexCacheStore` / `PreviewCacheStore` / `WorkspaceChangeStore`
    负责工作区数据目录中的可失效缓存与变更暂存。
+5. `WorkspaceImportExecutionGate` / `WorkspaceImportProcessingCoordinator`
+   负责同一工作区导入任务的互斥、导入计划构建、受控并行 worker 调度，以及结果聚合与提交编排。
 
 当前仓库里已经存在的 `IWorkspaceSessionRegistry` 继续承担第一部分职责。
 当前目录恢复与元数据编排也已经通过 `IWorkspaceContextPersistenceService / IWorkspaceContextCatalogService`
@@ -213,6 +215,12 @@ Presentation 层保留两个协同层次：
         <preview-cache-key>.json
         <preview-payload-file>
   staging/
+    decrypt/
+      <workspace-key>/
+        <decryptor-id>/
+          <bundle-cache-key>/
+            <derived-output-file>
+            <result-file>
     changes/
       <workspace-key>.json
 ```
@@ -227,6 +235,9 @@ Presentation 层保留两个协同层次：
   负责保存每个 AB 文件的解析索引缓存，用于加速资源包列表、资产列表和基础恢复。
 - `cache/previews/...`
   负责保存缩略图、文本片段等预览派生缓存。
+- `staging/decrypt/...`
+  负责保存解密阶段派生文件、外部进程结果文件与短期工作目录；
+  路径必须带上 `workspaceKey + decryptorId + bundleCacheKey` 或等价唯一段，避免后续并行导入时仅凭同名源文件发生覆写冲突。
 - `staging/changes/...`
   负责保存结构化变更暂存，不与轻量元数据混写。
 
@@ -414,6 +425,52 @@ Presentation 层保留两个协同层次：
 - 对同一 `bundleCacheKey` 会优先基于上述字段执行命中复用
 - 对失效或已移除的资源包，只清理对应的资源包索引缓存与关联预览缓存
 
+### 5.7 多线程导入与并行度规则
+
+工作区导入后续允许扩展为受控并行，
+但并发边界必须停留在 `Application` 的导入链路内部，
+不能把解析、缓存写入或共享状态竞争回推到 `Presentation`、`WorkspaceSessionRegistry`
+或任意页面级协调对象。
+
+推荐规则如下：
+
+1. 工作区级互斥
+   同一 `workspaceKey` 在任意时刻只允许存在一个进行中的导入/刷新作业。
+   手动导入、工作区重新打开时的自动导入刷新，以及后续任何“重建导入缓存”入口都应复用同一执行闸门。
+2. 并行粒度
+   第一版只允许在“已发现的 bundle 来源文件”粒度做并行，
+   不把单个 bundle 内部的深读、依赖遍历或预览派生拆成多线程主路径。
+3. 分阶段模型
+   导入处理默认按三段组织：
+   - 计划阶段串行执行：加载工作区元数据、展开导入源、做来源筛选、解析工作区级解密器、快照现有索引缓存和预览描述。
+   - worker 阶段有界并行执行：按单 bundle 处理 `fingerprint -> 缓存复用判断 -> decrypt -> Reader.CanRead -> Reader.Read -> 构建索引结果/诊断`。
+   - 提交阶段串行执行：统一保存/删除缓存、清理关联预览、汇总统计与诊断、清理陈旧来源，并按条件回写真实解密器。
+4. 共享状态规则
+   并行 worker 不直接修改 `WorkspaceMetadataStore`、`WorkspaceSessionRegistry`、
+   共享 `Dictionary/List` 计数器或全局缓存集合。
+   worker 只返回不可变结果对象、诊断或写入意图；
+   真正的 `BundleIndexCacheStore / PreviewCacheStore` 写入与删除由提交阶段统一完成。
+5. staging 路径规则
+   解密阶段的工作目录和输出文件路径必须包含 `workspaceKey + decryptorId + bundleCacheKey`
+   或等价唯一标识，不能只基于源文件名推导。
+   这样即便两个不同目录里存在同名 `hero.ab`，后续并行导入时也不会覆写彼此的派生文件。
+6. 默认并发度
+   导入 worker 池默认并发度按下面规则确定：
+   - 逻辑核心数 `<= 1` 时，使用 `1`
+   - 逻辑核心数 `2-4` 时，使用 `2`
+   - 逻辑核心数 `5-6` 时，使用 `3`
+   - 逻辑核心数 `>= 7` 时，使用 `4`
+
+   等价公式可写为：
+   `processorCount <= 1 ? 1 : Min(4, Max(2, Ceiling(processorCount / 2)))`
+
+   第一版每个工作区的导入并发度上限不应超过 `4`，
+   避免 `AssetsTools.NET` 深读、外部解密进程和磁盘 IO 同时放大时把桌面交互压垮。
+7. Probe 并发规则
+   工作区级解密器自动识别在第一版仍保持串行 Probe。
+   若后续确认 Probe 成为明显瓶颈，再单独引入低并发 Probe 池，
+   其默认并发度上限为 `2`，且不得高于正式导入 worker 池并发度。
+
 ## 6. 切换流程建议
 
 工作区切换建议遵循下面的顺序：
@@ -516,6 +573,7 @@ Presentation 层保留两个协同层次：
 - 工作区默认解密器当前已支持“自动识别”模式：导入时会先按工作区级探测非回退解密器，再回退到直通解密器，并在成功建立或复用索引后把真实解密器固化回工作区元数据
 - 工作区导入结果当前已补充第一轮结构化失败诊断：会回传自动识别探测摘要，以及“导入源筛除 / 解密失败 / 读取器拒绝 / 读取失败”四类问题明细，供工作台日志与后续诊断页复用
 - 工作区导入结果当前已补上结构化缓存诊断：会回传 `缓存未命中 / 来源指纹变化 / 解密器变化 / 解密器版本变化 / 工具版本变化 / 解析器版本变化 / 来源移除` 等标准原因，而不是只保留数量统计
+- 当前导入处理协调器仍按单作业串行执行；多线程导入规范现已明确收敛为“工作区级互斥 + bundle 粒度受控并行 + 串行提交”，但代码尚未按该模型落地
 - 工作区运行时会话当前已改为优先从 `BundleIndexCacheStore` 恢复资源包列表，不再依赖假数据资源包树
 - Infrastructure 当前已接入 `AssetsTools.NET` 作为真实解析库，并保留启发式 Reader 作为失败回退
 - 当前阶段的 Reader 已可解析资源包内序列化文件、真实资产名与 `m_Container` 路径，并把资产列表 / 基础详情摘要写入 `BundleIndexCacheStore`
@@ -612,6 +670,7 @@ Presentation 层保留两个协同层次：
 - 拖拽导入的页面桥接应优先挂在具体工作区区域，而不是整页根节点
 - AB 真实解析结果应优先写入独立缓存层，而不是写进工作区元数据文件
 - 解密后的临时文件默认属于 `staging` 层，不应混入工作区元数据
+- 同一工作区的导入刷新默认只允许一个运行中作业；若后续扩展多线程导入，默认只允许在 `Application` 导入链路内部按 bundle 粒度做受控并行，并维持“串行计划 -> 有界并行 worker -> 串行提交”的三段模型
 - 通过工作区向导新建或打开工作区时，仍可显式选择当前窗口或新窗口
 - 工作区向导应优先用“工作区数据目录”识别已有工作区，并在新建时显式处理目录冲突
 - 从控制台再次打开最近工作区时，打开策略由设置项统一控制，可选默认当前、默认新建或每次询问

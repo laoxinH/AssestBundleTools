@@ -62,6 +62,55 @@ internal static class GetAssetPreviewHandlerTests
         TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Cache hit should not rewrite preview cache.");
     }
 
+    public static async Task HandleAsync_ShouldRoundTripCachedImageOverlay_WhenPreviewCacheStillMatches()
+    {
+        const string resolvedPayloadFilePath = @"D:\WorkspaceData\preview-cache\bundle-cache-001\asset-001.png";
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        var imageOverlay = new AssetPreviewImageOverlayDto(
+            CanvasPixelWidth: 256,
+            CanvasPixelHeight: 128,
+            HighlightRegion: new AssetPreviewImageRegionDto(
+                X: 24,
+                Y: 36,
+                Width: 80,
+                Height: 48));
+        var previewCachePayload = CreateImagePreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            generatorVersion: "generator-1",
+            imageOverlay: imageOverlay);
+        var previewCacheStore = new TestPreviewCacheStore(previewCachePayload, resolvedPayloadFilePath);
+        var decryptor = new TestAssetBundleDecryptor(CreatePassThroughDecryptorDescriptor());
+        var generator = new TestAssetPreviewGenerator();
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService());
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Matching image preview cache should return cached preview.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(AssetPreviewKind.Image, preview.Kind, "Cached image preview kind should round-trip.");
+        TestAssert.Equal(resolvedPayloadFilePath, preview.PreviewPayloadFilePath, "Cached image preview should expose resolved payload path.");
+        var restoredOverlay = preview.ImageOverlay ?? throw new InvalidOperationException("Expected image overlay.");
+        TestAssert.Equal(imageOverlay.CanvasPixelWidth, restoredOverlay.CanvasPixelWidth, "Image overlay canvas width should round-trip.");
+        TestAssert.Equal(imageOverlay.CanvasPixelHeight, restoredOverlay.CanvasPixelHeight, "Image overlay canvas height should round-trip.");
+        TestAssert.Equal(imageOverlay.HighlightRegion.X, restoredOverlay.HighlightRegion.X, "Image overlay x should round-trip.");
+        TestAssert.Equal(imageOverlay.HighlightRegion.Y, restoredOverlay.HighlightRegion.Y, "Image overlay y should round-trip.");
+        TestAssert.Equal(imageOverlay.HighlightRegion.Width, restoredOverlay.HighlightRegion.Width, "Image overlay width should round-trip.");
+        TestAssert.Equal(imageOverlay.HighlightRegion.Height, restoredOverlay.HighlightRegion.Height, "Image overlay height should round-trip.");
+        TestAssert.Equal(0, decryptor.DecryptCallCount, "Cache hit should not invoke decryptor.");
+        TestAssert.Equal(0, generator.GenerateCallCount, "Cache hit should not invoke preview generator.");
+        TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Cache hit should not rewrite preview cache.");
+    }
+
     public static async Task HandleAsync_ShouldRegeneratePreview_WhenGeneratorVersionChanges()
     {
         const string resolvedBundlePath = @"C:\Temp\preview.bundle";
@@ -597,6 +646,29 @@ internal static class GetAssetPreviewHandlerTests
                 GeneratedAtUtc: new DateTimeOffset(2026, 4, 28, 14, 10, 0, TimeSpan.Zero),
                 GeneratorVersion: generatorVersion),
             Encoding.UTF8.GetBytes(textContent));
+    }
+
+    private static PreviewCachePayloadDto CreateImagePreviewPayload(
+        BundleIndexCacheEntryDto bundleCacheEntry,
+        string assetId,
+        string generatorVersion,
+        AssetPreviewImageOverlayDto? imageOverlay)
+    {
+        var previewCacheKey = CreatePreviewCacheKey(bundleCacheEntry.BundleCacheKey, assetId);
+        return new PreviewCachePayloadDto(
+            new PreviewCacheDescriptorDto(
+                WorkspaceKey: bundleCacheEntry.WorkspaceKey,
+                PreviewCacheKey: previewCacheKey,
+                BundleCacheKey: bundleCacheEntry.BundleCacheKey,
+                AssetId: assetId,
+                PreviewKind: AssetPreviewKind.Image.ToString(),
+                ContentType: "image/png",
+                RelativePayloadPath: Path.Combine(previewCacheKey, "payload.png"),
+                SourceFingerprint: bundleCacheEntry.SourceFingerprint,
+                GeneratedAtUtc: new DateTimeOffset(2026, 4, 28, 14, 10, 0, TimeSpan.Zero),
+                GeneratorVersion: generatorVersion,
+                ImageOverlay: imageOverlay),
+            [0x89, 0x50, 0x4E, 0x47]);
     }
 
     private static string CreatePreviewCacheKey(string bundleCacheKey, string assetId)

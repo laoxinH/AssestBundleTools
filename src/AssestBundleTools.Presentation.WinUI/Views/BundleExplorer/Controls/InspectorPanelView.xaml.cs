@@ -1,11 +1,16 @@
 using AssestBundleTools.Presentation.WinUI.Localization;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Media.Playback;
 
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 /// <summary>
@@ -16,6 +21,7 @@ public sealed partial class InspectorPanelView : UserControl
     private readonly DispatcherTimer _audioTransportTimer;
     private MediaPlayer? _attachedAudioPlayer;
     private InspectorPanelViewModel? _observedViewModel;
+    private InspectorPreviewViewModel? _observedPreviewViewModel;
     private bool _isUpdatingAudioSliderValue;
 
     public static readonly DependencyProperty ViewModelProperty =
@@ -172,6 +178,7 @@ public sealed partial class InspectorPanelView : UserControl
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         AttachAudioPlayer(AudioPreviewPlayer.MediaPlayer);
+        RefreshPreviewImageViewport();
         RefreshAudioTransportState();
     }
 
@@ -189,7 +196,8 @@ public sealed partial class InspectorPanelView : UserControl
         }
 
         _observedViewModel = viewModel;
-        _observedViewModel.PropertyChanged += OnObservedViewModelPropertyChanged;
+        AttachObservedPreviewViewModel(viewModel.Preview);
+        RefreshPreviewImageViewport();
         RefreshAudioTransportState();
     }
 
@@ -200,27 +208,79 @@ public sealed partial class InspectorPanelView : UserControl
             return;
         }
 
-        _observedViewModel.PropertyChanged -= OnObservedViewModelPropertyChanged;
+        DetachObservedPreviewViewModel(_observedPreviewViewModel);
         _observedViewModel = null;
     }
 
-    private void OnObservedViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void AttachObservedPreviewViewModel(InspectorPreviewViewModel? previewViewModel)
     {
-        if (e.PropertyName is not (
-            nameof(InspectorPanelViewModel.PreviewAudioSource) or
-            nameof(InspectorPanelViewModel.PreviewAudioVisibility) or
-            nameof(InspectorPanelViewModel.CanOpenPreviewLocation)))
+        if (previewViewModel is null || ReferenceEquals(_observedPreviewViewModel, previewViewModel))
         {
             return;
         }
 
+        _observedPreviewViewModel = previewViewModel;
+        _observedPreviewViewModel.PropertyChanged += OnObservedPreviewViewModelPropertyChanged;
+    }
+
+    private void DetachObservedPreviewViewModel(InspectorPreviewViewModel? previewViewModel)
+    {
+        if (previewViewModel is null || !ReferenceEquals(_observedPreviewViewModel, previewViewModel))
+        {
+            return;
+        }
+
+        _observedPreviewViewModel.PropertyChanged -= OnObservedPreviewViewModelPropertyChanged;
+        _observedPreviewViewModel = null;
+    }
+
+    private void OnObservedPreviewViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
         if (DispatcherQueue.HasThreadAccess)
         {
+            if (e.PropertyName is
+                nameof(InspectorPreviewViewModel.PreviewImageSource) or
+                nameof(InspectorPreviewViewModel.PreviewImageVisibility) or
+                nameof(InspectorPreviewViewModel.PreviewImageCanvasWidth) or
+                nameof(InspectorPreviewViewModel.PreviewImageCanvasHeight))
+            {
+                RefreshPreviewImageViewport();
+            }
+
+            if (e.PropertyName is not (
+                nameof(InspectorPreviewViewModel.PreviewAudioSource) or
+                nameof(InspectorPreviewViewModel.PreviewAudioVisibility)))
+            {
+                return;
+            }
+
             RefreshAudioTransportState();
             return;
         }
 
-        DispatcherQueue.TryEnqueue(RefreshAudioTransportState);
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (e.PropertyName is
+                nameof(InspectorPreviewViewModel.PreviewImageSource) or
+                nameof(InspectorPreviewViewModel.PreviewImageVisibility) or
+                nameof(InspectorPreviewViewModel.PreviewImageCanvasWidth) or
+                nameof(InspectorPreviewViewModel.PreviewImageCanvasHeight))
+            {
+                RefreshPreviewImageViewport();
+            }
+
+            if (e.PropertyName is
+                nameof(InspectorPreviewViewModel.PreviewAudioSource) or
+                nameof(InspectorPreviewViewModel.PreviewAudioVisibility))
+            {
+                RefreshAudioTransportState();
+            }
+        });
+    }
+
+    private void OnPreviewImageViewportHostSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        RefreshPreviewImageViewport();
     }
 
     private void OnAudioTransportTimerTick(object? sender, object e)
@@ -276,7 +336,7 @@ public sealed partial class InspectorPanelView : UserControl
     private void OnAudioTransportPlayPauseButtonClick(object sender, RoutedEventArgs e)
     {
         AttachAudioPlayer(AudioPreviewPlayer.MediaPlayer);
-        if (_attachedAudioPlayer is null || ViewModel?.PreviewAudioSource is null)
+        if (_attachedAudioPlayer is null || ViewModel?.Preview.PreviewAudioSource is null)
         {
             return;
         }
@@ -330,7 +390,7 @@ public sealed partial class InspectorPanelView : UserControl
     {
         AttachAudioPlayer(AudioPreviewPlayer.MediaPlayer);
 
-        var hasAudioPreview = ViewModel?.PreviewAudioSource is not null;
+        var hasAudioPreview = ViewModel?.Preview.PreviewAudioSource is not null;
         if (_attachedAudioPlayer?.PlaybackSession is null || !hasAudioPreview)
         {
             _audioTransportTimer.Stop();
@@ -394,6 +454,18 @@ public sealed partial class InspectorPanelView : UserControl
         }
 
         AudioTransportTimeText.Text = $"{FormatDuration(currentPosition)} / {FormatDuration(totalDuration)}";
+    }
+
+    private void RefreshPreviewImageViewport()
+    {
+        if (ViewModel is null)
+        {
+            return;
+        }
+
+        ViewModel.UpdatePreviewImageViewport(
+            PreviewImageViewportHost.ActualWidth,
+            PreviewImageViewportHost.ActualHeight);
     }
 
     private static string FormatDuration(TimeSpan duration)

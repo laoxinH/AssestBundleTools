@@ -1,9 +1,14 @@
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
-using AssestBundleTools.Presentation.WinUI.ViewModels.Shell;
+using AssestBundleTools.Presentation.WinUI.Views.BatchTasks;
+using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.Views.Home;
+using AssestBundleTools.Presentation.WinUI.Views.SettingsDiagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
+using AssestBundleTools.Presentation.WinUI.ViewModels.Shell.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Shell.Contracts;
 namespace AssestBundleTools.Presentation.WinUI.Views;
 
 /// <summary>
@@ -11,9 +16,10 @@ namespace AssestBundleTools.Presentation.WinUI.Views;
 /// </summary>
 /// <remarks>
 /// 当前窗口只维护两种 Presentation 级模式：
-/// 1. 控制台态：承载工作区新建、打开、恢复等入口；
+/// 1. 控制台态：承载工作区新建、打开、恢复等入口。
 /// 2. 工作台态：承载正式资源浏览与编辑流程。
-/// 两种模式都复用同一个一级入口，但允许在显式操作时从工作台返回控制台，避免重新启动应用才能切换入口。
+/// 两种模式都复用同一个一级入口，但允许在显式操作时从工作台返回控制台，
+/// 避免重新启动应用才能切换入口。
 /// </remarks>
 public sealed partial class ShellPage : Page
 {
@@ -155,7 +161,6 @@ public sealed partial class ShellPage : Page
 
         // 如果当前窗口已经持有已加载工作区，则允许在不重复传入导航参数的情况下
         // 直接从控制台态回到工作台。这样既能支持“已打开工作区再次激活”，
-        // 也能支持用户通过导航入口显式返回当前工作台。
         if (navigationKey == ShellNavigationKeys.Workbench &&
             HasRegisteredWorkspace())
         {
@@ -237,7 +242,7 @@ public sealed partial class ShellPage : Page
 
     /// <summary>
     /// 当前窗口仍保留“控制台态 / 工作台态”两态模型，
-    /// 但第一导航入口始终保持可用：
+    /// 但第一导航入口始终保持可用。
     /// 无工作区时显示控制台，有工作区时显示正式工作台。
     /// </summary>
     private void ApplyWindowMode()
@@ -282,3 +287,4 @@ public sealed partial class ShellPage : Page
             : ShellWindowMode.LaunchGuide;
     }
 }
+

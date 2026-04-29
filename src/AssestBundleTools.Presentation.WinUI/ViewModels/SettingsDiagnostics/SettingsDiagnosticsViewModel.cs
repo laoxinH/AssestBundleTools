@@ -8,10 +8,15 @@ using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
-using AssestBundleTools.Presentation.WinUI.ViewModels.Common;
+using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using Microsoft.UI.Xaml;
 
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.SettingsDiagnostics;
 
 /// <summary>
@@ -163,7 +168,7 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// 控制台中“最近工作区”的默认打开策略：
+    /// 控制台中“最近工作区”的默认打开策略。
     /// 当前窗口、新建窗口或每次询问。
     /// </summary>
     public int RecentWorkspaceOpenBehaviorSelectedIndex
@@ -610,3 +615,4 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
             : 0;
     }
 }
+

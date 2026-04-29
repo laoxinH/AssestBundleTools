@@ -521,6 +521,7 @@ public static class ResourceKeys
     public const string InspectorInfoCardCopyToolTip = "InspectorPanelView.InfoCardCopyButton.ToolTip";
     public const string InspectorInfoCardItemCountFormat = "InspectorPanelView.InfoCardItemCount.Format";
     public const string InspectorPreviewOpenLocationToolTip = "InspectorPanelView.PreviewOpenLocationButton.ToolTip";
+    public const string InspectorSpritePreviewOverlayBadgeFormat = "InspectorPanelView.SpritePreviewOverlay.Badge.Format";
     public const string InspectorAudioTransportPlayToolTip = "InspectorPanelView.AudioTransport.Play.ToolTip";
     public const string InspectorAudioTransportPauseToolTip = "InspectorPanelView.AudioTransport.Pause.ToolTip";
     public const string InspectorAudioTransportResetToolTip = "InspectorPanelView.AudioTransport.Reset.ToolTip";

@@ -6,7 +6,12 @@ using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Presentation.WinUI.Localization;
 
-namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 
 /// <summary>
 /// 负责把资产详情 DTO 投影为列表项、检查器和替换状态等可绑定 UI 状态。
@@ -55,7 +60,7 @@ internal sealed class BundleExplorerAssetInspectorPresenter
     }
 
     /// <summary>
-    /// Inspector 的文案、依赖卡片和替换摘要都由展示层统一投影，
+    /// Inspector 的文案、依赖卡片和替换摘要都由展示层统一投影。
     /// 避免把本地化格式化散落回主工作流 ViewModel。
     /// </summary>
     public void PresentAssetDocumentTab(
@@ -407,3 +412,4 @@ internal sealed class BundleExplorerAssetInspectorPresenter
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
 }
+
