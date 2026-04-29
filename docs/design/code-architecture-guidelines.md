@@ -389,10 +389,11 @@ AssestBundleTools.Infrastructure/
 - `ViewModels/<Feature>/` 应理解为“该功能的 Presentation 代码包”，而不是“这里的每个文件都必须是 ViewModel”。
 - 只有直接参与绑定、通知或命令暴露的类型才应命名为 `*ViewModel`。
 - 不直接参与绑定的协作对象，应使用 `Coordinator`、`Presenter`、`Formatter`、`Resolver`、`Loader`、`ActionHandler`、`Contracts` 等更明确的职责命名；不要为了迎合目录名而伪装成 `ViewModel`。
-- 对于很小的功能范围，功能目录下可以临时并列放置少量协作对象；但当某个功能目录开始长期承载多类职责时，应继续在该功能目录内拆出明确子目录，如 `Bindings`、`Coordinators`、`Presenters`、`Formatting`、`Contracts`、`State`。
+- 对于很小的功能范围，功能目录下可以临时并列放置少量协作对象；但当某个功能目录开始长期承载多类职责时，应继续在该功能目录内拆出明确子目录，如 `Bindings`、`Coordinators`、`Presenters`、`Formatting`、`Contracts`、`ActionHandlers`、`State`。
 - `Services/` 仅承载应用级或多功能共享的 Presentation 服务；功能局部工作流协作对象不应因为“也是服务”就提升到全局 `Services/`。
 - `Views/` 可以保留少量应用级页面文件；可复用控件放在 `Views/Controls/`，应用级共享视图表面放在 `Views/Shared/`，持续增长的功能视图族应优先落到 `Views/<Feature>/`。
-- 当前类似 `ViewModels/BundleExplorer/` 这样混合了 `ViewModel + Coordinator + Presenter + Formatter + Contract` 的目录，应视为可继续渐进收口的功能包过渡态；后续新增类型时，优先在该功能包内补齐明确子目录，而不是继续把不同角色平铺在同一层。
+- 仍处于 `ViewModels/<Feature>/` 根目录平铺多角色文件的区域，应视为可继续渐进收口的功能包过渡态；后续新增类型时，优先在该功能包内补齐明确子目录，而不是继续把不同角色平铺在同一层。
+- `ViewModels/Common/Support/` 这类共享 MVVM 基础支撑目录可以保留，但只应用于跨功能复用的稳定基类、命令封装和轻量支撑类型。
 
 示例：
 
@@ -401,10 +402,16 @@ AssestBundleTools.Presentation.WinUI/
   ViewModels/
     BundleExplorer/
       Bindings/
+      ActionHandlers/
       Coordinators/
       Presenters/
       Formatting/
       Contracts/
+    Shell/
+      Bindings/
+      Contracts/
+    Common/
+      Support/
     Home/
   Views/
     Controls/

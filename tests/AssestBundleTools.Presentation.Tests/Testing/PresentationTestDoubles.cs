@@ -100,7 +100,7 @@ internal sealed class TestAppNotificationService : IAppNotificationService
 
 internal sealed class TestWorkspaceContextService : IWorkspaceContextService
 {
-    private readonly List<WorkspaceContextEntry> _workspaceEntries = [];
+    private readonly List<WorkspaceContextEntryDto> _workspaceEntries = [];
 
     public event EventHandler? CurrentWorkspaceChanged;
 
@@ -112,7 +112,7 @@ internal sealed class TestWorkspaceContextService : IWorkspaceContextService
 
     public bool HasCurrentWorkspace => CurrentWorkspaceSummary is not null;
 
-    public IReadOnlyList<WorkspaceContextEntry> WorkspaceEntries => _workspaceEntries;
+    public IReadOnlyList<WorkspaceContextEntryDto> WorkspaceEntries => _workspaceEntries;
 
     public int WorkspaceEntryCount => _workspaceEntries.Count;
 
@@ -128,7 +128,7 @@ internal sealed class TestWorkspaceContextService : IWorkspaceContextService
         return false;
     }
 
-    public bool TryGetCurrentWorkspaceEntry(out WorkspaceContextEntry? workspaceEntry)
+    public bool TryGetCurrentWorkspaceEntry(out WorkspaceContextEntryDto? workspaceEntry)
     {
         workspaceEntry = CurrentWorkspaceSummary is null
             ? null
@@ -151,7 +151,7 @@ internal sealed class TestWorkspaceContextService : IWorkspaceContextService
         var workspaceKey = WorkspaceCatalogKeyFactory.CreateWorkspaceKey(
             workspaceSummary.SourcePath,
             workspaceDataRootPath);
-        var workspaceEntry = new WorkspaceContextEntry(
+        var workspaceEntry = new WorkspaceContextEntryDto(
             WorkspaceKey: workspaceKey,
             DisplayName: workspaceSummary.DisplayName,
             SourcePath: workspaceSummary.SourcePath,
