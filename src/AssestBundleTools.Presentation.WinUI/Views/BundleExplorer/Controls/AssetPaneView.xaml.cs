@@ -10,7 +10,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Input;
 
-namespace AssestBundleTools.Presentation.WinUI.Views.Controls;
+namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 /// <summary>
 /// 中间区域单个资产窗格的可复用视图。

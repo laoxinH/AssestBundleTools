@@ -1,5 +1,5 @@
 using AssestBundleTools.Presentation.WinUI.Localization;
-using AssestBundleTools.Presentation.WinUI.Views.Controls;
+using AssestBundleTools.Presentation.WinUI.Views.SettingsDiagnostics.Controls;
 using AssestBundleTools.Presentation.WinUI.ViewModels.SettingsDiagnostics;
 using Microsoft.UI.Xaml.Controls;
 

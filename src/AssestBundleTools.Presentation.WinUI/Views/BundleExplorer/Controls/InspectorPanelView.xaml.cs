@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Media.Playback;
 
-namespace AssestBundleTools.Presentation.WinUI.Views.Controls;
+namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 /// <summary>
 /// 右侧详情检查器的可复用视图。

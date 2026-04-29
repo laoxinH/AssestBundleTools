@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
-namespace AssestBundleTools.Presentation.WinUI.Views.Controls;
+namespace AssestBundleTools.Presentation.WinUI.Views.SettingsDiagnostics.Controls;
 
 /// <summary>
 /// 承载解密器新增与编辑的表单内容。

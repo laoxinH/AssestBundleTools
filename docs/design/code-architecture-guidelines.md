@@ -392,6 +392,7 @@ AssestBundleTools.Infrastructure/
 - 对于很小的功能范围，功能目录下可以临时并列放置少量协作对象；但当某个功能目录开始长期承载多类职责时，应继续在该功能目录内拆出明确子目录，如 `Bindings`、`Coordinators`、`Presenters`、`Formatting`、`Contracts`、`ActionHandlers`、`State`。
 - `Services/` 仅承载应用级或多功能共享的 Presentation 服务；功能局部工作流协作对象不应因为“也是服务”就提升到全局 `Services/`。
 - `Views/` 可以保留少量应用级页面文件；可复用控件放在 `Views/Controls/`，应用级共享视图表面放在 `Views/Shared/`，持续增长的功能视图族应优先落到 `Views/<Feature>/`。
+- 当某个控件明显只服务单一页面域时，应优先放到 `Views/<Feature>/Controls/`；`Views/Controls/` 更适合跨页面共享对话内容、通用控件或暂时无法归属到单一功能的视图片段。
 - 仍处于 `ViewModels/<Feature>/` 根目录平铺多角色文件的区域，应视为可继续渐进收口的功能包过渡态；后续新增类型时，优先在该功能包内补齐明确子目录，而不是继续把不同角色平铺在同一层。
 - `ViewModels/Common/Support/` 这类共享 MVVM 基础支撑目录可以保留，但只应用于跨功能复用的稳定基类、命令封装和轻量支撑类型。
 
@@ -414,6 +415,10 @@ AssestBundleTools.Presentation.WinUI/
       Support/
     Home/
   Views/
+    BundleExplorer/
+      Controls/
+    SettingsDiagnostics/
+      Controls/
     Controls/
     Shared/
 ```
