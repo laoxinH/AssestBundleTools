@@ -20,6 +20,8 @@ public sealed class ProcessWorkspaceImportsHandler
         IWorkspaceDataStoreFactory workspaceDataStoreFactory,
         IWorkspaceImportSourceDiscoveryService workspaceImportSourceDiscoveryService,
         IWorkspaceImportFileSystemService workspaceImportFileSystemService,
+        IWorkspaceImportExecutionGate workspaceImportExecutionGate,
+        IWorkspaceImportExecutionOptionsResolver workspaceImportExecutionOptionsResolver,
         IAssetBundleSourceInspector assetBundleSourceInspector,
         IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
         IAssetBundleReader assetBundleReader)
@@ -29,6 +31,8 @@ public sealed class ProcessWorkspaceImportsHandler
             workspaceDataStoreFactory,
             workspaceImportSourceDiscoveryService,
             workspaceImportFileSystemService,
+            workspaceImportExecutionGate,
+            workspaceImportExecutionOptionsResolver,
             assetBundleSourceInspector,
             assetBundleDecryptorRegistry,
             assetBundleReader);

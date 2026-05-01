@@ -595,8 +595,11 @@ src/AssestBundleTools.Application/
 - 当前导入处理已补上第一轮结构化失败诊断：会把自动识别探测摘要，以及“导入源筛除 / 解密失败 / 读取器拒绝 / 读取失败”四类问题明细回传到工作台日志链路
 - 当前 M9 的自动识别主轴已明确收敛为四层：`导入源识别 -> 解密器识别 -> Reader 路径识别 -> 缓存命中识别`
 - 当前导入处理已补上结构化缓存诊断：会把 `缓存未命中 / 来源指纹变化 / 解密器变化 / 解密器版本变化 / 工具版本变化 / 解析器版本变化 / 来源移除` 等原因回传到应用层结果，用于日志和后续诊断页复用
-- 当前导入处理协调器仍保持串行实现；若下一步需要提升大工作区导入吞吐，推荐方向已经收敛为 `Application` 内部的“工作区级执行闸门 + bundle 粒度有界并行 worker + 串行提交”，而不是把并发扩散到 `Presentation` 或 `WorkspaceSessionRegistry`
-- 多线程导入的默认 worker 并发度已收敛为：逻辑核心数 `<= 1` 用 `1`，`2-4` 用 `2`，`5-6` 用 `3`，`>= 7` 用 `4`；第一版每个工作区导入上限不超过 `4`
+- 当前导入入口已经补上 `workspaceKey` 级执行闸门，工作区重新打开时的自动刷新也会复用同一互斥链路
+- 外部解密 staging 目录当前已补上 `workspaceKey + decryptorId + bundleCacheKey` 唯一路径，避免不同来源下的同名 bundle 派生文件互相覆写
+- 当前导入处理协调器已完成第二阶段收口：`Application` 内部的 `PlanBuilder -> Worker Pool -> Committer` 三段模型与 bundle 粒度有界并行已经落地，没有把并发扩散到 `Presentation` 或 `WorkspaceSessionRegistry`
+- 多线程导入的默认 worker 并发度当前已通过 `WorkspaceImportExecutionOptionsResolver` 固化为：逻辑核心数 `<= 1` 用 `1`，`2-4` 用 `2`，`5-6` 用 `3`，`>= 7` 用 `4`；第一版每个工作区导入上限不超过 `4`
+- 当前导入结果已补上 `Planning / Screening / Worker / Commit / Total` 五段耗时诊断，并额外记录 `ProbeDuration / ProbeDecryptorCount / ProbeEvaluationCount`，可直接为后续 `Probe` 并发评估提供依据
 - 当前预览查询链路已补上结构化预览诊断：会把预览缓存命中 / 失效原因，以及 `定位信息缺失 / 解密器不可用 / 解密失败 / 预览生成失败` 等摘要回退原因统一沉到应用层 DTO
 - 当前预览诊断 detail 已从裸字符串进一步收口为 `LocalizedMessageDto` 结构化消息；检查器不再直接显示由 `Application / Infrastructure` 拼装的原始诊断句子
 - 当前 Reader 直检与预览生成阶段的稳定失败原因已抬升为标准错误令牌，例如“来源资源包缺失 / 资源包格式无法识别 / 无兼容 Reader / 序列化文件定位失败 / 资产定位失败 / 字段树加载失败”，避免基础设施层继续拼接英文细节
@@ -686,26 +689,31 @@ src/AssestBundleTools.Application/
 
 ### M9 导入吞吐扩展建议
 
-多线程导入不应作为随手加上的局部优化，
-而应按工作区导入主链路的正式扩展来推进。
+多线程导入当前已经按工作区导入主链路的正式扩展落地，
+而不是作为局部循环优化散落实现。
 
-建议顺序如下：
+当前已完成的收口顺序如下：
 
-1. 先补 `workspaceKey` 级执行闸门
-   保证手动导入、工作区重新打开时的自动刷新，以及后续缓存重建入口不会在同一工作区上并发运行。
-2. 再把导入协调器拆成三段
-   `PlanBuilder -> Parallel Worker Pool -> Committer`，
-   避免直接在现有串行循环上叠 `Parallel.ForEachAsync(...)`。
-3. 先修 staging 唯一路径
-   解密派生目录必须带上 `workspaceKey + decryptorId + bundleCacheKey`
-   或等价唯一段，不能只靠源文件名。
-4. 最后再打开有界并行 worker
-   第一版仅在单 bundle 粒度并行，默认并发度规则保持与
+1. `workspaceKey` 级执行闸门已落地
+   手动导入、工作区重新打开时的自动刷新，以及后续缓存重建入口当前都会复用同一互斥链路。
+2. 导入协调器已拆成三段
+   `WorkspaceImportProcessingPlanBuilder -> WorkspaceImportWorkerPool -> WorkspaceImportCommitter`
+   已成为当前稳定主链路，避免了在旧串行循环上直接叠 `Parallel.ForEachAsync(...)`。
+3. staging 唯一路径已落地
+   解密派生目录当前固定带上 `workspaceKey + decryptorId + bundleCacheKey`
+   这一组唯一段，不再只依赖源文件名。
+4. bundle 粒度有界并行 worker 已落地
+   默认并发度规则与
    [`workspace-management.md`](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/workspace-management.md)
-   中定义一致，且每个工作区导入上限不超过 `4`。
-5. 并发回归必须同步补齐
-   至少覆盖缓存复用、解密失败、Reader 拒绝、读取失败、陈旧缓存清理、
+   保持一致，并通过 `WorkspaceImportExecutionOptionsResolver` 固化；每个工作区导入上限保持 `4`。
+5. 并发回归已同步补齐首轮关键路径
+   当前至少已覆盖缓存复用、解密失败、Reader 拒绝、读取失败、陈旧缓存清理、
    staging 输出路径隔离，以及“同一工作区不允许双重导入作业”这几条关键路径。
+
+当前剩余增强项：
+
+- 工作区级解密器自动识别 `Probe` 仍保持串行；只有在后续 profiling 确认成为瓶颈时，才单独评估低并发 Probe 池。
+- 若未来需要继续提高大工作区吞吐，优先补性能采样与更细粒度回归，不直接放宽每工作区 `4` 个 worker 的上限。
 
 ## 5.11 M10 保存与重建能力
 
@@ -885,7 +893,7 @@ src/AssestBundleTools.Application/
 - 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补 `GetWorkspaceSavePreviewHandler / SaveWorkspaceAsNewBundleHandler` 的保存预览空态、资源包分组聚合、缺失工作区、无候选失败与执行摘要链路
 - 已完成 D-07 第二轮收口：宿主程序自身的启动/壳层异常提示与页面代码中残留的资源键字面量已继续收口到资源键常量和标准错误令牌；当前仅保留外部工具原始输出作为诊断回退文本，而不再作为主提示文案
 - 当前 M9 剩余主线收口为富预览扩展，优先顺序为 `AudioClip -> SpriteAtlas -> Mesh -> Material / Font / AnimationClip`
-- 当前导入主链路在功能上已完成单线程收口；若后续进入“导入吞吐增强”支线，应按既定规范先落 `workspaceKey` 级执行闸门、唯一 staging 路径与 `PlanBuilder -> Worker Pool -> Committer` 三段模型，再开启 bundle 粒度有界并行
+- 当前导入主链路在功能上已完成第二阶段多线程收口：`workspaceKey` 级执行闸门、唯一 staging 路径、`PlanBuilder -> Worker Pool -> Committer` 三段模型与 bundle 粒度有界并行都已落地；后续进入“导入吞吐增强”支线时，更适合转向 profiling、Probe 并发评估与更深层并发回归
 
 ## 10. 架构代办事项
 
@@ -902,6 +910,6 @@ src/AssestBundleTools.Application/
 5. 当前 `AudioClip` 的 `FSB5` 播放能力优先依赖外部 `vgmstream-cli`；若未来确实需要“完全无外部依赖”的部署形态，应在保留现有独立音频转码端口的前提下，单独补一轮内建 `FSB5` 部分 codec 支持，而不是把编解码逻辑直接塞回 Preview UI 或 Reader。
 6. `BundleExplorerViewModel` 当前约 `426` 行；在页面兼容透传属性面与 `BundleExplorerPageStateBridge` 一并移除之后，主类已重新回到常规手写业务类 `200-500` 行目标内，后续重点应转为“避免再把新的页面流程或兼容面回灌进主类”，而不是继续把它当作 D-04 的主要热点。
 7. 当前资产工作流子 `ViewModel` 已完成 D-03 第三轮 sibling / 页面状态收口与 D-04 第六轮体量收缩：`Preview / Modification Action / Inspector Projection / Asset Document Coordination / Asset Document Host / Asset Pane Coordination / Asset Command Coordination` 已分别下沉到 `BundleExplorerAssetPreviewCoordinator / BundleExplorerAssetModificationActionHandler / BundleExplorerAssetInspectorPresenter / BundleExplorerAssetDocumentTabCoordinator / BundleExplorerAssetDocumentHostCoordinator / BundleExplorerAssetPaneCoordinator / BundleExplorerAssetCommandCoordinator`；共享失败反馈继续统一复用 `BundleExplorerOperationFeedbackBridge`；`BundleExplorerPage` 也已直接绑定或订阅 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 的语义化状态宿主，旧页面兼容桥接层已移除；主类当前约 `273` 行，后续重点应转向防止职责回灌，而不是继续把命令逻辑堆回资产工作流主类。
-8. 工作区导入多线程扩展当前已完成规范定义，但尚未进入实现；后续若启动该支线，应优先收口 `WorkspaceImportExecutionGate`、唯一 staging 路径和串行提交模型，避免在现有串行协调器上直接叠加共享状态并发。
+8. 工作区导入多线程扩展当前已完成第二阶段主链路收口：`WorkspaceImportExecutionGate`、唯一 staging 路径、`PlanBuilder -> Worker Pool -> Committer` 与串行提交模型都已落地；后续重点转为守住并发边界，并在有明确收益时再评估 Probe 并发与更细粒度吞吐优化。
 
 这些事项当前不阻塞 M9 主线，但后续在缓存失效、预览链路和保存输出继续推进前，应择机完成后续收口。

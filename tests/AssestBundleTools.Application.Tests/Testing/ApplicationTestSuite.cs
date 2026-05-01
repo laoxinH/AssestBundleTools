@@ -8,6 +8,7 @@ using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Application.Tests.Workspace.Commands;
+using AssestBundleTools.Application.Tests.Workspace.Services;
 using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Domain.Workspace;
 
@@ -56,12 +57,36 @@ internal static class ApplicationTestSuite
             ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldReportDecryptionFailure_WhenDecryptorExecutionFails);
         await RunTestAsync(
             failures,
+            nameof(ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldPassBundleCacheKeyToDecryptorRequest),
+            ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldPassBundleCacheKeyToDecryptorRequest);
+        await RunTestAsync(
+            failures,
+            nameof(ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldProcessCandidateBundlesInParallel_WhenExecutionOptionsAllowMultipleWorkers),
+            ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldProcessCandidateBundlesInParallel_WhenExecutionOptionsAllowMultipleWorkers);
+        await RunTestAsync(
+            failures,
+            nameof(ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldRecordProbeTelemetry_WhenAutoDetectionProbesUnresolvedCandidates),
+            ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldRecordProbeTelemetry_WhenAutoDetectionProbesUnresolvedCandidates);
+        await RunTestAsync(
+            failures,
             nameof(ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldReportReaderRejected_WhenDecryptedBundleCannotBeRead),
             ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldReportReaderRejected_WhenDecryptedBundleCannotBeRead);
         await RunTestAsync(
             failures,
             nameof(ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldReportReadFailure_WhenReaderReturnsFailure),
             ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldReportReadFailure_WhenReaderReturnsFailure);
+        await RunTestAsync(
+            failures,
+            nameof(WorkspaceImportExecutionGateTests.ExecuteExclusiveAsync_ShouldSerializeConcurrentOperations_ForSameWorkspaceKey),
+            WorkspaceImportExecutionGateTests.ExecuteExclusiveAsync_ShouldSerializeConcurrentOperations_ForSameWorkspaceKey);
+        await RunTestAsync(
+            failures,
+            nameof(WorkspaceImportExecutionGateTests.ExecuteExclusiveAsync_ShouldRemainReusable_AfterConcurrentImportWaves),
+            WorkspaceImportExecutionGateTests.ExecuteExclusiveAsync_ShouldRemainReusable_AfterConcurrentImportWaves);
+        await RunTestAsync(
+            failures,
+            nameof(WorkspaceImportExecutionOptionsResolverTests.ResolveBundleWorkerCount_ShouldFollowDocumentedThresholds),
+            WorkspaceImportExecutionOptionsResolverTests.ResolveBundleWorkerCount_ShouldFollowDocumentedThresholds);
         await RunTestAsync(
             failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldReturnFallbackSummary_WhenDecryptionFails),

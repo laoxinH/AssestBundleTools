@@ -68,6 +68,7 @@ Do not move recent-workspace restore, availability semantics, last-active worksp
 - Regular handwritten business/UI classes should usually stay within `200-500` lines.
 - Page-level facade/orchestrator viewmodels have a soft limit of `600` lines.
 - `800+` lines are split-required transitional state; `1000+` lines are not acceptable as steady state.
+- Resource catalogs, localization key catalogs, and simple constant catalogs are exempt from line-count splitting by default; keep them centralized unless there is a clear maintainability reason beyond file length.
 - If a current change pushes a touched handwritten file above a documented threshold, or leaves a touched oversize file in place, do not only report it; continue the same change with the required split/refactor when the docs already define a clear direction.
 - Only defer the structural fix when the correct split path is genuinely ambiguous or carries a meaningful product/architecture tradeoff that the docs do not already resolve; in that case, stop and ask the user instead of guessing.
 - Prefer explicit collaborator types such as `Coordinator`, `Presenter`, `Loader`, `Formatter`, `Mapper`, `Resolver`, and `ActionHandler`.

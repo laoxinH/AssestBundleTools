@@ -18,4 +18,5 @@ public sealed record WorkspaceImportProcessingResultDto(
     int FailedFileCount,
     IReadOnlyList<WorkspaceImportCacheDecisionDiagnosticDto> CacheDiagnostics,
     IReadOnlyList<WorkspaceImportIssueDiagnosticDto> IssueDiagnostics,
-    DateTimeOffset ProcessedAtUtc);
+    DateTimeOffset ProcessedAtUtc,
+    WorkspaceImportPerformanceDiagnosticDto? PerformanceDiagnostic = null);

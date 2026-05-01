@@ -11,6 +11,7 @@ public sealed record AssetBundleDecryptionRequestDto(
     string SourcePath,
     string WorkspaceKey,
     string WorkspaceDataRootPath,
+    string? BundleCacheKey = null,
     string? WorkingDirectoryPath = null,
     string? PreferredOutputFileName = null,
     IReadOnlyDictionary<string, string>? Parameters = null);

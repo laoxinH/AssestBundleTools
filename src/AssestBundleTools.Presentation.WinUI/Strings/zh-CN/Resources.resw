@@ -495,6 +495,12 @@
   <data name="WorkspaceImport.Log.Processed.Format" xml:space="preserve">
     <value>工作区“{0}”已刷新导入索引：{1} 条来源、发现 {2} 个文件、初筛排除 {3} 个、新建索引 {4} 个资源包，复用缓存 {5} 个，读取跳过 {6} 个，失败 {7} 个。</value>
   </data>
+  <data name="WorkspaceImport.Log.Performance.Format" xml:space="preserve">
+    <value>导入阶段耗时：worker {0} 个，总计 {1} ms，计划 {2} ms，筛选 {3} ms，并行处理 {4} ms，提交 {5} ms。</value>
+  </data>
+  <data name="WorkspaceImport.Log.ProbePerformance.Format" xml:space="preserve">
+    <value>Probe 诊断：耗时 {0} ms，候选解密器 {1} 个，文件评估 {2} 次。</value>
+  </data>
   <data name="WorkspaceImport.Log.AutoDetectionSummary.Format" xml:space="preserve">
     <value>工作区“{0}”本次导入使用自动识别，最终选择解密器“{1}”。探测候选 {2} 个，待判定文件 {3} 个。</value>
   </data>

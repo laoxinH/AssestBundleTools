@@ -1,3 +1,4 @@
+using AssestBundleTools.Infrastructure.Tests.Bundles.Decryption;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Persistence;
 
 namespace AssestBundleTools.Infrastructure.Tests.Testing;
@@ -48,6 +49,14 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(JsonPreviewCacheStoreTests.Delete_ShouldRemoveDescriptor_WhenStoredDescriptorPayloadPathIsInvalid),
             JsonPreviewCacheStoreTests.Delete_ShouldRemoveDescriptor_WhenStoredDescriptorPayloadPathIsInvalid);
+        await RunTestAsync(
+            failures,
+            nameof(ExternalProcessAssetBundleDecryptorTests.DecryptAsync_ShouldUseBundleScopedWorkspaceStagingPath_WhenWorkspaceDataRootIsProvided),
+            ExternalProcessAssetBundleDecryptorTests.DecryptAsync_ShouldUseBundleScopedWorkspaceStagingPath_WhenWorkspaceDataRootIsProvided);
+        await RunTestAsync(
+            failures,
+            nameof(ExternalProcessAssetBundleDecryptorTests.DecryptAsync_ShouldAppendUniqueSegments_WhenCustomWorkingDirectoryIsProvided),
+            ExternalProcessAssetBundleDecryptorTests.DecryptAsync_ShouldAppendUniqueSegments_WhenCustomWorkingDirectoryIsProvided);
 
         if (failures.Count == 0)
         {

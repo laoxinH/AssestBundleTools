@@ -193,6 +193,8 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
                         processingResult.FailedFileCount > 0;
 
         _appLogService.AppendInfo(logMessage);
+        AppendPerformanceDiagnostic(processingResult);
+        AppendProbePerformanceDiagnostic(processingResult);
         AppendAutoDetectionDiagnostics(result.WorkspaceDisplayName, processingResult);
         AppendCacheDiagnostics(processingResult);
         AppendIssueDiagnostics(processingResult);
@@ -270,6 +272,44 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
                     LocalizedMessageDisplayFormatter.Format(sampleMessage, _localizationService)));
             }
         }
+    }
+
+    private void AppendPerformanceDiagnostic(WorkspaceImportProcessingResultDto processingResult)
+    {
+        if (processingResult.PerformanceDiagnostic is null)
+        {
+            return;
+        }
+
+        var diagnostic = processingResult.PerformanceDiagnostic;
+        _appLogService.AppendInfo(_localizationService.GetFormattedString(
+            ResourceKeys.WorkspaceImportLogPerformanceFormat,
+            diagnostic.BundleWorkerCount,
+            diagnostic.TotalDurationMs,
+            diagnostic.PlanningDurationMs,
+            diagnostic.ScreeningDurationMs,
+            diagnostic.WorkerDurationMs,
+            diagnostic.CommitDurationMs));
+    }
+
+    private void AppendProbePerformanceDiagnostic(WorkspaceImportProcessingResultDto processingResult)
+    {
+        if (processingResult.PerformanceDiagnostic is null)
+        {
+            return;
+        }
+
+        var diagnostic = processingResult.PerformanceDiagnostic;
+        if (diagnostic.ProbeDecryptorCount <= 0 || diagnostic.ProbeEvaluationCount <= 0)
+        {
+            return;
+        }
+
+        _appLogService.AppendInfo(_localizationService.GetFormattedString(
+            ResourceKeys.WorkspaceImportLogProbePerformanceFormat,
+            diagnostic.ProbeDurationMs,
+            diagnostic.ProbeDecryptorCount,
+            diagnostic.ProbeEvaluationCount));
     }
 
     private void AppendCacheDiagnostics(WorkspaceImportProcessingResultDto processingResult)

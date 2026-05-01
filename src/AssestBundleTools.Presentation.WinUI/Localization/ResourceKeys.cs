@@ -128,6 +128,8 @@ public static class ResourceKeys
     public const string WorkspaceImportLogBundleDirectoryRegisteredFormat = "WorkspaceImport.Log.BundleDirectoryRegistered.Format";
     public const string WorkspaceImportLogDragDropRegisteredFormat = "WorkspaceImport.Log.DragDropRegistered.Format";
     public const string WorkspaceImportLogProcessedFormat = "WorkspaceImport.Log.Processed.Format";
+    public const string WorkspaceImportLogPerformanceFormat = "WorkspaceImport.Log.Performance.Format";
+    public const string WorkspaceImportLogProbePerformanceFormat = "WorkspaceImport.Log.ProbePerformance.Format";
     public const string WorkspaceImportLogAutoDetectionSummaryFormat = "WorkspaceImport.Log.AutoDetectionSummary.Format";
     public const string WorkspaceImportLogAutoDetectionFallbackSummaryFormat = "WorkspaceImport.Log.AutoDetectionFallbackSummary.Format";
     public const string WorkspaceImportLogAutoDetectionProbeFormat = "WorkspaceImport.Log.AutoDetectionProbe.Format";
@@ -151,7 +153,6 @@ public static class ResourceKeys
     public const string WorkspaceImportNotificationProcessedFormat = "WorkspaceImport.Notification.Processed.Format";
     public const string WorkspaceImportDropOverlayTitle = "WorkspaceImport.DropOverlay.Title";
     public const string WorkspaceImportDropOverlayHint = "WorkspaceImport.DropOverlay.Hint";
-
     public const string DiagnosticsLogEmptyState = "Diagnostics.Log.EmptyState";
     public const string LogPanelAllFilterButtonContent = "LogPanel.AllFilterButton.Content";
     public const string LogPanelInfoFilterButtonContent = "LogPanel.InfoFilterButton.Content";

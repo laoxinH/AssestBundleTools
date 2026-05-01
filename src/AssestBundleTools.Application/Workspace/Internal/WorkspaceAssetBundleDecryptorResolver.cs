@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AssestBundleTools.Application.Bundles;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
@@ -73,7 +74,8 @@ internal static class WorkspaceAssetBundleDecryptorResolver
                     UsedAutoDetection: false,
                     ShouldPersistResolvedDecryptorId: false,
                     AutoDetectionDiagnostic: null,
-                    SelectedProbeSummary: null));
+                    SelectedProbeSummary: null,
+                    ProbeTelemetry: WorkspaceImportProbeTelemetry.None));
         }
 
         var fallbackDecryptor = FindFallbackDecryptor(assetBundleDecryptorRegistry);
@@ -100,10 +102,12 @@ internal static class WorkspaceAssetBundleDecryptorResolver
                         usedFallbackDecryptor: true,
                         probeSummaries: Array.Empty<WorkspaceImportDecryptorProbeSummary>(),
                         selectedProbeDecryptorId: null),
-                    SelectedProbeSummary: null));
+                    SelectedProbeSummary: null,
+                    ProbeTelemetry: WorkspaceImportProbeTelemetry.None));
         }
 
         var probeSummaries = new List<WorkspaceImportDecryptorProbeSummary>(probeCandidates.Length);
+        var probeStopwatch = Stopwatch.StartNew();
         foreach (var probeCandidate in probeCandidates)
         {
             probeSummaries.Add(await ProbeDecryptorAsync(
@@ -111,6 +115,7 @@ internal static class WorkspaceAssetBundleDecryptorResolver
                 discoveredFiles,
                 cancellationToken));
         }
+        probeStopwatch.Stop();
 
         var bestMatchedCandidate = probeSummaries
             .Where(static summary => summary.MatchedFileCount > 0)
@@ -132,7 +137,11 @@ internal static class WorkspaceAssetBundleDecryptorResolver
                     usedFallbackDecryptor: bestMatchedCandidate is null,
                     probeSummaries,
                     bestMatchedCandidate?.Decryptor.Descriptor.Id),
-                SelectedProbeSummary: bestMatchedCandidate));
+                SelectedProbeSummary: bestMatchedCandidate,
+                ProbeTelemetry: new WorkspaceImportProbeTelemetry(
+                    DurationMs: probeStopwatch.ElapsedMilliseconds,
+                    DecryptorCount: probeSummaries.Count,
+                    FileEvaluationCount: probeSummaries.Sum(static summary => summary.FileResults.Count))));
     }
 
     internal static async Task<WorkspaceImportDecryptorProbeSummary> ProbeDecryptorAsync(
@@ -301,7 +310,8 @@ internal sealed record WorkspaceImportDecryptorResolutionResult(
     bool UsedAutoDetection,
     bool ShouldPersistResolvedDecryptorId,
     WorkspaceImportAutoDetectionDiagnosticDto? AutoDetectionDiagnostic,
-    WorkspaceImportDecryptorProbeSummary? SelectedProbeSummary);
+    WorkspaceImportDecryptorProbeSummary? SelectedProbeSummary,
+    WorkspaceImportProbeTelemetry ProbeTelemetry);
 
 internal sealed record WorkspaceImportDecryptorProbeSummary(
     IAssetBundleDecryptor Decryptor,

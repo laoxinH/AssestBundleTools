@@ -432,6 +432,14 @@ Presentation 层保留两个协同层次：
 不能把解析、缓存写入或共享状态竞争回推到 `Presentation`、`WorkspaceSessionRegistry`
 或任意页面级协调对象。
 
+当前实现进度补充：
+
+- 第一阶段前置约束已落地：`WorkspaceImportExecutionGate` 已统一保护手动导入与工作区重新打开时的自动导入刷新
+- 外部解密 staging 路径当前也已升级为 `workspaceKey + decryptorId + bundleCacheKey` 级别的稳定隔离目录
+- 第二阶段已落地：导入协调器当前已正式拆为 `PlanBuilder -> Worker Pool -> Committer`，并在 `Application` 导入链路内部打开 bundle 粒度有界并行
+- 默认并发度当前已通过 `WorkspaceImportExecutionOptionsResolver` 固化为 `1 / 2 / 3 / 4` 四档；提交阶段与工作区级 Probe 仍保持串行
+- 导入处理结果当前已补上 `Planning / Screening / Worker / Commit / Total` 五段耗时诊断，并额外记录 `ProbeDuration / ProbeDecryptorCount / ProbeEvaluationCount`，供后续评估 `Probe` 是否值得单独并行化
+
 推荐规则如下：
 
 1. 工作区级互斥
@@ -573,7 +581,10 @@ Presentation 层保留两个协同层次：
 - 工作区默认解密器当前已支持“自动识别”模式：导入时会先按工作区级探测非回退解密器，再回退到直通解密器，并在成功建立或复用索引后把真实解密器固化回工作区元数据
 - 工作区导入结果当前已补充第一轮结构化失败诊断：会回传自动识别探测摘要，以及“导入源筛除 / 解密失败 / 读取器拒绝 / 读取失败”四类问题明细，供工作台日志与后续诊断页复用
 - 工作区导入结果当前已补上结构化缓存诊断：会回传 `缓存未命中 / 来源指纹变化 / 解密器变化 / 解密器版本变化 / 工具版本变化 / 解析器版本变化 / 来源移除` 等标准原因，而不是只保留数量统计
-- 当前导入处理协调器仍按单作业串行执行；多线程导入规范现已明确收敛为“工作区级互斥 + bundle 粒度受控并行 + 串行提交”，但代码尚未按该模型落地
+- 当前导入入口已经补上 `workspaceKey` 级执行闸门，工作区重新打开时的自动刷新也会复用同一互斥链路
+- 外部解密 staging 目录当前已补上 `workspaceKey + decryptorId + bundleCacheKey` 唯一路径，避免不同来源下的同名 bundle 派生文件互相覆写
+- 当前导入处理协调器已正式拆为 `WorkspaceImportProcessingPlanBuilder -> WorkspaceImportWorkerPool -> WorkspaceImportCommitter`，bundle 粒度有界并行也已在 `Application` 导入链路内部落地
+- 当前导入结果与工作台日志已补上阶段耗时诊断，能够直接观察 `Planning / Screening / Worker / Commit` 的相对开销，并额外看到 `Probe` 的独立耗时与评估规模
 - 工作区运行时会话当前已改为优先从 `BundleIndexCacheStore` 恢复资源包列表，不再依赖假数据资源包树
 - Infrastructure 当前已接入 `AssetsTools.NET` 作为真实解析库，并保留启发式 Reader 作为失败回退
 - 当前阶段的 Reader 已可解析资源包内序列化文件、真实资产名与 `m_Container` 路径，并把资产列表 / 基础详情摘要写入 `BundleIndexCacheStore`
@@ -670,7 +681,7 @@ Presentation 层保留两个协同层次：
 - 拖拽导入的页面桥接应优先挂在具体工作区区域，而不是整页根节点
 - AB 真实解析结果应优先写入独立缓存层，而不是写进工作区元数据文件
 - 解密后的临时文件默认属于 `staging` 层，不应混入工作区元数据
-- 同一工作区的导入刷新默认只允许一个运行中作业；若后续扩展多线程导入，默认只允许在 `Application` 导入链路内部按 bundle 粒度做受控并行，并维持“串行计划 -> 有界并行 worker -> 串行提交”的三段模型
+- 同一工作区的导入刷新默认只允许一个运行中作业；当前多线程导入也只允许在 `Application` 导入链路内部按 bundle 粒度做受控并行，并维持“串行计划 -> 有界并行 worker -> 串行提交”的三段模型
 - 通过工作区向导新建或打开工作区时，仍可显式选择当前窗口或新窗口
 - 工作区向导应优先用“工作区数据目录”识别已有工作区，并在新建时显式处理目录冲突
 - 从控制台再次打开最近工作区时，打开策略由设置项统一控制，可选默认当前、默认新建或每次询问

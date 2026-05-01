@@ -66,6 +66,8 @@ internal static class AppCompositionRoot
             workspaceImportFileSystemService);
         var workspaceContextCatalogService = new WorkspaceContextCatalogService(
             workspaceContextPersistenceService);
+        var workspaceImportExecutionGate = new WorkspaceImportExecutionGate();
+        var workspaceImportExecutionOptionsResolver = new WorkspaceImportExecutionOptionsResolver();
         var assetBundleSourceInspector = new UnityAssetBundleSourceInspector();
         var assetBundleReader = new FallbackAssetBundleReader(
             new AssetsToolsAssetBundleReader(),
@@ -79,6 +81,8 @@ internal static class AppCompositionRoot
             workspaceDataStoreFactory: workspaceDataStoreFactory,
             workspaceImportSourceDiscoveryService: workspaceImportSourceDiscoveryService,
             workspaceImportFileSystemService: workspaceImportFileSystemService,
+            workspaceImportExecutionGate: workspaceImportExecutionGate,
+            workspaceImportExecutionOptionsResolver: workspaceImportExecutionOptionsResolver,
             assetBundleSourceInspector: assetBundleSourceInspector,
             assetBundleDecryptorRegistry: assetBundleDecryptorRegistry,
             assetBundleReader: assetBundleReader);
@@ -90,6 +94,8 @@ internal static class AppCompositionRoot
             workspaceDataStoreFactory,
             workspaceImportSourceDiscoveryService,
             workspaceImportFileSystemService,
+            workspaceImportExecutionGate,
+            workspaceImportExecutionOptionsResolver,
             assetBundleSourceInspector,
             assetBundleDecryptorRegistry,
             assetBundleReader);

@@ -65,7 +65,7 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
 
         var resultFilePath = Path.Combine(
             workingDirectoryPath,
-            $"{SanitizeFileComponent(_manifest.Id)}.probe.{Guid.NewGuid():N}.json");
+            $"{ExternalProcessAssetBundleDecryptorSupport.SanitizeFileComponent(_manifest.Id)}.probe.{Guid.NewGuid():N}.json");
 
         var executionResult = await ExecuteProcessAsync(
             arguments: _manifest.ProbeArguments,
@@ -98,7 +98,7 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
                         WorkspaceImportMessageTokens.DecryptorProbeResultFileMissing));
             }
 
-            var payload = ReadJsonFile<AssetBundleExternalProcessProbePayload>(resultFilePath);
+            var payload = ExternalProcessAssetBundleDecryptorSupport.ReadJsonFile<AssetBundleExternalProcessProbePayload>(resultFilePath);
             if (payload is null)
             {
                 return new AssetBundleDecryptorProbeResultDto(
@@ -119,7 +119,7 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
         }
         finally
         {
-            DeleteFileIfExists(resultFilePath);
+            ExternalProcessAssetBundleDecryptorSupport.DeleteFileIfExists(resultFilePath);
         }
     }
 
@@ -139,16 +139,12 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
                 ApplicationErrors.BundleDecryptionArgumentsRequired(Descriptor.Id));
         }
 
-        var workingDirectoryPath = ResolveWorkingDirectory(
-            request.SourcePath,
-            request.WorkspaceKey,
-            request.WorkspaceDataRootPath,
-            request.WorkingDirectoryPath);
+        var workingDirectoryPath = ResolveDecryptionWorkingDirectory(request);
         Directory.CreateDirectory(workingDirectoryPath);
 
         var resultFilePath = Path.Combine(
             workingDirectoryPath,
-            $"{SanitizeFileComponent(_manifest.Id)}.decrypt.{Guid.NewGuid():N}.json");
+            $"{ExternalProcessAssetBundleDecryptorSupport.SanitizeFileComponent(_manifest.Id)}.decrypt.{Guid.NewGuid():N}.json");
         var outputFilePath = Path.Combine(
             workingDirectoryPath,
             ResolveOutputFileName(request.SourcePath, request.PreferredOutputFileName));
@@ -180,7 +176,7 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
                     ApplicationErrors.BundleDecryptionResultFileMissing(Descriptor.Id));
             }
 
-            var payload = ReadJsonFile<AssetBundleExternalProcessDecryptPayload>(resultFilePath);
+            var payload = ExternalProcessAssetBundleDecryptorSupport.ReadJsonFile<AssetBundleExternalProcessDecryptPayload>(resultFilePath);
             if (payload is null)
             {
                 return Result<AssetBundleDecryptionResultDto>.Failure(
@@ -198,7 +194,7 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
 
             var resolvedOutputPath = string.IsNullOrWhiteSpace(payload.OutputPath)
                 ? outputFilePath
-                : ResolvePath(payload.OutputPath, workingDirectoryPath);
+                : ExternalProcessAssetBundleDecryptorSupport.ResolvePath(payload.OutputPath, workingDirectoryPath);
             if (!File.Exists(resolvedOutputPath))
             {
                 return Result<AssetBundleDecryptionResultDto>.Failure(
@@ -208,7 +204,7 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
             var result = new AssetBundleDecryptionResultDto(
                 Decryptor: Descriptor,
                 ResolvedBundlePath: resolvedOutputPath,
-                ProducedDerivedFile: !PathsEqual(request.SourcePath, resolvedOutputPath),
+                ProducedDerivedFile: !ExternalProcessAssetBundleDecryptorSupport.PathsEqual(request.SourcePath, resolvedOutputPath),
                 BundleFingerprint: AssetBundleFileFingerprintFactory.Create(resolvedOutputPath),
                 DiagnosticMessage: string.IsNullOrWhiteSpace(payload.Message)
                     ? null
@@ -218,7 +214,7 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
         }
         finally
         {
-            DeleteFileIfExists(resultFilePath);
+            ExternalProcessAssetBundleDecryptorSupport.DeleteFileIfExists(resultFilePath);
         }
     }
 
@@ -239,7 +235,7 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
         try
         {
             process = new Process();
-            process.StartInfo.FileName = ResolveExecutablePath(_manifest.ExecutablePath, _manifestDirectoryPath);
+            process.StartInfo.FileName = ExternalProcessAssetBundleDecryptorSupport.ResolveExecutablePath(_manifest.ExecutablePath, _manifestDirectoryPath);
             process.StartInfo.WorkingDirectory = workingDirectoryPath;
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.CreateNoWindow = true;
@@ -298,7 +294,7 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
                   timeoutCancellationTokenSource.IsCancellationRequested &&
                   !cancellationToken.IsCancellationRequested)
         {
-            TryTerminateProcess(process);
+            ExternalProcessAssetBundleDecryptorSupport.TryTerminateProcess(process);
             return new ExternalProcessExecutionResult(
                 IsSuccess: false,
                 Detail: null,
@@ -307,12 +303,12 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
         }
         catch (OperationCanceledException)
         {
-            TryTerminateProcess(process);
+            ExternalProcessAssetBundleDecryptorSupport.TryTerminateProcess(process);
             throw;
         }
         catch (Exception)
         {
-            TryTerminateProcess(process);
+            ExternalProcessAssetBundleDecryptorSupport.TryTerminateProcess(process);
             return new ExternalProcessExecutionResult(
                 IsSuccess: false,
                 Detail: null,
@@ -353,15 +349,8 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
         string? workspaceDataRootPath,
         string? requestWorkingDirectoryPath = null)
     {
-        if (!string.IsNullOrWhiteSpace(requestWorkingDirectoryPath))
-        {
-            return Path.GetFullPath(requestWorkingDirectoryPath);
-        }
-
-        if (!string.IsNullOrWhiteSpace(_manifest.WorkingDirectoryPath))
-        {
-            return ResolvePath(_manifest.WorkingDirectoryPath, _manifestDirectoryPath);
-        }
+        if (!string.IsNullOrWhiteSpace(requestWorkingDirectoryPath)) return Path.GetFullPath(requestWorkingDirectoryPath);
+        if (!string.IsNullOrWhiteSpace(_manifest.WorkingDirectoryPath)) return ExternalProcessAssetBundleDecryptorSupport.ResolvePath(_manifest.WorkingDirectoryPath, _manifestDirectoryPath);
 
         if (!string.IsNullOrWhiteSpace(workspaceDataRootPath) &&
             !string.IsNullOrWhiteSpace(workspaceKey))
@@ -369,25 +358,37 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
             return Path.Combine(
                 Path.GetFullPath(workspaceDataRootPath),
                 "staging",
-                "decrypt",
-                workspaceKey,
-                SanitizeFileComponent(_manifest.Id));
+                "decrypt");
         }
 
         return Path.Combine(
             Path.GetTempPath(),
             "AssestBundleTools",
-            "decrypt",
-            SanitizeFileComponent(_manifest.Id),
-            Path.GetFileNameWithoutExtension(sourcePath));
+            "decrypt");
+    }
+
+    private string ResolveDecryptionWorkingDirectory(AssetBundleDecryptionRequestDto request)
+    {
+        var rootDirectoryPath = ResolveWorkingDirectory(
+            request.SourcePath,
+            request.WorkspaceKey,
+            request.WorkspaceDataRootPath,
+            request.WorkingDirectoryPath);
+        var workspaceSegment = ExternalProcessAssetBundleDecryptorSupport.SanitizeDirectoryComponent(request.WorkspaceKey);
+        var decryptorSegment = ExternalProcessAssetBundleDecryptorSupport.SanitizeDirectoryComponent(_manifest.Id);
+        var workItemSegment = ResolveWorkItemDirectorySegment(request);
+        return Path.Combine(rootDirectoryPath, workspaceSegment, decryptorSegment, workItemSegment);
+    }
+
+    private string ResolveWorkItemDirectorySegment(AssetBundleDecryptionRequestDto request)
+    {
+        if (!string.IsNullOrWhiteSpace(request.BundleCacheKey)) return ExternalProcessAssetBundleDecryptorSupport.SanitizeDirectoryComponent(request.BundleCacheKey);
+        return ExternalProcessAssetBundleDecryptorSupport.ComputeStableSourcePathKey(request.SourcePath);
     }
 
     private static string ResolveOutputFileName(string sourcePath, string? preferredOutputFileName)
     {
-        if (!string.IsNullOrWhiteSpace(preferredOutputFileName))
-        {
-            return preferredOutputFileName.Trim();
-        }
+        if (!string.IsNullOrWhiteSpace(preferredOutputFileName)) return preferredOutputFileName.Trim();
 
         var extension = Path.GetExtension(sourcePath);
         var baseName = Path.GetFileNameWithoutExtension(sourcePath);
@@ -437,104 +438,4 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
         };
     }
 
-    private static TPayload? ReadJsonFile<TPayload>(string filePath)
-    {
-        try
-        {
-            using var stream = File.OpenRead(filePath);
-            return JsonSerializer.Deserialize<TPayload>(stream, AssetBundleDecryptorJsonSerialization.SerializerOptions);
-        }
-        catch (Exception)
-        {
-            return default;
-        }
-    }
-
-    private static string ResolvePath(string path, string baseDirectoryPath)
-    {
-        return Path.IsPathRooted(path)
-            ? Path.GetFullPath(path)
-            : Path.GetFullPath(Path.Combine(baseDirectoryPath, path));
-    }
-
-    private static string ResolveExecutablePath(string executablePath, string baseDirectoryPath)
-    {
-        if (Path.IsPathRooted(executablePath))
-        {
-            return Path.GetFullPath(executablePath);
-        }
-
-        if (executablePath.Contains(Path.DirectorySeparatorChar) ||
-            executablePath.Contains(Path.AltDirectorySeparatorChar))
-        {
-            return Path.GetFullPath(Path.Combine(baseDirectoryPath, executablePath));
-        }
-
-        return executablePath;
-    }
-
-    private static string SanitizeFileComponent(string value)
-    {
-        var sanitizedChars = value
-            .Select(ch => Path.GetInvalidFileNameChars().Contains(ch) ? '_' : ch)
-            .ToArray();
-        return new string(sanitizedChars);
-    }
-
-    private static bool PathsEqual(string left, string right)
-    {
-        return string.Equals(
-            Path.GetFullPath(left),
-            Path.GetFullPath(right),
-            StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static void DeleteFileIfExists(string filePath)
-    {
-        try
-        {
-            if (File.Exists(filePath))
-            {
-                File.Delete(filePath);
-            }
-        }
-        catch (Exception)
-        {
-            // 结果文件清理失败不应中断主流程。
-        }
-    }
-
-    private static void TryTerminateProcess(Process? process)
-    {
-        if (process is null)
-        {
-            return;
-        }
-
-        try
-        {
-            if (!process.HasExited)
-            {
-                process.Kill(entireProcessTree: true);
-            }
-        }
-        catch (Exception)
-        {
-            // 外部进程终止失败不应覆盖原始错误。
-        }
-    }
 }
-
-internal enum ExternalProcessExecutionFailureKind
-{
-    None = 0,
-    ProcessExited = 1,
-    TimedOut = 2,
-    Exception = 3
-}
-
-internal readonly record struct ExternalProcessExecutionResult(
-    bool IsSuccess,
-    string? Detail,
-    ExternalProcessExecutionFailureKind FailureKind,
-    int ExitCode);

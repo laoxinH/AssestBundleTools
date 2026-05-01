@@ -495,6 +495,12 @@
   <data name="WorkspaceImport.Log.Processed.Format" xml:space="preserve">
     <value>Refreshed the import index for workspace \"{0}\": {1} sources, {2} discovered files, {3} screened out early, {4} bundles re-indexed, {5} cache hits reused, {6} read-stage skips, {7} failures.</value>
   </data>
+  <data name="WorkspaceImport.Log.Performance.Format" xml:space="preserve">
+    <value>Import stage timings: {0} workers, total {1} ms, planning {2} ms, screening {3} ms, worker execution {4} ms, commit {5} ms.</value>
+  </data>
+  <data name="WorkspaceImport.Log.ProbePerformance.Format" xml:space="preserve">
+    <value>Probe diagnostics: {0} ms, {1} candidate decryptors, {2} file evaluations.</value>
+  </data>
   <data name="WorkspaceImport.Log.AutoDetectionSummary.Format" xml:space="preserve">
     <value>Workspace \"{0}\" used auto-detection for this import and selected decryptor \"{1}\". Probed {2} candidates across {3} unresolved files.</value>
   </data>

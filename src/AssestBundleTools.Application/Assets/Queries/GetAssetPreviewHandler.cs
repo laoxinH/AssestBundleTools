@@ -160,7 +160,8 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             new AssetBundleDecryptionRequestDto(
                 SourcePath: bundleCacheEntry.SourceFingerprint.SourcePath,
                 WorkspaceKey: query.WorkspaceKey,
-                WorkspaceDataRootPath: query.WorkspaceDataRootPath),
+                WorkspaceDataRootPath: query.WorkspaceDataRootPath,
+                BundleCacheKey: bundleCacheEntry.BundleCacheKey),
             cancellationToken);
         if (decryptionResult.IsCancelled)
         {

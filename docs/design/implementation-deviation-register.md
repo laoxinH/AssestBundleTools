@@ -39,7 +39,7 @@
 - 如果后续决定“保留当前实现并上升为正式规则”，则应把规则写回主文档，并从本文档移除该项。
 - 若新的实现继续引入过渡结构，必须先补登记，再继续扩散。
 
-## 3. 当前偏差总览（2026-04-29）
+## 3. 当前偏差总览（2026-05-01）
 
 | ID | 优先级 | 主题 | 当前状态 |
 |---|---|---|---|
@@ -51,7 +51,7 @@
 | D-06 | 高 | 自动化测试覆盖深度仍待继续补强 | 第三轮已收口（当前剩余为深层回归补齐） |
 | D-07 | 中 | 用户文本资源化与结构化错误仍有残余热点 | 第二轮已收口（仅保留外部工具诊断回退） |
 | D-08 | 中 | 工作区进程占用注册时机仍偏后 | 第二轮已收口（预登记 + 晋升/回滚） |
-| D-09 | 中 | 工作区导入多线程扩展规范已定义但实现仍保持串行 | 已登记 |
+| D-09 | 中 | 工作区导入多线程扩展规范落地收口 | 第二轮已收口（主链路已并行化） |
 
 ## 4. 详细登记
 
@@ -402,22 +402,37 @@
 - 保持当前“formal 注册 + pending 预登记 + 成功晋升 + 失败回滚”模型，不要再回退为“只有加载成功后才注册”；
 - 后续若继续加强这一块，更适合继续补跨进程激活重定向、事件派发与窗口定位链路的自动化回归，而不是重新调整语义边界。
 
-### D-09 工作区导入多线程扩展规范已定义但实现仍保持串行
+### D-09 工作区导入多线程扩展规范落地收口
 
 当前状态：
 
 - `src/AssestBundleTools.Application/Workspace/Internal/WorkspaceImportProcessingCoordinator.cs`
-  当前仍按单循环串行执行来源指纹、缓存复用判断、解密、Reader 读取、缓存保存与陈旧缓存清理。
+  当前已完成第二阶段收口：导入主链路已正式拆为
+  `WorkspaceImportProcessingPlanBuilder -> WorkspaceImportWorkerPool -> WorkspaceImportCommitter`，
+  并在 `Application` 导入链路内部打开 bundle 粒度有界并行。
+- `src/AssestBundleTools.Application/Workspace/Services/WorkspaceImportExecutionOptionsResolver.cs`
+  当前已把默认 worker 并发度规则固化为 `1 / 2 / 3 / 4` 四档，
+  供导入链路统一解析运行时并发选项。
 - `src/AssestBundleTools.Infrastructure/Bundles/Decryption/ExternalProcessAssetBundleDecryptor.cs`
-  当前工作目录与输出文件生成规则仍主要围绕“源文件名”展开，尚未升级为
-  `workspaceKey + decryptorId + bundleCacheKey` 级别的稳定隔离路径。
+  当前已升级为 `workspaceKey + decryptorId + bundleCacheKey`
+  级别的稳定隔离路径，不再仅围绕源文件名推导工作目录。
 - `docs/design/workspace-management.md`
   当前已经把多线程导入正式收敛为：
   - 同一 `workspaceKey` 只允许一个进行中的导入作业
   - `串行计划 -> bundle 粒度有界并行 worker -> 串行提交`
   - 默认 worker 并发度为 `1 / 2 / 3 / 4`，且每个工作区上限不超过 `4`
-- 也就是说，仓库规范已经明确，
-  但当前代码仍停留在“结构上适合扩展、实现上仍串行”的过渡态。
+- `tests/AssestBundleTools.Application.Tests` / `tests/AssestBundleTools.Infrastructure.Tests`
+  当前已补上首轮并发回归：
+  - 同一工作区执行闸门串行化
+  - bundle 粒度并行处理
+  - staging 输出路径隔离
+- `WorkspaceImportProcessingResultDto`
+  当前也已补上 `Planning / Screening / Worker / Commit / Total`
+  五段耗时诊断，并额外记录 `ProbeDuration / ProbeDecryptorCount / ProbeEvaluationCount`，
+  便于后续判断 `Probe` 是否成为新的吞吐瓶颈
+
+也就是说，这条偏差的主体实现缺口已经关闭；
+当前剩余的只是未来是否继续扩展 `Probe` 并发、是否调整并发度上限等增强议题。
 
 与规范冲突点：
 
@@ -425,34 +440,29 @@
   - 多线程导入的并发边界必须停留在 `Application` 导入链路内部
   - 同一工作区需要先有执行闸门，再允许 bundle 粒度有界并行
   - 缓存写入、预览清理和元数据回写必须保持串行提交
-- 当前实现虽然没有违反这些规则，
-  但也还没有真正落地这些规则要求的执行闸门、三段模型与 staging 唯一路径。
+- 当前实现已与上述边界对齐；
+  当前不再存在“规范已定义但主链路仍串行”的核心偏差。
 
 影响：
 
-- 当前实现仍然稳定，但无法安全地直接通过 `Parallel.ForEachAsync(...)`
-  之类方式把现有串行循环“原地并行化”；
-- 如果不先收口 staging 路径和共享状态边界，
-  后续并发导入很容易出现：
-  - 同名 bundle 派生文件覆写
-  - 共享统计/诊断集合竞争
-  - 缓存删除与缓存保存交错
-  - 工作区重新打开与手动导入刷新互相重叠
+- 导入吞吐增强当前已经落在明确的三段模型内，
+  后续不需要再通过“原地并行化旧串行循环”的高风险方式推进；
+- 执行闸门、提交串行化与 staging 唯一路径已经把共享统计/诊断集合竞争、
+  缓存删除与缓存保存交错，以及同工作区双重导入作业这类高风险点压回到受控边界内；
+- 这条偏差当前已从“实现缺口”转为“持续守住并发边界”的维护项。
 
 建议收口方向：
 
-- 先补 `WorkspaceImportExecutionGate`，
-  统一保护手动导入、工作区重新打开时的自动刷新，以及后续缓存重建入口；
-- 再把导入协调器拆为 `PlanBuilder -> Worker Pool -> Committer`，
-  避免在现有串行协调器上直接叠加共享状态并发；
-- 把外部解密 staging 路径升级为 `workspaceKey + decryptorId + bundleCacheKey`
-  级别的唯一目录；
-- 最后按既定默认并发度规则打开 bundle 粒度有界并行，并同步补并发回归测试。
+- 保持当前 `Application` 内部的 `PlanBuilder -> Worker Pool -> Committer`
+  三段边界，不回退到单体串行协调器，也不把并发扩散到 `Presentation`；
+- 继续把缓存写入、预览清理、元数据回写维持在提交阶段串行完成；
+- 后续若要进一步提高吞吐，优先补 profiling 与回归，
+  再评估是否需要单独引入低并发 `Probe` 池或调整每工作区 `4` 个 worker 的上限。
 
 ## 5. 建议的收口顺序
 
 本轮 D-01 ~ D-09 已按原推荐顺序完成阶段性梳理。
-当前除 D-06 后续深层测试补齐，以及 D-09 的多线程导入实现收口外，
+当前除 D-06 后续深层测试补齐外，
 其余非测试收口项已进入“维持边界、防止回弹”的阶段。
 
 后续继续推进时，仍建议沿同一原则演进，而不是回头做一次性大重构：
