@@ -110,7 +110,8 @@ public sealed class BundleExplorerWorkspaceShellViewModel : ObservableObject, IB
         {
             SourcePath = workspaceSummary.SourcePath,
             WorkspaceDisplayName = workspaceSummary.DisplayName,
-            WorkspaceDataRootPath = resolvedNavigationRequest.WorkspaceDataRootPath ?? string.Empty
+            WorkspaceDataRootPath = resolvedNavigationRequest.WorkspaceDataRootPath ?? string.Empty,
+            ForceNewWorkspaceSession = false
         };
 
         NotifyWorkspaceShellChanged();

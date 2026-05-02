@@ -66,8 +66,16 @@
   在受限终端或沙箱环境里执行 `dotnet run` / `dotnet test` 时，若默认用户目录不可写，先设置可写的 `DOTNET_CLI_HOME`，并建议同时设置 `DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1`。
 - `AssestBundleTools.Presentation.Tests` 项目固定为 `x86 / win-x86`。
   若用 `MSBuild` 或 `dotnet test` 单独验证它，请显式使用 `Platform=x86`，否则容易因为引用链先产出 `x64` DLL 而触发 `MSB3270`。
-- `AssestBundleTools.Infrastructure.Tests` 会在解析引用前先构建 `src/AssestBundleTools.Infrastructure`，而 `Presentation.Tests` 也会带起同一组上游项目。
+- `AssestBundleTools.Infrastructure.Tests` 应通过 `ProjectReference` 引用 `src/AssestBundleTools.Infrastructure`，不要固定 `HintPath` 到 `src/*/bin/Debug/...`。
+  固定路径在 `Platform=x86` 构建时可能引用旧 DLL，导致测试编译提示新 DTO 字段不存在；这类错误优先检查项目引用方式，而不是先怀疑生产代码。
+- `AssestBundleTools.Infrastructure.Tests` 和 `Presentation.Tests` 都会带起同一组上游项目。
   因此这两类验证不要并行跑；并行时容易争用 `src/*/obj` 或 `src/*/bin`，导致 `CS2012`、`MSB3021`、`MSB3027`。
+- `AssestBundleTools.Application.Tests` 也会在解析引用前构建 `src/AssestBundleTools.Application`。
+  不要把它和解决方案级 `MSBuild` 同时跑；这次曾复现 `CS2012`，具体表现为无法写入 `src/AssestBundleTools.Application/obj/Debug/net8.0/AssestBundleTools.Application.dll`。
+  串行重跑后测试通过时，应把前一次视为验证命令争用，而不是优先怀疑业务代码。
+- `AssestBundleTools.Presentation.Tests` 在当前 WinUI / x86 测试链路下，`dotnet test` 可能出现退出码 `1` 但没有测试正文的静默失败。
+  若项目已经用 `MSBuild /p:Platform=x86` 构建成功，建议用 VS `vstest.console.exe` 直接执行 `bin/x86/.../AssestBundleTools.Presentation.Tests.dll`，
+  并带上 `/Platform:x86 /InIsolation`；只有当输出里出现明确断言、加载或编译错误时，再按真实测试失败处理。
 - 如果只是为了避开运行中进程或 DLL 文件锁，优先保留默认 `obj`，只在解决方案或项目构建时重定向 `OutDir`。
   不建议把 `BaseIntermediateOutputPath` 当成通用解法；这次验证中它曾引出 `NETSDK1004` 和 `CS0579` 之类与真实代码无关的噪声错误。
 

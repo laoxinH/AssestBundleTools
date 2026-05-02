@@ -28,4 +28,5 @@ internal sealed record AppCompositionServices(
     IWorkspaceWindowService WorkspaceWindowService,
     IAppNotificationService AppNotificationService,
     IAppLogService AppLogService,
+    IBackgroundTaskRunner BackgroundTaskRunner,
     IWorkspaceImportCoordinatorService WorkspaceImportCoordinatorService);

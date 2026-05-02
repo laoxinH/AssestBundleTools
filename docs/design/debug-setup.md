@@ -105,6 +105,22 @@ $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find 'MSBui
 - 多个测试项目不要并行构建或并行跑各自的前置构建。
   这次实际遇到过 `CS2012`、`MSB3021`、`MSB3027`，根因是不同命令同时写入 `src/*/obj` 或复制 `src/*/bin`。
   继续使用 `BuildInParallel=false`、`/m:1`、`/nr:false`，并让 `Infrastructure` / `Presentation` 验证串行执行，会明显稳定很多。
+- 不要把解决方案 `MSBuild` 和 `AssestBundleTools.Application.Tests` 的 `dotnet run` 并行执行。
+  当前 `Application.Tests` 会在解析引用前构建 `src/AssestBundleTools.Application`，如果同时有另一条 `MSBuild` 正在写同一个 `obj\Debug\net8.0\AssestBundleTools.Application.dll`，
+  会触发 `CS2012`（文件正被另一进程使用）。
+  处理方式是等待上一条构建完全结束后再串行跑测试；这类错误通常不是业务代码失败。
+- 当前环境下 `dotnet test tests/AssestBundleTools.Presentation.Tests/... -p:Platform=x86` 曾出现退出码 `1` 但没有正文输出的静默失败。
+  如果 `MSBuild` 已能构建 `Presentation.Tests`，而 `dotnet test` 没给出断言或编译错误，优先改用 Visual Studio 的 `vstest.console.exe` 跑已生成的测试 DLL：
+
+```powershell
+$vstest = 'C:\Program Files\Microsoft Visual Studio\18\Professional\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe'
+& $vstest 'tests\AssestBundleTools.Presentation.Tests\bin\x86\Debug\net8.0-windows10.0.19041.0\win-x86\AssestBundleTools.Presentation.Tests.dll' /Platform:x86 /InIsolation
+```
+
+  如果 VS 安装路径不同，仍可先通过 `vswhere` 找到安装目录再拼出 `Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe`。
+- 测试项目不要用固定 `HintPath` 指向 `src/*/bin/Debug/...` 的旧程序集。
+  在带 `/p:Platform=x86` 的构建中，真实产物会落到 `bin\x86\Debug\...`，固定 `HintPath` 可能让测试项目悄悄引用过期 DLL，表现为“源码里明明有新 DTO 字段，测试编译却提示字段不存在”。
+  处理方式是优先使用 `ProjectReference`，让测试项目跟随当前源码和平台一起构建。
 
 ## 6. 什么时候切换到 x86
 

@@ -18,8 +18,9 @@ internal static class JsonPreviewCacheStoreTests
             bundleCacheKey: "bundle-cache-001",
             relativePayloadPath: "payloads/audio/preview-001.bin");
         var expectedContent = new byte[] { 0x10, 0x20, 0x30, 0x40 };
+        var expectedImageFocusContent = new byte[] { 0x89, 0x50, 0x4E, 0x47 };
 
-        store.Save(new PreviewCachePayloadDto(descriptor, expectedContent));
+        store.Save(new PreviewCachePayloadDto(descriptor, expectedContent, expectedImageFocusContent));
         var restoredPayload = store.Load("workspace-a", "preview-001");
 
         var payload = TestAssert.NotNull(restoredPayload, "Saved preview payload should be readable.");
@@ -37,8 +38,23 @@ internal static class JsonPreviewCacheStoreTests
         TestAssert.Equal(36d, imageOverlay.HighlightRegion.Y, "Image overlay y should round-trip.");
         TestAssert.Equal(80d, imageOverlay.HighlightRegion.Width, "Image overlay width should round-trip.");
         TestAssert.Equal(48d, imageOverlay.HighlightRegion.Height, "Image overlay height should round-trip.");
+        var pivotPoint = TestAssert.NotNull(imageOverlay.PivotPoint, "Image overlay pivot should round-trip.");
+        TestAssert.Equal(64d, pivotPoint.X, "Image overlay pivot x should round-trip.");
+        TestAssert.Equal(72d, pivotPoint.Y, "Image overlay pivot y should round-trip.");
+        var border = TestAssert.NotNull(imageOverlay.NineSliceBorder, "Image overlay border should round-trip.");
+        TestAssert.Equal(4d, border.Left, "Image overlay border left should round-trip.");
+        TestAssert.Equal(5d, border.Top, "Image overlay border top should round-trip.");
+        TestAssert.Equal(6d, border.Right, "Image overlay border right should round-trip.");
+        TestAssert.Equal(7d, border.Bottom, "Image overlay border bottom should round-trip.");
+        var imageFocus = TestAssert.NotNull(payload.Descriptor.ImageFocus, "Image focus descriptor should round-trip.");
+        TestAssert.Equal("image/png", imageFocus.ContentType, "Image focus content type should round-trip.");
+        TestAssert.Equal("preview-001\\focus.png", imageFocus.RelativePayloadPath, "Image focus payload path should round-trip.");
+        TestAssert.Equal(80, imageFocus.PixelWidth, "Image focus width should round-trip.");
+        TestAssert.Equal(48, imageFocus.PixelHeight, "Image focus height should round-trip.");
+        var restoredImageFocusContent = TestAssert.NotNull(payload.ImageFocusContent, "Image focus payload should round-trip.");
         TestAssert.Equal(4, payload.Content.Length, "Preview payload length should round-trip.");
         AssertBytesEqual(expectedContent, payload.Content, "Preview payload bytes should round-trip.");
+        AssertBytesEqual(expectedImageFocusContent, restoredImageFocusContent, "Image focus payload bytes should round-trip.");
 
         var restoredDescriptors = store.LoadDescriptors("workspace-a");
         var restoredDescriptor = TestAssert.Single(restoredDescriptors);
@@ -68,6 +84,7 @@ internal static class JsonPreviewCacheStoreTests
         TestAssert.Null(store.Load("workspace-a", "preview-delete"), "Deleted preview payload should no longer be readable.");
         TestAssert.Equal(0, store.LoadDescriptors("workspace-a").Count, "Deleted preview descriptor should be removed from listings.");
         TestAssert.True(!File.Exists(payloadFilePath), "Payload file should be removed together with descriptor.");
+        TestAssert.True(!File.Exists(Path.Combine(payloadDirectoryPath!, "focus.png")), "Image focus payload file should be removed together with descriptor.");
         TestAssert.False(Directory.Exists(payloadDirectoryPath), "Empty payload directory should be pruned after deletion.");
     }
 
@@ -195,7 +212,15 @@ internal static class JsonPreviewCacheStoreTests
                     X: 24,
                     Y: 36,
                     Width: 80,
-                    Height: 48)));
+                    Height: 48),
+                PivotPoint: new AssetPreviewImagePointDto(64, 72),
+                NineSliceBorder: new AssetPreviewImageBorderDto(4, 5, 6, 7)),
+            ImageFocus: new AssetPreviewImageFocusDto(
+                ContentType: "image/png",
+                BinaryContent: null,
+                RelativePayloadPath: Path.Combine(previewCacheKey, "focus.png"),
+                PixelWidth: 80,
+                PixelHeight: 48));
     }
 
     private static void AssertBytesEqual(byte[] expected, byte[] actual, string message)

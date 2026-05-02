@@ -5,6 +5,9 @@ internal readonly record struct PreviewImageOverlayLayout(
     double OverlayY,
     double OverlayWidth,
     double OverlayHeight,
+    double ImageScale,
+    double ImageOffsetX,
+    double ImageOffsetY,
     double LabelX,
     double LabelY);
 
@@ -62,6 +65,9 @@ internal static class PreviewImageOverlayLayoutCalculator
             overlayY,
             overlayWidth,
             overlayHeight,
+            scale,
+            imageOffsetX,
+            imageOffsetY,
             ComputeLabelX(overlayX, viewportWidth),
             ComputeLabelY(overlayY, overlayHeight, viewportHeight));
         return true;

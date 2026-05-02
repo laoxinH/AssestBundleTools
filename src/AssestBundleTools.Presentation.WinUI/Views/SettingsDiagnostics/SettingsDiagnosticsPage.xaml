@@ -494,6 +494,36 @@
                         <Border
                             Style="{StaticResource SettingsInsetCardStyle}"
                             Padding="16">
+                            <StackPanel Spacing="12">
+                                <StackPanel Spacing="6">
+                                    <TextBlock
+                                        x:Name="WorkspaceImportPerformanceTitleText"
+                                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                    <TextBlock
+                                        x:Name="WorkspaceImportPerformanceHintText"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        TextWrapping="WrapWholeWords" />
+                                </StackPanel>
+
+                                <TextBlock
+                                    x:Name="WorkspaceImportWorkerCountLabelText"
+                                    FontWeight="SemiBold" />
+
+                                <RadioButtons
+                                    x:Name="WorkspaceImportWorkerCountRadioButtons"
+                                    MaxColumns="3"
+                                    SelectedIndex="{x:Bind ViewModel.WorkspaceImportWorkerCountSelectedIndex, Mode=TwoWay}" />
+
+                                <TextBlock
+                                    x:Name="WorkspaceImportWorkerCountDescriptionText"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="WrapWholeWords" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border
+                            Style="{StaticResource SettingsInsetCardStyle}"
+                            Padding="16">
                             <StackPanel Spacing="8">
                                 <TextBlock
                                     x:Name="ResponsibilityTitleText"

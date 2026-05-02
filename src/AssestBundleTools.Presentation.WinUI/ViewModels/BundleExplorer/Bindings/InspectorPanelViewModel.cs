@@ -376,7 +376,8 @@ public sealed class InspectorPanelViewModel : ObservableObject
         int imagePixelHeight,
         IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
         string? previewPayloadFilePath = null,
-        SpritePreviewOverlayDisplayState? spritePreviewOverlayDisplayState = null)
+        SpritePreviewOverlayDisplayState? spritePreviewOverlayDisplayState = null,
+        SpriteFocusPreviewDisplayState? spriteFocusPreviewDisplayState = null)
     {
         Preview.ApplyImagePreview(
             imageSource,
@@ -384,7 +385,8 @@ public sealed class InspectorPanelViewModel : ObservableObject
             imagePixelHeight,
             previewInfoRows,
             previewPayloadFilePath,
-            spritePreviewOverlayDisplayState);
+            spritePreviewOverlayDisplayState,
+            spriteFocusPreviewDisplayState);
         RebuildInformationCards();
     }
 

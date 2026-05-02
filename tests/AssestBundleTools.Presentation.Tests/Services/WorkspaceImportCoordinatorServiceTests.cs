@@ -34,7 +34,8 @@ public sealed class WorkspaceImportCoordinatorServiceTests
             new StubFilePickerService(),
             appLogService,
             notificationService,
-            localizationService);
+            localizationService,
+            new InlineBackgroundTaskRunner());
 
         var result = await service.RequestDragDropImportAsync(
             [@"C:\Bundles\hero.ab"]);
@@ -150,5 +151,15 @@ public sealed class WorkspaceImportCoordinatorServiceTests
             AssetType targetAssetType,
             CancellationToken cancellationToken = default) =>
             Task.FromResult<string?>(null);
+    }
+
+    private sealed class InlineBackgroundTaskRunner : IBackgroundTaskRunner
+    {
+        public Task<TResult> RunAsync<TResult>(
+            Func<CancellationToken, Task<TResult>> operation,
+            CancellationToken cancellationToken = default)
+        {
+            return operation(cancellationToken);
+        }
     }
 }

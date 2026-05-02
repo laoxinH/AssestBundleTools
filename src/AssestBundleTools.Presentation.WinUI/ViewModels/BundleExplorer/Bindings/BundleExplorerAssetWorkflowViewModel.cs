@@ -51,6 +51,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         ILocalizationService localizationService,
         IFilePickerService filePickerService,
         IWorkspaceContextService workspaceContextService,
+        IBackgroundTaskRunner backgroundTaskRunner,
         IPathNavigationService pathNavigationService,
         IBundleExplorerWorkspaceShellHost workspaceShell,
         IBundleExplorerBundlePaneHost bundlePane,
@@ -66,6 +67,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         ArgumentNullException.ThrowIfNull(appNotificationService);
         ArgumentNullException.ThrowIfNull(filePickerService);
         ArgumentNullException.ThrowIfNull(workspaceContextService);
+        ArgumentNullException.ThrowIfNull(backgroundTaskRunner);
         ArgumentNullException.ThrowIfNull(pathNavigationService);
         _workspaceShell = workspaceShell ?? throw new ArgumentNullException(nameof(workspaceShell));
         _bundlePane = bundlePane ?? throw new ArgumentNullException(nameof(bundlePane));
@@ -85,7 +87,8 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             workspaceContextService,
             _workspaceShell,
             appLogService,
-            _localizationService);
+            _localizationService,
+            backgroundTaskRunner);
         var modificationActionHandler = new BundleExplorerAssetModificationActionHandler(
             workspaceAssetOperationGateway,
             appLogService,
@@ -112,6 +115,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             _assetPreviewCoordinator,
             appLogService,
             _localizationService,
+            backgroundTaskRunner,
             PrimaryPane,
             _assetDocumentHostCoordinator,
             () => IsBusy,

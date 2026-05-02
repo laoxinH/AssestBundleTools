@@ -9,24 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="AssestBundleTools.Infrastructure">
-      <HintPath>..\..\src\AssestBundleTools.Infrastructure\bin\Debug\net8.0\AssestBundleTools.Infrastructure.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="AssestBundleTools.Application">
-      <HintPath>..\..\src\AssestBundleTools.Application\bin\Debug\net8.0\AssestBundleTools.Application.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="AssestBundleTools.Domain">
-      <HintPath>..\..\src\AssestBundleTools.Domain\bin\Debug\net8.0\AssestBundleTools.Domain.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
+    <ProjectReference Include="..\..\src\AssestBundleTools.Infrastructure\AssestBundleTools.Infrastructure.csproj" />
   </ItemGroup>
-
-  <Target Name="BuildInfrastructureAssemblies" BeforeTargets="ResolveReferences">
-    <MSBuild Projects="..\..\src\AssestBundleTools.Infrastructure\AssestBundleTools.Infrastructure.csproj"
-             Targets="Build"
-             Properties="Configuration=$(Configuration);RestoreIgnoreFailedSources=true" />
-  </Target>
 
 </Project>

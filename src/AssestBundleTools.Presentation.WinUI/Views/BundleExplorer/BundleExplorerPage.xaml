@@ -1304,6 +1304,74 @@
                         </StackPanel>
                     </Grid>
                 </Border>
+
+                <Border
+                    x:Name="WorkspaceImportBusyOverlay"
+                    Margin="4"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="18"
+                    Canvas.ZIndex="30"
+                    IsHitTestVisible="True"
+                    Opacity="0.96"
+                    Visibility="{x:Bind ViewModel.WorkspaceImportProgress.OverlayVisibility, Mode=OneWay}">
+                    <Grid Padding="18">
+                        <StackPanel
+                            MaxWidth="280"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Center"
+                            Spacing="12">
+                            <ProgressRing
+                                Width="42"
+                                Height="42"
+                                HorizontalAlignment="Center"
+                                IsActive="{x:Bind ViewModel.WorkspaceImportProgress.IsActive, Mode=OneWay}" />
+
+                            <StackPanel Spacing="5">
+                                <TextBlock
+                                    x:Name="WorkspaceImportBusyOverlayTitleText"
+                                    HorizontalAlignment="Center"
+                                    FontSize="16"
+                                    FontWeight="SemiBold"
+                                    TextAlignment="Center"
+                                    TextWrapping="WrapWholeWords" />
+
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.WorkspaceImportProgress.ProgressText, Mode=OneWay}"
+                                    HorizontalAlignment="Center"
+                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                    FontSize="13"
+                                    FontWeight="SemiBold"
+                                    TextAlignment="Center"
+                                    TextWrapping="WrapWholeWords" />
+
+                                <TextBlock
+                                    x:Name="WorkspaceImportBusyOverlayHintText"
+                                    HorizontalAlignment="Center"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    FontSize="12"
+                                    TextAlignment="Center"
+                                    TextWrapping="WrapWholeWords" />
+                            </StackPanel>
+
+                            <ProgressBar
+                                Minimum="0"
+                                Maximum="100"
+                                Value="{x:Bind ViewModel.WorkspaceImportProgress.ProgressBarValue, Mode=OneWay}"
+                                IsIndeterminate="{x:Bind ViewModel.WorkspaceImportProgress.IsProgressBarIndeterminate, Mode=OneWay}" />
+
+                            <TextBlock
+                                Text="{x:Bind ViewModel.WorkspaceImportProgress.DetailText, Mode=OneWay}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                FontSize="12"
+                                TextAlignment="Center"
+                                TextTrimming="CharacterEllipsis"
+                                TextWrapping="NoWrap" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
             </Grid>
 
             <Border
@@ -1429,6 +1497,7 @@
                         ViewModel="{x:Bind ViewModel.AssetWorkflow.Inspector, Mode=OneWay}" />
                 </Grid>
             </Border>
+
         </Grid>
     </Grid>
 </Page>

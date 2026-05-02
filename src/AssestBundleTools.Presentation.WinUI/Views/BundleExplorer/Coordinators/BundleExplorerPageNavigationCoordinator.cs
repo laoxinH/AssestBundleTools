@@ -42,7 +42,8 @@ public sealed partial class BundleExplorerPage
                 return;
             }
 
-            if (App.CurrentApp.TryActivateOpenedWorkspace(request))
+            if (!request.ForceNewWorkspaceSession &&
+                App.CurrentApp.TryActivateOpenedWorkspace(request))
             {
                 return;
             }

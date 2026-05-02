@@ -67,7 +67,8 @@ internal static class AppCompositionRoot
         var workspaceContextCatalogService = new WorkspaceContextCatalogService(
             workspaceContextPersistenceService);
         var workspaceImportExecutionGate = new WorkspaceImportExecutionGate();
-        var workspaceImportExecutionOptionsResolver = new WorkspaceImportExecutionOptionsResolver();
+        var workspaceImportExecutionOptionsResolver = new WorkspaceImportExecutionOptionsResolver(
+            () => appPreferencesService.WorkspaceImportWorkerCount);
         var assetBundleSourceInspector = new UnityAssetBundleSourceInspector();
         var assetBundleReader = new FallbackAssetBundleReader(
             new AssetsToolsAssetBundleReader(),
@@ -187,13 +188,15 @@ internal static class AppCompositionRoot
         var workspaceWindowService = new WorkspaceWindowService(workspaceProcessCoordinatorService);
         var appNotificationService = new AppNotificationService();
         var appLogService = new AppLogService(localizationService);
+        var backgroundTaskRunner = new ThreadPoolBackgroundTaskRunner();
         var workspaceImportCoordinatorService = new WorkspaceImportCoordinatorService(
             workspaceContextService,
             workspaceExplorerGateway,
             filePickerService,
             appLogService,
             appNotificationService,
-            localizationService);
+            localizationService,
+            backgroundTaskRunner);
 
         StartupDiagnostics.Log("Composition root services created.");
 
@@ -217,6 +220,7 @@ internal static class AppCompositionRoot
             WorkspaceWindowService: workspaceWindowService,
             AppNotificationService: appNotificationService,
             AppLogService: appLogService,
+            BackgroundTaskRunner: backgroundTaskRunner,
             WorkspaceImportCoordinatorService: workspaceImportCoordinatorService);
     }
 }

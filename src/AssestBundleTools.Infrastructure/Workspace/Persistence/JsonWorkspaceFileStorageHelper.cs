@@ -55,7 +55,7 @@ internal static class JsonWorkspaceFileStorageHelper
     {
         Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
 
-        var temporaryFilePath = $"{filePath}.tmp";
+        var temporaryFilePath = CreateTemporaryFilePath(filePath);
         var jsonText = JsonSerializer.Serialize(value, serializerOptions);
         File.WriteAllText(temporaryFilePath, jsonText);
         File.Move(temporaryFilePath, filePath, overwrite: true);
@@ -67,7 +67,7 @@ internal static class JsonWorkspaceFileStorageHelper
 
         Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
 
-        var temporaryFilePath = $"{filePath}.tmp";
+        var temporaryFilePath = CreateTemporaryFilePath(filePath);
         File.WriteAllBytes(temporaryFilePath, content);
         File.Move(temporaryFilePath, filePath, overwrite: true);
     }
@@ -91,4 +91,7 @@ internal static class JsonWorkspaceFileStorageHelper
 
         Directory.Delete(directoryPath, recursive: true);
     }
+
+    private static string CreateTemporaryFilePath(string filePath) =>
+        $"{filePath}.{Guid.NewGuid():N}.tmp";
 }

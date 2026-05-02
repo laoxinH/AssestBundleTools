@@ -596,9 +596,10 @@ src/AssestBundleTools.Application/
 - 当前 M9 的自动识别主轴已明确收敛为四层：`导入源识别 -> 解密器识别 -> Reader 路径识别 -> 缓存命中识别`
 - 当前导入处理已补上结构化缓存诊断：会把 `缓存未命中 / 来源指纹变化 / 解密器变化 / 解密器版本变化 / 工具版本变化 / 解析器版本变化 / 来源移除` 等原因回传到应用层结果，用于日志和后续诊断页复用
 - 当前导入入口已经补上 `workspaceKey` 级执行闸门，工作区重新打开时的自动刷新也会复用同一互斥链路
+- 手动导入与工作区打开/恢复触发的自动导入刷新当前已通过 Presentation 后台任务调度器执行，并在工作台左侧资源包窗格内显示正式导入进度覆盖层，避免导入解析期间窗口彻底卡住或整页被遮罩
 - 外部解密 staging 目录当前已补上 `workspaceKey + decryptorId + bundleCacheKey` 唯一路径，避免不同来源下的同名 bundle 派生文件互相覆写
 - 当前导入处理协调器已完成第二阶段收口：`Application` 内部的 `PlanBuilder -> Worker Pool -> Committer` 三段模型与 bundle 粒度有界并行已经落地，没有把并发扩散到 `Presentation` 或 `WorkspaceSessionRegistry`
-- 多线程导入的默认 worker 并发度当前已通过 `WorkspaceImportExecutionOptionsResolver` 固化为：逻辑核心数 `<= 1` 用 `1`，`2-4` 用 `2`，`5-6` 用 `3`，`>= 7` 用 `4`；第一版每个工作区导入上限不超过 `4`
+- 多线程导入的默认 worker 并发度当前已通过 `WorkspaceImportExecutionOptionsResolver` 固化为：逻辑核心数 `<= 1` 用 `1`，`2-4` 用 `2`，`5-6` 用 `3`，`>= 7` 用 `4`；用户也可在“设置与诊断”中固定为 `1-4` 个 worker；第一版每个工作区导入上限不超过 `4`
 - 当前导入结果已补上 `Planning / Screening / Worker / Commit / Total` 五段耗时诊断，并额外记录 `ProbeDuration / ProbeDecryptorCount / ProbeEvaluationCount`，可直接为后续 `Probe` 并发评估提供依据
 - 当前预览查询链路已补上结构化预览诊断：会把预览缓存命中 / 失效原因，以及 `定位信息缺失 / 解密器不可用 / 解密失败 / 预览生成失败` 等摘要回退原因统一沉到应用层 DTO
 - 当前预览诊断 detail 已从裸字符串进一步收口为 `LocalizedMessageDto` 结构化消息；检查器不再直接显示由 `Application / Infrastructure` 拼装的原始诊断句子
@@ -615,13 +616,15 @@ src/AssestBundleTools.Application/
 - 资产友好路径当前优先使用 `m_Container` 路径，缺失时回退到 `SerializedFileName / 资产类型 / PathId` 组合摘要，避免不同资源仅靠名称难以区分
 - 当前预览类型覆盖如下：
   - 图像预览：`Texture2D`、`Sprite`
+    `Sprite` 当前已在源贴图预览上叠加裁切框、pivot 点和 9-slice border 辅助线，并额外提供裁切结果卡片；这些数据随预览缓存一起落盘和命中复用。
   - 文本预览：`TextAsset`、`Shader`
+  - 音频预览：`AudioClip`
   - 结构化摘要预览：`AudioClip`、`Mesh`、`Material`、`GameObject`、`MonoBehaviour`、`AnimationClip`、`AnimatorController`、`Font`、`SpriteAtlas`
   - 通用摘要回退：其余可读取资源类型
-- 工作台检查器当前已补充 `PathId` 展示，并为图片预览增加尺寸、裁切区域、像素编码与源格式标识等专属信息
+- 工作台检查器当前已补充 `PathId` 展示，并为图片预览增加尺寸、裁切区域、像素编码与源格式标识等专属信息；预览表面已拆为独立控件，避免继续把图片覆盖层、音频播放条和文本预览细节堆回检查器主控件
 - 工作台检查器当前已收敛为 `详情 / 依赖 / 替换 / 变更` 四页签；其中“详情”页统一承载预览画面、基础信息、预览补充信息与预览诊断，“依赖”页签会展示资产依赖、反向引用、依赖闭包和 Bundle 外部依赖
 - 工作台右侧当前已补上资产详情标签层，不同资产会独立打开为标签并按资源包标签页归属保存状态，为后续资产级扩展功能预留稳定承载面
-- 当前 M9 除“富预览扩展”外的主干代办已完成，下一步进入预览能力扩展阶段
+- 当前 M9 除“富预览扩展”外的主干代办已完成，下一步继续预览能力扩展阶段
 - 当前剩余的高优先级架构收口已进一步缩小到“少量内部哨兵值、外部工具诊断回退与调试日志格式统一”，而不再是检查器、预览、启动兜底或 WinUI 壳层的用户可见文本主链路
 
 ### M9 预览能力下一阶段计划
@@ -635,10 +638,10 @@ src/AssestBundleTools.Application/
 
 - `AudioClip`
   优先补可播放预览，目标形态为 `播放 / 暂停 + 时长 + 基础波形或幅度摘要`。
-- `SpriteAtlas`
-  优先补图集图像预览，目标形态为 `整张图集 + atlas 内 sprite 区域信息`。
 - `Mesh`
   优先补静态 3D 预览，目标形态为 `旋转 / 缩放 / 重置 + 顶点与子网格摘要`。
+- `SpriteAtlas`
+  仍可复用图片预览链路，但在当前目标游戏样本中优先级低于 `Mesh`；后续若遇到大量 SpriteAtlas 样本，再补 `整张图集 + atlas 内 sprite 区域信息`。
 
 第二梯队，做受控的半可视化预览：
 
@@ -672,10 +675,10 @@ src/AssestBundleTools.Application/
    - 这是识别价值最高、用户感知最强的一类真实内容预览。
    - 完成标准是“能稳定回退”：可解码时播放，不可解码时仍回退到结构化摘要，而不是直接失败。
    - 当前已完成第二阶段：标准音频容器可直接播放，`FSB5` 会优先走独立音频转码层，经外部 `vgmstream-cli` 转为 `WAV` 后播放；当转码器缺失或执行失败时仍稳定回退到结构化摘要。
-3. 再做 `SpriteAtlas`
-   - 该类型与现有图片预览链路最接近，能低风险复用已有 `Texture2D / Sprite` 能力。
-4. 最后做 `Mesh`
+3. 再做 `Mesh`
    - 在 Audio 与 Atlas 两类预览稳定后，再引入 3D 视口和交互控制，避免同时把解码、缓存、渲染三个复杂度叠在一起。
+4. 按样本频率回补 `SpriteAtlas`
+   - 该类型与现有图片预览链路最接近，能低风险复用已有 `Texture2D / Sprite` 能力；但如果目标样本中不常见，不应压过 Mesh 等更高收益类型。
 
 #### 实施约束
 
@@ -705,7 +708,7 @@ src/AssestBundleTools.Application/
 4. bundle 粒度有界并行 worker 已落地
    默认并发度规则与
    [`workspace-management.md`](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/workspace-management.md)
-   保持一致，并通过 `WorkspaceImportExecutionOptionsResolver` 固化；每个工作区导入上限保持 `4`。
+   保持一致，并通过 `WorkspaceImportExecutionOptionsResolver` 固化；用户设置只覆盖自动推导值，每个工作区导入上限保持 `4`。
 5. 并发回归已同步补齐首轮关键路径
    当前至少已覆盖缓存复用、解密失败、Reader 拒绝、读取失败、陈旧缓存清理、
    staging 输出路径隔离，以及“同一工作区不允许双重导入作业”这几条关键路径。
@@ -843,6 +846,7 @@ src/AssestBundleTools.Application/
 - 已完成控制台页中的工作区新建、打开、删除与最近工作区入口骨架
 - 已将工作区新建 / 打开流程收敛为集中式可视化配置面板
 - 已把工作区向导调整为目录优先的工作流，并补齐目录内已有工作区的打开 / 重置分支
+- 已补齐工作区重置后重建的运行时会话边界：重置打开会绕开同 `workspaceKey` 的旧窗口/进程激活与页面恢复点，成功绑定后再恢复普通去重语义
 - 已将工作台顶部命令区与控制台页工作区入口对齐
 - 已将窗口导航收敛为“控制台态 / 工作台态”双态模型，并允许从工作台显式返回控制台
 - 已把活动工作区感知继续同步到批处理页与“设置与诊断”页，并补齐工作区目录刷新时的会话状态保留
@@ -892,8 +896,10 @@ src/AssestBundleTools.Application/
 - 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补替换链路中的文件候选类型解析、来源路径校验、缺失资源失败、类型不匹配、工作区候选空集失败、单资源文件/工作区替换、撤销替换，以及批量替换预览/执行摘要链路
 - 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补 `GetWorkspaceSavePreviewHandler / SaveWorkspaceAsNewBundleHandler` 的保存预览空态、资源包分组聚合、缺失工作区、无候选失败与执行摘要链路
 - 已完成 D-07 第二轮收口：宿主程序自身的启动/壳层异常提示与页面代码中残留的资源键字面量已继续收口到资源键常量和标准错误令牌；当前仅保留外部工具原始输出作为诊断回退文本，而不再作为主提示文案
-- 当前 M9 剩余主线收口为富预览扩展，优先顺序为 `AudioClip -> SpriteAtlas -> Mesh -> Material / Font / AnimationClip`
+- 当前 M9 剩余主线收口为富预览扩展，优先顺序为 `AudioClip -> Sprite 增强 -> Mesh -> SpriteAtlas(按样本频率回补) -> Material / Font / AnimationClip`
+- 当前 Sprite 预览已完成一轮增强：源贴图预览上叠加裁切框、pivot 点与 9-slice border，检查器额外展示裁切结果卡片；Infrastructure 已把 Sprite 专属生成逻辑拆入独立 builder，检查器预览表面也已拆为独立控件，避免后续富预览继续回灌到巨型生成器或检查器控件
 - 当前导入主链路在功能上已完成第二阶段多线程收口：`workspaceKey` 级执行闸门、唯一 staging 路径、`PlanBuilder -> Worker Pool -> Committer` 三段模型与 bundle 粒度有界并行都已落地；后续进入“导入吞吐增强”支线时，更适合转向 profiling、Probe 并发评估与更深层并发回归
+- 当前资产预览查询已从单槽后台闸门调整为前台优先的有界并发执行队列，默认并发度为 CPU 核心数一半并限制在 `1-4`；其中 1 个前台槽专门服务当前活动资产详情标签，其余槽用于已打开资产标签的后台预热。若并发度为 1，后台预热不与前台竞争；切换到尚未完成的标签会取消该标签旧后台请求并以前台优先级重开，已完成预览则直接复用。
 
 ## 10. 架构代办事项
 

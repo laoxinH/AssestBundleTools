@@ -227,7 +227,8 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
             navigationRequest.SourcePath,
             navigationRequest.WorkspaceDataRootPath);
 
-        if (OwnsWorkspace(workspaceKey))
+        if (!navigationRequest.ForceNewWorkspaceSession &&
+            OwnsWorkspace(workspaceKey))
         {
             shellPage.ActivateCurrentWorkspace();
             return;

@@ -255,7 +255,9 @@ public sealed class WorkspaceDialogService : IWorkspaceDialogService
 
         if (!inspection.HasMatchedWorkspace || inspection.Workspace is null)
         {
-            return BuildNewWorkspaceNavigationRequest(submission);
+            return BuildNewWorkspaceNavigationRequest(
+                submission,
+                forceNewWorkspaceSession: true);
         }
 
         var action = await RequestExistingWorkspaceActionAsync(
@@ -273,7 +275,10 @@ public sealed class WorkspaceDialogService : IWorkspaceDialogService
             _workspaceDataRootService.ResetWorkspace(
                 submission.WorkspaceDataRootPath,
                 inspection.Workspace.WorkspaceKey);
-            return BuildNewWorkspaceNavigationRequest(submission);
+            return BuildNewWorkspaceNavigationRequest(
+                submission,
+                forceNewWorkspaceSession: true,
+                forceCurrentWindow: true);
         }
 
         return BuildNavigationRequestFromExistingWorkspace(inspection.Workspace, submission);
@@ -316,14 +321,20 @@ public sealed class WorkspaceDialogService : IWorkspaceDialogService
         };
     }
 
-    private static WorkspaceNavigationRequest BuildNewWorkspaceNavigationRequest(WorkspaceSetupSubmission submission)
+    private static WorkspaceNavigationRequest BuildNewWorkspaceNavigationRequest(
+        WorkspaceSetupSubmission submission,
+        bool forceNewWorkspaceSession = false,
+        bool forceCurrentWindow = false)
     {
         return new WorkspaceNavigationRequest(
             SourcePath: string.Empty,
             WorkspaceDisplayName: submission.WorkspaceDisplayName,
             WorkspaceDataRootPath: submission.WorkspaceDataRootPath,
-            OpenTarget: submission.OpenTarget,
-            AssetBundleDecryptorId: submission.AssetBundleDecryptorId);
+            OpenTarget: forceCurrentWindow
+                ? WorkspaceOpenTarget.CurrentWindow
+                : submission.OpenTarget,
+            AssetBundleDecryptorId: submission.AssetBundleDecryptorId,
+            ForceNewWorkspaceSession: forceNewWorkspaceSession);
     }
 
     private static WorkspaceNavigationRequest BuildNavigationRequestFromExistingWorkspace(

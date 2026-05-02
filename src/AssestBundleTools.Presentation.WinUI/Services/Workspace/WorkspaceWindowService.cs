@@ -22,7 +22,8 @@ public sealed class WorkspaceWindowService : IWorkspaceWindowService
 
         // “新窗口”现在代表“必要时派生新主进程”，
         // 但如果目标工作区已经在任一运行中的窗口里承载，则仍应优先激活既有实例。
-        if (App.CurrentApp.TryActivateOpenedWorkspace(navigationRequest))
+        if (!navigationRequest.ForceNewWorkspaceSession &&
+            App.CurrentApp.TryActivateOpenedWorkspace(navigationRequest))
         {
             return;
         }

@@ -38,7 +38,9 @@ public sealed class AssetPreviewDisplayFormatterTests
                     X: 24,
                     Y: 36,
                     Width: 80,
-                    Height: 48)));
+                    Height: 48),
+                PivotPoint: new AssetPreviewImagePointDto(64, 60),
+                NineSliceBorder: new AssetPreviewImageBorderDto(8, 10, 12, 14)));
 
         var state = formatter.BuildSpritePreviewOverlayDisplayState(preview);
 
@@ -49,6 +51,12 @@ public sealed class AssetPreviewDisplayFormatterTests
         Assert.Equal(36d, state.RegionY);
         Assert.Equal(80d, state.RegionWidth);
         Assert.Equal(48d, state.RegionHeight);
+        Assert.Equal(64d, state.PivotX);
+        Assert.Equal(60d, state.PivotY);
+        Assert.Equal(8d, state.BorderLeft);
+        Assert.Equal(10d, state.BorderTop);
+        Assert.Equal(12d, state.BorderRight);
+        Assert.Equal(14d, state.BorderBottom);
         Assert.Equal(
             ResourceKeys.InspectorSpritePreviewOverlayBadgeFormat + ":24|36|80|48",
             state.BadgeText);

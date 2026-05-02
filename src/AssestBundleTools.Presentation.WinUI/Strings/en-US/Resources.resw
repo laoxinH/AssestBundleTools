@@ -501,6 +501,30 @@
   <data name="WorkspaceImport.Log.ProbePerformance.Format" xml:space="preserve">
     <value>Probe diagnostics: {0} ms, {1} candidate decryptors, {2} file evaluations.</value>
   </data>
+  <data name="WorkspaceImport.BusyOverlay.Title" xml:space="preserve">
+    <value>Processing workspace in the background</value>
+  </data>
+  <data name="WorkspaceImport.BusyOverlay.Hint" xml:space="preserve">
+    <value>Bundles are being parsed, cache-reused, and indexed. The window remains responsive and the bundle list updates when processing finishes.</value>
+  </data>
+  <data name="WorkspaceImport.BusyOverlay.Progress.Preparing" xml:space="preserve">
+    <value>Detecting bundles</value>
+  </data>
+  <data name="WorkspaceImport.BusyOverlay.Progress.Processing.Format" xml:space="preserve">
+    <value>Importing bundles {0} / {1}</value>
+  </data>
+  <data name="WorkspaceImport.BusyOverlay.Progress.Committing" xml:space="preserve">
+    <value>Committing index</value>
+  </data>
+  <data name="WorkspaceImport.BusyOverlay.Progress.Completed" xml:space="preserve">
+    <value>Import processing completed</value>
+  </data>
+  <data name="WorkspaceImport.BusyOverlay.Progress.CurrentBundle.Format" xml:space="preserve">
+    <value>Current: {0}</value>
+  </data>
+  <data name="WorkspaceImport.BusyOverlay.Progress.Percent.Format" xml:space="preserve">
+    <value>{0:0}%</value>
+  </data>
   <data name="WorkspaceImport.Log.AutoDetectionSummary.Format" xml:space="preserve">
     <value>Workspace \"{0}\" used auto-detection for this import and selected decryptor \"{1}\". Probed {2} candidates across {3} unresolved files.</value>
   </data>
@@ -755,6 +779,12 @@
   </data>
   <data name="InspectorPanelView.SpritePreviewOverlay.Badge.Format" xml:space="preserve">
     <value>Crop x={0}, y={1} · {2} x {3}</value>
+  </data>
+  <data name="InspectorPanelView.SpriteFocusPreview.Title" xml:space="preserve">
+    <value>Crop Result</value>
+  </data>
+  <data name="InspectorPanelView.SpriteFocusPreview.Size.Format" xml:space="preserve">
+    <value>{0} x {1} px</value>
   </data>
   <data name="InspectorPanelView.AudioTransport.Play.ToolTip" xml:space="preserve">
     <value>Play</value>
@@ -1034,6 +1064,12 @@
   </data>
   <data name="InspectorPanelView.PreviewInfo.SpriteSourceTextureFormatId.Label" xml:space="preserve">
     <value>Source Texture Format ID</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpritePivot.Label" xml:space="preserve">
+    <value>Pivot Point</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteBorder.Label" xml:space="preserve">
+    <value>9-Slice Border</value>
   </data>
   <data name="InspectorPanelView.PreviewInfo.AudioContainer.Label" xml:space="preserve">
     <value>Audio Container</value>
@@ -1638,11 +1674,41 @@
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Option.AskEveryTime" xml:space="preserve">
     <value>Ask every time</value>
   </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportPerformance.Title" xml:space="preserve">
+    <value>Import Performance</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportPerformance.Hint" xml:space="preserve">
+    <value>Controls how many background workers bundle import can use. Automatic mode selects 1 to 4 workers from the CPU count; manual values are useful when disk or external decryptor load is high.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Label" xml:space="preserve">
+    <value>Import worker count</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Description" xml:space="preserve">
+    <value>Automatic mode follows the repository default concurrency rule. A fixed value overrides the automatic choice, while still capping each workspace import at 4 workers.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.Automatic" xml:space="preserve">
+    <value>Automatic</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.One" xml:space="preserve">
+    <value>1 worker</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.Two" xml:space="preserve">
+    <value>2 workers</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.Three" xml:space="preserve">
+    <value>3 workers</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.Four" xml:space="preserve">
+    <value>4 workers</value>
+  </data>
   <data name="SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the startup restore preference. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
   </data>
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the recent-workspace opening behavior. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.SaveFailedMessage" xml:space="preserve">
+    <value>Failed to save the import worker count. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
   </data>
   <data name="SettingsDiagnosticsPage.ResponsibilityTitleText.Text" xml:space="preserve">
     <value>Page Role</value>
@@ -1748,6 +1814,9 @@
   </data>
   <data name="BundleExplorer.Preview.UnexpectedDisplayFailure" xml:space="preserve">
     <value>An unexpected error occurred while presenting the preview.</value>
+  </data>
+  <data name="BundleExplorer.Preview.LoadTimedOut" xml:space="preserve">
+    <value>Preview loading timed out.</value>
   </data>
   <data name="Common.UnexpectedFailure" xml:space="preserve">
     <value>Unexpected failure.</value>

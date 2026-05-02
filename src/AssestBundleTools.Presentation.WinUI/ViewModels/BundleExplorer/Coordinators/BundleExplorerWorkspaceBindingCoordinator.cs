@@ -28,6 +28,7 @@ internal sealed class BundleExplorerWorkspaceBindingCoordinator
     private readonly ILocalizationService _localizationService;
     private readonly IWorkspaceContextService _workspaceContextService;
     private readonly BundleExplorerOperationFeedbackBridge _operationFeedbackBridge;
+    private readonly IBackgroundTaskRunner _backgroundTaskRunner;
     private readonly BundleExplorerWorkspaceShellViewModel _workspaceShell;
     private readonly BundleExplorerBundlePaneViewModel _bundlePane;
     private readonly BundleExplorerDocumentWorkspaceViewModel _documentWorkspace;
@@ -46,6 +47,7 @@ internal sealed class BundleExplorerWorkspaceBindingCoordinator
         ILocalizationService localizationService,
         IWorkspaceContextService workspaceContextService,
         BundleExplorerOperationFeedbackBridge operationFeedbackBridge,
+        IBackgroundTaskRunner backgroundTaskRunner,
         BundleExplorerWorkspaceShellViewModel workspaceShell,
         BundleExplorerBundlePaneViewModel bundlePane,
         BundleExplorerDocumentWorkspaceViewModel documentWorkspace,
@@ -60,6 +62,7 @@ internal sealed class BundleExplorerWorkspaceBindingCoordinator
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _operationFeedbackBridge = operationFeedbackBridge ?? throw new ArgumentNullException(nameof(operationFeedbackBridge));
+        _backgroundTaskRunner = backgroundTaskRunner ?? throw new ArgumentNullException(nameof(backgroundTaskRunner));
         _workspaceShell = workspaceShell ?? throw new ArgumentNullException(nameof(workspaceShell));
         _bundlePane = bundlePane ?? throw new ArgumentNullException(nameof(bundlePane));
         _documentWorkspace = documentWorkspace ?? throw new ArgumentNullException(nameof(documentWorkspace));
@@ -73,6 +76,7 @@ internal sealed class BundleExplorerWorkspaceBindingCoordinator
     public async Task LoadWorkspaceAsync(
         bool clearExistingLogs,
         WorkspaceNavigationRequest? workspaceNavigationRequest,
+        IProgress<WorkspaceImportProgressDto>? importProgress = null,
         bool showLoadedNotification = true,
         bool allowBusyReentry = false)
     {
@@ -87,7 +91,9 @@ internal sealed class BundleExplorerWorkspaceBindingCoordinator
             _setBusyState(true);
         }
 
-        var restorePoint = CaptureWorkspaceRestorePoint();
+        var restorePoint = workspaceNavigationRequest?.ForceNewWorkspaceSession == true
+            ? null
+            : CaptureWorkspaceRestorePoint();
         try
         {
             if (clearExistingLogs)
@@ -104,12 +110,14 @@ internal sealed class BundleExplorerWorkspaceBindingCoordinator
 
             _appLogService.AppendInfo(GetString(ResourceKeys.BundleExplorerLogInitializing));
 
-            var openResult = await _workspaceExplorerGateway.OpenWorkspaceAsync(
-                new OpenWorkspaceCommand(
-                    WorkspacePath: resolvedNavigationRequest.SourcePath,
-                    WorkspaceDataRootPath: resolvedNavigationRequest.WorkspaceDataRootPath,
-                    WorkspaceDisplayName: resolvedNavigationRequest.WorkspaceDisplayName,
-                    InitialMode: WorkspaceMode.SinglePane));
+            var openWorkspaceCommand = new OpenWorkspaceCommand(
+                WorkspacePath: resolvedNavigationRequest.SourcePath,
+                WorkspaceDataRootPath: resolvedNavigationRequest.WorkspaceDataRootPath,
+                WorkspaceDisplayName: resolvedNavigationRequest.WorkspaceDisplayName,
+                InitialMode: WorkspaceMode.SinglePane,
+                ImportProgress: importProgress);
+            var openResult = await _backgroundTaskRunner.RunAsync(
+                token => _workspaceExplorerGateway.OpenWorkspaceAsync(openWorkspaceCommand, token));
 
             if (!_operationFeedbackBridge.TryGetValue(openResult, out var workspaceSummary))
             {
@@ -187,6 +195,7 @@ internal sealed class BundleExplorerWorkspaceBindingCoordinator
         await LoadWorkspaceAsync(
             clearExistingLogs: false,
             workspaceNavigationRequest: _workspaceShell.ActiveWorkspaceNavigationRequest,
+            importProgress: null,
             showLoadedNotification: showLoadedNotification,
             allowBusyReentry: allowBusyReentry);
     }

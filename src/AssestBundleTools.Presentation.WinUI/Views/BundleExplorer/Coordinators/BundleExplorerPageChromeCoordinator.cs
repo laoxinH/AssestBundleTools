@@ -51,6 +51,8 @@ public sealed partial class BundleExplorerPage
             _owner.CollapsedBundlePaneSelectionLabelText.Text = UiText.Get(ResourceKeys.BundleExplorerPageCollapsedBundlePaneSelectionLabelText);
             _owner.WorkspaceImportDropOverlayTitleText.Text = UiText.Get(ResourceKeys.WorkspaceImportDropOverlayTitle);
             _owner.WorkspaceImportDropOverlayHintText.Text = UiText.Get(ResourceKeys.WorkspaceImportDropOverlayHint);
+            _owner.WorkspaceImportBusyOverlayTitleText.Text = UiText.Get(ResourceKeys.WorkspaceImportBusyOverlayTitle);
+            _owner.WorkspaceImportBusyOverlayHintText.Text = UiText.Get(ResourceKeys.WorkspaceImportBusyOverlayHint);
             _owner.CenterPanelTitleText.Text = UiText.Get(ResourceKeys.BundleExplorerPageCenterPanelTitle);
             _owner.RightPanelTitleText.Text = UiText.Get(ResourceKeys.BundleExplorerPageRightPanelTitle);
         }

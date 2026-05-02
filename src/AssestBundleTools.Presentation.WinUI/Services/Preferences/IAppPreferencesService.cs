@@ -14,7 +14,11 @@ public interface IAppPreferencesService
 
     RecentWorkspaceOpenBehavior RecentWorkspaceOpenBehavior { get; }
 
+    int WorkspaceImportWorkerCount { get; }
+
     bool TrySetRestoreLastWorkspaceOnStartup(bool value);
 
     bool TrySetRecentWorkspaceOpenBehavior(RecentWorkspaceOpenBehavior value);
+
+    bool TrySetWorkspaceImportWorkerCount(int value);
 }

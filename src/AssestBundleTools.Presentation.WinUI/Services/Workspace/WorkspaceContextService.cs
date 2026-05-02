@@ -138,6 +138,17 @@ public sealed class WorkspaceContextService : IWorkspaceContextService
     {
         LoadWorkspaceCatalogSnapshot();
         WorkspaceEntriesChanged?.Invoke(this, EventArgs.Empty);
+
+        if (_currentWorkspaceSummary is not null &&
+            !_workspaceEntries.Any(entry =>
+                string.Equals(
+                    entry.WorkspaceSummary?.WorkspaceId.Value,
+                    _currentWorkspaceSummary.WorkspaceId.Value,
+                    StringComparison.Ordinal)))
+        {
+            _currentWorkspaceSummary = null;
+            CurrentWorkspaceChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     /// <summary>

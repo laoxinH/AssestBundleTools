@@ -16,4 +16,5 @@ public sealed record AssetPreviewContentDto(
     long? PreferredDisplaySizeInBytes = null,
     string? AudioTranscoderId = null,
     string? AudioTranscoderVersion = null,
-    AssetPreviewImageOverlayDto? ImageOverlay = null);
+    AssetPreviewImageOverlayDto? ImageOverlay = null,
+    AssetPreviewImageFocusDto? ImageFocus = null);

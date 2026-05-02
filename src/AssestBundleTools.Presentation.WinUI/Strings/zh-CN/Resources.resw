@@ -501,6 +501,30 @@
   <data name="WorkspaceImport.Log.ProbePerformance.Format" xml:space="preserve">
     <value>Probe 诊断：耗时 {0} ms，候选解密器 {1} 个，文件评估 {2} 次。</value>
   </data>
+  <data name="WorkspaceImport.BusyOverlay.Title" xml:space="preserve">
+    <value>正在后台处理工作区</value>
+  </data>
+  <data name="WorkspaceImport.BusyOverlay.Hint" xml:space="preserve">
+    <value>资源包正在解析、复用缓存并刷新索引，窗口可以继续响应。完成后会自动更新资源包列表。</value>
+  </data>
+  <data name="WorkspaceImport.BusyOverlay.Progress.Preparing" xml:space="preserve">
+    <value>正在识别资源包</value>
+  </data>
+  <data name="WorkspaceImport.BusyOverlay.Progress.Processing.Format" xml:space="preserve">
+    <value>正在导入资源包 {0} / {1}</value>
+  </data>
+  <data name="WorkspaceImport.BusyOverlay.Progress.Committing" xml:space="preserve">
+    <value>正在提交索引</value>
+  </data>
+  <data name="WorkspaceImport.BusyOverlay.Progress.Completed" xml:space="preserve">
+    <value>导入处理完成</value>
+  </data>
+  <data name="WorkspaceImport.BusyOverlay.Progress.CurrentBundle.Format" xml:space="preserve">
+    <value>当前：{0}</value>
+  </data>
+  <data name="WorkspaceImport.BusyOverlay.Progress.Percent.Format" xml:space="preserve">
+    <value>{0:0}%</value>
+  </data>
   <data name="WorkspaceImport.Log.AutoDetectionSummary.Format" xml:space="preserve">
     <value>工作区“{0}”本次导入使用自动识别，最终选择解密器“{1}”。探测候选 {2} 个，待判定文件 {3} 个。</value>
   </data>
@@ -755,6 +779,12 @@
   </data>
   <data name="InspectorPanelView.SpritePreviewOverlay.Badge.Format" xml:space="preserve">
     <value>裁切 x={0}, y={1} · {2} x {3}</value>
+  </data>
+  <data name="InspectorPanelView.SpriteFocusPreview.Title" xml:space="preserve">
+    <value>裁切结果</value>
+  </data>
+  <data name="InspectorPanelView.SpriteFocusPreview.Size.Format" xml:space="preserve">
+    <value>{0} x {1} px</value>
   </data>
   <data name="InspectorPanelView.AudioTransport.Play.ToolTip" xml:space="preserve">
     <value>播放</value>
@@ -1034,6 +1064,12 @@
   </data>
   <data name="InspectorPanelView.PreviewInfo.SpriteSourceTextureFormatId.Label" xml:space="preserve">
     <value>源纹理格式 ID</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpritePivot.Label" xml:space="preserve">
+    <value>Pivot 点</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.SpriteBorder.Label" xml:space="preserve">
+    <value>九宫格边距</value>
   </data>
   <data name="InspectorPanelView.PreviewInfo.AudioContainer.Label" xml:space="preserve">
     <value>音频容器</value>
@@ -1638,11 +1674,41 @@
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Option.AskEveryTime" xml:space="preserve">
     <value>每次询问</value>
   </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportPerformance.Title" xml:space="preserve">
+    <value>导入性能</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportPerformance.Hint" xml:space="preserve">
+    <value>这里控制资源包导入时的后台 worker 数。默认自动模式会按机器核心数选择 1 到 4 个 worker；手动值适合在磁盘或外部解密器压力较高时降载。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Label" xml:space="preserve">
+    <value>导入 worker 数量</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Description" xml:space="preserve">
+    <value>自动模式会遵循仓库默认并发规则；固定数量会覆盖自动推导，但单工作区仍不会超过 4 个 worker。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.Automatic" xml:space="preserve">
+    <value>自动</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.One" xml:space="preserve">
+    <value>1 个</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.Two" xml:space="preserve">
+    <value>2 个</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.Three" xml:space="preserve">
+    <value>3 个</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.Four" xml:space="preserve">
+    <value>4 个</value>
+  </data>
   <data name="SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage" xml:space="preserve">
     <value>保存启动恢复偏好失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
   </data>
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.SaveFailedMessage" xml:space="preserve">
     <value>保存最近工作区打开方式失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.SaveFailedMessage" xml:space="preserve">
+    <value>保存导入 worker 数量失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
   </data>
   <data name="SettingsDiagnosticsPage.ResponsibilityTitleText.Text" xml:space="preserve">
     <value>页面职责</value>
@@ -1748,6 +1814,9 @@
   </data>
   <data name="BundleExplorer.Preview.UnexpectedDisplayFailure" xml:space="preserve">
     <value>预览展示阶段发生未预期错误。</value>
+  </data>
+  <data name="BundleExplorer.Preview.LoadTimedOut" xml:space="preserve">
+    <value>预览加载超时。</value>
   </data>
   <data name="Common.UnexpectedFailure" xml:space="preserve">
     <value>发生未预期的失败。</value>

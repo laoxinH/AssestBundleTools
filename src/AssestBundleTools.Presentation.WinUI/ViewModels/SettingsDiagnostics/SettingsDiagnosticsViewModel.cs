@@ -8,15 +8,9 @@ using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using Microsoft.UI.Xaml;
-
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.SettingsDiagnostics;
 
 /// <summary>
@@ -35,7 +29,7 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
     private readonly ILocalizationService _localizationService;
     private readonly IWorkspaceImportCoordinatorService _workspaceImportCoordinatorService;
     private readonly IAssetBundleDecryptorCatalogService _assetBundleDecryptorCatalogService;
-    private readonly IAssetBundleDecryptorRegistry _assetBundleDecryptorRegistry;
+    private readonly SettingsDecryptorCatalogEntryPresenter _decryptorEntryPresenter;
     private readonly Dictionary<string, AssetBundleDecryptorCatalogEntryDto> _decryptorEntriesById = new(StringComparer.OrdinalIgnoreCase);
     private string _activeWorkspaceDisplayName = string.Empty;
     private string _activeWorkspacePrimaryBadgeText = string.Empty;
@@ -47,6 +41,7 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
     private string _workspaceCatalogSummaryText = string.Empty;
     private bool _restoreLastWorkspaceOnStartup;
     private int _recentWorkspaceOpenBehaviorSelectedIndex;
+    private int _workspaceImportWorkerCountSelectedIndex;
 
     public SettingsDiagnosticsViewModel(
         IAppLogService appLogService,
@@ -65,7 +60,9 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _workspaceImportCoordinatorService = workspaceImportCoordinatorService ?? throw new ArgumentNullException(nameof(workspaceImportCoordinatorService));
         _assetBundleDecryptorCatalogService = assetBundleDecryptorCatalogService ?? throw new ArgumentNullException(nameof(assetBundleDecryptorCatalogService));
-        _assetBundleDecryptorRegistry = assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry));
+        _decryptorEntryPresenter = new SettingsDecryptorCatalogEntryPresenter(
+            _localizationService,
+            assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry)));
 
         LogPanel = _appLogService.LogPanel;
         ImportBundleFilesCommand = new AsyncRelayCommand(
@@ -76,7 +73,11 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
             canExecute: () => HasActiveWorkspace);
         _restoreLastWorkspaceOnStartup = _appPreferencesService.RestoreLastWorkspaceOnStartup;
         _recentWorkspaceOpenBehaviorSelectedIndex =
-            ConvertRecentWorkspaceOpenBehaviorToSelectedIndex(_appPreferencesService.RecentWorkspaceOpenBehavior);
+            SettingsDiagnosticsPreferenceOptionMapper.ConvertRecentWorkspaceOpenBehaviorToSelectedIndex(
+                _appPreferencesService.RecentWorkspaceOpenBehavior);
+        _workspaceImportWorkerCountSelectedIndex =
+            SettingsDiagnosticsPreferenceOptionMapper.ConvertWorkspaceImportWorkerCountToSelectedIndex(
+                _appPreferencesService.WorkspaceImportWorkerCount);
         _workspaceContextService.CurrentWorkspaceChanged += OnWorkspaceContextChanged;
         _workspaceContextService.WorkspaceEntriesChanged += OnWorkspaceContextChanged;
 
@@ -176,13 +177,13 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
         get => _recentWorkspaceOpenBehaviorSelectedIndex;
         set
         {
-            var selectedIndex = CoerceRecentWorkspaceOpenBehaviorSelectedIndex(value);
+            var selectedIndex = SettingsDiagnosticsPreferenceOptionMapper.CoerceRecentWorkspaceOpenBehaviorSelectedIndex(value);
             if (_recentWorkspaceOpenBehaviorSelectedIndex == selectedIndex)
             {
                 return;
             }
 
-            var openBehavior = ConvertSelectedIndexToRecentWorkspaceOpenBehavior(selectedIndex);
+            var openBehavior = SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToRecentWorkspaceOpenBehavior(selectedIndex);
             if (_appPreferencesService.TrySetRecentWorkspaceOpenBehavior(openBehavior))
             {
                 SetProperty(ref _recentWorkspaceOpenBehaviorSelectedIndex, selectedIndex);
@@ -191,6 +192,30 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
 
             _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorSaveFailedMessage));
             ShowErrorNotification(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorSaveFailedMessage);
+            OnPropertyChanged();
+        }
+    }
+
+    public int WorkspaceImportWorkerCountSelectedIndex
+    {
+        get => _workspaceImportWorkerCountSelectedIndex;
+        set
+        {
+            var selectedIndex = SettingsDiagnosticsPreferenceOptionMapper.ConvertWorkspaceImportWorkerCountToSelectedIndex(value);
+            if (_workspaceImportWorkerCountSelectedIndex == selectedIndex)
+            {
+                return;
+            }
+
+            var workerCount = SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToWorkspaceImportWorkerCount(selectedIndex);
+            if (_appPreferencesService.TrySetWorkspaceImportWorkerCount(workerCount))
+            {
+                SetProperty(ref _workspaceImportWorkerCountSelectedIndex, selectedIndex);
+                return;
+            }
+
+            _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountSaveFailedMessage));
+            ShowErrorNotification(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountSaveFailedMessage);
             OnPropertyChanged();
         }
     }
@@ -266,10 +291,7 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
             GetString(ResourceKeys.AppNotificationSuccessTitle),
             _localizationService.GetFormattedString(
                 ResourceKeys.SettingsDiagnosticsDecryptorSaveSucceededMessageFormat,
-                AssetBundleDecryptorDisplayText.GetDisplayName(
-                    _localizationService,
-                    _assetBundleDecryptorRegistry,
-                    savedEntry.Definition.Id)),
+                _decryptorEntryPresenter.GetDisplayName(savedEntry.Definition.Id)),
             AppNotificationSeverity.Success);
         return true;
     }
@@ -299,10 +321,7 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
             GetString(ResourceKeys.AppNotificationSuccessTitle),
             _localizationService.GetFormattedString(
                 ResourceKeys.SettingsDiagnosticsDecryptorDeleteSucceededMessageFormat,
-                AssetBundleDecryptorDisplayText.GetDisplayName(
-                    _localizationService,
-                    _assetBundleDecryptorRegistry,
-                    targetEntry.Definition.Id)),
+                _decryptorEntryPresenter.GetDisplayName(targetEntry.Definition.Id)),
             AppNotificationSeverity.Success);
         return true;
     }
@@ -413,7 +432,7 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
         foreach (var entry in entries)
         {
             _decryptorEntriesById[entry.Definition.Id] = entry;
-            DecryptorEntries.Add(BuildDecryptorItem(entry));
+            DecryptorEntries.Add(_decryptorEntryPresenter.Build(entry));
         }
 
         NotifyWorkspaceState();
@@ -477,52 +496,6 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
         timestamp.ToLocalTime().ToString("g", CultureInfo.CurrentCulture);
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
-
-    private SettingsDecryptorCatalogEntryItemViewModel BuildDecryptorItem(AssetBundleDecryptorCatalogEntryDto entry)
-    {
-        var displayName = AssetBundleDecryptorDisplayText.GetDisplayName(
-            _localizationService,
-            _assetBundleDecryptorRegistry,
-            entry.Definition.Id);
-        var description = AssetBundleDecryptorDisplayText.GetDescription(
-            _localizationService,
-            _assetBundleDecryptorRegistry,
-            entry.Definition.Id);
-
-        var primaryBadgeText = entry.IsBuiltIn
-            ? GetString(ResourceKeys.SettingsDiagnosticsDecryptorBuiltInBadge)
-            : entry.IsReadOnly
-                ? GetString(ResourceKeys.SettingsDiagnosticsDecryptorReadOnlyBadge)
-                : GetString(ResourceKeys.SettingsDiagnosticsDecryptorUserManagedBadge);
-        var secondaryBadgeText = entry.IsBuiltIn
-            ? GetString(ResourceKeys.SettingsDiagnosticsDecryptorReadOnlyBadge)
-            : null;
-
-        var executablePathSummary = string.IsNullOrWhiteSpace(entry.Definition.ExecutablePath)
-            ? string.Empty
-            : _localizationService.GetFormattedString(
-                ResourceKeys.SettingsDiagnosticsDecryptorExecutablePathFormat,
-                entry.Definition.ExecutablePath);
-        var manifestPathSummary = string.IsNullOrWhiteSpace(entry.ManifestFilePath)
-            ? null
-            : _localizationService.GetFormattedString(
-                ResourceKeys.SettingsDiagnosticsDecryptorManifestPathFormat,
-                entry.ManifestFilePath);
-
-        return new SettingsDecryptorCatalogEntryItemViewModel(
-            Id: entry.Definition.Id,
-            DisplayName: displayName,
-            VersionSummary: _localizationService.GetFormattedString(
-                ResourceKeys.SettingsDiagnosticsDecryptorVersionFormat,
-                string.IsNullOrWhiteSpace(entry.Definition.Version) ? "1.0.0" : entry.Definition.Version),
-            Description: description,
-            ExecutablePathSummary: executablePathSummary,
-            ManifestPathSummary: manifestPathSummary,
-            PrimaryBadgeText: primaryBadgeText,
-            SecondaryBadgeText: secondaryBadgeText,
-            CanEdit: !entry.IsReadOnly,
-            CanDelete: !entry.IsReadOnly);
-    }
 
     private bool TryGetValue<T>(
         AssestBundleTools.Application.Common.Results.Result<T> result,
@@ -588,31 +561,5 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
             : _localizationService.GetRequiredString(firstError.MessageToken);
     }
 
-    private static int ConvertRecentWorkspaceOpenBehaviorToSelectedIndex(RecentWorkspaceOpenBehavior behavior)
-    {
-        return behavior switch
-        {
-            RecentWorkspaceOpenBehavior.NewWindow => 1,
-            RecentWorkspaceOpenBehavior.AskEveryTime => 2,
-            _ => 0
-        };
-    }
-
-    private static RecentWorkspaceOpenBehavior ConvertSelectedIndexToRecentWorkspaceOpenBehavior(int selectedIndex)
-    {
-        return selectedIndex switch
-        {
-            1 => RecentWorkspaceOpenBehavior.NewWindow,
-            2 => RecentWorkspaceOpenBehavior.AskEveryTime,
-            _ => RecentWorkspaceOpenBehavior.CurrentWindow
-        };
-    }
-
-    private static int CoerceRecentWorkspaceOpenBehaviorSelectedIndex(int selectedIndex)
-    {
-        return selectedIndex is >= 0 and <= 2
-            ? selectedIndex
-            : 0;
-    }
 }
 

@@ -26,4 +26,5 @@ public sealed record AssetPreviewDto(
     bool IsFromCache,
     DateTimeOffset GeneratedAtUtc,
     AssetPreviewDiagnosticDto Diagnostic,
-    AssetPreviewImageOverlayDto? ImageOverlay = null);
+    AssetPreviewImageOverlayDto? ImageOverlay = null,
+    AssetPreviewImageFocusDto? ImageFocus = null);

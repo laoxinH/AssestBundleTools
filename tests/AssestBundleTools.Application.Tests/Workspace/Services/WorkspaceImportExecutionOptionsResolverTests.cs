@@ -17,4 +17,13 @@ internal static class WorkspaceImportExecutionOptionsResolverTests
         TestAssert.Equal(4, WorkspaceImportExecutionOptionsResolver.ResolveBundleWorkerCount(16), "High-core environments should stay capped at four workers.");
         return Task.CompletedTask;
     }
+
+    public static Task ResolveBundleWorkerCount_ShouldUseManualWorkerCount_WhenConfigured()
+    {
+        TestAssert.Equal(1, WorkspaceImportExecutionOptionsResolver.ResolveBundleWorkerCount(16, 1), "Manual one-worker mode should force serial import.");
+        TestAssert.Equal(3, WorkspaceImportExecutionOptionsResolver.ResolveBundleWorkerCount(2, 3), "Manual worker mode should override the CPU default.");
+        TestAssert.Equal(4, WorkspaceImportExecutionOptionsResolver.ResolveBundleWorkerCount(16, 99), "Manual worker mode should stay capped at four workers.");
+        TestAssert.Equal(4, WorkspaceImportExecutionOptionsResolver.ResolveBundleWorkerCount(16, 0), "Zero keeps automatic mode.");
+        return Task.CompletedTask;
+    }
 }

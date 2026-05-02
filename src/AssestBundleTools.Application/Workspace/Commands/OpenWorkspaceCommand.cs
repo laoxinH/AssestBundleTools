@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Workspace;
 
 namespace AssestBundleTools.Application.Workspace.Commands;
@@ -9,4 +10,5 @@ public sealed record OpenWorkspaceCommand(
     string WorkspacePath,
     string WorkspaceDataRootPath,
     string? WorkspaceDisplayName = null,
-    WorkspaceMode InitialMode = WorkspaceMode.SinglePane);
+    WorkspaceMode InitialMode = WorkspaceMode.SinglePane,
+    IProgress<WorkspaceImportProgressDto>? ImportProgress = null);

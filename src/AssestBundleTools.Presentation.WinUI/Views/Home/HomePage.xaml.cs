@@ -160,6 +160,7 @@ public sealed partial class HomePage : Page
             ResourceKeys.HomePageDeleteWorkspaceSucceededMessageFormat,
             AppNotificationSeverity.Success,
             workspaceItem.DisplayName);
+        ClearDeletedCurrentWorkspaceRegistration(workspaceItem);
         App.CurrentApp.WorkspaceContextService.ReloadWorkspaceCatalogEntries();
     }
 
@@ -225,7 +226,8 @@ public sealed partial class HomePage : Page
             return;
         }
 
-        if (App.CurrentApp.TryActivateOpenedWorkspace(request))
+        if (!request.ForceNewWorkspaceSession &&
+            App.CurrentApp.TryActivateOpenedWorkspace(request))
         {
             return;
         }
@@ -288,6 +290,21 @@ public sealed partial class HomePage : Page
         }
 
         return false;
+    }
+
+    private void ClearDeletedCurrentWorkspaceRegistration(HomeRecentWorkspaceItemViewModel workspaceItem)
+    {
+        var request = new WorkspaceNavigationRequest(
+            SourcePath: workspaceItem.SourcePath,
+            WorkspaceDisplayName: workspaceItem.DisplayName,
+            WorkspaceDataRootPath: workspaceItem.WorkspaceDataRootPath,
+            OpenTarget: WorkspaceOpenTarget.CurrentWindow);
+
+        if (TryGetHostWindow(out var hostWindow) &&
+            App.CurrentApp.DoesWindowHostWorkspace(hostWindow, request))
+        {
+            hostWindow.ClearRegisteredWorkspace();
+        }
     }
 
     private void ApplyLocalizedText()

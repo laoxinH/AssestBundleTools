@@ -37,6 +37,7 @@ public sealed partial class BundleExplorerPage : Page
             App.CurrentApp.FilePickerService,
             App.CurrentApp.WorkspaceContextService,
             App.CurrentApp.WorkspaceImportCoordinatorService,
+            App.CurrentApp.BackgroundTaskRunner,
             App.CurrentApp.AssetBundleDecryptorRegistry,
             App.CurrentApp.PathNavigationService);
 

@@ -10,4 +10,6 @@ namespace AssestBundleTools.Application.Assets.Dtos;
 public sealed record AssetPreviewImageOverlayDto(
     int CanvasPixelWidth,
     int CanvasPixelHeight,
-    AssetPreviewImageRegionDto HighlightRegion);
+    AssetPreviewImageRegionDto HighlightRegion,
+    AssetPreviewImagePointDto? PivotPoint = null,
+    AssetPreviewImageBorderDto? NineSliceBorder = null);

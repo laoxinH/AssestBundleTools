@@ -1,3 +1,5 @@
+using AssestBundleTools.Application.Workspace.Dtos;
+
 namespace AssestBundleTools.Presentation.WinUI.Services;
 
 /// <summary>
@@ -13,17 +15,22 @@ public interface IWorkspaceImportCoordinatorService
     /// <summary>
     /// 从“资源包文件导入”入口收集输入，并登记到当前活动工作区。
     /// </summary>
-    Task<bool> RequestBundleFileImportAsync(CancellationToken cancellationToken = default);
+    Task<bool> RequestBundleFileImportAsync(
+        IProgress<WorkspaceImportProgressDto>? progress = null,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 从“资源包目录导入”入口收集输入，并登记到当前活动工作区。
     /// </summary>
-    Task<bool> RequestBundleDirectoryImportAsync(CancellationToken cancellationToken = default);
+    Task<bool> RequestBundleDirectoryImportAsync(
+        IProgress<WorkspaceImportProgressDto>? progress = null,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 将拖拽进入工作区的文件系统路径收口成统一导入请求，并登记到当前活动工作区。
     /// </summary>
     Task<bool> RequestDragDropImportAsync(
         IReadOnlyList<string> droppedPaths,
+        IProgress<WorkspaceImportProgressDto>? progress = null,
         CancellationToken cancellationToken = default);
 }

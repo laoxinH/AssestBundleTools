@@ -29,8 +29,10 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
     private readonly BundleExplorerAssetPreviewCoordinator _assetPreviewCoordinator;
     private readonly IAppLogService _appLogService;
     private readonly ILocalizationService _localizationService;
+    private readonly IBackgroundTaskRunner _backgroundTaskRunner;
     private readonly AssetPaneViewModel _primaryPane;
     private readonly BundleExplorerAssetDocumentHostCoordinator _assetDocumentHostCoordinator;
+    private readonly BundleExplorerAssetPreviewLoadCoordinator _assetPreviewLoadCoordinator;
     private readonly Func<bool> _isBusyProvider;
     private readonly Action _requestWorkspaceBrowserStatePersistence;
     private readonly Action _notifyActionStates;
@@ -46,6 +48,7 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         BundleExplorerAssetPreviewCoordinator assetPreviewCoordinator,
         IAppLogService appLogService,
         ILocalizationService localizationService,
+        IBackgroundTaskRunner backgroundTaskRunner,
         AssetPaneViewModel primaryPane,
         BundleExplorerAssetDocumentHostCoordinator assetDocumentHostCoordinator,
         Func<bool> isBusyProvider,
@@ -61,6 +64,7 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         _assetPreviewCoordinator = assetPreviewCoordinator ?? throw new ArgumentNullException(nameof(assetPreviewCoordinator));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+        _backgroundTaskRunner = backgroundTaskRunner ?? throw new ArgumentNullException(nameof(backgroundTaskRunner));
         _primaryPane = primaryPane ?? throw new ArgumentNullException(nameof(primaryPane));
         _assetDocumentHostCoordinator = assetDocumentHostCoordinator ?? throw new ArgumentNullException(nameof(assetDocumentHostCoordinator));
         _isBusyProvider = isBusyProvider ?? throw new ArgumentNullException(nameof(isBusyProvider));
@@ -68,6 +72,10 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         _notifyActionStates = notifyActionStates ?? throw new ArgumentNullException(nameof(notifyActionStates));
         _appendResultFailure = appendResultFailure ?? throw new ArgumentNullException(nameof(appendResultFailure));
         _formatFirstErrorMessage = formatFirstErrorMessage ?? throw new ArgumentNullException(nameof(formatFirstErrorMessage));
+        _assetPreviewLoadCoordinator = new BundleExplorerAssetPreviewLoadCoordinator(
+            _assetPreviewCoordinator,
+            () => _documentWorkspace.ActiveAssetDocumentTab,
+            _formatFirstErrorMessage);
     }
 
     public bool IsSynchronizingAssetDocumentState => _assetDocumentStateSynchronizationDepth > 0;
@@ -381,41 +389,48 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
                 AppendAssetFocusedLog(assetTab.Details);
             }
 
+            SchedulePreviewLoadingForActiveBundleTab(
+                bundleTab,
+                assetTab,
+                promoteActiveLoadingPreview: !wasAlreadyActiveAssetTab);
             _requestWorkspaceBrowserStatePersistence();
             return;
         }
 
-        await LoadAssetDocumentTabAsync(bundleTab, assetTab, writeLog);
+        await LoadAssetDocumentTabAsync(bundleTab, assetTab, writeLog, promotePreviewAfterLoad: !wasAlreadyActiveAssetTab);
         _requestWorkspaceBrowserStatePersistence();
     }
 
     private async Task LoadAssetDocumentTabAsync(
         BundleDocumentTabViewModel bundleTab,
         AssetDocumentTabViewModel assetTab,
-        bool writeLog)
+        bool writeLog,
+        bool promotePreviewAfterLoad)
     {
         if (_workspaceShell.WorkspaceSummary is null)
         {
             return;
         }
 
-        var openResult = await _workspaceAssetInspectionGateway.OpenAssetInPaneAsync(
-            new OpenAssetInPaneCommand(
-                WorkspaceId: _workspaceShell.WorkspaceSummary.WorkspaceId,
-                BundleId: assetTab.BundleId,
-                AssetId: assetTab.AssetId,
-                PaneId: assetTab.PaneId));
+        var openCommand = new OpenAssetInPaneCommand(
+            WorkspaceId: _workspaceShell.WorkspaceSummary.WorkspaceId,
+            BundleId: assetTab.BundleId,
+            AssetId: assetTab.AssetId,
+            PaneId: assetTab.PaneId);
+        var openResult = await _backgroundTaskRunner.RunAsync(
+            token => _workspaceAssetInspectionGateway.OpenAssetInPaneAsync(openCommand, token));
 
         if (!TryGetValue(openResult, out _))
         {
             return;
         }
 
-        var detailsResult = await _workspaceAssetInspectionGateway.GetAssetDetailsAsync(
-            new GetAssetDetailsQuery(
-                WorkspaceId: _workspaceShell.WorkspaceSummary.WorkspaceId,
-                BundleId: assetTab.BundleId,
-                AssetId: assetTab.AssetId));
+        var detailsQuery = new GetAssetDetailsQuery(
+            WorkspaceId: _workspaceShell.WorkspaceSummary.WorkspaceId,
+            BundleId: assetTab.BundleId,
+            AssetId: assetTab.AssetId);
+        var detailsResult = await _backgroundTaskRunner.RunAsync(
+            token => _workspaceAssetInspectionGateway.GetAssetDetailsAsync(detailsQuery, token));
 
         if (!TryGetValue(detailsResult, out var details))
         {
@@ -428,12 +443,27 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
             canEdit: ReferenceEquals(bundleTab, _documentWorkspace.ActiveBundleTab),
             isBusy: _isBusyProvider());
         _notifyActionStates();
-        _ = _assetPreviewCoordinator.LoadInspectorPreviewAsync(assetTab, details, _formatFirstErrorMessage);
+        SchedulePreviewLoadingForActiveBundleTab(
+            bundleTab,
+            assetTab,
+            promotePreviewAfterLoad);
 
         if (writeLog)
         {
             AppendAssetFocusedLog(details);
         }
+    }
+
+    private void SchedulePreviewLoadingForActiveBundleTab(
+        BundleDocumentTabViewModel bundleTab,
+        AssetDocumentTabViewModel activeAssetTab,
+        bool promoteActiveLoadingPreview)
+    {
+        ArgumentNullException.ThrowIfNull(bundleTab);
+        ArgumentNullException.ThrowIfNull(activeAssetTab);
+
+        _assetPreviewLoadCoordinator.LoadForegroundPreview(activeAssetTab, promoteActiveLoadingPreview);
+        _assetPreviewLoadCoordinator.PrewarmBackgroundPreviews(bundleTab, activeAssetTab);
     }
 
     /// <summary>

@@ -5,4 +5,5 @@ namespace AssestBundleTools.Application.Workspace.Dtos;
 /// </summary>
 public sealed record PreviewCachePayloadDto(
     PreviewCacheDescriptorDto Descriptor,
-    byte[] Content);
+    byte[] Content,
+    byte[]? ImageFocusContent = null);

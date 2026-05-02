@@ -213,7 +213,12 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
             AssetTabs.Add(assetTab);
         }
 
+        var previousActiveAssetTab = ActiveAssetTab;
         ActiveAssetTab = assetTab;
+        if (!ReferenceEquals(previousActiveAssetTab, ActiveAssetTab))
+        {
+            previousActiveAssetTab?.CancelPreviewRequest();
+        }
     }
 
     public void RestoreAssetTabs(
@@ -222,6 +227,7 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(assetTabs);
 
+        CancelAllAssetPreviewRequests();
         AssetTabs.Clear();
 
         AssetDocumentTabViewModel? activeAssetTab = null;
@@ -258,6 +264,7 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
             return;
         }
 
+        assetTab.CancelPreviewRequest();
         if (ReferenceEquals(ActiveAssetTab, assetTab))
         {
             ActiveAssetTab = AssetTabs.FirstOrDefault();
@@ -266,8 +273,17 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
 
     public void ClearAssetTabs()
     {
+        CancelAllAssetPreviewRequests();
         AssetTabs.Clear();
         ActiveAssetTab = null;
+    }
+
+    public void CancelAllAssetPreviewRequests()
+    {
+        foreach (var assetTab in AssetTabs)
+        {
+            assetTab.CancelPreviewRequest();
+        }
     }
 }
 

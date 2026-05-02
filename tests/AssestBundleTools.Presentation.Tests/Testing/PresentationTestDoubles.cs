@@ -246,6 +246,66 @@ internal sealed class TestAssetBundleDecryptorRegistry : IAssetBundleDecryptorRe
     }
 }
 
+internal sealed class TestBackgroundTaskRunner : IBackgroundTaskRunner
+{
+    public int RunCallCount { get; private set; }
+
+    public Type? LastResultType { get; private set; }
+
+    public Func<Func<CancellationToken, Task<object>>, CancellationToken, Task<object>>? RunAsyncHandler { get; init; }
+
+    public Task<TResult> RunAsync<TResult>(
+        Func<CancellationToken, Task<TResult>> operation,
+        CancellationToken cancellationToken = default)
+    {
+        RunCallCount++;
+        LastResultType = typeof(TResult);
+        if (RunAsyncHandler is not null)
+        {
+            return RunWithHandlerAsync(operation, cancellationToken);
+        }
+
+        return operation(cancellationToken);
+    }
+
+    private async Task<TResult> RunWithHandlerAsync<TResult>(
+        Func<CancellationToken, Task<TResult>> operation,
+        CancellationToken cancellationToken)
+    {
+        var result = await RunAsyncHandler!(
+            async token => (await operation(token))!,
+            cancellationToken);
+        return (TResult)result;
+    }
+}
+
+internal sealed class TestWorkspaceAssetInspectionGateway : IWorkspaceAssetInspectionGateway
+{
+    public Func<OpenAssetInPaneCommand, Task<Result<AssetPaneContextDto>>> OpenAssetInPaneHandler { get; init; } =
+        _ => throw new NotSupportedException();
+
+    public Func<GetAssetDetailsQuery, Task<Result<AssetDetailsDto>>> GetAssetDetailsHandler { get; init; } =
+        _ => throw new NotSupportedException();
+
+    public Func<GetAssetPreviewQuery, Task<Result<AssetPreviewDto>>> GetAssetPreviewHandler { get; init; } =
+        _ => throw new NotSupportedException();
+
+    public Task<Result<AssetDetailsDto>> GetAssetDetailsAsync(
+        GetAssetDetailsQuery query,
+        CancellationToken cancellationToken = default) =>
+        GetAssetDetailsHandler(query);
+
+    public Task<Result<AssetPreviewDto>> GetAssetPreviewAsync(
+        GetAssetPreviewQuery query,
+        CancellationToken cancellationToken = default) =>
+        GetAssetPreviewHandler(query);
+
+    public Task<Result<AssetPaneContextDto>> OpenAssetInPaneAsync(
+        OpenAssetInPaneCommand command,
+        CancellationToken cancellationToken = default) =>
+        OpenAssetInPaneHandler(command);
+}
+
 internal sealed class TestWorkspaceExplorerGateway : IWorkspaceExplorerGateway
 {
     public required Func<OpenWorkspaceCommand, Task<Result<WorkspaceSummaryDto>>> OpenWorkspaceHandler { get; init; }

@@ -9,4 +9,5 @@ namespace AssestBundleTools.Presentation.WinUI.Services;
 /// </remarks>
 internal sealed record AppPreferencesPersistenceSnapshot(
     bool RestoreLastWorkspaceOnStartup,
-    string RecentWorkspaceOpenBehavior);
+    string RecentWorkspaceOpenBehavior,
+    int WorkspaceImportWorkerCount);

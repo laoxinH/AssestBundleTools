@@ -28,6 +28,7 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
     private string _toolTipText;
     private bool _canEdit;
     private long _previewRequestVersion;
+    private AssetPreviewRequest? _activePreviewRequest;
 
     public AssetDocumentTabViewModel(
         BundleId bundleId,
@@ -136,15 +137,44 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
         Inspector.RestoreSelectedSection(sectionKey);
     }
 
-    public long BeginPreviewRequest()
+    internal AssetPreviewRequest BeginPreviewRequest()
     {
         _previewRequestVersion++;
-        return _previewRequestVersion;
+        _activePreviewRequest?.Cancel();
+        _activePreviewRequest = new AssetPreviewRequest(_previewRequestVersion);
+        return _activePreviewRequest;
     }
 
-    public bool IsPreviewRequestCurrent(AssetDetailsDto details, long previewRequestVersion)
+    internal void CancelPreviewRequest()
     {
-        return _previewRequestVersion == previewRequestVersion &&
+        _previewRequestVersion++;
+        _activePreviewRequest?.Cancel();
+        _activePreviewRequest = null;
+        if (Inspector.Preview.IsPreviewLoading)
+        {
+            Inspector.Preview.ResetState();
+        }
+    }
+
+    internal void CompletePreviewRequest(AssetPreviewRequest previewRequest)
+    {
+        ArgumentNullException.ThrowIfNull(previewRequest);
+
+        if (ReferenceEquals(_activePreviewRequest, previewRequest))
+        {
+            _activePreviewRequest = null;
+        }
+
+        previewRequest.Dispose();
+    }
+
+    internal bool IsPreviewRequestCurrent(AssetDetailsDto details, AssetPreviewRequest previewRequest)
+    {
+        ArgumentNullException.ThrowIfNull(previewRequest);
+
+        return ReferenceEquals(_activePreviewRequest, previewRequest) &&
+               _previewRequestVersion == previewRequest.Version &&
+               !previewRequest.CancellationToken.IsCancellationRequested &&
                Details is not null &&
                Details.BundleId.Equals(details.BundleId) &&
                Details.AssetId.Equals(details.AssetId);

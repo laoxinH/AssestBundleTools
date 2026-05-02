@@ -1,13 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
+using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
-using Microsoft.UI.Xaml.Media.Imaging;
-using Windows.Media.Core;
-using Windows.Storage.Streams;
 
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -21,11 +19,14 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordin
 /// </summary>
 internal sealed class BundleExplorerAssetPreviewCoordinator
 {
+    private static readonly TimeSpan DefaultPreviewQueryTimeout = TimeSpan.FromSeconds(45);
+
     private readonly IWorkspaceAssetInspectionGateway _workspaceAssetInspectionGateway;
     private readonly IWorkspaceContextService _workspaceContextService;
     private readonly IBundleExplorerWorkspaceShellHost _workspaceShell;
     private readonly IAppLogService _appLogService;
     private readonly ILocalizationService _localizationService;
+    private readonly AssetPreviewQueryExecutor _previewQueryExecutor;
     private readonly LocalizedValueFormatter _localizedValueFormatter;
     private readonly AssetPreviewDisplayFormatter _assetPreviewDisplayFormatter;
 
@@ -34,50 +35,129 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         IWorkspaceContextService workspaceContextService,
         IBundleExplorerWorkspaceShellHost workspaceShell,
         IAppLogService appLogService,
-        ILocalizationService localizationService)
+        ILocalizationService localizationService,
+        IBackgroundTaskRunner backgroundTaskRunner,
+        TimeSpan? previewQueryTimeout = null,
+        int? previewWorkerCount = null)
     {
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _workspaceShell = workspaceShell ?? throw new ArgumentNullException(nameof(workspaceShell));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+        ArgumentNullException.ThrowIfNull(backgroundTaskRunner);
+        _previewQueryExecutor = new AssetPreviewQueryExecutor(
+            _workspaceAssetInspectionGateway,
+            backgroundTaskRunner,
+            NormalizePreviewQueryTimeout(previewQueryTimeout),
+            AssetPreviewExecutionOptionsResolver.NormalizePreviewWorkerCount(previewWorkerCount));
         _localizedValueFormatter = new LocalizedValueFormatter(_localizationService);
         _assetPreviewDisplayFormatter = new AssetPreviewDisplayFormatter(_localizationService);
     }
 
-    public Task LoadInspectorPreviewAsync(
+    public async Task LoadInspectorPreviewAsync(
         AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
-        Func<IReadOnlyList<AppError>, string> formatFirstErrorMessage)
+        Func<IReadOnlyList<AppError>, string> formatFirstErrorMessage,
+        Func<bool>? isPreviewRelevant = null,
+        AssetPreviewLoadPriority priority = AssetPreviewLoadPriority.Foreground)
     {
         ArgumentNullException.ThrowIfNull(assetTab);
         ArgumentNullException.ThrowIfNull(details);
         ArgumentNullException.ThrowIfNull(formatFirstErrorMessage);
 
-        var previewRequestVersion = assetTab.BeginPreviewRequest();
+        var previewRequest = assetTab.BeginPreviewRequest();
+        if (!IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant))
+        {
+            ResetPreviewIfCurrent(assetTab, details, previewRequest);
+            return;
+        }
+
         assetTab.Inspector.SetPreviewLoading(GetString(ResourceKeys.InspectorPreviewLoadingText));
-        return LoadInspectorPreviewCoreAsync(assetTab, details, previewRequestVersion, formatFirstErrorMessage);
+        try
+        {
+            await LoadInspectorPreviewCoreAsync(
+                assetTab,
+                details,
+                previewRequest,
+                formatFirstErrorMessage,
+                priority,
+                isPreviewRelevant);
+        }
+        catch (OperationCanceledException)
+        {
+            ResetPreviewIfCurrent(assetTab, details, previewRequest);
+        }
+        catch (TimeoutException)
+        {
+            if (!ApplyUnavailablePreviewIfCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant))
+            {
+                ResetPreviewIfCurrent(assetTab, details, previewRequest);
+            }
+            else
+            {
+                LogPreviewDisplayFailure(details.Name, GetString(ResourceKeys.BundleExplorerPreviewLoadTimedOut));
+            }
+        }
+        catch (Exception)
+        {
+            if (!ApplyUnavailablePreviewIfCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant))
+            {
+                ResetPreviewIfCurrent(assetTab, details, previewRequest);
+            }
+            else
+            {
+                LogPreviewDisplayFailure(details.Name, GetString(ResourceKeys.BundleExplorerPreviewUnexpectedDisplayFailure));
+            }
+        }
+        finally
+        {
+            assetTab.CompletePreviewRequest(previewRequest);
+        }
     }
 
     private async Task LoadInspectorPreviewCoreAsync(
         AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
-        long previewRequestVersion,
-        Func<IReadOnlyList<AppError>, string> formatFirstErrorMessage)
+        AssetPreviewRequest previewRequest,
+        Func<IReadOnlyList<AppError>, string> formatFirstErrorMessage,
+        AssetPreviewLoadPriority priority,
+        Func<bool>? isPreviewRelevant)
     {
         if (!TryCreateAssetPreviewQuery(details, out var previewQuery))
         {
-            if (assetTab.IsPreviewRequestCurrent(details, previewRequestVersion))
+            if (!ApplyUnavailablePreviewIfCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant))
             {
-                assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
+                ResetPreviewIfCurrent(assetTab, details, previewRequest);
             }
 
             return;
         }
 
-        var previewResult = await _workspaceAssetInspectionGateway.GetAssetPreviewAsync(previewQuery);
-        if (previewResult.IsCancelled || !assetTab.IsPreviewRequestCurrent(details, previewRequestVersion))
+        var previewResult = await GetPreviewResultWithTimeoutAsync(
+            previewQuery,
+            previewRequest.CancellationToken,
+            priority,
+            () => IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant));
+        if (previewResult is null)
         {
+            ResetPreviewIfCurrent(assetTab, details, previewRequest);
+            return;
+        }
+
+        if (!IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant))
+        {
+            ResetPreviewIfCurrent(assetTab, details, previewRequest);
+            return;
+        }
+
+        if (previewResult.IsCancelled)
+        {
+            if (!ApplyUnavailablePreviewIfCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant))
+            {
+                ResetPreviewIfCurrent(assetTab, details, previewRequest);
+            }
+
             return;
         }
 
@@ -104,8 +184,9 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
             {
                 case AssetPreviewKind.Image:
                 {
-                    var imageSource = await CreatePreviewImageSourceAsync(preview.BinaryContent);
-                    if (!assetTab.IsPreviewRequestCurrent(details, previewRequestVersion))
+                    var imageSource = await AssetPreviewMediaSourceFactory.CreateImageSourceAsync(preview.BinaryContent);
+                    var spriteFocusPreviewDisplayState = await CreateSpriteFocusPreviewDisplayStateAsync(preview);
+                    if (!assetTab.IsPreviewRequestCurrent(details, previewRequest))
                     {
                         return;
                     }
@@ -123,7 +204,8 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
                         imageSource.PixelHeight,
                         previewInfoRows,
                         preview.PreviewPayloadFilePath,
-                        _assetPreviewDisplayFormatter.BuildSpritePreviewOverlayDisplayState(preview));
+                        _assetPreviewDisplayFormatter.BuildSpritePreviewOverlayDisplayState(preview),
+                        spriteFocusPreviewDisplayState);
                     ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
                 }
@@ -144,8 +226,8 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
                 }
                 case AssetPreviewKind.Audio:
                 {
-                    var audioPreviewSource = await CreatePreviewAudioSourceAsync(preview.BinaryContent, preview.ContentType);
-                    if (!assetTab.IsPreviewRequestCurrent(details, previewRequestVersion))
+                    var audioPreviewSource = await AssetPreviewMediaSourceFactory.CreateAudioSourceAsync(preview.BinaryContent, preview.ContentType);
+                    if (!assetTab.IsPreviewRequestCurrent(details, previewRequest))
                     {
                         audioPreviewSource?.Stream.Dispose();
                         return;
@@ -195,7 +277,7 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         }
         catch (Exception)
         {
-            if (!assetTab.IsPreviewRequestCurrent(details, previewRequestVersion))
+            if (!assetTab.IsPreviewRequestCurrent(details, previewRequest))
             {
                 return;
             }
@@ -249,58 +331,6 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         return true;
     }
 
-    private static async Task<BitmapImage?> CreatePreviewImageSourceAsync(byte[]? imagePayload)
-    {
-        if (imagePayload is not { Length: > 0 })
-        {
-            return null;
-        }
-
-        var bitmapImage = new BitmapImage();
-        using var stream = new InMemoryRandomAccessStream();
-        using (var writer = new DataWriter(stream.GetOutputStreamAt(0)))
-        {
-            writer.WriteBytes(imagePayload);
-            await writer.StoreAsync();
-            await writer.FlushAsync();
-            writer.DetachStream();
-        }
-
-        stream.Seek(0);
-        await bitmapImage.SetSourceAsync(stream);
-        return bitmapImage;
-    }
-
-    private static async Task<AudioPreviewSource?> CreatePreviewAudioSourceAsync(byte[]? audioPayload, string contentType)
-    {
-        if (audioPayload is not { Length: > 0 } || string.IsNullOrWhiteSpace(contentType))
-        {
-            return null;
-        }
-
-        var stream = new InMemoryRandomAccessStream();
-
-        try
-        {
-            using (var writer = new DataWriter(stream.GetOutputStreamAt(0)))
-            {
-                writer.WriteBytes(audioPayload);
-                await writer.StoreAsync();
-                await writer.FlushAsync();
-                writer.DetachStream();
-            }
-
-            stream.Seek(0);
-            var mediaSource = MediaSource.CreateFromStream(stream, contentType.Trim());
-            return new AudioPreviewSource(mediaSource, stream);
-        }
-        catch
-        {
-            stream.Dispose();
-            return null;
-        }
-    }
-
     /// <summary>
     /// 应用层预览诊断只暴露稳定枚举和结构化 detail message，
     /// 真正面向用户的中文文案在 Presentation 层完成映射，便于后续工作台和诊断页复用同一份诊断语义。
@@ -325,12 +355,74 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         ApplyPreviewDiagnostic(inspector, diagnostic);
     }
 
+    private bool ApplyUnavailablePreviewIfCurrentAndRelevant(
+        AssetDocumentTabViewModel assetTab,
+        AssetDetailsDto details,
+        AssetPreviewRequest previewRequest,
+        Func<bool>? isPreviewRelevant)
+    {
+        if (!IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant))
+        {
+            return false;
+        }
+
+        assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
+        return true;
+    }
+
+    private void ResetPreviewIfCurrent(
+        AssetDocumentTabViewModel assetTab,
+        AssetDetailsDto details,
+        AssetPreviewRequest previewRequest)
+    {
+        if (assetTab.IsPreviewRequestCurrent(details, previewRequest))
+        {
+            assetTab.Inspector.Preview.ResetState();
+        }
+    }
+
+    private async Task<Result<AssetPreviewDto>?> GetPreviewResultWithTimeoutAsync(
+        GetAssetPreviewQuery previewQuery,
+        CancellationToken previewCancellationToken,
+        AssetPreviewLoadPriority priority,
+        Func<bool> isPreviewRequestCurrentAndRelevant)
+    {
+        return await _previewQueryExecutor.ExecuteAsync(
+            previewQuery,
+            previewCancellationToken,
+            priority,
+            isPreviewRequestCurrentAndRelevant);
+    }
+
     private void LogPreviewDisplayFailure(string assetName, string reason)
     {
         _appLogService.AppendWarning(_localizationService.GetFormattedString(
             ResourceKeys.BundleExplorerLogAssetPreviewFailedFormat,
             assetName,
             reason));
+    }
+
+    private async Task<SpriteFocusPreviewDisplayState?> CreateSpriteFocusPreviewDisplayStateAsync(AssetPreviewDto preview)
+    {
+        var imageFocus = preview.ImageFocus;
+        if (imageFocus?.BinaryContent is not { Length: > 0 })
+        {
+            return null;
+        }
+
+        var imageSource = await AssetPreviewMediaSourceFactory.CreateImageSourceAsync(imageFocus.BinaryContent);
+        if (imageSource is null)
+        {
+            return null;
+        }
+
+        return new SpriteFocusPreviewDisplayState(
+            imageSource,
+            GetString(ResourceKeys.InspectorSpriteFocusPreviewTitle),
+            _localizationService.GetFormattedString(
+                ResourceKeys.InspectorSpriteFocusPreviewSizeFormat,
+                imageFocus.PixelWidth,
+                imageFocus.PixelHeight));
     }
 
     private string GetPreviewCacheStatusText(AssetPreviewCacheStatusKind cacheStatus)
@@ -360,9 +452,23 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         };
     }
 
+    private static TimeSpan NormalizePreviewQueryTimeout(TimeSpan? previewQueryTimeout)
+    {
+        return previewQueryTimeout is { } timeout && timeout > TimeSpan.Zero
+            ? timeout
+            : DefaultPreviewQueryTimeout;
+    }
+
+    private static bool IsPreviewRequestCurrentAndRelevant(
+        AssetDocumentTabViewModel assetTab,
+        AssetDetailsDto details,
+        AssetPreviewRequest previewRequest,
+        Func<bool>? isPreviewRelevant)
+    {
+        return assetTab.IsPreviewRequestCurrent(details, previewRequest) &&
+               (isPreviewRelevant is null || isPreviewRelevant());
+    }
+
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
 
-    private sealed record AudioPreviewSource(
-        MediaSource MediaSource,
-        IRandomAccessStream Stream);
 }

@@ -30,6 +30,7 @@ public sealed class BundleExplorerWorkspaceBindingCoordinatorTests
         var documentWorkspace = new BundleExplorerDocumentWorkspaceViewModel();
         var assetWorkflow = new TestAssetWorkflowBindingHost();
         var browserStateCoordinator = new TestBrowserStateCoordinator(restoreResult: false);
+        var backgroundTaskRunner = new TestBackgroundTaskRunner();
         var openBundleCalls = 0;
         var workspaceARequest = PresentationTestDataFactory.CreateNavigationRequest("WorkspaceA");
         var workspaceASummary = PresentationTestDataFactory.CreateWorkspaceSummary(workspaceARequest);
@@ -65,6 +66,7 @@ public sealed class BundleExplorerWorkspaceBindingCoordinatorTests
                 appLogService,
                 notificationService,
                 localizationService),
+            backgroundTaskRunner,
             workspaceShell,
             bundlePane,
             documentWorkspace,
@@ -85,10 +87,12 @@ public sealed class BundleExplorerWorkspaceBindingCoordinatorTests
 
         Assert.Equal(workspaceASummary.WorkspaceId, workspaceContextService.CurrentWorkspaceSummary?.WorkspaceId);
         Assert.Equal(workspaceASummary.WorkspaceId, workspaceShell.WorkspaceSummary?.WorkspaceId);
+        Assert.False(workspaceShell.ActiveWorkspaceNavigationRequest?.ForceNewWorkspaceSession);
         Assert.True(bundlePane.HasAnyBundles);
         Assert.Equal(0, workspaceContextService.ClearCurrentWorkspaceCallCount);
         Assert.Equal(1, openBundleCalls);
         Assert.Equal(1, browserStateCoordinator.RestoreCallCount);
+        Assert.Equal(1, backgroundTaskRunner.RunCallCount);
     }
 
     [Fact]
@@ -106,6 +110,7 @@ public sealed class BundleExplorerWorkspaceBindingCoordinatorTests
         var documentWorkspace = new BundleExplorerDocumentWorkspaceViewModel();
         var assetWorkflow = new TestAssetWorkflowBindingHost();
         var browserStateCoordinator = new TestBrowserStateCoordinator(restoreResult: false);
+        var backgroundTaskRunner = new TestBackgroundTaskRunner();
         var workspaceRequest = PresentationTestDataFactory.CreateNavigationRequest("WorkspaceFailure");
 
         bundlePane.RebuildBundleGroups(PresentationTestDataFactory.CreateBundleTree("StaleWorkspace"));
@@ -134,6 +139,7 @@ public sealed class BundleExplorerWorkspaceBindingCoordinatorTests
                 appLogService,
                 notificationService,
                 localizationService),
+            backgroundTaskRunner,
             workspaceShell,
             bundlePane,
             documentWorkspace,
@@ -155,6 +161,157 @@ public sealed class BundleExplorerWorkspaceBindingCoordinatorTests
         Assert.Equal(1, workspaceContextService.ClearCurrentWorkspaceCallCount);
         Assert.Equal(1, assetWorkflow.ClearActiveTabStateCallCount);
         Assert.Equal(1, browserStateCoordinator.CancelCallCount);
+        Assert.Equal(1, backgroundTaskRunner.RunCallCount);
+    }
+
+    [Fact]
+    public async Task LoadWorkspaceAsync_WhenForcedNewSessionFails_ShouldNotRestorePreviousWorkspace()
+    {
+        var localizationService = new TestLocalizationService();
+        var appLogService = new TestAppLogService();
+        var notificationService = new TestAppNotificationService();
+        var workspaceContextService = new TestWorkspaceContextService();
+        var assetBundleDecryptorRegistry = new TestAssetBundleDecryptorRegistry();
+        var workspaceShell = new BundleExplorerWorkspaceShellViewModel(
+            localizationService,
+            workspaceContextService,
+            assetBundleDecryptorRegistry);
+        var bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
+        var documentWorkspace = new BundleExplorerDocumentWorkspaceViewModel();
+        var assetWorkflow = new TestAssetWorkflowBindingHost();
+        var browserStateCoordinator = new TestBrowserStateCoordinator(restoreResult: false);
+        var backgroundTaskRunner = new TestBackgroundTaskRunner();
+        var workspaceARequest = PresentationTestDataFactory.CreateNavigationRequest("WorkspaceBeforeReset");
+        var workspaceASummary = PresentationTestDataFactory.CreateWorkspaceSummary(workspaceARequest);
+        var resetRequest = workspaceARequest with
+        {
+            WorkspaceDisplayName = "WorkspaceAfterReset",
+            ForceNewWorkspaceSession = true
+        };
+
+        workspaceContextService.RegisterOrActivateWorkspace(
+            workspaceASummary,
+            workspaceARequest.WorkspaceDataRootPath,
+            workspaceARequest.AssetBundleDecryptorId);
+        workspaceShell.ApplyWorkspace(workspaceASummary, workspaceARequest);
+        bundlePane.RebuildBundleGroups(PresentationTestDataFactory.CreateBundleTree("WorkspaceBeforeReset"));
+
+        var workspaceExplorerGateway = new TestWorkspaceExplorerGateway
+        {
+            OpenWorkspaceHandler = _ => Task.FromResult(
+                Result<AssestBundleTools.Application.Workspace.Dtos.WorkspaceSummaryDto>.Failure(
+                    PresentationTestDataFactory.CreateFailure("tests.reset-open-failed"))),
+            LoadBundleTreeHandler = _ => Task.FromResult(
+                Result<IReadOnlyList<AssestBundleTools.Application.Bundles.Dtos.BundleTreeNodeDto>>.Failure(
+                    PresentationTestDataFactory.CreateFailure("tests.unexpected-tree")))
+        };
+
+        var coordinator = new BundleExplorerWorkspaceBindingCoordinator(
+            workspaceExplorerGateway,
+            appLogService,
+            localizationService,
+            workspaceContextService,
+            new BundleExplorerOperationFeedbackBridge(
+                appLogService,
+                notificationService,
+                localizationService),
+            backgroundTaskRunner,
+            workspaceShell,
+            bundlePane,
+            documentWorkspace,
+            assetWorkflow,
+            browserStateCoordinator,
+            isBusyProvider: () => false,
+            setBusyState: static _ => { },
+            openBundleAsync: static (_, _) => Task.CompletedTask);
+
+        await coordinator.LoadWorkspaceAsync(
+            clearExistingLogs: true,
+            workspaceNavigationRequest: resetRequest,
+            showLoadedNotification: false);
+
+        Assert.Null(workspaceContextService.CurrentWorkspaceSummary);
+        Assert.Null(workspaceShell.WorkspaceSummary);
+        Assert.False(bundlePane.HasAnyBundles);
+        Assert.Equal(1, workspaceContextService.ClearCurrentWorkspaceCallCount);
+        Assert.Equal(1, browserStateCoordinator.CancelCallCount);
+        Assert.Equal(1, backgroundTaskRunner.RunCallCount);
+    }
+
+    [Fact]
+    public async Task LoadWorkspaceAsync_WhenForcedNewSessionSucceeds_ShouldReplacePreviousWorkspaceState()
+    {
+        var localizationService = new TestLocalizationService();
+        var appLogService = new TestAppLogService();
+        var notificationService = new TestAppNotificationService();
+        var workspaceContextService = new TestWorkspaceContextService();
+        var assetBundleDecryptorRegistry = new TestAssetBundleDecryptorRegistry();
+        var workspaceShell = new BundleExplorerWorkspaceShellViewModel(
+            localizationService,
+            workspaceContextService,
+            assetBundleDecryptorRegistry);
+        var bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
+        var documentWorkspace = new BundleExplorerDocumentWorkspaceViewModel();
+        var assetWorkflow = new TestAssetWorkflowBindingHost();
+        var browserStateCoordinator = new TestBrowserStateCoordinator(restoreResult: false);
+        var backgroundTaskRunner = new TestBackgroundTaskRunner();
+        var workspaceBeforeResetRequest = PresentationTestDataFactory.CreateNavigationRequest("WorkspaceBeforeReset");
+        var workspaceBeforeResetSummary = PresentationTestDataFactory.CreateWorkspaceSummary(workspaceBeforeResetRequest);
+        var workspaceAfterResetSummary = PresentationTestDataFactory.CreateWorkspaceSummary(
+            workspaceBeforeResetRequest with { WorkspaceDisplayName = "WorkspaceAfterReset" });
+        var resetRequest = workspaceBeforeResetRequest with
+        {
+            WorkspaceDisplayName = workspaceAfterResetSummary.DisplayName,
+            ForceNewWorkspaceSession = true
+        };
+
+        workspaceContextService.RegisterOrActivateWorkspace(
+            workspaceBeforeResetSummary,
+            workspaceBeforeResetRequest.WorkspaceDataRootPath,
+            workspaceBeforeResetRequest.AssetBundleDecryptorId);
+        workspaceShell.ApplyWorkspace(workspaceBeforeResetSummary, workspaceBeforeResetRequest);
+        bundlePane.RebuildBundleGroups(PresentationTestDataFactory.CreateBundleTree("WorkspaceBeforeReset"));
+
+        var workspaceExplorerGateway = new TestWorkspaceExplorerGateway
+        {
+            OpenWorkspaceHandler = _ => Task.FromResult(
+                Result<AssestBundleTools.Application.Workspace.Dtos.WorkspaceSummaryDto>.Success(
+                    workspaceAfterResetSummary)),
+            LoadBundleTreeHandler = _ => Task.FromResult(
+                Result<IReadOnlyList<AssestBundleTools.Application.Bundles.Dtos.BundleTreeNodeDto>>.Success([]))
+        };
+
+        var coordinator = new BundleExplorerWorkspaceBindingCoordinator(
+            workspaceExplorerGateway,
+            appLogService,
+            localizationService,
+            workspaceContextService,
+            new BundleExplorerOperationFeedbackBridge(
+                appLogService,
+                notificationService,
+                localizationService),
+            backgroundTaskRunner,
+            workspaceShell,
+            bundlePane,
+            documentWorkspace,
+            assetWorkflow,
+            browserStateCoordinator,
+            isBusyProvider: () => false,
+            setBusyState: static _ => { },
+            openBundleAsync: static (_, _) => Task.CompletedTask);
+
+        await coordinator.LoadWorkspaceAsync(
+            clearExistingLogs: true,
+            workspaceNavigationRequest: resetRequest,
+            showLoadedNotification: false);
+
+        Assert.Equal(workspaceAfterResetSummary.WorkspaceId, workspaceContextService.CurrentWorkspaceSummary?.WorkspaceId);
+        Assert.Equal(workspaceAfterResetSummary.WorkspaceId, workspaceShell.WorkspaceSummary?.WorkspaceId);
+        Assert.False(workspaceShell.ActiveWorkspaceNavigationRequest?.ForceNewWorkspaceSession);
+        Assert.False(bundlePane.HasAnyBundles);
+        Assert.Equal(0, workspaceContextService.ClearCurrentWorkspaceCallCount);
+        Assert.Equal(1, browserStateCoordinator.RestoreCallCount);
+        Assert.Equal(1, backgroundTaskRunner.RunCallCount);
     }
 }
 

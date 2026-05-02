@@ -64,6 +64,18 @@ public sealed partial class SettingsDiagnosticsPage : Page
             UiText.Get(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorOptionNewWindow),
             UiText.Get(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorOptionAskEveryTime)
         };
+        WorkspaceImportPerformanceTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportPerformanceTitle);
+        WorkspaceImportPerformanceHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportPerformanceHint);
+        WorkspaceImportWorkerCountLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountLabel);
+        WorkspaceImportWorkerCountDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountDescription);
+        WorkspaceImportWorkerCountRadioButtons.ItemsSource = new[]
+        {
+            UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionAutomatic),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionOne),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionTwo),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionThree),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionFour)
+        };
         ResponsibilityTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsResponsibilityTitle);
         ResponsibilityBodyText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsResponsibilityBody);
         DiagnosticsTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsDiagnosticsTitle);

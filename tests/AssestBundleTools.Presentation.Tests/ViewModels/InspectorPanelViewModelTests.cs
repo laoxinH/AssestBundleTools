@@ -46,17 +46,23 @@ public sealed class InspectorPanelViewModelTests
                 RegionY: 50,
                 RegionWidth: 200,
                 RegionHeight: 100,
+                PivotX: null,
+                PivotY: null,
+                BorderLeft: null,
+                BorderTop: null,
+                BorderRight: null,
+                BorderBottom: null,
                 BadgeText: "crop"));
 
-        Assert.Equal(Visibility.Collapsed, viewModel.Preview.PreviewImageOverlayVisibility);
+        Assert.Equal(Visibility.Collapsed, viewModel.Preview.Image.OverlayVisibility);
 
         viewModel.UpdatePreviewImageViewport(300d, 200d);
 
-        Assert.Equal(Visibility.Visible, viewModel.Preview.PreviewImageOverlayVisibility);
-        Assert.Equal(30d, viewModel.Preview.PreviewImageOverlayX, precision: 3);
-        Assert.Equal(40d, viewModel.Preview.PreviewImageOverlayY, precision: 3);
-        Assert.Equal(60d, viewModel.Preview.PreviewImageOverlayWidth, precision: 3);
-        Assert.Equal(30d, viewModel.Preview.PreviewImageOverlayHeight, precision: 3);
+        Assert.Equal(Visibility.Visible, viewModel.Preview.Image.OverlayVisibility);
+        Assert.Equal(30d, viewModel.Preview.Image.OverlayX, precision: 3);
+        Assert.Equal(40d, viewModel.Preview.Image.OverlayY, precision: 3);
+        Assert.Equal(60d, viewModel.Preview.Image.OverlayWidth, precision: 3);
+        Assert.Equal(30d, viewModel.Preview.Image.OverlayHeight, precision: 3);
     }
 
     [Fact]

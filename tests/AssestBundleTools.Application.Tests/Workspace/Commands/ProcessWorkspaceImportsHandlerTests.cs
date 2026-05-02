@@ -385,4 +385,131 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         TestAssert.Equal(2, result.Value?.PerformanceDiagnostic?.BundleWorkerCount ?? 0, "Performance diagnostics should record the resolved worker count.");
     }
 
+    public static async Task HandleAsync_ShouldReportBundleProgress_WhenProcessingCandidates()
+    {
+        const string workspaceKey = "workspace-progress";
+        const string workspaceDataRootPath = @"D:\WorkspaceData";
+        const string sourcePathA = @"C:\Bundles\hero.ab";
+        const string sourcePathB = @"C:\Bundles\villain.ab";
+        var metadataStore = new TestWorkspaceMetadataStore(new WorkspaceMetadataDto(
+            WorkspaceKey: workspaceKey,
+            DisplayName: "Progress Workspace",
+            SourcePath: @"C:\Bundles",
+            CreatedAtUtc: new DateTimeOffset(2026, 4, 20, 8, 0, 0, TimeSpan.Zero),
+            LastOpenedAtUtc: new DateTimeOffset(2026, 4, 28, 12, 30, 0, TimeSpan.Zero),
+            LastBundleId: null,
+            LastAssetId: null,
+            LastOutputDirectory: null,
+            BundleSearchKeyword: string.Empty,
+            AssetSearchKeyword: string.Empty,
+            AssetTypeFilter: null,
+            ShowModifiedOnly: false,
+            ShowPreviewableOnly: false,
+            OpenBundleTabs: Array.Empty<WorkspaceMetadataBundleTabDto>(),
+            ActiveBundleTabId: null,
+            ImportedSources:
+            [
+                new WorkspaceImportedSourceDto(
+                    Path: sourcePathA,
+                    ImportOrigin: WorkspaceImportOriginKind.BundleFiles,
+                    PathKind: WorkspaceImportPathKind.File,
+                    RecordedAtUtc: new DateTimeOffset(2026, 4, 28, 12, 30, 0, TimeSpan.Zero)),
+                new WorkspaceImportedSourceDto(
+                    Path: sourcePathB,
+                    ImportOrigin: WorkspaceImportOriginKind.BundleFiles,
+                    PathKind: WorkspaceImportPathKind.File,
+                    RecordedAtUtc: new DateTimeOffset(2026, 4, 28, 12, 30, 5, TimeSpan.Zero))
+            ],
+            AssetBundleDecryptorId: AssetBundleDecryptorIds.BuiltInPassThrough,
+            ExcludedBundleSourcePaths: Array.Empty<string>()));
+        var sourceDiscoveryService = new TestWorkspaceImportSourceDiscoveryService(
+        [
+            new DiscoveredWorkspaceImportFileDto(sourcePathA, "hero.ab"),
+            new DiscoveredWorkspaceImportFileDto(sourcePathB, "villain.ab")
+        ]);
+        var fileSystemService = new TestWorkspaceImportFileSystemService(
+            new Dictionary<string, WorkspaceFileFingerprintDto>(StringComparer.OrdinalIgnoreCase)
+            {
+                [sourcePathA] = new WorkspaceFileFingerprintDto(
+                    sourcePathA,
+                    FileSizeInBytes: 2048,
+                    LastWriteTimeUtc: new DateTimeOffset(2026, 4, 28, 12, 31, 0, TimeSpan.Zero),
+                    ContentHash: "hash-hero-progress"),
+                [sourcePathB] = new WorkspaceFileFingerprintDto(
+                    sourcePathB,
+                    FileSizeInBytes: 3072,
+                    LastWriteTimeUtc: new DateTimeOffset(2026, 4, 28, 12, 31, 5, TimeSpan.Zero),
+                    ContentHash: "hash-villain-progress")
+            });
+        var decryptorDescriptor = CreatePassThroughDecryptorDescriptor();
+        var decryptor = new TestAssetBundleDecryptor(decryptorDescriptor)
+        {
+            DecryptResultFactory = request =>
+            {
+                var resolvedBundlePath = $@"C:\Temp\{Path.GetFileNameWithoutExtension(request.SourcePath)}.ab";
+                return Task.FromResult(Result<AssetBundleDecryptionResultDto>.Success(
+                    CreateDecryptionResult(
+                        decryptorDescriptor,
+                        new WorkspaceFileFingerprintDto(
+                            resolvedBundlePath,
+                            FileSizeInBytes: 2048,
+                            LastWriteTimeUtc: new DateTimeOffset(2026, 4, 28, 12, 32, 0, TimeSpan.Zero),
+                            ContentHash: $"hash-{Path.GetFileNameWithoutExtension(request.SourcePath)}-resolved"),
+                        resolvedBundlePath)));
+            }
+        };
+        var reader = new TestAssetBundleReader
+        {
+            ReadResultFactory = request => Task.FromResult(Result<AssetBundleReadResultDto>.Success(
+                new AssetBundleReadResultDto(
+                    DisplayName: Path.GetFileNameWithoutExtension(request.BundlePath),
+                    LogicalPath: request.LogicalPath,
+                    ParserVersion: "parser-1",
+                    Dependencies: Array.Empty<string>(),
+                    Assets: Array.Empty<AssetBundleReadAssetDto>())))
+        };
+        var progressSnapshots = new List<WorkspaceImportProgressDto>();
+        var handler = new ProcessWorkspaceImportsHandler(
+            new TestWorkspaceMetadataStoreFactory(metadataStore),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore(Array.Empty<BundleIndexCacheEntryDto>()),
+                new TestPreviewCacheStore(Array.Empty<PreviewCacheDescriptorDto>())),
+            sourceDiscoveryService,
+            fileSystemService,
+            new WorkspaceImportExecutionGate(),
+            new FixedWorkspaceImportExecutionOptionsResolver(1),
+            new TestAssetBundleSourceInspector(),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            reader);
+
+        var result = await handler.HandleAsync(new ProcessWorkspaceImportsCommand(
+            WorkspaceKey: workspaceKey,
+            WorkspaceDataRootPath: workspaceDataRootPath,
+            Progress: new ProgressRecorder(progressSnapshots)));
+
+        TestAssert.True(result.IsSuccess, "Successful import should complete before progress assertions.");
+        TestAssert.True(
+            progressSnapshots.Any(progress => progress.Stage == WorkspaceImportProgressStage.Planning),
+            "Progress should report the planning stage.");
+        TestAssert.True(
+            progressSnapshots.Any(progress =>
+                progress.Stage == WorkspaceImportProgressStage.ProcessingBundles &&
+                progress.CompletedBundleCount == 0 &&
+                progress.TotalBundleCount == 2),
+            "Progress should report the worker stage with total bundle count.");
+        TestAssert.True(
+            progressSnapshots.Any(progress =>
+                progress.Stage == WorkspaceImportProgressStage.ProcessingBundles &&
+                progress.CompletedBundleCount == 2 &&
+                progress.TotalBundleCount == 2 &&
+                string.Equals(progress.CurrentBundleLogicalPath, "villain.ab", StringComparison.Ordinal)),
+            "Progress should report completed bundle count and current logical path.");
+        TestAssert.True(
+            progressSnapshots.Any(progress =>
+                progress.Stage == WorkspaceImportProgressStage.Committing &&
+                progress.CompletedBundleCount == 2 &&
+                progress.TotalBundleCount == 2),
+            "Progress should report commit stage after workers finish.");
+    }
+
 }

@@ -1,12 +1,8 @@
 using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Presentation.WinUI.Localization;
-
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 
 /// <summary>
@@ -124,6 +120,12 @@ internal sealed class AssetPreviewDisplayFormatter
             RegionY: region.Y,
             RegionWidth: region.Width,
             RegionHeight: region.Height,
+            PivotX: overlay.PivotPoint?.X,
+            PivotY: overlay.PivotPoint?.Y,
+            BorderLeft: overlay.NineSliceBorder?.Left,
+            BorderTop: overlay.NineSliceBorder?.Top,
+            BorderRight: overlay.NineSliceBorder?.Right,
+            BorderBottom: overlay.NineSliceBorder?.Bottom,
             BadgeText: _localizationService.GetFormattedString(
                 ResourceKeys.InspectorSpritePreviewOverlayBadgeFormat,
                 FormatOverlayNumber(region.X),
@@ -284,6 +286,14 @@ public sealed record AudioPreviewDisplayState(
     string FrequencyBadgeText);
 
 /// <summary>
+/// 表示 Sprite 实际裁切结果预览所需的展示状态。
+/// </summary>
+public sealed record SpriteFocusPreviewDisplayState(
+    Microsoft.UI.Xaml.Media.ImageSource ImageSource,
+    string TitleText,
+    string SizeText);
+
+/// <summary>
 /// 表示 Sprite 图片预览叠加裁切框所需的展示状态。
 /// </summary>
 public sealed record SpritePreviewOverlayDisplayState(
@@ -293,4 +303,10 @@ public sealed record SpritePreviewOverlayDisplayState(
     double RegionY,
     double RegionWidth,
     double RegionHeight,
+    double? PivotX,
+    double? PivotY,
+    double? BorderLeft,
+    double? BorderTop,
+    double? BorderRight,
+    double? BorderBottom,
     string BadgeText);

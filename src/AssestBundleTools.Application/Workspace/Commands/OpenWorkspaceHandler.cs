@@ -79,7 +79,8 @@ public sealed class OpenWorkspaceHandler : ICommandHandler<OpenWorkspaceCommand,
             var processingResult = await _workspaceImportProcessingCoordinator.ProcessAsync(
                 new ProcessWorkspaceImportsCommand(
                     WorkspaceKey: workspaceKey,
-                    WorkspaceDataRootPath: command.WorkspaceDataRootPath),
+                    WorkspaceDataRootPath: command.WorkspaceDataRootPath,
+                    Progress: command.ImportProgress),
                 cancellationToken);
 
             if (processingResult.IsCancelled)

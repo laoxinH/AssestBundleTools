@@ -412,7 +412,12 @@
   并在 `Application` 导入链路内部打开 bundle 粒度有界并行。
 - `src/AssestBundleTools.Application/Workspace/Services/WorkspaceImportExecutionOptionsResolver.cs`
   当前已把默认 worker 并发度规则固化为 `1 / 2 / 3 / 4` 四档，
+  并允许 Presentation 偏好设置提供 `1-4` 的手动覆盖值，
   供导入链路统一解析运行时并发选项。
+- `src/AssestBundleTools.Presentation.WinUI/Services/Workspace/IBackgroundTaskRunner.cs`
+  与 `BundleExplorerWorkspaceBindingCoordinator` 当前已把手动导入和
+  工作区打开/恢复时的自动导入刷新放到后台任务调度器执行，
+  工作台通过左侧资源包窗格内的正式导入进度覆盖层反馈长耗时处理状态。
 - `src/AssestBundleTools.Infrastructure/Bundles/Decryption/ExternalProcessAssetBundleDecryptor.cs`
   当前已升级为 `workspaceKey + decryptorId + bundleCacheKey`
   级别的稳定隔离路径，不再仅围绕源文件名推导工作目录。
@@ -420,7 +425,8 @@
   当前已经把多线程导入正式收敛为：
   - 同一 `workspaceKey` 只允许一个进行中的导入作业
   - `串行计划 -> bundle 粒度有界并行 worker -> 串行提交`
-  - 默认 worker 并发度为 `1 / 2 / 3 / 4`，且每个工作区上限不超过 `4`
+  - worker loop 必须独立调度到后台任务，避免同步型 Reader / Decryptor 让并行 worker 退化为单 worker 顺序消费
+  - 默认 worker 并发度为 `1 / 2 / 3 / 4`，允许用户手动固定 `1-4`，且每个工作区上限不超过 `4`
 - `tests/AssestBundleTools.Application.Tests` / `tests/AssestBundleTools.Infrastructure.Tests`
   当前已补上首轮并发回归：
   - 同一工作区执行闸门串行化

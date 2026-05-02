@@ -124,6 +124,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 query,
                 cacheEvaluation.Payload.Descriptor,
                 cacheEvaluation.Payload.Content,
+                cacheEvaluation.Payload.ImageFocusContent,
                 previewPayloadFilePath: previewCacheStore.ResolvePayloadFilePath(cacheEvaluation.Payload.Descriptor),
                 isFromCache: true,
                 diagnostic: new AssetPreviewDiagnosticDto(
@@ -228,14 +229,19 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             PreferredDisplaySizeInBytes: previewContent.PreferredDisplaySizeInBytes,
             AudioTranscoderId: previewContent.AudioTranscoderId,
             AudioTranscoderVersion: previewContent.AudioTranscoderVersion,
-            ImageOverlay: previewContent.ImageOverlay);
-        previewCacheStore.Save(new PreviewCachePayloadDto(descriptor, previewContent.Content));
+            ImageOverlay: previewContent.ImageOverlay,
+            ImageFocus: CreateCachedImageFocus(previewContent, previewCacheKey));
+        previewCacheStore.Save(new PreviewCachePayloadDto(
+            descriptor,
+            previewContent.Content,
+            previewContent.ImageFocus?.BinaryContent));
 
         return Result<AssetPreviewDto>.Success(MapPreviewDto(
             query,
             descriptor,
             previewContent.Content,
             previewPayloadFilePath: previewCacheStore.ResolvePayloadFilePath(descriptor),
+            imageFocusContent: previewContent.ImageFocus?.BinaryContent,
             isFromCache: false,
             diagnostic: new AssetPreviewDiagnosticDto(
                 CacheStatus: cacheEvaluation.CacheStatus,
@@ -359,6 +365,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         GetAssetPreviewQuery query,
         PreviewCacheDescriptorDto descriptor,
         byte[] content,
+        byte[]? imageFocusContent,
         string? previewPayloadFilePath,
         bool isFromCache,
         AssetPreviewDiagnosticDto diagnostic)
@@ -383,7 +390,8 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 IsFromCache: isFromCache,
                 GeneratedAtUtc: descriptor.GeneratedAtUtc,
                 Diagnostic: diagnostic,
-                ImageOverlay: descriptor.ImageOverlay)
+                ImageOverlay: descriptor.ImageOverlay,
+                ImageFocus: HydrateImageFocus(descriptor.ImageFocus, imageFocusContent))
             : new AssetPreviewDto(
                 WorkspaceId: query.WorkspaceId,
                 BundleId: query.BundleId,
@@ -399,7 +407,8 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 IsFromCache: isFromCache,
                 GeneratedAtUtc: descriptor.GeneratedAtUtc,
                 Diagnostic: diagnostic,
-                ImageOverlay: descriptor.ImageOverlay);
+                ImageOverlay: descriptor.ImageOverlay,
+                ImageFocus: HydrateImageFocus(descriptor.ImageFocus, imageFocusContent));
     }
 
     private static AssetPreviewDto BuildFallbackSummaryPreview(
@@ -422,7 +431,8 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             IsFromCache: false,
             GeneratedAtUtc: DateTimeOffset.UtcNow,
             Diagnostic: diagnostic,
-            ImageOverlay: null);
+            ImageOverlay: null,
+            ImageFocus: null);
     }
 
     private static string CreatePreviewCacheKey(string bundleCacheKey, string assetId)
@@ -442,6 +452,40 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         };
 
         return Path.Combine(previewCacheKey, fileName);
+    }
+
+    private static AssetPreviewImageFocusDto? CreateCachedImageFocus(
+        AssetPreviewContentDto previewContent,
+        string previewCacheKey)
+    {
+        var imageFocus = previewContent.ImageFocus;
+        if (imageFocus?.BinaryContent is not { Length: > 0 })
+        {
+            return null;
+        }
+
+        return imageFocus with
+        {
+            BinaryContent = null,
+            RelativePayloadPath = Path.Combine(previewCacheKey, "focus.png")
+        };
+    }
+
+    private static AssetPreviewImageFocusDto? HydrateImageFocus(
+        AssetPreviewImageFocusDto? imageFocus,
+        byte[]? content)
+    {
+        if (imageFocus is null)
+        {
+            return null;
+        }
+
+        if (content is not { Length: > 0 })
+        {
+            return null;
+        }
+
+        return imageFocus with { BinaryContent = content };
     }
 
     private static bool PreviewKindUsesBinaryPayload(AssetPreviewKind previewKind)

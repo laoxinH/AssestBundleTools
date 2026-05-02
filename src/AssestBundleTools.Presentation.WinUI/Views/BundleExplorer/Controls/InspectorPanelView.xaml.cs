@@ -1,9 +1,7 @@
 using AssestBundleTools.Presentation.WinUI.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.Media.Playback;
 
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -18,11 +16,7 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 /// </summary>
 public sealed partial class InspectorPanelView : UserControl
 {
-    private readonly DispatcherTimer _audioTransportTimer;
-    private MediaPlayer? _attachedAudioPlayer;
     private InspectorPanelViewModel? _observedViewModel;
-    private InspectorPreviewViewModel? _observedPreviewViewModel;
-    private bool _isUpdatingAudioSliderValue;
 
     public static readonly DependencyProperty ViewModelProperty =
         DependencyProperty.Register(
@@ -34,13 +28,6 @@ public sealed partial class InspectorPanelView : UserControl
     public InspectorPanelView()
     {
         InitializeComponent();
-        _audioTransportTimer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(200)
-        };
-        _audioTransportTimer.Tick += OnAudioTransportTimerTick;
-        Loaded += OnLoaded;
-        Unloaded += OnUnloaded;
         ApplyLocalizedText();
     }
 
@@ -87,7 +74,7 @@ public sealed partial class InspectorPanelView : UserControl
         UndoReplacementRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    private void OnOpenPreviewLocationButtonClick(object sender, RoutedEventArgs e)
+    private void OnPreviewSurfaceOpenPreviewLocationRequested(object? sender, EventArgs e)
     {
         OpenPreviewLocationRequested?.Invoke(this, EventArgs.Empty);
     }
@@ -168,24 +155,6 @@ public sealed partial class InspectorPanelView : UserControl
         SelectReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectReplacementButton);
         ApplyReplacementButton.Content = UiText.Get(ResourceKeys.InspectorApplyReplacementButton);
         UndoReplacementButton.Content = UiText.Get(ResourceKeys.InspectorUndoReplacementButton);
-        ToolTipService.SetToolTip(OpenPreviewLocationButton, UiText.Get(ResourceKeys.InspectorPreviewOpenLocationToolTip));
-        ToolTipService.SetToolTip(AudioTransportPlayPauseButton, UiText.Get(ResourceKeys.InspectorAudioTransportPlayToolTip));
-        ToolTipService.SetToolTip(AudioTransportResetButton, UiText.Get(ResourceKeys.InspectorAudioTransportResetToolTip));
-
-        RefreshAudioTransportState();
-    }
-
-    private void OnLoaded(object sender, RoutedEventArgs e)
-    {
-        AttachAudioPlayer(AudioPreviewPlayer.MediaPlayer);
-        RefreshPreviewImageViewport();
-        RefreshAudioTransportState();
-    }
-
-    private void OnUnloaded(object sender, RoutedEventArgs e)
-    {
-        _audioTransportTimer.Stop();
-        DetachAudioPlayer();
     }
 
     private void AttachObservedViewModel(InspectorPanelViewModel? viewModel)
@@ -196,9 +165,6 @@ public sealed partial class InspectorPanelView : UserControl
         }
 
         _observedViewModel = viewModel;
-        AttachObservedPreviewViewModel(viewModel.Preview);
-        RefreshPreviewImageViewport();
-        RefreshAudioTransportState();
     }
 
     private void DetachObservedViewModel(InspectorPanelViewModel? viewModel)
@@ -208,275 +174,6 @@ public sealed partial class InspectorPanelView : UserControl
             return;
         }
 
-        DetachObservedPreviewViewModel(_observedPreviewViewModel);
         _observedViewModel = null;
-    }
-
-    private void AttachObservedPreviewViewModel(InspectorPreviewViewModel? previewViewModel)
-    {
-        if (previewViewModel is null || ReferenceEquals(_observedPreviewViewModel, previewViewModel))
-        {
-            return;
-        }
-
-        _observedPreviewViewModel = previewViewModel;
-        _observedPreviewViewModel.PropertyChanged += OnObservedPreviewViewModelPropertyChanged;
-    }
-
-    private void DetachObservedPreviewViewModel(InspectorPreviewViewModel? previewViewModel)
-    {
-        if (previewViewModel is null || !ReferenceEquals(_observedPreviewViewModel, previewViewModel))
-        {
-            return;
-        }
-
-        _observedPreviewViewModel.PropertyChanged -= OnObservedPreviewViewModelPropertyChanged;
-        _observedPreviewViewModel = null;
-    }
-
-    private void OnObservedPreviewViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        if (DispatcherQueue.HasThreadAccess)
-        {
-            if (e.PropertyName is
-                nameof(InspectorPreviewViewModel.PreviewImageSource) or
-                nameof(InspectorPreviewViewModel.PreviewImageVisibility) or
-                nameof(InspectorPreviewViewModel.PreviewImageCanvasWidth) or
-                nameof(InspectorPreviewViewModel.PreviewImageCanvasHeight))
-            {
-                RefreshPreviewImageViewport();
-            }
-
-            if (e.PropertyName is not (
-                nameof(InspectorPreviewViewModel.PreviewAudioSource) or
-                nameof(InspectorPreviewViewModel.PreviewAudioVisibility)))
-            {
-                return;
-            }
-
-            RefreshAudioTransportState();
-            return;
-        }
-
-        DispatcherQueue.TryEnqueue(() =>
-        {
-            if (e.PropertyName is
-                nameof(InspectorPreviewViewModel.PreviewImageSource) or
-                nameof(InspectorPreviewViewModel.PreviewImageVisibility) or
-                nameof(InspectorPreviewViewModel.PreviewImageCanvasWidth) or
-                nameof(InspectorPreviewViewModel.PreviewImageCanvasHeight))
-            {
-                RefreshPreviewImageViewport();
-            }
-
-            if (e.PropertyName is
-                nameof(InspectorPreviewViewModel.PreviewAudioSource) or
-                nameof(InspectorPreviewViewModel.PreviewAudioVisibility))
-            {
-                RefreshAudioTransportState();
-            }
-        });
-    }
-
-    private void OnPreviewImageViewportHostSizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        RefreshPreviewImageViewport();
-    }
-
-    private void OnAudioTransportTimerTick(object? sender, object e)
-    {
-        RefreshAudioTransportState();
-    }
-
-    private void AttachAudioPlayer(MediaPlayer? mediaPlayer)
-    {
-        if (ReferenceEquals(_attachedAudioPlayer, mediaPlayer))
-        {
-            return;
-        }
-
-        DetachAudioPlayer();
-        _attachedAudioPlayer = mediaPlayer;
-        if (_attachedAudioPlayer is null)
-        {
-            return;
-        }
-
-        _attachedAudioPlayer.CurrentStateChanged += OnAudioPlayerStateChanged;
-        _attachedAudioPlayer.MediaOpened += OnAudioPlayerStateChanged;
-        _attachedAudioPlayer.MediaEnded += OnAudioPlayerStateChanged;
-        _attachedAudioPlayer.MediaFailed += OnAudioPlayerStateChanged;
-    }
-
-    private void DetachAudioPlayer()
-    {
-        if (_attachedAudioPlayer is null)
-        {
-            return;
-        }
-
-        _attachedAudioPlayer.CurrentStateChanged -= OnAudioPlayerStateChanged;
-        _attachedAudioPlayer.MediaOpened -= OnAudioPlayerStateChanged;
-        _attachedAudioPlayer.MediaEnded -= OnAudioPlayerStateChanged;
-        _attachedAudioPlayer.MediaFailed -= OnAudioPlayerStateChanged;
-        _attachedAudioPlayer = null;
-    }
-
-    private void OnAudioPlayerStateChanged(MediaPlayer sender, object args)
-    {
-        if (DispatcherQueue.HasThreadAccess)
-        {
-            RefreshAudioTransportState();
-            return;
-        }
-
-        DispatcherQueue.TryEnqueue(RefreshAudioTransportState);
-    }
-
-    private void OnAudioTransportPlayPauseButtonClick(object sender, RoutedEventArgs e)
-    {
-        AttachAudioPlayer(AudioPreviewPlayer.MediaPlayer);
-        if (_attachedAudioPlayer is null || ViewModel?.Preview.PreviewAudioSource is null)
-        {
-            return;
-        }
-
-        if (_attachedAudioPlayer.CurrentState == MediaPlayerState.Playing)
-        {
-            _attachedAudioPlayer.Pause();
-        }
-        else
-        {
-            _attachedAudioPlayer.Play();
-        }
-
-        RefreshAudioTransportState();
-    }
-
-    private void OnAudioTransportResetButtonClick(object sender, RoutedEventArgs e)
-    {
-        if (_attachedAudioPlayer?.PlaybackSession is null)
-        {
-            return;
-        }
-
-        _attachedAudioPlayer.Pause();
-        _attachedAudioPlayer.PlaybackSession.Position = TimeSpan.Zero;
-        RefreshAudioTransportState();
-    }
-
-    private void OnAudioTransportPositionSliderValueChanged(object sender, RangeBaseValueChangedEventArgs e)
-    {
-        if (_isUpdatingAudioSliderValue || _attachedAudioPlayer?.PlaybackSession is null)
-        {
-            return;
-        }
-
-        var targetPosition = TimeSpan.FromSeconds(Math.Max(0d, e.NewValue));
-        if (Math.Abs((_attachedAudioPlayer.PlaybackSession.Position - targetPosition).TotalMilliseconds) < 200d)
-        {
-            return;
-        }
-
-        _attachedAudioPlayer.PlaybackSession.Position = targetPosition;
-        RefreshAudioTransportState();
-    }
-
-    /// <summary>
-    /// 自定义音频控制条直接消费 MediaPlayer 运行时状态，
-    /// 这样既能规避默认传输控件在窄宽度下的布局问题，也能把通用预览动作保留在预览面板顶部。
-    /// </summary>
-    private void RefreshAudioTransportState()
-    {
-        AttachAudioPlayer(AudioPreviewPlayer.MediaPlayer);
-
-        var hasAudioPreview = ViewModel?.Preview.PreviewAudioSource is not null;
-        if (_attachedAudioPlayer?.PlaybackSession is null || !hasAudioPreview)
-        {
-            _audioTransportTimer.Stop();
-            ApplyAudioTransportState(
-                isEnabled: false,
-                isPlaying: false,
-                currentPosition: TimeSpan.Zero,
-                naturalDuration: TimeSpan.Zero);
-            return;
-        }
-
-        var playbackSession = _attachedAudioPlayer.PlaybackSession;
-        var naturalDuration = playbackSession.NaturalDuration;
-        var currentPosition = playbackSession.Position;
-        var isPlaying = _attachedAudioPlayer.CurrentState == MediaPlayerState.Playing;
-        if (!_audioTransportTimer.IsEnabled)
-        {
-            _audioTransportTimer.Start();
-        }
-
-        ApplyAudioTransportState(
-            isEnabled: true,
-            isPlaying: isPlaying,
-            currentPosition: currentPosition,
-            naturalDuration: naturalDuration);
-    }
-
-    private void ApplyAudioTransportState(
-        bool isEnabled,
-        bool isPlaying,
-        TimeSpan currentPosition,
-        TimeSpan naturalDuration)
-    {
-        AudioTransportPlayPauseButton.IsEnabled = isEnabled;
-        AudioTransportResetButton.IsEnabled = isEnabled;
-        AudioTransportPlayPauseIcon.Glyph = isPlaying ? "\uE769" : "\uE768";
-        ToolTipService.SetToolTip(
-            AudioTransportPlayPauseButton,
-            UiText.Get(isPlaying
-                ? ResourceKeys.InspectorAudioTransportPauseToolTip
-                : ResourceKeys.InspectorAudioTransportPlayToolTip));
-
-        var totalDuration = naturalDuration > TimeSpan.Zero
-            ? naturalDuration
-            : TimeSpan.Zero;
-        var maximumValue = totalDuration > TimeSpan.Zero
-            ? totalDuration.TotalSeconds
-            : 1d;
-        var currentValue = Math.Clamp(currentPosition.TotalSeconds, 0d, maximumValue);
-
-        _isUpdatingAudioSliderValue = true;
-        try
-        {
-            AudioTransportPositionSlider.Maximum = maximumValue;
-            AudioTransportPositionSlider.IsEnabled = isEnabled && totalDuration > TimeSpan.Zero;
-            AudioTransportPositionSlider.Value = currentValue;
-        }
-        finally
-        {
-            _isUpdatingAudioSliderValue = false;
-        }
-
-        AudioTransportTimeText.Text = $"{FormatDuration(currentPosition)} / {FormatDuration(totalDuration)}";
-    }
-
-    private void RefreshPreviewImageViewport()
-    {
-        if (ViewModel is null)
-        {
-            return;
-        }
-
-        ViewModel.UpdatePreviewImageViewport(
-            PreviewImageViewportHost.ActualWidth,
-            PreviewImageViewportHost.ActualHeight);
-    }
-
-    private static string FormatDuration(TimeSpan duration)
-    {
-        if (duration < TimeSpan.Zero)
-        {
-            duration = TimeSpan.Zero;
-        }
-
-        return duration.TotalHours >= 1
-            ? duration.ToString(@"h\:mm\:ss")
-            : duration.ToString(@"mm\:ss");
     }
 }

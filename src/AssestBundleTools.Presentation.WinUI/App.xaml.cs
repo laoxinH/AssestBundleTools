@@ -49,6 +49,7 @@ public partial class App : Microsoft.UI.Xaml.Application
             WorkspaceWindowService = services.WorkspaceWindowService;
             AppNotificationService = services.AppNotificationService;
             AppLogService = services.AppLogService;
+            BackgroundTaskRunner = services.BackgroundTaskRunner;
             WorkspaceImportCoordinatorService = services.WorkspaceImportCoordinatorService;
 
             RegisterGlobalExceptionHandlers();
@@ -103,6 +104,8 @@ public partial class App : Microsoft.UI.Xaml.Application
 
     public IAppLogService AppLogService { get; }
 
+    public IBackgroundTaskRunner BackgroundTaskRunner { get; }
+
     public IWorkspaceImportCoordinatorService WorkspaceImportCoordinatorService { get; }
 
     public void ReloadAssetBundleDecryptorRegistry()
@@ -155,6 +158,10 @@ public partial class App : Microsoft.UI.Xaml.Application
     public bool TryActivateOpenedWorkspace(WorkspaceNavigationRequest navigationRequest)
     {
         ArgumentNullException.ThrowIfNull(navigationRequest);
+        if (navigationRequest.ForceNewWorkspaceSession)
+        {
+            return false;
+        }
 
         var workspaceKey = CreateWorkspaceKey(navigationRequest);
         if (!string.IsNullOrWhiteSpace(workspaceKey))

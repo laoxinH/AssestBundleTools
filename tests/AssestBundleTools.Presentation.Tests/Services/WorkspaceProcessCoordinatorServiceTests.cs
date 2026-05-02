@@ -51,6 +51,26 @@ public sealed class WorkspaceProcessCoordinatorServiceTests
         Assert.False(coordinator.TryActivateExistingWorkspace(navigationRequest));
     }
 
+    [Fact]
+    public void TryRedirectLaunchToExistingProcess_ShouldNotRedirect_WhenForceNewWorkspaceSessionIsRequested()
+    {
+        using var coordinator = new WorkspaceProcessCoordinatorService(new TestLocalizationService());
+        var navigationRequest = PresentationTestDataFactory.CreateNavigationRequest("ResetWorkspace");
+        var forcedNavigationRequest = navigationRequest with
+        {
+            ForceNewWorkspaceSession = true
+        };
+
+        Assert.True(coordinator.TryBeginPendingWorkspaceRegistration(navigationRequest));
+
+        var launchRequest = new ShellLaunchRequest(
+            AssestBundleTools.Presentation.WinUI.ViewModels.Shell.Contracts.ShellNavigationKeys.Workbench,
+            forcedNavigationRequest);
+
+        Assert.False(coordinator.TryActivateExistingWorkspace(forcedNavigationRequest));
+        Assert.False(coordinator.TryRedirectLaunchToExistingProcess(launchRequest));
+    }
+
     private static string CreateMutexName(WorkspaceNavigationRequest navigationRequest)
     {
         var workspaceKey = AssestBundleTools.Application.Workspace.Services.WorkspaceCatalogKeyFactory.CreateWorkspaceKey(

@@ -349,6 +349,21 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         public WorkspaceImportExecutionOptions ResolveOptions() => _options;
     }
 
+    private sealed class ProgressRecorder : IProgress<WorkspaceImportProgressDto>
+    {
+        private readonly List<WorkspaceImportProgressDto> _snapshots;
+
+        public ProgressRecorder(List<WorkspaceImportProgressDto> snapshots)
+        {
+            _snapshots = snapshots;
+        }
+
+        public void Report(WorkspaceImportProgressDto value)
+        {
+            _snapshots.Add(value);
+        }
+    }
+
     private static void RecordMaximumConcurrency(ref int target, int candidate)
     {
         while (true)

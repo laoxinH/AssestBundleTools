@@ -30,6 +30,8 @@ public enum AssetPreviewInfoKey
     SpriteCropOrigin = 44,
     SpriteSourceTextureDimensions = 45,
     SpriteSourceTextureFormatId = 46,
+    SpritePivot = 47,
+    SpriteBorder = 48,
 
     AudioContainer = 60,
     AudioOriginalContainer = 61,

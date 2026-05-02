@@ -5,6 +5,9 @@ namespace AssestBundleTools.Presentation.WinUI.Services;
 /// </summary>
 public sealed class AppPreferencesService : IAppPreferencesService
 {
+    public const int AutomaticWorkspaceImportWorkerCount = 0;
+    public const int MinimumManualWorkspaceImportWorkerCount = 1;
+    public const int MaximumManualWorkspaceImportWorkerCount = 4;
     private const string CurrentWindowBehaviorKey = "currentWindow";
     private const string NewWindowBehaviorKey = "newWindow";
     private const string AskEveryTimeBehaviorKey = "askEveryTime";
@@ -21,6 +24,8 @@ public sealed class AppPreferencesService : IAppPreferencesService
 
     public RecentWorkspaceOpenBehavior RecentWorkspaceOpenBehavior =>
         DeserializeRecentWorkspaceOpenBehavior(_currentSnapshot.RecentWorkspaceOpenBehavior);
+
+    public int WorkspaceImportWorkerCount => CoerceWorkspaceImportWorkerCount(_currentSnapshot.WorkspaceImportWorkerCount);
 
     public bool TrySetRestoreLastWorkspaceOnStartup(bool value)
     {
@@ -82,6 +87,35 @@ public sealed class AppPreferencesService : IAppPreferencesService
         }
     }
 
+    public bool TrySetWorkspaceImportWorkerCount(int value)
+    {
+        var coercedValue = CoerceWorkspaceImportWorkerCount(value);
+        if (_currentSnapshot.WorkspaceImportWorkerCount == coercedValue)
+        {
+            return true;
+        }
+
+        var updatedSnapshot = _currentSnapshot with
+        {
+            WorkspaceImportWorkerCount = coercedValue
+        };
+
+        try
+        {
+            _preferencesStore.Save(updatedSnapshot);
+            _currentSnapshot = updatedSnapshot;
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
     private static RecentWorkspaceOpenBehavior DeserializeRecentWorkspaceOpenBehavior(string? behaviorKey)
     {
         return behaviorKey switch
@@ -100,5 +134,18 @@ public sealed class AppPreferencesService : IAppPreferencesService
             RecentWorkspaceOpenBehavior.AskEveryTime => AskEveryTimeBehaviorKey,
             _ => CurrentWindowBehaviorKey
         };
+    }
+
+    public static int CoerceWorkspaceImportWorkerCount(int value)
+    {
+        if (value == AutomaticWorkspaceImportWorkerCount)
+        {
+            return AutomaticWorkspaceImportWorkerCount;
+        }
+
+        return Math.Clamp(
+            value,
+            MinimumManualWorkspaceImportWorkerCount,
+            MaximumManualWorkspaceImportWorkerCount);
     }
 }

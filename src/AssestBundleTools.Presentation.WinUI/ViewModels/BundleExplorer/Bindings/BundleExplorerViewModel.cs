@@ -44,6 +44,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     private readonly BundleExplorerBundlePaneViewModel _bundlePane;
     private readonly BundleExplorerDocumentWorkspaceViewModel _documentWorkspace;
     private readonly BundleExplorerAssetWorkflowViewModel _assetWorkflow;
+    private readonly WorkspaceImportProgressViewModel _workspaceImportProgress;
     private bool _isInitialized;
     private bool _isBusy;
 
@@ -57,6 +58,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         IFilePickerService filePickerService,
         IWorkspaceContextService workspaceContextService,
         IWorkspaceImportCoordinatorService workspaceImportCoordinatorService,
+        IBackgroundTaskRunner backgroundTaskRunner,
         IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
         IPathNavigationService pathNavigationService)
     {
@@ -81,6 +83,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         _bundlePane = new BundleExplorerBundlePaneViewModel(_localizationService);
         _bundlePane.BrowserStateChanged += OnBundlePaneBrowserStateChanged;
         _documentWorkspace = new BundleExplorerDocumentWorkspaceViewModel();
+        _workspaceImportProgress = new WorkspaceImportProgressViewModel(_localizationService);
         _assetWorkflow = new BundleExplorerAssetWorkflowViewModel(
             _workspaceExplorerGateway,
             workspaceAssetInspectionGateway,
@@ -90,6 +93,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
             _localizationService,
             filePickerService ?? throw new ArgumentNullException(nameof(filePickerService)),
             _workspaceContextService,
+            backgroundTaskRunner,
             _pathNavigationService,
             _workspaceShell,
             _bundlePane,
@@ -117,6 +121,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
             _localizationService,
             _workspaceContextService,
             _operationFeedbackBridge,
+            backgroundTaskRunner ?? throw new ArgumentNullException(nameof(backgroundTaskRunner)),
             _workspaceShell,
             _bundlePane,
             _documentWorkspace,
@@ -139,6 +144,8 @@ public sealed class BundleExplorerViewModel : ObservableObject
     public BundleExplorerDocumentWorkspaceViewModel DocumentWorkspace => _documentWorkspace;
 
     public BundleExplorerAssetWorkflowViewModel AssetWorkflow => _assetWorkflow;
+
+    public WorkspaceImportProgressViewModel WorkspaceImportProgress => _workspaceImportProgress;
 
     public AsyncRelayCommand RefreshCommand { get; }
 
@@ -174,7 +181,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
         if (workspaceNavigationRequest is not null)
         {
-            await _workspaceBindingCoordinator.LoadWorkspaceAsync(clearExistingLogs: true, workspaceNavigationRequest);
+            await LoadWorkspaceWithImportOverlayAsync(clearExistingLogs: true, workspaceNavigationRequest);
             return;
         }
 
@@ -212,7 +219,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
         if (_workspaceShell.ActiveWorkspaceNavigationRequest is not null)
         {
-            await _workspaceBindingCoordinator.LoadWorkspaceAsync(clearExistingLogs: true, _workspaceShell.ActiveWorkspaceNavigationRequest);
+            await LoadWorkspaceWithImportOverlayAsync(
+                clearExistingLogs: true,
+                _workspaceShell.ActiveWorkspaceNavigationRequest);
             return;
         }
 
@@ -331,15 +340,14 @@ public sealed class BundleExplorerViewModel : ObservableObject
     /// </summary>
     public async Task RequestBundleFileImportAsync(CancellationToken cancellationToken = default)
     {
-        if (!_workspaceShell.HasWorkspace)
+        if (!_workspaceShell.HasWorkspace || IsBusy)
         {
             return;
         }
 
-        if (await _workspaceImportCoordinatorService.RequestBundleFileImportAsync(cancellationToken))
-        {
-            await _workspaceBindingCoordinator.ReloadCurrentWorkspaceAsync(showLoadedNotification: false);
-        }
+        await RunWorkspaceImportAsync(
+            importAsync: (progress, token) => _workspaceImportCoordinatorService.RequestBundleFileImportAsync(progress, token),
+            cancellationToken);
     }
 
     /// <summary>
@@ -347,29 +355,69 @@ public sealed class BundleExplorerViewModel : ObservableObject
     /// </summary>
     public async Task RequestBundleDirectoryImportAsync(CancellationToken cancellationToken = default)
     {
-        if (!_workspaceShell.HasWorkspace)
+        if (!_workspaceShell.HasWorkspace || IsBusy)
         {
             return;
         }
 
-        if (await _workspaceImportCoordinatorService.RequestBundleDirectoryImportAsync(cancellationToken))
-        {
-            await _workspaceBindingCoordinator.ReloadCurrentWorkspaceAsync(showLoadedNotification: false);
-        }
+        await RunWorkspaceImportAsync(
+            importAsync: (progress, token) => _workspaceImportCoordinatorService.RequestBundleDirectoryImportAsync(progress, token),
+            cancellationToken);
     }
 
     public async Task RequestDragDropImportAsync(
         IReadOnlyList<string> droppedPaths,
         CancellationToken cancellationToken = default)
     {
-        if (!_workspaceShell.HasWorkspace)
+        if (!_workspaceShell.HasWorkspace || IsBusy)
         {
             return;
         }
 
-        if (await _workspaceImportCoordinatorService.RequestDragDropImportAsync(droppedPaths, cancellationToken))
+        await RunWorkspaceImportAsync(
+            importAsync: (progress, token) => _workspaceImportCoordinatorService.RequestDragDropImportAsync(droppedPaths, progress, token),
+            cancellationToken);
+    }
+
+    private async Task RunWorkspaceImportAsync(
+        Func<IProgress<WorkspaceImportProgressDto>, CancellationToken, Task<bool>> importAsync,
+        CancellationToken cancellationToken)
+    {
+        IsBusy = true;
+        _workspaceImportProgress.Start();
+        try
         {
-            await _workspaceBindingCoordinator.ReloadCurrentWorkspaceAsync(showLoadedNotification: false);
+            var progress = _workspaceImportProgress.CreateProgressReporter();
+            if (await importAsync(progress, cancellationToken))
+            {
+                await _workspaceBindingCoordinator.ReloadCurrentWorkspaceAsync(
+                    showLoadedNotification: false,
+                    allowBusyReentry: true);
+            }
+        }
+        finally
+        {
+            _workspaceImportProgress.Complete();
+            IsBusy = false;
+        }
+    }
+
+    private async Task LoadWorkspaceWithImportOverlayAsync(
+        bool clearExistingLogs,
+        WorkspaceNavigationRequest workspaceNavigationRequest)
+    {
+        _workspaceImportProgress.Start();
+        try
+        {
+            var progress = _workspaceImportProgress.CreateProgressReporter();
+            await _workspaceBindingCoordinator.LoadWorkspaceAsync(
+                clearExistingLogs,
+                workspaceNavigationRequest,
+                progress);
+        }
+        finally
+        {
+            _workspaceImportProgress.Complete();
         }
     }
 

@@ -1,3 +1,5 @@
+using AssestBundleTools.Application.Workspace.Dtos;
+
 namespace AssestBundleTools.Application.Workspace.Commands;
 
 /// <summary>
@@ -5,4 +7,5 @@ namespace AssestBundleTools.Application.Workspace.Commands;
 /// </summary>
 public sealed record ProcessWorkspaceImportsCommand(
     string WorkspaceKey,
-    string WorkspaceDataRootPath);
+    string WorkspaceDataRootPath,
+    IProgress<WorkspaceImportProgressDto>? Progress = null);

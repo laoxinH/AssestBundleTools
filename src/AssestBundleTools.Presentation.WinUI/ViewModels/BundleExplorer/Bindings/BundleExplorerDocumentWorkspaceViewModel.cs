@@ -122,6 +122,11 @@ public sealed class BundleExplorerDocumentWorkspaceViewModel : ObservableObject,
 
     public void SetActiveBundleTab(BundleDocumentTabViewModel? bundleTab)
     {
+        if (!ReferenceEquals(ActiveBundleTab, bundleTab))
+        {
+            ActiveBundleTab?.CancelAllAssetPreviewRequests();
+        }
+
         ActiveBundleTab = bundleTab;
     }
 

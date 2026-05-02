@@ -48,7 +48,12 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
             return null;
         }
 
-        return new PreviewCachePayloadDto(descriptor, payload);
+        var imageFocusPayload = TryReadOptionalImageFocusPayload(
+            workspaceKey,
+            previewCacheKey,
+            descriptor);
+
+        return new PreviewCachePayloadDto(descriptor, payload, imageFocusPayload);
     }
 
     public IReadOnlyList<PreviewCacheDescriptorDto> LoadDescriptors(string workspaceKey)
@@ -113,6 +118,18 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
             descriptor,
             JsonWorkspaceSerialization.SerializerOptions);
         JsonWorkspaceFileStorageHelper.WriteBytesAtomically(payloadFilePath, previewCachePayload.Content);
+
+        if (previewCachePayload.ImageFocusContent is { Length: > 0 } &&
+            !string.IsNullOrWhiteSpace(descriptor.ImageFocus?.RelativePayloadPath))
+        {
+            var imageFocusPayloadFilePath = _storagePaths.GetPreviewPayloadFilePath(
+                descriptor.WorkspaceKey,
+                descriptor.PreviewCacheKey,
+                descriptor.ImageFocus.RelativePayloadPath);
+            JsonWorkspaceFileStorageHelper.WriteBytesAtomically(
+                imageFocusPayloadFilePath,
+                previewCachePayload.ImageFocusContent);
+        }
     }
 
     public void Delete(string workspaceKey, string previewCacheKey)
@@ -141,6 +158,17 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
         }
 
         JsonWorkspaceFileStorageHelper.DeleteFileIfExists(payloadFilePath);
+        if (!string.IsNullOrWhiteSpace(descriptor.ImageFocus?.RelativePayloadPath))
+        {
+            var imageFocusPayloadFilePath = TryResolvePayloadFilePath(
+                workspaceKey,
+                previewCacheKey,
+                descriptor.ImageFocus.RelativePayloadPath);
+            if (!string.IsNullOrWhiteSpace(imageFocusPayloadFilePath))
+            {
+                JsonWorkspaceFileStorageHelper.DeleteFileIfExists(imageFocusPayloadFilePath);
+            }
+        }
 
         var payloadDirectoryPath = Path.GetDirectoryName(payloadFilePath);
         if (!string.IsNullOrWhiteSpace(payloadDirectoryPath) &&
@@ -175,5 +203,24 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
         {
             return null;
         }
+    }
+
+    private byte[]? TryReadOptionalImageFocusPayload(
+        string workspaceKey,
+        string previewCacheKey,
+        PreviewCacheDescriptorDto descriptor)
+    {
+        if (string.IsNullOrWhiteSpace(descriptor.ImageFocus?.RelativePayloadPath))
+        {
+            return null;
+        }
+
+        var imageFocusPayloadFilePath = TryResolvePayloadFilePath(
+            workspaceKey,
+            previewCacheKey,
+            descriptor.ImageFocus.RelativePayloadPath);
+        return string.IsNullOrWhiteSpace(imageFocusPayloadFilePath)
+            ? null
+            : JsonWorkspaceFileStorageHelper.TryReadBytes(imageFocusPayloadFilePath);
     }
 }

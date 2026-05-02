@@ -82,6 +82,12 @@ internal sealed class WorkspaceImportProcessingCoordinator
         ProcessWorkspaceImportsCommand command,
         CancellationToken cancellationToken)
     {
+        command.Progress?.Report(new WorkspaceImportProgressDto(
+            WorkspaceImportProgressStage.Planning,
+            CompletedBundleCount: 0,
+            TotalBundleCount: 0,
+            CurrentBundleLogicalPath: null));
+
         var totalStopwatch = Stopwatch.StartNew();
         var planningStopwatch = Stopwatch.StartNew();
         var planResult = await _workspaceImportProcessingPlanBuilder.BuildAsync(command, cancellationToken);
@@ -94,6 +100,12 @@ internal sealed class WorkspaceImportProcessingCoordinator
         var workerStopwatch = Stopwatch.StartNew();
         var workerResults = await _workspaceImportWorkerPool.ExecuteAsync(planResult.Value, cancellationToken);
         workerStopwatch.Stop();
+
+        command.Progress?.Report(new WorkspaceImportProgressDto(
+            WorkspaceImportProgressStage.Committing,
+            CompletedBundleCount: planResult.Value.DecryptorResolution.CandidateFiles.Count,
+            TotalBundleCount: planResult.Value.DecryptorResolution.CandidateFiles.Count,
+            CurrentBundleLogicalPath: null));
 
         var commitStopwatch = Stopwatch.StartNew();
         var processingResult = _workspaceImportCommitter.Commit(planResult.Value, workerResults);

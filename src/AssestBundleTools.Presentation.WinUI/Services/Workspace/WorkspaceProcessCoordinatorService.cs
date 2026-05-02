@@ -43,12 +43,21 @@ public sealed class WorkspaceProcessCoordinatorService : IWorkspaceProcessCoordi
             return false;
         }
 
+        if (navigationRequest.ForceNewWorkspaceSession)
+        {
+            return false;
+        }
+
         return TryActivateExistingWorkspace(navigationRequest);
     }
 
     public bool TryActivateExistingWorkspace(WorkspaceNavigationRequest navigationRequest)
     {
         ArgumentNullException.ThrowIfNull(navigationRequest);
+        if (navigationRequest.ForceNewWorkspaceSession)
+        {
+            return false;
+        }
 
         var normalizedRequest = NormalizeNavigationRequest(navigationRequest);
         var workspaceKey = CreateWorkspaceKey(normalizedRequest);

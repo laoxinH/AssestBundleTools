@@ -282,7 +282,14 @@
 - `Views/BundleExplorerPage.xaml`
 - `Views/Controls/AssetPaneView.xaml`
 - `Views/Controls/InspectorPanelView.xaml`
+- `Views/BundleExplorer/Controls/InspectorPreviewSurfaceView.xaml`
 - `Views/SettingsDiagnosticsPage.xaml`
+
+补充约定：
+
+- `InspectorPanelView.xaml` 只负责检查器整体布局、分区切换、信息卡片和底部动作区。
+- 图片 / 音频 / 文本 / 摘要 / 加载 / 空态等预览表面统一收敛到 `InspectorPreviewSurfaceView.xaml`，后续富预览扩展不得继续把复杂预览 XAML 回灌到 `InspectorPanelView.xaml`。
+- 需要展示透明通道的图片预览，应在图片层下方使用统一的棋盘格底图；当前主图片预览和 Sprite 裁切结果卡片都复用 `Assets/PreviewCheckerboard.png`。
 
 ## 9. 实现准线
 

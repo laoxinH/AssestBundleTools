@@ -65,6 +65,14 @@ internal static class ApplicationTestSuite
             ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldProcessCandidateBundlesInParallel_WhenExecutionOptionsAllowMultipleWorkers);
         await RunTestAsync(
             failures,
+            nameof(ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldRunSynchronousBundleReadsOnMultipleWorkers_WhenConfigured),
+            ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldRunSynchronousBundleReadsOnMultipleWorkers_WhenConfigured);
+        await RunTestAsync(
+            failures,
+            nameof(ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldReportBundleProgress_WhenProcessingCandidates),
+            ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldReportBundleProgress_WhenProcessingCandidates);
+        await RunTestAsync(
+            failures,
             nameof(ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldRecordProbeTelemetry_WhenAutoDetectionProbesUnresolvedCandidates),
             ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldRecordProbeTelemetry_WhenAutoDetectionProbesUnresolvedCandidates);
         await RunTestAsync(
@@ -87,6 +95,10 @@ internal static class ApplicationTestSuite
             failures,
             nameof(WorkspaceImportExecutionOptionsResolverTests.ResolveBundleWorkerCount_ShouldFollowDocumentedThresholds),
             WorkspaceImportExecutionOptionsResolverTests.ResolveBundleWorkerCount_ShouldFollowDocumentedThresholds);
+        await RunTestAsync(
+            failures,
+            nameof(WorkspaceImportExecutionOptionsResolverTests.ResolveBundleWorkerCount_ShouldUseManualWorkerCount_WhenConfigured),
+            WorkspaceImportExecutionOptionsResolverTests.ResolveBundleWorkerCount_ShouldUseManualWorkerCount_WhenConfigured);
         await RunTestAsync(
             failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldReturnFallbackSummary_WhenDecryptionFails),

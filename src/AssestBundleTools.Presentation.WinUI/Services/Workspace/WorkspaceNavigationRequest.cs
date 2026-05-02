@@ -8,4 +8,5 @@ public sealed record WorkspaceNavigationRequest(
     string WorkspaceDisplayName,
     string WorkspaceDataRootPath,
     WorkspaceOpenTarget OpenTarget,
-    string? AssetBundleDecryptorId = null);
+    string? AssetBundleDecryptorId = null,
+    bool ForceNewWorkspaceSession = false);

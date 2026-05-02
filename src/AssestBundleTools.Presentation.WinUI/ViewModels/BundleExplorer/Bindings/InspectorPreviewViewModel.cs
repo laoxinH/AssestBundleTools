@@ -19,33 +19,19 @@ public sealed class InspectorPreviewViewModel : ObservableObject
     private string _previewCacheStatusText = string.Empty;
     private string _previewFallbackReasonText = string.Empty;
     private string _previewDiagnosticDetailText = string.Empty;
-    private string _previewImageOverlayLabelText = string.Empty;
     private string _audioPreviewSizeSummaryText = string.Empty;
     private string _audioPreviewContainerBadgeText = string.Empty;
     private string _audioPreviewDurationBadgeText = string.Empty;
     private string _audioPreviewChannelBadgeText = string.Empty;
     private string _audioPreviewFrequencyBadgeText = string.Empty;
-    private ImageSource? _previewImageSource;
     private MediaSource? _previewAudioSource;
     private IRandomAccessStream? _previewAudioStream;
     private AssetPreviewKind _previewKind;
     private bool _isPreviewLoading;
     private bool _hasSelection;
-    private double _previewImageCanvasWidth = 1d;
-    private double _previewImageCanvasHeight = 1d;
-    private double _previewImageOverlayX;
-    private double _previewImageOverlayY;
-    private double _previewImageOverlayWidth;
-    private double _previewImageOverlayHeight;
-    private double _previewImageOverlayLabelX;
-    private double _previewImageOverlayLabelY;
-    private double _previewImageViewportWidth;
-    private double _previewImageViewportHeight;
-    private double _previewImageOverlaySourceX;
-    private double _previewImageOverlaySourceY;
-    private double _previewImageOverlaySourceWidth;
-    private double _previewImageOverlaySourceHeight;
     private IReadOnlyList<InspectorInfoRowViewModel> _previewInfoRows = Array.Empty<InspectorInfoRowViewModel>();
+
+    public InspectorPreviewImageViewModel Image { get; } = new();
 
     public string PreviewStatusText
     {
@@ -71,84 +57,6 @@ public sealed class InspectorPreviewViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(CanOpenPreviewLocation));
                 OnPropertyChanged(nameof(PreviewOpenLocationVisibility));
-            }
-        }
-    }
-
-    public ImageSource? PreviewImageSource
-    {
-        get => _previewImageSource;
-        private set => SetProperty(ref _previewImageSource, value);
-    }
-
-    public double PreviewImageCanvasWidth
-    {
-        get => _previewImageCanvasWidth;
-        private set => SetProperty(ref _previewImageCanvasWidth, value);
-    }
-
-    public double PreviewImageCanvasHeight
-    {
-        get => _previewImageCanvasHeight;
-        private set => SetProperty(ref _previewImageCanvasHeight, value);
-    }
-
-    public double PreviewImageOverlayX
-    {
-        get => _previewImageOverlayX;
-        private set => SetProperty(ref _previewImageOverlayX, value);
-    }
-
-    public double PreviewImageOverlayY
-    {
-        get => _previewImageOverlayY;
-        private set => SetProperty(ref _previewImageOverlayY, value);
-    }
-
-    public double PreviewImageOverlayWidth
-    {
-        get => _previewImageOverlayWidth;
-        private set
-        {
-            if (SetProperty(ref _previewImageOverlayWidth, value))
-            {
-                OnPropertyChanged(nameof(PreviewImageOverlayVisibility));
-            }
-        }
-    }
-
-    public double PreviewImageOverlayHeight
-    {
-        get => _previewImageOverlayHeight;
-        private set
-        {
-            if (SetProperty(ref _previewImageOverlayHeight, value))
-            {
-                OnPropertyChanged(nameof(PreviewImageOverlayVisibility));
-            }
-        }
-    }
-
-    public double PreviewImageOverlayLabelX
-    {
-        get => _previewImageOverlayLabelX;
-        private set => SetProperty(ref _previewImageOverlayLabelX, value);
-    }
-
-    public double PreviewImageOverlayLabelY
-    {
-        get => _previewImageOverlayLabelY;
-        private set => SetProperty(ref _previewImageOverlayLabelY, value);
-    }
-
-    public string PreviewImageOverlayLabelText
-    {
-        get => _previewImageOverlayLabelText;
-        private set
-        {
-            if (SetProperty(ref _previewImageOverlayLabelText, value))
-            {
-                OnPropertyChanged(nameof(PreviewImageOverlayVisibility));
             }
         }
     }
@@ -239,18 +147,7 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         _hasSelection &&
         !IsPreviewLoading &&
         _previewKind == AssetPreviewKind.Image &&
-        PreviewImageSource is not null
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-    public Visibility PreviewImageOverlayVisibility =>
-        _hasSelection &&
-        !IsPreviewLoading &&
-        _previewKind == AssetPreviewKind.Image &&
-        PreviewImageSource is not null &&
-        PreviewImageOverlayWidth > 0 &&
-        PreviewImageOverlayHeight > 0 &&
-        !string.IsNullOrWhiteSpace(PreviewImageOverlayLabelText)
+        Image.ImageSource is not null
             ? Visibility.Visible
             : Visibility.Collapsed;
 
@@ -368,7 +265,8 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         int imagePixelHeight,
         IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
         string? previewPayloadFilePath = null,
-        SpritePreviewOverlayDisplayState? spritePreviewOverlayDisplayState = null)
+        SpritePreviewOverlayDisplayState? spritePreviewOverlayDisplayState = null,
+        SpriteFocusPreviewDisplayState? spriteFocusPreviewDisplayState = null)
     {
         ArgumentNullException.ThrowIfNull(imageSource);
 
@@ -376,16 +274,18 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         _previewKind = AssetPreviewKind.Image;
         _previewInfoRows = CloneRows(previewInfoRows);
         PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
-        ApplyPreviewImageDisplayState(imagePixelWidth, imagePixelHeight, spritePreviewOverlayDisplayState);
-        PreviewImageSource = imageSource;
+        Image.Apply(
+            imageSource,
+            imagePixelWidth,
+            imagePixelHeight,
+            spritePreviewOverlayDisplayState,
+            spriteFocusPreviewDisplayState);
         NotifyPreviewStateChanged();
     }
 
     internal void UpdatePreviewImageViewport(double viewportWidth, double viewportHeight)
     {
-        _previewImageViewportWidth = Math.Max(0d, viewportWidth);
-        _previewImageViewportHeight = Math.Max(0d, viewportHeight);
-        RecalculatePreviewImageOverlayLayout();
+        Image.UpdateViewport(viewportWidth, viewportHeight);
     }
 
     /// <summary>
@@ -444,7 +344,7 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         PreviewStatusText = string.Empty;
         PreviewText = string.Empty;
         PreviewPayloadFilePath = string.Empty;
-        PreviewImageSource = null;
+        Image.Clear();
         PreviewAudioSource = null;
         _previewAudioStream?.Dispose();
         _previewAudioStream = null;
@@ -453,7 +353,6 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         _previewFallbackReasonText = string.Empty;
         _previewDiagnosticDetailText = string.Empty;
         _previewKind = AssetPreviewKind.None;
-        ClearPreviewImageDisplayState();
         ClearAudioPreviewPresentation();
         NotifyPreviewStateChanged();
     }
@@ -462,7 +361,6 @@ public sealed class InspectorPreviewViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(PreviewLoadingVisibility));
         OnPropertyChanged(nameof(PreviewImageVisibility));
-        OnPropertyChanged(nameof(PreviewImageOverlayVisibility));
         OnPropertyChanged(nameof(PreviewTextVisibility));
         OnPropertyChanged(nameof(PreviewAudioVisibility));
         OnPropertyChanged(nameof(PreviewSummaryVisibility));
@@ -481,93 +379,6 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         string.IsNullOrWhiteSpace(previewPayloadFilePath)
             ? string.Empty
             : previewPayloadFilePath.Trim();
-
-    private void ApplyPreviewImageDisplayState(
-        int imagePixelWidth,
-        int imagePixelHeight,
-        SpritePreviewOverlayDisplayState? spritePreviewOverlayDisplayState)
-    {
-        PreviewImageCanvasWidth = spritePreviewOverlayDisplayState is { CanvasWidth: > 0 }
-            ? spritePreviewOverlayDisplayState.CanvasWidth
-            : Math.Max(1, imagePixelWidth);
-        PreviewImageCanvasHeight = spritePreviewOverlayDisplayState is { CanvasHeight: > 0 }
-            ? spritePreviewOverlayDisplayState.CanvasHeight
-            : Math.Max(1, imagePixelHeight);
-
-        _previewImageOverlaySourceX = spritePreviewOverlayDisplayState is null
-            ? 0d
-            : Math.Max(0d, spritePreviewOverlayDisplayState.RegionX);
-        _previewImageOverlaySourceY = spritePreviewOverlayDisplayState is null
-            ? 0d
-            : Math.Max(0d, spritePreviewOverlayDisplayState.RegionY);
-        _previewImageOverlaySourceWidth = spritePreviewOverlayDisplayState is null
-            ? 0d
-            : Math.Max(0d, spritePreviewOverlayDisplayState.RegionWidth);
-        _previewImageOverlaySourceHeight = spritePreviewOverlayDisplayState is null
-            ? 0d
-            : Math.Max(0d, spritePreviewOverlayDisplayState.RegionHeight);
-        PreviewImageOverlayLabelText = string.IsNullOrWhiteSpace(spritePreviewOverlayDisplayState?.BadgeText)
-            ? string.Empty
-            : spritePreviewOverlayDisplayState.BadgeText.Trim();
-        RecalculatePreviewImageOverlayLayout();
-    }
-
-    private void ClearPreviewImageDisplayState()
-    {
-        _previewImageViewportWidth = 0d;
-        _previewImageViewportHeight = 0d;
-        _previewImageOverlaySourceX = 0d;
-        _previewImageOverlaySourceY = 0d;
-        _previewImageOverlaySourceWidth = 0d;
-        _previewImageOverlaySourceHeight = 0d;
-        PreviewImageCanvasWidth = 1d;
-        PreviewImageCanvasHeight = 1d;
-        ClearPreviewImageOverlay();
-        PreviewImageOverlayLabelText = string.Empty;
-    }
-
-    private void ClearPreviewImageOverlay()
-    {
-        PreviewImageOverlayX = 0d;
-        PreviewImageOverlayY = 0d;
-        PreviewImageOverlayWidth = 0d;
-        PreviewImageOverlayHeight = 0d;
-        PreviewImageOverlayLabelX = 0d;
-        PreviewImageOverlayLabelY = 0d;
-    }
-
-    private void RecalculatePreviewImageOverlayLayout()
-    {
-        if (_previewImageOverlaySourceWidth <= 0d ||
-            _previewImageOverlaySourceHeight <= 0d ||
-            string.IsNullOrWhiteSpace(PreviewImageOverlayLabelText))
-        {
-            ClearPreviewImageOverlay();
-            return;
-        }
-
-        if (!PreviewImageOverlayLayoutCalculator.TryCalculate(
-                PreviewImageCanvasWidth,
-                PreviewImageCanvasHeight,
-                _previewImageOverlaySourceX,
-                _previewImageOverlaySourceY,
-                _previewImageOverlaySourceWidth,
-                _previewImageOverlaySourceHeight,
-                _previewImageViewportWidth,
-                _previewImageViewportHeight,
-                out var layout))
-        {
-            ClearPreviewImageOverlay();
-            return;
-        }
-
-        PreviewImageOverlayX = layout.OverlayX;
-        PreviewImageOverlayY = layout.OverlayY;
-        PreviewImageOverlayWidth = layout.OverlayWidth;
-        PreviewImageOverlayHeight = layout.OverlayHeight;
-        PreviewImageOverlayLabelX = layout.LabelX;
-        PreviewImageOverlayLabelY = layout.LabelY;
-    }
 
     private void ClearAudioPreviewPresentation()
     {

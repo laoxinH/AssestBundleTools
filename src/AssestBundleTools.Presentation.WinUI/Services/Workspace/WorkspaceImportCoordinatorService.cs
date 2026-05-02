@@ -24,6 +24,7 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
     private readonly IAppLogService _appLogService;
     private readonly IAppNotificationService _appNotificationService;
     private readonly ILocalizationService _localizationService;
+    private readonly IBackgroundTaskRunner _backgroundTaskRunner;
 
     public WorkspaceImportCoordinatorService(
         IWorkspaceContextService workspaceContextService,
@@ -31,7 +32,8 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
         IFilePickerService filePickerService,
         IAppLogService appLogService,
         IAppNotificationService appNotificationService,
-        ILocalizationService localizationService)
+        ILocalizationService localizationService,
+        IBackgroundTaskRunner backgroundTaskRunner)
     {
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _workspaceExplorerGateway = workspaceExplorerGateway ?? throw new ArgumentNullException(nameof(workspaceExplorerGateway));
@@ -39,11 +41,14 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+        _backgroundTaskRunner = backgroundTaskRunner ?? throw new ArgumentNullException(nameof(backgroundTaskRunner));
     }
 
     public bool HasActiveWorkspace => _workspaceContextService.CurrentWorkspaceSummary is not null;
 
-    public async Task<bool> RequestBundleFileImportAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> RequestBundleFileImportAsync(
+        IProgress<WorkspaceImportProgressDto>? progress = null,
+        CancellationToken cancellationToken = default)
     {
         if (!_workspaceContextService.TryGetCurrentWorkspaceEntry(out var workspaceEntry) ||
             _workspaceContextService.CurrentWorkspaceSummary is not { } workspaceSummary)
@@ -63,10 +68,13 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
             workspaceSummary,
             WorkspaceImportOriginKind.BundleFiles,
             selectedPaths,
+            progress,
             cancellationToken);
     }
 
-    public async Task<bool> RequestBundleDirectoryImportAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> RequestBundleDirectoryImportAsync(
+        IProgress<WorkspaceImportProgressDto>? progress = null,
+        CancellationToken cancellationToken = default)
     {
         if (!_workspaceContextService.TryGetCurrentWorkspaceEntry(out var workspaceEntry) ||
             _workspaceContextService.CurrentWorkspaceSummary is not { } workspaceSummary)
@@ -86,11 +94,13 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
             workspaceSummary,
             WorkspaceImportOriginKind.BundleDirectory,
             new[] { selectedDirectoryPath },
+            progress,
             cancellationToken);
     }
 
     public async Task<bool> RequestDragDropImportAsync(
         IReadOnlyList<string> droppedPaths,
+        IProgress<WorkspaceImportProgressDto>? progress = null,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -112,6 +122,7 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
             workspaceSummary,
             WorkspaceImportOriginKind.DragDrop,
             normalizedPaths,
+            progress,
             cancellationToken);
     }
 
@@ -120,6 +131,7 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
         WorkspaceSummaryDto workspaceSummary,
         WorkspaceImportOriginKind importOrigin,
         IReadOnlyList<string> paths,
+        IProgress<WorkspaceImportProgressDto>? progress,
         CancellationToken cancellationToken)
     {
         var result = await _workspaceExplorerGateway.RegisterWorkspaceImportAsync(
@@ -143,10 +155,13 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
             return false;
         }
 
-        var processingResult = await _workspaceExplorerGateway.ProcessWorkspaceImportsAsync(
-            new ProcessWorkspaceImportsCommand(
-                WorkspaceKey: workspaceEntry.WorkspaceKey,
-                WorkspaceDataRootPath: workspaceEntry.WorkspaceDataRootPath),
+        var processingResult = await _backgroundTaskRunner.RunAsync(
+            backgroundCancellationToken => _workspaceExplorerGateway.ProcessWorkspaceImportsAsync(
+                new ProcessWorkspaceImportsCommand(
+                    WorkspaceKey: workspaceEntry.WorkspaceKey,
+                    WorkspaceDataRootPath: workspaceEntry.WorkspaceDataRootPath,
+                    Progress: progress),
+                backgroundCancellationToken),
             cancellationToken);
         if (processingResult.IsCancelled)
         {
