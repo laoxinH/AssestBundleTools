@@ -46,6 +46,7 @@ internal sealed class BundleExplorerAssetDocumentHostCoordinator
     {
         var tab = new AssetDocumentTabViewModel(bundleId, assetId, assetName, _inspectorInformationTextSet);
         tab.PreviewImageDisplayOptionsChanged += OnPreviewImageDisplayOptionsChanged;
+        tab.PreviewMeshDisplayOptionsChanged += OnPreviewMeshDisplayOptionsChanged;
         tab.Inspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
         return tab;
     }
@@ -74,6 +75,11 @@ internal sealed class BundleExplorerAssetDocumentHostCoordinator
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
 
     private void OnPreviewImageDisplayOptionsChanged(object? sender, EventArgs e)
+    {
+        _requestWorkspaceBrowserStatePersistence();
+    }
+
+    private void OnPreviewMeshDisplayOptionsChanged(object? sender, EventArgs e)
     {
         _requestWorkspaceBrowserStatePersistence();
     }

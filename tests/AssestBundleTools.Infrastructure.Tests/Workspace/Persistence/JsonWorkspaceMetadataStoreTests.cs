@@ -44,7 +44,11 @@ internal static class JsonWorkspaceMetadataStoreTests
                             AssetName: "hero.png",
                             SelectedInspectorSection: "details",
                             PreviewImageBackgroundMode: "Solid",
-                            SpritePreviewDisplayMode: "CropResult")
+                            SpritePreviewDisplayMode: "CropResult",
+                            MeshPreviewDisplayMode: "Uv",
+                            MeshPreviewTextureOverlaySelected: false,
+                            MeshPreviewGridSelected: false,
+                            MeshPreviewZoom: 1.5d)
                     ],
                     ActiveAssetTabId: "asset-009")
             ],
@@ -100,6 +104,10 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.Equal("details", loadedAssetTab.SelectedInspectorSection, "Inspector section should round-trip.");
         TestAssert.Equal("Solid", loadedAssetTab.PreviewImageBackgroundMode, "Preview image background should round-trip.");
         TestAssert.Equal("CropResult", loadedAssetTab.SpritePreviewDisplayMode, "Sprite preview mode should round-trip.");
+        TestAssert.Equal("Uv", loadedAssetTab.MeshPreviewDisplayMode, "Mesh preview mode should round-trip.");
+        TestAssert.False(loadedAssetTab.MeshPreviewTextureOverlaySelected ?? true, "Mesh texture overlay state should round-trip.");
+        TestAssert.False(loadedAssetTab.MeshPreviewGridSelected ?? true, "Mesh grid state should round-trip.");
+        TestAssert.Equal(1.5d, loadedAssetTab.MeshPreviewZoom ?? 0d, "Mesh zoom should round-trip.");
 
         var importedSource = TestAssert.Single(restoredMetadata.ImportedSources!);
         TestAssert.Equal(@"C:\Bundles\characters", importedSource.Path, "Imported source path should round-trip.");

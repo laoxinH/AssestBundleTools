@@ -30,6 +30,7 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
     private long _previewRequestVersion;
     private AssetPreviewRequest? _activePreviewRequest;
     private bool _isRestoringPreviewImageDisplayOptions;
+    private bool _isRestoringPreviewMeshDisplayOptions;
 
     public AssetDocumentTabViewModel(
         BundleId bundleId,
@@ -47,9 +48,12 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
         Inspector = new InspectorPanelViewModel(
             inspectorInformationTextSet ?? throw new ArgumentNullException(nameof(inspectorInformationTextSet)));
         Inspector.Preview.Image.DisplayOptions.DisplayOptionsChanged += OnPreviewImageDisplayOptionsChanged;
+        Inspector.Preview.Mesh.DisplayOptionsChanged += OnPreviewMeshDisplayOptionsChanged;
     }
 
     public event EventHandler? PreviewImageDisplayOptionsChanged;
+
+    public event EventHandler? PreviewMeshDisplayOptionsChanged;
 
     public BundleId BundleId
     {
@@ -158,6 +162,27 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
         }
     }
 
+    public void RestorePreviewMeshDisplayOptions(
+        string? displayMode,
+        bool? textureOverlaySelected,
+        bool? meshGridSelected,
+        double? zoom)
+    {
+        _isRestoringPreviewMeshDisplayOptions = true;
+        try
+        {
+            Inspector.Preview.Mesh.RestoreDisplayOptions(
+                displayMode,
+                textureOverlaySelected,
+                meshGridSelected,
+                zoom);
+        }
+        finally
+        {
+            _isRestoringPreviewMeshDisplayOptions = false;
+        }
+    }
+
     internal AssetPreviewRequest BeginPreviewRequest()
     {
         _previewRequestVersion++;
@@ -209,5 +234,15 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
         }
 
         PreviewImageDisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnPreviewMeshDisplayOptionsChanged(object? sender, EventArgs e)
+    {
+        if (_isRestoringPreviewMeshDisplayOptions)
+        {
+            return;
+        }
+
+        PreviewMeshDisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
     }
 }

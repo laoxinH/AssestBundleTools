@@ -310,6 +310,8 @@ Presentation 层保留两个协同层次：
 - `showModifiedOnly`
 - `showPreviewableOnly`
 
+其中 `openAssetTabs[]` 只记录资产详情标签恢复所需的轻量浏览状态，例如资产标识、显示名、选中的检查器页签，以及图像背景、Sprite 裁切显示模式、Mesh 线框 / UV 显示模式、贴图叠加开关、网格/结构层显隐和缩放值等预览工具条选项；不保存真实详情内容、预览载荷或 Mesh 鼠标拖拽旋转姿态这类临时观察状态。
+
 补充约束：
 
 - `selectedAssetId` 不是装饰字段，而是资源列表焦点恢复的稳定键
@@ -612,6 +614,7 @@ Presentation 层保留两个协同层次：
 - 工作台资源详情当前已正式接入 `PreviewCacheStore` 的按需生成、命中与失效清理链路
 - 当前图片预览缓存已按资源独立落盘，不再共用单一 `payload.txt / payload.png` 覆写文件；Sprite 裁切结果会作为同一预览缓存项下的 `focus.png` 附加载荷保存
 - 资产详情预览加载采用当前活动标签优先策略：切换到其他资产详情标签时，旧标签的未完成预览请求会被标记为失效并清空旧 loading 状态；尚未开始的旧请求会跳过，已经开始但不再相关的旧请求不会回写 UI，用户切回旧标签时再按需懒加载预览
+- 已确认一个后续需要治理的预览内存风险：连续打开多个缓存未命中的资源预览时，`AssetsTools.NET` 在 `LoadBundleFile(..., unpackIfPacked: true)` 阶段可能通过 LZMA 把压缩 bundle 解到内存流；若旧预览任务已经进入同步解包，取消或超时不能立刻打断底层解包，后台预热、前台切换和 Mesh 关联贴图预览叠加时可能把实际内存峰值推高，并触发 `OutOfMemoryException`。当前先保留结构化诊断展示堆栈，后续应按 9.2 的方向收口。
 - 当前预览类型覆盖如下：
   - 图像预览：`Texture2D`、`Sprite`
   - 文本预览：`TextAsset`、`Shader`
@@ -679,6 +682,29 @@ Presentation 层保留两个协同层次：
 4. `Material / Font / AnimationClip` 的半可视化预览
 
 其中 `GameObject / MonoBehaviour / AnimatorController` 当前继续保留结构化摘要，不进入近期重型预览主线。
+
+### 9.2 预览解包内存风险后续治理
+
+已确认问题：
+
+- 2026-05-03 在连续打开多个资源详情预览时，预览诊断捕获到 `System.OutOfMemoryException`。
+- 堆栈落在 `AssetsToolsAssetPreviewGenerator.GenerateAsync` 调用 `AssetsManager.LoadBundleFile(request.ResolvedBundlePath, unpackIfPacked: true)` 的阶段，具体表现为 `SevenZip.Compression.LZMA` 解包过程中 `MemoryStream` 扩容失败。
+- 该异常发生在 bundle 解包阶段，通常早于具体 `Texture2D / Sprite / AudioClip / Mesh / TextAsset` 内容解析，因此不能简单归因于单个资源类型的预览渲染错误。
+
+当前风险判断：
+
+- 当前预览执行队列限制的是查询任务数量，不等于限制底层同步解包任务的真实内存峰值。
+- 预览请求被取消或超时后，如果底层 `LoadBundleFile(..., unpackIfPacked: true)` 已经进入同步 LZMA 解包，取消令牌无法立刻中断该解包；若执行槽提前释放，新请求可能继续进入解包，造成实际并发超过预期。
+- 后台预热会对已打开资产详情标签发起预览请求；Mesh 贴图叠加预览还会通过同一预览管线请求关联 `Texture2D / Sprite` 载荷。这些路径在缓存未命中且源 bundle 较大时会放大解包内存压力。
+- `x64` 运行能提高可用地址空间，但只能缓解症状，不能替代预览解包生命周期与缓存策略治理。
+
+后续收口建议：
+
+1. 先修正预览执行队列的槽位释放语义：UI 可在取消或超时后停止等待，但底层预览任务真正完成前不应释放对应 worker 槽，避免旧解包仍在运行时继续放入新解包任务。
+2. 收紧后台预热策略：对缓存未命中、大 bundle 或已发生内存不足的 bundle，后台预热应跳过或只复用已有预览缓存；前台活动资产预览优先。
+3. 为同一 `workspaceKey + bundleCacheKey` 引入 bundle 级 single-flight 或低并发闸门，避免同一个 bundle 被多个预览任务同时重复解包。
+4. 评估引入磁盘级 unpack cache：把压缩 bundle 解包为工作区缓存 artifact，并用 `source fingerprint + decryptorId + decryptorVersion + bundleCacheKey` 或等价身份控制失效；后续 Reader 与 Preview 都优先复用该 artifact，而不是每个预览缓存未命中时重新内存解包。
+5. 对 `OutOfMemoryException` 补专用诊断分类和短期退避：在保留堆栈 detail 的同时，提示“预览生成内存不足”，并暂停同 bundle 的后台预热，避免连续失败。
 
 ## 10. 执行结论
 

@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
@@ -11,7 +12,7 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 public sealed class BundleExplorerBrowserStateCoordinatorTests
 {
     [Fact]
-    public void PersistWorkspaceBrowserStateNow_ShouldIncludeAssetPreviewImageDisplayOptions()
+    public void PersistWorkspaceBrowserStateNow_ShouldIncludeAssetPreviewDisplayOptions()
     {
         var context = CreateContext();
         var assetTab = CreateAssetTab(
@@ -21,6 +22,11 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
             context.LocalizationService);
         assetTab.Inspector.Preview.Image.DisplayOptions.UseSolidBackground();
         assetTab.Inspector.Preview.Image.DisplayOptions.UseSpriteCropResult();
+        assetTab.RestorePreviewMeshDisplayOptions(
+            "Uv",
+            textureOverlaySelected: false,
+            meshGridSelected: false,
+            zoom: 1.5d);
         context.BundleTab.AddAssetTab(assetTab, activate: true);
 
         context.Coordinator.PersistWorkspaceBrowserStateNow();
@@ -30,10 +36,14 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         var assetTabState = Assert.Single(Assert.Single(browserState.OpenBundleTabs).OpenAssetTabs!);
         Assert.Equal("Solid", assetTabState.PreviewImageBackgroundMode);
         Assert.Equal("CropResult", assetTabState.SpritePreviewDisplayMode);
+        Assert.Equal("Uv", assetTabState.MeshPreviewDisplayMode);
+        Assert.False(assetTabState.MeshPreviewTextureOverlaySelected);
+        Assert.False(assetTabState.MeshPreviewGridSelected);
+        Assert.Equal(1.5d, assetTabState.MeshPreviewZoom);
     }
 
     [Fact]
-    public async Task TryRestoreWorkspaceBrowserStateAsync_ShouldRestoreAssetPreviewImageDisplayOptions()
+    public async Task TryRestoreWorkspaceBrowserStateAsync_ShouldRestoreAssetPreviewDisplayOptions()
     {
         var context = CreateContext();
         context.WorkspaceContextService.CurrentBrowserState = new WorkspaceBrowserStateSnapshotDto(
@@ -60,7 +70,11 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
                             AssetName: "Button",
                             SelectedInspectorSection: "details",
                             PreviewImageBackgroundMode: "Solid",
-                            SpritePreviewDisplayMode: "CropResult")
+                            SpritePreviewDisplayMode: "CropResult",
+                            MeshPreviewDisplayMode: "Uv",
+                            MeshPreviewTextureOverlaySelected: false,
+                            MeshPreviewGridSelected: false,
+                            MeshPreviewZoom: 1.5d)
                     ],
                     ActiveAssetTabId: "asset-button")
             ],
@@ -74,6 +88,14 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         var restoredAssetTab = Assert.Single(context.DocumentWorkspace.ActiveBundleTab!.AssetTabs);
         Assert.True(restoredAssetTab.Inspector.Preview.Image.DisplayOptions.IsSolidBackgroundSelected);
         Assert.True(restoredAssetTab.Inspector.Preview.Image.DisplayOptions.IsSpriteCropResultSelected);
+        restoredAssetTab.Inspector.Preview.Mesh.Apply(
+            CreateMeshGeometry(),
+            new MeshPreviewDisplayState("wire", "uv"));
+        restoredAssetTab.Inspector.Preview.Mesh.ApplyTextureOverlay([1, 2, 3, 4]);
+        Assert.True(restoredAssetTab.Inspector.Preview.Mesh.IsUvSelected);
+        Assert.False(restoredAssetTab.Inspector.Preview.Mesh.IsTextureOverlaySelected);
+        Assert.False(restoredAssetTab.Inspector.Preview.Mesh.IsMeshGridSelected);
+        Assert.Equal(1.5d, restoredAssetTab.Inspector.Preview.Mesh.Zoom);
     }
 
     private static BrowserStateCoordinatorContext CreateContext()
@@ -124,6 +146,41 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
             assetId,
             assetName,
             InspectorInformationTextSetFactory.Create(localizationService));
+    }
+
+    private static AssetPreviewMeshGeometryDto CreateMeshGeometry()
+    {
+        return new AssetPreviewMeshGeometryDto(
+            SchemaVersion: 3,
+            SourceVertexCount: 3,
+            SourceIndexCount: 3,
+            SourceTriangleCount: 1,
+            IsGeometryTruncated: false,
+            Vertices:
+            [
+                new AssetPreviewMeshVertexDto(0, 0, 0),
+                new AssetPreviewMeshVertexDto(1, 0, 0),
+                new AssetPreviewMeshVertexDto(0, 1, 0)
+            ],
+            Edges:
+            [
+                new AssetPreviewMeshEdgeDto(0, 1),
+                new AssetPreviewMeshEdgeDto(1, 2),
+                new AssetPreviewMeshEdgeDto(0, 2)
+            ],
+            SubMeshes: Array.Empty<AssetPreviewMeshSubMeshDto>(),
+            Bounds: null,
+            Uv0:
+            [
+                new AssetPreviewMeshUvDto(0, 0),
+                new AssetPreviewMeshUvDto(1, 0),
+                new AssetPreviewMeshUvDto(0, 1)
+            ],
+            Channels: Array.Empty<AssetPreviewMeshChannelDto>(),
+            Triangles:
+            [
+                new AssetPreviewMeshTriangleDto(0, 1, 2, 0)
+            ]);
     }
 
     private sealed record BrowserStateCoordinatorContext(

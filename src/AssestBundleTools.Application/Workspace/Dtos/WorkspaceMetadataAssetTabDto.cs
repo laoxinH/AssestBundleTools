@@ -12,4 +12,8 @@ public sealed record WorkspaceMetadataAssetTabDto(
     string AssetName,
     string? SelectedInspectorSection = null,
     string? PreviewImageBackgroundMode = null,
-    string? SpritePreviewDisplayMode = null);
+    string? SpritePreviewDisplayMode = null,
+    string? MeshPreviewDisplayMode = null,
+    bool? MeshPreviewTextureOverlaySelected = null,
+    bool? MeshPreviewGridSelected = null,
+    double? MeshPreviewZoom = null);

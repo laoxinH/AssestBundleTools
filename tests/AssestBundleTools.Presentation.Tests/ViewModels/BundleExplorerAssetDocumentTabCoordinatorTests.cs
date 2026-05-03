@@ -138,6 +138,54 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
         Assert.True(assetTab.Inspector.Preview.Image.DisplayOptions.IsSpriteCropResultSelected);
     }
 
+    [Fact]
+    public void AssetDocumentTabPreviewMeshDisplayOptions_ShouldRequestBrowserStatePersistence_WhenUserChangesToolbarState()
+    {
+        var context = CreateCoordinatorContext(WorkspaceId.New(), "MeshPreviewOptionsPersistence");
+        var assetTab = context.HostCoordinator.CreateAssetDocumentTab(
+            new BundleId("bundle-ui"),
+            new AssetId("asset-mesh"),
+            "Mesh");
+        assetTab.Inspector.Preview.Mesh.Apply(
+            CreateMeshGeometry(),
+            new MeshPreviewDisplayState("wire", "uv"));
+        assetTab.Inspector.Preview.Mesh.ApplyTextureOverlay([1, 2, 3, 4]);
+
+        assetTab.Inspector.Preview.Mesh.ToggleDisplayMode();
+        assetTab.Inspector.Preview.Mesh.ToggleMeshGrid();
+        assetTab.Inspector.Preview.Mesh.ToggleTextureOverlay();
+        assetTab.Inspector.Preview.Mesh.ZoomBy(1.18d);
+        assetTab.Inspector.Preview.Mesh.ResetView();
+
+        Assert.Equal(5, context.BrowserStatePersistenceRequestCount);
+    }
+
+    [Fact]
+    public void AssetDocumentTabPreviewMeshDisplayOptions_ShouldNotRequestBrowserStatePersistence_WhenRestoringMode()
+    {
+        var context = CreateCoordinatorContext(WorkspaceId.New(), "MeshPreviewOptionsRestore");
+        var assetTab = context.HostCoordinator.CreateAssetDocumentTab(
+            new BundleId("bundle-ui"),
+            new AssetId("asset-mesh"),
+            "Mesh");
+
+        assetTab.RestorePreviewMeshDisplayOptions(
+            "Uv",
+            textureOverlaySelected: false,
+            meshGridSelected: false,
+            zoom: 1.5d);
+        assetTab.Inspector.Preview.Mesh.Apply(
+            CreateMeshGeometry(),
+            new MeshPreviewDisplayState("wire", "uv"));
+        assetTab.Inspector.Preview.Mesh.ApplyTextureOverlay([1, 2, 3, 4]);
+
+        Assert.Equal(0, context.BrowserStatePersistenceRequestCount);
+        Assert.True(assetTab.Inspector.Preview.Mesh.IsUvSelected);
+        Assert.False(assetTab.Inspector.Preview.Mesh.IsTextureOverlaySelected);
+        Assert.False(assetTab.Inspector.Preview.Mesh.IsMeshGridSelected);
+        Assert.Equal(1.5d, assetTab.Inspector.Preview.Mesh.Zoom);
+    }
+
     private static CoordinatorContext CreateCoordinatorContext(WorkspaceId workspaceId, string workspaceName)
     {
         var browserStatePersistenceRequestCount = 0;
@@ -209,6 +257,41 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
             notifyActionStates: static () => { },
             appendResultFailure: static _ => { },
             formatFirstErrorMessage: static _ => "failed");
+    }
+
+    private static AssetPreviewMeshGeometryDto CreateMeshGeometry()
+    {
+        return new AssetPreviewMeshGeometryDto(
+            SchemaVersion: 3,
+            SourceVertexCount: 3,
+            SourceIndexCount: 3,
+            SourceTriangleCount: 1,
+            IsGeometryTruncated: false,
+            Vertices:
+            [
+                new AssetPreviewMeshVertexDto(0, 0, 0),
+                new AssetPreviewMeshVertexDto(1, 0, 0),
+                new AssetPreviewMeshVertexDto(0, 1, 0)
+            ],
+            Edges:
+            [
+                new AssetPreviewMeshEdgeDto(0, 1),
+                new AssetPreviewMeshEdgeDto(1, 2),
+                new AssetPreviewMeshEdgeDto(0, 2)
+            ],
+            SubMeshes: Array.Empty<AssetPreviewMeshSubMeshDto>(),
+            Bounds: null,
+            Uv0:
+            [
+                new AssetPreviewMeshUvDto(0, 0),
+                new AssetPreviewMeshUvDto(1, 0),
+                new AssetPreviewMeshUvDto(0, 1)
+            ],
+            Channels: Array.Empty<AssetPreviewMeshChannelDto>(),
+            Triangles:
+            [
+                new AssetPreviewMeshTriangleDto(0, 1, 2, 0)
+            ]);
     }
 
     private sealed record CoordinatorContext(

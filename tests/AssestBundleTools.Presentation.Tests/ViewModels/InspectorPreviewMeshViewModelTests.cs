@@ -58,6 +58,81 @@ public sealed class InspectorPreviewMeshViewModelTests
     }
 
     [Fact]
+    public void RestoreDisplayOptions_ShouldApplyUvMode_WhenGeometryLoadsLater()
+    {
+        var viewModel = new InspectorPreviewMeshViewModel();
+
+        viewModel.RestoreDisplayOptions("Uv", null, null, null);
+        viewModel.Apply(
+            CreateMeshGeometry(hasUv: true),
+            new MeshPreviewDisplayState("wire", "uv"));
+
+        Assert.True(viewModel.IsUvSelected);
+        Assert.Equal("Uv", viewModel.DisplayModePersistenceKey);
+        Assert.Equal("uv", viewModel.BadgeText);
+    }
+
+    [Fact]
+    public void RestoreDisplayOptions_ShouldFallBackToWireframe_WhenGeometryHasNoUv()
+    {
+        var viewModel = new InspectorPreviewMeshViewModel();
+
+        viewModel.RestoreDisplayOptions("Uv", null, null, null);
+        viewModel.Apply(
+            CreateMeshGeometry(hasUv: false),
+            new MeshPreviewDisplayState("wire", "uv"));
+
+        Assert.True(viewModel.IsWireframeSelected);
+        Assert.Equal("Wireframe", viewModel.DisplayModePersistenceKey);
+        Assert.Equal("wire", viewModel.BadgeText);
+    }
+
+    [Fact]
+    public void RestoreDisplayOptions_ShouldApplyToolbarState_WhenGeometryAndTextureLoadLater()
+    {
+        var viewModel = new InspectorPreviewMeshViewModel();
+
+        viewModel.RestoreDisplayOptions(
+            "Uv",
+            textureOverlaySelected: false,
+            meshGridSelected: false,
+            zoom: 1.5d);
+        viewModel.Apply(
+            CreateMeshGeometry(hasUv: true),
+            new MeshPreviewDisplayState("wire", "uv"));
+        viewModel.ApplyTextureOverlay([1, 2, 3, 4]);
+
+        Assert.True(viewModel.IsUvSelected);
+        Assert.False(viewModel.IsTextureOverlaySelected);
+        Assert.False(viewModel.IsMeshGridSelected);
+        Assert.Equal(1.5d, viewModel.Zoom);
+        Assert.False(viewModel.ShouldDrawTextureOverlay);
+        Assert.True(viewModel.ShouldDrawMeshGrid);
+    }
+
+    [Fact]
+    public void ToolbarChanges_ShouldRaiseDisplayOptionsChanged_ButRestoreShouldNot()
+    {
+        var viewModel = new InspectorPreviewMeshViewModel();
+        var changeCount = 0;
+        viewModel.DisplayOptionsChanged += (_, _) => changeCount++;
+
+        viewModel.Apply(
+            CreateMeshGeometry(hasUv: true),
+            new MeshPreviewDisplayState("wire", "uv"));
+        viewModel.ApplyTextureOverlay([1, 2, 3, 4]);
+        viewModel.ToggleDisplayMode();
+        viewModel.ToggleMeshGrid();
+        viewModel.ToggleTextureOverlay();
+        viewModel.ZoomBy(1.5d);
+        viewModel.ResetView();
+        viewModel.RestoreDisplayOptions("Wireframe", true, true, 1d);
+
+        Assert.Equal(5, changeCount);
+        Assert.True(viewModel.IsWireframeSelected);
+    }
+
+    [Fact]
     public void ToggleTextureOverlay_ShouldDrawOverlayInWireframe_WhenTrianglesAndTextureExist()
     {
         var viewModel = new InspectorPreviewMeshViewModel();

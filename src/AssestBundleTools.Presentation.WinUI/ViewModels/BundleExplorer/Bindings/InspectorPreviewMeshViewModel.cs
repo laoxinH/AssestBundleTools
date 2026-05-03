@@ -40,6 +40,8 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
     private double _rotationY = DefaultRotationY;
     private double _zoom = DefaultZoom;
 
+    public event EventHandler? DisplayOptionsChanged;
+
     public AssetPreviewMeshGeometryDto? Geometry
     {
         get => _geometry;
@@ -52,6 +54,9 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
                 OnPropertyChanged(nameof(HasGeometry));
                 OnPropertyChanged(nameof(HasUv));
                 OnPropertyChanged(nameof(CanDrawTexturedMesh));
+                OnPropertyChanged(nameof(IsWireframeSelected));
+                OnPropertyChanged(nameof(IsUvSelected));
+                OnPropertyChanged(nameof(DisplayModeGlyph));
                 OnPropertyChanged(nameof(DisplayModeSwitchVisibility));
                 OnPropertyChanged(nameof(TextureOverlaySwitchVisibility));
                 OnPropertyChanged(nameof(MeshGridSwitchVisibility));
@@ -81,19 +86,7 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
     public InspectorPreviewMeshDisplayMode DisplayMode
     {
         get => _displayMode;
-        private set
-        {
-            if (SetProperty(ref _displayMode, value))
-            {
-                OnPropertyChanged(nameof(IsWireframeSelected));
-                OnPropertyChanged(nameof(IsUvSelected));
-                OnPropertyChanged(nameof(DisplayModeGlyph));
-                OnPropertyChanged(nameof(BadgeText));
-                OnPropertyChanged(nameof(MeshGridSwitchVisibility));
-                OnPropertyChanged(nameof(ShouldDrawTextureOverlay));
-                OnPropertyChanged(nameof(ShouldDrawMeshGrid));
-            }
-        }
+        private set => SetDisplayMode(value);
     }
 
     public string BadgeText => IsUvSelected && !string.IsNullOrWhiteSpace(_uvBadgeText)
@@ -115,29 +108,13 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
     public bool IsTextureOverlaySelected
     {
         get => _isTextureOverlaySelected;
-        private set
-        {
-            if (SetProperty(ref _isTextureOverlaySelected, value))
-            {
-                OnPropertyChanged(nameof(TextureOverlayGlyph));
-                OnPropertyChanged(nameof(MeshGridSwitchVisibility));
-                OnPropertyChanged(nameof(ShouldDrawTextureOverlay));
-                OnPropertyChanged(nameof(ShouldDrawMeshGrid));
-            }
-        }
+        private set => SetTextureOverlaySelected(value);
     }
 
     public bool IsMeshGridSelected
     {
         get => _isMeshGridSelected;
-        private set
-        {
-            if (SetProperty(ref _isMeshGridSelected, value))
-            {
-                OnPropertyChanged(nameof(MeshGridGlyph));
-                OnPropertyChanged(nameof(ShouldDrawMeshGrid));
-            }
-        }
+        private set => SetMeshGridSelected(value);
     }
 
     public double RotationX
@@ -155,7 +132,7 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
     public double Zoom
     {
         get => _zoom;
-        private set => SetProperty(ref _zoom, Math.Clamp(value, MinZoom, MaxZoom));
+        private set => SetZoom(value);
     }
 
     public bool HasGeometry => Geometry is not null;
@@ -184,6 +161,8 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
     public string DisplayModeGlyph => IsUvSelected
         ? UvDisplayModeGlyphValue
         : WireframeDisplayModeGlyphValue;
+
+    public string DisplayModePersistenceKey => DisplayMode.ToString();
 
     public string TextureOverlayGlyph => IsTextureOverlaySelected
         ? TextureOverlaySelectedGlyphValue
@@ -224,11 +203,11 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
         _uvBadgeText = displayState?.UvBadgeText ?? string.Empty;
         TextureAssociationText = displayState?.TextureAssociationText ?? string.Empty;
         TextureOverlayContent = null;
-        IsTextureOverlaySelected = true;
-        IsMeshGridSelected = true;
         OnPropertyChanged(nameof(BadgeText));
-        DisplayMode = InspectorPreviewMeshDisplayMode.Wireframe;
-        ResetView();
+        if (!HasUv && DisplayMode == InspectorPreviewMeshDisplayMode.Uv)
+        {
+            SetDisplayMode(InspectorPreviewMeshDisplayMode.Wireframe, notifyDisplayOptionsChanged: false);
+        }
     }
 
     internal void ApplyTextureOverlay(byte[]? textureOverlayContent)
@@ -236,7 +215,6 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
         TextureOverlayContent = textureOverlayContent is { Length: > 0 }
             ? textureOverlayContent.ToArray()
             : null;
-        IsTextureOverlaySelected = HasTextureOverlay;
     }
 
     internal void Clear()
@@ -246,18 +224,27 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
         _wireframeBadgeText = string.Empty;
         _uvBadgeText = string.Empty;
         TextureAssociationText = string.Empty;
-        IsTextureOverlaySelected = true;
-        IsMeshGridSelected = true;
-        DisplayMode = InspectorPreviewMeshDisplayMode.Wireframe;
         OnPropertyChanged(nameof(BadgeText));
-        ResetView();
     }
 
     internal void ToggleDisplayMode()
     {
-        DisplayMode = IsUvSelected || !HasUv
-            ? InspectorPreviewMeshDisplayMode.Wireframe
-            : InspectorPreviewMeshDisplayMode.Uv;
+        SetDisplayMode(
+            IsUvSelected || !HasUv
+                ? InspectorPreviewMeshDisplayMode.Wireframe
+                : InspectorPreviewMeshDisplayMode.Uv);
+    }
+
+    internal void RestoreDisplayOptions(
+        string? displayMode,
+        bool? textureOverlaySelected,
+        bool? meshGridSelected,
+        double? zoom)
+    {
+        SetDisplayMode(ParseDisplayMode(displayMode), notifyDisplayOptionsChanged: false);
+        SetTextureOverlaySelected(textureOverlaySelected ?? true, notifyDisplayOptionsChanged: false);
+        SetMeshGridSelected(meshGridSelected ?? true, notifyDisplayOptionsChanged: false);
+        SetZoom(zoom ?? DefaultZoom, notifyDisplayOptionsChanged: false);
     }
 
     internal void ToggleTextureOverlay()
@@ -267,7 +254,7 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
             return;
         }
 
-        IsTextureOverlaySelected = !IsTextureOverlaySelected;
+        SetTextureOverlaySelected(!IsTextureOverlaySelected);
     }
 
     internal void ToggleMeshGrid()
@@ -277,7 +264,7 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
             return;
         }
 
-        IsMeshGridSelected = !IsMeshGridSelected;
+        SetMeshGridSelected(!IsMeshGridSelected);
     }
 
     internal void Rotate(double deltaX, double deltaY)
@@ -298,13 +285,89 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
             return;
         }
 
-        Zoom *= scale;
+        SetZoom(Zoom * scale);
     }
 
     internal void ResetView()
     {
         RotationX = DefaultRotationX;
         RotationY = DefaultRotationY;
-        Zoom = DefaultZoom;
+        SetZoom(DefaultZoom);
+    }
+
+    private void SetDisplayMode(
+        InspectorPreviewMeshDisplayMode mode,
+        bool notifyDisplayOptionsChanged = true)
+    {
+        if (SetProperty(ref _displayMode, mode, nameof(DisplayMode)))
+        {
+            OnPropertyChanged(nameof(IsWireframeSelected));
+            OnPropertyChanged(nameof(IsUvSelected));
+            OnPropertyChanged(nameof(DisplayModeGlyph));
+            OnPropertyChanged(nameof(DisplayModePersistenceKey));
+            OnPropertyChanged(nameof(BadgeText));
+            OnPropertyChanged(nameof(MeshGridSwitchVisibility));
+            OnPropertyChanged(nameof(ShouldDrawTextureOverlay));
+            OnPropertyChanged(nameof(ShouldDrawMeshGrid));
+            if (notifyDisplayOptionsChanged)
+            {
+                DisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+    }
+
+    private void SetTextureOverlaySelected(
+        bool isSelected,
+        bool notifyDisplayOptionsChanged = true)
+    {
+        if (SetProperty(ref _isTextureOverlaySelected, isSelected, nameof(IsTextureOverlaySelected)))
+        {
+            OnPropertyChanged(nameof(TextureOverlayGlyph));
+            OnPropertyChanged(nameof(MeshGridSwitchVisibility));
+            OnPropertyChanged(nameof(ShouldDrawTextureOverlay));
+            OnPropertyChanged(nameof(ShouldDrawMeshGrid));
+            if (notifyDisplayOptionsChanged)
+            {
+                DisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+    }
+
+    private void SetMeshGridSelected(
+        bool isSelected,
+        bool notifyDisplayOptionsChanged = true)
+    {
+        if (SetProperty(ref _isMeshGridSelected, isSelected, nameof(IsMeshGridSelected)))
+        {
+            OnPropertyChanged(nameof(MeshGridGlyph));
+            OnPropertyChanged(nameof(ShouldDrawMeshGrid));
+            if (notifyDisplayOptionsChanged)
+            {
+                DisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+    }
+
+    private void SetZoom(
+        double zoom,
+        bool notifyDisplayOptionsChanged = true)
+    {
+        var normalizedZoom = double.IsNaN(zoom) || double.IsInfinity(zoom)
+            ? DefaultZoom
+            : Math.Clamp(zoom, MinZoom, MaxZoom);
+        if (SetProperty(ref _zoom, normalizedZoom, nameof(Zoom)) && notifyDisplayOptionsChanged)
+        {
+            DisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private static InspectorPreviewMeshDisplayMode ParseDisplayMode(string? mode)
+    {
+        return Enum.TryParse<InspectorPreviewMeshDisplayMode>(
+            mode,
+            ignoreCase: true,
+            out var parsedMode)
+            ? parsedMode
+            : InspectorPreviewMeshDisplayMode.Wireframe;
     }
 }

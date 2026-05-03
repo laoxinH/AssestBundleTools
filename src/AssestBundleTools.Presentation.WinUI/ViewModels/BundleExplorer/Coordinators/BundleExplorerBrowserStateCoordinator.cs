@@ -292,6 +292,11 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
             assetTab.RestorePreviewImageDisplayOptions(
                 assetTabState.PreviewImageBackgroundMode,
                 assetTabState.SpritePreviewDisplayMode);
+            assetTab.RestorePreviewMeshDisplayOptions(
+                assetTabState.MeshPreviewDisplayMode,
+                assetTabState.MeshPreviewTextureOverlaySelected,
+                assetTabState.MeshPreviewGridSelected,
+                assetTabState.MeshPreviewZoom);
             restoredTabs.Add(assetTab);
         }
 
@@ -300,13 +305,18 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
 
     private static WorkspaceMetadataAssetTabDto CreateAssetTabMetadata(AssetDocumentTabViewModel tab)
     {
-        var displayOptions = tab.Inspector.Preview.Image.DisplayOptions;
+        var imageDisplayOptions = tab.Inspector.Preview.Image.DisplayOptions;
+        var meshDisplayOptions = tab.Inspector.Preview.Mesh;
         return new WorkspaceMetadataAssetTabDto(
             AssetId: tab.AssetId.Value,
             AssetName: tab.DisplayName,
             SelectedInspectorSection: tab.Inspector.SelectedSectionKey,
-            PreviewImageBackgroundMode: displayOptions.BackgroundModePersistenceKey,
-            SpritePreviewDisplayMode: displayOptions.SpriteDisplayModePersistenceKey);
+            PreviewImageBackgroundMode: imageDisplayOptions.BackgroundModePersistenceKey,
+            SpritePreviewDisplayMode: imageDisplayOptions.SpriteDisplayModePersistenceKey,
+            MeshPreviewDisplayMode: meshDisplayOptions.DisplayModePersistenceKey,
+            MeshPreviewTextureOverlaySelected: meshDisplayOptions.IsTextureOverlaySelected,
+            MeshPreviewGridSelected: meshDisplayOptions.IsMeshGridSelected,
+            MeshPreviewZoom: meshDisplayOptions.Zoom);
     }
 
     private static AssetType? ParseAssetTypeFilter(string? assetTypeFilter)
