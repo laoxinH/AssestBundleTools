@@ -163,7 +163,10 @@
    - 当前第二阶段已落地 `播放 / 暂停 + 基础音频信息`，并补上容器识别、外部转码与摘要回退；其中 `FSB5` 会优先转为标准 `WAV` 后播放，波形或幅度摘要仍保留为后续扩展。
    - 当前默认布局不再直接裸露系统播放器，而是采用紧凑工作卡：卡片首屏只保留资源名、原始大小与预览大小摘要，以及容器 / 时长 / 声道 / 采样率四个关键标签，中部承载播放器；更细的载荷来源、转码器与兼容字段继续放在下方统一信息卡中，避免首屏信息过载。
 4. 模型预览
-   - 预留给 `Mesh`，目标形态为 `静态 3D 视口 + 旋转 / 缩放 / 重置`。
+   - 用于 `Mesh`，当前形态为 `线框视口 + 逐三角贴图开关 + Mesh/UV 网格显隐开关 + UV0 视图切换 + 鼠标拖拽旋转 + 滚轮或按钮缩放 + 重置`；UV0 视图只在 DTO 携带 UV 坐标时显示切换入口，网格显隐只在当前视图已有可显示贴图时显示。
+   - 模型视口只消费 Application 预览 DTO 中的轻量几何、三角面索引、UV0 和通道摘要，不直接读取或解析 AB；无法取得可渲染几何时继续回退结构化摘要。
+   - 贴图关联提示优先消费详情 DTO 的 `TextureAssociations`：该字段由运行时工作区依赖图从 `Mesh <- MeshFilter / Renderer / ParticleSystemRenderer / GameObject -> Material -> Texture2D / Sprite` 主路径派生，只有主路径为空时才兜底使用 `Mesh -> Texture2D / Sprite` 直接依赖。
+   - 贴图按钮在 UV 视图中表示把首个可预览关联贴图叠加到 `[0,1]` UV 空间，便于检查 UV 展开；在线框视图中若 DTO 同时具备三角面索引和 UV0，则表示按三角裁剪并使用 UV 仿射映射贴图，再叠加线框结构。网格按钮用于在线框视图隐藏或恢复边线、顶点与轴线，在 UV 视图隐藏或恢复 UV 单位格、UV 边线与顶点，方便只观察贴图映射后的外观；贴图缺失、贴图关闭或贴图位图尚未加载完成时仍保留结构层，避免空白预览。当前不模拟 Shader、Material tiling/offset、多材质 submesh 分配或光照效果，缺少三角 / UV / 可预览贴图时稳定退回纯线框。
 5. 结构化摘要预览
    - 继续作为 `Material / Font / AnimationClip / GameObject / MonoBehaviour / AnimatorController` 等类型的安全回退。
 
@@ -288,7 +291,7 @@
 补充约定：
 
 - `InspectorPanelView.xaml` 只负责检查器整体布局、分区切换、信息卡片和底部动作区。
-- 图片 / 音频 / 文本 / 摘要 / 加载 / 空态等预览表面统一收敛到 `InspectorPreviewSurfaceView.xaml`，后续富预览扩展不得继续把复杂预览 XAML 回灌到 `InspectorPanelView.xaml`。
+- 图片 / 音频 / Mesh / 文本 / 摘要 / 加载 / 空态等预览表面统一收敛到 `InspectorPreviewSurfaceView.xaml` 及其子控件，后续富预览扩展不得继续把复杂预览 XAML 回灌到 `InspectorPanelView.xaml`。
 - 需要展示透明通道的图片预览，应在图片层下方使用统一的棋盘格底图；当前主图片预览和 Sprite 裁切结果卡片都复用 `Assets/PreviewCheckerboard.png`。
 
 ## 9. 实现准线

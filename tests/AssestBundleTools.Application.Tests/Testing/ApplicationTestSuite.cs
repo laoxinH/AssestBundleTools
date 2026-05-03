@@ -113,8 +113,16 @@ internal static class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldRoundTripCachedImageOverlay_WhenPreviewCacheStillMatches);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedMeshGeometry_WhenPreviewCacheStillMatches),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedMeshGeometry_WhenPreviewCacheStillMatches);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldRegeneratePreview_WhenGeneratorVersionChanges),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldRegeneratePreview_WhenGeneratorVersionChanges);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldRegenerateMeshPreview_WhenGeneratorVersionChanges),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldRegenerateMeshPreview_WhenGeneratorVersionChanges);
         await RunTestAsync(
             failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldRegeneratePreview_WhenSourceFingerprintChanges),

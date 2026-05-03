@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Assets.Services;
@@ -19,6 +20,8 @@ namespace AssestBundleTools.Application.Tests.Assets.Queries;
 
 internal static partial class GetAssetPreviewHandlerTests
 {
+    private static readonly JsonSerializerOptions TestMeshPreviewJsonSerializerOptions = new(JsonSerializerDefaults.Web);
+
     private static GetAssetPreviewQuery CreateQuery()
     {
         return new GetAssetPreviewQuery(
@@ -129,6 +132,100 @@ internal static partial class GetAssetPreviewHandlerTests
                 ImageFocus: imageFocus),
             [0x89, 0x50, 0x4E, 0x47],
             imageFocusContent);
+    }
+
+    private static PreviewCachePayloadDto CreateMeshPreviewPayload(
+        BundleIndexCacheEntryDto bundleCacheEntry,
+        string assetId,
+        string generatorVersion,
+        AssetPreviewMeshGeometryDto meshGeometry)
+    {
+        var previewCacheKey = CreatePreviewCacheKey(bundleCacheEntry.BundleCacheKey, assetId);
+        return new PreviewCachePayloadDto(
+            new PreviewCacheDescriptorDto(
+                WorkspaceKey: bundleCacheEntry.WorkspaceKey,
+                PreviewCacheKey: previewCacheKey,
+                BundleCacheKey: bundleCacheEntry.BundleCacheKey,
+                AssetId: assetId,
+                PreviewKind: AssetPreviewKind.Mesh.ToString(),
+                ContentType: "application/vnd.assestbundletools.mesh-preview+json",
+                RelativePayloadPath: Path.Combine(previewCacheKey, "payload.mesh.json"),
+                SourceFingerprint: bundleCacheEntry.SourceFingerprint,
+                GeneratedAtUtc: new DateTimeOffset(2026, 4, 28, 14, 10, 0, TimeSpan.Zero),
+                GeneratorVersion: generatorVersion,
+                PreviewInfoItems:
+                [
+                    new AssetPreviewInfoItemDto(
+                        AssetPreviewInfoKey.MeshVertexCount,
+                        AssetPreviewInfoValueKind.Integer,
+                        Int64Value: meshGeometry.SourceVertexCount)
+                ]),
+            JsonSerializer.SerializeToUtf8Bytes(
+                meshGeometry,
+                TestMeshPreviewJsonSerializerOptions));
+    }
+
+    private static AssetPreviewMeshGeometryDto CreateMeshGeometry()
+    {
+        return new AssetPreviewMeshGeometryDto(
+            SchemaVersion: 3,
+            SourceVertexCount: 3,
+            SourceIndexCount: 3,
+            SourceTriangleCount: 1,
+            IsGeometryTruncated: false,
+            Vertices:
+            [
+                new AssetPreviewMeshVertexDto(0, 0, 0),
+                new AssetPreviewMeshVertexDto(1, 0, 0),
+                new AssetPreviewMeshVertexDto(0, 1, 0)
+            ],
+            Edges:
+            [
+                new AssetPreviewMeshEdgeDto(0, 1),
+                new AssetPreviewMeshEdgeDto(1, 2),
+                new AssetPreviewMeshEdgeDto(0, 2)
+            ],
+            SubMeshes:
+            [
+                new AssetPreviewMeshSubMeshDto(
+                    Index: 0,
+                    FirstIndexByte: 0,
+                    IndexCount: 3,
+                    Topology: 0,
+                    BaseVertex: 0,
+                    FirstVertex: 0,
+                    VertexCount: 3)
+            ],
+            Bounds: new AssetPreviewMeshBoundsDto(
+                new AssetPreviewMeshVertexDto(0.5, 0.5, 0),
+                new AssetPreviewMeshVertexDto(0.5, 0.5, 0)),
+            Uv0:
+            [
+                new AssetPreviewMeshUvDto(0, 0),
+                new AssetPreviewMeshUvDto(1, 0),
+                new AssetPreviewMeshUvDto(0, 1)
+            ],
+            Channels:
+            [
+                new AssetPreviewMeshChannelDto(
+                    Index: 0,
+                    Stream: 0,
+                    Offset: 0,
+                    Format: 0,
+                    Dimension: 3,
+                    IsPreviewReadable: true),
+                new AssetPreviewMeshChannelDto(
+                    Index: 4,
+                    Stream: 0,
+                    Offset: 12,
+                    Format: 0,
+                    Dimension: 2,
+                    IsPreviewReadable: true)
+            ],
+            Triangles:
+            [
+                new AssetPreviewMeshTriangleDto(0, 1, 2, 0)
+            ]);
     }
 
     private static string CreatePreviewCacheKey(string bundleCacheKey, string assetId)

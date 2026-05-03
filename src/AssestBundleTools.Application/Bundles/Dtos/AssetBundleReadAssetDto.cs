@@ -17,4 +17,5 @@ public sealed record AssetBundleReadAssetDto(
     string SerializedFileName,
     long PathId,
     string? AssetTypeDisplayName = null,
-    IReadOnlyList<AssetBundleReadAssetDependencyDto>? Dependencies = null);
+    IReadOnlyList<AssetBundleReadAssetDependencyDto>? Dependencies = null,
+    bool IncludeInAssetList = true);

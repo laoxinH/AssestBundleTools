@@ -289,6 +289,9 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
                 new AssetId(assetTabState.AssetId),
                 assetTabState.AssetName);
             assetTab.RestoreSelectedInspectorSection(assetTabState.SelectedInspectorSection);
+            assetTab.RestorePreviewImageDisplayOptions(
+                assetTabState.PreviewImageBackgroundMode,
+                assetTabState.SpritePreviewDisplayMode);
             restoredTabs.Add(assetTab);
         }
 
@@ -297,10 +300,13 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
 
     private static WorkspaceMetadataAssetTabDto CreateAssetTabMetadata(AssetDocumentTabViewModel tab)
     {
+        var displayOptions = tab.Inspector.Preview.Image.DisplayOptions;
         return new WorkspaceMetadataAssetTabDto(
             AssetId: tab.AssetId.Value,
             AssetName: tab.DisplayName,
-            SelectedInspectorSection: tab.Inspector.SelectedSectionKey);
+            SelectedInspectorSection: tab.Inspector.SelectedSectionKey,
+            PreviewImageBackgroundMode: displayOptions.BackgroundModePersistenceKey,
+            SpritePreviewDisplayMode: displayOptions.SpriteDisplayModePersistenceKey);
     }
 
     private static AssetType? ParseAssetTypeFilter(string? assetTypeFilter)

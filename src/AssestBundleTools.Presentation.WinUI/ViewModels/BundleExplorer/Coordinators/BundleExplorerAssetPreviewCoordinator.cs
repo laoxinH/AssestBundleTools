@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
+using AssestBundleTools.Application.Common.Messages;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Common.Errors;
@@ -27,8 +28,10 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
     private readonly IAppLogService _appLogService;
     private readonly ILocalizationService _localizationService;
     private readonly AssetPreviewQueryExecutor _previewQueryExecutor;
+    private readonly MeshTextureOverlayPreviewLoader _meshTextureOverlayPreviewLoader;
     private readonly LocalizedValueFormatter _localizedValueFormatter;
     private readonly AssetPreviewDisplayFormatter _assetPreviewDisplayFormatter;
+    private readonly PreviewDiagnosticDisplayTextResolver _previewDiagnosticDisplayTextResolver;
 
     public BundleExplorerAssetPreviewCoordinator(
         IWorkspaceAssetInspectionGateway workspaceAssetInspectionGateway,
@@ -51,8 +54,10 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
             backgroundTaskRunner,
             NormalizePreviewQueryTimeout(previewQueryTimeout),
             AssetPreviewExecutionOptionsResolver.NormalizePreviewWorkerCount(previewWorkerCount));
+        _meshTextureOverlayPreviewLoader = new MeshTextureOverlayPreviewLoader(_previewQueryExecutor);
         _localizedValueFormatter = new LocalizedValueFormatter(_localizationService);
         _assetPreviewDisplayFormatter = new AssetPreviewDisplayFormatter(_localizationService);
+        _previewDiagnosticDisplayTextResolver = new PreviewDiagnosticDisplayTextResolver(_localizationService);
     }
 
     public async Task LoadInspectorPreviewAsync(
@@ -90,7 +95,13 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         }
         catch (TimeoutException)
         {
-            if (!ApplyUnavailablePreviewIfCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant))
+            if (!ApplyUnavailablePreviewIfCurrentAndRelevant(
+                    assetTab,
+                    details,
+                    previewRequest,
+                    isPreviewRelevant,
+                    CreatePreviewFailureDiagnostic(new LocalizedMessageDto(
+                        MessageToken: ResourceKeys.BundleExplorerPreviewLoadTimedOut))))
             {
                 ResetPreviewIfCurrent(assetTab, details, previewRequest);
             }
@@ -99,9 +110,14 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
                 LogPreviewDisplayFailure(details.Name, GetString(ResourceKeys.BundleExplorerPreviewLoadTimedOut));
             }
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            if (!ApplyUnavailablePreviewIfCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant))
+            if (!ApplyUnavailablePreviewIfCurrentAndRelevant(
+                    assetTab,
+                    details,
+                    previewRequest,
+                    isPreviewRelevant,
+                    CreatePreviewFailureDiagnostic(CreateExceptionDiagnosticMessage(exception))))
             {
                 ResetPreviewIfCurrent(assetTab, details, previewRequest);
             }
@@ -251,6 +267,34 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
                     ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
                 }
+                case AssetPreviewKind.Mesh:
+                {
+                    if (preview.MeshGeometry is null)
+                    {
+                        ApplyUnavailablePreview(assetTab.Inspector, preview.Diagnostic);
+                        return;
+                    }
+
+                    var textureOverlayContent = await _meshTextureOverlayPreviewLoader.LoadAsync(
+                        details,
+                        previewQuery,
+                        previewRequest.CancellationToken,
+                        priority,
+                        () => IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant));
+                    if (!IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant))
+                    {
+                        return;
+                    }
+
+                    assetTab.Inspector.ApplyMeshPreview(
+                        preview.MeshGeometry,
+                        previewInfoRows,
+                        _assetPreviewDisplayFormatter.BuildMeshPreviewDisplayState(preview, details),
+                        preview.PreviewPayloadFilePath,
+                        textureOverlayContent);
+                    ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
+                    return;
+                }
                 case AssetPreviewKind.Summary:
                 {
                     var summaryText = !string.IsNullOrWhiteSpace(preview.TextContent)
@@ -275,7 +319,7 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
                     return;
             }
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             if (!assetTab.IsPreviewRequestCurrent(details, previewRequest))
             {
@@ -283,7 +327,9 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
             }
 
             LogPreviewDisplayFailure(details.Name, GetString(ResourceKeys.BundleExplorerPreviewUnexpectedDisplayFailure));
-            ApplyUnavailablePreview(assetTab.Inspector, preview.Diagnostic);
+            ApplyUnavailablePreview(
+                assetTab.Inspector,
+                ReplacePreviewDiagnosticDetail(preview.Diagnostic, CreateExceptionDiagnosticMessage(exception)));
         }
     }
 
@@ -340,8 +386,8 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         AssetPreviewDiagnosticDto diagnostic)
     {
         inspector.ApplyPreviewDiagnostic(
-            cacheStatusText: GetPreviewCacheStatusText(diagnostic.CacheStatus),
-            fallbackReasonText: GetPreviewFallbackReasonText(diagnostic.FallbackReason),
+            cacheStatusText: _previewDiagnosticDisplayTextResolver.GetCacheStatusText(diagnostic.CacheStatus),
+            fallbackReasonText: _previewDiagnosticDisplayTextResolver.GetFallbackReasonText(diagnostic.FallbackReason),
             diagnosticDetailText: LocalizedMessageDisplayFormatter.Format(
                 diagnostic.DetailMessage,
                 _localizationService));
@@ -359,7 +405,8 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
         AssetPreviewRequest previewRequest,
-        Func<bool>? isPreviewRelevant)
+        Func<bool>? isPreviewRelevant,
+        AssetPreviewDiagnosticDto? diagnostic = null)
     {
         if (!IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant))
         {
@@ -367,6 +414,11 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         }
 
         assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
+        if (diagnostic is not null)
+        {
+            ApplyPreviewDiagnostic(assetTab.Inspector, diagnostic);
+        }
+
         return true;
     }
 
@@ -402,6 +454,33 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
             reason));
     }
 
+    private static AssetPreviewDiagnosticDto CreatePreviewFailureDiagnostic(LocalizedMessageDto detailMessage)
+    {
+        return new AssetPreviewDiagnosticDto(
+            CacheStatus: AssetPreviewCacheStatusKind.Missing,
+            FallbackReason: AssetPreviewFallbackReasonKind.GenerationFailed,
+            DetailMessage: detailMessage);
+    }
+
+    private static AssetPreviewDiagnosticDto ReplacePreviewDiagnosticDetail(
+        AssetPreviewDiagnosticDto diagnostic,
+        LocalizedMessageDto detailMessage)
+    {
+        return diagnostic with
+        {
+            FallbackReason = diagnostic.FallbackReason == AssetPreviewFallbackReasonKind.None
+                ? AssetPreviewFallbackReasonKind.GenerationFailed
+                : diagnostic.FallbackReason,
+            DetailMessage = detailMessage
+        };
+    }
+
+    private static LocalizedMessageDto CreateExceptionDiagnosticMessage(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        return new LocalizedMessageDto(FallbackText: exception.ToString());
+    }
+
     private async Task<SpriteFocusPreviewDisplayState?> CreateSpriteFocusPreviewDisplayStateAsync(AssetPreviewDto preview)
     {
         var imageFocus = preview.ImageFocus;
@@ -423,33 +502,6 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
                 ResourceKeys.InspectorSpriteFocusPreviewSizeFormat,
                 imageFocus.PixelWidth,
                 imageFocus.PixelHeight));
-    }
-
-    private string GetPreviewCacheStatusText(AssetPreviewCacheStatusKind cacheStatus)
-    {
-        return cacheStatus switch
-        {
-            AssetPreviewCacheStatusKind.Hit => GetString(ResourceKeys.InspectorPreviewDiagnosticCacheStatusHit),
-            AssetPreviewCacheStatusKind.Missing => GetString(ResourceKeys.InspectorPreviewDiagnosticCacheStatusMissing),
-            AssetPreviewCacheStatusKind.IdentityChanged => GetString(ResourceKeys.InspectorPreviewDiagnosticCacheStatusIdentityChanged),
-            AssetPreviewCacheStatusKind.SourceFingerprintChanged => GetString(ResourceKeys.InspectorPreviewDiagnosticCacheStatusSourceFingerprintChanged),
-            AssetPreviewCacheStatusKind.GeneratorVersionChanged => GetString(ResourceKeys.InspectorPreviewDiagnosticCacheStatusGeneratorVersionChanged),
-            AssetPreviewCacheStatusKind.AudioTranscoderChanged => GetString(ResourceKeys.InspectorPreviewDiagnosticCacheStatusAudioTranscoderChanged),
-            _ => cacheStatus.ToString()
-        };
-    }
-
-    private string GetPreviewFallbackReasonText(AssetPreviewFallbackReasonKind fallbackReason)
-    {
-        return fallbackReason switch
-        {
-            AssetPreviewFallbackReasonKind.None => GetString(ResourceKeys.InspectorPreviewDiagnosticFallbackReasonNone),
-            AssetPreviewFallbackReasonKind.MissingLocator => GetString(ResourceKeys.InspectorPreviewDiagnosticFallbackReasonMissingLocator),
-            AssetPreviewFallbackReasonKind.DecryptorResolveFailed => GetString(ResourceKeys.InspectorPreviewDiagnosticFallbackReasonDecryptorResolveFailed),
-            AssetPreviewFallbackReasonKind.DecryptionFailed => GetString(ResourceKeys.InspectorPreviewDiagnosticFallbackReasonDecryptionFailed),
-            AssetPreviewFallbackReasonKind.GenerationFailed => GetString(ResourceKeys.InspectorPreviewDiagnosticFallbackReasonGenerationFailed),
-            _ => fallbackReason.ToString()
-        };
     }
 
     private static TimeSpan NormalizePreviewQueryTimeout(TimeSpan? previewQueryTimeout)

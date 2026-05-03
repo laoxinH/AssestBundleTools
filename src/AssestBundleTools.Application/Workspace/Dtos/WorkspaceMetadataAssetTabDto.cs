@@ -10,4 +10,6 @@ namespace AssestBundleTools.Application.Workspace.Dtos;
 public sealed record WorkspaceMetadataAssetTabDto(
     string AssetId,
     string AssetName,
-    string? SelectedInspectorSection = null);
+    string? SelectedInspectorSection = null,
+    string? PreviewImageBackgroundMode = null,
+    string? SpritePreviewDisplayMode = null);

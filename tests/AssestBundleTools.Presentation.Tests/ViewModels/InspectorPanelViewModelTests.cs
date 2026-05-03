@@ -9,32 +9,46 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 public sealed class InspectorPanelViewModelTests
 {
     [Fact]
+    public void Apply_ShouldShowAvailablePathsAsSeparateRows()
+    {
+        var viewModel = CreateViewModel();
+
+        ApplyBasicDetails(
+            viewModel,
+            containerPath: "assets/ui/button.png",
+            serializedFileName: "CAB-test");
+
+        var rows = viewModel.InformationCards.Single(static card => card.Key == "basic").Rows;
+
+        Assert.DoesNotContain(rows, static row => row.Label == "Path");
+        Assert.Contains(rows, static row => row.Label == "Container" && row.Value == "assets/ui/button.png");
+        Assert.Contains(rows, static row => row.Label == "Serialized File" && row.Value == "CAB-test");
+        Assert.Contains(rows, static row => row.Label == "PathId" && row.Value == "1");
+    }
+
+    [Fact]
+    public void Apply_ShouldHideUnavailablePathRows()
+    {
+        var viewModel = CreateViewModel();
+
+        ApplyBasicDetails(
+            viewModel,
+            containerPath: string.Empty,
+            serializedFileName: string.Empty);
+
+        var rows = viewModel.InformationCards.Single(static card => card.Key == "basic").Rows;
+
+        Assert.DoesNotContain(rows, static row => row.Label == "Path");
+        Assert.DoesNotContain(rows, static row => row.Label == "Container");
+        Assert.DoesNotContain(rows, static row => row.Label == "Serialized File");
+        Assert.Contains(rows, static row => row.Label == "PathId" && row.Value == "1");
+    }
+
+    [Fact]
     public void UpdatePreviewImageViewport_ShouldMakeOverlayVisible_WhenViewportArrivesAfterPreviewState()
     {
         var viewModel = CreateViewModel();
-        viewModel.Apply(
-            assetName: "Sprite",
-            bundleDisplayName: "bundle",
-            assetTypeText: "Sprite",
-            assetPath: "Assets/Sprite",
-            containerPath: string.Empty,
-            sizeText: "1 KB",
-            pathIdText: "1",
-            extractCapabilityText: string.Empty,
-            fileReplacementCapabilityText: string.Empty,
-            workspaceReplacementCapabilityText: string.Empty,
-            replacementSourceText: string.Empty,
-            replacementStatusText: string.Empty,
-            changeSummaryText: string.Empty,
-            canExtract: false,
-            canSelectFileReplacementSource: false,
-            canSelectReplacementSource: false,
-            canApplyReplacement: false,
-            canUndoReplacement: false,
-            assetDependencies: Array.Empty<AssetDependencyViewModel>(),
-            referencedByDependencies: Array.Empty<AssetDependencyViewModel>(),
-            dependencyClosureItems: Array.Empty<AssetDependencyViewModel>(),
-            bundleExternalDependencies: Array.Empty<BundleExternalDependencyViewModel>());
+        ApplyBasicDetails(viewModel, string.Empty, "CAB-test");
         viewModel.ApplyImagePreview(
             CreateBitmapImageStub(),
             imagePixelWidth: 1000,
@@ -83,8 +97,6 @@ public sealed class InspectorPanelViewModelTests
         Assert.Equal(40d, projected.Value.OverlayY, precision: 3);
         Assert.Equal(60d, projected.Value.OverlayWidth, precision: 3);
         Assert.Equal(30d, projected.Value.OverlayHeight, precision: 3);
-        Assert.Equal(40d, projected.Value.LabelX, precision: 3);
-        Assert.Equal(80d, projected.Value.LabelY, precision: 3);
     }
 
     [Fact]
@@ -131,6 +143,36 @@ public sealed class InspectorPanelViewModelTests
             : null;
     }
 
+    private static void ApplyBasicDetails(
+        InspectorPanelViewModel viewModel,
+        string containerPath,
+        string serializedFileName)
+    {
+        viewModel.Apply(
+            assetName: "Sprite",
+            bundleDisplayName: "bundle",
+            assetTypeText: "Sprite",
+            containerPath: containerPath,
+            serializedFileName: serializedFileName,
+            sizeText: "1 KB",
+            pathIdText: "1",
+            extractCapabilityText: string.Empty,
+            fileReplacementCapabilityText: string.Empty,
+            workspaceReplacementCapabilityText: string.Empty,
+            replacementSourceText: string.Empty,
+            replacementStatusText: string.Empty,
+            changeSummaryText: string.Empty,
+            canExtract: false,
+            canSelectFileReplacementSource: false,
+            canSelectReplacementSource: false,
+            canApplyReplacement: false,
+            canUndoReplacement: false,
+            assetDependencies: Array.Empty<AssetDependencyViewModel>(),
+            referencedByDependencies: Array.Empty<AssetDependencyViewModel>(),
+            dependencyClosureItems: Array.Empty<AssetDependencyViewModel>(),
+            bundleExternalDependencies: Array.Empty<BundleExternalDependencyViewModel>());
+    }
+
     private static BitmapImage CreateBitmapImageStub()
     {
         return (BitmapImage)RuntimeHelpers.GetUninitializedObject(typeof(BitmapImage));
@@ -146,8 +188,8 @@ public sealed class InspectorPanelViewModelTests
                 AssetNameLabel: "Name",
                 AssetTypeLabel: "Type",
                 BundleLabel: "Bundle",
-                AssetPathLabel: "Path",
                 ContainerPathLabel: "Container",
+                SerializedFileLabel: "Serialized File",
                 AssetSizeLabel: "Size",
                 PathIdLabel: "PathId",
                 PreviewCacheStatusLabel: "Cache",

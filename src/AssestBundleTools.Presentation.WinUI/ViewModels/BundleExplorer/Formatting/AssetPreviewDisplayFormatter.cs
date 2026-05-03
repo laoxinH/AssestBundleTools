@@ -1,5 +1,6 @@
 using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
@@ -126,12 +127,31 @@ internal sealed class AssetPreviewDisplayFormatter
             BorderTop: overlay.NineSliceBorder?.Top,
             BorderRight: overlay.NineSliceBorder?.Right,
             BorderBottom: overlay.NineSliceBorder?.Bottom,
+            BadgeText: BuildSpritePreviewOverlayBadgeText(region, overlay.PivotPoint));
+    }
+
+    public MeshPreviewDisplayState BuildMeshPreviewDisplayState(
+        AssetPreviewDto preview,
+        AssetDetailsDto? details = null)
+    {
+        ArgumentNullException.ThrowIfNull(preview);
+
+        var geometry = preview.MeshGeometry;
+        if (preview.Kind != AssetPreviewKind.Mesh || geometry is null)
+        {
+            return new MeshPreviewDisplayState(string.Empty);
+        }
+
+        return new MeshPreviewDisplayState(
             BadgeText: _localizationService.GetFormattedString(
-                ResourceKeys.InspectorSpritePreviewOverlayBadgeFormat,
-                FormatOverlayNumber(region.X),
-                FormatOverlayNumber(region.Y),
-                FormatOverlayNumber(region.Width),
-                FormatOverlayNumber(region.Height)));
+                ResourceKeys.InspectorMeshPreviewBadgeFormat,
+                geometry.SourceVertexCount.ToString(CultureInfo.CurrentCulture),
+                geometry.Edges.Count.ToString(CultureInfo.CurrentCulture)),
+            UvBadgeText: _localizationService.GetFormattedString(
+                ResourceKeys.InspectorMeshPreviewUvBadgeFormat,
+                (geometry.Uv0?.Count ?? 0).ToString(CultureInfo.CurrentCulture),
+                geometry.Edges.Count.ToString(CultureInfo.CurrentCulture)),
+            TextureAssociationText: BuildMeshTextureAssociationText(details));
     }
 
     private string ResolvePreviewInfoLabel(AssetPreviewInfoKey key)
@@ -269,9 +289,76 @@ internal sealed class AssetPreviewDisplayFormatter
             .Int64Value;
     }
 
+    private string BuildSpritePreviewOverlayBadgeText(
+        AssetPreviewImageRegionDto region,
+        AssetPreviewImagePointDto? pivotPoint)
+    {
+        if (pivotPoint is null)
+        {
+            return _localizationService.GetFormattedString(
+                ResourceKeys.InspectorSpritePreviewOverlayBadgeFormat,
+                FormatOverlayNumber(region.X),
+                FormatOverlayNumber(region.Y),
+                FormatOverlayNumber(region.Width),
+                FormatOverlayNumber(region.Height));
+        }
+
+        return _localizationService.GetFormattedString(
+            ResourceKeys.InspectorSpritePreviewOverlayBadgeWithPivotFormat,
+            FormatOverlayNumber(region.X),
+            FormatOverlayNumber(region.Y),
+            FormatOverlayNumber(region.Width),
+            FormatOverlayNumber(region.Height),
+            FormatOverlayNumber(pivotPoint.X),
+            FormatOverlayNumber(pivotPoint.Y));
+    }
+
     private static string FormatOverlayNumber(double value)
     {
         return value.ToString("0.###", CultureInfo.CurrentCulture);
+    }
+
+    private string BuildMeshTextureAssociationText(AssetDetailsDto? details)
+    {
+        var associations = CollectMeshTextureAssociations(details);
+        if (associations.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        return _localizationService.GetFormattedString(
+            ResourceKeys.InspectorMeshPreviewTextureAssociationFormat,
+            string.Join(", ", associations));
+    }
+
+    private IReadOnlyList<string> CollectMeshTextureAssociations(AssetDetailsDto? details)
+    {
+        var associations = new List<string>();
+        foreach (var dependency in MeshTextureAssociationCandidateResolver.CollectDisplayCandidates(details, maxCount: 4))
+        {
+            associations.Add(_localizationService.GetFormattedString(
+                ResourceKeys.InspectorMeshPreviewTextureAssociationItemFormat,
+                dependency.Name,
+                ResolveAssociationTypeText(dependency)));
+        }
+
+        return associations;
+    }
+
+    private string ResolveAssociationTypeText(AssetDependencyDto dependency)
+    {
+        if (!string.IsNullOrWhiteSpace(dependency.AssetTypeDisplayName))
+        {
+            return dependency.AssetTypeDisplayName.Trim();
+        }
+
+        return dependency.AssetType switch
+        {
+            AssetType.Material => _localizationService.GetRequiredString(ResourceKeys.AssetTypeDisplayMaterial),
+            AssetType.Texture2D => _localizationService.GetRequiredString(ResourceKeys.AssetTypeDisplayTexture2D),
+            AssetType.Sprite => _localizationService.GetRequiredString(ResourceKeys.AssetTypeDisplaySprite),
+            _ => dependency.AssetType.ToString()
+        };
     }
 }
 
@@ -310,3 +397,11 @@ public sealed record SpritePreviewOverlayDisplayState(
     double? BorderRight,
     double? BorderBottom,
     string BadgeText);
+
+/// <summary>
+/// 表示 Mesh 线框预览需要的已格式化展示状态。
+/// </summary>
+public sealed record MeshPreviewDisplayState(
+    string BadgeText,
+    string UvBadgeText = "",
+    string TextureAssociationText = "");

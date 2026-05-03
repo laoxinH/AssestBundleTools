@@ -99,7 +99,8 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         _assetDocumentHostCoordinator = new BundleExplorerAssetDocumentHostCoordinator(
             _documentWorkspace,
             _localizationService,
-            () => NotifyActionStates());
+            () => NotifyActionStates(),
+            _requestWorkspaceBrowserStatePersistence);
 
         PrimaryPane.SupportsBatchExtractionQuickAction = true;
         PrimaryPane.ReplaceAssetTypeOptions(_assetInspectorPresenter.CreateAssetTypeOptions());

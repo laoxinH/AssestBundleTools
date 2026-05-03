@@ -76,6 +76,10 @@
 - `AssestBundleTools.Presentation.Tests` 在当前 WinUI / x86 测试链路下，`dotnet test` 可能出现退出码 `1` 但没有测试正文的静默失败。
   若项目已经用 `MSBuild /p:Platform=x86` 构建成功，建议用 VS `vstest.console.exe` 直接执行 `bin/x86/.../AssestBundleTools.Presentation.Tests.dll`，
   并带上 `/Platform:x86 /InIsolation`；只有当输出里出现明确断言、加载或编译错误时，再按真实测试失败处理。
+- 如果 `Presentation.Tests` 为了避开 WinUI 输出锁而构建到独立 `OutDir`，运行 `vstest` 前需要检查该 `OutDir` 根部是否含有 `hostfxr.dll / hostpolicy.dll`。
+  这两个 app-local host 文件会让 x86 `testhost` 把临时输出目录误判为 `.NET location`，随后报找不到 `Microsoft.NETCore.App 8.0.0 (x86)`。
+  只删除临时 `OutDir` 根部的 `hostfxr.dll / hostpolicy.dll` 后，再用：
+  `vstest.console.exe <OutDir>\AssestBundleTools.Presentation.Tests.dll /Platform:x86 /InIsolation /TestAdapterPath:<OutDir>`。
 - 如果只是为了避开运行中进程或 DLL 文件锁，优先保留默认 `obj`，只在解决方案或项目构建时重定向 `OutDir`。
   不建议把 `BaseIntermediateOutputPath` 当成通用解法；这次验证中它曾引出 `NETSDK1004` 和 `CS0579` 之类与真实代码无关的噪声错误。
 

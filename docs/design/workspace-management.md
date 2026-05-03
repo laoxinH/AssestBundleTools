@@ -385,6 +385,7 @@ Presentation 层保留两个协同层次：
 
 - `previewInfoItems` 只承载轻量补充信息，不承载音频波形点、atlas 矩形集合、模型默认相机等结构化富预览数据。
 - `imageOverlay / imageFocus` 仅用于图片类预览中与主 PNG 同源的轻量结构化数据；更复杂的富预览元数据仍应进入 sidecar metadata。
+- Mesh 预览的轻量几何 sidecar 当前包含顶点、边、submesh 摘要、UV0、通道摘要以及用于贴图化预览的三角面索引；Presentation 只能消费该 DTO 与关联贴图缓存载荷，不得为了补贴图效果直接解析 AB。
 - 当预览能力从 `Image / Text / Summary` 扩展到 `Audio / Model / Atlas` 时，应把这类结构化数据写入 `relativeMetadataPath` 指向的 sidecar metadata 文件。
 - `previewKind` 必须保持通用枚举语义，避免为某一个 Unity 资源类型直接设计专用缓存目录结构。
 - Presentation 层只消费 `AssetPreviewDto` 与缓存产物，不直接感知资源包或解密细节。
@@ -653,7 +654,7 @@ Presentation 层保留两个协同层次：
 1. 继续补活动工作区在更多依赖页面中的摘要与入口承载，并在后续需要时补跨 Bundle 级依赖跳转
 2. 再评估是否需要顶层工作区切换器
 3. M9 当前已完成真实资产级读取、索引缓存复用、工作区级解密器自动识别、失败诊断、依赖深读与缓存诊断主链路收口
-4. 下一步进入富预览扩展：`AudioClip -> SpriteAtlas -> Mesh -> Material / Font / AnimationClip`
+4. 富预览扩展当前已完成 `AudioClip` 与 `Mesh` 第一版，下一步按样本频率继续评估 `SpriteAtlas -> Material / Font / AnimationClip`
 5. 最后再评估是否需要引入可分享工作区文件
 6. 工作区窗口模型当前已按“跨进程隔离优先 + formal/pending 双阶段注册”落地，并已补上 pending 注册 / 页面级失败回滚的首轮 `Presentation` 回归；后续若继续加强稳定性，更适合继续补跨进程窗口激活与重定向链路，而不是重新回退注册时机
 
@@ -668,8 +669,13 @@ Presentation 层保留两个协同层次：
    - 工作台默认展示已调整为“紧凑音频工作卡”：首屏只展示资源名、原始大小 / 预览大小摘要与 `容器 / 时长 / 声道 / 采样率` 四个关键标签，中部承载自定义紧凑试听控制条；其余载荷与转码细节继续落在基础信息卡与预览信息卡中，避免重复堆叠。
    - 预览面板顶部统一提供“打开预览文件所在位置”动作，该动作面向整个预览容器，而不是只绑定在音频类型上；后续图片、文本和更复杂富预览都复用同一入口。
    - 若 `vgmstream-cli` 不可用或转码失败，仍会稳定回退为摘要信息，并展示容器类型、载荷来源、载荷大小、采样率、声道、时长和压缩格式等信息。
-2. `SpriteAtlas`
-3. `Mesh`
+2. `Mesh`
+   - 当前已落地线框视口与 UV0 视图：预览生成器输出轻量几何、UV0、顶点通道摘要 JSON，Application 缓存并反序列化为 DTO，Presentation 通过 Win2D 渲染旋转 / 缩放 / 重置交互和 UV 视图切换。
+   - 贴图关联主路径由运行时工作区缓存图派生：优先从 `Mesh` 的反向引用进入 `MeshFilter / Renderer / ParticleSystemRenderer / GameObject` 等宿主，再沿宿主到 `Material`、`Texture2D / Sprite` 的依赖链查找可关联贴图；只有主路径没有结果时，才把 `Mesh -> Texture2D / Sprite` 直接依赖作为兜底。Presentation 只消费 `AssetDetailsDto.TextureAssociations` 与现有预览查询管线，不在 WinUI 侧追加资源包解析。
+   - 当前 Mesh sidecar 已升级为 schema v3，并额外保存预览范围内的三角面索引；线框视图在贴图按钮开启、三角 / UV / 可预览关联贴图都可用时，会通过 Win2D 逐三角裁剪并按 UV 仿射映射贴图，再叠加线框结构。贴图化线框预览提供独立 Mesh/UV 网格显隐开关，可在线框视图隐藏边线、顶点与轴线，也可在 UV 视图隐藏 UV 单位格、UV 边线与顶点，以观察最终贴图映射外观；贴图缺失、贴图关闭或贴图位图尚未加载完成时仍保留结构层，避免空白预览。UV 视图仍通过现有 `GetAssetPreviewQuery` 管线加载首个可预览的 `Texture2D / Sprite` 关联图片并叠加到 `[0,1]` UV 空间，用于检查 UV 展开。
+   - 当前贴图化 Mesh 预览只表达几何和 UV 对贴图的基础对应关系，不模拟 Shader、Material tiling/offset、多材质 submesh 分配、骨骼蒙皮或光照效果；缺少三角 / UV / 可预览贴图时继续稳定退回纯线框。
+   - 当前只把可读取的非压缩 Mesh 几何提升为富预览；无法读取顶点 / 索引 / 布局时继续使用结构化摘要。
+3. `SpriteAtlas`
 4. `Material / Font / AnimationClip` 的半可视化预览
 
 其中 `GameObject / MonoBehaviour / AnimatorController` 当前继续保留结构化摘要，不进入近期重型预览主线。
@@ -693,6 +699,7 @@ Presentation 层保留两个协同层次：
 - 导入入口先收口到 Presentation 共享协调服务，再通过 Application 层统一登记工作区导入来源，并进一步接到解密、读取和缓存写入链路
 - 真实导入前若需要解密，应先通过独立解密器扩展点把来源转换为可读取文件，再进入 `IAssetBundleReader`
 - `AudioClip` 等富预览若需要额外转码，应先通过独立音频转码层把载荷转换为标准可播放格式，再交给 Presentation 渲染
+- `Mesh` 等模型富预览的几何、三角面索引、UV 与通道读取必须停留在 Infrastructure 预览生成器中；Mesh 贴图关联由运行时工作区依赖图派生为 `TextureAssociations`，Presentation 只能消费结构化 DTO、派生关联关系与缓存载荷路径，不得直接解析资源包
 - 自动识别默认按“导入源识别 -> 解密器识别 -> Reader 路径识别 -> 缓存命中识别”四层推进，而不是把所有判断都塞进 Reader 或 UI
 - 拖拽导入的页面桥接应优先挂在具体工作区区域，而不是整页根节点
 - AB 真实解析结果应优先写入独立缓存层，而不是写进工作区元数据文件

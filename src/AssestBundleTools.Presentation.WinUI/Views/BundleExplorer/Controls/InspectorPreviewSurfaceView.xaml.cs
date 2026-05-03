@@ -12,7 +12,6 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
     private readonly DispatcherTimer _audioTransportTimer;
     private MediaPlayer? _attachedAudioPlayer;
     private InspectorPreviewViewModel? _observedPreviewViewModel;
-    private InspectorPreviewImageViewModel? _observedPreviewImageViewModel;
     private bool _isUpdatingAudioSliderValue;
 
     public static readonly DependencyProperty ViewModelProperty =
@@ -59,6 +58,11 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
         ToolTipService.SetToolTip(OpenPreviewLocationButton, UiText.Get(ResourceKeys.InspectorPreviewOpenLocationToolTip));
         ToolTipService.SetToolTip(AudioTransportPlayPauseButton, UiText.Get(ResourceKeys.InspectorAudioTransportPlayToolTip));
         ToolTipService.SetToolTip(AudioTransportResetButton, UiText.Get(ResourceKeys.InspectorAudioTransportResetToolTip));
+        ToolTipService.SetToolTip(MeshZoomInButton, UiText.Get(ResourceKeys.InspectorMeshPreviewZoomInToolTip));
+        ToolTipService.SetToolTip(MeshZoomOutButton, UiText.Get(ResourceKeys.InspectorMeshPreviewZoomOutToolTip));
+        ToolTipService.SetToolTip(MeshResetButton, UiText.Get(ResourceKeys.InspectorMeshPreviewResetToolTip));
+        RefreshImageActionToolTips();
+        RefreshMeshActionToolTips();
         RefreshAudioTransportState();
     }
 
@@ -66,7 +70,6 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
     {
         AttachAudioPlayer(AudioPreviewPlayer.MediaPlayer);
         AttachObservedPreviewViewModel(ViewModel?.Preview);
-        RefreshPreviewImageViewport();
         RefreshAudioTransportState();
     }
 
@@ -86,7 +89,10 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
 
         _observedPreviewViewModel = previewViewModel;
         _observedPreviewViewModel.PropertyChanged += OnObservedPreviewViewModelPropertyChanged;
-        AttachObservedPreviewImageViewModel(previewViewModel.Image);
+        _observedPreviewViewModel.Image.DisplayOptions.PropertyChanged += OnObservedPreviewImageDisplayOptionsPropertyChanged;
+        _observedPreviewViewModel.Mesh.PropertyChanged += OnObservedPreviewMeshPropertyChanged;
+        RefreshImageActionToolTips();
+        RefreshMeshActionToolTips();
     }
 
     private void DetachObservedPreviewViewModel(InspectorPreviewViewModel? previewViewModel)
@@ -97,30 +103,9 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
         }
 
         _observedPreviewViewModel.PropertyChanged -= OnObservedPreviewViewModelPropertyChanged;
-        DetachObservedPreviewImageViewModel(_observedPreviewImageViewModel);
+        _observedPreviewViewModel.Image.DisplayOptions.PropertyChanged -= OnObservedPreviewImageDisplayOptionsPropertyChanged;
+        _observedPreviewViewModel.Mesh.PropertyChanged -= OnObservedPreviewMeshPropertyChanged;
         _observedPreviewViewModel = null;
-    }
-
-    private void AttachObservedPreviewImageViewModel(InspectorPreviewImageViewModel? imageViewModel)
-    {
-        if (imageViewModel is null || ReferenceEquals(_observedPreviewImageViewModel, imageViewModel))
-        {
-            return;
-        }
-
-        _observedPreviewImageViewModel = imageViewModel;
-        _observedPreviewImageViewModel.PropertyChanged += OnObservedPreviewImageViewModelPropertyChanged;
-    }
-
-    private void DetachObservedPreviewImageViewModel(InspectorPreviewImageViewModel? imageViewModel)
-    {
-        if (imageViewModel is null || !ReferenceEquals(_observedPreviewImageViewModel, imageViewModel))
-        {
-            return;
-        }
-
-        _observedPreviewImageViewModel.PropertyChanged -= OnObservedPreviewImageViewModelPropertyChanged;
-        _observedPreviewImageViewModel = null;
     }
 
     private void OnObservedPreviewViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -136,11 +121,6 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
 
     private void HandleObservedPreviewPropertyChanged(string? propertyName)
     {
-        if (propertyName is nameof(InspectorPreviewViewModel.PreviewImageVisibility))
-        {
-            RefreshPreviewImageViewport();
-        }
-
         if (propertyName is
             nameof(InspectorPreviewViewModel.PreviewAudioSource) or
             nameof(InspectorPreviewViewModel.PreviewAudioVisibility))
@@ -149,23 +129,44 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
         }
     }
 
-    private void OnObservedPreviewImageViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnObservedPreviewImageDisplayOptionsPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName is not (
-            nameof(InspectorPreviewImageViewModel.ImageSource) or
-            nameof(InspectorPreviewImageViewModel.CanvasWidth) or
-            nameof(InspectorPreviewImageViewModel.CanvasHeight)))
+            nameof(InspectorPreviewImageDisplayOptionsViewModel.BackgroundModeGlyph) or
+            nameof(InspectorPreviewImageDisplayOptionsViewModel.SpriteDisplayModeGlyph)))
         {
             return;
         }
 
         if (DispatcherQueue.HasThreadAccess)
         {
-            RefreshPreviewImageViewport();
+            RefreshImageActionToolTips();
             return;
         }
 
-        DispatcherQueue.TryEnqueue(RefreshPreviewImageViewport);
+        DispatcherQueue.TryEnqueue(RefreshImageActionToolTips);
+    }
+
+    private void OnObservedPreviewMeshPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is not (
+            nameof(InspectorPreviewMeshViewModel.DisplayMode) or
+            nameof(InspectorPreviewMeshViewModel.DisplayModeGlyph) or
+            nameof(InspectorPreviewMeshViewModel.IsTextureOverlaySelected) or
+            nameof(InspectorPreviewMeshViewModel.TextureOverlayGlyph) or
+            nameof(InspectorPreviewMeshViewModel.IsMeshGridSelected) or
+            nameof(InspectorPreviewMeshViewModel.MeshGridGlyph)))
+        {
+            return;
+        }
+
+        if (DispatcherQueue.HasThreadAccess)
+        {
+            RefreshMeshActionToolTips();
+            return;
+        }
+
+        DispatcherQueue.TryEnqueue(RefreshMeshActionToolTips);
     }
 
     private void OnOpenPreviewLocationButtonClick(object sender, RoutedEventArgs e)
@@ -173,14 +174,104 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
         OpenPreviewLocationRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    private void OnPreviewImageViewportHostSizeChanged(object sender, SizeChangedEventArgs e)
+    private void OnBackgroundModeButtonClick(object sender, RoutedEventArgs e)
     {
-        RefreshPreviewImageViewport();
+        ViewModel?.Preview.Image.DisplayOptions.ToggleBackgroundMode();
+        RefreshImageActionToolTips();
+    }
+
+    private void OnSpriteDisplayModeButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.Preview.Image.DisplayOptions.ToggleSpriteDisplayMode();
+        RefreshImageActionToolTips();
+    }
+
+    private void OnMeshZoomOutButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.Preview.Mesh.ZoomBy(0.84d);
+    }
+
+    private void OnMeshDisplayModeButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.Preview.Mesh.ToggleDisplayMode();
+        RefreshMeshActionToolTips();
+    }
+
+    private void OnMeshTextureOverlayButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.Preview.Mesh.ToggleTextureOverlay();
+        RefreshMeshActionToolTips();
+    }
+
+    private void OnMeshGridButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.Preview.Mesh.ToggleMeshGrid();
+        RefreshMeshActionToolTips();
+    }
+
+    private void OnMeshZoomInButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.Preview.Mesh.ZoomBy(1.18d);
+    }
+
+    private void OnMeshResetButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.Preview.Mesh.ResetView();
+    }
+
+    private void OnPreviewImageViewportChanged(object sender, PreviewImageViewportChangedEventArgs e)
+    {
+        ViewModel?.UpdatePreviewImageViewport(e.Width, e.Height);
     }
 
     private void OnAudioTransportTimerTick(object? sender, object e)
     {
         RefreshAudioTransportState();
+    }
+
+    private void RefreshImageActionToolTips()
+    {
+        var displayOptions = ViewModel?.Preview.Image.DisplayOptions;
+        if (displayOptions is null)
+        {
+            return;
+        }
+
+        ToolTipService.SetToolTip(
+            BackgroundModeButton,
+            UiText.Get(displayOptions.IsCheckerboardBackgroundSelected
+                ? ResourceKeys.InspectorPreviewCheckerboardBackgroundToolTip
+                : ResourceKeys.InspectorPreviewSolidBackgroundToolTip));
+        ToolTipService.SetToolTip(
+            SpriteDisplayModeButton,
+            UiText.Get(displayOptions.IsSpriteCropResultSelected
+                ? ResourceKeys.InspectorSpriteCropResultModeToolTip
+                : ResourceKeys.InspectorSpriteCropPreviewModeToolTip));
+    }
+
+    private void RefreshMeshActionToolTips()
+    {
+        var mesh = ViewModel?.Preview.Mesh;
+        if (mesh is null)
+        {
+            return;
+        }
+
+        ToolTipService.SetToolTip(
+            MeshDisplayModeButton,
+            UiText.Get(mesh.IsUvSelected
+                ? ResourceKeys.InspectorMeshPreviewWireframeModeToolTip
+                : ResourceKeys.InspectorMeshPreviewUvModeToolTip));
+        ToolTipService.SetToolTip(
+            MeshTextureOverlayButton,
+            UiText.Get(mesh.IsTextureOverlaySelected
+                ? ResourceKeys.InspectorMeshPreviewHideTextureOverlayToolTip
+                : ResourceKeys.InspectorMeshPreviewShowTextureOverlayToolTip));
+        ToolTipService.SetToolTip(
+            MeshGridButton,
+            UiText.Get(mesh.IsMeshGridSelected
+                ? ResourceKeys.InspectorMeshPreviewHideGridToolTip
+                : ResourceKeys.InspectorMeshPreviewShowGridToolTip));
     }
 
     private void AttachAudioPlayer(MediaPlayer? mediaPlayer)
@@ -349,13 +440,6 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
         }
 
         AudioTransportTimeText.Text = $"{FormatDuration(currentPosition)} / {FormatDuration(totalDuration)}";
-    }
-
-    private void RefreshPreviewImageViewport()
-    {
-        ViewModel?.UpdatePreviewImageViewport(
-            PreviewImageViewportHost.ActualWidth,
-            PreviewImageViewportHost.ActualHeight);
     }
 
     private static string FormatDuration(TimeSpan duration)

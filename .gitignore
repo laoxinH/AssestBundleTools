@@ -17,7 +17,10 @@ ARM64/
 TestResults/
 
 # NuGet / local SDK caches
-packages/
+packages/*
+!packages/nuget/
+packages/nuget/*
+!packages/nuget/.gitkeep
 .nuget-packages/
 .artifacts/
 artifacts/

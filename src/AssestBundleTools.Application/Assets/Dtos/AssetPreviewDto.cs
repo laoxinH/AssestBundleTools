@@ -27,4 +27,5 @@ public sealed record AssetPreviewDto(
     DateTimeOffset GeneratedAtUtc,
     AssetPreviewDiagnosticDto Diagnostic,
     AssetPreviewImageOverlayDto? ImageOverlay = null,
-    AssetPreviewImageFocusDto? ImageFocus = null);
+    AssetPreviewImageFocusDto? ImageFocus = null,
+    AssetPreviewMeshGeometryDto? MeshGeometry = null);

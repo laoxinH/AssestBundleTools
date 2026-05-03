@@ -160,6 +160,7 @@ public sealed class BundleExplorerAssetPreviewCoordinatorTests
 
         Assert.False(assetTab.Inspector.Preview.IsPreviewLoading);
         Assert.Equal(ResourceKeys.InspectorPreviewUnavailableText, assetTab.Inspector.Preview.PreviewStatusText);
+        Assert.Contains("runner failed", assetTab.Inspector.Preview.PreviewDiagnosticDetailText);
         Assert.Single(appLogService.WarningMessages);
     }
 
@@ -205,6 +206,7 @@ public sealed class BundleExplorerAssetPreviewCoordinatorTests
 
         Assert.False(assetTab.Inspector.Preview.IsPreviewLoading);
         Assert.Equal(ResourceKeys.InspectorPreviewUnavailableText, assetTab.Inspector.Preview.PreviewStatusText);
+        Assert.Contains("preview failed", assetTab.Inspector.Preview.PreviewDiagnosticDetailText);
         Assert.Single(appLogService.WarningMessages);
     }
 
@@ -298,6 +300,7 @@ public sealed class BundleExplorerAssetPreviewCoordinatorTests
 
         Assert.False(assetTab.Inspector.Preview.IsPreviewLoading);
         Assert.Equal(ResourceKeys.InspectorPreviewUnavailableText, assetTab.Inspector.Preview.PreviewStatusText);
+        Assert.Equal(ResourceKeys.BundleExplorerPreviewLoadTimedOut, assetTab.Inspector.Preview.PreviewDiagnosticDetailText);
         Assert.Single(appLogService.WarningMessages);
 
         pendingPreview.SetResult(Result<AssetPreviewDto>.Cancelled());

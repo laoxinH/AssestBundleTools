@@ -118,6 +118,25 @@ $vstest = 'C:\Program Files\Microsoft Visual Studio\18\Professional\Common7\IDE\
 ```
 
   如果 VS 安装路径不同，仍可先通过 `vswhere` 找到安装目录再拼出 `Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe`。
+- 如果为了避开正在运行的 WinUI 应用锁文件而给 `Presentation.Tests` 构建设置了独立 `OutDir`，该目录可能会带出 app-local `hostfxr.dll / hostpolicy.dll`。
+  此时 x86 `testhost.x86.exe` 会把该 `OutDir` 误当成 `.NET location`，并提示找不到 `Microsoft.NETCore.App 8.0.0 (x86)`，即使本机已经安装了 x86 .NET 8 运行时。
+  处理方式是在执行 `vstest.console.exe` 前删除该验证输出目录根部的这两个 host 文件，再指定测试适配器路径：
+
+```powershell
+$outDir = 'D:\project\AssestBundleTools\artifacts\validation\presentation-tests\'
+$vswhere = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe'
+$msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
+& $msbuild 'tests\AssestBundleTools.Presentation.Tests\AssestBundleTools.Presentation.Tests.csproj' /t:Build /p:Configuration=Debug /p:Platform=x86 /p:UseSharedCompilation=false /p:BuildInParallel=false /m:1 /nr:false /nologo /p:OutDir=$outDir
+
+Remove-Item -LiteralPath (Join-Path $outDir 'hostfxr.dll'), (Join-Path $outDir 'hostpolicy.dll') -ErrorAction SilentlyContinue
+
+$vsInstall = & $vswhere -latest -requires Microsoft.Component.MSBuild -property installationPath | Select-Object -First 1
+$vstest = Join-Path $vsInstall 'Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe'
+$testDll = Join-Path $outDir 'AssestBundleTools.Presentation.Tests.dll'
+& $vstest $testDll /Platform:x86 /InIsolation "/TestAdapterPath:$outDir"
+```
+
+  不要删除输出目录子目录或 NuGet 包缓存中的 host 文件；只清理这次临时验证 `OutDir` 根部的两项。
 - 测试项目不要用固定 `HintPath` 指向 `src/*/bin/Debug/...` 的旧程序集。
   在带 `/p:Platform=x86` 的构建中，真实产物会落到 `bin\x86\Debug\...`，固定 `HintPath` 可能让测试项目悄悄引用过期 DLL，表现为“源码里明明有新 DTO 字段，测试编译却提示字段不存在”。
   处理方式是优先使用 `ProjectReference`，让测试项目跟随当前源码和平台一起构建。

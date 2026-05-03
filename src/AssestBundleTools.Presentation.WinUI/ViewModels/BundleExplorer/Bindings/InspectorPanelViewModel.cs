@@ -24,8 +24,8 @@ public sealed class InspectorPanelViewModel : ObservableObject
     private string _assetName = string.Empty;
     private string _bundleDisplayName = string.Empty;
     private string _assetTypeText = string.Empty;
-    private string _assetPath = string.Empty;
     private string _containerPath = string.Empty;
+    private string _serializedFileName = string.Empty;
     private string _sizeText = string.Empty;
     private string _pathIdText = string.Empty;
     private string _extractCapabilityText = string.Empty;
@@ -75,16 +75,16 @@ public sealed class InspectorPanelViewModel : ObservableObject
         set => SetProperty(ref _assetTypeText, value);
     }
 
-    public string AssetPath
-    {
-        get => _assetPath;
-        set => SetProperty(ref _assetPath, value);
-    }
-
     public string ContainerPath
     {
         get => _containerPath;
         set => SetProperty(ref _containerPath, value);
+    }
+
+    public string SerializedFileName
+    {
+        get => _serializedFileName;
+        set => SetProperty(ref _serializedFileName, value);
     }
 
     public string SizeText
@@ -254,8 +254,8 @@ public sealed class InspectorPanelViewModel : ObservableObject
         AssetName = string.Empty;
         BundleDisplayName = string.Empty;
         AssetTypeText = string.Empty;
-        AssetPath = string.Empty;
         ContainerPath = string.Empty;
+        SerializedFileName = string.Empty;
         SizeText = string.Empty;
         PathIdText = string.Empty;
         ExtractCapabilityText = string.Empty;
@@ -283,8 +283,8 @@ public sealed class InspectorPanelViewModel : ObservableObject
         string assetName,
         string bundleDisplayName,
         string assetTypeText,
-        string assetPath,
         string containerPath,
+        string serializedFileName,
         string sizeText,
         string pathIdText,
         string extractCapabilityText,
@@ -306,8 +306,8 @@ public sealed class InspectorPanelViewModel : ObservableObject
         AssetName = assetName;
         BundleDisplayName = bundleDisplayName;
         AssetTypeText = assetTypeText;
-        AssetPath = assetPath;
-        ContainerPath = NormalizeDisplayContainerPath(assetPath, containerPath);
+        ContainerPath = NormalizePathValue(containerPath);
+        SerializedFileName = NormalizeSerializedFileName(serializedFileName);
         SizeText = sizeText;
         PathIdText = pathIdText;
         ExtractCapabilityText = extractCapabilityText;
@@ -411,6 +411,22 @@ public sealed class InspectorPanelViewModel : ObservableObject
         RebuildInformationCards();
     }
 
+    public void ApplyMeshPreview(
+        AssetPreviewMeshGeometryDto meshGeometry,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
+        MeshPreviewDisplayState? meshPreviewDisplayState = null,
+        string? previewPayloadFilePath = null,
+        byte[]? textureOverlayContent = null)
+    {
+        Preview.ApplyMeshPreview(
+            meshGeometry,
+            previewInfoRows,
+            meshPreviewDisplayState,
+            previewPayloadFilePath,
+            textureOverlayContent);
+        RebuildInformationCards();
+    }
+
     public void ApplyTextPreview(
         string textContent,
         IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
@@ -437,9 +453,9 @@ public sealed class InspectorPanelViewModel : ObservableObject
             AssetName,
             AssetTypeText,
             BundleDisplayName,
-            AssetPath,
             SizeText,
             ContainerPath,
+            SerializedFileName,
             PathIdText,
             Preview);
     }
@@ -504,21 +520,21 @@ public sealed class InspectorPanelViewModel : ObservableObject
         };
     }
 
-    private static string NormalizeDisplayContainerPath(string assetPath, string containerPath)
+    private static string NormalizePathValue(string path)
     {
-        if (string.IsNullOrWhiteSpace(containerPath))
+        if (string.IsNullOrWhiteSpace(path))
         {
             return string.Empty;
         }
 
-        var normalizedContainerPath = containerPath.Trim().Replace('\\', '/');
-        var normalizedAssetPath = string.IsNullOrWhiteSpace(assetPath)
-            ? string.Empty
-            : assetPath.Trim().Replace('\\', '/');
+        return path.Trim().Replace('\\', '/');
+    }
 
-        return string.Equals(normalizedContainerPath, normalizedAssetPath, StringComparison.OrdinalIgnoreCase)
+    private static string NormalizeSerializedFileName(string serializedFileName)
+    {
+        return string.IsNullOrWhiteSpace(serializedFileName)
             ? string.Empty
-            : normalizedContainerPath;
+            : serializedFileName.Trim().Replace('\\', '/');
     }
 
     private static void ReplaceCollection<T>(ObservableCollection<T> collection, IEnumerable<T> items)

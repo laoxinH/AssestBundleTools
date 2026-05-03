@@ -101,6 +101,58 @@ internal static class AssetsToolsFieldReader
         }
     }
 
+    public static uint? ReadUInt32(AssetTypeValueField? field)
+    {
+        if (field is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return field.AsUInt;
+        }
+        catch (Exception)
+        {
+            try
+            {
+                var value = field.AsInt;
+                return value < 0 ? null : (uint)value;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+    }
+
+    public static byte? ReadByte(AssetTypeValueField? field)
+    {
+        if (field is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return field.AsByte;
+        }
+        catch (Exception)
+        {
+            try
+            {
+                var value = field.AsInt;
+                return value is < byte.MinValue or > byte.MaxValue
+                    ? null
+                    : (byte)value;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+    }
+
     public static long? ReadInt64(AssetTypeValueField? field)
     {
         if (field is null)

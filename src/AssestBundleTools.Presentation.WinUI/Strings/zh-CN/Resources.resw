@@ -750,11 +750,11 @@
   <data name="InspectorPanelView.BundleLabelText.Text" xml:space="preserve">
     <value>所属 Bundle</value>
   </data>
-  <data name="InspectorPanelView.AssetPathLabelText.Text" xml:space="preserve">
-    <value>资源路径</value>
-  </data>
   <data name="InspectorPanelView.ContainerPathLabelText.Text" xml:space="preserve">
     <value>容器路径</value>
+  </data>
+  <data name="InspectorPanelView.SerializedFileLabelText.Text" xml:space="preserve">
+    <value>序列化文件</value>
   </data>
   <data name="InspectorPanelView.AssetSizeLabelText.Text" xml:space="preserve">
     <value>大小</value>
@@ -777,14 +777,68 @@
   <data name="InspectorPanelView.PreviewOpenLocationButton.ToolTip" xml:space="preserve">
     <value>打开预览文件所在位置</value>
   </data>
+  <data name="InspectorPanelView.PreviewCheckerboardBackgroundButton.ToolTip" xml:space="preserve">
+    <value>使用棋盘背景</value>
+  </data>
+  <data name="InspectorPanelView.PreviewSolidBackgroundButton.ToolTip" xml:space="preserve">
+    <value>使用纯色背景</value>
+  </data>
+  <data name="InspectorPanelView.SpriteCropResultModeButton.ToolTip" xml:space="preserve">
+    <value>显示裁切结果</value>
+  </data>
+  <data name="InspectorPanelView.SpriteCropPreviewModeButton.ToolTip" xml:space="preserve">
+    <value>显示裁切预览</value>
+  </data>
   <data name="InspectorPanelView.SpritePreviewOverlay.Badge.Format" xml:space="preserve">
-    <value>裁切 x={0}, y={1} · {2} x {3}</value>
+    <value>裁切预览&#x0a;x={0}, y={1}&#x0a;尺寸 {2} x {3}</value>
+  </data>
+  <data name="InspectorPanelView.SpritePreviewOverlay.BadgeWithPivot.Format" xml:space="preserve">
+    <value>裁切预览&#x0a;x={0}, y={1}&#x0a;尺寸 {2} x {3}&#x0a;Pivot {4}, {5}</value>
   </data>
   <data name="InspectorPanelView.SpriteFocusPreview.Title" xml:space="preserve">
     <value>裁切结果</value>
   </data>
   <data name="InspectorPanelView.SpriteFocusPreview.Size.Format" xml:space="preserve">
     <value>{0} x {1} px</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.Badge.Format" xml:space="preserve">
+    <value>{0} 顶点 · {1} 边</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.UvBadge.Format" xml:space="preserve">
+    <value>{0} UV · {1} 边</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.TextureAssociation.Format" xml:space="preserve">
+    <value>关联贴图/材质：{0}</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.TextureAssociation.Item.Format" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.ZoomIn.ToolTip" xml:space="preserve">
+    <value>放大 Mesh 预览</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.ZoomOut.ToolTip" xml:space="preserve">
+    <value>缩小 Mesh 预览</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.Reset.ToolTip" xml:space="preserve">
+    <value>重置 Mesh 视角</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.WireframeMode.ToolTip" xml:space="preserve">
+    <value>切换到线框视图</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.UvMode.ToolTip" xml:space="preserve">
+    <value>切换到 UV 视图</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.ShowTextureOverlay.ToolTip" xml:space="preserve">
+    <value>显示关联贴图</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.HideTextureOverlay.ToolTip" xml:space="preserve">
+    <value>隐藏关联贴图</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.ShowGrid.ToolTip" xml:space="preserve">
+    <value>显示 Mesh/UV 网格</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.HideGrid.ToolTip" xml:space="preserve">
+    <value>隐藏 Mesh/UV 网格</value>
   </data>
   <data name="InspectorPanelView.AudioTransport.Play.ToolTip" xml:space="preserve">
     <value>播放</value>
@@ -1116,6 +1170,15 @@
   <data name="InspectorPanelView.PreviewInfo.AudioResourceStreamSize.Label" xml:space="preserve">
     <value>资源流大小</value>
   </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshVertexCount.Label" xml:space="preserve">
+    <value>顶点数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshIndexCount.Label" xml:space="preserve">
+    <value>索引数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshTriangleCount.Label" xml:space="preserve">
+    <value>三角面数</value>
+  </data>
   <data name="InspectorPanelView.PreviewInfo.MeshSubMeshCount.Label" xml:space="preserve">
     <value>子网格数</value>
   </data>
@@ -1124,6 +1187,27 @@
   </data>
   <data name="InspectorPanelView.PreviewInfo.MeshBoneNameHashCount.Label" xml:space="preserve">
     <value>骨骼名称哈希数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshBoundsCenter.Label" xml:space="preserve">
+    <value>包围盒中心</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshBoundsExtents.Label" xml:space="preserve">
+    <value>包围盒半径</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshPreviewVertexCount.Label" xml:space="preserve">
+    <value>预览顶点数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshPreviewEdgeCount.Label" xml:space="preserve">
+    <value>预览边数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshPreviewGeometryTruncated.Label" xml:space="preserve">
+    <value>预览几何已截断</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshPreviewUvCount.Label" xml:space="preserve">
+    <value>预览 UV 数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshVertexChannelSummary.Label" xml:space="preserve">
+    <value>顶点通道摘要</value>
   </data>
   <data name="InspectorPanelView.PreviewInfo.MaterialTexturePropertyCount.Label" xml:space="preserve">
     <value>纹理属性数</value>

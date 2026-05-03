@@ -619,9 +619,9 @@ src/AssestBundleTools.Application/
     `Sprite` 当前已在源贴图预览上叠加裁切框、pivot 点和 9-slice border 辅助线，并额外提供裁切结果卡片；这些数据随预览缓存一起落盘和命中复用。
   - 文本预览：`TextAsset`、`Shader`
   - 音频预览：`AudioClip`
-  - 结构化摘要预览：`AudioClip`、`Mesh`、`Material`、`GameObject`、`MonoBehaviour`、`AnimationClip`、`AnimatorController`、`Font`、`SpriteAtlas`
+  - 结构化摘要预览：`Material`、`GameObject`、`MonoBehaviour`、`AnimationClip`、`AnimatorController`、`Font`、`SpriteAtlas`
   - 通用摘要回退：其余可读取资源类型
-- 工作台检查器当前已补充 `PathId` 展示，并为图片预览增加尺寸、裁切区域、像素编码与源格式标识等专属信息；预览表面已拆为独立控件，避免继续把图片覆盖层、音频播放条和文本预览细节堆回检查器主控件
+- 工作台检查器当前已补充 `PathId` 展示，并为图片预览增加尺寸、裁切区域、像素编码与源格式标识等专属信息；预览表面已拆为独立控件，图片覆盖层、音频播放条和 Mesh 线框视口都各自落在独立控件中，避免继续把复杂预览细节堆回检查器主控件
 - 工作台检查器当前已收敛为 `详情 / 依赖 / 替换 / 变更` 四页签；其中“详情”页统一承载预览画面、基础信息、预览补充信息与预览诊断，“依赖”页签会展示资产依赖、反向引用、依赖闭包和 Bundle 外部依赖
 - 工作台右侧当前已补上资产详情标签层，不同资产会独立打开为标签并按资源包标签页归属保存状态，为后续资产级扩展功能预留稳定承载面
 - 当前 M9 除“富预览扩展”外的主干代办已完成，下一步继续预览能力扩展阶段
@@ -629,7 +629,7 @@ src/AssestBundleTools.Application/
 
 ### M9 预览能力下一阶段计划
 
-在当前 `Texture2D / Sprite / TextAsset / Shader` 已具备真实预览、其余类型仍停留在结构化摘要的前提下，
+在当前 `Texture2D / Sprite / TextAsset / Shader / AudioClip / Mesh` 已具备真实预览、其余类型仍停留在结构化摘要的前提下，
 下一阶段不建议“平均推进所有类型”，而应按“识别价值 / 实现成本 / 架构稳定性”分批推进。
 
 #### 预览类型优先级
@@ -640,6 +640,7 @@ src/AssestBundleTools.Application/
   优先补可播放预览，目标形态为 `播放 / 暂停 + 时长 + 基础波形或幅度摘要`。
 - `Mesh`
   优先补静态 3D 预览，目标形态为 `旋转 / 缩放 / 重置 + 顶点与子网格摘要`。
+  当前已扩展到 `线框 + UV0 + 贴图关联提示 + UV 关联贴图叠加`：Infrastructure 从非压缩 Mesh 读取位置通道、UV0 通道、索引边、顶点通道摘要与 AABB，Application 以 `payload.mesh.json` 结构化缓存，Presentation 通过 Win2D 在线框视口和 UV 视图间切换；贴图关联优先使用运行时工作区依赖图派生的 `TextureAssociations`，主路径为 `Mesh <- MeshFilter / Renderer / ParticleSystemRenderer / GameObject -> Material -> Texture2D / Sprite`，找不到时才兜底 `Mesh -> Texture2D / Sprite` 直接依赖，并通过现有预览查询管线加载首个可预览的关联图片作为 UV 叠加载荷，不在 WinUI 侧解析资源包。无法读取几何或关联贴图时仍回退结构化摘要或纯 UV/线框显示。
 - `SpriteAtlas`
   仍可复用图片预览链路，但在当前目标游戏样本中优先级低于 `Mesh`；后续若遇到大量 SpriteAtlas 样本，再补 `整张图集 + atlas 内 sprite 区域信息`。
 
@@ -676,7 +677,8 @@ src/AssestBundleTools.Application/
    - 完成标准是“能稳定回退”：可解码时播放，不可解码时仍回退到结构化摘要，而不是直接失败。
    - 当前已完成第二阶段：标准音频容器可直接播放，`FSB5` 会优先走独立音频转码层，经外部 `vgmstream-cli` 转为 `WAV` 后播放；当转码器缺失或执行失败时仍稳定回退到结构化摘要。
 3. 再做 `Mesh`
-   - 在 Audio 与 Atlas 两类预览稳定后，再引入 3D 视口和交互控制，避免同时把解码、缓存、渲染三个复杂度叠在一起。
+   - 在 Audio 主链路稳定后引入 3D 视口和交互控制，避免同时把解码、缓存、渲染三个复杂度叠在一起。
+   - 当前已完成线框、UV0 视图与贴图关联提示；贴图关联主路径已从样本验证的 MeshFilter / Renderer / Material 链路派生，Mesh 直接贴图依赖只作为兜底。后续若继续增强，应优先评估压缩 Mesh / 更完整多 stream 布局 / 法线或真实材质采样显示，而不是让 WinUI 侧直接读取资源包。
 4. 按样本频率回补 `SpriteAtlas`
    - 该类型与现有图片预览链路最接近，能低风险复用已有 `Texture2D / Sprite` 能力；但如果目标样本中不常见，不应压过 Mesh 等更高收益类型。
 
@@ -896,8 +898,9 @@ src/AssestBundleTools.Application/
 - 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补替换链路中的文件候选类型解析、来源路径校验、缺失资源失败、类型不匹配、工作区候选空集失败、单资源文件/工作区替换、撤销替换，以及批量替换预览/执行摘要链路
 - 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补 `GetWorkspaceSavePreviewHandler / SaveWorkspaceAsNewBundleHandler` 的保存预览空态、资源包分组聚合、缺失工作区、无候选失败与执行摘要链路
 - 已完成 D-07 第二轮收口：宿主程序自身的启动/壳层异常提示与页面代码中残留的资源键字面量已继续收口到资源键常量和标准错误令牌；当前仅保留外部工具原始输出作为诊断回退文本，而不再作为主提示文案
-- 当前 M9 剩余主线收口为富预览扩展，优先顺序为 `AudioClip -> Sprite 增强 -> Mesh -> SpriteAtlas(按样本频率回补) -> Material / Font / AnimationClip`
+- 当前 M9 富预览扩展已完成 `AudioClip`、`Sprite` 增强与 `Mesh` 线框 / UV0 / 贴图关联 / 第一版逐三角贴图预览；剩余主线优先顺序为 `SpriteAtlas(按样本频率回补) -> Material / Font / AnimationClip`
 - 当前 Sprite 预览已完成一轮增强：源贴图预览上叠加裁切框、pivot 点与 9-slice border，检查器额外展示裁切结果卡片；Infrastructure 已把 Sprite 专属生成逻辑拆入独立 builder，检查器预览表面也已拆为独立控件，避免后续富预览继续回灌到巨型生成器或检查器控件
+- 当前 Mesh 预览已完成线框 / UV0 / 贴图关联 / 第一版逐三角贴图预览，并补上贴图化线框与 UV 视图共用的 Mesh/UV 网格显隐开关：`AssetsToolsMeshPreviewBuilder` 负责从真实 Mesh 字段读取轻量几何、三角面索引、UV0 和顶点通道摘要并生成 schema v3 JSON sidecar，`GetAssetPreviewHandler` 负责缓存命中后的结构化反序列化，`CachedWorkspaceSessionRegistry` 负责从运行时依赖图派生 `TextureAssociations`，`InspectorMeshPreviewSurfaceView` 只消费 DTO 并通过 Win2D 绘制线框、UV 或逐三角贴图化线框，不承担 AB 解析；贴图关联优先走 `Mesh <- MeshFilter / Renderer / ParticleSystemRenderer / GameObject -> Material -> Texture2D / Sprite`，再兜底 `Mesh -> Texture2D / Sprite`。当前贴图化预览用于表达几何 / UV / 贴图的基础对应关系，不模拟 Shader、Material tiling/offset、多材质 submesh 分配或光照效果。
 - 当前导入主链路在功能上已完成第二阶段多线程收口：`workspaceKey` 级执行闸门、唯一 staging 路径、`PlanBuilder -> Worker Pool -> Committer` 三段模型与 bundle 粒度有界并行都已落地；后续进入“导入吞吐增强”支线时，更适合转向 profiling、Probe 并发评估与更深层并发回归
 - 当前资产预览查询已从单槽后台闸门调整为前台优先的有界并发执行队列，默认并发度为 CPU 核心数一半并限制在 `1-4`；其中 1 个前台槽专门服务当前活动资产详情标签，其余槽用于已打开资产标签的后台预热。若并发度为 1，后台预热不与前台竞争；切换到尚未完成的标签会取消该标签旧后台请求并以前台优先级重开，已完成预览则直接复用。
 

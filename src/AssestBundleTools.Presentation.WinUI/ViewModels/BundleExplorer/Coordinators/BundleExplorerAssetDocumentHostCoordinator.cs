@@ -17,17 +17,20 @@ internal sealed class BundleExplorerAssetDocumentHostCoordinator
     private readonly IBundleExplorerDocumentWorkspaceHost _documentWorkspace;
     private readonly ILocalizationService _localizationService;
     private readonly Action _notifyActionStates;
+    private readonly Action _requestWorkspaceBrowserStatePersistence;
     private readonly InspectorInformationTextSet _inspectorInformationTextSet;
     private readonly InspectorPanelViewModel _emptyInspector;
 
     public BundleExplorerAssetDocumentHostCoordinator(
         IBundleExplorerDocumentWorkspaceHost documentWorkspace,
         ILocalizationService localizationService,
-        Action notifyActionStates)
+        Action notifyActionStates,
+        Action requestWorkspaceBrowserStatePersistence)
     {
         _documentWorkspace = documentWorkspace ?? throw new ArgumentNullException(nameof(documentWorkspace));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _notifyActionStates = notifyActionStates ?? throw new ArgumentNullException(nameof(notifyActionStates));
+        _requestWorkspaceBrowserStatePersistence = requestWorkspaceBrowserStatePersistence ?? throw new ArgumentNullException(nameof(requestWorkspaceBrowserStatePersistence));
         _inspectorInformationTextSet = InspectorInformationTextSetFactory.Create(_localizationService);
         _emptyInspector = new InspectorPanelViewModel(_inspectorInformationTextSet);
         ResetEmptyInspector();
@@ -42,6 +45,7 @@ internal sealed class BundleExplorerAssetDocumentHostCoordinator
         string assetName)
     {
         var tab = new AssetDocumentTabViewModel(bundleId, assetId, assetName, _inspectorInformationTextSet);
+        tab.PreviewImageDisplayOptionsChanged += OnPreviewImageDisplayOptionsChanged;
         tab.Inspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
         return tab;
     }
@@ -68,4 +72,9 @@ internal sealed class BundleExplorerAssetDocumentHostCoordinator
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
+
+    private void OnPreviewImageDisplayOptionsChanged(object? sender, EventArgs e)
+    {
+        _requestWorkspaceBrowserStatePersistence();
+    }
 }

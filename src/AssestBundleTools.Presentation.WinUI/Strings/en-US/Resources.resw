@@ -750,11 +750,11 @@
   <data name="InspectorPanelView.BundleLabelText.Text" xml:space="preserve">
     <value>Bundle</value>
   </data>
-  <data name="InspectorPanelView.AssetPathLabelText.Text" xml:space="preserve">
-    <value>Asset Path</value>
-  </data>
   <data name="InspectorPanelView.ContainerPathLabelText.Text" xml:space="preserve">
     <value>Container Path</value>
+  </data>
+  <data name="InspectorPanelView.SerializedFileLabelText.Text" xml:space="preserve">
+    <value>Serialized File</value>
   </data>
   <data name="InspectorPanelView.AssetSizeLabelText.Text" xml:space="preserve">
     <value>Size</value>
@@ -777,14 +777,68 @@
   <data name="InspectorPanelView.PreviewOpenLocationButton.ToolTip" xml:space="preserve">
     <value>Open preview file location</value>
   </data>
+  <data name="InspectorPanelView.PreviewCheckerboardBackgroundButton.ToolTip" xml:space="preserve">
+    <value>Use checkerboard background</value>
+  </data>
+  <data name="InspectorPanelView.PreviewSolidBackgroundButton.ToolTip" xml:space="preserve">
+    <value>Use solid background</value>
+  </data>
+  <data name="InspectorPanelView.SpriteCropResultModeButton.ToolTip" xml:space="preserve">
+    <value>Show crop result</value>
+  </data>
+  <data name="InspectorPanelView.SpriteCropPreviewModeButton.ToolTip" xml:space="preserve">
+    <value>Show crop preview</value>
+  </data>
   <data name="InspectorPanelView.SpritePreviewOverlay.Badge.Format" xml:space="preserve">
-    <value>Crop x={0}, y={1} · {2} x {3}</value>
+    <value>Crop Preview&#x0a;x={0}, y={1}&#x0a;Size {2} x {3}</value>
+  </data>
+  <data name="InspectorPanelView.SpritePreviewOverlay.BadgeWithPivot.Format" xml:space="preserve">
+    <value>Crop Preview&#x0a;x={0}, y={1}&#x0a;Size {2} x {3}&#x0a;Pivot {4}, {5}</value>
   </data>
   <data name="InspectorPanelView.SpriteFocusPreview.Title" xml:space="preserve">
     <value>Crop Result</value>
   </data>
   <data name="InspectorPanelView.SpriteFocusPreview.Size.Format" xml:space="preserve">
     <value>{0} x {1} px</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.Badge.Format" xml:space="preserve">
+    <value>{0} vertices · {1} edges</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.UvBadge.Format" xml:space="preserve">
+    <value>{0} UVs · {1} edges</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.TextureAssociation.Format" xml:space="preserve">
+    <value>Texture/material links: {0}</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.TextureAssociation.Item.Format" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.ZoomIn.ToolTip" xml:space="preserve">
+    <value>Zoom in Mesh preview</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.ZoomOut.ToolTip" xml:space="preserve">
+    <value>Zoom out Mesh preview</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.Reset.ToolTip" xml:space="preserve">
+    <value>Reset Mesh view</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.WireframeMode.ToolTip" xml:space="preserve">
+    <value>Switch to wireframe view</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.UvMode.ToolTip" xml:space="preserve">
+    <value>Switch to UV view</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.ShowTextureOverlay.ToolTip" xml:space="preserve">
+    <value>Show linked texture</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.HideTextureOverlay.ToolTip" xml:space="preserve">
+    <value>Hide linked texture</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.ShowGrid.ToolTip" xml:space="preserve">
+    <value>Show Mesh/UV grid</value>
+  </data>
+  <data name="InspectorPanelView.MeshPreview.HideGrid.ToolTip" xml:space="preserve">
+    <value>Hide Mesh/UV grid</value>
   </data>
   <data name="InspectorPanelView.AudioTransport.Play.ToolTip" xml:space="preserve">
     <value>Play</value>
@@ -1116,6 +1170,15 @@
   <data name="InspectorPanelView.PreviewInfo.AudioResourceStreamSize.Label" xml:space="preserve">
     <value>Resource Stream Size</value>
   </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshVertexCount.Label" xml:space="preserve">
+    <value>Vertex Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshIndexCount.Label" xml:space="preserve">
+    <value>Index Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshTriangleCount.Label" xml:space="preserve">
+    <value>Triangle Count</value>
+  </data>
   <data name="InspectorPanelView.PreviewInfo.MeshSubMeshCount.Label" xml:space="preserve">
     <value>SubMesh Count</value>
   </data>
@@ -1124,6 +1187,27 @@
   </data>
   <data name="InspectorPanelView.PreviewInfo.MeshBoneNameHashCount.Label" xml:space="preserve">
     <value>Bone Name Hash Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshBoundsCenter.Label" xml:space="preserve">
+    <value>Bounds Center</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshBoundsExtents.Label" xml:space="preserve">
+    <value>Bounds Extents</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshPreviewVertexCount.Label" xml:space="preserve">
+    <value>Preview Vertex Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshPreviewEdgeCount.Label" xml:space="preserve">
+    <value>Preview Edge Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshPreviewGeometryTruncated.Label" xml:space="preserve">
+    <value>Preview Geometry Truncated</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshPreviewUvCount.Label" xml:space="preserve">
+    <value>Preview UV Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.MeshVertexChannelSummary.Label" xml:space="preserve">
+    <value>Vertex Channel Summary</value>
   </data>
   <data name="InspectorPanelView.PreviewInfo.MaterialTexturePropertyCount.Label" xml:space="preserve">
     <value>Texture Property Count</value>

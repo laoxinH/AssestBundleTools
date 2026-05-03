@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Bundles;
@@ -130,6 +131,61 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Cache hit should not rewrite preview cache.");
     }
 
+    public static async Task HandleAsync_ShouldHydrateCachedMeshGeometry_WhenPreviewCacheStillMatches()
+    {
+        const string resolvedPayloadFilePath = @"D:\WorkspaceData\preview-cache\bundle-cache-001\asset-001.mesh.json";
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        var meshAssetEntry = bundleCacheEntry.Assets[0] with
+        {
+            AssetType = AssetType.Mesh.ToString(),
+            AssetTypeDisplayName = AssetType.Mesh.ToString(),
+            SerializedFileName = "mesh.assets"
+        };
+        bundleCacheEntry = bundleCacheEntry with
+        {
+            Assets = [meshAssetEntry]
+        };
+        var meshGeometry = CreateMeshGeometry();
+        var previewCachePayload = CreateMeshPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            generatorVersion: "generator-1",
+            meshGeometry);
+        var previewCacheStore = new TestPreviewCacheStore(previewCachePayload, resolvedPayloadFilePath);
+        var decryptor = new TestAssetBundleDecryptor(CreatePassThroughDecryptorDescriptor());
+        var generator = new TestAssetPreviewGenerator();
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService());
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Matching mesh preview cache should return cached preview.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(AssetPreviewKind.Mesh, preview.Kind, "Cached mesh preview kind should round-trip.");
+        TestAssert.Equal(null, preview.BinaryContent, "Mesh preview should not expose binary payload.");
+        TestAssert.Equal(null, preview.TextContent, "Mesh preview JSON should be hydrated into structured geometry.");
+        TestAssert.Equal(resolvedPayloadFilePath, preview.PreviewPayloadFilePath, "Cached mesh preview should expose resolved payload path.");
+        var restoredGeometry = preview.MeshGeometry ?? throw new InvalidOperationException("Expected mesh geometry.");
+        TestAssert.Equal(meshGeometry.SourceVertexCount, restoredGeometry.SourceVertexCount, "Mesh vertex count should round-trip.");
+        TestAssert.Equal(meshGeometry.SourceIndexCount, restoredGeometry.SourceIndexCount, "Mesh index count should round-trip.");
+        TestAssert.Equal(3, restoredGeometry.Edges.Count, "Mesh edges should be hydrated from cached JSON.");
+        TestAssert.Equal(1, restoredGeometry.Triangles?.Count ?? 0, "Mesh triangles should be hydrated from cached JSON.");
+        TestAssert.Equal(1, restoredGeometry.SubMeshes.Count, "Mesh submesh summary should be hydrated from cached JSON.");
+        TestAssert.Equal(3, restoredGeometry.Uv0?.Count ?? 0, "Mesh UV0 coordinates should be hydrated from cached JSON.");
+        TestAssert.Equal(2, restoredGeometry.Channels?.Count ?? 0, "Mesh channel metadata should be hydrated from cached JSON.");
+        TestAssert.Equal(0, decryptor.DecryptCallCount, "Cache hit should not invoke decryptor.");
+        TestAssert.Equal(0, generator.GenerateCallCount, "Cache hit should not invoke preview generator.");
+        TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Cache hit should not rewrite preview cache.");
+    }
+
     public static async Task HandleAsync_ShouldRegeneratePreview_WhenGeneratorVersionChanges()
     {
         const string resolvedBundlePath = @"C:\Temp\preview.bundle";
@@ -185,6 +241,91 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(1, previewCacheStore.SaveCallCount, "Regeneration should rewrite preview cache once.");
         TestAssert.Equal("generator-1", previewCacheStore.LastSavedPayload?.Descriptor.GeneratorVersion, "Saved preview cache should use current generator version.");
         TestAssert.Equal("regenerated preview", previewCacheStore.GetSavedTextContent(), "Saved preview cache should persist regenerated content.");
+    }
+
+    public static async Task HandleAsync_ShouldRegenerateMeshPreview_WhenGeneratorVersionChanges()
+    {
+        const string resolvedBundlePath = @"C:\Temp\mesh.bundle";
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        var meshAssetEntry = bundleCacheEntry.Assets[0] with
+        {
+            AssetType = AssetType.Mesh.ToString(),
+            AssetTypeDisplayName = AssetType.Mesh.ToString(),
+            SerializedFileName = "mesh.assets"
+        };
+        bundleCacheEntry = bundleCacheEntry with
+        {
+            Assets = [meshAssetEntry]
+        };
+        var stalePreviewCachePayload = CreateMeshPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            generatorVersion: "generator-legacy",
+            CreateMeshGeometry());
+        var previewCacheStore = new TestPreviewCacheStore(stalePreviewCachePayload);
+        var decryptorDescriptor = CreatePassThroughDecryptorDescriptor();
+        var decryptor = new TestAssetBundleDecryptor(decryptorDescriptor)
+        {
+            DecryptResultFactory = _ => Task.FromResult(Result<AssetBundleDecryptionResultDto>.Success(
+                new AssetBundleDecryptionResultDto(
+                    Decryptor: decryptorDescriptor,
+                    ResolvedBundlePath: resolvedBundlePath,
+                    ProducedDerivedFile: false,
+                    BundleFingerprint: bundleCacheEntry.SourceFingerprint,
+                    DiagnosticMessage: null)))
+        };
+        var regeneratedGeometry = CreateMeshGeometry() with
+        {
+            SourceVertexCount = 4,
+            IsGeometryTruncated = true
+        };
+        var generator = new TestAssetPreviewGenerator
+        {
+            GenerateResultFactory = _ => Task.FromResult(Result<AssetPreviewContentDto>.Success(
+                new AssetPreviewContentDto(
+                    Kind: AssetPreviewKind.Mesh,
+                    ContentType: "application/vnd.assestbundletools.mesh-preview+json",
+                    Content: JsonSerializer.SerializeToUtf8Bytes(
+                        regeneratedGeometry,
+                        TestMeshPreviewJsonSerializerOptions),
+                    PreviewInfoItems:
+                    [
+                        new AssetPreviewInfoItemDto(
+                            AssetPreviewInfoKey.MeshVertexCount,
+                            AssetPreviewInfoValueKind.Integer,
+                            Int64Value: regeneratedGeometry.SourceVertexCount)
+                    ])))
+        };
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService());
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Generator version change should rebuild mesh preview successfully.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(AssetPreviewKind.Mesh, preview.Kind, "Regenerated preview should preserve mesh kind.");
+        TestAssert.Equal(null, preview.BinaryContent, "Mesh preview should not expose binary payload.");
+        TestAssert.Equal(null, preview.TextContent, "Mesh preview JSON should be hydrated into structured geometry.");
+        TestAssert.Equal(4, preview.MeshGeometry?.SourceVertexCount, "Regenerated mesh geometry should be exposed.");
+        TestAssert.True(preview.MeshGeometry?.IsGeometryTruncated == true, "Regenerated mesh geometry should preserve truncation state.");
+        TestAssert.Equal(3, preview.MeshGeometry?.Uv0?.Count ?? 0, "Regenerated mesh geometry should preserve UV0 data.");
+        TestAssert.Equal(AssetPreviewCacheStatusKind.GeneratorVersionChanged, preview.Diagnostic.CacheStatus, "Generator version invalidation should be diagnosed explicitly.");
+        TestAssert.Equal(AssetPreviewFallbackReasonKind.None, preview.Diagnostic.FallbackReason, "Successful regeneration should not fall back to summary.");
+        TestAssert.Equal(1, decryptor.DecryptCallCount, "Generator version invalidation should decrypt once.");
+        TestAssert.Equal(1, generator.GenerateCallCount, "Generator version invalidation should regenerate preview once.");
+        TestAssert.Equal(1, previewCacheStore.SaveCallCount, "Regeneration should rewrite preview cache once.");
+        TestAssert.Equal(
+            Path.Combine(CreatePreviewCacheKey(bundleCacheEntry.BundleCacheKey, query.AssetId.Value), "payload.mesh.json"),
+            previewCacheStore.LastSavedPayload?.Descriptor.RelativePayloadPath,
+            "Saved mesh preview should use the mesh JSON payload file name.");
     }
 
     public static async Task HandleAsync_ShouldRegeneratePreview_WhenSourceFingerprintChanges()

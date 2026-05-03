@@ -22,8 +22,6 @@ public sealed class InspectorPreviewImageViewModel : ObservableObject
     private double _overlayY;
     private double _overlayWidth;
     private double _overlayHeight;
-    private double _overlayLabelX;
-    private double _overlayLabelY;
     private double _pivotX;
     private double _pivotY;
     private double _borderLeftX;
@@ -48,6 +46,8 @@ public sealed class InspectorPreviewImageViewModel : ObservableObject
     private double? _borderSourceTop;
     private double? _borderSourceRight;
     private double? _borderSourceBottom;
+
+    public InspectorPreviewImageDisplayOptionsViewModel DisplayOptions { get; } = new();
 
     public ImageSource? ImageSource
     {
@@ -107,18 +107,6 @@ public sealed class InspectorPreviewImageViewModel : ObservableObject
     {
         get => _overlayHeight;
         private set => SetProperty(ref _overlayHeight, value);
-    }
-
-    public double OverlayLabelX
-    {
-        get => _overlayLabelX;
-        private set => SetProperty(ref _overlayLabelX, value);
-    }
-
-    public double OverlayLabelY
-    {
-        get => _overlayLabelY;
-        private set => SetProperty(ref _overlayLabelY, value);
     }
 
     public string OverlayLabelText
@@ -324,8 +312,6 @@ public sealed class InspectorPreviewImageViewModel : ObservableObject
         OverlayY = 0d;
         OverlayWidth = 0d;
         OverlayHeight = 0d;
-        OverlayLabelX = 0d;
-        OverlayLabelY = 0d;
         PivotX = 0d;
         PivotY = 0d;
         BorderLeftX = 0d;
@@ -370,8 +356,6 @@ public sealed class InspectorPreviewImageViewModel : ObservableObject
         OverlayY = layout.OverlayY;
         OverlayWidth = layout.OverlayWidth;
         OverlayHeight = layout.OverlayHeight;
-        OverlayLabelX = layout.LabelX;
-        OverlayLabelY = layout.LabelY;
         ApplyPivotLayout(layout);
         ApplyBorderLayout(layout);
         NotifyOverlayVisibilityChanged();
@@ -414,6 +398,9 @@ public sealed class InspectorPreviewImageViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(Visibility));
         OnPropertyChanged(nameof(SpriteFocusPreviewVisibility));
+        DisplayOptions.UpdateImageState(
+            Visibility == Visibility.Visible,
+            SpriteFocusPreviewVisibility == Visibility.Visible);
         NotifyOverlayVisibilityChanged();
     }
 

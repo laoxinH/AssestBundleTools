@@ -34,4 +34,6 @@ public sealed record AssetDetailsDto(
     IReadOnlyList<AssetDependencyDto>? ReferencedBy = null,
     IReadOnlyList<AssetDependencyDto>? DependencyClosure = null,
     string? AssetTypeDisplayName = null,
-    IReadOnlyList<BundleExternalDependencyDto>? BundleExternalDependencies = null);
+    IReadOnlyList<BundleExternalDependencyDto>? BundleExternalDependencies = null,
+    string? SerializedFileName = null,
+    IReadOnlyList<AssetDependencyDto>? TextureAssociations = null);

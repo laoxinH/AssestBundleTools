@@ -298,13 +298,13 @@ public static class ApplicationErrors
             messageToken: "Error.Bundle.Preview.FieldTreeUnavailable",
             parameters: CreateParameters(("BundlePath", bundlePath)));
 
-    public static AppError BundlePreviewGenerationFailed(string bundlePath) =>
+    public static AppError BundlePreviewGenerationFailed(string bundlePath, string? detail = null) =>
         new(
             code: "Bundle.Preview.GenerationFailed",
             category: ErrorCategory.Unknown,
             severity: ErrorSeverity.Error,
             messageToken: "Error.Bundle.Preview.GenerationFailed",
-            parameters: CreateParameters(("BundlePath", bundlePath)));
+            parameters: CreateParameters(("Detail", ResolveDiagnosticDetail(detail, bundlePath))));
 
     public static AppError BundleDecryptorCatalogIdRequired() =>
         new(
@@ -451,5 +451,17 @@ public static class ApplicationErrors
         }
 
         return parameters;
+    }
+
+    private static string ResolveDiagnosticDetail(string? detail, string fallback)
+    {
+        if (!string.IsNullOrWhiteSpace(detail))
+        {
+            return detail.Trim();
+        }
+
+        return string.IsNullOrWhiteSpace(fallback)
+            ? "Unknown error."
+            : fallback.Trim();
     }
 }

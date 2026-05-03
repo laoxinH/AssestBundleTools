@@ -1,5 +1,7 @@
 using AssestBundleTools.Infrastructure.Tests.Bundles.Decryption;
+using AssestBundleTools.Infrastructure.Tests.Bundles.Previewing;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Persistence;
+using AssestBundleTools.Infrastructure.Tests.Workspace.Runtime;
 
 namespace AssestBundleTools.Infrastructure.Tests.Testing;
 
@@ -51,6 +53,26 @@ internal static class InfrastructureTestSuite
             JsonPreviewCacheStoreTests.Delete_ShouldRemoveDescriptor_WhenStoredDescriptorPayloadPathIsInvalid);
         await RunTestAsync(
             failures,
+            nameof(CachedWorkspaceSessionRegistryTests.TryGetAssetDetails_ShouldResolveMeshTextureAssociations_FromRendererPath),
+            CachedWorkspaceSessionRegistryTests.TryGetAssetDetails_ShouldResolveMeshTextureAssociations_FromRendererPath);
+        await RunTestAsync(
+            failures,
+            nameof(CachedWorkspaceSessionRegistryTests.TryGetAssetDetails_ShouldFallbackToMeshDirectTexture_WhenRendererPathHasNoTexture),
+            CachedWorkspaceSessionRegistryTests.TryGetAssetDetails_ShouldFallbackToMeshDirectTexture_WhenRendererPathHasNoTexture);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsAssetPreviewGeneratorTests.GenerateAsync_ShouldReturnGenerationFailureDetail_WhenUnexpectedExceptionOccurs),
+            AssetsToolsAssetPreviewGeneratorTests.GenerateAsync_ShouldReturnGenerationFailureDetail_WhenUnexpectedExceptionOccurs);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsMeshTopologyBuilderTests.BuildTriangles_ShouldReadTriangleAndQuadTopology),
+            AssetsToolsMeshTopologyBuilderTests.BuildTriangles_ShouldReadTriangleAndQuadTopology);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsMeshTopologyBuilderTests.BuildTriangles_ShouldSkipIndicesOutsidePreviewVertexRange),
+            AssetsToolsMeshTopologyBuilderTests.BuildTriangles_ShouldSkipIndicesOutsidePreviewVertexRange);
+        await RunTestAsync(
+            failures,
             nameof(ExternalProcessAssetBundleDecryptorTests.DecryptAsync_ShouldUseBundleScopedWorkspaceStagingPath_WhenWorkspaceDataRootIsProvided),
             ExternalProcessAssetBundleDecryptorTests.DecryptAsync_ShouldUseBundleScopedWorkspaceStagingPath_WhenWorkspaceDataRootIsProvided);
         await RunTestAsync(
@@ -89,5 +111,21 @@ internal static class InfrastructureTestSuite
         }
 
         return Task.CompletedTask;
+    }
+
+    private static async Task RunTestAsync(
+        ICollection<string> failures,
+        string testName,
+        Func<Task> test)
+    {
+        try
+        {
+            await test();
+            Console.WriteLine($"[PASS] {testName}");
+        }
+        catch (Exception exception)
+        {
+            failures.Add($"{testName}: {exception.Message}");
+        }
     }
 }

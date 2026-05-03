@@ -7,17 +7,10 @@ internal readonly record struct PreviewImageOverlayLayout(
     double OverlayHeight,
     double ImageScale,
     double ImageOffsetX,
-    double ImageOffsetY,
-    double LabelX,
-    double LabelY);
+    double ImageOffsetY);
 
 internal static class PreviewImageOverlayLayoutCalculator
 {
-    private const double LabelInset = 10d;
-    private const double PreferredLabelWidth = 240d;
-    private const double PreferredLabelHeight = 40d;
-    private const double LabelGap = 10d;
-
     public static bool TryCalculate(
         double sourceCanvasWidth,
         double sourceCanvasHeight,
@@ -67,34 +60,7 @@ internal static class PreviewImageOverlayLayoutCalculator
             overlayHeight,
             scale,
             imageOffsetX,
-            imageOffsetY,
-            ComputeLabelX(overlayX, viewportWidth),
-            ComputeLabelY(overlayY, overlayHeight, viewportHeight));
+            imageOffsetY);
         return true;
-    }
-
-    private static double ComputeLabelX(
-        double overlayX,
-        double canvasWidth)
-    {
-        var preferredX = overlayX + LabelInset;
-        var maxAllowedX = Math.Max(0d, canvasWidth - PreferredLabelWidth);
-        return Math.Min(Math.Max(0d, preferredX), maxAllowedX);
-    }
-
-    private static double ComputeLabelY(
-        double overlayY,
-        double overlayHeight,
-        double canvasHeight)
-    {
-        var aboveLabelY = overlayY - (PreferredLabelHeight + LabelGap);
-        if (aboveLabelY >= 0d)
-        {
-            return aboveLabelY;
-        }
-
-        var belowLabelY = overlayY + overlayHeight + LabelGap;
-        var maxAllowedY = Math.Max(0d, canvasHeight - PreferredLabelHeight);
-        return Math.Min(Math.Max(0d, belowLabelY), maxAllowedY);
     }
 }

@@ -29,6 +29,7 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
     private bool _canEdit;
     private long _previewRequestVersion;
     private AssetPreviewRequest? _activePreviewRequest;
+    private bool _isRestoringPreviewImageDisplayOptions;
 
     public AssetDocumentTabViewModel(
         BundleId bundleId,
@@ -45,7 +46,10 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
         PaneId = PaneId.New();
         Inspector = new InspectorPanelViewModel(
             inspectorInformationTextSet ?? throw new ArgumentNullException(nameof(inspectorInformationTextSet)));
+        Inspector.Preview.Image.DisplayOptions.DisplayOptionsChanged += OnPreviewImageDisplayOptionsChanged;
     }
+
+    public event EventHandler? PreviewImageDisplayOptionsChanged;
 
     public BundleId BundleId
     {
@@ -137,6 +141,23 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
         Inspector.RestoreSelectedSection(sectionKey);
     }
 
+    public void RestorePreviewImageDisplayOptions(
+        string? backgroundMode,
+        string? spriteDisplayMode)
+    {
+        _isRestoringPreviewImageDisplayOptions = true;
+        try
+        {
+            Inspector.Preview.Image.DisplayOptions.RestoreDisplayOptions(
+                backgroundMode,
+                spriteDisplayMode);
+        }
+        finally
+        {
+            _isRestoringPreviewImageDisplayOptions = false;
+        }
+    }
+
     internal AssetPreviewRequest BeginPreviewRequest()
     {
         _previewRequestVersion++;
@@ -178,5 +199,15 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
                Details is not null &&
                Details.BundleId.Equals(details.BundleId) &&
                Details.AssetId.Equals(details.AssetId);
+    }
+
+    private void OnPreviewImageDisplayOptionsChanged(object? sender, EventArgs e)
+    {
+        if (_isRestoringPreviewImageDisplayOptions)
+        {
+            return;
+        }
+
+        PreviewImageDisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
     }
 }

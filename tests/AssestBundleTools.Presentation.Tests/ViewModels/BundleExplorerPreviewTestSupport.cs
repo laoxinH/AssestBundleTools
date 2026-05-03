@@ -62,6 +62,119 @@ internal static class BundleExplorerPreviewTestSupport
                 AssetPreviewFallbackReasonKind.None)));
     }
 
+    public static Result<AssetPreviewDto> CreateMeshPreviewResult(
+        GetAssetPreviewQuery query,
+        string previewPayloadFilePath = @"C:\PreviewCache\mesh.json")
+    {
+        var meshGeometry = new AssetPreviewMeshGeometryDto(
+            SchemaVersion: 3,
+            SourceVertexCount: 3,
+            SourceIndexCount: 3,
+            SourceTriangleCount: 1,
+            IsGeometryTruncated: false,
+            Vertices:
+            [
+                new AssetPreviewMeshVertexDto(0, 0, 0),
+                new AssetPreviewMeshVertexDto(1, 0, 0),
+                new AssetPreviewMeshVertexDto(0, 1, 0)
+            ],
+            Edges:
+            [
+                new AssetPreviewMeshEdgeDto(0, 1),
+                new AssetPreviewMeshEdgeDto(1, 2),
+                new AssetPreviewMeshEdgeDto(0, 2)
+            ],
+            SubMeshes:
+            [
+                new AssetPreviewMeshSubMeshDto(
+                    Index: 0,
+                    FirstIndexByte: 0,
+                    IndexCount: 3,
+                    Topology: 0,
+                    BaseVertex: 0,
+                    FirstVertex: 0,
+                    VertexCount: 3)
+            ],
+            Bounds: new AssetPreviewMeshBoundsDto(
+                new AssetPreviewMeshVertexDto(0.5, 0.5, 0),
+                new AssetPreviewMeshVertexDto(0.5, 0.5, 0)),
+            Uv0:
+            [
+                new AssetPreviewMeshUvDto(0, 0),
+                new AssetPreviewMeshUvDto(1, 0),
+                new AssetPreviewMeshUvDto(0, 1)
+            ],
+            Channels:
+            [
+                new AssetPreviewMeshChannelDto(
+                    Index: 0,
+                    Stream: 0,
+                    Offset: 0,
+                    Format: 0,
+                    Dimension: 3,
+                    IsPreviewReadable: true),
+                new AssetPreviewMeshChannelDto(
+                    Index: 4,
+                    Stream: 0,
+                    Offset: 12,
+                    Format: 0,
+                    Dimension: 2,
+                    IsPreviewReadable: true)
+            ],
+            Triangles:
+            [
+                new AssetPreviewMeshTriangleDto(0, 1, 2, 0)
+            ]);
+
+        return Result<AssetPreviewDto>.Success(new AssetPreviewDto(
+            WorkspaceId: query.WorkspaceId,
+            BundleId: query.BundleId,
+            AssetId: query.AssetId,
+            Kind: AssetPreviewKind.Mesh,
+            ContentType: "application/vnd.assestbundletools.mesh-preview+json",
+            TextContent: null,
+            BinaryContent: null,
+            PreviewPayloadFilePath: previewPayloadFilePath,
+            PreviewInfoItems:
+            [
+                new AssetPreviewInfoItemDto(
+                    AssetPreviewInfoKey.MeshVertexCount,
+                    AssetPreviewInfoValueKind.Integer,
+                    Int64Value: meshGeometry.SourceVertexCount)
+            ],
+            PreviewMessage: null,
+            PreferredDisplaySizeInBytes: null,
+            IsFromCache: false,
+            GeneratedAtUtc: DateTimeOffset.UtcNow,
+            Diagnostic: new AssetPreviewDiagnosticDto(
+                AssetPreviewCacheStatusKind.Missing,
+                AssetPreviewFallbackReasonKind.None),
+            MeshGeometry: meshGeometry));
+    }
+
+    public static Result<AssetPreviewDto> CreateTexturePreviewResult(
+        GetAssetPreviewQuery query,
+        byte[]? binaryContent = null)
+    {
+        return Result<AssetPreviewDto>.Success(new AssetPreviewDto(
+            WorkspaceId: query.WorkspaceId,
+            BundleId: query.BundleId,
+            AssetId: query.AssetId,
+            Kind: AssetPreviewKind.Image,
+            ContentType: "image/png",
+            TextContent: null,
+            BinaryContent: binaryContent ?? [0x89, 0x50, 0x4E, 0x47],
+            PreviewPayloadFilePath: @"C:\PreviewCache\texture.png",
+            PreviewInfoItems: Array.Empty<AssetPreviewInfoItemDto>(),
+            PreviewMessage: null,
+            PreferredDisplaySizeInBytes: null,
+            IsFromCache: false,
+            GeneratedAtUtc: DateTimeOffset.UtcNow,
+            Diagnostic: new AssetPreviewDiagnosticDto(
+                AssetPreviewCacheStatusKind.Missing,
+                AssetPreviewFallbackReasonKind.None)));
+    }
+
     public static async Task WaitUntilAsync(Func<bool> predicate)
     {
         var deadline = DateTimeOffset.UtcNow.AddSeconds(5);

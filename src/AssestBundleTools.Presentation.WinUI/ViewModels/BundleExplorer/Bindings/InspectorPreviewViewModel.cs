@@ -33,6 +33,8 @@ public sealed class InspectorPreviewViewModel : ObservableObject
 
     public InspectorPreviewImageViewModel Image { get; } = new();
 
+    public InspectorPreviewMeshViewModel Mesh { get; } = new();
+
     public string PreviewStatusText
     {
         get => _previewStatusText;
@@ -164,6 +166,14 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         !IsPreviewLoading &&
         _previewKind == AssetPreviewKind.Audio &&
         PreviewAudioSource is not null
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    public Visibility PreviewMeshVisibility =>
+        _hasSelection &&
+        !IsPreviewLoading &&
+        _previewKind == AssetPreviewKind.Mesh &&
+        Mesh.HasGeometry
             ? Visibility.Visible
             : Visibility.Collapsed;
 
@@ -312,6 +322,24 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         NotifyPreviewStateChanged();
     }
 
+    internal void ApplyMeshPreview(
+        AssetPreviewMeshGeometryDto meshGeometry,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
+        MeshPreviewDisplayState? meshPreviewDisplayState = null,
+        string? previewPayloadFilePath = null,
+        byte[]? textureOverlayContent = null)
+    {
+        ArgumentNullException.ThrowIfNull(meshGeometry);
+
+        ResetState();
+        _previewKind = AssetPreviewKind.Mesh;
+        _previewInfoRows = CloneRows(previewInfoRows);
+        PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
+        Mesh.Apply(meshGeometry, meshPreviewDisplayState);
+        Mesh.ApplyTextureOverlay(textureOverlayContent);
+        NotifyPreviewStateChanged();
+    }
+
     internal void ApplyTextPreview(
         string textContent,
         IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
@@ -345,6 +373,7 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         PreviewText = string.Empty;
         PreviewPayloadFilePath = string.Empty;
         Image.Clear();
+        Mesh.Clear();
         PreviewAudioSource = null;
         _previewAudioStream?.Dispose();
         _previewAudioStream = null;
@@ -363,6 +392,7 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         OnPropertyChanged(nameof(PreviewImageVisibility));
         OnPropertyChanged(nameof(PreviewTextVisibility));
         OnPropertyChanged(nameof(PreviewAudioVisibility));
+        OnPropertyChanged(nameof(PreviewMeshVisibility));
         OnPropertyChanged(nameof(PreviewSummaryVisibility));
         OnPropertyChanged(nameof(PreviewMessageVisibility));
         OnPropertyChanged(nameof(PreviewSurfaceHeight));

@@ -79,8 +79,8 @@ internal sealed class BundleExplorerAssetInspectorPresenter
             assetName: details.Name,
             bundleDisplayName: _bundlePane.ResolveBundleDisplayName(details.BundleId),
             assetTypeText: ResolveAssetTypeDisplayName(details.AssetType, details.AssetTypeDisplayName),
-            assetPath: details.AssetPath,
             containerPath: details.ContainerPath,
+            serializedFileName: details.SerializedFileName ?? string.Empty,
             sizeText: _localizedValueFormatter.FormatCompactByteSize(
                 ResolveDisplaySizeInBytes(details.SizeInBytes, details.PreferredDisplaySizeInBytes)),
             pathIdText: details.PathId.ToString(CultureInfo.InvariantCulture),

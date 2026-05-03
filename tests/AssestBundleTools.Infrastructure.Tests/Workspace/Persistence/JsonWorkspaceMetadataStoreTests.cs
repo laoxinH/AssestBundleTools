@@ -36,7 +36,17 @@ internal static class JsonWorkspaceMetadataStoreTests
                     SearchKeyword: "hero",
                     AssetTypeFilter: "Texture2D",
                     ShowModifiedOnly: true,
-                    ShowPreviewableOnly: false)
+                    ShowPreviewableOnly: false,
+                    OpenAssetTabs:
+                    [
+                        new WorkspaceMetadataAssetTabDto(
+                            AssetId: "asset-009",
+                            AssetName: "hero.png",
+                            SelectedInspectorSection: "details",
+                            PreviewImageBackgroundMode: "Solid",
+                            SpritePreviewDisplayMode: "CropResult")
+                    ],
+                    ActiveAssetTabId: "asset-009")
             ],
             ActiveBundleTabId: "bundle-001",
             ImportedSources:
@@ -82,6 +92,14 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.Equal("environment/characters", loadedBundleTab.LogicalPath, "Bundle tab path should round-trip.");
         TestAssert.Equal("asset-009", loadedBundleTab.SelectedAssetId, "Selected asset id should round-trip.");
         TestAssert.Equal("hero", loadedBundleTab.SearchKeyword, "Tab search keyword should round-trip.");
+        TestAssert.Equal("asset-009", loadedBundleTab.ActiveAssetTabId, "Active asset tab should round-trip.");
+
+        var loadedAssetTab = TestAssert.Single(loadedBundleTab.OpenAssetTabs!);
+        TestAssert.Equal("asset-009", loadedAssetTab.AssetId, "Asset tab id should round-trip.");
+        TestAssert.Equal("hero.png", loadedAssetTab.AssetName, "Asset tab name should round-trip.");
+        TestAssert.Equal("details", loadedAssetTab.SelectedInspectorSection, "Inspector section should round-trip.");
+        TestAssert.Equal("Solid", loadedAssetTab.PreviewImageBackgroundMode, "Preview image background should round-trip.");
+        TestAssert.Equal("CropResult", loadedAssetTab.SpritePreviewDisplayMode, "Sprite preview mode should round-trip.");
 
         var importedSource = TestAssert.Single(restoredMetadata.ImportedSources!);
         TestAssert.Equal(@"C:\Bundles\characters", importedSource.Path, "Imported source path should round-trip.");

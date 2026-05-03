@@ -125,7 +125,11 @@ internal sealed class TestWorkspaceContextService : IWorkspaceContextService
 
     public int ClearCurrentWorkspaceCallCount { get; private set; }
 
-    public WorkspaceBrowserStateSnapshotDto? GetCurrentWorkspaceBrowserState() => null;
+    public WorkspaceBrowserStateSnapshotDto? CurrentBrowserState { get; set; }
+
+    public int UpdateCurrentWorkspaceBrowserStateCallCount { get; private set; }
+
+    public WorkspaceBrowserStateSnapshotDto? GetCurrentWorkspaceBrowserState() => CurrentBrowserState;
 
     public bool TryGetLastActiveWorkspaceNavigationRequest(out WorkspaceNavigationRequest? workspaceNavigationRequest)
     {
@@ -187,6 +191,8 @@ internal sealed class TestWorkspaceContextService : IWorkspaceContextService
 
     public void UpdateCurrentWorkspaceBrowserState(WorkspaceBrowserStateSnapshotDto browserStateSnapshot)
     {
+        UpdateCurrentWorkspaceBrowserStateCallCount++;
+        CurrentBrowserState = browserStateSnapshot;
     }
 
     public bool TryActivateWorkspace(WorkspaceId workspaceId)

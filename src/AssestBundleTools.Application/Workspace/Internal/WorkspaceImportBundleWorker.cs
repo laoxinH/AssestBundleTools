@@ -260,7 +260,8 @@ internal sealed class WorkspaceImportBundleWorker
                             AssetType: dependency.AssetType,
                             PathId: dependency.PathId,
                             AssetTypeDisplayName: dependency.AssetTypeDisplayName))
-                        .ToArray()))
+                        .ToArray(),
+                    IncludeInAssetList: asset.IncludeInAssetList))
                 .ToArray(),
             DecryptorId: decryptionResult.Decryptor.Id,
             DecryptorVersion: decryptionResult.Decryptor.Version,

@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Bundles.Dtos;
@@ -25,6 +26,7 @@ namespace AssestBundleTools.Application.Assets.Queries;
 public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>>
 {
     private const string TextContentType = "text/plain; charset=utf-8";
+    private static readonly JsonSerializerOptions MeshPreviewJsonSerializerOptions = new(JsonSerializerDefaults.Web);
 
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
@@ -374,6 +376,28 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             ? parsedPreviewKind
             : AssetPreviewKind.Summary;
 
+        if (previewKind == AssetPreviewKind.Mesh)
+        {
+            return new AssetPreviewDto(
+                WorkspaceId: query.WorkspaceId,
+                BundleId: query.BundleId,
+                AssetId: query.AssetId,
+                Kind: previewKind,
+                ContentType: descriptor.ContentType,
+                BinaryContent: null,
+                TextContent: null,
+                PreviewPayloadFilePath: previewPayloadFilePath,
+                PreviewInfoItems: descriptor.PreviewInfoItems,
+                PreviewMessage: descriptor.PreviewMessage,
+                PreferredDisplaySizeInBytes: descriptor.PreferredDisplaySizeInBytes,
+                IsFromCache: isFromCache,
+                GeneratedAtUtc: descriptor.GeneratedAtUtc,
+                Diagnostic: diagnostic,
+                ImageOverlay: descriptor.ImageOverlay,
+                ImageFocus: HydrateImageFocus(descriptor.ImageFocus, imageFocusContent),
+                MeshGeometry: TryDeserializeMeshGeometry(content));
+        }
+
         return PreviewKindUsesBinaryPayload(previewKind)
             ? new AssetPreviewDto(
                 WorkspaceId: query.WorkspaceId,
@@ -409,6 +433,25 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 Diagnostic: diagnostic,
                 ImageOverlay: descriptor.ImageOverlay,
                 ImageFocus: HydrateImageFocus(descriptor.ImageFocus, imageFocusContent));
+    }
+
+    private static AssetPreviewMeshGeometryDto? TryDeserializeMeshGeometry(byte[] content)
+    {
+        if (content is not { Length: > 0 })
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<AssetPreviewMeshGeometryDto>(
+                content,
+                MeshPreviewJsonSerializerOptions);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private static AssetPreviewDto BuildFallbackSummaryPreview(
@@ -448,6 +491,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         {
             AssetPreviewKind.Image => "payload.png",
             AssetPreviewKind.Audio => $"payload{ResolveAudioPayloadExtension(previewContent.ContentType)}",
+            AssetPreviewKind.Mesh => "payload.mesh.json",
             _ => "payload.txt"
         };
 

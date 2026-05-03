@@ -107,8 +107,40 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
         Assert.Equal([firstAssetId, secondAssetId, firstAssetId], previewQueryAssetIds);
     }
 
+    [Fact]
+    public void AssetDocumentTabPreviewImageDisplayOptions_ShouldRequestBrowserStatePersistence_WhenUserChangesModes()
+    {
+        var context = CreateCoordinatorContext(WorkspaceId.New(), "PreviewOptionsPersistence");
+        var assetTab = context.HostCoordinator.CreateAssetDocumentTab(
+            new BundleId("bundle-ui"),
+            new AssetId("asset-button"),
+            "Button");
+
+        assetTab.Inspector.Preview.Image.DisplayOptions.ToggleBackgroundMode();
+        assetTab.Inspector.Preview.Image.DisplayOptions.ToggleSpriteDisplayMode();
+
+        Assert.Equal(2, context.BrowserStatePersistenceRequestCount);
+    }
+
+    [Fact]
+    public void AssetDocumentTabPreviewImageDisplayOptions_ShouldNotRequestBrowserStatePersistence_WhenRestoringModes()
+    {
+        var context = CreateCoordinatorContext(WorkspaceId.New(), "PreviewOptionsRestore");
+        var assetTab = context.HostCoordinator.CreateAssetDocumentTab(
+            new BundleId("bundle-ui"),
+            new AssetId("asset-button"),
+            "Button");
+
+        assetTab.RestorePreviewImageDisplayOptions("Solid", "CropResult");
+
+        Assert.Equal(0, context.BrowserStatePersistenceRequestCount);
+        Assert.True(assetTab.Inspector.Preview.Image.DisplayOptions.IsSolidBackgroundSelected);
+        Assert.True(assetTab.Inspector.Preview.Image.DisplayOptions.IsSpriteCropResultSelected);
+    }
+
     private static CoordinatorContext CreateCoordinatorContext(WorkspaceId workspaceId, string workspaceName)
     {
+        var browserStatePersistenceRequestCount = 0;
         var localizationService = new TestLocalizationService();
         var workspaceContextService = new TestWorkspaceContextService();
         var workspaceRequest = PresentationTestDataFactory.CreateNavigationRequest(workspaceName);
@@ -129,7 +161,8 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
         var hostCoordinator = new BundleExplorerAssetDocumentHostCoordinator(
             documentWorkspace,
             localizationService,
-            static () => { });
+            static () => { },
+            () => browserStatePersistenceRequestCount++);
 
         return new CoordinatorContext(
             LocalizationService: localizationService,
@@ -144,7 +177,8 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
             HostCoordinator: hostCoordinator,
             PrimaryPane: new AssetPaneViewModel(),
             BackgroundTaskRunner: new TestBackgroundTaskRunner(),
-            WorkspaceRequest: workspaceRequest);
+            WorkspaceRequest: workspaceRequest,
+            GetBrowserStatePersistenceRequestCount: () => browserStatePersistenceRequestCount);
     }
 
     private static BundleExplorerAssetDocumentTabCoordinator CreateCoordinator(
@@ -188,5 +222,9 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
         BundleExplorerAssetDocumentHostCoordinator HostCoordinator,
         AssetPaneViewModel PrimaryPane,
         TestBackgroundTaskRunner BackgroundTaskRunner,
-        WorkspaceNavigationRequest WorkspaceRequest);
+        WorkspaceNavigationRequest WorkspaceRequest,
+        Func<int> GetBrowserStatePersistenceRequestCount)
+    {
+        public int BrowserStatePersistenceRequestCount => GetBrowserStatePersistenceRequestCount();
+    }
 }

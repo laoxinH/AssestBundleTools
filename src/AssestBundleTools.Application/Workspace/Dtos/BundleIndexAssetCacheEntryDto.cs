@@ -21,4 +21,5 @@ public sealed record BundleIndexAssetCacheEntryDto(
     string SerializedFileName,
     long PathId,
     string? AssetTypeDisplayName = null,
-    IReadOnlyList<BundleIndexAssetDependencyCacheEntryDto>? Dependencies = null);
+    IReadOnlyList<BundleIndexAssetDependencyCacheEntryDto>? Dependencies = null,
+    bool IncludeInAssetList = true);

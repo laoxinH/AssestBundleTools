@@ -22,7 +22,7 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
 {
     // 资源包索引当前新增 serialized file 名称集合与工作区级 CAB 反查能力，
     // 需要提升版本以触发旧索引缓存自动重建。
-    private const string ParserVersion = "assetstools.net/3.0.4-dependency-graph.3";
+    private const string ParserVersion = "assetstools.net/3.0.4-dependency-graph.4";
 
     private static readonly HashSet<AssetClassID> MetadataOnlyAssetClassIds =
     [
@@ -135,8 +135,7 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
                     SerializedFileName: asset.SerializedFileName,
                     PathId: asset.PathId));
 
-            var displayedAssets = rawAssets
-                .Where(static asset => asset.IncludeInAssetList)
+            var assets = rawAssets
                 .Select(asset => new AssetBundleReadAssetDto(
                     AssetId: asset.AssetId,
                     AssetName: asset.AssetName,
@@ -156,7 +155,8 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
                         asset.SerializedFile,
                         asset.BaseField,
                         assetLookup,
-                        internalSerializedFileLookup)))
+                        internalSerializedFileLookup),
+                    IncludeInAssetList: asset.IncludeInAssetList))
                 .OrderBy(static asset => asset.AssetPath, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(static asset => asset.AssetName, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
@@ -168,7 +168,7 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .OrderBy(static fileName => fileName, StringComparer.OrdinalIgnoreCase)
                     .ToArray(),
-                Assets: displayedAssets,
+                Assets: assets,
                 BundleDependencies: AssetsToolsBundleDependencyResolver.ResolveBundleDependencies(serializedFiles));
         }
         finally

@@ -27,9 +27,9 @@ internal sealed class InspectorInformationCardPresenter
         string assetName,
         string assetTypeText,
         string bundleDisplayName,
-        string assetPath,
         string sizeText,
         string containerPath,
+        string serializedFileName,
         string pathIdText,
         InspectorPreviewViewModel preview)
     {
@@ -48,9 +48,9 @@ internal sealed class InspectorInformationCardPresenter
             assetName,
             assetTypeText,
             bundleDisplayName,
-            assetPath,
             sizeText,
             containerPath,
+            serializedFileName,
             pathIdText,
             expandedStates));
 
@@ -93,9 +93,9 @@ internal sealed class InspectorInformationCardPresenter
         string assetName,
         string assetTypeText,
         string bundleDisplayName,
-        string assetPath,
         string sizeText,
         string containerPath,
+        string serializedFileName,
         string pathIdText,
         IReadOnlyDictionary<string, bool> expandedStates)
     {
@@ -104,13 +104,17 @@ internal sealed class InspectorInformationCardPresenter
             new(_informationTextSet.AssetNameLabel, assetName),
             new(_informationTextSet.AssetTypeLabel, assetTypeText),
             new(_informationTextSet.BundleLabel, bundleDisplayName),
-            new(_informationTextSet.AssetPathLabel, assetPath),
             new(_informationTextSet.AssetSizeLabel, sizeText)
         };
 
         if (!string.IsNullOrWhiteSpace(containerPath))
         {
             rows.Add(new InspectorInfoRowViewModel(_informationTextSet.ContainerPathLabel, containerPath));
+        }
+
+        if (!string.IsNullOrWhiteSpace(serializedFileName))
+        {
+            rows.Add(new InspectorInfoRowViewModel(_informationTextSet.SerializedFileLabel, serializedFileName));
         }
 
         if (!string.IsNullOrWhiteSpace(pathIdText))

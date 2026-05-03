@@ -26,7 +26,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         _audioPayloadTranscodingService = audioPayloadTranscodingService ?? throw new ArgumentNullException(nameof(audioPayloadTranscodingService));
     }
 
-    public string GeneratorVersion => "assetstools.preview/9";
+    public string GeneratorVersion => "assetstools.preview/12";
 
     public async Task<Result<AssetPreviewContentDto>> GenerateAsync(
         AssetPreviewBuildRequestDto request,
@@ -94,10 +94,12 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         {
             return Result<AssetPreviewContentDto>.Cancelled();
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             return Result<AssetPreviewContentDto>.Failure(
-                ApplicationErrors.BundlePreviewGenerationFailed(request.ResolvedBundlePath));
+                ApplicationErrors.BundlePreviewGenerationFailed(
+                    request.ResolvedBundlePath,
+                    exception.ToString()));
         }
         finally
         {
@@ -155,6 +157,12 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         if (classId == AssetClassID.AudioClip)
         {
             return await BuildAudioPreviewAsync(bundleInstance, baseField, request, cancellationToken);
+        }
+
+        if (classId == AssetClassID.Mesh &&
+            AssetsToolsMeshPreviewBuilder.TryBuildMeshPreview(baseField, request.SizeInBytes, out var meshPreview))
+        {
+            return meshPreview;
         }
 
         if (classId == AssetClassID.TextAsset &&
