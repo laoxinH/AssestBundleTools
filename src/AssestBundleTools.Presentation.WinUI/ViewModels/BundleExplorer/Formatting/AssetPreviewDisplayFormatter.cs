@@ -221,8 +221,8 @@ internal sealed class AssetPreviewDisplayFormatter
                 : string.Empty,
             AssetPreviewInfoValueKind.Boolean => item.BooleanValue.HasValue
                 ? _localizationService.GetRequiredString(item.BooleanValue.Value
-                    ? "InspectorPanelView.Boolean.True"
-                    : "InspectorPanelView.Boolean.False")
+                    ? ResourceKeys.InspectorBooleanTrue
+                    : ResourceKeys.InspectorBooleanFalse)
                 : string.Empty,
             _ => string.Empty
         };

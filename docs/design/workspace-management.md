@@ -658,7 +658,7 @@ Presentation 层保留两个协同层次：
 1. 继续补活动工作区在更多依赖页面中的摘要与入口承载，并在后续需要时补跨 Bundle 级依赖跳转
 2. 再评估是否需要顶层工作区切换器
 3. M9 当前已完成真实资产级读取、索引缓存复用、工作区级解密器自动识别、失败诊断、依赖深读与缓存诊断主链路收口
-4. 富预览扩展当前已完成 `AudioClip` 与 `Mesh` 第一版，下一步按样本频率继续评估 `SpriteAtlas -> Material / Font / AnimationClip`
+4. 富预览扩展当前已完成 `AudioClip`、`Mesh` 第一版、`Material` 半可视化摘要与 `AnimationClip` 第一版半可视化摘要；`SpriteAtlas / Font` 继续按样本资源可用性回补
 5. 最后再评估是否需要引入可分享工作区文件
 6. 工作区窗口模型当前已按“跨进程隔离优先 + formal/pending 双阶段注册”落地，并已补上 pending 注册 / 页面级失败回滚的首轮 `Presentation` 回归；后续若继续加强稳定性，更适合继续补跨进程窗口激活与重定向链路，而不是重新回退注册时机
 
@@ -680,7 +680,7 @@ Presentation 层保留两个协同层次：
    - 当前贴图化 Mesh 预览只表达几何和 UV 对贴图的基础对应关系，不模拟 Shader、Material tiling/offset、多材质 submesh 分配、骨骼蒙皮或光照效果；缺少三角 / UV / 可预览贴图时继续稳定退回纯线框。
    - 当前只把可读取的非压缩 Mesh 几何提升为富预览；无法读取顶点 / 索引 / 布局时继续使用结构化摘要。
 3. `SpriteAtlas`
-4. `Material / Font / AnimationClip` 的半可视化预览
+4. `Font / SpriteAtlas` 的样本驱动回补，以及 `AnimationClip` 曲线通道摘要增强
 
 其中 `GameObject / MonoBehaviour / AnimatorController` 当前继续保留结构化摘要，不进入近期重型预览主线。
 
@@ -727,6 +727,7 @@ Presentation 层保留两个协同层次：
 - 真实导入前若需要解密，应先通过独立解密器扩展点把来源转换为可读取文件，再进入 `IAssetBundleReader`
 - `AudioClip` 等富预览若需要额外转码，应先通过独立音频转码层把载荷转换为标准可播放格式，再交给 Presentation 渲染
 - `Mesh` 等模型富预览的几何、三角面索引、UV 与通道读取必须停留在 Infrastructure 预览生成器中；Mesh 贴图关联由运行时工作区依赖图派生为 `TextureAssociations`，Presentation 只能消费结构化 DTO、派生关联关系与缓存载荷路径，不得直接解析资源包
+- `Material / AnimationClip` 这类半可视化摘要也必须通过 Infrastructure 生成 JSON sidecar、Application 水化 DTO、Presentation 渲染 DTO 的同一管线完成，不得在 WinUI 中直接读取字段树或资源包
 - 自动识别默认按“导入源识别 -> 解密器识别 -> Reader 路径识别 -> 缓存命中识别”四层推进，而不是把所有判断都塞进 Reader 或 UI
 - 拖拽导入的页面桥接应优先挂在具体工作区区域，而不是整页根节点
 - AB 真实解析结果应优先写入独立缓存层，而不是写进工作区元数据文件

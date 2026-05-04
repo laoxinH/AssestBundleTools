@@ -15,7 +15,7 @@
 - 工作区资源包移除时的元数据修正与缓存失效链路
 - 工作区导入来源登记时的路径去重、更新计数、类型统计与排除列表修正
 - 工作区导入处理时的缓存复用命中、解密失败、Reader 拒绝、读取失败以及陈旧 bundle / preview 缓存清理与 `SourceRemoved` 诊断
-- 资源预览查询时的缓存命中、`SourceFingerprint / Identity / GeneratorVersion / AudioTranscoder` 失效重建、音频摘要在新转码器可用时的升级重建，以及解密失败 / 生成失败摘要回退链路
+- 资源预览查询时的缓存命中、Mesh / Material / AnimationClip 结构化载荷水化、`SourceFingerprint / Identity / GeneratorVersion / AudioTranscoder` 失效重建、音频摘要在新转码器可用时的升级重建，以及解密失败 / 生成失败摘要回退链路
 - 替换链路中的候选类型解析、来源路径校验、缺失资源失败、类型不匹配、工作区候选空集失败、单资源文件/工作区替换、撤销替换，以及批量替换预览/执行摘要
 - 保存链路中的保存前预览空态/资源包分组聚合，以及保存执行的缺失工作区、无候选失败和执行摘要
 - 工作区目录相关 `Infrastructure` 持久化关键路径（当前也通过零依赖控制台 runner 执行）

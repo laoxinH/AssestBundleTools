@@ -583,6 +583,17 @@ public static class ResourceKeys
     public const string InspectorMaterialPreviewTextureExternalFormat = "InspectorPanelView.MaterialPreview.TextureExternal.Format";
     public const string InspectorMaterialPreviewTextureTransformFormat = "InspectorPanelView.MaterialPreview.TextureTransform.Format";
     public const string InspectorMaterialPreviewColorValueFormat = "InspectorPanelView.MaterialPreview.ColorValue.Format";
+    public const string InspectorBooleanTrue = "InspectorPanelView.Boolean.True";
+    public const string InspectorBooleanFalse = "InspectorPanelView.Boolean.False";
+    public const string InspectorAnimationClipPreviewTimingFormat = "InspectorPanelView.AnimationClipPreview.Timing.Format";
+    public const string InspectorAnimationClipPreviewCurveCountFormat = "InspectorPanelView.AnimationClipPreview.CurveCount.Format";
+    public const string InspectorAnimationClipPreviewLegacyFormat = "InspectorPanelView.AnimationClipPreview.Legacy.Format";
+    public const string InspectorAnimationClipPreviewLoopFormat = "InspectorPanelView.AnimationClipPreview.Loop.Format";
+    public const string InspectorAnimationClipPreviewEventsTitle = "InspectorPanelView.AnimationClipPreview.EventsTitle.Text";
+    public const string InspectorAnimationClipPreviewEmptyEventsText = "InspectorPanelView.AnimationClipPreview.EmptyEvents.Text";
+    public const string InspectorAnimationClipPreviewTruncatedText = "InspectorPanelView.AnimationClipPreview.Truncated.Text";
+    public const string InspectorAnimationClipPreviewEventTimeFormat = "InspectorPanelView.AnimationClipPreview.EventTime.Format";
+    public const string InspectorAnimationClipPreviewEventParametersFormat = "InspectorPanelView.AnimationClipPreview.EventParameters.Format";
     public const string InspectorAudioTransportPlayToolTip = "InspectorPanelView.AudioTransport.Play.ToolTip";
     public const string InspectorAudioTransportPauseToolTip = "InspectorPanelView.AudioTransport.Pause.ToolTip";
     public const string InspectorAudioTransportResetToolTip = "InspectorPanelView.AudioTransport.Reset.ToolTip";

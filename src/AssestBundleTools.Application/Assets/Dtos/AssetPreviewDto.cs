@@ -29,4 +29,5 @@ public sealed record AssetPreviewDto(
     AssetPreviewImageOverlayDto? ImageOverlay = null,
     AssetPreviewImageFocusDto? ImageFocus = null,
     AssetPreviewMeshGeometryDto? MeshGeometry = null,
-    AssetPreviewMaterialDto? Material = null);
+    AssetPreviewMaterialDto? Material = null,
+    AssetPreviewAnimationClipDto? AnimationClip = null);

@@ -11,5 +11,6 @@ public enum AssetPreviewKind
     Audio = 3,
     Summary = 4,
     Mesh = 5,
-    Material = 6
+    Material = 6,
+    AnimationClip = 7
 }

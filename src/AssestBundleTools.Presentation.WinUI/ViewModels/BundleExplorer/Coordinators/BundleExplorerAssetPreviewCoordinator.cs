@@ -7,16 +7,14 @@ using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
-
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 
 /// <summary>
-/// 负责把应用层预览 DTO 转成检查器可直接渲染的 UI 状态。
+/// 负责调度应用层资产预览请求，并把呈现细节交给专用 Presenter。
 /// </summary>
 internal sealed class BundleExplorerAssetPreviewCoordinator
 {
@@ -28,11 +26,7 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
     private readonly IAppLogService _appLogService;
     private readonly ILocalizationService _localizationService;
     private readonly AssetPreviewQueryExecutor _previewQueryExecutor;
-    private readonly MeshTextureOverlayPreviewLoader _meshTextureOverlayPreviewLoader;
-    private readonly LocalizedValueFormatter _localizedValueFormatter;
-    private readonly AssetPreviewDisplayFormatter _assetPreviewDisplayFormatter;
-    private readonly MaterialPreviewDisplayFormatter _materialPreviewDisplayFormatter;
-    private readonly PreviewDiagnosticDisplayTextResolver _previewDiagnosticDisplayTextResolver;
+    private readonly AssetPreviewResultPresenter _previewResultPresenter;
 
     public BundleExplorerAssetPreviewCoordinator(
         IWorkspaceAssetInspectionGateway workspaceAssetInspectionGateway,
@@ -55,11 +49,11 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
             backgroundTaskRunner,
             NormalizePreviewQueryTimeout(previewQueryTimeout),
             AssetPreviewExecutionOptionsResolver.NormalizePreviewWorkerCount(previewWorkerCount));
-        _meshTextureOverlayPreviewLoader = new MeshTextureOverlayPreviewLoader(_previewQueryExecutor);
-        _localizedValueFormatter = new LocalizedValueFormatter(_localizationService);
-        _assetPreviewDisplayFormatter = new AssetPreviewDisplayFormatter(_localizationService);
-        _materialPreviewDisplayFormatter = new MaterialPreviewDisplayFormatter(_localizationService);
-        _previewDiagnosticDisplayTextResolver = new PreviewDiagnosticDisplayTextResolver(_localizationService);
+        var meshTextureOverlayPreviewLoader = new MeshTextureOverlayPreviewLoader(_previewQueryExecutor);
+        _previewResultPresenter = new AssetPreviewResultPresenter(
+            meshTextureOverlayPreviewLoader,
+            _appLogService,
+            _localizationService);
     }
 
     public async Task LoadInspectorPreviewAsync(
@@ -190,152 +184,18 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         }
 
         var preview = previewResult.Value;
-        var previewInfoRows = _assetPreviewDisplayFormatter.BuildPreviewInfoRows(preview.PreviewInfoItems);
-        if (preview.PreferredDisplaySizeInBytes is { } preferredDisplaySizeInBytes && preferredDisplaySizeInBytes > 0)
-        {
-            assetTab.Inspector.OverrideSizeText(_localizedValueFormatter.FormatCompactByteSize(preferredDisplaySizeInBytes));
-        }
-
         try
         {
-            switch (preview.Kind)
+            if (!await _previewResultPresenter.TryApplyAsync(
+                assetTab,
+                details,
+                previewQuery,
+                previewRequest,
+                preview,
+                priority,
+                () => IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant)))
             {
-                case AssetPreviewKind.Image:
-                {
-                    var imageSource = await AssetPreviewMediaSourceFactory.CreateImageSourceAsync(preview.BinaryContent);
-                    var spriteFocusPreviewDisplayState = await CreateSpriteFocusPreviewDisplayStateAsync(preview);
-                    if (!assetTab.IsPreviewRequestCurrent(details, previewRequest))
-                    {
-                        return;
-                    }
-
-                    if (imageSource is null)
-                    {
-                        LogPreviewDisplayFailure(details.Name, GetString(ResourceKeys.BundleExplorerPreviewImageDecodeFailed));
-                        ApplyUnavailablePreview(assetTab.Inspector, preview.Diagnostic);
-                        return;
-                    }
-
-                    assetTab.Inspector.ApplyImagePreview(
-                        imageSource,
-                        imageSource.PixelWidth,
-                        imageSource.PixelHeight,
-                        previewInfoRows,
-                        preview.PreviewPayloadFilePath,
-                        _assetPreviewDisplayFormatter.BuildSpritePreviewOverlayDisplayState(preview),
-                        spriteFocusPreviewDisplayState,
-                        _assetPreviewDisplayFormatter.BuildImagePreviewInfoDisplayState(preview.PreviewInfoItems));
-                    ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
-                    return;
-                }
-                case AssetPreviewKind.Text:
-                {
-                    if (string.IsNullOrWhiteSpace(preview.TextContent))
-                    {
-                        ApplyUnavailablePreview(assetTab.Inspector, preview.Diagnostic);
-                        return;
-                    }
-
-                    assetTab.Inspector.ApplyTextPreview(
-                        preview.TextContent,
-                        previewInfoRows,
-                        preview.PreviewPayloadFilePath);
-                    ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
-                    return;
-                }
-                case AssetPreviewKind.Audio:
-                {
-                    var audioPreviewSource = await AssetPreviewMediaSourceFactory.CreateAudioSourceAsync(preview.BinaryContent, preview.ContentType);
-                    if (!assetTab.IsPreviewRequestCurrent(details, previewRequest))
-                    {
-                        audioPreviewSource?.Stream.Dispose();
-                        return;
-                    }
-
-                    if (audioPreviewSource is null)
-                    {
-                        LogPreviewDisplayFailure(details.Name, GetString(ResourceKeys.BundleExplorerPreviewAudioDecodeFailed));
-                        ApplyUnavailablePreview(assetTab.Inspector, preview.Diagnostic);
-                        return;
-                    }
-
-                    assetTab.Inspector.ApplyAudioPreview(
-                        audioPreviewSource.MediaSource,
-                        audioPreviewSource.Stream,
-                        previewInfoRows,
-                        _assetPreviewDisplayFormatter.BuildAudioPreviewDisplayState(
-                            preview.PreviewInfoItems,
-                            preview.PreferredDisplaySizeInBytes),
-                        preview.PreviewPayloadFilePath);
-                    ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
-                    return;
-                }
-                case AssetPreviewKind.Mesh:
-                {
-                    if (preview.MeshGeometry is null)
-                    {
-                        ApplyUnavailablePreview(assetTab.Inspector, preview.Diagnostic);
-                        return;
-                    }
-
-                    var textureOverlayContent = await _meshTextureOverlayPreviewLoader.LoadAsync(
-                        details,
-                        previewQuery,
-                        previewRequest.CancellationToken,
-                        priority,
-                        () => IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant));
-                    if (!IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant))
-                    {
-                        return;
-                    }
-
-                    assetTab.Inspector.ApplyMeshPreview(
-                        preview.MeshGeometry,
-                        previewInfoRows,
-                        _assetPreviewDisplayFormatter.BuildMeshPreviewDisplayState(preview, details),
-                        preview.PreviewPayloadFilePath,
-                        textureOverlayContent);
-                    ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
-                    return;
-                }
-                case AssetPreviewKind.Material:
-                {
-                    if (preview.Material is null)
-                    {
-                        ApplyUnavailablePreview(assetTab.Inspector, preview.Diagnostic);
-                        return;
-                    }
-
-                    assetTab.Inspector.ApplyMaterialPreview(
-                        preview.Material,
-                        previewInfoRows,
-                        _materialPreviewDisplayFormatter.BuildDisplayState(preview.Material, details.Name),
-                        preview.PreviewPayloadFilePath);
-                    ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
-                    return;
-                }
-                case AssetPreviewKind.Summary:
-                {
-                    var summaryText = !string.IsNullOrWhiteSpace(preview.TextContent)
-                        ? preview.TextContent
-                        : _assetPreviewDisplayFormatter.BuildPreviewMessageText(preview.PreviewMessage);
-
-                    if (string.IsNullOrWhiteSpace(summaryText))
-                    {
-                        ApplyUnavailablePreview(assetTab.Inspector, preview.Diagnostic);
-                        return;
-                    }
-
-                    assetTab.Inspector.ApplySummaryPreview(
-                        summaryText,
-                        previewInfoRows,
-                        preview.PreviewPayloadFilePath);
-                    ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
-                    return;
-                }
-                default:
-                    ApplyUnavailablePreview(assetTab.Inspector, preview.Diagnostic);
-                    return;
+                return;
             }
         }
         catch (Exception exception)
@@ -346,7 +206,7 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
             }
 
             LogPreviewDisplayFailure(details.Name, GetString(ResourceKeys.BundleExplorerPreviewUnexpectedDisplayFailure));
-            ApplyUnavailablePreview(
+            _previewResultPresenter.ApplyUnavailablePreview(
                 assetTab.Inspector,
                 ReplacePreviewDiagnosticDetail(preview.Diagnostic, CreateExceptionDiagnosticMessage(exception)));
         }
@@ -396,30 +256,6 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         return true;
     }
 
-    /// <summary>
-    /// 应用层预览诊断只暴露稳定枚举和结构化 detail message，
-    /// 真正面向用户的中文文案在 Presentation 层完成映射，便于后续工作台和诊断页复用同一份诊断语义。
-    /// </summary>
-    private void ApplyPreviewDiagnostic(
-        InspectorPanelViewModel inspector,
-        AssetPreviewDiagnosticDto diagnostic)
-    {
-        inspector.ApplyPreviewDiagnostic(
-            cacheStatusText: _previewDiagnosticDisplayTextResolver.GetCacheStatusText(diagnostic.CacheStatus),
-            fallbackReasonText: _previewDiagnosticDisplayTextResolver.GetFallbackReasonText(diagnostic.FallbackReason),
-            diagnosticDetailText: LocalizedMessageDisplayFormatter.Format(
-                diagnostic.DetailMessage,
-                _localizationService));
-    }
-
-    private void ApplyUnavailablePreview(
-        InspectorPanelViewModel inspector,
-        AssetPreviewDiagnosticDto diagnostic)
-    {
-        inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
-        ApplyPreviewDiagnostic(inspector, diagnostic);
-    }
-
     private bool ApplyUnavailablePreviewIfCurrentAndRelevant(
         AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
@@ -432,10 +268,13 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
             return false;
         }
 
-        assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
-        if (diagnostic is not null)
+        if (diagnostic is null)
         {
-            ApplyPreviewDiagnostic(assetTab.Inspector, diagnostic);
+            assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
+        }
+        else
+        {
+            _previewResultPresenter.ApplyUnavailablePreview(assetTab.Inspector, diagnostic);
         }
 
         return true;
@@ -500,31 +339,6 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         return new LocalizedMessageDto(FallbackText: exception.ToString());
     }
 
-    private async Task<SpriteFocusPreviewDisplayState?> CreateSpriteFocusPreviewDisplayStateAsync(AssetPreviewDto preview)
-    {
-        var imageFocus = preview.ImageFocus;
-        if (imageFocus?.BinaryContent is not { Length: > 0 })
-        {
-            return null;
-        }
-
-        var imageSource = await AssetPreviewMediaSourceFactory.CreateImageSourceAsync(imageFocus.BinaryContent);
-        if (imageSource is null)
-        {
-            return null;
-        }
-
-        return new SpriteFocusPreviewDisplayState(
-            imageSource,
-            GetString(ResourceKeys.InspectorSpriteFocusPreviewTitle),
-            _localizationService.GetFormattedString(
-                ResourceKeys.InspectorSpriteFocusPreviewSizeFormat,
-                imageFocus.PixelWidth,
-                imageFocus.PixelHeight),
-            imageFocus.PixelWidth,
-            imageFocus.PixelHeight);
-    }
-
     private static TimeSpan NormalizePreviewQueryTimeout(TimeSpan? previewQueryTimeout)
     {
         return previewQueryTimeout is { } timeout && timeout > TimeSpan.Zero
@@ -543,5 +357,4 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
-
 }

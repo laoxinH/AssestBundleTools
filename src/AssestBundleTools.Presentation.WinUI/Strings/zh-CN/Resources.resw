@@ -903,6 +903,33 @@
   <data name="InspectorPanelView.MaterialPreview.ColorValue.Format" xml:space="preserve">
     <value>RGBA {0}, {1}, {2}, {3}</value>
   </data>
+  <data name="InspectorPanelView.AnimationClipPreview.Timing.Format" xml:space="preserve">
+    <value>时长 {0}s · {1} fps · {2} 帧 · 范围 {3}-{4}s</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveCount.Format" xml:space="preserve">
+    <value>{0} 条浮点 · {1} 条位置 · {2} 条旋转 · {3} 条缩放 · {4} 条对象引用曲线</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.Legacy.Format" xml:space="preserve">
+    <value>Legacy Clip：{0}</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.Loop.Format" xml:space="preserve">
+    <value>循环 {0} · 混合 {1} · 朝向 {2} · Y {3} · XZ {4}</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.EventsTitle.Text" xml:space="preserve">
+    <value>动画事件</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.EmptyEvents.Text" xml:space="preserve">
+    <value>没有动画事件</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.Truncated.Text" xml:space="preserve">
+    <value>事件较多，预览中仅展示前几项。</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.EventTime.Format" xml:space="preserve">
+    <value>{0}s</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.EventParameters.Format" xml:space="preserve">
+    <value>字符串 {0} · 浮点 {1} · 整数 {2}</value>
+  </data>
   <data name="InspectorPanelView.AudioTransport.Play.ToolTip" xml:space="preserve">
     <value>播放</value>
   </data>

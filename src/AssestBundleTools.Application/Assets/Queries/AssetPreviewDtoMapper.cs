@@ -33,7 +33,8 @@ internal static class AssetPreviewDtoMapper
                 diagnostic,
                 imageFocusContent,
                 meshGeometry: TryDeserialize<AssetPreviewMeshGeometryDto>(content),
-                material: null),
+                material: null,
+                animationClip: null),
             AssetPreviewKind.Material => CreateStructuredPreview(
                 query,
                 descriptor,
@@ -43,7 +44,19 @@ internal static class AssetPreviewDtoMapper
                 diagnostic,
                 imageFocusContent,
                 meshGeometry: null,
-                material: TryDeserialize<AssetPreviewMaterialDto>(content)),
+                material: TryDeserialize<AssetPreviewMaterialDto>(content),
+                animationClip: null),
+            AssetPreviewKind.AnimationClip => CreateStructuredPreview(
+                query,
+                descriptor,
+                previewKind,
+                previewPayloadFilePath,
+                isFromCache,
+                diagnostic,
+                imageFocusContent,
+                meshGeometry: null,
+                material: null,
+                animationClip: TryDeserialize<AssetPreviewAnimationClipDto>(content)),
             _ => PreviewKindUsesBinaryPayload(previewKind)
                 ? CreateBinaryPreview(
                     query,
@@ -75,7 +88,8 @@ internal static class AssetPreviewDtoMapper
         AssetPreviewDiagnosticDto diagnostic,
         byte[]? imageFocusContent,
         AssetPreviewMeshGeometryDto? meshGeometry,
-        AssetPreviewMaterialDto? material)
+        AssetPreviewMaterialDto? material,
+        AssetPreviewAnimationClipDto? animationClip)
     {
         return new AssetPreviewDto(
             WorkspaceId: query.WorkspaceId,
@@ -95,7 +109,8 @@ internal static class AssetPreviewDtoMapper
             ImageOverlay: descriptor.ImageOverlay,
             ImageFocus: HydrateImageFocus(descriptor.ImageFocus, imageFocusContent),
             MeshGeometry: meshGeometry,
-            Material: material);
+            Material: material,
+            AnimationClip: animationClip);
     }
 
     private static AssetPreviewDto CreateBinaryPreview(

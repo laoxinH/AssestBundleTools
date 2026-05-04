@@ -400,6 +400,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             AssetPreviewKind.Audio => $"payload{ResolveAudioPayloadExtension(previewContent.ContentType)}",
             AssetPreviewKind.Mesh => "payload.mesh.json",
             AssetPreviewKind.Material => "payload.material.json",
+            AssetPreviewKind.AnimationClip => "payload.animation-clip.json",
             _ => "payload.txt"
         };
 

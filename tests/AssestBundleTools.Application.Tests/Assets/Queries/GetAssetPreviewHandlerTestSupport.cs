@@ -22,6 +22,7 @@ internal static partial class GetAssetPreviewHandlerTests
 {
     private static readonly JsonSerializerOptions TestMeshPreviewJsonSerializerOptions = new(JsonSerializerDefaults.Web);
     private static readonly JsonSerializerOptions TestMaterialPreviewJsonSerializerOptions = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions TestAnimationClipPreviewJsonSerializerOptions = new(JsonSerializerDefaults.Web);
 
     private static GetAssetPreviewQuery CreateQuery()
     {
@@ -197,6 +198,37 @@ internal static partial class GetAssetPreviewHandlerTests
                 TestMaterialPreviewJsonSerializerOptions));
     }
 
+    private static PreviewCachePayloadDto CreateAnimationClipPreviewPayload(
+        BundleIndexCacheEntryDto bundleCacheEntry,
+        string assetId,
+        string generatorVersion,
+        AssetPreviewAnimationClipDto animationClip)
+    {
+        var previewCacheKey = CreatePreviewCacheKey(bundleCacheEntry.BundleCacheKey, assetId);
+        return new PreviewCachePayloadDto(
+            new PreviewCacheDescriptorDto(
+                WorkspaceKey: bundleCacheEntry.WorkspaceKey,
+                PreviewCacheKey: previewCacheKey,
+                BundleCacheKey: bundleCacheEntry.BundleCacheKey,
+                AssetId: assetId,
+                PreviewKind: AssetPreviewKind.AnimationClip.ToString(),
+                ContentType: "application/vnd.assestbundletools.animation-clip-preview+json",
+                RelativePayloadPath: Path.Combine(previewCacheKey, "payload.animation-clip.json"),
+                SourceFingerprint: bundleCacheEntry.SourceFingerprint,
+                GeneratedAtUtc: new DateTimeOffset(2026, 5, 4, 10, 0, 0, TimeSpan.Zero),
+                GeneratorVersion: generatorVersion,
+                PreviewInfoItems:
+                [
+                    new AssetPreviewInfoItemDto(
+                        AssetPreviewInfoKey.AnimationClipEventCount,
+                        AssetPreviewInfoValueKind.Integer,
+                        Int64Value: animationClip.Events.Count)
+                ]),
+            JsonSerializer.SerializeToUtf8Bytes(
+                animationClip,
+                TestAnimationClipPreviewJsonSerializerOptions));
+    }
+
     private static AssetPreviewMaterialDto CreateMaterialPreview()
     {
         return new AssetPreviewMaterialDto(
@@ -233,6 +265,37 @@ internal static partial class GetAssetPreviewHandlerTests
             ColorProperties:
             [
                 new AssetPreviewMaterialColorPropertyDto("_Color", 1, 0.25d, 0.5d, 1)
+            ]);
+    }
+
+    private static AssetPreviewAnimationClipDto CreateAnimationClipPreview()
+    {
+        return new AssetPreviewAnimationClipDto(
+            SchemaVersion: 1,
+            SampleRate: 30,
+            StartTime: 0,
+            StopTime: 1.5,
+            Duration: 1.5,
+            EstimatedFrameCount: 45,
+            IsLegacy: false,
+            LoopTime: true,
+            LoopBlend: false,
+            LoopBlendOrientation: true,
+            LoopBlendPositionY: false,
+            LoopBlendPositionXZ: true,
+            FloatCurveCount: 8,
+            PositionCurveCount: 2,
+            RotationCurveCount: 3,
+            ScaleCurveCount: 1,
+            PPtrCurveCount: 0,
+            Events:
+            [
+                new AssetPreviewAnimationEventDto(
+                    Time: 0.25,
+                    FunctionName: "OnStep",
+                    StringParameter: "left",
+                    FloatParameter: 0.5,
+                    IntParameter: 2)
             ]);
     }
 

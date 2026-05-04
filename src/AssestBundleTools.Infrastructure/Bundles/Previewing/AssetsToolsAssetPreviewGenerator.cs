@@ -26,7 +26,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         _audioPayloadTranscodingService = audioPayloadTranscodingService ?? throw new ArgumentNullException(nameof(audioPayloadTranscodingService));
     }
 
-    public string GeneratorVersion => "assetstools.preview/14";
+    public string GeneratorVersion => "assetstools.preview/15";
 
     public async Task<Result<AssetPreviewContentDto>> GenerateAsync(
         AssetPreviewBuildRequestDto request,
@@ -181,6 +181,15 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
                 out var materialPreview))
         {
             return materialPreview;
+        }
+
+        if (classId == AssetClassID.AnimationClip &&
+            AssetsToolsAnimationClipPreviewBuilder.TryBuildAnimationClipPreview(
+                baseField,
+                request.SizeInBytes,
+                out var animationClipPreview))
+        {
+            return animationClipPreview;
         }
 
         if (classId == AssetClassID.TextAsset &&

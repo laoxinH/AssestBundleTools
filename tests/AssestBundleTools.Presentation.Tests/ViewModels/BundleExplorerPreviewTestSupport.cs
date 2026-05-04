@@ -218,6 +218,64 @@ internal static class BundleExplorerPreviewTestSupport
             Material: material));
     }
 
+    public static Result<AssetPreviewDto> CreateAnimationClipPreviewResult(
+        GetAssetPreviewQuery query,
+        string previewPayloadFilePath = @"C:\PreviewCache\animation-clip.json")
+    {
+        var animationClip = new AssetPreviewAnimationClipDto(
+            SchemaVersion: 1,
+            SampleRate: 30,
+            StartTime: 0,
+            StopTime: 1.5,
+            Duration: 1.5,
+            EstimatedFrameCount: 45,
+            IsLegacy: false,
+            LoopTime: true,
+            LoopBlend: false,
+            LoopBlendOrientation: true,
+            LoopBlendPositionY: false,
+            LoopBlendPositionXZ: true,
+            FloatCurveCount: 8,
+            PositionCurveCount: 2,
+            RotationCurveCount: 3,
+            ScaleCurveCount: 1,
+            PPtrCurveCount: 0,
+            Events:
+            [
+                new AssetPreviewAnimationEventDto(
+                    Time: 0.25,
+                    FunctionName: "OnStep",
+                    StringParameter: "left",
+                    FloatParameter: 0.5,
+                    IntParameter: 2)
+            ]);
+
+        return Result<AssetPreviewDto>.Success(new AssetPreviewDto(
+            WorkspaceId: query.WorkspaceId,
+            BundleId: query.BundleId,
+            AssetId: query.AssetId,
+            Kind: AssetPreviewKind.AnimationClip,
+            ContentType: "application/vnd.assestbundletools.animation-clip-preview+json",
+            TextContent: null,
+            BinaryContent: null,
+            PreviewPayloadFilePath: previewPayloadFilePath,
+            PreviewInfoItems:
+            [
+                new AssetPreviewInfoItemDto(
+                    AssetPreviewInfoKey.AnimationClipEventCount,
+                    AssetPreviewInfoValueKind.Integer,
+                    Int64Value: animationClip.Events.Count)
+            ],
+            PreviewMessage: null,
+            PreferredDisplaySizeInBytes: null,
+            IsFromCache: false,
+            GeneratedAtUtc: DateTimeOffset.UtcNow,
+            Diagnostic: new AssetPreviewDiagnosticDto(
+                AssetPreviewCacheStatusKind.Missing,
+                AssetPreviewFallbackReasonKind.None),
+            AnimationClip: animationClip));
+    }
+
     public static Result<AssetPreviewDto> CreateTexturePreviewResult(
         GetAssetPreviewQuery query,
         byte[]? binaryContent = null)

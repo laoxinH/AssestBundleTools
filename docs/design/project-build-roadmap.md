@@ -91,7 +91,8 @@ tests/
 - 已完成 `BundleExplorerViewModel` 的 D-04 新一轮收口：在工作区浏览状态恢复/持久化节流、页面级结果反馈、工作区加载/重绑定编排以及资源包标签打开/激活/关闭/重排编排分别下沉到 `BundleExplorerBrowserStateCoordinator / BundleExplorerOperationFeedbackBridge / BundleExplorerWorkspaceBindingCoordinator / BundleExplorerBundleTabCoordinator` 之后，`BundleExplorerPage` 也已直接迁回 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 子状态宿主绑定，旧页面兼容透传属性与 `BundleExplorerPageStateBridge` 已移除，主类体量已由 `1258` 行降到约 `426` 行
 - 已完成 `BundleExplorerAssetWorkflowViewModel` 的 D-04 第六轮拆分：在 `Preview`、提取/替换动作、检查器投影、资产文档标签协调、资产文档宿主构造/清理以及主资产窗格加载/刷新/空态回退编排下沉之后，资产级命令入口与页面动作编排也已下沉到 `BundleExplorerAssetCommandCoordinator`，共享结果失败反馈继续统一复用 `BundleExplorerOperationFeedbackBridge`，主类当前约 `273` 行；当前 D-04 的主体偏差已完成收口，后续重点转向防止职责回灌与稳定页面内共享状态
 - 已完成 `BundleExplorer` 页面级共享状态的 D-03 第三轮收口：`BundleExplorerPage.xaml / BundleExplorerPage.xaml.cs` 当前已直接绑定或订阅 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 的语义化状态宿主，旧的 `BundleExplorerPageStateBridge` 已移除，不再继续保留页面兼容桥接层
-- 已开始 Material 结构化摘要预览：当前通过 `Infrastructure -> Application -> Presentation` 的现有预览管线输出 `Shader / TexEnv / Float / Color / Int` 的半可视化摘要，外部贴图引用继续保留 `fileId / pathId / external path`，未再在 UI 层直接读取 AB
+- 已完成 Material 结构化摘要预览：当前通过 `Infrastructure -> Application -> Presentation` 的现有预览管线输出 `Shader / TexEnv / Float / Color / Int` 的半可视化摘要，外部贴图引用继续保留 `fileId / pathId / external path`，未再在 UI 层直接读取 AB
+- 已完成 AnimationClip 第一版半可视化摘要预览：Infrastructure 输出 `duration / sampleRate / frame estimate / loop settings / curve counts / animation events` 的 JSON sidecar，Application 缓存命中后水化为专用 DTO，Presentation 通过独立 Presenter / ViewModel / 控件渲染，不在 UI 层解析 AB
 
 ## 3. 总体实施原则
 
@@ -620,7 +621,8 @@ src/AssestBundleTools.Application/
     `Sprite` 当前已在源贴图预览上叠加裁切框、pivot 点和 9-slice border 辅助线，并额外提供裁切结果卡片；这些数据随预览缓存一起落盘和命中复用。
   - 文本预览：`TextAsset`、`Shader`
   - 音频预览：`AudioClip`
-  - 结构化摘要预览：`Material`、`GameObject`、`MonoBehaviour`、`AnimationClip`、`AnimatorController`、`Font`、`SpriteAtlas`
+  - 半可视化摘要预览：`Material`、`AnimationClip`
+  - 结构化摘要预览：`GameObject`、`MonoBehaviour`、`AnimatorController`、`Font`、`SpriteAtlas`
   - 通用摘要回退：其余可读取资源类型
 - 工作台检查器当前已补充 `PathId` 展示，并为图片预览增加尺寸、裁切区域、像素编码与源格式标识等专属信息；预览表面已拆为独立控件，图片覆盖层、音频播放条和 Mesh 线框视口都各自落在独立控件中，避免继续把复杂预览细节堆回检查器主控件
 - 工作台检查器当前已收敛为 `详情 / 依赖 / 替换 / 变更` 四页签；其中“详情”页统一承载预览画面、基础信息、预览补充信息与预览诊断，“依赖”页签会展示资产依赖、反向引用、依赖闭包和 Bundle 外部依赖
@@ -630,7 +632,7 @@ src/AssestBundleTools.Application/
 
 ### M9 预览能力下一阶段计划
 
-在当前 `Texture2D / Sprite / TextAsset / Shader / AudioClip / Mesh` 已具备真实预览、其余类型仍停留在结构化摘要的前提下，
+在当前 `Texture2D / Sprite / TextAsset / Shader / AudioClip / Mesh` 已具备真实预览、`Material / AnimationClip` 已具备半可视化摘要、其余类型仍停留在结构化摘要的前提下，
 下一阶段不建议“平均推进所有类型”，而应按“识别价值 / 实现成本 / 架构稳定性”分批推进。
 
 #### 预览类型优先级
@@ -653,7 +655,7 @@ src/AssestBundleTools.Application/
 - `Font`
   优先做 `字体样张 + atlas 贴图 / 字符摘要`。
 - `AnimationClip`
-  第一阶段只做 `时长 / 采样率 / 事件 / 曲线摘要`，
+  第一阶段已完成 `时长 / 采样率 / 事件 / 曲线摘要`，
   后续再决定是否进入真正播放或骨骼驱动预览。
 
 第三梯队，当前继续保留结构化摘要：
@@ -682,6 +684,9 @@ src/AssestBundleTools.Application/
    - 当前已完成线框、UV0 视图与贴图关联提示；贴图关联主路径已从样本验证的 MeshFilter / Renderer / Material 链路派生，Mesh 直接贴图依赖只作为兜底。后续若继续增强，应优先评估压缩 Mesh / 更完整多 stream 布局 / 法线或真实材质采样显示，而不是让 WinUI 侧直接读取资源包。
 4. 按样本频率回补 `SpriteAtlas`
    - 该类型与现有图片预览链路最接近，能低风险复用已有 `Texture2D / Sprite` 能力；但如果目标样本中不常见，不应压过 Mesh 等更高收益类型。
+5. 对已落地的 `Material / AnimationClip` 做样本驱动增强
+   - `Material` 后续重点是基于已解析 TexEnv 的贴图定位与更友好的外部引用呈现。
+   - `AnimationClip` 后续可继续补曲线通道 / binding 摘要；不建议在缺少骨骼上下文时先做重型播放预览。
 
 #### 实施约束
 
@@ -899,9 +904,10 @@ src/AssestBundleTools.Application/
 - 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补替换链路中的文件候选类型解析、来源路径校验、缺失资源失败、类型不匹配、工作区候选空集失败、单资源文件/工作区替换、撤销替换，以及批量替换预览/执行摘要链路
 - 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补 `GetWorkspaceSavePreviewHandler / SaveWorkspaceAsNewBundleHandler` 的保存预览空态、资源包分组聚合、缺失工作区、无候选失败与执行摘要链路
 - 已完成 D-07 第二轮收口：宿主程序自身的启动/壳层异常提示与页面代码中残留的资源键字面量已继续收口到资源键常量和标准错误令牌；当前仅保留外部工具原始输出作为诊断回退文本，而不再作为主提示文案
-- 当前 M9 富预览扩展已完成 `AudioClip`、`Sprite` 增强与 `Mesh` 线框 / UV0 / 贴图关联 / 第一版逐三角贴图预览；剩余主线优先顺序为 `SpriteAtlas(按样本频率回补) -> Material / Font / AnimationClip`
+- 当前 M9 富预览扩展已完成 `AudioClip`、`Sprite` 增强、`Mesh` 线框 / UV0 / 贴图关联 / 第一版逐三角贴图预览、`Material` 半可视化摘要与 `AnimationClip` 第一版半可视化摘要；`SpriteAtlas / Font` 继续按样本资源可用性回补
 - 当前 Sprite 预览已完成一轮增强：源贴图预览上叠加裁切框、pivot 点与 9-slice border，检查器额外展示裁切结果卡片；Infrastructure 已把 Sprite 专属生成逻辑拆入独立 builder，检查器预览表面也已拆为独立控件，避免后续富预览继续回灌到巨型生成器或检查器控件
 - 当前 Mesh 预览已完成线框 / UV0 / 贴图关联 / 第一版逐三角贴图预览，并补上贴图化线框与 UV 视图共用的 Mesh/UV 网格显隐开关：`AssetsToolsMeshPreviewBuilder` 负责从真实 Mesh 字段读取轻量几何、三角面索引、UV0 和顶点通道摘要并生成 schema v3 JSON sidecar，`GetAssetPreviewHandler` 负责缓存命中后的结构化反序列化，`CachedWorkspaceSessionRegistry` 负责从运行时依赖图派生 `TextureAssociations`，`InspectorMeshPreviewSurfaceView` 只消费 DTO 并通过 Win2D 绘制线框、UV 或逐三角贴图化线框，不承担 AB 解析；贴图关联优先走 `Mesh <- MeshFilter / Renderer / ParticleSystemRenderer / GameObject -> Material -> Texture2D / Sprite`，再兜底 `Mesh -> Texture2D / Sprite`。当前贴图化预览用于表达几何 / UV / 贴图的基础对应关系，不模拟 Shader、Material tiling/offset、多材质 submesh 分配或光照效果。
+- 当前 AnimationClip 预览已完成第一版半可视化摘要：`AssetsToolsAnimationClipPreviewBuilder` 负责从真实 AnimationClip 字段读取采样率、起止时间、循环设置、曲线数量与前若干 animation events 并生成 schema v1 JSON sidecar，`GetAssetPreviewHandler` 负责缓存命中后的结构化反序列化，`AssetPreviewResultPresenter` 再把 DTO 交给独立 AnimationClip 预览 ViewModel / 控件渲染；后续增强优先考虑 binding / 曲线通道摘要，不在缺少上下文时把播放或骨骼驱动预览硬塞进 UI。
 - 当前导入主链路在功能上已完成第二阶段多线程收口：`workspaceKey` 级执行闸门、唯一 staging 路径、`PlanBuilder -> Worker Pool -> Committer` 三段模型与 bundle 粒度有界并行都已落地；后续进入“导入吞吐增强”支线时，更适合转向 profiling、Probe 并发评估与更深层并发回归
 - 当前资产预览查询已从单槽后台闸门调整为前台优先的有界并发执行队列，默认并发度为 CPU 核心数一半并限制在 `1-4`；其中 1 个前台槽专门服务当前活动资产详情标签，其余槽用于已打开资产标签的后台预热。若并发度为 1，后台预热不与前台竞争；切换到尚未完成的标签会取消该标签旧后台请求并以前台优先级重开，已完成预览则直接复用。
 

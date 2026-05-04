@@ -114,6 +114,20 @@ public sealed partial class InspectorPanelViewModel
         RebuildInformationCards();
     }
 
+    public void ApplyAnimationClipPreview(
+        AssetPreviewAnimationClipDto animationClip,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
+        AnimationClipPreviewDisplayState? animationClipPreviewDisplayState = null,
+        string? previewPayloadFilePath = null)
+    {
+        Preview.ApplyAnimationClipPreview(
+            animationClip,
+            previewInfoRows,
+            animationClipPreviewDisplayState,
+            previewPayloadFilePath);
+        RebuildInformationCards();
+    }
+
     public void ApplyTextPreview(
         string textContent,
         IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,

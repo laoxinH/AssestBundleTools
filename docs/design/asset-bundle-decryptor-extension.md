@@ -262,7 +262,10 @@ Presentation 不负责：
 - 当前预览类型覆盖如下：
   - 图像预览：`Texture2D`、`Sprite`
   - 文本预览：`TextAsset`、`Shader`
-  - 结构化摘要预览：`AudioClip`、`Mesh`、`Material`、`GameObject`、`MonoBehaviour`、`AnimationClip`、`AnimatorController`、`Font`、`SpriteAtlas`
+  - 音频预览：`AudioClip`
+  - 模型预览：`Mesh`
+  - 半可视化摘要预览：`Material`、`AnimationClip`
+  - 结构化摘要预览：`GameObject`、`MonoBehaviour`、`AnimatorController`、`Font`、`SpriteAtlas`
   - 通用摘要回退：其余可读取资源类型
 
 当前明确暂不实现：

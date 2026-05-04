@@ -903,6 +903,33 @@
   <data name="InspectorPanelView.MaterialPreview.ColorValue.Format" xml:space="preserve">
     <value>RGBA {0}, {1}, {2}, {3}</value>
   </data>
+  <data name="InspectorPanelView.AnimationClipPreview.Timing.Format" xml:space="preserve">
+    <value>{0}s duration · {1} fps · {2} frames · range {3}-{4}s</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveCount.Format" xml:space="preserve">
+    <value>{0} float · {1} position · {2} rotation · {3} scale · {4} object-reference curves</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.Legacy.Format" xml:space="preserve">
+    <value>Legacy clip: {0}</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.Loop.Format" xml:space="preserve">
+    <value>Loop {0} · Blend {1} · Orientation {2} · Y {3} · XZ {4}</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.EventsTitle.Text" xml:space="preserve">
+    <value>Animation Events</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.EmptyEvents.Text" xml:space="preserve">
+    <value>No animation events</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.Truncated.Text" xml:space="preserve">
+    <value>This clip has many events, so the preview shows the first entries only.</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.EventTime.Format" xml:space="preserve">
+    <value>{0}s</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.EventParameters.Format" xml:space="preserve">
+    <value>String {0} · Float {1} · Int {2}</value>
+  </data>
   <data name="InspectorPanelView.AudioTransport.Play.ToolTip" xml:space="preserve">
     <value>Play</value>
   </data>

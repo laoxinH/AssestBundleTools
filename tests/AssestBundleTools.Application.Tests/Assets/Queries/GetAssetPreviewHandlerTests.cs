@@ -242,6 +242,60 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Cache hit should not rewrite preview cache.");
     }
 
+    public static async Task HandleAsync_ShouldHydrateCachedAnimationClipPreview_WhenPreviewCacheStillMatches()
+    {
+        const string resolvedPayloadFilePath = @"D:\WorkspaceData\preview-cache\bundle-cache-001\asset-001.animation-clip.json";
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        var animationClipAssetEntry = bundleCacheEntry.Assets[0] with
+        {
+            AssetType = AssetType.Unknown.ToString(),
+            AssetTypeDisplayName = "AnimationClip",
+            SerializedFileName = "animations.assets"
+        };
+        bundleCacheEntry = bundleCacheEntry with
+        {
+            Assets = [animationClipAssetEntry]
+        };
+        var animationClip = CreateAnimationClipPreview();
+        var previewCachePayload = CreateAnimationClipPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            generatorVersion: "generator-1",
+            animationClip);
+        var previewCacheStore = new TestPreviewCacheStore(previewCachePayload, resolvedPayloadFilePath);
+        var decryptor = new TestAssetBundleDecryptor(CreatePassThroughDecryptorDescriptor());
+        var generator = new TestAssetPreviewGenerator();
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService());
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Matching animation clip preview cache should return cached preview.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(AssetPreviewKind.AnimationClip, preview.Kind, "Cached animation clip preview kind should round-trip.");
+        TestAssert.Equal(null, preview.BinaryContent, "AnimationClip preview should not expose binary payload.");
+        TestAssert.Equal(null, preview.TextContent, "AnimationClip preview JSON should be hydrated into structured animation data.");
+        TestAssert.Equal(resolvedPayloadFilePath, preview.PreviewPayloadFilePath, "Cached animation clip preview should expose resolved payload path.");
+        var restoredAnimationClip = preview.AnimationClip ?? throw new InvalidOperationException("Expected animation clip preview.");
+        TestAssert.Equal(30d, restoredAnimationClip.SampleRate, "AnimationClip sample rate should round-trip.");
+        TestAssert.Equal(1.5d, restoredAnimationClip.Duration, "AnimationClip duration should round-trip.");
+        TestAssert.Equal(45L, restoredAnimationClip.EstimatedFrameCount, "AnimationClip estimated frame count should round-trip.");
+        TestAssert.Equal(8, restoredAnimationClip.FloatCurveCount, "AnimationClip curve counts should round-trip.");
+        TestAssert.Equal(1, restoredAnimationClip.Events.Count, "Animation events should be hydrated from cached JSON.");
+        TestAssert.Equal("OnStep", restoredAnimationClip.Events[0].FunctionName, "Animation event function should round-trip.");
+        TestAssert.Equal(0, decryptor.DecryptCallCount, "Cache hit should not invoke decryptor.");
+        TestAssert.Equal(0, generator.GenerateCallCount, "Cache hit should not invoke preview generator.");
+        TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Cache hit should not rewrite preview cache.");
+    }
+
     public static async Task HandleAsync_ShouldRegeneratePreview_WhenGeneratorVersionChanges()
     {
         const string resolvedBundlePath = @"C:\Temp\preview.bundle";
