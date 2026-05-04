@@ -621,7 +621,7 @@ Presentation 层保留两个协同层次：
   - 音频预览：`AudioClip`（当前已支持标准音频容器直通播放，并对 `FSB5` 补上独立外部转码能力）
   - 模型预览：`Mesh`
   - 半可视化摘要预览：`Material`、`AnimationClip`
-    `Material` 当前会把 TexEnv 贴图行按资产详情依赖图解析到 `Texture2D / Sprite`，并通过现有预览查询管线加载前若干贴图缩略图和主纹理平面预览；解析不到具体资产时保留内部 / 外部引用未匹配状态，不在 Presentation 侧读取 AB。`Mesh` 贴图叠加与 `Material` 贴图展示共享同一贴图预览 payload loader，因此继续复用现有预览缓存、命名和失效链路。
+    `Material` 当前会把 TexEnv 贴图行按资产详情依赖图解析到 `Texture2D / Sprite`，并通过现有预览查询管线加载前若干贴图缩略图和主纹理平面预览；主纹理卡只叠加 `_Color` 基础 tint 并显示“非 Shader 仿真”的限制说明。解析不到具体资产时保留内部 / 外部引用未匹配状态，不在 Presentation 侧读取 AB。`Mesh` 贴图叠加与 `Material` 贴图展示共享同一贴图预览 payload loader，因此继续复用现有预览缓存、命名和失效链路。
   - 结构化摘要预览：`GameObject`、`MonoBehaviour`、`AnimatorController`、`Font`、`SpriteAtlas`
   - 通用摘要回退：其余可读取资源类型
 - 工作台检查器当前会直接展示资源 `PathId`，并在图片预览成功后展示尺寸、裁切矩形、像素编码与源格式标识等专属信息；Sprite 预览会额外展示源贴图上的裁切框、pivot 点、9-slice border 辅助线，以及独立裁切结果卡片

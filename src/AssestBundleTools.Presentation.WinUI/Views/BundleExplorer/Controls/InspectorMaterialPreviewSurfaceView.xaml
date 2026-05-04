@@ -105,6 +105,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
                     <StackPanel Spacing="2">
@@ -117,6 +118,14 @@
                         <TextBlock
                             Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
                             Text="{x:Bind ViewModel.MainTexturePreviewResolutionText, Mode=OneWay}" />
+                        <TextBlock
+                            Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
+                            Text="{x:Bind ViewModel.MainTexturePreviewTransformText, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.MainTexturePreviewTransformVisibility, Mode=OneWay}" />
+                        <TextBlock
+                            Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
+                            Text="{x:Bind ViewModel.MainTexturePreviewTintText, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.MainTexturePreviewTintTextVisibility, Mode=OneWay}" />
                     </StackPanel>
 
                     <Border
@@ -126,11 +135,23 @@
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="12">
-                        <Image
-                            MaxHeight="220"
-                            Source="{x:Bind ViewModel.MainTexturePreviewImageSource, Mode=OneWay}"
-                            Stretch="Uniform" />
+                        <Grid>
+                            <Image
+                                MaxHeight="220"
+                                Source="{x:Bind ViewModel.MainTexturePreviewImageSource, Mode=OneWay}"
+                                Stretch="Uniform" />
+                            <Rectangle
+                                Fill="{x:Bind ViewModel.MainTexturePreviewTintBrush, Mode=OneWay}"
+                                Opacity="0.28"
+                                Visibility="{x:Bind ViewModel.MainTexturePreviewTintVisibility, Mode=OneWay}" />
+                        </Grid>
                     </Border>
+
+                    <TextBlock
+                        Grid.Row="2"
+                        Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
+                        Text="{x:Bind ViewModel.MainTexturePreviewLimitText, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.MainTexturePreviewLimitVisibility, Mode=OneWay}" />
                 </Grid>
             </Border>
 

@@ -574,6 +574,8 @@ public static class ResourceKeys
     public const string InspectorMaterialPreviewShaderReferenceFormat = "InspectorPanelView.MaterialPreview.ShaderReference.Format";
     public const string InspectorMaterialPreviewPropertyCountFormat = "InspectorPanelView.MaterialPreview.PropertyCount.Format";
     public const string InspectorMaterialPreviewMainTextureTitleText = "InspectorPanelView.MaterialPreview.MainTextureTitle.Text";
+    public const string InspectorMaterialPreviewMainTextureTintFormat = "InspectorPanelView.MaterialPreview.MainTextureTint.Format";
+    public const string InspectorMaterialPreviewMainTextureLimitText = "InspectorPanelView.MaterialPreview.MainTextureLimit.Text";
     public const string InspectorMaterialPreviewTexturesTitle = "InspectorPanelView.MaterialPreview.TexturesTitle.Text";
     public const string InspectorMaterialPreviewColorsTitle = "InspectorPanelView.MaterialPreview.ColorsTitle.Text";
     public const string InspectorMaterialPreviewNumbersTitle = "InspectorPanelView.MaterialPreview.NumbersTitle.Text";

@@ -6,6 +6,8 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatt
 
 internal sealed class MaterialPreviewDisplayFormatter
 {
+    private const string MainColorPropertyName = "_Color";
+
     private readonly ILocalizationService _localizationService;
 
     public MaterialPreviewDisplayFormatter(ILocalizationService localizationService)
@@ -30,6 +32,8 @@ internal sealed class MaterialPreviewDisplayFormatter
                 material.ColorProperties.Count.ToString(CultureInfo.CurrentCulture),
                 (material.FloatProperties.Count + material.IntegerProperties.Count).ToString(CultureInfo.CurrentCulture)),
             MainTexturePreviewTitleText: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewMainTextureTitleText),
+            MainTexturePreviewLimitText: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewMainTextureLimitText),
+            MainTextureTint: BuildMainTextureTint(material),
             TextureSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewTexturesTitle),
             ColorSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewColorsTitle),
             NumberSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewNumbersTitle),
@@ -164,12 +168,37 @@ internal sealed class MaterialPreviewDisplayFormatter
             G: property.G,
             B: property.B,
             A: property.A,
-            ValueText: _localizationService.GetFormattedString(
-                ResourceKeys.InspectorMaterialPreviewColorValueFormat,
-                FormatNumber(property.R),
-                FormatNumber(property.G),
-                FormatNumber(property.B),
-                FormatNumber(property.A)));
+            ValueText: BuildColorValueText(property));
+    }
+
+    private MaterialPreviewTintDisplayState? BuildMainTextureTint(AssetPreviewMaterialDto material)
+    {
+        var tintProperty = material.ColorProperties.FirstOrDefault(static property =>
+            string.Equals(property.Name, MainColorPropertyName, StringComparison.OrdinalIgnoreCase));
+        if (tintProperty is null)
+        {
+            return null;
+        }
+
+        return new MaterialPreviewTintDisplayState(
+            Text: _localizationService.GetFormattedString(
+                ResourceKeys.InspectorMaterialPreviewMainTextureTintFormat,
+                tintProperty.Name,
+                BuildColorValueText(tintProperty)),
+            R: tintProperty.R,
+            G: tintProperty.G,
+            B: tintProperty.B,
+            A: tintProperty.A);
+    }
+
+    private string BuildColorValueText(AssetPreviewMaterialColorPropertyDto property)
+    {
+        return _localizationService.GetFormattedString(
+            ResourceKeys.InspectorMaterialPreviewColorValueFormat,
+            FormatNumber(property.R),
+            FormatNumber(property.G),
+            FormatNumber(property.B),
+            FormatNumber(property.A));
     }
 
     private string BuildTruncatedText(AssetPreviewMaterialDto material)
@@ -206,6 +235,8 @@ public sealed record MaterialPreviewDisplayState(
     string ShaderReferenceText,
     string PropertyCountText,
     string MainTexturePreviewTitleText,
+    string MainTexturePreviewLimitText,
+    MaterialPreviewTintDisplayState? MainTextureTint,
     string TextureSectionTitle,
     string ColorSectionTitle,
     string NumberSectionTitle,
@@ -222,6 +253,13 @@ public sealed record MaterialPreviewTextureRowDisplayState(
     string? ResolvedTextureAssetId,
     bool IsMainTextureCandidate,
     string TransformText);
+
+public sealed record MaterialPreviewTintDisplayState(
+    string Text,
+    double R,
+    double G,
+    double B,
+    double A);
 
 public sealed record MaterialPreviewColorRowDisplayState(
     string PropertyName,

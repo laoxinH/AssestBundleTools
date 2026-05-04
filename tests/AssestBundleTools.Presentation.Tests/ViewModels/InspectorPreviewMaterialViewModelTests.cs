@@ -20,6 +20,13 @@ public sealed class InspectorPreviewMaterialViewModelTests
             ShaderReferenceText: "materials.assets",
             PropertyCountText: "2 textures",
             MainTexturePreviewTitleText: "Main Texture",
+            MainTexturePreviewLimitText: "Reference only",
+            MainTextureTint: new MaterialPreviewTintDisplayState(
+                Text: "Tint _Color: RGBA 0.25, 0.5, 0.75, 1",
+                R: 0.25,
+                G: 0.5,
+                B: 0.75,
+                A: 1),
             TextureSectionTitle: "Textures",
             ColorSectionTitle: "Colors",
             NumberSectionTitle: "Numbers",
@@ -40,7 +47,7 @@ public sealed class InspectorPreviewMaterialViewModelTests
                     ResolutionText: "Resolved main",
                     ResolvedTextureAssetId: "main",
                     IsMainTextureCandidate: true,
-                    TransformText: string.Empty)
+                    TransformText: "Scale 1, 1 · Offset 0, 0")
             ],
             ColorRows: Array.Empty<MaterialPreviewColorRowDisplayState>(),
             NumberRows: Array.Empty<MaterialPreviewNumberRowDisplayState>());
@@ -58,7 +65,14 @@ public sealed class InspectorPreviewMaterialViewModelTests
         Assert.Equal("Main Texture", viewModel.MainTexturePreviewTitleText);
         Assert.Equal("_MainTex", viewModel.MainTexturePreviewNameText);
         Assert.Equal("Resolved main", viewModel.MainTexturePreviewResolutionText);
+        Assert.Equal("Scale 1, 1 · Offset 0, 0", viewModel.MainTexturePreviewTransformText);
+        Assert.Equal("Tint _Color: RGBA 0.25, 0.5, 0.75, 1", viewModel.MainTexturePreviewTintText);
+        Assert.Equal("Reference only", viewModel.MainTexturePreviewLimitText);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewTransformVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewTintTextVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewTintVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewLimitVisibility);
     }
 
     private static AssetPreviewMaterialDto CreateEmptyMaterial()

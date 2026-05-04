@@ -876,6 +876,12 @@
   <data name="InspectorPanelView.MaterialPreview.MainTextureTitle.Text" xml:space="preserve">
     <value>Main Texture Plane Preview</value>
   </data>
+  <data name="InspectorPanelView.MaterialPreview.MainTextureTint.Format" xml:space="preserve">
+    <value>Tint {0}: {1}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.MainTextureLimit.Text" xml:space="preserve">
+    <value>Reference preview: combines the main texture with the base color only; shader, lighting, multi-pass, and full sampling behavior are not simulated.</value>
+  </data>
   <data name="InspectorPanelView.MaterialPreview.TexturesTitle.Text" xml:space="preserve">
     <value>Texture Slots</value>
   </data>

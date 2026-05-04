@@ -876,6 +876,12 @@
   <data name="InspectorPanelView.MaterialPreview.MainTextureTitle.Text" xml:space="preserve">
     <value>主纹理平面预览</value>
   </data>
+  <data name="InspectorPanelView.MaterialPreview.MainTextureTint.Format" xml:space="preserve">
+    <value>颜色叠加 {0}：{1}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.MainTextureLimit.Text" xml:space="preserve">
+    <value>参考预览：仅叠加主纹理与基础颜色，不模拟 Shader、光照、多 Pass 或完整采样效果。</value>
+  </data>
   <data name="InspectorPanelView.MaterialPreview.TexturesTitle.Text" xml:space="preserve">
     <value>贴图槽</value>
   </data>

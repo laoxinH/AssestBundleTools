@@ -17,12 +17,17 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     private string _mainTexturePreviewTitleText = string.Empty;
     private string _mainTexturePreviewNameText = string.Empty;
     private string _mainTexturePreviewResolutionText = string.Empty;
+    private string _mainTexturePreviewTransformText = string.Empty;
+    private string _mainTexturePreviewTintText = string.Empty;
+    private string _mainTexturePreviewLimitText = string.Empty;
     private string _textureSectionTitle = string.Empty;
     private string _colorSectionTitle = string.Empty;
     private string _numberSectionTitle = string.Empty;
     private string _emptySectionText = string.Empty;
     private string _truncatedText = string.Empty;
     private ImageSource? _mainTexturePreviewImageSource;
+    private Brush? _mainTexturePreviewTintBrush;
+    private MaterialPreviewTintDisplayState? _mainTexturePreviewTint;
     private IReadOnlyList<MaterialPreviewTextureRowViewModel> _textureRows = Array.Empty<MaterialPreviewTextureRowViewModel>();
     private IReadOnlyList<MaterialPreviewColorRowViewModel> _colorRows = Array.Empty<MaterialPreviewColorRowViewModel>();
     private IReadOnlyList<MaterialPreviewNumberRowViewModel> _numberRows = Array.Empty<MaterialPreviewNumberRowViewModel>();
@@ -82,6 +87,42 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         private set => SetProperty(ref _mainTexturePreviewResolutionText, value);
     }
 
+    public string MainTexturePreviewTransformText
+    {
+        get => _mainTexturePreviewTransformText;
+        private set
+        {
+            if (SetProperty(ref _mainTexturePreviewTransformText, value))
+            {
+                OnPropertyChanged(nameof(MainTexturePreviewTransformVisibility));
+            }
+        }
+    }
+
+    public string MainTexturePreviewTintText
+    {
+        get => _mainTexturePreviewTintText;
+        private set
+        {
+            if (SetProperty(ref _mainTexturePreviewTintText, value))
+            {
+                OnPropertyChanged(nameof(MainTexturePreviewTintTextVisibility));
+            }
+        }
+    }
+
+    public string MainTexturePreviewLimitText
+    {
+        get => _mainTexturePreviewLimitText;
+        private set
+        {
+            if (SetProperty(ref _mainTexturePreviewLimitText, value))
+            {
+                OnPropertyChanged(nameof(MainTexturePreviewLimitVisibility));
+            }
+        }
+    }
+
     public ImageSource? MainTexturePreviewImageSource
     {
         get => _mainTexturePreviewImageSource;
@@ -93,6 +134,9 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
             }
         }
     }
+
+    public Brush? MainTexturePreviewTintBrush =>
+        _mainTexturePreviewTint is null ? null : _mainTexturePreviewTintBrush ??= CreateTintBrush(_mainTexturePreviewTint);
 
     public string TextureSectionTitle
     {
@@ -188,6 +232,18 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     public Visibility MainTexturePreviewVisibility =>
         MainTexturePreviewImageSource is null ? Visibility.Collapsed : Visibility.Visible;
 
+    public Visibility MainTexturePreviewTransformVisibility =>
+        string.IsNullOrWhiteSpace(MainTexturePreviewTransformText) ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility MainTexturePreviewTintTextVisibility =>
+        string.IsNullOrWhiteSpace(MainTexturePreviewTintText) ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility MainTexturePreviewTintVisibility =>
+        _mainTexturePreviewTint is null ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility MainTexturePreviewLimitVisibility =>
+        string.IsNullOrWhiteSpace(MainTexturePreviewLimitText) ? Visibility.Collapsed : Visibility.Visible;
+
     public Visibility TruncatedTextVisibility =>
         string.IsNullOrWhiteSpace(TruncatedText) ? Visibility.Collapsed : Visibility.Visible;
 
@@ -205,6 +261,9 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         ShaderReferenceText = displayState.ShaderReferenceText;
         PropertyCountText = displayState.PropertyCountText;
         MainTexturePreviewTitleText = displayState.MainTexturePreviewTitleText;
+        MainTexturePreviewLimitText = displayState.MainTexturePreviewLimitText;
+        MainTexturePreviewTintText = displayState.MainTextureTint?.Text ?? string.Empty;
+        ApplyMainTextureTint(displayState.MainTextureTint);
         TextureSectionTitle = displayState.TextureSectionTitle;
         ColorSectionTitle = displayState.ColorSectionTitle;
         NumberSectionTitle = displayState.NumberSectionTitle;
@@ -229,7 +288,11 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         MainTexturePreviewTitleText = string.Empty;
         MainTexturePreviewNameText = string.Empty;
         MainTexturePreviewResolutionText = string.Empty;
+        MainTexturePreviewTransformText = string.Empty;
+        MainTexturePreviewTintText = string.Empty;
+        MainTexturePreviewLimitText = string.Empty;
         MainTexturePreviewImageSource = null;
+        ApplyMainTextureTint(null);
         TextureSectionTitle = string.Empty;
         ColorSectionTitle = string.Empty;
         NumberSectionTitle = string.Empty;
@@ -261,6 +324,30 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         MainTexturePreviewImageSource = previewRow?.ThumbnailImageSource;
         MainTexturePreviewNameText = previewRow?.PropertyName ?? string.Empty;
         MainTexturePreviewResolutionText = previewRow?.ResolutionText ?? string.Empty;
+        MainTexturePreviewTransformText = previewRow?.TransformText ?? string.Empty;
+    }
+
+    private void ApplyMainTextureTint(MaterialPreviewTintDisplayState? tint)
+    {
+        _mainTexturePreviewTint = tint;
+        _mainTexturePreviewTintBrush = null;
+        OnPropertyChanged(nameof(MainTexturePreviewTintBrush));
+        OnPropertyChanged(nameof(MainTexturePreviewTintVisibility));
+    }
+
+    private static Brush CreateTintBrush(MaterialPreviewTintDisplayState tint)
+    {
+        return new SolidColorBrush(Color.FromArgb(
+            ToByte(tint.A),
+            ToByte(tint.R),
+            ToByte(tint.G),
+            ToByte(tint.B)));
+    }
+
+    private static byte ToByte(double value)
+    {
+        var clamped = Math.Clamp(value, 0d, 1d);
+        return (byte)Math.Round(clamped * byte.MaxValue);
     }
 }
 
