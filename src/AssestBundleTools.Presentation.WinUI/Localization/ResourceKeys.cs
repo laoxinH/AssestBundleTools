@@ -581,6 +581,9 @@ public static class ResourceKeys
     public const string InspectorMaterialPreviewTextureMissingText = "InspectorPanelView.MaterialPreview.TextureMissing.Text";
     public const string InspectorMaterialPreviewTextureInternalFormat = "InspectorPanelView.MaterialPreview.TextureInternal.Format";
     public const string InspectorMaterialPreviewTextureExternalFormat = "InspectorPanelView.MaterialPreview.TextureExternal.Format";
+    public const string InspectorMaterialPreviewTextureResolvedFormat = "InspectorPanelView.MaterialPreview.TextureResolved.Format";
+    public const string InspectorMaterialPreviewTextureExternalUnresolvedText = "InspectorPanelView.MaterialPreview.TextureExternalUnresolved.Text";
+    public const string InspectorMaterialPreviewTextureInternalUnresolvedText = "InspectorPanelView.MaterialPreview.TextureInternalUnresolved.Text";
     public const string InspectorMaterialPreviewTextureTransformFormat = "InspectorPanelView.MaterialPreview.TextureTransform.Format";
     public const string InspectorMaterialPreviewColorValueFormat = "InspectorPanelView.MaterialPreview.ColorValue.Format";
     public const string InspectorBooleanTrue = "InspectorPanelView.Boolean.True";

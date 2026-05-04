@@ -897,6 +897,15 @@
   <data name="InspectorPanelView.MaterialPreview.TextureExternal.Format" xml:space="preserve">
     <value>External {0} · PathId {1}</value>
   </data>
+  <data name="InspectorPanelView.MaterialPreview.TextureResolved.Format" xml:space="preserve">
+    <value>Resolved texture: {0} · {1}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.TextureExternalUnresolved.Text" xml:space="preserve">
+    <value>External texture is not imported or not matched in this workspace</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.TextureInternalUnresolved.Text" xml:space="preserve">
+    <value>Internal texture reference was not matched in the current dependency graph</value>
+  </data>
   <data name="InspectorPanelView.MaterialPreview.TextureTransform.Format" xml:space="preserve">
     <value>Scale {0}, {1} · Offset {2}, {3}</value>
   </data>

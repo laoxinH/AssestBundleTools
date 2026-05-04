@@ -50,8 +50,10 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
             NormalizePreviewQueryTimeout(previewQueryTimeout),
             AssetPreviewExecutionOptionsResolver.NormalizePreviewWorkerCount(previewWorkerCount));
         var meshTextureOverlayPreviewLoader = new MeshTextureOverlayPreviewLoader(_previewQueryExecutor);
+        var materialTexturePreviewLoader = new MaterialTexturePreviewLoader(_previewQueryExecutor);
         _previewResultPresenter = new AssetPreviewResultPresenter(
             meshTextureOverlayPreviewLoader,
+            materialTexturePreviewLoader,
             _appLogService,
             _localizationService);
     }

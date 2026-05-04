@@ -94,6 +94,10 @@ public sealed class BundleExplorerAssetPreviewCoordinatorMaterialTests
             ResourceKeys.InspectorMaterialPreviewTextureExternalFormat + ":archive:/CAB-textures/CAB-textures|200",
             textureRow.TargetText);
         Assert.Equal(
+            ResourceKeys.InspectorMaterialPreviewTextureExternalUnresolvedText,
+            textureRow.ResolutionText);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, textureRow.ResolutionVisibility);
+        Assert.Equal(
             ResourceKeys.InspectorMaterialPreviewTextureTransformFormat + ":1|1|0|0",
             textureRow.TransformText);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, textureRow.TransformVisibility);
@@ -110,6 +114,79 @@ public sealed class BundleExplorerAssetPreviewCoordinatorMaterialTests
         Assert.Equal("_Cull", assetTab.Inspector.Preview.Material.NumberRows[1].PropertyName);
         Assert.Equal("2", assetTab.Inspector.Preview.Material.NumberRows[1].ValueText);
         Assert.Equal(@"C:\PreviewCache\material.json", assetTab.Inspector.Preview.PreviewPayloadFilePath);
+        Assert.Empty(appLogService.WarningMessages);
+    }
+
+    [Fact]
+    public async Task LoadInspectorPreviewAsync_ShouldResolveMaterialTextureRow_AndRequestThumbnailPreview()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-ui");
+        var assetId = new AssetId("asset-material");
+        var textureAssetId = new AssetId("asset-texture");
+        var localizationService = new TestLocalizationService();
+        var appLogService = new TestAppLogService();
+        var workspaceContextService = new TestWorkspaceContextService();
+        var workspaceRequest = PresentationTestDataFactory.CreateNavigationRequest("MaterialTextureThumbnail");
+        var workspaceSummary = CreateWorkspaceSummary(workspaceId, workspaceRequest);
+        workspaceContextService.RegisterOrActivateWorkspace(
+            workspaceSummary,
+            workspaceRequest.WorkspaceDataRootPath,
+            workspaceRequest.AssetBundleDecryptorId);
+        var workspaceShell = new BundleExplorerWorkspaceShellViewModel(
+            localizationService,
+            workspaceContextService,
+            new TestAssetBundleDecryptorRegistry());
+        workspaceShell.ApplyWorkspace(workspaceSummary, workspaceRequest);
+        var queriedAssetIds = new List<AssetId>();
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            GetAssetPreviewHandler = query =>
+            {
+                queriedAssetIds.Add(query.AssetId);
+                return Task.FromResult(query.AssetId.Equals(textureAssetId)
+                    ? CreateTexturePreviewResult(query, [1, 2, 3])
+                    : CreateMaterialPreviewResult(query));
+            }
+        };
+        var coordinator = new BundleExplorerAssetPreviewCoordinator(
+            inspectionGateway,
+            workspaceContextService,
+            workspaceShell,
+            appLogService,
+            localizationService,
+            new TestBackgroundTaskRunner());
+        var assetTab = CreateAssetTab(bundleId, assetId, localizationService);
+        var details = CreateAssetDetails(workspaceId, bundleId, assetId) with
+        {
+            Name = "paopao_01",
+            AssetType = AssetType.Material,
+            AssetTypeDisplayName = AssetType.Material.ToString(),
+            Dependencies =
+            [
+                new AssetDependencyDto(
+                    textureAssetId,
+                    bundleId,
+                    "HeroTexture",
+                    AssetType.Texture2D,
+                    PathId: 200,
+                    AssetTypeDisplayName: "Texture2D")
+            ]
+        };
+        assetTab.ApplyDetails(details);
+        ApplyInspectorSelection(assetTab, details);
+
+        await coordinator.LoadInspectorPreviewAsync(
+            assetTab,
+            details,
+            static _ => "failed");
+
+        Assert.Equal([assetId, textureAssetId], queriedAssetIds);
+        var textureRow = Assert.Single(assetTab.Inspector.Preview.Material.TextureRows);
+        Assert.Equal(
+            ResourceKeys.InspectorMaterialPreviewTextureResolvedFormat + ":HeroTexture|Texture2D",
+            textureRow.ResolutionText);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, textureRow.ResolutionVisibility);
         Assert.Empty(appLogService.WarningMessages);
     }
 

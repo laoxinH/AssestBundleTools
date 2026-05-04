@@ -15,12 +15,13 @@ internal sealed class MaterialPreviewDisplayFormatter
 
     public MaterialPreviewDisplayState BuildDisplayState(
         AssetPreviewMaterialDto material,
-        string assetName)
+        AssetDetailsDto details)
     {
         ArgumentNullException.ThrowIfNull(material);
+        ArgumentNullException.ThrowIfNull(details);
 
         return new MaterialPreviewDisplayState(
-            AssetNameText: string.IsNullOrWhiteSpace(assetName) ? string.Empty : assetName.Trim(),
+            AssetNameText: string.IsNullOrWhiteSpace(details.Name) ? string.Empty : details.Name.Trim(),
             ShaderNameText: BuildShaderNameText(material.Shader),
             ShaderReferenceText: BuildShaderReferenceText(material.Shader),
             PropertyCountText: _localizationService.GetFormattedString(
@@ -33,7 +34,7 @@ internal sealed class MaterialPreviewDisplayFormatter
             NumberSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewNumbersTitle),
             EmptySectionText: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewEmptySectionText),
             TruncatedText: BuildTruncatedText(material),
-            TextureRows: material.TextureProperties.Select(BuildTextureRow).ToArray(),
+            TextureRows: material.TextureProperties.Select(property => BuildTextureRow(property, details)).ToArray(),
             ColorRows: material.ColorProperties.Select(BuildColorRow).ToArray(),
             NumberRows: material.FloatProperties
                 .Select(static property => new MaterialPreviewNumberRowDisplayState(
@@ -71,9 +72,13 @@ internal sealed class MaterialPreviewDisplayFormatter
             shader.PathId.ToString(CultureInfo.CurrentCulture));
     }
 
-    private MaterialPreviewTextureRowDisplayState BuildTextureRow(AssetPreviewMaterialTexturePropertyDto property)
+    private MaterialPreviewTextureRowDisplayState BuildTextureRow(
+        AssetPreviewMaterialTexturePropertyDto property,
+        AssetDetailsDto details)
     {
         var targetText = BuildTextureTargetText(property);
+        var resolvedTextureDependency = MaterialTextureDependencyResolver.ResolveTextureDependency(property, details);
+        var resolutionText = BuildTextureResolutionText(property, resolvedTextureDependency);
         var transformText = property.ScaleX.HasValue ||
                             property.ScaleY.HasValue ||
                             property.OffsetX.HasValue ||
@@ -89,6 +94,8 @@ internal sealed class MaterialPreviewDisplayFormatter
         return new MaterialPreviewTextureRowDisplayState(
             PropertyName: property.Name,
             TargetText: targetText,
+            ResolutionText: resolutionText,
+            ResolvedTextureAssetId: resolvedTextureDependency?.AssetId.Value,
             TransformText: transformText);
     }
 
@@ -109,6 +116,28 @@ internal sealed class MaterialPreviewDisplayFormatter
             formatKey,
             string.IsNullOrWhiteSpace(source) ? "-" : source,
             property.PathId.Value.ToString(CultureInfo.CurrentCulture));
+    }
+
+    private string BuildTextureResolutionText(
+        AssetPreviewMaterialTexturePropertyDto property,
+        AssetDependencyDto? resolvedTextureDependency)
+    {
+        if (!property.PathId.HasValue || property.PathId.Value == 0)
+        {
+            return string.Empty;
+        }
+
+        if (resolvedTextureDependency is not null)
+        {
+            return _localizationService.GetFormattedString(
+                ResourceKeys.InspectorMaterialPreviewTextureResolvedFormat,
+                resolvedTextureDependency.Name,
+                ResolveAssetTypeDisplayName(resolvedTextureDependency));
+        }
+
+        return property.IsExternal
+            ? _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewTextureExternalUnresolvedText)
+            : _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewTextureInternalUnresolvedText);
     }
 
     private MaterialPreviewColorRowDisplayState BuildColorRow(AssetPreviewMaterialColorPropertyDto property)
@@ -143,6 +172,16 @@ internal sealed class MaterialPreviewDisplayFormatter
             ? value.Value.ToString("0.###", CultureInfo.CurrentCulture)
             : "-";
     }
+
+    private static string ResolveAssetTypeDisplayName(AssetDependencyDto dependency)
+    {
+        if (!string.IsNullOrWhiteSpace(dependency.AssetTypeDisplayName))
+        {
+            return dependency.AssetTypeDisplayName.Trim();
+        }
+
+        return dependency.AssetType.ToString();
+    }
 }
 
 public sealed record MaterialPreviewDisplayState(
@@ -162,6 +201,8 @@ public sealed record MaterialPreviewDisplayState(
 public sealed record MaterialPreviewTextureRowDisplayState(
     string PropertyName,
     string TargetText,
+    string ResolutionText,
+    string? ResolvedTextureAssetId,
     string TransformText);
 
 public sealed record MaterialPreviewColorRowDisplayState(

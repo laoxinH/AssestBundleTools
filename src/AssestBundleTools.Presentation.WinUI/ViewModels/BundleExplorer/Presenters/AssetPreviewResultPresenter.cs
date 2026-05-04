@@ -5,6 +5,7 @@ using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using Microsoft.UI.Xaml.Media;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 
@@ -14,6 +15,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Present
 internal sealed class AssetPreviewResultPresenter
 {
     private readonly MeshTextureOverlayPreviewLoader _meshTextureOverlayPreviewLoader;
+    private readonly MaterialTexturePreviewLoader _materialTexturePreviewLoader;
     private readonly IAppLogService _appLogService;
     private readonly ILocalizationService _localizationService;
     private readonly LocalizedValueFormatter _localizedValueFormatter;
@@ -24,10 +26,12 @@ internal sealed class AssetPreviewResultPresenter
 
     public AssetPreviewResultPresenter(
         MeshTextureOverlayPreviewLoader meshTextureOverlayPreviewLoader,
+        MaterialTexturePreviewLoader materialTexturePreviewLoader,
         IAppLogService appLogService,
         ILocalizationService localizationService)
     {
         _meshTextureOverlayPreviewLoader = meshTextureOverlayPreviewLoader ?? throw new ArgumentNullException(nameof(meshTextureOverlayPreviewLoader));
+        _materialTexturePreviewLoader = materialTexturePreviewLoader ?? throw new ArgumentNullException(nameof(materialTexturePreviewLoader));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _localizedValueFormatter = new LocalizedValueFormatter(_localizationService);
@@ -79,8 +83,15 @@ internal sealed class AssetPreviewResultPresenter
                     priority,
                     isPreviewRequestCurrentAndRelevant);
             case AssetPreviewKind.Material:
-                ApplyMaterialPreview(assetTab.Inspector, details, preview, previewInfoRows);
-                return true;
+                return await TryApplyMaterialPreviewAsync(
+                    assetTab,
+                    details,
+                    previewQuery,
+                    previewRequest,
+                    preview,
+                    previewInfoRows,
+                    priority,
+                    isPreviewRequestCurrentAndRelevant);
             case AssetPreviewKind.AnimationClip:
                 ApplyAnimationClipPreview(assetTab.Inspector, details, preview, previewInfoRows);
                 return true;
@@ -223,24 +234,95 @@ internal sealed class AssetPreviewResultPresenter
         return true;
     }
 
-    private void ApplyMaterialPreview(
-        InspectorPanelViewModel inspector,
+    private async Task<bool> TryApplyMaterialPreviewAsync(
+        AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
+        GetAssetPreviewQuery previewQuery,
+        AssetPreviewRequest previewRequest,
         AssetPreviewDto preview,
-        IReadOnlyList<InspectorInfoRowViewModel> previewInfoRows)
+        IReadOnlyList<InspectorInfoRowViewModel> previewInfoRows,
+        AssetPreviewLoadPriority priority,
+        Func<bool> isPreviewRequestCurrentAndRelevant)
     {
         if (preview.Material is null)
         {
-            ApplyUnavailablePreview(inspector, preview.Diagnostic);
-            return;
+            ApplyUnavailablePreview(assetTab.Inspector, preview.Diagnostic);
+            return true;
         }
 
-        inspector.ApplyMaterialPreview(
+        var textureThumbnailSources = await LoadMaterialTextureThumbnailSourcesAsync(
+            assetTab,
+            details,
+            previewQuery,
+            previewRequest,
+            preview.Material,
+            priority,
+            isPreviewRequestCurrentAndRelevant);
+        if (!isPreviewRequestCurrentAndRelevant())
+        {
+            return false;
+        }
+
+        assetTab.Inspector.ApplyMaterialPreview(
             preview.Material,
             previewInfoRows,
-            _materialPreviewDisplayFormatter.BuildDisplayState(preview.Material, details.Name),
-            preview.PreviewPayloadFilePath);
-        ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
+            _materialPreviewDisplayFormatter.BuildDisplayState(preview.Material, details),
+            preview.PreviewPayloadFilePath,
+            textureThumbnailSources);
+        ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
+        return true;
+    }
+
+    private async Task<IReadOnlyDictionary<string, ImageSource>> LoadMaterialTextureThumbnailSourcesAsync(
+        AssetDocumentTabViewModel assetTab,
+        AssetDetailsDto details,
+        GetAssetPreviewQuery previewQuery,
+        AssetPreviewRequest previewRequest,
+        AssetPreviewMaterialDto material,
+        AssetPreviewLoadPriority priority,
+        Func<bool> isPreviewRequestCurrentAndRelevant)
+    {
+        var thumbnailPayloads = await _materialTexturePreviewLoader.LoadAsync(
+            details,
+            material,
+            previewQuery,
+            previewRequest.CancellationToken,
+            priority,
+            isPreviewRequestCurrentAndRelevant);
+        if (thumbnailPayloads.Count == 0 ||
+            !assetTab.IsPreviewRequestCurrent(details, previewRequest))
+        {
+            return new Dictionary<string, ImageSource>(StringComparer.Ordinal);
+        }
+
+        var thumbnailSources = new Dictionary<string, ImageSource>(StringComparer.Ordinal);
+        foreach (var (assetId, payload) in thumbnailPayloads)
+        {
+            if (!assetTab.IsPreviewRequestCurrent(details, previewRequest))
+            {
+                return new Dictionary<string, ImageSource>(StringComparer.Ordinal);
+            }
+
+            var imageSource = await TryCreateThumbnailSourceAsync(payload);
+            if (imageSource is not null)
+            {
+                thumbnailSources[assetId] = imageSource;
+            }
+        }
+
+        return thumbnailSources;
+    }
+
+    private static async Task<ImageSource?> TryCreateThumbnailSourceAsync(byte[] imagePayload)
+    {
+        try
+        {
+            return await AssetPreviewMediaSourceFactory.CreateImageSourceAsync(imagePayload);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private void ApplyAnimationClipPreview(

@@ -156,7 +156,8 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
 
     internal void Apply(
         AssetPreviewMaterialDto material,
-        MaterialPreviewDisplayState displayState)
+        MaterialPreviewDisplayState displayState,
+        IReadOnlyDictionary<string, ImageSource>? textureThumbnailSources = null)
     {
         ArgumentNullException.ThrowIfNull(material);
         ArgumentNullException.ThrowIfNull(displayState);
@@ -171,7 +172,9 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         NumberSectionTitle = displayState.NumberSectionTitle;
         EmptySectionText = displayState.EmptySectionText;
         TruncatedText = displayState.TruncatedText;
-        TextureRows = displayState.TextureRows.Select(static row => new MaterialPreviewTextureRowViewModel(row)).ToArray();
+        TextureRows = displayState.TextureRows
+            .Select(row => new MaterialPreviewTextureRowViewModel(row, ResolveThumbnailSource(row, textureThumbnailSources)))
+            .ToArray();
         ColorRows = displayState.ColorRows.Select(static row => new MaterialPreviewColorRowViewModel(row)).ToArray();
         NumberRows = displayState.NumberRows.Select(static row => new MaterialPreviewNumberRowViewModel(row)).ToArray();
     }
@@ -192,25 +195,51 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         ColorRows = Array.Empty<MaterialPreviewColorRowViewModel>();
         NumberRows = Array.Empty<MaterialPreviewNumberRowViewModel>();
     }
+
+    private static ImageSource? ResolveThumbnailSource(
+        MaterialPreviewTextureRowDisplayState row,
+        IReadOnlyDictionary<string, ImageSource>? textureThumbnailSources)
+    {
+        return !string.IsNullOrWhiteSpace(row.ResolvedTextureAssetId) &&
+               textureThumbnailSources is not null &&
+               textureThumbnailSources.TryGetValue(row.ResolvedTextureAssetId, out var thumbnailSource)
+            ? thumbnailSource
+            : null;
+    }
 }
 
 public sealed class MaterialPreviewTextureRowViewModel
 {
-    public MaterialPreviewTextureRowViewModel(MaterialPreviewTextureRowDisplayState row)
+    public MaterialPreviewTextureRowViewModel(
+        MaterialPreviewTextureRowDisplayState row,
+        ImageSource? thumbnailImageSource)
     {
         PropertyName = row.PropertyName;
         TargetText = row.TargetText;
+        ResolutionText = row.ResolutionText;
         TransformText = row.TransformText;
+        ThumbnailImageSource = thumbnailImageSource;
     }
 
     public string PropertyName { get; }
 
     public string TargetText { get; }
 
+    public string ResolutionText { get; }
+
     public string TransformText { get; }
+
+    public ImageSource? ThumbnailImageSource { get; }
+
+    public Visibility ResolutionVisibility =>
+        string.IsNullOrWhiteSpace(ResolutionText) ? Visibility.Collapsed : Visibility.Visible;
 
     public Visibility TransformVisibility =>
         string.IsNullOrWhiteSpace(TransformText) ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility ThumbnailVisibility => ThumbnailImageSource is null ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility ThumbnailPlaceholderVisibility => ThumbnailImageSource is null ? Visibility.Visible : Visibility.Collapsed;
 }
 
 public sealed class MaterialPreviewColorRowViewModel

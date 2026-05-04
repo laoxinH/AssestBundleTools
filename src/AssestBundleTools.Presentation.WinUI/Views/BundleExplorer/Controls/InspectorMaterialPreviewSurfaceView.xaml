@@ -111,19 +111,55 @@
                             <Border
                                 Margin="0,0,0,6"
                                 Style="{StaticResource MaterialPreviewPropertyCardStyle}">
-                                <StackPanel Spacing="2">
-                                    <TextBlock
-                                        FontWeight="SemiBold"
-                                        Text="{x:Bind PropertyName, Mode=OneTime}"
-                                        TextWrapping="WrapWholeWords" />
-                                    <TextBlock
-                                        Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                                        Text="{x:Bind TargetText, Mode=OneTime}" />
-                                    <TextBlock
-                                        Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                                        Text="{x:Bind TransformText, Mode=OneTime}"
-                                        Visibility="{x:Bind TransformVisibility, Mode=OneTime}" />
-                                </StackPanel>
+                                <Grid ColumnSpacing="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border
+                                        Width="42"
+                                        Height="42"
+                                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="10">
+                                        <Grid>
+                                            <Image
+                                                Source="{x:Bind ThumbnailImageSource, Mode=OneTime}"
+                                                Stretch="UniformToFill"
+                                                Visibility="{x:Bind ThumbnailVisibility, Mode=OneTime}" />
+                                            <FontIcon
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                FontFamily="Segoe Fluent Icons"
+                                                FontSize="15"
+                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                Glyph="&#xEB9F;"
+                                                Visibility="{x:Bind ThumbnailPlaceholderVisibility, Mode=OneTime}" />
+                                        </Grid>
+                                    </Border>
+
+                                    <StackPanel
+                                        Grid.Column="1"
+                                        Spacing="2">
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Text="{x:Bind PropertyName, Mode=OneTime}"
+                                            TextWrapping="WrapWholeWords" />
+                                        <TextBlock
+                                            Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
+                                            Text="{x:Bind ResolutionText, Mode=OneTime}"
+                                            Visibility="{x:Bind ResolutionVisibility, Mode=OneTime}" />
+                                        <TextBlock
+                                            Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
+                                            Text="{x:Bind TargetText, Mode=OneTime}" />
+                                        <TextBlock
+                                            Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
+                                            Text="{x:Bind TransformText, Mode=OneTime}"
+                                            Visibility="{x:Bind TransformVisibility, Mode=OneTime}" />
+                                    </StackPanel>
+                                </Grid>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

@@ -91,7 +91,7 @@ tests/
 - 已完成 `BundleExplorerViewModel` 的 D-04 新一轮收口：在工作区浏览状态恢复/持久化节流、页面级结果反馈、工作区加载/重绑定编排以及资源包标签打开/激活/关闭/重排编排分别下沉到 `BundleExplorerBrowserStateCoordinator / BundleExplorerOperationFeedbackBridge / BundleExplorerWorkspaceBindingCoordinator / BundleExplorerBundleTabCoordinator` 之后，`BundleExplorerPage` 也已直接迁回 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 子状态宿主绑定，旧页面兼容透传属性与 `BundleExplorerPageStateBridge` 已移除，主类体量已由 `1258` 行降到约 `426` 行
 - 已完成 `BundleExplorerAssetWorkflowViewModel` 的 D-04 第六轮拆分：在 `Preview`、提取/替换动作、检查器投影、资产文档标签协调、资产文档宿主构造/清理以及主资产窗格加载/刷新/空态回退编排下沉之后，资产级命令入口与页面动作编排也已下沉到 `BundleExplorerAssetCommandCoordinator`，共享结果失败反馈继续统一复用 `BundleExplorerOperationFeedbackBridge`，主类当前约 `273` 行；当前 D-04 的主体偏差已完成收口，后续重点转向防止职责回灌与稳定页面内共享状态
 - 已完成 `BundleExplorer` 页面级共享状态的 D-03 第三轮收口：`BundleExplorerPage.xaml / BundleExplorerPage.xaml.cs` 当前已直接绑定或订阅 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 的语义化状态宿主，旧的 `BundleExplorerPageStateBridge` 已移除，不再继续保留页面兼容桥接层
-- 已完成 Material 结构化摘要预览：当前通过 `Infrastructure -> Application -> Presentation` 的现有预览管线输出 `Shader / TexEnv / Float / Color / Int` 的半可视化摘要，外部贴图引用继续保留 `fileId / pathId / external path`，未再在 UI 层直接读取 AB
+- 已完成 Material 结构化摘要预览：当前通过 `Infrastructure -> Application -> Presentation` 的现有预览管线输出 `Shader / TexEnv / Float / Color / Int` 的半可视化摘要，并会把 TexEnv 行按 `AssetDetailsDto.Dependencies` 定位到当前依赖图中的 `Texture2D / Sprite`；命中时用现有 `GetAssetPreviewQuery` 管线加载缩略图，未命中时保留内部 / 外部未解析状态，仍不在 UI 层直接读取 AB
 - 已完成 AnimationClip 第一版半可视化摘要预览：Infrastructure 输出 `duration / sampleRate / frame estimate / loop settings / curve counts / animation events` 的 JSON sidecar，Application 缓存命中后水化为专用 DTO，Presentation 通过独立 Presenter / ViewModel / 控件渲染，不在 UI 层解析 AB
 
 ## 3. 总体实施原则
@@ -623,6 +623,7 @@ src/AssestBundleTools.Application/
   - 文本预览：`TextAsset`、`Shader`
   - 音频预览：`AudioClip`
   - 半可视化摘要预览：`Material`、`AnimationClip`
+    `Material` 当前会展示 Shader、TexEnv、颜色与数值属性；TexEnv 行会按依赖图解析 `Texture2D / Sprite` 并通过现有预览查询管线加载前若干缩略图，未匹配时展示内部或外部引用未解析状态。
   - 结构化摘要预览：`GameObject`、`MonoBehaviour`、`AnimatorController`、`Font`、`SpriteAtlas`
   - 通用摘要回退：其余可读取资源类型
 - 工作台检查器当前已补充 `PathId` 展示，并为图片预览增加尺寸、裁切区域、像素编码与源格式标识等专属信息；预览表面已拆为独立控件，图片覆盖层、音频播放条和 Mesh 线框视口都各自落在独立控件中，避免继续把复杂预览细节堆回检查器主控件
@@ -651,8 +652,7 @@ src/AssestBundleTools.Application/
 第二梯队，做受控的半可视化预览：
 
 - `Material`
-  第一阶段只做 `主纹理 + 颜色 / 属性摘要 + 简化材质球或平面缩略图`，
-  不直接追求 Unity Editor 级完整 shader 仿真。
+  当前已完成 `Shader + TexEnv + 颜色 / 数值属性摘要 + 贴图依赖定位 + 前若干贴图缩略图`；后续若继续增强，应优先做样本驱动的主纹理平面预览或简化材质球，不直接追求 Unity Editor 级完整 shader 仿真。
 - `Font`
   优先做 `字体样张 + atlas 贴图 / 字符摘要`。
 - `AnimationClip`

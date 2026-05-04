@@ -104,13 +104,15 @@ public sealed partial class InspectorPanelViewModel
         AssetPreviewMaterialDto material,
         IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
         MaterialPreviewDisplayState? materialPreviewDisplayState = null,
-        string? previewPayloadFilePath = null)
+        string? previewPayloadFilePath = null,
+        IReadOnlyDictionary<string, ImageSource>? materialTextureThumbnailSources = null)
     {
         Preview.ApplyMaterialPreview(
             material,
             previewInfoRows,
             materialPreviewDisplayState,
-            previewPayloadFilePath);
+            previewPayloadFilePath,
+            materialTextureThumbnailSources);
         RebuildInformationCards();
     }
 

@@ -366,7 +366,8 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         AssetPreviewMaterialDto material,
         IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
         MaterialPreviewDisplayState? materialPreviewDisplayState = null,
-        string? previewPayloadFilePath = null)
+        string? previewPayloadFilePath = null,
+        IReadOnlyDictionary<string, ImageSource>? materialTextureThumbnailSources = null)
     {
         ArgumentNullException.ThrowIfNull(material);
         ArgumentNullException.ThrowIfNull(materialPreviewDisplayState);
@@ -375,7 +376,7 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         _previewKind = AssetPreviewKind.Material;
         _previewInfoRows = CloneRows(previewInfoRows);
         PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
-        Material.Apply(material, materialPreviewDisplayState);
+        Material.Apply(material, materialPreviewDisplayState, materialTextureThumbnailSources);
         NotifyPreviewStateChanged();
     }
 
