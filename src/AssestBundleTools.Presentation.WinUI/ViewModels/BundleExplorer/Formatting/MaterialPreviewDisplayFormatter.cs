@@ -40,9 +40,11 @@ internal sealed class MaterialPreviewDisplayFormatter
             MainTexturePreviewTitleText: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewMainTextureTitleText),
             MainTexturePreviewLimitText: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewMainTextureLimitText),
             MainTextureTint: BuildMainTextureTint(material),
+            Appearance: MaterialPreviewAppearanceStateBuilder.Build(material, _localizationService),
             SemanticSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewSemanticHintsTitle),
             SemanticBadges: MaterialPreviewSemanticHintBuilder.Build(material, _localizationService),
             TextureSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewTexturesTitle),
+            TextureReferenceSummaryText: BuildTextureReferenceSummaryText(material, details),
             ColorSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewColorsTitle),
             NumberSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewNumbersTitle),
             EmptySectionText: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewEmptySectionText),
@@ -218,6 +220,45 @@ internal sealed class MaterialPreviewDisplayFormatter
             ValueText: BuildColorValueText(property));
     }
 
+    private string BuildTextureReferenceSummaryText(
+        AssetPreviewMaterialDto material,
+        AssetDetailsDto details)
+    {
+        var textureProperties = material.TextureProperties
+            .Where(static property => property.PathId is { } pathId && pathId != 0)
+            .ToArray();
+        if (textureProperties.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        var resolvedCount = 0;
+        var externalUnresolvedCount = 0;
+        var internalUnresolvedCount = 0;
+        foreach (var property in textureProperties)
+        {
+            if (MaterialTextureDependencyResolver.ResolveTextureDependency(property, details) is not null)
+            {
+                resolvedCount++;
+            }
+            else if (property.IsExternal)
+            {
+                externalUnresolvedCount++;
+            }
+            else
+            {
+                internalUnresolvedCount++;
+            }
+        }
+
+        return _localizationService.GetFormattedString(
+            ResourceKeys.InspectorMaterialPreviewTextureReferenceSummaryFormat,
+            resolvedCount.ToString(CultureInfo.CurrentCulture),
+            textureProperties.Length.ToString(CultureInfo.CurrentCulture),
+            externalUnresolvedCount.ToString(CultureInfo.CurrentCulture),
+            internalUnresolvedCount.ToString(CultureInfo.CurrentCulture));
+    }
+
     private MaterialPreviewTintDisplayState? BuildMainTextureTint(AssetPreviewMaterialDto material)
     {
         var tintProperty = material.ColorProperties.FirstOrDefault(static property =>
@@ -306,9 +347,26 @@ public sealed record MaterialPreviewDisplayState(
     IReadOnlyList<MaterialPreviewTextureRowDisplayState> TextureRows,
     IReadOnlyList<MaterialPreviewColorRowDisplayState> ColorRows,
     IReadOnlyList<MaterialPreviewNumberRowDisplayState> NumberRows,
+    MaterialPreviewAppearanceDisplayState? Appearance = null,
+    string TextureReferenceSummaryText = "",
     ResolvedAssetNavigationTarget? ShaderTarget = null,
     string OpenResolvedAssetButtonText = "",
     string OpenResolvedAssetButtonToolTipText = "");
+
+public sealed record MaterialPreviewAppearanceDisplayState(
+    string TitleText,
+    string NoteText,
+    string BaseColorText,
+    string AlphaText,
+    string MetallicText,
+    string SmoothnessText,
+    double R,
+    double G,
+    double B,
+    double A,
+    double Metallic,
+    double Smoothness,
+    double EmissionStrength);
 
 public sealed record MaterialPreviewTextureRowDisplayState(
     string PropertyName,

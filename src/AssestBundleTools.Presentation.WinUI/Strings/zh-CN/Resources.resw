@@ -891,6 +891,24 @@
   <data name="InspectorPanelView.MaterialPreview.PropertyCount.Format" xml:space="preserve">
     <value>{0} 个贴图槽 · {1} 个颜色 · {2} 个数值</value>
   </data>
+  <data name="InspectorPanelView.MaterialPreview.AppearanceTitle.Text" xml:space="preserve">
+    <value>简化材质样张</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.AppearanceNote.Text" xml:space="preserve">
+    <value>仅作近似参考：展示基础色、Alpha、金属度、光滑度和自发光提示，不模拟 Shader 光照。</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.AppearanceBaseColor.Format" xml:space="preserve">
+    <value>基础色：{0}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.AppearanceAlpha.Format" xml:space="preserve">
+    <value>Alpha：{0}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.AppearanceMetallic.Format" xml:space="preserve">
+    <value>金属度：{0}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.AppearanceSmoothness.Format" xml:space="preserve">
+    <value>光滑度：{0}</value>
+  </data>
   <data name="InspectorPanelView.MaterialPreview.MainTextureTitle.Text" xml:space="preserve">
     <value>主纹理平面预览</value>
   </data>
@@ -950,6 +968,9 @@
   </data>
   <data name="InspectorPanelView.MaterialPreview.TextureResolved.Format" xml:space="preserve">
     <value>已定位贴图：{0} · {1}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.TextureReferenceSummary.Format" xml:space="preserve">
+    <value>贴图引用：已解析 {0}/{1} · 外部未解析 {2} · 内部未解析 {3}</value>
   </data>
   <data name="InspectorPanelView.MaterialPreview.TextureExternalUnresolved.Text" xml:space="preserve">
     <value>外部贴图未导入或未匹配到当前工作区</value>

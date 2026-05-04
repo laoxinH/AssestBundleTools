@@ -91,6 +91,14 @@ public sealed class BundleExplorerAssetPreviewCoordinatorMaterialTests
             ResourceKeys.InspectorMaterialPreviewPropertyCountFormat + ":1|1|2",
             assetTab.Inspector.Preview.Material.PropertyCountText);
         Assert.Equal(
+            ResourceKeys.InspectorMaterialPreviewAppearanceTitle,
+            assetTab.Inspector.Preview.Material.Appearance.TitleText);
+        Assert.Equal(
+            ResourceKeys.InspectorMaterialPreviewAppearanceBaseColorFormat + ":" +
+            ResourceKeys.InspectorMaterialPreviewColorValueFormat + ":1|0|0|1",
+            assetTab.Inspector.Preview.Material.Appearance.BaseColorText);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, assetTab.Inspector.Preview.Material.Appearance.Visibility);
+        Assert.Equal(
             ResourceKeys.InspectorMaterialPreviewSemanticHintsTitle,
             assetTab.Inspector.Preview.Material.SemanticSectionTitle);
         Assert.Equal(
@@ -102,6 +110,9 @@ public sealed class BundleExplorerAssetPreviewCoordinatorMaterialTests
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, assetTab.Inspector.Preview.Material.SemanticHintsVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, assetTab.Inspector.Preview.Material.TextureRowsVisibility);
         Assert.Single(assetTab.Inspector.Preview.Material.TextureRows);
+        Assert.Equal(
+            ResourceKeys.InspectorMaterialPreviewTextureReferenceSummaryFormat + ":0|1|1|0",
+            assetTab.Inspector.Preview.Material.TextureReferenceSummaryText);
         var textureRow = assetTab.Inspector.Preview.Material.TextureRows[0];
         Assert.Equal("_MainTex", textureRow.PropertyName);
         Assert.Equal(

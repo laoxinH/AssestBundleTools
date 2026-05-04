@@ -583,6 +583,12 @@ public static class ResourceKeys
     public const string InspectorMaterialPreviewShaderExternalUnresolvedText = "InspectorPanelView.MaterialPreview.ShaderExternalUnresolved.Text";
     public const string InspectorMaterialPreviewShaderInternalUnresolvedText = "InspectorPanelView.MaterialPreview.ShaderInternalUnresolved.Text";
     public const string InspectorMaterialPreviewPropertyCountFormat = "InspectorPanelView.MaterialPreview.PropertyCount.Format";
+    public const string InspectorMaterialPreviewAppearanceTitle = "InspectorPanelView.MaterialPreview.AppearanceTitle.Text";
+    public const string InspectorMaterialPreviewAppearanceNote = "InspectorPanelView.MaterialPreview.AppearanceNote.Text";
+    public const string InspectorMaterialPreviewAppearanceBaseColorFormat = "InspectorPanelView.MaterialPreview.AppearanceBaseColor.Format";
+    public const string InspectorMaterialPreviewAppearanceAlphaFormat = "InspectorPanelView.MaterialPreview.AppearanceAlpha.Format";
+    public const string InspectorMaterialPreviewAppearanceMetallicFormat = "InspectorPanelView.MaterialPreview.AppearanceMetallic.Format";
+    public const string InspectorMaterialPreviewAppearanceSmoothnessFormat = "InspectorPanelView.MaterialPreview.AppearanceSmoothness.Format";
     public const string InspectorMaterialPreviewMainTextureTitleText = "InspectorPanelView.MaterialPreview.MainTextureTitle.Text";
     public const string InspectorMaterialPreviewMainTextureTintFormat = "InspectorPanelView.MaterialPreview.MainTextureTint.Format";
     public const string InspectorMaterialPreviewMainTextureLimitText = "InspectorPanelView.MaterialPreview.MainTextureLimit.Text";
@@ -603,6 +609,7 @@ public static class ResourceKeys
     public const string InspectorMaterialPreviewTextureInternalFormat = "InspectorPanelView.MaterialPreview.TextureInternal.Format";
     public const string InspectorMaterialPreviewTextureExternalFormat = "InspectorPanelView.MaterialPreview.TextureExternal.Format";
     public const string InspectorMaterialPreviewTextureResolvedFormat = "InspectorPanelView.MaterialPreview.TextureResolved.Format";
+    public const string InspectorMaterialPreviewTextureReferenceSummaryFormat = "InspectorPanelView.MaterialPreview.TextureReferenceSummary.Format";
     public const string InspectorMaterialPreviewTextureExternalUnresolvedText = "InspectorPanelView.MaterialPreview.TextureExternalUnresolved.Text";
     public const string InspectorMaterialPreviewTextureInternalUnresolvedText = "InspectorPanelView.MaterialPreview.TextureInternalUnresolved.Text";
     public const string InspectorMaterialPreviewTextureTransformFormat = "InspectorPanelView.MaterialPreview.TextureTransform.Format";

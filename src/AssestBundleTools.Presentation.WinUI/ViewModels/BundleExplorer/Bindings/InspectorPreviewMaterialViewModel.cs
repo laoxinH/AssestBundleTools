@@ -25,6 +25,7 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     private string _mainTexturePreviewLimitText = string.Empty;
     private string _semanticSectionTitle = string.Empty;
     private string _textureSectionTitle = string.Empty;
+    private string _textureReferenceSummaryText = string.Empty;
     private string _colorSectionTitle = string.Empty;
     private string _numberSectionTitle = string.Empty;
     private string _emptySectionText = string.Empty;
@@ -39,6 +40,8 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     private IReadOnlyList<MaterialPreviewTextureRowViewModel> _textureRows = Array.Empty<MaterialPreviewTextureRowViewModel>();
     private IReadOnlyList<MaterialPreviewColorRowViewModel> _colorRows = Array.Empty<MaterialPreviewColorRowViewModel>();
     private IReadOnlyList<MaterialPreviewNumberRowViewModel> _numberRows = Array.Empty<MaterialPreviewNumberRowViewModel>();
+
+    public MaterialPreviewAppearanceViewModel Appearance { get; } = new();
 
     public AssetPreviewMaterialDto? Material
     {
@@ -200,6 +203,18 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         private set => SetProperty(ref _textureSectionTitle, value);
     }
 
+    public string TextureReferenceSummaryText
+    {
+        get => _textureReferenceSummaryText;
+        private set
+        {
+            if (SetProperty(ref _textureReferenceSummaryText, value))
+            {
+                OnPropertyChanged(nameof(TextureReferenceSummaryVisibility));
+            }
+        }
+    }
+
     public string ColorSectionTitle
     {
         get => _colorSectionTitle;
@@ -289,6 +304,9 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
 
     public Visibility TextureRowsEmptyVisibility => TextureRows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
+    public Visibility TextureReferenceSummaryVisibility =>
+        string.IsNullOrWhiteSpace(TextureReferenceSummaryText) ? Visibility.Collapsed : Visibility.Visible;
+
     public Visibility ColorRowsVisibility => ColorRows.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility ColorRowsEmptyVisibility => ColorRows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -358,9 +376,11 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         MainTexturePreviewLimitText = displayState.MainTexturePreviewLimitText;
         MainTexturePreviewTintText = displayState.MainTextureTint?.Text ?? string.Empty;
         ApplyMainTextureTint(displayState.MainTextureTint);
+        Appearance.Apply(displayState.Appearance);
         SemanticSectionTitle = displayState.SemanticSectionTitle;
         SemanticBadges = displayState.SemanticBadges.Select(static badge => new MaterialPreviewSemanticBadgeViewModel(badge)).ToArray();
         TextureSectionTitle = displayState.TextureSectionTitle;
+        TextureReferenceSummaryText = displayState.TextureReferenceSummaryText;
         ColorSectionTitle = displayState.ColorSectionTitle;
         NumberSectionTitle = displayState.NumberSectionTitle;
         EmptySectionText = displayState.EmptySectionText;
@@ -394,9 +414,11 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         MainTexturePreviewLimitText = string.Empty;
         MainTexturePreviewImageSource = null;
         ApplyMainTextureTint(null);
+        Appearance.Clear();
         SemanticSectionTitle = string.Empty;
         SemanticBadges = Array.Empty<MaterialPreviewSemanticBadgeViewModel>();
         TextureSectionTitle = string.Empty;
+        TextureReferenceSummaryText = string.Empty;
         ColorSectionTitle = string.Empty;
         NumberSectionTitle = string.Empty;
         EmptySectionText = string.Empty;

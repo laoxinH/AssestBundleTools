@@ -76,6 +76,21 @@ public sealed class InspectorPreviewMaterialViewModelTests
             ],
             ColorRows: Array.Empty<MaterialPreviewColorRowDisplayState>(),
             NumberRows: Array.Empty<MaterialPreviewNumberRowDisplayState>(),
+            Appearance: new MaterialPreviewAppearanceDisplayState(
+                TitleText: "Simplified sample",
+                NoteText: "Approximation only",
+                BaseColorText: "Base color: RGBA 0.25, 0.5, 0.75, 1",
+                AlphaText: "Alpha: 1",
+                MetallicText: "Metallic: 0.6",
+                SmoothnessText: "Smoothness: 0.8",
+                R: 0.25,
+                G: 0.5,
+                B: 0.75,
+                A: 1,
+                Metallic: 0.6,
+                Smoothness: 0.8,
+                EmissionStrength: 0.5),
+            TextureReferenceSummaryText: "1/2 texture references resolved",
             ShaderTarget: shaderTarget,
             OpenResolvedAssetButtonText: "Open asset",
             OpenResolvedAssetButtonToolTipText: "Open resolved asset details");
@@ -101,6 +116,11 @@ public sealed class InspectorPreviewMaterialViewModelTests
         Assert.Same(shaderTarget, viewModel.ShaderTarget);
         Assert.Same(mainTextureTarget, viewModel.MainTexturePreviewTarget);
         Assert.Equal("Open asset", viewModel.OpenResolvedAssetButtonText);
+        Assert.Equal("Simplified sample", viewModel.Appearance.TitleText);
+        Assert.Equal("Base color: RGBA 0.25, 0.5, 0.75, 1", viewModel.Appearance.BaseColorText);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.Appearance.Visibility);
+        Assert.Equal("1/2 texture references resolved", viewModel.TextureReferenceSummaryText);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.TextureReferenceSummaryVisibility);
         Assert.Equal("Material hints", viewModel.SemanticSectionTitle);
         Assert.Equal(
             ["Main texture detected", "Transparent / blend candidate"],

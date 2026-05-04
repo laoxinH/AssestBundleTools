@@ -891,6 +891,24 @@
   <data name="InspectorPanelView.MaterialPreview.PropertyCount.Format" xml:space="preserve">
     <value>{0} texture slots · {1} colors · {2} numbers</value>
   </data>
+  <data name="InspectorPanelView.MaterialPreview.AppearanceTitle.Text" xml:space="preserve">
+    <value>Simplified Material Sample</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.AppearanceNote.Text" xml:space="preserve">
+    <value>Approximation only: shows base color, alpha, metallic, smoothness and emission cues without simulating Shader lighting.</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.AppearanceBaseColor.Format" xml:space="preserve">
+    <value>Base color: {0}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.AppearanceAlpha.Format" xml:space="preserve">
+    <value>Alpha: {0}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.AppearanceMetallic.Format" xml:space="preserve">
+    <value>Metallic: {0}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.AppearanceSmoothness.Format" xml:space="preserve">
+    <value>Smoothness: {0}</value>
+  </data>
   <data name="InspectorPanelView.MaterialPreview.MainTextureTitle.Text" xml:space="preserve">
     <value>Main Texture Plane Preview</value>
   </data>
@@ -950,6 +968,9 @@
   </data>
   <data name="InspectorPanelView.MaterialPreview.TextureResolved.Format" xml:space="preserve">
     <value>Resolved texture: {0} · {1}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.TextureReferenceSummary.Format" xml:space="preserve">
+    <value>Texture references: {0}/{1} resolved · {2} external unresolved · {3} internal unresolved</value>
   </data>
   <data name="InspectorPanelView.MaterialPreview.TextureExternalUnresolved.Text" xml:space="preserve">
     <value>External texture is not imported or not matched in this workspace</value>

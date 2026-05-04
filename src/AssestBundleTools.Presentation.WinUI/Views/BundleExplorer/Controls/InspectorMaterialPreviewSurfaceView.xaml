@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:bindings="using:AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings"
+    xmlns:controls="using:AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
@@ -140,6 +141,8 @@
                 </StackPanel>
             </Border>
 
+            <controls:InspectorMaterialAppearanceSampleView ViewModel="{x:Bind ViewModel.Appearance, Mode=OneWay}" />
+
             <Border
                 Padding="12"
                 Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
@@ -261,6 +264,10 @@
                 <TextBlock
                     Style="{StaticResource MaterialPreviewSectionTitleStyle}"
                     Text="{x:Bind ViewModel.TextureSectionTitle, Mode=OneWay}" />
+                <TextBlock
+                    Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
+                    Text="{x:Bind ViewModel.TextureReferenceSummaryText, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.TextureReferenceSummaryVisibility, Mode=OneWay}" />
                 <ItemsControl
                     ItemsSource="{x:Bind ViewModel.TextureRows, Mode=OneWay}"
                     Visibility="{x:Bind ViewModel.TextureRowsVisibility, Mode=OneWay}">

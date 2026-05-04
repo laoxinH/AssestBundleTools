@@ -115,6 +115,107 @@ public sealed class MaterialPreviewDisplayFormatterTests
             displayState.SemanticBadges.Select(static badge => badge.Text));
     }
 
+    [Fact]
+    public void BuildDisplayState_ShouldBuildAppearanceSample_FromCommonMaterialProperties()
+    {
+        var formatter = new MaterialPreviewDisplayFormatter(new TestLocalizationService());
+        var material = new AssetPreviewMaterialDto(
+            SchemaVersion: 1,
+            Shader: null,
+            TextureProperties: Array.Empty<AssetPreviewMaterialTexturePropertyDto>(),
+            FloatProperties:
+            [
+                new AssetPreviewMaterialFloatPropertyDto("_Metallic", 0.8),
+                new AssetPreviewMaterialFloatPropertyDto("_Roughness", 0.25)
+            ],
+            IntegerProperties: Array.Empty<AssetPreviewMaterialIntegerPropertyDto>(),
+            ColorProperties:
+            [
+                new AssetPreviewMaterialColorPropertyDto("_BaseColor", 0.2, 0.4, 0.6, 0.5),
+                new AssetPreviewMaterialColorPropertyDto("_EmissionColor", 0.9, 0.1, 0.1, 1)
+            ]);
+        var details = CreateAssetDetails(
+            WorkspaceId.New(),
+            new BundleId("bundle-material"),
+            new AssetId("asset-material")) with
+        {
+            Name = "paopao_01",
+            AssetType = AssetType.Material,
+            AssetTypeDisplayName = AssetType.Material.ToString()
+        };
+
+        var displayState = formatter.BuildDisplayState(material, details);
+
+        Assert.NotNull(displayState.Appearance);
+        var appearance = displayState.Appearance;
+        Assert.Equal(ResourceKeys.InspectorMaterialPreviewAppearanceTitle, appearance.TitleText);
+        Assert.Equal(ResourceKeys.InspectorMaterialPreviewAppearanceNote, appearance.NoteText);
+        Assert.Equal(
+            ResourceKeys.InspectorMaterialPreviewAppearanceBaseColorFormat + ":" +
+            ResourceKeys.InspectorMaterialPreviewColorValueFormat + ":0.2|0.4|0.6|0.5",
+            appearance.BaseColorText);
+        Assert.Equal(ResourceKeys.InspectorMaterialPreviewAppearanceAlphaFormat + ":0.5", appearance.AlphaText);
+        Assert.Equal(ResourceKeys.InspectorMaterialPreviewAppearanceMetallicFormat + ":0.8", appearance.MetallicText);
+        Assert.Equal(ResourceKeys.InspectorMaterialPreviewAppearanceSmoothnessFormat + ":0.75", appearance.SmoothnessText);
+        Assert.Equal(0.2, appearance.R);
+        Assert.Equal(0.4, appearance.G);
+        Assert.Equal(0.6, appearance.B);
+        Assert.Equal(0.5, appearance.A);
+        Assert.Equal(0.8, appearance.Metallic);
+        Assert.Equal(0.75, appearance.Smoothness);
+        Assert.Equal(0.9, appearance.EmissionStrength);
+    }
+
+    [Fact]
+    public void BuildDisplayState_ShouldSummarizeTextureReferenceResolution()
+    {
+        var formatter = new MaterialPreviewDisplayFormatter(new TestLocalizationService());
+        var textureAssetId = new AssetId("texture-main");
+        var bundleId = new BundleId("bundle-material");
+        var material = new AssetPreviewMaterialDto(
+            SchemaVersion: 1,
+            Shader: null,
+            TextureProperties:
+            [
+                CreateTextureProperty("_MainTex", 10),
+                CreateTextureProperty("_ExternalTex", 20) with
+                {
+                    FileId = 1,
+                    ExternalReferencePath = "archive:/CAB-ext/CAB-ext",
+                    IsExternal = true
+                },
+                CreateTextureProperty("_InternalMissing", 30)
+            ],
+            FloatProperties: Array.Empty<AssetPreviewMaterialFloatPropertyDto>(),
+            IntegerProperties: Array.Empty<AssetPreviewMaterialIntegerPropertyDto>(),
+            ColorProperties: Array.Empty<AssetPreviewMaterialColorPropertyDto>());
+        var details = CreateAssetDetails(
+            WorkspaceId.New(),
+            bundleId,
+            new AssetId("asset-material")) with
+        {
+            Name = "paopao_01",
+            AssetType = AssetType.Material,
+            AssetTypeDisplayName = AssetType.Material.ToString(),
+            Dependencies =
+            [
+                new AssetDependencyDto(
+                    textureAssetId,
+                    bundleId,
+                    "MainTexture",
+                    AssetType.Texture2D,
+                    PathId: 10,
+                    AssetTypeDisplayName: "Texture2D")
+            ]
+        };
+
+        var displayState = formatter.BuildDisplayState(material, details);
+
+        Assert.Equal(
+            ResourceKeys.InspectorMaterialPreviewTextureReferenceSummaryFormat + ":1|3|1|1",
+            displayState.TextureReferenceSummaryText);
+    }
+
     private static AssetPreviewMaterialTexturePropertyDto CreateTextureProperty(
         string name,
         long pathId)
