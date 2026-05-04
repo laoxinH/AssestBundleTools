@@ -36,8 +36,9 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
             .ThenBy(entry => entry.DisplayName, StringComparer.OrdinalIgnoreCase)
             .ToArray();
         var serializedFileBundleLookup = BuildSerializedFileBundleLookup(cacheEntries);
+        var assetDependencyTargetLookup = BuildAssetDependencyTargetLookup(cacheEntries);
         var bundleStates = cacheEntries
-            .Select(entry => MapBundleState(entry, serializedFileBundleLookup))
+            .Select(entry => MapBundleState(entry, serializedFileBundleLookup, assetDependencyTargetLookup))
             .ToArray();
 
         var workspaceSummary = new WorkspaceSummaryDto(

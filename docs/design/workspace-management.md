@@ -619,7 +619,9 @@ Presentation 层保留两个协同层次：
   - 图像预览：`Texture2D`、`Sprite`
   - 文本预览：`TextAsset`、`Shader`
   - 音频预览：`AudioClip`（当前已支持标准音频容器直通播放，并对 `FSB5` 补上独立外部转码能力）
-  - 结构化摘要预览：`AudioClip`、`Mesh`、`Material`、`GameObject`、`MonoBehaviour`、`AnimationClip`、`AnimatorController`、`Font`、`SpriteAtlas`
+  - 模型预览：`Mesh`
+  - 半可视化摘要预览：`Material`、`AnimationClip`
+  - 结构化摘要预览：`GameObject`、`MonoBehaviour`、`AnimatorController`、`Font`、`SpriteAtlas`
   - 通用摘要回退：其余可读取资源类型
 - 工作台检查器当前会直接展示资源 `PathId`，并在图片预览成功后展示尺寸、裁切矩形、像素编码与源格式标识等专属信息；Sprite 预览会额外展示源贴图上的裁切框、pivot 点、9-slice border 辅助线，以及独立裁切结果卡片
 - 预览缓存当前按 `source fingerprint + generatorVersion + audioTranscoderId + audioTranscoderVersion` 校验命中；对于曾因“无转码器”而回退成摘要的音频预览，在后续安装转码器后也会自动触发重建
@@ -635,7 +637,7 @@ Presentation 层保留两个协同层次：
 - Bundle 外部依赖当前会对 `archive:/CAB-xxx/CAB-xxx` 这类 Unity 外部序列化文件引用做第一轮友好解析，优先显示 `CAB-*` 标识与依赖类型；这里的 `CAB-*` 表示 Unity 内部 archive / serialized file 标识，不等于用户直接导入的 `char_xxx.ab` 这类资源包文件名
 - 当目标 serialized file 所属资源包也已经导入到当前工作区时，Bundle 外部依赖当前会进一步把标题优先还原为具体 `xxx.ab` 文件名，并在副标题继续保留 `CAB-*` 标识，兼顾可读性与底层定位稳定性
 - 资产友好路径当前优先采用 `m_Container` 路径；当资源缺少容器路径或名称冲突时，再回退到 `SerializedFileName / 资产类型 / PathId` 组合摘要，确保依赖与预览入口都能稳定定位同一个对象
-- 资产级依赖解析当前会保留外部 `PPtr` 的 serialized file 名称、外部引用路径与 `PathId` 占位；当对应外部 CAB 也已导入同一工作区并能通过稳定资产 ID 匹配时，运行时依赖图会把占位解析回具体资产，用于 Mesh 贴图关联等跨 Bundle 场景
+- 资产级依赖解析当前会保留外部 `PPtr` 的 serialized file 名称、外部引用路径与 `PathId` 占位；当对应外部 CAB 也已导入同一工作区并能通过稳定资产 ID 或 `SerializedFileName + PathId` 匹配时，运行时依赖图会把占位解析回具体资产，用于 Material 依赖页、反向引用、依赖闭包与 Mesh 贴图关联等跨 Bundle 场景
 - 批处理页与“设置与诊断”页已统一响应活动工作区切换
 - “设置与诊断”页已接入活动工作区摘要和工作区目录摘要承载
 - “设置与诊断”页已接入解密器管理区，支持新增、编辑、删除、刷新用户管理定义

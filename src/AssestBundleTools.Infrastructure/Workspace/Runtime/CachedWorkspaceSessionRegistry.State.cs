@@ -95,6 +95,52 @@ public sealed partial class CachedWorkspaceSessionRegistry
         string DisplayName,
         string LogicalPath);
 
+    private sealed record WorkspaceAssetDependencyTarget(
+        AssetId AssetId,
+        BundleId BundleId,
+        string Name,
+        AssetType AssetType,
+        string? AssetTypeDisplayName,
+        long PathId);
+
+    private readonly record struct WorkspaceAssetObjectKey(string SerializedFileName, long PathId);
+
+    private sealed class WorkspaceAssetDependencyTargetLookup
+    {
+        private readonly IReadOnlyDictionary<string, WorkspaceAssetDependencyTarget> _targetsByAssetId;
+        private readonly IReadOnlyDictionary<WorkspaceAssetObjectKey, WorkspaceAssetDependencyTarget> _targetsByObjectKey;
+
+        public WorkspaceAssetDependencyTargetLookup(
+            IReadOnlyDictionary<string, WorkspaceAssetDependencyTarget> targetsByAssetId,
+            IReadOnlyDictionary<WorkspaceAssetObjectKey, WorkspaceAssetDependencyTarget> targetsByObjectKey)
+        {
+            _targetsByAssetId = targetsByAssetId;
+            _targetsByObjectKey = targetsByObjectKey;
+        }
+
+        public bool TryResolve(
+            BundleIndexAssetDependencyCacheEntryDto dependency,
+            out WorkspaceAssetDependencyTarget target)
+        {
+            if (!string.IsNullOrWhiteSpace(dependency.AssetId) &&
+                _targetsByAssetId.TryGetValue(dependency.AssetId, out target!))
+            {
+                return true;
+            }
+
+            foreach (var objectKey in CreateDependencyObjectKeys(dependency))
+            {
+                if (_targetsByObjectKey.TryGetValue(objectKey, out target!))
+                {
+                    return true;
+                }
+            }
+
+            target = null!;
+            return false;
+        }
+    }
+
     private sealed class CachedAssetState
     {
         public CachedAssetState(

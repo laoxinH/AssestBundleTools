@@ -12,12 +12,13 @@ public sealed partial class CachedWorkspaceSessionRegistry
 {
     private static CachedBundleState MapBundleState(
         BundleIndexCacheEntryDto cacheEntry,
-        IReadOnlyDictionary<string, IReadOnlyList<WorkspaceSerializedFileBundleTarget>> serializedFileBundleLookup)
+        IReadOnlyDictionary<string, IReadOnlyList<WorkspaceSerializedFileBundleTarget>> serializedFileBundleLookup,
+        WorkspaceAssetDependencyTargetLookup assetDependencyTargetLookup)
     {
         var bundleId = ResolveBundleId(cacheEntry);
 
         var assets = cacheEntry.Assets
-            .Select(asset => MapAssetState(bundleId, asset))
+            .Select(asset => MapAssetState(bundleId, asset, assetDependencyTargetLookup))
             .ToArray();
 
         return new CachedBundleState(
@@ -36,11 +37,12 @@ public sealed partial class CachedWorkspaceSessionRegistry
             : new BundleId($"bundle.{cacheEntry.BundleCacheKey}");
     }
 
-    private static CachedAssetState MapAssetState(BundleId bundleId, BundleIndexAssetCacheEntryDto asset)
+    private static CachedAssetState MapAssetState(
+        BundleId bundleId,
+        BundleIndexAssetCacheEntryDto asset,
+        WorkspaceAssetDependencyTargetLookup assetDependencyTargetLookup)
     {
-        var assetId = AssetId.TryParse(asset.AssetId, out var parsedAssetId)
-            ? parsedAssetId
-            : new AssetId($"asset.{Guid.NewGuid():N}");
+        var assetId = ResolveCachedAssetId(asset);
         var assetType = ParseAssetType(asset.AssetType);
 
         return new CachedAssetState(
@@ -57,15 +59,17 @@ public sealed partial class CachedWorkspaceSessionRegistry
             hasPreview: asset.HasPreview,
             canExtract: asset.CanExtract,
             canReplace: asset.CanReplace,
-            dependencies: MapDependencies(bundleId, asset.Dependencies))
+            dependencies: MapDependencies(assetId, bundleId, asset.Dependencies, assetDependencyTargetLookup))
         {
             IncludeInAssetList = asset.IncludeInAssetList
         };
     }
 
     private static IReadOnlyList<AssetDependencyDto> MapDependencies(
+        AssetId sourceAssetId,
         BundleId bundleId,
-        IReadOnlyList<BundleIndexAssetDependencyCacheEntryDto>? dependencies)
+        IReadOnlyList<BundleIndexAssetDependencyCacheEntryDto>? dependencies,
+        WorkspaceAssetDependencyTargetLookup assetDependencyTargetLookup)
     {
         if (dependencies is not { Count: > 0 })
         {
@@ -74,16 +78,65 @@ public sealed partial class CachedWorkspaceSessionRegistry
 
         return dependencies
             .OrderBy(static dependency => dependency.AssetName, StringComparer.OrdinalIgnoreCase)
-            .Select(dependency => new AssetDependencyDto(
-                AssetId.TryParse(dependency.AssetId, out var parsedAssetId)
-                    ? parsedAssetId
-                    : new AssetId(dependency.AssetId),
-                bundleId,
-                dependency.AssetName,
-                ParseAssetType(dependency.AssetType),
-                PathId: dependency.PathId,
-                AssetTypeDisplayName: ResolveAssetTypeDisplayName(dependency.AssetTypeDisplayName, dependency.AssetType)))
+            .Select(dependency => MapDependency(sourceAssetId, bundleId, dependency, assetDependencyTargetLookup))
             .ToArray();
+    }
+
+    private static AssetDependencyDto MapDependency(
+        AssetId sourceAssetId,
+        BundleId sourceBundleId,
+        BundleIndexAssetDependencyCacheEntryDto dependency,
+        WorkspaceAssetDependencyTargetLookup assetDependencyTargetLookup)
+    {
+        if (assetDependencyTargetLookup.TryResolve(dependency, out var resolvedTarget) &&
+            !string.Equals(resolvedTarget.AssetId.Value, sourceAssetId.Value, StringComparison.Ordinal))
+        {
+            return new AssetDependencyDto(
+                resolvedTarget.AssetId,
+                resolvedTarget.BundleId,
+                resolvedTarget.Name,
+                resolvedTarget.AssetType,
+                PathId: resolvedTarget.PathId,
+                AssetTypeDisplayName: resolvedTarget.AssetTypeDisplayName);
+        }
+
+        return new AssetDependencyDto(
+            ResolveCachedDependencyAssetId(dependency),
+            sourceBundleId,
+            dependency.AssetName,
+            ParseAssetType(dependency.AssetType),
+            PathId: dependency.PathId,
+            AssetTypeDisplayName: ResolveAssetTypeDisplayName(dependency.AssetTypeDisplayName, dependency.AssetType));
+    }
+
+    private static AssetId ResolveCachedAssetId(BundleIndexAssetCacheEntryDto asset)
+    {
+        if (AssetId.TryParse(asset.AssetId, out var parsedAssetId))
+        {
+            return parsedAssetId;
+        }
+
+        if (!string.IsNullOrWhiteSpace(asset.SerializedFileName) && asset.PathId != 0)
+        {
+            return new AssetId(AssetsToolsAssetIdFactory.CreateAssetId(asset.SerializedFileName, asset.PathId));
+        }
+
+        return new AssetId($"asset.{Guid.NewGuid():N}");
+    }
+
+    private static AssetId ResolveCachedDependencyAssetId(BundleIndexAssetDependencyCacheEntryDto dependency)
+    {
+        if (AssetId.TryParse(dependency.AssetId, out var parsedAssetId))
+        {
+            return parsedAssetId;
+        }
+
+        if (!string.IsNullOrWhiteSpace(dependency.SerializedFileName) && dependency.PathId != 0)
+        {
+            return new AssetId(AssetsToolsAssetIdFactory.CreateAssetId(dependency.SerializedFileName, dependency.PathId));
+        }
+
+        return new AssetId($"asset.dependency.{Guid.NewGuid():N}");
     }
 
     /// <summary>
@@ -220,5 +273,131 @@ public sealed partial class CachedWorkspaceSessionRegistry
     private static string NormalizeExternalLookupKey(string value)
     {
         return value.Trim().Replace('\\', '/');
+    }
+
+    private static WorkspaceAssetDependencyTargetLookup BuildAssetDependencyTargetLookup(
+        IReadOnlyList<BundleIndexCacheEntryDto> cacheEntries)
+    {
+        var targetsByAssetId = new Dictionary<string, WorkspaceAssetDependencyTarget>(StringComparer.Ordinal);
+        var ambiguousAssetIds = new HashSet<string>(StringComparer.Ordinal);
+        var targetsByObjectKey = new Dictionary<WorkspaceAssetObjectKey, WorkspaceAssetDependencyTarget>();
+        var ambiguousObjectKeys = new HashSet<WorkspaceAssetObjectKey>();
+
+        foreach (var cacheEntry in cacheEntries)
+        {
+            var bundleId = ResolveBundleId(cacheEntry);
+            foreach (var asset in cacheEntry.Assets)
+            {
+                var assetId = ResolveCachedAssetId(asset);
+                var target = new WorkspaceAssetDependencyTarget(
+                    AssetId: assetId,
+                    BundleId: bundleId,
+                    Name: asset.AssetName,
+                    AssetType: ParseAssetType(asset.AssetType),
+                    AssetTypeDisplayName: ResolveAssetTypeDisplayName(asset.AssetTypeDisplayName, asset.AssetType),
+                    PathId: asset.PathId);
+
+                RegisterUniqueTarget(targetsByAssetId, ambiguousAssetIds, assetId.Value, target);
+                foreach (var objectKey in CreateObjectKeys(asset.SerializedFileName, asset.PathId))
+                {
+                    RegisterUniqueTarget(targetsByObjectKey, ambiguousObjectKeys, objectKey, target);
+                }
+            }
+        }
+
+        foreach (var ambiguousAssetId in ambiguousAssetIds)
+        {
+            targetsByAssetId.Remove(ambiguousAssetId);
+        }
+
+        foreach (var ambiguousObjectKey in ambiguousObjectKeys)
+        {
+            targetsByObjectKey.Remove(ambiguousObjectKey);
+        }
+
+        return new WorkspaceAssetDependencyTargetLookup(targetsByAssetId, targetsByObjectKey);
+    }
+
+    private static void RegisterUniqueTarget<TKey>(
+        IDictionary<TKey, WorkspaceAssetDependencyTarget> targets,
+        ISet<TKey> ambiguousKeys,
+        TKey key,
+        WorkspaceAssetDependencyTarget target)
+        where TKey : notnull
+    {
+        if (targets.TryGetValue(key, out var existingTarget))
+        {
+            if (!string.Equals(existingTarget.AssetId.Value, target.AssetId.Value, StringComparison.Ordinal) ||
+                !string.Equals(existingTarget.BundleId.Value, target.BundleId.Value, StringComparison.Ordinal))
+            {
+                ambiguousKeys.Add(key);
+            }
+
+            return;
+        }
+
+        if (!ambiguousKeys.Contains(key))
+        {
+            targets[key] = target;
+        }
+    }
+
+    private static IReadOnlyList<WorkspaceAssetObjectKey> CreateObjectKeys(string? serializedFileName, long pathId)
+    {
+        if (string.IsNullOrWhiteSpace(serializedFileName) || pathId == 0)
+        {
+            return Array.Empty<WorkspaceAssetObjectKey>();
+        }
+
+        return ExpandSerializedFileLookupCandidates(serializedFileName)
+            .Select(candidate => new WorkspaceAssetObjectKey(candidate, pathId))
+            .Distinct()
+            .ToArray();
+    }
+
+    private static IReadOnlyList<WorkspaceAssetObjectKey> CreateDependencyObjectKeys(
+        BundleIndexAssetDependencyCacheEntryDto dependency)
+    {
+        if (dependency.PathId == 0)
+        {
+            return Array.Empty<WorkspaceAssetObjectKey>();
+        }
+
+        var candidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var source in new[] { dependency.SerializedFileName, dependency.ExternalReferencePath })
+        {
+            if (string.IsNullOrWhiteSpace(source))
+            {
+                continue;
+            }
+
+            foreach (var candidate in ExpandSerializedFileLookupCandidates(source))
+            {
+                candidates.Add(candidate);
+            }
+        }
+
+        return candidates
+            .Select(candidate => new WorkspaceAssetObjectKey(candidate, dependency.PathId))
+            .ToArray();
+    }
+
+    private static IReadOnlyList<string> ExpandSerializedFileLookupCandidates(string value)
+    {
+        var candidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var candidate in AssetsToolsBundleExternalDependencyDisplayResolver.EnumerateLookupCandidates(value))
+        {
+            if (!string.IsNullOrWhiteSpace(candidate))
+            {
+                candidates.Add(NormalizeAssetObjectLookupKey(candidate));
+            }
+        }
+
+        return candidates.ToArray();
+    }
+
+    private static string NormalizeAssetObjectLookupKey(string value)
+    {
+        return NormalizeExternalLookupKey(value).ToLowerInvariant();
     }
 }

@@ -137,6 +137,7 @@ internal static class CachedWorkspaceSessionRegistryTests
         var rendererId = "renderer-1";
         var materialId = "material-1";
         var textureId = "texture-external";
+        var externalTexturePlaceholderId = "asset.external-texture-placeholder";
         var meshBundleId = "bundle.mesh";
         var textureBundleId = "bundle.texture";
         var meshCacheEntry = new BundleIndexCacheEntryDto(
@@ -152,15 +153,22 @@ internal static class CachedWorkspaceSessionRegistryTests
             Dependencies: ["archive:/CAB-textures/CAB-textures"],
             Assets:
             [
-                CreateAsset(meshId, "HeroMesh", AssetType.Mesh, "Mesh", pathId: 10),
-                CreateAsset(rendererId, "HeroRenderer", AssetType.Unknown, "ParticleSystemRenderer", pathId: 20, includeInList: false, dependencies:
+                CreateAsset(meshId, "HeroMesh", AssetType.Mesh, "Mesh", pathId: 10, serializedFileName: "CAB-mesh"),
+                CreateAsset(rendererId, "HeroRenderer", AssetType.Unknown, "ParticleSystemRenderer", pathId: 20, includeInList: false, serializedFileName: "CAB-mesh", dependencies:
                 [
                     CreateDependency(meshId, "HeroMesh", AssetType.Mesh, "Mesh", pathId: 10),
                     CreateDependency(materialId, "HeroMaterial", AssetType.Material, "Material", pathId: 30)
                 ]),
-                CreateAsset(materialId, "HeroMaterial", AssetType.Material, "Material", pathId: 30, dependencies:
+                CreateAsset(materialId, "HeroMaterial", AssetType.Material, "Material", pathId: 30, serializedFileName: "CAB-mesh", dependencies:
                 [
-                    CreateDependency(textureId, "CAB-textures #40", AssetType.Unknown, null, pathId: 40)
+                    CreateDependency(
+                        externalTexturePlaceholderId,
+                        "CAB-textures #40",
+                        AssetType.Unknown,
+                        null,
+                        pathId: 40,
+                        serializedFileName: "CAB-textures",
+                        externalReferencePath: "archive:/CAB-textures/CAB-textures")
                 ])
             ],
             SerializedFileNames: ["CAB-mesh"]);
@@ -177,7 +185,7 @@ internal static class CachedWorkspaceSessionRegistryTests
             Dependencies: Array.Empty<string>(),
             Assets:
             [
-                CreateAsset(textureId, "HeroTexture", AssetType.Texture2D, "Texture2D", pathId: 40)
+                CreateAsset(textureId, "HeroTexture", AssetType.Texture2D, "Texture2D", pathId: 40, serializedFileName: "CAB-textures")
             ],
             SerializedFileNames: ["CAB-textures"]);
         var bundleIndexCacheStore = new TestBundleIndexCacheStore([meshCacheEntry, textureCacheEntry]);
@@ -195,8 +203,18 @@ internal static class CachedWorkspaceSessionRegistryTests
             new BundleId(meshBundleId),
             new AssetId(meshId),
             out var details);
+        var hasMaterialDetails = registry.TryGetAssetDetails(
+            summary.WorkspaceId,
+            new BundleId(meshBundleId),
+            new AssetId(materialId),
+            out var materialDetails);
 
         TestAssert.True(hasDetails, "Mesh details should be available.");
+        TestAssert.True(hasMaterialDetails, "Material details should be available.");
+        var materialTextureDependency = TestAssert.Single(materialDetails!.Dependencies);
+        TestAssert.Equal(textureId, materialTextureDependency.AssetId.Value, "Material external placeholder should resolve to the imported texture asset.");
+        TestAssert.Equal(textureBundleId, materialTextureDependency.BundleId.Value, "Material dependency should point at the target texture bundle.");
+        TestAssert.Equal(AssetType.Texture2D, materialTextureDependency.AssetType, "Material dependency should use the concrete texture type after workspace resolution.");
         var textureAssociation = TestAssert.Single(details!.TextureAssociations ?? Array.Empty<AssestBundleTools.Application.Assets.Dtos.AssetDependencyDto>());
         TestAssert.Equal(textureId, textureAssociation.AssetId.Value, "External material texture dependency should resolve to imported texture asset.");
         TestAssert.Equal(textureBundleId, textureAssociation.BundleId.Value, "Texture association should point at the target bundle.");
@@ -210,20 +228,21 @@ internal static class CachedWorkspaceSessionRegistryTests
         string? displayType,
         long pathId,
         bool includeInList = true,
+        string serializedFileName = "CAB-test",
         IReadOnlyList<BundleIndexAssetDependencyCacheEntryDto>? dependencies = null)
     {
         return new BundleIndexAssetCacheEntryDto(
             AssetId: assetId,
             AssetName: name,
             AssetType: assetType.ToString(),
-            AssetPath: $"CAB-test/{name}",
+            AssetPath: $"{serializedFileName}/{name}",
             ContainerPath: string.Empty,
             SizeInBytes: 1,
             PreferredDisplaySizeInBytes: null,
             HasPreview: includeInList,
             CanExtract: includeInList,
             CanReplace: includeInList,
-            SerializedFileName: "CAB-test",
+            SerializedFileName: serializedFileName,
             PathId: pathId,
             AssetTypeDisplayName: displayType,
             Dependencies: dependencies,
@@ -235,14 +254,18 @@ internal static class CachedWorkspaceSessionRegistryTests
         string name,
         AssetType assetType,
         string? displayType,
-        long pathId)
+        long pathId,
+        string? serializedFileName = null,
+        string? externalReferencePath = null)
     {
         return new BundleIndexAssetDependencyCacheEntryDto(
             AssetId: assetId,
             AssetName: name,
             AssetType: assetType.ToString(),
             PathId: pathId,
-            AssetTypeDisplayName: displayType);
+            AssetTypeDisplayName: displayType,
+            SerializedFileName: serializedFileName,
+            ExternalReferencePath: externalReferencePath);
     }
 
     private sealed class TestWorkspaceDataStoreFactory : IWorkspaceDataStoreFactory

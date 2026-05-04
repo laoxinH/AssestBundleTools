@@ -615,6 +615,7 @@ src/AssestBundleTools.Application/
 - 当前依赖解析已兼容 Unity 有符号 `PathId` 语义，不再把负数 `PathId` 误判为无效引用；对应 Reader 解析版本也会同步提升以触发旧缓存自动重建
 - Bundle 外部依赖当前会对 `archive:/CAB-xxx/CAB-xxx` 解析为更友好的 `CAB-*` 展示名与依赖类型；这里的 `CAB-*` 属于 Unity 内部 archive / serialized file 标识，不等于用户导入的资源包文件名
 - 当目标 serialized file 也存在于当前工作区已导入资源包中时，Bundle 外部依赖当前会优先显示具体 `xxx.ab` 文件名，并在副标题继续保留 `CAB-*` 标识
+- 资产级外部 `PPtr` 占位当前也会在运行时工作区图中按稳定资产 ID 或 `SerializedFileName + PathId` 反查当前工作区已导入资产；命中时会把 `Material -> 外部 Texture2D/Sprite` 这类依赖提升为目标 Bundle 上的具体资产，供反向引用、闭包和 Mesh 贴图关联复用
 - 资产友好路径当前优先使用 `m_Container` 路径，缺失时回退到 `SerializedFileName / 资产类型 / PathId` 组合摘要，避免不同资源仅靠名称难以区分
 - 当前预览类型覆盖如下：
   - 图像预览：`Texture2D`、`Sprite`
