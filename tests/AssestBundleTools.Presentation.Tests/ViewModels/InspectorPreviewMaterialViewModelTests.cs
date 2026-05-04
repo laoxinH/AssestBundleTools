@@ -1,5 +1,7 @@
 using System.Runtime.CompilerServices;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using Microsoft.UI.Xaml.Media;
@@ -13,6 +15,18 @@ public sealed class InspectorPreviewMaterialViewModelTests
     public void Apply_ShouldPromoteMainTextureThumbnail_ToPlanePreview()
     {
         var mainTextureImageSource = CreateImageSourceStub();
+        var shaderTarget = new ResolvedAssetNavigationTarget(
+            new AssetId("shader-asset"),
+            new BundleId("bundle-material"),
+            88,
+            "Particles/Additive",
+            "Shader");
+        var mainTextureTarget = new ResolvedAssetNavigationTarget(
+            new AssetId("main"),
+            new BundleId("bundle-material"),
+            100,
+            "HeroTexture",
+            "Texture2D");
         var viewModel = new InspectorPreviewMaterialViewModel();
         var displayState = new MaterialPreviewDisplayState(
             AssetNameText: "paopao_01",
@@ -55,10 +69,16 @@ public sealed class InspectorPreviewMaterialViewModelTests
                     ResolutionText: "Resolved main",
                     ResolvedTextureAssetId: "main",
                     IsMainTextureCandidate: true,
-                    TransformText: "Scale 1, 1 · Offset 0, 0")
+                    TransformText: "Scale 1, 1 · Offset 0, 0",
+                    Target: mainTextureTarget,
+                    OpenButtonText: "Open asset",
+                    OpenButtonToolTipText: "Open resolved asset details")
             ],
             ColorRows: Array.Empty<MaterialPreviewColorRowDisplayState>(),
-            NumberRows: Array.Empty<MaterialPreviewNumberRowDisplayState>());
+            NumberRows: Array.Empty<MaterialPreviewNumberRowDisplayState>(),
+            ShaderTarget: shaderTarget,
+            OpenResolvedAssetButtonText: "Open asset",
+            OpenResolvedAssetButtonToolTipText: "Open resolved asset details");
 
         viewModel.Apply(
             CreateEmptyMaterial(),
@@ -78,6 +98,9 @@ public sealed class InspectorPreviewMaterialViewModelTests
         Assert.Equal("Reference only", viewModel.MainTexturePreviewLimitText);
         Assert.Equal("Resolved Shader: Particles/Additive · Shader", viewModel.ShaderResolutionText);
         Assert.Equal("shader-asset", viewModel.ResolvedShaderAssetId);
+        Assert.Same(shaderTarget, viewModel.ShaderTarget);
+        Assert.Same(mainTextureTarget, viewModel.MainTexturePreviewTarget);
+        Assert.Equal("Open asset", viewModel.OpenResolvedAssetButtonText);
         Assert.Equal("Material hints", viewModel.SemanticSectionTitle);
         Assert.Equal(
             ["Main texture detected", "Transparent / blend candidate"],
@@ -88,6 +111,8 @@ public sealed class InspectorPreviewMaterialViewModelTests
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewTintVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewLimitVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.ShaderResolutionVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.ShaderOpenButtonVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewOpenButtonVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.SemanticHintsVisibility);
     }
 

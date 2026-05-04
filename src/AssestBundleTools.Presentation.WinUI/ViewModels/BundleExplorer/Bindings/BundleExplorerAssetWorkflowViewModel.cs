@@ -244,6 +244,28 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
     public Task ActivateAssetDocumentTabAsync(AssetDocumentTabViewModel? assetTab) =>
         _assetDocumentTabCoordinator.ActivateAssetDocumentTabAsync(assetTab);
 
+    public async Task<bool> OpenResolvedAssetAsync(ResolvedAssetNavigationTarget? target)
+    {
+        if (target is null ||
+            ActiveBundleTab is null ||
+            !ActiveBundleTab.BundleId.Equals(target.BundleId))
+        {
+            return false;
+        }
+
+        if (!ActiveBundleTab.TryGetAssetTab(target.AssetId, out var assetTab))
+        {
+            assetTab = _assetDocumentHostCoordinator.CreateAssetDocumentTab(
+                target.BundleId,
+                target.AssetId,
+                target.DisplayName);
+            ActiveBundleTab.AddAssetTab(assetTab, activate: false);
+        }
+
+        await _assetDocumentTabCoordinator.ActivateAssetDocumentTabAsync(assetTab);
+        return true;
+    }
+
     public Task CloseAssetDocumentTabAsync(AssetDocumentTabViewModel? assetTab) =>
         _assetDocumentTabCoordinator.CloseAssetDocumentTabAsync(assetTab);
 

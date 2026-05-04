@@ -318,6 +318,9 @@ internal sealed class TestWorkspaceExplorerGateway : IWorkspaceExplorerGateway
 
     public required Func<LoadBundleTreeQuery, Task<Result<IReadOnlyList<BundleTreeNodeDto>>>> LoadBundleTreeHandler { get; init; }
 
+    public Func<LoadAssetListQuery, Task<Result<AssetListResultDto>>> LoadAssetListHandler { get; init; } =
+        _ => throw new NotSupportedException();
+
     public Task<Result<WorkspaceSummaryDto>> OpenWorkspaceAsync(
         OpenWorkspaceCommand command,
         CancellationToken cancellationToken = default) =>
@@ -346,7 +349,7 @@ internal sealed class TestWorkspaceExplorerGateway : IWorkspaceExplorerGateway
     public Task<Result<AssetListResultDto>> LoadAssetListAsync(
         LoadAssetListQuery query,
         CancellationToken cancellationToken = default) =>
-        throw new NotSupportedException();
+        LoadAssetListHandler(query);
 }
 
 internal sealed class TestBrowserStateCoordinator : IBundleExplorerBrowserStateCoordinator

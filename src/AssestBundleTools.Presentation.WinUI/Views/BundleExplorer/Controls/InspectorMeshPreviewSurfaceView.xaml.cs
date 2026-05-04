@@ -42,6 +42,8 @@ public sealed partial class InspectorMeshPreviewSurfaceView : UserControl
         set => SetValue(ViewModelProperty, value);
     }
 
+    public event EventHandler<ResolvedAssetOpenRequestedEventArgs>? ResolvedAssetOpenRequested;
+
     private static void OnViewModelPropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
     {
         if (dependencyObject is not InspectorMeshPreviewSurfaceView view)
@@ -163,6 +165,14 @@ public sealed partial class InspectorMeshPreviewSurfaceView : UserControl
         var wheelDelta = e.GetCurrentPoint(MeshCanvas).Properties.MouseWheelDelta;
         ViewModel?.ZoomBy(wheelDelta > 0 ? WheelZoomInScale : WheelZoomOutScale);
         e.Handled = true;
+    }
+
+    private void OnResolvedAssetOpenButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: ResolvedAssetNavigationTarget target })
+        {
+            ResolvedAssetOpenRequested?.Invoke(this, new ResolvedAssetOpenRequestedEventArgs(target));
+        }
     }
 
     private void OnMeshCanvasDraw(CanvasControl sender, CanvasDrawEventArgs args)

@@ -1,6 +1,7 @@
 using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Presentation.WinUI.Localization;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 
@@ -23,6 +24,8 @@ internal sealed class MaterialPreviewDisplayFormatter
         ArgumentNullException.ThrowIfNull(details);
 
         var resolvedShaderDependency = MaterialShaderDependencyResolver.ResolveShaderDependency(material.Shader, details);
+        var openButtonText = _localizationService.GetRequiredString(ResourceKeys.InspectorResolvedAssetOpenButton);
+        var openButtonToolTipText = _localizationService.GetRequiredString(ResourceKeys.InspectorResolvedAssetOpenButtonToolTip);
         return new MaterialPreviewDisplayState(
             AssetNameText: string.IsNullOrWhiteSpace(details.Name) ? string.Empty : details.Name.Trim(),
             ShaderNameText: BuildShaderNameText(material.Shader),
@@ -44,7 +47,7 @@ internal sealed class MaterialPreviewDisplayFormatter
             NumberSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewNumbersTitle),
             EmptySectionText: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewEmptySectionText),
             TruncatedText: BuildTruncatedText(material),
-            TextureRows: BuildTextureRows(material, details),
+            TextureRows: BuildTextureRows(material, details, openButtonText, openButtonToolTipText),
             ColorRows: material.ColorProperties.Select(BuildColorRow).ToArray(),
             NumberRows: material.FloatProperties
                 .Select(static property => new MaterialPreviewNumberRowDisplayState(
@@ -53,19 +56,26 @@ internal sealed class MaterialPreviewDisplayFormatter
                 .Concat(material.IntegerProperties.Select(static property => new MaterialPreviewNumberRowDisplayState(
                     property.Name,
                     property.Value.ToString(CultureInfo.CurrentCulture))))
-                .ToArray());
+                .ToArray(),
+            ShaderTarget: resolvedShaderDependency is null ? null : CreateNavigationTarget(resolvedShaderDependency),
+            OpenResolvedAssetButtonText: openButtonText,
+            OpenResolvedAssetButtonToolTipText: openButtonToolTipText);
     }
 
     private IReadOnlyList<MaterialPreviewTextureRowDisplayState> BuildTextureRows(
         AssetPreviewMaterialDto material,
-        AssetDetailsDto details)
+        AssetDetailsDto details,
+        string openButtonText,
+        string openButtonToolTipText)
     {
         var mainTextureProperty = MaterialTextureDependencyResolver.SelectMainTextureProperty(material);
         return material.TextureProperties
             .Select(property => BuildTextureRow(
                 property,
                 details,
-                ReferenceEquals(property, mainTextureProperty)))
+                ReferenceEquals(property, mainTextureProperty),
+                openButtonText,
+                openButtonToolTipText))
             .ToArray();
     }
 
@@ -125,7 +135,9 @@ internal sealed class MaterialPreviewDisplayFormatter
     private MaterialPreviewTextureRowDisplayState BuildTextureRow(
         AssetPreviewMaterialTexturePropertyDto property,
         AssetDetailsDto details,
-        bool isMainTextureCandidate)
+        bool isMainTextureCandidate,
+        string openButtonText,
+        string openButtonToolTipText)
     {
         var targetText = BuildTextureTargetText(property);
         var resolvedTextureDependency = MaterialTextureDependencyResolver.ResolveTextureDependency(property, details);
@@ -148,7 +160,10 @@ internal sealed class MaterialPreviewDisplayFormatter
             ResolutionText: resolutionText,
             ResolvedTextureAssetId: resolvedTextureDependency?.AssetId.Value,
             IsMainTextureCandidate: isMainTextureCandidate,
-            TransformText: transformText);
+            TransformText: transformText,
+            Target: resolvedTextureDependency is null ? null : CreateNavigationTarget(resolvedTextureDependency),
+            OpenButtonText: openButtonText,
+            OpenButtonToolTipText: openButtonToolTipText);
     }
 
     private string BuildTextureTargetText(AssetPreviewMaterialTexturePropertyDto property)
@@ -259,6 +274,16 @@ internal sealed class MaterialPreviewDisplayFormatter
 
         return dependency.AssetType.ToString();
     }
+
+    private static ResolvedAssetNavigationTarget CreateNavigationTarget(AssetDependencyDto dependency)
+    {
+        return new ResolvedAssetNavigationTarget(
+            dependency.AssetId,
+            dependency.BundleId,
+            dependency.PathId,
+            dependency.Name,
+            ResolveAssetTypeDisplayName(dependency));
+    }
 }
 
 public sealed record MaterialPreviewDisplayState(
@@ -280,7 +305,10 @@ public sealed record MaterialPreviewDisplayState(
     string TruncatedText,
     IReadOnlyList<MaterialPreviewTextureRowDisplayState> TextureRows,
     IReadOnlyList<MaterialPreviewColorRowDisplayState> ColorRows,
-    IReadOnlyList<MaterialPreviewNumberRowDisplayState> NumberRows);
+    IReadOnlyList<MaterialPreviewNumberRowDisplayState> NumberRows,
+    ResolvedAssetNavigationTarget? ShaderTarget = null,
+    string OpenResolvedAssetButtonText = "",
+    string OpenResolvedAssetButtonToolTipText = "");
 
 public sealed record MaterialPreviewTextureRowDisplayState(
     string PropertyName,
@@ -288,7 +316,10 @@ public sealed record MaterialPreviewTextureRowDisplayState(
     string ResolutionText,
     string? ResolvedTextureAssetId,
     bool IsMainTextureCandidate,
-    string TransformText);
+    string TransformText,
+    ResolvedAssetNavigationTarget? Target = null,
+    string OpenButtonText = "",
+    string OpenButtonToolTipText = "");
 
 public sealed record MaterialPreviewSemanticBadgeDisplayState(string Text);
 

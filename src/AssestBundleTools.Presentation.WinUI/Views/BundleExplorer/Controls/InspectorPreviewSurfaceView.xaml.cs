@@ -42,6 +42,8 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
 
     public event EventHandler? OpenPreviewLocationRequested;
 
+    public event EventHandler<ResolvedAssetOpenRequestedEventArgs>? ResolvedAssetOpenRequested;
+
     private static void OnViewModelPropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
     {
         if (dependencyObject is not InspectorPreviewSurfaceView view)
@@ -175,6 +177,13 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
     private void OnOpenPreviewLocationButtonClick(object sender, RoutedEventArgs e)
     {
         OpenPreviewLocationRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnPreviewResolvedAssetOpenRequested(
+        object? sender,
+        ResolvedAssetOpenRequestedEventArgs e)
+    {
+        ResolvedAssetOpenRequested?.Invoke(this, e);
     }
 
     private void OnBackgroundModeButtonClick(object sender, RoutedEventArgs e)

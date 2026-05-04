@@ -200,6 +200,14 @@ public sealed class BundleExplorerAssetPreviewCoordinatorMaterialTests
         Assert.Equal(
             ResourceKeys.InspectorMaterialPreviewTextureResolvedFormat + ":HeroTexture|Texture2D",
             textureRow.ResolutionText);
+        Assert.NotNull(textureRow.Target);
+        Assert.Equal(textureAssetId, textureRow.Target.AssetId);
+        Assert.Equal(bundleId, textureRow.Target.BundleId);
+        Assert.Equal(200, textureRow.Target.PathId);
+        Assert.Equal("HeroTexture", textureRow.Target.DisplayName);
+        Assert.Equal("Texture2D", textureRow.Target.AssetTypeText);
+        Assert.Equal(ResourceKeys.InspectorResolvedAssetOpenButton, textureRow.OpenButtonText);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, textureRow.OpenButtonVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, textureRow.ResolutionVisibility);
         Assert.Empty(appLogService.WarningMessages);
     }

@@ -1,6 +1,5 @@
 using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
-using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
@@ -24,11 +23,13 @@ internal sealed class AssetPreviewDisplayFormatter
 
     private readonly ILocalizationService _localizationService;
     private readonly LocalizedValueFormatter _localizedValueFormatter;
+    private readonly MeshPreviewDisplayStateBuilder _meshPreviewDisplayStateBuilder;
 
     public AssetPreviewDisplayFormatter(ILocalizationService localizationService)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _localizedValueFormatter = new LocalizedValueFormatter(_localizationService);
+        _meshPreviewDisplayStateBuilder = new MeshPreviewDisplayStateBuilder(_localizationService);
     }
 
     public IReadOnlyList<InspectorInfoRowViewModel> BuildPreviewInfoRows(
@@ -174,24 +175,7 @@ internal sealed class AssetPreviewDisplayFormatter
         AssetPreviewDto preview,
         AssetDetailsDto? details = null)
     {
-        ArgumentNullException.ThrowIfNull(preview);
-
-        var geometry = preview.MeshGeometry;
-        if (preview.Kind != AssetPreviewKind.Mesh || geometry is null)
-        {
-            return new MeshPreviewDisplayState(string.Empty);
-        }
-
-        return new MeshPreviewDisplayState(
-            BadgeText: _localizationService.GetFormattedString(
-                ResourceKeys.InspectorMeshPreviewBadgeFormat,
-                geometry.SourceVertexCount.ToString(CultureInfo.CurrentCulture),
-                geometry.Edges.Count.ToString(CultureInfo.CurrentCulture)),
-            UvBadgeText: _localizationService.GetFormattedString(
-                ResourceKeys.InspectorMeshPreviewUvBadgeFormat,
-                (geometry.Uv0?.Count ?? 0).ToString(CultureInfo.CurrentCulture),
-                geometry.Edges.Count.ToString(CultureInfo.CurrentCulture)),
-            TextureAssociationText: BuildMeshTextureAssociationText(details));
+        return _meshPreviewDisplayStateBuilder.Build(preview, details);
     }
 
     private string ResolvePreviewInfoLabel(AssetPreviewInfoKey key)
@@ -358,49 +342,6 @@ internal sealed class AssetPreviewDisplayFormatter
         return value.ToString("0.###", CultureInfo.CurrentCulture);
     }
 
-    private string BuildMeshTextureAssociationText(AssetDetailsDto? details)
-    {
-        var associations = CollectMeshTextureAssociations(details);
-        if (associations.Count == 0)
-        {
-            return string.Empty;
-        }
-
-        return _localizationService.GetFormattedString(
-            ResourceKeys.InspectorMeshPreviewTextureAssociationFormat,
-            string.Join(", ", associations));
-    }
-
-    private IReadOnlyList<string> CollectMeshTextureAssociations(AssetDetailsDto? details)
-    {
-        var associations = new List<string>();
-        foreach (var dependency in MeshTextureAssociationCandidateResolver.CollectDisplayCandidates(details, maxCount: 4))
-        {
-            associations.Add(_localizationService.GetFormattedString(
-                ResourceKeys.InspectorMeshPreviewTextureAssociationItemFormat,
-                dependency.Name,
-                ResolveAssociationTypeText(dependency)));
-        }
-
-        return associations;
-    }
-
-    private string ResolveAssociationTypeText(AssetDependencyDto dependency)
-    {
-        if (!string.IsNullOrWhiteSpace(dependency.AssetTypeDisplayName))
-        {
-            return dependency.AssetTypeDisplayName.Trim();
-        }
-
-        return dependency.AssetType switch
-        {
-            AssetType.Material => _localizationService.GetRequiredString(ResourceKeys.AssetTypeDisplayMaterial),
-            AssetType.Texture2D => _localizationService.GetRequiredString(ResourceKeys.AssetTypeDisplayTexture2D),
-            AssetType.Sprite => _localizationService.GetRequiredString(ResourceKeys.AssetTypeDisplaySprite),
-            _ => dependency.AssetType.ToString()
-        };
-    }
-
     private IEnumerable<string> BuildTextureInfoSegments(
         params (string ResourceKey, string Value)[] candidates)
     {
@@ -477,4 +418,5 @@ public sealed record SpritePreviewOverlayDisplayState(
 public sealed record MeshPreviewDisplayState(
     string BadgeText,
     string UvBadgeText = "",
-    string TextureAssociationText = "");
+    string TextureAssociationText = "",
+    IReadOnlyList<ResolvedAssetReferenceDisplayState>? TextureAssociationReferences = null);

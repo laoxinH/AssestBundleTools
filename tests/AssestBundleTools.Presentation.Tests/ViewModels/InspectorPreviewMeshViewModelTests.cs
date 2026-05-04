@@ -1,4 +1,6 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
@@ -13,19 +15,37 @@ public sealed class InspectorPreviewMeshViewModelTests
     {
         var viewModel = new InspectorPreviewMeshViewModel();
         var geometry = CreateMeshGeometry(hasUv: true);
+        var textureTarget = new ResolvedAssetNavigationTarget(
+            new AssetId("tex-1"),
+            new BundleId("bundle-1"),
+            77,
+            "HeroTex",
+            "Texture2D");
 
         viewModel.Apply(
             geometry,
             new MeshPreviewDisplayState(
                 BadgeText: "wire",
                 UvBadgeText: "uv",
-                TextureAssociationText: "links"));
+                TextureAssociationText: "links",
+                TextureAssociationReferences:
+                [
+                    new ResolvedAssetReferenceDisplayState(
+                        "HeroTex · Texture2D",
+                        textureTarget,
+                        "Open asset",
+                        "Open resolved asset details")
+                ]));
 
         Assert.Equal(Visibility.Visible, viewModel.DisplayModeSwitchVisibility);
         Assert.True(viewModel.IsWireframeSelected);
         Assert.Equal("wire", viewModel.BadgeText);
         Assert.Equal("links", viewModel.TextureAssociationText);
         Assert.Equal(Visibility.Visible, viewModel.TextureAssociationVisibility);
+        var associationRow = Assert.Single(viewModel.TextureAssociationRows);
+        Assert.Same(textureTarget, associationRow.Target);
+        Assert.Equal("Open asset", associationRow.OpenButtonText);
+        Assert.Equal(Visibility.Visible, viewModel.TextureAssociationRowsVisibility);
 
         viewModel.ToggleDisplayMode();
 

@@ -777,6 +777,12 @@
   <data name="InspectorPanelView.PreviewOpenLocationButton.ToolTip" xml:space="preserve">
     <value>打开预览文件所在位置</value>
   </data>
+  <data name="InspectorPanelView.ResolvedAssetOpenButton.Content" xml:space="preserve">
+    <value>打开资源</value>
+  </data>
+  <data name="InspectorPanelView.ResolvedAssetOpenButton.ToolTip" xml:space="preserve">
+    <value>打开已解析资源详情</value>
+  </data>
   <data name="InspectorPanelView.PreviewCheckerboardBackgroundButton.ToolTip" xml:space="preserve">
     <value>使用棋盘背景</value>
   </data>
@@ -2096,6 +2102,18 @@
   </data>
   <data name="BundleExplorer.Notification.PreviewOpenLocationFailed" xml:space="preserve">
     <value>无法打开预览文件“{0}”的所在位置。</value>
+  </data>
+  <data name="BundleExplorer.Notification.ResolvedAssetNavigationBusy" xml:space="preserve">
+    <value>当前工作台正忙，请稍后再打开引用资源。</value>
+  </data>
+  <data name="BundleExplorer.Notification.ResolvedAssetNavigationNoWorkspace" xml:space="preserve">
+    <value>当前没有可用于打开引用资源的活动工作区。</value>
+  </data>
+  <data name="BundleExplorer.Notification.ResolvedAssetBundleUnavailable.Format" xml:space="preserve">
+    <value>无法打开“{0}”：目标资源包未在当前工作区中解析。</value>
+  </data>
+  <data name="BundleExplorer.Notification.ResolvedAssetNavigationUnavailable.Format" xml:space="preserve">
+    <value>无法打开“{0}”：目标资源暂时不可用。</value>
   </data>
   <data name="BundleExplorer.Notification.AssetExtracted" xml:space="preserve">
     <value>已完成资源提取：{0}</value>

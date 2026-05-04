@@ -36,6 +36,7 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
     private string _wireframeBadgeText = string.Empty;
     private string _uvBadgeText = string.Empty;
     private string _textureAssociationText = string.Empty;
+    private IReadOnlyList<ResolvedAssetReferenceViewModel> _textureAssociationRows = Array.Empty<ResolvedAssetReferenceViewModel>();
     private bool _isTextureOverlaySelected = true;
     private bool _isMeshGridSelected = true;
     private double _rotationX = DefaultRotationX;
@@ -103,6 +104,18 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
             if (SetProperty(ref _textureAssociationText, value))
             {
                 OnPropertyChanged(nameof(TextureAssociationVisibility));
+            }
+        }
+    }
+
+    public IReadOnlyList<ResolvedAssetReferenceViewModel> TextureAssociationRows
+    {
+        get => _textureAssociationRows;
+        private set
+        {
+            if (SetProperty(ref _textureAssociationRows, value))
+            {
+                OnPropertyChanged(nameof(TextureAssociationRowsVisibility));
             }
         }
     }
@@ -197,6 +210,9 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
     public Visibility TextureAssociationVisibility =>
         string.IsNullOrWhiteSpace(TextureAssociationText) ? Visibility.Collapsed : Visibility.Visible;
 
+    public Visibility TextureAssociationRowsVisibility =>
+        TextureAssociationRows.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
     internal void Apply(
         AssetPreviewMeshGeometryDto geometry,
         MeshPreviewDisplayState? displayState)
@@ -207,6 +223,9 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
         _wireframeBadgeText = displayState?.BadgeText ?? string.Empty;
         _uvBadgeText = displayState?.UvBadgeText ?? string.Empty;
         TextureAssociationText = displayState?.TextureAssociationText ?? string.Empty;
+        TextureAssociationRows = displayState?.TextureAssociationReferences?
+            .Select(static reference => new ResolvedAssetReferenceViewModel(reference))
+            .ToArray() ?? Array.Empty<ResolvedAssetReferenceViewModel>();
         TextureOverlayContent = null;
         OnPropertyChanged(nameof(BadgeText));
         if (!HasUv && DisplayMode == InspectorPreviewMeshDisplayMode.Uv)
@@ -229,6 +248,7 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
         _wireframeBadgeText = string.Empty;
         _uvBadgeText = string.Empty;
         TextureAssociationText = string.Empty;
+        TextureAssociationRows = Array.Empty<ResolvedAssetReferenceViewModel>();
         OnPropertyChanged(nameof(BadgeText));
     }
 

@@ -49,6 +49,8 @@ public sealed partial class InspectorPanelView : UserControl
 
     public event EventHandler? OpenPreviewLocationRequested;
 
+    public event EventHandler<ResolvedAssetOpenRequestedEventArgs>? ResolvedAssetOpenRequested;
+
     private void OnExtractButtonClick(object sender, RoutedEventArgs e)
     {
         ExtractRequested?.Invoke(this, EventArgs.Empty);
@@ -77,6 +79,21 @@ public sealed partial class InspectorPanelView : UserControl
     private void OnPreviewSurfaceOpenPreviewLocationRequested(object? sender, EventArgs e)
     {
         OpenPreviewLocationRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnPreviewSurfaceResolvedAssetOpenRequested(
+        object? sender,
+        ResolvedAssetOpenRequestedEventArgs e)
+    {
+        ResolvedAssetOpenRequested?.Invoke(this, e);
+    }
+
+    private void OnResolvedAssetOpenButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: ResolvedAssetNavigationTarget target })
+        {
+            ResolvedAssetOpenRequested?.Invoke(this, new ResolvedAssetOpenRequestedEventArgs(target));
+        }
     }
 
     /// <summary>

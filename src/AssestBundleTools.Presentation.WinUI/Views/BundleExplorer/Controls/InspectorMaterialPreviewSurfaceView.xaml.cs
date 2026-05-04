@@ -23,4 +23,14 @@ public sealed partial class InspectorMaterialPreviewSurfaceView : UserControl
         get => (InspectorPreviewMaterialViewModel?)GetValue(ViewModelProperty);
         set => SetValue(ViewModelProperty, value);
     }
+
+    public event EventHandler<ResolvedAssetOpenRequestedEventArgs>? ResolvedAssetOpenRequested;
+
+    private void OnResolvedAssetOpenButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: ResolvedAssetNavigationTarget target })
+        {
+            ResolvedAssetOpenRequested?.Invoke(this, new ResolvedAssetOpenRequestedEventArgs(target));
+        }
+    }
 }

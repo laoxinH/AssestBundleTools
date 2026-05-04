@@ -385,6 +385,10 @@ public static class ResourceKeys
     public const string BundleExplorerNotificationBundleRemoved = "BundleExplorer.Notification.BundleRemoved";
     public const string BundleExplorerNotificationBundleOpenLocationFailed = "BundleExplorer.Notification.BundleOpenLocationFailed";
     public const string BundleExplorerNotificationPreviewOpenLocationFailed = "BundleExplorer.Notification.PreviewOpenLocationFailed";
+    public const string BundleExplorerNotificationResolvedAssetNavigationBusy = "BundleExplorer.Notification.ResolvedAssetNavigationBusy";
+    public const string BundleExplorerNotificationResolvedAssetNavigationNoWorkspace = "BundleExplorer.Notification.ResolvedAssetNavigationNoWorkspace";
+    public const string BundleExplorerNotificationResolvedAssetBundleUnavailableFormat = "BundleExplorer.Notification.ResolvedAssetBundleUnavailable.Format";
+    public const string BundleExplorerNotificationResolvedAssetNavigationUnavailableFormat = "BundleExplorer.Notification.ResolvedAssetNavigationUnavailable.Format";
     public const string BundleExplorerNotificationAssetExtracted = "BundleExplorer.Notification.AssetExtracted";
     public const string BundleExplorerNotificationBatchAssetsExtracted = "BundleExplorer.Notification.BatchAssetsExtracted";
     public const string BundleExplorerNotificationReplacementSourceSelected = "BundleExplorer.Notification.ReplacementSourceSelected";
@@ -541,6 +545,8 @@ public static class ResourceKeys
     public const string InspectorInfoCardCopyToolTip = "InspectorPanelView.InfoCardCopyButton.ToolTip";
     public const string InspectorInfoCardItemCountFormat = "InspectorPanelView.InfoCardItemCount.Format";
     public const string InspectorPreviewOpenLocationToolTip = "InspectorPanelView.PreviewOpenLocationButton.ToolTip";
+    public const string InspectorResolvedAssetOpenButton = "InspectorPanelView.ResolvedAssetOpenButton.Content";
+    public const string InspectorResolvedAssetOpenButtonToolTip = "InspectorPanelView.ResolvedAssetOpenButton.ToolTip";
     public const string InspectorPreviewCheckerboardBackgroundToolTip = "InspectorPanelView.PreviewCheckerboardBackgroundButton.ToolTip";
     public const string InspectorPreviewSolidBackgroundToolTip = "InspectorPanelView.PreviewSolidBackgroundButton.ToolTip";
     public const string InspectorPreviewImageZoomInToolTip = "InspectorPanelView.PreviewImage.ZoomIn.ToolTip";

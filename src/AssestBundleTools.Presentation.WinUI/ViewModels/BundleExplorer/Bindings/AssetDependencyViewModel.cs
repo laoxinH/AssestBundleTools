@@ -1,10 +1,5 @@
 using Microsoft.UI.Xaml;
 
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
@@ -14,10 +9,18 @@ public sealed record AssetDependencyViewModel(
     string Name,
     string BundleName,
     string MetadataText,
-    string SupplementaryText)
+    string SupplementaryText,
+    ResolvedAssetNavigationTarget? Target = null,
+    string OpenButtonText = "",
+    string OpenButtonToolTipText = "")
 {
     public Visibility SupplementaryVisibility =>
         string.IsNullOrWhiteSpace(SupplementaryText)
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+
+    public Visibility OpenButtonVisibility =>
+        Target is null
             ? Visibility.Collapsed
             : Visibility.Visible;
 }

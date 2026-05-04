@@ -3,6 +3,7 @@ using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.Views.BatchTasks;
+using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -372,6 +373,13 @@ public sealed partial class BundleExplorerPage : Page
     private void OnInspectorOpenPreviewLocationRequested(object sender, EventArgs e)
     {
         ViewModel.OpenCurrentPreviewLocation();
+    }
+
+    private async void OnInspectorResolvedAssetOpenRequested(
+        object sender,
+        ResolvedAssetOpenRequestedEventArgs e)
+    {
+        await ViewModel.OpenResolvedAssetAsync(e.Target);
     }
 
     private async void OnPrimaryPaneBatchExtractRequested(object sender, EventArgs e)

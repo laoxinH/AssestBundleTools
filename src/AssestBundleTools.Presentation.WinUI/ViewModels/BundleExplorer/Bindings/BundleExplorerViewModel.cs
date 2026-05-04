@@ -39,6 +39,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     private readonly BundleExplorerOperationFeedbackBridge _operationFeedbackBridge;
     private readonly BundleExplorerBrowserStateCoordinator _browserStateCoordinator;
     private readonly BundleExplorerBundleTabCoordinator _bundleTabCoordinator;
+    private readonly BundleExplorerResolvedAssetNavigationCoordinator _resolvedAssetNavigationCoordinator;
     private readonly BundleExplorerWorkspaceBindingCoordinator _workspaceBindingCoordinator;
     private readonly BundleExplorerWorkspaceShellViewModel _workspaceShell;
     private readonly BundleExplorerBundlePaneViewModel _bundlePane;
@@ -107,6 +108,16 @@ public sealed class BundleExplorerViewModel : ObservableObject
             _assetWorkflow,
             hasWorkspaceProvider: () => _workspaceShell.HasWorkspace,
             requestWorkspaceBrowserStatePersistence: RequestWorkspaceBrowserStatePersistence);
+        _resolvedAssetNavigationCoordinator = new BundleExplorerResolvedAssetNavigationCoordinator(
+            _workspaceShell,
+            _bundlePane,
+            _documentWorkspace,
+            _bundleTabCoordinator,
+            _assetWorkflow,
+            _operationFeedbackBridge,
+            _appLogService,
+            _localizationService,
+            isBusyProvider: () => IsBusy);
         _browserStateCoordinator = new BundleExplorerBrowserStateCoordinator(
             _workspaceContextService,
             _bundlePane,
@@ -240,6 +251,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
     public Task ActivateAssetDocumentTabAsync(AssetDocumentTabViewModel? assetTab) =>
         _assetWorkflow.ActivateAssetDocumentTabAsync(assetTab);
+
+    public Task OpenResolvedAssetAsync(ResolvedAssetNavigationTarget? target) =>
+        _resolvedAssetNavigationCoordinator.OpenResolvedAssetAsync(target);
 
     public Task CloseAssetDocumentTabAsync(AssetDocumentTabViewModel? assetTab) =>
         _assetWorkflow.CloseAssetDocumentTabAsync(assetTab);

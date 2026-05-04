@@ -429,14 +429,16 @@
                     Margin="8"
                     Visibility="{x:Bind ViewModel.Preview.PreviewMeshVisibility, Mode=OneWay}">
                     <controls:InspectorMeshPreviewSurfaceView
-                        ViewModel="{x:Bind ViewModel.Preview.Mesh, Mode=OneWay}" />
+                        ViewModel="{x:Bind ViewModel.Preview.Mesh, Mode=OneWay}"
+                        ResolvedAssetOpenRequested="OnPreviewResolvedAssetOpenRequested" />
                 </Grid>
 
                 <Grid
                     Margin="8"
                     Visibility="{x:Bind ViewModel.Preview.PreviewMaterialVisibility, Mode=OneWay}">
                     <controls:InspectorMaterialPreviewSurfaceView
-                        ViewModel="{x:Bind ViewModel.Preview.Material, Mode=OneWay}" />
+                        ViewModel="{x:Bind ViewModel.Preview.Material, Mode=OneWay}"
+                        ResolvedAssetOpenRequested="OnPreviewResolvedAssetOpenRequested" />
                 </Grid>
 
                 <Grid

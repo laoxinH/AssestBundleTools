@@ -233,6 +233,7 @@ public sealed class AssetPreviewDisplayFormatterTests
             ResourceKeys.InspectorMeshPreviewTextureAssociationItemFormat + ":HeroMat|Material, " +
             ResourceKeys.InspectorMeshPreviewTextureAssociationItemFormat + ":HeroTex|Texture2D",
             state.TextureAssociationText);
+        Assert.Equal(2, state.TextureAssociationReferences?.Count);
     }
 
     [Fact]
@@ -308,6 +309,7 @@ public sealed class AssetPreviewDisplayFormatterTests
                     new BundleId("bundle-1"),
                     "RendererTexture",
                     AssetType.Texture2D,
+                    PathId: 77,
                     AssetTypeDisplayName: "Texture2D")
             ]);
         var preview = new AssetPreviewDto(
@@ -335,5 +337,12 @@ public sealed class AssetPreviewDisplayFormatterTests
             ResourceKeys.InspectorMeshPreviewTextureAssociationFormat + ":" +
             ResourceKeys.InspectorMeshPreviewTextureAssociationItemFormat + ":RendererTexture|Texture2D",
             state.TextureAssociationText);
+        var association = Assert.Single(state.TextureAssociationReferences ?? []);
+        Assert.Equal(new AssetId("renderer-texture"), association.Target.AssetId);
+        Assert.Equal(new BundleId("bundle-1"), association.Target.BundleId);
+        Assert.Equal(77, association.Target.PathId);
+        Assert.Equal("RendererTexture", association.Target.DisplayName);
+        Assert.Equal("Texture2D", association.Target.AssetTypeText);
+        Assert.Equal(ResourceKeys.InspectorResolvedAssetOpenButton, association.OpenButtonText);
     }
 }

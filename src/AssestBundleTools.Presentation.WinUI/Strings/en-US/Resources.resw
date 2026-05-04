@@ -777,6 +777,12 @@
   <data name="InspectorPanelView.PreviewOpenLocationButton.ToolTip" xml:space="preserve">
     <value>Open preview file location</value>
   </data>
+  <data name="InspectorPanelView.ResolvedAssetOpenButton.Content" xml:space="preserve">
+    <value>Open asset</value>
+  </data>
+  <data name="InspectorPanelView.ResolvedAssetOpenButton.ToolTip" xml:space="preserve">
+    <value>Open resolved asset details</value>
+  </data>
   <data name="InspectorPanelView.PreviewCheckerboardBackgroundButton.ToolTip" xml:space="preserve">
     <value>Use checkerboard background</value>
   </data>
@@ -2096,6 +2102,18 @@
   </data>
   <data name="BundleExplorer.Notification.PreviewOpenLocationFailed" xml:space="preserve">
     <value>Unable to open the containing folder for preview "{0}".</value>
+  </data>
+  <data name="BundleExplorer.Notification.ResolvedAssetNavigationBusy" xml:space="preserve">
+    <value>The workbench is busy. Try opening the referenced asset again in a moment.</value>
+  </data>
+  <data name="BundleExplorer.Notification.ResolvedAssetNavigationNoWorkspace" xml:space="preserve">
+    <value>There is no active workspace available for opening referenced assets.</value>
+  </data>
+  <data name="BundleExplorer.Notification.ResolvedAssetBundleUnavailable.Format" xml:space="preserve">
+    <value>Unable to open "{0}": the target bundle is not resolved in the current workspace.</value>
+  </data>
+  <data name="BundleExplorer.Notification.ResolvedAssetNavigationUnavailable.Format" xml:space="preserve">
+    <value>Unable to open "{0}": the target asset is not currently available.</value>
   </data>
   <data name="BundleExplorer.Notification.AssetExtracted" xml:space="preserve">
     <value>Asset extracted: {0}</value>

@@ -1490,6 +1490,7 @@
                         Grid.Row="2"
                         ExtractRequested="OnInspectorExtractRequested"
                         OpenPreviewLocationRequested="OnInspectorOpenPreviewLocationRequested"
+                        ResolvedAssetOpenRequested="OnInspectorResolvedAssetOpenRequested"
                         SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
                         SelectReplacementSourceRequested="OnInspectorSelectReplacementSourceRequested"
                         ApplyReplacementRequested="OnInspectorApplyReplacementRequested"

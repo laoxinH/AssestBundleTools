@@ -56,6 +56,13 @@ public sealed class MaterialPreviewDisplayFormatterTests
             ResourceKeys.InspectorMaterialPreviewShaderResolvedFormat + ":Particles/Additive|Shader",
             displayState.ShaderResolutionText);
         Assert.Equal(shaderAssetId.Value, displayState.ResolvedShaderAssetId);
+        Assert.NotNull(displayState.ShaderTarget);
+        Assert.Equal(shaderAssetId, displayState.ShaderTarget.AssetId);
+        Assert.Equal(bundleId, displayState.ShaderTarget.BundleId);
+        Assert.Equal(100, displayState.ShaderTarget.PathId);
+        Assert.Equal("Particles/Additive", displayState.ShaderTarget.DisplayName);
+        Assert.Equal("Shader", displayState.ShaderTarget.AssetTypeText);
+        Assert.Equal(ResourceKeys.InspectorResolvedAssetOpenButton, displayState.OpenResolvedAssetButtonText);
     }
 
     [Fact]

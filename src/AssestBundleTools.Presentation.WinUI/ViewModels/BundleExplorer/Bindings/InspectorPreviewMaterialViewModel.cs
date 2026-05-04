@@ -15,6 +15,7 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     private string _shaderReferenceText = string.Empty;
     private string _shaderResolutionText = string.Empty;
     private string? _resolvedShaderAssetId;
+    private ResolvedAssetNavigationTarget? _shaderTarget;
     private string _propertyCountText = string.Empty;
     private string _mainTexturePreviewTitleText = string.Empty;
     private string _mainTexturePreviewNameText = string.Empty;
@@ -27,7 +28,10 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     private string _colorSectionTitle = string.Empty;
     private string _numberSectionTitle = string.Empty;
     private string _emptySectionText = string.Empty;
+    private string _openResolvedAssetButtonText = string.Empty;
+    private string _openResolvedAssetButtonToolTipText = string.Empty;
     private string _truncatedText = string.Empty;
+    private ResolvedAssetNavigationTarget? _mainTexturePreviewTarget;
     private ImageSource? _mainTexturePreviewImageSource;
     private Brush? _mainTexturePreviewTintBrush;
     private MaterialPreviewTintDisplayState? _mainTexturePreviewTint;
@@ -83,6 +87,18 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     {
         get => _resolvedShaderAssetId;
         private set => SetProperty(ref _resolvedShaderAssetId, value);
+    }
+
+    public ResolvedAssetNavigationTarget? ShaderTarget
+    {
+        get => _shaderTarget;
+        private set
+        {
+            if (SetProperty(ref _shaderTarget, value))
+            {
+                OnPropertyChanged(nameof(ShaderOpenButtonVisibility));
+            }
+        }
     }
 
     public string PropertyCountText
@@ -202,6 +218,18 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         private set => SetProperty(ref _emptySectionText, value);
     }
 
+    public string OpenResolvedAssetButtonText
+    {
+        get => _openResolvedAssetButtonText;
+        private set => SetProperty(ref _openResolvedAssetButtonText, value);
+    }
+
+    public string OpenResolvedAssetButtonToolTipText
+    {
+        get => _openResolvedAssetButtonToolTipText;
+        private set => SetProperty(ref _openResolvedAssetButtonToolTipText, value);
+    }
+
     public string TruncatedText
     {
         get => _truncatedText;
@@ -284,6 +312,23 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     public Visibility MainTexturePreviewLimitVisibility =>
         string.IsNullOrWhiteSpace(MainTexturePreviewLimitText) ? Visibility.Collapsed : Visibility.Visible;
 
+    public ResolvedAssetNavigationTarget? MainTexturePreviewTarget
+    {
+        get => _mainTexturePreviewTarget;
+        private set
+        {
+            if (SetProperty(ref _mainTexturePreviewTarget, value))
+            {
+                OnPropertyChanged(nameof(MainTexturePreviewOpenButtonVisibility));
+            }
+        }
+    }
+
+    public Visibility ShaderOpenButtonVisibility => ShaderTarget is null ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility MainTexturePreviewOpenButtonVisibility =>
+        MainTexturePreviewTarget is null ? Visibility.Collapsed : Visibility.Visible;
+
     public Visibility ShaderResolutionVisibility =>
         string.IsNullOrWhiteSpace(ShaderResolutionText) ? Visibility.Collapsed : Visibility.Visible;
 
@@ -307,6 +352,7 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         ShaderReferenceText = displayState.ShaderReferenceText;
         ShaderResolutionText = displayState.ShaderResolutionText;
         ResolvedShaderAssetId = displayState.ResolvedShaderAssetId;
+        ShaderTarget = displayState.ShaderTarget;
         PropertyCountText = displayState.PropertyCountText;
         MainTexturePreviewTitleText = displayState.MainTexturePreviewTitleText;
         MainTexturePreviewLimitText = displayState.MainTexturePreviewLimitText;
@@ -318,6 +364,8 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         ColorSectionTitle = displayState.ColorSectionTitle;
         NumberSectionTitle = displayState.NumberSectionTitle;
         EmptySectionText = displayState.EmptySectionText;
+        OpenResolvedAssetButtonText = displayState.OpenResolvedAssetButtonText;
+        OpenResolvedAssetButtonToolTipText = displayState.OpenResolvedAssetButtonToolTipText;
         TruncatedText = displayState.TruncatedText;
         var textureRows = displayState.TextureRows
             .Select(row => new MaterialPreviewTextureRowViewModel(row, ResolveThumbnailSource(row, textureThumbnailSources)))
@@ -336,6 +384,7 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         ShaderReferenceText = string.Empty;
         ShaderResolutionText = string.Empty;
         ResolvedShaderAssetId = null;
+        ShaderTarget = null;
         PropertyCountText = string.Empty;
         MainTexturePreviewTitleText = string.Empty;
         MainTexturePreviewNameText = string.Empty;
@@ -351,7 +400,10 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         ColorSectionTitle = string.Empty;
         NumberSectionTitle = string.Empty;
         EmptySectionText = string.Empty;
+        OpenResolvedAssetButtonText = string.Empty;
+        OpenResolvedAssetButtonToolTipText = string.Empty;
         TruncatedText = string.Empty;
+        MainTexturePreviewTarget = null;
         TextureRows = Array.Empty<MaterialPreviewTextureRowViewModel>();
         ColorRows = Array.Empty<MaterialPreviewColorRowViewModel>();
         NumberRows = Array.Empty<MaterialPreviewNumberRowViewModel>();
@@ -379,6 +431,7 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         MainTexturePreviewNameText = previewRow?.PropertyName ?? string.Empty;
         MainTexturePreviewResolutionText = previewRow?.ResolutionText ?? string.Empty;
         MainTexturePreviewTransformText = previewRow?.TransformText ?? string.Empty;
+        MainTexturePreviewTarget = previewRow?.Target;
     }
 
     private void ApplyMainTextureTint(MaterialPreviewTintDisplayState? tint)

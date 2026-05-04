@@ -148,11 +148,20 @@ internal sealed class BundleExplorerAssetInspectorPresenter
 
     private AssetDependencyViewModel MapDependency(AssetDependencyDto dependency)
     {
+        var assetTypeText = ResolveAssetTypeDisplayName(dependency.AssetType, dependency.AssetTypeDisplayName);
         return new AssetDependencyViewModel(
             Name: dependency.Name,
             BundleName: _bundlePane.ResolveBundleDisplayName(dependency.BundleId),
-            MetadataText: BuildDependencyMetadataText(dependency),
-            SupplementaryText: BuildDependencySupplementaryText(dependency));
+            MetadataText: BuildDependencyMetadataText(dependency, assetTypeText),
+            SupplementaryText: BuildDependencySupplementaryText(dependency),
+            Target: new ResolvedAssetNavigationTarget(
+                dependency.AssetId,
+                dependency.BundleId,
+                dependency.PathId,
+                dependency.Name,
+                assetTypeText),
+            OpenButtonText: GetString(ResourceKeys.InspectorResolvedAssetOpenButton),
+            OpenButtonToolTipText: GetString(ResourceKeys.InspectorResolvedAssetOpenButtonToolTip));
     }
 
     /// <summary>
@@ -196,9 +205,10 @@ internal sealed class BundleExplorerAssetInspectorPresenter
             ReferencePath: referencePath);
     }
 
-    private string BuildDependencyMetadataText(AssetDependencyDto dependency)
+    private string BuildDependencyMetadataText(
+        AssetDependencyDto dependency,
+        string assetTypeText)
     {
-        var assetTypeText = ResolveAssetTypeDisplayName(dependency.AssetType, dependency.AssetTypeDisplayName);
         // Unity 的 PathId 是有符号 long，负数同样是合法对象标识。
         // 依赖卡片只应在 PathId 为 0（未解析 / 无效）时隐藏该字段。
         if (dependency.PathId != 0)

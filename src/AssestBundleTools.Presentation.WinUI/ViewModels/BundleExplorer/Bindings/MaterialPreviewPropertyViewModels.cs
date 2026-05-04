@@ -26,6 +26,9 @@ public sealed class MaterialPreviewTextureRowViewModel
         ResolutionText = row.ResolutionText;
         TransformText = row.TransformText;
         IsMainTextureCandidate = row.IsMainTextureCandidate;
+        Target = row.Target;
+        OpenButtonText = row.OpenButtonText;
+        OpenButtonToolTipText = row.OpenButtonToolTipText;
         ThumbnailImageSource = thumbnailImageSource;
     }
 
@@ -39,6 +42,12 @@ public sealed class MaterialPreviewTextureRowViewModel
 
     public bool IsMainTextureCandidate { get; }
 
+    public ResolvedAssetNavigationTarget? Target { get; }
+
+    public string OpenButtonText { get; }
+
+    public string OpenButtonToolTipText { get; }
+
     public ImageSource? ThumbnailImageSource { get; }
 
     public Visibility ResolutionVisibility =>
@@ -50,6 +59,8 @@ public sealed class MaterialPreviewTextureRowViewModel
     public Visibility ThumbnailVisibility => ThumbnailImageSource is null ? Visibility.Collapsed : Visibility.Visible;
 
     public Visibility ThumbnailPlaceholderVisibility => ThumbnailImageSource is null ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility OpenButtonVisibility => Target is null ? Visibility.Collapsed : Visibility.Visible;
 }
 
 public sealed class MaterialPreviewColorRowViewModel
