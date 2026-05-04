@@ -84,6 +84,10 @@ public sealed class BundleExplorerAssetPreviewCoordinatorMaterialTests
             ResourceKeys.InspectorMaterialPreviewShaderReferenceFormat + ":materials.assets|100",
             assetTab.Inspector.Preview.Material.ShaderReferenceText);
         Assert.Equal(
+            ResourceKeys.InspectorMaterialPreviewShaderInternalUnresolvedText,
+            assetTab.Inspector.Preview.Material.ShaderResolutionText);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, assetTab.Inspector.Preview.Material.ShaderResolutionVisibility);
+        Assert.Equal(
             ResourceKeys.InspectorMaterialPreviewPropertyCountFormat + ":1|1|2",
             assetTab.Inspector.Preview.Material.PropertyCountText);
         Assert.Equal(

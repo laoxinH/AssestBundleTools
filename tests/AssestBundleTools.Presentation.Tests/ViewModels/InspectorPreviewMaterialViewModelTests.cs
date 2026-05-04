@@ -18,6 +18,8 @@ public sealed class InspectorPreviewMaterialViewModelTests
             AssetNameText: "paopao_01",
             ShaderNameText: "Particles/Additive",
             ShaderReferenceText: "materials.assets",
+            ShaderResolutionText: "Resolved Shader: Particles/Additive · Shader",
+            ResolvedShaderAssetId: "shader-asset",
             PropertyCountText: "2 textures",
             MainTexturePreviewTitleText: "Main Texture",
             MainTexturePreviewLimitText: "Reference only",
@@ -74,6 +76,8 @@ public sealed class InspectorPreviewMaterialViewModelTests
         Assert.Equal("Scale 1, 1 · Offset 0, 0", viewModel.MainTexturePreviewTransformText);
         Assert.Equal("Tint _Color: RGBA 0.25, 0.5, 0.75, 1", viewModel.MainTexturePreviewTintText);
         Assert.Equal("Reference only", viewModel.MainTexturePreviewLimitText);
+        Assert.Equal("Resolved Shader: Particles/Additive · Shader", viewModel.ShaderResolutionText);
+        Assert.Equal("shader-asset", viewModel.ResolvedShaderAssetId);
         Assert.Equal("Material hints", viewModel.SemanticSectionTitle);
         Assert.Equal(
             ["Main texture detected", "Transparent / blend candidate"],
@@ -83,6 +87,7 @@ public sealed class InspectorPreviewMaterialViewModelTests
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewTintTextVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewTintVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewLimitVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.ShaderResolutionVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.SemanticHintsVisibility);
     }
 

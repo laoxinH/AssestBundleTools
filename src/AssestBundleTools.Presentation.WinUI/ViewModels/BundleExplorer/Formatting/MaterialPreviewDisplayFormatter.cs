@@ -22,10 +22,13 @@ internal sealed class MaterialPreviewDisplayFormatter
         ArgumentNullException.ThrowIfNull(material);
         ArgumentNullException.ThrowIfNull(details);
 
+        var resolvedShaderDependency = MaterialShaderDependencyResolver.ResolveShaderDependency(material.Shader, details);
         return new MaterialPreviewDisplayState(
             AssetNameText: string.IsNullOrWhiteSpace(details.Name) ? string.Empty : details.Name.Trim(),
             ShaderNameText: BuildShaderNameText(material.Shader),
             ShaderReferenceText: BuildShaderReferenceText(material.Shader),
+            ShaderResolutionText: BuildShaderResolutionText(material.Shader, resolvedShaderDependency),
+            ResolvedShaderAssetId: resolvedShaderDependency?.AssetId.Value,
             PropertyCountText: _localizationService.GetFormattedString(
                 ResourceKeys.InspectorMaterialPreviewPropertyCountFormat,
                 material.TextureProperties.Count.ToString(CultureInfo.CurrentCulture),
@@ -90,6 +93,33 @@ internal sealed class MaterialPreviewDisplayFormatter
             ResourceKeys.InspectorMaterialPreviewShaderReferenceFormat,
             string.IsNullOrWhiteSpace(source) ? "-" : source,
             shader.PathId.ToString(CultureInfo.CurrentCulture));
+    }
+
+    private string BuildShaderResolutionText(
+        AssetPreviewMaterialShaderDto? shader,
+        AssetDependencyDto? resolvedShaderDependency)
+    {
+        if (shader is null)
+        {
+            return string.Empty;
+        }
+
+        if (shader.PathId == 0)
+        {
+            return _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewShaderMissingText);
+        }
+
+        if (resolvedShaderDependency is not null)
+        {
+            return _localizationService.GetFormattedString(
+                ResourceKeys.InspectorMaterialPreviewShaderResolvedFormat,
+                resolvedShaderDependency.Name,
+                ResolveAssetTypeDisplayName(resolvedShaderDependency));
+        }
+
+        return shader.IsExternal
+            ? _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewShaderExternalUnresolvedText)
+            : _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewShaderInternalUnresolvedText);
     }
 
     private MaterialPreviewTextureRowDisplayState BuildTextureRow(
@@ -235,6 +265,8 @@ public sealed record MaterialPreviewDisplayState(
     string AssetNameText,
     string ShaderNameText,
     string ShaderReferenceText,
+    string ShaderResolutionText,
+    string? ResolvedShaderAssetId,
     string PropertyCountText,
     string MainTexturePreviewTitleText,
     string MainTexturePreviewLimitText,

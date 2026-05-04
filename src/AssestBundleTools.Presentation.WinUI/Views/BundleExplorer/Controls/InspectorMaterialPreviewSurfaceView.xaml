@@ -100,6 +100,10 @@
                     <TextBlock
                         Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
                         Text="{x:Bind ViewModel.ShaderReferenceText, Mode=OneWay}" />
+                    <TextBlock
+                        Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
+                        Text="{x:Bind ViewModel.ShaderResolutionText, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.ShaderResolutionVisibility, Mode=OneWay}" />
                 </StackPanel>
             </Border>
 

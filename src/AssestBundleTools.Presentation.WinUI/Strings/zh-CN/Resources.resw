@@ -870,6 +870,18 @@
   <data name="InspectorPanelView.MaterialPreview.ShaderReference.Format" xml:space="preserve">
     <value>Shader 引用：{0} · PathId {1}</value>
   </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderMissing.Text" xml:space="preserve">
+    <value>未绑定 Shader</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderResolved.Format" xml:space="preserve">
+    <value>已定位 Shader：{0} · {1}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderExternalUnresolved.Text" xml:space="preserve">
+    <value>外部 Shader 未导入或未匹配到当前工作区</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderInternalUnresolved.Text" xml:space="preserve">
+    <value>内部 Shader 引用未在当前依赖图中匹配</value>
+  </data>
   <data name="InspectorPanelView.MaterialPreview.PropertyCount.Format" xml:space="preserve">
     <value>{0} 个贴图槽 · {1} 个颜色 · {2} 个数值</value>
   </data>

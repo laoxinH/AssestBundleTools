@@ -870,6 +870,18 @@
   <data name="InspectorPanelView.MaterialPreview.ShaderReference.Format" xml:space="preserve">
     <value>Shader reference: {0} · PathId {1}</value>
   </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderMissing.Text" xml:space="preserve">
+    <value>No Shader bound</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderResolved.Format" xml:space="preserve">
+    <value>Resolved Shader: {0} · {1}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderExternalUnresolved.Text" xml:space="preserve">
+    <value>External Shader is not imported or not matched in this workspace</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderInternalUnresolved.Text" xml:space="preserve">
+    <value>Internal Shader reference was not matched in the current dependency graph</value>
+  </data>
   <data name="InspectorPanelView.MaterialPreview.PropertyCount.Format" xml:space="preserve">
     <value>{0} texture slots · {1} colors · {2} numbers</value>
   </data>

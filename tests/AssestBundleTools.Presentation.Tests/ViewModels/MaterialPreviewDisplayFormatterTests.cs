@@ -12,6 +12,53 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 public sealed class MaterialPreviewDisplayFormatterTests
 {
     [Fact]
+    public void BuildDisplayState_ShouldResolveShaderDependency_ByPathIdAndUnityTypeName()
+    {
+        var formatter = new MaterialPreviewDisplayFormatter(new TestLocalizationService());
+        var shaderAssetId = new AssetId("asset-shader");
+        var bundleId = new BundleId("bundle-material");
+        var material = new AssetPreviewMaterialDto(
+            SchemaVersion: 1,
+            Shader: new AssetPreviewMaterialShaderDto(
+                FileId: 0,
+                PathId: 100,
+                Name: "Particles/Additive",
+                SerializedFileName: "materials.assets",
+                ExternalReferencePath: null,
+                IsExternal: false),
+            TextureProperties: Array.Empty<AssetPreviewMaterialTexturePropertyDto>(),
+            FloatProperties: Array.Empty<AssetPreviewMaterialFloatPropertyDto>(),
+            IntegerProperties: Array.Empty<AssetPreviewMaterialIntegerPropertyDto>(),
+            ColorProperties: Array.Empty<AssetPreviewMaterialColorPropertyDto>());
+        var details = CreateAssetDetails(
+            WorkspaceId.New(),
+            bundleId,
+            new AssetId("asset-material")) with
+        {
+            Name = "paopao_01",
+            AssetType = AssetType.Material,
+            AssetTypeDisplayName = AssetType.Material.ToString(),
+            Dependencies =
+            [
+                new AssetDependencyDto(
+                    shaderAssetId,
+                    bundleId,
+                    "Particles/Additive",
+                    AssetType.Unknown,
+                    PathId: 100,
+                    AssetTypeDisplayName: "Shader")
+            ]
+        };
+
+        var displayState = formatter.BuildDisplayState(material, details);
+
+        Assert.Equal(
+            ResourceKeys.InspectorMaterialPreviewShaderResolvedFormat + ":Particles/Additive|Shader",
+            displayState.ShaderResolutionText);
+        Assert.Equal(shaderAssetId.Value, displayState.ResolvedShaderAssetId);
+    }
+
+    [Fact]
     public void BuildDisplayState_ShouldSurfaceSemanticBadges_ForCommonMaterialProperties()
     {
         var formatter = new MaterialPreviewDisplayFormatter(new TestLocalizationService());

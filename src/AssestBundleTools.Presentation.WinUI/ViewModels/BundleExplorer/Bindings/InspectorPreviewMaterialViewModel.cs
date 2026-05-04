@@ -13,6 +13,8 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     private string _assetNameText = string.Empty;
     private string _shaderNameText = string.Empty;
     private string _shaderReferenceText = string.Empty;
+    private string _shaderResolutionText = string.Empty;
+    private string? _resolvedShaderAssetId;
     private string _propertyCountText = string.Empty;
     private string _mainTexturePreviewTitleText = string.Empty;
     private string _mainTexturePreviewNameText = string.Empty;
@@ -63,6 +65,24 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     {
         get => _shaderReferenceText;
         private set => SetProperty(ref _shaderReferenceText, value);
+    }
+
+    public string ShaderResolutionText
+    {
+        get => _shaderResolutionText;
+        private set
+        {
+            if (SetProperty(ref _shaderResolutionText, value))
+            {
+                OnPropertyChanged(nameof(ShaderResolutionVisibility));
+            }
+        }
+    }
+
+    public string? ResolvedShaderAssetId
+    {
+        get => _resolvedShaderAssetId;
+        private set => SetProperty(ref _resolvedShaderAssetId, value);
     }
 
     public string PropertyCountText
@@ -264,6 +284,9 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     public Visibility MainTexturePreviewLimitVisibility =>
         string.IsNullOrWhiteSpace(MainTexturePreviewLimitText) ? Visibility.Collapsed : Visibility.Visible;
 
+    public Visibility ShaderResolutionVisibility =>
+        string.IsNullOrWhiteSpace(ShaderResolutionText) ? Visibility.Collapsed : Visibility.Visible;
+
     public Visibility SemanticHintsVisibility =>
         SemanticBadges.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
@@ -282,6 +305,8 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         AssetNameText = displayState.AssetNameText;
         ShaderNameText = displayState.ShaderNameText;
         ShaderReferenceText = displayState.ShaderReferenceText;
+        ShaderResolutionText = displayState.ShaderResolutionText;
+        ResolvedShaderAssetId = displayState.ResolvedShaderAssetId;
         PropertyCountText = displayState.PropertyCountText;
         MainTexturePreviewTitleText = displayState.MainTexturePreviewTitleText;
         MainTexturePreviewLimitText = displayState.MainTexturePreviewLimitText;
@@ -309,6 +334,8 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         AssetNameText = string.Empty;
         ShaderNameText = string.Empty;
         ShaderReferenceText = string.Empty;
+        ShaderResolutionText = string.Empty;
+        ResolvedShaderAssetId = null;
         PropertyCountText = string.Empty;
         MainTexturePreviewTitleText = string.Empty;
         MainTexturePreviewNameText = string.Empty;
@@ -376,104 +403,4 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         var clamped = Math.Clamp(value, 0d, 1d);
         return (byte)Math.Round(clamped * byte.MaxValue);
     }
-}
-
-public sealed class MaterialPreviewSemanticBadgeViewModel
-{
-    public MaterialPreviewSemanticBadgeViewModel(MaterialPreviewSemanticBadgeDisplayState badge)
-    {
-        Text = badge.Text;
-    }
-
-    public string Text { get; }
-}
-
-public sealed class MaterialPreviewTextureRowViewModel
-{
-    public MaterialPreviewTextureRowViewModel(
-        MaterialPreviewTextureRowDisplayState row,
-        ImageSource? thumbnailImageSource)
-    {
-        PropertyName = row.PropertyName;
-        TargetText = row.TargetText;
-        ResolutionText = row.ResolutionText;
-        TransformText = row.TransformText;
-        IsMainTextureCandidate = row.IsMainTextureCandidate;
-        ThumbnailImageSource = thumbnailImageSource;
-    }
-
-    public string PropertyName { get; }
-
-    public string TargetText { get; }
-
-    public string ResolutionText { get; }
-
-    public string TransformText { get; }
-
-    public bool IsMainTextureCandidate { get; }
-
-    public ImageSource? ThumbnailImageSource { get; }
-
-    public Visibility ResolutionVisibility =>
-        string.IsNullOrWhiteSpace(ResolutionText) ? Visibility.Collapsed : Visibility.Visible;
-
-    public Visibility TransformVisibility =>
-        string.IsNullOrWhiteSpace(TransformText) ? Visibility.Collapsed : Visibility.Visible;
-
-    public Visibility ThumbnailVisibility => ThumbnailImageSource is null ? Visibility.Collapsed : Visibility.Visible;
-
-    public Visibility ThumbnailPlaceholderVisibility => ThumbnailImageSource is null ? Visibility.Visible : Visibility.Collapsed;
-}
-
-public sealed class MaterialPreviewColorRowViewModel
-{
-    private Brush? _swatchBrush;
-
-    public MaterialPreviewColorRowViewModel(MaterialPreviewColorRowDisplayState row)
-    {
-        PropertyName = row.PropertyName;
-        ValueText = row.ValueText;
-        Alpha = row.A;
-        Red = row.R;
-        Green = row.G;
-        Blue = row.B;
-    }
-
-    public string PropertyName { get; }
-
-    public string ValueText { get; }
-
-    public Brush SwatchBrush =>
-        _swatchBrush ??= new SolidColorBrush(Color.FromArgb(
-            ToByte(Alpha),
-            ToByte(Red),
-            ToByte(Green),
-            ToByte(Blue)));
-
-    private double Alpha { get; }
-
-    private double Red { get; }
-
-    private double Green { get; }
-
-    private double Blue { get; }
-
-    private static byte ToByte(double value)
-    {
-        var clamped = Math.Clamp(value, 0d, 1d);
-        return (byte)Math.Round(clamped * byte.MaxValue);
-    }
-}
-
-public sealed class MaterialPreviewNumberRowViewModel
-{
-    public MaterialPreviewNumberRowViewModel(MaterialPreviewNumberRowDisplayState row)
-    {
-        PropertyName = row.PropertyName;
-        ValueText = row.ValueText;
-    }
-
-    public string PropertyName { get; }
-
-    public string ValueText { get; }
 }

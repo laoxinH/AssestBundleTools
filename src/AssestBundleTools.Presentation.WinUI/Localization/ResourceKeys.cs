@@ -572,6 +572,10 @@ public static class ResourceKeys
     public const string InspectorMeshPreviewHideGridToolTip = "InspectorPanelView.MeshPreview.HideGrid.ToolTip";
     public const string InspectorMaterialPreviewShaderUnknownText = "InspectorPanelView.MaterialPreview.ShaderUnknown.Text";
     public const string InspectorMaterialPreviewShaderReferenceFormat = "InspectorPanelView.MaterialPreview.ShaderReference.Format";
+    public const string InspectorMaterialPreviewShaderMissingText = "InspectorPanelView.MaterialPreview.ShaderMissing.Text";
+    public const string InspectorMaterialPreviewShaderResolvedFormat = "InspectorPanelView.MaterialPreview.ShaderResolved.Format";
+    public const string InspectorMaterialPreviewShaderExternalUnresolvedText = "InspectorPanelView.MaterialPreview.ShaderExternalUnresolved.Text";
+    public const string InspectorMaterialPreviewShaderInternalUnresolvedText = "InspectorPanelView.MaterialPreview.ShaderInternalUnresolved.Text";
     public const string InspectorMaterialPreviewPropertyCountFormat = "InspectorPanelView.MaterialPreview.PropertyCount.Format";
     public const string InspectorMaterialPreviewMainTextureTitleText = "InspectorPanelView.MaterialPreview.MainTextureTitle.Text";
     public const string InspectorMaterialPreviewMainTextureTintFormat = "InspectorPanelView.MaterialPreview.MainTextureTint.Format";
