@@ -296,7 +296,9 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
                 assetTabState.MeshPreviewDisplayMode,
                 assetTabState.MeshPreviewTextureOverlaySelected,
                 assetTabState.MeshPreviewGridSelected,
-                assetTabState.MeshPreviewZoom);
+                assetTabState.MeshPreviewZoom,
+                assetTabState.MeshPreviewRotationX,
+                assetTabState.MeshPreviewRotationY);
             restoredTabs.Add(assetTab);
         }
 
@@ -316,7 +318,9 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
             MeshPreviewDisplayMode: meshDisplayOptions.DisplayModePersistenceKey,
             MeshPreviewTextureOverlaySelected: meshDisplayOptions.IsTextureOverlaySelected,
             MeshPreviewGridSelected: meshDisplayOptions.IsMeshGridSelected,
-            MeshPreviewZoom: meshDisplayOptions.Zoom);
+            MeshPreviewZoom: meshDisplayOptions.Zoom,
+            MeshPreviewRotationX: meshDisplayOptions.RotationX,
+            MeshPreviewRotationY: meshDisplayOptions.RotationY);
     }
 
     private static AssetType? ParseAssetTypeFilter(string? assetTypeFilter)

@@ -166,7 +166,9 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
         string? displayMode,
         bool? textureOverlaySelected,
         bool? meshGridSelected,
-        double? zoom)
+        double? zoom,
+        double? rotationX,
+        double? rotationY)
     {
         _isRestoringPreviewMeshDisplayOptions = true;
         try
@@ -175,7 +177,9 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
                 displayMode,
                 textureOverlaySelected,
                 meshGridSelected,
-                zoom);
+                zoom,
+                rotationX,
+                rotationY);
         }
         finally
         {

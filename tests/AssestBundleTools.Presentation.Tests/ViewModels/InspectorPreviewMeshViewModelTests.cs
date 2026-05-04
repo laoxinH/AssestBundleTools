@@ -62,7 +62,7 @@ public sealed class InspectorPreviewMeshViewModelTests
     {
         var viewModel = new InspectorPreviewMeshViewModel();
 
-        viewModel.RestoreDisplayOptions("Uv", null, null, null);
+        viewModel.RestoreDisplayOptions("Uv", null, null, null, null, null);
         viewModel.Apply(
             CreateMeshGeometry(hasUv: true),
             new MeshPreviewDisplayState("wire", "uv"));
@@ -77,7 +77,7 @@ public sealed class InspectorPreviewMeshViewModelTests
     {
         var viewModel = new InspectorPreviewMeshViewModel();
 
-        viewModel.RestoreDisplayOptions("Uv", null, null, null);
+        viewModel.RestoreDisplayOptions("Uv", null, null, null, null, null);
         viewModel.Apply(
             CreateMeshGeometry(hasUv: false),
             new MeshPreviewDisplayState("wire", "uv"));
@@ -96,7 +96,9 @@ public sealed class InspectorPreviewMeshViewModelTests
             "Uv",
             textureOverlaySelected: false,
             meshGridSelected: false,
-            zoom: 1.5d);
+            zoom: 1.5d,
+            rotationX: 24d,
+            rotationY: -72d);
         viewModel.Apply(
             CreateMeshGeometry(hasUv: true),
             new MeshPreviewDisplayState("wire", "uv"));
@@ -106,6 +108,9 @@ public sealed class InspectorPreviewMeshViewModelTests
         Assert.False(viewModel.IsTextureOverlaySelected);
         Assert.False(viewModel.IsMeshGridSelected);
         Assert.Equal(1.5d, viewModel.Zoom);
+        Assert.Equal(24d, viewModel.RotationX);
+        Assert.Equal(-72d, viewModel.RotationY);
+        Assert.Equal("X +24\u00B0  Y -72\u00B0", viewModel.RotationStatusText);
         Assert.False(viewModel.ShouldDrawTextureOverlay);
         Assert.True(viewModel.ShouldDrawMeshGrid);
     }
@@ -121,15 +126,18 @@ public sealed class InspectorPreviewMeshViewModelTests
             CreateMeshGeometry(hasUv: true),
             new MeshPreviewDisplayState("wire", "uv"));
         viewModel.ApplyTextureOverlay([1, 2, 3, 4]);
+        viewModel.Rotate(10d, -12d);
         viewModel.ToggleDisplayMode();
         viewModel.ToggleMeshGrid();
         viewModel.ToggleTextureOverlay();
         viewModel.ZoomBy(1.5d);
         viewModel.ResetView();
-        viewModel.RestoreDisplayOptions("Wireframe", true, true, 1d);
+        viewModel.RestoreDisplayOptions("Wireframe", true, true, 1d, -18d, 32d);
 
-        Assert.Equal(5, changeCount);
+        Assert.Equal(8, changeCount);
         Assert.True(viewModel.IsWireframeSelected);
+        Assert.Equal(-18d, viewModel.RotationX);
+        Assert.Equal(32d, viewModel.RotationY);
     }
 
     [Fact]

@@ -108,6 +108,54 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
     }
 
     [Fact]
+    public async Task ActivateAssetDocumentTabAsync_ShouldReuseLoadedMeshPreview_WhenSwitchingTabs()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-ui");
+        var meshAssetId = new AssetId("asset-mesh");
+        var textAssetId = new AssetId("asset-text");
+        var context = CreateCoordinatorContext(workspaceId, "MeshPreviewReuse");
+        var meshDetails = CreateAssetDetails(workspaceId, bundleId, meshAssetId);
+        var textDetails = CreateAssetDetails(workspaceId, bundleId, textAssetId);
+        var previewQueryAssetIds = new List<AssetId>();
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            OpenAssetInPaneHandler = command => Task.FromResult(Result<AssetPaneContextDto>.Success(
+                new AssetPaneContextDto(
+                    command.WorkspaceId,
+                    command.PaneId,
+                    command.BundleId,
+                    command.AssetId,
+                    "Asset",
+                    WorkspaceMode.SinglePane))),
+            GetAssetDetailsHandler = query => Task.FromResult(Result<AssetDetailsDto>.Success(
+                query.AssetId.Equals(meshAssetId) ? meshDetails : textDetails)),
+            GetAssetPreviewHandler = query =>
+            {
+                previewQueryAssetIds.Add(query.AssetId);
+                return Task.FromResult(query.AssetId.Equals(meshAssetId)
+                    ? CreateMeshPreviewResult(query)
+                    : CreateSummaryPreviewResult(query));
+            }
+        };
+        var coordinator = CreateCoordinator(context, inspectionGateway);
+        var meshTab = context.HostCoordinator.CreateAssetDocumentTab(bundleId, meshAssetId, "Mesh");
+        var textTab = context.HostCoordinator.CreateAssetDocumentTab(bundleId, textAssetId, "Text");
+        context.BundleTab.AddAssetTab(meshTab, activate: false);
+        context.BundleTab.AddAssetTab(textTab, activate: false);
+
+        await coordinator.ActivateAssetDocumentTabAsync(meshTab);
+        await WaitUntilAsync(() => meshTab.Inspector.Preview.Mesh.Geometry is not null);
+        await coordinator.ActivateAssetDocumentTabAsync(textTab);
+        await WaitUntilAsync(() => textTab.Inspector.Preview.PreviewText == "summary");
+        await coordinator.ActivateAssetDocumentTabAsync(meshTab);
+        await Task.Delay(50);
+
+        Assert.NotNull(meshTab.Inspector.Preview.Mesh.Geometry);
+        Assert.Equal([meshAssetId, textAssetId], previewQueryAssetIds);
+    }
+
+    [Fact]
     public void AssetDocumentTabPreviewImageDisplayOptions_ShouldRequestBrowserStatePersistence_WhenUserChangesModes()
     {
         var context = CreateCoordinatorContext(WorkspaceId.New(), "PreviewOptionsPersistence");
@@ -151,13 +199,14 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
             new MeshPreviewDisplayState("wire", "uv"));
         assetTab.Inspector.Preview.Mesh.ApplyTextureOverlay([1, 2, 3, 4]);
 
+        assetTab.Inspector.Preview.Mesh.Rotate(10d, -12d);
         assetTab.Inspector.Preview.Mesh.ToggleDisplayMode();
         assetTab.Inspector.Preview.Mesh.ToggleMeshGrid();
         assetTab.Inspector.Preview.Mesh.ToggleTextureOverlay();
         assetTab.Inspector.Preview.Mesh.ZoomBy(1.18d);
         assetTab.Inspector.Preview.Mesh.ResetView();
 
-        Assert.Equal(5, context.BrowserStatePersistenceRequestCount);
+        Assert.Equal(8, context.BrowserStatePersistenceRequestCount);
     }
 
     [Fact]
@@ -173,7 +222,9 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
             "Uv",
             textureOverlaySelected: false,
             meshGridSelected: false,
-            zoom: 1.5d);
+            zoom: 1.5d,
+            rotationX: 24d,
+            rotationY: -72d);
         assetTab.Inspector.Preview.Mesh.Apply(
             CreateMeshGeometry(),
             new MeshPreviewDisplayState("wire", "uv"));
@@ -184,6 +235,8 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
         Assert.False(assetTab.Inspector.Preview.Mesh.IsTextureOverlaySelected);
         Assert.False(assetTab.Inspector.Preview.Mesh.IsMeshGridSelected);
         Assert.Equal(1.5d, assetTab.Inspector.Preview.Mesh.Zoom);
+        Assert.Equal(24d, assetTab.Inspector.Preview.Mesh.RotationX);
+        Assert.Equal(-72d, assetTab.Inspector.Preview.Mesh.RotationY);
     }
 
     private static CoordinatorContext CreateCoordinatorContext(WorkspaceId workspaceId, string workspaceName)

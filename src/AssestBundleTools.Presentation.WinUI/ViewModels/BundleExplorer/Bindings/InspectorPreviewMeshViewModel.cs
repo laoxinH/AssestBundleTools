@@ -21,6 +21,8 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
     private const double DefaultZoom = 1d;
     private const double MinZoom = 0.35d;
     private const double MaxZoom = 6d;
+    private const double MinRotationX = -89d;
+    private const double MaxRotationX = 89d;
     private const string WireframeDisplayModeGlyphValue = "\uE9D9";
     private const string UvDisplayModeGlyphValue = "\uE8A9";
     private const string TextureOverlaySelectedGlyphValue = "\uE91B";
@@ -120,13 +122,13 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
     public double RotationX
     {
         get => _rotationX;
-        private set => SetProperty(ref _rotationX, value);
+        private set => SetRotationX(value);
     }
 
     public double RotationY
     {
         get => _rotationY;
-        private set => SetProperty(ref _rotationY, value);
+        private set => SetRotationY(value);
     }
 
     public double Zoom
@@ -171,6 +173,9 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
     public string MeshGridGlyph => IsMeshGridSelected
         ? MeshGridSelectedGlyphValue
         : MeshGridHiddenGlyphValue;
+
+    public string RotationStatusText => FormattableString.Invariant(
+        $"X {Math.Round(RotationX):+0;-0;0}\u00B0  Y {Math.Round(NormalizeRotationY(RotationY)):+0;-0;0}\u00B0");
 
     public Visibility Visibility => HasGeometry ? Visibility.Visible : Visibility.Collapsed;
 
@@ -239,12 +244,16 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
         string? displayMode,
         bool? textureOverlaySelected,
         bool? meshGridSelected,
-        double? zoom)
+        double? zoom,
+        double? rotationX,
+        double? rotationY)
     {
         SetDisplayMode(ParseDisplayMode(displayMode), notifyDisplayOptionsChanged: false);
         SetTextureOverlaySelected(textureOverlaySelected ?? true, notifyDisplayOptionsChanged: false);
         SetMeshGridSelected(meshGridSelected ?? true, notifyDisplayOptionsChanged: false);
         SetZoom(zoom ?? DefaultZoom, notifyDisplayOptionsChanged: false);
+        SetRotationX(rotationX ?? DefaultRotationX, notifyDisplayOptionsChanged: false);
+        SetRotationY(rotationY ?? DefaultRotationY, notifyDisplayOptionsChanged: false);
     }
 
     internal void ToggleTextureOverlay()
@@ -274,8 +283,12 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
             return;
         }
 
-        RotationY += deltaX * 0.45d;
-        RotationX = Math.Clamp(RotationX + (deltaY * 0.45d), -89d, 89d);
+        var hasChanged = SetRotationY(RotationY + (deltaX * 0.45d), notifyDisplayOptionsChanged: false);
+        hasChanged = SetRotationX(RotationX + (deltaY * 0.45d), notifyDisplayOptionsChanged: false) || hasChanged;
+        if (hasChanged)
+        {
+            DisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     internal void ZoomBy(double scale)
@@ -290,8 +303,8 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
 
     internal void ResetView()
     {
-        RotationX = DefaultRotationX;
-        RotationY = DefaultRotationY;
+        SetRotationX(DefaultRotationX);
+        SetRotationY(DefaultRotationY);
         SetZoom(DefaultZoom);
     }
 
@@ -361,6 +374,48 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
         }
     }
 
+    private bool SetRotationX(
+        double rotationX,
+        bool notifyDisplayOptionsChanged = true)
+    {
+        var normalizedRotationX = double.IsNaN(rotationX) || double.IsInfinity(rotationX)
+            ? DefaultRotationX
+            : Math.Clamp(rotationX, MinRotationX, MaxRotationX);
+        if (SetProperty(ref _rotationX, normalizedRotationX, nameof(RotationX)))
+        {
+            OnPropertyChanged(nameof(RotationStatusText));
+            if (notifyDisplayOptionsChanged)
+            {
+                DisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool SetRotationY(
+        double rotationY,
+        bool notifyDisplayOptionsChanged = true)
+    {
+        var normalizedRotationY = double.IsNaN(rotationY) || double.IsInfinity(rotationY)
+            ? DefaultRotationY
+            : NormalizeRotationY(rotationY);
+        if (SetProperty(ref _rotationY, normalizedRotationY, nameof(RotationY)))
+        {
+            OnPropertyChanged(nameof(RotationStatusText));
+            if (notifyDisplayOptionsChanged)
+            {
+                DisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     private static InspectorPreviewMeshDisplayMode ParseDisplayMode(string? mode)
     {
         return Enum.TryParse<InspectorPreviewMeshDisplayMode>(
@@ -369,5 +424,20 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
             out var parsedMode)
             ? parsedMode
             : InspectorPreviewMeshDisplayMode.Wireframe;
+    }
+
+    private static double NormalizeRotationY(double rotationY)
+    {
+        var normalizedRotation = rotationY % 360d;
+        if (normalizedRotation > 180d)
+        {
+            normalizedRotation -= 360d;
+        }
+        else if (normalizedRotation < -180d)
+        {
+            normalizedRotation += 360d;
+        }
+
+        return normalizedRotation;
     }
 }

@@ -48,7 +48,9 @@ internal static class JsonWorkspaceMetadataStoreTests
                             MeshPreviewDisplayMode: "Uv",
                             MeshPreviewTextureOverlaySelected: false,
                             MeshPreviewGridSelected: false,
-                            MeshPreviewZoom: 1.5d)
+                            MeshPreviewZoom: 1.5d,
+                            MeshPreviewRotationX: 24d,
+                            MeshPreviewRotationY: -72d)
                     ],
                     ActiveAssetTabId: "asset-009")
             ],
@@ -108,6 +110,8 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.False(loadedAssetTab.MeshPreviewTextureOverlaySelected ?? true, "Mesh texture overlay state should round-trip.");
         TestAssert.False(loadedAssetTab.MeshPreviewGridSelected ?? true, "Mesh grid state should round-trip.");
         TestAssert.Equal(1.5d, loadedAssetTab.MeshPreviewZoom ?? 0d, "Mesh zoom should round-trip.");
+        TestAssert.Equal(24d, loadedAssetTab.MeshPreviewRotationX ?? 0d, "Mesh rotation X should round-trip.");
+        TestAssert.Equal(-72d, loadedAssetTab.MeshPreviewRotationY ?? 0d, "Mesh rotation Y should round-trip.");
 
         var importedSource = TestAssert.Single(restoredMetadata.ImportedSources!);
         TestAssert.Equal(@"C:\Bundles\characters", importedSource.Path, "Imported source path should round-trip.");

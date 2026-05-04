@@ -26,7 +26,9 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
             "Uv",
             textureOverlaySelected: false,
             meshGridSelected: false,
-            zoom: 1.5d);
+            zoom: 1.5d,
+            rotationX: 24d,
+            rotationY: -72d);
         context.BundleTab.AddAssetTab(assetTab, activate: true);
 
         context.Coordinator.PersistWorkspaceBrowserStateNow();
@@ -40,6 +42,8 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         Assert.False(assetTabState.MeshPreviewTextureOverlaySelected);
         Assert.False(assetTabState.MeshPreviewGridSelected);
         Assert.Equal(1.5d, assetTabState.MeshPreviewZoom);
+        Assert.Equal(24d, assetTabState.MeshPreviewRotationX);
+        Assert.Equal(-72d, assetTabState.MeshPreviewRotationY);
     }
 
     [Fact]
@@ -74,7 +78,9 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
                             MeshPreviewDisplayMode: "Uv",
                             MeshPreviewTextureOverlaySelected: false,
                             MeshPreviewGridSelected: false,
-                            MeshPreviewZoom: 1.5d)
+                            MeshPreviewZoom: 1.5d,
+                            MeshPreviewRotationX: 24d,
+                            MeshPreviewRotationY: -72d)
                     ],
                     ActiveAssetTabId: "asset-button")
             ],
@@ -96,6 +102,8 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         Assert.False(restoredAssetTab.Inspector.Preview.Mesh.IsTextureOverlaySelected);
         Assert.False(restoredAssetTab.Inspector.Preview.Mesh.IsMeshGridSelected);
         Assert.Equal(1.5d, restoredAssetTab.Inspector.Preview.Mesh.Zoom);
+        Assert.Equal(24d, restoredAssetTab.Inspector.Preview.Mesh.RotationX);
+        Assert.Equal(-72d, restoredAssetTab.Inspector.Preview.Mesh.RotationY);
     }
 
     private static BrowserStateCoordinatorContext CreateContext()

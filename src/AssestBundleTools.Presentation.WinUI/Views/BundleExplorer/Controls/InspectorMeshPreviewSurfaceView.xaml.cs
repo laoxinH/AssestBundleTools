@@ -167,7 +167,8 @@ public sealed partial class InspectorMeshPreviewSurfaceView : UserControl
 
     private void OnMeshCanvasDraw(CanvasControl sender, CanvasDrawEventArgs args)
     {
-        var geometry = ViewModel?.Geometry;
+        var viewModel = ViewModel;
+        var geometry = viewModel?.Geometry;
         if (geometry is null || geometry.Vertices.Count == 0)
         {
             return;
@@ -180,7 +181,7 @@ public sealed partial class InspectorMeshPreviewSurfaceView : UserControl
             return;
         }
 
-        if (ViewModel?.IsUvSelected == true)
+        if (viewModel?.IsUvSelected == true)
         {
             var textureOverlayBitmap = ResolveTextureOverlayBitmap(sender);
             InspectorMeshPreviewRenderer.DrawUv(
@@ -188,23 +189,31 @@ public sealed partial class InspectorMeshPreviewSurfaceView : UserControl
                 geometry,
                 width,
                 height,
-                ViewModel.Zoom,
+                viewModel.Zoom,
                 textureOverlayBitmap,
-                ViewModel.ShouldDrawMeshGrid);
-            return;
+                viewModel.ShouldDrawMeshGrid);
+        }
+        else
+        {
+            var meshTextureBitmap = ResolveTextureOverlayBitmap(sender);
+            InspectorMeshPreviewRenderer.DrawWireframe(
+                args.DrawingSession,
+                geometry,
+                width,
+                height,
+                viewModel?.RotationX ?? 0d,
+                viewModel?.RotationY ?? 0d,
+                viewModel?.Zoom ?? 1d,
+                meshTextureBitmap,
+                viewModel?.ShouldDrawMeshGrid ?? true);
         }
 
-        var meshTextureBitmap = ResolveTextureOverlayBitmap(sender);
-        InspectorMeshPreviewRenderer.DrawWireframe(
+        InspectorMeshOrientationGizmoRenderer.Draw(
             args.DrawingSession,
-            geometry,
             width,
             height,
-            ViewModel?.RotationX ?? 0d,
-            ViewModel?.RotationY ?? 0d,
-            ViewModel?.Zoom ?? 1d,
-            meshTextureBitmap,
-            ViewModel?.ShouldDrawMeshGrid ?? true);
+            viewModel?.RotationX ?? 0d,
+            viewModel?.RotationY ?? 0d);
     }
 
     private CanvasBitmap? ResolveTextureOverlayBitmap(CanvasControl canvas)

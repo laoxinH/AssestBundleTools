@@ -84,6 +84,7 @@ internal sealed class BundleExplorerAssetPreviewLoadCoordinator
 
         return preview.Image.ImageSource is not null ||
                preview.PreviewAudioSource is not null ||
+               preview.Mesh.Geometry is not null ||
                !string.IsNullOrWhiteSpace(preview.PreviewText) ||
                !string.IsNullOrWhiteSpace(preview.PreviewStatusText);
     }
