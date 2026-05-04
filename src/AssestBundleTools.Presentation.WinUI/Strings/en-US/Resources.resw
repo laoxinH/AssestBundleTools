@@ -873,6 +873,9 @@
   <data name="InspectorPanelView.MaterialPreview.PropertyCount.Format" xml:space="preserve">
     <value>{0} texture slots · {1} colors · {2} numbers</value>
   </data>
+  <data name="InspectorPanelView.MaterialPreview.MainTextureTitle.Text" xml:space="preserve">
+    <value>Main Texture Plane Preview</value>
+  </data>
   <data name="InspectorPanelView.MaterialPreview.TexturesTitle.Text" xml:space="preserve">
     <value>Texture Slots</value>
   </data>

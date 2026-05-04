@@ -10,11 +10,11 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordin
 /// </summary>
 internal sealed class MeshTextureOverlayPreviewLoader
 {
-    private readonly AssetPreviewQueryExecutor _previewQueryExecutor;
+    private readonly TexturePreviewPayloadLoader _texturePreviewPayloadLoader;
 
-    public MeshTextureOverlayPreviewLoader(AssetPreviewQueryExecutor previewQueryExecutor)
+    public MeshTextureOverlayPreviewLoader(TexturePreviewPayloadLoader texturePreviewPayloadLoader)
     {
-        _previewQueryExecutor = previewQueryExecutor ?? throw new ArgumentNullException(nameof(previewQueryExecutor));
+        _texturePreviewPayloadLoader = texturePreviewPayloadLoader ?? throw new ArgumentNullException(nameof(texturePreviewPayloadLoader));
     }
 
     public async Task<byte[]?> LoadAsync(
@@ -28,59 +28,11 @@ internal sealed class MeshTextureOverlayPreviewLoader
         ArgumentNullException.ThrowIfNull(meshPreviewQuery);
         ArgumentNullException.ThrowIfNull(isPreviewRequestCurrentAndRelevant);
 
-        foreach (var textureCandidate in MeshTextureAssociationCandidateResolver.CollectTextureOverlayCandidates(details, maxCount: 4))
-        {
-            var texturePreview = await TryLoadTexturePreviewAsync(
-                meshPreviewQuery,
-                textureCandidate,
-                previewCancellationToken,
-                priority,
-                isPreviewRequestCurrentAndRelevant);
-            if (texturePreview is not null)
-            {
-                return texturePreview.BinaryContent!.ToArray();
-            }
-        }
-
-        return null;
-    }
-
-    private async Task<AssetPreviewDto?> TryLoadTexturePreviewAsync(
-        GetAssetPreviewQuery meshPreviewQuery,
-        AssetDependencyDto textureCandidate,
-        CancellationToken previewCancellationToken,
-        AssetPreviewLoadPriority priority,
-        Func<bool> isPreviewRequestCurrentAndRelevant)
-    {
-        try
-        {
-            var texturePreviewQuery = meshPreviewQuery with
-            {
-                BundleId = textureCandidate.BundleId,
-                AssetId = textureCandidate.AssetId
-            };
-
-            var texturePreviewResult = await _previewQueryExecutor.ExecuteAsync(
-                texturePreviewQuery,
-                previewCancellationToken,
-                priority,
-                isPreviewRequestCurrentAndRelevant);
-            if (texturePreviewResult is null ||
-                !texturePreviewResult.IsSuccess ||
-                texturePreviewResult.Value is not { Kind: AssetPreviewKind.Image, BinaryContent.Length: > 0 } texturePreview)
-            {
-                return null;
-            }
-
-            return texturePreview;
-        }
-        catch (OperationCanceledException) when (previewCancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch
-        {
-            return null;
-        }
+        return await _texturePreviewPayloadLoader.LoadFirstAsync(
+            meshPreviewQuery,
+            MeshTextureAssociationCandidateResolver.CollectTextureOverlayCandidates(details, maxCount: 4),
+            previewCancellationToken,
+            priority,
+            isPreviewRequestCurrentAndRelevant);
     }
 }

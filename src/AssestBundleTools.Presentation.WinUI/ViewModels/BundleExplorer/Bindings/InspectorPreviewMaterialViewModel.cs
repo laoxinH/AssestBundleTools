@@ -14,11 +14,15 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     private string _shaderNameText = string.Empty;
     private string _shaderReferenceText = string.Empty;
     private string _propertyCountText = string.Empty;
+    private string _mainTexturePreviewTitleText = string.Empty;
+    private string _mainTexturePreviewNameText = string.Empty;
+    private string _mainTexturePreviewResolutionText = string.Empty;
     private string _textureSectionTitle = string.Empty;
     private string _colorSectionTitle = string.Empty;
     private string _numberSectionTitle = string.Empty;
     private string _emptySectionText = string.Empty;
     private string _truncatedText = string.Empty;
+    private ImageSource? _mainTexturePreviewImageSource;
     private IReadOnlyList<MaterialPreviewTextureRowViewModel> _textureRows = Array.Empty<MaterialPreviewTextureRowViewModel>();
     private IReadOnlyList<MaterialPreviewColorRowViewModel> _colorRows = Array.Empty<MaterialPreviewColorRowViewModel>();
     private IReadOnlyList<MaterialPreviewNumberRowViewModel> _numberRows = Array.Empty<MaterialPreviewNumberRowViewModel>();
@@ -58,6 +62,36 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     {
         get => _propertyCountText;
         private set => SetProperty(ref _propertyCountText, value);
+    }
+
+    public string MainTexturePreviewTitleText
+    {
+        get => _mainTexturePreviewTitleText;
+        private set => SetProperty(ref _mainTexturePreviewTitleText, value);
+    }
+
+    public string MainTexturePreviewNameText
+    {
+        get => _mainTexturePreviewNameText;
+        private set => SetProperty(ref _mainTexturePreviewNameText, value);
+    }
+
+    public string MainTexturePreviewResolutionText
+    {
+        get => _mainTexturePreviewResolutionText;
+        private set => SetProperty(ref _mainTexturePreviewResolutionText, value);
+    }
+
+    public ImageSource? MainTexturePreviewImageSource
+    {
+        get => _mainTexturePreviewImageSource;
+        private set
+        {
+            if (SetProperty(ref _mainTexturePreviewImageSource, value))
+            {
+                OnPropertyChanged(nameof(MainTexturePreviewVisibility));
+            }
+        }
     }
 
     public string TextureSectionTitle
@@ -151,6 +185,9 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
 
     public Visibility NumberRowsEmptyVisibility => NumberRows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
+    public Visibility MainTexturePreviewVisibility =>
+        MainTexturePreviewImageSource is null ? Visibility.Collapsed : Visibility.Visible;
+
     public Visibility TruncatedTextVisibility =>
         string.IsNullOrWhiteSpace(TruncatedText) ? Visibility.Collapsed : Visibility.Visible;
 
@@ -167,14 +204,17 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         ShaderNameText = displayState.ShaderNameText;
         ShaderReferenceText = displayState.ShaderReferenceText;
         PropertyCountText = displayState.PropertyCountText;
+        MainTexturePreviewTitleText = displayState.MainTexturePreviewTitleText;
         TextureSectionTitle = displayState.TextureSectionTitle;
         ColorSectionTitle = displayState.ColorSectionTitle;
         NumberSectionTitle = displayState.NumberSectionTitle;
         EmptySectionText = displayState.EmptySectionText;
         TruncatedText = displayState.TruncatedText;
-        TextureRows = displayState.TextureRows
+        var textureRows = displayState.TextureRows
             .Select(row => new MaterialPreviewTextureRowViewModel(row, ResolveThumbnailSource(row, textureThumbnailSources)))
             .ToArray();
+        TextureRows = textureRows;
+        ApplyMainTexturePreview(textureRows);
         ColorRows = displayState.ColorRows.Select(static row => new MaterialPreviewColorRowViewModel(row)).ToArray();
         NumberRows = displayState.NumberRows.Select(static row => new MaterialPreviewNumberRowViewModel(row)).ToArray();
     }
@@ -186,6 +226,10 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         ShaderNameText = string.Empty;
         ShaderReferenceText = string.Empty;
         PropertyCountText = string.Empty;
+        MainTexturePreviewTitleText = string.Empty;
+        MainTexturePreviewNameText = string.Empty;
+        MainTexturePreviewResolutionText = string.Empty;
+        MainTexturePreviewImageSource = null;
         TextureSectionTitle = string.Empty;
         ColorSectionTitle = string.Empty;
         NumberSectionTitle = string.Empty;
@@ -206,6 +250,18 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
             ? thumbnailSource
             : null;
     }
+
+    private void ApplyMainTexturePreview(IReadOnlyList<MaterialPreviewTextureRowViewModel> textureRows)
+    {
+        var previewRow = textureRows.FirstOrDefault(static row =>
+                             row.IsMainTextureCandidate &&
+                             row.ThumbnailImageSource is not null)
+                         ?? textureRows.FirstOrDefault(static row => row.ThumbnailImageSource is not null);
+
+        MainTexturePreviewImageSource = previewRow?.ThumbnailImageSource;
+        MainTexturePreviewNameText = previewRow?.PropertyName ?? string.Empty;
+        MainTexturePreviewResolutionText = previewRow?.ResolutionText ?? string.Empty;
+    }
 }
 
 public sealed class MaterialPreviewTextureRowViewModel
@@ -218,6 +274,7 @@ public sealed class MaterialPreviewTextureRowViewModel
         TargetText = row.TargetText;
         ResolutionText = row.ResolutionText;
         TransformText = row.TransformText;
+        IsMainTextureCandidate = row.IsMainTextureCandidate;
         ThumbnailImageSource = thumbnailImageSource;
     }
 
@@ -228,6 +285,8 @@ public sealed class MaterialPreviewTextureRowViewModel
     public string ResolutionText { get; }
 
     public string TransformText { get; }
+
+    public bool IsMainTextureCandidate { get; }
 
     public ImageSource? ThumbnailImageSource { get; }
 

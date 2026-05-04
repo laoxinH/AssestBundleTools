@@ -5,6 +5,8 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatt
 
 internal static class MaterialTextureDependencyResolver
 {
+    private const string MainTexturePropertyName = "_MainTex";
+
     public static AssetDependencyDto? ResolveTextureDependency(
         AssetPreviewMaterialTexturePropertyDto property,
         AssetDetailsDto details)
@@ -24,6 +26,16 @@ internal static class MaterialTextureDependencyResolver
             .FirstOrDefault(static dependency => IsTextureType(dependency.AssetType));
     }
 
+    public static AssetPreviewMaterialTexturePropertyDto? SelectMainTextureProperty(AssetPreviewMaterialDto material)
+    {
+        ArgumentNullException.ThrowIfNull(material);
+
+        return material.TextureProperties.FirstOrDefault(static property =>
+                   HasTexturePath(property) &&
+                   string.Equals(property.Name, MainTexturePropertyName, StringComparison.OrdinalIgnoreCase))
+               ?? material.TextureProperties.FirstOrDefault(HasTexturePath);
+    }
+
     public static IReadOnlyList<AssetDependencyDto> CollectPreviewCandidates(
         AssetPreviewMaterialDto material,
         AssetDetailsDto details,
@@ -37,7 +49,16 @@ internal static class MaterialTextureDependencyResolver
             return Array.Empty<AssetDependencyDto>();
         }
 
-        return material.TextureProperties
+        var orderedProperties = new List<AssetPreviewMaterialTexturePropertyDto>();
+        var mainTextureProperty = SelectMainTextureProperty(material);
+        if (mainTextureProperty is not null)
+        {
+            orderedProperties.Add(mainTextureProperty);
+        }
+
+        orderedProperties.AddRange(material.TextureProperties.Where(property => !ReferenceEquals(property, mainTextureProperty)));
+
+        return orderedProperties
             .Select(property => ResolveTextureDependency(property, details))
             .Where(static dependency => dependency is not null)
             .Select(static dependency => dependency!)
@@ -45,6 +66,9 @@ internal static class MaterialTextureDependencyResolver
             .Take(maxCount)
             .ToArray();
     }
+
+    private static bool HasTexturePath(AssetPreviewMaterialTexturePropertyDto property) =>
+        property.PathId is { } pathId && pathId != 0;
 
     private static bool IsTextureType(AssetType assetType) =>
         assetType is AssetType.Texture2D or AssetType.Sprite;

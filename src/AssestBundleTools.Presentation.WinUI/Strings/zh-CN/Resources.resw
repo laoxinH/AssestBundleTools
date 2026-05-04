@@ -873,6 +873,9 @@
   <data name="InspectorPanelView.MaterialPreview.PropertyCount.Format" xml:space="preserve">
     <value>{0} 个贴图槽 · {1} 个颜色 · {2} 个数值</value>
   </data>
+  <data name="InspectorPanelView.MaterialPreview.MainTextureTitle.Text" xml:space="preserve">
+    <value>主纹理平面预览</value>
+  </data>
   <data name="InspectorPanelView.MaterialPreview.TexturesTitle.Text" xml:space="preserve">
     <value>贴图槽</value>
   </data>

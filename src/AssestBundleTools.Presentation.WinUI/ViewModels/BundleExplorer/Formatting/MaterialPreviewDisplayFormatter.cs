@@ -29,12 +29,13 @@ internal sealed class MaterialPreviewDisplayFormatter
                 material.TextureProperties.Count.ToString(CultureInfo.CurrentCulture),
                 material.ColorProperties.Count.ToString(CultureInfo.CurrentCulture),
                 (material.FloatProperties.Count + material.IntegerProperties.Count).ToString(CultureInfo.CurrentCulture)),
+            MainTexturePreviewTitleText: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewMainTextureTitleText),
             TextureSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewTexturesTitle),
             ColorSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewColorsTitle),
             NumberSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewNumbersTitle),
             EmptySectionText: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewEmptySectionText),
             TruncatedText: BuildTruncatedText(material),
-            TextureRows: material.TextureProperties.Select(property => BuildTextureRow(property, details)).ToArray(),
+            TextureRows: BuildTextureRows(material, details),
             ColorRows: material.ColorProperties.Select(BuildColorRow).ToArray(),
             NumberRows: material.FloatProperties
                 .Select(static property => new MaterialPreviewNumberRowDisplayState(
@@ -44,6 +45,19 @@ internal sealed class MaterialPreviewDisplayFormatter
                     property.Name,
                     property.Value.ToString(CultureInfo.CurrentCulture))))
                 .ToArray());
+    }
+
+    private IReadOnlyList<MaterialPreviewTextureRowDisplayState> BuildTextureRows(
+        AssetPreviewMaterialDto material,
+        AssetDetailsDto details)
+    {
+        var mainTextureProperty = MaterialTextureDependencyResolver.SelectMainTextureProperty(material);
+        return material.TextureProperties
+            .Select(property => BuildTextureRow(
+                property,
+                details,
+                ReferenceEquals(property, mainTextureProperty)))
+            .ToArray();
     }
 
     private string BuildShaderNameText(AssetPreviewMaterialShaderDto? shader)
@@ -74,7 +88,8 @@ internal sealed class MaterialPreviewDisplayFormatter
 
     private MaterialPreviewTextureRowDisplayState BuildTextureRow(
         AssetPreviewMaterialTexturePropertyDto property,
-        AssetDetailsDto details)
+        AssetDetailsDto details,
+        bool isMainTextureCandidate)
     {
         var targetText = BuildTextureTargetText(property);
         var resolvedTextureDependency = MaterialTextureDependencyResolver.ResolveTextureDependency(property, details);
@@ -96,6 +111,7 @@ internal sealed class MaterialPreviewDisplayFormatter
             TargetText: targetText,
             ResolutionText: resolutionText,
             ResolvedTextureAssetId: resolvedTextureDependency?.AssetId.Value,
+            IsMainTextureCandidate: isMainTextureCandidate,
             TransformText: transformText);
     }
 
@@ -189,6 +205,7 @@ public sealed record MaterialPreviewDisplayState(
     string ShaderNameText,
     string ShaderReferenceText,
     string PropertyCountText,
+    string MainTexturePreviewTitleText,
     string TextureSectionTitle,
     string ColorSectionTitle,
     string NumberSectionTitle,
@@ -203,6 +220,7 @@ public sealed record MaterialPreviewTextureRowDisplayState(
     string TargetText,
     string ResolutionText,
     string? ResolvedTextureAssetId,
+    bool IsMainTextureCandidate,
     string TransformText);
 
 public sealed record MaterialPreviewColorRowDisplayState(

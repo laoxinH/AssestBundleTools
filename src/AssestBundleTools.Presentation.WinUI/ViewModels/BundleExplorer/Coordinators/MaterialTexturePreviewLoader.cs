@@ -9,11 +9,11 @@ internal sealed class MaterialTexturePreviewLoader
 {
     private const int MaxThumbnailPreviewCount = 6;
 
-    private readonly AssetPreviewQueryExecutor _previewQueryExecutor;
+    private readonly TexturePreviewPayloadLoader _texturePreviewPayloadLoader;
 
-    public MaterialTexturePreviewLoader(AssetPreviewQueryExecutor previewQueryExecutor)
+    public MaterialTexturePreviewLoader(TexturePreviewPayloadLoader texturePreviewPayloadLoader)
     {
-        _previewQueryExecutor = previewQueryExecutor ?? throw new ArgumentNullException(nameof(previewQueryExecutor));
+        _texturePreviewPayloadLoader = texturePreviewPayloadLoader ?? throw new ArgumentNullException(nameof(texturePreviewPayloadLoader));
     }
 
     public async Task<IReadOnlyDictionary<string, byte[]>> LoadAsync(
@@ -29,63 +29,14 @@ internal sealed class MaterialTexturePreviewLoader
         ArgumentNullException.ThrowIfNull(materialPreviewQuery);
         ArgumentNullException.ThrowIfNull(isPreviewRequestCurrentAndRelevant);
 
-        var thumbnailPayloads = new Dictionary<string, byte[]>(StringComparer.Ordinal);
-        foreach (var textureCandidate in MaterialTextureDependencyResolver.CollectPreviewCandidates(
-                     material,
-                     details,
-                     MaxThumbnailPreviewCount))
-        {
-            var texturePreview = await TryLoadTexturePreviewAsync(
-                materialPreviewQuery,
-                textureCandidate,
-                previewCancellationToken,
-                priority,
-                isPreviewRequestCurrentAndRelevant);
-            if (texturePreview?.BinaryContent is { Length: > 0 } binaryContent)
-            {
-                thumbnailPayloads[textureCandidate.AssetId.Value] = binaryContent.ToArray();
-            }
-        }
-
-        return thumbnailPayloads;
-    }
-
-    private async Task<AssetPreviewDto?> TryLoadTexturePreviewAsync(
-        GetAssetPreviewQuery materialPreviewQuery,
-        AssetDependencyDto textureCandidate,
-        CancellationToken previewCancellationToken,
-        AssetPreviewLoadPriority priority,
-        Func<bool> isPreviewRequestCurrentAndRelevant)
-    {
-        try
-        {
-            var texturePreviewQuery = materialPreviewQuery with
-            {
-                BundleId = textureCandidate.BundleId,
-                AssetId = textureCandidate.AssetId
-            };
-
-            var texturePreviewResult = await _previewQueryExecutor.ExecuteAsync(
-                texturePreviewQuery,
-                previewCancellationToken,
-                priority,
-                isPreviewRequestCurrentAndRelevant);
-            if (texturePreviewResult is null ||
-                !texturePreviewResult.IsSuccess ||
-                texturePreviewResult.Value is not { Kind: AssetPreviewKind.Image, BinaryContent.Length: > 0 } texturePreview)
-            {
-                return null;
-            }
-
-            return texturePreview;
-        }
-        catch (OperationCanceledException) when (previewCancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch
-        {
-            return null;
-        }
+        return await _texturePreviewPayloadLoader.LoadManyAsync(
+            materialPreviewQuery,
+            MaterialTextureDependencyResolver.CollectPreviewCandidates(
+                material,
+                details,
+                MaxThumbnailPreviewCount),
+            previewCancellationToken,
+            priority,
+            isPreviewRequestCurrentAndRelevant);
     }
 }

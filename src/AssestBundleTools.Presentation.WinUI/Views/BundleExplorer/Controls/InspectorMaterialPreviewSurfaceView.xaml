@@ -94,6 +94,46 @@
                 </StackPanel>
             </Border>
 
+            <Border
+                Padding="12"
+                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="14"
+                Visibility="{x:Bind ViewModel.MainTexturePreviewVisibility, Mode=OneWay}">
+                <Grid RowSpacing="9">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Spacing="2">
+                        <TextBlock
+                            Style="{StaticResource MaterialPreviewSectionTitleStyle}"
+                            Text="{x:Bind ViewModel.MainTexturePreviewTitleText, Mode=OneWay}" />
+                        <TextBlock
+                            Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
+                            Text="{x:Bind ViewModel.MainTexturePreviewNameText, Mode=OneWay}" />
+                        <TextBlock
+                            Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
+                            Text="{x:Bind ViewModel.MainTexturePreviewResolutionText, Mode=OneWay}" />
+                    </StackPanel>
+
+                    <Border
+                        Grid.Row="1"
+                        MinHeight="150"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12">
+                        <Image
+                            MaxHeight="220"
+                            Source="{x:Bind ViewModel.MainTexturePreviewImageSource, Mode=OneWay}"
+                            Stretch="Uniform" />
+                    </Border>
+                </Grid>
+            </Border>
+
             <TextBlock
                 Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
                 Text="{x:Bind ViewModel.TruncatedText, Mode=OneWay}"

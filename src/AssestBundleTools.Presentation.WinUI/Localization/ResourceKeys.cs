@@ -573,6 +573,7 @@ public static class ResourceKeys
     public const string InspectorMaterialPreviewShaderUnknownText = "InspectorPanelView.MaterialPreview.ShaderUnknown.Text";
     public const string InspectorMaterialPreviewShaderReferenceFormat = "InspectorPanelView.MaterialPreview.ShaderReference.Format";
     public const string InspectorMaterialPreviewPropertyCountFormat = "InspectorPanelView.MaterialPreview.PropertyCount.Format";
+    public const string InspectorMaterialPreviewMainTextureTitleText = "InspectorPanelView.MaterialPreview.MainTextureTitle.Text";
     public const string InspectorMaterialPreviewTexturesTitle = "InspectorPanelView.MaterialPreview.TexturesTitle.Text";
     public const string InspectorMaterialPreviewColorsTitle = "InspectorPanelView.MaterialPreview.ColorsTitle.Text";
     public const string InspectorMaterialPreviewNumbersTitle = "InspectorPanelView.MaterialPreview.NumbersTitle.Text";
