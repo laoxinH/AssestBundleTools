@@ -1,4 +1,5 @@
 using AssestBundleTools.Infrastructure.Tests.Bundles.Decryption;
+using AssestBundleTools.Infrastructure.Tests.Bundles.Reading;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Previewing;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Persistence;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Runtime;
@@ -59,6 +60,14 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(CachedWorkspaceSessionRegistryTests.TryGetAssetDetails_ShouldFallbackToMeshDirectTexture_WhenRendererPathHasNoTexture),
             CachedWorkspaceSessionRegistryTests.TryGetAssetDetails_ShouldFallbackToMeshDirectTexture_WhenRendererPathHasNoTexture);
+        await RunTestAsync(
+            failures,
+            nameof(CachedWorkspaceSessionRegistryTests.TryGetAssetDetails_ShouldResolveMeshTextureAssociations_FromExternalMaterialTexture),
+            CachedWorkspaceSessionRegistryTests.TryGetAssetDetails_ShouldResolveMeshTextureAssociations_FromExternalMaterialTexture);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsRealSampleDependencyTests.Cone002Mesh_ShouldExposeRendererMaterialPath_ButNoTextureAssociation_FromRealDependencyGraph),
+            AssetsToolsRealSampleDependencyTests.Cone002Mesh_ShouldExposeRendererMaterialPath_ButNoTextureAssociation_FromRealDependencyGraph);
         await RunTestAsync(
             failures,
             nameof(AssetsToolsAssetPreviewGeneratorTests.GenerateAsync_ShouldReturnGenerationFailureDetail_WhenUnexpectedExceptionOccurs),

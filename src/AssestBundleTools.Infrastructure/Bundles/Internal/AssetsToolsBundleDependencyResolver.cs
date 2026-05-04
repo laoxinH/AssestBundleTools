@@ -7,13 +7,13 @@ namespace AssestBundleTools.Infrastructure.Bundles.Internal;
 /// </summary>
 internal static class AssetsToolsBundleDependencyResolver
 {
-    private static readonly HashSet<string> BuiltInDependencyNames =
-    [
+    private static readonly HashSet<string> BuiltInDependencyNames = new(StringComparer.OrdinalIgnoreCase)
+    {
         "library/unity default resources",
         "resources/unity default resources",
         "resources/unity_builtin_extra",
         "builtin/default resources"
-    ];
+    };
 
     public static IReadOnlyDictionary<string, string> BuildInternalSerializedFileLookup(
         IReadOnlyList<AssetsFileInstance> serializedFiles)
@@ -95,6 +95,66 @@ internal static class AssetsToolsBundleDependencyResolver
             out targetSerializedFileName);
     }
 
+    public static bool TryResolveTargetSerializedFileReference(
+        AssetsFileInstance currentSerializedFile,
+        long fileId,
+        IReadOnlyDictionary<string, string> internalSerializedFileLookup,
+        out AssetsToolsSerializedFileReference targetReference)
+    {
+        ArgumentNullException.ThrowIfNull(currentSerializedFile);
+        ArgumentNullException.ThrowIfNull(internalSerializedFileLookup);
+
+        if (fileId == 0)
+        {
+            targetReference = new AssetsToolsSerializedFileReference(
+                currentSerializedFile.name,
+                ExternalReferencePath: null,
+                IsExternal: false);
+            return true;
+        }
+
+        var externalIndex = checked((int)fileId) - 1;
+        var externals = currentSerializedFile.file.Metadata.Externals;
+        if (externalIndex < 0 || externalIndex >= externals.Count)
+        {
+            targetReference = default;
+            return false;
+        }
+
+        var external = externals[externalIndex];
+        if (TryResolveExternalToInternalSerializedFileName(
+                external,
+                internalSerializedFileLookup,
+                out var internalSerializedFileName))
+        {
+            targetReference = new AssetsToolsSerializedFileReference(
+                internalSerializedFileName,
+                ExternalReferencePath: null,
+                IsExternal: false);
+            return true;
+        }
+
+        var dependencyPath = SelectExternalPath(external);
+        if (string.IsNullOrWhiteSpace(dependencyPath))
+        {
+            targetReference = default;
+            return false;
+        }
+
+        var normalizedPath = NormalizePath(dependencyPath);
+        if (IsBuiltInDependency(normalizedPath))
+        {
+            targetReference = default;
+            return false;
+        }
+
+        targetReference = new AssetsToolsSerializedFileReference(
+            ResolveSerializedFileLookupName(normalizedPath),
+            normalizedPath,
+            IsExternal: true);
+        return true;
+    }
+
     private static bool TryResolveExternalToInternalSerializedFileName(
         AssetsTools.NET.AssetsFileExternal external,
         IReadOnlyDictionary<string, string> internalSerializedFileLookup,
@@ -150,6 +210,19 @@ internal static class AssetsToolsBundleDependencyResolver
             .FirstOrDefault(static candidate => !string.IsNullOrWhiteSpace(candidate));
     }
 
+    private static bool IsBuiltInDependency(string dependencyPath)
+    {
+        return BuiltInDependencyNames.Contains(NormalizePath(dependencyPath));
+    }
+
+    private static string ResolveSerializedFileLookupName(string normalizedPath)
+    {
+        var fileName = Path.GetFileName(normalizedPath);
+        return string.IsNullOrWhiteSpace(fileName)
+            ? normalizedPath
+            : fileName;
+    }
+
     private static void RegisterLookupCandidate(
         IDictionary<string, string> lookup,
         string? candidate,
@@ -175,3 +248,8 @@ internal static class AssetsToolsBundleDependencyResolver
         return path.Trim().Replace('\\', '/');
     }
 }
+
+internal readonly record struct AssetsToolsSerializedFileReference(
+    string SerializedFileName,
+    string? ExternalReferencePath,
+    bool IsExternal);

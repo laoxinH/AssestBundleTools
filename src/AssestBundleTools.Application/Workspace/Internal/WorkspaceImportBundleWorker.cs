@@ -259,7 +259,9 @@ internal sealed class WorkspaceImportBundleWorker
                             AssetName: dependency.AssetName,
                             AssetType: dependency.AssetType,
                             PathId: dependency.PathId,
-                            AssetTypeDisplayName: dependency.AssetTypeDisplayName))
+                            AssetTypeDisplayName: dependency.AssetTypeDisplayName,
+                            SerializedFileName: dependency.SerializedFileName,
+                            ExternalReferencePath: dependency.ExternalReferencePath))
                         .ToArray(),
                     IncludeInAssetList: asset.IncludeInAssetList))
                 .ToArray(),

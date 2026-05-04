@@ -131,11 +131,83 @@ internal static class CachedWorkspaceSessionRegistryTests
         TestAssert.Equal(textureId, textureAssociation.AssetId.Value, "Direct Mesh texture dependency should be used as fallback.");
     }
 
+    public static void TryGetAssetDetails_ShouldResolveMeshTextureAssociations_FromExternalMaterialTexture()
+    {
+        var meshId = "mesh-1";
+        var rendererId = "renderer-1";
+        var materialId = "material-1";
+        var textureId = "texture-external";
+        var meshBundleId = "bundle.mesh";
+        var textureBundleId = "bundle.texture";
+        var meshCacheEntry = new BundleIndexCacheEntryDto(
+            WorkspaceKey: "workspace-a",
+            BundleCacheKey: "bundle-cache-mesh",
+            BundleId: meshBundleId,
+            DisplayName: "mesh.ab",
+            LogicalPath: "mesh.ab",
+            SourceFingerprint: new WorkspaceFileFingerprintDto("mesh.ab", 100, DateTimeOffset.UnixEpoch, "hash"),
+            CachedAtUtc: DateTimeOffset.UnixEpoch,
+            ParserVersion: "test",
+            ToolVersion: "test",
+            Dependencies: ["archive:/CAB-textures/CAB-textures"],
+            Assets:
+            [
+                CreateAsset(meshId, "HeroMesh", AssetType.Mesh, "Mesh", pathId: 10),
+                CreateAsset(rendererId, "HeroRenderer", AssetType.Unknown, "ParticleSystemRenderer", pathId: 20, includeInList: false, dependencies:
+                [
+                    CreateDependency(meshId, "HeroMesh", AssetType.Mesh, "Mesh", pathId: 10),
+                    CreateDependency(materialId, "HeroMaterial", AssetType.Material, "Material", pathId: 30)
+                ]),
+                CreateAsset(materialId, "HeroMaterial", AssetType.Material, "Material", pathId: 30, dependencies:
+                [
+                    CreateDependency(textureId, "CAB-textures #40", AssetType.Unknown, null, pathId: 40)
+                ])
+            ],
+            SerializedFileNames: ["CAB-mesh"]);
+        var textureCacheEntry = new BundleIndexCacheEntryDto(
+            WorkspaceKey: "workspace-a",
+            BundleCacheKey: "bundle-cache-texture",
+            BundleId: textureBundleId,
+            DisplayName: "textures.ab",
+            LogicalPath: "textures.ab",
+            SourceFingerprint: new WorkspaceFileFingerprintDto("textures.ab", 100, DateTimeOffset.UnixEpoch, "hash"),
+            CachedAtUtc: DateTimeOffset.UnixEpoch,
+            ParserVersion: "test",
+            ToolVersion: "test",
+            Dependencies: Array.Empty<string>(),
+            Assets:
+            [
+                CreateAsset(textureId, "HeroTexture", AssetType.Texture2D, "Texture2D", pathId: 40)
+            ],
+            SerializedFileNames: ["CAB-textures"]);
+        var bundleIndexCacheStore = new TestBundleIndexCacheStore([meshCacheEntry, textureCacheEntry]);
+        var registry = new CachedWorkspaceSessionRegistry(new TestWorkspaceDataStoreFactory(bundleIndexCacheStore));
+
+        var summary = registry.OpenWorkspace(new WorkspaceSessionOpenRequestDto(
+            WorkspaceKey: "workspace-a",
+            WorkspacePath: "workspace",
+            WorkspaceDataRootPath: "data",
+            WorkspaceDisplayName: "Workspace A",
+            InitialMode: WorkspaceMode.SinglePane));
+
+        var hasDetails = registry.TryGetAssetDetails(
+            summary.WorkspaceId,
+            new BundleId(meshBundleId),
+            new AssetId(meshId),
+            out var details);
+
+        TestAssert.True(hasDetails, "Mesh details should be available.");
+        var textureAssociation = TestAssert.Single(details!.TextureAssociations ?? Array.Empty<AssestBundleTools.Application.Assets.Dtos.AssetDependencyDto>());
+        TestAssert.Equal(textureId, textureAssociation.AssetId.Value, "External material texture dependency should resolve to imported texture asset.");
+        TestAssert.Equal(textureBundleId, textureAssociation.BundleId.Value, "Texture association should point at the target bundle.");
+        TestAssert.Equal(AssetType.Texture2D, textureAssociation.AssetType, "Resolved texture association should use the concrete texture type.");
+    }
+
     private static BundleIndexAssetCacheEntryDto CreateAsset(
         string assetId,
         string name,
         AssetType assetType,
-        string displayType,
+        string? displayType,
         long pathId,
         bool includeInList = true,
         IReadOnlyList<BundleIndexAssetDependencyCacheEntryDto>? dependencies = null)
@@ -162,7 +234,7 @@ internal static class CachedWorkspaceSessionRegistryTests
         string assetId,
         string name,
         AssetType assetType,
-        string displayType,
+        string? displayType,
         long pathId)
     {
         return new BundleIndexAssetDependencyCacheEntryDto(

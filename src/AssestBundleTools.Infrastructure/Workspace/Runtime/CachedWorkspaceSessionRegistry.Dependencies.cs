@@ -191,6 +191,12 @@ public sealed partial class CachedWorkspaceSessionRegistry
                 continue;
             }
 
+            if (IsTextureAssociationType(dependencyNode.AssetState.AssetType))
+            {
+                AddTextureAssociation(CreateDependencyDescriptor(dependencyNode), associations, seenAssetIds);
+                continue;
+            }
+
             foreach (var nestedDependency in dependencyNode.AssetState.Dependencies)
             {
                 pending.Enqueue((nestedDependency, depth + 1));

@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using System.Text;
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
@@ -20,9 +19,9 @@ namespace AssestBundleTools.Infrastructure.Bundles.Reading;
 /// </remarks>
 public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
 {
-    // 资源包索引当前新增 serialized file 名称集合与工作区级 CAB 反查能力，
+    // 资源包索引当前新增外部资产级 PPtr 占位与工作区级 CAB 反查能力，
     // 需要提升版本以触发旧索引缓存自动重建。
-    private const string ParserVersion = "assetstools.net/3.0.4-dependency-graph.4";
+    private const string ParserVersion = "assetstools.net/3.0.4-dependency-graph.5";
 
     private static readonly HashSet<AssetClassID> MetadataOnlyAssetClassIds =
     [
@@ -280,7 +279,7 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
                 var assetName = ResolveAssetName(rawAssetName, containerPath, assetTypeDisplayName, assetInfo.PathId);
 
                 rawAssets.Add(new RawAssetReadEntry(
-                    AssetId: CreateAssetId(serializedFile.name, assetInfo.PathId),
+                    AssetId: AssetsToolsAssetIdFactory.CreateAssetId(serializedFile.name, assetInfo.PathId),
                     SerializedFile: serializedFile,
                     SerializedFileName: serializedFile.name,
                     PathId: assetInfo.PathId,
@@ -421,14 +420,6 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
     private static bool CanReplace(AssetType assetType)
     {
         return assetType is not AssetType.Unknown;
-    }
-
-    private static string CreateAssetId(string serializedFileName, long pathId)
-    {
-        var normalizedKey = $"{serializedFileName.ToLowerInvariant()}::{pathId}";
-        var bytes = Encoding.UTF8.GetBytes(normalizedKey);
-        var hash = SHA256.HashData(bytes);
-        return $"asset.{Convert.ToHexString(hash).ToLowerInvariant()}";
     }
 
     private sealed record BundleReadGraph(

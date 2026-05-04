@@ -39,17 +39,39 @@ internal static class AssetsToolsAssetDependencyResolver
                     currentField,
                     serializedFile,
                     internalSerializedFileLookup,
-                    out var targetObjectKey) &&
-                assetLookup.TryGetValue(targetObjectKey, out var targetAsset) &&
-                !string.Equals(targetAsset.AssetId, sourceAssetId, StringComparison.Ordinal) &&
-                seenAssetIds.Add(targetAsset.AssetId))
+                    out var targetObjectKey,
+                    out var targetReference))
             {
-                dependencies.Add(new AssetBundleReadAssetDependencyDto(
-                    AssetId: targetAsset.AssetId,
-                    AssetName: targetAsset.AssetName,
-                    AssetType: targetAsset.AssetType,
-                    PathId: targetAsset.PathId,
-                    AssetTypeDisplayName: targetAsset.AssetTypeDisplayName));
+                if (assetLookup.TryGetValue(targetObjectKey, out var targetAsset) &&
+                    !string.Equals(targetAsset.AssetId, sourceAssetId, StringComparison.Ordinal) &&
+                    seenAssetIds.Add(targetAsset.AssetId))
+                {
+                    dependencies.Add(new AssetBundleReadAssetDependencyDto(
+                        AssetId: targetAsset.AssetId,
+                        AssetName: targetAsset.AssetName,
+                        AssetType: targetAsset.AssetType,
+                        PathId: targetAsset.PathId,
+                        AssetTypeDisplayName: targetAsset.AssetTypeDisplayName,
+                        SerializedFileName: targetAsset.SerializedFileName));
+                }
+                else if (targetReference.IsExternal)
+                {
+                    var externalAssetId = AssetsToolsAssetIdFactory.CreateAssetId(
+                        targetReference.SerializedFileName,
+                        targetObjectKey.PathId);
+                    if (!string.Equals(externalAssetId, sourceAssetId, StringComparison.Ordinal) &&
+                        seenAssetIds.Add(externalAssetId))
+                    {
+                        dependencies.Add(new AssetBundleReadAssetDependencyDto(
+                            AssetId: externalAssetId,
+                            AssetName: CreateExternalDependencyName(targetReference, targetObjectKey.PathId),
+                            AssetType: "Unknown",
+                            PathId: targetObjectKey.PathId,
+                            AssetTypeDisplayName: null,
+                            SerializedFileName: targetReference.SerializedFileName,
+                            ExternalReferencePath: targetReference.ExternalReferencePath));
+                    }
+                }
             }
 
             if (currentField.Children is not { Count: > 0 })
@@ -70,9 +92,11 @@ internal static class AssetsToolsAssetDependencyResolver
         AssetTypeValueField field,
         AssetsFileInstance serializedFile,
         IReadOnlyDictionary<string, string> internalSerializedFileLookup,
-        out AssetsToolsAssetObjectKey targetObjectKey)
+        out AssetsToolsAssetObjectKey targetObjectKey,
+        out AssetsToolsSerializedFileReference targetReference)
     {
         targetObjectKey = default;
+        targetReference = default;
 
         if (!IsAssetPointerField(field))
         {
@@ -88,17 +112,29 @@ internal static class AssetsToolsAssetDependencyResolver
             return false;
         }
 
-        if (!AssetsToolsBundleDependencyResolver.TryResolveTargetSerializedFileName(
+        if (!AssetsToolsBundleDependencyResolver.TryResolveTargetSerializedFileReference(
                 serializedFile,
                 fileId,
                 internalSerializedFileLookup,
-                out var targetSerializedFileName))
+                out targetReference))
         {
             return false;
         }
 
-        targetObjectKey = new AssetsToolsAssetObjectKey(targetSerializedFileName, pathId.Value);
+        targetObjectKey = new AssetsToolsAssetObjectKey(targetReference.SerializedFileName, pathId.Value);
         return true;
+    }
+
+    private static string CreateExternalDependencyName(
+        AssetsToolsSerializedFileReference targetReference,
+        long pathId)
+    {
+        var serializedFileName = string.IsNullOrWhiteSpace(targetReference.SerializedFileName)
+            ? targetReference.ExternalReferencePath
+            : targetReference.SerializedFileName;
+        return string.IsNullOrWhiteSpace(serializedFileName)
+            ? $"External #{pathId}"
+            : $"{serializedFileName} #{pathId}";
     }
 
     private static bool IsAssetPointerField(AssetTypeValueField field)

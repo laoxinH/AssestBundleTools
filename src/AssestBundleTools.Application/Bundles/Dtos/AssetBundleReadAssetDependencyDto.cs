@@ -8,4 +8,6 @@ public sealed record AssetBundleReadAssetDependencyDto(
     string AssetName,
     string AssetType,
     long PathId = 0,
-    string? AssetTypeDisplayName = null);
+    string? AssetTypeDisplayName = null,
+    string? SerializedFileName = null,
+    string? ExternalReferencePath = null);
