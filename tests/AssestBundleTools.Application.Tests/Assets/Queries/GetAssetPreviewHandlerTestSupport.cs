@@ -21,6 +21,7 @@ namespace AssestBundleTools.Application.Tests.Assets.Queries;
 internal static partial class GetAssetPreviewHandlerTests
 {
     private static readonly JsonSerializerOptions TestMeshPreviewJsonSerializerOptions = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions TestMaterialPreviewJsonSerializerOptions = new(JsonSerializerDefaults.Web);
 
     private static GetAssetPreviewQuery CreateQuery()
     {
@@ -163,6 +164,76 @@ internal static partial class GetAssetPreviewHandlerTests
             JsonSerializer.SerializeToUtf8Bytes(
                 meshGeometry,
                 TestMeshPreviewJsonSerializerOptions));
+    }
+
+    private static PreviewCachePayloadDto CreateMaterialPreviewPayload(
+        BundleIndexCacheEntryDto bundleCacheEntry,
+        string assetId,
+        string generatorVersion,
+        AssetPreviewMaterialDto material)
+    {
+        var previewCacheKey = CreatePreviewCacheKey(bundleCacheEntry.BundleCacheKey, assetId);
+        return new PreviewCachePayloadDto(
+            new PreviewCacheDescriptorDto(
+                WorkspaceKey: bundleCacheEntry.WorkspaceKey,
+                PreviewCacheKey: previewCacheKey,
+                BundleCacheKey: bundleCacheEntry.BundleCacheKey,
+                AssetId: assetId,
+                PreviewKind: AssetPreviewKind.Material.ToString(),
+                ContentType: "application/vnd.assestbundletools.material-preview+json",
+                RelativePayloadPath: Path.Combine(previewCacheKey, "payload.material.json"),
+                SourceFingerprint: bundleCacheEntry.SourceFingerprint,
+                GeneratedAtUtc: new DateTimeOffset(2026, 5, 4, 10, 0, 0, TimeSpan.Zero),
+                GeneratorVersion: generatorVersion,
+                PreviewInfoItems:
+                [
+                    new AssetPreviewInfoItemDto(
+                        AssetPreviewInfoKey.MaterialTexturePropertyCount,
+                        AssetPreviewInfoValueKind.Integer,
+                        Int64Value: material.TextureProperties.Count)
+                ]),
+            JsonSerializer.SerializeToUtf8Bytes(
+                material,
+                TestMaterialPreviewJsonSerializerOptions));
+    }
+
+    private static AssetPreviewMaterialDto CreateMaterialPreview()
+    {
+        return new AssetPreviewMaterialDto(
+            SchemaVersion: 1,
+            Shader: new AssetPreviewMaterialShaderDto(
+                FileId: 0,
+                PathId: 100,
+                Name: "Particles/Additive",
+                SerializedFileName: "materials.assets",
+                ExternalReferencePath: null,
+                IsExternal: false),
+            TextureProperties:
+            [
+                new AssetPreviewMaterialTexturePropertyDto(
+                    Name: "_MainTex",
+                    FileId: 2,
+                    PathId: 200,
+                    SerializedFileName: "CAB-textures",
+                    ExternalReferencePath: "archive:/CAB-textures/CAB-textures",
+                    IsExternal: true,
+                    ScaleX: 1,
+                    ScaleY: 1,
+                    OffsetX: 0,
+                    OffsetY: 0)
+            ],
+            FloatProperties:
+            [
+                new AssetPreviewMaterialFloatPropertyDto("_Glossiness", 0.5d)
+            ],
+            IntegerProperties:
+            [
+                new AssetPreviewMaterialIntegerPropertyDto("_Cull", 2)
+            ],
+            ColorProperties:
+            [
+                new AssetPreviewMaterialColorPropertyDto("_Color", 1, 0.25d, 0.5d, 1)
+            ]);
     }
 
     private static AssetPreviewMeshGeometryDto CreateMeshGeometry()

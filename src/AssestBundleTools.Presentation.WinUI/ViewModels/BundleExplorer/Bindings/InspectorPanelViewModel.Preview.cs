@@ -100,6 +100,20 @@ public sealed partial class InspectorPanelViewModel
         RebuildInformationCards();
     }
 
+    public void ApplyMaterialPreview(
+        AssetPreviewMaterialDto material,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
+        MaterialPreviewDisplayState? materialPreviewDisplayState = null,
+        string? previewPayloadFilePath = null)
+    {
+        Preview.ApplyMaterialPreview(
+            material,
+            previewInfoRows,
+            materialPreviewDisplayState,
+            previewPayloadFilePath);
+        RebuildInformationCards();
+    }
+
     public void ApplyTextPreview(
         string textContent,
         IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,

@@ -31,6 +31,7 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
     private readonly MeshTextureOverlayPreviewLoader _meshTextureOverlayPreviewLoader;
     private readonly LocalizedValueFormatter _localizedValueFormatter;
     private readonly AssetPreviewDisplayFormatter _assetPreviewDisplayFormatter;
+    private readonly MaterialPreviewDisplayFormatter _materialPreviewDisplayFormatter;
     private readonly PreviewDiagnosticDisplayTextResolver _previewDiagnosticDisplayTextResolver;
 
     public BundleExplorerAssetPreviewCoordinator(
@@ -57,6 +58,7 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         _meshTextureOverlayPreviewLoader = new MeshTextureOverlayPreviewLoader(_previewQueryExecutor);
         _localizedValueFormatter = new LocalizedValueFormatter(_localizationService);
         _assetPreviewDisplayFormatter = new AssetPreviewDisplayFormatter(_localizationService);
+        _materialPreviewDisplayFormatter = new MaterialPreviewDisplayFormatter(_localizationService);
         _previewDiagnosticDisplayTextResolver = new PreviewDiagnosticDisplayTextResolver(_localizationService);
     }
 
@@ -293,6 +295,22 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
                         _assetPreviewDisplayFormatter.BuildMeshPreviewDisplayState(preview, details),
                         preview.PreviewPayloadFilePath,
                         textureOverlayContent);
+                    ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
+                    return;
+                }
+                case AssetPreviewKind.Material:
+                {
+                    if (preview.Material is null)
+                    {
+                        ApplyUnavailablePreview(assetTab.Inspector, preview.Diagnostic);
+                        return;
+                    }
+
+                    assetTab.Inspector.ApplyMaterialPreview(
+                        preview.Material,
+                        previewInfoRows,
+                        _materialPreviewDisplayFormatter.BuildDisplayState(preview.Material, details.Name),
+                        preview.PreviewPayloadFilePath);
                     ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
                 }

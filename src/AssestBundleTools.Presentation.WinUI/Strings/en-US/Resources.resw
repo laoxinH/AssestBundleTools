@@ -864,6 +864,45 @@
   <data name="InspectorPanelView.MeshPreview.HideGrid.ToolTip" xml:space="preserve">
     <value>Hide Mesh/UV grid</value>
   </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderUnknown.Text" xml:space="preserve">
+    <value>Shader name unresolved</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderReference.Format" xml:space="preserve">
+    <value>Shader reference: {0} · PathId {1}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.PropertyCount.Format" xml:space="preserve">
+    <value>{0} texture slots · {1} colors · {2} numbers</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.TexturesTitle.Text" xml:space="preserve">
+    <value>Texture Slots</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.ColorsTitle.Text" xml:space="preserve">
+    <value>Color Properties</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.NumbersTitle.Text" xml:space="preserve">
+    <value>Numeric Properties</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.EmptySection.Text" xml:space="preserve">
+    <value>No displayable properties</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Truncated.Text" xml:space="preserve">
+    <value>This material has many properties, so the preview shows the first entries only. Full fields can be inspected through export or a future structure view.</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.TextureMissing.Text" xml:space="preserve">
+    <value>No texture bound</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.TextureInternal.Format" xml:space="preserve">
+    <value>{0} · PathId {1}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.TextureExternal.Format" xml:space="preserve">
+    <value>External {0} · PathId {1}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.TextureTransform.Format" xml:space="preserve">
+    <value>Scale {0}, {1} · Offset {2}, {3}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.ColorValue.Format" xml:space="preserve">
+    <value>RGBA {0}, {1}, {2}, {3}</value>
+  </data>
   <data name="InspectorPanelView.AudioTransport.Play.ToolTip" xml:space="preserve">
     <value>Play</value>
   </data>

@@ -219,7 +219,7 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
     }
 
     public bool TryOpenAssetInPane(
-        WorkspaceId workspaceId,
+        WorkspaceId workspaceId, 
         BundleId bundleId,
         AssetId assetId,
         PaneId paneId,

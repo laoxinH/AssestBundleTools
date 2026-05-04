@@ -117,6 +117,10 @@ internal static class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedMeshGeometry_WhenPreviewCacheStillMatches);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedMaterialPreview_WhenPreviewCacheStillMatches),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedMaterialPreview_WhenPreviewCacheStillMatches);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldRegeneratePreview_WhenGeneratorVersionChanges),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldRegeneratePreview_WhenGeneratorVersionChanges);
         await RunTestAsync(

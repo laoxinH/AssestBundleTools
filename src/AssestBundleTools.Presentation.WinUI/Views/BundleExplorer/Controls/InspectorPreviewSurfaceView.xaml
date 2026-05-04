@@ -432,6 +432,13 @@
                         ViewModel="{x:Bind ViewModel.Preview.Mesh, Mode=OneWay}" />
                 </Grid>
 
+                <Grid
+                    Margin="8"
+                    Visibility="{x:Bind ViewModel.Preview.PreviewMaterialVisibility, Mode=OneWay}">
+                    <controls:InspectorMaterialPreviewSurfaceView
+                        ViewModel="{x:Bind ViewModel.Preview.Material, Mode=OneWay}" />
+                </Grid>
+
                 <StackPanel
                     Margin="8,0,8,8"
                     HorizontalAlignment="Stretch"

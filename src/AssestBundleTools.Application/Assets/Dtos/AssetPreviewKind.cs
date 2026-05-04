@@ -10,5 +10,6 @@ public enum AssetPreviewKind
     Text = 2,
     Audio = 3,
     Summary = 4,
-    Mesh = 5
+    Mesh = 5,
+    Material = 6
 }

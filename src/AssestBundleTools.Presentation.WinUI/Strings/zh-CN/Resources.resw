@@ -864,6 +864,45 @@
   <data name="InspectorPanelView.MeshPreview.HideGrid.ToolTip" xml:space="preserve">
     <value>隐藏 Mesh/UV 网格</value>
   </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderUnknown.Text" xml:space="preserve">
+    <value>未解析 Shader 名称</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderReference.Format" xml:space="preserve">
+    <value>Shader 引用：{0} · PathId {1}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.PropertyCount.Format" xml:space="preserve">
+    <value>{0} 个贴图槽 · {1} 个颜色 · {2} 个数值</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.TexturesTitle.Text" xml:space="preserve">
+    <value>贴图槽</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.ColorsTitle.Text" xml:space="preserve">
+    <value>颜色属性</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.NumbersTitle.Text" xml:space="preserve">
+    <value>数值属性</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.EmptySection.Text" xml:space="preserve">
+    <value>没有可展示的属性</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Truncated.Text" xml:space="preserve">
+    <value>属性较多，预览中仅展示前几项；完整字段仍可通过导出/后续结构视图查看。</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.TextureMissing.Text" xml:space="preserve">
+    <value>未绑定贴图</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.TextureInternal.Format" xml:space="preserve">
+    <value>{0} · PathId {1}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.TextureExternal.Format" xml:space="preserve">
+    <value>外部 {0} · PathId {1}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.TextureTransform.Format" xml:space="preserve">
+    <value>Scale {0}, {1} · Offset {2}, {3}</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.ColorValue.Format" xml:space="preserve">
+    <value>RGBA {0}, {1}, {2}, {3}</value>
+  </data>
   <data name="InspectorPanelView.AudioTransport.Play.ToolTip" xml:space="preserve">
     <value>播放</value>
   </data>

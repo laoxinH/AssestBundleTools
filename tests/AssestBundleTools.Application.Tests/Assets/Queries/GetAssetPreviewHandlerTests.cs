@@ -186,6 +186,62 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Cache hit should not rewrite preview cache.");
     }
 
+    public static async Task HandleAsync_ShouldHydrateCachedMaterialPreview_WhenPreviewCacheStillMatches()
+    {
+        const string resolvedPayloadFilePath = @"D:\WorkspaceData\preview-cache\bundle-cache-001\asset-001.material.json";
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        var materialAssetEntry = bundleCacheEntry.Assets[0] with
+        {
+            AssetType = AssetType.Material.ToString(),
+            AssetTypeDisplayName = AssetType.Material.ToString(),
+            SerializedFileName = "materials.assets"
+        };
+        bundleCacheEntry = bundleCacheEntry with
+        {
+            Assets = [materialAssetEntry]
+        };
+        var material = CreateMaterialPreview();
+        var previewCachePayload = CreateMaterialPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            generatorVersion: "generator-1",
+            material);
+        var previewCacheStore = new TestPreviewCacheStore(previewCachePayload, resolvedPayloadFilePath);
+        var decryptor = new TestAssetBundleDecryptor(CreatePassThroughDecryptorDescriptor());
+        var generator = new TestAssetPreviewGenerator();
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService());
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Matching material preview cache should return cached preview.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(AssetPreviewKind.Material, preview.Kind, "Cached material preview kind should round-trip.");
+        TestAssert.Equal(null, preview.BinaryContent, "Material preview should not expose binary payload.");
+        TestAssert.Equal(null, preview.TextContent, "Material preview JSON should be hydrated into structured material data.");
+        TestAssert.Equal(resolvedPayloadFilePath, preview.PreviewPayloadFilePath, "Cached material preview should expose resolved payload path.");
+        var restoredMaterial = preview.Material ?? throw new InvalidOperationException("Expected material preview.");
+        TestAssert.Equal("Particles/Additive", restoredMaterial.Shader?.Name, "Material shader name should round-trip.");
+        TestAssert.Equal(1, restoredMaterial.TextureProperties.Count, "Texture slots should be hydrated from cached JSON.");
+        TestAssert.Equal("_MainTex", restoredMaterial.TextureProperties[0].Name, "Texture property name should round-trip.");
+        TestAssert.True(restoredMaterial.TextureProperties[0].IsExternal, "External texture reference should round-trip.");
+        TestAssert.Equal(1, restoredMaterial.ColorProperties.Count, "Color properties should be hydrated from cached JSON.");
+        TestAssert.Equal("_Color", restoredMaterial.ColorProperties[0].Name, "Color property name should round-trip.");
+        TestAssert.Equal(1, restoredMaterial.FloatProperties.Count, "Float properties should be hydrated from cached JSON.");
+        TestAssert.Equal(1, restoredMaterial.IntegerProperties.Count, "Integer properties should be hydrated from cached JSON.");
+        TestAssert.Equal(0, decryptor.DecryptCallCount, "Cache hit should not invoke decryptor.");
+        TestAssert.Equal(0, generator.GenerateCallCount, "Cache hit should not invoke preview generator.");
+        TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Cache hit should not rewrite preview cache.");
+    }
+
     public static async Task HandleAsync_ShouldRegeneratePreview_WhenGeneratorVersionChanges()
     {
         const string resolvedBundlePath = @"C:\Temp\preview.bundle";

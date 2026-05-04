@@ -91,6 +91,7 @@ tests/
 - 已完成 `BundleExplorerViewModel` 的 D-04 新一轮收口：在工作区浏览状态恢复/持久化节流、页面级结果反馈、工作区加载/重绑定编排以及资源包标签打开/激活/关闭/重排编排分别下沉到 `BundleExplorerBrowserStateCoordinator / BundleExplorerOperationFeedbackBridge / BundleExplorerWorkspaceBindingCoordinator / BundleExplorerBundleTabCoordinator` 之后，`BundleExplorerPage` 也已直接迁回 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 子状态宿主绑定，旧页面兼容透传属性与 `BundleExplorerPageStateBridge` 已移除，主类体量已由 `1258` 行降到约 `426` 行
 - 已完成 `BundleExplorerAssetWorkflowViewModel` 的 D-04 第六轮拆分：在 `Preview`、提取/替换动作、检查器投影、资产文档标签协调、资产文档宿主构造/清理以及主资产窗格加载/刷新/空态回退编排下沉之后，资产级命令入口与页面动作编排也已下沉到 `BundleExplorerAssetCommandCoordinator`，共享结果失败反馈继续统一复用 `BundleExplorerOperationFeedbackBridge`，主类当前约 `273` 行；当前 D-04 的主体偏差已完成收口，后续重点转向防止职责回灌与稳定页面内共享状态
 - 已完成 `BundleExplorer` 页面级共享状态的 D-03 第三轮收口：`BundleExplorerPage.xaml / BundleExplorerPage.xaml.cs` 当前已直接绑定或订阅 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 的语义化状态宿主，旧的 `BundleExplorerPageStateBridge` 已移除，不再继续保留页面兼容桥接层
+- 已开始 Material 结构化摘要预览：当前通过 `Infrastructure -> Application -> Presentation` 的现有预览管线输出 `Shader / TexEnv / Float / Color / Int` 的半可视化摘要，外部贴图引用继续保留 `fileId / pathId / external path`，未再在 UI 层直接读取 AB
 
 ## 3. 总体实施原则
 

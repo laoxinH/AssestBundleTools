@@ -152,6 +152,72 @@ internal static class BundleExplorerPreviewTestSupport
             MeshGeometry: meshGeometry));
     }
 
+    public static Result<AssetPreviewDto> CreateMaterialPreviewResult(
+        GetAssetPreviewQuery query,
+        string previewPayloadFilePath = @"C:\PreviewCache\material.json")
+    {
+        var material = new AssetPreviewMaterialDto(
+            SchemaVersion: 1,
+            Shader: new AssetPreviewMaterialShaderDto(
+                FileId: 0,
+                PathId: 100,
+                Name: "Particles/Additive",
+                SerializedFileName: "materials.assets",
+                ExternalReferencePath: null,
+                IsExternal: false),
+            TextureProperties:
+            [
+                new AssetPreviewMaterialTexturePropertyDto(
+                    Name: "_MainTex",
+                    FileId: 5,
+                    PathId: 200,
+                    SerializedFileName: "CAB-textures",
+                    ExternalReferencePath: "archive:/CAB-textures/CAB-textures",
+                    IsExternal: true,
+                    ScaleX: 1,
+                    ScaleY: 1,
+                    OffsetX: 0,
+                    OffsetY: 0)
+            ],
+            FloatProperties:
+            [
+                new AssetPreviewMaterialFloatPropertyDto("_Glossiness", 1)
+            ],
+            IntegerProperties:
+            [
+                new AssetPreviewMaterialIntegerPropertyDto("_Cull", 2)
+            ],
+            ColorProperties:
+            [
+                new AssetPreviewMaterialColorPropertyDto("_Color", 1, 0, 0, 1)
+            ]);
+
+        return Result<AssetPreviewDto>.Success(new AssetPreviewDto(
+            WorkspaceId: query.WorkspaceId,
+            BundleId: query.BundleId,
+            AssetId: query.AssetId,
+            Kind: AssetPreviewKind.Material,
+            ContentType: "application/vnd.assestbundletools.material-preview+json",
+            TextContent: null,
+            BinaryContent: null,
+            PreviewPayloadFilePath: previewPayloadFilePath,
+            PreviewInfoItems:
+            [
+                new AssetPreviewInfoItemDto(
+                    AssetPreviewInfoKey.MaterialTexturePropertyCount,
+                    AssetPreviewInfoValueKind.Integer,
+                    Int64Value: material.TextureProperties.Count)
+            ],
+            PreviewMessage: null,
+            PreferredDisplaySizeInBytes: null,
+            IsFromCache: false,
+            GeneratedAtUtc: DateTimeOffset.UtcNow,
+            Diagnostic: new AssetPreviewDiagnosticDto(
+                AssetPreviewCacheStatusKind.Missing,
+                AssetPreviewFallbackReasonKind.None),
+            Material: material));
+    }
+
     public static Result<AssetPreviewDto> CreateTexturePreviewResult(
         GetAssetPreviewQuery query,
         byte[]? binaryContent = null)
