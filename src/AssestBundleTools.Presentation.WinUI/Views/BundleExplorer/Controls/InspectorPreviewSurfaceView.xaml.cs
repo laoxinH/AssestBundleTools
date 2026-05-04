@@ -58,6 +58,9 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
         ToolTipService.SetToolTip(OpenPreviewLocationButton, UiText.Get(ResourceKeys.InspectorPreviewOpenLocationToolTip));
         ToolTipService.SetToolTip(AudioTransportPlayPauseButton, UiText.Get(ResourceKeys.InspectorAudioTransportPlayToolTip));
         ToolTipService.SetToolTip(AudioTransportResetButton, UiText.Get(ResourceKeys.InspectorAudioTransportResetToolTip));
+        ToolTipService.SetToolTip(ImageZoomInButton, UiText.Get(ResourceKeys.InspectorPreviewImageZoomInToolTip));
+        ToolTipService.SetToolTip(ImageZoomOutButton, UiText.Get(ResourceKeys.InspectorPreviewImageZoomOutToolTip));
+        ToolTipService.SetToolTip(ImageResetButton, UiText.Get(ResourceKeys.InspectorPreviewImageResetToolTip));
         ToolTipService.SetToolTip(MeshZoomInButton, UiText.Get(ResourceKeys.InspectorMeshPreviewZoomInToolTip));
         ToolTipService.SetToolTip(MeshZoomOutButton, UiText.Get(ResourceKeys.InspectorMeshPreviewZoomOutToolTip));
         ToolTipService.SetToolTip(MeshResetButton, UiText.Get(ResourceKeys.InspectorMeshPreviewResetToolTip));
@@ -184,6 +187,21 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
     {
         ViewModel?.Preview.Image.DisplayOptions.ToggleSpriteDisplayMode();
         RefreshImageActionToolTips();
+    }
+
+    private void OnImageZoomOutButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.Preview.Image.ZoomBy(0.84d);
+    }
+
+    private void OnImageZoomInButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.Preview.Image.ZoomBy(1.18d);
+    }
+
+    private void OnImageResetButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.Preview.Image.ResetView();
     }
 
     private void OnMeshZoomOutButtonClick(object sender, RoutedEventArgs e)

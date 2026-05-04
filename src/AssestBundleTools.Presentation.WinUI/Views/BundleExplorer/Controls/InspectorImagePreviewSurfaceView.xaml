@@ -35,6 +35,12 @@
 
     <Grid
         x:Name="PreviewImageViewportHost"
+        PointerCanceled="OnPreviewImagePointerReleased"
+        PointerCaptureLost="OnPreviewImagePointerReleased"
+        PointerMoved="OnPreviewImagePointerMoved"
+        PointerPressed="OnPreviewImagePointerPressed"
+        PointerReleased="OnPreviewImagePointerReleased"
+        PointerWheelChanged="OnPreviewImagePointerWheelChanged"
         SizeChanged="OnPreviewImageViewportHostSizeChanged">
         <controls:CheckerboardBackground
             CellSize="12"
@@ -44,21 +50,15 @@
             Visibility="{x:Bind ViewModel.DisplayOptions.SolidBackgroundVisibility, Mode=OneWay}" />
 
         <Grid Visibility="{x:Bind ViewModel.DisplayOptions.FullImagePreviewVisibility, Mode=OneWay}">
-            <Viewbox
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Stretch="Uniform"
-                StretchDirection="DownOnly">
-                <Grid
-                    Width="{x:Bind ViewModel.CanvasWidth, Mode=OneWay}"
-                    Height="{x:Bind ViewModel.CanvasHeight, Mode=OneWay}">
-                    <Image
-                        Width="{x:Bind ViewModel.CanvasWidth, Mode=OneWay}"
-                        Height="{x:Bind ViewModel.CanvasHeight, Mode=OneWay}"
-                        Source="{x:Bind ViewModel.ImageSource, Mode=OneWay}"
-                        Stretch="Fill" />
-                </Grid>
-            </Viewbox>
+            <Canvas>
+                <Image
+                    Canvas.Left="{x:Bind ViewModel.FullImageX, Mode=OneWay}"
+                    Canvas.Top="{x:Bind ViewModel.FullImageY, Mode=OneWay}"
+                    Width="{x:Bind ViewModel.FullImageWidth, Mode=OneWay}"
+                    Height="{x:Bind ViewModel.FullImageHeight, Mode=OneWay}"
+                    Source="{x:Bind ViewModel.ImageSource, Mode=OneWay}"
+                    Stretch="Fill" />
+            </Canvas>
 
             <Canvas
                 IsHitTestVisible="False"
@@ -144,16 +144,42 @@
                     Style="{StaticResource InspectorPreviewOverlayBadgeTextStyle}"
                     Text="{x:Bind ViewModel.OverlayLabelText, Mode=OneWay}" />
             </Border>
+
+            <Border
+                Margin="8"
+                MaxWidth="260"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Style="{StaticResource InspectorPreviewOverlayBadgeBorderStyle}"
+                Visibility="{x:Bind ViewModel.InfoBadgeVisibility, Mode=OneWay}">
+                <StackPanel Spacing="2">
+                    <TextBlock
+                        Style="{StaticResource InspectorPreviewOverlayBadgeTextStyle}"
+                        Text="{x:Bind ViewModel.InfoBadgePrimaryText, Mode=OneWay}" />
+                    <TextBlock
+                        Opacity="0.86"
+                        Style="{StaticResource InspectorPreviewOverlayBadgeTextStyle}"
+                        Text="{x:Bind ViewModel.InfoBadgeSecondaryText, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.InfoBadgeSecondaryVisibility, Mode=OneWay}" />
+                    <TextBlock
+                        Opacity="0.72"
+                        Style="{StaticResource InspectorPreviewOverlayBadgeTextStyle}"
+                        Text="{x:Bind ViewModel.InfoBadgeDetailText, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.InfoBadgeDetailVisibility, Mode=OneWay}" />
+                </StackPanel>
+            </Border>
         </Grid>
 
-        <Grid
-            Padding="8"
-            Visibility="{x:Bind ViewModel.DisplayOptions.SpriteCropResultVisibility, Mode=OneWay}">
-            <Image
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Source="{x:Bind ViewModel.SpriteFocusImageSource, Mode=OneWay}"
-                Stretch="Uniform" />
+        <Grid Visibility="{x:Bind ViewModel.DisplayOptions.SpriteCropResultVisibility, Mode=OneWay}">
+            <Canvas>
+                <Image
+                    Canvas.Left="{x:Bind ViewModel.SpriteFocusImageX, Mode=OneWay}"
+                    Canvas.Top="{x:Bind ViewModel.SpriteFocusImageY, Mode=OneWay}"
+                    Width="{x:Bind ViewModel.SpriteFocusImageWidth, Mode=OneWay}"
+                    Height="{x:Bind ViewModel.SpriteFocusImageHeight, Mode=OneWay}"
+                    Source="{x:Bind ViewModel.SpriteFocusImageSource, Mode=OneWay}"
+                    Stretch="Fill" />
+            </Canvas>
 
             <Border
                 Margin="8"

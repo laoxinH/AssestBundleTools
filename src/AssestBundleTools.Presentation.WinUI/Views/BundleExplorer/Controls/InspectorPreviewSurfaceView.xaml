@@ -250,6 +250,17 @@
                     Orientation="Horizontal"
                     Spacing="6">
                     <Button
+                        x:Name="ImageZoomOutButton"
+                        Click="OnImageZoomOutButtonClick"
+                        Style="{StaticResource InspectorPreviewActionButtonStyle}"
+                        Visibility="{x:Bind ViewModel.Preview.Image.ControlsVisibility, Mode=OneWay}">
+                        <FontIcon
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="13"
+                            Glyph="&#xE738;" />
+                    </Button>
+
+                    <Button
                         x:Name="BackgroundModeButton"
                         Click="OnBackgroundModeButtonClick"
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
@@ -269,6 +280,28 @@
                             FontFamily="Segoe Fluent Icons"
                             FontSize="13"
                             Glyph="{x:Bind ViewModel.Preview.Image.DisplayOptions.SpriteDisplayModeGlyph, Mode=OneWay}" />
+                    </Button>
+
+                    <Button
+                        x:Name="ImageZoomInButton"
+                        Click="OnImageZoomInButtonClick"
+                        Style="{StaticResource InspectorPreviewActionButtonStyle}"
+                        Visibility="{x:Bind ViewModel.Preview.Image.ControlsVisibility, Mode=OneWay}">
+                        <FontIcon
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="13"
+                            Glyph="&#xE710;" />
+                    </Button>
+
+                    <Button
+                        x:Name="ImageResetButton"
+                        Click="OnImageResetButtonClick"
+                        Style="{StaticResource InspectorPreviewActionButtonStyle}"
+                        Visibility="{x:Bind ViewModel.Preview.Image.ControlsVisibility, Mode=OneWay}">
+                        <FontIcon
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="13"
+                            Glyph="&#xE72C;" />
                     </Button>
 
                     <Button
@@ -549,8 +582,7 @@
                                 Grid.Column="3"
                                 VerticalAlignment="Center"
                                 FontFamily="Cascadia Mono"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="00:00 / 00:00" />
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </Grid>
 
                         <Slider

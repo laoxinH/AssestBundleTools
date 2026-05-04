@@ -48,10 +48,13 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
         Inspector = new InspectorPanelViewModel(
             inspectorInformationTextSet ?? throw new ArgumentNullException(nameof(inspectorInformationTextSet)));
         Inspector.Preview.Image.DisplayOptions.DisplayOptionsChanged += OnPreviewImageDisplayOptionsChanged;
+        Inspector.Preview.Image.ViewStateChanged += OnPreviewImageViewStateChanged;
         Inspector.Preview.Mesh.DisplayOptionsChanged += OnPreviewMeshDisplayOptionsChanged;
     }
 
     public event EventHandler? PreviewImageDisplayOptionsChanged;
+
+    public event EventHandler? PreviewImageViewStateChanged;
 
     public event EventHandler? PreviewMeshDisplayOptionsChanged;
 
@@ -147,7 +150,10 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
 
     public void RestorePreviewImageDisplayOptions(
         string? backgroundMode,
-        string? spriteDisplayMode)
+        string? spriteDisplayMode,
+        double? zoom = null,
+        double? panX = null,
+        double? panY = null)
     {
         _isRestoringPreviewImageDisplayOptions = true;
         try
@@ -155,6 +161,7 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
             Inspector.Preview.Image.DisplayOptions.RestoreDisplayOptions(
                 backgroundMode,
                 spriteDisplayMode);
+            Inspector.Preview.Image.RestoreViewState(zoom, panX, panY);
         }
         finally
         {
@@ -238,6 +245,16 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
         }
 
         PreviewImageDisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnPreviewImageViewStateChanged(object? sender, EventArgs e)
+    {
+        if (_isRestoringPreviewImageDisplayOptions)
+        {
+            return;
+        }
+
+        PreviewImageViewStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnPreviewMeshDisplayOptionsChanged(object? sender, EventArgs e)

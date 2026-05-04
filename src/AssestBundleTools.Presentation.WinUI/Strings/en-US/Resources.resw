@@ -783,6 +783,30 @@
   <data name="InspectorPanelView.PreviewSolidBackgroundButton.ToolTip" xml:space="preserve">
     <value>Use solid background</value>
   </data>
+  <data name="InspectorPanelView.PreviewImage.ZoomIn.ToolTip" xml:space="preserve">
+    <value>Zoom in image preview</value>
+  </data>
+  <data name="InspectorPanelView.PreviewImage.ZoomOut.ToolTip" xml:space="preserve">
+    <value>Zoom out image preview</value>
+  </data>
+  <data name="InspectorPanelView.PreviewImage.Reset.ToolTip" xml:space="preserve">
+    <value>Reset image view</value>
+  </data>
+  <data name="InspectorPanelView.TexturePreview.Info.Dimensions.Format" xml:space="preserve">
+    <value>Size {0} px</value>
+  </data>
+  <data name="InspectorPanelView.TexturePreview.Info.EncodingSegment.Format" xml:space="preserve">
+    <value>Encoding {0}</value>
+  </data>
+  <data name="InspectorPanelView.TexturePreview.Info.OutputSegment.Format" xml:space="preserve">
+    <value>Output {0}</value>
+  </data>
+  <data name="InspectorPanelView.TexturePreview.Info.FormatIdSegment.Format" xml:space="preserve">
+    <value>Format ID {0}</value>
+  </data>
+  <data name="InspectorPanelView.TexturePreview.Info.MipSegment.Format" xml:space="preserve">
+    <value>Mip {0}</value>
+  </data>
   <data name="InspectorPanelView.SpriteCropResultModeButton.ToolTip" xml:space="preserve">
     <value>Show crop result</value>
   </data>

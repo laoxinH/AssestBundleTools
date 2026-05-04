@@ -50,7 +50,10 @@ internal static class JsonWorkspaceMetadataStoreTests
                             MeshPreviewGridSelected: false,
                             MeshPreviewZoom: 1.5d,
                             MeshPreviewRotationX: 24d,
-                            MeshPreviewRotationY: -72d)
+                            MeshPreviewRotationY: -72d,
+                            PreviewImageZoom: 1.75d,
+                            PreviewImagePanX: 18d,
+                            PreviewImagePanY: -12d)
                     ],
                     ActiveAssetTabId: "asset-009")
             ],
@@ -106,6 +109,9 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.Equal("details", loadedAssetTab.SelectedInspectorSection, "Inspector section should round-trip.");
         TestAssert.Equal("Solid", loadedAssetTab.PreviewImageBackgroundMode, "Preview image background should round-trip.");
         TestAssert.Equal("CropResult", loadedAssetTab.SpritePreviewDisplayMode, "Sprite preview mode should round-trip.");
+        TestAssert.Equal(1.75d, loadedAssetTab.PreviewImageZoom ?? 0d, "Preview image zoom should round-trip.");
+        TestAssert.Equal(18d, loadedAssetTab.PreviewImagePanX ?? 0d, "Preview image pan X should round-trip.");
+        TestAssert.Equal(-12d, loadedAssetTab.PreviewImagePanY ?? 0d, "Preview image pan Y should round-trip.");
         TestAssert.Equal("Uv", loadedAssetTab.MeshPreviewDisplayMode, "Mesh preview mode should round-trip.");
         TestAssert.False(loadedAssetTab.MeshPreviewTextureOverlaySelected ?? true, "Mesh texture overlay state should round-trip.");
         TestAssert.False(loadedAssetTab.MeshPreviewGridSelected ?? true, "Mesh grid state should round-trip.");

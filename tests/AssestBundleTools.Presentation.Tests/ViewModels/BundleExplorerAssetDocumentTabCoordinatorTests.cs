@@ -13,6 +13,8 @@ using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using static AssestBundleTools.Presentation.Tests.ViewModels.BundleExplorerPreviewTestSupport;
 
 namespace AssestBundleTools.Presentation.Tests.ViewModels;
@@ -187,6 +189,51 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
     }
 
     [Fact]
+    public void AssetDocumentTabPreviewImageViewState_ShouldRequestBrowserStatePersistence_WhenUserChangesView()
+    {
+        var context = CreateCoordinatorContext(WorkspaceId.New(), "PreviewImageViewStatePersistence");
+        var assetTab = context.HostCoordinator.CreateAssetDocumentTab(
+            new BundleId("bundle-ui"),
+            new AssetId("asset-button"),
+            "Button");
+        assetTab.Inspector.Preview.Image.Apply(
+            CreateImageSourceStub(),
+            imagePixelWidth: 100,
+            imagePixelHeight: 50,
+            overlayDisplayState: null,
+            focusPreviewDisplayState: null);
+        assetTab.Inspector.Preview.Image.UpdateViewport(200d, 100d);
+
+        assetTab.Inspector.Preview.Image.ZoomBy(1.25d);
+        assetTab.Inspector.Preview.Image.PanBy(12d, -8d);
+        assetTab.Inspector.Preview.Image.ResetView();
+
+        Assert.Equal(3, context.BrowserStatePersistenceRequestCount);
+    }
+
+    [Fact]
+    public void AssetDocumentTabPreviewImageViewState_ShouldNotRequestBrowserStatePersistence_WhenRestoringView()
+    {
+        var context = CreateCoordinatorContext(WorkspaceId.New(), "PreviewImageViewStateRestore");
+        var assetTab = context.HostCoordinator.CreateAssetDocumentTab(
+            new BundleId("bundle-ui"),
+            new AssetId("asset-button"),
+            "Button");
+
+        assetTab.RestorePreviewImageDisplayOptions(
+            "Solid",
+            "CropResult",
+            zoom: 1.75d,
+            panX: 18d,
+            panY: -12d);
+
+        Assert.Equal(0, context.BrowserStatePersistenceRequestCount);
+        Assert.Equal(1.75d, assetTab.Inspector.Preview.Image.Zoom);
+        Assert.Equal(18d, assetTab.Inspector.Preview.Image.PanX);
+        Assert.Equal(-12d, assetTab.Inspector.Preview.Image.PanY);
+    }
+
+    [Fact]
     public void AssetDocumentTabPreviewMeshDisplayOptions_ShouldRequestBrowserStatePersistence_WhenUserChangesToolbarState()
     {
         var context = CreateCoordinatorContext(WorkspaceId.New(), "MeshPreviewOptionsPersistence");
@@ -345,6 +392,11 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
             [
                 new AssetPreviewMeshTriangleDto(0, 1, 2, 0)
             ]);
+    }
+
+    private static ImageSource CreateImageSourceStub()
+    {
+        return (BitmapImage)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(BitmapImage));
     }
 
     private sealed record CoordinatorContext(

@@ -18,4 +18,7 @@ public sealed record WorkspaceMetadataAssetTabDto(
     bool? MeshPreviewGridSelected = null,
     double? MeshPreviewZoom = null,
     double? MeshPreviewRotationX = null,
-    double? MeshPreviewRotationY = null);
+    double? MeshPreviewRotationY = null,
+    double? PreviewImageZoom = null,
+    double? PreviewImagePanX = null,
+    double? PreviewImagePanY = null);

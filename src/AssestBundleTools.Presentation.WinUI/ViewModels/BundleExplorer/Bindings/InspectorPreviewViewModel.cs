@@ -276,7 +276,8 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
         string? previewPayloadFilePath = null,
         SpritePreviewOverlayDisplayState? spritePreviewOverlayDisplayState = null,
-        SpriteFocusPreviewDisplayState? spriteFocusPreviewDisplayState = null)
+        SpriteFocusPreviewDisplayState? spriteFocusPreviewDisplayState = null,
+        ImagePreviewInfoDisplayState? imagePreviewInfoDisplayState = null)
     {
         ArgumentNullException.ThrowIfNull(imageSource);
 
@@ -289,7 +290,8 @@ public sealed class InspectorPreviewViewModel : ObservableObject
             imagePixelWidth,
             imagePixelHeight,
             spritePreviewOverlayDisplayState,
-            spriteFocusPreviewDisplayState);
+            spriteFocusPreviewDisplayState,
+            imagePreviewInfoDisplayState);
         NotifyPreviewStateChanged();
     }
 

@@ -22,6 +22,12 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
             context.LocalizationService);
         assetTab.Inspector.Preview.Image.DisplayOptions.UseSolidBackground();
         assetTab.Inspector.Preview.Image.DisplayOptions.UseSpriteCropResult();
+        assetTab.RestorePreviewImageDisplayOptions(
+            "Solid",
+            "CropResult",
+            zoom: 1.75d,
+            panX: 18d,
+            panY: -12d);
         assetTab.RestorePreviewMeshDisplayOptions(
             "Uv",
             textureOverlaySelected: false,
@@ -38,6 +44,9 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         var assetTabState = Assert.Single(Assert.Single(browserState.OpenBundleTabs).OpenAssetTabs!);
         Assert.Equal("Solid", assetTabState.PreviewImageBackgroundMode);
         Assert.Equal("CropResult", assetTabState.SpritePreviewDisplayMode);
+        Assert.Equal(1.75d, assetTabState.PreviewImageZoom);
+        Assert.Equal(18d, assetTabState.PreviewImagePanX);
+        Assert.Equal(-12d, assetTabState.PreviewImagePanY);
         Assert.Equal("Uv", assetTabState.MeshPreviewDisplayMode);
         Assert.False(assetTabState.MeshPreviewTextureOverlaySelected);
         Assert.False(assetTabState.MeshPreviewGridSelected);
@@ -80,7 +89,10 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
                             MeshPreviewGridSelected: false,
                             MeshPreviewZoom: 1.5d,
                             MeshPreviewRotationX: 24d,
-                            MeshPreviewRotationY: -72d)
+                            MeshPreviewRotationY: -72d,
+                            PreviewImageZoom: 1.75d,
+                            PreviewImagePanX: 18d,
+                            PreviewImagePanY: -12d)
                     ],
                     ActiveAssetTabId: "asset-button")
             ],
@@ -94,6 +106,9 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         var restoredAssetTab = Assert.Single(context.DocumentWorkspace.ActiveBundleTab!.AssetTabs);
         Assert.True(restoredAssetTab.Inspector.Preview.Image.DisplayOptions.IsSolidBackgroundSelected);
         Assert.True(restoredAssetTab.Inspector.Preview.Image.DisplayOptions.IsSpriteCropResultSelected);
+        Assert.Equal(1.75d, restoredAssetTab.Inspector.Preview.Image.Zoom);
+        Assert.Equal(18d, restoredAssetTab.Inspector.Preview.Image.PanX);
+        Assert.Equal(-12d, restoredAssetTab.Inspector.Preview.Image.PanY);
         restoredAssetTab.Inspector.Preview.Mesh.Apply(
             CreateMeshGeometry(),
             new MeshPreviewDisplayState("wire", "uv"));

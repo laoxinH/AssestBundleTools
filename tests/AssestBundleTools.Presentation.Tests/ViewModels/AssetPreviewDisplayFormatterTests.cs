@@ -11,6 +11,69 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 public sealed class AssetPreviewDisplayFormatterTests
 {
     [Fact]
+    public void BuildImagePreviewInfoDisplayState_ShouldProjectTextureInfoBadgeText()
+    {
+        var formatter = new AssetPreviewDisplayFormatter(new TestLocalizationService());
+        AssetPreviewInfoItemDto[] items =
+        [
+            new(
+                AssetPreviewInfoKey.TextureWidth,
+                AssetPreviewInfoValueKind.Integer,
+                Int64Value: 256),
+            new(
+                AssetPreviewInfoKey.TextureHeight,
+                AssetPreviewInfoValueKind.Integer,
+                Int64Value: 128),
+            new(
+                AssetPreviewInfoKey.PreviewPixelEncoding,
+                AssetPreviewInfoValueKind.Text,
+                TextValue: "RGBA32"),
+            new(
+                AssetPreviewInfoKey.PreviewOutputFormat,
+                AssetPreviewInfoValueKind.Text,
+                TextValue: "PNG"),
+            new(
+                AssetPreviewInfoKey.TextureFormatId,
+                AssetPreviewInfoValueKind.Integer,
+                Int64Value: 47),
+            new(
+                AssetPreviewInfoKey.TextureMipCount,
+                AssetPreviewInfoValueKind.Integer,
+                Int64Value: 4)
+        ];
+
+        var state = formatter.BuildImagePreviewInfoDisplayState(items);
+
+        Assert.NotNull(state);
+        Assert.Equal(ResourceKeys.InspectorTexturePreviewInfoDimensionsFormat + ":256 x 128", state!.PrimaryText);
+        Assert.Equal(
+            ResourceKeys.InspectorTexturePreviewInfoEncodingSegmentFormat + ":RGBA32 · " +
+            ResourceKeys.InspectorTexturePreviewInfoOutputSegmentFormat + ":PNG",
+            state.SecondaryText);
+        Assert.Equal(
+            ResourceKeys.InspectorTexturePreviewInfoFormatIdSegmentFormat + ":47 · " +
+            ResourceKeys.InspectorTexturePreviewInfoMipSegmentFormat + ":4",
+            state.DetailText);
+    }
+
+    [Fact]
+    public void BuildImagePreviewInfoDisplayState_ShouldReturnNull_WhenTextureFormatIsMissing()
+    {
+        var formatter = new AssetPreviewDisplayFormatter(new TestLocalizationService());
+        AssetPreviewInfoItemDto[] items =
+        [
+            new(
+                AssetPreviewInfoKey.ImageDimensions,
+                AssetPreviewInfoValueKind.Text,
+                TextValue: "256 x 128")
+        ];
+
+        var state = formatter.BuildImagePreviewInfoDisplayState(items);
+
+        Assert.Null(state);
+    }
+
+    [Fact]
     public void BuildSpritePreviewOverlayDisplayState_ShouldProjectOverlayGeometry_AndBadgeText()
     {
         var formatter = new AssetPreviewDisplayFormatter(new TestLocalizationService());

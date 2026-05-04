@@ -1,12 +1,20 @@
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Windows.Foundation;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 public sealed partial class InspectorImagePreviewSurfaceView : UserControl
 {
+    private const double WheelZoomInScale = 1.12d;
+    private const double WheelZoomOutScale = 1d / WheelZoomInScale;
+
     private InspectorPreviewImageViewModel? _observedViewModel;
+    private bool _isDragging;
+    private Point _lastPointerPosition;
 
     public static readonly DependencyProperty ViewModelProperty =
         DependencyProperty.Register(
@@ -51,6 +59,7 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         DetachObservedViewModel(_observedViewModel);
+        _isDragging = false;
     }
 
     private void AttachObservedViewModel(InspectorPreviewImageViewModel? viewModel)
@@ -99,8 +108,67 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
         RefreshPreviewImageViewport();
     }
 
+    private void OnPreviewImagePointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        var point = e.GetCurrentPoint(PreviewImageViewportHost);
+        if (ViewModel?.Visibility != Visibility.Visible || !point.Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+
+        _isDragging = true;
+        _lastPointerPosition = point.Position;
+        PreviewImageViewportHost.CapturePointer(e.Pointer);
+        e.Handled = true;
+    }
+
+    private void OnPreviewImagePointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_isDragging || ViewModel is null)
+        {
+            return;
+        }
+
+        var currentPosition = e.GetCurrentPoint(PreviewImageViewportHost).Position;
+        ViewModel.PanBy(
+            currentPosition.X - _lastPointerPosition.X,
+            currentPosition.Y - _lastPointerPosition.Y);
+        _lastPointerPosition = currentPosition;
+        e.Handled = true;
+    }
+
+    private void OnPreviewImagePointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        _isDragging = false;
+        PreviewImageViewportHost.ReleasePointerCapture(e.Pointer);
+        e.Handled = true;
+    }
+
+    private void OnPreviewImagePointerWheelChanged(object sender, PointerRoutedEventArgs e)
+    {
+        if (ViewModel?.Visibility != Visibility.Visible)
+        {
+            return;
+        }
+
+        var point = e.GetCurrentPoint(PreviewImageViewportHost);
+        ViewModel.ZoomBy(
+            point.Properties.MouseWheelDelta > 0 ? WheelZoomInScale : WheelZoomOutScale,
+            point.Position.X,
+            point.Position.Y);
+        e.Handled = true;
+    }
+
     private void RefreshPreviewImageViewport()
     {
+        PreviewImageViewportHost.Clip = new RectangleGeometry
+        {
+            Rect = new Rect(
+                0d,
+                0d,
+                Math.Max(0d, PreviewImageViewportHost.ActualWidth),
+                Math.Max(0d, PreviewImageViewportHost.ActualHeight))
+        };
         PreviewImageViewportChanged?.Invoke(
             this,
             new PreviewImageViewportChangedEventArgs(

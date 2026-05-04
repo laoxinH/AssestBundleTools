@@ -221,7 +221,8 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
                         previewInfoRows,
                         preview.PreviewPayloadFilePath,
                         _assetPreviewDisplayFormatter.BuildSpritePreviewOverlayDisplayState(preview),
-                        spriteFocusPreviewDisplayState);
+                        spriteFocusPreviewDisplayState,
+                        _assetPreviewDisplayFormatter.BuildImagePreviewInfoDisplayState(preview.PreviewInfoItems));
                     ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
                     return;
                 }
@@ -501,7 +502,9 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
             _localizationService.GetFormattedString(
                 ResourceKeys.InspectorSpriteFocusPreviewSizeFormat,
                 imageFocus.PixelWidth,
-                imageFocus.PixelHeight));
+                imageFocus.PixelHeight),
+            imageFocus.PixelWidth,
+            imageFocus.PixelHeight);
     }
 
     private static TimeSpan NormalizePreviewQueryTimeout(TimeSpan? previewQueryTimeout)

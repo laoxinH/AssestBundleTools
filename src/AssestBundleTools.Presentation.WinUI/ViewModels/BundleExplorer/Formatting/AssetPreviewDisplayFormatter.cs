@@ -130,6 +130,46 @@ internal sealed class AssetPreviewDisplayFormatter
             BadgeText: BuildSpritePreviewOverlayBadgeText(region, overlay.PivotPoint));
     }
 
+    public ImagePreviewInfoDisplayState? BuildImagePreviewInfoDisplayState(
+        IReadOnlyList<AssetPreviewInfoItemDto>? items)
+    {
+        if (items is not { Count: > 0 } ||
+            !items.Any(static item => item.Key == AssetPreviewInfoKey.TextureFormatId))
+        {
+            return null;
+        }
+
+        var dimensions = FindFormattedValue(items, AssetPreviewInfoKey.ImageDimensions);
+        if (string.IsNullOrWhiteSpace(dimensions))
+        {
+            dimensions = BuildDimensionsFromWidthAndHeight(items);
+        }
+
+        var primaryText = string.IsNullOrWhiteSpace(dimensions)
+            ? string.Empty
+            : _localizationService.GetFormattedString(
+                ResourceKeys.InspectorTexturePreviewInfoDimensionsFormat,
+                dimensions);
+
+        var secondaryText = string.Join(
+            " · ",
+            BuildTextureInfoSegments(
+                (ResourceKeys.InspectorTexturePreviewInfoEncodingSegmentFormat, FindFormattedValue(items, AssetPreviewInfoKey.PreviewPixelEncoding)),
+                (ResourceKeys.InspectorTexturePreviewInfoOutputSegmentFormat, FindFormattedValue(items, AssetPreviewInfoKey.PreviewOutputFormat))));
+
+        var detailText = string.Join(
+            " · ",
+            BuildTextureInfoSegments(
+                (ResourceKeys.InspectorTexturePreviewInfoFormatIdSegmentFormat, FindFormattedValue(items, AssetPreviewInfoKey.TextureFormatId)),
+                (ResourceKeys.InspectorTexturePreviewInfoMipSegmentFormat, FindFormattedValue(items, AssetPreviewInfoKey.TextureMipCount))));
+
+        return string.IsNullOrWhiteSpace(primaryText) &&
+               string.IsNullOrWhiteSpace(secondaryText) &&
+               string.IsNullOrWhiteSpace(detailText)
+            ? null
+            : new ImagePreviewInfoDisplayState(primaryText, secondaryText, detailText);
+    }
+
     public MeshPreviewDisplayState BuildMeshPreviewDisplayState(
         AssetPreviewDto preview,
         AssetDetailsDto? details = null)
@@ -360,6 +400,29 @@ internal sealed class AssetPreviewDisplayFormatter
             _ => dependency.AssetType.ToString()
         };
     }
+
+    private IEnumerable<string> BuildTextureInfoSegments(
+        params (string ResourceKey, string Value)[] candidates)
+    {
+        foreach (var (resourceKey, value) in candidates)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                continue;
+            }
+
+            yield return _localizationService.GetFormattedString(resourceKey, value);
+        }
+    }
+
+    private string BuildDimensionsFromWidthAndHeight(IReadOnlyList<AssetPreviewInfoItemDto> items)
+    {
+        var width = FindFormattedValue(items, AssetPreviewInfoKey.TextureWidth);
+        var height = FindFormattedValue(items, AssetPreviewInfoKey.TextureHeight);
+        return string.IsNullOrWhiteSpace(width) || string.IsNullOrWhiteSpace(height)
+            ? string.Empty
+            : $"{width} x {height}";
+    }
 }
 
 /// <summary>
@@ -373,12 +436,22 @@ public sealed record AudioPreviewDisplayState(
     string FrequencyBadgeText);
 
 /// <summary>
+/// 表示 Texture2D 图片预览右下角信息覆盖层需要的已格式化展示状态。
+/// </summary>
+public sealed record ImagePreviewInfoDisplayState(
+    string PrimaryText,
+    string SecondaryText,
+    string DetailText);
+
+/// <summary>
 /// 表示 Sprite 实际裁切结果预览所需的展示状态。
 /// </summary>
 public sealed record SpriteFocusPreviewDisplayState(
     Microsoft.UI.Xaml.Media.ImageSource ImageSource,
     string TitleText,
-    string SizeText);
+    string SizeText,
+    int PixelWidth = 1,
+    int PixelHeight = 1);
 
 /// <summary>
 /// 表示 Sprite 图片预览叠加裁切框所需的展示状态。

@@ -8,7 +8,7 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 internal static class InspectorMeshOrientationGizmoRenderer
 {
     private const double DegreesToRadians = Math.PI / 180d;
-    private const float Width = 118f;
+    private const float Width = 96f;
     private const float Height = 56f;
     private const float AxisLength = 22f;
 
@@ -86,7 +86,7 @@ internal static class InspectorMeshOrientationGizmoRenderer
         drawingSession.FillCircle(origin, 2.5f, Color.FromArgb(224, 248, 250, 252));
         drawingSession.DrawText(
             FormatRotationStatus(rotationX, rotationY),
-            left + 55f,
+            left + 53f,
             top + 23f,
             Color.FromArgb(224, 248, 250, 252),
             AngleTextFormat);

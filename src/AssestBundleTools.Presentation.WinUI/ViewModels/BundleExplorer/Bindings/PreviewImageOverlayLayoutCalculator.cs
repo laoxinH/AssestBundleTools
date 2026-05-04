@@ -20,6 +20,9 @@ internal static class PreviewImageOverlayLayoutCalculator
         double overlaySourceHeight,
         double viewportWidth,
         double viewportHeight,
+        double zoom,
+        double panX,
+        double panY,
         out PreviewImageOverlayLayout layout)
     {
         layout = default;
@@ -34,11 +37,12 @@ internal static class PreviewImageOverlayLayoutCalculator
 
         var sourceWidth = Math.Max(1d, sourceCanvasWidth);
         var sourceHeight = Math.Max(1d, sourceCanvasHeight);
-        var scale = Math.Min(
+        var baseScale = Math.Min(
             1d,
             Math.Min(
                 viewportWidth / sourceWidth,
                 viewportHeight / sourceHeight));
+        var scale = baseScale * Math.Max(0.01d, zoom);
         if (scale <= 0d || double.IsNaN(scale) || double.IsInfinity(scale))
         {
             return false;
@@ -46,8 +50,8 @@ internal static class PreviewImageOverlayLayoutCalculator
 
         var renderedImageWidth = sourceWidth * scale;
         var renderedImageHeight = sourceHeight * scale;
-        var imageOffsetX = Math.Max(0d, (viewportWidth - renderedImageWidth) / 2d);
-        var imageOffsetY = Math.Max(0d, (viewportHeight - renderedImageHeight) / 2d);
+        var imageOffsetX = ((viewportWidth - renderedImageWidth) / 2d) + panX;
+        var imageOffsetY = ((viewportHeight - renderedImageHeight) / 2d) + panY;
         var overlayX = imageOffsetX + (Math.Max(0d, overlaySourceX) * scale);
         var overlayY = imageOffsetY + (Math.Max(0d, overlaySourceY) * scale);
         var overlayWidth = overlaySourceWidth * scale;
@@ -62,5 +66,31 @@ internal static class PreviewImageOverlayLayoutCalculator
             imageOffsetX,
             imageOffsetY);
         return true;
+    }
+
+    public static bool TryCalculate(
+        double sourceCanvasWidth,
+        double sourceCanvasHeight,
+        double overlaySourceX,
+        double overlaySourceY,
+        double overlaySourceWidth,
+        double overlaySourceHeight,
+        double viewportWidth,
+        double viewportHeight,
+        out PreviewImageOverlayLayout layout)
+    {
+        return TryCalculate(
+            sourceCanvasWidth,
+            sourceCanvasHeight,
+            overlaySourceX,
+            overlaySourceY,
+            overlaySourceWidth,
+            overlaySourceHeight,
+            viewportWidth,
+            viewportHeight,
+            zoom: 1d,
+            panX: 0d,
+            panY: 0d,
+            out layout);
     }
 }

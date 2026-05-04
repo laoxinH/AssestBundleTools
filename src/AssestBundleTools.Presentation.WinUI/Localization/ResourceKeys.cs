@@ -543,6 +543,14 @@ public static class ResourceKeys
     public const string InspectorPreviewOpenLocationToolTip = "InspectorPanelView.PreviewOpenLocationButton.ToolTip";
     public const string InspectorPreviewCheckerboardBackgroundToolTip = "InspectorPanelView.PreviewCheckerboardBackgroundButton.ToolTip";
     public const string InspectorPreviewSolidBackgroundToolTip = "InspectorPanelView.PreviewSolidBackgroundButton.ToolTip";
+    public const string InspectorPreviewImageZoomInToolTip = "InspectorPanelView.PreviewImage.ZoomIn.ToolTip";
+    public const string InspectorPreviewImageZoomOutToolTip = "InspectorPanelView.PreviewImage.ZoomOut.ToolTip";
+    public const string InspectorPreviewImageResetToolTip = "InspectorPanelView.PreviewImage.Reset.ToolTip";
+    public const string InspectorTexturePreviewInfoDimensionsFormat = "InspectorPanelView.TexturePreview.Info.Dimensions.Format";
+    public const string InspectorTexturePreviewInfoEncodingSegmentFormat = "InspectorPanelView.TexturePreview.Info.EncodingSegment.Format";
+    public const string InspectorTexturePreviewInfoOutputSegmentFormat = "InspectorPanelView.TexturePreview.Info.OutputSegment.Format";
+    public const string InspectorTexturePreviewInfoFormatIdSegmentFormat = "InspectorPanelView.TexturePreview.Info.FormatIdSegment.Format";
+    public const string InspectorTexturePreviewInfoMipSegmentFormat = "InspectorPanelView.TexturePreview.Info.MipSegment.Format";
     public const string InspectorSpriteCropResultModeToolTip = "InspectorPanelView.SpriteCropResultModeButton.ToolTip";
     public const string InspectorSpriteCropPreviewModeToolTip = "InspectorPanelView.SpriteCropPreviewModeButton.ToolTip";
     public const string InspectorSpritePreviewOverlayBadgeFormat = "InspectorPanelView.SpritePreviewOverlay.Badge.Format";
