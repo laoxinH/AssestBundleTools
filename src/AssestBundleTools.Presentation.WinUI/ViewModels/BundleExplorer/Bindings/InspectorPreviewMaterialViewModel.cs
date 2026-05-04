@@ -20,6 +20,7 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     private string _mainTexturePreviewTransformText = string.Empty;
     private string _mainTexturePreviewTintText = string.Empty;
     private string _mainTexturePreviewLimitText = string.Empty;
+    private string _semanticSectionTitle = string.Empty;
     private string _textureSectionTitle = string.Empty;
     private string _colorSectionTitle = string.Empty;
     private string _numberSectionTitle = string.Empty;
@@ -28,6 +29,7 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     private ImageSource? _mainTexturePreviewImageSource;
     private Brush? _mainTexturePreviewTintBrush;
     private MaterialPreviewTintDisplayState? _mainTexturePreviewTint;
+    private IReadOnlyList<MaterialPreviewSemanticBadgeViewModel> _semanticBadges = Array.Empty<MaterialPreviewSemanticBadgeViewModel>();
     private IReadOnlyList<MaterialPreviewTextureRowViewModel> _textureRows = Array.Empty<MaterialPreviewTextureRowViewModel>();
     private IReadOnlyList<MaterialPreviewColorRowViewModel> _colorRows = Array.Empty<MaterialPreviewColorRowViewModel>();
     private IReadOnlyList<MaterialPreviewNumberRowViewModel> _numberRows = Array.Empty<MaterialPreviewNumberRowViewModel>();
@@ -138,6 +140,24 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     public Brush? MainTexturePreviewTintBrush =>
         _mainTexturePreviewTint is null ? null : _mainTexturePreviewTintBrush ??= CreateTintBrush(_mainTexturePreviewTint);
 
+    public string SemanticSectionTitle
+    {
+        get => _semanticSectionTitle;
+        private set => SetProperty(ref _semanticSectionTitle, value);
+    }
+
+    public IReadOnlyList<MaterialPreviewSemanticBadgeViewModel> SemanticBadges
+    {
+        get => _semanticBadges;
+        private set
+        {
+            if (SetProperty(ref _semanticBadges, value))
+            {
+                OnPropertyChanged(nameof(SemanticHintsVisibility));
+            }
+        }
+    }
+
     public string TextureSectionTitle
     {
         get => _textureSectionTitle;
@@ -244,6 +264,9 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     public Visibility MainTexturePreviewLimitVisibility =>
         string.IsNullOrWhiteSpace(MainTexturePreviewLimitText) ? Visibility.Collapsed : Visibility.Visible;
 
+    public Visibility SemanticHintsVisibility =>
+        SemanticBadges.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
     public Visibility TruncatedTextVisibility =>
         string.IsNullOrWhiteSpace(TruncatedText) ? Visibility.Collapsed : Visibility.Visible;
 
@@ -264,6 +287,8 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         MainTexturePreviewLimitText = displayState.MainTexturePreviewLimitText;
         MainTexturePreviewTintText = displayState.MainTextureTint?.Text ?? string.Empty;
         ApplyMainTextureTint(displayState.MainTextureTint);
+        SemanticSectionTitle = displayState.SemanticSectionTitle;
+        SemanticBadges = displayState.SemanticBadges.Select(static badge => new MaterialPreviewSemanticBadgeViewModel(badge)).ToArray();
         TextureSectionTitle = displayState.TextureSectionTitle;
         ColorSectionTitle = displayState.ColorSectionTitle;
         NumberSectionTitle = displayState.NumberSectionTitle;
@@ -293,6 +318,8 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         MainTexturePreviewLimitText = string.Empty;
         MainTexturePreviewImageSource = null;
         ApplyMainTextureTint(null);
+        SemanticSectionTitle = string.Empty;
+        SemanticBadges = Array.Empty<MaterialPreviewSemanticBadgeViewModel>();
         TextureSectionTitle = string.Empty;
         ColorSectionTitle = string.Empty;
         NumberSectionTitle = string.Empty;
@@ -349,6 +376,16 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         var clamped = Math.Clamp(value, 0d, 1d);
         return (byte)Math.Round(clamped * byte.MaxValue);
     }
+}
+
+public sealed class MaterialPreviewSemanticBadgeViewModel
+{
+    public MaterialPreviewSemanticBadgeViewModel(MaterialPreviewSemanticBadgeDisplayState badge)
+    {
+        Text = badge.Text;
+    }
+
+    public string Text { get; }
 }
 
 public sealed class MaterialPreviewTextureRowViewModel

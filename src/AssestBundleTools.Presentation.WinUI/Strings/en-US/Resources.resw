@@ -882,6 +882,30 @@
   <data name="InspectorPanelView.MaterialPreview.MainTextureLimit.Text" xml:space="preserve">
     <value>Reference preview: combines the main texture with the base color only; shader, lighting, multi-pass, and full sampling behavior are not simulated.</value>
   </data>
+  <data name="InspectorPanelView.MaterialPreview.SemanticHintsTitle.Text" xml:space="preserve">
+    <value>Material Property Hints</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Semantic.MainTextureDetected.Text" xml:space="preserve">
+    <value>Main texture detected</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Semantic.NormalMapCandidate.Text" xml:space="preserve">
+    <value>Normal map candidate</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Semantic.EmissionCandidate.Text" xml:space="preserve">
+    <value>Emission candidate</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Semantic.AlphaCutoffCandidate.Text" xml:space="preserve">
+    <value>Alpha cutoff candidate</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Semantic.MetallicSmoothnessCandidate.Text" xml:space="preserve">
+    <value>Metallic / smoothness candidate</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Semantic.DissolveDistortionCandidate.Text" xml:space="preserve">
+    <value>Dissolve / distortion candidate</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Semantic.TransparentBlendCandidate.Text" xml:space="preserve">
+    <value>Transparent / blend candidate</value>
+  </data>
   <data name="InspectorPanelView.MaterialPreview.TexturesTitle.Text" xml:space="preserve">
     <value>Texture Slots</value>
   </data>

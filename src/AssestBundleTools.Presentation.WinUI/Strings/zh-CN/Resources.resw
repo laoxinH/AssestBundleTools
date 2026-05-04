@@ -882,6 +882,30 @@
   <data name="InspectorPanelView.MaterialPreview.MainTextureLimit.Text" xml:space="preserve">
     <value>参考预览：仅叠加主纹理与基础颜色，不模拟 Shader、光照、多 Pass 或完整采样效果。</value>
   </data>
+  <data name="InspectorPanelView.MaterialPreview.SemanticHintsTitle.Text" xml:space="preserve">
+    <value>材质属性提示</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Semantic.MainTextureDetected.Text" xml:space="preserve">
+    <value>检测到主纹理</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Semantic.NormalMapCandidate.Text" xml:space="preserve">
+    <value>法线贴图候选</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Semantic.EmissionCandidate.Text" xml:space="preserve">
+    <value>自发光候选</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Semantic.AlphaCutoffCandidate.Text" xml:space="preserve">
+    <value>Alpha 裁剪候选</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Semantic.MetallicSmoothnessCandidate.Text" xml:space="preserve">
+    <value>金属 / 光滑度候选</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Semantic.DissolveDistortionCandidate.Text" xml:space="preserve">
+    <value>溶解 / 扰动候选</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.Semantic.TransparentBlendCandidate.Text" xml:space="preserve">
+    <value>透明 / 混合候选</value>
+  </data>
   <data name="InspectorPanelView.MaterialPreview.TexturesTitle.Text" xml:space="preserve">
     <value>贴图槽</value>
   </data>

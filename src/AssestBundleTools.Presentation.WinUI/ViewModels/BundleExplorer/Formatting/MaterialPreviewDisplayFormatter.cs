@@ -34,6 +34,8 @@ internal sealed class MaterialPreviewDisplayFormatter
             MainTexturePreviewTitleText: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewMainTextureTitleText),
             MainTexturePreviewLimitText: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewMainTextureLimitText),
             MainTextureTint: BuildMainTextureTint(material),
+            SemanticSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewSemanticHintsTitle),
+            SemanticBadges: MaterialPreviewSemanticHintBuilder.Build(material, _localizationService),
             TextureSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewTexturesTitle),
             ColorSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewColorsTitle),
             NumberSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewNumbersTitle),
@@ -237,6 +239,8 @@ public sealed record MaterialPreviewDisplayState(
     string MainTexturePreviewTitleText,
     string MainTexturePreviewLimitText,
     MaterialPreviewTintDisplayState? MainTextureTint,
+    string SemanticSectionTitle,
+    IReadOnlyList<MaterialPreviewSemanticBadgeDisplayState> SemanticBadges,
     string TextureSectionTitle,
     string ColorSectionTitle,
     string NumberSectionTitle,
@@ -253,6 +257,8 @@ public sealed record MaterialPreviewTextureRowDisplayState(
     string? ResolvedTextureAssetId,
     bool IsMainTextureCandidate,
     string TransformText);
+
+public sealed record MaterialPreviewSemanticBadgeDisplayState(string Text);
 
 public sealed record MaterialPreviewTintDisplayState(
     string Text,

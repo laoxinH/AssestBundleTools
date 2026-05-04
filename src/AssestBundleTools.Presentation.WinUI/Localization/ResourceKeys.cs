@@ -576,6 +576,14 @@ public static class ResourceKeys
     public const string InspectorMaterialPreviewMainTextureTitleText = "InspectorPanelView.MaterialPreview.MainTextureTitle.Text";
     public const string InspectorMaterialPreviewMainTextureTintFormat = "InspectorPanelView.MaterialPreview.MainTextureTint.Format";
     public const string InspectorMaterialPreviewMainTextureLimitText = "InspectorPanelView.MaterialPreview.MainTextureLimit.Text";
+    public const string InspectorMaterialPreviewSemanticHintsTitle = "InspectorPanelView.MaterialPreview.SemanticHintsTitle.Text";
+    public const string InspectorMaterialPreviewSemanticMainTextureDetectedText = "InspectorPanelView.MaterialPreview.Semantic.MainTextureDetected.Text";
+    public const string InspectorMaterialPreviewSemanticNormalMapCandidateText = "InspectorPanelView.MaterialPreview.Semantic.NormalMapCandidate.Text";
+    public const string InspectorMaterialPreviewSemanticEmissionCandidateText = "InspectorPanelView.MaterialPreview.Semantic.EmissionCandidate.Text";
+    public const string InspectorMaterialPreviewSemanticAlphaCutoffCandidateText = "InspectorPanelView.MaterialPreview.Semantic.AlphaCutoffCandidate.Text";
+    public const string InspectorMaterialPreviewSemanticMetallicSmoothnessCandidateText = "InspectorPanelView.MaterialPreview.Semantic.MetallicSmoothnessCandidate.Text";
+    public const string InspectorMaterialPreviewSemanticDissolveDistortionCandidateText = "InspectorPanelView.MaterialPreview.Semantic.DissolveDistortionCandidate.Text";
+    public const string InspectorMaterialPreviewSemanticTransparentBlendCandidateText = "InspectorPanelView.MaterialPreview.Semantic.TransparentBlendCandidate.Text";
     public const string InspectorMaterialPreviewTexturesTitle = "InspectorPanelView.MaterialPreview.TexturesTitle.Text";
     public const string InspectorMaterialPreviewColorsTitle = "InspectorPanelView.MaterialPreview.ColorsTitle.Text";
     public const string InspectorMaterialPreviewNumbersTitle = "InspectorPanelView.MaterialPreview.NumbersTitle.Text";

@@ -621,7 +621,7 @@ Presentation 层保留两个协同层次：
   - 音频预览：`AudioClip`（当前已支持标准音频容器直通播放，并对 `FSB5` 补上独立外部转码能力）
   - 模型预览：`Mesh`
   - 半可视化摘要预览：`Material`、`AnimationClip`
-    `Material` 当前会把 TexEnv 贴图行按资产详情依赖图解析到 `Texture2D / Sprite`，并通过现有预览查询管线加载前若干贴图缩略图和主纹理平面预览；主纹理卡只叠加 `_Color` 基础 tint 并显示“非 Shader 仿真”的限制说明。解析不到具体资产时保留内部 / 外部引用未匹配状态，不在 Presentation 侧读取 AB。`Mesh` 贴图叠加与 `Material` 贴图展示共享同一贴图预览 payload loader，因此继续复用现有预览缓存、命名和失效链路。
+    `Material` 当前会把 TexEnv 贴图行按资产详情依赖图解析到 `Texture2D / Sprite`，并通过现有预览查询管线加载前若干贴图缩略图和主纹理平面预览；主纹理卡只叠加 `_Color` 基础 tint 并显示“非 Shader 仿真”的限制说明。Presentation 还会基于常见 Unity 材质属性名展示主纹理、法线、自发光、Alpha 裁剪、金属 / 光滑度、溶解 / 扰动、透明 / 混合等语义候选提示；这些提示只用于阅读辅助，不代表真实 Shader 渲染。解析不到具体资产时保留内部 / 外部引用未匹配状态，不在 Presentation 侧读取 AB。`Mesh` 贴图叠加与 `Material` 贴图展示共享同一贴图预览 payload loader，因此继续复用现有预览缓存、命名和失效链路。
   - 结构化摘要预览：`GameObject`、`MonoBehaviour`、`AnimatorController`、`Font`、`SpriteAtlas`
   - 通用摘要回退：其余可读取资源类型
 - 工作台检查器当前会直接展示资源 `PathId`，并在图片预览成功后展示尺寸、裁切矩形、像素编码与源格式标识等专属信息；Sprite 预览会额外展示源贴图上的裁切框、pivot 点、9-slice border 辅助线，以及独立裁切结果卡片
@@ -730,7 +730,7 @@ Presentation 层保留两个协同层次：
 - 真实导入前若需要解密，应先通过独立解密器扩展点把来源转换为可读取文件，再进入 `IAssetBundleReader`
 - `AudioClip` 等富预览若需要额外转码，应先通过独立音频转码层把载荷转换为标准可播放格式，再交给 Presentation 渲染
 - `Mesh` 等模型富预览的几何、三角面索引、UV 与通道读取必须停留在 Infrastructure 预览生成器中；Mesh 贴图关联由运行时工作区依赖图派生为 `TextureAssociations`，Presentation 只能消费结构化 DTO、派生关联关系与缓存载荷路径，不得直接解析资源包
-- `Material / AnimationClip` 这类半可视化摘要也必须通过 Infrastructure 生成 JSON sidecar、Application 水化 DTO、Presentation 渲染 DTO 的同一管线完成，不得在 WinUI 中直接读取字段树或资源包
+- `Material / AnimationClip` 这类半可视化摘要也必须通过 Infrastructure 生成 JSON sidecar、Application 水化 DTO、Presentation 渲染 DTO 的同一管线完成，不得在 WinUI 中直接读取字段树或资源包；Material 的属性语义提示只能从已水化 DTO 派生，并应保持“候选 / 检测到”措辞，避免暗示已经完成 Shader 仿真
 - 自动识别默认按“导入源识别 -> 解密器识别 -> Reader 路径识别 -> 缓存命中识别”四层推进，而不是把所有判断都塞进 Reader 或 UI
 - 拖拽导入的页面桥接应优先挂在具体工作区区域，而不是整页根节点
 - AB 真实解析结果应优先写入独立缓存层，而不是写进工作区元数据文件

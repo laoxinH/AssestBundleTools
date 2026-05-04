@@ -32,6 +32,15 @@
             <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
             <Setter Property="CornerRadius" Value="10" />
         </Style>
+
+        <Style
+            x:Key="MaterialPreviewSemanticBadgeStyle"
+            TargetType="Border">
+            <Setter Property="Margin" Value="0,0,6,6" />
+            <Setter Property="Padding" Value="9,5" />
+            <Setter Property="Background" Value="{ThemeResource AccentFillColorTertiaryBrush}" />
+            <Setter Property="CornerRadius" Value="10" />
+        </Style>
     </UserControl.Resources>
 
     <ScrollViewer
@@ -91,6 +100,38 @@
                     <TextBlock
                         Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
                         Text="{x:Bind ViewModel.ShaderReferenceText, Mode=OneWay}" />
+                </StackPanel>
+            </Border>
+
+            <Border
+                Padding="12"
+                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Visibility="{x:Bind ViewModel.SemanticHintsVisibility, Mode=OneWay}">
+                <StackPanel Spacing="8">
+                    <TextBlock
+                        Style="{StaticResource MaterialPreviewSectionTitleStyle}"
+                        Text="{x:Bind ViewModel.SemanticSectionTitle, Mode=OneWay}" />
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.SemanticBadges, Mode=OneWay}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <ItemsWrapGrid Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="bindings:MaterialPreviewSemanticBadgeViewModel">
+                                <Border Style="{StaticResource MaterialPreviewSemanticBadgeStyle}">
+                                    <TextBlock
+                                        FontSize="11.5"
+                                        FontWeight="SemiBold"
+                                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                        Text="{x:Bind Text, Mode=OneTime}" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </Border>
 

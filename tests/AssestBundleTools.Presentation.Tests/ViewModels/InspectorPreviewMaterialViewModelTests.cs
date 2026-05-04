@@ -27,6 +27,12 @@ public sealed class InspectorPreviewMaterialViewModelTests
                 G: 0.5,
                 B: 0.75,
                 A: 1),
+            SemanticSectionTitle: "Material hints",
+            SemanticBadges:
+            [
+                new MaterialPreviewSemanticBadgeDisplayState("Main texture detected"),
+                new MaterialPreviewSemanticBadgeDisplayState("Transparent / blend candidate")
+            ],
             TextureSectionTitle: "Textures",
             ColorSectionTitle: "Colors",
             NumberSectionTitle: "Numbers",
@@ -68,11 +74,16 @@ public sealed class InspectorPreviewMaterialViewModelTests
         Assert.Equal("Scale 1, 1 · Offset 0, 0", viewModel.MainTexturePreviewTransformText);
         Assert.Equal("Tint _Color: RGBA 0.25, 0.5, 0.75, 1", viewModel.MainTexturePreviewTintText);
         Assert.Equal("Reference only", viewModel.MainTexturePreviewLimitText);
+        Assert.Equal("Material hints", viewModel.SemanticSectionTitle);
+        Assert.Equal(
+            ["Main texture detected", "Transparent / blend candidate"],
+            viewModel.SemanticBadges.Select(static badge => badge.Text));
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewTransformVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewTintTextVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewTintVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.MainTexturePreviewLimitVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.SemanticHintsVisibility);
     }
 
     private static AssetPreviewMaterialDto CreateEmptyMaterial()

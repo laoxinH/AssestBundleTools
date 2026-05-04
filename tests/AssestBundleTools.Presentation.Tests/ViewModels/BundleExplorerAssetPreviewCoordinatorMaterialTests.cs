@@ -86,6 +86,16 @@ public sealed class BundleExplorerAssetPreviewCoordinatorMaterialTests
         Assert.Equal(
             ResourceKeys.InspectorMaterialPreviewPropertyCountFormat + ":1|1|2",
             assetTab.Inspector.Preview.Material.PropertyCountText);
+        Assert.Equal(
+            ResourceKeys.InspectorMaterialPreviewSemanticHintsTitle,
+            assetTab.Inspector.Preview.Material.SemanticSectionTitle);
+        Assert.Equal(
+            [
+                ResourceKeys.InspectorMaterialPreviewSemanticMainTextureDetectedText,
+                ResourceKeys.InspectorMaterialPreviewSemanticMetallicSmoothnessCandidateText
+            ],
+            assetTab.Inspector.Preview.Material.SemanticBadges.Select(static badge => badge.Text));
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, assetTab.Inspector.Preview.Material.SemanticHintsVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, assetTab.Inspector.Preview.Material.TextureRowsVisibility);
         Assert.Single(assetTab.Inspector.Preview.Material.TextureRows);
         var textureRow = assetTab.Inspector.Preview.Material.TextureRows[0];
