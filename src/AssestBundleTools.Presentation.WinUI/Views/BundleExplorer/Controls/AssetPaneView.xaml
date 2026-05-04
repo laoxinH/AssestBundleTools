@@ -140,7 +140,7 @@
                     Style="{StaticResource AssetPaneFilterComboBoxStyle}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate x:DataType="viewModels:AssetTypeOptionViewModel">
-                            <TextBlock Text="{x:Bind DisplayName}" />
+                            <TextBlock Text="{x:Bind DisplayText}" />
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>

@@ -56,13 +56,34 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
     }
 
     [Fact]
+    public void PersistWorkspaceBrowserStateNow_ShouldRoundTripDynamicAssetTypeFilterKey()
+    {
+        var context = CreateContext();
+        context.BundleTab.RestoreViewState(
+            searchKeyword: "shader",
+            selectedAssetTypeFilterKey: "Unknown:Shader",
+            selectedAssetId: "asset-shader",
+            showModifiedOnly: true,
+            showPreviewableOnly: false);
+
+        context.Coordinator.PersistWorkspaceBrowserStateNow();
+
+        Assert.NotNull(context.WorkspaceContextService.CurrentBrowserState);
+        var browserState = context.WorkspaceContextService.CurrentBrowserState!;
+        Assert.Equal("Unknown:Shader", browserState.AssetTypeFilter);
+        var bundleTabState = Assert.Single(browserState.OpenBundleTabs);
+        Assert.Equal("Unknown:Shader", bundleTabState.AssetTypeFilter);
+        Assert.Equal(AssetType.Unknown, context.BundleTab.SelectedAssetType);
+    }
+
+    [Fact]
     public async Task TryRestoreWorkspaceBrowserStateAsync_ShouldRestoreAssetPreviewDisplayOptions()
     {
         var context = CreateContext();
         context.WorkspaceContextService.CurrentBrowserState = new WorkspaceBrowserStateSnapshotDto(
             BundleSearchKeyword: string.Empty,
             AssetSearchKeyword: string.Empty,
-            AssetTypeFilter: null,
+            AssetTypeFilter: "Unknown:Shader",
             ShowModifiedOnly: false,
             ShowPreviewableOnly: false,
             OpenBundleTabs:
@@ -73,7 +94,7 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
                     IsPreview: false,
                     SelectedAssetId: "asset-button",
                     SearchKeyword: string.Empty,
-                    AssetTypeFilter: null,
+                    AssetTypeFilter: "Unknown:Shader",
                     ShowModifiedOnly: false,
                     ShowPreviewableOnly: false,
                     OpenAssetTabs:
@@ -103,6 +124,8 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         var restored = await context.Coordinator.TryRestoreWorkspaceBrowserStateAsync();
 
         Assert.True(restored);
+        Assert.Equal("Unknown:Shader", context.DocumentWorkspace.ActiveBundleTab!.SelectedAssetTypeFilterKey);
+        Assert.Equal(AssetType.Unknown, context.DocumentWorkspace.ActiveBundleTab.SelectedAssetType);
         var restoredAssetTab = Assert.Single(context.DocumentWorkspace.ActiveBundleTab!.AssetTabs);
         Assert.True(restoredAssetTab.Inspector.Preview.Image.DisplayOptions.IsSolidBackgroundSelected);
         Assert.True(restoredAssetTab.Inspector.Preview.Image.DisplayOptions.IsSpriteCropResultSelected);

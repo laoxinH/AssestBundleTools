@@ -70,6 +70,7 @@ internal static class CachedWorkspaceSessionRegistryTests
             bundle,
             searchKeyword: null,
             assetTypeFilter: null,
+            assetTypeDisplayNameFilter: null,
             out var assetList);
         var hasDetails = registry.TryGetAssetDetails(
             summary.WorkspaceId,
@@ -219,6 +220,82 @@ internal static class CachedWorkspaceSessionRegistryTests
         TestAssert.Equal(textureId, textureAssociation.AssetId.Value, "External material texture dependency should resolve to imported texture asset.");
         TestAssert.Equal(textureBundleId, textureAssociation.BundleId.Value, "Texture association should point at the target bundle.");
         TestAssert.Equal(AssetType.Texture2D, textureAssociation.AssetType, "Resolved texture association should use the concrete texture type.");
+    }
+
+    public static void TryGetAssetList_ShouldExposeDynamicTypeFacets_AndFilterUnknownByDisplayName()
+    {
+        var bundleId = "bundle.types";
+        var shaderId = "shader-1";
+        var shaderVariantId = "shader-2";
+        var cacheEntry = new BundleIndexCacheEntryDto(
+            WorkspaceKey: "workspace-a",
+            BundleCacheKey: "bundle-cache-types",
+            BundleId: bundleId,
+            DisplayName: "types.ab",
+            LogicalPath: "types.ab",
+            SourceFingerprint: new WorkspaceFileFingerprintDto("types.ab", 100, DateTimeOffset.UnixEpoch, "hash"),
+            CachedAtUtc: DateTimeOffset.UnixEpoch,
+            ParserVersion: "test",
+            ToolVersion: "test",
+            Dependencies: Array.Empty<string>(),
+            Assets:
+            [
+                CreateAsset("texture-1", "HeroTexture", AssetType.Texture2D, "Texture2D", pathId: 10),
+                CreateAsset("material-1", "HeroMaterial", AssetType.Material, "Material", pathId: 20),
+                CreateAsset(shaderId, "HeroShader", AssetType.Unknown, "Shader", pathId: 30),
+                CreateAsset(shaderVariantId, "HeroShaderVariant", AssetType.Unknown, "shader", pathId: 31),
+                CreateAsset("renderer-1", "HeroRenderer", AssetType.Unknown, "MeshRenderer", pathId: 40, includeInList: false)
+            ],
+            SerializedFileNames: ["CAB-types"]);
+        var bundleIndexCacheStore = new TestBundleIndexCacheStore([cacheEntry]);
+        var registry = new CachedWorkspaceSessionRegistry(new TestWorkspaceDataStoreFactory(bundleIndexCacheStore));
+
+        var summary = registry.OpenWorkspace(new WorkspaceSessionOpenRequestDto(
+            WorkspaceKey: "workspace-a",
+            WorkspacePath: "workspace",
+            WorkspaceDataRootPath: "data",
+            WorkspaceDisplayName: "Workspace A",
+            InitialMode: WorkspaceMode.SinglePane));
+
+        var hasAllAssets = registry.TryGetAssetList(
+            summary.WorkspaceId,
+            new BundleId(bundleId),
+            searchKeyword: null,
+            assetTypeFilter: null,
+            assetTypeDisplayNameFilter: null,
+            out var allAssets);
+        var hasShaderAssets = registry.TryGetAssetList(
+            summary.WorkspaceId,
+            new BundleId(bundleId),
+            searchKeyword: null,
+            assetTypeFilter: AssetType.Unknown,
+            assetTypeDisplayNameFilter: "  Shader  ",
+            out var shaderAssets);
+
+        TestAssert.True(hasAllAssets, "Asset list should be available.");
+        TestAssert.Equal(4, allAssets!.TotalCount, "Hidden renderer helper nodes should not be counted as visible assets.");
+        var shaderFacet = allAssets.TypeFacets!.FirstOrDefault(facet =>
+            facet.AssetType == AssetType.Unknown &&
+            string.Equals(facet.AssetTypeDisplayName, "Shader", StringComparison.OrdinalIgnoreCase));
+        TestAssert.True(shaderFacet is not null, "Visible Shader assets should produce a dynamic Unknown/Shader facet.");
+        TestAssert.Equal(2, shaderFacet!.Count, "Dynamic type facets should group display names case-insensitively.");
+        TestAssert.True(
+            allAssets.TypeFacets!.All(facet =>
+                !string.Equals(facet.AssetTypeDisplayName, "MeshRenderer", StringComparison.OrdinalIgnoreCase)),
+            "Hidden graph helper nodes should not produce visible filter facets.");
+
+        TestAssert.True(hasShaderAssets, "Filtered Shader asset list should be available.");
+        TestAssert.Equal(2, shaderAssets!.FilteredCount, "Unknown + Shader display filter should keep only Shader assets.");
+        TestAssert.Equal("Shader", shaderAssets.AssetTypeDisplayNameFilter, "Display-name filter should be trimmed in the result.");
+        TestAssert.True(
+            shaderAssets.Items.All(item =>
+                item.AssetType == AssetType.Unknown &&
+                string.Equals(item.AssetTypeDisplayName, "Shader", StringComparison.OrdinalIgnoreCase)),
+            "Filtered items should all be dynamic Shader assets.");
+        TestAssert.True(
+            shaderAssets.Items.Any(item => item.AssetId.Value == shaderId) &&
+            shaderAssets.Items.Any(item => item.AssetId.Value == shaderVariantId),
+            "Both Shader assets should survive the dynamic type filter.");
     }
 
     private static BundleIndexAssetCacheEntryDto CreateAsset(

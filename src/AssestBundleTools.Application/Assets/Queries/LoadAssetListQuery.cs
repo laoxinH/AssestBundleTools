@@ -11,4 +11,5 @@ public sealed record LoadAssetListQuery(
     WorkspaceId WorkspaceId,
     BundleId BundleId,
     string? SearchKeyword = null,
-    AssetType? AssetTypeFilter = null);
+    AssetType? AssetTypeFilter = null,
+    string? AssetTypeDisplayNameFilter = null);

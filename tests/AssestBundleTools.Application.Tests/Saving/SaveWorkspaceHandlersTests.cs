@@ -265,6 +265,7 @@ internal static class SaveWorkspaceHandlersTests
             BundleId bundleId,
             string? searchKeyword,
             AssetType? assetTypeFilter,
+            string? assetTypeDisplayNameFilter,
             out AssetListResultDto? assetListResult)
         {
             assetListResult = null;

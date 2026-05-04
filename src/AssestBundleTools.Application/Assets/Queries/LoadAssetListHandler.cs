@@ -52,6 +52,7 @@ public sealed class LoadAssetListHandler : IQueryHandler<LoadAssetListQuery, Res
             query.BundleId,
             query.SearchKeyword,
             query.AssetTypeFilter,
+            query.AssetTypeDisplayNameFilter,
             out var assetListResult);
 
         return Task.FromResult(Result<AssetListResultDto>.Success(assetListResult!));

@@ -6,11 +6,10 @@ using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Presentation.WinUI.Localization;
 
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 
 /// <summary>
@@ -18,6 +17,16 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Present
 /// </summary>
 internal sealed class BundleExplorerAssetInspectorPresenter
 {
+    private static readonly AssetType[] PreferredAssetTypeOrder =
+    [
+        AssetType.Texture2D,
+        AssetType.Sprite,
+        AssetType.TextAsset,
+        AssetType.AudioClip,
+        AssetType.Mesh,
+        AssetType.Material
+    ];
+
     private readonly IBundleExplorerBundlePaneHost _bundlePane;
     private readonly ILocalizationService _localizationService;
     private readonly LocalizedValueFormatter _localizedValueFormatter;
@@ -31,18 +40,49 @@ internal sealed class BundleExplorerAssetInspectorPresenter
         _localizedValueFormatter = new LocalizedValueFormatter(_localizationService);
     }
 
-    public IReadOnlyList<AssetTypeOptionViewModel> CreateAssetTypeOptions()
+    public IReadOnlyList<AssetTypeOptionViewModel> CreateAssetTypeOptions(
+        IReadOnlyList<AssetTypeFacetDto>? typeFacets = null)
     {
-        return
-        [
-            new AssetTypeOptionViewModel(GetString(ResourceKeys.AssetTypeFilterAll), null),
-            new AssetTypeOptionViewModel(GetAssetTypeDisplayName(AssetType.Texture2D), AssetType.Texture2D),
-            new AssetTypeOptionViewModel(GetAssetTypeDisplayName(AssetType.Sprite), AssetType.Sprite),
-            new AssetTypeOptionViewModel(GetAssetTypeDisplayName(AssetType.TextAsset), AssetType.TextAsset),
-            new AssetTypeOptionViewModel(GetAssetTypeDisplayName(AssetType.AudioClip), AssetType.AudioClip),
-            new AssetTypeOptionViewModel(GetAssetTypeDisplayName(AssetType.Mesh), AssetType.Mesh),
-            new AssetTypeOptionViewModel(GetAssetTypeDisplayName(AssetType.Material), AssetType.Material)
-        ];
+        var normalizedFacets = (typeFacets ?? Array.Empty<AssetTypeFacetDto>())
+            .Where(static facet => facet.Count > 0)
+            .ToArray();
+        var shouldUseFacets = typeFacets is not null;
+        var options = new List<AssetTypeOptionViewModel>
+        {
+            new(GetString(ResourceKeys.AssetTypeFilterAll), null)
+        };
+
+        foreach (var assetType in PreferredAssetTypeOrder)
+        {
+            var count = normalizedFacets
+                .Where(facet => facet.AssetType == assetType)
+                .Sum(static facet => facet.Count);
+            if (!shouldUseFacets || count > 0)
+            {
+                options.Add(new AssetTypeOptionViewModel(
+                    GetAssetTypeDisplayName(assetType),
+                    assetType,
+                    Count: shouldUseFacets ? count : null));
+            }
+        }
+
+        if (!shouldUseFacets)
+        {
+            return options;
+        }
+
+        var preferredAssetTypes = PreferredAssetTypeOrder.ToHashSet();
+        var dynamicOptions = normalizedFacets
+            .Where(facet => facet.AssetType == AssetType.Unknown ||
+                            !preferredAssetTypes.Contains(facet.AssetType))
+            .OrderBy(static facet => facet.AssetTypeDisplayName, StringComparer.OrdinalIgnoreCase)
+            .Select(facet => new AssetTypeOptionViewModel(
+                ResolveDynamicAssetTypeDisplayName(facet),
+                facet.AssetType,
+                facet.AssetType == AssetType.Unknown ? facet.AssetTypeDisplayName : null,
+                facet.Count));
+        options.AddRange(dynamicOptions);
+        return options;
     }
 
     public AssetListEntryViewModel CreateAssetEntry(AssetListItemDto item)
@@ -256,6 +296,13 @@ internal sealed class BundleExplorerAssetInspectorPresenter
             AssetType.Material => GetString(ResourceKeys.AssetTypeDisplayMaterial),
             _ => GetString(ResourceKeys.AssetTypeDisplayUnknown)
         };
+    }
+
+    private static string ResolveDynamicAssetTypeDisplayName(AssetTypeFacetDto facet)
+    {
+        return string.IsNullOrWhiteSpace(facet.AssetTypeDisplayName)
+            ? facet.AssetType.ToString()
+            : facet.AssetTypeDisplayName.Trim();
     }
 
     private string ResolveAssetTypeDisplayName(AssetType assetType, string? assetTypeDisplayName)

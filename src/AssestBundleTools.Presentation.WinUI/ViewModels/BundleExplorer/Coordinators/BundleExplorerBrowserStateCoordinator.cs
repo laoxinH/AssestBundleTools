@@ -3,11 +3,9 @@ using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.Services;
 
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 
 /// <summary>
@@ -150,7 +148,7 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
                 tabState.IsPreview);
             tab.RestoreViewState(
                 searchKeyword: tabState.SearchKeyword,
-                selectedAssetType: ParseAssetTypeFilter(tabState.AssetTypeFilter),
+                selectedAssetTypeFilterKey: tabState.AssetTypeFilter,
                 selectedAssetId: tabState.SelectedAssetId,
                 showModifiedOnly: tabState.ShowModifiedOnly,
                 showPreviewableOnly: tabState.ShowPreviewableOnly);
@@ -185,7 +183,7 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
             isPreview: true);
         restoredTab.RestoreViewState(
             searchKeyword: browserState.AssetSearchKeyword,
-            selectedAssetType: ParseAssetTypeFilter(browserState.AssetTypeFilter),
+            selectedAssetTypeFilterKey: browserState.AssetTypeFilter,
             selectedAssetId: browserState.LastAssetId,
             showModifiedOnly: browserState.ShowModifiedOnly,
             showPreviewableOnly: browserState.ShowPreviewableOnly);
@@ -236,7 +234,7 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
         return new WorkspaceBrowserStateSnapshotDto(
             BundleSearchKeyword: _bundlePane.BundleSearchKeyword,
             AssetSearchKeyword: activeTab?.SearchKeyword ?? string.Empty,
-            AssetTypeFilter: activeTab?.SelectedAssetType?.ToString(),
+            AssetTypeFilter: activeTab?.SelectedAssetTypeFilterKey,
             ShowModifiedOnly: activeTab?.ShowModifiedOnly ?? false,
             ShowPreviewableOnly: activeTab?.ShowPreviewableOnly ?? false,
             OpenBundleTabs: _documentWorkspace.BundleTabs
@@ -255,7 +253,7 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
             IsPreview: tab.IsPreview,
             SelectedAssetId: tab.SelectedAssetId,
             SearchKeyword: tab.SearchKeyword,
-            AssetTypeFilter: tab.SelectedAssetType?.ToString(),
+            AssetTypeFilter: tab.SelectedAssetTypeFilterKey,
             ShowModifiedOnly: tab.ShowModifiedOnly,
             ShowPreviewableOnly: tab.ShowPreviewableOnly,
             OpenAssetTabs: tab.AssetTabs
@@ -328,17 +326,5 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
             PreviewImageZoom: imageViewState.Zoom,
             PreviewImagePanX: imageViewState.PanX,
             PreviewImagePanY: imageViewState.PanY);
-    }
-
-    private static AssetType? ParseAssetTypeFilter(string? assetTypeFilter)
-    {
-        if (string.IsNullOrWhiteSpace(assetTypeFilter))
-        {
-            return null;
-        }
-
-        return Enum.TryParse<AssetType>(assetTypeFilter, ignoreCase: true, out var parsedAssetType)
-            ? parsedAssetType
-            : null;
     }
 }

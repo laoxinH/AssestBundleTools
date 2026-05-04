@@ -126,6 +126,7 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
         BundleId bundleId,
         string? searchKeyword,
         AssetType? assetTypeFilter,
+        string? assetTypeDisplayNameFilter,
         out AssetListResultDto? assetListResult)
     {
         lock (_syncRoot)
@@ -139,7 +140,7 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
             var filteredItems = bundleState.Assets
                 .Where(static asset => asset.IncludeInAssetList)
                 .Where(asset => MatchesSearch(asset, searchKeyword))
-                .Where(asset => !assetTypeFilter.HasValue || asset.AssetType == assetTypeFilter.Value)
+                .Where(asset => MatchesAssetType(asset, assetTypeFilter, assetTypeDisplayNameFilter))
                 .Select(asset => new AssetListItemDto(
                     AssetId: asset.AssetId,
                     BundleId: bundleState.BundleId,
@@ -161,7 +162,9 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
                 AssetTypeFilter: assetTypeFilter,
                 TotalCount: bundleState.Assets.Count(static asset => asset.IncludeInAssetList),
                 FilteredCount: filteredItems.Length,
-                Items: filteredItems);
+                Items: filteredItems,
+                AssetTypeDisplayNameFilter: NormalizeAssetTypeDisplayNameFilter(assetTypeDisplayNameFilter),
+                TypeFacets: BuildTypeFacets(bundleState.Assets));
 
             return true;
         }
@@ -308,6 +311,45 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
 
     private static string? NormalizeSearchKeyword(string? searchKeyword) =>
         string.IsNullOrWhiteSpace(searchKeyword) ? null : searchKeyword.Trim();
+
+    private static bool MatchesAssetType(
+        CachedAssetState asset,
+        AssetType? assetTypeFilter,
+        string? assetTypeDisplayNameFilter)
+    {
+        if (assetTypeFilter.HasValue && asset.AssetType != assetTypeFilter.Value)
+        {
+            return false;
+        }
+
+        var normalizedDisplayNameFilter = NormalizeAssetTypeDisplayNameFilter(assetTypeDisplayNameFilter);
+        return normalizedDisplayNameFilter is null ||
+               string.Equals(
+                   asset.AssetTypeDisplayName,
+                   normalizedDisplayNameFilter,
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? NormalizeAssetTypeDisplayNameFilter(string? assetTypeDisplayNameFilter) =>
+        string.IsNullOrWhiteSpace(assetTypeDisplayNameFilter)
+            ? null
+            : assetTypeDisplayNameFilter.Trim();
+
+    private static IReadOnlyList<AssetTypeFacetDto> BuildTypeFacets(IReadOnlyList<CachedAssetState> assets)
+    {
+        return assets
+            .Where(static asset => asset.IncludeInAssetList)
+            .GroupBy(
+                static asset => new AssetTypeFacetKey(
+                    asset.AssetType,
+                    asset.AssetTypeDisplayName),
+                AssetTypeFacetKeyComparer.Instance)
+            .Select(static group => new AssetTypeFacetDto(
+                group.Key.AssetType,
+                group.Key.AssetTypeDisplayName,
+                group.Count()))
+            .ToArray();
+    }
 
     private static string BuildSuggestedOutputPath(string bundleDisplayName, string assetName, AssetType assetType)
     {

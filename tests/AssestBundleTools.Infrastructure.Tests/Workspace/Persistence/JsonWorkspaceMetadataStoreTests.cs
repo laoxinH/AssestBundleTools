@@ -23,7 +23,7 @@ internal static class JsonWorkspaceMetadataStoreTests
             LastOutputDirectory: @"D:\Exports",
             BundleSearchKeyword: "characters",
             AssetSearchKeyword: "hero",
-            AssetTypeFilter: "Texture2D",
+            AssetTypeFilter: "Unknown:Shader",
             ShowModifiedOnly: true,
             ShowPreviewableOnly: false,
             OpenBundleTabs:
@@ -34,7 +34,7 @@ internal static class JsonWorkspaceMetadataStoreTests
                     IsPreview: false,
                     SelectedAssetId: "asset-009",
                     SearchKeyword: "hero",
-                    AssetTypeFilter: "Texture2D",
+                    AssetTypeFilter: "Unknown:Shader",
                     ShowModifiedOnly: true,
                     ShowPreviewableOnly: false,
                     OpenAssetTabs:
@@ -86,7 +86,7 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.Equal(@"D:\Exports", restoredMetadata.LastOutputDirectory, "Output directory should round-trip.");
         TestAssert.Equal("characters", restoredMetadata.BundleSearchKeyword, "Bundle keyword should round-trip.");
         TestAssert.Equal("hero", restoredMetadata.AssetSearchKeyword, "Asset keyword should round-trip.");
-        TestAssert.Equal("Texture2D", restoredMetadata.AssetTypeFilter, "Asset type filter should round-trip.");
+        TestAssert.Equal("Unknown:Shader", restoredMetadata.AssetTypeFilter, "Dynamic asset type filter should round-trip.");
         TestAssert.True(restoredMetadata.ShowModifiedOnly, "Modified-only flag should round-trip.");
         TestAssert.False(restoredMetadata.ShowPreviewableOnly, "Previewable-only flag should round-trip.");
         TestAssert.Equal("bundle-001", restoredMetadata.ActiveBundleTabId, "Active bundle tab should round-trip.");
@@ -101,6 +101,7 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.Equal("environment/characters", loadedBundleTab.LogicalPath, "Bundle tab path should round-trip.");
         TestAssert.Equal("asset-009", loadedBundleTab.SelectedAssetId, "Selected asset id should round-trip.");
         TestAssert.Equal("hero", loadedBundleTab.SearchKeyword, "Tab search keyword should round-trip.");
+        TestAssert.Equal("Unknown:Shader", loadedBundleTab.AssetTypeFilter, "Dynamic bundle tab asset type filter should round-trip.");
         TestAssert.Equal("asset-009", loadedBundleTab.ActiveAssetTabId, "Active asset tab should round-trip.");
 
         var loadedAssetTab = TestAssert.Single(loadedBundleTab.OpenAssetTabs!);

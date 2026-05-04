@@ -1,13 +1,8 @@
+using System.Collections.ObjectModel;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
-using System.Collections.ObjectModel;
 
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
@@ -23,7 +18,7 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
     private string _displayName;
     private string _logicalPath;
     private string _searchKeyword = string.Empty;
-    private AssetType? _selectedAssetType;
+    private string? _selectedAssetTypeFilterKey;
     private string? _selectedAssetId;
     private bool _showModifiedOnly;
     private bool _showPreviewableOnly;
@@ -66,11 +61,25 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         private set => SetProperty(ref _searchKeyword, value);
     }
 
-    public AssetType? SelectedAssetType
+    public string? SelectedAssetTypeFilterKey
     {
-        get => _selectedAssetType;
-        private set => SetProperty(ref _selectedAssetType, value);
+        get => _selectedAssetTypeFilterKey;
+        private set
+        {
+            if (SetProperty(ref _selectedAssetTypeFilterKey, value))
+            {
+                OnPropertyChanged(nameof(SelectedAssetType));
+            }
+        }
     }
+
+    public AssetType? SelectedAssetType =>
+        AssetTypeOptionViewModel.TryParseFilterKey(
+            SelectedAssetTypeFilterKey,
+            out var assetType,
+            out _)
+            ? assetType
+            : null;
 
     public string? SelectedAssetId
     {
@@ -117,7 +126,7 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(pane);
 
         SearchKeyword = pane.SearchKeyword;
-        SelectedAssetType = pane.SelectedAssetType;
+        SelectedAssetTypeFilterKey = pane.SelectedAssetTypeFilterKey;
         SelectedAssetId = pane.SelectedAssetId?.Value;
         ShowModifiedOnly = pane.ShowModifiedOnly;
         ShowPreviewableOnly = pane.ShowPreviewableOnly;
@@ -129,13 +138,13 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
     /// </summary>
     public void RestoreViewState(
         string searchKeyword,
-        AssetType? selectedAssetType,
+        string? selectedAssetTypeFilterKey,
         string? selectedAssetId,
         bool showModifiedOnly,
         bool showPreviewableOnly)
     {
         SearchKeyword = searchKeyword;
-        SelectedAssetType = selectedAssetType;
+        SelectedAssetTypeFilterKey = selectedAssetTypeFilterKey;
         SelectedAssetId = selectedAssetId;
         ShowModifiedOnly = showModifiedOnly;
         ShowPreviewableOnly = showPreviewableOnly;
@@ -147,7 +156,7 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
 
         pane.RestoreViewState(
             searchKeyword: SearchKeyword,
-            selectedAssetType: SelectedAssetType,
+            selectedAssetTypeFilterKey: SelectedAssetTypeFilterKey,
             showModifiedOnly: ShowModifiedOnly,
             showPreviewableOnly: ShowPreviewableOnly);
     }
@@ -167,7 +176,7 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         DisplayName = displayName;
         LogicalPath = logicalPath;
         SearchKeyword = string.Empty;
-        SelectedAssetType = null;
+        SelectedAssetTypeFilterKey = null;
         SelectedAssetId = null;
         ShowModifiedOnly = false;
         ShowPreviewableOnly = false;

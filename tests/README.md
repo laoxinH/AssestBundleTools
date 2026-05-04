@@ -20,6 +20,7 @@
 - 保存链路中的保存前预览空态/资源包分组聚合，以及保存执行的缺失工作区、无候选失败和执行摘要
 - 工作区目录相关 `Infrastructure` 持久化关键路径（当前也通过零依赖控制台 runner 执行）
 - 缓存型工作区运行时依赖图中的反向引用、依赖闭包、Mesh 贴图关联，以及外部 `PPtr` 占位到当前工作区已导入资产的跨 Bundle 解析
+- 缓存型工作区运行时资产列表中的动态类型 Facet、隐藏图节点排除、以及 `Unknown + Unity 类型名` 的资产级筛选
 - 预览缓存描述文件 / 载荷文件的保存回读、删除清理，以及缺失 payload / 非法 payload path 下的容错加载与清理
 - `zh-CN / en-US` 资源键一致性与 `ResourceKeys.cs` 覆盖率
 - `Presentation -> Infrastructure` 组合根边界检查

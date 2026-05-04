@@ -29,6 +29,7 @@ public interface IWorkspaceSessionRegistry
         BundleId bundleId,
         string? searchKeyword,
         AssetType? assetTypeFilter,
+        string? assetTypeDisplayNameFilter,
         out AssetListResultDto? assetListResult);
 
     bool TryGetAssetDetails(

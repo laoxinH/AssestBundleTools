@@ -13,7 +13,7 @@ namespace AssestBundleTools.Application.Workspace.Services;
 /// <summary>
 /// 基于内存的临时工作区注册表，用于 M2 阶段打通用例与假数据链路。
 /// </summary>
-public sealed class InMemoryWorkspaceSessionRegistry : IWorkspaceSessionRegistry
+public sealed partial class InMemoryWorkspaceSessionRegistry : IWorkspaceSessionRegistry
 {
     private readonly object _syncRoot = new();
     private readonly Dictionary<string, WorkspaceSessionState> _workspaceStates = new(StringComparer.Ordinal);
@@ -111,6 +111,7 @@ public sealed class InMemoryWorkspaceSessionRegistry : IWorkspaceSessionRegistry
         BundleId bundleId,
         string? searchKeyword,
         AssetType? assetTypeFilter,
+        string? assetTypeDisplayNameFilter,
         out AssetListResultDto? assetListResult)
     {
         lock (_syncRoot)
@@ -123,7 +124,7 @@ public sealed class InMemoryWorkspaceSessionRegistry : IWorkspaceSessionRegistry
 
             var filteredItems = bundleState.Assets
                 .Where(asset => MatchesSearch(asset, searchKeyword))
-                .Where(asset => !assetTypeFilter.HasValue || asset.AssetType == assetTypeFilter.Value)
+                .Where(asset => MatchesAssetType(asset, assetTypeFilter, assetTypeDisplayNameFilter))
                 .Select(asset => new AssetListItemDto(
                     AssetId: asset.AssetId,
                     BundleId: bundleState.BundleId,
@@ -145,7 +146,9 @@ public sealed class InMemoryWorkspaceSessionRegistry : IWorkspaceSessionRegistry
                 AssetTypeFilter: assetTypeFilter,
                 TotalCount: bundleState.Assets.Count,
                 FilteredCount: filteredItems.Length,
-                Items: filteredItems);
+                Items: filteredItems,
+                AssetTypeDisplayNameFilter: NormalizeAssetTypeDisplayNameFilter(assetTypeDisplayNameFilter),
+                TypeFacets: BuildTypeFacets(bundleState.Assets));
 
             return true;
         }
@@ -486,6 +489,44 @@ public sealed class InMemoryWorkspaceSessionRegistry : IWorkspaceSessionRegistry
     private static string? NormalizeSearchKeyword(string? searchKeyword) =>
         string.IsNullOrWhiteSpace(searchKeyword) ? null : searchKeyword.Trim();
 
+    private static bool MatchesAssetType(
+        SampleAssetState asset,
+        AssetType? assetTypeFilter,
+        string? assetTypeDisplayNameFilter)
+    {
+        if (assetTypeFilter.HasValue && asset.AssetType != assetTypeFilter.Value)
+        {
+            return false;
+        }
+
+        var normalizedDisplayNameFilter = NormalizeAssetTypeDisplayNameFilter(assetTypeDisplayNameFilter);
+        return normalizedDisplayNameFilter is null ||
+               string.Equals(
+                   asset.AssetTypeDisplayName,
+                   normalizedDisplayNameFilter,
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? NormalizeAssetTypeDisplayNameFilter(string? assetTypeDisplayNameFilter) =>
+        string.IsNullOrWhiteSpace(assetTypeDisplayNameFilter)
+            ? null
+            : assetTypeDisplayNameFilter.Trim();
+
+    private static IReadOnlyList<AssetTypeFacetDto> BuildTypeFacets(IReadOnlyList<SampleAssetState> assets)
+    {
+        return assets
+            .GroupBy(
+                static asset => new AssetTypeFacetKey(
+                    asset.AssetType,
+                    asset.AssetTypeDisplayName),
+                AssetTypeFacetKeyComparer.Instance)
+            .Select(static group => new AssetTypeFacetDto(
+                group.Key.AssetType,
+                group.Key.AssetTypeDisplayName,
+                group.Count()))
+            .ToArray();
+    }
+
     private static string BuildSuggestedOutputPath(string bundleDisplayName, string assetName, AssetType assetType)
     {
         return $"Exports/{bundleDisplayName}/{assetName}{GetAssetExtension(assetType)}";
@@ -603,295 +644,4 @@ public sealed class InMemoryWorkspaceSessionRegistry : IWorkspaceSessionRegistry
         return false;
     }
 
-    private static IReadOnlyList<SampleBundleState> CreateSampleBundles() =>
-        new[]
-        {
-            new SampleBundleState(
-                BundleId: new BundleId("bundle.characters.player"),
-                DisplayName: "player.ab",
-                LogicalPath: "characters/player.ab",
-                Assets: new[]
-                {
-                    new SampleAssetState(
-                        AssetId: new AssetId("asset.characters.hero.diffuse"),
-                        Name: "Hero_Diffuse",
-                        AssetPath: "Assets/Characters/Hero/Hero_Diffuse.png",
-                        ContainerPath: "Assets/Characters/Hero/Hero.prefab",
-                        AssetType: AssetType.Texture2D,
-                        SizeInBytes: 524_288,
-                        HasPreview: true,
-                        PathId: 1_001,
-                        Dependencies: new[]
-                        {
-                            new AssetDependencyDto(
-                                AssetId: new AssetId("asset.characters.hero.material"),
-                                BundleId: new BundleId("bundle.characters.player"),
-                                Name: "Hero_Material",
-                                AssetType: AssetType.Material)
-                        }),
-                    new SampleAssetState(
-                        AssetId: new AssetId("asset.characters.hero.material"),
-                        Name: "Hero_Material",
-                        AssetPath: "Assets/Characters/Hero/Hero_Material.mat",
-                        ContainerPath: "Assets/Characters/Hero/Hero.prefab",
-                        AssetType: AssetType.Material,
-                        SizeInBytes: 24_576,
-                        HasPreview: false,
-                        PathId: 1_002,
-                        Dependencies: new[]
-                        {
-                            new AssetDependencyDto(
-                                AssetId: new AssetId("asset.characters.hero.diffuse"),
-                                BundleId: new BundleId("bundle.characters.player"),
-                                Name: "Hero_Diffuse",
-                                AssetType: AssetType.Texture2D)
-                        }),
-                    new SampleAssetState(
-                        AssetId: new AssetId("asset.characters.hero.mesh"),
-                        Name: "Hero_Mesh",
-                        AssetPath: "Assets/Characters/Hero/Hero_Mesh.fbx",
-                        ContainerPath: "Assets/Characters/Hero/Hero.prefab",
-                        AssetType: AssetType.Mesh,
-                        SizeInBytes: 312_944,
-                        HasPreview: false,
-                        PathId: 1_003,
-                        Dependencies: Array.Empty<AssetDependencyDto>())
-                }),
-            new SampleBundleState(
-                BundleId: new BundleId("bundle.ui.common"),
-                DisplayName: "common.ab",
-                LogicalPath: "ui/common.ab",
-                Assets: new[]
-                {
-                    new SampleAssetState(
-                        AssetId: new AssetId("asset.ui.button.sprite"),
-                        Name: "Button_Primary",
-                        AssetPath: "Assets/UI/Atlas/Button_Primary.sprite",
-                        ContainerPath: "Assets/UI/Atlas/CommonAtlas.spriteatlas",
-                        AssetType: AssetType.Sprite,
-                        SizeInBytes: 18_432,
-                        HasPreview: true,
-                        PathId: 2_001,
-                        Dependencies: new[]
-                        {
-                            new AssetDependencyDto(
-                                AssetId: new AssetId("asset.ui.common.texture"),
-                                BundleId: new BundleId("bundle.ui.common"),
-                                Name: "CommonAtlas",
-                                AssetType: AssetType.Texture2D)
-                        }),
-                    new SampleAssetState(
-                        AssetId: new AssetId("asset.ui.common.texture"),
-                        Name: "CommonAtlas",
-                        AssetPath: "Assets/UI/Atlas/CommonAtlas.png",
-                        ContainerPath: "Assets/UI/Atlas/CommonAtlas.spriteatlas",
-                        AssetType: AssetType.Texture2D,
-                        SizeInBytes: 262_144,
-                        HasPreview: true,
-                        PathId: 2_002,
-                        Dependencies: Array.Empty<AssetDependencyDto>()),
-                    new SampleAssetState(
-                        AssetId: new AssetId("asset.ui.localization.table"),
-                        Name: "LocalizationTable",
-                        AssetPath: "Assets/UI/Config/LocalizationTable.json",
-                        ContainerPath: "Assets/UI/Config",
-                        AssetType: AssetType.TextAsset,
-                        SizeInBytes: 6_144,
-                        HasPreview: false,
-                        PathId: 2_003,
-                        Dependencies: Array.Empty<AssetDependencyDto>())
-                }),
-            new SampleBundleState(
-                BundleId: new BundleId("bundle.audio.bgm"),
-                DisplayName: "bgm.ab",
-                LogicalPath: "audio/bgm.ab",
-                Assets: new[]
-                {
-                    new SampleAssetState(
-                        AssetId: new AssetId("asset.audio.battle.theme"),
-                        Name: "BattleTheme",
-                        AssetPath: "Assets/Audio/Bgm/BattleTheme.wav",
-                        ContainerPath: "Assets/Audio/Bgm",
-                        AssetType: AssetType.AudioClip,
-                        SizeInBytes: 1_572_864,
-                        HasPreview: false,
-                        PathId: 3_001,
-                        Dependencies: Array.Empty<AssetDependencyDto>()),
-                    new SampleAssetState(
-                        AssetId: new AssetId("asset.audio.menu.theme"),
-                        Name: "MenuTheme",
-                        AssetPath: "Assets/Audio/Bgm/MenuTheme.wav",
-                        ContainerPath: "Assets/Audio/Bgm",
-                        AssetType: AssetType.AudioClip,
-                        SizeInBytes: 1_114_112,
-                        HasPreview: false,
-                        PathId: 3_002,
-                        Dependencies: Array.Empty<AssetDependencyDto>())
-                }),
-            new SampleBundleState(
-                BundleId: new BundleId("bundle.environment.city"),
-                DisplayName: "city.ab",
-                LogicalPath: "environment/city.ab",
-                Assets: new[]
-                {
-                    new SampleAssetState(
-                        AssetId: new AssetId("asset.environment.city.mesh"),
-                        Name: "City_Block_A",
-                        AssetPath: "Assets/Environment/City/City_Block_A.fbx",
-                        ContainerPath: "Assets/Environment/City",
-                        AssetType: AssetType.Mesh,
-                        SizeInBytes: 842_752,
-                        HasPreview: false,
-                        PathId: 4_001,
-                        Dependencies: new[]
-                        {
-                            new AssetDependencyDto(
-                                AssetId: new AssetId("asset.environment.city.material"),
-                                BundleId: new BundleId("bundle.environment.city"),
-                                Name: "City_Lit",
-                                AssetType: AssetType.Material)
-                        }),
-                    new SampleAssetState(
-                        AssetId: new AssetId("asset.environment.city.material"),
-                        Name: "City_Lit",
-                        AssetPath: "Assets/Environment/City/City_Lit.mat",
-                        ContainerPath: "Assets/Environment/City",
-                        AssetType: AssetType.Material,
-                        SizeInBytes: 32_768,
-                        HasPreview: false,
-                        PathId: 4_002,
-                        Dependencies: Array.Empty<AssetDependencyDto>())
-                })
-        };
-
-    private static IReadOnlyList<BundleTreeNodeDto> CreateBundleTree(IReadOnlyList<SampleBundleState> bundleStates)
-    {
-        return bundleStates
-            .GroupBy(bundle => bundle.LogicalPath.Split('/')[0], StringComparer.OrdinalIgnoreCase)
-            .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
-            .Select(group =>
-            {
-                var childBundles = group
-                    .OrderBy(bundle => bundle.DisplayName, StringComparer.OrdinalIgnoreCase)
-                    .Select(bundle => new BundleTreeNodeDto(
-                        BundleId: bundle.BundleId,
-                        DisplayName: bundle.DisplayName,
-                        LogicalPath: bundle.LogicalPath,
-                        SourcePath: string.Empty,
-                        IsVirtualFolder: false,
-                        AssetCount: bundle.Assets.Count,
-                        Children: Array.Empty<BundleTreeNodeDto>()))
-                    .ToArray();
-
-                return new BundleTreeNodeDto(
-                    BundleId: new BundleId($"folder.{group.Key}"),
-                    DisplayName: group.Key,
-                    LogicalPath: group.Key,
-                    SourcePath: string.Empty,
-                    IsVirtualFolder: true,
-                    AssetCount: childBundles.Sum(static node => node.AssetCount),
-                    Children: childBundles);
-            })
-            .ToArray();
-    }
-
-    private sealed class WorkspaceSessionState
-    {
-        public WorkspaceSessionState(
-            WorkspaceSummaryDto summary,
-            IReadOnlyList<BundleTreeNodeDto> bundleTree,
-            IReadOnlyDictionary<string, SampleBundleState> bundlesById)
-        {
-            Summary = summary;
-            BundleTree = bundleTree;
-            BundlesById = bundlesById;
-        }
-
-        public WorkspaceSummaryDto Summary { get; }
-
-        public IReadOnlyList<BundleTreeNodeDto> BundleTree { get; }
-
-        public IReadOnlyDictionary<string, SampleBundleState> BundlesById { get; }
-    }
-
-    private sealed record SampleBundleState(
-        BundleId BundleId,
-        string DisplayName,
-        string LogicalPath,
-        IReadOnlyList<SampleAssetState> Assets);
-
-    private sealed class SampleAssetState
-    {
-        public SampleAssetState(
-            AssetId AssetId,
-            string Name,
-            string AssetPath,
-            string ContainerPath,
-            AssetType AssetType,
-            long SizeInBytes,
-            long PathId,
-            bool HasPreview,
-            IReadOnlyList<AssetDependencyDto> Dependencies,
-            string? AssetTypeDisplayName = null,
-            long? PreferredDisplaySizeInBytes = null)
-        {
-            this.AssetId = AssetId;
-            this.Name = Name;
-            this.AssetPath = AssetPath;
-            this.ContainerPath = ContainerPath;
-            this.AssetType = AssetType;
-            this.SizeInBytes = SizeInBytes;
-            this.PreferredDisplaySizeInBytes = PreferredDisplaySizeInBytes;
-            this.PathId = PathId;
-            this.HasPreview = HasPreview;
-            this.Dependencies = Dependencies;
-            this.AssetTypeDisplayName = string.IsNullOrWhiteSpace(AssetTypeDisplayName)
-                ? AssetType.ToString()
-                : AssetTypeDisplayName.Trim();
-        }
-
-        public AssetId AssetId { get; }
-
-        public string Name { get; }
-
-        public string AssetPath { get; }
-
-        public string ContainerPath { get; }
-
-        public AssetType AssetType { get; }
-
-        public string AssetTypeDisplayName { get; }
-
-        public long SizeInBytes { get; }
-
-        public long? PreferredDisplaySizeInBytes { get; }
-
-        public long PathId { get; }
-
-        public bool HasPreview { get; }
-
-        public IReadOnlyList<AssetDependencyDto> Dependencies { get; }
-
-        public bool IsModified { get; set; }
-
-        public DateTimeOffset? LastExtractedAtUtc { get; set; }
-
-        public AppliedWorkspaceReplacementState? AppliedWorkspaceReplacement { get; set; }
-
-        public AppliedFileReplacementState? AppliedFileReplacement { get; set; }
-    }
-
-    private sealed record AppliedWorkspaceReplacementState(
-        BundleId SourceBundleId,
-        AssetId SourceAssetId,
-        string SourceBundleDisplayName,
-        string SourceAssetName,
-        AssetType SourceAssetType,
-        DateTimeOffset AppliedAtUtc);
-
-    private sealed record AppliedFileReplacementState(
-        string SourceFilePath,
-        string SourceFileName,
-        AssetType SourceAssetType,
-        DateTimeOffset AppliedAtUtc);
 }

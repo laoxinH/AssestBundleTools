@@ -102,6 +102,11 @@ public sealed partial class AssetPaneView : UserControl
 
     private void OnFilterSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (ViewModel?.IsReplacingAssetTypeOptions == true)
+        {
+            return;
+        }
+
         FilterChanged?.Invoke(this, EventArgs.Empty);
     }
 

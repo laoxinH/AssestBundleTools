@@ -47,7 +47,7 @@
             <Setter Property="Width" Value="28" />
             <Setter Property="Height" Value="28" />
             <Setter Property="CornerRadius" Value="14" />
-            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
             <Setter Property="VerticalAlignment" Value="Top" />
         </Style>
     </UserControl.Resources>
@@ -89,10 +89,14 @@
                                 Margin="0,4,0,0"
                                 ColumnSpacing="6">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Style="{StaticResource InspectorMeshPreviewAssociationTextStyle}"
+                                    Text="{x:Bind Text, Mode=OneTime}" />
                                 <Button
+                                    Grid.Column="1"
                                     AutomationProperties.Name="{x:Bind OpenButtonText, Mode=OneTime}"
                                     Click="OnResolvedAssetOpenButtonClick"
                                     Style="{StaticResource InspectorMeshPreviewResolvedAssetTagButtonStyle}"
@@ -103,12 +107,8 @@
                                         FontFamily="Segoe Fluent Icons"
                                         FontSize="13"
                                         Foreground="#FFF8FAFC"
-                                        Glyph="&#xE8B7;" />
+                                        Glyph="&#xE8A7;" />
                                 </Button>
-                                <TextBlock
-                                    Grid.Column="1"
-                                    Style="{StaticResource InspectorMeshPreviewAssociationTextStyle}"
-                                    Text="{x:Bind Text, Mode=OneTime}" />
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

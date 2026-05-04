@@ -15,4 +15,6 @@ public sealed record AssetListResultDto(
     AssetType? AssetTypeFilter,
     int TotalCount,
     int FilteredCount,
-    IReadOnlyList<AssetListItemDto> Items);
+    IReadOnlyList<AssetListItemDto> Items,
+    string? AssetTypeDisplayNameFilter = null,
+    IReadOnlyList<AssetTypeFacetDto>? TypeFacets = null);

@@ -42,7 +42,8 @@ internal static class WorkspaceBatchExtractionPlanner
                     workspaceId,
                     bundleNode.BundleId,
                     searchKeyword: null,
-                    assetTypeFilter,
+                    assetTypeFilter: assetTypeFilter,
+                    assetTypeDisplayNameFilter: null,
                     out var assetListResult))
             {
                 continue;

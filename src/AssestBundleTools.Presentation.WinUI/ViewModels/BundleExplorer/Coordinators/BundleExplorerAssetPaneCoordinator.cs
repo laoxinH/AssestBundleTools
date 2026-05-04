@@ -6,11 +6,10 @@ using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 
 /// <summary>
@@ -180,13 +179,16 @@ internal sealed class BundleExplorerAssetPaneCoordinator
                 WorkspaceId: workspaceSummary.WorkspaceId,
                 BundleId: bundleNode.BundleId,
                 SearchKeyword: NormalizeSearchKeyword(pane.SearchKeyword),
-                AssetTypeFilter: pane.SelectedAssetTypeOption?.AssetType)));
+                AssetTypeFilter: pane.SelectedAssetType,
+                AssetTypeDisplayNameFilter: pane.SelectedAssetTypeDisplayNameFilter)));
 
         if (assetList is null)
         {
             ClearPaneItems(pane, clearInspectorOnEmpty);
             return;
         }
+
+        pane.ReplaceAssetTypeOptions(_assetInspectorPresenter.CreateAssetTypeOptions(assetList.TypeFacets));
 
         var entries = assetList.Items
             .Select(_assetInspectorPresenter.CreateAssetEntry)

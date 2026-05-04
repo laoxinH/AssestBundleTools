@@ -105,6 +105,31 @@ public sealed partial class CachedWorkspaceSessionRegistry
 
     private readonly record struct WorkspaceAssetObjectKey(string SerializedFileName, long PathId);
 
+    private readonly record struct AssetTypeFacetKey(
+        AssetType AssetType,
+        string AssetTypeDisplayName);
+
+    private sealed class AssetTypeFacetKeyComparer : IEqualityComparer<AssetTypeFacetKey>
+    {
+        public static AssetTypeFacetKeyComparer Instance { get; } = new();
+
+        public bool Equals(AssetTypeFacetKey x, AssetTypeFacetKey y)
+        {
+            return x.AssetType == y.AssetType &&
+                   string.Equals(
+                       x.AssetTypeDisplayName,
+                       y.AssetTypeDisplayName,
+                       StringComparison.OrdinalIgnoreCase);
+        }
+
+        public int GetHashCode(AssetTypeFacetKey obj)
+        {
+            return HashCode.Combine(
+                obj.AssetType,
+                StringComparer.OrdinalIgnoreCase.GetHashCode(obj.AssetTypeDisplayName));
+        }
+    }
+
     private sealed class WorkspaceAssetDependencyTargetLookup
     {
         private readonly IReadOnlyDictionary<string, WorkspaceAssetDependencyTarget> _targetsByAssetId;

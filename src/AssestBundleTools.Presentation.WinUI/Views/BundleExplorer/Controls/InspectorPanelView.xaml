@@ -111,7 +111,7 @@
                 Value="15" />
             <Setter
                 Property="HorizontalAlignment"
-                Value="Left" />
+                Value="Right" />
             <Setter
                 Property="VerticalAlignment"
                 Value="Top" />
@@ -399,45 +399,44 @@
                                                             Padding="10"
                                                             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                                             CornerRadius="8">
-                                                            <Grid ColumnSpacing="8">
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="Auto" />
-                                                                    <ColumnDefinition Width="*" />
-                                                                </Grid.ColumnDefinitions>
-                                                                <Button
-                                                                    AutomationProperties.Name="{x:Bind OpenButtonText, Mode=OneTime}"
-                                                                    Click="OnResolvedAssetOpenButtonClick"
-                                                                    Style="{StaticResource InspectorResolvedAssetTagButtonStyle}"
-                                                                    Tag="{x:Bind Target, Mode=OneTime}"
-                                                                    ToolTipService.ToolTip="{x:Bind OpenButtonToolTipText, Mode=OneTime}"
-                                                                    Visibility="{x:Bind OpenButtonVisibility, Mode=OneTime}">
-                                                                    <FontIcon
-                                                                        FontFamily="Segoe Fluent Icons"
-                                                                        FontSize="14"
-                                                                        Glyph="&#xE8B7;" />
-                                                                </Button>
-                                                                <StackPanel
-                                                                    Grid.Column="1"
-                                                                    Spacing="4">
+                                                            <StackPanel Spacing="4">
+                                                                <Grid ColumnSpacing="8">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*" />
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                    </Grid.ColumnDefinitions>
                                                                     <TextBlock
                                                                         FontWeight="SemiBold"
                                                                         Text="{x:Bind Name, Mode=OneTime}"
                                                                         TextWrapping="WrapWholeWords" />
-                                                                    <TextBlock
-                                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                                        Text="{x:Bind BundleName, Mode=OneTime}"
-                                                                        TextWrapping="WrapWholeWords" />
-                                                                    <TextBlock
-                                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                                        Text="{x:Bind MetadataText, Mode=OneTime}"
-                                                                        TextWrapping="WrapWholeWords" />
-                                                                    <TextBlock
-                                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                                                        Text="{x:Bind SupplementaryText, Mode=OneTime}"
-                                                                        TextWrapping="WrapWholeWords"
-                                                                        Visibility="{x:Bind SupplementaryVisibility, Mode=OneTime}" />
-                                                                </StackPanel>
-                                                            </Grid>
+                                                                    <Button
+                                                                        Grid.Column="1"
+                                                                        AutomationProperties.Name="{x:Bind OpenButtonText, Mode=OneTime}"
+                                                                        Click="OnResolvedAssetOpenButtonClick"
+                                                                        Style="{StaticResource InspectorResolvedAssetTagButtonStyle}"
+                                                                        Tag="{x:Bind Target, Mode=OneTime}"
+                                                                        ToolTipService.ToolTip="{x:Bind OpenButtonToolTipText, Mode=OneTime}"
+                                                                        Visibility="{x:Bind OpenButtonVisibility, Mode=OneTime}">
+                                                                        <FontIcon
+                                                                            FontFamily="Segoe Fluent Icons"
+                                                                            FontSize="14"
+                                                                            Glyph="&#xE8A7;" />
+                                                                    </Button>
+                                                                </Grid>
+                                                                <TextBlock
+                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                    Text="{x:Bind BundleName, Mode=OneTime}"
+                                                                    TextWrapping="WrapWholeWords" />
+                                                                <TextBlock
+                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                    Text="{x:Bind MetadataText, Mode=OneTime}"
+                                                                    TextWrapping="WrapWholeWords" />
+                                                                <TextBlock
+                                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                                    Text="{x:Bind SupplementaryText, Mode=OneTime}"
+                                                                    TextWrapping="WrapWholeWords"
+                                                                    Visibility="{x:Bind SupplementaryVisibility, Mode=OneTime}" />
+                                                            </StackPanel>
                                                         </Border>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
@@ -462,45 +461,44 @@
                                                             Padding="10"
                                                             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                                             CornerRadius="8">
-                                                            <Grid ColumnSpacing="8">
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="Auto" />
-                                                                    <ColumnDefinition Width="*" />
-                                                                </Grid.ColumnDefinitions>
-                                                                <Button
-                                                                    AutomationProperties.Name="{x:Bind OpenButtonText, Mode=OneTime}"
-                                                                    Click="OnResolvedAssetOpenButtonClick"
-                                                                    Style="{StaticResource InspectorResolvedAssetTagButtonStyle}"
-                                                                    Tag="{x:Bind Target, Mode=OneTime}"
-                                                                    ToolTipService.ToolTip="{x:Bind OpenButtonToolTipText, Mode=OneTime}"
-                                                                    Visibility="{x:Bind OpenButtonVisibility, Mode=OneTime}">
-                                                                    <FontIcon
-                                                                        FontFamily="Segoe Fluent Icons"
-                                                                        FontSize="14"
-                                                                        Glyph="&#xE8B7;" />
-                                                                </Button>
-                                                                <StackPanel
-                                                                    Grid.Column="1"
-                                                                    Spacing="4">
+                                                            <StackPanel Spacing="4">
+                                                                <Grid ColumnSpacing="8">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*" />
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                    </Grid.ColumnDefinitions>
                                                                     <TextBlock
                                                                         FontWeight="SemiBold"
                                                                         Text="{x:Bind Name, Mode=OneTime}"
                                                                         TextWrapping="WrapWholeWords" />
-                                                                    <TextBlock
-                                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                                        Text="{x:Bind BundleName, Mode=OneTime}"
-                                                                        TextWrapping="WrapWholeWords" />
-                                                                    <TextBlock
-                                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                                        Text="{x:Bind MetadataText, Mode=OneTime}"
-                                                                        TextWrapping="WrapWholeWords" />
-                                                                    <TextBlock
-                                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                                                        Text="{x:Bind SupplementaryText, Mode=OneTime}"
-                                                                        TextWrapping="WrapWholeWords"
-                                                                        Visibility="{x:Bind SupplementaryVisibility, Mode=OneTime}" />
-                                                                </StackPanel>
-                                                            </Grid>
+                                                                    <Button
+                                                                        Grid.Column="1"
+                                                                        AutomationProperties.Name="{x:Bind OpenButtonText, Mode=OneTime}"
+                                                                        Click="OnResolvedAssetOpenButtonClick"
+                                                                        Style="{StaticResource InspectorResolvedAssetTagButtonStyle}"
+                                                                        Tag="{x:Bind Target, Mode=OneTime}"
+                                                                        ToolTipService.ToolTip="{x:Bind OpenButtonToolTipText, Mode=OneTime}"
+                                                                        Visibility="{x:Bind OpenButtonVisibility, Mode=OneTime}">
+                                                                        <FontIcon
+                                                                            FontFamily="Segoe Fluent Icons"
+                                                                            FontSize="14"
+                                                                            Glyph="&#xE8A7;" />
+                                                                    </Button>
+                                                                </Grid>
+                                                                <TextBlock
+                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                    Text="{x:Bind BundleName, Mode=OneTime}"
+                                                                    TextWrapping="WrapWholeWords" />
+                                                                <TextBlock
+                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                    Text="{x:Bind MetadataText, Mode=OneTime}"
+                                                                    TextWrapping="WrapWholeWords" />
+                                                                <TextBlock
+                                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                                    Text="{x:Bind SupplementaryText, Mode=OneTime}"
+                                                                    TextWrapping="WrapWholeWords"
+                                                                    Visibility="{x:Bind SupplementaryVisibility, Mode=OneTime}" />
+                                                            </StackPanel>
                                                         </Border>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
@@ -525,45 +523,44 @@
                                                             Padding="10"
                                                             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                                             CornerRadius="8">
-                                                            <Grid ColumnSpacing="8">
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="Auto" />
-                                                                    <ColumnDefinition Width="*" />
-                                                                </Grid.ColumnDefinitions>
-                                                                <Button
-                                                                    AutomationProperties.Name="{x:Bind OpenButtonText, Mode=OneTime}"
-                                                                    Click="OnResolvedAssetOpenButtonClick"
-                                                                    Style="{StaticResource InspectorResolvedAssetTagButtonStyle}"
-                                                                    Tag="{x:Bind Target, Mode=OneTime}"
-                                                                    ToolTipService.ToolTip="{x:Bind OpenButtonToolTipText, Mode=OneTime}"
-                                                                    Visibility="{x:Bind OpenButtonVisibility, Mode=OneTime}">
-                                                                    <FontIcon
-                                                                        FontFamily="Segoe Fluent Icons"
-                                                                        FontSize="14"
-                                                                        Glyph="&#xE8B7;" />
-                                                                </Button>
-                                                                <StackPanel
-                                                                    Grid.Column="1"
-                                                                    Spacing="4">
+                                                            <StackPanel Spacing="4">
+                                                                <Grid ColumnSpacing="8">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*" />
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                    </Grid.ColumnDefinitions>
                                                                     <TextBlock
                                                                         FontWeight="SemiBold"
                                                                         Text="{x:Bind Name, Mode=OneTime}"
                                                                         TextWrapping="WrapWholeWords" />
-                                                                    <TextBlock
-                                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                                        Text="{x:Bind BundleName, Mode=OneTime}"
-                                                                        TextWrapping="WrapWholeWords" />
-                                                                    <TextBlock
-                                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                                        Text="{x:Bind MetadataText, Mode=OneTime}"
-                                                                        TextWrapping="WrapWholeWords" />
-                                                                    <TextBlock
-                                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                                                        Text="{x:Bind SupplementaryText, Mode=OneTime}"
-                                                                        TextWrapping="WrapWholeWords"
-                                                                        Visibility="{x:Bind SupplementaryVisibility, Mode=OneTime}" />
-                                                                </StackPanel>
-                                                            </Grid>
+                                                                    <Button
+                                                                        Grid.Column="1"
+                                                                        AutomationProperties.Name="{x:Bind OpenButtonText, Mode=OneTime}"
+                                                                        Click="OnResolvedAssetOpenButtonClick"
+                                                                        Style="{StaticResource InspectorResolvedAssetTagButtonStyle}"
+                                                                        Tag="{x:Bind Target, Mode=OneTime}"
+                                                                        ToolTipService.ToolTip="{x:Bind OpenButtonToolTipText, Mode=OneTime}"
+                                                                        Visibility="{x:Bind OpenButtonVisibility, Mode=OneTime}">
+                                                                        <FontIcon
+                                                                            FontFamily="Segoe Fluent Icons"
+                                                                            FontSize="14"
+                                                                            Glyph="&#xE8A7;" />
+                                                                    </Button>
+                                                                </Grid>
+                                                                <TextBlock
+                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                    Text="{x:Bind BundleName, Mode=OneTime}"
+                                                                    TextWrapping="WrapWholeWords" />
+                                                                <TextBlock
+                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                    Text="{x:Bind MetadataText, Mode=OneTime}"
+                                                                    TextWrapping="WrapWholeWords" />
+                                                                <TextBlock
+                                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                                    Text="{x:Bind SupplementaryText, Mode=OneTime}"
+                                                                    TextWrapping="WrapWholeWords"
+                                                                    Visibility="{x:Bind SupplementaryVisibility, Mode=OneTime}" />
+                                                            </StackPanel>
                                                         </Border>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>

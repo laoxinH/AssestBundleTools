@@ -15,6 +15,39 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 public sealed class BundleExplorerAssetInspectorPresenterTests
 {
     [Fact]
+    public void CreateAssetTypeOptions_ShouldProjectDynamicFacets_WithPreferredOrderingAndCounts()
+    {
+        var localizationService = new TestLocalizationService();
+        var bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
+        var presenter = new BundleExplorerAssetInspectorPresenter(bundlePane, localizationService);
+
+        var options = presenter.CreateAssetTypeOptions(
+        [
+            new AssetTypeFacetDto(AssetType.Material, "Material", 2),
+            new AssetTypeFacetDto(AssetType.Texture2D, "Texture2D", 3),
+            new AssetTypeFacetDto(AssetType.Mesh, "Mesh", 0),
+            new AssetTypeFacetDto(AssetType.Unknown, "Shader", 1)
+        ]);
+
+        Assert.Equal(4, options.Count);
+        Assert.Equal(ResourceKeys.AssetTypeFilterAll, options[0].DisplayText);
+        Assert.Null(options[0].FilterKey);
+        Assert.Equal(AssetType.Texture2D, options[1].AssetType);
+        Assert.Equal(ResourceKeys.AssetTypeDisplayTexture2D + " (3)", options[1].DisplayText);
+        Assert.Equal("Texture2D", options[1].FilterKey);
+        Assert.Equal(AssetType.Material, options[2].AssetType);
+        Assert.Equal(ResourceKeys.AssetTypeDisplayMaterial + " (2)", options[2].DisplayText);
+        Assert.DoesNotContain(options, option => option.AssetType == AssetType.Mesh);
+
+        var shaderOption = options[3];
+        Assert.Equal("Shader", shaderOption.DisplayName);
+        Assert.Equal("Shader (1)", shaderOption.DisplayText);
+        Assert.Equal(AssetType.Unknown, shaderOption.AssetType);
+        Assert.Equal("Shader", shaderOption.AssetTypeDisplayNameFilter);
+        Assert.Equal("Unknown:Shader", shaderOption.FilterKey);
+    }
+
+    [Fact]
     public void PresentAssetDocumentTab_ShouldProjectDependencyNavigationTarget()
     {
         var localizationService = new TestLocalizationService();

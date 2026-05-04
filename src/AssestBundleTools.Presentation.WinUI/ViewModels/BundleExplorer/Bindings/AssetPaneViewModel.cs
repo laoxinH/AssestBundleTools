@@ -4,11 +4,6 @@ using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using Microsoft.UI.Xaml;
 
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
@@ -32,6 +27,8 @@ public sealed class AssetPaneViewModel : ObservableObject
     private bool _showPreviewableOnly;
     private bool _supportsBatchExtractionQuickAction;
     private bool _isBusy;
+    private bool _isReplacingAssetTypeOptions;
+    private string? _selectedAssetTypeFilterKey;
     private AssetTypeOptionViewModel? _selectedAssetTypeOption;
     private AssetListEntryViewModel? _selectedAsset;
     private PaneId _paneId;
@@ -159,17 +156,54 @@ public sealed class AssetPaneViewModel : ObservableObject
 
     public ObservableCollection<AssetListEntryViewModel> SelectedAssets { get; } = new();
 
+    public bool IsReplacingAssetTypeOptions
+    {
+        get => _isReplacingAssetTypeOptions;
+        private set => SetProperty(ref _isReplacingAssetTypeOptions, value);
+    }
+
     public AssetTypeOptionViewModel? SelectedAssetTypeOption
     {
         get => _selectedAssetTypeOption;
-        set => SetProperty(ref _selectedAssetTypeOption, value);
+        set
+        {
+            SetSelectedAssetTypeOption(value, syncFilterKeyFromOption: true);
+        }
+    }
+
+    public string? SelectedAssetTypeFilterKey
+    {
+        get => _selectedAssetTypeFilterKey;
+        private set
+        {
+            var normalizedValue = NormalizeAssetTypeFilterKey(value);
+            if (SetProperty(ref _selectedAssetTypeFilterKey, normalizedValue))
+            {
+                OnPropertyChanged(nameof(SelectedAssetType));
+                OnPropertyChanged(nameof(SelectedAssetTypeDisplayNameFilter));
+            }
+        }
     }
 
     /// <summary>
     /// 当前窗格选中的资源类型筛选。
     /// 该值用于在标签页切换时保存和恢复列表过滤条件。
     /// </summary>
-    public AssetType? SelectedAssetType => SelectedAssetTypeOption?.AssetType;
+    public AssetType? SelectedAssetType =>
+        AssetTypeOptionViewModel.TryParseFilterKey(
+            SelectedAssetTypeFilterKey,
+            out var assetType,
+            out _)
+            ? assetType
+            : null;
+
+    public string? SelectedAssetTypeDisplayNameFilter =>
+        AssetTypeOptionViewModel.TryParseFilterKey(
+            SelectedAssetTypeFilterKey,
+            out _,
+            out var assetTypeDisplayNameFilter)
+            ? assetTypeDisplayNameFilter
+            : null;
 
     public AssetListEntryViewModel? SelectedAsset
     {
@@ -214,13 +248,34 @@ public sealed class AssetPaneViewModel : ObservableObject
 
     public void ReplaceAssetTypeOptions(IEnumerable<AssetTypeOptionViewModel> options)
     {
-        AssetTypeOptions.Clear();
-        foreach (var option in options)
+        var selectedFilterKey = SelectedAssetTypeFilterKey;
+        var materializedOptions = options.ToArray();
+        if (AreAssetTypeOptionsEquivalent(materializedOptions))
         {
-            AssetTypeOptions.Add(option);
+            SelectedAssetTypeOption = SelectAssetTypeOption(selectedFilterKey) ??
+                                      AssetTypeOptions.FirstOrDefault();
+            return;
         }
 
-        SelectedAssetTypeOption = AssetTypeOptions.FirstOrDefault();
+        IsReplacingAssetTypeOptions = true;
+        try
+        {
+            AssetTypeOptions.Clear();
+            foreach (var option in materializedOptions)
+            {
+                AssetTypeOptions.Add(option);
+            }
+
+            var selectedOption = SelectAssetTypeOption(selectedFilterKey) ??
+                                 EnsureRestoredAssetTypeOption(selectedFilterKey) ??
+                                 AssetTypeOptions.FirstOrDefault();
+            SetSelectedAssetTypeOption(selectedOption, syncFilterKeyFromOption: false);
+            SelectedAssetTypeFilterKey = selectedOption?.FilterKey;
+        }
+        finally
+        {
+            IsReplacingAssetTypeOptions = false;
+        }
     }
 
     public void ReplaceItems(string currentBundleDisplayName, IEnumerable<AssetListEntryViewModel> items, string emptyStateText)
@@ -316,7 +371,7 @@ public sealed class AssetPaneViewModel : ObservableObject
     /// </summary>
     public void RestoreViewState(
         string searchKeyword,
-        AssetType? selectedAssetType,
+        string? selectedAssetTypeFilterKey,
         bool showModifiedOnly,
         bool showPreviewableOnly)
     {
@@ -324,8 +379,12 @@ public sealed class AssetPaneViewModel : ObservableObject
         IsSearchExpanded = !string.IsNullOrWhiteSpace(searchKeyword);
         ShowModifiedOnly = showModifiedOnly;
         ShowPreviewableOnly = showPreviewableOnly;
-        SelectedAssetTypeOption = AssetTypeOptions.FirstOrDefault(option => option.AssetType == selectedAssetType)
-                                  ?? AssetTypeOptions.FirstOrDefault();
+        SelectedAssetTypeFilterKey = selectedAssetTypeFilterKey;
+        SetSelectedAssetTypeOption(
+            SelectAssetTypeOption(SelectedAssetTypeFilterKey) ??
+            EnsureRestoredAssetTypeOption(SelectedAssetTypeFilterKey) ??
+            AssetTypeOptions.FirstOrDefault(),
+            syncFilterKeyFromOption: false);
     }
 
     /// <summary>
@@ -418,5 +477,78 @@ public sealed class AssetPaneViewModel : ObservableObject
             item.IsSelected = true;
         }
     }
-}
 
+    private AssetTypeOptionViewModel? SelectAssetTypeOption(string? filterKey)
+    {
+        return string.IsNullOrWhiteSpace(filterKey)
+            ? AssetTypeOptions.FirstOrDefault(option => option.AssetType is null)
+            : AssetTypeOptions.FirstOrDefault(option => option.MatchesFilterKey(filterKey));
+    }
+
+    private bool AreAssetTypeOptionsEquivalent(IReadOnlyList<AssetTypeOptionViewModel> options)
+    {
+        if (AssetTypeOptions.Count != options.Count)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < options.Count; index++)
+        {
+            var current = AssetTypeOptions[index];
+            var next = options[index];
+            if (!string.Equals(current.FilterKey, next.FilterKey, StringComparison.OrdinalIgnoreCase) ||
+                !string.Equals(current.DisplayName, next.DisplayName, StringComparison.Ordinal) ||
+                current.Count != next.Count)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private AssetTypeOptionViewModel? EnsureRestoredAssetTypeOption(string? filterKey)
+    {
+        var restoredOption = AssetTypeOptionViewModel.CreateFromFilterKey(filterKey);
+        if (restoredOption.AssetType is null)
+        {
+            return null;
+        }
+
+        AssetTypeOptions.Add(restoredOption);
+        return restoredOption;
+    }
+
+    // 这里必须按引用更新，避免重建选项集合后 SelectedItem 仍指向旧实例而导致下拉空白。
+    private void SetSelectedAssetTypeOption(
+        AssetTypeOptionViewModel? option,
+        bool syncFilterKeyFromOption)
+    {
+        if (ReferenceEquals(_selectedAssetTypeOption, option))
+        {
+            if (syncFilterKeyFromOption && !IsReplacingAssetTypeOptions)
+            {
+                SelectedAssetTypeFilterKey = option?.FilterKey;
+            }
+
+            return;
+        }
+
+        _selectedAssetTypeOption = option;
+        OnPropertyChanged(nameof(SelectedAssetTypeOption));
+
+        if (syncFilterKeyFromOption && !IsReplacingAssetTypeOptions)
+        {
+            SelectedAssetTypeFilterKey = option?.FilterKey;
+            return;
+        }
+
+        OnPropertyChanged(nameof(SelectedAssetType));
+        OnPropertyChanged(nameof(SelectedAssetTypeDisplayNameFilter));
+    }
+
+    private static string? NormalizeAssetTypeFilterKey(string? filterKey) =>
+        string.IsNullOrWhiteSpace(filterKey)
+            ? null
+            : filterKey.Trim();
+}
