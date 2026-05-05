@@ -18,7 +18,7 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 /// 当前仍由 <see cref="BundleExplorerPage" /> 承载文档里约定的“三栏主工作区”结构，
 /// 当前阶段重点是先把导航、只读浏览骨架和轻量操作反馈稳定下来。
 /// </remarks>
-public sealed partial class BundleExplorerPage : Page
+public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
 {
     private readonly BundleExplorerPageChromeCoordinator _chromeCoordinator;
     private readonly BundleExplorerPageNavigationCoordinator _navigationCoordinator;
@@ -241,10 +241,44 @@ public sealed partial class BundleExplorerPage : Page
     {
         if (!_tabCoordinator.TryBuildTabOrderSnapshot(sender, out IReadOnlyList<AssetDocumentTabViewModel> orderedTabs))
         {
+            AssetDocumentTabDragCoordinator.CompleteDrag();
             return;
         }
 
         ViewModel.ReorderActiveAssetDocumentTabs(orderedTabs);
+        AssetDocumentTabDragCoordinator.CompleteDrag();
+    }
+
+    private void OnAssetDocumentTabViewTabDragStarting(TabView sender, TabViewTabDragStartingEventArgs args)
+    {
+        AssetDocumentTabDragCoordinator.StartDrag(this, args);
+    }
+
+    private async void OnAssetDocumentTabViewTabDroppedOutside(
+        TabView sender,
+        TabViewTabDroppedOutsideEventArgs args)
+    {
+        try
+        {
+            if (AssetDocumentTabDragCoordinator.TryResolveAssetTab(args.Item, args.Tab, out var assetTab))
+            {
+                await _assetEditorWindowCoordinator.OpenAssetDocumentInNewWindowAsync(assetTab);
+            }
+        }
+        finally
+        {
+            AssetDocumentTabDragCoordinator.CompleteDrag();
+        }
+    }
+
+    private void OnAssetDocumentTabViewTabStripDragOver(object sender, DragEventArgs e)
+    {
+        AssetDocumentTabDragCoordinator.HandleDragOver(this, e);
+    }
+
+    private async void OnAssetDocumentTabViewTabStripDrop(object sender, DragEventArgs e)
+    {
+        await AssetDocumentTabDragCoordinator.HandleDropAsync(this, e);
     }
 
     private void OnAssetDocumentTabContextFlyoutOpening(object sender, object e)
@@ -452,4 +486,31 @@ public sealed partial class BundleExplorerPage : Page
         _paneLayoutCoordinator.Stop();
         _chromeCoordinator.Stop();
     }
+
+    bool IAssetDocumentTabDragHost.CanStartAssetDocumentTabDrag(AssetDocumentTabViewModel assetTab)
+    {
+        ArgumentNullException.ThrowIfNull(assetTab);
+
+        return !ViewModel.IsBusy &&
+               ViewModel.DocumentWorkspace.CurrentAssetTabs.Contains(assetTab);
+    }
+
+    bool IAssetDocumentTabDragHost.CanAcceptAssetDocumentTabDrag(AssetDocumentTabDragSession session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        return !ViewModel.IsBusy &&
+               ViewModel.WorkspaceShell.HasWorkspace;
+    }
+
+    Task<AssetDocumentTabViewModel?> IAssetDocumentTabDragHost.DetachAssetDocumentTabForDragAsync(
+        AssetDocumentTabViewModel assetTab) =>
+        ViewModel.DetachAssetDocumentTabForEditorWindowAsync(assetTab);
+
+    Task<bool> IAssetDocumentTabDragHost.AttachAssetDocumentTabFromDragAsync(
+        AssetDocumentTabViewModel assetTab) =>
+        ViewModel.AttachAssetDocumentTabFromEditorWindowAsync(assetTab);
+
+    Task IAssetDocumentTabDragHost.CompleteAssetDocumentTabDragMoveAsync() =>
+        Task.CompletedTask;
 }

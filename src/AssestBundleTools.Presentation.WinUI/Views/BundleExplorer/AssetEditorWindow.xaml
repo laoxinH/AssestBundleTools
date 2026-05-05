@@ -23,13 +23,18 @@
         <TabView
             x:Name="AssetEditorTabView"
             Margin="-2,-2,-2,0"
+            AllowDropTabs="True"
             CanDragTabs="True"
             CanReorderTabs="True"
             IsAddTabButtonVisible="False"
             SelectedItem="{x:Bind ViewModel.DocumentGroup.ActiveAssetTab, Mode=OneWay}"
             TabCloseRequested="OnAssetEditorTabViewTabCloseRequested"
             TabDragCompleted="OnAssetEditorTabViewTabDragCompleted"
+            TabDragStarting="OnAssetEditorTabViewTabDragStarting"
+            TabDroppedOutside="OnAssetEditorTabViewTabDroppedOutside"
             TabItemsSource="{x:Bind ViewModel.DocumentGroup.AssetTabs, Mode=OneWay}"
+            TabStripDragOver="OnAssetEditorTabViewTabStripDragOver"
+            TabStripDrop="OnAssetEditorTabViewTabStripDrop"
             SelectionChanged="OnAssetEditorTabViewSelectionChanged"
             Visibility="{x:Bind ViewModel.DocumentGroup.TabStripVisibility, Mode=OneWay}">
             <TabView.TabItemTemplate>

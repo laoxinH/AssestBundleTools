@@ -1455,13 +1455,18 @@
                         x:Name="AssetDocumentTabView"
                         Grid.Row="1"
                         Margin="-2,-2,-2,0"
+                        AllowDropTabs="True"
                         CanDragTabs="True"
                         CanReorderTabs="True"
                         IsAddTabButtonVisible="False"
                         SelectedItem="{x:Bind ViewModel.DocumentWorkspace.ActiveAssetDocumentTab, Mode=OneWay}"
                         TabDragCompleted="OnAssetDocumentTabViewTabDragCompleted"
+                        TabDragStarting="OnAssetDocumentTabViewTabDragStarting"
+                        TabDroppedOutside="OnAssetDocumentTabViewTabDroppedOutside"
                         TabCloseRequested="OnAssetDocumentTabViewTabCloseRequested"
                         TabItemsSource="{x:Bind ViewModel.DocumentWorkspace.CurrentAssetTabs, Mode=OneWay}"
+                        TabStripDragOver="OnAssetDocumentTabViewTabStripDragOver"
+                        TabStripDrop="OnAssetDocumentTabViewTabStripDrop"
                         SelectionChanged="OnAssetDocumentTabViewSelectionChanged"
                         Visibility="{x:Bind ViewModel.DocumentWorkspace.AssetDocumentTabStripVisibility, Mode=OneWay}">
                         <TabView.TabItemTemplate>

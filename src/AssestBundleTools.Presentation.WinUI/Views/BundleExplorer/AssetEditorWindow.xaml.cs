@@ -10,14 +10,18 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 /// <summary>
 /// 独立资源编辑窗口，第一阶段承载命令式移出的资产文档标签组。
 /// </summary>
-public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window
+public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAssetDocumentTabDragHost
 {
+    private readonly Func<AssetEditorWindow, AssetDocumentTabViewModel, Task> _openAssetDocumentInNewWindowAsync;
     private bool _isInitialized;
     private bool _isSynchronizingSelection;
 
-    public AssetEditorWindow(AssetEditorWindowViewModel viewModel)
+    public AssetEditorWindow(
+        AssetEditorWindowViewModel viewModel,
+        Func<AssetEditorWindow, AssetDocumentTabViewModel, Task> openAssetDocumentInNewWindowAsync)
     {
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        _openAssetDocumentInNewWindowAsync = openAssetDocumentInNewWindowAsync ?? throw new ArgumentNullException(nameof(openAssetDocumentInNewWindowAsync));
         InitializeComponent();
         ApplyLocalizedText();
         UpdateWindowTitle();
@@ -76,6 +80,39 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window
         }
 
         ViewModel.ReorderAssetDocumentTabs(orderedTabs);
+        AssetDocumentTabDragCoordinator.CompleteDrag();
+    }
+
+    private void OnAssetEditorTabViewTabDragStarting(TabView sender, TabViewTabDragStartingEventArgs args)
+    {
+        AssetDocumentTabDragCoordinator.StartDrag(this, args);
+    }
+
+    private async void OnAssetEditorTabViewTabDroppedOutside(
+        TabView sender,
+        TabViewTabDroppedOutsideEventArgs args)
+    {
+        try
+        {
+            if (AssetDocumentTabDragCoordinator.TryResolveAssetTab(args.Item, args.Tab, out var assetTab))
+            {
+                await _openAssetDocumentInNewWindowAsync(this, assetTab);
+            }
+        }
+        finally
+        {
+            AssetDocumentTabDragCoordinator.CompleteDrag();
+        }
+    }
+
+    private void OnAssetEditorTabViewTabStripDragOver(object sender, DragEventArgs e)
+    {
+        AssetDocumentTabDragCoordinator.HandleDragOver(this, e);
+    }
+
+    private async void OnAssetEditorTabViewTabStripDrop(object sender, DragEventArgs e)
+    {
+        await AssetDocumentTabDragCoordinator.HandleDropAsync(this, e);
     }
 
     private void OnAssetEditorTabContextFlyoutOpening(object sender, object e)
@@ -297,4 +334,30 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window
         value = (sender as FrameworkElement)?.Tag as TValue;
         return value is not null;
     }
+
+    bool IAssetDocumentTabDragHost.CanStartAssetDocumentTabDrag(AssetDocumentTabViewModel assetTab)
+    {
+        ArgumentNullException.ThrowIfNull(assetTab);
+
+        return !ViewModel.IsBusy &&
+               ViewModel.DocumentGroup.AssetTabs.Contains(assetTab);
+    }
+
+    bool IAssetDocumentTabDragHost.CanAcceptAssetDocumentTabDrag(AssetDocumentTabDragSession session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        return !ViewModel.IsBusy;
+    }
+
+    Task<AssetDocumentTabViewModel?> IAssetDocumentTabDragHost.DetachAssetDocumentTabForDragAsync(
+        AssetDocumentTabViewModel assetTab) =>
+        ViewModel.DetachAssetDocumentTabForExternalHostAsync(assetTab);
+
+    Task<bool> IAssetDocumentTabDragHost.AttachAssetDocumentTabFromDragAsync(
+        AssetDocumentTabViewModel assetTab) =>
+        ViewModel.AttachAssetDocumentTabFromExternalHostAsync(assetTab);
+
+    Task IAssetDocumentTabDragHost.CompleteAssetDocumentTabDragMoveAsync() =>
+        ViewModel.CompleteExternalAssetDocumentMoveAsync();
 }
