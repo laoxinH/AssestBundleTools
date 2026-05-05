@@ -9,10 +9,13 @@ namespace AssestBundleTools.Infrastructure.Bundles.Internal;
 /// </summary>
 internal static class AssetsToolsAssetDependencyResolver
 {
+    private const string GameObjectTypeDisplayName = "GameObject";
+
     public static IReadOnlyList<AssetBundleReadAssetDependencyDto> ResolveDependencies(
         string sourceAssetId,
         AssetsFileInstance serializedFile,
         AssetTypeValueField? baseField,
+        string? assetTypeDisplayName,
         IReadOnlyDictionary<AssetsToolsAssetObjectKey, AssetsToolsResolvedAssetDescriptor> assetLookup,
         IReadOnlyDictionary<string, string> internalSerializedFileLookup)
     {
@@ -28,6 +31,44 @@ internal static class AssetsToolsAssetDependencyResolver
 
         var dependencies = new List<AssetBundleReadAssetDependencyDto>();
         var seenAssetIds = new HashSet<string>(StringComparer.Ordinal);
+        AddDependenciesFromFieldTree(
+            sourceAssetId,
+            serializedFile,
+            baseField,
+            assetLookup,
+            internalSerializedFileLookup,
+            dependencies,
+            seenAssetIds);
+
+        foreach (var component in EnumerateGameObjectComponentDependencyRoots(
+                     assetTypeDisplayName,
+                     serializedFile,
+                     baseField,
+                     assetLookup,
+                     internalSerializedFileLookup))
+        {
+            AddDependenciesFromFieldTree(
+                sourceAssetId,
+                component.SerializedFile,
+                component.BaseField,
+                assetLookup,
+                internalSerializedFileLookup,
+                dependencies,
+                seenAssetIds);
+        }
+
+        return dependencies;
+    }
+
+    private static void AddDependenciesFromFieldTree(
+        string sourceAssetId,
+        AssetsFileInstance serializedFile,
+        AssetTypeValueField baseField,
+        IReadOnlyDictionary<AssetsToolsAssetObjectKey, AssetsToolsResolvedAssetDescriptor> assetLookup,
+        IReadOnlyDictionary<string, string> internalSerializedFileLookup,
+        ICollection<AssetBundleReadAssetDependencyDto> dependencies,
+        ISet<string> seenAssetIds)
+    {
         var pendingFields = new Stack<AssetTypeValueField>();
         pendingFields.Push(baseField);
 
@@ -84,8 +125,6 @@ internal static class AssetsToolsAssetDependencyResolver
                 pendingFields.Push(currentField.Children[index]);
             }
         }
-
-        return dependencies;
     }
 
     private static bool TryResolvePointerTarget(
@@ -125,6 +164,49 @@ internal static class AssetsToolsAssetDependencyResolver
         return true;
     }
 
+    private static IEnumerable<GameObjectComponentDependencyRoot> EnumerateGameObjectComponentDependencyRoots(
+        string? assetTypeDisplayName,
+        AssetsFileInstance serializedFile,
+        AssetTypeValueField gameObjectField,
+        IReadOnlyDictionary<AssetsToolsAssetObjectKey, AssetsToolsResolvedAssetDescriptor> assetLookup,
+        IReadOnlyDictionary<string, string> internalSerializedFileLookup)
+    {
+        if (!string.Equals(assetTypeDisplayName, GameObjectTypeDisplayName, StringComparison.OrdinalIgnoreCase))
+        {
+            yield break;
+        }
+
+        var componentArray = AssetsToolsFieldReader.TryGetField(gameObjectField, "m_Component", "Array");
+        if (componentArray?.Children is not { Count: > 0 } children)
+        {
+            yield break;
+        }
+
+        var seenComponentKeys = new HashSet<AssetsToolsAssetObjectKey>();
+        foreach (var componentEntry in children)
+        {
+            var componentPointer = AssetsToolsFieldReader.TryGetField(componentEntry, "component") ??
+                                   AssetsToolsFieldReader.TryGetField(componentEntry, "second") ??
+                                   componentEntry;
+            if (!TryResolvePointerTarget(
+                    componentPointer,
+                    serializedFile,
+                    internalSerializedFileLookup,
+                    out var componentKey,
+                    out _) ||
+                !seenComponentKeys.Add(componentKey) ||
+                !assetLookup.TryGetValue(componentKey, out var componentAsset) ||
+                componentAsset.BaseField is null)
+            {
+                continue;
+            }
+
+            yield return new GameObjectComponentDependencyRoot(
+                componentAsset.SerializedFile,
+                componentAsset.BaseField);
+        }
+    }
+
     private static string CreateExternalDependencyName(
         AssetsToolsSerializedFileReference targetReference,
         long pathId)
@@ -149,6 +231,10 @@ internal static class AssetsToolsAssetDependencyResolver
                 AssetsToolsFieldReader.TryGetField(field, "m_FileID") is not null &&
                 AssetsToolsFieldReader.TryGetField(field, "m_PathID") is not null);
     }
+
+    private sealed record GameObjectComponentDependencyRoot(
+        AssetsFileInstance SerializedFile,
+        AssetTypeValueField BaseField);
 }
 
 internal sealed record AssetsToolsResolvedAssetDescriptor(
@@ -157,4 +243,6 @@ internal sealed record AssetsToolsResolvedAssetDescriptor(
     string AssetType,
     string? AssetTypeDisplayName,
     string SerializedFileName,
-    long PathId);
+    long PathId,
+    AssetsFileInstance SerializedFile,
+    AssetTypeValueField? BaseField);

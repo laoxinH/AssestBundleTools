@@ -2,6 +2,7 @@ using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using Microsoft.UI.Xaml.Media;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 
@@ -10,15 +11,18 @@ internal sealed class MaterialPreviewDisplayFormatter
     private const string MainColorPropertyName = "_Color";
 
     private readonly ILocalizationService _localizationService;
+    private readonly MaterialPreviewInfoCardBuilder _infoCardBuilder;
 
     public MaterialPreviewDisplayFormatter(ILocalizationService localizationService)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+        _infoCardBuilder = new MaterialPreviewInfoCardBuilder(_localizationService);
     }
 
     public MaterialPreviewDisplayState BuildDisplayState(
         AssetPreviewMaterialDto material,
-        AssetDetailsDto details)
+        AssetDetailsDto details,
+        IReadOnlyDictionary<string, ImageSource>? textureThumbnailSources = null)
     {
         ArgumentNullException.ThrowIfNull(material);
         ArgumentNullException.ThrowIfNull(details);
@@ -26,11 +30,30 @@ internal sealed class MaterialPreviewDisplayFormatter
         var resolvedShaderDependency = MaterialShaderDependencyResolver.ResolveShaderDependency(material.Shader, details);
         var openButtonText = _localizationService.GetRequiredString(ResourceKeys.InspectorResolvedAssetOpenButton);
         var openButtonToolTipText = _localizationService.GetRequiredString(ResourceKeys.InspectorResolvedAssetOpenButtonToolTip);
+        var shaderNameText = BuildShaderNameText(material.Shader);
+        var shaderReferenceText = BuildShaderReferenceText(material.Shader);
+        var shaderResolutionText = BuildShaderResolutionText(material.Shader, resolvedShaderDependency);
+        var textureReferenceSummaryText = BuildTextureReferenceSummaryText(material, details);
+        var truncatedText = BuildTruncatedText(material);
+        var mainTextureTint = BuildMainTextureTint(material);
+        var appearance = MaterialPreviewAppearanceStateBuilder.Build(material, _localizationService);
+        var semanticBadges = MaterialPreviewSemanticHintBuilder.Build(material, _localizationService);
+        var textureRows = BuildTextureRows(material, details, openButtonText, openButtonToolTipText);
+        var colorRows = material.ColorProperties.Select(BuildColorRow).ToArray();
+        var numberRows = material.FloatProperties
+            .Select(static property => new MaterialPreviewNumberRowDisplayState(
+                property.Name,
+                property.Value.ToString("0.###", CultureInfo.CurrentCulture)))
+            .Concat(material.IntegerProperties.Select(static property => new MaterialPreviewNumberRowDisplayState(
+                property.Name,
+                property.Value.ToString(CultureInfo.CurrentCulture))))
+            .ToArray();
+
         return new MaterialPreviewDisplayState(
             AssetNameText: string.IsNullOrWhiteSpace(details.Name) ? string.Empty : details.Name.Trim(),
-            ShaderNameText: BuildShaderNameText(material.Shader),
-            ShaderReferenceText: BuildShaderReferenceText(material.Shader),
-            ShaderResolutionText: BuildShaderResolutionText(material.Shader, resolvedShaderDependency),
+            ShaderNameText: shaderNameText,
+            ShaderReferenceText: shaderReferenceText,
+            ShaderResolutionText: shaderResolutionText,
             ResolvedShaderAssetId: resolvedShaderDependency?.AssetId.Value,
             PropertyCountText: _localizationService.GetFormattedString(
                 ResourceKeys.InspectorMaterialPreviewPropertyCountFormat,
@@ -39,29 +62,78 @@ internal sealed class MaterialPreviewDisplayFormatter
                 (material.FloatProperties.Count + material.IntegerProperties.Count).ToString(CultureInfo.CurrentCulture)),
             MainTexturePreviewTitleText: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewMainTextureTitleText),
             MainTexturePreviewLimitText: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewMainTextureLimitText),
-            MainTextureTint: BuildMainTextureTint(material),
-            Appearance: MaterialPreviewAppearanceStateBuilder.Build(material, _localizationService),
+            MainTextureTint: mainTextureTint,
+            Appearance: appearance,
             SemanticSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewSemanticHintsTitle),
-            SemanticBadges: MaterialPreviewSemanticHintBuilder.Build(material, _localizationService),
+            SemanticBadges: semanticBadges,
             TextureSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewTexturesTitle),
-            TextureReferenceSummaryText: BuildTextureReferenceSummaryText(material, details),
+            TextureReferenceSummaryText: textureReferenceSummaryText,
             ColorSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewColorsTitle),
             NumberSectionTitle: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewNumbersTitle),
             EmptySectionText: _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewEmptySectionText),
-            TruncatedText: BuildTruncatedText(material),
-            TextureRows: BuildTextureRows(material, details, openButtonText, openButtonToolTipText),
-            ColorRows: material.ColorProperties.Select(BuildColorRow).ToArray(),
-            NumberRows: material.FloatProperties
-                .Select(static property => new MaterialPreviewNumberRowDisplayState(
-                    property.Name,
-                    property.Value.ToString("0.###", CultureInfo.CurrentCulture)))
-                .Concat(material.IntegerProperties.Select(static property => new MaterialPreviewNumberRowDisplayState(
-                    property.Name,
-                    property.Value.ToString(CultureInfo.CurrentCulture))))
-                .ToArray(),
+            TruncatedText: truncatedText,
+            TextureRows: textureRows,
+            ColorRows: colorRows,
+            NumberRows: numberRows,
             ShaderTarget: resolvedShaderDependency is null ? null : CreateNavigationTarget(resolvedShaderDependency),
             OpenResolvedAssetButtonText: openButtonText,
-            OpenResolvedAssetButtonToolTipText: openButtonToolTipText);
+            OpenResolvedAssetButtonToolTipText: openButtonToolTipText,
+            SummaryCards: BuildSummaryCards(material, textureReferenceSummaryText, semanticBadges),
+            DetailCards: _infoCardBuilder.Build(
+                shaderNameText,
+                shaderReferenceText,
+                shaderResolutionText,
+                resolvedShaderDependency,
+                appearance,
+                semanticBadges,
+                textureRows,
+                colorRows,
+                numberRows,
+                truncatedText,
+                openButtonText,
+                openButtonToolTipText,
+                mainTextureTint,
+                textureThumbnailSources));
+    }
+
+    private IReadOnlyList<MaterialPreviewSummaryCardDisplayState> BuildSummaryCards(
+        AssetPreviewMaterialDto material,
+        string textureReferenceSummaryText,
+        IReadOnlyList<MaterialPreviewSemanticBadgeDisplayState> semanticBadges)
+    {
+        return
+        [
+            new(
+                _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewTexturesTitle),
+                material.TextureProperties.Count.ToString(CultureInfo.CurrentCulture),
+                textureReferenceSummaryText),
+            new(
+                _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewColorsTitle),
+                material.ColorProperties.Count.ToString(CultureInfo.CurrentCulture),
+                BuildPropertyNameSummary(material.ColorProperties.Select(static property => property.Name))),
+            new(
+                _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewNumbersTitle),
+                (material.FloatProperties.Count + material.IntegerProperties.Count).ToString(CultureInfo.CurrentCulture),
+                BuildPropertyNameSummary(
+                    material.FloatProperties.Select(static property => property.Name)
+                        .Concat(material.IntegerProperties.Select(static property => property.Name)))),
+            new(
+                _localizationService.GetRequiredString(ResourceKeys.InspectorMaterialPreviewSemanticHintsTitle),
+                semanticBadges.Count.ToString(CultureInfo.CurrentCulture),
+                BuildPropertyNameSummary(semanticBadges.Select(static badge => badge.Text)))
+        ];
+    }
+
+    private static string BuildPropertyNameSummary(IEnumerable<string> propertyNames)
+    {
+        var summary = string.Join(
+            ", ",
+            propertyNames
+                .Where(static name => !string.IsNullOrWhiteSpace(name))
+                .Select(static name => name.Trim())
+                .Take(3));
+
+        return summary;
     }
 
     private IReadOnlyList<MaterialPreviewTextureRowDisplayState> BuildTextureRows(
@@ -325,6 +397,7 @@ internal sealed class MaterialPreviewDisplayFormatter
             dependency.Name,
             ResolveAssetTypeDisplayName(dependency));
     }
+
 }
 
 public sealed record MaterialPreviewDisplayState(
@@ -351,7 +424,14 @@ public sealed record MaterialPreviewDisplayState(
     string TextureReferenceSummaryText = "",
     ResolvedAssetNavigationTarget? ShaderTarget = null,
     string OpenResolvedAssetButtonText = "",
-    string OpenResolvedAssetButtonToolTipText = "");
+    string OpenResolvedAssetButtonToolTipText = "",
+    IReadOnlyList<MaterialPreviewSummaryCardDisplayState>? SummaryCards = null,
+    IReadOnlyList<InspectorInfoCardViewModel>? DetailCards = null);
+
+public sealed record MaterialPreviewSummaryCardDisplayState(
+    string TitleText,
+    string ValueText,
+    string DetailText);
 
 public sealed record MaterialPreviewAppearanceDisplayState(
     string TitleText,

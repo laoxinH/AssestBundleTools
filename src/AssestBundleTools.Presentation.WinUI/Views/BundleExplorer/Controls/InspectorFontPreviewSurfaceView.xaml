@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls.InspectorFontPreviewSurfaceView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:bindings="using:AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <Style
+            x:Key="FontPreviewSecondaryTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="TextWrapping" Value="WrapWholeWords" />
+        </Style>
+
+        <Style
+            x:Key="FontPreviewSectionTitleStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style
+            x:Key="FontPreviewCardStyle"
+            TargetType="Border">
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="CornerRadius" Value="10" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer
+        HorizontalScrollBarVisibility="Disabled"
+        HorizontalScrollMode="Disabled"
+        VerticalScrollBarVisibility="Auto"
+        VerticalScrollMode="Enabled"
+        ZoomMode="Disabled">
+        <StackPanel Spacing="12">
+            <Grid ColumnSpacing="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border
+                    Width="42"
+                    Height="42"
+                    Background="{ThemeResource AccentFillColorSecondaryBrush}"
+                    CornerRadius="13">
+                    <FontIcon
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontFamily="Segoe Fluent Icons"
+                        FontSize="18"
+                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                        Glyph="&#xE185;" />
+                </Border>
+
+                <StackPanel
+                    Grid.Column="1"
+                    Spacing="2">
+                    <TextBlock
+                        FontSize="17"
+                        FontWeight="SemiBold"
+                        Text="{x:Bind ViewModel.AssetNameText, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis"
+                        TextWrapping="WrapWholeWords" />
+                    <TextBlock
+                        Style="{StaticResource FontPreviewSecondaryTextStyle}"
+                        Text="{x:Bind ViewModel.SummaryText, Mode=OneWay}" />
+                    <TextBlock
+                        Style="{StaticResource FontPreviewSecondaryTextStyle}"
+                        Text="{x:Bind ViewModel.FontDataSizeText, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.FontDataSizeVisibility, Mode=OneWay}" />
+                </StackPanel>
+            </Grid>
+
+            <Border
+                Padding="12"
+                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="12">
+                <StackPanel Spacing="4">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Text="{x:Bind ViewModel.MetricsText, Mode=OneWay}"
+                        TextWrapping="WrapWholeWords" />
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="2">
+                            <TextBlock
+                                Style="{StaticResource FontPreviewSectionTitleStyle}"
+                                Text="{x:Bind ViewModel.TextureTitle, Mode=OneWay}" />
+                            <TextBlock
+                                Style="{StaticResource FontPreviewSecondaryTextStyle}"
+                                Text="{x:Bind ViewModel.TextureReferenceText, Mode=OneWay}" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                Style="{StaticResource FontPreviewSectionTitleStyle}"
+                                Text="{x:Bind ViewModel.DefaultMaterialTitle, Mode=OneWay}" />
+                            <TextBlock
+                                Style="{StaticResource FontPreviewSecondaryTextStyle}"
+                                Text="{x:Bind ViewModel.DefaultMaterialReferenceText, Mode=OneWay}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <TextBlock
+                Style="{StaticResource FontPreviewSecondaryTextStyle}"
+                Text="{x:Bind ViewModel.TruncatedText, Mode=OneWay}"
+                Visibility="{x:Bind ViewModel.TruncatedTextVisibility, Mode=OneWay}" />
+
+            <StackPanel Spacing="7">
+                <TextBlock
+                    Style="{StaticResource FontPreviewSectionTitleStyle}"
+                    Text="{x:Bind ViewModel.CharactersTitle, Mode=OneWay}" />
+                <ItemsControl
+                    ItemsSource="{x:Bind ViewModel.CharacterRows, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.CharacterRowsVisibility, Mode=OneWay}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="bindings:FontCharacterRowViewModel">
+                            <Border
+                                Margin="0,0,0,6"
+                                Style="{StaticResource FontPreviewCardStyle}">
+                                <Grid ColumnSpacing="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border
+                                        MinWidth="34"
+                                        Height="34"
+                                        Padding="8,0"
+                                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                        CornerRadius="8"
+                                        Visibility="{x:Bind GlyphVisibility, Mode=OneTime}">
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontSize="18"
+                                            FontWeight="SemiBold"
+                                            Text="{x:Bind GlyphText, Mode=OneTime}" />
+                                    </Border>
+
+                                    <StackPanel
+                                        Grid.Column="1"
+                                        Spacing="2">
+                                        <TextBlock
+                                            FontFamily="Cascadia Mono"
+                                            FontWeight="SemiBold"
+                                            Text="{x:Bind CodePointText, Mode=OneTime}" />
+                                        <TextBlock
+                                            Style="{StaticResource FontPreviewSecondaryTextStyle}"
+                                            Text="{x:Bind UvText, Mode=OneTime}"
+                                            Visibility="{x:Bind UvVisibility, Mode=OneTime}" />
+                                        <TextBlock
+                                            Style="{StaticResource FontPreviewSecondaryTextStyle}"
+                                            Text="{x:Bind VertexText, Mode=OneTime}"
+                                            Visibility="{x:Bind VertexVisibility, Mode=OneTime}" />
+                                        <TextBlock
+                                            Style="{StaticResource FontPreviewSecondaryTextStyle}"
+                                            Text="{x:Bind AdvanceText, Mode=OneTime}"
+                                            Visibility="{x:Bind AdvanceVisibility, Mode=OneTime}" />
+                                        <TextBlock
+                                            Style="{StaticResource FontPreviewSecondaryTextStyle}"
+                                            Text="{x:Bind FlippedText, Mode=OneTime}"
+                                            Visibility="{x:Bind FlippedVisibility, Mode=OneTime}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock
+                    Style="{StaticResource FontPreviewSecondaryTextStyle}"
+                    Text="{x:Bind ViewModel.EmptyCharactersText, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.CharacterRowsEmptyVisibility, Mode=OneWay}" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

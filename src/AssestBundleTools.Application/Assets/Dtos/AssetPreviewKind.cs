@@ -12,5 +12,9 @@ public enum AssetPreviewKind
     Summary = 4,
     Mesh = 5,
     Material = 6,
-    AnimationClip = 7
+    AnimationClip = 7,
+    Font = 8,
+    GameObject = 9,
+    MonoBehaviour = 10,
+    AnimatorController = 11
 }

@@ -230,8 +230,8 @@
     </UserControl.Resources>
 
     <Border
-        Height="{x:Bind ViewModel.Preview.PreviewSurfaceHeight, Mode=OneWay}"
-        MinHeight="{x:Bind ViewModel.Preview.PreviewSurfaceMinHeight, Mode=OneWay}"
+        Height="{x:Bind PreviewSurfaceHeight, Mode=OneWay}"
+        MinHeight="{x:Bind PreviewSurfaceMinHeight, Mode=OneWay}"
         Padding="12"
         Style="{StaticResource InspectorPreviewSurfaceBorderStyle}">
         <Grid RowSpacing="8">
@@ -446,6 +446,34 @@
                     Visibility="{x:Bind ViewModel.Preview.PreviewAnimationClipVisibility, Mode=OneWay}">
                     <controls:InspectorAnimationClipPreviewSurfaceView
                         ViewModel="{x:Bind ViewModel.Preview.AnimationClip, Mode=OneWay}" />
+                </Grid>
+
+                <Grid
+                    Margin="8"
+                    Visibility="{x:Bind ViewModel.Preview.PreviewFontVisibility, Mode=OneWay}">
+                    <controls:InspectorFontPreviewSurfaceView
+                        ViewModel="{x:Bind ViewModel.Preview.Font, Mode=OneWay}" />
+                </Grid>
+
+                <Grid
+                    Margin="8"
+                    Visibility="{x:Bind ViewModel.Preview.PreviewGameObjectVisibility, Mode=OneWay}">
+                    <controls:InspectorGameObjectPreviewSurfaceView
+                        ViewModel="{x:Bind ViewModel.Preview.GameObject, Mode=OneWay}" />
+                </Grid>
+
+                <Grid
+                    Margin="8"
+                    Visibility="{x:Bind ViewModel.Preview.PreviewMonoBehaviourVisibility, Mode=OneWay}">
+                    <controls:InspectorMonoBehaviourPreviewSurfaceView
+                        ViewModel="{x:Bind ViewModel.Preview.MonoBehaviour, Mode=OneWay}" />
+                </Grid>
+
+                <Grid
+                    Margin="8"
+                    Visibility="{x:Bind ViewModel.Preview.PreviewAnimatorControllerVisibility, Mode=OneWay}">
+                    <controls:InspectorAnimatorControllerPreviewSurfaceView
+                        ViewModel="{x:Bind ViewModel.Preview.AnimatorController, Mode=OneWay}" />
                 </Grid>
 
                 <StackPanel

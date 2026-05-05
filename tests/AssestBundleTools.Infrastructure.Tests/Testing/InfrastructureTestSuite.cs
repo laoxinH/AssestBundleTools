@@ -78,6 +78,18 @@ internal static class InfrastructureTestSuite
             AssetsToolsRealSampleDependencyTests.Cone002Mesh_ShouldResolveTextureAssociation_WhenReadableSampleWorkspaceContainsMatchingTextureBundles);
         await RunTestAsync(
             failures,
+            nameof(AssetsToolsRealSampleDependencyTests.GameObject_ShouldResolveComponentMaterialPath_FromRealDependencyGraph),
+            AssetsToolsRealSampleDependencyTests.GameObject_ShouldResolveComponentMaterialPath_FromRealDependencyGraph);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsRealSampleDependencyTests.MonoBehaviourPreview_ShouldGenerateStructuredSummary_FromReadableRealSamples),
+            AssetsToolsRealSampleDependencyTests.MonoBehaviourPreview_ShouldGenerateStructuredSummary_FromReadableRealSamples);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsRealSampleDependencyTests.AnimatorControllerPreview_ShouldGenerateStructuredSummary_FromReadableRealSamples),
+            AssetsToolsRealSampleDependencyTests.AnimatorControllerPreview_ShouldGenerateStructuredSummary_FromReadableRealSamples);
+        await RunTestAsync(
+            failures,
             nameof(AssetsToolsAssetPreviewGeneratorTests.GenerateAsync_ShouldReturnGenerationFailureDetail_WhenUnexpectedExceptionOccurs),
             AssetsToolsAssetPreviewGeneratorTests.GenerateAsync_ShouldReturnGenerationFailureDetail_WhenUnexpectedExceptionOccurs);
         await RunTestAsync(

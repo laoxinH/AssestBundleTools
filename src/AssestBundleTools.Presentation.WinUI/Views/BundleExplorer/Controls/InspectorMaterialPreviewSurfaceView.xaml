@@ -11,14 +11,6 @@
 
     <UserControl.Resources>
         <Style
-            x:Key="MaterialPreviewSectionTitleStyle"
-            TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
-        </Style>
-
-        <Style
             x:Key="MaterialPreviewSecondaryTextStyle"
             TargetType="TextBlock">
             <Setter Property="FontSize" Value="11.5" />
@@ -27,413 +19,117 @@
         </Style>
 
         <Style
-            x:Key="MaterialPreviewPropertyCardStyle"
+            x:Key="MaterialPreviewSummaryCardStyle"
             TargetType="Border">
-            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="MinHeight" Value="54" />
+            <Setter Property="Padding" Value="9,7" />
             <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
-            <Setter Property="CornerRadius" Value="10" />
-        </Style>
-
-        <Style
-            x:Key="MaterialPreviewSemanticBadgeStyle"
-            TargetType="Border">
-            <Setter Property="Margin" Value="0,0,6,6" />
-            <Setter Property="Padding" Value="9,5" />
-            <Setter Property="Background" Value="{ThemeResource AccentFillColorTertiaryBrush}" />
-            <Setter Property="CornerRadius" Value="10" />
-        </Style>
-
-        <Style
-            x:Key="MaterialPreviewResolvedAssetTagButtonStyle"
-            TargetType="Button">
-            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Width" Value="30" />
-            <Setter Property="Height" Value="30" />
-            <Setter Property="CornerRadius" Value="15" />
-            <Setter Property="HorizontalAlignment" Value="Right" />
-            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
         </Style>
     </UserControl.Resources>
 
-    <ScrollViewer
-        HorizontalScrollBarVisibility="Disabled"
-        HorizontalScrollMode="Disabled"
-        VerticalScrollBarVisibility="Auto"
-        VerticalScrollMode="Enabled"
-        ZoomMode="Disabled">
-        <StackPanel Spacing="12">
-            <Grid ColumnSpacing="10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <Border
-                    Width="42"
-                    Height="42"
-                    Background="{ThemeResource AccentFillColorSecondaryBrush}"
-                    CornerRadius="13">
-                    <FontIcon
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        FontFamily="Segoe Fluent Icons"
-                        FontSize="18"
-                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                        Glyph="&#xE790;" />
-                </Border>
-
-                <StackPanel
-                    Grid.Column="1"
-                    Spacing="2">
-                    <TextBlock
-                        FontSize="17"
-                        FontWeight="SemiBold"
-                        Text="{x:Bind ViewModel.AssetNameText, Mode=OneWay}"
-                        TextTrimming="CharacterEllipsis"
-                        TextWrapping="WrapWholeWords" />
-                    <TextBlock
-                        Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                        Text="{x:Bind ViewModel.PropertyCountText, Mode=OneWay}" />
-                </StackPanel>
-            </Grid>
+    <StackPanel Spacing="10">
+        <Grid ColumnSpacing="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
             <Border
-                Padding="12"
-                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="12">
-                <StackPanel Spacing="3">
-                    <Grid ColumnSpacing="8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock
-                            FontSize="13"
-                            FontWeight="SemiBold"
-                            Text="{x:Bind ViewModel.ShaderNameText, Mode=OneWay}"
-                            TextWrapping="WrapWholeWords" />
-                        <Button
-                            Grid.Column="1"
-                            AutomationProperties.Name="{x:Bind ViewModel.OpenResolvedAssetButtonText, Mode=OneWay}"
-                            Click="OnResolvedAssetOpenButtonClick"
-                            Style="{StaticResource MaterialPreviewResolvedAssetTagButtonStyle}"
-                            Tag="{x:Bind ViewModel.ShaderTarget, Mode=OneWay}"
-                            ToolTipService.ToolTip="{x:Bind ViewModel.OpenResolvedAssetButtonToolTipText, Mode=OneWay}"
-                            Visibility="{x:Bind ViewModel.ShaderOpenButtonVisibility, Mode=OneWay}">
-                            <FontIcon
-                                FontFamily="Segoe Fluent Icons"
-                                FontSize="14"
-                                Glyph="&#xE8A7;" />
-                        </Button>
-                    </Grid>
-                    <TextBlock
-                        Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                        Text="{x:Bind ViewModel.ShaderReferenceText, Mode=OneWay}" />
-                    <TextBlock
-                        Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                        Text="{x:Bind ViewModel.ShaderResolutionText, Mode=OneWay}"
-                        Visibility="{x:Bind ViewModel.ShaderResolutionVisibility, Mode=OneWay}" />
-                </StackPanel>
+                Width="42"
+                Height="42"
+                Background="{ThemeResource AccentFillColorSecondaryBrush}"
+                CornerRadius="13">
+                <FontIcon
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="18"
+                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                    Glyph="&#xE790;" />
             </Border>
 
-            <controls:InspectorMaterialAppearanceSampleView ViewModel="{x:Bind ViewModel.Appearance, Mode=OneWay}" />
-
-            <Border
-                Padding="12"
-                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="12"
-                Visibility="{x:Bind ViewModel.SemanticHintsVisibility, Mode=OneWay}">
-                <StackPanel Spacing="8">
-                    <TextBlock
-                        Style="{StaticResource MaterialPreviewSectionTitleStyle}"
-                        Text="{x:Bind ViewModel.SemanticSectionTitle, Mode=OneWay}" />
-                    <ItemsControl ItemsSource="{x:Bind ViewModel.SemanticBadges, Mode=OneWay}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <ItemsWrapGrid Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="bindings:MaterialPreviewSemanticBadgeViewModel">
-                                <Border Style="{StaticResource MaterialPreviewSemanticBadgeStyle}">
-                                    <TextBlock
-                                        FontSize="11.5"
-                                        FontWeight="SemiBold"
-                                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                        Text="{x:Bind Text, Mode=OneTime}" />
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </Border>
-
-            <Border
-                Padding="12"
-                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="14"
-                Visibility="{x:Bind ViewModel.MainTexturePreviewVisibility, Mode=OneWay}">
-                <Grid RowSpacing="9">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <Grid ColumnSpacing="8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Spacing="2">
-                            <TextBlock
-                                Style="{StaticResource MaterialPreviewSectionTitleStyle}"
-                                Text="{x:Bind ViewModel.MainTexturePreviewTitleText, Mode=OneWay}" />
-                            <TextBlock
-                                Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                                Text="{x:Bind ViewModel.MainTexturePreviewNameText, Mode=OneWay}" />
-                            <TextBlock
-                                Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                                Text="{x:Bind ViewModel.MainTexturePreviewResolutionText, Mode=OneWay}" />
-                            <TextBlock
-                                Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                                Text="{x:Bind ViewModel.MainTexturePreviewTransformText, Mode=OneWay}"
-                                Visibility="{x:Bind ViewModel.MainTexturePreviewTransformVisibility, Mode=OneWay}" />
-                            <TextBlock
-                                Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                                Text="{x:Bind ViewModel.MainTexturePreviewTintText, Mode=OneWay}"
-                                Visibility="{x:Bind ViewModel.MainTexturePreviewTintTextVisibility, Mode=OneWay}" />
-                        </StackPanel>
-                        <Button
-                            Grid.Column="1"
-                            AutomationProperties.Name="{x:Bind ViewModel.OpenResolvedAssetButtonText, Mode=OneWay}"
-                            Click="OnResolvedAssetOpenButtonClick"
-                            Style="{StaticResource MaterialPreviewResolvedAssetTagButtonStyle}"
-                            Tag="{x:Bind ViewModel.MainTexturePreviewTarget, Mode=OneWay}"
-                            ToolTipService.ToolTip="{x:Bind ViewModel.OpenResolvedAssetButtonToolTipText, Mode=OneWay}"
-                            Visibility="{x:Bind ViewModel.MainTexturePreviewOpenButtonVisibility, Mode=OneWay}">
-                            <FontIcon
-                                FontFamily="Segoe Fluent Icons"
-                                FontSize="14"
-                                Glyph="&#xE8A7;" />
-                        </Button>
-                    </Grid>
-
-                    <Border
-                        Grid.Row="1"
-                        MinHeight="150"
-                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="12">
-                        <Grid>
-                            <Image
-                                MaxHeight="220"
-                                Source="{x:Bind ViewModel.MainTexturePreviewImageSource, Mode=OneWay}"
-                                Stretch="Uniform" />
-                            <Rectangle
-                                Fill="{x:Bind ViewModel.MainTexturePreviewTintBrush, Mode=OneWay}"
-                                Opacity="0.28"
-                                Visibility="{x:Bind ViewModel.MainTexturePreviewTintVisibility, Mode=OneWay}" />
-                        </Grid>
-                    </Border>
-
-                    <TextBlock
-                        Grid.Row="2"
-                        Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                        Text="{x:Bind ViewModel.MainTexturePreviewLimitText, Mode=OneWay}"
-                        Visibility="{x:Bind ViewModel.MainTexturePreviewLimitVisibility, Mode=OneWay}" />
-                </Grid>
-            </Border>
-
-            <TextBlock
-                Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                Text="{x:Bind ViewModel.TruncatedText, Mode=OneWay}"
-                Visibility="{x:Bind ViewModel.TruncatedTextVisibility, Mode=OneWay}" />
-
-            <StackPanel Spacing="7">
+            <StackPanel
+                Grid.Column="1"
+                Spacing="2">
                 <TextBlock
-                    Style="{StaticResource MaterialPreviewSectionTitleStyle}"
-                    Text="{x:Bind ViewModel.TextureSectionTitle, Mode=OneWay}" />
+                    FontSize="17"
+                    FontWeight="SemiBold"
+                    MaxLines="2"
+                    Text="{x:Bind ViewModel.AssetNameText, Mode=OneWay}"
+                    TextTrimming="CharacterEllipsis"
+                    TextWrapping="WrapWholeWords" />
                 <TextBlock
+                    MaxLines="2"
+                    Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
+                    Text="{x:Bind ViewModel.PropertyCountText, Mode=OneWay}" />
+            </StackPanel>
+        </Grid>
+
+        <Border
+            Padding="12"
+            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8">
+            <StackPanel Spacing="6">
+                <TextBlock
+                    FontWeight="SemiBold"
+                    MaxLines="2"
+                    Text="{x:Bind ViewModel.ShaderNameText, Mode=OneWay}"
+                    TextWrapping="WrapWholeWords" />
+                <TextBlock
+                    MaxLines="2"
+                    Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
+                    Text="{x:Bind ViewModel.ShaderResolutionText, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.ShaderResolutionVisibility, Mode=OneWay}" />
+                <TextBlock
+                    MaxLines="2"
                     Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
                     Text="{x:Bind ViewModel.TextureReferenceSummaryText, Mode=OneWay}"
                     Visibility="{x:Bind ViewModel.TextureReferenceSummaryVisibility, Mode=OneWay}" />
-                <ItemsControl
-                    ItemsSource="{x:Bind ViewModel.TextureRows, Mode=OneWay}"
-                    Visibility="{x:Bind ViewModel.TextureRowsVisibility, Mode=OneWay}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="bindings:MaterialPreviewTextureRowViewModel">
-                            <Border
-                                Margin="0,0,0,6"
-                                Style="{StaticResource MaterialPreviewPropertyCardStyle}">
-                                <Grid ColumnSpacing="10">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <Border
-                                        Width="42"
-                                        Height="42"
-                                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="10">
-                                        <Grid>
-                                            <Image
-                                                Source="{x:Bind ThumbnailImageSource, Mode=OneTime}"
-                                                Stretch="UniformToFill"
-                                                Visibility="{x:Bind ThumbnailVisibility, Mode=OneTime}" />
-                                            <FontIcon
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                FontFamily="Segoe Fluent Icons"
-                                                FontSize="15"
-                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                                Glyph="&#xEB9F;"
-                                                Visibility="{x:Bind ThumbnailPlaceholderVisibility, Mode=OneTime}" />
-                                        </Grid>
-                                    </Border>
-
-                                    <StackPanel
-                                        Grid.Column="1"
-                                        Spacing="2">
-                                        <Grid ColumnSpacing="8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock
-                                                FontWeight="SemiBold"
-                                                Text="{x:Bind PropertyName, Mode=OneTime}"
-                                                TextWrapping="WrapWholeWords" />
-                                            <Button
-                                                Grid.Column="1"
-                                                AutomationProperties.Name="{x:Bind OpenButtonText, Mode=OneTime}"
-                                                Click="OnResolvedAssetOpenButtonClick"
-                                                Style="{StaticResource MaterialPreviewResolvedAssetTagButtonStyle}"
-                                                Tag="{x:Bind Target, Mode=OneTime}"
-                                                ToolTipService.ToolTip="{x:Bind OpenButtonToolTipText, Mode=OneTime}"
-                                                Visibility="{x:Bind OpenButtonVisibility, Mode=OneTime}">
-                                                <FontIcon
-                                                    FontFamily="Segoe Fluent Icons"
-                                                    FontSize="14"
-                                                    Glyph="&#xE8A7;" />
-                                            </Button>
-                                        </Grid>
-                                        <TextBlock
-                                            Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                                            Text="{x:Bind ResolutionText, Mode=OneTime}"
-                                            Visibility="{x:Bind ResolutionVisibility, Mode=OneTime}" />
-                                        <TextBlock
-                                            Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                                            Text="{x:Bind TargetText, Mode=OneTime}" />
-                                        <TextBlock
-                                            Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                                            Text="{x:Bind TransformText, Mode=OneTime}"
-                                            Visibility="{x:Bind TransformVisibility, Mode=OneTime}" />
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <TextBlock
-                    Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                    Text="{x:Bind ViewModel.EmptySectionText, Mode=OneWay}"
-                    Visibility="{x:Bind ViewModel.TextureRowsEmptyVisibility, Mode=OneWay}" />
             </StackPanel>
+        </Border>
 
-            <StackPanel Spacing="7">
-                <TextBlock
-                    Style="{StaticResource MaterialPreviewSectionTitleStyle}"
-                    Text="{x:Bind ViewModel.ColorSectionTitle, Mode=OneWay}" />
-                <ItemsControl
-                    ItemsSource="{x:Bind ViewModel.ColorRows, Mode=OneWay}"
-                    Visibility="{x:Bind ViewModel.ColorRowsVisibility, Mode=OneWay}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="bindings:MaterialPreviewColorRowViewModel">
-                            <Border
-                                Margin="0,0,0,6"
-                                Style="{StaticResource MaterialPreviewPropertyCardStyle}">
-                                <Grid ColumnSpacing="9">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <Rectangle
-                                        Width="28"
-                                        Height="28"
-                                        RadiusX="8"
-                                        RadiusY="8"
-                                        Fill="{x:Bind SwatchBrush, Mode=OneTime}" />
-                                    <StackPanel
-                                        Grid.Column="1"
-                                        Spacing="1">
-                                        <TextBlock
-                                            FontWeight="SemiBold"
-                                            Text="{x:Bind PropertyName, Mode=OneTime}"
-                                            TextWrapping="WrapWholeWords" />
-                                        <TextBlock
-                                            Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                                            Text="{x:Bind ValueText, Mode=OneTime}" />
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <TextBlock
-                    Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                    Text="{x:Bind ViewModel.EmptySectionText, Mode=OneWay}"
-                    Visibility="{x:Bind ViewModel.ColorRowsEmptyVisibility, Mode=OneWay}" />
-            </StackPanel>
-
-            <StackPanel Spacing="7">
-                <TextBlock
-                    Style="{StaticResource MaterialPreviewSectionTitleStyle}"
-                    Text="{x:Bind ViewModel.NumberSectionTitle, Mode=OneWay}" />
-                <ItemsControl
-                    ItemsSource="{x:Bind ViewModel.NumberRows, Mode=OneWay}"
-                    Visibility="{x:Bind ViewModel.NumberRowsVisibility, Mode=OneWay}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="bindings:MaterialPreviewNumberRowViewModel">
-                            <Border
-                                Margin="0,0,0,6"
-                                Style="{StaticResource MaterialPreviewPropertyCardStyle}">
-                                <Grid ColumnSpacing="8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock
-                                        FontWeight="SemiBold"
-                                        Text="{x:Bind PropertyName, Mode=OneTime}"
-                                        TextWrapping="WrapWholeWords" />
-                                    <TextBlock
-                                        Grid.Column="1"
-                                        FontFamily="Cascadia Mono"
-                                        Text="{x:Bind ValueText, Mode=OneTime}" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <TextBlock
-                    Style="{StaticResource MaterialPreviewSecondaryTextStyle}"
-                    Text="{x:Bind ViewModel.EmptySectionText, Mode=OneWay}"
-                    Visibility="{x:Bind ViewModel.NumberRowsEmptyVisibility, Mode=OneWay}" />
-            </StackPanel>
-        </StackPanel>
-    </ScrollViewer>
+        <ItemsControl
+            HorizontalAlignment="Stretch"
+            ItemsSource="{x:Bind ViewModel.SummaryCards, Mode=OneWay}"
+            Visibility="{x:Bind ViewModel.SummaryCardsVisibility, Mode=OneWay}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <controls:TwoColumnSummaryCardPanel
+                        ColumnSpacing="6"
+                        MinItemWidth="132"
+                        RowSpacing="6" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="bindings:MaterialPreviewSummaryCardViewModel">
+                    <Border Style="{StaticResource MaterialPreviewSummaryCardStyle}">
+                        <StackPanel Spacing="1">
+                            <TextBlock
+                                FontSize="10.5"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="{x:Bind TitleText, Mode=OneTime}"
+                                TextWrapping="WrapWholeWords" />
+                            <TextBlock
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                Text="{x:Bind ValueText, Mode=OneTime}"
+                                TextWrapping="WrapWholeWords" />
+                            <TextBlock
+                                FontSize="10.5"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="{x:Bind DetailText, Mode=OneTime}"
+                                TextWrapping="WrapWholeWords"
+                                Visibility="{x:Bind DetailVisibility, Mode=OneTime}" />
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
 </UserControl>

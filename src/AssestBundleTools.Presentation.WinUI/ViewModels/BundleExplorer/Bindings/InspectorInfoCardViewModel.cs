@@ -2,12 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
@@ -23,7 +19,8 @@ public sealed class InspectorInfoCardViewModel : ObservableObject
         string copyToolTipText,
         string summaryText,
         bool isExpanded,
-        IReadOnlyList<InspectorInfoRowViewModel> rows)
+        IReadOnlyList<InspectorInfoRowViewModel> rows,
+        InspectorInfoCardVisualViewModel? visual = null)
     {
         Key = string.IsNullOrWhiteSpace(key)
             ? throw new ArgumentException("Card key is required.", nameof(key))
@@ -38,6 +35,7 @@ public sealed class InspectorInfoCardViewModel : ObservableObject
             ? string.Empty
             : summaryText.Trim();
         Rows = rows ?? throw new ArgumentNullException(nameof(rows));
+        Visual = visual;
         _isExpanded = isExpanded;
     }
 
@@ -50,6 +48,23 @@ public sealed class InspectorInfoCardViewModel : ObservableObject
     public string SummaryText { get; }
 
     public IReadOnlyList<InspectorInfoRowViewModel> Rows { get; }
+
+    public InspectorInfoCardVisualViewModel? Visual { get; }
+
+    public MaterialPreviewAppearanceViewModel? VisualMaterialAppearance => Visual?.MaterialAppearance;
+
+    public ImageSource? VisualImageSource => Visual?.ImageSource;
+
+    public Brush? VisualImageTintBrush => Visual?.ImageTintBrush;
+
+    public Visibility MaterialAppearanceVisualVisibility =>
+        Visual?.MaterialAppearanceVisibility ?? Visibility.Collapsed;
+
+    public Visibility ImagePreviewVisualVisibility =>
+        Visual?.ImagePreviewVisibility ?? Visibility.Collapsed;
+
+    public Visibility ImagePreviewTintVisibility =>
+        Visual?.ImageTintVisibility ?? Visibility.Collapsed;
 
     public bool IsExpanded
     {
@@ -68,7 +83,7 @@ public sealed class InspectorInfoCardViewModel : ObservableObject
     public string ExpandGlyph => IsExpanded ? "\uE70D" : "\uE76C";
 
     public Visibility ContentVisibility =>
-        IsExpanded && Rows.Count > 0
+        IsExpanded && (Rows.Count > 0 || Visual is { HasVisual: true })
             ? Visibility.Visible
             : Visibility.Collapsed;
 
@@ -78,6 +93,11 @@ public sealed class InspectorInfoCardViewModel : ObservableObject
             : Visibility.Collapsed;
 
     public string CopyPayloadText => string.Join(Environment.NewLine, Rows.Select(static row => row.CopyText));
+
+    public Visibility CopyButtonVisibility =>
+        string.IsNullOrWhiteSpace(CopyPayloadText)
+            ? Visibility.Collapsed
+            : Visibility.Visible;
 
     public void ToggleExpanded()
     {

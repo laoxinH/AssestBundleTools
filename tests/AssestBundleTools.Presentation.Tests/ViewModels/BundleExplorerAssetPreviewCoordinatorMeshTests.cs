@@ -73,6 +73,8 @@ public sealed class BundleExplorerAssetPreviewCoordinatorMeshTests
 
         Assert.False(assetTab.Inspector.Preview.IsPreviewLoading);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, assetTab.Inspector.Preview.PreviewMeshVisibility);
+        Assert.True(assetTab.Inspector.Preview.UsesFixedPreviewSurfaceHeight);
+        Assert.Equal(320d, assetTab.Inspector.Preview.PreviewSurfaceHeight);
         Assert.NotNull(assetTab.Inspector.Preview.Mesh.Geometry);
         Assert.Equal(3, assetTab.Inspector.Preview.Mesh.Geometry!.Vertices.Count);
         Assert.Equal(3, assetTab.Inspector.Preview.Mesh.Geometry.Uv0?.Count ?? 0);

@@ -80,10 +80,17 @@ public enum AssetPreviewInfoKey
 
     AnimatorControllerLayerCount = 190,
     AnimatorControllerParameterCount = 191,
+    AnimatorControllerStateCount = 192,
+    AnimatorControllerTransitionCount = 193,
+    AnimatorControllerReferenceCount = 194,
 
     FontLineSpacing = 210,
     FontDefaultSize = 211,
     FontAsciiStartOffset = 212,
+    FontCharacterCount = 213,
+    FontTexturePathId = 214,
+    FontDataSize = 215,
+    FontAscent = 216,
 
     SpriteAtlasPackedSpriteCount = 230,
 

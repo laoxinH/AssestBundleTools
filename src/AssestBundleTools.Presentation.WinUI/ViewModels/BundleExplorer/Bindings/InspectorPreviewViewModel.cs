@@ -3,15 +3,13 @@ using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
-using Windows.Media.Core;
-using Windows.Storage.Streams;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
 /// 承载检查器中的预览子状态，避免把图片/音频/文本/覆盖层细节继续堆回父级检查器宿主。
 /// </summary>
-public sealed class InspectorPreviewViewModel : ObservableObject
+public sealed partial class InspectorPreviewViewModel : ObservableObject
 {
     private string _previewStatusText = string.Empty;
     private string _previewText = string.Empty;
@@ -19,17 +17,11 @@ public sealed class InspectorPreviewViewModel : ObservableObject
     private string _previewCacheStatusText = string.Empty;
     private string _previewFallbackReasonText = string.Empty;
     private string _previewDiagnosticDetailText = string.Empty;
-    private string _audioPreviewSizeSummaryText = string.Empty;
-    private string _audioPreviewContainerBadgeText = string.Empty;
-    private string _audioPreviewDurationBadgeText = string.Empty;
-    private string _audioPreviewChannelBadgeText = string.Empty;
-    private string _audioPreviewFrequencyBadgeText = string.Empty;
-    private MediaSource? _previewAudioSource;
-    private IRandomAccessStream? _previewAudioStream;
     private AssetPreviewKind _previewKind;
     private bool _isPreviewLoading;
     private bool _hasSelection;
     private IReadOnlyList<InspectorInfoRowViewModel> _previewInfoRows = Array.Empty<InspectorInfoRowViewModel>();
+    private IReadOnlyList<InspectorInfoCardViewModel> _additionalInformationCards = Array.Empty<InspectorInfoCardViewModel>();
 
     public InspectorPreviewImageViewModel Image { get; } = new();
 
@@ -38,6 +30,14 @@ public sealed class InspectorPreviewViewModel : ObservableObject
     public InspectorPreviewMaterialViewModel Material { get; } = new();
 
     public InspectorPreviewAnimationClipViewModel AnimationClip { get; } = new();
+
+    public InspectorPreviewFontViewModel Font { get; } = new();
+
+    public InspectorPreviewGameObjectViewModel GameObject { get; } = new();
+
+    public InspectorPreviewMonoBehaviourViewModel MonoBehaviour { get; } = new();
+
+    public InspectorPreviewAnimatorControllerViewModel AnimatorController { get; } = new();
 
     public string PreviewStatusText
     {
@@ -67,72 +67,6 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         }
     }
 
-    public MediaSource? PreviewAudioSource
-    {
-        get => _previewAudioSource;
-        private set => SetProperty(ref _previewAudioSource, value);
-    }
-
-    public string AudioPreviewSizeSummaryText
-    {
-        get => _audioPreviewSizeSummaryText;
-        private set
-        {
-            if (SetProperty(ref _audioPreviewSizeSummaryText, value))
-            {
-                OnPropertyChanged(nameof(AudioPreviewSizeSummaryVisibility));
-            }
-        }
-    }
-
-    public string AudioPreviewContainerBadgeText
-    {
-        get => _audioPreviewContainerBadgeText;
-        private set
-        {
-            if (SetProperty(ref _audioPreviewContainerBadgeText, value))
-            {
-                OnPropertyChanged(nameof(AudioPreviewContainerBadgeVisibility));
-            }
-        }
-    }
-
-    public string AudioPreviewDurationBadgeText
-    {
-        get => _audioPreviewDurationBadgeText;
-        private set
-        {
-            if (SetProperty(ref _audioPreviewDurationBadgeText, value))
-            {
-                OnPropertyChanged(nameof(AudioPreviewDurationBadgeVisibility));
-            }
-        }
-    }
-
-    public string AudioPreviewChannelBadgeText
-    {
-        get => _audioPreviewChannelBadgeText;
-        private set
-        {
-            if (SetProperty(ref _audioPreviewChannelBadgeText, value))
-            {
-                OnPropertyChanged(nameof(AudioPreviewChannelBadgeVisibility));
-            }
-        }
-    }
-
-    public string AudioPreviewFrequencyBadgeText
-    {
-        get => _audioPreviewFrequencyBadgeText;
-        private set
-        {
-            if (SetProperty(ref _audioPreviewFrequencyBadgeText, value))
-            {
-                OnPropertyChanged(nameof(AudioPreviewFrequencyBadgeVisibility));
-            }
-        }
-    }
-
     public bool IsPreviewLoading
     {
         get => _isPreviewLoading;
@@ -140,12 +74,13 @@ public sealed class InspectorPreviewViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 图片预览继续使用固定高度，保证列表与详情页的视觉稳定；
-    /// 音频预览改为内容自适应，避免播放器和标签内容被固定高度裁切。
+    /// 只有真实渲染面保持固定高度；摘要卡片预览交给外层布局按内容自适应。
     /// </summary>
-    public double PreviewSurfaceHeight => _previewKind == AssetPreviewKind.Audio ? double.NaN : 320d;
+    public bool UsesFixedPreviewSurfaceHeight => UsesFixedPreviewSurfaceHeightFor(_previewKind);
 
-    public double PreviewSurfaceMinHeight => _previewKind == AssetPreviewKind.Audio ? 0d : 320d;
+    public double PreviewSurfaceHeight => UsesFixedPreviewSurfaceHeight ? 320d : double.NaN;
+
+    public double PreviewSurfaceMinHeight => UsesFixedPreviewSurfaceHeight ? 320d : 0d;
 
     public Visibility PreviewLoadingVisibility => _hasSelection && IsPreviewLoading ? Visibility.Visible : Visibility.Collapsed;
 
@@ -197,6 +132,38 @@ public sealed class InspectorPreviewViewModel : ObservableObject
             ? Visibility.Visible
             : Visibility.Collapsed;
 
+    public Visibility PreviewFontVisibility =>
+        _hasSelection &&
+        !IsPreviewLoading &&
+        _previewKind == AssetPreviewKind.Font &&
+        Font.HasFont
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    public Visibility PreviewGameObjectVisibility =>
+        _hasSelection &&
+        !IsPreviewLoading &&
+        _previewKind == AssetPreviewKind.GameObject &&
+        GameObject.HasGameObject
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    public Visibility PreviewMonoBehaviourVisibility =>
+        _hasSelection &&
+        !IsPreviewLoading &&
+        _previewKind == AssetPreviewKind.MonoBehaviour &&
+        MonoBehaviour.HasMonoBehaviour
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    public Visibility PreviewAnimatorControllerVisibility =>
+        _hasSelection &&
+        !IsPreviewLoading &&
+        _previewKind == AssetPreviewKind.AnimatorController &&
+        AnimatorController.HasAnimatorController
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
     public Visibility PreviewSummaryVisibility =>
         _hasSelection &&
         !IsPreviewLoading &&
@@ -220,32 +187,9 @@ public sealed class InspectorPreviewViewModel : ObservableObject
             ? Visibility.Visible
             : Visibility.Collapsed;
 
-    public Visibility AudioPreviewSizeSummaryVisibility =>
-        string.IsNullOrWhiteSpace(AudioPreviewSizeSummaryText)
-            ? Visibility.Collapsed
-            : Visibility.Visible;
-
-    public Visibility AudioPreviewContainerBadgeVisibility =>
-        string.IsNullOrWhiteSpace(AudioPreviewContainerBadgeText)
-            ? Visibility.Collapsed
-            : Visibility.Visible;
-
-    public Visibility AudioPreviewDurationBadgeVisibility =>
-        string.IsNullOrWhiteSpace(AudioPreviewDurationBadgeText)
-            ? Visibility.Collapsed
-            : Visibility.Visible;
-
-    public Visibility AudioPreviewChannelBadgeVisibility =>
-        string.IsNullOrWhiteSpace(AudioPreviewChannelBadgeText)
-            ? Visibility.Collapsed
-            : Visibility.Visible;
-
-    public Visibility AudioPreviewFrequencyBadgeVisibility =>
-        string.IsNullOrWhiteSpace(AudioPreviewFrequencyBadgeText)
-            ? Visibility.Collapsed
-            : Visibility.Visible;
-
     internal IReadOnlyList<InspectorInfoRowViewModel> PreviewInfoRows => _previewInfoRows;
+
+    internal IReadOnlyList<InspectorInfoCardViewModel> AdditionalInformationCards => _additionalInformationCards;
 
     internal string PreviewCacheStatusText => _previewCacheStatusText;
 
@@ -320,30 +264,6 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         Image.UpdateViewport(viewportWidth, viewportHeight);
     }
 
-    /// <summary>
-    /// 音频流需要在预览存活期间保持底层随机访问流不被回收，
-    /// 因此这里同时保存 <see cref="MediaSource"/> 和对应的源流句柄。
-    /// </summary>
-    internal void ApplyAudioPreview(
-        MediaSource audioSource,
-        IRandomAccessStream audioStream,
-        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
-        AudioPreviewDisplayState? audioPreviewDisplayState = null,
-        string? previewPayloadFilePath = null)
-    {
-        ArgumentNullException.ThrowIfNull(audioSource);
-        ArgumentNullException.ThrowIfNull(audioStream);
-
-        ResetState();
-        _previewKind = AssetPreviewKind.Audio;
-        _previewInfoRows = CloneRows(previewInfoRows);
-        PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
-        _previewAudioStream = audioStream;
-        PreviewAudioSource = audioSource;
-        ApplyAudioPreviewDisplayState(audioPreviewDisplayState);
-        NotifyPreviewStateChanged();
-    }
-
     internal void ApplyMeshPreview(
         AssetPreviewMeshGeometryDto meshGeometry,
         IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
@@ -375,6 +295,7 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         ResetState();
         _previewKind = AssetPreviewKind.Material;
         _previewInfoRows = CloneRows(previewInfoRows);
+        _additionalInformationCards = CloneCards(materialPreviewDisplayState.DetailCards ?? Array.Empty<InspectorInfoCardViewModel>());
         PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
         Material.Apply(material, materialPreviewDisplayState, materialTextureThumbnailSources);
         NotifyPreviewStateChanged();
@@ -392,8 +313,80 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         ResetState();
         _previewKind = AssetPreviewKind.AnimationClip;
         _previewInfoRows = CloneRows(previewInfoRows);
+        _additionalInformationCards = CloneCards(animationClipPreviewDisplayState.DetailCards);
         PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
         AnimationClip.Apply(animationClip, animationClipPreviewDisplayState);
+        NotifyPreviewStateChanged();
+    }
+
+    internal void ApplyFontPreview(
+        AssetPreviewFontDto font,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
+        FontPreviewDisplayState? fontPreviewDisplayState = null,
+        string? previewPayloadFilePath = null)
+    {
+        ArgumentNullException.ThrowIfNull(font);
+        ArgumentNullException.ThrowIfNull(fontPreviewDisplayState);
+
+        ResetState();
+        _previewKind = AssetPreviewKind.Font;
+        _previewInfoRows = CloneRows(previewInfoRows);
+        PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
+        Font.Apply(font, fontPreviewDisplayState);
+        NotifyPreviewStateChanged();
+    }
+
+    internal void ApplyGameObjectPreview(
+        AssetPreviewGameObjectDto gameObject,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
+        GameObjectPreviewDisplayState? gameObjectPreviewDisplayState = null,
+        string? previewPayloadFilePath = null)
+    {
+        ArgumentNullException.ThrowIfNull(gameObject);
+        ArgumentNullException.ThrowIfNull(gameObjectPreviewDisplayState);
+
+        ResetState();
+        _previewKind = AssetPreviewKind.GameObject;
+        _previewInfoRows = CloneRows(previewInfoRows);
+        _additionalInformationCards = CloneCards(gameObjectPreviewDisplayState.DetailCards);
+        PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
+        GameObject.Apply(gameObject, gameObjectPreviewDisplayState);
+        NotifyPreviewStateChanged();
+    }
+
+    internal void ApplyMonoBehaviourPreview(
+        AssetPreviewMonoBehaviourDto monoBehaviour,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
+        MonoBehaviourPreviewDisplayState? monoBehaviourPreviewDisplayState = null,
+        string? previewPayloadFilePath = null)
+    {
+        ArgumentNullException.ThrowIfNull(monoBehaviour);
+        ArgumentNullException.ThrowIfNull(monoBehaviourPreviewDisplayState);
+
+        ResetState();
+        _previewKind = AssetPreviewKind.MonoBehaviour;
+        _previewInfoRows = CloneRows(previewInfoRows);
+        _additionalInformationCards = CloneCards(monoBehaviourPreviewDisplayState.DetailCards);
+        PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
+        MonoBehaviour.Apply(monoBehaviour, monoBehaviourPreviewDisplayState);
+        NotifyPreviewStateChanged();
+    }
+
+    internal void ApplyAnimatorControllerPreview(
+        AssetPreviewAnimatorControllerDto animatorController,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
+        AnimatorControllerPreviewDisplayState? animatorControllerPreviewDisplayState = null,
+        string? previewPayloadFilePath = null)
+    {
+        ArgumentNullException.ThrowIfNull(animatorController);
+        ArgumentNullException.ThrowIfNull(animatorControllerPreviewDisplayState);
+
+        ResetState();
+        _previewKind = AssetPreviewKind.AnimatorController;
+        _previewInfoRows = CloneRows(previewInfoRows);
+        _additionalInformationCards = CloneCards(animatorControllerPreviewDisplayState.DetailCards);
+        PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
+        AnimatorController.Apply(animatorController, animatorControllerPreviewDisplayState);
         NotifyPreviewStateChanged();
     }
 
@@ -433,10 +426,15 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         Mesh.Clear();
         Material.Clear();
         AnimationClip.Clear();
+        Font.Clear();
+        GameObject.Clear();
+        MonoBehaviour.Clear();
+        AnimatorController.Clear();
         PreviewAudioSource = null;
         _previewAudioStream?.Dispose();
         _previewAudioStream = null;
         _previewInfoRows = Array.Empty<InspectorInfoRowViewModel>();
+        _additionalInformationCards = Array.Empty<InspectorInfoCardViewModel>();
         _previewCacheStatusText = string.Empty;
         _previewFallbackReasonText = string.Empty;
         _previewDiagnosticDetailText = string.Empty;
@@ -454,10 +452,15 @@ public sealed class InspectorPreviewViewModel : ObservableObject
         OnPropertyChanged(nameof(PreviewMeshVisibility));
         OnPropertyChanged(nameof(PreviewMaterialVisibility));
         OnPropertyChanged(nameof(PreviewAnimationClipVisibility));
+        OnPropertyChanged(nameof(PreviewFontVisibility));
+        OnPropertyChanged(nameof(PreviewGameObjectVisibility));
+        OnPropertyChanged(nameof(PreviewMonoBehaviourVisibility));
+        OnPropertyChanged(nameof(PreviewAnimatorControllerVisibility));
         OnPropertyChanged(nameof(PreviewSummaryVisibility));
         OnPropertyChanged(nameof(PreviewMessageVisibility));
         OnPropertyChanged(nameof(PreviewSurfaceHeight));
         OnPropertyChanged(nameof(PreviewSurfaceMinHeight));
+        OnPropertyChanged(nameof(UsesFixedPreviewSurfaceHeight));
         NotifyAudioPreviewPresentationChanged();
     }
 
@@ -471,38 +474,27 @@ public sealed class InspectorPreviewViewModel : ObservableObject
             ? string.Empty
             : previewPayloadFilePath.Trim();
 
-    private void ClearAudioPreviewPresentation()
-    {
-        AudioPreviewSizeSummaryText = string.Empty;
-        AudioPreviewContainerBadgeText = string.Empty;
-        AudioPreviewDurationBadgeText = string.Empty;
-        AudioPreviewChannelBadgeText = string.Empty;
-        AudioPreviewFrequencyBadgeText = string.Empty;
-    }
-
-    private void NotifyAudioPreviewPresentationChanged()
-    {
-        OnPropertyChanged(nameof(AudioPreviewSizeSummaryVisibility));
-        OnPropertyChanged(nameof(AudioPreviewContainerBadgeVisibility));
-        OnPropertyChanged(nameof(AudioPreviewDurationBadgeVisibility));
-        OnPropertyChanged(nameof(AudioPreviewChannelBadgeVisibility));
-        OnPropertyChanged(nameof(AudioPreviewFrequencyBadgeVisibility));
-    }
-
-    private void ApplyAudioPreviewDisplayState(AudioPreviewDisplayState? audioPreviewDisplayState)
-    {
-        AudioPreviewSizeSummaryText = audioPreviewDisplayState?.SizeSummaryText ?? string.Empty;
-        AudioPreviewContainerBadgeText = audioPreviewDisplayState?.ContainerBadgeText ?? string.Empty;
-        AudioPreviewDurationBadgeText = audioPreviewDisplayState?.DurationBadgeText ?? string.Empty;
-        AudioPreviewChannelBadgeText = audioPreviewDisplayState?.ChannelBadgeText ?? string.Empty;
-        AudioPreviewFrequencyBadgeText = audioPreviewDisplayState?.FrequencyBadgeText ?? string.Empty;
-    }
-
     private static IReadOnlyList<InspectorInfoRowViewModel> CloneRows(
         IReadOnlyList<InspectorInfoRowViewModel>? rows)
     {
         return rows is { Count: > 0 }
             ? rows.ToArray()
             : Array.Empty<InspectorInfoRowViewModel>();
+    }
+
+    private static IReadOnlyList<InspectorInfoCardViewModel> CloneCards(
+        IReadOnlyList<InspectorInfoCardViewModel>? cards)
+    {
+        return cards is { Count: > 0 }
+            ? cards.ToArray()
+            : Array.Empty<InspectorInfoCardViewModel>();
+    }
+
+    private static bool UsesFixedPreviewSurfaceHeightFor(AssetPreviewKind previewKind)
+    {
+        return previewKind is
+            AssetPreviewKind.Image or
+            AssetPreviewKind.Mesh or
+            AssetPreviewKind.Text;
     }
 }

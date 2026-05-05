@@ -11,9 +11,11 @@ public sealed class InspectorPreviewAnimationClipViewModel : ObservableObject
     private string _assetNameText = string.Empty;
     private string _timingText = string.Empty;
     private string _curveCountText = string.Empty;
+    private string _bindingSummaryText = string.Empty;
     private string _legacyText = string.Empty;
     private string _loopText = string.Empty;
     private string _eventsTitle = string.Empty;
+    private string _eventSummaryText = string.Empty;
     private string _emptyEventsText = string.Empty;
     private string _truncatedText = string.Empty;
     private IReadOnlyList<AnimationClipEventRowViewModel> _eventRows = Array.Empty<AnimationClipEventRowViewModel>();
@@ -49,6 +51,12 @@ public sealed class InspectorPreviewAnimationClipViewModel : ObservableObject
         private set => SetProperty(ref _curveCountText, value);
     }
 
+    public string BindingSummaryText
+    {
+        get => _bindingSummaryText;
+        private set => SetProperty(ref _bindingSummaryText, value);
+    }
+
     public string LegacyText
     {
         get => _legacyText;
@@ -65,6 +73,12 @@ public sealed class InspectorPreviewAnimationClipViewModel : ObservableObject
     {
         get => _eventsTitle;
         private set => SetProperty(ref _eventsTitle, value);
+    }
+
+    public string EventSummaryText
+    {
+        get => _eventSummaryText;
+        private set => SetProperty(ref _eventSummaryText, value);
     }
 
     public string EmptyEventsText
@@ -120,9 +134,11 @@ public sealed class InspectorPreviewAnimationClipViewModel : ObservableObject
         AssetNameText = displayState.AssetNameText;
         TimingText = displayState.TimingText;
         CurveCountText = displayState.CurveCountText;
+        BindingSummaryText = displayState.BindingSummaryText;
         LegacyText = displayState.LegacyText;
         LoopText = displayState.LoopText;
         EventsTitle = displayState.EventsTitle;
+        EventSummaryText = displayState.EventSummaryText;
         EmptyEventsText = displayState.EmptyEventsText;
         TruncatedText = displayState.TruncatedText;
         EventRows = displayState.EventRows.Select(static row => new AnimationClipEventRowViewModel(row)).ToArray();
@@ -134,9 +150,11 @@ public sealed class InspectorPreviewAnimationClipViewModel : ObservableObject
         AssetNameText = string.Empty;
         TimingText = string.Empty;
         CurveCountText = string.Empty;
+        BindingSummaryText = string.Empty;
         LegacyText = string.Empty;
         LoopText = string.Empty;
         EventsTitle = string.Empty;
+        EventSummaryText = string.Empty;
         EmptyEventsText = string.Empty;
         TruncatedText = string.Empty;
         EventRows = Array.Empty<AnimationClipEventRowViewModel>();

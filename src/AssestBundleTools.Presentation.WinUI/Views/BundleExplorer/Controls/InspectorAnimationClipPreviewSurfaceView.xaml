@@ -29,118 +29,91 @@
             TargetType="Border">
             <Setter Property="Padding" Value="10,8" />
             <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
-            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="CornerRadius" Value="8" />
         </Style>
     </UserControl.Resources>
 
-    <ScrollViewer
-        HorizontalScrollBarVisibility="Disabled"
-        HorizontalScrollMode="Disabled"
-        VerticalScrollBarVisibility="Auto"
-        VerticalScrollMode="Enabled"
-        ZoomMode="Disabled">
-        <StackPanel Spacing="12">
-            <Grid ColumnSpacing="10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <Border
-                    Width="42"
-                    Height="42"
-                    Background="{ThemeResource AccentFillColorSecondaryBrush}"
-                    CornerRadius="13">
-                    <FontIcon
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        FontFamily="Segoe Fluent Icons"
-                        FontSize="18"
-                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                        Glyph="&#xE8B9;" />
-                </Border>
-
-                <StackPanel
-                    Grid.Column="1"
-                    Spacing="2">
-                    <TextBlock
-                        FontSize="17"
-                        FontWeight="SemiBold"
-                        Text="{x:Bind ViewModel.AssetNameText, Mode=OneWay}"
-                        TextTrimming="CharacterEllipsis"
-                        TextWrapping="WrapWholeWords" />
-                    <TextBlock
-                        Style="{StaticResource AnimationClipPreviewSecondaryTextStyle}"
-                        Text="{x:Bind ViewModel.TimingText, Mode=OneWay}" />
-                </StackPanel>
-            </Grid>
+    <StackPanel Spacing="12">
+        <Grid ColumnSpacing="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
             <Border
-                Padding="12"
-                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="12">
-                <StackPanel Spacing="4">
-                    <TextBlock
-                        FontWeight="SemiBold"
-                        Text="{x:Bind ViewModel.CurveCountText, Mode=OneWay}"
-                        TextWrapping="WrapWholeWords" />
-                    <TextBlock
-                        Style="{StaticResource AnimationClipPreviewSecondaryTextStyle}"
-                        Text="{x:Bind ViewModel.LegacyText, Mode=OneWay}" />
-                    <TextBlock
-                        Style="{StaticResource AnimationClipPreviewSecondaryTextStyle}"
-                        Text="{x:Bind ViewModel.LoopText, Mode=OneWay}" />
-                </StackPanel>
+                Width="42"
+                Height="42"
+                Background="{ThemeResource AccentFillColorSecondaryBrush}"
+                CornerRadius="13">
+                <FontIcon
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="18"
+                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                    Glyph="&#xE8B9;" />
             </Border>
 
+            <StackPanel
+                Grid.Column="1"
+                Spacing="2">
+                <TextBlock
+                    FontSize="17"
+                    FontWeight="SemiBold"
+                    MaxLines="2"
+                    Text="{x:Bind ViewModel.AssetNameText, Mode=OneWay}"
+                    TextTrimming="CharacterEllipsis"
+                    TextWrapping="WrapWholeWords" />
+                <TextBlock
+                    MaxLines="2"
+                    Style="{StaticResource AnimationClipPreviewSecondaryTextStyle}"
+                    Text="{x:Bind ViewModel.TimingText, Mode=OneWay}" />
+            </StackPanel>
+        </Grid>
+
+        <Border
+            Padding="12"
+            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8">
+            <StackPanel Spacing="4">
+                <TextBlock
+                    FontWeight="SemiBold"
+                    MaxLines="2"
+                    Text="{x:Bind ViewModel.CurveCountText, Mode=OneWay}"
+                    TextWrapping="WrapWholeWords" />
+                <TextBlock
+                    MaxLines="1"
+                    Style="{StaticResource AnimationClipPreviewSecondaryTextStyle}"
+                    Text="{x:Bind ViewModel.BindingSummaryText, Mode=OneWay}" />
+                <TextBlock
+                    MaxLines="1"
+                    Style="{StaticResource AnimationClipPreviewSecondaryTextStyle}"
+                    Text="{x:Bind ViewModel.LegacyText, Mode=OneWay}" />
+                <TextBlock
+                    MaxLines="1"
+                    Style="{StaticResource AnimationClipPreviewSecondaryTextStyle}"
+                    Text="{x:Bind ViewModel.LoopText, Mode=OneWay}" />
+            </StackPanel>
+        </Border>
+
+        <StackPanel Spacing="4">
+            <TextBlock
+                Style="{StaticResource AnimationClipPreviewSectionTitleStyle}"
+                Text="{x:Bind ViewModel.EventsTitle, Mode=OneWay}" />
+            <TextBlock
+                Style="{StaticResource AnimationClipPreviewSecondaryTextStyle}"
+                Text="{x:Bind ViewModel.EventSummaryText, Mode=OneWay}"
+                Visibility="{x:Bind ViewModel.EventRowsVisibility, Mode=OneWay}" />
+            <TextBlock
+                Style="{StaticResource AnimationClipPreviewSecondaryTextStyle}"
+                Text="{x:Bind ViewModel.EmptyEventsText, Mode=OneWay}"
+                Visibility="{x:Bind ViewModel.EventRowsEmptyVisibility, Mode=OneWay}" />
             <TextBlock
                 Style="{StaticResource AnimationClipPreviewSecondaryTextStyle}"
                 Text="{x:Bind ViewModel.TruncatedText, Mode=OneWay}"
                 Visibility="{x:Bind ViewModel.TruncatedTextVisibility, Mode=OneWay}" />
-
-            <StackPanel Spacing="7">
-                <TextBlock
-                    Style="{StaticResource AnimationClipPreviewSectionTitleStyle}"
-                    Text="{x:Bind ViewModel.EventsTitle, Mode=OneWay}" />
-                <ItemsControl
-                    ItemsSource="{x:Bind ViewModel.EventRows, Mode=OneWay}"
-                    Visibility="{x:Bind ViewModel.EventRowsVisibility, Mode=OneWay}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="bindings:AnimationClipEventRowViewModel">
-                            <Border
-                                Margin="0,0,0,6"
-                                Style="{StaticResource AnimationClipPreviewCardStyle}">
-                                <StackPanel Spacing="2">
-                                    <Grid ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock
-                                            FontFamily="Cascadia Mono"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{x:Bind TimeText, Mode=OneTime}" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            FontWeight="SemiBold"
-                                            Text="{x:Bind FunctionNameText, Mode=OneTime}"
-                                            TextWrapping="WrapWholeWords" />
-                                    </Grid>
-                                    <TextBlock
-                                        Style="{StaticResource AnimationClipPreviewSecondaryTextStyle}"
-                                        Text="{x:Bind ParameterText, Mode=OneTime}" />
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <TextBlock
-                    Style="{StaticResource AnimationClipPreviewSecondaryTextStyle}"
-                    Text="{x:Bind ViewModel.EmptyEventsText, Mode=OneWay}"
-                    Visibility="{x:Bind ViewModel.EventRowsEmptyVisibility, Mode=OneWay}" />
-            </StackPanel>
         </StackPanel>
-    </ScrollViewer>
+    </StackPanel>
 </UserControl>

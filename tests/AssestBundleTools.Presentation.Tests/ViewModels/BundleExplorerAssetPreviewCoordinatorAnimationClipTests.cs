@@ -83,8 +83,14 @@ public sealed class BundleExplorerAssetPreviewCoordinatorAnimationClipTests
             ResourceKeys.InspectorAnimationClipPreviewCurveCountFormat + ":8|2|3|1|0",
             assetTab.Inspector.Preview.AnimationClip.CurveCountText);
         Assert.Equal(
+            ResourceKeys.InspectorAnimationClipPreviewBindingSummaryFormat + ":3|16",
+            assetTab.Inspector.Preview.AnimationClip.BindingSummaryText);
+        Assert.Equal(
             ResourceKeys.InspectorAnimationClipPreviewLoopFormat + ":InspectorPanelView.Boolean.True|InspectorPanelView.Boolean.False|InspectorPanelView.Boolean.True|InspectorPanelView.Boolean.False|InspectorPanelView.Boolean.True",
             assetTab.Inspector.Preview.AnimationClip.LoopText);
+        Assert.Equal(
+            ResourceKeys.InspectorAnimationClipPreviewEventSummaryFormat + ":1",
+            assetTab.Inspector.Preview.AnimationClip.EventSummaryText);
         Assert.Single(assetTab.Inspector.Preview.AnimationClip.EventRows);
         var eventRow = assetTab.Inspector.Preview.AnimationClip.EventRows[0];
         Assert.Equal(ResourceKeys.InspectorAnimationClipPreviewEventTimeFormat + ":0.25", eventRow.TimeText);
@@ -92,6 +98,26 @@ public sealed class BundleExplorerAssetPreviewCoordinatorAnimationClipTests
         Assert.Equal(
             ResourceKeys.InspectorAnimationClipPreviewEventParametersFormat + ":left|0.5|2",
             eventRow.ParameterText);
+        var curveBindingCard = Assert.Single(
+            assetTab.Inspector.InformationCards,
+            static card => card.Key == "animation-clip-curve-bindings");
+        Assert.Equal(ResourceKeys.InspectorAnimationClipPreviewCurveBindingCardTitle, curveBindingCard.Title);
+        Assert.Contains(
+            curveBindingCard.Rows,
+            static row => row.Label == ResourceKeys.InspectorAnimationClipPreviewCurveBindingCountLabel &&
+                          row.Value == "3");
+        Assert.Contains(
+            curveBindingCard.Rows,
+            static row => row.Label == ResourceKeys.InspectorAnimationClipPreviewCurveBindingLabelFormat + ":" +
+                ResourceKeys.InspectorAnimationClipPreviewCurveBindingKindFloat + "|1" &&
+                          row.Value.Contains("Root/Hips", StringComparison.Ordinal));
+        Assert.Contains(
+            curveBindingCard.Rows,
+            static row => row.Label == ResourceKeys.InspectorAnimationClipPreviewCurveBindingLabelFormat + ":" +
+                ResourceKeys.InspectorAnimationClipPreviewCurveBindingKindGeneric + "|3" &&
+                          row.Value.Contains(
+                              ResourceKeys.InspectorAnimationClipPreviewCurveBindingCurveKeyFormat + ":1|-",
+                              StringComparison.Ordinal));
         Assert.Equal(@"C:\PreviewCache\animation-clip.json", assetTab.Inspector.Preview.PreviewPayloadFilePath);
         Assert.Empty(appLogService.WarningMessages);
     }

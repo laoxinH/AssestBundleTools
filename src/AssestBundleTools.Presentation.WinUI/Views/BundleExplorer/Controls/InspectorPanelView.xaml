@@ -11,81 +11,6 @@
 
     <UserControl.Resources>
         <Style
-            x:Key="InspectorInfoCardBorderStyle"
-            TargetType="Border">
-            <Setter
-                Property="Background"
-                Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
-            <Setter
-                Property="BorderBrush"
-                Value="{ThemeResource CardStrokeColorDefaultBrush}" />
-            <Setter
-                Property="BorderThickness"
-                Value="1" />
-            <Setter
-                Property="CornerRadius"
-                Value="12" />
-        </Style>
-
-        <Style
-            x:Key="InspectorInfoCardHeaderButtonStyle"
-            TargetType="Button">
-            <Setter
-                Property="Background"
-                Value="Transparent" />
-            <Setter
-                Property="BorderBrush"
-                Value="Transparent" />
-            <Setter
-                Property="BorderThickness"
-                Value="0" />
-            <Setter
-                Property="Padding"
-                Value="10,8" />
-            <Setter
-                Property="CornerRadius"
-                Value="10" />
-            <Setter
-                Property="HorizontalAlignment"
-                Value="Stretch" />
-            <Setter
-                Property="HorizontalContentAlignment"
-                Value="Stretch" />
-        </Style>
-
-        <Style
-            x:Key="InspectorInfoCardCopyButtonStyle"
-            TargetType="Button">
-            <Setter
-                Property="Background"
-                Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
-            <Setter
-                Property="BorderBrush"
-                Value="Transparent" />
-            <Setter
-                Property="BorderThickness"
-                Value="0" />
-            <Setter
-                Property="Padding"
-                Value="0" />
-            <Setter
-                Property="Width"
-                Value="30" />
-            <Setter
-                Property="Height"
-                Value="30" />
-            <Setter
-                Property="CornerRadius"
-                Value="15" />
-            <Setter
-                Property="HorizontalAlignment"
-                Value="Right" />
-            <Setter
-                Property="VerticalAlignment"
-                Value="Top" />
-        </Style>
-
-        <Style
             x:Key="InspectorResolvedAssetTagButtonStyle"
             TargetType="Button">
             <Setter
@@ -115,68 +40,6 @@
             <Setter
                 Property="VerticalAlignment"
                 Value="Top" />
-        </Style>
-
-        <Style
-            x:Key="InspectorInfoCardTitleTextStyle"
-            TargetType="TextBlock">
-            <Setter
-                Property="FontSize"
-                Value="14" />
-            <Setter
-                Property="FontWeight"
-                Value="SemiBold" />
-            <Setter
-                Property="TextWrapping"
-                Value="WrapWholeWords" />
-        </Style>
-
-        <Style
-            x:Key="InspectorInfoCardSummaryTextStyle"
-            TargetType="TextBlock">
-            <Setter
-                Property="FontSize"
-                Value="12" />
-            <Setter
-                Property="Foreground"
-                Value="{ThemeResource TextFillColorSecondaryBrush}" />
-            <Setter
-                Property="TextWrapping"
-                Value="WrapWholeWords" />
-        </Style>
-
-        <Style
-            x:Key="InspectorInfoRowLabelTextStyle"
-            TargetType="TextBlock">
-            <Setter
-                Property="Margin"
-                Value="0,0,12,0" />
-            <Setter
-                Property="FontSize"
-                Value="12.5" />
-            <Setter
-                Property="FontWeight"
-                Value="SemiBold" />
-            <Setter
-                Property="Foreground"
-                Value="{ThemeResource TextFillColorSecondaryBrush}" />
-            <Setter
-                Property="TextWrapping"
-                Value="WrapWholeWords" />
-        </Style>
-
-        <Style
-            x:Key="InspectorInfoRowValueTextStyle"
-            TargetType="TextBlock">
-            <Setter
-                Property="FontSize"
-                Value="12.5" />
-            <Setter
-                Property="IsTextSelectionEnabled"
-                Value="True" />
-            <Setter
-                Property="TextWrapping"
-                Value="WrapWholeWords" />
         </Style>
 
     </UserControl.Resources>
@@ -261,6 +124,7 @@
                         Visibility="{x:Bind ViewModel.DetailsSectionVisibility, Mode=OneWay}">
                         <StackPanel Padding="8" Spacing="8">
                             <controls:InspectorPreviewSurfaceView
+                                FixedPreviewSurfaceHeight="320"
                                 ViewModel="{x:Bind ViewModel, Mode=OneWay}"
                                 OpenPreviewLocationRequested="OnPreviewSurfaceOpenPreviewLocationRequested"
                                 ResolvedAssetOpenRequested="OnPreviewSurfaceResolvedAssetOpenRequested" />
@@ -273,104 +137,11 @@
                                 <ItemsControl ItemsSource="{x:Bind ViewModel.InformationCards, Mode=OneWay}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="viewModels:InspectorInfoCardViewModel">
-                                            <Border
+                                            <controls:InspectorInfoCardView
+                                                Card="{Binding}"
                                                 Margin="0,0,0,8"
-                                                Style="{StaticResource InspectorInfoCardBorderStyle}">
-                                                <Grid>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                    </Grid.RowDefinitions>
-
-                                                    <Grid
-                                                        Grid.Row="0"
-                                                        Padding="6,6,6,4"
-                                                        ColumnSpacing="6">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="Auto" />
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <Button
-                                                            Grid.Column="0"
-                                                            Click="OnInspectorInfoCardHeaderButtonClick"
-                                                            Style="{StaticResource InspectorInfoCardHeaderButtonStyle}">
-                                                            <Grid ColumnSpacing="10">
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="Auto" />
-                                                                    <ColumnDefinition Width="*" />
-                                                                </Grid.ColumnDefinitions>
-
-                                                                <FontIcon
-                                                                    VerticalAlignment="Center"
-                                                                    FontFamily="Segoe Fluent Icons"
-                                                                    FontSize="12"
-                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                                    Glyph="{x:Bind ExpandGlyph, Mode=OneWay}" />
-
-                                                                <StackPanel
-                                                                    Grid.Column="1"
-                                                                    Spacing="2">
-                                                                    <TextBlock
-                                                                        Style="{StaticResource InspectorInfoCardTitleTextStyle}"
-                                                                        Text="{x:Bind Title, Mode=OneWay}" />
-                                                                    <TextBlock
-                                                                        Style="{StaticResource InspectorInfoCardSummaryTextStyle}"
-                                                                        Text="{x:Bind SummaryText, Mode=OneWay}"
-                                                                        Visibility="{x:Bind SummaryVisibility, Mode=OneWay}" />
-                                                                </StackPanel>
-                                                            </Grid>
-                                                        </Button>
-
-                                                        <Button
-                                                            Grid.Column="1"
-                                                            Click="OnInspectorInfoCardCopyButtonClick"
-                                                            Style="{StaticResource InspectorInfoCardCopyButtonStyle}"
-                                                            ToolTipService.ToolTip="{x:Bind CopyToolTipText, Mode=OneWay}">
-                                                            <FontIcon
-                                                                FontFamily="Segoe Fluent Icons"
-                                                                Glyph="&#xE8C8;" />
-                                                        </Button>
-                                                    </Grid>
-
-                                                    <Border
-                                                        Grid.Row="1"
-                                                        Margin="12,0,12,0"
-                                                        Background="{ThemeResource CardStrokeColorDefaultBrush}"
-                                                        Height="1"
-                                                        Visibility="{x:Bind ContentVisibility, Mode=OneWay}" />
-
-                                                    <ItemsControl
-                                                        Grid.Row="2"
-                                                        Margin="12,6,12,12"
-                                                        ItemsSource="{x:Bind Rows, Mode=OneWay}"
-                                                        Visibility="{x:Bind ContentVisibility, Mode=OneWay}">
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate x:DataType="viewModels:InspectorInfoRowViewModel">
-                                                                <Grid
-                                                                    Margin="0,0,0,8"
-                                                                    ColumnSpacing="0">
-                                                                    <Grid.ColumnDefinitions>
-                                                                        <ColumnDefinition Width="Auto" />
-                                                                        <ColumnDefinition Width="*" />
-                                                                    </Grid.ColumnDefinitions>
-
-                                                                    <TextBlock
-                                                                        Style="{StaticResource InspectorInfoRowLabelTextStyle}"
-                                                                        Text="{x:Bind Label, Mode=OneTime}"
-                                                                        Visibility="{x:Bind LabelVisibility, Mode=OneTime}" />
-
-                                                                    <TextBlock
-                                                                        Grid.Column="1"
-                                                                        Style="{StaticResource InspectorInfoRowValueTextStyle}"
-                                                                        Text="{x:Bind Value, Mode=OneTime}" />
-                                                                </Grid>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                </Grid>
-                                            </Border>
+                                                HorizontalAlignment="Stretch"
+                                                ResolvedAssetOpenRequested="OnInfoCardResolvedAssetOpenRequested" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>

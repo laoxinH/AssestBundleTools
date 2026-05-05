@@ -1,7 +1,6 @@
 using AssestBundleTools.Presentation.WinUI.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Windows.ApplicationModel.DataTransfer;
 
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -88,6 +87,13 @@ public sealed partial class InspectorPanelView : UserControl
         ResolvedAssetOpenRequested?.Invoke(this, e);
     }
 
+    private void OnInfoCardResolvedAssetOpenRequested(
+        object? sender,
+        ResolvedAssetOpenRequestedEventArgs e)
+    {
+        ResolvedAssetOpenRequested?.Invoke(this, e);
+    }
+
     private void OnResolvedAssetOpenButtonClick(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: ResolvedAssetNavigationTarget target })
@@ -111,27 +117,6 @@ public sealed partial class InspectorPanelView : UserControl
         {
             ViewModel.SelectedSectionIndex = sectionIndex;
         }
-    }
-
-    private void OnInspectorInfoCardHeaderButtonClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement { DataContext: InspectorInfoCardViewModel card })
-        {
-            card.ToggleExpanded();
-        }
-    }
-
-    private void OnInspectorInfoCardCopyButtonClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is not FrameworkElement { DataContext: InspectorInfoCardViewModel card } ||
-            string.IsNullOrWhiteSpace(card.CopyPayloadText))
-        {
-            return;
-        }
-
-        var dataPackage = new DataPackage();
-        dataPackage.SetText(card.CopyPayloadText);
-        Clipboard.SetContent(dataPackage);
     }
 
     private static void OnViewModelPropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)

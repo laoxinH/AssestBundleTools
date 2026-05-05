@@ -130,6 +130,62 @@ public sealed partial class InspectorPanelViewModel
         RebuildInformationCards();
     }
 
+    public void ApplyFontPreview(
+        AssetPreviewFontDto font,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
+        FontPreviewDisplayState? fontPreviewDisplayState = null,
+        string? previewPayloadFilePath = null)
+    {
+        Preview.ApplyFontPreview(
+            font,
+            previewInfoRows,
+            fontPreviewDisplayState,
+            previewPayloadFilePath);
+        RebuildInformationCards();
+    }
+
+    public void ApplyGameObjectPreview(
+        AssetPreviewGameObjectDto gameObject,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
+        GameObjectPreviewDisplayState? gameObjectPreviewDisplayState = null,
+        string? previewPayloadFilePath = null)
+    {
+        Preview.ApplyGameObjectPreview(
+            gameObject,
+            previewInfoRows,
+            gameObjectPreviewDisplayState,
+            previewPayloadFilePath);
+        RebuildInformationCards();
+    }
+
+    public void ApplyMonoBehaviourPreview(
+        AssetPreviewMonoBehaviourDto monoBehaviour,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
+        MonoBehaviourPreviewDisplayState? monoBehaviourPreviewDisplayState = null,
+        string? previewPayloadFilePath = null)
+    {
+        Preview.ApplyMonoBehaviourPreview(
+            monoBehaviour,
+            previewInfoRows,
+            monoBehaviourPreviewDisplayState,
+            previewPayloadFilePath);
+        RebuildInformationCards();
+    }
+
+    public void ApplyAnimatorControllerPreview(
+        AssetPreviewAnimatorControllerDto animatorController,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
+        AnimatorControllerPreviewDisplayState? animatorControllerPreviewDisplayState = null,
+        string? previewPayloadFilePath = null)
+    {
+        Preview.ApplyAnimatorControllerPreview(
+            animatorController,
+            previewInfoRows,
+            animatorControllerPreviewDisplayState,
+            previewPayloadFilePath);
+        RebuildInformationCards();
+    }
+
     public void ApplyTextPreview(
         string textContent,
         IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,

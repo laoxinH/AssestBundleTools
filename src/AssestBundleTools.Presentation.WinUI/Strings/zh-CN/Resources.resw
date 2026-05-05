@@ -888,6 +888,18 @@
   <data name="InspectorPanelView.MaterialPreview.ShaderInternalUnresolved.Text" xml:space="preserve">
     <value>内部 Shader 引用未在当前依赖图中匹配</value>
   </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderCardTitle.Text" xml:space="preserve">
+    <value>Shader</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderName.Label" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderReference.Label" xml:space="preserve">
+    <value>引用</value>
+  </data>
+  <data name="InspectorPanelView.MaterialPreview.ShaderResolution.Label" xml:space="preserve">
+    <value>解析状态</value>
+  </data>
   <data name="InspectorPanelView.MaterialPreview.PropertyCount.Format" xml:space="preserve">
     <value>{0} 个贴图槽 · {1} 个颜色 · {2} 个数值</value>
   </data>
@@ -990,6 +1002,9 @@
   <data name="InspectorPanelView.AnimationClipPreview.CurveCount.Format" xml:space="preserve">
     <value>{0} 条浮点 · {1} 条位置 · {2} 条旋转 · {3} 条缩放 · {4} 条对象引用曲线</value>
   </data>
+  <data name="InspectorPanelView.AnimationClipPreview.BindingSummary.Format" xml:space="preserve">
+    <value>{0} 条绑定 · {1} 个关键帧</value>
+  </data>
   <data name="InspectorPanelView.AnimationClipPreview.Legacy.Format" xml:space="preserve">
     <value>Legacy Clip：{0}</value>
   </data>
@@ -998,6 +1013,9 @@
   </data>
   <data name="InspectorPanelView.AnimationClipPreview.EventsTitle.Text" xml:space="preserve">
     <value>动画事件</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.EventSummary.Format" xml:space="preserve">
+    <value>{0} 个动画事件</value>
   </data>
   <data name="InspectorPanelView.AnimationClipPreview.EmptyEvents.Text" xml:space="preserve">
     <value>没有动画事件</value>
@@ -1010,6 +1028,675 @@
   </data>
   <data name="InspectorPanelView.AnimationClipPreview.EventParameters.Format" xml:space="preserve">
     <value>字符串 {0} · 浮点 {1} · 整数 {2}</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.TimingCardTitle.Text" xml:space="preserve">
+    <value>时间与循环</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingCardTitle.Text" xml:space="preserve">
+    <value>曲线与绑定</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.Duration.Label" xml:space="preserve">
+    <value>时长</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.SampleRate.Label" xml:space="preserve">
+    <value>采样率</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.EstimatedFrames.Label" xml:space="preserve">
+    <value>估算帧数</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.StartTime.Label" xml:space="preserve">
+    <value>起始时间</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.StopTime.Label" xml:space="preserve">
+    <value>结束时间</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.Legacy.Label" xml:space="preserve">
+    <value>旧版模式</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.LoopTime.Label" xml:space="preserve">
+    <value>循环</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.LoopBlend.Label" xml:space="preserve">
+    <value>循环混合</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.LoopBlendOrientation.Label" xml:space="preserve">
+    <value>朝向混合</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.LoopBlendPositionY.Label" xml:space="preserve">
+    <value>Y 位置混合</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.LoopBlendPositionXZ.Label" xml:space="preserve">
+    <value>XZ 位置混合</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.FloatCurveCount.Label" xml:space="preserve">
+    <value>浮点曲线</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.PositionCurveCount.Label" xml:space="preserve">
+    <value>位置曲线</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.RotationCurveCount.Label" xml:space="preserve">
+    <value>旋转曲线</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.ScaleCurveCount.Label" xml:space="preserve">
+    <value>缩放曲线</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.PPtrCurveCount.Label" xml:space="preserve">
+    <value>对象引用曲线</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingCount.Label" xml:space="preserve">
+    <value>绑定条目</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingLabel.Format" xml:space="preserve">
+    <value>{0} #{1}</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingEmpty.Text" xml:space="preserve">
+    <value>没有可读取的曲线绑定明细</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingTruncated.Text" xml:space="preserve">
+    <value>绑定较多，预览中仅展示前几项。</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingPath.Format" xml:space="preserve">
+    <value>路径 {0}</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingPathHash.Format" xml:space="preserve">
+    <value>路径哈希 {0}</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingAttribute.Format" xml:space="preserve">
+    <value>属性 {0}</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingAttributeId.Format" xml:space="preserve">
+    <value>属性 ID {0}</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingClassId.Format" xml:space="preserve">
+    <value>ClassID {0}</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingTypeId.Format" xml:space="preserve">
+    <value>TypeID {0}</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingScriptPathId.Format" xml:space="preserve">
+    <value>脚本 PathID {0}</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingCurveKey.Format" xml:space="preserve">
+    <value>{0} 条曲线 · {1} 个关键帧</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingPPtr.Format" xml:space="preserve">
+    <value>PPtr {0}</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingKind.Float" xml:space="preserve">
+    <value>浮点</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingKind.Position" xml:space="preserve">
+    <value>位置</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingKind.Rotation" xml:space="preserve">
+    <value>旋转</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingKind.Scale" xml:space="preserve">
+    <value>缩放</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingKind.PPtr" xml:space="preserve">
+    <value>对象引用</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingKind.Generic" xml:space="preserve">
+    <value>通用</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.CurveBindingKind.Unknown" xml:space="preserve">
+    <value>未知</value>
+  </data>
+  <data name="InspectorPanelView.AnimationClipPreview.EventDetail.Format" xml:space="preserve">
+    <value>{0}，{1}</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.Summary.Format" xml:space="preserve">
+    <value>{0} 个字符 · 默认字号 {1} · 行间距 {2}</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.Metrics.Format" xml:space="preserve">
+    <value>Ascent {0} · Descent {1} · Tracking {2} · 字符间距 {3} · Padding {4}</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.DataSize.Format" xml:space="preserve">
+    <value>字体数据：{0}</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.TextureTitle.Text" xml:space="preserve">
+    <value>贴图</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.DefaultMaterialTitle.Text" xml:space="preserve">
+    <value>默认材质</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.ReferenceMissing.Text" xml:space="preserve">
+    <value>无引用</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.ReferenceInternal.Format" xml:space="preserve">
+    <value>{0} · PathId {1}</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.ReferenceExternal.Format" xml:space="preserve">
+    <value>外部 {0} · PathId {1}</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.CharactersTitle.Text" xml:space="preserve">
+    <value>字符矩形</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.EmptyCharacters.Text" xml:space="preserve">
+    <value>没有字符矩形</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.Truncated.Text" xml:space="preserve">
+    <value>字符项较多，预览中仅展示前几项。</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.CharacterCodePoint.Format" xml:space="preserve">
+    <value>U+{0}</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.CharacterUv.Format" xml:space="preserve">
+    <value>UV x={0}, y={1}, w={2}, h={3}</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.CharacterVertex.Format" xml:space="preserve">
+    <value>顶点 x={0}, y={1}, w={2}, h={3}</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.CharacterAdvance.Format" xml:space="preserve">
+    <value>步进 {0}</value>
+  </data>
+  <data name="InspectorPanelView.FontPreview.CharacterFlipped.Format" xml:space="preserve">
+    <value>翻转 {0}</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.State.Format" xml:space="preserve">
+    <value>Active {0} · Layer {1} · Tag {2}</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentSummary.Format" xml:space="preserve">
+    <value>{0} 个组件 · {1}</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.TransformSummary.Format" xml:space="preserve">
+    <value>位置 {0} · 缩放 {1}</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.RootHierarchy.Format" xml:space="preserve">
+    <value>根对象 · {0} 个子对象</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ParentHierarchy.Format" xml:space="preserve">
+    <value>父级 PathId {0} · {1} 个子对象</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.Summary.ResolvedReference.Label" xml:space="preserve">
+    <value>已解析引用</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.SummaryCard.Components.Title" xml:space="preserve">
+    <value>组件构成</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.SummaryCard.References.Title" xml:space="preserve">
+    <value>引用状态</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.SummaryCard.Renderer.Title" xml:space="preserve">
+    <value>Renderer</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.SummaryCard.Mesh.Title" xml:space="preserve">
+    <value>Mesh</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.SummaryCard.Script.Title" xml:space="preserve">
+    <value>脚本</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.SummaryCard.Animator.Title" xml:space="preserve">
+    <value>Animator</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.SummaryCard.Audio.Title" xml:space="preserve">
+    <value>AudioSource</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.SummaryCard.Particle.Title" xml:space="preserve">
+    <value>ParticleSystem</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.SummaryCard.Collider.Title" xml:space="preserve">
+    <value>Collider</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentSummaryField.Format" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentSummary.Enabled.Label" xml:space="preserve">
+    <value>启用</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentSummary.CastShadows.Label" xml:space="preserve">
+    <value>投射阴影</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentSummary.ReceiveShadows.Label" xml:space="preserve">
+    <value>接收阴影</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentSummary.Loop.Label" xml:space="preserve">
+    <value>循环</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentSummary.PlayOnAwake.Label" xml:space="preserve">
+    <value>启动播放</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentSummary.Volume.Label" xml:space="preserve">
+    <value>音量</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentSummary.Trigger.Label" xml:space="preserve">
+    <value>触发器</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentSummary.RootMotion.Label" xml:space="preserve">
+    <value>Root Motion</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentSummary.Prewarm.Label" xml:space="preserve">
+    <value>预热</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentSummary.Duration.Label" xml:space="preserve">
+    <value>时长</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentSummary.Unknown.Label" xml:space="preserve">
+    <value>字段</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ObjectCardTitle.Text" xml:space="preserve">
+    <value>对象状态</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.TransformCardTitle.Text" xml:space="preserve">
+    <value>Transform</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentsCardTitle.Text" xml:space="preserve">
+    <value>组件</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentReferencesCardTitle.Text" xml:space="preserve">
+    <value>组件引用</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.Name.Label" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.Active.Label" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.Layer.Label" xml:space="preserve">
+    <value>Layer</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.Tag.Label" xml:space="preserve">
+    <value>Tag</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentCount.Label" xml:space="preserve">
+    <value>组件数</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.StaticFlags.Label" xml:space="preserve">
+    <value>Static Flags</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.TransformType.Label" xml:space="preserve">
+    <value>Transform 类型</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.TransformPathId.Label" xml:space="preserve">
+    <value>Transform PathId</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ParentPathId.Label" xml:space="preserve">
+    <value>父级 PathId</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ChildCount.Label" xml:space="preserve">
+    <value>子对象数</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.LocalPosition.Label" xml:space="preserve">
+    <value>本地位置</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.LocalRotation.Label" xml:space="preserve">
+    <value>本地旋转</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.LocalScale.Label" xml:space="preserve">
+    <value>本地缩放</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.NoTransform.Text" xml:space="preserve">
+    <value>没有可解析的 Transform 组件</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.EmptyComponents.Text" xml:space="preserve">
+    <value>没有组件</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentsTruncated.Text" xml:space="preserve">
+    <value>组件较多，预览中仅展示前几项。</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentLabel.Format" xml:space="preserve">
+    <value>组件 {0}</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentType.Format" xml:space="preserve">
+    <value>类型 {0}</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentName.Format" xml:space="preserve">
+    <value>名称 {0}</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentPathId.Format" xml:space="preserve">
+    <value>PathId {0}</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentScript.Format" xml:space="preserve">
+    <value>脚本 {0}</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentEnabled.Format" xml:space="preserve">
+    <value>Enabled {0}</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentExternal.Format" xml:space="preserve">
+    <value>外部 {0}</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentReferenceLabel.Format" xml:space="preserve">
+    <value>组件 {0} · {1}</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentReferenceTarget.Format" xml:space="preserve">
+    <value>{0} · PathId {1}</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentReferenceResolved.Format" xml:space="preserve">
+    <value>{0} · 已解析为 {1} ({2})</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentReferenceExternalUnresolved.Format" xml:space="preserve">
+    <value>{0} · 外部引用未匹配</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ComponentReferenceInternalUnresolved.Format" xml:space="preserve">
+    <value>{0} · 内部引用未匹配</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ReferenceRole.Mesh" xml:space="preserve">
+    <value>Mesh</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ReferenceRole.Material" xml:space="preserve">
+    <value>Material</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ReferenceRole.Sprite" xml:space="preserve">
+    <value>Sprite</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ReferenceRole.Controller" xml:space="preserve">
+    <value>Controller</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ReferenceRole.Avatar" xml:space="preserve">
+    <value>Avatar</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ReferenceRole.AudioClip" xml:space="preserve">
+    <value>AudioClip</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.ReferenceRole.Script" xml:space="preserve">
+    <value>Script</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.Vector3.Format" xml:space="preserve">
+    <value>({0}, {1}, {2})</value>
+  </data>
+  <data name="InspectorPanelView.GameObjectPreview.Quaternion.Format" xml:space="preserve">
+    <value>({0}, {1}, {2}, {3})</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.State.Format" xml:space="preserve">
+    <value>启用 {0} · 引用 {1} · 字段 {2}</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.FieldSummary.Format" xml:space="preserve">
+    <value>标量字段 {0} · 数组 {1}</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ReferenceSummary.Format" xml:space="preserve">
+    <value>已解析引用 {0} / {1}</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.SummaryCard.Script.Title" xml:space="preserve">
+    <value>脚本</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.SummaryCard.Fields.Title" xml:space="preserve">
+    <value>字段</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.SummaryCard.References.Title" xml:space="preserve">
+    <value>引用</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.SummaryFieldDetail.Format" xml:space="preserve">
+    <value>总计 {0} · 数组 {1} · 分组 {2}</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ResolvedReferenceCount.Format" xml:space="preserve">
+    <value>{0} / {1} 已解析</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ObjectCardTitle.Text" xml:space="preserve">
+    <value>MonoBehaviour 对象</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ScriptCardTitle.Text" xml:space="preserve">
+    <value>脚本引用</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.FieldsCardTitle.Text" xml:space="preserve">
+    <value>字段摘要</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.FieldGroupsCardTitle.Text" xml:space="preserve">
+    <value>字段分组</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ContainersCardTitle.Text" xml:space="preserve">
+    <value>序列化容器</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ReferencesCardTitle.Text" xml:space="preserve">
+    <value>引用明细</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.Name.Label" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.Enabled.Label" xml:space="preserve">
+    <value>启用</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.FieldCount.Label" xml:space="preserve">
+    <value>遍历字段数</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ScalarFieldCount.Label" xml:space="preserve">
+    <value>标量字段数</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ArrayFieldCount.Label" xml:space="preserve">
+    <value>数组字段数</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ReferenceCount.Label" xml:space="preserve">
+    <value>引用数</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ScriptMissing.Text" xml:space="preserve">
+    <value>未读取到脚本引用</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ScriptName.Label" xml:space="preserve">
+    <value>脚本名</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ScriptClass.Label" xml:space="preserve">
+    <value>类名</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ScriptNamespace.Label" xml:space="preserve">
+    <value>命名空间</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ScriptAssembly.Label" xml:space="preserve">
+    <value>程序集</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ScriptSerializedFile.Label" xml:space="preserve">
+    <value>序列化文件</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ScriptExternalPath.Label" xml:space="preserve">
+    <value>外部路径</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ScriptPathId.Label" xml:space="preserve">
+    <value>脚本 PathId</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.EmptyFields.Text" xml:space="preserve">
+    <value>未读取到可展示字段</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.FieldsTruncated.Text" xml:space="preserve">
+    <value>字段列表已截断</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.EmptyReferences.Text" xml:space="preserve">
+    <value>未读取到资源引用</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ReferencesTruncated.Text" xml:space="preserve">
+    <value>引用列表已截断</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ReferenceTarget.Format" xml:space="preserve">
+    <value>{0} · PathId {1}</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ReferenceResolved.Format" xml:space="preserve">
+    <value>{0} · 已解析为 {1} · {2}</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ReferenceExternalUnresolved.Format" xml:space="preserve">
+    <value>{0} · 外部引用未解析</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ReferenceInternalUnresolved.Format" xml:space="preserve">
+    <value>{0} · 内部引用未匹配</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ScriptSummary.Format" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ReferenceTypeCount.Format" xml:space="preserve">
+    <value>{0} x{1}</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.FieldArrayCount.Format" xml:space="preserve">
+    <value>{0} · {1} 项</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.FieldValue.Format" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.FieldGroupSummary.Format" xml:space="preserve">
+    <value>{0} 字段 · 标量 {1} · 数组 {2} · 引用 {3}</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ContainerSummary.Format" xml:space="preserve">
+    <value>{0} · {1} 项 · 深度 {2}</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.ScriptUnresolvedName.Format" xml:space="preserve">
+    <value>未解析脚本 · PathId {0}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.Structure.Format" xml:space="preserve">
+    <value>层 {0} · 参数 {1}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.StateSummary.Format" xml:space="preserve">
+    <value>状态机 {0} · 状态 {1} · 过渡 {2}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ReferenceSummary.Format" xml:space="preserve">
+    <value>已解析引用 {0} / {1} · {2}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.SummaryCard.Structure.Title" xml:space="preserve">
+    <value>结构</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.SummaryCard.Parameters.Title" xml:space="preserve">
+    <value>参数</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.SummaryCard.States.Title" xml:space="preserve">
+    <value>状态</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.SummaryCard.References.Title" xml:space="preserve">
+    <value>引用</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.SummaryStructureDetail.Format" xml:space="preserve">
+    <value>层 {0} · 值表 {1}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.SummaryStateDetail.Format" xml:space="preserve">
+    <value>过渡 {0} · Any State {1}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ResolvedReferenceCount.Format" xml:space="preserve">
+    <value>{0} / {1} 已解析</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ObjectCardTitle.Text" xml:space="preserve">
+    <value>AnimatorController 对象</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.LayersCardTitle.Text" xml:space="preserve">
+    <value>层</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ParametersCardTitle.Text" xml:space="preserve">
+    <value>参数</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ContainersCardTitle.Text" xml:space="preserve">
+    <value>状态机常量区</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ReferencesCardTitle.Text" xml:space="preserve">
+    <value>引用明细</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.Name.Label" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.LayerCount.Label" xml:space="preserve">
+    <value>层数</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ParameterCount.Label" xml:space="preserve">
+    <value>参数数</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.StateMachineCount.Label" xml:space="preserve">
+    <value>状态机数</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.StateCount.Label" xml:space="preserve">
+    <value>状态数</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.TransitionCount.Label" xml:space="preserve">
+    <value>过渡数</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.AnyStateTransitionCount.Label" xml:space="preserve">
+    <value>Any State 过渡</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ReferenceCount.Label" xml:space="preserve">
+    <value>引用数</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.LayerLabel.Format" xml:space="preserve">
+    <value>层 {0}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.LayerValue.Format" xml:space="preserve">
+    <value>权重 {0} · 状态 {1} · 过渡 {2}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.LayerStateMachinePathId.Format" xml:space="preserve">
+    <value>状态机 PathId {0}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ParameterLabel.Format" xml:space="preserve">
+    <value>参数 {0}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ParameterValue.Format" xml:space="preserve">
+    <value>{0} · {1} · 默认 {2}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ParameterType.Float" xml:space="preserve">
+    <value>Float</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ParameterType.Int" xml:space="preserve">
+    <value>Int</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ParameterType.Bool" xml:space="preserve">
+    <value>Bool</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ParameterType.Trigger" xml:space="preserve">
+    <value>Trigger</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ParameterTypeUnknown.Format" xml:space="preserve">
+    <value>类型 {0}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ParameterTypeCount.Format" xml:space="preserve">
+    <value>{0} x{1}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ContainerSummary.Format" xml:space="preserve">
+    <value>{0} · {1} 项 · 深度 {2}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ContainerKind.Layer" xml:space="preserve">
+    <value>层</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ContainerKind.Parameter" xml:space="preserve">
+    <value>参数</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ContainerKind.StateMachine" xml:space="preserve">
+    <value>状态机</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ContainerKind.State" xml:space="preserve">
+    <value>状态</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ContainerKind.Transition" xml:space="preserve">
+    <value>过渡</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ContainerKind.AnyStateTransition" xml:space="preserve">
+    <value>Any State 过渡</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ContainerKind.BlendTree" xml:space="preserve">
+    <value>BlendTree</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ContainerKind.Value" xml:space="preserve">
+    <value>值表</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ContainerKind.Unknown" xml:space="preserve">
+    <value>未知容器</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.EmptyLayers.Text" xml:space="preserve">
+    <value>未读取到传统层数组</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.EmptyParameters.Text" xml:space="preserve">
+    <value>未读取到参数</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.EmptyContainers.Text" xml:space="preserve">
+    <value>未读取到状态机容器</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.EmptyReferences.Text" xml:space="preserve">
+    <value>未读取到动画引用</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.LayersTruncated.Text" xml:space="preserve">
+    <value>层列表已截断</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ParametersTruncated.Text" xml:space="preserve">
+    <value>参数列表已截断</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ContainersTruncated.Text" xml:space="preserve">
+    <value>容器列表已截断</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ReferencesTruncated.Text" xml:space="preserve">
+    <value>引用列表已截断</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ReferenceTarget.Format" xml:space="preserve">
+    <value>{0} · PathId {1}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ReferenceResolved.Format" xml:space="preserve">
+    <value>{0} · 已解析为 {1} · {2}</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ReferenceExternalUnresolved.Format" xml:space="preserve">
+    <value>{0} · 外部引用未解析</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ReferenceInternalUnresolved.Format" xml:space="preserve">
+    <value>{0} · 内部引用未匹配</value>
+  </data>
+  <data name="InspectorPanelView.AnimatorControllerPreview.ReferenceTypeCount.Format" xml:space="preserve">
+    <value>{0} x{1}</value>
   </data>
   <data name="InspectorPanelView.AudioTransport.Play.ToolTip" xml:space="preserve">
     <value>播放</value>
@@ -1419,6 +2106,15 @@
   <data name="InspectorPanelView.PreviewInfo.AnimatorControllerParameterCount.Label" xml:space="preserve">
     <value>参数数</value>
   </data>
+  <data name="InspectorPanelView.PreviewInfo.AnimatorControllerStateCount.Label" xml:space="preserve">
+    <value>状态数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AnimatorControllerTransitionCount.Label" xml:space="preserve">
+    <value>过渡数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.AnimatorControllerReferenceCount.Label" xml:space="preserve">
+    <value>引用数</value>
+  </data>
   <data name="InspectorPanelView.PreviewInfo.FontLineSpacing.Label" xml:space="preserve">
     <value>行间距</value>
   </data>
@@ -1427,6 +2123,18 @@
   </data>
   <data name="InspectorPanelView.PreviewInfo.FontAsciiStartOffset.Label" xml:space="preserve">
     <value>ASCII 起始偏移</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.FontCharacterCount.Label" xml:space="preserve">
+    <value>字符数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.FontTexturePathId.Label" xml:space="preserve">
+    <value>贴图 PathId</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.FontDataSize.Label" xml:space="preserve">
+    <value>字体数据大小</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.FontAscent.Label" xml:space="preserve">
+    <value>Ascent</value>
   </data>
   <data name="InspectorPanelView.PreviewInfo.SpriteAtlasPackedSpriteCount.Label" xml:space="preserve">
     <value>打包精灵数</value>

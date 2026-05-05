@@ -65,6 +65,12 @@ internal sealed class InspectorInformationCardPresenter
                 defaultExpanded: true));
         }
 
+        foreach (var previewCard in preview.AdditionalInformationCards)
+        {
+            ApplyExpandedState(previewCard, expandedStates);
+            informationCards.Add(previewCard);
+        }
+
         var diagnosticRows = CreatePreviewDiagnosticRows(
             preview.PreviewCacheStatusText,
             preview.PreviewFallbackReasonText,
@@ -148,6 +154,16 @@ internal sealed class InspectorInformationCardPresenter
             summaryText: _informationTextSet.FormatItemCount(rows.Count),
             isExpanded: isExpanded,
             rows: rows);
+    }
+
+    private static void ApplyExpandedState(
+        InspectorInfoCardViewModel card,
+        IReadOnlyDictionary<string, bool> expandedStates)
+    {
+        if (expandedStates.TryGetValue(card.Key, out var existingExpanded))
+        {
+            card.IsExpanded = existingExpanded;
+        }
     }
 
     private List<InspectorInfoRowViewModel> CreatePreviewDiagnosticRows(

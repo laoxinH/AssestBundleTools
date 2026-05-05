@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using Microsoft.UI.Xaml;
@@ -77,6 +78,58 @@ public sealed class InspectorPanelViewModelTests
         Assert.Equal(40d, viewModel.Preview.Image.OverlayY, precision: 3);
         Assert.Equal(60d, viewModel.Preview.Image.OverlayWidth, precision: 3);
         Assert.Equal(30d, viewModel.Preview.Image.OverlayHeight, precision: 3);
+    }
+
+    [Fact]
+    public void PreviewSurfaceHeight_ShouldBeFixedForImagesAndText_ButAutoForSummaryCards()
+    {
+        var viewModel = CreateViewModel();
+
+        viewModel.ApplyImagePreview(CreateBitmapImageStub(), imagePixelWidth: 100, imagePixelHeight: 100);
+
+        AssertFixedPreviewSurfaceHeight(viewModel);
+
+        viewModel.ApplyTextPreview("plain text");
+
+        AssertFixedPreviewSurfaceHeight(viewModel);
+
+        viewModel.ApplyMaterialPreview(
+            CreateEmptyMaterial(),
+            materialPreviewDisplayState: CreateMaterialDisplayState());
+
+        AssertAutoPreviewSurfaceHeight(viewModel);
+
+        viewModel.ApplyGameObjectPreview(
+            CreateEmptyGameObject(),
+            gameObjectPreviewDisplayState: CreateGameObjectDisplayState());
+
+        AssertAutoPreviewSurfaceHeight(viewModel);
+
+        viewModel.ApplyMonoBehaviourPreview(
+            CreateEmptyMonoBehaviour(),
+            monoBehaviourPreviewDisplayState: CreateMonoBehaviourDisplayState());
+
+        AssertAutoPreviewSurfaceHeight(viewModel);
+
+        viewModel.ApplyAnimatorControllerPreview(
+            CreateEmptyAnimatorController(),
+            animatorControllerPreviewDisplayState: CreateAnimatorControllerDisplayState());
+
+        AssertAutoPreviewSurfaceHeight(viewModel);
+    }
+
+    private static void AssertFixedPreviewSurfaceHeight(InspectorPanelViewModel viewModel)
+    {
+        Assert.True(viewModel.Preview.UsesFixedPreviewSurfaceHeight);
+        Assert.Equal(320d, viewModel.Preview.PreviewSurfaceHeight);
+        Assert.Equal(320d, viewModel.Preview.PreviewSurfaceMinHeight);
+    }
+
+    private static void AssertAutoPreviewSurfaceHeight(InspectorPanelViewModel viewModel)
+    {
+        Assert.False(viewModel.Preview.UsesFixedPreviewSurfaceHeight);
+        Assert.True(double.IsNaN(viewModel.Preview.PreviewSurfaceHeight));
+        Assert.Equal(0d, viewModel.Preview.PreviewSurfaceMinHeight);
     }
 
     [Fact]
@@ -176,6 +229,123 @@ public sealed class InspectorPanelViewModelTests
     private static BitmapImage CreateBitmapImageStub()
     {
         return (BitmapImage)RuntimeHelpers.GetUninitializedObject(typeof(BitmapImage));
+    }
+
+    private static AssetPreviewMaterialDto CreateEmptyMaterial()
+    {
+        return new AssetPreviewMaterialDto(
+            SchemaVersion: 1,
+            Shader: null,
+            TextureProperties: Array.Empty<AssetPreviewMaterialTexturePropertyDto>(),
+            FloatProperties: Array.Empty<AssetPreviewMaterialFloatPropertyDto>(),
+            IntegerProperties: Array.Empty<AssetPreviewMaterialIntegerPropertyDto>(),
+            ColorProperties: Array.Empty<AssetPreviewMaterialColorPropertyDto>());
+    }
+
+    private static MaterialPreviewDisplayState CreateMaterialDisplayState()
+    {
+        return new MaterialPreviewDisplayState(
+            AssetNameText: "mat",
+            ShaderNameText: "shader",
+            ShaderReferenceText: string.Empty,
+            ShaderResolutionText: string.Empty,
+            ResolvedShaderAssetId: null,
+            PropertyCountText: "0",
+            MainTexturePreviewTitleText: string.Empty,
+            MainTexturePreviewLimitText: string.Empty,
+            MainTextureTint: null,
+            SemanticSectionTitle: string.Empty,
+            SemanticBadges: Array.Empty<MaterialPreviewSemanticBadgeDisplayState>(),
+            TextureSectionTitle: string.Empty,
+            ColorSectionTitle: string.Empty,
+            NumberSectionTitle: string.Empty,
+            EmptySectionText: string.Empty,
+            TruncatedText: string.Empty,
+            TextureRows: Array.Empty<MaterialPreviewTextureRowDisplayState>(),
+            ColorRows: Array.Empty<MaterialPreviewColorRowDisplayState>(),
+            NumberRows: Array.Empty<MaterialPreviewNumberRowDisplayState>(),
+            SummaryCards: Array.Empty<MaterialPreviewSummaryCardDisplayState>(),
+            DetailCards: Array.Empty<InspectorInfoCardViewModel>());
+    }
+
+    private static AssetPreviewGameObjectDto CreateEmptyGameObject()
+    {
+        return new AssetPreviewGameObjectDto(
+            SchemaVersion: 1,
+            Name: "go",
+            Layer: 0,
+            Tag: "Untagged",
+            IsActive: true,
+            StaticEditorFlags: null,
+            ComponentCount: 0,
+            Components: Array.Empty<AssetPreviewGameObjectComponentDto>());
+    }
+
+    private static GameObjectPreviewDisplayState CreateGameObjectDisplayState()
+    {
+        return new GameObjectPreviewDisplayState(
+            AssetNameText: "go",
+            StateText: "active",
+            ComponentSummaryText: "0 components",
+            TransformSummaryText: string.Empty,
+            HierarchySummaryText: string.Empty,
+            SummaryCards: Array.Empty<GameObjectPreviewSummaryCardDisplayState>(),
+            DetailCards: Array.Empty<InspectorInfoCardViewModel>());
+    }
+
+    private static AssetPreviewMonoBehaviourDto CreateEmptyMonoBehaviour()
+    {
+        return new AssetPreviewMonoBehaviourDto(
+            SchemaVersion: 1,
+            Name: "behaviour",
+            IsEnabled: true,
+            Script: null,
+            FieldCount: 0,
+            ScalarFieldCount: 0,
+            ReferenceCount: 0,
+            ArrayFieldCount: 0,
+            Fields: Array.Empty<AssetPreviewMonoBehaviourFieldDto>(),
+            References: Array.Empty<AssetPreviewMonoBehaviourReferenceDto>());
+    }
+
+    private static MonoBehaviourPreviewDisplayState CreateMonoBehaviourDisplayState()
+    {
+        return new MonoBehaviourPreviewDisplayState(
+            AssetNameText: "behaviour",
+            ScriptText: string.Empty,
+            StateText: "enabled",
+            FieldSummaryText: "0 fields",
+            ReferenceSummaryText: "0 refs",
+            SummaryCards: Array.Empty<MonoBehaviourPreviewSummaryCardDisplayState>(),
+            DetailCards: Array.Empty<InspectorInfoCardViewModel>());
+    }
+
+    private static AssetPreviewAnimatorControllerDto CreateEmptyAnimatorController()
+    {
+        return new AssetPreviewAnimatorControllerDto(
+            SchemaVersion: 1,
+            Name: "controller",
+            LayerCount: 0,
+            ParameterCount: 0,
+            StateMachineCount: 0,
+            StateCount: 0,
+            TransitionCount: 0,
+            AnyStateTransitionCount: 0,
+            ReferenceCount: 0,
+            Layers: Array.Empty<AssetPreviewAnimatorControllerLayerDto>(),
+            Parameters: Array.Empty<AssetPreviewAnimatorControllerParameterDto>(),
+            References: Array.Empty<AssetPreviewAnimatorControllerReferenceDto>());
+    }
+
+    private static AnimatorControllerPreviewDisplayState CreateAnimatorControllerDisplayState()
+    {
+        return new AnimatorControllerPreviewDisplayState(
+            AssetNameText: "controller",
+            StructureText: string.Empty,
+            StateSummaryText: string.Empty,
+            ReferenceSummaryText: string.Empty,
+            SummaryCards: Array.Empty<AnimatorControllerPreviewSummaryCardDisplayState>(),
+            DetailCards: Array.Empty<InspectorInfoCardViewModel>());
     }
 
     private static InspectorPanelViewModel CreateViewModel()

@@ -30,4 +30,8 @@ public sealed record AssetPreviewDto(
     AssetPreviewImageFocusDto? ImageFocus = null,
     AssetPreviewMeshGeometryDto? MeshGeometry = null,
     AssetPreviewMaterialDto? Material = null,
-    AssetPreviewAnimationClipDto? AnimationClip = null);
+    AssetPreviewAnimationClipDto? AnimationClip = null,
+    AssetPreviewFontDto? Font = null,
+    AssetPreviewGameObjectDto? GameObject = null,
+    AssetPreviewMonoBehaviourDto? MonoBehaviour = null,
+    AssetPreviewAnimatorControllerDto? AnimatorController = null);

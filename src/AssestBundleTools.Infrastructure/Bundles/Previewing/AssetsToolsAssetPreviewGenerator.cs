@@ -26,7 +26,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         _audioPayloadTranscodingService = audioPayloadTranscodingService ?? throw new ArgumentNullException(nameof(audioPayloadTranscodingService));
     }
 
-    public string GeneratorVersion => "assetstools.preview/15";
+    public string GeneratorVersion => "assetstools.preview/22";
 
     public async Task<Result<AssetPreviewContentDto>> GenerateAsync(
         AssetPreviewBuildRequestDto request,
@@ -190,6 +190,58 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
                 out var animationClipPreview))
         {
             return animationClipPreview;
+        }
+
+        if (classId == AssetClassID.Font &&
+            AssetsToolsFontPreviewBuilder.TryBuildFontPreview(
+                assetsManager,
+                serializedFiles,
+                serializedFile,
+                baseField,
+                internalSerializedFileLookup,
+                request.SizeInBytes,
+                out var fontPreview))
+        {
+            return fontPreview;
+        }
+
+        if (classId == AssetClassID.AnimatorController &&
+            AssetsToolsAnimatorControllerPreviewBuilder.TryBuildAnimatorControllerPreview(
+                assetsManager,
+                serializedFiles,
+                serializedFile,
+                baseField,
+                internalSerializedFileLookup,
+                request.SizeInBytes,
+                out var animatorControllerPreview))
+        {
+            return animatorControllerPreview;
+        }
+
+        if (classId == AssetClassID.GameObject &&
+            AssetsToolsGameObjectPreviewBuilder.TryBuildGameObjectPreview(
+                assetsManager,
+                serializedFiles,
+                serializedFile,
+                baseField,
+                internalSerializedFileLookup,
+                request.SizeInBytes,
+                out var gameObjectPreview))
+        {
+            return gameObjectPreview;
+        }
+
+        if (classId == AssetClassID.MonoBehaviour &&
+            AssetsToolsMonoBehaviourPreviewBuilder.TryBuildMonoBehaviourPreview(
+                assetsManager,
+                serializedFiles,
+                serializedFile,
+                baseField,
+                internalSerializedFileLookup,
+                request.SizeInBytes,
+                out var monoBehaviourPreview))
+        {
+            return monoBehaviourPreview;
         }
 
         if (classId == AssetClassID.TextAsset &&

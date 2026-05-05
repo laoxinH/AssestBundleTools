@@ -22,6 +22,10 @@ internal sealed class AssetPreviewResultPresenter
     private readonly AssetPreviewDisplayFormatter _assetPreviewDisplayFormatter;
     private readonly MaterialPreviewDisplayFormatter _materialPreviewDisplayFormatter;
     private readonly AnimationClipPreviewDisplayFormatter _animationClipPreviewDisplayFormatter;
+    private readonly FontPreviewDisplayFormatter _fontPreviewDisplayFormatter;
+    private readonly GameObjectPreviewDisplayFormatter _gameObjectPreviewDisplayFormatter;
+    private readonly MonoBehaviourPreviewDisplayFormatter _monoBehaviourPreviewDisplayFormatter;
+    private readonly AnimatorControllerPreviewDisplayFormatter _animatorControllerPreviewDisplayFormatter;
     private readonly PreviewDiagnosticDisplayTextResolver _previewDiagnosticDisplayTextResolver;
 
     public AssetPreviewResultPresenter(
@@ -38,6 +42,10 @@ internal sealed class AssetPreviewResultPresenter
         _assetPreviewDisplayFormatter = new AssetPreviewDisplayFormatter(_localizationService);
         _materialPreviewDisplayFormatter = new MaterialPreviewDisplayFormatter(_localizationService);
         _animationClipPreviewDisplayFormatter = new AnimationClipPreviewDisplayFormatter(_localizationService);
+        _fontPreviewDisplayFormatter = new FontPreviewDisplayFormatter(_localizationService);
+        _gameObjectPreviewDisplayFormatter = new GameObjectPreviewDisplayFormatter(_localizationService);
+        _monoBehaviourPreviewDisplayFormatter = new MonoBehaviourPreviewDisplayFormatter(_localizationService);
+        _animatorControllerPreviewDisplayFormatter = new AnimatorControllerPreviewDisplayFormatter(_localizationService);
         _previewDiagnosticDisplayTextResolver = new PreviewDiagnosticDisplayTextResolver(_localizationService);
     }
 
@@ -94,6 +102,18 @@ internal sealed class AssetPreviewResultPresenter
                     isPreviewRequestCurrentAndRelevant);
             case AssetPreviewKind.AnimationClip:
                 ApplyAnimationClipPreview(assetTab.Inspector, details, preview, previewInfoRows);
+                return true;
+            case AssetPreviewKind.Font:
+                ApplyFontPreview(assetTab.Inspector, details, preview, previewInfoRows);
+                return true;
+            case AssetPreviewKind.GameObject:
+                ApplyGameObjectPreview(assetTab.Inspector, details, preview, previewInfoRows);
+                return true;
+            case AssetPreviewKind.MonoBehaviour:
+                ApplyMonoBehaviourPreview(assetTab.Inspector, details, preview, previewInfoRows);
+                return true;
+            case AssetPreviewKind.AnimatorController:
+                ApplyAnimatorControllerPreview(assetTab.Inspector, details, preview, previewInfoRows);
                 return true;
             case AssetPreviewKind.Summary:
                 ApplySummaryPreview(assetTab.Inspector, preview, previewInfoRows);
@@ -266,7 +286,7 @@ internal sealed class AssetPreviewResultPresenter
         assetTab.Inspector.ApplyMaterialPreview(
             preview.Material,
             previewInfoRows,
-            _materialPreviewDisplayFormatter.BuildDisplayState(preview.Material, details),
+            _materialPreviewDisplayFormatter.BuildDisplayState(preview.Material, details, textureThumbnailSources),
             preview.PreviewPayloadFilePath,
             textureThumbnailSources);
         ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
@@ -341,6 +361,86 @@ internal sealed class AssetPreviewResultPresenter
             preview.AnimationClip,
             previewInfoRows,
             _animationClipPreviewDisplayFormatter.BuildDisplayState(preview.AnimationClip, details.Name),
+            preview.PreviewPayloadFilePath);
+        ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
+    }
+
+    private void ApplyFontPreview(
+        InspectorPanelViewModel inspector,
+        AssetDetailsDto details,
+        AssetPreviewDto preview,
+        IReadOnlyList<InspectorInfoRowViewModel> previewInfoRows)
+    {
+        if (preview.Font is null)
+        {
+            ApplyUnavailablePreview(inspector, preview.Diagnostic);
+            return;
+        }
+
+        inspector.ApplyFontPreview(
+            preview.Font,
+            previewInfoRows,
+            _fontPreviewDisplayFormatter.BuildDisplayState(preview.Font, details.Name),
+            preview.PreviewPayloadFilePath);
+        ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
+    }
+
+    private void ApplyGameObjectPreview(
+        InspectorPanelViewModel inspector,
+        AssetDetailsDto details,
+        AssetPreviewDto preview,
+        IReadOnlyList<InspectorInfoRowViewModel> previewInfoRows)
+    {
+        if (preview.GameObject is null)
+        {
+            ApplyUnavailablePreview(inspector, preview.Diagnostic);
+            return;
+        }
+
+        inspector.ApplyGameObjectPreview(
+            preview.GameObject,
+            previewInfoRows,
+            _gameObjectPreviewDisplayFormatter.BuildDisplayState(preview.GameObject, details),
+            preview.PreviewPayloadFilePath);
+        ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
+    }
+
+    private void ApplyMonoBehaviourPreview(
+        InspectorPanelViewModel inspector,
+        AssetDetailsDto details,
+        AssetPreviewDto preview,
+        IReadOnlyList<InspectorInfoRowViewModel> previewInfoRows)
+    {
+        if (preview.MonoBehaviour is null)
+        {
+            ApplyUnavailablePreview(inspector, preview.Diagnostic);
+            return;
+        }
+
+        inspector.ApplyMonoBehaviourPreview(
+            preview.MonoBehaviour,
+            previewInfoRows,
+            _monoBehaviourPreviewDisplayFormatter.BuildDisplayState(preview.MonoBehaviour, details),
+            preview.PreviewPayloadFilePath);
+        ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
+    }
+
+    private void ApplyAnimatorControllerPreview(
+        InspectorPanelViewModel inspector,
+        AssetDetailsDto details,
+        AssetPreviewDto preview,
+        IReadOnlyList<InspectorInfoRowViewModel> previewInfoRows)
+    {
+        if (preview.AnimatorController is null)
+        {
+            ApplyUnavailablePreview(inspector, preview.Diagnostic);
+            return;
+        }
+
+        inspector.ApplyAnimatorControllerPreview(
+            preview.AnimatorController,
+            previewInfoRows,
+            _animatorControllerPreviewDisplayFormatter.BuildDisplayState(preview.AnimatorController, details),
             preview.PreviewPayloadFilePath);
         ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
     }

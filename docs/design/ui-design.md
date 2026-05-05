@@ -19,6 +19,7 @@
 - [ui-wireframes.md](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/ui-wireframes.md)
 - [workspace-management.md](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/workspace-management.md)
 - [project-build-roadmap.md](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/project-build-roadmap.md)
+- [asset-editor-window-mode.md](asset-editor-window-mode.md)
 
 ## 2. 当前结论
 
@@ -27,7 +28,8 @@
 - 单主窗口承载主工作流
 - `NavigationView` 作为应用外壳
 - 工作台采用“左侧资源包列表 + 中间资源包标签页与资产列表 + 右侧资源详情检查器”的三栏布局
-- 资源包浏览扩展能力统一通过类似 VS Code 的标签页实现，不再引入资源子窗口
+- 资源包浏览扩展能力统一通过类似 VS Code 的标签页实现，不再引入资源包浏览子窗口
+- 资源详情后续可扩展为同一工作区进程内的独立资源编辑窗口，作为资产文档宿主增强而不是资源包浏览子窗口；详细见 [asset-editor-window-mode.md](asset-editor-window-mode.md)
 - 工作区采用 IDE 式模型演进，允许登记多个工作区，但任意时刻只存在一个活动工作区
 - 详细日志统一沉淀到“设置与诊断”，主工作区只保留轻量 toast 反馈
 
@@ -265,12 +267,14 @@
 
 以下内容不再作为当前阶段 UI 主方案的一部分：
 
-- 资源子窗口浏览
+- 资源包浏览子窗口
 - 主界面双窗格对比
 - 依赖树主工作流
 - 跨标签页真实拖拽替换
 - 完整工作区切换器 UI
 - 全类型真实预览器
+
+资源编辑窗口模式属于资源详情 / 编辑支线，已单独记录在 [asset-editor-window-mode.md](asset-editor-window-mode.md)，不等同于这里被淘汰的资源包浏览子窗口。
 
 ## 8. 后续优先级
 

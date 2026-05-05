@@ -36,6 +36,7 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     private ImageSource? _mainTexturePreviewImageSource;
     private Brush? _mainTexturePreviewTintBrush;
     private MaterialPreviewTintDisplayState? _mainTexturePreviewTint;
+    private IReadOnlyList<MaterialPreviewSummaryCardViewModel> _summaryCards = Array.Empty<MaterialPreviewSummaryCardViewModel>();
     private IReadOnlyList<MaterialPreviewSemanticBadgeViewModel> _semanticBadges = Array.Empty<MaterialPreviewSemanticBadgeViewModel>();
     private IReadOnlyList<MaterialPreviewTextureRowViewModel> _textureRows = Array.Empty<MaterialPreviewTextureRowViewModel>();
     private IReadOnlyList<MaterialPreviewColorRowViewModel> _colorRows = Array.Empty<MaterialPreviewColorRowViewModel>();
@@ -183,6 +184,18 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     {
         get => _semanticSectionTitle;
         private set => SetProperty(ref _semanticSectionTitle, value);
+    }
+
+    public IReadOnlyList<MaterialPreviewSummaryCardViewModel> SummaryCards
+    {
+        get => _summaryCards;
+        private set
+        {
+            if (SetProperty(ref _summaryCards, value))
+            {
+                OnPropertyChanged(nameof(SummaryCardsVisibility));
+            }
+        }
     }
 
     public IReadOnlyList<MaterialPreviewSemanticBadgeViewModel> SemanticBadges
@@ -347,8 +360,10 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
     public Visibility MainTexturePreviewOpenButtonVisibility =>
         MainTexturePreviewTarget is null ? Visibility.Collapsed : Visibility.Visible;
 
-    public Visibility ShaderResolutionVisibility =>
-        string.IsNullOrWhiteSpace(ShaderResolutionText) ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility ShaderResolutionVisibility => string.IsNullOrWhiteSpace(ShaderResolutionText) ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility SummaryCardsVisibility =>
+        SummaryCards.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
 
     public Visibility SemanticHintsVisibility =>
         SemanticBadges.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -378,6 +393,9 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         ApplyMainTextureTint(displayState.MainTextureTint);
         Appearance.Apply(displayState.Appearance);
         SemanticSectionTitle = displayState.SemanticSectionTitle;
+        SummaryCards = (displayState.SummaryCards ?? Array.Empty<MaterialPreviewSummaryCardDisplayState>())
+            .Select(static card => new MaterialPreviewSummaryCardViewModel(card))
+            .ToArray();
         SemanticBadges = displayState.SemanticBadges.Select(static badge => new MaterialPreviewSemanticBadgeViewModel(badge)).ToArray();
         TextureSectionTitle = displayState.TextureSectionTitle;
         TextureReferenceSummaryText = displayState.TextureReferenceSummaryText;
@@ -416,6 +434,7 @@ public sealed class InspectorPreviewMaterialViewModel : ObservableObject
         ApplyMainTextureTint(null);
         Appearance.Clear();
         SemanticSectionTitle = string.Empty;
+        SummaryCards = Array.Empty<MaterialPreviewSummaryCardViewModel>();
         SemanticBadges = Array.Empty<MaterialPreviewSemanticBadgeViewModel>();
         TextureSectionTitle = string.Empty;
         TextureReferenceSummaryText = string.Empty;

@@ -7,13 +7,15 @@
 - 应用可以登记多个工作区
 - 任意时刻只有一个活动工作区参与主任务
 - 工作区运行时状态和持久化元数据分离
-- 工作区内的资源包浏览通过标签页承载，而不是子窗口
+- 工作区内的资源包浏览通过标签页承载，而不是资源包浏览子窗口
+- 资源详情后续可独立为同一工作区进程内的资源编辑窗口，但该窗口只迁移资产文档宿主和页面级状态，不改变工作区事实来源
 
 当前文档与以下规范配套使用：
 
 - [code-architecture-guidelines.md](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/code-architecture-guidelines.md)
 - [ui-final-spec.md](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/ui-final-spec.md)
 - [project-build-roadmap.md](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/project-build-roadmap.md)
+- [asset-editor-window-mode.md](asset-editor-window-mode.md)
 
 ## 2. 设计目标
 
@@ -620,9 +622,14 @@ Presentation 层保留两个协同层次：
   - 文本预览：`TextAsset`、`Shader`
   - 音频预览：`AudioClip`（当前已支持标准音频容器直通播放，并对 `FSB5` 补上独立外部转码能力）
   - 模型预览：`Mesh`
-  - 半可视化摘要预览：`Material`、`AnimationClip`
-    `Material` 当前会把 Shader PPtr 和 TexEnv 贴图行按资产详情依赖图解析到 `Shader / Texture2D / Sprite`，并通过现有预览查询管线加载前若干贴图缩略图和主纹理平面预览；主纹理卡只叠加 `_Color` 基础 tint 并显示“非 Shader 仿真”的限制说明。Presentation 还会基于常见 Unity 材质属性名展示主纹理、法线、自发光、Alpha 裁剪、金属 / 光滑度、溶解 / 扰动、透明 / 混合等语义候选提示；这些提示只用于阅读辅助，不代表真实 Shader 渲染。解析不到具体资产时保留内部 / 外部引用未匹配状态，不在 Presentation 侧读取 AB 或打开额外资产。`Mesh` 贴图叠加与 `Material` 贴图展示共享同一贴图预览 payload loader，因此继续复用现有预览缓存、命名和失效链路。
-  - 结构化摘要预览：`GameObject`、`MonoBehaviour`、`AnimatorController`、`Font`、`SpriteAtlas`
+  - 半可视化摘要预览：`Material`、`AnimationClip`、`Font`、`GameObject`、`MonoBehaviour`、`AnimatorController`
+    `Material` 当前会把 Shader PPtr 和 TexEnv 贴图行按资产详情依赖图解析到 `Shader / Texture2D / Sprite`，并通过现有预览查询管线加载前若干贴图缩略图和主纹理平面预览；主纹理卡只叠加 `_Color` 基础 tint 并显示“非 Shader 仿真”的限制说明。Presentation 还会基于常见 Unity 材质属性名展示主纹理、法线、自发光、Alpha 裁剪、金属 / 光滑度、溶解 / 扰动、透明 / 混合等语义候选提示；这些提示只用于阅读辅助，不代表真实 Shader 渲染。解析不到具体资产时保留内部 / 外部引用未匹配状态，不在 Presentation 侧读取 AB 或打开额外资产。`Mesh` 贴图叠加与 `Material` 贴图展示共享同一贴图预览 payload loader，因此继续复用现有预览缓存、命名和失效链路。`AnimationClip` 当前输出 schema v3 binding / 曲线摘要，并把自适应摘要预览区控制在主要信息范围内；完整时间、循环、binding 与事件明细进入通用信息卡。若 `m_AnimationClipSettings` 缺失，起止时间和循环字段回退读取 `m_MuscleClip`；packed generic binding 的 keyframe 数在未解码前显示为未知，不显示为 0。
+    `GameObject` 当前输出 `payload.game-object.json`，自适应摘要预览区只展示对象名、激活 / Layer / Tag、组件摘要、Transform 摘要和层级摘要；对象基础字段、Transform 坐标 / 父子关系、组件 PPtr / 类型 / 脚本 / 启用状态以及常见组件的 `Mesh / Material / Sprite / Controller / Avatar / AudioClip / Script` 引用进入通用信息卡。组件和引用行会按 `AssetDetailsDto.Dependencies` 解析到统一资源跳转目标，未匹配时保留内部 / 外部引用未解析状态。该预览只消费现有预览管线和 sidecar，不在 WinUI 侧读取 AB，也不做场景渲染。
+    `MonoBehaviour` 当前输出 `payload.mono-behaviour.json`，自适应摘要预览区只展示对象名、脚本摘要、启用状态、字段数、字段分组数和引用数；对象基础字段、MonoScript 信息、字段分组、常见 Unity 序列化容器、前若干标量 / 数组字段和 PPtr 引用进入通用信息卡。若 MonoScript 位于未导入的外部 CAB 且类名不可读，Presentation 只回退显示“未解析脚本 + PathId”，不猜测业务脚本名。脚本和引用行会按 `AssetDetailsDto.Dependencies` 解析到统一资源跳转目标，未匹配时保留内部 / 外部引用未解析状态。该预览只消费现有预览管线和 sidecar，不在 WinUI 侧读取 AB，也不做脚本业务语义推断、编辑或运行时模拟。
+    `AnimatorController` 当前输出 `payload.animator-controller.json`，自适应摘要预览区只展示控制器名、Layer / Parameter、状态 / 转场和引用状态；Layer、Parameter、`m_Controller` 常量区容器摘要与 `m_AnimationClips` 等 PPtr 引用进入通用信息卡。真实样本中 `m_AnimatorLayers / m_AnimatorParameters` 可为空，预览以 `m_Controller` 常量区摘要为主。引用行会按 `AssetDetailsDto.Dependencies` 解析到统一资源跳转目标，未匹配时保留内部 / 外部引用未解析状态。该预览只消费现有预览管线和 sidecar，不在 WinUI 侧读取 AB，也不做状态机画布或播放模拟。
+  - 结构化摘要预览：`SpriteAtlas`
+  - 聚合资源组预览：`Spine`
+    Spine 面向 2D 游戏中 `.atlas + .skel/.json + Texture2D` 的跨资产组合，不作为 `AssetType` 下拉里的 Unity 类型，也不作为 `仅已修改 / 仅可预览` 同级布尔筛选。后续检测到 Spine 组合时，应在资产列表提供 `资源 / Spine 组` 视图切换；普通资源视图继续展示单资产，Spine 组视图展示聚合条目。首版预览只做资源组识别、skeleton / atlas / texture page 匹配状态、atlas region overlay、缺失 page / 外部引用未解析诊断和相关资产跳转；完整 Spine 动画播放器、skin 切换与 `.skel` 多版本兼容解析后置。
   - 通用摘要回退：其余可读取资源类型
 - 工作台检查器当前会直接展示资源 `PathId`，并在图片预览成功后展示尺寸、裁切矩形、像素编码与源格式标识等专属信息；Sprite 预览会额外展示源贴图上的裁切框、pivot 点、9-slice border 辅助线，以及独立裁切结果卡片
 - 预览缓存当前按 `source fingerprint + generatorVersion + audioTranscoderId + audioTranscoderVersion` 校验命中；对于曾因“无转码器”而回退成摘要的音频预览，在后续安装转码器后也会自动触发重建
@@ -632,6 +639,8 @@ Presentation 层保留两个协同层次：
 - 工作台右侧当前已从“单实例检查器”扩展为“资源包标签页内的资产文档标签”结构；不同资产会独立打开为详情标签，并保留各自的检查器页签位置、预览状态与替换候选状态
 - 工作区元数据当前会跟随每个资源包标签页一起保存其已打开资产文档标签与活动资产标签，切换资源包标签和重启应用后会优先恢复对应的资产详情上下文
 - 当前资源包标签与资产详情标签都已支持拖拽重排，且重排后的集合顺序会随工作区浏览状态一起持久化和恢复
+- 后续资源详情会演进为 [资源编辑窗口模式](asset-editor-window-mode.md)：资产文档标签或整个资产文档组可以从主窗口独立为资源编辑窗口，也可以在窗口之间组合或放回主窗口。该模式只迁移页面级文档宿主、预览浏览状态、内层分段位置、替换候选选择和后续编辑草稿标识；已导入资源包、资产索引、依赖图、预览缓存、替换队列、变更队列和保存计划仍归同一个活动工作区运行时会话所有，不随窗口复制。
+- 独立资源编辑窗口的恢复优先级低于主窗口浏览状态恢复。第一阶段只要求不破坏资源包标签、资产文档标签和活动资产恢复；窗口位置、大小、独立标签组顺序和未应用编辑草稿恢复在窗口模型稳定后再逐步落地。
 - 资产依赖当前会补充展示依赖目标的 `PathId`、Unity 类型名与闭包层级，便于后续把“查看依赖”与“按对象替换”稳定关联到真实序列化对象
 - 依赖解析当前已兼容 Unity 有符号 `PathId` 语义，不再把负数 `PathId` 误判为无效引用；这类修正会通过 Reader 解析版本提升自动触发旧缓存重建
 - 运行时工作区会话当前已在基础设施缓存恢复后构建资产依赖图，并在运行时派生 `反向引用` 与 `依赖闭包`，避免把图遍历逻辑下沉到 Presentation
@@ -653,6 +662,7 @@ Presentation 层保留两个协同层次：
 当前暂不实现：
 
 - 顶部全局工作区切换器
+- 资源编辑窗口的完整布局恢复、跨窗口编辑冲突解决和真实写包回滚语义；这些能力等待独立窗口、编辑草稿和保存链路契约稳定后再落地
 
 ## 9. 后续实施建议
 
@@ -661,8 +671,9 @@ Presentation 层保留两个协同层次：
 1. 继续补活动工作区在更多依赖页面中的摘要与入口承载，并在后续需要时补跨 Bundle 级依赖跳转
 2. 再评估是否需要顶层工作区切换器
 3. M9 当前已完成真实资产级读取、索引缓存复用、工作区级解密器自动识别、失败诊断、依赖深读与缓存诊断主链路收口
-4. 富预览扩展当前已完成 `AudioClip`、`Mesh` 第一版、`Material` 半可视化摘要与 `AnimationClip` 第一版半可视化摘要；`SpriteAtlas / Font` 继续按样本资源可用性回补
-5. 最后再评估是否需要引入可分享工作区文件
+4. 富预览扩展当前已完成 `AudioClip`、`Mesh` 第一版、`Material` 半可视化摘要、`AnimationClip` binding / 曲线摘要增强、`Font` 第一版半可视化摘要、`GameObject` 第一版信息浏览预览、`MonoBehaviour` 第一版信息浏览预览与 `AnimatorController` 第一版信息浏览预览；GameObject 已补上常见组件引用摘要和已解析资源跳转，MonoBehaviour 已补上脚本 / 字段 / 引用信息卡、字段分组、序列化容器摘要和已解析资源跳转，AnimatorController 已补上 `m_Controller` 常量区状态机摘要、AnimationClip 引用信息卡和已解析资源跳转；`SpriteAtlas` 继续按样本资源可用性回补；Spine 预览按“资源组视图 + atlas region overlay + 关联跳转”作为后续 2D 游戏聚合预览方向，不进入近期完整动画播放主线
+5. 资源编辑窗口模式按 [asset-editor-window-mode.md](asset-editor-window-mode.md) 分阶段推进：先做命令式独立窗口和放回主窗口，再做标签拖拽与窗口间合并，最后补整组拖出 / 放回、布局恢复和编辑草稿恢复；该支线适合在主预览与替换基础链路继续稳定后启动
+6. 最后再评估是否需要引入可分享工作区文件
 6. 工作区窗口模型当前已按“跨进程隔离优先 + formal/pending 双阶段注册”落地，并已补上 pending 注册 / 页面级失败回滚的首轮 `Presentation` 回归；后续若继续加强稳定性，更适合继续补跨进程窗口激活与重定向链路，而不是重新回退注册时机
 
 ### 9.1 预览扩展建议
@@ -682,10 +693,14 @@ Presentation 层保留两个协同层次：
    - 当前 Mesh sidecar 已升级为 schema v3，并额外保存预览范围内的三角面索引；线框视图在贴图按钮开启、三角 / UV / 可预览关联贴图都可用时，会通过 Win2D 逐三角裁剪并按 UV 仿射映射贴图，再叠加线框结构。贴图化线框预览提供独立 Mesh/UV 网格显隐开关，可在线框视图隐藏边线、顶点与轴线，也可在 UV 视图隐藏 UV 单位格、UV 边线与顶点，以观察最终贴图映射外观；贴图缺失、贴图关闭或贴图位图尚未加载完成时仍保留结构层，避免空白预览。UV 视图仍通过现有 `GetAssetPreviewQuery` 管线加载首个可预览的 `Texture2D / Sprite` 关联图片并叠加到 `[0,1]` UV 空间，用于检查 UV 展开。
    - 当前贴图化 Mesh 预览只表达几何和 UV 对贴图的基础对应关系，不模拟 Shader、Material tiling/offset、多材质 submesh 分配、骨骼蒙皮或光照效果；缺少三角 / UV / 可预览贴图时继续稳定退回纯线框。
    - 当前只把可读取的非压缩 Mesh 几何提升为富预览；无法读取顶点 / 索引 / 布局时继续使用结构化摘要。
-3. `SpriteAtlas`
-4. `Font / SpriteAtlas` 的样本驱动回补，以及 `AnimationClip` 曲线通道摘要增强
+3. `SpriteAtlas` 样本驱动回补
+4. `Spine` 资源组预览
+   - Spine 是跨资产聚合，不直接扩展 `AssetType` 下拉项。首版先在资产列表增加 `资源 / Spine 组` 视图切换，并由 Application / Infrastructure 输出资源组 DTO。
+   - 识别主线优先覆盖同 Bundle 或当前工作区内可匹配的 `.atlas`、`.skel/.json` 和 `Texture2D` page；搜索和跳转基于组名、skeleton、atlas、texture page 与已解析资产目标。
+   - 预览主线优先做 atlas region overlay、资源匹配状态、动画 / skin / bone / slot 数量摘要和缺失 page / 外部引用未解析诊断。`.skel` 二进制细解析、skin 切换、setup pose 和动画播放必须样本驱动后置。
+5. `Font` 样本驱动回补，以及 `AnimationClip / AnimatorController` 更细的 binding / 状态机分类摘要增强
 
-其中 `GameObject / MonoBehaviour / AnimatorController` 当前继续保留结构化摘要，不进入近期重型预览主线。
+其中 `MonoBehaviour` 已进入轻量信息浏览预览但不做脚本语义推断、编辑或运行时模拟；`AnimatorController` 已进入轻量信息浏览预览，当前从 `m_Controller` 常量区和 `m_AnimationClips` 提取状态机 / 状态 / 转场 / 引用摘要，不进入近期重型状态机画布或播放主线；`GameObject` 已进入轻量信息浏览预览，但仍不进入重型场景渲染主线；Spine 当前先做资源组阅读和 atlas 定位，不先承诺完整动画播放器。
 
 ### 9.2 预览解包内存风险后续治理
 
@@ -730,7 +745,7 @@ Presentation 层保留两个协同层次：
 - 真实导入前若需要解密，应先通过独立解密器扩展点把来源转换为可读取文件，再进入 `IAssetBundleReader`
 - `AudioClip` 等富预览若需要额外转码，应先通过独立音频转码层把载荷转换为标准可播放格式，再交给 Presentation 渲染
 - `Mesh` 等模型富预览的几何、三角面索引、UV 与通道读取必须停留在 Infrastructure 预览生成器中；Mesh 贴图关联由运行时工作区依赖图派生为 `TextureAssociations`，Presentation 只能消费结构化 DTO、派生关联关系与缓存载荷路径，不得直接解析资源包
-- `Material / AnimationClip` 这类半可视化摘要也必须通过 Infrastructure 生成 JSON sidecar、Application 水化 DTO、Presentation 渲染 DTO 的同一管线完成，不得在 WinUI 中直接读取字段树或资源包；Material 的属性语义提示只能从已水化 DTO 派生，并应保持“候选 / 检测到”措辞，避免暗示已经完成 Shader 仿真
+- `Material / AnimationClip / Font / GameObject / MonoBehaviour / AnimatorController` 这类半可视化摘要或轻量信息浏览也必须通过 Infrastructure 生成 JSON sidecar、Application 水化 DTO、Presentation 渲染 DTO 的同一管线完成，不得在 WinUI 中直接读取字段树或资源包；Material 的属性语义提示只能从已水化 DTO 派生，并应保持“候选 / 检测到”措辞，避免暗示已经完成 Shader 仿真；GameObject / MonoBehaviour / AnimatorController 的引用跳转只能消费详情依赖图和预览 DTO，不得在 Presentation 侧重读资源包
 - 自动识别默认按“导入源识别 -> 解密器识别 -> Reader 路径识别 -> 缓存命中识别”四层推进，而不是把所有判断都塞进 Reader 或 UI
 - 拖拽导入的页面桥接应优先挂在具体工作区区域，而不是整页根节点
 - AB 真实解析结果应优先写入独立缓存层，而不是写进工作区元数据文件

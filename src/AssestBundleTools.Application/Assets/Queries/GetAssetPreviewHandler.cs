@@ -401,6 +401,10 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             AssetPreviewKind.Mesh => "payload.mesh.json",
             AssetPreviewKind.Material => "payload.material.json",
             AssetPreviewKind.AnimationClip => "payload.animation-clip.json",
+            AssetPreviewKind.Font => "payload.font.json",
+            AssetPreviewKind.GameObject => "payload.game-object.json",
+            AssetPreviewKind.MonoBehaviour => "payload.mono-behaviour.json",
+            AssetPreviewKind.AnimatorController => "payload.animator-controller.json",
             _ => "payload.txt"
         };
 

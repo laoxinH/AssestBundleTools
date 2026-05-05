@@ -53,6 +53,7 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
 
         view.DetachObservedPreviewViewModel((args.OldValue as InspectorPanelViewModel)?.Preview);
         view.AttachObservedPreviewViewModel((args.NewValue as InspectorPanelViewModel)?.Preview);
+        view.RefreshPreviewSurfaceHeightBinding();
     }
 
     private void ApplyLocalizedText()
@@ -131,6 +132,14 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
             nameof(InspectorPreviewViewModel.PreviewAudioVisibility))
         {
             RefreshAudioTransportState();
+        }
+
+        if (propertyName is
+            nameof(InspectorPreviewViewModel.UsesFixedPreviewSurfaceHeight) or
+            nameof(InspectorPreviewViewModel.PreviewSurfaceHeight) or
+            nameof(InspectorPreviewViewModel.PreviewSurfaceMinHeight))
+        {
+            RefreshPreviewSurfaceHeightBinding();
         }
     }
 

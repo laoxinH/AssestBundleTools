@@ -17,6 +17,7 @@
 - [code-architecture-guidelines.md](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/code-architecture-guidelines.md)
 - [error-handling-guidelines.md](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/error-handling-guidelines.md)
 - [workspace-management.md](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/workspace-management.md)
+- [asset-editor-window-mode.md](asset-editor-window-mode.md)
 
 ## 2. 当前状态
 
@@ -87,6 +88,7 @@ tests/
 - 已补强资源包标签页的资产列表状态恢复链路，当前会缓存并恢复搜索、筛选与 `selectedAssetId`，切换标签页和重启后都能回到对应资源焦点
 - 已将工作台资产类型筛选从 UI 固定六项推进为应用层驱动的动态类型 Facet：真实 Reader 可展示资产会保留 Unity 类型名，列表查询返回类型统计，Presentation 按 `All -> 固定优先类型 -> 动态真实类型` 投影下拉项并显示数量，动态项通过 `AssetType + AssetTypeDisplayName` 筛选键恢复和持久化
 - 已把工作台右侧详情区扩展为“资源包标签页内的资产文档标签”结构，当前会缓存并恢复已打开资产、活动资产标签与检查器页签位置，避免不同资源共用单一检查器实例
+- 已完成资源编辑窗口模式的设计收敛：后续资产文档标签和整个资源详情窗格可以独立为同一工作区进程内的资源编辑窗口，并支持窗口间标签组合与放回主窗口；该能力当前只进入设计文档，不改变现有主窗口资产文档标签实现，详细见 [asset-editor-window-mode.md](asset-editor-window-mode.md)
 - 已完成预览展示链路第一轮资源化收口：`PreviewInfoText` 已被结构化 `PreviewInfoItems / PreviewMessage / Diagnostic` 取代，尺寸单位等公共展示值也已收敛到共享本地化格式化器
 - 已完成工作台页面 ViewModel 第二轮拆分：工作区壳层、资源包左窗格、文档宿主与资产工作流已分别下沉到独立子 ViewModel，`BundleExplorerViewModel` 当前主要承担页面级协调与工作区恢复/持久化编排
 - 已完成 `BundleExplorerViewModel` 的 D-04 新一轮收口：在工作区浏览状态恢复/持久化节流、页面级结果反馈、工作区加载/重绑定编排以及资源包标签打开/激活/关闭/重排编排分别下沉到 `BundleExplorerBrowserStateCoordinator / BundleExplorerOperationFeedbackBridge / BundleExplorerWorkspaceBindingCoordinator / BundleExplorerBundleTabCoordinator` 之后，`BundleExplorerPage` 也已直接迁回 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 子状态宿主绑定，旧页面兼容透传属性与 `BundleExplorerPageStateBridge` 已移除，主类体量已由 `1258` 行降到约 `426` 行
@@ -94,6 +96,10 @@ tests/
 - 已完成 `BundleExplorer` 页面级共享状态的 D-03 第三轮收口：`BundleExplorerPage.xaml / BundleExplorerPage.xaml.cs` 当前已直接绑定或订阅 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 的语义化状态宿主，旧的 `BundleExplorerPageStateBridge` 已移除，不再继续保留页面兼容桥接层
 - 已完成 Material 结构化摘要预览：当前通过 `Infrastructure -> Application -> Presentation` 的现有预览管线输出 `Shader / TexEnv / Float / Color / Int` 的半可视化摘要，并会把 Shader PPtr 和 TexEnv 行按 `AssetDetailsDto.Dependencies` 定位到当前依赖图中的 `Shader / Texture2D / Sprite`；命中贴图时用现有 `GetAssetPreviewQuery` 管线加载缩略图和主纹理平面预览，主纹理卡仅叠加 `_Color` 基础 tint 并显示限制说明；预览还会基于常见 Unity 材质属性名展示主纹理、法线、自发光、Alpha 裁剪、金属 / 光滑度、溶解 / 扰动、透明 / 混合等语义候选提示；当前已补充简化材质样张，用基础色、Alpha、金属度、光滑度和自发光强度做受控近似展示，并在贴图槽区域展示已解析 / 外部未解析 / 内部未解析引用汇总；未命中时保留内部 / 外部未解析状态，仍不在 UI 层直接读取 AB、打开额外资产或模拟 Shader
 - 已完成 AnimationClip 第一版半可视化摘要预览：Infrastructure 输出 `duration / sampleRate / frame estimate / loop settings / curve counts / animation events` 的 JSON sidecar，Application 缓存命中后水化为专用 DTO，Presentation 通过独立 Presenter / ViewModel / 控件渲染，不在 UI 层解析 AB
+- 已完成 Font 第一版半可视化摘要预览：Infrastructure 输出字体指标、字符矩形、atlas 贴图引用和默认材质引用的 JSON sidecar，Application 缓存命中后水化为专用 DTO，Presentation 通过独立 Formatter / ViewModel / 控件渲染，不在 UI 层解析 AB
+- 已完成 GameObject 第一版信息浏览预览：Infrastructure 输出对象基础字段、Transform 摘要、组件列表与常见组件引用的 JSON sidecar，Application 缓存命中后水化为专用 DTO，Presentation 通过独立 Formatter / ViewModel / 控件渲染，并复用详情依赖图进行资源跳转，不在 UI 层解析 AB 或渲染场景
+- 已完成 MonoBehaviour 第一版信息浏览预览并按真实样本补强：Infrastructure 输出对象名、启用状态、MonoScript 摘要、字段分组、常见 Unity 序列化容器、前若干字段和 PPtr 引用的 JSON sidecar，Application 缓存命中后水化为专用 DTO，Presentation 通过独立 Formatter / ViewModel / 控件渲染，并复用详情依赖图进行资源跳转；MonoScript 类名无法解析时只显示未解析脚本 PathId，不在 UI 层解析 AB 或推断脚本业务语义
+- 已完成 AnimatorController 第一版信息浏览预览：Infrastructure 输出控制器名、Layer / Parameter 计数、`m_Controller` 常量区中的 StateMachine / State / Transition / BlendTree / Value 摘要，以及 `m_AnimationClips` 等 PPtr 引用 JSON sidecar，Application 缓存命中后水化为专用 DTO，Presentation 通过独立 Formatter / ViewModel / 控件渲染，并复用详情依赖图进行资源跳转；真实样本中 `m_AnimatorLayers / m_AnimatorParameters` 常为空，首版以 `m_Controller` 常量区摘要为主，不做状态机画布或动画播放模拟
 
 ## 3. 总体实施原则
 
@@ -441,7 +447,7 @@ src/AssestBundleTools.Application/
 
 - 主工作区继续保持单窗格三栏布局
 - 标签页能力优先作用于“资源浏览”
-- 当前阶段不重新引入资源子窗口，也不再把双窗格作为本阶段目标
+- 当前阶段不重新引入资源包浏览子窗口，也不再把双窗格作为本阶段目标；资源详情后续独立为资源编辑窗口属于资产文档宿主增强，单独按 [asset-editor-window-mode.md](asset-editor-window-mode.md) 分阶段推进
 
 ### 应实现内容
 
@@ -462,7 +468,7 @@ src/AssestBundleTools.Application/
 
 ### 当前进展
 
-- 已移除资源子窗口链路与窗口映射代码
+- 已移除资源包浏览子窗口链路与窗口映射代码
 - 已支持左侧资源包列表单击直接打开或激活资源包标签页
 - 已支持同一资源包重复打开时直接激活已有标签页
 - 已支持标签页关闭与活动标签页切换
@@ -623,9 +629,16 @@ src/AssestBundleTools.Application/
     `Sprite` 当前已在源贴图预览上叠加裁切框、pivot 点和 9-slice border 辅助线，并额外提供裁切结果卡片；这些数据随预览缓存一起落盘和命中复用。
   - 文本预览：`TextAsset`、`Shader`
   - 音频预览：`AudioClip`
-  - 半可视化摘要预览：`Material`、`AnimationClip`
+  - 半可视化摘要预览：`Material`、`AnimationClip`、`Font`、`GameObject`、`MonoBehaviour`、`AnimatorController`
     `Material` 当前会展示 Shader、TexEnv、颜色与数值属性；Shader PPtr 会按依赖图尝试定位到 `Shader` 资产并展示解析状态；TexEnv 行会按依赖图解析 `Texture2D / Sprite` 并通过现有预览查询管线加载前若干缩略图，同时把 `_MainTex` 或首个可用贴图提升为主纹理平面预览，并在存在 `_Color` 时做低透明度 tint 参考叠加；另会基于常见属性名补充材质语义候选提示，但不模拟 Shader 渲染，未匹配时展示内部或外部引用未解析状态。
-  - 结构化摘要预览：`GameObject`、`MonoBehaviour`、`AnimatorController`、`Font`、`SpriteAtlas`
+    `AnimationClip` 当前会在自适应摘要预览区中只展示资源名、时长 / 采样率 / 帧数、曲线数量、binding 摘要和动画事件概览；更完整的时间、循环、曲线 binding 和事件明细通过通用可折叠信息卡展示。Infrastructure 输出 schema v3 JSON sidecar，Presentation 不在 UI 层解析 AB，也不在缺少骨骼上下文时做播放或骨骼驱动预览。
+    `Font` 当前会展示基础字体指标、字符矩形、font data 大小、atlas 贴图引用和默认材质引用；引用只消费预览 sidecar 和依赖解析结果，不在 UI 层读取资源包。第一版明确未覆盖 atlas 贴图缩略图 / 字形样张、真实文本排版渲染、kerning、动态字体或系统字体 fallback、TextMeshPro 类资源，以及跨更多 Unity 版本 / 字段布局的样本验证；外部或内部引用未解析时继续保持 reference-only 呈现。
+    `GameObject` 当前会展示对象名、激活 / Layer / Tag、组件摘要、Transform 摘要、层级摘要和紧凑摘要卡片；对象基础字段、Transform 坐标 / 父子关系、组件 PPtr / 类型 / 脚本 / 启用状态，以及常见组件的 `Mesh / Material / Sprite / Controller / Avatar / AudioClip / Script` 引用进入通用可折叠信息卡。组件和引用行会按 `AssetDetailsDto.Dependencies` 解析到统一资源跳转目标，未匹配时保留内部 / 外部引用未解析状态。Infrastructure 输出 `payload.game-object.json`，Presentation 只消费预览 DTO，不在 UI 层读取 AB，也不做场景渲染或 Prefab 实例化。
+    `MonoBehaviour` 当前会展示对象名、脚本摘要、启用状态、字段数、字段分组数、引用数和紧凑摘要卡片；对象基础字段、MonoScript 信息、字段分组、常见 Unity 序列化容器、前若干标量 / 数组字段和 PPtr 引用进入通用可折叠信息卡。脚本和引用行会按 `AssetDetailsDto.Dependencies` 解析到统一资源跳转目标，未匹配时保留内部 / 外部引用未解析状态；MonoScript 类名无法解析时只显示未解析脚本 PathId。Infrastructure 输出 `payload.mono-behaviour.json`，Presentation 只消费预览 DTO，不在 UI 层读取 AB，也不做脚本业务语义推断、编辑或运行时模拟。
+    `AnimatorController` 当前会展示控制器名、Layer / Parameter 总数、状态机 / 状态 / 转场 / BlendTree / Value 容器摘要和 `m_AnimationClips` 等 PPtr 引用；引用行会按 `AssetDetailsDto.Dependencies` 解析到统一资源跳转目标，未匹配时保留内部 / 外部引用未解析状态。真实样本中 `m_AnimatorLayers / m_AnimatorParameters` 可为空，预览以 `m_Controller` 常量区摘要为主。Infrastructure 输出 `payload.animator-controller.json`，Presentation 只消费预览 DTO，不在 UI 层读取 AB，也不做状态机画布或播放模拟。
+  - 结构化摘要预览：`SpriteAtlas`
+  - 聚合资源组预览：`Spine`
+    Spine 后续按 2D 游戏资源组处理，不作为 `全部类型` 下拉里的 Unity 类型，也不作为 `仅已修改 / 仅可预览` 同级开关。检测到 `.atlas + .skel/.json + Texture2D` 可聚合关系时，中间资产列表应提供 `资源 / Spine 组` 视图切换；Spine 组视图展示聚合条目，右侧详情展示组匹配状态、atlas region overlay、动画 / skin / bone / slot 摘要、缺失 page / 外部引用未解析诊断和相关资产跳转。完整动画播放器、setup pose、skin 切换和 `.skel` 多版本细解析后置。
   - 通用摘要回退：其余可读取资源类型
 - 工作台检查器当前已补充 `PathId` 展示，并为图片预览增加尺寸、裁切区域、像素编码与源格式标识等专属信息；预览表面已拆为独立控件，图片覆盖层、音频播放条和 Mesh 线框视口都各自落在独立控件中，避免继续把复杂预览细节堆回检查器主控件
 - 工作台检查器当前已收敛为 `详情 / 依赖 / 替换 / 变更` 四页签；其中“详情”页统一承载预览画面、基础信息、预览补充信息与预览诊断，“依赖”页签会展示资产依赖、反向引用、依赖闭包和 Bundle 外部依赖
@@ -635,36 +648,39 @@ src/AssestBundleTools.Application/
 
 ### M9 预览能力下一阶段计划
 
-在当前 `Texture2D / Sprite / TextAsset / Shader / AudioClip / Mesh` 已具备真实预览、`Material / AnimationClip` 已具备半可视化摘要、其余类型仍停留在结构化摘要的前提下，
+在当前 `Texture2D / Sprite / TextAsset / Shader / AudioClip / Mesh` 已具备真实预览、`Material / AnimationClip / Font / GameObject / MonoBehaviour / AnimatorController` 已具备半可视化摘要或轻量信息浏览、其余类型仍停留在结构化摘要的前提下，
 下一阶段不建议“平均推进所有类型”，而应按“识别价值 / 实现成本 / 架构稳定性”分批推进。
 
 #### 预览类型优先级
 
-第一梯队，优先升级为真正内容预览：
+第一梯队，当前已完成的下一步增强：
+
+- `AnimationClip`
+  已完成 binding / 曲线通道摘要增强：schema v3 sidecar 会补充曲线 binding 总数、前若干 binding 行、路径 / 属性 / ClassID / TypeID / 脚本引用 / 曲线数 / keyframe 数；`m_AnimationClipSettings` 缺失时回退读取 `m_MuscleClip` 的时间和循环字段，packed generic binding 的 keyframe 数在未解码前保留未知。自适应摘要预览区只展示主要信息，详细信息进入通用可折叠信息卡。后续仍不建议在缺少骨骼上下文时先做重型播放预览。
+- `GameObject`
+  已完成第一版轻量信息浏览预览并补上组件引用导航：schema v1 sidecar 会读取对象名、Layer、Tag、激活状态、静态标记、组件 PPtr、组件类型 / 名称 / 启用状态、MonoBehaviour 脚本引用、常见组件二级资源引用和 Transform 坐标 / 父子摘要。自适应摘要预览区只展示主要信息，并用摘要卡片补充组件构成、引用状态与常见组件专属字段；完整字段进入通用可折叠信息卡，组件和引用行复用统一已解析资源跳转链路。后续仍不建议在缺少场景上下文时先做重型场景渲染。
+- `MonoBehaviour`
+  已完成第一版轻量信息浏览预览并按真实样本补强：schema v1 sidecar 会读取对象名、启用状态、`m_Script` 指向的 MonoScript 摘要、字段分组、常见 Unity 序列化容器、前若干可展示标量 / 数组字段，以及前若干 PPtr 引用。自适应摘要预览区只展示脚本、启用状态、字段数、字段分组数和引用数等主要信息；脚本、字段分组、容器、字段和引用明细进入通用可折叠信息卡。若脚本类名无法从当前导入资源中解析，只显示未解析脚本 PathId；若脚本或字段引用 PathId 已被详情依赖图解析到当前工作区资产，信息卡行复用统一“打开资源”链路；该预览仍不做 MonoBehaviour 业务语义推断、编辑或运行时模拟。
+- `AnimatorController`
+  已完成第一版轻量信息浏览预览：schema v1 sidecar 会读取控制器名、Layer / Parameter 总数、状态机 / 状态 / 转场 / AnyState 转场 / BlendTree / Value 等容器摘要，以及前若干动画片段等 PPtr 引用。自适应摘要预览区只展示资源名、Layer / Parameter、状态 / 转场和引用状态等主要信息；Layer、Parameter、容器摘要和引用明细进入通用可折叠信息卡。真实样本显示不少 2D 资源的 `m_AnimatorLayers / m_AnimatorParameters` 数组为空，首版会继续从 `m_Controller.m_StateMachineArray / m_StateConstantArray / m_TransitionConstantArray / m_AnimationClips` 等字段提取可浏览信息；已解析引用复用统一“打开资源”链路，仍不做状态机画布、条件表达式编辑或运行时播放模拟。
+
+第二梯队，按样本继续增强已落地预览：
 
 - `AudioClip`
-  优先补可播放预览，目标形态为 `播放 / 暂停 + 时长 + 基础波形或幅度摘要`。
+  当前已完成标准音频容器播放、`FSB5` 外部转码和摘要回退；后续若继续增强，优先补波形或幅度摘要，不改变音频转码与预览缓存边界。
 - `Mesh`
-  优先补静态 3D 预览，目标形态为 `旋转 / 缩放 / 重置 + 顶点与子网格摘要`。
-  当前已扩展到 `线框 + UV0 + 贴图关联提示 + UV 关联贴图叠加`：Infrastructure 从非压缩 Mesh 读取位置通道、UV0 通道、索引边、顶点通道摘要与 AABB，Application 以 `payload.mesh.json` 结构化缓存，Presentation 通过 Win2D 在线框视口和 UV 视图间切换；贴图关联优先使用运行时工作区依赖图派生的 `TextureAssociations`，主路径为 `Mesh <- MeshFilter / Renderer / ParticleSystemRenderer / GameObject -> Material -> Texture2D / Sprite`，找不到时才兜底 `Mesh -> Texture2D / Sprite` 直接依赖，并通过现有预览查询管线加载首个可预览的关联图片作为 UV 叠加载荷，不在 WinUI 侧解析资源包。无法读取几何或关联贴图时仍回退结构化摘要或纯 UV/线框显示。
-- `SpriteAtlas`
-  仍可复用图片预览链路，但在当前目标游戏样本中优先级低于 `Mesh`；后续若遇到大量 SpriteAtlas 样本，再补 `整张图集 + atlas 内 sprite 区域信息`。
-
-第二梯队，做受控的半可视化预览：
-
+  当前已扩展到 `线框 + UV0 + 贴图关联提示 + UV 关联贴图叠加 + 第一版逐三角贴图预览`：Infrastructure 从非压缩 Mesh 读取位置通道、UV0 通道、索引边、顶点通道摘要与 AABB，Application 以 `payload.mesh.json` 结构化缓存，Presentation 通过 Win2D 在线框视口和 UV 视图间切换；贴图关联优先使用运行时工作区依赖图派生的 `TextureAssociations`，主路径为 `Mesh <- MeshFilter / Renderer / ParticleSystemRenderer / GameObject -> Material -> Texture2D / Sprite`，找不到时才兜底 `Mesh -> Texture2D / Sprite` 直接依赖，并通过现有预览查询管线加载首个可预览的关联图片作为 UV 叠加载荷，不在 WinUI 侧解析资源包。后续若继续增强，应先评估压缩 Mesh / 多 stream 布局 / 法线或真实材质采样的样本价值，缺少三角、UV 或可预览贴图时仍回退纯结构显示。
 - `Material`
   当前已完成 `Shader + Shader PPtr 解析状态 + TexEnv + 颜色 / 数值属性摘要 + 贴图依赖定位 + 前若干贴图缩略图 + 主纹理平面预览 + _Color tint 参考叠加 + 常见属性语义候选提示 + 简化材质样张 + 贴图引用解析汇总`；`Mesh` 和 `Material` 共享同一个贴图预览 payload loader，继续复用现有预览缓存、命名和失效链路。后续若继续增强，应保持样本驱动，不直接追求 Unity Editor 级完整 shader 仿真。
 - `Font`
-  优先做 `字体样张 + atlas 贴图 / 字符摘要`。
-- `AnimationClip`
-  第一阶段已完成 `时长 / 采样率 / 事件 / 曲线摘要`，
-  后续再决定是否进入真正播放或骨骼驱动预览。
+  当前已完成 `字体指标 + atlas 贴图引用 + 默认材质引用 + 前若干字符矩形摘要`。已知遗漏包括 atlas 贴图缩略图、可读字形样张、kerning、动态字体或系统 fallback、TextMeshPro 类资源，以及更多 Unity 版本 / 字段布局样本验证；后续增强应先基于真实样本确认字段稳定性，再通过现有预览管线联动 atlas 贴图生成受控样张，不直接追求完整字体渲染引擎。
+- `SpriteAtlas`
+  与现有 `Texture2D / Sprite` 图片预览、预览缓存和依赖解析链路最接近，但当前缺少足够验证资源，暂时降为样本门控项；后续遇到稳定样本后再补 `整张图集引用 + packed sprite 数量 + 前若干区域矩形 + 可解析贴图缩略图`，不按字段名猜测实现。
+- `Spine` 资源组
+  面向 2D 游戏的跨资产预览，优先级高于继续平均扩展弱上下文类型，但实现方式必须是 `资源 / Spine 组` 视图切换和聚合 DTO，而不是新增 Unity 资产类型。首版目标是识别 `.atlas + .skel/.json + Texture2D` 组合、解析 atlas page / region、在可预览 Texture2D 上叠加 region、展示 skeleton / atlas / texture page 匹配诊断，并提供跳转到组成资产的入口。完整动画播放、skin 切换、setup pose 和 `.skel` 二进制多版本兼容应在样本充足后再评估。
 
 第三梯队，当前继续保留结构化摘要：
 
-- `GameObject`
-- `MonoBehaviour`
-- `AnimatorController`
 - 其余 `Unknown` 或强依赖上下文资源的类型
 
 这些类型当前更适合做 `层级 / 字段 / 状态机 / 引用关系` 的信息浏览，
@@ -672,23 +688,30 @@ src/AssestBundleTools.Application/
 
 #### 推荐实施顺序
 
-建议按以下四步推进：
+建议按以下步骤推进：
 
-1. 先扩预览承载模型
-   - 在 `AssetPreviewKind`、`AssetPreviewDto`、`PreviewCacheStore` 和检查器渲染层中补齐 `音频 / 模型 / atlas` 这类富预览的承载边界。
-   - 保持 `IAssetPreviewGenerator` 作为唯一预览生成入口，Presentation 只负责渲染 DTO，不直接读取资源包。
-2. 先做 `AudioClip`
-   - 这是识别价值最高、用户感知最强的一类真实内容预览。
-   - 完成标准是“能稳定回退”：可解码时播放，不可解码时仍回退到结构化摘要，而不是直接失败。
-   - 当前已完成第二阶段：标准音频容器可直接播放，`FSB5` 会优先走独立音频转码层，经外部 `vgmstream-cli` 转为 `WAV` 后播放；当转码器缺失或执行失败时仍稳定回退到结构化摘要。
-3. 再做 `Mesh`
-   - 在 Audio 主链路稳定后引入 3D 视口和交互控制，避免同时把解码、缓存、渲染三个复杂度叠在一起。
-   - 当前已完成线框、UV0 视图与贴图关联提示；贴图关联主路径已从样本验证的 MeshFilter / Renderer / Material 链路派生，Mesh 直接贴图依赖只作为兜底。后续若继续增强，应优先评估压缩 Mesh / 更完整多 stream 布局 / 法线或真实材质采样显示，而不是让 WinUI 侧直接读取资源包。
-4. 按样本频率回补 `SpriteAtlas`
-   - 该类型与现有图片预览链路最接近，能低风险复用已有 `Texture2D / Sprite` 能力；但如果目标样本中不常见，不应压过 Mesh 等更高收益类型。
-5. 对已落地的 `Material / AnimationClip` 做样本驱动增强
+1. 已完成 `AnimationClip` binding / 曲线摘要增强
+   - 当前完成标准是 `payload.animation-clip.json` schema v3、缓存水化、自适应摘要预览区、通用信息卡明细，以及 Presentation 回归覆盖。
+2. 已完成 `GameObject` 第一版信息浏览预览
+   - 当前完成标准是 `payload.game-object.json` schema v1、缓存水化、自适应摘要预览区与摘要卡片、对象 / Transform / 组件 / 组件引用通用信息卡、已解析资源跳转，以及 Presentation 回归覆盖。
+3. 已完成 `MonoBehaviour` 第一版信息浏览预览和真实样本补强
+   - 当前完成标准是 `payload.mono-behaviour.json` schema v1、缓存水化、自适应摘要预览区与摘要卡片、脚本 / 字段分组 / 序列化容器 / 字段 / 引用通用信息卡、未解析脚本 PathId fallback、已解析资源跳转，以及 Application / Infrastructure / Presentation 回归覆盖。
+4. 已完成 `AnimatorController` 第一版信息浏览预览
+   - 当前完成标准是 `payload.animator-controller.json` schema v1、缓存水化、自适应摘要预览区与摘要卡片、Layer / Parameter / 状态机容器 / AnimationClip 引用通用信息卡、已解析资源跳转，以及 Application / Infrastructure / Presentation 回归覆盖。
+5. 对 `SpriteAtlas / Font` 先补样本验证清单，再决定是否增强
+   - `SpriteAtlas` 缺少验证资源时不实现字段猜测版，继续作为样本门控项。
+   - Font 第一版已经可用，但 atlas 缩略图、样张、kerning、动态字体 / 系统 fallback、TextMeshPro 类资源都依赖更多真实样本，不建议紧接着在缺少样本的情况下扩成完整字体渲染。
+6. `Spine` 资源组作为后续 2D 游戏聚合预览方向
+   - 首先实现资源组识别、列表视图切换、组摘要 DTO、atlas region overlay、缺失资源诊断和组成资产跳转。
+   - 不把 Spine 作为 `AssetType` 筛选项，不让 Presentation 直接读取 AB 或文本文件；所有组合关系与预览 sidecar 都由 Application / Infrastructure 管线输出。
+   - `.skel` 二进制细解析、setup pose 和动画播放暂不作为首版完成标准。
+7. 对已落地的 `Material / AnimationClip / Font / GameObject / MonoBehaviour / AnimatorController` 做样本驱动增强
    - `Material` 后续重点是基于已解析 TexEnv 的贴图定位、更友好的外部引用呈现，以及在样本足够时评估受控的简化材质球；现有属性语义提示只表达候选含义，不代表 Shader 仿真结果。
-   - `AnimationClip` 后续可继续补曲线通道 / binding 摘要；不建议在缺少骨骼上下文时先做重型播放预览。
+   - `AnimationClip` 后续可继续补更细的 binding 分类和曲线统计；不建议在缺少骨骼上下文时先做重型播放预览。
+   - `Font` 后续可继续补 atlas 贴图联动和可读样张；不建议让 WinUI 侧绕过预览管线读取字体或贴图资源。
+   - `GameObject` 后续可在真实样本足够时补组件引用跳转、Prefab / Scene 层级关系阅读和 MonoBehaviour 脚本友好名增强；不建议让 WinUI 侧绕过预览管线重读场景。
+   - `MonoBehaviour` 已按真实样本补字段分组、常见 Unity 序列化容器摘要和未解析脚本 PathId fallback；后续若继续增强，应优先依赖更多 MonoScript / Spine 样本验证，不建议在没有明确脚本协议时推断业务含义或加入编辑器。
+   - `AnimatorController` 后续若继续增强，应优先样本驱动补状态名 / 条件摘要 / Clip 到状态的对应关系；不建议在缺少 Avatar / Animator / 场景上下文时先做重型状态机画布或播放预览。
 
 #### 实施约束
 
@@ -893,6 +916,7 @@ src/AssestBundleTools.Application/
 - 已完成 `BundleExplorerAssetWorkflowViewModel` 的 D-04 第六轮收口：预览加载/呈现、提取/替换/撤销动作、检查器投影、资产文档标签同步、主资产窗格加载/刷新/空态回退以及资产级命令入口/页面动作编排已分别拆为独立协作对象，共享结果失败反馈继续统一复用 `BundleExplorerOperationFeedbackBridge`，主类当前约 `273` 行；当前 D-04 的主要强风险已完成收口，后续更适合把注意力转向防止职责回灌，而不是重新扩大页面主类
 - 已完成 `BundleExplorer` 页面级共享状态的 D-03 第三轮收口：`BundleExplorerPage.xaml / BundleExplorerPage.xaml.cs` 已直接绑定或订阅 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 的语义化状态宿主，旧的 `BundleExplorerPageStateBridge` 已移除，检查器同步、资产命令态、左栏搜索/折叠态与文档宿主兼容属性刷新都已继续按状态宿主边界显式通知
 - 已继续完成 `BundleExplorerPage.xaml.cs` 的页面协作收口：工作区导航/窗口注册、资源包窗格布局动画、资产文档标签同步与页面静态 chrome 当前已分别下沉到 `BundleExplorerPageNavigationCoordinator / BundleExplorerPagePaneLayoutCoordinator / BundleExplorerPageTabCoordinator / BundleExplorerPageChromeCoordinator`，页面主 code-behind 当前约 `362` 行；后续重点转为防止新的页面视图流程重新长回单一巨型 code-behind
+- 已完成资源编辑窗口模式的产品与架构设计登记：第一阶段建议先做命令式 `在新窗口中打开 / 移动到主窗口`，验证资产文档组复用、窗口生命周期和页面级状态迁移；之后再做标签拖拽、整组拖出 / 放回、独立窗口布局恢复和编辑草稿恢复。窗口模式不得绕过 Application 预览 / 替换 / 保存用例，也不得引入 Presentation 到 Infrastructure 的新直接依赖
 - 已完成 `BatchTasksViewModel` 的一轮页面投影收口：工作区摘要、批量提取/替换/保存预览、结果卡片与静态筛选项初始化当前已下沉到 `BatchTasksPresentationPresenter`，页面主 ViewModel 当前约 `533` 行；后续重点转为防止新的展示映射和文本拼装重新回灌回主类
 - 已完成 D-05 第一轮边界显式化：`Presentation -> Infrastructure` 的直接引用当前只允许出现在 `src/AssestBundleTools.Presentation.WinUI/Composition/` 目录，`App.xaml.cs` 与普通壳层服务已退回为消费组合结果或依赖 Presentation 窄抽象，并补上仓库级检查防止新的越界引用
 - 已完成 D-06 第一轮最小测试骨架：`tests/AssestBundleTools.Domain.Tests / AssestBundleTools.Application.Tests / AssestBundleTools.Localization.Tests` 已分别覆盖 `AppError`、`Result + 工作区目录关键 Handler` 以及 `zh-CN / en-US` 资源键一致性与 `ResourceKeys` 覆盖校验；后续测试重点转向扩展更多 `Application / Infrastructure` 关键路径
@@ -906,10 +930,13 @@ src/AssestBundleTools.Application/
 - 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补替换链路中的文件候选类型解析、来源路径校验、缺失资源失败、类型不匹配、工作区候选空集失败、单资源文件/工作区替换、撤销替换，以及批量替换预览/执行摘要链路
 - 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补 `GetWorkspaceSavePreviewHandler / SaveWorkspaceAsNewBundleHandler` 的保存预览空态、资源包分组聚合、缺失工作区、无候选失败与执行摘要链路
 - 已完成 D-07 第二轮收口：宿主程序自身的启动/壳层异常提示与页面代码中残留的资源键字面量已继续收口到资源键常量和标准错误令牌；当前仅保留外部工具原始输出作为诊断回退文本，而不再作为主提示文案
-- 当前 M9 富预览扩展已完成 `AudioClip`、`Sprite` 增强、`Mesh` 线框 / UV0 / 贴图关联 / 第一版逐三角贴图预览、`Material` 半可视化摘要与 `AnimationClip` 第一版半可视化摘要；`SpriteAtlas / Font` 继续按样本资源可用性回补
+- 当前 M9 富预览扩展已完成 `AudioClip`、`Sprite` 增强、`Mesh` 线框 / UV0 / 贴图关联 / 第一版逐三角贴图预览、`Material` 半可视化摘要、`AnimationClip` binding / 曲线摘要增强、`Font` 第一版半可视化摘要、`GameObject` 第一版信息浏览预览与 `MonoBehaviour` 第一版信息浏览预览及真实样本补强；`SpriteAtlas` 继续按样本资源可用性回补，Spine 作为后续资源组预览方向
 - 当前 Sprite 预览已完成一轮增强：源贴图预览上叠加裁切框、pivot 点与 9-slice border，检查器额外展示裁切结果卡片；Infrastructure 已把 Sprite 专属生成逻辑拆入独立 builder，检查器预览表面也已拆为独立控件，避免后续富预览继续回灌到巨型生成器或检查器控件
 - 当前 Mesh 预览已完成线框 / UV0 / 贴图关联 / 第一版逐三角贴图预览，并补上贴图化线框与 UV 视图共用的 Mesh/UV 网格显隐开关：`AssetsToolsMeshPreviewBuilder` 负责从真实 Mesh 字段读取轻量几何、三角面索引、UV0 和顶点通道摘要并生成 schema v3 JSON sidecar，`GetAssetPreviewHandler` 负责缓存命中后的结构化反序列化，`CachedWorkspaceSessionRegistry` 负责从运行时依赖图派生 `TextureAssociations`，`InspectorMeshPreviewSurfaceView` 只消费 DTO 并通过 Win2D 绘制线框、UV 或逐三角贴图化线框，不承担 AB 解析；贴图关联优先走 `Mesh <- MeshFilter / Renderer / ParticleSystemRenderer / GameObject -> Material -> Texture2D / Sprite`，再兜底 `Mesh -> Texture2D / Sprite`。当前贴图化预览用于表达几何 / UV / 贴图的基础对应关系，不模拟 Shader、Material tiling/offset、多材质 submesh 分配或光照效果。
-- 当前 AnimationClip 预览已完成第一版半可视化摘要：`AssetsToolsAnimationClipPreviewBuilder` 负责从真实 AnimationClip 字段读取采样率、起止时间、循环设置、曲线数量与前若干 animation events 并生成 schema v1 JSON sidecar，`GetAssetPreviewHandler` 负责缓存命中后的结构化反序列化，`AssetPreviewResultPresenter` 再把 DTO 交给独立 AnimationClip 预览 ViewModel / 控件渲染；后续增强优先考虑 binding / 曲线通道摘要，不在缺少上下文时把播放或骨骼驱动预览硬塞进 UI。
+- 当前 AnimationClip 预览已完成 binding / 曲线摘要增强：`AssetsToolsAnimationClipPreviewBuilder` 负责从真实 AnimationClip 字段读取采样率、起止时间、循环设置、曲线数量、前若干 animation events、曲线 binding 总数与前若干 binding 行并生成 schema v3 JSON sidecar；当 `m_AnimationClipSettings` 缺失时，时间和循环字段回退读取 `m_MuscleClip`，packed generic binding 的 keyframe 数在未解码前显示为未知。`GetAssetPreviewHandler` 负责缓存命中后的结构化反序列化，`AssetPreviewResultPresenter` 再把 DTO 交给独立 AnimationClip formatter / ViewModel / 控件渲染；自适应摘要预览区只放主要摘要，时间 / 循环 / binding / 事件明细进入通用信息卡，不在缺少上下文时把播放或骨骼驱动预览硬塞进 UI。
+- 当前 Font 预览已完成第一版半可视化摘要：`AssetsToolsFontPreviewBuilder` 负责从真实 Font 字段读取基础指标、font data 大小、atlas 贴图引用、默认材质引用与前若干字符矩形并生成 schema v1 JSON sidecar，`GetAssetPreviewHandler` 负责缓存命中后的结构化反序列化，`AssetPreviewResultPresenter` 再把 DTO 交给独立 Font formatter / ViewModel / 控件渲染；后续增强优先考虑 atlas 贴图联动和受控样张，不在 WinUI 侧直接读取 AB。
+- 当前 GameObject 预览已完成第一版轻量信息浏览：`AssetsToolsGameObjectPreviewBuilder` 负责读取对象基础字段、Transform 摘要、组件 PPtr、MonoBehaviour 脚本引用和常见组件二级资源引用并生成 schema v1 JSON sidecar；自适应摘要预览区只放主要摘要和紧凑摘要卡片，对象 / Transform / 组件 / 引用明细进入通用信息卡，已解析 PathId 复用统一资源跳转，不做场景渲染。
+- 当前 MonoBehaviour 预览已完成第一版轻量信息浏览和真实样本补强：`AssetsToolsMonoBehaviourPreviewBuilder` 负责读取对象名、启用状态、MonoScript 摘要、字段分组、常见 Unity 序列化容器、前若干标量 / 数组字段和 PPtr 引用并生成 schema v1 JSON sidecar；自适应摘要预览区只放脚本、字段和引用摘要，脚本 / 字段分组 / 容器 / 字段 / 引用明细进入通用信息卡，已解析 PathId 复用统一资源跳转，未解析 MonoScript 只显示 PathId fallback，不做脚本业务语义推断、编辑或运行时模拟。
 - 当前导入主链路在功能上已完成第二阶段多线程收口：`workspaceKey` 级执行闸门、唯一 staging 路径、`PlanBuilder -> Worker Pool -> Committer` 三段模型与 bundle 粒度有界并行都已落地；后续进入“导入吞吐增强”支线时，更适合转向 profiling、Probe 并发评估与更深层并发回归
 - 当前资产预览查询已从单槽后台闸门调整为前台优先的有界并发执行队列，默认并发度为 CPU 核心数一半并限制在 `1-4`；其中 1 个前台槽专门服务当前活动资产详情标签，其余槽用于已打开资产标签的后台预热。若并发度为 1，后台预热不与前台竞争；切换到尚未完成的标签会取消该标签旧后台请求并以前台优先级重开，已完成预览则直接复用。
 

@@ -291,6 +291,13 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(8, restoredAnimationClip.FloatCurveCount, "AnimationClip curve counts should round-trip.");
         TestAssert.Equal(1, restoredAnimationClip.Events.Count, "Animation events should be hydrated from cached JSON.");
         TestAssert.Equal("OnStep", restoredAnimationClip.Events[0].FunctionName, "Animation event function should round-trip.");
+        TestAssert.Equal(3, restoredAnimationClip.CurveBindingCount, "Animation curve binding count should round-trip.");
+        TestAssert.Equal(3, restoredAnimationClip.CurveBindings?.Count, "Animation curve binding rows should be hydrated from cached JSON.");
+        TestAssert.Equal(AssetPreviewAnimationCurveBindingKind.Float, restoredAnimationClip.CurveBindings![0].Kind, "Animation curve binding kind should round-trip.");
+        TestAssert.Equal("Root/Hips", restoredAnimationClip.CurveBindings[0].Path, "Animation curve binding path should round-trip.");
+        TestAssert.Equal(4, restoredAnimationClip.CurveBindings[0].KeyframeCount, "Animation curve binding keyframe count should round-trip.");
+        TestAssert.Equal(AssetPreviewAnimationCurveBindingKind.Generic, restoredAnimationClip.CurveBindings[2].Kind, "Generic animation binding kind should round-trip.");
+        TestAssert.Equal<int?>(null, restoredAnimationClip.CurveBindings[2].KeyframeCount, "Packed generic binding keyframe count should stay unknown.");
         TestAssert.Equal(0, decryptor.DecryptCallCount, "Cache hit should not invoke decryptor.");
         TestAssert.Equal(0, generator.GenerateCallCount, "Cache hit should not invoke preview generator.");
         TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Cache hit should not rewrite preview cache.");

@@ -138,6 +138,50 @@ public sealed class BundleExplorerAssetPreviewCoordinatorMaterialTests
         Assert.Equal("1", assetTab.Inspector.Preview.Material.NumberRows[0].ValueText);
         Assert.Equal("_Cull", assetTab.Inspector.Preview.Material.NumberRows[1].PropertyName);
         Assert.Equal("2", assetTab.Inspector.Preview.Material.NumberRows[1].ValueText);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, assetTab.Inspector.Preview.Material.SummaryCardsVisibility);
+        Assert.Contains(
+            assetTab.Inspector.Preview.Material.SummaryCards,
+            static card => card.TitleText == ResourceKeys.InspectorMaterialPreviewTexturesTitle &&
+                           card.ValueText == "1" &&
+                           card.DetailText == ResourceKeys.InspectorMaterialPreviewTextureReferenceSummaryFormat + ":0|1|1|0");
+        Assert.Contains(
+            assetTab.Inspector.Preview.Material.SummaryCards,
+            static card => card.TitleText == ResourceKeys.InspectorMaterialPreviewColorsTitle &&
+                           card.ValueText == "1" &&
+                           card.DetailText == "_Color");
+        Assert.Contains(
+            assetTab.Inspector.Preview.Material.SummaryCards,
+            static card => card.TitleText == ResourceKeys.InspectorMaterialPreviewNumbersTitle &&
+                           card.ValueText == "2" &&
+                           card.DetailText.Contains("_Glossiness", StringComparison.Ordinal) &&
+                           card.DetailText.Contains("_Cull", StringComparison.Ordinal));
+
+        var shaderCard = Assert.Single(
+            assetTab.Inspector.InformationCards,
+            static card => card.Key == "material-shader");
+        Assert.Equal(ResourceKeys.InspectorMaterialPreviewShaderCardTitle, shaderCard.Title);
+        Assert.Contains(
+            shaderCard.Rows,
+            static row => row.Label == ResourceKeys.InspectorMaterialPreviewShaderNameLabel &&
+                          row.Value == "Particles/Additive");
+        Assert.Contains(
+            shaderCard.Rows,
+            static row => row.Label == ResourceKeys.InspectorMaterialPreviewShaderResolutionLabel &&
+                          row.Value == ResourceKeys.InspectorMaterialPreviewShaderInternalUnresolvedText);
+        var texturesCard = Assert.Single(
+            assetTab.Inspector.InformationCards,
+            static card => card.Key == "material-textures");
+        Assert.Equal(ResourceKeys.InspectorMaterialPreviewTexturesTitle, texturesCard.Title);
+        var textureInfoRow = Assert.Single(texturesCard.Rows);
+        Assert.Equal("_MainTex", textureInfoRow.Label);
+        Assert.Contains(
+            ResourceKeys.InspectorMaterialPreviewTextureExternalUnresolvedText,
+            textureInfoRow.Value,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            ResourceKeys.InspectorMaterialPreviewTextureTransformFormat + ":1|1|0|0",
+            textureInfoRow.Value,
+            StringComparison.Ordinal);
         Assert.Equal(@"C:\PreviewCache\material.json", assetTab.Inspector.Preview.PreviewPayloadFilePath);
         Assert.Empty(appLogService.WarningMessages);
     }
@@ -220,6 +264,16 @@ public sealed class BundleExplorerAssetPreviewCoordinatorMaterialTests
         Assert.Equal(ResourceKeys.InspectorResolvedAssetOpenButton, textureRow.OpenButtonText);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, textureRow.OpenButtonVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, textureRow.ResolutionVisibility);
+        var texturesCard = Assert.Single(
+            assetTab.Inspector.InformationCards,
+            static card => card.Key == "material-textures");
+        var textureInfoRow = Assert.Single(texturesCard.Rows);
+        Assert.NotNull(textureInfoRow.Target);
+        Assert.Equal(textureAssetId, textureInfoRow.Target.AssetId);
+        Assert.Contains(
+            ResourceKeys.InspectorMaterialPreviewTextureResolvedFormat + ":HeroTexture|Texture2D",
+            textureInfoRow.Value,
+            StringComparison.Ordinal);
         Assert.Empty(appLogService.WarningMessages);
     }
 

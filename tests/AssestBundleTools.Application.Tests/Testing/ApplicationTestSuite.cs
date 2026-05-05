@@ -125,6 +125,22 @@ internal static class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedAnimationClipPreview_WhenPreviewCacheStillMatches);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedFontPreview_WhenPreviewCacheStillMatches),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedFontPreview_WhenPreviewCacheStillMatches);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedGameObjectPreview_WhenPreviewCacheStillMatches),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedGameObjectPreview_WhenPreviewCacheStillMatches);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedMonoBehaviourPreview_WhenPreviewCacheStillMatches),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedMonoBehaviourPreview_WhenPreviewCacheStillMatches);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedAnimatorControllerPreview_WhenPreviewCacheStillMatches),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedAnimatorControllerPreview_WhenPreviewCacheStillMatches);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldRegeneratePreview_WhenGeneratorVersionChanges),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldRegeneratePreview_WhenGeneratorVersionChanges);
         await RunTestAsync(
