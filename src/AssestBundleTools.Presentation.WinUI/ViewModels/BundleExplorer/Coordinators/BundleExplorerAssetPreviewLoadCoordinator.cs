@@ -53,7 +53,17 @@ internal sealed class BundleExplorerAssetPreviewLoadCoordinator
         ArgumentNullException.ThrowIfNull(bundleTab);
         ArgumentNullException.ThrowIfNull(foregroundAssetTab);
 
-        foreach (var assetTab in bundleTab.AssetTabs)
+        PrewarmBackgroundPreviews(bundleTab.AssetTabs, foregroundAssetTab);
+    }
+
+    public void PrewarmBackgroundPreviews(
+        IEnumerable<AssetDocumentTabViewModel> assetTabs,
+        AssetDocumentTabViewModel foregroundAssetTab)
+    {
+        ArgumentNullException.ThrowIfNull(assetTabs);
+        ArgumentNullException.ThrowIfNull(foregroundAssetTab);
+
+        foreach (var assetTab in assetTabs)
         {
             if (ReferenceEquals(assetTab, foregroundAssetTab) ||
                 assetTab.Details is not { } details ||
@@ -66,7 +76,7 @@ internal sealed class BundleExplorerAssetPreviewLoadCoordinator
                 assetTab,
                 details,
                 _formatFirstErrorMessage,
-                () => bundleTab.AssetTabs.Contains(assetTab),
+                () => assetTabs.Contains(assetTab),
                 AssetPreviewLoadPriority.BackgroundPrewarm);
         }
     }

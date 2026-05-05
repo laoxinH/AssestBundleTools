@@ -417,6 +417,21 @@
   <data name="BundleExplorerPage.TabContext.CloseAll.Text" xml:space="preserve">
     <value>关闭全部</value>
   </data>
+  <data name="AssetEditorWindow.OpenInNewWindow.Text" xml:space="preserve">
+    <value>在新窗口中打开</value>
+  </data>
+  <data name="AssetEditorWindow.MoveToMainWindow.Text" xml:space="preserve">
+    <value>移动到主窗口</value>
+  </data>
+  <data name="AssetEditorWindow.TabContext.Close.Text" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="AssetEditorWindow.Title.Format" xml:space="preserve">
+    <value>资源编辑 - {0}</value>
+  </data>
+  <data name="AssetEditorWindow.Title.Fallback" xml:space="preserve">
+    <value>未命名资源</value>
+  </data>
   <data name="BundleExplorerPage.RefreshButton.Content" xml:space="preserve">
     <value>刷新</value>
   </data>

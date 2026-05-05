@@ -282,6 +282,10 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
     /// </summary>
     public Task CloseAllAssetDocumentTabsAsync() => _assetDocumentTabCoordinator.CloseAllAssetDocumentTabsAsync();
 
+    public Task<AssetDocumentTabViewModel?> DetachAssetDocumentTabForExternalHostAsync(
+        AssetDocumentTabViewModel? assetTab) =>
+        _assetDocumentTabCoordinator.DetachAssetDocumentTabForExternalHostAsync(assetTab);
+
     public Task RefreshPrimaryPaneAsync() =>
         _assetPaneCoordinator.RefreshPrimaryPaneAsync(() => CaptureActiveTabState());
 

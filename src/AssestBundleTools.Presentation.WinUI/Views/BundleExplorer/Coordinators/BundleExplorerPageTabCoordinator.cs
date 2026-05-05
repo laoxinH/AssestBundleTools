@@ -42,13 +42,25 @@ public sealed partial class BundleExplorerPage
 
         public void ConfigureTabContextFlyout(
             MenuFlyout? flyout,
+            string? openInNewWindowMenuItemName,
             string closeOtherMenuItemName,
             string closeAllMenuItemName,
-            int tabCount)
+            int tabCount,
+            bool canOpenInNewWindow)
         {
             if (flyout is null)
             {
                 return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(openInNewWindowMenuItemName))
+            {
+                var openInNewWindowMenuItem = FindMenuFlyoutItem(flyout, openInNewWindowMenuItemName);
+                if (openInNewWindowMenuItem is not null)
+                {
+                    openInNewWindowMenuItem.Text = UiText.Get(ResourceKeys.AssetEditorWindowOpenInNewWindowText);
+                    openInNewWindowMenuItem.IsEnabled = tabCount > 0 && canOpenInNewWindow;
+                }
             }
 
             var closeOtherMenuItem = FindMenuFlyoutItem(flyout, closeOtherMenuItemName);

@@ -280,6 +280,27 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// 将资产文档标签移交给独立资源编辑窗口时使用。
+    /// 移交过程不取消目标标签自身的预览请求，页面级预览状态会跟随标签移动。
+    /// </summary>
+    public bool DetachAssetTab(AssetDocumentTabViewModel assetTab)
+    {
+        ArgumentNullException.ThrowIfNull(assetTab);
+
+        if (!AssetTabs.Remove(assetTab))
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(ActiveAssetTab, assetTab))
+        {
+            ActiveAssetTab = AssetTabs.FirstOrDefault();
+        }
+
+        return true;
+    }
+
     public void ClearAssetTabs()
     {
         CancelAllAssetPreviewRequests();

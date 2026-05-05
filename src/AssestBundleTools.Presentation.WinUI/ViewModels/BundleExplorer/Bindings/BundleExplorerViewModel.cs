@@ -40,6 +40,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     private readonly BundleExplorerBrowserStateCoordinator _browserStateCoordinator;
     private readonly BundleExplorerBundleTabCoordinator _bundleTabCoordinator;
     private readonly BundleExplorerResolvedAssetNavigationCoordinator _resolvedAssetNavigationCoordinator;
+    private readonly BundleExplorerAssetDocumentMoveCoordinator _assetDocumentMoveCoordinator;
     private readonly BundleExplorerWorkspaceBindingCoordinator _workspaceBindingCoordinator;
     private readonly BundleExplorerWorkspaceShellViewModel _workspaceShell;
     private readonly BundleExplorerBundlePaneViewModel _bundlePane;
@@ -118,6 +119,17 @@ public sealed class BundleExplorerViewModel : ObservableObject
             _appLogService,
             _localizationService,
             isBusyProvider: () => IsBusy);
+        _assetDocumentMoveCoordinator = new BundleExplorerAssetDocumentMoveCoordinator(
+            _workspaceShell,
+            _bundlePane,
+            _documentWorkspace,
+            _bundleTabCoordinator,
+            _assetWorkflow,
+            _operationFeedbackBridge,
+            _appLogService,
+            _localizationService,
+            isBusyProvider: () => IsBusy,
+            requestWorkspaceBrowserStatePersistence: RequestWorkspaceBrowserStatePersistence);
         _browserStateCoordinator = new BundleExplorerBrowserStateCoordinator(
             _workspaceContextService,
             _bundlePane,
@@ -270,6 +282,13 @@ public sealed class BundleExplorerViewModel : ObservableObject
     /// 关闭后同时清空列表焦点，避免旧选中项立刻把详情标签重新打开。
     /// </summary>
     public Task CloseAllAssetDocumentTabsAsync() => _assetWorkflow.CloseAllAssetDocumentTabsAsync();
+
+    public Task<AssetDocumentTabViewModel?> DetachAssetDocumentTabForEditorWindowAsync(
+        AssetDocumentTabViewModel? assetTab) =>
+        _assetDocumentMoveCoordinator.DetachAssetDocumentTabForExternalHostAsync(assetTab);
+
+    public Task<bool> AttachAssetDocumentTabFromEditorWindowAsync(AssetDocumentTabViewModel assetTab) =>
+        _assetDocumentMoveCoordinator.AttachAssetDocumentTabFromExternalHostAsync(assetTab);
 
     public Task RefreshPrimaryPaneAsync() => _assetWorkflow.RefreshPrimaryPaneAsync();
 

@@ -24,6 +24,20 @@ public sealed partial class InspectorPanelView : UserControl
             typeof(InspectorPanelView),
             new PropertyMetadata(null, OnViewModelPropertyChanged));
 
+    public static readonly DependencyProperty ShowDetailsPreviewProperty =
+        DependencyProperty.Register(
+            nameof(ShowDetailsPreview),
+            typeof(bool),
+            typeof(InspectorPanelView),
+            new PropertyMetadata(true, OnLayoutOptionPropertyChanged));
+
+    public static readonly DependencyProperty ShowActionBarProperty =
+        DependencyProperty.Register(
+            nameof(ShowActionBar),
+            typeof(bool),
+            typeof(InspectorPanelView),
+            new PropertyMetadata(true, OnLayoutOptionPropertyChanged));
+
     public InspectorPanelView()
     {
         InitializeComponent();
@@ -35,6 +49,22 @@ public sealed partial class InspectorPanelView : UserControl
         get => (InspectorPanelViewModel?)GetValue(ViewModelProperty);
         set => SetValue(ViewModelProperty, value);
     }
+
+    public bool ShowDetailsPreview
+    {
+        get => (bool)GetValue(ShowDetailsPreviewProperty);
+        set => SetValue(ShowDetailsPreviewProperty, value);
+    }
+
+    public bool ShowActionBar
+    {
+        get => (bool)GetValue(ShowActionBarProperty);
+        set => SetValue(ShowActionBarProperty, value);
+    }
+
+    public Visibility DetailsPreviewVisibility => ShowDetailsPreview ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility ActionBarVisibility => ShowActionBar ? Visibility.Visible : Visibility.Collapsed;
 
     public event EventHandler? ExtractRequested;
 
@@ -128,6 +158,14 @@ public sealed partial class InspectorPanelView : UserControl
 
         view.DetachObservedViewModel(args.OldValue as InspectorPanelViewModel);
         view.AttachObservedViewModel(args.NewValue as InspectorPanelViewModel);
+    }
+
+    private static void OnLayoutOptionPropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
+    {
+        if (dependencyObject is InspectorPanelView view)
+        {
+            view.Bindings.Update();
+        }
     }
 
     private void ApplyLocalizedText()

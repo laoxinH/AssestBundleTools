@@ -127,7 +127,8 @@
                                 FixedPreviewSurfaceHeight="320"
                                 ViewModel="{x:Bind ViewModel, Mode=OneWay}"
                                 OpenPreviewLocationRequested="OnPreviewSurfaceOpenPreviewLocationRequested"
-                                ResolvedAssetOpenRequested="OnPreviewSurfaceResolvedAssetOpenRequested" />
+                                ResolvedAssetOpenRequested="OnPreviewSurfaceResolvedAssetOpenRequested"
+                                Visibility="{x:Bind DetailsPreviewVisibility, Mode=OneWay}" />
 
                             <StackPanel Spacing="6">
                                 <TextBlock
@@ -521,7 +522,8 @@
                     Margin="8,0,8,8"
                     Padding="12"
                     Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                    CornerRadius="12">
+                    CornerRadius="12"
+                    Visibility="{x:Bind ActionBarVisibility, Mode=OneWay}">
                     <Grid>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button

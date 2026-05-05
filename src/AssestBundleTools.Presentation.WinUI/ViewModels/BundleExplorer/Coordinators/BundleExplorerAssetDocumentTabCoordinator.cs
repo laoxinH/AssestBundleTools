@@ -278,6 +278,55 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// 将资产文档标签从主窗口当前资源包标签组移出，供独立资源编辑窗口接管。
+    /// 该流程只移动页面级标签状态，不关闭资产 Pane，也不取消被移动标签已有的预览状态。
+    /// </summary>
+    public async Task<AssetDocumentTabViewModel?> DetachAssetDocumentTabForExternalHostAsync(
+        AssetDocumentTabViewModel? assetTab)
+    {
+        if (assetTab is null || _documentWorkspace.ActiveBundleTab is null)
+        {
+            return null;
+        }
+
+        var ownerTab = _documentWorkspace.ActiveBundleTab;
+        if (!ownerTab.AssetTabs.Contains(assetTab))
+        {
+            return null;
+        }
+
+        var wasActive = ReferenceEquals(ownerTab.ActiveAssetTab, assetTab);
+        if (!ownerTab.DetachAssetTab(assetTab))
+        {
+            return null;
+        }
+
+        if (!wasActive)
+        {
+            _documentWorkspace.NotifyAssetDocumentHostStateChanged();
+            _requestWorkspaceBrowserStatePersistence();
+            _notifyActionStates();
+            return assetTab;
+        }
+
+        if (ownerTab.ActiveAssetTab is not null)
+        {
+            await SetActiveAssetDocumentTabAsync(
+                ownerTab,
+                ownerTab.ActiveAssetTab,
+                synchronizePaneSelection: true,
+                writeLog: false);
+            return assetTab;
+        }
+
+        _primaryPane.ClearSelection();
+        _documentWorkspace.NotifyAssetDocumentHostStateChanged();
+        _requestWorkspaceBrowserStatePersistence();
+        _notifyActionStates();
+        return assetTab;
+    }
+
     public void ReapplyAssetDocumentTab(AssetDocumentTabViewModel assetTab, AssetDetailsDto details)
     {
         ArgumentNullException.ThrowIfNull(assetTab);

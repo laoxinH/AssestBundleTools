@@ -417,6 +417,21 @@
   <data name="BundleExplorerPage.TabContext.CloseAll.Text" xml:space="preserve">
     <value>Close All</value>
   </data>
+  <data name="AssetEditorWindow.OpenInNewWindow.Text" xml:space="preserve">
+    <value>Open in New Window</value>
+  </data>
+  <data name="AssetEditorWindow.MoveToMainWindow.Text" xml:space="preserve">
+    <value>Move to Main Window</value>
+  </data>
+  <data name="AssetEditorWindow.TabContext.Close.Text" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="AssetEditorWindow.Title.Format" xml:space="preserve">
+    <value>Resource Editor - {0}</value>
+  </data>
+  <data name="AssetEditorWindow.Title.Fallback" xml:space="preserve">
+    <value>Untitled Asset</value>
+  </data>
   <data name="BundleExplorerPage.RefreshButton.Content" xml:space="preserve">
     <value>Refresh</value>
   </data>

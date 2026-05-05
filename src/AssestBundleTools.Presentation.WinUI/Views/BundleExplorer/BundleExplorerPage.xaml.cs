@@ -24,6 +24,7 @@ public sealed partial class BundleExplorerPage : Page
     private readonly BundleExplorerPageNavigationCoordinator _navigationCoordinator;
     private readonly BundleExplorerPagePaneLayoutCoordinator _paneLayoutCoordinator;
     private readonly BundleExplorerPageTabCoordinator _tabCoordinator;
+    private readonly AssetEditorWindowCoordinator _assetEditorWindowCoordinator;
     private WorkspaceNavigationRequest? _workspaceNavigationRequest;
 
     public BundleExplorerPage()
@@ -48,6 +49,7 @@ public sealed partial class BundleExplorerPage : Page
         _navigationCoordinator = new BundleExplorerPageNavigationCoordinator(this);
         _paneLayoutCoordinator = new BundleExplorerPagePaneLayoutCoordinator(this);
         _tabCoordinator = new BundleExplorerPageTabCoordinator(this);
+        _assetEditorWindowCoordinator = new AssetEditorWindowCoordinator(this);
 
         _chromeCoordinator.ApplyLocalizedText();
         _paneLayoutCoordinator.Initialize();
@@ -192,9 +194,11 @@ public sealed partial class BundleExplorerPage : Page
     {
         _tabCoordinator.ConfigureTabContextFlyout(
             sender as MenuFlyout,
+            openInNewWindowMenuItemName: null,
             closeOtherMenuItemName: "CloseOtherBundleTabsMenuItem",
             closeAllMenuItemName: "CloseAllBundleTabsMenuItem",
-            tabCount: ViewModel.DocumentWorkspace.BundleTabs.Count);
+            tabCount: ViewModel.DocumentWorkspace.BundleTabs.Count,
+            canOpenInNewWindow: false);
     }
 
     private async void OnCloseOtherBundleTabsMenuItemClick(object sender, RoutedEventArgs e)
@@ -247,9 +251,19 @@ public sealed partial class BundleExplorerPage : Page
     {
         _tabCoordinator.ConfigureTabContextFlyout(
             sender as MenuFlyout,
+            openInNewWindowMenuItemName: "OpenAssetDocumentInNewWindowMenuItem",
             closeOtherMenuItemName: "CloseOtherAssetDocumentTabsMenuItem",
             closeAllMenuItemName: "CloseAllAssetDocumentTabsMenuItem",
-            tabCount: ViewModel.DocumentWorkspace.CurrentAssetTabs.Count);
+            tabCount: ViewModel.DocumentWorkspace.CurrentAssetTabs.Count,
+            canOpenInNewWindow: !ViewModel.IsBusy);
+    }
+
+    private async void OnOpenAssetDocumentInNewWindowMenuItemClick(object sender, RoutedEventArgs e)
+    {
+        if (_tabCoordinator.TryGetTaggedValue(sender, out AssetDocumentTabViewModel? assetTab))
+        {
+            await _assetEditorWindowCoordinator.OpenAssetDocumentInNewWindowAsync(assetTab);
+        }
     }
 
     private async void OnCloseOtherAssetDocumentTabsMenuItemClick(object sender, RoutedEventArgs e)
@@ -431,6 +445,7 @@ public sealed partial class BundleExplorerPage : Page
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         ViewModel.FlushWorkspaceBrowserState();
+        _assetEditorWindowCoordinator.CloseAll();
         ViewModel.DocumentWorkspace.PageStateChanged -= OnDocumentWorkspacePageStateChanged;
         ViewModel.BundlePane.PageStateChanged -= OnBundlePanePageStateChanged;
         ViewModel.WorkspaceShell.PageStateChanged -= OnWorkspaceShellPageStateChanged;

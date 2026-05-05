@@ -1472,6 +1472,11 @@
                                     <TabViewItem.ContextFlyout>
                                         <MenuFlyout Opening="OnAssetDocumentTabContextFlyoutOpening">
                                             <MenuFlyoutItem
+                                                x:Name="OpenAssetDocumentInNewWindowMenuItem"
+                                                Click="OnOpenAssetDocumentInNewWindowMenuItemClick"
+                                                Tag="{Binding}" />
+                                            <MenuFlyoutSeparator />
+                                            <MenuFlyoutItem
                                                 x:Name="CloseOtherAssetDocumentTabsMenuItem"
                                                 Click="OnCloseOtherAssetDocumentTabsMenuItemClick"
                                                 Tag="{Binding}" />

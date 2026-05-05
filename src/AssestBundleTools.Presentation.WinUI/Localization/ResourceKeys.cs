@@ -428,6 +428,11 @@ public static class ResourceKeys
     public const string BundleExplorerPageRightPanelTitle = "BundleExplorerPage.RightPanelTitleText.Text";
     public const string BundleExplorerPageTabContextCloseOtherText = "BundleExplorerPage.TabContext.CloseOther.Text";
     public const string BundleExplorerPageTabContextCloseAllText = "BundleExplorerPage.TabContext.CloseAll.Text";
+    public const string AssetEditorWindowOpenInNewWindowText = "AssetEditorWindow.OpenInNewWindow.Text";
+    public const string AssetEditorWindowMoveToMainWindowText = "AssetEditorWindow.MoveToMainWindow.Text";
+    public const string AssetEditorWindowTabContextCloseText = "AssetEditorWindow.TabContext.Close.Text";
+    public const string AssetEditorWindowTitleFormat = "AssetEditorWindow.Title.Format";
+    public const string AssetEditorWindowTitleFallback = "AssetEditorWindow.Title.Fallback";
     public const string BundleExplorerCollapsedPaneSelectedBundleShortNone = "BundleExplorer.CollapsedPane.SelectedBundleShort.None";
     public const string AssetBundleDecryptorBuiltInAutoDetectDisplayName = "AssetBundleDecryptor.BuiltIn.AutoDetect.DisplayName";
     public const string AssetBundleDecryptorBuiltInAutoDetectDescription = "AssetBundleDecryptor.BuiltIn.AutoDetect.Description";

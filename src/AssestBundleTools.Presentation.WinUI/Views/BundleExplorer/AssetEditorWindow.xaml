@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.AssetEditorWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewModels="using:AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings"
+    mc:Ignorable="d">
+
+    <Grid
+        x:Name="ContentRoot"
+        Padding="14"
+        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+        Loaded="OnContentRootLoaded"
+        RowSpacing="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TabView
+            x:Name="AssetEditorTabView"
+            Margin="-2,-2,-2,0"
+            CanDragTabs="True"
+            CanReorderTabs="True"
+            IsAddTabButtonVisible="False"
+            SelectedItem="{x:Bind ViewModel.DocumentGroup.ActiveAssetTab, Mode=OneWay}"
+            TabCloseRequested="OnAssetEditorTabViewTabCloseRequested"
+            TabDragCompleted="OnAssetEditorTabViewTabDragCompleted"
+            TabItemsSource="{x:Bind ViewModel.DocumentGroup.AssetTabs, Mode=OneWay}"
+            SelectionChanged="OnAssetEditorTabViewSelectionChanged"
+            Visibility="{x:Bind ViewModel.DocumentGroup.TabStripVisibility, Mode=OneWay}">
+            <TabView.TabItemTemplate>
+                <DataTemplate x:DataType="viewModels:AssetDocumentTabViewModel">
+                    <TabViewItem
+                        Header="{x:Bind DisplayName}"
+                        ToolTipService.ToolTip="{x:Bind ToolTipText}">
+                        <TabViewItem.ContextFlyout>
+                            <MenuFlyout Opening="OnAssetEditorTabContextFlyoutOpening">
+                                <MenuFlyoutItem
+                                    x:Name="MoveAssetDocumentToMainWindowMenuItem"
+                                    Click="OnMoveAssetDocumentToMainWindowMenuItemClick"
+                                    Tag="{Binding}" />
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem
+                                    x:Name="CloseAssetDocumentTabMenuItem"
+                                    Click="OnCloseAssetDocumentTabMenuItemClick"
+                                    Tag="{Binding}" />
+                            </MenuFlyout>
+                        </TabViewItem.ContextFlyout>
+                    </TabViewItem>
+                </DataTemplate>
+            </TabView.TabItemTemplate>
+        </TabView>
+
+        <Grid
+            Grid.Row="1"
+            MinHeight="0"
+            ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" MinWidth="380" />
+                <ColumnDefinition Width="*" MinWidth="340" />
+            </Grid.ColumnDefinitions>
+
+            <Grid MinHeight="0" RowSpacing="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <ScrollViewer
+                    MinHeight="0"
+                    HorizontalScrollBarVisibility="Disabled"
+                    HorizontalScrollMode="Disabled"
+                    VerticalScrollBarVisibility="Auto"
+                    VerticalScrollMode="Enabled"
+                    ZoomMode="Disabled">
+                    <controls:InspectorPreviewSurfaceView
+                        FixedPreviewSurfaceHeight="520"
+                        ViewModel="{x:Bind ViewModel.Inspector, Mode=OneWay}"
+                        OpenPreviewLocationRequested="OnPreviewSurfaceOpenPreviewLocationRequested"
+                        ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested" />
+                </ScrollViewer>
+
+                <Border
+                    Grid.Row="1"
+                    Padding="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                    <ScrollViewer
+                        HorizontalScrollBarVisibility="Auto"
+                        HorizontalScrollMode="Enabled"
+                        VerticalScrollBarVisibility="Disabled"
+                        VerticalScrollMode="Disabled"
+                        ZoomMode="Disabled">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button
+                                x:Name="MoveToMainWindowButton"
+                                Click="OnMoveActiveAssetDocumentToMainWindowButtonClick"
+                                Style="{StaticResource WorkspaceInlineActionButtonStyle}" />
+                            <Button
+                                x:Name="ExtractButton"
+                                Click="OnExtractButtonClick"
+                                IsEnabled="{x:Bind ViewModel.Inspector.CanExtract, Mode=OneWay}" />
+                            <Button
+                                x:Name="SelectReplacementButton"
+                                Click="OnSelectReplacementButtonClick"
+                                IsEnabled="{x:Bind ViewModel.Inspector.CanSelectReplacementSource, Mode=OneWay}" />
+                            <Button
+                                x:Name="SelectFileReplacementButton"
+                                Click="OnSelectFileReplacementButtonClick"
+                                IsEnabled="{x:Bind ViewModel.Inspector.CanSelectFileReplacementSource, Mode=OneWay}" />
+                            <Button
+                                x:Name="ApplyReplacementButton"
+                                Click="OnApplyReplacementButtonClick"
+                                IsEnabled="{x:Bind ViewModel.Inspector.CanApplyReplacement, Mode=OneWay}" />
+                            <Button
+                                x:Name="UndoReplacementButton"
+                                Click="OnUndoReplacementButtonClick"
+                                IsEnabled="{x:Bind ViewModel.Inspector.CanUndoReplacement, Mode=OneWay}" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <Border
+                Grid.Column="1"
+                Padding="10"
+                Style="{StaticResource SettingsSectionCardStyle}">
+                <controls:InspectorPanelView
+                    ShowActionBar="False"
+                    ShowDetailsPreview="False"
+                    ViewModel="{x:Bind ViewModel.Inspector, Mode=OneWay}"
+                    ApplyReplacementRequested="OnInspectorApplyReplacementRequested"
+                    ExtractRequested="OnInspectorExtractRequested"
+                    OpenPreviewLocationRequested="OnInspectorOpenPreviewLocationRequested"
+                    ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested"
+                    SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
+                    SelectReplacementSourceRequested="OnInspectorSelectReplacementSourceRequested"
+                    UndoReplacementRequested="OnInspectorUndoReplacementRequested" />
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
