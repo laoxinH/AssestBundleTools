@@ -9,6 +9,7 @@ public sealed partial class BundleExplorerPage
     {
         private readonly BundleExplorerPage _owner;
         private readonly List<AssetEditorWindow> _windows = [];
+        private readonly AssetEditorWindowStateStore _windowStateStore = new();
 
         public AssetEditorWindowCoordinator(BundleExplorerPage owner)
         {
@@ -110,10 +111,12 @@ public sealed partial class BundleExplorerPage
             foreach (var window in _windows.ToArray())
             {
                 window.Closed -= OnAssetEditorWindowClosed;
+                window.LayoutSnapshotChanged -= OnAssetEditorWindowLayoutSnapshotChanged;
                 window.Close();
             }
 
             _windows.Clear();
+            _windowStateStore.Clear();
         }
 
         private void OnAssetEditorWindowClosed(object sender, WindowEventArgs args)
@@ -124,7 +127,13 @@ public sealed partial class BundleExplorerPage
             }
 
             window.Closed -= OnAssetEditorWindowClosed;
+            window.LayoutSnapshotChanged -= OnAssetEditorWindowLayoutSnapshotChanged;
             _windows.Remove(window);
+        }
+
+        private void OnAssetEditorWindowLayoutSnapshotChanged(AssetEditorWindowLayoutSnapshot snapshot)
+        {
+            _windowStateStore.RememberWindowLayout(snapshot);
         }
 
         private AssetEditorWindow CreateAssetEditorWindow(AssetDocumentTabViewModel detachedAssetTab)
@@ -154,6 +163,8 @@ public sealed partial class BundleExplorerPage
                 OpenAssetDocumentInNewWindowFromEditorAsync,
                 OpenAssetDocumentGroupInNewWindowFromEditorAsync);
             window.Closed += OnAssetEditorWindowClosed;
+            window.LayoutSnapshotChanged += OnAssetEditorWindowLayoutSnapshotChanged;
+            window.ApplyInitialLayout(_windowStateStore.CreateNextWindowLayout());
             _windows.Add(window);
             return window;
         }
