@@ -179,17 +179,39 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 
     private async void OnAssetDocumentGroupDropCompleted(UIElement sender, DropCompletedEventArgs args)
     {
+        SetAssetDocumentGroupDropPreviewVisible(false);
         await AssetDocumentGroupDragCoordinator.HandleDropCompletedAsync(this, args);
+    }
+
+    private void OnAssetDocumentGroupDragEnter(object sender, DragEventArgs e)
+    {
+        SetAssetDocumentGroupDropPreviewVisible(
+            AssetDocumentGroupDragCoordinator.CanShowDropPreview(this, e));
+    }
+
+    private void OnAssetDocumentGroupDragLeave(object sender, DragEventArgs e)
+    {
+        SetAssetDocumentGroupDropPreviewVisible(false);
     }
 
     private void OnAssetDocumentGroupDragOver(object sender, DragEventArgs e)
     {
+        SetAssetDocumentGroupDropPreviewVisible(
+            AssetDocumentGroupDragCoordinator.CanShowDropPreview(this, e));
         AssetDocumentGroupDragCoordinator.HandleDragOver(this, e);
     }
 
     private async void OnAssetDocumentGroupDrop(object sender, DragEventArgs e)
     {
+        SetAssetDocumentGroupDropPreviewVisible(false);
         await AssetDocumentGroupDragCoordinator.HandleDropAsync(this, e);
+    }
+
+    private void SetAssetDocumentGroupDropPreviewVisible(bool isVisible)
+    {
+        AssetDocumentGroupDropPreviewOverlay.Visibility = isVisible
+            ? Visibility.Visible
+            : Visibility.Collapsed;
     }
 
     private async void OnExtractButtonClick(object sender, RoutedEventArgs e)

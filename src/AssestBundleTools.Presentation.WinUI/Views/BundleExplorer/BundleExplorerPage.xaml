@@ -1440,6 +1440,8 @@
                 AllowDrop="True"
                 Padding="12"
                 Style="{StaticResource SettingsSectionCardStyle}"
+                DragEnter="OnAssetDocumentGroupDragEnter"
+                DragLeave="OnAssetDocumentGroupDragLeave"
                 DragOver="OnAssetDocumentGroupDragOver"
                 Drop="OnAssetDocumentGroupDrop">
                 <Grid
@@ -1551,6 +1553,21 @@
                         ViewModel="{x:Bind ViewModel.AssetWorkflow.Inspector, Mode=OneWay}" />
                 </Grid>
             </Border>
+
+            <Grid
+                x:Name="AssetDocumentGroupDropPreviewOverlay"
+                Grid.Column="2"
+                IsHitTestVisible="False"
+                Visibility="Collapsed">
+                <Border
+                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                    CornerRadius="12"
+                    Opacity="0.08" />
+                <Border
+                    BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                    BorderThickness="2"
+                    CornerRadius="12" />
+            </Grid>
 
         </Grid>
     </Grid>

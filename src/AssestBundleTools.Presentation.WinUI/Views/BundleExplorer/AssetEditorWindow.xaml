@@ -14,6 +14,8 @@
         AllowDrop="True"
         Padding="14"
         Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+        DragEnter="OnAssetDocumentGroupDragEnter"
+        DragLeave="OnAssetDocumentGroupDragLeave"
         DragOver="OnAssetDocumentGroupDragOver"
         Drop="OnAssetDocumentGroupDrop"
         Loaded="OnContentRootLoaded"
@@ -188,6 +190,21 @@
                     SelectReplacementSourceRequested="OnInspectorSelectReplacementSourceRequested"
                     UndoReplacementRequested="OnInspectorUndoReplacementRequested" />
             </Border>
+        </Grid>
+
+        <Grid
+            x:Name="AssetDocumentGroupDropPreviewOverlay"
+            Grid.RowSpan="2"
+            IsHitTestVisible="False"
+            Visibility="Collapsed">
+            <Border
+                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                CornerRadius="12"
+                Opacity="0.08" />
+            <Border
+                BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                BorderThickness="2"
+                CornerRadius="12" />
         </Grid>
     </Grid>
 </Window>

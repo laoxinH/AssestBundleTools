@@ -75,6 +75,14 @@ internal static class AssetDocumentGroupDragCoordinator
         args.Handled = true;
     }
 
+    public static bool CanShowDropPreview(IAssetDocumentGroupDragHost targetHost, DragEventArgs args)
+    {
+        ArgumentNullException.ThrowIfNull(targetHost);
+        ArgumentNullException.ThrowIfNull(args);
+
+        return TryGetCurrentSession(args, targetHost, out _);
+    }
+
     public static async Task<bool> HandleDropAsync(IAssetDocumentGroupDragHost targetHost, DragEventArgs args)
     {
         ArgumentNullException.ThrowIfNull(targetHost);
