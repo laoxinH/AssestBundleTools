@@ -423,6 +423,12 @@
   <data name="AssetEditorWindow.MoveToMainWindow.Text" xml:space="preserve">
     <value>Move to Main Window</value>
   </data>
+  <data name="AssetEditorWindow.OpenGroupInNewWindow.Text" xml:space="preserve">
+    <value>Open Group in New Window</value>
+  </data>
+  <data name="AssetEditorWindow.MoveGroupToMainWindow.Text" xml:space="preserve">
+    <value>Move Group to Main Window</value>
+  </data>
   <data name="AssetEditorWindow.TabContext.Close.Text" xml:space="preserve">
     <value>Close</value>
   </data>

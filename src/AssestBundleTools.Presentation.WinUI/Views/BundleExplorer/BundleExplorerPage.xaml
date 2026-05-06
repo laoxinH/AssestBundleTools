@@ -1447,9 +1447,29 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock
-                        x:Name="RightPanelTitleText"
-                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock
+                            x:Name="RightPanelTitleText"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+
+                        <Button
+                            x:Name="OpenAssetDocumentGroupInNewWindowButton"
+                            Grid.Column="1"
+                            Click="OnOpenAssetDocumentGroupInNewWindowButtonClick"
+                            IsEnabled="{x:Bind ViewModel.DocumentWorkspace.HasAssetDocumentTabs, Mode=OneWay}"
+                            Style="{StaticResource WorkbenchTitleIconButtonStyle}">
+                            <FontIcon
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="14"
+                                Glyph="&#xE8A7;" />
+                        </Button>
+                    </Grid>
 
                     <TabView
                         x:Name="AssetDocumentTabView"

@@ -300,6 +300,11 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         }
     }
 
+    private async void OnOpenAssetDocumentGroupInNewWindowButtonClick(object sender, RoutedEventArgs e)
+    {
+        await _assetEditorWindowCoordinator.OpenActiveAssetDocumentGroupInNewWindowAsync();
+    }
+
     private async void OnCloseOtherAssetDocumentTabsMenuItemClick(object sender, RoutedEventArgs e)
     {
         if (_tabCoordinator.TryGetTaggedValue(sender, out AssetDocumentTabViewModel? assetTab))

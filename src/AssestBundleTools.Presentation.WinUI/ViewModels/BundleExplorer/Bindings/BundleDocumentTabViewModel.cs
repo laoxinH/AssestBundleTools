@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
@@ -162,7 +163,6 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
     }
 
     /// <summary>
-    /// <summary>
     /// 当系统仍需要复用预览态标签页时，
     /// 可以通过这里把该标签页重定向到新的资源包。
     /// </summary>
@@ -194,7 +194,9 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         IsPreview = false;
     }
 
-    public bool TryGetAssetTab(AssetId assetId, out AssetDocumentTabViewModel? assetTab)
+    public bool TryGetAssetTab(
+        AssetId assetId,
+        [NotNullWhen(true)] out AssetDocumentTabViewModel? assetTab)
     {
         assetTab = AssetTabs.FirstOrDefault(tab => tab.AssetId.Equals(assetId));
         return assetTab is not null;
@@ -299,6 +301,19 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         }
 
         return true;
+    }
+
+    public AssetDocumentGroupTransfer? DetachAssetTabs()
+    {
+        if (AssetTabs.Count == 0)
+        {
+            return null;
+        }
+
+        var transfer = new AssetDocumentGroupTransfer(AssetTabs.ToArray(), ActiveAssetTab);
+        AssetTabs.Clear();
+        ActiveAssetTab = null;
+        return transfer;
     }
 
     public void ClearAssetTabs()

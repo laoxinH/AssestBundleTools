@@ -13,15 +13,18 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAssetDocumentTabDragHost
 {
     private readonly Func<AssetEditorWindow, AssetDocumentTabViewModel, Task> _openAssetDocumentInNewWindowAsync;
+    private readonly Func<AssetEditorWindow, Task> _openAssetDocumentGroupInNewWindowAsync;
     private bool _isInitialized;
     private bool _isSynchronizingSelection;
 
     public AssetEditorWindow(
         AssetEditorWindowViewModel viewModel,
-        Func<AssetEditorWindow, AssetDocumentTabViewModel, Task> openAssetDocumentInNewWindowAsync)
+        Func<AssetEditorWindow, AssetDocumentTabViewModel, Task> openAssetDocumentInNewWindowAsync,
+        Func<AssetEditorWindow, Task> openAssetDocumentGroupInNewWindowAsync)
     {
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         _openAssetDocumentInNewWindowAsync = openAssetDocumentInNewWindowAsync ?? throw new ArgumentNullException(nameof(openAssetDocumentInNewWindowAsync));
+        _openAssetDocumentGroupInNewWindowAsync = openAssetDocumentGroupInNewWindowAsync ?? throw new ArgumentNullException(nameof(openAssetDocumentGroupInNewWindowAsync));
         InitializeComponent();
         ApplyLocalizedText();
         UpdateWindowTitle();
@@ -159,6 +162,16 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         await ViewModel.MoveActiveAssetDocumentToMainWindowAsync();
     }
 
+    private async void OnMoveAssetDocumentGroupToMainWindowButtonClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.MoveAssetDocumentGroupToMainWindowAsync();
+    }
+
+    private async void OnOpenAssetDocumentGroupInNewWindowButtonClick(object sender, RoutedEventArgs e)
+    {
+        await _openAssetDocumentGroupInNewWindowAsync(this);
+    }
+
     private async void OnExtractButtonClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.ExtractSelectedAssetAsync();
@@ -263,6 +276,8 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
     private void ApplyLocalizedText()
     {
         MoveToMainWindowButton.Content = UiText.Get(ResourceKeys.AssetEditorWindowMoveToMainWindowText);
+        MoveGroupToMainWindowButton.Content = UiText.Get(ResourceKeys.AssetEditorWindowMoveGroupToMainWindowText);
+        OpenGroupInNewWindowButton.Content = UiText.Get(ResourceKeys.AssetEditorWindowOpenGroupInNewWindowText);
         ExtractButton.Content = UiText.Get(ResourceKeys.InspectorExtractButton);
         SelectReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectReplacementButton);
         SelectFileReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectFileReplacementButton);

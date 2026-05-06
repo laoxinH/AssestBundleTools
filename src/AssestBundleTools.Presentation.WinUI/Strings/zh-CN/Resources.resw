@@ -423,6 +423,12 @@
   <data name="AssetEditorWindow.MoveToMainWindow.Text" xml:space="preserve">
     <value>移动到主窗口</value>
   </data>
+  <data name="AssetEditorWindow.OpenGroupInNewWindow.Text" xml:space="preserve">
+    <value>在新窗口中打开全部</value>
+  </data>
+  <data name="AssetEditorWindow.MoveGroupToMainWindow.Text" xml:space="preserve">
+    <value>全部移动到主窗口</value>
+  </data>
   <data name="AssetEditorWindow.TabContext.Close.Text" xml:space="preserve">
     <value>关闭</value>
   </data>

@@ -63,6 +63,35 @@ public sealed class AssetDocumentGroupViewModel : ObservableObject
         }
     }
 
+    public void AddAssetTabs(AssetDocumentGroupTransfer transfer)
+    {
+        ArgumentNullException.ThrowIfNull(transfer);
+
+        AssetDocumentTabViewModel? activeAssetTab = null;
+        foreach (var assetTab in transfer.AssetTabs)
+        {
+            if (TryGetAssetTab(assetTab.BundleId, assetTab.AssetId, out var existingAssetTab))
+            {
+                assetTab.CancelPreviewRequest();
+                if (ReferenceEquals(assetTab, transfer.ActiveAssetTab))
+                {
+                    activeAssetTab = existingAssetTab;
+                }
+
+                continue;
+            }
+
+            AssetTabs.Add(assetTab);
+            if (ReferenceEquals(assetTab, transfer.ActiveAssetTab))
+            {
+                activeAssetTab = assetTab;
+            }
+        }
+
+        NotifyGroupStateChanged();
+        SetActiveAssetTab(activeAssetTab ?? transfer.ActiveAssetTab);
+    }
+
     public void SetActiveAssetTab(AssetDocumentTabViewModel? assetTab)
     {
         if (assetTab is not null && !AssetTabs.Contains(assetTab))
@@ -129,6 +158,20 @@ public sealed class AssetDocumentGroupViewModel : ObservableObject
 
         NotifyGroupStateChanged();
         return true;
+    }
+
+    public AssetDocumentGroupTransfer? DetachAssetTabs()
+    {
+        if (AssetTabs.Count == 0)
+        {
+            return null;
+        }
+
+        var transfer = new AssetDocumentGroupTransfer(AssetTabs.ToArray(), ActiveAssetTab);
+        AssetTabs.Clear();
+        ActiveAssetTab = null;
+        NotifyGroupStateChanged();
+        return transfer;
     }
 
     public void Clear()

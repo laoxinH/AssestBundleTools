@@ -35,6 +35,26 @@ public sealed partial class BundleExplorerPage
             }
         }
 
+        public async Task OpenActiveAssetDocumentGroupInNewWindowAsync()
+        {
+            var detachedGroup = await _owner.ViewModel.DetachActiveAssetDocumentGroupForEditorWindowAsync();
+            if (detachedGroup is null)
+            {
+                return;
+            }
+
+            try
+            {
+                var window = CreateAssetEditorWindow(detachedGroup);
+                window.Activate();
+            }
+            catch
+            {
+                await _owner.ViewModel.AttachAssetDocumentGroupFromEditorWindowAsync(detachedGroup);
+                throw;
+            }
+        }
+
         private async Task OpenAssetDocumentInNewWindowFromEditorAsync(
             AssetEditorWindow sourceWindow,
             AssetDocumentTabViewModel assetTab)
@@ -58,6 +78,29 @@ public sealed partial class BundleExplorerPage
             catch
             {
                 await sourceHost.AttachAssetDocumentTabFromDragAsync(detachedAssetTab);
+                throw;
+            }
+        }
+
+        private async Task OpenAssetDocumentGroupInNewWindowFromEditorAsync(AssetEditorWindow sourceWindow)
+        {
+            ArgumentNullException.ThrowIfNull(sourceWindow);
+
+            var detachedGroup = await sourceWindow.ViewModel.DetachAssetDocumentGroupForExternalHostAsync();
+            if (detachedGroup is null)
+            {
+                return;
+            }
+
+            try
+            {
+                var window = CreateAssetEditorWindow(detachedGroup);
+                window.Activate();
+                await sourceWindow.ViewModel.CompleteExternalAssetDocumentMoveAsync();
+            }
+            catch
+            {
+                await sourceWindow.ViewModel.RestoreDetachedAssetDocumentGroupAsync(detachedGroup);
                 throw;
             }
         }
@@ -86,8 +129,13 @@ public sealed partial class BundleExplorerPage
 
         private AssetEditorWindow CreateAssetEditorWindow(AssetDocumentTabViewModel detachedAssetTab)
         {
+            return CreateAssetEditorWindow(new AssetDocumentGroupTransfer([detachedAssetTab], detachedAssetTab));
+        }
+
+        private AssetEditorWindow CreateAssetEditorWindow(AssetDocumentGroupTransfer detachedGroup)
+        {
             var viewModel = new AssetEditorWindowViewModel(
-                detachedAssetTab,
+                detachedGroup,
                 App.CurrentApp.WorkspaceAssetInspectionGateway,
                 App.CurrentApp.WorkspaceAssetOperationGateway,
                 App.CurrentApp.AppLogService,
@@ -99,10 +147,12 @@ public sealed partial class BundleExplorerPage
                 App.CurrentApp.PathNavigationService,
                 _owner.ViewModel.WorkspaceShell,
                 _owner.ViewModel.BundlePane,
-                _owner.ViewModel.AttachAssetDocumentTabFromEditorWindowAsync);
+                _owner.ViewModel.AttachAssetDocumentTabFromEditorWindowAsync,
+                _owner.ViewModel.AttachAssetDocumentGroupFromEditorWindowAsync);
             var window = new AssetEditorWindow(
                 viewModel,
-                OpenAssetDocumentInNewWindowFromEditorAsync);
+                OpenAssetDocumentInNewWindowFromEditorAsync,
+                OpenAssetDocumentGroupInNewWindowFromEditorAsync);
             window.Closed += OnAssetEditorWindowClosed;
             _windows.Add(window);
             return window;

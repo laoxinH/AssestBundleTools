@@ -106,6 +106,17 @@
                             <Button
                                 x:Name="MoveToMainWindowButton"
                                 Click="OnMoveActiveAssetDocumentToMainWindowButtonClick"
+                                IsEnabled="{x:Bind ViewModel.DocumentGroup.HasAssetTabs, Mode=OneWay}"
+                                Style="{StaticResource WorkspaceInlineActionButtonStyle}" />
+                            <Button
+                                x:Name="MoveGroupToMainWindowButton"
+                                Click="OnMoveAssetDocumentGroupToMainWindowButtonClick"
+                                IsEnabled="{x:Bind ViewModel.DocumentGroup.HasAssetTabs, Mode=OneWay}"
+                                Style="{StaticResource WorkspaceInlineActionButtonStyle}" />
+                            <Button
+                                x:Name="OpenGroupInNewWindowButton"
+                                Click="OnOpenAssetDocumentGroupInNewWindowButtonClick"
+                                IsEnabled="{x:Bind ViewModel.DocumentGroup.HasAssetTabs, Mode=OneWay}"
                                 Style="{StaticResource WorkspaceInlineActionButtonStyle}" />
                             <Button
                                 x:Name="ExtractButton"

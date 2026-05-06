@@ -290,6 +290,12 @@ public sealed class BundleExplorerViewModel : ObservableObject
     public Task<bool> AttachAssetDocumentTabFromEditorWindowAsync(AssetDocumentTabViewModel assetTab) =>
         _assetDocumentMoveCoordinator.AttachAssetDocumentTabFromExternalHostAsync(assetTab);
 
+    public Task<AssetDocumentGroupTransfer?> DetachActiveAssetDocumentGroupForEditorWindowAsync() =>
+        _assetDocumentMoveCoordinator.DetachActiveAssetDocumentGroupForExternalHostAsync();
+
+    public Task<bool> AttachAssetDocumentGroupFromEditorWindowAsync(AssetDocumentGroupTransfer transfer) =>
+        _assetDocumentMoveCoordinator.AttachAssetDocumentGroupFromExternalHostAsync(transfer);
+
     public Task RefreshPrimaryPaneAsync() => _assetWorkflow.RefreshPrimaryPaneAsync();
 
     public void FlushWorkspaceBrowserState()

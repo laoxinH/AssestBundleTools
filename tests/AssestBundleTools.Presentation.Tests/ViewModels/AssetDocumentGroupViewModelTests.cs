@@ -30,6 +30,53 @@ public sealed class AssetDocumentGroupViewModelTests
     }
 
     [Fact]
+    public void DetachAssetTabs_ShouldPreserveOrderActiveAndPreviewState()
+    {
+        var firstTab = CreateAssetDocumentTab("bundle-a", "asset-1");
+        var secondTab = CreateAssetDocumentTab("bundle-a", "asset-2");
+        var group = new AssetDocumentGroupViewModel();
+        group.AddAssetTab(firstTab, activate: true);
+        group.AddAssetTab(secondTab, activate: true);
+        _ = firstTab.BeginPreviewRequest();
+        firstTab.Inspector.SetPreviewLoading(ResourceKeys.InspectorPreviewLoadingText);
+
+        var transfer = group.DetachAssetTabs();
+
+        Assert.NotNull(transfer);
+        Assert.Empty(group.AssetTabs);
+        Assert.Null(group.ActiveAssetTab);
+        Assert.Collection(
+            transfer.AssetTabs,
+            tab => Assert.Same(firstTab, tab),
+            tab => Assert.Same(secondTab, tab));
+        Assert.Same(secondTab, transfer.ActiveAssetTab);
+        Assert.True(firstTab.Inspector.Preview.IsPreviewLoading);
+
+        firstTab.CancelPreviewRequest();
+    }
+
+    [Fact]
+    public void AddAssetTabs_ShouldDeduplicateExistingTabsAndActivateTransferredActive()
+    {
+        var existingTab = CreateAssetDocumentTab("bundle-a", "asset-1");
+        var duplicateTab = CreateAssetDocumentTab("bundle-a", "asset-1");
+        var newTab = CreateAssetDocumentTab("bundle-a", "asset-2");
+        var group = new AssetDocumentGroupViewModel();
+        group.AddAssetTab(existingTab, activate: true);
+        _ = duplicateTab.BeginPreviewRequest();
+        duplicateTab.Inspector.SetPreviewLoading(ResourceKeys.InspectorPreviewLoadingText);
+
+        group.AddAssetTabs(new AssetDocumentGroupTransfer([duplicateTab, newTab], duplicateTab));
+
+        Assert.Collection(
+            group.AssetTabs,
+            tab => Assert.Same(existingTab, tab),
+            tab => Assert.Same(newTab, tab));
+        Assert.Same(existingTab, group.ActiveAssetTab);
+        Assert.False(duplicateTab.Inspector.Preview.IsPreviewLoading);
+    }
+
+    [Fact]
     public void TryGetAssetTab_ShouldMatchBundleAndAssetIdentity()
     {
         var firstTab = CreateAssetDocumentTab("bundle-a", "shared-asset");
@@ -62,6 +109,36 @@ public sealed class AssetDocumentGroupViewModelTests
 
         Assert.DoesNotContain(firstTab, bundleTab.AssetTabs);
         Assert.Same(secondTab, bundleTab.ActiveAssetTab);
+        Assert.True(firstTab.Inspector.Preview.IsPreviewLoading);
+
+        firstTab.CancelPreviewRequest();
+    }
+
+    [Fact]
+    public void BundleDocumentTabDetachAssetTabs_ShouldPreserveOrderActiveAndPreviewState()
+    {
+        var bundleTab = new BundleDocumentTabViewModel(
+            new BundleId("bundle-a"),
+            displayName: "bundle-a.ab",
+            logicalPath: "bundle-a.ab",
+            isPreview: false);
+        var firstTab = CreateAssetDocumentTab("bundle-a", "asset-1");
+        var secondTab = CreateAssetDocumentTab("bundle-a", "asset-2");
+        bundleTab.AddAssetTab(firstTab, activate: true);
+        bundleTab.AddAssetTab(secondTab, activate: true);
+        _ = firstTab.BeginPreviewRequest();
+        firstTab.Inspector.SetPreviewLoading(ResourceKeys.InspectorPreviewLoadingText);
+
+        var transfer = bundleTab.DetachAssetTabs();
+
+        Assert.NotNull(transfer);
+        Assert.Empty(bundleTab.AssetTabs);
+        Assert.Null(bundleTab.ActiveAssetTab);
+        Assert.Collection(
+            transfer.AssetTabs,
+            tab => Assert.Same(firstTab, tab),
+            tab => Assert.Same(secondTab, tab));
+        Assert.Same(secondTab, transfer.ActiveAssetTab);
         Assert.True(firstTab.Inspector.Preview.IsPreviewLoading);
 
         firstTab.CancelPreviewRequest();

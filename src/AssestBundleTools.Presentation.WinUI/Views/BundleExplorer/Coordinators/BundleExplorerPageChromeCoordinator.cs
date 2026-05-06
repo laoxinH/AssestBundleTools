@@ -55,6 +55,9 @@ public sealed partial class BundleExplorerPage
             _owner.WorkspaceImportBusyOverlayHintText.Text = UiText.Get(ResourceKeys.WorkspaceImportBusyOverlayHint);
             _owner.CenterPanelTitleText.Text = UiText.Get(ResourceKeys.BundleExplorerPageCenterPanelTitle);
             _owner.RightPanelTitleText.Text = UiText.Get(ResourceKeys.BundleExplorerPageRightPanelTitle);
+            ToolTipService.SetToolTip(
+                _owner.OpenAssetDocumentGroupInNewWindowButton,
+                UiText.Get(ResourceKeys.AssetEditorWindowOpenGroupInNewWindowText));
         }
 
         public void SetWorkspaceImportDropOverlayVisible(bool isVisible)

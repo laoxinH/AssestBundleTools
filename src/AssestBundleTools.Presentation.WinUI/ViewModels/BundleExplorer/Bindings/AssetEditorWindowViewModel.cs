@@ -3,7 +3,6 @@ using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Workspace.Commands;
-using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
@@ -25,16 +24,15 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 public sealed class AssetEditorWindowViewModel : ObservableObject
 {
     private readonly IWorkspaceAssetInspectionGateway _workspaceAssetInspectionGateway;
-    private readonly IAppLogService _appLogService;
     private readonly ILocalizationService _localizationService;
     private readonly IBackgroundTaskRunner _backgroundTaskRunner;
-    private readonly IPathNavigationService _pathNavigationService;
     private readonly IBundleExplorerWorkspaceShellHost _workspaceShell;
     private readonly Func<AssetDocumentTabViewModel, Task<bool>> _moveAssetDocumentToMainWindowAsync;
+    private readonly Func<AssetDocumentGroupTransfer, Task<bool>> _moveAssetDocumentGroupToMainWindowAsync;
     private readonly BundleExplorerOperationFeedbackBridge _operationFeedbackBridge;
     private readonly BundleExplorerAssetInspectorPresenter _assetInspectorPresenter;
     private readonly BundleExplorerAssetPreviewLoadCoordinator _assetPreviewLoadCoordinator;
-    private readonly BundleExplorerAssetModificationActionHandler _modificationActionHandler;
+    private readonly AssetEditorWindowAssetActionCoordinator _assetActionCoordinator;
     private readonly InspectorInformationTextSet _inspectorInformationTextSet;
     private readonly InspectorPanelViewModel _emptyInspector;
     private bool _isBusy;
@@ -52,24 +50,59 @@ public sealed class AssetEditorWindowViewModel : ObservableObject
         IPathNavigationService pathNavigationService,
         IBundleExplorerWorkspaceShellHost workspaceShell,
         IBundleExplorerBundlePaneHost bundlePane,
-        Func<AssetDocumentTabViewModel, Task<bool>> moveAssetDocumentToMainWindowAsync)
+        Func<AssetDocumentTabViewModel, Task<bool>> moveAssetDocumentToMainWindowAsync,
+        Func<AssetDocumentGroupTransfer, Task<bool>> moveAssetDocumentGroupToMainWindowAsync)
+        : this(
+            CreateSingleAssetGroup(initialAssetTab),
+            workspaceAssetInspectionGateway,
+            workspaceAssetOperationGateway,
+            appLogService,
+            appNotificationService,
+            localizationService,
+            filePickerService,
+            workspaceContextService,
+            backgroundTaskRunner,
+            pathNavigationService,
+            workspaceShell,
+            bundlePane,
+            moveAssetDocumentToMainWindowAsync,
+            moveAssetDocumentGroupToMainWindowAsync)
     {
-        ArgumentNullException.ThrowIfNull(initialAssetTab);
+    }
+
+    public AssetEditorWindowViewModel(
+        AssetDocumentGroupTransfer initialAssetGroup,
+        IWorkspaceAssetInspectionGateway workspaceAssetInspectionGateway,
+        IWorkspaceAssetOperationGateway workspaceAssetOperationGateway,
+        IAppLogService appLogService,
+        IAppNotificationService appNotificationService,
+        ILocalizationService localizationService,
+        IFilePickerService filePickerService,
+        IWorkspaceContextService workspaceContextService,
+        IBackgroundTaskRunner backgroundTaskRunner,
+        IPathNavigationService pathNavigationService,
+        IBundleExplorerWorkspaceShellHost workspaceShell,
+        IBundleExplorerBundlePaneHost bundlePane,
+        Func<AssetDocumentTabViewModel, Task<bool>> moveAssetDocumentToMainWindowAsync,
+        Func<AssetDocumentGroupTransfer, Task<bool>> moveAssetDocumentGroupToMainWindowAsync)
+    {
+        ArgumentNullException.ThrowIfNull(initialAssetGroup);
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
         ArgumentNullException.ThrowIfNull(workspaceAssetOperationGateway);
-        _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
+        ArgumentNullException.ThrowIfNull(appLogService);
         ArgumentNullException.ThrowIfNull(appNotificationService);
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         ArgumentNullException.ThrowIfNull(filePickerService);
         ArgumentNullException.ThrowIfNull(workspaceContextService);
         _backgroundTaskRunner = backgroundTaskRunner ?? throw new ArgumentNullException(nameof(backgroundTaskRunner));
-        _pathNavigationService = pathNavigationService ?? throw new ArgumentNullException(nameof(pathNavigationService));
+        ArgumentNullException.ThrowIfNull(pathNavigationService);
         _workspaceShell = workspaceShell ?? throw new ArgumentNullException(nameof(workspaceShell));
         ArgumentNullException.ThrowIfNull(bundlePane);
         _moveAssetDocumentToMainWindowAsync = moveAssetDocumentToMainWindowAsync ?? throw new ArgumentNullException(nameof(moveAssetDocumentToMainWindowAsync));
+        _moveAssetDocumentGroupToMainWindowAsync = moveAssetDocumentGroupToMainWindowAsync ?? throw new ArgumentNullException(nameof(moveAssetDocumentGroupToMainWindowAsync));
 
         _operationFeedbackBridge = new BundleExplorerOperationFeedbackBridge(
-            _appLogService,
+            appLogService,
             appNotificationService,
             _localizationService);
         _assetInspectorPresenter = new BundleExplorerAssetInspectorPresenter(
@@ -79,24 +112,37 @@ public sealed class AssetEditorWindowViewModel : ObservableObject
             _workspaceAssetInspectionGateway,
             workspaceContextService,
             _workspaceShell,
-            _appLogService,
+            appLogService,
             _localizationService,
             _backgroundTaskRunner);
         _assetPreviewLoadCoordinator = new BundleExplorerAssetPreviewLoadCoordinator(
             assetPreviewCoordinator,
             () => DocumentGroup.ActiveAssetTab,
             _operationFeedbackBridge.FormatFirstErrorMessage);
-        _modificationActionHandler = new BundleExplorerAssetModificationActionHandler(
+        var modificationActionHandler = new BundleExplorerAssetModificationActionHandler(
             workspaceAssetOperationGateway,
-            _appLogService,
+            appLogService,
             appNotificationService,
             _localizationService,
             filePickerService);
+        _assetActionCoordinator = new AssetEditorWindowAssetActionCoordinator(
+            _workspaceShell,
+            pathNavigationService,
+            appLogService,
+            _localizationService,
+            _operationFeedbackBridge,
+            modificationActionHandler,
+            () => DocumentGroup.ActiveAssetTab,
+            () => Inspector,
+            () => IsBusy,
+            value => IsBusy = value,
+            ReloadActiveAssetDocumentAsync,
+            ReapplyAssetDocumentState);
         _inspectorInformationTextSet = InspectorInformationTextSetFactory.Create(_localizationService);
         _emptyInspector = new InspectorPanelViewModel(_inspectorInformationTextSet);
         _emptyInspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
 
-        DocumentGroup.AddAssetTab(initialAssetTab, activate: true);
+        DocumentGroup.AddAssetTabs(initialAssetGroup);
         SyncActiveDocumentState();
     }
 
@@ -210,6 +256,23 @@ public sealed class AssetEditorWindowViewModel : ObservableObject
     public Task MoveActiveAssetDocumentToMainWindowAsync() =>
         MoveAssetDocumentToMainWindowAsync(DocumentGroup.ActiveAssetTab);
 
+    public async Task MoveAssetDocumentGroupToMainWindowAsync()
+    {
+        var transfer = await DetachAssetDocumentGroupForExternalHostAsync();
+        if (transfer is null)
+        {
+            return;
+        }
+
+        if (await _moveAssetDocumentGroupToMainWindowAsync(transfer))
+        {
+            await CompleteExternalAssetDocumentMoveAsync();
+            return;
+        }
+
+        await RestoreDetachedAssetDocumentGroupAsync(transfer);
+    }
+
     public async Task<AssetDocumentTabViewModel?> DetachAssetDocumentTabForExternalHostAsync(
         AssetDocumentTabViewModel? assetTab)
     {
@@ -228,6 +291,18 @@ public sealed class AssetEditorWindowViewModel : ObservableObject
         }
 
         return assetTab;
+    }
+
+    public Task<AssetDocumentGroupTransfer?> DetachAssetDocumentGroupForExternalHostAsync()
+    {
+        if (IsBusy)
+        {
+            return Task.FromResult<AssetDocumentGroupTransfer?>(null);
+        }
+
+        var transfer = DocumentGroup.DetachAssetTabs();
+        SyncActiveDocumentState();
+        return Task.FromResult(transfer);
     }
 
     public async Task<bool> AttachAssetDocumentTabFromExternalHostAsync(AssetDocumentTabViewModel? assetTab)
@@ -249,12 +324,32 @@ public sealed class AssetEditorWindowViewModel : ObservableObject
         return true;
     }
 
+    public async Task<bool> AttachAssetDocumentGroupFromExternalHostAsync(AssetDocumentGroupTransfer? transfer)
+    {
+        if (transfer is null || IsBusy)
+        {
+            return false;
+        }
+
+        DocumentGroup.AddAssetTabs(transfer);
+        await ActivateAssetDocumentTabAsync(DocumentGroup.ActiveAssetTab);
+        return true;
+    }
+
     public async Task RestoreDetachedAssetDocumentTabAsync(AssetDocumentTabViewModel assetTab)
     {
         ArgumentNullException.ThrowIfNull(assetTab);
 
         DocumentGroup.AddAssetTab(assetTab, activate: false);
         await ActivateAssetDocumentTabAsync(assetTab);
+    }
+
+    public Task RestoreDetachedAssetDocumentGroupAsync(AssetDocumentGroupTransfer transfer)
+    {
+        ArgumentNullException.ThrowIfNull(transfer);
+
+        DocumentGroup.AddAssetTabs(transfer);
+        return ActivateAssetDocumentTabAsync(DocumentGroup.ActiveAssetTab);
     }
 
     public async Task CompleteExternalAssetDocumentMoveAsync()
@@ -268,131 +363,19 @@ public sealed class AssetEditorWindowViewModel : ObservableObject
         await ActivateAssetDocumentTabAsync(DocumentGroup.ActiveAssetTab);
     }
 
-    public void OpenCurrentPreviewLocation()
-    {
-        if (!TryGetActiveAssetDocumentState(out _, out var details))
-        {
-            return;
-        }
+    public void OpenCurrentPreviewLocation() => _assetActionCoordinator.OpenCurrentPreviewLocation();
 
-        var previewPayloadFilePath = Inspector.Preview.PreviewPayloadFilePath;
-        if (string.IsNullOrWhiteSpace(previewPayloadFilePath))
-        {
-            return;
-        }
+    public Task ExtractSelectedAssetAsync() => _assetActionCoordinator.ExtractSelectedAssetAsync();
 
-        if (!_pathNavigationService.TryOpenContainingFolder(previewPayloadFilePath))
-        {
-            var message = _localizationService.GetFormattedString(
-                ResourceKeys.BundleExplorerNotificationPreviewOpenLocationFailed,
-                details.Name);
-            _appLogService.AppendWarning(message);
-            _operationFeedbackBridge.ShowOperationNotification(
-                GetString(ResourceKeys.AppNotificationWarningTitle),
-                message,
-                AppNotificationSeverity.Warning);
-        }
-    }
+    public Task SelectWorkspaceReplacementSourceAsync() =>
+        _assetActionCoordinator.SelectWorkspaceReplacementSourceAsync();
 
-    public async Task ExtractSelectedAssetAsync()
-    {
-        if (!TryGetActiveAssetCommandContext(
-                static (_, details) => details.CanExtract,
-                out var workspaceSummary,
-                out _,
-                out var details))
-        {
-            return;
-        }
+    public Task SelectFileReplacementSourceAsync() =>
+        _assetActionCoordinator.SelectFileReplacementSourceAsync();
 
-        await _modificationActionHandler.ExtractSelectedAssetAsync(
-            workspaceSummary,
-            details,
-            value => IsBusy = value,
-            ReloadActiveAssetDocumentAsync,
-            _operationFeedbackBridge.AppendResultFailure);
-    }
+    public Task ApplyPendingReplacementAsync() => _assetActionCoordinator.ApplyPendingReplacementAsync();
 
-    public async Task SelectWorkspaceReplacementSourceAsync()
-    {
-        if (!TryGetActiveAssetCommandContext(
-                static (_, details) => details.CanReplaceFromWorkspace,
-                out var workspaceSummary,
-                out var assetTab,
-                out var details))
-        {
-            return;
-        }
-
-        await _modificationActionHandler.SelectWorkspaceReplacementSourceAsync(
-            workspaceSummary,
-            assetTab,
-            details,
-            ReapplyAssetDocumentState,
-            value => IsBusy = value,
-            _operationFeedbackBridge.AppendResultFailure);
-    }
-
-    public async Task SelectFileReplacementSourceAsync()
-    {
-        if (!TryGetActiveAssetCommandContext(
-                static (_, details) => details.CanReplaceFromFile,
-                out var workspaceSummary,
-                out var assetTab,
-                out var details))
-        {
-            return;
-        }
-
-        await _modificationActionHandler.SelectFileReplacementSourceAsync(
-            workspaceSummary,
-            assetTab,
-            details,
-            ReapplyAssetDocumentState,
-            value => IsBusy = value,
-            _operationFeedbackBridge.AppendResultFailure);
-    }
-
-    public async Task ApplyPendingReplacementAsync()
-    {
-        if (!TryGetActiveAssetCommandContext(
-                static (assetTab, _) => assetTab.PendingWorkspaceReplacementCandidate is not null ||
-                                         assetTab.PendingFileReplacementCandidate is not null,
-                out var workspaceSummary,
-                out var assetTab,
-                out var details))
-        {
-            return;
-        }
-
-        await _modificationActionHandler.ApplyPendingReplacementAsync(
-            workspaceSummary,
-            assetTab,
-            details,
-            value => IsBusy = value,
-            ReloadActiveAssetDocumentAsync,
-            _operationFeedbackBridge.AppendResultFailure);
-    }
-
-    public async Task UndoAppliedReplacementAsync()
-    {
-        if (!TryGetActiveAssetCommandContext(
-                static (_, details) => HasAppliedReplacement(details),
-                out var workspaceSummary,
-                out var assetTab,
-                out var details))
-        {
-            return;
-        }
-
-        await _modificationActionHandler.UndoAppliedReplacementAsync(
-            workspaceSummary,
-            assetTab,
-            details,
-            value => IsBusy = value,
-            ReloadActiveAssetDocumentAsync,
-            _operationFeedbackBridge.AppendResultFailure);
-    }
+    public Task UndoAppliedReplacementAsync() => _assetActionCoordinator.UndoAppliedReplacementAsync();
 
     private AssetDocumentTabViewModel CreateAssetDocumentTab(
         BundleId bundleId,
@@ -503,30 +486,6 @@ public sealed class AssetEditorWindowViewModel : ObservableObject
         return true;
     }
 
-    private bool TryGetActiveAssetCommandContext(
-        Func<AssetDocumentTabViewModel, AssetDetailsDto, bool> canExecute,
-        [NotNullWhen(true)] out WorkspaceSummaryDto? workspaceSummary,
-        [NotNullWhen(true)] out AssetDocumentTabViewModel? assetTab,
-        [NotNullWhen(true)] out AssetDetailsDto? details)
-    {
-        ArgumentNullException.ThrowIfNull(canExecute);
-
-        workspaceSummary = _workspaceShell.WorkspaceSummary;
-        if (IsBusy ||
-            workspaceSummary is null ||
-            !TryGetActiveAssetDocumentState(out assetTab, out details) ||
-            !assetTab.CanEdit ||
-            !canExecute(assetTab, details))
-        {
-            workspaceSummary = null;
-            assetTab = null;
-            details = null;
-            return false;
-        }
-
-        return true;
-    }
-
     private bool TryGetValue<T>(Result<T> result, [NotNullWhen(true)] out T? value)
     {
         if (result.IsSuccess && result.Value is not null)
@@ -554,12 +513,10 @@ public sealed class AssetEditorWindowViewModel : ObservableObject
                details.AssetId.Equals(assetTab.AssetId);
     }
 
-    private static bool HasAppliedReplacement(AssetDetailsDto details)
+    private static AssetDocumentGroupTransfer CreateSingleAssetGroup(AssetDocumentTabViewModel assetTab)
     {
-        ArgumentNullException.ThrowIfNull(details);
-
-        return !string.IsNullOrWhiteSpace(details.WorkspaceReplacementSourceAssetName) ||
-               !string.IsNullOrWhiteSpace(details.FileReplacementSourceFileName);
+        ArgumentNullException.ThrowIfNull(assetTab);
+        return new AssetDocumentGroupTransfer([assetTab], assetTab);
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);

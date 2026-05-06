@@ -327,6 +327,25 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         return assetTab;
     }
 
+    public Task<AssetDocumentGroupTransfer?> DetachActiveAssetDocumentGroupForExternalHostAsync()
+    {
+        if (_documentWorkspace.ActiveBundleTab is not { } ownerTab)
+        {
+            return Task.FromResult<AssetDocumentGroupTransfer?>(null);
+        }
+
+        var transfer = ownerTab.DetachAssetTabs();
+        if (transfer is null)
+        {
+            return Task.FromResult<AssetDocumentGroupTransfer?>(null);
+        }
+
+        _documentWorkspace.NotifyAssetDocumentHostStateChanged();
+        _requestWorkspaceBrowserStatePersistence();
+        _notifyActionStates();
+        return Task.FromResult<AssetDocumentGroupTransfer?>(transfer);
+    }
+
     public void ReapplyAssetDocumentTab(AssetDocumentTabViewModel assetTab, AssetDetailsDto details)
     {
         ArgumentNullException.ThrowIfNull(assetTab);
