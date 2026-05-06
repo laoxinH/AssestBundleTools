@@ -117,6 +117,62 @@ public sealed class AssetEditorWindowStateStoreTests
     }
 
     [Fact]
+    public void CaptureOpenWindowMetadata_ShouldMapWindowAndAssetTabSnapshots()
+    {
+        var store = new AssetEditorWindowStateStore();
+        var layout = new AssetEditorWindowLayoutSnapshot(420, 180, 1440, 900);
+        store.RegisterWindow(
+            layout,
+            new AssetEditorWindowGroupSnapshot(
+                new[]
+                {
+                    new AssetEditorWindowAssetTabSnapshot(
+                        BundleId: "bundle-a",
+                        AssetId: "asset-1",
+                        DisplayName: "asset-1",
+                        SelectedInspectorSection: "dependencies",
+                        PreviewImageBackgroundMode: "Solid",
+                        SpritePreviewDisplayMode: "CropResult",
+                        MeshPreviewDisplayMode: "Uv",
+                        MeshPreviewTextureOverlaySelected: false,
+                        MeshPreviewGridSelected: true,
+                        MeshPreviewZoom: 1.25d,
+                        MeshPreviewRotationX: 12d,
+                        MeshPreviewRotationY: -24d,
+                        PreviewImageZoom: 1.5d,
+                        PreviewImagePanX: 8d,
+                        PreviewImagePanY: -4d)
+                },
+                "bundle-a",
+                "asset-1"));
+
+        var window = Assert.Single(store.CaptureOpenWindowMetadata());
+        var assetTab = Assert.Single(window.OpenAssetTabs);
+
+        Assert.Equal(layout.X, window.Layout.X);
+        Assert.Equal(layout.Y, window.Layout.Y);
+        Assert.Equal(layout.Width, window.Layout.Width);
+        Assert.Equal(layout.Height, window.Layout.Height);
+        Assert.Equal("bundle-a", window.ActiveBundleId);
+        Assert.Equal("asset-1", window.ActiveAssetId);
+        Assert.Equal("bundle-a", assetTab.BundleId);
+        Assert.Equal("asset-1", assetTab.AssetId);
+        Assert.Equal("asset-1", assetTab.AssetName);
+        Assert.Equal("dependencies", assetTab.SelectedInspectorSection);
+        Assert.Equal("Solid", assetTab.PreviewImageBackgroundMode);
+        Assert.Equal("CropResult", assetTab.SpritePreviewDisplayMode);
+        Assert.Equal("Uv", assetTab.MeshPreviewDisplayMode);
+        Assert.False(assetTab.MeshPreviewTextureOverlaySelected);
+        Assert.True(assetTab.MeshPreviewGridSelected);
+        Assert.Equal(1.25d, assetTab.MeshPreviewZoom);
+        Assert.Equal(12d, assetTab.MeshPreviewRotationX);
+        Assert.Equal(-24d, assetTab.MeshPreviewRotationY);
+        Assert.Equal(1.5d, assetTab.PreviewImageZoom);
+        Assert.Equal(8d, assetTab.PreviewImagePanX);
+        Assert.Equal(-4d, assetTab.PreviewImagePanY);
+    }
+
+    [Fact]
     public void RemoveWindow_ShouldDropOpenWindowSnapshot_ButKeepLayoutCascade()
     {
         var store = new AssetEditorWindowStateStore();

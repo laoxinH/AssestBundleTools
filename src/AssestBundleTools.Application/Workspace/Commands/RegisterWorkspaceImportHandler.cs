@@ -142,7 +142,8 @@ public sealed class RegisterWorkspaceImportHandler
             ActiveBundleTabId: existingMetadata?.ActiveBundleTabId,
             ImportedSources: orderedSources,
             AssetBundleDecryptorId: existingMetadata?.AssetBundleDecryptorId,
-            ExcludedBundleSourcePaths: excludedBundleSourcePaths.ToArray());
+            ExcludedBundleSourcePaths: excludedBundleSourcePaths.ToArray(),
+            OpenAssetEditorWindows: existingMetadata?.OpenAssetEditorWindows);
 
         metadataStore.Save(metadata);
 

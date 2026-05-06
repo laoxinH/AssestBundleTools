@@ -50,6 +50,8 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         _paneLayoutCoordinator = new BundleExplorerPagePaneLayoutCoordinator(this);
         _tabCoordinator = new BundleExplorerPageTabCoordinator(this);
         _assetEditorWindowCoordinator = new AssetEditorWindowCoordinator(this);
+        ViewModel.SetAssetEditorWindowStateSnapshotProvider(
+            _assetEditorWindowCoordinator.CaptureOpenWindowMetadata);
 
         _chromeCoordinator.ApplyLocalizedText();
         _paneLayoutCoordinator.Initialize();

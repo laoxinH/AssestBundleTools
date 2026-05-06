@@ -17,6 +17,18 @@ internal static class RegisterWorkspaceImportHandlerTests
         const string staleExcludedPath = @"C:\Bundles\Legacy\ignored.ab";
         var existingCreatedAtUtc = new DateTimeOffset(2026, 4, 20, 8, 0, 0, TimeSpan.Zero);
         var existingOpenedAtUtc = new DateTimeOffset(2026, 4, 27, 9, 30, 0, TimeSpan.Zero);
+        var existingAssetEditorWindows = new[]
+        {
+            new WorkspaceAssetEditorWindowStateDto(
+                WindowStateId: 3,
+                Layout: new WorkspaceAssetEditorWindowLayoutDto(120, 90, 1320, 820),
+                OpenAssetTabs:
+                [
+                    new WorkspaceAssetEditorWindowAssetTabDto("bundle-a", "asset-a", "asset-a")
+                ],
+                ActiveBundleId: "bundle-a",
+                ActiveAssetId: "asset-a")
+        };
         var metadataStore = new TestWorkspaceMetadataStore(new WorkspaceMetadataDto(
             WorkspaceKey: workspaceKey,
             DisplayName: "Existing Workspace",
@@ -46,7 +58,8 @@ internal static class RegisterWorkspaceImportHandlerTests
             [
                 heroBundlePath,
                 staleExcludedPath
-            ]));
+            ],
+            OpenAssetEditorWindows: existingAssetEditorWindows));
         var fileSystemService = new TestWorkspaceImportFileSystemService(new Dictionary<string, WorkspaceImportPathKind>(StringComparer.OrdinalIgnoreCase)
         {
             [directoryPath] = WorkspaceImportPathKind.Directory,
@@ -108,6 +121,10 @@ internal static class RegisterWorkspaceImportHandlerTests
             "Existing source should be updated to the latest import origin and timestamp.");
         TestAssert.Equal(1, savedMetadata.ExcludedBundleSourcePaths!.Count, "Re-imported bundle paths should be removed from the exclusion list.");
         TestAssert.Equal(staleExcludedPath, savedMetadata.ExcludedBundleSourcePaths[0], "Only unrelated excluded paths should remain.");
+        TestAssert.Equal(
+            existingAssetEditorWindows,
+            savedMetadata.OpenAssetEditorWindows,
+            "Import registration should preserve open asset editor windows.");
         TestAssert.Equal(1, metadataStore.SaveCallCount, "Successful registration should save metadata once.");
         TestAssert.Equal(3, fileSystemService.ResolvePathKindCallCount, "Path kind resolution should run once per distinct normalized path.");
     }

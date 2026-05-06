@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.UI.Xaml;
 
@@ -16,6 +17,9 @@ public sealed partial class BundleExplorerPage
         {
             _owner = owner ?? throw new ArgumentNullException(nameof(owner));
         }
+
+        public IReadOnlyList<WorkspaceAssetEditorWindowStateDto> CaptureOpenWindowMetadata() =>
+            CaptureCurrentOpenWindowMetadata();
 
         public async Task OpenAssetDocumentInNewWindowAsync(AssetDocumentTabViewModel? assetTab)
         {
@@ -138,6 +142,7 @@ public sealed partial class BundleExplorerPage
             }
 
             _windows.Remove(window);
+            RequestWindowStatePersistence();
         }
 
         private void OnAssetEditorWindowLayoutSnapshotChanged(
@@ -147,6 +152,7 @@ public sealed partial class BundleExplorerPage
             if (_windowStateIds.TryGetValue(window, out var windowStateId))
             {
                 _windowStateStore.UpdateWindowLayout(windowStateId, snapshot);
+                RequestWindowStatePersistence();
             }
         }
 
@@ -157,6 +163,7 @@ public sealed partial class BundleExplorerPage
             if (_windowStateIds.TryGetValue(window, out var windowStateId))
             {
                 _windowStateStore.UpdateWindowGroup(windowStateId, snapshot);
+                RequestWindowStatePersistence();
             }
         }
 
@@ -196,7 +203,33 @@ public sealed partial class BundleExplorerPage
             window.GroupSnapshotChanged += OnAssetEditorWindowGroupSnapshotChanged;
             window.ApplyInitialLayout(initialLayout);
             _windows.Add(window);
+            RequestWindowStatePersistence();
             return window;
+        }
+
+        private IReadOnlyList<WorkspaceAssetEditorWindowStateDto> CaptureCurrentOpenWindowMetadata()
+        {
+            foreach (var window in _windows)
+            {
+                if (!_windowStateIds.TryGetValue(window, out var windowStateId))
+                {
+                    continue;
+                }
+
+                if (window.TryCaptureLayoutSnapshot(out var layout))
+                {
+                    _windowStateStore.UpdateWindowLayout(windowStateId, layout);
+                }
+
+                _windowStateStore.UpdateWindowGroup(windowStateId, window.CaptureGroupSnapshot());
+            }
+
+            return _windowStateStore.CaptureOpenWindowMetadata();
+        }
+
+        private void RequestWindowStatePersistence()
+        {
+            _owner.ViewModel.RequestAssetEditorWindowStatePersistence();
         }
     }
 }

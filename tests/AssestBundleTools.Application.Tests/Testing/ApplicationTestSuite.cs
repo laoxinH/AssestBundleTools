@@ -101,6 +101,14 @@ internal static class ApplicationTestSuite
             WorkspaceImportExecutionOptionsResolverTests.ResolveBundleWorkerCount_ShouldUseManualWorkerCount_WhenConfigured);
         await RunTestAsync(
             failures,
+            nameof(WorkspaceContextPersistenceServiceTests.SaveWorkspaceBrowserState_ShouldPersistAssetEditorWindowSnapshots),
+            WorkspaceContextPersistenceServiceTests.SaveWorkspaceBrowserState_ShouldPersistAssetEditorWindowSnapshots);
+        await RunTestAsync(
+            failures,
+            nameof(WorkspaceContextPersistenceServiceTests.SaveWorkspaceActivationMetadata_ShouldPreserveExistingAssetEditorWindowSnapshots),
+            WorkspaceContextPersistenceServiceTests.SaveWorkspaceActivationMetadata_ShouldPreserveExistingAssetEditorWindowSnapshots);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldReturnFallbackSummary_WhenDecryptionFails),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldReturnFallbackSummary_WhenDecryptionFails);
         await RunTestAsync(

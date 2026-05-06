@@ -294,6 +294,7 @@ Presentation 层保留两个协同层次：
 - `excludedBundleSourcePaths[]`
 - `openBundleTabs[]`
 - `activeBundleTabId`
+- `openAssetEditorWindows[]`
 
 其中 `excludedBundleSourcePaths[]` 用于承载“从工作区移除单个资源包”的结果：
 
@@ -313,6 +314,8 @@ Presentation 层保留两个协同层次：
 - `showPreviewableOnly`
 
 其中 `openAssetTabs[]` 只记录资产详情标签恢复所需的轻量浏览状态，例如资产标识、显示名、选中的检查器页签，以及图像背景、Sprite 裁切显示模式、图片缩放/平移、Mesh 线框 / UV 显示模式、贴图叠加开关、网格/结构层显隐、Mesh 缩放值和线框旋转角度等预览观察选项；不保存真实详情内容或预览载荷。
+
+其中 `openAssetEditorWindows[]` 只记录独立资源编辑窗口的轻量页面级状态，例如窗口位置 / 大小、窗口内资产文档标签顺序、活动资产、检查器分段，以及图片 / Mesh 预览浏览选项；不保存真实资源详情、预览缓存载荷、替换结果或编辑草稿内容。当前该字段只作为后续恢复模型的数据基础，应用重新打开工作区时仍不自动创建独立资源编辑窗口。
 
 补充约束：
 

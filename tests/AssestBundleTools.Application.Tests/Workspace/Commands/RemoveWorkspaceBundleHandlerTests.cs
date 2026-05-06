@@ -68,7 +68,38 @@ internal static class RemoveWorkspaceBundleHandlerTests
                     RecordedAtUtc: DateTimeOffset.UtcNow)
             ],
             AssetBundleDecryptorId: "decryptor-a",
-            ExcludedBundleSourcePaths: Array.Empty<string>()));
+            ExcludedBundleSourcePaths: Array.Empty<string>(),
+            OpenAssetEditorWindows:
+            [
+                new WorkspaceAssetEditorWindowStateDto(
+                    WindowStateId: 1,
+                    Layout: new WorkspaceAssetEditorWindowLayoutDto(120, 90, 1320, 820),
+                    OpenAssetTabs:
+                    [
+                        new WorkspaceAssetEditorWindowAssetTabDto(
+                            BundleId: bundleId.Value,
+                            AssetId: "asset-removed",
+                            AssetName: "removed"),
+                        new WorkspaceAssetEditorWindowAssetTabDto(
+                            BundleId: "bundle.environment",
+                            AssetId: "asset-keep",
+                            AssetName: "keep")
+                    ],
+                    ActiveBundleId: bundleId.Value,
+                    ActiveAssetId: "asset-removed"),
+                new WorkspaceAssetEditorWindowStateDto(
+                    WindowStateId: 2,
+                    Layout: new WorkspaceAssetEditorWindowLayoutDto(180, 120, 1320, 820),
+                    OpenAssetTabs:
+                    [
+                        new WorkspaceAssetEditorWindowAssetTabDto(
+                            BundleId: bundleId.Value,
+                            AssetId: "asset-only-removed",
+                            AssetName: "only-removed")
+                    ],
+                    ActiveBundleId: bundleId.Value,
+                    ActiveAssetId: "asset-only-removed")
+            ]));
         var bundleIndexCacheStore = new TestBundleIndexCacheStore();
         var previewCacheStore = new TestPreviewCacheStore(
         [
@@ -130,6 +161,10 @@ internal static class RemoveWorkspaceBundleHandlerTests
         TestAssert.Equal("bundle.environment", savedMetadata.OpenBundleTabs[0].BundleId, "Remaining bundle tab should stay intact.");
         TestAssert.Equal<string?>(null, savedMetadata.LastBundleId, "Last bundle should clear when it points to the removed bundle.");
         TestAssert.Equal<string?>(null, savedMetadata.LastAssetId, "Last asset should clear together with the removed bundle.");
+        var remainingEditorWindow = TestAssert.Single(savedMetadata.OpenAssetEditorWindows!);
+        var remainingEditorTab = TestAssert.Single(remainingEditorWindow.OpenAssetTabs);
+        TestAssert.Equal("bundle.environment", remainingEditorTab.BundleId, "Editor window tabs for the removed bundle should be cleared.");
+        TestAssert.Equal("asset-keep", remainingEditorWindow.ActiveAssetId, "Editor window focus should move to the remaining tab.");
 
         TestAssert.Equal(1, bundleIndexCacheStore.DeleteOperations.Count, "Bundle index cache should be invalidated once.");
         TestAssert.Equal(workspaceKey, bundleIndexCacheStore.DeleteOperations[0].WorkspaceKey, "Bundle cache invalidation should use the current workspace.");

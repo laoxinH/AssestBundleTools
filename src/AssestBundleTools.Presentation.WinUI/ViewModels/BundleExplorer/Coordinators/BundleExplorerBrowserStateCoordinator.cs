@@ -20,6 +20,7 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
     private readonly Action _captureActiveTabStateWithoutPersistence;
     private readonly Func<BundleId, AssetId, string, AssetDocumentTabViewModel> _createAssetDocumentTab;
     private readonly Func<BundleDocumentTabViewModel, Task> _activateBundleTabAsync;
+    private readonly Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>> _captureOpenAssetEditorWindows;
     private bool _isRestoringWorkspaceBrowserState;
     private CancellationTokenSource? _workspaceBrowserStatePersistenceCts;
 
@@ -30,7 +31,8 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
         Func<bool> hasWorkspaceProvider,
         Action captureActiveTabStateWithoutPersistence,
         Func<BundleId, AssetId, string, AssetDocumentTabViewModel> createAssetDocumentTab,
-        Func<BundleDocumentTabViewModel, Task> activateBundleTabAsync)
+        Func<BundleDocumentTabViewModel, Task> activateBundleTabAsync,
+        Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>>? captureOpenAssetEditorWindows = null)
     {
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _bundlePane = bundlePane ?? throw new ArgumentNullException(nameof(bundlePane));
@@ -39,6 +41,8 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
         _captureActiveTabStateWithoutPersistence = captureActiveTabStateWithoutPersistence ?? throw new ArgumentNullException(nameof(captureActiveTabStateWithoutPersistence));
         _createAssetDocumentTab = createAssetDocumentTab ?? throw new ArgumentNullException(nameof(createAssetDocumentTab));
         _activateBundleTabAsync = activateBundleTabAsync ?? throw new ArgumentNullException(nameof(activateBundleTabAsync));
+        _captureOpenAssetEditorWindows = captureOpenAssetEditorWindows
+            ?? (() => Array.Empty<WorkspaceAssetEditorWindowStateDto>());
     }
 
     /// <summary>
@@ -242,7 +246,8 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
                 .ToArray(),
             ActiveBundleTabId: activeTab?.BundleId.Value,
             LastBundleId: activeTab?.BundleId.Value,
-            LastAssetId: activeTab?.ActiveAssetTab?.AssetId.Value ?? activeTab?.SelectedAssetId);
+            LastAssetId: activeTab?.ActiveAssetTab?.AssetId.Value ?? activeTab?.SelectedAssetId,
+            OpenAssetEditorWindows: _captureOpenAssetEditorWindows());
     }
 
     private static WorkspaceMetadataBundleTabDto CreateBundleTabMetadata(BundleDocumentTabViewModel tab)

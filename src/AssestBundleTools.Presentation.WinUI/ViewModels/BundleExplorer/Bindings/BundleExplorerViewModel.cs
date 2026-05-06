@@ -47,6 +47,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     private readonly BundleExplorerDocumentWorkspaceViewModel _documentWorkspace;
     private readonly BundleExplorerAssetWorkflowViewModel _assetWorkflow;
     private readonly WorkspaceImportProgressViewModel _workspaceImportProgress;
+    private Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>> _captureOpenAssetEditorWindows = static () => Array.Empty<WorkspaceAssetEditorWindowStateDto>();
     private bool _isInitialized;
     private bool _isBusy;
 
@@ -137,7 +138,8 @@ public sealed class BundleExplorerViewModel : ObservableObject
             hasWorkspaceProvider: () => _workspaceShell.WorkspaceSummary is not null,
             captureActiveTabStateWithoutPersistence: () => _assetWorkflow.CaptureActiveTabState(requestPersistence: false),
             createAssetDocumentTab: _assetWorkflow.CreateAssetDocumentTab,
-            activateBundleTabAsync: tab => _bundleTabCoordinator.SetActiveBundleTabAsync(tab, writeSelectionLog: false));
+            activateBundleTabAsync: tab => _bundleTabCoordinator.SetActiveBundleTabAsync(tab, writeSelectionLog: false),
+            captureOpenAssetEditorWindows: () => _captureOpenAssetEditorWindows());
         _workspaceBindingCoordinator = new BundleExplorerWorkspaceBindingCoordinator(
             _workspaceExplorerGateway,
             _appLogService,
@@ -301,6 +303,18 @@ public sealed class BundleExplorerViewModel : ObservableObject
     public void FlushWorkspaceBrowserState()
     {
         _browserStateCoordinator.PersistWorkspaceBrowserStateNow();
+    }
+
+    public void SetAssetEditorWindowStateSnapshotProvider(
+        Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>>? snapshotProvider)
+    {
+        _captureOpenAssetEditorWindows = snapshotProvider
+            ?? (() => Array.Empty<WorkspaceAssetEditorWindowStateDto>());
+    }
+
+    public void RequestAssetEditorWindowStatePersistence()
+    {
+        RequestWorkspaceBrowserStatePersistence();
     }
 
     public async Task ActivateBundleTabAsync(BundleDocumentTabViewModel? tab)

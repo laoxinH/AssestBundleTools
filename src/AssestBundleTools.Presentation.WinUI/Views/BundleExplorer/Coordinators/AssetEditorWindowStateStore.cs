@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
@@ -98,6 +99,12 @@ internal sealed class AssetEditorWindowStateStore
             .OrderBy(state => state.WindowStateId)
             .ToArray();
 
+    public IReadOnlyList<WorkspaceAssetEditorWindowStateDto> CaptureOpenWindowMetadata() =>
+        CaptureOpenWindows()
+            .Where(static state => state.Group.AssetTabs.Count > 0)
+            .Select(CreateWindowMetadata)
+            .ToArray();
+
     public void Clear()
     {
         _lastKnownLayout = null;
@@ -112,6 +119,44 @@ internal sealed class AssetEditorWindowStateStore
     private static bool CanRemember(AssetEditorWindowLayoutSnapshot layout) =>
         layout.Width >= MinimumRememberedWidth &&
         layout.Height >= MinimumRememberedHeight;
+
+    private static WorkspaceAssetEditorWindowStateDto CreateWindowMetadata(
+        AssetEditorWindowStateSnapshot state)
+    {
+        return new WorkspaceAssetEditorWindowStateDto(
+            WindowStateId: state.WindowStateId,
+            Layout: new WorkspaceAssetEditorWindowLayoutDto(
+                X: state.Layout.X,
+                Y: state.Layout.Y,
+                Width: state.Layout.Width,
+                Height: state.Layout.Height),
+            OpenAssetTabs: state.Group.AssetTabs
+                .Select(CreateAssetTabMetadata)
+                .ToArray(),
+            ActiveBundleId: state.Group.ActiveBundleId,
+            ActiveAssetId: state.Group.ActiveAssetId);
+    }
+
+    private static WorkspaceAssetEditorWindowAssetTabDto CreateAssetTabMetadata(
+        AssetEditorWindowAssetTabSnapshot assetTab)
+    {
+        return new WorkspaceAssetEditorWindowAssetTabDto(
+            BundleId: assetTab.BundleId,
+            AssetId: assetTab.AssetId,
+            AssetName: assetTab.DisplayName,
+            SelectedInspectorSection: assetTab.SelectedInspectorSection,
+            PreviewImageBackgroundMode: assetTab.PreviewImageBackgroundMode,
+            SpritePreviewDisplayMode: assetTab.SpritePreviewDisplayMode,
+            MeshPreviewDisplayMode: assetTab.MeshPreviewDisplayMode,
+            MeshPreviewTextureOverlaySelected: assetTab.MeshPreviewTextureOverlaySelected,
+            MeshPreviewGridSelected: assetTab.MeshPreviewGridSelected,
+            MeshPreviewZoom: assetTab.MeshPreviewZoom,
+            MeshPreviewRotationX: assetTab.MeshPreviewRotationX,
+            MeshPreviewRotationY: assetTab.MeshPreviewRotationY,
+            PreviewImageZoom: assetTab.PreviewImageZoom,
+            PreviewImagePanX: assetTab.PreviewImagePanX,
+            PreviewImagePanY: assetTab.PreviewImagePanY);
+    }
 }
 
 internal sealed record AssetEditorWindowStateSnapshot(
@@ -140,15 +185,42 @@ internal sealed record AssetEditorWindowGroupSnapshot(
 internal sealed record AssetEditorWindowAssetTabSnapshot(
     string BundleId,
     string AssetId,
-    string DisplayName)
+    string DisplayName,
+    string? SelectedInspectorSection = null,
+    string? PreviewImageBackgroundMode = null,
+    string? SpritePreviewDisplayMode = null,
+    string? MeshPreviewDisplayMode = null,
+    bool? MeshPreviewTextureOverlaySelected = null,
+    bool? MeshPreviewGridSelected = null,
+    double? MeshPreviewZoom = null,
+    double? MeshPreviewRotationX = null,
+    double? MeshPreviewRotationY = null,
+    double? PreviewImageZoom = null,
+    double? PreviewImagePanX = null,
+    double? PreviewImagePanY = null)
 {
     public static AssetEditorWindowAssetTabSnapshot FromAssetTab(AssetDocumentTabViewModel assetTab)
     {
         ArgumentNullException.ThrowIfNull(assetTab);
 
+        var imageDisplayOptions = assetTab.Inspector.Preview.Image.DisplayOptions;
+        var imageViewState = assetTab.Inspector.Preview.Image;
+        var meshDisplayOptions = assetTab.Inspector.Preview.Mesh;
         return new AssetEditorWindowAssetTabSnapshot(
             assetTab.BundleId.Value,
             assetTab.AssetId.Value,
-            assetTab.DisplayName);
+            assetTab.DisplayName,
+            SelectedInspectorSection: assetTab.Inspector.SelectedSectionKey,
+            PreviewImageBackgroundMode: imageDisplayOptions.BackgroundModePersistenceKey,
+            SpritePreviewDisplayMode: imageDisplayOptions.SpriteDisplayModePersistenceKey,
+            MeshPreviewDisplayMode: meshDisplayOptions.DisplayModePersistenceKey,
+            MeshPreviewTextureOverlaySelected: meshDisplayOptions.IsTextureOverlaySelected,
+            MeshPreviewGridSelected: meshDisplayOptions.IsMeshGridSelected,
+            MeshPreviewZoom: meshDisplayOptions.Zoom,
+            MeshPreviewRotationX: meshDisplayOptions.RotationX,
+            MeshPreviewRotationY: meshDisplayOptions.RotationY,
+            PreviewImageZoom: imageViewState.Zoom,
+            PreviewImagePanX: imageViewState.PanX,
+            PreviewImagePanY: imageViewState.PanY);
     }
 }

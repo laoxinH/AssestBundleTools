@@ -70,6 +70,33 @@ internal static class JsonWorkspaceMetadataStoreTests
             ExcludedBundleSourcePaths:
             [
                 @"C:\Bundles\characters\ignored.ab"
+            ],
+            OpenAssetEditorWindows:
+            [
+                new WorkspaceAssetEditorWindowStateDto(
+                    WindowStateId: 5,
+                    Layout: new WorkspaceAssetEditorWindowLayoutDto(120, 90, 1320, 820),
+                    OpenAssetTabs:
+                    [
+                        new WorkspaceAssetEditorWindowAssetTabDto(
+                            BundleId: "bundle-001",
+                            AssetId: "asset-009",
+                            AssetName: "hero.png",
+                            SelectedInspectorSection: "dependencies",
+                            PreviewImageBackgroundMode: "Solid",
+                            SpritePreviewDisplayMode: "CropResult",
+                            MeshPreviewDisplayMode: "Uv",
+                            MeshPreviewTextureOverlaySelected: false,
+                            MeshPreviewGridSelected: true,
+                            MeshPreviewZoom: 1.25d,
+                            MeshPreviewRotationX: 12d,
+                            MeshPreviewRotationY: -24d,
+                            PreviewImageZoom: 1.8d,
+                            PreviewImagePanX: 14d,
+                            PreviewImagePanY: -8d)
+                    ],
+                    ActiveBundleId: "bundle-001",
+                    ActiveAssetId: "asset-009")
             ]);
 
         store.Save(metadata);
@@ -125,6 +152,32 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.Equal(WorkspaceImportOriginKind.BundleDirectory, importedSource.ImportOrigin, "Imported source kind should round-trip.");
         TestAssert.Equal(WorkspaceImportPathKind.Directory, importedSource.PathKind, "Imported source path kind should round-trip.");
         TestAssert.Equal(openedAtUtc, importedSource.RecordedAtUtc, "Imported source timestamp should round-trip.");
+
+        var editorWindow = TestAssert.Single(restoredMetadata.OpenAssetEditorWindows!);
+        TestAssert.Equal(5, editorWindow.WindowStateId, "Editor window state id should round-trip.");
+        TestAssert.Equal(120, editorWindow.Layout.X, "Editor window X should round-trip.");
+        TestAssert.Equal(90, editorWindow.Layout.Y, "Editor window Y should round-trip.");
+        TestAssert.Equal(1320, editorWindow.Layout.Width, "Editor window width should round-trip.");
+        TestAssert.Equal(820, editorWindow.Layout.Height, "Editor window height should round-trip.");
+        TestAssert.Equal("bundle-001", editorWindow.ActiveBundleId, "Editor window active bundle should round-trip.");
+        TestAssert.Equal("asset-009", editorWindow.ActiveAssetId, "Editor window active asset should round-trip.");
+
+        var editorAssetTab = TestAssert.Single(editorWindow.OpenAssetTabs);
+        TestAssert.Equal("bundle-001", editorAssetTab.BundleId, "Editor asset tab bundle should round-trip.");
+        TestAssert.Equal("asset-009", editorAssetTab.AssetId, "Editor asset tab id should round-trip.");
+        TestAssert.Equal("hero.png", editorAssetTab.AssetName, "Editor asset tab name should round-trip.");
+        TestAssert.Equal("dependencies", editorAssetTab.SelectedInspectorSection, "Editor inspector section should round-trip.");
+        TestAssert.Equal("Solid", editorAssetTab.PreviewImageBackgroundMode, "Editor preview background should round-trip.");
+        TestAssert.Equal("CropResult", editorAssetTab.SpritePreviewDisplayMode, "Editor sprite mode should round-trip.");
+        TestAssert.Equal("Uv", editorAssetTab.MeshPreviewDisplayMode, "Editor mesh mode should round-trip.");
+        TestAssert.False(editorAssetTab.MeshPreviewTextureOverlaySelected ?? true, "Editor mesh texture overlay should round-trip.");
+        TestAssert.True(editorAssetTab.MeshPreviewGridSelected ?? false, "Editor mesh grid should round-trip.");
+        TestAssert.Equal(1.25d, editorAssetTab.MeshPreviewZoom ?? 0d, "Editor mesh zoom should round-trip.");
+        TestAssert.Equal(12d, editorAssetTab.MeshPreviewRotationX ?? 0d, "Editor mesh rotation X should round-trip.");
+        TestAssert.Equal(-24d, editorAssetTab.MeshPreviewRotationY ?? 0d, "Editor mesh rotation Y should round-trip.");
+        TestAssert.Equal(1.8d, editorAssetTab.PreviewImageZoom ?? 0d, "Editor preview zoom should round-trip.");
+        TestAssert.Equal(14d, editorAssetTab.PreviewImagePanX ?? 0d, "Editor preview pan X should round-trip.");
+        TestAssert.Equal(-8d, editorAssetTab.PreviewImagePanY ?? 0d, "Editor preview pan Y should round-trip.");
     }
 
     public static void Delete_ShouldRemoveSavedMetadataFile()

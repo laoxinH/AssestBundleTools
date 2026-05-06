@@ -18,6 +18,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 {
     private readonly Func<AssetEditorWindow, AssetDocumentTabViewModel, Task> _openAssetDocumentInNewWindowAsync;
     private readonly Func<AssetEditorWindow, Task> _openAssetDocumentGroupInNewWindowAsync;
+    private readonly AssetEditorWindowAssetTabStateObserver _assetTabStateObserver;
     private AppWindow? _appWindow;
     private AssetEditorWindowLayoutSnapshot? _lastPublishedLayout;
     private bool _isApplyingInitialLayout;
@@ -39,6 +40,9 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
         ViewModel.DocumentGroup.PropertyChanged += OnDocumentGroupPropertyChanged;
+        _assetTabStateObserver = new AssetEditorWindowAssetTabStateObserver(
+            ViewModel.DocumentGroup,
+            PublishCurrentGroupSnapshot);
         ViewModel.EmptyGroupRequested += OnEmptyGroupRequested;
         Closed += OnClosed;
     }
@@ -51,6 +55,9 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 
     internal AssetEditorWindowGroupSnapshot CaptureGroupSnapshot() =>
         AssetEditorWindowGroupSnapshot.FromDocumentGroup(ViewModel.DocumentGroup);
+
+    internal bool TryCaptureLayoutSnapshot(out AssetEditorWindowLayoutSnapshot layout) =>
+        TryCaptureCurrentLayout(out layout);
 
     internal void ApplyInitialLayout(AssetEditorWindowLayoutSnapshot layout)
     {
@@ -359,6 +366,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 
         ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
         ViewModel.DocumentGroup.PropertyChanged -= OnDocumentGroupPropertyChanged;
+        _assetTabStateObserver.Dispose();
         ViewModel.EmptyGroupRequested -= OnEmptyGroupRequested;
         Closed -= OnClosed;
         ViewModel.DocumentGroup.Clear();

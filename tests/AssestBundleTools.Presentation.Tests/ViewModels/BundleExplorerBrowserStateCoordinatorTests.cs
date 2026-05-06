@@ -77,6 +77,28 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
     }
 
     [Fact]
+    public void PersistWorkspaceBrowserStateNow_ShouldIncludeAssetEditorWindowSnapshots()
+    {
+        var editorWindows = new[]
+        {
+            new WorkspaceAssetEditorWindowStateDto(
+                WindowStateId: 4,
+                Layout: new WorkspaceAssetEditorWindowLayoutDto(120, 90, 1320, 820),
+                OpenAssetTabs:
+                [
+                    new WorkspaceAssetEditorWindowAssetTabDto("bundle-ui", "asset-button", "Button")
+                ],
+                ActiveBundleId: "bundle-ui",
+                ActiveAssetId: "asset-button")
+        };
+        var context = CreateContext(editorWindows);
+
+        context.Coordinator.PersistWorkspaceBrowserStateNow();
+
+        Assert.Same(editorWindows, context.WorkspaceContextService.CurrentBrowserState!.OpenAssetEditorWindows);
+    }
+
+    [Fact]
     public async Task TryRestoreWorkspaceBrowserStateAsync_ShouldRestoreAssetPreviewDisplayOptions()
     {
         var context = CreateContext();
@@ -144,7 +166,8 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         Assert.Equal(-72d, restoredAssetTab.Inspector.Preview.Mesh.RotationY);
     }
 
-    private static BrowserStateCoordinatorContext CreateContext()
+    private static BrowserStateCoordinatorContext CreateContext(
+        IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? openAssetEditorWindows = null)
     {
         var localizationService = new TestLocalizationService();
         var workspaceContextService = new TestWorkspaceContextService();
@@ -171,7 +194,8 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
             {
                 documentWorkspace.SetActiveBundleTab(tab);
                 return Task.CompletedTask;
-            });
+            },
+            captureOpenAssetEditorWindows: () => openAssetEditorWindows ?? Array.Empty<WorkspaceAssetEditorWindowStateDto>());
 
         return new BrowserStateCoordinatorContext(
             localizationService,

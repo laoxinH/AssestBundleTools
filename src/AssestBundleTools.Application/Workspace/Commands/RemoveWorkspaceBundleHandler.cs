@@ -90,6 +90,9 @@ public sealed class RemoveWorkspaceBundleHandler
         var remainingOpenTabs = existingMetadata.OpenBundleTabs
             .Where(tab => !string.Equals(tab.BundleId, command.BundleId.Value, StringComparison.Ordinal))
             .ToArray();
+        var remainingOpenAssetEditorWindows = RemoveBundleAssetTabsFromEditorWindows(
+            existingMetadata.OpenAssetEditorWindows,
+            command.BundleId.Value);
         var nextActiveBundleTabId = string.IsNullOrWhiteSpace(existingMetadata.ActiveBundleTabId) ||
                                     remainingOpenTabs.Any(tab => string.Equals(tab.BundleId, existingMetadata.ActiveBundleTabId, StringComparison.Ordinal))
             ? existingMetadata.ActiveBundleTabId
@@ -117,7 +120,8 @@ public sealed class RemoveWorkspaceBundleHandler
             ActiveBundleTabId: nextActiveBundleTabId,
             ImportedSources: remainingImportedSources,
             AssetBundleDecryptorId: existingMetadata.AssetBundleDecryptorId,
-            ExcludedBundleSourcePaths: excludedBundleSourcePaths);
+            ExcludedBundleSourcePaths: excludedBundleSourcePaths,
+            OpenAssetEditorWindows: remainingOpenAssetEditorWindows);
         metadataStore.Save(updatedMetadata);
 
         var bundleCacheKey = WorkspaceImportPathUtility.CreateBundleCacheKey(normalizedBundleSourcePath);
@@ -140,5 +144,40 @@ public sealed class RemoveWorkspaceBundleHandler
                 RemovedDirectImportSource: removedDirectImportSource,
                 AddedExcludedBundleSourcePath: addedExcludedBundleSourcePath,
                 RemainingRegisteredSourceCount: remainingImportedSources.Length)));
+    }
+
+    private static IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? RemoveBundleAssetTabsFromEditorWindows(
+        IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? openAssetEditorWindows,
+        string removedBundleId)
+    {
+        if (openAssetEditorWindows is null || openAssetEditorWindows.Count == 0)
+        {
+            return openAssetEditorWindows;
+        }
+
+        var remainingWindows = new List<WorkspaceAssetEditorWindowStateDto>(openAssetEditorWindows.Count);
+        foreach (var window in openAssetEditorWindows)
+        {
+            var remainingTabs = window.OpenAssetTabs
+                .Where(tab => !string.Equals(tab.BundleId, removedBundleId, StringComparison.Ordinal))
+                .ToArray();
+            if (remainingTabs.Length == 0)
+            {
+                continue;
+            }
+
+            var hasActiveTab = remainingTabs.Any(tab =>
+                string.Equals(tab.BundleId, window.ActiveBundleId, StringComparison.Ordinal) &&
+                string.Equals(tab.AssetId, window.ActiveAssetId, StringComparison.Ordinal));
+            var activeTab = hasActiveTab ? null : remainingTabs[0];
+            remainingWindows.Add(window with
+            {
+                OpenAssetTabs = remainingTabs,
+                ActiveBundleId = hasActiveTab ? window.ActiveBundleId : activeTab?.BundleId,
+                ActiveAssetId = hasActiveTab ? window.ActiveAssetId : activeTab?.AssetId
+            });
+        }
+
+        return remainingWindows;
     }
 }
