@@ -65,10 +65,14 @@ public sealed class AssetEditorWindowStateStoreTests
     {
         var store = new AssetEditorWindowStateStore();
         store.RememberWindowLayout(new AssetEditorWindowLayoutSnapshot(420, 180, 1440, 900));
+        store.RegisterWindow(
+            new AssetEditorWindowLayoutSnapshot(420, 180, 1440, 900),
+            CreateGroupSnapshot("bundle-a", "asset-1"));
 
         store.Clear();
         var next = store.CreateNextWindowLayout();
 
+        Assert.Empty(store.CaptureOpenWindows());
         Assert.Equal(
             new AssetEditorWindowLayoutSnapshot(
                 AssetEditorWindowStateStore.DefaultX,
@@ -77,4 +81,65 @@ public sealed class AssetEditorWindowStateStoreTests
                 AssetEditorWindowStateStore.DefaultHeight),
             next);
     }
+
+    [Fact]
+    public void RegisterWindow_ShouldCaptureOpenWindowState()
+    {
+        var store = new AssetEditorWindowStateStore();
+        var layout = new AssetEditorWindowLayoutSnapshot(420, 180, 1440, 900);
+        var group = CreateGroupSnapshot("bundle-a", "asset-1");
+
+        var windowStateId = store.RegisterWindow(layout, group);
+        var windows = store.CaptureOpenWindows();
+
+        var state = Assert.Single(windows);
+        Assert.Equal(windowStateId, state.WindowStateId);
+        Assert.Equal(layout, state.Layout);
+        Assert.Same(group, state.Group);
+    }
+
+    [Fact]
+    public void UpdateWindowState_ShouldReplaceTrackedLayoutAndGroup()
+    {
+        var store = new AssetEditorWindowStateStore();
+        var windowStateId = store.RegisterWindow(
+            new AssetEditorWindowLayoutSnapshot(420, 180, 1440, 900),
+            CreateGroupSnapshot("bundle-a", "asset-1"));
+        var nextLayout = new AssetEditorWindowLayoutSnapshot(480, 220, 1500, 940);
+        var nextGroup = CreateGroupSnapshot("bundle-b", "asset-2");
+
+        store.UpdateWindowLayout(windowStateId, nextLayout);
+        store.UpdateWindowGroup(windowStateId, nextGroup);
+
+        var state = Assert.Single(store.CaptureOpenWindows());
+        Assert.Equal(nextLayout, state.Layout);
+        Assert.Same(nextGroup, state.Group);
+    }
+
+    [Fact]
+    public void RemoveWindow_ShouldDropOpenWindowSnapshot_ButKeepLayoutCascade()
+    {
+        var store = new AssetEditorWindowStateStore();
+        var layout = new AssetEditorWindowLayoutSnapshot(420, 180, 1440, 900);
+        var windowStateId = store.RegisterWindow(layout, CreateGroupSnapshot("bundle-a", "asset-1"));
+
+        store.RemoveWindow(windowStateId);
+        var next = store.CreateNextWindowLayout();
+
+        Assert.Empty(store.CaptureOpenWindows());
+        Assert.Equal(
+            layout.Offset(
+                AssetEditorWindowStateStore.CascadeOffset,
+                AssetEditorWindowStateStore.CascadeOffset),
+            next);
+    }
+
+    private static AssetEditorWindowGroupSnapshot CreateGroupSnapshot(string bundleId, string assetId) =>
+        new(
+            new[]
+            {
+                new AssetEditorWindowAssetTabSnapshot(bundleId, assetId, assetId),
+            },
+            bundleId,
+            assetId);
 }

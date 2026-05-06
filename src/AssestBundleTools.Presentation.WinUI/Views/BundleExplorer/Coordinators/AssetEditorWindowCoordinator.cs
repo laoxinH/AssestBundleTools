@@ -9,6 +9,7 @@ public sealed partial class BundleExplorerPage
     {
         private readonly BundleExplorerPage _owner;
         private readonly List<AssetEditorWindow> _windows = [];
+        private readonly Dictionary<AssetEditorWindow, int> _windowStateIds = [];
         private readonly AssetEditorWindowStateStore _windowStateStore = new();
 
         public AssetEditorWindowCoordinator(BundleExplorerPage owner)
@@ -112,10 +113,12 @@ public sealed partial class BundleExplorerPage
             {
                 window.Closed -= OnAssetEditorWindowClosed;
                 window.LayoutSnapshotChanged -= OnAssetEditorWindowLayoutSnapshotChanged;
+                window.GroupSnapshotChanged -= OnAssetEditorWindowGroupSnapshotChanged;
                 window.Close();
             }
 
             _windows.Clear();
+            _windowStateIds.Clear();
             _windowStateStore.Clear();
         }
 
@@ -128,12 +131,33 @@ public sealed partial class BundleExplorerPage
 
             window.Closed -= OnAssetEditorWindowClosed;
             window.LayoutSnapshotChanged -= OnAssetEditorWindowLayoutSnapshotChanged;
+            window.GroupSnapshotChanged -= OnAssetEditorWindowGroupSnapshotChanged;
+            if (_windowStateIds.Remove(window, out var windowStateId))
+            {
+                _windowStateStore.RemoveWindow(windowStateId);
+            }
+
             _windows.Remove(window);
         }
 
-        private void OnAssetEditorWindowLayoutSnapshotChanged(AssetEditorWindowLayoutSnapshot snapshot)
+        private void OnAssetEditorWindowLayoutSnapshotChanged(
+            AssetEditorWindow window,
+            AssetEditorWindowLayoutSnapshot snapshot)
         {
-            _windowStateStore.RememberWindowLayout(snapshot);
+            if (_windowStateIds.TryGetValue(window, out var windowStateId))
+            {
+                _windowStateStore.UpdateWindowLayout(windowStateId, snapshot);
+            }
+        }
+
+        private void OnAssetEditorWindowGroupSnapshotChanged(
+            AssetEditorWindow window,
+            AssetEditorWindowGroupSnapshot snapshot)
+        {
+            if (_windowStateIds.TryGetValue(window, out var windowStateId))
+            {
+                _windowStateStore.UpdateWindowGroup(windowStateId, snapshot);
+            }
         }
 
         private AssetEditorWindow CreateAssetEditorWindow(AssetDocumentTabViewModel detachedAssetTab)
@@ -162,9 +186,15 @@ public sealed partial class BundleExplorerPage
                 viewModel,
                 OpenAssetDocumentInNewWindowFromEditorAsync,
                 OpenAssetDocumentGroupInNewWindowFromEditorAsync);
+            var initialLayout = _windowStateStore.CreateNextWindowLayout();
+            var windowStateId = _windowStateStore.RegisterWindow(
+                initialLayout,
+                window.CaptureGroupSnapshot());
+            _windowStateIds[window] = windowStateId;
             window.Closed += OnAssetEditorWindowClosed;
             window.LayoutSnapshotChanged += OnAssetEditorWindowLayoutSnapshotChanged;
-            window.ApplyInitialLayout(_windowStateStore.CreateNextWindowLayout());
+            window.GroupSnapshotChanged += OnAssetEditorWindowGroupSnapshotChanged;
+            window.ApplyInitialLayout(initialLayout);
             _windows.Add(window);
             return window;
         }

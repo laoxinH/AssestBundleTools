@@ -45,7 +45,12 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 
     public AssetEditorWindowViewModel ViewModel { get; }
 
-    internal event Action<AssetEditorWindowLayoutSnapshot>? LayoutSnapshotChanged;
+    internal event Action<AssetEditorWindow, AssetEditorWindowLayoutSnapshot>? LayoutSnapshotChanged;
+
+    internal event Action<AssetEditorWindow, AssetEditorWindowGroupSnapshot>? GroupSnapshotChanged;
+
+    internal AssetEditorWindowGroupSnapshot CaptureGroupSnapshot() =>
+        AssetEditorWindowGroupSnapshot.FromDocumentGroup(ViewModel.DocumentGroup);
 
     internal void ApplyInitialLayout(AssetEditorWindowLayoutSnapshot layout)
     {
@@ -334,6 +339,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
             SynchronizeSelection();
         }
 
+        PublishCurrentGroupSnapshot();
         Bindings.Update();
     }
 
@@ -396,7 +402,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         }
 
         _lastPublishedLayout = layout;
-        LayoutSnapshotChanged?.Invoke(layout);
+        LayoutSnapshotChanged?.Invoke(this, layout);
     }
 
     private bool TryCaptureCurrentLayout(out AssetEditorWindowLayoutSnapshot layout)
@@ -415,6 +421,11 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
             size.Width,
             size.Height);
         return true;
+    }
+
+    private void PublishCurrentGroupSnapshot()
+    {
+        GroupSnapshotChanged?.Invoke(this, CaptureGroupSnapshot());
     }
 
     private void ApplyLocalizedText()
