@@ -58,6 +58,9 @@ public sealed partial class BundleExplorerPage
             ToolTipService.SetToolTip(
                 _owner.OpenAssetDocumentGroupInNewWindowButton,
                 UiText.Get(ResourceKeys.AssetEditorWindowOpenGroupInNewWindowText));
+            ToolTipService.SetToolTip(
+                _owner.AssetDocumentGroupDragHandle,
+                UiText.Get(ResourceKeys.AssetEditorWindowDragGroupHandleToolTip));
         }
 
         public void SetWorkspaceImportDropOverlayVisible(bool isVisible)

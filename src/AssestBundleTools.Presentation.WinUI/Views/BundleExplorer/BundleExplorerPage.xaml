@@ -1435,9 +1435,13 @@
             </Border>
 
             <Border
+                x:Name="RightPanelContainer"
                 Grid.Column="2"
+                AllowDrop="True"
                 Padding="12"
-                Style="{StaticResource SettingsSectionCardStyle}">
+                Style="{StaticResource SettingsSectionCardStyle}"
+                DragOver="OnAssetDocumentGroupDragOver"
+                Drop="OnAssetDocumentGroupDrop">
                 <Grid
                     MinHeight="0"
                     RowSpacing="8">
@@ -1453,10 +1457,29 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock
-                            x:Name="RightPanelTitleText"
-                            VerticalAlignment="Center"
-                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                        <Grid
+                            x:Name="AssetDocumentGroupDragHandle"
+                            CanDrag="{x:Bind ViewModel.DocumentWorkspace.HasAssetDocumentTabs, Mode=OneWay}"
+                            DragStarting="OnAssetDocumentGroupDragStarting"
+                            DropCompleted="OnAssetDocumentGroupDropCompleted"
+                            ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <FontIcon
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="12"
+                                Glyph="&#xE700;" />
+
+                            <TextBlock
+                                x:Name="RightPanelTitleText"
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                        </Grid>
 
                         <Button
                             x:Name="OpenAssetDocumentGroupInNewWindowButton"

@@ -10,7 +10,7 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 /// <summary>
 /// 独立资源编辑窗口，第一阶段承载命令式移出的资产文档标签组。
 /// </summary>
-public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAssetDocumentTabDragHost
+public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAssetDocumentTabDragHost, IAssetDocumentGroupDragHost
 {
     private readonly Func<AssetEditorWindow, AssetDocumentTabViewModel, Task> _openAssetDocumentInNewWindowAsync;
     private readonly Func<AssetEditorWindow, Task> _openAssetDocumentGroupInNewWindowAsync;
@@ -172,6 +172,26 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         await _openAssetDocumentGroupInNewWindowAsync(this);
     }
 
+    private void OnAssetDocumentGroupDragStarting(UIElement sender, DragStartingEventArgs args)
+    {
+        AssetDocumentGroupDragCoordinator.StartDrag(this, args);
+    }
+
+    private async void OnAssetDocumentGroupDropCompleted(UIElement sender, DropCompletedEventArgs args)
+    {
+        await AssetDocumentGroupDragCoordinator.HandleDropCompletedAsync(this, args);
+    }
+
+    private void OnAssetDocumentGroupDragOver(object sender, DragEventArgs e)
+    {
+        AssetDocumentGroupDragCoordinator.HandleDragOver(this, e);
+    }
+
+    private async void OnAssetDocumentGroupDrop(object sender, DragEventArgs e)
+    {
+        await AssetDocumentGroupDragCoordinator.HandleDropAsync(this, e);
+    }
+
     private async void OnExtractButtonClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.ExtractSelectedAssetAsync();
@@ -278,6 +298,9 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         MoveToMainWindowButton.Content = UiText.Get(ResourceKeys.AssetEditorWindowMoveToMainWindowText);
         MoveGroupToMainWindowButton.Content = UiText.Get(ResourceKeys.AssetEditorWindowMoveGroupToMainWindowText);
         OpenGroupInNewWindowButton.Content = UiText.Get(ResourceKeys.AssetEditorWindowOpenGroupInNewWindowText);
+        ToolTipService.SetToolTip(
+            AssetEditorGroupDragHandle,
+            UiText.Get(ResourceKeys.AssetEditorWindowDragGroupHandleToolTip));
         ExtractButton.Content = UiText.Get(ResourceKeys.InspectorExtractButton);
         SelectReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectReplacementButton);
         SelectFileReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectFileReplacementButton);
@@ -375,4 +398,30 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 
     Task IAssetDocumentTabDragHost.CompleteAssetDocumentTabDragMoveAsync() =>
         ViewModel.CompleteExternalAssetDocumentMoveAsync();
+
+    bool IAssetDocumentGroupDragHost.CanStartAssetDocumentGroupDrag()
+    {
+        return !ViewModel.IsBusy &&
+               ViewModel.DocumentGroup.HasAssetTabs;
+    }
+
+    bool IAssetDocumentGroupDragHost.CanAcceptAssetDocumentGroupDrag(AssetDocumentGroupDragSession session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        return !ViewModel.IsBusy;
+    }
+
+    Task<AssetDocumentGroupTransfer?> IAssetDocumentGroupDragHost.DetachAssetDocumentGroupForDragAsync() =>
+        ViewModel.DetachAssetDocumentGroupForExternalHostAsync();
+
+    Task<bool> IAssetDocumentGroupDragHost.AttachAssetDocumentGroupFromDragAsync(
+        AssetDocumentGroupTransfer transfer) =>
+        ViewModel.AttachAssetDocumentGroupFromExternalHostAsync(transfer);
+
+    Task IAssetDocumentGroupDragHost.CompleteAssetDocumentGroupDragMoveAsync() =>
+        ViewModel.CompleteExternalAssetDocumentMoveAsync();
+
+    Task IAssetDocumentGroupDragHost.OpenAssetDocumentGroupInNewWindowFromDragAsync() =>
+        _openAssetDocumentGroupInNewWindowAsync(this);
 }

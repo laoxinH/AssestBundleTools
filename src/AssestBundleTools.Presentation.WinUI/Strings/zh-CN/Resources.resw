@@ -429,6 +429,9 @@
   <data name="AssetEditorWindow.MoveGroupToMainWindow.Text" xml:space="preserve">
     <value>全部移动到主窗口</value>
   </data>
+  <data name="AssetEditorWindow.DragGroupHandle.ToolTip" xml:space="preserve">
+    <value>拖动整个资源详情组</value>
+  </data>
   <data name="AssetEditorWindow.TabContext.Close.Text" xml:space="preserve">
     <value>关闭</value>
   </data>

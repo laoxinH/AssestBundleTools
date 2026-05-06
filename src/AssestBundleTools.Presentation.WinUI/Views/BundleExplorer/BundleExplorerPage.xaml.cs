@@ -18,7 +18,7 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 /// 当前仍由 <see cref="BundleExplorerPage" /> 承载文档里约定的“三栏主工作区”结构，
 /// 当前阶段重点是先把导航、只读浏览骨架和轻量操作反馈稳定下来。
 /// </remarks>
-public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
+public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost, IAssetDocumentGroupDragHost
 {
     private readonly BundleExplorerPageChromeCoordinator _chromeCoordinator;
     private readonly BundleExplorerPageNavigationCoordinator _navigationCoordinator;
@@ -305,6 +305,26 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         await _assetEditorWindowCoordinator.OpenActiveAssetDocumentGroupInNewWindowAsync();
     }
 
+    private void OnAssetDocumentGroupDragStarting(UIElement sender, DragStartingEventArgs args)
+    {
+        AssetDocumentGroupDragCoordinator.StartDrag(this, args);
+    }
+
+    private async void OnAssetDocumentGroupDropCompleted(UIElement sender, DropCompletedEventArgs args)
+    {
+        await AssetDocumentGroupDragCoordinator.HandleDropCompletedAsync(this, args);
+    }
+
+    private void OnAssetDocumentGroupDragOver(object sender, DragEventArgs e)
+    {
+        AssetDocumentGroupDragCoordinator.HandleDragOver(this, e);
+    }
+
+    private async void OnAssetDocumentGroupDrop(object sender, DragEventArgs e)
+    {
+        await AssetDocumentGroupDragCoordinator.HandleDropAsync(this, e);
+    }
+
     private async void OnCloseOtherAssetDocumentTabsMenuItemClick(object sender, RoutedEventArgs e)
     {
         if (_tabCoordinator.TryGetTaggedValue(sender, out AssetDocumentTabViewModel? assetTab))
@@ -518,4 +538,31 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
 
     Task IAssetDocumentTabDragHost.CompleteAssetDocumentTabDragMoveAsync() =>
         Task.CompletedTask;
+
+    bool IAssetDocumentGroupDragHost.CanStartAssetDocumentGroupDrag()
+    {
+        return !ViewModel.IsBusy &&
+               ViewModel.DocumentWorkspace.HasAssetDocumentTabs;
+    }
+
+    bool IAssetDocumentGroupDragHost.CanAcceptAssetDocumentGroupDrag(AssetDocumentGroupDragSession session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        return !ViewModel.IsBusy &&
+               ViewModel.WorkspaceShell.HasWorkspace;
+    }
+
+    Task<AssetDocumentGroupTransfer?> IAssetDocumentGroupDragHost.DetachAssetDocumentGroupForDragAsync() =>
+        ViewModel.DetachActiveAssetDocumentGroupForEditorWindowAsync();
+
+    Task<bool> IAssetDocumentGroupDragHost.AttachAssetDocumentGroupFromDragAsync(
+        AssetDocumentGroupTransfer transfer) =>
+        ViewModel.AttachAssetDocumentGroupFromEditorWindowAsync(transfer);
+
+    Task IAssetDocumentGroupDragHost.CompleteAssetDocumentGroupDragMoveAsync() =>
+        Task.CompletedTask;
+
+    Task IAssetDocumentGroupDragHost.OpenAssetDocumentGroupInNewWindowFromDragAsync() =>
+        _assetEditorWindowCoordinator.OpenActiveAssetDocumentGroupInNewWindowAsync();
 }

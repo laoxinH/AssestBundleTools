@@ -432,6 +432,7 @@ public static class ResourceKeys
     public const string AssetEditorWindowMoveToMainWindowText = "AssetEditorWindow.MoveToMainWindow.Text";
     public const string AssetEditorWindowOpenGroupInNewWindowText = "AssetEditorWindow.OpenGroupInNewWindow.Text";
     public const string AssetEditorWindowMoveGroupToMainWindowText = "AssetEditorWindow.MoveGroupToMainWindow.Text";
+    public const string AssetEditorWindowDragGroupHandleToolTip = "AssetEditorWindow.DragGroupHandle.ToolTip";
     public const string AssetEditorWindowTabContextCloseText = "AssetEditorWindow.TabContext.Close.Text";
     public const string AssetEditorWindowTitleFormat = "AssetEditorWindow.Title.Format";
     public const string AssetEditorWindowTitleFallback = "AssetEditorWindow.Title.Fallback";

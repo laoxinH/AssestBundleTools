@@ -11,8 +11,11 @@
 
     <Grid
         x:Name="ContentRoot"
+        AllowDrop="True"
         Padding="14"
         Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+        DragOver="OnAssetDocumentGroupDragOver"
+        Drop="OnAssetDocumentGroupDrop"
         Loaded="OnContentRootLoaded"
         RowSpacing="8">
         <Grid.RowDefinitions>
@@ -20,45 +23,71 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TabView
-            x:Name="AssetEditorTabView"
-            Margin="-2,-2,-2,0"
-            AllowDropTabs="True"
-            CanDragTabs="True"
-            CanReorderTabs="True"
-            IsAddTabButtonVisible="False"
-            SelectedItem="{x:Bind ViewModel.DocumentGroup.ActiveAssetTab, Mode=OneWay}"
-            TabCloseRequested="OnAssetEditorTabViewTabCloseRequested"
-            TabDragCompleted="OnAssetEditorTabViewTabDragCompleted"
-            TabDragStarting="OnAssetEditorTabViewTabDragStarting"
-            TabDroppedOutside="OnAssetEditorTabViewTabDroppedOutside"
-            TabItemsSource="{x:Bind ViewModel.DocumentGroup.AssetTabs, Mode=OneWay}"
-            TabStripDragOver="OnAssetEditorTabViewTabStripDragOver"
-            TabStripDrop="OnAssetEditorTabViewTabStripDrop"
-            SelectionChanged="OnAssetEditorTabViewSelectionChanged"
-            Visibility="{x:Bind ViewModel.DocumentGroup.TabStripVisibility, Mode=OneWay}">
-            <TabView.TabItemTemplate>
-                <DataTemplate x:DataType="viewModels:AssetDocumentTabViewModel">
-                    <TabViewItem
-                        Header="{x:Bind DisplayName}"
-                        ToolTipService.ToolTip="{x:Bind ToolTipText}">
-                        <TabViewItem.ContextFlyout>
-                            <MenuFlyout Opening="OnAssetEditorTabContextFlyoutOpening">
-                                <MenuFlyoutItem
-                                    x:Name="MoveAssetDocumentToMainWindowMenuItem"
-                                    Click="OnMoveAssetDocumentToMainWindowMenuItemClick"
-                                    Tag="{Binding}" />
-                                <MenuFlyoutSeparator />
-                                <MenuFlyoutItem
-                                    x:Name="CloseAssetDocumentTabMenuItem"
-                                    Click="OnCloseAssetDocumentTabMenuItemClick"
-                                    Tag="{Binding}" />
-                            </MenuFlyout>
-                        </TabViewItem.ContextFlyout>
-                    </TabViewItem>
-                </DataTemplate>
-            </TabView.TabItemTemplate>
-        </TabView>
+        <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border
+                x:Name="AssetEditorGroupDragHandle"
+                Width="30"
+                Height="30"
+                CanDrag="{x:Bind ViewModel.DocumentGroup.HasAssetTabs, Mode=OneWay}"
+                Background="Transparent"
+                CornerRadius="6"
+                DragStarting="OnAssetDocumentGroupDragStarting"
+                DropCompleted="OnAssetDocumentGroupDropCompleted"
+                Visibility="{x:Bind ViewModel.DocumentGroup.TabStripVisibility, Mode=OneWay}">
+                <FontIcon
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="12"
+                    Glyph="&#xE700;" />
+            </Border>
+
+            <TabView
+                x:Name="AssetEditorTabView"
+                Grid.Column="1"
+                Margin="-2,-2,-2,0"
+                AllowDropTabs="True"
+                CanDragTabs="True"
+                CanReorderTabs="True"
+                IsAddTabButtonVisible="False"
+                SelectedItem="{x:Bind ViewModel.DocumentGroup.ActiveAssetTab, Mode=OneWay}"
+                TabCloseRequested="OnAssetEditorTabViewTabCloseRequested"
+                TabDragCompleted="OnAssetEditorTabViewTabDragCompleted"
+                TabDragStarting="OnAssetEditorTabViewTabDragStarting"
+                TabDroppedOutside="OnAssetEditorTabViewTabDroppedOutside"
+                TabItemsSource="{x:Bind ViewModel.DocumentGroup.AssetTabs, Mode=OneWay}"
+                TabStripDragOver="OnAssetEditorTabViewTabStripDragOver"
+                TabStripDrop="OnAssetEditorTabViewTabStripDrop"
+                SelectionChanged="OnAssetEditorTabViewSelectionChanged"
+                Visibility="{x:Bind ViewModel.DocumentGroup.TabStripVisibility, Mode=OneWay}">
+                <TabView.TabItemTemplate>
+                    <DataTemplate x:DataType="viewModels:AssetDocumentTabViewModel">
+                        <TabViewItem
+                            Header="{x:Bind DisplayName}"
+                            ToolTipService.ToolTip="{x:Bind ToolTipText}">
+                            <TabViewItem.ContextFlyout>
+                                <MenuFlyout Opening="OnAssetEditorTabContextFlyoutOpening">
+                                    <MenuFlyoutItem
+                                        x:Name="MoveAssetDocumentToMainWindowMenuItem"
+                                        Click="OnMoveAssetDocumentToMainWindowMenuItemClick"
+                                        Tag="{Binding}" />
+                                    <MenuFlyoutSeparator />
+                                    <MenuFlyoutItem
+                                        x:Name="CloseAssetDocumentTabMenuItem"
+                                        Click="OnCloseAssetDocumentTabMenuItemClick"
+                                        Tag="{Binding}" />
+                                </MenuFlyout>
+                            </TabViewItem.ContextFlyout>
+                        </TabViewItem>
+                    </DataTemplate>
+                </TabView.TabItemTemplate>
+            </TabView>
+        </Grid>
 
         <Grid
             Grid.Row="1"
