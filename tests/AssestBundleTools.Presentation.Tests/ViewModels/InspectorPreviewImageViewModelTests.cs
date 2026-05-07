@@ -126,6 +126,25 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Contains(nameof(InspectorPreviewImageViewModel.FullImageHeight), changedProperties);
     }
 
+    [Fact]
+    public void UpdateViewport_ShouldIgnoreCollapsedViewportAfterValidViewport()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        viewModel.Apply(
+            CreateImageSourceStub(),
+            imagePixelWidth: 100,
+            imagePixelHeight: 50,
+            overlayDisplayState: null,
+            focusPreviewDisplayState: null);
+        viewModel.UpdateViewport(200d, 100d);
+        viewModel.ZoomBy(2d);
+
+        viewModel.UpdateViewport(0d, 0d);
+
+        Assert.Equal(200d, viewModel.FullImageWidth, precision: 3);
+        Assert.Equal(100d, viewModel.FullImageHeight, precision: 3);
+    }
+
     private static ImageSource CreateImageSourceStub()
     {
         return (BitmapImage)RuntimeHelpers.GetUninitializedObject(typeof(BitmapImage));

@@ -87,6 +87,14 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
 
     internal void UpdateViewport(double viewportWidth, double viewportHeight)
     {
+        if (!double.IsFinite(viewportWidth) ||
+            !double.IsFinite(viewportHeight) ||
+            viewportWidth <= 0d ||
+            viewportHeight <= 0d)
+        {
+            return;
+        }
+
         _viewportState.UpdateViewport(viewportWidth, viewportHeight);
         if (_viewportState.ClampPan(ResolveActiveImageViewportSource()))
         {
