@@ -456,6 +456,9 @@
   <data name="AssetEditorWindow.RestorePending.Dialog.Description.Format" xml:space="preserve">
     <value>此工作区保存了上一轮会话中的 {0} 个编辑窗口和 {1} 个资源标签。可以现在恢复，也可以继续浏览，稍后从工具栏恢复。</value>
   </data>
+  <data name="AssetEditorWindow.RestorePending.Dialog.DescriptionWithDrafts.Format" xml:space="preserve">
+    <value>此工作区保存了上一轮会话中的 {0} 个编辑窗口和 {1} 个资源标签，其中 {2} 个标签带有未应用草稿标记。可以现在恢复标签与草稿标记，也可以继续浏览，稍后从工具栏恢复。</value>
+  </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.PrimaryButton" xml:space="preserve">
     <value>立即恢复</value>
   </data>

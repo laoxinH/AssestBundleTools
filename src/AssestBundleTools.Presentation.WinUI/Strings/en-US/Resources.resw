@@ -456,6 +456,9 @@
   <data name="AssetEditorWindow.RestorePending.Dialog.Description.Format" xml:space="preserve">
     <value>This workspace has {0} saved editor windows with {1} asset tabs from the previous session. Restore them now, or keep browsing and restore them later from the toolbar.</value>
   </data>
+  <data name="AssetEditorWindow.RestorePending.Dialog.DescriptionWithDrafts.Format" xml:space="preserve">
+    <value>This workspace has {0} saved editor windows with {1} asset tabs from the previous session, including {2} tabs marked with unapplied drafts. Restore the tabs and draft markers now, or keep browsing and restore them later from the toolbar.</value>
+  </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.PrimaryButton" xml:space="preserve">
     <value>Restore Now</value>
   </data>

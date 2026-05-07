@@ -102,10 +102,7 @@ public sealed partial class BundleExplorerPage
                     DefaultButton = ContentDialogButton.Close,
                     Content = new TextBlock
                     {
-                        Text = UiText.GetFormatted(
-                            ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionFormat,
-                            restorePrompt.PendingWindowCount,
-                            restorePrompt.PendingAssetTabCount),
+                        Text = restorePrompt.RestoreDialogDescription,
                         TextWrapping = TextWrapping.WrapWholeWords
                     }
                 };

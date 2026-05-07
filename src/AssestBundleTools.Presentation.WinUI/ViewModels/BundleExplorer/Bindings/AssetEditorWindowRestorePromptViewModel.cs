@@ -26,6 +26,9 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
 
     public int PendingAssetTabCount => _pendingWindows.Sum(static window => window.OpenAssetTabs.Count);
 
+    public int PendingDraftTabCount => _pendingWindows.Sum(static window =>
+        window.OpenAssetTabs.Count(static assetTab => HasDraftReference(assetTab.EditDraftReference)));
+
     public Visibility PendingRestoreVisibility => HasPendingWindows
         ? Visibility.Visible
         : Visibility.Collapsed;
@@ -38,6 +41,17 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
         ResourceKeys.AssetEditorWindowRestorePendingToolTipFormat,
         PendingWindowCount,
         PendingAssetTabCount);
+
+    public string RestoreDialogDescription => PendingDraftTabCount > 0
+        ? _localizationService.GetFormattedString(
+            ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionWithDraftsFormat,
+            PendingWindowCount,
+            PendingAssetTabCount,
+            PendingDraftTabCount)
+        : _localizationService.GetFormattedString(
+            ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionFormat,
+            PendingWindowCount,
+            PendingAssetTabCount);
 
     public void ReplacePendingSnapshots(IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? snapshots)
     {
@@ -70,9 +84,11 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
         OnPropertyChanged(nameof(HasPendingWindows));
         OnPropertyChanged(nameof(PendingWindowCount));
         OnPropertyChanged(nameof(PendingAssetTabCount));
+        OnPropertyChanged(nameof(PendingDraftTabCount));
         OnPropertyChanged(nameof(PendingRestoreVisibility));
         OnPropertyChanged(nameof(RestoreButtonText));
         OnPropertyChanged(nameof(RestoreToolTip));
+        OnPropertyChanged(nameof(RestoreDialogDescription));
     }
 
     private static IReadOnlyList<WorkspaceAssetEditorWindowStateDto> NormalizeSnapshots(
@@ -126,4 +142,9 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
 
         return normalizedTabs;
     }
+
+    private static bool HasDraftReference(WorkspaceAssetEditDraftReferenceDto? draftReference) =>
+        draftReference is not null &&
+        !string.IsNullOrWhiteSpace(draftReference.DraftId) &&
+        !string.IsNullOrWhiteSpace(draftReference.DraftMode);
 }

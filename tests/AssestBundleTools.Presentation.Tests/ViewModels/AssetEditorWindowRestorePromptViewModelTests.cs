@@ -20,8 +20,20 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
                 Layout: new WorkspaceAssetEditorWindowLayoutDto(120, 90, 1320, 820),
                 OpenAssetTabs:
                 [
-                    new WorkspaceAssetEditorWindowAssetTabDto("bundle-a", "asset-1", "Asset 1"),
-                    new WorkspaceAssetEditorWindowAssetTabDto("bundle-a", "asset-2", "Asset 2"),
+                    new WorkspaceAssetEditorWindowAssetTabDto(
+                        "bundle-a",
+                        "asset-1",
+                        "Asset 1",
+                        EditDraftReference: new WorkspaceAssetEditDraftReferenceDto(
+                            "draft-1",
+                            "text")),
+                    new WorkspaceAssetEditorWindowAssetTabDto(
+                        "bundle-a",
+                        "asset-2",
+                        "Asset 2",
+                        EditDraftReference: new WorkspaceAssetEditDraftReferenceDto(
+                            "",
+                            "text")),
                     new WorkspaceAssetEditorWindowAssetTabDto("bundle-a", "asset-1", "Asset 1 Duplicate"),
                     new WorkspaceAssetEditorWindowAssetTabDto("bundle-a", "", "Invalid")
                 ],
@@ -41,6 +53,7 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
         Assert.True(prompt.HasPendingWindows);
         Assert.Equal(1, prompt.PendingWindowCount);
         Assert.Equal(2, prompt.PendingAssetTabCount);
+        Assert.Equal(1, prompt.PendingDraftTabCount);
         Assert.Equal(Visibility.Visible, prompt.PendingRestoreVisibility);
         Assert.Equal(
             $"{ResourceKeys.AssetEditorWindowRestorePendingButtonFormat}:1",
@@ -48,6 +61,9 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
         Assert.Equal(
             $"{ResourceKeys.AssetEditorWindowRestorePendingToolTipFormat}:1|2",
             prompt.RestoreToolTip);
+        Assert.Equal(
+            $"{ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionWithDraftsFormat}:1|2|1",
+            prompt.RestoreDialogDescription);
     }
 
     [Fact]
@@ -74,6 +90,10 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
         Assert.False(prompt.HasPendingWindows);
         Assert.Equal(0, prompt.PendingWindowCount);
         Assert.Equal(0, prompt.PendingAssetTabCount);
+        Assert.Equal(0, prompt.PendingDraftTabCount);
         Assert.Equal(Visibility.Collapsed, prompt.PendingRestoreVisibility);
+        Assert.Equal(
+            $"{ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionFormat}:0|0",
+            prompt.RestoreDialogDescription);
     }
 }
