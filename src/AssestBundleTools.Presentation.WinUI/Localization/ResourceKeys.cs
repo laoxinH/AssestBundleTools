@@ -436,6 +436,7 @@ public static class ResourceKeys
     public const string AssetEditorWindowTabContextCloseText = "AssetEditorWindow.TabContext.Close.Text";
     public const string AssetEditorWindowRestorePendingButtonFormat = "AssetEditorWindow.RestorePending.Button.Format";
     public const string AssetEditorWindowRestorePendingToolTipFormat = "AssetEditorWindow.RestorePending.ToolTip.Format";
+    public const string AssetEditorWindowRestorePendingToolTipWithConflictsFormat = "AssetEditorWindow.RestorePending.ToolTipWithConflicts.Format";
     public const string AssetEditorWindowRestorePendingRestoredFormat = "AssetEditorWindow.RestorePending.Restored.Format";
     public const string AssetEditorWindowRestorePendingPartialFormat = "AssetEditorWindow.RestorePending.Partial.Format";
     public const string AssetEditorWindowRestorePendingPartialWithConflictsFormat = "AssetEditorWindow.RestorePending.PartialWithConflicts.Format";

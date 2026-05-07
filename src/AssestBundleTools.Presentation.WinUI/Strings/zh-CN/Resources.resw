@@ -441,6 +441,9 @@
   <data name="AssetEditorWindow.RestorePending.ToolTip.Format" xml:space="preserve">
     <value>恢复上一轮工作区会话中保存的 {0} 个编辑窗口和 {1} 个资源标签</value>
   </data>
+  <data name="AssetEditorWindow.RestorePending.ToolTipWithConflicts.Format" xml:space="preserve">
+    <value>恢复上一轮工作区会话中保存的 {0} 个编辑窗口和 {1} 个资源标签；其中 {2} 个标签已在当前窗口中打开，关闭对应标签后可继续恢复</value>
+  </data>
   <data name="AssetEditorWindow.RestorePending.Restored.Format" xml:space="preserve">
     <value>已恢复 {0} 个编辑窗口。</value>
   </data>

@@ -41,10 +41,16 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
         ResourceKeys.AssetEditorWindowRestorePendingButtonFormat,
         PendingWindowCount);
 
-    public string RestoreToolTip => _localizationService.GetFormattedString(
-        ResourceKeys.AssetEditorWindowRestorePendingToolTipFormat,
-        PendingWindowCount,
-        PendingAssetTabCount);
+    public string RestoreToolTip => PendingConflictAssetTabCount > 0
+        ? _localizationService.GetFormattedString(
+            ResourceKeys.AssetEditorWindowRestorePendingToolTipWithConflictsFormat,
+            PendingWindowCount,
+            PendingAssetTabCount,
+            PendingConflictAssetTabCount)
+        : _localizationService.GetFormattedString(
+            ResourceKeys.AssetEditorWindowRestorePendingToolTipFormat,
+            PendingWindowCount,
+            PendingAssetTabCount);
 
     public string RestoreDialogDescription => (PendingDraftTabCount, PendingConflictAssetTabCount) switch
     {

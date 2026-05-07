@@ -207,6 +207,19 @@ public sealed partial class BundleExplorerPage
             _activeWorkspaceId = nextWorkspaceId;
         }
 
+        public void HandleDocumentWorkspacePageStateChanged(
+            BundleExplorerPageStateChangedEventArgs<BundleExplorerDocumentWorkspacePageStateChange> eventArgs)
+        {
+            ArgumentNullException.ThrowIfNull(eventArgs);
+
+            if (!eventArgs.ChangeFlags.HasFlag(BundleExplorerDocumentWorkspacePageStateChange.AssetDocumentHost))
+            {
+                return;
+            }
+
+            RefreshPendingAssetEditorWindowConflictState();
+        }
+
         private async Task OpenAssetDocumentInNewWindowFromEditorAsync(
             AssetEditorWindow sourceWindow,
             AssetDocumentTabViewModel assetTab)
@@ -295,6 +308,7 @@ public sealed partial class BundleExplorerPage
             }
 
             _windows.Remove(window);
+            RefreshPendingAssetEditorWindowConflictState();
             RequestWindowStatePersistence();
         }
 
@@ -316,6 +330,7 @@ public sealed partial class BundleExplorerPage
             if (_windowStateIds.TryGetValue(window, out var windowStateId))
             {
                 _windowStateStore.UpdateWindowGroup(windowStateId, snapshot);
+                RefreshPendingAssetEditorWindowConflictState();
                 RequestWindowStatePersistence();
             }
         }

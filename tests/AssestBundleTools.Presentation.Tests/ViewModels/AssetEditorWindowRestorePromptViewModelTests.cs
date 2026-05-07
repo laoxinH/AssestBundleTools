@@ -64,11 +64,18 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
             $"{ResourceKeys.AssetEditorWindowRestorePendingButtonFormat}:1",
             prompt.RestoreButtonText);
         Assert.Equal(
-            $"{ResourceKeys.AssetEditorWindowRestorePendingToolTipFormat}:1|2",
+            $"{ResourceKeys.AssetEditorWindowRestorePendingToolTipWithConflictsFormat}:1|2|1",
             prompt.RestoreToolTip);
         Assert.Equal(
             $"{ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionWithDraftsAndConflictsFormat}:1|2|1|1",
             prompt.RestoreDialogDescription);
+
+        prompt.ReplacePotentialConflictAssetKeys(null);
+
+        Assert.Equal(0, prompt.PendingConflictAssetTabCount);
+        Assert.Equal(
+            $"{ResourceKeys.AssetEditorWindowRestorePendingToolTipFormat}:1|2",
+            prompt.RestoreToolTip);
     }
 
     [Fact]

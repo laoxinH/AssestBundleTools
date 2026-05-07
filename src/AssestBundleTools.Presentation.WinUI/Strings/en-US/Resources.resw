@@ -441,6 +441,9 @@
   <data name="AssetEditorWindow.RestorePending.ToolTip.Format" xml:space="preserve">
     <value>Restore {0} saved editor windows and {1} asset tabs from the previous workspace session</value>
   </data>
+  <data name="AssetEditorWindow.RestorePending.ToolTipWithConflicts.Format" xml:space="preserve">
+    <value>Restore {0} saved editor windows and {1} asset tabs from the previous workspace session; {2} tabs are already open in the current window set, so close those tabs before restoring them</value>
+  </data>
   <data name="AssetEditorWindow.RestorePending.Restored.Format" xml:space="preserve">
     <value>Restored {0} editor windows.</value>
   </data>

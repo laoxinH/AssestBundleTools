@@ -443,25 +443,17 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         _chromeCoordinator.UpdateCollapsedBundlePaneActionVisualState(sender, isPointerOver: false, isPressed: false);
     }
 
-    private void OnBundlePaneCollapseButtonClick(object sender, RoutedEventArgs e)
-    {
+    private void OnBundlePaneCollapseButtonClick(object sender, RoutedEventArgs e) =>
         ViewModel.ToggleBundlePaneCollapsed();
-    }
 
-    private void OnBatchExtractChipButtonClick(object sender, RoutedEventArgs e)
-    {
+    private void OnBatchExtractChipButtonClick(object sender, RoutedEventArgs e) =>
         Frame?.Navigate(typeof(BatchTasksPage));
-    }
 
-    private void OnReturnToConsoleIconButtonClick(object sender, RoutedEventArgs e)
-    {
+    private void OnReturnToConsoleIconButtonClick(object sender, RoutedEventArgs e) =>
         _navigationCoordinator.NavigateToConsole();
-    }
 
-    private void OnSaveAsBundleChipButtonClick(object sender, RoutedEventArgs e)
-    {
+    private void OnSaveAsBundleChipButtonClick(object sender, RoutedEventArgs e) =>
         Frame?.Navigate(typeof(BatchTasksPage));
-    }
 
     private async void OnRestoreAssetEditorWindowsChipButtonClick(object sender, RoutedEventArgs e)
     {
@@ -529,6 +521,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         object? sender,
         BundleExplorerPageStateChangedEventArgs<BundleExplorerDocumentWorkspacePageStateChange> e)
     {
+        _assetEditorWindowCoordinator.HandleDocumentWorkspacePageStateChanged(e);
         _tabCoordinator.HandleDocumentWorkspacePageStateChanged(e);
     }
 
