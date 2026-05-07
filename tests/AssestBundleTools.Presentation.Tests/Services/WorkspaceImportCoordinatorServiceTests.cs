@@ -134,6 +134,11 @@ public sealed class WorkspaceImportCoordinatorServiceTests
             LoadAssetListQuery query,
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
+
+        public Task<Result<SpineAssetGroupListResultDto>> LoadSpineAssetGroupsAsync(
+            LoadSpineAssetGroupsQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class StubFilePickerService : IFilePickerService

@@ -3,6 +3,7 @@ using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 
@@ -30,6 +31,7 @@ internal sealed class BundleExplorerAssetPaneCoordinator
     private readonly AssetPaneViewModel _primaryPane;
     private readonly Func<BundleDocumentTabViewModel?> _getActiveBundleTab;
     private readonly Func<Result<AssetListResultDto>, AssetListResultDto?> _unwrapAssetListResult;
+    private readonly Func<Result<SpineAssetGroupListResultDto>, SpineAssetGroupListResultDto?> _unwrapSpineAssetGroupListResult;
     private readonly Func<bool, Task> _synchronizeInspectorWithActiveBundleTabAsync;
     private readonly Action<bool> _clearCurrentInspectorHostState;
     private readonly Action _clearActiveTabState;
@@ -46,6 +48,7 @@ internal sealed class BundleExplorerAssetPaneCoordinator
         AssetPaneViewModel primaryPane,
         Func<BundleDocumentTabViewModel?> getActiveBundleTab,
         Func<Result<AssetListResultDto>, AssetListResultDto?> unwrapAssetListResult,
+        Func<Result<SpineAssetGroupListResultDto>, SpineAssetGroupListResultDto?> unwrapSpineAssetGroupListResult,
         Func<bool, Task> synchronizeInspectorWithActiveBundleTabAsync,
         Action<bool> clearCurrentInspectorHostState,
         Action clearActiveTabState,
@@ -60,6 +63,7 @@ internal sealed class BundleExplorerAssetPaneCoordinator
         _primaryPane = primaryPane ?? throw new ArgumentNullException(nameof(primaryPane));
         _getActiveBundleTab = getActiveBundleTab ?? throw new ArgumentNullException(nameof(getActiveBundleTab));
         _unwrapAssetListResult = unwrapAssetListResult ?? throw new ArgumentNullException(nameof(unwrapAssetListResult));
+        _unwrapSpineAssetGroupListResult = unwrapSpineAssetGroupListResult ?? throw new ArgumentNullException(nameof(unwrapSpineAssetGroupListResult));
         _synchronizeInspectorWithActiveBundleTabAsync = synchronizeInspectorWithActiveBundleTabAsync ?? throw new ArgumentNullException(nameof(synchronizeInspectorWithActiveBundleTabAsync));
         _clearCurrentInspectorHostState = clearCurrentInspectorHostState ?? throw new ArgumentNullException(nameof(clearCurrentInspectorHostState));
         _clearActiveTabState = clearActiveTabState ?? throw new ArgumentNullException(nameof(clearActiveTabState));
@@ -109,7 +113,7 @@ internal sealed class BundleExplorerAssetPaneCoordinator
             ResourceKeys.BundleExplorerLogBundleLoaded,
             _primaryPane.PaneTitle,
             bundleNode.DisplayName,
-            _primaryPane.Items.Count));
+            _primaryPane.IsSpineGroupViewMode ? _primaryPane.SpineGroupItems.Count : _primaryPane.Items.Count));
         _requestWorkspaceBrowserStatePersistence();
     }
 
@@ -174,6 +178,12 @@ internal sealed class BundleExplorerAssetPaneCoordinator
             return;
         }
 
+        if (pane.IsSpineGroupViewMode)
+        {
+            await LoadSpineGroupsIntoPaneAsync(pane, bundleNode, workspaceSummary.WorkspaceId);
+            return;
+        }
+
         var assetList = _unwrapAssetListResult(await _workspaceExplorerGateway.LoadAssetListAsync(
             new LoadAssetListQuery(
                 WorkspaceId: workspaceSummary.WorkspaceId,
@@ -209,11 +219,47 @@ internal sealed class BundleExplorerAssetPaneCoordinator
             assetList.FilteredCount));
     }
 
+    private async Task LoadSpineGroupsIntoPaneAsync(
+        AssetPaneViewModel pane,
+        BundleNodeViewModel bundleNode,
+        WorkspaceId workspaceId)
+    {
+        var spineGroupList = _unwrapSpineAssetGroupListResult(await _workspaceExplorerGateway.LoadSpineAssetGroupsAsync(
+            new LoadSpineAssetGroupsQuery(
+                WorkspaceId: workspaceId,
+                BundleId: bundleNode.BundleId,
+                SearchKeyword: NormalizeSearchKeyword(pane.SearchKeyword))));
+
+        if (spineGroupList is null)
+        {
+            ClearPaneItems(pane, clearInspectorOnEmpty: false);
+            return;
+        }
+
+        var entries = spineGroupList.Items
+            .Select(_assetInspectorPresenter.CreateSpineAssetGroupEntry)
+            .ToArray();
+
+        pane.ReplaceSpineGroups(
+            currentBundleDisplayName: bundleNode.DisplayName,
+            items: entries,
+            emptyStateText: GetString(ResourceKeys.BundleExplorerNoSpineGroups));
+
+        _appLogService.AppendInfo(_localizationService.GetFormattedString(
+            ResourceKeys.BundleExplorerLogBundleLoaded,
+            pane.PaneTitle,
+            bundleNode.DisplayName,
+            spineGroupList.FilteredCount));
+    }
+
     private void ClearPaneItems(AssetPaneViewModel pane, bool clearInspectorOnEmpty)
     {
-        pane.ClearItems(GetString(ResourceKeys.BundleExplorerNoAssets));
+        pane.ClearItems(GetString(
+            pane.IsSpineGroupViewMode
+                ? ResourceKeys.BundleExplorerNoSpineGroups
+                : ResourceKeys.BundleExplorerNoAssets));
 
-        if (clearInspectorOnEmpty && ReferenceEquals(pane, _primaryPane))
+        if (clearInspectorOnEmpty && ReferenceEquals(pane, _primaryPane) && pane.IsAssetViewMode)
         {
             _clearCurrentInspectorHostState(true);
         }

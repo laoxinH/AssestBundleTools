@@ -119,6 +119,12 @@ public sealed partial class InspectorPreviewImageViewModel
         private set => SetProperty(ref _overlayLabelText, value);
     }
 
+    public string RegionOverlayBadgeText
+    {
+        get => _regionOverlayBadgeText;
+        private set => SetProperty(ref _regionOverlayBadgeText, value);
+    }
+
     public string InfoBadgePrimaryText
     {
         get => _infoBadgePrimaryText;
@@ -248,6 +254,19 @@ public sealed partial class InspectorPreviewImageViewModel
         OverlayWidth > 0 &&
         OverlayHeight > 0 &&
         !string.IsNullOrWhiteSpace(OverlayLabelText)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    public Visibility RegionOverlayVisibility =>
+        Visibility == Visibility.Visible &&
+        DisplayOptions.FullImagePreviewVisibility == Visibility.Visible &&
+        RegionOverlays.Count > 0
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    public Visibility RegionOverlayBadgeVisibility =>
+        RegionOverlayVisibility == Visibility.Visible &&
+        !string.IsNullOrWhiteSpace(RegionOverlayBadgeText)
             ? Visibility.Visible
             : Visibility.Collapsed;
 

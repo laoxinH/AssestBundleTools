@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.State;
 using Microsoft.UI.Xaml;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -11,26 +12,20 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 /// </summary>
 public sealed class AssetPaneViewModel : ObservableObject
 {
-    /// <summary>
-    /// 保留当前窗格一次查询得到的完整结果集。
-    /// 这样“仅已修改 / 仅可预览”这类纯展示筛选可以在 UI 层本地完成，
-    /// 无需每次切换都重新请求应用层数据。
-    /// </summary>
-    private readonly List<AssetListEntryViewModel> _sourceItems = [];
+    private readonly AssetPaneAssetListState _assetList = new();
+    private readonly AssetPaneSpineGroupListState _spineGroupList = new();
+    private readonly AssetPaneAssetTypeFilterState _assetTypeFilter = new();
 
     private string _paneTitle = string.Empty;
     private string _currentBundleDisplayName = string.Empty;
     private string _searchKeyword = string.Empty;
     private string _emptyStateText = string.Empty;
+    private AssetPaneViewMode _viewMode;
     private bool _isSearchExpanded;
     private bool _showModifiedOnly;
     private bool _showPreviewableOnly;
     private bool _supportsBatchExtractionQuickAction;
     private bool _isBusy;
-    private bool _isReplacingAssetTypeOptions;
-    private string? _selectedAssetTypeFilterKey;
-    private AssetTypeOptionViewModel? _selectedAssetTypeOption;
-    private AssetListEntryViewModel? _selectedAsset;
     private PaneId _paneId;
 
     public AssetPaneViewModel()
@@ -61,6 +56,22 @@ public sealed class AssetPaneViewModel : ObservableObject
         get => _searchKeyword;
         set => SetProperty(ref _searchKeyword, value);
     }
+
+    public AssetPaneViewMode ViewMode
+    {
+        get => _viewMode;
+        set
+        {
+            if (SetProperty(ref _viewMode, value))
+            {
+                NotifyViewModeChanged();
+            }
+        }
+    }
+
+    public bool IsAssetViewMode => ViewMode == AssetPaneViewMode.Assets;
+
+    public bool IsSpineGroupViewMode => ViewMode == AssetPaneViewMode.SpineGroups;
 
     /// <summary>
     /// 控制资产列表搜索框是否处于展开状态。
@@ -150,21 +161,22 @@ public sealed class AssetPaneViewModel : ObservableObject
         }
     }
 
-    public ObservableCollection<AssetTypeOptionViewModel> AssetTypeOptions { get; } = new();
+    public ObservableCollection<AssetTypeOptionViewModel> AssetTypeOptions => _assetTypeFilter.Options;
 
-    public ObservableCollection<AssetListEntryViewModel> Items { get; } = new();
+    public ObservableCollection<AssetListEntryViewModel> Items => _assetList.Items;
 
-    public ObservableCollection<AssetListEntryViewModel> SelectedAssets { get; } = new();
+    public ObservableCollection<AssetListEntryViewModel> SelectedAssets => _assetList.SelectedAssets;
+
+    public ObservableCollection<SpineAssetGroupEntryViewModel> SpineGroupItems => _spineGroupList.Items;
 
     public bool IsReplacingAssetTypeOptions
     {
-        get => _isReplacingAssetTypeOptions;
-        private set => SetProperty(ref _isReplacingAssetTypeOptions, value);
+        get => _assetTypeFilter.IsReplacingOptions;
     }
 
     public AssetTypeOptionViewModel? SelectedAssetTypeOption
     {
-        get => _selectedAssetTypeOption;
+        get => _assetTypeFilter.SelectedOption;
         set
         {
             SetSelectedAssetTypeOption(value, syncFilterKeyFromOption: true);
@@ -173,14 +185,12 @@ public sealed class AssetPaneViewModel : ObservableObject
 
     public string? SelectedAssetTypeFilterKey
     {
-        get => _selectedAssetTypeFilterKey;
+        get => _assetTypeFilter.SelectedFilterKey;
         private set
         {
-            var normalizedValue = NormalizeAssetTypeFilterKey(value);
-            if (SetProperty(ref _selectedAssetTypeFilterKey, normalizedValue))
+            if (_assetTypeFilter.SetSelectedFilterKey(value))
             {
-                OnPropertyChanged(nameof(SelectedAssetType));
-                OnPropertyChanged(nameof(SelectedAssetTypeDisplayNameFilter));
+                NotifyAssetTypeFilterSelectionChanged();
             }
         }
     }
@@ -190,25 +200,40 @@ public sealed class AssetPaneViewModel : ObservableObject
     /// 该值用于在标签页切换时保存和恢复列表过滤条件。
     /// </summary>
     public AssetType? SelectedAssetType =>
-        AssetTypeOptionViewModel.TryParseFilterKey(
-            SelectedAssetTypeFilterKey,
-            out var assetType,
-            out _)
-            ? assetType
-            : null;
+        _assetTypeFilter.SelectedAssetType;
 
     public string? SelectedAssetTypeDisplayNameFilter =>
-        AssetTypeOptionViewModel.TryParseFilterKey(
-            SelectedAssetTypeFilterKey,
-            out _,
-            out var assetTypeDisplayNameFilter)
-            ? assetTypeDisplayNameFilter
-            : null;
+        _assetTypeFilter.SelectedAssetTypeDisplayNameFilter;
 
     public AssetListEntryViewModel? SelectedAsset
     {
-        get => _selectedAsset;
-        set => SetProperty(ref _selectedAsset, value);
+        get => _assetList.SelectedAsset;
+        set
+        {
+            if (ReferenceEquals(_assetList.SelectedAsset, value))
+            {
+                return;
+            }
+
+            _assetList.SetSelectedAsset(value);
+            OnPropertyChanged();
+            NotifySelectionStateChanged();
+        }
+    }
+
+    public SpineAssetGroupEntryViewModel? SelectedSpineGroup
+    {
+        get => _spineGroupList.SelectedSpineGroup;
+        set
+        {
+            if (ReferenceEquals(_spineGroupList.SelectedSpineGroup, value))
+            {
+                return;
+            }
+
+            _spineGroupList.SetSelectedSpineGroup(value);
+            OnPropertyChanged();
+        }
     }
 
     /// <summary>
@@ -222,22 +247,33 @@ public sealed class AssetPaneViewModel : ObservableObject
     public bool HasMultipleSelection => SelectedAssetCount > 1;
 
     public bool CanBatchExtractSelectedAssets =>
+        IsAssetViewMode &&
         SupportsBatchExtractionQuickAction &&
         !IsBusy &&
         HasMultipleSelection;
 
-    public bool CanToggleSearch => !IsBusy && _sourceItems.Count > 0;
+    public bool CanToggleSearch => !IsBusy && CurrentSourceItemCount > 0;
 
     public string SearchToggleGlyph => IsSearchExpanded ? "\uE711" : "\uE721";
 
-    public Visibility ListVisibility => Items.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility AssetListVisibility => IsAssetViewMode && Items.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
-    public Visibility EmptyStateVisibility => Items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility SpineGroupListVisibility => IsSpineGroupViewMode && SpineGroupItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility EmptyStateVisibility => CurrentVisibleItemCount == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility AssetFilterVisibility => IsAssetViewMode ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility MultiSelectionQuickActionsVisibility =>
-        SupportsBatchExtractionQuickAction && HasMultipleSelection
+        IsAssetViewMode && SupportsBatchExtractionQuickAction && HasMultipleSelection
             ? Visibility.Visible
             : Visibility.Collapsed;
+
+    private int CurrentSourceItemCount =>
+        IsSpineGroupViewMode ? _spineGroupList.SourceCount : _assetList.SourceCount;
+
+    private int CurrentVisibleItemCount =>
+        IsSpineGroupViewMode ? _spineGroupList.VisibleCount : _assetList.VisibleCount;
 
     public void ConfigurePane(PaneId paneId, string paneTitle, string emptyStateText)
     {
@@ -248,34 +284,10 @@ public sealed class AssetPaneViewModel : ObservableObject
 
     public void ReplaceAssetTypeOptions(IEnumerable<AssetTypeOptionViewModel> options)
     {
-        var selectedFilterKey = SelectedAssetTypeFilterKey;
-        var materializedOptions = options.ToArray();
-        if (AreAssetTypeOptionsEquivalent(materializedOptions))
-        {
-            SelectedAssetTypeOption = SelectAssetTypeOption(selectedFilterKey) ??
-                                      AssetTypeOptions.FirstOrDefault();
-            return;
-        }
-
-        IsReplacingAssetTypeOptions = true;
-        try
-        {
-            AssetTypeOptions.Clear();
-            foreach (var option in materializedOptions)
-            {
-                AssetTypeOptions.Add(option);
-            }
-
-            var selectedOption = SelectAssetTypeOption(selectedFilterKey) ??
-                                 EnsureRestoredAssetTypeOption(selectedFilterKey) ??
-                                 AssetTypeOptions.FirstOrDefault();
-            SetSelectedAssetTypeOption(selectedOption, syncFilterKeyFromOption: false);
-            SelectedAssetTypeFilterKey = selectedOption?.FilterKey;
-        }
-        finally
-        {
-            IsReplacingAssetTypeOptions = false;
-        }
+        _assetTypeFilter.ReplaceOptions(options);
+        OnPropertyChanged(nameof(IsReplacingAssetTypeOptions));
+        OnPropertyChanged(nameof(SelectedAssetTypeOption));
+        NotifyAssetTypeFilterSelectionChanged();
     }
 
     public void ReplaceItems(string currentBundleDisplayName, IEnumerable<AssetListEntryViewModel> items, string emptyStateText)
@@ -295,21 +307,40 @@ public sealed class AssetPaneViewModel : ObservableObject
     {
         CurrentBundleDisplayName = currentBundleDisplayName;
         EmptyStateText = emptyStateText;
-        _sourceItems.Clear();
-        _sourceItems.AddRange(items);
+        _assetList.ReplaceItems(
+            items,
+            preferredSelectedAssetId,
+            ShowModifiedOnly,
+            ShowPreviewableOnly);
         OnPropertyChanged(nameof(CanToggleSearch));
-        ApplyLocalFilters(preferredSelectedAssetId);
+        OnPropertyChanged(nameof(SelectedAsset));
+        NotifySelectionStateChanged();
+        NotifyListStateChanged();
+    }
+
+    public void ReplaceSpineGroups(
+        string currentBundleDisplayName,
+        IEnumerable<SpineAssetGroupEntryViewModel> items,
+        string emptyStateText)
+    {
+        var selectedGroupId = SelectedSpineGroup?.Item.GroupId;
+        CurrentBundleDisplayName = currentBundleDisplayName;
+        EmptyStateText = emptyStateText;
+        _spineGroupList.ReplaceItems(items, selectedGroupId);
+        OnPropertyChanged(nameof(CanToggleSearch));
+        OnPropertyChanged(nameof(SelectedSpineGroup));
+        NotifyListStateChanged();
     }
 
     public void ClearItems(string emptyStateText)
     {
         CurrentBundleDisplayName = string.Empty;
         EmptyStateText = emptyStateText;
-        _sourceItems.Clear();
-        Items.Clear();
-        SelectedAssets.Clear();
-        SelectedAsset = null;
+        _assetList.Clear();
+        _spineGroupList.Clear();
         IsSearchExpanded = false;
+        OnPropertyChanged(nameof(SelectedAsset));
+        OnPropertyChanged(nameof(SelectedSpineGroup));
         OnPropertyChanged(nameof(CanToggleSearch));
         NotifySelectionStateChanged();
         NotifyListStateChanged();
@@ -344,14 +375,14 @@ public sealed class AssetPaneViewModel : ObservableObject
         IEnumerable<AssetListEntryViewModel> selectedAssets,
         AssetListEntryViewModel? primarySelectedAsset)
     {
-        SelectedAssets.Clear();
-        foreach (var item in selectedAssets)
-        {
-            SelectedAssets.Add(item);
-        }
-
-        SelectedAsset = primarySelectedAsset;
+        _assetList.UpdateSelection(selectedAssets, primarySelectedAsset);
+        OnPropertyChanged(nameof(SelectedAsset));
         NotifySelectionStateChanged();
+    }
+
+    public void UpdateSpineGroupSelection(SpineAssetGroupEntryViewModel? primarySelectedGroup)
+    {
+        SelectedSpineGroup = primarySelectedGroup;
     }
 
     /// <summary>
@@ -360,8 +391,8 @@ public sealed class AssetPaneViewModel : ObservableObject
     /// </summary>
     public void ClearSelection()
     {
-        SelectedAssets.Clear();
-        SelectedAsset = null;
+        _assetList.ClearSelection();
+        OnPropertyChanged(nameof(SelectedAsset));
         NotifySelectionStateChanged();
     }
 
@@ -373,16 +404,18 @@ public sealed class AssetPaneViewModel : ObservableObject
         string searchKeyword,
         string? selectedAssetTypeFilterKey,
         bool showModifiedOnly,
-        bool showPreviewableOnly)
+        bool showPreviewableOnly,
+        AssetPaneViewMode viewMode = AssetPaneViewMode.Assets)
     {
         SearchKeyword = searchKeyword;
         IsSearchExpanded = !string.IsNullOrWhiteSpace(searchKeyword);
         ShowModifiedOnly = showModifiedOnly;
         ShowPreviewableOnly = showPreviewableOnly;
+        ViewMode = viewMode;
         SelectedAssetTypeFilterKey = selectedAssetTypeFilterKey;
         SetSelectedAssetTypeOption(
-            SelectAssetTypeOption(SelectedAssetTypeFilterKey) ??
-            EnsureRestoredAssetTypeOption(SelectedAssetTypeFilterKey) ??
+            _assetTypeFilter.SelectOption(SelectedAssetTypeFilterKey) ??
+            _assetTypeFilter.EnsureRestoredOption(SelectedAssetTypeFilterKey) ??
             AssetTypeOptions.FirstOrDefault(),
             syncFilterKeyFromOption: false);
     }
@@ -394,129 +427,52 @@ public sealed class AssetPaneViewModel : ObservableObject
     /// </summary>
     public bool TrySelectAsset(AssetId assetId)
     {
-        if (string.IsNullOrWhiteSpace(assetId.Value))
+        if (!_assetList.TrySelectAsset(assetId))
         {
             return false;
         }
 
-        var target = Items.FirstOrDefault(item => item.Item.AssetId.Equals(assetId));
-        if (target is null)
-        {
-            return false;
-        }
-
-        SelectedAssets.Clear();
-        SelectedAssets.Add(target);
-        SelectedAsset = target;
+        OnPropertyChanged(nameof(SelectedAsset));
         NotifySelectionStateChanged();
         return true;
     }
 
     public void NotifyListStateChanged()
     {
-        OnPropertyChanged(nameof(ListVisibility));
+        OnPropertyChanged(nameof(AssetListVisibility));
+        OnPropertyChanged(nameof(SpineGroupListVisibility));
         OnPropertyChanged(nameof(EmptyStateVisibility));
     }
 
-    /// <summary>
-    /// 将应用层返回的完整结果集重新映射到当前窗格的展示集合。
-    /// 这里会尽量保留用户原先的选中项；
-    /// 如果旧选中项已经不在当前结果里，则保持空选中，不再自动回退到第一项。
-    /// </summary>
     private void ApplyLocalFilters(AssetId? preferredSelectedAssetId = null)
     {
-        var desiredSelectedAssetId = preferredSelectedAssetId ?? SelectedAsset?.Item.AssetId;
-
-        var filteredItems = _sourceItems
-            .Where(item => !ShowModifiedOnly || item.Item.IsModified)
-            .Where(item => !ShowPreviewableOnly || item.Item.HasPreview)
-            .ToArray();
-
-        Items.Clear();
-        foreach (var item in filteredItems)
-        {
-            Items.Add(item);
-        }
-
-        SelectedAssets.Clear();
-        SelectedAsset = desiredSelectedAssetId is { } assetId
-            ? Items.FirstOrDefault(item => item.Item.AssetId.Equals(assetId))
-            : null;
-
-        if (SelectedAsset is not null)
-        {
-            SelectedAssets.Add(SelectedAsset);
-        }
-
+        _assetList.ApplyLocalFilters(
+            preferredSelectedAssetId,
+            ShowModifiedOnly,
+            ShowPreviewableOnly);
+        OnPropertyChanged(nameof(SelectedAsset));
         NotifySelectionStateChanged();
         NotifyListStateChanged();
     }
 
     private void NotifySelectionStateChanged()
     {
-        UpdateItemSelectionState();
+        _assetList.UpdateSelectionState();
         OnPropertyChanged(nameof(SelectedAssetCount));
         OnPropertyChanged(nameof(HasMultipleSelection));
         OnPropertyChanged(nameof(CanBatchExtractSelectedAssets));
         OnPropertyChanged(nameof(MultiSelectionQuickActionsVisibility));
     }
 
-    /// <summary>
-    /// 列表行的视觉选中态直接从真实选择集合派生。
-    /// 避免模板自己猜选中状态，后续扩展多选视觉时也更容易统一维护。
-    /// </summary>
-    private void UpdateItemSelectionState()
+    private void NotifyViewModeChanged()
     {
-        foreach (var item in _sourceItems)
-        {
-            item.IsSelected = false;
-        }
-
-        foreach (var item in SelectedAssets)
-        {
-            item.IsSelected = true;
-        }
-    }
-
-    private AssetTypeOptionViewModel? SelectAssetTypeOption(string? filterKey)
-    {
-        return string.IsNullOrWhiteSpace(filterKey)
-            ? AssetTypeOptions.FirstOrDefault(option => option.AssetType is null)
-            : AssetTypeOptions.FirstOrDefault(option => option.MatchesFilterKey(filterKey));
-    }
-
-    private bool AreAssetTypeOptionsEquivalent(IReadOnlyList<AssetTypeOptionViewModel> options)
-    {
-        if (AssetTypeOptions.Count != options.Count)
-        {
-            return false;
-        }
-
-        for (var index = 0; index < options.Count; index++)
-        {
-            var current = AssetTypeOptions[index];
-            var next = options[index];
-            if (!string.Equals(current.FilterKey, next.FilterKey, StringComparison.OrdinalIgnoreCase) ||
-                !string.Equals(current.DisplayName, next.DisplayName, StringComparison.Ordinal) ||
-                current.Count != next.Count)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private AssetTypeOptionViewModel? EnsureRestoredAssetTypeOption(string? filterKey)
-    {
-        var restoredOption = AssetTypeOptionViewModel.CreateFromFilterKey(filterKey);
-        if (restoredOption.AssetType is null)
-        {
-            return null;
-        }
-
-        AssetTypeOptions.Add(restoredOption);
-        return restoredOption;
+        OnPropertyChanged(nameof(IsAssetViewMode));
+        OnPropertyChanged(nameof(IsSpineGroupViewMode));
+        OnPropertyChanged(nameof(AssetFilterVisibility));
+        OnPropertyChanged(nameof(CanBatchExtractSelectedAssets));
+        OnPropertyChanged(nameof(CanToggleSearch));
+        OnPropertyChanged(nameof(MultiSelectionQuickActionsVisibility));
+        NotifyListStateChanged();
     }
 
     // 这里必须按引用更新，避免重建选项集合后 SelectedItem 仍指向旧实例而导致下拉空白。
@@ -524,31 +480,37 @@ public sealed class AssetPaneViewModel : ObservableObject
         AssetTypeOptionViewModel? option,
         bool syncFilterKeyFromOption)
     {
-        if (ReferenceEquals(_selectedAssetTypeOption, option))
-        {
-            if (syncFilterKeyFromOption && !IsReplacingAssetTypeOptions)
-            {
-                SelectedAssetTypeFilterKey = option?.FilterKey;
-            }
+        var previousOption = _assetTypeFilter.SelectedOption;
+        var previousFilterKey = _assetTypeFilter.SelectedFilterKey;
 
+        _assetTypeFilter.SetSelectedOption(option, syncFilterKeyFromOption);
+
+        var optionChanged = !ReferenceEquals(previousOption, _assetTypeFilter.SelectedOption);
+        var filterKeyChanged = !string.Equals(
+            previousFilterKey,
+            _assetTypeFilter.SelectedFilterKey,
+            StringComparison.Ordinal);
+
+        if (!optionChanged && !filterKeyChanged)
+        {
             return;
         }
 
-        _selectedAssetTypeOption = option;
-        OnPropertyChanged(nameof(SelectedAssetTypeOption));
-
-        if (syncFilterKeyFromOption && !IsReplacingAssetTypeOptions)
+        if (optionChanged)
         {
-            SelectedAssetTypeFilterKey = option?.FilterKey;
-            return;
+            OnPropertyChanged(nameof(SelectedAssetTypeOption));
         }
 
+        if (filterKeyChanged)
+        {
+            NotifyAssetTypeFilterSelectionChanged();
+        }
+    }
+
+    private void NotifyAssetTypeFilterSelectionChanged()
+    {
+        OnPropertyChanged(nameof(SelectedAssetTypeFilterKey));
         OnPropertyChanged(nameof(SelectedAssetType));
         OnPropertyChanged(nameof(SelectedAssetTypeDisplayNameFilter));
     }
-
-    private static string? NormalizeAssetTypeFilterKey(string? filterKey) =>
-        string.IsNullOrWhiteSpace(filterKey)
-            ? null
-            : filterKey.Trim();
 }

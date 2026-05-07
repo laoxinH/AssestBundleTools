@@ -766,13 +766,19 @@
     <value>资源详情</value>
   </data>
   <data name="AssetPaneView.SearchTextBox.PlaceholderText" xml:space="preserve">
-    <value>搜索资源名称或路径</value>
+    <value>搜索当前视图</value>
   </data>
   <data name="AssetPaneView.SearchToggleButton.OpenToolTip" xml:space="preserve">
-    <value>展开资源搜索</value>
+    <value>展开当前视图搜索</value>
   </data>
   <data name="AssetPaneView.SearchToggleButton.CloseToolTip" xml:space="preserve">
-    <value>收起资源搜索</value>
+    <value>收起当前视图搜索</value>
+  </data>
+  <data name="AssetPaneView.Mode.AssetsToggleButton.Content" xml:space="preserve">
+    <value>资源</value>
+  </data>
+  <data name="AssetPaneView.Mode.SpineGroupsToggleButton.Content" xml:space="preserve">
+    <value>Spine 组</value>
   </data>
   <data name="AssetPaneView.ModifiedOnlyToggleButton.Content" xml:space="preserve">
     <value>仅已修改</value>
@@ -801,8 +807,26 @@
   <data name="AssetPaneView.AssetStateHeaderText.Text" xml:space="preserve">
     <value>状态</value>
   </data>
+  <data name="AssetPaneView.SpineGroupPartsHeaderText.Text" xml:space="preserve">
+    <value>组成</value>
+  </data>
+  <data name="AssetPaneView.SpineGroupTexturePagesHeaderText.Text" xml:space="preserve">
+    <value>贴图页</value>
+  </data>
+  <data name="AssetPaneView.SpineGroupParts.Format" xml:space="preserve">
+    <value>骨架 {0} / Atlas {1}</value>
+  </data>
+  <data name="AssetPaneView.SpineGroupTexturePages.Format" xml:space="preserve">
+    <value>{0} 页</value>
+  </data>
+  <data name="AssetPaneView.SpineGroupState.Ready" xml:space="preserve">
+    <value>可预览</value>
+  </data>
+  <data name="AssetPaneView.SpineGroupState.Diagnostics.Format" xml:space="preserve">
+    <value>{0} 条诊断</value>
+  </data>
   <data name="AssetPaneView.EmptyStateHintText.Text" xml:space="preserve">
-    <value>切换左侧 Bundle 节点或调整当前筛选条件后，这里会刷新为对应窗格的资源列表。</value>
+    <value>切换左侧 Bundle 节点、调整搜索或切换视图后，这里会刷新为对应列表。</value>
   </data>
   <data name="InspectorPanelView.DetailsTab.Header" xml:space="preserve">
     <value>详情</value>
@@ -890,6 +914,150 @@
   </data>
   <data name="InspectorPanelView.TexturePreview.Info.MipSegment.Format" xml:space="preserve">
     <value>Mip {0}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AssetType.Text" xml:space="preserve">
+    <value>Spine 资源组</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Summary.Format" xml:space="preserve">
+    <value>Skeleton {0} · Atlas {1} · Texture page {2} · Atlas page {3} · Region {4} · 诊断 {5}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AssetCount.Format" xml:space="preserve">
+    <value>{0} 个组成资产</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.GroupId.Label" xml:space="preserve">
+    <value>组 ID</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.GroupKey.Label" xml:space="preserve">
+    <value>组键</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonCount.Label" xml:space="preserve">
+    <value>Skeleton</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AtlasCount.Label" xml:space="preserve">
+    <value>Atlas</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.TexturePageCount.Label" xml:space="preserve">
+    <value>Texture page</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AtlasPageCount.Label" xml:space="preserve">
+    <value>Atlas page</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AtlasRegionCount.Label" xml:space="preserve">
+    <value>Atlas region</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonStructure.Label" xml:space="preserve">
+    <value>Skeleton 结构</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonStructureLabel.Format" xml:space="preserve">
+    <value>Skeleton 结构 {0}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonStructure.Format" xml:space="preserve">
+    <value>{0} · Bone {1} · Slot {2} · Skin {3} · Animation {4}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonConstraint.Label" xml:space="preserve">
+    <value>Skeleton 约束</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonConstraint.Format" xml:space="preserve">
+    <value>Event {0} · IK {1} · Transform {2} · Path {3}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonVersion.Label" xml:space="preserve">
+    <value>Spine 版本</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonFormat.Json" xml:space="preserve">
+    <value>JSON</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonFormat.Binary" xml:space="preserve">
+    <value>二进制 .skel</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonFormat.Unknown" xml:space="preserve">
+    <value>未知格式</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonBinarySummary.Text" xml:space="preserve">
+    <value>二进制 .skel，当前仅保留组成资产；细解析和动画播放后置</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonCountUnknown.Text" xml:space="preserve">
+    <value>未知</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostics.Label" xml:space="preserve">
+    <value>诊断</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Ready.Text" xml:space="preserve">
+    <value>已匹配</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.PartMetadata.Format" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.PartRole.Skeleton" xml:space="preserve">
+    <value>Skeleton</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.PartRole.Atlas" xml:space="preserve">
+    <value>Atlas</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.PartRole.TexturePage" xml:space="preserve">
+    <value>Texture page</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.Label.Format" xml:space="preserve">
+    <value>诊断 {0}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.Format" xml:space="preserve">
+    <value>{0} · {1} · 关联 {2} 项</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.WithDetail.Format" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.PageDetail.Format" xml:space="preserve">
+    <value>page {0}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.PageSizeDetail.Format" xml:space="preserve">
+    <value>page {0}，atlas {1} x {2}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.TextureSizeDetail.Format" xml:space="preserve">
+    <value>page {0}，atlas {1} x {2}，贴图 {3} x {4}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.MissingSkeleton" xml:space="preserve">
+    <value>缺少 skeleton</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.MissingAtlas" xml:space="preserve">
+    <value>缺少 atlas</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.MissingTexturePage" xml:space="preserve">
+    <value>缺少 texture page</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.MultipleSkeletons" xml:space="preserve">
+    <value>存在多个 skeleton 候选</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.MultipleAtlases" xml:space="preserve">
+    <value>存在多个 atlas 候选</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.AtlasPreviewUnavailable" xml:space="preserve">
+    <value>无法读取 atlas 文本预览</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.AtlasParseFailed" xml:space="preserve">
+    <value>atlas 文本无法解析</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.AtlasPageTextureUnmatched" xml:space="preserve">
+    <value>atlas page 未匹配到 Texture2D</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.TexturePreviewUnavailable" xml:space="preserve">
+    <value>Texture2D 图片预览不可用</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.AtlasPageTextureSizeMismatch" xml:space="preserve">
+    <value>atlas page 尺寸与 Texture2D 预览尺寸不一致</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.SkeletonPreviewUnavailable" xml:space="preserve">
+    <value>无法读取 skeleton 文本预览</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.SkeletonJsonParseFailed" xml:space="preserve">
+    <value>skeleton JSON 无法解析</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.RegionOverlay.Badge.Format" xml:space="preserve">
+    <value>Atlas page {0}&#x0a;Region {1}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AtlasPageSelector.Label" xml:space="preserve">
+    <value>Atlas page</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AtlasPageSelector.ToolTip" xml:space="preserve">
+    <value>切换当前 Spine atlas page 预览</value>
   </data>
   <data name="InspectorPanelView.SpriteCropResultModeButton.ToolTip" xml:space="preserve">
     <value>显示裁切结果</value>
@@ -2808,6 +2976,9 @@
   <data name="BundleExplorer.EmptyState.NoAssets" xml:space="preserve">
     <value>当前 Bundle 在此筛选条件下没有可显示的资源。</value>
   </data>
+  <data name="BundleExplorer.EmptyState.NoSpineGroups" xml:space="preserve">
+    <value>当前 Bundle 在此搜索条件下没有可识别的 Spine 资源组。</value>
+  </data>
   <data name="BundleExplorer.EmptyState.NoOpenTabs" xml:space="preserve">
     <value>当前还没有打开任何资源包标签页，请从左侧资源包列表单击一个资源包开始浏览。</value>
   </data>
@@ -2999,6 +3170,12 @@
   </data>
   <data name="Error.Asset.Query.AssetIdRequired" xml:space="preserve">
     <value>查询资源前需要提供资源标识。</value>
+  </data>
+  <data name="Error.Asset.SpineGroup.Query.GroupIdRequired" xml:space="preserve">
+    <value>查询 Spine 资源组前需要提供资源组标识。</value>
+  </data>
+  <data name="Error.Asset.SpineGroup.NotFound" xml:space="preserve">
+    <value>未找到 Spine 资源组：{0}</value>
   </data>
   <data name="Error.Workspace.OpenAsset.PaneIdRequired" xml:space="preserve">
     <value>在窗格中打开资源前需要提供窗格标识。</value>

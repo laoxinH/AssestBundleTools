@@ -145,6 +145,35 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(100d, viewModel.FullImageHeight, precision: 3);
     }
 
+    [Fact]
+    public void RegionOverlay_ShouldProjectMultipleRegionsIntoCurrentViewport()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        viewModel.Apply(
+            CreateImageSourceStub(),
+            imagePixelWidth: 100,
+            imagePixelHeight: 50,
+            overlayDisplayState: null,
+            focusPreviewDisplayState: null,
+            regionOverlayDisplayState: new ImageRegionOverlayDisplayState(
+                CanvasWidth: 100,
+                CanvasHeight: 50,
+                Regions:
+                [
+                    new ImageRegionOverlayItemDisplayState(4, 5, 20, 10, "head"),
+                    new ImageRegionOverlayItemDisplayState(40, 10, 30, 15, "body")
+                ],
+                BadgeText: "2 regions"));
+
+        viewModel.UpdateViewport(200d, 100d);
+
+        Assert.Equal(2, viewModel.RegionOverlays.Count);
+        Assert.Equal(54d, viewModel.RegionOverlays[0].X, precision: 3);
+        Assert.Equal(30d, viewModel.RegionOverlays[0].Y, precision: 3);
+        Assert.Equal(20d, viewModel.RegionOverlays[0].Width, precision: 3);
+        Assert.Equal(Visibility.Visible, viewModel.RegionOverlayBadgeVisibility);
+    }
+
     private static ImageSource CreateImageSourceStub()
     {
         return (BitmapImage)RuntimeHelpers.GetUninitializedObject(typeof(BitmapImage));

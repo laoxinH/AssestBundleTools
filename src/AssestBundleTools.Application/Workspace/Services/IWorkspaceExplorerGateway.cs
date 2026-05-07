@@ -36,4 +36,8 @@ public interface IWorkspaceExplorerGateway
     Task<Result<AssetListResultDto>> LoadAssetListAsync(
         LoadAssetListQuery query,
         CancellationToken cancellationToken = default);
+
+    Task<Result<SpineAssetGroupListResultDto>> LoadSpineAssetGroupsAsync(
+        LoadSpineAssetGroupsQuery query,
+        CancellationToken cancellationToken = default);
 }

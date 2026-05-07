@@ -102,6 +102,22 @@ public static class ApplicationErrors
             severity: ErrorSeverity.Warning,
             messageToken: "Error.Asset.Query.AssetIdRequired");
 
+    public static AppError SpineAssetGroupIdRequired() =>
+        new(
+            code: "Asset.SpineGroup.Query.GroupIdRequired",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.SpineGroup.Query.GroupIdRequired");
+
+    public static AppError SpineAssetGroupNotFound(string groupId) =>
+        new(
+            code: "Asset.SpineGroup.NotFound",
+            category: ErrorCategory.NotFound,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.SpineGroup.NotFound",
+            parameters: CreateParameters(("GroupId", groupId)),
+            isUserActionable: true);
+
     public static AppError PaneIdRequired() =>
         new(
             code: "Workspace.OpenAsset.PaneIdRequired",

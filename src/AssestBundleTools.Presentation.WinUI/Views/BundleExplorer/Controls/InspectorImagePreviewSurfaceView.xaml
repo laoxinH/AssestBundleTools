@@ -31,6 +31,35 @@
             <Setter Property="Foreground" Value="#FFF8FAFC" />
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
+
+        <Style
+            x:Key="InspectorPreviewRegionOverlayItemContainerStyle"
+            TargetType="ContentPresenter">
+            <Setter Property="Canvas.Left" Value="{Binding X}" />
+            <Setter Property="Canvas.Top" Value="{Binding Y}" />
+        </Style>
+
+        <DataTemplate
+            x:Key="InspectorPreviewRegionOverlayItemTemplate"
+            x:DataType="viewModels:PreviewImageRegionOverlayItemViewModel">
+            <Grid
+                Width="{x:Bind Width}"
+                Height="{x:Bind Height}"
+                ToolTipService.ToolTip="{x:Bind LabelText}">
+                <Rectangle
+                    RadiusX="3"
+                    RadiusY="3"
+                    Fill="Transparent"
+                    Stroke="#CC101418"
+                    StrokeThickness="1.5" />
+                <Rectangle
+                    RadiusX="3"
+                    RadiusY="3"
+                    Fill="Transparent"
+                    Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                    StrokeThickness="0.75" />
+            </Grid>
+        </DataTemplate>
     </UserControl.Resources>
 
     <Grid
@@ -58,6 +87,21 @@
                     Height="{x:Bind ViewModel.FullImageHeight, Mode=OneWay}"
                     Source="{x:Bind ViewModel.ImageSource, Mode=OneWay}"
                     Stretch="Fill" />
+            </Canvas>
+
+            <Canvas
+                IsHitTestVisible="False"
+                Visibility="{x:Bind ViewModel.RegionOverlayVisibility, Mode=OneWay}">
+                <ItemsControl
+                    ItemContainerStyle="{StaticResource InspectorPreviewRegionOverlayItemContainerStyle}"
+                    ItemTemplate="{StaticResource InspectorPreviewRegionOverlayItemTemplate}"
+                    ItemsSource="{x:Bind ViewModel.RegionOverlays, Mode=OneWay}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
             </Canvas>
 
             <Canvas
@@ -143,6 +187,18 @@
                 <TextBlock
                     Style="{StaticResource InspectorPreviewOverlayBadgeTextStyle}"
                     Text="{x:Bind ViewModel.OverlayLabelText, Mode=OneWay}" />
+            </Border>
+
+            <Border
+                Margin="8"
+                MaxWidth="260"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Bottom"
+                Style="{StaticResource InspectorPreviewOverlayBadgeBorderStyle}"
+                Visibility="{x:Bind ViewModel.RegionOverlayBadgeVisibility, Mode=OneWay}">
+                <TextBlock
+                    Style="{StaticResource InspectorPreviewOverlayBadgeTextStyle}"
+                    Text="{x:Bind ViewModel.RegionOverlayBadgeText, Mode=OneWay}" />
             </Border>
 
             <Border

@@ -12,6 +12,7 @@ public sealed partial class BundleExplorerPage
     {
         private readonly BundleExplorerPage _owner;
         private bool _isSynchronizingAssetDocumentTabSelection;
+        private bool _isSynchronizingSpineGroupDocumentTabSelection;
 
         public BundleExplorerPageTabCoordinator(BundleExplorerPage owner)
         {
@@ -29,6 +30,17 @@ public sealed partial class BundleExplorerPage
             return _owner.AssetDocumentTabView.SelectedItem as AssetDocumentTabViewModel;
         }
 
+        public SpineAssetGroupDocumentTabViewModel? GetActivatableSpineGroupDocumentTab()
+        {
+            if (_isSynchronizingSpineGroupDocumentTabSelection ||
+                _owner.ViewModel.DocumentWorkspace.IsSynchronizingAssetDocumentHostSelection)
+            {
+                return null;
+            }
+
+            return _owner.SpineGroupDocumentTabView.SelectedItem as SpineAssetGroupDocumentTabViewModel;
+        }
+
         public void HandleDocumentWorkspacePageStateChanged(
             BundleExplorerPageStateChangedEventArgs<BundleExplorerDocumentWorkspacePageStateChange> e)
         {
@@ -38,6 +50,7 @@ public sealed partial class BundleExplorerPage
             }
 
             Enqueue(SynchronizeAssetDocumentTabSelection);
+            Enqueue(SynchronizeSpineGroupDocumentTabSelection);
         }
 
         public void ConfigureTabContextFlyout(
@@ -140,6 +153,30 @@ public sealed partial class BundleExplorerPage
             finally
             {
                 _isSynchronizingAssetDocumentTabSelection = false;
+            }
+        }
+
+        private void SynchronizeSpineGroupDocumentTabSelection()
+        {
+            if (_isSynchronizingSpineGroupDocumentTabSelection)
+            {
+                return;
+            }
+
+            _isSynchronizingSpineGroupDocumentTabSelection = true;
+            try
+            {
+                if (!ReferenceEquals(
+                        _owner.SpineGroupDocumentTabView.SelectedItem,
+                        _owner.ViewModel.DocumentWorkspace.ActiveSpineGroupDocumentTab))
+                {
+                    _owner.SpineGroupDocumentTabView.SelectedItem =
+                        _owner.ViewModel.DocumentWorkspace.ActiveSpineGroupDocumentTab;
+                }
+            }
+            finally
+            {
+                _isSynchronizingSpineGroupDocumentTabSelection = false;
             }
         }
 

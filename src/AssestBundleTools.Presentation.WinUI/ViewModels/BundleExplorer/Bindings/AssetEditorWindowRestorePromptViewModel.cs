@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
-/// 承载独立资源编辑窗口待恢复提示的页面级状态。
+/// 承载独立资源编辑窗口待恢复提示的页面级状态。+
 /// </summary>
 public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
 {

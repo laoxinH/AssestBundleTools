@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.Localization;
@@ -37,7 +38,9 @@ internal sealed class BundleExplorerAssetDocumentHostCoordinator
     }
 
     public InspectorPanelViewModel CurrentInspector =>
-        _documentWorkspace.ActiveAssetDocumentTab?.Inspector ?? _emptyInspector;
+        _documentWorkspace.ActiveAssetDocumentTab?.Inspector ??
+        _documentWorkspace.ActiveSpineGroupDocumentTab?.Inspector ??
+        _emptyInspector;
 
     public AssetDocumentTabViewModel CreateAssetDocumentTab(
         BundleId bundleId,
@@ -48,6 +51,13 @@ internal sealed class BundleExplorerAssetDocumentHostCoordinator
         tab.PreviewImageDisplayOptionsChanged += OnPreviewImageDisplayOptionsChanged;
         tab.PreviewImageViewStateChanged += OnPreviewImageViewStateChanged;
         tab.PreviewMeshDisplayOptionsChanged += OnPreviewMeshDisplayOptionsChanged;
+        tab.Inspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
+        return tab;
+    }
+
+    public SpineAssetGroupDocumentTabViewModel CreateSpineGroupDocumentTab(SpineAssetGroupDto spineGroup)
+    {
+        var tab = new SpineAssetGroupDocumentTabViewModel(spineGroup, _inspectorInformationTextSet);
         tab.Inspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
         return tab;
     }

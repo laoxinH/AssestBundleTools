@@ -99,6 +99,26 @@ internal sealed class BundleExplorerAssetInspectorPresenter
                 : GetString(ResourceKeys.AssetStateOriginal));
     }
 
+    public SpineAssetGroupEntryViewModel CreateSpineAssetGroupEntry(SpineAssetGroupDto item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        return new SpineAssetGroupEntryViewModel(
+            item: item,
+            partsText: _localizationService.GetFormattedString(
+                ResourceKeys.AssetPaneViewSpineGroupPartsFormat,
+                item.SkeletonAssets.Count.ToString(CultureInfo.CurrentCulture),
+                item.AtlasAssets.Count.ToString(CultureInfo.CurrentCulture)),
+            texturePagesText: _localizationService.GetFormattedString(
+                ResourceKeys.AssetPaneViewSpineGroupTexturePagesFormat,
+                item.TexturePageAssets.Count.ToString(CultureInfo.CurrentCulture)),
+            stateText: item.Diagnostics.Count == 0
+                ? GetString(ResourceKeys.AssetPaneViewSpineGroupStateReady)
+                : _localizationService.GetFormattedString(
+                    ResourceKeys.AssetPaneViewSpineGroupStateDiagnosticsFormat,
+                    item.Diagnostics.Count.ToString(CultureInfo.CurrentCulture)));
+    }
+
     /// <summary>
     /// Inspector 的文案、依赖卡片和替换摘要都由展示层统一投影。
     /// 避免把本地化格式化散落回主工作流 ViewModel。

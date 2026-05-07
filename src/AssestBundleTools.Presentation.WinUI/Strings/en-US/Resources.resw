@@ -766,13 +766,19 @@
     <value>Asset Details</value>
   </data>
   <data name="AssetPaneView.SearchTextBox.PlaceholderText" xml:space="preserve">
-    <value>Search asset name or path</value>
+    <value>Search current view</value>
   </data>
   <data name="AssetPaneView.SearchToggleButton.OpenToolTip" xml:space="preserve">
-    <value>Expand asset search</value>
+    <value>Expand current view search</value>
   </data>
   <data name="AssetPaneView.SearchToggleButton.CloseToolTip" xml:space="preserve">
-    <value>Collapse asset search</value>
+    <value>Collapse current view search</value>
+  </data>
+  <data name="AssetPaneView.Mode.AssetsToggleButton.Content" xml:space="preserve">
+    <value>Assets</value>
+  </data>
+  <data name="AssetPaneView.Mode.SpineGroupsToggleButton.Content" xml:space="preserve">
+    <value>Spine Groups</value>
   </data>
   <data name="AssetPaneView.ModifiedOnlyToggleButton.Content" xml:space="preserve">
     <value>Modified Only</value>
@@ -801,8 +807,26 @@
   <data name="AssetPaneView.AssetStateHeaderText.Text" xml:space="preserve">
     <value>State</value>
   </data>
+  <data name="AssetPaneView.SpineGroupPartsHeaderText.Text" xml:space="preserve">
+    <value>Parts</value>
+  </data>
+  <data name="AssetPaneView.SpineGroupTexturePagesHeaderText.Text" xml:space="preserve">
+    <value>Texture Pages</value>
+  </data>
+  <data name="AssetPaneView.SpineGroupParts.Format" xml:space="preserve">
+    <value>Skeleton {0} / Atlas {1}</value>
+  </data>
+  <data name="AssetPaneView.SpineGroupTexturePages.Format" xml:space="preserve">
+    <value>{0} pages</value>
+  </data>
+  <data name="AssetPaneView.SpineGroupState.Ready" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="AssetPaneView.SpineGroupState.Diagnostics.Format" xml:space="preserve">
+    <value>{0} diagnostics</value>
+  </data>
   <data name="AssetPaneView.EmptyStateHintText.Text" xml:space="preserve">
-    <value>Switch a bundle on the left or adjust the current filters to refresh the asset list shown in this pane.</value>
+    <value>Switch a bundle on the left, adjust search, or change views to refresh the list shown in this pane.</value>
   </data>
   <data name="InspectorPanelView.DetailsTab.Header" xml:space="preserve">
     <value>Details</value>
@@ -890,6 +914,150 @@
   </data>
   <data name="InspectorPanelView.TexturePreview.Info.MipSegment.Format" xml:space="preserve">
     <value>Mip {0}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AssetType.Text" xml:space="preserve">
+    <value>Spine asset group</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Summary.Format" xml:space="preserve">
+    <value>Skeleton {0} · Atlas {1} · Texture pages {2} · Atlas pages {3} · Regions {4} · diagnostics {5}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AssetCount.Format" xml:space="preserve">
+    <value>{0} grouped assets</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.GroupId.Label" xml:space="preserve">
+    <value>Group ID</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.GroupKey.Label" xml:space="preserve">
+    <value>Group key</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonCount.Label" xml:space="preserve">
+    <value>Skeleton</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AtlasCount.Label" xml:space="preserve">
+    <value>Atlas</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.TexturePageCount.Label" xml:space="preserve">
+    <value>Texture pages</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AtlasPageCount.Label" xml:space="preserve">
+    <value>Atlas pages</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AtlasRegionCount.Label" xml:space="preserve">
+    <value>Atlas regions</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonStructure.Label" xml:space="preserve">
+    <value>Skeleton structure</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonStructureLabel.Format" xml:space="preserve">
+    <value>Skeleton structure {0}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonStructure.Format" xml:space="preserve">
+    <value>{0} · Bones {1} · Slots {2} · Skins {3} · Animations {4}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonConstraint.Label" xml:space="preserve">
+    <value>Skeleton constraints</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonConstraint.Format" xml:space="preserve">
+    <value>Events {0} · IK {1} · Transform {2} · Path {3}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonVersion.Label" xml:space="preserve">
+    <value>Spine version</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonFormat.Json" xml:space="preserve">
+    <value>JSON</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonFormat.Binary" xml:space="preserve">
+    <value>Binary .skel</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonFormat.Unknown" xml:space="preserve">
+    <value>Unknown format</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonBinarySummary.Text" xml:space="preserve">
+    <value>Binary .skel, grouped asset retained; detailed parsing and playback stay deferred</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.SkeletonCountUnknown.Text" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostics.Label" xml:space="preserve">
+    <value>Diagnostics</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Ready.Text" xml:space="preserve">
+    <value>Matched</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.PartMetadata.Format" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.PartRole.Skeleton" xml:space="preserve">
+    <value>Skeleton</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.PartRole.Atlas" xml:space="preserve">
+    <value>Atlas</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.PartRole.TexturePage" xml:space="preserve">
+    <value>Texture page</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.Label.Format" xml:space="preserve">
+    <value>Diagnostic {0}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.Format" xml:space="preserve">
+    <value>{0} · {1} · {2} related items</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.WithDetail.Format" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.PageDetail.Format" xml:space="preserve">
+    <value>page {0}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.PageSizeDetail.Format" xml:space="preserve">
+    <value>page {0}, atlas {1} x {2}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.TextureSizeDetail.Format" xml:space="preserve">
+    <value>page {0}, atlas {1} x {2}, texture {3} x {4}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.MissingSkeleton" xml:space="preserve">
+    <value>Missing skeleton</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.MissingAtlas" xml:space="preserve">
+    <value>Missing atlas</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.MissingTexturePage" xml:space="preserve">
+    <value>Missing texture page</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.MultipleSkeletons" xml:space="preserve">
+    <value>Multiple skeleton candidates</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.MultipleAtlases" xml:space="preserve">
+    <value>Multiple atlas candidates</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.AtlasPreviewUnavailable" xml:space="preserve">
+    <value>Atlas text preview unavailable</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.AtlasParseFailed" xml:space="preserve">
+    <value>Atlas text could not be parsed</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.AtlasPageTextureUnmatched" xml:space="preserve">
+    <value>Atlas page is not matched to a Texture2D</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.TexturePreviewUnavailable" xml:space="preserve">
+    <value>Texture2D image preview unavailable</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.AtlasPageTextureSizeMismatch" xml:space="preserve">
+    <value>Atlas page size differs from the Texture2D preview</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.SkeletonPreviewUnavailable" xml:space="preserve">
+    <value>Skeleton text preview unavailable</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.SkeletonJsonParseFailed" xml:space="preserve">
+    <value>Skeleton JSON could not be parsed</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.RegionOverlay.Badge.Format" xml:space="preserve">
+    <value>Atlas page {0}&#x0a;Regions {1}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AtlasPageSelector.Label" xml:space="preserve">
+    <value>Atlas page</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AtlasPageSelector.ToolTip" xml:space="preserve">
+    <value>Switch the current Spine atlas page preview</value>
   </data>
   <data name="InspectorPanelView.SpriteCropResultModeButton.ToolTip" xml:space="preserve">
     <value>Show crop result</value>
@@ -2808,6 +2976,9 @@
   <data name="BundleExplorer.EmptyState.NoAssets" xml:space="preserve">
     <value>No assets are available for the current bundle and filter combination.</value>
   </data>
+  <data name="BundleExplorer.EmptyState.NoSpineGroups" xml:space="preserve">
+    <value>No recognizable Spine groups are available for the current bundle and search.</value>
+  </data>
   <data name="BundleExplorer.EmptyState.NoOpenTabs" xml:space="preserve">
     <value>No bundle tabs are open yet. Click a bundle on the left to start browsing.</value>
   </data>
@@ -2999,6 +3170,12 @@
   </data>
   <data name="Error.Asset.Query.AssetIdRequired" xml:space="preserve">
     <value>An asset id is required before querying an asset.</value>
+  </data>
+  <data name="Error.Asset.SpineGroup.Query.GroupIdRequired" xml:space="preserve">
+    <value>A Spine group id is required before querying a Spine asset group.</value>
+  </data>
+  <data name="Error.Asset.SpineGroup.NotFound" xml:space="preserve">
+    <value>Spine asset group not found: {0}</value>
   </data>
   <data name="Error.Workspace.OpenAsset.PaneIdRequired" xml:space="preserve">
     <value>A pane id is required before opening an asset in a pane.</value>

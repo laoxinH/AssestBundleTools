@@ -299,6 +299,9 @@ internal sealed class TestWorkspaceAssetInspectionGateway : IWorkspaceAssetInspe
     public Func<GetAssetPreviewQuery, Task<Result<AssetPreviewDto>>> GetAssetPreviewHandler { get; init; } =
         _ => throw new NotSupportedException();
 
+    public Func<LoadSpineAssetGroupDetailsQuery, Task<Result<SpineAssetGroupDetailsDto>>> LoadSpineAssetGroupDetailsHandler { get; init; } =
+        _ => throw new NotSupportedException();
+
     public Task<Result<AssetDetailsDto>> GetAssetDetailsAsync(
         GetAssetDetailsQuery query,
         CancellationToken cancellationToken = default) =>
@@ -308,6 +311,11 @@ internal sealed class TestWorkspaceAssetInspectionGateway : IWorkspaceAssetInspe
         GetAssetPreviewQuery query,
         CancellationToken cancellationToken = default) =>
         GetAssetPreviewHandler(query);
+
+    public Task<Result<SpineAssetGroupDetailsDto>> LoadSpineAssetGroupDetailsAsync(
+        LoadSpineAssetGroupDetailsQuery query,
+        CancellationToken cancellationToken = default) =>
+        LoadSpineAssetGroupDetailsHandler(query);
 
     public Task<Result<AssetPaneContextDto>> OpenAssetInPaneAsync(
         OpenAssetInPaneCommand command,
@@ -322,6 +330,9 @@ internal sealed class TestWorkspaceExplorerGateway : IWorkspaceExplorerGateway
     public required Func<LoadBundleTreeQuery, Task<Result<IReadOnlyList<BundleTreeNodeDto>>>> LoadBundleTreeHandler { get; init; }
 
     public Func<LoadAssetListQuery, Task<Result<AssetListResultDto>>> LoadAssetListHandler { get; init; } =
+        _ => throw new NotSupportedException();
+
+    public Func<LoadSpineAssetGroupsQuery, Task<Result<SpineAssetGroupListResultDto>>> LoadSpineAssetGroupsHandler { get; init; } =
         _ => throw new NotSupportedException();
 
     public Task<Result<WorkspaceSummaryDto>> OpenWorkspaceAsync(
@@ -353,6 +364,11 @@ internal sealed class TestWorkspaceExplorerGateway : IWorkspaceExplorerGateway
         LoadAssetListQuery query,
         CancellationToken cancellationToken = default) =>
         LoadAssetListHandler(query);
+
+    public Task<Result<SpineAssetGroupListResultDto>> LoadSpineAssetGroupsAsync(
+        LoadSpineAssetGroupsQuery query,
+        CancellationToken cancellationToken = default) =>
+        LoadSpineAssetGroupsHandler(query);
 }
 
 internal sealed class TestAssetEditDraftRestorePlanGateway : IAssetEditDraftRestorePlanGateway

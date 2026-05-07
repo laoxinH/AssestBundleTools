@@ -60,7 +60,8 @@ internal static class JsonWorkspaceMetadataStoreTests
                                 "source-v1",
                                 "Main tab draft"))
                     ],
-                    ActiveAssetTabId: "asset-009")
+                    ActiveAssetTabId: "asset-009",
+                    AssetListViewMode: "SpineGroups")
             ],
             ActiveBundleTabId: "bundle-001",
             ImportedSources:
@@ -140,6 +141,7 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.Equal("hero", loadedBundleTab.SearchKeyword, "Tab search keyword should round-trip.");
         TestAssert.Equal("Unknown:Shader", loadedBundleTab.AssetTypeFilter, "Dynamic bundle tab asset type filter should round-trip.");
         TestAssert.Equal("asset-009", loadedBundleTab.ActiveAssetTabId, "Active asset tab should round-trip.");
+        TestAssert.Equal("SpineGroups", loadedBundleTab.AssetListViewMode, "Asset pane view mode should round-trip.");
 
         var loadedAssetTab = TestAssert.Single(loadedBundleTab.OpenAssetTabs!);
         TestAssert.Equal("asset-009", loadedAssetTab.AssetId, "Asset tab id should round-trip.");

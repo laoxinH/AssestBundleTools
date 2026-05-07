@@ -16,6 +16,8 @@ public interface IBundleExplorerDocumentWorkspaceHost
 
     AssetDocumentTabViewModel? ActiveAssetDocumentTab { get; }
 
+    SpineAssetGroupDocumentTabViewModel? ActiveSpineGroupDocumentTab { get; }
+
     void SetActiveBundleTab(BundleDocumentTabViewModel? bundleTab);
 
     void NotifyAssetDocumentHostStateChanged();

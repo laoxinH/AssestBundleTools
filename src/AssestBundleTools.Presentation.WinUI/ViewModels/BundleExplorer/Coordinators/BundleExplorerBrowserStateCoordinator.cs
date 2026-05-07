@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.Services;
@@ -19,6 +20,7 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
     private readonly Func<bool> _hasWorkspaceProvider;
     private readonly Action _captureActiveTabStateWithoutPersistence;
     private readonly Func<BundleId, AssetId, string, AssetDocumentTabViewModel> _createAssetDocumentTab;
+    private readonly Func<SpineAssetGroupDto, SpineAssetGroupDocumentTabViewModel>? _createSpineGroupDocumentTab;
     private readonly Func<BundleDocumentTabViewModel, Task> _activateBundleTabAsync;
     private readonly Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>> _captureOpenAssetEditorWindows;
     private readonly Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>> _capturePendingAssetEditorWindows;
@@ -34,6 +36,7 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
         Action captureActiveTabStateWithoutPersistence,
         Func<BundleId, AssetId, string, AssetDocumentTabViewModel> createAssetDocumentTab,
         Func<BundleDocumentTabViewModel, Task> activateBundleTabAsync,
+        Func<SpineAssetGroupDto, SpineAssetGroupDocumentTabViewModel>? createSpineGroupDocumentTab = null,
         Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>>? captureOpenAssetEditorWindows = null,
         Action<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>?>? restorePendingAssetEditorWindows = null,
         Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>>? capturePendingAssetEditorWindows = null)
@@ -44,6 +47,7 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
         _hasWorkspaceProvider = hasWorkspaceProvider ?? throw new ArgumentNullException(nameof(hasWorkspaceProvider));
         _captureActiveTabStateWithoutPersistence = captureActiveTabStateWithoutPersistence ?? throw new ArgumentNullException(nameof(captureActiveTabStateWithoutPersistence));
         _createAssetDocumentTab = createAssetDocumentTab ?? throw new ArgumentNullException(nameof(createAssetDocumentTab));
+        _createSpineGroupDocumentTab = createSpineGroupDocumentTab;
         _activateBundleTabAsync = activateBundleTabAsync ?? throw new ArgumentNullException(nameof(activateBundleTabAsync));
         _captureOpenAssetEditorWindows = captureOpenAssetEditorWindows
             ?? (() => Array.Empty<WorkspaceAssetEditorWindowStateDto>());
@@ -170,10 +174,14 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
                 selectedAssetTypeFilterKey: tabState.AssetTypeFilter,
                 selectedAssetId: tabState.SelectedAssetId,
                 showModifiedOnly: tabState.ShowModifiedOnly,
-                showPreviewableOnly: tabState.ShowPreviewableOnly);
+                showPreviewableOnly: tabState.ShowPreviewableOnly,
+                assetPaneViewMode: tabState.AssetListViewMode);
             tab.RestoreAssetTabs(
                 RestoreAssetTabsForBundle(bundleNode.BundleId, tabState.OpenAssetTabs),
                 tabState.ActiveAssetTabId);
+            tab.RestoreSpineGroupTabs(
+                RestoreSpineGroupTabsForBundle(bundleNode.BundleId, tabState.OpenSpineGroupTabs),
+                tabState.ActiveSpineGroupTabId);
 
             _documentWorkspace.BundleTabs.Add(tab);
             restoredTabs.Add(tab);
@@ -298,7 +306,12 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
             OpenAssetTabs: tab.AssetTabs
                 .Select(CreateAssetTabMetadata)
                 .ToArray(),
-            ActiveAssetTabId: tab.ActiveAssetTab?.DocumentId);
+            ActiveAssetTabId: tab.ActiveAssetTab?.DocumentId,
+            AssetListViewMode: AssetPaneViewModePersistence.ToPersistenceKey(tab.AssetPaneViewMode),
+            OpenSpineGroupTabs: tab.SpineGroupTabs
+                .Select(CreateSpineGroupTabMetadata)
+                .ToArray(),
+            ActiveSpineGroupTabId: tab.ActiveSpineGroupTab?.DocumentId);
     }
 
     private IReadOnlyList<AssetDocumentTabViewModel> RestoreAssetTabsForBundle(
@@ -347,6 +360,35 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
         return restoredTabs;
     }
 
+    private IReadOnlyList<SpineAssetGroupDocumentTabViewModel> RestoreSpineGroupTabsForBundle(
+        BundleId bundleId,
+        IReadOnlyList<WorkspaceMetadataSpineGroupTabDto>? spineGroupTabStates)
+    {
+        if (_createSpineGroupDocumentTab is null ||
+            spineGroupTabStates is null ||
+            spineGroupTabStates.Count == 0)
+        {
+            return Array.Empty<SpineAssetGroupDocumentTabViewModel>();
+        }
+
+        var restoredTabs = new List<SpineAssetGroupDocumentTabViewModel>(spineGroupTabStates.Count);
+        var restoredGroupIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var spineGroupTabState in spineGroupTabStates)
+        {
+            if (string.IsNullOrWhiteSpace(spineGroupTabState.GroupId) ||
+                !restoredGroupIds.Add(spineGroupTabState.GroupId))
+            {
+                continue;
+            }
+
+            restoredTabs.Add(_createSpineGroupDocumentTab(CreateRestoredSpineGroup(
+                bundleId,
+                spineGroupTabState)));
+        }
+
+        return restoredTabs;
+    }
+
     private static WorkspaceMetadataAssetTabDto CreateAssetTabMetadata(AssetDocumentTabViewModel tab)
     {
         var imageDisplayOptions = tab.Inspector.Preview.Image.DisplayOptions;
@@ -368,5 +410,34 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
             PreviewImagePanX: imageViewState.PanX,
             PreviewImagePanY: imageViewState.PanY,
             EditDraftReference: AssetDocumentEditDraftReferenceMapper.ToDto(tab.EditDraftReference));
+    }
+
+    private static WorkspaceMetadataSpineGroupTabDto CreateSpineGroupTabMetadata(
+        SpineAssetGroupDocumentTabViewModel tab)
+    {
+        return new WorkspaceMetadataSpineGroupTabDto(
+            GroupId: tab.GroupId,
+            DisplayName: tab.DisplayName,
+            GroupKey: tab.Item.GroupKey);
+    }
+
+    private static SpineAssetGroupDto CreateRestoredSpineGroup(
+        BundleId bundleId,
+        WorkspaceMetadataSpineGroupTabDto tabState)
+    {
+        var groupId = tabState.GroupId.Trim();
+        return new SpineAssetGroupDto(
+            GroupId: groupId,
+            BundleId: bundleId,
+            DisplayName: string.IsNullOrWhiteSpace(tabState.DisplayName)
+                ? groupId
+                : tabState.DisplayName.Trim(),
+            GroupKey: string.IsNullOrWhiteSpace(tabState.GroupKey)
+                ? groupId
+                : tabState.GroupKey.Trim(),
+            SkeletonAssets: Array.Empty<SpineAssetGroupPartDto>(),
+            AtlasAssets: Array.Empty<SpineAssetGroupPartDto>(),
+            TexturePageAssets: Array.Empty<SpineAssetGroupPartDto>(),
+            Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>());
     }
 }

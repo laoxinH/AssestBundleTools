@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using Microsoft.UI.Xaml;
@@ -12,7 +13,9 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
 {
     private readonly PreviewImageViewportState _viewportState = new();
     private readonly PreviewImageOverlayState _overlayState = new();
+    private readonly PreviewImageRegionOverlayState _regionOverlayState = new();
     private string _overlayLabelText = string.Empty;
+    private string _regionOverlayBadgeText = string.Empty;
     private string _infoBadgePrimaryText = string.Empty;
     private string _infoBadgeSecondaryText = string.Empty;
     private string _infoBadgeDetailText = string.Empty;
@@ -52,6 +55,8 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
 
     public InspectorPreviewImageDisplayOptionsViewModel DisplayOptions { get; } = new();
 
+    public ObservableCollection<PreviewImageRegionOverlayItemViewModel> RegionOverlays { get; } = [];
+
     public event EventHandler? ViewStateChanged;
 
     public InspectorPreviewImageViewModel()
@@ -65,7 +70,8 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         int imagePixelHeight,
         SpritePreviewOverlayDisplayState? overlayDisplayState,
         SpriteFocusPreviewDisplayState? focusPreviewDisplayState,
-        ImagePreviewInfoDisplayState? infoDisplayState = null)
+        ImagePreviewInfoDisplayState? infoDisplayState = null,
+        ImageRegionOverlayDisplayState? regionOverlayDisplayState = null)
     {
         ArgumentNullException.ThrowIfNull(imageSource);
 
@@ -74,6 +80,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         ApplyDisplayState(imagePixelWidth, imagePixelHeight, overlayDisplayState);
         ApplyFocusPreviewDisplayState(focusPreviewDisplayState);
         ApplyInfoDisplayState(infoDisplayState);
+        ApplyRegionOverlayDisplayState(regionOverlayDisplayState);
         ImageSource = imageSource;
         if (_viewportState.ClampPan(ResolveActiveImageViewportSource()))
         {
@@ -81,7 +88,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         }
 
         RecalculateImageLayout();
-        RecalculateOverlayLayout();
+        RecalculateOverlays();
         NotifyVisibilityChanged();
     }
 
@@ -102,7 +109,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         }
 
         RecalculateImageLayout();
-        RecalculateOverlayLayout();
+        RecalculateOverlays();
     }
 
     internal void RestoreViewState(double? zoom, double? panX, double? panY)
@@ -113,7 +120,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         }
 
         RecalculateImageLayout();
-        RecalculateOverlayLayout();
+        RecalculateOverlays();
     }
 
     internal void ZoomBy(double scale, double? anchorX = null, double? anchorY = null)
@@ -122,7 +129,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         {
             NotifyViewStatePropertiesChanged();
             RecalculateImageLayout();
-            RecalculateOverlayLayout();
+            RecalculateOverlays();
             ViewStateChanged?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -133,7 +140,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         {
             NotifyViewStatePropertiesChanged();
             RecalculateImageLayout();
-            RecalculateOverlayLayout();
+            RecalculateOverlays();
             ViewStateChanged?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -144,7 +151,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         {
             NotifyViewStatePropertiesChanged();
             RecalculateImageLayout();
-            RecalculateOverlayLayout();
+            RecalculateOverlays();
             ViewStateChanged?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -154,6 +161,8 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         _isVisible = false;
         _viewportState.UpdateViewport(0d, 0d);
         _overlayState.Clear();
+        _regionOverlayState.Clear();
+        RegionOverlays.Clear();
         _spriteFocusCanvasWidth = 1d;
         _spriteFocusCanvasHeight = 1d;
         CanvasWidth = 1d;
@@ -174,7 +183,9 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         SpriteFocusPreviewTitleText = string.Empty;
         SpriteFocusPreviewSizeText = string.Empty;
         OverlayLabelText = string.Empty;
+        RegionOverlayBadgeText = string.Empty;
         ClearOverlayLayout();
+        NotifyRegionOverlayVisibilityChanged();
         NotifyVisibilityChanged();
     }
 
@@ -192,7 +203,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
 
         _overlayState.Apply(overlayDisplayState);
         OverlayLabelText = _overlayState.LabelText;
-        RecalculateOverlayLayout();
+        RecalculateOverlays();
     }
 
     private void ApplyFocusPreviewDisplayState(SpriteFocusPreviewDisplayState? focusPreviewDisplayState)
@@ -210,6 +221,13 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         InfoBadgePrimaryText = infoDisplayState?.PrimaryText ?? string.Empty;
         InfoBadgeSecondaryText = infoDisplayState?.SecondaryText ?? string.Empty;
         InfoBadgeDetailText = infoDisplayState?.DetailText ?? string.Empty;
+    }
+
+    private void ApplyRegionOverlayDisplayState(ImageRegionOverlayDisplayState? regionOverlayDisplayState)
+    {
+        _regionOverlayState.Apply(regionOverlayDisplayState);
+        RegionOverlayBadgeText = _regionOverlayState.BadgeText;
+        RecalculateRegionOverlayLayout();
     }
 
     private void ClearOverlayLayout()
@@ -270,12 +288,31 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         NotifyOverlayVisibilityChanged();
     }
 
+    private void RecalculateOverlays()
+    {
+        RecalculateOverlayLayout();
+        RecalculateRegionOverlayLayout();
+    }
+
+    private void RecalculateRegionOverlayLayout()
+    {
+        RegionOverlays.Clear();
+        foreach (var overlay in _regionOverlayState.CalculateLayouts(_viewportState))
+        {
+            RegionOverlays.Add(overlay);
+        }
+
+        OnPropertyChanged(nameof(RegionOverlays));
+        NotifyRegionOverlayVisibilityChanged();
+    }
+
     private void NotifyVisibilityChanged()
     {
         OnPropertyChanged(nameof(Visibility));
         OnPropertyChanged(nameof(ControlsVisibility));
         OnPropertyChanged(nameof(SpriteFocusPreviewVisibility));
         NotifyInfoBadgeVisibilityChanged();
+        NotifyRegionOverlayVisibilityChanged();
         DisplayOptions.UpdateImageState(
             Visibility == Visibility.Visible,
             SpriteFocusPreviewVisibility == Visibility.Visible);
@@ -356,6 +393,12 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         OnPropertyChanged(nameof(BorderVisibility));
     }
 
+    private void NotifyRegionOverlayVisibilityChanged()
+    {
+        OnPropertyChanged(nameof(RegionOverlayVisibility));
+        OnPropertyChanged(nameof(RegionOverlayBadgeVisibility));
+    }
+
     private void NotifyInfoBadgeVisibilityChanged()
     {
         OnPropertyChanged(nameof(InfoBadgeVisibility));
@@ -379,8 +422,9 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         }
 
         RecalculateImageLayout();
-        RecalculateOverlayLayout();
+        RecalculateOverlays();
         NotifyInfoBadgeVisibilityChanged();
+        NotifyRegionOverlayVisibilityChanged();
     }
 
     private void NotifyViewStatePropertiesChanged()

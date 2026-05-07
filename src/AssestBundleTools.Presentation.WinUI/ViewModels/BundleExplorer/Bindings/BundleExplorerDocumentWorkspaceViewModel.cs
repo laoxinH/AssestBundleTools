@@ -21,6 +21,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 public sealed class BundleExplorerDocumentWorkspaceViewModel : ObservableObject, IBundleExplorerDocumentWorkspaceHost
 {
     private readonly ObservableCollection<AssetDocumentTabViewModel> _emptyAssetTabs = [];
+    private readonly ObservableCollection<SpineAssetGroupDocumentTabViewModel> _emptySpineGroupTabs = [];
     private BundleDocumentTabViewModel? _activeBundleTab;
     private int _assetDocumentHostSynchronizationDepth;
 
@@ -33,12 +34,22 @@ public sealed class BundleExplorerDocumentWorkspaceViewModel : ObservableObject,
     public ObservableCollection<AssetDocumentTabViewModel> CurrentAssetTabs =>
         ActiveBundleTab?.AssetTabs ?? _emptyAssetTabs;
 
+    public ObservableCollection<SpineAssetGroupDocumentTabViewModel> CurrentSpineGroupTabs =>
+        ActiveBundleTab?.SpineGroupTabs ?? _emptySpineGroupTabs;
+
     public AssetDocumentTabViewModel? ActiveAssetDocumentTab => ActiveBundleTab?.ActiveAssetTab;
+
+    public SpineAssetGroupDocumentTabViewModel? ActiveSpineGroupDocumentTab => ActiveBundleTab?.ActiveSpineGroupTab;
 
     public bool HasAssetDocumentTabs => CurrentAssetTabs.Count > 0;
 
+    public bool HasSpineGroupDocumentTabs => CurrentSpineGroupTabs.Count > 0;
+
     public Visibility AssetDocumentTabStripVisibility =>
-        HasAssetDocumentTabs ? Visibility.Visible : Visibility.Collapsed;
+        ActiveAssetDocumentTab is not null && HasAssetDocumentTabs ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility SpineGroupDocumentTabStripVisibility =>
+        ActiveSpineGroupDocumentTab is not null && HasSpineGroupDocumentTabs ? Visibility.Visible : Visibility.Collapsed;
 
     public bool HasOpenTabs => ActiveBundleTab is not null;
 
@@ -72,6 +83,12 @@ public sealed class BundleExplorerDocumentWorkspaceViewModel : ObservableObject,
     {
         ArgumentNullException.ThrowIfNull(orderedTabs);
         return ActiveBundleTab is not null && ActiveBundleTab.ReorderAssetTabs(orderedTabs);
+    }
+
+    public bool ReorderActiveSpineGroupTabs(IReadOnlyList<SpineAssetGroupDocumentTabViewModel> orderedTabs)
+    {
+        ArgumentNullException.ThrowIfNull(orderedTabs);
+        return ActiveBundleTab is not null && ActiveBundleTab.ReorderSpineGroupTabs(orderedTabs);
     }
 
     /// <summary>
@@ -164,9 +181,13 @@ public sealed class BundleExplorerDocumentWorkspaceViewModel : ObservableObject,
     public void NotifyAssetDocumentHostStateChanged()
     {
         OnPropertyChanged(nameof(CurrentAssetTabs));
+        OnPropertyChanged(nameof(CurrentSpineGroupTabs));
         OnPropertyChanged(nameof(ActiveAssetDocumentTab));
+        OnPropertyChanged(nameof(ActiveSpineGroupDocumentTab));
         OnPropertyChanged(nameof(HasAssetDocumentTabs));
+        OnPropertyChanged(nameof(HasSpineGroupDocumentTabs));
         OnPropertyChanged(nameof(AssetDocumentTabStripVisibility));
+        OnPropertyChanged(nameof(SpineGroupDocumentTabStripVisibility));
         AssetDocumentHostStateChanged?.Invoke(this, EventArgs.Empty);
         NotifyPageStateChanged(BundleExplorerDocumentWorkspacePageStateChange.AssetDocumentHost);
     }

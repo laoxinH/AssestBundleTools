@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls.SpineAtlasPageSelectorView"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewModels="using:AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings"
+    mc:Ignorable="d">
+
+    <Border
+        Padding="10"
+        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+        CornerRadius="10"
+        Visibility="{Binding ViewModel.Visibility, ElementName=Root}">
+        <Grid ColumnSpacing="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock
+                x:Name="AtlasPageSelectorLabelText"
+                VerticalAlignment="Center"
+                Style="{ThemeResource BodyStrongTextBlockStyle}" />
+
+            <ComboBox
+                x:Name="AtlasPageSelectorComboBox"
+                Grid.Column="1"
+                MinWidth="180"
+                HorizontalAlignment="Stretch"
+                ItemsSource="{Binding ViewModel.Options, ElementName=Root}"
+                SelectedItem="{Binding ViewModel.SelectedOption, ElementName=Root, Mode=OneWay}"
+                SelectionChanged="OnAtlasPageSelectorComboBoxSelectionChanged">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:SpineAtlasPageOptionViewModel">
+                        <TextBlock Text="{x:Bind DisplayName, Mode=OneTime}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </Grid>
+    </Border>
+</UserControl>

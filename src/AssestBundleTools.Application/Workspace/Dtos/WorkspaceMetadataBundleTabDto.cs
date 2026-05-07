@@ -17,4 +17,7 @@ public sealed record WorkspaceMetadataBundleTabDto(
     bool ShowModifiedOnly,
     bool ShowPreviewableOnly,
     IReadOnlyList<WorkspaceMetadataAssetTabDto>? OpenAssetTabs = null,
-    string? ActiveAssetTabId = null);
+    string? ActiveAssetTabId = null,
+    string? AssetListViewMode = null,
+    IReadOnlyList<WorkspaceMetadataSpineGroupTabDto>? OpenSpineGroupTabs = null,
+    string? ActiveSpineGroupTabId = null);

@@ -131,36 +131,55 @@
             <StackPanel
                 Grid.Column="0"
                 Orientation="Horizontal"
-                Spacing="6">
-                <ComboBox
-                    x:Name="FilterComboBox"
-                    ItemsSource="{x:Bind ViewModel.AssetTypeOptions, Mode=OneWay}"
-                    SelectedItem="{x:Bind ViewModel.SelectedAssetTypeOption, Mode=TwoWay}"
-                    SelectionChanged="OnFilterSelectionChanged"
-                    Style="{StaticResource AssetPaneFilterComboBoxStyle}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="viewModels:AssetTypeOptionViewModel">
-                            <TextBlock Text="{x:Bind DisplayText}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-
+                Spacing="8">
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <ToggleButton
-                        x:Name="ModifiedOnlyToggleButton"
-                        Checked="OnModifiedOnlyToggleButtonChecked"
-                        Content="Modified Only"
-                        IsChecked="{x:Bind ViewModel.ShowModifiedOnly, Mode=OneWay}"
-                        Unchecked="OnModifiedOnlyToggleButtonUnchecked"
+                        x:Name="AssetsViewModeToggleButton"
+                        Checked="OnAssetsViewModeToggleButtonChecked"
+                        IsChecked="{x:Bind ViewModel.IsAssetViewMode, Mode=OneWay}"
+                        Unchecked="OnAssetsViewModeToggleButtonUnchecked"
                         Style="{StaticResource CompactSegmentToggleButtonStyle}" />
 
                     <ToggleButton
-                        x:Name="PreviewOnlyToggleButton"
-                        Checked="OnPreviewOnlyToggleButtonChecked"
-                        Content="Preview Only"
-                        IsChecked="{x:Bind ViewModel.ShowPreviewableOnly, Mode=OneWay}"
-                        Unchecked="OnPreviewOnlyToggleButtonUnchecked"
+                        x:Name="SpineGroupsViewModeToggleButton"
+                        Checked="OnSpineGroupsViewModeToggleButtonChecked"
+                        IsChecked="{x:Bind ViewModel.IsSpineGroupViewMode, Mode=OneWay}"
+                        Unchecked="OnSpineGroupsViewModeToggleButtonUnchecked"
                         Style="{StaticResource CompactSegmentToggleButtonStyle}" />
+                </StackPanel>
+
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="6"
+                    Visibility="{x:Bind ViewModel.AssetFilterVisibility, Mode=OneWay}">
+                    <ComboBox
+                        x:Name="FilterComboBox"
+                        ItemsSource="{x:Bind ViewModel.AssetTypeOptions, Mode=OneWay}"
+                        SelectedItem="{x:Bind ViewModel.SelectedAssetTypeOption, Mode=TwoWay}"
+                        SelectionChanged="OnFilterSelectionChanged"
+                        Style="{StaticResource AssetPaneFilterComboBoxStyle}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="viewModels:AssetTypeOptionViewModel">
+                                <TextBlock Text="{x:Bind DisplayText}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <ToggleButton
+                            x:Name="ModifiedOnlyToggleButton"
+                            Checked="OnModifiedOnlyToggleButtonChecked"
+                            IsChecked="{x:Bind ViewModel.ShowModifiedOnly, Mode=OneWay}"
+                            Unchecked="OnModifiedOnlyToggleButtonUnchecked"
+                            Style="{StaticResource CompactSegmentToggleButtonStyle}" />
+
+                        <ToggleButton
+                            x:Name="PreviewOnlyToggleButton"
+                            Checked="OnPreviewOnlyToggleButtonChecked"
+                            IsChecked="{x:Bind ViewModel.ShowPreviewableOnly, Mode=OneWay}"
+                            Unchecked="OnPreviewOnlyToggleButtonUnchecked"
+                            Style="{StaticResource CompactSegmentToggleButtonStyle}" />
+                    </StackPanel>
                 </StackPanel>
             </StackPanel>
 
@@ -255,10 +274,9 @@
                 HorizontalContentAlignment="Stretch"
                 ItemsSource="{x:Bind ViewModel.Items, Mode=OneWay}"
                 ItemContainerStyle="{StaticResource AssetPaneListViewItemStyle}"
-                SelectedItem="{x:Bind ViewModel.SelectedAsset, Mode=TwoWay}"
                 SelectionMode="Extended"
                 SelectionChanged="OnAssetListSelectionChanged"
-                Visibility="{x:Bind ViewModel.ListVisibility, Mode=OneWay}">
+                Visibility="{x:Bind ViewModel.AssetListVisibility, Mode=OneWay}">
                 <!-- 表头放进 ListView.Header，确保它和数据行共享同一内容宽度，
                      避免垂直滚动条出现后，外置表头与数据列产生位移。 -->
                 <ListView.Header>
@@ -378,6 +396,138 @@
                                     Grid.Column="2"
                                     Style="{StaticResource AssetPaneBodyCellTextStyle}"
                                     Text="{x:Bind SizeText}" />
+                                <TextBlock
+                                    Grid.Column="3"
+                                    Style="{StaticResource AssetPaneBodyCellTextStyle}"
+                                    Text="{x:Bind StateText}" />
+                            </Grid>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <ListView
+                x:Name="SpineGroupListView"
+                HorizontalContentAlignment="Stretch"
+                ItemsSource="{x:Bind ViewModel.SpineGroupItems, Mode=OneWay}"
+                ItemContainerStyle="{StaticResource AssetPaneListViewItemStyle}"
+                SelectionMode="Single"
+                SelectionChanged="OnSpineGroupListSelectionChanged"
+                Visibility="{x:Bind ViewModel.SpineGroupListVisibility, Mode=OneWay}">
+                <!-- Spine 组是跨资产聚合入口，首版只展示组成和诊断摘要，不伪装成 Unity 类型。 -->
+                <ListView.Header>
+                    <Grid Padding="4,0,4,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid
+                            Grid.Column="2"
+                            ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2.5*" />
+                                <ColumnDefinition Width="1.2*" />
+                                <ColumnDefinition Width="1.1*" />
+                                <ColumnDefinition Width="1*" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock
+                                x:Name="SpineGroupNameHeaderText"
+                                Style="{StaticResource AssetPaneTableHeaderTextStyle}" />
+                            <TextBlock
+                                x:Name="SpineGroupPartsHeaderText"
+                                Grid.Column="1"
+                                Style="{StaticResource AssetPaneTableHeaderTextStyle}" />
+                            <TextBlock
+                                x:Name="SpineGroupTexturePagesHeaderText"
+                                Grid.Column="2"
+                                Style="{StaticResource AssetPaneTableHeaderTextStyle}" />
+                            <TextBlock
+                                x:Name="SpineGroupStateHeaderText"
+                                Grid.Column="3"
+                                Style="{StaticResource AssetPaneTableHeaderTextStyle}" />
+                        </Grid>
+                    </Grid>
+                </ListView.Header>
+
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:SpineAssetGroupEntryViewModel">
+                        <Grid
+                            Padding="4,4,4,5"
+                            PointerEntered="OnAssetRowPointerEntered"
+                            PointerExited="OnAssetRowPointerExited"
+                            PointerPressed="OnAssetRowPointerPressed"
+                            PointerReleased="OnAssetRowPointerReleased"
+                            PointerCanceled="OnAssetRowPointerCanceled">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border
+                                Grid.ColumnSpan="3"
+                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                CornerRadius="6"
+                                Opacity="{x:Bind SelectionBackgroundOpacity, Mode=OneWay}" />
+
+                            <Border
+                                x:Name="AssetRowHoverOverlay"
+                                Grid.ColumnSpan="3"
+                                Background="#11000000"
+                                CornerRadius="6"
+                                IsHitTestVisible="False"
+                                Opacity="0" />
+
+                            <Border
+                                x:Name="AssetRowPressedOverlay"
+                                Grid.ColumnSpan="3"
+                                Background="#19000000"
+                                CornerRadius="6"
+                                IsHitTestVisible="False"
+                                Opacity="0" />
+
+                            <Border
+                                Width="2"
+                                Margin="0,8,0,8"
+                                HorizontalAlignment="Left"
+                                Background="{ThemeResource TextFillColorPrimaryBrush}"
+                                CornerRadius="1"
+                                Visibility="{x:Bind SelectionIndicatorVisibility, Mode=OneWay}" />
+
+                            <Grid
+                                Grid.Column="2"
+                                ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2.5*" />
+                                    <ColumnDefinition Width="1.2*" />
+                                    <ColumnDefinition Width="1.1*" />
+                                    <ColumnDefinition Width="1*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Spacing="1">
+                                    <TextBlock
+                                        Style="{StaticResource AssetPanePrimaryNameTextStyle}"
+                                        Text="{x:Bind DisplayName}">
+                                        <ToolTipService.ToolTip>
+                                            <controls:ToolTip Content="{x:Bind DisplayNameToolTipText}" />
+                                        </ToolTipService.ToolTip>
+                                    </TextBlock>
+                                    <TextBlock
+                                        Style="{StaticResource AssetPaneSecondaryPathTextStyle}"
+                                        Text="{x:Bind DisplayGroupKey}" />
+                                </StackPanel>
+
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Style="{StaticResource AssetPaneBodyCellTextStyle}"
+                                    Text="{x:Bind PartsText}" />
+                                <TextBlock
+                                    Grid.Column="2"
+                                    Style="{StaticResource AssetPaneBodyCellTextStyle}"
+                                    Text="{x:Bind TexturePagesText}" />
                                 <TextBlock
                                     Grid.Column="3"
                                     Style="{StaticResource AssetPaneBodyCellTextStyle}"

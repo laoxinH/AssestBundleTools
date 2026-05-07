@@ -13,10 +13,11 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 
 public sealed partial class BundleExplorerPage
 {
-    private sealed class AssetEditorWindowCoordinator
+    private sealed partial class AssetEditorWindowCoordinator
     {
         private readonly BundleExplorerPage _owner;
         private readonly List<AssetEditorWindow> _windows = [];
+        private readonly List<SpineAssetGroupEditorWindow> _spineGroupWindows = [];
         private readonly Dictionary<AssetEditorWindow, int> _windowStateIds = [];
         private readonly AssetDocumentOpenConflictActivator _openConflictActivator;
         private readonly AssetEditorWindowStateStore _windowStateStore = new();
@@ -303,6 +304,8 @@ public sealed partial class BundleExplorerPage
 
         public void CloseAll()
         {
+            CloseAllSpineGroupWindows();
+
             foreach (var window in _windows.ToArray())
             {
                 window.Closed -= OnAssetEditorWindowClosed;

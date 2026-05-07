@@ -107,6 +107,7 @@ internal static class AppCompositionRoot
             workspaceDataStoreFactory);
         var loadBundleTreeHandler = new LoadBundleTreeHandler(workspaceSessionRegistry);
         var loadAssetListHandler = new LoadAssetListHandler(workspaceSessionRegistry);
+        var loadSpineAssetGroupsHandler = new LoadSpineAssetGroupsHandler(workspaceSessionRegistry);
         var getAssetDetailsHandler = new GetAssetDetailsHandler(workspaceSessionRegistry);
         var getAssetPreviewHandler = new GetAssetPreviewHandler(
             workspaceSessionRegistry,
@@ -114,6 +115,9 @@ internal static class AppCompositionRoot
             assetBundleDecryptorRegistry,
             assetPreviewGenerator,
             audioPayloadTranscodingService);
+        var loadSpineAssetGroupDetailsHandler = new LoadSpineAssetGroupDetailsHandler(
+            workspaceSessionRegistry,
+            getAssetPreviewHandler);
         var getWorkspaceChangeSummaryHandler = new GetWorkspaceChangeSummaryHandler(workspaceSessionRegistry);
         var getWorkspaceSavePreviewHandler = new GetWorkspaceSavePreviewHandler(workspaceSessionRegistry);
         var saveWorkspaceAsNewBundleHandler = new SaveWorkspaceAsNewBundleHandler(workspaceSessionRegistry);
@@ -150,10 +154,12 @@ internal static class AppCompositionRoot
             processWorkspaceImportsHandler: processWorkspaceImportsHandler,
             removeWorkspaceBundleHandler: removeWorkspaceBundleHandler,
             loadBundleTreeHandler: loadBundleTreeHandler,
-            loadAssetListHandler: loadAssetListHandler);
+            loadAssetListHandler: loadAssetListHandler,
+            loadSpineAssetGroupsHandler: loadSpineAssetGroupsHandler);
         var workspaceAssetInspectionGateway = new WorkspaceAssetInspectionGateway(
             getAssetDetailsHandler: getAssetDetailsHandler,
             getAssetPreviewHandler: getAssetPreviewHandler,
+            loadSpineAssetGroupDetailsHandler: loadSpineAssetGroupDetailsHandler,
             openAssetInPaneHandler: openAssetInPaneHandler);
         var workspaceAssetOperationGateway = new WorkspaceAssetOperationGateway(
             extractAssetHandler: extractAssetHandler,

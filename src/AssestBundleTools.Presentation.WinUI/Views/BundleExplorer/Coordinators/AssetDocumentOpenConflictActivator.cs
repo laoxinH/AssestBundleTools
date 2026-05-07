@@ -44,6 +44,12 @@ internal sealed class AssetDocumentOpenConflictActivator
 
     public async Task HandleMainAssetSelectionChangedAsync()
     {
+        if (_owner.ViewModel.AssetWorkflow.PrimaryPane.ViewMode != AssetPaneViewMode.Assets)
+        {
+            await _owner.ViewModel.HandlePrimaryPaneSelectionChangedAsync();
+            return;
+        }
+
         if (_owner.ViewModel.AssetWorkflow.PrimaryPane.SelectedAsset?.Item is { } selectedAsset &&
             await TryActivateAsync(
                 selectedAsset.BundleId,

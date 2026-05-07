@@ -1,15 +1,14 @@
 using System.Diagnostics.CodeAnalysis;
 using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Editing.Services;
-using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
-using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
@@ -25,19 +24,13 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 /// </remarks>
 public sealed class BundleExplorerViewModel : ObservableObject
 {
-    private readonly IWorkspaceExplorerGateway _workspaceExplorerGateway;
-    private readonly IAppLogService _appLogService;
-    private readonly IAppNotificationService _appNotificationService;
-    private readonly ILocalizationService _localizationService;
-    private readonly IWorkspaceContextService _workspaceContextService;
-    private readonly IWorkspaceImportCoordinatorService _workspaceImportCoordinatorService;
-    private readonly IPathNavigationService _pathNavigationService;
-    private readonly BundleExplorerOperationFeedbackBridge _operationFeedbackBridge;
     private readonly BundleExplorerBrowserStateCoordinator _browserStateCoordinator;
     private readonly BundleExplorerBundleTabCoordinator _bundleTabCoordinator;
     private readonly BundleExplorerResolvedAssetNavigationCoordinator _resolvedAssetNavigationCoordinator;
     private readonly BundleExplorerAssetDocumentMoveCoordinator _assetDocumentMoveCoordinator;
     private readonly AssetEditorWindowDraftRestorePlanCoordinator _assetEditorWindowDraftRestorePlanCoordinator;
+    private readonly BundleExplorerWorkspaceImportActionHandler _workspaceImportActionHandler;
+    private readonly BundleExplorerBundleActionHandler _bundleActionHandler;
     private readonly BundleExplorerWorkspaceBindingCoordinator _workspaceBindingCoordinator;
     private readonly BundleExplorerWorkspaceShellViewModel _workspaceShell;
     private readonly BundleExplorerBundlePaneViewModel _bundlePane;
@@ -64,44 +57,44 @@ public sealed class BundleExplorerViewModel : ObservableObject
         IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
         IPathNavigationService pathNavigationService)
     {
-        _workspaceExplorerGateway = workspaceExplorerGateway ?? throw new ArgumentNullException(nameof(workspaceExplorerGateway));
+        ArgumentNullException.ThrowIfNull(workspaceExplorerGateway);
         ArgumentNullException.ThrowIfNull(workspaceAssetInspectionGateway);
         ArgumentNullException.ThrowIfNull(workspaceAssetOperationGateway);
-        _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
-        _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
-        _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
-        _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
-        _workspaceImportCoordinatorService = workspaceImportCoordinatorService ?? throw new ArgumentNullException(nameof(workspaceImportCoordinatorService));
-        _pathNavigationService = pathNavigationService ?? throw new ArgumentNullException(nameof(pathNavigationService));
-        _operationFeedbackBridge = new BundleExplorerOperationFeedbackBridge(
-            _appLogService,
-            _appNotificationService,
-            _localizationService);
+        ArgumentNullException.ThrowIfNull(appLogService);
+        ArgumentNullException.ThrowIfNull(appNotificationService);
+        ArgumentNullException.ThrowIfNull(localizationService);
+        ArgumentNullException.ThrowIfNull(workspaceContextService);
+        ArgumentNullException.ThrowIfNull(workspaceImportCoordinatorService);
+        ArgumentNullException.ThrowIfNull(pathNavigationService);
+        var operationFeedbackBridge = new BundleExplorerOperationFeedbackBridge(
+            appLogService,
+            appNotificationService,
+            localizationService);
         _workspaceShell = new BundleExplorerWorkspaceShellViewModel(
-            _localizationService,
-            _workspaceContextService,
+            localizationService,
+            workspaceContextService,
             assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry)));
         _workspaceShell.PageStateChanged += OnWorkspaceShellPageStateChanged;
-        _bundlePane = new BundleExplorerBundlePaneViewModel(_localizationService);
+        _bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
         _bundlePane.BrowserStateChanged += OnBundlePaneBrowserStateChanged;
         _documentWorkspace = new BundleExplorerDocumentWorkspaceViewModel();
-        _workspaceImportProgress = new WorkspaceImportProgressViewModel(_localizationService);
-        _assetEditorWindowRestorePrompt = new AssetEditorWindowRestorePromptViewModel(_localizationService);
+        _workspaceImportProgress = new WorkspaceImportProgressViewModel(localizationService);
+        _assetEditorWindowRestorePrompt = new AssetEditorWindowRestorePromptViewModel(localizationService);
         _assetEditorWindowDraftRestorePlanCoordinator = new AssetEditorWindowDraftRestorePlanCoordinator(
             assetEditDraftRestorePlanGateway ?? throw new ArgumentNullException(nameof(assetEditDraftRestorePlanGateway)),
-            _workspaceContextService,
+            workspaceContextService,
             _assetEditorWindowRestorePrompt);
         _assetWorkflow = new BundleExplorerAssetWorkflowViewModel(
-            _workspaceExplorerGateway,
+            workspaceExplorerGateway,
             workspaceAssetInspectionGateway,
             workspaceAssetOperationGateway,
-            _appLogService,
-            _appNotificationService,
-            _localizationService,
+            appLogService,
+            appNotificationService,
+            localizationService,
             filePickerService ?? throw new ArgumentNullException(nameof(filePickerService)),
-            _workspaceContextService,
+            workspaceContextService,
             backgroundTaskRunner,
-            _pathNavigationService,
+            pathNavigationService,
             _workspaceShell,
             _bundlePane,
             _documentWorkspace,
@@ -120,9 +113,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
             _documentWorkspace,
             _bundleTabCoordinator,
             _assetWorkflow,
-            _operationFeedbackBridge,
-            _appLogService,
-            _localizationService,
+            operationFeedbackBridge,
+            appLogService,
+            localizationService,
             isBusyProvider: () => IsBusy);
         _assetDocumentMoveCoordinator = new BundleExplorerAssetDocumentMoveCoordinator(
             _workspaceShell,
@@ -130,28 +123,29 @@ public sealed class BundleExplorerViewModel : ObservableObject
             _documentWorkspace,
             _bundleTabCoordinator,
             _assetWorkflow,
-            _operationFeedbackBridge,
-            _appLogService,
-            _localizationService,
+            operationFeedbackBridge,
+            appLogService,
+            localizationService,
             isBusyProvider: () => IsBusy,
             requestWorkspaceBrowserStatePersistence: RequestWorkspaceBrowserStatePersistence);
         _browserStateCoordinator = new BundleExplorerBrowserStateCoordinator(
-            _workspaceContextService,
+            workspaceContextService,
             _bundlePane,
             _documentWorkspace,
             hasWorkspaceProvider: () => _workspaceShell.WorkspaceSummary is not null,
             captureActiveTabStateWithoutPersistence: () => _assetWorkflow.CaptureActiveTabState(requestPersistence: false),
             createAssetDocumentTab: _assetWorkflow.CreateAssetDocumentTab,
             activateBundleTabAsync: tab => _bundleTabCoordinator.SetActiveBundleTabAsync(tab, writeSelectionLog: false),
+            createSpineGroupDocumentTab: _assetWorkflow.CreateSpineGroupDocumentTab,
             captureOpenAssetEditorWindows: () => _captureOpenAssetEditorWindows(),
             restorePendingAssetEditorWindows: snapshots => _assetEditorWindowRestorePrompt.ReplacePendingSnapshots(snapshots),
             capturePendingAssetEditorWindows: () => _assetEditorWindowRestorePrompt.PendingWindows);
         _workspaceBindingCoordinator = new BundleExplorerWorkspaceBindingCoordinator(
-            _workspaceExplorerGateway,
-            _appLogService,
-            _localizationService,
-            _workspaceContextService,
-            _operationFeedbackBridge,
+            workspaceExplorerGateway,
+            appLogService,
+            localizationService,
+            workspaceContextService,
+            operationFeedbackBridge,
             backgroundTaskRunner ?? throw new ArgumentNullException(nameof(backgroundTaskRunner)),
             _workspaceShell,
             _bundlePane,
@@ -161,6 +155,26 @@ public sealed class BundleExplorerViewModel : ObservableObject
             isBusyProvider: () => IsBusy,
             setBusyState: value => IsBusy = value,
             openBundleAsync: _bundleTabCoordinator.OpenBundleAsync);
+        _workspaceImportActionHandler = new BundleExplorerWorkspaceImportActionHandler(
+            workspaceImportCoordinatorService,
+            _workspaceImportProgress,
+            _workspaceBindingCoordinator,
+            hasWorkspaceProvider: () => _workspaceShell.HasWorkspace,
+            isBusyProvider: () => IsBusy,
+            setBusyState: value => IsBusy = value);
+        _bundleActionHandler = new BundleExplorerBundleActionHandler(
+            workspaceExplorerGateway,
+            workspaceContextService,
+            pathNavigationService,
+            appLogService,
+            localizationService,
+            operationFeedbackBridge,
+            hasWorkspaceProvider: () => _workspaceShell.HasWorkspace,
+            isBusyProvider: () => IsBusy,
+            setBusyState: value => IsBusy = value,
+            reloadCurrentWorkspaceAsync: () => _workspaceBindingCoordinator.ReloadCurrentWorkspaceAsync(
+                showLoadedNotification: false,
+                allowBusyReentry: true));
 
         RefreshCommand = new AsyncRelayCommand(
             executeAsync: RefreshAsync,
@@ -214,7 +228,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
         if (workspaceNavigationRequest is not null)
         {
-            await LoadWorkspaceWithImportOverlayAsync(clearExistingLogs: true, workspaceNavigationRequest);
+            await _workspaceImportActionHandler.LoadWorkspaceWithImportOverlayAsync(clearExistingLogs: true, workspaceNavigationRequest);
             return;
         }
 
@@ -252,7 +266,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
 
         if (_workspaceShell.ActiveWorkspaceNavigationRequest is not null)
         {
-            await LoadWorkspaceWithImportOverlayAsync(
+            await _workspaceImportActionHandler.LoadWorkspaceWithImportOverlayAsync(
                 clearExistingLogs: true,
                 _workspaceShell.ActiveWorkspaceNavigationRequest);
             return;
@@ -274,11 +288,28 @@ public sealed class BundleExplorerViewModel : ObservableObject
     public Task ActivateAssetDocumentTabAsync(AssetDocumentTabViewModel? assetTab) =>
         _assetWorkflow.ActivateAssetDocumentTabAsync(assetTab);
 
+    public Task ActivateSpineGroupDocumentTabAsync(SpineAssetGroupDocumentTabViewModel? spineGroupTab) =>
+        _assetWorkflow.ActivateSpineGroupDocumentTabAsync(spineGroupTab);
+
+    public Task SelectActiveSpineGroupAtlasPageAsync(SpineAtlasPageOptionViewModel? atlasPageOption) =>
+        _assetWorkflow.SelectActiveSpineGroupAtlasPageAsync(atlasPageOption);
+
     public Task OpenResolvedAssetAsync(ResolvedAssetNavigationTarget? target) =>
         _resolvedAssetNavigationCoordinator.OpenResolvedAssetAsync(target);
 
     public Task CloseAssetDocumentTabAsync(AssetDocumentTabViewModel? assetTab) =>
         _assetWorkflow.CloseAssetDocumentTabAsync(assetTab);
+
+    public Task CloseSpineGroupDocumentTabAsync(SpineAssetGroupDocumentTabViewModel? spineGroupTab) =>
+        _assetWorkflow.CloseSpineGroupDocumentTabAsync(spineGroupTab);
+
+    public Task<SpineAssetGroupDocumentTabViewModel?> DetachSpineGroupDocumentTabForEditorWindowAsync(
+        SpineAssetGroupDocumentTabViewModel? spineGroupTab) =>
+        _assetWorkflow.DetachSpineGroupDocumentTabForExternalHostAsync(spineGroupTab);
+
+    public Task RestoreDetachedSpineGroupDocumentTabFromEditorWindowAsync(
+        SpineAssetGroupDocumentTabViewModel spineGroupTab) =>
+        _assetWorkflow.RestoreDetachedSpineGroupDocumentTabAsync(spineGroupTab);
 
     /// <summary>
     /// 在当前活动资源包下，仅保留指定资产详情标签。
@@ -358,6 +389,18 @@ public sealed class BundleExplorerViewModel : ObservableObject
         RequestWorkspaceBrowserStatePersistence();
     }
 
+    public void ReorderActiveSpineGroupDocumentTabs(IReadOnlyList<SpineAssetGroupDocumentTabViewModel> orderedTabs)
+    {
+        ArgumentNullException.ThrowIfNull(orderedTabs);
+
+        if (!_documentWorkspace.ReorderActiveSpineGroupTabs(orderedTabs))
+        {
+            return;
+        }
+
+        RequestWorkspaceBrowserStatePersistence();
+    }
+
     public async Task CloseBundleTabAsync(BundleDocumentTabViewModel? tab)
     {
         await _bundleTabCoordinator.CloseBundleTabAsync(tab);
@@ -402,105 +445,22 @@ public sealed class BundleExplorerViewModel : ObservableObject
     /// 资源包导入入口统一交给共享协调服务处理。
     /// 当前阶段只收集来源并记录标准化反馈，为后续真实导入链路预留稳定边界。
     /// </summary>
-    public async Task RequestBundleFileImportAsync(CancellationToken cancellationToken = default)
-    {
-        if (!_workspaceShell.HasWorkspace || IsBusy)
-        {
-            return;
-        }
-
-        await RunWorkspaceImportAsync(
-            importAsync: (progress, token) => _workspaceImportCoordinatorService.RequestBundleFileImportAsync(progress, token),
-            cancellationToken);
-    }
+    public Task RequestBundleFileImportAsync(CancellationToken cancellationToken = default) =>
+        _workspaceImportActionHandler.RequestBundleFileImportAsync(cancellationToken);
 
     /// <summary>
     /// 目录导入与文件导入共用同一套协调链路，避免页面散落各自的导入前置逻辑。
     /// </summary>
-    public async Task RequestBundleDirectoryImportAsync(CancellationToken cancellationToken = default)
-    {
-        if (!_workspaceShell.HasWorkspace || IsBusy)
-        {
-            return;
-        }
+    public Task RequestBundleDirectoryImportAsync(CancellationToken cancellationToken = default) =>
+        _workspaceImportActionHandler.RequestBundleDirectoryImportAsync(cancellationToken);
 
-        await RunWorkspaceImportAsync(
-            importAsync: (progress, token) => _workspaceImportCoordinatorService.RequestBundleDirectoryImportAsync(progress, token),
-            cancellationToken);
-    }
-
-    public async Task RequestDragDropImportAsync(
+    public Task RequestDragDropImportAsync(
         IReadOnlyList<string> droppedPaths,
-        CancellationToken cancellationToken = default)
-    {
-        if (!_workspaceShell.HasWorkspace || IsBusy)
-        {
-            return;
-        }
+        CancellationToken cancellationToken = default) =>
+        _workspaceImportActionHandler.RequestDragDropImportAsync(droppedPaths, cancellationToken);
 
-        await RunWorkspaceImportAsync(
-            importAsync: (progress, token) => _workspaceImportCoordinatorService.RequestDragDropImportAsync(droppedPaths, progress, token),
-            cancellationToken);
-    }
-
-    private async Task RunWorkspaceImportAsync(
-        Func<IProgress<WorkspaceImportProgressDto>, CancellationToken, Task<bool>> importAsync,
-        CancellationToken cancellationToken)
-    {
-        IsBusy = true;
-        _workspaceImportProgress.Start();
-        try
-        {
-            var progress = _workspaceImportProgress.CreateProgressReporter();
-            if (await importAsync(progress, cancellationToken))
-            {
-                await _workspaceBindingCoordinator.ReloadCurrentWorkspaceAsync(
-                    showLoadedNotification: false,
-                    allowBusyReentry: true);
-            }
-        }
-        finally
-        {
-            _workspaceImportProgress.Complete();
-            IsBusy = false;
-        }
-    }
-
-    private async Task LoadWorkspaceWithImportOverlayAsync(
-        bool clearExistingLogs,
-        WorkspaceNavigationRequest workspaceNavigationRequest)
-    {
-        _workspaceImportProgress.Start();
-        try
-        {
-            var progress = _workspaceImportProgress.CreateProgressReporter();
-            await _workspaceBindingCoordinator.LoadWorkspaceAsync(
-                clearExistingLogs,
-                workspaceNavigationRequest,
-                progress);
-        }
-        finally
-        {
-            _workspaceImportProgress.Complete();
-        }
-    }
-
-    public void OpenBundleSourceLocation(BundleNodeViewModel bundleNode)
-    {
-        ArgumentNullException.ThrowIfNull(bundleNode);
-
-        if (!_pathNavigationService.TryOpenContainingFolder(bundleNode.SourcePath))
-        {
-            var message = _localizationService.GetFormattedString(
-                ResourceKeys.BundleExplorerNotificationBundleOpenLocationFailed,
-                bundleNode.DisplayName);
-            _appLogService.AppendWarning(message);
-            _operationFeedbackBridge.ShowOperationNotification(
-                GetString(ResourceKeys.AppNotificationWarningTitle),
-                message,
-                AppNotificationSeverity.Warning);
-        }
-    }
+    public void OpenBundleSourceLocation(BundleNodeViewModel bundleNode) =>
+        _bundleActionHandler.OpenBundleSourceLocation(bundleNode);
 
     /// <summary>
     /// 预览文件定位属于当前详情标签页的通用预览动作。
@@ -508,53 +468,8 @@ public sealed class BundleExplorerViewModel : ObservableObject
     /// </summary>
     public void OpenCurrentPreviewLocation() => _assetWorkflow.OpenCurrentPreviewLocation();
 
-    public async Task RemoveBundleFromWorkspaceAsync(BundleNodeViewModel bundleNode)
-    {
-        ArgumentNullException.ThrowIfNull(bundleNode);
-
-        if (IsBusy ||
-            !_workspaceShell.HasWorkspace ||
-            !_workspaceContextService.TryGetCurrentWorkspaceEntry(out var workspaceEntry) ||
-            workspaceEntry is null)
-        {
-            return;
-        }
-
-        IsBusy = true;
-        try
-        {
-            var result = await _workspaceExplorerGateway.RemoveWorkspaceBundleAsync(
-                new RemoveWorkspaceBundleCommand(
-                    WorkspaceKey: workspaceEntry.WorkspaceKey,
-                    WorkspaceDataRootPath: workspaceEntry.WorkspaceDataRootPath,
-                    BundleId: bundleNode.BundleId,
-                    BundleSourcePath: bundleNode.SourcePath));
-
-            if (!_operationFeedbackBridge.TryGetValue(result, out _))
-            {
-                return;
-            }
-
-            _appLogService.AppendInfo(_localizationService.GetFormattedString(
-                ResourceKeys.BundleExplorerLogBundleRemoved,
-                bundleNode.DisplayName));
-
-            _operationFeedbackBridge.ShowOperationNotification(
-                GetString(ResourceKeys.AppNotificationSuccessTitle),
-                _localizationService.GetFormattedString(
-                    ResourceKeys.BundleExplorerNotificationBundleRemoved,
-                    bundleNode.DisplayName),
-                AppNotificationSeverity.Success);
-
-            await _workspaceBindingCoordinator.ReloadCurrentWorkspaceAsync(
-                showLoadedNotification: false,
-                allowBusyReentry: true);
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
+    public Task RemoveBundleFromWorkspaceAsync(BundleNodeViewModel bundleNode) =>
+        _bundleActionHandler.RemoveBundleFromWorkspaceAsync(bundleNode);
 
     public Task ExtractSelectedAssetAsync() => _assetWorkflow.ExtractSelectedAssetAsync();
 
@@ -599,8 +514,6 @@ public sealed class BundleExplorerViewModel : ObservableObject
     {
         RequestWorkspaceBrowserStatePersistence();
     }
-
-    private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
 
     private void NotifyCommandStates()
     {

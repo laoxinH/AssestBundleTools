@@ -22,6 +22,28 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
 {
     [Fact]
+    public async Task HandlePrimaryPaneSelectionChangedAsync_ShouldOnlyCaptureState_WhenPaneShowsSpineGroups()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-ui");
+        var assetId = new AssetId("asset-button");
+        var context = CreateCoordinatorContext(workspaceId, "SpinePaneSelection");
+        var coordinator = CreateCoordinator(context, new TestWorkspaceAssetInspectionGateway());
+        var entry = CreateAssetListEntry(bundleId, assetId);
+        context.PrimaryPane.ReplaceItems("ui.ab", [entry], "empty");
+        context.PrimaryPane.UpdateSelection([entry], entry);
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.SpineGroups;
+        var captureCount = 0;
+
+        await coordinator.HandlePrimaryPaneSelectionChangedAsync(
+            isSynchronizingPrimaryPaneState: false,
+            captureActiveTabState: () => captureCount++);
+
+        Assert.Equal(1, captureCount);
+        Assert.Empty(context.BundleTab.AssetTabs);
+    }
+
+    [Fact]
     public async Task LoadAssetDocumentTabAsync_ShouldUseBackgroundRunner_ForOpenAndDetailsQueries()
     {
         var workspaceId = WorkspaceId.New();
@@ -392,6 +414,24 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
             [
                 new AssetPreviewMeshTriangleDto(0, 1, 2, 0)
             ]);
+    }
+
+    private static AssetListEntryViewModel CreateAssetListEntry(BundleId bundleId, AssetId assetId)
+    {
+        return new AssetListEntryViewModel(
+            new AssetListItemDto(
+                assetId,
+                bundleId,
+                "Button",
+                "Assets/Button.png",
+                AssetType.Texture2D,
+                SizeInBytes: 128,
+                PreferredDisplaySizeInBytes: null,
+                HasPreview: true,
+                IsModified: false),
+            "Texture2D",
+            "128 B",
+            "Original");
     }
 
     private static ImageSource CreateImageSourceStub()

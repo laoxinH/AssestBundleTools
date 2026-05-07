@@ -19,6 +19,7 @@ public sealed class WorkspaceExplorerGateway : IWorkspaceExplorerGateway
     private readonly RemoveWorkspaceBundleHandler _removeWorkspaceBundleHandler;
     private readonly LoadBundleTreeHandler _loadBundleTreeHandler;
     private readonly LoadAssetListHandler _loadAssetListHandler;
+    private readonly LoadSpineAssetGroupsHandler _loadSpineAssetGroupsHandler;
 
     public WorkspaceExplorerGateway(
         OpenWorkspaceHandler openWorkspaceHandler,
@@ -26,7 +27,8 @@ public sealed class WorkspaceExplorerGateway : IWorkspaceExplorerGateway
         ProcessWorkspaceImportsHandler processWorkspaceImportsHandler,
         RemoveWorkspaceBundleHandler removeWorkspaceBundleHandler,
         LoadBundleTreeHandler loadBundleTreeHandler,
-        LoadAssetListHandler loadAssetListHandler)
+        LoadAssetListHandler loadAssetListHandler,
+        LoadSpineAssetGroupsHandler loadSpineAssetGroupsHandler)
     {
         _openWorkspaceHandler = openWorkspaceHandler ?? throw new ArgumentNullException(nameof(openWorkspaceHandler));
         _registerWorkspaceImportHandler = registerWorkspaceImportHandler ?? throw new ArgumentNullException(nameof(registerWorkspaceImportHandler));
@@ -34,6 +36,7 @@ public sealed class WorkspaceExplorerGateway : IWorkspaceExplorerGateway
         _removeWorkspaceBundleHandler = removeWorkspaceBundleHandler ?? throw new ArgumentNullException(nameof(removeWorkspaceBundleHandler));
         _loadBundleTreeHandler = loadBundleTreeHandler ?? throw new ArgumentNullException(nameof(loadBundleTreeHandler));
         _loadAssetListHandler = loadAssetListHandler ?? throw new ArgumentNullException(nameof(loadAssetListHandler));
+        _loadSpineAssetGroupsHandler = loadSpineAssetGroupsHandler ?? throw new ArgumentNullException(nameof(loadSpineAssetGroupsHandler));
     }
 
     public Task<Result<WorkspaceSummaryDto>> OpenWorkspaceAsync(
@@ -65,4 +68,9 @@ public sealed class WorkspaceExplorerGateway : IWorkspaceExplorerGateway
         LoadAssetListQuery query,
         CancellationToken cancellationToken = default) =>
         _loadAssetListHandler.HandleAsync(query, cancellationToken);
+
+    public Task<Result<SpineAssetGroupListResultDto>> LoadSpineAssetGroupsAsync(
+        LoadSpineAssetGroupsQuery query,
+        CancellationToken cancellationToken = default) =>
+        _loadSpineAssetGroupsHandler.HandleAsync(query, cancellationToken);
 }

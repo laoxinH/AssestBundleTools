@@ -43,9 +43,12 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     {
         _informationCardPresenter = new InspectorInformationCardPresenter(informationTextSet);
         Preview = new InspectorPreviewViewModel();
+        SpineAtlasPageSelector = new SpineAtlasPageSelectorViewModel();
     }
 
     public InspectorPreviewViewModel Preview { get; }
+
+    public SpineAtlasPageSelectorViewModel SpineAtlasPageSelector { get; }
 
     public string EmptyStateText
     {
@@ -269,6 +272,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         ReferencedByDependencies.Clear();
         DependencyClosureItems.Clear();
         BundleExternalDependencies.Clear();
+        SpineAtlasPageSelector.Clear();
         Preview.ResetState();
         NotifyDependencyStateChanged();
         HasSelection = false;
@@ -322,6 +326,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         ReplaceCollection(ReferencedByDependencies, referencedByDependencies);
         ReplaceCollection(DependencyClosureItems, dependencyClosureItems);
         ReplaceCollection(BundleExternalDependencies, bundleExternalDependencies);
+        SpineAtlasPageSelector.Clear();
 
         NotifyDependencyStateChanged();
         HasSelection = true;

@@ -87,6 +87,52 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
     }
 
     [Fact]
+    public void PersistWorkspaceBrowserStateNow_ShouldIncludeAssetPaneViewMode()
+    {
+        var context = CreateContext();
+        context.BundleTab.RestoreViewState(
+            searchKeyword: "hero",
+            selectedAssetTypeFilterKey: null,
+            selectedAssetId: null,
+            showModifiedOnly: false,
+            showPreviewableOnly: false,
+            assetPaneViewMode: "SpineGroups");
+
+        context.Coordinator.PersistWorkspaceBrowserStateNow();
+
+        var bundleTabState = Assert.Single(context.WorkspaceContextService.CurrentBrowserState!.OpenBundleTabs);
+        Assert.Equal("SpineGroups", bundleTabState.AssetListViewMode);
+    }
+
+    [Fact]
+    public void PersistWorkspaceBrowserStateNow_ShouldIncludeSpineGroupDocumentTabs()
+    {
+        var context = CreateContext();
+        var spineGroupTab = CreateSpineGroupTab(
+            new BundleId("bundle-ui"),
+            "spine-group:bundle-ui:hero",
+            "Hero Spine",
+            context.LocalizationService);
+        context.BundleTab.AddSpineGroupTab(spineGroupTab, activate: true);
+        context.BundleTab.RestoreViewState(
+            searchKeyword: "hero",
+            selectedAssetTypeFilterKey: null,
+            selectedAssetId: null,
+            showModifiedOnly: false,
+            showPreviewableOnly: false,
+            assetPaneViewMode: "SpineGroups");
+
+        context.Coordinator.PersistWorkspaceBrowserStateNow();
+
+        var bundleTabState = Assert.Single(context.WorkspaceContextService.CurrentBrowserState!.OpenBundleTabs);
+        var spineGroupTabState = Assert.Single(bundleTabState.OpenSpineGroupTabs!);
+        Assert.Equal("spine-group:bundle-ui:hero", spineGroupTabState.GroupId);
+        Assert.Equal("Hero Spine", spineGroupTabState.DisplayName);
+        Assert.Equal("spine-group:bundle-ui:hero", bundleTabState.ActiveSpineGroupTabId);
+        Assert.Null(bundleTabState.ActiveAssetTabId);
+    }
+
+    [Fact]
     public void PersistWorkspaceBrowserStateNow_ShouldIncludeAssetEditorWindowSnapshots()
     {
         var editorWindows = new[]
@@ -152,7 +198,8 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
                                 "source-v1",
                                 "Text draft"))
                     ],
-                    ActiveAssetTabId: "asset-button")
+                    ActiveAssetTabId: "asset-button",
+                    AssetListViewMode: "SpineGroups")
             ],
             ActiveBundleTabId: "bundle-ui",
             LastBundleId: "bundle-ui",
@@ -163,6 +210,7 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         Assert.True(restored);
         Assert.Equal("Unknown:Shader", context.DocumentWorkspace.ActiveBundleTab!.SelectedAssetTypeFilterKey);
         Assert.Equal(AssetType.Unknown, context.DocumentWorkspace.ActiveBundleTab.SelectedAssetType);
+        Assert.Equal(AssetPaneViewMode.SpineGroups, context.DocumentWorkspace.ActiveBundleTab.AssetPaneViewMode);
         var restoredAssetTab = Assert.Single(context.DocumentWorkspace.ActiveBundleTab!.AssetTabs);
         Assert.True(restoredAssetTab.Inspector.Preview.Image.DisplayOptions.IsSolidBackgroundSelected);
         Assert.True(restoredAssetTab.Inspector.Preview.Image.DisplayOptions.IsSpriteCropResultSelected);
@@ -184,6 +232,56 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         Assert.Equal("text", restoredAssetTab.EditDraftReference?.DraftMode);
         Assert.Equal("source-v1", restoredAssetTab.EditDraftReference?.SourceFingerprint);
         Assert.Equal("Text draft", restoredAssetTab.EditDraftReference?.SourceDescription);
+    }
+
+    [Fact]
+    public async Task TryRestoreWorkspaceBrowserStateAsync_ShouldRestoreSpineGroupDocumentTabs()
+    {
+        var context = CreateContext();
+        context.WorkspaceContextService.CurrentBrowserState = new WorkspaceBrowserStateSnapshotDto(
+            BundleSearchKeyword: string.Empty,
+            AssetSearchKeyword: "hero",
+            AssetTypeFilter: null,
+            ShowModifiedOnly: false,
+            ShowPreviewableOnly: false,
+            OpenBundleTabs:
+            [
+                new WorkspaceMetadataBundleTabDto(
+                    BundleId: "bundle-ui",
+                    LogicalPath: "ui.ab",
+                    IsPreview: false,
+                    SelectedAssetId: null,
+                    SearchKeyword: "hero",
+                    AssetTypeFilter: null,
+                    ShowModifiedOnly: false,
+                    ShowPreviewableOnly: false,
+                    OpenAssetTabs: Array.Empty<WorkspaceMetadataAssetTabDto>(),
+                    ActiveAssetTabId: null,
+                    AssetListViewMode: "SpineGroups",
+                    OpenSpineGroupTabs:
+                    [
+                        new WorkspaceMetadataSpineGroupTabDto(
+                            "spine-group:bundle-ui:hero",
+                            "Hero Spine",
+                            "assets/hero/hero")
+                    ],
+                    ActiveSpineGroupTabId: "spine-group:bundle-ui:hero")
+            ],
+            ActiveBundleTabId: "bundle-ui",
+            LastBundleId: "bundle-ui",
+            LastAssetId: null);
+
+        var restored = await context.Coordinator.TryRestoreWorkspaceBrowserStateAsync();
+
+        Assert.True(restored);
+        var activeBundleTab = context.DocumentWorkspace.ActiveBundleTab!;
+        Assert.Equal(AssetPaneViewMode.SpineGroups, activeBundleTab.AssetPaneViewMode);
+        Assert.Null(activeBundleTab.ActiveAssetTab);
+        var spineGroupTab = Assert.Single(activeBundleTab.SpineGroupTabs);
+        Assert.Same(spineGroupTab, activeBundleTab.ActiveSpineGroupTab);
+        Assert.Equal("spine-group:bundle-ui:hero", spineGroupTab.GroupId);
+        Assert.Equal("Hero Spine", spineGroupTab.DisplayName);
+        Assert.Equal("assets/hero/hero", spineGroupTab.Item.GroupKey);
     }
 
     [Fact]
@@ -271,6 +369,8 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
                 documentWorkspace.SetActiveBundleTab(tab);
                 return Task.CompletedTask;
             },
+            createSpineGroupDocumentTab: group =>
+                CreateSpineGroupTab(group.BundleId, group.GroupId, group.DisplayName, localizationService, group.GroupKey),
             captureOpenAssetEditorWindows: () => openAssetEditorWindows ?? Array.Empty<WorkspaceAssetEditorWindowStateDto>(),
             restorePendingAssetEditorWindows: snapshots => restorePrompt.ReplacePendingSnapshots(snapshots),
             capturePendingAssetEditorWindows: () => restorePrompt.PendingWindows);
@@ -294,6 +394,26 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
             bundleId,
             assetId,
             assetName,
+            InspectorInformationTextSetFactory.Create(localizationService));
+    }
+
+    private static SpineAssetGroupDocumentTabViewModel CreateSpineGroupTab(
+        BundleId bundleId,
+        string groupId,
+        string displayName,
+        TestLocalizationService localizationService,
+        string? groupKey = null)
+    {
+        return new SpineAssetGroupDocumentTabViewModel(
+            new SpineAssetGroupDto(
+                groupId,
+                bundleId,
+                displayName,
+                groupKey ?? groupId,
+                SkeletonAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                AtlasAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                TexturePageAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>()),
             InspectorInformationTextSetFactory.Create(localizationService));
     }
 

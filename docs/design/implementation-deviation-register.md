@@ -185,10 +185,10 @@
 
 ### D-04 `BundleExplorer` 相关 `ViewModel` 仍存在文件规模偏大风险
 
-当前状态（2026-04-29 抽查）：
+当前状态（2026-05-07 抽查）：
 
 - `BundleExplorerAssetWorkflowViewModel.cs`：`273` 行（已由 `1906` 行降至 `273` 行）
-- `BundleExplorerViewModel.cs`：`426` 行（已由 `1258` 行降至 `426` 行）
+- `BundleExplorerViewModel.cs`：约 `511` 行（页面级 facade，已由 `1258` 行降至 `600` 行软上限内；导入动作与资源包节点动作已继续拆入 action handler）
 - `WorkspaceContextService.cs`：`261` 行
 - `App.xaml.cs`：`375` 行
 - `BundleExplorerAssetWorkflowViewModel` 已完成第一轮 `Preview / Modification Action` 协作对象下沉：
@@ -218,7 +218,7 @@
 - `BundleExplorerViewModel` 已继续完成资源包标签导航、激活、关闭与重排编排下沉：
   - `BundleExplorerBundleTabCoordinator`
 - 当前 `BundleExplorerAssetWorkflowViewModel / BundleExplorerViewModel`
-  都已脱离 `800+ / 1000+` 强制拆分区，也都已重新回到常规手写业务类 `200-500` 行目标内；
+  都已脱离 `800+ / 1000+` 强制拆分区；其中资产工作流已回到常规手写业务类目标区间，页面门面仍应按 `600` 行软上限继续防回灌；
 - 当前 D-04 的主体偏差已收口，剩余关注点转为防止页面主类、页面代码和资产级命令逻辑再次回灌。
 
 与规范冲突点：
@@ -244,8 +244,8 @@
   - `Asset Command Coordination`
 - `BundleExplorerAssetPaneCoordinator` 已把主资产窗格的加载/刷新职责从资产工作流主类中收走；
 - 当前资产工作流主类也已继续把共享失败反馈统一回收到 `BundleExplorerOperationFeedbackBridge`，并把提取/替换/撤销入口的共同前置条件与页面动作编排收口到共享命令协调器；
-- `BundleExplorerViewModel` 已完成“工作区恢复/浏览状态持久化节流”“页面级结果反馈与通知桥接”“工作区绑定/恢复编排”“资源包标签导航/关闭/激活”以及“旧页面兼容面压缩”五类职责下沉/收缩；
-- `BundleExplorerAssetWorkflowViewModel` 当前约 `273` 行，`BundleExplorerViewModel` 当前约 `426` 行；两者都已回到常规手写业务类体量区间。后续继续推进 D-04，更适合把焦点转到
+- `BundleExplorerViewModel` 已完成“工作区恢复/浏览状态持久化节流”“页面级结果反馈与通知桥接”“工作区绑定/恢复编排”“资源包标签导航/关闭/激活”“导入动作/资源包节点动作”以及“旧页面兼容面压缩”等职责下沉/收缩；
+- `BundleExplorerAssetWorkflowViewModel` 当前约 `273` 行，`BundleExplorerViewModel` 当前约 `511` 行；前者已回到常规手写业务类体量区间，后者作为页面级 facade 低于 `600` 行软上限。后续继续推进 D-04，更适合把焦点转到
   - 防止新的页面级反馈/浏览逻辑回灌回 `BundleExplorerAssetWorkflowViewModel / BundleExplorerViewModel`
   - 新增资产级命令时继续优先落到 `BundleExplorerAssetCommandCoordinator` 或新的窄协作对象
   - 维持页面内共享状态宿主稳定，不重新长出父级兼容透传层

@@ -1574,6 +1574,36 @@
                         </TabView.TabItemTemplate>
                     </TabView>
 
+                    <TabView
+                        x:Name="SpineGroupDocumentTabView"
+                        Grid.Row="1"
+                        Margin="-2,-2,-2,0"
+                        CanReorderTabs="True"
+                        IsAddTabButtonVisible="False"
+                        SelectedItem="{x:Bind ViewModel.DocumentWorkspace.ActiveSpineGroupDocumentTab, Mode=OneWay}"
+                        TabDragCompleted="OnSpineGroupDocumentTabViewTabDragCompleted"
+                        TabCloseRequested="OnSpineGroupDocumentTabViewTabCloseRequested"
+                        TabItemsSource="{x:Bind ViewModel.DocumentWorkspace.CurrentSpineGroupTabs, Mode=OneWay}"
+                        SelectionChanged="OnSpineGroupDocumentTabViewSelectionChanged"
+                        Visibility="{x:Bind ViewModel.DocumentWorkspace.SpineGroupDocumentTabStripVisibility, Mode=OneWay}">
+                        <TabView.TabItemTemplate>
+                            <DataTemplate x:DataType="viewModels:SpineAssetGroupDocumentTabViewModel">
+                                <TabViewItem
+                                    Header="{x:Bind DisplayName}"
+                                    ToolTipService.ToolTip="{x:Bind ToolTipText}">
+                                    <TabViewItem.ContextFlyout>
+                                        <MenuFlyout Opening="OnSpineGroupDocumentTabContextFlyoutOpening">
+                                            <MenuFlyoutItem
+                                                x:Name="OpenSpineGroupDocumentInNewWindowMenuItem"
+                                                Click="OnOpenSpineGroupDocumentInNewWindowMenuItemClick"
+                                                Tag="{Binding}" />
+                                        </MenuFlyout>
+                                    </TabViewItem.ContextFlyout>
+                                </TabViewItem>
+                            </DataTemplate>
+                        </TabView.TabItemTemplate>
+                    </TabView>
+
                     <controls:InspectorPanelView
                         Grid.Row="2"
                         ExtractRequested="OnInspectorExtractRequested"
@@ -1583,6 +1613,7 @@
                         SelectReplacementSourceRequested="OnInspectorSelectReplacementSourceRequested"
                         ApplyReplacementRequested="OnInspectorApplyReplacementRequested"
                         UndoReplacementRequested="OnInspectorUndoReplacementRequested"
+                        SpineAtlasPageSelectionRequested="OnInspectorSpineAtlasPageSelectionRequested"
                         ViewModel="{x:Bind ViewModel.AssetWorkflow.Inspector, Mode=OneWay}" />
                 </Grid>
             </Border>

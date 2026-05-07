@@ -33,6 +33,7 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
     private readonly AssetPaneViewModel _primaryPane;
     private readonly BundleExplorerAssetDocumentHostCoordinator _assetDocumentHostCoordinator;
     private readonly BundleExplorerAssetPreviewLoadCoordinator _assetPreviewLoadCoordinator;
+    private readonly BundleExplorerAssetDocumentTabLifecycleCoordinator _assetDocumentTabLifecycleCoordinator;
     private readonly Func<bool> _isBusyProvider;
     private readonly Action _requestWorkspaceBrowserStatePersistence;
     private readonly Action _notifyActionStates;
@@ -76,6 +77,13 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
             _assetPreviewCoordinator,
             () => _documentWorkspace.ActiveAssetDocumentTab,
             _formatFirstErrorMessage);
+        _assetDocumentTabLifecycleCoordinator = new BundleExplorerAssetDocumentTabLifecycleCoordinator(
+            _documentWorkspace,
+            _primaryPane,
+            _assetDocumentHostCoordinator,
+            SetActiveAssetDocumentTabAsync,
+            _requestWorkspaceBrowserStatePersistence,
+            _notifyActionStates);
     }
 
     public bool IsSynchronizingAssetDocumentState => _assetDocumentStateSynchronizationDepth > 0;
@@ -90,6 +98,12 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         }
 
         if (IsSynchronizingAssetDocumentState)
+        {
+            captureActiveTabState();
+            return;
+        }
+
+        if (_primaryPane.ViewMode != AssetPaneViewMode.Assets)
         {
             captureActiveTabState();
             return;
@@ -128,6 +142,7 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
             // 只有当资源仍在当前列表里可见时，才回写列表选中态。
             // 若该资源已被筛选隐藏，则保持详情标签独立存在。
             var shouldSynchronizePaneSelection =
+                _primaryPane.IsAssetViewMode &&
                 _primaryPane.Items.Any(item => item.Item.AssetId.Equals(preferredAssetTab.AssetId)) &&
                 (_primaryPane.SelectedAsset is null ||
                  !_primaryPane.SelectedAsset.Item.AssetId.Equals(preferredAssetTab.AssetId));
@@ -136,6 +151,12 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
                 preferredAssetTab,
                 synchronizePaneSelection: shouldSynchronizePaneSelection,
                 writeLog: writeLog);
+            return;
+        }
+
+        if (_primaryPane.ViewMode != AssetPaneViewMode.Assets)
+        {
+            _assetDocumentHostCoordinator.ClearCurrentInspectorHostState(clearAssetTabs: false);
             return;
         }
 
@@ -165,186 +186,33 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
             writeLog: false);
     }
 
-    public async Task CloseAssetDocumentTabAsync(AssetDocumentTabViewModel? assetTab)
-    {
-        if (assetTab is null || _documentWorkspace.ActiveBundleTab is null)
-        {
-            return;
-        }
-
-        var ownerTab = _documentWorkspace.ActiveBundleTab;
-        var removedIndex = ownerTab.AssetTabs.IndexOf(assetTab);
-        if (removedIndex < 0)
-        {
-            return;
-        }
-
-        var wasActive = ReferenceEquals(ownerTab.ActiveAssetTab, assetTab);
-        ownerTab.RemoveAssetTab(assetTab);
-
-        if (!wasActive)
-        {
-            _documentWorkspace.NotifyAssetDocumentHostStateChanged();
-            _requestWorkspaceBrowserStatePersistence();
-            _notifyActionStates();
-            return;
-        }
-
-        if (ownerTab.ActiveAssetTab is not null)
-        {
-            await SetActiveAssetDocumentTabAsync(
-                ownerTab,
-                ownerTab.ActiveAssetTab,
-                synchronizePaneSelection: true,
-                writeLog: false);
-            return;
-        }
-
-        _primaryPane.ClearSelection();
-        _documentWorkspace.NotifyAssetDocumentHostStateChanged();
-        _requestWorkspaceBrowserStatePersistence();
-        _notifyActionStates();
-    }
+    public Task CloseAssetDocumentTabAsync(AssetDocumentTabViewModel? assetTab) =>
+        _assetDocumentTabLifecycleCoordinator.CloseAssetDocumentTabAsync(assetTab);
 
     /// <summary>
     /// 在当前活动资源包下，仅保留指定资产详情标签。
     /// 这样可以快速收拢右侧详情区，同时保留用户明确选中的目标上下文。
     /// </summary>
-    public async Task CloseOtherAssetDocumentTabsAsync(AssetDocumentTabViewModel? assetTab)
-    {
-        if (assetTab is null || _documentWorkspace.ActiveBundleTab is null)
-        {
-            return;
-        }
-
-        var ownerTab = _documentWorkspace.ActiveBundleTab;
-        if (!ownerTab.AssetTabs.Contains(assetTab))
-        {
-            return;
-        }
-
-        if (ownerTab.AssetTabs.Count <= 1)
-        {
-            if (!ReferenceEquals(ownerTab.ActiveAssetTab, assetTab))
-            {
-                await SetActiveAssetDocumentTabAsync(
-                    ownerTab,
-                    assetTab,
-                    synchronizePaneSelection: true,
-                    writeLog: false);
-            }
-
-            return;
-        }
-
-        var tabsToRemove = ownerTab.AssetTabs
-            .Where(openedTab => !ReferenceEquals(openedTab, assetTab))
-            .ToArray();
-
-        foreach (var tabToRemove in tabsToRemove)
-        {
-            ownerTab.RemoveAssetTab(tabToRemove);
-        }
-
-        if (!ReferenceEquals(ownerTab.ActiveAssetTab, assetTab))
-        {
-            await SetActiveAssetDocumentTabAsync(
-                ownerTab,
-                assetTab,
-                synchronizePaneSelection: true,
-                writeLog: false);
-            return;
-        }
-
-        _documentWorkspace.NotifyAssetDocumentHostStateChanged();
-        _requestWorkspaceBrowserStatePersistence();
-        _notifyActionStates();
-    }
+    public Task CloseOtherAssetDocumentTabsAsync(AssetDocumentTabViewModel? assetTab) =>
+        _assetDocumentTabLifecycleCoordinator.CloseOtherAssetDocumentTabsAsync(assetTab);
 
     /// <summary>
     /// 清空当前资源包下所有已打开的资产详情标签。
     /// 关闭后同时清空列表焦点，避免旧选中项立刻把详情标签重新打开。
     /// </summary>
-    public Task CloseAllAssetDocumentTabsAsync()
-    {
-        if (_documentWorkspace.ActiveBundleTab is null || _documentWorkspace.ActiveBundleTab.AssetTabs.Count == 0)
-        {
-            return Task.CompletedTask;
-        }
-
-        _assetDocumentHostCoordinator.ClearCurrentInspectorHostState(clearAssetTabs: true);
-        _primaryPane.ClearSelection();
-        _requestWorkspaceBrowserStatePersistence();
-        return Task.CompletedTask;
-    }
+    public Task CloseAllAssetDocumentTabsAsync() =>
+        _assetDocumentTabLifecycleCoordinator.CloseAllAssetDocumentTabsAsync();
 
     /// <summary>
     /// 将资产文档标签从主窗口当前资源包标签组移出，供独立资源编辑窗口接管。
     /// 该流程只移动页面级标签状态，不关闭资产 Pane，也不取消被移动标签已有的预览状态。
     /// </summary>
-    public async Task<AssetDocumentTabViewModel?> DetachAssetDocumentTabForExternalHostAsync(
-        AssetDocumentTabViewModel? assetTab)
-    {
-        if (assetTab is null || _documentWorkspace.ActiveBundleTab is null)
-        {
-            return null;
-        }
+    public Task<AssetDocumentTabViewModel?> DetachAssetDocumentTabForExternalHostAsync(
+        AssetDocumentTabViewModel? assetTab) =>
+        _assetDocumentTabLifecycleCoordinator.DetachAssetDocumentTabForExternalHostAsync(assetTab);
 
-        var ownerTab = _documentWorkspace.ActiveBundleTab;
-        if (!ownerTab.AssetTabs.Contains(assetTab))
-        {
-            return null;
-        }
-
-        var wasActive = ReferenceEquals(ownerTab.ActiveAssetTab, assetTab);
-        if (!ownerTab.DetachAssetTab(assetTab))
-        {
-            return null;
-        }
-
-        if (!wasActive)
-        {
-            _documentWorkspace.NotifyAssetDocumentHostStateChanged();
-            _requestWorkspaceBrowserStatePersistence();
-            _notifyActionStates();
-            return assetTab;
-        }
-
-        if (ownerTab.ActiveAssetTab is not null)
-        {
-            await SetActiveAssetDocumentTabAsync(
-                ownerTab,
-                ownerTab.ActiveAssetTab,
-                synchronizePaneSelection: true,
-                writeLog: false);
-            return assetTab;
-        }
-
-        _primaryPane.ClearSelection();
-        _documentWorkspace.NotifyAssetDocumentHostStateChanged();
-        _requestWorkspaceBrowserStatePersistence();
-        _notifyActionStates();
-        return assetTab;
-    }
-
-    public Task<AssetDocumentGroupTransfer?> DetachActiveAssetDocumentGroupForExternalHostAsync()
-    {
-        if (_documentWorkspace.ActiveBundleTab is not { } ownerTab)
-        {
-            return Task.FromResult<AssetDocumentGroupTransfer?>(null);
-        }
-
-        var transfer = ownerTab.DetachAssetTabs();
-        if (transfer is null)
-        {
-            return Task.FromResult<AssetDocumentGroupTransfer?>(null);
-        }
-
-        _documentWorkspace.NotifyAssetDocumentHostStateChanged();
-        _requestWorkspaceBrowserStatePersistence();
-        _notifyActionStates();
-        return Task.FromResult<AssetDocumentGroupTransfer?>(transfer);
-    }
+    public Task<AssetDocumentGroupTransfer?> DetachActiveAssetDocumentGroupForExternalHostAsync() =>
+        _assetDocumentTabLifecycleCoordinator.DetachActiveAssetDocumentGroupForExternalHostAsync();
 
     public void ReapplyAssetDocumentTab(AssetDocumentTabViewModel assetTab, AssetDetailsDto details)
     {
@@ -372,7 +240,7 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
             return bundleTab.ActiveAssetTab;
         }
 
-        if (_primaryPane.SelectedAsset is not null)
+        if (_primaryPane.ViewMode == AssetPaneViewMode.Assets && _primaryPane.SelectedAsset is not null)
         {
             return bundleTab.TryGetAssetTab(_primaryPane.SelectedAsset.Item.AssetId, out var existingAssetTab)
                 ? existingAssetTab

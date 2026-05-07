@@ -49,7 +49,8 @@ public sealed partial class InspectorPanelViewModel
         string? previewPayloadFilePath = null,
         SpritePreviewOverlayDisplayState? spritePreviewOverlayDisplayState = null,
         SpriteFocusPreviewDisplayState? spriteFocusPreviewDisplayState = null,
-        ImagePreviewInfoDisplayState? imagePreviewInfoDisplayState = null)
+        ImagePreviewInfoDisplayState? imagePreviewInfoDisplayState = null,
+        ImageRegionOverlayDisplayState? imageRegionOverlayDisplayState = null)
     {
         Preview.ApplyImagePreview(
             imageSource,
@@ -59,7 +60,8 @@ public sealed partial class InspectorPanelViewModel
             previewPayloadFilePath,
             spritePreviewOverlayDisplayState,
             spriteFocusPreviewDisplayState,
-            imagePreviewInfoDisplayState);
+            imagePreviewInfoDisplayState,
+            imageRegionOverlayDisplayState);
         RebuildInformationCards();
     }
 

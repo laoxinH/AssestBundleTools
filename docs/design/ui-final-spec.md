@@ -134,7 +134,7 @@
 16. 资产列表搜索入口应与左侧资源包搜索保持一致，采用顶部图标按钮展开/收起搜索框的交互，不长期占用垂直空间。
 17. 资产列表顶部不再额外显示“当前 Bundle”文字说明，类型筛选与本地显示筛选统一使用紧凑分段按钮样式，避免与上层标签条视觉重复。
 18. 资产列表表头与数据行必须共享同一列布局并保持左对齐；名称列在截断时需要支持悬浮查看完整名称，整体字号应保持紧凑，优先为同屏显示更多资源信息服务。
-19. `Spine` 不作为 `全部类型` 下拉中的 Unity 资产类型项，也不作为 `仅已修改 / 仅可预览` 同级的布尔筛选。后续检测到可聚合的 Spine 资源时，应在资产列表工具条提供独立的 `资源 / Spine 组` 视图切换；普通资源视图继续展示真实 Unity 资产，Spine 组视图展示由 `.atlas + .skel/.json + Texture2D` 组成的聚合条目。搜索在普通资源视图中匹配资产名，在 Spine 组视图中匹配组名、skeleton、atlas 与 texture page 名；本地显示筛选继续作用于当前视图。
+19. `Spine` 不作为 `全部类型` 下拉中的 Unity 资产类型项，也不作为 `仅已修改 / 仅可预览` 同级的布尔筛选。当前资产列表工具条已提供独立的 `资源 / Spine 组` 视图切换；普通资源视图继续展示真实 Unity 资产、类型筛选和本地显示筛选，Spine 组视图展示由 `.atlas + .skel/.json + Texture2D` 组成的聚合条目摘要。搜索在普通资源视图中匹配资产名，在 Spine 组视图中匹配组名、skeleton、atlas 与 texture page 名；Spine 组选择会在右侧复用现有资源详情窗格打开组文档，组文档使用 `BundleId + GroupId` 或等价身份，并通过 Application 预览管线回填 atlas page / region 数量。
 
 ### 右侧
 
@@ -219,8 +219,8 @@
    - `AnimatorController` 当前自适应摘要预览区只展示资源名、Layer / Parameter、状态 / 转场和引用状态等主要信息，并用紧凑摘要卡片补充参数类型、状态机容器和引用解析情况；Layer、Parameter、`m_Controller` 常量区容器摘要和 `m_AnimationClips` 等 PPtr 引用明细进入下方通用信息卡。若引用 PathId 已被详情依赖图解析到当前工作区资产，信息卡行会复用统一“打开资源”链路；该预览仍属于轻量信息浏览，不做状态机画布、条件表达式编辑或运行时播放模拟。
 6. Spine 资源组预览
    - 面向 2D 游戏常见的 Spine 资源组合，首版目标是 `资源组识别 + Atlas region overlay + 引用跳转 + 结构化诊断`，而不是完整动画播放器。
-   - Spine 资源组属于跨资产聚合视图，不改变单个 `Texture2D / TextAsset` 的基础预览能力，也不伪装成新的 Unity 资产类型。打开资源组后，右侧检查器展示 skeleton、atlas、texture page 的匹配状态、region 数量、动画 / skin / bone / slot 摘要，以及缺失 page、命名不匹配、外部引用未解析等诊断。
-   - Atlas region overlay 应复用现有图片预览和棋盘格底图能力，在可解析 Texture2D page 上叠加 region 矩形与名称；`.skel` 二进制解析和动画播放后置到样本与版本兼容性明确之后。
+   - Spine 资源组属于跨资产聚合视图，不改变单个 `Texture2D / TextAsset` 的基础预览能力，也不伪装成新的 Unity 资产类型。打开资源组后，右侧检查器展示 skeleton、atlas、texture page 的匹配状态、JSON skeleton 的轻量结构计数、当前已解析的 atlas page / region 数量，以及缺失 page、命名不匹配、atlas 预览不可用、外部引用未解析等诊断；更细的动画 / skin / bone / slot 明细应在样本和 skeleton 解析边界明确后再推进。
+   - Atlas region overlay 当前复用现有图片预览和棋盘格底图能力，在可解析 Texture2D page 上叠加 region 矩形；page 到 Texture2D 的匹配由 Application 详情 DTO 提供，Presentation 只通过预览管线加载图片载荷。`.skel` 二进制解析和动画播放后置到样本与版本兼容性明确之后。
 
 补充规则如下：
 

@@ -130,6 +130,10 @@
                                 ResolvedAssetOpenRequested="OnPreviewSurfaceResolvedAssetOpenRequested"
                                 Visibility="{x:Bind DetailsPreviewVisibility, Mode=OneWay}" />
 
+                            <controls:SpineAtlasPageSelectorView
+                                ViewModel="{x:Bind ViewModel.SpineAtlasPageSelector, Mode=OneWay}"
+                                SelectionRequested="OnSpineAtlasPageSelectorSelectionRequested" />
+
                             <StackPanel Spacing="6">
                                 <TextBlock
                                     x:Name="InformationSectionTitleText"

@@ -80,6 +80,8 @@ public sealed partial class InspectorPanelView : UserControl
 
     public event EventHandler<ResolvedAssetOpenRequestedEventArgs>? ResolvedAssetOpenRequested;
 
+    public event EventHandler<SpineAtlasPageSelectionRequestedEventArgs>? SpineAtlasPageSelectionRequested;
+
     private void OnExtractButtonClick(object sender, RoutedEventArgs e)
     {
         ExtractRequested?.Invoke(this, EventArgs.Empty);
@@ -122,6 +124,13 @@ public sealed partial class InspectorPanelView : UserControl
         ResolvedAssetOpenRequestedEventArgs e)
     {
         ResolvedAssetOpenRequested?.Invoke(this, e);
+    }
+
+    private void OnSpineAtlasPageSelectorSelectionRequested(
+        object? sender,
+        SpineAtlasPageSelectionRequestedEventArgs e)
+    {
+        SpineAtlasPageSelectionRequested?.Invoke(this, e);
     }
 
     private void OnResolvedAssetOpenButtonClick(object sender, RoutedEventArgs e)

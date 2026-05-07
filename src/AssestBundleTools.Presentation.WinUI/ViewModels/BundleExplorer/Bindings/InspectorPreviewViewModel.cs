@@ -241,7 +241,8 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         string? previewPayloadFilePath = null,
         SpritePreviewOverlayDisplayState? spritePreviewOverlayDisplayState = null,
         SpriteFocusPreviewDisplayState? spriteFocusPreviewDisplayState = null,
-        ImagePreviewInfoDisplayState? imagePreviewInfoDisplayState = null)
+        ImagePreviewInfoDisplayState? imagePreviewInfoDisplayState = null,
+        ImageRegionOverlayDisplayState? imageRegionOverlayDisplayState = null)
     {
         ArgumentNullException.ThrowIfNull(imageSource);
 
@@ -255,7 +256,8 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
             imagePixelHeight,
             spritePreviewOverlayDisplayState,
             spriteFocusPreviewDisplayState,
-            imagePreviewInfoDisplayState);
+            imagePreviewInfoDisplayState,
+            imageRegionOverlayDisplayState);
         NotifyPreviewStateChanged();
     }
 

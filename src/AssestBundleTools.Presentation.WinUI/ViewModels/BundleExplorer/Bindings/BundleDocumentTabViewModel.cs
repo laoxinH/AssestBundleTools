@@ -21,10 +21,12 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
     private string _searchKeyword = string.Empty;
     private string? _selectedAssetTypeFilterKey;
     private string? _selectedAssetId;
+    private AssetPaneViewMode _assetPaneViewMode;
     private bool _showModifiedOnly;
     private bool _showPreviewableOnly;
     private bool _isPreview;
     private AssetDocumentTabViewModel? _activeAssetTab;
+    private SpineAssetGroupDocumentTabViewModel? _activeSpineGroupTab;
 
     public BundleDocumentTabViewModel(
         BundleId bundleId,
@@ -88,6 +90,12 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         private set => SetProperty(ref _selectedAssetId, value);
     }
 
+    public AssetPaneViewMode AssetPaneViewMode
+    {
+        get => _assetPaneViewMode;
+        private set => SetProperty(ref _assetPaneViewMode, value);
+    }
+
     public bool ShowModifiedOnly
     {
         get => _showModifiedOnly;
@@ -116,10 +124,18 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
     /// </summary>
     public ObservableCollection<AssetDocumentTabViewModel> AssetTabs { get; } = new();
 
+    public ObservableCollection<SpineAssetGroupDocumentTabViewModel> SpineGroupTabs { get; } = new();
+
     public AssetDocumentTabViewModel? ActiveAssetTab
     {
         get => _activeAssetTab;
         private set => SetProperty(ref _activeAssetTab, value);
+    }
+
+    public SpineAssetGroupDocumentTabViewModel? ActiveSpineGroupTab
+    {
+        get => _activeSpineGroupTab;
+        private set => SetProperty(ref _activeSpineGroupTab, value);
     }
 
     public void CaptureFromPane(AssetPaneViewModel pane)
@@ -129,6 +145,7 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         SearchKeyword = pane.SearchKeyword;
         SelectedAssetTypeFilterKey = pane.SelectedAssetTypeFilterKey;
         SelectedAssetId = pane.SelectedAssetId?.Value;
+        AssetPaneViewMode = pane.ViewMode;
         ShowModifiedOnly = pane.ShowModifiedOnly;
         ShowPreviewableOnly = pane.ShowPreviewableOnly;
     }
@@ -142,11 +159,13 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         string? selectedAssetTypeFilterKey,
         string? selectedAssetId,
         bool showModifiedOnly,
-        bool showPreviewableOnly)
+        bool showPreviewableOnly,
+        string? assetPaneViewMode = null)
     {
         SearchKeyword = searchKeyword;
         SelectedAssetTypeFilterKey = selectedAssetTypeFilterKey;
         SelectedAssetId = selectedAssetId;
+        AssetPaneViewMode = AssetPaneViewModePersistence.FromPersistenceKey(assetPaneViewMode);
         ShowModifiedOnly = showModifiedOnly;
         ShowPreviewableOnly = showPreviewableOnly;
     }
@@ -159,7 +178,8 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
             searchKeyword: SearchKeyword,
             selectedAssetTypeFilterKey: SelectedAssetTypeFilterKey,
             showModifiedOnly: ShowModifiedOnly,
-            showPreviewableOnly: ShowPreviewableOnly);
+            showPreviewableOnly: ShowPreviewableOnly,
+            viewMode: AssetPaneViewMode);
     }
 
     /// <summary>
@@ -178,10 +198,12 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         SearchKeyword = string.Empty;
         SelectedAssetTypeFilterKey = null;
         SelectedAssetId = null;
+        AssetPaneViewMode = AssetPaneViewMode.Assets;
         ShowModifiedOnly = false;
         ShowPreviewableOnly = false;
         IsPreview = isPreview;
         ClearAssetTabs();
+        ClearSpineGroupTabs();
     }
 
     public void PromoteToPinnedTab()
@@ -226,6 +248,11 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
 
         var previousActiveAssetTab = ActiveAssetTab;
         ActiveAssetTab = assetTab;
+        if (assetTab is not null)
+        {
+            ActiveSpineGroupTab = null;
+        }
+
         if (!ReferenceEquals(previousActiveAssetTab, ActiveAssetTab))
         {
             previousActiveAssetTab?.CancelPreviewRequest();
@@ -253,6 +280,38 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         }
 
         ActiveAssetTab = activeAssetTab ?? AssetTabs.FirstOrDefault();
+        ActiveSpineGroupTab = null;
+    }
+
+    public void RestoreSpineGroupTabs(
+        IEnumerable<SpineAssetGroupDocumentTabViewModel> spineGroupTabs,
+        string? activeSpineGroupTabId)
+    {
+        ArgumentNullException.ThrowIfNull(spineGroupTabs);
+
+        SpineGroupTabs.Clear();
+
+        SpineAssetGroupDocumentTabViewModel? activeSpineGroupTab = null;
+        foreach (var spineGroupTab in spineGroupTabs)
+        {
+            SpineGroupTabs.Add(spineGroupTab);
+            if (activeSpineGroupTab is null &&
+                string.Equals(spineGroupTab.DocumentId, activeSpineGroupTabId, StringComparison.Ordinal))
+            {
+                activeSpineGroupTab = spineGroupTab;
+            }
+        }
+
+        if (activeSpineGroupTab is null)
+        {
+            ActiveSpineGroupTab = null;
+            return;
+        }
+
+        var previousActiveAssetTab = ActiveAssetTab;
+        ActiveAssetTab = null;
+        previousActiveAssetTab?.CancelPreviewRequest();
+        ActiveSpineGroupTab = activeSpineGroupTab;
     }
 
     /// <summary>
@@ -264,6 +323,88 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(orderedAssetTabs);
 
         return ObservableCollectionOrderHelper.Reorder(AssetTabs, orderedAssetTabs);
+    }
+
+    public bool TryGetSpineGroupTab(
+        string groupId,
+        [NotNullWhen(true)] out SpineAssetGroupDocumentTabViewModel? spineGroupTab)
+    {
+        spineGroupTab = string.IsNullOrWhiteSpace(groupId)
+            ? null
+            : SpineGroupTabs.FirstOrDefault(tab =>
+                string.Equals(tab.GroupId, groupId, StringComparison.Ordinal));
+        return spineGroupTab is not null;
+    }
+
+    public void AddSpineGroupTab(SpineAssetGroupDocumentTabViewModel spineGroupTab, bool activate)
+    {
+        ArgumentNullException.ThrowIfNull(spineGroupTab);
+
+        if (!SpineGroupTabs.Contains(spineGroupTab))
+        {
+            SpineGroupTabs.Add(spineGroupTab);
+        }
+
+        if (activate)
+        {
+            SetActiveSpineGroupTab(spineGroupTab);
+        }
+    }
+
+    public void SetActiveSpineGroupTab(SpineAssetGroupDocumentTabViewModel? spineGroupTab)
+    {
+        if (spineGroupTab is not null && !SpineGroupTabs.Contains(spineGroupTab))
+        {
+            SpineGroupTabs.Add(spineGroupTab);
+        }
+
+        if (spineGroupTab is not null)
+        {
+            var previousActiveAssetTab = ActiveAssetTab;
+            ActiveAssetTab = null;
+            previousActiveAssetTab?.CancelPreviewRequest();
+        }
+
+        ActiveSpineGroupTab = spineGroupTab;
+    }
+
+    public bool ReorderSpineGroupTabs(IReadOnlyList<SpineAssetGroupDocumentTabViewModel> orderedSpineGroupTabs)
+    {
+        ArgumentNullException.ThrowIfNull(orderedSpineGroupTabs);
+
+        return ObservableCollectionOrderHelper.Reorder(SpineGroupTabs, orderedSpineGroupTabs);
+    }
+
+    public void RemoveSpineGroupTab(SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        ArgumentNullException.ThrowIfNull(spineGroupTab);
+
+        if (!SpineGroupTabs.Remove(spineGroupTab))
+        {
+            return;
+        }
+
+        if (ReferenceEquals(ActiveSpineGroupTab, spineGroupTab))
+        {
+            ActiveSpineGroupTab = SpineGroupTabs.FirstOrDefault();
+        }
+    }
+
+    public bool DetachSpineGroupTab(SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        ArgumentNullException.ThrowIfNull(spineGroupTab);
+
+        if (!SpineGroupTabs.Remove(spineGroupTab))
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(ActiveSpineGroupTab, spineGroupTab))
+        {
+            ActiveSpineGroupTab = SpineGroupTabs.FirstOrDefault();
+        }
+
+        return true;
     }
 
     public void RemoveAssetTab(AssetDocumentTabViewModel assetTab)
@@ -321,6 +462,12 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         CancelAllAssetPreviewRequests();
         AssetTabs.Clear();
         ActiveAssetTab = null;
+    }
+
+    public void ClearSpineGroupTabs()
+    {
+        SpineGroupTabs.Clear();
+        ActiveSpineGroupTab = null;
     }
 
     public void CancelAllAssetPreviewRequests()
