@@ -13,4 +13,6 @@ internal interface IBundleExplorerBrowserStateCoordinator
     Task<bool> TryRestoreWorkspaceBrowserStateAsync();
 
     void CancelWorkspaceBrowserStatePersistence();
+
+    void ClearPendingAssetEditorWindowRestoreState();
 }

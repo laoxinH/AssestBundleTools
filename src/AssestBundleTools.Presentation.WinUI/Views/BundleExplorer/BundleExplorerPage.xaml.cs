@@ -69,6 +69,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     {
         await _paneLayoutCoordinator.ApplyInitialStateAsync();
         await _navigationCoordinator.HandleLoadedAsync(_workspaceNavigationRequest);
+        await _assetEditorWindowCoordinator.PromptPendingAssetEditorWindowsRestoreAsync();
     }
 
     protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
@@ -460,6 +461,11 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     private void OnSaveAsBundleChipButtonClick(object sender, RoutedEventArgs e)
     {
         Frame?.Navigate(typeof(BatchTasksPage));
+    }
+
+    private async void OnRestoreAssetEditorWindowsChipButtonClick(object sender, RoutedEventArgs e)
+    {
+        await _assetEditorWindowCoordinator.RestorePendingAssetEditorWindowsAsync();
     }
 
     private async void OnInspectorExtractRequested(object sender, EventArgs e)

@@ -203,6 +203,7 @@ internal sealed class BundleExplorerWorkspaceBindingCoordinator
     public void ResetWorkspaceToEmptyState()
     {
         _browserStateCoordinator.CancelWorkspaceBrowserStatePersistence();
+        _browserStateCoordinator.ClearPendingAssetEditorWindowRestoreState();
         _workspaceShell.Reset();
         _workspaceContextService.ClearCurrentWorkspace();
         _bundlePane.Clear();

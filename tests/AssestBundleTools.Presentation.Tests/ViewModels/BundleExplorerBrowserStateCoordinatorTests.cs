@@ -166,11 +166,67 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         Assert.Equal(-72d, restoredAssetTab.Inspector.Preview.Mesh.RotationY);
     }
 
+    [Fact]
+    public async Task TryRestoreWorkspaceBrowserStateAsync_ShouldPublishPendingAssetEditorWindowsAndPreserveThemOnPersist()
+    {
+        var context = CreateContext();
+        context.DocumentWorkspace.Clear();
+        var pendingEditorWindows = new[]
+        {
+            new WorkspaceAssetEditorWindowStateDto(
+                WindowStateId: 7,
+                Layout: new WorkspaceAssetEditorWindowLayoutDto(240, 160, 1320, 820),
+                OpenAssetTabs:
+                [
+                    new WorkspaceAssetEditorWindowAssetTabDto("bundle-ui", "asset-button", "Button")
+                ],
+                ActiveBundleId: "bundle-ui",
+                ActiveAssetId: "asset-button")
+        };
+        context.WorkspaceContextService.CurrentBrowserState = new WorkspaceBrowserStateSnapshotDto(
+            BundleSearchKeyword: string.Empty,
+            AssetSearchKeyword: string.Empty,
+            AssetTypeFilter: null,
+            ShowModifiedOnly: false,
+            ShowPreviewableOnly: false,
+            OpenBundleTabs:
+            [
+                new WorkspaceMetadataBundleTabDto(
+                    BundleId: "bundle-ui",
+                    LogicalPath: "ui.ab",
+                    IsPreview: false,
+                    SelectedAssetId: null,
+                    SearchKeyword: string.Empty,
+                    AssetTypeFilter: null,
+                    ShowModifiedOnly: false,
+                    ShowPreviewableOnly: false,
+                    OpenAssetTabs: Array.Empty<WorkspaceMetadataAssetTabDto>(),
+                    ActiveAssetTabId: null)
+            ],
+            ActiveBundleTabId: "bundle-ui",
+            LastBundleId: "bundle-ui",
+            LastAssetId: null,
+            OpenAssetEditorWindows: pendingEditorWindows);
+
+        var restored = await context.Coordinator.TryRestoreWorkspaceBrowserStateAsync();
+
+        Assert.True(restored);
+        var pendingWindow = Assert.Single(context.RestorePrompt.PendingWindows);
+        Assert.Equal(7, pendingWindow.WindowStateId);
+        Assert.Equal("bundle-ui", pendingWindow.ActiveBundleId);
+
+        var persistedBrowserState = context.WorkspaceContextService.CurrentBrowserState!;
+        var persistedWindow = Assert.Single(persistedBrowserState.OpenAssetEditorWindows!);
+        Assert.Equal(7, persistedWindow.WindowStateId);
+        Assert.Equal("asset-button", Assert.Single(persistedWindow.OpenAssetTabs).AssetId);
+    }
+
     private static BrowserStateCoordinatorContext CreateContext(
         IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? openAssetEditorWindows = null)
     {
         var localizationService = new TestLocalizationService();
         var workspaceContextService = new TestWorkspaceContextService();
+        var restorePrompt = new AssetEditorWindowRestorePromptViewModel(localizationService);
         var bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
         bundlePane.RebuildBundleGroups(PresentationTestDataFactory.CreateBundleTree("ui"));
         var documentWorkspace = new BundleExplorerDocumentWorkspaceViewModel();
@@ -195,13 +251,16 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
                 documentWorkspace.SetActiveBundleTab(tab);
                 return Task.CompletedTask;
             },
-            captureOpenAssetEditorWindows: () => openAssetEditorWindows ?? Array.Empty<WorkspaceAssetEditorWindowStateDto>());
+            captureOpenAssetEditorWindows: () => openAssetEditorWindows ?? Array.Empty<WorkspaceAssetEditorWindowStateDto>(),
+            restorePendingAssetEditorWindows: snapshots => restorePrompt.ReplacePendingSnapshots(snapshots),
+            capturePendingAssetEditorWindows: () => restorePrompt.PendingWindows);
 
         return new BrowserStateCoordinatorContext(
             localizationService,
             workspaceContextService,
             documentWorkspace,
             bundleTab,
+            restorePrompt,
             coordinator);
     }
 
@@ -258,5 +317,6 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         TestWorkspaceContextService WorkspaceContextService,
         BundleExplorerDocumentWorkspaceViewModel DocumentWorkspace,
         BundleDocumentTabViewModel BundleTab,
+        AssetEditorWindowRestorePromptViewModel RestorePrompt,
         BundleExplorerBrowserStateCoordinator Coordinator);
 }

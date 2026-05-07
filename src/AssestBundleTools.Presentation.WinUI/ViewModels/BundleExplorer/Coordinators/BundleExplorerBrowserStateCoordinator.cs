@@ -21,6 +21,8 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
     private readonly Func<BundleId, AssetId, string, AssetDocumentTabViewModel> _createAssetDocumentTab;
     private readonly Func<BundleDocumentTabViewModel, Task> _activateBundleTabAsync;
     private readonly Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>> _captureOpenAssetEditorWindows;
+    private readonly Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>> _capturePendingAssetEditorWindows;
+    private readonly Action<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>?> _restorePendingAssetEditorWindows;
     private bool _isRestoringWorkspaceBrowserState;
     private CancellationTokenSource? _workspaceBrowserStatePersistenceCts;
 
@@ -32,7 +34,9 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
         Action captureActiveTabStateWithoutPersistence,
         Func<BundleId, AssetId, string, AssetDocumentTabViewModel> createAssetDocumentTab,
         Func<BundleDocumentTabViewModel, Task> activateBundleTabAsync,
-        Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>>? captureOpenAssetEditorWindows = null)
+        Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>>? captureOpenAssetEditorWindows = null,
+        Action<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>?>? restorePendingAssetEditorWindows = null,
+        Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>>? capturePendingAssetEditorWindows = null)
     {
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _bundlePane = bundlePane ?? throw new ArgumentNullException(nameof(bundlePane));
@@ -42,6 +46,10 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
         _createAssetDocumentTab = createAssetDocumentTab ?? throw new ArgumentNullException(nameof(createAssetDocumentTab));
         _activateBundleTabAsync = activateBundleTabAsync ?? throw new ArgumentNullException(nameof(activateBundleTabAsync));
         _captureOpenAssetEditorWindows = captureOpenAssetEditorWindows
+            ?? (() => Array.Empty<WorkspaceAssetEditorWindowStateDto>());
+        _restorePendingAssetEditorWindows = restorePendingAssetEditorWindows
+            ?? (_ => { });
+        _capturePendingAssetEditorWindows = capturePendingAssetEditorWindows
             ?? (() => Array.Empty<WorkspaceAssetEditorWindowStateDto>());
     }
 
@@ -54,6 +62,7 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
         var browserState = _workspaceContextService.GetCurrentWorkspaceBrowserState();
         if (browserState is null)
         {
+            ClearPendingAssetEditorWindowRestoreState();
             return false;
         }
 
@@ -61,6 +70,7 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
         try
         {
             _bundlePane.RestoreSearchState(browserState.BundleSearchKeyword);
+            _restorePendingAssetEditorWindows(browserState.OpenAssetEditorWindows);
 
             var restoredTabs = RestoreBundleTabsFromBrowserState(browserState);
             if (restoredTabs.Count == 0)
@@ -123,6 +133,11 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
         _workspaceBrowserStatePersistenceCts.Cancel();
         _workspaceBrowserStatePersistenceCts.Dispose();
         _workspaceBrowserStatePersistenceCts = null;
+    }
+
+    public void ClearPendingAssetEditorWindowRestoreState()
+    {
+        _restorePendingAssetEditorWindows(Array.Empty<WorkspaceAssetEditorWindowStateDto>());
     }
 
     private List<BundleDocumentTabViewModel> RestoreBundleTabsFromBrowserState(
@@ -247,7 +262,26 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
             ActiveBundleTabId: activeTab?.BundleId.Value,
             LastBundleId: activeTab?.BundleId.Value,
             LastAssetId: activeTab?.ActiveAssetTab?.AssetId.Value ?? activeTab?.SelectedAssetId,
-            OpenAssetEditorWindows: _captureOpenAssetEditorWindows());
+            OpenAssetEditorWindows: CaptureAssetEditorWindowsForPersistence());
+    }
+
+    private IReadOnlyList<WorkspaceAssetEditorWindowStateDto> CaptureAssetEditorWindowsForPersistence()
+    {
+        var openWindows = _captureOpenAssetEditorWindows();
+        var pendingWindows = _capturePendingAssetEditorWindows();
+        if (openWindows.Count == 0)
+        {
+            return pendingWindows;
+        }
+
+        if (pendingWindows.Count == 0)
+        {
+            return openWindows;
+        }
+
+        return openWindows
+            .Concat(pendingWindows)
+            .ToArray();
     }
 
     private static WorkspaceMetadataBundleTabDto CreateBundleTabMetadata(BundleDocumentTabViewModel tab)

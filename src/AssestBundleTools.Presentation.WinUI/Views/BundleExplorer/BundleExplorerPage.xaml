@@ -439,6 +439,39 @@
                     </Grid>
                 </Button>
 
+                <Button
+                    Click="OnRestoreAssetEditorWindowsChipButtonClick"
+                    IsEnabled="{x:Bind ViewModel.WorkspaceShell.HasWorkspace, Mode=OneWay}"
+                    Style="{StaticResource WorkspaceSecondaryActionChipButtonStyle}"
+                    ToolTipService.ToolTip="{x:Bind ViewModel.AssetEditorWindowRestorePrompt.RestoreToolTip, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.AssetEditorWindowRestorePrompt.PendingRestoreVisibility, Mode=OneWay}">
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource WorkspaceChipIconBadgeStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="11"
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                Glyph="&#xE8A7;" />
+                        </Border>
+
+                        <TextBlock
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                            FontSize="12.5"
+                            FontWeight="SemiBold"
+                            Text="{x:Bind ViewModel.AssetEditorWindowRestorePrompt.RestoreButtonText, Mode=OneWay}"
+                            TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                </Button>
+
                 <ItemsControl
                     Margin="4,0,0,0"
                     ItemsSource="{x:Bind ViewModel.WorkspaceShell.WorkspaceStatusChips, Mode=OneWay}">

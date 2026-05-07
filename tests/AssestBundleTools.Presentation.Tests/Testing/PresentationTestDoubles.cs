@@ -365,6 +365,8 @@ internal sealed class TestBrowserStateCoordinator : IBundleExplorerBrowserStateC
 
     public int CancelCallCount { get; private set; }
 
+    public int ClearPendingRestoreStateCallCount { get; private set; }
+
     public Task<bool> TryRestoreWorkspaceBrowserStateAsync()
     {
         RestoreCallCount++;
@@ -374,6 +376,11 @@ internal sealed class TestBrowserStateCoordinator : IBundleExplorerBrowserStateC
     public void CancelWorkspaceBrowserStatePersistence()
     {
         CancelCallCount++;
+    }
+
+    public void ClearPendingAssetEditorWindowRestoreState()
+    {
+        ClearPendingRestoreStateCallCount++;
     }
 }
 

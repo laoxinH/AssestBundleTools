@@ -435,6 +435,33 @@
   <data name="AssetEditorWindow.TabContext.Close.Text" xml:space="preserve">
     <value>关闭</value>
   </data>
+  <data name="AssetEditorWindow.RestorePending.Button.Format" xml:space="preserve">
+    <value>恢复 {0} 个编辑窗口</value>
+  </data>
+  <data name="AssetEditorWindow.RestorePending.ToolTip.Format" xml:space="preserve">
+    <value>恢复上一轮工作区会话中保存的 {0} 个编辑窗口和 {1} 个资源标签</value>
+  </data>
+  <data name="AssetEditorWindow.RestorePending.Restored.Format" xml:space="preserve">
+    <value>已恢复 {0} 个编辑窗口。</value>
+  </data>
+  <data name="AssetEditorWindow.RestorePending.Partial.Format" xml:space="preserve">
+    <value>已恢复 {0} 个编辑窗口，另有 {1} 个保存的窗口因所属资源包不可用而未恢复。</value>
+  </data>
+  <data name="AssetEditorWindow.RestorePending.Unavailable.Format" xml:space="preserve">
+    <value>有 {0} 个保存的编辑窗口因所属资源包不可用而未恢复。</value>
+  </data>
+  <data name="AssetEditorWindow.RestorePending.Dialog.Title" xml:space="preserve">
+    <value>恢复上次的编辑窗口？</value>
+  </data>
+  <data name="AssetEditorWindow.RestorePending.Dialog.Description.Format" xml:space="preserve">
+    <value>此工作区保存了上一轮会话中的 {0} 个编辑窗口和 {1} 个资源标签。可以现在恢复，也可以继续浏览，稍后从工具栏恢复。</value>
+  </data>
+  <data name="AssetEditorWindow.RestorePending.Dialog.PrimaryButton" xml:space="preserve">
+    <value>立即恢复</value>
+  </data>
+  <data name="AssetEditorWindow.RestorePending.Dialog.CloseButton" xml:space="preserve">
+    <value>稍后</value>
+  </data>
   <data name="AssetEditorWindow.Title.Format" xml:space="preserve">
     <value>资源编辑 - {0}</value>
   </data>

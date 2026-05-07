@@ -47,6 +47,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     private readonly BundleExplorerDocumentWorkspaceViewModel _documentWorkspace;
     private readonly BundleExplorerAssetWorkflowViewModel _assetWorkflow;
     private readonly WorkspaceImportProgressViewModel _workspaceImportProgress;
+    private readonly AssetEditorWindowRestorePromptViewModel _assetEditorWindowRestorePrompt;
     private Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>> _captureOpenAssetEditorWindows = static () => Array.Empty<WorkspaceAssetEditorWindowStateDto>();
     private bool _isInitialized;
     private bool _isBusy;
@@ -87,6 +88,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         _bundlePane.BrowserStateChanged += OnBundlePaneBrowserStateChanged;
         _documentWorkspace = new BundleExplorerDocumentWorkspaceViewModel();
         _workspaceImportProgress = new WorkspaceImportProgressViewModel(_localizationService);
+        _assetEditorWindowRestorePrompt = new AssetEditorWindowRestorePromptViewModel(_localizationService);
         _assetWorkflow = new BundleExplorerAssetWorkflowViewModel(
             _workspaceExplorerGateway,
             workspaceAssetInspectionGateway,
@@ -139,7 +141,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
             captureActiveTabStateWithoutPersistence: () => _assetWorkflow.CaptureActiveTabState(requestPersistence: false),
             createAssetDocumentTab: _assetWorkflow.CreateAssetDocumentTab,
             activateBundleTabAsync: tab => _bundleTabCoordinator.SetActiveBundleTabAsync(tab, writeSelectionLog: false),
-            captureOpenAssetEditorWindows: () => _captureOpenAssetEditorWindows());
+            captureOpenAssetEditorWindows: () => _captureOpenAssetEditorWindows(),
+            restorePendingAssetEditorWindows: snapshots => _assetEditorWindowRestorePrompt.ReplacePendingSnapshots(snapshots),
+            capturePendingAssetEditorWindows: () => _assetEditorWindowRestorePrompt.PendingWindows);
         _workspaceBindingCoordinator = new BundleExplorerWorkspaceBindingCoordinator(
             _workspaceExplorerGateway,
             _appLogService,
@@ -171,6 +175,8 @@ public sealed class BundleExplorerViewModel : ObservableObject
     public BundleExplorerAssetWorkflowViewModel AssetWorkflow => _assetWorkflow;
 
     public WorkspaceImportProgressViewModel WorkspaceImportProgress => _workspaceImportProgress;
+
+    public AssetEditorWindowRestorePromptViewModel AssetEditorWindowRestorePrompt => _assetEditorWindowRestorePrompt;
 
     public AsyncRelayCommand RefreshCommand { get; }
 

@@ -1,6 +1,11 @@
 using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Bundles;
+using AssestBundleTools.Presentation.WinUI.Localization;
+using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 
@@ -12,6 +17,8 @@ public sealed partial class BundleExplorerPage
         private readonly List<AssetEditorWindow> _windows = [];
         private readonly Dictionary<AssetEditorWindow, int> _windowStateIds = [];
         private readonly AssetEditorWindowStateStore _windowStateStore = new();
+        private string? _lastPromptedRestoreSnapshotKey;
+        private bool _isRestorePromptDialogOpen;
 
         public AssetEditorWindowCoordinator(BundleExplorerPage owner)
         {
@@ -59,6 +66,99 @@ public sealed partial class BundleExplorerPage
                 await _owner.ViewModel.AttachAssetDocumentGroupFromEditorWindowAsync(detachedGroup);
                 throw;
             }
+        }
+
+        public async Task PromptPendingAssetEditorWindowsRestoreAsync()
+        {
+            var restorePrompt = _owner.ViewModel.AssetEditorWindowRestorePrompt;
+            if (_isRestorePromptDialogOpen ||
+                _owner.XamlRoot is null ||
+                !_owner.ViewModel.WorkspaceShell.HasWorkspace ||
+                !restorePrompt.HasPendingWindows)
+            {
+                return;
+            }
+
+            var promptKey = CreatePendingRestorePromptKey(restorePrompt.PendingWindows);
+            if (string.Equals(_lastPromptedRestoreSnapshotKey, promptKey, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _lastPromptedRestoreSnapshotKey = promptKey;
+            _isRestorePromptDialogOpen = true;
+            try
+            {
+                var dialog = new ContentDialog
+                {
+                    XamlRoot = _owner.XamlRoot,
+                    Title = UiText.Get(ResourceKeys.AssetEditorWindowRestorePendingDialogTitle),
+                    PrimaryButtonText = UiText.Get(ResourceKeys.AssetEditorWindowRestorePendingDialogPrimaryButton),
+                    CloseButtonText = UiText.Get(ResourceKeys.AssetEditorWindowRestorePendingDialogCloseButton),
+                    DefaultButton = ContentDialogButton.Close,
+                    Content = new TextBlock
+                    {
+                        Text = UiText.GetFormatted(
+                            ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionFormat,
+                            restorePrompt.PendingWindowCount,
+                            restorePrompt.PendingAssetTabCount),
+                        TextWrapping = TextWrapping.WrapWholeWords
+                    }
+                };
+
+                var result = await dialog.ShowAsync();
+                if (result == ContentDialogResult.Primary)
+                {
+                    await RestorePendingAssetEditorWindowsAsync();
+                }
+            }
+            finally
+            {
+                _isRestorePromptDialogOpen = false;
+            }
+        }
+
+        public Task RestorePendingAssetEditorWindowsAsync()
+        {
+            if (!_owner.ViewModel.WorkspaceShell.HasWorkspace || _owner.ViewModel.IsBusy)
+            {
+                return Task.CompletedTask;
+            }
+
+            var pendingWindows = _owner.ViewModel.AssetEditorWindowRestorePrompt.TakePendingSnapshots();
+            if (pendingWindows.Count == 0)
+            {
+                return Task.CompletedTask;
+            }
+
+            try
+            {
+                var restoredWindowCount = 0;
+                var unavailableWindowCount = 0;
+                foreach (var pendingWindow in pendingWindows)
+                {
+                    var restoredGroup = TryCreateRestoredDocumentGroup(pendingWindow);
+                    if (restoredGroup is null)
+                    {
+                        unavailableWindowCount++;
+                        continue;
+                    }
+
+                    var restoredLayout = CreateRestoredLayout(pendingWindow.Layout);
+                    var window = CreateAssetEditorWindow(restoredGroup, restoredLayout);
+                    window.Activate();
+                    restoredWindowCount++;
+                }
+
+                PublishRestoreResult(restoredWindowCount, unavailableWindowCount);
+            }
+            catch
+            {
+                _owner.ViewModel.AssetEditorWindowRestorePrompt.ReplacePendingSnapshots(pendingWindows);
+                throw;
+            }
+
+            return Task.CompletedTask;
         }
 
         private async Task OpenAssetDocumentInNewWindowFromEditorAsync(
@@ -172,7 +272,9 @@ public sealed partial class BundleExplorerPage
             return CreateAssetEditorWindow(new AssetDocumentGroupTransfer([detachedAssetTab], detachedAssetTab));
         }
 
-        private AssetEditorWindow CreateAssetEditorWindow(AssetDocumentGroupTransfer detachedGroup)
+        private AssetEditorWindow CreateAssetEditorWindow(
+            AssetDocumentGroupTransfer detachedGroup,
+            AssetEditorWindowLayoutSnapshot? preferredLayout = null)
         {
             var viewModel = new AssetEditorWindowViewModel(
                 detachedGroup,
@@ -193,7 +295,9 @@ public sealed partial class BundleExplorerPage
                 viewModel,
                 OpenAssetDocumentInNewWindowFromEditorAsync,
                 OpenAssetDocumentGroupInNewWindowFromEditorAsync);
-            var initialLayout = _windowStateStore.CreateNextWindowLayout();
+            var initialLayout = preferredLayout is { } layout && CanRestoreLayout(layout)
+                ? layout
+                : _windowStateStore.CreateNextWindowLayout();
             var windowStateId = _windowStateStore.RegisterWindow(
                 initialLayout,
                 window.CaptureGroupSnapshot());
@@ -230,6 +334,129 @@ public sealed partial class BundleExplorerPage
         private void RequestWindowStatePersistence()
         {
             _owner.ViewModel.RequestAssetEditorWindowStatePersistence();
+        }
+
+        private static string CreatePendingRestorePromptKey(
+            IReadOnlyList<WorkspaceAssetEditorWindowStateDto> pendingWindows)
+        {
+            return string.Join(
+                "|",
+                pendingWindows.Select(static window =>
+                    string.Concat(
+                        window.WindowStateId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        ":",
+                        window.ActiveBundleId,
+                        ":",
+                        window.ActiveAssetId,
+                        ":",
+                        window.OpenAssetTabs.Count.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+        }
+
+        private AssetDocumentGroupTransfer? TryCreateRestoredDocumentGroup(
+            WorkspaceAssetEditorWindowStateDto pendingWindow)
+        {
+            ArgumentNullException.ThrowIfNull(pendingWindow);
+
+            var restoredTabs = new List<AssetDocumentTabViewModel>(pendingWindow.OpenAssetTabs.Count);
+            foreach (var assetTabState in pendingWindow.OpenAssetTabs)
+            {
+                if (string.IsNullOrWhiteSpace(assetTabState.BundleId) ||
+                    string.IsNullOrWhiteSpace(assetTabState.AssetId) ||
+                    _owner.ViewModel.BundlePane.FindBundleNode(new BundleId(assetTabState.BundleId)) is null)
+                {
+                    continue;
+                }
+
+                var restoredAssetTab = _owner.ViewModel.AssetWorkflow.CreateAssetDocumentTab(
+                    new BundleId(assetTabState.BundleId),
+                    new AssetId(assetTabState.AssetId),
+                    assetTabState.AssetName);
+                restoredAssetTab.RestoreSelectedInspectorSection(assetTabState.SelectedInspectorSection);
+                restoredAssetTab.RestorePreviewImageDisplayOptions(
+                    assetTabState.PreviewImageBackgroundMode,
+                    assetTabState.SpritePreviewDisplayMode,
+                    assetTabState.PreviewImageZoom,
+                    assetTabState.PreviewImagePanX,
+                    assetTabState.PreviewImagePanY);
+                restoredAssetTab.RestorePreviewMeshDisplayOptions(
+                    assetTabState.MeshPreviewDisplayMode,
+                    assetTabState.MeshPreviewTextureOverlaySelected,
+                    assetTabState.MeshPreviewGridSelected,
+                    assetTabState.MeshPreviewZoom,
+                    assetTabState.MeshPreviewRotationX,
+                    assetTabState.MeshPreviewRotationY);
+                restoredTabs.Add(restoredAssetTab);
+            }
+
+            if (restoredTabs.Count == 0)
+            {
+                return null;
+            }
+
+            var activeAssetTab = restoredTabs.FirstOrDefault(assetTab =>
+                                   string.Equals(assetTab.BundleId.Value, pendingWindow.ActiveBundleId, StringComparison.Ordinal) &&
+                                   string.Equals(assetTab.AssetId.Value, pendingWindow.ActiveAssetId, StringComparison.Ordinal))
+                               ?? restoredTabs[0];
+
+            return new AssetDocumentGroupTransfer(restoredTabs, activeAssetTab);
+        }
+
+        private static AssetEditorWindowLayoutSnapshot? CreateRestoredLayout(
+            WorkspaceAssetEditorWindowLayoutDto layout)
+        {
+            var restoredLayout = new AssetEditorWindowLayoutSnapshot(
+                layout.X,
+                layout.Y,
+                layout.Width,
+                layout.Height);
+            return CanRestoreLayout(restoredLayout)
+                ? restoredLayout
+                : null;
+        }
+
+        private static bool CanRestoreLayout(AssetEditorWindowLayoutSnapshot layout) =>
+            layout.Width >= AssetEditorWindowStateStore.MinimumRememberedWidth &&
+            layout.Height >= AssetEditorWindowStateStore.MinimumRememberedHeight;
+
+        private static void PublishRestoreResult(int restoredWindowCount, int unavailableWindowCount)
+        {
+            if (restoredWindowCount == 0 && unavailableWindowCount == 0)
+            {
+                return;
+            }
+
+            var localizationService = App.CurrentApp.LocalizationService;
+            var notificationService = App.CurrentApp.AppNotificationService;
+            var logService = App.CurrentApp.AppLogService;
+
+            string message;
+            string title;
+            AppNotificationSeverity severity;
+            if (restoredWindowCount > 0 && unavailableWindowCount == 0)
+            {
+                message = localizationService.GetFormattedString(
+                    ResourceKeys.AssetEditorWindowRestorePendingRestoredFormat,
+                    restoredWindowCount);
+                title = localizationService.GetRequiredString(ResourceKeys.AppNotificationSuccessTitle);
+                severity = AppNotificationSeverity.Success;
+                logService.AppendInfo(message);
+            }
+            else
+            {
+                message = restoredWindowCount > 0
+                    ? localizationService.GetFormattedString(
+                        ResourceKeys.AssetEditorWindowRestorePendingPartialFormat,
+                        restoredWindowCount,
+                        unavailableWindowCount)
+                    : localizationService.GetFormattedString(
+                        ResourceKeys.AssetEditorWindowRestorePendingUnavailableFormat,
+                        unavailableWindowCount);
+                title = localizationService.GetRequiredString(ResourceKeys.AppNotificationWarningTitle);
+                severity = AppNotificationSeverity.Warning;
+                logService.AppendWarning(message);
+            }
+
+            notificationService.Show(title, message, severity);
         }
     }
 }

@@ -434,6 +434,15 @@ public static class ResourceKeys
     public const string AssetEditorWindowMoveGroupToMainWindowText = "AssetEditorWindow.MoveGroupToMainWindow.Text";
     public const string AssetEditorWindowDragGroupHandleToolTip = "AssetEditorWindow.DragGroupHandle.ToolTip";
     public const string AssetEditorWindowTabContextCloseText = "AssetEditorWindow.TabContext.Close.Text";
+    public const string AssetEditorWindowRestorePendingButtonFormat = "AssetEditorWindow.RestorePending.Button.Format";
+    public const string AssetEditorWindowRestorePendingToolTipFormat = "AssetEditorWindow.RestorePending.ToolTip.Format";
+    public const string AssetEditorWindowRestorePendingRestoredFormat = "AssetEditorWindow.RestorePending.Restored.Format";
+    public const string AssetEditorWindowRestorePendingPartialFormat = "AssetEditorWindow.RestorePending.Partial.Format";
+    public const string AssetEditorWindowRestorePendingUnavailableFormat = "AssetEditorWindow.RestorePending.Unavailable.Format";
+    public const string AssetEditorWindowRestorePendingDialogTitle = "AssetEditorWindow.RestorePending.Dialog.Title";
+    public const string AssetEditorWindowRestorePendingDialogDescriptionFormat = "AssetEditorWindow.RestorePending.Dialog.Description.Format";
+    public const string AssetEditorWindowRestorePendingDialogPrimaryButton = "AssetEditorWindow.RestorePending.Dialog.PrimaryButton";
+    public const string AssetEditorWindowRestorePendingDialogCloseButton = "AssetEditorWindow.RestorePending.Dialog.CloseButton";
     public const string AssetEditorWindowTitleFormat = "AssetEditorWindow.Title.Format";
     public const string AssetEditorWindowTitleFallback = "AssetEditorWindow.Title.Fallback";
     public const string BundleExplorerCollapsedPaneSelectedBundleShortNone = "BundleExplorer.CollapsedPane.SelectedBundleShort.None";
