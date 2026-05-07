@@ -58,6 +58,12 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
         Assert.Equal(1, prompt.PendingWindowCount);
         Assert.Equal(2, prompt.PendingAssetTabCount);
         Assert.Equal(1, prompt.PendingDraftTabCount);
+        Assert.True(prompt.HasDraftRestoreOption);
+        Assert.Equal(Visibility.Visible, prompt.DraftRestoreOptionVisibility);
+        Assert.True(prompt.RestoreDraftMarkers);
+        Assert.Equal(
+            ResourceKeys.AssetEditorWindowRestorePendingDialogRestoreDraftMarkersOption,
+            prompt.RestoreDraftMarkersOptionText);
         Assert.Equal(1, prompt.PendingConflictAssetTabCount);
         Assert.Equal(Visibility.Visible, prompt.PendingRestoreVisibility);
         Assert.Equal(
@@ -76,6 +82,10 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
         Assert.Equal(
             $"{ResourceKeys.AssetEditorWindowRestorePendingToolTipFormat}:1|2",
             prompt.RestoreToolTip);
+
+        prompt.SetRestoreDraftMarkers(false);
+
+        Assert.False(prompt.RestoreDraftMarkers);
     }
 
     [Fact]
@@ -117,11 +127,16 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
                 Layout: new WorkspaceAssetEditorWindowLayoutDto(120, 90, 1320, 820),
                 OpenAssetTabs:
                 [
-                    new WorkspaceAssetEditorWindowAssetTabDto("bundle-a", "asset-1", "Asset 1")
+                    new WorkspaceAssetEditorWindowAssetTabDto(
+                        "bundle-a",
+                        "asset-1",
+                        "Asset 1",
+                        EditDraftReference: new WorkspaceAssetEditDraftReferenceDto("draft-1", "text"))
                 ],
                 ActiveBundleId: "bundle-a",
                 ActiveAssetId: "asset-1")
         ]);
+        prompt.SetRestoreDraftMarkers(false);
 
         var takenSnapshots = prompt.TakePendingSnapshots();
 
@@ -131,10 +146,52 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
         Assert.Equal(0, prompt.PendingWindowCount);
         Assert.Equal(0, prompt.PendingAssetTabCount);
         Assert.Equal(0, prompt.PendingDraftTabCount);
+        Assert.False(prompt.HasDraftRestoreOption);
+        Assert.Equal(Visibility.Collapsed, prompt.DraftRestoreOptionVisibility);
         Assert.Equal(0, prompt.PendingConflictAssetTabCount);
         Assert.Equal(Visibility.Collapsed, prompt.PendingRestoreVisibility);
+        Assert.True(prompt.RestoreDraftMarkers);
         Assert.Equal(
             $"{ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionFormat}:0|0",
             prompt.RestoreDialogDescription);
+    }
+
+    [Fact]
+    public void ReplacePendingSnapshots_ShouldResetDraftMarkerOption_WhenNoDraftsRemain()
+    {
+        var prompt = new AssetEditorWindowRestorePromptViewModel(new TestLocalizationService());
+        prompt.ReplacePendingSnapshots(
+        [
+            new WorkspaceAssetEditorWindowStateDto(
+                WindowStateId: 6,
+                Layout: new WorkspaceAssetEditorWindowLayoutDto(120, 90, 1320, 820),
+                OpenAssetTabs:
+                [
+                    new WorkspaceAssetEditorWindowAssetTabDto(
+                        "bundle-a",
+                        "asset-1",
+                        "Asset 1",
+                        EditDraftReference: new WorkspaceAssetEditDraftReferenceDto("draft-1", "text"))
+                ],
+                ActiveBundleId: "bundle-a",
+                ActiveAssetId: "asset-1")
+        ]);
+        prompt.SetRestoreDraftMarkers(false);
+
+        prompt.ReplacePendingSnapshots(
+        [
+            new WorkspaceAssetEditorWindowStateDto(
+                WindowStateId: 7,
+                Layout: new WorkspaceAssetEditorWindowLayoutDto(120, 90, 1320, 820),
+                OpenAssetTabs:
+                [
+                    new WorkspaceAssetEditorWindowAssetTabDto("bundle-a", "asset-2", "Asset 2")
+                ],
+                ActiveBundleId: "bundle-a",
+                ActiveAssetId: "asset-2")
+        ]);
+
+        Assert.False(prompt.HasDraftRestoreOption);
+        Assert.True(prompt.RestoreDraftMarkers);
     }
 }

@@ -13,6 +13,7 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
     private readonly ILocalizationService _localizationService;
     private IReadOnlyList<WorkspaceAssetEditorWindowStateDto> _pendingWindows = Array.Empty<WorkspaceAssetEditorWindowStateDto>();
     private IReadOnlySet<string> _potentialConflictAssetKeys = new HashSet<string>(StringComparer.Ordinal);
+    private bool _restoreDraftMarkers = true;
 
     public AssetEditorWindowRestorePromptViewModel(ILocalizationService localizationService)
     {
@@ -32,6 +33,27 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
 
     public int PendingConflictAssetTabCount => _pendingWindows.Sum(window =>
         window.OpenAssetTabs.Count(assetTab => IsPotentialConflict(assetTab)));
+
+    public bool HasDraftRestoreOption => PendingDraftTabCount > 0;
+
+    public Visibility DraftRestoreOptionVisibility => HasDraftRestoreOption
+        ? Visibility.Visible
+        : Visibility.Collapsed;
+
+    public bool RestoreDraftMarkers
+    {
+        get => _restoreDraftMarkers;
+        private set
+        {
+            if (SetProperty(ref _restoreDraftMarkers, value))
+            {
+                OnPropertyChanged(nameof(RestoreDraftMarkersOptionText));
+            }
+        }
+    }
+
+    public string RestoreDraftMarkersOptionText => _localizationService.GetRequiredString(
+        ResourceKeys.AssetEditorWindowRestorePendingDialogRestoreDraftMarkersOption);
 
     public Visibility PendingRestoreVisibility => HasPendingWindows
         ? Visibility.Visible
@@ -87,13 +109,24 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
     public void ReplacePendingSnapshots(IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? snapshots)
     {
         _pendingWindows = NormalizeSnapshots(snapshots);
+        if (PendingDraftTabCount == 0)
+        {
+            RestoreDraftMarkers = true;
+        }
+
         NotifyRestoreStateChanged();
+    }
+
+    public void SetRestoreDraftMarkers(bool restoreDraftMarkers)
+    {
+        RestoreDraftMarkers = restoreDraftMarkers;
     }
 
     public IReadOnlyList<WorkspaceAssetEditorWindowStateDto> TakePendingSnapshots()
     {
         var snapshots = _pendingWindows;
         _pendingWindows = Array.Empty<WorkspaceAssetEditorWindowStateDto>();
+        RestoreDraftMarkers = true;
         NotifyRestoreStateChanged();
         return snapshots;
     }
@@ -106,6 +139,7 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
         }
 
         _pendingWindows = Array.Empty<WorkspaceAssetEditorWindowStateDto>();
+        RestoreDraftMarkers = true;
         NotifyRestoreStateChanged();
     }
 
@@ -117,10 +151,13 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
         OnPropertyChanged(nameof(PendingAssetTabCount));
         OnPropertyChanged(nameof(PendingDraftTabCount));
         OnPropertyChanged(nameof(PendingConflictAssetTabCount));
+        OnPropertyChanged(nameof(HasDraftRestoreOption));
+        OnPropertyChanged(nameof(DraftRestoreOptionVisibility));
         OnPropertyChanged(nameof(PendingRestoreVisibility));
         OnPropertyChanged(nameof(RestoreButtonText));
         OnPropertyChanged(nameof(RestoreToolTip));
         OnPropertyChanged(nameof(RestoreDialogDescription));
+        OnPropertyChanged(nameof(RestoreDraftMarkersOptionText));
     }
 
     private static IReadOnlyList<WorkspaceAssetEditorWindowStateDto> NormalizeSnapshots(

@@ -447,6 +447,7 @@ public static class ResourceKeys
     public const string AssetEditorWindowRestorePendingDialogDescriptionWithDraftsFormat = "AssetEditorWindow.RestorePending.Dialog.DescriptionWithDrafts.Format";
     public const string AssetEditorWindowRestorePendingDialogDescriptionWithConflictsFormat = "AssetEditorWindow.RestorePending.Dialog.DescriptionWithConflicts.Format";
     public const string AssetEditorWindowRestorePendingDialogDescriptionWithDraftsAndConflictsFormat = "AssetEditorWindow.RestorePending.Dialog.DescriptionWithDraftsAndConflicts.Format";
+    public const string AssetEditorWindowRestorePendingDialogRestoreDraftMarkersOption = "AssetEditorWindow.RestorePending.Dialog.RestoreDraftMarkers.Option";
     public const string AssetEditorWindowRestorePendingDialogPrimaryButton = "AssetEditorWindow.RestorePending.Dialog.PrimaryButton";
     public const string AssetEditorWindowRestorePendingDialogSecondaryButton = "AssetEditorWindow.RestorePending.Dialog.SecondaryButton";
     public const string AssetEditorWindowRestorePendingDialogCloseButton = "AssetEditorWindow.RestorePending.Dialog.CloseButton";

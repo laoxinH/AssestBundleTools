@@ -474,6 +474,9 @@
   <data name="AssetEditorWindow.RestorePending.Dialog.DescriptionWithDraftsAndConflicts.Format" xml:space="preserve">
     <value>此工作区保存了上一轮会话中的 {0} 个编辑窗口和 {1} 个资源标签，其中 {2} 个标签带有未应用草稿标记，{3} 个标签已在当前窗口中打开。恢复时会跳过冲突标签并继续保留在工具栏入口中。</value>
   </data>
+  <data name="AssetEditorWindow.RestorePending.Dialog.RestoreDraftMarkers.Option" xml:space="preserve">
+    <value>同时恢复未应用草稿标记（不恢复草稿内容）</value>
+  </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.PrimaryButton" xml:space="preserve">
     <value>立即恢复</value>
   </data>
