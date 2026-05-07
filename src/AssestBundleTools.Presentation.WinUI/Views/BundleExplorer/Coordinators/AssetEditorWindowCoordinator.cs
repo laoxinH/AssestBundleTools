@@ -18,6 +18,7 @@ public sealed partial class BundleExplorerPage
         private readonly BundleExplorerPage _owner;
         private readonly List<AssetEditorWindow> _windows = [];
         private readonly Dictionary<AssetEditorWindow, int> _windowStateIds = [];
+        private readonly AssetDocumentOpenConflictActivator _openConflictActivator;
         private readonly AssetEditorWindowStateStore _windowStateStore = new();
         private string? _activeWorkspaceId;
         private string? _lastPromptedRestoreSnapshotKey;
@@ -26,6 +27,7 @@ public sealed partial class BundleExplorerPage
         public AssetEditorWindowCoordinator(BundleExplorerPage owner)
         {
             _owner = owner ?? throw new ArgumentNullException(nameof(owner));
+            _openConflictActivator = new AssetDocumentOpenConflictActivator(_owner, () => _windows);
         }
 
         public IReadOnlyList<WorkspaceAssetEditorWindowStateDto> CaptureOpenWindowMetadata() =>
@@ -33,6 +35,11 @@ public sealed partial class BundleExplorerPage
 
         public async Task OpenAssetDocumentInNewWindowAsync(AssetDocumentTabViewModel? assetTab)
         {
+            if (await _openConflictActivator.TryActivateForNewWindowFromMainAsync(assetTab))
+            {
+                return;
+            }
+
             var detachedAssetTab = await _owner.ViewModel.DetachAssetDocumentTabForEditorWindowAsync(assetTab);
             if (detachedAssetTab is null)
             {
@@ -123,6 +130,12 @@ public sealed partial class BundleExplorerPage
                 _isRestorePromptDialogOpen = false;
             }
         }
+
+        public Task HandleMainAssetSelectionChangedAsync() =>
+            _openConflictActivator.HandleMainAssetSelectionChangedAsync();
+
+        public Task HandleMainResolvedAssetOpenRequestedAsync(ResolvedAssetNavigationTarget? target) =>
+            _openConflictActivator.HandleMainResolvedAssetOpenRequestedAsync(target);
 
         public Task RestorePendingAssetEditorWindowsAsync()
         {
@@ -231,6 +244,11 @@ public sealed partial class BundleExplorerPage
         {
             ArgumentNullException.ThrowIfNull(sourceWindow);
             ArgumentNullException.ThrowIfNull(assetTab);
+
+            if (await _openConflictActivator.TryActivateForNewWindowFromEditorAsync(sourceWindow, assetTab))
+            {
+                return;
+            }
 
             var sourceHost = (IAssetDocumentTabDragHost)sourceWindow;
             var detachedAssetTab = await sourceHost.DetachAssetDocumentTabForDragAsync(assetTab);
@@ -367,7 +385,8 @@ public sealed partial class BundleExplorerPage
             var window = new AssetEditorWindow(
                 viewModel,
                 OpenAssetDocumentInNewWindowFromEditorAsync,
-                OpenAssetDocumentGroupInNewWindowFromEditorAsync);
+                OpenAssetDocumentGroupInNewWindowFromEditorAsync,
+                _openConflictActivator.TryActivateFromEditorAsync);
             var initialLayout = preferredLayout is { } layout && AssetEditorWindowLayoutSafety.CanRestoreSize(layout)
                 ? layout
                 : _windowStateStore.CreateNextWindowLayout();

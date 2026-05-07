@@ -154,7 +154,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
 
     private async void OnPrimaryPaneAssetSelectionChanged(object sender, EventArgs e)
     {
-        await ViewModel.HandlePrimaryPaneSelectionChangedAsync();
+        await _assetEditorWindowCoordinator.HandleMainAssetSelectionChangedAsync();
     }
 
     private async void OnPrimaryPaneFilterChanged(object sender, EventArgs e)
@@ -475,7 +475,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         object sender,
         ResolvedAssetOpenRequestedEventArgs e)
     {
-        await ViewModel.OpenResolvedAssetAsync(e.Target);
+        await _assetEditorWindowCoordinator.HandleMainResolvedAssetOpenRequestedAsync(e.Target);
     }
 
     private async void OnPrimaryPaneBatchExtractRequested(object sender, EventArgs e)

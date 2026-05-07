@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Windows.Graphics;
@@ -7,6 +8,8 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 
 public sealed partial class AssetEditorWindow
 {
+    private const int SwShow = 5;
+    private const int SwRestore = 9;
     private AppWindow? _appWindow;
     private AssetEditorWindowLayoutSnapshot? _lastPublishedLayout;
     private bool _isApplyingInitialLayout;
@@ -15,6 +18,25 @@ public sealed partial class AssetEditorWindow
 
     internal bool TryCaptureLayoutSnapshot(out AssetEditorWindowLayoutSnapshot layout) =>
         TryCaptureCurrentLayout(out layout);
+
+    internal void BringToFront()
+    {
+        try
+        {
+            var windowHandle = WindowNative.GetWindowHandle(this);
+            if (windowHandle != IntPtr.Zero)
+            {
+                ShowWindow(windowHandle, IsIconic(windowHandle) ? SwRestore : SwShow);
+                SetForegroundWindow(windowHandle);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Asset editor window foreground activation failed: {ex}");
+        }
+
+        Activate();
+    }
 
     internal void ApplyInitialLayout(AssetEditorWindowLayoutSnapshot layout)
     {
@@ -125,5 +147,16 @@ public sealed partial class AssetEditorWindow
             size.Height);
         return true;
     }
-}
 
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ShowWindow(nint hWnd, int nCmdShow);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetForegroundWindow(nint hWnd);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsIconic(nint hWnd);
+}

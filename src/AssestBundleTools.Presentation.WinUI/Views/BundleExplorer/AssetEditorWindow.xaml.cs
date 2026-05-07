@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
@@ -14,6 +16,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 {
     private readonly Func<AssetEditorWindow, AssetDocumentTabViewModel, Task> _openAssetDocumentInNewWindowAsync;
     private readonly Func<AssetEditorWindow, Task> _openAssetDocumentGroupInNewWindowAsync;
+    private readonly Func<AssetEditorWindow, ResolvedAssetNavigationTarget, Task<bool>> _activateOpenAssetDocumentAsync;
     private readonly AssetEditorWindowAssetTabStateObserver _assetTabStateObserver;
     private bool _isInitialized;
     private bool _isSynchronizingSelection;
@@ -21,11 +24,13 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
     public AssetEditorWindow(
         AssetEditorWindowViewModel viewModel,
         Func<AssetEditorWindow, AssetDocumentTabViewModel, Task> openAssetDocumentInNewWindowAsync,
-        Func<AssetEditorWindow, Task> openAssetDocumentGroupInNewWindowAsync)
+        Func<AssetEditorWindow, Task> openAssetDocumentGroupInNewWindowAsync,
+        Func<AssetEditorWindow, ResolvedAssetNavigationTarget, Task<bool>> activateOpenAssetDocumentAsync)
     {
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         _openAssetDocumentInNewWindowAsync = openAssetDocumentInNewWindowAsync ?? throw new ArgumentNullException(nameof(openAssetDocumentInNewWindowAsync));
         _openAssetDocumentGroupInNewWindowAsync = openAssetDocumentGroupInNewWindowAsync ?? throw new ArgumentNullException(nameof(openAssetDocumentGroupInNewWindowAsync));
+        _activateOpenAssetDocumentAsync = activateOpenAssetDocumentAsync ?? throw new ArgumentNullException(nameof(activateOpenAssetDocumentAsync));
         InitializeComponent();
         ApplyLocalizedText();
         UpdateWindowTitle();
@@ -46,6 +51,18 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 
     internal AssetEditorWindowGroupSnapshot CaptureGroupSnapshot() =>
         AssetEditorWindowGroupSnapshot.FromDocumentGroup(ViewModel.DocumentGroup);
+
+    internal async Task<bool> TryActivateAssetDocumentTabAsync(BundleId bundleId, AssetId assetId)
+    {
+        if (!ViewModel.DocumentGroup.TryGetAssetTab(bundleId, assetId, out var assetTab))
+        {
+            return false;
+        }
+
+        await ViewModel.ActivateAssetDocumentTabAsync(assetTab);
+        BringToFront();
+        return true;
+    }
 
     private async void OnContentRootLoaded(object sender, RoutedEventArgs e)
     {
@@ -288,6 +305,11 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         object sender,
         ResolvedAssetOpenRequestedEventArgs e)
     {
+        if (await _activateOpenAssetDocumentAsync(this, e.Target))
+        {
+            return;
+        }
+
         await ViewModel.OpenResolvedAssetAsync(e.Target);
     }
 
