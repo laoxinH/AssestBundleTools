@@ -1059,6 +1059,18 @@
   <data name="InspectorPanelView.SpineGroup.AtlasPageSelector.ToolTip" xml:space="preserve">
     <value>切换当前 Spine atlas page 预览</value>
   </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationPreview.Label" xml:space="preserve">
+    <value>动画预览</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationPreview.Format" xml:space="preserve">
+    <value>动画 {0} · Attachment {1} · Texture page {2}</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.PlayPause.ToolTip" xml:space="preserve">
+    <value>播放或暂停 Spine 动画预览</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.Restart.ToolTip" xml:space="preserve">
+    <value>重新开始 Spine 动画预览</value>
+  </data>
   <data name="InspectorPanelView.SpriteCropResultModeButton.ToolTip" xml:space="preserve">
     <value>显示裁切结果</value>
   </data>

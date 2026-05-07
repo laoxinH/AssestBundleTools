@@ -1059,6 +1059,18 @@
   <data name="InspectorPanelView.SpineGroup.AtlasPageSelector.ToolTip" xml:space="preserve">
     <value>Switch the current Spine atlas page preview</value>
   </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationPreview.Label" xml:space="preserve">
+    <value>Animation preview</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationPreview.Format" xml:space="preserve">
+    <value>Animations {0} · Attachments {1} · Texture pages {2}</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.PlayPause.ToolTip" xml:space="preserve">
+    <value>Play or pause the Spine animation preview</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.Restart.ToolTip" xml:space="preserve">
+    <value>Restart the Spine animation preview</value>
+  </data>
   <data name="InspectorPanelView.SpriteCropResultModeButton.ToolTip" xml:space="preserve">
     <value>Show crop result</value>
   </data>

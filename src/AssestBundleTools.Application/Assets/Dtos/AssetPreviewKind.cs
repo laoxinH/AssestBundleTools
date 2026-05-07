@@ -16,5 +16,6 @@ public enum AssetPreviewKind
     Font = 8,
     GameObject = 9,
     MonoBehaviour = 10,
-    AnimatorController = 11
+    AnimatorController = 11,
+    SpineAnimation = 12
 }

@@ -64,6 +64,13 @@ internal sealed class SpineAssetGroupInspectorPresenter
         groupTab.Inspector.SpineAtlasPageSelector.Apply(
             groupTab.AtlasPageOptions,
             groupTab.SelectedAtlasPageOption);
+        if (details?.AnimationPreview is { } animationPreview &&
+            groupTab.AnimationTextures.Count > 0)
+        {
+            ApplyAnimationPreview(groupTab.Inspector, group, details, diagnostics, animationPreview, groupTab.AnimationTextures);
+            return;
+        }
+
         if (groupTab.TexturePreview is { } texturePreview)
         {
             ApplyTexturePreview(groupTab.Inspector, group, details, diagnostics, texturePreview);
@@ -113,6 +120,31 @@ internal sealed class SpineAssetGroupInspectorPresenter
                 texturePreview.Preview.PreviewInfoItems),
             imageRegionOverlayDisplayState: BuildRegionOverlayDisplayState(texturePreview));
         ApplyPreviewDiagnostic(inspector, texturePreview.Preview.Diagnostic);
+    }
+
+    private void ApplyAnimationPreview(
+        InspectorPanelViewModel inspector,
+        SpineAssetGroupDto group,
+        SpineAssetGroupDetailsDto details,
+        IReadOnlyList<SpineAssetGroupDiagnosticDto> diagnostics,
+        SpineAnimationPreviewDto animationPreview,
+        IReadOnlyDictionary<string, SpineAnimationPreviewTextureState> animationTextures)
+    {
+        var rows = new List<InspectorInfoRowViewModel>(
+            BuildGroupPreviewInfoRows(group, details, diagnostics))
+        {
+            new(
+                GetString(ResourceKeys.InspectorSpineGroupAnimationPreviewLabel),
+                _localizationService.GetFormattedString(
+                    ResourceKeys.InspectorSpineGroupAnimationPreviewFormat,
+                    animationPreview.Animations.Count.ToString(CultureInfo.CurrentCulture),
+                    animationPreview.Attachments.Count.ToString(CultureInfo.CurrentCulture),
+                    animationTextures.Count.ToString(CultureInfo.CurrentCulture)))
+        };
+        inspector.ApplySpineAnimationPreview(
+            animationPreview,
+            animationTextures,
+            rows);
     }
 
     private IReadOnlyList<InspectorInfoRowViewModel> BuildGroupPreviewInfoRows(

@@ -82,7 +82,10 @@ public sealed partial class AssetEditorWindowViewModel
                 return;
             }
 
-            spineGroupTab.ApplyDetails(loadResult.Details, loadResult.TexturePreview);
+            spineGroupTab.ApplyDetails(
+                loadResult.Details,
+                loadResult.TexturePreview,
+                loadResult.AnimationTextures);
             _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
             OnPropertyChanged(nameof(Inspector));
         }

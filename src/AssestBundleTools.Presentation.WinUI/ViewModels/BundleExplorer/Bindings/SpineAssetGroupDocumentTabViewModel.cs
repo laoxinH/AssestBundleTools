@@ -15,6 +15,8 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
     private SpineAssetGroupDto _item;
     private SpineAssetGroupDetailsDto? _details;
     private SpineAssetGroupTexturePreviewState? _texturePreview;
+    private IReadOnlyDictionary<string, SpineAnimationPreviewTextureState> _animationTextures =
+        new Dictionary<string, SpineAnimationPreviewTextureState>(StringComparer.Ordinal);
     private SpineAtlasPageOptionViewModel? _selectedAtlasPageOption;
     private string _displayName;
     private string _toolTipText;
@@ -66,6 +68,12 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
         private set => SetProperty(ref _texturePreview, value);
     }
 
+    internal IReadOnlyDictionary<string, SpineAnimationPreviewTextureState> AnimationTextures
+    {
+        get => _animationTextures;
+        private set => SetProperty(ref _animationTextures, value);
+    }
+
     public ObservableCollection<SpineAtlasPageOptionViewModel> AtlasPageOptions { get; } = new();
 
     public SpineAtlasPageOptionViewModel? SelectedAtlasPageOption
@@ -82,6 +90,7 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
 
         Details = null;
         TexturePreview = null;
+        AnimationTextures = new Dictionary<string, SpineAnimationPreviewTextureState>(StringComparer.Ordinal);
         ClearAtlasPageOptions();
         Item = item;
         DisplayName = ResolveDisplayName(item);
@@ -90,7 +99,8 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
 
     internal void ApplyDetails(
         SpineAssetGroupDetailsDto details,
-        SpineAssetGroupTexturePreviewState? texturePreview = null)
+        SpineAssetGroupTexturePreviewState? texturePreview = null,
+        IReadOnlyDictionary<string, SpineAnimationPreviewTextureState>? animationTextures = null)
     {
         ArgumentNullException.ThrowIfNull(details);
 
@@ -98,6 +108,9 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
         Details = details;
         ReplaceAtlasPageOptions(details, texturePreview?.AtlasPage);
         TexturePreview = texturePreview;
+        AnimationTextures = animationTextures is { Count: > 0 }
+            ? new Dictionary<string, SpineAnimationPreviewTextureState>(animationTextures, StringComparer.Ordinal)
+            : new Dictionary<string, SpineAnimationPreviewTextureState>(StringComparer.Ordinal);
         DisplayName = ResolveDisplayName(details.Group);
         ToolTipText = CreateToolTipText(details.Group);
     }

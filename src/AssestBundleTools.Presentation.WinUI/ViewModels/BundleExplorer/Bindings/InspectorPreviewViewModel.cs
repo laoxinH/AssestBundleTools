@@ -1,7 +1,6 @@
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -38,6 +37,8 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
     public InspectorPreviewMonoBehaviourViewModel MonoBehaviour { get; } = new();
 
     public InspectorPreviewAnimatorControllerViewModel AnimatorController { get; } = new();
+
+    public InspectorPreviewSpineAnimationViewModel SpineAnimation { get; } = new();
 
     public string PreviewStatusText
     {
@@ -81,111 +82,6 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
     public double PreviewSurfaceHeight => UsesFixedPreviewSurfaceHeight ? 320d : double.NaN;
 
     public double PreviewSurfaceMinHeight => UsesFixedPreviewSurfaceHeight ? 320d : 0d;
-
-    public Visibility PreviewLoadingVisibility => _hasSelection && IsPreviewLoading ? Visibility.Visible : Visibility.Collapsed;
-
-    public Visibility PreviewImageVisibility =>
-        _hasSelection &&
-        !IsPreviewLoading &&
-        _previewKind == AssetPreviewKind.Image &&
-        Image.ImageSource is not null
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-    public Visibility PreviewTextVisibility =>
-        _hasSelection &&
-        !IsPreviewLoading &&
-        _previewKind == AssetPreviewKind.Text &&
-        !string.IsNullOrWhiteSpace(PreviewText)
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-    public Visibility PreviewAudioVisibility =>
-        _hasSelection &&
-        !IsPreviewLoading &&
-        _previewKind == AssetPreviewKind.Audio &&
-        PreviewAudioSource is not null
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-    public Visibility PreviewMeshVisibility =>
-        _hasSelection &&
-        !IsPreviewLoading &&
-        _previewKind == AssetPreviewKind.Mesh &&
-        Mesh.HasGeometry
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-    public Visibility PreviewMaterialVisibility =>
-        _hasSelection &&
-        !IsPreviewLoading &&
-        _previewKind == AssetPreviewKind.Material &&
-        Material.HasMaterial
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-    public Visibility PreviewAnimationClipVisibility =>
-        _hasSelection &&
-        !IsPreviewLoading &&
-        _previewKind == AssetPreviewKind.AnimationClip &&
-        AnimationClip.HasAnimationClip
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-    public Visibility PreviewFontVisibility =>
-        _hasSelection &&
-        !IsPreviewLoading &&
-        _previewKind == AssetPreviewKind.Font &&
-        Font.HasFont
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-    public Visibility PreviewGameObjectVisibility =>
-        _hasSelection &&
-        !IsPreviewLoading &&
-        _previewKind == AssetPreviewKind.GameObject &&
-        GameObject.HasGameObject
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-    public Visibility PreviewMonoBehaviourVisibility =>
-        _hasSelection &&
-        !IsPreviewLoading &&
-        _previewKind == AssetPreviewKind.MonoBehaviour &&
-        MonoBehaviour.HasMonoBehaviour
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-    public Visibility PreviewAnimatorControllerVisibility =>
-        _hasSelection &&
-        !IsPreviewLoading &&
-        _previewKind == AssetPreviewKind.AnimatorController &&
-        AnimatorController.HasAnimatorController
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-    public Visibility PreviewSummaryVisibility =>
-        _hasSelection &&
-        !IsPreviewLoading &&
-        _previewKind == AssetPreviewKind.Summary &&
-        !string.IsNullOrWhiteSpace(PreviewText)
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-    public Visibility PreviewMessageVisibility =>
-        _hasSelection &&
-        !IsPreviewLoading &&
-        _previewKind == AssetPreviewKind.None &&
-        !string.IsNullOrWhiteSpace(PreviewStatusText)
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-    public bool CanOpenPreviewLocation => !string.IsNullOrWhiteSpace(PreviewPayloadFilePath);
-
-    public Visibility PreviewOpenLocationVisibility =>
-        CanOpenPreviewLocation
-            ? Visibility.Visible
-            : Visibility.Collapsed;
 
     internal IReadOnlyList<InspectorInfoRowViewModel> PreviewInfoRows => _previewInfoRows;
 
@@ -392,6 +288,21 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         NotifyPreviewStateChanged();
     }
 
+    internal void ApplySpineAnimationPreview(
+        SpineAnimationPreviewDto animationPreview,
+        IReadOnlyDictionary<string, SpineAnimationPreviewTextureState> texturePreviews,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null)
+    {
+        ArgumentNullException.ThrowIfNull(animationPreview);
+        ArgumentNullException.ThrowIfNull(texturePreviews);
+
+        ResetState();
+        _previewKind = AssetPreviewKind.SpineAnimation;
+        _previewInfoRows = CloneRows(previewInfoRows);
+        SpineAnimation.Apply(animationPreview, texturePreviews);
+        NotifyPreviewStateChanged();
+    }
+
     internal void ApplyTextPreview(
         string textContent,
         IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
@@ -432,6 +343,7 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         GameObject.Clear();
         MonoBehaviour.Clear();
         AnimatorController.Clear();
+        SpineAnimation.Clear();
         PreviewAudioSource = null;
         _previewAudioStream?.Dispose();
         _previewAudioStream = null;
@@ -458,6 +370,7 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         OnPropertyChanged(nameof(PreviewGameObjectVisibility));
         OnPropertyChanged(nameof(PreviewMonoBehaviourVisibility));
         OnPropertyChanged(nameof(PreviewAnimatorControllerVisibility));
+        OnPropertyChanged(nameof(PreviewSpineAnimationVisibility));
         OnPropertyChanged(nameof(PreviewSummaryVisibility));
         OnPropertyChanged(nameof(PreviewMessageVisibility));
         OnPropertyChanged(nameof(PreviewSurfaceHeight));
@@ -497,6 +410,7 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         return previewKind is
             AssetPreviewKind.Image or
             AssetPreviewKind.Mesh or
-            AssetPreviewKind.Text;
+            AssetPreviewKind.Text or
+            AssetPreviewKind.SpineAnimation;
     }
 }

@@ -16,6 +16,7 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
     private readonly IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>> _assetPreviewQueryHandler;
     private readonly SpineAssetGroupTextureDiagnosticBuilder _textureDiagnosticBuilder;
     private readonly SpineSkeletonSummaryBuilder _skeletonSummaryBuilder;
+    private readonly SpineAnimationPreviewBuilder _animationPreviewBuilder;
 
     public LoadSpineAssetGroupDetailsHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
@@ -25,6 +26,7 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
         _assetPreviewQueryHandler = assetPreviewQueryHandler ?? throw new ArgumentNullException(nameof(assetPreviewQueryHandler));
         _textureDiagnosticBuilder = new SpineAssetGroupTextureDiagnosticBuilder(_assetPreviewQueryHandler);
         _skeletonSummaryBuilder = new SpineSkeletonSummaryBuilder(_assetPreviewQueryHandler);
+        _animationPreviewBuilder = new SpineAnimationPreviewBuilder(_assetPreviewQueryHandler);
     }
 
     public async Task<Result<SpineAssetGroupDetailsDto>> HandleAsync(
@@ -129,11 +131,22 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
             atlasPages.AddRange(parsedPages);
         }
 
+        var animationPreviewResult = await _animationPreviewBuilder.BuildAsync(
+            query,
+            group.SkeletonAssets,
+            atlasPages,
+            cancellationToken);
+        if (animationPreviewResult.IsCancelled)
+        {
+            return Result<SpineAssetGroupDetailsDto>.Cancelled();
+        }
+
         return Result<SpineAssetGroupDetailsDto>.Success(new SpineAssetGroupDetailsDto(
             group,
             skeletonSummaryResult.Summaries,
             atlasPages,
-            diagnostics));
+            diagnostics,
+            animationPreviewResult.Preview));
     }
 
     private Result<SpineAssetGroupDetailsDto>? ValidateQuery(LoadSpineAssetGroupDetailsQuery query)

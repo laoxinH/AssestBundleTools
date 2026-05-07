@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls.InspectorSpineAnimationPreviewSurfaceView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid RowSpacing="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid
+            ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <ComboBox
+                x:Name="AnimationComboBox"
+                MinWidth="180"
+                HorizontalAlignment="Stretch"
+                ItemsSource="{x:Bind ViewModel.AnimationNames, Mode=OneWay}"
+                SelectedItem="{x:Bind ViewModel.SelectedAnimationName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            <Button
+                x:Name="PlayPauseButton"
+                Grid.Column="1"
+                Width="34"
+                Height="34"
+                MinWidth="34"
+                Click="OnPlayPauseButtonClick">
+                <FontIcon
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="14"
+                    Glyph="{x:Bind ViewModel.PlayPauseGlyph, Mode=OneWay}" />
+            </Button>
+
+            <Button
+                x:Name="RestartButton"
+                Grid.Column="2"
+                Width="34"
+                Height="34"
+                MinWidth="34"
+                Click="OnRestartButtonClick">
+                <FontIcon
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="14"
+                    Glyph="&#xE72C;" />
+            </Button>
+        </Grid>
+
+        <canvas:CanvasControl
+            x:Name="SpineCanvas"
+            Grid.Row="1"
+            ClearColor="Transparent"
+            Draw="OnSpineCanvasDraw"
+            SizeChanged="OnSpineCanvasSizeChanged" />
+    </Grid>
+</UserControl>

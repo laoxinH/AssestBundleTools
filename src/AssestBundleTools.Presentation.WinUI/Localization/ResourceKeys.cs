@@ -649,6 +649,10 @@ public static class ResourceKeys
     public const string InspectorSpineGroupRegionOverlayBadgeFormat = "InspectorPanelView.SpineGroup.RegionOverlay.Badge.Format";
     public const string InspectorSpineGroupAtlasPageSelectorLabel = "InspectorPanelView.SpineGroup.AtlasPageSelector.Label";
     public const string InspectorSpineGroupAtlasPageSelectorToolTip = "InspectorPanelView.SpineGroup.AtlasPageSelector.ToolTip";
+    public const string InspectorSpineGroupAnimationPreviewLabel = "InspectorPanelView.SpineGroup.AnimationPreview.Label";
+    public const string InspectorSpineGroupAnimationPreviewFormat = "InspectorPanelView.SpineGroup.AnimationPreview.Format";
+    public const string InspectorSpineAnimationPreviewPlayPauseToolTip = "InspectorPanelView.SpineAnimationPreview.PlayPause.ToolTip";
+    public const string InspectorSpineAnimationPreviewRestartToolTip = "InspectorPanelView.SpineAnimationPreview.Restart.ToolTip";
     public const string InspectorSpriteCropResultModeToolTip = "InspectorPanelView.SpriteCropResultModeButton.ToolTip";
     public const string InspectorSpriteCropPreviewModeToolTip = "InspectorPanelView.SpriteCropPreviewModeButton.ToolTip";
     public const string InspectorSpritePreviewOverlayBadgeFormat = "InspectorPanelView.SpritePreviewOverlay.Badge.Format";

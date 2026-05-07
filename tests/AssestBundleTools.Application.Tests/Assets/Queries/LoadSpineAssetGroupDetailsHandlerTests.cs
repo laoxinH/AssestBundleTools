@@ -131,7 +131,7 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
         var result = await handler.HandleAsync(CreateQuery(workspaceId, spineBundleId));
 
         TestAssert.True(result.IsSuccess, "Spine JSON skeleton summary should load through the preview pipeline.");
-        TestAssert.Equal(3, previewHandler.HandleCallCount, "Skeleton JSON, atlas text and Texture2D image should be requested.");
+        TestAssert.Equal(4, previewHandler.HandleCallCount, "Skeleton summary, atlas text, Texture2D image and animation preview should use preview queries.");
         var summary = TestAssert.Single(result.Value?.SkeletonSummaries ?? Array.Empty<SpineSkeletonSummaryDto>());
         TestAssert.Equal(SpineSkeletonAssetFormat.Json, summary.Format, "JSON skeleton assets should be identified.");
         TestAssert.Equal("4.1.24", summary.SpineVersion, "Spine version should come from skeleton metadata.");
@@ -144,6 +144,113 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
         TestAssert.Equal(1, summary.TransformConstraintCount, "Transform constraint count should be parsed.");
         TestAssert.Equal(1, summary.PathConstraintCount, "Path constraint count should be parsed.");
         TestAssert.Empty(result.Value!.Diagnostics, "A valid JSON skeleton should not add skeleton diagnostics.");
+    }
+
+    public static async Task HandleAsync_ShouldBuildJsonSpineAnimationPreview_FromPreviewPipeline()
+    {
+        var workspaceId = new WorkspaceId("workspace-a");
+        var spineBundleId = new BundleId("bundle.spine");
+        var skeletonAssetId = new AssetId("skeleton-hero");
+        var atlasAssetId = new AssetId("atlas-hero");
+        var spineAssets = CreateAssetList(
+            workspaceId,
+            spineBundleId,
+            "spine.ab",
+            CreateItem(spineBundleId, skeletonAssetId.Value, "Assets/Hero/Hero.json", AssetType.TextAsset),
+            CreateItem(spineBundleId, atlasAssetId.Value, "Assets/Hero/Hero.atlas", AssetType.TextAsset),
+            CreateItem(spineBundleId, "texture-hero", "Assets/Hero/Hero.png", AssetType.Texture2D));
+        var previewHandler = new TestAssetPreviewHandler(query =>
+        {
+            if (query.AssetId.Equals(skeletonAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(query, """
+                    {
+                      "skeleton": { "spine": "4.1.24" },
+                      "bones": [
+                        { "name": "root" },
+                        { "name": "body", "parent": "root", "x": 4, "y": 8 }
+                      ],
+                      "slots": [
+                        { "name": "body-slot", "bone": "body", "attachment": "body" }
+                      ],
+                      "skins": {
+                        "default": {
+                          "body-slot": {
+                            "body": {
+                              "type": "region",
+                              "path": "body",
+                              "x": 1,
+                              "y": 2,
+                              "width": 64,
+                              "height": 128
+                            }
+                          }
+                        }
+                      },
+                      "animations": {
+                        "idle": {
+                          "bones": {
+                            "body": {
+                              "translate": [
+                                { "time": 0, "x": 0, "y": 0 },
+                                { "time": 1, "x": 12, "y": 16 }
+                              ],
+                              "rotate": [
+                                { "time": 0, "angle": 0 },
+                                { "time": 1, "angle": 15 }
+                              ]
+                            }
+                          },
+                          "slots": {
+                            "body-slot": {
+                              "attachment": [
+                                { "time": 0, "name": "body" }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                    """));
+            }
+
+            if (query.AssetId.Equals(atlasAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(query, """
+                    Hero.png
+                    size: 256,256
+                    body
+                      xy: 16, 24
+                      size: 64, 128
+                    """));
+            }
+
+            return Result<AssetPreviewDto>.Success(CreateImagePreview(query, 256, 256));
+        });
+        var handler = new LoadSpineAssetGroupDetailsHandler(
+            new TestWorkspaceSessionRegistry(workspaceId, [spineAssets]),
+            previewHandler);
+
+        var result = await handler.HandleAsync(CreateQuery(workspaceId, spineBundleId));
+
+        TestAssert.True(result.IsSuccess, "Spine animation preview should be built through preview queries.");
+        TestAssert.Equal(4, previewHandler.HandleCallCount, "Skeleton summary, atlas, texture diagnostics and animation preview should stay on the preview pipeline.");
+        var animationPreview = result.Value?.AnimationPreview ??
+                               throw new InvalidOperationException("Expected animation preview.");
+        TestAssert.Equal("4.1.24", animationPreview.SpineVersion, "Spine version should be preserved.");
+        TestAssert.Equal(2, animationPreview.Bones.Count, "Bones should be parsed for pose sampling.");
+        TestAssert.Equal(1, animationPreview.Slots.Count, "Slots should be parsed for draw order.");
+        var attachment = TestAssert.Single(animationPreview.Attachments);
+        TestAssert.Equal("body-slot", attachment.SlotName, "Attachment should retain its owning slot.");
+        TestAssert.Equal("Hero.png", attachment.PageName, "Attachment should resolve the atlas page.");
+        TestAssert.Equal(16, attachment.RegionX, "Attachment should carry atlas region x.");
+        TestAssert.Equal(128, attachment.RegionHeight, "Attachment should carry atlas region height.");
+        var animation = TestAssert.Single(animationPreview.Animations);
+        TestAssert.Equal("idle", animation.Name, "Animation name should be parsed.");
+        TestAssert.Equal(1d, animation.Duration, "Duration should be derived from timeline frames.");
+        TestAssert.Equal(2, animation.BoneTimelines.Count, "Translate and rotate timelines should be parsed.");
+        TestAssert.Single(animation.SlotAttachmentTimelines);
+        TestAssert.Empty(result.Value!.Diagnostics, "A complete previewable group should not add diagnostics.");
     }
 
     public static async Task HandleAsync_ShouldReportAtlasPageTextureUnmatched_WhenPageHasNoTextureAsset()

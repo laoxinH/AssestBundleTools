@@ -1,20 +1,13 @@
-using System.Runtime.CompilerServices;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Domain.Assets;
-using AssestBundleTools.Domain.Bundles;
-using AssestBundleTools.Domain.Workspace;
-using AssestBundleTools.Presentation.Tests.Testing;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace AssestBundleTools.Presentation.Tests.ViewModels;
 
-public sealed class BundleExplorerSpineGroupDocumentCoordinatorTests
+public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
 {
     [Fact]
     public async Task HandlePrimaryPaneSelectionChangedAsync_ShouldOpenSpineGroupDocumentAndReuseExistingTab()
@@ -168,6 +161,59 @@ public sealed class BundleExplorerSpineGroupDocumentCoordinatorTests
     }
 
     [Fact]
+    public async Task HandlePrimaryPaneSelectionChangedAsync_ShouldApplySpineAnimationPreview()
+    {
+        var context = CreateContext();
+        var entry = CreateSpineGroupEntry("hero", "Hero");
+        var texturePageAsset = entry.Item.TexturePageAssets[0];
+        var atlasPage = new SpineAtlasPageDto(
+            "hero.png",
+            Width: 128,
+            Height: 128,
+            Regions:
+            [
+                new SpineAtlasRegionDto("body", "hero.png", 0, 0, 64, 64, IsRotated: false)
+            ],
+            TexturePageAsset: texturePageAsset);
+        var animationPreview = CreateAnimationPreview(entry.Item.SkeletonAssets[0], atlasPage.Name);
+        var loader = new TestSpineAssetGroupDetailsLoader
+        {
+            LoadHandler = tab => Task.FromResult<SpineAssetGroupDetailsLoadResult?>(new SpineAssetGroupDetailsLoadResult(
+                new SpineAssetGroupDetailsDto(
+                    tab.Item,
+                    [],
+                    [atlasPage],
+                    tab.Item.Diagnostics,
+                    animationPreview),
+                TexturePreview: null,
+                AnimationTextures: new Dictionary<string, SpineAnimationPreviewTextureState>(StringComparer.Ordinal)
+                {
+                    [atlasPage.Name] = new SpineAnimationPreviewTextureState(
+                        atlasPage.Name,
+                        CreateTexturePreviewState(atlasPage, texturePageAsset, [1, 2, 3]))
+                }))
+        };
+        var coordinator = CreateCoordinator(context, loader);
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.SpineGroups;
+        context.PrimaryPane.ReplaceSpineGroups("ui.ab", [entry], "empty");
+        context.PrimaryPane.UpdateSpineGroupSelection(entry);
+
+        await coordinator.HandlePrimaryPaneSelectionChangedAsync(
+            isSynchronizingPrimaryPaneState: false,
+            captureActiveTabState: static () => { });
+
+        var groupTab = Assert.Single(context.BundleTab.SpineGroupTabs);
+        Assert.Equal(Visibility.Visible, groupTab.Inspector.Preview.PreviewSpineAnimationVisibility);
+        Assert.Equal(Visibility.Collapsed, groupTab.Inspector.Preview.PreviewImageVisibility);
+        Assert.True(groupTab.Inspector.Preview.SpineAnimation.HasSpineAnimation);
+        Assert.Equal("idle", Assert.Single(groupTab.Inspector.Preview.SpineAnimation.AnimationNames));
+        Assert.Contains(
+            groupTab.Inspector.Preview.PreviewInfoRows,
+            row => row.Label == ResourceKeys.InspectorSpineGroupAnimationPreviewLabel &&
+                   row.Value == ResourceKeys.InspectorSpineGroupAnimationPreviewFormat + ":1|1|1");
+    }
+
+    [Fact]
     public async Task SelectActiveAtlasPageAsync_ShouldSwitchTexturePreviewOverlay()
     {
         var context = CreateContext();
@@ -226,185 +272,4 @@ public sealed class BundleExplorerSpineGroupDocumentCoordinatorTests
         Assert.Equal("hero-face.png", groupTab.Inspector.SpineAtlasPageSelector.SelectedOption?.DisplayName);
     }
 
-    private static TestContext CreateContext()
-    {
-        var localizationService = new TestLocalizationService();
-        var documentWorkspace = new BundleExplorerDocumentWorkspaceViewModel();
-        var bundleTab = new BundleDocumentTabViewModel(new BundleId("bundle-ui"), "ui.ab", "ui.ab", isPreview: false);
-        documentWorkspace.BundleTabs.Add(bundleTab);
-        documentWorkspace.SetActiveBundleTab(bundleTab);
-        var hostCoordinator = new BundleExplorerAssetDocumentHostCoordinator(
-            documentWorkspace,
-            localizationService,
-            static () => { },
-            static () => { });
-
-        return new TestContext(
-            localizationService,
-            documentWorkspace,
-            bundleTab,
-            hostCoordinator,
-            new AssetPaneViewModel());
-    }
-
-    private static BundleExplorerSpineGroupDocumentCoordinator CreateCoordinator(
-        TestContext context,
-        ISpineAssetGroupDetailsLoader? loader = null)
-    {
-        var bundlePane = new BundleExplorerBundlePaneViewModel(context.LocalizationService);
-        return new BundleExplorerSpineGroupDocumentCoordinator(
-            context.DocumentWorkspace,
-            context.PrimaryPane,
-            context.HostCoordinator,
-            new SpineAssetGroupInspectorPresenter(bundlePane, context.LocalizationService),
-            loader ?? new TestSpineAssetGroupDetailsLoader(),
-            static () => { },
-            static () => { });
-    }
-
-    private static SpineAssetGroupEntryViewModel CreateSpineGroupEntry(string groupId, string displayName)
-    {
-        return new SpineAssetGroupEntryViewModel(
-            CreateSpineGroup(groupId, displayName),
-            "Skeleton 1 / Atlas 1",
-            "1 page",
-            "Ready");
-    }
-
-    private static SpineAssetGroupDto CreateSpineGroup(string groupId, string displayName)
-    {
-        var bundleId = new BundleId("bundle-ui");
-        return new SpineAssetGroupDto(
-            groupId,
-            bundleId,
-            displayName,
-            $"characters/{groupId}",
-            SkeletonAssets:
-            [
-                new SpineAssetGroupPartDto(
-                    SpineAssetGroupPartRole.Skeleton,
-                    bundleId,
-                    new AssetId($"{groupId}-json"),
-                    "ui.ab",
-                    $"{groupId}.json",
-                    $"Assets/{groupId}.json",
-                    AssetType.TextAsset,
-                    "TextAsset")
-            ],
-            AtlasAssets:
-            [
-                new SpineAssetGroupPartDto(
-                    SpineAssetGroupPartRole.Atlas,
-                    bundleId,
-                    new AssetId($"{groupId}-atlas"),
-                    "ui.ab",
-                    $"{groupId}.atlas",
-                    $"Assets/{groupId}.atlas",
-                    AssetType.TextAsset,
-                    "TextAsset")
-            ],
-            TexturePageAssets:
-            [
-                new SpineAssetGroupPartDto(
-                    SpineAssetGroupPartRole.TexturePage,
-                    bundleId,
-                    new AssetId($"{groupId}-texture"),
-                    "ui.ab",
-                    $"{groupId}.png",
-                    $"Assets/{groupId}.png",
-                    AssetType.Texture2D,
-                    "Texture2D")
-            ],
-            Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>());
-    }
-
-    private static AssetPreviewDto CreateImagePreview(SpineAssetGroupPartDto texturePageAsset)
-    {
-        return new AssetPreviewDto(
-            WorkspaceId: new WorkspaceId("workspace"),
-            texturePageAsset.BundleId,
-            texturePageAsset.AssetId,
-            AssetPreviewKind.Image,
-            ContentType: "image/png",
-            BinaryContent: null,
-            TextContent: null,
-            PreviewPayloadFilePath: null,
-            PreviewInfoItems: null,
-            PreviewMessage: null,
-            PreferredDisplaySizeInBytes: null,
-            IsFromCache: false,
-            GeneratedAtUtc: DateTimeOffset.UnixEpoch,
-            Diagnostic: new AssetPreviewDiagnosticDto(
-                AssetPreviewCacheStatusKind.Missing,
-                AssetPreviewFallbackReasonKind.None));
-    }
-
-    private static SpineSkeletonSummaryDto CreateJsonSkeletonSummary(
-        SpineAssetGroupPartDto skeletonAsset) =>
-        new(
-            skeletonAsset,
-            SpineSkeletonAssetFormat.Json,
-            SpineVersion: "4.1",
-            BoneCount: 2,
-            SlotCount: 3,
-            SkinCount: 1,
-            AnimationCount: 4,
-            EventCount: 1,
-            IkConstraintCount: 0,
-            TransformConstraintCount: 0,
-            PathConstraintCount: 0);
-
-    private static SpineAssetGroupTexturePreviewState CreateTexturePreviewState(
-        SpineAtlasPageDto atlasPage,
-        SpineAssetGroupPartDto texturePageAsset)
-    {
-        return new SpineAssetGroupTexturePreviewState(
-            atlasPage,
-            CreateImagePreview(texturePageAsset),
-            CreateImageSourceStub(),
-            PixelWidth: atlasPage.Width ?? 1,
-            PixelHeight: atlasPage.Height ?? 1);
-    }
-
-    private static ImageSource CreateImageSourceStub()
-    {
-        return (BitmapImage)RuntimeHelpers.GetUninitializedObject(typeof(BitmapImage));
-    }
-
-    private sealed record TestContext(
-        TestLocalizationService LocalizationService,
-        BundleExplorerDocumentWorkspaceViewModel DocumentWorkspace,
-        BundleDocumentTabViewModel BundleTab,
-        BundleExplorerAssetDocumentHostCoordinator HostCoordinator,
-        AssetPaneViewModel PrimaryPane);
-
-    private sealed class TestSpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoader
-    {
-        public int LoadCallCount { get; private set; }
-
-        public int LoadTexturePreviewCallCount { get; private set; }
-
-        public Func<SpineAssetGroupDocumentTabViewModel, Task<SpineAssetGroupDetailsLoadResult?>> LoadHandler { get; init; } =
-            _ => Task.FromResult<SpineAssetGroupDetailsLoadResult?>(null);
-
-        public Func<SpineAssetGroupDocumentTabViewModel, SpineAtlasPageOptionViewModel, Task<SpineAssetGroupTexturePreviewState?>> LoadTexturePreviewHandler { get; init; } =
-            (_, _) => Task.FromResult<SpineAssetGroupTexturePreviewState?>(null);
-
-        public Task<SpineAssetGroupDetailsLoadResult?> LoadAsync(
-            SpineAssetGroupDocumentTabViewModel groupTab,
-            CancellationToken cancellationToken = default)
-        {
-            LoadCallCount++;
-            return LoadHandler(groupTab);
-        }
-
-        public Task<SpineAssetGroupTexturePreviewState?> LoadTexturePreviewAsync(
-            SpineAssetGroupDocumentTabViewModel groupTab,
-            SpineAtlasPageOptionViewModel atlasPageOption,
-            CancellationToken cancellationToken = default)
-        {
-            LoadTexturePreviewCallCount++;
-            return LoadTexturePreviewHandler(groupTab, atlasPageOption);
-        }
-    }
 }

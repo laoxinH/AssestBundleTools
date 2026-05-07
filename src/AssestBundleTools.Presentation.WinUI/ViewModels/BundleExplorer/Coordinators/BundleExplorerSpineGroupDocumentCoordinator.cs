@@ -325,7 +325,10 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
             return;
         }
 
-        spineGroupTab.ApplyDetails(loadResult.Details, loadResult.TexturePreview);
+        spineGroupTab.ApplyDetails(
+            loadResult.Details,
+            loadResult.TexturePreview,
+            loadResult.AnimationTextures);
         _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
         _documentWorkspace.NotifyAssetDocumentHostStateChanged();
         _requestWorkspaceBrowserStatePersistence();

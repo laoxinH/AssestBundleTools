@@ -55,7 +55,11 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
                 result.Value,
                 groupTab.SelectedAtlasPageOption,
                 cancellationToken);
-            return new SpineAssetGroupDetailsLoadResult(result.Value, texturePreview);
+            var animationTextures = await TryLoadAnimationTexturePreviewsSafelyAsync(
+                query,
+                result.Value,
+                cancellationToken);
+            return new SpineAssetGroupDetailsLoadResult(result.Value, texturePreview, animationTextures);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -118,6 +122,57 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
         {
             return null;
         }
+    }
+
+    private async Task<IReadOnlyDictionary<string, SpineAnimationPreviewTextureState>> TryLoadAnimationTexturePreviewsSafelyAsync(
+        LoadSpineAssetGroupDetailsQuery detailsQuery,
+        SpineAssetGroupDetailsDto details,
+        CancellationToken cancellationToken)
+    {
+        if (details.AnimationPreview is null)
+        {
+            return new Dictionary<string, SpineAnimationPreviewTextureState>(StringComparer.Ordinal);
+        }
+
+        var atlasPagesByName = details.AtlasPages
+            .Where(static page => page.TexturePageAsset is not null)
+            .GroupBy(static page => page.Name, StringComparer.Ordinal)
+            .ToDictionary(static group => group.Key, static group => group.First(), StringComparer.Ordinal);
+        var requiredPageNames = details.AnimationPreview.Attachments
+            .Select(static attachment => attachment.PageName)
+            .Where(static pageName => !string.IsNullOrWhiteSpace(pageName))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        var texturePreviews = new Dictionary<string, SpineAnimationPreviewTextureState>(StringComparer.Ordinal);
+        foreach (var pageName in requiredPageNames)
+        {
+            if (!atlasPagesByName.TryGetValue(pageName, out var atlasPage))
+            {
+                continue;
+            }
+
+            try
+            {
+                var texturePreview = await TryLoadTexturePreviewAsync(
+                    detailsQuery,
+                    atlasPage,
+                    cancellationToken);
+                if (texturePreview is not null)
+                {
+                    texturePreviews[pageName] = new SpineAnimationPreviewTextureState(pageName, texturePreview);
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+                continue;
+            }
+        }
+
+        return texturePreviews;
     }
 
     private async Task<SpineAssetGroupTexturePreviewState?> TryLoadTexturePreviewAsync(

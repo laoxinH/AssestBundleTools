@@ -188,6 +188,18 @@ public sealed partial class InspectorPanelViewModel
         RebuildInformationCards();
     }
 
+    internal void ApplySpineAnimationPreview(
+        SpineAnimationPreviewDto animationPreview,
+        IReadOnlyDictionary<string, SpineAnimationPreviewTextureState> texturePreviews,
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null)
+    {
+        Preview.ApplySpineAnimationPreview(
+            animationPreview,
+            texturePreviews,
+            previewInfoRows);
+        RebuildInformationCards();
+    }
+
     public void ApplyTextPreview(
         string textContent,
         IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,

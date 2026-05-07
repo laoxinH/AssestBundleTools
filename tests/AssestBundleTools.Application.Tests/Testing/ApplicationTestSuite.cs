@@ -1,7 +1,7 @@
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
-using AssestBundleTools.Application.Tests.Editing;
 using AssestBundleTools.Application.Tests.Assets.Queries;
+using AssestBundleTools.Application.Tests.Editing;
 using AssestBundleTools.Application.Tests.Replacement;
 using AssestBundleTools.Application.Tests.Saving;
 using AssestBundleTools.Application.Tests.TestDoubles;
@@ -15,7 +15,7 @@ using AssestBundleTools.Domain.Workspace;
 
 namespace AssestBundleTools.Application.Tests.Testing;
 
-internal static class ApplicationTestSuite
+internal static partial class ApplicationTestSuite
 {
     public static async Task<int> RunAsync()
     {
@@ -40,38 +40,7 @@ internal static class ApplicationTestSuite
             failures,
             nameof(GetAssetEditDraftRestorePlanHandlerTests.HandleAsync_ShouldAllowReferenceWithoutSourceFingerprint),
             GetAssetEditDraftRestorePlanHandlerTests.HandleAsync_ShouldAllowReferenceWithoutSourceFingerprint);
-        await RunTestAsync(
-            failures,
-            nameof(LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldGroupSkeletonAtlasAndWorkspaceTexturePages),
-            LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldGroupSkeletonAtlasAndWorkspaceTexturePages);
-        await RunTestAsync(
-            failures,
-            nameof(LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldReportMissingAtlasAndTextureDiagnostics),
-            LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldReportMissingAtlasAndTextureDiagnostics);
-        await RunTestAsync(
-            failures,
-            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseAtlasPagesAndRegions_FromPreviewPipeline),
-            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseAtlasPagesAndRegions_FromPreviewPipeline);
-        await RunTestAsync(
-            failures,
-            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseJsonSkeletonSummary_FromPreviewPipeline),
-            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseJsonSkeletonSummary_FromPreviewPipeline);
-        await RunTestAsync(
-            failures,
-            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportAtlasPreviewUnavailable_WhenAtlasPreviewIsNotText),
-            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportAtlasPreviewUnavailable_WhenAtlasPreviewIsNotText);
-        await RunTestAsync(
-            failures,
-            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportAtlasPageTextureUnmatched_WhenPageHasNoTextureAsset),
-            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportAtlasPageTextureUnmatched_WhenPageHasNoTextureAsset);
-        await RunTestAsync(
-            failures,
-            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportTexturePreviewUnavailable_WhenMatchedTextureHasNoImagePreview),
-            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportTexturePreviewUnavailable_WhenMatchedTextureHasNoImagePreview);
-        await RunTestAsync(
-            failures,
-            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportAtlasPageTextureSizeMismatch_WhenImageDimensionsDiffer),
-            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportAtlasPageTextureSizeMismatch_WhenImageDimensionsDiffer);
+        await RunSpineAssetGroupTestsAsync(failures);
         await RunTestAsync(
             failures,
             nameof(WorkspaceChangeSetAssetEditDraftStoreTests.Load_ShouldResolveDraftDescriptor_FromWorkspaceChangeSet),

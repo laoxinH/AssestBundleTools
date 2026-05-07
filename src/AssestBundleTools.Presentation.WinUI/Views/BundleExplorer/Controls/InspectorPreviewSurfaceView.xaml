@@ -476,6 +476,13 @@
                         ViewModel="{x:Bind ViewModel.Preview.AnimatorController, Mode=OneWay}" />
                 </Grid>
 
+                <Grid
+                    Margin="8"
+                    Visibility="{x:Bind ViewModel.Preview.PreviewSpineAnimationVisibility, Mode=OneWay}">
+                    <controls:InspectorSpineAnimationPreviewSurfaceView
+                        ViewModel="{x:Bind ViewModel.Preview.SpineAnimation, Mode=OneWay}" />
+                </Grid>
+
                 <StackPanel
                     Margin="8,0,8,8"
                     HorizontalAlignment="Stretch"

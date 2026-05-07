@@ -7,4 +7,5 @@ public sealed record SpineAssetGroupDetailsDto(
     SpineAssetGroupDto Group,
     IReadOnlyList<SpineSkeletonSummaryDto> SkeletonSummaries,
     IReadOnlyList<SpineAtlasPageDto> AtlasPages,
-    IReadOnlyList<SpineAssetGroupDiagnosticDto> Diagnostics);
+    IReadOnlyList<SpineAssetGroupDiagnosticDto> Diagnostics,
+    SpineAnimationPreviewDto? AnimationPreview = null);

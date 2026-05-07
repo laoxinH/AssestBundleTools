@@ -5,4 +5,5 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordin
 
 internal sealed record SpineAssetGroupDetailsLoadResult(
     SpineAssetGroupDetailsDto Details,
-    SpineAssetGroupTexturePreviewState? TexturePreview);
+    SpineAssetGroupTexturePreviewState? TexturePreview,
+    IReadOnlyDictionary<string, SpineAnimationPreviewTextureState>? AnimationTextures = null);
