@@ -129,6 +129,43 @@ public sealed class AssetEditorWindowRestorePlannerTests
         Assert.Equal("draft-1", Assert.Single(restoredWindow.OpenAssetTabs).EditDraftReference?.DraftId);
     }
 
+    [Fact]
+    public void DraftMarkerPolicy_ShouldKeepOnlyRestorableDraftReferences_WhenRestorePlanIsAvailable()
+    {
+        var window = CreateWindow(
+            windowStateId: 14,
+            activeBundleId: "bundle-a",
+            activeAssetId: "asset-1",
+            new WorkspaceAssetEditorWindowAssetTabDto(
+                "bundle-a",
+                "asset-1",
+                "Asset 1",
+                EditDraftReference: new WorkspaceAssetEditDraftReferenceDto(
+                    "draft-1",
+                    "text",
+                    "source-v1")),
+            new WorkspaceAssetEditorWindowAssetTabDto(
+                "bundle-a",
+                "asset-2",
+                "Asset 2",
+                EditDraftReference: new WorkspaceAssetEditDraftReferenceDto(
+                    "draft-2",
+                    "text",
+                    "source-v2")));
+        var restorableDraftReferenceKeys = new HashSet<AssetEditDraftReferenceKey>
+        {
+            new("draft-1", "text", "source-v1")
+        };
+
+        var restoredWindow = AssetEditorWindowRestoreDraftMarkerPolicy.Apply(
+            window,
+            restoreDraftMarkers: true,
+            restorableDraftReferenceKeys);
+
+        Assert.Equal("draft-1", restoredWindow.OpenAssetTabs[0].EditDraftReference?.DraftId);
+        Assert.Null(restoredWindow.OpenAssetTabs[1].EditDraftReference);
+    }
+
     private static WorkspaceAssetEditorWindowStateDto CreateWindow(
         int windowStateId,
         string activeBundleId,

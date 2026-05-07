@@ -132,9 +132,11 @@ public sealed partial class BundleExplorerPage
             }
 
             var openAssetKeys = CaptureOpenAssetKeys();
-            _owner.ViewModel.AssetEditorWindowRestorePrompt.ReplacePotentialConflictAssetKeys(openAssetKeys);
-            var restoreDraftMarkers = _owner.ViewModel.AssetEditorWindowRestorePrompt.RestoreDraftMarkers;
-            var pendingWindows = _owner.ViewModel.AssetEditorWindowRestorePrompt.TakePendingSnapshots();
+            var restorePrompt = _owner.ViewModel.AssetEditorWindowRestorePrompt;
+            restorePrompt.ReplacePotentialConflictAssetKeys(openAssetKeys);
+            var restoreDraftMarkers = restorePrompt.RestoreDraftMarkers;
+            var restorableDraftReferenceKeys = restorePrompt.CreateRestorableDraftReferenceKeys();
+            var pendingWindows = restorePrompt.TakePendingSnapshots();
             if (pendingWindows.Count == 0)
             {
                 return Task.CompletedTask;
@@ -154,7 +156,8 @@ public sealed partial class BundleExplorerPage
                 {
                     var restorableWindow = AssetEditorWindowRestoreDraftMarkerPolicy.Apply(
                         pendingWindow,
-                        restoreDraftMarkers);
+                        restoreDraftMarkers,
+                        restorableDraftReferenceKeys);
                     var restoredGroup = TryCreateRestoredDocumentGroup(restorableWindow);
                     if (restoredGroup is null)
                     {

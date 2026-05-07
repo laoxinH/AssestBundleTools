@@ -179,6 +179,31 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
         RestoreDraftMarkers = restoreDraftMarkers;
     }
 
+    internal IReadOnlySet<AssetEditDraftReferenceKey>? CreateRestorableDraftReferenceKeys()
+    {
+        if (_draftRestorePlan is null)
+        {
+            return null;
+        }
+
+        var restorableDraftReferenceKeys = new HashSet<AssetEditDraftReferenceKey>();
+        foreach (var candidate in _draftRestorePlan.Candidates)
+        {
+            if (!candidate.IsRestorable)
+            {
+                continue;
+            }
+
+            var draftReferenceKey = AssetEditDraftReferenceKey.Create(candidate.Reference);
+            if (draftReferenceKey is not null)
+            {
+                restorableDraftReferenceKeys.Add(draftReferenceKey);
+            }
+        }
+
+        return restorableDraftReferenceKeys;
+    }
+
     public IReadOnlyList<WorkspaceAssetEditorWindowStateDto> TakePendingSnapshots()
     {
         var snapshots = _pendingWindows;

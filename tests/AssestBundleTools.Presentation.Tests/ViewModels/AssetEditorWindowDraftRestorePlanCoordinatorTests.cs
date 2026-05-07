@@ -59,7 +59,15 @@ public sealed class AssetEditorWindowDraftRestorePlanCoordinatorTests
                     SourceMismatchCount: 0,
                     ExpiredCount: 0,
                     InvalidReferenceCount: 1,
-                    Candidates: Array.Empty<AssetEditDraftRestoreCandidateDto>())))
+                    Candidates:
+                    [
+                        new AssetEditDraftRestoreCandidateDto(
+                            query.DraftReferences[0],
+                            AssetEditDraftRestoreStatus.Restorable),
+                        new AssetEditDraftRestoreCandidateDto(
+                            query.DraftReferences[1],
+                            AssetEditDraftRestoreStatus.InvalidReference)
+                    ])))
         };
         var coordinator = new AssetEditorWindowDraftRestorePlanCoordinator(
             gateway,

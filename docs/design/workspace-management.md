@@ -317,7 +317,7 @@ Presentation 层保留两个协同层次：
 
 其中 `openAssetEditorWindows[]` 只记录独立资源编辑窗口的轻量页面级状态，例如窗口位置 / 大小、窗口内资产文档标签顺序、活动资产、检查器分段，以及图片 / Mesh 预览浏览选项；不保存真实资源详情、预览缓存载荷、替换结果或编辑草稿内容。资产文档标签可以携带与主窗口同形状的轻量草稿引用。应用重新打开工作区时当前会读取该字段并弹出一次可控恢复提示；如果存在轻量草稿引用，提示会显示带草稿标记的标签数量，并允许用户决定本次成功打开的标签是否带回该标记，同时在弹窗中显示草稿恢复候选预检摘要；如果待恢复标签已在主窗口或现有独立窗口中打开，提示和工具栏入口会显示冲突标签数量，并引导用户关闭对应标签后再恢复。用户选择稍后时仍可通过工具栏入口恢复，但系统仍不自动创建独立资源编辑窗口。恢复执行会按当前资源包可用性和已打开资产身份拆分快照：可恢复项打开，不可恢复或冲突项继续保留为待恢复状态，用户可在提示中显式忽略；窗口 bounds 应在应用前做最小尺寸和当前显示器工作区安全归位。
 
-编辑草稿的真实状态不写入 `openAssetTabs[]` 或 `openAssetEditorWindows[]`。当前 Application 层只提供最小草稿恢复候选读模型：`IAssetEditDraftStore` 按 `workspaceKey + draftId + draftMode` 读取草稿描述元数据，`GetAssetEditDraftRestorePlanHandler` 再用轻量引用里的 `SourceFingerprint` 判断该标记是可恢复、缺失、来源不匹配、已过期还是引用无效。Presentation 弹窗当前会在显示前通过 `AssetEditDraftRestorePlanGateway` 读取该计划，并只把数量摘要用于恢复提示和重复弹窗判定；组合根已接入 `WorkspaceChangeSetAssetEditDraftStore`，从 `staging/changes/<workspaceKey>.json` 的 `editDrafts[]` 描述列表读取草稿元数据。该流程不读取真实草稿内容，也不提交、丢弃或合并草稿；后续真实草稿队列和持久化实现应继续落在 `staging/changes` 或等价变更暂存层，并与工作区轻量元数据分离。
+编辑草稿的真实状态不写入 `openAssetTabs[]` 或 `openAssetEditorWindows[]`。当前 Application 层只提供最小草稿恢复候选读模型：`IAssetEditDraftStore` 按 `workspaceKey + draftId + draftMode` 读取草稿描述元数据，`GetAssetEditDraftRestorePlanHandler` 再用轻量引用里的 `SourceFingerprint` 判断该标记是可恢复、缺失、来源不匹配、已过期还是引用无效。Presentation 弹窗当前会在显示前通过 `AssetEditDraftRestorePlanGateway` 读取该计划，并把数量摘要用于恢复提示和重复弹窗判定；当预检计划可用时，执行恢复只把预检为可恢复的轻量标记带回新标签，缺失、来源不匹配、已过期和引用无效的草稿标记不会继续保留。组合根已接入 `WorkspaceChangeSetAssetEditDraftStore`，从 `staging/changes/<workspaceKey>.json` 的 `editDrafts[]` 描述列表读取草稿元数据。该流程不读取真实草稿内容，也不提交、丢弃或合并草稿；后续真实草稿队列和持久化实现应继续落在 `staging/changes` 或等价变更暂存层，并与工作区轻量元数据分离。
 
 补充约束：
 
@@ -431,7 +431,7 @@ Presentation 层保留两个协同层次：
 - `sourceDescription`
 - `summary`
 
-该列表服务于恢复提示里的候选预检：恢复提示只需要知道草稿标记是否仍可定位、是否与来源指纹匹配、是否过期，以及可展示的轻量说明。真实草稿内容、合并策略、确认 / 丢弃队列和保存应用语义仍由后续编辑器模型定义。
+该列表服务于恢复提示里的候选预检：恢复提示只需要知道草稿标记是否仍可定位、是否与来源指纹匹配、是否过期，以及可展示的轻量说明。预检计划可用时，执行窗口恢复只允许保留预检为可恢复的轻量标记。真实草稿内容、合并策略、确认 / 丢弃队列和保存应用语义仍由后续编辑器模型定义。
 
 ### 5.6 缓存失效规则
 

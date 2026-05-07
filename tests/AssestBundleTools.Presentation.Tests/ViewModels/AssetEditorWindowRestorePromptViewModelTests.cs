@@ -209,7 +209,15 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
             SourceMismatchCount: 1,
             ExpiredCount: 1,
             InvalidReferenceCount: 0,
-            Candidates: Array.Empty<AssetEditDraftRestoreCandidateDto>()));
+            Candidates:
+            [
+                new AssetEditDraftRestoreCandidateDto(
+                    new AssetEditDraftReferenceDto(" draft-1 ", " text ", " source-v1 "),
+                    AssetEditDraftRestoreStatus.Restorable),
+                new AssetEditDraftRestoreCandidateDto(
+                    new AssetEditDraftReferenceDto("draft-2", "text", "source-v2"),
+                    AssetEditDraftRestoreStatus.Missing)
+            ]));
 
         Assert.Equal(5, prompt.DraftRestoreReferenceCount);
         Assert.Equal(1, prompt.DraftRestorableCount);
@@ -223,6 +231,10 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
         Assert.Equal(
             $"{ResourceKeys.AssetEditorWindowRestorePendingDialogDraftDiagnosticsFormat}:1|2|1|1|0",
             prompt.DraftRestoreDiagnosticsText);
+        var restorableDraftReferenceKeys = prompt.CreateRestorableDraftReferenceKeys()
+            ?? new HashSet<AssetEditDraftReferenceKey>();
+        var restorableDraftReferenceKey = Assert.Single(restorableDraftReferenceKeys);
+        Assert.Equal(new AssetEditDraftReferenceKey("draft-1", "text", "source-v1"), restorableDraftReferenceKey);
 
         prompt.ClearDraftRestorePlan();
 

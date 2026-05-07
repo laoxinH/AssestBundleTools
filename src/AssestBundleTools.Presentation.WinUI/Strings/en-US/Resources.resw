@@ -475,10 +475,10 @@
     <value>This workspace has {0} saved editor windows with {1} asset tabs from the previous session, including {2} tabs marked with unapplied drafts and {3} tabs already open in the current window set. Restore will skip conflicting tabs and keep them available from the toolbar.</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.RestoreDraftMarkers.Option" xml:space="preserve">
-    <value>Also restore unapplied draft markers (draft content is not restored)</value>
+    <value>Also restore available draft markers (draft content is not restored)</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.DraftDiagnostics.Format" xml:space="preserve">
-    <value>Draft precheck: {0} restorable, {1} missing, {2} source mismatch, {3} expired, {4} invalid references. This still restores only draft markers, not draft content.</value>
+    <value>Draft precheck: {0} restorable, {1} missing, {2} source mismatch, {3} expired, {4} invalid references. This still restores only available draft markers, not draft content.</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.PrimaryButton" xml:space="preserve">
     <value>Restore Now</value>
