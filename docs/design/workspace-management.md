@@ -319,6 +319,8 @@ Presentation 层保留两个协同层次：
 
 打开资源详情、依赖跳转或请求新建独立资源编辑窗口时，Presentation 需要先检查主窗口和所有独立资源编辑窗口中是否已有同一 `BundleId + AssetId` 的资产文档标签。命中时应激活并切换到已有标签，再把所在窗口置前，不再创建重复标签或重复独立窗口；显式移动标签 / 移动整组仍保持“移动现有标签实例”的语义。
 
+独立资源编辑窗口只有一个资产文档标签时，单标签拖出窗口外不应创建新的等价独立窗口并关闭原窗口；该手势应按取消拖出处理，保留原窗口与原标签上下文。
+
 编辑草稿的真实状态不写入 `openAssetTabs[]` 或 `openAssetEditorWindows[]`。当前 Application 层只提供最小草稿恢复候选读模型：`IAssetEditDraftStore` 按 `workspaceKey + draftId + draftMode` 读取草稿描述元数据，`GetAssetEditDraftRestorePlanHandler` 再用轻量引用里的 `SourceFingerprint` 判断该标记是可恢复、缺失、来源不匹配、已过期还是引用无效。Presentation 弹窗当前会在显示前通过 `AssetEditDraftRestorePlanGateway` 读取该计划，并把数量摘要用于恢复提示和重复弹窗判定；当预检计划可用时，执行恢复只把预检为可恢复的轻量标记带回新标签，缺失、来源不匹配、已过期和引用无效的草稿标记不会继续保留。组合根已接入 `WorkspaceChangeSetAssetEditDraftStore`，从 `staging/changes/<workspaceKey>.json` 的 `editDrafts[]` 描述列表读取草稿元数据。该流程不读取真实草稿内容，也不提交、丢弃或合并草稿；后续真实草稿队列和持久化实现应继续落在 `staging/changes` 或等价变更暂存层，并与工作区轻量元数据分离。
 
 补充约束：

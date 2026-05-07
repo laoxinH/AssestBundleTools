@@ -245,6 +245,14 @@ public sealed partial class BundleExplorerPage
             ArgumentNullException.ThrowIfNull(sourceWindow);
             ArgumentNullException.ThrowIfNull(assetTab);
 
+            if (!AssetEditorWindowTabDragPolicy.CanCreateNewWindowFromDroppedTab(
+                    sourceWindow.ViewModel.DocumentGroup,
+                    assetTab))
+            {
+                await sourceWindow.TryActivateAssetDocumentTabAsync(assetTab.BundleId, assetTab.AssetId);
+                return;
+            }
+
             if (await _openConflictActivator.TryActivateForNewWindowFromEditorAsync(sourceWindow, assetTab))
             {
                 return;
