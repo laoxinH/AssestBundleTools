@@ -33,6 +33,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             App.CurrentApp.WorkspaceExplorerGateway,
             App.CurrentApp.WorkspaceAssetInspectionGateway,
             App.CurrentApp.WorkspaceAssetOperationGateway,
+            App.CurrentApp.AssetEditDraftRestorePlanGateway,
             App.CurrentApp.AppLogService,
             App.CurrentApp.AppNotificationService,
             App.CurrentApp.LocalizationService,

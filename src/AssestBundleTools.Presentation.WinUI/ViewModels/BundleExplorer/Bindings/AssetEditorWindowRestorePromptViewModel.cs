@@ -1,3 +1,5 @@
+using System.Globalization;
+using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
@@ -13,6 +15,7 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
     private readonly ILocalizationService _localizationService;
     private IReadOnlyList<WorkspaceAssetEditorWindowStateDto> _pendingWindows = Array.Empty<WorkspaceAssetEditorWindowStateDto>();
     private IReadOnlySet<string> _potentialConflictAssetKeys = new HashSet<string>(StringComparer.Ordinal);
+    private AssetEditDraftRestorePlanDto? _draftRestorePlan;
     private bool _restoreDraftMarkers = true;
 
     public AssetEditorWindowRestorePromptViewModel(ILocalizationService localizationService)
@@ -39,6 +42,43 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
     public Visibility DraftRestoreOptionVisibility => HasDraftRestoreOption
         ? Visibility.Visible
         : Visibility.Collapsed;
+
+    public int DraftRestoreReferenceCount => _draftRestorePlan?.TotalReferenceCount ?? 0;
+
+    public int DraftRestorableCount => _draftRestorePlan?.RestorableCount ?? 0;
+
+    public int DraftMissingCount => _draftRestorePlan?.MissingCount ?? 0;
+
+    public int DraftSourceMismatchCount => _draftRestorePlan?.SourceMismatchCount ?? 0;
+
+    public int DraftExpiredCount => _draftRestorePlan?.ExpiredCount ?? 0;
+
+    public int DraftInvalidReferenceCount => _draftRestorePlan?.InvalidReferenceCount ?? 0;
+
+    public bool HasDraftRestoreDiagnostics => DraftRestoreReferenceCount > 0;
+
+    public Visibility DraftRestoreDiagnosticsVisibility => HasDraftRestoreDiagnostics
+        ? Visibility.Visible
+        : Visibility.Collapsed;
+
+    public string DraftRestoreDiagnosticsText => HasDraftRestoreDiagnostics
+        ? _localizationService.GetFormattedString(
+            ResourceKeys.AssetEditorWindowRestorePendingDialogDraftDiagnosticsFormat,
+            DraftRestorableCount,
+            DraftMissingCount,
+            DraftSourceMismatchCount,
+            DraftExpiredCount,
+            DraftInvalidReferenceCount)
+        : string.Empty;
+
+    public string DraftRestoreDiagnosticsKey => string.Join(
+        ":",
+        DraftRestoreReferenceCount.ToString(CultureInfo.InvariantCulture),
+        DraftRestorableCount.ToString(CultureInfo.InvariantCulture),
+        DraftMissingCount.ToString(CultureInfo.InvariantCulture),
+        DraftSourceMismatchCount.ToString(CultureInfo.InvariantCulture),
+        DraftExpiredCount.ToString(CultureInfo.InvariantCulture),
+        DraftInvalidReferenceCount.ToString(CultureInfo.InvariantCulture));
 
     public bool RestoreDraftMarkers
     {
@@ -109,12 +149,29 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
     public void ReplacePendingSnapshots(IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? snapshots)
     {
         _pendingWindows = NormalizeSnapshots(snapshots);
+        ClearDraftRestorePlanCore();
         if (PendingDraftTabCount == 0)
         {
             RestoreDraftMarkers = true;
         }
 
         NotifyRestoreStateChanged();
+    }
+
+    public void ReplaceDraftRestorePlan(AssetEditDraftRestorePlanDto? restorePlan)
+    {
+        _draftRestorePlan = restorePlan?.TotalReferenceCount > 0
+            ? restorePlan
+            : null;
+        NotifyDraftRestorePlanChanged();
+    }
+
+    public void ClearDraftRestorePlan()
+    {
+        if (ClearDraftRestorePlanCore())
+        {
+            NotifyDraftRestorePlanChanged();
+        }
     }
 
     public void SetRestoreDraftMarkers(bool restoreDraftMarkers)
@@ -126,6 +183,7 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
     {
         var snapshots = _pendingWindows;
         _pendingWindows = Array.Empty<WorkspaceAssetEditorWindowStateDto>();
+        ClearDraftRestorePlanCore();
         RestoreDraftMarkers = true;
         NotifyRestoreStateChanged();
         return snapshots;
@@ -133,12 +191,13 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
 
     public void Clear()
     {
-        if (_pendingWindows.Count == 0)
+        if (_pendingWindows.Count == 0 && _draftRestorePlan is null)
         {
             return;
         }
 
         _pendingWindows = Array.Empty<WorkspaceAssetEditorWindowStateDto>();
+        ClearDraftRestorePlanCore();
         RestoreDraftMarkers = true;
         NotifyRestoreStateChanged();
     }
@@ -153,11 +212,37 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
         OnPropertyChanged(nameof(PendingConflictAssetTabCount));
         OnPropertyChanged(nameof(HasDraftRestoreOption));
         OnPropertyChanged(nameof(DraftRestoreOptionVisibility));
+        NotifyDraftRestorePlanChanged();
         OnPropertyChanged(nameof(PendingRestoreVisibility));
         OnPropertyChanged(nameof(RestoreButtonText));
         OnPropertyChanged(nameof(RestoreToolTip));
         OnPropertyChanged(nameof(RestoreDialogDescription));
         OnPropertyChanged(nameof(RestoreDraftMarkersOptionText));
+    }
+
+    private void NotifyDraftRestorePlanChanged()
+    {
+        OnPropertyChanged(nameof(DraftRestoreReferenceCount));
+        OnPropertyChanged(nameof(DraftRestorableCount));
+        OnPropertyChanged(nameof(DraftMissingCount));
+        OnPropertyChanged(nameof(DraftSourceMismatchCount));
+        OnPropertyChanged(nameof(DraftExpiredCount));
+        OnPropertyChanged(nameof(DraftInvalidReferenceCount));
+        OnPropertyChanged(nameof(HasDraftRestoreDiagnostics));
+        OnPropertyChanged(nameof(DraftRestoreDiagnosticsVisibility));
+        OnPropertyChanged(nameof(DraftRestoreDiagnosticsText));
+        OnPropertyChanged(nameof(DraftRestoreDiagnosticsKey));
+    }
+
+    private bool ClearDraftRestorePlanCore()
+    {
+        if (_draftRestorePlan is null)
+        {
+            return false;
+        }
+
+        _draftRestorePlan = null;
+        return true;
     }
 
     private static IReadOnlyList<WorkspaceAssetEditorWindowStateDto> NormalizeSnapshots(

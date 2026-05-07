@@ -83,9 +83,11 @@ public sealed partial class BundleExplorerPage
             }
 
             RefreshPendingAssetEditorWindowConflictState();
+            await _owner.ViewModel.RefreshAssetEditorWindowDraftRestorePlanAsync();
             var promptKey = CreatePendingRestorePromptKey(
                 restorePrompt.PendingWindows,
-                restorePrompt.PendingConflictAssetTabCount);
+                restorePrompt.PendingConflictAssetTabCount,
+                restorePrompt.DraftRestoreDiagnosticsKey);
             if (string.Equals(_lastPromptedRestoreSnapshotKey, promptKey, StringComparison.Ordinal))
             {
                 return;
@@ -103,7 +105,7 @@ public sealed partial class BundleExplorerPage
                     SecondaryButtonText = UiText.Get(ResourceKeys.AssetEditorWindowRestorePendingDialogSecondaryButton),
                     CloseButtonText = UiText.Get(ResourceKeys.AssetEditorWindowRestorePendingDialogCloseButton),
                     DefaultButton = ContentDialogButton.Close,
-                    Content = CreateRestoreDialogContent(restorePrompt)
+                    Content = AssetEditorWindowRestoreDialogContentBuilder.Create(restorePrompt)
                 };
 
                 var result = await dialog.ShowAsync();
@@ -184,40 +186,6 @@ public sealed partial class BundleExplorerPage
             }
 
             return Task.CompletedTask;
-        }
-
-        private static UIElement CreateRestoreDialogContent(
-            AssetEditorWindowRestorePromptViewModel restorePrompt)
-        {
-            var panel = new StackPanel
-            {
-                Spacing = 12
-            };
-            panel.Children.Add(
-                new TextBlock
-                {
-                    Text = restorePrompt.RestoreDialogDescription,
-                    TextWrapping = TextWrapping.WrapWholeWords
-                });
-
-            if (!restorePrompt.HasDraftRestoreOption)
-            {
-                return panel;
-            }
-
-            var restoreDraftMarkersCheckBox = new CheckBox
-            {
-                Content = new TextBlock
-                {
-                    Text = restorePrompt.RestoreDraftMarkersOptionText,
-                    TextWrapping = TextWrapping.WrapWholeWords
-                },
-                IsChecked = restorePrompt.RestoreDraftMarkers
-            };
-            restoreDraftMarkersCheckBox.Checked += (_, _) => restorePrompt.SetRestoreDraftMarkers(true);
-            restoreDraftMarkersCheckBox.Unchecked += (_, _) => restorePrompt.SetRestoreDraftMarkers(false);
-            panel.Children.Add(restoreDraftMarkersCheckBox);
-            return panel;
         }
 
         public void HandleWorkspaceShellPageStateChanged(
@@ -467,7 +435,8 @@ public sealed partial class BundleExplorerPage
 
         private static string CreatePendingRestorePromptKey(
             IReadOnlyList<WorkspaceAssetEditorWindowStateDto> pendingWindows,
-            int conflictedAssetTabCount)
+            int conflictedAssetTabCount,
+            string draftRestoreDiagnosticsKey)
         {
             var snapshotKey = string.Join(
                 "|",
@@ -483,7 +452,9 @@ public sealed partial class BundleExplorerPage
             return string.Concat(
                 snapshotKey,
                 ":conflicts:",
-                conflictedAssetTabCount.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                conflictedAssetTabCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                ":drafts:",
+                draftRestoreDiagnosticsKey);
         }
 
         private AssetDocumentGroupTransfer? TryCreateRestoredDocumentGroup(

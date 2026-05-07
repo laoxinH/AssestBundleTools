@@ -6,6 +6,9 @@ using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Queries;
 using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Editing.Dtos;
+using AssestBundleTools.Application.Editing.Queries;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
@@ -350,6 +353,31 @@ internal sealed class TestWorkspaceExplorerGateway : IWorkspaceExplorerGateway
         LoadAssetListQuery query,
         CancellationToken cancellationToken = default) =>
         LoadAssetListHandler(query);
+}
+
+internal sealed class TestAssetEditDraftRestorePlanGateway : IAssetEditDraftRestorePlanGateway
+{
+    public List<GetAssetEditDraftRestorePlanQuery> Queries { get; } = [];
+
+    public Func<GetAssetEditDraftRestorePlanQuery, Task<Result<AssetEditDraftRestorePlanDto>>> GetRestorePlanHandler { get; init; } =
+        query => Task.FromResult(Result<AssetEditDraftRestorePlanDto>.Success(
+            new AssetEditDraftRestorePlanDto(
+                WorkspaceKey: query.WorkspaceKey,
+                TotalReferenceCount: query.DraftReferences.Count,
+                RestorableCount: 0,
+                MissingCount: query.DraftReferences.Count,
+                SourceMismatchCount: 0,
+                ExpiredCount: 0,
+                InvalidReferenceCount: 0,
+                Candidates: Array.Empty<AssetEditDraftRestoreCandidateDto>())));
+
+    public Task<Result<AssetEditDraftRestorePlanDto>> GetRestorePlanAsync(
+        GetAssetEditDraftRestorePlanQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        Queries.Add(query);
+        return GetRestorePlanHandler(query);
+    }
 }
 
 internal sealed class TestBrowserStateCoordinator : IBundleExplorerBrowserStateCoordinator

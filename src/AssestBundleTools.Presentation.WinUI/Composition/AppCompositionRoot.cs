@@ -2,6 +2,8 @@ using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Bundles.Commands;
 using AssestBundleTools.Application.Bundles.Queries;
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Editing.Queries;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Extraction.Commands;
 using AssestBundleTools.Application.Extraction.Queries;
 using AssestBundleTools.Application.Replacement.Commands;
@@ -136,6 +138,8 @@ internal static class AppCompositionRoot
         var getAssetBundleDecryptorCatalogEntriesHandler = new GetAssetBundleDecryptorCatalogEntriesHandler(assetBundleDecryptorCatalogStore);
         var upsertAssetBundleDecryptorHandler = new UpsertAssetBundleDecryptorHandler(assetBundleDecryptorCatalogStore);
         var deleteAssetBundleDecryptorHandler = new DeleteAssetBundleDecryptorHandler(assetBundleDecryptorCatalogStore);
+        var getAssetEditDraftRestorePlanHandler = new GetAssetEditDraftRestorePlanHandler(
+            new CompositionAssetEditDraftStore());
 
         var workspaceExplorerGateway = new WorkspaceExplorerGateway(
             openWorkspaceHandler: openWorkspaceHandler,
@@ -168,6 +172,8 @@ internal static class AppCompositionRoot
             registerWorkspaceCatalogEntryHandler: registerWorkspaceCatalogEntryHandler,
             removeWorkspaceCatalogEntryHandler: removeWorkspaceCatalogEntryHandler,
             setWorkspaceCatalogEntryPinnedStateHandler: setWorkspaceCatalogEntryPinnedStateHandler);
+        var assetEditDraftRestorePlanGateway = new AssetEditDraftRestorePlanGateway(
+            getAssetEditDraftRestorePlanHandler);
 
         var workspaceContextService = new WorkspaceContextService(workspaceContextCatalogService);
         var workspaceProcessCoordinatorService = new WorkspaceProcessCoordinatorService(localizationService);
@@ -209,6 +215,7 @@ internal static class AppCompositionRoot
             WorkspaceAssetInspectionGateway: workspaceAssetInspectionGateway,
             WorkspaceAssetOperationGateway: workspaceAssetOperationGateway,
             WorkspaceBatchOperationsGateway: workspaceBatchOperationsGateway,
+            AssetEditDraftRestorePlanGateway: assetEditDraftRestorePlanGateway,
             WorkspaceContextService: workspaceContextService,
             WorkspaceProcessCoordinatorService: workspaceProcessCoordinatorService,
             FilePickerService: filePickerService,

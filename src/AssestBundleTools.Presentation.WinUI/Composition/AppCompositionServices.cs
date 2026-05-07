@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
@@ -17,6 +18,7 @@ internal sealed record AppCompositionServices(
     IWorkspaceAssetInspectionGateway WorkspaceAssetInspectionGateway,
     IWorkspaceAssetOperationGateway WorkspaceAssetOperationGateway,
     IWorkspaceBatchOperationsGateway WorkspaceBatchOperationsGateway,
+    IAssetEditDraftRestorePlanGateway AssetEditDraftRestorePlanGateway,
     IWorkspaceContextService WorkspaceContextService,
     IWorkspaceProcessCoordinatorService WorkspaceProcessCoordinatorService,
     IFilePickerService FilePickerService,

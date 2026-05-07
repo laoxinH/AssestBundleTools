@@ -477,6 +477,9 @@
   <data name="AssetEditorWindow.RestorePending.Dialog.RestoreDraftMarkers.Option" xml:space="preserve">
     <value>Also restore unapplied draft markers (draft content is not restored)</value>
   </data>
+  <data name="AssetEditorWindow.RestorePending.Dialog.DraftDiagnostics.Format" xml:space="preserve">
+    <value>Draft precheck: {0} restorable, {1} missing, {2} source mismatch, {3} expired, {4} invalid references. This still restores only draft markers, not draft content.</value>
+  </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.PrimaryButton" xml:space="preserve">
     <value>Restore Now</value>
   </data>

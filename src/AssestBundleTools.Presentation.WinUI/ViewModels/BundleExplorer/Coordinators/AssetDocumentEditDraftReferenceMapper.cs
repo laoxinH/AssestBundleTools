@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
@@ -39,6 +40,18 @@ internal static class AssetDocumentEditDraftReferenceMapper
             Normalize(draftReference.SourceDescription));
     }
 
+    public static AssetEditDraftReferenceDto ToRestorePlanDto(
+        WorkspaceAssetEditDraftReferenceDto draftReference)
+    {
+        ArgumentNullException.ThrowIfNull(draftReference);
+
+        return new AssetEditDraftReferenceDto(
+            draftReference.DraftId,
+            draftReference.DraftMode,
+            draftReference.SourceFingerprint,
+            draftReference.SourceDescription);
+    }
+
     private static string? Normalize(string? value)
     {
         return string.IsNullOrWhiteSpace(value)
@@ -46,4 +59,3 @@ internal static class AssetDocumentEditDraftReferenceMapper
             : value.Trim();
     }
 }
-

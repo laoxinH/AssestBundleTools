@@ -104,6 +104,7 @@ public sealed class BundleExplorerViewModelResolvedAssetNavigationTests
                 GetAssetPreviewHandler = _ => throw new NotSupportedException()
             },
             new StubWorkspaceAssetOperationGateway(),
+            new TestAssetEditDraftRestorePlanGateway(),
             appLogService,
             notificationService,
             localizationService,

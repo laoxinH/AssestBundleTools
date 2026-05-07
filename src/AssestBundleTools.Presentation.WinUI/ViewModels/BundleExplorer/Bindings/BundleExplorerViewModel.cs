@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
@@ -36,6 +37,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
     private readonly BundleExplorerBundleTabCoordinator _bundleTabCoordinator;
     private readonly BundleExplorerResolvedAssetNavigationCoordinator _resolvedAssetNavigationCoordinator;
     private readonly BundleExplorerAssetDocumentMoveCoordinator _assetDocumentMoveCoordinator;
+    private readonly AssetEditorWindowDraftRestorePlanCoordinator _assetEditorWindowDraftRestorePlanCoordinator;
     private readonly BundleExplorerWorkspaceBindingCoordinator _workspaceBindingCoordinator;
     private readonly BundleExplorerWorkspaceShellViewModel _workspaceShell;
     private readonly BundleExplorerBundlePaneViewModel _bundlePane;
@@ -51,6 +53,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         IWorkspaceExplorerGateway workspaceExplorerGateway,
         IWorkspaceAssetInspectionGateway workspaceAssetInspectionGateway,
         IWorkspaceAssetOperationGateway workspaceAssetOperationGateway,
+        IAssetEditDraftRestorePlanGateway assetEditDraftRestorePlanGateway,
         IAppLogService appLogService,
         IAppNotificationService appNotificationService,
         ILocalizationService localizationService,
@@ -84,6 +87,10 @@ public sealed class BundleExplorerViewModel : ObservableObject
         _documentWorkspace = new BundleExplorerDocumentWorkspaceViewModel();
         _workspaceImportProgress = new WorkspaceImportProgressViewModel(_localizationService);
         _assetEditorWindowRestorePrompt = new AssetEditorWindowRestorePromptViewModel(_localizationService);
+        _assetEditorWindowDraftRestorePlanCoordinator = new AssetEditorWindowDraftRestorePlanCoordinator(
+            assetEditDraftRestorePlanGateway ?? throw new ArgumentNullException(nameof(assetEditDraftRestorePlanGateway)),
+            _workspaceContextService,
+            _assetEditorWindowRestorePrompt);
         _assetWorkflow = new BundleExplorerAssetWorkflowViewModel(
             _workspaceExplorerGateway,
             workspaceAssetInspectionGateway,
@@ -317,6 +324,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
     {
         RequestWorkspaceBrowserStatePersistence();
     }
+
+    public Task RefreshAssetEditorWindowDraftRestorePlanAsync(CancellationToken cancellationToken = default) =>
+        _assetEditorWindowDraftRestorePlanCoordinator.RefreshAsync(cancellationToken);
 
     public async Task ActivateBundleTabAsync(BundleDocumentTabViewModel? tab)
     {

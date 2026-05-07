@@ -3,6 +3,7 @@ using AssestBundleTools.Presentation.WinUI.Composition;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Workspace.Services;
 using System.Diagnostics;
 
@@ -38,6 +39,7 @@ public partial class App : Microsoft.UI.Xaml.Application
             WorkspaceAssetInspectionGateway = services.WorkspaceAssetInspectionGateway;
             WorkspaceAssetOperationGateway = services.WorkspaceAssetOperationGateway;
             WorkspaceBatchOperationsGateway = services.WorkspaceBatchOperationsGateway;
+            AssetEditDraftRestorePlanGateway = services.AssetEditDraftRestorePlanGateway;
             WorkspaceContextService = services.WorkspaceContextService;
             WorkspaceProcessCoordinatorService = services.WorkspaceProcessCoordinatorService;
             FilePickerService = services.FilePickerService;
@@ -81,6 +83,8 @@ public partial class App : Microsoft.UI.Xaml.Application
     public IWorkspaceAssetOperationGateway WorkspaceAssetOperationGateway { get; }
 
     public IWorkspaceBatchOperationsGateway WorkspaceBatchOperationsGateway { get; }
+
+    public IAssetEditDraftRestorePlanGateway AssetEditDraftRestorePlanGateway { get; }
 
     public IWorkspaceContextService WorkspaceContextService { get; }
 

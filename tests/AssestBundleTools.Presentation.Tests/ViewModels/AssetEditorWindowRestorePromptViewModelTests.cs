@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Presentation.Tests.Testing;
 using AssestBundleTools.Presentation.WinUI.Localization;
@@ -193,5 +194,41 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
 
         Assert.False(prompt.HasDraftRestoreOption);
         Assert.True(prompt.RestoreDraftMarkers);
+    }
+
+    [Fact]
+    public void ReplaceDraftRestorePlan_ShouldUpdateDraftDiagnostics()
+    {
+        var prompt = new AssetEditorWindowRestorePromptViewModel(new TestLocalizationService());
+
+        prompt.ReplaceDraftRestorePlan(new AssetEditDraftRestorePlanDto(
+            WorkspaceKey: "workspace-a",
+            TotalReferenceCount: 5,
+            RestorableCount: 1,
+            MissingCount: 2,
+            SourceMismatchCount: 1,
+            ExpiredCount: 1,
+            InvalidReferenceCount: 0,
+            Candidates: Array.Empty<AssetEditDraftRestoreCandidateDto>()));
+
+        Assert.Equal(5, prompt.DraftRestoreReferenceCount);
+        Assert.Equal(1, prompt.DraftRestorableCount);
+        Assert.Equal(2, prompt.DraftMissingCount);
+        Assert.Equal(1, prompt.DraftSourceMismatchCount);
+        Assert.Equal(1, prompt.DraftExpiredCount);
+        Assert.Equal(0, prompt.DraftInvalidReferenceCount);
+        Assert.True(prompt.HasDraftRestoreDiagnostics);
+        Assert.Equal(Visibility.Visible, prompt.DraftRestoreDiagnosticsVisibility);
+        Assert.Equal("5:1:2:1:1:0", prompt.DraftRestoreDiagnosticsKey);
+        Assert.Equal(
+            $"{ResourceKeys.AssetEditorWindowRestorePendingDialogDraftDiagnosticsFormat}:1|2|1|1|0",
+            prompt.DraftRestoreDiagnosticsText);
+
+        prompt.ClearDraftRestorePlan();
+
+        Assert.False(prompt.HasDraftRestoreDiagnostics);
+        Assert.Equal(Visibility.Collapsed, prompt.DraftRestoreDiagnosticsVisibility);
+        Assert.Equal(string.Empty, prompt.DraftRestoreDiagnosticsText);
+        Assert.Equal("0:0:0:0:0:0", prompt.DraftRestoreDiagnosticsKey);
     }
 }
