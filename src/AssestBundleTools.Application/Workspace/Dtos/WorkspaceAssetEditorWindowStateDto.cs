@@ -6,6 +6,7 @@ namespace AssestBundleTools.Application.Workspace.Dtos;
 /// <remarks>
 /// 该状态只记录窗口位置、资产文档标签顺序与页面级预览浏览选项，
 /// 不保存真实资源详情、预览载荷、替换结果或编辑草稿内容。
+/// 如果后续编辑器存在未应用草稿，这里只允许记录轻量草稿引用。
 /// </remarks>
 public sealed record WorkspaceAssetEditorWindowStateDto(
     int WindowStateId,
@@ -41,4 +42,5 @@ public sealed record WorkspaceAssetEditorWindowAssetTabDto(
     double? MeshPreviewRotationY = null,
     double? PreviewImageZoom = null,
     double? PreviewImagePanX = null,
-    double? PreviewImagePanY = null);
+    double? PreviewImagePanY = null,
+    WorkspaceAssetEditDraftReferenceDto? EditDraftReference = null);

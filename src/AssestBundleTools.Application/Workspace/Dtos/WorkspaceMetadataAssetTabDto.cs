@@ -21,4 +21,5 @@ public sealed record WorkspaceMetadataAssetTabDto(
     double? MeshPreviewRotationY = null,
     double? PreviewImageZoom = null,
     double? PreviewImagePanX = null,
-    double? PreviewImagePanY = null);
+    double? PreviewImagePanY = null,
+    WorkspaceAssetEditDraftReferenceDto? EditDraftReference = null);

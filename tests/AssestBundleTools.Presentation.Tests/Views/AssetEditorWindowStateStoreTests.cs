@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 
 namespace AssestBundleTools.Presentation.Tests.Views;
@@ -141,7 +142,12 @@ public sealed class AssetEditorWindowStateStoreTests
                         MeshPreviewRotationY: -24d,
                         PreviewImageZoom: 1.5d,
                         PreviewImagePanX: 8d,
-                        PreviewImagePanY: -4d)
+                        PreviewImagePanY: -4d,
+                        EditDraftReference: new WorkspaceAssetEditDraftReferenceDto(
+                            "draft-1",
+                            "text",
+                            "source-v1",
+                            "Text draft"))
                 },
                 "bundle-a",
                 "asset-1"));
@@ -170,6 +176,10 @@ public sealed class AssetEditorWindowStateStoreTests
         Assert.Equal(1.5d, assetTab.PreviewImageZoom);
         Assert.Equal(8d, assetTab.PreviewImagePanX);
         Assert.Equal(-4d, assetTab.PreviewImagePanY);
+        Assert.Equal("draft-1", assetTab.EditDraftReference?.DraftId);
+        Assert.Equal("text", assetTab.EditDraftReference?.DraftMode);
+        Assert.Equal("source-v1", assetTab.EditDraftReference?.SourceFingerprint);
+        Assert.Equal("Text draft", assetTab.EditDraftReference?.SourceDescription);
     }
 
     [Fact]

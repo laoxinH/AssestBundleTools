@@ -5,6 +5,7 @@ using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -423,6 +424,8 @@ public sealed partial class BundleExplorerPage
                     assetTabState.MeshPreviewZoom,
                     assetTabState.MeshPreviewRotationX,
                     assetTabState.MeshPreviewRotationY);
+                restoredAssetTab.RestoreEditDraftReference(
+                    AssetDocumentEditDraftReferenceMapper.ToViewModel(assetTabState.EditDraftReference));
                 restoredTabs.Add(restoredAssetTab);
             }
 

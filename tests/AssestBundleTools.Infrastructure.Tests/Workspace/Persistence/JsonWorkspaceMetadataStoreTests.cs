@@ -53,7 +53,12 @@ internal static class JsonWorkspaceMetadataStoreTests
                             MeshPreviewRotationY: -72d,
                             PreviewImageZoom: 1.75d,
                             PreviewImagePanX: 18d,
-                            PreviewImagePanY: -12d)
+                            PreviewImagePanY: -12d,
+                            EditDraftReference: new WorkspaceAssetEditDraftReferenceDto(
+                                "draft-main",
+                                "text",
+                                "source-v1",
+                                "Main tab draft"))
                     ],
                     ActiveAssetTabId: "asset-009")
             ],
@@ -93,7 +98,12 @@ internal static class JsonWorkspaceMetadataStoreTests
                             MeshPreviewRotationY: -24d,
                             PreviewImageZoom: 1.8d,
                             PreviewImagePanX: 14d,
-                            PreviewImagePanY: -8d)
+                            PreviewImagePanY: -8d,
+                            EditDraftReference: new WorkspaceAssetEditDraftReferenceDto(
+                                "draft-window",
+                                "material",
+                                "source-v2",
+                                "Editor window draft"))
                     ],
                     ActiveBundleId: "bundle-001",
                     ActiveAssetId: "asset-009")
@@ -146,6 +156,10 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.Equal(1.5d, loadedAssetTab.MeshPreviewZoom ?? 0d, "Mesh zoom should round-trip.");
         TestAssert.Equal(24d, loadedAssetTab.MeshPreviewRotationX ?? 0d, "Mesh rotation X should round-trip.");
         TestAssert.Equal(-72d, loadedAssetTab.MeshPreviewRotationY ?? 0d, "Mesh rotation Y should round-trip.");
+        TestAssert.Equal("draft-main", loadedAssetTab.EditDraftReference?.DraftId, "Asset tab draft id should round-trip.");
+        TestAssert.Equal("text", loadedAssetTab.EditDraftReference?.DraftMode, "Asset tab draft mode should round-trip.");
+        TestAssert.Equal("source-v1", loadedAssetTab.EditDraftReference?.SourceFingerprint, "Asset tab draft source should round-trip.");
+        TestAssert.Equal("Main tab draft", loadedAssetTab.EditDraftReference?.SourceDescription, "Asset tab draft description should round-trip.");
 
         var importedSource = TestAssert.Single(restoredMetadata.ImportedSources!);
         TestAssert.Equal(@"C:\Bundles\characters", importedSource.Path, "Imported source path should round-trip.");
@@ -178,6 +192,10 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.Equal(1.8d, editorAssetTab.PreviewImageZoom ?? 0d, "Editor preview zoom should round-trip.");
         TestAssert.Equal(14d, editorAssetTab.PreviewImagePanX ?? 0d, "Editor preview pan X should round-trip.");
         TestAssert.Equal(-8d, editorAssetTab.PreviewImagePanY ?? 0d, "Editor preview pan Y should round-trip.");
+        TestAssert.Equal("draft-window", editorAssetTab.EditDraftReference?.DraftId, "Editor draft id should round-trip.");
+        TestAssert.Equal("material", editorAssetTab.EditDraftReference?.DraftMode, "Editor draft mode should round-trip.");
+        TestAssert.Equal("source-v2", editorAssetTab.EditDraftReference?.SourceFingerprint, "Editor draft source should round-trip.");
+        TestAssert.Equal("Editor window draft", editorAssetTab.EditDraftReference?.SourceDescription, "Editor draft description should round-trip.");
     }
 
     public static void Delete_ShouldRemoveSavedMetadataFile()

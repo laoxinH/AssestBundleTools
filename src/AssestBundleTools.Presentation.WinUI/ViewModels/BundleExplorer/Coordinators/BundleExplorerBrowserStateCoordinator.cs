@@ -339,6 +339,8 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
                 assetTabState.MeshPreviewZoom,
                 assetTabState.MeshPreviewRotationX,
                 assetTabState.MeshPreviewRotationY);
+            assetTab.RestoreEditDraftReference(
+                AssetDocumentEditDraftReferenceMapper.ToViewModel(assetTabState.EditDraftReference));
             restoredTabs.Add(assetTab);
         }
 
@@ -364,6 +366,7 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
             MeshPreviewRotationY: meshDisplayOptions.RotationY,
             PreviewImageZoom: imageViewState.Zoom,
             PreviewImagePanX: imageViewState.PanX,
-            PreviewImagePanY: imageViewState.PanY);
+            PreviewImagePanY: imageViewState.PanY,
+            EditDraftReference: AssetDocumentEditDraftReferenceMapper.ToDto(tab.EditDraftReference));
     }
 }

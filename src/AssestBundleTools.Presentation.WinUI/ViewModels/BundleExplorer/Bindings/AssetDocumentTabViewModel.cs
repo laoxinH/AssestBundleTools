@@ -29,6 +29,7 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
     private bool _canEdit;
     private long _previewRequestVersion;
     private AssetPreviewRequest? _activePreviewRequest;
+    private AssetDocumentEditDraftReference? _editDraftReference;
     private bool _isRestoringPreviewImageDisplayOptions;
     private bool _isRestoringPreviewMeshDisplayOptions;
 
@@ -100,6 +101,10 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
 
     public FileReplacementCandidateDto? PendingFileReplacementCandidate { get; private set; }
 
+    public AssetDocumentEditDraftReference? EditDraftReference => _editDraftReference;
+
+    public bool HasEditDraft => _editDraftReference is not null;
+
     /// <summary>
     /// 资产标签页会在运行期保留自己的详情和候选状态，
     /// 这样切换到其他资产标签后再回来时，不会丢失当前浏览上下文。
@@ -141,6 +146,28 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
     {
         PendingWorkspaceReplacementCandidate = null;
         PendingFileReplacementCandidate = null;
+    }
+
+    public void SetEditDraftReference(AssetDocumentEditDraftReference? draftReference)
+    {
+        if (Equals(_editDraftReference, draftReference))
+        {
+            return;
+        }
+
+        _editDraftReference = draftReference;
+        OnPropertyChanged(nameof(EditDraftReference));
+        OnPropertyChanged(nameof(HasEditDraft));
+    }
+
+    public void RestoreEditDraftReference(AssetDocumentEditDraftReference? draftReference)
+    {
+        SetEditDraftReference(draftReference);
+    }
+
+    public void ClearEditDraftReference()
+    {
+        SetEditDraftReference(null);
     }
 
     public void RestoreSelectedInspectorSection(string? sectionKey)

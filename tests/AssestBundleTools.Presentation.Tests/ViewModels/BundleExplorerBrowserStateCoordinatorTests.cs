@@ -35,6 +35,12 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
             zoom: 1.5d,
             rotationX: 24d,
             rotationY: -72d);
+        assetTab.SetEditDraftReference(
+            new AssetDocumentEditDraftReference(
+                "draft-asset-button",
+                "text",
+                "source-v1",
+                "Text draft"));
         context.BundleTab.AddAssetTab(assetTab, activate: true);
 
         context.Coordinator.PersistWorkspaceBrowserStateNow();
@@ -53,6 +59,10 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         Assert.Equal(1.5d, assetTabState.MeshPreviewZoom);
         Assert.Equal(24d, assetTabState.MeshPreviewRotationX);
         Assert.Equal(-72d, assetTabState.MeshPreviewRotationY);
+        Assert.Equal("draft-asset-button", assetTabState.EditDraftReference?.DraftId);
+        Assert.Equal("text", assetTabState.EditDraftReference?.DraftMode);
+        Assert.Equal("source-v1", assetTabState.EditDraftReference?.SourceFingerprint);
+        Assert.Equal("Text draft", assetTabState.EditDraftReference?.SourceDescription);
     }
 
     [Fact]
@@ -135,7 +145,12 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
                             MeshPreviewRotationY: -72d,
                             PreviewImageZoom: 1.75d,
                             PreviewImagePanX: 18d,
-                            PreviewImagePanY: -12d)
+                            PreviewImagePanY: -12d,
+                            EditDraftReference: new WorkspaceAssetEditDraftReferenceDto(
+                                "draft-asset-button",
+                                "text",
+                                "source-v1",
+                                "Text draft"))
                     ],
                     ActiveAssetTabId: "asset-button")
             ],
@@ -164,6 +179,11 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         Assert.Equal(1.5d, restoredAssetTab.Inspector.Preview.Mesh.Zoom);
         Assert.Equal(24d, restoredAssetTab.Inspector.Preview.Mesh.RotationX);
         Assert.Equal(-72d, restoredAssetTab.Inspector.Preview.Mesh.RotationY);
+        Assert.True(restoredAssetTab.HasEditDraft);
+        Assert.Equal("draft-asset-button", restoredAssetTab.EditDraftReference?.DraftId);
+        Assert.Equal("text", restoredAssetTab.EditDraftReference?.DraftMode);
+        Assert.Equal("source-v1", restoredAssetTab.EditDraftReference?.SourceFingerprint);
+        Assert.Equal("Text draft", restoredAssetTab.EditDraftReference?.SourceDescription);
     }
 
     [Fact]

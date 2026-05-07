@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 
@@ -155,7 +156,8 @@ internal sealed class AssetEditorWindowStateStore
             MeshPreviewRotationY: assetTab.MeshPreviewRotationY,
             PreviewImageZoom: assetTab.PreviewImageZoom,
             PreviewImagePanX: assetTab.PreviewImagePanX,
-            PreviewImagePanY: assetTab.PreviewImagePanY);
+            PreviewImagePanY: assetTab.PreviewImagePanY,
+            EditDraftReference: assetTab.EditDraftReference);
     }
 }
 
@@ -197,7 +199,8 @@ internal sealed record AssetEditorWindowAssetTabSnapshot(
     double? MeshPreviewRotationY = null,
     double? PreviewImageZoom = null,
     double? PreviewImagePanX = null,
-    double? PreviewImagePanY = null)
+    double? PreviewImagePanY = null,
+    WorkspaceAssetEditDraftReferenceDto? EditDraftReference = null)
 {
     public static AssetEditorWindowAssetTabSnapshot FromAssetTab(AssetDocumentTabViewModel assetTab)
     {
@@ -221,6 +224,7 @@ internal sealed record AssetEditorWindowAssetTabSnapshot(
             MeshPreviewRotationY: meshDisplayOptions.RotationY,
             PreviewImageZoom: imageViewState.Zoom,
             PreviewImagePanX: imageViewState.PanX,
-            PreviewImagePanY: imageViewState.PanY);
+            PreviewImagePanY: imageViewState.PanY,
+            EditDraftReference: AssetDocumentEditDraftReferenceMapper.ToDto(assetTab.EditDraftReference));
     }
 }
