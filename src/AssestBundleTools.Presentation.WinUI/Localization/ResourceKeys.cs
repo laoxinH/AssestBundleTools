@@ -529,6 +529,13 @@ public static class ResourceKeys
     public const string ErrorBundlePreviewAssetLocatorMissing = "Error.Bundle.Preview.AssetLocatorMissing";
     public const string ErrorBundlePreviewFieldTreeUnavailable = "Error.Bundle.Preview.FieldTreeUnavailable";
     public const string ErrorBundlePreviewGenerationFailed = "Error.Bundle.Preview.GenerationFailed";
+    public const string ErrorAssetEditDraftWorkspaceKeyRequired = "Error.Asset.EditDraft.WorkspaceKeyRequired";
+    public const string ErrorAssetEditDraftReferenceRequired = "Error.Asset.EditDraft.ReferenceRequired";
+    public const string ErrorAssetEditDraftIdRequired = "Error.Asset.EditDraft.IdRequired";
+    public const string ErrorAssetEditDraftModeRequired = "Error.Asset.EditDraft.ModeRequired";
+    public const string ErrorAssetEditDraftNotFound = "Error.Asset.EditDraft.NotFound";
+    public const string ErrorAssetEditDraftSourceMismatch = "Error.Asset.EditDraft.SourceMismatch";
+    public const string ErrorAssetEditDraftExpired = "Error.Asset.EditDraft.Expired";
     public const string ErrorPresentationOwnerWindowUnavailable = "Error.Presentation.OwnerWindowUnavailable";
     public const string ErrorPresentationUnsupportedLaunchNavigationParameter = "Error.Presentation.UnsupportedLaunchNavigationParameter";
     public const string ErrorPresentationStartWorkspaceProcessFailed = "Error.Presentation.StartWorkspaceProcessFailed";

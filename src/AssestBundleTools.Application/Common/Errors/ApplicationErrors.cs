@@ -441,6 +441,79 @@ public static class ApplicationErrors
             parameters: CreateParameters(("AssetId", assetId.ToString())),
             isUserActionable: true);
 
+    public static AppError AssetEditDraftWorkspaceKeyRequired() =>
+        new(
+            code: "Asset.EditDraft.WorkspaceKeyRequired",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.EditDraft.WorkspaceKeyRequired");
+
+    public static AppError AssetEditDraftReferenceRequired() =>
+        new(
+            code: "Asset.EditDraft.ReferenceRequired",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.EditDraft.ReferenceRequired");
+
+    public static AppError AssetEditDraftIdRequired() =>
+        new(
+            code: "Asset.EditDraft.IdRequired",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.EditDraft.IdRequired");
+
+    public static AppError AssetEditDraftModeRequired() =>
+        new(
+            code: "Asset.EditDraft.ModeRequired",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.EditDraft.ModeRequired");
+
+    public static AppError AssetEditDraftNotFound(
+        string workspaceKey,
+        string draftId,
+        string draftMode) =>
+        new(
+            code: "Asset.EditDraft.NotFound",
+            category: ErrorCategory.NotFound,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.EditDraft.NotFound",
+            parameters: CreateParameters(
+                ("WorkspaceKey", workspaceKey),
+                ("DraftId", draftId),
+                ("DraftMode", draftMode)),
+            isUserActionable: true);
+
+    public static AppError AssetEditDraftSourceMismatch(
+        string workspaceKey,
+        string draftId,
+        string draftMode) =>
+        new(
+            code: "Asset.EditDraft.SourceMismatch",
+            category: ErrorCategory.Conflict,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.EditDraft.SourceMismatch",
+            parameters: CreateParameters(
+                ("WorkspaceKey", workspaceKey),
+                ("DraftId", draftId),
+                ("DraftMode", draftMode)),
+            isUserActionable: true);
+
+    public static AppError AssetEditDraftExpired(
+        string workspaceKey,
+        string draftId,
+        string draftMode) =>
+        new(
+            code: "Asset.EditDraft.Expired",
+            category: ErrorCategory.Conflict,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.EditDraft.Expired",
+            parameters: CreateParameters(
+                ("WorkspaceKey", workspaceKey),
+                ("DraftId", draftId),
+                ("DraftMode", draftMode)),
+            isUserActionable: true);
+
     private static IReadOnlyDictionary<string, object?> CreateParameters(params (string Key, object? Value)[] pairs)
     {
         var parameters = new Dictionary<string, object?>(StringComparer.Ordinal);

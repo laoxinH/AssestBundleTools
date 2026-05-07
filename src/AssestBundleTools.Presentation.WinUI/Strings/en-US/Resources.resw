@@ -3009,6 +3009,27 @@
   <data name="Error.Asset.Query.NotFound" xml:space="preserve">
     <value>Asset not found: {0}</value>
   </data>
+  <data name="Error.Asset.EditDraft.WorkspaceKeyRequired" xml:space="preserve">
+    <value>A workspace id is required before restoring edit drafts.</value>
+  </data>
+  <data name="Error.Asset.EditDraft.ReferenceRequired" xml:space="preserve">
+    <value>The draft reference is empty and cannot be restored.</value>
+  </data>
+  <data name="Error.Asset.EditDraft.IdRequired" xml:space="preserve">
+    <value>The draft reference is missing a draft id and cannot be restored.</value>
+  </data>
+  <data name="Error.Asset.EditDraft.ModeRequired" xml:space="preserve">
+    <value>The draft reference is missing a draft mode and cannot be restored.</value>
+  </data>
+  <data name="Error.Asset.EditDraft.NotFound" xml:space="preserve">
+    <value>Draft {1} ({2}) was not found in workspace {0}; it may have been discarded or cleaned up.</value>
+  </data>
+  <data name="Error.Asset.EditDraft.SourceMismatch" xml:space="preserve">
+    <value>Draft {1} ({2}) in workspace {0} does not match the current asset source and was skipped.</value>
+  </data>
+  <data name="Error.Asset.EditDraft.Expired" xml:space="preserve">
+    <value>Draft {1} ({2}) in workspace {0} has expired and was skipped.</value>
+  </data>
   <data name="Error.Asset.Replace.NoCompatibleSource" xml:space="preserve">
     <value>No compatible workspace replacement source is available for this asset: {0}</value>
   </data>

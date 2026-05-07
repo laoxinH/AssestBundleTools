@@ -3009,6 +3009,27 @@
   <data name="Error.Asset.Query.NotFound" xml:space="preserve">
     <value>未找到资源：{0}</value>
   </data>
+  <data name="Error.Asset.EditDraft.WorkspaceKeyRequired" xml:space="preserve">
+    <value>恢复编辑草稿前需要提供工作区标识。</value>
+  </data>
+  <data name="Error.Asset.EditDraft.ReferenceRequired" xml:space="preserve">
+    <value>草稿引用为空，无法恢复编辑草稿。</value>
+  </data>
+  <data name="Error.Asset.EditDraft.IdRequired" xml:space="preserve">
+    <value>草稿引用缺少草稿标识，无法恢复编辑草稿。</value>
+  </data>
+  <data name="Error.Asset.EditDraft.ModeRequired" xml:space="preserve">
+    <value>草稿引用缺少草稿模式，无法恢复编辑草稿。</value>
+  </data>
+  <data name="Error.Asset.EditDraft.NotFound" xml:space="preserve">
+    <value>未找到工作区 {0} 中的草稿 {1}（{2}），可能已被丢弃或清理。</value>
+  </data>
+  <data name="Error.Asset.EditDraft.SourceMismatch" xml:space="preserve">
+    <value>工作区 {0} 中的草稿 {1}（{2}）来源与当前资源不一致，已跳过恢复。</value>
+  </data>
+  <data name="Error.Asset.EditDraft.Expired" xml:space="preserve">
+    <value>工作区 {0} 中的草稿 {1}（{2}）已过期，已跳过恢复。</value>
+  </data>
   <data name="Error.Asset.Replace.NoCompatibleSource" xml:space="preserve">
     <value>当前资源没有可用的同类型工作区替换源：{0}</value>
   </data>

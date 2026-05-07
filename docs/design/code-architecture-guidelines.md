@@ -292,6 +292,10 @@ AssestBundleTools.Application/
     Queries/
     Dtos/
     Services/
+  Editing/
+    Queries/
+    Dtos/
+    Services/
   Extraction/
     Commands/
     Dtos/
@@ -314,7 +318,7 @@ AssestBundleTools.Application/
 
 补充规则：
 
-- 顶层优先按功能根组织，如 `Assets`、`Bundles`、`Extraction`、`Replacement`、`Saving`、`Workspace`、`Common`。
+- 顶层优先按功能根组织，如 `Assets`、`Bundles`、`Editing`、`Extraction`、`Replacement`、`Saving`、`Workspace`、`Common`。
 - 功能根下允许的常见子目录为 `Commands`、`Queries`、`Dtos`、`Services`、`Internal`。
 - 不要在 `Application` 根下再建横切型总目录，如全局 `Handlers/`、`Models/`、`Helpers/`。
 - `Common/` 仅放跨多个功能根复用、且不属于单一业务场景的应用层契约、结果模型或共享支持类型。
@@ -448,7 +452,7 @@ AssestBundleTools.Presentation.WinUI/
 推荐规则：
 
 - 测试项目名称继续镜像生产层，如 `AssestBundleTools.Application.Tests`、`AssestBundleTools.Presentation.Tests`。
-- 测试项目内部优先按生产功能根组织，如 `Assets`、`Workspace`、`Replacement`、`Saving`。
+- 测试项目内部优先按生产功能根组织，如 `Assets`、`Editing`、`Workspace`、`Replacement`、`Saving`。
 - `Testing`、`TestDoubles`、`Architecture` 这类支持目录可以保留，但必须保持语义单一，不能逐渐演变成新的兜底堆放区。
 
 这样做的好处是：
@@ -503,6 +507,15 @@ AssestBundleTools.Presentation.WinUI/
 - 工作区内资源拖拽替换
 - 替换兼容性校验
 - 替换确认与撤销
+
+### Asset Editing 模块
+
+负责：
+
+- 编辑草稿引用解析
+- 编辑草稿恢复候选诊断
+- 后续草稿确认 / 丢弃 / 恢复队列契约
+- 与真实保存链路解耦的草稿元数据访问端口
 
 ### Save / Build 模块
 

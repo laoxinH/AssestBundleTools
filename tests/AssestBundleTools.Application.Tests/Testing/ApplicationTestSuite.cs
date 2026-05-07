@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Tests.Editing;
 using AssestBundleTools.Application.Tests.Assets.Queries;
 using AssestBundleTools.Application.Tests.Replacement;
 using AssestBundleTools.Application.Tests.Saving;
@@ -23,6 +24,22 @@ internal static class ApplicationTestSuite
         await RunTestAsync(failures, nameof(Failure_ShouldExposeSingleError), Failure_ShouldExposeSingleError);
         await RunTestAsync(failures, nameof(Failure_ShouldThrow_WhenErrorCollectionIsEmpty), Failure_ShouldThrow_WhenErrorCollectionIsEmpty);
         await RunTestAsync(failures, nameof(GenericSuccess_ShouldExposeValue), GenericSuccess_ShouldExposeValue);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetEditDraftRestorePlanHandlerTests.HandleAsync_ShouldReturnFailure_WhenWorkspaceKeyIsBlank),
+            GetAssetEditDraftRestorePlanHandlerTests.HandleAsync_ShouldReturnFailure_WhenWorkspaceKeyIsBlank);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetEditDraftRestorePlanHandlerTests.HandleAsync_ShouldReturnRestorableCandidate_WhenDraftMatchesReference),
+            GetAssetEditDraftRestorePlanHandlerTests.HandleAsync_ShouldReturnRestorableCandidate_WhenDraftMatchesReference);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetEditDraftRestorePlanHandlerTests.HandleAsync_ShouldClassifyMissingMismatchExpiredAndInvalidReferences),
+            GetAssetEditDraftRestorePlanHandlerTests.HandleAsync_ShouldClassifyMissingMismatchExpiredAndInvalidReferences);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetEditDraftRestorePlanHandlerTests.HandleAsync_ShouldAllowReferenceWithoutSourceFingerprint),
+            GetAssetEditDraftRestorePlanHandlerTests.HandleAsync_ShouldAllowReferenceWithoutSourceFingerprint);
         await RunTestAsync(failures, nameof(RegisterWorkspaceCatalogEntry_ShouldReturnFailure_WhenSourcePathIsBlank), RegisterWorkspaceCatalogEntry_ShouldReturnFailure_WhenSourcePathIsBlank);
         await RunTestAsync(failures, nameof(RegisterWorkspaceCatalogEntry_ShouldPreserveExistingPinnedState_AndNormalizeDisplayName), RegisterWorkspaceCatalogEntry_ShouldPreserveExistingPinnedState_AndNormalizeDisplayName);
         await RunTestAsync(failures, nameof(SetWorkspaceCatalogEntryPinnedState_ShouldReturnFailure_WhenWorkspaceKeyIsBlank), SetWorkspaceCatalogEntryPinnedState_ShouldReturnFailure_WhenWorkspaceKeyIsBlank);

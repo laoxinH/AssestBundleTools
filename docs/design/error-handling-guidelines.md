@@ -521,6 +521,27 @@ Parameters = { SourceType: Texture2D, TargetType: TextAsset }
 - `Bundle.Save.NoCandidates`
   - `MessageToken = Error.Bundle.Save.NoCandidates`
   - 用于当前工作区没有可执行保存骨架的资源包输出计划时
+- `Asset.EditDraft.WorkspaceKeyRequired`
+  - `MessageToken = Error.Asset.EditDraft.WorkspaceKeyRequired`
+  - 用于草稿恢复候选解析缺少工作区范围时
+- `Asset.EditDraft.ReferenceRequired`
+  - `MessageToken = Error.Asset.EditDraft.ReferenceRequired`
+  - 用于草稿恢复候选解析遇到空草稿引用时
+- `Asset.EditDraft.IdRequired`
+  - `MessageToken = Error.Asset.EditDraft.IdRequired`
+  - 用于草稿恢复候选解析遇到缺少草稿 id 的引用时
+- `Asset.EditDraft.ModeRequired`
+  - `MessageToken = Error.Asset.EditDraft.ModeRequired`
+  - 用于草稿恢复候选解析遇到缺少草稿模式的引用时
+- `Asset.EditDraft.NotFound`
+  - `MessageToken = Error.Asset.EditDraft.NotFound`
+  - 用于轻量草稿引用指向的草稿元数据不存在时
+- `Asset.EditDraft.SourceMismatch`
+  - `MessageToken = Error.Asset.EditDraft.SourceMismatch`
+  - 用于轻量草稿引用的来源指纹与草稿元数据不一致时
+- `Asset.EditDraft.Expired`
+  - `MessageToken = Error.Asset.EditDraft.Expired`
+  - 用于轻量草稿引用指向的草稿元数据已过期时
 
 另外，M8 当前已接入真实文件选择器，相关约束如下：
 
