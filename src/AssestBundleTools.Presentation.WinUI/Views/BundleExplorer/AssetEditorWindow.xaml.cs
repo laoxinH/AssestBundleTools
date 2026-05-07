@@ -213,8 +213,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 
     private void OnAssetDocumentGroupDragEnter(object sender, DragEventArgs e)
     {
-        SetAssetDocumentGroupDropPreviewVisible(
-            AssetDocumentGroupDragCoordinator.CanShowDropPreview(this, e));
+        SetAssetDocumentGroupDropPreviewVisible(CanShowAssetDocumentHostDropPreview(e));
     }
 
     private void OnAssetDocumentGroupDragLeave(object sender, DragEventArgs e)
@@ -224,6 +223,13 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 
     private void OnAssetDocumentGroupDragOver(object sender, DragEventArgs e)
     {
+        if (AssetDocumentTabDragCoordinator.CanShowDropPreview(this, e))
+        {
+            SetAssetDocumentGroupDropPreviewVisible(true);
+            AssetDocumentTabDragCoordinator.HandleDragOver(this, e);
+            return;
+        }
+
         SetAssetDocumentGroupDropPreviewVisible(
             AssetDocumentGroupDragCoordinator.CanShowDropPreview(this, e));
         AssetDocumentGroupDragCoordinator.HandleDragOver(this, e);
@@ -232,8 +238,17 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
     private async void OnAssetDocumentGroupDrop(object sender, DragEventArgs e)
     {
         SetAssetDocumentGroupDropPreviewVisible(false);
+        if (await AssetDocumentTabDragCoordinator.HandleDropAsync(this, e))
+        {
+            return;
+        }
+
         await AssetDocumentGroupDragCoordinator.HandleDropAsync(this, e);
     }
+
+    private bool CanShowAssetDocumentHostDropPreview(DragEventArgs e) =>
+        AssetDocumentTabDragCoordinator.CanShowDropPreview(this, e) ||
+        AssetDocumentGroupDragCoordinator.CanShowDropPreview(this, e);
 
     private void SetAssetDocumentGroupDropPreviewVisible(bool isVisible)
     {
