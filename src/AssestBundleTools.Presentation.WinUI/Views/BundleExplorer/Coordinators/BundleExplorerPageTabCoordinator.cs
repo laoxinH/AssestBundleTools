@@ -11,34 +11,22 @@ public sealed partial class BundleExplorerPage
     private sealed class BundleExplorerPageTabCoordinator
     {
         private readonly BundleExplorerPage _owner;
-        private bool _isSynchronizingAssetDocumentTabSelection;
-        private bool _isSynchronizingSpineGroupDocumentTabSelection;
+        private bool _isSynchronizingDocumentTabSelection;
 
         public BundleExplorerPageTabCoordinator(BundleExplorerPage owner)
         {
             _owner = owner ?? throw new ArgumentNullException(nameof(owner));
         }
 
-        public AssetDocumentTabViewModel? GetActivatableAssetDocumentTab()
+        public AssetDocumentTabItemViewModel? GetActivatableDocumentTab()
         {
-            if (_isSynchronizingAssetDocumentTabSelection ||
+            if (_isSynchronizingDocumentTabSelection ||
                 _owner.ViewModel.DocumentWorkspace.IsSynchronizingAssetDocumentHostSelection)
             {
                 return null;
             }
 
-            return _owner.AssetDocumentTabView.SelectedItem as AssetDocumentTabViewModel;
-        }
-
-        public SpineAssetGroupDocumentTabViewModel? GetActivatableSpineGroupDocumentTab()
-        {
-            if (_isSynchronizingSpineGroupDocumentTabSelection ||
-                _owner.ViewModel.DocumentWorkspace.IsSynchronizingAssetDocumentHostSelection)
-            {
-                return null;
-            }
-
-            return _owner.SpineGroupDocumentTabView.SelectedItem as SpineAssetGroupDocumentTabViewModel;
+            return _owner.AssetDocumentTabView.SelectedItem as AssetDocumentTabItemViewModel;
         }
 
         public void HandleDocumentWorkspacePageStateChanged(
@@ -49,8 +37,7 @@ public sealed partial class BundleExplorerPage
                 return;
             }
 
-            Enqueue(SynchronizeAssetDocumentTabSelection);
-            Enqueue(SynchronizeSpineGroupDocumentTabSelection);
+            Enqueue(SynchronizeDocumentTabSelection);
         }
 
         public void ConfigureTabContextFlyout(
@@ -135,48 +122,24 @@ public sealed partial class BundleExplorerPage
         /// 这里显式把控件选中态对齐回 ViewModel 中已记录的活动资产标签，
         /// 避免资源包切换时把“当前详情标签”误写成第一项。
         /// </summary>
-        private void SynchronizeAssetDocumentTabSelection()
+        private void SynchronizeDocumentTabSelection()
         {
-            if (_isSynchronizingAssetDocumentTabSelection)
+            if (_isSynchronizingDocumentTabSelection)
             {
                 return;
             }
 
-            _isSynchronizingAssetDocumentTabSelection = true;
+            _isSynchronizingDocumentTabSelection = true;
             try
             {
-                if (!ReferenceEquals(_owner.AssetDocumentTabView.SelectedItem, _owner.ViewModel.DocumentWorkspace.ActiveAssetDocumentTab))
+                if (!ReferenceEquals(_owner.AssetDocumentTabView.SelectedItem, _owner.ViewModel.DocumentWorkspace.ActiveDocumentTab))
                 {
-                    _owner.AssetDocumentTabView.SelectedItem = _owner.ViewModel.DocumentWorkspace.ActiveAssetDocumentTab;
+                    _owner.AssetDocumentTabView.SelectedItem = _owner.ViewModel.DocumentWorkspace.ActiveDocumentTab;
                 }
             }
             finally
             {
-                _isSynchronizingAssetDocumentTabSelection = false;
-            }
-        }
-
-        private void SynchronizeSpineGroupDocumentTabSelection()
-        {
-            if (_isSynchronizingSpineGroupDocumentTabSelection)
-            {
-                return;
-            }
-
-            _isSynchronizingSpineGroupDocumentTabSelection = true;
-            try
-            {
-                if (!ReferenceEquals(
-                        _owner.SpineGroupDocumentTabView.SelectedItem,
-                        _owner.ViewModel.DocumentWorkspace.ActiveSpineGroupDocumentTab))
-                {
-                    _owner.SpineGroupDocumentTabView.SelectedItem =
-                        _owner.ViewModel.DocumentWorkspace.ActiveSpineGroupDocumentTab;
-                }
-            }
-            finally
-            {
-                _isSynchronizingSpineGroupDocumentTabSelection = false;
+                _isSynchronizingDocumentTabSelection = false;
             }
         }
 

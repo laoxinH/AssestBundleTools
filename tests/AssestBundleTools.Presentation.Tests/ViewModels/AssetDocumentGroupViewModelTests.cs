@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.Tests.Testing;
@@ -9,6 +10,102 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 
 public sealed class AssetDocumentGroupViewModelTests
 {
+    [Fact]
+    public void AddSpineGroupTab_ShouldShareDocumentTabsWithAssetTabsAndActivateSpineDocument()
+    {
+        var assetTab = CreateAssetDocumentTab("bundle-a", "asset-1");
+        var spineGroupTab = CreateSpineGroupDocumentTab("bundle-a", "spine-hero");
+        var group = new AssetDocumentGroupViewModel();
+
+        group.AddAssetTab(assetTab, activate: true);
+        group.AddSpineGroupTab(spineGroupTab, activate: true);
+
+        Assert.Collection(
+            group.DocumentTabs,
+            tab => Assert.Same(assetTab, tab.AssetTab),
+            tab => Assert.Same(spineGroupTab, tab.SpineGroupTab));
+        Assert.Null(group.ActiveAssetTab);
+        Assert.Same(spineGroupTab, group.ActiveSpineGroupTab);
+        Assert.Same(spineGroupTab, group.ActiveDocumentTab?.SpineGroupTab);
+        Assert.Single(group.AssetTabs);
+        Assert.Single(group.SpineGroupTabs);
+    }
+
+    [Fact]
+    public void ReorderDocumentTabs_ShouldUpdateKindSpecificCollections()
+    {
+        var firstAssetTab = CreateAssetDocumentTab("bundle-a", "asset-1");
+        var spineGroupTab = CreateSpineGroupDocumentTab("bundle-a", "spine-hero");
+        var secondAssetTab = CreateAssetDocumentTab("bundle-a", "asset-2");
+        var group = new AssetDocumentGroupViewModel();
+        group.AddAssetTab(firstAssetTab, activate: true);
+        group.AddSpineGroupTab(spineGroupTab, activate: false);
+        group.AddAssetTab(secondAssetTab, activate: false);
+
+        var orderedTabs = new[]
+        {
+            group.DocumentTabs.Single(tab => tab.Wraps(secondAssetTab)),
+            group.DocumentTabs.Single(tab => tab.Wraps(spineGroupTab)),
+            group.DocumentTabs.Single(tab => tab.Wraps(firstAssetTab))
+        };
+
+        Assert.True(group.ReorderDocumentTabs(orderedTabs));
+
+        Assert.Collection(
+            group.DocumentTabs,
+            tab => Assert.Same(secondAssetTab, tab.AssetTab),
+            tab => Assert.Same(spineGroupTab, tab.SpineGroupTab),
+            tab => Assert.Same(firstAssetTab, tab.AssetTab));
+        Assert.Collection(
+            group.AssetTabs,
+            tab => Assert.Same(secondAssetTab, tab),
+            tab => Assert.Same(firstAssetTab, tab));
+        Assert.Same(spineGroupTab, Assert.Single(group.SpineGroupTabs));
+    }
+
+    [Fact]
+    public void DetachDocumentTabs_ShouldPreserveMixedOrderAndActiveDocument()
+    {
+        var assetTab = CreateAssetDocumentTab("bundle-a", "asset-1");
+        var spineGroupTab = CreateSpineGroupDocumentTab("bundle-a", "spine-hero");
+        var group = new AssetDocumentGroupViewModel();
+        group.AddAssetTab(assetTab, activate: true);
+        group.AddSpineGroupTab(spineGroupTab, activate: true);
+
+        var transfer = group.DetachDocumentTabs();
+
+        Assert.NotNull(transfer);
+        Assert.Empty(group.DocumentTabs);
+        Assert.Empty(group.AssetTabs);
+        Assert.Empty(group.SpineGroupTabs);
+        Assert.Null(group.ActiveDocumentTab);
+        Assert.Collection(
+            transfer.DocumentTabs,
+            tab => Assert.Same(assetTab, tab.AssetTab),
+            tab => Assert.Same(spineGroupTab, tab.SpineGroupTab));
+        Assert.Same(spineGroupTab, transfer.ActiveDocumentTab.SpineGroupTab);
+    }
+
+    [Fact]
+    public void DetachDocumentTab_ShouldActivateSpineFallbackWhenActiveAssetMovesOut()
+    {
+        var assetTab = CreateAssetDocumentTab("bundle-a", "asset-1");
+        var spineGroupTab = CreateSpineGroupDocumentTab("bundle-a", "spine-hero");
+        var group = new AssetDocumentGroupViewModel();
+        group.AddSpineGroupTab(spineGroupTab, activate: false);
+        group.AddAssetTab(assetTab, activate: true);
+
+        var assetDocumentTab = group.DocumentTabs.Single(tab => tab.Wraps(assetTab));
+
+        Assert.True(group.DetachDocumentTab(assetDocumentTab));
+
+        Assert.DoesNotContain(assetTab, group.AssetTabs);
+        Assert.Same(spineGroupTab, Assert.Single(group.SpineGroupTabs));
+        Assert.Same(spineGroupTab, group.ActiveDocumentTab?.SpineGroupTab);
+        Assert.Null(group.ActiveAssetTab);
+        Assert.Same(spineGroupTab, group.ActiveSpineGroupTab);
+    }
+
     [Fact]
     public void DetachAssetTab_ShouldPreservePreviewStateAndSelectFallback()
     {
@@ -151,6 +248,22 @@ public sealed class AssetDocumentGroupViewModelTests
             new BundleId(bundleId),
             new AssetId(assetId),
             assetId,
+            textSet);
+    }
+
+    private static SpineAssetGroupDocumentTabViewModel CreateSpineGroupDocumentTab(string bundleId, string groupId)
+    {
+        var textSet = InspectorInformationTextSetFactory.Create(new TestLocalizationService());
+        return new SpineAssetGroupDocumentTabViewModel(
+            new SpineAssetGroupDto(
+                groupId,
+                new BundleId(bundleId),
+                groupId,
+                groupId,
+                Array.Empty<SpineAssetGroupPartDto>(),
+                Array.Empty<SpineAssetGroupPartDto>(),
+                Array.Empty<SpineAssetGroupPartDto>(),
+                Array.Empty<SpineAssetGroupDiagnosticDto>()),
             textSet);
     }
 }

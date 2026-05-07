@@ -13,7 +13,10 @@ public sealed record WorkspaceAssetEditorWindowStateDto(
     WorkspaceAssetEditorWindowLayoutDto Layout,
     IReadOnlyList<WorkspaceAssetEditorWindowAssetTabDto> OpenAssetTabs,
     string? ActiveBundleId,
-    string? ActiveAssetId);
+    string? ActiveAssetId,
+    IReadOnlyList<WorkspaceAssetEditorWindowDocumentTabDto>? OpenDocumentTabs = null,
+    string? ActiveDocumentKind = null,
+    string? ActiveSpineGroupId = null);
 
 /// <summary>
 /// 表示独立资源编辑窗口的轻量布局状态。
@@ -23,6 +26,18 @@ public sealed record WorkspaceAssetEditorWindowLayoutDto(
     int Y,
     int Width,
     int Height);
+
+/// <summary>
+/// 表示独立资源编辑窗口中的统一文档标签恢复状态。
+/// </summary>
+public sealed record WorkspaceAssetEditorWindowDocumentTabDto(
+    string Kind,
+    WorkspaceAssetEditorWindowAssetTabDto? AssetTab = null,
+    WorkspaceAssetEditorWindowSpineGroupTabDto? SpineGroupTab = null)
+{
+    public const string AssetKind = "asset";
+    public const string SpineGroupKind = "spineGroup";
+}
 
 /// <summary>
 /// 表示独立资源编辑窗口中的单个资产文档标签恢复状态。
@@ -44,3 +59,12 @@ public sealed record WorkspaceAssetEditorWindowAssetTabDto(
     double? PreviewImagePanX = null,
     double? PreviewImagePanY = null,
     WorkspaceAssetEditDraftReferenceDto? EditDraftReference = null);
+
+/// <summary>
+/// 表示独立资源编辑窗口中的单个 Spine 资源组文档标签恢复状态。
+/// </summary>
+public sealed record WorkspaceAssetEditorWindowSpineGroupTabDto(
+    string BundleId,
+    string GroupId,
+    string DisplayName,
+    string? GroupKey = null);

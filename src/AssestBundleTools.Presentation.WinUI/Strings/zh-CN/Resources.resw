@@ -439,10 +439,10 @@
     <value>恢复 {0} 个编辑窗口</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.ToolTip.Format" xml:space="preserve">
-    <value>恢复上一轮工作区会话中保存的 {0} 个编辑窗口和 {1} 个资源标签</value>
+    <value>恢复上一轮工作区会话中保存的 {0} 个编辑窗口和 {1} 个资源文档标签</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.ToolTipWithConflicts.Format" xml:space="preserve">
-    <value>恢复上一轮工作区会话中保存的 {0} 个编辑窗口和 {1} 个资源标签；其中 {2} 个标签已在当前窗口中打开，关闭对应标签后可继续恢复</value>
+    <value>恢复上一轮工作区会话中保存的 {0} 个编辑窗口和 {1} 个资源文档标签；其中 {2} 个标签已在当前窗口中打开，关闭对应标签后可继续恢复</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Restored.Format" xml:space="preserve">
     <value>已恢复 {0} 个编辑窗口。</value>
@@ -451,28 +451,28 @@
     <value>已恢复 {0} 个编辑窗口，另有 {1} 个保存的窗口因所属资源包不可用而未恢复，并会继续保留在工具栏入口中。</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.PartialWithConflicts.Format" xml:space="preserve">
-    <value>已恢复 {0} 个编辑窗口，另有 {1} 个保存的窗口因资源包不可用或资产已打开而暂未恢复，并会继续保留在工具栏入口中；其中 {2} 个资源标签已在当前窗口中打开。</value>
+    <value>已恢复 {0} 个编辑窗口，另有 {1} 个保存的窗口因资源包不可用或文档已打开而暂未恢复，并会继续保留在工具栏入口中；其中 {2} 个资源文档标签已在当前窗口中打开。</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Unavailable.Format" xml:space="preserve">
     <value>有 {0} 个保存的编辑窗口因所属资源包不可用而未恢复，仍可稍后从工具栏入口处理。</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.BlockedWithConflicts.Format" xml:space="preserve">
-    <value>有 {0} 个保存的编辑窗口因资源包不可用或资产已打开而暂未恢复；其中 {1} 个资源标签已在当前窗口中打开。关闭对应资源标签后，仍可稍后从工具栏入口处理。</value>
+    <value>有 {0} 个保存的编辑窗口因资源包不可用或文档已打开而暂未恢复；其中 {1} 个资源文档标签已在当前窗口中打开。关闭对应标签后，仍可稍后从工具栏入口处理。</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.Title" xml:space="preserve">
     <value>恢复上次的编辑窗口？</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.Description.Format" xml:space="preserve">
-    <value>此工作区保存了上一轮会话中的 {0} 个编辑窗口和 {1} 个资源标签。可以现在恢复，也可以继续浏览，稍后从工具栏恢复。</value>
+    <value>此工作区保存了上一轮会话中的 {0} 个编辑窗口和 {1} 个资源文档标签。可以现在恢复，也可以继续浏览，稍后从工具栏恢复。</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.DescriptionWithDrafts.Format" xml:space="preserve">
-    <value>此工作区保存了上一轮会话中的 {0} 个编辑窗口和 {1} 个资源标签，其中 {2} 个标签带有未应用草稿标记。可以现在恢复标签与草稿标记，也可以继续浏览，稍后从工具栏恢复。</value>
+    <value>此工作区保存了上一轮会话中的 {0} 个编辑窗口和 {1} 个资源文档标签，其中 {2} 个标签带有未应用草稿标记。可以现在恢复标签与草稿标记，也可以继续浏览，稍后从工具栏恢复。</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.DescriptionWithConflicts.Format" xml:space="preserve">
-    <value>此工作区保存了上一轮会话中的 {0} 个编辑窗口和 {1} 个资源标签，其中 {2} 个标签已在当前窗口中打开。恢复时会跳过这些冲突标签并继续保留在工具栏入口中。</value>
+    <value>此工作区保存了上一轮会话中的 {0} 个编辑窗口和 {1} 个资源文档标签，其中 {2} 个标签已在当前窗口中打开。恢复时会跳过这些冲突标签并继续保留在工具栏入口中。</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.DescriptionWithDraftsAndConflicts.Format" xml:space="preserve">
-    <value>此工作区保存了上一轮会话中的 {0} 个编辑窗口和 {1} 个资源标签，其中 {2} 个标签带有未应用草稿标记，{3} 个标签已在当前窗口中打开。恢复时会跳过冲突标签并继续保留在工具栏入口中。</value>
+    <value>此工作区保存了上一轮会话中的 {0} 个编辑窗口和 {1} 个资源文档标签，其中 {2} 个标签带有未应用草稿标记，{3} 个标签已在当前窗口中打开。恢复时会跳过冲突标签并继续保留在工具栏入口中。</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.RestoreDraftMarkers.Option" xml:space="preserve">
     <value>同时恢复可用草稿标记（不恢复草稿内容）</value>

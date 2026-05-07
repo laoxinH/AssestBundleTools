@@ -1494,7 +1494,7 @@
 
                         <Grid
                             x:Name="AssetDocumentGroupDragHandle"
-                            CanDrag="{x:Bind ViewModel.DocumentWorkspace.HasAssetDocumentTabs, Mode=OneWay}"
+                            CanDrag="{x:Bind ViewModel.DocumentWorkspace.HasDocumentTabs, Mode=OneWay}"
                             DragStarting="OnAssetDocumentGroupDragStarting"
                             DropCompleted="OnAssetDocumentGroupDropCompleted"
                             ColumnSpacing="6">
@@ -1520,7 +1520,7 @@
                             x:Name="OpenAssetDocumentGroupInNewWindowButton"
                             Grid.Column="1"
                             Click="OnOpenAssetDocumentGroupInNewWindowButtonClick"
-                            IsEnabled="{x:Bind ViewModel.DocumentWorkspace.HasAssetDocumentTabs, Mode=OneWay}"
+                            IsEnabled="{x:Bind ViewModel.DocumentWorkspace.HasDocumentTabs, Mode=OneWay}"
                             Style="{StaticResource WorkbenchTitleIconButtonStyle}">
                             <FontIcon
                                 FontFamily="Segoe Fluent Icons"
@@ -1537,21 +1537,39 @@
                         CanDragTabs="True"
                         CanReorderTabs="True"
                         IsAddTabButtonVisible="False"
-                        SelectedItem="{x:Bind ViewModel.DocumentWorkspace.ActiveAssetDocumentTab, Mode=OneWay}"
+                        SelectedItem="{x:Bind ViewModel.DocumentWorkspace.ActiveDocumentTab, Mode=OneWay}"
                         TabDragCompleted="OnAssetDocumentTabViewTabDragCompleted"
                         TabDragStarting="OnAssetDocumentTabViewTabDragStarting"
                         TabDroppedOutside="OnAssetDocumentTabViewTabDroppedOutside"
                         TabCloseRequested="OnAssetDocumentTabViewTabCloseRequested"
-                        TabItemsSource="{x:Bind ViewModel.DocumentWorkspace.CurrentAssetTabs, Mode=OneWay}"
+                        TabItemsSource="{x:Bind ViewModel.DocumentWorkspace.CurrentDocumentTabs, Mode=OneWay}"
                         TabStripDragOver="OnAssetDocumentTabViewTabStripDragOver"
                         TabStripDrop="OnAssetDocumentTabViewTabStripDrop"
                         SelectionChanged="OnAssetDocumentTabViewSelectionChanged"
-                        Visibility="{x:Bind ViewModel.DocumentWorkspace.AssetDocumentTabStripVisibility, Mode=OneWay}">
+                        Visibility="{x:Bind ViewModel.DocumentWorkspace.DocumentTabStripVisibility, Mode=OneWay}">
                         <TabView.TabItemTemplate>
-                            <DataTemplate x:DataType="viewModels:AssetDocumentTabViewModel">
+                            <DataTemplate x:DataType="viewModels:AssetDocumentTabItemViewModel">
                                 <TabViewItem
-                                    Header="{x:Bind DisplayName}"
                                     ToolTipService.ToolTip="{x:Bind ToolTipText}">
+                                    <TabViewItem.Header>
+                                        <Grid ColumnSpacing="6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border
+                                                Width="4"
+                                                Height="18"
+                                                VerticalAlignment="Center"
+                                                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                CornerRadius="2"
+                                                Visibility="{x:Bind SpineMarkerVisibility}" />
+                                            <TextBlock
+                                                Grid.Column="1"
+                                                VerticalAlignment="Center"
+                                                Text="{x:Bind DisplayName}" />
+                                        </Grid>
+                                    </TabViewItem.Header>
                                     <TabViewItem.ContextFlyout>
                                         <MenuFlyout Opening="OnAssetDocumentTabContextFlyoutOpening">
                                             <MenuFlyoutItem
@@ -1566,36 +1584,6 @@
                                             <MenuFlyoutItem
                                                 x:Name="CloseAllAssetDocumentTabsMenuItem"
                                                 Click="OnCloseAllAssetDocumentTabsMenuItemClick"
-                                                Tag="{Binding}" />
-                                        </MenuFlyout>
-                                    </TabViewItem.ContextFlyout>
-                                </TabViewItem>
-                            </DataTemplate>
-                        </TabView.TabItemTemplate>
-                    </TabView>
-
-                    <TabView
-                        x:Name="SpineGroupDocumentTabView"
-                        Grid.Row="1"
-                        Margin="-2,-2,-2,0"
-                        CanReorderTabs="True"
-                        IsAddTabButtonVisible="False"
-                        SelectedItem="{x:Bind ViewModel.DocumentWorkspace.ActiveSpineGroupDocumentTab, Mode=OneWay}"
-                        TabDragCompleted="OnSpineGroupDocumentTabViewTabDragCompleted"
-                        TabCloseRequested="OnSpineGroupDocumentTabViewTabCloseRequested"
-                        TabItemsSource="{x:Bind ViewModel.DocumentWorkspace.CurrentSpineGroupTabs, Mode=OneWay}"
-                        SelectionChanged="OnSpineGroupDocumentTabViewSelectionChanged"
-                        Visibility="{x:Bind ViewModel.DocumentWorkspace.SpineGroupDocumentTabStripVisibility, Mode=OneWay}">
-                        <TabView.TabItemTemplate>
-                            <DataTemplate x:DataType="viewModels:SpineAssetGroupDocumentTabViewModel">
-                                <TabViewItem
-                                    Header="{x:Bind DisplayName}"
-                                    ToolTipService.ToolTip="{x:Bind ToolTipText}">
-                                    <TabViewItem.ContextFlyout>
-                                        <MenuFlyout Opening="OnSpineGroupDocumentTabContextFlyoutOpening">
-                                            <MenuFlyoutItem
-                                                x:Name="OpenSpineGroupDocumentInNewWindowMenuItem"
-                                                Click="OnOpenSpineGroupDocumentInNewWindowMenuItemClick"
                                                 Tag="{Binding}" />
                                         </MenuFlyout>
                                     </TabViewItem.ContextFlyout>

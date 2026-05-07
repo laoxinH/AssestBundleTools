@@ -331,6 +331,37 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         AssetDocumentTabViewModel? assetTab) =>
         _assetDocumentTabCoordinator.DetachAssetDocumentTabForExternalHostAsync(assetTab);
 
+    public async Task<AssetDocumentTabItemViewModel?> DetachDocumentTabForExternalHostAsync(
+        AssetDocumentTabItemViewModel? documentTab)
+    {
+        if (documentTab is null || ActiveBundleTab is null || !ActiveBundleTab.DocumentTabs.Contains(documentTab))
+        {
+            return null;
+        }
+
+        var ownerTab = ActiveBundleTab;
+        var wasActive = ReferenceEquals(ownerTab.ActiveDocumentTab, documentTab);
+        if (!ownerTab.DetachDocumentTab(documentTab))
+        {
+            return null;
+        }
+
+        if (wasActive && ownerTab.ActiveDocumentTab is { } activeDocumentTab)
+        {
+            await ActivateDocumentTabAsync(activeDocumentTab);
+            return documentTab;
+        }
+
+        if (wasActive)
+        {
+            PrimaryPane.ClearSelection();
+        }
+
+        _documentWorkspace.NotifyAssetDocumentHostStateChanged();
+        _requestWorkspaceBrowserStatePersistence();
+        return documentTab;
+    }
+
     public Task<AssetDocumentGroupTransfer?> DetachActiveAssetDocumentGroupForExternalHostAsync() =>
         _assetDocumentTabCoordinator.DetachActiveAssetDocumentGroupForExternalHostAsync();
 
@@ -353,6 +384,18 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
 
     private void ReapplyActiveAssetDocumentTab(AssetDocumentTabViewModel assetTab, AssetDetailsDto details) =>
         _assetDocumentTabCoordinator.ReapplyAssetDocumentTab(assetTab, details);
+
+    private Task ActivateDocumentTabAsync(AssetDocumentTabItemViewModel documentTab)
+    {
+        if (documentTab.AssetTab is { } assetTab)
+        {
+            return ActivateAssetDocumentTabAsync(assetTab);
+        }
+
+        return documentTab.SpineGroupTab is { } spineGroupTab
+            ? ActivateSpineGroupDocumentTabAsync(spineGroupTab)
+            : Task.CompletedTask;
+    }
 
     private Task SynchronizeInspectorWithActiveBundleTabAsync(bool writeLog)
     {

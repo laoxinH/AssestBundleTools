@@ -81,6 +81,36 @@ public sealed class AssetEditorWindowRestorePlannerTests
     }
 
     [Fact]
+    public void CreatePlan_ShouldRestoreSpineGroupDocumentTabs()
+    {
+        var plan = AssetEditorWindowRestorePlanner.CreatePlan(
+        [
+            CreateDocumentWindow(
+                windowStateId: 15,
+                activeBundleId: "bundle-a",
+                activeAssetId: null,
+                CreateSpineGroupDocumentTab("bundle-a", "spine-group:bundle-a:hero"))
+                with
+                {
+                    ActiveDocumentKind = WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
+                    ActiveSpineGroupId = "spine-group:bundle-a:hero"
+                }
+        ],
+        static _ => false,
+        canRestoreSpineGroupTab: static tab => tab.BundleId == "bundle-a");
+
+        var restorableWindow = Assert.Single(plan.RestorableWindows);
+        var documentTab = Assert.Single(restorableWindow.OpenDocumentTabs ?? []);
+
+        Assert.Empty(restorableWindow.OpenAssetTabs);
+        Assert.Equal(WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind, restorableWindow.ActiveDocumentKind);
+        Assert.Equal("bundle-a", restorableWindow.ActiveBundleId);
+        Assert.Null(restorableWindow.ActiveAssetId);
+        Assert.Equal("spine-group:bundle-a:hero", restorableWindow.ActiveSpineGroupId);
+        Assert.Equal("spine-group:bundle-a:hero", documentTab.SpineGroupTab?.GroupId);
+    }
+
+    [Fact]
     public void CreateRestoredLayout_ShouldRejectTooSmallLayout()
     {
         var layout = AssetEditorWindowRestorePlanner.CreateRestoredLayout(
@@ -169,7 +199,7 @@ public sealed class AssetEditorWindowRestorePlannerTests
     private static WorkspaceAssetEditorWindowStateDto CreateWindow(
         int windowStateId,
         string activeBundleId,
-        string activeAssetId,
+        string? activeAssetId,
         params WorkspaceAssetEditorWindowAssetTabDto[] assetTabs)
     {
         return new WorkspaceAssetEditorWindowStateDto(
@@ -179,6 +209,36 @@ public sealed class AssetEditorWindowRestorePlannerTests
             ActiveBundleId: activeBundleId,
             ActiveAssetId: activeAssetId);
     }
+
+    private static WorkspaceAssetEditorWindowStateDto CreateDocumentWindow(
+        int windowStateId,
+        string activeBundleId,
+        string? activeAssetId,
+        params WorkspaceAssetEditorWindowDocumentTabDto[] documentTabs)
+    {
+        return new WorkspaceAssetEditorWindowStateDto(
+            WindowStateId: windowStateId,
+            Layout: new WorkspaceAssetEditorWindowLayoutDto(120, 90, 1320, 820),
+            OpenAssetTabs: documentTabs
+                .Select(static tab => tab.AssetTab)
+                .Where(static tab => tab is not null)
+                .Cast<WorkspaceAssetEditorWindowAssetTabDto>()
+                .ToArray(),
+            ActiveBundleId: activeBundleId,
+            ActiveAssetId: activeAssetId,
+            OpenDocumentTabs: documentTabs);
+    }
+
+    private static WorkspaceAssetEditorWindowDocumentTabDto CreateSpineGroupDocumentTab(
+        string bundleId,
+        string groupId) =>
+        new(
+            WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
+            SpineGroupTab: new WorkspaceAssetEditorWindowSpineGroupTabDto(
+                bundleId,
+                groupId,
+                groupId,
+                groupId));
 
     private static WorkspaceAssetEditorWindowAssetTabDto CreateAssetTab(
         string bundleId,

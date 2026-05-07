@@ -17,7 +17,6 @@ public sealed partial class BundleExplorerPage
     {
         private readonly BundleExplorerPage _owner;
         private readonly List<AssetEditorWindow> _windows = [];
-        private readonly List<SpineAssetGroupEditorWindow> _spineGroupWindows = [];
         private readonly Dictionary<AssetEditorWindow, int> _windowStateIds = [];
         private readonly AssetDocumentOpenConflictActivator _openConflictActivator;
         private readonly AssetEditorWindowStateStore _windowStateStore = new();
@@ -79,56 +78,41 @@ public sealed partial class BundleExplorerPage
             }
         }
 
-        public async Task PromptPendingAssetEditorWindowsRestoreAsync()
+        public async Task OpenDocumentInNewWindowAsync(AssetDocumentTabItemViewModel? documentTab)
         {
-            var restorePrompt = _owner.ViewModel.AssetEditorWindowRestorePrompt;
-            if (_isRestorePromptDialogOpen ||
-                _owner.XamlRoot is null ||
-                !_owner.ViewModel.WorkspaceShell.HasWorkspace ||
-                !restorePrompt.HasPendingWindows)
+            if (documentTab?.AssetTab is { } assetTab)
+            {
+                await OpenAssetDocumentInNewWindowAsync(assetTab);
+                return;
+            }
+
+            if (documentTab?.SpineGroupTab is not { } spineGroupTab)
             {
                 return;
             }
 
-            RefreshPendingAssetEditorWindowConflictState();
-            await _owner.ViewModel.RefreshAssetEditorWindowDraftRestorePlanAsync();
-            var promptKey = CreatePendingRestorePromptKey(
-                restorePrompt.PendingWindows,
-                restorePrompt.PendingConflictAssetTabCount,
-                restorePrompt.DraftRestoreDiagnosticsKey);
-            if (string.Equals(_lastPromptedRestoreSnapshotKey, promptKey, StringComparison.Ordinal))
+            if (await _openConflictActivator.TryActivateSpineGroupForNewWindowFromMainAsync(spineGroupTab))
             {
                 return;
             }
 
-            _lastPromptedRestoreSnapshotKey = promptKey;
-            _isRestorePromptDialogOpen = true;
+            var detachedSpineGroupTab = await _owner.ViewModel.DetachSpineGroupDocumentTabForEditorWindowAsync(spineGroupTab);
+            if (detachedSpineGroupTab is null)
+            {
+                return;
+            }
+
+            var detachedDocumentTab = AssetDocumentTabItemViewModel.FromSpineGroup(detachedSpineGroupTab);
+            var detachedGroup = new AssetDocumentGroupTransfer([detachedDocumentTab], detachedDocumentTab);
             try
             {
-                var dialog = new ContentDialog
-                {
-                    XamlRoot = _owner.XamlRoot,
-                    Title = UiText.Get(ResourceKeys.AssetEditorWindowRestorePendingDialogTitle),
-                    PrimaryButtonText = UiText.Get(ResourceKeys.AssetEditorWindowRestorePendingDialogPrimaryButton),
-                    SecondaryButtonText = UiText.Get(ResourceKeys.AssetEditorWindowRestorePendingDialogSecondaryButton),
-                    CloseButtonText = UiText.Get(ResourceKeys.AssetEditorWindowRestorePendingDialogCloseButton),
-                    DefaultButton = ContentDialogButton.Close,
-                    Content = AssetEditorWindowRestoreDialogContentBuilder.Create(restorePrompt)
-                };
-
-                var result = await dialog.ShowAsync();
-                if (result == ContentDialogResult.Primary)
-                {
-                    await RestorePendingAssetEditorWindowsAsync();
-                }
-                else if (result == ContentDialogResult.Secondary)
-                {
-                    ClearPendingAssetEditorWindowRestoreState();
-                }
+                var window = CreateAssetEditorWindow(detachedGroup);
+                window.Activate();
             }
-            finally
+            catch
             {
-                _isRestorePromptDialogOpen = false;
+                await _owner.ViewModel.RestoreDetachedSpineGroupDocumentTabFromEditorWindowAsync(detachedSpineGroupTab);
+                throw;
             }
         }
 
@@ -137,73 +121,6 @@ public sealed partial class BundleExplorerPage
 
         public Task HandleMainResolvedAssetOpenRequestedAsync(ResolvedAssetNavigationTarget? target) =>
             _openConflictActivator.HandleMainResolvedAssetOpenRequestedAsync(target);
-
-        public Task RestorePendingAssetEditorWindowsAsync()
-        {
-            if (!_owner.ViewModel.WorkspaceShell.HasWorkspace || _owner.ViewModel.IsBusy)
-            {
-                return Task.CompletedTask;
-            }
-
-            var openAssetKeys = CaptureOpenAssetKeys();
-            var restorePrompt = _owner.ViewModel.AssetEditorWindowRestorePrompt;
-            restorePrompt.ReplacePotentialConflictAssetKeys(openAssetKeys);
-            var restoreDraftMarkers = restorePrompt.RestoreDraftMarkers;
-            var restorableDraftReferenceKeys = restorePrompt.CreateRestorableDraftReferenceKeys();
-            var pendingWindows = restorePrompt.TakePendingSnapshots();
-            if (pendingWindows.Count == 0)
-            {
-                return Task.CompletedTask;
-            }
-
-            try
-            {
-                var restorePlan = AssetEditorWindowRestorePlanner.CreatePlan(
-                    pendingWindows,
-                    CanRestoreAssetTab,
-                    openAssetKeys);
-                var remainingPendingWindows = restorePlan.PendingUnavailableWindows
-                    .Concat(restorePlan.PendingConflictedWindows)
-                    .ToList();
-                var restoredWindowCount = 0;
-                foreach (var pendingWindow in restorePlan.RestorableWindows)
-                {
-                    var restorableWindow = AssetEditorWindowRestoreDraftMarkerPolicy.Apply(
-                        pendingWindow,
-                        restoreDraftMarkers,
-                        restorableDraftReferenceKeys);
-                    var restoredGroup = TryCreateRestoredDocumentGroup(restorableWindow);
-                    if (restoredGroup is null)
-                    {
-                        remainingPendingWindows.Add(pendingWindow);
-                        continue;
-                    }
-
-                    var restoredLayout = AssetEditorWindowRestorePlanner.CreateRestoredLayout(pendingWindow.Layout);
-                    var window = CreateAssetEditorWindow(restoredGroup, restoredLayout);
-                    window.Activate();
-                    restoredWindowCount++;
-                }
-
-                _owner.ViewModel.AssetEditorWindowRestorePrompt.ReplacePendingSnapshots(remainingPendingWindows);
-                RefreshPendingAssetEditorWindowConflictState();
-                RequestWindowStatePersistence();
-                AssetEditorWindowRestoreFeedbackPresenter.Publish(
-                    restoredWindowCount,
-                    restorePlan.PendingUnavailableWindows.Count,
-                    restorePlan.PendingConflictedWindows.Count,
-                    CountAssetTabs(restorePlan.PendingConflictedWindows));
-            }
-            catch
-            {
-                _owner.ViewModel.AssetEditorWindowRestorePrompt.ReplacePendingSnapshots(pendingWindows);
-                RefreshPendingAssetEditorWindowConflictState();
-                RequestWindowStatePersistence();
-                throw;
-            }
-
-            return Task.CompletedTask;
-        }
 
         public void HandleWorkspaceShellPageStateChanged(
             BundleExplorerPageStateChangedEventArgs<BundleExplorerWorkspaceShellPageStateChange> eventArgs)
@@ -239,42 +156,48 @@ public sealed partial class BundleExplorerPage
             RefreshPendingAssetEditorWindowConflictState();
         }
 
-        private async Task OpenAssetDocumentInNewWindowFromEditorAsync(
+        private async Task OpenDocumentInNewWindowFromEditorAsync(
             AssetEditorWindow sourceWindow,
-            AssetDocumentTabViewModel assetTab)
+            AssetDocumentTabItemViewModel documentTab)
         {
             ArgumentNullException.ThrowIfNull(sourceWindow);
-            ArgumentNullException.ThrowIfNull(assetTab);
+            ArgumentNullException.ThrowIfNull(documentTab);
 
-            if (!AssetEditorWindowTabDragPolicy.CanCreateNewWindowFromDroppedTab(
-                    sourceWindow.ViewModel.DocumentGroup,
-                    assetTab))
+            if (sourceWindow.ViewModel.DocumentGroup.DocumentTabs.Count <= 1 &&
+                sourceWindow.ViewModel.DocumentGroup.DocumentTabs.Contains(documentTab))
             {
-                await sourceWindow.TryActivateAssetDocumentTabAsync(assetTab.BundleId, assetTab.AssetId);
+                await sourceWindow.ViewModel.ActivateDocumentTabAsync(documentTab);
+                sourceWindow.BringToFront();
                 return;
             }
 
-            if (await _openConflictActivator.TryActivateForNewWindowFromEditorAsync(sourceWindow, assetTab))
+            if (documentTab.AssetTab is { } assetTab &&
+                await _openConflictActivator.TryActivateForNewWindowFromEditorAsync(sourceWindow, assetTab))
             {
                 return;
             }
 
-            var sourceHost = (IAssetDocumentTabDragHost)sourceWindow;
-            var detachedAssetTab = await sourceHost.DetachAssetDocumentTabForDragAsync(assetTab);
-            if (detachedAssetTab is null)
+            if (documentTab.SpineGroupTab is { } spineGroupTab &&
+                await _openConflictActivator.TryActivateSpineGroupForNewWindowFromEditorAsync(sourceWindow, spineGroupTab))
+            {
+                return;
+            }
+
+            var detachedDocumentTab = await sourceWindow.ViewModel.DetachDocumentTabForExternalHostAsync(documentTab);
+            if (detachedDocumentTab is null)
             {
                 return;
             }
 
             try
             {
-                var window = CreateAssetEditorWindow(detachedAssetTab);
+                var window = CreateAssetEditorWindow(new AssetDocumentGroupTransfer([detachedDocumentTab], detachedDocumentTab));
                 window.Activate();
-                await sourceHost.CompleteAssetDocumentTabDragMoveAsync();
+                await sourceWindow.ViewModel.CompleteExternalAssetDocumentMoveAsync();
             }
             catch
             {
-                await sourceHost.AttachAssetDocumentTabFromDragAsync(detachedAssetTab);
+                await sourceWindow.ViewModel.RestoreDetachedDocumentTabAsync(detachedDocumentTab);
                 throw;
             }
         }
@@ -304,8 +227,6 @@ public sealed partial class BundleExplorerPage
 
         public void CloseAll()
         {
-            CloseAllSpineGroupWindows();
-
             foreach (var window in _windows.ToArray())
             {
                 window.Closed -= OnAssetEditorWindowClosed;
@@ -317,13 +238,6 @@ public sealed partial class BundleExplorerPage
             _windows.Clear();
             _windowStateIds.Clear();
             _windowStateStore.Clear();
-        }
-
-        private void ClearPendingAssetEditorWindowRestoreState()
-        {
-            _owner.ViewModel.AssetEditorWindowRestorePrompt.Clear();
-            _owner.ViewModel.AssetEditorWindowRestorePrompt.ReplacePotentialConflictAssetKeys(null);
-            RequestWindowStatePersistence();
         }
 
         private void OnAssetEditorWindowClosed(object sender, WindowEventArgs args)
@@ -395,7 +309,7 @@ public sealed partial class BundleExplorerPage
                 _owner.ViewModel.AttachAssetDocumentGroupFromEditorWindowAsync);
             var window = new AssetEditorWindow(
                 viewModel,
-                OpenAssetDocumentInNewWindowFromEditorAsync,
+                OpenDocumentInNewWindowFromEditorAsync,
                 OpenAssetDocumentGroupInNewWindowFromEditorAsync,
                 _openConflictActivator.TryActivateFromEditorAsync);
             var initialLayout = preferredLayout is { } layout && AssetEditorWindowLayoutSafety.CanRestoreSize(layout)
@@ -434,128 +348,9 @@ public sealed partial class BundleExplorerPage
             return _windowStateStore.CaptureOpenWindowMetadata();
         }
 
-        private IReadOnlySet<string> CaptureOpenAssetKeys()
-        {
-            var openAssetKeys = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var bundleTab in _owner.ViewModel.DocumentWorkspace.BundleTabs)
-            {
-                foreach (var assetTab in bundleTab.AssetTabs)
-                {
-                    AddAssetKey(openAssetKeys, assetTab.BundleId.Value, assetTab.AssetId.Value);
-                }
-            }
-
-            foreach (var window in CaptureCurrentOpenWindowMetadata())
-            {
-                foreach (var assetTab in window.OpenAssetTabs)
-                {
-                    AddAssetKey(openAssetKeys, assetTab.BundleId, assetTab.AssetId);
-                }
-            }
-
-            return openAssetKeys;
-        }
-
-        private void RefreshPendingAssetEditorWindowConflictState()
-        {
-            _owner.ViewModel.AssetEditorWindowRestorePrompt.ReplacePotentialConflictAssetKeys(CaptureOpenAssetKeys());
-        }
-
         private void RequestWindowStatePersistence()
         {
             _owner.ViewModel.RequestAssetEditorWindowStatePersistence();
         }
-
-        private static string CreatePendingRestorePromptKey(
-            IReadOnlyList<WorkspaceAssetEditorWindowStateDto> pendingWindows,
-            int conflictedAssetTabCount,
-            string draftRestoreDiagnosticsKey)
-        {
-            var snapshotKey = string.Join(
-                "|",
-                pendingWindows.Select(static window =>
-                    string.Concat(
-                        window.WindowStateId.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                        ":",
-                        window.ActiveBundleId,
-                        ":",
-                        window.ActiveAssetId,
-                        ":",
-                        window.OpenAssetTabs.Count.ToString(System.Globalization.CultureInfo.InvariantCulture))));
-            return string.Concat(
-                snapshotKey,
-                ":conflicts:",
-                conflictedAssetTabCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                ":drafts:",
-                draftRestoreDiagnosticsKey);
-        }
-
-        private AssetDocumentGroupTransfer? TryCreateRestoredDocumentGroup(
-            WorkspaceAssetEditorWindowStateDto pendingWindow)
-        {
-            ArgumentNullException.ThrowIfNull(pendingWindow);
-
-            var restoredTabs = new List<AssetDocumentTabViewModel>(pendingWindow.OpenAssetTabs.Count);
-            foreach (var assetTabState in pendingWindow.OpenAssetTabs)
-            {
-                if (!CanRestoreAssetTab(assetTabState))
-                {
-                    continue;
-                }
-
-                var restoredAssetTab = _owner.ViewModel.AssetWorkflow.CreateAssetDocumentTab(
-                    new BundleId(assetTabState.BundleId),
-                    new AssetId(assetTabState.AssetId),
-                    assetTabState.AssetName);
-                restoredAssetTab.RestoreSelectedInspectorSection(assetTabState.SelectedInspectorSection);
-                restoredAssetTab.RestorePreviewImageDisplayOptions(
-                    assetTabState.PreviewImageBackgroundMode,
-                    assetTabState.SpritePreviewDisplayMode,
-                    assetTabState.PreviewImageZoom,
-                    assetTabState.PreviewImagePanX,
-                    assetTabState.PreviewImagePanY);
-                restoredAssetTab.RestorePreviewMeshDisplayOptions(
-                    assetTabState.MeshPreviewDisplayMode,
-                    assetTabState.MeshPreviewTextureOverlaySelected,
-                    assetTabState.MeshPreviewGridSelected,
-                    assetTabState.MeshPreviewZoom,
-                    assetTabState.MeshPreviewRotationX,
-                    assetTabState.MeshPreviewRotationY);
-                restoredAssetTab.RestoreEditDraftReference(
-                    AssetDocumentEditDraftReferenceMapper.ToViewModel(assetTabState.EditDraftReference));
-                restoredTabs.Add(restoredAssetTab);
-            }
-
-            if (restoredTabs.Count == 0)
-            {
-                return null;
-            }
-
-            var activeAssetTab = restoredTabs.FirstOrDefault(assetTab =>
-                                   string.Equals(assetTab.BundleId.Value, pendingWindow.ActiveBundleId, StringComparison.Ordinal) &&
-                                   string.Equals(assetTab.AssetId.Value, pendingWindow.ActiveAssetId, StringComparison.Ordinal))
-                               ?? restoredTabs[0];
-
-            return new AssetDocumentGroupTransfer(restoredTabs, activeAssetTab);
-        }
-
-        private bool CanRestoreAssetTab(WorkspaceAssetEditorWindowAssetTabDto assetTabState)
-        {
-            return !string.IsNullOrWhiteSpace(assetTabState.BundleId) &&
-                   !string.IsNullOrWhiteSpace(assetTabState.AssetId) &&
-                   _owner.ViewModel.BundlePane.FindBundleNode(new BundleId(assetTabState.BundleId)) is not null;
-        }
-
-        private static void AddAssetKey(HashSet<string> assetKeys, string? bundleId, string? assetId)
-        {
-            if (AssetDocumentIdentityKey.TryCreate(bundleId, assetId, out var assetKey))
-            {
-                assetKeys.Add(assetKey);
-            }
-        }
-
-        private static int CountAssetTabs(IReadOnlyList<WorkspaceAssetEditorWindowStateDto> windows) =>
-            windows.Sum(static window => window.OpenAssetTabs.Count);
-
     }
 }

@@ -49,6 +49,10 @@ internal sealed class BundleExplorerAssetDocumentMoveCoordinator
         AssetDocumentTabViewModel? assetTab) =>
         _assetWorkflow.DetachAssetDocumentTabForExternalHostAsync(assetTab);
 
+    public Task<AssetDocumentTabItemViewModel?> DetachDocumentTabForExternalHostAsync(
+        AssetDocumentTabItemViewModel? documentTab) =>
+        _assetWorkflow.DetachDocumentTabForExternalHostAsync(documentTab);
+
     public Task<AssetDocumentGroupTransfer?> DetachActiveAssetDocumentGroupForExternalHostAsync()
     {
         if (_isBusyProvider())
@@ -103,6 +107,14 @@ internal sealed class BundleExplorerAssetDocumentMoveCoordinator
         return true;
     }
 
+    public Task<bool> AttachDocumentTabFromExternalHostAsync(AssetDocumentTabItemViewModel documentTab)
+    {
+        ArgumentNullException.ThrowIfNull(documentTab);
+
+        return AttachAssetDocumentGroupFromExternalHostAsync(
+            new AssetDocumentGroupTransfer([documentTab], documentTab));
+    }
+
     public async Task<bool> AttachAssetDocumentGroupFromExternalHostAsync(AssetDocumentGroupTransfer transfer)
     {
         ArgumentNullException.ThrowIfNull(transfer);
@@ -112,21 +124,28 @@ internal sealed class BundleExplorerAssetDocumentMoveCoordinator
             return false;
         }
 
-        AssetDocumentTabViewModel? activeAssetTab = null;
-        foreach (var assetTab in transfer.AssetTabs)
+        AssetDocumentTabItemViewModel? activeDocumentTab = null;
+        foreach (var documentTab in transfer.DocumentTabs)
         {
-            var attachedAssetTab = await AttachAssetDocumentTabWithoutActivationAsync(assetTab);
-            if (ReferenceEquals(assetTab, transfer.ActiveAssetTab))
+            var attachedDocumentTab = await AttachDocumentTabWithoutActivationAsync(documentTab);
+            if (ReferenceEquals(documentTab, transfer.ActiveDocumentTab))
             {
-                activeAssetTab = attachedAssetTab;
+                activeDocumentTab = attachedDocumentTab;
             }
         }
 
-        if (activeAssetTab is not null &&
-            _documentWorkspace.TryGetBundleTab(activeAssetTab.BundleId, out var activeBundleTab))
+        if (activeDocumentTab is not null &&
+            _documentWorkspace.TryGetBundleTab(activeDocumentTab.BundleId, out var activeBundleTab))
         {
             await _bundleTabCoordinator.ActivateBundleTabAsync(activeBundleTab);
-            await _assetWorkflow.ActivateAssetDocumentTabAsync(activeAssetTab);
+            if (activeDocumentTab.AssetTab is { } activeAssetTab)
+            {
+                await _assetWorkflow.ActivateAssetDocumentTabAsync(activeAssetTab);
+            }
+            else if (activeDocumentTab.SpineGroupTab is { } activeSpineGroupTab)
+            {
+                await _assetWorkflow.ActivateSpineGroupDocumentTabAsync(activeSpineGroupTab);
+            }
         }
 
         _requestWorkspaceBrowserStatePersistence();
@@ -135,7 +154,7 @@ internal sealed class BundleExplorerAssetDocumentMoveCoordinator
 
     private bool CanResolveAllBundleTabs(AssetDocumentGroupTransfer transfer)
     {
-        foreach (var bundleId in transfer.AssetTabs.Select(static tab => tab.BundleId).Distinct())
+        foreach (var bundleId in transfer.DocumentTabs.Select(static tab => tab.BundleId).Distinct())
         {
             if (_documentWorkspace.TryGetBundleTab(bundleId, out _) ||
                 _bundlePane.FindBundleNode(bundleId) is not null)
@@ -143,11 +162,35 @@ internal sealed class BundleExplorerAssetDocumentMoveCoordinator
                 continue;
             }
 
-            ShowAssetDocumentMoveBackWarning(transfer.ActiveAssetTab);
+            ShowDocumentMoveBackWarning(transfer.ActiveDocumentTab);
             return false;
         }
 
         return true;
+    }
+
+    private async Task<AssetDocumentTabItemViewModel> AttachDocumentTabWithoutActivationAsync(
+        AssetDocumentTabItemViewModel documentTab)
+    {
+        if (documentTab.AssetTab is { } assetTab)
+        {
+            var attachedAssetTab = await AttachAssetDocumentTabWithoutActivationAsync(assetTab);
+            return _documentWorkspace.TryGetBundleTab(attachedAssetTab.BundleId, out var assetBundleTab) &&
+                   assetBundleTab.DocumentTabs.FirstOrDefault(tab => tab.Wraps(attachedAssetTab)) is { } attachedDocumentTab
+                ? attachedDocumentTab
+                : documentTab;
+        }
+
+        if (documentTab.SpineGroupTab is { } spineGroupTab)
+        {
+            var attachedSpineGroupTab = await AttachSpineGroupDocumentTabWithoutActivationAsync(spineGroupTab);
+            return _documentWorkspace.TryGetBundleTab(attachedSpineGroupTab.BundleId, out var spineBundleTab) &&
+                   spineBundleTab.DocumentTabs.FirstOrDefault(tab => tab.Wraps(attachedSpineGroupTab)) is { } attachedDocumentTab
+                ? attachedDocumentTab
+                : documentTab;
+        }
+
+        return documentTab;
     }
 
     private async Task<AssetDocumentTabViewModel> AttachAssetDocumentTabWithoutActivationAsync(
@@ -179,11 +222,51 @@ internal sealed class BundleExplorerAssetDocumentMoveCoordinator
         return assetTab;
     }
 
+    private async Task<SpineAssetGroupDocumentTabViewModel> AttachSpineGroupDocumentTabWithoutActivationAsync(
+        SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        if (!_documentWorkspace.TryGetBundleTab(spineGroupTab.BundleId, out var bundleTab))
+        {
+            var bundleNode = _bundlePane.FindBundleNode(spineGroupTab.BundleId);
+            if (bundleNode is not null)
+            {
+                await _bundleTabCoordinator.OpenBundleAsync(bundleNode, openAsPinnedTab: true);
+            }
+
+            _documentWorkspace.TryGetBundleTab(spineGroupTab.BundleId, out bundleTab);
+        }
+
+        if (bundleTab is null)
+        {
+            return spineGroupTab;
+        }
+
+        if (bundleTab.TryGetSpineGroupTab(spineGroupTab.GroupId, out var existingSpineGroupTab))
+        {
+            return existingSpineGroupTab;
+        }
+
+        bundleTab.AddSpineGroupTab(spineGroupTab, activate: false);
+        return spineGroupTab;
+    }
+
     private void ShowAssetDocumentMoveBackWarning(AssetDocumentTabViewModel assetTab)
     {
         var message = _localizationService.GetFormattedString(
             ResourceKeys.BundleExplorerNotificationResolvedAssetBundleUnavailableFormat,
             string.IsNullOrWhiteSpace(assetTab.DisplayName) ? assetTab.AssetId.Value : assetTab.DisplayName);
+        _appLogService.AppendWarning(message);
+        _operationFeedbackBridge.ShowOperationNotification(
+            GetString(ResourceKeys.AppNotificationWarningTitle),
+            message,
+            AppNotificationSeverity.Warning);
+    }
+
+    private void ShowDocumentMoveBackWarning(AssetDocumentTabItemViewModel documentTab)
+    {
+        var message = _localizationService.GetFormattedString(
+            ResourceKeys.BundleExplorerNotificationResolvedAssetBundleUnavailableFormat,
+            string.IsNullOrWhiteSpace(documentTab.DisplayName) ? documentTab.DocumentId : documentTab.DisplayName);
         _appLogService.AppendWarning(message);
         _operationFeedbackBridge.ShowOperationNotification(
             GetString(ResourceKeys.AppNotificationWarningTitle),

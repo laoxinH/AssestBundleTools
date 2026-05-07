@@ -118,6 +118,50 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
     }
 
     [Fact]
+    public void ReplacePendingSnapshots_ShouldKeepSpineOnlyWindows()
+    {
+        var prompt = new AssetEditorWindowRestorePromptViewModel(new TestLocalizationService());
+        prompt.ReplacePendingSnapshots(
+        [
+            new WorkspaceAssetEditorWindowStateDto(
+                WindowStateId: 8,
+                Layout: new WorkspaceAssetEditorWindowLayoutDto(120, 90, 1320, 820),
+                OpenAssetTabs: Array.Empty<WorkspaceAssetEditorWindowAssetTabDto>(),
+                ActiveBundleId: "bundle-a",
+                ActiveAssetId: null,
+                OpenDocumentTabs:
+                [
+                    new WorkspaceAssetEditorWindowDocumentTabDto(
+                        WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
+                        SpineGroupTab: new WorkspaceAssetEditorWindowSpineGroupTabDto(
+                            "bundle-a",
+                            "spine-group:bundle-a:hero",
+                            "hero",
+                            "hero"))
+                ],
+                ActiveDocumentKind: WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
+                ActiveSpineGroupId: "spine-group:bundle-a:hero")
+        ]);
+
+        prompt.ReplacePotentialConflictDocumentKeys(
+            assetKeys: null,
+            spineGroupKeys:
+            [
+                SpineGroupDocumentIdentityKey.Create("bundle-a", "spine-group:bundle-a:hero")
+            ]);
+
+        var pendingWindow = Assert.Single(prompt.PendingWindows);
+
+        Assert.Empty(pendingWindow.OpenAssetTabs);
+        Assert.Single(pendingWindow.OpenDocumentTabs ?? []);
+        Assert.Equal(1, prompt.PendingAssetTabCount);
+        Assert.Equal(1, prompt.PendingConflictAssetTabCount);
+        Assert.Equal(
+            $"{ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionWithConflictsFormat}:1|1|1",
+            prompt.RestoreDialogDescription);
+    }
+
+    [Fact]
     public void TakePendingSnapshots_ShouldClearPromptState()
     {
         var prompt = new AssetEditorWindowRestorePromptViewModel(new TestLocalizationService());

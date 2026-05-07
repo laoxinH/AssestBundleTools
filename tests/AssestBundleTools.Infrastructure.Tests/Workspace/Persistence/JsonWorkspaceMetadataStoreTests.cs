@@ -107,7 +107,42 @@ internal static class JsonWorkspaceMetadataStoreTests
                                 "Editor window draft"))
                     ],
                     ActiveBundleId: "bundle-001",
-                    ActiveAssetId: "asset-009")
+                    ActiveAssetId: "asset-009",
+                    OpenDocumentTabs:
+                    [
+                        new WorkspaceAssetEditorWindowDocumentTabDto(
+                            WorkspaceAssetEditorWindowDocumentTabDto.AssetKind,
+                            AssetTab: new WorkspaceAssetEditorWindowAssetTabDto(
+                                BundleId: "bundle-001",
+                                AssetId: "asset-009",
+                                AssetName: "hero.png",
+                                SelectedInspectorSection: "dependencies",
+                                PreviewImageBackgroundMode: "Solid",
+                                SpritePreviewDisplayMode: "CropResult",
+                                MeshPreviewDisplayMode: "Uv",
+                                MeshPreviewTextureOverlaySelected: false,
+                                MeshPreviewGridSelected: true,
+                                MeshPreviewZoom: 1.25d,
+                                MeshPreviewRotationX: 12d,
+                                MeshPreviewRotationY: -24d,
+                                PreviewImageZoom: 1.8d,
+                                PreviewImagePanX: 14d,
+                                PreviewImagePanY: -8d,
+                                EditDraftReference: new WorkspaceAssetEditDraftReferenceDto(
+                                    "draft-window",
+                                    "material",
+                                    "source-v2",
+                                    "Editor window draft"))),
+                        new WorkspaceAssetEditorWindowDocumentTabDto(
+                            WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
+                            SpineGroupTab: new WorkspaceAssetEditorWindowSpineGroupTabDto(
+                                BundleId: "bundle-001",
+                                GroupId: "spine-group:bundle-001:hero",
+                                DisplayName: "Hero Spine",
+                                GroupKey: "hero"))
+                    ],
+                    ActiveDocumentKind: WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
+                    ActiveSpineGroupId: "spine-group:bundle-001:hero")
             ]);
 
         store.Save(metadata);
@@ -177,6 +212,14 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.Equal(820, editorWindow.Layout.Height, "Editor window height should round-trip.");
         TestAssert.Equal("bundle-001", editorWindow.ActiveBundleId, "Editor window active bundle should round-trip.");
         TestAssert.Equal("asset-009", editorWindow.ActiveAssetId, "Editor window active asset should round-trip.");
+        TestAssert.Equal(
+            WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
+            editorWindow.ActiveDocumentKind,
+            "Editor window active document kind should round-trip.");
+        TestAssert.Equal(
+            "spine-group:bundle-001:hero",
+            editorWindow.ActiveSpineGroupId,
+            "Editor window active Spine group should round-trip.");
 
         var editorAssetTab = TestAssert.Single(editorWindow.OpenAssetTabs);
         TestAssert.Equal("bundle-001", editorAssetTab.BundleId, "Editor asset tab bundle should round-trip.");
@@ -198,6 +241,29 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.Equal("material", editorAssetTab.EditDraftReference?.DraftMode, "Editor draft mode should round-trip.");
         TestAssert.Equal("source-v2", editorAssetTab.EditDraftReference?.SourceFingerprint, "Editor draft source should round-trip.");
         TestAssert.Equal("Editor window draft", editorAssetTab.EditDraftReference?.SourceDescription, "Editor draft description should round-trip.");
+
+        TestAssert.Equal(2, editorWindow.OpenDocumentTabs?.Count ?? 0, "Editor document tabs should round-trip.");
+        var editorDocumentAssetTab = editorWindow.OpenDocumentTabs![0];
+        TestAssert.Equal(
+            WorkspaceAssetEditorWindowDocumentTabDto.AssetKind,
+            editorDocumentAssetTab.Kind,
+            "Editor asset document kind should round-trip.");
+        TestAssert.Equal("bundle-001", editorDocumentAssetTab.AssetTab?.BundleId, "Editor document asset bundle should round-trip.");
+        TestAssert.Equal("asset-009", editorDocumentAssetTab.AssetTab?.AssetId, "Editor document asset id should round-trip.");
+        TestAssert.Equal("hero.png", editorDocumentAssetTab.AssetTab?.AssetName, "Editor document asset name should round-trip.");
+
+        var editorDocumentSpineGroupTab = editorWindow.OpenDocumentTabs[1];
+        TestAssert.Equal(
+            WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
+            editorDocumentSpineGroupTab.Kind,
+            "Editor Spine document kind should round-trip.");
+        TestAssert.Equal("bundle-001", editorDocumentSpineGroupTab.SpineGroupTab?.BundleId, "Editor Spine bundle should round-trip.");
+        TestAssert.Equal(
+            "spine-group:bundle-001:hero",
+            editorDocumentSpineGroupTab.SpineGroupTab?.GroupId,
+            "Editor Spine group id should round-trip.");
+        TestAssert.Equal("Hero Spine", editorDocumentSpineGroupTab.SpineGroupTab?.DisplayName, "Editor Spine display name should round-trip.");
+        TestAssert.Equal("hero", editorDocumentSpineGroupTab.SpineGroupTab?.GroupKey, "Editor Spine group key should round-trip.");
     }
 
     public static void Delete_ShouldRemoveSavedMetadataFile()

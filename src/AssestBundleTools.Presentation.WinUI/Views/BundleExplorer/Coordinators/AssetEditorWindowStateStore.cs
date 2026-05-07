@@ -102,7 +102,7 @@ internal sealed class AssetEditorWindowStateStore
 
     public IReadOnlyList<WorkspaceAssetEditorWindowStateDto> CaptureOpenWindowMetadata() =>
         CaptureOpenWindows()
-            .Where(static state => state.Group.AssetTabs.Count > 0)
+            .Where(static state => state.Group.DocumentTabs.Count > 0)
             .Select(CreateWindowMetadata)
             .ToArray();
 
@@ -135,7 +135,26 @@ internal sealed class AssetEditorWindowStateStore
                 .Select(CreateAssetTabMetadata)
                 .ToArray(),
             ActiveBundleId: state.Group.ActiveBundleId,
-            ActiveAssetId: state.Group.ActiveAssetId);
+            ActiveAssetId: state.Group.ActiveAssetId,
+            OpenDocumentTabs: state.Group.DocumentTabs
+                .Select(CreateDocumentTabMetadata)
+                .ToArray(),
+            ActiveDocumentKind: state.Group.ActiveDocumentKind,
+            ActiveSpineGroupId: state.Group.ActiveSpineGroupId);
+    }
+
+    private static WorkspaceAssetEditorWindowDocumentTabDto CreateDocumentTabMetadata(
+        AssetEditorWindowDocumentTabSnapshot documentTab)
+    {
+        return documentTab.AssetTab is { } assetTab
+            ? new WorkspaceAssetEditorWindowDocumentTabDto(
+                WorkspaceAssetEditorWindowDocumentTabDto.AssetKind,
+                AssetTab: CreateAssetTabMetadata(assetTab))
+            : new WorkspaceAssetEditorWindowDocumentTabDto(
+                WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
+                SpineGroupTab: documentTab.SpineGroupTab is { } spineGroupTab
+                    ? CreateSpineGroupTabMetadata(spineGroupTab)
+                    : null);
     }
 
     private static WorkspaceAssetEditorWindowAssetTabDto CreateAssetTabMetadata(
@@ -159,6 +178,16 @@ internal sealed class AssetEditorWindowStateStore
             PreviewImagePanY: assetTab.PreviewImagePanY,
             EditDraftReference: assetTab.EditDraftReference);
     }
+
+    private static WorkspaceAssetEditorWindowSpineGroupTabDto CreateSpineGroupTabMetadata(
+        AssetEditorWindowSpineGroupTabSnapshot spineGroupTab)
+    {
+        return new WorkspaceAssetEditorWindowSpineGroupTabDto(
+            BundleId: spineGroupTab.BundleId,
+            GroupId: spineGroupTab.GroupId,
+            DisplayName: spineGroupTab.DisplayName,
+            GroupKey: spineGroupTab.GroupKey);
+    }
 }
 
 internal sealed record AssetEditorWindowStateSnapshot(
@@ -167,20 +196,57 @@ internal sealed record AssetEditorWindowStateSnapshot(
     AssetEditorWindowGroupSnapshot Group);
 
 internal sealed record AssetEditorWindowGroupSnapshot(
+    IReadOnlyList<AssetEditorWindowDocumentTabSnapshot> DocumentTabs,
     IReadOnlyList<AssetEditorWindowAssetTabSnapshot> AssetTabs,
+    string? ActiveDocumentKind,
     string? ActiveBundleId,
-    string? ActiveAssetId)
+    string? ActiveAssetId,
+    string? ActiveSpineGroupId)
 {
     public static AssetEditorWindowGroupSnapshot FromDocumentGroup(AssetDocumentGroupViewModel group)
     {
         ArgumentNullException.ThrowIfNull(group);
 
         return new AssetEditorWindowGroupSnapshot(
+            group.DocumentTabs
+                .Select(AssetEditorWindowDocumentTabSnapshot.FromDocumentTab)
+                .ToArray(),
             group.AssetTabs
                 .Select(AssetEditorWindowAssetTabSnapshot.FromAssetTab)
                 .ToArray(),
-            group.ActiveAssetTab?.BundleId.Value,
-            group.ActiveAssetTab?.AssetId.Value);
+            group.ActiveDocumentTab?.IsSpineGroup == true
+                ? WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind
+                : WorkspaceAssetEditorWindowDocumentTabDto.AssetKind,
+            group.ActiveDocumentTab?.BundleId.Value,
+            group.ActiveAssetTab?.AssetId.Value,
+            group.ActiveSpineGroupTab?.GroupId);
+    }
+}
+
+internal sealed record AssetEditorWindowDocumentTabSnapshot(
+    string Kind,
+    AssetEditorWindowAssetTabSnapshot? AssetTab = null,
+    AssetEditorWindowSpineGroupTabSnapshot? SpineGroupTab = null)
+{
+    public static AssetEditorWindowDocumentTabSnapshot FromDocumentTab(AssetDocumentTabItemViewModel documentTab)
+    {
+        ArgumentNullException.ThrowIfNull(documentTab);
+
+        if (documentTab.AssetTab is { } assetTab)
+        {
+            return new AssetEditorWindowDocumentTabSnapshot(
+                WorkspaceAssetEditorWindowDocumentTabDto.AssetKind,
+                AssetTab: AssetEditorWindowAssetTabSnapshot.FromAssetTab(assetTab));
+        }
+
+        if (documentTab.SpineGroupTab is { } spineGroupTab)
+        {
+            return new AssetEditorWindowDocumentTabSnapshot(
+                WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
+                SpineGroupTab: AssetEditorWindowSpineGroupTabSnapshot.FromSpineGroupTab(spineGroupTab));
+        }
+
+        throw new InvalidOperationException("Document tab snapshot requires a backing document.");
     }
 }
 
@@ -226,5 +292,24 @@ internal sealed record AssetEditorWindowAssetTabSnapshot(
             PreviewImagePanX: imageViewState.PanX,
             PreviewImagePanY: imageViewState.PanY,
             EditDraftReference: AssetDocumentEditDraftReferenceMapper.ToDto(assetTab.EditDraftReference));
+    }
+}
+
+internal sealed record AssetEditorWindowSpineGroupTabSnapshot(
+    string BundleId,
+    string GroupId,
+    string DisplayName,
+    string? GroupKey)
+{
+    public static AssetEditorWindowSpineGroupTabSnapshot FromSpineGroupTab(
+        SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        ArgumentNullException.ThrowIfNull(spineGroupTab);
+
+        return new AssetEditorWindowSpineGroupTabSnapshot(
+            spineGroupTab.BundleId.Value,
+            spineGroupTab.GroupId,
+            spineGroupTab.DisplayName,
+            spineGroupTab.Item.GroupKey);
     }
 }

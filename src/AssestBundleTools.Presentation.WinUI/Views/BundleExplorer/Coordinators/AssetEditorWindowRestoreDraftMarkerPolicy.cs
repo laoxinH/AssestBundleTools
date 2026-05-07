@@ -21,8 +21,26 @@ internal static class AssetEditorWindowRestoreDraftMarkerPolicy
                 .Select(assetTab => ShouldKeepDraftReference(assetTab, restoreDraftMarkers, restorableDraftReferenceKeys)
                     ? assetTab
                     : assetTab with { EditDraftReference = null })
+                .ToArray(),
+            OpenDocumentTabs = windowState.OpenDocumentTabs?
+                .Select(documentTab => ApplyDocumentTab(documentTab, restoreDraftMarkers, restorableDraftReferenceKeys))
                 .ToArray()
         };
+    }
+
+    private static WorkspaceAssetEditorWindowDocumentTabDto ApplyDocumentTab(
+        WorkspaceAssetEditorWindowDocumentTabDto documentTab,
+        bool restoreDraftMarkers,
+        IReadOnlySet<AssetEditDraftReferenceKey>? restorableDraftReferenceKeys)
+    {
+        if (documentTab.AssetTab is not { } assetTab)
+        {
+            return documentTab;
+        }
+
+        return ShouldKeepDraftReference(assetTab, restoreDraftMarkers, restorableDraftReferenceKeys)
+            ? documentTab
+            : documentTab with { AssetTab = assetTab with { EditDraftReference = null } };
     }
 
     private static bool ShouldKeepDraftReference(

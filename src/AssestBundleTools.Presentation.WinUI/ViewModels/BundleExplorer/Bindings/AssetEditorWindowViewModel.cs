@@ -21,7 +21,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 /// <summary>
 /// 独立资源编辑窗口的资产文档组状态与资源级动作编排。
 /// </summary>
-public sealed class AssetEditorWindowViewModel : ObservableObject
+public sealed partial class AssetEditorWindowViewModel : ObservableObject
 {
     private readonly IWorkspaceAssetInspectionGateway _workspaceAssetInspectionGateway;
     private readonly ILocalizationService _localizationService;
@@ -31,6 +31,8 @@ public sealed class AssetEditorWindowViewModel : ObservableObject
     private readonly Func<AssetDocumentGroupTransfer, Task<bool>> _moveAssetDocumentGroupToMainWindowAsync;
     private readonly BundleExplorerOperationFeedbackBridge _operationFeedbackBridge;
     private readonly BundleExplorerAssetInspectorPresenter _assetInspectorPresenter;
+    private readonly SpineAssetGroupInspectorPresenter _spineGroupInspectorPresenter;
+    private readonly ISpineAssetGroupDetailsLoader _spineGroupDetailsLoader;
     private readonly BundleExplorerAssetPreviewLoadCoordinator _assetPreviewLoadCoordinator;
     private readonly AssetEditorWindowAssetActionCoordinator _assetActionCoordinator;
     private readonly InspectorInformationTextSet _inspectorInformationTextSet;
@@ -108,6 +110,14 @@ public sealed class AssetEditorWindowViewModel : ObservableObject
         _assetInspectorPresenter = new BundleExplorerAssetInspectorPresenter(
             bundlePane,
             _localizationService);
+        _spineGroupInspectorPresenter = new SpineAssetGroupInspectorPresenter(
+            bundlePane,
+            _localizationService);
+        _spineGroupDetailsLoader = new SpineAssetGroupDetailsLoader(
+            _workspaceAssetInspectionGateway,
+            workspaceContextService,
+            _workspaceShell,
+            _backgroundTaskRunner);
         var assetPreviewCoordinator = new BundleExplorerAssetPreviewCoordinator(
             _workspaceAssetInspectionGateway,
             workspaceContextService,
@@ -142,7 +152,7 @@ public sealed class AssetEditorWindowViewModel : ObservableObject
         _emptyInspector = new InspectorPanelViewModel(_inspectorInformationTextSet);
         _emptyInspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
 
-        DocumentGroup.AddAssetTabs(initialAssetGroup);
+        DocumentGroup.AddDocumentTabs(initialAssetGroup);
         SyncActiveDocumentState();
     }
 
@@ -150,11 +160,11 @@ public sealed class AssetEditorWindowViewModel : ObservableObject
 
     public AssetDocumentGroupViewModel DocumentGroup { get; } = new();
 
-    public InspectorPanelViewModel Inspector => DocumentGroup.ActiveAssetTab?.Inspector ?? _emptyInspector;
+    public InspectorPanelViewModel Inspector => DocumentGroup.ActiveDocumentTab?.Inspector ?? _emptyInspector;
 
     public string WindowTitle => _localizationService.GetFormattedString(
         ResourceKeys.AssetEditorWindowTitleFormat,
-        DocumentGroup.ActiveAssetTab?.DisplayName ?? GetString(ResourceKeys.AssetEditorWindowTitleFallback));
+        DocumentGroup.ActiveDocumentTab?.DisplayName ?? GetString(ResourceKeys.AssetEditorWindowTitleFallback));
 
     public bool IsBusy
     {
@@ -189,6 +199,18 @@ public sealed class AssetEditorWindowViewModel : ObservableObject
         await LoadAssetDocumentTabAsync(assetTab, promotePreviewAfterLoad: !wasAlreadyActiveAssetTab);
     }
 
+    public Task ActivateDocumentTabAsync(AssetDocumentTabItemViewModel? documentTab)
+    {
+        if (documentTab?.AssetTab is { } assetTab)
+        {
+            return ActivateAssetDocumentTabAsync(assetTab);
+        }
+
+        return documentTab?.SpineGroupTab is { } spineGroupTab
+            ? ActivateSpineGroupDocumentTabAsync(spineGroupTab)
+            : Task.CompletedTask;
+    }
+
     public async Task OpenResolvedAssetAsync(ResolvedAssetNavigationTarget? target)
     {
         if (target is null || IsBusy)
@@ -216,7 +238,7 @@ public sealed class AssetEditorWindowViewModel : ObservableObject
 
         var wasActive = ReferenceEquals(DocumentGroup.ActiveAssetTab, assetTab);
         DocumentGroup.RemoveAssetTab(assetTab);
-        if (!DocumentGroup.HasAssetTabs)
+        if (!DocumentGroup.HasDocumentTabs)
         {
             EmptyGroupRequested?.Invoke(this, EventArgs.Empty);
             return;
@@ -224,143 +246,35 @@ public sealed class AssetEditorWindowViewModel : ObservableObject
 
         if (wasActive)
         {
-            await ActivateAssetDocumentTabAsync(DocumentGroup.ActiveAssetTab);
+            await ActivateDocumentTabAsync(DocumentGroup.ActiveDocumentTab);
             return;
         }
 
         SyncActiveDocumentState();
+    }
+
+    public async Task CloseDocumentTabAsync(AssetDocumentTabItemViewModel? documentTab)
+    {
+        if (documentTab?.AssetTab is { } assetTab)
+        {
+            await CloseAssetDocumentTabAsync(assetTab);
+            return;
+        }
+
+        if (documentTab?.SpineGroupTab is { } spineGroupTab)
+        {
+            await CloseSpineGroupDocumentTabAsync(spineGroupTab);
+        }
+    }
+
+    public void ReorderDocumentTabs(IReadOnlyList<AssetDocumentTabItemViewModel> orderedTabs)
+    {
+        DocumentGroup.ReorderDocumentTabs(orderedTabs);
     }
 
     public void ReorderAssetDocumentTabs(IReadOnlyList<AssetDocumentTabViewModel> orderedTabs)
     {
         DocumentGroup.ReorderAssetTabs(orderedTabs);
-    }
-
-    public async Task MoveAssetDocumentToMainWindowAsync(AssetDocumentTabViewModel? assetTab)
-    {
-        var detachedAssetTab = await DetachAssetDocumentTabForExternalHostAsync(assetTab);
-        if (detachedAssetTab is null)
-        {
-            return;
-        }
-
-        if (await _moveAssetDocumentToMainWindowAsync(detachedAssetTab))
-        {
-            await CompleteExternalAssetDocumentMoveAsync();
-            return;
-        }
-
-        await RestoreDetachedAssetDocumentTabAsync(detachedAssetTab);
-    }
-
-    public Task MoveActiveAssetDocumentToMainWindowAsync() =>
-        MoveAssetDocumentToMainWindowAsync(DocumentGroup.ActiveAssetTab);
-
-    public async Task MoveAssetDocumentGroupToMainWindowAsync()
-    {
-        var transfer = await DetachAssetDocumentGroupForExternalHostAsync();
-        if (transfer is null)
-        {
-            return;
-        }
-
-        if (await _moveAssetDocumentGroupToMainWindowAsync(transfer))
-        {
-            await CompleteExternalAssetDocumentMoveAsync();
-            return;
-        }
-
-        await RestoreDetachedAssetDocumentGroupAsync(transfer);
-    }
-
-    public async Task<AssetDocumentTabViewModel?> DetachAssetDocumentTabForExternalHostAsync(
-        AssetDocumentTabViewModel? assetTab)
-    {
-        if (assetTab is null || IsBusy || !DocumentGroup.DetachAssetTab(assetTab))
-        {
-            return null;
-        }
-
-        if (DocumentGroup.HasAssetTabs)
-        {
-            await ActivateAssetDocumentTabAsync(DocumentGroup.ActiveAssetTab);
-        }
-        else
-        {
-            SyncActiveDocumentState();
-        }
-
-        return assetTab;
-    }
-
-    public Task<AssetDocumentGroupTransfer?> DetachAssetDocumentGroupForExternalHostAsync()
-    {
-        if (IsBusy)
-        {
-            return Task.FromResult<AssetDocumentGroupTransfer?>(null);
-        }
-
-        var transfer = DocumentGroup.DetachAssetTabs();
-        SyncActiveDocumentState();
-        return Task.FromResult(transfer);
-    }
-
-    public async Task<bool> AttachAssetDocumentTabFromExternalHostAsync(AssetDocumentTabViewModel? assetTab)
-    {
-        if (assetTab is null || IsBusy)
-        {
-            return false;
-        }
-
-        if (DocumentGroup.TryGetAssetTab(assetTab.BundleId, assetTab.AssetId, out var existingAssetTab))
-        {
-            assetTab.CancelPreviewRequest();
-            await ActivateAssetDocumentTabAsync(existingAssetTab);
-            return true;
-        }
-
-        DocumentGroup.AddAssetTab(assetTab, activate: false);
-        await ActivateAssetDocumentTabAsync(assetTab);
-        return true;
-    }
-
-    public async Task<bool> AttachAssetDocumentGroupFromExternalHostAsync(AssetDocumentGroupTransfer? transfer)
-    {
-        if (transfer is null || IsBusy)
-        {
-            return false;
-        }
-
-        DocumentGroup.AddAssetTabs(transfer);
-        await ActivateAssetDocumentTabAsync(DocumentGroup.ActiveAssetTab);
-        return true;
-    }
-
-    public async Task RestoreDetachedAssetDocumentTabAsync(AssetDocumentTabViewModel assetTab)
-    {
-        ArgumentNullException.ThrowIfNull(assetTab);
-
-        DocumentGroup.AddAssetTab(assetTab, activate: false);
-        await ActivateAssetDocumentTabAsync(assetTab);
-    }
-
-    public Task RestoreDetachedAssetDocumentGroupAsync(AssetDocumentGroupTransfer transfer)
-    {
-        ArgumentNullException.ThrowIfNull(transfer);
-
-        DocumentGroup.AddAssetTabs(transfer);
-        return ActivateAssetDocumentTabAsync(DocumentGroup.ActiveAssetTab);
-    }
-
-    public async Task CompleteExternalAssetDocumentMoveAsync()
-    {
-        if (!DocumentGroup.HasAssetTabs)
-        {
-            EmptyGroupRequested?.Invoke(this, EventArgs.Empty);
-            return;
-        }
-
-        await ActivateAssetDocumentTabAsync(DocumentGroup.ActiveAssetTab);
     }
 
     public void OpenCurrentPreviewLocation() => _assetActionCoordinator.OpenCurrentPreviewLocation();

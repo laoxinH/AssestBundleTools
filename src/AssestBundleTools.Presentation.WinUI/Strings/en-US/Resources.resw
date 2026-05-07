@@ -439,10 +439,10 @@
     <value>Restore {0} editor windows</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.ToolTip.Format" xml:space="preserve">
-    <value>Restore {0} saved editor windows and {1} asset tabs from the previous workspace session</value>
+    <value>Restore {0} saved editor windows and {1} resource document tabs from the previous workspace session</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.ToolTipWithConflicts.Format" xml:space="preserve">
-    <value>Restore {0} saved editor windows and {1} asset tabs from the previous workspace session; {2} tabs are already open in the current window set, so close those tabs before restoring them</value>
+    <value>Restore {0} saved editor windows and {1} resource document tabs from the previous workspace session; {2} tabs are already open in the current window set, so close those tabs before restoring them</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Restored.Format" xml:space="preserve">
     <value>Restored {0} editor windows.</value>
@@ -451,28 +451,28 @@
     <value>Restored {0} editor windows. {1} saved windows could not be restored because their bundles are unavailable, and remain available from the toolbar.</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.PartialWithConflicts.Format" xml:space="preserve">
-    <value>Restored {0} editor windows. {1} saved windows remain available from the toolbar because some bundles are unavailable or assets are already open; {2} asset tabs are already open in the current window set.</value>
+    <value>Restored {0} editor windows. {1} saved windows remain available from the toolbar because some bundles are unavailable or documents are already open; {2} resource document tabs are already open in the current window set.</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Unavailable.Format" xml:space="preserve">
     <value>{0} saved editor windows could not be restored because their bundles are unavailable. They remain available from the toolbar.</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.BlockedWithConflicts.Format" xml:space="preserve">
-    <value>{0} saved editor windows were not restored because some bundles are unavailable or assets are already open; {1} asset tabs are already open in the current window set. Close those asset tabs, then use the toolbar entry again.</value>
+    <value>{0} saved editor windows were not restored because some bundles are unavailable or documents are already open; {1} resource document tabs are already open in the current window set. Close those tabs, then use the toolbar entry again.</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.Title" xml:space="preserve">
     <value>Restore saved editor windows?</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.Description.Format" xml:space="preserve">
-    <value>This workspace has {0} saved editor windows with {1} asset tabs from the previous session. Restore them now, or keep browsing and restore them later from the toolbar.</value>
+    <value>This workspace has {0} saved editor windows with {1} resource document tabs from the previous session. Restore them now, or keep browsing and restore them later from the toolbar.</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.DescriptionWithDrafts.Format" xml:space="preserve">
-    <value>This workspace has {0} saved editor windows with {1} asset tabs from the previous session, including {2} tabs marked with unapplied drafts. Restore the tabs and draft markers now, or keep browsing and restore them later from the toolbar.</value>
+    <value>This workspace has {0} saved editor windows with {1} resource document tabs from the previous session, including {2} tabs marked with unapplied drafts. Restore the tabs and draft markers now, or keep browsing and restore them later from the toolbar.</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.DescriptionWithConflicts.Format" xml:space="preserve">
-    <value>This workspace has {0} saved editor windows with {1} asset tabs from the previous session, including {2} tabs already open in the current window set. Restore will skip those conflicting tabs and keep them available from the toolbar.</value>
+    <value>This workspace has {0} saved editor windows with {1} resource document tabs from the previous session, including {2} tabs already open in the current window set. Restore will skip those conflicting tabs and keep them available from the toolbar.</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.DescriptionWithDraftsAndConflicts.Format" xml:space="preserve">
-    <value>This workspace has {0} saved editor windows with {1} asset tabs from the previous session, including {2} tabs marked with unapplied drafts and {3} tabs already open in the current window set. Restore will skip conflicting tabs and keep them available from the toolbar.</value>
+    <value>This workspace has {0} saved editor windows with {1} resource document tabs from the previous session, including {2} tabs marked with unapplied drafts and {3} tabs already open in the current window set. Restore will skip conflicting tabs and keep them available from the toolbar.</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.RestoreDraftMarkers.Option" xml:space="preserve">
     <value>Also restore available draft markers (draft content is not restored)</value>

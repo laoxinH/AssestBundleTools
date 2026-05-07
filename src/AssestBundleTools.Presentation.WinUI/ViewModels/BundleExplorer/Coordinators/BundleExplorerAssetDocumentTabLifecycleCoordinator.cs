@@ -162,7 +162,7 @@ internal sealed class BundleExplorerAssetDocumentTabLifecycleCoordinator
             return Task.FromResult<AssetDocumentGroupTransfer?>(null);
         }
 
-        var transfer = ownerTab.DetachAssetTabs();
+        var transfer = ownerTab.DetachDocumentTabs();
         if (transfer is null)
         {
             return Task.FromResult<AssetDocumentGroupTransfer?>(null);

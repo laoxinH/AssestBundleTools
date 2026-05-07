@@ -8,7 +8,9 @@ internal static class AssetEditorWindowRestorePlanner
     public static AssetEditorWindowRestorePlan CreatePlan(
         IReadOnlyList<WorkspaceAssetEditorWindowStateDto> pendingWindows,
         Func<WorkspaceAssetEditorWindowAssetTabDto, bool> canRestoreAssetTab,
-        IReadOnlySet<string>? openAssetKeys = null)
+        IReadOnlySet<string>? openAssetKeys = null,
+        Func<WorkspaceAssetEditorWindowSpineGroupTabDto, bool>? canRestoreSpineGroupTab = null,
+        IReadOnlySet<string>? openSpineGroupKeys = null)
     {
         ArgumentNullException.ThrowIfNull(pendingWindows);
         ArgumentNullException.ThrowIfNull(canRestoreAssetTab);
@@ -19,44 +21,47 @@ internal static class AssetEditorWindowRestorePlanner
         var reservedAssetKeys = new HashSet<string>(
             openAssetKeys is null ? Array.Empty<string>() : openAssetKeys,
             StringComparer.Ordinal);
+        var reservedSpineGroupKeys = new HashSet<string>(
+            openSpineGroupKeys is null ? Array.Empty<string>() : openSpineGroupKeys,
+            StringComparer.Ordinal);
 
         foreach (var pendingWindow in pendingWindows)
         {
-            var restorableTabs = new List<WorkspaceAssetEditorWindowAssetTabDto>(pendingWindow.OpenAssetTabs.Count);
-            var unavailableTabs = new List<WorkspaceAssetEditorWindowAssetTabDto>();
-            var conflictedTabs = new List<WorkspaceAssetEditorWindowAssetTabDto>();
+            var sourceTabs = GetSourceDocumentTabs(pendingWindow);
+            var restorableTabs = new List<WorkspaceAssetEditorWindowDocumentTabDto>(sourceTabs.Count);
+            var unavailableTabs = new List<WorkspaceAssetEditorWindowDocumentTabDto>();
+            var conflictedTabs = new List<WorkspaceAssetEditorWindowDocumentTabDto>();
 
-            foreach (var assetTab in pendingWindow.OpenAssetTabs)
+            foreach (var documentTab in sourceTabs)
             {
-                if (!canRestoreAssetTab(assetTab))
+                if (!CanRestoreDocumentTab(documentTab, canRestoreAssetTab, canRestoreSpineGroupTab))
                 {
-                    unavailableTabs.Add(assetTab);
+                    unavailableTabs.Add(documentTab);
                     continue;
                 }
 
-                if (!AssetDocumentIdentityKey.TryCreate(assetTab.BundleId, assetTab.AssetId, out var assetKey) ||
-                    !reservedAssetKeys.Add(assetKey))
+                if (!TryReserveDocumentTabKey(documentTab, reservedAssetKeys, reservedSpineGroupKeys))
                 {
-                    conflictedTabs.Add(assetTab);
+                    conflictedTabs.Add(documentTab);
                     continue;
                 }
 
-                restorableTabs.Add(assetTab);
+                restorableTabs.Add(documentTab);
             }
 
             if (restorableTabs.Count > 0)
             {
-                restorableWindows.Add(CreateWindowSnapshotWithTabs(pendingWindow, restorableTabs));
+                restorableWindows.Add(CreateWindowSnapshotWithDocumentTabs(pendingWindow, restorableTabs));
             }
 
             if (unavailableTabs.Count > 0)
             {
-                unavailableWindows.Add(CreateWindowSnapshotWithTabs(pendingWindow, unavailableTabs));
+                unavailableWindows.Add(CreateWindowSnapshotWithDocumentTabs(pendingWindow, unavailableTabs));
             }
 
             if (conflictedTabs.Count > 0)
             {
-                conflictedWindows.Add(CreateWindowSnapshotWithTabs(pendingWindow, conflictedTabs));
+                conflictedWindows.Add(CreateWindowSnapshotWithDocumentTabs(pendingWindow, conflictedTabs));
             }
         }
 
@@ -76,22 +81,95 @@ internal static class AssetEditorWindowRestorePlanner
             : null;
     }
 
-    private static WorkspaceAssetEditorWindowStateDto CreateWindowSnapshotWithTabs(
+    private static WorkspaceAssetEditorWindowStateDto CreateWindowSnapshotWithDocumentTabs(
         WorkspaceAssetEditorWindowStateDto source,
-        IReadOnlyList<WorkspaceAssetEditorWindowAssetTabDto> assetTabs)
+        IReadOnlyList<WorkspaceAssetEditorWindowDocumentTabDto> documentTabs)
     {
-        var activeTab = assetTabs.FirstOrDefault(tab =>
-                            string.Equals(tab.BundleId, source.ActiveBundleId, StringComparison.Ordinal) &&
-                            string.Equals(tab.AssetId, source.ActiveAssetId, StringComparison.Ordinal))
-                        ?? assetTabs[0];
+        var activeTab = documentTabs.FirstOrDefault(tab => IsActiveDocumentTab(source, tab))
+                        ?? documentTabs[0];
 
         return source with
         {
-            OpenAssetTabs = assetTabs.ToArray(),
-            ActiveBundleId = activeTab.BundleId,
-            ActiveAssetId = activeTab.AssetId
+            OpenAssetTabs = documentTabs
+                .Select(static tab => tab.AssetTab)
+                .Where(static tab => tab is not null)
+                .Cast<WorkspaceAssetEditorWindowAssetTabDto>()
+                .ToArray(),
+            OpenDocumentTabs = documentTabs.ToArray(),
+            ActiveDocumentKind = activeTab.Kind,
+            ActiveBundleId = GetBundleId(activeTab),
+            ActiveAssetId = activeTab.AssetTab?.AssetId,
+            ActiveSpineGroupId = activeTab.SpineGroupTab?.GroupId
         };
     }
+
+    private static IReadOnlyList<WorkspaceAssetEditorWindowDocumentTabDto> GetSourceDocumentTabs(
+        WorkspaceAssetEditorWindowStateDto window)
+    {
+        return window.OpenDocumentTabs is { Count: > 0 } documentTabs
+            ? documentTabs
+            : window.OpenAssetTabs
+                .Select(static assetTab => new WorkspaceAssetEditorWindowDocumentTabDto(
+                    WorkspaceAssetEditorWindowDocumentTabDto.AssetKind,
+                    AssetTab: assetTab))
+                .ToArray();
+    }
+
+    private static bool CanRestoreDocumentTab(
+        WorkspaceAssetEditorWindowDocumentTabDto documentTab,
+        Func<WorkspaceAssetEditorWindowAssetTabDto, bool> canRestoreAssetTab,
+        Func<WorkspaceAssetEditorWindowSpineGroupTabDto, bool>? canRestoreSpineGroupTab)
+    {
+        return documentTab.AssetTab is { } assetTab
+            ? canRestoreAssetTab(assetTab)
+            : documentTab.SpineGroupTab is { } spineGroupTab &&
+              canRestoreSpineGroupTab is not null &&
+              canRestoreSpineGroupTab(spineGroupTab);
+    }
+
+    private static bool TryReserveDocumentTabKey(
+        WorkspaceAssetEditorWindowDocumentTabDto documentTab,
+        HashSet<string> reservedAssetKeys,
+        HashSet<string> reservedSpineGroupKeys)
+    {
+        if (documentTab.AssetTab is { } assetTab)
+        {
+            return AssetDocumentIdentityKey.TryCreate(assetTab.BundleId, assetTab.AssetId, out var assetKey) &&
+                   reservedAssetKeys.Add(assetKey);
+        }
+
+        return documentTab.SpineGroupTab is { } spineGroupTab &&
+               SpineGroupDocumentIdentityKey.TryCreate(spineGroupTab.BundleId, spineGroupTab.GroupId, out var spineGroupKey) &&
+               reservedSpineGroupKeys.Add(spineGroupKey);
+    }
+
+    private static bool IsActiveDocumentTab(
+        WorkspaceAssetEditorWindowStateDto source,
+        WorkspaceAssetEditorWindowDocumentTabDto documentTab)
+    {
+        if (documentTab.AssetTab is { } assetTab)
+        {
+            return IsActiveAssetDocument(source, assetTab);
+        }
+
+        return documentTab.SpineGroupTab is { } spineGroupTab &&
+               string.Equals(source.ActiveDocumentKind, WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind, StringComparison.Ordinal) &&
+               string.Equals(spineGroupTab.BundleId, source.ActiveBundleId, StringComparison.Ordinal) &&
+               string.Equals(spineGroupTab.GroupId, source.ActiveSpineGroupId, StringComparison.Ordinal);
+    }
+
+    private static bool IsActiveAssetDocument(
+        WorkspaceAssetEditorWindowStateDto source,
+        WorkspaceAssetEditorWindowAssetTabDto assetTab)
+    {
+        return (string.IsNullOrWhiteSpace(source.ActiveDocumentKind) ||
+                string.Equals(source.ActiveDocumentKind, WorkspaceAssetEditorWindowDocumentTabDto.AssetKind, StringComparison.Ordinal)) &&
+               string.Equals(assetTab.BundleId, source.ActiveBundleId, StringComparison.Ordinal) &&
+               string.Equals(assetTab.AssetId, source.ActiveAssetId, StringComparison.Ordinal);
+    }
+
+    private static string? GetBundleId(WorkspaceAssetEditorWindowDocumentTabDto documentTab) =>
+        documentTab.AssetTab?.BundleId ?? documentTab.SpineGroupTab?.BundleId;
 }
 
 internal sealed record AssetEditorWindowRestorePlan(

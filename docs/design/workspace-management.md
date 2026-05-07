@@ -321,11 +321,11 @@ Presentation 层保留两个协同层次：
 - `displayName`
 - `groupKey`
 
-该结构只用于在资源包标签恢复后重新建立 `BundleId + GroupId` 的页面级组文档身份，不保存 atlas 解析结果、Texture2D 预览载荷、region overlay 数据、诊断明细或组成资产快照；真实组详情仍在激活后通过 `LoadSpineAssetGroupDetailsQuery` 和现有预览管线重新读取。当前专用 Spine 组独立窗口不写入 `openAssetEditorWindows[]`，也不随重启恢复。
+该结构只用于在资源包标签恢复后重新建立 `BundleId + GroupId` 的页面级组文档身份，不保存 atlas 解析结果、Texture2D 预览载荷、region overlay 数据、诊断明细或组成资产快照；真实组详情仍在激活后通过 `LoadSpineAssetGroupDetailsQuery` 和现有预览管线重新读取。Spine 组文档当前已可在会话内与普通资产文档共用主窗口文档标签组和独立资源编辑窗口宿主；独立窗口快照使用 `openDocumentTabs[]` 保存混合标签顺序，Spine 组标签只写入 `BundleId / GroupId / DisplayName / GroupKey` 等轻量身份信息。
 
-其中 `openAssetEditorWindows[]` 只记录独立资源编辑窗口的轻量页面级状态，例如窗口位置 / 大小、窗口内资产文档标签顺序、活动资产、检查器分段，以及图片 / Mesh 预览浏览选项；不保存真实资源详情、预览缓存载荷、替换结果或编辑草稿内容。资产文档标签可以携带与主窗口同形状的轻量草稿引用。应用重新打开工作区时当前会读取该字段并弹出一次可控恢复提示；如果存在轻量草稿引用，提示会显示带草稿标记的标签数量，并允许用户决定本次成功打开的标签是否带回该标记，同时在弹窗中显示草稿恢复候选预检摘要；如果待恢复标签已在主窗口或现有独立窗口中打开，提示和工具栏入口会显示冲突标签数量，并引导用户关闭对应标签后再恢复。用户选择稍后时仍可通过工具栏入口恢复，但系统仍不自动创建独立资源编辑窗口。恢复执行会按当前资源包可用性和已打开资产身份拆分快照：可恢复项打开，不可恢复或冲突项继续保留为待恢复状态，用户可在提示中显式忽略；窗口 bounds 应在应用前做最小尺寸和当前显示器工作区安全归位。
+其中 `openAssetEditorWindows[]` 只记录独立资源编辑窗口的轻量页面级状态，例如窗口位置 / 大小、窗口内统一文档标签顺序、活动文档、普通资产检查器分段，以及图片 / Mesh 预览浏览选项；不保存真实资源详情、预览缓存载荷、替换结果或编辑草稿内容。普通资产文档标签可以携带与主窗口同形状的轻量草稿引用；Spine 组标签只携带轻量组身份。应用重新打开工作区时当前会读取该字段并弹出一次可控恢复提示；如果存在轻量草稿引用，提示会显示带草稿标记的标签数量，并允许用户决定本次成功打开的标签是否带回该标记，同时在弹窗中显示草稿恢复候选预检摘要；如果待恢复标签已在主窗口或现有独立窗口中打开，提示和工具栏入口会显示冲突标签数量，并引导用户关闭对应标签后再恢复。用户选择稍后时仍可通过工具栏入口恢复，但系统仍不自动创建独立资源编辑窗口。恢复执行会按当前资源包可用性和已打开文档身份拆分快照：可恢复项打开，不可恢复或冲突项继续保留为待恢复状态，用户可在提示中显式忽略；窗口 bounds 应在应用前做最小尺寸和当前显示器工作区安全归位。
 
-打开资源详情、依赖跳转或请求新建独立资源编辑窗口时，Presentation 需要先检查主窗口和所有独立资源编辑窗口中是否已有同一 `BundleId + AssetId` 的资产文档标签。命中时应激活并切换到已有标签，再把所在窗口置前，不再创建重复标签或重复独立窗口；显式移动标签 / 移动整组仍保持“移动现有标签实例”的语义。
+打开资源详情、依赖跳转或请求新建独立资源编辑窗口时，Presentation 需要先检查主窗口和所有独立资源编辑窗口中是否已有同一 `BundleId + AssetId` 的资产文档标签。Spine 组文档同样按 `BundleId + GroupId` 做会话内冲突检测。命中时应激活并切换到已有标签，再把所在窗口置前，不再创建重复标签或重复独立窗口；显式移动标签 / 移动整组仍保持“移动现有标签实例”的语义。
 
 跨宿主拖入检测范围应与可接收宿主的视觉范围一致：单个资产文档标签拖入主窗口时，目标是整个右侧资源详情宿主区域；拖入独立资源编辑窗口时，目标是整个窗口可接收区域，而不是仅限标签栏。整组资源详情拖入继续复用相同的全尺寸宿主检测。
 
@@ -703,7 +703,7 @@ Presentation 层保留两个协同层次：
 1. 继续补活动工作区在更多依赖页面中的摘要与入口承载，并在后续需要时补跨 Bundle 级依赖跳转
 2. 再评估是否需要顶层工作区切换器
 3. M9 当前已完成真实资产级读取、索引缓存复用、工作区级解密器自动识别、失败诊断、依赖深读与缓存诊断主链路收口
-4. 富预览扩展当前已完成 `AudioClip`、`Mesh` 第一版、`Material` 半可视化摘要、`AnimationClip` binding / 曲线摘要增强、`Font` 第一版半可视化摘要、`GameObject` 第一版信息浏览预览、`MonoBehaviour` 第一版信息浏览预览与 `AnimatorController` 第一版信息浏览预览；GameObject 已补上常见组件引用摘要和已解析资源跳转，MonoBehaviour 已补上脚本 / 字段 / 引用信息卡、字段分组、序列化容器摘要和已解析资源跳转，AnimatorController 已补上 `m_Controller` 常量区状态机摘要、AnimationClip 引用信息卡和已解析资源跳转；`SpriteAtlas` 继续按样本资源可用性回补；Spine 预览按“资源组视图 + JSON skeleton 轻量摘要 + atlas region overlay + 关联跳转 + 组文档轻量恢复 + 专用独立窗口入口”继续推进，不进入近期完整动画播放主线
+4. 富预览扩展当前已完成 `AudioClip`、`Mesh` 第一版、`Material` 半可视化摘要、`AnimationClip` binding / 曲线摘要增强、`Font` 第一版半可视化摘要、`GameObject` 第一版信息浏览预览、`MonoBehaviour` 第一版信息浏览预览与 `AnimatorController` 第一版信息浏览预览；GameObject 已补上常见组件引用摘要和已解析资源跳转，MonoBehaviour 已补上脚本 / 字段 / 引用信息卡、字段分组、序列化容器摘要和已解析资源跳转，AnimatorController 已补上 `m_Controller` 常量区状态机摘要、AnimationClip 引用信息卡和已解析资源跳转；`SpriteAtlas` 继续按样本资源可用性回补；Spine 预览按“资源组视图 + JSON skeleton 轻量摘要 + atlas region overlay + 关联跳转 + 组文档轻量恢复 + 统一资源编辑窗口承载与独立窗口轻量恢复”继续推进，不进入近期完整动画播放主线
 5. 资源编辑窗口模式按 [asset-editor-window-mode.md](asset-editor-window-mode.md) 分阶段推进：当前已完成命令式独立窗口 / 放回主窗口、标签拖拽与整组拖出 / 放回，以及“启动读取快照 + 弹窗确认 / 手动恢复入口 + 草稿候选预检摘要 + 变更暂存描述读取”这一轮窗口恢复闭环；后续重点转向更完整的布局恢复、冲突处理与真实编辑草稿队列
 6. 最后再评估是否需要引入可分享工作区文件
 6. 工作区窗口模型当前已按“跨进程隔离优先 + formal/pending 双阶段注册”落地，并已补上 pending 注册 / 页面级失败回滚的首轮 `Presentation` 回归；后续若继续加强稳定性，更适合继续补跨进程窗口激活与重定向链路，而不是重新回退注册时机
@@ -731,7 +731,7 @@ Presentation 层保留两个协同层次：
    - 当前 Application 已落地 `LoadSpineAssetGroupsQuery` 与 `LoadSpineAssetGroupDetailsQuery` 第一版读模型：基于现有资产索引元数据识别当前 Bundle 视图下的 `.atlas / .skel / .json` TextAsset 锚点，并在当前工作区内按归一化组名匹配 `Texture2D` page 候选；详情查询继续通过 `GetAssetPreviewQuery` 取得 atlas TextAsset 预览文本，在 Application 层解析 atlas page / region 统计，并继续通过预览管线校验匹配 Texture2D 的图片预览可用性与尺寸；对 `.json` skeleton 会通过同一预览管线读取文本并提取 bone / slot / skin / animation / event / constraint 轻量计数，`.skel` 二进制 skeleton 当前只标记格式并把细解析后置；结果包含稳定 `GroupId`、skeleton / atlas / texture page 组成资产、skeleton 摘要、atlas page / region 摘要，以及缺失 atlas / texture page、atlas 预览不可用、atlas page 未匹配 Texture2D、Texture2D 预览不可用、page 尺寸与图片尺寸不一致等诊断。
    - 当前 Presentation 已接入中间资产窗格的 `资源 / Spine 组` 视图切换。普通资源视图继续使用真实 Unity 资产列表、类型筛选和本地显示筛选；Spine 组视图通过 `LoadSpineAssetGroupsQuery` 加载组摘要，只显示组名、组成数量、Texture page 数和诊断状态，并把视图模式保存到资源包标签页浏览状态。
    - Spine 组列表选择当前会在主窗口右侧复用现有资源详情窗格打开组文档，文档身份使用 `BundleId + GroupId`，不会借用某个 TextAsset 的 `AssetId`。当前范围覆盖组摘要、skeleton / atlas / texture page 组成资产跳转、JSON skeleton 结构摘要、诊断摘要、atlas page / region 数量回填、atlas page 选择器和当前 page 的 region overlay；主窗口组文档会通过资源包标签页下的 `openSpineGroupTabs[]` 做轻量恢复。
-   - Spine 组当前已有专用独立窗口入口，用于会话内承载单个组文档；它不是普通资产文档标签，不参与 `openAssetEditorWindows[]` 重启恢复、普通资产窗口混合标签、拖拽合并或资产打开冲突检测。
+   - Spine 组当前作为统一资源文档标签参与普通独立资源编辑窗口；它与普通资产文档共享混合标签、拖拽合并、放回主窗口、冲突检测和 `openAssetEditorWindows[]` 重启恢复链路，恢复时只重建 `BundleId + GroupId` 轻量组身份。
    - 识别主线优先覆盖同 Bundle 或当前工作区内可匹配的 `.atlas`、`.skel/.json` 和 `Texture2D` page；搜索和跳转基于组名、skeleton、atlas、texture page 与已解析资产目标。
    - 预览主线接下来在 JSON skeleton 轻量计数基础上继续做样本驱动补强，例如更可靠的动画 / skin / bone / slot 明细摘要；完整 `.skel` 二进制多版本细解析、skin 切换、setup pose 和动画播放必须继续后置。
 5. `Font` 样本驱动回补，以及 `AnimationClip / AnimatorController` 更细的 binding / 状态机分类摘要增强

@@ -218,167 +218,6 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         await ViewModel.CloseAllBundleTabsAsync();
     }
 
-    private async void OnAssetDocumentTabViewSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        var assetTab = _tabCoordinator.GetActivatableAssetDocumentTab();
-        if (assetTab is not null)
-        {
-            await ViewModel.ActivateAssetDocumentTabAsync(assetTab);
-        }
-    }
-
-    private async void OnAssetDocumentTabViewTabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
-    {
-        if (args.Item is AssetDocumentTabViewModel assetTab)
-        {
-            await ViewModel.CloseAssetDocumentTabAsync(assetTab);
-            return;
-        }
-
-        if (args.Tab is FrameworkElement { DataContext: AssetDocumentTabViewModel dataContextTab })
-        {
-            await ViewModel.CloseAssetDocumentTabAsync(dataContextTab);
-        }
-    }
-
-    private void OnAssetDocumentTabViewTabDragCompleted(TabView sender, TabViewTabDragCompletedEventArgs args)
-    {
-        if (!_tabCoordinator.TryBuildTabOrderSnapshot(sender, out IReadOnlyList<AssetDocumentTabViewModel> orderedTabs))
-        {
-            AssetDocumentTabDragCoordinator.CompleteDrag();
-            return;
-        }
-
-        ViewModel.ReorderActiveAssetDocumentTabs(orderedTabs);
-        AssetDocumentTabDragCoordinator.CompleteDrag();
-    }
-
-    private void OnAssetDocumentTabViewTabDragStarting(TabView sender, TabViewTabDragStartingEventArgs args)
-    {
-        AssetDocumentTabDragCoordinator.StartDrag(this, args);
-    }
-
-    private async void OnAssetDocumentTabViewTabDroppedOutside(
-        TabView sender,
-        TabViewTabDroppedOutsideEventArgs args)
-    {
-        try
-        {
-            if (AssetDocumentTabDragCoordinator.TryResolveAssetTab(args.Item, args.Tab, out var assetTab))
-            {
-                await _assetEditorWindowCoordinator.OpenAssetDocumentInNewWindowAsync(assetTab);
-            }
-        }
-        finally
-        {
-            AssetDocumentTabDragCoordinator.CompleteDrag();
-        }
-    }
-
-    private void OnAssetDocumentTabViewTabStripDragOver(object sender, DragEventArgs e)
-    {
-        AssetDocumentTabDragCoordinator.HandleDragOver(this, e);
-    }
-
-    private async void OnAssetDocumentTabViewTabStripDrop(object sender, DragEventArgs e)
-    {
-        await AssetDocumentTabDragCoordinator.HandleDropAsync(this, e);
-    }
-
-    private void OnAssetDocumentTabContextFlyoutOpening(object sender, object e)
-    {
-        _tabCoordinator.ConfigureTabContextFlyout(
-            sender as MenuFlyout,
-            openInNewWindowMenuItemName: "OpenAssetDocumentInNewWindowMenuItem",
-            closeOtherMenuItemName: "CloseOtherAssetDocumentTabsMenuItem",
-            closeAllMenuItemName: "CloseAllAssetDocumentTabsMenuItem",
-            tabCount: ViewModel.DocumentWorkspace.CurrentAssetTabs.Count,
-            canOpenInNewWindow: !ViewModel.IsBusy);
-    }
-
-    private async void OnOpenAssetDocumentInNewWindowMenuItemClick(object sender, RoutedEventArgs e)
-    {
-        if (_tabCoordinator.TryGetTaggedValue(sender, out AssetDocumentTabViewModel? assetTab))
-        {
-            await _assetEditorWindowCoordinator.OpenAssetDocumentInNewWindowAsync(assetTab);
-        }
-    }
-
-    private async void OnOpenAssetDocumentGroupInNewWindowButtonClick(object sender, RoutedEventArgs e)
-    {
-        await _assetEditorWindowCoordinator.OpenActiveAssetDocumentGroupInNewWindowAsync();
-    }
-
-    private void OnAssetDocumentGroupDragStarting(UIElement sender, DragStartingEventArgs args)
-    {
-        AssetDocumentGroupDragCoordinator.StartDrag(this, args);
-    }
-
-    private async void OnAssetDocumentGroupDropCompleted(UIElement sender, DropCompletedEventArgs args)
-    {
-        SetAssetDocumentGroupDropPreviewVisible(false);
-        await AssetDocumentGroupDragCoordinator.HandleDropCompletedAsync(this, args);
-    }
-
-    private void OnAssetDocumentGroupDragEnter(object sender, DragEventArgs e)
-    {
-        SetAssetDocumentGroupDropPreviewVisible(CanShowAssetDocumentHostDropPreview(e));
-    }
-
-    private void OnAssetDocumentGroupDragLeave(object sender, DragEventArgs e)
-    {
-        SetAssetDocumentGroupDropPreviewVisible(false);
-    }
-
-    private void OnAssetDocumentGroupDragOver(object sender, DragEventArgs e)
-    {
-        if (AssetDocumentTabDragCoordinator.CanShowDropPreview(this, e))
-        {
-            SetAssetDocumentGroupDropPreviewVisible(true);
-            AssetDocumentTabDragCoordinator.HandleDragOver(this, e);
-            return;
-        }
-
-        SetAssetDocumentGroupDropPreviewVisible(
-            AssetDocumentGroupDragCoordinator.CanShowDropPreview(this, e));
-        AssetDocumentGroupDragCoordinator.HandleDragOver(this, e);
-    }
-
-    private async void OnAssetDocumentGroupDrop(object sender, DragEventArgs e)
-    {
-        SetAssetDocumentGroupDropPreviewVisible(false);
-        if (await AssetDocumentTabDragCoordinator.HandleDropAsync(this, e))
-        {
-            return;
-        }
-
-        await AssetDocumentGroupDragCoordinator.HandleDropAsync(this, e);
-    }
-
-    private bool CanShowAssetDocumentHostDropPreview(DragEventArgs e) =>
-        AssetDocumentTabDragCoordinator.CanShowDropPreview(this, e) ||
-        AssetDocumentGroupDragCoordinator.CanShowDropPreview(this, e);
-
-    private void SetAssetDocumentGroupDropPreviewVisible(bool isVisible)
-    {
-        AssetDocumentGroupDropPreviewOverlay.Visibility = isVisible
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-    }
-
-    private async void OnCloseOtherAssetDocumentTabsMenuItemClick(object sender, RoutedEventArgs e)
-    {
-        if (_tabCoordinator.TryGetTaggedValue(sender, out AssetDocumentTabViewModel? assetTab))
-        {
-            await ViewModel.CloseOtherAssetDocumentTabsAsync(assetTab);
-        }
-    }
-
-    private async void OnCloseAllAssetDocumentTabsMenuItemClick(object sender, RoutedEventArgs e)
-    {
-        await ViewModel.CloseAllAssetDocumentTabsAsync();
-    }
-
     private void OnBundleSearchToggleButtonClick(object sender, RoutedEventArgs e)
     {
         ViewModel.ToggleBundleSearch();
@@ -552,12 +391,12 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         _chromeCoordinator.Stop();
     }
 
-    bool IAssetDocumentTabDragHost.CanStartAssetDocumentTabDrag(AssetDocumentTabViewModel assetTab)
+    bool IAssetDocumentTabDragHost.CanStartAssetDocumentTabDrag(AssetDocumentTabItemViewModel documentTab)
     {
-        ArgumentNullException.ThrowIfNull(assetTab);
+        ArgumentNullException.ThrowIfNull(documentTab);
 
         return !ViewModel.IsBusy &&
-               ViewModel.DocumentWorkspace.CurrentAssetTabs.Contains(assetTab);
+               ViewModel.DocumentWorkspace.CurrentDocumentTabs.Contains(documentTab);
     }
 
     bool IAssetDocumentTabDragHost.CanAcceptAssetDocumentTabDrag(AssetDocumentTabDragSession session)
@@ -568,13 +407,13 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
                ViewModel.WorkspaceShell.HasWorkspace;
     }
 
-    Task<AssetDocumentTabViewModel?> IAssetDocumentTabDragHost.DetachAssetDocumentTabForDragAsync(
-        AssetDocumentTabViewModel assetTab) =>
-        ViewModel.DetachAssetDocumentTabForEditorWindowAsync(assetTab);
+    Task<AssetDocumentTabItemViewModel?> IAssetDocumentTabDragHost.DetachAssetDocumentTabForDragAsync(
+        AssetDocumentTabItemViewModel documentTab) =>
+        ViewModel.DetachDocumentTabForEditorWindowAsync(documentTab);
 
     Task<bool> IAssetDocumentTabDragHost.AttachAssetDocumentTabFromDragAsync(
-        AssetDocumentTabViewModel assetTab) =>
-        ViewModel.AttachAssetDocumentTabFromEditorWindowAsync(assetTab);
+        AssetDocumentTabItemViewModel documentTab) =>
+        ViewModel.AttachDocumentTabFromEditorWindowAsync(documentTab);
 
     Task IAssetDocumentTabDragHost.CompleteAssetDocumentTabDragMoveAsync() =>
         Task.CompletedTask;
@@ -582,7 +421,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     bool IAssetDocumentGroupDragHost.CanStartAssetDocumentGroupDrag()
     {
         return !ViewModel.IsBusy &&
-               ViewModel.DocumentWorkspace.HasAssetDocumentTabs;
+               ViewModel.DocumentWorkspace.HasDocumentTabs;
     }
 
     bool IAssetDocumentGroupDragHost.CanAcceptAssetDocumentGroupDrag(AssetDocumentGroupDragSession session)

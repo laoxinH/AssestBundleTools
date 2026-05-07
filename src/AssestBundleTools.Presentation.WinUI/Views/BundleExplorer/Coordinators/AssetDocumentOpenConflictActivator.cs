@@ -44,6 +44,23 @@ internal sealed class AssetDocumentOpenConflictActivator
 
     public async Task HandleMainAssetSelectionChangedAsync()
     {
+        if (_owner.ViewModel.AssetWorkflow.PrimaryPane.ViewMode == AssetPaneViewMode.SpineGroups)
+        {
+            if (_owner.ViewModel.AssetWorkflow.PrimaryPane.SelectedSpineGroup?.Item is { } selectedGroup &&
+                await TryActivateSpineGroupAsync(
+                    selectedGroup.BundleId,
+                    selectedGroup.GroupId,
+                    includeMainWindow: false,
+                    excludedEditorWindow: null))
+            {
+                _owner.ViewModel.AssetWorkflow.CaptureActiveTabState();
+                return;
+            }
+
+            await _owner.ViewModel.HandlePrimaryPaneSelectionChangedAsync();
+            return;
+        }
+
         if (_owner.ViewModel.AssetWorkflow.PrimaryPane.ViewMode != AssetPaneViewMode.Assets)
         {
             await _owner.ViewModel.HandlePrimaryPaneSelectionChangedAsync();
@@ -101,6 +118,33 @@ internal sealed class AssetDocumentOpenConflictActivator
                 includeMainWindow: true,
                 preferMainWindow: false,
                 preferredEditorWindow: null,
+                excludedEditorWindow: sourceWindow);
+    }
+
+    public Task<bool> TryActivateSpineGroupForNewWindowFromMainAsync(
+        SpineAssetGroupDocumentTabViewModel? spineGroupTab)
+    {
+        return spineGroupTab is null
+            ? Task.FromResult(false)
+            : TryActivateSpineGroupAsync(
+                spineGroupTab.BundleId,
+                spineGroupTab.GroupId,
+                includeMainWindow: false,
+                excludedEditorWindow: null);
+    }
+
+    public Task<bool> TryActivateSpineGroupForNewWindowFromEditorAsync(
+        AssetEditorWindow sourceWindow,
+        SpineAssetGroupDocumentTabViewModel? spineGroupTab)
+    {
+        ArgumentNullException.ThrowIfNull(sourceWindow);
+
+        return spineGroupTab is null
+            ? Task.FromResult(false)
+            : TryActivateSpineGroupAsync(
+                spineGroupTab.BundleId,
+                spineGroupTab.GroupId,
+                includeMainWindow: true,
                 excludedEditorWindow: sourceWindow);
     }
 
@@ -172,6 +216,67 @@ internal sealed class AssetDocumentOpenConflictActivator
             assetId);
     }
 
+    private async Task<bool> TryActivateSpineGroupAsync(
+        BundleId bundleId,
+        string groupId,
+        bool includeMainWindow,
+        AssetEditorWindow? excludedEditorWindow)
+    {
+        if (string.IsNullOrWhiteSpace(groupId))
+        {
+            return false;
+        }
+
+        if (includeMainWindow &&
+            TryFindMainSpineGroupDocumentTab(bundleId, groupId, out var bundleTab, out var spineGroupTab))
+        {
+            await _owner.ViewModel.ActivateBundleTabAsync(bundleTab);
+            await _owner.ViewModel.ActivateSpineGroupDocumentTabAsync(spineGroupTab);
+            SynchronizeMainWindowSelection(bundleTab, spineGroupTab);
+            TryBringMainWindowToFront();
+            return true;
+        }
+
+        foreach (var editorWindow in _getEditorWindows())
+        {
+            if (ReferenceEquals(editorWindow, excludedEditorWindow))
+            {
+                continue;
+            }
+
+            if (await editorWindow.TryActivateSpineGroupDocumentTabAsync(bundleId, groupId))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryFindMainSpineGroupDocumentTab(
+        BundleId bundleId,
+        string groupId,
+        out BundleDocumentTabViewModel bundleTab,
+        out SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        foreach (var candidateBundleTab in _owner.ViewModel.DocumentWorkspace.BundleTabs)
+        {
+            if (!candidateBundleTab.BundleId.Equals(bundleId) ||
+                !candidateBundleTab.TryGetSpineGroupTab(groupId, out var candidateGroupTab))
+            {
+                continue;
+            }
+
+            bundleTab = candidateBundleTab;
+            spineGroupTab = candidateGroupTab;
+            return true;
+        }
+
+        bundleTab = null!;
+        spineGroupTab = null!;
+        return false;
+    }
+
     private void SynchronizeMainWindowSelection(
         BundleDocumentTabViewModel bundleTab,
         AssetDocumentTabViewModel assetTab)
@@ -183,9 +288,28 @@ internal sealed class AssetDocumentOpenConflictActivator
         }
 
         if (_owner.FindName("AssetDocumentTabView") is TabView assetDocumentTabView &&
-            !ReferenceEquals(assetDocumentTabView.SelectedItem, assetTab))
+            bundleTab.DocumentTabs.FirstOrDefault(tab => tab.Wraps(assetTab)) is { } documentTab &&
+            !ReferenceEquals(assetDocumentTabView.SelectedItem, documentTab))
         {
-            assetDocumentTabView.SelectedItem = assetTab;
+            assetDocumentTabView.SelectedItem = documentTab;
+        }
+    }
+
+    private void SynchronizeMainWindowSelection(
+        BundleDocumentTabViewModel bundleTab,
+        SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        if (_owner.FindName("BundleTabView") is TabView bundleTabView &&
+            !ReferenceEquals(bundleTabView.SelectedItem, bundleTab))
+        {
+            bundleTabView.SelectedItem = bundleTab;
+        }
+
+        if (_owner.FindName("AssetDocumentTabView") is TabView assetDocumentTabView &&
+            bundleTab.DocumentTabs.FirstOrDefault(tab => tab.Wraps(spineGroupTab)) is { } documentTab &&
+            !ReferenceEquals(assetDocumentTabView.SelectedItem, documentTab))
+        {
+            assetDocumentTabView.SelectedItem = documentTab;
         }
     }
 

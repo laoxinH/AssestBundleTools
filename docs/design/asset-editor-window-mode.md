@@ -50,7 +50,7 @@
 - **资源编辑窗口**：独立 WinUI 窗口，用于承载一个资产文档组、固定预览 / 编辑区域和右侧信息区。
 - **预览 / 编辑区域**：窗口模式下固定显示的主操作面，承载图片、Mesh、文本、结构化摘要和后续编辑器。
 - **信息区**：窗口模式右侧区域，承载 `详情 / 依赖 / 替换 / 变更` 分段以及对应信息卡、依赖导航和替换状态。
-- **Spine 资源组文档**：跨资产聚合详情上下文，稳定身份使用 `BundleId + GroupId` 或等价组文档键；不得为了复用当前资产文档标签而伪造 `AssetId`。当前主窗口右侧已提供组文档和轻量恢复；独立承载先采用专用 Spine 组窗口，不混入普通资产文档窗口的标签组模型。
+- **Spine 资源组文档**：跨资产聚合详情上下文，稳定身份使用 `BundleId + GroupId` 或等价组文档键；不得为了复用当前资产文档标签而伪造 `AssetId`。当前已作为统一资源文档标签的一种，与普通 `BundleId + AssetId` 资产文档共享主窗口右侧标签组和独立资源编辑窗口宿主；标签头通过非文字强调标识区分 Spine 组。
 
 ## 6. 视觉结构
 
@@ -85,7 +85,7 @@
 3. 文本：以固定编辑面呈现，为后续 TextAsset / Shader 编辑或替换确认预留空间。
 4. Material / Font / AnimationClip / GameObject / MonoBehaviour / AnimatorController：继续显示主要摘要和轻量可视化信息；详细字段仍进入右侧信息区。
 5. AudioClip：保留试听工具面，后续波形或幅度摘要也应在此区域扩展。
-6. Spine 资源组：当前已在主窗口组文档中展示 JSON skeleton 轻量结构摘要、atlas region overlay、atlas page 选择器和结构化诊断，诊断覆盖 page 未匹配 Texture2D、Texture2D 预览不可用、page 尺寸与图片尺寸不一致等情况；`.skel` 二进制细解析和完整动画播放器不在首版范围内。当前 Application 已提供 `LoadSpineAssetGroupsQuery / LoadSpineAssetGroupDetailsQuery` 的轻量组读模型，主窗口资产窗格已接入 `资源 / Spine 组` 切换用于浏览组摘要。选择 Spine 组会在主窗口右侧复用现有资源详情窗格打开组文档，身份为 `BundleId + GroupId`，检查器展示组摘要、组成资产跳转、skeleton 摘要、诊断摘要、atlas page / region、page 选择器和当前 page 的 overlay；专用 Spine 组独立窗口可会话内承载单个组文档，并复用同一 page 选择入口。
+6. Spine 资源组：当前已在主窗口组文档中展示 JSON skeleton 轻量结构摘要、atlas region overlay、atlas page 选择器和结构化诊断，诊断覆盖 page 未匹配 Texture2D、Texture2D 预览不可用、page 尺寸与图片尺寸不一致等情况；`.skel` 二进制细解析和完整动画播放器不在首版范围内。当前 Application 已提供 `LoadSpineAssetGroupsQuery / LoadSpineAssetGroupDetailsQuery` 的轻量组读模型，主窗口资产窗格已接入 `资源 / Spine 组` 切换用于浏览组摘要。选择 Spine 组会在主窗口右侧复用现有资源详情窗格打开组文档，身份为 `BundleId + GroupId`，检查器展示组摘要、组成资产跳转、skeleton 摘要、诊断摘要、atlas page / region、page 选择器和当前 page 的 overlay；Spine 组文档可与普通资产文档混在同一个资源文档标签组中，并可跟随统一资源编辑窗口进行会话内拖出、组合和放回。
 
 预览 / 编辑区域只消费 Application 预览 DTO、缓存载荷和展示层状态，不直接读取 AB、遍历文件或调用 Infrastructure 解析实现。
 
@@ -196,7 +196,7 @@
 
 这些状态可以持久化，但第一阶段不要求独立资源编辑窗口随应用重启恢复；主窗口资源包标签和资产文档组恢复仍是优先级更高的稳定链路。
 
-Spine 资源组文档属于页面级浏览状态。主窗口资源包标签会用 `openSpineGroupTabs[]` 只保存 `GroupId / DisplayName / GroupKey` 这类轻量身份信息；专用 Spine 组独立窗口当前是会话内窗口，不写入 `openAssetEditorWindows[]`，也不保存 atlas 解析结果、Texture2D 预览载荷或 region overlay 数据。
+Spine 资源组文档属于页面级浏览状态。主窗口资源包标签会用 `openSpineGroupTabs[]` 只保存 `GroupId / DisplayName / GroupKey` 这类轻量身份信息；独立资源编辑窗口通过 `openAssetEditorWindows[].openDocumentTabs[]` 保存普通资产文档和 Spine 组文档的统一轻量标签序列，并用 `ActiveDocumentKind / ActiveSpineGroupId` 恢复活动 Spine 组。窗口快照仍不保存 atlas 解析结果、Texture2D 预览载荷、region overlay 数据或诊断明细；真实组详情在恢复后激活时继续通过 `LoadSpineAssetGroupDetailsQuery` 和现有预览管线重新读取。`openAssetTabs[] / ActiveAssetId` 保留为普通资产标签和旧快照兼容字段。
 
 ### 11.3 编辑草稿状态
 
@@ -319,8 +319,8 @@ Spine 资源组文档属于页面级浏览状态。主窗口资源包标签会�
 - Application 层已新增 `Editing` 草稿恢复候选契约：`IAssetEditDraftStore` 只读取草稿元数据，`GetAssetEditDraftRestorePlanHandler` 按工作区、草稿 id、模式和来源指纹把轻量引用解析为 `Restorable / Missing / SourceMismatch / Expired / InvalidReference`。该契约只用于后续恢复提示和诊断分流，不读取或暴露真实草稿内容。
 - Presentation 恢复弹窗当前已在显示前调用 `AssetEditDraftRestorePlanGateway` 做轻量预检，并在弹窗中显示可恢复、缺失、来源不匹配、已过期和引用无效的草稿引用数量；该预检会刷新提示文案、重复弹窗判定和后续可保留的草稿标记集合，不自动恢复草稿内容，也不改变用户是否主动恢复窗口的控制权。组合根已接入 `WorkspaceChangeSetAssetEditDraftStore`，从 `staging/changes/<workspaceKey>.json` 的 `editDrafts[]` 描述列表读取草稿元数据。
 - 当前仍不自动弹出独立资源编辑窗口，也不恢复最大化 / 最小化、显示器或真实编辑草稿内容；当预检计划可用时，草稿选项只决定本次成功打开的标签是否带回预检为可恢复的 `EditDraftReference` 标记，缺失、来源不匹配、已过期和引用无效的草稿标记不会重新挂回新标签。真实草稿确认 / 丢弃 / 恢复队列仍留给后续编辑器模型。
-- 当前打开资源详情、依赖跳转和新窗口打开入口会先检查主窗口与所有独立资源编辑窗口：如果目标资源已打开，则直接激活并切换到已有资产标签，再把所在窗口置前；只有未命中现有标签时才继续创建新的资产标签或独立窗口。
-- Spine 资源组当前按专用入口从主窗口组文档打开到独立 Spine 组窗口；该窗口复用组详情加载器和资源跳转链路，但不参与普通资产文档窗口的混合标签、拖拽合并、`openAssetEditorWindows[]` 快照恢复或同一 `BundleId + AssetId` 资产冲突检测。
+- 当前打开资源详情、依赖跳转、Spine 组文档和新窗口打开入口会先检查主窗口与所有独立资源编辑窗口：如果目标文档已打开，则直接激活并切换到已有标签，再把所在窗口置前；只有未命中现有标签时才继续创建新的文档标签或独立窗口。
+- Spine 资源组当前作为统一资源文档标签打开到普通独立资源编辑窗口；会话内混合标签、拖拽合并、放回主窗口、冲突激活和 `openAssetEditorWindows[]` 快照恢复均复用统一文档标签链路。Spine 组恢复只持久化 `BundleId + GroupId + DisplayName + GroupKey`，不持久化解析详情或预览载荷。
 
 ## 16. 测试建议
 

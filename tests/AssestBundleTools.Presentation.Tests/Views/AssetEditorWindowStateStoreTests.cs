@@ -127,6 +127,39 @@ public sealed class AssetEditorWindowStateStoreTests
             new AssetEditorWindowGroupSnapshot(
                 new[]
                 {
+                    new AssetEditorWindowDocumentTabSnapshot(
+                        WorkspaceAssetEditorWindowDocumentTabDto.AssetKind,
+                        AssetTab: new AssetEditorWindowAssetTabSnapshot(
+                            BundleId: "bundle-a",
+                            AssetId: "asset-1",
+                            DisplayName: "asset-1",
+                            SelectedInspectorSection: "dependencies",
+                            PreviewImageBackgroundMode: "Solid",
+                            SpritePreviewDisplayMode: "CropResult",
+                            MeshPreviewDisplayMode: "Uv",
+                            MeshPreviewTextureOverlaySelected: false,
+                            MeshPreviewGridSelected: true,
+                            MeshPreviewZoom: 1.25d,
+                            MeshPreviewRotationX: 12d,
+                            MeshPreviewRotationY: -24d,
+                            PreviewImageZoom: 1.5d,
+                            PreviewImagePanX: 8d,
+                            PreviewImagePanY: -4d,
+                            EditDraftReference: new WorkspaceAssetEditDraftReferenceDto(
+                                "draft-1",
+                                "text",
+                                "source-v1",
+                                "Text draft"))),
+                    new AssetEditorWindowDocumentTabSnapshot(
+                        WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
+                        SpineGroupTab: new AssetEditorWindowSpineGroupTabSnapshot(
+                            "bundle-a",
+                            "spine-group:bundle-a:hero",
+                            "hero",
+                            "hero"))
+                },
+                new[]
+                {
                     new AssetEditorWindowAssetTabSnapshot(
                         BundleId: "bundle-a",
                         AssetId: "asset-1",
@@ -149,18 +182,27 @@ public sealed class AssetEditorWindowStateStoreTests
                             "source-v1",
                             "Text draft"))
                 },
+                WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
                 "bundle-a",
-                "asset-1"));
+                null,
+                "spine-group:bundle-a:hero"));
 
         var window = Assert.Single(store.CaptureOpenWindowMetadata());
         var assetTab = Assert.Single(window.OpenAssetTabs);
+        var documentTabs = window.OpenDocumentTabs ?? Array.Empty<WorkspaceAssetEditorWindowDocumentTabDto>();
 
         Assert.Equal(layout.X, window.Layout.X);
         Assert.Equal(layout.Y, window.Layout.Y);
         Assert.Equal(layout.Width, window.Layout.Width);
         Assert.Equal(layout.Height, window.Layout.Height);
         Assert.Equal("bundle-a", window.ActiveBundleId);
-        Assert.Equal("asset-1", window.ActiveAssetId);
+        Assert.Null(window.ActiveAssetId);
+        Assert.Equal(WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind, window.ActiveDocumentKind);
+        Assert.Equal("spine-group:bundle-a:hero", window.ActiveSpineGroupId);
+        Assert.Collection(
+            documentTabs,
+            tab => Assert.Equal(WorkspaceAssetEditorWindowDocumentTabDto.AssetKind, tab.Kind),
+            tab => Assert.Equal(WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind, tab.Kind));
         Assert.Equal("bundle-a", assetTab.BundleId);
         Assert.Equal("asset-1", assetTab.AssetId);
         Assert.Equal("asset-1", assetTab.AssetName);
@@ -180,6 +222,42 @@ public sealed class AssetEditorWindowStateStoreTests
         Assert.Equal("text", assetTab.EditDraftReference?.DraftMode);
         Assert.Equal("source-v1", assetTab.EditDraftReference?.SourceFingerprint);
         Assert.Equal("Text draft", assetTab.EditDraftReference?.SourceDescription);
+    }
+
+    [Fact]
+    public void CaptureOpenWindowMetadata_ShouldKeepSpineOnlyWindow()
+    {
+        var store = new AssetEditorWindowStateStore();
+        var layout = new AssetEditorWindowLayoutSnapshot(420, 180, 1440, 900);
+        store.RegisterWindow(
+            layout,
+            new AssetEditorWindowGroupSnapshot(
+                new[]
+                {
+                    new AssetEditorWindowDocumentTabSnapshot(
+                        WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
+                        SpineGroupTab: new AssetEditorWindowSpineGroupTabSnapshot(
+                            "bundle-a",
+                            "spine-group:bundle-a:hero",
+                            "hero",
+                            "hero"))
+                },
+                Array.Empty<AssetEditorWindowAssetTabSnapshot>(),
+                WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
+                "bundle-a",
+                null,
+                "spine-group:bundle-a:hero"));
+
+        var window = Assert.Single(store.CaptureOpenWindowMetadata());
+        var documentTab = Assert.Single(window.OpenDocumentTabs ?? []);
+
+        Assert.Empty(window.OpenAssetTabs);
+        Assert.Equal(WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind, window.ActiveDocumentKind);
+        Assert.Equal("bundle-a", window.ActiveBundleId);
+        Assert.Null(window.ActiveAssetId);
+        Assert.Equal("spine-group:bundle-a:hero", window.ActiveSpineGroupId);
+        Assert.Equal("bundle-a", documentTab.SpineGroupTab?.BundleId);
+        Assert.Equal("spine-group:bundle-a:hero", documentTab.SpineGroupTab?.GroupId);
     }
 
     [Fact]
@@ -232,8 +310,16 @@ public sealed class AssetEditorWindowStateStoreTests
         new(
             new[]
             {
+                new AssetEditorWindowDocumentTabSnapshot(
+                    WorkspaceAssetEditorWindowDocumentTabDto.AssetKind,
+                    AssetTab: new AssetEditorWindowAssetTabSnapshot(bundleId, assetId, assetId)),
+            },
+            new[]
+            {
                 new AssetEditorWindowAssetTabSnapshot(bundleId, assetId, assetId),
             },
+            WorkspaceAssetEditorWindowDocumentTabDto.AssetKind,
             bundleId,
-            assetId);
+            assetId,
+            null);
 }

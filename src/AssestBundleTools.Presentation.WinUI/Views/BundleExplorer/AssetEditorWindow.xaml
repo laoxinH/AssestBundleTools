@@ -35,7 +35,7 @@
                 x:Name="AssetEditorGroupDragHandle"
                 Width="30"
                 Height="30"
-                CanDrag="{x:Bind ViewModel.DocumentGroup.HasAssetTabs, Mode=OneWay}"
+                CanDrag="{x:Bind ViewModel.DocumentGroup.HasDocumentTabs, Mode=OneWay}"
                 Background="Transparent"
                 CornerRadius="6"
                 DragStarting="OnAssetDocumentGroupDragStarting"
@@ -57,21 +57,39 @@
                 CanDragTabs="True"
                 CanReorderTabs="True"
                 IsAddTabButtonVisible="False"
-                SelectedItem="{x:Bind ViewModel.DocumentGroup.ActiveAssetTab, Mode=OneWay}"
+                SelectedItem="{x:Bind ViewModel.DocumentGroup.ActiveDocumentTab, Mode=OneWay}"
                 TabCloseRequested="OnAssetEditorTabViewTabCloseRequested"
                 TabDragCompleted="OnAssetEditorTabViewTabDragCompleted"
                 TabDragStarting="OnAssetEditorTabViewTabDragStarting"
                 TabDroppedOutside="OnAssetEditorTabViewTabDroppedOutside"
-                TabItemsSource="{x:Bind ViewModel.DocumentGroup.AssetTabs, Mode=OneWay}"
+                TabItemsSource="{x:Bind ViewModel.DocumentGroup.DocumentTabs, Mode=OneWay}"
                 TabStripDragOver="OnAssetEditorTabViewTabStripDragOver"
                 TabStripDrop="OnAssetEditorTabViewTabStripDrop"
                 SelectionChanged="OnAssetEditorTabViewSelectionChanged"
                 Visibility="{x:Bind ViewModel.DocumentGroup.TabStripVisibility, Mode=OneWay}">
                 <TabView.TabItemTemplate>
-                    <DataTemplate x:DataType="viewModels:AssetDocumentTabViewModel">
+                    <DataTemplate x:DataType="viewModels:AssetDocumentTabItemViewModel">
                         <TabViewItem
-                            Header="{x:Bind DisplayName}"
                             ToolTipService.ToolTip="{x:Bind ToolTipText}">
+                            <TabViewItem.Header>
+                                <Grid ColumnSpacing="6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border
+                                        Width="4"
+                                        Height="18"
+                                        VerticalAlignment="Center"
+                                        Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                        CornerRadius="2"
+                                        Visibility="{x:Bind SpineMarkerVisibility}" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Text="{x:Bind DisplayName}" />
+                                </Grid>
+                            </TabViewItem.Header>
                             <TabViewItem.ContextFlyout>
                                 <MenuFlyout Opening="OnAssetEditorTabContextFlyoutOpening">
                                     <MenuFlyoutItem
@@ -137,17 +155,17 @@
                             <Button
                                 x:Name="MoveToMainWindowButton"
                                 Click="OnMoveActiveAssetDocumentToMainWindowButtonClick"
-                                IsEnabled="{x:Bind ViewModel.DocumentGroup.HasAssetTabs, Mode=OneWay}"
+                                IsEnabled="{x:Bind ViewModel.DocumentGroup.HasDocumentTabs, Mode=OneWay}"
                                 Style="{StaticResource WorkspaceInlineActionButtonStyle}" />
                             <Button
                                 x:Name="MoveGroupToMainWindowButton"
                                 Click="OnMoveAssetDocumentGroupToMainWindowButtonClick"
-                                IsEnabled="{x:Bind ViewModel.DocumentGroup.HasAssetTabs, Mode=OneWay}"
+                                IsEnabled="{x:Bind ViewModel.DocumentGroup.HasDocumentTabs, Mode=OneWay}"
                                 Style="{StaticResource WorkspaceInlineActionButtonStyle}" />
                             <Button
                                 x:Name="OpenGroupInNewWindowButton"
                                 Click="OnOpenAssetDocumentGroupInNewWindowButtonClick"
-                                IsEnabled="{x:Bind ViewModel.DocumentGroup.HasAssetTabs, Mode=OneWay}"
+                                IsEnabled="{x:Bind ViewModel.DocumentGroup.HasDocumentTabs, Mode=OneWay}"
                                 Style="{StaticResource WorkspaceInlineActionButtonStyle}" />
                             <Button
                                 x:Name="ExtractButton"
@@ -188,6 +206,7 @@
                     ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested"
                     SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
                     SelectReplacementSourceRequested="OnInspectorSelectReplacementSourceRequested"
+                    SpineAtlasPageSelectionRequested="OnInspectorSpineAtlasPageSelectionRequested"
                     UndoReplacementRequested="OnInspectorUndoReplacementRequested" />
             </Border>
         </Grid>

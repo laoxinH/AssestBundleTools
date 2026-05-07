@@ -25,8 +25,7 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
     private bool _showModifiedOnly;
     private bool _showPreviewableOnly;
     private bool _isPreview;
-    private AssetDocumentTabViewModel? _activeAssetTab;
-    private SpineAssetGroupDocumentTabViewModel? _activeSpineGroupTab;
+    private readonly AssetDocumentGroupViewModel _documentGroup = new();
 
     public BundleDocumentTabViewModel(
         BundleId bundleId,
@@ -122,21 +121,19 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
     /// 右侧资产详情标签页属于当前资源包标签页的页面级子状态。
     /// 这样在切换资源包标签时，可以完整保留其对应的资产详情浏览上下文。
     /// </summary>
-    public ObservableCollection<AssetDocumentTabViewModel> AssetTabs { get; } = new();
+    public AssetDocumentGroupViewModel DocumentGroup => _documentGroup;
 
-    public ObservableCollection<SpineAssetGroupDocumentTabViewModel> SpineGroupTabs { get; } = new();
+    public ObservableCollection<AssetDocumentTabItemViewModel> DocumentTabs => DocumentGroup.DocumentTabs;
 
-    public AssetDocumentTabViewModel? ActiveAssetTab
-    {
-        get => _activeAssetTab;
-        private set => SetProperty(ref _activeAssetTab, value);
-    }
+    public ObservableCollection<AssetDocumentTabViewModel> AssetTabs => DocumentGroup.AssetTabs;
 
-    public SpineAssetGroupDocumentTabViewModel? ActiveSpineGroupTab
-    {
-        get => _activeSpineGroupTab;
-        private set => SetProperty(ref _activeSpineGroupTab, value);
-    }
+    public ObservableCollection<SpineAssetGroupDocumentTabViewModel> SpineGroupTabs => DocumentGroup.SpineGroupTabs;
+
+    public AssetDocumentTabItemViewModel? ActiveDocumentTab => DocumentGroup.ActiveDocumentTab;
+
+    public AssetDocumentTabViewModel? ActiveAssetTab => DocumentGroup.ActiveAssetTab;
+
+    public SpineAssetGroupDocumentTabViewModel? ActiveSpineGroupTab => DocumentGroup.ActiveSpineGroupTab;
 
     public void CaptureFromPane(AssetPaneViewModel pane)
     {
@@ -226,92 +223,26 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
 
     public void AddAssetTab(AssetDocumentTabViewModel assetTab, bool activate)
     {
-        ArgumentNullException.ThrowIfNull(assetTab);
-
-        if (!AssetTabs.Contains(assetTab))
-        {
-            AssetTabs.Add(assetTab);
-        }
-
-        if (activate)
-        {
-            SetActiveAssetTab(assetTab);
-        }
+        DocumentGroup.AddAssetTab(assetTab, activate);
     }
 
     public void SetActiveAssetTab(AssetDocumentTabViewModel? assetTab)
     {
-        if (assetTab is not null && !AssetTabs.Contains(assetTab))
-        {
-            AssetTabs.Add(assetTab);
-        }
-
-        var previousActiveAssetTab = ActiveAssetTab;
-        ActiveAssetTab = assetTab;
-        if (assetTab is not null)
-        {
-            ActiveSpineGroupTab = null;
-        }
-
-        if (!ReferenceEquals(previousActiveAssetTab, ActiveAssetTab))
-        {
-            previousActiveAssetTab?.CancelPreviewRequest();
-        }
+        DocumentGroup.SetActiveAssetTab(assetTab);
     }
 
     public void RestoreAssetTabs(
         IEnumerable<AssetDocumentTabViewModel> assetTabs,
         string? activeAssetTabId)
     {
-        ArgumentNullException.ThrowIfNull(assetTabs);
-
-        CancelAllAssetPreviewRequests();
-        AssetTabs.Clear();
-
-        AssetDocumentTabViewModel? activeAssetTab = null;
-        foreach (var assetTab in assetTabs)
-        {
-            AssetTabs.Add(assetTab);
-            if (activeAssetTab is null &&
-                string.Equals(assetTab.DocumentId, activeAssetTabId, StringComparison.Ordinal))
-            {
-                activeAssetTab = assetTab;
-            }
-        }
-
-        ActiveAssetTab = activeAssetTab ?? AssetTabs.FirstOrDefault();
-        ActiveSpineGroupTab = null;
+        DocumentGroup.RestoreAssetTabs(assetTabs, activeAssetTabId);
     }
 
     public void RestoreSpineGroupTabs(
         IEnumerable<SpineAssetGroupDocumentTabViewModel> spineGroupTabs,
         string? activeSpineGroupTabId)
     {
-        ArgumentNullException.ThrowIfNull(spineGroupTabs);
-
-        SpineGroupTabs.Clear();
-
-        SpineAssetGroupDocumentTabViewModel? activeSpineGroupTab = null;
-        foreach (var spineGroupTab in spineGroupTabs)
-        {
-            SpineGroupTabs.Add(spineGroupTab);
-            if (activeSpineGroupTab is null &&
-                string.Equals(spineGroupTab.DocumentId, activeSpineGroupTabId, StringComparison.Ordinal))
-            {
-                activeSpineGroupTab = spineGroupTab;
-            }
-        }
-
-        if (activeSpineGroupTab is null)
-        {
-            ActiveSpineGroupTab = null;
-            return;
-        }
-
-        var previousActiveAssetTab = ActiveAssetTab;
-        ActiveAssetTab = null;
-        previousActiveAssetTab?.CancelPreviewRequest();
-        ActiveSpineGroupTab = activeSpineGroupTab;
+        DocumentGroup.RestoreSpineGroupTabs(spineGroupTabs, activeSpineGroupTabId);
     }
 
     /// <summary>
@@ -320,107 +251,49 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
     /// </summary>
     public bool ReorderAssetTabs(IReadOnlyList<AssetDocumentTabViewModel> orderedAssetTabs)
     {
-        ArgumentNullException.ThrowIfNull(orderedAssetTabs);
+        return DocumentGroup.ReorderAssetTabs(orderedAssetTabs);
+    }
 
-        return ObservableCollectionOrderHelper.Reorder(AssetTabs, orderedAssetTabs);
+    public bool ReorderDocumentTabs(IReadOnlyList<AssetDocumentTabItemViewModel> orderedDocumentTabs)
+    {
+        return DocumentGroup.ReorderDocumentTabs(orderedDocumentTabs);
     }
 
     public bool TryGetSpineGroupTab(
         string groupId,
         [NotNullWhen(true)] out SpineAssetGroupDocumentTabViewModel? spineGroupTab)
     {
-        spineGroupTab = string.IsNullOrWhiteSpace(groupId)
-            ? null
-            : SpineGroupTabs.FirstOrDefault(tab =>
-                string.Equals(tab.GroupId, groupId, StringComparison.Ordinal));
-        return spineGroupTab is not null;
+        return DocumentGroup.TryGetSpineGroupTab(BundleId, groupId, out spineGroupTab);
     }
 
     public void AddSpineGroupTab(SpineAssetGroupDocumentTabViewModel spineGroupTab, bool activate)
     {
-        ArgumentNullException.ThrowIfNull(spineGroupTab);
-
-        if (!SpineGroupTabs.Contains(spineGroupTab))
-        {
-            SpineGroupTabs.Add(spineGroupTab);
-        }
-
-        if (activate)
-        {
-            SetActiveSpineGroupTab(spineGroupTab);
-        }
+        DocumentGroup.AddSpineGroupTab(spineGroupTab, activate);
     }
 
     public void SetActiveSpineGroupTab(SpineAssetGroupDocumentTabViewModel? spineGroupTab)
     {
-        if (spineGroupTab is not null && !SpineGroupTabs.Contains(spineGroupTab))
-        {
-            SpineGroupTabs.Add(spineGroupTab);
-        }
-
-        if (spineGroupTab is not null)
-        {
-            var previousActiveAssetTab = ActiveAssetTab;
-            ActiveAssetTab = null;
-            previousActiveAssetTab?.CancelPreviewRequest();
-        }
-
-        ActiveSpineGroupTab = spineGroupTab;
+        DocumentGroup.SetActiveSpineGroupTab(spineGroupTab);
     }
 
     public bool ReorderSpineGroupTabs(IReadOnlyList<SpineAssetGroupDocumentTabViewModel> orderedSpineGroupTabs)
     {
-        ArgumentNullException.ThrowIfNull(orderedSpineGroupTabs);
-
-        return ObservableCollectionOrderHelper.Reorder(SpineGroupTabs, orderedSpineGroupTabs);
+        return DocumentGroup.ReorderSpineGroupTabs(orderedSpineGroupTabs);
     }
 
     public void RemoveSpineGroupTab(SpineAssetGroupDocumentTabViewModel spineGroupTab)
     {
-        ArgumentNullException.ThrowIfNull(spineGroupTab);
-
-        if (!SpineGroupTabs.Remove(spineGroupTab))
-        {
-            return;
-        }
-
-        if (ReferenceEquals(ActiveSpineGroupTab, spineGroupTab))
-        {
-            ActiveSpineGroupTab = SpineGroupTabs.FirstOrDefault();
-        }
+        DocumentGroup.RemoveSpineGroupTab(spineGroupTab);
     }
 
     public bool DetachSpineGroupTab(SpineAssetGroupDocumentTabViewModel spineGroupTab)
     {
-        ArgumentNullException.ThrowIfNull(spineGroupTab);
-
-        if (!SpineGroupTabs.Remove(spineGroupTab))
-        {
-            return false;
-        }
-
-        if (ReferenceEquals(ActiveSpineGroupTab, spineGroupTab))
-        {
-            ActiveSpineGroupTab = SpineGroupTabs.FirstOrDefault();
-        }
-
-        return true;
+        return DocumentGroup.DetachSpineGroupTab(spineGroupTab);
     }
 
     public void RemoveAssetTab(AssetDocumentTabViewModel assetTab)
     {
-        ArgumentNullException.ThrowIfNull(assetTab);
-
-        if (!AssetTabs.Remove(assetTab))
-        {
-            return;
-        }
-
-        assetTab.CancelPreviewRequest();
-        if (ReferenceEquals(ActiveAssetTab, assetTab))
-        {
-            ActiveAssetTab = AssetTabs.FirstOrDefault();
-        }
+        DocumentGroup.RemoveAssetTab(assetTab);
     }
 
     /// <summary>
@@ -429,53 +302,37 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
     /// </summary>
     public bool DetachAssetTab(AssetDocumentTabViewModel assetTab)
     {
-        ArgumentNullException.ThrowIfNull(assetTab);
+        return DocumentGroup.DetachAssetTab(assetTab);
+    }
 
-        if (!AssetTabs.Remove(assetTab))
-        {
-            return false;
-        }
-
-        if (ReferenceEquals(ActiveAssetTab, assetTab))
-        {
-            ActiveAssetTab = AssetTabs.FirstOrDefault();
-        }
-
-        return true;
+    public bool DetachDocumentTab(AssetDocumentTabItemViewModel documentTab)
+    {
+        return DocumentGroup.DetachDocumentTab(documentTab);
     }
 
     public AssetDocumentGroupTransfer? DetachAssetTabs()
     {
-        if (AssetTabs.Count == 0)
-        {
-            return null;
-        }
+        return DocumentGroup.DetachAssetTabs();
+    }
 
-        var transfer = new AssetDocumentGroupTransfer(AssetTabs.ToArray(), ActiveAssetTab);
-        AssetTabs.Clear();
-        ActiveAssetTab = null;
-        return transfer;
+    public AssetDocumentGroupTransfer? DetachDocumentTabs()
+    {
+        return DocumentGroup.DetachDocumentTabs();
     }
 
     public void ClearAssetTabs()
     {
-        CancelAllAssetPreviewRequests();
-        AssetTabs.Clear();
-        ActiveAssetTab = null;
+        DocumentGroup.ClearAssetTabs();
     }
 
     public void ClearSpineGroupTabs()
     {
-        SpineGroupTabs.Clear();
-        ActiveSpineGroupTab = null;
+        DocumentGroup.ClearSpineGroupTabs();
     }
 
     public void CancelAllAssetPreviewRequests()
     {
-        foreach (var assetTab in AssetTabs)
-        {
-            assetTab.CancelPreviewRequest();
-        }
+        DocumentGroup.CancelAllAssetPreviewRequests();
     }
 }
 

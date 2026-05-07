@@ -7,13 +7,13 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 
 internal interface IAssetDocumentTabDragHost
 {
-    bool CanStartAssetDocumentTabDrag(AssetDocumentTabViewModel assetTab);
+    bool CanStartAssetDocumentTabDrag(AssetDocumentTabItemViewModel documentTab);
 
     bool CanAcceptAssetDocumentTabDrag(AssetDocumentTabDragSession session);
 
-    Task<AssetDocumentTabViewModel?> DetachAssetDocumentTabForDragAsync(AssetDocumentTabViewModel assetTab);
+    Task<AssetDocumentTabItemViewModel?> DetachAssetDocumentTabForDragAsync(AssetDocumentTabItemViewModel documentTab);
 
-    Task<bool> AttachAssetDocumentTabFromDragAsync(AssetDocumentTabViewModel assetTab);
+    Task<bool> AttachAssetDocumentTabFromDragAsync(AssetDocumentTabItemViewModel documentTab);
 
     Task CompleteAssetDocumentTabDragMoveAsync();
 }
@@ -23,19 +23,19 @@ internal sealed class AssetDocumentTabDragSession
     public AssetDocumentTabDragSession(
         string token,
         IAssetDocumentTabDragHost sourceHost,
-        AssetDocumentTabViewModel assetTab)
+        AssetDocumentTabItemViewModel documentTab)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(token);
         Token = token;
         SourceHost = sourceHost ?? throw new ArgumentNullException(nameof(sourceHost));
-        AssetTab = assetTab ?? throw new ArgumentNullException(nameof(assetTab));
+        DocumentTab = documentTab ?? throw new ArgumentNullException(nameof(documentTab));
     }
 
     public string Token { get; }
 
     public IAssetDocumentTabDragHost SourceHost { get; }
 
-    public AssetDocumentTabViewModel AssetTab { get; }
+    public AssetDocumentTabItemViewModel DocumentTab { get; }
 }
 
 internal static class AssetDocumentTabDragCoordinator
@@ -50,8 +50,8 @@ internal static class AssetDocumentTabDragCoordinator
         ArgumentNullException.ThrowIfNull(sourceHost);
         ArgumentNullException.ThrowIfNull(args);
 
-        if (!TryResolveAssetTab(args.Item, args.Tab, out var assetTab) ||
-            !sourceHost.CanStartAssetDocumentTabDrag(assetTab))
+        if (!TryResolveDocumentTab(args.Item, args.Tab, out var documentTab) ||
+            !sourceHost.CanStartAssetDocumentTabDrag(documentTab))
         {
             args.Cancel = true;
             return;
@@ -60,7 +60,7 @@ internal static class AssetDocumentTabDragCoordinator
         _currentSession = new AssetDocumentTabDragSession(
             Guid.NewGuid().ToString("N"),
             sourceHost,
-            assetTab);
+            documentTab);
         args.Data.RequestedOperation = DataPackageOperation.Move;
         args.Data.SetData(DataFormat, _currentSession.Token);
     }
@@ -113,14 +113,14 @@ internal static class AssetDocumentTabDragCoordinator
         _currentSession = null;
     }
 
-    public static bool TryResolveAssetTab(
+    public static bool TryResolveDocumentTab(
         object? item,
         TabViewItem? tab,
-        [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out AssetDocumentTabViewModel? assetTab)
+        [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out AssetDocumentTabItemViewModel? documentTab)
     {
-        assetTab = item as AssetDocumentTabViewModel ??
-                   tab?.DataContext as AssetDocumentTabViewModel;
-        return assetTab is not null;
+        documentTab = item as AssetDocumentTabItemViewModel ??
+                      tab?.DataContext as AssetDocumentTabItemViewModel;
+        return documentTab is not null;
     }
 
     private static async Task<bool> MoveAssetDocumentTabAsync(
@@ -128,19 +128,19 @@ internal static class AssetDocumentTabDragCoordinator
         IAssetDocumentTabDragHost targetHost)
     {
         var sourceHost = session.SourceHost;
-        var movedAssetTab = await sourceHost.DetachAssetDocumentTabForDragAsync(session.AssetTab);
-        if (movedAssetTab is null)
+        var movedDocumentTab = await sourceHost.DetachAssetDocumentTabForDragAsync(session.DocumentTab);
+        if (movedDocumentTab is null)
         {
             return false;
         }
 
-        if (await targetHost.AttachAssetDocumentTabFromDragAsync(movedAssetTab))
+        if (await targetHost.AttachAssetDocumentTabFromDragAsync(movedDocumentTab))
         {
             await sourceHost.CompleteAssetDocumentTabDragMoveAsync();
             return true;
         }
 
-        await sourceHost.AttachAssetDocumentTabFromDragAsync(movedAssetTab);
+        await sourceHost.AttachAssetDocumentTabFromDragAsync(movedDocumentTab);
         return false;
     }
 

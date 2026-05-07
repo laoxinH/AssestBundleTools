@@ -331,6 +331,13 @@ public sealed class BundleExplorerViewModel : ObservableObject
     public Task<bool> AttachAssetDocumentTabFromEditorWindowAsync(AssetDocumentTabViewModel assetTab) =>
         _assetDocumentMoveCoordinator.AttachAssetDocumentTabFromExternalHostAsync(assetTab);
 
+    public Task<AssetDocumentTabItemViewModel?> DetachDocumentTabForEditorWindowAsync(
+        AssetDocumentTabItemViewModel? documentTab) =>
+        _assetDocumentMoveCoordinator.DetachDocumentTabForExternalHostAsync(documentTab);
+
+    public Task<bool> AttachDocumentTabFromEditorWindowAsync(AssetDocumentTabItemViewModel documentTab) =>
+        _assetDocumentMoveCoordinator.AttachDocumentTabFromExternalHostAsync(documentTab);
+
     public Task<AssetDocumentGroupTransfer?> DetachActiveAssetDocumentGroupForEditorWindowAsync() =>
         _assetDocumentMoveCoordinator.DetachActiveAssetDocumentGroupForExternalHostAsync();
 
@@ -394,6 +401,18 @@ public sealed class BundleExplorerViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(orderedTabs);
 
         if (!_documentWorkspace.ReorderActiveSpineGroupTabs(orderedTabs))
+        {
+            return;
+        }
+
+        RequestWorkspaceBrowserStatePersistence();
+    }
+
+    public void ReorderActiveDocumentTabs(IReadOnlyList<AssetDocumentTabItemViewModel> orderedTabs)
+    {
+        ArgumentNullException.ThrowIfNull(orderedTabs);
+
+        if (!_documentWorkspace.ReorderActiveDocumentTabs(orderedTabs))
         {
             return;
         }

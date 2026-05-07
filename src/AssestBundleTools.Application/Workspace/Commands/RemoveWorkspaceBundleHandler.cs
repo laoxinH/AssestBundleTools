@@ -158,26 +158,64 @@ public sealed class RemoveWorkspaceBundleHandler
         var remainingWindows = new List<WorkspaceAssetEditorWindowStateDto>(openAssetEditorWindows.Count);
         foreach (var window in openAssetEditorWindows)
         {
-            var remainingTabs = window.OpenAssetTabs
-                .Where(tab => !string.Equals(tab.BundleId, removedBundleId, StringComparison.Ordinal))
+            var remainingDocumentTabs = GetWindowDocumentTabs(window)
+                .Where(tab => !string.Equals(GetBundleId(tab), removedBundleId, StringComparison.Ordinal))
                 .ToArray();
-            if (remainingTabs.Length == 0)
+            if (remainingDocumentTabs.Length == 0)
             {
                 continue;
             }
 
-            var hasActiveTab = remainingTabs.Any(tab =>
-                string.Equals(tab.BundleId, window.ActiveBundleId, StringComparison.Ordinal) &&
-                string.Equals(tab.AssetId, window.ActiveAssetId, StringComparison.Ordinal));
-            var activeTab = hasActiveTab ? null : remainingTabs[0];
+            var activeTab = remainingDocumentTabs.FirstOrDefault(tab => IsActiveWindowDocumentTab(window, tab))
+                            ?? remainingDocumentTabs[0];
             remainingWindows.Add(window with
             {
-                OpenAssetTabs = remainingTabs,
-                ActiveBundleId = hasActiveTab ? window.ActiveBundleId : activeTab?.BundleId,
-                ActiveAssetId = hasActiveTab ? window.ActiveAssetId : activeTab?.AssetId
+                OpenDocumentTabs = remainingDocumentTabs,
+                OpenAssetTabs = remainingDocumentTabs
+                    .Select(static tab => tab.AssetTab)
+                    .Where(static tab => tab is not null)
+                    .Cast<WorkspaceAssetEditorWindowAssetTabDto>()
+                    .ToArray(),
+                ActiveDocumentKind = activeTab.Kind,
+                ActiveBundleId = GetBundleId(activeTab),
+                ActiveAssetId = activeTab.AssetTab?.AssetId,
+                ActiveSpineGroupId = activeTab.SpineGroupTab?.GroupId
             });
         }
 
         return remainingWindows;
     }
+
+    private static IReadOnlyList<WorkspaceAssetEditorWindowDocumentTabDto> GetWindowDocumentTabs(
+        WorkspaceAssetEditorWindowStateDto window)
+    {
+        return window.OpenDocumentTabs is { Count: > 0 } documentTabs
+            ? documentTabs
+            : window.OpenAssetTabs
+                .Select(static assetTab => new WorkspaceAssetEditorWindowDocumentTabDto(
+                    WorkspaceAssetEditorWindowDocumentTabDto.AssetKind,
+                    AssetTab: assetTab))
+                .ToArray();
+    }
+
+    private static bool IsActiveWindowDocumentTab(
+        WorkspaceAssetEditorWindowStateDto window,
+        WorkspaceAssetEditorWindowDocumentTabDto documentTab)
+    {
+        if (documentTab.AssetTab is { } assetTab)
+        {
+            return (string.IsNullOrWhiteSpace(window.ActiveDocumentKind) ||
+                    string.Equals(window.ActiveDocumentKind, WorkspaceAssetEditorWindowDocumentTabDto.AssetKind, StringComparison.Ordinal)) &&
+                   string.Equals(assetTab.BundleId, window.ActiveBundleId, StringComparison.Ordinal) &&
+                   string.Equals(assetTab.AssetId, window.ActiveAssetId, StringComparison.Ordinal);
+        }
+
+        return documentTab.SpineGroupTab is { } spineGroupTab &&
+               string.Equals(window.ActiveDocumentKind, WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind, StringComparison.Ordinal) &&
+               string.Equals(spineGroupTab.BundleId, window.ActiveBundleId, StringComparison.Ordinal) &&
+               string.Equals(spineGroupTab.GroupId, window.ActiveSpineGroupId, StringComparison.Ordinal);
+    }
+
+    private static string? GetBundleId(WorkspaceAssetEditorWindowDocumentTabDto documentTab) =>
+        documentTab.AssetTab?.BundleId ?? documentTab.SpineGroupTab?.BundleId;
 }
