@@ -102,6 +102,30 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(0d, viewModel.PanY);
     }
 
+    [Fact]
+    public void ZoomAndPan_ShouldRaiseVisualLayoutPropertyChanges()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        var changedProperties = new List<string?>();
+        viewModel.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+        viewModel.Apply(
+            CreateImageSourceStub(),
+            imagePixelWidth: 100,
+            imagePixelHeight: 50,
+            overlayDisplayState: null,
+            focusPreviewDisplayState: null);
+        viewModel.UpdateViewport(100d, 50d);
+        changedProperties.Clear();
+
+        viewModel.ZoomBy(2d);
+        viewModel.PanBy(10d, 5d);
+
+        Assert.Contains(nameof(InspectorPreviewImageViewModel.FullImageX), changedProperties);
+        Assert.Contains(nameof(InspectorPreviewImageViewModel.FullImageY), changedProperties);
+        Assert.Contains(nameof(InspectorPreviewImageViewModel.FullImageWidth), changedProperties);
+        Assert.Contains(nameof(InspectorPreviewImageViewModel.FullImageHeight), changedProperties);
+    }
+
     private static ImageSource CreateImageSourceStub()
     {
         return (BitmapImage)RuntimeHelpers.GetUninitializedObject(typeof(BitmapImage));

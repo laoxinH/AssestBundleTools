@@ -20,6 +20,7 @@ public sealed partial class InspectorMeshPreviewSurfaceView : UserControl
     private byte[]? _textureOverlayBitmapSource;
     private bool _isLoadingTextureOverlayBitmap;
     private bool _isDragging;
+    private bool _isBindingsUpdateQueued;
     private Point _lastPointerPosition;
 
     public static readonly DependencyProperty ViewModelProperty =
@@ -53,12 +54,14 @@ public sealed partial class InspectorMeshPreviewSurfaceView : UserControl
 
         view.DetachObservedViewModel(args.OldValue as InspectorPreviewMeshViewModel);
         view.AttachObservedViewModel(args.NewValue as InspectorPreviewMeshViewModel);
+        view.UpdateBindingsNow();
         view.InvalidateMeshCanvas();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         AttachObservedViewModel(ViewModel);
+        UpdateBindingsNow();
         InvalidateMeshCanvas();
     }
 
@@ -93,6 +96,8 @@ public sealed partial class InspectorMeshPreviewSurfaceView : UserControl
 
     private void OnObservedViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        QueueBindingsUpdate();
+
         if (e.PropertyName == nameof(InspectorPreviewMeshViewModel.TextureOverlayContent))
         {
             ClearTextureOverlayBitmap();
@@ -118,6 +123,38 @@ public sealed partial class InspectorMeshPreviewSurfaceView : UserControl
         }
 
         DispatcherQueue.TryEnqueue(InvalidateMeshCanvas);
+    }
+
+    private void UpdateBindingsNow()
+    {
+        if (!DispatcherQueue.HasThreadAccess)
+        {
+            DispatcherQueue.TryEnqueue(UpdateBindingsNow);
+            return;
+        }
+
+        _isBindingsUpdateQueued = false;
+        Bindings.Update();
+    }
+
+    private void QueueBindingsUpdate()
+    {
+        if (!DispatcherQueue.HasThreadAccess)
+        {
+            DispatcherQueue.TryEnqueue(QueueBindingsUpdate);
+            return;
+        }
+
+        if (_isBindingsUpdateQueued)
+        {
+            return;
+        }
+
+        _isBindingsUpdateQueued = true;
+        if (!DispatcherQueue.TryEnqueue(UpdateBindingsNow))
+        {
+            _isBindingsUpdateQueued = false;
+        }
     }
 
     private void OnMeshCanvasSizeChanged(object sender, SizeChangedEventArgs e)

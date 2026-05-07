@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -14,6 +15,7 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
 
     private InspectorPreviewImageViewModel? _observedViewModel;
     private bool _isDragging;
+    private bool _isBindingsUpdateQueued;
     private Point _lastPointerPosition;
 
     public static readonly DependencyProperty ViewModelProperty =
@@ -47,12 +49,14 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
 
         view.DetachObservedViewModel(args.OldValue as InspectorPreviewImageViewModel);
         view.AttachObservedViewModel(args.NewValue as InspectorPreviewImageViewModel);
+        view.UpdateBindingsNow();
         view.RefreshPreviewImageViewport();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         AttachObservedViewModel(ViewModel);
+        UpdateBindingsNow();
         RefreshPreviewImageViewport();
     }
 
@@ -71,6 +75,7 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
 
         _observedViewModel = viewModel;
         _observedViewModel.PropertyChanged += OnObservedViewModelPropertyChanged;
+        _observedViewModel.DisplayOptions.PropertyChanged += OnObservedDisplayOptionsPropertyChanged;
     }
 
     private void DetachObservedViewModel(InspectorPreviewImageViewModel? viewModel)
@@ -81,11 +86,14 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
         }
 
         _observedViewModel.PropertyChanged -= OnObservedViewModelPropertyChanged;
+        _observedViewModel.DisplayOptions.PropertyChanged -= OnObservedDisplayOptionsPropertyChanged;
         _observedViewModel = null;
     }
 
-    private void OnObservedViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnObservedViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        QueueBindingsUpdate();
+
         if (e.PropertyName is not (
             nameof(InspectorPreviewImageViewModel.ImageSource) or
             nameof(InspectorPreviewImageViewModel.CanvasWidth) or
@@ -101,6 +109,11 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
         }
 
         DispatcherQueue.TryEnqueue(RefreshPreviewImageViewport);
+    }
+
+    private void OnObservedDisplayOptionsPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        QueueBindingsUpdate();
     }
 
     private void OnPreviewImageViewportHostSizeChanged(object sender, SizeChangedEventArgs e)
@@ -174,6 +187,38 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
             new PreviewImageViewportChangedEventArgs(
                 PreviewImageViewportHost.ActualWidth,
                 PreviewImageViewportHost.ActualHeight));
+    }
+
+    private void UpdateBindingsNow()
+    {
+        if (!DispatcherQueue.HasThreadAccess)
+        {
+            DispatcherQueue.TryEnqueue(UpdateBindingsNow);
+            return;
+        }
+
+        _isBindingsUpdateQueued = false;
+        Bindings.Update();
+    }
+
+    private void QueueBindingsUpdate()
+    {
+        if (!DispatcherQueue.HasThreadAccess)
+        {
+            DispatcherQueue.TryEnqueue(QueueBindingsUpdate);
+            return;
+        }
+
+        if (_isBindingsUpdateQueued)
+        {
+            return;
+        }
+
+        _isBindingsUpdateQueued = true;
+        if (!DispatcherQueue.TryEnqueue(UpdateBindingsNow))
+        {
+            _isBindingsUpdateQueued = false;
+        }
     }
 }
 

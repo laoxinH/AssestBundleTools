@@ -39,7 +39,7 @@ public sealed partial class InspectorPreviewSurfaceView
 
     private void RefreshPreviewSurfaceHeightBinding()
     {
-        Bindings.Update();
+        UpdateBindingsNow();
     }
 
     private static double NormalizeFixedPreviewSurfaceHeight(double fixedPreviewSurfaceHeight)

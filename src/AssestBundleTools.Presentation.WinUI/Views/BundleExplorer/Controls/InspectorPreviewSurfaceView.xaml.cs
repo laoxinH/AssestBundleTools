@@ -13,6 +13,7 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
     private MediaPlayer? _attachedAudioPlayer;
     private InspectorPreviewViewModel? _observedPreviewViewModel;
     private bool _isUpdatingAudioSliderValue;
+    private bool _isBindingsUpdateQueued;
 
     public static readonly DependencyProperty ViewModelProperty =
         DependencyProperty.Register(
@@ -53,7 +54,7 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
 
         view.DetachObservedPreviewViewModel((args.OldValue as InspectorPanelViewModel)?.Preview);
         view.AttachObservedPreviewViewModel((args.NewValue as InspectorPanelViewModel)?.Preview);
-        view.RefreshPreviewSurfaceHeightBinding();
+        view.UpdateBindingsNow();
     }
 
     private void ApplyLocalizedText()
@@ -76,6 +77,7 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
     {
         AttachAudioPlayer(AudioPreviewPlayer.MediaPlayer);
         AttachObservedPreviewViewModel(ViewModel?.Preview);
+        UpdateBindingsNow();
         RefreshAudioTransportState();
     }
 
@@ -127,6 +129,8 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
 
     private void HandleObservedPreviewPropertyChanged(string? propertyName)
     {
+        QueueBindingsUpdate();
+
         if (propertyName is
             nameof(InspectorPreviewViewModel.PreviewAudioSource) or
             nameof(InspectorPreviewViewModel.PreviewAudioVisibility))
@@ -154,11 +158,16 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
 
         if (DispatcherQueue.HasThreadAccess)
         {
+            QueueBindingsUpdate();
             RefreshImageActionToolTips();
             return;
         }
 
-        DispatcherQueue.TryEnqueue(RefreshImageActionToolTips);
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            QueueBindingsUpdate();
+            RefreshImageActionToolTips();
+        });
     }
 
     private void OnObservedPreviewMeshPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -176,11 +185,48 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
 
         if (DispatcherQueue.HasThreadAccess)
         {
+            QueueBindingsUpdate();
             RefreshMeshActionToolTips();
             return;
         }
 
-        DispatcherQueue.TryEnqueue(RefreshMeshActionToolTips);
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            QueueBindingsUpdate();
+            RefreshMeshActionToolTips();
+        });
+    }
+
+    private void UpdateBindingsNow()
+    {
+        if (!DispatcherQueue.HasThreadAccess)
+        {
+            DispatcherQueue.TryEnqueue(UpdateBindingsNow);
+            return;
+        }
+
+        _isBindingsUpdateQueued = false;
+        Bindings.Update();
+    }
+
+    private void QueueBindingsUpdate()
+    {
+        if (!DispatcherQueue.HasThreadAccess)
+        {
+            DispatcherQueue.TryEnqueue(QueueBindingsUpdate);
+            return;
+        }
+
+        if (_isBindingsUpdateQueued)
+        {
+            return;
+        }
+
+        _isBindingsUpdateQueued = true;
+        if (!DispatcherQueue.TryEnqueue(UpdateBindingsNow))
+        {
+            _isBindingsUpdateQueued = false;
+        }
     }
 
     private void OnOpenPreviewLocationButtonClick(object sender, RoutedEventArgs e)
