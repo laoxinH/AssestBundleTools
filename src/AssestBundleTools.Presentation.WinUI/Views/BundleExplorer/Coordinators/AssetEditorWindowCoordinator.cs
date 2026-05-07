@@ -82,7 +82,10 @@ public sealed partial class BundleExplorerPage
                 return;
             }
 
-            var promptKey = CreatePendingRestorePromptKey(restorePrompt.PendingWindows);
+            RefreshPendingAssetEditorWindowConflictState();
+            var promptKey = CreatePendingRestorePromptKey(
+                restorePrompt.PendingWindows,
+                restorePrompt.PendingConflictAssetTabCount);
             if (string.Equals(_lastPromptedRestoreSnapshotKey, promptKey, StringComparison.Ordinal))
             {
                 return;
@@ -130,6 +133,8 @@ public sealed partial class BundleExplorerPage
                 return Task.CompletedTask;
             }
 
+            var openAssetKeys = CaptureOpenAssetKeys();
+            _owner.ViewModel.AssetEditorWindowRestorePrompt.ReplacePotentialConflictAssetKeys(openAssetKeys);
             var pendingWindows = _owner.ViewModel.AssetEditorWindowRestorePrompt.TakePendingSnapshots();
             if (pendingWindows.Count == 0)
             {
@@ -140,8 +145,11 @@ public sealed partial class BundleExplorerPage
             {
                 var restorePlan = AssetEditorWindowRestorePlanner.CreatePlan(
                     pendingWindows,
-                    CanRestoreAssetTab);
-                var remainingPendingWindows = restorePlan.PendingUnavailableWindows.ToList();
+                    CanRestoreAssetTab,
+                    openAssetKeys);
+                var remainingPendingWindows = restorePlan.PendingUnavailableWindows
+                    .Concat(restorePlan.PendingConflictedWindows)
+                    .ToList();
                 var restoredWindowCount = 0;
                 foreach (var pendingWindow in restorePlan.RestorableWindows)
                 {
@@ -159,12 +167,18 @@ public sealed partial class BundleExplorerPage
                 }
 
                 _owner.ViewModel.AssetEditorWindowRestorePrompt.ReplacePendingSnapshots(remainingPendingWindows);
+                RefreshPendingAssetEditorWindowConflictState();
                 RequestWindowStatePersistence();
-                PublishRestoreResult(restoredWindowCount, remainingPendingWindows.Count);
+                AssetEditorWindowRestoreFeedbackPresenter.Publish(
+                    restoredWindowCount,
+                    restorePlan.PendingUnavailableWindows.Count,
+                    restorePlan.PendingConflictedWindows.Count,
+                    CountAssetTabs(restorePlan.PendingConflictedWindows));
             }
             catch
             {
                 _owner.ViewModel.AssetEditorWindowRestorePrompt.ReplacePendingSnapshots(pendingWindows);
+                RefreshPendingAssetEditorWindowConflictState();
                 RequestWindowStatePersistence();
                 throw;
             }
@@ -261,6 +275,7 @@ public sealed partial class BundleExplorerPage
         private void ClearPendingAssetEditorWindowRestoreState()
         {
             _owner.ViewModel.AssetEditorWindowRestorePrompt.Clear();
+            _owner.ViewModel.AssetEditorWindowRestorePrompt.ReplacePotentialConflictAssetKeys(null);
             RequestWindowStatePersistence();
         }
 
@@ -369,15 +384,43 @@ public sealed partial class BundleExplorerPage
             return _windowStateStore.CaptureOpenWindowMetadata();
         }
 
+        private IReadOnlySet<string> CaptureOpenAssetKeys()
+        {
+            var openAssetKeys = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var bundleTab in _owner.ViewModel.DocumentWorkspace.BundleTabs)
+            {
+                foreach (var assetTab in bundleTab.AssetTabs)
+                {
+                    AddAssetKey(openAssetKeys, assetTab.BundleId.Value, assetTab.AssetId.Value);
+                }
+            }
+
+            foreach (var window in CaptureCurrentOpenWindowMetadata())
+            {
+                foreach (var assetTab in window.OpenAssetTabs)
+                {
+                    AddAssetKey(openAssetKeys, assetTab.BundleId, assetTab.AssetId);
+                }
+            }
+
+            return openAssetKeys;
+        }
+
+        private void RefreshPendingAssetEditorWindowConflictState()
+        {
+            _owner.ViewModel.AssetEditorWindowRestorePrompt.ReplacePotentialConflictAssetKeys(CaptureOpenAssetKeys());
+        }
+
         private void RequestWindowStatePersistence()
         {
             _owner.ViewModel.RequestAssetEditorWindowStatePersistence();
         }
 
         private static string CreatePendingRestorePromptKey(
-            IReadOnlyList<WorkspaceAssetEditorWindowStateDto> pendingWindows)
+            IReadOnlyList<WorkspaceAssetEditorWindowStateDto> pendingWindows,
+            int conflictedAssetTabCount)
         {
-            return string.Join(
+            var snapshotKey = string.Join(
                 "|",
                 pendingWindows.Select(static window =>
                     string.Concat(
@@ -388,6 +431,10 @@ public sealed partial class BundleExplorerPage
                         window.ActiveAssetId,
                         ":",
                         window.OpenAssetTabs.Count.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+            return string.Concat(
+                snapshotKey,
+                ":conflicts:",
+                conflictedAssetTabCount.ToString(System.Globalization.CultureInfo.InvariantCulture));
         }
 
         private AssetDocumentGroupTransfer? TryCreateRestoredDocumentGroup(
@@ -446,45 +493,16 @@ public sealed partial class BundleExplorerPage
                    _owner.ViewModel.BundlePane.FindBundleNode(new BundleId(assetTabState.BundleId)) is not null;
         }
 
-        private static void PublishRestoreResult(int restoredWindowCount, int unavailableWindowCount)
+        private static void AddAssetKey(HashSet<string> assetKeys, string? bundleId, string? assetId)
         {
-            if (restoredWindowCount == 0 && unavailableWindowCount == 0)
+            if (AssetDocumentIdentityKey.TryCreate(bundleId, assetId, out var assetKey))
             {
-                return;
+                assetKeys.Add(assetKey);
             }
-
-            var localizationService = App.CurrentApp.LocalizationService;
-            var notificationService = App.CurrentApp.AppNotificationService;
-            var logService = App.CurrentApp.AppLogService;
-
-            string message;
-            string title;
-            AppNotificationSeverity severity;
-            if (restoredWindowCount > 0 && unavailableWindowCount == 0)
-            {
-                message = localizationService.GetFormattedString(
-                    ResourceKeys.AssetEditorWindowRestorePendingRestoredFormat,
-                    restoredWindowCount);
-                title = localizationService.GetRequiredString(ResourceKeys.AppNotificationSuccessTitle);
-                severity = AppNotificationSeverity.Success;
-                logService.AppendInfo(message);
-            }
-            else
-            {
-                message = restoredWindowCount > 0
-                    ? localizationService.GetFormattedString(
-                        ResourceKeys.AssetEditorWindowRestorePendingPartialFormat,
-                        restoredWindowCount,
-                        unavailableWindowCount)
-                    : localizationService.GetFormattedString(
-                        ResourceKeys.AssetEditorWindowRestorePendingUnavailableFormat,
-                        unavailableWindowCount);
-                title = localizationService.GetRequiredString(ResourceKeys.AppNotificationWarningTitle);
-                severity = AppNotificationSeverity.Warning;
-                logService.AppendWarning(message);
-            }
-
-            notificationService.Show(title, message, severity);
         }
+
+        private static int CountAssetTabs(IReadOnlyList<WorkspaceAssetEditorWindowStateDto> windows) =>
+            windows.Sum(static window => window.OpenAssetTabs.Count);
+
     }
 }

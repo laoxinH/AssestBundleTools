@@ -438,10 +438,14 @@ public static class ResourceKeys
     public const string AssetEditorWindowRestorePendingToolTipFormat = "AssetEditorWindow.RestorePending.ToolTip.Format";
     public const string AssetEditorWindowRestorePendingRestoredFormat = "AssetEditorWindow.RestorePending.Restored.Format";
     public const string AssetEditorWindowRestorePendingPartialFormat = "AssetEditorWindow.RestorePending.Partial.Format";
+    public const string AssetEditorWindowRestorePendingPartialWithConflictsFormat = "AssetEditorWindow.RestorePending.PartialWithConflicts.Format";
     public const string AssetEditorWindowRestorePendingUnavailableFormat = "AssetEditorWindow.RestorePending.Unavailable.Format";
+    public const string AssetEditorWindowRestorePendingBlockedWithConflictsFormat = "AssetEditorWindow.RestorePending.BlockedWithConflicts.Format";
     public const string AssetEditorWindowRestorePendingDialogTitle = "AssetEditorWindow.RestorePending.Dialog.Title";
     public const string AssetEditorWindowRestorePendingDialogDescriptionFormat = "AssetEditorWindow.RestorePending.Dialog.Description.Format";
     public const string AssetEditorWindowRestorePendingDialogDescriptionWithDraftsFormat = "AssetEditorWindow.RestorePending.Dialog.DescriptionWithDrafts.Format";
+    public const string AssetEditorWindowRestorePendingDialogDescriptionWithConflictsFormat = "AssetEditorWindow.RestorePending.Dialog.DescriptionWithConflicts.Format";
+    public const string AssetEditorWindowRestorePendingDialogDescriptionWithDraftsAndConflictsFormat = "AssetEditorWindow.RestorePending.Dialog.DescriptionWithDraftsAndConflicts.Format";
     public const string AssetEditorWindowRestorePendingDialogPrimaryButton = "AssetEditorWindow.RestorePending.Dialog.PrimaryButton";
     public const string AssetEditorWindowRestorePendingDialogSecondaryButton = "AssetEditorWindow.RestorePending.Dialog.SecondaryButton";
     public const string AssetEditorWindowRestorePendingDialogCloseButton = "AssetEditorWindow.RestorePending.Dialog.CloseButton";

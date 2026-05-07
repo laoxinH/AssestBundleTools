@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 
 namespace AssestBundleTools.Presentation.Tests.Views;
@@ -51,6 +52,35 @@ public sealed class AssetEditorWindowRestorePlannerTests
     }
 
     [Fact]
+    public void CreatePlan_ShouldKeepAlreadyOpenAssetsPendingAsConflicts()
+    {
+        var plan = AssetEditorWindowRestorePlanner.CreatePlan(
+        [
+            CreateWindow(
+                windowStateId: 11,
+                activeBundleId: "bundle-a",
+                activeAssetId: "asset-open",
+                CreateAssetTab("bundle-a", "asset-open"),
+                CreateAssetTab("bundle-a", "asset-new"),
+                CreateAssetTab("bundle-a", "asset-new"))
+        ],
+        static _ => true,
+        new HashSet<string>(StringComparer.Ordinal)
+        {
+            AssetDocumentIdentityKey.Create("bundle-a", "asset-open")
+        });
+
+        var restorableWindow = Assert.Single(plan.RestorableWindows);
+        var conflictedWindow = Assert.Single(plan.PendingConflictedWindows);
+
+        Assert.Equal("asset-new", Assert.Single(restorableWindow.OpenAssetTabs).AssetId);
+        Assert.Equal("asset-new", restorableWindow.ActiveAssetId);
+        Assert.Equal(["asset-open", "asset-new"], conflictedWindow.OpenAssetTabs.Select(static tab => tab.AssetId));
+        Assert.Equal("asset-open", conflictedWindow.ActiveAssetId);
+        Assert.Empty(plan.PendingUnavailableWindows);
+    }
+
+    [Fact]
     public void CreateRestoredLayout_ShouldRejectTooSmallLayout()
     {
         var layout = AssetEditorWindowRestorePlanner.CreateRestoredLayout(
@@ -78,4 +108,3 @@ public sealed class AssetEditorWindowRestorePlannerTests
         string assetId) =>
         new(bundleId, assetId, assetId);
 }
-

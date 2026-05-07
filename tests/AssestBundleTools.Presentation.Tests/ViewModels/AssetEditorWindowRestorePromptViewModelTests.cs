@@ -46,6 +46,10 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
                 ActiveBundleId: null,
                 ActiveAssetId: null)
         ]);
+        prompt.ReplacePotentialConflictAssetKeys(
+        [
+            AssetDocumentIdentityKey.Create("bundle-a", "asset-2")
+        ]);
 
         var pendingWindow = Assert.Single(prompt.PendingWindows);
         Assert.Equal(2, pendingWindow.WindowStateId);
@@ -54,6 +58,7 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
         Assert.Equal(1, prompt.PendingWindowCount);
         Assert.Equal(2, prompt.PendingAssetTabCount);
         Assert.Equal(1, prompt.PendingDraftTabCount);
+        Assert.Equal(1, prompt.PendingConflictAssetTabCount);
         Assert.Equal(Visibility.Visible, prompt.PendingRestoreVisibility);
         Assert.Equal(
             $"{ResourceKeys.AssetEditorWindowRestorePendingButtonFormat}:1",
@@ -62,7 +67,35 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
             $"{ResourceKeys.AssetEditorWindowRestorePendingToolTipFormat}:1|2",
             prompt.RestoreToolTip);
         Assert.Equal(
-            $"{ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionWithDraftsFormat}:1|2|1",
+            $"{ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionWithDraftsAndConflictsFormat}:1|2|1|1",
+            prompt.RestoreDialogDescription);
+    }
+
+    [Fact]
+    public void RestoreDialogDescription_ShouldUseConflictText_WhenOnlyConflictsExist()
+    {
+        var prompt = new AssetEditorWindowRestorePromptViewModel(new TestLocalizationService());
+        prompt.ReplacePendingSnapshots(
+        [
+            new WorkspaceAssetEditorWindowStateDto(
+                WindowStateId: 5,
+                Layout: new WorkspaceAssetEditorWindowLayoutDto(120, 90, 1320, 820),
+                OpenAssetTabs:
+                [
+                    new WorkspaceAssetEditorWindowAssetTabDto("bundle-a", "asset-1", "Asset 1")
+                ],
+                ActiveBundleId: "bundle-a",
+                ActiveAssetId: "asset-1")
+        ]);
+
+        prompt.ReplacePotentialConflictAssetKeys(
+        [
+            AssetDocumentIdentityKey.Create("bundle-a", "asset-1")
+        ]);
+
+        Assert.Equal(1, prompt.PendingConflictAssetTabCount);
+        Assert.Equal(
+            $"{ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionWithConflictsFormat}:1|1|1",
             prompt.RestoreDialogDescription);
     }
 
@@ -91,6 +124,7 @@ public sealed class AssetEditorWindowRestorePromptViewModelTests
         Assert.Equal(0, prompt.PendingWindowCount);
         Assert.Equal(0, prompt.PendingAssetTabCount);
         Assert.Equal(0, prompt.PendingDraftTabCount);
+        Assert.Equal(0, prompt.PendingConflictAssetTabCount);
         Assert.Equal(Visibility.Collapsed, prompt.PendingRestoreVisibility);
         Assert.Equal(
             $"{ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionFormat}:0|0",

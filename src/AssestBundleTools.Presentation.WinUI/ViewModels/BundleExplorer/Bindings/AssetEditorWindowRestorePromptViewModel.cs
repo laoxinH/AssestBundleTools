@@ -12,6 +12,7 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
 {
     private readonly ILocalizationService _localizationService;
     private IReadOnlyList<WorkspaceAssetEditorWindowStateDto> _pendingWindows = Array.Empty<WorkspaceAssetEditorWindowStateDto>();
+    private IReadOnlySet<string> _potentialConflictAssetKeys = new HashSet<string>(StringComparer.Ordinal);
 
     public AssetEditorWindowRestorePromptViewModel(ILocalizationService localizationService)
     {
@@ -29,6 +30,9 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
     public int PendingDraftTabCount => _pendingWindows.Sum(static window =>
         window.OpenAssetTabs.Count(static assetTab => HasDraftReference(assetTab.EditDraftReference)));
 
+    public int PendingConflictAssetTabCount => _pendingWindows.Sum(window =>
+        window.OpenAssetTabs.Count(assetTab => IsPotentialConflict(assetTab)));
+
     public Visibility PendingRestoreVisibility => HasPendingWindows
         ? Visibility.Visible
         : Visibility.Collapsed;
@@ -42,16 +46,37 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
         PendingWindowCount,
         PendingAssetTabCount);
 
-    public string RestoreDialogDescription => PendingDraftTabCount > 0
-        ? _localizationService.GetFormattedString(
+    public string RestoreDialogDescription => (PendingDraftTabCount, PendingConflictAssetTabCount) switch
+    {
+        (> 0, > 0) => _localizationService.GetFormattedString(
+            ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionWithDraftsAndConflictsFormat,
+            PendingWindowCount,
+            PendingAssetTabCount,
+            PendingDraftTabCount,
+            PendingConflictAssetTabCount),
+        (> 0, _) => _localizationService.GetFormattedString(
             ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionWithDraftsFormat,
             PendingWindowCount,
             PendingAssetTabCount,
-            PendingDraftTabCount)
-        : _localizationService.GetFormattedString(
+            PendingDraftTabCount),
+        (_, > 0) => _localizationService.GetFormattedString(
+            ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionWithConflictsFormat,
+            PendingWindowCount,
+            PendingAssetTabCount,
+            PendingConflictAssetTabCount),
+        _ => _localizationService.GetFormattedString(
             ResourceKeys.AssetEditorWindowRestorePendingDialogDescriptionFormat,
             PendingWindowCount,
-            PendingAssetTabCount);
+            PendingAssetTabCount)
+    };
+
+    internal void ReplacePotentialConflictAssetKeys(IEnumerable<string>? assetKeys)
+    {
+        _potentialConflictAssetKeys = assetKeys is null
+            ? new HashSet<string>(StringComparer.Ordinal)
+            : new HashSet<string>(assetKeys, StringComparer.Ordinal);
+        NotifyRestoreStateChanged();
+    }
 
     public void ReplacePendingSnapshots(IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? snapshots)
     {
@@ -85,6 +110,7 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
         OnPropertyChanged(nameof(PendingWindowCount));
         OnPropertyChanged(nameof(PendingAssetTabCount));
         OnPropertyChanged(nameof(PendingDraftTabCount));
+        OnPropertyChanged(nameof(PendingConflictAssetTabCount));
         OnPropertyChanged(nameof(PendingRestoreVisibility));
         OnPropertyChanged(nameof(RestoreButtonText));
         OnPropertyChanged(nameof(RestoreToolTip));
@@ -126,13 +152,12 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
         var restoredAssetKeys = new HashSet<string>(StringComparer.Ordinal);
         foreach (var assetTab in assetTabs)
         {
-            if (string.IsNullOrWhiteSpace(assetTab.BundleId) ||
-                string.IsNullOrWhiteSpace(assetTab.AssetId))
+            if (!AssetDocumentIdentityKey.TryCreate(assetTab.BundleId, assetTab.AssetId, out var assetKey))
             {
                 continue;
             }
 
-            if (!restoredAssetKeys.Add($"{assetTab.BundleId}\n{assetTab.AssetId}"))
+            if (!restoredAssetKeys.Add(assetKey))
             {
                 continue;
             }
@@ -142,6 +167,10 @@ public sealed class AssetEditorWindowRestorePromptViewModel : ObservableObject
 
         return normalizedTabs;
     }
+
+    private bool IsPotentialConflict(WorkspaceAssetEditorWindowAssetTabDto assetTab) =>
+        AssetDocumentIdentityKey.TryCreate(assetTab.BundleId, assetTab.AssetId, out var assetKey) &&
+        _potentialConflictAssetKeys.Contains(assetKey);
 
     private static bool HasDraftReference(WorkspaceAssetEditDraftReferenceDto? draftReference) =>
         draftReference is not null &&
