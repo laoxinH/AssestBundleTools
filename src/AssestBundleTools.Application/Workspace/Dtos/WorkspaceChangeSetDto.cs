@@ -6,11 +6,16 @@ namespace AssestBundleTools.Application.Workspace.Dtos;
 public sealed record WorkspaceChangeSetDto(
     string WorkspaceKey,
     DateTimeOffset UpdatedAtUtc,
-    IReadOnlyList<WorkspaceChangeRecordDto> Changes)
+    IReadOnlyList<WorkspaceChangeRecordDto> Changes,
+    IReadOnlyList<WorkspaceAssetEditDraftDescriptorDto>? EditDrafts = null)
 {
     public static WorkspaceChangeSetDto Empty(string workspaceKey)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workspaceKey);
-        return new WorkspaceChangeSetDto(workspaceKey, DateTimeOffset.UtcNow, Array.Empty<WorkspaceChangeRecordDto>());
+        return new WorkspaceChangeSetDto(
+            workspaceKey,
+            DateTimeOffset.UtcNow,
+            Array.Empty<WorkspaceChangeRecordDto>(),
+            Array.Empty<WorkspaceAssetEditDraftDescriptorDto>());
     }
 }

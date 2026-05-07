@@ -317,7 +317,7 @@ Presentation 层保留两个协同层次：
 
 其中 `openAssetEditorWindows[]` 只记录独立资源编辑窗口的轻量页面级状态，例如窗口位置 / 大小、窗口内资产文档标签顺序、活动资产、检查器分段，以及图片 / Mesh 预览浏览选项；不保存真实资源详情、预览缓存载荷、替换结果或编辑草稿内容。资产文档标签可以携带与主窗口同形状的轻量草稿引用。应用重新打开工作区时当前会读取该字段并弹出一次可控恢复提示；如果存在轻量草稿引用，提示会显示带草稿标记的标签数量，并允许用户决定本次成功打开的标签是否带回该标记，同时在弹窗中显示草稿恢复候选预检摘要；如果待恢复标签已在主窗口或现有独立窗口中打开，提示和工具栏入口会显示冲突标签数量，并引导用户关闭对应标签后再恢复。用户选择稍后时仍可通过工具栏入口恢复，但系统仍不自动创建独立资源编辑窗口。恢复执行会按当前资源包可用性和已打开资产身份拆分快照：可恢复项打开，不可恢复或冲突项继续保留为待恢复状态，用户可在提示中显式忽略；窗口 bounds 应在应用前做最小尺寸和当前显示器工作区安全归位。
 
-编辑草稿的真实状态不写入 `openAssetTabs[]` 或 `openAssetEditorWindows[]`。当前 Application 层只提供最小草稿恢复候选读模型：`IAssetEditDraftStore` 按 `workspaceKey + draftId + draftMode` 读取草稿描述元数据，`GetAssetEditDraftRestorePlanHandler` 再用轻量引用里的 `SourceFingerprint` 判断该标记是可恢复、缺失、来源不匹配、已过期还是引用无效。Presentation 弹窗当前会在显示前通过 `AssetEditDraftRestorePlanGateway` 读取该计划，并只把数量摘要用于恢复提示和重复弹窗判定；当前组合根的草稿元数据仓储仍为空实现，所以有效轻量引用会先落入缺失诊断。该流程不读取真实草稿内容，也不提交、丢弃或合并草稿；后续真实草稿队列和持久化实现应落在 `staging/changes` 或等价变更暂存层，继续与工作区轻量元数据分离。
+编辑草稿的真实状态不写入 `openAssetTabs[]` 或 `openAssetEditorWindows[]`。当前 Application 层只提供最小草稿恢复候选读模型：`IAssetEditDraftStore` 按 `workspaceKey + draftId + draftMode` 读取草稿描述元数据，`GetAssetEditDraftRestorePlanHandler` 再用轻量引用里的 `SourceFingerprint` 判断该标记是可恢复、缺失、来源不匹配、已过期还是引用无效。Presentation 弹窗当前会在显示前通过 `AssetEditDraftRestorePlanGateway` 读取该计划，并只把数量摘要用于恢复提示和重复弹窗判定；组合根已接入 `WorkspaceChangeSetAssetEditDraftStore`，从 `staging/changes/<workspaceKey>.json` 的 `editDrafts[]` 描述列表读取草稿元数据。该流程不读取真实草稿内容，也不提交、丢弃或合并草稿；后续真实草稿队列和持久化实现应继续落在 `staging/changes` 或等价变更暂存层，并与工作区轻量元数据分离。
 
 补充约束：
 
@@ -406,6 +406,7 @@ Presentation 层保留两个协同层次：
 - `workspaceKey`
 - `updatedAtUtc`
 - `changes[]`
+- `editDrafts[]`
 
 每个 `changes[]` 条目当前可先保持通用结构：
 
@@ -419,6 +420,18 @@ Presentation 层保留两个协同层次：
 - `outputPath`
 
 后续在真实保存链路稳定后，再按提取、工作区替换、文件替换拆成更细的专用模型。
+
+`editDrafts[]` 当前只保存草稿描述元数据，不保存草稿内容。字段包括：
+
+- `draftId`
+- `draftMode`
+- `sourceFingerprint`
+- `updatedAtUtc`
+- `expiresAtUtc`
+- `sourceDescription`
+- `summary`
+
+该列表服务于恢复提示里的候选预检：恢复提示只需要知道草稿标记是否仍可定位、是否与来源指纹匹配、是否过期，以及可展示的轻量说明。真实草稿内容、合并策略、确认 / 丢弃队列和保存应用语义仍由后续编辑器模型定义。
 
 ### 5.6 缓存失效规则
 
@@ -677,7 +690,7 @@ Presentation 层保留两个协同层次：
 2. 再评估是否需要顶层工作区切换器
 3. M9 当前已完成真实资产级读取、索引缓存复用、工作区级解密器自动识别、失败诊断、依赖深读与缓存诊断主链路收口
 4. 富预览扩展当前已完成 `AudioClip`、`Mesh` 第一版、`Material` 半可视化摘要、`AnimationClip` binding / 曲线摘要增强、`Font` 第一版半可视化摘要、`GameObject` 第一版信息浏览预览、`MonoBehaviour` 第一版信息浏览预览与 `AnimatorController` 第一版信息浏览预览；GameObject 已补上常见组件引用摘要和已解析资源跳转，MonoBehaviour 已补上脚本 / 字段 / 引用信息卡、字段分组、序列化容器摘要和已解析资源跳转，AnimatorController 已补上 `m_Controller` 常量区状态机摘要、AnimationClip 引用信息卡和已解析资源跳转；`SpriteAtlas` 继续按样本资源可用性回补；Spine 预览按“资源组视图 + atlas region overlay + 关联跳转”作为后续 2D 游戏聚合预览方向，不进入近期完整动画播放主线
-5. 资源编辑窗口模式按 [asset-editor-window-mode.md](asset-editor-window-mode.md) 分阶段推进：当前已完成命令式独立窗口 / 放回主窗口、标签拖拽与整组拖出 / 放回，以及“启动读取快照 + 弹窗确认 / 手动恢复入口 + 草稿候选预检摘要”这一轮窗口恢复闭环；后续重点转向更完整的布局恢复、冲突处理与真实编辑草稿队列
+5. 资源编辑窗口模式按 [asset-editor-window-mode.md](asset-editor-window-mode.md) 分阶段推进：当前已完成命令式独立窗口 / 放回主窗口、标签拖拽与整组拖出 / 放回，以及“启动读取快照 + 弹窗确认 / 手动恢复入口 + 草稿候选预检摘要 + 变更暂存描述读取”这一轮窗口恢复闭环；后续重点转向更完整的布局恢复、冲突处理与真实编辑草稿队列
 6. 最后再评估是否需要引入可分享工作区文件
 6. 工作区窗口模型当前已按“跨进程隔离优先 + formal/pending 双阶段注册”落地，并已补上 pending 注册 / 页面级失败回滚的首轮 `Presentation` 回归；后续若继续加强稳定性，更适合继续补跨进程窗口激活与重定向链路，而不是重新回退注册时机
 

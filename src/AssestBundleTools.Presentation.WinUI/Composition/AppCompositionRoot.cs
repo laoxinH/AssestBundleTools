@@ -138,8 +138,11 @@ internal static class AppCompositionRoot
         var getAssetBundleDecryptorCatalogEntriesHandler = new GetAssetBundleDecryptorCatalogEntriesHandler(assetBundleDecryptorCatalogStore);
         var upsertAssetBundleDecryptorHandler = new UpsertAssetBundleDecryptorHandler(assetBundleDecryptorCatalogStore);
         var deleteAssetBundleDecryptorHandler = new DeleteAssetBundleDecryptorHandler(assetBundleDecryptorCatalogStore);
+        var assetEditDraftStore = new WorkspaceChangeSetAssetEditDraftStore(
+            workspaceCatalogStore,
+            workspaceDataStoreFactory);
         var getAssetEditDraftRestorePlanHandler = new GetAssetEditDraftRestorePlanHandler(
-            new CompositionAssetEditDraftStore());
+            assetEditDraftStore);
 
         var workspaceExplorerGateway = new WorkspaceExplorerGateway(
             openWorkspaceHandler: openWorkspaceHandler,

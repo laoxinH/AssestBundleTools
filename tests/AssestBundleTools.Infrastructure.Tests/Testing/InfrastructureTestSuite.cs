@@ -30,6 +30,10 @@ internal static class InfrastructureTestSuite
             JsonWorkspaceMetadataStoreTests.Delete_ShouldRemoveSavedMetadataFile);
         await RunTestAsync(
             failures,
+            nameof(JsonWorkspaceChangeStoreTests.Save_ShouldRoundTripEditDraftDescriptors),
+            JsonWorkspaceChangeStoreTests.Save_ShouldRoundTripEditDraftDescriptors);
+        await RunTestAsync(
+            failures,
             nameof(JsonPreviewCacheStoreTests.Save_ShouldRoundTripDescriptorAndPayload),
             JsonPreviewCacheStoreTests.Save_ShouldRoundTripDescriptorAndPayload);
         await RunTestAsync(
