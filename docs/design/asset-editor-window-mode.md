@@ -316,7 +316,7 @@
 - Application 层已新增 `Editing` 草稿恢复候选契约：`IAssetEditDraftStore` 只读取草稿元数据，`GetAssetEditDraftRestorePlanHandler` 按工作区、草稿 id、模式和来源指纹把轻量引用解析为 `Restorable / Missing / SourceMismatch / Expired / InvalidReference`。该契约只用于后续恢复提示和诊断分流，不读取或暴露真实草稿内容。
 - Presentation 恢复弹窗当前已在显示前调用 `AssetEditDraftRestorePlanGateway` 做轻量预检，并在弹窗中显示可恢复、缺失、来源不匹配、已过期和引用无效的草稿引用数量；该预检会刷新提示文案、重复弹窗判定和后续可保留的草稿标记集合，不自动恢复草稿内容，也不改变用户是否主动恢复窗口的控制权。组合根已接入 `WorkspaceChangeSetAssetEditDraftStore`，从 `staging/changes/<workspaceKey>.json` 的 `editDrafts[]` 描述列表读取草稿元数据。
 - 当前仍不自动弹出独立资源编辑窗口，也不恢复最大化 / 最小化、显示器或真实编辑草稿内容；当预检计划可用时，草稿选项只决定本次成功打开的标签是否带回预检为可恢复的 `EditDraftReference` 标记，缺失、来源不匹配、已过期和引用无效的草稿标记不会重新挂回新标签。真实草稿确认 / 丢弃 / 恢复队列仍留给后续编辑器模型。
-- 当前打开资源详情、依赖跳转和新窗口打开入口会先检查主窗口与所有独立资源编辑窗口：如果目标资源已打开，则直接激活已有资产标签并把所在窗口置前；只有未命中现有标签时才继续创建新的资产标签或独立窗口。
+- 当前打开资源详情、依赖跳转和新窗口打开入口会先检查主窗口与所有独立资源编辑窗口：如果目标资源已打开，则直接激活并切换到已有资产标签，再把所在窗口置前；只有未命中现有标签时才继续创建新的资产标签或独立窗口。
 
 ## 16. 测试建议
 

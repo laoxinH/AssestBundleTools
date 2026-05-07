@@ -4,6 +4,7 @@ using AssestBundleTools.Presentation.WinUI.Views;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
@@ -149,6 +150,7 @@ internal sealed class AssetDocumentOpenConflictActivator
 
             await _owner.ViewModel.ActivateBundleTabAsync(resolution.BundleTab);
             await _owner.ViewModel.ActivateAssetDocumentTabAsync(resolution.AssetTab);
+            SynchronizeMainWindowSelection(resolution.BundleTab, resolution.AssetTab);
             TryBringMainWindowToFront();
             return true;
         }
@@ -162,6 +164,23 @@ internal sealed class AssetDocumentOpenConflictActivator
         return await editorWindows[resolution.EditorWindowIndex].TryActivateAssetDocumentTabAsync(
             bundleId,
             assetId);
+    }
+
+    private void SynchronizeMainWindowSelection(
+        BundleDocumentTabViewModel bundleTab,
+        AssetDocumentTabViewModel assetTab)
+    {
+        if (_owner.FindName("BundleTabView") is TabView bundleTabView &&
+            !ReferenceEquals(bundleTabView.SelectedItem, bundleTab))
+        {
+            bundleTabView.SelectedItem = bundleTab;
+        }
+
+        if (_owner.FindName("AssetDocumentTabView") is TabView assetDocumentTabView &&
+            !ReferenceEquals(assetDocumentTabView.SelectedItem, assetTab))
+        {
+            assetDocumentTabView.SelectedItem = assetTab;
+        }
     }
 
     private void TryBringMainWindowToFront()

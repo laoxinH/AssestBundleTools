@@ -60,6 +60,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         }
 
         await ViewModel.ActivateAssetDocumentTabAsync(assetTab);
+        SynchronizeSelection(assetTab);
         BringToFront();
         return true;
     }
@@ -381,7 +382,10 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         Title = ViewModel.WindowTitle;
     }
 
-    private void SynchronizeSelection()
+    private void SynchronizeSelection() =>
+        SynchronizeSelection(ViewModel.DocumentGroup.ActiveAssetTab);
+
+    private void SynchronizeSelection(AssetDocumentTabViewModel? activeAssetTab)
     {
         if (_isSynchronizingSelection)
         {
@@ -391,9 +395,9 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         _isSynchronizingSelection = true;
         try
         {
-            if (!ReferenceEquals(AssetEditorTabView.SelectedItem, ViewModel.DocumentGroup.ActiveAssetTab))
+            if (!ReferenceEquals(AssetEditorTabView.SelectedItem, activeAssetTab))
             {
-                AssetEditorTabView.SelectedItem = ViewModel.DocumentGroup.ActiveAssetTab;
+                AssetEditorTabView.SelectedItem = activeAssetTab;
             }
         }
         finally
