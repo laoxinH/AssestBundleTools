@@ -2,12 +2,8 @@ using System.ComponentModel;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Windows.Graphics;
-using WinRT.Interop;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 
@@ -19,9 +15,6 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
     private readonly Func<AssetEditorWindow, AssetDocumentTabViewModel, Task> _openAssetDocumentInNewWindowAsync;
     private readonly Func<AssetEditorWindow, Task> _openAssetDocumentGroupInNewWindowAsync;
     private readonly AssetEditorWindowAssetTabStateObserver _assetTabStateObserver;
-    private AppWindow? _appWindow;
-    private AssetEditorWindowLayoutSnapshot? _lastPublishedLayout;
-    private bool _isApplyingInitialLayout;
     private bool _isInitialized;
     private bool _isSynchronizingSelection;
 
@@ -49,41 +42,10 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 
     public AssetEditorWindowViewModel ViewModel { get; }
 
-    internal event Action<AssetEditorWindow, AssetEditorWindowLayoutSnapshot>? LayoutSnapshotChanged;
-
     internal event Action<AssetEditorWindow, AssetEditorWindowGroupSnapshot>? GroupSnapshotChanged;
 
     internal AssetEditorWindowGroupSnapshot CaptureGroupSnapshot() =>
         AssetEditorWindowGroupSnapshot.FromDocumentGroup(ViewModel.DocumentGroup);
-
-    internal bool TryCaptureLayoutSnapshot(out AssetEditorWindowLayoutSnapshot layout) =>
-        TryCaptureCurrentLayout(out layout);
-
-    internal void ApplyInitialLayout(AssetEditorWindowLayoutSnapshot layout)
-    {
-        if (_appWindow is null)
-        {
-            return;
-        }
-
-        try
-        {
-            _isApplyingInitialLayout = true;
-            _appWindow.MoveAndResize(new RectInt32(
-                layout.X,
-                layout.Y,
-                layout.Width,
-                layout.Height));
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Asset editor window layout restore failed: {ex}");
-        }
-        finally
-        {
-            _isApplyingInitialLayout = false;
-        }
-    }
 
     private async void OnContentRootLoaded(object sender, RoutedEventArgs e)
     {
@@ -370,65 +332,6 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         ViewModel.EmptyGroupRequested -= OnEmptyGroupRequested;
         Closed -= OnClosed;
         ViewModel.DocumentGroup.Clear();
-    }
-
-    private void TryInitializeWindowLayoutTracking()
-    {
-        try
-        {
-            var windowHandle = WindowNative.GetWindowHandle(this);
-            var windowId = Win32Interop.GetWindowIdFromWindow(windowHandle);
-            _appWindow = AppWindow.GetFromWindowId(windowId);
-            if (_appWindow is not null)
-            {
-                _appWindow.Changed += OnAppWindowChanged;
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Asset editor window layout tracking initialization failed: {ex}");
-        }
-    }
-
-    private void OnAppWindowChanged(AppWindow sender, AppWindowChangedEventArgs args)
-    {
-        if (_isApplyingInitialLayout ||
-            (!args.DidPositionChange && !args.DidSizeChange))
-        {
-            return;
-        }
-
-        PublishCurrentLayout();
-    }
-
-    private void PublishCurrentLayout()
-    {
-        if (!TryCaptureCurrentLayout(out var layout) ||
-            (_lastPublishedLayout is { } lastPublishedLayout && layout.Equals(lastPublishedLayout)))
-        {
-            return;
-        }
-
-        _lastPublishedLayout = layout;
-        LayoutSnapshotChanged?.Invoke(this, layout);
-    }
-
-    private bool TryCaptureCurrentLayout(out AssetEditorWindowLayoutSnapshot layout)
-    {
-        if (_appWindow is null)
-        {
-            layout = default;
-            return false;
-        }
-
-        var position = _appWindow.Position;
-        var size = _appWindow.Size;
-        layout = new AssetEditorWindowLayoutSnapshot(
-            position.X,
-            position.Y,
-            size.Width,
-            size.Height);
-        return true;
     }
 
     private void PublishCurrentGroupSnapshot()

@@ -4,6 +4,7 @@ using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -17,6 +18,7 @@ public sealed partial class BundleExplorerPage
         private readonly List<AssetEditorWindow> _windows = [];
         private readonly Dictionary<AssetEditorWindow, int> _windowStateIds = [];
         private readonly AssetEditorWindowStateStore _windowStateStore = new();
+        private string? _activeWorkspaceId;
         private string? _lastPromptedRestoreSnapshotKey;
         private bool _isRestorePromptDialogOpen;
 
@@ -94,6 +96,7 @@ public sealed partial class BundleExplorerPage
                     XamlRoot = _owner.XamlRoot,
                     Title = UiText.Get(ResourceKeys.AssetEditorWindowRestorePendingDialogTitle),
                     PrimaryButtonText = UiText.Get(ResourceKeys.AssetEditorWindowRestorePendingDialogPrimaryButton),
+                    SecondaryButtonText = UiText.Get(ResourceKeys.AssetEditorWindowRestorePendingDialogSecondaryButton),
                     CloseButtonText = UiText.Get(ResourceKeys.AssetEditorWindowRestorePendingDialogCloseButton),
                     DefaultButton = ContentDialogButton.Close,
                     Content = new TextBlock
@@ -110,6 +113,10 @@ public sealed partial class BundleExplorerPage
                 if (result == ContentDialogResult.Primary)
                 {
                     await RestorePendingAssetEditorWindowsAsync();
+                }
+                else if (result == ContentDialogResult.Secondary)
+                {
+                    ClearPendingAssetEditorWindowRestoreState();
                 }
             }
             finally
@@ -133,32 +140,59 @@ public sealed partial class BundleExplorerPage
 
             try
             {
+                var restorePlan = AssetEditorWindowRestorePlanner.CreatePlan(
+                    pendingWindows,
+                    CanRestoreAssetTab);
+                var remainingPendingWindows = restorePlan.PendingUnavailableWindows.ToList();
                 var restoredWindowCount = 0;
-                var unavailableWindowCount = 0;
-                foreach (var pendingWindow in pendingWindows)
+                foreach (var pendingWindow in restorePlan.RestorableWindows)
                 {
                     var restoredGroup = TryCreateRestoredDocumentGroup(pendingWindow);
                     if (restoredGroup is null)
                     {
-                        unavailableWindowCount++;
+                        remainingPendingWindows.Add(pendingWindow);
                         continue;
                     }
 
-                    var restoredLayout = CreateRestoredLayout(pendingWindow.Layout);
+                    var restoredLayout = AssetEditorWindowRestorePlanner.CreateRestoredLayout(pendingWindow.Layout);
                     var window = CreateAssetEditorWindow(restoredGroup, restoredLayout);
                     window.Activate();
                     restoredWindowCount++;
                 }
 
-                PublishRestoreResult(restoredWindowCount, unavailableWindowCount);
+                _owner.ViewModel.AssetEditorWindowRestorePrompt.ReplacePendingSnapshots(remainingPendingWindows);
+                RequestWindowStatePersistence();
+                PublishRestoreResult(restoredWindowCount, remainingPendingWindows.Count);
             }
             catch
             {
                 _owner.ViewModel.AssetEditorWindowRestorePrompt.ReplacePendingSnapshots(pendingWindows);
+                RequestWindowStatePersistence();
                 throw;
             }
 
             return Task.CompletedTask;
+        }
+
+        public void HandleWorkspaceShellPageStateChanged(
+            BundleExplorerPageStateChangedEventArgs<BundleExplorerWorkspaceShellPageStateChange> eventArgs)
+        {
+            ArgumentNullException.ThrowIfNull(eventArgs);
+
+            if (!eventArgs.ChangeFlags.HasFlag(BundleExplorerWorkspaceShellPageStateChange.WorkspaceAvailability))
+            {
+                return;
+            }
+
+            var nextWorkspaceId = _owner.ViewModel.WorkspaceShell.WorkspaceSummary?.WorkspaceId.Value;
+            if (string.Equals(_activeWorkspaceId, nextWorkspaceId, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            CloseAll();
+            _lastPromptedRestoreSnapshotKey = null;
+            _activeWorkspaceId = nextWorkspaceId;
         }
 
         private async Task OpenAssetDocumentInNewWindowFromEditorAsync(
@@ -224,6 +258,12 @@ public sealed partial class BundleExplorerPage
             _windows.Clear();
             _windowStateIds.Clear();
             _windowStateStore.Clear();
+        }
+
+        private void ClearPendingAssetEditorWindowRestoreState()
+        {
+            _owner.ViewModel.AssetEditorWindowRestorePrompt.Clear();
+            RequestWindowStatePersistence();
         }
 
         private void OnAssetEditorWindowClosed(object sender, WindowEventArgs args)
@@ -295,7 +335,7 @@ public sealed partial class BundleExplorerPage
                 viewModel,
                 OpenAssetDocumentInNewWindowFromEditorAsync,
                 OpenAssetDocumentGroupInNewWindowFromEditorAsync);
-            var initialLayout = preferredLayout is { } layout && CanRestoreLayout(layout)
+            var initialLayout = preferredLayout is { } layout && AssetEditorWindowLayoutSafety.CanRestoreSize(layout)
                 ? layout
                 : _windowStateStore.CreateNextWindowLayout();
             var windowStateId = _windowStateStore.RegisterWindow(
@@ -360,9 +400,7 @@ public sealed partial class BundleExplorerPage
             var restoredTabs = new List<AssetDocumentTabViewModel>(pendingWindow.OpenAssetTabs.Count);
             foreach (var assetTabState in pendingWindow.OpenAssetTabs)
             {
-                if (string.IsNullOrWhiteSpace(assetTabState.BundleId) ||
-                    string.IsNullOrWhiteSpace(assetTabState.AssetId) ||
-                    _owner.ViewModel.BundlePane.FindBundleNode(new BundleId(assetTabState.BundleId)) is null)
+                if (!CanRestoreAssetTab(assetTabState))
                 {
                     continue;
                 }
@@ -401,22 +439,12 @@ public sealed partial class BundleExplorerPage
             return new AssetDocumentGroupTransfer(restoredTabs, activeAssetTab);
         }
 
-        private static AssetEditorWindowLayoutSnapshot? CreateRestoredLayout(
-            WorkspaceAssetEditorWindowLayoutDto layout)
+        private bool CanRestoreAssetTab(WorkspaceAssetEditorWindowAssetTabDto assetTabState)
         {
-            var restoredLayout = new AssetEditorWindowLayoutSnapshot(
-                layout.X,
-                layout.Y,
-                layout.Width,
-                layout.Height);
-            return CanRestoreLayout(restoredLayout)
-                ? restoredLayout
-                : null;
+            return !string.IsNullOrWhiteSpace(assetTabState.BundleId) &&
+                   !string.IsNullOrWhiteSpace(assetTabState.AssetId) &&
+                   _owner.ViewModel.BundlePane.FindBundleNode(new BundleId(assetTabState.BundleId)) is not null;
         }
-
-        private static bool CanRestoreLayout(AssetEditorWindowLayoutSnapshot layout) =>
-            layout.Width >= AssetEditorWindowStateStore.MinimumRememberedWidth &&
-            layout.Height >= AssetEditorWindowStateStore.MinimumRememberedHeight;
 
         private static void PublishRestoreResult(int restoredWindowCount, int unavailableWindowCount)
         {

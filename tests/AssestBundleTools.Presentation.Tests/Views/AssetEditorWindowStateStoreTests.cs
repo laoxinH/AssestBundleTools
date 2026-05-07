@@ -190,6 +190,34 @@ public sealed class AssetEditorWindowStateStoreTests
             next);
     }
 
+    [Fact]
+    public void ClampToWorkArea_ShouldMoveRestoredLayoutInsideVisibleBounds()
+    {
+        var layout = new AssetEditorWindowLayoutSnapshot(4800, -900, 1320, 820);
+        var workArea = new AssetEditorWindowWorkAreaSnapshot(0, 0, 1920, 1080);
+
+        var safeLayout = AssetEditorWindowLayoutSafety.ClampToWorkArea(layout, workArea);
+
+        Assert.Equal(600, safeLayout.X);
+        Assert.Equal(0, safeLayout.Y);
+        Assert.Equal(1320, safeLayout.Width);
+        Assert.Equal(820, safeLayout.Height);
+    }
+
+    [Fact]
+    public void ClampToWorkArea_ShouldShrinkLayoutThatExceedsWorkArea()
+    {
+        var layout = new AssetEditorWindowLayoutSnapshot(120, 90, 2200, 1400);
+        var workArea = new AssetEditorWindowWorkAreaSnapshot(0, 0, 1920, 1080);
+
+        var safeLayout = AssetEditorWindowLayoutSafety.ClampToWorkArea(layout, workArea);
+
+        Assert.Equal(0, safeLayout.X);
+        Assert.Equal(0, safeLayout.Y);
+        Assert.Equal(1920, safeLayout.Width);
+        Assert.Equal(1080, safeLayout.Height);
+    }
+
     private static AssetEditorWindowGroupSnapshot CreateGroupSnapshot(string bundleId, string assetId) =>
         new(
             new[]

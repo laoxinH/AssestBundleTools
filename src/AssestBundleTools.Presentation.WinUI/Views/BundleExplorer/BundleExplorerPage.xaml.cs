@@ -514,6 +514,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         object? sender,
         BundleExplorerPageStateChangedEventArgs<BundleExplorerWorkspaceShellPageStateChange> e)
     {
+        _assetEditorWindowCoordinator.HandleWorkspaceShellPageStateChanged(e);
         _navigationCoordinator.HandleWorkspaceShellPageStateChanged(e);
     }
 

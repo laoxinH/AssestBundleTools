@@ -1,6 +1,4 @@
-using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
-using AssestBundleTools.Application.Bundles;
 using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
@@ -11,11 +9,8 @@ using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
-
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 

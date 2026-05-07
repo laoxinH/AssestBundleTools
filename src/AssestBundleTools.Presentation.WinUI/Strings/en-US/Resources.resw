@@ -445,10 +445,10 @@
     <value>Restored {0} editor windows.</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Partial.Format" xml:space="preserve">
-    <value>Restored {0} editor windows. {1} saved windows could not be restored because their bundles are unavailable.</value>
+    <value>Restored {0} editor windows. {1} saved windows could not be restored because their bundles are unavailable, and remain available from the toolbar.</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Unavailable.Format" xml:space="preserve">
-    <value>{0} saved editor windows could not be restored because their bundles are unavailable.</value>
+    <value>{0} saved editor windows could not be restored because their bundles are unavailable. They remain available from the toolbar.</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.Title" xml:space="preserve">
     <value>Restore saved editor windows?</value>
@@ -458,6 +458,9 @@
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.PrimaryButton" xml:space="preserve">
     <value>Restore Now</value>
+  </data>
+  <data name="AssetEditorWindow.RestorePending.Dialog.SecondaryButton" xml:space="preserve">
+    <value>Ignore Saved Windows</value>
   </data>
   <data name="AssetEditorWindow.RestorePending.Dialog.CloseButton" xml:space="preserve">
     <value>Later</value>
