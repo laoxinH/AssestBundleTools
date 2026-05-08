@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
@@ -20,13 +21,16 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
 
     public LoadSpineAssetGroupDetailsHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
-        IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>> assetPreviewQueryHandler)
+        IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>> assetPreviewQueryHandler,
+        ISpineAnimationRuntimePreviewService? spineAnimationRuntimePreviewService = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _assetPreviewQueryHandler = assetPreviewQueryHandler ?? throw new ArgumentNullException(nameof(assetPreviewQueryHandler));
         _textureDiagnosticBuilder = new SpineAssetGroupTextureDiagnosticBuilder(_assetPreviewQueryHandler);
         _skeletonSummaryBuilder = new SpineSkeletonSummaryBuilder(_assetPreviewQueryHandler);
-        _animationPreviewBuilder = new SpineAnimationPreviewBuilder(_assetPreviewQueryHandler);
+        _animationPreviewBuilder = new SpineAnimationPreviewBuilder(
+            _assetPreviewQueryHandler,
+            spineAnimationRuntimePreviewService);
     }
 
     public async Task<Result<SpineAssetGroupDetailsDto>> HandleAsync(

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Results;
 
@@ -10,9 +11,11 @@ internal sealed partial class SpineAnimationPreviewBuilder
     private readonly IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>> _assetPreviewQueryHandler;
 
     public SpineAnimationPreviewBuilder(
-        IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>> assetPreviewQueryHandler)
+        IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>> assetPreviewQueryHandler,
+        ISpineAnimationRuntimePreviewService? runtimePreviewService = null)
     {
         _assetPreviewQueryHandler = assetPreviewQueryHandler ?? throw new ArgumentNullException(nameof(assetPreviewQueryHandler));
+        _runtimePreviewService = runtimePreviewService ?? NoOpRuntimePreviewService;
     }
 
     public async Task<SpineAnimationPreviewBuildResult> BuildAsync(
@@ -59,6 +62,25 @@ internal sealed partial class SpineAnimationPreviewBuilder
         if (!TryReadSkeletonJson(previewResult, out var skeletonJson))
         {
             return SpineAnimationPreviewBuildResult.Empty;
+        }
+
+        var runtimePreviewResult = await TryBuildRuntimePreviewAsync(
+            skeletonAsset,
+            groupKey,
+            skeletonJson,
+            atlasPages,
+            cancellationToken);
+        if (runtimePreviewResult.IsCancelled)
+        {
+            return SpineAnimationPreviewBuildResult.Cancelled;
+        }
+
+        if (runtimePreviewResult.IsHandled)
+        {
+            return new SpineAnimationPreviewBuildResult(
+                false,
+                runtimePreviewResult.Preview,
+                runtimePreviewResult.Diagnostics);
         }
 
         return TryBuildPreview(skeletonAsset, groupKey, skeletonJson, atlasPages, out var preview, out var previewDiagnostics)

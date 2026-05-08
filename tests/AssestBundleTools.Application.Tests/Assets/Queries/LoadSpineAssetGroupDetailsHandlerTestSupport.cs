@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Results;
@@ -164,6 +165,32 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
         {
             HandleCallCount++;
             return Task.FromResult(_handler(query));
+        }
+    }
+
+    private sealed class TestSpineAnimationRuntimePreviewService : ISpineAnimationRuntimePreviewService
+    {
+        private readonly Func<SpineAnimationRuntimePreviewRequestDto, SpineAnimationRuntimePreviewResultDto> _handler;
+
+        public TestSpineAnimationRuntimePreviewService(
+            Func<SpineAnimationRuntimePreviewRequestDto, SpineAnimationRuntimePreviewResultDto> handler)
+        {
+            _handler = handler;
+        }
+
+        public int HandleCallCount { get; private set; }
+
+        public SpineAnimationRuntimePreviewRequestDto? LastRequest { get; private set; }
+
+        public Task<SpineAnimationRuntimePreviewResultDto> TryBuildPreviewAsync(
+            SpineAnimationRuntimePreviewRequestDto request,
+            CancellationToken cancellationToken = default)
+        {
+            HandleCallCount++;
+            LastRequest = request;
+            return Task.FromResult(cancellationToken.IsCancellationRequested
+                ? SpineAnimationRuntimePreviewResultDto.Cancelled
+                : _handler(request));
         }
     }
 

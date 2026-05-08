@@ -28,6 +28,10 @@ internal static partial class ApplicationTestSuite
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldBuildJsonSpineAnimationPreview_FromPreviewPipeline);
         await RunTestAsync(
             failures,
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldPreferRuntimeAdapterPreview_WhenAdapterHandlesSkeleton),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldPreferRuntimeAdapterPreview_WhenAdapterHandlesSkeleton);
+        await RunTestAsync(
+            failures,
             nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportUnsupportedRuntimeVersion_WhenNoAdapterMatches),
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportUnsupportedRuntimeVersion_WhenNoAdapterMatches);
         await RunTestAsync(

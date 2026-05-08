@@ -16,6 +16,7 @@ using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Infrastructure.Bundles.Decryption;
 using AssestBundleTools.Infrastructure.Bundles.Previewing;
 using AssestBundleTools.Infrastructure.Bundles.Previewing.Audio;
+using AssestBundleTools.Infrastructure.Bundles.Previewing.Spine;
 using AssestBundleTools.Infrastructure.Bundles.Reading;
 using AssestBundleTools.Infrastructure.Settings.Persistence;
 using AssestBundleTools.Infrastructure.Workspace.Importing;
@@ -77,6 +78,7 @@ internal static class AppCompositionRoot
             new HeuristicAssetBundleReader());
         var audioPayloadTranscodingService = new AudioPayloadTranscodingService();
         var assetPreviewGenerator = new AssetsToolsAssetPreviewGenerator(audioPayloadTranscodingService);
+        var spineAnimationRuntimePreviewService = new SpineAnimationRuntimePreviewService();
 
         var openWorkspaceHandler = new OpenWorkspaceHandler(
             workspaceSessionRegistry: workspaceSessionRegistry,
@@ -117,7 +119,8 @@ internal static class AppCompositionRoot
             audioPayloadTranscodingService);
         var loadSpineAssetGroupDetailsHandler = new LoadSpineAssetGroupDetailsHandler(
             workspaceSessionRegistry,
-            getAssetPreviewHandler);
+            getAssetPreviewHandler,
+            spineAnimationRuntimePreviewService);
         var getWorkspaceChangeSummaryHandler = new GetWorkspaceChangeSummaryHandler(workspaceSessionRegistry);
         var getWorkspaceSavePreviewHandler = new GetWorkspaceSavePreviewHandler(workspaceSessionRegistry);
         var saveWorkspaceAsNewBundleHandler = new SaveWorkspaceAsNewBundleHandler(workspaceSessionRegistry);
