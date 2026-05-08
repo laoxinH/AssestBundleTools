@@ -11,4 +11,7 @@ public sealed record SpineAssetGroupDiagnosticDto(
     int? AtlasPageWidth = null,
     int? AtlasPageHeight = null,
     int? TextureWidth = null,
-    int? TextureHeight = null);
+    int? TextureHeight = null,
+    SpineAnimationUnsupportedFeatureKind? AnimationUnsupportedFeature = null,
+    string? SpineVersion = null,
+    string? RuntimeAdapterKey = null);

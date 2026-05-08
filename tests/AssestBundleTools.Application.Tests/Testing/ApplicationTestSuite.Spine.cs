@@ -28,6 +28,18 @@ internal static partial class ApplicationTestSuite
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldBuildJsonSpineAnimationPreview_FromPreviewPipeline);
         await RunTestAsync(
             failures,
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportUnsupportedRuntimeVersion_WhenNoAdapterMatches),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportUnsupportedRuntimeVersion_WhenNoAdapterMatches);
+        await RunTestAsync(
+            failures,
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldResolveSpineViewerRuntimeMatrix_ByMajorMinorVersion),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldResolveSpineViewerRuntimeMatrix_ByMajorMinorVersion);
+        await RunTestAsync(
+            failures,
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportJsonSpineAnimationUnsupportedFeatures),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportJsonSpineAnimationUnsupportedFeatures);
+        await RunTestAsync(
+            failures,
             nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportAtlasPreviewUnavailable_WhenAtlasPreviewIsNotText),
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportAtlasPreviewUnavailable_WhenAtlasPreviewIsNotText);
         await RunTestAsync(

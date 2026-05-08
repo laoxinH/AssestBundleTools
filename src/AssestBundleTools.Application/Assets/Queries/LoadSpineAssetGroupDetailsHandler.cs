@@ -133,6 +133,7 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
 
         var animationPreviewResult = await _animationPreviewBuilder.BuildAsync(
             query,
+            group.GroupKey,
             group.SkeletonAssets,
             atlasPages,
             cancellationToken);
@@ -141,6 +142,7 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
             return Result<SpineAssetGroupDetailsDto>.Cancelled();
         }
 
+        diagnostics.AddRange(animationPreviewResult.Diagnostics);
         return Result<SpineAssetGroupDetailsDto>.Success(new SpineAssetGroupDetailsDto(
             group,
             skeletonSummaryResult.Summaries,

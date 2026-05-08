@@ -137,6 +137,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
             ? skeletonAsset.Name
             : skeletonAsset.AssetPath;
         return !string.IsNullOrWhiteSpace(path) &&
-               path.Trim().EndsWith(".skel", StringComparison.OrdinalIgnoreCase);
+               (path.Trim().EndsWith(".skel", StringComparison.OrdinalIgnoreCase) ||
+                path.Trim().EndsWith(".skel.bytes", StringComparison.OrdinalIgnoreCase));
     }
 }

@@ -1050,6 +1050,81 @@
   <data name="InspectorPanelView.SpineGroup.Diagnostic.SkeletonJsonParseFailed" xml:space="preserve">
     <value>Skeleton JSON could not be parsed</value>
   </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.AnimationPreviewUnsupportedFeature" xml:space="preserve">
+    <value>Animation preview unsupported feature</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.AnimationPreviewRuntimeUnsupported" xml:space="preserve">
+    <value>Animation preview has no matching runtime adapter</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.AnimationUnsupportedFeatureDetail.Format" xml:space="preserve">
+    <value>feature {0}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.RuntimeDetail.Format" xml:space="preserve">
+    <value>version {0}, adapter {1}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.BinarySkeleton" xml:space="preserve">
+    <value>.skel binary skeleton</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.NonDefaultSkin" xml:space="preserve">
+    <value>non-default skin or multiple skins</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.MeshAttachment" xml:space="preserve">
+    <value>mesh attachment</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.WeightedVertices" xml:space="preserve">
+    <value>weighted vertices / skinned mesh</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.LinkedMeshAttachment" xml:space="preserve">
+    <value>linked mesh attachment</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.BoundingBoxAttachment" xml:space="preserve">
+    <value>bounding box attachment</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.PathAttachment" xml:space="preserve">
+    <value>path attachment</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.ClippingAttachment" xml:space="preserve">
+    <value>clipping attachment</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.PointAttachment" xml:space="preserve">
+    <value>point attachment</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.UnknownAttachment" xml:space="preserve">
+    <value>unknown attachment type</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.SlotColorTimeline" xml:space="preserve">
+    <value>slot color timeline</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.SlotTwoColorTimeline" xml:space="preserve">
+    <value>slot two-color timeline</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.BoneShearTimeline" xml:space="preserve">
+    <value>bone shear timeline</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.DeformTimeline" xml:space="preserve">
+    <value>deform / FFD timeline</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.DrawOrderTimeline" xml:space="preserve">
+    <value>draw order timeline</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.EventTimeline" xml:space="preserve">
+    <value>event timeline</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.IkConstraint" xml:space="preserve">
+    <value>IK constraint</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.TransformConstraint" xml:space="preserve">
+    <value>transform constraint</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.PathConstraint" xml:space="preserve">
+    <value>path constraint</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.PhysicsConstraint" xml:space="preserve">
+    <value>physics constraint</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.BezierCurve" xml:space="preserve">
+    <value>Bezier curve interpolation</value>
+  </data>
   <data name="InspectorPanelView.SpineGroup.RegionOverlay.Badge.Format" xml:space="preserve">
     <value>Atlas page {0}&#x0a;Regions {1}</value>
   </data>
@@ -1064,6 +1139,15 @@
   </data>
   <data name="InspectorPanelView.SpineGroup.AnimationPreview.Format" xml:space="preserve">
     <value>Animations {0} · Attachments {1} · Texture pages {2}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.RuntimeAdapter.Label" xml:space="preserve">
+    <value>Runtime adapter</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.RuntimeAdapter.Format" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.RuntimeAdapter.Unavailable.Format" xml:space="preserve">
+    <value>{0} · no adapter yet</value>
   </data>
   <data name="InspectorPanelView.SpineAnimationPreview.PlayPause.ToolTip" xml:space="preserve">
     <value>Play or pause the Spine animation preview</value>

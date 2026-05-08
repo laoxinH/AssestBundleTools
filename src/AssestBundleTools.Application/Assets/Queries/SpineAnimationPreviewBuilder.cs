@@ -17,14 +17,30 @@ internal sealed partial class SpineAnimationPreviewBuilder
 
     public async Task<SpineAnimationPreviewBuildResult> BuildAsync(
         LoadSpineAssetGroupDetailsQuery query,
+        string groupKey,
         IReadOnlyList<SpineAssetGroupPartDto> skeletonAssets,
         IReadOnlyList<SpineAtlasPageDto> atlasPages,
         CancellationToken cancellationToken)
     {
-        var skeletonAsset = skeletonAssets.FirstOrDefault(static asset => !IsBinarySkeleton(asset));
-        if (skeletonAsset is null || atlasPages.Count == 0)
+        var diagnostics = new List<SpineAssetGroupDiagnosticDto>();
+        if (atlasPages.Count == 0)
         {
             return SpineAnimationPreviewBuildResult.Empty;
+        }
+
+        var skeletonAsset = skeletonAssets.FirstOrDefault(static asset => !IsBinarySkeleton(asset));
+        if (skeletonAsset is null)
+        {
+            var binarySkeletonAsset = skeletonAssets.FirstOrDefault(static asset => IsBinarySkeleton(asset));
+            if (binarySkeletonAsset is not null)
+            {
+                diagnostics.Add(CreateUnsupportedFeatureDiagnostic(
+                    groupKey,
+                    binarySkeletonAsset,
+                    SpineAnimationUnsupportedFeatureKind.BinarySkeleton));
+            }
+
+            return SpineAnimationPreviewBuildResult.EmptyWithDiagnostics(diagnostics);
         }
 
         var previewResult = await _assetPreviewQueryHandler.HandleAsync(
@@ -45,22 +61,29 @@ internal sealed partial class SpineAnimationPreviewBuilder
             return SpineAnimationPreviewBuildResult.Empty;
         }
 
-        return TryBuildPreview(skeletonAsset, skeletonJson, atlasPages, out var preview)
-            ? new SpineAnimationPreviewBuildResult(false, preview)
-            : SpineAnimationPreviewBuildResult.Empty;
+        return TryBuildPreview(skeletonAsset, groupKey, skeletonJson, atlasPages, out var preview, out var previewDiagnostics)
+            ? new SpineAnimationPreviewBuildResult(false, preview, previewDiagnostics)
+            : SpineAnimationPreviewBuildResult.EmptyWithDiagnostics(previewDiagnostics);
     }
 
     private static bool TryBuildPreview(
         SpineAssetGroupPartDto skeletonAsset,
+        string groupKey,
         string skeletonJson,
         IReadOnlyList<SpineAtlasPageDto> atlasPages,
-        out SpineAnimationPreviewDto? preview)
+        out SpineAnimationPreviewDto? preview,
+        out IReadOnlyList<SpineAssetGroupDiagnosticDto> diagnostics)
     {
         preview = null;
+        diagnostics = Array.Empty<SpineAssetGroupDiagnosticDto>();
         try
         {
             using var document = JsonDocument.Parse(skeletonJson);
             var root = document.RootElement;
+            var spineVersion = ResolveSkeletonMetadataText(root, "spine");
+            var runtime = SpineAnimationRuntimeResolver.Resolve(spineVersion);
+            var unsupportedFeatureDiagnostics = BuildUnsupportedFeatureDiagnostics(skeletonAsset, groupKey, root);
+            var runtimeDiagnostics = BuildRuntimeDiagnostics(skeletonAsset, groupKey, runtime);
             var atlasRegions = CreateAtlasRegionMap(atlasPages);
             var bones = ParseBones(root);
             var slots = ParseSlots(root);
@@ -71,13 +94,17 @@ internal sealed partial class SpineAnimationPreviewBuilder
                 return false;
             }
 
+            diagnostics = unsupportedFeatureDiagnostics
+                .Concat(runtimeDiagnostics)
+                .ToArray();
             preview = new SpineAnimationPreviewDto(
                 skeletonAsset,
-                ResolveSkeletonMetadataText(root, "spine"),
+                spineVersion,
                 bones,
                 slots,
                 attachments,
-                animations);
+                BuildSampledAnimationClips(bones, slots, attachments, animations),
+                runtime);
             return true;
         }
         catch (JsonException)
@@ -387,9 +414,16 @@ internal sealed partial class SpineAnimationPreviewBuilder
 
 internal sealed record SpineAnimationPreviewBuildResult(
     bool IsCancelled,
-    SpineAnimationPreviewDto? Preview)
+    SpineAnimationPreviewDto? Preview,
+    IReadOnlyList<SpineAssetGroupDiagnosticDto> Diagnostics)
 {
-    public static SpineAnimationPreviewBuildResult Empty { get; } = new(false, null);
+    public static SpineAnimationPreviewBuildResult Empty { get; } =
+        new(false, null, Array.Empty<SpineAssetGroupDiagnosticDto>());
 
-    public static SpineAnimationPreviewBuildResult Cancelled { get; } = new(true, null);
+    public static SpineAnimationPreviewBuildResult Cancelled { get; } =
+        new(true, null, Array.Empty<SpineAssetGroupDiagnosticDto>());
+
+    public static SpineAnimationPreviewBuildResult EmptyWithDiagnostics(
+        IReadOnlyList<SpineAssetGroupDiagnosticDto> diagnostics) =>
+        new(false, null, diagnostics);
 }

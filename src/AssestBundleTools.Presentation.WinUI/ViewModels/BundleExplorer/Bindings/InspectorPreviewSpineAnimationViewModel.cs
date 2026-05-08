@@ -74,6 +74,7 @@ public sealed class InspectorPreviewSpineAnimationViewModel : ObservableObject
     }
 
     public bool HasSpineAnimation => Preview is { Animations.Count: > 0 } &&
+                                     Preview.Animations.Any(static animation => animation.SampledFrames.Count > 0) &&
                                      TexturePageContents.Count > 0;
 
     public Visibility Visibility => HasSpineAnimation ? Visibility.Visible : Visibility.Collapsed;
@@ -95,7 +96,7 @@ public sealed class InspectorPreviewSpineAnimationViewModel : ObservableObject
                 static pair => pair.Key,
                 static pair => pair.Value.BinaryContent!,
                 StringComparer.Ordinal);
-        foreach (var animation in preview.Animations)
+        foreach (var animation in preview.Animations.Where(static animation => animation.SampledFrames.Count > 0))
         {
             AnimationNames.Add(animation.Name);
         }

@@ -17,6 +17,7 @@ internal sealed class SpineAssetGroupInspectorPresenter
     private readonly ILocalizationService _localizationService;
     private readonly AssetPreviewDisplayFormatter _assetPreviewDisplayFormatter;
     private readonly PreviewDiagnosticDisplayTextResolver _previewDiagnosticDisplayTextResolver;
+    private readonly SpineAssetGroupDiagnosticDisplayFormatter _diagnosticDisplayFormatter;
 
     public SpineAssetGroupInspectorPresenter(
         IBundleExplorerBundlePaneHost bundlePane,
@@ -26,6 +27,7 @@ internal sealed class SpineAssetGroupInspectorPresenter
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _assetPreviewDisplayFormatter = new AssetPreviewDisplayFormatter(_localizationService);
         _previewDiagnosticDisplayTextResolver = new PreviewDiagnosticDisplayTextResolver(_localizationService);
+        _diagnosticDisplayFormatter = new SpineAssetGroupDiagnosticDisplayFormatter(_localizationService);
     }
 
     public void PresentSpineGroupDocumentTab(SpineAssetGroupDocumentTabViewModel groupTab)
@@ -141,10 +143,33 @@ internal sealed class SpineAssetGroupInspectorPresenter
                     animationPreview.Attachments.Count.ToString(CultureInfo.CurrentCulture),
                     animationTextures.Count.ToString(CultureInfo.CurrentCulture)))
         };
+        if (animationPreview.Runtime is { } runtime)
+        {
+            rows.Add(new InspectorInfoRowViewModel(
+                GetString(ResourceKeys.InspectorSpineGroupRuntimeAdapterLabel),
+                BuildRuntimeAdapterText(runtime)));
+        }
+
         inspector.ApplySpineAnimationPreview(
             animationPreview,
             animationTextures,
             rows);
+    }
+
+    private string BuildRuntimeAdapterText(SpineAnimationRuntimeDto runtime)
+    {
+        if (runtime.SupportKind == SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable &&
+            !string.IsNullOrWhiteSpace(runtime.AdapterKey))
+        {
+            return _localizationService.GetFormattedString(
+                ResourceKeys.InspectorSpineGroupRuntimeAdapterFormat,
+                runtime.SpineVersion ?? string.Empty,
+                runtime.AdapterKey);
+        }
+
+        return _localizationService.GetFormattedString(
+            ResourceKeys.InspectorSpineGroupRuntimeAdapterUnavailableFormat,
+            runtime.SpineVersion ?? string.Empty);
     }
 
     private IReadOnlyList<InspectorInfoRowViewModel> BuildGroupPreviewInfoRows(
@@ -191,7 +216,7 @@ internal sealed class SpineAssetGroupInspectorPresenter
                 _localizationService.GetFormattedString(
                     ResourceKeys.InspectorSpineGroupDiagnosticLabelFormat,
                     (index + 1).ToString(CultureInfo.CurrentCulture)),
-                BuildDiagnosticText(diagnostics[index])));
+                _diagnosticDisplayFormatter.BuildDiagnosticText(diagnostics[index])));
         }
 
         return rows;
@@ -278,22 +303,6 @@ internal sealed class SpineAssetGroupInspectorPresenter
             diagnostics.Count.ToString(CultureInfo.CurrentCulture));
     }
 
-    private string BuildDiagnosticText(SpineAssetGroupDiagnosticDto diagnostic)
-    {
-        var summaryText = _localizationService.GetFormattedString(
-            ResourceKeys.InspectorSpineGroupDiagnosticFormat,
-            ResolveDiagnosticKindText(diagnostic.Kind),
-            diagnostic.GroupKey,
-            diagnostic.RelatedParts.Count.ToString(CultureInfo.CurrentCulture));
-        var detailText = BuildDiagnosticDetailText(diagnostic);
-        return string.IsNullOrWhiteSpace(detailText)
-            ? summaryText
-            : _localizationService.GetFormattedString(
-                ResourceKeys.InspectorSpineGroupDiagnosticWithDetailFormat,
-                summaryText,
-                detailText);
-    }
-
     private void ApplyPreviewDiagnostic(
         InspectorPanelViewModel inspector,
         AssetPreviewDiagnosticDto diagnostic)
@@ -314,26 +323,6 @@ internal sealed class SpineAssetGroupInspectorPresenter
             SpineAssetGroupPartRole.Atlas => GetString(ResourceKeys.InspectorSpineGroupPartRoleAtlas),
             SpineAssetGroupPartRole.TexturePage => GetString(ResourceKeys.InspectorSpineGroupPartRoleTexturePage),
             _ => role.ToString()
-        };
-    }
-
-    private string ResolveDiagnosticKindText(SpineAssetGroupDiagnosticKind kind)
-    {
-        return kind switch
-        {
-            SpineAssetGroupDiagnosticKind.MissingSkeleton => GetString(ResourceKeys.InspectorSpineGroupDiagnosticMissingSkeleton),
-            SpineAssetGroupDiagnosticKind.MissingAtlas => GetString(ResourceKeys.InspectorSpineGroupDiagnosticMissingAtlas),
-            SpineAssetGroupDiagnosticKind.MissingTexturePage => GetString(ResourceKeys.InspectorSpineGroupDiagnosticMissingTexturePage),
-            SpineAssetGroupDiagnosticKind.MultipleSkeletons => GetString(ResourceKeys.InspectorSpineGroupDiagnosticMultipleSkeletons),
-            SpineAssetGroupDiagnosticKind.MultipleAtlases => GetString(ResourceKeys.InspectorSpineGroupDiagnosticMultipleAtlases),
-            SpineAssetGroupDiagnosticKind.AtlasPreviewUnavailable => GetString(ResourceKeys.InspectorSpineGroupDiagnosticAtlasPreviewUnavailable),
-            SpineAssetGroupDiagnosticKind.AtlasParseFailed => GetString(ResourceKeys.InspectorSpineGroupDiagnosticAtlasParseFailed),
-            SpineAssetGroupDiagnosticKind.AtlasPageTextureUnmatched => GetString(ResourceKeys.InspectorSpineGroupDiagnosticAtlasPageTextureUnmatched),
-            SpineAssetGroupDiagnosticKind.TexturePreviewUnavailable => GetString(ResourceKeys.InspectorSpineGroupDiagnosticTexturePreviewUnavailable),
-            SpineAssetGroupDiagnosticKind.AtlasPageTextureSizeMismatch => GetString(ResourceKeys.InspectorSpineGroupDiagnosticAtlasPageTextureSizeMismatch),
-            SpineAssetGroupDiagnosticKind.SkeletonPreviewUnavailable => GetString(ResourceKeys.InspectorSpineGroupDiagnosticSkeletonPreviewUnavailable),
-            SpineAssetGroupDiagnosticKind.SkeletonJsonParseFailed => GetString(ResourceKeys.InspectorSpineGroupDiagnosticSkeletonJsonParseFailed),
-            _ => kind.ToString()
         };
     }
 
@@ -378,38 +367,6 @@ internal sealed class SpineAssetGroupInspectorPresenter
         return value.HasValue
             ? value.Value.ToString(CultureInfo.CurrentCulture)
             : GetString(ResourceKeys.InspectorSpineGroupSkeletonCountUnknownText);
-    }
-
-    private string BuildDiagnosticDetailText(SpineAssetGroupDiagnosticDto diagnostic)
-    {
-        if (string.IsNullOrWhiteSpace(diagnostic.AtlasPageName))
-        {
-            return string.Empty;
-        }
-
-        if (diagnostic is { AtlasPageWidth: > 0, AtlasPageHeight: > 0, TextureWidth: > 0, TextureHeight: > 0 })
-        {
-            return _localizationService.GetFormattedString(
-                ResourceKeys.InspectorSpineGroupDiagnosticTextureSizeDetailFormat,
-                diagnostic.AtlasPageName,
-                diagnostic.AtlasPageWidth.Value.ToString(CultureInfo.CurrentCulture),
-                diagnostic.AtlasPageHeight.Value.ToString(CultureInfo.CurrentCulture),
-                diagnostic.TextureWidth.Value.ToString(CultureInfo.CurrentCulture),
-                diagnostic.TextureHeight.Value.ToString(CultureInfo.CurrentCulture));
-        }
-
-        if (diagnostic is { AtlasPageWidth: > 0, AtlasPageHeight: > 0 })
-        {
-            return _localizationService.GetFormattedString(
-                ResourceKeys.InspectorSpineGroupDiagnosticPageSizeDetailFormat,
-                diagnostic.AtlasPageName,
-                diagnostic.AtlasPageWidth.Value.ToString(CultureInfo.CurrentCulture),
-                diagnostic.AtlasPageHeight.Value.ToString(CultureInfo.CurrentCulture));
-        }
-
-        return _localizationService.GetFormattedString(
-            ResourceKeys.InspectorSpineGroupDiagnosticPageDetailFormat,
-            diagnostic.AtlasPageName);
     }
 
     private string ResolveAssetTypeDisplayName(AssetType assetType, string? assetTypeDisplayName)

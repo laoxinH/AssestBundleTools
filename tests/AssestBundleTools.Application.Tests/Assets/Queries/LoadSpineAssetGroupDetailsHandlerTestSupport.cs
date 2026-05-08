@@ -3,6 +3,7 @@ using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Tests.Testing;
 using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Workspace.Commands;
@@ -98,6 +99,15 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
         }
 
         return matches[0];
+    }
+
+    private static void AssertUnsupportedFeature(
+        IReadOnlyList<SpineAssetGroupDiagnosticDto> diagnostics,
+        SpineAnimationUnsupportedFeatureKind feature)
+    {
+        TestAssert.True(
+            diagnostics.Any(diagnostic => diagnostic.AnimationUnsupportedFeature == feature),
+            $"Expected unsupported Spine animation feature diagnostic: {feature}.");
     }
 
     private static AssetListResultDto CreateAssetList(

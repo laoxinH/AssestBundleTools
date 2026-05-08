@@ -1050,6 +1050,81 @@
   <data name="InspectorPanelView.SpineGroup.Diagnostic.SkeletonJsonParseFailed" xml:space="preserve">
     <value>skeleton JSON 无法解析</value>
   </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.AnimationPreviewUnsupportedFeature" xml:space="preserve">
+    <value>动画预览暂不支持特性</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.AnimationPreviewRuntimeUnsupported" xml:space="preserve">
+    <value>动画预览暂无匹配 runtime 适配器</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.AnimationUnsupportedFeatureDetail.Format" xml:space="preserve">
+    <value>特性 {0}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.Diagnostic.RuntimeDetail.Format" xml:space="preserve">
+    <value>版本 {0}，adapter {1}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.BinarySkeleton" xml:space="preserve">
+    <value>.skel 二进制 skeleton</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.NonDefaultSkin" xml:space="preserve">
+    <value>非默认 skin 或多 skin 切换</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.MeshAttachment" xml:space="preserve">
+    <value>mesh attachment</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.WeightedVertices" xml:space="preserve">
+    <value>权重顶点 / 蒙皮网格</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.LinkedMeshAttachment" xml:space="preserve">
+    <value>linked mesh attachment</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.BoundingBoxAttachment" xml:space="preserve">
+    <value>bounding box attachment</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.PathAttachment" xml:space="preserve">
+    <value>path attachment</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.ClippingAttachment" xml:space="preserve">
+    <value>clipping attachment</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.PointAttachment" xml:space="preserve">
+    <value>point attachment</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.UnknownAttachment" xml:space="preserve">
+    <value>未知 attachment 类型</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.SlotColorTimeline" xml:space="preserve">
+    <value>slot 颜色时间线</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.SlotTwoColorTimeline" xml:space="preserve">
+    <value>slot 双颜色时间线</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.BoneShearTimeline" xml:space="preserve">
+    <value>bone shear 时间线</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.DeformTimeline" xml:space="preserve">
+    <value>deform / FFD 时间线</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.DrawOrderTimeline" xml:space="preserve">
+    <value>draw order 时间线</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.EventTimeline" xml:space="preserve">
+    <value>event 时间线</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.IkConstraint" xml:space="preserve">
+    <value>IK 约束</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.TransformConstraint" xml:space="preserve">
+    <value>transform 约束</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.PathConstraint" xml:space="preserve">
+    <value>path 约束</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.PhysicsConstraint" xml:space="preserve">
+    <value>physics 约束</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.AnimationUnsupportedFeature.BezierCurve" xml:space="preserve">
+    <value>Bezier 曲线插值</value>
+  </data>
   <data name="InspectorPanelView.SpineGroup.RegionOverlay.Badge.Format" xml:space="preserve">
     <value>Atlas page {0}&#x0a;Region {1}</value>
   </data>
@@ -1063,7 +1138,16 @@
     <value>动画预览</value>
   </data>
   <data name="InspectorPanelView.SpineGroup.AnimationPreview.Format" xml:space="preserve">
-    <value>动画 {0} · Attachment {1} · Texture page {2}</value>
+    <value>动画 {0} · 附件 {1} · 纹理页 {2}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.RuntimeAdapter.Label" xml:space="preserve">
+    <value>运行时适配器</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.RuntimeAdapter.Format" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="InspectorPanelView.SpineGroup.RuntimeAdapter.Unavailable.Format" xml:space="preserve">
+    <value>{0} · 暂无适配器</value>
   </data>
   <data name="InspectorPanelView.SpineAnimationPreview.PlayPause.ToolTip" xml:space="preserve">
     <value>播放或暂停 Spine 动画预览</value>

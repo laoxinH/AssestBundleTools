@@ -176,6 +176,14 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
             ],
             TexturePageAsset: texturePageAsset);
         var animationPreview = CreateAnimationPreview(entry.Item.SkeletonAssets[0], atlasPage.Name);
+        var diagnostics = new[]
+        {
+            new SpineAssetGroupDiagnosticDto(
+                SpineAssetGroupDiagnosticKind.AnimationPreviewUnsupportedFeature,
+                entry.Item.GroupKey,
+                [entry.Item.SkeletonAssets[0]],
+                AnimationUnsupportedFeature: SpineAnimationUnsupportedFeatureKind.MeshAttachment)
+        };
         var loader = new TestSpineAssetGroupDetailsLoader
         {
             LoadHandler = tab => Task.FromResult<SpineAssetGroupDetailsLoadResult?>(new SpineAssetGroupDetailsLoadResult(
@@ -183,7 +191,7 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
                     tab.Item,
                     [],
                     [atlasPage],
-                    tab.Item.Diagnostics,
+                    diagnostics,
                     animationPreview),
                 TexturePreview: null,
                 AnimationTextures: new Dictionary<string, SpineAnimationPreviewTextureState>(StringComparer.Ordinal)
@@ -211,6 +219,20 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
             groupTab.Inspector.Preview.PreviewInfoRows,
             row => row.Label == ResourceKeys.InspectorSpineGroupAnimationPreviewLabel &&
                    row.Value == ResourceKeys.InspectorSpineGroupAnimationPreviewFormat + ":1|1|1");
+        Assert.Contains(
+            groupTab.Inspector.Preview.PreviewInfoRows,
+            row => row.Label == ResourceKeys.InspectorSpineGroupRuntimeAdapterLabel &&
+                   row.Value == ResourceKeys.InspectorSpineGroupRuntimeAdapterFormat + ":4.1|V41");
+        Assert.Contains(
+            groupTab.Inspector.Preview.PreviewInfoRows,
+            row => row.Label == ResourceKeys.InspectorSpineGroupDiagnosticLabelFormat + ":1" &&
+                   row.Value ==
+                   ResourceKeys.InspectorSpineGroupDiagnosticWithDetailFormat + ":" +
+                   ResourceKeys.InspectorSpineGroupDiagnosticFormat + ":" +
+                   ResourceKeys.InspectorSpineGroupDiagnosticAnimationPreviewUnsupportedFeature + "|" +
+                   entry.Item.GroupKey + "|1|" +
+                   ResourceKeys.InspectorSpineGroupDiagnosticAnimationUnsupportedFeatureDetailFormat + ":" +
+                   ResourceKeys.InspectorSpineGroupAnimationUnsupportedFeatureMeshAttachment);
     }
 
     [Fact]

@@ -9,7 +9,8 @@ public sealed record SpineAnimationPreviewDto(
     IReadOnlyList<SpineAnimationBoneDto> Bones,
     IReadOnlyList<SpineAnimationSlotDto> Slots,
     IReadOnlyList<SpineAnimationAttachmentDto> Attachments,
-    IReadOnlyList<SpineAnimationClipDto> Animations);
+    IReadOnlyList<SpineAnimationClipDto> Animations,
+    SpineAnimationRuntimeDto? Runtime = null);
 
 public sealed record SpineAnimationBoneDto(
     string Name,
@@ -48,7 +49,11 @@ public sealed record SpineAnimationClipDto(
     string Name,
     double Duration,
     IReadOnlyList<SpineAnimationBoneTimelineDto> BoneTimelines,
-    IReadOnlyList<SpineAnimationSlotAttachmentTimelineDto> SlotAttachmentTimelines);
+    IReadOnlyList<SpineAnimationSlotAttachmentTimelineDto> SlotAttachmentTimelines)
+{
+    public IReadOnlyList<SpineAnimationFrameDto> SampledFrames { get; init; } =
+        Array.Empty<SpineAnimationFrameDto>();
+}
 
 public sealed record SpineAnimationBoneTimelineDto(
     string BoneName,

@@ -175,7 +175,6 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
 
         InspectorSpineAnimationPreviewRenderer.Draw(
             args.DrawingSession,
-            viewModel.Preview,
             viewModel.SelectedAnimation,
             _textureBitmaps,
             width,

@@ -16,5 +16,7 @@ public enum SpineAssetGroupDiagnosticKind
     TexturePreviewUnavailable = 8,
     AtlasPageTextureSizeMismatch = 9,
     SkeletonPreviewUnavailable = 10,
-    SkeletonJsonParseFailed = 11
+    SkeletonJsonParseFailed = 11,
+    AnimationPreviewUnsupportedFeature = 12,
+    AnimationPreviewRuntimeUnsupported = 13
 }

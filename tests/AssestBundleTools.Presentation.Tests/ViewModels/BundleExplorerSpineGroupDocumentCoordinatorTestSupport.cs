@@ -194,7 +194,40 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
                             ])
                     ],
                     SlotAttachmentTimelines: [])
-            ]);
+                {
+                    SampledFrames =
+                    [
+                        new SpineAnimationFrameDto(
+                            Time: 0d,
+                            DrawCommands:
+                            [
+                                new SpineAnimationDrawCommandDto(
+                                    "body-slot",
+                                    "body",
+                                    "body",
+                                    pageName,
+                                    SourceX: 0,
+                                    SourceY: 0,
+                                    SourceWidth: 64,
+                                    SourceHeight: 64,
+                                    Width: 64d,
+                                    Height: 64d,
+                                    TransformM11: 1d,
+                                    TransformM12: 0d,
+                                    TransformM21: 0d,
+                                    TransformM22: 1d,
+                                    TransformM31: 0d,
+                                    TransformM32: 0d)
+                            ])
+                    ]
+                }
+            ],
+            Runtime: new SpineAnimationRuntimeDto(
+                "4.1",
+                Major: 4,
+                Minor: 1,
+                AdapterKey: "V41",
+                SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable));
 
     private static SpineAssetGroupTexturePreviewState CreateTexturePreviewState(
         SpineAtlasPageDto atlasPage,
