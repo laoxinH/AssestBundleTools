@@ -24,6 +24,8 @@ internal static class SpineAnimationAlphaTexturePageResolver
         ".alpha",
         " alpha",
         "@alpha",
+        "[alpha]",
+        " [alpha]",
         "_a",
         "-a",
         ".a",

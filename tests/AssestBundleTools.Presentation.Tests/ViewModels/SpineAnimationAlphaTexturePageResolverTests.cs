@@ -25,6 +25,26 @@ public sealed class SpineAnimationAlphaTexturePageResolverTests
         Assert.Same(alphaPart, result);
     }
 
+    [Theory]
+    [InlineData("body[alpha].png")]
+    [InlineData("body [alpha].png")]
+    public void Resolve_ShouldMatchBracketedAlphaCompanionSuffix(string alphaTextureName)
+    {
+        var colorPart = CreateTexturePart("color", "body.png", "Assets/spine/body.png");
+        var alphaPart = CreateTexturePart("alpha", alphaTextureName, string.Concat("Assets/spine/", alphaTextureName));
+        var details = CreateDetails(colorPart, alphaPart);
+        var atlasPage = new SpineAtlasPageDto(
+            "body.png",
+            Width: 64,
+            Height: 64,
+            Regions: Array.Empty<SpineAtlasRegionDto>(),
+            colorPart);
+
+        var result = SpineAnimationAlphaTexturePageResolver.Resolve(details, atlasPage);
+
+        Assert.Same(alphaPart, result);
+    }
+
     [Fact]
     public void Resolve_ShouldNotReturnColorPageItself()
     {
