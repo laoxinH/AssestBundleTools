@@ -93,7 +93,7 @@ $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 
 - `60 FPS` 交互预览可以视为达标；后续不应为了压低偶发 `commandsMs` 尖峰牺牲结构边界或重新引入整段预采样，除非后续日志能复现用户可感知卡顿。
 - 若目标提升到 `120 FPS`，`commandsMs`、XAML 绑定刷新和 present 节奏会重新变成需要一起验证的瓶颈；这属于下一阶段高刷新目标，不是当前 `60 FPS` 完成标准。
-- 旧 sampled DTO 仍保留给 JSON fallback、兼容回退、测试稳定输入和未来固定 fps 导出，不再作为交互预览主线。
+- 旧 sampled DTO 仍保留给 JSON fallback、兼容回退、测试稳定输入和未来固定 fps 导出，不再作为交互预览主线；固定 FPS 帧序列采样已先落到 runtime playback service，序列帧 / 视频写出仍待产品化。
 
 ## 当前判断
 
@@ -103,7 +103,7 @@ $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 - 当前迹象不支持“持续 GPU 绘制是主要瓶颈”的判断。有界多帧 batch cache 已让回环 / 重复帧路径的 `projectMs / clipMs` 基本归零。
 - 复杂样本切入时曾出现 `projectMs=40.633 ms` 的冷投影尖峰，说明仍需继续观察大 mesh 首次投影。当前实时播放主路径不再等待整段 sampled frame batch prewarm；当前帧 batch 未命中时直接投影并绘制，避免“等待预热完成”本身造成切换后的可见跳帧。
 - D3D 投影尖峰消除后，复杂样本仍不流畅时优先看 `spine.runtime-frame` 的 runtime frame generation 分段、播放 tick 频率和 XAML binding 压力。真实样本曾只有 `22` 个 sampled frames，说明旧采样预算会限制低速播放观感；V38 / V42 的 `60 FPS`、`1024` 帧采样策略现在只作为 `IncludeSampledFrames=true` 的兼容 / 导出路径能力，交互预览主线不再请求整段 sampled frames。
-- 长期策略不再继续提高全动画 sampled frame 上限或 D3D 全量 batch cache。实时预览已接入 [Spine Runtime Playback Session](spine-runtime-playback-session.md)：Infrastructure 持有官方 Spine runtime state，按绝对 seek 时间生成当前帧 DTO；Presentation 只渲染当前帧并保留小窗口缓存。固定 fps 采样保留给导出、序列帧和 runtime session 不可用时的兼容回退。
+- 长期策略不再继续提高全动画 sampled frame 上限或 D3D 全量 batch cache。实时预览已接入 [Spine Runtime Playback Session](spine-runtime-playback-session.md)：Infrastructure 持有官方 Spine runtime state，按绝对 seek 时间生成当前帧 DTO；Presentation 只渲染当前帧并保留小窗口缓存。固定 fps 采样保留给导出、序列帧和 runtime session 不可用时的兼容回退；当前已具备基础帧序列采样端口，尚未接入图像 / 视频文件输出。
 - `60 FPS` 交互目标已经由真实复杂样本确认；若目标提升到 `120 FPS`，仍需要同时验证播放 tick、D3D present 和 XAML binding 压力。继续增加 `120 FPS` 采样或预热不再是实时预览主路径。
 - 最新真实样本日志已经确认当前 runtime playback session + D3D 当前帧路径满足 `60 FPS` 交互目标；下一轮性能工作只应在高刷新目标、可感知卡顿或默认启用策略需要时继续推进。
 - 默认动画连续播放平稳、但切换 animation / skin 时出现跳帧感时，优先检查 `animation-changed` / `skin-changed` 诊断中的 `time` 是否还停留在旧动画位置。此前 ViewModel 在重置播放时间和当前帧前先发出选择变化通知，导致控件短暂看到“新动画名称 + 旧播放时间 / 旧当前帧”，后台预热也可能把旧帧加入新动画批次；当前已改为先同步 `PlaybackTime` 与 `CurrentFrame`，再通知渲染后端刷新；预热也会在当前帧同步到渲染后端后启动，避免 `requestedFrames` 混入旧动画帧。

@@ -10,6 +10,10 @@ public interface ISpineAnimationRuntimePlaybackService
     Task<SpineAnimationRuntimePlaybackSessionResultDto> TryCreateSessionAsync(
         SpineAnimationRuntimePlaybackSourceDto source,
         CancellationToken cancellationToken = default);
+
+    Task<SpineAnimationRuntimeFixedFrameSamplingResultDto> SampleFixedFramesAsync(
+        SpineAnimationRuntimeFixedFrameSamplingRequestDto request,
+        CancellationToken cancellationToken = default);
 }
 
 public interface ISpineAnimationRuntimePlaybackSession : IDisposable

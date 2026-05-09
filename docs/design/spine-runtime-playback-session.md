@@ -198,7 +198,7 @@ setup pose 继续作为独立语义。runtime session 可提供 setup pose 当�
 
 - 已用 `char_2026_yu_nian#12.ab` 复杂样本记录并验证 `60 FPS` 目标下的交互播放、速度切换、animation 切换和进度拖动观感。
 - 在高刷新显示器上继续验证 `120 FPS` 目标是否真的受益，并据实决定是否还需要对非播放控制类 UI 绑定继续节流。
-- 固定 fps 导出、序列帧或视频输出仍需从实时预览主线中正式拆成产品化用例。
+- 固定 fps 导出、序列帧或视频输出仍需从实时预览主线中正式拆成产品化用例；当前已先补上 `SampleFixedFramesAsync` 基础端口，可按指定 FPS 从 playback session 生成确定性 `SpineAnimationFrameDto` 序列，后续文件写入、画布尺寸、序列帧命名、GIF/视频编码和 FFmpeg 编排再接到该端口之后。
 - D3D runtime path 已作为默认高复杂 Spine 路径；后续继续补更多设备、device lost 恢复和工作集基线，若出现不可恢复问题则通过自动 fallback 或 `ABT_SPINE_D3D11=win2d` 回退。
 
 ## 10. 当前剩余工作清单
@@ -206,7 +206,7 @@ setup pose 继续作为独立语义。runtime session 可提供 setup pose 当�
 以下事项属于后续收口项，不改变当前“runtime playback session 已达到 `60 FPS` 交互预览目标”的判断：
 
 - `120 FPS` / 高刷新率实机验证尚未完成；进度 slider 与时间读数绑定已完成首轮节流，其他 UI 绑定是否需要继续节流仍待按高刷新目标和实测 XAML 压力决定。
-- 固定 fps 导出、序列帧导出和视频导出尚未产品化；后续参考 [SpineViewer](https://github.com/ww-rm/SpineViewer) 的多版本查看、调试渲染、帧率 / time scale 调整以及单帧 / GIF / 视频 / FFmpeg 导出边界推进，但仍通过本项目 Application 端口与 runtime-neutral DTO 落地。旧 sampled DTO 路径目前只作为 JSON fallback playback session 的姿态来源、兼容回退、测试稳定输入和未来导出基础保留。
+- 固定 fps 导出、序列帧导出和视频导出尚未产品化；当前只完成面向后续导出的固定 FPS 帧序列采样基础。后续参考 [SpineViewer](https://github.com/ww-rm/SpineViewer) 的多版本查看、调试渲染、帧率 / time scale 调整以及单帧 / GIF / 视频 / FFmpeg 导出边界推进，但仍通过本项目 Application 端口与 runtime-neutral DTO 落地。旧 sampled DTO 路径目前只作为 JSON fallback playback session 的姿态来源、兼容回退、测试稳定输入和未来导出基础保留。
 - JSON fallback 已完成首轮 playback session 化，但仍是基于既有 sampled frame 的轻量 session；若后续需要和官方 runtime 一样按 JSON timeline 即时求姿态，需要另行拆分 on-demand JSON sampler。
 - 更多 Spine Runtime 版本仍需按 adapter key 分版本封装；linked mesh、path constraint、physics constraint 和更复杂 FFD / deform 行为仍按真实样本门控推进。
 - D3D 默认启用后还需要继续补更多设备、窗口缩放、skin 切换、device lost 恢复和工作集基线。

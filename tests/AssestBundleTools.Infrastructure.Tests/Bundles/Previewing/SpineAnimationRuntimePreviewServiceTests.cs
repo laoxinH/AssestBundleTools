@@ -255,6 +255,53 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
             "Runtime seek should compute V42 poses directly.");
     }
 
+    public static async Task SampleFixedFramesAsync_ShouldSampleDeterministicV38RuntimeFrames()
+    {
+        var service = new SpineAnimationRuntimePreviewService();
+
+        var result = await service.SampleFixedFramesAsync(new SpineAnimationRuntimeFixedFrameSamplingRequestDto(
+            Source: CreatePlaybackSource(
+                spineVersion: "3.8.99",
+                adapterKey: "V38",
+                major: 3,
+                minor: 8),
+            AnimationName: "idle",
+            SkinName: "default",
+            FramesPerSecond: 2d));
+
+        TestAssert.True(result.IsHandled, "Fixed FPS sampling should use the V38 runtime playback session.");
+        TestAssert.Equal(3, result.Frames.Count, "A one-second animation sampled at 2 FPS should include start, middle, and final frames.");
+        TestAssert.Equal(3, result.SampleTimes.Count, "Fixed FPS sampling should expose deterministic sample times.");
+        TestAssert.Equal(2d, result.FramesPerSecond, "Fixed FPS sampling should preserve the requested frame rate.");
+        TestAssert.Equal(1d, result.Duration, "Fixed FPS sampling should expose animation duration.");
+        TestAssert.True(Math.Abs(result.SampleTimes[1] - 0.5d) < 0.000001d, "Fixed FPS sampling should include the middle time.");
+        TestAssert.True(Math.Abs(result.SampleTimes[2] - 1d) < 0.000001d, "Fixed FPS sampling should include the final time.");
+        var firstCommand = TestAssert.Single(result.Frames[0].DrawCommands);
+        var middleCommand = TestAssert.Single(result.Frames[1].DrawCommands);
+        var finalCommand = TestAssert.Single(result.Frames[2].DrawCommands);
+        TestAssert.True(
+            firstCommand.TransformM31 < middleCommand.TransformM31 &&
+            middleCommand.TransformM31 < finalCommand.TransformM31,
+            "Fixed FPS sampling should produce ordered poses from runtime seek results.");
+    }
+
+    public static async Task SampleFixedFramesAsync_ShouldUseSampledFallbackSession_WhenRuntimeAdapterIsMissing()
+    {
+        var service = new SpineAnimationRuntimePreviewService();
+
+        var result = await service.SampleFixedFramesAsync(new SpineAnimationRuntimeFixedFrameSamplingRequestDto(
+            Source: CreateSampledFallbackPlaybackSource(),
+            AnimationName: "idle",
+            SkinName: "default",
+            FramesPerSecond: 2d));
+
+        TestAssert.True(result.IsHandled, "Fixed FPS sampling should also work through the sampled fallback session.");
+        TestAssert.Equal(3, result.Frames.Count, "Fallback fixed FPS sampling should include start, middle, and final frames.");
+        TestAssert.Equal("first", TestAssert.Single(result.Frames[0].DrawCommands).AttachmentName, "The first exported frame should use the first sampled pose.");
+        TestAssert.Equal("middle", TestAssert.Single(result.Frames[1].DrawCommands).AttachmentName, "The middle exported frame should use the middle sampled pose.");
+        TestAssert.Equal("last", TestAssert.Single(result.Frames[2].DrawCommands).AttachmentName, "The final exported frame should use the final sampled pose.");
+    }
+
     public static async Task TryCreateSessionAsync_ShouldUseSampledFallbackSession_WhenOfficialPlaybackAdapterIsMissing()
     {
         var service = new SpineAnimationRuntimePreviewService();

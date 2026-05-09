@@ -114,6 +114,14 @@ internal static class InfrastructureTestSuite
             SpineAnimationRuntimePreviewServiceTests.TryCreateSessionAsync_ShouldSeekV42RuntimeFrameWithoutSampledCache);
         await RunTestAsync(
             failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.SampleFixedFramesAsync_ShouldSampleDeterministicV38RuntimeFrames),
+            SpineAnimationRuntimePreviewServiceTests.SampleFixedFramesAsync_ShouldSampleDeterministicV38RuntimeFrames);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.SampleFixedFramesAsync_ShouldUseSampledFallbackSession_WhenRuntimeAdapterIsMissing),
+            SpineAnimationRuntimePreviewServiceTests.SampleFixedFramesAsync_ShouldUseSampledFallbackSession_WhenRuntimeAdapterIsMissing);
+        await RunTestAsync(
+            failures,
             nameof(SpineAnimationRuntimePreviewServiceTests.TryCreateSessionAsync_ShouldUseSampledFallbackSession_WhenOfficialPlaybackAdapterIsMissing),
             SpineAnimationRuntimePreviewServiceTests.TryCreateSessionAsync_ShouldUseSampledFallbackSession_WhenOfficialPlaybackAdapterIsMissing);
         await RunTestAsync(

@@ -44,6 +44,60 @@ public sealed record SpineAnimationRuntimePlaybackFrameRequestDto(
     double PlaybackTime,
     bool ShowSetupPose);
 
+public sealed record SpineAnimationRuntimeFixedFrameSamplingRequestDto(
+    SpineAnimationRuntimePlaybackSourceDto Source,
+    string? AnimationName,
+    string? SkinName,
+    double FramesPerSecond,
+    double StartTime = 0d,
+    double? EndTime = null,
+    bool IncludeFinalFrame = true);
+
+public sealed record SpineAnimationRuntimeFixedFrameSamplingResultDto(
+    bool IsHandled,
+    bool IsCancelled,
+    double FramesPerSecond,
+    double Duration,
+    IReadOnlyList<double> SampleTimes,
+    IReadOnlyList<SpineAnimationFrameDto> Frames,
+    IReadOnlyList<SpineAssetGroupDiagnosticDto> Diagnostics)
+{
+    public static SpineAnimationRuntimeFixedFrameSamplingResultDto NotHandled { get; } =
+        new(
+            false,
+            false,
+            0d,
+            0d,
+            Array.Empty<double>(),
+            Array.Empty<SpineAnimationFrameDto>(),
+            Array.Empty<SpineAssetGroupDiagnosticDto>());
+
+    public static SpineAnimationRuntimeFixedFrameSamplingResultDto Cancelled { get; } =
+        new(
+            false,
+            true,
+            0d,
+            0d,
+            Array.Empty<double>(),
+            Array.Empty<SpineAnimationFrameDto>(),
+            Array.Empty<SpineAssetGroupDiagnosticDto>());
+
+    public static SpineAnimationRuntimeFixedFrameSamplingResultDto Handled(
+        double framesPerSecond,
+        double duration,
+        IReadOnlyList<double> sampleTimes,
+        IReadOnlyList<SpineAnimationFrameDto> frames,
+        IReadOnlyList<SpineAssetGroupDiagnosticDto>? diagnostics = null) =>
+        new(
+            true,
+            false,
+            framesPerSecond,
+            duration,
+            sampleTimes,
+            frames,
+            diagnostics ?? Array.Empty<SpineAssetGroupDiagnosticDto>());
+}
+
 public sealed record SpineAnimationRuntimePlaybackFrameResultDto(
     bool IsHandled,
     bool IsCancelled,

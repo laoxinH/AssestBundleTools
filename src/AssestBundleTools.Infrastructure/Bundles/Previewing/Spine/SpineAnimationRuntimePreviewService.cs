@@ -88,6 +88,22 @@ public sealed class SpineAnimationRuntimePreviewService :
             () => TryCreateSession(source, cancellationToken));
     }
 
+    public Task<SpineAnimationRuntimeFixedFrameSamplingResultDto> SampleFixedFramesAsync(
+        SpineAnimationRuntimeFixedFrameSamplingRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.Source);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromResult(SpineAnimationRuntimeFixedFrameSamplingResultDto.Cancelled);
+        }
+
+        return Task.Run(
+            () => SampleFixedFramesCoreAsync(request, cancellationToken));
+    }
+
     private SpineAnimationRuntimePlaybackSessionResultDto TryCreateSession(
         SpineAnimationRuntimePlaybackSourceDto source,
         CancellationToken cancellationToken)
@@ -155,4 +171,98 @@ public sealed class SpineAnimationRuntimePreviewService :
                     source.Runtime?.AdapterKey,
                     source.SampledFallback));
     }
+
+    private async Task<SpineAnimationRuntimeFixedFrameSamplingResultDto> SampleFixedFramesCoreAsync(
+        SpineAnimationRuntimeFixedFrameSamplingRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (request.FramesPerSecond <= 0d ||
+            double.IsNaN(request.FramesPerSecond) ||
+            double.IsInfinity(request.FramesPerSecond))
+        {
+            return SpineAnimationRuntimeFixedFrameSamplingResultDto.NotHandled;
+        }
+
+        var sessionResult = TryCreateSession(request.Source, cancellationToken);
+        if (sessionResult.IsCancelled)
+        {
+            return SpineAnimationRuntimeFixedFrameSamplingResultDto.Cancelled;
+        }
+
+        if (!sessionResult.IsHandled ||
+            sessionResult.Session is null)
+        {
+            return SpineAnimationRuntimeFixedFrameSamplingResultDto.NotHandled;
+        }
+
+        using var session = sessionResult.Session;
+        var firstFrameResult = await session.GetFrameAsync(
+            CreateFixedFrameRequest(request, request.StartTime),
+            cancellationToken).ConfigureAwait(false);
+        if (firstFrameResult.IsCancelled)
+        {
+            return SpineAnimationRuntimeFixedFrameSamplingResultDto.Cancelled;
+        }
+
+        if (!firstFrameResult.IsHandled ||
+            firstFrameResult.Frame is null)
+        {
+            return SpineAnimationRuntimeFixedFrameSamplingResultDto.NotHandled;
+        }
+
+        var sampleTimes = SpineFixedFrameSamplingPolicy.CreateSampleTimes(
+            firstFrameResult.Duration,
+            request.FramesPerSecond,
+            request.StartTime,
+            request.EndTime,
+            request.IncludeFinalFrame);
+        var frames = new List<SpineAnimationFrameDto>(sampleTimes.Count);
+        for (var index = 0; index < sampleTimes.Count; index++)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return SpineAnimationRuntimeFixedFrameSamplingResultDto.Cancelled;
+            }
+
+            var sampleTime = sampleTimes[index];
+            if (index == 0 &&
+                Math.Abs(sampleTime - firstFrameResult.PlaybackTime) <= 0.000001d)
+            {
+                frames.Add(firstFrameResult.Frame);
+                continue;
+            }
+
+            var frameResult = await session.GetFrameAsync(
+                CreateFixedFrameRequest(request, sampleTime),
+                cancellationToken).ConfigureAwait(false);
+            if (frameResult.IsCancelled)
+            {
+                return SpineAnimationRuntimeFixedFrameSamplingResultDto.Cancelled;
+            }
+
+            if (!frameResult.IsHandled ||
+                frameResult.Frame is null)
+            {
+                return SpineAnimationRuntimeFixedFrameSamplingResultDto.NotHandled;
+            }
+
+            frames.Add(frameResult.Frame);
+        }
+
+        return SpineAnimationRuntimeFixedFrameSamplingResultDto.Handled(
+            request.FramesPerSecond,
+            firstFrameResult.Duration,
+            sampleTimes,
+            frames,
+            sessionResult.Diagnostics);
+    }
+
+    private static SpineAnimationRuntimePlaybackFrameRequestDto CreateFixedFrameRequest(
+        SpineAnimationRuntimeFixedFrameSamplingRequestDto request,
+        double playbackTime) =>
+        new(
+            request.AnimationName,
+            request.SkinName,
+            playbackTime,
+            ShowSetupPose: false);
 }
