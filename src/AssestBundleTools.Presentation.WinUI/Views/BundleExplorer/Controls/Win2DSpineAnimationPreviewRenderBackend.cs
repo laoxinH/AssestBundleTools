@@ -15,6 +15,7 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
     private readonly SpineAnimationFrameRenderCache _frameRenderCache = new();
     private IReadOnlyDictionary<string, byte[]> _texturePageContents = EmptyTexturePages;
     private SpineAnimationFrameDto? _currentFrame;
+    private SpineAnimationPreviewViewport _viewport = SpineAnimationPreviewViewport.Default;
     private int _textureLoadGeneration;
 
     public Win2DSpineAnimationPreviewRenderBackend(CanvasControl canvas)
@@ -32,6 +33,19 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
         }
 
         _currentFrame = frame;
+        Invalidate();
+    }
+
+    public void SetViewport(SpineAnimationPreviewViewport viewport)
+    {
+        var normalized = viewport.Normalize();
+        if (EqualityComparer<SpineAnimationPreviewViewport>.Default.Equals(_viewport, normalized))
+        {
+            return;
+        }
+
+        _viewport = normalized;
+        _frameRenderCache.Clear();
         Invalidate();
     }
 
@@ -164,7 +178,8 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
             _currentFrame,
             _textureBitmaps,
             width,
-            height);
+            height,
+            _viewport);
     }
 
     private void ClearTextureBitmaps()

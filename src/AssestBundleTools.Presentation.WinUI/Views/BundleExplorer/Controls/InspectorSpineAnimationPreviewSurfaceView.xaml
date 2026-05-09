@@ -155,13 +155,37 @@
         </Grid>
 
         <Grid
-            Grid.Row="2">
+            x:Name="PreviewViewportHost"
+            Grid.Row="2"
+            Background="Transparent"
+            PointerCanceled="OnPreviewViewportPointerReleased"
+            PointerCaptureLost="OnPreviewViewportPointerReleased"
+            PointerMoved="OnPreviewViewportPointerMoved"
+            PointerPressed="OnPreviewViewportPointerPressed"
+            PointerReleased="OnPreviewViewportPointerReleased"
+            PointerWheelChanged="OnPreviewViewportPointerWheelChanged"
+            SizeChanged="OnPreviewViewportHostSizeChanged">
             <SwapChainPanel
                 x:Name="SpineSwapChainPanel"
                 Visibility="Collapsed" />
             <canvas:CanvasControl
                 x:Name="SpineCanvas"
                 ClearColor="Transparent" />
+            <Button
+                x:Name="ResetViewportButton"
+                Width="32"
+                Height="32"
+                MinWidth="32"
+                Margin="8"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Visibility="{x:Bind ViewModel.Visibility, Mode=OneWay}"
+                Click="OnResetViewportButtonClick">
+                <FontIcon
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="13"
+                    Glyph="&#xE72C;" />
+            </Button>
         </Grid>
     </Grid>
 </UserControl>

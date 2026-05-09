@@ -1179,6 +1179,9 @@
   <data name="InspectorPanelView.SpineAnimationPreview.ExportFrames.ToolTip" xml:space="preserve">
     <value>Export PNG frame sequence</value>
   </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.ResetViewport.ToolTip" xml:space="preserve">
+    <value>Reset preview view</value>
+  </data>
   <data name="InspectorPanelView.SpineAnimationPreview.Export.UnavailableMessage" xml:space="preserve">
     <value>The current Spine animation cannot be exported yet.</value>
   </data>

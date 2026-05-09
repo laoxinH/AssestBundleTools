@@ -12,6 +12,7 @@ internal sealed class SpineAnimationFallbackRenderBackend : ISpineAnimationPrevi
     private readonly Action<bool> _setPrimaryActive;
     private IReadOnlyDictionary<string, byte[]> _texturePageContents = EmptyTexturePages;
     private SpineAnimationFrameDto? _currentFrame;
+    private SpineAnimationPreviewViewport _viewport = SpineAnimationPreviewViewport.Default;
     private bool _isFallbackActive;
 
     public SpineAnimationFallbackRenderBackend(
@@ -29,6 +30,12 @@ internal sealed class SpineAnimationFallbackRenderBackend : ISpineAnimationPrevi
     {
         _currentFrame = frame;
         ActiveBackend.SetCurrentFrame(frame);
+    }
+
+    public void SetViewport(SpineAnimationPreviewViewport viewport)
+    {
+        _viewport = viewport.Normalize();
+        ActiveBackend.SetViewport(_viewport);
     }
 
     public void PrewarmFrames(IReadOnlyList<SpineAnimationFrameDto> frames)
@@ -90,6 +97,7 @@ internal sealed class SpineAnimationFallbackRenderBackend : ISpineAnimationPrevi
         }
 
         _fallback.SetCurrentFrame(_currentFrame);
+        _fallback.SetViewport(_viewport);
         _fallback.ResetFrameCache();
         _fallback.Invalidate();
     }

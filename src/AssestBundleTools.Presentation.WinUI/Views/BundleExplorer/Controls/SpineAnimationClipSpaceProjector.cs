@@ -5,11 +5,16 @@ internal static class SpineAnimationClipSpaceProjector
     public static IReadOnlyList<SpineAnimationClipSpaceBatch> Project(
         IReadOnlyList<SpineAnimationVertexBatch> batches,
         float viewportWidth,
-        float viewportHeight)
+        float viewportHeight,
+        SpineAnimationPreviewViewport? viewport = null)
     {
         ArgumentNullException.ThrowIfNull(batches);
 
-        var transform = SpineAnimationClipSpaceTransform.Resolve(batches, viewportWidth, viewportHeight);
+        var transform = SpineAnimationClipSpaceTransform.Resolve(
+            batches,
+            viewportWidth,
+            viewportHeight,
+            viewport ?? SpineAnimationPreviewViewport.Default);
         if (!transform.IsValid)
         {
             return Array.Empty<SpineAnimationClipSpaceBatch>();
@@ -38,7 +43,8 @@ internal readonly record struct SpineAnimationClipSpaceTransform(
     double CenterY,
     double Scale,
     float ViewportWidth,
-    float ViewportHeight)
+    float ViewportHeight,
+    SpineAnimationPreviewViewport Viewport)
 {
     private const double MinExtent = 0.001d;
 
@@ -47,7 +53,8 @@ internal readonly record struct SpineAnimationClipSpaceTransform(
     public static SpineAnimationClipSpaceTransform Resolve(
         IReadOnlyList<SpineAnimationVertexBatch> batches,
         float viewportWidth,
-        float viewportHeight)
+        float viewportHeight,
+        SpineAnimationPreviewViewport viewport)
     {
         ArgumentNullException.ThrowIfNull(batches);
 
@@ -63,7 +70,8 @@ internal readonly record struct SpineAnimationClipSpaceTransform(
             bounds.CenterY,
             scale,
             viewportWidth,
-            viewportHeight);
+            viewportHeight,
+            viewport.Normalize());
     }
 
     public SpineAnimationClipSpaceVertex Project(SpineAnimationBatchVertex vertex)
@@ -75,6 +83,16 @@ internal readonly record struct SpineAnimationClipSpaceTransform(
 
         var pixelX = ((vertex.X - CenterX) * Scale) + (ViewportWidth / 2d);
         var pixelY = (-(vertex.Y - CenterY) * Scale) + (ViewportHeight / 2d);
+        pixelX = ApplyViewportAxis(
+            pixelX,
+            ViewportWidth / 2d,
+            Viewport.Zoom,
+            Viewport.PanX);
+        pixelY = ApplyViewportAxis(
+            pixelY,
+            ViewportHeight / 2d,
+            Viewport.Zoom,
+            Viewport.PanY);
         return new SpineAnimationClipSpaceVertex(
             (float)((pixelX / ViewportWidth * 2d) - 1d),
             (float)(1d - (pixelY / ViewportHeight * 2d)),
@@ -85,6 +103,13 @@ internal readonly record struct SpineAnimationClipSpaceTransform(
             vertex.B,
             vertex.A);
     }
+
+    private static double ApplyViewportAxis(
+        double pixel,
+        double center,
+        double zoom,
+        double pan) =>
+        center + ((pixel - center) * zoom) + pan;
 
     private static SpineAnimationVertexBounds ResolveBounds(IReadOnlyList<SpineAnimationVertexBatch> batches)
     {

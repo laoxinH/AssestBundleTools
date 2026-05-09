@@ -27,6 +27,7 @@ public sealed class SpineAnimationFallbackRenderBackendTests
         Assert.Equal(1, primary.LoadTexturePagesCount);
         Assert.Same(texturePages, fallback.TexturePages);
         Assert.Same(frame, fallback.CurrentFrame);
+        Assert.Equal(SpineAnimationPreviewViewport.Default, fallback.Viewport);
         Assert.Equal(1, fallback.ResetFrameCacheCount);
         Assert.Equal(1, fallback.InvalidateCount);
     }
@@ -64,6 +65,21 @@ public sealed class SpineAnimationFallbackRenderBackendTests
 
         Assert.Same(frames, primary.PrewarmedFrames);
         Assert.Same(frames, fallback.PrewarmedFrames);
+    }
+
+    [Fact]
+    public void SwitchToFallback_ShouldReplayViewport()
+    {
+        var primary = new RecordingBackend();
+        var fallback = new RecordingBackend();
+        var backend = new SpineAnimationFallbackRenderBackend(primary, fallback, _ => { });
+        var viewport = new SpineAnimationPreviewViewport(1.5d, 12d, -4d);
+
+        backend.SetViewport(viewport);
+        backend.SwitchToFallback();
+
+        Assert.Equal(viewport, primary.Viewport);
+        Assert.Equal(viewport, fallback.Viewport);
     }
 
     [Fact]
@@ -108,6 +124,9 @@ public sealed class SpineAnimationFallbackRenderBackendTests
 
         public IReadOnlyDictionary<string, byte[]>? TexturePages { get; private set; }
 
+        public SpineAnimationPreviewViewport Viewport { get; private set; } =
+            SpineAnimationPreviewViewport.Default;
+
         public bool TexturePagesCleared { get; private set; }
 
         public int LoadTexturePagesCount { get; private set; }
@@ -120,6 +139,9 @@ public sealed class SpineAnimationFallbackRenderBackendTests
 
         public void SetCurrentFrame(SpineAnimationFrameDto? frame) =>
             CurrentFrame = frame;
+
+        public void SetViewport(SpineAnimationPreviewViewport viewport) =>
+            Viewport = viewport.Normalize();
 
         public void PrewarmFrames(IReadOnlyList<SpineAnimationFrameDto> frames) =>
             PrewarmedFrames = frames;

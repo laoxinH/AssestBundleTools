@@ -70,6 +70,7 @@ internal sealed class D3D11SpineAnimationBatchRenderer : IDisposable
         IReadOnlyDictionary<string, D3D11SpineTexturePage> texturePages,
         float viewportWidth,
         float viewportHeight,
+        SpineAnimationPreviewViewport viewport,
         out TimeSpan clipProjectionElapsed)
     {
         ArgumentNullException.ThrowIfNull(device);
@@ -84,7 +85,11 @@ internal sealed class D3D11SpineAnimationBatchRenderer : IDisposable
             return;
         }
 
-        var transform = SpineAnimationClipSpaceTransform.Resolve(batches, viewportWidth, viewportHeight);
+        var transform = SpineAnimationClipSpaceTransform.Resolve(
+            batches,
+            viewportWidth,
+            viewportHeight,
+            viewport);
         if (!transform.IsValid)
         {
             return;

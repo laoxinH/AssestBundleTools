@@ -21,7 +21,8 @@ internal sealed class SpineAnimationFrameRenderCache : IDisposable
         SpineAnimationFrameDto frame,
         IReadOnlyDictionary<string, CanvasBitmap> textureBitmaps,
         float width,
-        float height)
+        float height,
+        SpineAnimationPreviewViewport viewport)
     {
         ArgumentNullException.ThrowIfNull(drawingSession);
         ArgumentNullException.ThrowIfNull(resourceCreator);
@@ -29,7 +30,7 @@ internal sealed class SpineAnimationFrameRenderCache : IDisposable
         ArgumentNullException.ThrowIfNull(textureBitmaps);
 
         var key = CacheKey.Create(frame, width, height);
-        var target = GetOrCreateTarget(resourceCreator, frame, textureBitmaps, key);
+        var target = GetOrCreateTarget(resourceCreator, frame, textureBitmaps, key, viewport);
         drawingSession.DrawImage(
             target,
             new Rect(0d, 0d, width, height),
@@ -55,7 +56,8 @@ internal sealed class SpineAnimationFrameRenderCache : IDisposable
         ICanvasResourceCreator resourceCreator,
         SpineAnimationFrameDto frame,
         IReadOnlyDictionary<string, CanvasBitmap> textureBitmaps,
-        CacheKey key)
+        CacheKey key,
+        SpineAnimationPreviewViewport viewport)
     {
         if (_entries.TryGetValue(key, out var entry))
         {
@@ -78,7 +80,8 @@ internal sealed class SpineAnimationFrameRenderCache : IDisposable
                 frame,
                 textureBitmaps,
                 key.Width,
-                key.Height);
+                key.Height,
+                viewport);
         }
 
         _entries[key] = new CacheEntry(frame, target, key.PixelCount, ++_useStamp);

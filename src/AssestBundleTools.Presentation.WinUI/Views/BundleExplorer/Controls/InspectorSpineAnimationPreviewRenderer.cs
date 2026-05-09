@@ -16,7 +16,8 @@ internal static class InspectorSpineAnimationPreviewRenderer
         SpineAnimationFrameDto frame,
         IReadOnlyDictionary<string, CanvasBitmap> textureBitmaps,
         float width,
-        float height)
+        float height,
+        SpineAnimationPreviewViewport viewport)
     {
         DrawReferenceGrid(drawingSession, width, height);
 
@@ -26,7 +27,7 @@ internal static class InspectorSpineAnimationPreviewRenderer
             return;
         }
 
-        var viewportTransform = CreateViewportTransform(drawItems, width, height);
+        var viewportTransform = CreateViewportTransform(drawItems, width, height, viewport);
         foreach (var item in drawItems)
         {
             if (item.HasMesh &&
@@ -130,16 +131,25 @@ internal static class InspectorSpineAnimationPreviewRenderer
     private static Matrix3x2 CreateViewportTransform(
         IReadOnlyList<SpineDrawItem> drawItems,
         float width,
-        float height)
+        float height,
+        SpineAnimationPreviewViewport viewport)
     {
+        var normalizedViewport = viewport.Normalize();
         var bounds = ResolveBounds(drawItems);
         var extent = Math.Max(Math.Max(bounds.Width, bounds.Height), MinExtent);
         var scale = (Math.Min(width, height) * 0.72d) / extent;
+        var viewportCenterX = width / 2f;
+        var viewportCenterY = height / 2f;
         return Matrix3x2.CreateTranslation(
                    (float)(-bounds.CenterX),
                    (float)(-bounds.CenterY)) *
                Matrix3x2.CreateScale((float)scale, (float)-scale) *
-               Matrix3x2.CreateTranslation(width / 2f, height / 2f);
+               Matrix3x2.CreateTranslation(viewportCenterX, viewportCenterY) *
+               Matrix3x2.CreateTranslation(-viewportCenterX, -viewportCenterY) *
+               Matrix3x2.CreateScale((float)normalizedViewport.Zoom) *
+               Matrix3x2.CreateTranslation(
+                   viewportCenterX + (float)normalizedViewport.PanX,
+                   viewportCenterY + (float)normalizedViewport.PanY);
     }
 
     private static Matrix3x2 CreateExportTransform(

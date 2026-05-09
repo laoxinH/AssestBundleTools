@@ -30,6 +30,7 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
     private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _resizeTimer;
     private IReadOnlyDictionary<string, byte[]> _texturePageContents = EmptyTexturePages;
     private SpineAnimationFrameDto? _currentFrame;
+    private SpineAnimationPreviewViewport _viewport = SpineAnimationPreviewViewport.Default;
     private ID3D11Device? _device;
     private ID3D11DeviceContext? _context;
     private IDXGISwapChain1? _swapChain;
@@ -67,6 +68,18 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
     public void SetCurrentFrame(SpineAnimationFrameDto? frame)
     {
         _currentFrame = frame;
+        Invalidate();
+    }
+
+    public void SetViewport(SpineAnimationPreviewViewport viewport)
+    {
+        var normalized = viewport.Normalize();
+        if (EqualityComparer<SpineAnimationPreviewViewport>.Default.Equals(_viewport, normalized))
+        {
+            return;
+        }
+
+        _viewport = normalized;
         Invalidate();
     }
 
@@ -214,6 +227,7 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
                 _texturePageCache.GpuPages,
                 _pixelWidth,
                 _pixelHeight,
+                _viewport.ScalePan(XamlRootScale),
                 out clipProjectionElapsed);
             drawStopwatch.Stop();
             drawElapsed = drawStopwatch.Elapsed - clipProjectionElapsed;

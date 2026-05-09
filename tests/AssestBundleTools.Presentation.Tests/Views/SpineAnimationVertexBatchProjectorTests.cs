@@ -129,6 +129,27 @@ public sealed class SpineAnimationVertexBatchProjectorTests
         Assert.Empty(batches);
     }
 
+    [Fact]
+    public void ProjectClipSpace_ShouldApplyPreviewViewport()
+    {
+        var sourceBatch = new SpineAnimationVertexBatch(
+            "page-a.png",
+            [
+                new SpineAnimationBatchVertex(-1f, -1f, 0f, 0f, 1f, 1f, 1f, 1f),
+                new SpineAnimationBatchVertex(1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f)
+            ],
+            [0, 1, 1]);
+
+        var batch = Assert.Single(SpineAnimationClipSpaceProjector.Project(
+            [sourceBatch],
+            100f,
+            100f,
+            new SpineAnimationPreviewViewport(2d, 10d, -5d)));
+
+        AssertClipVertex(batch.Vertices[0], x: -1.24f, y: -1.34f, u: 0f, v: 0f);
+        AssertClipVertex(batch.Vertices[1], x: 1.64f, y: 1.54f, u: 1f, v: 1f);
+    }
+
     private static SpineAnimationDrawCommandDto CreateRegionCommand(string slotName, string pageName) =>
         new(
             slotName,

@@ -71,6 +71,7 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         }
 
         view.DetachObservedViewModel(args.OldValue as InspectorPreviewSpineAnimationViewModel);
+        view.ResetViewportState();
         if (view._isPreviewRunning)
         {
             view.AttachObservedViewModel(args.NewValue as InspectorPreviewSpineAnimationViewModel);
@@ -132,6 +133,7 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         RefreshRuntimePlaybackSession();
         SyncRenderFrame();
         RefreshPrewarmFrames();
+        ApplyViewportState();
         StartRenderingLoop();
         UpdateBindingsNow();
         InvalidatePreviewSurface();
@@ -151,6 +153,7 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         DetachObservedViewModel(_observedViewModel);
         _renderBackend.SetCurrentFrame(null);
         _lastSyncedFrame = null;
+        _isViewportDragging = false;
         _deferredResourceReleaseTimer.Stop();
         _deferredResourceReleaseTimer.Start();
     }
@@ -199,6 +202,9 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         ToolTipService.SetToolTip(
             ExportFramesButton,
             UiText.Get(ResourceKeys.InspectorSpineAnimationPreviewExportFramesToolTip));
+        ToolTipService.SetToolTip(
+            ResetViewportButton,
+            UiText.Get(ResourceKeys.InspectorSpineAnimationPreviewResetViewportToolTip));
     }
 
     private void AttachObservedViewModel(InspectorPreviewSpineAnimationViewModel? viewModel)
@@ -268,6 +274,7 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
 
         if (shouldRefreshRuntimeSession)
         {
+            ResetViewportState();
             RefreshRuntimePlaybackSession();
         }
         else if (shouldRefreshRuntimeFrame)

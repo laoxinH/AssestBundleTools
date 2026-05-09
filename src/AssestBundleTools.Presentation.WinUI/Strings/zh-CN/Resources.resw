@@ -1179,6 +1179,9 @@
   <data name="InspectorPanelView.SpineAnimationPreview.ExportFrames.ToolTip" xml:space="preserve">
     <value>导出 PNG 序列帧</value>
   </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.ResetViewport.ToolTip" xml:space="preserve">
+    <value>重置预览视图</value>
+  </data>
   <data name="InspectorPanelView.SpineAnimationPreview.Export.UnavailableMessage" xml:space="preserve">
     <value>当前 Spine 动画暂不能导出。</value>
   </data>
