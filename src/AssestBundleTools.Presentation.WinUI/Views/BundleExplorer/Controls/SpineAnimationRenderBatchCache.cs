@@ -4,18 +4,28 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 internal sealed class SpineAnimationRenderBatchCache
 {
+    private const int DefaultMaxCachedFrames = 96;
+    private const int MaxClipViewportsPerFrame = 2;
+
     private static readonly IReadOnlyList<SpineAnimationVertexBatch> EmptyVertexBatches =
         Array.Empty<SpineAnimationVertexBatch>();
     private static readonly IReadOnlyList<SpineAnimationClipSpaceBatch> EmptyClipBatches =
         Array.Empty<SpineAnimationClipSpaceBatch>();
 
-    private SpineAnimationFrameDto? _vertexFrame;
+    private readonly int _maxCachedFrames;
+    private readonly Dictionary<SpineAnimationFrameDto, VertexBatchCacheEntry> _vertexEntries;
+    private readonly Dictionary<IReadOnlyList<SpineAnimationVertexBatch>, List<ClipBatchCacheEntry>> _clipEntries;
+    private long _cacheStamp;
     private int _texturePageVersion = -1;
-    private IReadOnlyList<SpineAnimationVertexBatch> _vertexBatches = EmptyVertexBatches;
-    private IReadOnlyList<SpineAnimationVertexBatch>? _clipSourceBatches;
-    private float _clipViewportWidth;
-    private float _clipViewportHeight;
-    private IReadOnlyList<SpineAnimationClipSpaceBatch> _clipBatches = EmptyClipBatches;
+
+    public SpineAnimationRenderBatchCache(int maxCachedFrames = DefaultMaxCachedFrames)
+    {
+        _maxCachedFrames = Math.Max(1, maxCachedFrames);
+        _vertexEntries = new Dictionary<SpineAnimationFrameDto, VertexBatchCacheEntry>(
+            ReferenceEqualityComparer<SpineAnimationFrameDto>.Instance);
+        _clipEntries = new Dictionary<IReadOnlyList<SpineAnimationVertexBatch>, List<ClipBatchCacheEntry>>(
+            ReferenceEqualityComparer<IReadOnlyList<SpineAnimationVertexBatch>>.Instance);
+    }
 
     public IReadOnlyList<SpineAnimationVertexBatch> GetVertexBatches(
         SpineAnimationFrameDto? frame,
@@ -30,17 +40,22 @@ internal sealed class SpineAnimationRenderBatchCache
             return EmptyVertexBatches;
         }
 
-        if (ReferenceEquals(_vertexFrame, frame) &&
-            _texturePageVersion == texturePageVersion)
+        if (_texturePageVersion != texturePageVersion)
         {
-            return _vertexBatches;
+            Clear();
+            _texturePageVersion = texturePageVersion;
         }
 
-        _vertexFrame = frame;
-        _texturePageVersion = texturePageVersion;
-        _vertexBatches = SpineAnimationVertexBatchProjector.Project(frame, texturePages);
-        ClearClipBatches();
-        return _vertexBatches;
+        if (_vertexEntries.TryGetValue(frame, out var entry))
+        {
+            entry.LastUsedStamp = NextStamp();
+            return entry.VertexBatches;
+        }
+
+        var batches = SpineAnimationVertexBatchProjector.Project(frame, texturePages);
+        _vertexEntries.Add(frame, new VertexBatchCacheEntry(batches, NextStamp()));
+        TrimVertexEntries();
+        return batches;
     }
 
     public IReadOnlyList<SpineAnimationClipSpaceBatch> GetClipBatches(
@@ -52,40 +67,101 @@ internal sealed class SpineAnimationRenderBatchCache
 
         if (batches.Count == 0)
         {
-            ClearClipBatches();
             return EmptyClipBatches;
         }
 
-        if (ReferenceEquals(_clipSourceBatches, batches) &&
-            NearlyEquals(_clipViewportWidth, viewportWidth) &&
-            NearlyEquals(_clipViewportHeight, viewportHeight))
+        if (!_clipEntries.TryGetValue(batches, out var entries))
         {
-            return _clipBatches;
+            entries = [];
+            _clipEntries.Add(batches, entries);
         }
 
-        _clipSourceBatches = batches;
-        _clipViewportWidth = viewportWidth;
-        _clipViewportHeight = viewportHeight;
-        _clipBatches = SpineAnimationClipSpaceProjector.Project(batches, viewportWidth, viewportHeight);
-        return _clipBatches;
+        foreach (var entry in entries)
+        {
+            if (NearlyEquals(entry.ViewportWidth, viewportWidth) &&
+                NearlyEquals(entry.ViewportHeight, viewportHeight))
+            {
+                entry.LastUsedStamp = NextStamp();
+                return entry.ClipBatches;
+            }
+        }
+
+        var clipBatches = SpineAnimationClipSpaceProjector.Project(batches, viewportWidth, viewportHeight);
+        entries.Add(new ClipBatchCacheEntry(viewportWidth, viewportHeight, clipBatches, NextStamp()));
+        TrimClipEntries(entries);
+        return clipBatches;
     }
 
     public void Clear()
     {
-        _vertexFrame = null;
         _texturePageVersion = -1;
-        _vertexBatches = EmptyVertexBatches;
-        ClearClipBatches();
+        _vertexEntries.Clear();
+        _clipEntries.Clear();
+        _cacheStamp = 0;
     }
 
-    private void ClearClipBatches()
+    private void TrimVertexEntries()
     {
-        _clipSourceBatches = null;
-        _clipViewportWidth = 0f;
-        _clipViewportHeight = 0f;
-        _clipBatches = EmptyClipBatches;
+        while (_vertexEntries.Count > _maxCachedFrames)
+        {
+            var leastUsed = _vertexEntries
+                .OrderBy(static pair => pair.Value.LastUsedStamp)
+                .First();
+            _clipEntries.Remove(leastUsed.Value.VertexBatches);
+            _vertexEntries.Remove(leastUsed.Key);
+        }
     }
+
+    private void TrimClipEntries(List<ClipBatchCacheEntry> entries)
+    {
+        while (entries.Count > MaxClipViewportsPerFrame)
+        {
+            var leastUsed = entries
+                .OrderBy(static entry => entry.LastUsedStamp)
+                .First();
+            entries.Remove(leastUsed);
+        }
+    }
+
+    private long NextStamp() =>
+        ++_cacheStamp;
 
     private static bool NearlyEquals(float left, float right) =>
         Math.Abs(left - right) < 0.001f;
+
+    private sealed class VertexBatchCacheEntry(
+        IReadOnlyList<SpineAnimationVertexBatch> vertexBatches,
+        long lastUsedStamp)
+    {
+        public IReadOnlyList<SpineAnimationVertexBatch> VertexBatches { get; } = vertexBatches;
+
+        public long LastUsedStamp { get; set; } = lastUsedStamp;
+    }
+
+    private sealed class ClipBatchCacheEntry(
+        float viewportWidth,
+        float viewportHeight,
+        IReadOnlyList<SpineAnimationClipSpaceBatch> clipBatches,
+        long lastUsedStamp)
+    {
+        public float ViewportWidth { get; } = viewportWidth;
+
+        public float ViewportHeight { get; } = viewportHeight;
+
+        public IReadOnlyList<SpineAnimationClipSpaceBatch> ClipBatches { get; } = clipBatches;
+
+        public long LastUsedStamp { get; set; } = lastUsedStamp;
+    }
+
+    private sealed class ReferenceEqualityComparer<T> : IEqualityComparer<T>
+        where T : class
+    {
+        public static ReferenceEqualityComparer<T> Instance { get; } = new();
+
+        public bool Equals(T? x, T? y) =>
+            ReferenceEquals(x, y);
+
+        public int GetHashCode(T obj) =>
+            System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
+    }
 }

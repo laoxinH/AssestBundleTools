@@ -43,13 +43,18 @@ $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 | --- | --- |
 | texture payload | `15,666,859` bytes |
 | decoded pages | `1` |
+| texture decode | `122.213 ms` |
 | texture alpha | `0..255` |
 | non-zero alpha | `55.009%` |
 | GPU pages | `1` |
 | GPU texture bytes | `42,510,400` |
-| GPU upload | `14.263 ms` |
-| first visible frame | frame `6`, `8,845` vertices, `25,350` indices, `37.14 ms` |
-| steady sample | frame `60`, `8,845` vertices, `25,350` indices, `2.345 ms` |
+| GPU upload | `53.904 ms` in segmented run; earlier run observed `14.263 ms` |
+| first visible frame | frame `1`, `8,845` vertices, `25,350` indices, `106.42 ms` |
+| first frame timing | `uploadMs=53.904`, `projectMs=3.333`, `clipMs=3.106`, `drawMs=15.79`, `presentMs=1.311` |
+| cached duplicate frame | frame `2`, `0.767 ms`, `projectMs=0`, `clipMs=0.037`, `drawMs=0.384`, `presentMs=0.318` |
+| changed frame sample | frame `3`, `3.573 ms`, `projectMs=2.132`, `clipMs=0.801`, `drawMs=0.514`, `presentMs=0.107` |
+| steady sample | frame `60`, `0.318 ms`, `projectMs=0`, `clipMs=0`, `drawMs=0.282`, `presentMs=0.029` |
+| later steady sample | frame `120`, `0.317 ms`, `projectMs=0`, `clipMs=0.001`, `drawMs=0.267`, `presentMs=0.041` |
 | bounds sample | `-1029.775,6.337..1023.472,1921.976` |
 | UV range | `0.001,0.001..1,0.999` |
 | alpha range | `0..1` |
@@ -67,6 +72,7 @@ $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 ## 当前判断
 
 - D3D11 后端已经能真实采样贴图并显示大 mesh，不再是空白或块状矩形近似。
-- 大样本首帧主要包含 shader / buffer / draw warmup，后续帧已明显下降。
-- 下一轮需要用 `uploadMs / projectMs / clipMs / drawMs / presentMs` 区分 CPU runtime 采样、DTO 到 vertex batch 投影、clip-space 投影、GPU draw 和 present 的占比。
-- 若 `projectMs` 或 frame DTO 生成前耗时占主导，优先把缓存推进到 animation / skin / playback timestamp 维度；若 `drawMs / presentMs` 占主导，再考虑 D3D batch 合并、texture page 排序或更低层的渲染调度优化。
+- 大样本首帧主要消耗在 Texture2D GPU upload、device / shader / buffer warmup 和首帧 draw；后续 GPU draw / present 通常低于 `1 ms`。
+- 新动画帧的 Presentation 投影成本主要在 `projectMs / clipMs`，当前大样本约 `1.4-3 ms`；同一帧重复渲染时缓存命中后基本归零。
+- 当前迹象不支持“持续 GPU 绘制是主要瓶颈”的判断。下一步优先把 Presentation batch cache 从上一帧缓存扩展为有界多帧缓存，让动画回环播放时复用已投影结果。
+- 若有用户可感知卡顿但 D3D 分段耗时仍低，应补 Application / Infrastructure 侧预览生成、runtime 采样和 DTO 投影的加载期诊断，而不是继续压缩 D3D draw。

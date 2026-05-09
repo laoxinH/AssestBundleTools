@@ -21,6 +21,38 @@ public sealed class SpineAnimationRenderBatchCacheTests
     }
 
     [Fact]
+    public void GetVertexBatches_ShouldReuseEarlierFrame_WhenWithinCapacity()
+    {
+        var cache = new SpineAnimationRenderBatchCache(maxCachedFrames: 2);
+        var firstFrame = CreateFrame("first");
+        var secondFrame = CreateFrame("second");
+        var texturePages = CreateTexturePages();
+
+        var first = cache.GetVertexBatches(firstFrame, texturePages, texturePageVersion: 1);
+        _ = cache.GetVertexBatches(secondFrame, texturePages, texturePageVersion: 1);
+        var reused = cache.GetVertexBatches(firstFrame, texturePages, texturePageVersion: 1);
+
+        Assert.Same(first, reused);
+    }
+
+    [Fact]
+    public void GetVertexBatches_ShouldEvictLeastRecentlyUsedFrame_WhenCapacityIsExceeded()
+    {
+        var cache = new SpineAnimationRenderBatchCache(maxCachedFrames: 2);
+        var firstFrame = CreateFrame("first");
+        var secondFrame = CreateFrame("second");
+        var thirdFrame = CreateFrame("third");
+        var texturePages = CreateTexturePages();
+        var first = cache.GetVertexBatches(firstFrame, texturePages, texturePageVersion: 1);
+        _ = cache.GetVertexBatches(secondFrame, texturePages, texturePageVersion: 1);
+
+        _ = cache.GetVertexBatches(thirdFrame, texturePages, texturePageVersion: 1);
+        var afterEviction = cache.GetVertexBatches(firstFrame, texturePages, texturePageVersion: 1);
+
+        Assert.NotSame(first, afterEviction);
+    }
+
+    [Fact]
     public void GetClipBatches_ShouldReuseBatches_ForSameSourceAndViewport()
     {
         var cache = new SpineAnimationRenderBatchCache();
@@ -32,6 +64,19 @@ public sealed class SpineAnimationRenderBatchCacheTests
 
         Assert.Same(first, second);
         Assert.NotSame(first, afterResize);
+    }
+
+    [Fact]
+    public void GetClipBatches_ShouldReuseEarlierFrameClip_WhenWithinCapacity()
+    {
+        var cache = new SpineAnimationRenderBatchCache(maxCachedFrames: 2);
+        var firstVertexBatches = cache.GetVertexBatches(CreateFrame("first"), CreateTexturePages(), texturePageVersion: 1);
+        var firstClip = cache.GetClipBatches(firstVertexBatches, 320f, 240f);
+        _ = cache.GetVertexBatches(CreateFrame("second"), CreateTexturePages(), texturePageVersion: 1);
+
+        var reused = cache.GetClipBatches(firstVertexBatches, 320f, 240f);
+
+        Assert.Same(firstClip, reused);
     }
 
     [Fact]
@@ -52,12 +97,12 @@ public sealed class SpineAnimationRenderBatchCacheTests
         Assert.NotSame(firstClip, secondClip);
     }
 
-    private static SpineAnimationFrameDto CreateFrame() =>
+    private static SpineAnimationFrameDto CreateFrame(string slotName = "slot") =>
         new(
             0d,
             [
                 new SpineAnimationDrawCommandDto(
-                    "slot",
+                    slotName,
                     "attachment",
                     "region",
                     "page.png",
