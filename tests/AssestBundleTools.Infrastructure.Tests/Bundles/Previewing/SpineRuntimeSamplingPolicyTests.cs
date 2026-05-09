@@ -13,7 +13,7 @@ internal static class SpineRuntimeSamplingPolicyTests
 
         var sampleTimes = SpineRuntimeSamplingPolicy.CreateSampleTimes(4f, budget);
 
-        TestAssert.Equal(121, sampleTimes.Count, "Large official runtime meshes should keep 30 FPS sampling when under the preview cap.");
+        TestAssert.Equal(120, sampleTimes.Count, "Large official runtime meshes should stay close to 30 FPS within the memory-bounded preview cap.");
     }
 
     public static void CreateSampleTimes_ShouldStayBounded_ForExtremeOfficialRuntimeMesh()
@@ -24,7 +24,7 @@ internal static class SpineRuntimeSamplingPolicyTests
 
         var sampleTimes = SpineRuntimeSamplingPolicy.CreateSampleTimes(8f, budget);
 
-        TestAssert.True(sampleTimes.Count <= 240, "Runtime sampling should stay within the hard frame cap.");
+        TestAssert.True(sampleTimes.Count <= 120, "Runtime sampling should stay within the memory-bounded hard frame cap.");
         TestAssert.True(sampleTimes.Count >= 2, "Runtime sampling should keep at least two frames for animated previews.");
     }
 }

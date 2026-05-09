@@ -19,10 +19,12 @@ public sealed class SpineAnimationFallbackRenderBackendTests
         };
 
         backend.LoadTexturePages(texturePages);
+        backend.LoadTexturePages(texturePages);
         backend.SetCurrentFrame(frame);
         backend.SwitchToFallback();
 
         Assert.Equal([true, false], primaryStates);
+        Assert.Equal(1, primary.LoadTexturePagesCount);
         Assert.Same(texturePages, fallback.TexturePages);
         Assert.Same(frame, fallback.CurrentFrame);
         Assert.Equal(1, fallback.ResetFrameCacheCount);
@@ -77,6 +79,27 @@ public sealed class SpineAnimationFallbackRenderBackendTests
         Assert.Equal(1, fallback.ReleaseResourcesCount);
     }
 
+    [Fact]
+    public void ReleaseResources_ShouldDropRememberedTexturePagesAndFrame()
+    {
+        var primary = new RecordingBackend();
+        var fallback = new RecordingBackend();
+        var backend = new SpineAnimationFallbackRenderBackend(primary, fallback, _ => { });
+        var frame = new SpineAnimationFrameDto(0d, []);
+        var texturePages = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        {
+            ["page.png"] = [1, 2, 3]
+        };
+
+        backend.LoadTexturePages(texturePages);
+        backend.SetCurrentFrame(frame);
+        backend.ReleaseResources();
+        backend.SwitchToFallback();
+
+        Assert.True(fallback.TexturePagesCleared);
+        Assert.Null(fallback.CurrentFrame);
+    }
+
     private sealed class RecordingBackend : ISpineAnimationPreviewRenderBackend
     {
         public SpineAnimationFrameDto? CurrentFrame { get; private set; }
@@ -86,6 +109,8 @@ public sealed class SpineAnimationFallbackRenderBackendTests
         public IReadOnlyDictionary<string, byte[]>? TexturePages { get; private set; }
 
         public bool TexturePagesCleared { get; private set; }
+
+        public int LoadTexturePagesCount { get; private set; }
 
         public int ResetFrameCacheCount { get; private set; }
 
@@ -101,6 +126,7 @@ public sealed class SpineAnimationFallbackRenderBackendTests
 
         public void LoadTexturePages(IReadOnlyDictionary<string, byte[]> texturePageContents)
         {
+            LoadTexturePagesCount++;
             TexturePages = texturePageContents;
             TexturePagesCleared = false;
         }

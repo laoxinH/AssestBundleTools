@@ -11,12 +11,15 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationPreviewRenderBackend
 {
+    private static readonly IReadOnlyDictionary<string, byte[]> EmptyTexturePages =
+        new Dictionary<string, byte[]>(StringComparer.Ordinal);
+
     private const int BufferCount = 2;
     private const int DxgiErrorDeviceRemoved = unchecked((int)0x887A0005);
     private const int DxgiErrorDeviceHung = unchecked((int)0x887A0006);
     private const int DxgiErrorDeviceReset = unchecked((int)0x887A0007);
     private const int DxgiErrorDriverInternalError = unchecked((int)0x887A0020);
-    private const int D3DMaxCachedFrames = 256;
+    private const int D3DMaxCachedFrames = 128;
 
     private readonly SwapChainPanel _panel;
     private readonly D3D11SpineRenderDiagnostics _diagnostics;
@@ -25,6 +28,7 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
     private readonly SpineAnimationRenderBatchCache _batchCache = new(D3DMaxCachedFrames);
     private readonly D3D11SpineBatchPrewarmer _batchPrewarmer;
     private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _resizeTimer;
+    private IReadOnlyDictionary<string, byte[]> _texturePageContents = EmptyTexturePages;
     private SpineAnimationFrameDto? _currentFrame;
     private ID3D11Device? _device;
     private ID3D11DeviceContext? _context;
@@ -34,6 +38,7 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
     private int _pixelHeight;
     private int _textureLoadGeneration;
     private int _texturePageVersion;
+    private bool _textureLoadPending;
     private bool _deviceRecoveryAttempted;
 
     public D3D11SpineAnimationPreviewRenderBackend(
@@ -77,21 +82,32 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
     {
         ArgumentNullException.ThrowIfNull(texturePageContents);
 
+        if (SpineAnimationTexturePageContentComparer.ReferenceEqualsByEntry(_texturePageContents, texturePageContents) &&
+            (_textureLoadPending || _texturePageCache.TexturePageSizes.Count > 0))
+        {
+            return;
+        }
+
+        _texturePageContents = texturePageContents;
         var generation = ++_textureLoadGeneration;
         _texturePageCache.Clear();
         InvalidateBatchCache();
         if (texturePageContents.Count == 0)
         {
+            _textureLoadPending = false;
             Invalidate();
             return;
         }
 
+        _textureLoadPending = true;
         _ = LoadTexturePagesAsync(texturePageContents, generation);
         Invalidate();
     }
 
     public void ClearTexturePages()
     {
+        _texturePageContents = EmptyTexturePages;
+        _textureLoadPending = false;
         _textureLoadGeneration++;
         _texturePageCache.Clear();
         InvalidateBatchCache();
@@ -109,7 +125,7 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
         _resizeTimer.Stop();
         _deviceRecoveryAttempted = false;
         _batchPrewarmer.Cancel();
-        ReleaseDeviceResources();
+        ReleaseDeviceResources(clearTextureContents: true);
     }
 
     public void Invalidate()
@@ -158,6 +174,14 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
 
         if (_renderTargetView is null)
         {
+            return;
+        }
+
+        if (_texturePageCache.TexturePageSizes.Count == 0 &&
+            _texturePageContents.Count > 0 &&
+            !_textureLoadPending)
+        {
+            LoadTexturePages(_texturePageContents);
             return;
         }
 
@@ -220,17 +244,17 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
         {
             _deviceRecoveryAttempted = true;
             _diagnostics.DeviceLostRecoveryQueued(exception);
-            ReleaseDeviceResources();
+            ReleaseDeviceResources(clearTextureContents: false);
             Invalidate();
             return;
         }
 
         _diagnostics.RenderingFailed(exception);
-        ReleaseDeviceResources();
+        ReleaseDeviceResources(clearTextureContents: false);
         RenderingFailed?.Invoke(this, EventArgs.Empty);
     }
 
-    private void ReleaseDeviceResources()
+    private void ReleaseDeviceResources(bool clearTextureContents)
     {
         _renderTargetView?.Dispose();
         _swapChain?.Dispose();
@@ -246,6 +270,11 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
         _batchRenderer.ReleaseDeviceResources();
         _batchCache.Clear();
         _batchPrewarmer.Cancel();
+        if (clearTextureContents)
+        {
+            _texturePageContents = EmptyTexturePages;
+            _textureLoadPending = false;
+        }
     }
 
     private bool EnsureDeviceResources()
@@ -381,6 +410,7 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
                 }
 
                 _texturePageCache.ReplaceDecodedPages(decodedPages);
+                _textureLoadPending = false;
                 InvalidateBatchCache();
                 if (!StartBatchPrewarmIfReady())
                 {
@@ -405,6 +435,8 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
             {
                 if (generation == _textureLoadGeneration)
                 {
+                    _texturePageContents = EmptyTexturePages;
+                    _textureLoadPending = false;
                     _texturePageCache.Clear();
                     InvalidateBatchCache();
                     Invalidate();

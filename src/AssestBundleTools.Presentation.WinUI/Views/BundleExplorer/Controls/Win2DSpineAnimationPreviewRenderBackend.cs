@@ -7,9 +7,13 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationPreviewRenderBackend
 {
+    private static readonly IReadOnlyDictionary<string, byte[]> EmptyTexturePages =
+        new Dictionary<string, byte[]>(StringComparer.Ordinal);
+
     private readonly CanvasControl _canvas;
     private readonly Dictionary<string, CanvasBitmap> _textureBitmaps = new(StringComparer.Ordinal);
     private readonly SpineAnimationFrameRenderCache _frameRenderCache = new();
+    private IReadOnlyDictionary<string, byte[]> _texturePageContents = EmptyTexturePages;
     private SpineAnimationFrameDto? _currentFrame;
     private int _textureLoadGeneration;
 
@@ -40,6 +44,12 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
     {
         ArgumentNullException.ThrowIfNull(texturePageContents);
 
+        if (SpineAnimationTexturePageContentComparer.ReferenceEqualsByEntry(_texturePageContents, texturePageContents))
+        {
+            return;
+        }
+
+        _texturePageContents = texturePageContents;
         var generation = ++_textureLoadGeneration;
         ClearTextureBitmaps();
         if (texturePageContents.Count == 0)
@@ -53,6 +63,7 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
 
     public void ClearTexturePages()
     {
+        _texturePageContents = EmptyTexturePages;
         _textureLoadGeneration++;
         ClearTextureBitmaps();
         Invalidate();
@@ -65,6 +76,7 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
 
     public void ReleaseResources()
     {
+        _texturePageContents = EmptyTexturePages;
         ClearTextureBitmaps();
         _currentFrame = null;
         _textureLoadGeneration++;
@@ -119,6 +131,7 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
         {
             if (generation == _textureLoadGeneration)
             {
+                _texturePageContents = EmptyTexturePages;
                 ClearTextureBitmaps();
                 Invalidate();
             }

@@ -42,6 +42,11 @@ internal sealed class SpineAnimationFallbackRenderBackend : ISpineAnimationPrevi
     {
         ArgumentNullException.ThrowIfNull(texturePageContents);
 
+        if (SpineAnimationTexturePageContentComparer.ReferenceEqualsByEntry(_texturePageContents, texturePageContents))
+        {
+            return;
+        }
+
         _texturePageContents = texturePageContents;
         ActiveBackend.LoadTexturePages(texturePageContents);
     }
@@ -57,6 +62,8 @@ internal sealed class SpineAnimationFallbackRenderBackend : ISpineAnimationPrevi
 
     public void ReleaseResources()
     {
+        _texturePageContents = EmptyTexturePages;
+        _currentFrame = null;
         _primary.ReleaseResources();
         _fallback.ReleaseResources();
     }

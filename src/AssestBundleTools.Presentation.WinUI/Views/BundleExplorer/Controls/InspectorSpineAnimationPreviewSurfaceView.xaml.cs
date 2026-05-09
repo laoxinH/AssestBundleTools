@@ -10,7 +10,10 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserControl
 {
+    private static readonly TimeSpan DeferredResourceReleaseDelay = TimeSpan.FromSeconds(5);
+
     private readonly DispatcherTimer _playbackTimer;
+    private readonly DispatcherTimer _deferredResourceReleaseTimer;
     private readonly ISpineAnimationPreviewRenderBackend _renderBackend;
     private readonly D3D11SpineRenderDiagnostics? _diagnostics;
     private InspectorPreviewSpineAnimationViewModel? _observedViewModel;
@@ -36,6 +39,11 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
             Interval = TimeSpan.FromMilliseconds(33)
         };
         _playbackTimer.Tick += OnPlaybackTimerTick;
+        _deferredResourceReleaseTimer = new DispatcherTimer
+        {
+            Interval = DeferredResourceReleaseDelay
+        };
+        _deferredResourceReleaseTimer.Tick += OnDeferredResourceReleaseTimerTick;
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         ApplyLocalizedText();
@@ -65,6 +73,7 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        _deferredResourceReleaseTimer.Stop();
         AttachObservedViewModel(ViewModel);
         RefreshTexturePages();
         SyncRenderFrame();
@@ -80,9 +89,21 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         _playbackTimer.Stop();
         DetachObservedViewModel(_observedViewModel);
         _renderBackend.SetCurrentFrame(null);
+        _lastSyncedFrame = null;
+        _deferredResourceReleaseTimer.Stop();
+        _deferredResourceReleaseTimer.Start();
+    }
+
+    private void OnDeferredResourceReleaseTimerTick(object? sender, object e)
+    {
+        _deferredResourceReleaseTimer.Stop();
+        if (IsLoaded)
+        {
+            return;
+        }
+
         _renderBackend.ClearTexturePages();
         _renderBackend.ReleaseResources();
-        _lastSyncedFrame = null;
     }
 
     private void ApplyLocalizedText()

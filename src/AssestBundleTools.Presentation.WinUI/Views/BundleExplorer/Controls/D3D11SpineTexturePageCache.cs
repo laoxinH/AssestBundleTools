@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 
@@ -128,7 +129,7 @@ internal sealed class D3D11SpineTexturePage : IDisposable
         ID3D11Texture2D? texture = null;
         try
         {
-            var pixels = ToUInt32Pixels(decodedPage.BgraPixels);
+            var pixels = MemoryMarshal.Cast<byte, uint>(decodedPage.BgraPixels);
             texture = device.CreateTexture2D(
                 pixels,
                 Format.B8G8R8A8_UNorm,
@@ -160,12 +161,6 @@ internal sealed class D3D11SpineTexturePage : IDisposable
         Texture.Dispose();
     }
 
-    private static uint[] ToUInt32Pixels(byte[] bgraPixels)
-    {
-        var pixels = new uint[bgraPixels.Length / sizeof(uint)];
-        Buffer.BlockCopy(bgraPixels, 0, pixels, 0, pixels.Length * sizeof(uint));
-        return pixels;
-    }
 }
 
 internal readonly record struct D3D11SpineTextureUploadResult(
