@@ -78,4 +78,5 @@ $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 - 新动画帧的 Presentation 投影成本主要在 `projectMs / clipMs`，当前大样本约 `1.4-3 ms`；同一帧重复渲染时缓存命中后基本归零。
 - 当前迹象不支持“持续 GPU 绘制是主要瓶颈”的判断。有界多帧 batch cache 已让回环 / 重复帧路径的 `projectMs / clipMs` 基本归零。
 - 复杂样本切入时曾出现 `projectMs=40.633 ms` 的冷投影尖峰，说明仍需避免 UI render 路径同步投影大 mesh。当前策略改为 texture page 解码完成后后台预热当前动画 sampled frames 的 vertex batch，回写前校验 texture page version；未命中且预热可用时，D3D 后端会延迟该帧绘制而不是在 UI 线程同步投影。
+- D3D 投影尖峰消除后，复杂样本仍不流畅时优先看 `batch-prewarm-completed requestedFrames`。真实样本曾只有 `22` 个 sampled frames，说明官方 runtime adapter 的 Win2D 时代复杂度预算把动画采样压得过低；当前已把 V38 / V42 采样预算放宽到在硬上限 `240` 帧内优先保持 `30 FPS`，并把 D3D vertex batch cache 扩到可容纳一条高质量 sampled animation。
 - 若有用户可感知卡顿但 D3D 分段耗时仍低，应补 Application / Infrastructure 侧预览生成、runtime 采样和 DTO 投影的加载期诊断，而不是继续压缩 D3D draw。

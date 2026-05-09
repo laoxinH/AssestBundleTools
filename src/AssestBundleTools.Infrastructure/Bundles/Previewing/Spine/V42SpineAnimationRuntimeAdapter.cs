@@ -6,11 +6,6 @@ namespace AssestBundleTools.Infrastructure.Bundles.Previewing.Spine;
 
 internal sealed partial class V42SpineAnimationRuntimeAdapter : ISpineAnimationRuntimeAdapter
 {
-    private const double SampledFrameRate = 30d;
-    private const int MaxSampledFrameCount = 240;
-    private const int MaxSampledDrawCommandBudget = 12000;
-    private const int MaxSampledMeshTriangleBudget = 480000;
-
     public string AdapterKey => "V42";
 
     public SpineAnimationRuntimePreviewResultDto TryBuildPreview(
@@ -248,7 +243,7 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter : ISpineAnimationR
         SpineRuntimeSamplingBudget samplingBudget,
         CancellationToken cancellationToken)
     {
-        return CreateSampleTimes(animation.Duration, samplingBudget)
+        return SpineRuntimeSamplingPolicy.CreateSampleTimes(animation.Duration, samplingBudget)
             .Select(time =>
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -286,35 +281,9 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter : ISpineAnimationR
 
     private static SpineRuntimeSamplingBudget CreateSamplingBudget(SpineAnimationFrameDto setupFrame)
     {
-        var drawCommandCount = Math.Max(setupFrame.DrawCommands.Count, 1);
+        var drawCommandCount = setupFrame.DrawCommands.Count;
         var meshTriangleCount = setupFrame.DrawCommands.Sum(static command => command.MeshTriangles.Count);
-        var maxFrameCount = Math.Clamp(
-            Math.Min(
-                MaxSampledDrawCommandBudget / drawCommandCount,
-                meshTriangleCount > 0 ? MaxSampledMeshTriangleBudget / meshTriangleCount : MaxSampledFrameCount),
-            2,
-            MaxSampledFrameCount);
-        return new SpineRuntimeSamplingBudget(maxFrameCount);
-    }
-
-    private static IReadOnlyList<double> CreateSampleTimes(
-        float duration,
-        SpineRuntimeSamplingBudget samplingBudget)
-    {
-        if (duration <= 0f)
-        {
-            return [0d];
-        }
-
-        var frameCount = Math.Clamp(
-            (int)Math.Floor(duration * SampledFrameRate) + 1,
-            2,
-            samplingBudget.MaxFrameCount);
-        var step = duration / Math.Max(frameCount - 1, 1);
-        return Enumerable.Range(0, frameCount)
-            .Select(index => index == frameCount - 1 ? duration : index * step)
-            .Select(static value => (double)value)
-            .ToArray();
+        return SpineRuntimeSamplingPolicy.CreateBudget(drawCommandCount, meshTriangleCount);
     }
 
     private static IReadOnlyList<SpineAnimationDrawCommandDto> BuildDrawCommands(
@@ -483,5 +452,4 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter : ISpineAnimationR
         double M31,
         double M32);
 
-    private readonly record struct SpineRuntimeSamplingBudget(int MaxFrameCount);
 }

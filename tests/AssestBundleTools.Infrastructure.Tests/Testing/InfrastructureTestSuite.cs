@@ -158,6 +158,14 @@ internal static class InfrastructureTestSuite
             SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldReturnNotHandled_WhenV42ParserReturnsNullSkeletonData);
         await RunTestAsync(
             failures,
+            nameof(SpineRuntimeSamplingPolicyTests.CreateSampleTimes_ShouldKeepThirtyFpsBudget_ForLargeOfficialRuntimeMesh),
+            SpineRuntimeSamplingPolicyTests.CreateSampleTimes_ShouldKeepThirtyFpsBudget_ForLargeOfficialRuntimeMesh);
+        await RunTestAsync(
+            failures,
+            nameof(SpineRuntimeSamplingPolicyTests.CreateSampleTimes_ShouldStayBounded_ForExtremeOfficialRuntimeMesh),
+            SpineRuntimeSamplingPolicyTests.CreateSampleTimes_ShouldStayBounded_ForExtremeOfficialRuntimeMesh);
+        await RunTestAsync(
+            failures,
             nameof(AssetsToolsMeshTopologyBuilderTests.BuildTriangles_ShouldReadTriangleAndQuadTopology),
             AssetsToolsMeshTopologyBuilderTests.BuildTriangles_ShouldReadTriangleAndQuadTopology);
         await RunTestAsync(

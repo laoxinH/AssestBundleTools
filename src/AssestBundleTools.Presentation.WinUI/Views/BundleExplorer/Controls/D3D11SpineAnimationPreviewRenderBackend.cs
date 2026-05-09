@@ -16,12 +16,13 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
     private const int DxgiErrorDeviceHung = unchecked((int)0x887A0006);
     private const int DxgiErrorDeviceReset = unchecked((int)0x887A0007);
     private const int DxgiErrorDriverInternalError = unchecked((int)0x887A0020);
+    private const int D3DMaxCachedFrames = 256;
 
     private readonly SwapChainPanel _panel;
     private readonly D3D11SpineRenderDiagnostics _diagnostics;
     private readonly D3D11SpineTexturePageCache _texturePageCache = new();
     private readonly D3D11SpineAnimationBatchRenderer _batchRenderer = new();
-    private readonly SpineAnimationRenderBatchCache _batchCache = new();
+    private readonly SpineAnimationRenderBatchCache _batchCache = new(D3DMaxCachedFrames);
     private readonly D3D11SpineBatchPrewarmer _batchPrewarmer;
     private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _resizeTimer;
     private SpineAnimationFrameDto? _currentFrame;
