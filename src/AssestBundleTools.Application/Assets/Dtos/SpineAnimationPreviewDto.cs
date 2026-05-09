@@ -20,6 +20,8 @@ public sealed partial record SpineAnimationPreviewDto
 
     public IReadOnlyList<SpineAnimationSkinPreviewDto> SkinPreviews { get; init; } =
         Array.Empty<SpineAnimationSkinPreviewDto>();
+
+    public SpineAnimationRuntimePlaybackSourceDto? PlaybackSource { get; init; }
 }
 
 public sealed record SpineAnimationSkinPreviewDto(

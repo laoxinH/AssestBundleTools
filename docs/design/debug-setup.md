@@ -188,6 +188,6 @@ $env:ABT_SPINE_D3D11_SMOKE = '1'
 $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 ```
 
-该诊断只写入调试输出，记录 native `SwapChainPanel` 绑定 readiness / strategy、device / resize、batch renderer 预热、动画帧 batch 后台预热、Texture2D decode、GPU texture upload、节流后的 frame batch / vertex / index / elapsed 数据、`uploadMs / projectMs / clipMs / drawMs / presentMs` 分段耗时、播放 / 暂停 / animation / skin / setup pose / step 等交互事件，以及 fallback 或 device lost 恢复异常类型；不在 UI 中显示原始 D3D 异常。当前 D3D 后端会在 GPU 上传成功后释放 CPU 侧 BGRA 解码页，并在渲染上传动态 buffer 时用池化数组直接做 clip-space 投影，因此 `clipMs` 不再对应一份长期常驻的 clip-space batch 缓存。
+该诊断只写入调试输出，记录 native `SwapChainPanel` 绑定 readiness / strategy、device / resize、batch renderer 预热、Texture2D decode、GPU texture upload、runtime frame generation、节流后的 frame batch / vertex / index / elapsed 数据、`uploadMs / projectMs / clipMs / drawMs / presentMs` 分段耗时、播放 / 暂停 / animation / skin / setup pose / step 等交互事件，以及 fallback 或 device lost 恢复异常类型；不在 UI 中显示原始 D3D 异常。当前 D3D 后端会在 GPU 上传成功后释放 CPU 侧 BGRA 解码页，并在渲染上传动态 buffer 时用池化数组直接做 clip-space 投影，因此 `clipMs` 不再对应一份长期常驻的 clip-space batch 缓存。实时播放主线不再默认预热整段 sampled frame batch，旧 batch 预热只保留在兼容或诊断语境中。
 
-真实样本基线建议至少记录以下操作的连续日志：首帧贴图 decode / upload，正常播放 10 秒，窗口缩放，切 animation，切 skin，暂停 / 恢复，逐帧，重开同一 Spine 组。当前样本记录保存在 [`spine-d3d11-performance-baseline.md`](spine-d3d11-performance-baseline.md)。默认切换前还需要用大量三角样本补齐帧时间、内存占用和设备恢复路径验证。
+真实样本基线建议至少记录以下操作的连续日志：首帧贴图 decode / upload，正常播放 10 秒，窗口缩放，切 animation，切 skin，暂停 / 恢复，逐帧，进度拖动，重开同一 Spine 组。当前样本记录保存在 [`spine-d3d11-performance-baseline.md`](spine-d3d11-performance-baseline.md)：`char_2026_yu_nian#12.ab` 已验证当前 runtime playback session + D3D 当前帧路径达到 `60 FPS` 交互观感；默认切换前还需要补齐更多设备、内存占用、高刷新目标和设备恢复路径验证。

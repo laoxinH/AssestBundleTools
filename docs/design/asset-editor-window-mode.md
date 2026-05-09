@@ -87,6 +87,8 @@
 5. AudioClip：保留试听工具面，后续波形或幅度摘要也应在此区域扩展。
 6. Spine 资源组：当前已在主窗口组文档中展示 JSON skeleton 轻量结构摘要、atlas region overlay、atlas page 选择器和结构化诊断，诊断覆盖 page 未匹配 Texture2D、Texture2D 预览不可用、page 尺寸与图片尺寸不一致等情况；实验性 JSON fallback 动画预览当前支持多 skin 的 region attachment、bone rotate / translate / scale、slot attachment、draw order 和 slot color / rgb / rgba / alpha 时间线，linked mesh、权重顶点、deform、slot 双颜色、event、IK / transform / path / physics 约束、Bezier 曲线等尚未完整解释的特性仍投影为结构化诊断。完整播放器参考 [SpineViewer](https://github.com/ww-rm/SpineViewer) 的“多版本 runtime 适配器 + 窄 skeleton / animation 抽象 + 独立渲染层”思路推进；当前 Application 已先建立并回归覆盖 `V21 / V34 / V35 / V36 / V37 / V38 / V40 / V41 / V42` 版本矩阵，按 skeleton 的 major/minor 版本解析目标 adapter key，预览 DTO 会携带 skeleton 版本、目标 adapter key、适配状态以及 runtime-neutral sampled frames / draw commands，未知或暂无 adapter 的版本会返回结构化 runtime 诊断。Application 现在已提供 `ISpineAnimationRuntimePreviewService` 端口：已知 adapter key 会先交给 Infrastructure runtime adapter 尝试生成同一套中立 DTO，未处理时继续回退到实验 JSON 预览；`.skel / .skel.bytes` TextAsset 会先通过统一预览缓存生成 `AssetPreviewKind.Binary` 载荷，再交给 runtime adapter 尝试解析，未处理时才保留二进制 skeleton 未支持诊断。当前 Infrastructure 已 vendor 官方 `spine-csharp` 3.8 / 4.2 源码到 `ThirdParty/Spine/V38` 和 `ThirdParty/Spine/V42`，并完成 V38 / V42 JSON 与 binary skeleton adapter；V38 / V42 adapter 会把 region attachment 直接输出中立 draw command，mesh attachment 输出官方 runtime 计算出的 world vertices、atlas UV 和 triangle indices，mesh deform timeline 会通过官方 runtime 采样反映到 mesh world vertices，V38 transform constraint timeline 与 V38 / V42 IK constraint timeline 已有最小样本回归，runtime draw order 与 slot / attachment / skeleton tint 会合成到 draw command。Presentation 通过 Win2D 按 DTO 应用 alpha 与 RGB tint，并保持 mesh 几何逐三角贴图绘制；复杂帧使用控件级渲染目标缓存复用完整高质量画面，只有 mesh 数据不可绘制时才退回到 region 矩形，避免播放时出现块状近似。播放体验层当前提供动画选择、真实 skin 切换、播放速度、进度拖动、播放 / 暂停、上一帧 / 下一帧、重播和 setup pose；setup pose 由 Application DTO 的独立 `SetupFrame` 承载，skin 切换通过 `SkinPreviews[]` 切换对应的 setup frame 与 sampled frames，不再把动画 0 秒帧等同于 setup pose；当前帧选择在 ViewModel 内用缓存索引和二分查找，采样端会按 setup frame 的 draw command / mesh 三角复杂度限制最大采样帧数，避免大动画一次性生成过重帧缓存。具体 runtime 对象必须封装在 Infrastructure adapter 内，Presentation 仍只消费 Application DTO / draw command / Texture2D 预览载荷。当前 Application 已提供 `LoadSpineAssetGroupsQuery / LoadSpineAssetGroupDetailsQuery` 的轻量组读模型，主窗口资产窗格已接入 `资源 / Spine 组` 切换用于浏览组摘要。选择 Spine 组会在主窗口右侧复用现有资源详情窗格打开组文档，身份为 `BundleId + GroupId`，检查器展示组摘要、组成资产跳转、skeleton 摘要、诊断摘要、atlas page / region、page 选择器、当前 page 的 overlay、runtime adapter 状态和可用时的实验性动画预览；Spine 组文档可与普通资产文档混在同一个资源文档标签组中，并可跟随统一资源编辑窗口进行会话内拖出、组合和放回。
 
+Spine 动画预览的长期播放路线不再继续扩大整段 `sampled frames` 和全量 D3D batch 预热，当前实时预览已接入 Application 定义、Infrastructure 实现的 runtime playback session；Presentation 按真实 elapsed delta 计算播放时间，并只接收当前帧 DTO 进行渲染。详细契约见 [spine-runtime-playback-session.md](spine-runtime-playback-session.md)。
+
 预览 / 编辑区域只消费 Application 预览 DTO、缓存载荷和展示层状态，不直接读取 AB、遍历文件或调用 Infrastructure 解析实现。
 
 ## 8. 功能区
@@ -241,6 +243,15 @@ Spine 动画的长期高性能渲染路线采用 `D3D11 + SwapChainPanel + verte
 - 现有 Win2D 渲染器保留为兼容回退路径，用于 D3D 初始化失败、设备丢失恢复期间或尚未迁移的测试环境；回退路径不得再把复杂 mesh 降级为块状矩形近似。
 - 所有用户可见的渲染状态、错误提示和降级提示仍走现有本地化资源；D3D 设备错误只作为诊断明细，不直接暴露原始异常文本作为主提示。
 
+Spine 动画的长期高性能播放路线采用 runtime playback session，而不是继续把完整动画预采样并常驻缓存：
+
+- Application 定义 `ISpineAnimationRuntimePlaybackService` 一类窄端口，用于创建、推进、seek、切换 animation / skin 和释放播放 session。
+- Infrastructure 持有官方 Spine runtime 对象，按真实 delta 或绝对 seek 时间生成当前帧的 runtime-neutral draw command DTO。
+- Presentation 的 Spine 播放循环已由 `CompositionTarget.Rendering` 显示刷新驱动；`char_2026_yu_nian#12.ab` 等真实复杂样本的播放、速度切换、animation 切换和进度拖动日志已确认 `60 FPS` 交互观感可接受。若目标提升到 `120 FPS`，仍需结合实际 rendering tick、present 节奏和绑定刷新压力继续验证。
+- D3D 后端只缓存长期 GPU 资源、动态 buffer 和小窗口当前帧批次；不得默认预热整段动画所有 sampled frames。
+- 固定 fps 采样仍可用于导出、序列帧和 runtime session 不可用时的兼容回退。
+- 详细边界、诊断和测试要求见 [spine-runtime-playback-session.md](spine-runtime-playback-session.md)。
+
 ## 13. 与现有主窗口的关系
 
 主窗口仍是活动工作区的主要导航和组织入口：
@@ -342,9 +353,10 @@ Spine 动画的长期高性能渲染路线采用 `D3D11 + SwapChainPanel + verte
 - 当前已完成第二步：Presentation 内部已新增 DTO 到顶点批次的纯投影器，覆盖 region / mesh 顶点、UV、tint / alpha、无效三角过滤和按连续 texture page 保持 draw order 的批次切分；该投影器暂不接触 D3D 类型。
 - 当前已完成第三步的受控 D3D 后端：`ABT_SPINE_D3D11_SMOKE=1/true/d3d11` 时，播放控件会切到 `SwapChainPanel` 承载的 D3D11 后端，创建 device / swap chain / render target，并把顶点批次投影到 clip space 后通过 D3D11 顶点 / 索引 buffer 提交。
 - 当前已完成第四步的第一段：Texture2D 预览载荷会在 Presentation 内解码为 BGRA8、上传为 D3D texture / shader resource，并按 page name 缓存；顶点批次会通过 shader 采样真实 page texture 并应用 DTO 中的 tint / alpha。
-- 当前已完成第五步的第二段：D3D11 后端已把每个 batch 每帧临时创建 vertex / index buffer 的提交方式替换为可复用动态 buffer，按容量增长后使用 `WriteDiscard` 上传当前 batch；播放控件会在 Unloaded 后短暂保留 D3D / Win2D 后端资源，若没有快速重新挂载才释放，D3D resize 通过短防抖合并，Texture2D 解码和上传带 generation 保护，DXGI device removed / reset / hung / internal error 会先尝试释放并重建一次，仍失败时才自动切回 Win2D 后端并重放当前帧与贴图状态。D3D 后端还会按 `SpineAnimationFrameDto` 引用和 texture page version 做有界多帧 vertex batch 缓存，clip-space 投影改为渲染上传阶段使用池化数组即时完成，并在 texture page 解码完成后后台预热当前 animation sampled frames 的 vertex batch；复杂帧未命中且预热可用时，会延迟该帧绘制而不是在 UI render 路径同步投影大 mesh。V38 / V42 官方 runtime adapter 的复杂 mesh 采样预算已放宽到在 `120` 帧内尽量接近 `30 FPS`，D3D batch cache 同步保持有界以降低常驻内存；暂停或当前帧未变化时减少重复 invalidation；batch renderer 会在后台预编译 shader bytecode，并在 device 创建后预热 shader / input layout / sampler / blend 等管线资源，避免首个真实 draw 才加载 D3DCompiler。D3D smoke 可通过 `ABT_SPINE_D3D11_DIAGNOSTICS=1/true/d3d11` 额外输出 device / resize、batch renderer prewarm、batch prewarm、texture decode、GPU upload、frame batch / vertex / index / elapsed、upload / projection / clip / draw / present 分段耗时、播放交互事件和 fallback / device lost 异常类型，便于真实样本基线记录；默认路径仍是 Win2D，D3D 后端仍需通过环境变量主动启用。
+- 当前已完成第五步的第二段并接入实时播放主线：D3D11 后端已把每个 batch 每帧临时创建 vertex / index buffer 的提交方式替换为可复用动态 buffer，按容量增长后使用 `WriteDiscard` 上传当前 batch；播放控件会在 Unloaded 后短暂保留 D3D / Win2D 后端资源，若没有快速重新挂载才释放，D3D resize 通过短防抖合并，Texture2D 解码和上传带 generation 保护，DXGI device removed / reset / hung / internal error 会先尝试释放并重建一次，仍失败时才自动切回 Win2D 后端并重放当前帧与贴图状态。D3D 后端按 `SpineAnimationFrameDto` 引用和 texture page version 做小窗口 vertex batch 缓存，clip-space 投影改为渲染上传阶段使用池化数组即时完成；当前帧 batch 未命中时直接投影并绘制，不再为了等待整段 sampled frame prewarm 而延迟显示。V38 / V42 官方 runtime adapter 仍保留复杂 mesh sampled DTO 作为 JSON fallback、兼容回退和未来固定 fps 导出基础；实时预览则优先通过 playback session 按 animation / skin / setup pose / 绝对 seek 时间生成当前帧。动画和 skin 切换会先同步播放时间与当前帧再通知控件刷新，避免切换瞬间把新动画名称与旧动画时间 / 旧帧混用。暂停或当前帧未变化时减少重复 invalidation；batch renderer 会在后台预编译 shader bytecode，并在 device 创建后预热 shader / input layout / sampler / blend 等管线资源，避免首个真实 draw 才加载 D3DCompiler。D3D smoke 可通过 `ABT_SPINE_D3D11_DIAGNOSTICS=1/true/d3d11` 额外输出 device / resize、batch renderer prewarm、texture decode、GPU upload、runtime frame generation、frame batch / vertex / index / elapsed、upload / projection / clip / draw / present 分段耗时、播放交互事件和 fallback / device lost 异常类型，便于真实样本基线记录；默认路径仍是 Win2D，D3D 后端仍需通过环境变量主动启用。
+- 独立资源编辑窗口的右侧详情面板会复用 `InspectorPanelView`，但详情预览区在该布局中隐藏；隐藏详情预览必须向内层 Spine surface 传递 inactive 状态，避免不可见副本监听同一 ViewModel、创建 runtime session、启动 rendering loop、重复 texture decode / batch prewarm，并让可见预览看起来跳帧或速度异常。
 - 保留现有 Win2D 帧缓存作为回退；D3D 可用时大量三角动画不再走逐三角 `CreateLayer` 裁剪路径。
-- 给真实高复杂样本补受控性能验证记录，至少覆盖首帧纹理上传、连续播放、窗口缩放、skin / animation 切换、设备丢失回退和恢复；当前样本基线记录在 [`spine-d3d11-performance-baseline.md`](spine-d3d11-performance-baseline.md)。
+- 已给真实高复杂样本补受控性能验证记录，覆盖首帧纹理上传、连续播放、速度切换、animation 切换和进度拖动；窗口缩放、skin 切换、设备丢失回退和更多设备工作集基线仍继续按 [`spine-d3d11-performance-baseline.md`](spine-d3d11-performance-baseline.md) 补充。
 
 建议开发顺序：
 
@@ -354,7 +366,27 @@ Spine 动画的长期高性能渲染路线采用 `D3D11 + SwapChainPanel + verte
 4. 已完成：接入 Texture2D 预览载荷解码、D3D texture 上传和 page texture 缓存，并在 D3D shader 中采样真实贴图。
 5. 已完成：把当前每帧临时创建 vertex / index buffer 的 smoke 提交流程升级为可复用动态 buffer / 批次提交器。
 6. 已完成：补 D3D 后端生命周期和低风险缓存优化，包括 Unloaded 延迟释放、resize 防抖、device lost 一次重建、贴图 generation 过期保护、暂停状态降低刷新频率、vertex batch 缓存和池化 clip-space 投影。
-7. 下一步：用 `char_2026_yu_nian#12.ab` 这类大量三角样本配合 D3D 诊断记录首帧纹理上传、连续播放帧时间、窗口缩放、skin / animation 切换和内存占用基线；若卡顿主要来自 Application / Infrastructure 的 runtime 采样或 DTO 投影，再把缓存推进到动画时间戳 / skin / animation 维度，而不是回到块状矩形近似。
+7. 已完成：用 `char_2026_yu_nian#12.ab` 这类大量三角样本配合 D3D / runtime session 诊断记录首帧纹理上传、连续播放、速度切换、animation 切换和进度拖动基线，并确认当前 `60 FPS` 交互观感可接受。下一步只在高刷新目标、设备恢复、工作集或可感知卡顿需要时继续围绕 runtime frame generation、绑定刷新节流和小窗口 batch cache 优化，不再扩大 sampled frame / batch cache 或回到块状矩形近似。
+
+### 第六阶段：Spine runtime 实时播放
+
+完成标准：
+
+- 已新增 Application 层 runtime playback session 契约，所有方法只使用稳定身份、播放请求 DTO 和 runtime-neutral 当前帧 DTO。
+- Infrastructure 已在 V38 / V42 adapter 内创建和持有官方 runtime session，支持绝对 seek、animation / skin 切换、setup pose 和 dispose；播放 delta 由 Presentation 计算后以绝对时间请求当前帧。
+- Presentation 可见预览已优先走 runtime session；隐藏预览 inactive 时不得创建或推进 session。
+- 播放循环已从 `33ms` timer 迁移到显示刷新驱动，UI 绑定刷新仍可继续节流。
+- D3D 后端已停止默认全量 sampled frame batch prewarm，仅保留当前帧 / 小窗口缓存和长期 GPU 资源缓存。
+- runtime session 不可用、adapter 不支持或 JSON fallback 尚未迁移时，稳定回退现有 sampled DTO 播放路径。
+
+建议开发顺序：
+
+1. 已完成 Application 契约、DTO 和回归覆盖，现有 sampled UI 保留为回退。
+2. 已在 Infrastructure V38 / V42 adapter 中实现 session create / seek / switch / setup pose / dispose，并复用现有 atlas / texture 诊断。
+3. 已让 Spine 预览 ViewModel / surface 创建 session，并用返回的当前帧驱动现有 render backend。
+4. 已改造播放 tick 为显示刷新驱动；当前 `60 FPS` 交互观感已通过真实复杂样本验证，进度绑定刷新节流留到高刷新目标或实测 XAML 压力出现时再决定。
+5. 已收缩 D3D batch prewarm 和 cache 上限，只保留当前帧、小窗口或按需投影。
+6. 已用真实复杂样本记录 runtime frame generation、D3D project / draw / present 和交互切换基线；是否把 D3D runtime path 升为默认仍需补更多设备、device lost 恢复、窗口缩放、skin 切换和工作集变化验证。
 
 ## 16. 测试建议
 

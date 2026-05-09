@@ -182,6 +182,132 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
         TestAssert.Equal(16, drawCommand.SourceX, "Draw command should target the atlas region.");
     }
 
+    public static async Task TryCreateSessionAsync_ShouldSeekV38RuntimeFrameWithoutSampledCache()
+    {
+        var service = new SpineAnimationRuntimePreviewService();
+
+        var result = await service.TryCreateSessionAsync(CreatePlaybackSource(
+            spineVersion: "3.8.99",
+            adapterKey: "V38",
+            major: 3,
+            minor: 8));
+
+        TestAssert.True(result.IsHandled, "V38 playback service should create a runtime playback session.");
+        using var session = TestAssert.NotNull(result.Session, "Playback service should return a session.");
+        var setupFrame = await session.GetFrameAsync(new SpineAnimationRuntimePlaybackFrameRequestDto(
+            AnimationName: "idle",
+            SkinName: "default",
+            PlaybackTime: 0d,
+            ShowSetupPose: true));
+        var firstFrame = await session.GetFrameAsync(new SpineAnimationRuntimePlaybackFrameRequestDto(
+            AnimationName: "idle",
+            SkinName: "default",
+            PlaybackTime: 0d,
+            ShowSetupPose: false));
+        var middleFrame = await session.GetFrameAsync(new SpineAnimationRuntimePlaybackFrameRequestDto(
+            AnimationName: "idle",
+            SkinName: "default",
+            PlaybackTime: 0.5d,
+            ShowSetupPose: false));
+
+        TestAssert.True(setupFrame.IsHandled, "Runtime session should return setup pose frames.");
+        TestAssert.True(firstFrame.IsHandled, "Runtime session should seek animation frame 0.");
+        TestAssert.True(middleFrame.IsHandled, "Runtime session should seek animation frame 0.5.");
+        AssertRuntimeDiagnostics(setupFrame.RuntimeDiagnostics, "V38", isSetupPose: true, isSkeletonReused: false);
+        AssertRuntimeDiagnostics(middleFrame.RuntimeDiagnostics, "V38", isSetupPose: false, isSkeletonReused: true);
+        var firstCommand = TestAssert.Single(TestAssert.NotNull(firstFrame.Frame, "First frame should be available.").DrawCommands);
+        var middleCommand = TestAssert.Single(TestAssert.NotNull(middleFrame.Frame, "Middle frame should be available.").DrawCommands);
+        TestAssert.True(
+            Math.Abs(firstCommand.TransformM31 - middleCommand.TransformM31) > 0.001d,
+            "Runtime seek should compute the current pose directly instead of replaying a cached sampled frame.");
+    }
+
+    public static async Task TryCreateSessionAsync_ShouldSeekV42RuntimeFrameWithoutSampledCache()
+    {
+        var service = new SpineAnimationRuntimePreviewService();
+
+        var result = await service.TryCreateSessionAsync(CreatePlaybackSource(
+            spineVersion: "4.2.74",
+            adapterKey: "V42",
+            major: 4,
+            minor: 2));
+
+        TestAssert.True(result.IsHandled, "V42 playback service should create a runtime playback session.");
+        using var session = TestAssert.NotNull(result.Session, "Playback service should return a session.");
+        var firstFrame = await session.GetFrameAsync(new SpineAnimationRuntimePlaybackFrameRequestDto(
+            AnimationName: "idle",
+            SkinName: "default",
+            PlaybackTime: 0d,
+            ShowSetupPose: false));
+        var middleFrame = await session.GetFrameAsync(new SpineAnimationRuntimePlaybackFrameRequestDto(
+            AnimationName: "idle",
+            SkinName: "default",
+            PlaybackTime: 0.5d,
+            ShowSetupPose: false));
+
+        TestAssert.True(firstFrame.IsHandled, "Runtime session should seek animation frame 0.");
+        TestAssert.True(middleFrame.IsHandled, "Runtime session should seek animation frame 0.5.");
+        AssertRuntimeDiagnostics(middleFrame.RuntimeDiagnostics, "V42", isSetupPose: false, isSkeletonReused: true);
+        var firstCommand = TestAssert.Single(TestAssert.NotNull(firstFrame.Frame, "First frame should be available.").DrawCommands);
+        var middleCommand = TestAssert.Single(TestAssert.NotNull(middleFrame.Frame, "Middle frame should be available.").DrawCommands);
+        TestAssert.True(
+            Math.Abs(firstCommand.TransformM31 - middleCommand.TransformM31) > 0.001d,
+            "Runtime seek should compute V42 poses directly.");
+    }
+
+    public static async Task TryCreateSessionAsync_ShouldReturnCancelledRuntimeFrame_WhenFrameTokenIsAlreadyCancelled()
+    {
+        var service = new SpineAnimationRuntimePreviewService();
+
+        var result = await service.TryCreateSessionAsync(CreatePlaybackSource(
+            spineVersion: "3.8.99",
+            adapterKey: "V38",
+            major: 3,
+            minor: 8));
+
+        TestAssert.True(result.IsHandled, "Playback service should create a runtime playback session.");
+        using var session = TestAssert.NotNull(result.Session, "Playback service should return a session.");
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        var frame = await session.GetFrameAsync(new SpineAnimationRuntimePlaybackFrameRequestDto(
+            AnimationName: "idle",
+            SkinName: "default",
+            PlaybackTime: 0.5d,
+            ShowSetupPose: false), cancellation.Token);
+
+        TestAssert.True(frame.IsCancelled, "Cancelled runtime frame requests should return a cancelled result.");
+        TestAssert.False(frame.IsHandled, "Cancelled runtime frame requests should not report a handled frame.");
+        TestAssert.Null(frame.Frame, "Cancelled runtime frame requests should not return a frame.");
+        TestAssert.Null(frame.RuntimeDiagnostics, "Cancelled runtime frame requests should not return diagnostics.");
+    }
+
+    public static async Task TryBuildPreviewAsync_ShouldSkipSampledFrames_WhenPlaybackSessionWillDrivePreview()
+    {
+        var service = new SpineAnimationRuntimePreviewService();
+        var source = CreatePlaybackSource(
+            spineVersion: "3.8.99",
+            adapterKey: "V38",
+            major: 3,
+            minor: 8);
+
+        var result = await service.TryBuildPreviewAsync(new SpineAnimationRuntimePreviewRequestDto(
+            source.GroupKey,
+            source.SkeletonAsset,
+            source.SkeletonJson,
+            source.Runtime,
+            source.AtlasPages,
+            source.AtlasTexts,
+            source.SkeletonBinaryContent,
+            IncludeSampledFrames: false));
+
+        TestAssert.True(result.IsHandled, "Runtime preview metadata should still be available without sampled frame pre-cache.");
+        var preview = TestAssert.NotNull(result.Preview, "Runtime preview should be returned.");
+        TestAssert.NotNull(preview.SetupFrame, "Setup pose should remain available when sampled frames are skipped.");
+        var animation = TestAssert.Single(preview.Animations);
+        TestAssert.Equal(0, animation.SampledFrames.Count, "Interactive runtime preview should be able to skip whole-animation sampled frames.");
+    }
+
     public static async Task TryBuildPreviewAsync_ShouldBuildV38SkinPreviewVariants_FromJsonSkeleton()
     {
         var service = new SpineAnimationRuntimePreviewService();
@@ -386,6 +512,108 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
             "Assets/Hero/" + name,
             AssetType.TextAsset,
             nameof(AssetType.TextAsset));
+
+    private static SpineAnimationRuntimePlaybackSourceDto CreatePlaybackSource(
+        string spineVersion,
+        string adapterKey,
+        int major,
+        int minor) =>
+        new(
+            GroupKey: "assets/hero/hero",
+            SkeletonAsset: CreateSkeletonPart("Hero.json"),
+            SkeletonJson: $$"""
+                {
+                  "skeleton": { "hash": "", "spine": "{{spineVersion}}" },
+                  "bones": [
+                    { "name": "root" },
+                    { "name": "body", "parent": "root", "x": 4, "y": 8 }
+                  ],
+                  "slots": [
+                    { "name": "body-slot", "bone": "body", "attachment": "body" }
+                  ],
+                  "skins": [
+                    {
+                      "name": "default",
+                      "attachments": {
+                        "body-slot": {
+                          "body": {
+                            "type": "region",
+                            "path": "body",
+                            "width": 64,
+                            "height": 128
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "animations": {
+                    "idle": {
+                      "bones": {
+                        "body": {
+                          "translate": [
+                            { "time": 0, "x": 0, "y": 0 },
+                            { "time": 1, "x": 12, "y": 16 }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+                """,
+            Runtime: new SpineAnimationRuntimeDto(
+                spineVersion,
+                major,
+                minor,
+                adapterKey,
+                SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable),
+            AtlasPages: Array.Empty<SpineAtlasPageDto>(),
+            AtlasTexts:
+            [
+                """
+                Hero.png
+                size: 256,256
+                format: RGBA8888
+                filter: Linear,Linear
+                repeat: none
+                body
+                  rotate: false
+                  xy: 16, 24
+                  size: 64, 128
+                  orig: 64, 128
+                  offset: 0, 0
+                  index: -1
+                """
+            ]);
+
+    private static void AssertRuntimeDiagnostics(
+        SpineAnimationRuntimePlaybackFrameDiagnosticsDto? diagnostics,
+        string expectedAdapterKey,
+        bool isSetupPose,
+        bool isSkeletonReused)
+    {
+        var value = TestAssert.NotNull(diagnostics, "Runtime frame diagnostics should be returned.");
+        TestAssert.Equal(expectedAdapterKey, value.AdapterKey, "Runtime diagnostics should preserve the adapter key.");
+        TestAssert.Equal(isSetupPose, value.IsSetupPose, "Runtime diagnostics should preserve setup pose state.");
+        TestAssert.Equal(isSkeletonReused, value.IsSkeletonReused, "Runtime diagnostics should preserve skeleton reuse state.");
+        TestAssert.True(value.TotalMilliseconds >= 0d, "Runtime diagnostics should expose total frame time.");
+        TestAssert.True(value.SkeletonCreateMilliseconds >= 0d, "Runtime diagnostics should expose skeleton creation time.");
+        TestAssert.True(value.SkeletonResetMilliseconds >= 0d, "Runtime diagnostics should expose skeleton reset time.");
+        if (isSkeletonReused)
+        {
+            TestAssert.Equal(0d, value.SkeletonCreateMilliseconds, "Reused skeleton frames should not create a skeleton.");
+        }
+        else
+        {
+            TestAssert.Equal(0d, value.SkeletonResetMilliseconds, "New skeleton frames should not reset a cached skeleton.");
+        }
+
+        TestAssert.True(value.AnimationApplyMilliseconds >= 0d, "Runtime diagnostics should expose animation apply time.");
+        TestAssert.True(value.WorldTransformMilliseconds >= 0d, "Runtime diagnostics should expose world transform time.");
+        TestAssert.True(value.DrawCommandBuildMilliseconds >= 0d, "Runtime diagnostics should expose draw command build time.");
+        TestAssert.Equal(1, value.DrawCommandCount, "Runtime diagnostics should count draw commands.");
+        TestAssert.Equal(0, value.MeshVertexCount, "Runtime diagnostics should count mesh vertices.");
+        TestAssert.Equal(0, value.MeshTriangleCount, "Runtime diagnostics should count mesh triangles.");
+    }
 
     private sealed class TestSpineRuntimeAdapter : ISpineAnimationRuntimeAdapter
     {

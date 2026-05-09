@@ -106,6 +106,22 @@ internal static class InfrastructureTestSuite
             SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV38RuntimeDrawCommands_FromJsonSkeleton);
         await RunTestAsync(
             failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryCreateSessionAsync_ShouldSeekV38RuntimeFrameWithoutSampledCache),
+            SpineAnimationRuntimePreviewServiceTests.TryCreateSessionAsync_ShouldSeekV38RuntimeFrameWithoutSampledCache);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryCreateSessionAsync_ShouldSeekV42RuntimeFrameWithoutSampledCache),
+            SpineAnimationRuntimePreviewServiceTests.TryCreateSessionAsync_ShouldSeekV42RuntimeFrameWithoutSampledCache);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryCreateSessionAsync_ShouldReturnCancelledRuntimeFrame_WhenFrameTokenIsAlreadyCancelled),
+            SpineAnimationRuntimePreviewServiceTests.TryCreateSessionAsync_ShouldReturnCancelledRuntimeFrame_WhenFrameTokenIsAlreadyCancelled);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldSkipSampledFrames_WhenPlaybackSessionWillDrivePreview),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldSkipSampledFrames_WhenPlaybackSessionWillDrivePreview);
+        await RunTestAsync(
+            failures,
             nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV38SkinPreviewVariants_FromJsonSkeleton),
             SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV38SkinPreviewVariants_FromJsonSkeleton);
         await RunTestAsync(
@@ -158,8 +174,12 @@ internal static class InfrastructureTestSuite
             SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldReturnNotHandled_WhenV42ParserReturnsNullSkeletonData);
         await RunTestAsync(
             failures,
-            nameof(SpineRuntimeSamplingPolicyTests.CreateSampleTimes_ShouldKeepThirtyFpsBudget_ForLargeOfficialRuntimeMesh),
-            SpineRuntimeSamplingPolicyTests.CreateSampleTimes_ShouldKeepThirtyFpsBudget_ForLargeOfficialRuntimeMesh);
+            nameof(SpineRuntimeSamplingPolicyTests.CreateSampleTimes_ShouldKeepHalfSpeedPlaybackDense_ForLargeOfficialRuntimeMesh),
+            SpineRuntimeSamplingPolicyTests.CreateSampleTimes_ShouldKeepHalfSpeedPlaybackDense_ForLargeOfficialRuntimeMesh);
+        await RunTestAsync(
+            failures,
+            nameof(SpineRuntimeSamplingPolicyTests.CreateSampleTimes_ShouldKeepLongHalfSpeedAnimationDense_ForLargeOfficialRuntimeMesh),
+            SpineRuntimeSamplingPolicyTests.CreateSampleTimes_ShouldKeepLongHalfSpeedAnimationDense_ForLargeOfficialRuntimeMesh);
         await RunTestAsync(
             failures,
             nameof(SpineRuntimeSamplingPolicyTests.CreateSampleTimes_ShouldStayBounded_ForExtremeOfficialRuntimeMesh),

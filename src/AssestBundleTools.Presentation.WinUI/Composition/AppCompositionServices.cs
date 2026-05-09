@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Presentation.WinUI.Localization;
@@ -31,4 +32,5 @@ internal sealed record AppCompositionServices(
     IAppNotificationService AppNotificationService,
     IAppLogService AppLogService,
     IBackgroundTaskRunner BackgroundTaskRunner,
-    IWorkspaceImportCoordinatorService WorkspaceImportCoordinatorService);
+    IWorkspaceImportCoordinatorService WorkspaceImportCoordinatorService,
+    ISpineAnimationRuntimePlaybackService SpineAnimationRuntimePlaybackService);

@@ -72,11 +72,77 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
 
         Assert.Equal("skin-alt", viewModel.SelectedSkinName);
         Assert.Equal("idle", viewModel.SelectedAnimationName);
-        Assert.Equal("skin-alt-frame", viewModel.CurrentFrame?.DrawCommands[0].AttachmentName);
+        Assert.Equal("skin-alt-idle-frame", viewModel.CurrentFrame?.DrawCommands[0].AttachmentName);
 
         viewModel.ShowSetupPose();
 
         Assert.Equal("skin-alt-setup", viewModel.CurrentFrame?.DrawCommands[0].AttachmentName);
+    }
+
+    [Fact]
+    public void SelectedAnimationName_ShouldResetPlaybackBeforeNotifying()
+    {
+        var viewModel = new InspectorPreviewSpineAnimationViewModel();
+        viewModel.Apply(CreatePreview(), CreateTextureStates());
+        viewModel.Advance(TimeSpan.FromSeconds(0.75d));
+        var observedPlaybackTimes = new List<double>();
+        var observedFrameAttachments = new List<string?>();
+
+        viewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(InspectorPreviewSpineAnimationViewModel.SelectedAnimationName))
+            {
+                observedPlaybackTimes.Add(viewModel.PlaybackTime);
+                observedFrameAttachments.Add(viewModel.CurrentFrame?.DrawCommands[0].AttachmentName);
+            }
+        };
+
+        viewModel.SelectedAnimationName = "attack";
+
+        Assert.Equal("attack", viewModel.SelectedAnimationName);
+        Assert.Equal(0d, viewModel.PlaybackTime, precision: 6);
+        Assert.Equal("default-attack-frame", viewModel.CurrentFrame?.DrawCommands[0].AttachmentName);
+        Assert.Equal([0d], observedPlaybackTimes);
+        Assert.Equal(["default-attack-frame"], observedFrameAttachments);
+    }
+
+    [Fact]
+    public void SelectedSkinName_ShouldSyncFrameBeforeNotifying()
+    {
+        var viewModel = new InspectorPreviewSpineAnimationViewModel();
+        viewModel.Apply(CreatePreview(), CreateTextureStates());
+        var observedFrameAttachments = new List<string?>();
+
+        viewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(InspectorPreviewSpineAnimationViewModel.SelectedSkinName))
+            {
+                observedFrameAttachments.Add(viewModel.CurrentFrame?.DrawCommands[0].AttachmentName);
+            }
+        };
+
+        viewModel.SelectedSkinName = "skin-alt";
+
+        Assert.Equal(["skin-alt-idle-frame"], observedFrameAttachments);
+    }
+
+    [Fact]
+    public void Apply_ShouldExposeRuntimeAnimationsWithoutSampledFrames()
+    {
+        var viewModel = new InspectorPreviewSpineAnimationViewModel();
+
+        viewModel.Apply(CreateRuntimePreviewWithoutSampledFrames(), CreateTextureStates());
+
+        Assert.True(viewModel.HasSpineAnimation);
+        Assert.True(viewModel.HasRuntimePlayback);
+        Assert.Equal(["idle", "attack"], viewModel.AnimationNames);
+        Assert.Equal("idle", viewModel.SelectedAnimationName);
+        Assert.Same(viewModel.Preview!.SetupFrame, viewModel.CurrentFrame);
+
+        var runtimeFrame = CreateFrame(0.25d, "runtime-idle-frame");
+        viewModel.ApplyRuntimeFrame(runtimeFrame);
+
+        Assert.Same(runtimeFrame, viewModel.CurrentFrame);
     }
 
     private static SpineAnimationPreviewDto CreatePreview()
@@ -92,13 +158,13 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
             nameof(AssetType.TextAsset));
         var defaultAnimations = new[]
         {
-            CreateAnimation("idle", "default-frame"),
-            CreateAnimation("attack", "default-frame")
+            CreateAnimation("idle", "default-idle-frame"),
+            CreateAnimation("attack", "default-attack-frame")
         };
         var altAnimations = new[]
         {
-            CreateAnimation("idle", "skin-alt-frame"),
-            CreateAnimation("attack", "skin-alt-frame")
+            CreateAnimation("idle", "skin-alt-idle-frame"),
+            CreateAnimation("attack", "skin-alt-attack-frame")
         };
         var defaultSetupFrame = CreateFrame(0d, "default-setup");
         var altSetupFrame = CreateFrame(0d, "skin-alt-setup");
@@ -129,6 +195,63 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
         };
     }
 
+    private static SpineAnimationPreviewDto CreateRuntimePreviewWithoutSampledFrames()
+    {
+        var skeletonAsset = new SpineAssetGroupPartDto(
+            SpineAssetGroupPartRole.Skeleton,
+            new BundleId("bundle"),
+            new AssetId("skeleton"),
+            "spine.ab",
+            "hero.skel",
+            "Assets/hero.skel",
+            AssetType.TextAsset,
+            nameof(AssetType.TextAsset));
+        var animations = new[]
+        {
+            CreateAnimationWithoutSampledFrames("idle"),
+            CreateAnimationWithoutSampledFrames("attack")
+        };
+        var setupFrame = CreateFrame(0d, "runtime-setup");
+
+        return new SpineAnimationPreviewDto(
+            skeletonAsset,
+            SpineVersion: "3.8.99",
+            Bones: [new SpineAnimationBoneDto("root", null, 0d, 0d, 0d, 1d, 1d)],
+            Slots: [new SpineAnimationSlotDto("slot", "root", "body", 0)],
+            Attachments: Array.Empty<SpineAnimationAttachmentDto>(),
+            Animations: animations,
+            Runtime: new SpineAnimationRuntimeDto(
+                "3.8.99",
+                Major: 3,
+                Minor: 8,
+                AdapterKey: "V38",
+                SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable))
+        {
+            SkinNames = ["default"],
+            SetupFrame = setupFrame,
+            SkinPreviews =
+            [
+                new SpineAnimationSkinPreviewDto(
+                    "default",
+                    Array.Empty<SpineAnimationAttachmentDto>(),
+                    animations,
+                    setupFrame)
+            ],
+            PlaybackSource = new SpineAnimationRuntimePlaybackSourceDto(
+                "spine-group",
+                skeletonAsset,
+                SkeletonJson: "{}",
+                Runtime: new SpineAnimationRuntimeDto(
+                    "3.8.99",
+                    Major: 3,
+                    Minor: 8,
+                    AdapterKey: "V38",
+                    SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable),
+                AtlasPages: Array.Empty<SpineAtlasPageDto>(),
+                AtlasTexts: Array.Empty<string>())
+        };
+    }
+
     private static SpineAnimationClipDto CreateAnimation(string name, string attachmentName) =>
         new(
             name,
@@ -143,6 +266,13 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
                 CreateFrame(1d, attachmentName)
             ]
         };
+
+    private static SpineAnimationClipDto CreateAnimationWithoutSampledFrames(string name) =>
+        new(
+            name,
+            Duration: 1d,
+            BoneTimelines: Array.Empty<SpineAnimationBoneTimelineDto>(),
+            SlotAttachmentTimelines: Array.Empty<SpineAnimationSlotAttachmentTimelineDto>());
 
     private static SpineAnimationFrameDto CreateFrame(double time, string attachmentName) =>
         new(

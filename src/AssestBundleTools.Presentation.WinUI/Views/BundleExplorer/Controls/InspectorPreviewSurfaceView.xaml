@@ -480,6 +480,7 @@
                     Margin="8"
                     Visibility="{x:Bind ViewModel.Preview.PreviewSpineAnimationVisibility, Mode=OneWay}">
                     <controls:InspectorSpineAnimationPreviewSurfaceView
+                        IsPreviewActive="{x:Bind IsPreviewActive, Mode=OneWay}"
                         ViewModel="{x:Bind ViewModel.Preview.SpineAnimation, Mode=OneWay}" />
                 </Grid>
 

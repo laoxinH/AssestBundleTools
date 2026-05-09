@@ -240,6 +240,7 @@ internal static class AppCompositionRoot
             AppNotificationService: appNotificationService,
             AppLogService: appLogService,
             BackgroundTaskRunner: backgroundTaskRunner,
-            WorkspaceImportCoordinatorService: workspaceImportCoordinatorService);
+            WorkspaceImportCoordinatorService: workspaceImportCoordinatorService,
+            SpineAnimationRuntimePlaybackService: spineAnimationRuntimePreviewService);
     }
 }

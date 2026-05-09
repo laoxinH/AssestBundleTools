@@ -125,6 +125,7 @@
                         <StackPanel Padding="8" Spacing="8">
                             <controls:InspectorPreviewSurfaceView
                                 FixedPreviewSurfaceHeight="320"
+                                IsPreviewActive="{x:Bind ShowDetailsPreview, Mode=OneWay}"
                                 ViewModel="{x:Bind ViewModel, Mode=OneWay}"
                                 OpenPreviewLocationRequested="OnPreviewSurfaceOpenPreviewLocationRequested"
                                 ResolvedAssetOpenRequested="OnPreviewSurfaceResolvedAssetOpenRequested"

@@ -10,4 +10,5 @@ public sealed record SpineAnimationRuntimePreviewRequestDto(
     SpineAnimationRuntimeDto Runtime,
     IReadOnlyList<SpineAtlasPageDto> AtlasPages,
     IReadOnlyList<string> AtlasTexts,
-    byte[]? SkeletonBinaryContent = null);
+    byte[]? SkeletonBinaryContent = null,
+    bool IncludeSampledFrames = true);

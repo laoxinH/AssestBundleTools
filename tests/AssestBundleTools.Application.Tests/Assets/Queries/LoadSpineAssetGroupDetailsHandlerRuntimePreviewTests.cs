@@ -93,6 +93,7 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
         var runtimeRequest = runtimePreviewService.LastRequest ??
                              throw new InvalidOperationException("Expected a runtime preview request.");
         TestAssert.Equal("V42", runtimeRequest.Runtime.AdapterKey, "The request should carry the resolved adapter key.");
+        TestAssert.False(runtimeRequest.IncludeSampledFrames, "Interactive runtime previews should not pre-sample whole animations.");
         TestAssert.Single(runtimeRequest.AtlasPages);
         TestAssert.Single(runtimeRequest.AtlasTexts);
         var animationPreview = result.Value?.AnimationPreview ??
@@ -178,6 +179,7 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
                       throw new InvalidOperationException("Expected a runtime preview request.");
         TestAssert.Equal(binarySkeleton.Length, request.SkeletonBinaryContent?.Length ?? 0, "Binary skeleton payload should come from the preview pipeline.");
         TestAssert.True(string.IsNullOrWhiteSpace(request.SkeletonJson), "Binary skeleton requests should not synthesize JSON.");
+        TestAssert.False(request.IncludeSampledFrames, "Binary runtime previews should use playback session frames instead of whole-animation pre-sampling.");
         TestAssert.True(
             result.Value?.Diagnostics.All(static diagnostic =>
                 diagnostic.AnimationUnsupportedFeature != SpineAnimationUnsupportedFeatureKind.BinarySkeleton) == true,

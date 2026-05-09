@@ -2,6 +2,7 @@ using AssestBundleTools.Presentation.WinUI.Diagnostics;
 using AssestBundleTools.Presentation.WinUI.Composition;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Workspace.Services;
@@ -53,6 +54,7 @@ public partial class App : Microsoft.UI.Xaml.Application
             AppLogService = services.AppLogService;
             BackgroundTaskRunner = services.BackgroundTaskRunner;
             WorkspaceImportCoordinatorService = services.WorkspaceImportCoordinatorService;
+            SpineAnimationRuntimePlaybackService = services.SpineAnimationRuntimePlaybackService;
 
             RegisterGlobalExceptionHandlers();
             StartupDiagnostics.Log("Global exception handlers registered.");
@@ -111,6 +113,8 @@ public partial class App : Microsoft.UI.Xaml.Application
     public IBackgroundTaskRunner BackgroundTaskRunner { get; }
 
     public IWorkspaceImportCoordinatorService WorkspaceImportCoordinatorService { get; }
+
+    public ISpineAnimationRuntimePlaybackService SpineAnimationRuntimePlaybackService { get; }
 
     public void ReloadAssetBundleDecryptorRegistry()
     {

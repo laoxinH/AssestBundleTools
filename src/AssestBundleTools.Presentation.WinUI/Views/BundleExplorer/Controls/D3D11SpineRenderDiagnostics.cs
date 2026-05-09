@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using AssestBundleTools.Application.Assets.Dtos;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
@@ -8,8 +9,10 @@ internal sealed class D3D11SpineRenderDiagnostics
     private const int WarmupFrameLogCount = 5;
     private const int SteadyFrameLogInterval = 60;
     private const double SlowFrameThresholdMilliseconds = 33d;
+    private const double SlowRuntimeFrameThresholdMilliseconds = 8d;
     private readonly Action<string>? _writeMessage;
     private int _frameNumber;
+    private int _runtimeFrameNumber;
 
     public D3D11SpineRenderDiagnostics(Action<string>? writeMessage)
     {
@@ -190,6 +193,38 @@ internal sealed class D3D11SpineRenderDiagnostics
             $"speed={FormatNumber(playbackSpeed)}");
     }
 
+    public void RuntimeFrame(
+        string? animationName,
+        string? skinName,
+        double playbackTime,
+        SpineAnimationRuntimePlaybackFrameDiagnosticsDto diagnostics)
+    {
+        if (!IsEnabled)
+        {
+            return;
+        }
+
+        _runtimeFrameNumber++;
+        if (!ShouldLogRuntimeFrame(diagnostics.TotalMilliseconds))
+        {
+            return;
+        }
+
+        WriteRuntime(
+            $"number={_runtimeFrameNumber} adapter={FormatToken(diagnostics.AdapterKey)} " +
+            $"setup={diagnostics.IsSetupPose} animation={FormatToken(animationName)} " +
+            $"skin={FormatToken(skinName)} time={FormatNumber(playbackTime)} " +
+            $"totalMs={FormatNumber(diagnostics.TotalMilliseconds)} " +
+            $"reusedSkeleton={diagnostics.IsSkeletonReused} " +
+            $"createMs={FormatNumber(diagnostics.SkeletonCreateMilliseconds)} " +
+            $"resetMs={FormatNumber(diagnostics.SkeletonResetMilliseconds)} " +
+            $"applyMs={FormatNumber(diagnostics.AnimationApplyMilliseconds)} " +
+            $"worldMs={FormatNumber(diagnostics.WorldTransformMilliseconds)} " +
+            $"commandsMs={FormatNumber(diagnostics.DrawCommandBuildMilliseconds)} " +
+            $"commands={diagnostics.DrawCommandCount} meshVertices={diagnostics.MeshVertexCount} " +
+            $"meshTriangles={diagnostics.MeshTriangleCount}");
+    }
+
     public void RenderingFailed(Exception exception)
     {
         if (!IsEnabled)
@@ -219,9 +254,19 @@ internal sealed class D3D11SpineRenderDiagnostics
         _frameNumber % SteadyFrameLogInterval == 0 ||
         elapsed.TotalMilliseconds >= SlowFrameThresholdMilliseconds;
 
+    private bool ShouldLogRuntimeFrame(double elapsedMilliseconds) =>
+        _runtimeFrameNumber <= WarmupFrameLogCount ||
+        _runtimeFrameNumber % SteadyFrameLogInterval == 0 ||
+        elapsedMilliseconds >= SlowRuntimeFrameThresholdMilliseconds;
+
     private void Write(string message)
     {
         _writeMessage?.Invoke($"spine.d3d11 {message}");
+    }
+
+    private void WriteRuntime(string message)
+    {
+        _writeMessage?.Invoke($"spine.runtime-frame {message}");
     }
 
     private static string FormatMilliseconds(TimeSpan elapsed) =>

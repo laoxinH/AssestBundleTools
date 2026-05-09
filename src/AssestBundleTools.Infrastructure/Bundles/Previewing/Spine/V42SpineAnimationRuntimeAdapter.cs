@@ -4,7 +4,9 @@ using Runtime = AssestBundleTools.Infrastructure.ThirdParty.Spine.V42;
 
 namespace AssestBundleTools.Infrastructure.Bundles.Previewing.Spine;
 
-internal sealed partial class V42SpineAnimationRuntimeAdapter : ISpineAnimationRuntimeAdapter
+internal sealed partial class V42SpineAnimationRuntimeAdapter :
+    ISpineAnimationRuntimeAdapter,
+    ISpineAnimationRuntimePlaybackAdapter
 {
     public string AdapterKey => "V42";
 
@@ -40,10 +42,12 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter : ISpineAnimationR
                 Minor: 2,
                 AdapterKey,
                 SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable);
-            var skinPreviews = BuildSkinPreviews(skeletonData, cancellationToken);
+            var skinPreviews = BuildSkinPreviews(
+                skeletonData,
+                request.IncludeSampledFrames,
+                cancellationToken);
             if (skinPreviews.Count == 0 ||
-                skinPreviews.All(static skin => skin.Animations.All(static clip =>
-                    clip.SampledFrames.All(static frame => frame.DrawCommands.Count == 0))))
+                !HasDrawablePreview(skinPreviews))
             {
                 return SpineAnimationRuntimePreviewResultDto.NotHandled;
             }
@@ -142,6 +146,7 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter : ISpineAnimationR
 
     private static IReadOnlyList<SpineAnimationSkinPreviewDto> BuildSkinPreviews(
         Runtime.SkeletonData skeletonData,
+        bool includeSampledFrames,
         CancellationToken cancellationToken)
     {
         var skins = skeletonData.Skins
@@ -149,11 +154,11 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter : ISpineAnimationR
             .ToArray();
         if (skins.Length == 0)
         {
-            return [BuildSkinPreview(skeletonData, "default", skin: null, cancellationToken)];
+            return [BuildSkinPreview(skeletonData, "default", skin: null, includeSampledFrames, cancellationToken)];
         }
 
         return skins
-            .Select(skin => BuildSkinPreview(skeletonData, skin.Name, skin, cancellationToken))
+            .Select(skin => BuildSkinPreview(skeletonData, skin.Name, skin, includeSampledFrames, cancellationToken))
             .ToArray();
     }
 
@@ -161,6 +166,7 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter : ISpineAnimationR
         Runtime.SkeletonData skeletonData,
         string skinName,
         Runtime.Skin? skin,
+        bool includeSampledFrames,
         CancellationToken cancellationToken)
     {
         var attachmentMap = new Dictionary<string, SpineAnimationAttachmentDto>(StringComparer.Ordinal);
@@ -170,6 +176,7 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter : ISpineAnimationR
             skin,
             attachmentMap,
             setupFrame,
+            includeSampledFrames,
             cancellationToken);
         return new SpineAnimationSkinPreviewDto(
             skinName,
@@ -207,21 +214,26 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter : ISpineAnimationR
         Runtime.Skin? skin,
         Dictionary<string, SpineAnimationAttachmentDto> attachmentMap,
         SpineAnimationFrameDto setupFrame,
+        bool includeSampledFrames,
         CancellationToken cancellationToken)
     {
-        var samplingBudget = CreateSamplingBudget(setupFrame);
+        var samplingBudget = includeSampledFrames
+            ? CreateSamplingBudget(setupFrame)
+            : default;
         var clips = new List<SpineAnimationClipDto>();
         foreach (var animation in skeletonData.Animations)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var sampledFrames = BuildSampledFrames(
-                skeletonData,
-                skin,
-                animation,
-                attachmentMap,
-                samplingBudget,
-                cancellationToken);
+            var sampledFrames = includeSampledFrames
+                ? BuildSampledFrames(
+                    skeletonData,
+                    skin,
+                    animation,
+                    attachmentMap,
+                    samplingBudget,
+                    cancellationToken)
+                : Array.Empty<SpineAnimationFrameDto>();
             clips.Add(new SpineAnimationClipDto(
                 animation.Name,
                 animation.Duration,
@@ -234,6 +246,12 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter : ISpineAnimationR
 
         return clips;
     }
+
+    private static bool HasDrawablePreview(IReadOnlyList<SpineAnimationSkinPreviewDto> skinPreviews) =>
+        skinPreviews.Any(static skin =>
+            skin.SetupFrame?.DrawCommands.Count > 0 ||
+            skin.Animations.Any(static clip =>
+                clip.SampledFrames.Any(static frame => frame.DrawCommands.Count > 0)));
 
     private static IReadOnlyList<SpineAnimationFrameDto> BuildSampledFrames(
         Runtime.SkeletonData skeletonData,

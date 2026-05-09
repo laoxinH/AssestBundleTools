@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
-public sealed class InspectorPreviewSpineAnimationViewModel : ObservableObject
+public sealed partial class InspectorPreviewSpineAnimationViewModel : ObservableObject
 {
     private SpineAnimationPreviewDto? _preview;
     private IReadOnlyDictionary<string, byte[]> _texturePageContents =
@@ -42,14 +42,10 @@ public sealed class InspectorPreviewSpineAnimationViewModel : ObservableObject
         get => _selectedAnimationName;
         set
         {
-            if (SetProperty(ref _selectedAnimationName, value))
+            var update = ApplySelectedAnimationName(value, resetPlayback: true);
+            if (update.AnimationNameChanged)
             {
-                _cachedFrameIndex = 0;
-                _isShowingSetupPose = false;
-                SetPlaybackTime(0d);
-                OnPropertyChanged(nameof(SelectedAnimation));
-                OnPropertyChanged(nameof(Duration));
-                SyncCurrentFrame();
+                NotifyAnimationSelectionChanged(update);
             }
         }
     }
@@ -59,23 +55,74 @@ public sealed class InspectorPreviewSpineAnimationViewModel : ObservableObject
         get => _selectedSkinName;
         set
         {
-            if (SetProperty(ref _selectedSkinName, value))
+            if (EqualityComparer<string?>.Default.Equals(_selectedSkinName, value))
             {
-                _cachedFrameIndex = 0;
-                _isShowingSetupPose = false;
-                RefreshAnimationNamesForActiveSkin();
-                if (!AnimationNames.Contains(SelectedAnimationName ?? string.Empty))
-                {
-                    SelectedAnimationName = AnimationNames.FirstOrDefault();
-                }
-                else
-                {
-                    SetPlaybackTime(PlaybackTime);
-                    OnPropertyChanged(nameof(SelectedAnimation));
-                    OnPropertyChanged(nameof(Duration));
-                    SyncCurrentFrame();
-                }
+                return;
             }
+
+            _selectedSkinName = value;
+            _cachedFrameIndex = 0;
+            _isShowingSetupPose = false;
+            RefreshAnimationNamesForActiveSkin();
+            var update = AnimationNames.Contains(SelectedAnimationName ?? string.Empty)
+                ? ApplyCurrentAnimationForActiveSkin()
+                : ApplySelectedAnimationName(AnimationNames.FirstOrDefault(), resetPlayback: true);
+
+            OnPropertyChanged(nameof(SelectedSkinName));
+            if (update.AnimationNameChanged)
+            {
+                OnPropertyChanged(nameof(SelectedAnimationName));
+            }
+
+            OnPropertyChanged(nameof(SelectedAnimation));
+            OnPropertyChanged(nameof(Duration));
+            if (update.PlaybackTimeChanged)
+            {
+                OnPropertyChanged(nameof(PlaybackTime));
+            }
+
+            if (update.CurrentFrameChanged)
+            {
+                OnPropertyChanged(nameof(CurrentFrame));
+            }
+        }
+    }
+
+    private AnimationSelectionUpdate ApplySelectedAnimationName(string? value, bool resetPlayback)
+    {
+        if (EqualityComparer<string?>.Default.Equals(_selectedAnimationName, value))
+        {
+            return new AnimationSelectionUpdate(false, false, false);
+        }
+
+        _selectedAnimationName = value;
+        _cachedFrameIndex = 0;
+        _isShowingSetupPose = false;
+        var playbackTimeChanged = SetPlaybackTimeCore(resetPlayback ? 0d : PlaybackTime, notify: false);
+        var currentFrameChanged = SyncCurrentFrame(notify: false);
+        return new AnimationSelectionUpdate(true, playbackTimeChanged, currentFrameChanged);
+    }
+
+    private AnimationSelectionUpdate ApplyCurrentAnimationForActiveSkin()
+    {
+        var playbackTimeChanged = SetPlaybackTimeCore(PlaybackTime, notify: false);
+        var currentFrameChanged = SyncCurrentFrame(notify: false);
+        return new AnimationSelectionUpdate(false, playbackTimeChanged, currentFrameChanged);
+    }
+
+    private void NotifyAnimationSelectionChanged(AnimationSelectionUpdate update)
+    {
+        OnPropertyChanged(nameof(SelectedAnimationName));
+        OnPropertyChanged(nameof(SelectedAnimation));
+        OnPropertyChanged(nameof(Duration));
+        if (update.PlaybackTimeChanged)
+        {
+            OnPropertyChanged(nameof(PlaybackTime));
+        }
+
+        if (update.CurrentFrameChanged)
+        {
+            OnPropertyChanged(nameof(CurrentFrame));
         }
     }
 
@@ -91,8 +138,17 @@ public sealed class InspectorPreviewSpineAnimationViewModel : ObservableObject
         set
         {
             _isShowingSetupPose = false;
-            SetPlaybackTime(value);
-            SyncCurrentFrame();
+            var playbackTimeChanged = SetPlaybackTimeCore(value, notify: false);
+            var currentFrameChanged = HasRuntimePlayback ? false : SyncCurrentFrame(notify: false);
+            if (playbackTimeChanged)
+            {
+                OnPropertyChanged(nameof(PlaybackTime));
+            }
+
+            if (currentFrameChanged)
+            {
+                OnPropertyChanged(nameof(CurrentFrame));
+            }
         }
     }
 
@@ -105,7 +161,7 @@ public sealed class InspectorPreviewSpineAnimationViewModel : ObservableObject
     public SpineAnimationFrameDto? CurrentFrame
     {
         get => _currentFrame;
-        private set => SetProperty(ref _currentFrame, value);
+        private set => SetCurrentFrame(value, notify: true);
     }
 
     public bool IsPlaying
@@ -121,8 +177,13 @@ public sealed class InspectorPreviewSpineAnimationViewModel : ObservableObject
     }
 
     public bool HasSpineAnimation => Preview is not null &&
-                                     ActiveAnimations.Any(static animation => animation.SampledFrames.Count > 0) &&
+                                     (HasRuntimePlayback ||
+                                      ActiveAnimations.Any(static animation => animation.SampledFrames.Count > 0)) &&
                                      TexturePageContents.Count > 0;
+
+    public bool HasRuntimePlayback => Preview?.PlaybackSource is not null;
+
+    public bool IsShowingSetupPose => _isShowingSetupPose;
 
     public Visibility Visibility => HasSpineAnimation ? Visibility.Visible : Visibility.Collapsed;
 
@@ -172,7 +233,7 @@ public sealed class InspectorPreviewSpineAnimationViewModel : ObservableObject
         SelectedSkinName = null;
         _cachedFrameIndex = 0;
         _isShowingSetupPose = false;
-        SetPlaybackTime(0d);
+        SetPlaybackTimeCore(0d, notify: true);
         CurrentFrame = null;
         IsPlaying = false;
         NotifyStateChanged();
@@ -204,7 +265,7 @@ public sealed class InspectorPreviewSpineAnimationViewModel : ObservableObject
     {
         _isShowingSetupPose = true;
         IsPlaying = false;
-        SetPlaybackTime(0d);
+        SetPlaybackTimeCore(0d, notify: true);
         SyncCurrentFrame();
     }
 
@@ -216,6 +277,11 @@ public sealed class InspectorPreviewSpineAnimationViewModel : ObservableObject
     public void StepNextFrame()
     {
         StepFrame(1);
+    }
+
+    internal void ApplyRuntimeFrame(SpineAnimationFrameDto? frame)
+    {
+        SetCurrentFrame(frame, notify: true);
     }
 
     public void Advance(TimeSpan elapsed)
@@ -234,6 +300,7 @@ public sealed class InspectorPreviewSpineAnimationViewModel : ObservableObject
         var frames = SelectedAnimation?.SampledFrames;
         if (frames is not { Count: > 0 })
         {
+            StepRuntimeFrame(direction);
             return;
         }
 
@@ -242,128 +309,100 @@ public sealed class InspectorPreviewSpineAnimationViewModel : ObservableObject
         var currentIndex = ResolveFrameIndex(frames, PlaybackTime);
         var nextIndex = (currentIndex + direction + frames.Count) % frames.Count;
         _cachedFrameIndex = nextIndex;
-        SetPlaybackTime(frames[nextIndex].Time);
-        CurrentFrame = frames[nextIndex];
+        var playbackTimeChanged = SetPlaybackTimeCore(frames[nextIndex].Time, notify: false);
+        var currentFrameChanged = SetCurrentFrame(frames[nextIndex], notify: false);
+        if (playbackTimeChanged)
+        {
+            OnPropertyChanged(nameof(PlaybackTime));
+        }
+
+        if (currentFrameChanged)
+        {
+            OnPropertyChanged(nameof(CurrentFrame));
+        }
     }
 
-    private void SetPlaybackTime(double value)
+    private void StepRuntimeFrame(int direction)
+    {
+        if (!HasRuntimePlayback || Duration <= 0d)
+        {
+            return;
+        }
+
+        IsPlaying = false;
+        _isShowingSetupPose = false;
+        var step = Math.Clamp(1d / 60d, 0d, Duration);
+        var nextTime = PlaybackTime + (direction * step);
+        if (nextTime < 0d)
+        {
+            nextTime += Duration;
+        }
+        else if (nextTime > Duration)
+        {
+            nextTime %= Duration;
+        }
+
+        SetPlaybackTimeCore(nextTime, notify: true);
+    }
+
+    private bool SetPlaybackTimeCore(double value, bool notify)
     {
         var maxTime = Duration > 0d ? Duration : double.MaxValue;
-        SetProperty(ref _playbackTime, Math.Clamp(value, 0d, maxTime));
+        var normalizedValue = Math.Clamp(value, 0d, maxTime);
+        if (EqualityComparer<double>.Default.Equals(_playbackTime, normalizedValue))
+        {
+            return false;
+        }
+
+        _playbackTime = normalizedValue;
+        if (notify)
+        {
+            OnPropertyChanged(nameof(PlaybackTime));
+        }
+
+        return true;
     }
 
-    private void SyncCurrentFrame()
+    private bool SyncCurrentFrame(bool notify = true)
     {
         var frames = SelectedAnimation?.SampledFrames;
         if (_isShowingSetupPose &&
             ActiveSetupFrame is not null)
         {
-            CurrentFrame = ActiveSetupFrame;
-            return;
+            return SetCurrentFrame(ActiveSetupFrame, notify);
         }
 
         if (frames is not { Count: > 0 })
         {
-            CurrentFrame = null;
-            return;
+            return HasRuntimePlayback
+                ? SetCurrentFrame(ActiveSetupFrame, notify)
+                : SetCurrentFrame(null, notify);
         }
 
         _cachedFrameIndex = ResolveFrameIndex(frames, PlaybackTime);
-        CurrentFrame = frames[_cachedFrameIndex];
+        return SetCurrentFrame(frames[_cachedFrameIndex], notify);
     }
 
-    private int ResolveFrameIndex(IReadOnlyList<SpineAnimationFrameDto> frames, double time)
+    private bool SetCurrentFrame(SpineAnimationFrameDto? value, bool notify)
     {
-        if (frames.Count <= 1)
-        {
-            return 0;
-        }
-
-        if (IsCachedFrameValid(frames, time))
-        {
-            return _cachedFrameIndex;
-        }
-
-        var low = 0;
-        var high = frames.Count - 1;
-        while (low <= high)
-        {
-            var mid = low + ((high - low) / 2);
-            if (frames[mid].Time <= time)
-            {
-                low = mid + 1;
-                continue;
-            }
-
-            high = mid - 1;
-        }
-
-        return Math.Clamp(high, 0, frames.Count - 1);
-    }
-
-    private bool IsCachedFrameValid(IReadOnlyList<SpineAnimationFrameDto> frames, double time)
-    {
-        if (_cachedFrameIndex < 0 || _cachedFrameIndex >= frames.Count)
+        if (ReferenceEquals(_currentFrame, value))
         {
             return false;
         }
 
-        var currentTime = frames[_cachedFrameIndex].Time;
-        var nextTime = _cachedFrameIndex + 1 < frames.Count
-            ? frames[_cachedFrameIndex + 1].Time
-            : double.PositiveInfinity;
-        return time >= currentTime && time < nextTime;
-    }
-
-    private SpineAnimationSkinPreviewDto? SelectedSkinPreview =>
-        Preview?.SkinPreviews.FirstOrDefault(skin =>
-            string.Equals(skin.Name, SelectedSkinName, StringComparison.Ordinal));
-
-    private IReadOnlyList<SpineAnimationClipDto> ActiveAnimations =>
-        SelectedSkinPreview?.Animations ??
-        Preview?.Animations ??
-        Array.Empty<SpineAnimationClipDto>();
-
-    private SpineAnimationFrameDto? ActiveSetupFrame =>
-        SelectedSkinPreview?.SetupFrame ?? Preview?.SetupFrame;
-
-    private void RefreshAnimationNamesForActiveSkin()
-    {
-        AnimationNames.Clear();
-        foreach (var animation in ActiveAnimations.Where(static animation => animation.SampledFrames.Count > 0))
+        _currentFrame = value;
+        if (notify)
         {
-            AnimationNames.Add(animation.Name);
+            OnPropertyChanged(nameof(CurrentFrame));
         }
 
-        OnPropertyChanged(nameof(HasSpineAnimation));
-        OnPropertyChanged(nameof(Visibility));
-    }
-
-    private static IReadOnlyList<string> ResolveSkinNames(SpineAnimationPreviewDto preview)
-    {
-        var names = preview.SkinPreviews.Count > 0
-            ? preview.SkinPreviews.Select(static skin => skin.Name)
-            : preview.SkinNames;
-        return names
-            .Where(static name => !string.IsNullOrWhiteSpace(name))
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
-    }
-
-    private static string? ResolveInitialSkinName(SpineAnimationPreviewDto preview)
-    {
-        var skinPreview = preview.SkinPreviews.FirstOrDefault(static skin =>
-            string.Equals(skin.Name, "default", StringComparison.OrdinalIgnoreCase)) ??
-            preview.SkinPreviews.FirstOrDefault(static skin =>
-                skin.Animations.Any(static animation =>
-                    animation.SampledFrames.Any(static frame => frame.DrawCommands.Count > 0))) ??
-            preview.SkinPreviews.FirstOrDefault();
-        return skinPreview?.Name ?? preview.SkinNames.FirstOrDefault();
+        return true;
     }
 
     private void NotifyStateChanged()
     {
         OnPropertyChanged(nameof(HasSpineAnimation));
+        OnPropertyChanged(nameof(HasRuntimePlayback));
         OnPropertyChanged(nameof(Visibility));
         OnPropertyChanged(nameof(IsSkinSelectionEnabled));
         OnPropertyChanged(nameof(SelectedAnimation));
@@ -371,4 +410,9 @@ public sealed class InspectorPreviewSpineAnimationViewModel : ObservableObject
         OnPropertyChanged(nameof(PlayPauseGlyph));
         OnPropertyChanged(nameof(CurrentFrame));
     }
+
+    private readonly record struct AnimationSelectionUpdate(
+        bool AnimationNameChanged,
+        bool PlaybackTimeChanged,
+        bool CurrentFrameChanged);
 }

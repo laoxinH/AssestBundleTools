@@ -2,10 +2,10 @@ namespace AssestBundleTools.Infrastructure.Bundles.Previewing.Spine;
 
 internal static class SpineRuntimeSamplingPolicy
 {
-    private const double SampledFrameRate = 30d;
-    private const int MaxSampledFrameCount = 120;
-    private const int MaxSampledDrawCommandBudget = 180000;
-    private const int MaxSampledMeshTriangleBudget = 2400000;
+    private const double SampledFrameRate = 60d;
+    private const int MaxSampledFrameCount = 1024;
+    private const int MaxSampledDrawCommandBudget = 720000;
+    private const int MaxSampledMeshTriangleBudget = 10000000;
 
     public static SpineRuntimeSamplingBudget CreateBudget(int drawCommandCount, int meshTriangleCount)
     {

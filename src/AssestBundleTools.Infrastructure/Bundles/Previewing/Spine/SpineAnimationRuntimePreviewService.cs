@@ -6,9 +6,12 @@ namespace AssestBundleTools.Infrastructure.Bundles.Previewing.Spine;
 /// <summary>
 /// Spine runtime adapter 组合点；真实官方 runtime 按版本在此层封装。
 /// </summary>
-public sealed class SpineAnimationRuntimePreviewService : ISpineAnimationRuntimePreviewService
+public sealed class SpineAnimationRuntimePreviewService :
+    ISpineAnimationRuntimePreviewService,
+    ISpineAnimationRuntimePlaybackService
 {
     private readonly IReadOnlyDictionary<string, ISpineAnimationRuntimeAdapter> _adaptersByKey;
+    private readonly IReadOnlyDictionary<string, ISpineAnimationRuntimePlaybackAdapter> _playbackAdaptersByKey;
 
     public SpineAnimationRuntimePreviewService()
         : this([new V38SpineAnimationRuntimeAdapter(), new V42SpineAnimationRuntimeAdapter()])
@@ -18,6 +21,9 @@ public sealed class SpineAnimationRuntimePreviewService : ISpineAnimationRuntime
     internal SpineAnimationRuntimePreviewService(IReadOnlyList<ISpineAnimationRuntimeAdapter> adapters)
     {
         _adaptersByKey = adapters.ToDictionary(static adapter => adapter.AdapterKey, StringComparer.Ordinal);
+        _playbackAdaptersByKey = adapters
+            .OfType<ISpineAnimationRuntimePlaybackAdapter>()
+            .ToDictionary(static adapter => adapter.AdapterKey, StringComparer.Ordinal);
     }
 
     public Task<SpineAnimationRuntimePreviewResultDto> TryBuildPreviewAsync(
@@ -65,5 +71,65 @@ public sealed class SpineAnimationRuntimePreviewService : ISpineAnimationRuntime
         }
 
         return SpineAnimationRuntimePreviewResultDto.NotHandled;
+    }
+
+    public Task<SpineAnimationRuntimePlaybackSessionResultDto> TryCreateSessionAsync(
+        SpineAnimationRuntimePlaybackSourceDto source,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromResult(SpineAnimationRuntimePlaybackSessionResultDto.Cancelled);
+        }
+
+        return Task.Run(
+            () => TryCreateSession(source, cancellationToken));
+    }
+
+    private SpineAnimationRuntimePlaybackSessionResultDto TryCreateSession(
+        SpineAnimationRuntimePlaybackSourceDto source,
+        CancellationToken cancellationToken)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return SpineAnimationRuntimePlaybackSessionResultDto.Cancelled;
+        }
+
+        var adapterKey = source.Runtime?.AdapterKey;
+        if (string.IsNullOrWhiteSpace(adapterKey) ||
+            !_playbackAdaptersByKey.TryGetValue(adapterKey, out var adapter))
+        {
+            return TryCreateBinarySessionWithAnyAdapter(source, cancellationToken);
+        }
+
+        return adapter.TryCreatePlaybackSession(source, cancellationToken);
+    }
+
+    private SpineAnimationRuntimePlaybackSessionResultDto TryCreateBinarySessionWithAnyAdapter(
+        SpineAnimationRuntimePlaybackSourceDto source,
+        CancellationToken cancellationToken)
+    {
+        if (source.SkeletonBinaryContent is not { Length: > 0 })
+        {
+            return SpineAnimationRuntimePlaybackSessionResultDto.NotHandled;
+        }
+
+        foreach (var adapter in _playbackAdaptersByKey.Values)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return SpineAnimationRuntimePlaybackSessionResultDto.Cancelled;
+            }
+
+            var result = adapter.TryCreatePlaybackSession(source, cancellationToken);
+            if (result.IsHandled || result.IsCancelled)
+            {
+                return result;
+            }
+        }
+
+        return SpineAnimationRuntimePlaybackSessionResultDto.NotHandled;
     }
 }

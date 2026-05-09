@@ -37,7 +37,8 @@ internal sealed partial class SpineAnimationPreviewBuilder
                 runtime,
                 atlasPages,
                 atlasTexts,
-                skeletonBinaryContent),
+                skeletonBinaryContent,
+                IncludeSampledFrames: false),
             cancellationToken);
         if (result.IsCancelled ||
             !result.IsHandled ||
@@ -51,7 +52,15 @@ internal sealed partial class SpineAnimationPreviewBuilder
             Preview = result.Preview with
             {
                 SpineVersion = result.Preview.SpineVersion ?? spineVersion,
-                Runtime = result.Preview.Runtime ?? runtime
+                Runtime = result.Preview.Runtime ?? runtime,
+                PlaybackSource = new SpineAnimationRuntimePlaybackSourceDto(
+                    groupKey,
+                    skeletonAsset,
+                    skeletonJson,
+                    result.Preview.Runtime ?? runtime,
+                    atlasPages,
+                    atlasTexts,
+                    skeletonBinaryContent)
             }
         };
     }
