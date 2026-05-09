@@ -177,21 +177,26 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
             return;
         }
 
-        var clipBatches = ResolveClipBatches(batches, out var clipProjectionElapsed);
         _context.ClearRenderTargetView(_renderTargetView, ResolveSmokeTint(batches.Count));
         var drawElapsed = TimeSpan.Zero;
-        if (clipBatches.Count > 0)
+        var clipProjectionElapsed = TimeSpan.Zero;
+        if (batches.Count > 0)
         {
             var drawStopwatch = Stopwatch.StartNew();
             _batchRenderer.Draw(
                 _device!,
                 _context,
-                clipBatches,
+                batches,
                 _texturePageCache.GpuPages,
                 _pixelWidth,
-                _pixelHeight);
+                _pixelHeight,
+                out clipProjectionElapsed);
             drawStopwatch.Stop();
-            drawElapsed = drawStopwatch.Elapsed;
+            drawElapsed = drawStopwatch.Elapsed - clipProjectionElapsed;
+            if (drawElapsed < TimeSpan.Zero)
+            {
+                drawElapsed = TimeSpan.Zero;
+            }
         }
 
         var presentStopwatch = Stopwatch.StartNew();
@@ -344,17 +349,6 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
         stopwatch.Stop();
         elapsed = stopwatch.Elapsed;
         return batches;
-    }
-
-    private IReadOnlyList<SpineAnimationClipSpaceBatch> ResolveClipBatches(
-        IReadOnlyList<SpineAnimationVertexBatch> batches,
-        out TimeSpan elapsed)
-    {
-        var stopwatch = Stopwatch.StartNew();
-        var clipBatches = _batchCache.GetClipBatches(batches, _pixelWidth, _pixelHeight);
-        stopwatch.Stop();
-        elapsed = stopwatch.Elapsed;
-        return clipBatches;
     }
 
     private async Task LoadTexturePagesAsync(

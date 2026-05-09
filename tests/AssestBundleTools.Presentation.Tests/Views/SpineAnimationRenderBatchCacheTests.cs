@@ -81,48 +81,18 @@ public sealed class SpineAnimationRenderBatchCacheTests
     }
 
     [Fact]
-    public void GetClipBatches_ShouldReuseBatches_ForSameSourceAndViewport()
-    {
-        var cache = new SpineAnimationRenderBatchCache();
-        var vertexBatches = cache.GetVertexBatches(CreateFrame(), CreateTexturePages(), texturePageVersion: 1);
-
-        var first = cache.GetClipBatches(vertexBatches, 320f, 240f);
-        var second = cache.GetClipBatches(vertexBatches, 320f, 240f);
-        var afterResize = cache.GetClipBatches(vertexBatches, 480f, 240f);
-
-        Assert.Same(first, second);
-        Assert.NotSame(first, afterResize);
-    }
-
-    [Fact]
-    public void GetClipBatches_ShouldReuseEarlierFrameClip_WhenWithinCapacity()
-    {
-        var cache = new SpineAnimationRenderBatchCache(maxCachedFrames: 2);
-        var firstVertexBatches = cache.GetVertexBatches(CreateFrame("first"), CreateTexturePages(), texturePageVersion: 1);
-        var firstClip = cache.GetClipBatches(firstVertexBatches, 320f, 240f);
-        _ = cache.GetVertexBatches(CreateFrame("second"), CreateTexturePages(), texturePageVersion: 1);
-
-        var reused = cache.GetClipBatches(firstVertexBatches, 320f, 240f);
-
-        Assert.Same(firstClip, reused);
-    }
-
-    [Fact]
-    public void Clear_ShouldDropCachedVertexAndClipBatches()
+    public void Clear_ShouldDropCachedVertexBatches()
     {
         var cache = new SpineAnimationRenderBatchCache();
         var frame = CreateFrame();
         var texturePages = CreateTexturePages();
         var first = cache.GetVertexBatches(frame, texturePages, texturePageVersion: 1);
-        var firstClip = cache.GetClipBatches(first, 320f, 240f);
 
         cache.Clear();
 
         var second = cache.GetVertexBatches(frame, texturePages, texturePageVersion: 1);
-        var secondClip = cache.GetClipBatches(second, 320f, 240f);
 
         Assert.NotSame(first, second);
-        Assert.NotSame(firstClip, secondClip);
     }
 
     private static SpineAnimationFrameDto CreateFrame(string slotName = "slot") =>

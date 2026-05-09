@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Vortice.D3DCompiler;
 using Vortice.Direct3D;
@@ -65,26 +66,39 @@ internal sealed class D3D11SpineAnimationBatchRenderer : IDisposable
     public void Draw(
         ID3D11Device device,
         ID3D11DeviceContext context,
-        IReadOnlyList<SpineAnimationClipSpaceBatch> clipBatches,
+        IReadOnlyList<SpineAnimationVertexBatch> batches,
         IReadOnlyDictionary<string, D3D11SpineTexturePage> texturePages,
         float viewportWidth,
-        float viewportHeight)
+        float viewportHeight,
+        out TimeSpan clipProjectionElapsed)
     {
         ArgumentNullException.ThrowIfNull(device);
         ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(clipBatches);
+        ArgumentNullException.ThrowIfNull(batches);
         ArgumentNullException.ThrowIfNull(texturePages);
 
+        clipProjectionElapsed = TimeSpan.Zero;
         EnsureDeviceResources(device);
-        if (clipBatches.Count == 0)
+        if (batches.Count == 0)
+        {
+            return;
+        }
+
+        var transform = SpineAnimationClipSpaceTransform.Resolve(batches, viewportWidth, viewportHeight);
+        if (!transform.IsValid)
         {
             return;
         }
 
         ApplyPipeline(context, viewportWidth, viewportHeight);
-        foreach (var batch in clipBatches)
+        foreach (var batch in batches)
         {
-            DrawBatch(device, context, batch, ResolveTextureView(batch.PageName, texturePages));
+            clipProjectionElapsed += DrawBatch(
+                device,
+                context,
+                batch,
+                transform,
+                ResolveTextureView(batch.PageName, texturePages));
         }
     }
 
@@ -151,22 +165,27 @@ internal sealed class D3D11SpineAnimationBatchRenderer : IDisposable
         context.OMSetBlendState(_blendState);
     }
 
-    private void DrawBatch(
+    private TimeSpan DrawBatch(
         ID3D11Device device,
         ID3D11DeviceContext context,
-        SpineAnimationClipSpaceBatch batch,
+        SpineAnimationVertexBatch batch,
+        SpineAnimationClipSpaceTransform transform,
         ID3D11ShaderResourceView textureView)
     {
         if (batch.Vertices.Count == 0 || batch.Indices.Count == 0)
         {
-            return;
+            return TimeSpan.Zero;
         }
 
         var vertices = ArrayPool<D3D11SpineBatchVertex>.Shared.Rent(batch.Vertices.Count);
         var indices = ArrayPool<int>.Shared.Rent(batch.Indices.Count);
+        var projectionElapsed = TimeSpan.Zero;
         try
         {
-            CopyVertices(batch.Vertices, vertices);
+            var projectionStopwatch = Stopwatch.StartNew();
+            CopyProjectedVertices(batch.Vertices, vertices, transform);
+            projectionStopwatch.Stop();
+            projectionElapsed = projectionStopwatch.Elapsed;
             CopyIndices(batch.Indices, indices);
             _batchBuffer.Upload(
                 device,
@@ -183,6 +202,8 @@ internal sealed class D3D11SpineAnimationBatchRenderer : IDisposable
             ArrayPool<int>.Shared.Return(indices);
             ArrayPool<D3D11SpineBatchVertex>.Shared.Return(vertices);
         }
+
+        return projectionElapsed;
     }
 
     private ID3D11ShaderResourceView ResolveTextureView(
@@ -213,13 +234,14 @@ internal sealed class D3D11SpineAnimationBatchRenderer : IDisposable
     private static D3D11SpineBatchVertex CreateRenderVertex(SpineAnimationClipSpaceVertex vertex) =>
         new(vertex.X, vertex.Y, vertex.U, vertex.V, vertex.R, vertex.G, vertex.B, vertex.A);
 
-    private static void CopyVertices(
-        IReadOnlyList<SpineAnimationClipSpaceVertex> source,
-        D3D11SpineBatchVertex[] destination)
+    private static void CopyProjectedVertices(
+        IReadOnlyList<SpineAnimationBatchVertex> source,
+        D3D11SpineBatchVertex[] destination,
+        SpineAnimationClipSpaceTransform transform)
     {
         for (var index = 0; index < source.Count; index++)
         {
-            destination[index] = CreateRenderVertex(source[index]);
+            destination[index] = CreateRenderVertex(transform.Project(source[index]));
         }
     }
 

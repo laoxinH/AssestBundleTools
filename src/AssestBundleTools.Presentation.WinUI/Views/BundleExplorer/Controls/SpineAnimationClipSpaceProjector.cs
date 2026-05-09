@@ -2,8 +2,6 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 internal static class SpineAnimationClipSpaceProjector
 {
-    private const double MinExtent = 0.001d;
-
     public static IReadOnlyList<SpineAnimationClipSpaceBatch> Project(
         IReadOnlyList<SpineAnimationVertexBatch> batches,
         float viewportWidth,
@@ -11,13 +9,12 @@ internal static class SpineAnimationClipSpaceProjector
     {
         ArgumentNullException.ThrowIfNull(batches);
 
-        if (batches.Count == 0 || viewportWidth <= 1f || viewportHeight <= 1f)
+        var transform = SpineAnimationClipSpaceTransform.Resolve(batches, viewportWidth, viewportHeight);
+        if (!transform.IsValid)
         {
             return Array.Empty<SpineAnimationClipSpaceBatch>();
         }
 
-        var bounds = ResolveBounds(batches);
-        var scale = ResolveScale(bounds, viewportWidth, viewportHeight);
         var projected = new List<SpineAnimationClipSpaceBatch>(batches.Count);
         foreach (var batch in batches)
         {
@@ -28,30 +25,59 @@ internal static class SpineAnimationClipSpaceProjector
 
             projected.Add(new SpineAnimationClipSpaceBatch(
                 batch.PageName,
-                batch.Vertices.Select(vertex => ProjectVertex(
-                    vertex,
-                    bounds,
-                    scale,
-                    viewportWidth,
-                    viewportHeight)).ToArray(),
+                batch.Vertices.Select(transform.Project).ToArray(),
                 batch.Indices));
         }
 
         return projected;
     }
+}
 
-    private static SpineAnimationClipSpaceVertex ProjectVertex(
-        SpineAnimationBatchVertex vertex,
-        SpineAnimationVertexBounds bounds,
-        double scale,
+internal readonly record struct SpineAnimationClipSpaceTransform(
+    double CenterX,
+    double CenterY,
+    double Scale,
+    float ViewportWidth,
+    float ViewportHeight)
+{
+    private const double MinExtent = 0.001d;
+
+    public bool IsValid => Scale > 0d && ViewportWidth > 1f && ViewportHeight > 1f;
+
+    public static SpineAnimationClipSpaceTransform Resolve(
+        IReadOnlyList<SpineAnimationVertexBatch> batches,
         float viewportWidth,
         float viewportHeight)
     {
-        var pixelX = ((vertex.X - bounds.CenterX) * scale) + (viewportWidth / 2d);
-        var pixelY = (-(vertex.Y - bounds.CenterY) * scale) + (viewportHeight / 2d);
+        ArgumentNullException.ThrowIfNull(batches);
+
+        if (batches.Count == 0 || viewportWidth <= 1f || viewportHeight <= 1f)
+        {
+            return default;
+        }
+
+        var bounds = ResolveBounds(batches);
+        var scale = ResolveScale(bounds, viewportWidth, viewportHeight);
+        return new SpineAnimationClipSpaceTransform(
+            bounds.CenterX,
+            bounds.CenterY,
+            scale,
+            viewportWidth,
+            viewportHeight);
+    }
+
+    public SpineAnimationClipSpaceVertex Project(SpineAnimationBatchVertex vertex)
+    {
+        if (!IsValid)
+        {
+            return default;
+        }
+
+        var pixelX = ((vertex.X - CenterX) * Scale) + (ViewportWidth / 2d);
+        var pixelY = (-(vertex.Y - CenterY) * Scale) + (ViewportHeight / 2d);
         return new SpineAnimationClipSpaceVertex(
-            (float)((pixelX / viewportWidth * 2d) - 1d),
-            (float)(1d - (pixelY / viewportHeight * 2d)),
+            (float)((pixelX / ViewportWidth * 2d) - 1d),
+            (float)(1d - (pixelY / ViewportHeight * 2d)),
             vertex.U,
             vertex.V,
             vertex.R,

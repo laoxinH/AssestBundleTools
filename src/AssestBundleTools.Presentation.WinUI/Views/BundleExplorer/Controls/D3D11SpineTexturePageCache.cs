@@ -41,6 +41,7 @@ internal sealed class D3D11SpineTexturePageCache : IDisposable
 
         var uploadedPageCount = 0;
         long uploadedBytes = 0;
+        List<string>? uploadedPageNames = null;
         foreach (var pair in _decodedPages)
         {
             if (_gpuPages.ContainsKey(pair.Key))
@@ -55,6 +56,16 @@ internal sealed class D3D11SpineTexturePageCache : IDisposable
                 uploadedPageCount++;
                 uploadedBytes += texturePage.ByteSize;
                 _gpuPageBytes += texturePage.ByteSize;
+                uploadedPageNames ??= [];
+                uploadedPageNames.Add(pair.Key);
+            }
+        }
+
+        if (uploadedPageNames is not null)
+        {
+            foreach (var pageName in uploadedPageNames)
+            {
+                _decodedPages.Remove(pageName);
             }
         }
 

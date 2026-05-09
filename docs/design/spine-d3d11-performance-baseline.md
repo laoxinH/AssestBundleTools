@@ -80,3 +80,10 @@ $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 - 复杂样本切入时曾出现 `projectMs=40.633 ms` 的冷投影尖峰，说明仍需避免 UI render 路径同步投影大 mesh。当前策略改为 texture page 解码完成后后台预热当前动画 sampled frames 的 vertex batch，回写前校验 texture page version；未命中且预热可用时，D3D 后端会延迟该帧绘制而不是在 UI 线程同步投影。
 - D3D 投影尖峰消除后，复杂样本仍不流畅时优先看 `batch-prewarm-completed requestedFrames`。真实样本曾只有 `22` 个 sampled frames，说明官方 runtime adapter 的 Win2D 时代复杂度预算把动画采样压得过低；当前已把 V38 / V42 采样预算放宽到在硬上限 `240` 帧内优先保持 `30 FPS`，并把 D3D vertex batch cache 扩到可容纳一条高质量 sampled animation。
 - 若有用户可感知卡顿但 D3D 分段耗时仍低，应补 Application / Infrastructure 侧预览生成、runtime 采样和 DTO 投影的加载期诊断，而不是继续压缩 D3D draw。
+
+## 2026-05-09 内存优化记录
+
+- `SpineAnimationMeshVertexDto` / `SpineAnimationMeshTriangleDto` 已从引用类型 record 改为只读值类型 record struct，避免复杂 mesh 的 sampled frames 产生大量小对象。
+- D3D Texture2D page 成功上传为 shader resource 后，会释放 CPU 侧 BGRA 解码页；后续仍保留 texture page size 供 vertex batch 投影使用。
+- D3D 后端不再把每帧 clip-space batch 常驻在缓存中；当前只缓存 texture-version 保护下的 world-space vertex batch，渲染时用池化数组直接投影并上传动态 vertex buffer。
+- 因此新日志里的 `clipMs` 可能不再长期接近 `0.001 ms`，但它不再代表一份常驻 clip-space 顶点缓存；实际是否接受应以播放流畅度和工作集下降共同判断。

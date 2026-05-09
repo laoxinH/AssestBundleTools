@@ -40,13 +40,13 @@ public sealed record SpineAnimationDrawCommandDto(
         Array.Empty<SpineAnimationMeshTriangleDto>();
 }
 
-public sealed record SpineAnimationMeshVertexDto(
+public readonly record struct SpineAnimationMeshVertexDto(
     double X,
     double Y,
     double U,
     double V);
 
-public sealed record SpineAnimationMeshTriangleDto(
+public readonly record struct SpineAnimationMeshTriangleDto(
     int A,
     int B,
     int C);
