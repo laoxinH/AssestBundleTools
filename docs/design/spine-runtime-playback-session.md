@@ -21,6 +21,8 @@
 
 参考 [SpineViewer](https://github.com/ww-rm/SpineViewer) 的实时预览策略：预览播放持有 runtime skeleton / animation state，每个 render loop 用真实 delta 推进并绘制当前姿态；固定 fps 逐帧推进只用于视频或序列帧导出。该方向更适合本项目的交互预览。
 
+本项目不追求复刻 SpineViewer 的完整查看器能力。Spine 范围收敛为基础播放、动画 / skin 切换、进度 / 速度控制和导出所需的固定 FPS 采样；调试渲染、多轨道混合、完整编辑器语义、动态壁纸、PSD 或复杂查看器功能不作为当前产品目标。
+
 ## 3. 设计原则
 
 1. 实时预览优先使用 runtime session，不再依赖全动画 sampled frame 列表。
@@ -206,9 +208,9 @@ setup pose 继续作为独立语义。runtime session 可提供 setup pose 当�
 以下事项属于后续收口项，不改变当前“runtime playback session 已达到 `60 FPS` 交互预览目标”的判断：
 
 - `120 FPS` / 高刷新率实机验证尚未完成；进度 slider 与时间读数绑定已完成首轮节流，其他 UI 绑定是否需要继续节流仍待按高刷新目标和实测 XAML 压力决定。
-- 固定 fps 导出、序列帧导出和视频导出尚未产品化；当前只完成面向后续导出的固定 FPS 帧序列采样基础。后续参考 [SpineViewer](https://github.com/ww-rm/SpineViewer) 的多版本查看、调试渲染、帧率 / time scale 调整以及单帧 / GIF / 视频 / FFmpeg 导出边界推进，但仍通过本项目 Application 端口与 runtime-neutral DTO 落地。旧 sampled DTO 路径目前只作为 JSON fallback playback session 的姿态来源、兼容回退、测试稳定输入和未来导出基础保留。
+- 固定 fps 导出、序列帧导出和视频导出尚未产品化；当前只完成面向后续导出的固定 FPS 帧序列采样基础。后续只参考 SpineViewer 的基础播放与导出边界，优先补单帧 / 序列帧 / 视频导出所需的画布尺寸、文件命名、编码器或 FFmpeg 编排，但仍通过本项目 Application 端口与 runtime-neutral DTO 落地。旧 sampled DTO 路径目前只作为 JSON fallback playback session 的姿态来源、兼容回退、测试稳定输入和未来导出基础保留。
 - JSON fallback 已完成首轮 playback session 化，但仍是基于既有 sampled frame 的轻量 session；若后续需要和官方 runtime 一样按 JSON timeline 即时求姿态，需要另行拆分 on-demand JSON sampler。
-- 更多 Spine Runtime 版本仍需按 adapter key 分版本封装；linked mesh、path constraint、physics constraint 和更复杂 FFD / deform 行为仍按真实样本门控推进。
+- 更多 Spine Runtime 版本、linked mesh、path constraint、physics constraint 和更复杂 FFD / deform 行为不再作为主动扩展目标；只有当真实样本阻塞基础播放、动画切换或导出时，才按 adapter key 分版本做最小兼容，其他情况保留结构化诊断。
 - D3D 默认启用后还需要继续补更多设备、窗口缩放、skin 切换、device lost 恢复和工作集基线。
 
 ## 11. 测试要求
@@ -224,4 +226,5 @@ setup pose 继续作为独立语义。runtime session 可提供 setup pose 当�
 - 不把 runtime session 写入工作区持久化状态。
 - 不为了实时预览继续扩大 sampled frame 上限或全量 D3D batch cache。
 - 不在第一阶段同时重写导出链路。
+- 不复刻 SpineViewer 的完整查看器、调试渲染、多轨道混合、动态壁纸、PSD 或编辑器级能力。
 - 不把 WinUI 控件、D3D device、swap chain 或 GPU resource 放入 Application / Infrastructure 公共 DTO。

@@ -48,8 +48,8 @@ internal static partial class ApplicationTestSuite
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportUnsupportedRuntimeVersion_WhenNoAdapterMatches);
         await RunTestAsync(
             failures,
-            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldResolveSpineViewerRuntimeMatrix_ByMajorMinorVersion),
-            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldResolveSpineViewerRuntimeMatrix_ByMajorMinorVersion);
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldResolveSpineRuntimeMatrix_ByMajorMinorVersion),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldResolveSpineRuntimeMatrix_ByMajorMinorVersion);
         await RunTestAsync(
             failures,
             nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportJsonSpineAnimationUnsupportedFeatures),

@@ -234,7 +234,7 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
         TestAssert.Equal("4.3.0", diagnostic.SpineVersion, "Runtime diagnostics should preserve the version.");
     }
 
-    public static async Task HandleAsync_ShouldResolveSpineViewerRuntimeMatrix_ByMajorMinorVersion()
+    public static async Task HandleAsync_ShouldResolveSpineRuntimeMatrix_ByMajorMinorVersion()
     {
         var versions = new (string SpineVersion, string AdapterKey)[]
         {
