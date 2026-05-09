@@ -1,5 +1,7 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.Graphics.Canvas;
+using Windows.Graphics.DirectX;
 using Windows.UI;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
@@ -17,7 +19,7 @@ internal sealed class SpineAnimationFrameSequencePngExporter
 
     public async Task<int> ExportAsync(
         SpineAnimationRuntimeFrameSequenceExportPlanResultDto plan,
-        IReadOnlyDictionary<string, byte[]> texturePageContents,
+        IReadOnlyDictionary<string, SpineAnimationTexturePageContent> texturePageContents,
         string outputDirectoryPath,
         CancellationToken cancellationToken)
     {
@@ -72,7 +74,7 @@ internal sealed class SpineAnimationFrameSequencePngExporter
     }
 
     private async Task<SpineExportTextureBitmapSet> LoadTextureBitmapsAsync(
-        IReadOnlyDictionary<string, byte[]> texturePageContents,
+        IReadOnlyDictionary<string, SpineAnimationTexturePageContent> texturePageContents,
         CancellationToken cancellationToken)
     {
         var textureBitmaps = new Dictionary<string, CanvasBitmap>(StringComparer.Ordinal);
@@ -82,13 +84,29 @@ internal sealed class SpineAnimationFrameSequencePngExporter
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (string.IsNullOrWhiteSpace(pair.Key) ||
-                    pair.Value.Length == 0)
+                    pair.Value.ColorContent.Length == 0)
                 {
                     continue;
                 }
 
-                using var stream = await SpineAnimationTextureStreamFactory.CreateAsync(pair.Value);
-                textureBitmaps[pair.Key] = await CanvasBitmap.LoadAsync(_resourceCreator, stream);
+                var decodedPages = await SpineAnimationTexturePageDecoder.DecodeAsync(
+                    new Dictionary<string, SpineAnimationTexturePageContent>(StringComparer.Ordinal)
+                    {
+                        [pair.Key] = pair.Value
+                    });
+                if (!decodedPages.TryGetValue(pair.Key, out var decodedPage))
+                {
+                    continue;
+                }
+
+                textureBitmaps[pair.Key] = CanvasBitmap.CreateFromBytes(
+                    _resourceCreator,
+                    decodedPage.BgraPixels,
+                    decodedPage.Width,
+                    decodedPage.Height,
+                    DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                    96f,
+                    CanvasAlphaMode.Premultiplied);
             }
 
             return new SpineExportTextureBitmapSet(textureBitmaps);

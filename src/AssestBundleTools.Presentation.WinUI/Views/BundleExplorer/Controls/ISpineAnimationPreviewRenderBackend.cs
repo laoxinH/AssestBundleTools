@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
@@ -10,7 +11,7 @@ internal interface ISpineAnimationPreviewRenderBackend
 
     void PrewarmFrames(IReadOnlyList<SpineAnimationFrameDto> frames);
 
-    void LoadTexturePages(IReadOnlyDictionary<string, byte[]> texturePageContents);
+    void LoadTexturePages(IReadOnlyDictionary<string, SpineAnimationTexturePageContent> texturePageContents);
 
     void ClearTexturePages();
 

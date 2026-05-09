@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Vortice.Direct3D;
@@ -11,8 +12,8 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationPreviewRenderBackend
 {
-    private static readonly IReadOnlyDictionary<string, byte[]> EmptyTexturePages =
-        new Dictionary<string, byte[]>(StringComparer.Ordinal);
+    private static readonly IReadOnlyDictionary<string, SpineAnimationTexturePageContent> EmptyTexturePages =
+        new Dictionary<string, SpineAnimationTexturePageContent>(StringComparer.Ordinal);
 
     private const int BufferCount = 2;
     private const int DxgiErrorDeviceRemoved = unchecked((int)0x887A0005);
@@ -28,7 +29,7 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
     private readonly SpineAnimationRenderBatchCache _batchCache = new(D3DMaxCachedFrames);
     private readonly D3D11SpineBatchPrewarmer _batchPrewarmer;
     private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _resizeTimer;
-    private IReadOnlyDictionary<string, byte[]> _texturePageContents = EmptyTexturePages;
+    private IReadOnlyDictionary<string, SpineAnimationTexturePageContent> _texturePageContents = EmptyTexturePages;
     private SpineAnimationFrameDto? _currentFrame;
     private SpineAnimationPreviewViewport _viewport = SpineAnimationPreviewViewport.Default;
     private ID3D11Device? _device;
@@ -91,7 +92,7 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
         StartBatchPrewarmIfReady();
     }
 
-    public void LoadTexturePages(IReadOnlyDictionary<string, byte[]> texturePageContents)
+    public void LoadTexturePages(IReadOnlyDictionary<string, SpineAnimationTexturePageContent> texturePageContents)
     {
         ArgumentNullException.ThrowIfNull(texturePageContents);
 
@@ -395,7 +396,7 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
     }
 
     private async Task LoadTexturePagesAsync(
-        IReadOnlyDictionary<string, byte[]> texturePageContents,
+        IReadOnlyDictionary<string, SpineAnimationTexturePageContent> texturePageContents,
         int generation)
     {
         var requestedPageCount = texturePageContents.Count;
@@ -403,7 +404,7 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            var decodedPages = await D3D11SpineTexturePageDecoder.DecodeAsync(texturePageContents);
+            var decodedPages = await SpineAnimationTexturePageDecoder.DecodeAsync(texturePageContents);
             stopwatch.Stop();
             _diagnostics.TextureDecodeCompleted(
                 requestedPageCount,

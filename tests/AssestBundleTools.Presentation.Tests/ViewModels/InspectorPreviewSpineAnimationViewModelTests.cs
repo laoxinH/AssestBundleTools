@@ -151,6 +151,21 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
     }
 
     [Fact]
+    public void Apply_ShouldExposeExternalAlphaTextureContent()
+    {
+        var viewModel = new InspectorPreviewSpineAnimationViewModel();
+        byte[] alphaContent = [4, 5, 6];
+
+        viewModel.Apply(CreatePreview(), CreateTextureStates(alphaContent));
+
+        var content = Assert.Single(viewModel.TexturePageContents).Value;
+        Assert.Equal("hero.png", content.PageName);
+        Assert.Equal([1, 2, 3], content.ColorContent);
+        Assert.Same(alphaContent, content.AlphaContent);
+        Assert.True(content.HasAlphaContent);
+    }
+
+    [Fact]
     public void Advance_ShouldThrottleDisplayPlaybackTimeNotifications()
     {
         var viewModel = new InspectorPreviewSpineAnimationViewModel();
@@ -348,7 +363,8 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
                     TransformM32: 0d)
             ]);
 
-    private static IReadOnlyDictionary<string, SpineAnimationPreviewTextureState> CreateTextureStates()
+    private static IReadOnlyDictionary<string, SpineAnimationPreviewTextureState> CreateTextureStates(
+        byte[]? alphaContent = null)
     {
         var page = new SpineAtlasPageDto(
             Name: "hero.png",
@@ -379,9 +395,21 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
             CreateImageSourceStub(),
             PixelWidth: 64,
             PixelHeight: 64);
+        var alphaState = alphaContent is null
+            ? null
+            : new SpineAssetGroupTexturePreviewState(
+                page,
+                preview with
+                {
+                    AssetId = new AssetId("texture-alpha"),
+                    BinaryContent = alphaContent
+                },
+                CreateImageSourceStub(),
+                PixelWidth: 64,
+                PixelHeight: 64);
         return new Dictionary<string, SpineAnimationPreviewTextureState>(StringComparer.Ordinal)
         {
-            ["hero.png"] = new("hero.png", state)
+            ["hero.png"] = new("hero.png", state, alphaState)
         };
     }
 

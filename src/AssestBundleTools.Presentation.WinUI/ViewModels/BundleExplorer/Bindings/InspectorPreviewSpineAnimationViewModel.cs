@@ -11,8 +11,8 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
     private static readonly TimeSpan PlaybackDisplayRefreshInterval = TimeSpan.FromMilliseconds(100);
 
     private SpineAnimationPreviewDto? _preview;
-    private IReadOnlyDictionary<string, byte[]> _texturePageContents =
-        new Dictionary<string, byte[]>(StringComparer.Ordinal);
+    private IReadOnlyDictionary<string, SpineAnimationTexturePageContent> _texturePageContents =
+        new Dictionary<string, SpineAnimationTexturePageContent>(StringComparer.Ordinal);
     private string? _selectedAnimationName;
     private string? _selectedSkinName;
     private double _playbackTime;
@@ -36,7 +36,7 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         private set => SetProperty(ref _preview, value);
     }
 
-    public IReadOnlyDictionary<string, byte[]> TexturePageContents
+    public IReadOnlyDictionary<string, SpineAnimationTexturePageContent> TexturePageContents
     {
         get => _texturePageContents;
         private set => SetProperty(ref _texturePageContents, value);
@@ -225,12 +225,7 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
 
         Clear();
         Preview = preview;
-        TexturePageContents = texturePreviews
-            .Where(static pair => pair.Value.BinaryContent is { Length: > 0 })
-            .ToDictionary(
-                static pair => pair.Key,
-                static pair => pair.Value.BinaryContent!,
-                StringComparer.Ordinal);
+        TexturePageContents = CreateTexturePageContents(texturePreviews);
         foreach (var skinName in ResolveSkinNames(preview))
         {
             SkinNames.Add(skinName);
@@ -253,7 +248,7 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         AnimationNames.Clear();
         SkinNames.Clear();
         Preview = null;
-        TexturePageContents = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+        TexturePageContents = new Dictionary<string, SpineAnimationTexturePageContent>(StringComparer.Ordinal);
         SelectedAnimationName = null;
         SelectedSkinName = null;
         _cachedFrameIndex = 0;
@@ -500,7 +495,5 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
     }
 
     private readonly record struct AnimationSelectionUpdate(
-        bool AnimationNameChanged,
-        bool PlaybackTimeChanged,
-        bool CurrentFrameChanged);
+        bool AnimationNameChanged, bool PlaybackTimeChanged, bool CurrentFrameChanged);
 }

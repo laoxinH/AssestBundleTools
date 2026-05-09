@@ -159,7 +159,15 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
                     cancellationToken);
                 if (texturePreview is not null)
                 {
-                    texturePreviews[pageName] = new SpineAnimationPreviewTextureState(pageName, texturePreview);
+                    var alphaTexturePreview = await TryLoadAlphaTexturePreviewAsync(
+                        detailsQuery,
+                        details,
+                        atlasPage,
+                        cancellationToken);
+                    texturePreviews[pageName] = new SpineAnimationPreviewTextureState(
+                        pageName,
+                        texturePreview,
+                        alphaTexturePreview);
                 }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -173,6 +181,35 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
         }
 
         return texturePreviews;
+    }
+
+    private async Task<SpineAssetGroupTexturePreviewState?> TryLoadAlphaTexturePreviewAsync(
+        LoadSpineAssetGroupDetailsQuery detailsQuery,
+        SpineAssetGroupDetailsDto details,
+        SpineAtlasPageDto atlasPage,
+        CancellationToken cancellationToken)
+    {
+        var alphaTexturePageAsset = SpineAnimationAlphaTexturePageResolver.Resolve(details, atlasPage);
+        if (alphaTexturePageAsset is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return await TryLoadTexturePreviewAsync(
+                detailsQuery,
+                atlasPage with { TexturePageAsset = alphaTexturePageAsset },
+                cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private async Task<SpineAssetGroupTexturePreviewState?> TryLoadTexturePreviewAsync(

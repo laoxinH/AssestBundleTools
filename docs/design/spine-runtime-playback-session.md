@@ -175,7 +175,7 @@ setup pose 继续作为独立语义。runtime session 可提供 setup pose 当�
 - Runtime frame result 已携带分段诊断，Presentation 调试输出会节流打印 `spine.runtime-frame`；V38 / V42 playback session 会在同 skin 连续帧之间复用 runtime skeleton 并在每帧重置 setup pose，正常 frame cancellation 已改为返回 `Cancelled` 结果，避免交互切换和 session dispose 时把预期取消表达为热路径异常。
 - `char_2026_yu_nian#12.ab` 大量三角样本的最新交互日志已经覆盖播放、速度切换、animation 切换和进度拖动；连续帧显示 `reusedSkeleton=True`、`createMs=0`、`resetMs` 常见约 `0.07-0.3ms`，D3D 当前帧路径大多 `projectMs=0` 且 draw 成本低，主观观感已达到流畅的 `60 FPS` 交互预览目标。
 - JSON fallback 已通过 `SpineAnimationSampledPlaybackSourceDto` 挂入 playback source；官方 runtime adapter 不可用或未处理时，Infrastructure 会创建轻量 sampled fallback playback session，并按 animation / skin / setup pose / 绝对播放时间返回最近 sampled frame。旧 sampled DTO 仍保留为 JSON fallback 的姿态来源、兼容回退、测试稳定输入和未来固定 fps 导出方案。
-- 普通 RGBA / 带透明通道的 Texture2D 预览载荷和多 atlas page 已覆盖 D3D11 主路径与 Win2D 回退路径；D3D11 按 page name 解码 BGRA8 straight alpha、上传 shader resource，并在 shader 中采样真实 page texture 后乘以 draw command tint / alpha。当前不实现“颜色图 + 独立 alpha 图”自动合成，不主动修正已预乘 alpha 贴图，也不为完全无规律的 atlas page 名称增加猜测匹配规则；这些边界继续作为样本门控后续项。
+- 普通 RGBA / 带透明通道的 Texture2D 预览载荷、多 atlas page 和常见独立 alpha companion 已覆盖 D3D11 主路径、Win2D 回退路径和基础 PNG 序列帧导出路径；Presentation 仍只通过预览管线加载 Texture2D 载荷，按 atlas page / texture 资产名的 `_alpha / -alpha / .alpha / @alpha / _a` 等常见后缀匹配 alpha page。共享解码器会把颜色图与 alpha 图合成为 BGRA8，并统一转为 premultiplied alpha；D3D11 上传 PMA shader resource 后使用 PMA blend，shader 只再乘 draw command tint / alpha，避免边缘发黑或直通 alpha 二次相乘。完全无规律的 atlas page / alpha page 名称匹配仍作为样本门控后续项。
 - 当前剩余工作见第 10 节；这些事项不阻塞当前 `60 FPS` 交互预览主线。
 
 ### 第一阶段：契约与文档
@@ -212,7 +212,7 @@ setup pose 继续作为独立语义。runtime session 可提供 setup pose 当�
 - `120 FPS` / 高刷新率实机验证尚未完成；进度 slider 与时间读数绑定已完成首轮节流，其他 UI 绑定是否需要继续节流仍待按高刷新目标和实测 XAML 压力决定。
 - 固定 fps 序列帧 PNG 导出已有基础入口；当前还没有导出参数面板、单帧截图入口、GIF/视频编码和 FFmpeg 编排。后续只参考 SpineViewer 的基础播放与导出边界，优先补导出 FPS / 尺寸 / 范围等参数，以及 GIF/视频输出，但仍通过本项目 Application 端口与 runtime-neutral DTO 落地。旧 sampled DTO 路径目前只作为 JSON fallback playback session 的姿态来源、兼容回退、测试稳定输入和未来导出基础保留。
 - JSON fallback 已完成首轮 playback session 化，但仍是基于既有 sampled frame 的轻量 session；若后续需要和官方 runtime 一样按 JSON timeline 即时求姿态，需要另行拆分 on-demand JSON sampler。
-- 独立 alpha map 合成、预乘 alpha 贴图修正、完全无规律 atlas page 名称匹配不作为当前主动实现项；若真实样本出现明显缺透明、边缘发黑 / 发亮或 page 无法匹配，再按样本补最小兼容和诊断。
+- 独立 alpha map 合成和 premultiplied alpha 渲染已覆盖常见 companion 命名、D3D11 主路径、Win2D 回退路径和基础 PNG 序列帧导出路径；完全无规律 atlas page / alpha page 名称匹配仍不作为当前主动实现项，若真实样本出现 page 无法匹配，再按样本补最小兼容和诊断。
 - 更多 Spine Runtime 版本、linked mesh、path constraint、physics constraint 和更复杂 FFD / deform 行为不再作为主动扩展目标；只有当真实样本阻塞基础播放、动画切换或导出时，才按 adapter key 分版本做最小兼容，其他情况保留结构化诊断。
 - D3D 默认启用后还需要继续补更多设备、窗口缩放、skin 切换、device lost 恢复和工作集基线；当前视口平移 / 缩放 / 重置已覆盖 D3D 与 Win2D 两条渲染路径，但仍需在更多真实窗口尺寸和 DPI 缩放组合下观察交互手感。
 

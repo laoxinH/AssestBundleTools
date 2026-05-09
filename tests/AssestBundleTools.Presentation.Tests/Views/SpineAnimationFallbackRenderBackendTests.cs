@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 namespace AssestBundleTools.Presentation.Tests.Views;
 
@@ -13,9 +14,9 @@ public sealed class SpineAnimationFallbackRenderBackendTests
         var primaryStates = new List<bool>();
         var backend = new SpineAnimationFallbackRenderBackend(primary, fallback, primaryStates.Add);
         var frame = new SpineAnimationFrameDto(0d, []);
-        var texturePages = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        var texturePages = new Dictionary<string, SpineAnimationTexturePageContent>(StringComparer.Ordinal)
         {
-            ["page.png"] = [1, 2, 3]
+            ["page.png"] = new("page.png", [1, 2, 3])
         };
 
         backend.LoadTexturePages(texturePages);
@@ -102,9 +103,9 @@ public sealed class SpineAnimationFallbackRenderBackendTests
         var fallback = new RecordingBackend();
         var backend = new SpineAnimationFallbackRenderBackend(primary, fallback, _ => { });
         var frame = new SpineAnimationFrameDto(0d, []);
-        var texturePages = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        var texturePages = new Dictionary<string, SpineAnimationTexturePageContent>(StringComparer.Ordinal)
         {
-            ["page.png"] = [1, 2, 3]
+            ["page.png"] = new("page.png", [1, 2, 3])
         };
 
         backend.LoadTexturePages(texturePages);
@@ -122,7 +123,7 @@ public sealed class SpineAnimationFallbackRenderBackendTests
 
         public IReadOnlyList<SpineAnimationFrameDto>? PrewarmedFrames { get; private set; }
 
-        public IReadOnlyDictionary<string, byte[]>? TexturePages { get; private set; }
+        public IReadOnlyDictionary<string, SpineAnimationTexturePageContent>? TexturePages { get; private set; }
 
         public SpineAnimationPreviewViewport Viewport { get; private set; } =
             SpineAnimationPreviewViewport.Default;
@@ -146,7 +147,7 @@ public sealed class SpineAnimationFallbackRenderBackendTests
         public void PrewarmFrames(IReadOnlyList<SpineAnimationFrameDto> frames) =>
             PrewarmedFrames = frames;
 
-        public void LoadTexturePages(IReadOnlyDictionary<string, byte[]> texturePageContents)
+        public void LoadTexturePages(IReadOnlyDictionary<string, SpineAnimationTexturePageContent> texturePageContents)
         {
             LoadTexturePagesCount++;
             TexturePages = texturePageContents;

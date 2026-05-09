@@ -1,10 +1,12 @@
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 internal static class SpineAnimationTexturePageContentComparer
 {
     public static bool ReferenceEqualsByEntry(
-        IReadOnlyDictionary<string, byte[]> left,
-        IReadOnlyDictionary<string, byte[]> right)
+        IReadOnlyDictionary<string, SpineAnimationTexturePageContent> left,
+        IReadOnlyDictionary<string, SpineAnimationTexturePageContent> right)
     {
         ArgumentNullException.ThrowIfNull(left);
         ArgumentNullException.ThrowIfNull(right);
@@ -22,7 +24,8 @@ internal static class SpineAnimationTexturePageContentComparer
         foreach (var pair in left)
         {
             if (!right.TryGetValue(pair.Key, out var rightContent) ||
-                !ReferenceEquals(pair.Value, rightContent))
+                !ReferenceEquals(pair.Value.ColorContent, rightContent.ColorContent) ||
+                !ReferenceEquals(pair.Value.AlphaContent, rightContent.AlphaContent))
             {
                 return false;
             }

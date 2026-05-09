@@ -83,7 +83,7 @@ internal readonly record struct D3D11SpineTexturePixelStats(
     public static D3D11SpineTexturePixelStats Empty =>
         new(false, 255, 0, 0, 0);
 
-    public D3D11SpineTexturePixelStats Include(D3D11SpineDecodedTexturePage page)
+    public D3D11SpineTexturePixelStats Include(SpineAnimationDecodedTexturePage page)
     {
         var stats = this;
         for (var index = 3; index < page.BgraPixels.Length; index += 4)

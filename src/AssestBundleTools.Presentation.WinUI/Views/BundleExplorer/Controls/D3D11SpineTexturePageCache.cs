@@ -6,7 +6,7 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 internal sealed class D3D11SpineTexturePageCache : IDisposable
 {
-    private readonly Dictionary<string, D3D11SpineDecodedTexturePage> _decodedPages = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, SpineAnimationDecodedTexturePage> _decodedPages = new(StringComparer.Ordinal);
     private readonly Dictionary<string, D3D11SpineTexturePage> _gpuPages = new(StringComparer.Ordinal);
     private readonly Dictionary<string, SpineAnimationTexturePageSize> _texturePageSizes = new(StringComparer.Ordinal);
     private long _gpuPageBytes;
@@ -17,7 +17,7 @@ internal sealed class D3D11SpineTexturePageCache : IDisposable
 
     public long GpuPageBytes => _gpuPageBytes;
 
-    public void ReplaceDecodedPages(IReadOnlyDictionary<string, D3D11SpineDecodedTexturePage> decodedPages)
+    public void ReplaceDecodedPages(IReadOnlyDictionary<string, SpineAnimationDecodedTexturePage> decodedPages)
     {
         ArgumentNullException.ThrowIfNull(decodedPages);
 
@@ -124,7 +124,7 @@ internal sealed class D3D11SpineTexturePage : IDisposable
 
     public static D3D11SpineTexturePage? TryCreate(
         ID3D11Device device,
-        D3D11SpineDecodedTexturePage decodedPage)
+        SpineAnimationDecodedTexturePage decodedPage)
     {
         ID3D11Texture2D? texture = null;
         try

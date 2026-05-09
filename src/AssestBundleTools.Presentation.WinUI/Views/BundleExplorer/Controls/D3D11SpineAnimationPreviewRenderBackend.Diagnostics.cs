@@ -1,3 +1,4 @@
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Vortice.Mathematics;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
@@ -40,19 +41,20 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend
             presentElapsed);
     }
 
-    private static long CountPayloadBytes(IReadOnlyDictionary<string, byte[]> texturePageContents)
+    private static long CountPayloadBytes(IReadOnlyDictionary<string, SpineAnimationTexturePageContent> texturePageContents)
     {
         long payloadBytes = 0;
         foreach (var content in texturePageContents.Values)
         {
-            payloadBytes += content.Length;
+            payloadBytes += content.ColorContent.Length;
+            payloadBytes += content.AlphaContent?.Length ?? 0;
         }
 
         return payloadBytes;
     }
 
     private static string FormatDecodedTextureSummary(
-        IReadOnlyDictionary<string, D3D11SpineDecodedTexturePage> decodedPages)
+        IReadOnlyDictionary<string, SpineAnimationDecodedTexturePage> decodedPages)
     {
         var stats = D3D11SpineTexturePixelStats.Empty;
         foreach (var page in decodedPages.Values)

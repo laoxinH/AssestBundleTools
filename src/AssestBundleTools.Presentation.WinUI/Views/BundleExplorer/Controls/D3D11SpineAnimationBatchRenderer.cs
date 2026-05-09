@@ -39,7 +39,10 @@ internal sealed class D3D11SpineAnimationBatchRenderer : IDisposable
 
         float4 PSMain(PSInput input) : SV_TARGET
         {
-            return SpineTexture.Sample(SpineSampler, input.TexCoord) * input.Color;
+            float4 sampled = SpineTexture.Sample(SpineSampler, input.TexCoord);
+            return float4(
+                sampled.rgb * input.Color.rgb * input.Color.a,
+                sampled.a * input.Color.a);
         }
         """;
 
@@ -147,7 +150,11 @@ internal sealed class D3D11SpineAnimationBatchRenderer : IDisposable
         _inputLayout = device.CreateInputLayout(CreateInputElements(), shaderBytecode.VertexShader);
         _rasterizerState = device.CreateRasterizerState(RasterizerDescription.CullNone);
         _samplerState = device.CreateSamplerState(SamplerDescription.LinearClamp);
-        _blendState = device.CreateBlendState(BlendDescription.NonPremultiplied);
+        _blendState = device.CreateBlendState(new BlendDescription(
+            Blend.One,
+            Blend.InverseSourceAlpha,
+            Blend.One,
+            Blend.InverseSourceAlpha));
         (_fallbackTexture, _fallbackTextureView) = CreateFallbackTexture(device);
     }
 

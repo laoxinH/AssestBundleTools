@@ -1,16 +1,17 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 internal sealed class SpineAnimationFallbackRenderBackend : ISpineAnimationPreviewRenderBackend
 {
-    private static readonly IReadOnlyDictionary<string, byte[]> EmptyTexturePages =
-        new Dictionary<string, byte[]>(StringComparer.Ordinal);
+    private static readonly IReadOnlyDictionary<string, SpineAnimationTexturePageContent> EmptyTexturePages =
+        new Dictionary<string, SpineAnimationTexturePageContent>(StringComparer.Ordinal);
 
     private readonly ISpineAnimationPreviewRenderBackend _primary;
     private readonly ISpineAnimationPreviewRenderBackend _fallback;
     private readonly Action<bool> _setPrimaryActive;
-    private IReadOnlyDictionary<string, byte[]> _texturePageContents = EmptyTexturePages;
+    private IReadOnlyDictionary<string, SpineAnimationTexturePageContent> _texturePageContents = EmptyTexturePages;
     private SpineAnimationFrameDto? _currentFrame;
     private SpineAnimationPreviewViewport _viewport = SpineAnimationPreviewViewport.Default;
     private bool _isFallbackActive;
@@ -45,7 +46,7 @@ internal sealed class SpineAnimationFallbackRenderBackend : ISpineAnimationPrevi
         ActiveBackend.PrewarmFrames(frames);
     }
 
-    public void LoadTexturePages(IReadOnlyDictionary<string, byte[]> texturePageContents)
+    public void LoadTexturePages(IReadOnlyDictionary<string, SpineAnimationTexturePageContent> texturePageContents)
     {
         ArgumentNullException.ThrowIfNull(texturePageContents);
 

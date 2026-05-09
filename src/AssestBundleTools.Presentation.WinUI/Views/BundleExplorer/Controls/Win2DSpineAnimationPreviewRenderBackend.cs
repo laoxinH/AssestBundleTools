@@ -1,19 +1,21 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI.Xaml;
+using Windows.Graphics.DirectX;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationPreviewRenderBackend
 {
-    private static readonly IReadOnlyDictionary<string, byte[]> EmptyTexturePages =
-        new Dictionary<string, byte[]>(StringComparer.Ordinal);
+    private static readonly IReadOnlyDictionary<string, SpineAnimationTexturePageContent> EmptyTexturePages =
+        new Dictionary<string, SpineAnimationTexturePageContent>(StringComparer.Ordinal);
 
     private readonly CanvasControl _canvas;
     private readonly Dictionary<string, CanvasBitmap> _textureBitmaps = new(StringComparer.Ordinal);
     private readonly SpineAnimationFrameRenderCache _frameRenderCache = new();
-    private IReadOnlyDictionary<string, byte[]> _texturePageContents = EmptyTexturePages;
+    private IReadOnlyDictionary<string, SpineAnimationTexturePageContent> _texturePageContents = EmptyTexturePages;
     private SpineAnimationFrameDto? _currentFrame;
     private SpineAnimationPreviewViewport _viewport = SpineAnimationPreviewViewport.Default;
     private int _textureLoadGeneration;
@@ -54,7 +56,7 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
         ArgumentNullException.ThrowIfNull(frames);
     }
 
-    public void LoadTexturePages(IReadOnlyDictionary<string, byte[]> texturePageContents)
+    public void LoadTexturePages(IReadOnlyDictionary<string, SpineAnimationTexturePageContent> texturePageContents)
     {
         ArgumentNullException.ThrowIfNull(texturePageContents);
 
@@ -108,7 +110,7 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
     }
 
     private async Task LoadTextureBitmapsAsync(
-        IReadOnlyDictionary<string, byte[]> texturePageContents,
+        IReadOnlyDictionary<string, SpineAnimationTexturePageContent> texturePageContents,
         int generation)
     {
         try
@@ -120,16 +122,33 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
                     return;
                 }
 
-                if (pair.Value.Length == 0)
+                if (pair.Value.ColorContent.Length == 0)
                 {
                     continue;
                 }
 
-                using var stream = await SpineAnimationTextureStreamFactory.CreateAsync(pair.Value);
-                var bitmap = await CanvasBitmap.LoadAsync(_canvas, stream);
+                var decodedPages = await SpineAnimationTexturePageDecoder.DecodeAsync(
+                    new Dictionary<string, SpineAnimationTexturePageContent>(StringComparer.Ordinal)
+                    {
+                        [pair.Key] = pair.Value
+                    });
+                if (!decodedPages.TryGetValue(pair.Key, out var decodedPage))
+                {
+                    continue;
+                }
+
+                var bitmap = CanvasBitmap.CreateFromBytes(
+                    _canvas,
+                    decodedPage.BgraPixels,
+                    decodedPage.Width,
+                    decodedPage.Height,
+                    DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                    96f,
+                    CanvasAlphaMode.Premultiplied);
                 if (generation != _textureLoadGeneration ||
                     !texturePageContents.TryGetValue(pair.Key, out var currentContent) ||
-                    !ReferenceEquals(currentContent, pair.Value))
+                    !ReferenceEquals(currentContent.ColorContent, pair.Value.ColorContent) ||
+                    !ReferenceEquals(currentContent.AlphaContent, pair.Value.AlphaContent))
                 {
                     bitmap.Dispose();
                     continue;
