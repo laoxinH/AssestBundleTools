@@ -128,6 +128,16 @@ internal sealed class D3D11SpineRenderDiagnostics
             $"uploadedBytes={uploadedBytes} totalGpuBytes={totalGpuBytes} elapsedMs={FormatMilliseconds(elapsed)}");
     }
 
+    public void BatchRendererPrewarmed(TimeSpan elapsed)
+    {
+        if (!IsEnabled)
+        {
+            return;
+        }
+
+        Write($"batch-renderer-prewarmed elapsedMs={FormatMilliseconds(elapsed)}");
+    }
+
     public void FrameRendered(D3D11SpineRenderFrameMetrics metrics)
     {
         if (!IsEnabled)

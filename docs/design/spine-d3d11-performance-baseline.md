@@ -48,12 +48,13 @@ $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 | non-zero alpha | `55.009%` |
 | GPU pages | `1` |
 | GPU texture bytes | `42,510,400` |
-| GPU upload | `53.904 ms` in segmented run; earlier run observed `14.263 ms` |
-| first visible frame | frame `1`, `8,845` vertices, `25,350` indices, `106.42 ms` |
-| first frame timing | `uploadMs=53.904`, `projectMs=3.333`, `clipMs=3.106`, `drawMs=15.79`, `presentMs=1.311` |
-| cached duplicate frame | frame `2`, `0.767 ms`, `projectMs=0`, `clipMs=0.037`, `drawMs=0.384`, `presentMs=0.318` |
-| changed frame sample | frame `3`, `3.573 ms`, `projectMs=2.132`, `clipMs=0.801`, `drawMs=0.514`, `presentMs=0.107` |
-| steady sample | frame `60`, `0.318 ms`, `projectMs=0`, `clipMs=0`, `drawMs=0.282`, `presentMs=0.029` |
+| GPU upload | latest run `14.052 ms`; previous segmented run observed `53.904 ms` |
+| first visible frame | latest run frame `1`, `8,845` vertices, `25,350` indices, `66.255 ms` |
+| first frame timing | latest run `uploadMs=14.052`, `projectMs=3.479`, `clipMs=3.353`, `drawMs=15.904`, `presentMs=1.556` |
+| cached duplicate frame | latest run frame `2`, `1.004 ms`, `projectMs=0.135`, `clipMs=0.141`, `drawMs=0.408`, `presentMs=0.267` |
+| changed frame spike | latest run frame `3`, `11.735 ms`, `projectMs=10.128`, `clipMs=0.885`, `drawMs=0.585`, `presentMs=0.116` |
+| changed frame typical | latest run frame `5`, `1.94 ms`, `projectMs=0.77`, `clipMs=0.56`, `drawMs=0.497`, `presentMs=0.083` |
+| steady sample | latest run frame `60`, `0.309 ms`, `projectMs=0.001`, `clipMs=0.001`, `drawMs=0.264`, `presentMs=0.034` |
 | later steady sample | frame `120`, `0.317 ms`, `projectMs=0`, `clipMs=0.001`, `drawMs=0.267`, `presentMs=0.041` |
 | bounds sample | `-1029.775,6.337..1023.472,1921.976` |
 | UV range | `0.001,0.001..1,0.999` |
@@ -72,7 +73,7 @@ $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 ## 当前判断
 
 - D3D11 后端已经能真实采样贴图并显示大 mesh，不再是空白或块状矩形近似。
-- 大样本首帧主要消耗在 Texture2D GPU upload、device / shader / buffer warmup 和首帧 draw；后续 GPU draw / present 通常低于 `1 ms`。
+- 大样本首帧主要消耗在 Texture2D GPU upload、device / shader / buffer warmup 和首帧 draw；后续 GPU draw / present 通常低于 `1 ms`。`Vortice.D3DCompiler.dll` 在首帧前首次加载，首帧 `drawMs` 稳定在约 `16 ms`，下一步先通过 batch renderer shader / pipeline 预热确认这部分能否移出首个真实动画帧。
 - 新动画帧的 Presentation 投影成本主要在 `projectMs / clipMs`，当前大样本约 `1.4-3 ms`；同一帧重复渲染时缓存命中后基本归零。
-- 当前迹象不支持“持续 GPU 绘制是主要瓶颈”的判断。下一步优先把 Presentation batch cache 从上一帧缓存扩展为有界多帧缓存，让动画回环播放时复用已投影结果。
+- 当前迹象不支持“持续 GPU 绘制是主要瓶颈”的判断。有界多帧 batch cache 已让回环 / 重复帧路径的 `projectMs / clipMs` 基本归零。
 - 若有用户可感知卡顿但 D3D 分段耗时仍低，应补 Application / Infrastructure 侧预览生成、runtime 采样和 DTO 投影的加载期诊断，而不是继续压缩 D3D draw。

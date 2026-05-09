@@ -209,6 +209,18 @@ public sealed class D3D11SpineRenderDiagnosticsTests
     }
 
     [Fact]
+    public void BatchRendererPrewarmed_ShouldLogElapsedTime()
+    {
+        var messages = new List<string>();
+        var diagnostics = new D3D11SpineRenderDiagnostics(messages.Add);
+
+        diagnostics.BatchRendererPrewarmed(TimeSpan.FromMilliseconds(7.5d));
+
+        var message = Assert.Single(messages);
+        Assert.Contains("batch-renderer-prewarmed elapsedMs=7.5", message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Diagnostics_ShouldStaySilent_WhenNoSinkIsProvided()
     {
         var diagnostics = new D3D11SpineRenderDiagnostics(null);

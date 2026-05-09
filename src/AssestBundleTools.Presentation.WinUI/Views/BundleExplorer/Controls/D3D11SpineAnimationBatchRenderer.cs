@@ -52,6 +52,16 @@ internal sealed class D3D11SpineAnimationBatchRenderer : IDisposable
     private ID3D11ShaderResourceView? _fallbackTextureView;
     private readonly D3D11SpineDynamicBatchBuffer _batchBuffer = new();
 
+    public static void BeginShaderPrecompile() =>
+        _ = D3D11SpineShaderBytecodeCache.PrecompileTask;
+
+    public void Prewarm(ID3D11Device device)
+    {
+        ArgumentNullException.ThrowIfNull(device);
+
+        EnsureDeviceResources(device);
+    }
+
     public void Draw(
         ID3D11Device device,
         ID3D11DeviceContext context,
@@ -111,24 +121,11 @@ internal sealed class D3D11SpineAnimationBatchRenderer : IDisposable
             return;
         }
 
-        var vertexShaderBytecode = Compiler.Compile(
-            ShaderSource,
-            "VSMain",
-            "SpineAnimationBatchSmoke.hlsl",
-            "vs_4_0",
-            ShaderFlags.None,
-            EffectFlags.None);
-        var pixelShaderBytecode = Compiler.Compile(
-            ShaderSource,
-            "PSMain",
-            "SpineAnimationBatchSmoke.hlsl",
-            "ps_4_0",
-            ShaderFlags.None,
-            EffectFlags.None);
+        var shaderBytecode = D3D11SpineShaderBytecodeCache.Resolve();
 
-        _vertexShader = device.CreateVertexShader(vertexShaderBytecode.Span, null!);
-        _pixelShader = device.CreatePixelShader(pixelShaderBytecode.Span, null!);
-        _inputLayout = device.CreateInputLayout(CreateInputElements(), vertexShaderBytecode.Span);
+        _vertexShader = device.CreateVertexShader(shaderBytecode.VertexShader, null!);
+        _pixelShader = device.CreatePixelShader(shaderBytecode.PixelShader, null!);
+        _inputLayout = device.CreateInputLayout(CreateInputElements(), shaderBytecode.VertexShader);
         _rasterizerState = device.CreateRasterizerState(RasterizerDescription.CullNone);
         _samplerState = device.CreateSamplerState(SamplerDescription.LinearClamp);
         _blendState = device.CreateBlendState(BlendDescription.NonPremultiplied);
@@ -235,4 +232,53 @@ internal sealed class D3D11SpineAnimationBatchRenderer : IDisposable
             destination[index] = source[index];
         }
     }
+
+    private static class D3D11SpineShaderBytecodeCache
+    {
+        private const string ShaderFileName = "SpineAnimationBatchSmoke.hlsl";
+
+        public static Task<D3D11SpineShaderBytecode> PrecompileTask { get; } =
+            Task.Run(Compile);
+
+        public static D3D11SpineShaderBytecode Resolve()
+        {
+            if (PrecompileTask.IsCompletedSuccessfully)
+            {
+                return PrecompileTask.Result;
+            }
+
+            if (PrecompileTask.IsFaulted)
+            {
+                return Compile();
+            }
+
+            return PrecompileTask.GetAwaiter().GetResult();
+        }
+
+        private static D3D11SpineShaderBytecode Compile()
+        {
+            var vertexShaderBytecode = Compiler.Compile(
+                ShaderSource,
+                "VSMain",
+                ShaderFileName,
+                "vs_4_0",
+                ShaderFlags.None,
+                EffectFlags.None);
+            var pixelShaderBytecode = Compiler.Compile(
+                ShaderSource,
+                "PSMain",
+                ShaderFileName,
+                "ps_4_0",
+                ShaderFlags.None,
+                EffectFlags.None);
+
+            return new D3D11SpineShaderBytecode(
+                vertexShaderBytecode.Span.ToArray(),
+                pixelShaderBytecode.Span.ToArray());
+        }
+    }
+
+    private sealed record D3D11SpineShaderBytecode(
+        byte[] VertexShader,
+        byte[] PixelShader);
 }

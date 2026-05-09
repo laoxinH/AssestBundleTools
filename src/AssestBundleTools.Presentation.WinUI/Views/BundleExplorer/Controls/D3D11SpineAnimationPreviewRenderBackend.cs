@@ -42,6 +42,7 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
         _panel = panel;
         _diagnostics = diagnostics ?? new D3D11SpineRenderDiagnostics(null);
         _panel.SizeChanged += OnPanelSizeChanged;
+        D3D11SpineAnimationBatchRenderer.BeginShaderPrecompile();
         _resizeTimer = _panel.DispatcherQueue.CreateTimer();
         _resizeTimer.Interval = TimeSpan.FromMilliseconds(80);
         _resizeTimer.IsRepeating = false;
@@ -265,6 +266,10 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
         _swapChain = factory.CreateSwapChainForComposition(_device, swapChainDescription);
         WinUI3SwapChainPanelNative.SetSwapChain(_panel, _swapChain, _diagnostics);
         CreateRenderTargetView();
+        var prewarmStopwatch = Stopwatch.StartNew();
+        _batchRenderer.Prewarm(_device);
+        prewarmStopwatch.Stop();
+        _diagnostics.BatchRendererPrewarmed(prewarmStopwatch.Elapsed);
         _diagnostics.DeviceCreated(_pixelWidth, _pixelHeight);
         return true;
     }
