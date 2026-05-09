@@ -15,9 +15,9 @@ internal static class SpineAnimationPreviewRenderBackendFactory
         ArgumentNullException.ThrowIfNull(d3DPanel);
 
         if (SpineAnimationPreviewRenderBackendSelector.ResolvePreferredKind() ==
-            SpineAnimationPreviewRenderBackendKind.D3D11Smoke)
+            SpineAnimationPreviewRenderBackendKind.D3D11)
         {
-            var d3DBackend = TryCreateD3D11SmokeBackend(win2DCanvas, d3DPanel);
+            var d3DBackend = TryCreateD3D11Backend(win2DCanvas, d3DPanel);
             if (d3DBackend is not null)
             {
                 return d3DBackend;
@@ -29,7 +29,7 @@ internal static class SpineAnimationPreviewRenderBackendFactory
         return new Win2DSpineAnimationPreviewRenderBackend(win2DCanvas);
     }
 
-    private static ISpineAnimationPreviewRenderBackend? TryCreateD3D11SmokeBackend(
+    private static ISpineAnimationPreviewRenderBackend? TryCreateD3D11Backend(
         CanvasControl win2DCanvas,
         SwapChainPanel d3DPanel)
     {

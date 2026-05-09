@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using Microsoft.UI.Xaml;
@@ -7,13 +8,17 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 
 public sealed partial class InspectorPreviewSpineAnimationViewModel : ObservableObject
 {
+    private static readonly TimeSpan PlaybackDisplayRefreshInterval = TimeSpan.FromMilliseconds(100);
+
     private SpineAnimationPreviewDto? _preview;
     private IReadOnlyDictionary<string, byte[]> _texturePageContents =
         new Dictionary<string, byte[]>(StringComparer.Ordinal);
     private string? _selectedAnimationName;
     private string? _selectedSkinName;
     private double _playbackTime;
+    private double _displayPlaybackTime;
     private double _playbackSpeed = 1d;
+    private TimeSpan _playbackDisplayElapsedSinceLastNotification;
     private bool _isPlaying = true;
     private int _cachedFrameIndex;
     private SpineAnimationFrameDto? _currentFrame;
@@ -76,9 +81,11 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
 
             OnPropertyChanged(nameof(SelectedAnimation));
             OnPropertyChanged(nameof(Duration));
+            OnPropertyChanged(nameof(DisplayPlaybackTimeText));
             if (update.PlaybackTimeChanged)
             {
                 OnPropertyChanged(nameof(PlaybackTime));
+                SynchronizeDisplayPlaybackTime(force: true);
             }
 
             if (update.CurrentFrameChanged)
@@ -115,9 +122,11 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         OnPropertyChanged(nameof(SelectedAnimationName));
         OnPropertyChanged(nameof(SelectedAnimation));
         OnPropertyChanged(nameof(Duration));
+        OnPropertyChanged(nameof(DisplayPlaybackTimeText));
         if (update.PlaybackTimeChanged)
         {
             OnPropertyChanged(nameof(PlaybackTime));
+            SynchronizeDisplayPlaybackTime(force: true);
         }
 
         if (update.CurrentFrameChanged)
@@ -143,6 +152,7 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
             if (playbackTimeChanged)
             {
                 OnPropertyChanged(nameof(PlaybackTime));
+                SynchronizeDisplayPlaybackTime(force: true);
             }
 
             if (currentFrameChanged)
@@ -151,6 +161,14 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
             }
         }
     }
+
+    public double DisplayPlaybackTime
+    {
+        get => _displayPlaybackTime;
+        set => PlaybackTime = value;
+    }
+
+    public string DisplayPlaybackTimeText => $"{FormatPlaybackTime(DisplayPlaybackTime)} / {FormatPlaybackTime(Duration)}";
 
     public double PlaybackSpeed
     {
@@ -234,6 +252,7 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         _cachedFrameIndex = 0;
         _isShowingSetupPose = false;
         SetPlaybackTimeCore(0d, notify: true);
+        SynchronizeDisplayPlaybackTime(force: true);
         CurrentFrame = null;
         IsPlaying = false;
         NotifyStateChanged();
@@ -266,6 +285,7 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         _isShowingSetupPose = true;
         IsPlaying = false;
         SetPlaybackTimeCore(0d, notify: true);
+        SynchronizeDisplayPlaybackTime(force: true);
         SyncCurrentFrame();
     }
 
@@ -284,15 +304,38 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         SetCurrentFrame(frame, notify: true);
     }
 
-    public void Advance(TimeSpan elapsed)
+    public bool Advance(TimeSpan elapsed)
     {
         if (!IsPlaying || Duration <= 0d)
         {
-            return;
+            return false;
         }
 
-        var nextTime = PlaybackTime + Math.Max(0d, elapsed.TotalSeconds) * PlaybackSpeed;
-        PlaybackTime = nextTime % Duration;
+        var elapsedSeconds = Math.Max(0d, elapsed.TotalSeconds);
+        var nextTime = PlaybackTime + (elapsedSeconds * PlaybackSpeed);
+        var normalizedTime = nextTime % Duration;
+        var wrapped = normalizedTime < PlaybackTime;
+        var playbackTimeChanged = SetPlaybackTimeCore(normalizedTime, notify: false);
+        if (!playbackTimeChanged)
+        {
+            return false;
+        }
+
+        _isShowingSetupPose = false;
+        _playbackDisplayElapsedSinceLastNotification += TimeSpan.FromSeconds(elapsedSeconds);
+        if (HasRuntimePlayback)
+        {
+            SynchronizeDisplayPlaybackTimeIfDue(wrapped);
+            return true;
+        }
+
+        if (SyncCurrentFrame(notify: false))
+        {
+            OnPropertyChanged(nameof(CurrentFrame));
+        }
+
+        SynchronizeDisplayPlaybackTimeIfDue(wrapped);
+        return true;
     }
 
     private void StepFrame(int direction)
@@ -314,6 +357,7 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         if (playbackTimeChanged)
         {
             OnPropertyChanged(nameof(PlaybackTime));
+            SynchronizeDisplayPlaybackTime(force: true);
         }
 
         if (currentFrameChanged)
@@ -343,6 +387,7 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         }
 
         SetPlaybackTimeCore(nextTime, notify: true);
+        SynchronizeDisplayPlaybackTime(force: true);
     }
 
     private bool SetPlaybackTimeCore(double value, bool notify)
@@ -361,6 +406,39 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         }
 
         return true;
+    }
+
+    private void SynchronizeDisplayPlaybackTimeIfDue(bool force)
+    {
+        if (force || _playbackDisplayElapsedSinceLastNotification >= PlaybackDisplayRefreshInterval)
+        {
+            SynchronizeDisplayPlaybackTime(force: true);
+        }
+    }
+
+    private void SynchronizeDisplayPlaybackTime(bool force)
+    {
+        if (!force && EqualityComparer<double>.Default.Equals(_displayPlaybackTime, _playbackTime))
+        {
+            return;
+        }
+
+        _playbackDisplayElapsedSinceLastNotification = TimeSpan.Zero;
+        if (EqualityComparer<double>.Default.Equals(_displayPlaybackTime, _playbackTime))
+        {
+            return;
+        }
+
+        _displayPlaybackTime = _playbackTime;
+        OnPropertyChanged(nameof(DisplayPlaybackTime));
+        OnPropertyChanged(nameof(DisplayPlaybackTimeText));
+    }
+
+    private static string FormatPlaybackTime(double seconds)
+    {
+        var time = TimeSpan.FromSeconds(Math.Max(0d, seconds));
+        var format = time.TotalHours >= 1d ? @"h\:mm\:ss\.ff" : @"m\:ss\.ff";
+        return time.ToString(format, CultureInfo.InvariantCulture);
     }
 
     private bool SyncCurrentFrame(bool notify = true)
@@ -407,6 +485,8 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         OnPropertyChanged(nameof(IsSkinSelectionEnabled));
         OnPropertyChanged(nameof(SelectedAnimation));
         OnPropertyChanged(nameof(Duration));
+        OnPropertyChanged(nameof(DisplayPlaybackTime));
+        OnPropertyChanged(nameof(DisplayPlaybackTimeText));
         OnPropertyChanged(nameof(PlayPauseGlyph));
         OnPropertyChanged(nameof(CurrentFrame));
     }

@@ -66,7 +66,7 @@ Infrastructure 负责：
 - 在 animation / skin 变化时重置或更新 runtime state，并返回新的当前帧。
 - 在 session dispose、工作区失效或预览取消时释放 runtime 对象。
 
-首批实现范围优先覆盖已 vendor 的 V38 / V42 runtime adapter。JSON fallback 可以继续走 sampled DTO 路径，直到其行为也有稳定 runtime session 实现。
+首批实现范围优先覆盖已 vendor 的 V38 / V42 runtime adapter。JSON fallback 继续以 sampled DTO 作为姿态来源，但对 Presentation 暴露为轻量 playback session，避免 UI 层在 runtime session 和 sampled 播放之间分叉。
 
 ### 4.3 Presentation
 
@@ -167,11 +167,12 @@ setup pose 继续作为独立语义。runtime session 可提供 setup pose 当�
 - Application 已新增 `ISpineAnimationRuntimePlaybackService`、播放 session 接口和 `SpineAnimationRuntimePlaybackSourceDto / FrameRequest / FrameResult` 等 DTO；runtime adapter 生成的预览 DTO 会携带 `PlaybackSource`，交互预览请求会传 `IncludeSampledFrames=false`，不再为实时播放预采样整段动画。
 - Infrastructure 的 V38 / V42 官方 runtime adapter 已能创建 playback session，并按 animation / skin / setup pose / 绝对播放时间生成当前 `SpineAnimationFrameDto`。
 - Presentation 的 Spine surface 已优先创建 runtime playback session，并由 `CompositionTarget.Rendering` 驱动播放；ViewModel 允许 runtime 预览在没有 `SampledFrames` 时仍展示 animation / skin。
+- Presentation 已把真实播放时间和 UI 展示时间拆开：runtime frame request 继续使用未节流的 `PlaybackTime`，进度 slider 和时间读数绑定 `DisplayPlaybackTime / DisplayPlaybackTimeText` 并约 `100ms` 刷新一次；`CurrentFrame` 每帧变化只同步渲染后端，不再强制刷新全部 XAML 绑定。
 - D3D11 后端不再默认对整段 animation sampled frames 做全量 batch prewarm；当前帧 batch 未命中时直接投影并绘制，只保留小窗口 world-space batch cache。
 - Runtime frame result 已携带分段诊断，Presentation 调试输出会节流打印 `spine.runtime-frame`；V38 / V42 playback session 会在同 skin 连续帧之间复用 runtime skeleton 并在每帧重置 setup pose，正常 frame cancellation 已改为返回 `Cancelled` 结果，避免交互切换和 session dispose 时把预期取消表达为热路径异常。
 - `char_2026_yu_nian#12.ab` 大量三角样本的最新交互日志已经覆盖播放、速度切换、animation 切换和进度拖动；连续帧显示 `reusedSkeleton=True`、`createMs=0`、`resetMs` 常见约 `0.07-0.3ms`，D3D 当前帧路径大多 `projectMs=0` 且 draw 成本低，主观观感已达到流畅的 `60 FPS` 交互预览目标。
-- 旧 sampled DTO 路径仍保留为 JSON fallback、runtime session 不可用时的兼容回退、测试稳定输入和未来固定 fps 导出方案。
-- 尚未完成：UI 绑定刷新节流、高刷新率 / `120 FPS` 实机验证、固定 fps 导出链路正式产品化、JSON fallback 的 runtime session 化、更多官方 Spine Runtime 版本，以及 linked mesh / path / physics 等高级行为的样本门控补强。D3D11 后端当前仍通过 `ABT_SPINE_D3D11_SMOKE` 显式启用，默认切换需要另行验收。
+- JSON fallback 已通过 `SpineAnimationSampledPlaybackSourceDto` 挂入 playback source；官方 runtime adapter 不可用或未处理时，Infrastructure 会创建轻量 sampled fallback playback session，并按 animation / skin / setup pose / 绝对播放时间返回最近 sampled frame。旧 sampled DTO 仍保留为 JSON fallback 的姿态来源、兼容回退、测试稳定输入和未来固定 fps 导出方案。
+- 当前剩余工作见第 10 节；这些事项不阻塞当前 `60 FPS` 交互预览主线。
 
 ### 第一阶段：契约与文档
 
@@ -191,23 +192,33 @@ setup pose 继续作为独立语义。runtime session 可提供 setup pose 当�
 - Spine 预览 surface 已优先创建 runtime playback session。
 - 播放循环已从 `33ms` timer 迁移到显示刷新驱动。
 - D3D 后端已停止播放主路径的全量 sampled frame batch prewarm，只保留当前帧和小窗口缓存。
-- runtime session 不可用时继续回退现有 sampled DTO 播放。
+- runtime session 不可用时继续回退现有 sampled DTO 播放；JSON fallback 首选 sampled fallback playback session，Presentation 不需要单独区分官方 runtime 与 JSON fallback。
 
 ### 第四阶段：验证与默认策略
 
 - 已用 `char_2026_yu_nian#12.ab` 复杂样本记录并验证 `60 FPS` 目标下的交互播放、速度切换、animation 切换和进度拖动观感。
-- 在高刷新显示器上继续验证 `120 FPS` 目标是否真的受益，并决定进度文本 / slider 等 UI 绑定是否需要进一步节流。
+- 在高刷新显示器上继续验证 `120 FPS` 目标是否真的受益，并据实决定是否还需要对非播放控制类 UI 绑定继续节流。
 - 固定 fps 导出、序列帧或视频输出仍需从实时预览主线中正式拆成产品化用例。
-- 若 D3D runtime path 在更多设备、device lost 恢复和工作集基线下稳定，再考虑让 D3D 后端从 opt-in smoke 变为默认高复杂 Spine 路径。
+- D3D runtime path 已作为默认高复杂 Spine 路径；后续继续补更多设备、device lost 恢复和工作集基线，若出现不可恢复问题则通过自动 fallback 或 `ABT_SPINE_D3D11=win2d` 回退。
 
-## 10. 测试要求
+## 10. 当前剩余工作清单
+
+以下事项属于后续收口项，不改变当前“runtime playback session 已达到 `60 FPS` 交互预览目标”的判断：
+
+- `120 FPS` / 高刷新率实机验证尚未完成；进度 slider 与时间读数绑定已完成首轮节流，其他 UI 绑定是否需要继续节流仍待按高刷新目标和实测 XAML 压力决定。
+- 固定 fps 导出、序列帧导出和视频导出尚未产品化；后续参考 [SpineViewer](https://github.com/ww-rm/SpineViewer) 的多版本查看、调试渲染、帧率 / time scale 调整以及单帧 / GIF / 视频 / FFmpeg 导出边界推进，但仍通过本项目 Application 端口与 runtime-neutral DTO 落地。旧 sampled DTO 路径目前只作为 JSON fallback playback session 的姿态来源、兼容回退、测试稳定输入和未来导出基础保留。
+- JSON fallback 已完成首轮 playback session 化，但仍是基于既有 sampled frame 的轻量 session；若后续需要和官方 runtime 一样按 JSON timeline 即时求姿态，需要另行拆分 on-demand JSON sampler。
+- 更多 Spine Runtime 版本仍需按 adapter key 分版本封装；linked mesh、path constraint、physics constraint 和更复杂 FFD / deform 行为仍按真实样本门控推进。
+- D3D 默认启用后还需要继续补更多设备、窗口缩放、skin 切换、device lost 恢复和工作集基线。
+
+## 11. 测试要求
 
 - Application tests 覆盖 session 契约、无 adapter / 载荷缺失 / session 过期 / dispose 后调用等稳定语义。
 - Infrastructure tests 覆盖 V38 / V42 session 的 create、update、seek、animation / skin 切换、setup pose 和 dispose。
 - Presentation tests 覆盖 session 生命周期、隐藏预览 inactive、不重复创建 session、关闭标签释放 session，以及 Presentation 不直接引用 Infrastructure 的边界检查。
 - 性能验证继续同时记录 `spine.runtime-frame` 与 `spine.d3d11 frame`，用来判断瓶颈来自 runtime 生成当前姿态、DTO 到 D3D batch 投影、clip / draw，还是 present。
 
-## 11. 非目标
+## 12. 非目标
 
 - 不把官方 Spine runtime 对象暴露给 Presentation。
 - 不把 runtime session 写入工作区持久化状态。

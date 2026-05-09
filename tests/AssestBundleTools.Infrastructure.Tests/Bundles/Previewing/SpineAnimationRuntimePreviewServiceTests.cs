@@ -255,6 +255,52 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
             "Runtime seek should compute V42 poses directly.");
     }
 
+    public static async Task TryCreateSessionAsync_ShouldUseSampledFallbackSession_WhenOfficialPlaybackAdapterIsMissing()
+    {
+        var service = new SpineAnimationRuntimePreviewService();
+
+        var result = await service.TryCreateSessionAsync(CreateSampledFallbackPlaybackSource());
+
+        TestAssert.True(result.IsHandled, "Playback service should expose JSON fallback sampled frames as a session.");
+        using var session = TestAssert.NotNull(result.Session, "Sampled fallback should return a playback session.");
+        var setupFrame = await session.GetFrameAsync(new SpineAnimationRuntimePlaybackFrameRequestDto(
+            AnimationName: "idle",
+            SkinName: "default",
+            PlaybackTime: 0d,
+            ShowSetupPose: true));
+        var middleFrame = await session.GetFrameAsync(new SpineAnimationRuntimePlaybackFrameRequestDto(
+            AnimationName: "idle",
+            SkinName: "default",
+            PlaybackTime: 0.75d,
+            ShowSetupPose: false));
+        var altSkinFrame = await session.GetFrameAsync(new SpineAnimationRuntimePlaybackFrameRequestDto(
+            AnimationName: "idle",
+            SkinName: "skin-alt",
+            PlaybackTime: 0d,
+            ShowSetupPose: false));
+
+        TestAssert.True(setupFrame.IsHandled, "Sampled fallback should return setup pose frames.");
+        TestAssert.True(middleFrame.IsHandled, "Sampled fallback should return nearest sampled animation frames.");
+        TestAssert.True(altSkinFrame.IsHandled, "Sampled fallback should preserve per-skin frame variants.");
+        TestAssert.Equal(
+            "setup",
+            TestAssert.Single(TestAssert.NotNull(setupFrame.Frame, "Setup frame should be available.").DrawCommands).AttachmentName,
+            "Setup pose should come from the sampled fallback source.");
+        TestAssert.Equal(
+            "middle",
+            TestAssert.Single(TestAssert.NotNull(middleFrame.Frame, "Middle frame should be available.").DrawCommands).AttachmentName,
+            "Fallback session should seek to the sampled frame at or before the requested time.");
+        TestAssert.Equal(
+            "alt",
+            TestAssert.Single(TestAssert.NotNull(altSkinFrame.Frame, "Alt skin frame should be available.").DrawCommands).AttachmentName,
+            "Fallback session should use the requested skin preview.");
+        AssertRuntimeDiagnostics(
+            middleFrame.RuntimeDiagnostics,
+            "JSONFallback:V21",
+            isSetupPose: false,
+            isSkeletonReused: true);
+    }
+
     public static async Task TryCreateSessionAsync_ShouldReturnCancelledRuntimeFrame_WhenFrameTokenIsAlreadyCancelled()
     {
         var service = new SpineAnimationRuntimePreviewService();
@@ -583,6 +629,86 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
                   offset: 0, 0
                   index: -1
                 """
+            ]);
+
+    private static SpineAnimationRuntimePlaybackSourceDto CreateSampledFallbackPlaybackSource()
+    {
+        var defaultSetup = CreateFrame(0d, "setup", x: 0d);
+        var defaultAnimation = CreateSampledAnimation(
+            "idle",
+            CreateFrame(0d, "first", x: 0d),
+            CreateFrame(0.5d, "middle", x: 4d),
+            CreateFrame(1d, "last", x: 8d));
+        var altSetup = CreateFrame(0d, "alt-setup", x: 16d);
+        var altAnimation = CreateSampledAnimation(
+            "idle",
+            CreateFrame(0d, "alt", x: 16d),
+            CreateFrame(1d, "alt-last", x: 24d));
+        var skins = new[]
+        {
+            new SpineAnimationSkinPreviewDto(
+                "default",
+                Array.Empty<SpineAnimationAttachmentDto>(),
+                [defaultAnimation],
+                defaultSetup),
+            new SpineAnimationSkinPreviewDto(
+                "skin-alt",
+                Array.Empty<SpineAnimationAttachmentDto>(),
+                [altAnimation],
+                altSetup)
+        };
+
+        return new SpineAnimationRuntimePlaybackSourceDto(
+            GroupKey: "assets/hero/hero",
+            SkeletonAsset: CreateSkeletonPart("Hero.json"),
+            SkeletonJson: "{}",
+            Runtime: new SpineAnimationRuntimeDto(
+                "2.1.25",
+                Major: 2,
+                Minor: 1,
+                AdapterKey: "V21",
+                SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable),
+            AtlasPages: Array.Empty<SpineAtlasPageDto>(),
+            AtlasTexts: Array.Empty<string>(),
+            SampledFallback: new SpineAnimationSampledPlaybackSourceDto(
+                skins,
+                defaultSetup,
+                [defaultAnimation]));
+    }
+
+    private static SpineAnimationClipDto CreateSampledAnimation(
+        string name,
+        params SpineAnimationFrameDto[] frames) =>
+        new(
+            name,
+            Duration: frames.Length == 0 ? 0d : frames[^1].Time,
+            BoneTimelines: Array.Empty<SpineAnimationBoneTimelineDto>(),
+            SlotAttachmentTimelines: Array.Empty<SpineAnimationSlotAttachmentTimelineDto>())
+        {
+            SampledFrames = frames
+        };
+
+    private static SpineAnimationFrameDto CreateFrame(double time, string attachmentName, double x) =>
+        new(
+            time,
+            [
+                new SpineAnimationDrawCommandDto(
+                    "slot",
+                    attachmentName,
+                    attachmentName,
+                    "Hero.png",
+                    SourceX: 0,
+                    SourceY: 0,
+                    SourceWidth: 16,
+                    SourceHeight: 16,
+                    Width: 16d,
+                    Height: 16d,
+                    TransformM11: 1d,
+                    TransformM12: 0d,
+                    TransformM21: 0d,
+                    TransformM22: 1d,
+                    TransformM31: x,
+                    TransformM32: 0d)
             ]);
 
     private static void AssertRuntimeDiagnostics(

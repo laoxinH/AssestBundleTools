@@ -172,15 +172,15 @@ $testDll = Join-Path $outDir 'AssestBundleTools.Presentation.Tests.dll'
 
 当前阶段先保持最小、稳定、易用的调试方案即可。
 
-## 9. Spine D3D Smoke 验证
+## 9. Spine D3D11 默认后端与诊断
 
-Spine 高复杂 mesh 播放的 D3D11 后端当前仍是受控 smoke，不作为默认路径。需要验证 `SwapChainPanel` / D3D11 设备、swap chain、render target、Texture2D 预览载荷上传和顶点 / 索引批次提交时，可在启动前设置：
+Spine 高复杂 mesh 播放默认使用 `SwapChainPanel` / D3D11 后端；D3D 初始化、渲染或 device lost 恢复失败时会自动切回 Win2D 回退后端。需要强制验证 Win2D 回退路径时，可在启动前设置：
 
 ```powershell
-$env:ABT_SPINE_D3D11_SMOKE = '1'
+$env:ABT_SPINE_D3D11 = 'win2d'
 ```
 
-允许值为 `1`、`true` 或 `d3d11`。未设置时继续使用 Win2D 回退后端；该 smoke 当前会解码 Texture2D 预览载荷、上传为 D3D shader resource、采样真实贴图，并通过可复用动态 vertex / index buffer 提交批次。播放控件卸载时会释放后端资源，resize 会短防抖合并，Texture2D 解码和上传带 generation 保护；遇到 DXGI device removed / reset / hung / internal error 会先释放并重建一次，仍失败才切回 Win2D 后端。
+`ABT_SPINE_D3D11` 的回退值为 `0`、`false`、`off` 或 `win2d`；未设置时使用默认 D3D11。旧的 `ABT_SPINE_D3D11_SMOKE` 仍作为兼容开关读取，便于复用已有调试脚本。D3D11 后端会解码 Texture2D 预览载荷、上传为 D3D shader resource、采样真实贴图，并通过可复用动态 vertex / index buffer 提交批次。播放控件卸载时会释放后端资源，resize 会短防抖合并，Texture2D 解码和上传带 generation 保护；遇到 DXGI device removed / reset / hung / internal error 会先释放并重建一次，仍失败才切回 Win2D 后端。
 
 需要记录真实样本基线时，可额外打开 D3D 诊断输出：
 
@@ -190,4 +190,4 @@ $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 
 该诊断只写入调试输出，记录 native `SwapChainPanel` 绑定 readiness / strategy、device / resize、batch renderer 预热、Texture2D decode、GPU texture upload、runtime frame generation、节流后的 frame batch / vertex / index / elapsed 数据、`uploadMs / projectMs / clipMs / drawMs / presentMs` 分段耗时、播放 / 暂停 / animation / skin / setup pose / step 等交互事件，以及 fallback 或 device lost 恢复异常类型；不在 UI 中显示原始 D3D 异常。当前 D3D 后端会在 GPU 上传成功后释放 CPU 侧 BGRA 解码页，并在渲染上传动态 buffer 时用池化数组直接做 clip-space 投影，因此 `clipMs` 不再对应一份长期常驻的 clip-space batch 缓存。实时播放主线不再默认预热整段 sampled frame batch，旧 batch 预热只保留在兼容或诊断语境中。
 
-真实样本基线建议至少记录以下操作的连续日志：首帧贴图 decode / upload，正常播放 10 秒，窗口缩放，切 animation，切 skin，暂停 / 恢复，逐帧，进度拖动，重开同一 Spine 组。当前样本记录保存在 [`spine-d3d11-performance-baseline.md`](spine-d3d11-performance-baseline.md)：`char_2026_yu_nian#12.ab` 已验证当前 runtime playback session + D3D 当前帧路径达到 `60 FPS` 交互观感；默认切换前还需要补齐更多设备、内存占用、高刷新目标和设备恢复路径验证。
+真实样本基线建议至少记录以下操作的连续日志：首帧贴图 decode / upload，正常播放 10 秒，窗口缩放，切 animation，切 skin，暂停 / 恢复，逐帧，进度拖动，重开同一 Spine 组。当前样本记录保存在 [`spine-d3d11-performance-baseline.md`](spine-d3d11-performance-baseline.md)：`char_2026_yu_nian#12.ab` 已验证当前 runtime playback session + D3D 当前帧路径达到 `60 FPS` 交互观感；默认启用后仍需要补齐更多设备、内存占用、高刷新目标和设备恢复路径验证。

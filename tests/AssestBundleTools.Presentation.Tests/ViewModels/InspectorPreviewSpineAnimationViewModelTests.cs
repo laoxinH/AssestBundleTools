@@ -26,6 +26,7 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
         Assert.Equal("default", viewModel.SelectedSkinName);
         Assert.NotNull(viewModel.CurrentFrame);
         Assert.Equal(0d, viewModel.CurrentFrame.Time);
+        Assert.Equal("0:00.00 / 0:01.00", viewModel.DisplayPlaybackTimeText);
     }
 
     [Fact]
@@ -38,22 +39,26 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
         viewModel.Advance(TimeSpan.FromSeconds(0.25d));
 
         Assert.Equal(0.5d, viewModel.PlaybackTime, precision: 6);
+        Assert.Equal(0.5d, viewModel.DisplayPlaybackTime, precision: 6);
         Assert.Equal(0.5d, viewModel.CurrentFrame?.Time ?? -1d, precision: 6);
 
         viewModel.StepNextFrame();
 
         Assert.False(viewModel.IsPlaying);
         Assert.Equal(1d, viewModel.PlaybackTime, precision: 6);
+        Assert.Equal(1d, viewModel.DisplayPlaybackTime, precision: 6);
         Assert.Equal(1d, viewModel.CurrentFrame?.Time ?? -1d, precision: 6);
 
         viewModel.StepPreviousFrame();
 
         Assert.Equal(0.5d, viewModel.PlaybackTime, precision: 6);
+        Assert.Equal(0.5d, viewModel.DisplayPlaybackTime, precision: 6);
 
         viewModel.ShowSetupPose();
 
         Assert.False(viewModel.IsPlaying);
         Assert.Equal(0d, viewModel.PlaybackTime, precision: 6);
+        Assert.Equal(0d, viewModel.DisplayPlaybackTime, precision: 6);
         Assert.Same(viewModel.Preview!.SetupFrame, viewModel.CurrentFrame);
 
         viewModel.TogglePlayback();
@@ -143,6 +148,52 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
         viewModel.ApplyRuntimeFrame(runtimeFrame);
 
         Assert.Same(runtimeFrame, viewModel.CurrentFrame);
+    }
+
+    [Fact]
+    public void Advance_ShouldThrottleDisplayPlaybackTimeNotifications()
+    {
+        var viewModel = new InspectorPreviewSpineAnimationViewModel();
+        viewModel.Apply(CreateRuntimePreviewWithoutSampledFrames(), CreateTextureStates());
+        var changedProperties = new List<string?>();
+        viewModel.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        for (var index = 0; index < 5; index++)
+        {
+            Assert.True(viewModel.Advance(TimeSpan.FromMilliseconds(16)));
+        }
+
+        Assert.Equal(0.08d, viewModel.PlaybackTime, precision: 6);
+        Assert.Equal(0d, viewModel.DisplayPlaybackTime, precision: 6);
+        Assert.Equal("0:00.00 / 0:01.00", viewModel.DisplayPlaybackTimeText);
+        Assert.DoesNotContain(nameof(InspectorPreviewSpineAnimationViewModel.DisplayPlaybackTime), changedProperties);
+        Assert.DoesNotContain(nameof(InspectorPreviewSpineAnimationViewModel.DisplayPlaybackTimeText), changedProperties);
+
+        Assert.True(viewModel.Advance(TimeSpan.FromMilliseconds(20)));
+
+        Assert.Equal(0.1d, viewModel.PlaybackTime, precision: 6);
+        Assert.Equal(0.1d, viewModel.DisplayPlaybackTime, precision: 6);
+        Assert.Equal("0:00.10 / 0:01.00", viewModel.DisplayPlaybackTimeText);
+        Assert.Contains(nameof(InspectorPreviewSpineAnimationViewModel.DisplayPlaybackTime), changedProperties);
+        Assert.Contains(nameof(InspectorPreviewSpineAnimationViewModel.DisplayPlaybackTimeText), changedProperties);
+    }
+
+    [Fact]
+    public void DisplayPlaybackTime_ShouldSeekImmediately()
+    {
+        var viewModel = new InspectorPreviewSpineAnimationViewModel();
+        viewModel.Apply(CreateRuntimePreviewWithoutSampledFrames(), CreateTextureStates());
+        var changedProperties = new List<string?>();
+        viewModel.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        viewModel.DisplayPlaybackTime = 0.5d;
+
+        Assert.Equal(0.5d, viewModel.PlaybackTime, precision: 6);
+        Assert.Equal(0.5d, viewModel.DisplayPlaybackTime, precision: 6);
+        Assert.Equal("0:00.50 / 0:01.00", viewModel.DisplayPlaybackTimeText);
+        Assert.Contains(nameof(InspectorPreviewSpineAnimationViewModel.PlaybackTime), changedProperties);
+        Assert.Contains(nameof(InspectorPreviewSpineAnimationViewModel.DisplayPlaybackTime), changedProperties);
+        Assert.Contains(nameof(InspectorPreviewSpineAnimationViewModel.DisplayPlaybackTimeText), changedProperties);
     }
 
     private static SpineAnimationPreviewDto CreatePreview()

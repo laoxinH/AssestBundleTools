@@ -2,6 +2,7 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 internal static class SpineAnimationPreviewRenderBackendSelector
 {
+    public const string D3D11EnvironmentVariable = "ABT_SPINE_D3D11";
     public const string D3D11SmokeEnvironmentVariable = "ABT_SPINE_D3D11_SMOKE";
     public const string D3D11DiagnosticsEnvironmentVariable = "ABT_SPINE_D3D11_DIAGNOSTICS";
 
@@ -9,10 +10,15 @@ internal static class SpineAnimationPreviewRenderBackendSelector
         Func<string, string?>? readEnvironmentVariable = null)
     {
         readEnvironmentVariable ??= Environment.GetEnvironmentVariable;
-        var value = readEnvironmentVariable(D3D11SmokeEnvironmentVariable);
-        return IsEnabled(value)
-            ? SpineAnimationPreviewRenderBackendKind.D3D11Smoke
-            : SpineAnimationPreviewRenderBackendKind.Win2D;
+        var value = readEnvironmentVariable(D3D11EnvironmentVariable);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            value = readEnvironmentVariable(D3D11SmokeEnvironmentVariable);
+        }
+
+        return IsDisabled(value)
+            ? SpineAnimationPreviewRenderBackendKind.Win2D
+            : SpineAnimationPreviewRenderBackendKind.D3D11;
     }
 
     public static bool ResolveD3D11DiagnosticsEnabled(
@@ -26,4 +32,10 @@ internal static class SpineAnimationPreviewRenderBackendSelector
         string.Equals(value, "1", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(value, "d3d11", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsDisabled(string? value) =>
+        string.Equals(value, "0", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(value, "false", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(value, "off", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(value, "win2d", StringComparison.OrdinalIgnoreCase);
 }

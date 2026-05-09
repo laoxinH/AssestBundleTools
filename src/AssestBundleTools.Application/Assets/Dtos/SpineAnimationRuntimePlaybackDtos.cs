@@ -12,7 +12,13 @@ public sealed record SpineAnimationRuntimePlaybackSourceDto(
     SpineAnimationRuntimeDto Runtime,
     IReadOnlyList<SpineAtlasPageDto> AtlasPages,
     IReadOnlyList<string> AtlasTexts,
-    byte[]? SkeletonBinaryContent = null);
+    byte[]? SkeletonBinaryContent = null,
+    SpineAnimationSampledPlaybackSourceDto? SampledFallback = null);
+
+public sealed record SpineAnimationSampledPlaybackSourceDto(
+    IReadOnlyList<SpineAnimationSkinPreviewDto> SkinPreviews,
+    SpineAnimationFrameDto? SetupFrame,
+    IReadOnlyList<SpineAnimationClipDto> Animations);
 
 public sealed record SpineAnimationRuntimePlaybackSessionResultDto(
     bool IsHandled,

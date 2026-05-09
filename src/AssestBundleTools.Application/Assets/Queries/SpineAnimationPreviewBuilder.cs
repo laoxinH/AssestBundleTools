@@ -106,7 +106,14 @@ internal sealed partial class SpineAnimationPreviewBuilder
                 runtimePreviewResult.Diagnostics);
         }
 
-        return TryBuildPreview(skeletonAsset, groupKey, skeletonJson, atlasPages, out var preview, out var previewDiagnostics)
+        return TryBuildPreview(
+            skeletonAsset,
+            groupKey,
+            skeletonJson,
+            atlasPages,
+            atlasTexts,
+            out var preview,
+            out var previewDiagnostics)
             ? new SpineAnimationPreviewBuildResult(false, preview, previewDiagnostics)
             : SpineAnimationPreviewBuildResult.EmptyWithDiagnostics(previewDiagnostics);
     }
@@ -170,6 +177,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
         string groupKey,
         string skeletonJson,
         IReadOnlyList<SpineAtlasPageDto> atlasPages,
+        IReadOnlyList<string> atlasTexts,
         out SpineAnimationPreviewDto? preview,
         out IReadOnlyList<SpineAssetGroupDiagnosticDto> diagnostics)
     {
@@ -209,7 +217,18 @@ internal sealed partial class SpineAnimationPreviewBuilder
             {
                 SkinNames = ParseSkinNames(root),
                 SetupFrame = activeSkinPreview.SetupFrame,
-                SkinPreviews = skinPreviews
+                SkinPreviews = skinPreviews,
+                PlaybackSource = new SpineAnimationRuntimePlaybackSourceDto(
+                    groupKey,
+                    skeletonAsset,
+                    skeletonJson,
+                    runtime,
+                    atlasPages,
+                    atlasTexts,
+                    SampledFallback: new SpineAnimationSampledPlaybackSourceDto(
+                        skinPreviews,
+                        activeSkinPreview.SetupFrame,
+                        activeSkinPreview.Animations))
             };
             return true;
         }

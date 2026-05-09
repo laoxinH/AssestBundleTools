@@ -145,6 +145,15 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
             SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable,
             animationPreview.Runtime?.SupportKind,
             "Known Spine versions should be marked as runtime-adaptable.");
+        var playbackSource = animationPreview.PlaybackSource ??
+                             throw new InvalidOperationException("Expected JSON fallback sampled playback source.");
+        TestAssert.Equal("V41", playbackSource.Runtime.AdapterKey, "Fallback playback source should preserve runtime metadata.");
+        if (playbackSource.SampledFallback is null)
+        {
+            throw new InvalidOperationException("JSON fallback previews should expose sampled frames through the playback session source.");
+        }
+
+        TestAssert.Equal(2, playbackSource.SampledFallback!.SkinPreviews.Count, "Fallback playback should preserve per-skin sampled frames.");
         TestAssert.Empty(result.Value!.Diagnostics, "A complete previewable multi-skin group should not add diagnostics.");
     }
 

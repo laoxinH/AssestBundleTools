@@ -117,12 +117,27 @@
             </Button>
         </Grid>
 
-        <Slider
-            x:Name="PlaybackSlider"
+        <Grid
             Grid.Row="1"
-            Minimum="0"
-            Maximum="{x:Bind ViewModel.Duration, Mode=OneWay}"
-            Value="{x:Bind ViewModel.PlaybackTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Slider
+                x:Name="PlaybackSlider"
+                Minimum="0"
+                Maximum="{x:Bind ViewModel.Duration, Mode=OneWay}"
+                Value="{x:Bind ViewModel.DisplayPlaybackTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            <TextBlock
+                Grid.Column="1"
+                MinWidth="96"
+                VerticalAlignment="Center"
+                Text="{x:Bind ViewModel.DisplayPlaybackTimeText, Mode=OneWay}"
+                TextAlignment="Right" />
+        </Grid>
 
         <Grid
             Grid.Row="2">

@@ -35,6 +35,27 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
         Assert.Contains("IsPreviewActive=\"{x:Bind IsPreviewActive, Mode=OneWay}\"", xaml);
     }
 
+    [Fact]
+    public void SpinePreviewSurface_ShouldBindSliderToThrottledDisplayPlaybackTime()
+    {
+        var xaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorSpineAnimationPreviewSurfaceView.xaml"));
+
+        Assert.Contains(
+            "Value=\"{x:Bind ViewModel.DisplayPlaybackTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}\"",
+            xaml);
+        Assert.Contains(
+            "Text=\"{x:Bind ViewModel.DisplayPlaybackTimeText, Mode=OneWay}\"",
+            xaml);
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

@@ -1,15 +1,16 @@
 # Spine D3D11 Performance Baseline
 
-本文档记录 Spine D3D11 smoke 后端的真实样本性能观察。它不是默认启用标准，而是后续判断卡顿来源、缓存策略和默认切换条件的对照记录。
+本文档记录 Spine D3D11 默认后端的真实样本性能观察，用于后续判断卡顿来源、缓存策略、设备兼容性和回退条件。
 
 ## 采集方式
 
-启动前打开：
+启动前打开诊断：
 
 ```powershell
-$env:ABT_SPINE_D3D11_SMOKE = '1'
 $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 ```
+
+需要对比 Win2D 回退路径时，可额外设置 `$env:ABT_SPINE_D3D11 = 'win2d'`。
 
 建议在同一资源组上连续记录以下操作：
 
@@ -37,7 +38,7 @@ $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 
 样本：`char_2026_yu_nian#12.ab`
 
-环境：`ABT_SPINE_D3D11_SMOKE=1`、`ABT_SPINE_D3D11_DIAGNOSTICS=1`，WinUI 预览区域约 `393x234` 像素。
+环境：当时使用 `ABT_SPINE_D3D11_SMOKE=1`、`ABT_SPINE_D3D11_DIAGNOSTICS=1` 采集；D3D11 现已默认启用，后续只需开启 `ABT_SPINE_D3D11_DIAGNOSTICS=1`。WinUI 预览区域约 `393x234` 像素。
 
 大贴图 / 大三角 Spine 组：
 

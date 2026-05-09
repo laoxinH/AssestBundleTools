@@ -101,10 +101,16 @@ public sealed class SpineAnimationRuntimePreviewService :
         if (string.IsNullOrWhiteSpace(adapterKey) ||
             !_playbackAdaptersByKey.TryGetValue(adapterKey, out var adapter))
         {
-            return TryCreateBinarySessionWithAnyAdapter(source, cancellationToken);
+            var binaryResult = TryCreateBinarySessionWithAnyAdapter(source, cancellationToken);
+            return binaryResult.IsHandled || binaryResult.IsCancelled
+                ? binaryResult
+                : TryCreateSampledFallbackSession(source, cancellationToken);
         }
 
-        return adapter.TryCreatePlaybackSession(source, cancellationToken);
+        var adapterResult = adapter.TryCreatePlaybackSession(source, cancellationToken);
+        return adapterResult.IsHandled || adapterResult.IsCancelled
+            ? adapterResult
+            : TryCreateSampledFallbackSession(source, cancellationToken);
     }
 
     private SpineAnimationRuntimePlaybackSessionResultDto TryCreateBinarySessionWithAnyAdapter(
@@ -131,5 +137,22 @@ public sealed class SpineAnimationRuntimePreviewService :
         }
 
         return SpineAnimationRuntimePlaybackSessionResultDto.NotHandled;
+    }
+
+    private static SpineAnimationRuntimePlaybackSessionResultDto TryCreateSampledFallbackSession(
+        SpineAnimationRuntimePlaybackSourceDto source,
+        CancellationToken cancellationToken)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return SpineAnimationRuntimePlaybackSessionResultDto.Cancelled;
+        }
+
+        return source.SampledFallback is null
+            ? SpineAnimationRuntimePlaybackSessionResultDto.NotHandled
+            : SpineAnimationRuntimePlaybackSessionResultDto.Handled(
+                new SpineAnimationSampledFallbackPlaybackSession(
+                    source.Runtime?.AdapterKey,
+                    source.SampledFallback));
     }
 }

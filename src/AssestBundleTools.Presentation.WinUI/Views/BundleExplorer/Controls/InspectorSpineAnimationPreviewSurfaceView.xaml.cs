@@ -226,6 +226,7 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         var shouldRefreshPrewarmFrames = ShouldRefreshPrewarmFrames(e.PropertyName);
         var shouldRefreshRuntimeSession = ShouldRefreshRuntimePlaybackSession(e.PropertyName);
         var shouldRefreshRuntimeFrame = ShouldRefreshRuntimeFrame(e.PropertyName);
+        var shouldUpdateBindings = ShouldUpdateBindings(e.PropertyName);
 
         LogInteractionForProperty(e.PropertyName);
 
@@ -235,7 +236,8 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
                 texturePagesChanged,
                 shouldRefreshPrewarmFrames,
                 shouldRefreshRuntimeSession,
-                shouldRefreshRuntimeFrame);
+                shouldRefreshRuntimeFrame,
+                shouldUpdateBindings);
             return;
         }
 
@@ -244,14 +246,16 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
                 texturePagesChanged,
                 shouldRefreshPrewarmFrames,
                 shouldRefreshRuntimeSession,
-                shouldRefreshRuntimeFrame));
+                shouldRefreshRuntimeFrame,
+                shouldUpdateBindings));
     }
 
     private void ApplyObservedViewModelPropertyChange(
         bool texturePagesChanged,
         bool shouldRefreshPrewarmFrames,
         bool shouldRefreshRuntimeSession,
-        bool shouldRefreshRuntimeFrame)
+        bool shouldRefreshRuntimeFrame,
+        bool shouldUpdateBindings)
     {
         if (texturePagesChanged)
         {
@@ -273,7 +277,11 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
             RefreshPrewarmFrames();
         }
 
-        UpdateBindingsNow();
+        if (shouldUpdateBindings)
+        {
+            UpdateBindingsNow();
+        }
+
         if (shouldInvalidate)
         {
             InvalidatePreviewSurface();
@@ -432,6 +440,9 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
 
     private static bool ShouldRefreshPrewarmFrames(string? propertyName) =>
         propertyName is nameof(InspectorPreviewSpineAnimationViewModel.TexturePageContents);
+
+    private static bool ShouldUpdateBindings(string? propertyName) =>
+        propertyName is not nameof(InspectorPreviewSpineAnimationViewModel.CurrentFrame);
 
     private void LogInteraction(string eventName)
     {
