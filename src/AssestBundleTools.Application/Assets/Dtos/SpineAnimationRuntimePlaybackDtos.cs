@@ -98,6 +98,82 @@ public sealed record SpineAnimationRuntimeFixedFrameSamplingResultDto(
             diagnostics ?? Array.Empty<SpineAssetGroupDiagnosticDto>());
 }
 
+public sealed record SpineAnimationRuntimeFrameSequenceExportPlanRequestDto(
+    SpineAnimationRuntimePlaybackSourceDto Source,
+    string? AnimationName,
+    string? SkinName,
+    double FramesPerSecond,
+    double StartTime = 0d,
+    double? EndTime = null,
+    bool IncludeFinalFrame = true,
+    string? FileNamePrefix = null,
+    int? CanvasWidth = null,
+    int? CanvasHeight = null,
+    int PaddingPixels = 16);
+
+public sealed record SpineAnimationRuntimeFrameSequenceExportPlanResultDto(
+    bool IsHandled,
+    bool IsCancelled,
+    double FramesPerSecond,
+    double Duration,
+    SpineAnimationRuntimeFrameSequenceExportLayoutDto? Layout,
+    IReadOnlyList<SpineAnimationRuntimeFrameSequenceExportFrameDto> Frames,
+    IReadOnlyList<SpineAssetGroupDiagnosticDto> Diagnostics)
+{
+    public static SpineAnimationRuntimeFrameSequenceExportPlanResultDto NotHandled { get; } =
+        new(
+            false,
+            false,
+            0d,
+            0d,
+            null,
+            Array.Empty<SpineAnimationRuntimeFrameSequenceExportFrameDto>(),
+            Array.Empty<SpineAssetGroupDiagnosticDto>());
+
+    public static SpineAnimationRuntimeFrameSequenceExportPlanResultDto Cancelled { get; } =
+        new(
+            false,
+            true,
+            0d,
+            0d,
+            null,
+            Array.Empty<SpineAnimationRuntimeFrameSequenceExportFrameDto>(),
+            Array.Empty<SpineAssetGroupDiagnosticDto>());
+
+    public static SpineAnimationRuntimeFrameSequenceExportPlanResultDto Handled(
+        double framesPerSecond,
+        double duration,
+        SpineAnimationRuntimeFrameSequenceExportLayoutDto layout,
+        IReadOnlyList<SpineAnimationRuntimeFrameSequenceExportFrameDto> frames,
+        IReadOnlyList<SpineAssetGroupDiagnosticDto>? diagnostics = null) =>
+        new(
+            true,
+            false,
+            framesPerSecond,
+            duration,
+            layout,
+            frames,
+            diagnostics ?? Array.Empty<SpineAssetGroupDiagnosticDto>());
+}
+
+public sealed record SpineAnimationRuntimeFrameSequenceExportLayoutDto(
+    int CanvasWidth,
+    int CanvasHeight,
+    int PaddingPixels,
+    double ContentMinX,
+    double ContentMinY,
+    double ContentMaxX,
+    double ContentMaxY,
+    double WorldToPixelScale,
+    double WorldToPixelOffsetX,
+    double WorldToPixelOffsetY);
+
+public sealed record SpineAnimationRuntimeFrameSequenceExportFrameDto(
+    int Index,
+    double Time,
+    string FileName,
+    SpineAnimationFrameDto Frame);
+
 public sealed record SpineAnimationRuntimePlaybackFrameResultDto(
     bool IsHandled,
     bool IsCancelled,

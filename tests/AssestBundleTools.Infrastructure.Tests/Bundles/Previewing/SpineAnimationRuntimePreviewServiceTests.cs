@@ -302,6 +302,36 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
         TestAssert.Equal("last", TestAssert.Single(result.Frames[2].DrawCommands).AttachmentName, "The final exported frame should use the final sampled pose.");
     }
 
+    public static async Task PlanFrameSequenceExportAsync_ShouldCreateStableCanvasAndFrameNames_ForV38RuntimeFrames()
+    {
+        var service = new SpineAnimationRuntimePreviewService();
+
+        var result = await service.PlanFrameSequenceExportAsync(new SpineAnimationRuntimeFrameSequenceExportPlanRequestDto(
+            Source: CreatePlaybackSource(
+                spineVersion: "3.8.99",
+                adapterKey: "V38",
+                major: 3,
+                minor: 8),
+            AnimationName: "idle",
+            SkinName: "default",
+            FramesPerSecond: 2d,
+            FileNamePrefix: "idle/export"));
+
+        TestAssert.True(result.IsHandled, "Frame sequence export planning should use fixed FPS runtime sampling.");
+        TestAssert.Equal(3, result.Frames.Count, "Export planning should produce one file entry per sampled frame.");
+        TestAssert.Equal("idle_export_0000.png", result.Frames[0].FileName, "Export frame names should be deterministic and file-system safe.");
+        TestAssert.Equal("idle_export_0001.png", result.Frames[1].FileName, "Export frame names should preserve sequence order.");
+        TestAssert.Equal("idle_export_0002.png", result.Frames[2].FileName, "Export frame names should include the final frame.");
+        var layout = TestAssert.NotNull(result.Layout, "Export planning should compute a shared sequence layout.");
+        TestAssert.True(layout.CanvasWidth > 0, "Export canvas width should be positive.");
+        TestAssert.True(layout.CanvasHeight > 0, "Export canvas height should be positive.");
+        TestAssert.True(layout.ContentMinX < layout.ContentMaxX, "Export layout should include world-space content bounds.");
+        TestAssert.True(layout.ContentMinY < layout.ContentMaxY, "Export layout should include world-space content bounds.");
+        TestAssert.True(layout.WorldToPixelScale > 0d, "Export layout should expose a usable world-to-pixel scale.");
+        AssertMapsInsideCanvas(layout, layout.ContentMinX, layout.ContentMinY);
+        AssertMapsInsideCanvas(layout, layout.ContentMaxX, layout.ContentMaxY);
+    }
+
     public static async Task TryCreateSessionAsync_ShouldUseSampledFallbackSession_WhenOfficialPlaybackAdapterIsMissing()
     {
         var service = new SpineAnimationRuntimePreviewService();
@@ -786,6 +816,19 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
         TestAssert.Equal(1, value.DrawCommandCount, "Runtime diagnostics should count draw commands.");
         TestAssert.Equal(0, value.MeshVertexCount, "Runtime diagnostics should count mesh vertices.");
         TestAssert.Equal(0, value.MeshTriangleCount, "Runtime diagnostics should count mesh triangles.");
+    }
+
+    private static void AssertMapsInsideCanvas(
+        SpineAnimationRuntimeFrameSequenceExportLayoutDto layout,
+        double worldX,
+        double worldY)
+    {
+        var pixelX = (worldX * layout.WorldToPixelScale) + layout.WorldToPixelOffsetX;
+        var pixelY = (-worldY * layout.WorldToPixelScale) + layout.WorldToPixelOffsetY;
+        TestAssert.True(pixelX >= -0.000001d, "Export world-to-pixel transform should keep content within the canvas.");
+        TestAssert.True(pixelY >= -0.000001d, "Export world-to-pixel transform should keep content within the canvas.");
+        TestAssert.True(pixelX <= layout.CanvasWidth + 0.000001d, "Export world-to-pixel transform should keep content within the canvas.");
+        TestAssert.True(pixelY <= layout.CanvasHeight + 0.000001d, "Export world-to-pixel transform should keep content within the canvas.");
     }
 
     private sealed class TestSpineRuntimeAdapter : ISpineAnimationRuntimeAdapter

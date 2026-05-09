@@ -104,6 +104,22 @@ public sealed class SpineAnimationRuntimePreviewService :
             () => SampleFixedFramesCoreAsync(request, cancellationToken));
     }
 
+    public Task<SpineAnimationRuntimeFrameSequenceExportPlanResultDto> PlanFrameSequenceExportAsync(
+        SpineAnimationRuntimeFrameSequenceExportPlanRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.Source);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromResult(SpineAnimationRuntimeFrameSequenceExportPlanResultDto.Cancelled);
+        }
+
+        return Task.Run(
+            () => PlanFrameSequenceExportCoreAsync(request, cancellationToken));
+    }
+
     private SpineAnimationRuntimePlaybackSessionResultDto TryCreateSession(
         SpineAnimationRuntimePlaybackSourceDto source,
         CancellationToken cancellationToken)
@@ -255,6 +271,35 @@ public sealed class SpineAnimationRuntimePreviewService :
             sampleTimes,
             frames,
             sessionResult.Diagnostics);
+    }
+
+    private async Task<SpineAnimationRuntimeFrameSequenceExportPlanResultDto> PlanFrameSequenceExportCoreAsync(
+        SpineAnimationRuntimeFrameSequenceExportPlanRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (!SpineFrameSequenceExportPlanner.IsValidRequest(request))
+        {
+            return SpineAnimationRuntimeFrameSequenceExportPlanResultDto.NotHandled;
+        }
+
+        var samplingResult = await SampleFixedFramesCoreAsync(
+            new SpineAnimationRuntimeFixedFrameSamplingRequestDto(
+                request.Source,
+                request.AnimationName,
+                request.SkinName,
+                request.FramesPerSecond,
+                request.StartTime,
+                request.EndTime,
+                request.IncludeFinalFrame),
+            cancellationToken).ConfigureAwait(false);
+        if (samplingResult.IsCancelled)
+        {
+            return SpineAnimationRuntimeFrameSequenceExportPlanResultDto.Cancelled;
+        }
+
+        return samplingResult.IsHandled
+            ? SpineFrameSequenceExportPlanner.CreatePlan(request, samplingResult)
+            : SpineAnimationRuntimeFrameSequenceExportPlanResultDto.NotHandled;
     }
 
     private static SpineAnimationRuntimePlaybackFrameRequestDto CreateFixedFrameRequest(
