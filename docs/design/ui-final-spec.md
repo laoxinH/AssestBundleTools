@@ -220,7 +220,7 @@
 6. Spine 资源组预览
    - 面向 2D 游戏常见的 Spine 资源组合，当前目标已经从 `资源组识别 + Atlas region overlay + 引用跳转 + 结构化诊断` 扩展到实验播放、真实 skin 切换和官方 runtime adapter 采样；完整高性能播放体验继续按 GPU 批量渲染路线推进。
    - Spine 资源组属于跨资产聚合视图，不改变单个 `Texture2D / TextAsset` 的基础预览能力，也不伪装成新的 Unity 资产类型。打开资源组后，右侧检查器展示 skeleton、atlas、texture page 的匹配状态、skeleton 的轻量结构计数、当前已解析的 atlas page / region 数量、runtime adapter 状态、可用动画 / skin 播放入口，以及缺失 page、命名不匹配、atlas 预览不可用、外部引用未解析等诊断；更细的约束、linked mesh、path / physics 行为应在样本和 runtime 边界明确后再推进。
-   - Atlas region overlay 当前复用现有图片预览和棋盘格底图能力，在可解析 Texture2D page 上叠加 region 矩形；page 到 Texture2D 的匹配由 Application 详情 DTO 提供，Presentation 只通过预览管线加载图片载荷。`.skel` 二进制解析和动画播放当前通过官方 runtime adapter 输出中立 DTO；大量三角动画的长期 UI 承载采用 `D3D11 + SwapChainPanel + vertex batch renderer`，现有 Win2D 播放面只作为兼容回退，不作为高复杂 mesh 的性能主线。当前 D3D 后端仍是 `ABT_SPINE_D3D11_SMOKE` 控制下的受控验证入口，已经覆盖面板、swap chain、顶点批量提交、Texture2D 预览载荷上传 / 采样、可复用动态 vertex / index buffer 和渲染失败自动回退 Win2D；默认切换需在真实样本帧时间、内存占用和设备恢复路径稳定后再验收。
+   - Atlas region overlay 当前复用现有图片预览和棋盘格底图能力，在可解析 Texture2D page 上叠加 region 矩形；page 到 Texture2D 的匹配由 Application 详情 DTO 提供，Presentation 只通过预览管线加载图片载荷。`.skel` 二进制解析和动画播放当前通过官方 runtime adapter 输出中立 DTO；大量三角动画的长期 UI 承载采用 `D3D11 + SwapChainPanel + vertex batch renderer`，现有 Win2D 播放面只作为兼容回退，不作为高复杂 mesh 的性能主线。当前 D3D 后端仍是 `ABT_SPINE_D3D11_SMOKE` 控制下的受控验证入口，已经覆盖面板、swap chain、顶点批量提交、Texture2D 预览载荷上传 / 采样、可复用动态 vertex / index buffer、Unloaded 资源释放、resize 防抖、device lost 一次重建、vertex / clip-space batch 缓存和渲染失败自动回退 Win2D；默认切换需在真实样本帧时间、内存占用和设备恢复路径稳定后再验收。
 
 补充规则如下：
 

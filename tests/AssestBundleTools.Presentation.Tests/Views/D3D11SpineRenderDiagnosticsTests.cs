@@ -71,6 +71,59 @@ public sealed class D3D11SpineRenderDiagnosticsTests
     }
 
     [Fact]
+    public void FrameRendered_ShouldAppendPipelineTimings_WhenProvided()
+    {
+        var messages = new List<string>();
+        var diagnostics = new D3D11SpineRenderDiagnostics(messages.Add);
+        var metrics = new D3D11SpineRenderFrameMetrics(
+            BatchCount: 1,
+            VertexCount: 3,
+            IndexCount: 3,
+            GpuPageCount: 1,
+            GpuPageBytes: 4096,
+            Width: 320,
+            Height: 240,
+            Elapsed: TimeSpan.FromMilliseconds(12),
+            TextureUploadElapsed: TimeSpan.FromMilliseconds(1),
+            BatchProjectionElapsed: TimeSpan.FromMilliseconds(2),
+            ClipProjectionElapsed: TimeSpan.FromMilliseconds(2.5d),
+            DrawElapsed: TimeSpan.FromMilliseconds(3),
+            PresentElapsed: TimeSpan.FromMilliseconds(4));
+
+        diagnostics.FrameRendered(metrics);
+
+        var message = Assert.Single(messages);
+        Assert.Contains("uploadMs=1", message, StringComparison.Ordinal);
+        Assert.Contains("projectMs=2", message, StringComparison.Ordinal);
+        Assert.Contains("clipMs=2.5", message, StringComparison.Ordinal);
+        Assert.Contains("drawMs=3", message, StringComparison.Ordinal);
+        Assert.Contains("presentMs=4", message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PlaybackInteraction_ShouldLogSelectionAndPlaybackState()
+    {
+        var messages = new List<string>();
+        var diagnostics = new D3D11SpineRenderDiagnostics(messages.Add);
+
+        diagnostics.PlaybackInteraction(
+            "skin-changed",
+            "idle",
+            "skin-alt",
+            isPlaying: true,
+            playbackTime: 1.25d,
+            playbackSpeed: 2d);
+
+        var message = Assert.Single(messages);
+        Assert.Contains("interaction event=skin-changed", message, StringComparison.Ordinal);
+        Assert.Contains("animation=idle", message, StringComparison.Ordinal);
+        Assert.Contains("skin=skin-alt", message, StringComparison.Ordinal);
+        Assert.Contains("playing=True", message, StringComparison.Ordinal);
+        Assert.Contains("time=1.25", message, StringComparison.Ordinal);
+        Assert.Contains("speed=2", message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void TextureDecodeCompleted_ShouldIncludePageCountsAndPayloadSize()
     {
         var messages = new List<string>();
@@ -181,6 +234,36 @@ public sealed class D3D11SpineRenderDiagnosticsTests
         Assert.Contains("message=", message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void DeviceLostRecoveryQueued_ShouldIncludeExceptionTypeAndHResult()
+    {
+        var messages = new List<string>();
+        var diagnostics = new D3D11SpineRenderDiagnostics(messages.Add);
+
+        diagnostics.DeviceLostRecoveryQueued(new HResultException(-2005270523));
+
+        var message = Assert.Single(messages);
+        Assert.Contains("device-lost recovery=queued", message, StringComparison.Ordinal);
+        Assert.Contains("exception=HResultException", message, StringComparison.Ordinal);
+        Assert.Contains("hresult=0x887A0005", message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(-2005270523)]
+    [InlineData(-2005270522)]
+    [InlineData(-2005270521)]
+    [InlineData(-2005270496)]
+    public void IsRecoverableDeviceLossHResult_ShouldRecognizeDxgiDeviceLoss(int hresult)
+    {
+        Assert.True(D3D11SpineAnimationPreviewRenderBackend.IsRecoverableDeviceLossHResult(hresult));
+    }
+
+    [Fact]
+    public void IsRecoverableDeviceLossHResult_ShouldRejectGenericFailures()
+    {
+        Assert.False(D3D11SpineAnimationPreviewRenderBackend.IsRecoverableDeviceLossHResult(-2147467259));
+    }
+
     private static D3D11SpineRenderFrameMetrics CreateMetrics(TimeSpan elapsed) =>
         new(
             BatchCount: 1,
@@ -191,4 +274,12 @@ public sealed class D3D11SpineRenderDiagnosticsTests
             Width: 320,
             Height: 240,
             elapsed);
+
+    private sealed class HResultException : Exception
+    {
+        public HResultException(int hresult)
+        {
+            HResult = hresult;
+        }
+    }
 }

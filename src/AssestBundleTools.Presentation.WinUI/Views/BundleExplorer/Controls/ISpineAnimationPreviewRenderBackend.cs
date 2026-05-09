@@ -12,5 +12,7 @@ internal interface ISpineAnimationPreviewRenderBackend
 
     void ResetFrameCache();
 
+    void ReleaseResources();
+
     void Invalidate();
 }

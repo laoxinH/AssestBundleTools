@@ -48,6 +48,12 @@ internal sealed class SpineAnimationFallbackRenderBackend : ISpineAnimationPrevi
     public void ResetFrameCache() =>
         ActiveBackend.ResetFrameCache();
 
+    public void ReleaseResources()
+    {
+        _primary.ReleaseResources();
+        _fallback.ReleaseResources();
+    }
+
     public void Invalidate() =>
         ActiveBackend.Invalidate();
 

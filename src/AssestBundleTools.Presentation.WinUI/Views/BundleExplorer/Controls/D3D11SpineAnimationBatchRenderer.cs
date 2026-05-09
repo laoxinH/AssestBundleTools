@@ -55,18 +55,17 @@ internal sealed class D3D11SpineAnimationBatchRenderer : IDisposable
     public void Draw(
         ID3D11Device device,
         ID3D11DeviceContext context,
-        IReadOnlyList<SpineAnimationVertexBatch> batches,
+        IReadOnlyList<SpineAnimationClipSpaceBatch> clipBatches,
         IReadOnlyDictionary<string, D3D11SpineTexturePage> texturePages,
         float viewportWidth,
         float viewportHeight)
     {
         ArgumentNullException.ThrowIfNull(device);
         ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(batches);
+        ArgumentNullException.ThrowIfNull(clipBatches);
         ArgumentNullException.ThrowIfNull(texturePages);
 
         EnsureDeviceResources(device);
-        var clipBatches = SpineAnimationClipSpaceProjector.Project(batches, viewportWidth, viewportHeight);
         if (clipBatches.Count == 0)
         {
             return;

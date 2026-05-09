@@ -48,6 +48,19 @@ public sealed class SpineAnimationFallbackRenderBackendTests
         Assert.Equal(2, fallback.InvalidateCount);
     }
 
+    [Fact]
+    public void ReleaseResources_ShouldReleasePrimaryAndFallback()
+    {
+        var primary = new RecordingBackend();
+        var fallback = new RecordingBackend();
+        var backend = new SpineAnimationFallbackRenderBackend(primary, fallback, _ => { });
+
+        backend.ReleaseResources();
+
+        Assert.Equal(1, primary.ReleaseResourcesCount);
+        Assert.Equal(1, fallback.ReleaseResourcesCount);
+    }
+
     private sealed class RecordingBackend : ISpineAnimationPreviewRenderBackend
     {
         public SpineAnimationFrameDto? CurrentFrame { get; private set; }
@@ -59,6 +72,8 @@ public sealed class SpineAnimationFallbackRenderBackendTests
         public int ResetFrameCacheCount { get; private set; }
 
         public int InvalidateCount { get; private set; }
+
+        public int ReleaseResourcesCount { get; private set; }
 
         public void SetCurrentFrame(SpineAnimationFrameDto? frame) =>
             CurrentFrame = frame;
@@ -77,6 +92,9 @@ public sealed class SpineAnimationFallbackRenderBackendTests
 
         public void ResetFrameCache() =>
             ResetFrameCacheCount++;
+
+        public void ReleaseResources() =>
+            ReleaseResourcesCount++;
 
         public void Invalidate() =>
             InvalidateCount++;

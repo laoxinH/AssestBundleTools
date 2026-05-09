@@ -180,7 +180,7 @@ Spine 高复杂 mesh 播放的 D3D11 后端当前仍是受控 smoke，不作为�
 $env:ABT_SPINE_D3D11_SMOKE = '1'
 ```
 
-允许值为 `1`、`true` 或 `d3d11`。未设置时继续使用 Win2D 回退后端；该 smoke 当前会解码 Texture2D 预览载荷、上传为 D3D shader resource、采样真实贴图，并通过可复用动态 vertex / index buffer 提交批次。若 D3D render / resize / present 失败，会自动切回 Win2D 后端。
+允许值为 `1`、`true` 或 `d3d11`。未设置时继续使用 Win2D 回退后端；该 smoke 当前会解码 Texture2D 预览载荷、上传为 D3D shader resource、采样真实贴图，并通过可复用动态 vertex / index buffer 提交批次。播放控件卸载时会释放后端资源，resize 会短防抖合并，Texture2D 解码和上传带 generation 保护；遇到 DXGI device removed / reset / hung / internal error 会先释放并重建一次，仍失败才切回 Win2D 后端。
 
 需要记录真实样本基线时，可额外打开 D3D 诊断输出：
 
@@ -188,4 +188,6 @@ $env:ABT_SPINE_D3D11_SMOKE = '1'
 $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 ```
 
-该诊断只写入调试输出，记录 native `SwapChainPanel` 绑定 readiness / strategy、device / resize、Texture2D decode、GPU texture upload、节流后的 frame batch / vertex / index / elapsed 数据和 fallback 异常类型；不在 UI 中显示原始 D3D 异常。默认切换前还需要用大量三角样本补齐帧时间、内存占用和设备恢复路径验证。
+该诊断只写入调试输出，记录 native `SwapChainPanel` 绑定 readiness / strategy、device / resize、Texture2D decode、GPU texture upload、节流后的 frame batch / vertex / index / elapsed 数据、`uploadMs / projectMs / clipMs / drawMs / presentMs` 分段耗时、播放 / 暂停 / animation / skin / setup pose / step 等交互事件，以及 fallback 或 device lost 恢复异常类型；不在 UI 中显示原始 D3D 异常。
+
+真实样本基线建议至少记录以下操作的连续日志：首帧贴图 decode / upload，正常播放 10 秒，窗口缩放，切 animation，切 skin，暂停 / 恢复，逐帧，重开同一 Spine 组。默认切换前还需要用大量三角样本补齐帧时间、内存占用和设备恢复路径验证。

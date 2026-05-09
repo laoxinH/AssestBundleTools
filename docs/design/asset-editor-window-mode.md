@@ -342,7 +342,7 @@ Spine 动画的长期高性能渲染路线采用 `D3D11 + SwapChainPanel + verte
 - 当前已完成第二步：Presentation 内部已新增 DTO 到顶点批次的纯投影器，覆盖 region / mesh 顶点、UV、tint / alpha、无效三角过滤和按连续 texture page 保持 draw order 的批次切分；该投影器暂不接触 D3D 类型。
 - 当前已完成第三步的受控 D3D 后端：`ABT_SPINE_D3D11_SMOKE=1/true/d3d11` 时，播放控件会切到 `SwapChainPanel` 承载的 D3D11 后端，创建 device / swap chain / render target，并把顶点批次投影到 clip space 后通过 D3D11 顶点 / 索引 buffer 提交。
 - 当前已完成第四步的第一段：Texture2D 预览载荷会在 Presentation 内解码为 BGRA8、上传为 D3D texture / shader resource，并按 page name 缓存；顶点批次会通过 shader 采样真实 page texture 并应用 DTO 中的 tint / alpha。
-- 当前已完成第五步的第一段：D3D11 后端已把每个 batch 每帧临时创建 vertex / index buffer 的提交方式替换为可复用动态 buffer，按容量增长后使用 `WriteDiscard` 上传当前 batch，降低大量三角播放时的 GPU 资源创建压力；D3D render / resize / present 失败时会自动切回 Win2D 后端并重放当前帧与贴图状态。D3D smoke 可通过 `ABT_SPINE_D3D11_DIAGNOSTICS=1/true/d3d11` 额外输出 device / resize、texture decode、GPU upload、节流 frame batch / vertex / index / elapsed 和 fallback 异常类型，便于真实样本基线记录；默认路径仍是 Win2D，D3D 后端仍需通过环境变量主动启用。
+- 当前已完成第五步的第二段：D3D11 后端已把每个 batch 每帧临时创建 vertex / index buffer 的提交方式替换为可复用动态 buffer，按容量增长后使用 `WriteDiscard` 上传当前 batch；播放控件会在 Unloaded 时释放 D3D / Win2D 后端资源，D3D resize 通过短防抖合并，Texture2D 解码和上传带 generation 保护，DXGI device removed / reset / hung / internal error 会先尝试释放并重建一次，仍失败时才自动切回 Win2D 后端并重放当前帧与贴图状态。D3D 后端还会按 `SpineAnimationFrameDto` 引用、texture page version 和 viewport 缓存 vertex batch / clip-space batch，暂停或当前帧未变化时减少重复 invalidation。D3D smoke 可通过 `ABT_SPINE_D3D11_DIAGNOSTICS=1/true/d3d11` 额外输出 device / resize、texture decode、GPU upload、frame batch / vertex / index / elapsed、upload / projection / clip / draw / present 分段耗时、播放交互事件和 fallback / device lost 异常类型，便于真实样本基线记录；默认路径仍是 Win2D，D3D 后端仍需通过环境变量主动启用。
 - 保留现有 Win2D 帧缓存作为回退；D3D 可用时大量三角动画不再走逐三角 `CreateLayer` 裁剪路径。
 - 给真实高复杂样本补受控性能验证记录，至少覆盖首帧纹理上传、连续播放、窗口缩放、skin / animation 切换、设备丢失回退和恢复。
 
@@ -353,7 +353,8 @@ Spine 动画的长期高性能渲染路线采用 `D3D11 + SwapChainPanel + verte
 3. 已完成：接入 `SwapChainPanel` 与 D3D11 设备 / swap chain 生命周期，并以 opt-in smoke 绘制按 tint 着色的 Spine 顶点批次。
 4. 已完成：接入 Texture2D 预览载荷解码、D3D texture 上传和 page texture 缓存，并在 D3D shader 中采样真实贴图。
 5. 已完成：把当前每帧临时创建 vertex / index buffer 的 smoke 提交流程升级为可复用动态 buffer / 批次提交器。
-6. 下一步：用 `char_2026_yu_nian#12.ab` 这类大量三角样本配合 D3D 诊断记录首帧纹理上传、连续播放帧时间、窗口缩放、skin / animation 切换和内存占用基线，再决定是否需要做 D3D 设备重建而不只是回退 Win2D。
+6. 已完成：补 D3D 后端生命周期和低风险缓存优化，包括 Unloaded 释放、resize 防抖、device lost 一次重建、贴图 generation 过期保护、暂停状态降低刷新频率、vertex batch 缓存和 clip-space batch 缓存。
+7. 下一步：用 `char_2026_yu_nian#12.ab` 这类大量三角样本配合 D3D 诊断记录首帧纹理上传、连续播放帧时间、窗口缩放、skin / animation 切换和内存占用基线；若卡顿主要来自 Application / Infrastructure 的 runtime 采样或 DTO 投影，再把缓存推进到动画时间戳 / skin / animation 维度，而不是回到块状矩形近似。
 
 ## 16. 测试建议
 

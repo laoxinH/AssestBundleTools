@@ -58,6 +58,13 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
         _frameRenderCache.Clear();
     }
 
+    public void ReleaseResources()
+    {
+        ClearTextureBitmaps();
+        _currentFrame = null;
+        _textureLoadGeneration++;
+    }
+
     public void Invalidate()
     {
         if (_canvas.DispatcherQueue.HasThreadAccess)

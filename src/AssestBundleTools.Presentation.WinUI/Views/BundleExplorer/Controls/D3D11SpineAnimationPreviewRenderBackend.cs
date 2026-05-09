@@ -13,11 +13,17 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationPreviewRenderBackend
 {
     private const int BufferCount = 2;
+    private const int DxgiErrorDeviceRemoved = unchecked((int)0x887A0005);
+    private const int DxgiErrorDeviceHung = unchecked((int)0x887A0006);
+    private const int DxgiErrorDeviceReset = unchecked((int)0x887A0007);
+    private const int DxgiErrorDriverInternalError = unchecked((int)0x887A0020);
 
     private readonly SwapChainPanel _panel;
     private readonly D3D11SpineRenderDiagnostics _diagnostics;
     private readonly D3D11SpineTexturePageCache _texturePageCache = new();
     private readonly D3D11SpineAnimationBatchRenderer _batchRenderer = new();
+    private readonly SpineAnimationRenderBatchCache _batchCache = new();
+    private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _resizeTimer;
     private SpineAnimationFrameDto? _currentFrame;
     private ID3D11Device? _device;
     private ID3D11DeviceContext? _context;
@@ -26,6 +32,8 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
     private int _pixelWidth;
     private int _pixelHeight;
     private int _textureLoadGeneration;
+    private int _texturePageVersion;
+    private bool _deviceRecoveryAttempted;
 
     public D3D11SpineAnimationPreviewRenderBackend(
         SwapChainPanel panel,
@@ -34,6 +42,10 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
         _panel = panel;
         _diagnostics = diagnostics ?? new D3D11SpineRenderDiagnostics(null);
         _panel.SizeChanged += OnPanelSizeChanged;
+        _resizeTimer = _panel.DispatcherQueue.CreateTimer();
+        _resizeTimer.Interval = TimeSpan.FromMilliseconds(80);
+        _resizeTimer.IsRepeating = false;
+        _resizeTimer.Tick += OnResizeTimerTick;
     }
 
     public event EventHandler? RenderingFailed;
@@ -50,6 +62,7 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
 
         var generation = ++_textureLoadGeneration;
         _texturePageCache.Clear();
+        InvalidateBatchCache();
         if (texturePageContents.Count == 0)
         {
             Invalidate();
@@ -64,11 +77,20 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
     {
         _textureLoadGeneration++;
         _texturePageCache.Clear();
+        InvalidateBatchCache();
         Invalidate();
     }
 
     public void ResetFrameCache()
     {
+        _batchCache.Clear();
+    }
+
+    public void ReleaseResources()
+    {
+        _resizeTimer.Stop();
+        _deviceRecoveryAttempted = false;
+        ReleaseDeviceResources();
     }
 
     public void Invalidate()
@@ -84,15 +106,15 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
 
     private void OnPanelSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        try
-        {
-            ResizeIfNeeded();
-            Invalidate();
-        }
-        catch (Exception exception)
-        {
-            HandleRenderingFailure(exception);
-        }
+        _resizeTimer.Stop();
+        _resizeTimer.Start();
+    }
+
+    private void OnResizeTimerTick(
+        Microsoft.UI.Dispatching.DispatcherQueueTimer sender,
+        object args)
+    {
+        Invalidate();
     }
 
     private void Render()
@@ -124,32 +146,57 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
         var uploadStopwatch = Stopwatch.StartNew();
         var uploadResult = _texturePageCache.EnsureGpuPages(_device!);
         uploadStopwatch.Stop();
+        var uploadElapsed = uploadStopwatch.Elapsed;
         _diagnostics.GpuTextureUploadCompleted(
             uploadResult.UploadedPageCount,
             uploadResult.UploadedBytes,
             _texturePageCache.GpuPages.Count,
             _texturePageCache.GpuPageBytes,
-            uploadStopwatch.Elapsed);
-        var batches = ResolveBatches();
+            uploadElapsed);
+        var batches = ResolveBatches(out var batchProjectionElapsed);
+        var clipBatches = ResolveClipBatches(batches, out var clipProjectionElapsed);
         _context.ClearRenderTargetView(_renderTargetView, ResolveSmokeTint(batches.Count));
-        if (batches.Count > 0)
+        var drawElapsed = TimeSpan.Zero;
+        if (clipBatches.Count > 0)
         {
+            var drawStopwatch = Stopwatch.StartNew();
             _batchRenderer.Draw(
                 _device!,
                 _context,
-                batches,
+                clipBatches,
                 _texturePageCache.GpuPages,
                 _pixelWidth,
                 _pixelHeight);
+            drawStopwatch.Stop();
+            drawElapsed = drawStopwatch.Elapsed;
         }
 
+        var presentStopwatch = Stopwatch.StartNew();
         _swapChain!.Present(1, PresentFlags.None);
+        presentStopwatch.Stop();
         frameStopwatch.Stop();
-        _diagnostics.FrameRendered(CreateFrameMetrics(batches, frameStopwatch.Elapsed));
+        _deviceRecoveryAttempted = false;
+        _diagnostics.FrameRendered(CreateFrameMetrics(
+            batches,
+            frameStopwatch.Elapsed,
+            uploadElapsed,
+            batchProjectionElapsed,
+            clipProjectionElapsed,
+            drawElapsed,
+            presentStopwatch.Elapsed));
     }
 
     private void HandleRenderingFailure(Exception exception)
     {
+        if (!_deviceRecoveryAttempted && IsRecoverableDeviceLossHResult(exception.HResult))
+        {
+            _deviceRecoveryAttempted = true;
+            _diagnostics.DeviceLostRecoveryQueued(exception);
+            ReleaseDeviceResources();
+            Invalidate();
+            return;
+        }
+
         _diagnostics.RenderingFailed(exception);
         ReleaseDeviceResources();
         RenderingFailed?.Invoke(this, EventArgs.Empty);
@@ -169,6 +216,7 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
         _pixelHeight = 0;
         _texturePageCache.Clear();
         _batchRenderer.ReleaseDeviceResources();
+        _batchCache.Clear();
     }
 
     private bool EnsureDeviceResources()
@@ -258,14 +306,27 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
         _renderTargetView = _device!.CreateRenderTargetView(backBuffer);
     }
 
-    private IReadOnlyList<SpineAnimationVertexBatch> ResolveBatches()
+    private IReadOnlyList<SpineAnimationVertexBatch> ResolveBatches(out TimeSpan elapsed)
     {
-        if (_currentFrame is null || _texturePageCache.TexturePageSizes.Count == 0)
-        {
-            return Array.Empty<SpineAnimationVertexBatch>();
-        }
+        var stopwatch = Stopwatch.StartNew();
+        var batches = _batchCache.GetVertexBatches(
+            _currentFrame,
+            _texturePageCache.TexturePageSizes,
+            _texturePageVersion);
+        stopwatch.Stop();
+        elapsed = stopwatch.Elapsed;
+        return batches;
+    }
 
-        return SpineAnimationVertexBatchProjector.Project(_currentFrame, _texturePageCache.TexturePageSizes);
+    private IReadOnlyList<SpineAnimationClipSpaceBatch> ResolveClipBatches(
+        IReadOnlyList<SpineAnimationVertexBatch> batches,
+        out TimeSpan elapsed)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var clipBatches = _batchCache.GetClipBatches(batches, _pixelWidth, _pixelHeight);
+        stopwatch.Stop();
+        elapsed = stopwatch.Elapsed;
+        return clipBatches;
     }
 
     private async Task LoadTexturePagesAsync(
@@ -298,6 +359,7 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
                 }
 
                 _texturePageCache.ReplaceDecodedPages(decodedPages);
+                InvalidateBatchCache();
                 Invalidate();
             });
         }
@@ -319,6 +381,7 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
                 if (generation == _textureLoadGeneration)
                 {
                     _texturePageCache.Clear();
+                    InvalidateBatchCache();
                     Invalidate();
                 }
             });
@@ -327,7 +390,12 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
 
     private D3D11SpineRenderFrameMetrics CreateFrameMetrics(
         IReadOnlyList<SpineAnimationVertexBatch> batches,
-        TimeSpan elapsed)
+        TimeSpan elapsed,
+        TimeSpan textureUploadElapsed,
+        TimeSpan batchProjectionElapsed,
+        TimeSpan clipProjectionElapsed,
+        TimeSpan drawElapsed,
+        TimeSpan presentElapsed)
     {
         var vertexCount = 0;
         var indexCount = 0;
@@ -348,7 +416,18 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
             _pixelWidth,
             _pixelHeight,
             elapsed,
-            stats.Format());
+            stats.Format(),
+            textureUploadElapsed,
+            batchProjectionElapsed,
+            clipProjectionElapsed,
+            drawElapsed,
+            presentElapsed);
+    }
+
+    private void InvalidateBatchCache()
+    {
+        _texturePageVersion++;
+        _batchCache.Clear();
     }
 
     private static long CountPayloadBytes(IReadOnlyDictionary<string, byte[]> texturePageContents)
@@ -384,6 +463,12 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
         var batchCount = Math.Clamp(projectedBatchCount, 1, 8);
         return new Color4(0.02f, 0.08f + (batchCount * 0.04f), 0.16f + (batchCount * 0.06f), 1f);
     }
+
+    internal static bool IsRecoverableDeviceLossHResult(int hresult) =>
+        hresult is DxgiErrorDeviceRemoved or
+            DxgiErrorDeviceHung or
+            DxgiErrorDeviceReset or
+            DxgiErrorDriverInternalError;
 
     private readonly record struct D3D11SpineBatchStats(
         bool HasVertices,

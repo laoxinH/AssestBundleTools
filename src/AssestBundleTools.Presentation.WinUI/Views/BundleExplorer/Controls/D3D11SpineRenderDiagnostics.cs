@@ -145,7 +145,27 @@ internal sealed class D3D11SpineRenderDiagnostics
             $"frame number={_frameNumber} batches={metrics.BatchCount} vertices={metrics.VertexCount} " +
             $"indices={metrics.IndexCount} gpuPages={metrics.GpuPageCount} gpuBytes={metrics.GpuPageBytes} " +
             $"size={metrics.Width}x{metrics.Height} elapsedMs={FormatMilliseconds(metrics.Elapsed)}" +
+            FormatFrameTiming(metrics) +
             FormatBatchSummary(metrics.BatchSummary));
+    }
+
+    public void PlaybackInteraction(
+        string eventName,
+        string? animationName,
+        string? skinName,
+        bool isPlaying,
+        double playbackTime,
+        double playbackSpeed)
+    {
+        if (!IsEnabled)
+        {
+            return;
+        }
+
+        Write(
+            $"interaction event={FormatToken(eventName)} animation={FormatToken(animationName)} " +
+            $"skin={FormatToken(skinName)} playing={isPlaying} time={FormatNumber(playbackTime)} " +
+            $"speed={FormatNumber(playbackSpeed)}");
     }
 
     public void RenderingFailed(Exception exception)
@@ -157,6 +177,18 @@ internal sealed class D3D11SpineRenderDiagnostics
 
         Write(
             $"rendering-failed exception={exception.GetType().Name} " +
+            $"hresult=0x{exception.HResult:X8} message={FormatMessage(exception.Message)}");
+    }
+
+    public void DeviceLostRecoveryQueued(Exception exception)
+    {
+        if (!IsEnabled)
+        {
+            return;
+        }
+
+        Write(
+            $"device-lost recovery=queued exception={exception.GetType().Name} " +
             $"hresult=0x{exception.HResult:X8} message={FormatMessage(exception.Message)}");
     }
 
@@ -178,8 +210,34 @@ internal sealed class D3D11SpineRenderDiagnostics
             ? string.Empty
             : $" {batchSummary}";
 
+    private static string FormatFrameTiming(D3D11SpineRenderFrameMetrics metrics)
+    {
+        if (metrics.TextureUploadElapsed == TimeSpan.Zero &&
+            metrics.BatchProjectionElapsed == TimeSpan.Zero &&
+            metrics.ClipProjectionElapsed == TimeSpan.Zero &&
+            metrics.DrawElapsed == TimeSpan.Zero &&
+            metrics.PresentElapsed == TimeSpan.Zero)
+        {
+            return string.Empty;
+        }
+
+        return $" uploadMs={FormatMilliseconds(metrics.TextureUploadElapsed)}" +
+               $" projectMs={FormatMilliseconds(metrics.BatchProjectionElapsed)}" +
+               $" clipMs={FormatMilliseconds(metrics.ClipProjectionElapsed)}" +
+               $" drawMs={FormatMilliseconds(metrics.DrawElapsed)}" +
+               $" presentMs={FormatMilliseconds(metrics.PresentElapsed)}";
+    }
+
     private static string FormatNumber(double value) =>
         value.ToString("0.###", CultureInfo.InvariantCulture);
+
+    private static string FormatToken(string? value) =>
+        string.IsNullOrWhiteSpace(value)
+            ? "<none>"
+            : value
+                .ReplaceLineEndings(" ")
+                .Replace('\t', ' ')
+                .Trim();
 
     private static string FormatMessage(string message)
     {
@@ -204,4 +262,9 @@ internal readonly record struct D3D11SpineRenderFrameMetrics(
     int Width,
     int Height,
     TimeSpan Elapsed,
-    string BatchSummary = "");
+    string BatchSummary = "",
+    TimeSpan TextureUploadElapsed = default,
+    TimeSpan BatchProjectionElapsed = default,
+    TimeSpan ClipProjectionElapsed = default,
+    TimeSpan DrawElapsed = default,
+    TimeSpan PresentElapsed = default);

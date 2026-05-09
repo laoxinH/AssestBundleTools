@@ -1,5 +1,7 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using AssestBundleTools.Presentation.WinUI.Localization;
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -10,7 +12,9 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
 {
     private readonly DispatcherTimer _playbackTimer;
     private readonly ISpineAnimationPreviewRenderBackend _renderBackend;
+    private readonly D3D11SpineRenderDiagnostics? _diagnostics;
     private InspectorPreviewSpineAnimationViewModel? _observedViewModel;
+    private SpineAnimationFrameDto? _lastSyncedFrame;
     private DateTimeOffset _lastTickUtc;
 
     public static readonly DependencyProperty ViewModelProperty =
@@ -23,6 +27,7 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
     public InspectorSpineAnimationPreviewSurfaceView()
     {
         InitializeComponent();
+        _diagnostics = CreateDiagnostics();
         _renderBackend = SpineAnimationPreviewRenderBackendFactory.Create(
             SpineCanvas,
             SpineSwapChainPanel);
@@ -74,6 +79,8 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         DetachObservedViewModel(_observedViewModel);
         _renderBackend.SetCurrentFrame(null);
         _renderBackend.ClearTexturePages();
+        _renderBackend.ReleaseResources();
+        _lastSyncedFrame = null;
     }
 
     private void ApplyLocalizedText()
@@ -136,19 +143,30 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
             RefreshTexturePages();
         }
 
+        LogInteractionForProperty(e.PropertyName);
+
         if (DispatcherQueue.HasThreadAccess)
         {
-            SyncRenderFrame();
+            var shouldInvalidate = SyncRenderFrame() ||
+                                   e.PropertyName is nameof(InspectorPreviewSpineAnimationViewModel.TexturePageContents);
             UpdateBindingsNow();
-            InvalidatePreviewSurface();
+            if (shouldInvalidate)
+            {
+                InvalidatePreviewSurface();
+            }
+
             return;
         }
 
         DispatcherQueue.TryEnqueue(() =>
         {
-            SyncRenderFrame();
+            var shouldInvalidate = SyncRenderFrame() ||
+                                   e.PropertyName is nameof(InspectorPreviewSpineAnimationViewModel.TexturePageContents);
             UpdateBindingsNow();
-            InvalidatePreviewSurface();
+            if (shouldInvalidate)
+            {
+                InvalidatePreviewSurface();
+            }
         });
     }
 
@@ -167,11 +185,13 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         }
 
         ViewModel.PlaybackSpeed = playbackSpeed;
+        LogInteraction("speed-changed");
     }
 
     private void OnRestartButtonClick(object sender, RoutedEventArgs e)
     {
         ViewModel?.Restart();
+        LogInteraction("restart");
         SyncRenderFrame();
         InvalidatePreviewSurface();
     }
@@ -179,6 +199,7 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
     private void OnSetupPoseButtonClick(object sender, RoutedEventArgs e)
     {
         ViewModel?.ShowSetupPose();
+        LogInteraction("setup-pose");
         SyncRenderFrame();
         InvalidatePreviewSurface();
     }
@@ -186,6 +207,7 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
     private void OnStepPreviousButtonClick(object sender, RoutedEventArgs e)
     {
         ViewModel?.StepPreviousFrame();
+        LogInteraction("step-previous");
         SyncRenderFrame();
         InvalidatePreviewSurface();
     }
@@ -193,6 +215,7 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
     private void OnStepNextButtonClick(object sender, RoutedEventArgs e)
     {
         ViewModel?.StepNextFrame();
+        LogInteraction("step-next");
         SyncRenderFrame();
         InvalidatePreviewSurface();
     }
@@ -202,9 +225,16 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         var now = DateTimeOffset.UtcNow;
         var elapsed = now - _lastTickUtc;
         _lastTickUtc = now;
-        ViewModel?.Advance(elapsed);
-        SyncRenderFrame();
-        InvalidatePreviewSurface();
+        if (ViewModel is not { IsPlaying: true } viewModel)
+        {
+            return;
+        }
+
+        viewModel.Advance(elapsed);
+        if (SyncRenderFrame())
+        {
+            InvalidatePreviewSurface();
+        }
     }
 
     private void RefreshTexturePages()
@@ -218,9 +248,17 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         _renderBackend.ClearTexturePages();
     }
 
-    private void SyncRenderFrame()
+    private bool SyncRenderFrame()
     {
-        _renderBackend.SetCurrentFrame(ViewModel?.CurrentFrame);
+        var frame = ViewModel?.CurrentFrame;
+        if (ReferenceEquals(_lastSyncedFrame, frame))
+        {
+            return false;
+        }
+
+        _lastSyncedFrame = frame;
+        _renderBackend.SetCurrentFrame(frame);
+        return true;
     }
 
     private void UpdateBindingsNow()
@@ -238,4 +276,45 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
     {
         _renderBackend.Invalidate();
     }
+
+    private void LogInteractionForProperty(string? propertyName)
+    {
+        if (propertyName is nameof(InspectorPreviewSpineAnimationViewModel.SelectedAnimationName))
+        {
+            LogInteraction("animation-changed");
+            return;
+        }
+
+        if (propertyName is nameof(InspectorPreviewSpineAnimationViewModel.SelectedSkinName))
+        {
+            LogInteraction("skin-changed");
+            return;
+        }
+
+        if (propertyName is nameof(InspectorPreviewSpineAnimationViewModel.IsPlaying))
+        {
+            LogInteraction(ViewModel?.IsPlaying == true ? "playback-resumed" : "playback-paused");
+        }
+    }
+
+    private void LogInteraction(string eventName)
+    {
+        if (_diagnostics is null || ViewModel is null)
+        {
+            return;
+        }
+
+        _diagnostics.PlaybackInteraction(
+            eventName,
+            ViewModel.SelectedAnimationName,
+            ViewModel.SelectedSkinName,
+            ViewModel.IsPlaying,
+            ViewModel.PlaybackTime,
+            ViewModel.PlaybackSpeed);
+    }
+
+    private static D3D11SpineRenderDiagnostics? CreateDiagnostics() =>
+        SpineAnimationPreviewRenderBackendSelector.ResolveD3D11DiagnosticsEnabled()
+            ? new D3D11SpineRenderDiagnostics(static message => Debug.WriteLine(message))
+            : null;
 }
