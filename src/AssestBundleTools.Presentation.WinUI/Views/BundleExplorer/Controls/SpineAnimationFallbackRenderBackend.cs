@@ -31,6 +31,13 @@ internal sealed class SpineAnimationFallbackRenderBackend : ISpineAnimationPrevi
         ActiveBackend.SetCurrentFrame(frame);
     }
 
+    public void PrewarmFrames(IReadOnlyList<SpineAnimationFrameDto> frames)
+    {
+        ArgumentNullException.ThrowIfNull(frames);
+
+        ActiveBackend.PrewarmFrames(frames);
+    }
+
     public void LoadTexturePages(IReadOnlyDictionary<string, byte[]> texturePageContents)
     {
         ArgumentNullException.ThrowIfNull(texturePageContents);

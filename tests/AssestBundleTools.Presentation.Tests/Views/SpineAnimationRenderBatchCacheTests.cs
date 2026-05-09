@@ -36,6 +36,34 @@ public sealed class SpineAnimationRenderBatchCacheTests
     }
 
     [Fact]
+    public void TryGetVertexBatches_ShouldReturnStoredBatches_ForMatchingFrameAndTextureVersion()
+    {
+        var cache = new SpineAnimationRenderBatchCache();
+        var frame = CreateFrame();
+        var stored = SpineAnimationVertexBatchProjector.Project(frame, CreateTexturePages());
+
+        cache.StoreVertexBatches(frame, texturePageVersion: 3, stored);
+        var result = cache.TryGetVertexBatches(frame, texturePageVersion: 3, out var resolved);
+
+        Assert.True(result);
+        Assert.Same(stored, resolved);
+    }
+
+    [Fact]
+    public void TryGetVertexBatches_ShouldRejectStoredBatches_WhenTextureVersionChanges()
+    {
+        var cache = new SpineAnimationRenderBatchCache();
+        var frame = CreateFrame();
+        var stored = SpineAnimationVertexBatchProjector.Project(frame, CreateTexturePages());
+
+        cache.StoreVertexBatches(frame, texturePageVersion: 3, stored);
+        var result = cache.TryGetVertexBatches(frame, texturePageVersion: 4, out var resolved);
+
+        Assert.False(result);
+        Assert.Empty(resolved);
+    }
+
+    [Fact]
     public void GetVertexBatches_ShouldEvictLeastRecentlyUsedFrame_WhenCapacityIsExceeded()
     {
         var cache = new SpineAnimationRenderBatchCache(maxCachedFrames: 2);

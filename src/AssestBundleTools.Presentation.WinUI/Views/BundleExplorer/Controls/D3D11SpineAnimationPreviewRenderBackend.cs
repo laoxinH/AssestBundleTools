@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -23,6 +22,7 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
     private readonly D3D11SpineTexturePageCache _texturePageCache = new();
     private readonly D3D11SpineAnimationBatchRenderer _batchRenderer = new();
     private readonly SpineAnimationRenderBatchCache _batchCache = new();
+    private readonly D3D11SpineBatchPrewarmer _batchPrewarmer;
     private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _resizeTimer;
     private SpineAnimationFrameDto? _currentFrame;
     private ID3D11Device? _device;
@@ -43,6 +43,13 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
         _diagnostics = diagnostics ?? new D3D11SpineRenderDiagnostics(null);
         _panel.SizeChanged += OnPanelSizeChanged;
         D3D11SpineAnimationBatchRenderer.BeginShaderPrecompile();
+        _batchPrewarmer = new D3D11SpineBatchPrewarmer(
+            _panel.DispatcherQueue,
+            _batchCache,
+            _diagnostics,
+            () => _currentFrame,
+            () => _texturePageVersion,
+            Invalidate);
         _resizeTimer = _panel.DispatcherQueue.CreateTimer();
         _resizeTimer.Interval = TimeSpan.FromMilliseconds(80);
         _resizeTimer.IsRepeating = false;
@@ -55,6 +62,14 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
     {
         _currentFrame = frame;
         Invalidate();
+    }
+
+    public void PrewarmFrames(IReadOnlyList<SpineAnimationFrameDto> frames)
+    {
+        ArgumentNullException.ThrowIfNull(frames);
+
+        _batchPrewarmer.SetFrames(frames);
+        StartBatchPrewarmIfReady();
     }
 
     public void LoadTexturePages(IReadOnlyDictionary<string, byte[]> texturePageContents)
@@ -85,12 +100,14 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
     public void ResetFrameCache()
     {
         _batchCache.Clear();
+        StartBatchPrewarmIfReady();
     }
 
     public void ReleaseResources()
     {
         _resizeTimer.Stop();
         _deviceRecoveryAttempted = false;
+        _batchPrewarmer.Cancel();
         ReleaseDeviceResources();
     }
 
@@ -154,7 +171,11 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
             _texturePageCache.GpuPages.Count,
             _texturePageCache.GpuPageBytes,
             uploadElapsed);
-        var batches = ResolveBatches(out var batchProjectionElapsed);
+        if (!TryResolveBatches(out var batches, out var batchProjectionElapsed))
+        {
+            return;
+        }
+
         var clipBatches = ResolveClipBatches(batches, out var clipProjectionElapsed);
         _context.ClearRenderTargetView(_renderTargetView, ResolveSmokeTint(batches.Count));
         var drawElapsed = TimeSpan.Zero;
@@ -218,6 +239,7 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
         _texturePageCache.Clear();
         _batchRenderer.ReleaseDeviceResources();
         _batchCache.Clear();
+        _batchPrewarmer.Cancel();
     }
 
     private bool EnsureDeviceResources()
@@ -365,7 +387,10 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
 
                 _texturePageCache.ReplaceDecodedPages(decodedPages);
                 InvalidateBatchCache();
-                Invalidate();
+                if (!StartBatchPrewarmIfReady())
+                {
+                    Invalidate();
+                }
             });
         }
         catch (Exception exception)
@@ -392,6 +417,33 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
             });
         }
     }
+
+    private bool TryResolveBatches(
+        out IReadOnlyList<SpineAnimationVertexBatch> batches,
+        out TimeSpan elapsed)
+    {
+        if (_batchCache.TryGetVertexBatches(_currentFrame, _texturePageVersion, out batches))
+        {
+            elapsed = TimeSpan.Zero;
+            return true;
+        }
+
+        if (CanPrewarmCurrentFrame())
+        {
+            StartBatchPrewarmIfReady();
+            elapsed = TimeSpan.Zero;
+            return false;
+        }
+
+        batches = ResolveBatches(out elapsed);
+        return true;
+    }
+
+    private bool CanPrewarmCurrentFrame() =>
+        _batchPrewarmer.CanPrewarmCurrentFrame(_texturePageCache.TexturePageSizes.Count);
+
+    private bool StartBatchPrewarmIfReady() =>
+        _batchPrewarmer.TryStart(_texturePageCache.TexturePageSizes, _texturePageVersion);
 
     private D3D11SpineRenderFrameMetrics CreateFrameMetrics(
         IReadOnlyList<SpineAnimationVertexBatch> batches,
@@ -433,6 +485,7 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
     {
         _texturePageVersion++;
         _batchCache.Clear();
+        _batchPrewarmer.Cancel();
     }
 
     private static long CountPayloadBytes(IReadOnlyDictionary<string, byte[]> texturePageContents)
@@ -475,119 +528,4 @@ internal sealed class D3D11SpineAnimationPreviewRenderBackend : ISpineAnimationP
             DxgiErrorDeviceReset or
             DxgiErrorDriverInternalError;
 
-    private readonly record struct D3D11SpineBatchStats(
-        bool HasVertices,
-        double MinX,
-        double MinY,
-        double MaxX,
-        double MaxY,
-        double MinU,
-        double MinV,
-        double MaxU,
-        double MaxV,
-        double MinAlpha,
-        double MaxAlpha)
-    {
-        public static D3D11SpineBatchStats Empty =>
-            new(false, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d);
-
-        public D3D11SpineBatchStats Include(SpineAnimationVertexBatch batch)
-        {
-            var stats = this;
-            foreach (var vertex in batch.Vertices)
-            {
-                stats = stats.Include(vertex);
-            }
-
-            return stats;
-        }
-
-        public string Format() =>
-            HasVertices
-                ? $"bounds={Format(MinX)},{Format(MinY)}..{Format(MaxX)},{Format(MaxY)} " +
-                  $"uv={Format(MinU)},{Format(MinV)}..{Format(MaxU)},{Format(MaxV)} " +
-                  $"alpha={Format(MinAlpha)}..{Format(MaxAlpha)}"
-                : string.Empty;
-
-        private D3D11SpineBatchStats Include(SpineAnimationBatchVertex vertex)
-        {
-            if (!HasVertices)
-            {
-                return new D3D11SpineBatchStats(
-                    true,
-                    vertex.X,
-                    vertex.Y,
-                    vertex.X,
-                    vertex.Y,
-                    vertex.U,
-                    vertex.V,
-                    vertex.U,
-                    vertex.V,
-                    vertex.A,
-                    vertex.A);
-            }
-
-            return this with
-            {
-                MinX = Math.Min(MinX, vertex.X),
-                MinY = Math.Min(MinY, vertex.Y),
-                MaxX = Math.Max(MaxX, vertex.X),
-                MaxY = Math.Max(MaxY, vertex.Y),
-                MinU = Math.Min(MinU, vertex.U),
-                MinV = Math.Min(MinV, vertex.V),
-                MaxU = Math.Max(MaxU, vertex.U),
-                MaxV = Math.Max(MaxV, vertex.V),
-                MinAlpha = Math.Min(MinAlpha, vertex.A),
-                MaxAlpha = Math.Max(MaxAlpha, vertex.A)
-            };
-        }
-
-        private static string Format(double value) =>
-            value.ToString("0.###", CultureInfo.InvariantCulture);
-    }
-
-    private readonly record struct D3D11SpineTexturePixelStats(
-        bool HasPixels,
-        int MinAlpha,
-        int MaxAlpha,
-        long NonZeroAlphaPixels,
-        long TotalPixels)
-    {
-        public static D3D11SpineTexturePixelStats Empty =>
-            new(false, 255, 0, 0, 0);
-
-        public D3D11SpineTexturePixelStats Include(D3D11SpineDecodedTexturePage page)
-        {
-            var stats = this;
-            for (var index = 3; index < page.BgraPixels.Length; index += 4)
-            {
-                stats = stats.Include(page.BgraPixels[index]);
-            }
-
-            return stats;
-        }
-
-        public string Format()
-        {
-            if (!HasPixels || TotalPixels <= 0)
-            {
-                return string.Empty;
-            }
-
-            var nonZeroPercent = NonZeroAlphaPixels * 100d / TotalPixels;
-            return string.Create(
-                CultureInfo.InvariantCulture,
-                $"textureAlpha={MinAlpha}..{MaxAlpha} nonZero={nonZeroPercent:0.###}%");
-        }
-
-        private D3D11SpineTexturePixelStats Include(byte alpha)
-        {
-            return new D3D11SpineTexturePixelStats(
-                true,
-                HasPixels ? Math.Min(MinAlpha, alpha) : alpha,
-                HasPixels ? Math.Max(MaxAlpha, alpha) : alpha,
-                NonZeroAlphaPixels + (alpha > 0 ? 1 : 0),
-                TotalPixels + 1);
-        }
-    }
 }

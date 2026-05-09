@@ -28,6 +28,7 @@ $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 - `gpu-texture-upload uploaded / totalGpuPages / uploadedBytes / totalGpuBytes / elapsedMs`
 - `frame batches / vertices / indices / gpuBytes / elapsedMs`
 - `uploadMs / projectMs / clipMs / drawMs / presentMs`
+- `batch-renderer-prewarmed` / `batch-prewarm-completed`
 - `interaction event / animation / skin / playing / time / speed`
 - `device-lost recovery=queued` 或 `rendering-failed`
 
@@ -76,4 +77,5 @@ $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 - 大样本首帧主要消耗在 Texture2D GPU upload、device / shader / buffer warmup 和首帧 draw；后续 GPU draw / present 通常低于 `1 ms`。`Vortice.D3DCompiler.dll` 在首帧前首次加载，首帧 `drawMs` 稳定在约 `16 ms`，下一步先通过 batch renderer shader / pipeline 预热确认这部分能否移出首个真实动画帧。
 - 新动画帧的 Presentation 投影成本主要在 `projectMs / clipMs`，当前大样本约 `1.4-3 ms`；同一帧重复渲染时缓存命中后基本归零。
 - 当前迹象不支持“持续 GPU 绘制是主要瓶颈”的判断。有界多帧 batch cache 已让回环 / 重复帧路径的 `projectMs / clipMs` 基本归零。
+- 复杂样本切入时曾出现 `projectMs=40.633 ms` 的冷投影尖峰，说明仍需避免 UI render 路径同步投影大 mesh。当前策略改为 texture page 解码完成后后台预热当前动画 sampled frames 的 vertex batch，回写前校验 texture page version；未命中且预热可用时，D3D 后端会延迟该帧绘制而不是在 UI 线程同步投影。
 - 若有用户可感知卡顿但 D3D 分段耗时仍低，应补 Application / Infrastructure 侧预览生成、runtime 采样和 DTO 投影的加载期诊断，而不是继续压缩 D3D draw。

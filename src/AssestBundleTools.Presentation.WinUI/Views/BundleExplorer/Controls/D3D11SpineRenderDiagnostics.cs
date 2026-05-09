@@ -138,6 +138,18 @@ internal sealed class D3D11SpineRenderDiagnostics
         Write($"batch-renderer-prewarmed elapsedMs={FormatMilliseconds(elapsed)}");
     }
 
+    public void BatchPrewarmCompleted(int prewarmedFrameCount, int requestedFrameCount, TimeSpan elapsed)
+    {
+        if (!IsEnabled)
+        {
+            return;
+        }
+
+        Write(
+            $"batch-prewarm-completed prewarmedFrames={prewarmedFrameCount} " +
+            $"requestedFrames={requestedFrameCount} elapsedMs={FormatMilliseconds(elapsed)}");
+    }
+
     public void FrameRendered(D3D11SpineRenderFrameMetrics metrics)
     {
         if (!IsEnabled)

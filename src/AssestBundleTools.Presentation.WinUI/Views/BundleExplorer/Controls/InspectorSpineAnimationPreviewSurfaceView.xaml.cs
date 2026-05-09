@@ -58,6 +58,7 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         view.AttachObservedViewModel(args.NewValue as InspectorPreviewSpineAnimationViewModel);
         view.RefreshTexturePages();
         view.SyncRenderFrame();
+        view.RefreshPrewarmFrames();
         view.UpdateBindingsNow();
         view.InvalidatePreviewSurface();
     }
@@ -67,6 +68,7 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         AttachObservedViewModel(ViewModel);
         RefreshTexturePages();
         SyncRenderFrame();
+        RefreshPrewarmFrames();
         _lastTickUtc = DateTimeOffset.UtcNow;
         _playbackTimer.Start();
         UpdateBindingsNow();
@@ -141,6 +143,11 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         if (e.PropertyName is nameof(InspectorPreviewSpineAnimationViewModel.TexturePageContents))
         {
             RefreshTexturePages();
+        }
+
+        if (ShouldRefreshPrewarmFrames(e.PropertyName))
+        {
+            RefreshPrewarmFrames();
         }
 
         LogInteractionForProperty(e.PropertyName);
@@ -248,6 +255,13 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         _renderBackend.ClearTexturePages();
     }
 
+    private void RefreshPrewarmFrames()
+    {
+        _renderBackend.PrewarmFrames(
+            ViewModel?.SelectedAnimation?.SampledFrames ??
+            Array.Empty<SpineAnimationFrameDto>());
+    }
+
     private bool SyncRenderFrame()
     {
         var frame = ViewModel?.CurrentFrame;
@@ -296,6 +310,11 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
             LogInteraction(ViewModel?.IsPlaying == true ? "playback-resumed" : "playback-paused");
         }
     }
+
+    private static bool ShouldRefreshPrewarmFrames(string? propertyName) =>
+        propertyName is nameof(InspectorPreviewSpineAnimationViewModel.SelectedAnimationName) or
+            nameof(InspectorPreviewSpineAnimationViewModel.SelectedSkinName) or
+            nameof(InspectorPreviewSpineAnimationViewModel.TexturePageContents);
 
     private void LogInteraction(string eventName)
     {

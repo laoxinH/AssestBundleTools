@@ -31,6 +31,11 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
         Invalidate();
     }
 
+    public void PrewarmFrames(IReadOnlyList<SpineAnimationFrameDto> frames)
+    {
+        ArgumentNullException.ThrowIfNull(frames);
+    }
+
     public void LoadTexturePages(IReadOnlyDictionary<string, byte[]> texturePageContents)
     {
         ArgumentNullException.ThrowIfNull(texturePageContents);

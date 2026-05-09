@@ -49,6 +49,22 @@ public sealed class SpineAnimationFallbackRenderBackendTests
     }
 
     [Fact]
+    public void PrewarmFrames_ShouldRouteToActiveBackend()
+    {
+        var primary = new RecordingBackend();
+        var fallback = new RecordingBackend();
+        var backend = new SpineAnimationFallbackRenderBackend(primary, fallback, _ => { });
+        var frames = new[] { new SpineAnimationFrameDto(0d, []) };
+
+        backend.PrewarmFrames(frames);
+        backend.SwitchToFallback();
+        backend.PrewarmFrames(frames);
+
+        Assert.Same(frames, primary.PrewarmedFrames);
+        Assert.Same(frames, fallback.PrewarmedFrames);
+    }
+
+    [Fact]
     public void ReleaseResources_ShouldReleasePrimaryAndFallback()
     {
         var primary = new RecordingBackend();
@@ -65,6 +81,8 @@ public sealed class SpineAnimationFallbackRenderBackendTests
     {
         public SpineAnimationFrameDto? CurrentFrame { get; private set; }
 
+        public IReadOnlyList<SpineAnimationFrameDto>? PrewarmedFrames { get; private set; }
+
         public IReadOnlyDictionary<string, byte[]>? TexturePages { get; private set; }
 
         public bool TexturePagesCleared { get; private set; }
@@ -77,6 +95,9 @@ public sealed class SpineAnimationFallbackRenderBackendTests
 
         public void SetCurrentFrame(SpineAnimationFrameDto? frame) =>
             CurrentFrame = frame;
+
+        public void PrewarmFrames(IReadOnlyList<SpineAnimationFrameDto> frames) =>
+            PrewarmedFrames = frames;
 
         public void LoadTexturePages(IReadOnlyDictionary<string, byte[]> texturePageContents)
         {

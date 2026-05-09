@@ -58,6 +58,53 @@ internal sealed class SpineAnimationRenderBatchCache
         return batches;
     }
 
+    public bool TryGetVertexBatches(
+        SpineAnimationFrameDto? frame,
+        int texturePageVersion,
+        out IReadOnlyList<SpineAnimationVertexBatch> batches)
+    {
+        if (frame is null ||
+            _texturePageVersion != texturePageVersion ||
+            !_vertexEntries.TryGetValue(frame, out var entry))
+        {
+            batches = EmptyVertexBatches;
+            return false;
+        }
+
+        entry.LastUsedStamp = NextStamp();
+        batches = entry.VertexBatches;
+        return true;
+    }
+
+    public void StoreVertexBatches(
+        SpineAnimationFrameDto frame,
+        int texturePageVersion,
+        IReadOnlyList<SpineAnimationVertexBatch> batches)
+    {
+        ArgumentNullException.ThrowIfNull(frame);
+        ArgumentNullException.ThrowIfNull(batches);
+
+        if (_texturePageVersion != texturePageVersion)
+        {
+            Clear();
+            _texturePageVersion = texturePageVersion;
+        }
+
+        if (_vertexEntries.TryGetValue(frame, out var entry))
+        {
+            if (ReferenceEquals(entry.VertexBatches, batches))
+            {
+                entry.LastUsedStamp = NextStamp();
+                return;
+            }
+
+            _clipEntries.Remove(entry.VertexBatches);
+        }
+
+        _vertexEntries[frame] = new VertexBatchCacheEntry(batches, NextStamp());
+        TrimVertexEntries();
+    }
+
     public IReadOnlyList<SpineAnimationClipSpaceBatch> GetClipBatches(
         IReadOnlyList<SpineAnimationVertexBatch> batches,
         float viewportWidth,

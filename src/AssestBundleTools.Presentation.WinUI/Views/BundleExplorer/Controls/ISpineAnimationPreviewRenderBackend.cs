@@ -6,6 +6,8 @@ internal interface ISpineAnimationPreviewRenderBackend
 {
     void SetCurrentFrame(SpineAnimationFrameDto? frame);
 
+    void PrewarmFrames(IReadOnlyList<SpineAnimationFrameDto> frames);
+
     void LoadTexturePages(IReadOnlyDictionary<string, byte[]> texturePageContents);
 
     void ClearTexturePages();
