@@ -26,6 +26,12 @@ public interface IFilePickerService
     Task<string?> PickBundleImportDirectoryAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// 选择 Spine 序列帧导出的目标目录。
+    /// 返回 <see langword="null"/> 表示用户主动取消。
+    /// </summary>
+    Task<string?> PickSpineFrameSequenceExportDirectoryAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// 为当前资源替换流程选择一个外部文件来源。
     /// 返回 <see langword="null"/> 表示用户主动取消，不应视为错误。
     /// </summary>

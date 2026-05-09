@@ -81,6 +81,7 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
 
             OnPropertyChanged(nameof(SelectedAnimation));
             OnPropertyChanged(nameof(Duration));
+            OnPropertyChanged(nameof(CanExportFrameSequence));
             OnPropertyChanged(nameof(DisplayPlaybackTimeText));
             if (update.PlaybackTimeChanged)
             {
@@ -122,6 +123,7 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         OnPropertyChanged(nameof(SelectedAnimationName));
         OnPropertyChanged(nameof(SelectedAnimation));
         OnPropertyChanged(nameof(Duration));
+        OnPropertyChanged(nameof(CanExportFrameSequence));
         OnPropertyChanged(nameof(DisplayPlaybackTimeText));
         if (update.PlaybackTimeChanged)
         {
@@ -200,6 +202,11 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
                                      TexturePageContents.Count > 0;
 
     public bool HasRuntimePlayback => Preview?.PlaybackSource is not null;
+
+    public bool CanExportFrameSequence => HasSpineAnimation &&
+                                          HasRuntimePlayback &&
+                                          Duration > 0d &&
+                                          TexturePageContents.Count > 0;
 
     public bool IsShowingSetupPose => _isShowingSetupPose;
 
@@ -481,6 +488,7 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
     {
         OnPropertyChanged(nameof(HasSpineAnimation));
         OnPropertyChanged(nameof(HasRuntimePlayback));
+        OnPropertyChanged(nameof(CanExportFrameSequence));
         OnPropertyChanged(nameof(Visibility));
         OnPropertyChanged(nameof(IsSkinSelectionEnabled));
         OnPropertyChanged(nameof(SelectedAnimation));

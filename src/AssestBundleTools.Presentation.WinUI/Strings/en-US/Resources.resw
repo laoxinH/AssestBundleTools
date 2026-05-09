@@ -1176,6 +1176,21 @@
   <data name="InspectorPanelView.SpineAnimationPreview.Restart.ToolTip" xml:space="preserve">
     <value>Restart the Spine animation preview</value>
   </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.ExportFrames.ToolTip" xml:space="preserve">
+    <value>Export PNG frame sequence</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.Export.UnavailableMessage" xml:space="preserve">
+    <value>The current Spine animation cannot be exported yet.</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.Export.Started.Format" xml:space="preserve">
+    <value>Exporting {0} PNG frames to {1}</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.Export.Succeeded.Format" xml:space="preserve">
+    <value>Exported {0} PNG frames to {1}</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.Export.FailedMessage" xml:space="preserve">
+    <value>Spine PNG frame export failed.</value>
+  </data>
   <data name="InspectorPanelView.SpriteCropResultModeButton.ToolTip" xml:space="preserve">
     <value>Show crop result</value>
   </data>

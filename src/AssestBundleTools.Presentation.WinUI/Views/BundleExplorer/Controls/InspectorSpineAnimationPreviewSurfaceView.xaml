@@ -26,6 +26,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <ComboBox
@@ -114,6 +115,20 @@
                     FontFamily="Segoe Fluent Icons"
                     FontSize="14"
                     Glyph="&#xE72C;" />
+            </Button>
+
+            <Button
+                x:Name="ExportFramesButton"
+                Grid.Column="8"
+                Width="34"
+                Height="34"
+                MinWidth="34"
+                IsEnabled="{x:Bind ViewModel.CanExportFrameSequence, Mode=OneWay}"
+                Click="OnExportFramesButtonClick">
+                <FontIcon
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="14"
+                    Glyph="&#xE74E;" />
             </Button>
         </Grid>
 

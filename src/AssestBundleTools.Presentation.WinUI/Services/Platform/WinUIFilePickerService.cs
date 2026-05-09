@@ -70,6 +70,14 @@ public sealed class WinUIFilePickerService : IFilePickerService
         return selectedFolder?.Path;
     }
 
+    public async Task<string?> PickSpineFrameSequenceExportDirectoryAsync(CancellationToken cancellationToken = default)
+    {
+        var picker = CreateFolderPicker();
+        var selectedFolder = await picker.PickSingleFolderAsync();
+        cancellationToken.ThrowIfCancellationRequested();
+        return selectedFolder?.Path;
+    }
+
     public async Task<string?> PickReplacementSourceFileAsync(
         AssetType targetAssetType,
         CancellationToken cancellationToken = default)

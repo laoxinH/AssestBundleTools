@@ -200,7 +200,7 @@ setup pose 继续作为独立语义。runtime session 可提供 setup pose 当�
 
 - 已用 `char_2026_yu_nian#12.ab` 复杂样本记录并验证 `60 FPS` 目标下的交互播放、速度切换、animation 切换和进度拖动观感。
 - 在高刷新显示器上继续验证 `120 FPS` 目标是否真的受益，并据实决定是否还需要对非播放控制类 UI 绑定继续节流。
-- 固定 fps 导出、序列帧或视频输出已从实时预览主线中正式拆出第一层产品化契约；当前已补上 `SampleFixedFramesAsync` 基础端口和 `PlanFrameSequenceExportAsync` 序列帧导出计划端口，可按指定 FPS 从 playback session 生成确定性 `SpineAnimationFrameDto` 序列，并计算整段序列共享画布、world-to-pixel 变换和 PNG 文件名。后续真实文件写入、PNG/GIF/视频编码和 FFmpeg 编排再接到该计划之后。
+- 固定 fps 导出、序列帧或视频输出已从实时预览主线中正式拆出产品化用例；当前已补上 `SampleFixedFramesAsync` 基础端口和 `PlanFrameSequenceExportAsync` 序列帧导出计划端口，可按指定 FPS 从 playback session 生成确定性 `SpineAnimationFrameDto` 序列，并计算整段序列共享画布、world-to-pixel 变换和 PNG 文件名。Presentation 预览控件已接入基础 PNG 序列帧导出入口：用户选择目标目录后，控件创建带时间戳的子目录，并用 Win2D 按导出计划写出当前 animation / skin 的 PNG 序列。GIF/视频编码和 FFmpeg 编排再接到该计划之后。
 - D3D runtime path 已作为默认高复杂 Spine 路径；后续继续补更多设备、device lost 恢复和工作集基线，若出现不可恢复问题则通过自动 fallback 或 `ABT_SPINE_D3D11=win2d` 回退。
 
 ## 10. 当前剩余工作清单
@@ -208,7 +208,7 @@ setup pose 继续作为独立语义。runtime session 可提供 setup pose 当�
 以下事项属于后续收口项，不改变当前“runtime playback session 已达到 `60 FPS` 交互预览目标”的判断：
 
 - `120 FPS` / 高刷新率实机验证尚未完成；进度 slider 与时间读数绑定已完成首轮节流，其他 UI 绑定是否需要继续节流仍待按高刷新目标和实测 XAML 压力决定。
-- 固定 fps 导出、序列帧导出和视频导出尚未完成真实文件写入；当前已完成固定 FPS 帧序列采样基础，以及序列帧导出计划中的共享画布、world-to-pixel 变换和 PNG 文件命名。后续只参考 SpineViewer 的基础播放与导出边界，优先补单帧 / 序列帧 PNG 写出、GIF/视频编码和 FFmpeg 编排，但仍通过本项目 Application 端口与 runtime-neutral DTO 落地。旧 sampled DTO 路径目前只作为 JSON fallback playback session 的姿态来源、兼容回退、测试稳定输入和未来导出基础保留。
+- 固定 fps 序列帧 PNG 导出已有基础入口；当前还没有导出参数面板、单帧截图入口、GIF/视频编码和 FFmpeg 编排。后续只参考 SpineViewer 的基础播放与导出边界，优先补导出 FPS / 尺寸 / 范围等参数，以及 GIF/视频输出，但仍通过本项目 Application 端口与 runtime-neutral DTO 落地。旧 sampled DTO 路径目前只作为 JSON fallback playback session 的姿态来源、兼容回退、测试稳定输入和未来导出基础保留。
 - JSON fallback 已完成首轮 playback session 化，但仍是基于既有 sampled frame 的轻量 session；若后续需要和官方 runtime 一样按 JSON timeline 即时求姿态，需要另行拆分 on-demand JSON sampler。
 - 更多 Spine Runtime 版本、linked mesh、path constraint、physics constraint 和更复杂 FFD / deform 行为不再作为主动扩展目标；只有当真实样本阻塞基础播放、动画切换或导出时，才按 adapter key 分版本做最小兼容，其他情况保留结构化诊断。
 - D3D 默认启用后还需要继续补更多设备、窗口缩放、skin 切换、device lost 恢复和工作集基线。

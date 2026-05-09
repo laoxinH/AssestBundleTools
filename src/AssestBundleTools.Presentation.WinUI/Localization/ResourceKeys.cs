@@ -688,6 +688,11 @@ public static class ResourceKeys
     public const string InspectorSpineAnimationPreviewPlayPauseToolTip = "InspectorPanelView.SpineAnimationPreview.PlayPause.ToolTip";
     public const string InspectorSpineAnimationPreviewStepNextToolTip = "InspectorPanelView.SpineAnimationPreview.StepNext.ToolTip";
     public const string InspectorSpineAnimationPreviewRestartToolTip = "InspectorPanelView.SpineAnimationPreview.Restart.ToolTip";
+    public const string InspectorSpineAnimationPreviewExportFramesToolTip = "InspectorPanelView.SpineAnimationPreview.ExportFrames.ToolTip";
+    public const string InspectorSpineAnimationPreviewExportUnavailableMessage = "InspectorPanelView.SpineAnimationPreview.Export.UnavailableMessage";
+    public const string InspectorSpineAnimationPreviewExportStartedFormat = "InspectorPanelView.SpineAnimationPreview.Export.Started.Format";
+    public const string InspectorSpineAnimationPreviewExportSucceededFormat = "InspectorPanelView.SpineAnimationPreview.Export.Succeeded.Format";
+    public const string InspectorSpineAnimationPreviewExportFailedMessage = "InspectorPanelView.SpineAnimationPreview.Export.FailedMessage";
     public const string InspectorSpriteCropResultModeToolTip = "InspectorPanelView.SpriteCropResultModeButton.ToolTip";
     public const string InspectorSpriteCropPreviewModeToolTip = "InspectorPanelView.SpriteCropPreviewModeButton.ToolTip";
     public const string InspectorSpritePreviewOverlayBadgeFormat = "InspectorPanelView.SpritePreviewOverlay.Badge.Format";

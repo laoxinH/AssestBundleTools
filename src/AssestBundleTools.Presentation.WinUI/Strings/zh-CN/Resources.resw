@@ -1176,6 +1176,21 @@
   <data name="InspectorPanelView.SpineAnimationPreview.Restart.ToolTip" xml:space="preserve">
     <value>重新开始 Spine 动画预览</value>
   </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.ExportFrames.ToolTip" xml:space="preserve">
+    <value>导出 PNG 序列帧</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.Export.UnavailableMessage" xml:space="preserve">
+    <value>当前 Spine 动画暂不能导出。</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.Export.Started.Format" xml:space="preserve">
+    <value>正在导出 {0} 张 PNG 序列帧到 {1}</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.Export.Succeeded.Format" xml:space="preserve">
+    <value>已导出 {0} 张 PNG 序列帧到 {1}</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.Export.FailedMessage" xml:space="preserve">
+    <value>Spine PNG 序列帧导出失败。</value>
+  </data>
   <data name="InspectorPanelView.SpriteCropResultModeButton.ToolTip" xml:space="preserve">
     <value>显示裁切结果</value>
   </data>

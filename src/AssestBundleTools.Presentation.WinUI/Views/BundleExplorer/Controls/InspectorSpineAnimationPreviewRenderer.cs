@@ -48,6 +48,43 @@ internal static class InspectorSpineAnimationPreviewRenderer
         DrawOrigin(drawingSession, viewportTransform);
     }
 
+    public static void DrawExport(
+        CanvasDrawingSession drawingSession,
+        SpineAnimationFrameDto frame,
+        IReadOnlyDictionary<string, CanvasBitmap> textureBitmaps,
+        SpineAnimationRuntimeFrameSequenceExportLayoutDto layout)
+    {
+        ArgumentNullException.ThrowIfNull(drawingSession);
+        ArgumentNullException.ThrowIfNull(frame);
+        ArgumentNullException.ThrowIfNull(textureBitmaps);
+        ArgumentNullException.ThrowIfNull(layout);
+
+        var drawItems = BuildDrawItems(frame, textureBitmaps);
+        if (drawItems.Count == 0)
+        {
+            return;
+        }
+
+        var viewportTransform = CreateExportTransform(layout);
+        foreach (var item in drawItems)
+        {
+            if (item.HasMesh &&
+                InspectorSpineTexturedTriangleRenderer.Draw(
+                    drawingSession,
+                    item.Texture,
+                    item.Image,
+                    item.MeshVertices,
+                    item.MeshTriangles,
+                    viewportTransform,
+                    item.Opacity))
+            {
+                continue;
+            }
+
+            DrawRectangleItem(drawingSession, item, viewportTransform);
+        }
+    }
+
     private static IReadOnlyList<SpineDrawItem> BuildDrawItems(
         SpineAnimationFrameDto frame,
         IReadOnlyDictionary<string, CanvasBitmap> textureBitmaps)
@@ -104,6 +141,16 @@ internal static class InspectorSpineAnimationPreviewRenderer
                Matrix3x2.CreateScale((float)scale, (float)-scale) *
                Matrix3x2.CreateTranslation(width / 2f, height / 2f);
     }
+
+    private static Matrix3x2 CreateExportTransform(
+        SpineAnimationRuntimeFrameSequenceExportLayoutDto layout) =>
+        new(
+            (float)layout.WorldToPixelScale,
+            0f,
+            0f,
+            (float)-layout.WorldToPixelScale,
+            (float)layout.WorldToPixelOffsetX,
+            (float)layout.WorldToPixelOffsetY);
 
     private static SpineBounds ResolveBounds(IReadOnlyList<SpineDrawItem> drawItems)
     {

@@ -145,6 +145,7 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         }
 
         _isPreviewRunning = false;
+        CancelFrameSequenceExport();
         StopRenderingLoop();
         DisposeRuntimePlaybackSession();
         DetachObservedViewModel(_observedViewModel);
@@ -195,6 +196,9 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         ToolTipService.SetToolTip(
             RestartButton,
             UiText.Get(ResourceKeys.InspectorSpineAnimationPreviewRestartToolTip));
+        ToolTipService.SetToolTip(
+            ExportFramesButton,
+            UiText.Get(ResourceKeys.InspectorSpineAnimationPreviewExportFramesToolTip));
     }
 
     private void AttachObservedViewModel(InspectorPreviewSpineAnimationViewModel? viewModel)
