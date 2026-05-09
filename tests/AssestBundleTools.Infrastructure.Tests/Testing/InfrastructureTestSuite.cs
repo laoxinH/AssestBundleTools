@@ -98,6 +98,66 @@ internal static class InfrastructureTestSuite
             AssetsToolsAssetPreviewGeneratorTests.GenerateAsync_ShouldReturnGenerationFailureDetail_WhenUnexpectedExceptionOccurs);
         await RunTestAsync(
             failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV42RuntimeDrawCommands_FromJsonSkeleton),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV42RuntimeDrawCommands_FromJsonSkeleton);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV38RuntimeDrawCommands_FromJsonSkeleton),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV38RuntimeDrawCommands_FromJsonSkeleton);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV38SkinPreviewVariants_FromJsonSkeleton),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV38SkinPreviewVariants_FromJsonSkeleton);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV38MeshDrawCommands_FromJsonSkeleton),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV38MeshDrawCommands_FromJsonSkeleton);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV42MeshDrawCommands_FromJsonSkeleton),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV42MeshDrawCommands_FromJsonSkeleton);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldApplyV38DrawOrderAndSlotColorTimelines),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldApplyV38DrawOrderAndSlotColorTimelines);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldApplyV38UnweightedMeshDeformTimeline),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldApplyV38UnweightedMeshDeformTimeline);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldApplyV38WeightedMeshDeformTimeline),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldApplyV38WeightedMeshDeformTimeline);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldApplyV38TransformConstraintTimeline),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldApplyV38TransformConstraintTimeline);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldApplyV38IkConstraintTimeline),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldApplyV38IkConstraintTimeline);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldApplyV42MeshDeformTimeline),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldApplyV42MeshDeformTimeline);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldApplyV42IkConstraintTimeline),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldApplyV42IkConstraintTimeline);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldTryRegisteredAdapters_ForBinarySkeletonWithUnknownRuntime),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldTryRegisteredAdapters_ForBinarySkeletonWithUnknownRuntime);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldReturnNotHandled_WhenRuntimeMetadataIsMissing),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldReturnNotHandled_WhenRuntimeMetadataIsMissing);
+        await RunTestAsync(
+            failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldReturnNotHandled_WhenV42ParserReturnsNullSkeletonData),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldReturnNotHandled_WhenV42ParserReturnsNullSkeletonData);
+        await RunTestAsync(
+            failures,
             nameof(AssetsToolsMeshTopologyBuilderTests.BuildTriangles_ShouldReadTriangleAndQuadTopology),
             AssetsToolsMeshTopologyBuilderTests.BuildTriangles_ShouldReadTriangleAndQuadTopology);
         await RunTestAsync(

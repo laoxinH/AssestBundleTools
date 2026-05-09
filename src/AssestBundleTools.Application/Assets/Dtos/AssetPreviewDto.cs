@@ -34,4 +34,10 @@ public sealed record AssetPreviewDto(
     AssetPreviewFontDto? Font = null,
     AssetPreviewGameObjectDto? GameObject = null,
     AssetPreviewMonoBehaviourDto? MonoBehaviour = null,
-    AssetPreviewAnimatorControllerDto? AnimatorController = null);
+    AssetPreviewAnimatorControllerDto? AnimatorController = null)
+{
+    /// <summary>
+    /// 完整文本内容，供 Application 结构化解析使用；Presentation 显示仍应优先使用有界的 <see cref="TextContent"/>。
+    /// </summary>
+    public string? FullTextContent { get; init; }
+}

@@ -5,14 +5,18 @@
       "commandName": "Project",
       "environmentVariables": {
         "ABT_ENVIRONMENT": "Development",
-        "ABT_DEBUG_PROFILE": "UnpackagedDebug"
+        "ABT_DEBUG_PROFILE": "UnpackagedDebug",
+        "ABT_SPINE_D3D11_SMOKE": "1",
+        "ABT_SPINE_D3D11_DIAGNOSTICS": "1"
       }
     },
     "AssestBundleTools (Package Debug)": {
       "commandName": "MsixPackage",
       "environmentVariables": {
         "ABT_ENVIRONMENT": "Development",
-        "ABT_DEBUG_PROFILE": "PackageDebug"
+        "ABT_DEBUG_PROFILE": "PackageDebug",
+        "ABT_SPINE_D3D11_SMOKE": "1",
+        "ABT_SPINE_D3D11_DIAGNOSTICS": "1"
       }
     }
   }

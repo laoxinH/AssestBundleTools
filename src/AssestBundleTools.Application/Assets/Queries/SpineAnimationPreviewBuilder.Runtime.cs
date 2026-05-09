@@ -14,12 +14,17 @@ internal sealed partial class SpineAnimationPreviewBuilder
     private async Task<SpineAnimationRuntimePreviewResultDto> TryBuildRuntimePreviewAsync(
         SpineAssetGroupPartDto skeletonAsset,
         string groupKey,
-        string skeletonJson,
+        string? skeletonJson,
         IReadOnlyList<SpineAtlasPageDto> atlasPages,
+        IReadOnlyList<string> atlasTexts,
+        byte[]? skeletonBinaryContent,
         CancellationToken cancellationToken)
     {
-        if (!TryResolveRuntime(skeletonJson, out var spineVersion, out var runtime) ||
-            runtime.SupportKind != SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable)
+        var runtime = SpineAnimationRuntimeResolver.Resolve(null);
+        string? spineVersion = null;
+        if (!string.IsNullOrWhiteSpace(skeletonJson) &&
+            (!TryResolveRuntime(skeletonJson, out spineVersion, out runtime) ||
+             runtime.SupportKind != SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable))
         {
             return SpineAnimationRuntimePreviewResultDto.NotHandled;
         }
@@ -30,7 +35,9 @@ internal sealed partial class SpineAnimationPreviewBuilder
                 skeletonAsset,
                 skeletonJson,
                 runtime,
-                atlasPages),
+                atlasPages,
+                atlasTexts,
+                skeletonBinaryContent),
             cancellationToken);
         if (result.IsCancelled ||
             !result.IsHandled ||

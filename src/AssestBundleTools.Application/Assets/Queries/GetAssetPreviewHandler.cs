@@ -405,6 +405,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             AssetPreviewKind.GameObject => "payload.game-object.json",
             AssetPreviewKind.MonoBehaviour => "payload.mono-behaviour.json",
             AssetPreviewKind.AnimatorController => "payload.animator-controller.json",
+            AssetPreviewKind.Binary => "payload.bin",
             _ => "payload.txt"
         };
 

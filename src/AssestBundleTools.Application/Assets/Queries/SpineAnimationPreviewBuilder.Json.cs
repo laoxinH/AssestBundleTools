@@ -56,17 +56,21 @@ internal sealed partial class SpineAnimationPreviewBuilder
 
     private static bool TryReadSkeletonJson(
         Result<AssetPreviewDto> previewResult,
-        out string skeletonJson)
+        out string skeletonJson) =>
+        AssetPreviewStructuredTextReader.TryReadText(previewResult, out skeletonJson);
+
+    private static bool TryReadSkeletonBinary(
+        Result<AssetPreviewDto> previewResult,
+        out byte[] skeletonBinaryContent)
     {
-        skeletonJson = string.Empty;
+        skeletonBinaryContent = Array.Empty<byte>();
         if (!previewResult.IsSuccess ||
-            previewResult.Value is not { Kind: AssetPreviewKind.Text } preview ||
-            string.IsNullOrWhiteSpace(preview.TextContent))
+            previewResult.Value is not { Kind: AssetPreviewKind.Binary, BinaryContent.Length: > 0 } preview)
         {
             return false;
         }
 
-        skeletonJson = preview.TextContent;
+        skeletonBinaryContent = preview.BinaryContent;
         return true;
     }
 

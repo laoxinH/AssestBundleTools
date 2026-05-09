@@ -171,3 +171,21 @@ $testDll = Join-Path $outDir 'AssestBundleTools.Presentation.Tests.dll'
 - 调试专用工作区启动参数
 
 当前阶段先保持最小、稳定、易用的调试方案即可。
+
+## 9. Spine D3D Smoke 验证
+
+Spine 高复杂 mesh 播放的 D3D11 后端当前仍是受控 smoke，不作为默认路径。需要验证 `SwapChainPanel` / D3D11 设备、swap chain、render target、Texture2D 预览载荷上传和顶点 / 索引批次提交时，可在启动前设置：
+
+```powershell
+$env:ABT_SPINE_D3D11_SMOKE = '1'
+```
+
+允许值为 `1`、`true` 或 `d3d11`。未设置时继续使用 Win2D 回退后端；该 smoke 当前会解码 Texture2D 预览载荷、上传为 D3D shader resource、采样真实贴图，并通过可复用动态 vertex / index buffer 提交批次。若 D3D render / resize / present 失败，会自动切回 Win2D 后端。
+
+需要记录真实样本基线时，可额外打开 D3D 诊断输出：
+
+```powershell
+$env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
+```
+
+该诊断只写入调试输出，记录 native `SwapChainPanel` 绑定 readiness / strategy、device / resize、Texture2D decode、GPU texture upload、节流后的 frame batch / vertex / index / elapsed 数据和 fallback 异常类型；不在 UI 中显示原始 D3D 异常。默认切换前还需要用大量三角样本补齐帧时间、内存占用和设备恢复路径验证。

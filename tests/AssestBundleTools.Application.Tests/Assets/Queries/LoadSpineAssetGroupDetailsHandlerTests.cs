@@ -56,7 +56,7 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
             GroupId: "spine-group:bundle.spine:assets/hero/hero"));
 
         TestAssert.True(result.IsSuccess, "Spine group details should load through the preview pipeline.");
-        TestAssert.Equal(2, previewHandler.HandleCallCount, "Atlas text and matched Texture2D image should be requested from the preview query.");
+        TestAssert.Equal(3, previewHandler.HandleCallCount, "Atlas text, matched Texture2D image and binary skeleton preview should use the preview query.");
         var details = result.Value ?? throw new InvalidOperationException("Expected Spine group details.");
         var page = TestAssert.Single(details.AtlasPages);
         TestAssert.Equal("hero.png", page.Name, "Atlas page name should be parsed.");

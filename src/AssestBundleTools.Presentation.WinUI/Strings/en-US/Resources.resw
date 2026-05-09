@@ -1149,8 +1149,29 @@
   <data name="InspectorPanelView.SpineGroup.RuntimeAdapter.Unavailable.Format" xml:space="preserve">
     <value>{0} · no adapter yet</value>
   </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.AnimationSelector.ToolTip" xml:space="preserve">
+    <value>Select Spine animation</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.SkinSelector.ToolTip" xml:space="preserve">
+    <value>Select Spine skin</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.Speed.ToolTip" xml:space="preserve">
+    <value>Select playback speed</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.Seek.ToolTip" xml:space="preserve">
+    <value>Seek playback position</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.SetupPose.ToolTip" xml:space="preserve">
+    <value>Show setup pose</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.StepPrevious.ToolTip" xml:space="preserve">
+    <value>Previous frame</value>
+  </data>
   <data name="InspectorPanelView.SpineAnimationPreview.PlayPause.ToolTip" xml:space="preserve">
     <value>Play or pause the Spine animation preview</value>
+  </data>
+  <data name="InspectorPanelView.SpineAnimationPreview.StepNext.ToolTip" xml:space="preserve">
+    <value>Next frame</value>
   </data>
   <data name="InspectorPanelView.SpineAnimationPreview.Restart.ToolTip" xml:space="preserve">
     <value>Restart the Spine animation preview</value>

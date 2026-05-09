@@ -679,7 +679,14 @@ public static class ResourceKeys
     public const string InspectorSpineGroupRuntimeAdapterLabel = "InspectorPanelView.SpineGroup.RuntimeAdapter.Label";
     public const string InspectorSpineGroupRuntimeAdapterFormat = "InspectorPanelView.SpineGroup.RuntimeAdapter.Format";
     public const string InspectorSpineGroupRuntimeAdapterUnavailableFormat = "InspectorPanelView.SpineGroup.RuntimeAdapter.Unavailable.Format";
+    public const string InspectorSpineAnimationPreviewAnimationSelectorToolTip = "InspectorPanelView.SpineAnimationPreview.AnimationSelector.ToolTip";
+    public const string InspectorSpineAnimationPreviewSkinSelectorToolTip = "InspectorPanelView.SpineAnimationPreview.SkinSelector.ToolTip";
+    public const string InspectorSpineAnimationPreviewSpeedToolTip = "InspectorPanelView.SpineAnimationPreview.Speed.ToolTip";
+    public const string InspectorSpineAnimationPreviewSeekToolTip = "InspectorPanelView.SpineAnimationPreview.Seek.ToolTip";
+    public const string InspectorSpineAnimationPreviewSetupPoseToolTip = "InspectorPanelView.SpineAnimationPreview.SetupPose.ToolTip";
+    public const string InspectorSpineAnimationPreviewStepPreviousToolTip = "InspectorPanelView.SpineAnimationPreview.StepPrevious.ToolTip";
     public const string InspectorSpineAnimationPreviewPlayPauseToolTip = "InspectorPanelView.SpineAnimationPreview.PlayPause.ToolTip";
+    public const string InspectorSpineAnimationPreviewStepNextToolTip = "InspectorPanelView.SpineAnimationPreview.StepNext.ToolTip";
     public const string InspectorSpineAnimationPreviewRestartToolTip = "InspectorPanelView.SpineAnimationPreview.Restart.ToolTip";
     public const string InspectorSpriteCropResultModeToolTip = "InspectorPanelView.SpriteCropResultModeButton.ToolTip";
     public const string InspectorSpriteCropPreviewModeToolTip = "InspectorPanelView.SpriteCropPreviewModeButton.ToolTip";

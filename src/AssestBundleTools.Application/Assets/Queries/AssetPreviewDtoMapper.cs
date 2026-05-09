@@ -7,6 +7,8 @@ namespace AssestBundleTools.Application.Assets.Queries;
 
 internal static class AssetPreviewDtoMapper
 {
+    private const int MaxTextDisplayCharacters = 24000;
+
     private static readonly JsonSerializerOptions SidecarJsonSerializerOptions = new(JsonSerializerDefaults.Web);
 
     public static AssetPreviewDto MapPreviewDto(
@@ -232,6 +234,8 @@ internal static class AssetPreviewDtoMapper
         bool isFromCache,
         AssetPreviewDiagnosticDto diagnostic)
     {
+        var fullTextContent = Encoding.UTF8.GetString(content);
+        var displayTextContent = TrimTextDisplayContent(fullTextContent);
         return new AssetPreviewDto(
             WorkspaceId: query.WorkspaceId,
             BundleId: query.BundleId,
@@ -239,7 +243,7 @@ internal static class AssetPreviewDtoMapper
             Kind: previewKind,
             ContentType: descriptor.ContentType,
             BinaryContent: null,
-            TextContent: Encoding.UTF8.GetString(content),
+            TextContent: displayTextContent,
             PreviewPayloadFilePath: previewPayloadFilePath,
             PreviewInfoItems: descriptor.PreviewInfoItems,
             PreviewMessage: descriptor.PreviewMessage,
@@ -248,7 +252,10 @@ internal static class AssetPreviewDtoMapper
             GeneratedAtUtc: descriptor.GeneratedAtUtc,
             Diagnostic: diagnostic,
             ImageOverlay: descriptor.ImageOverlay,
-            ImageFocus: HydrateImageFocus(descriptor.ImageFocus, imageFocusContent));
+            ImageFocus: HydrateImageFocus(descriptor.ImageFocus, imageFocusContent))
+        {
+            FullTextContent = fullTextContent
+        };
     }
 
     private static T? TryDeserialize<T>(byte[] content)
@@ -285,6 +292,14 @@ internal static class AssetPreviewDtoMapper
 
     private static bool PreviewKindUsesBinaryPayload(AssetPreviewKind previewKind)
     {
-        return previewKind is AssetPreviewKind.Image or AssetPreviewKind.Audio;
+        return previewKind is AssetPreviewKind.Image or AssetPreviewKind.Audio or AssetPreviewKind.Binary;
+    }
+
+    private static string TrimTextDisplayContent(string textContent)
+    {
+        var normalizedText = textContent.Replace("\r\n", "\n").Replace('\r', '\n');
+        return normalizedText.Length <= MaxTextDisplayCharacters
+            ? normalizedText
+            : normalizedText[..MaxTextDisplayCharacters];
     }
 }

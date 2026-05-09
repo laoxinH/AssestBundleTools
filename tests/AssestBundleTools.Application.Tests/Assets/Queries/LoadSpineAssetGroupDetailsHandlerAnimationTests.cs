@@ -49,6 +49,18 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
                               "height": 128
                             }
                           }
+                        },
+                        "skin-alt": {
+                          "body-slot": {
+                            "body": {
+                              "type": "region",
+                              "path": "body-alt",
+                              "x": 1,
+                              "y": 2,
+                              "width": 64,
+                              "height": 128
+                            }
+                          }
                         }
                       },
                       "animations": {
@@ -86,6 +98,9 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
                     body
                       xy: 16, 24
                       size: 64, 128
+                    body-alt
+                      xy: 96, 24
+                      size: 64, 128
                     """));
             }
 
@@ -104,6 +119,9 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
         TestAssert.Equal("4.1.24", animationPreview.SpineVersion, "Spine version should be preserved.");
         TestAssert.Equal(2, animationPreview.Bones.Count, "Bones should be parsed for pose sampling.");
         TestAssert.Equal(1, animationPreview.Slots.Count, "Slots should be parsed for draw order.");
+        _ = animationPreview.SetupFrame ??
+            throw new InvalidOperationException("Expected JSON fallback setup pose frame.");
+        TestAssert.Equal(2, animationPreview.SkinPreviews.Count, "JSON fallback should expose previewable skin variants.");
         var attachment = TestAssert.Single(animationPreview.Attachments);
         TestAssert.Equal("body-slot", attachment.SlotName, "Attachment should retain its owning slot.");
         TestAssert.Equal("Hero.png", attachment.PageName, "Attachment should resolve the atlas page.");
@@ -119,12 +137,15 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
         TestAssert.Equal("Hero.png", drawCommand.PageName, "Sampled draw command should retain the texture page.");
         TestAssert.Equal(16, drawCommand.SourceX, "Sampled draw command should retain atlas source x.");
         TestAssert.Equal(64, drawCommand.SourceWidth, "Sampled draw command should retain atlas source width.");
+        var altSkin = animationPreview.SkinPreviews.First(static skin => skin.Name == "skin-alt");
+        var altDrawCommand = TestAssert.Single(TestAssert.Single(altSkin.Animations).SampledFrames[0].DrawCommands);
+        TestAssert.Equal(96, altDrawCommand.SourceX, "JSON fallback skin variant should resolve its own atlas region.");
         TestAssert.Equal("V41", animationPreview.Runtime?.AdapterKey, "Spine 4.1 should select the V41 runtime adapter.");
         TestAssert.Equal(
             SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable,
             animationPreview.Runtime?.SupportKind,
             "Known Spine versions should be marked as runtime-adaptable.");
-        TestAssert.Empty(result.Value!.Diagnostics, "A complete previewable group should not add diagnostics.");
+        TestAssert.Empty(result.Value!.Diagnostics, "A complete previewable multi-skin group should not add diagnostics.");
     }
 
     public static async Task HandleAsync_ShouldReportUnsupportedRuntimeVersion_WhenNoAdapterMatches()
@@ -347,15 +368,12 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
         var diagnostics = result.Value!.Diagnostics
             .Where(static diagnostic => diagnostic.Kind == SpineAssetGroupDiagnosticKind.AnimationPreviewUnsupportedFeature)
             .ToArray();
-        AssertUnsupportedFeature(diagnostics, SpineAnimationUnsupportedFeatureKind.NonDefaultSkin);
         AssertUnsupportedFeature(diagnostics, SpineAnimationUnsupportedFeatureKind.MeshAttachment);
         AssertUnsupportedFeature(diagnostics, SpineAnimationUnsupportedFeatureKind.WeightedVertices);
         AssertUnsupportedFeature(diagnostics, SpineAnimationUnsupportedFeatureKind.BoundingBoxAttachment);
-        AssertUnsupportedFeature(diagnostics, SpineAnimationUnsupportedFeatureKind.SlotColorTimeline);
         AssertUnsupportedFeature(diagnostics, SpineAnimationUnsupportedFeatureKind.SlotTwoColorTimeline);
         AssertUnsupportedFeature(diagnostics, SpineAnimationUnsupportedFeatureKind.BoneShearTimeline);
         AssertUnsupportedFeature(diagnostics, SpineAnimationUnsupportedFeatureKind.DeformTimeline);
-        AssertUnsupportedFeature(diagnostics, SpineAnimationUnsupportedFeatureKind.DrawOrderTimeline);
         AssertUnsupportedFeature(diagnostics, SpineAnimationUnsupportedFeatureKind.EventTimeline);
         AssertUnsupportedFeature(diagnostics, SpineAnimationUnsupportedFeatureKind.IkConstraint);
         AssertUnsupportedFeature(diagnostics, SpineAnimationUnsupportedFeatureKind.TransformConstraint);

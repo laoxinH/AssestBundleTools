@@ -17,5 +17,6 @@ public enum AssetPreviewKind
     GameObject = 9,
     MonoBehaviour = 10,
     AnimatorController = 11,
-    SpineAnimation = 12
+    SpineAnimation = 12,
+    Binary = 13
 }

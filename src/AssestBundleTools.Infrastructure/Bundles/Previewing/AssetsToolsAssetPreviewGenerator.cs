@@ -17,7 +17,7 @@ namespace AssestBundleTools.Infrastructure.Bundles.Previewing;
 public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
 {
     private const string TextContentType = "text/plain; charset=utf-8";
-    private const int MaxTextPreviewCharacters = 24000;
+    private const string BinaryContentType = "application/octet-stream";
 
     private readonly IAudioPayloadTranscodingService _audioPayloadTranscodingService;
 
@@ -26,7 +26,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         _audioPayloadTranscodingService = audioPayloadTranscodingService ?? throw new ArgumentNullException(nameof(audioPayloadTranscodingService));
     }
 
-    public string GeneratorVersion => "assetstools.preview/22";
+    public string GeneratorVersion => "assetstools.preview/23";
 
     public async Task<Result<AssetPreviewContentDto>> GenerateAsync(
         AssetPreviewBuildRequestDto request,
@@ -245,6 +245,13 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         }
 
         if (classId == AssetClassID.TextAsset &&
+            IsSpineBinarySkeletonRequest(request) &&
+            TryBuildBinaryTextAssetPreview(baseField, request.SizeInBytes, out var binaryTextAssetPreview))
+        {
+            return binaryTextAssetPreview;
+        }
+
+        if (classId == AssetClassID.TextAsset &&
             TryBuildTextPreview(baseField, "m_Script", out var textAssetPreview))
         {
             return textAssetPreview;
@@ -257,6 +264,16 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         }
 
         return AssetsToolsSummaryPreviewBuilder.BuildSummaryPreview(assetInfo, baseField, classId);
+    }
+
+    private static bool IsSpineBinarySkeletonRequest(AssetPreviewBuildRequestDto request)
+    {
+        var path = string.IsNullOrWhiteSpace(request.AssetPath)
+            ? request.AssetName
+            : request.AssetPath;
+        return !string.IsNullOrWhiteSpace(path) &&
+               (path.Trim().EndsWith(".skel", StringComparison.OrdinalIgnoreCase) ||
+                path.Trim().EndsWith(".skel.bytes", StringComparison.OrdinalIgnoreCase));
     }
 
     private async Task<AssetPreviewContentDto> BuildAudioPreviewAsync(
@@ -347,9 +364,38 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         previewContent = new AssetPreviewContentDto(
             Kind: AssetPreviewKind.Text,
             ContentType: TextContentType,
-            Content: Encoding.UTF8.GetBytes(TrimTextPreview(textContent)),
+            Content: Encoding.UTF8.GetBytes(NormalizeTextContent(textContent)),
             PreviewInfoItems: Array.Empty<AssetPreviewInfoItemDto>(),
             PreferredDisplaySizeInBytes: null);
+        return true;
+    }
+
+    private static bool TryBuildBinaryTextAssetPreview(
+        AssetTypeValueField baseField,
+        long? sizeInBytes,
+        out AssetPreviewContentDto previewContent)
+    {
+        previewContent = null!;
+
+        var textField = AssetsToolsFieldReader.TryGetField(baseField, "m_Script");
+        var payload = AssetsToolsFieldReader.ReadByteArray(textField);
+        if (payload is not { Length: > 0 })
+        {
+            return false;
+        }
+
+        previewContent = new AssetPreviewContentDto(
+            Kind: AssetPreviewKind.Binary,
+            ContentType: BinaryContentType,
+            Content: payload,
+            PreviewInfoItems:
+            [
+                new AssetPreviewInfoItemDto(
+                    AssetPreviewInfoKey.SerializedObjectSize,
+                    AssetPreviewInfoValueKind.Integer,
+                    Int64Value: payload.Length)
+            ],
+            PreferredDisplaySizeInBytes: sizeInBytes ?? payload.Length);
         return true;
     }
 
@@ -384,17 +430,8 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         }
     }
 
-    private static string TrimTextPreview(string textContent)
-    {
-        var normalizedText = textContent.Replace("\r\n", "\n").Replace('\r', '\n');
-        if (normalizedText.Length <= MaxTextPreviewCharacters)
-        {
-            return normalizedText;
-        }
-
-        return string.Concat(
-            normalizedText[..MaxTextPreviewCharacters]);
-    }
+    private static string NormalizeTextContent(string textContent) =>
+        textContent.Replace("\r\n", "\n").Replace('\r', '\n');
 
     private static AssetClassID ResolveClassId(int rawTypeId)
     {

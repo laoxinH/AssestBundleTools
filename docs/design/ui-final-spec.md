@@ -218,9 +218,9 @@
    - `MonoBehaviour` 当前自适应摘要预览区只展示资源名、脚本摘要、启用状态、字段数、字段分组数和引用数等主要信息，并用紧凑摘要卡片补充脚本、字段和引用状态；对象基础字段、MonoScript 信息、字段分组、常见 Unity 序列化容器、前若干标量 / 数组字段和 PPtr 引用明细进入下方通用信息卡。若 MonoScript 类名无法从当前导入资源中解析，只显示未解析脚本 PathId，不猜测脚本业务名；若脚本或字段引用 PathId 已被详情依赖图解析到当前工作区资产，信息卡行会复用统一“打开资源”链路；该预览仍属于轻量信息浏览，不做脚本业务语义推断、编辑或运行时模拟。
    - `AnimatorController` 当前自适应摘要预览区只展示资源名、Layer / Parameter、状态 / 转场和引用状态等主要信息，并用紧凑摘要卡片补充参数类型、状态机容器和引用解析情况；Layer、Parameter、`m_Controller` 常量区容器摘要和 `m_AnimationClips` 等 PPtr 引用明细进入下方通用信息卡。若引用 PathId 已被详情依赖图解析到当前工作区资产，信息卡行会复用统一“打开资源”链路；该预览仍属于轻量信息浏览，不做状态机画布、条件表达式编辑或运行时播放模拟。
 6. Spine 资源组预览
-   - 面向 2D 游戏常见的 Spine 资源组合，首版目标是 `资源组识别 + Atlas region overlay + 引用跳转 + 结构化诊断`，而不是完整动画播放器。
-   - Spine 资源组属于跨资产聚合视图，不改变单个 `Texture2D / TextAsset` 的基础预览能力，也不伪装成新的 Unity 资产类型。打开资源组后，右侧检查器展示 skeleton、atlas、texture page 的匹配状态、JSON skeleton 的轻量结构计数、当前已解析的 atlas page / region 数量，以及缺失 page、命名不匹配、atlas 预览不可用、外部引用未解析等诊断；更细的动画 / skin / bone / slot 明细应在样本和 skeleton 解析边界明确后再推进。
-   - Atlas region overlay 当前复用现有图片预览和棋盘格底图能力，在可解析 Texture2D page 上叠加 region 矩形；page 到 Texture2D 的匹配由 Application 详情 DTO 提供，Presentation 只通过预览管线加载图片载荷。`.skel` 二进制解析和动画播放后置到样本与版本兼容性明确之后。
+   - 面向 2D 游戏常见的 Spine 资源组合，当前目标已经从 `资源组识别 + Atlas region overlay + 引用跳转 + 结构化诊断` 扩展到实验播放、真实 skin 切换和官方 runtime adapter 采样；完整高性能播放体验继续按 GPU 批量渲染路线推进。
+   - Spine 资源组属于跨资产聚合视图，不改变单个 `Texture2D / TextAsset` 的基础预览能力，也不伪装成新的 Unity 资产类型。打开资源组后，右侧检查器展示 skeleton、atlas、texture page 的匹配状态、skeleton 的轻量结构计数、当前已解析的 atlas page / region 数量、runtime adapter 状态、可用动画 / skin 播放入口，以及缺失 page、命名不匹配、atlas 预览不可用、外部引用未解析等诊断；更细的约束、linked mesh、path / physics 行为应在样本和 runtime 边界明确后再推进。
+   - Atlas region overlay 当前复用现有图片预览和棋盘格底图能力，在可解析 Texture2D page 上叠加 region 矩形；page 到 Texture2D 的匹配由 Application 详情 DTO 提供，Presentation 只通过预览管线加载图片载荷。`.skel` 二进制解析和动画播放当前通过官方 runtime adapter 输出中立 DTO；大量三角动画的长期 UI 承载采用 `D3D11 + SwapChainPanel + vertex batch renderer`，现有 Win2D 播放面只作为兼容回退，不作为高复杂 mesh 的性能主线。当前 D3D 后端仍是 `ABT_SPINE_D3D11_SMOKE` 控制下的受控验证入口，已经覆盖面板、swap chain、顶点批量提交、Texture2D 预览载荷上传 / 采样、可复用动态 vertex / index buffer 和渲染失败自动回退 Win2D；默认切换需在真实样本帧时间、内存占用和设备恢复路径稳定后再验收。
 
 补充规则如下：
 
@@ -230,6 +230,7 @@
 4. 详情页中的预览区应额外承载结构化预览诊断，至少展示 `缓存状态 / 摘要回退原因 / detail`，避免失败原因只停留在日志中。
 5. 预览内部若展示已解析资源（例如 `Material` 的 Shader / Texture 引用），应优先复用同一套已解析资源跳转目标与资产文档打开链路，不在具体预览控件中重新实现 Bundle 读取、缓存解析或资产定位。
 6. Spine 资源组只能消费 Application 层输出的聚合 DTO、预览 sidecar 和现有图片载荷；Presentation 不得为了组装 Spine 关系直接读取资源包、遍历文件或解析 `.atlas / .skel`。
+7. Spine GPU 播放面中的 D3D11 设备、swap chain、纹理上传和 vertex batch 都属于 Presentation 控件实现细节；不得把 D3D / WinUI 类型写入 Application DTO，也不得让官方 Spine runtime 对象越过 Infrastructure adapter 边界。
 
 ### 顶部反馈
 

@@ -20,6 +20,10 @@ internal static partial class ApplicationTestSuite
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseAtlasPagesAndRegions_FromPreviewPipeline);
         await RunTestAsync(
             failures,
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseAtlasFromFullTextContent_WhenDisplayTextIsBounded),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseAtlasFromFullTextContent_WhenDisplayTextIsBounded);
+        await RunTestAsync(
+            failures,
             nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseJsonSkeletonSummary_FromPreviewPipeline),
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseJsonSkeletonSummary_FromPreviewPipeline);
         await RunTestAsync(
@@ -28,8 +32,16 @@ internal static partial class ApplicationTestSuite
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldBuildJsonSpineAnimationPreview_FromPreviewPipeline);
         await RunTestAsync(
             failures,
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldApplyJsonDrawOrderAndSlotColorTimelines),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldApplyJsonDrawOrderAndSlotColorTimelines);
+        await RunTestAsync(
+            failures,
             nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldPreferRuntimeAdapterPreview_WhenAdapterHandlesSkeleton),
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldPreferRuntimeAdapterPreview_WhenAdapterHandlesSkeleton);
+        await RunTestAsync(
+            failures,
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldPassBinarySkeletonPreview_ToRuntimeAdapter),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldPassBinarySkeletonPreview_ToRuntimeAdapter);
         await RunTestAsync(
             failures,
             nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportUnsupportedRuntimeVersion_WhenNoAdapterMatches),

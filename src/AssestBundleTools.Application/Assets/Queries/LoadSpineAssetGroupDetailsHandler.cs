@@ -73,6 +73,7 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
         }
 
         var atlasPages = new List<SpineAtlasPageDto>();
+        var atlasTexts = new List<string>();
         var diagnostics = new List<SpineAssetGroupDiagnosticDto>(group.Diagnostics);
         var skeletonSummaryResult = await _skeletonSummaryBuilder.BuildAsync(
             query,
@@ -120,6 +121,7 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
                 continue;
             }
 
+            atlasTexts.Add(atlasText);
             var textureDiagnostics = await _textureDiagnosticBuilder.BuildAsync(
                 query,
                 group.GroupKey,
@@ -140,6 +142,7 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
             group.GroupKey,
             group.SkeletonAssets,
             atlasPages,
+            atlasTexts,
             cancellationToken);
         if (animationPreviewResult.IsCancelled)
         {
@@ -234,19 +237,8 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
 
     private static bool TryReadAtlasText(
         Result<AssetPreviewDto> atlasPreviewResult,
-        out string atlasText)
-    {
-        atlasText = string.Empty;
-        if (!atlasPreviewResult.IsSuccess ||
-            atlasPreviewResult.Value is not { Kind: AssetPreviewKind.Text } preview ||
-            string.IsNullOrWhiteSpace(preview.TextContent))
-        {
-            return false;
-        }
-
-        atlasText = preview.TextContent;
-        return true;
-    }
+        out string atlasText) =>
+        AssetPreviewStructuredTextReader.TryReadText(atlasPreviewResult, out atlasText);
 
     private static SpineAssetGroupDiagnosticDto CreateDiagnostic(
         SpineAssetGroupDiagnosticKind kind,

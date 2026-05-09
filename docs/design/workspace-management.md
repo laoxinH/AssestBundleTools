@@ -408,6 +408,7 @@ Presentation 层保留两个协同层次：
 
 - `previewInfoItems` 只承载轻量补充信息，不承载音频波形点、atlas 矩形集合、模型默认相机等结构化富预览数据。
 - `imageOverlay / imageFocus` 仅用于图片类预览中与主 PNG 同源的轻量结构化数据；更复杂的富预览元数据仍应进入 sidecar metadata。
+- `Text` 预览缓存必须保存完整规范化文本载荷；`AssetPreviewDto.TextContent` 只作为 Presentation 有界展示文本，结构化 Application 消费者应读取 `FullTextContent ?? TextContent`，避免 Spine atlas / JSON skeleton 等长文本被 UI 截断策略破坏。影响文本载荷语义的变更需要递增 `generatorVersion`，让旧截断缓存自动失效。
 - Mesh 预览的轻量几何 sidecar 当前包含顶点、边、submesh 摘要、UV0、通道摘要以及用于贴图化预览的三角面索引；Presentation 只能消费该 DTO 与关联贴图缓存载荷，不得为了补贴图效果直接解析 AB。
 - 当预览能力从 `Image / Text / Summary` 扩展到 `Audio / Model / Atlas` 时，应把这类结构化数据写入 `relativeMetadataPath` 指向的 sidecar metadata 文件。
 - `previewKind` 必须保持通用枚举语义，避免为某一个 Unity 资源类型直接设计专用缓存目录结构。
@@ -661,7 +662,7 @@ Presentation 层保留两个协同层次：
     `AnimatorController` 当前输出 `payload.animator-controller.json`，自适应摘要预览区只展示控制器名、Layer / Parameter、状态 / 转场和引用状态；Layer、Parameter、`m_Controller` 常量区容器摘要与 `m_AnimationClips` 等 PPtr 引用进入通用信息卡。真实样本中 `m_AnimatorLayers / m_AnimatorParameters` 可为空，预览以 `m_Controller` 常量区摘要为主。引用行会按 `AssetDetailsDto.Dependencies` 解析到统一资源跳转目标，未匹配时保留内部 / 外部引用未解析状态。该预览只消费现有预览管线和 sidecar，不在 WinUI 侧读取 AB，也不做状态机画布或播放模拟。
   - 结构化摘要预览：`SpriteAtlas`
   - 聚合资源组预览：`Spine`
-    Spine 面向 2D 游戏中 `.atlas + .skel/.skel.bytes/.json + Texture2D` 的跨资产组合，不作为 `AssetType` 下拉里的 Unity 类型，也不作为 `仅已修改 / 仅可预览` 同级布尔筛选。检测到 Spine 组合时，应在资产列表提供 `资源 / Spine 组` 视图切换；普通资源视图继续展示单资产，Spine 组视图展示聚合条目。首版预览覆盖资源组识别、skeleton / atlas / texture page 匹配状态、JSON skeleton 轻量结构摘要、atlas region overlay、缺失 page / 外部引用未解析诊断、相关资产跳转，以及实验性 JSON skeleton 动画预览；官方或第三方 Spine runtime、skin 切换与 `.skel / .skel.bytes` 多版本兼容解析后置。
+    Spine 面向 2D 游戏中 `.atlas + .skel/.skel.bytes/.json + Texture2D` 的跨资产组合，不作为 `AssetType` 下拉里的 Unity 类型，也不作为 `仅已修改 / 仅可预览` 同级布尔筛选。检测到 Spine 组合时，应在资产列表提供 `资源 / Spine 组` 视图切换；普通资源视图继续展示单资产，Spine 组视图展示聚合条目。首版预览覆盖资源组识别、skeleton / atlas / texture page 匹配状态、JSON skeleton 轻量结构摘要、atlas region overlay、缺失 page / 外部引用未解析诊断、相关资产跳转、实验性动画预览、真实 skin 切换，以及 V38 / V42 官方 runtime adapter；更多官方版本与约束细解析后置。
   - 通用摘要回退：其余可读取资源类型
 - 工作台检查器当前会直接展示资源 `PathId`，并在图片预览成功后展示尺寸、裁切矩形、像素编码与源格式标识等专属信息；Sprite 预览会额外展示源贴图上的裁切框、pivot 点、9-slice border 辅助线，以及独立裁切结果卡片
 - 预览缓存当前按 `source fingerprint + generatorVersion + audioTranscoderId + audioTranscoderVersion` 校验命中；对于曾因“无转码器”而回退成摘要的音频预览，在后续安装转码器后也会自动触发重建
@@ -703,7 +704,7 @@ Presentation 层保留两个协同层次：
 1. 继续补活动工作区在更多依赖页面中的摘要与入口承载，并在后续需要时补跨 Bundle 级依赖跳转
 2. 再评估是否需要顶层工作区切换器
 3. M9 当前已完成真实资产级读取、索引缓存复用、工作区级解密器自动识别、失败诊断、依赖深读与缓存诊断主链路收口
-4. 富预览扩展当前已完成 `AudioClip`、`Mesh` 第一版、`Material` 半可视化摘要、`AnimationClip` binding / 曲线摘要增强、`Font` 第一版半可视化摘要、`GameObject` 第一版信息浏览预览、`MonoBehaviour` 第一版信息浏览预览与 `AnimatorController` 第一版信息浏览预览；GameObject 已补上常见组件引用摘要和已解析资源跳转，MonoBehaviour 已补上脚本 / 字段 / 引用信息卡、字段分组、序列化容器摘要和已解析资源跳转，AnimatorController 已补上 `m_Controller` 常量区状态机摘要、AnimationClip 引用信息卡和已解析资源跳转；`SpriteAtlas` 继续按样本资源可用性回补；Spine 预览按“资源组视图 + JSON skeleton 轻量摘要 + atlas region overlay + 实验性 JSON 动画预览 + 关联跳转 + 组文档轻量恢复 + 统一资源编辑窗口承载与独立窗口轻量恢复”继续推进，完整 runtime 级动画播放不进入近期主线
+4. 富预览扩展当前已完成 `AudioClip`、`Mesh` 第一版、`Material` 半可视化摘要、`AnimationClip` binding / 曲线摘要增强、`Font` 第一版半可视化摘要、`GameObject` 第一版信息浏览预览、`MonoBehaviour` 第一版信息浏览预览与 `AnimatorController` 第一版信息浏览预览；GameObject 已补上常见组件引用摘要和已解析资源跳转，MonoBehaviour 已补上脚本 / 字段 / 引用信息卡、字段分组、序列化容器摘要和已解析资源跳转，AnimatorController 已补上 `m_Controller` 常量区状态机摘要、AnimationClip 引用信息卡和已解析资源跳转；`SpriteAtlas` 继续按样本资源可用性回补；Spine 预览按“资源组视图 + skeleton 摘要 + atlas region overlay + runtime-neutral 动画 DTO + V38/V42 runtime adapter + 播放体验层 + 组文档轻量恢复 + 统一资源编辑窗口承载与独立窗口轻量恢复”继续推进，后续重点是 linked mesh / 更复杂 FFD 与 path / physics constraint 细化
 5. 资源编辑窗口模式按 [asset-editor-window-mode.md](asset-editor-window-mode.md) 分阶段推进：当前已完成命令式独立窗口 / 放回主窗口、标签拖拽与整组拖出 / 放回，以及“启动读取快照 + 弹窗确认 / 手动恢复入口 + 草稿候选预检摘要 + 变更暂存描述读取”这一轮窗口恢复闭环；后续重点转向更完整的布局恢复、冲突处理与真实编辑草稿队列
 6. 最后再评估是否需要引入可分享工作区文件
 6. 工作区窗口模型当前已按“跨进程隔离优先 + formal/pending 双阶段注册”落地，并已补上 pending 注册 / 页面级失败回滚的首轮 `Presentation` 回归；后续若继续加强稳定性，更适合继续补跨进程窗口激活与重定向链路，而不是重新回退注册时机
@@ -728,15 +729,16 @@ Presentation 层保留两个协同层次：
 3. `SpriteAtlas` 样本驱动回补
 4. `Spine` 资源组预览
    - Spine 是跨资产聚合，不直接扩展 `AssetType` 下拉项。首版先在资产列表增加 `资源 / Spine 组` 视图切换，并由 Application / Infrastructure 输出资源组 DTO。
-   - 当前 Application 已落地 `LoadSpineAssetGroupsQuery` 与 `LoadSpineAssetGroupDetailsQuery` 第一版读模型：基于现有资产索引元数据识别当前 Bundle 视图下的 `.atlas / .skel / .skel.bytes / .json` TextAsset 锚点，并在当前工作区内按归一化组名匹配 `Texture2D` page 候选；详情查询继续通过 `GetAssetPreviewQuery` 取得 atlas TextAsset 预览文本，在 Application 层解析 atlas page / region 统计，并继续通过预览管线校验匹配 Texture2D 的图片预览可用性与尺寸；对 `.json` skeleton 会通过同一预览管线读取文本并提取 bone / slot / skin / animation / event / constraint 轻量计数，且在默认 skin region attachment 与基础 timeline 可解析时输出实验性 `SpineAnimationPreviewDto`；`.skel / .skel.bytes` 二进制 skeleton 当前只标记格式并把细解析后置；结果包含稳定 `GroupId`、skeleton / atlas / texture page 组成资产、skeleton 摘要、atlas page / region 摘要、可选动画预览读模型、runtime-neutral sampled frames / draw commands，以及缺失 atlas / texture page、atlas 预览不可用、atlas page 未匹配 Texture2D、Texture2D 预览不可用、page 尺寸与图片尺寸不一致等诊断。
+   - 当前 Application 已落地 `LoadSpineAssetGroupsQuery` 与 `LoadSpineAssetGroupDetailsQuery` 第一版读模型：基于现有资产索引元数据识别当前 Bundle 视图下的 `.atlas / .skel / .skel.bytes / .json` TextAsset 锚点，并在当前工作区内按归一化组名匹配 `Texture2D` page 候选；详情查询继续通过 `GetAssetPreviewQuery` 取得 atlas TextAsset 预览文本，并使用完整文本载荷在 Application 层解析 atlas page / region 统计，避免大 atlas 被显示层截断影响，再继续通过预览管线校验匹配 Texture2D 的图片预览可用性与尺寸；对 `.json` skeleton 会通过同一预览管线读取完整文本并提取 bone / slot / skin / animation / event / constraint 轻量计数，且在默认 skin region attachment、基础 timeline、draw order timeline 与 slot color/tint 可解析时输出实验性 `SpineAnimationPreviewDto`；`.skel / .skel.bytes` 二进制 skeleton 当前会作为 `AssetPreviewKind.Binary` 载荷优先交给已注册 runtime adapter，未命中时再保留结构化不支持诊断；结果包含稳定 `GroupId`、skeleton / atlas / texture page 组成资产、skeleton 摘要、atlas page / region 摘要、可选动画预览读模型、runtime-neutral sampled frames / draw commands，以及缺失 atlas / texture page、atlas 预览不可用、atlas page 未匹配 Texture2D、Texture2D 预览不可用、page 尺寸与图片尺寸不一致等诊断。
    - 当前 Presentation 已接入中间资产窗格的 `资源 / Spine 组` 视图切换。普通资源视图继续使用真实 Unity 资产列表、类型筛选和本地显示筛选；Spine 组视图通过 `LoadSpineAssetGroupsQuery` 加载组摘要，只显示组名、组成数量、Texture page 数和诊断状态，并把视图模式保存到资源包标签页浏览状态。
    - Spine 组列表选择当前会在主窗口右侧复用现有资源详情窗格打开组文档，文档身份使用 `BundleId + GroupId`，不会借用某个 TextAsset 的 `AssetId`。当前范围覆盖组摘要、skeleton / atlas / texture page 组成资产跳转、JSON skeleton 结构摘要、诊断摘要、atlas page / region 数量回填、atlas page 选择器和当前 page 的 region overlay；主窗口组文档会通过资源包标签页下的 `openSpineGroupTabs[]` 做轻量恢复。
    - Spine 组当前作为统一资源文档标签参与普通独立资源编辑窗口；它与普通资产文档共享混合标签、拖拽合并、放回主窗口、冲突检测和 `openAssetEditorWindows[]` 重启恢复链路，恢复时只重建 `BundleId + GroupId` 轻量组身份。
    - 识别主线优先覆盖同 Bundle 或当前工作区内可匹配的 `.atlas`、`.skel/.skel.bytes/.json` 和 `Texture2D` page；搜索和跳转基于组名、skeleton、atlas、texture page 与已解析资产目标。
-   - 预览主线当前只把 JSON skeleton 的默认 skin / region attachment / rotate / translate / scale / slot attachment timeline 提升为实验播放；完整 `.skel / .skel.bytes` 二进制多版本细解析、skin 切换、setup pose、mesh / deform / constraint 和官方 runtime 接入必须继续后置。
+   - 预览主线当前已经把 JSON skeleton 的多 skin / region attachment / rotate / translate / scale / slot attachment / draw order / slot color timeline 提升为实验播放，并接入 `.skel / .skel.bytes` 二进制载荷到 V38 / V42 官方 runtime adapter；V38 / V42 runtime adapter 已支持 mesh draw command、mesh deform timeline 与 IK constraint timeline 采样，V38 runtime adapter 已支持 transform constraint timeline 采样，runtime draw order 与 slot tint 会合成到中立 DTO。Presentation 渲染层参考 SpineViewer 的三角网格提交思路，保持 mesh 几何逐三角贴图绘制；复杂帧通过控件级渲染目标缓存复用完整画面，只有 mesh 数据本身不可绘制时才回退到 region 矩形，不再因播放预算把高复杂帧块状近似化；更多官方 runtime 版本、linked mesh / 更复杂 FFD / path / physics constraint 和更完整的 mesh 行为继续后置。
+   - 大量三角 Spine 播放的长期渲染方向固定为 `D3D11 + SwapChainPanel + vertex batch renderer`：Application 继续只输出 runtime-neutral draw command DTO，Infrastructure 继续封装官方 runtime 和采样，Presentation 内部把 DTO 投影成按 texture / blend / tint 分组的 GPU 顶点批次。当前 Presentation 已先完成渲染后端抽象、Win2D 回退后端适配、DTO 到顶点批次的纯投影器回归、`ABT_SPINE_D3D11_SMOKE=1/true/d3d11` 控制下的 `SwapChainPanel` / D3D11 顶点批次提交、Texture2D 预览载荷到 D3D shader resource 的解码 / 上传 / page name 缓存、可复用动态 vertex / index buffer 批次提交，以及 D3D render / resize / present 失败时自动切回 Win2D 的兼容保护；默认路径仍保留 Win2D。下一步再用大量三角真实样本验证帧时间、内存占用、窗口缩放、skin / animation 切换、设备丢失回退和必要时的 D3D 设备重建策略。`SwapChainPanel` 仅作为 WinUI 承载面，D3D 设备、纹理上传、swap chain 生命周期和设备丢失恢复都必须留在 Presentation 控件 / renderer 协调层；不得把 D3D 类型、WinUI 控件或官方 Spine runtime 对象写入 Application 契约或工作区持久化状态。现有 Win2D 路径保留为兼容回退，不再作为高复杂 mesh 的性能主线。
 5. `Font` 样本驱动回补，以及 `AnimationClip / AnimatorController` 更细的 binding / 状态机分类摘要增强
 
-其中 `MonoBehaviour` 已进入轻量信息浏览预览但不做脚本语义推断、编辑或运行时模拟；`AnimatorController` 已进入轻量信息浏览预览，当前从 `m_Controller` 常量区和 `m_AnimationClips` 提取状态机 / 状态 / 转场 / 引用摘要，不进入近期重型状态机画布或播放主线；`GameObject` 已进入轻量信息浏览预览，但仍不进入重型场景渲染主线；Spine 当前先做资源组阅读、atlas 定位和 JSON-only 实验播放，不先承诺完整 runtime 级动画播放器。
+其中 `MonoBehaviour` 已进入轻量信息浏览预览但不做脚本语义推断、编辑或运行时模拟；`AnimatorController` 已进入轻量信息浏览预览，当前从 `m_Controller` 常量区和 `m_AnimationClips` 提取状态机 / 状态 / 转场 / 引用摘要，不进入近期重型状态机画布或播放主线；`GameObject` 已进入轻量信息浏览预览，但仍不进入重型场景渲染主线；Spine 当前按资源组阅读、atlas 定位、runtime-neutral DTO、V38/V42 runtime adapter 和实验播放层推进，不让 Presentation 直接持有 runtime 或读取 AB。
 
 ### 9.2 预览解包内存风险后续治理
 

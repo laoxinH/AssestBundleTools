@@ -1,6 +1,7 @@
 using System.Numerics;
 using AssestBundleTools.Application.Assets.Dtos;
 using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Effects;
 using Windows.Foundation;
 using Windows.UI;
 
@@ -12,15 +13,14 @@ internal static class InspectorSpineAnimationPreviewRenderer
 
     public static void Draw(
         CanvasDrawingSession drawingSession,
-        SpineAnimationClipDto animation,
+        SpineAnimationFrameDto frame,
         IReadOnlyDictionary<string, CanvasBitmap> textureBitmaps,
         float width,
-        float height,
-        double time)
+        float height)
     {
         DrawReferenceGrid(drawingSession, width, height);
 
-        var drawItems = BuildDrawItems(animation.SampledFrames, time, textureBitmaps);
+        var drawItems = BuildDrawItems(frame, textureBitmaps);
         if (drawItems.Count == 0)
         {
             return;
@@ -29,27 +29,30 @@ internal static class InspectorSpineAnimationPreviewRenderer
         var viewportTransform = CreateViewportTransform(drawItems, width, height);
         foreach (var item in drawItems)
         {
-            var previousTransform = drawingSession.Transform;
-            drawingSession.Transform = item.Transform * viewportTransform;
-            drawingSession.DrawImage(
-                item.Texture,
-                new Rect(-item.Width / 2d, -item.Height / 2d, item.Width, item.Height),
-                item.SourceRect,
-                1f,
-                CanvasImageInterpolation.Linear);
-            drawingSession.Transform = previousTransform;
+            if (item.HasMesh &&
+                InspectorSpineTexturedTriangleRenderer.Draw(
+                    drawingSession,
+                    item.Texture,
+                    item.Image,
+                    item.MeshVertices,
+                    item.MeshTriangles,
+                    viewportTransform,
+                    item.Opacity))
+            {
+                continue;
+            }
+
+            DrawRectangleItem(drawingSession, item, viewportTransform);
         }
 
         DrawOrigin(drawingSession, viewportTransform);
     }
 
     private static IReadOnlyList<SpineDrawItem> BuildDrawItems(
-        IReadOnlyList<SpineAnimationFrameDto> frames,
-        double time,
+        SpineAnimationFrameDto frame,
         IReadOnlyDictionary<string, CanvasBitmap> textureBitmaps)
     {
-        var frame = ResolveSampledFrame(frames, time);
-        if (frame is null || frame.DrawCommands.Count == 0)
+        if (frame.DrawCommands.Count == 0)
         {
             return Array.Empty<SpineDrawItem>();
         }
@@ -64,6 +67,11 @@ internal static class InspectorSpineAnimationPreviewRenderer
 
             drawItems.Add(new SpineDrawItem(
                 texture,
+                CreateTintedImage(texture, new SpineTint(
+                    command.TintR,
+                    command.TintG,
+                    command.TintB,
+                    command.TintA)),
                 new Rect(command.SourceX, command.SourceY, command.SourceWidth, command.SourceHeight),
                 new Matrix3x2(
                     (float)command.TransformM11,
@@ -73,35 +81,13 @@ internal static class InspectorSpineAnimationPreviewRenderer
                     (float)command.TransformM31,
                     (float)command.TransformM32),
                 command.Width,
-                command.Height));
+                command.Height,
+                ClampUnit(command.TintA),
+                command.MeshVertices,
+                command.MeshTriangles));
         }
 
         return drawItems;
-    }
-
-    private static SpineAnimationFrameDto? ResolveSampledFrame(
-        IReadOnlyList<SpineAnimationFrameDto> frames,
-        double time)
-    {
-        if (frames.Count == 0)
-        {
-            return null;
-        }
-
-        if (frames.Count == 1 || time <= frames[0].Time)
-        {
-            return frames[0];
-        }
-
-        for (var index = 1; index < frames.Count; index++)
-        {
-            if (time < frames[index].Time)
-            {
-                return frames[index - 1];
-            }
-        }
-
-        return frames[^1];
     }
 
     private static Matrix3x2 CreateViewportTransform(
@@ -151,6 +137,16 @@ internal static class InspectorSpineAnimationPreviewRenderer
 
     private static IEnumerable<Vector2> EnumerateCorners(SpineDrawItem item)
     {
+        if (item.MeshVertices.Count > 0)
+        {
+            foreach (var vertex in item.MeshVertices)
+            {
+                yield return new Vector2((float)vertex.X, (float)vertex.Y);
+            }
+
+            yield break;
+        }
+
         var halfWidth = (float)(item.Width / 2d);
         var halfHeight = (float)(item.Height / 2d);
         yield return Vector2.Transform(new Vector2(-halfWidth, -halfHeight), item.Transform);
@@ -158,6 +154,45 @@ internal static class InspectorSpineAnimationPreviewRenderer
         yield return Vector2.Transform(new Vector2(halfWidth, halfHeight), item.Transform);
         yield return Vector2.Transform(new Vector2(-halfWidth, halfHeight), item.Transform);
     }
+
+    private static void DrawRectangleItem(
+        CanvasDrawingSession drawingSession,
+        SpineDrawItem item,
+        Matrix3x2 viewportTransform)
+    {
+        var previousTransform = drawingSession.Transform;
+        drawingSession.Transform = item.Transform * viewportTransform;
+        drawingSession.DrawImage(
+            item.Image,
+            new Rect(-item.Width / 2d, -item.Height / 2d, item.Width, item.Height),
+            item.SourceRect,
+            item.Opacity,
+            CanvasImageInterpolation.Linear);
+        drawingSession.Transform = previousTransform;
+    }
+
+    private static ICanvasImage CreateTintedImage(CanvasBitmap texture, SpineTint tint)
+    {
+        if (!tint.HasRgbTint)
+        {
+            return texture;
+        }
+
+        return new ColorMatrixEffect
+        {
+            Source = texture,
+            ColorMatrix = new Matrix5x4
+            {
+                M11 = ClampUnit(tint.R),
+                M22 = ClampUnit(tint.G),
+                M33 = ClampUnit(tint.B),
+                M44 = 1f
+            }
+        };
+    }
+
+    private static float ClampUnit(double value) =>
+        (float)Math.Clamp(value, 0d, 1d);
 
     private static void DrawReferenceGrid(CanvasDrawingSession drawingSession, float width, float height)
     {
@@ -182,14 +217,33 @@ internal static class InspectorSpineAnimationPreviewRenderer
 
     private sealed record SpineDrawItem(
         CanvasBitmap Texture,
+        ICanvasImage Image,
         Rect SourceRect,
         Matrix3x2 Transform,
         double Width,
-        double Height);
+        double Height,
+        float Opacity,
+        IReadOnlyList<SpineAnimationMeshVertexDto> MeshVertices,
+        IReadOnlyList<SpineAnimationMeshTriangleDto> MeshTriangles)
+    {
+        public bool HasMesh => MeshVertices.Count > 0 && MeshTriangles.Count > 0;
+    }
 
     private readonly record struct SpineBounds(
         double CenterX,
         double CenterY,
         double Width,
         double Height);
+
+    private readonly record struct SpineTint(
+        double R,
+        double G,
+        double B,
+        double A)
+    {
+        public bool HasRgbTint =>
+            Math.Abs(R - 1d) > 0.0001d ||
+            Math.Abs(G - 1d) > 0.0001d ||
+            Math.Abs(B - 1d) > 0.0001d;
+    }
 }

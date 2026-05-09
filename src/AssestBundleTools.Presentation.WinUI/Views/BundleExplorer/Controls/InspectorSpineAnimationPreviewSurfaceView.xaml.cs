@@ -1,22 +1,17 @@
 using System.ComponentModel;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
-using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Windows.Storage.Streams;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserControl
 {
     private readonly DispatcherTimer _playbackTimer;
-    private readonly Dictionary<string, CanvasBitmap> _textureBitmaps = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, byte[]> _textureBitmapSources = new(StringComparer.Ordinal);
+    private readonly ISpineAnimationPreviewRenderBackend _renderBackend;
     private InspectorPreviewSpineAnimationViewModel? _observedViewModel;
     private DateTimeOffset _lastTickUtc;
-    private bool _isLoadingTextures;
 
     public static readonly DependencyProperty ViewModelProperty =
         DependencyProperty.Register(
@@ -28,6 +23,9 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
     public InspectorSpineAnimationPreviewSurfaceView()
     {
         InitializeComponent();
+        _renderBackend = SpineAnimationPreviewRenderBackendFactory.Create(
+            SpineCanvas,
+            SpineSwapChainPanel);
         _playbackTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(33)
@@ -53,34 +51,57 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
 
         view.DetachObservedViewModel(args.OldValue as InspectorPreviewSpineAnimationViewModel);
         view.AttachObservedViewModel(args.NewValue as InspectorPreviewSpineAnimationViewModel);
-        view.ClearTextureBitmaps();
-        view.QueueTextureLoad();
+        view.RefreshTexturePages();
+        view.SyncRenderFrame();
         view.UpdateBindingsNow();
-        view.InvalidateCanvas();
+        view.InvalidatePreviewSurface();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         AttachObservedViewModel(ViewModel);
-        QueueTextureLoad();
+        RefreshTexturePages();
+        SyncRenderFrame();
         _lastTickUtc = DateTimeOffset.UtcNow;
         _playbackTimer.Start();
         UpdateBindingsNow();
-        InvalidateCanvas();
+        InvalidatePreviewSurface();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         _playbackTimer.Stop();
         DetachObservedViewModel(_observedViewModel);
-        ClearTextureBitmaps();
+        _renderBackend.SetCurrentFrame(null);
+        _renderBackend.ClearTexturePages();
     }
 
     private void ApplyLocalizedText()
     {
         ToolTipService.SetToolTip(
+            AnimationComboBox,
+            UiText.Get(ResourceKeys.InspectorSpineAnimationPreviewAnimationSelectorToolTip));
+        ToolTipService.SetToolTip(
+            SkinComboBox,
+            UiText.Get(ResourceKeys.InspectorSpineAnimationPreviewSkinSelectorToolTip));
+        ToolTipService.SetToolTip(
+            PlaybackSpeedComboBox,
+            UiText.Get(ResourceKeys.InspectorSpineAnimationPreviewSpeedToolTip));
+        ToolTipService.SetToolTip(
+            PlaybackSlider,
+            UiText.Get(ResourceKeys.InspectorSpineAnimationPreviewSeekToolTip));
+        ToolTipService.SetToolTip(
+            SetupPoseButton,
+            UiText.Get(ResourceKeys.InspectorSpineAnimationPreviewSetupPoseToolTip));
+        ToolTipService.SetToolTip(
+            StepPreviousButton,
+            UiText.Get(ResourceKeys.InspectorSpineAnimationPreviewStepPreviousToolTip));
+        ToolTipService.SetToolTip(
             PlayPauseButton,
             UiText.Get(ResourceKeys.InspectorSpineAnimationPreviewPlayPauseToolTip));
+        ToolTipService.SetToolTip(
+            StepNextButton,
+            UiText.Get(ResourceKeys.InspectorSpineAnimationPreviewStepNextToolTip));
         ToolTipService.SetToolTip(
             RestartButton,
             UiText.Get(ResourceKeys.InspectorSpineAnimationPreviewRestartToolTip));
@@ -112,21 +133,22 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
     {
         if (e.PropertyName is nameof(InspectorPreviewSpineAnimationViewModel.TexturePageContents))
         {
-            ClearTextureBitmaps();
-            QueueTextureLoad();
+            RefreshTexturePages();
         }
 
         if (DispatcherQueue.HasThreadAccess)
         {
+            SyncRenderFrame();
             UpdateBindingsNow();
-            InvalidateCanvas();
+            InvalidatePreviewSurface();
             return;
         }
 
         DispatcherQueue.TryEnqueue(() =>
         {
+            SyncRenderFrame();
             UpdateBindingsNow();
-            InvalidateCanvas();
+            InvalidatePreviewSurface();
         });
     }
 
@@ -136,10 +158,43 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         UpdateBindingsNow();
     }
 
+    private void OnPlaybackSpeedSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ViewModel is null ||
+            PlaybackSpeedComboBox.SelectedItem is not double playbackSpeed)
+        {
+            return;
+        }
+
+        ViewModel.PlaybackSpeed = playbackSpeed;
+    }
+
     private void OnRestartButtonClick(object sender, RoutedEventArgs e)
     {
         ViewModel?.Restart();
-        InvalidateCanvas();
+        SyncRenderFrame();
+        InvalidatePreviewSurface();
+    }
+
+    private void OnSetupPoseButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.ShowSetupPose();
+        SyncRenderFrame();
+        InvalidatePreviewSurface();
+    }
+
+    private void OnStepPreviousButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.StepPreviousFrame();
+        SyncRenderFrame();
+        InvalidatePreviewSurface();
+    }
+
+    private void OnStepNextButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.StepNextFrame();
+        SyncRenderFrame();
+        InvalidatePreviewSurface();
     }
 
     private void OnPlaybackTimerTick(object? sender, object e)
@@ -148,112 +203,24 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         var elapsed = now - _lastTickUtc;
         _lastTickUtc = now;
         ViewModel?.Advance(elapsed);
-        InvalidateCanvas();
+        SyncRenderFrame();
+        InvalidatePreviewSurface();
     }
 
-    private void OnSpineCanvasSizeChanged(object sender, SizeChangedEventArgs e)
+    private void RefreshTexturePages()
     {
-        InvalidateCanvas();
-    }
-
-    private void OnSpineCanvasDraw(CanvasControl sender, CanvasDrawEventArgs args)
-    {
-        var viewModel = ViewModel;
-        if (viewModel?.Preview is null ||
-            viewModel.SelectedAnimation is null ||
-            _textureBitmaps.Count == 0)
+        if (ViewModel?.TexturePageContents is { Count: > 0 } texturePageContents)
         {
+            _renderBackend.LoadTexturePages(texturePageContents);
             return;
         }
 
-        var width = (float)Math.Max(0d, sender.ActualWidth);
-        var height = (float)Math.Max(0d, sender.ActualHeight);
-        if (width <= 1f || height <= 1f)
-        {
-            return;
-        }
-
-        InspectorSpineAnimationPreviewRenderer.Draw(
-            args.DrawingSession,
-            viewModel.SelectedAnimation,
-            _textureBitmaps,
-            width,
-            height,
-            viewModel.PlaybackTime);
+        _renderBackend.ClearTexturePages();
     }
 
-    private void QueueTextureLoad()
+    private void SyncRenderFrame()
     {
-        if (_isLoadingTextures || ViewModel?.TexturePageContents is not { Count: > 0 })
-        {
-            return;
-        }
-
-        _ = LoadTextureBitmapsAsync(ViewModel.TexturePageContents);
-    }
-
-    private async Task LoadTextureBitmapsAsync(IReadOnlyDictionary<string, byte[]> texturePageContents)
-    {
-        _isLoadingTextures = true;
-        try
-        {
-            foreach (var pair in texturePageContents)
-            {
-                if (_textureBitmaps.ContainsKey(pair.Key) ||
-                    pair.Value.Length == 0)
-                {
-                    continue;
-                }
-
-                using var stream = await CreateTextureStreamAsync(pair.Value);
-                var bitmap = await CanvasBitmap.LoadAsync(SpineCanvas, stream);
-                if (ViewModel?.TexturePageContents.TryGetValue(pair.Key, out var currentContent) != true ||
-                    !ReferenceEquals(currentContent, pair.Value))
-                {
-                    bitmap.Dispose();
-                    continue;
-                }
-
-                _textureBitmaps[pair.Key] = bitmap;
-                _textureBitmapSources[pair.Key] = pair.Value;
-            }
-
-            InvalidateCanvas();
-        }
-        catch
-        {
-            ClearTextureBitmaps();
-        }
-        finally
-        {
-            _isLoadingTextures = false;
-        }
-    }
-
-    private static async Task<IRandomAccessStream> CreateTextureStreamAsync(byte[] textureContent)
-    {
-        var stream = new InMemoryRandomAccessStream();
-        using (var writer = new DataWriter(stream.GetOutputStreamAt(0)))
-        {
-            writer.WriteBytes(textureContent);
-            await writer.StoreAsync();
-            await writer.FlushAsync();
-            writer.DetachStream();
-        }
-
-        stream.Seek(0);
-        return stream;
-    }
-
-    private void ClearTextureBitmaps()
-    {
-        foreach (var bitmap in _textureBitmaps.Values)
-        {
-            bitmap.Dispose();
-        }
-
-        _textureBitmaps.Clear();
-        _textureBitmapSources.Clear();
+        _renderBackend.SetCurrentFrame(ViewModel?.CurrentFrame);
     }
 
     private void UpdateBindingsNow()
@@ -267,14 +234,8 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         DispatcherQueue.TryEnqueue(UpdateBindingsNow);
     }
 
-    private void InvalidateCanvas()
+    private void InvalidatePreviewSurface()
     {
-        if (DispatcherQueue.HasThreadAccess)
-        {
-            SpineCanvas.Invalidate();
-            return;
-        }
-
-        DispatcherQueue.TryEnqueue(InvalidateCanvas);
+        _renderBackend.Invalidate();
     }
 }

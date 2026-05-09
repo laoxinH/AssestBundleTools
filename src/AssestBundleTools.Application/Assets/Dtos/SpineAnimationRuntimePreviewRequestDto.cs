@@ -6,6 +6,8 @@ namespace AssestBundleTools.Application.Assets.Dtos;
 public sealed record SpineAnimationRuntimePreviewRequestDto(
     string GroupKey,
     SpineAssetGroupPartDto SkeletonAsset,
-    string SkeletonJson,
+    string? SkeletonJson,
     SpineAnimationRuntimeDto Runtime,
-    IReadOnlyList<SpineAtlasPageDto> AtlasPages);
+    IReadOnlyList<SpineAtlasPageDto> AtlasPages,
+    IReadOnlyList<string> AtlasTexts,
+    byte[]? SkeletonBinaryContent = null);

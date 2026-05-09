@@ -18,11 +18,36 @@ namespace AssestBundleTools.Application.Tests.Assets.Queries;
 
 internal static partial class LoadSpineAssetGroupDetailsHandlerTests
 {
-    private static AssetPreviewDto CreateTextPreview(GetAssetPreviewQuery query, string text) =>
-        CreatePreview(query, AssetPreviewKind.Text, text);
+    private static AssetPreviewDto CreateTextPreview(
+        GetAssetPreviewQuery query,
+        string text,
+        string? fullTextContent = null) =>
+        CreatePreview(query, AssetPreviewKind.Text, text) with
+        {
+            FullTextContent = fullTextContent
+        };
 
     private static AssetPreviewDto CreateSummaryPreview(GetAssetPreviewQuery query, string text) =>
         CreatePreview(query, AssetPreviewKind.Summary, text);
+
+    private static AssetPreviewDto CreateBinaryPreview(GetAssetPreviewQuery query, byte[] content) =>
+        new(
+            query.WorkspaceId,
+            query.BundleId,
+            query.AssetId,
+            AssetPreviewKind.Binary,
+            ContentType: "application/octet-stream",
+            BinaryContent: content,
+            TextContent: null,
+            PreviewPayloadFilePath: null,
+            PreviewInfoItems: null,
+            PreviewMessage: null,
+            PreferredDisplaySizeInBytes: content.LongLength,
+            IsFromCache: false,
+            GeneratedAtUtc: DateTimeOffset.UnixEpoch,
+            Diagnostic: new AssetPreviewDiagnosticDto(
+                AssetPreviewCacheStatusKind.Missing,
+                AssetPreviewFallbackReasonKind.None));
 
     private static AssetPreviewDto CreateImagePreview(GetAssetPreviewQuery query, int width, int height) =>
         new(

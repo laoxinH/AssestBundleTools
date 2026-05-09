@@ -11,27 +11,75 @@
     <Grid RowSpacing="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <Grid
-            ColumnSpacing="8">
+            ColumnSpacing="6">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <ComboBox
                 x:Name="AnimationComboBox"
-                MinWidth="180"
+                MinWidth="150"
                 HorizontalAlignment="Stretch"
                 ItemsSource="{x:Bind ViewModel.AnimationNames, Mode=OneWay}"
                 SelectedItem="{x:Bind ViewModel.SelectedAnimationName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
+            <ComboBox
+                x:Name="SkinComboBox"
+                Grid.Column="1"
+                Width="120"
+                IsEnabled="{x:Bind ViewModel.IsSkinSelectionEnabled, Mode=OneWay}"
+                ItemsSource="{x:Bind ViewModel.SkinNames, Mode=OneWay}"
+                SelectedItem="{x:Bind ViewModel.SelectedSkinName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            <ComboBox
+                x:Name="PlaybackSpeedComboBox"
+                Grid.Column="2"
+                Width="72"
+                ItemsSource="{x:Bind ViewModel.PlaybackSpeedOptions, Mode=OneWay}"
+                SelectedItem="{x:Bind ViewModel.PlaybackSpeed, Mode=OneWay}"
+                SelectionChanged="OnPlaybackSpeedSelectionChanged" />
+
+            <Button
+                x:Name="SetupPoseButton"
+                Grid.Column="3"
+                Width="34"
+                Height="34"
+                MinWidth="34"
+                Click="OnSetupPoseButtonClick">
+                <FontIcon
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="14"
+                    Glyph="&#xE777;" />
+            </Button>
+
+            <Button
+                x:Name="StepPreviousButton"
+                Grid.Column="4"
+                Width="34"
+                Height="34"
+                MinWidth="34"
+                Click="OnStepPreviousButtonClick">
+                <FontIcon
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="14"
+                    Glyph="&#xE100;" />
+            </Button>
+
             <Button
                 x:Name="PlayPauseButton"
-                Grid.Column="1"
+                Grid.Column="5"
                 Width="34"
                 Height="34"
                 MinWidth="34"
@@ -43,8 +91,21 @@
             </Button>
 
             <Button
+                x:Name="StepNextButton"
+                Grid.Column="6"
+                Width="34"
+                Height="34"
+                MinWidth="34"
+                Click="OnStepNextButtonClick">
+                <FontIcon
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="14"
+                    Glyph="&#xE101;" />
+            </Button>
+
+            <Button
                 x:Name="RestartButton"
-                Grid.Column="2"
+                Grid.Column="7"
                 Width="34"
                 Height="34"
                 MinWidth="34"
@@ -56,11 +117,21 @@
             </Button>
         </Grid>
 
-        <canvas:CanvasControl
-            x:Name="SpineCanvas"
+        <Slider
+            x:Name="PlaybackSlider"
             Grid.Row="1"
-            ClearColor="Transparent"
-            Draw="OnSpineCanvasDraw"
-            SizeChanged="OnSpineCanvasSizeChanged" />
+            Minimum="0"
+            Maximum="{x:Bind ViewModel.Duration, Mode=OneWay}"
+            Value="{x:Bind ViewModel.PlaybackTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+        <Grid
+            Grid.Row="2">
+            <SwapChainPanel
+                x:Name="SpineSwapChainPanel"
+                Visibility="Collapsed" />
+            <canvas:CanvasControl
+                x:Name="SpineCanvas"
+                ClearColor="Transparent" />
+        </Grid>
     </Grid>
 </UserControl>

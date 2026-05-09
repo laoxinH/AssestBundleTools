@@ -78,19 +78,8 @@ internal sealed class SpineSkeletonSummaryBuilder
 
     private static bool TryReadSkeletonJson(
         Result<AssetPreviewDto> previewResult,
-        out string skeletonJson)
-    {
-        skeletonJson = string.Empty;
-        if (!previewResult.IsSuccess ||
-            previewResult.Value is not { Kind: AssetPreviewKind.Text } preview ||
-            string.IsNullOrWhiteSpace(preview.TextContent))
-        {
-            return false;
-        }
-
-        skeletonJson = preview.TextContent;
-        return true;
-    }
+        out string skeletonJson) =>
+        AssetPreviewStructuredTextReader.TryReadText(previewResult, out skeletonJson);
 
     private static bool TryCreateJsonSummary(
         SpineAssetGroupPartDto skeletonAsset,

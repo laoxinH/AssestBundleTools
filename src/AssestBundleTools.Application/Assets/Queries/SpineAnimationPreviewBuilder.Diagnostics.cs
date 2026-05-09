@@ -11,7 +11,6 @@ internal sealed partial class SpineAnimationPreviewBuilder
         JsonElement root)
     {
         var features = new HashSet<SpineAnimationUnsupportedFeatureKind>();
-        AddSkinDiagnostics(root, features);
         AddSkinAttachmentDiagnostics(root, features);
         AddConstraintDiagnostics(root, features);
         AddAnimationTimelineDiagnostics(root, features);
@@ -51,47 +50,6 @@ internal sealed partial class SpineAnimationPreviewBuilder
                 SpineVersion: runtime.SpineVersion,
                 RuntimeAdapterKey: runtime.AdapterKey)
         ];
-    }
-
-    private static void AddSkinDiagnostics(
-        JsonElement root,
-        HashSet<SpineAnimationUnsupportedFeatureKind> features)
-    {
-        if (!root.TryGetProperty("skins", out var skinsElement))
-        {
-            return;
-        }
-
-        var hasNonDefaultSkin = skinsElement.ValueKind switch
-        {
-            JsonValueKind.Object => HasObjectNonDefaultSkin(skinsElement),
-            JsonValueKind.Array => HasArrayNonDefaultSkin(skinsElement),
-            _ => false
-        };
-        if (hasNonDefaultSkin)
-        {
-            features.Add(SpineAnimationUnsupportedFeatureKind.NonDefaultSkin);
-        }
-    }
-
-    private static bool HasObjectNonDefaultSkin(JsonElement skinsElement)
-    {
-        var skinNames = skinsElement.EnumerateObject()
-            .Select(static skin => skin.Name)
-            .Where(static name => !string.IsNullOrWhiteSpace(name))
-            .ToArray();
-        return skinNames.Length > 1 ||
-               skinNames.Any(static name => !string.Equals(name, "default", StringComparison.OrdinalIgnoreCase));
-    }
-
-    private static bool HasArrayNonDefaultSkin(JsonElement skinsElement)
-    {
-        var skinNames = skinsElement.EnumerateArray()
-            .Select(static skin => GetString(skin, "name"))
-            .Where(static name => !string.IsNullOrWhiteSpace(name))
-            .ToArray();
-        return skinNames.Length > 1 ||
-               skinNames.Any(static name => !string.Equals(name, "default", StringComparison.OrdinalIgnoreCase));
     }
 
     private static void AddSkinAttachmentDiagnostics(
@@ -233,8 +191,6 @@ internal sealed partial class SpineAnimationPreviewBuilder
         foreach (var animationProperty in animationsElement.EnumerateObject())
         {
             var animationElement = animationProperty.Value;
-            AddAnimationFeature(animationElement, "drawOrder", SpineAnimationUnsupportedFeatureKind.DrawOrderTimeline, features);
-            AddAnimationFeature(animationElement, "draworder", SpineAnimationUnsupportedFeatureKind.DrawOrderTimeline, features);
             AddAnimationFeature(animationElement, "deform", SpineAnimationUnsupportedFeatureKind.DeformTimeline, features);
             AddAnimationFeature(animationElement, "ffd", SpineAnimationUnsupportedFeatureKind.DeformTimeline, features);
             AddAnimationFeature(animationElement, "events", SpineAnimationUnsupportedFeatureKind.EventTimeline, features);
@@ -275,10 +231,6 @@ internal sealed partial class SpineAnimationPreviewBuilder
         foreach (var slotProperty in slotsElement.EnumerateObject())
         {
             var slotElement = slotProperty.Value;
-            AddAnimationFeature(slotElement, "color", SpineAnimationUnsupportedFeatureKind.SlotColorTimeline, features);
-            AddAnimationFeature(slotElement, "rgb", SpineAnimationUnsupportedFeatureKind.SlotColorTimeline, features);
-            AddAnimationFeature(slotElement, "rgba", SpineAnimationUnsupportedFeatureKind.SlotColorTimeline, features);
-            AddAnimationFeature(slotElement, "alpha", SpineAnimationUnsupportedFeatureKind.SlotColorTimeline, features);
             AddAnimationFeature(slotElement, "twoColor", SpineAnimationUnsupportedFeatureKind.SlotTwoColorTimeline, features);
             AddAnimationFeature(slotElement, "rgb2", SpineAnimationUnsupportedFeatureKind.SlotTwoColorTimeline, features);
             AddAnimationFeature(slotElement, "rgba2", SpineAnimationUnsupportedFeatureKind.SlotTwoColorTimeline, features);

@@ -1,0 +1,79 @@
+using AssestBundleTools.Application.Assets.Dtos;
+
+namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
+
+internal sealed class SpineAnimationFallbackRenderBackend : ISpineAnimationPreviewRenderBackend
+{
+    private static readonly IReadOnlyDictionary<string, byte[]> EmptyTexturePages =
+        new Dictionary<string, byte[]>(StringComparer.Ordinal);
+
+    private readonly ISpineAnimationPreviewRenderBackend _primary;
+    private readonly ISpineAnimationPreviewRenderBackend _fallback;
+    private readonly Action<bool> _setPrimaryActive;
+    private IReadOnlyDictionary<string, byte[]> _texturePageContents = EmptyTexturePages;
+    private SpineAnimationFrameDto? _currentFrame;
+    private bool _isFallbackActive;
+
+    public SpineAnimationFallbackRenderBackend(
+        ISpineAnimationPreviewRenderBackend primary,
+        ISpineAnimationPreviewRenderBackend fallback,
+        Action<bool> setPrimaryActive)
+    {
+        _primary = primary;
+        _fallback = fallback;
+        _setPrimaryActive = setPrimaryActive;
+        _setPrimaryActive(true);
+    }
+
+    public void SetCurrentFrame(SpineAnimationFrameDto? frame)
+    {
+        _currentFrame = frame;
+        ActiveBackend.SetCurrentFrame(frame);
+    }
+
+    public void LoadTexturePages(IReadOnlyDictionary<string, byte[]> texturePageContents)
+    {
+        ArgumentNullException.ThrowIfNull(texturePageContents);
+
+        _texturePageContents = texturePageContents;
+        ActiveBackend.LoadTexturePages(texturePageContents);
+    }
+
+    public void ClearTexturePages()
+    {
+        _texturePageContents = EmptyTexturePages;
+        ActiveBackend.ClearTexturePages();
+    }
+
+    public void ResetFrameCache() =>
+        ActiveBackend.ResetFrameCache();
+
+    public void Invalidate() =>
+        ActiveBackend.Invalidate();
+
+    public void SwitchToFallback()
+    {
+        if (_isFallbackActive)
+        {
+            return;
+        }
+
+        _isFallbackActive = true;
+        _setPrimaryActive(false);
+        if (_texturePageContents.Count > 0)
+        {
+            _fallback.LoadTexturePages(_texturePageContents);
+        }
+        else
+        {
+            _fallback.ClearTexturePages();
+        }
+
+        _fallback.SetCurrentFrame(_currentFrame);
+        _fallback.ResetFrameCache();
+        _fallback.Invalidate();
+    }
+
+    private ISpineAnimationPreviewRenderBackend ActiveBackend =>
+        _isFallbackActive ? _fallback : _primary;
+}

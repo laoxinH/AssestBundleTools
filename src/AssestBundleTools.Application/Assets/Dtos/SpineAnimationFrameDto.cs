@@ -23,4 +23,30 @@ public sealed record SpineAnimationDrawCommandDto(
     double TransformM21,
     double TransformM22,
     double TransformM31,
-    double TransformM32);
+    double TransformM32)
+{
+    public double TintR { get; init; } = 1d;
+
+    public double TintG { get; init; } = 1d;
+
+    public double TintB { get; init; } = 1d;
+
+    public double TintA { get; init; } = 1d;
+
+    public IReadOnlyList<SpineAnimationMeshVertexDto> MeshVertices { get; init; } =
+        Array.Empty<SpineAnimationMeshVertexDto>();
+
+    public IReadOnlyList<SpineAnimationMeshTriangleDto> MeshTriangles { get; init; } =
+        Array.Empty<SpineAnimationMeshTriangleDto>();
+}
+
+public sealed record SpineAnimationMeshVertexDto(
+    double X,
+    double Y,
+    double U,
+    double V);
+
+public sealed record SpineAnimationMeshTriangleDto(
+    int A,
+    int B,
+    int C);

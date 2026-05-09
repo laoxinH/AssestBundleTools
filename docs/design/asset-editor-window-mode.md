@@ -85,7 +85,7 @@
 3. 文本：以固定编辑面呈现，为后续 TextAsset / Shader 编辑或替换确认预留空间。
 4. Material / Font / AnimationClip / GameObject / MonoBehaviour / AnimatorController：继续显示主要摘要和轻量可视化信息；详细字段仍进入右侧信息区。
 5. AudioClip：保留试听工具面，后续波形或幅度摘要也应在此区域扩展。
-6. Spine 资源组：当前已在主窗口组文档中展示 JSON skeleton 轻量结构摘要、atlas region overlay、atlas page 选择器和结构化诊断，诊断覆盖 page 未匹配 Texture2D、Texture2D 预览不可用、page 尺寸与图片尺寸不一致等情况；实验性 JSON 动画预览当前支持默认 skin 的 region attachment、bone rotate / translate / scale 和 slot attachment 时间线，并会把 `.skel / .skel.bytes` 二进制 skeleton、非默认 skin、mesh / linked mesh、权重顶点、deform、draw order、slot 颜色 / 双颜色、event、IK / transform / path / physics 约束、Bezier 曲线等尚未完整解释的特性投影为结构化诊断。完整播放器参考 [SpineViewer](https://github.com/ww-rm/SpineViewer) 的“多版本 runtime 适配器 + 窄 skeleton / animation 抽象 + 独立渲染层”思路推进；当前 Application 已先建立并回归覆盖 `V21 / V34 / V35 / V36 / V37 / V38 / V40 / V41 / V42` 版本矩阵，按 skeleton 的 major/minor 版本解析目标 adapter key，预览 DTO 会携带 skeleton 版本、目标 adapter key、适配状态以及 runtime-neutral sampled frames / draw commands，未知或暂无 adapter 的版本会返回结构化 runtime 诊断。Application 现在已提供 `ISpineAnimationRuntimePreviewService` 端口：已知 adapter key 会先交给 Infrastructure runtime adapter 尝试生成同一套中立 DTO，当前 Infrastructure 空实现返回未处理并继续回退到实验 JSON 预览。后续可直接接入官方 Spine Runtime 源码，但具体 runtime 对象必须封装在 Infrastructure adapter 内，Presentation 仍只消费 Application DTO / draw command / Texture2D 预览载荷。当前 Application 已提供 `LoadSpineAssetGroupsQuery / LoadSpineAssetGroupDetailsQuery` 的轻量组读模型，主窗口资产窗格已接入 `资源 / Spine 组` 切换用于浏览组摘要。选择 Spine 组会在主窗口右侧复用现有资源详情窗格打开组文档，身份为 `BundleId + GroupId`，检查器展示组摘要、组成资产跳转、skeleton 摘要、诊断摘要、atlas page / region、page 选择器、当前 page 的 overlay、runtime adapter 状态和可用时的实验性动画预览；Spine 组文档可与普通资产文档混在同一个资源文档标签组中，并可跟随统一资源编辑窗口进行会话内拖出、组合和放回。
+6. Spine 资源组：当前已在主窗口组文档中展示 JSON skeleton 轻量结构摘要、atlas region overlay、atlas page 选择器和结构化诊断，诊断覆盖 page 未匹配 Texture2D、Texture2D 预览不可用、page 尺寸与图片尺寸不一致等情况；实验性 JSON fallback 动画预览当前支持多 skin 的 region attachment、bone rotate / translate / scale、slot attachment、draw order 和 slot color / rgb / rgba / alpha 时间线，linked mesh、权重顶点、deform、slot 双颜色、event、IK / transform / path / physics 约束、Bezier 曲线等尚未完整解释的特性仍投影为结构化诊断。完整播放器参考 [SpineViewer](https://github.com/ww-rm/SpineViewer) 的“多版本 runtime 适配器 + 窄 skeleton / animation 抽象 + 独立渲染层”思路推进；当前 Application 已先建立并回归覆盖 `V21 / V34 / V35 / V36 / V37 / V38 / V40 / V41 / V42` 版本矩阵，按 skeleton 的 major/minor 版本解析目标 adapter key，预览 DTO 会携带 skeleton 版本、目标 adapter key、适配状态以及 runtime-neutral sampled frames / draw commands，未知或暂无 adapter 的版本会返回结构化 runtime 诊断。Application 现在已提供 `ISpineAnimationRuntimePreviewService` 端口：已知 adapter key 会先交给 Infrastructure runtime adapter 尝试生成同一套中立 DTO，未处理时继续回退到实验 JSON 预览；`.skel / .skel.bytes` TextAsset 会先通过统一预览缓存生成 `AssetPreviewKind.Binary` 载荷，再交给 runtime adapter 尝试解析，未处理时才保留二进制 skeleton 未支持诊断。当前 Infrastructure 已 vendor 官方 `spine-csharp` 3.8 / 4.2 源码到 `ThirdParty/Spine/V38` 和 `ThirdParty/Spine/V42`，并完成 V38 / V42 JSON 与 binary skeleton adapter；V38 / V42 adapter 会把 region attachment 直接输出中立 draw command，mesh attachment 输出官方 runtime 计算出的 world vertices、atlas UV 和 triangle indices，mesh deform timeline 会通过官方 runtime 采样反映到 mesh world vertices，V38 transform constraint timeline 与 V38 / V42 IK constraint timeline 已有最小样本回归，runtime draw order 与 slot / attachment / skeleton tint 会合成到 draw command。Presentation 通过 Win2D 按 DTO 应用 alpha 与 RGB tint，并保持 mesh 几何逐三角贴图绘制；复杂帧使用控件级渲染目标缓存复用完整高质量画面，只有 mesh 数据不可绘制时才退回到 region 矩形，避免播放时出现块状近似。播放体验层当前提供动画选择、真实 skin 切换、播放速度、进度拖动、播放 / 暂停、上一帧 / 下一帧、重播和 setup pose；setup pose 由 Application DTO 的独立 `SetupFrame` 承载，skin 切换通过 `SkinPreviews[]` 切换对应的 setup frame 与 sampled frames，不再把动画 0 秒帧等同于 setup pose；当前帧选择在 ViewModel 内用缓存索引和二分查找，采样端会按 setup frame 的 draw command / mesh 三角复杂度限制最大采样帧数，避免大动画一次性生成过重帧缓存。具体 runtime 对象必须封装在 Infrastructure adapter 内，Presentation 仍只消费 Application DTO / draw command / Texture2D 预览载荷。当前 Application 已提供 `LoadSpineAssetGroupsQuery / LoadSpineAssetGroupDetailsQuery` 的轻量组读模型，主窗口资产窗格已接入 `资源 / Spine 组` 切换用于浏览组摘要。选择 Spine 组会在主窗口右侧复用现有资源详情窗格打开组文档，身份为 `BundleId + GroupId`，检查器展示组摘要、组成资产跳转、skeleton 摘要、诊断摘要、atlas page / region、page 选择器、当前 page 的 overlay、runtime adapter 状态和可用时的实验性动画预览；Spine 组文档可与普通资产文档混在同一个资源文档标签组中，并可跟随统一资源编辑窗口进行会话内拖出、组合和放回。
 
 预览 / 编辑区域只消费 Application 预览 DTO、缓存载荷和展示层状态，不直接读取 AB、遍历文件或调用 Infrastructure 解析实现。
 
@@ -232,6 +232,15 @@ Spine 资源组文档属于页面级浏览状态。主窗口资源包标签会�
 - `AssetEditorWindowStateStore`：后续保存独立窗口位置和标签组状态。
 - `AssetEditDraftCoordinator`：后续管理编辑草稿确认、恢复和丢弃。
 
+Spine 动画的长期高性能渲染路线采用 `D3D11 + SwapChainPanel + vertex batch renderer` 组合，而不是在 Win2D 逐三角裁剪路径上继续堆叠近似策略：
+
+- `vertex batch renderer` 是核心策略：把 `SpineAnimationFrameDto.DrawCommands` 转换为按 texture / blend / tint 可提交的顶点、UV、颜色和索引批次，保持 mesh 几何质量。
+- `D3D11` 是首选渲染后端：负责 GPU 纹理采样、alpha blend、顶点 / 索引 buffer 提交和渲染目标管理。
+- `SwapChainPanel` 是 WinUI 承载面：只负责把 D3D 输出嵌入资源详情预览区，不承载 runtime 解析、采样或资源组识别语义。
+- 该渲染器属于 Presentation 控件实现细节，只能消费 Application DTO、Texture2D 预览载荷和展示层状态；不得让 Application 引用 D3D / WinUI 类型，也不得把 Infrastructure 官方 Spine runtime 对象泄露到 Presentation。
+- 现有 Win2D 渲染器保留为兼容回退路径，用于 D3D 初始化失败、设备丢失恢复期间或尚未迁移的测试环境；回退路径不得再把复杂 mesh 降级为块状矩形近似。
+- 所有用户可见的渲染状态、错误提示和降级提示仍走现有本地化资源；D3D 设备错误只作为诊断明细，不直接暴露原始异常文本作为主提示。
+
 ## 13. 与现有主窗口的关系
 
 主窗口仍是活动工作区的主要导航和组织入口：
@@ -321,6 +330,30 @@ Spine 资源组文档属于页面级浏览状态。主窗口资源包标签会�
 - 当前仍不自动弹出独立资源编辑窗口，也不恢复最大化 / 最小化、显示器或真实编辑草稿内容；当预检计划可用时，草稿选项只决定本次成功打开的标签是否带回预检为可恢复的 `EditDraftReference` 标记，缺失、来源不匹配、已过期和引用无效的草稿标记不会重新挂回新标签。真实草稿确认 / 丢弃 / 恢复队列仍留给后续编辑器模型。
 - 当前打开资源详情、依赖跳转、Spine 组文档和新窗口打开入口会先检查主窗口与所有独立资源编辑窗口：如果目标文档已打开，则直接激活并切换到已有标签，再把所在窗口置前；只有未命中现有标签时才继续创建新的文档标签或独立窗口。
 - Spine 资源组当前作为统一资源文档标签打开到普通独立资源编辑窗口；会话内混合标签、拖拽合并、放回主窗口、冲突激活和 `openAssetEditorWindows[]` 快照恢复均复用统一文档标签链路。Spine 组恢复只持久化 `BundleId + GroupId + DisplayName + GroupKey`，不持久化解析详情或预览载荷。
+
+### 第五阶段：Spine GPU 批量渲染
+
+完成标准：
+
+- 新增 Presentation 内部的 Spine 渲染后端抽象，使现有播放控件可以在 Win2D 回退后端和 D3D11 后端之间切换。
+- 当前已完成第一步：`InspectorSpineAnimationPreviewSurfaceView` 已改为消费 `ISpineAnimationPreviewRenderBackend`，现有 Win2D 绘制、贴图加载、帧缓存和 invalidation 已下沉到 `Win2DSpineAnimationPreviewRenderBackend`，播放控件本身不再直接持有 Win2D 帧绘制状态。
+- D3D11 后端通过 `SwapChainPanel` 承载，并实现按 texture / blend 分组的 vertex batch renderer，批量提交 Spine region / mesh 三角形。
+- 顶点批次只由 Application 的 runtime-neutral DTO 投影而来，保持 `world position / UV / tint / alpha / draw order` 语义；不在 Presentation 中持有官方 Spine runtime 对象，也不读取 AB。
+- 当前已完成第二步：Presentation 内部已新增 DTO 到顶点批次的纯投影器，覆盖 region / mesh 顶点、UV、tint / alpha、无效三角过滤和按连续 texture page 保持 draw order 的批次切分；该投影器暂不接触 D3D 类型。
+- 当前已完成第三步的受控 D3D 后端：`ABT_SPINE_D3D11_SMOKE=1/true/d3d11` 时，播放控件会切到 `SwapChainPanel` 承载的 D3D11 后端，创建 device / swap chain / render target，并把顶点批次投影到 clip space 后通过 D3D11 顶点 / 索引 buffer 提交。
+- 当前已完成第四步的第一段：Texture2D 预览载荷会在 Presentation 内解码为 BGRA8、上传为 D3D texture / shader resource，并按 page name 缓存；顶点批次会通过 shader 采样真实 page texture 并应用 DTO 中的 tint / alpha。
+- 当前已完成第五步的第一段：D3D11 后端已把每个 batch 每帧临时创建 vertex / index buffer 的提交方式替换为可复用动态 buffer，按容量增长后使用 `WriteDiscard` 上传当前 batch，降低大量三角播放时的 GPU 资源创建压力；D3D render / resize / present 失败时会自动切回 Win2D 后端并重放当前帧与贴图状态。D3D smoke 可通过 `ABT_SPINE_D3D11_DIAGNOSTICS=1/true/d3d11` 额外输出 device / resize、texture decode、GPU upload、节流 frame batch / vertex / index / elapsed 和 fallback 异常类型，便于真实样本基线记录；默认路径仍是 Win2D，D3D 后端仍需通过环境变量主动启用。
+- 保留现有 Win2D 帧缓存作为回退；D3D 可用时大量三角动画不再走逐三角 `CreateLayer` 裁剪路径。
+- 给真实高复杂样本补受控性能验证记录，至少覆盖首帧纹理上传、连续播放、窗口缩放、skin / animation 切换、设备丢失回退和恢复。
+
+建议开发顺序：
+
+1. 已完成：抽出 `SpineAnimationPreviewSurface` 的渲染后端接口和 Win2D 适配器，现有播放功能继续走兼容回退后端。
+2. 已完成：实现 DTO 到 batch 的纯 Presentation 投影器，单元测试验证 draw order、UV、tint、alpha 和 texture 分组。
+3. 已完成：接入 `SwapChainPanel` 与 D3D11 设备 / swap chain 生命周期，并以 opt-in smoke 绘制按 tint 着色的 Spine 顶点批次。
+4. 已完成：接入 Texture2D 预览载荷解码、D3D texture 上传和 page texture 缓存，并在 D3D shader 中采样真实贴图。
+5. 已完成：把当前每帧临时创建 vertex / index buffer 的 smoke 提交流程升级为可复用动态 buffer / 批次提交器。
+6. 下一步：用 `char_2026_yu_nian#12.ab` 这类大量三角样本配合 D3D 诊断记录首帧纹理上传、连续播放帧时间、窗口缩放、skin / animation 切换和内存占用基线，再决定是否需要做 D3D 设备重建而不只是回退 Win2D。
 
 ## 16. 测试建议
 

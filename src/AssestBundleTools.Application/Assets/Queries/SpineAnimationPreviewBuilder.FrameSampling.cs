@@ -7,19 +7,66 @@ internal sealed partial class SpineAnimationPreviewBuilder
 {
     private const double SampledFrameRate = 30d;
     private const int MaxSampledFrameCount = 240;
+    private const int MaxSampledDrawCommandBudget = 12000;
     private const double DegreesToRadians = Math.PI / 180d;
     private const double MinSampleExtent = 0.001d;
+
+    private static SpineAnimationFrameDto BuildSetupFrame(
+        IReadOnlyList<SpineAnimationBoneDto> bones,
+        IReadOnlyList<SpineAnimationSlotDto> slots,
+        IReadOnlyList<SpineAnimationAttachmentDto> attachments) =>
+        new(
+            0d,
+            BuildDrawCommands(
+                bones,
+                slots,
+                attachments,
+                animation: null,
+                time: 0d));
+
+    private static IReadOnlyList<SpineAnimationSkinPreviewDto> BuildSampledSkinPreviews(
+        IReadOnlyList<SpineAnimationBoneDto> bones,
+        IReadOnlyList<SpineAnimationSlotDto> slots,
+        IReadOnlyList<SpineAnimationSkinAttachmentSet> skinAttachmentSets,
+        IReadOnlyList<SpineAnimationClipDto> animations)
+    {
+        return skinAttachmentSets
+            .Select(skin =>
+            {
+                var setupFrame = BuildSetupFrame(bones, slots, skin.Attachments);
+                return new SpineAnimationSkinPreviewDto(
+                    skin.Name,
+                    skin.Attachments,
+                    BuildSampledAnimationClips(bones, slots, skin.Attachments, animations, setupFrame),
+                    setupFrame);
+            })
+            .ToArray();
+    }
+
+    private static SpineAnimationSkinPreviewDto ResolveInitialSkinPreview(
+        IReadOnlyList<SpineAnimationSkinPreviewDto> skinPreviews)
+    {
+        var defaultPreview = skinPreviews.FirstOrDefault(static skin =>
+            string.Equals(skin.Name, "default", StringComparison.OrdinalIgnoreCase));
+        return defaultPreview ??
+               skinPreviews.FirstOrDefault(static skin =>
+                   skin.Animations.Any(static animation =>
+                       animation.SampledFrames.Any(static frame => frame.DrawCommands.Count > 0))) ??
+               skinPreviews[0];
+    }
 
     private static IReadOnlyList<SpineAnimationClipDto> BuildSampledAnimationClips(
         IReadOnlyList<SpineAnimationBoneDto> bones,
         IReadOnlyList<SpineAnimationSlotDto> slots,
         IReadOnlyList<SpineAnimationAttachmentDto> attachments,
-        IReadOnlyList<SpineAnimationClipDto> animations)
+        IReadOnlyList<SpineAnimationClipDto> animations,
+        SpineAnimationFrameDto setupFrame)
     {
+        var samplingBudget = CreateSamplingBudget(setupFrame);
         return animations
             .Select(animation => animation with
             {
-                SampledFrames = BuildSampledFrames(bones, slots, attachments, animation)
+                SampledFrames = BuildSampledFrames(bones, slots, attachments, animation, samplingBudget)
             })
             .ToArray();
     }
@@ -28,9 +75,10 @@ internal sealed partial class SpineAnimationPreviewBuilder
         IReadOnlyList<SpineAnimationBoneDto> bones,
         IReadOnlyList<SpineAnimationSlotDto> slots,
         IReadOnlyList<SpineAnimationAttachmentDto> attachments,
-        SpineAnimationClipDto animation)
+        SpineAnimationClipDto animation,
+        SpineAnimationSamplingBudget samplingBudget)
     {
-        var frameTimes = CreateSampleTimes(animation.Duration);
+        var frameTimes = CreateSampleTimes(animation.Duration, samplingBudget);
         return frameTimes
             .Select(time => new SpineAnimationFrameDto(
                 time,
@@ -38,7 +86,19 @@ internal sealed partial class SpineAnimationPreviewBuilder
             .ToArray();
     }
 
-    private static IReadOnlyList<double> CreateSampleTimes(double duration)
+    private static SpineAnimationSamplingBudget CreateSamplingBudget(SpineAnimationFrameDto setupFrame)
+    {
+        var drawCommandCount = Math.Max(setupFrame.DrawCommands.Count, 1);
+        var maxFrameCount = Math.Clamp(
+            MaxSampledDrawCommandBudget / drawCommandCount,
+            2,
+            MaxSampledFrameCount);
+        return new SpineAnimationSamplingBudget(maxFrameCount);
+    }
+
+    private static IReadOnlyList<double> CreateSampleTimes(
+        double duration,
+        SpineAnimationSamplingBudget samplingBudget)
     {
         if (duration <= 0d)
         {
@@ -46,7 +106,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
         }
 
         var requestedFrameCount = (int)Math.Floor(duration * SampledFrameRate) + 1;
-        var frameCount = Math.Clamp(requestedFrameCount, 2, MaxSampledFrameCount);
+        var frameCount = Math.Clamp(requestedFrameCount, 2, samplingBudget.MaxFrameCount);
         var step = duration / Math.Max(frameCount - 1, 1);
         return Enumerable.Range(0, frameCount)
             .Select(index => index == frameCount - 1 ? duration : index * step)
@@ -57,17 +117,22 @@ internal sealed partial class SpineAnimationPreviewBuilder
         IReadOnlyList<SpineAnimationBoneDto> bones,
         IReadOnlyList<SpineAnimationSlotDto> slots,
         IReadOnlyList<SpineAnimationAttachmentDto> attachments,
-        SpineAnimationClipDto animation,
+        SpineAnimationClipDto? animation,
         double time)
     {
         var boneTransforms = BuildBoneTransforms(bones, animation, time);
         var attachmentsBySlotAndName = attachments
             .GroupBy(static attachment => CreateAttachmentKey(attachment.SlotName, attachment.Name), StringComparer.Ordinal)
             .ToDictionary(static group => group.Key, static group => group.First(), StringComparer.Ordinal);
-        var attachmentTimelineBySlot = animation.SlotAttachmentTimelines
-            .ToDictionary(static timeline => timeline.SlotName, StringComparer.Ordinal);
+        var attachmentTimelineBySlot = animation?.SlotAttachmentTimelines
+            .ToDictionary(static timeline => timeline.SlotName, StringComparer.Ordinal) ??
+            new Dictionary<string, SpineAnimationSlotAttachmentTimelineDto>(StringComparer.Ordinal);
+        var colorTimelinesBySlot = animation?.SlotColorTimelines
+            .ToLookup(static timeline => timeline.SlotName, StringComparer.Ordinal) ??
+            Enumerable.Empty<SpineAnimationSlotColorTimelineDto>()
+                .ToLookup(static timeline => timeline.SlotName, StringComparer.Ordinal);
         var commands = new List<SpineAnimationDrawCommandDto>();
-        foreach (var slot in slots.OrderBy(static slot => slot.DrawOrder))
+        foreach (var slot in ResolveDrawOrder(slots, animation, time))
         {
             if (!boneTransforms.TryGetValue(slot.BoneName, out var boneTransform))
             {
@@ -81,7 +146,8 @@ internal sealed partial class SpineAnimationPreviewBuilder
                 continue;
             }
 
-            commands.Add(CreateDrawCommand(attachment, boneTransform));
+            var tint = ResolveSlotTint(slot, colorTimelinesBySlot[slot.Name], time);
+            commands.Add(CreateDrawCommand(attachment, boneTransform, tint));
         }
 
         return commands;
@@ -89,7 +155,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
 
     private static Dictionary<string, Matrix3x2> BuildBoneTransforms(
         IReadOnlyList<SpineAnimationBoneDto> bones,
-        SpineAnimationClipDto animation,
+        SpineAnimationClipDto? animation,
         double time)
     {
         var setupBones = bones.ToDictionary(static bone => bone.Name, StringComparer.Ordinal);
@@ -140,7 +206,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
 
     private static SpineAnimationBonePose ApplyBoneTimelines(
         SpineAnimationBoneDto setupBone,
-        SpineAnimationClipDto animation,
+        SpineAnimationClipDto? animation,
         double time)
     {
         var pose = new SpineAnimationBonePose(
@@ -149,6 +215,11 @@ internal sealed partial class SpineAnimationPreviewBuilder
             setupBone.Rotation,
             setupBone.ScaleX,
             setupBone.ScaleY);
+        if (animation is null)
+        {
+            return pose;
+        }
+
         foreach (var timeline in animation.BoneTimelines.Where(timeline =>
                      string.Equals(timeline.BoneName, setupBone.Name, StringComparison.Ordinal)))
         {
@@ -242,7 +313,8 @@ internal sealed partial class SpineAnimationPreviewBuilder
 
     private static SpineAnimationDrawCommandDto CreateDrawCommand(
         SpineAnimationAttachmentDto attachment,
-        Matrix3x2 boneTransform)
+        Matrix3x2 boneTransform,
+        SpineAnimationSlotTint tint)
     {
         var attachmentTransform = CreateTransform(
             attachment.X,
@@ -267,7 +339,13 @@ internal sealed partial class SpineAnimationPreviewBuilder
             transform.M21,
             transform.M22,
             transform.M31,
-            transform.M32);
+            transform.M32)
+        {
+            TintR = tint.R,
+            TintG = tint.G,
+            TintB = tint.B,
+            TintA = tint.A
+        };
     }
 
     private static Matrix3x2 CreateTransform(
@@ -322,4 +400,6 @@ internal sealed partial class SpineAnimationPreviewBuilder
         double Rotation,
         double ScaleX,
         double ScaleY);
+
+    private readonly record struct SpineAnimationSamplingBudget(int MaxFrameCount);
 }
