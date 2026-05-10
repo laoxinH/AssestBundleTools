@@ -1,9 +1,11 @@
 using System.Runtime.CompilerServices;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 
@@ -27,6 +29,9 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
         Assert.NotNull(viewModel.CurrentFrame);
         Assert.Equal(0d, viewModel.CurrentFrame.Time);
         Assert.Equal("0:00.00 / 0:01.00", viewModel.DisplayPlaybackTimeText);
+        Assert.True(viewModel.IsSolidBackgroundSelected);
+        Assert.Equal(Visibility.Visible, viewModel.SolidBackgroundVisibility);
+        Assert.Equal(Visibility.Collapsed, viewModel.CheckerboardBackgroundVisibility);
     }
 
     [Fact]
@@ -132,6 +137,52 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
     }
 
     [Fact]
+    public void SelectedSkinName_ShouldReplaceAnimationNamesCollection()
+    {
+        var viewModel = new InspectorPreviewSpineAnimationViewModel();
+        viewModel.Apply(CreatePreview(), CreateTextureStates());
+        var originalAnimationNames = viewModel.AnimationNames;
+        var observedAnimationNameCollections = new List<IReadOnlyList<string>>();
+
+        viewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(InspectorPreviewSpineAnimationViewModel.AnimationNames))
+            {
+                observedAnimationNameCollections.Add(viewModel.AnimationNames);
+            }
+        };
+
+        viewModel.SelectedSkinName = "skin-alt";
+
+        Assert.Equal(["idle", "attack"], originalAnimationNames);
+        Assert.NotSame(originalAnimationNames, viewModel.AnimationNames);
+        Assert.Same(viewModel.AnimationNames, Assert.Single(observedAnimationNameCollections));
+    }
+
+    [Fact]
+    public void ToggleBackgroundMode_ShouldSwitchSpinePreviewBackground()
+    {
+        var viewModel = new InspectorPreviewSpineAnimationViewModel();
+        var changedProperties = new List<string?>();
+        viewModel.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        viewModel.ToggleBackgroundMode();
+
+        Assert.True(viewModel.IsCheckerboardBackgroundSelected);
+        Assert.Equal("\uECA5", viewModel.BackgroundModeGlyph);
+        Assert.Equal(Visibility.Visible, viewModel.CheckerboardBackgroundVisibility);
+        Assert.Equal(Visibility.Collapsed, viewModel.SolidBackgroundVisibility);
+        Assert.Contains(nameof(InspectorPreviewSpineAnimationViewModel.BackgroundModeGlyph), changedProperties);
+
+        viewModel.ToggleBackgroundMode();
+
+        Assert.True(viewModel.IsSolidBackgroundSelected);
+        Assert.Equal("\uE790", viewModel.BackgroundModeGlyph);
+        Assert.Equal(Visibility.Collapsed, viewModel.CheckerboardBackgroundVisibility);
+        Assert.Equal(Visibility.Visible, viewModel.SolidBackgroundVisibility);
+    }
+
+    [Fact]
     public void Apply_ShouldExposeRuntimeAnimationsWithoutSampledFrames()
     {
         var viewModel = new InspectorPreviewSpineAnimationViewModel();
@@ -209,6 +260,54 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
         Assert.Contains(nameof(InspectorPreviewSpineAnimationViewModel.PlaybackTime), changedProperties);
         Assert.Contains(nameof(InspectorPreviewSpineAnimationViewModel.DisplayPlaybackTime), changedProperties);
         Assert.Contains(nameof(InspectorPreviewSpineAnimationViewModel.DisplayPlaybackTimeText), changedProperties);
+    }
+
+    [Fact]
+    public void CaptureAndRestorePreviewState_ShouldPreservePlaybackAndViewportOptions()
+    {
+        var source = new InspectorPreviewSpineAnimationViewModel();
+        source.Apply(CreatePreview(), CreateTextureStates());
+        source.SelectedSkinName = "skin-alt";
+        source.SelectedAnimationName = "attack";
+        source.PlaybackSpeed = 1.5d;
+        source.DisplayPlaybackTime = 0.5d;
+        source.ToggleBackgroundMode();
+        source.UpdateViewportState(2d, 18d, -9d);
+        source.TogglePlayback();
+
+        WorkspaceSpinePreviewStateDto state = source.CapturePreviewState();
+        var restored = new InspectorPreviewSpineAnimationViewModel();
+        restored.Apply(CreatePreview(), CreateTextureStates(), state);
+
+        Assert.Equal("skin-alt", restored.SelectedSkinName);
+        Assert.Equal("attack", restored.SelectedAnimationName);
+        Assert.Equal(1.5d, restored.PlaybackSpeed);
+        Assert.Equal(0.5d, restored.PlaybackTime, precision: 6);
+        Assert.Equal(0.5d, restored.DisplayPlaybackTime, precision: 6);
+        Assert.False(restored.IsPlaying);
+        Assert.True(restored.IsCheckerboardBackgroundSelected);
+        Assert.Equal(2d, restored.ViewportZoom);
+        Assert.Equal(18d, restored.ViewportPanX);
+        Assert.Equal(-9d, restored.ViewportPanY);
+        Assert.Equal("skin-alt-attack-frame", restored.CurrentFrame?.DrawCommands[0].AttachmentName);
+    }
+
+    [Fact]
+    public void SelectorNames_ShouldIgnoreTransientNullOrInvalidValues_WhenOptionsAreLoaded()
+    {
+        var viewModel = new InspectorPreviewSpineAnimationViewModel();
+        viewModel.Apply(CreatePreview(), CreateTextureStates());
+        viewModel.SelectedSkinName = "skin-alt";
+        viewModel.SelectedAnimationName = "attack";
+
+        viewModel.SelectedSkinName = null;
+        viewModel.SelectedAnimationName = string.Empty;
+        viewModel.SelectedSkinName = "missing-skin";
+        viewModel.SelectedAnimationName = "missing-animation";
+
+        Assert.Equal("skin-alt", viewModel.SelectedSkinName);
+        Assert.Equal("attack", viewModel.SelectedAnimationName);
+        Assert.Equal("skin-alt-attack-frame", viewModel.CurrentFrame?.DrawCommands[0].AttachmentName);
     }
 
     private static SpineAnimationPreviewDto CreatePreview()

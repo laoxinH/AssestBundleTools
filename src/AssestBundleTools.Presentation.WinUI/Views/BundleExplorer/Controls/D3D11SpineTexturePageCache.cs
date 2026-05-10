@@ -32,7 +32,10 @@ internal sealed class D3D11SpineTexturePageCache : IDisposable
             }
 
             _decodedPages[pair.Key] = pair.Value;
-            _texturePageSizes[pair.Key] = new SpineAnimationTexturePageSize(pair.Value.Width, pair.Value.Height);
+            _texturePageSizes[pair.Key] = new SpineAnimationTexturePageSize(
+                pair.Value.Width,
+                pair.Value.Height,
+                pair.Value.AlphaMap);
         }
     }
 

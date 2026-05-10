@@ -14,7 +14,9 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
 
     private readonly CanvasControl _canvas;
     private readonly Dictionary<string, CanvasBitmap> _textureBitmaps = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, SpineAnimationTexturePageSize> _texturePageSizes = new(StringComparer.Ordinal);
     private readonly SpineAnimationFrameRenderCache _frameRenderCache = new();
+    private readonly SpineAnimationStableAutoFitBounds _stableAutoFitBounds = new();
     private IReadOnlyDictionary<string, SpineAnimationTexturePageContent> _texturePageContents = EmptyTexturePages;
     private SpineAnimationFrameDto? _currentFrame;
     private SpineAnimationPreviewViewport _viewport = SpineAnimationPreviewViewport.Default;
@@ -51,9 +53,20 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
         Invalidate();
     }
 
+    public void SetBackgroundMode(InspectorPreviewImageBackgroundMode backgroundMode)
+    {
+        // Win2D 预览继续使用 XAML 背景层，D3D 后端才需要自行绘制背景。
+    }
+
     public void PrewarmFrames(IReadOnlyList<SpineAnimationFrameDto> frames)
     {
         ArgumentNullException.ThrowIfNull(frames);
+
+        if (_stableAutoFitBounds.SetReferenceFrames(frames))
+        {
+            _frameRenderCache.Clear();
+            Invalidate();
+        }
     }
 
     public void LoadTexturePages(IReadOnlyDictionary<string, SpineAnimationTexturePageContent> texturePageContents)
@@ -67,6 +80,7 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
 
         _texturePageContents = texturePageContents;
         var generation = ++_textureLoadGeneration;
+        _stableAutoFitBounds.ResetBounds();
         ClearTextureBitmaps();
         if (texturePageContents.Count == 0)
         {
@@ -81,12 +95,14 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
     {
         _texturePageContents = EmptyTexturePages;
         _textureLoadGeneration++;
+        _stableAutoFitBounds.ResetBounds();
         ClearTextureBitmaps();
         Invalidate();
     }
 
     public void ResetFrameCache()
     {
+        _stableAutoFitBounds.ResetBounds();
         _frameRenderCache.Clear();
     }
 
@@ -96,6 +112,8 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
         ClearTextureBitmaps();
         _currentFrame = null;
         _textureLoadGeneration++;
+        _stableAutoFitBounds.ClearReferenceFrames();
+        _stableAutoFitBounds.ResetBounds();
     }
 
     public void Invalidate()
@@ -155,6 +173,11 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
                 }
 
                 _textureBitmaps[pair.Key] = bitmap;
+                _texturePageSizes[pair.Key] = new SpineAnimationTexturePageSize(
+                    decodedPage.Width,
+                    decodedPage.Height,
+                    decodedPage.AlphaMap);
+                _stableAutoFitBounds.ResetBounds();
                 _frameRenderCache.Clear();
             }
 
@@ -191,15 +214,30 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
             return;
         }
 
+        var stableFitChanged = _stableAutoFitBounds.TryResolveBounds(
+            SpineAnimationVertexBatchProjector.Project(_currentFrame, _texturePageSizes),
+            ResolveReferenceFrameBatches,
+            out var autoFitBounds);
+        if (stableFitChanged)
+        {
+            _frameRenderCache.Clear();
+        }
+
         _frameRenderCache.Draw(
             args.DrawingSession,
             sender,
             _currentFrame,
             _textureBitmaps,
+            _texturePageSizes,
             width,
             height,
-            _viewport);
+            _viewport,
+            autoFitBounds);
     }
+
+    private IReadOnlyList<SpineAnimationVertexBatch> ResolveReferenceFrameBatches(
+        SpineAnimationFrameDto frame) =>
+        SpineAnimationVertexBatchProjector.Project(frame, _texturePageSizes);
 
     private void ClearTextureBitmaps()
     {
@@ -209,6 +247,7 @@ internal sealed class Win2DSpineAnimationPreviewRenderBackend : ISpineAnimationP
         }
 
         _textureBitmaps.Clear();
+        _texturePageSizes.Clear();
         _frameRenderCache.Clear();
     }
 }

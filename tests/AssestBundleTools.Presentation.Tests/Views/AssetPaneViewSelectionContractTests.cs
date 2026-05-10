@@ -21,6 +21,22 @@ public sealed class AssetPaneViewSelectionContractTests
         Assert.DoesNotContain("SelectedItem=\"{x:Bind ViewModel.SelectedSpineGroup, Mode=TwoWay}\"", xaml);
     }
 
+    [Fact]
+    public void AssetPaneViewModeToggles_ShouldUseDedicatedViewModeChangedEvent()
+    {
+        var xaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "BundleExplorerPage.xaml"));
+
+        Assert.Contains("ViewModeChanged=\"OnPrimaryPaneViewModeChanged\"", xaml);
+        Assert.Contains("FilterChanged=\"OnPrimaryPaneFilterChanged\"", xaml);
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

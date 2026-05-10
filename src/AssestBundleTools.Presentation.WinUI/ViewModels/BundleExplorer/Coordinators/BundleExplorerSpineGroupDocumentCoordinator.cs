@@ -276,6 +276,10 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
         var wasAlreadyActiveGroupTab = ReferenceEquals(bundleTab.ActiveSpineGroupTab, spineGroupTab);
         bundleTab.SetActiveSpineGroupTab(spineGroupTab);
         _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
+        if (spineGroupTab.Details is null)
+        {
+            _spineGroupInspectorPresenter.PresentSpineGroupPreviewLoading(spineGroupTab);
+        }
 
         if (!wasAlreadyActiveGroupTab)
         {
@@ -316,12 +320,19 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
         var expectedBundleId = spineGroupTab.BundleId;
         var expectedGroup = spineGroupTab.Item;
         var loadResult = await _spineGroupDetailsLoader.LoadAsync(spineGroupTab);
-        if (loadResult is null ||
-            !expectedBundleId.Equals(spineGroupTab.BundleId) ||
+        if (!expectedBundleId.Equals(spineGroupTab.BundleId) ||
             !string.Equals(expectedGroupId, spineGroupTab.GroupId, StringComparison.Ordinal) ||
             !ReferenceEquals(expectedGroup, spineGroupTab.Item) ||
             !ReferenceEquals(bundleTab.ActiveSpineGroupTab, spineGroupTab))
         {
+            return;
+        }
+
+        if (loadResult is null)
+        {
+            _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
+            _documentWorkspace.NotifyAssetDocumentHostStateChanged();
+            _notifyActionStates();
             return;
         }
 

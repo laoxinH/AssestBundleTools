@@ -10,14 +10,18 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 internal static class InspectorSpineAnimationPreviewRenderer
 {
     private const double MinExtent = 0.001d;
+    private const double ViewportFitRatio = 0.72d;
+    private const float VisibleOpacityThreshold = 0.0001f;
 
     public static void Draw(
         CanvasDrawingSession drawingSession,
         SpineAnimationFrameDto frame,
         IReadOnlyDictionary<string, CanvasBitmap> textureBitmaps,
+        IReadOnlyDictionary<string, SpineAnimationTexturePageSize> texturePageSizes,
         float width,
         float height,
-        SpineAnimationPreviewViewport viewport)
+        SpineAnimationPreviewViewport viewport,
+        SpineAnimationAutoFitBounds autoFitBounds = default)
     {
         DrawReferenceGrid(drawingSession, width, height);
 
@@ -27,7 +31,13 @@ internal static class InspectorSpineAnimationPreviewRenderer
             return;
         }
 
-        var viewportTransform = CreateViewportTransform(drawItems, width, height, viewport);
+        var viewportTransform = CreateViewportTransform(
+            drawItems,
+            texturePageSizes,
+            width,
+            height,
+            viewport,
+            autoFitBounds);
         foreach (var item in drawItems)
         {
             if (item.HasMesh &&
@@ -104,6 +114,7 @@ internal static class InspectorSpineAnimationPreviewRenderer
             }
 
             drawItems.Add(new SpineDrawItem(
+                command.PageName,
                 texture,
                 CreateTintedImage(texture, new SpineTint(
                     command.TintR,
@@ -130,14 +141,19 @@ internal static class InspectorSpineAnimationPreviewRenderer
 
     private static Matrix3x2 CreateViewportTransform(
         IReadOnlyList<SpineDrawItem> drawItems,
+        IReadOnlyDictionary<string, SpineAnimationTexturePageSize> texturePageSizes,
         float width,
         float height,
-        SpineAnimationPreviewViewport viewport)
+        SpineAnimationPreviewViewport viewport,
+        SpineAnimationAutoFitBounds autoFitBounds)
     {
         var normalizedViewport = viewport.Normalize();
-        var bounds = ResolveBounds(drawItems);
-        var extent = Math.Max(Math.Max(bounds.Width, bounds.Height), MinExtent);
-        var scale = (Math.Min(width, height) * 0.72d) / extent;
+        var bounds = autoFitBounds.IsValid
+            ? CreateBounds(autoFitBounds)
+            : ResolveBounds(drawItems, texturePageSizes);
+        var scale = Math.Min(
+            width / Math.Max(bounds.FitWidth, MinExtent),
+            height / Math.Max(bounds.FitHeight, MinExtent)) * ViewportFitRatio;
         var viewportCenterX = width / 2f;
         var viewportCenterY = height / 2f;
         return Matrix3x2.CreateTranslation(
@@ -162,16 +178,26 @@ internal static class InspectorSpineAnimationPreviewRenderer
             (float)layout.WorldToPixelOffsetX,
             (float)layout.WorldToPixelOffsetY);
 
-    private static SpineBounds ResolveBounds(IReadOnlyList<SpineDrawItem> drawItems)
+    private static SpineBounds ResolveBounds(
+        IReadOnlyList<SpineDrawItem> drawItems,
+        IReadOnlyDictionary<string, SpineAnimationTexturePageSize> texturePageSizes)
     {
         var minX = double.PositiveInfinity;
         var minY = double.PositiveInfinity;
         var maxX = double.NegativeInfinity;
         var maxY = double.NegativeInfinity;
+        var hasVisibleItems = false;
         foreach (var item in drawItems)
         {
-            foreach (var point in EnumerateCorners(item))
+            if (!IsVisibleForAutoFit(item))
             {
+                continue;
+            }
+
+            var contribution = ResolveVisibleContribution(item, texturePageSizes);
+            foreach (var point in contribution.BoundsPoints)
+            {
+                hasVisibleItems = true;
                 minX = Math.Min(minX, point.X);
                 minY = Math.Min(minY, point.Y);
                 maxX = Math.Max(maxX, point.X);
@@ -179,17 +205,150 @@ internal static class InspectorSpineAnimationPreviewRenderer
             }
         }
 
+        if (!hasVisibleItems)
+        {
+            foreach (var item in drawItems)
+            {
+                foreach (var point in EnumerateCorners(item))
+                {
+                    minX = Math.Min(minX, point.X);
+                    minY = Math.Min(minY, point.Y);
+                    maxX = Math.Max(maxX, point.X);
+                    maxY = Math.Max(maxY, point.Y);
+                }
+            }
+        }
+
         if (!double.IsFinite(minX) || !double.IsFinite(minY) ||
             !double.IsFinite(maxX) || !double.IsFinite(maxY))
         {
-            return new SpineBounds(0d, 0d, 1d, 1d);
+            return new SpineBounds(0d, 0d, 1d, 1d, 1d, 1d);
         }
 
+        var centerX = (minX + maxX) / 2d;
+        var centerY = (minY + maxY) / 2d;
         return new SpineBounds(
-            (minX + maxX) / 2d,
-            (minY + maxY) / 2d,
+            centerX,
+            centerY,
             Math.Max(maxX - minX, 1d),
-            Math.Max(maxY - minY, 1d));
+            Math.Max(maxY - minY, 1d),
+            Math.Max(Math.Max(maxX - centerX, centerX - minX) * 2d, 1d),
+            Math.Max(Math.Max(maxY - centerY, centerY - minY) * 2d, 1d));
+    }
+
+    private static SpineBounds CreateBounds(SpineAnimationAutoFitBounds autoFitBounds) =>
+        autoFitBounds.IsValid
+            ? new SpineBounds(
+                autoFitBounds.CenterX,
+                autoFitBounds.CenterY,
+                autoFitBounds.Width,
+                autoFitBounds.Height,
+                autoFitBounds.Width,
+                autoFitBounds.Height)
+            : new SpineBounds(0d, 0d, 1d, 1d, 1d, 1d);
+
+    private static bool IsVisibleForAutoFit(SpineDrawItem item) =>
+        item.Opacity > VisibleOpacityThreshold;
+
+    private static SpineDrawAutoFitContribution ResolveVisibleContribution(
+        SpineDrawItem item,
+        IReadOnlyDictionary<string, SpineAnimationTexturePageSize> texturePageSizes)
+    {
+        if (!texturePageSizes.TryGetValue(item.PageName, out var pageSize))
+        {
+            return new SpineDrawAutoFitContribution(EnumerateCorners(item).ToArray());
+        }
+
+        if (item.HasMesh)
+        {
+            return ResolveVisibleMeshContribution(item, pageSize);
+        }
+
+        var sourceX = (int)Math.Round(item.SourceRect.X);
+        var sourceY = (int)Math.Round(item.SourceRect.Y);
+        var sourceWidth = (int)Math.Round(item.SourceRect.Width);
+        var sourceHeight = (int)Math.Round(item.SourceRect.Height);
+        if (pageSize.AlphaMap?.TryResolveVisibleBounds(
+                sourceX,
+                sourceY,
+                sourceWidth,
+                sourceHeight,
+                out var sourceBounds) != true)
+        {
+            return pageSize.AlphaMap is null
+                ? new SpineDrawAutoFitContribution(EnumerateCorners(item).ToArray())
+                : SpineDrawAutoFitContribution.Empty;
+        }
+
+        return new SpineDrawAutoFitContribution(
+            EnumerateVisibleRegionCorners(item, sourceBounds, sourceX, sourceY, sourceWidth, sourceHeight).ToArray());
+    }
+
+    private static SpineDrawAutoFitContribution ResolveVisibleMeshContribution(
+        SpineDrawItem item,
+        SpineAnimationTexturePageSize pageSize)
+    {
+        if (pageSize.AlphaMap is null)
+        {
+            return new SpineDrawAutoFitContribution(EnumerateCorners(item).ToArray());
+        }
+
+        var points = new List<Vector2>();
+        foreach (var triangle in item.MeshTriangles)
+        {
+            if (!IsValid(triangle, item.MeshVertices.Count))
+            {
+                continue;
+            }
+
+            var contribution = SpineAnimationMeshAutoFitBoundsResolver.ResolveTriangleContribution(
+                item.MeshVertices,
+                triangle,
+                pageSize);
+            points.AddRange(contribution.BoundsPoints);
+        }
+
+        return new SpineDrawAutoFitContribution(points);
+    }
+
+    private static IEnumerable<Vector2> EnumerateVisibleRegionCorners(
+        SpineDrawItem item,
+        SpineAnimationTextureSourceAlphaBounds sourceBounds,
+        int sourceX,
+        int sourceY,
+        int sourceWidth,
+        int sourceHeight)
+    {
+        var left = ResolveLocalAxis(sourceBounds.Left, sourceX, sourceWidth, item.Width);
+        var right = ResolveLocalAxis(sourceBounds.Right, sourceX, sourceWidth, item.Width);
+        var top = ResolveLocalAxis(sourceBounds.Top, sourceY, sourceHeight, item.Height);
+        var bottom = ResolveLocalAxis(sourceBounds.Bottom, sourceY, sourceHeight, item.Height);
+        yield return Vector2.Transform(new Vector2(left, top), item.Transform);
+        yield return Vector2.Transform(new Vector2(right, top), item.Transform);
+        yield return Vector2.Transform(new Vector2(right, bottom), item.Transform);
+        yield return Vector2.Transform(new Vector2(left, bottom), item.Transform);
+    }
+
+    private static float ResolveLocalAxis(
+        int pixel,
+        int sourceStart,
+        int sourceLength,
+        double worldLength) =>
+        ResolveLocalAxis((double)pixel, sourceStart, sourceLength, worldLength);
+
+    private static float ResolveLocalAxis(
+        double pixel,
+        int sourceStart,
+        int sourceLength,
+        double worldLength)
+    {
+        if (sourceLength <= 0 || worldLength <= 0d)
+        {
+            return 0f;
+        }
+
+        var ratio = (pixel - sourceStart) / (double)sourceLength;
+        return (float)((ratio * worldLength) - (worldLength / 2d));
     }
 
     private static IEnumerable<Vector2> EnumerateCorners(SpineDrawItem item)
@@ -211,6 +370,14 @@ internal static class InspectorSpineAnimationPreviewRenderer
         yield return Vector2.Transform(new Vector2(halfWidth, halfHeight), item.Transform);
         yield return Vector2.Transform(new Vector2(-halfWidth, halfHeight), item.Transform);
     }
+
+    private static bool IsValid(SpineAnimationMeshTriangleDto triangle, int vertexCount) =>
+        IsValidVertexIndex(triangle.A, vertexCount) &&
+        IsValidVertexIndex(triangle.B, vertexCount) &&
+        IsValidVertexIndex(triangle.C, vertexCount);
+
+    private static bool IsValidVertexIndex(int index, int vertexCount) =>
+        index >= 0 && index < vertexCount;
 
     private static void DrawRectangleItem(
         CanvasDrawingSession drawingSession,
@@ -272,35 +439,4 @@ internal static class InspectorSpineAnimationPreviewRenderer
         drawingSession.FillCircle(origin, 3.2f, Color.FromArgb(220, 59, 130, 246));
     }
 
-    private sealed record SpineDrawItem(
-        CanvasBitmap Texture,
-        ICanvasImage Image,
-        Rect SourceRect,
-        Matrix3x2 Transform,
-        double Width,
-        double Height,
-        float Opacity,
-        IReadOnlyList<SpineAnimationMeshVertexDto> MeshVertices,
-        IReadOnlyList<SpineAnimationMeshTriangleDto> MeshTriangles)
-    {
-        public bool HasMesh => MeshVertices.Count > 0 && MeshTriangles.Count > 0;
-    }
-
-    private readonly record struct SpineBounds(
-        double CenterX,
-        double CenterY,
-        double Width,
-        double Height);
-
-    private readonly record struct SpineTint(
-        double R,
-        double G,
-        double B,
-        double A)
-    {
-        public bool HasRgbTint =>
-            Math.Abs(R - 1d) > 0.0001d ||
-            Math.Abs(G - 1d) > 0.0001d ||
-            Math.Abs(B - 1d) > 0.0001d;
-    }
 }

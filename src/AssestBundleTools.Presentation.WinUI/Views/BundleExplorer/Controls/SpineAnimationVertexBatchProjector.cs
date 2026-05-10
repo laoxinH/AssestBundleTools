@@ -30,7 +30,7 @@ internal static class SpineAnimationVertexBatchProjector
 
             if (command.MeshVertices.Count > 0 && command.MeshTriangles.Count > 0)
             {
-                AppendMesh(builder, command);
+                AppendMesh(builder, command, pageSize);
             }
             else
             {
@@ -65,6 +65,12 @@ internal static class SpineAnimationVertexBatchProjector
             return;
         }
 
+        var sourceBounds = ResolveVisibleSourceBounds(command, pageSize);
+        if (pageSize.AlphaMap is not null && !sourceBounds.HasVisiblePixels)
+        {
+            return;
+        }
+
         var baseIndex = builder.VertexCount;
         var transform = CreateTransform(command);
         var halfWidth = (float)(command.Width / 2d);
@@ -77,15 +83,21 @@ internal static class SpineAnimationVertexBatchProjector
         builder.AddVertex(CreateVertex(-halfWidth, halfHeight, uv.Left, uv.Bottom, transform, tint));
         builder.AddTriangle(baseIndex, baseIndex + 1, baseIndex + 2);
         builder.AddTriangle(baseIndex, baseIndex + 2, baseIndex + 3);
+        if (tint.A > 0f && sourceBounds.HasVisiblePixels)
+        {
+            builder.IncludeAutoFitBounds(CreateVisibleRegionCorners(command, sourceBounds, transform));
+        }
     }
 
     private static void AppendMesh(
         BatchBuilder builder,
-        SpineAnimationDrawCommandDto command)
+        SpineAnimationDrawCommandDto command,
+        SpineAnimationTexturePageSize pageSize)
     {
         var baseIndex = builder.VertexCount;
         var indexStart = builder.IndexCount;
         var tint = CreateTint(command);
+        var autoFitStart = builder.AutoFitBoundsStamp;
         foreach (var vertex in command.MeshVertices)
         {
             builder.AddVertex(new SpineAnimationBatchVertex(
@@ -110,12 +122,106 @@ internal static class SpineAnimationVertexBatchProjector
                 baseIndex + triangle.A,
                 baseIndex + triangle.B,
                 baseIndex + triangle.C);
+            if (tint.A > 0f)
+            {
+                var contribution = SpineAnimationMeshAutoFitBoundsResolver.ResolveTriangleContribution(
+                    command.MeshVertices,
+                    triangle,
+                    pageSize);
+                builder.IncludeAutoFitBounds(contribution.BoundsPoints);
+            }
         }
 
         if (builder.IndexCount == indexStart)
         {
             builder.RemoveVerticesFrom(baseIndex);
+            builder.RemoveAutoFitBoundsFrom(autoFitStart);
         }
+    }
+
+    private static IReadOnlyList<Vector2> CreateVisibleRegionCorners(
+        SpineAnimationDrawCommandDto command,
+        SpineAnimationTextureSourceAlphaBounds sourceBounds,
+        Matrix3x2 transform)
+    {
+        var left = ResolveLocalAxis(
+            sourceBounds.Left,
+            command.SourceX,
+            command.SourceWidth,
+            command.Width);
+        var right = ResolveLocalAxis(
+            sourceBounds.Right,
+            command.SourceX,
+            command.SourceWidth,
+            command.Width);
+        var top = ResolveLocalAxis(
+            sourceBounds.Top,
+            command.SourceY,
+            command.SourceHeight,
+            command.Height);
+        var bottom = ResolveLocalAxis(
+            sourceBounds.Bottom,
+            command.SourceY,
+            command.SourceHeight,
+            command.Height);
+        return
+        [
+            Vector2.Transform(new Vector2(left, top), transform),
+            Vector2.Transform(new Vector2(right, top), transform),
+            Vector2.Transform(new Vector2(right, bottom), transform),
+            Vector2.Transform(new Vector2(left, bottom), transform)
+        ];
+    }
+
+    private static SpineAnimationTextureSourceAlphaBounds ResolveVisibleSourceBounds(
+        SpineAnimationDrawCommandDto command,
+        SpineAnimationTexturePageSize pageSize)
+    {
+        if (pageSize.AlphaMap?.TryResolveVisibleBounds(
+                command.SourceX,
+                command.SourceY,
+                command.SourceWidth,
+                command.SourceHeight,
+                out var alphaBounds) == true)
+        {
+            return alphaBounds;
+        }
+
+        if (pageSize.AlphaMap is not null)
+        {
+            return SpineAnimationTextureSourceAlphaBounds.Empty;
+        }
+
+        var right = command.SourceX + command.SourceWidth;
+        var bottom = command.SourceY + command.SourceHeight;
+        return new SpineAnimationTextureSourceAlphaBounds(
+            true,
+            command.SourceX,
+            command.SourceY,
+            right,
+            bottom);
+    }
+
+    private static float ResolveLocalAxis(
+        int pixel,
+        int sourceStart,
+        int sourceLength,
+        double worldLength) =>
+        ResolveLocalAxis((double)pixel, sourceStart, sourceLength, worldLength);
+
+    private static float ResolveLocalAxis(
+        double pixel,
+        int sourceStart,
+        int sourceLength,
+        double worldLength)
+    {
+        if (sourceLength <= 0 || worldLength <= 0d)
+        {
+            return 0f;
+        }
+
+        var ratio = (pixel - sourceStart) / (double)sourceLength;
+        return (float)((ratio * worldLength) - (worldLength / 2d));
     }
 
     private static Matrix3x2 CreateTransform(SpineAnimationDrawCommandDto command) =>
@@ -179,6 +285,8 @@ internal static class SpineAnimationVertexBatchProjector
 
         public int IndexCount => _indices.Count;
 
+        public int AutoFitBoundsStamp => _autoFitBounds.Count;
+
         public void AddVertex(SpineAnimationBatchVertex vertex) =>
             _vertices.Add(vertex);
 
@@ -192,8 +300,62 @@ internal static class SpineAnimationVertexBatchProjector
         public void RemoveVerticesFrom(int startIndex) =>
             _vertices.RemoveRange(startIndex, _vertices.Count - startIndex);
 
+        public void IncludeAutoFitBounds(SpineAnimationMeshVertexDto vertex) =>
+            IncludeAutoFitBounds((float)vertex.X, (float)vertex.Y);
+
+        public void IncludeAutoFitBounds(IReadOnlyList<Vector2> points)
+        {
+            foreach (var point in points)
+            {
+                IncludeAutoFitBounds(point.X, point.Y);
+            }
+        }
+
+        public void RemoveAutoFitBoundsFrom(int startIndex) =>
+            _autoFitBounds.RemoveRange(startIndex, _autoFitBounds.Count - startIndex);
+
+        private void IncludeAutoFitBounds(float x, float y)
+        {
+            if (float.IsFinite(x) && float.IsFinite(y))
+            {
+                _autoFitBounds.Add(new SpineAnimationAutoFitPoint(x, y));
+            }
+        }
+
         public SpineAnimationVertexBatch Build() =>
-            new(PageName, _vertices.ToArray(), _indices.ToArray());
+            new(PageName, _vertices.ToArray(), _indices.ToArray(), ResolveAutoFitBounds());
+
+        private SpineAnimationAutoFitBounds ResolveAutoFitBounds()
+        {
+            if (_autoFitBounds.Count == 0)
+            {
+                return default;
+            }
+
+            var minX = double.PositiveInfinity;
+            var minY = double.PositiveInfinity;
+            var maxX = double.NegativeInfinity;
+            var maxY = double.NegativeInfinity;
+            foreach (var point in _autoFitBounds)
+            {
+                minX = Math.Min(minX, point.X);
+                minY = Math.Min(minY, point.Y);
+                maxX = Math.Max(maxX, point.X);
+                maxY = Math.Max(maxY, point.Y);
+            }
+
+            if (!double.IsFinite(minX) ||
+                !double.IsFinite(minY) ||
+                !double.IsFinite(maxX) ||
+                !double.IsFinite(maxY))
+            {
+                return default;
+            }
+
+            return new SpineAnimationAutoFitBounds(true, minX, minY, maxX, maxY);
+        }
+
+        private readonly List<SpineAnimationAutoFitPoint> _autoFitBounds = [];
     }
 
     private readonly record struct SpineAnimationVertexTint(
@@ -211,7 +373,8 @@ internal static class SpineAnimationVertexBatchProjector
 
 internal sealed record SpineAnimationTexturePageSize(
     int Width,
-    int Height)
+    int Height,
+    SpineAnimationTextureAlphaMap? AlphaMap = null)
 {
     public bool IsValid => Width > 0 && Height > 0;
 }
@@ -219,7 +382,8 @@ internal sealed record SpineAnimationTexturePageSize(
 internal sealed record SpineAnimationVertexBatch(
     string PageName,
     IReadOnlyList<SpineAnimationBatchVertex> Vertices,
-    IReadOnlyList<int> Indices);
+    IReadOnlyList<int> Indices,
+    SpineAnimationAutoFitBounds AutoFitBounds = default);
 
 internal readonly record struct SpineAnimationBatchVertex(
     float X,
@@ -230,3 +394,23 @@ internal readonly record struct SpineAnimationBatchVertex(
     float G,
     float B,
     float A);
+
+internal readonly record struct SpineAnimationAutoFitBounds(
+    bool IsValid,
+    double MinX,
+    double MinY,
+    double MaxX,
+    double MaxY)
+{
+    public double CenterX => (MinX + MaxX) / 2d;
+
+    public double CenterY => (MinY + MaxY) / 2d;
+
+    public double Width => Math.Max(MaxX - MinX, 1d);
+
+    public double Height => Math.Max(MaxY - MinY, 1d);
+}
+
+internal readonly record struct SpineAnimationAutoFitPoint(
+    float X,
+    float Y);

@@ -9,7 +9,8 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter
     private static SpineAnimationDrawCommandDto? TryCreateMeshDrawCommand(
         Runtime.Slot slot,
         Runtime.MeshAttachment attachment,
-        Dictionary<string, SpineAnimationAttachmentDto> attachmentMap)
+        Dictionary<string, SpineAnimationAttachmentDto> attachmentMap,
+        Runtime.SkeletonClipping clipper)
     {
         if (attachment.Region is not Runtime.AtlasRegion region ||
             !IsDrawableRegion(region) ||
@@ -18,7 +19,7 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter
             return null;
         }
 
-        var geometry = TryCreateMeshGeometry(slot, attachment);
+        var geometry = TryCreateMeshGeometry(slot, attachment, clipper);
         if (geometry is null)
         {
             return null;
@@ -55,7 +56,8 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter
 
     private static SpineRuntimeMeshGeometry? TryCreateMeshGeometry(
         Runtime.Slot slot,
-        Runtime.MeshAttachment attachment)
+        Runtime.MeshAttachment attachment,
+        Runtime.SkeletonClipping clipper)
     {
         if (attachment.UVs is not { Length: > 0 } uvs)
         {
@@ -65,6 +67,47 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter
         var worldVertices = new float[attachment.WorldVerticesLength];
         attachment.ComputeWorldVertices(slot, 0, attachment.WorldVerticesLength, worldVertices, 0);
         var vertexCount = Math.Min(worldVertices.Length, uvs.Length) / 2;
+        if (vertexCount < 3)
+        {
+            return null;
+        }
+
+        var triangles = BuildMeshTriangles(attachment.Triangles, vertexCount);
+        if (triangles.Count == 0)
+        {
+            return null;
+        }
+
+        if (clipper.IsClipping)
+        {
+            return CreateClippedGeometry(clipper, worldVertices, uvs, attachment.Triangles);
+        }
+
+        return CreateGeometry(worldVertices, uvs, attachment.Triangles, vertexCount * 2, attachment.Triangles.Length);
+    }
+
+    private static SpineRuntimeMeshGeometry? CreateGeometry(
+        float[] worldVertices,
+        float[] uvs,
+        int[] triangleIndices) =>
+        CreateGeometry(
+            worldVertices,
+            uvs,
+            triangleIndices,
+            Math.Min(worldVertices.Length, uvs.Length),
+            triangleIndices.Length);
+
+    private static SpineRuntimeMeshGeometry? CreateGeometry(
+        float[] worldVertices,
+        float[] uvs,
+        int[] triangleIndices,
+        int vertexCoordinateCount,
+        int triangleIndexCount)
+    {
+        var normalizedCoordinateCount = Math.Min(
+            Math.Min(worldVertices.Length, uvs.Length),
+            Math.Max(0, vertexCoordinateCount));
+        var vertexCount = normalizedCoordinateCount / 2;
         if (vertexCount < 3)
         {
             return null;
@@ -95,7 +138,15 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter
             maxY = Math.Max(maxY, y);
         }
 
-        var triangles = BuildMeshTriangles(attachment.Triangles, vertexCount);
+        var triangles = BuildMeshTriangles(
+            triangleIndices,
+            vertexCount,
+            Math.Min(triangleIndices.Length, Math.Max(0, triangleIndexCount)));
+        if (triangles.Count == 0)
+        {
+            return null;
+        }
+
         if (!float.IsFinite(minX) || !float.IsFinite(minY) ||
             !float.IsFinite(maxX) || !float.IsFinite(maxY))
         {
@@ -116,15 +167,23 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter
 
     private static IReadOnlyList<SpineAnimationMeshTriangleDto> BuildMeshTriangles(
         int[]? triangleIndices,
-        int vertexCount)
+        int vertexCount) =>
+        BuildMeshTriangles(triangleIndices, vertexCount, triangleIndices?.Length ?? 0);
+
+    private static IReadOnlyList<SpineAnimationMeshTriangleDto> BuildMeshTriangles(
+        int[]? triangleIndices,
+        int vertexCount,
+        int triangleIndexCount)
     {
-        if (triangleIndices is not { Length: >= 3 })
+        if (triangleIndices is not { Length: >= 3 } ||
+            triangleIndexCount < 3)
         {
             return Array.Empty<SpineAnimationMeshTriangleDto>();
         }
 
-        var triangles = new List<SpineAnimationMeshTriangleDto>(triangleIndices.Length / 3);
-        for (var index = 0; index < triangleIndices.Length - 2; index += 3)
+        var safeIndexCount = Math.Min(triangleIndices.Length, triangleIndexCount);
+        var triangles = new List<SpineAnimationMeshTriangleDto>(safeIndexCount / 3);
+        for (var index = 0; index < safeIndexCount - 2; index += 3)
         {
             var a = triangleIndices[index];
             var b = triangleIndices[index + 1];

@@ -44,4 +44,16 @@ public sealed class SpineAnimationPreviewViewportStateTests
         Assert.True(changed);
         Assert.Equal(SpineAnimationPreviewViewport.Default, state.Current);
     }
+
+    [Fact]
+    public void ScalePan_ShouldApplyAxisSpecificCompositionScale()
+    {
+        var viewport = new SpineAnimationPreviewViewport(2d, 10d, -5d);
+
+        var scaled = viewport.ScalePan(1.25d, 2d);
+
+        Assert.Equal(2d, scaled.Zoom, precision: 6);
+        Assert.Equal(12.5d, scaled.PanX, precision: 6);
+        Assert.Equal(-10d, scaled.PanY, precision: 6);
+    }
 }

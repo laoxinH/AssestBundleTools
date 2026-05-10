@@ -80,11 +80,12 @@ internal sealed class D3D11SpineBatchPrewarmer : IDisposable
             texturePageSizes,
             StringComparer.Ordinal);
         var cancellation = new CancellationTokenSource();
+        var cancellationToken = cancellation.Token;
         _cancellation = cancellation;
         _isActive = true;
         _ = Task.Run(
-            () => PrewarmAsync(frames, texturePageSnapshot, texturePageVersion, generation, cancellation.Token),
-            cancellation.Token);
+            () => PrewarmAsync(frames, texturePageSnapshot, texturePageVersion, generation, cancellationToken),
+            cancellationToken);
         return true;
     }
 

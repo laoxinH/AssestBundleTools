@@ -279,6 +279,7 @@ public sealed partial class BundleExplorerPage
                 assetTabState.MeshPreviewRotationY);
             restoredAssetTab.RestoreEditDraftReference(
                 AssetDocumentEditDraftReferenceMapper.ToViewModel(assetTabState.EditDraftReference));
+            restoredAssetTab.RestoreInspectorScrollState(assetTabState.InspectorScrollState);
             return restoredAssetTab;
         }
 
@@ -286,7 +287,7 @@ public sealed partial class BundleExplorerPage
             WorkspaceAssetEditorWindowSpineGroupTabDto spineGroupTabState)
         {
             var groupId = spineGroupTabState.GroupId.Trim();
-            return _owner.ViewModel.AssetWorkflow.CreateSpineGroupDocumentTab(new SpineAssetGroupDto(
+            var restoredTab = _owner.ViewModel.AssetWorkflow.CreateSpineGroupDocumentTab(new SpineAssetGroupDto(
                 GroupId: groupId,
                 BundleId: new BundleId(spineGroupTabState.BundleId),
                 DisplayName: string.IsNullOrWhiteSpace(spineGroupTabState.DisplayName)
@@ -299,6 +300,9 @@ public sealed partial class BundleExplorerPage
                 AtlasAssets: Array.Empty<SpineAssetGroupPartDto>(),
                 TexturePageAssets: Array.Empty<SpineAssetGroupPartDto>(),
                 Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>()));
+            restoredTab.RestorePreviewState(spineGroupTabState.PreviewState);
+            restoredTab.RestoreInspectorScrollState(spineGroupTabState.InspectorScrollState);
+            return restoredTab;
         }
 
         private bool CanRestoreAssetTab(WorkspaceAssetEditorWindowAssetTabDto assetTabState)

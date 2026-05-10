@@ -1,5 +1,8 @@
 using System.Runtime.CompilerServices;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using Microsoft.UI.Xaml;
@@ -81,9 +84,13 @@ public sealed class InspectorPanelViewModelTests
     }
 
     [Fact]
-    public void PreviewSurfaceHeight_ShouldBeFixedForImagesAndText_ButAutoForSummaryCards()
+    public void PreviewSurfaceHeight_ShouldBeFixedForLoadingImagesAndText_ButAutoForSummaryCardsAndSpine()
     {
         var viewModel = CreateViewModel();
+
+        viewModel.SetPreviewLoading("Loading");
+
+        AssertFixedPreviewSurfaceHeight(viewModel);
 
         viewModel.ApplyImagePreview(CreateBitmapImageStub(), imagePixelWidth: 100, imagePixelHeight: 100);
 
@@ -92,6 +99,12 @@ public sealed class InspectorPanelViewModelTests
         viewModel.ApplyTextPreview("plain text");
 
         AssertFixedPreviewSurfaceHeight(viewModel);
+
+        viewModel.ApplySpineAnimationPreview(
+            CreateSpinePreview(),
+            new Dictionary<string, SpineAnimationPreviewTextureState>(StringComparer.Ordinal));
+
+        AssertAutoPreviewSurfaceHeight(viewModel);
 
         viewModel.ApplyMaterialPreview(
             CreateEmptyMaterial(),
@@ -130,6 +143,65 @@ public sealed class InspectorPanelViewModelTests
         Assert.False(viewModel.Preview.UsesFixedPreviewSurfaceHeight);
         Assert.True(double.IsNaN(viewModel.Preview.PreviewSurfaceHeight));
         Assert.Equal(0d, viewModel.Preview.PreviewSurfaceMinHeight);
+    }
+
+    [Fact]
+    public void SectionScrollPosition_ShouldBeStoredIndependentlyPerInspector()
+    {
+        var firstInspector = CreateViewModel();
+        var secondInspector = CreateViewModel();
+
+        firstInspector.CaptureSectionSelectorScrollPosition(horizontalOffset: 16d, verticalOffset: 0d);
+        firstInspector.CaptureSectionScrollPosition(sectionIndex: 0, horizontalOffset: 12d, verticalOffset: 120d);
+        firstInspector.CaptureSectionScrollPosition(sectionIndex: 1, horizontalOffset: 4d, verticalOffset: 40d);
+        secondInspector.CaptureSectionScrollPosition(sectionIndex: 0, horizontalOffset: 2d, verticalOffset: 20d);
+
+        Assert.Equal(new InspectorPanelScrollPosition(16d, 0d), firstInspector.GetSectionSelectorScrollPosition());
+        Assert.Equal(default(InspectorPanelScrollPosition), secondInspector.GetSectionSelectorScrollPosition());
+        Assert.Equal(new InspectorPanelScrollPosition(12d, 120d), firstInspector.GetSectionScrollPosition(0));
+        Assert.Equal(new InspectorPanelScrollPosition(4d, 40d), firstInspector.GetSectionScrollPosition(1));
+        Assert.Equal(new InspectorPanelScrollPosition(2d, 20d), secondInspector.GetSectionScrollPosition(0));
+        Assert.Equal(default(InspectorPanelScrollPosition), secondInspector.GetSectionScrollPosition(1));
+
+        var capturedState = firstInspector.CaptureInspectorScrollState();
+        Assert.Equal(16d, capturedState?.SectionSelector?.HorizontalOffset);
+        Assert.Equal(0d, capturedState?.SectionSelector?.VerticalOffset);
+        Assert.Equal(12d, capturedState?.DetailsSection?.HorizontalOffset);
+        Assert.Equal(120d, capturedState?.DetailsSection?.VerticalOffset);
+        Assert.Equal(4d, capturedState?.DependenciesSection?.HorizontalOffset);
+        Assert.Equal(40d, capturedState?.DependenciesSection?.VerticalOffset);
+    }
+
+    [Fact]
+    public void Clear_ShouldResetCapturedSectionScrollPositions()
+    {
+        var viewModel = CreateViewModel();
+
+        viewModel.CaptureSectionSelectorScrollPosition(horizontalOffset: 20d, verticalOffset: 0d);
+        viewModel.CaptureSectionScrollPosition(sectionIndex: 0, horizontalOffset: 8d, verticalOffset: 80d);
+        viewModel.CaptureSectionScrollPosition(sectionIndex: 3, horizontalOffset: 3d, verticalOffset: 30d);
+
+        viewModel.Clear("Empty");
+
+        Assert.Equal(default(InspectorPanelScrollPosition), viewModel.GetSectionSelectorScrollPosition());
+        Assert.Equal(default(InspectorPanelScrollPosition), viewModel.GetSectionScrollPosition(0));
+        Assert.Equal(default(InspectorPanelScrollPosition), viewModel.GetSectionScrollPosition(3));
+    }
+
+    [Fact]
+    public void RestoreInspectorScrollState_ShouldRestoreCapturedSectionOffsets()
+    {
+        var viewModel = CreateViewModel();
+
+        viewModel.RestoreInspectorScrollState(new WorkspaceInspectorScrollStateDto(
+            DetailsSection: new WorkspaceInspectorSectionScrollPositionDto(6d, 160d),
+            ChangesSection: new WorkspaceInspectorSectionScrollPositionDto(0d, 44d),
+            SectionSelector: new WorkspaceInspectorSectionScrollPositionDto(24d, 0d)));
+
+        Assert.Equal(new InspectorPanelScrollPosition(24d, 0d), viewModel.GetSectionSelectorScrollPosition());
+        Assert.Equal(new InspectorPanelScrollPosition(6d, 160d), viewModel.GetSectionScrollPosition(0));
+        Assert.Equal(new InspectorPanelScrollPosition(0d, 44d), viewModel.GetSectionScrollPosition(3));
+        Assert.Equal(default(InspectorPanelScrollPosition), viewModel.GetSectionScrollPosition(1));
     }
 
     [Fact]
@@ -229,6 +301,27 @@ public sealed class InspectorPanelViewModelTests
     private static BitmapImage CreateBitmapImageStub()
     {
         return (BitmapImage)RuntimeHelpers.GetUninitializedObject(typeof(BitmapImage));
+    }
+
+    private static SpineAnimationPreviewDto CreateSpinePreview()
+    {
+        var skeletonAsset = new SpineAssetGroupPartDto(
+            SpineAssetGroupPartRole.Skeleton,
+            new BundleId("bundle"),
+            new AssetId("skeleton"),
+            "spine.ab",
+            "hero.skel",
+            "Assets/hero.skel",
+            AssetType.TextAsset,
+            nameof(AssetType.TextAsset));
+
+        return new SpineAnimationPreviewDto(
+            skeletonAsset,
+            SpineVersion: "3.8.99",
+            Bones: [new SpineAnimationBoneDto("root", null, 0d, 0d, 0d, 1d, 1d)],
+            Slots: [new SpineAnimationSlotDto("slot", "root", "body", 0)],
+            Attachments: Array.Empty<SpineAnimationAttachmentDto>(),
+            Animations: Array.Empty<SpineAnimationClipDto>());
     }
 
     private static AssetPreviewMaterialDto CreateEmptyMaterial()

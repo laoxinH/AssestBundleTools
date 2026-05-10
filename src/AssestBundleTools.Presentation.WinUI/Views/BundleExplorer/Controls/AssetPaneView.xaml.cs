@@ -59,6 +59,8 @@ public sealed partial class AssetPaneView : UserControl
 
     public event EventHandler? FilterChanged;
 
+    public event EventHandler? ViewModeChanged;
+
     public event EventHandler? BatchExtractRequested;
 
     private static void OnViewModelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -437,7 +439,7 @@ public sealed partial class AssetPaneView : UserControl
         }
 
         ViewModel.ViewMode = viewMode;
-        FilterChanged?.Invoke(this, EventArgs.Empty);
+        ViewModeChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void RestoreViewModeToggleStateIfNeeded()

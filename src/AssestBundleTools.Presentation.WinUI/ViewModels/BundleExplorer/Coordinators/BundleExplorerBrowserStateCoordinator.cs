@@ -354,6 +354,7 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
                 assetTabState.MeshPreviewRotationY);
             assetTab.RestoreEditDraftReference(
                 AssetDocumentEditDraftReferenceMapper.ToViewModel(assetTabState.EditDraftReference));
+            assetTab.RestoreInspectorScrollState(assetTabState.InspectorScrollState);
             restoredTabs.Add(assetTab);
         }
 
@@ -381,9 +382,12 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
                 continue;
             }
 
-            restoredTabs.Add(_createSpineGroupDocumentTab(CreateRestoredSpineGroup(
+            var spineGroupTab = _createSpineGroupDocumentTab(CreateRestoredSpineGroup(
                 bundleId,
-                spineGroupTabState)));
+                spineGroupTabState));
+            spineGroupTab.RestorePreviewState(spineGroupTabState.PreviewState);
+            spineGroupTab.RestoreInspectorScrollState(spineGroupTabState.InspectorScrollState);
+            restoredTabs.Add(spineGroupTab);
         }
 
         return restoredTabs;
@@ -409,7 +413,8 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
             PreviewImageZoom: imageViewState.Zoom,
             PreviewImagePanX: imageViewState.PanX,
             PreviewImagePanY: imageViewState.PanY,
-            EditDraftReference: AssetDocumentEditDraftReferenceMapper.ToDto(tab.EditDraftReference));
+            EditDraftReference: AssetDocumentEditDraftReferenceMapper.ToDto(tab.EditDraftReference),
+            InspectorScrollState: tab.Inspector.CaptureInspectorScrollState());
     }
 
     private static WorkspaceMetadataSpineGroupTabDto CreateSpineGroupTabMetadata(
@@ -418,7 +423,9 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
         return new WorkspaceMetadataSpineGroupTabDto(
             GroupId: tab.GroupId,
             DisplayName: tab.DisplayName,
-            GroupKey: tab.Item.GroupKey);
+            GroupKey: tab.Item.GroupKey,
+            PreviewState: tab.CapturePreviewState(),
+            InspectorScrollState: tab.Inspector.CaptureInspectorScrollState());
     }
 
     private static SpineAssetGroupDto CreateRestoredSpineGroup(

@@ -54,6 +54,11 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView
             return;
         }
 
+        if (_isPlaybackSliderScrubbing)
+        {
+            return;
+        }
+
         var playbackTimeChanged = viewModel.Advance(elapsed);
         if (viewModel.HasRuntimePlayback && _runtimePlaybackSession is not null)
         {

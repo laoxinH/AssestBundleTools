@@ -1,5 +1,4 @@
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
-using Vortice.Mathematics;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
@@ -7,6 +6,7 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend
 {
     private D3D11SpineRenderFrameMetrics CreateFrameMetrics(
         IReadOnlyList<SpineAnimationVertexBatch> batches,
+        SpineAnimationAutoFitBounds autoFitBounds,
         TimeSpan elapsed,
         TimeSpan textureUploadElapsed,
         TimeSpan batchProjectionElapsed,
@@ -33,7 +33,7 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend
             _pixelWidth,
             _pixelHeight,
             elapsed,
-            stats.Format(),
+            stats.Format(autoFitBounds),
             textureUploadElapsed,
             batchProjectionElapsed,
             clipProjectionElapsed,
@@ -63,17 +63,6 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend
         }
 
         return stats.Format();
-    }
-
-    private static Color4 ResolveSmokeTint(int projectedBatchCount)
-    {
-        if (projectedBatchCount <= 0)
-        {
-            return new Color4(0.02f, 0.04f, 0.08f, 1f);
-        }
-
-        var batchCount = Math.Clamp(projectedBatchCount, 1, 8);
-        return new Color4(0.02f, 0.08f + (batchCount * 0.04f), 0.16f + (batchCount * 0.06f), 1f);
     }
 
     internal static bool IsRecoverableDeviceLossHResult(int hresult) =>

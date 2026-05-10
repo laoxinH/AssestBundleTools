@@ -1,3 +1,4 @@
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -13,6 +14,34 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView
     private readonly SpineAnimationPreviewViewportState _viewportState = new();
     private bool _isViewportDragging;
     private Point _lastViewportPointerPosition;
+
+    private void OnPreviewViewportSquareFrameSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        RefreshPreviewViewportFrameSizing();
+    }
+
+    private void RefreshPreviewViewportFrameSizing()
+    {
+        if (!UseSquareViewport)
+        {
+            if (!double.IsNaN(PreviewViewportSquareFrame.Height))
+            {
+                PreviewViewportSquareFrame.Height = double.NaN;
+            }
+
+            InvalidatePreviewSurface();
+            return;
+        }
+
+        var squareSide = Math.Max(0d, PreviewViewportSquareFrame.ActualWidth);
+        if (!double.IsFinite(squareSide) ||
+            Math.Abs(PreviewViewportSquareFrame.Height - squareSide) < 0.5d)
+        {
+            return;
+        }
+
+        PreviewViewportSquareFrame.Height = squareSide;
+    }
 
     private void OnPreviewViewportHostSizeChanged(object sender, SizeChangedEventArgs e)
     {
@@ -97,6 +126,34 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView
         }
     }
 
+    private void OnZoomOutViewportButtonClick(object sender, RoutedEventArgs e)
+    {
+        ZoomViewportFromCenter(WheelZoomOutScale);
+    }
+
+    private void OnZoomInViewportButtonClick(object sender, RoutedEventArgs e)
+    {
+        ZoomViewportFromCenter(WheelZoomInScale);
+    }
+
+    private void ZoomViewportFromCenter(double scale)
+    {
+        if (!CanManipulateViewport())
+        {
+            return;
+        }
+
+        if (_viewportState.ZoomBy(
+                scale,
+                PreviewViewportHost.ActualWidth / 2d,
+                PreviewViewportHost.ActualHeight / 2d,
+                PreviewViewportHost.ActualWidth,
+                PreviewViewportHost.ActualHeight))
+        {
+            ApplyViewportState();
+        }
+    }
+
     private void ResetViewportState()
     {
         _isViewportDragging = false;
@@ -106,9 +163,33 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView
         }
     }
 
-    private void ApplyViewportState()
+    private void RestoreViewportStateFromViewModel(
+        InspectorPreviewSpineAnimationViewModel? viewModel)
+    {
+        _isViewportDragging = false;
+        if (_viewportState.Restore(
+                viewModel?.ViewportZoom,
+                viewModel?.ViewportPanX,
+                viewModel?.ViewportPanY))
+        {
+            ApplyViewportState(syncViewModel: false);
+            return;
+        }
+
+        ApplyViewportState(syncViewModel: false);
+    }
+
+    private void ApplyViewportState(bool syncViewModel = true)
     {
         _renderBackend.SetViewport(_viewportState.Current);
+        if (syncViewModel)
+        {
+            ViewModel?.UpdateViewportState(
+                _viewportState.Current.Zoom,
+                _viewportState.Current.PanX,
+                _viewportState.Current.PanY);
+        }
+
         InvalidatePreviewSurface();
     }
 

@@ -97,6 +97,8 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
         var drawCommand = TestAssert.Single(animation.SampledFrames[0].DrawCommands);
         TestAssert.Equal("Hero.png", drawCommand.PageName, "Draw command should target the atlas page.");
         TestAssert.Equal(16, drawCommand.SourceX, "Draw command should target the atlas region.");
+        TestAssert.Equal(4, drawCommand.MeshVertices.Count, "Region draw commands should expose the runtime quad vertices.");
+        TestAssert.Equal(2, drawCommand.MeshTriangles.Count, "Region draw commands should expose the runtime quad triangles.");
     }
 
     public static async Task TryBuildPreviewAsync_ShouldBuildV38RuntimeDrawCommands_FromJsonSkeleton()
@@ -180,6 +182,83 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
         var drawCommand = TestAssert.Single(TestAssert.Single(preview.Animations).SampledFrames[0].DrawCommands);
         TestAssert.Equal("Hero.png", drawCommand.PageName, "Draw command should target the atlas page.");
         TestAssert.Equal(16, drawCommand.SourceX, "Draw command should target the atlas region.");
+        TestAssert.Equal(4, drawCommand.MeshVertices.Count, "Region draw commands should expose the runtime quad vertices.");
+        TestAssert.Equal(2, drawCommand.MeshTriangles.Count, "Region draw commands should expose the runtime quad triangles.");
+    }
+
+    public static async Task TryBuildPreviewAsync_ShouldClipV38RegionDrawCommands_FromJsonSkeleton()
+    {
+        var service = new SpineAnimationRuntimePreviewService();
+
+        var result = await service.TryBuildPreviewAsync(new SpineAnimationRuntimePreviewRequestDto(
+            GroupKey: "assets/hero/hero",
+            SkeletonAsset: CreateSkeletonPart("Hero.json"),
+            SkeletonJson: """
+                {
+                  "skeleton": { "hash": "", "spine": "3.8.99" },
+                  "bones": [{ "name": "root" }],
+                  "slots": [
+                    { "name": "clip-slot", "bone": "root", "attachment": "clip" },
+                    { "name": "body-slot", "bone": "root", "attachment": "body" }
+                  ],
+                  "skins": [
+                    {
+                      "name": "default",
+                      "attachments": {
+                        "clip-slot": {
+                          "clip": {
+                            "type": "clipping",
+                            "end": "body-slot",
+                            "vertexCount": 4,
+                            "vertices": [-16, -16, -16, 16, 16, 16, 16, -16]
+                          }
+                        },
+                        "body-slot": {
+                          "body": {
+                            "type": "region",
+                            "path": "body",
+                            "width": 64,
+                            "height": 64
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "animations": { "idle": {} }
+                }
+                """,
+            Runtime: new SpineAnimationRuntimeDto(
+                SpineVersion: "3.8.99",
+                Major: 3,
+                Minor: 8,
+                AdapterKey: "V38",
+                SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable),
+            AtlasPages: Array.Empty<SpineAtlasPageDto>(),
+            AtlasTexts:
+            [
+                """
+                Hero.png
+                size: 256,256
+                format: RGBA8888
+                filter: Linear,Linear
+                repeat: none
+                body
+                  rotate: false
+                  xy: 16, 24
+                  size: 64, 64
+                  orig: 64, 64
+                  offset: 0, 0
+                  index: -1
+                """
+            ]));
+
+        TestAssert.True(result.IsHandled, "V38 adapter should handle clipped region input.");
+        var preview = TestAssert.NotNull(result.Preview, "Runtime adapter should return a preview.");
+        var drawCommand = TestAssert.Single(TestAssert.Single(preview.Animations).SampledFrames[0].DrawCommands);
+        TestAssert.True(drawCommand.MeshVertices.Count > 0, "Clipped region should keep drawable mesh vertices.");
+        TestAssert.True(drawCommand.MeshTriangles.Count > 0, "Clipped region should keep drawable mesh triangles.");
+        TestAssert.True(drawCommand.Width <= 33d, "Clipped region world bounds should come from the clipping polygon.");
+        TestAssert.True(drawCommand.Height <= 33d, "Clipped region world bounds should come from the clipping polygon.");
     }
 
     public static async Task TryCreateSessionAsync_ShouldSeekV38RuntimeFrameWithoutSampledCache()
@@ -213,8 +292,20 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
         TestAssert.True(setupFrame.IsHandled, "Runtime session should return setup pose frames.");
         TestAssert.True(firstFrame.IsHandled, "Runtime session should seek animation frame 0.");
         TestAssert.True(middleFrame.IsHandled, "Runtime session should seek animation frame 0.5.");
-        AssertRuntimeDiagnostics(setupFrame.RuntimeDiagnostics, "V38", isSetupPose: true, isSkeletonReused: false);
-        AssertRuntimeDiagnostics(middleFrame.RuntimeDiagnostics, "V38", isSetupPose: false, isSkeletonReused: true);
+        AssertRuntimeDiagnostics(
+            setupFrame.RuntimeDiagnostics,
+            "V38",
+            isSetupPose: true,
+            isSkeletonReused: false,
+            expectedMeshVertexCount: 4,
+            expectedMeshTriangleCount: 2);
+        AssertRuntimeDiagnostics(
+            middleFrame.RuntimeDiagnostics,
+            "V38",
+            isSetupPose: false,
+            isSkeletonReused: true,
+            expectedMeshVertexCount: 4,
+            expectedMeshTriangleCount: 2);
         var firstCommand = TestAssert.Single(TestAssert.NotNull(firstFrame.Frame, "First frame should be available.").DrawCommands);
         var middleCommand = TestAssert.Single(TestAssert.NotNull(middleFrame.Frame, "Middle frame should be available.").DrawCommands);
         TestAssert.True(
@@ -247,7 +338,13 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
 
         TestAssert.True(firstFrame.IsHandled, "Runtime session should seek animation frame 0.");
         TestAssert.True(middleFrame.IsHandled, "Runtime session should seek animation frame 0.5.");
-        AssertRuntimeDiagnostics(middleFrame.RuntimeDiagnostics, "V42", isSetupPose: false, isSkeletonReused: true);
+        AssertRuntimeDiagnostics(
+            middleFrame.RuntimeDiagnostics,
+            "V42",
+            isSetupPose: false,
+            isSkeletonReused: true,
+            expectedMeshVertexCount: 4,
+            expectedMeshTriangleCount: 2);
         var firstCommand = TestAssert.Single(TestAssert.NotNull(firstFrame.Frame, "First frame should be available.").DrawCommands);
         var middleCommand = TestAssert.Single(TestAssert.NotNull(middleFrame.Frame, "Middle frame should be available.").DrawCommands);
         TestAssert.True(
@@ -375,7 +472,9 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
             middleFrame.RuntimeDiagnostics,
             "JSONFallback:V21",
             isSetupPose: false,
-            isSkeletonReused: true);
+            isSkeletonReused: true,
+            expectedMeshVertexCount: 0,
+            expectedMeshTriangleCount: 0);
     }
 
     public static async Task TryCreateSessionAsync_ShouldReturnCancelledRuntimeFrame_WhenFrameTokenIsAlreadyCancelled()
@@ -792,7 +891,9 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
         SpineAnimationRuntimePlaybackFrameDiagnosticsDto? diagnostics,
         string expectedAdapterKey,
         bool isSetupPose,
-        bool isSkeletonReused)
+        bool isSkeletonReused,
+        int expectedMeshVertexCount,
+        int expectedMeshTriangleCount)
     {
         var value = TestAssert.NotNull(diagnostics, "Runtime frame diagnostics should be returned.");
         TestAssert.Equal(expectedAdapterKey, value.AdapterKey, "Runtime diagnostics should preserve the adapter key.");
@@ -814,8 +915,8 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
         TestAssert.True(value.WorldTransformMilliseconds >= 0d, "Runtime diagnostics should expose world transform time.");
         TestAssert.True(value.DrawCommandBuildMilliseconds >= 0d, "Runtime diagnostics should expose draw command build time.");
         TestAssert.Equal(1, value.DrawCommandCount, "Runtime diagnostics should count draw commands.");
-        TestAssert.Equal(0, value.MeshVertexCount, "Runtime diagnostics should count mesh vertices.");
-        TestAssert.Equal(0, value.MeshTriangleCount, "Runtime diagnostics should count mesh triangles.");
+        TestAssert.Equal(expectedMeshVertexCount, value.MeshVertexCount, "Runtime diagnostics should count mesh vertices.");
+        TestAssert.Equal(expectedMeshTriangleCount, value.MeshTriangleCount, "Runtime diagnostics should count mesh triangles.");
     }
 
     private static void AssertMapsInsideCanvas(

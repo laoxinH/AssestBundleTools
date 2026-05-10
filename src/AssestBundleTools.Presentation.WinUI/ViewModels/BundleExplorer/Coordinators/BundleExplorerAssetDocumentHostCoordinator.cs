@@ -48,6 +48,7 @@ internal sealed class BundleExplorerAssetDocumentHostCoordinator
         string assetName)
     {
         var tab = new AssetDocumentTabViewModel(bundleId, assetId, assetName, _inspectorInformationTextSet);
+        tab.InspectorScrollStateChanged += OnInspectorScrollStateChanged;
         tab.PreviewImageDisplayOptionsChanged += OnPreviewImageDisplayOptionsChanged;
         tab.PreviewImageViewStateChanged += OnPreviewImageViewStateChanged;
         tab.PreviewMeshDisplayOptionsChanged += OnPreviewMeshDisplayOptionsChanged;
@@ -58,6 +59,8 @@ internal sealed class BundleExplorerAssetDocumentHostCoordinator
     public SpineAssetGroupDocumentTabViewModel CreateSpineGroupDocumentTab(SpineAssetGroupDto spineGroup)
     {
         var tab = new SpineAssetGroupDocumentTabViewModel(spineGroup, _inspectorInformationTextSet);
+        tab.InspectorScrollStateChanged += OnInspectorScrollStateChanged;
+        tab.PreviewStateChanged += OnSpineGroupPreviewStateChanged;
         tab.Inspector.Clear(GetString(ResourceKeys.BundleExplorerInspectorEmpty));
         return tab;
     }
@@ -70,7 +73,7 @@ internal sealed class BundleExplorerAssetDocumentHostCoordinator
         }
         else
         {
-            _documentWorkspace.ActiveBundleTab?.SetActiveAssetTab(null);
+            _documentWorkspace.ActiveBundleTab?.ClearActiveAssetTab();
         }
 
         ResetEmptyInspector();
@@ -96,6 +99,16 @@ internal sealed class BundleExplorerAssetDocumentHostCoordinator
     }
 
     private void OnPreviewMeshDisplayOptionsChanged(object? sender, EventArgs e)
+    {
+        _requestWorkspaceBrowserStatePersistence();
+    }
+
+    private void OnInspectorScrollStateChanged(object? sender, EventArgs e)
+    {
+        _requestWorkspaceBrowserStatePersistence();
+    }
+
+    private void OnSpineGroupPreviewStateChanged(object? sender, EventArgs e)
     {
         _requestWorkspaceBrowserStatePersistence();
     }

@@ -1,5 +1,6 @@
 using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -69,7 +70,14 @@ internal sealed class SpineAssetGroupInspectorPresenter
         if (details?.AnimationPreview is { } animationPreview &&
             groupTab.AnimationTextures.Count > 0)
         {
-            ApplyAnimationPreview(groupTab.Inspector, group, details, diagnostics, animationPreview, groupTab.AnimationTextures);
+            ApplyAnimationPreview(
+                groupTab.Inspector,
+                group,
+                details,
+                diagnostics,
+                animationPreview,
+                groupTab.AnimationTextures,
+                groupTab.CapturePreviewState());
             return;
         }
 
@@ -82,6 +90,13 @@ internal sealed class SpineAssetGroupInspectorPresenter
         groupTab.Inspector.ApplySummaryPreview(
             BuildSummaryText(group, details, diagnostics),
             BuildGroupPreviewInfoRows(group, details, diagnostics));
+    }
+
+    public void PresentSpineGroupPreviewLoading(SpineAssetGroupDocumentTabViewModel groupTab)
+    {
+        ArgumentNullException.ThrowIfNull(groupTab);
+
+        groupTab.Inspector.SetPreviewLoading(GetString(ResourceKeys.InspectorPreviewLoadingText));
     }
 
     private AssetDependencyViewModel CreatePartDependency(SpineAssetGroupPartDto part)
@@ -130,7 +145,8 @@ internal sealed class SpineAssetGroupInspectorPresenter
         SpineAssetGroupDetailsDto details,
         IReadOnlyList<SpineAssetGroupDiagnosticDto> diagnostics,
         SpineAnimationPreviewDto animationPreview,
-        IReadOnlyDictionary<string, SpineAnimationPreviewTextureState> animationTextures)
+        IReadOnlyDictionary<string, SpineAnimationPreviewTextureState> animationTextures,
+        WorkspaceSpinePreviewStateDto? previewState)
     {
         var rows = new List<InspectorInfoRowViewModel>(
             BuildGroupPreviewInfoRows(group, details, diagnostics))
@@ -153,7 +169,8 @@ internal sealed class SpineAssetGroupInspectorPresenter
         inspector.ApplySpineAnimationPreview(
             animationPreview,
             animationTextures,
-            rows);
+            rows,
+            previewState);
     }
 
     private string BuildRuntimeAdapterText(SpineAnimationRuntimeDto runtime)

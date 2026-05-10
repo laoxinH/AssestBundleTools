@@ -3,10 +3,8 @@ using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
-using Vortice.Mathematics;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
@@ -26,18 +24,25 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
     private readonly D3D11SpineRenderDiagnostics _diagnostics;
     private readonly D3D11SpineTexturePageCache _texturePageCache = new();
     private readonly D3D11SpineAnimationBatchRenderer _batchRenderer = new();
+    private readonly D3D11SpinePreviewBackgroundRenderer _backgroundRenderer = new();
     private readonly SpineAnimationRenderBatchCache _batchCache = new(D3DMaxCachedFrames);
+    private readonly SpineAnimationStableAutoFitBounds _stableAutoFitBounds = new();
     private readonly D3D11SpineBatchPrewarmer _batchPrewarmer;
     private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _resizeTimer;
     private IReadOnlyDictionary<string, SpineAnimationTexturePageContent> _texturePageContents = EmptyTexturePages;
     private SpineAnimationFrameDto? _currentFrame;
     private SpineAnimationPreviewViewport _viewport = SpineAnimationPreviewViewport.Default;
+    private InspectorPreviewImageBackgroundMode _backgroundMode = InspectorPreviewImageBackgroundMode.Solid;
     private ID3D11Device? _device;
     private ID3D11DeviceContext? _context;
     private IDXGISwapChain1? _swapChain;
     private ID3D11RenderTargetView? _renderTargetView;
     private int _pixelWidth;
     private int _pixelHeight;
+    private double _compositionScaleX = 1d;
+    private double _compositionScaleY = 1d;
+    private double _appliedCompositionScaleX;
+    private double _appliedCompositionScaleY;
     private int _textureLoadGeneration;
     private int _texturePageVersion;
     private bool _textureLoadPending;
@@ -50,6 +55,7 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
         _panel = panel;
         _diagnostics = diagnostics ?? new D3D11SpineRenderDiagnostics(null);
         _panel.SizeChanged += OnPanelSizeChanged;
+        _panel.CompositionScaleChanged += OnPanelCompositionScaleChanged;
         D3D11SpineAnimationBatchRenderer.BeginShaderPrecompile();
         _batchPrewarmer = new D3D11SpineBatchPrewarmer(
             _panel.DispatcherQueue,
@@ -84,12 +90,28 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
         Invalidate();
     }
 
+    public void SetBackgroundMode(InspectorPreviewImageBackgroundMode backgroundMode)
+    {
+        if (EqualityComparer<InspectorPreviewImageBackgroundMode>.Default.Equals(_backgroundMode, backgroundMode))
+        {
+            return;
+        }
+
+        _backgroundMode = backgroundMode;
+        Invalidate();
+    }
+
     public void PrewarmFrames(IReadOnlyList<SpineAnimationFrameDto> frames)
     {
         ArgumentNullException.ThrowIfNull(frames);
 
+        var fitBoundsChanged = _stableAutoFitBounds.SetReferenceFrames(frames);
         _batchPrewarmer.SetFrames(frames);
         StartBatchPrewarmIfReady();
+        if (fitBoundsChanged)
+        {
+            Invalidate();
+        }
     }
 
     public void LoadTexturePages(IReadOnlyDictionary<string, SpineAnimationTexturePageContent> texturePageContents)
@@ -105,6 +127,7 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
         _texturePageContents = texturePageContents;
         var generation = ++_textureLoadGeneration;
         _texturePageCache.Clear();
+        _stableAutoFitBounds.ResetBounds();
         InvalidateBatchCache();
         if (texturePageContents.Count == 0)
         {
@@ -124,6 +147,7 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
         _textureLoadPending = false;
         _textureLoadGeneration++;
         _texturePageCache.Clear();
+        _stableAutoFitBounds.ResetBounds();
         InvalidateBatchCache();
         Invalidate();
     }
@@ -131,6 +155,7 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
     public void ResetFrameCache()
     {
         _batchCache.Clear();
+        _stableAutoFitBounds.ResetBounds();
         StartBatchPrewarmIfReady();
     }
 
@@ -154,6 +179,12 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
     }
 
     private void OnPanelSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        _resizeTimer.Stop();
+        _resizeTimer.Start();
+    }
+
+    private void OnPanelCompositionScaleChanged(SwapChainPanel sender, object args)
     {
         _resizeTimer.Stop();
         _resizeTimer.Start();
@@ -215,7 +246,16 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
             return;
         }
 
-        _context.ClearRenderTargetView(_renderTargetView, ResolveSmokeTint(batches.Count));
+        var autoFitBounds = ResolveStableAutoFitBounds(batches);
+        _backgroundRenderer.Draw(
+            _device!,
+            _context,
+            _renderTargetView,
+            _pixelWidth,
+            _pixelHeight,
+            _compositionScaleX,
+            _compositionScaleY,
+            _backgroundMode);
         var drawElapsed = TimeSpan.Zero;
         var clipProjectionElapsed = TimeSpan.Zero;
         if (batches.Count > 0)
@@ -228,7 +268,8 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
                 _texturePageCache.GpuPages,
                 _pixelWidth,
                 _pixelHeight,
-                _viewport.ScalePan(XamlRootScale),
+                _viewport.ScalePan(_compositionScaleX, _compositionScaleY),
+                autoFitBounds,
                 out clipProjectionElapsed);
             drawStopwatch.Stop();
             drawElapsed = drawStopwatch.Elapsed - clipProjectionElapsed;
@@ -245,6 +286,7 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
         _deviceRecoveryAttempted = false;
         _diagnostics.FrameRendered(CreateFrameMetrics(
             batches,
+            autoFitBounds,
             frameStopwatch.Elapsed,
             uploadElapsed,
             batchProjectionElapsed,
@@ -281,106 +323,21 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
         _device = null;
         _pixelWidth = 0;
         _pixelHeight = 0;
+        _compositionScaleX = 1d;
+        _compositionScaleY = 1d;
+        _appliedCompositionScaleX = 0d;
+        _appliedCompositionScaleY = 0d;
         _texturePageCache.Clear();
+        _backgroundRenderer.ReleaseDeviceResources();
         _batchRenderer.ReleaseDeviceResources();
         _batchCache.Clear();
+        _stableAutoFitBounds.ResetBounds();
         _batchPrewarmer.Cancel();
         if (clearTextureContents)
         {
             _texturePageContents = EmptyTexturePages;
             _textureLoadPending = false;
         }
-    }
-
-    private bool EnsureDeviceResources()
-    {
-        if (_device is not null)
-        {
-            return true;
-        }
-
-        if (!_panel.IsLoaded || _panel.XamlRoot is null)
-        {
-            return false;
-        }
-
-        if (!ResolvePanelSize(out _pixelWidth, out _pixelHeight))
-        {
-            return false;
-        }
-
-        var deviceCreationFlags = DeviceCreationFlags.BgraSupport;
-        D3D11.D3D11CreateDevice(
-            null,
-            DriverType.Hardware,
-            deviceCreationFlags,
-            [FeatureLevel.Level_11_1, FeatureLevel.Level_11_0, FeatureLevel.Level_10_1],
-            out _device,
-            out _,
-            out _context).CheckError();
-
-        using var dxgiDevice = _device.QueryInterface<IDXGIDevice>();
-        using var adapter = dxgiDevice.GetAdapter();
-        using var factory = adapter.GetParent<IDXGIFactory2>();
-        var swapChainDescription = new SwapChainDescription1
-        {
-            Width = (uint)_pixelWidth,
-            Height = (uint)_pixelHeight,
-            Format = Format.B8G8R8A8_UNorm,
-            Stereo = false,
-            SampleDescription = new SampleDescription(1, 0),
-            BufferUsage = Usage.RenderTargetOutput,
-            BufferCount = BufferCount,
-            Scaling = Scaling.Stretch,
-            SwapEffect = SwapEffect.FlipSequential,
-            AlphaMode = AlphaMode.Ignore
-        };
-        _swapChain = factory.CreateSwapChainForComposition(_device, swapChainDescription);
-        WinUI3SwapChainPanelNative.SetSwapChain(_panel, _swapChain, _diagnostics);
-        CreateRenderTargetView();
-        var prewarmStopwatch = Stopwatch.StartNew();
-        _batchRenderer.Prewarm(_device);
-        prewarmStopwatch.Stop();
-        _diagnostics.BatchRendererPrewarmed(prewarmStopwatch.Elapsed);
-        _diagnostics.DeviceCreated(_pixelWidth, _pixelHeight);
-        return true;
-    }
-
-    private bool ResizeIfNeeded()
-    {
-        if (_swapChain is null || !ResolvePanelSize(out var width, out var height))
-        {
-            return false;
-        }
-
-        if (width == _pixelWidth && height == _pixelHeight && _renderTargetView is not null)
-        {
-            return true;
-        }
-
-        _pixelWidth = width;
-        _pixelHeight = height;
-        _renderTargetView?.Dispose();
-        _renderTargetView = null;
-        _swapChain.ResizeBuffers(BufferCount, (uint)_pixelWidth, (uint)_pixelHeight, Format.B8G8R8A8_UNorm, SwapChainFlags.None);
-        CreateRenderTargetView();
-        _diagnostics.Resized(_pixelWidth, _pixelHeight);
-        return true;
-    }
-
-    private bool ResolvePanelSize(out int width, out int height)
-    {
-        width = Math.Max(1, (int)Math.Ceiling(_panel.ActualWidth * XamlRootScale));
-        height = Math.Max(1, (int)Math.Ceiling(_panel.ActualHeight * XamlRootScale));
-        return width > 1 && height > 1;
-    }
-
-    private double XamlRootScale => _panel.XamlRoot?.RasterizationScale ?? 1d;
-
-    private void CreateRenderTargetView()
-    {
-        using var backBuffer = _swapChain!.GetBuffer<ID3D11Texture2D>(0);
-        _renderTargetView = _device!.CreateRenderTargetView(backBuffer);
     }
 
     private IReadOnlyList<SpineAnimationVertexBatch> ResolveBatches(out TimeSpan elapsed)
@@ -394,6 +351,23 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
         elapsed = stopwatch.Elapsed;
         return batches;
     }
+
+    private SpineAnimationAutoFitBounds ResolveStableAutoFitBounds(
+        IReadOnlyList<SpineAnimationVertexBatch> currentBatches)
+    {
+        _stableAutoFitBounds.TryResolveBounds(
+            currentBatches,
+            ResolveReferenceFrameBatches,
+            out var bounds);
+        return bounds;
+    }
+
+    private IReadOnlyList<SpineAnimationVertexBatch> ResolveReferenceFrameBatches(
+        SpineAnimationFrameDto frame) =>
+        _batchCache.GetVertexBatches(
+            frame,
+            _texturePageCache.TexturePageSizes,
+            _texturePageVersion);
 
     private async Task LoadTexturePagesAsync(
         IReadOnlyDictionary<string, SpineAnimationTexturePageContent> texturePageContents,
@@ -481,6 +455,7 @@ internal sealed partial class D3D11SpineAnimationPreviewRenderBackend : ISpineAn
     {
         _texturePageVersion++;
         _batchCache.Clear();
+        _stableAutoFitBounds.ResetBounds();
         _batchPrewarmer.Cancel();
     }
 

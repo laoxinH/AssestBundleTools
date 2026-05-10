@@ -22,4 +22,5 @@ public sealed record WorkspaceMetadataAssetTabDto(
     double? PreviewImageZoom = null,
     double? PreviewImagePanX = null,
     double? PreviewImagePanY = null,
-    WorkspaceAssetEditDraftReferenceDto? EditDraftReference = null);
+    WorkspaceAssetEditDraftReferenceDto? EditDraftReference = null,
+    WorkspaceInspectorScrollStateDto? InspectorScrollState = null);

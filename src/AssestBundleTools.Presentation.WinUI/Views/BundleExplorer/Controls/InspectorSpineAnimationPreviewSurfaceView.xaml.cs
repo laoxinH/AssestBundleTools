@@ -19,6 +19,7 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
     private SpineAnimationFrameDto? _lastSyncedFrame;
     private DateTimeOffset _lastTickUtc;
     private bool _isPreviewRunning;
+    private bool _isBindingsUpdateQueued;
 
     public static readonly DependencyProperty ViewModelProperty =
         DependencyProperty.Register(
@@ -34,6 +35,13 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
             typeof(InspectorSpineAnimationPreviewSurfaceView),
             new PropertyMetadata(true, OnIsPreviewActiveChanged));
 
+    public static readonly DependencyProperty UseSquareViewportProperty =
+        DependencyProperty.Register(
+            nameof(UseSquareViewport),
+            typeof(bool),
+            typeof(InspectorSpineAnimationPreviewSurfaceView),
+            new PropertyMetadata(true, OnUseSquareViewportChanged));
+
     public InspectorSpineAnimationPreviewSurfaceView()
     {
         InitializeComponent();
@@ -48,6 +56,7 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         _deferredResourceReleaseTimer.Tick += OnDeferredResourceReleaseTimerTick;
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
+        RegisterPlaybackSliderInputHandlers();
         ApplyLocalizedText();
     }
 
@@ -63,6 +72,12 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         set => SetValue(IsPreviewActiveProperty, value);
     }
 
+    public bool UseSquareViewport
+    {
+        get => (bool)GetValue(UseSquareViewportProperty);
+        set => SetValue(UseSquareViewportProperty, value);
+    }
+
     private static void OnViewModelPropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
     {
         if (dependencyObject is not InspectorSpineAnimationPreviewSurfaceView view)
@@ -71,7 +86,10 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         }
 
         view.DetachObservedViewModel(args.OldValue as InspectorPreviewSpineAnimationViewModel);
-        view.ResetViewportState();
+        view.CancelPlaybackSliderScrub();
+        view.RestoreViewportStateFromViewModel(args.NewValue as InspectorPreviewSpineAnimationViewModel);
+        view.ResetAutoFitReferenceCapture();
+        view._renderBackend.ResetFrameCache();
         if (view._isPreviewRunning)
         {
             view.AttachObservedViewModel(args.NewValue as InspectorPreviewSpineAnimationViewModel);
@@ -79,9 +97,11 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
             view.RefreshRuntimePlaybackSession();
             view.SyncRenderFrame();
             view.RefreshPrewarmFrames();
+            view.RefreshBackgroundMode();
         }
 
         view.UpdateBindingsNow();
+        view.RefreshSpineBackgroundActionToolTip();
         if (view._isPreviewRunning)
         {
             view.InvalidatePreviewSurface();
@@ -95,6 +115,16 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         if (dependencyObject is InspectorSpineAnimationPreviewSurfaceView view)
         {
             view.UpdatePreviewActivation();
+        }
+    }
+
+    private static void OnUseSquareViewportChanged(
+        DependencyObject dependencyObject,
+        DependencyPropertyChangedEventArgs args)
+    {
+        if (dependencyObject is InspectorSpineAnimationPreviewSurfaceView view)
+        {
+            view.RefreshPreviewViewportFrameSizing();
         }
     }
 
@@ -128,12 +158,14 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
 
         _isPreviewRunning = true;
         _deferredResourceReleaseTimer.Stop();
+        ResetAutoFitReferenceCapture();
         AttachObservedViewModel(ViewModel);
         RefreshTexturePages();
         RefreshRuntimePlaybackSession();
         SyncRenderFrame();
         RefreshPrewarmFrames();
-        ApplyViewportState();
+        RestoreViewportStateFromViewModel(ViewModel);
+        RefreshBackgroundMode();
         StartRenderingLoop();
         UpdateBindingsNow();
         InvalidatePreviewSurface();
@@ -147,11 +179,13 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         }
 
         _isPreviewRunning = false;
+        CancelPlaybackSliderScrub();
         CancelFrameSequenceExport();
         StopRenderingLoop();
         DisposeRuntimePlaybackSession();
         DetachObservedViewModel(_observedViewModel);
         _renderBackend.SetCurrentFrame(null);
+        ResetAutoFitReferenceCapture();
         _lastSyncedFrame = null;
         _isViewportDragging = false;
         _deferredResourceReleaseTimer.Stop();
@@ -202,6 +236,13 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         ToolTipService.SetToolTip(
             ExportFramesButton,
             UiText.Get(ResourceKeys.InspectorSpineAnimationPreviewExportFramesToolTip));
+        RefreshSpineBackgroundActionToolTip();
+        ToolTipService.SetToolTip(
+            ZoomOutViewportButton,
+            UiText.Get(ResourceKeys.InspectorPreviewImageZoomOutToolTip));
+        ToolTipService.SetToolTip(
+            ZoomInViewportButton,
+            UiText.Get(ResourceKeys.InspectorPreviewImageZoomInToolTip));
         ToolTipService.SetToolTip(
             ResetViewportButton,
             UiText.Get(ResourceKeys.InspectorSpineAnimationPreviewResetViewportToolTip));
@@ -236,7 +277,11 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         var shouldRefreshPrewarmFrames = ShouldRefreshPrewarmFrames(e.PropertyName);
         var shouldRefreshRuntimeSession = ShouldRefreshRuntimePlaybackSession(e.PropertyName);
         var shouldRefreshRuntimeFrame = ShouldRefreshRuntimeFrame(e.PropertyName);
+        var shouldCaptureRuntimeCurrentFrameAutoFitReference =
+            ShouldCaptureRuntimeCurrentFrameAutoFitReference(e.PropertyName);
         var shouldUpdateBindings = ShouldUpdateBindings(e.PropertyName);
+        var shouldRefreshBackgroundMode = ShouldRefreshBackgroundMode(e.PropertyName);
+        var shouldResetRenderFrameCache = ShouldResetRenderFrameCache(e.PropertyName);
 
         LogInteractionForProperty(e.PropertyName);
 
@@ -247,6 +292,9 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
                 shouldRefreshPrewarmFrames,
                 shouldRefreshRuntimeSession,
                 shouldRefreshRuntimeFrame,
+                shouldCaptureRuntimeCurrentFrameAutoFitReference,
+                shouldRefreshBackgroundMode,
+                shouldResetRenderFrameCache,
                 shouldUpdateBindings);
             return;
         }
@@ -257,6 +305,9 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
                 shouldRefreshPrewarmFrames,
                 shouldRefreshRuntimeSession,
                 shouldRefreshRuntimeFrame,
+                shouldCaptureRuntimeCurrentFrameAutoFitReference,
+                shouldRefreshBackgroundMode,
+                shouldResetRenderFrameCache,
                 shouldUpdateBindings));
     }
 
@@ -265,6 +316,9 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         bool shouldRefreshPrewarmFrames,
         bool shouldRefreshRuntimeSession,
         bool shouldRefreshRuntimeFrame,
+        bool shouldCaptureRuntimeCurrentFrameAutoFitReference,
+        bool shouldRefreshBackgroundMode,
+        bool shouldResetRenderFrameCache,
         bool shouldUpdateBindings)
     {
         if (texturePagesChanged)
@@ -272,9 +326,19 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
             RefreshTexturePages();
         }
 
+        if (shouldResetRenderFrameCache)
+        {
+            ResetAutoFitReferenceCapture();
+            _renderBackend.ResetFrameCache();
+        }
+
+        if (shouldRefreshPrewarmFrames)
+        {
+            RefreshPrewarmFrames();
+        }
+
         if (shouldRefreshRuntimeSession)
         {
-            ResetViewportState();
             RefreshRuntimePlaybackSession();
         }
         else if (shouldRefreshRuntimeFrame)
@@ -282,15 +346,26 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
             QueueRuntimeFrameRefresh();
         }
 
-        var shouldInvalidate = SyncRenderFrame() || texturePagesChanged;
-        if (shouldRefreshPrewarmFrames)
+        if (shouldCaptureRuntimeCurrentFrameAutoFitReference)
         {
-            RefreshPrewarmFrames();
+            CaptureRuntimeCurrentFrameAutoFitReferenceIfNeeded();
+        }
+
+        var shouldInvalidate = SyncRenderFrame() || texturePagesChanged;
+        if (shouldRefreshBackgroundMode)
+        {
+            RefreshBackgroundMode();
+            shouldInvalidate = true;
         }
 
         if (shouldUpdateBindings)
         {
-            UpdateBindingsNow();
+            QueueBindingsUpdate();
+        }
+
+        if (ShouldRefreshSpineBackgroundActionToolTip(ViewModel, shouldUpdateBindings))
+        {
+            RefreshSpineBackgroundActionToolTip();
         }
 
         if (shouldInvalidate)
@@ -306,7 +381,15 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
             return;
         }
 
+        var wasShowingSetupPose = ViewModel?.IsShowingSetupPose == true;
         ViewModel?.TogglePlayback();
+        if (wasShowingSetupPose && ViewModel?.IsShowingSetupPose == false)
+        {
+            ResetAutoFitReferenceCapture();
+            RefreshPrewarmFrames();
+            QueueRuntimeFrameRefresh();
+        }
+
         UpdateBindingsNow();
     }
 
@@ -336,6 +419,8 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         }
 
         ViewModel?.Restart();
+        ResetAutoFitReferenceCapture();
+        RefreshPrewarmFrames();
         LogInteraction("restart");
         QueueRuntimeFrameRefresh();
         SyncRenderFrame();
@@ -350,6 +435,8 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         }
 
         ViewModel?.ShowSetupPose();
+        ResetAutoFitReferenceCapture();
+        RefreshPrewarmFrames();
         LogInteraction("setup-pose");
         QueueRuntimeFrameRefresh();
         SyncRenderFrame();
@@ -364,6 +451,8 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         }
 
         ViewModel?.StepPreviousFrame();
+        ResetAutoFitReferenceCapture();
+        RefreshPrewarmFrames();
         LogInteraction("step-previous");
         QueueRuntimeFrameRefresh();
         SyncRenderFrame();
@@ -378,6 +467,8 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         }
 
         ViewModel?.StepNextFrame();
+        ResetAutoFitReferenceCapture();
+        RefreshPrewarmFrames();
         LogInteraction("step-next");
         QueueRuntimeFrameRefresh();
         SyncRenderFrame();
@@ -397,7 +488,9 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
 
     private void RefreshPrewarmFrames()
     {
-        _renderBackend.PrewarmFrames(Array.Empty<SpineAnimationFrameDto>());
+        _renderBackend.PrewarmFrames(ResolveAutoFitReferenceFrames(
+            ViewModel,
+            _runtimeCurrentFrameAutoFitReferenceFrame));
     }
 
     private bool SyncRenderFrame()
@@ -411,17 +504,6 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
         _lastSyncedFrame = frame;
         _renderBackend.SetCurrentFrame(frame);
         return true;
-    }
-
-    private void UpdateBindingsNow()
-    {
-        if (DispatcherQueue.HasThreadAccess)
-        {
-            Bindings.Update();
-            return;
-        }
-
-        DispatcherQueue.TryEnqueue(UpdateBindingsNow);
     }
 
     private void InvalidatePreviewSurface()
@@ -448,12 +530,6 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView : UserCont
             LogInteraction(ViewModel?.IsPlaying == true ? "playback-resumed" : "playback-paused");
         }
     }
-
-    private static bool ShouldRefreshPrewarmFrames(string? propertyName) =>
-        propertyName is nameof(InspectorPreviewSpineAnimationViewModel.TexturePageContents);
-
-    private static bool ShouldUpdateBindings(string? propertyName) =>
-        propertyName is not nameof(InspectorPreviewSpineAnimationViewModel.CurrentFrame);
 
     private void LogInteraction(string eventName)
     {

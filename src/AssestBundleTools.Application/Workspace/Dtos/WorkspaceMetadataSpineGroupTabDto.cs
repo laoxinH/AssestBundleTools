@@ -10,4 +10,6 @@ namespace AssestBundleTools.Application.Workspace.Dtos;
 public sealed record WorkspaceMetadataSpineGroupTabDto(
     string GroupId,
     string DisplayName,
-    string GroupKey);
+    string GroupKey,
+    WorkspaceSpinePreviewStateDto? PreviewState = null,
+    WorkspaceInspectorScrollStateDto? InspectorScrollState = null);

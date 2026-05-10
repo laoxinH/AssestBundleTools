@@ -125,6 +125,20 @@ public sealed partial class AssetDocumentGroupViewModel : ObservableObject
         SetActiveDocumentTab(assetTab is null ? null : GetOrAddAssetDocumentTab(assetTab));
     }
 
+    public void ClearActiveAssetTab()
+    {
+        if (ActiveDocumentTab?.IsSpineGroup == true)
+        {
+            return;
+        }
+
+        var fallbackDocumentTab = DocumentTabs.FirstOrDefault(static tab => tab.IsSpineGroup);
+        if (ActiveAssetTab is not null || (ActiveDocumentTab is null && fallbackDocumentTab is not null))
+        {
+            SetActiveDocumentTab(fallbackDocumentTab);
+        }
+    }
+
     public void SetActiveSpineGroupTab(SpineAssetGroupDocumentTabViewModel? spineGroupTab)
     {
         SetActiveDocumentTab(spineGroupTab is null ? null : GetOrAddSpineGroupDocumentTab(spineGroupTab));

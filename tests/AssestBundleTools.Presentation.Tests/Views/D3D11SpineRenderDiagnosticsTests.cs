@@ -1,3 +1,4 @@
+using System.Numerics;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 namespace AssestBundleTools.Presentation.Tests.Views;
@@ -169,6 +170,25 @@ public sealed class D3D11SpineRenderDiagnosticsTests
         var message = Assert.Single(messages);
         Assert.Contains("native-panel-binding-started", message, StringComparison.Ordinal);
         Assert.Contains("loaded=True xamlRoot=True size=320x240", message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SwapChainCompositionTransformApplied_ShouldIncludeScaleAndMatrix()
+    {
+        var messages = new List<string>();
+        var diagnostics = new D3D11SpineRenderDiagnostics(messages.Add);
+
+        diagnostics.SwapChainCompositionTransformApplied(
+            width: 393,
+            height: 203,
+            scaleX: 1.25d,
+            scaleY: 1.25d,
+            Matrix3x2.CreateScale(0.8f));
+
+        var message = Assert.Single(messages);
+        Assert.Contains("swapchain-composition size=393x203", message, StringComparison.Ordinal);
+        Assert.Contains("scale=1.25x1.25", message, StringComparison.Ordinal);
+        Assert.Contains("matrix=0.8,0,0,0.8", message, StringComparison.Ordinal);
     }
 
     [Fact]

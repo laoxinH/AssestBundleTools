@@ -1463,6 +1463,7 @@
                         AssetSelectionChanged="OnPrimaryPaneAssetSelectionChanged"
                         BatchExtractRequested="OnPrimaryPaneBatchExtractRequested"
                         FilterChanged="OnPrimaryPaneFilterChanged"
+                        ViewModeChanged="OnPrimaryPaneViewModeChanged"
                         ViewModel="{x:Bind ViewModel.AssetWorkflow.PrimaryPane, Mode=OneWay}" />
                 </Grid>
             </Border>

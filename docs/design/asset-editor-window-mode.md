@@ -192,13 +192,13 @@ Spine 动画预览的长期播放路线不再继续扩大整段 `sampled frames`
 - 资产文档组顺序。
 - 当前激活资产文档。
 - 每个资产文档的内层分段位置。
-- 图片缩放 / 平移、Sprite 显示模式、Mesh 显示模式、文本滚动位置等预览浏览状态。
+- 图片缩放 / 平移、Sprite 显示模式、Mesh 显示模式、Spine 动画 / 皮肤 / 播放速度 / 视口缩放平移等预览浏览状态。
 - 替换候选选择。
 - 编辑草稿标识和草稿来源。
 
 这些状态可以持久化，但第一阶段不要求独立资源编辑窗口随应用重启恢复；主窗口资源包标签和资产文档组恢复仍是优先级更高的稳定链路。
 
-Spine 资源组文档属于页面级浏览状态。主窗口资源包标签会用 `openSpineGroupTabs[]` 只保存 `GroupId / DisplayName / GroupKey` 这类轻量身份信息；独立资源编辑窗口通过 `openAssetEditorWindows[].openDocumentTabs[]` 保存普通资产文档和 Spine 组文档的统一轻量标签序列，并用 `ActiveDocumentKind / ActiveSpineGroupId` 恢复活动 Spine 组。窗口快照仍不保存 atlas 解析结果、Texture2D 预览载荷、region overlay 数据或诊断明细；真实组详情在恢复后激活时继续通过 `LoadSpineAssetGroupDetailsQuery` 和现有预览管线重新读取。`openAssetTabs[] / ActiveAssetId` 保留为普通资产标签和旧快照兼容字段。
+Spine 资源组文档属于页面级浏览状态。主窗口资源包标签会用 `openSpineGroupTabs[]` 保存 `GroupId / DisplayName / GroupKey` 这类轻量身份信息，以及动画名、皮肤名、播放速度、播放时间、播放/暂停、setup pose、预览背景、视口缩放/平移和 atlas page 选择这类轻量观察状态；独立资源编辑窗口通过 `openAssetEditorWindows[].openDocumentTabs[]` 保存普通资产文档和 Spine 组文档的统一轻量标签序列，并用 `ActiveDocumentKind / ActiveSpineGroupId` 恢复活动 Spine 组。窗口快照仍不保存 atlas 解析结果、Texture2D 预览载荷、region overlay 数据或诊断明细；真实组详情在恢复后激活时继续通过 `LoadSpineAssetGroupDetailsQuery` 和现有预览管线重新读取。`openAssetTabs[] / ActiveAssetId` 保留为普通资产标签和旧快照兼容字段。
 
 ### 11.3 编辑草稿状态
 
@@ -330,17 +330,17 @@ Spine 动画的长期高性能播放路线采用 runtime playback session，而�
 当前实现：
 
 - 独立资源编辑窗口已具备会话内轻量位置 / 大小记忆：新窗口按上一个可用窗口 bounds 级联打开，关闭当前工作区时清空该页面级状态。
-- `AssetEditorWindowStateStore` 已跟踪当前会话内的独立窗口状态快照，包含窗口 bounds、资产文档标签顺序、活动资产身份、检查器分段和图片 / Mesh 预览浏览选项。
+- `AssetEditorWindowStateStore` 已跟踪当前会话内的独立窗口状态快照，包含窗口 bounds、资产文档标签顺序、活动资产身份、检查器分段和图片 / Mesh / Spine 预览浏览选项。
 - 工作区浏览状态 DTO 与工作区元数据已具备 `openAssetEditorWindows[]` 持久化形状；窗口创建、布局变化、标签组变化和关闭会随浏览状态回写该快照。
 - 工作区重新打开时当前会读取 `openAssetEditorWindows[]` 并弹出一次可控恢复提示；如果快照里包含轻量草稿引用，提示会显示带草稿标记的标签数量，并提供“同时恢复草稿标记”的轻量选项；如果待恢复标签已在主窗口或现有独立窗口中打开，提示和工具栏入口会显示冲突标签数量，并提示关闭对应标签后可继续恢复。用户选择稍后时，主窗口工具条仍保留手动恢复入口。只有用户主动确认时，才会按保存的轻量标签组和窗口布局重建独立资源编辑窗口。
 - 恢复时会先按当前工作区资源包可用性和已打开资产身份拆分快照；可恢复的窗口会打开，不可恢复或与当前已打开资产冲突的窗口 / 标签会继续保留在待恢复入口中，用户也可在恢复提示中显式忽略这些已保存窗口。
 - 恢复窗口布局时会先校验最小尺寸，并在应用到 WinUI 窗口前按当前显示器工作区做安全归位，避免窗口恢复到屏幕外或过大的不可操作位置。
-- 当前只落盘轻量窗口 / 标签恢复元数据，不保存真实详情内容、预览载荷、替换候选、编辑草稿内容或运行时资源数据；资产文档标签已具备轻量 `EditDraftReference` 挂点，只允许保存草稿 id、模式和来源指纹等恢复引用。
+- 当前只落盘轻量窗口 / 标签恢复元数据，不保存真实详情内容、预览载荷、替换候选、编辑草稿内容或运行时资源数据；资产文档标签已具备轻量 `EditDraftReference` 挂点，只允许保存草稿 id、模式和来源指纹等恢复引用；Spine 组标签只保存动画 / 皮肤 / 播放 / 背景 / 视口 / atlas page 选择等观察状态。
 - Application 层已新增 `Editing` 草稿恢复候选契约：`IAssetEditDraftStore` 只读取草稿元数据，`GetAssetEditDraftRestorePlanHandler` 按工作区、草稿 id、模式和来源指纹把轻量引用解析为 `Restorable / Missing / SourceMismatch / Expired / InvalidReference`。该契约只用于后续恢复提示和诊断分流，不读取或暴露真实草稿内容。
 - Presentation 恢复弹窗当前已在显示前调用 `AssetEditDraftRestorePlanGateway` 做轻量预检，并在弹窗中显示可恢复、缺失、来源不匹配、已过期和引用无效的草稿引用数量；该预检会刷新提示文案、重复弹窗判定和后续可保留的草稿标记集合，不自动恢复草稿内容，也不改变用户是否主动恢复窗口的控制权。组合根已接入 `WorkspaceChangeSetAssetEditDraftStore`，从 `staging/changes/<workspaceKey>.json` 的 `editDrafts[]` 描述列表读取草稿元数据。
 - 当前仍不自动弹出独立资源编辑窗口，也不恢复最大化 / 最小化、显示器或真实编辑草稿内容；当预检计划可用时，草稿选项只决定本次成功打开的标签是否带回预检为可恢复的 `EditDraftReference` 标记，缺失、来源不匹配、已过期和引用无效的草稿标记不会重新挂回新标签。真实草稿确认 / 丢弃 / 恢复队列仍留给后续编辑器模型。
 - 当前打开资源详情、依赖跳转、Spine 组文档和新窗口打开入口会先检查主窗口与所有独立资源编辑窗口：如果目标文档已打开，则直接激活并切换到已有标签，再把所在窗口置前；只有未命中现有标签时才继续创建新的文档标签或独立窗口。
-- Spine 资源组当前作为统一资源文档标签打开到普通独立资源编辑窗口；会话内混合标签、拖拽合并、放回主窗口、冲突激活和 `openAssetEditorWindows[]` 快照恢复均复用统一文档标签链路。Spine 组恢复只持久化 `BundleId + GroupId + DisplayName + GroupKey`，不持久化解析详情或预览载荷。
+- Spine 资源组当前作为统一资源文档标签打开到普通独立资源编辑窗口；会话内混合标签、拖拽合并、放回主窗口、冲突激活和 `openAssetEditorWindows[]` 快照恢复均复用统一文档标签链路。Spine 组恢复只持久化 `BundleId + GroupId + DisplayName + GroupKey` 与轻量预览观察状态，不持久化解析详情或预览载荷。
 
 ### 第五阶段：Spine GPU 批量渲染
 

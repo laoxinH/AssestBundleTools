@@ -1,6 +1,7 @@
 using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Replacement.Dtos;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
@@ -48,10 +49,13 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
         PaneId = PaneId.New();
         Inspector = new InspectorPanelViewModel(
             inspectorInformationTextSet ?? throw new ArgumentNullException(nameof(inspectorInformationTextSet)));
+        Inspector.SectionScrollPositionChanged += OnInspectorSectionScrollPositionChanged;
         Inspector.Preview.Image.DisplayOptions.DisplayOptionsChanged += OnPreviewImageDisplayOptionsChanged;
         Inspector.Preview.Image.ViewStateChanged += OnPreviewImageViewStateChanged;
         Inspector.Preview.Mesh.DisplayOptionsChanged += OnPreviewMeshDisplayOptionsChanged;
     }
+
+    public event EventHandler? InspectorScrollStateChanged;
 
     public event EventHandler? PreviewImageDisplayOptionsChanged;
 
@@ -175,6 +179,11 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
         Inspector.RestoreSelectedSection(sectionKey);
     }
 
+    public void RestoreInspectorScrollState(WorkspaceInspectorScrollStateDto? scrollState)
+    {
+        Inspector.RestoreInspectorScrollState(scrollState);
+    }
+
     public void RestorePreviewImageDisplayOptions(
         string? backgroundMode,
         string? spriteDisplayMode,
@@ -272,6 +281,11 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
         }
 
         PreviewImageDisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnInspectorSectionScrollPositionChanged(object? sender, EventArgs e)
+    {
+        InspectorScrollStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnPreviewImageViewStateChanged(object? sender, EventArgs e)

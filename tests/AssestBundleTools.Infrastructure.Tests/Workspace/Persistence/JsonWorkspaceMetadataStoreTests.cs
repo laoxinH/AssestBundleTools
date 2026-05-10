@@ -61,7 +61,25 @@ internal static class JsonWorkspaceMetadataStoreTests
                                 "Main tab draft"))
                     ],
                     ActiveAssetTabId: "asset-009",
-                    AssetListViewMode: "SpineGroups")
+                    AssetListViewMode: "SpineGroups",
+                    OpenSpineGroupTabs:
+                    [
+                        new WorkspaceMetadataSpineGroupTabDto(
+                            GroupId: "spine-group:bundle-001:hero",
+                            DisplayName: "Hero Spine",
+                            GroupKey: "hero",
+                            PreviewState: new WorkspaceSpinePreviewStateDto(
+                                SelectedAnimationName: "Special",
+                                SelectedSkinName: "default",
+                                PlaybackSpeed: 1.5d,
+                                PlaybackTime: 2.25d,
+                                IsPlaying: false,
+                                BackgroundMode: "Checkerboard",
+                                ViewportZoom: 2d,
+                                ViewportPanX: 18d,
+                                ViewportPanY: -9d))
+                    ],
+                    ActiveSpineGroupTabId: "spine-group:bundle-001:hero")
             ],
             ActiveBundleTabId: "bundle-001",
             ImportedSources:
@@ -139,7 +157,15 @@ internal static class JsonWorkspaceMetadataStoreTests
                                 BundleId: "bundle-001",
                                 GroupId: "spine-group:bundle-001:hero",
                                 DisplayName: "Hero Spine",
-                                GroupKey: "hero"))
+                                GroupKey: "hero",
+                                PreviewState: new WorkspaceSpinePreviewStateDto(
+                                    SelectedAnimationName: "Sleep",
+                                    SelectedSkinName: "summer",
+                                    PlaybackSpeed: 0.5d,
+                                    PlaybackTime: 1.25d,
+                                    ViewportZoom: 1.75d,
+                                    ViewportPanX: 10d,
+                                    ViewportPanY: -20d)))
                     ],
                     ActiveDocumentKind: WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
                     ActiveSpineGroupId: "spine-group:bundle-001:hero")
@@ -177,6 +203,10 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.Equal("Unknown:Shader", loadedBundleTab.AssetTypeFilter, "Dynamic bundle tab asset type filter should round-trip.");
         TestAssert.Equal("asset-009", loadedBundleTab.ActiveAssetTabId, "Active asset tab should round-trip.");
         TestAssert.Equal("SpineGroups", loadedBundleTab.AssetListViewMode, "Asset pane view mode should round-trip.");
+        TestAssert.Equal(
+            "spine-group:bundle-001:hero",
+            loadedBundleTab.ActiveSpineGroupTabId,
+            "Active Spine group tab should round-trip.");
 
         var loadedAssetTab = TestAssert.Single(loadedBundleTab.OpenAssetTabs!);
         TestAssert.Equal("asset-009", loadedAssetTab.AssetId, "Asset tab id should round-trip.");
@@ -197,6 +227,17 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.Equal("text", loadedAssetTab.EditDraftReference?.DraftMode, "Asset tab draft mode should round-trip.");
         TestAssert.Equal("source-v1", loadedAssetTab.EditDraftReference?.SourceFingerprint, "Asset tab draft source should round-trip.");
         TestAssert.Equal("Main tab draft", loadedAssetTab.EditDraftReference?.SourceDescription, "Asset tab draft description should round-trip.");
+
+        var loadedSpineGroupTab = TestAssert.Single(loadedBundleTab.OpenSpineGroupTabs!);
+        TestAssert.Equal("Special", loadedSpineGroupTab.PreviewState?.SelectedAnimationName, "Spine animation should round-trip.");
+        TestAssert.Equal("default", loadedSpineGroupTab.PreviewState?.SelectedSkinName, "Spine skin should round-trip.");
+        TestAssert.Equal(1.5d, loadedSpineGroupTab.PreviewState?.PlaybackSpeed ?? 0d, "Spine speed should round-trip.");
+        TestAssert.Equal(2.25d, loadedSpineGroupTab.PreviewState?.PlaybackTime ?? 0d, "Spine time should round-trip.");
+        TestAssert.False(loadedSpineGroupTab.PreviewState?.IsPlaying ?? true, "Spine playing state should round-trip.");
+        TestAssert.Equal("Checkerboard", loadedSpineGroupTab.PreviewState?.BackgroundMode, "Spine background should round-trip.");
+        TestAssert.Equal(2d, loadedSpineGroupTab.PreviewState?.ViewportZoom ?? 0d, "Spine viewport zoom should round-trip.");
+        TestAssert.Equal(18d, loadedSpineGroupTab.PreviewState?.ViewportPanX ?? 0d, "Spine viewport pan X should round-trip.");
+        TestAssert.Equal(-9d, loadedSpineGroupTab.PreviewState?.ViewportPanY ?? 0d, "Spine viewport pan Y should round-trip.");
 
         var importedSource = TestAssert.Single(restoredMetadata.ImportedSources!);
         TestAssert.Equal(@"C:\Bundles\characters", importedSource.Path, "Imported source path should round-trip.");
@@ -264,6 +305,13 @@ internal static class JsonWorkspaceMetadataStoreTests
             "Editor Spine group id should round-trip.");
         TestAssert.Equal("Hero Spine", editorDocumentSpineGroupTab.SpineGroupTab?.DisplayName, "Editor Spine display name should round-trip.");
         TestAssert.Equal("hero", editorDocumentSpineGroupTab.SpineGroupTab?.GroupKey, "Editor Spine group key should round-trip.");
+        TestAssert.Equal("Sleep", editorDocumentSpineGroupTab.SpineGroupTab?.PreviewState?.SelectedAnimationName, "Editor Spine animation should round-trip.");
+        TestAssert.Equal("summer", editorDocumentSpineGroupTab.SpineGroupTab?.PreviewState?.SelectedSkinName, "Editor Spine skin should round-trip.");
+        TestAssert.Equal(0.5d, editorDocumentSpineGroupTab.SpineGroupTab?.PreviewState?.PlaybackSpeed ?? 0d, "Editor Spine speed should round-trip.");
+        TestAssert.Equal(1.25d, editorDocumentSpineGroupTab.SpineGroupTab?.PreviewState?.PlaybackTime ?? 0d, "Editor Spine time should round-trip.");
+        TestAssert.Equal(1.75d, editorDocumentSpineGroupTab.SpineGroupTab?.PreviewState?.ViewportZoom ?? 0d, "Editor Spine viewport zoom should round-trip.");
+        TestAssert.Equal(10d, editorDocumentSpineGroupTab.SpineGroupTab?.PreviewState?.ViewportPanX ?? 0d, "Editor Spine viewport pan X should round-trip.");
+        TestAssert.Equal(-20d, editorDocumentSpineGroupTab.SpineGroupTab?.PreviewState?.ViewportPanY ?? 0d, "Editor Spine viewport pan Y should round-trip.");
     }
 
     public static void Delete_ShouldRemoveSavedMetadataFile()

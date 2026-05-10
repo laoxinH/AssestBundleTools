@@ -8,6 +8,8 @@ internal sealed partial class V38SpineAnimationRuntimeAdapter :
     ISpineAnimationRuntimeAdapter,
     ISpineAnimationRuntimePlaybackAdapter
 {
+    private static readonly int[] QuadTriangleIndices = [0, 1, 2, 2, 3, 0];
+
     public string AdapterKey => "V38";
 
     public SpineAnimationRuntimePreviewResultDto TryBuildPreview(
@@ -309,35 +311,53 @@ internal sealed partial class V38SpineAnimationRuntimeAdapter :
         Dictionary<string, SpineAnimationAttachmentDto> attachmentMap)
     {
         var commands = new List<SpineAnimationDrawCommandDto>();
+        var clipper = new Runtime.SkeletonClipping();
         foreach (var slot in skeleton.DrawOrder)
         {
+            if (!slot.Bone.Active)
+            {
+                continue;
+            }
+
+            if (slot.Attachment is Runtime.ClippingAttachment clippingAttachment)
+            {
+                clipper.ClipStart(slot, clippingAttachment);
+                continue;
+            }
+
             var command = slot.Attachment switch
             {
                 Runtime.RegionAttachment regionAttachment => TryCreateRegionDrawCommand(
                     slot,
                     regionAttachment,
-                    attachmentMap),
+                    attachmentMap,
+                    clipper),
                 Runtime.MeshAttachment meshAttachment => TryCreateMeshDrawCommand(
                     slot,
                     meshAttachment,
-                    attachmentMap),
+                    attachmentMap,
+                    clipper),
                 _ => null
             };
             if (command is null)
             {
+                clipper.ClipEnd(slot);
                 continue;
             }
 
             commands.Add(command);
+            clipper.ClipEnd(slot);
         }
 
+        clipper.ClipEnd();
         return commands;
     }
 
     private static SpineAnimationDrawCommandDto? TryCreateRegionDrawCommand(
         Runtime.Slot slot,
         Runtime.RegionAttachment attachment,
-        Dictionary<string, SpineAnimationAttachmentDto> attachmentMap)
+        Dictionary<string, SpineAnimationAttachmentDto> attachmentMap,
+        Runtime.SkeletonClipping clipper)
     {
         if (attachment.RendererObject is not Runtime.AtlasRegion region ||
             !IsDrawableRegion(region))
@@ -345,7 +365,13 @@ internal sealed partial class V38SpineAnimationRuntimeAdapter :
             return null;
         }
 
-        var transform = CreateRegionTransform(slot, attachment, region);
+        var geometry = TryCreateRegionGeometry(slot, attachment, clipper);
+        if (geometry is null)
+        {
+            return null;
+        }
+
+        var bounds = geometry.Value.Bounds;
         var tint = CreateTint(slot, attachment);
         AddAttachment(attachmentMap, slot, attachment, region);
         return new SpineAnimationDrawCommandDto(
@@ -357,49 +383,70 @@ internal sealed partial class V38SpineAnimationRuntimeAdapter :
             region.y,
             region.width,
             region.height,
-            Math.Max(1d, attachment.Width),
-            Math.Max(1d, attachment.Height),
-            transform.M11,
-            transform.M12,
-            transform.M21,
-            transform.M22,
-            transform.M31,
-            transform.M32)
+            bounds.Width,
+            bounds.Height,
+            1d,
+            0d,
+            0d,
+            1d,
+            bounds.CenterX,
+            bounds.CenterY)
         {
             TintR = tint.R,
             TintG = tint.G,
             TintB = tint.B,
-            TintA = tint.A
+            TintA = tint.A,
+            MeshVertices = geometry.Value.Vertices,
+            MeshTriangles = geometry.Value.Triangles
         };
     }
 
-    private static SpineRuntimeMatrix CreateRegionTransform(
+    private static SpineRuntimeMeshGeometry? TryCreateRegionGeometry(
         Runtime.Slot slot,
         Runtime.RegionAttachment attachment,
-        Runtime.AtlasRegion region)
+        Runtime.SkeletonClipping clipper)
     {
-        var vertices = new float[8];
-        attachment.ComputeWorldVertices(slot.Bone, vertices, offset: 0);
-        var width = Math.Max(attachment.Width, 1f);
-        var height = Math.Max(attachment.Height, 1f);
-        var bl = new SpineRuntimePoint(vertices[0], vertices[1]);
-        var ul = new SpineRuntimePoint(vertices[2], vertices[3]);
-        var br = new SpineRuntimePoint(vertices[6], vertices[7]);
-        var xAxis = (br - bl) / width;
-        var yAxis = (ul - bl) / height;
-        if (region.rotate || region.degrees == 90)
+        var worldVertices = new float[8];
+        attachment.ComputeWorldVertices(slot.Bone, worldVertices, offset: 0);
+        var uvs = attachment.UVs;
+        if (uvs is not { Length: >= 8 })
         {
-            (xAxis, yAxis) = (yAxis, xAxis * -1f);
+            return null;
         }
 
-        var translation = bl + (xAxis * (width / 2f)) + (yAxis * (height / 2f));
-        return new SpineRuntimeMatrix(
-            xAxis.X,
-            xAxis.Y,
-            yAxis.X,
-            yAxis.Y,
-            translation.X,
-            translation.Y);
+        return clipper.IsClipping
+            ? CreateClippedGeometry(clipper, worldVertices, uvs, QuadTriangleIndices)
+            : CreateGeometry(worldVertices, uvs, QuadTriangleIndices);
+    }
+
+    private static SpineRuntimeMeshGeometry? CreateClippedGeometry(
+        Runtime.SkeletonClipping clipper,
+        float[] worldVertices,
+        float[] uvs,
+        int[] triangles)
+    {
+        clipper.ClipTriangles(
+            worldVertices,
+            worldVertices.Length,
+            triangles,
+            triangles.Length,
+            uvs);
+        if (clipper.ClippedVertices.Count < 6 ||
+            clipper.ClippedTriangles.Count < 3 ||
+            clipper.ClippedUVs.Count < clipper.ClippedVertices.Count)
+        {
+            return null;
+        }
+
+        var vertices = clipper.ClippedVertices.Items;
+        var clippedUvs = clipper.ClippedUVs.Items;
+        var clippedTriangles = clipper.ClippedTriangles.Items;
+        return CreateGeometry(
+            vertices,
+            clippedUvs,
+            clippedTriangles,
+            clipper.ClippedVertices.Count,
+            clipper.ClippedTriangles.Count);
     }
 
     private static void AddAttachment(
@@ -446,28 +493,5 @@ internal sealed partial class V38SpineAnimationRuntimeAdapter :
         {
         }
     }
-
-    private readonly record struct SpineRuntimePoint(float X, float Y)
-    {
-        public static SpineRuntimePoint operator +(SpineRuntimePoint left, SpineRuntimePoint right) =>
-            new(left.X + right.X, left.Y + right.Y);
-
-        public static SpineRuntimePoint operator -(SpineRuntimePoint left, SpineRuntimePoint right) =>
-            new(left.X - right.X, left.Y - right.Y);
-
-        public static SpineRuntimePoint operator *(SpineRuntimePoint point, float scalar) =>
-            new(point.X * scalar, point.Y * scalar);
-
-        public static SpineRuntimePoint operator /(SpineRuntimePoint point, float scalar) =>
-            new(point.X / scalar, point.Y / scalar);
-    }
-
-    private readonly record struct SpineRuntimeMatrix(
-        double M11,
-        double M12,
-        double M21,
-        double M22,
-        double M31,
-        double M32);
 
 }

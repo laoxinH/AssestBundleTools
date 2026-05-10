@@ -22,10 +22,21 @@ internal readonly record struct SpineAnimationPreviewViewport(
         var normalizedScale = double.IsFinite(scale) && scale > 0d
             ? scale
             : 1d;
+        return ScalePan(normalizedScale, normalizedScale);
+    }
+
+    public SpineAnimationPreviewViewport ScalePan(double scaleX, double scaleY)
+    {
+        var normalizedScaleX = double.IsFinite(scaleX) && scaleX > 0d
+            ? scaleX
+            : 1d;
+        var normalizedScaleY = double.IsFinite(scaleY) && scaleY > 0d
+            ? scaleY
+            : 1d;
         return new SpineAnimationPreviewViewport(
                 Zoom,
-                PanX * normalizedScale,
-                PanY * normalizedScale)
+                PanX * normalizedScaleX,
+                PanY * normalizedScaleY)
             .Normalize();
     }
 
@@ -89,6 +100,12 @@ internal sealed class SpineAnimationPreviewViewportState
 
     public bool Reset() =>
         SetCurrent(SpineAnimationPreviewViewport.Default);
+
+    public bool Restore(double? zoom, double? panX, double? panY) =>
+        SetCurrent(new SpineAnimationPreviewViewport(
+            zoom ?? SpineAnimationPreviewViewport.DefaultZoom,
+            panX ?? 0d,
+            panY ?? 0d));
 
     private bool SetCurrent(SpineAnimationPreviewViewport viewport)
     {

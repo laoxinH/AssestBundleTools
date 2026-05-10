@@ -84,6 +84,20 @@ public sealed class SpineAnimationFallbackRenderBackendTests
     }
 
     [Fact]
+    public void SwitchToFallback_ShouldReplayBackgroundMode()
+    {
+        var primary = new RecordingBackend();
+        var fallback = new RecordingBackend();
+        var backend = new SpineAnimationFallbackRenderBackend(primary, fallback, _ => { });
+
+        backend.SetBackgroundMode(InspectorPreviewImageBackgroundMode.Checkerboard);
+        backend.SwitchToFallback();
+
+        Assert.Equal(InspectorPreviewImageBackgroundMode.Checkerboard, primary.BackgroundMode);
+        Assert.Equal(InspectorPreviewImageBackgroundMode.Checkerboard, fallback.BackgroundMode);
+    }
+
+    [Fact]
     public void ReleaseResources_ShouldReleasePrimaryAndFallback()
     {
         var primary = new RecordingBackend();
@@ -128,6 +142,9 @@ public sealed class SpineAnimationFallbackRenderBackendTests
         public SpineAnimationPreviewViewport Viewport { get; private set; } =
             SpineAnimationPreviewViewport.Default;
 
+        public InspectorPreviewImageBackgroundMode BackgroundMode { get; private set; } =
+            InspectorPreviewImageBackgroundMode.Solid;
+
         public bool TexturePagesCleared { get; private set; }
 
         public int LoadTexturePagesCount { get; private set; }
@@ -143,6 +160,9 @@ public sealed class SpineAnimationFallbackRenderBackendTests
 
         public void SetViewport(SpineAnimationPreviewViewport viewport) =>
             Viewport = viewport.Normalize();
+
+        public void SetBackgroundMode(InspectorPreviewImageBackgroundMode backgroundMode) =>
+            BackgroundMode = backgroundMode;
 
         public void PrewarmFrames(IReadOnlyList<SpineAnimationFrameDto> frames) =>
             PrewarmedFrames = frames;

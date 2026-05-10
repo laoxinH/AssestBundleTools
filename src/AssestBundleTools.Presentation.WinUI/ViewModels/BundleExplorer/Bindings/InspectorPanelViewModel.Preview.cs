@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using Microsoft.UI.Xaml.Media;
 using Windows.Media.Core;
@@ -191,12 +192,14 @@ public sealed partial class InspectorPanelViewModel
     internal void ApplySpineAnimationPreview(
         SpineAnimationPreviewDto animationPreview,
         IReadOnlyDictionary<string, SpineAnimationPreviewTextureState> texturePreviews,
-        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null)
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
+        WorkspaceSpinePreviewStateDto? previewState = null)
     {
         Preview.ApplySpineAnimationPreview(
             animationPreview,
             texturePreviews,
-            previewInfoRows);
+            previewInfoRows,
+            previewState);
         RebuildInformationCards();
     }
 

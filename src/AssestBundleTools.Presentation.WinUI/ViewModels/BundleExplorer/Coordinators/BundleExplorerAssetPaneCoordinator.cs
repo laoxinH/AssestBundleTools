@@ -117,7 +117,9 @@ internal sealed class BundleExplorerAssetPaneCoordinator
         _requestWorkspaceBrowserStatePersistence();
     }
 
-    public async Task RefreshPrimaryPaneAsync(Action captureActiveTabState)
+    public async Task RefreshPrimaryPaneAsync(
+        Action captureActiveTabState,
+        bool preserveCurrentDocumentTab = false)
     {
         ArgumentNullException.ThrowIfNull(captureActiveTabState);
 
@@ -127,11 +129,17 @@ internal sealed class BundleExplorerAssetPaneCoordinator
         }
 
         captureActiveTabState();
-        await RefreshPaneAsync(_primaryPane, clearInspectorOnEmpty: true);
+        await RefreshPaneAsync(
+            _primaryPane,
+            clearInspectorOnEmpty: true,
+            preserveCurrentDocumentTab);
         captureActiveTabState();
     }
 
-    private async Task RefreshPaneAsync(AssetPaneViewModel pane, bool clearInspectorOnEmpty)
+    private async Task RefreshPaneAsync(
+        AssetPaneViewModel pane,
+        bool clearInspectorOnEmpty,
+        bool preserveCurrentDocumentTab = false)
     {
         if (_workspaceShell.WorkspaceSummary is null)
         {
@@ -155,7 +163,7 @@ internal sealed class BundleExplorerAssetPaneCoordinator
             clearInspectorOnEmpty,
             preferredSelectedAssetId);
 
-        if (ReferenceEquals(pane, _primaryPane))
+        if (ReferenceEquals(pane, _primaryPane) && !preserveCurrentDocumentTab)
         {
             await _synchronizeInspectorWithActiveBundleTabAsync(false);
         }

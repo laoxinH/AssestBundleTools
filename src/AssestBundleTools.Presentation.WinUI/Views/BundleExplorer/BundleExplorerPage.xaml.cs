@@ -162,6 +162,11 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         await ViewModel.RefreshPrimaryPaneAsync();
     }
 
+    private async void OnPrimaryPaneViewModeChanged(object sender, EventArgs e)
+    {
+        await ViewModel.RefreshPrimaryPaneAsync(preserveCurrentDocumentTab: true);
+    }
+
     private async void OnBundleTabViewSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (BundleTabView.SelectedItem is BundleDocumentTabViewModel bundleTab)

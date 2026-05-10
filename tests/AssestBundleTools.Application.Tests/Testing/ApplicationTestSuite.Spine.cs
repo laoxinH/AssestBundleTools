@@ -16,6 +16,10 @@ internal static partial class ApplicationTestSuite
             LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldReportMissingAtlasAndTextureDiagnostics);
         await RunTestAsync(
             failures,
+            nameof(LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldSplitDuplicateSpineResourcesUsingDependencyLinks),
+            LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldSplitDuplicateSpineResourcesUsingDependencyLinks);
+        await RunTestAsync(
+            failures,
             nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseAtlasPagesAndRegions_FromPreviewPipeline),
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseAtlasPagesAndRegions_FromPreviewPipeline);
         await RunTestAsync(

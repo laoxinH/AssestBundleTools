@@ -59,12 +59,23 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
             return Result<SpineAssetGroupDetailsDto>.Cancelled();
         }
 
+        var assetDetailsByAssetKey = SpineAssetGroupDetectionDetailsCollector.Collect(
+            _workspaceSessionRegistry,
+            query.WorkspaceId,
+            assetLists.Value,
+            cancellationToken);
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Result<SpineAssetGroupDetailsDto>.Cancelled();
+        }
+
         var groupList = SpineAssetGroupDetector.CreateResult(
             query.WorkspaceId,
             query.BundleId,
             targetBundleDisplayName: query.BundleId.Value,
             searchKeyword: null,
-            assetLists.Value);
+            assetLists.Value,
+            assetDetailsByAssetKey);
         var group = groupList.Items.FirstOrDefault(item =>
             string.Equals(item.GroupId, query.GroupId.Trim(), StringComparison.Ordinal));
         if (group is null)

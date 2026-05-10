@@ -12,8 +12,10 @@ internal sealed class SpineAnimationFallbackRenderBackend : ISpineAnimationPrevi
     private readonly ISpineAnimationPreviewRenderBackend _fallback;
     private readonly Action<bool> _setPrimaryActive;
     private IReadOnlyDictionary<string, SpineAnimationTexturePageContent> _texturePageContents = EmptyTexturePages;
+    private IReadOnlyList<SpineAnimationFrameDto> _prewarmFrames = Array.Empty<SpineAnimationFrameDto>();
     private SpineAnimationFrameDto? _currentFrame;
     private SpineAnimationPreviewViewport _viewport = SpineAnimationPreviewViewport.Default;
+    private InspectorPreviewImageBackgroundMode _backgroundMode = InspectorPreviewImageBackgroundMode.Solid;
     private bool _isFallbackActive;
 
     public SpineAnimationFallbackRenderBackend(
@@ -39,10 +41,17 @@ internal sealed class SpineAnimationFallbackRenderBackend : ISpineAnimationPrevi
         ActiveBackend.SetViewport(_viewport);
     }
 
+    public void SetBackgroundMode(InspectorPreviewImageBackgroundMode backgroundMode)
+    {
+        _backgroundMode = backgroundMode;
+        ActiveBackend.SetBackgroundMode(backgroundMode);
+    }
+
     public void PrewarmFrames(IReadOnlyList<SpineAnimationFrameDto> frames)
     {
         ArgumentNullException.ThrowIfNull(frames);
 
+        _prewarmFrames = frames;
         ActiveBackend.PrewarmFrames(frames);
     }
 
@@ -71,7 +80,9 @@ internal sealed class SpineAnimationFallbackRenderBackend : ISpineAnimationPrevi
     public void ReleaseResources()
     {
         _texturePageContents = EmptyTexturePages;
+        _prewarmFrames = Array.Empty<SpineAnimationFrameDto>();
         _currentFrame = null;
+        _backgroundMode = InspectorPreviewImageBackgroundMode.Solid;
         _primary.ReleaseResources();
         _fallback.ReleaseResources();
     }
@@ -99,6 +110,8 @@ internal sealed class SpineAnimationFallbackRenderBackend : ISpineAnimationPrevi
 
         _fallback.SetCurrentFrame(_currentFrame);
         _fallback.SetViewport(_viewport);
+        _fallback.SetBackgroundMode(_backgroundMode);
+        _fallback.PrewarmFrames(_prewarmFrames);
         _fallback.ResetFrameCache();
         _fallback.Invalidate();
     }

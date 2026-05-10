@@ -176,7 +176,8 @@ internal sealed class AssetEditorWindowStateStore
             PreviewImageZoom: assetTab.PreviewImageZoom,
             PreviewImagePanX: assetTab.PreviewImagePanX,
             PreviewImagePanY: assetTab.PreviewImagePanY,
-            EditDraftReference: assetTab.EditDraftReference);
+            EditDraftReference: assetTab.EditDraftReference,
+            InspectorScrollState: assetTab.InspectorScrollState);
     }
 
     private static WorkspaceAssetEditorWindowSpineGroupTabDto CreateSpineGroupTabMetadata(
@@ -186,7 +187,9 @@ internal sealed class AssetEditorWindowStateStore
             BundleId: spineGroupTab.BundleId,
             GroupId: spineGroupTab.GroupId,
             DisplayName: spineGroupTab.DisplayName,
-            GroupKey: spineGroupTab.GroupKey);
+            GroupKey: spineGroupTab.GroupKey,
+            PreviewState: spineGroupTab.PreviewState,
+            InspectorScrollState: spineGroupTab.InspectorScrollState);
     }
 }
 
@@ -266,7 +269,8 @@ internal sealed record AssetEditorWindowAssetTabSnapshot(
     double? PreviewImageZoom = null,
     double? PreviewImagePanX = null,
     double? PreviewImagePanY = null,
-    WorkspaceAssetEditDraftReferenceDto? EditDraftReference = null)
+    WorkspaceAssetEditDraftReferenceDto? EditDraftReference = null,
+    WorkspaceInspectorScrollStateDto? InspectorScrollState = null)
 {
     public static AssetEditorWindowAssetTabSnapshot FromAssetTab(AssetDocumentTabViewModel assetTab)
     {
@@ -291,7 +295,8 @@ internal sealed record AssetEditorWindowAssetTabSnapshot(
             PreviewImageZoom: imageViewState.Zoom,
             PreviewImagePanX: imageViewState.PanX,
             PreviewImagePanY: imageViewState.PanY,
-            EditDraftReference: AssetDocumentEditDraftReferenceMapper.ToDto(assetTab.EditDraftReference));
+            EditDraftReference: AssetDocumentEditDraftReferenceMapper.ToDto(assetTab.EditDraftReference),
+            InspectorScrollState: assetTab.Inspector.CaptureInspectorScrollState());
     }
 }
 
@@ -299,7 +304,9 @@ internal sealed record AssetEditorWindowSpineGroupTabSnapshot(
     string BundleId,
     string GroupId,
     string DisplayName,
-    string? GroupKey)
+    string? GroupKey,
+    WorkspaceSpinePreviewStateDto? PreviewState = null,
+    WorkspaceInspectorScrollStateDto? InspectorScrollState = null)
 {
     public static AssetEditorWindowSpineGroupTabSnapshot FromSpineGroupTab(
         SpineAssetGroupDocumentTabViewModel spineGroupTab)
@@ -310,6 +317,8 @@ internal sealed record AssetEditorWindowSpineGroupTabSnapshot(
             spineGroupTab.BundleId.Value,
             spineGroupTab.GroupId,
             spineGroupTab.DisplayName,
-            spineGroupTab.Item.GroupKey);
+            spineGroupTab.Item.GroupKey,
+            spineGroupTab.CapturePreviewState(),
+            spineGroupTab.Inspector.CaptureInspectorScrollState());
     }
 }

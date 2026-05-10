@@ -72,12 +72,14 @@
                 </Grid.RowDefinitions>
 
                 <ScrollViewer
+                    x:Name="SectionSelectorScrollViewer"
                     Grid.Row="0"
                     Margin="8,0,8,0"
                     HorizontalScrollBarVisibility="Auto"
                     HorizontalScrollMode="Enabled"
                     VerticalScrollBarVisibility="Disabled"
                     VerticalScrollMode="Disabled"
+                    ViewChanged="OnSectionSelectorScrollViewerViewChanged"
                     ZoomMode="Disabled">
                     <Border
                         Padding="3"
@@ -120,7 +122,10 @@
                     Grid.Row="1"
                     MinHeight="0">
                     <ScrollViewer
+                        x:Name="DetailsSectionScrollViewer"
                         MinHeight="0"
+                        Tag="0"
+                        ViewChanged="OnSectionScrollViewerViewChanged"
                         Visibility="{x:Bind ViewModel.DetailsSectionVisibility, Mode=OneWay}">
                         <StackPanel Padding="8" Spacing="8">
                             <controls:InspectorPreviewSurfaceView
@@ -156,7 +161,10 @@
                     </ScrollViewer>
 
                     <ScrollViewer
+                        x:Name="DependenciesSectionScrollViewer"
                         MinHeight="0"
+                        Tag="1"
+                        ViewChanged="OnSectionScrollViewerViewChanged"
                         Visibility="{x:Bind ViewModel.DependenciesSectionVisibility, Mode=OneWay}">
                         <StackPanel Padding="8" Spacing="8">
                                     <Border
@@ -398,7 +406,10 @@
                     </ScrollViewer>
 
                     <ScrollViewer
+                        x:Name="ReplacementSectionScrollViewer"
                         MinHeight="0"
+                        Tag="2"
+                        ViewChanged="OnSectionScrollViewerViewChanged"
                         Visibility="{x:Bind ViewModel.ReplacementSectionVisibility, Mode=OneWay}">
                         <StackPanel Padding="8" Spacing="8">
                                     <Border
@@ -488,7 +499,10 @@
                     </ScrollViewer>
 
                     <ScrollViewer
+                        x:Name="ChangesSectionScrollViewer"
                         MinHeight="0"
+                        Tag="3"
+                        ViewChanged="OnSectionScrollViewerViewChanged"
                         Visibility="{x:Bind ViewModel.ChangesSectionVisibility, Mode=OneWay}">
                         <StackPanel Padding="8" Spacing="8">
                                     <Border
@@ -534,19 +548,23 @@
                             <Button
                                 x:Name="ExtractButton"
                                 Click="OnExtractButtonClick"
-                                IsEnabled="{x:Bind ViewModel.CanExtract, Mode=OneWay}" />
+                                IsEnabled="{x:Bind ViewModel.CanExtract, Mode=OneWay}"
+                                Style="{StaticResource WorkspaceOperationButtonStyle}" />
                             <Button
                                 x:Name="SelectReplacementButton"
                                 Click="OnSelectReplacementButtonClick"
-                                IsEnabled="{x:Bind ViewModel.CanSelectReplacementSource, Mode=OneWay}" />
+                                IsEnabled="{x:Bind ViewModel.CanSelectReplacementSource, Mode=OneWay}"
+                                Style="{StaticResource WorkspaceOperationButtonStyle}" />
                             <Button
                                 x:Name="ApplyReplacementButton"
                                 Click="OnApplyReplacementButtonClick"
-                                IsEnabled="{x:Bind ViewModel.CanApplyReplacement, Mode=OneWay}" />
+                                IsEnabled="{x:Bind ViewModel.CanApplyReplacement, Mode=OneWay}"
+                                Style="{StaticResource WorkspaceOperationButtonStyle}" />
                             <Button
                                 x:Name="UndoReplacementButton"
                                 Click="OnUndoReplacementButtonClick"
-                                IsEnabled="{x:Bind ViewModel.CanUndoReplacement, Mode=OneWay}" />
+                                IsEnabled="{x:Bind ViewModel.CanUndoReplacement, Mode=OneWay}"
+                                Style="{StaticResource WorkspaceOperationButtonStyle}" />
                         </StackPanel>
                     </Grid>
                 </Border>

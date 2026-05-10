@@ -6,7 +6,8 @@ internal static class SpineAnimationClipSpaceProjector
         IReadOnlyList<SpineAnimationVertexBatch> batches,
         float viewportWidth,
         float viewportHeight,
-        SpineAnimationPreviewViewport? viewport = null)
+        SpineAnimationPreviewViewport? viewport = null,
+        SpineAnimationAutoFitBounds autoFitBounds = default)
     {
         ArgumentNullException.ThrowIfNull(batches);
 
@@ -14,7 +15,8 @@ internal static class SpineAnimationClipSpaceProjector
             batches,
             viewportWidth,
             viewportHeight,
-            viewport ?? SpineAnimationPreviewViewport.Default);
+            viewport ?? SpineAnimationPreviewViewport.Default,
+            autoFitBounds);
         if (!transform.IsValid)
         {
             return Array.Empty<SpineAnimationClipSpaceBatch>();
@@ -47,6 +49,7 @@ internal readonly record struct SpineAnimationClipSpaceTransform(
     SpineAnimationPreviewViewport Viewport)
 {
     private const double MinExtent = 0.001d;
+    private const double ViewportFitRatio = 0.72d;
 
     public bool IsValid => Scale > 0d && ViewportWidth > 1f && ViewportHeight > 1f;
 
@@ -54,7 +57,8 @@ internal readonly record struct SpineAnimationClipSpaceTransform(
         IReadOnlyList<SpineAnimationVertexBatch> batches,
         float viewportWidth,
         float viewportHeight,
-        SpineAnimationPreviewViewport viewport)
+        SpineAnimationPreviewViewport viewport,
+        SpineAnimationAutoFitBounds autoFitBounds = default)
     {
         ArgumentNullException.ThrowIfNull(batches);
 
@@ -63,7 +67,9 @@ internal readonly record struct SpineAnimationClipSpaceTransform(
             return default;
         }
 
-        var bounds = ResolveBounds(batches);
+        var bounds = ResolveBounds(autoFitBounds.IsValid
+            ? autoFitBounds
+            : SpineAnimationAutoFitBoundsResolver.Resolve(batches));
         var scale = ResolveScale(bounds, viewportWidth, viewportHeight);
         return new SpineAnimationClipSpaceTransform(
             bounds.CenterX,
@@ -111,31 +117,20 @@ internal readonly record struct SpineAnimationClipSpaceTransform(
         double pan) =>
         center + ((pixel - center) * zoom) + pan;
 
-    private static SpineAnimationVertexBounds ResolveBounds(IReadOnlyList<SpineAnimationVertexBatch> batches)
+    private static SpineAnimationVertexBounds ResolveBounds(SpineAnimationAutoFitBounds bounds)
     {
-        var minX = double.PositiveInfinity;
-        var minY = double.PositiveInfinity;
-        var maxX = double.NegativeInfinity;
-        var maxY = double.NegativeInfinity;
-        foreach (var vertex in batches.SelectMany(static batch => batch.Vertices))
+        if (!bounds.IsValid)
         {
-            minX = Math.Min(minX, vertex.X);
-            minY = Math.Min(minY, vertex.Y);
-            maxX = Math.Max(maxX, vertex.X);
-            maxY = Math.Max(maxY, vertex.Y);
-        }
-
-        if (!double.IsFinite(minX) || !double.IsFinite(minY) ||
-            !double.IsFinite(maxX) || !double.IsFinite(maxY))
-        {
-            return new SpineAnimationVertexBounds(0d, 0d, 1d, 1d);
+            return new SpineAnimationVertexBounds(0d, 0d, 1d, 1d, 1d, 1d);
         }
 
         return new SpineAnimationVertexBounds(
-            (minX + maxX) / 2d,
-            (minY + maxY) / 2d,
-            Math.Max(maxX - minX, 1d),
-            Math.Max(maxY - minY, 1d));
+            bounds.CenterX,
+            bounds.CenterY,
+            Math.Max(bounds.Width, 1d),
+            Math.Max(bounds.Height, 1d),
+            Math.Max(bounds.Width, 1d),
+            Math.Max(bounds.Height, 1d));
     }
 
     private static double ResolveScale(
@@ -143,15 +138,18 @@ internal readonly record struct SpineAnimationClipSpaceTransform(
         float viewportWidth,
         float viewportHeight)
     {
-        var extent = Math.Max(Math.Max(bounds.Width, bounds.Height), MinExtent);
-        return (Math.Min(viewportWidth, viewportHeight) * 0.72d) / extent;
+        var widthScale = viewportWidth / Math.Max(bounds.FitWidth, MinExtent);
+        var heightScale = viewportHeight / Math.Max(bounds.FitHeight, MinExtent);
+        return Math.Min(widthScale, heightScale) * ViewportFitRatio;
     }
 
     private readonly record struct SpineAnimationVertexBounds(
         double CenterX,
         double CenterY,
         double Width,
-        double Height);
+        double Height,
+        double FitWidth,
+        double FitHeight);
 }
 
 internal sealed record SpineAnimationClipSpaceBatch(

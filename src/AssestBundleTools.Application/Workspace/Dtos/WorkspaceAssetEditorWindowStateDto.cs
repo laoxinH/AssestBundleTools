@@ -58,7 +58,8 @@ public sealed record WorkspaceAssetEditorWindowAssetTabDto(
     double? PreviewImageZoom = null,
     double? PreviewImagePanX = null,
     double? PreviewImagePanY = null,
-    WorkspaceAssetEditDraftReferenceDto? EditDraftReference = null);
+    WorkspaceAssetEditDraftReferenceDto? EditDraftReference = null,
+    WorkspaceInspectorScrollStateDto? InspectorScrollState = null);
 
 /// <summary>
 /// 表示独立资源编辑窗口中的单个 Spine 资源组文档标签恢复状态。
@@ -67,4 +68,6 @@ public sealed record WorkspaceAssetEditorWindowSpineGroupTabDto(
     string BundleId,
     string GroupId,
     string DisplayName,
-    string? GroupKey = null);
+    string? GroupKey = null,
+    WorkspaceSpinePreviewStateDto? PreviewState = null,
+    WorkspaceInspectorScrollStateDto? InspectorScrollState = null);

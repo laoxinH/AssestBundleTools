@@ -149,14 +149,26 @@ public sealed class AssetEditorWindowStateStoreTests
                                 "draft-1",
                                 "text",
                                 "source-v1",
-                                "Text draft"))),
+                                "Text draft"),
+                            InspectorScrollState: new WorkspaceInspectorScrollStateDto(
+                                DetailsSection: new WorkspaceInspectorSectionScrollPositionDto(0d, 136d)))),
                     new AssetEditorWindowDocumentTabSnapshot(
                         WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
                         SpineGroupTab: new AssetEditorWindowSpineGroupTabSnapshot(
                             "bundle-a",
                             "spine-group:bundle-a:hero",
                             "hero",
-                            "hero"))
+                            "hero",
+                            new WorkspaceSpinePreviewStateDto(
+                                SelectedAnimationName: "Idle",
+                                SelectedSkinName: "default",
+                                PlaybackSpeed: 1.5d,
+                                PlaybackTime: 2.25d,
+                                ViewportZoom: 2d,
+                                ViewportPanX: 18d,
+                                ViewportPanY: -9d),
+                            InspectorScrollState: new WorkspaceInspectorScrollStateDto(
+                                DetailsSection: new WorkspaceInspectorSectionScrollPositionDto(0d, 212d))))
                 },
                 new[]
                 {
@@ -180,7 +192,10 @@ public sealed class AssetEditorWindowStateStoreTests
                             "draft-1",
                             "text",
                             "source-v1",
-                            "Text draft"))
+                            "Text draft"),
+                        InspectorScrollState: new WorkspaceInspectorScrollStateDto(
+                            DetailsSection: new WorkspaceInspectorSectionScrollPositionDto(0d, 136d),
+                            SectionSelector: new WorkspaceInspectorSectionScrollPositionDto(14d, 0d)))
                 },
                 WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
                 "bundle-a",
@@ -222,6 +237,20 @@ public sealed class AssetEditorWindowStateStoreTests
         Assert.Equal("text", assetTab.EditDraftReference?.DraftMode);
         Assert.Equal("source-v1", assetTab.EditDraftReference?.SourceFingerprint);
         Assert.Equal("Text draft", assetTab.EditDraftReference?.SourceDescription);
+        Assert.Equal(14d, assetTab.InspectorScrollState?.SectionSelector?.HorizontalOffset);
+        Assert.Equal(0d, assetTab.InspectorScrollState?.SectionSelector?.VerticalOffset);
+        Assert.Equal(0d, assetTab.InspectorScrollState?.DetailsSection?.HorizontalOffset);
+        Assert.Equal(136d, assetTab.InspectorScrollState?.DetailsSection?.VerticalOffset);
+        var spineDocumentTab = documentTabs[1].SpineGroupTab;
+        Assert.Equal("Idle", spineDocumentTab?.PreviewState?.SelectedAnimationName);
+        Assert.Equal("default", spineDocumentTab?.PreviewState?.SelectedSkinName);
+        Assert.Equal(1.5d, spineDocumentTab?.PreviewState?.PlaybackSpeed);
+        Assert.Equal(2.25d, spineDocumentTab?.PreviewState?.PlaybackTime);
+        Assert.Equal(2d, spineDocumentTab?.PreviewState?.ViewportZoom);
+        Assert.Equal(18d, spineDocumentTab?.PreviewState?.ViewportPanX);
+        Assert.Equal(-9d, spineDocumentTab?.PreviewState?.ViewportPanY);
+        Assert.Equal(0d, spineDocumentTab?.InspectorScrollState?.DetailsSection?.HorizontalOffset);
+        Assert.Equal(212d, spineDocumentTab?.InspectorScrollState?.DetailsSection?.VerticalOffset);
     }
 
     [Fact]
@@ -240,7 +269,8 @@ public sealed class AssetEditorWindowStateStoreTests
                             "bundle-a",
                             "spine-group:bundle-a:hero",
                             "hero",
-                            "hero"))
+                            "hero",
+                            new WorkspaceSpinePreviewStateDto(ViewportZoom: 1.75d)))
                 },
                 Array.Empty<AssetEditorWindowAssetTabSnapshot>(),
                 WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
@@ -258,6 +288,7 @@ public sealed class AssetEditorWindowStateStoreTests
         Assert.Equal("spine-group:bundle-a:hero", window.ActiveSpineGroupId);
         Assert.Equal("bundle-a", documentTab.SpineGroupTab?.BundleId);
         Assert.Equal("spine-group:bundle-a:hero", documentTab.SpineGroupTab?.GroupId);
+        Assert.Equal(1.75d, documentTab.SpineGroupTab?.PreviewState?.ViewportZoom);
     }
 
     [Fact]

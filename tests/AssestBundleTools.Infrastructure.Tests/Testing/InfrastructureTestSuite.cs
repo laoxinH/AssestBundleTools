@@ -106,6 +106,10 @@ internal static class InfrastructureTestSuite
             SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV38RuntimeDrawCommands_FromJsonSkeleton);
         await RunTestAsync(
             failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldClipV38RegionDrawCommands_FromJsonSkeleton),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldClipV38RegionDrawCommands_FromJsonSkeleton);
+        await RunTestAsync(
+            failures,
             nameof(SpineAnimationRuntimePreviewServiceTests.TryCreateSessionAsync_ShouldSeekV38RuntimeFrameWithoutSampledCache),
             SpineAnimationRuntimePreviewServiceTests.TryCreateSessionAsync_ShouldSeekV38RuntimeFrameWithoutSampledCache);
         await RunTestAsync(

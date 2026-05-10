@@ -43,6 +43,72 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
     }
 
     [Fact]
+    public async Task HandlePrimaryPaneSelectionChangedAsync_ShouldShowLoadingWhileSpineDetailsArePending()
+    {
+        var context = CreateContext();
+        var entry = CreateSpineGroupEntry("hero", "Hero");
+        var loadCompletion = new TaskCompletionSource<SpineAssetGroupDetailsLoadResult?>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var loader = new TestSpineAssetGroupDetailsLoader
+        {
+            LoadHandler = _ => loadCompletion.Task
+        };
+        var coordinator = CreateCoordinator(context, loader);
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.SpineGroups;
+        context.PrimaryPane.ReplaceSpineGroups("ui.ab", [entry], "empty");
+        context.PrimaryPane.UpdateSpineGroupSelection(entry);
+
+        var loadTask = coordinator.HandlePrimaryPaneSelectionChangedAsync(
+            isSynchronizingPrimaryPaneState: false,
+            captureActiveTabState: static () => { });
+
+        var groupTab = Assert.Single(context.BundleTab.SpineGroupTabs);
+        Assert.False(loadTask.IsCompleted);
+        Assert.True(groupTab.Inspector.Preview.IsPreviewLoading);
+        Assert.Equal(ResourceKeys.InspectorPreviewLoadingText, groupTab.Inspector.Preview.PreviewStatusText);
+        Assert.Equal(Visibility.Visible, groupTab.Inspector.Preview.PreviewLoadingVisibility);
+        Assert.Equal(Visibility.Collapsed, groupTab.Inspector.Preview.PreviewMessageVisibility);
+
+        loadCompletion.SetResult(new SpineAssetGroupDetailsLoadResult(
+            new SpineAssetGroupDetailsDto(groupTab.Item, [], [], groupTab.Item.Diagnostics),
+            TexturePreview: null));
+        await loadTask;
+
+        Assert.False(groupTab.Inspector.Preview.IsPreviewLoading);
+    }
+
+    [Fact]
+    public async Task HandlePrimaryPaneSelectionChangedAsync_ShouldRestoreSummaryPreview_WhenSpineDetailsLoadFails()
+    {
+        var context = CreateContext();
+        var entry = CreateSpineGroupEntry("hero", "Hero");
+        var loadCompletion = new TaskCompletionSource<SpineAssetGroupDetailsLoadResult?>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var loader = new TestSpineAssetGroupDetailsLoader
+        {
+            LoadHandler = _ => loadCompletion.Task
+        };
+        var coordinator = CreateCoordinator(context, loader);
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.SpineGroups;
+        context.PrimaryPane.ReplaceSpineGroups("ui.ab", [entry], "empty");
+        context.PrimaryPane.UpdateSpineGroupSelection(entry);
+
+        var loadTask = coordinator.HandlePrimaryPaneSelectionChangedAsync(
+            isSynchronizingPrimaryPaneState: false,
+            captureActiveTabState: static () => { });
+        var groupTab = Assert.Single(context.BundleTab.SpineGroupTabs);
+
+        loadCompletion.SetResult(null);
+        await loadTask;
+
+        Assert.False(groupTab.Inspector.Preview.IsPreviewLoading);
+        Assert.Equal(Visibility.Visible, groupTab.Inspector.Preview.PreviewSummaryVisibility);
+        Assert.Equal(
+            ResourceKeys.InspectorSpineGroupSummaryFormat + ":1|1|1|0|0|0",
+            groupTab.Inspector.Preview.PreviewText);
+    }
+
+    [Fact]
     public async Task ActivateSpineGroupDocumentTabAsync_ShouldSwitchInspectorWithoutRemovingAssetTabs()
     {
         var context = CreateContext();

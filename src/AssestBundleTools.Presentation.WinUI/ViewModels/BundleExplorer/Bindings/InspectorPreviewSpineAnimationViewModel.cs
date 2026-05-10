@@ -1,6 +1,6 @@
-using System.Collections.ObjectModel;
 using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using Microsoft.UI.Xaml;
 
@@ -23,12 +23,35 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
     private int _cachedFrameIndex;
     private SpineAnimationFrameDto? _currentFrame;
     private bool _isShowingSetupPose;
+    private IReadOnlyList<string> _animationNames = Array.Empty<string>();
+    private IReadOnlyList<string> _skinNames = Array.Empty<string>();
+    private InspectorPreviewImageBackgroundMode _backgroundMode = InspectorPreviewImageBackgroundMode.Solid;
 
-    public ObservableCollection<string> AnimationNames { get; } = [];
+    public IReadOnlyList<string> AnimationNames
+    {
+        get => _animationNames;
+        private set
+        {
+            if (SetProperty(ref _animationNames, value))
+            {
+                OnPropertyChanged(nameof(SelectedAnimationName));
+            }
+        }
+    }
 
-    public ObservableCollection<string> SkinNames { get; } = [];
+    public IReadOnlyList<string> SkinNames
+    {
+        get => _skinNames;
+        private set
+        {
+            if (SetProperty(ref _skinNames, value))
+            {
+                OnPropertyChanged(nameof(IsSkinSelectionEnabled));
+            }
+        }
+    }
 
-    public ObservableCollection<double> PlaybackSpeedOptions { get; } = [0.25d, 0.5d, 1d, 1.5d, 2d, 3d];
+    public IReadOnlyList<double> PlaybackSpeedOptions { get; } = [0.25d, 0.5d, 1d, 1.5d, 2d, 3d];
 
     public SpineAnimationPreviewDto? Preview
     {
@@ -47,7 +70,12 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         get => _selectedAnimationName;
         set
         {
-            var update = ApplySelectedAnimationName(value, resetPlayback: true);
+            if (!TryCoerceSelectorName(AnimationNames, value, out var selectedAnimationName))
+            {
+                return;
+            }
+
+            var update = ApplySelectedAnimationName(selectedAnimationName, resetPlayback: true);
             if (update.AnimationNameChanged)
             {
                 NotifyAnimationSelectionChanged(update);
@@ -60,12 +88,13 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         get => _selectedSkinName;
         set
         {
-            if (EqualityComparer<string?>.Default.Equals(_selectedSkinName, value))
+            if (!TryCoerceSelectorName(SkinNames, value, out var selectedSkinName) ||
+                EqualityComparer<string?>.Default.Equals(_selectedSkinName, selectedSkinName))
             {
                 return;
             }
 
-            _selectedSkinName = value;
+            _selectedSkinName = selectedSkinName;
             _cachedFrameIndex = 0;
             _isShowingSetupPose = false;
             RefreshAnimationNamesForActiveSkin();
@@ -93,6 +122,8 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
             {
                 OnPropertyChanged(nameof(CurrentFrame));
             }
+
+            RaisePreviewStateChanged();
         }
     }
 
@@ -135,6 +166,8 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         {
             OnPropertyChanged(nameof(CurrentFrame));
         }
+
+        RaisePreviewStateChanged();
     }
 
     public SpineAnimationClipDto? SelectedAnimation =>
@@ -161,6 +194,11 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
             {
                 OnPropertyChanged(nameof(CurrentFrame));
             }
+
+            if (playbackTimeChanged)
+            {
+                RaisePreviewStateChanged();
+            }
         }
     }
 
@@ -175,7 +213,13 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
     public double PlaybackSpeed
     {
         get => _playbackSpeed;
-        set => SetProperty(ref _playbackSpeed, Math.Clamp(value, 0.1d, 3d));
+        set
+        {
+            if (SetProperty(ref _playbackSpeed, Math.Clamp(value, 0.1d, 3d)))
+            {
+                RaisePreviewStateChanged();
+            }
+        }
     }
 
     public SpineAnimationFrameDto? CurrentFrame
@@ -192,6 +236,7 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
             if (SetProperty(ref _isPlaying, value))
             {
                 OnPropertyChanged(nameof(PlayPauseGlyph));
+                RaisePreviewStateChanged();
             }
         }
     }
@@ -218,35 +263,31 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
 
     internal void Apply(
         SpineAnimationPreviewDto preview,
-        IReadOnlyDictionary<string, SpineAnimationPreviewTextureState> texturePreviews)
+        IReadOnlyDictionary<string, SpineAnimationPreviewTextureState> texturePreviews,
+        WorkspaceSpinePreviewStateDto? previewState = null)
     {
         ArgumentNullException.ThrowIfNull(preview);
         ArgumentNullException.ThrowIfNull(texturePreviews);
 
+        using var _ = SuppressPreviewStateChanged();
         Clear();
         Preview = preview;
         TexturePageContents = CreateTexturePageContents(texturePreviews);
-        foreach (var skinName in ResolveSkinNames(preview))
-        {
-            SkinNames.Add(skinName);
-        }
-
-        if (SkinNames.Count == 0)
-        {
-            SkinNames.Add("default");
-        }
-
+        var skinNames = ResolveSkinNames(preview);
+        SkinNames = skinNames.Count > 0 ? skinNames : ["default"];
         SelectedSkinName = ResolveInitialSkinName(preview) ?? SkinNames.FirstOrDefault();
         SelectedAnimationName ??= AnimationNames.FirstOrDefault();
         _isShowingSetupPose = false;
         IsPlaying = true;
+        RestorePreviewState(previewState);
         NotifyStateChanged();
     }
 
     internal void Clear()
     {
-        AnimationNames.Clear();
-        SkinNames.Clear();
+        using var _ = SuppressPreviewStateChanged();
+        AnimationNames = Array.Empty<string>();
+        SkinNames = Array.Empty<string>();
         Preview = null;
         TexturePageContents = new Dictionary<string, SpineAnimationTexturePageContent>(StringComparer.Ordinal);
         SelectedAnimationName = null;
@@ -269,7 +310,12 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
 
         if (!IsPlaying)
         {
-            _isShowingSetupPose = false;
+            if (_isShowingSetupPose)
+            {
+                _isShowingSetupPose = false;
+                OnPropertyChanged(nameof(IsShowingSetupPose));
+            }
+
             SyncCurrentFrame();
         }
 
@@ -278,17 +324,25 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
 
     public void Restart()
     {
-        _isShowingSetupPose = false;
+        if (_isShowingSetupPose)
+        {
+            _isShowingSetupPose = false;
+            OnPropertyChanged(nameof(IsShowingSetupPose));
+        }
+
         PlaybackTime = 0d;
+        RaisePreviewStateChanged();
     }
 
     public void ShowSetupPose()
     {
         _isShowingSetupPose = true;
+        OnPropertyChanged(nameof(IsShowingSetupPose));
         IsPlaying = false;
         SetPlaybackTimeCore(0d, notify: true);
         SynchronizeDisplayPlaybackTime(force: true);
         SyncCurrentFrame();
+        RaisePreviewStateChanged();
     }
 
     public void StepPreviousFrame()
@@ -366,6 +420,8 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         {
             OnPropertyChanged(nameof(CurrentFrame));
         }
+
+        RaisePreviewStateChanged();
     }
 
     private void StepRuntimeFrame(int direction)
@@ -390,6 +446,7 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
 
         SetPlaybackTimeCore(nextTime, notify: true);
         SynchronizeDisplayPlaybackTime(force: true);
+        RaisePreviewStateChanged();
     }
 
     private bool SetPlaybackTimeCore(double value, bool notify)
@@ -441,6 +498,23 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel : Observable
         var time = TimeSpan.FromSeconds(Math.Max(0d, seconds));
         var format = time.TotalHours >= 1d ? @"h\:mm\:ss\.ff" : @"m\:ss\.ff";
         return time.ToString(format, CultureInfo.InvariantCulture);
+    }
+
+    private static bool TryCoerceSelectorName(
+        IReadOnlyList<string> availableNames,
+        string? requestedName,
+        out string? selectedName)
+    {
+        if (string.IsNullOrWhiteSpace(requestedName))
+        {
+            selectedName = null;
+            return availableNames.Count == 0;
+        }
+
+        var trimmedName = requestedName.Trim();
+        selectedName = availableNames.FirstOrDefault(name =>
+            string.Equals(name, trimmedName, StringComparison.Ordinal));
+        return selectedName is not null;
     }
 
     private bool SyncCurrentFrame(bool notify = true)

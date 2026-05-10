@@ -56,6 +56,223 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
             xaml);
     }
 
+    [Fact]
+    public void SpinePreviewSurface_ShouldSuspendPlaybackClockWhileSliderIsScrubbed()
+    {
+        var code = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorSpineAnimationPreviewSurfaceView.xaml.cs"));
+        var runtimeCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorSpineAnimationPreviewSurfaceView.Runtime.cs"));
+        var sliderCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorSpineAnimationPreviewSurfaceView.PlaybackSlider.cs"));
+
+        Assert.Contains("RegisterPlaybackSliderInputHandlers();", code);
+        Assert.Contains("CancelPlaybackSliderScrub();", code);
+        Assert.Contains("if (_isPlaybackSliderScrubbing)", runtimeCode);
+        Assert.Contains("UIElement.PointerPressedEvent", sliderCode);
+        Assert.Contains("UIElement.PointerReleasedEvent", sliderCode);
+        Assert.Contains("ViewModel.DisplayPlaybackTime = PlaybackSlider.Value;", sliderCode);
+    }
+
+    [Fact]
+    public void SpinePreviewSurface_ShouldExposeImageStyleBackgroundSwitcher()
+    {
+        var xaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorSpineAnimationPreviewSurfaceView.xaml"));
+
+        Assert.Contains("<controls:CheckerboardBackground", xaml);
+        Assert.Contains("Visibility=\"{x:Bind ViewModel.CheckerboardBackgroundVisibility, Mode=OneWay}\"", xaml);
+        Assert.Contains("Background=\"White\"", xaml);
+        Assert.Contains("x:Name=\"BackgroundModeButton\"", xaml);
+        Assert.Contains("Glyph=\"{x:Bind ViewModel.BackgroundModeGlyph, Mode=OneWay}\"", xaml);
+    }
+
+    [Fact]
+    public void SpinePreviewSurface_ShouldUseWidthDrivenSquareViewportByDefault()
+    {
+        var xaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorSpineAnimationPreviewSurfaceView.xaml"));
+        var code = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorSpineAnimationPreviewSurfaceView.xaml.cs"));
+        var viewportCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorSpineAnimationPreviewSurfaceView.Viewport.cs"));
+
+        Assert.Contains("<RowDefinition Height=\"*\" />", xaml);
+        Assert.Contains("x:Name=\"PreviewViewportSquareFrame\"", xaml);
+        Assert.Contains("SizeChanged=\"OnPreviewViewportSquareFrameSizeChanged\"", xaml);
+        Assert.Contains("UseSquareViewportProperty", code);
+        Assert.Contains("PreviewViewportSquareFrame.Height = squareSide;", viewportCode);
+    }
+
+    [Fact]
+    public void SpinePreviewSurface_ShouldUseFlexibleViewportInAssetEditorWindow()
+    {
+        var previewSurfaceXaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorPreviewSurfaceView.xaml"));
+        var previewSurfaceCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorPreviewSurfaceView.Height.cs"));
+        var assetEditorXaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "AssetEditorWindow.xaml"));
+
+        Assert.Contains("UseSquareViewport=\"{x:Bind UseCompactSpineViewport, Mode=OneWay}\"", previewSurfaceXaml);
+        Assert.Contains("UseAvailablePreviewSpaceProperty", previewSurfaceCode);
+        Assert.Contains("UseCompactSpineViewport => !UseAvailablePreviewSpace", previewSurfaceCode);
+        Assert.Contains("UseAvailablePreviewSpace=\"True\"", assetEditorXaml);
+    }
+
+    [Fact]
+    public void SpineD3DPreviewBackend_ShouldDrawPreviewBackground()
+    {
+        var backendCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "D3D11SpineAnimationPreviewRenderBackend.cs"));
+        var backgroundRendererCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "D3D11SpinePreviewBackgroundRenderer.cs"));
+
+        Assert.Contains("D3D11SpinePreviewBackgroundRenderer", backendCode);
+        Assert.Contains("_backgroundRenderer.Draw(", backendCode);
+        Assert.Contains("CheckerboardTileLayoutBuilder.Build", backgroundRendererCode);
+        Assert.Contains("SolidBackgroundColor", backgroundRendererCode);
+    }
+
+    [Fact]
+    public void SpinePreviewSurface_ShouldQueueBindingUpdatesFromObservedViewModelChanges()
+    {
+        var code = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorSpineAnimationPreviewSurfaceView.xaml.cs"));
+        var bindingCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorSpineAnimationPreviewSurfaceView.Bindings.cs"));
+
+        Assert.Contains("private void QueueBindingsUpdate()", bindingCode);
+        Assert.Contains("if (shouldUpdateBindings)", code);
+        Assert.Contains("QueueBindingsUpdate();", code);
+    }
+
+    [Fact]
+    public void SpinePreviewSurface_ShouldReconcileSelectorSelectionsAfterBindingRefresh()
+    {
+        var bindingCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorSpineAnimationPreviewSurfaceView.Bindings.cs"));
+        var selectorCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorSpineAnimationPreviewSurfaceView.Selectors.cs"));
+
+        Assert.Contains("Bindings.Update();", bindingCode);
+        Assert.Contains("ReconcileSelectorSelections();", bindingCode);
+        Assert.Contains("SelectStringItem(AnimationComboBox", selectorCode);
+        Assert.Contains("SelectStringItem(SkinComboBox", selectorCode);
+        Assert.Contains("SelectPlaybackSpeedItem(PlaybackSpeedComboBox", selectorCode);
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

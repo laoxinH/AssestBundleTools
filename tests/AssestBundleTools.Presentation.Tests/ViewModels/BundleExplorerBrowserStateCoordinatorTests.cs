@@ -35,6 +35,9 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
             zoom: 1.5d,
             rotationX: 24d,
             rotationY: -72d);
+        assetTab.Inspector.CaptureSectionSelectorScrollPosition(horizontalOffset: 18d, verticalOffset: 0d);
+        assetTab.Inspector.CaptureSectionScrollPosition(sectionIndex: 0, horizontalOffset: 3d, verticalOffset: 120d);
+        assetTab.Inspector.CaptureSectionScrollPosition(sectionIndex: 1, horizontalOffset: 0d, verticalOffset: 48d);
         assetTab.SetEditDraftReference(
             new AssetDocumentEditDraftReference(
                 "draft-asset-button",
@@ -53,6 +56,12 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         Assert.Equal(1.75d, assetTabState.PreviewImageZoom);
         Assert.Equal(18d, assetTabState.PreviewImagePanX);
         Assert.Equal(-12d, assetTabState.PreviewImagePanY);
+        Assert.Equal(18d, assetTabState.InspectorScrollState?.SectionSelector?.HorizontalOffset);
+        Assert.Equal(0d, assetTabState.InspectorScrollState?.SectionSelector?.VerticalOffset);
+        Assert.Equal(3d, assetTabState.InspectorScrollState?.DetailsSection?.HorizontalOffset);
+        Assert.Equal(120d, assetTabState.InspectorScrollState?.DetailsSection?.VerticalOffset);
+        Assert.Equal(0d, assetTabState.InspectorScrollState?.DependenciesSection?.HorizontalOffset);
+        Assert.Equal(48d, assetTabState.InspectorScrollState?.DependenciesSection?.VerticalOffset);
         Assert.Equal("Uv", assetTabState.MeshPreviewDisplayMode);
         Assert.False(assetTabState.MeshPreviewTextureOverlaySelected);
         Assert.False(assetTabState.MeshPreviewGridSelected);
@@ -113,6 +122,17 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
             "spine-group:bundle-ui:hero",
             "Hero Spine",
             context.LocalizationService);
+        spineGroupTab.RestorePreviewState(new WorkspaceSpinePreviewStateDto(
+            SelectedAnimationName: "Special",
+            SelectedSkinName: "default",
+            PlaybackSpeed: 1.5d,
+            PlaybackTime: 2.25d,
+            IsPlaying: false,
+            BackgroundMode: "Checkerboard",
+            ViewportZoom: 2d,
+            ViewportPanX: 24d,
+            ViewportPanY: -16d));
+        spineGroupTab.Inspector.CaptureSectionScrollPosition(sectionIndex: 0, horizontalOffset: 0d, verticalOffset: 180d);
         context.BundleTab.AddSpineGroupTab(spineGroupTab, activate: true);
         context.BundleTab.RestoreViewState(
             searchKeyword: "hero",
@@ -128,6 +148,17 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         var spineGroupTabState = Assert.Single(bundleTabState.OpenSpineGroupTabs!);
         Assert.Equal("spine-group:bundle-ui:hero", spineGroupTabState.GroupId);
         Assert.Equal("Hero Spine", spineGroupTabState.DisplayName);
+        Assert.Equal("Special", spineGroupTabState.PreviewState?.SelectedAnimationName);
+        Assert.Equal("default", spineGroupTabState.PreviewState?.SelectedSkinName);
+        Assert.Equal(1.5d, spineGroupTabState.PreviewState?.PlaybackSpeed);
+        Assert.Equal(2.25d, spineGroupTabState.PreviewState?.PlaybackTime);
+        Assert.False(spineGroupTabState.PreviewState?.IsPlaying ?? true);
+        Assert.Equal("Checkerboard", spineGroupTabState.PreviewState?.BackgroundMode);
+        Assert.Equal(2d, spineGroupTabState.PreviewState?.ViewportZoom);
+        Assert.Equal(24d, spineGroupTabState.PreviewState?.ViewportPanX);
+        Assert.Equal(-16d, spineGroupTabState.PreviewState?.ViewportPanY);
+        Assert.Equal(0d, spineGroupTabState.InspectorScrollState?.DetailsSection?.HorizontalOffset);
+        Assert.Equal(180d, spineGroupTabState.InspectorScrollState?.DetailsSection?.VerticalOffset);
         Assert.Equal("spine-group:bundle-ui:hero", bundleTabState.ActiveSpineGroupTabId);
         Assert.Null(bundleTabState.ActiveAssetTabId);
     }
@@ -196,7 +227,11 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
                                 "draft-asset-button",
                                 "text",
                                 "source-v1",
-                                "Text draft"))
+                                "Text draft"),
+                            InspectorScrollState: new WorkspaceInspectorScrollStateDto(
+                                DetailsSection: new WorkspaceInspectorSectionScrollPositionDto(2d, 140d),
+                                DependenciesSection: new WorkspaceInspectorSectionScrollPositionDto(0d, 64d),
+                                SectionSelector: new WorkspaceInspectorSectionScrollPositionDto(22d, 0d)))
                     ],
                     ActiveAssetTabId: "asset-button",
                     AssetListViewMode: "SpineGroups")
@@ -217,6 +252,9 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         Assert.Equal(1.75d, restoredAssetTab.Inspector.Preview.Image.Zoom);
         Assert.Equal(18d, restoredAssetTab.Inspector.Preview.Image.PanX);
         Assert.Equal(-12d, restoredAssetTab.Inspector.Preview.Image.PanY);
+        Assert.Equal(new InspectorPanelScrollPosition(22d, 0d), restoredAssetTab.Inspector.GetSectionSelectorScrollPosition());
+        Assert.Equal(new InspectorPanelScrollPosition(2d, 140d), restoredAssetTab.Inspector.GetSectionScrollPosition(0));
+        Assert.Equal(new InspectorPanelScrollPosition(0d, 64d), restoredAssetTab.Inspector.GetSectionScrollPosition(1));
         restoredAssetTab.Inspector.Preview.Mesh.Apply(
             CreateMeshGeometry(),
             new MeshPreviewDisplayState("wire", "uv"));
@@ -263,7 +301,19 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
                         new WorkspaceMetadataSpineGroupTabDto(
                             "spine-group:bundle-ui:hero",
                             "Hero Spine",
-                            "assets/hero/hero")
+                            "assets/hero/hero",
+                            new WorkspaceSpinePreviewStateDto(
+                                SelectedAnimationName: "Sleep",
+                                SelectedSkinName: "summer",
+                                PlaybackSpeed: 0.5d,
+                                PlaybackTime: 1.25d,
+                                IsPlaying: true,
+                                BackgroundMode: "Checkerboard",
+                                ViewportZoom: 1.75d,
+                                ViewportPanX: 10d,
+                                ViewportPanY: -20d),
+                            InspectorScrollState: new WorkspaceInspectorScrollStateDto(
+                                DetailsSection: new WorkspaceInspectorSectionScrollPositionDto(0d, 220d)))
                     ],
                     ActiveSpineGroupTabId: "spine-group:bundle-ui:hero")
             ],
@@ -282,6 +332,14 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         Assert.Equal("spine-group:bundle-ui:hero", spineGroupTab.GroupId);
         Assert.Equal("Hero Spine", spineGroupTab.DisplayName);
         Assert.Equal("assets/hero/hero", spineGroupTab.Item.GroupKey);
+        Assert.Equal("Sleep", spineGroupTab.PreviewState?.SelectedAnimationName);
+        Assert.Equal("summer", spineGroupTab.PreviewState?.SelectedSkinName);
+        Assert.Equal(0.5d, spineGroupTab.PreviewState?.PlaybackSpeed);
+        Assert.Equal(1.25d, spineGroupTab.PreviewState?.PlaybackTime);
+        Assert.Equal(1.75d, spineGroupTab.Inspector.Preview.SpineAnimation.ViewportZoom);
+        Assert.Equal(10d, spineGroupTab.Inspector.Preview.SpineAnimation.ViewportPanX);
+        Assert.Equal(-20d, spineGroupTab.Inspector.Preview.SpineAnimation.ViewportPanY);
+        Assert.Equal(new InspectorPanelScrollPosition(0d, 220d), spineGroupTab.Inspector.GetSectionScrollPosition(0));
     }
 
     [Fact]

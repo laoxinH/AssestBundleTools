@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using Microsoft.UI.Xaml.Media;
@@ -75,9 +76,9 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 只有真实渲染面保持固定高度；摘要卡片预览交给外层布局按内容自适应。
+    /// 加载态与真实渲染面保持固定高度；摘要卡片预览交给外层布局按内容自适应。
     /// </summary>
-    public bool UsesFixedPreviewSurfaceHeight => UsesFixedPreviewSurfaceHeightFor(_previewKind);
+    public bool UsesFixedPreviewSurfaceHeight => IsPreviewLoading || UsesFixedPreviewSurfaceHeightFor(_previewKind);
 
     public double PreviewSurfaceHeight => UsesFixedPreviewSurfaceHeight ? 320d : double.NaN;
 
@@ -291,7 +292,8 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
     internal void ApplySpineAnimationPreview(
         SpineAnimationPreviewDto animationPreview,
         IReadOnlyDictionary<string, SpineAnimationPreviewTextureState> texturePreviews,
-        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null)
+        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
+        WorkspaceSpinePreviewStateDto? previewState = null)
     {
         ArgumentNullException.ThrowIfNull(animationPreview);
         ArgumentNullException.ThrowIfNull(texturePreviews);
@@ -299,7 +301,7 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         ResetState();
         _previewKind = AssetPreviewKind.SpineAnimation;
         _previewInfoRows = CloneRows(previewInfoRows);
-        SpineAnimation.Apply(animationPreview, texturePreviews);
+        SpineAnimation.Apply(animationPreview, texturePreviews, previewState);
         NotifyPreviewStateChanged();
     }
 
@@ -410,7 +412,6 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         return previewKind is
             AssetPreviewKind.Image or
             AssetPreviewKind.Mesh or
-            AssetPreviewKind.Text or
-            AssetPreviewKind.SpineAnimation;
+            AssetPreviewKind.Text;
     }
 }

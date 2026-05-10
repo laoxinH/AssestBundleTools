@@ -11,23 +11,48 @@ public sealed partial class InspectorPreviewSurfaceView
             typeof(InspectorPreviewSurfaceView),
             new PropertyMetadata(320d, OnFixedPreviewSurfaceHeightPropertyChanged));
 
+    public static readonly DependencyProperty UseAvailablePreviewSpaceProperty =
+        DependencyProperty.Register(
+            nameof(UseAvailablePreviewSpace),
+            typeof(bool),
+            typeof(InspectorPreviewSurfaceView),
+            new PropertyMetadata(false, OnUseAvailablePreviewSpacePropertyChanged));
+
     public double FixedPreviewSurfaceHeight
     {
         get => (double)GetValue(FixedPreviewSurfaceHeightProperty);
         set => SetValue(FixedPreviewSurfaceHeightProperty, value);
     }
 
+    public bool UseAvailablePreviewSpace
+    {
+        get => (bool)GetValue(UseAvailablePreviewSpaceProperty);
+        set => SetValue(UseAvailablePreviewSpaceProperty, value);
+    }
+
+    public bool UseCompactSpineViewport => !UseAvailablePreviewSpace;
+
     public double PreviewSurfaceHeight =>
-        ViewModel?.Preview.UsesFixedPreviewSurfaceHeight == true
+        !UseAvailablePreviewSpace && ViewModel?.Preview.UsesFixedPreviewSurfaceHeight == true
             ? NormalizeFixedPreviewSurfaceHeight(FixedPreviewSurfaceHeight)
             : double.NaN;
 
     public double PreviewSurfaceMinHeight =>
-        ViewModel?.Preview.UsesFixedPreviewSurfaceHeight == true
+        !UseAvailablePreviewSpace && ViewModel?.Preview.UsesFixedPreviewSurfaceHeight == true
             ? NormalizeFixedPreviewSurfaceHeight(FixedPreviewSurfaceHeight)
             : 0d;
 
     private static void OnFixedPreviewSurfaceHeightPropertyChanged(
+        DependencyObject dependencyObject,
+        DependencyPropertyChangedEventArgs args)
+    {
+        if (dependencyObject is InspectorPreviewSurfaceView view)
+        {
+            view.RefreshPreviewSurfaceHeightBinding();
+        }
+    }
+
+    private static void OnUseAvailablePreviewSpacePropertyChanged(
         DependencyObject dependencyObject,
         DependencyPropertyChangedEventArgs args)
     {

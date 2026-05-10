@@ -231,6 +231,11 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         DocumentGroup.SetActiveAssetTab(assetTab);
     }
 
+    public void ClearActiveAssetTab()
+    {
+        DocumentGroup.ClearActiveAssetTab();
+    }
+
     public void RestoreAssetTabs(
         IEnumerable<AssetDocumentTabViewModel> assetTabs,
         string? activeAssetTabId)

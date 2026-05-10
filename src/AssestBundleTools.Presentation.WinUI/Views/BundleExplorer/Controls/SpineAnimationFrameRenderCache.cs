@@ -20,17 +20,27 @@ internal sealed class SpineAnimationFrameRenderCache : IDisposable
         ICanvasResourceCreator resourceCreator,
         SpineAnimationFrameDto frame,
         IReadOnlyDictionary<string, CanvasBitmap> textureBitmaps,
+        IReadOnlyDictionary<string, SpineAnimationTexturePageSize> texturePageSizes,
         float width,
         float height,
-        SpineAnimationPreviewViewport viewport)
+        SpineAnimationPreviewViewport viewport,
+        SpineAnimationAutoFitBounds autoFitBounds = default)
     {
         ArgumentNullException.ThrowIfNull(drawingSession);
         ArgumentNullException.ThrowIfNull(resourceCreator);
         ArgumentNullException.ThrowIfNull(frame);
         ArgumentNullException.ThrowIfNull(textureBitmaps);
+        ArgumentNullException.ThrowIfNull(texturePageSizes);
 
-        var key = CacheKey.Create(frame, width, height);
-        var target = GetOrCreateTarget(resourceCreator, frame, textureBitmaps, key, viewport);
+        var key = CacheKey.Create(frame, width, height, viewport, autoFitBounds);
+        var target = GetOrCreateTarget(
+            resourceCreator,
+            frame,
+            textureBitmaps,
+            texturePageSizes,
+            key,
+            viewport,
+            autoFitBounds);
         drawingSession.DrawImage(
             target,
             new Rect(0d, 0d, width, height),
@@ -56,8 +66,10 @@ internal sealed class SpineAnimationFrameRenderCache : IDisposable
         ICanvasResourceCreator resourceCreator,
         SpineAnimationFrameDto frame,
         IReadOnlyDictionary<string, CanvasBitmap> textureBitmaps,
+        IReadOnlyDictionary<string, SpineAnimationTexturePageSize> texturePageSizes,
         CacheKey key,
-        SpineAnimationPreviewViewport viewport)
+        SpineAnimationPreviewViewport viewport,
+        SpineAnimationAutoFitBounds autoFitBounds)
     {
         if (_entries.TryGetValue(key, out var entry))
         {
@@ -79,9 +91,11 @@ internal sealed class SpineAnimationFrameRenderCache : IDisposable
                 targetSession,
                 frame,
                 textureBitmaps,
+                texturePageSizes,
                 key.Width,
                 key.Height,
-                viewport);
+                viewport,
+                autoFitBounds);
         }
 
         _entries[key] = new CacheEntry(frame, target, key.PixelCount, ++_useStamp);
@@ -144,17 +158,26 @@ internal sealed class SpineAnimationFrameRenderCache : IDisposable
     private readonly record struct CacheKey(
         int FrameIdentity,
         int Width,
-        int Height)
+        int Height,
+        SpineAnimationPreviewViewport Viewport,
+        SpineAnimationAutoFitBounds AutoFitBounds)
     {
         public long PixelCount => (long)Width * Height;
 
         public static CacheKey Create(
             SpineAnimationFrameDto frame,
             float width,
-            float height) =>
-            new(
+            float height,
+            SpineAnimationPreviewViewport viewport,
+            SpineAnimationAutoFitBounds autoFitBounds)
+        {
+            var normalizedViewport = viewport.Normalize();
+            return new CacheKey(
                 RuntimeHelpers.GetHashCode(frame),
                 Math.Max(1, (int)Math.Ceiling(width)),
-                Math.Max(1, (int)Math.Ceiling(height)));
+                Math.Max(1, (int)Math.Ceiling(height)),
+                normalizedViewport,
+                autoFitBounds);
+        }
     }
 }

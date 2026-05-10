@@ -9,6 +9,8 @@ internal interface ISpineAnimationPreviewRenderBackend
 
     void SetViewport(SpineAnimationPreviewViewport viewport);
 
+    void SetBackgroundMode(InspectorPreviewImageBackgroundMode backgroundMode);
+
     void PrewarmFrames(IReadOnlyList<SpineAnimationFrameDto> frames);
 
     void LoadTexturePages(IReadOnlyDictionary<string, SpineAnimationTexturePageContent> texturePageContents);

@@ -48,6 +48,7 @@ internal static class SpineAnimationTexturePageDecoder
                 colorPage.Width,
                 colorPage.Height,
                 colorPage.BgraPixels,
+                SpineAnimationTextureAlphaMap.Create(colorPage.Width, colorPage.Height, colorPage.BgraPixels),
                 hasExternalAlpha);
         }
         catch
@@ -153,4 +154,5 @@ internal sealed record SpineAnimationDecodedTexturePage(
     int Width,
     int Height,
     byte[] BgraPixels,
+    SpineAnimationTextureAlphaMap AlphaMap,
     bool HasExternalAlpha);

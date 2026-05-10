@@ -8,6 +8,7 @@ internal sealed class AssetEditorWindowAssetTabStateObserver : IDisposable
     private readonly AssetDocumentGroupViewModel _documentGroup;
     private readonly Action _stateChanged;
     private readonly HashSet<AssetDocumentTabViewModel> _trackedAssetTabs = [];
+    private readonly HashSet<SpineAssetGroupDocumentTabViewModel> _trackedSpineGroupTabs = [];
     private bool _disposed;
 
     public AssetEditorWindowAssetTabStateObserver(
@@ -17,7 +18,9 @@ internal sealed class AssetEditorWindowAssetTabStateObserver : IDisposable
         _documentGroup = documentGroup ?? throw new ArgumentNullException(nameof(documentGroup));
         _stateChanged = stateChanged ?? throw new ArgumentNullException(nameof(stateChanged));
         _documentGroup.AssetTabs.CollectionChanged += OnDocumentGroupAssetTabsChanged;
+        _documentGroup.SpineGroupTabs.CollectionChanged += OnDocumentGroupSpineGroupTabsChanged;
         SubscribeAssetTabStateEvents(_documentGroup.AssetTabs);
+        SubscribeSpineGroupTabStateEvents(_documentGroup.SpineGroupTabs);
     }
 
     public void Dispose()
@@ -28,7 +31,9 @@ internal sealed class AssetEditorWindowAssetTabStateObserver : IDisposable
         }
 
         _documentGroup.AssetTabs.CollectionChanged -= OnDocumentGroupAssetTabsChanged;
+        _documentGroup.SpineGroupTabs.CollectionChanged -= OnDocumentGroupSpineGroupTabsChanged;
         UnsubscribeAssetTabStateEvents(_trackedAssetTabs.ToArray());
+        UnsubscribeSpineGroupTabStateEvents(_trackedSpineGroupTabs.ToArray());
         _disposed = true;
     }
 
@@ -57,6 +62,31 @@ internal sealed class AssetEditorWindowAssetTabStateObserver : IDisposable
         }
     }
 
+    private void OnDocumentGroupSpineGroupTabsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.Action == NotifyCollectionChangedAction.Reset)
+        {
+            SynchronizeSpineGroupTabStateEventSubscriptions();
+            return;
+        }
+
+        if (e.OldItems is not null)
+        {
+            foreach (var oldItem in e.OldItems.OfType<SpineAssetGroupDocumentTabViewModel>())
+            {
+                UnsubscribeSpineGroupTabStateEvents(oldItem);
+            }
+        }
+
+        if (e.NewItems is not null)
+        {
+            foreach (var newItem in e.NewItems.OfType<SpineAssetGroupDocumentTabViewModel>())
+            {
+                SubscribeSpineGroupTabStateEvents(newItem);
+            }
+        }
+    }
+
     private void OnAssetTabBrowserStateChanged(object? sender, EventArgs e)
     {
         _stateChanged();
@@ -80,6 +110,7 @@ internal sealed class AssetEditorWindowAssetTabStateObserver : IDisposable
         assetTab.PreviewImageDisplayOptionsChanged += OnAssetTabBrowserStateChanged;
         assetTab.PreviewImageViewStateChanged += OnAssetTabBrowserStateChanged;
         assetTab.PreviewMeshDisplayOptionsChanged += OnAssetTabBrowserStateChanged;
+        assetTab.InspectorScrollStateChanged += OnAssetTabBrowserStateChanged;
     }
 
     private void UnsubscribeAssetTabStateEvents(IEnumerable<AssetDocumentTabViewModel> assetTabs)
@@ -100,6 +131,7 @@ internal sealed class AssetEditorWindowAssetTabStateObserver : IDisposable
         assetTab.PreviewImageDisplayOptionsChanged -= OnAssetTabBrowserStateChanged;
         assetTab.PreviewImageViewStateChanged -= OnAssetTabBrowserStateChanged;
         assetTab.PreviewMeshDisplayOptionsChanged -= OnAssetTabBrowserStateChanged;
+        assetTab.InspectorScrollStateChanged -= OnAssetTabBrowserStateChanged;
     }
 
     private void SynchronizeAssetTabStateEventSubscriptions()
@@ -115,6 +147,60 @@ internal sealed class AssetEditorWindowAssetTabStateObserver : IDisposable
         foreach (var assetTab in currentAssetTabs)
         {
             SubscribeAssetTabStateEvents(assetTab);
+        }
+    }
+
+    private void SubscribeSpineGroupTabStateEvents(IEnumerable<SpineAssetGroupDocumentTabViewModel> spineGroupTabs)
+    {
+        foreach (var spineGroupTab in spineGroupTabs)
+        {
+            SubscribeSpineGroupTabStateEvents(spineGroupTab);
+        }
+    }
+
+    private void SubscribeSpineGroupTabStateEvents(SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        if (!_trackedSpineGroupTabs.Add(spineGroupTab))
+        {
+            return;
+        }
+
+        spineGroupTab.PreviewStateChanged += OnAssetTabBrowserStateChanged;
+        spineGroupTab.InspectorScrollStateChanged += OnAssetTabBrowserStateChanged;
+    }
+
+    private void UnsubscribeSpineGroupTabStateEvents(IEnumerable<SpineAssetGroupDocumentTabViewModel> spineGroupTabs)
+    {
+        foreach (var spineGroupTab in spineGroupTabs)
+        {
+            UnsubscribeSpineGroupTabStateEvents(spineGroupTab);
+        }
+    }
+
+    private void UnsubscribeSpineGroupTabStateEvents(SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        if (!_trackedSpineGroupTabs.Remove(spineGroupTab))
+        {
+            return;
+        }
+
+        spineGroupTab.PreviewStateChanged -= OnAssetTabBrowserStateChanged;
+        spineGroupTab.InspectorScrollStateChanged -= OnAssetTabBrowserStateChanged;
+    }
+
+    private void SynchronizeSpineGroupTabStateEventSubscriptions()
+    {
+        var currentSpineGroupTabs = _documentGroup.SpineGroupTabs.ToHashSet();
+        foreach (var trackedSpineGroupTab in _trackedSpineGroupTabs
+                     .Where(spineGroupTab => !currentSpineGroupTabs.Contains(spineGroupTab))
+                     .ToArray())
+        {
+            UnsubscribeSpineGroupTabStateEvents(trackedSpineGroupTab);
+        }
+
+        foreach (var spineGroupTab in currentSpineGroupTabs)
+        {
+            SubscribeSpineGroupTabStateEvents(spineGroupTab);
         }
     }
 }

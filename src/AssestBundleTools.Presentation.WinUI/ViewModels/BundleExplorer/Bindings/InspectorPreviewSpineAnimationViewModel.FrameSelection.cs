@@ -61,12 +61,10 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel
 
     private void RefreshAnimationNamesForActiveSkin()
     {
-        AnimationNames.Clear();
-        foreach (var animation in ActiveAnimations.Where(animation =>
-                     HasRuntimePlayback || animation.SampledFrames.Count > 0))
-        {
-            AnimationNames.Add(animation.Name);
-        }
+        AnimationNames = ActiveAnimations
+            .Where(animation => HasRuntimePlayback || animation.SampledFrames.Count > 0)
+            .Select(static animation => animation.Name)
+            .ToArray();
 
         OnPropertyChanged(nameof(HasSpineAnimation));
         OnPropertyChanged(nameof(Visibility));

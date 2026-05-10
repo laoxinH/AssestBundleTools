@@ -50,9 +50,16 @@ public sealed class D3D11SpineTexturePageTests
     public void ReplaceDecodedPages_ShouldExposeTexturePageSizesAndClearGpuState()
     {
         using var cache = new D3D11SpineTexturePageCache();
+        var pixels = new byte[2 * 3 * 4];
         var decodedPages = new Dictionary<string, SpineAnimationDecodedTexturePage>(StringComparer.Ordinal)
         {
-            ["page.png"] = new("page.png", 2, 3, new byte[2 * 3 * 4], HasExternalAlpha: false)
+            ["page.png"] = new(
+                "page.png",
+                2,
+                3,
+                pixels,
+                SpineAnimationTextureAlphaMap.Create(2, 3, pixels),
+                HasExternalAlpha: false)
         };
 
         cache.ReplaceDecodedPages(decodedPages);

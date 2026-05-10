@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Numerics;
 using AssestBundleTools.Application.Assets.Dtos;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
@@ -78,6 +79,24 @@ internal sealed class D3D11SpineRenderDiagnostics
         }
 
         Write($"resize size={width}x{height}");
+    }
+
+    public void SwapChainCompositionTransformApplied(
+        int width,
+        int height,
+        double scaleX,
+        double scaleY,
+        Matrix3x2 matrix)
+    {
+        if (!IsEnabled)
+        {
+            return;
+        }
+
+        Write(
+            $"swapchain-composition size={width}x{height} " +
+            $"scale={FormatNumber(scaleX)}x{FormatNumber(scaleY)} " +
+            $"matrix={FormatNumber(matrix.M11)},0,0,{FormatNumber(matrix.M22)}");
     }
 
     public void TextureDecodeCompleted(

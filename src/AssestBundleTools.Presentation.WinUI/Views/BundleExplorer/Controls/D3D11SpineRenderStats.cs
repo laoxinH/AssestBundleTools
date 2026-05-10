@@ -13,10 +13,15 @@ internal readonly record struct D3D11SpineBatchStats(
     double MaxU,
     double MaxV,
     double MinAlpha,
-    double MaxAlpha)
+    double MaxAlpha,
+    bool HasAutoFit,
+    double AutoFitMinX,
+    double AutoFitMinY,
+    double AutoFitMaxX,
+    double AutoFitMaxY)
 {
     public static D3D11SpineBatchStats Empty =>
-        new(false, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d);
+        new(false, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, false, 0d, 0d, 0d, 0d);
 
     public D3D11SpineBatchStats Include(SpineAnimationVertexBatch batch)
     {
@@ -26,14 +31,17 @@ internal readonly record struct D3D11SpineBatchStats(
             stats = stats.Include(vertex);
         }
 
+        stats = stats.Include(batch.AutoFitBounds);
         return stats;
     }
 
-    public string Format() =>
+    public string Format(SpineAnimationAutoFitBounds appliedAutoFitBounds) =>
         HasVertices
             ? $"bounds={Format(MinX)},{Format(MinY)}..{Format(MaxX)},{Format(MaxY)} " +
               $"uv={Format(MinU)},{Format(MinV)}..{Format(MaxU)},{Format(MaxV)} " +
-              $"alpha={Format(MinAlpha)}..{Format(MaxAlpha)}"
+              $"alpha={Format(MinAlpha)}..{Format(MaxAlpha)}" +
+              FormatAutoFit(appliedAutoFitBounds) +
+              FormatFrameAutoFit(appliedAutoFitBounds)
             : string.Empty;
 
     private D3D11SpineBatchStats Include(SpineAnimationBatchVertex vertex)
@@ -51,7 +59,12 @@ internal readonly record struct D3D11SpineBatchStats(
                 vertex.U,
                 vertex.V,
                 vertex.A,
-                vertex.A);
+                vertex.A,
+                false,
+                0d,
+                0d,
+                0d,
+                0d);
         }
 
         return this with
@@ -67,6 +80,72 @@ internal readonly record struct D3D11SpineBatchStats(
             MinAlpha = Math.Min(MinAlpha, vertex.A),
             MaxAlpha = Math.Max(MaxAlpha, vertex.A)
         };
+    }
+
+    private D3D11SpineBatchStats Include(SpineAnimationAutoFitBounds bounds)
+    {
+        if (!bounds.IsValid)
+        {
+            return this;
+        }
+
+        var next = HasAutoFit
+            ? this with
+            {
+                AutoFitMinX = Math.Min(AutoFitMinX, bounds.MinX),
+                AutoFitMinY = Math.Min(AutoFitMinY, bounds.MinY),
+                AutoFitMaxX = Math.Max(AutoFitMaxX, bounds.MaxX),
+                AutoFitMaxY = Math.Max(AutoFitMaxY, bounds.MaxY)
+            }
+            : this with
+            {
+                HasAutoFit = true,
+                AutoFitMinX = bounds.MinX,
+                AutoFitMinY = bounds.MinY,
+                AutoFitMaxX = bounds.MaxX,
+                AutoFitMaxY = bounds.MaxY
+            };
+
+        return next;
+    }
+
+    private string FormatAutoFit(SpineAnimationAutoFitBounds appliedAutoFitBounds)
+    {
+        if (!appliedAutoFitBounds.IsValid)
+        {
+            return string.Empty;
+        }
+
+        return $" fitBounds={Format(appliedAutoFitBounds.MinX)},{Format(appliedAutoFitBounds.MinY)}.." +
+               $"{Format(appliedAutoFitBounds.MaxX)},{Format(appliedAutoFitBounds.MaxY)} " +
+               $"fitCenter={Format(appliedAutoFitBounds.CenterX)},{Format(appliedAutoFitBounds.CenterY)}";
+    }
+
+    private string FormatFrameAutoFit(SpineAnimationAutoFitBounds appliedAutoFitBounds)
+    {
+        if (!HasAutoFit)
+        {
+            return string.Empty;
+        }
+
+        var frameAutoFitBounds = new SpineAnimationAutoFitBounds(
+            true,
+            AutoFitMinX,
+            AutoFitMinY,
+            AutoFitMaxX,
+            AutoFitMaxY);
+        if (EqualityComparer<SpineAnimationAutoFitBounds>.Default.Equals(
+                appliedAutoFitBounds,
+                frameAutoFitBounds))
+        {
+            return string.Empty;
+        }
+
+        var centerX = (AutoFitMinX + AutoFitMaxX) / 2d;
+        var centerY = (AutoFitMinY + AutoFitMaxY) / 2d;
+        return $" frameFitBounds={Format(AutoFitMinX)},{Format(AutoFitMinY)}.." +
+               $"{Format(AutoFitMaxX)},{Format(AutoFitMaxY)} " +
+               $"frameFitCenter={Format(centerX)},{Format(centerY)}";
     }
 
     private static string Format(double value) =>

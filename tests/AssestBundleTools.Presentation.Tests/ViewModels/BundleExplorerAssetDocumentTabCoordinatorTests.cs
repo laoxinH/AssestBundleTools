@@ -44,6 +44,26 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
     }
 
     [Fact]
+    public async Task SynchronizeInspectorWithActiveBundleTabAsync_ShouldPreserveActiveSpineDocument_WhenAssetPaneHasNoAssetTab()
+    {
+        var workspaceId = WorkspaceId.New();
+        var context = CreateCoordinatorContext(workspaceId, "SpineDocumentSwitchBack");
+        var coordinator = CreateCoordinator(context, new TestWorkspaceAssetInspectionGateway());
+        var spineGroupTab = context.HostCoordinator.CreateSpineGroupDocumentTab(
+            CreateSpineGroup(context.BundleTab.BundleId, "hero", "Hero"));
+        context.BundleTab.AddSpineGroupTab(spineGroupTab, activate: true);
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.Assets;
+        context.PrimaryPane.ClearItems("empty");
+
+        await coordinator.SynchronizeInspectorWithActiveBundleTabAsync(writeLog: false);
+
+        Assert.Empty(context.BundleTab.AssetTabs);
+        Assert.Same(spineGroupTab, context.BundleTab.ActiveSpineGroupTab);
+        Assert.Same(spineGroupTab, context.BundleTab.ActiveDocumentTab?.SpineGroupTab);
+        Assert.Same(spineGroupTab.Inspector, context.HostCoordinator.CurrentInspector);
+    }
+
+    [Fact]
     public async Task LoadAssetDocumentTabAsync_ShouldUseBackgroundRunner_ForOpenAndDetailsQueries()
     {
         var workspaceId = WorkspaceId.New();
@@ -432,6 +452,19 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
             "Texture2D",
             "128 B",
             "Original");
+    }
+
+    private static SpineAssetGroupDto CreateSpineGroup(BundleId bundleId, string groupId, string displayName)
+    {
+        return new SpineAssetGroupDto(
+            groupId,
+            bundleId,
+            displayName,
+            groupId,
+            SkeletonAssets: Array.Empty<SpineAssetGroupPartDto>(),
+            AtlasAssets: Array.Empty<SpineAssetGroupPartDto>(),
+            TexturePageAssets: Array.Empty<SpineAssetGroupPartDto>(),
+            Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>());
     }
 
     private static ImageSource CreateImageSourceStub()

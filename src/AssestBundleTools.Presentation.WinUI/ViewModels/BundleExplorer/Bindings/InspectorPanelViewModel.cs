@@ -274,6 +274,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         BundleExternalDependencies.Clear();
         SpineAtlasPageSelector.Clear();
         Preview.ResetState();
+        ResetSectionScrollPositions();
         NotifyDependencyStateChanged();
         HasSelection = false;
         RebuildInformationCards();

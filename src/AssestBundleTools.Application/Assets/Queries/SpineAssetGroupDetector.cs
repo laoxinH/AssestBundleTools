@@ -5,7 +5,7 @@ using AssestBundleTools.Domain.Workspace;
 
 namespace AssestBundleTools.Application.Assets.Queries;
 
-internal static class SpineAssetGroupDetector
+internal static partial class SpineAssetGroupDetector
 {
     private static readonly string[] AtlasSuffixes =
     [
@@ -39,7 +39,8 @@ internal static class SpineAssetGroupDetector
         BundleId targetBundleId,
         string targetBundleDisplayName,
         string? searchKeyword,
-        IReadOnlyList<AssetListResultDto> bundleAssetLists)
+        IReadOnlyList<AssetListResultDto> bundleAssetLists,
+        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey = null)
     {
         ArgumentNullException.ThrowIfNull(bundleAssetLists);
 
@@ -69,11 +70,23 @@ internal static class SpineAssetGroupDetector
             .Where(static candidate => candidate is not null)
             .Select(static candidate => candidate!)
             .ToArray();
+        var linkedGroups = CreateLinkedGroups(
+            targetBundleId,
+            candidates,
+            textParts,
+            textureCandidates,
+            assetDetailsByAssetKey);
+        var linkedGroupKeys = linkedGroups
+            .Select(static group => group.GroupKey)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var allGroups = anchorGroupKeys
+            .Where(groupKey => !linkedGroupKeys.Contains(groupKey))
             .Select(groupKey => CreateGroup(targetBundleId, groupKey, textParts, textureCandidates))
+            .Concat(linkedGroups)
             .OrderBy(static group => group.DisplayName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(static group => group.GroupKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static group => group.GroupId, StringComparer.Ordinal)
             .ToArray();
 
         var filteredGroups = allGroups

@@ -15,8 +15,6 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 /// </summary>
 public sealed partial class InspectorPanelView : UserControl
 {
-    private InspectorPanelViewModel? _observedViewModel;
-
     public static readonly DependencyProperty ViewModelProperty =
         DependencyProperty.Register(
             nameof(ViewModel),
@@ -42,6 +40,12 @@ public sealed partial class InspectorPanelView : UserControl
     {
         InitializeComponent();
         ApplyLocalizedText();
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+        DetailsSectionScrollViewer.LayoutUpdated += OnSectionScrollViewerLayoutUpdated;
+        DependenciesSectionScrollViewer.LayoutUpdated += OnSectionScrollViewerLayoutUpdated;
+        ReplacementSectionScrollViewer.LayoutUpdated += OnSectionScrollViewerLayoutUpdated;
+        ChangesSectionScrollViewer.LayoutUpdated += OnSectionScrollViewerLayoutUpdated;
     }
 
     public InspectorPanelViewModel? ViewModel
@@ -141,34 +145,6 @@ public sealed partial class InspectorPanelView : UserControl
         }
     }
 
-    /// <summary>
-    /// 内层详情切换保持单选语义，点击后统一回写到同一个 SectionIndex，
-    /// 避免控件自己的开关行为把“当前选中页”状态打散。
-    /// </summary>
-    private void OnSectionRadioButtonChecked(object sender, RoutedEventArgs e)
-    {
-        if (ViewModel is null || sender is not RadioButton { Tag: string sectionTag })
-        {
-            return;
-        }
-
-        if (int.TryParse(sectionTag, out var sectionIndex))
-        {
-            ViewModel.SelectedSectionIndex = sectionIndex;
-        }
-    }
-
-    private static void OnViewModelPropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
-    {
-        if (dependencyObject is not InspectorPanelView view)
-        {
-            return;
-        }
-
-        view.DetachObservedViewModel(args.OldValue as InspectorPanelViewModel);
-        view.AttachObservedViewModel(args.NewValue as InspectorPanelViewModel);
-    }
-
     private static void OnLayoutOptionPropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
     {
         if (dependencyObject is InspectorPanelView view)
@@ -206,23 +182,4 @@ public sealed partial class InspectorPanelView : UserControl
         UndoReplacementButton.Content = UiText.Get(ResourceKeys.InspectorUndoReplacementButton);
     }
 
-    private void AttachObservedViewModel(InspectorPanelViewModel? viewModel)
-    {
-        if (viewModel is null || ReferenceEquals(_observedViewModel, viewModel))
-        {
-            return;
-        }
-
-        _observedViewModel = viewModel;
-    }
-
-    private void DetachObservedViewModel(InspectorPanelViewModel? viewModel)
-    {
-        if (viewModel is null || !ReferenceEquals(_observedViewModel, viewModel))
-        {
-            return;
-        }
-
-        _observedViewModel = null;
-    }
 }

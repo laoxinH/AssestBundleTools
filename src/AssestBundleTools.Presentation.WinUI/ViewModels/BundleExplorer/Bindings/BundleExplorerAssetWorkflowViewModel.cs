@@ -164,7 +164,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             _setBusyState,
             () => Inspector,
             () => ActiveAssetDocumentTab,
-            RefreshPrimaryPaneAsync,
+            () => RefreshPrimaryPaneAsync(),
             ReapplyActiveAssetDocumentTab);
         _documentWorkspace.AssetDocumentHostStateChanged += OnAssetDocumentHostStateChanged;
     }
@@ -365,8 +365,10 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
     public Task<AssetDocumentGroupTransfer?> DetachActiveAssetDocumentGroupForExternalHostAsync() =>
         _assetDocumentTabCoordinator.DetachActiveAssetDocumentGroupForExternalHostAsync();
 
-    public Task RefreshPrimaryPaneAsync() =>
-        _assetPaneCoordinator.RefreshPrimaryPaneAsync(() => CaptureActiveTabState());
+    public Task RefreshPrimaryPaneAsync(bool preserveCurrentDocumentTab = false) =>
+        _assetPaneCoordinator.RefreshPrimaryPaneAsync(
+            () => CaptureActiveTabState(),
+            preserveCurrentDocumentTab);
 
     public void OpenCurrentPreviewLocation() => _assetCommandCoordinator.OpenCurrentPreviewLocation();
 

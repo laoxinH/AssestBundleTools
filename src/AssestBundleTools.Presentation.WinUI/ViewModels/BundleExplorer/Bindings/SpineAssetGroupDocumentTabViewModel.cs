@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Collections.ObjectModel;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
@@ -18,6 +19,7 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
     private IReadOnlyDictionary<string, SpineAnimationPreviewTextureState> _animationTextures =
         new Dictionary<string, SpineAnimationPreviewTextureState>(StringComparer.Ordinal);
     private SpineAtlasPageOptionViewModel? _selectedAtlasPageOption;
+    private WorkspaceSpinePreviewStateDto? _previewState;
     private string _displayName;
     private string _toolTipText;
 
@@ -30,7 +32,13 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
         _toolTipText = CreateToolTipText(item);
         Inspector = new InspectorPanelViewModel(
             inspectorInformationTextSet ?? throw new ArgumentNullException(nameof(inspectorInformationTextSet)));
+        Inspector.SectionScrollPositionChanged += OnInspectorSectionScrollPositionChanged;
+        Inspector.Preview.SpineAnimation.PreviewStateChanged += OnSpineAnimationPreviewStateChanged;
     }
+
+    public event EventHandler? InspectorScrollStateChanged;
+
+    public event EventHandler? PreviewStateChanged;
 
     public SpineAssetGroupDto Item
     {
@@ -82,6 +90,12 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
         private set => SetProperty(ref _selectedAtlasPageOption, value);
     }
 
+    internal WorkspaceSpinePreviewStateDto? PreviewState
+    {
+        get => _previewState;
+        private set => SetProperty(ref _previewState, value);
+    }
+
     public InspectorPanelViewModel Inspector { get; }
 
     public void ApplyGroup(SpineAssetGroupDto item)
@@ -126,7 +140,39 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
 
         SelectedAtlasPageOption = option;
         TexturePreview = null;
+        CapturePreviewState();
+        PreviewStateChanged?.Invoke(this, EventArgs.Empty);
         return true;
+    }
+
+    internal void RestorePreviewState(WorkspaceSpinePreviewStateDto? previewState)
+    {
+        PreviewState = previewState;
+        RestoreSelectedAtlasPageOption(previewState);
+        Inspector.Preview.SpineAnimation.RestorePreviewState(previewState);
+    }
+
+    internal void RestoreInspectorScrollState(WorkspaceInspectorScrollStateDto? scrollState)
+    {
+        Inspector.RestoreInspectorScrollState(scrollState);
+    }
+
+    internal WorkspaceSpinePreviewStateDto? CapturePreviewState()
+    {
+        if (Inspector.Preview.SpineAnimation.Preview is null &&
+            PreviewState is not null)
+        {
+            return PreviewState;
+        }
+
+        var animationState = Inspector.Preview.SpineAnimation.CapturePreviewState();
+        var state = animationState with
+        {
+            SelectedAtlasPageName = NormalizeAtlasPageName(SelectedAtlasPageOption?.AtlasPage.Name),
+            SelectedAtlasPageIndex = SelectedAtlasPageOption?.Index
+        };
+        PreviewState = state;
+        return state;
     }
 
     internal void ApplyTexturePreview(SpineAssetGroupTexturePreviewState? texturePreview)
@@ -138,6 +184,7 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
         }
 
         TexturePreview = texturePreview;
+        CapturePreviewState();
     }
 
     private void ReplaceAtlasPageOptions(
@@ -153,13 +200,20 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
 
         SelectedAtlasPageOption = ResolveSelectedAtlasPageOption(
             preferredAtlasPage,
-            previousSelectedIndex);
+            previousSelectedIndex,
+            PreviewState);
     }
 
     private SpineAtlasPageOptionViewModel? ResolveSelectedAtlasPageOption(
         SpineAtlasPageDto? preferredAtlasPage,
-        int? previousSelectedIndex)
+        int? previousSelectedIndex,
+        WorkspaceSpinePreviewStateDto? previewState)
     {
+        if (TryFindAtlasPageOption(previewState, out var previewStateOption))
+        {
+            return previewStateOption;
+        }
+
         if (preferredAtlasPage is not null &&
             TryFindAtlasPageOption(preferredAtlasPage, out var preferredOption))
         {
@@ -187,6 +241,60 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
         return option is not null;
     }
 
+    private bool TryFindAtlasPageOption(
+        WorkspaceSpinePreviewStateDto? previewState,
+        out SpineAtlasPageOptionViewModel option)
+    {
+        option = null!;
+        if (previewState is null)
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(previewState.SelectedAtlasPageName))
+        {
+            var atlasPageName = previewState.SelectedAtlasPageName.Trim();
+            option = AtlasPageOptions.FirstOrDefault(candidate =>
+                string.Equals(candidate.AtlasPage.Name, atlasPageName, StringComparison.Ordinal))!;
+            if (option is not null)
+            {
+                return true;
+            }
+        }
+
+        if (previewState.SelectedAtlasPageIndex is >= 0 &&
+            previewState.SelectedAtlasPageIndex.Value < AtlasPageOptions.Count)
+        {
+            option = AtlasPageOptions[previewState.SelectedAtlasPageIndex.Value];
+            return true;
+        }
+
+        return false;
+    }
+
+    private void RestoreSelectedAtlasPageOption(WorkspaceSpinePreviewStateDto? previewState)
+    {
+        if (AtlasPageOptions.Count == 0 ||
+            !TryFindAtlasPageOption(previewState, out var option) ||
+            ReferenceEquals(SelectedAtlasPageOption, option))
+        {
+            return;
+        }
+
+        SelectedAtlasPageOption = option;
+    }
+
+    private void OnSpineAnimationPreviewStateChanged(object? sender, EventArgs e)
+    {
+        CapturePreviewState();
+        PreviewStateChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnInspectorSectionScrollPositionChanged(object? sender, EventArgs e)
+    {
+        InspectorScrollStateChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     private void ClearAtlasPageOptions()
     {
         AtlasPageOptions.Clear();
@@ -199,6 +307,11 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
             ? item.GroupId
             : item.DisplayName.Trim();
     }
+
+    private static string? NormalizeAtlasPageName(string? atlasPageName) =>
+        string.IsNullOrWhiteSpace(atlasPageName)
+            ? null
+            : atlasPageName.Trim();
 
     private static string CreateToolTipText(SpineAssetGroupDto item)
     {

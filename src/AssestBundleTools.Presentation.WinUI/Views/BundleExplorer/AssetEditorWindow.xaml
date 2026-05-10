@@ -124,19 +124,15 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <ScrollViewer
+                <controls:InspectorPreviewSurfaceView
                     MinHeight="0"
-                    HorizontalScrollBarVisibility="Disabled"
-                    HorizontalScrollMode="Disabled"
-                    VerticalScrollBarVisibility="Auto"
-                    VerticalScrollMode="Enabled"
-                    ZoomMode="Disabled">
-                    <controls:InspectorPreviewSurfaceView
-                        FixedPreviewSurfaceHeight="520"
-                        ViewModel="{x:Bind ViewModel.Inspector, Mode=OneWay}"
-                        OpenPreviewLocationRequested="OnPreviewSurfaceOpenPreviewLocationRequested"
-                        ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested" />
-                </ScrollViewer>
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    FixedPreviewSurfaceHeight="520"
+                    UseAvailablePreviewSpace="True"
+                    ViewModel="{x:Bind ViewModel.Inspector, Mode=OneWay}"
+                    OpenPreviewLocationRequested="OnPreviewSurfaceOpenPreviewLocationRequested"
+                    ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested" />
 
                 <Border
                     Grid.Row="1"

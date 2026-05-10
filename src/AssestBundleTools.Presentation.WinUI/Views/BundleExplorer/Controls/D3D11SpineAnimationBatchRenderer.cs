@@ -74,6 +74,7 @@ internal sealed class D3D11SpineAnimationBatchRenderer : IDisposable
         float viewportWidth,
         float viewportHeight,
         SpineAnimationPreviewViewport viewport,
+        SpineAnimationAutoFitBounds autoFitBounds,
         out TimeSpan clipProjectionElapsed)
     {
         ArgumentNullException.ThrowIfNull(device);
@@ -92,7 +93,8 @@ internal sealed class D3D11SpineAnimationBatchRenderer : IDisposable
             batches,
             viewportWidth,
             viewportHeight,
-            viewport);
+            viewport,
+            autoFitBounds);
         if (!transform.IsValid)
         {
             return;
