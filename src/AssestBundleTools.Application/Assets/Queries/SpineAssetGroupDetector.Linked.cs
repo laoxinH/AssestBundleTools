@@ -66,14 +66,6 @@ internal static partial class SpineAssetGroupDetector
             {
                 foreach (var atlasLink in ResolveAtlasLinks(skeletonHost, textPartsByAssetKey, detailsByAssetKey))
                 {
-                    if (!string.Equals(
-                            atlasLink.Atlas.GroupKey,
-                            skeletonPart.GroupKey,
-                            StringComparison.OrdinalIgnoreCase))
-                    {
-                        continue;
-                    }
-
                     links.Add(new LinkedSpineAssetGroup(
                         skeletonPart.GroupKey,
                         skeletonPart.Part,
@@ -89,6 +81,33 @@ internal static partial class SpineAssetGroupDetector
             .GroupBy(static link => link.GroupKey, StringComparer.OrdinalIgnoreCase)
             .SelectMany(group => CreateLinkedGroupDtos(targetBundleId, group.ToArray()))
             .ToArray();
+    }
+
+    private static IReadOnlySet<string> CreateLinkedGroupKeySet(
+        IReadOnlyList<SpineAssetGroupDto> linkedGroups,
+        IReadOnlyList<ClassifiedPart> textParts)
+    {
+        var linkedGroupKeys = linkedGroups
+            .Select(static group => group.GroupKey)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (linkedGroups.Count == 0)
+        {
+            return linkedGroupKeys;
+        }
+
+        var linkedPartKeys = linkedGroups
+            .SelectMany(static group => group.SkeletonAssets.Concat(group.AtlasAssets))
+            .Select(static part => CreateAssetKey(part))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var textPart in textParts)
+        {
+            if (linkedPartKeys.Contains(CreateAssetKey(textPart.Part)))
+            {
+                linkedGroupKeys.Add(textPart.GroupKey);
+            }
+        }
+
+        return linkedGroupKeys;
     }
 
     private static IEnumerable<LinkedAtlasAsset> ResolveAtlasLinks(

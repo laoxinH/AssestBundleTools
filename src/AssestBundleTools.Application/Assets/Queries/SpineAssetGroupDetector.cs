@@ -51,6 +51,7 @@ internal static partial class SpineAssetGroupDetector
 
         var textParts = new List<ClassifiedPart>();
         var anchorGroupKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var classifiedTextPartKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var candidate in candidates)
         {
             if (!TryCreateTextPart(candidate, out var classifiedPart))
@@ -59,11 +60,27 @@ internal static partial class SpineAssetGroupDetector
             }
 
             textParts.Add(classifiedPart);
+            classifiedTextPartKeys.Add(CreateAssetKey(classifiedPart.Part));
             if (candidate.Bundle.BundleId.Equals(targetBundleId))
             {
                 anchorGroupKeys.Add(classifiedPart.GroupKey);
             }
         }
+
+        AddDependencyClassifiedTextParts(
+            targetBundleId,
+            candidates,
+            textParts,
+            classifiedTextPartKeys,
+            anchorGroupKeys,
+            assetDetailsByAssetKey);
+
+        AddExtensionlessSkeletonParts(
+            targetBundleId,
+            candidates,
+            textParts,
+            classifiedTextPartKeys,
+            anchorGroupKeys);
 
         var textureCandidates = candidates
             .Select(TryCreateTexturePart)
@@ -76,9 +93,7 @@ internal static partial class SpineAssetGroupDetector
             textParts,
             textureCandidates,
             assetDetailsByAssetKey);
-        var linkedGroupKeys = linkedGroups
-            .Select(static group => group.GroupKey)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var linkedGroupKeys = CreateLinkedGroupKeySet(linkedGroups, textParts);
 
         var allGroups = anchorGroupKeys
             .Where(groupKey => !linkedGroupKeys.Contains(groupKey))

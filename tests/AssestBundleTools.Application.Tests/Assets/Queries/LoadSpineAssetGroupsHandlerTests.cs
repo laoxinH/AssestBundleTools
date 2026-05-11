@@ -12,7 +12,7 @@ using AssestBundleTools.Domain.Workspace;
 
 namespace AssestBundleTools.Application.Tests.Assets.Queries;
 
-internal static class LoadSpineAssetGroupsHandlerTests
+internal static partial class LoadSpineAssetGroupsHandlerTests
 {
     public static async Task HandleAsync_ShouldGroupSkeletonAtlasAndWorkspaceTexturePages()
     {

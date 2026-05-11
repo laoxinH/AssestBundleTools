@@ -343,7 +343,7 @@ Spine 动画的长期高性能播放路线采用 runtime playback session，而�
 - Presentation 恢复弹窗当前已在显示前调用 `AssetEditDraftRestorePlanGateway` 做轻量预检，并在弹窗中显示可恢复、缺失、来源不匹配、已过期和引用无效的草稿引用数量；该预检会刷新提示文案、重复弹窗判定和后续可保留的草稿标记集合，不自动恢复草稿内容，也不改变用户是否主动恢复窗口的控制权。组合根已接入 `WorkspaceChangeSetAssetEditDraftStore`，从 `staging/changes/<workspaceKey>.json` 的 `editDrafts[]` 描述列表读取草稿元数据。
 - 当前仍不自动弹出独立资源编辑窗口，也不恢复最大化 / 最小化、显示器或真实编辑草稿内容；当预检计划可用时，草稿选项只决定本次成功打开的标签是否带回预检为可恢复的 `EditDraftReference` 标记，缺失、来源不匹配、已过期和引用无效的草稿标记不会重新挂回新标签。真实草稿确认 / 丢弃 / 恢复队列仍留给后续编辑器模型。
 - 当前打开资源详情、依赖跳转、Spine 组文档和新窗口打开入口会先检查主窗口与所有独立资源编辑窗口：如果目标文档已打开，则直接激活并切换到已有标签，再把所在窗口置前；只有未命中现有标签时才继续创建新的文档标签或独立窗口。
-- Spine 资源组当前作为统一资源文档标签打开到普通独立资源编辑窗口；会话内混合标签、拖拽合并、放回主窗口、冲突激活和 `openAssetEditorWindows[]` 快照恢复均复用统一文档标签链路。Spine 组恢复只持久化 `BundleId + GroupId + DisplayName + GroupKey` 与轻量预览观察状态，不持久化解析详情或预览载荷。
+- Spine 资源组当前作为统一资源文档标签打开到普通独立资源编辑窗口；会话内混合标签、拖拽合并、放回主窗口、冲突激活和 `openAssetEditorWindows[]` 快照恢复均复用统一文档标签链路。Spine 组恢复只持久化 `BundleId + GroupId + DisplayName + GroupKey` 与轻量预览观察状态，不持久化解析详情或预览载荷。组识别以 `.skel / .skel.bytes / .json + .atlas` 后缀组合为快路径；当 Unity AB 去掉 TextAsset 文件后缀时，会通过 `SkeletonData` / `Atlas` MonoBehaviour 依赖树把无扩展 TextAsset 回填为 skeleton / atlas，并优先按 `SkeletonData -> Atlas -> Material -> Texture2D` 依赖链拆分多骨架、多 atlas、多贴图组。同目录同 basename 的无扩展 TextAsset 与 `.atlas` 配对仍作为缺少依赖详情时的保守兼容 fallback。
 - 主窗口中间资产窗格的普通资源行和 Spine 组行已接入右键菜单入口；`在新窗口中打开` 会先把目标行同步为当前资源文档，再复用统一的新窗口打开逻辑，因此不会生成绕过资源详情标签组的临时预览宿主。
 
 ### 第五阶段：Spine GPU 批量渲染
