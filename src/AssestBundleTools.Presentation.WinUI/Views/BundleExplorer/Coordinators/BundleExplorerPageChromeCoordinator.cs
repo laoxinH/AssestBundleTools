@@ -1,5 +1,6 @@
 using AssestBundleTools.Presentation.WinUI.Localization;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
@@ -56,7 +57,16 @@ public sealed partial class BundleExplorerPage
             _owner.CenterPanelTitleText.Text = UiText.Get(ResourceKeys.BundleExplorerPageCenterPanelTitle);
             _owner.RightPanelTitleText.Text = UiText.Get(ResourceKeys.BundleExplorerPageRightPanelTitle);
             ToolTipService.SetToolTip(
+                _owner.LocateActiveDocumentButton,
+                UiText.Get(ResourceKeys.AssetEditorWindowLocateActiveDocumentText));
+            _owner.LocateActiveDocumentButton.SetValue(
+                AutomationProperties.NameProperty,
+                UiText.Get(ResourceKeys.AssetEditorWindowLocateActiveDocumentText));
+            ToolTipService.SetToolTip(
                 _owner.OpenAssetDocumentGroupInNewWindowButton,
+                UiText.Get(ResourceKeys.AssetEditorWindowOpenGroupInNewWindowText));
+            _owner.OpenAssetDocumentGroupInNewWindowButton.SetValue(
+                AutomationProperties.NameProperty,
                 UiText.Get(ResourceKeys.AssetEditorWindowOpenGroupInNewWindowText));
             ToolTipService.SetToolTip(
                 _owner.AssetDocumentGroupDragHandle,

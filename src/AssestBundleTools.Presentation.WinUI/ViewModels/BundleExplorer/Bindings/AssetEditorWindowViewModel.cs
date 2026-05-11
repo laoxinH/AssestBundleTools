@@ -143,6 +143,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject
             _operationFeedbackBridge,
             modificationActionHandler,
             () => DocumentGroup.ActiveAssetTab,
+            () => DocumentGroup.ActiveSpineGroupTab,
             () => Inspector,
             () => IsBusy,
             value => IsBusy = value,
@@ -378,6 +379,10 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject
         if (TryGetActiveAssetDocumentState(out var assetTab, out var details))
         {
             _assetInspectorPresenter.SyncInspectorActionStates(Inspector, assetTab, details, IsBusy);
+        }
+        else if (DocumentGroup.ActiveSpineGroupTab is { } spineGroupTab)
+        {
+            _spineGroupInspectorPresenter.SyncInspectorActionStates(Inspector, spineGroupTab, IsBusy);
         }
         else
         {

@@ -49,13 +49,15 @@ internal sealed class SpineAssetGroupInspectorPresenter
                 ResourceKeys.InspectorSpineGroupAssetCountFormat,
                 parts.Length.ToString(CultureInfo.CurrentCulture)),
             pathIdText: string.Empty,
-            extractCapabilityText: GetString(ResourceKeys.InspectorCapabilityUnavailable),
+            extractCapabilityText: parts.Length > 0
+                ? GetString(ResourceKeys.InspectorCapabilityAvailable)
+                : GetString(ResourceKeys.InspectorCapabilityUnavailable),
             fileReplacementCapabilityText: GetString(ResourceKeys.InspectorCapabilityUnavailable),
             workspaceReplacementCapabilityText: GetString(ResourceKeys.InspectorCapabilityUnavailable),
             replacementSourceText: GetString(ResourceKeys.InspectorReplacementSourceNone),
             replacementStatusText: GetString(ResourceKeys.InspectorReplacementStatusNone),
             changeSummaryText: GetString(ResourceKeys.InspectorChangeSummaryNone),
-            canExtract: false,
+            canExtract: parts.Length > 0,
             canSelectFileReplacementSource: false,
             canSelectReplacementSource: false,
             canApplyReplacement: false,
@@ -97,6 +99,22 @@ internal sealed class SpineAssetGroupInspectorPresenter
         ArgumentNullException.ThrowIfNull(groupTab);
 
         groupTab.Inspector.SetPreviewLoading(GetString(ResourceKeys.InspectorPreviewLoadingText));
+    }
+
+    public void SyncInspectorActionStates(
+        InspectorPanelViewModel inspector,
+        SpineAssetGroupDocumentTabViewModel? groupTab,
+        bool isBusy)
+    {
+        ArgumentNullException.ThrowIfNull(inspector);
+
+        inspector.CanExtract = !isBusy &&
+                               groupTab is not null &&
+                               EnumerateParts(groupTab.Item).Any();
+        inspector.CanSelectFileReplacementSource = false;
+        inspector.CanSelectReplacementSource = false;
+        inspector.CanApplyReplacement = false;
+        inspector.CanUndoReplacement = false;
     }
 
     private AssetDependencyViewModel CreatePartDependency(SpineAssetGroupPartDto part)

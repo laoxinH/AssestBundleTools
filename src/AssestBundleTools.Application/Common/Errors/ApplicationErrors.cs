@@ -143,6 +143,51 @@ public static class ApplicationErrors
             parameters: CreateParameters(("WorkspaceId", workspaceId.ToString())),
             isUserActionable: true);
 
+    public static AppError NoSpineAssetGroupExtractionCandidates(string groupId) =>
+        new(
+            code: "Asset.Extract.SpineGroup.NoCandidates",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.Extract.SpineGroup.NoCandidates",
+            parameters: CreateParameters(("GroupId", groupId)),
+            isUserActionable: true);
+
+    public static AppError AssetExtractionOutputDirectoryRequired() =>
+        new(
+            code: "Asset.Extract.OutputDirectoryRequired",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.Extract.OutputDirectoryRequired",
+            isUserActionable: true);
+
+    public static AppError AssetExtractionNotSupported(AssetId assetId) =>
+        new(
+            code: "Asset.Extract.NotSupported",
+            category: ErrorCategory.Unsupported,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.Extract.NotSupported",
+            parameters: CreateParameters(("AssetId", assetId.ToString())),
+            isUserActionable: true);
+
+    public static AppError AssetExtractionPayloadUnavailable(AssetId assetId) =>
+        new(
+            code: "Asset.Extract.PayloadUnavailable",
+            category: ErrorCategory.ParseFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Asset.Extract.PayloadUnavailable",
+            parameters: CreateParameters(("AssetId", assetId.ToString())),
+            isUserActionable: true);
+
+    public static AppError AssetExtractionWriteFailed(string outputPath, string? detail = null) =>
+        new(
+            code: "Asset.Extract.WriteFailed",
+            category: ErrorCategory.IoFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Asset.Extract.WriteFailed",
+            parameters: CreateParameters(
+                ("OutputPath", outputPath),
+                ("Detail", detail)));
+
     public static AppError NoBatchReplacementCandidates(WorkspaceId workspaceId) =>
         new(
             code: "Asset.Replace.NoBatchCandidates",

@@ -1,8 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Common.Results;
-using AssestBundleTools.Application.Extraction.Commands;
-using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Replacement.Commands;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Queries;
@@ -11,16 +9,12 @@ using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
-
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 
 /// <summary>
-/// 聚合资产级提取、替换与撤销动作，避免主工作流继续堆积动作编排细节。
+/// 聚合资产级替换与撤销动作，并兼容旧的资产提取入口委托。
 /// </summary>
 internal sealed class BundleExplorerAssetModificationActionHandler
 {
@@ -29,6 +23,7 @@ internal sealed class BundleExplorerAssetModificationActionHandler
     private readonly IAppNotificationService _appNotificationService;
     private readonly ILocalizationService _localizationService;
     private readonly IFilePickerService _filePickerService;
+    private readonly BundleExplorerAssetExtractionActionHandler _extractionActionHandler;
 
     public BundleExplorerAssetModificationActionHandler(
         IWorkspaceAssetOperationGateway workspaceAssetOperationGateway,
@@ -42,122 +37,52 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _filePickerService = filePickerService ?? throw new ArgumentNullException(nameof(filePickerService));
+        _extractionActionHandler = new BundleExplorerAssetExtractionActionHandler(
+            _workspaceAssetOperationGateway,
+            _appLogService,
+            _appNotificationService,
+            _localizationService,
+            _filePickerService);
     }
 
-    public async Task ExtractSelectedAssetAsync(
+    public Task ExtractSelectedAssetAsync(
         WorkspaceSummaryDto workspaceSummary,
         AssetDetailsDto details,
         Action<bool> setBusyState,
         Func<Task> refreshPrimaryPaneAsync,
-        Action<IReadOnlyList<AppError>> appendResultFailure)
-    {
-        ArgumentNullException.ThrowIfNull(workspaceSummary);
-        ArgumentNullException.ThrowIfNull(details);
-        ArgumentNullException.ThrowIfNull(setBusyState);
-        ArgumentNullException.ThrowIfNull(refreshPrimaryPaneAsync);
-        ArgumentNullException.ThrowIfNull(appendResultFailure);
+        Action<IReadOnlyList<AppError>> appendResultFailure) =>
+        _extractionActionHandler.ExtractSelectedAssetAsync(
+            workspaceSummary,
+            details,
+            setBusyState,
+            refreshPrimaryPaneAsync,
+            appendResultFailure);
 
-        setBusyState(true);
-        try
-        {
-            var result = await _workspaceAssetOperationGateway.ExtractAssetAsync(
-                new ExtractAssetCommand(
-                    workspaceSummary.WorkspaceId,
-                    details.BundleId,
-                    details.AssetId));
-
-            if (!TryGetValue(result, out var extractionResult, appendResultFailure))
-            {
-                return;
-            }
-
-            _appLogService.AppendInfo(_localizationService.GetFormattedString(
-                ResourceKeys.BundleExplorerLogAssetExtracted,
-                extractionResult.AssetName,
-                extractionResult.SuggestedOutputPath));
-
-            ShowOperationNotification(
-                GetString(ResourceKeys.AppNotificationSuccessTitle),
-                _localizationService.GetFormattedString(
-                    ResourceKeys.BundleExplorerNotificationAssetExtracted,
-                    extractionResult.AssetName),
-                AppNotificationSeverity.Success);
-
-            await refreshPrimaryPaneAsync();
-        }
-        finally
-        {
-            setBusyState(false);
-        }
-    }
-
-    public async Task ExtractSelectedAssetsAsync(
+    public Task ExtractSelectedAssetsAsync(
         WorkspaceSummaryDto workspaceSummary,
         IReadOnlyList<AssetListEntryViewModel> selectedEntries,
         Action<bool> setBusyState,
         Func<Task> refreshPrimaryPaneAsync,
-        Action<IReadOnlyList<AppError>> appendResultFailure)
-    {
-        ArgumentNullException.ThrowIfNull(workspaceSummary);
-        ArgumentNullException.ThrowIfNull(selectedEntries);
-        ArgumentNullException.ThrowIfNull(setBusyState);
-        ArgumentNullException.ThrowIfNull(refreshPrimaryPaneAsync);
-        ArgumentNullException.ThrowIfNull(appendResultFailure);
+        Action<IReadOnlyList<AppError>> appendResultFailure) =>
+        _extractionActionHandler.ExtractSelectedAssetsAsync(
+            workspaceSummary,
+            selectedEntries,
+            setBusyState,
+            refreshPrimaryPaneAsync,
+            appendResultFailure);
 
-        if (selectedEntries.Count == 0)
-        {
-            return;
-        }
-
-        setBusyState(true);
-        try
-        {
-            var extractedResults = new List<AssetExtractionResultDto>(selectedEntries.Count);
-
-            foreach (var entry in selectedEntries)
-            {
-                var result = await _workspaceAssetOperationGateway.ExtractAssetAsync(
-                    new ExtractAssetCommand(
-                        workspaceSummary.WorkspaceId,
-                        entry.Item.BundleId,
-                        entry.Item.AssetId));
-
-                if (!TryGetValue(result, out var extractionResult, appendResultFailure))
-                {
-                    continue;
-                }
-
-                extractedResults.Add(extractionResult);
-                _appLogService.AppendInfo(_localizationService.GetFormattedString(
-                    ResourceKeys.BundleExplorerLogAssetExtracted,
-                    extractionResult.AssetName,
-                    extractionResult.SuggestedOutputPath));
-            }
-
-            if (extractedResults.Count == 0)
-            {
-                return;
-            }
-
-            _appLogService.AppendInfo(_localizationService.GetFormattedString(
-                ResourceKeys.BundleExplorerLogBatchAssetsExtracted,
-                extractedResults.Count,
-                extractedResults[0].SuggestedOutputPath));
-
-            ShowOperationNotification(
-                GetString(ResourceKeys.AppNotificationSuccessTitle),
-                _localizationService.GetFormattedString(
-                    ResourceKeys.BundleExplorerNotificationBatchAssetsExtracted,
-                    extractedResults.Count),
-                AppNotificationSeverity.Success);
-
-            await refreshPrimaryPaneAsync();
-        }
-        finally
-        {
-            setBusyState(false);
-        }
-    }
+    public Task ExtractSpineAssetGroupAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        SpineAssetGroupDocumentTabViewModel spineGroupTab,
+        Action<bool> setBusyState,
+        Func<Task> refreshPrimaryPaneAsync,
+        Action<IReadOnlyList<AppError>> appendResultFailure) =>
+        _extractionActionHandler.ExtractSpineAssetGroupAsync(
+            workspaceSummary,
+            spineGroupTab,
+            setBusyState,
+            refreshPrimaryPaneAsync,
+            appendResultFailure);
 
     public async Task SelectWorkspaceReplacementSourceAsync(
         WorkspaceSummaryDto workspaceSummary,
@@ -314,7 +239,9 @@ internal sealed class BundleExplorerAssetModificationActionHandler
                         details.BundleId,
                         details.AssetId,
                         assetTab.PendingFileReplacementCandidate.SourceFilePath,
-                        assetTab.PendingFileReplacementCandidate.SourceAssetType));
+                        assetTab.PendingFileReplacementCandidate.SourceAssetType,
+                        workspaceSummary.WorkspaceKey,
+                        workspaceSummary.WorkspaceDataRootPath));
 
                 if (!TryGetValue(fileResult, out var fileReplacementResult, appendResultFailure))
                 {
@@ -350,7 +277,9 @@ internal sealed class BundleExplorerAssetModificationActionHandler
                     details.BundleId,
                     details.AssetId,
                     assetTab.PendingWorkspaceReplacementCandidate.SourceBundleId,
-                    assetTab.PendingWorkspaceReplacementCandidate.SourceAssetId));
+                    assetTab.PendingWorkspaceReplacementCandidate.SourceAssetId,
+                    workspaceSummary.WorkspaceKey,
+                    workspaceSummary.WorkspaceDataRootPath));
 
             if (!TryGetValue(workspaceResult, out var replacementResult, appendResultFailure))
             {
@@ -401,7 +330,9 @@ internal sealed class BundleExplorerAssetModificationActionHandler
                 new UndoAssetReplacementCommand(
                     workspaceSummary.WorkspaceId,
                     details.BundleId,
-                    details.AssetId));
+                    details.AssetId,
+                    workspaceSummary.WorkspaceKey,
+                    workspaceSummary.WorkspaceDataRootPath));
 
             if (!TryGetValue(result, out var undoResult, appendResultFailure))
             {

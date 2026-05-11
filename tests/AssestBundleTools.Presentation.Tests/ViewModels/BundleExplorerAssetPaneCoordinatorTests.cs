@@ -54,6 +54,20 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
         Assert.Equal(0, context.SynchronizeInspectorCallCount);
     }
 
+    [Fact]
+    public async Task RefreshPrimaryPaneAsync_ShouldKeepPrimaryPaneSynchronizationActiveUntilInspectorSync()
+    {
+        var context = CreateContext();
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.Assets;
+
+        await context.Coordinator.RefreshPrimaryPaneAsync(
+            context.CaptureActiveTabState,
+            preserveCurrentDocumentTab: false);
+
+        Assert.True(context.ObservedSynchronizationDuringInspectorSync.GetValueOrDefault());
+        Assert.False(context.Coordinator.IsSynchronizingPrimaryPaneState);
+    }
+
     private static TestContext CreateContext()
     {
         var localizationService = new TestLocalizationService();
@@ -94,7 +108,9 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
         documentWorkspace.SetActiveBundleTab(bundleTab);
 
         var synchronizeInspectorCallCount = 0;
-        var coordinator = new BundleExplorerAssetPaneCoordinator(
+        bool? observedSynchronizationDuringInspectorSync = null;
+        BundleExplorerAssetPaneCoordinator? coordinator = null;
+        coordinator = new BundleExplorerAssetPaneCoordinator(
             CreateWorkspaceExplorerGateway(workspaceSummary.WorkspaceId, bundleNode.BundleId, bundleNode.DisplayName),
             new TestAppLogService(),
             localizationService,
@@ -108,6 +124,7 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
             _ =>
             {
                 synchronizeInspectorCallCount++;
+                observedSynchronizationDuringInspectorSync = coordinator?.IsSynchronizingPrimaryPaneState;
                 return Task.CompletedTask;
             },
             static _ => { },
@@ -119,7 +136,8 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
             primaryPane,
             bundleTab,
             coordinator,
-            () => synchronizeInspectorCallCount);
+            () => synchronizeInspectorCallCount,
+            () => observedSynchronizationDuringInspectorSync);
     }
 
     private static TestWorkspaceExplorerGateway CreateWorkspaceExplorerGateway(
@@ -227,9 +245,12 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
         AssetPaneViewModel PrimaryPane,
         BundleDocumentTabViewModel BundleTab,
         BundleExplorerAssetPaneCoordinator Coordinator,
-        Func<int> GetSynchronizeInspectorCallCount)
+        Func<int> GetSynchronizeInspectorCallCount,
+        Func<bool?> GetObservedSynchronizationDuringInspectorSync)
     {
         public int SynchronizeInspectorCallCount => GetSynchronizeInspectorCallCount();
+
+        public bool? ObservedSynchronizationDuringInspectorSync => GetObservedSynchronizationDuringInspectorSync();
 
         public void CaptureActiveTabState()
         {

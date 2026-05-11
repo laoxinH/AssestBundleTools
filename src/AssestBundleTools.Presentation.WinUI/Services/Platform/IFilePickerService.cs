@@ -32,6 +32,23 @@ public interface IFilePickerService
     Task<string?> PickSpineFrameSequenceExportDirectoryAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// 选择 Spine 资源组整组提取的目标目录。
+    /// 返回 <see langword="null"/> 表示用户主动取消。
+    /// </summary>
+    Task<string?> PickSpineAssetGroupExtractionDirectoryAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 为当前资源提取流程选择一个目标保存文件。
+    /// 返回 <see langword="null"/> 表示用户主动取消，不应视为错误。
+    /// </summary>
+    Task<string?> PickAssetExtractionOutputFileAsync(
+        AssetType assetType,
+        string assetName,
+        string? assetPath,
+        string? containerPath,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// 为当前资源替换流程选择一个外部文件来源。
     /// 返回 <see langword="null"/> 表示用户主动取消，不应视为错误。
     /// </summary>

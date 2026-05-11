@@ -85,6 +85,23 @@ internal sealed partial class SpineAnimationPreviewBuilder
             return SpineAnimationPreviewBuildResult.Empty;
         }
 
+        return await BuildJsonSkeletonPreviewFromTextAsync(
+            skeletonAsset,
+            groupKey,
+            skeletonJson,
+            atlasPages,
+            atlasTexts,
+            cancellationToken);
+    }
+
+    private async Task<SpineAnimationPreviewBuildResult> BuildJsonSkeletonPreviewFromTextAsync(
+        SpineAssetGroupPartDto skeletonAsset,
+        string groupKey,
+        string skeletonJson,
+        IReadOnlyList<SpineAtlasPageDto> atlasPages,
+        IReadOnlyList<string> atlasTexts,
+        CancellationToken cancellationToken)
+    {
         var runtimePreviewResult = await TryBuildRuntimePreviewAsync(
             skeletonAsset,
             groupKey,
@@ -162,6 +179,23 @@ internal sealed partial class SpineAnimationPreviewBuilder
                     runtimePreviewResult.Diagnostics);
             }
         }
+        else if (TryReadSkeletonJson(previewResult, out var skeletonJson) &&
+                 LooksLikeJsonObject(skeletonJson))
+        {
+            var jsonPreviewResult = await BuildJsonSkeletonPreviewFromTextAsync(
+                skeletonAsset,
+                groupKey,
+                skeletonJson,
+                atlasPages,
+                atlasTexts,
+                cancellationToken);
+            if (jsonPreviewResult.IsCancelled ||
+                jsonPreviewResult.Preview is not null ||
+                jsonPreviewResult.Diagnostics.Count > 0)
+            {
+                return jsonPreviewResult;
+            }
+        }
 
         return SpineAnimationPreviewBuildResult.EmptyWithDiagnostics(
         [
@@ -236,6 +270,21 @@ internal sealed partial class SpineAnimationPreviewBuilder
         {
             return false;
         }
+    }
+
+    private static bool LooksLikeJsonObject(string text)
+    {
+        foreach (var character in text)
+        {
+            if (char.IsWhiteSpace(character))
+            {
+                continue;
+            }
+
+            return character == '{';
+        }
+
+        return false;
     }
 
 }

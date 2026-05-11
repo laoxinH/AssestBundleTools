@@ -1459,10 +1459,14 @@
                     </TabView>
 
                     <controls:AssetPaneView
+                        x:Name="PrimaryAssetPaneView"
                         Grid.Row="2"
                         AssetSelectionChanged="OnPrimaryPaneAssetSelectionChanged"
                         BatchExtractRequested="OnPrimaryPaneBatchExtractRequested"
+                        ExtractSelectedItemRequested="OnPrimaryPaneExtractSelectedItemRequested"
                         FilterChanged="OnPrimaryPaneFilterChanged"
+                        OpenSelectedItemInNewWindowRequested="OnPrimaryPaneOpenSelectedItemInNewWindowRequested"
+                        ReplaceSelectedAssetRequested="OnPrimaryPaneReplaceSelectedAssetRequested"
                         ViewModeChanged="OnPrimaryPaneViewModeChanged"
                         ViewModel="{x:Bind ViewModel.AssetWorkflow.PrimaryPane, Mode=OneWay}" />
                 </Grid>
@@ -1517,17 +1521,32 @@
                                 Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
                         </Grid>
 
-                        <Button
-                            x:Name="OpenAssetDocumentGroupInNewWindowButton"
+                        <StackPanel
                             Grid.Column="1"
-                            Click="OnOpenAssetDocumentGroupInNewWindowButtonClick"
-                            IsEnabled="{x:Bind ViewModel.DocumentWorkspace.HasDocumentTabs, Mode=OneWay}"
-                            Style="{StaticResource WorkbenchTitleIconButtonStyle}">
-                            <FontIcon
-                                FontFamily="Segoe Fluent Icons"
-                                FontSize="14"
-                                Glyph="&#xE8A7;" />
-                        </Button>
+                            Orientation="Horizontal"
+                            Spacing="6">
+                            <Button
+                                x:Name="LocateActiveDocumentButton"
+                                Click="OnLocateActiveDocumentButtonClick"
+                                IsEnabled="{x:Bind ViewModel.DocumentWorkspace.HasDocumentTabs, Mode=OneWay}"
+                                Style="{StaticResource WorkbenchTitleIconButtonStyle}">
+                                <FontIcon
+                                    FontFamily="Segoe Fluent Icons"
+                                    FontSize="14"
+                                    Glyph="&#xE707;" />
+                            </Button>
+
+                            <Button
+                                x:Name="OpenAssetDocumentGroupInNewWindowButton"
+                                Click="OnOpenAssetDocumentGroupInNewWindowButtonClick"
+                                IsEnabled="{x:Bind ViewModel.DocumentWorkspace.HasDocumentTabs, Mode=OneWay}"
+                                Style="{StaticResource WorkbenchTitleIconButtonStyle}">
+                                <FontIcon
+                                    FontFamily="Segoe Fluent Icons"
+                                    FontSize="14"
+                                    Glyph="&#xE8A7;" />
+                            </Button>
+                        </StackPanel>
                     </Grid>
 
                     <TabView

@@ -13,4 +13,6 @@ public sealed record WorkspaceSummaryDto(
     PaneId ActivePaneId,
     int BundleCount,
     int AssetCount,
-    DateTimeOffset OpenedAtUtc);
+    DateTimeOffset OpenedAtUtc,
+    string? WorkspaceKey = null,
+    string? WorkspaceDataRootPath = null);

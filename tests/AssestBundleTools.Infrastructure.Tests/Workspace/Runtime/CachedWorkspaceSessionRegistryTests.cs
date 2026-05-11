@@ -397,4 +397,5 @@ internal static class CachedWorkspaceSessionRegistryTests
         public void DeleteWorkspace(string workspaceKey) =>
             throw new NotSupportedException();
     }
+
 }

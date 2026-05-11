@@ -12,7 +12,7 @@ namespace AssestBundleTools.Application.Extraction.Services;
 /// </summary>
 /// <remarks>
 /// 这里不做真实导出，只负责基于现有工作区读模型把范围、输出目录和候选项聚合出来，
-/// 供预览查询和执行骨架复用，避免相同的遍历逻辑在多个 Handler 中重复出现。
+/// 供预览查询和执行流程复用，避免相同的遍历逻辑在多个 Handler 中重复出现。
 /// </remarks>
 internal static class WorkspaceBatchExtractionPlanner
 {
@@ -98,7 +98,7 @@ internal static class WorkspaceBatchExtractionPlanner
         return bundleNodes.Any() ? "CurrentWorkspace" : string.Empty;
     }
 
-    private static string ResolveOutputDirectory(string? outputDirectory, WorkspaceId workspaceId, AssetType? assetTypeFilter)
+    public static string ResolveOutputDirectory(string? outputDirectory, WorkspaceId workspaceId, AssetType? assetTypeFilter)
     {
         if (!string.IsNullOrWhiteSpace(outputDirectory))
         {
@@ -109,7 +109,7 @@ internal static class WorkspaceBatchExtractionPlanner
         return Path.Combine("Exports", workspaceId.Value, scopeFolder);
     }
 
-    private static string BuildSuggestedOutputPath(
+    public static string BuildSuggestedOutputPath(
         string outputDirectory,
         string bundleDisplayName,
         string assetName,

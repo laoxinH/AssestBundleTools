@@ -13,6 +13,7 @@ namespace AssestBundleTools.Application.Workspace.Services;
 public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGateway
 {
     private readonly ExtractAssetHandler _extractAssetHandler;
+    private readonly ExtractSpineAssetGroupHandler _extractSpineAssetGroupHandler;
     private readonly GetFileReplacementCandidateHandler _getFileReplacementCandidateHandler;
     private readonly GetWorkspaceReplacementCandidatesHandler _getWorkspaceReplacementCandidatesHandler;
     private readonly ReplaceAssetFromFileHandler _replaceAssetFromFileHandler;
@@ -21,6 +22,7 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
 
     public WorkspaceAssetOperationGateway(
         ExtractAssetHandler extractAssetHandler,
+        ExtractSpineAssetGroupHandler extractSpineAssetGroupHandler,
         GetFileReplacementCandidateHandler getFileReplacementCandidateHandler,
         GetWorkspaceReplacementCandidatesHandler getWorkspaceReplacementCandidatesHandler,
         ReplaceAssetFromFileHandler replaceAssetFromFileHandler,
@@ -28,6 +30,7 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         UndoAssetReplacementHandler undoAssetReplacementHandler)
     {
         _extractAssetHandler = extractAssetHandler ?? throw new ArgumentNullException(nameof(extractAssetHandler));
+        _extractSpineAssetGroupHandler = extractSpineAssetGroupHandler ?? throw new ArgumentNullException(nameof(extractSpineAssetGroupHandler));
         _getFileReplacementCandidateHandler = getFileReplacementCandidateHandler ?? throw new ArgumentNullException(nameof(getFileReplacementCandidateHandler));
         _getWorkspaceReplacementCandidatesHandler = getWorkspaceReplacementCandidatesHandler ?? throw new ArgumentNullException(nameof(getWorkspaceReplacementCandidatesHandler));
         _replaceAssetFromFileHandler = replaceAssetFromFileHandler ?? throw new ArgumentNullException(nameof(replaceAssetFromFileHandler));
@@ -39,6 +42,11 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         ExtractAssetCommand command,
         CancellationToken cancellationToken = default) =>
         _extractAssetHandler.HandleAsync(command, cancellationToken);
+
+    public Task<Result<SpineAssetGroupExtractionResultDto>> ExtractSpineAssetGroupAsync(
+        ExtractSpineAssetGroupCommand command,
+        CancellationToken cancellationToken = default) =>
+        _extractSpineAssetGroupHandler.HandleAsync(command, cancellationToken);
 
     public Task<Result<FileReplacementCandidateDto>> GetFileReplacementCandidateAsync(
         GetFileReplacementCandidateQuery query,

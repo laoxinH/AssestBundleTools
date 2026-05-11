@@ -8,6 +8,7 @@
 
 - [ui-final-spec.md](ui-final-spec.md)
 - [workspace-management.md](workspace-management.md)
+- [workspace-recoverable-operation-records.md](workspace-recoverable-operation-records.md)
 - [project-build-roadmap.md](project-build-roadmap.md)
 - [code-architecture-guidelines.md](code-architecture-guidelines.md)
 
@@ -211,6 +212,8 @@ Spine 资源组文档属于页面级浏览状态。主窗口资源包标签会�
 
 草稿不得只绑定某个 WinUI 控件实例。窗口关闭、标签移动或主窗口切换时，草稿必须能被确认、丢弃或恢复。
 
+编辑草稿后续应用到工作区时，应通过 [工作区可恢复操作记录](workspace-recoverable-operation-records.md) 进入 `operations[]`，而不是只修改窗口或标签页状态。窗口快照仍只保存轻量 `EditDraftReference`，真实草稿内容和草稿应用 / 丢弃记录留在 `staging` 变更暂存层。
+
 ## 12. 架构边界
 
 窗口模式实现必须遵守现有分层：
@@ -341,6 +344,7 @@ Spine 动画的长期高性能播放路线采用 runtime playback session，而�
 - 当前仍不自动弹出独立资源编辑窗口，也不恢复最大化 / 最小化、显示器或真实编辑草稿内容；当预检计划可用时，草稿选项只决定本次成功打开的标签是否带回预检为可恢复的 `EditDraftReference` 标记，缺失、来源不匹配、已过期和引用无效的草稿标记不会重新挂回新标签。真实草稿确认 / 丢弃 / 恢复队列仍留给后续编辑器模型。
 - 当前打开资源详情、依赖跳转、Spine 组文档和新窗口打开入口会先检查主窗口与所有独立资源编辑窗口：如果目标文档已打开，则直接激活并切换到已有标签，再把所在窗口置前；只有未命中现有标签时才继续创建新的文档标签或独立窗口。
 - Spine 资源组当前作为统一资源文档标签打开到普通独立资源编辑窗口；会话内混合标签、拖拽合并、放回主窗口、冲突激活和 `openAssetEditorWindows[]` 快照恢复均复用统一文档标签链路。Spine 组恢复只持久化 `BundleId + GroupId + DisplayName + GroupKey` 与轻量预览观察状态，不持久化解析详情或预览载荷。
+- 主窗口中间资产窗格的普通资源行和 Spine 组行已接入右键菜单入口；`在新窗口中打开` 会先把目标行同步为当前资源文档，再复用统一的新窗口打开逻辑，因此不会生成绕过资源详情标签组的临时预览宿主。
 
 ### 第五阶段：Spine GPU 批量渲染
 

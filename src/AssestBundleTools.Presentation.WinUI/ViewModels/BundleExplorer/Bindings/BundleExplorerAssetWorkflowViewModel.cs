@@ -34,11 +34,13 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
     private readonly Action _requestWorkspaceBrowserStatePersistence;
     private readonly BundleExplorerOperationFeedbackBridge _operationFeedbackBridge;
     private readonly BundleExplorerAssetInspectorPresenter _assetInspectorPresenter;
+    private readonly SpineAssetGroupInspectorPresenter _spineGroupInspectorPresenter;
     private readonly BundleExplorerAssetPreviewCoordinator _assetPreviewCoordinator;
     private readonly BundleExplorerAssetDocumentHostCoordinator _assetDocumentHostCoordinator;
     private readonly BundleExplorerAssetDocumentTabCoordinator _assetDocumentTabCoordinator;
     private readonly BundleExplorerSpineGroupDocumentCoordinator _spineGroupDocumentCoordinator;
     private readonly BundleExplorerAssetPaneCoordinator _assetPaneCoordinator;
+    private readonly BundleExplorerActiveDocumentLocator _activeDocumentLocator;
     private readonly BundleExplorerAssetCommandCoordinator _assetCommandCoordinator;
 
     internal event EventHandler<BundleExplorerPageStateChangedEventArgs<BundleExplorerAssetWorkflowPageStateChange>>? PageStateChanged;
@@ -81,6 +83,9 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             appNotificationService,
             _localizationService);
         _assetInspectorPresenter = new BundleExplorerAssetInspectorPresenter(
+            _bundlePane,
+            _localizationService);
+        _spineGroupInspectorPresenter = new SpineAssetGroupInspectorPresenter(
             _bundlePane,
             _localizationService);
         _assetPreviewCoordinator = new BundleExplorerAssetPreviewCoordinator(
@@ -129,7 +134,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             _documentWorkspace,
             PrimaryPane,
             _assetDocumentHostCoordinator,
-            new SpineAssetGroupInspectorPresenter(_bundlePane, _localizationService),
+            _spineGroupInspectorPresenter,
             new SpineAssetGroupDetailsLoader(
                 workspaceAssetInspectionGateway,
                 workspaceContextService,
@@ -152,6 +157,11 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             clearCurrentInspectorHostState: _assetDocumentHostCoordinator.ClearCurrentInspectorHostState,
             clearActiveTabState: ClearActiveTabState,
             requestWorkspaceBrowserStatePersistence: _requestWorkspaceBrowserStatePersistence);
+        _activeDocumentLocator = new BundleExplorerActiveDocumentLocator(
+            _documentWorkspace,
+            PrimaryPane,
+            preserveCurrentDocumentTab => RefreshPrimaryPaneAsync(preserveCurrentDocumentTab),
+            () => CaptureActiveTabState());
         _assetCommandCoordinator = new BundleExplorerAssetCommandCoordinator(
             appLogService,
             _localizationService,
@@ -164,6 +174,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             _setBusyState,
             () => Inspector,
             () => ActiveAssetDocumentTab,
+            () => _documentWorkspace.ActiveSpineGroupDocumentTab,
             () => RefreshPrimaryPaneAsync(),
             ReapplyActiveAssetDocumentTab);
         _documentWorkspace.AssetDocumentHostStateChanged += OnAssetDocumentHostStateChanged;
@@ -372,6 +383,9 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
 
     public void OpenCurrentPreviewLocation() => _assetCommandCoordinator.OpenCurrentPreviewLocation();
 
+    public Task<bool> LocateActiveDocumentInPrimaryPaneAsync() =>
+        _activeDocumentLocator.LocateActiveDocumentAsync();
+
     public Task ExtractSelectedAssetAsync() => _assetCommandCoordinator.ExtractSelectedAssetAsync();
 
     public Task ExtractSelectedAssetsAsync() => _assetCommandCoordinator.ExtractSelectedAssetsAsync();
@@ -401,6 +415,16 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
 
     private Task SynchronizeInspectorWithActiveBundleTabAsync(bool writeLog)
     {
+        if (ActiveBundleTab?.ActiveDocumentTab?.SpineGroupTab is { } activeSpineGroupTab)
+        {
+            return _spineGroupDocumentCoordinator.ActivateSpineGroupDocumentTabAsync(activeSpineGroupTab);
+        }
+
+        if (ActiveBundleTab?.ActiveDocumentTab?.AssetTab is not null)
+        {
+            return _assetDocumentTabCoordinator.SynchronizeInspectorWithActiveBundleTabAsync(writeLog);
+        }
+
         return PrimaryPane.ViewMode == AssetPaneViewMode.SpineGroups
             ? _spineGroupDocumentCoordinator.SynchronizeInspectorWithActiveBundleTabAsync()
             : _assetDocumentTabCoordinator.SynchronizeInspectorWithActiveBundleTabAsync(writeLog);
@@ -434,6 +458,10 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         if (_assetCommandCoordinator.TryGetActiveAssetDocumentState(out var assetTab, out var details))
         {
             _assetInspectorPresenter.SyncInspectorActionStates(Inspector, assetTab, details, IsBusy);
+        }
+        else if (_assetCommandCoordinator.TryGetActiveSpineGroupDocumentState(out var spineGroupTab))
+        {
+            _spineGroupInspectorPresenter.SyncInspectorActionStates(Inspector, spineGroupTab, IsBusy);
         }
         else
         {

@@ -324,7 +324,53 @@
                             PointerExited="OnAssetRowPointerExited"
                             PointerPressed="OnAssetRowPointerPressed"
                             PointerReleased="OnAssetRowPointerReleased"
-                            PointerCanceled="OnAssetRowPointerCanceled">
+                            PointerCanceled="OnAssetRowPointerCanceled"
+                            Tag="{x:Bind}">
+                            <Grid.ContextFlyout>
+                                <MenuFlyout Opening="OnAssetRowContextFlyoutOpening">
+                                    <MenuFlyoutItem
+                                        Name="OpenAssetPaneItemInNewWindowMenuItem"
+                                        Click="OnOpenAssetPaneItemInNewWindowMenuItemClick"
+                                        Tag="{x:Bind}">
+                                        <MenuFlyoutItem.Icon>
+                                            <FontIcon
+                                                FontFamily="Segoe Fluent Icons"
+                                                Glyph="&#xE8A7;" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem
+                                        Name="ExtractAssetPaneItemMenuItem"
+                                        Click="OnExtractAssetPaneItemMenuItemClick"
+                                        Tag="{x:Bind}">
+                                        <MenuFlyoutItem.Icon>
+                                            <FontIcon
+                                                FontFamily="Segoe Fluent Icons"
+                                                Glyph="&#xE896;" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem
+                                        Name="ReplaceAssetPaneItemMenuItem"
+                                        Click="OnReplaceAssetPaneItemMenuItemClick"
+                                        Tag="{x:Bind}">
+                                        <MenuFlyoutItem.Icon>
+                                            <FontIcon
+                                                FontFamily="Segoe Fluent Icons"
+                                                Glyph="&#xE8AC;" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutSeparator />
+                                    <MenuFlyoutItem
+                                        Name="EnterAssetPaneItemMultiSelectionMenuItem"
+                                        Click="OnEnterAssetPaneItemMultiSelectionMenuItemClick"
+                                        Tag="{x:Bind}">
+                                        <MenuFlyoutItem.Icon>
+                                            <FontIcon
+                                                FontFamily="Segoe Fluent Icons"
+                                                Glyph="&#xE762;" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                </MenuFlyout>
+                            </Grid.ContextFlyout>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="2" />
                                 <ColumnDefinition Width="8" />
@@ -411,7 +457,7 @@
                 HorizontalContentAlignment="Stretch"
                 ItemsSource="{x:Bind ViewModel.SpineGroupItems, Mode=OneWay}"
                 ItemContainerStyle="{StaticResource AssetPaneListViewItemStyle}"
-                SelectionMode="Single"
+                SelectionMode="Extended"
                 SelectionChanged="OnSpineGroupListSelectionChanged"
                 Visibility="{x:Bind ViewModel.SpineGroupListVisibility, Mode=OneWay}">
                 <!-- Spine 组是跨资产聚合入口，首版只展示组成和诊断摘要，不伪装成 Unity 类型。 -->
@@ -460,7 +506,53 @@
                             PointerExited="OnAssetRowPointerExited"
                             PointerPressed="OnAssetRowPointerPressed"
                             PointerReleased="OnAssetRowPointerReleased"
-                            PointerCanceled="OnAssetRowPointerCanceled">
+                            PointerCanceled="OnAssetRowPointerCanceled"
+                            Tag="{x:Bind}">
+                            <Grid.ContextFlyout>
+                                <MenuFlyout Opening="OnSpineGroupRowContextFlyoutOpening">
+                                    <MenuFlyoutItem
+                                        Name="OpenAssetPaneItemInNewWindowMenuItem"
+                                        Click="OnOpenAssetPaneItemInNewWindowMenuItemClick"
+                                        Tag="{x:Bind}">
+                                        <MenuFlyoutItem.Icon>
+                                            <FontIcon
+                                                FontFamily="Segoe Fluent Icons"
+                                                Glyph="&#xE8A7;" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem
+                                        Name="ExtractAssetPaneItemMenuItem"
+                                        Click="OnExtractAssetPaneItemMenuItemClick"
+                                        Tag="{x:Bind}">
+                                        <MenuFlyoutItem.Icon>
+                                            <FontIcon
+                                                FontFamily="Segoe Fluent Icons"
+                                                Glyph="&#xE896;" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem
+                                        Name="ReplaceAssetPaneItemMenuItem"
+                                        Click="OnReplaceAssetPaneItemMenuItemClick"
+                                        Tag="{x:Bind}">
+                                        <MenuFlyoutItem.Icon>
+                                            <FontIcon
+                                                FontFamily="Segoe Fluent Icons"
+                                                Glyph="&#xE8AC;" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutSeparator />
+                                    <MenuFlyoutItem
+                                        Name="EnterAssetPaneItemMultiSelectionMenuItem"
+                                        Click="OnEnterAssetPaneItemMultiSelectionMenuItemClick"
+                                        Tag="{x:Bind}">
+                                        <MenuFlyoutItem.Icon>
+                                            <FontIcon
+                                                FontFamily="Segoe Fluent Icons"
+                                                Glyph="&#xE762;" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                </MenuFlyout>
+                            </Grid.ContextFlyout>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="2" />
                                 <ColumnDefinition Width="8" />

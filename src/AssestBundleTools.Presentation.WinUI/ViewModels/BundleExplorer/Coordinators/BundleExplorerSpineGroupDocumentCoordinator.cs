@@ -80,6 +80,13 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
             return;
         }
 
+        if (activeBundleTab.ActiveDocumentTab?.IsAsset == true)
+        {
+            _notifyActionStates();
+            _requestWorkspaceBrowserStatePersistence();
+            return;
+        }
+
         if (_primaryPane.ViewMode != AssetPaneViewMode.SpineGroups)
         {
             return;
@@ -291,7 +298,7 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
             BeginSpineGroupDocumentStateSynchronization();
             try
             {
-                if (!TrySelectSpineGroup(spineGroupTab.GroupId))
+                if (!_primaryPane.TrySelectSpineGroup(spineGroupTab.GroupId))
                 {
                     _primaryPane.SelectedSpineGroup = null;
                 }
@@ -356,24 +363,6 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
     private void BeginSpineGroupDocumentStateSynchronization()
     {
         _spineGroupDocumentStateSynchronizationDepth++;
-    }
-
-    private bool TrySelectSpineGroup(string groupId)
-    {
-        if (string.IsNullOrWhiteSpace(groupId))
-        {
-            return false;
-        }
-
-        var target = _primaryPane.SpineGroupItems.FirstOrDefault(item =>
-            string.Equals(item.Item.GroupId, groupId, StringComparison.Ordinal));
-        if (target is null)
-        {
-            return false;
-        }
-
-        _primaryPane.SelectedSpineGroup = target;
-        return true;
     }
 
     private void EndSpineGroupDocumentStateSynchronization()

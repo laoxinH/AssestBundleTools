@@ -2,6 +2,7 @@ using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Replacement.Dtos;
+using AssestBundleTools.Application.Replacement.Services;
 using AssestBundleTools.Application.Workspace.Services;
 
 namespace AssestBundleTools.Application.Replacement.Commands;
@@ -12,10 +13,14 @@ namespace AssestBundleTools.Application.Replacement.Commands;
 public sealed class ReplaceAssetFromWorkspaceHandler : ICommandHandler<ReplaceAssetFromWorkspaceCommand, Result<AssetReplacementResultDto>>
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
+    private readonly WorkspaceReplacementOperationRecorder? _operationRecorder;
 
-    public ReplaceAssetFromWorkspaceHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
+    public ReplaceAssetFromWorkspaceHandler(
+        IWorkspaceSessionRegistry workspaceSessionRegistry,
+        WorkspaceReplacementOperationRecorder? operationRecorder = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
+        _operationRecorder = operationRecorder;
     }
 
     public Task<Result<AssetReplacementResultDto>> HandleAsync(
@@ -70,6 +75,8 @@ public sealed class ReplaceAssetFromWorkspaceHandler : ICommandHandler<ReplaceAs
             command.SourceBundleId,
             command.SourceAssetId,
             out var replacementResult);
+
+        _operationRecorder?.RecordWorkspaceReplacement(command, targetDetails!, sourceDetails!, replacementResult!);
 
         return Task.FromResult(Result<AssetReplacementResultDto>.Success(replacementResult!));
     }

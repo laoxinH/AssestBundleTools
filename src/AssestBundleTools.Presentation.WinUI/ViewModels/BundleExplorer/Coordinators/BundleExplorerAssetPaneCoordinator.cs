@@ -129,10 +129,19 @@ internal sealed class BundleExplorerAssetPaneCoordinator
         }
 
         captureActiveTabState();
-        await RefreshPaneAsync(
-            _primaryPane,
-            clearInspectorOnEmpty: true,
-            preserveCurrentDocumentTab);
+        BeginPrimaryPaneStateSynchronization();
+        try
+        {
+            await RefreshPaneAsync(
+                _primaryPane,
+                clearInspectorOnEmpty: true,
+                preserveCurrentDocumentTab);
+        }
+        finally
+        {
+            EndPrimaryPaneStateSynchronization();
+        }
+
         captureActiveTabState();
     }
 

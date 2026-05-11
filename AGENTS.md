@@ -8,14 +8,16 @@ Keep it concise and stable. Use it as the default rule set, then follow the link
 
 Before making non-trivial changes, read the docs that match the scope:
 
+- Design doc index and current phase: [`docs/design/README.md`](docs/design/README.md)
 - Architecture and layering: [`docs/design/code-architecture-guidelines.md`](docs/design/code-architecture-guidelines.md)
 - Current deviation baseline: [`docs/design/implementation-deviation-register.md`](docs/design/implementation-deviation-register.md)
 - Workspace model and persistence: [`docs/design/workspace-management.md`](docs/design/workspace-management.md)
+- Recoverable workspace operations: [`docs/design/workspace-recoverable-operation-records.md`](docs/design/workspace-recoverable-operation-records.md)
 - Build and debug commands: [`docs/design/debug-setup.md`](docs/design/debug-setup.md)
 - Roadmap and current phase: [`docs/design/project-build-roadmap.md`](docs/design/project-build-roadmap.md)
 - Error model: [`docs/design/error-handling-guidelines.md`](docs/design/error-handling-guidelines.md)
 - Test ownership and current regression scope: [`tests/README.md`](tests/README.md)
-- UI structure and constraints: [`docs/design/ui-design.md`](docs/design/ui-design.md), [`docs/design/ui-final-spec.md`](docs/design/ui-final-spec.md)
+- UI structure and constraints: [`docs/design/ui-final-spec.md`](docs/design/ui-final-spec.md)
 
 Do not guess rules from local code alone when the docs already define them.
 
@@ -26,7 +28,8 @@ AssestBundleTools is a WinUI desktop tool for browsing, previewing, extracting, 
 Current direction:
 
 - The repo is already on the real-reader / real-cache / real-workspace path.
-- Changes should continue respecting the M9 direction: stable import recognition, diagnostics, cache reuse/invalidation, dependency reading, and preview expansion.
+- Changes should preserve the completed M9 direction: stable import recognition, diagnostics, cache reuse/invalidation, dependency reading, and preview pipeline boundaries.
+- The next mainline direction is extraction/replacement workflow smoothness, followed by save/rebuild output planning and implementation.
 - Rich preview work must continue through the documented preview pipeline, not through ad hoc UI-side reads.
 
 ## 3. Non-Negotiable Architecture Rules

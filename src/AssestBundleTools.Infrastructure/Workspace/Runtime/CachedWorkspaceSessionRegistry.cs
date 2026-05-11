@@ -19,11 +19,15 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
 {
     private readonly object _syncRoot = new();
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
+    private readonly IWorkspaceOperationLogService? _operationLogService;
     private readonly Dictionary<string, WorkspaceSessionState> _workspaceStates = new(StringComparer.Ordinal);
 
-    public CachedWorkspaceSessionRegistry(IWorkspaceDataStoreFactory workspaceDataStoreFactory)
+    public CachedWorkspaceSessionRegistry(
+        IWorkspaceDataStoreFactory workspaceDataStoreFactory,
+        IWorkspaceOperationLogService? operationLogService = null)
     {
         _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
+        _operationLogService = operationLogService;
     }
 
     public WorkspaceSummaryDto OpenWorkspace(WorkspaceSessionOpenRequestDto request)
@@ -49,7 +53,9 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
             ActivePaneId: PaneId.New(),
             BundleCount: bundleStates.Length,
             AssetCount: bundleStates.Sum(static bundle => bundle.Assets.Count(static asset => asset.IncludeInAssetList)),
-            OpenedAtUtc: DateTimeOffset.UtcNow);
+            OpenedAtUtc: DateTimeOffset.UtcNow,
+            WorkspaceKey: request.WorkspaceKey,
+            WorkspaceDataRootPath: request.WorkspaceDataRootPath);
 
         var workspaceState = new WorkspaceSessionState(
             summary: workspaceSummary,
@@ -57,6 +63,7 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
             bundlesById: bundleStates.ToDictionary(static bundle => bundle.BundleId.Value, StringComparer.Ordinal),
             assetsById: BuildAssetGraphNodes(bundleStates));
         workspaceState.InitializeDependencyIndexes();
+        ApplyPersistedOperations(request, workspaceState);
 
         lock (_syncRoot)
         {

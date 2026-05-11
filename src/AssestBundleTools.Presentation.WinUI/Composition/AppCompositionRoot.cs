@@ -6,8 +6,10 @@ using AssestBundleTools.Application.Editing.Queries;
 using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Extraction.Commands;
 using AssestBundleTools.Application.Extraction.Queries;
+using AssestBundleTools.Application.Extraction.Services;
 using AssestBundleTools.Application.Replacement.Commands;
 using AssestBundleTools.Application.Replacement.Queries;
+using AssestBundleTools.Application.Replacement.Services;
 using AssestBundleTools.Application.Saving.Commands;
 using AssestBundleTools.Application.Saving.Queries;
 using AssestBundleTools.Application.Workspace.Commands;
@@ -19,6 +21,7 @@ using AssestBundleTools.Infrastructure.Bundles.Previewing.Audio;
 using AssestBundleTools.Infrastructure.Bundles.Previewing.Spine;
 using AssestBundleTools.Infrastructure.Bundles.Reading;
 using AssestBundleTools.Infrastructure.Settings.Persistence;
+using AssestBundleTools.Infrastructure.Workspace.Extraction;
 using AssestBundleTools.Infrastructure.Workspace.Importing;
 using AssestBundleTools.Infrastructure.Workspace.Persistence;
 using AssestBundleTools.Infrastructure.Workspace.Runtime;
@@ -49,7 +52,10 @@ internal static class AppCompositionRoot
         var workspaceCatalogStore = new JsonWorkspaceCatalogStore();
         var workspaceMetadataStoreFactory = new JsonWorkspaceMetadataStoreFactory();
         var workspaceDataStoreFactory = new JsonWorkspaceDataStoreFactory();
-        var workspaceSessionRegistry = new CachedWorkspaceSessionRegistry(workspaceDataStoreFactory);
+        var workspaceOperationLogService = new WorkspaceOperationLogService();
+        var workspaceSessionRegistry = new CachedWorkspaceSessionRegistry(
+            workspaceDataStoreFactory,
+            workspaceOperationLogService);
         var workspaceDataRootService = new JsonWorkspaceDataRootService(
             workspaceMetadataStoreFactory,
             workspaceDataStoreFactory);
@@ -124,16 +130,42 @@ internal static class AppCompositionRoot
         var getWorkspaceChangeSummaryHandler = new GetWorkspaceChangeSummaryHandler(workspaceSessionRegistry);
         var getWorkspaceSavePreviewHandler = new GetWorkspaceSavePreviewHandler(workspaceSessionRegistry);
         var saveWorkspaceAsNewBundleHandler = new SaveWorkspaceAsNewBundleHandler(workspaceSessionRegistry);
-        var extractAssetHandler = new ExtractAssetHandler(workspaceSessionRegistry);
+        var assetExtractionFileStore = new FileSystemAssetExtractionFileStore();
+        var workspaceAssetExtractionExporter = new WorkspaceAssetExtractionExporter(
+            getAssetPreviewHandler,
+            assetExtractionFileStore);
+        var workspaceExtractionOperationRecorder = new WorkspaceExtractionOperationRecorder(
+            workspaceDataStoreFactory,
+            workspaceOperationLogService);
+        var extractAssetHandler = new ExtractAssetHandler(
+            workspaceSessionRegistry,
+            workspaceAssetExtractionExporter,
+            workspaceExtractionOperationRecorder);
         var getWorkspaceBatchExtractionPreviewHandler = new GetWorkspaceBatchExtractionPreviewHandler(workspaceSessionRegistry);
-        var extractWorkspaceAssetsHandler = new ExtractWorkspaceAssetsHandler(workspaceSessionRegistry);
+        var extractWorkspaceAssetsHandler = new ExtractWorkspaceAssetsHandler(
+            workspaceSessionRegistry,
+            extractAssetHandler,
+            workspaceExtractionOperationRecorder);
+        var extractSpineAssetGroupHandler = new ExtractSpineAssetGroupHandler(
+            workspaceSessionRegistry,
+            loadSpineAssetGroupDetailsHandler,
+            extractAssetHandler);
         var getWorkspaceBatchReplacementPreviewHandler = new GetWorkspaceBatchReplacementPreviewHandler(workspaceSessionRegistry);
         var executeWorkspaceBatchReplacementHandler = new ExecuteWorkspaceBatchReplacementHandler(workspaceSessionRegistry);
         var getFileReplacementCandidateHandler = new GetFileReplacementCandidateHandler(workspaceSessionRegistry);
         var getWorkspaceReplacementCandidatesHandler = new GetWorkspaceReplacementCandidatesHandler(workspaceSessionRegistry);
-        var replaceAssetFromFileHandler = new ReplaceAssetFromFileHandler(workspaceSessionRegistry);
-        var replaceAssetFromWorkspaceHandler = new ReplaceAssetFromWorkspaceHandler(workspaceSessionRegistry);
-        var undoAssetReplacementHandler = new UndoAssetReplacementHandler(workspaceSessionRegistry);
+        var workspaceReplacementOperationRecorder = new WorkspaceReplacementOperationRecorder(
+            workspaceDataStoreFactory,
+            workspaceOperationLogService);
+        var replaceAssetFromFileHandler = new ReplaceAssetFromFileHandler(
+            workspaceSessionRegistry,
+            workspaceReplacementOperationRecorder);
+        var replaceAssetFromWorkspaceHandler = new ReplaceAssetFromWorkspaceHandler(
+            workspaceSessionRegistry,
+            workspaceReplacementOperationRecorder);
+        var undoAssetReplacementHandler = new UndoAssetReplacementHandler(
+            workspaceSessionRegistry,
+            workspaceReplacementOperationRecorder);
         var openAssetInPaneHandler = new OpenAssetInPaneHandler(workspaceSessionRegistry);
         var getWorkspaceCatalogSnapshotHandler = new GetWorkspaceCatalogSnapshotHandler(workspaceCatalogStore);
         var registerWorkspaceCatalogEntryHandler = new RegisterWorkspaceCatalogEntryHandler(workspaceCatalogStore);
@@ -166,6 +198,7 @@ internal static class AppCompositionRoot
             openAssetInPaneHandler: openAssetInPaneHandler);
         var workspaceAssetOperationGateway = new WorkspaceAssetOperationGateway(
             extractAssetHandler: extractAssetHandler,
+            extractSpineAssetGroupHandler: extractSpineAssetGroupHandler,
             getFileReplacementCandidateHandler: getFileReplacementCandidateHandler,
             getWorkspaceReplacementCandidatesHandler: getWorkspaceReplacementCandidatesHandler,
             replaceAssetFromFileHandler: replaceAssetFromFileHandler,

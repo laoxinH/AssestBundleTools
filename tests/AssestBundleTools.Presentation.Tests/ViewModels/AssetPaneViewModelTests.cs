@@ -200,6 +200,67 @@ public sealed class AssetPaneViewModelTests
         Assert.Equal(Visibility.Collapsed, viewModel.AssetFilterVisibility);
     }
 
+    [Fact]
+    public void TrySelectSpineGroup_ShouldSelectMatchingGroup()
+    {
+        var viewModel = new AssetPaneViewModel();
+        var firstGroup = CreateSpineGroupEntry("hero");
+        var secondGroup = CreateSpineGroupEntry("enemy");
+        viewModel.ReplaceSpineGroups("ui.ab", [firstGroup, secondGroup], "no spine");
+
+        var selected = viewModel.TrySelectSpineGroup("enemy");
+
+        Assert.True(selected);
+        Assert.Same(secondGroup, viewModel.SelectedSpineGroup);
+    }
+
+    [Fact]
+    public void UpdateSpineGroupSelection_ShouldPreserveMultiSelection()
+    {
+        var viewModel = new AssetPaneViewModel();
+        var firstGroup = CreateSpineGroupEntry("hero");
+        var secondGroup = CreateSpineGroupEntry("enemy");
+        viewModel.ReplaceSpineGroups("ui.ab", [firstGroup, secondGroup], "no spine");
+
+        viewModel.UpdateSpineGroupSelection([firstGroup, secondGroup], secondGroup);
+
+        Assert.Same(secondGroup, viewModel.SelectedSpineGroup);
+        Assert.Collection(
+            viewModel.SelectedSpineGroups,
+            selected => Assert.Same(firstGroup, selected),
+            selected => Assert.Same(secondGroup, selected));
+        Assert.True(firstGroup.IsSelected);
+        Assert.True(secondGroup.IsSelected);
+        Assert.Equal(2, viewModel.SelectedSpineGroupCount);
+    }
+
+    [Fact]
+    public void UpdateSpineGroupSelection_ShouldKeepPrimarySelection_WhenSelectedItemsAreEmpty()
+    {
+        var viewModel = new AssetPaneViewModel();
+        var group = CreateSpineGroupEntry("hero");
+        viewModel.ReplaceSpineGroups("ui.ab", [group], "no spine");
+
+        viewModel.UpdateSpineGroupSelection([], group);
+
+        Assert.Same(group, viewModel.SelectedSpineGroup);
+        Assert.Collection(viewModel.SelectedSpineGroups, selected => Assert.Same(group, selected));
+        Assert.True(group.IsSelected);
+        Assert.Equal(1, viewModel.SelectedSpineGroupCount);
+    }
+
+    [Fact]
+    public void TrySelectSpineGroup_ShouldReturnFalse_WhenGroupIsMissing()
+    {
+        var viewModel = new AssetPaneViewModel();
+        viewModel.ReplaceSpineGroups("ui.ab", [CreateSpineGroupEntry("hero")], "no spine");
+
+        var selected = viewModel.TrySelectSpineGroup("missing");
+
+        Assert.False(selected);
+        Assert.Null(viewModel.SelectedSpineGroup);
+    }
+
     private static AssetListEntryViewModel CreateAssetEntry(string assetId)
     {
         return new AssetListEntryViewModel(

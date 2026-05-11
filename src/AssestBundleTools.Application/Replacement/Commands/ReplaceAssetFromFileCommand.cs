@@ -12,4 +12,6 @@ public sealed record ReplaceAssetFromFileCommand(
     BundleId TargetBundleId,
     AssetId TargetAssetId,
     string SourceFilePath,
-    AssetType SourceAssetType);
+    AssetType SourceAssetType,
+    string? WorkspaceKey = null,
+    string? WorkspaceDataRootPath = null);

@@ -372,7 +372,10 @@ public static class ResourceKeys
     public const string BundleExplorerLogAssetPreviewFailedFormat = "BundleExplorer.Log.AssetPreviewFailed.Format";
     public const string BundleExplorerLogFilterApplied = "BundleExplorer.Log.FilterApplied";
     public const string BundleExplorerLogAssetExtracted = "BundleExplorer.Log.AssetExtracted";
+    public const string BundleExplorerLogAssetExtractionSelectionCancelled = "BundleExplorer.Log.AssetExtractionSelectionCancelled";
     public const string BundleExplorerLogBatchAssetsExtracted = "BundleExplorer.Log.BatchAssetsExtracted";
+    public const string BundleExplorerLogSpineGroupExtracted = "BundleExplorer.Log.SpineGroupExtracted";
+    public const string BundleExplorerLogSpineGroupExtractionSelectionCancelled = "BundleExplorer.Log.SpineGroupExtractionSelectionCancelled";
     public const string BundleExplorerLogReplacementSourceSelected = "BundleExplorer.Log.ReplacementSourceSelected";
     public const string BundleExplorerLogFileReplacementSelectionCancelled = "BundleExplorer.Log.FileReplacementSelectionCancelled";
     public const string BundleExplorerLogFilePickerOpenFailedFormat = "BundleExplorer.Log.FilePickerOpenFailed.Format";
@@ -392,12 +395,18 @@ public static class ResourceKeys
     public const string BundleExplorerNotificationResolvedAssetNavigationUnavailableFormat = "BundleExplorer.Notification.ResolvedAssetNavigationUnavailable.Format";
     public const string BundleExplorerNotificationAssetExtracted = "BundleExplorer.Notification.AssetExtracted";
     public const string BundleExplorerNotificationBatchAssetsExtracted = "BundleExplorer.Notification.BatchAssetsExtracted";
+    public const string BundleExplorerNotificationSpineGroupExtracted = "BundleExplorer.Notification.SpineGroupExtracted";
     public const string BundleExplorerNotificationReplacementSourceSelected = "BundleExplorer.Notification.ReplacementSourceSelected";
     public const string BundleExplorerNotificationFilePickerOpenFailed = "BundleExplorer.Notification.FilePickerOpenFailed";
     public const string BundleExplorerNotificationFileReplacementSourceSelected = "BundleExplorer.Notification.FileReplacementSourceSelected";
     public const string BundleExplorerNotificationFileReplacementApplied = "BundleExplorer.Notification.FileReplacementApplied";
     public const string BundleExplorerNotificationReplacementApplied = "BundleExplorer.Notification.ReplacementApplied";
     public const string BundleExplorerNotificationReplacementUndone = "BundleExplorer.Notification.ReplacementUndone";
+    public const string FilePickerExtractionTypeImage = "FilePicker.Extraction.Type.Image";
+    public const string FilePickerExtractionTypeText = "FilePicker.Extraction.Type.Text";
+    public const string FilePickerExtractionTypeAudio = "FilePicker.Extraction.Type.Audio";
+    public const string FilePickerExtractionTypeJson = "FilePicker.Extraction.Type.Json";
+    public const string FilePickerExtractionTypeBinary = "FilePicker.Extraction.Type.Binary";
     public const string BundleExplorerPreviewImageDecodeFailed = "BundleExplorer.Preview.ImageDecodeFailed";
     public const string BundleExplorerPreviewAudioDecodeFailed = "BundleExplorer.Preview.AudioDecodeFailed";
     public const string BundleExplorerPreviewUnexpectedDisplayFailure = "BundleExplorer.Preview.UnexpectedDisplayFailure";
@@ -432,6 +441,7 @@ public static class ResourceKeys
     public const string AssetEditorWindowOpenInNewWindowText = "AssetEditorWindow.OpenInNewWindow.Text";
     public const string AssetEditorWindowMoveToMainWindowText = "AssetEditorWindow.MoveToMainWindow.Text";
     public const string AssetEditorWindowOpenGroupInNewWindowText = "AssetEditorWindow.OpenGroupInNewWindow.Text";
+    public const string AssetEditorWindowLocateActiveDocumentText = "AssetEditorWindow.LocateActiveDocument.Text";
     public const string AssetEditorWindowMoveGroupToMainWindowText = "AssetEditorWindow.MoveGroupToMainWindow.Text";
     public const string AssetEditorWindowDragGroupHandleToolTip = "AssetEditorWindow.DragGroupHandle.ToolTip";
     public const string AssetEditorWindowTabContextCloseText = "AssetEditorWindow.TabContext.Close.Text";
@@ -514,6 +524,8 @@ public static class ResourceKeys
     public const string AssetPaneViewSpineGroupStateReady = "AssetPaneView.SpineGroupState.Ready";
     public const string AssetPaneViewSpineGroupStateDiagnosticsFormat = "AssetPaneView.SpineGroupState.Diagnostics.Format";
     public const string AssetPaneViewEmptyStateHintText = "AssetPaneView.EmptyStateHintText.Text";
+    public const string AssetPaneViewContextReplaceText = "AssetPaneView.Context.Replace.Text";
+    public const string AssetPaneViewContextEnterMultiSelectionText = "AssetPaneView.Context.EnterMultiSelection.Text";
 
     public const string ErrorBundleDecryptorCatalogIdRequired = "Error.Bundle.Decryptor.Catalog.IdRequired";
     public const string ErrorBundleDecryptorCatalogDisplayNameRequired = "Error.Bundle.Decryptor.Catalog.DisplayNameRequired";
@@ -541,6 +553,8 @@ public static class ResourceKeys
     public const string ErrorBundlePreviewGenerationFailed = "Error.Bundle.Preview.GenerationFailed";
     public const string ErrorAssetSpineGroupIdRequired = "Error.Asset.SpineGroup.Query.GroupIdRequired";
     public const string ErrorAssetSpineGroupNotFound = "Error.Asset.SpineGroup.NotFound";
+    public const string ErrorAssetExtractSpineGroupNoCandidates = "Error.Asset.Extract.SpineGroup.NoCandidates";
+    public const string ErrorAssetExtractOutputDirectoryRequired = "Error.Asset.Extract.OutputDirectoryRequired";
     public const string ErrorAssetEditDraftWorkspaceKeyRequired = "Error.Asset.EditDraft.WorkspaceKeyRequired";
     public const string ErrorAssetEditDraftReferenceRequired = "Error.Asset.EditDraft.ReferenceRequired";
     public const string ErrorAssetEditDraftIdRequired = "Error.Asset.EditDraft.IdRequired";

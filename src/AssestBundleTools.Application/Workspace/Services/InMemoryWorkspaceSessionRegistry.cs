@@ -36,7 +36,9 @@ public sealed partial class InMemoryWorkspaceSessionRegistry : IWorkspaceSession
             ActivePaneId: PaneId.New(),
             BundleCount: bundleStates.Count,
             AssetCount: bundleStates.Sum(static bundle => bundle.Assets.Count),
-            OpenedAtUtc: DateTimeOffset.UtcNow);
+            OpenedAtUtc: DateTimeOffset.UtcNow,
+            WorkspaceKey: request.WorkspaceKey,
+            WorkspaceDataRootPath: request.WorkspaceDataRootPath);
 
         var workspaceState = new WorkspaceSessionState(
             summary: workspaceSummary,

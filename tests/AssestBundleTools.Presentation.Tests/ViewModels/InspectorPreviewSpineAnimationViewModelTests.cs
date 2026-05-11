@@ -35,6 +35,19 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
     }
 
     [Fact]
+    public void Apply_ShouldPreferDrawableSkin_WhenDefaultSkinIsEmpty()
+    {
+        var viewModel = new InspectorPreviewSpineAnimationViewModel();
+
+        viewModel.Apply(CreatePreviewWithEmptyDefaultSkin(), CreateTextureStates());
+
+        Assert.True(viewModel.HasSpineAnimation);
+        Assert.Equal("skin-alt", viewModel.SelectedSkinName);
+        Assert.Equal("idle", viewModel.SelectedAnimationName);
+        Assert.Equal("skin-alt-idle-frame", viewModel.CurrentFrame?.DrawCommands[0].AttachmentName);
+    }
+
+    [Fact]
     public void PlaybackControls_ShouldPauseStepSeekAndApplySpeed()
     {
         var viewModel = new InspectorPreviewSpineAnimationViewModel();
@@ -357,6 +370,23 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
                     altAnimations,
                     altSetupFrame)
             ]
+        };
+    }
+
+    private static SpineAnimationPreviewDto CreatePreviewWithEmptyDefaultSkin()
+    {
+        var preview = CreatePreview();
+        var emptySetupFrame = new SpineAnimationFrameDto(0d, Array.Empty<SpineAnimationDrawCommandDto>());
+        var emptyDefaultSkin = preview.SkinPreviews[0] with
+        {
+            Animations = Array.Empty<SpineAnimationClipDto>(),
+            SetupFrame = emptySetupFrame
+        };
+        return preview with
+        {
+            Animations = Array.Empty<SpineAnimationClipDto>(),
+            SetupFrame = emptySetupFrame,
+            SkinPreviews = [emptyDefaultSkin, preview.SkinPreviews[1]]
         };
     }
 

@@ -35,6 +35,29 @@ internal sealed class SpineSkeletonSummaryBuilder
 
             if (IsBinarySkeleton(skeletonAsset))
             {
+                if (IsAmbiguousSkeleton(skeletonAsset))
+                {
+                    var ambiguousPreviewResult = await _assetPreviewQueryHandler.HandleAsync(
+                        new GetAssetPreviewQuery(
+                            query.WorkspaceId,
+                            query.WorkspaceKey,
+                            query.WorkspaceDataRootPath,
+                            skeletonAsset.BundleId,
+                            skeletonAsset.AssetId),
+                        cancellationToken);
+                    if (ambiguousPreviewResult.IsCancelled)
+                    {
+                        return SkeletonSummaryResult.Cancelled;
+                    }
+
+                    if (TryReadSkeletonJson(ambiguousPreviewResult, out var ambiguousSkeletonJson) &&
+                        TryCreateJsonSummary(skeletonAsset, ambiguousSkeletonJson, out var ambiguousJsonSummary))
+                    {
+                        summaries.Add(ambiguousJsonSummary);
+                        continue;
+                    }
+                }
+
                 summaries.Add(CreateBinarySummary(skeletonAsset));
                 continue;
             }
@@ -189,6 +212,9 @@ internal sealed class SpineSkeletonSummaryBuilder
         return path.EndsWith(".skel", StringComparison.OrdinalIgnoreCase) ||
                path.EndsWith(".skel.bytes", StringComparison.OrdinalIgnoreCase);
     }
+
+    private static bool IsAmbiguousSkeleton(SpineAssetGroupPartDto skeletonAsset) =>
+        ResolvePartPath(skeletonAsset).EndsWith(".skel", StringComparison.OrdinalIgnoreCase);
 
     private static string ResolvePartPath(SpineAssetGroupPartDto skeletonAsset)
     {

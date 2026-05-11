@@ -426,6 +426,9 @@
   <data name="AssetEditorWindow.OpenGroupInNewWindow.Text" xml:space="preserve">
     <value>Open Group in New Window</value>
   </data>
+  <data name="AssetEditorWindow.LocateActiveDocument.Text" xml:space="preserve">
+    <value>Locate Active Detail Tab</value>
+  </data>
   <data name="AssetEditorWindow.MoveGroupToMainWindow.Text" xml:space="preserve">
     <value>Move Group to Main Window</value>
   </data>
@@ -827,6 +830,12 @@
   </data>
   <data name="AssetPaneView.EmptyStateHintText.Text" xml:space="preserve">
     <value>Switch a bundle on the left, adjust search, or change views to refresh the list shown in this pane.</value>
+  </data>
+  <data name="AssetPaneView.Context.Replace.Text" xml:space="preserve">
+    <value>Replace</value>
+  </data>
+  <data name="AssetPaneView.Context.EnterMultiSelection.Text" xml:space="preserve">
+    <value>Enter Multi-Select</value>
   </data>
   <data name="InspectorPanelView.DetailsTab.Header" xml:space="preserve">
     <value>Details</value>
@@ -2647,7 +2656,7 @@
     <value>Bulk Extraction Preview</value>
   </data>
   <data name="BatchTasksPage.BatchExtractHintText.Text" xml:space="preserve">
-    <value>Filter and summarize candidates by workspace scope and asset type. The current execution only writes extraction records back to the workspace and does not export real files.</value>
+    <value>Filter and summarize candidates by workspace scope and asset type. Running it writes extractable assets to the workspace export directory and records the operations.</value>
   </data>
   <data name="BatchTasksPage.BatchExtractScopeLabelText.Text" xml:space="preserve">
     <value>Scope</value>
@@ -2722,7 +2731,7 @@
     <value>Current Stage Scope</value>
   </data>
   <data name="BatchTasksPage.StageNoteBodyText.Text" xml:space="preserve">
-    <value>This page currently focuses on aggregation and task surfaces. It now includes bulk extraction, bulk replacement, save skeletons, and structured result details, while real file export and bundle writing remain for later milestones.</value>
+    <value>This page currently focuses on aggregation and task surfaces. It now includes real bulk extraction, bulk replacement skeletons, save skeletons, and structured result details, while real bundle writing remains for later milestones.</value>
   </data>
   <data name="BatchTasksPage.TaskResultsTitleText.Text" xml:space="preserve">
     <value>Task Result Details</value>
@@ -2812,10 +2821,10 @@
     <value>Bulk extraction has not been run yet.</value>
   </data>
   <data name="BatchTasksPage.BatchExtract.LastRun.Format" xml:space="preserve">
-    <value>The last run marked {0} assets across {1} bundles. Completed at: {2}</value>
+    <value>The last run extracted {0} assets across {1} bundles. Completed at: {2}</value>
   </data>
   <data name="BatchTasksPage.BatchExtract.Log.Executed.Format" xml:space="preserve">
-    <value>Executed the bulk extraction skeleton and marked {0} assets across {1} bundles. Suggested output directory: {2}</value>
+    <value>Executed bulk extraction and wrote {0} assets across {1} bundles. Output directory: {2}</value>
   </data>
   <data name="BatchTasksPage.BatchReplace.Scope.Format" xml:space="preserve">
     <value>Current workspace: {0}</value>
@@ -2890,10 +2899,10 @@
     <value>Bulk Extraction</value>
   </data>
   <data name="BatchTasksPage.TaskResult.BatchExtract.Summary.Format" xml:space="preserve">
-    <value>Marked {0} assets across {1} bundles.</value>
+    <value>Extracted {0} assets across {1} bundles.</value>
   </data>
   <data name="BatchTasksPage.TaskResult.BatchExtract.Detail.Format" xml:space="preserve">
-    <value>Suggested output directory: {0}</value>
+    <value>Output directory: {0}</value>
   </data>
   <data name="BatchTasksPage.TaskResult.BatchReplace.Title" xml:space="preserve">
     <value>Bulk Replacement</value>
@@ -3172,10 +3181,19 @@
     <value>{0} reloaded {1} with the current filters.</value>
   </data>
   <data name="BundleExplorer.Log.AssetExtracted" xml:space="preserve">
-    <value>Extracted asset "{0}". Suggested output path: {1}</value>
+    <value>Extracted asset "{0}". Output path: {1}</value>
+  </data>
+  <data name="BundleExplorer.Log.AssetExtractionSelectionCancelled" xml:space="preserve">
+    <value>Cancelled selecting an extraction output path for "{0}".</value>
   </data>
   <data name="BundleExplorer.Log.BatchAssetsExtracted" xml:space="preserve">
-    <value>Extracted {0} assets in bulk. First suggested output path: {1}</value>
+    <value>Extracted {0} assets in bulk. First output path: {1}</value>
+  </data>
+  <data name="BundleExplorer.Log.SpineGroupExtracted" xml:space="preserve">
+    <value>Extracted Spine group "{0}". Completed: {1}; failed: {2}; output directory: {3}</value>
+  </data>
+  <data name="BundleExplorer.Log.SpineGroupExtractionSelectionCancelled" xml:space="preserve">
+    <value>Cancelled extraction directory selection for Spine group "{0}".</value>
   </data>
   <data name="BundleExplorer.Log.ReplacementSourceSelected" xml:space="preserve">
     <value>Selected a workspace replacement source for "{2}": {0} / {1}</value>
@@ -3232,7 +3250,10 @@
     <value>Asset extracted: {0}</value>
   </data>
   <data name="BundleExplorer.Notification.BatchAssetsExtracted" xml:space="preserve">
-    <value>Marked {0} assets as extracted.</value>
+    <value>Exported {0} assets.</value>
+  </data>
+  <data name="BundleExplorer.Notification.SpineGroupExtracted" xml:space="preserve">
+    <value>Finished extracting Spine group "{0}": {1} completed, {2} failed.</value>
   </data>
   <data name="BundleExplorer.Notification.ReplacementSourceSelected" xml:space="preserve">
     <value>Workspace replacement source selected: {0}</value>
@@ -3251,6 +3272,21 @@
   </data>
   <data name="BundleExplorer.Notification.ReplacementUndone" xml:space="preserve">
     <value>Replacement undone: {0}</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.Image" xml:space="preserve">
+    <value>Image File</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.Text" xml:space="preserve">
+    <value>Text File</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.Audio" xml:space="preserve">
+    <value>Audio File</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.Json" xml:space="preserve">
+    <value>JSON File</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.Binary" xml:space="preserve">
+    <value>Binary File</value>
   </data>
   <data name="AssetTypeFilter.All" xml:space="preserve">
     <value>All Types</value>
@@ -3362,6 +3398,21 @@
   </data>
   <data name="Error.Asset.Extract.NoBatchCandidates" xml:space="preserve">
     <value>No candidates are available for bulk extraction under the current filter: {0}</value>
+  </data>
+  <data name="Error.Asset.Extract.SpineGroup.NoCandidates" xml:space="preserve">
+    <value>The current Spine group has no extractable parts: {0}</value>
+  </data>
+  <data name="Error.Asset.Extract.OutputDirectoryRequired" xml:space="preserve">
+    <value>Select an output directory before extracting.</value>
+  </data>
+  <data name="Error.Asset.Extract.NotSupported" xml:space="preserve">
+    <value>The current asset does not support extraction: {0}</value>
+  </data>
+  <data name="Error.Asset.Extract.PayloadUnavailable" xml:space="preserve">
+    <value>No writable extraction payload could be generated: {0}</value>
+  </data>
+  <data name="Error.Asset.Extract.WriteFailed" xml:space="preserve">
+    <value>Failed to write the extracted file: {0}. Detail: {1}</value>
   </data>
   <data name="Error.Bundle.Save.NoCandidates" xml:space="preserve">
     <value>No bundles are available for the save skeleton in the current workspace: {0}</value>

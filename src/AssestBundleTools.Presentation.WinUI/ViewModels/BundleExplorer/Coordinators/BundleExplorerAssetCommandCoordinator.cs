@@ -27,6 +27,7 @@ internal sealed class BundleExplorerAssetCommandCoordinator
     private readonly Action<bool> _setBusyState;
     private readonly Func<InspectorPanelViewModel> _getInspector;
     private readonly Func<AssetDocumentTabViewModel?> _getActiveAssetDocumentTab;
+    private readonly Func<SpineAssetGroupDocumentTabViewModel?> _getActiveSpineGroupDocumentTab;
     private readonly Func<Task> _refreshPrimaryPaneAsync;
     private readonly Action<AssetDocumentTabViewModel, AssetDetailsDto> _reapplyAssetDocumentState;
 
@@ -42,6 +43,7 @@ internal sealed class BundleExplorerAssetCommandCoordinator
         Action<bool> setBusyState,
         Func<InspectorPanelViewModel> getInspector,
         Func<AssetDocumentTabViewModel?> getActiveAssetDocumentTab,
+        Func<SpineAssetGroupDocumentTabViewModel?> getActiveSpineGroupDocumentTab,
         Func<Task> refreshPrimaryPaneAsync,
         Action<AssetDocumentTabViewModel, AssetDetailsDto> reapplyAssetDocumentState)
     {
@@ -56,13 +58,18 @@ internal sealed class BundleExplorerAssetCommandCoordinator
         _setBusyState = setBusyState ?? throw new ArgumentNullException(nameof(setBusyState));
         _getInspector = getInspector ?? throw new ArgumentNullException(nameof(getInspector));
         _getActiveAssetDocumentTab = getActiveAssetDocumentTab ?? throw new ArgumentNullException(nameof(getActiveAssetDocumentTab));
+        _getActiveSpineGroupDocumentTab = getActiveSpineGroupDocumentTab ?? throw new ArgumentNullException(nameof(getActiveSpineGroupDocumentTab));
         _refreshPrimaryPaneAsync = refreshPrimaryPaneAsync ?? throw new ArgumentNullException(nameof(refreshPrimaryPaneAsync));
         _reapplyAssetDocumentState = reapplyAssetDocumentState ?? throw new ArgumentNullException(nameof(reapplyAssetDocumentState));
     }
 
-    public bool HasSelectedAsset => TryGetActiveAssetDocumentState(out _, out _);
+    public bool HasSelectedAsset =>
+        TryGetActiveAssetDocumentState(out _, out _) ||
+        TryGetActiveSpineGroupDocumentState(out _);
 
-    public bool CanExtractSelectedAsset => CanExecuteActiveAssetCommand(static (_, details) => details.CanExtract);
+    public bool CanExtractSelectedAsset =>
+        CanExecuteActiveAssetCommand(static (_, details) => details.CanExtract) ||
+        CanExtractActiveSpineGroup();
 
     public bool CanSelectFileReplacementSource => CanExecuteActiveAssetCommand(static (_, details) => details.CanReplaceFromFile);
 
@@ -81,6 +88,13 @@ internal sealed class BundleExplorerAssetCommandCoordinator
 
         details = assetTab.Details;
         return true;
+    }
+
+    public bool TryGetActiveSpineGroupDocumentState(
+        [NotNullWhen(true)] out SpineAssetGroupDocumentTabViewModel? spineGroupTab)
+    {
+        spineGroupTab = _getActiveSpineGroupDocumentTab();
+        return spineGroupTab is not null;
     }
 
     public void OpenCurrentPreviewLocation()
@@ -111,18 +125,31 @@ internal sealed class BundleExplorerAssetCommandCoordinator
 
     public async Task ExtractSelectedAssetAsync()
     {
-        if (!TryGetActiveAssetCommandContext(
+        if (TryGetActiveAssetCommandContext(
                 static (_, details) => details.CanExtract,
                 out var workspaceSummary,
                 out _,
                 out var details))
         {
+            await _modificationActionHandler.ExtractSelectedAssetAsync(
+                workspaceSummary,
+                details,
+                _setBusyState,
+                _refreshPrimaryPaneAsync,
+                _operationFeedbackBridge.AppendResultFailure);
             return;
         }
 
-        await _modificationActionHandler.ExtractSelectedAssetAsync(
+        if (!TryGetActiveSpineGroupExtractionContext(
+                out workspaceSummary,
+                out var spineGroupTab))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.ExtractSpineAssetGroupAsync(
             workspaceSummary,
-            details,
+            spineGroupTab,
             _setBusyState,
             _refreshPrimaryPaneAsync,
             _operationFeedbackBridge.AppendResultFailure);
@@ -248,6 +275,11 @@ internal sealed class BundleExplorerAssetCommandCoordinator
                canExecute(assetTab, details);
     }
 
+    private bool CanExtractActiveSpineGroup() =>
+        !_isBusyProvider() &&
+        _workspaceShell.WorkspaceSummary is not null &&
+        TryGetActiveSpineGroupDocumentState(out _);
+
     /// <summary>
     /// 资产级命令入口共用同一条前置条件判定，避免提取/替换/撤销各自散落重复 guard。
     /// 真正的业务规则仍由能力位和应用层结果决定，这里只做页面级可执行性筛选。
@@ -270,6 +302,23 @@ internal sealed class BundleExplorerAssetCommandCoordinator
             workspaceSummary = null;
             assetTab = null;
             details = null;
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool TryGetActiveSpineGroupExtractionContext(
+        [NotNullWhen(true)] out WorkspaceSummaryDto? workspaceSummary,
+        [NotNullWhen(true)] out SpineAssetGroupDocumentTabViewModel? spineGroupTab)
+    {
+        workspaceSummary = _workspaceShell.WorkspaceSummary;
+        if (_isBusyProvider() ||
+            workspaceSummary is null ||
+            !TryGetActiveSpineGroupDocumentState(out spineGroupTab))
+        {
+            workspaceSummary = null;
+            spineGroupTab = null;
             return false;
         }
 

@@ -41,6 +41,8 @@ internal static partial class ApplicationTestSuite
             nameof(GetAssetEditDraftRestorePlanHandlerTests.HandleAsync_ShouldAllowReferenceWithoutSourceFingerprint),
             GetAssetEditDraftRestorePlanHandlerTests.HandleAsync_ShouldAllowReferenceWithoutSourceFingerprint);
         await RunSpineAssetGroupTestsAsync(failures);
+        await RunWorkspaceOperationLogTestsAsync(failures);
+        await RunExtractionWorkflowTestsAsync(failures);
         await RunTestAsync(
             failures,
             nameof(WorkspaceChangeSetAssetEditDraftStoreTests.Load_ShouldResolveDraftDescriptor_FromWorkspaceChangeSet),
@@ -209,6 +211,7 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(ReplacementWorkflowHandlerTests.GetFileReplacementCandidateHandler_ShouldPreferTargetAssetType_WhenSharedExtensionMatches),
             ReplacementWorkflowHandlerTests.GetFileReplacementCandidateHandler_ShouldPreferTargetAssetType_WhenSharedExtensionMatches);
+        await RunReplacementOperationRecorderTestsAsync(failures);
         await RunTestAsync(
             failures,
             nameof(ReplacementWorkflowHandlerTests.GetFileReplacementCandidateHandler_ShouldReturnFailure_WhenTargetAssetDoesNotExist),

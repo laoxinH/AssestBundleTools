@@ -23,6 +23,7 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
     private readonly BundleExplorerOperationFeedbackBridge _operationFeedbackBridge;
     private readonly BundleExplorerAssetModificationActionHandler _modificationActionHandler;
     private readonly Func<AssetDocumentTabViewModel?> _activeAssetTabProvider;
+    private readonly Func<SpineAssetGroupDocumentTabViewModel?> _activeSpineGroupTabProvider;
     private readonly Func<InspectorPanelViewModel> _inspectorProvider;
     private readonly Func<bool> _isBusyProvider;
     private readonly Action<bool> _setBusy;
@@ -37,6 +38,7 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
         BundleExplorerOperationFeedbackBridge operationFeedbackBridge,
         BundleExplorerAssetModificationActionHandler modificationActionHandler,
         Func<AssetDocumentTabViewModel?> activeAssetTabProvider,
+        Func<SpineAssetGroupDocumentTabViewModel?> activeSpineGroupTabProvider,
         Func<InspectorPanelViewModel> inspectorProvider,
         Func<bool> isBusyProvider,
         Action<bool> setBusy,
@@ -50,6 +52,7 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
         _operationFeedbackBridge = operationFeedbackBridge ?? throw new ArgumentNullException(nameof(operationFeedbackBridge));
         _modificationActionHandler = modificationActionHandler ?? throw new ArgumentNullException(nameof(modificationActionHandler));
         _activeAssetTabProvider = activeAssetTabProvider ?? throw new ArgumentNullException(nameof(activeAssetTabProvider));
+        _activeSpineGroupTabProvider = activeSpineGroupTabProvider ?? throw new ArgumentNullException(nameof(activeSpineGroupTabProvider));
         _inspectorProvider = inspectorProvider ?? throw new ArgumentNullException(nameof(inspectorProvider));
         _isBusyProvider = isBusyProvider ?? throw new ArgumentNullException(nameof(isBusyProvider));
         _setBusy = setBusy ?? throw new ArgumentNullException(nameof(setBusy));
@@ -85,20 +88,33 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
 
     public async Task ExtractSelectedAssetAsync()
     {
-        if (!TryGetActiveAssetCommandContext(
+        if (TryGetActiveAssetCommandContext(
                 static (_, details) => details.CanExtract,
                 out var workspaceSummary,
                 out _,
                 out var details))
         {
+            await _modificationActionHandler.ExtractSelectedAssetAsync(
+                workspaceSummary,
+                details,
+                _setBusy,
+                _reloadActiveAssetDocumentAsync,
+                _operationFeedbackBridge.AppendResultFailure);
             return;
         }
 
-        await _modificationActionHandler.ExtractSelectedAssetAsync(
+        if (!TryGetActiveSpineGroupExtractionContext(
+                out workspaceSummary,
+                out var spineGroupTab))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.ExtractSpineAssetGroupAsync(
             workspaceSummary,
-            details,
+            spineGroupTab,
             _setBusy,
-            _reloadActiveAssetDocumentAsync,
+            static () => Task.CompletedTask,
             _operationFeedbackBridge.AppendResultFailure);
     }
 
@@ -216,6 +232,24 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
             workspaceSummary = null;
             assetTab = null;
             details = null;
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool TryGetActiveSpineGroupExtractionContext(
+        [NotNullWhen(true)] out WorkspaceSummaryDto? workspaceSummary,
+        [NotNullWhen(true)] out SpineAssetGroupDocumentTabViewModel? spineGroupTab)
+    {
+        workspaceSummary = _workspaceShell.WorkspaceSummary;
+        spineGroupTab = _activeSpineGroupTabProvider();
+        if (_isBusyProvider() ||
+            workspaceSummary is null ||
+            spineGroupTab is null)
+        {
+            workspaceSummary = null;
+            spineGroupTab = null;
             return false;
         }
 

@@ -131,6 +131,31 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
     }
 
     [Fact]
+    public async Task SynchronizeInspectorWithActiveBundleTabAsync_ShouldPreserveActiveAssetDocument_WhenSelectedSpineGroupHasOpenTab()
+    {
+        var context = CreateContext();
+        var coordinator = CreateCoordinator(context);
+        var assetTab = context.HostCoordinator.CreateAssetDocumentTab(
+            context.BundleTab.BundleId,
+            new AssetId("asset-texture"),
+            "Texture");
+        var groupEntry = CreateSpineGroupEntry("hero", "Hero");
+        var groupTab = context.HostCoordinator.CreateSpineGroupDocumentTab(groupEntry.Item);
+        context.BundleTab.AddAssetTab(assetTab, activate: true);
+        context.BundleTab.AddSpineGroupTab(groupTab, activate: false);
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.SpineGroups;
+        context.PrimaryPane.ReplaceSpineGroups("ui.ab", [groupEntry], "empty");
+        context.PrimaryPane.UpdateSpineGroupSelection(groupEntry);
+
+        await coordinator.SynchronizeInspectorWithActiveBundleTabAsync();
+
+        Assert.Same(assetTab, context.BundleTab.ActiveAssetTab);
+        Assert.Same(assetTab, context.BundleTab.ActiveDocumentTab?.AssetTab);
+        Assert.Same(assetTab.Inspector, context.HostCoordinator.CurrentInspector);
+        Assert.NotSame(groupTab, context.BundleTab.ActiveSpineGroupTab);
+    }
+
+    [Fact]
     public async Task HandlePrimaryPaneSelectionChangedAsync_ShouldApplyLoadedAtlasDetails()
     {
         var context = CreateContext();

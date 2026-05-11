@@ -155,6 +155,17 @@ public sealed class WorkspaceImportCoordinatorServiceTests
         public Task<string?> PickSpineFrameSequenceExportDirectoryAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult<string?>(null);
 
+        public Task<string?> PickSpineAssetGroupExtractionDirectoryAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
+
+        public Task<string?> PickAssetExtractionOutputFileAsync(
+            AssetType assetType,
+            string assetName,
+            string? assetPath,
+            string? containerPath,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
+
         public Task<string?> PickReplacementSourceFileAsync(
             AssetType targetAssetType,
             CancellationToken cancellationToken = default) =>

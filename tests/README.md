@@ -18,6 +18,7 @@
 - 资源预览查询时的缓存命中、文本预览完整载荷缓存与有界展示文本投影、Mesh / Material / AnimationClip / Font / GameObject / MonoBehaviour / AnimatorController 结构化载荷水化、AnimationClip binding / 曲线摘要展示、GameObject 自适应预览摘要卡片、组件引用信息卡与已解析资源跳转展示、MonoBehaviour 自适应预览摘要卡片、脚本 / 字段分组 / 序列化容器 / 字段 / 引用信息卡与已解析资源跳转展示、AnimatorController 自适应预览摘要卡片、状态机容器 / 参数 / AnimationClip 引用信息卡与已解析资源跳转展示、`SourceFingerprint / Identity / GeneratorVersion / AudioTranscoder` 失效重建、音频摘要在新转码器可用时的升级重建，以及解密失败 / 生成失败摘要回退链路
 - Spine 资源组第一版 Application 读模型中的 `.atlas / .skel / .skel.bytes / .json` 组识别、跨工作区 `Texture2D` page 候选匹配、atlas 完整预览文本 page / region 解析、page 到 Texture2D 组成资产映射、JSON skeleton 的 bone / slot / skin / animation 轻量计数摘要、`.skel / .skel.bytes` 的 `AssetPreviewKind.Binary` 预览载荷传递、多 skin region attachment 与基础 timeline 的实验性动画预览 DTO、runtime-neutral skin previews / setup frame / sampled frames / draw commands、draw order timeline、slot color/tint、`V21 / V34 / V35 / V36 / V37 / V38 / V40 / V41 / V42` runtime adapter 版本矩阵、runtime adapter 端口优先于 JSON fallback 的应用层调度、V38 / V42 官方 runtime JSON / binary adapter 的 atlas / skeleton 解析与 draw command 输出、V38 / V42 runtime playback session 当前帧 seek、setup pose、skeleton 复用、frame diagnostics 和取消结果、JSON fallback sampled playback session、固定 FPS 帧序列采样、序列帧导出计划的共享画布 / world-to-pixel 变换 / PNG 文件命名、Presentation PNG 序列帧导出入口、V38 / V42 mesh attachment world vertices / atlas UV / triangle draw command 输出、V38 / V42 mesh deform timeline 采样、V38 transform constraint timeline 采样、V38 / V42 IK constraint timeline 采样、官方 runtime 复杂 mesh 采样预算、二进制 skeleton 版本未知时尝试已注册 adapter、无匹配 adapter 的结构化诊断、缺失 atlas / texture page / atlas 预览不可用、atlas page 未匹配 Texture2D、Texture2D 预览不可用、page 尺寸与图片尺寸不一致诊断，JSON fallback mesh / weighted vertices / deform、slot 双颜色、event、约束和 Bezier 曲线等实验动画预览未支持特性的结构化诊断，以及 Presentation 资产窗格 `资源 / Spine 组` 视图切换、浏览状态持久化、主窗口右侧组文档去重打开、组文档轻量恢复、统一资源文档标签组内普通资产与 Spine 组混排 / 重排 / 移出、独立窗口轻量快照恢复、隐藏预览 inactive、详情回填、atlas page 选择切换、Texture2D region overlay、skeleton 摘要、实验性动画预览投影、逐三角 mesh 渲染与控件级帧缓存、动画选择、真实 skin 切换、速度、进度、播放时间与进度 slider / 时间读数展示时间拆分 / 节流、暂停 / 逐帧 / 独立 setup pose frame 的播放体验状态，以及 D3D 主线前置的 Presentation 渲染后端抽象、DTO 到 vertex batch 的 draw order / UV / tint / mesh 三角投影、clip-space 投影、预览视口平移 / 锚点缩放 / 重置状态、Texture2D 预览载荷解码 / page size 暴露、常见独立 alpha page 合成、premultiplied alpha 解码与 D3D / Win2D 载荷传递、默认 D3D11 shader resource 上传、可复用动态 vertex / index buffer 容量增长、D3D 渲染失败自动回退 Win2D、D3D 诊断输出、device lost 识别、小窗口 frame / texture version 批次缓存、runtime frame generation 诊断、batch renderer 预热和顶点 / 索引批次后端选择
 - 编辑草稿恢复候选解析中的工作区范围校验、轻量引用标准化、可恢复 / 缺失 / 来源不匹配 / 过期 / 引用无效诊断分类，工作区变更暂存中的 `editDrafts[]` 描述读取，以及 Presentation 恢复弹窗的草稿候选预检摘要投影和可恢复标记筛选
+- 工作区可恢复操作记录：`WorkspaceChangeSetDto.operations[] / schemaVersion / operationSequence` DTO 契约、操作日志追加与状态更新、当前生效操作筛选、`Pending` 到恢复计划 `Interrupted` 的基础分类、`JsonWorkspaceChangeStore` 对操作记录和字符串枚举的 JSON round-trip、文件/工作区替换与撤销替换成功后的操作记录追加、单资源 / 批量 / Spine 资源组提取记录追加，以及工作区重开时从 `operations[]` 物化当前生效替换状态
 - 资源编辑窗口模式中的打开冲突解析：主窗口和独立资源编辑窗口已存在同一资源文档标签时，优先解析到可激活的已有宿主和目标标签，避免重复创建窗口或标签；独立窗口单标签拖出策略会阻止创建等价新窗口
 - 替换链路中的候选类型解析、来源路径校验、缺失资源失败、类型不匹配、工作区候选空集失败、单资源文件/工作区替换、撤销替换，以及批量替换预览/执行摘要
 - 保存链路中的保存前预览空态/资源包分组聚合，以及保存执行的缺失工作区、无候选失败和执行摘要
@@ -96,5 +97,9 @@
 
 后续仍待补齐：
 
+- 工作区可恢复操作记录接入保存链路后，补来源缺失 / 指纹不匹配恢复计划、按目标资源撤销栈的当前会话精确回退和保存检查点回归
+- 提取主线已补单资源文本 / 图片真实写出、单资源保存文件名保留、批量提取操作记录、Spine 资源组 skeleton / atlas / 主贴图 / alpha 贴图整组提取、文件写出端口和提取记录重启恢复回归；后续补命名冲突、取消、失败分类、输出文件缺失恢复诊断和批处理结果明细回归
+- 下一轮替换主线落地后，补文件来源兼容性诊断、替换预览、批量替换结果明细、撤销一致性和变更暂存回归
+- 保存 / 重建进入真实写包前，先补保存输出计划、覆盖保护、不可保存原因和执行摘要回归
 - 更完整的工作区激活，以及替换/保存链路在真实写包与最终持久化语义落地后的深层回归
 - 结构化错误与资源键的更细粒度自动校验

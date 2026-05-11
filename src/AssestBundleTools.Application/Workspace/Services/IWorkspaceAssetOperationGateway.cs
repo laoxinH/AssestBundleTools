@@ -16,6 +16,10 @@ public interface IWorkspaceAssetOperationGateway
         ExtractAssetCommand command,
         CancellationToken cancellationToken = default);
 
+    Task<Result<SpineAssetGroupExtractionResultDto>> ExtractSpineAssetGroupAsync(
+        ExtractSpineAssetGroupCommand command,
+        CancellationToken cancellationToken = default);
+
     Task<Result<FileReplacementCandidateDto>> GetFileReplacementCandidateAsync(
         GetFileReplacementCandidateQuery query,
         CancellationToken cancellationToken = default);

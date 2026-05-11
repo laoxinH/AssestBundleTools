@@ -96,6 +96,13 @@ public sealed partial class BundleExplorerPage
         await _assetEditorWindowCoordinator.OpenActiveAssetDocumentGroupInNewWindowAsync();
     }
 
+    private async void OnLocateActiveDocumentButtonClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.LocateActiveDocumentInPrimaryPaneAsync();
+        PrimaryAssetPaneView.ScrollSelectedItemIntoView();
+        _tabCoordinator.ScrollActiveDocumentTabIntoView();
+    }
+
     private async void OnCloseOtherAssetDocumentTabsMenuItemClick(object sender, RoutedEventArgs e)
     {
         if (!_tabCoordinator.TryGetTaggedValue(sender, out AssetDocumentTabItemViewModel? documentTab))

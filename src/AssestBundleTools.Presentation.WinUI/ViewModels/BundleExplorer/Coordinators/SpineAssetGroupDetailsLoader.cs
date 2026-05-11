@@ -138,11 +138,7 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
             .Where(static page => page.TexturePageAsset is not null)
             .GroupBy(static page => page.Name, StringComparer.Ordinal)
             .ToDictionary(static group => group.Key, static group => group.First(), StringComparer.Ordinal);
-        var requiredPageNames = details.AnimationPreview.Attachments
-            .Select(static attachment => attachment.PageName)
-            .Where(static pageName => !string.IsNullOrWhiteSpace(pageName))
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
+        var requiredPageNames = SpineAnimationTexturePageNameResolver.Resolve(details);
         var texturePreviews = new Dictionary<string, SpineAnimationPreviewTextureState>(StringComparer.Ordinal);
         foreach (var pageName in requiredPageNames)
         {

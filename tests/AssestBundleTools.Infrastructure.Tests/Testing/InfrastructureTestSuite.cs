@@ -2,6 +2,7 @@ using AssestBundleTools.Infrastructure.Tests.Bundles.Decryption;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Reading;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Previewing;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Persistence;
+using AssestBundleTools.Infrastructure.Tests.Workspace.Extraction;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Runtime;
 
 namespace AssestBundleTools.Infrastructure.Tests.Testing;
@@ -34,6 +35,14 @@ internal static class InfrastructureTestSuite
             JsonWorkspaceChangeStoreTests.Save_ShouldRoundTripEditDraftDescriptors);
         await RunTestAsync(
             failures,
+            nameof(JsonWorkspaceChangeStoreTests.Save_ShouldRoundTripOperationRecords_AsStringEnums),
+            JsonWorkspaceChangeStoreTests.Save_ShouldRoundTripOperationRecords_AsStringEnums);
+        await RunTestAsync(
+            failures,
+            nameof(JsonWorkspaceChangeStoreTests.Load_ShouldReadLegacyChangeSetWithoutOperationFields),
+            JsonWorkspaceChangeStoreTests.Load_ShouldReadLegacyChangeSetWithoutOperationFields);
+        await RunTestAsync(
+            failures,
             nameof(JsonPreviewCacheStoreTests.Save_ShouldRoundTripDescriptorAndPayload),
             JsonPreviewCacheStoreTests.Save_ShouldRoundTripDescriptorAndPayload);
         await RunTestAsync(
@@ -58,6 +67,14 @@ internal static class InfrastructureTestSuite
             JsonPreviewCacheStoreTests.Delete_ShouldRemoveDescriptor_WhenStoredDescriptorPayloadPathIsInvalid);
         await RunTestAsync(
             failures,
+            nameof(FileSystemAssetExtractionFileStoreTests.WriteAsync_ShouldWriteContent_UnderWorkspaceDataRoot_ForRelativeOutputPath),
+            FileSystemAssetExtractionFileStoreTests.WriteAsync_ShouldWriteContent_UnderWorkspaceDataRoot_ForRelativeOutputPath);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemAssetExtractionFileStoreTests.WriteAsync_ShouldCopySourcePayload_WhenContentIsNotProvided),
+            FileSystemAssetExtractionFileStoreTests.WriteAsync_ShouldCopySourcePayload_WhenContentIsNotProvided);
+        await RunTestAsync(
+            failures,
             nameof(CachedWorkspaceSessionRegistryTests.TryGetAssetDetails_ShouldResolveMeshTextureAssociations_FromRendererPath),
             CachedWorkspaceSessionRegistryTests.TryGetAssetDetails_ShouldResolveMeshTextureAssociations_FromRendererPath);
         await RunTestAsync(
@@ -72,6 +89,14 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(CachedWorkspaceSessionRegistryTests.TryGetAssetList_ShouldExposeDynamicTypeFacets_AndFilterUnknownByDisplayName),
             CachedWorkspaceSessionRegistryTests.TryGetAssetList_ShouldExposeDynamicTypeFacets_AndFilterUnknownByDisplayName);
+        await RunTestAsync(
+            failures,
+            nameof(CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedExtractionOperations_FromChangeSet),
+            CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedExtractionOperations_FromChangeSet);
+        await RunTestAsync(
+            failures,
+            nameof(CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedReplacementOperations_FromChangeSet),
+            CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedReplacementOperations_FromChangeSet);
         await RunTestAsync(
             failures,
             nameof(AssetsToolsRealSampleDependencyTests.Cone002Mesh_ShouldExposeRendererMaterialPath_ButNoTextureAssociation_FromRealDependencyGraph),
@@ -96,6 +121,34 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(AssetsToolsAssetPreviewGeneratorTests.GenerateAsync_ShouldReturnGenerationFailureDetail_WhenUnexpectedExceptionOccurs),
             AssetsToolsAssetPreviewGeneratorTests.GenerateAsync_ShouldReturnGenerationFailureDetail_WhenUnexpectedExceptionOccurs);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsTextAssetPreviewClassifierTests.TryDecodeReadableTextPayload_ShouldAcceptJsonSkelText),
+            AssetsToolsTextAssetPreviewClassifierTests.TryDecodeReadableTextPayload_ShouldAcceptJsonSkelText);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsTextAssetPreviewClassifierTests.TryDecodeJsonTextPayload_ShouldAcceptJsonSkelText),
+            AssetsToolsTextAssetPreviewClassifierTests.TryDecodeJsonTextPayload_ShouldAcceptJsonSkelText);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsTextAssetPreviewClassifierTests.TryDecodeReadableTextPayload_ShouldRejectBinarySkelPayload),
+            AssetsToolsTextAssetPreviewClassifierTests.TryDecodeReadableTextPayload_ShouldRejectBinarySkelPayload);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsTextAssetPreviewClassifierTests.TryDecodeReadableTextPayload_ShouldRejectUtf8ControlPayload),
+            AssetsToolsTextAssetPreviewClassifierTests.TryDecodeReadableTextPayload_ShouldRejectUtf8ControlPayload);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsTextAssetPreviewClassifierTests.TryDecodeJsonTextPayload_ShouldRejectReadableNonJsonPayload),
+            AssetsToolsTextAssetPreviewClassifierTests.TryDecodeJsonTextPayload_ShouldRejectReadableNonJsonPayload);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsTextAssetPreviewClassifierTests.TryDecodeJsonTextPayload_ShouldRejectInvalidJsonPayload),
+            AssetsToolsTextAssetPreviewClassifierTests.TryDecodeJsonTextPayload_ShouldRejectInvalidJsonPayload);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsTextAssetPreviewClassifierTests.IsSpineSkeletonPath_ShouldMatchSkelAndSkelBytes),
+            AssetsToolsTextAssetPreviewClassifierTests.IsSpineSkeletonPath_ShouldMatchSkelAndSkelBytes);
         await RunTestAsync(
             failures,
             nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV42RuntimeDrawCommands_FromJsonSkeleton),

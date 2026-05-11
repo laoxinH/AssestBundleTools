@@ -169,6 +169,8 @@ public sealed class AssetPaneViewModel : ObservableObject
 
     public ObservableCollection<SpineAssetGroupEntryViewModel> SpineGroupItems => _spineGroupList.Items;
 
+    public ObservableCollection<SpineAssetGroupEntryViewModel> SelectedSpineGroups => _spineGroupList.SelectedSpineGroups;
+
     public bool IsReplacingAssetTypeOptions
     {
         get => _assetTypeFilter.IsReplacingOptions;
@@ -233,6 +235,7 @@ public sealed class AssetPaneViewModel : ObservableObject
 
             _spineGroupList.SetSelectedSpineGroup(value);
             OnPropertyChanged();
+            OnPropertyChanged(nameof(SelectedSpineGroupCount));
         }
     }
 
@@ -243,6 +246,8 @@ public sealed class AssetPaneViewModel : ObservableObject
     public AssetId? SelectedAssetId => SelectedAsset?.Item.AssetId;
 
     public int SelectedAssetCount => SelectedAssets.Count;
+
+    public int SelectedSpineGroupCount => SelectedSpineGroups.Count;
 
     public bool HasMultipleSelection => SelectedAssetCount > 1;
 
@@ -385,6 +390,15 @@ public sealed class AssetPaneViewModel : ObservableObject
         SelectedSpineGroup = primarySelectedGroup;
     }
 
+    public void UpdateSpineGroupSelection(
+        IEnumerable<SpineAssetGroupEntryViewModel> selectedSpineGroups,
+        SpineAssetGroupEntryViewModel? primarySelectedGroup)
+    {
+        _spineGroupList.UpdateSelection(selectedSpineGroups, primarySelectedGroup);
+        OnPropertyChanged(nameof(SelectedSpineGroup));
+        OnPropertyChanged(nameof(SelectedSpineGroupCount));
+    }
+
     /// <summary>
     /// 主动清空当前窗格的选中状态。
     /// 主要用于详情标签被关闭后同步回退列表焦点，避免旧选中项立即重新打开详情。
@@ -434,6 +448,24 @@ public sealed class AssetPaneViewModel : ObservableObject
 
         OnPropertyChanged(nameof(SelectedAsset));
         NotifySelectionStateChanged();
+        return true;
+    }
+
+    public bool TrySelectSpineGroup(string groupId)
+    {
+        if (string.IsNullOrWhiteSpace(groupId))
+        {
+            return false;
+        }
+
+        var target = SpineGroupItems.FirstOrDefault(item =>
+            string.Equals(item.Item.GroupId, groupId, StringComparison.Ordinal));
+        if (target is null)
+        {
+            return false;
+        }
+
+        SelectedSpineGroup = target;
         return true;
     }
 

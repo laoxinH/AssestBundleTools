@@ -15,6 +15,7 @@
 - [code-architecture-guidelines.md](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/code-architecture-guidelines.md)
 - [ui-final-spec.md](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/ui-final-spec.md)
 - [project-build-roadmap.md](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/project-build-roadmap.md)
+- [workspace-recoverable-operation-records.md](workspace-recoverable-operation-records.md)
 - [asset-editor-window-mode.md](asset-editor-window-mode.md)
 
 ## 2. 设计目标
@@ -421,10 +422,17 @@ Presentation 层保留两个协同层次：
 
 - `workspaceKey`
 - `updatedAtUtc`
+- `schemaVersion`
+- `operationSequence`
+- `operations[]`
 - `changes[]`
 - `editDrafts[]`
 
-每个 `changes[]` 条目当前可先保持通用结构：
+当前设计已进入“操作记录 + 物化摘要”两层模型，详细见 [workspace-recoverable-operation-records.md](workspace-recoverable-operation-records.md)。
+
+`operations[]` 是后续提取、替换、编辑草稿应用和保存输出的可恢复事实来源，负责记录操作顺序、状态、目标、来源、前一状态、结果和恢复诊断。它用于支持重启恢复、撤销、长操作中断识别和保存检查点。
+
+`changes[]` 保留为当前物化变更摘要和旧 UI / 保存预览兼容结构，不再继续扩展为完整历史记录。每个 `changes[]` 条目当前可先保持通用结构：
 
 - `changeKey`
 - `changeKind`
@@ -435,7 +443,7 @@ Presentation 层保留两个协同层次：
 - `sourceDescriptor`
 - `outputPath`
 
-后续在真实保存链路稳定后，再按提取、工作区替换、文件替换拆成更细的专用模型。
+后续不再优先通过扩展 `summary / sourceDescriptor / outputPath` 来表达新语义；需要恢复、撤销或检查点参与的字段应进入 `operations[]` 的结构化目标、来源、前一状态和结果模型。
 
 `editDrafts[]` 当前只保存草稿描述元数据，不保存草稿内容。字段包括：
 
@@ -448,6 +456,8 @@ Presentation 层保留两个协同层次：
 - `summary`
 
 该列表服务于恢复提示里的候选预检：恢复提示只需要知道草稿标记是否仍可定位、是否与来源指纹匹配、是否过期，以及可展示的轻量说明。预检计划可用时，执行窗口恢复只允许保留预检为可恢复的轻量标记。真实草稿内容、合并策略、确认 / 丢弃队列和保存应用语义仍由后续编辑器模型定义。
+
+真实草稿内容后续应进入 `staging/drafts/<workspaceKey>/<draftId>/`，真实长操作或大载荷中间产物后续应进入 `staging/operation-payloads/<workspaceKey>/<operationId>/`，不得塞入工作区元数据或资源包浏览状态。
 
 ### 5.6 缓存失效规则
 
@@ -700,19 +710,21 @@ Presentation 层保留两个协同层次：
 
 ## 9. 后续实施建议
 
+当前工作区主链路已经完成阶段性收口。后续工作区相关开发默认服务于提取、替换和保存输出主线，不再优先扩展顶层工作区切换器或新的大布局。
+
 建议按下面顺序继续推进：
 
-1. 继续补活动工作区在更多依赖页面中的摘要与入口承载，并在后续需要时补跨 Bundle 级依赖跳转
-2. 再评估是否需要顶层工作区切换器
-3. M9 当前已完成真实资产级读取、索引缓存复用、工作区级解密器自动识别、失败诊断、依赖深读与缓存诊断主链路收口
-4. 富预览扩展当前已完成 `AudioClip`、`Mesh` 第一版、`Material` 半可视化摘要、`AnimationClip` binding / 曲线摘要增强、`Font` 第一版半可视化摘要、`GameObject` 第一版信息浏览预览、`MonoBehaviour` 第一版信息浏览预览与 `AnimatorController` 第一版信息浏览预览；GameObject 已补上常见组件引用摘要和已解析资源跳转，MonoBehaviour 已补上脚本 / 字段 / 引用信息卡、字段分组、序列化容器摘要和已解析资源跳转，AnimatorController 已补上 `m_Controller` 常量区状态机摘要、AnimationClip 引用信息卡和已解析资源跳转；`SpriteAtlas` 继续按样本资源可用性回补；Spine 预览按“资源组视图 + skeleton 摘要 + atlas region overlay + runtime-neutral 动画 DTO + V38/V42 runtime adapter + runtime playback session + 组文档轻量恢复 + 统一资源编辑窗口承载与独立窗口轻量恢复”继续推进，当前 `60 FPS` 交互主线已通过真实复杂样本验证，后续重点收敛为基础播放 / 切换稳定性、高刷新验证和固定 fps 导出
-5. 资源编辑窗口模式按 [asset-editor-window-mode.md](asset-editor-window-mode.md) 分阶段推进：当前已完成命令式独立窗口 / 放回主窗口、标签拖拽与整组拖出 / 放回，以及“启动读取快照 + 弹窗确认 / 手动恢复入口 + 草稿候选预检摘要 + 变更暂存描述读取”这一轮窗口恢复闭环；后续重点转向更完整的布局恢复、冲突处理与真实编辑草稿队列
-6. 最后再评估是否需要引入可分享工作区文件
-6. 工作区窗口模型当前已按“跨进程隔离优先 + formal/pending 双阶段注册”落地，并已补上 pending 注册 / 页面级失败回滚的首轮 `Presentation` 回归；后续若继续加强稳定性，更适合继续补跨进程窗口激活与重定向链路，而不是重新回退注册时机
+1. 保持现有活动工作区、导入缓存、预览缓存和浏览状态恢复边界，不把新的提取 / 替换 / 保存语义写回 Presentation。
+2. 真实提取输出已接入工作区数据根下的默认导出路径、单资源保存文件选择、输出结果记录和重启恢复；Spine 资源组已接入整组提取入口，按 atlas page 匹配 skeleton / atlas / 主贴图 / 独立 alpha 贴图，并继续复用单资源真实写出与提取操作记录；后续补批量用户可选最近输出目录、命名冲突策略 UI、失败明细面板和撤销提取标记。
+3. 为替换和保存继续复用现有 `staging/changes` 变更暂存，不把真实写包结果直接塞进工作区元数据。
+4. 在保存输出计划稳定后，再评估是否需要可分享工作区文件。
+5. 工作区窗口模型继续保持“跨进程隔离优先 + formal/pending 双阶段注册”；后续若加强稳定性，优先补跨进程窗口激活与重定向回归，不重新回退注册时机。
 
-### 9.1 预览扩展建议
+已完成的预览与窗口支线状态继续保留在 [project-build-roadmap.md](project-build-roadmap.md)、[ui-final-spec.md](ui-final-spec.md)、[asset-editor-window-mode.md](asset-editor-window-mode.md) 和 Spine 专题文档中。本文不再重复维护完整预览阶段日志。
 
-真实内容预览的后续扩展建议单独按下面顺序推进，避免和当前已完成范围混淆：
+### 9.1 预览扩展记录与样本门控建议
+
+真实内容预览已经完成当前高价值主线。下面内容保留为已落地能力和样本门控修补方向，避免和下一轮提取 / 替换 / 保存主线混淆：
 
 1. `AudioClip`
    - 第一阶段已落地“容器识别 + 可播放载荷透传 + 摘要回退”主链路。

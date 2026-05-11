@@ -45,8 +45,87 @@ internal sealed class AssetPaneSelectionViewCoordinator
         }
 
         _getViewModel()?.UpdateSpineGroupSelection(
+            _spineGroupListView.SelectedItems.OfType<SpineAssetGroupEntryViewModel>(),
             _spineGroupListView.SelectedItem as SpineAssetGroupEntryViewModel);
         return true;
+    }
+
+    public bool SelectAssetForContextAction(
+        AssetListEntryViewModel targetSelection,
+        bool preserveExistingSelection)
+    {
+        ArgumentNullException.ThrowIfNull(targetSelection);
+
+        var viewModel = _getViewModel();
+        if (viewModel is null || !viewModel.Items.Contains(targetSelection))
+        {
+            return false;
+        }
+
+        _isSynchronizingAssetSelectionFromViewModel = true;
+        try
+        {
+            if (!preserveExistingSelection)
+            {
+                _assetListView.SelectedItems.Clear();
+            }
+
+            _assetListView.SelectedItem = targetSelection;
+            if (!_assetListView.SelectedItems.Contains(targetSelection))
+            {
+                _assetListView.SelectedItems.Add(targetSelection);
+            }
+
+            viewModel.UpdateSelection(
+                _assetListView.SelectedItems.OfType<AssetListEntryViewModel>(),
+                targetSelection);
+            _assetListView.UpdateLayout();
+            _assetListView.ScrollIntoView(targetSelection);
+            return true;
+        }
+        finally
+        {
+            _isSynchronizingAssetSelectionFromViewModel = false;
+        }
+    }
+
+    public bool SelectSpineGroupForContextAction(
+        SpineAssetGroupEntryViewModel targetSelection,
+        bool preserveExistingSelection)
+    {
+        ArgumentNullException.ThrowIfNull(targetSelection);
+
+        var viewModel = _getViewModel();
+        if (viewModel is null || !viewModel.SpineGroupItems.Contains(targetSelection))
+        {
+            return false;
+        }
+
+        _isSynchronizingSpineGroupSelectionFromViewModel = true;
+        try
+        {
+            if (!preserveExistingSelection)
+            {
+                _spineGroupListView.SelectedItems.Clear();
+            }
+
+            _spineGroupListView.SelectedItem = targetSelection;
+            if (!_spineGroupListView.SelectedItems.Contains(targetSelection))
+            {
+                _spineGroupListView.SelectedItems.Add(targetSelection);
+            }
+
+            viewModel.UpdateSpineGroupSelection(
+                _spineGroupListView.SelectedItems.OfType<SpineAssetGroupEntryViewModel>(),
+                targetSelection);
+            _spineGroupListView.UpdateLayout();
+            _spineGroupListView.ScrollIntoView(targetSelection);
+            return true;
+        }
+        finally
+        {
+            _isSynchronizingSpineGroupSelectionFromViewModel = false;
+        }
     }
 
     public void SynchronizeAssetSelectionFromViewModel()
@@ -121,9 +200,11 @@ internal sealed class AssetPaneSelectionViewCoordinator
             var targetSelection = viewModel.SelectedSpineGroup;
             if (targetSelection is null)
             {
-                if (_spineGroupListView.SelectedItem is not null)
+                if (_spineGroupListView.SelectedItem is not null ||
+                    _spineGroupListView.SelectedItems.Count > 0)
                 {
                     _spineGroupListView.SelectedItem = null;
+                    _spineGroupListView.SelectedItems.Clear();
                 }
 
                 return;
@@ -139,11 +220,57 @@ internal sealed class AssetPaneSelectionViewCoordinator
                 _spineGroupListView.SelectedItem = targetSelection;
             }
 
+            if (_spineGroupListView.SelectedItems.Count != viewModel.SelectedSpineGroups.Count ||
+                viewModel.SelectedSpineGroups.Any(item => !_spineGroupListView.SelectedItems.Contains(item)))
+            {
+                _spineGroupListView.SelectedItems.Clear();
+                foreach (var selectedGroup in viewModel.SelectedSpineGroups)
+                {
+                    _spineGroupListView.SelectedItems.Add(selectedGroup);
+                }
+            }
+
             _spineGroupListView.ScrollIntoView(targetSelection);
         }
         finally
         {
             _isSynchronizingSpineGroupSelectionFromViewModel = false;
         }
+    }
+
+    public void ScrollSelectedItemIntoView()
+    {
+        var viewModel = _getViewModel();
+        if (viewModel?.IsSpineGroupViewMode == true)
+        {
+            ScrollSelectedSpineGroupIntoView(viewModel);
+            return;
+        }
+
+        ScrollSelectedAssetIntoView(viewModel);
+    }
+
+    private void ScrollSelectedAssetIntoView(AssetPaneViewModel? viewModel)
+    {
+        var targetSelection = viewModel?.SelectedAsset;
+        if (targetSelection is null || viewModel is null || !viewModel.Items.Contains(targetSelection))
+        {
+            return;
+        }
+
+        _assetListView.UpdateLayout();
+        _assetListView.ScrollIntoView(targetSelection);
+    }
+
+    private void ScrollSelectedSpineGroupIntoView(AssetPaneViewModel viewModel)
+    {
+        var targetSelection = viewModel.SelectedSpineGroup;
+        if (targetSelection is null || !viewModel.SpineGroupItems.Contains(targetSelection))
+        {
+            return;
+        }
+
+        _spineGroupListView.UpdateLayout();
+        _spineGroupListView.ScrollIntoView(targetSelection);
     }
 }

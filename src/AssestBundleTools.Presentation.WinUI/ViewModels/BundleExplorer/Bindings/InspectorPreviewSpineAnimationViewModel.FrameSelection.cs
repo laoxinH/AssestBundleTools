@@ -83,14 +83,45 @@ public sealed partial class InspectorPreviewSpineAnimationViewModel
 
     private static string? ResolveInitialSkinName(SpineAnimationPreviewDto preview)
     {
-        var skinPreview = preview.SkinPreviews.FirstOrDefault(static skin =>
-            string.Equals(skin.Name, "default", StringComparison.OrdinalIgnoreCase)) ??
-            preview.SkinPreviews.FirstOrDefault(skin =>
-                preview.PlaybackSource is not null && skin.Animations.Count > 0) ??
-            preview.SkinPreviews.FirstOrDefault(static skin =>
-                skin.Animations.Any(static animation =>
-                    animation.SampledFrames.Any(static frame => frame.DrawCommands.Count > 0))) ??
-            preview.SkinPreviews.FirstOrDefault();
+        var hasRuntimePlayback = preview.PlaybackSource is not null;
+        var defaultSkinPreview = preview.SkinPreviews.FirstOrDefault(static skin =>
+            string.Equals(skin.Name, "default", StringComparison.OrdinalIgnoreCase));
+        var skinPreview = HasFrameContent(defaultSkinPreview)
+            ? defaultSkinPreview
+            : preview.SkinPreviews.FirstOrDefault(HasFrameContent);
+        if (skinPreview is not null)
+        {
+            return skinPreview.Name;
+        }
+
+        if (hasRuntimePlayback)
+        {
+            skinPreview = HasRuntimeAnimation(defaultSkinPreview)
+                ? defaultSkinPreview
+                : preview.SkinPreviews.FirstOrDefault(HasRuntimeAnimation);
+            if (skinPreview is not null)
+            {
+                return skinPreview.Name;
+            }
+        }
+
+        skinPreview = defaultSkinPreview ?? preview.SkinPreviews.FirstOrDefault();
         return skinPreview?.Name ?? preview.SkinNames.FirstOrDefault();
     }
+
+    private static bool HasFrameContent(SpineAnimationSkinPreviewDto? skinPreview)
+    {
+        if (skinPreview is null)
+        {
+            return false;
+        }
+
+        return skinPreview.SetupFrame?.DrawCommands.Count > 0 ||
+               skinPreview.Animations.Any(static animation =>
+                   animation.SampledFrames.Any(static frame => frame.DrawCommands.Count > 0));
+    }
+
+    private static bool HasRuntimeAnimation(SpineAnimationSkinPreviewDto? skinPreview) =>
+        skinPreview?.Animations.Any(static animation =>
+            !string.IsNullOrWhiteSpace(animation.Name)) == true;
 }

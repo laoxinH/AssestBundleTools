@@ -133,6 +133,13 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
             return;
         }
 
+        if (activeBundleTab.ActiveDocumentTab?.IsSpineGroup == true)
+        {
+            _notifyActionStates();
+            _requestWorkspaceBrowserStatePersistence();
+            return;
+        }
+
         // 资源列表为空并不等于“当前详情上下文失效”。
         // 这里常见于用户切换搜索或资源类型筛选后暂时没有命中项，
         // 此时应优先保留已经打开的资产详情标签，而不是把它们一并关闭。

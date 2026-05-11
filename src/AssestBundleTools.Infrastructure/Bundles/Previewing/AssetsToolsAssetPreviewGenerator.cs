@@ -26,7 +26,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         _audioPayloadTranscodingService = audioPayloadTranscodingService ?? throw new ArgumentNullException(nameof(audioPayloadTranscodingService));
     }
 
-    public string GeneratorVersion => "assetstools.preview/23";
+    public string GeneratorVersion => "assetstools.preview/25";
 
     public async Task<Result<AssetPreviewContentDto>> GenerateAsync(
         AssetPreviewBuildRequestDto request,
@@ -245,14 +245,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         }
 
         if (classId == AssetClassID.TextAsset &&
-            IsSpineBinarySkeletonRequest(request) &&
-            TryBuildBinaryTextAssetPreview(baseField, request.SizeInBytes, out var binaryTextAssetPreview))
-        {
-            return binaryTextAssetPreview;
-        }
-
-        if (classId == AssetClassID.TextAsset &&
-            TryBuildTextPreview(baseField, "m_Script", out var textAssetPreview))
+            TryBuildTextAssetPreview(baseField, request, out var textAssetPreview))
         {
             return textAssetPreview;
         }
@@ -264,16 +257,6 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         }
 
         return AssetsToolsSummaryPreviewBuilder.BuildSummaryPreview(assetInfo, baseField, classId);
-    }
-
-    private static bool IsSpineBinarySkeletonRequest(AssetPreviewBuildRequestDto request)
-    {
-        var path = string.IsNullOrWhiteSpace(request.AssetPath)
-            ? request.AssetName
-            : request.AssetPath;
-        return !string.IsNullOrWhiteSpace(path) &&
-               (path.Trim().EndsWith(".skel", StringComparison.OrdinalIgnoreCase) ||
-                path.Trim().EndsWith(".skel.bytes", StringComparison.OrdinalIgnoreCase));
     }
 
     private async Task<AssetPreviewContentDto> BuildAudioPreviewAsync(
@@ -370,20 +353,74 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         return true;
     }
 
-    private static bool TryBuildBinaryTextAssetPreview(
+    private static bool TryBuildTextAssetPreview(
         AssetTypeValueField baseField,
-        long? sizeInBytes,
+        AssetPreviewBuildRequestDto request,
         out AssetPreviewContentDto previewContent)
     {
         previewContent = null!;
 
         var textField = AssetsToolsFieldReader.TryGetField(baseField, "m_Script");
-        var payload = AssetsToolsFieldReader.ReadByteArray(textField);
-        if (payload is not { Length: > 0 })
+        if (AssetsToolsTextAssetPreviewClassifier.IsSpineSkeletonPath(request.AssetPath, request.AssetName))
         {
-            return false;
+            return TryBuildSpineSkeletonTextAssetPreview(textField, request.SizeInBytes, out previewContent);
         }
 
+        var textContent = AssetsToolsFieldReader.ReadString(textField);
+        if (string.IsNullOrWhiteSpace(textContent))
+        {
+            textContent = DecodeTextPayload(AssetsToolsFieldReader.ReadByteArray(textField));
+        }
+
+        if (!string.IsNullOrWhiteSpace(textContent))
+        {
+            return TryBuildTextPreviewContent(textContent, out previewContent);
+        }
+
+        return false;
+    }
+
+    private static bool TryBuildSpineSkeletonTextAssetPreview(
+        AssetTypeValueField? textField,
+        long? sizeInBytes,
+        out AssetPreviewContentDto previewContent)
+    {
+        previewContent = null!;
+
+        var payload = AssetsToolsFieldReader.ReadByteArray(textField);
+        if (AssetsToolsTextAssetPreviewClassifier.TryDecodeJsonTextPayload(payload, out var textContent))
+        {
+            return TryBuildTextPreviewContent(textContent, out previewContent);
+        }
+
+        if (payload is { Length: > 0 })
+        {
+            return TryBuildBinaryPayloadPreview(payload, sizeInBytes, out previewContent);
+        }
+
+        textContent = AssetsToolsFieldReader.ReadString(textField);
+        return AssetsToolsTextAssetPreviewClassifier.IsJsonTextContent(textContent) &&
+               TryBuildTextPreviewContent(textContent!, out previewContent);
+    }
+
+    private static bool TryBuildTextPreviewContent(
+        string textContent,
+        out AssetPreviewContentDto previewContent)
+    {
+        previewContent = new AssetPreviewContentDto(
+            Kind: AssetPreviewKind.Text,
+            ContentType: TextContentType,
+            Content: Encoding.UTF8.GetBytes(NormalizeTextContent(textContent)),
+            PreviewInfoItems: Array.Empty<AssetPreviewInfoItemDto>(),
+            PreferredDisplaySizeInBytes: null);
+        return true;
+    }
+
+    private static bool TryBuildBinaryPayloadPreview(
+        byte[] payload,
+        long? sizeInBytes,
+        out AssetPreviewContentDto previewContent)
+    {
         previewContent = new AssetPreviewContentDto(
             Kind: AssetPreviewKind.Binary,
             ContentType: BinaryContentType,

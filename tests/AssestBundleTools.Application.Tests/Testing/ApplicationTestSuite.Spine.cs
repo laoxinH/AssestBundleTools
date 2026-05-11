@@ -48,6 +48,10 @@ internal static partial class ApplicationTestSuite
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldPassBinarySkeletonPreview_ToRuntimeAdapter);
         await RunTestAsync(
             failures,
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldTreatReadableSkelPayload_AsJsonSkeletonPreview),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldTreatReadableSkelPayload_AsJsonSkeletonPreview);
+        await RunTestAsync(
+            failures,
             nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportUnsupportedRuntimeVersion_WhenNoAdapterMatches),
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportUnsupportedRuntimeVersion_WhenNoAdapterMatches);
         await RunTestAsync(

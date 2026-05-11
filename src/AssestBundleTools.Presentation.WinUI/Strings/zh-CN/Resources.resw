@@ -426,6 +426,9 @@
   <data name="AssetEditorWindow.OpenGroupInNewWindow.Text" xml:space="preserve">
     <value>在新窗口中打开全部</value>
   </data>
+  <data name="AssetEditorWindow.LocateActiveDocument.Text" xml:space="preserve">
+    <value>定位当前详情标签</value>
+  </data>
   <data name="AssetEditorWindow.MoveGroupToMainWindow.Text" xml:space="preserve">
     <value>全部移动到主窗口</value>
   </data>
@@ -827,6 +830,12 @@
   </data>
   <data name="AssetPaneView.EmptyStateHintText.Text" xml:space="preserve">
     <value>切换左侧 Bundle 节点、调整搜索或切换视图后，这里会刷新为对应列表。</value>
+  </data>
+  <data name="AssetPaneView.Context.Replace.Text" xml:space="preserve">
+    <value>替换</value>
+  </data>
+  <data name="AssetPaneView.Context.EnterMultiSelection.Text" xml:space="preserve">
+    <value>进入多选</value>
   </data>
   <data name="InspectorPanelView.DetailsTab.Header" xml:space="preserve">
     <value>详情</value>
@@ -2647,7 +2656,7 @@
     <value>批量提取预览</value>
   </data>
   <data name="BatchTasksPage.BatchExtractHintText.Text" xml:space="preserve">
-    <value>按当前工作区与资源类型筛选汇总候选项。当前执行只回写提取记录，不执行真实文件导出。</value>
+    <value>按当前工作区与资源类型筛选汇总候选项。执行后会把可提取资源写出到工作区导出目录并记录操作。</value>
   </data>
   <data name="BatchTasksPage.BatchExtractScopeLabelText.Text" xml:space="preserve">
     <value>提取范围</value>
@@ -2722,7 +2731,7 @@
     <value>当前阶段承载</value>
   </data>
   <data name="BatchTasksPage.StageNoteBodyText.Text" xml:space="preserve">
-    <value>本页目前聚焦“汇总”和“承载”，已接入批量提取骨架、批量替换骨架、保存骨架与结果明细，真实文件导出和真实写包仍将在后续阶段继续接入。</value>
+    <value>本页目前聚焦“汇总”和“承载”，已接入真实批量提取、批量替换骨架、保存骨架与结果明细；真实写包仍将在后续阶段继续接入。</value>
   </data>
   <data name="BatchTasksPage.TaskResultsTitleText.Text" xml:space="preserve">
     <value>任务结果明细</value>
@@ -2812,10 +2821,10 @@
     <value>尚未执行批量提取。</value>
   </data>
   <data name="BatchTasksPage.BatchExtract.LastRun.Format" xml:space="preserve">
-    <value>最近一次已标记 {0} 个资源、覆盖 {1} 个资源包，完成时间：{2}</value>
+    <value>最近一次已提取 {0} 个资源、覆盖 {1} 个资源包，完成时间：{2}</value>
   </data>
   <data name="BatchTasksPage.BatchExtract.Log.Executed.Format" xml:space="preserve">
-    <value>已执行批量提取骨架，标记 {0} 个资源、覆盖 {1} 个资源包，建议输出目录：{2}</value>
+    <value>已执行批量提取，写出 {0} 个资源、覆盖 {1} 个资源包，输出目录：{2}</value>
   </data>
   <data name="BatchTasksPage.BatchReplace.Scope.Format" xml:space="preserve">
     <value>当前工作区：{0}</value>
@@ -2890,10 +2899,10 @@
     <value>批量提取</value>
   </data>
   <data name="BatchTasksPage.TaskResult.BatchExtract.Summary.Format" xml:space="preserve">
-    <value>已标记 {0} 个资源，覆盖 {1} 个资源包。</value>
+    <value>已提取 {0} 个资源，覆盖 {1} 个资源包。</value>
   </data>
   <data name="BatchTasksPage.TaskResult.BatchExtract.Detail.Format" xml:space="preserve">
-    <value>建议输出目录：{0}</value>
+    <value>输出目录：{0}</value>
   </data>
   <data name="BatchTasksPage.TaskResult.BatchReplace.Title" xml:space="preserve">
     <value>批量替换</value>
@@ -3172,10 +3181,19 @@
     <value>{0} 已按当前筛选条件重新加载 {1}。</value>
   </data>
   <data name="BundleExplorer.Log.AssetExtracted" xml:space="preserve">
-    <value>已提取资源“{0}”，建议输出路径：{1}</value>
+    <value>已提取资源“{0}”，输出路径：{1}</value>
+  </data>
+  <data name="BundleExplorer.Log.AssetExtractionSelectionCancelled" xml:space="preserve">
+    <value>已取消为“{0}”选择提取保存位置。</value>
   </data>
   <data name="BundleExplorer.Log.BatchAssetsExtracted" xml:space="preserve">
-    <value>已批量提取 {0} 项资源，首个建议输出路径：{1}</value>
+    <value>已批量提取 {0} 项资源，首个输出路径：{1}</value>
+  </data>
+  <data name="BundleExplorer.Log.SpineGroupExtracted" xml:space="preserve">
+    <value>已整组提取 Spine 资源“{0}”，成功 {1} 项，失败 {2} 项，输出目录：{3}</value>
+  </data>
+  <data name="BundleExplorer.Log.SpineGroupExtractionSelectionCancelled" xml:space="preserve">
+    <value>已取消为 Spine 资源组“{0}”选择提取目录。</value>
   </data>
   <data name="BundleExplorer.Log.ReplacementSourceSelected" xml:space="preserve">
     <value>已为“{2}”选择工作区替换源：{0} / {1}</value>
@@ -3232,7 +3250,10 @@
     <value>已完成资源提取：{0}</value>
   </data>
   <data name="BundleExplorer.Notification.BatchAssetsExtracted" xml:space="preserve">
-    <value>已完成 {0} 项资源的提取标记。</value>
+    <value>已完成 {0} 项资源的提取写出。</value>
+  </data>
+  <data name="BundleExplorer.Notification.SpineGroupExtracted" xml:space="preserve">
+    <value>已完成 Spine 资源组“{0}”提取：成功 {1} 项，失败 {2} 项。</value>
   </data>
   <data name="BundleExplorer.Notification.ReplacementSourceSelected" xml:space="preserve">
     <value>已选中工作区替换源：{0}</value>
@@ -3251,6 +3272,21 @@
   </data>
   <data name="BundleExplorer.Notification.ReplacementUndone" xml:space="preserve">
     <value>已撤销替换：{0}</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.Image" xml:space="preserve">
+    <value>图像文件</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.Text" xml:space="preserve">
+    <value>文本文件</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.Audio" xml:space="preserve">
+    <value>音频文件</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.Json" xml:space="preserve">
+    <value>JSON 文件</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.Binary" xml:space="preserve">
+    <value>二进制文件</value>
   </data>
   <data name="AssetTypeFilter.All" xml:space="preserve">
     <value>全部类型</value>
@@ -3362,6 +3398,21 @@
   </data>
   <data name="Error.Asset.Extract.NoBatchCandidates" xml:space="preserve">
     <value>当前筛选条件下没有可执行批量提取的候选资源：{0}</value>
+  </data>
+  <data name="Error.Asset.Extract.SpineGroup.NoCandidates" xml:space="preserve">
+    <value>当前 Spine 资源组没有可提取的组成资源：{0}</value>
+  </data>
+  <data name="Error.Asset.Extract.OutputDirectoryRequired" xml:space="preserve">
+    <value>提取前需要选择输出目录。</value>
+  </data>
+  <data name="Error.Asset.Extract.NotSupported" xml:space="preserve">
+    <value>当前资源不支持提取：{0}</value>
+  </data>
+  <data name="Error.Asset.Extract.PayloadUnavailable" xml:space="preserve">
+    <value>未能生成可写出的提取内容：{0}</value>
+  </data>
+  <data name="Error.Asset.Extract.WriteFailed" xml:space="preserve">
+    <value>写出提取文件失败：{0}。详情：{1}</value>
   </data>
   <data name="Error.Bundle.Save.NoCandidates" xml:space="preserve">
     <value>当前工作区没有可执行保存骨架的资源包：{0}</value>

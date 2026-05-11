@@ -187,4 +187,95 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
         var animation = TestAssert.Single(result.Value!.AnimationPreview!.Animations);
         TestAssert.Equal("binary-runtime", animation.Name, "Runtime adapter output should be used for binary skeletons.");
     }
+
+    public static async Task HandleAsync_ShouldTreatReadableSkelPayload_AsJsonSkeletonPreview()
+    {
+        var workspaceId = new WorkspaceId("workspace-a");
+        var spineBundleId = new BundleId("bundle.spine");
+        var skeletonAssetId = new AssetId("skeleton-hero");
+        var atlasAssetId = new AssetId("atlas-hero");
+        var spineAssets = CreateAssetList(
+            workspaceId,
+            spineBundleId,
+            "spine.ab",
+            CreateItem(spineBundleId, skeletonAssetId.Value, "Assets/Hero/Hero.skel", AssetType.TextAsset),
+            CreateItem(spineBundleId, atlasAssetId.Value, "Assets/Hero/Hero.atlas", AssetType.TextAsset),
+            CreateItem(spineBundleId, "texture-hero", "Assets/Hero/Hero.png", AssetType.Texture2D));
+        var skeletonJson = """
+            {
+              "skeleton": { "spine": "4.2.74" },
+              "bones": [{ "name": "root" }],
+              "slots": [{ "name": "body-slot", "bone": "root", "attachment": "body" }],
+              "skins": {
+                "default": {
+                  "body-slot": {
+                    "body": { "type": "region", "path": "body", "width": 32, "height": 32 }
+                  }
+                }
+              },
+              "animations": { "idle": {} }
+            }
+            """;
+        var previewHandler = new TestAssetPreviewHandler(query =>
+        {
+            if (query.AssetId.Equals(skeletonAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(query, skeletonJson));
+            }
+
+            if (query.AssetId.Equals(atlasAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(query, """
+                    Hero.png
+                    size: 64,64
+                    body
+                      xy: 0, 0
+                      size: 32, 32
+                    """));
+            }
+
+            return Result<AssetPreviewDto>.Success(CreateImagePreview(query, 64, 64));
+        });
+        var runtimePreviewService = new TestSpineAnimationRuntimePreviewService(request =>
+            SpineAnimationRuntimePreviewResultDto.Handled(new SpineAnimationPreviewDto(
+                request.SkeletonAsset,
+                SpineVersion: null,
+                Bones: Array.Empty<SpineAnimationBoneDto>(),
+                Slots: Array.Empty<SpineAnimationSlotDto>(),
+                Attachments: Array.Empty<SpineAnimationAttachmentDto>(),
+                Animations:
+                [
+                    new SpineAnimationClipDto(
+                        "text-skel-runtime",
+                        Duration: 0d,
+                        BoneTimelines: Array.Empty<SpineAnimationBoneTimelineDto>(),
+                        SlotAttachmentTimelines: Array.Empty<SpineAnimationSlotAttachmentTimelineDto>())
+                    {
+                        SampledFrames =
+                        [
+                            new SpineAnimationFrameDto(
+                                Time: 0d,
+                                DrawCommands: Array.Empty<SpineAnimationDrawCommandDto>())
+                        ]
+                    }
+                ],
+                Runtime: null)));
+        var handler = new LoadSpineAssetGroupDetailsHandler(
+            new TestWorkspaceSessionRegistry(workspaceId, [spineAssets]),
+            previewHandler,
+            runtimePreviewService);
+
+        var result = await handler.HandleAsync(CreateQuery(workspaceId, spineBundleId));
+
+        TestAssert.True(result.IsSuccess, "Readable .skel payloads should stay on the JSON skeleton preview path.");
+        var summary = TestAssert.Single(result.Value?.SkeletonSummaries ?? Array.Empty<SpineSkeletonSummaryDto>());
+        TestAssert.Equal(SpineSkeletonAssetFormat.Json, summary.Format, "Readable .skel payloads should not be summarized as binary.");
+        TestAssert.Equal("4.2.74", summary.SpineVersion, "The JSON summary should preserve the skeleton version.");
+        var request = runtimePreviewService.LastRequest ??
+                      throw new InvalidOperationException("Expected a runtime preview request for text .skel.");
+        TestAssert.True(!string.IsNullOrWhiteSpace(request.SkeletonJson), "Text .skel should be passed to the runtime adapter as JSON.");
+        TestAssert.True(request.SkeletonBinaryContent is null, "Text .skel should not be passed as a binary skeleton payload.");
+        var animation = TestAssert.Single(result.Value!.AnimationPreview!.Animations);
+        TestAssert.Equal("text-skel-runtime", animation.Name, "Runtime adapter output should be used for readable .skel skeletons.");
+    }
 }

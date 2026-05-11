@@ -10,4 +10,6 @@ namespace AssestBundleTools.Application.Replacement.Commands;
 public sealed record UndoAssetReplacementCommand(
     WorkspaceId WorkspaceId,
     BundleId BundleId,
-    AssetId AssetId);
+    AssetId AssetId,
+    string? WorkspaceKey = null,
+    string? WorkspaceDataRootPath = null);

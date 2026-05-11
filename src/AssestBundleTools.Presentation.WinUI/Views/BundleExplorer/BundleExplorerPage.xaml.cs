@@ -342,6 +342,25 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         await ViewModel.ExtractSelectedAssetsAsync();
     }
 
+    private async void OnPrimaryPaneOpenSelectedItemInNewWindowRequested(object sender, EventArgs e)
+    {
+        await _assetEditorWindowCoordinator.HandleMainAssetSelectionChangedAsync();
+        await _assetEditorWindowCoordinator.OpenDocumentInNewWindowAsync(
+            ViewModel.DocumentWorkspace.ActiveDocumentTab);
+    }
+
+    private async void OnPrimaryPaneExtractSelectedItemRequested(object sender, EventArgs e)
+    {
+        await _assetEditorWindowCoordinator.HandleMainAssetSelectionChangedAsync();
+        await ViewModel.ExtractSelectedAssetAsync();
+    }
+
+    private async void OnPrimaryPaneReplaceSelectedAssetRequested(object sender, EventArgs e)
+    {
+        await _assetEditorWindowCoordinator.HandleMainAssetSelectionChangedAsync();
+        await ViewModel.SelectFileReplacementSourceAsync();
+    }
+
     private async void OnInspectorSelectFileReplacementSourceRequested(object sender, EventArgs e)
     {
         await ViewModel.SelectFileReplacementSourceAsync();

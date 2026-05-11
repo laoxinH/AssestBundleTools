@@ -3,6 +3,7 @@ using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 
@@ -117,6 +118,11 @@ public sealed partial class BundleExplorerPage
             return value is not null;
         }
 
+        public void ScrollActiveDocumentTabIntoView()
+        {
+            Enqueue(ScrollActiveDocumentTabIntoViewCore);
+        }
+
         /// <summary>
         /// WinUI 的 TabView 在切换 ItemsSource 时可能会先回落到第一项，
         /// 这里显式把控件选中态对齐回 ViewModel 中已记录的活动资产标签，
@@ -141,6 +147,68 @@ public sealed partial class BundleExplorerPage
             {
                 _isSynchronizingDocumentTabSelection = false;
             }
+        }
+
+        private void ScrollActiveDocumentTabIntoViewCore()
+        {
+            SynchronizeDocumentTabSelection();
+
+            var activeDocumentTab = _owner.ViewModel.DocumentWorkspace.ActiveDocumentTab;
+            if (activeDocumentTab is null)
+            {
+                return;
+            }
+
+            _owner.AssetDocumentTabView.UpdateLayout();
+            if (TryResolveTabElement(activeDocumentTab, out var tabElement))
+            {
+                tabElement.StartBringIntoView();
+            }
+        }
+
+        private bool TryResolveTabElement(
+            AssetDocumentTabItemViewModel activeDocumentTab,
+            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out FrameworkElement? tabElement)
+        {
+            foreach (var item in _owner.AssetDocumentTabView.TabItems)
+            {
+                if (item is FrameworkElement { DataContext: var dataContext } itemElement &&
+                    ReferenceEquals(dataContext, activeDocumentTab))
+                {
+                    tabElement = itemElement;
+                    return true;
+                }
+            }
+
+            return TryFindTabElement(_owner.AssetDocumentTabView, activeDocumentTab, out tabElement);
+        }
+
+        private static bool TryFindTabElement(
+            DependencyObject root,
+            AssetDocumentTabItemViewModel activeDocumentTab,
+            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out FrameworkElement? tabElement)
+        {
+            if (root is TabViewItem { DataContext: var dataContext } tabViewItem &&
+                ReferenceEquals(dataContext, activeDocumentTab))
+            {
+                tabElement = tabViewItem;
+                return true;
+            }
+
+            var childCount = VisualTreeHelper.GetChildrenCount(root);
+            for (var index = 0; index < childCount; index++)
+            {
+                if (TryFindTabElement(
+                        VisualTreeHelper.GetChild(root, index),
+                        activeDocumentTab,
+                        out tabElement))
+                {
+                    return true;
+                }
+            }
+
+            tabElement = null;
+            return false;
         }
 
         private static MenuFlyoutItem? FindMenuFlyoutItem(MenuFlyout flyout, string itemName)

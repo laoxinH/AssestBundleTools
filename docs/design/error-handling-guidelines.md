@@ -518,6 +518,15 @@ Parameters = { SourceType: Texture2D, TargetType: TextAsset }
 - `Asset.Extract.NoBatchCandidates`
   - `MessageToken = Error.Asset.Extract.NoBatchCandidates`
   - 用于当前工作区在给定筛选条件下没有可执行批量提取的候选资源时
+- `Asset.Extract.NotSupported`
+  - `MessageToken = Error.Asset.Extract.NotSupported`
+  - 用于当前资源存在但没有提取能力时
+- `Asset.Extract.PayloadUnavailable`
+  - `MessageToken = Error.Asset.Extract.PayloadUnavailable`
+  - 用于预览 / 导出管线未能生成可写出的 payload 时
+- `Asset.Extract.WriteFailed`
+  - `MessageToken = Error.Asset.Extract.WriteFailed`
+  - 用于提取 payload 写出到目标文件失败时
 - `Bundle.Save.NoCandidates`
   - `MessageToken = Error.Bundle.Save.NoCandidates`
   - 用于当前工作区没有可执行保存骨架的资源包输出计划时

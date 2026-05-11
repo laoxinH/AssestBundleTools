@@ -7,8 +7,13 @@ public sealed record WorkspaceChangeSetDto(
     string WorkspaceKey,
     DateTimeOffset UpdatedAtUtc,
     IReadOnlyList<WorkspaceChangeRecordDto> Changes,
-    IReadOnlyList<WorkspaceAssetEditDraftDescriptorDto>? EditDrafts = null)
+    IReadOnlyList<WorkspaceAssetEditDraftDescriptorDto>? EditDrafts = null,
+    int SchemaVersion = 2,
+    long OperationSequence = 0,
+    IReadOnlyList<WorkspaceOperationRecordDto>? Operations = null)
 {
+    public const int CurrentSchemaVersion = 2;
+
     public static WorkspaceChangeSetDto Empty(string workspaceKey)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workspaceKey);
@@ -16,6 +21,9 @@ public sealed record WorkspaceChangeSetDto(
             workspaceKey,
             DateTimeOffset.UtcNow,
             Array.Empty<WorkspaceChangeRecordDto>(),
-            Array.Empty<WorkspaceAssetEditDraftDescriptorDto>());
+            Array.Empty<WorkspaceAssetEditDraftDescriptorDto>(),
+            CurrentSchemaVersion,
+            0,
+            Array.Empty<WorkspaceOperationRecordDto>());
     }
 }

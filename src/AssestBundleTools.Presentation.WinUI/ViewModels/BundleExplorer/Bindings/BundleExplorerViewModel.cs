@@ -344,6 +344,9 @@ public sealed class BundleExplorerViewModel : ObservableObject
     public Task<bool> AttachAssetDocumentGroupFromEditorWindowAsync(AssetDocumentGroupTransfer transfer) =>
         _assetDocumentMoveCoordinator.AttachAssetDocumentGroupFromExternalHostAsync(transfer);
 
+    public Task<bool> LocateActiveDocumentInPrimaryPaneAsync() =>
+        _assetWorkflow.LocateActiveDocumentInPrimaryPaneAsync();
+
     public Task RefreshPrimaryPaneAsync(bool preserveCurrentDocumentTab = false) =>
         _assetWorkflow.RefreshPrimaryPaneAsync(preserveCurrentDocumentTab);
 

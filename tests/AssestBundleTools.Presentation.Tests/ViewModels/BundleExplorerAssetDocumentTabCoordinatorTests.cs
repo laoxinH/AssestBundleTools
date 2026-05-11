@@ -64,6 +64,32 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
     }
 
     [Fact]
+    public async Task SynchronizeInspectorWithActiveBundleTabAsync_ShouldPreserveActiveSpineDocument_WhenSelectedAssetHasOpenTab()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-ui");
+        var assetId = new AssetId("asset-button");
+        var context = CreateCoordinatorContext(workspaceId, "SpineDocumentWithSelectedAsset");
+        var coordinator = CreateCoordinator(context, new TestWorkspaceAssetInspectionGateway());
+        var assetEntry = CreateAssetListEntry(bundleId, assetId);
+        var assetTab = context.HostCoordinator.CreateAssetDocumentTab(bundleId, assetId, "Button");
+        var spineGroupTab = context.HostCoordinator.CreateSpineGroupDocumentTab(
+            CreateSpineGroup(context.BundleTab.BundleId, "hero", "Hero"));
+        context.BundleTab.AddAssetTab(assetTab, activate: false);
+        context.BundleTab.AddSpineGroupTab(spineGroupTab, activate: true);
+        context.PrimaryPane.ReplaceItems("ui.ab", [assetEntry], "empty");
+        context.PrimaryPane.UpdateSelection([assetEntry], assetEntry);
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.Assets;
+
+        await coordinator.SynchronizeInspectorWithActiveBundleTabAsync(writeLog: false);
+
+        Assert.Same(spineGroupTab, context.BundleTab.ActiveSpineGroupTab);
+        Assert.Same(spineGroupTab, context.BundleTab.ActiveDocumentTab?.SpineGroupTab);
+        Assert.Same(spineGroupTab.Inspector, context.HostCoordinator.CurrentInspector);
+        Assert.NotSame(assetTab, context.BundleTab.ActiveAssetTab);
+    }
+
+    [Fact]
     public async Task LoadAssetDocumentTabAsync_ShouldUseBackgroundRunner_ForOpenAndDetailsQueries()
     {
         var workspaceId = WorkspaceId.New();
