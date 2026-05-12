@@ -39,6 +39,7 @@ internal static class AssetsToolsMonoBehaviourPreviewBuilder
             currentSerializedFile,
             monoBehaviourField,
             internalSerializedFileLookup);
+        var typeTreeJson = AssetsToolsTypeTreeJsonBuilder.Build(monoBehaviourField);
         var monoBehaviour = new AssetPreviewMonoBehaviourDto(
             SchemaVersion: MonoBehaviourPreviewSchemaVersion,
             Name: AssetsToolsFieldReader.ReadString(AssetsToolsFieldReader.TryGetField(monoBehaviourField, "m_Name")),
@@ -53,7 +54,10 @@ internal static class AssetsToolsMonoBehaviourPreviewBuilder
             FieldGroups: scan.FieldGroups,
             Containers: scan.Containers,
             IsFieldListTruncated: scan.IsFieldListTruncated,
-            IsReferenceListTruncated: scan.IsReferenceListTruncated);
+            IsReferenceListTruncated: scan.IsReferenceListTruncated,
+            TypeTreeJsonText: typeTreeJson.JsonText,
+            TypeTreeNodeCount: typeTreeJson.NodeCount,
+            IsTypeTreeJsonTruncated: typeTreeJson.IsTruncated);
 
         previewContent = new AssetPreviewContentDto(
             Kind: AssetPreviewKind.MonoBehaviour,

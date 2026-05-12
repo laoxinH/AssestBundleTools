@@ -401,11 +401,24 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 ### 第三阶段：提取操作接入
 
 - 已让单资源提取通过现有 `GetAssetPreviewQuery` 管线取得真实 payload，并由 Presentation 先选择保存文件、Application 保留用户选择的文件名、Infrastructure 文件写出端口落到导出文件。
-- 已覆盖 `Image / Audio / Binary` 二进制 payload、`Text / Summary` 完整文本 payload，以及 `Mesh / Material / AnimationClip / Font / GameObject / MonoBehaviour / AnimatorController` 结构化 JSON payload 的统一写出策略。
+- 已覆盖 `Image / Audio / Binary` 二进制 payload、`Text / Summary` 完整文本 payload，`Mesh` 可导入专业建模软件的 OBJ 预览几何导出，以及 `Material / AnimationClip / Font / GameObject / MonoBehaviour / AnimatorController` 结构化 JSON payload 的统一写出策略。
+- 当前导出格式按“能直接进入专业软件优先，其次保留完整结构化摘要”的推荐表落地：
+  - `Texture2D / Sprite`：PNG。来源为预览管线生成的无损图片 payload，不做有损压缩。
+  - `TextAsset / Shader / MonoScript`：保留原始可读文本扩展名并写完整文本载荷；`.skel / .skel.bytes` 若为二进制预览则保持二进制写出。
+  - `AudioClip`：优先写预览 / 转码后的标准音频 payload，扩展名随内容类型落到 `wav / ogg / mp3 / flac / m4a / aac`，无法识别时保留二进制。
+  - `Mesh`：默认写 OBJ，保存文件对话框同时提供实验性 FBX；两者都只包含当前 Mesh 预览 DTO 中可读取的静态顶点、UV0 和三角面，不包含材质、骨骼、蒙皮、法线/切线或 AnimationClip。若预览几何被截断，导出文件会保留截断注记，仍不伪装成完整源模型。
+  - `Material / AnimationClip / Font / GameObject / AnimatorController`：写可读 JSON 摘要，作为后续编辑 / 替换确认的结构化数据，不声明可直接导入 Unity 或 DCC 工具。
+  - `MonoBehaviour`：默认写 TypeTree JSON 字段树，保存文件对话框额外提供摘要 JSON、YAML 投影和原始字段清单文本；TypeTree JSON 来自 Infrastructure 读取到的 Unity 字段树，摘要 / YAML / 字段文本来自当前 Application 预览 DTO，均不等同于 Unity 原始二进制对象，字段清单在预览字段被截断时会写入警告。
 - 已让单资源提取追加 `ExtractAsset` 操作记录，保存实际输出路径、输出目录、输出文件存在性和完成时间。
-- 已让批量提取复用单资源提取链路，并追加 `ExtractBatch` 汇总记录；当前批处理仍以“继续处理可成功项，汇总失败数”为第一版策略。
-- 已让 Spine 资源组整组提取复用单资源提取链路：组级入口负责解析 skeleton / atlas / atlas page 主贴图和独立 alpha 贴图匹配，真实写出和恢复事实仍以每个组成资源的 `ExtractAsset` 操作记录为准。
+- 已让普通资源批量提取复用单资源提取链路，并追加 `ExtractBatch` 汇总记录；资产窗格多选批量提取会在用户选择的输出根目录下按 `<输出根目录>/<AB 资源包名称>/<资源类型>/` 组织文件，当前批处理仍以“继续处理可成功项，汇总失败数”为第一版策略。
+- 已让 Spine 资源组整组提取复用单资源提取链路：组级入口负责解析 skeleton / atlas / atlas page 主贴图和独立 alpha 贴图匹配；每个组成资源仍追加独立 `ExtractAsset` 操作记录并更新资源级 `LastExtractedAtUtc`，组级入口同时追加一条 `ExtractBatch` 汇总记录，记录 Spine 组目标、输出目录、成功 / 失败数量和已关联资源 ID。工作区变更摘要会保留已提取的隐藏依赖资产，避免 Spine 组关联资源已经导出但“最近变更记录”被资产列表可见性过滤掉；窗口化 Spine 详情在提取成功后也会即时重投影当前项变更摘要。
+- 已让资产窗格的 Spine 资源组多选模式接入批量提取入口：用户选择一次输出根目录后，Presentation 为每个组把应用层输出目录设置为 `<输出根目录>/<AB 资源包名称>`，应用层单组提取再在该目录下创建组名子目录并写出组成资源。
 - 已让工作区打开时把 `Applied ExtractAsset` 操作物化回资源 `LastExtractedAtUtc`，用于重启后恢复已提取状态。
+- 已在 Presentation 层增加工作区操作变更通知管线：组合根用 notifying gateway 包装 `IWorkspaceAssetOperationGateway / IWorkspaceBatchOperationsGateway`，单资源提取、Spine 组提取、普通批量提取、替换、撤销替换和保存骨架成功后会发布当前 `WorkspaceId` 的读模型失效事件。订阅者包括：
+  - 批处理页：活动工作区匹配时自动重新读取 `WorkspaceChangeSummaryDto / SavePreview / BatchPreview`。
+  - 主工作台资源详情区：通过 `WorkspaceOperationChangeRefreshCoordinator` 合并通知，先保留当前详情标签刷新资源 / Spine 列表读模型，再重读当前激活资源或 Spine 资源组详情，使“变更”页签自动更新。
+  - 独立资源编辑窗口：订阅同一通知，重读当前激活资源或 Spine 资源组详情，窗口化场景不再依赖发起操作的一侧手动重投影。
+  操作入口只负责执行命令、清理本地候选状态和展示结果反馈，不再在提取 / 替换 / 撤销成功后手动调用页面刷新回调；非持久化的候选来源选择仍允许即时重投影当前详情。
 - 提取撤销仍未实现；当前原则保持为“只撤销工作区提取标记，不自动删除用户目录中的外部文件”。
 - 批处理页的中断、失败和输出文件不可用状态展示仍待细化。
 
@@ -425,7 +438,9 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 
 - Application 定义操作记录 DTO、恢复计划、撤销语义和物化规则。
 - Infrastructure 只负责 JSON 持久化、外部文件指纹、真实导出 / 写包实现。
-- Presentation 只负责触发命令、展示恢复计划、接收用户选择和本地化文本。
+- Presentation 只负责触发命令、展示恢复计划、接收用户选择、本地化文本，以及页面级读模型失效协调；操作变更通知不得反向进入 Application，也不得让页面直接读取 `staging/changes`。
+- 页面或窗口订阅操作通知时必须按 `WorkspaceId` 过滤，并在自身忙碌时合并为一次待刷新请求；统一使用 `WorkspaceOperationChangeRefreshCoordinator`，不要在新的操作 handler 中新增“成功后刷新某个页面”的回调。
+- 发起操作的 handler 可以更新仅存在于当前 UI 的瞬时状态，例如清理待替换候选；已持久化的提取 / 替换 / 撤销 / 保存状态必须通过通知后的读模型重读来反映到详情页和批处理页。
 - 工作区元数据只保存轻量浏览状态；操作记录属于 `staging/changes`。
 - 预览缓存仍是可重建缓存，不得成为撤销事实来源。
 - 外部工具 stdout / stderr 只能作为诊断 detail，不进入操作主提示。

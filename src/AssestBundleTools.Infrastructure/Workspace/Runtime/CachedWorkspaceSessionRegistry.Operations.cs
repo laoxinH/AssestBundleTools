@@ -24,7 +24,6 @@ public sealed partial class CachedWorkspaceSessionRegistry
 
             var items = workspaceState.BundlesById.Values
                 .SelectMany(bundleState => bundleState.Assets
-                    .Where(static asset => asset.IncludeInAssetList)
                     .Select(assetState => BuildWorkspaceChangeItem(bundleState, assetState)))
                 .Where(static item => item is not null)
                 .Select(static item => item!)

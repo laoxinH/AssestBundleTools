@@ -28,7 +28,6 @@ internal sealed class BundleExplorerAssetCommandCoordinator
     private readonly Func<InspectorPanelViewModel> _getInspector;
     private readonly Func<AssetDocumentTabViewModel?> _getActiveAssetDocumentTab;
     private readonly Func<SpineAssetGroupDocumentTabViewModel?> _getActiveSpineGroupDocumentTab;
-    private readonly Func<Task> _refreshPrimaryPaneAsync;
     private readonly Action<AssetDocumentTabViewModel, AssetDetailsDto> _reapplyAssetDocumentState;
 
     public BundleExplorerAssetCommandCoordinator(
@@ -44,7 +43,6 @@ internal sealed class BundleExplorerAssetCommandCoordinator
         Func<InspectorPanelViewModel> getInspector,
         Func<AssetDocumentTabViewModel?> getActiveAssetDocumentTab,
         Func<SpineAssetGroupDocumentTabViewModel?> getActiveSpineGroupDocumentTab,
-        Func<Task> refreshPrimaryPaneAsync,
         Action<AssetDocumentTabViewModel, AssetDetailsDto> reapplyAssetDocumentState)
     {
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
@@ -59,7 +57,6 @@ internal sealed class BundleExplorerAssetCommandCoordinator
         _getInspector = getInspector ?? throw new ArgumentNullException(nameof(getInspector));
         _getActiveAssetDocumentTab = getActiveAssetDocumentTab ?? throw new ArgumentNullException(nameof(getActiveAssetDocumentTab));
         _getActiveSpineGroupDocumentTab = getActiveSpineGroupDocumentTab ?? throw new ArgumentNullException(nameof(getActiveSpineGroupDocumentTab));
-        _refreshPrimaryPaneAsync = refreshPrimaryPaneAsync ?? throw new ArgumentNullException(nameof(refreshPrimaryPaneAsync));
         _reapplyAssetDocumentState = reapplyAssetDocumentState ?? throw new ArgumentNullException(nameof(reapplyAssetDocumentState));
     }
 
@@ -135,7 +132,6 @@ internal sealed class BundleExplorerAssetCommandCoordinator
                 workspaceSummary,
                 details,
                 _setBusyState,
-                _refreshPrimaryPaneAsync,
                 _operationFeedbackBridge.AppendResultFailure);
             return;
         }
@@ -151,7 +147,6 @@ internal sealed class BundleExplorerAssetCommandCoordinator
             workspaceSummary,
             spineGroupTab,
             _setBusyState,
-            _refreshPrimaryPaneAsync,
             _operationFeedbackBridge.AppendResultFailure);
     }
 
@@ -165,12 +160,37 @@ internal sealed class BundleExplorerAssetCommandCoordinator
             return;
         }
 
+        if (_primaryPane.IsSpineGroupViewMode)
+        {
+            var selectedSpineGroups = _primaryPane.SelectedSpineGroups
+                .GroupBy(static entry => string.Concat(
+                    entry.Item.BundleId.Value,
+                    "\n",
+                    entry.Item.GroupId), StringComparer.Ordinal)
+                .Select(static group => group.First())
+                .ToArray();
+
+            if (selectedSpineGroups.Length == 0)
+            {
+                await ExtractSelectedAssetAsync();
+                return;
+            }
+
+            await _modificationActionHandler.ExtractSelectedSpineAssetGroupsAsync(
+                workspaceSummary,
+                selectedSpineGroups,
+                _primaryPane.CurrentBundleDisplayName,
+                _setBusyState,
+                _operationFeedbackBridge.AppendResultFailure);
+            return;
+        }
+
         var selectedEntries = _primaryPane.SelectedAssets
             .GroupBy(static entry => entry.Item.AssetId.Value, StringComparer.Ordinal)
             .Select(static group => group.First())
             .ToArray();
 
-        if (selectedEntries.Length <= 1)
+        if (selectedEntries.Length == 0)
         {
             await ExtractSelectedAssetAsync();
             return;
@@ -179,8 +199,8 @@ internal sealed class BundleExplorerAssetCommandCoordinator
         await _modificationActionHandler.ExtractSelectedAssetsAsync(
             workspaceSummary,
             selectedEntries,
+            _primaryPane.CurrentBundleDisplayName,
             _setBusyState,
-            _refreshPrimaryPaneAsync,
             _operationFeedbackBridge.AppendResultFailure);
     }
 
@@ -241,7 +261,6 @@ internal sealed class BundleExplorerAssetCommandCoordinator
             assetTab,
             details,
             _setBusyState,
-            _refreshPrimaryPaneAsync,
             _operationFeedbackBridge.AppendResultFailure);
     }
 
@@ -261,7 +280,6 @@ internal sealed class BundleExplorerAssetCommandCoordinator
             assetTab,
             details,
             _setBusyState,
-            _refreshPrimaryPaneAsync,
             _operationFeedbackBridge.AppendResultFailure);
     }
 

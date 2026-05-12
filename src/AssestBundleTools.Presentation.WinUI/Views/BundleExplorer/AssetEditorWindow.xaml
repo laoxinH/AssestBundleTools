@@ -202,8 +202,7 @@
                     ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested"
                     SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
                     SelectReplacementSourceRequested="OnInspectorSelectReplacementSourceRequested"
-                    SpineAtlasPageSelectionRequested="OnInspectorSpineAtlasPageSelectionRequested"
-                    UndoReplacementRequested="OnInspectorUndoReplacementRequested" />
+                    SpineAtlasPageSelectionRequested="OnInspectorSpineAtlasPageSelectionRequested" />
             </Border>
         </Grid>
 

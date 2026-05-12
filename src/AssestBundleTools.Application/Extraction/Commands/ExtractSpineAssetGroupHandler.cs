@@ -19,15 +19,18 @@ public sealed class ExtractSpineAssetGroupHandler : ICommandHandler<ExtractSpine
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly IQueryHandler<LoadSpineAssetGroupDetailsQuery, Result<SpineAssetGroupDetailsDto>> _loadSpineAssetGroupDetailsHandler;
     private readonly ExtractAssetHandler _extractAssetHandler;
+    private readonly WorkspaceExtractionOperationRecorder? _operationRecorder;
 
     public ExtractSpineAssetGroupHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
         IQueryHandler<LoadSpineAssetGroupDetailsQuery, Result<SpineAssetGroupDetailsDto>> loadSpineAssetGroupDetailsHandler,
-        ExtractAssetHandler extractAssetHandler)
+        ExtractAssetHandler extractAssetHandler,
+        WorkspaceExtractionOperationRecorder? operationRecorder = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _loadSpineAssetGroupDetailsHandler = loadSpineAssetGroupDetailsHandler ?? throw new ArgumentNullException(nameof(loadSpineAssetGroupDetailsHandler));
         _extractAssetHandler = extractAssetHandler ?? throw new ArgumentNullException(nameof(extractAssetHandler));
+        _operationRecorder = operationRecorder;
     }
 
     public async Task<Result<SpineAssetGroupExtractionResultDto>> HandleAsync(
@@ -113,18 +116,20 @@ public sealed class ExtractSpineAssetGroupHandler : ICommandHandler<ExtractSpine
                 : Result<SpineAssetGroupExtractionResultDto>.Failure(failures);
         }
 
-        return Result<SpineAssetGroupExtractionResultDto>.Success(
-            new SpineAssetGroupExtractionResultDto(
-                command.WorkspaceId,
-                command.BundleId,
-                details.Group.GroupId,
-                details.Group.DisplayName,
-                groupOutputDirectory,
-                extractedResults.Count,
-                failures.Count,
-                DateTimeOffset.UtcNow,
-                extractedResults,
-                plannedParts));
+        var result = new SpineAssetGroupExtractionResultDto(
+            command.WorkspaceId,
+            command.BundleId,
+            details.Group.GroupId,
+            details.Group.DisplayName,
+            groupOutputDirectory,
+            extractedResults.Count,
+            failures.Count,
+            DateTimeOffset.UtcNow,
+            extractedResults,
+            plannedParts);
+        _operationRecorder?.RecordSpineAssetGroupExtraction(command, result);
+
+        return Result<SpineAssetGroupExtractionResultDto>.Success(result);
     }
 
     private Result<SpineAssetGroupExtractionResultDto>? ValidateCommand(ExtractSpineAssetGroupCommand command)

@@ -373,9 +373,12 @@ public static class ResourceKeys
     public const string BundleExplorerLogFilterApplied = "BundleExplorer.Log.FilterApplied";
     public const string BundleExplorerLogAssetExtracted = "BundleExplorer.Log.AssetExtracted";
     public const string BundleExplorerLogAssetExtractionSelectionCancelled = "BundleExplorer.Log.AssetExtractionSelectionCancelled";
+    public const string BundleExplorerLogBatchAssetExtractionSelectionCancelled = "BundleExplorer.Log.BatchAssetExtractionSelectionCancelled";
     public const string BundleExplorerLogBatchAssetsExtracted = "BundleExplorer.Log.BatchAssetsExtracted";
     public const string BundleExplorerLogSpineGroupExtracted = "BundleExplorer.Log.SpineGroupExtracted";
     public const string BundleExplorerLogSpineGroupExtractionSelectionCancelled = "BundleExplorer.Log.SpineGroupExtractionSelectionCancelled";
+    public const string BundleExplorerLogBatchSpineGroupExtractionSelectionCancelled = "BundleExplorer.Log.BatchSpineGroupExtractionSelectionCancelled";
+    public const string BundleExplorerLogBatchSpineGroupsExtracted = "BundleExplorer.Log.BatchSpineGroupsExtracted";
     public const string BundleExplorerLogReplacementSourceSelected = "BundleExplorer.Log.ReplacementSourceSelected";
     public const string BundleExplorerLogFileReplacementSelectionCancelled = "BundleExplorer.Log.FileReplacementSelectionCancelled";
     public const string BundleExplorerLogFilePickerOpenFailedFormat = "BundleExplorer.Log.FilePickerOpenFailed.Format";
@@ -396,6 +399,7 @@ public static class ResourceKeys
     public const string BundleExplorerNotificationAssetExtracted = "BundleExplorer.Notification.AssetExtracted";
     public const string BundleExplorerNotificationBatchAssetsExtracted = "BundleExplorer.Notification.BatchAssetsExtracted";
     public const string BundleExplorerNotificationSpineGroupExtracted = "BundleExplorer.Notification.SpineGroupExtracted";
+    public const string BundleExplorerNotificationBatchSpineGroupsExtracted = "BundleExplorer.Notification.BatchSpineGroupsExtracted";
     public const string BundleExplorerNotificationReplacementSourceSelected = "BundleExplorer.Notification.ReplacementSourceSelected";
     public const string BundleExplorerNotificationFilePickerOpenFailed = "BundleExplorer.Notification.FilePickerOpenFailed";
     public const string BundleExplorerNotificationFileReplacementSourceSelected = "BundleExplorer.Notification.FileReplacementSourceSelected";
@@ -405,7 +409,13 @@ public static class ResourceKeys
     public const string FilePickerExtractionTypeImage = "FilePicker.Extraction.Type.Image";
     public const string FilePickerExtractionTypeText = "FilePicker.Extraction.Type.Text";
     public const string FilePickerExtractionTypeAudio = "FilePicker.Extraction.Type.Audio";
+    public const string FilePickerExtractionTypeObj = "FilePicker.Extraction.Type.Obj";
+    public const string FilePickerExtractionTypeFbx = "FilePicker.Extraction.Type.Fbx";
     public const string FilePickerExtractionTypeJson = "FilePicker.Extraction.Type.Json";
+    public const string FilePickerExtractionTypeYaml = "FilePicker.Extraction.Type.Yaml";
+    public const string FilePickerExtractionTypeMonoBehaviourTypeTreeJson = "FilePicker.Extraction.Type.MonoBehaviourTypeTreeJson";
+    public const string FilePickerExtractionTypeMonoBehaviourSummaryJson = "FilePicker.Extraction.Type.MonoBehaviourSummaryJson";
+    public const string FilePickerExtractionTypeMonoBehaviourFields = "FilePicker.Extraction.Type.MonoBehaviourFields";
     public const string FilePickerExtractionTypeBinary = "FilePicker.Extraction.Type.Binary";
     public const string BundleExplorerPreviewImageDecodeFailed = "BundleExplorer.Preview.ImageDecodeFailed";
     public const string BundleExplorerPreviewAudioDecodeFailed = "BundleExplorer.Preview.AudioDecodeFailed";
@@ -513,6 +523,9 @@ public static class ResourceKeys
     public const string AssetPaneViewMultiSelectionLabel = "AssetPaneView.MultiSelectionLabelText.Text";
     public const string AssetPaneViewMultiSelectionUnit = "AssetPaneView.MultiSelectionUnitText.Text";
     public const string AssetPaneViewBatchExtractSelectedButton = "AssetPaneView.BatchExtractSelectedButton.Content";
+    public const string AssetPaneViewExitMultiSelectionButtonToolTip = "AssetPaneView.ExitMultiSelectionButton.ToolTip";
+    public const string AssetPaneViewSelectAllMultiSelectionButtonToolTip = "AssetPaneView.SelectAllMultiSelectionButton.ToolTip";
+    public const string AssetPaneViewInvertMultiSelectionButtonToolTip = "AssetPaneView.InvertMultiSelectionButton.ToolTip";
     public const string AssetPaneViewAssetNameHeaderText = "AssetPaneView.AssetNameHeaderText.Text";
     public const string AssetPaneViewAssetTypeHeaderText = "AssetPaneView.AssetTypeHeaderText.Text";
     public const string AssetPaneViewAssetSizeHeaderText = "AssetPaneView.AssetSizeHeaderText.Text";
@@ -919,6 +932,7 @@ public static class ResourceKeys
     public const string InspectorMonoBehaviourPreviewFieldGroupsCardTitle = "InspectorPanelView.MonoBehaviourPreview.FieldGroupsCardTitle.Text";
     public const string InspectorMonoBehaviourPreviewContainersCardTitle = "InspectorPanelView.MonoBehaviourPreview.ContainersCardTitle.Text";
     public const string InspectorMonoBehaviourPreviewReferencesCardTitle = "InspectorPanelView.MonoBehaviourPreview.ReferencesCardTitle.Text";
+    public const string InspectorMonoBehaviourPreviewTypeTreeJsonCardTitle = "InspectorPanelView.MonoBehaviourPreview.TypeTreeJsonCardTitle.Text";
     public const string InspectorMonoBehaviourPreviewNameLabel = "InspectorPanelView.MonoBehaviourPreview.Name.Label";
     public const string InspectorMonoBehaviourPreviewEnabledLabel = "InspectorPanelView.MonoBehaviourPreview.Enabled.Label";
     public const string InspectorMonoBehaviourPreviewFieldCountLabel = "InspectorPanelView.MonoBehaviourPreview.FieldCount.Label";
@@ -948,6 +962,11 @@ public static class ResourceKeys
     public const string InspectorMonoBehaviourPreviewFieldGroupSummaryFormat = "InspectorPanelView.MonoBehaviourPreview.FieldGroupSummary.Format";
     public const string InspectorMonoBehaviourPreviewContainerSummaryFormat = "InspectorPanelView.MonoBehaviourPreview.ContainerSummary.Format";
     public const string InspectorMonoBehaviourPreviewScriptUnresolvedNameFormat = "InspectorPanelView.MonoBehaviourPreview.ScriptUnresolvedName.Format";
+    public const string InspectorMonoBehaviourPreviewTypeTreeNodeCountLabel = "InspectorPanelView.MonoBehaviourPreview.TypeTreeNodeCount.Label";
+    public const string InspectorMonoBehaviourPreviewTypeTreeStatusLabel = "InspectorPanelView.MonoBehaviourPreview.TypeTreeStatus.Label";
+    public const string InspectorMonoBehaviourPreviewTypeTreeStatusCompleteText = "InspectorPanelView.MonoBehaviourPreview.TypeTreeStatusComplete.Text";
+    public const string InspectorMonoBehaviourPreviewTypeTreeStatusTruncatedText = "InspectorPanelView.MonoBehaviourPreview.TypeTreeStatusTruncated.Text";
+    public const string InspectorMonoBehaviourPreviewTypeTreeJsonContentLabel = "InspectorPanelView.MonoBehaviourPreview.TypeTreeJsonContent.Label";
     public const string InspectorAnimatorControllerPreviewStructureFormat = "InspectorPanelView.AnimatorControllerPreview.Structure.Format";
     public const string InspectorAnimatorControllerPreviewStateSummaryFormat = "InspectorPanelView.AnimatorControllerPreview.StateSummary.Format";
     public const string InspectorAnimatorControllerPreviewReferenceSummaryFormat = "InspectorPanelView.AnimatorControllerPreview.ReferenceSummary.Format";
@@ -1049,6 +1068,7 @@ public static class ResourceKeys
     public const string InspectorWorkspaceReplacementCapabilityLabel = "InspectorPanelView.WorkspaceReplacementCapabilityLabelText.Text";
     public const string InspectorChangeSummaryTitle = "InspectorPanelView.ChangeSummaryTitleText.Text";
     public const string InspectorExtractButton = "InspectorPanelView.ExtractButton.Content";
+    public const string InspectorModifyButton = "InspectorPanelView.ModifyButton.Content";
     public const string InspectorSelectFileReplacementButton = "InspectorPanelView.SelectFileReplacementButton.Content";
     public const string InspectorSelectReplacementButton = "InspectorPanelView.SelectReplacementButton.Content";
     public const string InspectorApplyReplacementButton = "InspectorPanelView.ApplyReplacementButton.Content";

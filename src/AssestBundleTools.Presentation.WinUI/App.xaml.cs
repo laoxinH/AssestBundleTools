@@ -40,6 +40,7 @@ public partial class App : Microsoft.UI.Xaml.Application
             WorkspaceAssetInspectionGateway = services.WorkspaceAssetInspectionGateway;
             WorkspaceAssetOperationGateway = services.WorkspaceAssetOperationGateway;
             WorkspaceBatchOperationsGateway = services.WorkspaceBatchOperationsGateway;
+            WorkspaceOperationChangeNotifier = services.WorkspaceOperationChangeNotifier;
             AssetEditDraftRestorePlanGateway = services.AssetEditDraftRestorePlanGateway;
             WorkspaceContextService = services.WorkspaceContextService;
             WorkspaceProcessCoordinatorService = services.WorkspaceProcessCoordinatorService;
@@ -85,6 +86,8 @@ public partial class App : Microsoft.UI.Xaml.Application
     public IWorkspaceAssetOperationGateway WorkspaceAssetOperationGateway { get; }
 
     public IWorkspaceBatchOperationsGateway WorkspaceBatchOperationsGateway { get; }
+
+    public IWorkspaceOperationChangeNotifier WorkspaceOperationChangeNotifier { get; }
 
     public IAssetEditDraftRestorePlanGateway AssetEditDraftRestorePlanGateway { get; }
 

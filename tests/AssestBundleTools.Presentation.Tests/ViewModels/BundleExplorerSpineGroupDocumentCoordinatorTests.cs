@@ -3,6 +3,7 @@ using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using System.Globalization;
 using Microsoft.UI.Xaml;
 
 namespace AssestBundleTools.Presentation.Tests.ViewModels;
@@ -40,6 +41,43 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
         Assert.Single(context.BundleTab.SpineGroupTabs);
         Assert.Same(groupTab, context.BundleTab.ActiveSpineGroupTab);
         Assert.Equal("Hero refreshed", groupTab.DisplayName);
+    }
+
+    [Fact]
+    public async Task ActivateSpineGroupDocumentTabAsync_ShouldRefreshExtractionSummaryFromPane()
+    {
+        var context = CreateContext();
+        var loader = new TestSpineAssetGroupDetailsLoader
+        {
+            LoadHandler = tab => Task.FromResult<SpineAssetGroupDetailsLoadResult?>(new SpineAssetGroupDetailsLoadResult(
+                new SpineAssetGroupDetailsDto(tab.Item, [], [], tab.Item.Diagnostics),
+                TexturePreview: null))
+        };
+        var coordinator = CreateCoordinator(context, loader);
+        var firstEntry = CreateSpineGroupEntry("hero", "Hero");
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.SpineGroups;
+        context.PrimaryPane.ReplaceSpineGroups("ui.ab", [firstEntry], "empty");
+        context.PrimaryPane.UpdateSpineGroupSelection(firstEntry);
+        await coordinator.HandlePrimaryPaneSelectionChangedAsync(
+            isSynchronizingPrimaryPaneState: false,
+            captureActiveTabState: static () => { });
+
+        var groupTab = Assert.Single(context.BundleTab.SpineGroupTabs);
+        Assert.Equal(ResourceKeys.InspectorChangeSummaryNone, groupTab.Inspector.ChangeSummaryText);
+        Assert.Equal(1, loader.LoadCallCount);
+
+        var extractedAtUtc = new DateTimeOffset(2026, 5, 12, 8, 30, 0, TimeSpan.Zero);
+        var refreshedEntry = CreateSpineGroupEntry("hero", "Hero", extractedAtUtc);
+        context.PrimaryPane.ReplaceSpineGroups("ui.ab", [refreshedEntry], "empty");
+
+        await coordinator.ActivateSpineGroupDocumentTabAsync(groupTab);
+
+        Assert.Equal(2, loader.LoadCallCount);
+        Assert.Equal(extractedAtUtc, groupTab.Item.SkeletonAssets[0].LastExtractedAtUtc);
+        Assert.Equal(
+            ResourceKeys.InspectorChangeSummaryExtractOnlyFormat + ":" +
+            extractedAtUtc.ToLocalTime().ToString("G", CultureInfo.CurrentCulture),
+            groupTab.Inspector.ChangeSummaryText);
     }
 
     [Fact]

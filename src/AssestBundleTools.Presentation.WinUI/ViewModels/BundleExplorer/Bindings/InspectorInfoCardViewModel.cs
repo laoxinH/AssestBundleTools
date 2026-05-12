@@ -12,6 +12,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 public sealed class InspectorInfoCardViewModel : ObservableObject
 {
     private bool _isExpanded;
+    private readonly string? _copyPayloadText;
 
     public InspectorInfoCardViewModel(
         string key,
@@ -20,7 +21,8 @@ public sealed class InspectorInfoCardViewModel : ObservableObject
         string summaryText,
         bool isExpanded,
         IReadOnlyList<InspectorInfoRowViewModel> rows,
-        InspectorInfoCardVisualViewModel? visual = null)
+        InspectorInfoCardVisualViewModel? visual = null,
+        string? copyPayloadText = null)
     {
         Key = string.IsNullOrWhiteSpace(key)
             ? throw new ArgumentException("Card key is required.", nameof(key))
@@ -36,6 +38,9 @@ public sealed class InspectorInfoCardViewModel : ObservableObject
             : summaryText.Trim();
         Rows = rows ?? throw new ArgumentNullException(nameof(rows));
         Visual = visual;
+        _copyPayloadText = string.IsNullOrWhiteSpace(copyPayloadText)
+            ? null
+            : copyPayloadText;
         _isExpanded = isExpanded;
     }
 
@@ -92,7 +97,7 @@ public sealed class InspectorInfoCardViewModel : ObservableObject
             ? Visibility.Visible
             : Visibility.Collapsed;
 
-    public string CopyPayloadText => string.Join(Environment.NewLine, Rows.Select(static row => row.CopyText));
+    public string CopyPayloadText => _copyPayloadText ?? string.Join(Environment.NewLine, Rows.Select(static row => row.CopyText));
 
     public Visibility CopyButtonVisibility =>
         string.IsNullOrWhiteSpace(CopyPayloadText)

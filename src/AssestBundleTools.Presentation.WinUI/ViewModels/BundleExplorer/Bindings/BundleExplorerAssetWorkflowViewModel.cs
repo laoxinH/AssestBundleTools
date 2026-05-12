@@ -7,7 +7,6 @@ using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
-
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
@@ -23,7 +22,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 /// 资源筛选、详情标签激活、检查器同步、预览加载以及资产级操作都在这里闭环，
 /// 主页面 ViewModel 只保留工作区与资源包级别的导航编排职责。
 /// </remarks>
-public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBundleExplorerAssetWorkflowBindingHost
+public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBundleExplorerAssetWorkflowBindingHost, IDisposable
 {
     private readonly ILocalizationService _localizationService;
     private readonly IBundleExplorerWorkspaceShellHost _workspaceShell;
@@ -42,6 +41,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
     private readonly BundleExplorerAssetPaneCoordinator _assetPaneCoordinator;
     private readonly BundleExplorerActiveDocumentLocator _activeDocumentLocator;
     private readonly BundleExplorerAssetCommandCoordinator _assetCommandCoordinator;
+    private readonly WorkspaceOperationChangeRefreshCoordinator _operationChangeRefreshCoordinator;
 
     internal event EventHandler<BundleExplorerPageStateChangedEventArgs<BundleExplorerAssetWorkflowPageStateChange>>? PageStateChanged;
 
@@ -52,6 +52,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         IAppLogService appLogService,
         IAppNotificationService appNotificationService,
         ILocalizationService localizationService,
+        IWorkspaceOperationChangeNotifier workspaceOperationChangeNotifier,
         IFilePickerService filePickerService,
         IWorkspaceContextService workspaceContextService,
         IBackgroundTaskRunner backgroundTaskRunner,
@@ -67,6 +68,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         ArgumentNullException.ThrowIfNull(workspaceExplorerGateway);
         ArgumentNullException.ThrowIfNull(workspaceAssetInspectionGateway);
         ArgumentNullException.ThrowIfNull(workspaceAssetOperationGateway);
+        ArgumentNullException.ThrowIfNull(workspaceOperationChangeNotifier);
         ArgumentNullException.ThrowIfNull(appNotificationService);
         ArgumentNullException.ThrowIfNull(filePickerService);
         ArgumentNullException.ThrowIfNull(workspaceContextService);
@@ -175,8 +177,17 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             () => Inspector,
             () => ActiveAssetDocumentTab,
             () => _documentWorkspace.ActiveSpineGroupDocumentTab,
-            () => RefreshPrimaryPaneAsync(),
             ReapplyActiveAssetDocumentTab);
+        var operationReadModelRefreshHandler = new BundleExplorerOperationReadModelRefreshHandler(
+            _documentWorkspace,
+            _assetDocumentTabCoordinator,
+            _spineGroupDocumentCoordinator,
+            () => RefreshPrimaryPaneAsync(preserveCurrentDocumentTab: true));
+        _operationChangeRefreshCoordinator = new WorkspaceOperationChangeRefreshCoordinator(
+            workspaceOperationChangeNotifier,
+            () => _workspaceShell.WorkspaceSummary?.WorkspaceId,
+            () => IsBusy,
+            operationReadModelRefreshHandler.RefreshAsync);
         _documentWorkspace.AssetDocumentHostStateChanged += OnAssetDocumentHostStateChanged;
     }
 
@@ -185,11 +196,8 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
     public InspectorPanelViewModel Inspector => _assetDocumentHostCoordinator.CurrentInspector;
 
     public bool HasSelectedAsset => _assetCommandCoordinator.HasSelectedAsset;
-
     public bool CanExtractSelectedAsset => _assetCommandCoordinator.CanExtractSelectedAsset;
-
     public bool CanSelectFileReplacementSource => _assetCommandCoordinator.CanSelectFileReplacementSource;
-
     public bool CanSelectWorkspaceReplacementSource => _assetCommandCoordinator.CanSelectWorkspaceReplacementSource;
 
     private bool IsBusy => _isBusyProvider();
@@ -206,20 +214,23 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
     {
         PrimaryPane.IsBusy = isBusy;
         NotifyActionStates();
+        _operationChangeRefreshCoordinator.HandleBusyStateChanged(isBusy);
+    }
+
+    public void Dispose()
+    {
+        _documentWorkspace.AssetDocumentHostStateChanged -= OnAssetDocumentHostStateChanged;
+        _operationChangeRefreshCoordinator.Dispose();
     }
 
     public AssetDocumentTabViewModel CreateAssetDocumentTab(
         BundleId bundleId,
         AssetId assetId,
-        string assetName)
-    {
-        return _assetDocumentHostCoordinator.CreateAssetDocumentTab(bundleId, assetId, assetName);
-    }
+        string assetName) =>
+        _assetDocumentHostCoordinator.CreateAssetDocumentTab(bundleId, assetId, assetName);
 
-    public SpineAssetGroupDocumentTabViewModel CreateSpineGroupDocumentTab(SpineAssetGroupDto spineGroup)
-    {
-        return _assetDocumentHostCoordinator.CreateSpineGroupDocumentTab(spineGroup);
-    }
+    public SpineAssetGroupDocumentTabViewModel CreateSpineGroupDocumentTab(SpineAssetGroupDto spineGroup) =>
+        _assetDocumentHostCoordinator.CreateSpineGroupDocumentTab(spineGroup);
 
     public void CaptureCurrentBundleTabStateBeforeActivation(BundleDocumentTabViewModel nextTab)
     {

@@ -254,18 +254,55 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     <TextBlock
                         FontWeight="SemiBold"
-                        Text="{x:Bind ViewModel.SelectedAssetCount, Mode=OneWay}" />
+                        Text="{x:Bind ViewModel.SelectedItemCount, Mode=OneWay}" />
                     <TextBlock
                         x:Name="MultiSelectionUnitText"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </Border>
 
-            <Button
-                x:Name="BatchExtractSelectedButton"
+            <StackPanel
                 Grid.Column="1"
-                Click="OnBatchExtractSelectedButtonClick"
-                IsEnabled="{x:Bind ViewModel.CanBatchExtractSelectedAssets, Mode=OneWay}" />
+                Orientation="Horizontal"
+                Spacing="4">
+                <Button
+                    x:Name="ExitMultiSelectionButton"
+                    Click="OnExitMultiSelectionButtonClick"
+                    Style="{StaticResource AssetPaneToolbarIconButtonStyle}">
+                    <FontIcon
+                        FontFamily="Segoe Fluent Icons"
+                        FontSize="15"
+                        Glyph="&#xE711;" />
+                </Button>
+                <Button
+                    x:Name="SelectAllMultiSelectionButton"
+                    Click="OnSelectAllMultiSelectionButtonClick"
+                    Style="{StaticResource AssetPaneToolbarIconButtonStyle}">
+                    <FontIcon
+                        FontFamily="Segoe Fluent Icons"
+                        FontSize="15"
+                        Glyph="&#xE762;" />
+                </Button>
+                <Button
+                    x:Name="InvertMultiSelectionButton"
+                    Click="OnInvertMultiSelectionButtonClick"
+                    Style="{StaticResource AssetPaneToolbarIconButtonStyle}">
+                    <FontIcon
+                        FontFamily="Segoe Fluent Icons"
+                        FontSize="15"
+                        Glyph="&#xE8AB;" />
+                </Button>
+                <Button
+                    x:Name="BatchExtractSelectedButton"
+                    Click="OnBatchExtractSelectedButtonClick"
+                    IsEnabled="{x:Bind ViewModel.CanBatchExtractSelectedAssets, Mode=OneWay}"
+                    Style="{StaticResource AssetPaneToolbarIconButtonStyle}">
+                    <FontIcon
+                        FontFamily="Segoe Fluent Icons"
+                        FontSize="15"
+                        Glyph="&#xE896;" />
+                </Button>
+            </StackPanel>
         </Grid>
 
         <Grid Grid.Row="3">

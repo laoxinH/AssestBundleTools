@@ -187,6 +187,15 @@ public sealed class BundleExplorerAssetPreviewCoordinatorMonoBehaviourTests
             ResourceKeys.InspectorMonoBehaviourPreviewReferenceResolvedFormat + ":",
             materialReferenceRow.Value,
             StringComparison.Ordinal);
+        var typeTreeJsonCard = Assert.Single(
+            assetTab.Inspector.InformationCards,
+            static card => card.Key == "mono-behaviour-typetree-json");
+        Assert.Equal(ResourceKeys.InspectorMonoBehaviourPreviewTypeTreeJsonCardTitle, typeTreeJsonCard.Title);
+        Assert.Contains(
+            typeTreeJsonCard.Rows,
+            static row => row.Label == ResourceKeys.InspectorMonoBehaviourPreviewTypeTreeNodeCountLabel &&
+                          row.Value == "6");
+        Assert.Contains("\"m_GameObject\"", typeTreeJsonCard.CopyPayloadText, StringComparison.Ordinal);
         Assert.Equal(@"C:\PreviewCache\mono-behaviour.json", assetTab.Inspector.Preview.PreviewPayloadFilePath);
         Assert.Empty(appLogService.WarningMessages);
     }

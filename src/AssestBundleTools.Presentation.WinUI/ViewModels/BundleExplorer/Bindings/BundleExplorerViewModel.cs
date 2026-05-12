@@ -22,7 +22,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 /// 负责工作区加载、恢复、资源包标签导航与浏览状态持久化。
 /// 而资产窗格、检查器和预览、替换动作已分别下沉到更细粒度的子 ViewModel。
 /// </remarks>
-public sealed class BundleExplorerViewModel : ObservableObject
+public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
 {
     private readonly BundleExplorerBrowserStateCoordinator _browserStateCoordinator;
     private readonly BundleExplorerBundleTabCoordinator _bundleTabCoordinator;
@@ -50,6 +50,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         IAppLogService appLogService,
         IAppNotificationService appNotificationService,
         ILocalizationService localizationService,
+        IWorkspaceOperationChangeNotifier workspaceOperationChangeNotifier,
         IFilePickerService filePickerService,
         IWorkspaceContextService workspaceContextService,
         IWorkspaceImportCoordinatorService workspaceImportCoordinatorService,
@@ -63,6 +64,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(appLogService);
         ArgumentNullException.ThrowIfNull(appNotificationService);
         ArgumentNullException.ThrowIfNull(localizationService);
+        ArgumentNullException.ThrowIfNull(workspaceOperationChangeNotifier);
         ArgumentNullException.ThrowIfNull(workspaceContextService);
         ArgumentNullException.ThrowIfNull(workspaceImportCoordinatorService);
         ArgumentNullException.ThrowIfNull(pathNavigationService);
@@ -91,6 +93,7 @@ public sealed class BundleExplorerViewModel : ObservableObject
             appLogService,
             appNotificationService,
             localizationService,
+            workspaceOperationChangeNotifier,
             filePickerService ?? throw new ArgumentNullException(nameof(filePickerService)),
             workspaceContextService,
             backgroundTaskRunner,
@@ -242,6 +245,13 @@ public sealed class BundleExplorerViewModel : ObservableObject
         }
 
         _workspaceBindingCoordinator.ResetWorkspaceToEmptyState();
+    }
+
+    public void Dispose()
+    {
+        _assetWorkflow.Dispose();
+        _workspaceShell.PageStateChanged -= OnWorkspaceShellPageStateChanged;
+        _bundlePane.BrowserStateChanged -= OnBundlePaneBrowserStateChanged;
     }
 
     public async Task RefreshAsync()

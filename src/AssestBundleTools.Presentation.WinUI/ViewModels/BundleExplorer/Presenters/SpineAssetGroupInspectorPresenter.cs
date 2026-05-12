@@ -37,7 +37,8 @@ internal sealed class SpineAssetGroupInspectorPresenter
 
         var group = groupTab.Item;
         var details = groupTab.Details;
-        var parts = EnumerateParts(group).ToArray();
+        var displayGroup = details?.Group ?? group;
+        var parts = EnumerateParts(displayGroup).ToArray();
         var diagnostics = details?.Diagnostics ?? group.Diagnostics;
         groupTab.Inspector.Apply(
             assetName: groupTab.DisplayName,
@@ -56,7 +57,7 @@ internal sealed class SpineAssetGroupInspectorPresenter
             workspaceReplacementCapabilityText: GetString(ResourceKeys.InspectorCapabilityUnavailable),
             replacementSourceText: GetString(ResourceKeys.InspectorReplacementSourceNone),
             replacementStatusText: GetString(ResourceKeys.InspectorReplacementStatusNone),
-            changeSummaryText: GetString(ResourceKeys.InspectorChangeSummaryNone),
+            changeSummaryText: BuildChangeSummaryText(parts),
             canExtract: parts.Length > 0,
             canSelectFileReplacementSource: false,
             canSelectReplacementSource: false,
@@ -205,6 +206,21 @@ internal sealed class SpineAssetGroupInspectorPresenter
         return _localizationService.GetFormattedString(
             ResourceKeys.InspectorSpineGroupRuntimeAdapterUnavailableFormat,
             runtime.SpineVersion ?? string.Empty);
+    }
+
+    private string BuildChangeSummaryText(IReadOnlyList<SpineAssetGroupPartDto> parts)
+    {
+        var lastExtractedAtUtc = parts
+            .Select(static part => part.LastExtractedAtUtc)
+            .OfType<DateTimeOffset>()
+            .DefaultIfEmpty()
+            .Max();
+
+        return lastExtractedAtUtc == default
+            ? GetString(ResourceKeys.InspectorChangeSummaryNone)
+            : _localizationService.GetFormattedString(
+                ResourceKeys.InspectorChangeSummaryExtractOnlyFormat,
+                lastExtractedAtUtc.ToLocalTime().ToString("G", CultureInfo.CurrentCulture));
     }
 
     private IReadOnlyList<InspectorInfoRowViewModel> BuildGroupPreviewInfoRows(

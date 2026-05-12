@@ -68,12 +68,59 @@ internal sealed class AssetPaneAssetListState
         AssetListEntryViewModel? primarySelectedAsset)
     {
         SelectedAssets.Clear();
-        foreach (var item in selectedAssets)
+        foreach (var item in selectedAssets.Where(Items.Contains))
         {
             SelectedAssets.Add(item);
         }
 
-        SelectedAsset = primarySelectedAsset;
+        SelectedAsset = primarySelectedAsset is not null && Items.Contains(primarySelectedAsset)
+            ? primarySelectedAsset
+            : SelectedAssets.LastOrDefault();
+        UpdateSelectionState();
+    }
+
+    public void SelectAllVisibleItems()
+    {
+        SelectedAssets.Clear();
+        foreach (var item in Items)
+        {
+            SelectedAssets.Add(item);
+        }
+
+        SelectedAsset = SelectedAssets.LastOrDefault();
+        UpdateSelectionState();
+    }
+
+    public void InvertVisibleSelection()
+    {
+        var selectedSet = SelectedAssets.ToHashSet();
+        var invertedItems = Items
+            .Where(item => !selectedSet.Contains(item))
+            .ToArray();
+
+        SelectedAssets.Clear();
+        foreach (var item in invertedItems)
+        {
+            SelectedAssets.Add(item);
+        }
+
+        SelectedAsset = SelectedAssets.LastOrDefault();
+        UpdateSelectionState();
+    }
+
+    public void CollapseSelectionToPrimary()
+    {
+        if (SelectedAsset is null || !SelectedAssets.Contains(SelectedAsset))
+        {
+            SelectedAsset = SelectedAssets.LastOrDefault();
+        }
+
+        SelectedAssets.Clear();
+        if (SelectedAsset is not null)
+        {
+            SelectedAssets.Add(SelectedAsset);
+        }
+
         UpdateSelectionState();
     }
 

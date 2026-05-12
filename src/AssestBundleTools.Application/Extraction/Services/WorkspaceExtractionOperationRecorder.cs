@@ -12,6 +12,8 @@ namespace AssestBundleTools.Application.Extraction.Services;
 public sealed class WorkspaceExtractionOperationRecorder
 {
     private const string SourceKindWorkspace = "workspace";
+    private const string TargetTypeSpineAssetGroup = "SpineAssetGroup";
+    private const string TargetTypeDisplayNameSpine = "Spine";
 
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
     private readonly IWorkspaceOperationLogService _operationLogService;
@@ -74,6 +76,48 @@ public sealed class WorkspaceExtractionOperationRecorder
             WorkspaceKey: workspaceKey,
             OperationKind: WorkspaceOperationKind.ExtractBatch,
             Status: WorkspaceOperationStatus.Applied,
+            Source: new WorkspaceOperationSourceDto(
+                SourceKind: SourceKindWorkspace,
+                OutputDirectory: result.SuggestedOutputDirectory),
+            Result: new WorkspaceOperationResultDto(
+                OutputDirectory: result.SuggestedOutputDirectory,
+                AffectedBundleIds: assetResults
+                    .Select(static asset => asset.BundleId.Value)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray(),
+                AffectedAssetIds: assetResults
+                    .Select(static asset => asset.AssetId.Value)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray(),
+                CompletedCount: result.ExtractedAssetCount,
+                FailedCount: result.FailedAssetCount),
+            CreatedAtUtc: result.CompletedAtUtc,
+            AppliedAtUtc: result.CompletedAtUtc,
+            CompletedAtUtc: result.CompletedAtUtc);
+
+        store.Save(_operationLogService.AppendOperation(changeSet, appendRequest));
+    }
+
+    public void RecordSpineAssetGroupExtraction(
+        ExtractSpineAssetGroupCommand command,
+        SpineAssetGroupExtractionResultDto result)
+    {
+        if (!TryLoadChangeSet(command.WorkspaceKey, command.WorkspaceDataRootPath, out var workspaceKey, out var store, out var changeSet))
+        {
+            return;
+        }
+
+        var assetResults = result.AssetResults ?? Array.Empty<AssetExtractionResultDto>();
+        var appendRequest = new WorkspaceOperationAppendRequestDto(
+            WorkspaceKey: workspaceKey,
+            OperationKind: WorkspaceOperationKind.ExtractBatch,
+            Status: WorkspaceOperationStatus.Applied,
+            Target: new WorkspaceOperationTargetDto(
+                BundleId: result.BundleId.Value,
+                AssetId: result.GroupId,
+                AssetName: result.GroupDisplayName,
+                AssetType: TargetTypeSpineAssetGroup,
+                AssetTypeDisplayName: TargetTypeDisplayNameSpine),
             Source: new WorkspaceOperationSourceDto(
                 SourceKind: SourceKindWorkspace,
                 OutputDirectory: result.SuggestedOutputDirectory),

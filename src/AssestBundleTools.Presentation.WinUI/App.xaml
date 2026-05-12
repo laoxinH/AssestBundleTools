@@ -149,34 +149,34 @@
                     Value="SemiBold" />
             </Style>
 
-            <!-- 详情与工具面板里的普通操作按钮，保留 WinUI Button 行为并统一为应用的紧凑卡片风格。 -->
+            <!-- 详情与工具面板里的轻量标签式操作按钮，保留 WinUI Button 行为并降低检查器底部操作区高度。 -->
             <Style
                 x:Key="WorkspaceOperationButtonStyle"
                 TargetType="Button">
                 <Setter
                     Property="Background"
-                    Value="{ThemeResource ControlFillColorDefaultBrush}" />
+                    Value="Transparent" />
                 <Setter
                     Property="Foreground"
-                    Value="{ThemeResource TextFillColorPrimaryBrush}" />
+                    Value="{ThemeResource TextFillColorSecondaryBrush}" />
                 <Setter
                     Property="BorderBrush"
-                    Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
+                    Value="Transparent" />
                 <Setter
                     Property="BorderThickness"
-                    Value="1" />
+                    Value="0" />
                 <Setter
                     Property="CornerRadius"
-                    Value="8" />
+                    Value="4" />
                 <Setter
                     Property="Padding"
-                    Value="14,0" />
+                    Value="7,0" />
                 <Setter
                     Property="MinHeight"
-                    Value="38" />
+                    Value="28" />
                 <Setter
                     Property="MinWidth"
-                    Value="68" />
+                    Value="0" />
                 <Setter
                     Property="HorizontalAlignment"
                     Value="Left" />
@@ -191,10 +191,10 @@
                     Value="Center" />
                 <Setter
                     Property="FontSize"
-                    Value="13" />
+                    Value="12" />
                 <Setter
                     Property="FontWeight"
-                    Value="SemiBold" />
+                    Value="Normal" />
                 <Setter
                     Property="UseSystemFocusVisuals"
                     Value="True" />
@@ -230,14 +230,14 @@
                                                     Storyboard.TargetProperty="Background">
                                                     <DiscreteObjectKeyFrame
                                                         KeyTime="0"
-                                                        Value="{ThemeResource ControlFillColorSecondaryBrush}" />
+                                                        Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
                                                 </ObjectAnimationUsingKeyFrames>
                                                 <ObjectAnimationUsingKeyFrames
                                                     Storyboard.TargetName="RootBorder"
                                                     Storyboard.TargetProperty="BorderBrush">
                                                     <DiscreteObjectKeyFrame
                                                         KeyTime="0"
-                                                        Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
+                                                        Value="Transparent" />
                                                 </ObjectAnimationUsingKeyFrames>
                                                 <ObjectAnimationUsingKeyFrames
                                                     Storyboard.TargetName="ContentPresenter"
@@ -255,14 +255,14 @@
                                                     Storyboard.TargetProperty="Background">
                                                     <DiscreteObjectKeyFrame
                                                         KeyTime="0"
-                                                        Value="{ThemeResource ControlFillColorTertiaryBrush}" />
+                                                        Value="{ThemeResource SubtleFillColorTertiaryBrush}" />
                                                 </ObjectAnimationUsingKeyFrames>
                                                 <ObjectAnimationUsingKeyFrames
                                                     Storyboard.TargetName="RootBorder"
                                                     Storyboard.TargetProperty="BorderBrush">
                                                     <DiscreteObjectKeyFrame
                                                         KeyTime="0"
-                                                        Value="{ThemeResource ControlStrongStrokeColorDefaultBrush}" />
+                                                        Value="Transparent" />
                                                 </ObjectAnimationUsingKeyFrames>
                                                 <ObjectAnimationUsingKeyFrames
                                                     Storyboard.TargetName="ContentPresenter"
@@ -280,14 +280,14 @@
                                                     Storyboard.TargetProperty="Background">
                                                     <DiscreteObjectKeyFrame
                                                         KeyTime="0"
-                                                        Value="{ThemeResource ControlFillColorDisabledBrush}" />
+                                                        Value="Transparent" />
                                                 </ObjectAnimationUsingKeyFrames>
                                                 <ObjectAnimationUsingKeyFrames
                                                     Storyboard.TargetName="RootBorder"
                                                     Storyboard.TargetProperty="BorderBrush">
                                                     <DiscreteObjectKeyFrame
                                                         KeyTime="0"
-                                                        Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
+                                                        Value="Transparent" />
                                                 </ObjectAnimationUsingKeyFrames>
                                                 <ObjectAnimationUsingKeyFrames
                                                     Storyboard.TargetName="ContentPresenter"

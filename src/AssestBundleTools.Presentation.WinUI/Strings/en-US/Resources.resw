@@ -798,6 +798,15 @@
   <data name="AssetPaneView.BatchExtractSelectedButton.Content" xml:space="preserve">
     <value>Extract Selected</value>
   </data>
+  <data name="AssetPaneView.ExitMultiSelectionButton.ToolTip" xml:space="preserve">
+    <value>Exit Multi-Select</value>
+  </data>
+  <data name="AssetPaneView.SelectAllMultiSelectionButton.ToolTip" xml:space="preserve">
+    <value>Select All</value>
+  </data>
+  <data name="AssetPaneView.InvertMultiSelectionButton.ToolTip" xml:space="preserve">
+    <value>Invert Selection</value>
+  </data>
   <data name="AssetPaneView.AssetNameHeaderText.Text" xml:space="preserve">
     <value>Name</value>
   </data>
@@ -1830,6 +1839,9 @@
   <data name="InspectorPanelView.MonoBehaviourPreview.ReferencesCardTitle.Text" xml:space="preserve">
     <value>Reference details</value>
   </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.TypeTreeJsonCardTitle.Text" xml:space="preserve">
+    <value>TypeTree JSON field tree</value>
+  </data>
   <data name="InspectorPanelView.MonoBehaviourPreview.Name.Label" xml:space="preserve">
     <value>Name</value>
   </data>
@@ -1916,6 +1928,21 @@
   </data>
   <data name="InspectorPanelView.MonoBehaviourPreview.ScriptUnresolvedName.Format" xml:space="preserve">
     <value>Unresolved script · PathId {0}</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.TypeTreeNodeCount.Label" xml:space="preserve">
+    <value>Nodes</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.TypeTreeStatus.Label" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.TypeTreeStatusComplete.Text" xml:space="preserve">
+    <value>Complete</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.TypeTreeStatusTruncated.Text" xml:space="preserve">
+    <value>Truncated</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.TypeTreeJsonContent.Label" xml:space="preserve">
+    <value>JSON</value>
   </data>
   <data name="InspectorPanelView.AnimatorControllerPreview.Structure.Format" xml:space="preserve">
     <value>Layers {0} · Parameters {1}</value>
@@ -2132,6 +2159,9 @@
   </data>
   <data name="InspectorPanelView.ExtractButton.Content" xml:space="preserve">
     <value>Extract</value>
+  </data>
+  <data name="InspectorPanelView.ModifyButton.Content" xml:space="preserve">
+    <value>Edit</value>
   </data>
   <data name="InspectorPanelView.SelectReplacementButton.Content" xml:space="preserve">
     <value>Workspace Source</value>
@@ -3186,6 +3216,9 @@
   <data name="BundleExplorer.Log.AssetExtractionSelectionCancelled" xml:space="preserve">
     <value>Cancelled selecting an extraction output path for "{0}".</value>
   </data>
+  <data name="BundleExplorer.Log.BatchAssetExtractionSelectionCancelled" xml:space="preserve">
+    <value>Cancelled selecting a batch extraction directory for {0} selected assets.</value>
+  </data>
   <data name="BundleExplorer.Log.BatchAssetsExtracted" xml:space="preserve">
     <value>Extracted {0} assets in bulk. First output path: {1}</value>
   </data>
@@ -3194,6 +3227,12 @@
   </data>
   <data name="BundleExplorer.Log.SpineGroupExtractionSelectionCancelled" xml:space="preserve">
     <value>Cancelled extraction directory selection for Spine group "{0}".</value>
+  </data>
+  <data name="BundleExplorer.Log.BatchSpineGroupExtractionSelectionCancelled" xml:space="preserve">
+    <value>Cancelled selecting a batch extraction directory for {0} Spine groups.</value>
+  </data>
+  <data name="BundleExplorer.Log.BatchSpineGroupsExtracted" xml:space="preserve">
+    <value>Extracted Spine groups in bulk: {0}/{1} groups completed, {2} assets completed, {3} failed. Output root: {4}</value>
   </data>
   <data name="BundleExplorer.Log.ReplacementSourceSelected" xml:space="preserve">
     <value>Selected a workspace replacement source for "{2}": {0} / {1}</value>
@@ -3255,6 +3294,9 @@
   <data name="BundleExplorer.Notification.SpineGroupExtracted" xml:space="preserve">
     <value>Finished extracting Spine group "{0}": {1} completed, {2} failed.</value>
   </data>
+  <data name="BundleExplorer.Notification.BatchSpineGroupsExtracted" xml:space="preserve">
+    <value>Finished batch extracting Spine groups: {0}/{1} groups, {2} assets completed, {3} failed.</value>
+  </data>
   <data name="BundleExplorer.Notification.ReplacementSourceSelected" xml:space="preserve">
     <value>Workspace replacement source selected: {0}</value>
   </data>
@@ -3282,8 +3324,26 @@
   <data name="FilePicker.Extraction.Type.Audio" xml:space="preserve">
     <value>Audio File</value>
   </data>
+  <data name="FilePicker.Extraction.Type.Obj" xml:space="preserve">
+    <value>OBJ Model File</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.Fbx" xml:space="preserve">
+    <value>FBX Model File</value>
+  </data>
   <data name="FilePicker.Extraction.Type.Json" xml:space="preserve">
     <value>JSON File</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.Yaml" xml:space="preserve">
+    <value>YAML File</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.MonoBehaviourTypeTreeJson" xml:space="preserve">
+    <value>MonoBehaviour TypeTree JSON</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.MonoBehaviourSummaryJson" xml:space="preserve">
+    <value>MonoBehaviour Summary JSON</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.MonoBehaviourFields" xml:space="preserve">
+    <value>MonoBehaviour Raw Fields File</value>
   </data>
   <data name="FilePicker.Extraction.Type.Binary" xml:space="preserve">
     <value>Binary File</value>

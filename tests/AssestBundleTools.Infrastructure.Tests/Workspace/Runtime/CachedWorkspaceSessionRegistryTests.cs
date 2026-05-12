@@ -298,6 +298,59 @@ internal static class CachedWorkspaceSessionRegistryTests
             "Both Shader assets should survive the dynamic type filter.");
     }
 
+    public static void TryGetWorkspaceChangeSummary_ShouldIncludeHiddenExtractedAssets()
+    {
+        var bundleId = "bundle.spine";
+        var hiddenSkeletonId = "asset.hidden-skeleton";
+        var visibleTextureId = "asset.visible-texture";
+        var cacheEntry = new BundleIndexCacheEntryDto(
+            WorkspaceKey: "workspace-a",
+            BundleCacheKey: "bundle-cache-spine",
+            BundleId: bundleId,
+            DisplayName: "spine.ab",
+            LogicalPath: "spine.ab",
+            SourceFingerprint: new WorkspaceFileFingerprintDto("spine.ab", 100, DateTimeOffset.UnixEpoch, "hash"),
+            CachedAtUtc: DateTimeOffset.UnixEpoch,
+            ParserVersion: "test",
+            ToolVersion: "test",
+            Dependencies: Array.Empty<string>(),
+            Assets:
+            [
+                CreateAsset(
+                    hiddenSkeletonId,
+                    "HiddenSkeleton",
+                    AssetType.TextAsset,
+                    "TextAsset",
+                    pathId: 10,
+                    includeInList: false,
+                    canExtract: true),
+                CreateAsset(visibleTextureId, "VisibleTexture", AssetType.Texture2D, "Texture2D", pathId: 20)
+            ],
+            SerializedFileNames: ["CAB-spine"]);
+        var bundleIndexCacheStore = new TestBundleIndexCacheStore([cacheEntry]);
+        var registry = new CachedWorkspaceSessionRegistry(new TestWorkspaceDataStoreFactory(bundleIndexCacheStore));
+        var summary = registry.OpenWorkspace(new WorkspaceSessionOpenRequestDto(
+            WorkspaceKey: "workspace-a",
+            WorkspacePath: "workspace",
+            WorkspaceDataRootPath: "data",
+            WorkspaceDisplayName: "Workspace A",
+            InitialMode: WorkspaceMode.SinglePane));
+
+        var extracted = registry.TryExtractAsset(
+            summary.WorkspaceId,
+            new BundleId(bundleId),
+            new AssetId(hiddenSkeletonId),
+            out _);
+        var hasSummary = registry.TryGetWorkspaceChangeSummary(summary.WorkspaceId, out var changeSummary);
+
+        TestAssert.True(extracted, "Hidden dependency assets can still be valid extraction targets.");
+        TestAssert.True(hasSummary, "Workspace change summary should be available.");
+        var item = TestAssert.Single(changeSummary!.Items);
+        TestAssert.Equal(hiddenSkeletonId, item.AssetId.Value, "Extracted hidden dependencies should remain visible in change records.");
+        TestAssert.True(item.LastExtractedAtUtc.HasValue, "Hidden extracted dependency should keep the extraction timestamp.");
+        TestAssert.Equal(1, changeSummary.ExtractedAssetCount, "Summary extracted count should include hidden extracted dependencies.");
+    }
+
     private static BundleIndexAssetCacheEntryDto CreateAsset(
         string assetId,
         string name,
@@ -305,6 +358,7 @@ internal static class CachedWorkspaceSessionRegistryTests
         string? displayType,
         long pathId,
         bool includeInList = true,
+        bool? canExtract = null,
         string serializedFileName = "CAB-test",
         IReadOnlyList<BundleIndexAssetDependencyCacheEntryDto>? dependencies = null)
     {
@@ -317,7 +371,7 @@ internal static class CachedWorkspaceSessionRegistryTests
             SizeInBytes: 1,
             PreferredDisplaySizeInBytes: null,
             HasPreview: includeInList,
-            CanExtract: includeInList,
+            CanExtract: canExtract ?? includeInList,
             CanReplace: includeInList,
             SerializedFileName: serializedFileName,
             PathId: pathId,

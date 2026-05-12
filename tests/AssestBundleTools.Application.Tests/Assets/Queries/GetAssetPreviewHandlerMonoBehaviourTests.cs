@@ -72,6 +72,11 @@ internal static partial class GetAssetPreviewHandlerTests
             "Field group array summary should round-trip.");
         TestAssert.Equal(1, restoredMonoBehaviour.Containers?.Count ?? 0, "Container summaries should round-trip.");
         TestAssert.Equal(2, restoredMonoBehaviour.Containers?[0].ChildCount, "Container child count should round-trip.");
+        TestAssert.True(
+            restoredMonoBehaviour.TypeTreeJsonText?.Contains("\"m_GameObject\"", StringComparison.Ordinal) == true,
+            "TypeTree JSON should round-trip.");
+        TestAssert.Equal(6, restoredMonoBehaviour.TypeTreeNodeCount, "TypeTree node count should round-trip.");
+        TestAssert.False(restoredMonoBehaviour.IsTypeTreeJsonTruncated, "TypeTree truncation flag should round-trip.");
         var materialReference = restoredMonoBehaviour.References.Single(static reference => reference.Path == "m_Material");
         TestAssert.Equal(200L, materialReference.PathId, "Reference path id should round-trip.");
         TestAssert.Equal("Material", materialReference.TypeName, "Reference type should round-trip.");

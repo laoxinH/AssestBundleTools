@@ -108,6 +108,7 @@ public sealed class BundleExplorerViewModelResolvedAssetNavigationTests
             appLogService,
             notificationService,
             localizationService,
+            new WorkspaceOperationChangeNotifier(),
             new StubFilePickerService(),
             workspaceContextService,
             new StubWorkspaceImportCoordinatorService(),
@@ -147,10 +148,14 @@ public sealed class BundleExplorerViewModelResolvedAssetNavigationTests
 
         public Task<string?> PickAssetExtractionOutputFileAsync(
             AssetType assetType,
+            string? assetTypeDisplayName,
             string assetName,
             string? assetPath,
             string? containerPath,
             CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
+
+        public Task<string?> PickAssetBatchExtractionOutputDirectoryAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult<string?>(null);
 
         public Task<string?> PickReplacementSourceFileAsync(

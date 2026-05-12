@@ -268,7 +268,8 @@ internal static partial class SpineAssetGroupDetector
             Name: candidate.Item.Name,
             AssetPath: candidate.Item.AssetPath,
             AssetType: candidate.Item.AssetType,
-            AssetTypeDisplayName: candidate.Item.AssetTypeDisplayName);
+            AssetTypeDisplayName: candidate.Item.AssetTypeDisplayName,
+            LastExtractedAtUtc: candidate.Item.LastExtractedAtUtc);
     }
 
     private static IEnumerable<string> EnumerateCandidatePaths(AssetListItemDto item)

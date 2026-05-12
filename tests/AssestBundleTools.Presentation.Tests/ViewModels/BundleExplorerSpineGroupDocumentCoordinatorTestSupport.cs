@@ -50,16 +50,22 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
             static () => { });
     }
 
-    private static SpineAssetGroupEntryViewModel CreateSpineGroupEntry(string groupId, string displayName)
+    private static SpineAssetGroupEntryViewModel CreateSpineGroupEntry(
+        string groupId,
+        string displayName,
+        DateTimeOffset? lastExtractedAtUtc = null)
     {
         return new SpineAssetGroupEntryViewModel(
-            CreateSpineGroup(groupId, displayName),
+            CreateSpineGroup(groupId, displayName, lastExtractedAtUtc),
             "Skeleton 1 / Atlas 1",
             "1 page",
             "Ready");
     }
 
-    private static SpineAssetGroupDto CreateSpineGroup(string groupId, string displayName)
+    private static SpineAssetGroupDto CreateSpineGroup(
+        string groupId,
+        string displayName,
+        DateTimeOffset? lastExtractedAtUtc = null)
     {
         var bundleId = new BundleId("bundle-ui");
         return new SpineAssetGroupDto(
@@ -77,7 +83,8 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
                     $"{groupId}.json",
                     $"Assets/{groupId}.json",
                     AssetType.TextAsset,
-                    "TextAsset")
+                    "TextAsset",
+                    lastExtractedAtUtc)
             ],
             AtlasAssets:
             [
@@ -89,7 +96,8 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
                     $"{groupId}.atlas",
                     $"Assets/{groupId}.atlas",
                     AssetType.TextAsset,
-                    "TextAsset")
+                    "TextAsset",
+                    lastExtractedAtUtc)
             ],
             TexturePageAssets:
             [
@@ -101,7 +109,8 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
                     $"{groupId}.png",
                     $"Assets/{groupId}.png",
                     AssetType.Texture2D,
-                    "Texture2D")
+                    "Texture2D",
+                    lastExtractedAtUtc)
             ],
             Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>());
     }

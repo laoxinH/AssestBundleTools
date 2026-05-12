@@ -91,6 +91,10 @@ internal static class InfrastructureTestSuite
             CachedWorkspaceSessionRegistryTests.TryGetAssetList_ShouldExposeDynamicTypeFacets_AndFilterUnknownByDisplayName);
         await RunTestAsync(
             failures,
+            nameof(CachedWorkspaceSessionRegistryTests.TryGetWorkspaceChangeSummary_ShouldIncludeHiddenExtractedAssets),
+            CachedWorkspaceSessionRegistryTests.TryGetWorkspaceChangeSummary_ShouldIncludeHiddenExtractedAssets);
+        await RunTestAsync(
+            failures,
             nameof(CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedExtractionOperations_FromChangeSet),
             CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedExtractionOperations_FromChangeSet);
         await RunTestAsync(

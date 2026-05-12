@@ -16,4 +16,5 @@ public sealed record AssetListItemDto(
     long? PreferredDisplaySizeInBytes,
     bool HasPreview,
     bool IsModified,
-    string? AssetTypeDisplayName = null);
+    string? AssetTypeDisplayName = null,
+    DateTimeOffset? LastExtractedAtUtc = null);

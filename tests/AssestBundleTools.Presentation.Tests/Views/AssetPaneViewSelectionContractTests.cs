@@ -22,6 +22,226 @@ public sealed class AssetPaneViewSelectionContractTests
     }
 
     [Fact]
+    public void AssetPaneSelectionChanged_ShouldSuppressDocumentActivation_DuringMultiSelectionMode()
+    {
+        var code = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "AssetPaneView.xaml.cs"));
+
+        var assetSelectionHandler = code[
+            code.IndexOf("private void OnAssetListSelectionChanged", StringComparison.Ordinal)..
+            code.IndexOf("private void OnSpineGroupListSelectionChanged", StringComparison.Ordinal)];
+        var spineGroupSelectionHandler = code[
+            code.IndexOf("private void OnSpineGroupListSelectionChanged", StringComparison.Ordinal)..
+            code.IndexOf("private void OnSearchTextChanged", StringComparison.Ordinal)];
+
+        Assert.True(
+            assetSelectionHandler.IndexOf("ViewModel?.IsMultiSelectionMode == true", StringComparison.Ordinal) <
+            assetSelectionHandler.IndexOf("AssetSelectionChanged?.Invoke", StringComparison.Ordinal));
+        Assert.True(
+            spineGroupSelectionHandler.IndexOf("ViewModel?.IsMultiSelectionMode == true", StringComparison.Ordinal) <
+            spineGroupSelectionHandler.IndexOf("AssetSelectionChanged?.Invoke", StringComparison.Ordinal));
+        Assert.Contains("return;", assetSelectionHandler);
+        Assert.Contains("return;", spineGroupSelectionHandler);
+    }
+
+    [Fact]
+    public void AssetPaneMultiSelectionMode_ShouldSwitchListViewToMultipleSelection()
+    {
+        var code = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "AssetPaneView.MultiSelection.cs"));
+
+        Assert.Contains("AssetListView.SelectionMode", code);
+        Assert.Contains("SpineGroupListView.SelectionMode", code);
+        Assert.Contains("ListViewSelectionMode.Multiple", code);
+        Assert.Contains("ListViewSelectionMode.Extended", code);
+    }
+
+    [Fact]
+    public void AssetPaneMultiSelectionMode_ShouldInterceptRowPointerPressForToggle()
+    {
+        var root = FindRepositoryRoot();
+        var xaml = File.ReadAllText(
+            Path.Combine(
+                root,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "AssetPaneView.xaml"));
+        var rowInteractionCode = File.ReadAllText(
+            Path.Combine(
+                root,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "AssetPaneView.RowInteraction.cs"));
+        var multiSelectionCode = File.ReadAllText(
+            Path.Combine(
+                root,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "AssetPaneView.MultiSelection.cs"));
+        var selectionCoordinatorCode = File.ReadAllText(
+            Path.Combine(
+                root,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Coordinators",
+                "AssetPaneSelectionViewCoordinator.cs"));
+
+        Assert.Contains("PointerPressed=\"OnAssetRowPointerPressed\"", xaml);
+        Assert.Contains("TryHandleMultiSelectionRowPointerPressed(sender, e);", rowInteractionCode);
+        Assert.Contains("e.Handled = true;", multiSelectionCode);
+        Assert.Contains("pointer.Properties.IsRightButtonPressed", multiSelectionCode);
+        Assert.Contains("pointer.Properties.IsLeftButtonPressed", multiSelectionCode);
+        Assert.Contains("ToggleAssetSelectionInMultiSelectionMode", multiSelectionCode);
+        Assert.Contains("ToggleSpineGroupSelectionInMultiSelectionMode", multiSelectionCode);
+        Assert.Contains("public bool ToggleAssetSelectionInMultiSelectionMode", selectionCoordinatorCode);
+        Assert.Contains("public bool ToggleSpineGroupSelectionInMultiSelectionMode", selectionCoordinatorCode);
+
+        var assetToggleHandler = selectionCoordinatorCode[
+            selectionCoordinatorCode.IndexOf(
+                "public bool ToggleAssetSelectionInMultiSelectionMode",
+                StringComparison.Ordinal)..
+            selectionCoordinatorCode.IndexOf(
+                "public bool ToggleAssetSelectionRangeInMultiSelectionMode",
+                StringComparison.Ordinal)];
+        var spineGroupToggleHandler = selectionCoordinatorCode[
+            selectionCoordinatorCode.IndexOf(
+                "public bool ToggleSpineGroupSelectionInMultiSelectionMode",
+                StringComparison.Ordinal)..
+            selectionCoordinatorCode.IndexOf(
+                "public bool ToggleSpineGroupSelectionRangeInMultiSelectionMode",
+                StringComparison.Ordinal)];
+
+        Assert.DoesNotContain("AssetPaneListViewSelectionWriter.ApplySelection", assetToggleHandler);
+        Assert.DoesNotContain("ScrollIntoView", assetToggleHandler);
+        Assert.DoesNotContain("UpdateLayout", assetToggleHandler);
+        Assert.DoesNotContain("AssetPaneListViewSelectionWriter.ApplySelection", spineGroupToggleHandler);
+        Assert.DoesNotContain("ScrollIntoView", spineGroupToggleHandler);
+        Assert.DoesNotContain("UpdateLayout", spineGroupToggleHandler);
+    }
+
+    [Fact]
+    public void AssetPaneMultiSelectionMode_ShouldSupportPointerDragSelection()
+    {
+        var root = FindRepositoryRoot();
+        var rowInteractionCode = File.ReadAllText(
+            Path.Combine(
+                root,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "AssetPaneView.RowInteraction.cs"));
+        var multiSelectionCode = File.ReadAllText(
+            Path.Combine(
+                root,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "AssetPaneView.MultiSelection.cs"));
+        var viewCode = File.ReadAllText(
+            Path.Combine(
+                root,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "AssetPaneView.xaml.cs"));
+        var selectionCoordinatorCode = File.ReadAllText(
+            Path.Combine(
+                root,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Coordinators",
+                "AssetPaneSelectionViewCoordinator.cs"));
+        var selectionRangeResolverCode = File.ReadAllText(
+            Path.Combine(
+                root,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Coordinators",
+                "AssetPaneSelectionRangeResolver.cs"));
+
+        Assert.Contains("TryHandleMultiSelectionRowPointerEntered(sender, e);", rowInteractionCode);
+        Assert.Contains("EndMultiSelectionDragGesture();", rowInteractionCode);
+        Assert.Contains("_isMultiSelectionDragGestureActive", multiSelectionCode);
+        Assert.DoesNotContain("_multiSelectionDragShouldSelect", multiSelectionCode);
+        Assert.Contains("_lastMultiSelectionDragRowContext", multiSelectionCode);
+        Assert.Contains("AddHandler", viewCode);
+        Assert.Contains("PointerWheelChangedEvent", viewCode);
+        Assert.Contains("handledEventsToo: true", viewCode);
+        Assert.Contains("OnAssetPaneListPointerWheelChanged", multiSelectionCode);
+        Assert.Contains("DispatcherQueuePriority.Low", multiSelectionCode);
+        Assert.Contains("FindRowContextAtPointerPosition", multiSelectionCode);
+        Assert.Contains("TryContinueAssetMultiSelectionDrag", multiSelectionCode);
+        Assert.Contains("TryContinueSpineGroupMultiSelectionDrag", multiSelectionCode);
+        Assert.Contains("ToggleAssetSelectionRangeInMultiSelectionMode", multiSelectionCode);
+        Assert.Contains("ToggleSpineGroupSelectionRangeInMultiSelectionMode", multiSelectionCode);
+        Assert.Contains("public bool ToggleAssetSelectionRangeInMultiSelectionMode", selectionCoordinatorCode);
+        Assert.Contains("public bool ToggleSpineGroupSelectionRangeInMultiSelectionMode", selectionCoordinatorCode);
+        Assert.Contains("AssetPaneSelectionRangeResolver.Resolve", selectionCoordinatorCode);
+        Assert.Contains("AssetPaneSelectionRangeResolver.ResolveToggleRange", selectionCoordinatorCode);
+        Assert.Contains("ResolveRange", selectionRangeResolverCode);
+        Assert.Contains("IndexOf", selectionRangeResolverCode);
+        Assert.DoesNotContain("SetAssetSelectionInMultiSelectionMode", selectionCoordinatorCode);
+        Assert.DoesNotContain("SetSpineGroupSelectionInMultiSelectionMode", selectionCoordinatorCode);
+
+        var assetDragSelectionHandler = selectionCoordinatorCode[
+            selectionCoordinatorCode.IndexOf(
+                "private bool ApplyAssetSelectionToggleRangeInMultiSelectionMode",
+                StringComparison.Ordinal)..
+            selectionCoordinatorCode.IndexOf(
+                "public bool SelectSpineGroupForContextAction",
+                StringComparison.Ordinal)];
+        var spineGroupDragSelectionHandler = selectionCoordinatorCode[
+            selectionCoordinatorCode.IndexOf(
+                "private bool ApplySpineGroupSelectionToggleRangeInMultiSelectionMode",
+                StringComparison.Ordinal)..
+            selectionCoordinatorCode.IndexOf(
+                "public void SynchronizeAssetSelectionFromViewModel",
+                StringComparison.Ordinal)];
+
+        Assert.DoesNotContain("ScrollIntoView", assetDragSelectionHandler);
+        Assert.DoesNotContain("UpdateLayout", assetDragSelectionHandler);
+        Assert.DoesNotContain("AssetPaneListViewSelectionWriter.ApplySelection", assetDragSelectionHandler);
+        Assert.DoesNotContain("ScrollIntoView", spineGroupDragSelectionHandler);
+        Assert.DoesNotContain("UpdateLayout", spineGroupDragSelectionHandler);
+        Assert.DoesNotContain("AssetPaneListViewSelectionWriter.ApplySelection", spineGroupDragSelectionHandler);
+    }
+
+    [Fact]
     public void AssetPaneViewModeToggles_ShouldUseDedicatedViewModeChangedEvent()
     {
         var xaml = File.ReadAllText(
@@ -79,6 +299,30 @@ public sealed class AssetPaneViewSelectionContractTests
         Assert.Contains("Click=\"OnEnterAssetPaneItemMultiSelectionMenuItemClick\"", xaml);
         Assert.Contains("x:Name=\"SpineGroupListView\"", xaml);
         Assert.Contains("SelectionMode=\"Extended\"", xaml);
+    }
+
+    [Fact]
+    public void AssetPaneMultiSelectionBar_ShouldExposeIconCommands()
+    {
+        var xaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "AssetPaneView.xaml"));
+
+        Assert.Contains("x:Name=\"ExitMultiSelectionButton\"", xaml);
+        Assert.Contains("Click=\"OnExitMultiSelectionButtonClick\"", xaml);
+        Assert.Contains("x:Name=\"SelectAllMultiSelectionButton\"", xaml);
+        Assert.Contains("Click=\"OnSelectAllMultiSelectionButtonClick\"", xaml);
+        Assert.Contains("x:Name=\"InvertMultiSelectionButton\"", xaml);
+        Assert.Contains("Click=\"OnInvertMultiSelectionButtonClick\"", xaml);
+        Assert.Contains("x:Name=\"BatchExtractSelectedButton\"", xaml);
+        Assert.Contains("Style=\"{StaticResource AssetPaneToolbarIconButtonStyle}\"", xaml);
+        Assert.Contains("Text=\"{x:Bind ViewModel.SelectedItemCount, Mode=OneWay}\"", xaml);
     }
 
     [Fact]

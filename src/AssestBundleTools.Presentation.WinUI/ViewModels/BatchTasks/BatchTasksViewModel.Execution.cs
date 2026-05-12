@@ -18,7 +18,6 @@ public sealed partial class BatchTasksViewModel
             return;
         }
 
-        WorkspaceBatchExtractionResultDto? extractionResult = null;
         IsBusy = true;
         try
         {
@@ -29,7 +28,7 @@ public sealed partial class BatchTasksViewModel
                     WorkspaceKey: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceKey,
                     WorkspaceDataRootPath: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceDataRootPath));
 
-            if (!TryGetValue(result, out extractionResult))
+            if (!TryGetValue(result, out WorkspaceBatchExtractionResultDto? extractionResult))
             {
                 return;
             }
@@ -51,11 +50,6 @@ public sealed partial class BatchTasksViewModel
         finally
         {
             IsBusy = false;
-        }
-
-        if (extractionResult is not null)
-        {
-            await RefreshAsync();
         }
     }
 

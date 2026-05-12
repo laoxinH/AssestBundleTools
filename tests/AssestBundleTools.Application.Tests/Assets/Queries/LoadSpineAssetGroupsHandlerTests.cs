@@ -79,6 +79,40 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
             "Incomplete groups should carry a missing-texture-page diagnostic.");
     }
 
+    public static async Task HandleAsync_ShouldExposePartExtractionState()
+    {
+        var extractedAtUtc = new DateTimeOffset(2026, 5, 12, 8, 30, 0, TimeSpan.Zero);
+        var workspaceId = new WorkspaceId("workspace-a");
+        var spineBundleId = new BundleId("bundle.spine");
+        var spineAssets = CreateAssetList(
+            workspaceId,
+            spineBundleId,
+            "spine.ab",
+            CreateItem(
+                spineBundleId,
+                "skeleton-hero",
+                "Assets/Hero/Hero.skel",
+                AssetType.TextAsset,
+                lastExtractedAtUtc: extractedAtUtc),
+            CreateItem(spineBundleId, "atlas-hero", "Assets/Hero/Hero.atlas", AssetType.TextAsset),
+            CreateItem(spineBundleId, "texture-hero", "Assets/Hero/Hero.png", AssetType.Texture2D));
+        var handler = new LoadSpineAssetGroupsHandler(new TestWorkspaceSessionRegistry(
+            workspaceId,
+            [spineAssets]));
+
+        var result = await handler.HandleAsync(new LoadSpineAssetGroupsQuery(
+            workspaceId,
+            spineBundleId));
+
+        TestAssert.True(result.IsSuccess, "Spine group query should carry asset list change metadata.");
+        var group = TestAssert.Single(result.Value!.Items);
+        var skeleton = TestAssert.Single(group.SkeletonAssets);
+        TestAssert.Equal(
+            extractedAtUtc,
+            skeleton.LastExtractedAtUtc,
+            "Spine part metadata should retain the resource-level extraction timestamp.");
+    }
+
     public static async Task HandleAsync_ShouldSplitDuplicateSpineResourcesUsingDependencyLinks()
     {
         var workspaceId = new WorkspaceId("workspace-a");
@@ -197,7 +231,8 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
         string assetId,
         string assetPath,
         AssetType assetType,
-        string? assetTypeDisplayName = null)
+        string? assetTypeDisplayName = null,
+        DateTimeOffset? lastExtractedAtUtc = null)
     {
         var assetName = assetPath.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
         return new AssetListItemDto(
@@ -210,7 +245,8 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
             PreferredDisplaySizeInBytes: null,
             HasPreview: true,
             IsModified: false,
-            AssetTypeDisplayName: assetTypeDisplayName ?? assetType.ToString());
+            AssetTypeDisplayName: assetTypeDisplayName ?? assetType.ToString(),
+            LastExtractedAtUtc: lastExtractedAtUtc);
     }
 
     private static AssetDetailsDto CreateDetails(

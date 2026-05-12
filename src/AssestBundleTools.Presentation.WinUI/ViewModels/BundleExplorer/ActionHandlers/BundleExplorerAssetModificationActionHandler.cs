@@ -49,39 +49,48 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         WorkspaceSummaryDto workspaceSummary,
         AssetDetailsDto details,
         Action<bool> setBusyState,
-        Func<Task> refreshPrimaryPaneAsync,
         Action<IReadOnlyList<AppError>> appendResultFailure) =>
         _extractionActionHandler.ExtractSelectedAssetAsync(
             workspaceSummary,
             details,
             setBusyState,
-            refreshPrimaryPaneAsync,
             appendResultFailure);
 
     public Task ExtractSelectedAssetsAsync(
         WorkspaceSummaryDto workspaceSummary,
         IReadOnlyList<AssetListEntryViewModel> selectedEntries,
+        string defaultBundleDisplayName,
         Action<bool> setBusyState,
-        Func<Task> refreshPrimaryPaneAsync,
         Action<IReadOnlyList<AppError>> appendResultFailure) =>
         _extractionActionHandler.ExtractSelectedAssetsAsync(
             workspaceSummary,
             selectedEntries,
+            defaultBundleDisplayName,
             setBusyState,
-            refreshPrimaryPaneAsync,
             appendResultFailure);
 
     public Task ExtractSpineAssetGroupAsync(
         WorkspaceSummaryDto workspaceSummary,
         SpineAssetGroupDocumentTabViewModel spineGroupTab,
         Action<bool> setBusyState,
-        Func<Task> refreshPrimaryPaneAsync,
         Action<IReadOnlyList<AppError>> appendResultFailure) =>
         _extractionActionHandler.ExtractSpineAssetGroupAsync(
             workspaceSummary,
             spineGroupTab,
             setBusyState,
-            refreshPrimaryPaneAsync,
+            appendResultFailure);
+
+    public Task ExtractSelectedSpineAssetGroupsAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        IReadOnlyList<SpineAssetGroupEntryViewModel> selectedEntries,
+        string defaultBundleDisplayName,
+        Action<bool> setBusyState,
+        Action<IReadOnlyList<AppError>> appendResultFailure) =>
+        _extractionActionHandler.ExtractSelectedSpineAssetGroupsAsync(
+            workspaceSummary,
+            selectedEntries,
+            defaultBundleDisplayName,
+            setBusyState,
             appendResultFailure);
 
     public async Task SelectWorkspaceReplacementSourceAsync(
@@ -218,14 +227,12 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
         Action<bool> setBusyState,
-        Func<Task> refreshPrimaryPaneAsync,
         Action<IReadOnlyList<AppError>> appendResultFailure)
     {
         ArgumentNullException.ThrowIfNull(workspaceSummary);
         ArgumentNullException.ThrowIfNull(assetTab);
         ArgumentNullException.ThrowIfNull(details);
         ArgumentNullException.ThrowIfNull(setBusyState);
-        ArgumentNullException.ThrowIfNull(refreshPrimaryPaneAsync);
         ArgumentNullException.ThrowIfNull(appendResultFailure);
 
         setBusyState(true);
@@ -262,7 +269,6 @@ internal sealed class BundleExplorerAssetModificationActionHandler
                     AppNotificationSeverity.Success);
 
                 assetTab.ClearPendingReplacementCandidates();
-                await refreshPrimaryPaneAsync();
                 return;
             }
 
@@ -300,7 +306,6 @@ internal sealed class BundleExplorerAssetModificationActionHandler
                 AppNotificationSeverity.Success);
 
             assetTab.ClearPendingReplacementCandidates();
-            await refreshPrimaryPaneAsync();
         }
         finally
         {
@@ -313,14 +318,12 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
         Action<bool> setBusyState,
-        Func<Task> refreshPrimaryPaneAsync,
         Action<IReadOnlyList<AppError>> appendResultFailure)
     {
         ArgumentNullException.ThrowIfNull(workspaceSummary);
         ArgumentNullException.ThrowIfNull(assetTab);
         ArgumentNullException.ThrowIfNull(details);
         ArgumentNullException.ThrowIfNull(setBusyState);
-        ArgumentNullException.ThrowIfNull(refreshPrimaryPaneAsync);
         ArgumentNullException.ThrowIfNull(appendResultFailure);
 
         setBusyState(true);
@@ -351,7 +354,6 @@ internal sealed class BundleExplorerAssetModificationActionHandler
                 AppNotificationSeverity.Informational);
 
             assetTab.ClearPendingReplacementCandidates();
-            await refreshPrimaryPaneAsync();
         }
         finally
         {

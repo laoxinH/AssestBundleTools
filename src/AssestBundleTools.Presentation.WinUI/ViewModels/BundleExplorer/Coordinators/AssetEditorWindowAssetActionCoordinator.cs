@@ -27,7 +27,6 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
     private readonly Func<InspectorPanelViewModel> _inspectorProvider;
     private readonly Func<bool> _isBusyProvider;
     private readonly Action<bool> _setBusy;
-    private readonly Func<Task> _reloadActiveAssetDocumentAsync;
     private readonly Action<AssetDocumentTabViewModel, AssetDetailsDto> _reapplyAssetDocumentState;
 
     public AssetEditorWindowAssetActionCoordinator(
@@ -42,7 +41,6 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
         Func<InspectorPanelViewModel> inspectorProvider,
         Func<bool> isBusyProvider,
         Action<bool> setBusy,
-        Func<Task> reloadActiveAssetDocumentAsync,
         Action<AssetDocumentTabViewModel, AssetDetailsDto> reapplyAssetDocumentState)
     {
         _workspaceShell = workspaceShell ?? throw new ArgumentNullException(nameof(workspaceShell));
@@ -56,7 +54,6 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
         _inspectorProvider = inspectorProvider ?? throw new ArgumentNullException(nameof(inspectorProvider));
         _isBusyProvider = isBusyProvider ?? throw new ArgumentNullException(nameof(isBusyProvider));
         _setBusy = setBusy ?? throw new ArgumentNullException(nameof(setBusy));
-        _reloadActiveAssetDocumentAsync = reloadActiveAssetDocumentAsync ?? throw new ArgumentNullException(nameof(reloadActiveAssetDocumentAsync));
         _reapplyAssetDocumentState = reapplyAssetDocumentState ?? throw new ArgumentNullException(nameof(reapplyAssetDocumentState));
     }
 
@@ -98,7 +95,6 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
                 workspaceSummary,
                 details,
                 _setBusy,
-                _reloadActiveAssetDocumentAsync,
                 _operationFeedbackBridge.AppendResultFailure);
             return;
         }
@@ -114,7 +110,6 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
             workspaceSummary,
             spineGroupTab,
             _setBusy,
-            static () => Task.CompletedTask,
             _operationFeedbackBridge.AppendResultFailure);
     }
 
@@ -175,7 +170,6 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
             assetTab,
             details,
             _setBusy,
-            _reloadActiveAssetDocumentAsync,
             _operationFeedbackBridge.AppendResultFailure);
     }
 
@@ -195,7 +189,6 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
             assetTab,
             details,
             _setBusy,
-            _reloadActiveAssetDocumentAsync,
             _operationFeedbackBridge.AppendResultFailure);
     }
 

@@ -18,7 +18,7 @@ using AssestBundleTools.Domain.Workspace;
 
 namespace AssestBundleTools.Application.Tests.Extraction;
 
-internal static class ExtractionWorkflowHandlerTests
+internal static partial class ExtractionWorkflowHandlerTests
 {
     public static async Task ExtractAssetHandler_ShouldWriteFullTextPayload_AndRecordOperation()
     {
@@ -311,7 +311,10 @@ internal static class ExtractionWorkflowHandlerTests
         var changeStore = new TestWorkspaceChangeStore();
         var singleHandler = CreateHandler(registry, previewHandler, fileStore, changeStore);
         var detailsHandler = new LoadSpineAssetGroupDetailsHandler(registry, previewHandler);
-        var handler = new ExtractSpineAssetGroupHandler(registry, detailsHandler, singleHandler);
+        var recorder = new WorkspaceExtractionOperationRecorder(
+            new TestWorkspaceDataStoreFactory(changeStore),
+            new WorkspaceOperationLogService());
+        var handler = new ExtractSpineAssetGroupHandler(registry, detailsHandler, singleHandler, recorder);
 
         var result = await handler.HandleAsync(new ExtractSpineAssetGroupCommand(
             workspaceId,
@@ -347,10 +350,15 @@ internal static class ExtractionWorkflowHandlerTests
             "The independent alpha texture page should be exported as PNG.");
 
         var operations = changeStore.SavedChangeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>();
-        TestAssert.Equal(4, operations.Count, "Each Spine group part should still be recorded as a real asset extraction.");
+        TestAssert.Equal(5, operations.Count, "Each Spine group part should be recorded plus one group summary operation.");
         TestAssert.True(
-            operations.All(static operation => operation.OperationKind == WorkspaceOperationKind.ExtractAsset),
+            operations.Take(4).All(static operation => operation.OperationKind == WorkspaceOperationKind.ExtractAsset),
             "Spine group extraction should reuse existing asset extraction operation records.");
+        TestAssert.Equal(WorkspaceOperationKind.ExtractBatch, operations[^1].OperationKind, "Spine group summary should be appended after part operations.");
+        TestAssert.Equal("SpineAssetGroup", operations[^1].Target?.AssetType, "Spine group summary should keep a stable group target type.");
+        TestAssert.Equal(4, operations[^1].Result?.CompletedCount ?? 0, "Spine group summary should record completed part count.");
+        TestAssert.Equal(0, operations[^1].Result?.FailedCount ?? -1, "Spine group summary should record failed part count.");
+        TestAssert.Equal(4, operations[^1].Result?.AffectedAssetIds?.Count ?? 0, "Spine group summary should list affected part asset ids.");
     }
 
     private const string WorkspaceKey = "workspace-a";
@@ -375,7 +383,8 @@ internal static class ExtractionWorkflowHandlerTests
         AssetId assetId,
         AssetType assetType,
         string assetName,
-        string assetPath) =>
+        string assetPath,
+        string? assetTypeDisplayName = null) =>
         new(
             WorkspaceId: workspaceId,
             BundleId: bundleId,
@@ -399,7 +408,7 @@ internal static class ExtractionWorkflowHandlerTests
             FileReplacementSourceAssetType: null,
             LastExtractedAtUtc: null,
             Dependencies: Array.Empty<AssetDependencyDto>(),
-            AssetTypeDisplayName: assetType.ToString(),
+            AssetTypeDisplayName: assetTypeDisplayName ?? assetType.ToString(),
             SerializedFileName: "bundle.assets");
 
     private static AssetPreviewDto CreateTextPreview(

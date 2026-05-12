@@ -71,24 +71,19 @@ public sealed class WinUIFilePickerService : IFilePickerService
         return selectedFolder?.Path;
     }
 
-    public async Task<string?> PickSpineFrameSequenceExportDirectoryAsync(CancellationToken cancellationToken = default)
+    public Task<string?> PickSpineFrameSequenceExportDirectoryAsync(CancellationToken cancellationToken = default)
     {
-        var picker = CreateFolderPicker();
-        var selectedFolder = await picker.PickSingleFolderAsync();
-        cancellationToken.ThrowIfCancellationRequested();
-        return selectedFolder?.Path;
+        return Task.FromResult(PickExportDirectory(cancellationToken));
     }
 
-    public async Task<string?> PickSpineAssetGroupExtractionDirectoryAsync(CancellationToken cancellationToken = default)
+    public Task<string?> PickSpineAssetGroupExtractionDirectoryAsync(CancellationToken cancellationToken = default)
     {
-        var picker = CreateFolderPicker();
-        var selectedFolder = await picker.PickSingleFolderAsync();
-        cancellationToken.ThrowIfCancellationRequested();
-        return selectedFolder?.Path;
+        return Task.FromResult(PickExportDirectory(cancellationToken));
     }
 
     public async Task<string?> PickAssetExtractionOutputFileAsync(
         AssetType assetType,
+        string? assetTypeDisplayName,
         string assetName,
         string? assetPath,
         string? containerPath,
@@ -98,23 +93,32 @@ public sealed class WinUIFilePickerService : IFilePickerService
 
         var ownerWindow = RequireOwnerWindow();
         var defaultFileName = ResolveSuggestedExtractionFileName(assetName, assetPath, containerPath);
-        var extensions = ResolveExtractionFileExtensions(assetType, defaultFileName);
+        var typeChoices = ResolveExtractionFileTypeChoices(assetType, assetTypeDisplayName, defaultFileName);
         var picker = new FileSavePicker
         {
             SuggestedStartLocation = PickerLocationId.Downloads,
-            SuggestedFileName = Path.GetFileNameWithoutExtension(defaultFileName),
-            DefaultFileExtension = extensions[0]
+            SuggestedFileName = ResolvePickerSuggestedFileName(assetTypeDisplayName, defaultFileName),
+            DefaultFileExtension = typeChoices[0].Extensions[0]
         };
 
-        picker.FileTypeChoices.Add(
-            _localizationService.GetRequiredString(ResolveExtractionFileTypeResourceKey(assetType)),
-            extensions.ToList());
+        foreach (var typeChoice in typeChoices)
+        {
+            picker.FileTypeChoices.Add(
+                _localizationService.GetRequiredString(typeChoice.ResourceKey),
+                typeChoice.Extensions.ToList());
+        }
+
         InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(ownerWindow));
 
         var selectedFile = await picker.PickSaveFileAsync();
         cancellationToken.ThrowIfCancellationRequested();
 
         return selectedFile?.Path;
+    }
+
+    public Task<string?> PickAssetBatchExtractionOutputDirectoryAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(PickExportDirectory(cancellationToken));
     }
 
     public async Task<string?> PickReplacementSourceFileAsync(
@@ -157,6 +161,15 @@ public sealed class WinUIFilePickerService : IFilePickerService
         return picker;
     }
 
+    private string? PickExportDirectory(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var ownerWindow = RequireOwnerWindow();
+        var selectedDirectory = NativeFolderPicker.PickSingleFolder(WindowNative.GetWindowHandle(ownerWindow));
+        cancellationToken.ThrowIfCancellationRequested();
+        return selectedDirectory;
+    }
+
     private static string ResolveSuggestedExtractionFileName(
         string assetName,
         string? assetPath,
@@ -185,31 +198,78 @@ public sealed class WinUIFilePickerService : IFilePickerService
             : fileName.Trim();
     }
 
-    private static IReadOnlyList<string> ResolveExtractionFileExtensions(
+    internal static IReadOnlyList<ExtractionFileTypeChoice> ResolveExtractionFileTypeChoices(
         AssetType assetType,
+        string? assetTypeDisplayName,
         string defaultFileName)
     {
-        var extensions = assetType switch
+        var normalizedTypeName = NormalizeAssetTypeDisplayName(assetTypeDisplayName);
+        var typeChoices = assetType switch
         {
-            AssetType.Texture2D or AssetType.Sprite => new[] { ".png" },
-            AssetType.TextAsset => ResolveTextAssetFileExtensions(defaultFileName),
-            AssetType.AudioClip => [".wav", ".ogg", ".mp3", ".flac", ".m4a", ".aac", ".bin"],
-            AssetType.Mesh or AssetType.Material => [".json"],
-            _ => [".bin"]
+            AssetType.Texture2D or AssetType.Sprite => [CreateTypeChoice(ResourceKeys.FilePickerExtractionTypeImage, ".png")],
+            AssetType.TextAsset => [CreateTypeChoice(ResourceKeys.FilePickerExtractionTypeText, ResolveTextAssetFileExtensions(defaultFileName))],
+            AssetType.AudioClip => [CreateTypeChoice(ResourceKeys.FilePickerExtractionTypeAudio, ".wav", ".ogg", ".mp3", ".flac", ".m4a", ".aac", ".bin")],
+            AssetType.Mesh => CreateMeshTypeChoices(),
+            AssetType.Material => [CreateTypeChoice(ResourceKeys.FilePickerExtractionTypeJson, ".json")],
+            _ when IsUnityTypeName(normalizedTypeName, "mesh") => CreateMeshTypeChoices(),
+            _ when IsTextLikeAssetType(normalizedTypeName) => [CreateTypeChoice(ResourceKeys.FilePickerExtractionTypeText, ResolveTextLikeAssetFileExtensions(normalizedTypeName, defaultFileName))],
+            _ when IsMonoBehaviourAssetType(normalizedTypeName) => CreateMonoBehaviourTypeChoices(),
+            _ when IsStructuredJsonAssetType(normalizedTypeName) => [CreateTypeChoice(ResourceKeys.FilePickerExtractionTypeJson, ".json")],
+            _ => [CreateTypeChoice(ResourceKeys.FilePickerExtractionTypeBinary, ".bin")]
         };
 
-        return extensions
-            .Where(static extension => !string.IsNullOrWhiteSpace(extension))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
+        return typeChoices
+            .Where(static choice => choice.Extensions.Count > 0)
             .ToArray();
     }
 
     private static string[] ResolveTextAssetFileExtensions(string defaultFileName)
     {
+        return ResolveTextFileExtensions(defaultFileName, ".txt");
+    }
+
+    private static string[] ResolveTextLikeAssetFileExtensions(string normalizedTypeName, string defaultFileName)
+    {
+        if (IsUnityTypeName(normalizedTypeName, "shader"))
+        {
+            return ResolveTextFileExtensions(defaultFileName, ".shader");
+        }
+
+        if (IsUnityTypeName(normalizedTypeName, "monoscript"))
+        {
+            return ResolveTextFileExtensions(defaultFileName, ".cs");
+        }
+
+        return ResolveTextFileExtensions(defaultFileName, ".txt");
+    }
+
+    private static string[] ResolveTextFileExtensions(string defaultFileName, string fallbackExtension)
+    {
         var extension = Path.GetExtension(defaultFileName);
         return string.IsNullOrWhiteSpace(extension)
-            ? [".txt"]
+            ? [fallbackExtension, ".txt"]
             : [extension, ".txt"];
+    }
+
+    internal static string ResolvePickerSuggestedFileName(
+        string? assetTypeDisplayName,
+        string defaultFileName)
+    {
+        var suggestedFileName = Path.GetFileNameWithoutExtension(defaultFileName);
+        if (string.IsNullOrWhiteSpace(suggestedFileName))
+        {
+            return "asset";
+        }
+
+        var normalizedTypeName = NormalizeAssetTypeDisplayName(assetTypeDisplayName);
+        if (!IsMonoBehaviourAssetType(normalizedTypeName))
+        {
+            return suggestedFileName;
+        }
+
+        return HasMonoBehaviourExportFormatSuffix(suggestedFileName)
+            ? suggestedFileName
+            : $"{suggestedFileName}.typetree";
     }
 
     private static string SanitizeSuggestedFileName(string fileName)
@@ -227,15 +287,57 @@ public sealed class WinUIFilePickerService : IFilePickerService
             : sanitized;
     }
 
-    private static string ResolveExtractionFileTypeResourceKey(AssetType assetType) =>
-        assetType switch
-        {
-            AssetType.Texture2D or AssetType.Sprite => ResourceKeys.FilePickerExtractionTypeImage,
-            AssetType.TextAsset => ResourceKeys.FilePickerExtractionTypeText,
-            AssetType.AudioClip => ResourceKeys.FilePickerExtractionTypeAudio,
-            AssetType.Mesh or AssetType.Material => ResourceKeys.FilePickerExtractionTypeJson,
-            _ => ResourceKeys.FilePickerExtractionTypeBinary
-        };
+    private static string NormalizeAssetTypeDisplayName(string? assetTypeDisplayName) =>
+        string.IsNullOrWhiteSpace(assetTypeDisplayName)
+            ? string.Empty
+            : assetTypeDisplayName.Trim().Replace(" ", string.Empty).Replace("_", string.Empty).ToLowerInvariant();
+
+    private static bool IsTextLikeAssetType(string normalizedTypeName) =>
+        IsUnityTypeName(normalizedTypeName, "shader") ||
+        IsUnityTypeName(normalizedTypeName, "monoscript");
+
+    private static bool IsStructuredJsonAssetType(string normalizedTypeName) =>
+        IsUnityTypeName(normalizedTypeName, "material") ||
+        IsUnityTypeName(normalizedTypeName, "animationclip") ||
+        IsUnityTypeName(normalizedTypeName, "font") ||
+        IsUnityTypeName(normalizedTypeName, "gameobject") ||
+        IsMonoBehaviourAssetType(normalizedTypeName) ||
+        IsUnityTypeName(normalizedTypeName, "animatorcontroller");
+
+    private static bool IsMonoBehaviourAssetType(string normalizedTypeName) =>
+        IsUnityTypeName(normalizedTypeName, "monobehaviour") ||
+        IsUnityTypeName(normalizedTypeName, "monobehavior");
+
+    private static bool IsUnityTypeName(string normalizedTypeName, string expectedTypeName) =>
+        string.Equals(normalizedTypeName, expectedTypeName, StringComparison.Ordinal) ||
+        normalizedTypeName.EndsWith($".{expectedTypeName}", StringComparison.Ordinal);
+
+    private static bool HasMonoBehaviourExportFormatSuffix(string fileNameWithoutExtension) =>
+        fileNameWithoutExtension.EndsWith(".typetree", StringComparison.OrdinalIgnoreCase) ||
+        fileNameWithoutExtension.EndsWith(".mono-behaviour", StringComparison.OrdinalIgnoreCase) ||
+        fileNameWithoutExtension.EndsWith(".summary", StringComparison.OrdinalIgnoreCase) ||
+        fileNameWithoutExtension.EndsWith(".fields", StringComparison.OrdinalIgnoreCase);
+
+    private static IReadOnlyList<ExtractionFileTypeChoice> CreateMeshTypeChoices() =>
+    [
+        CreateTypeChoice(ResourceKeys.FilePickerExtractionTypeObj, ".obj"),
+        CreateTypeChoice(ResourceKeys.FilePickerExtractionTypeFbx, ".fbx")
+    ];
+
+    private static IReadOnlyList<ExtractionFileTypeChoice> CreateMonoBehaviourTypeChoices() =>
+    [
+        CreateTypeChoice(ResourceKeys.FilePickerExtractionTypeMonoBehaviourTypeTreeJson, ".json"),
+        CreateTypeChoice(ResourceKeys.FilePickerExtractionTypeYaml, ".yaml", ".yml"),
+        CreateTypeChoice(ResourceKeys.FilePickerExtractionTypeMonoBehaviourFields, ".txt")
+    ];
+
+    private static ExtractionFileTypeChoice CreateTypeChoice(string resourceKey, params string[] extensions) =>
+        new(
+            resourceKey,
+            extensions
+                .Where(static extension => !string.IsNullOrWhiteSpace(extension))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray());
 
     /// <summary>
     /// 文件/目录选择器依赖已创建的宿主窗口句柄。
@@ -246,4 +348,8 @@ public sealed class WinUIFilePickerService : IFilePickerService
         return _ownerWindowAccessor()
                ?? throw PresentationExceptionFactory.CreateOwnerWindowUnavailableException(_localizationService);
     }
+
+    internal sealed record ExtractionFileTypeChoice(
+        string ResourceKey,
+        IReadOnlyList<string> Extensions);
 }

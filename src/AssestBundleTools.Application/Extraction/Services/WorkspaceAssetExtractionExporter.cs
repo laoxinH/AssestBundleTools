@@ -16,7 +16,10 @@ namespace AssestBundleTools.Application.Extraction.Services;
 /// </summary>
 public sealed class WorkspaceAssetExtractionExporter
 {
-    private static readonly JsonSerializerOptions StructuredJsonSerializerOptions = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions StructuredJsonSerializerOptions = new(JsonSerializerDefaults.Web)
+    {
+        WriteIndented = true
+    };
 
     private readonly IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>> _assetPreviewHandler;
     private readonly IAssetExtractionFileStore _fileStore;
@@ -58,7 +61,12 @@ public sealed class WorkspaceAssetExtractionExporter
         }
 
         var preview = previewResult.Value;
-        var payload = ResolvePayload(preview);
+        var suggestedOutputPath = BuildSuggestedOutputPath(
+            command.SuggestedOutputPath ?? extractionResult.SuggestedOutputPath,
+            targetDetails,
+            preview,
+            command.PreserveSuggestedFileName);
+        var payload = ResolvePayload(preview, targetDetails, suggestedOutputPath);
         if (payload.Content is not { Length: > 0 } &&
             string.IsNullOrWhiteSpace(payload.SourcePayloadFilePath))
         {
@@ -66,11 +74,6 @@ public sealed class WorkspaceAssetExtractionExporter
                 ApplicationErrors.AssetExtractionPayloadUnavailable(command.AssetId));
         }
 
-        var suggestedOutputPath = BuildSuggestedOutputPath(
-            command.SuggestedOutputPath ?? extractionResult.SuggestedOutputPath,
-            targetDetails,
-            preview,
-            command.PreserveSuggestedFileName);
         var writeResult = await _fileStore.WriteAsync(
             new AssetExtractionWriteRequestDto(
                 WorkspaceDataRootPath: command.WorkspaceDataRootPath ?? string.Empty,
@@ -100,26 +103,64 @@ public sealed class WorkspaceAssetExtractionExporter
         });
     }
 
-    private static ExtractionPayload ResolvePayload(AssetPreviewDto preview)
+    private static ExtractionPayload ResolvePayload(
+        AssetPreviewDto preview,
+        AssetDetailsDto targetDetails,
+        string suggestedOutputPath)
     {
-        if (preview.BinaryContent is { Length: > 0 })
+        var content = preview.Kind switch
         {
-            return new ExtractionPayload(preview.BinaryContent, SourcePayloadFilePath: null);
-        }
+            AssetPreviewKind.Mesh => ResolveMeshPayload(preview, targetDetails, suggestedOutputPath),
+            AssetPreviewKind.MonoBehaviour => ResolveMonoBehaviourPayload(preview, targetDetails, suggestedOutputPath),
+            AssetPreviewKind.Material or
+            AssetPreviewKind.AnimationClip or
+            AssetPreviewKind.Font or
+            AssetPreviewKind.GameObject or
+            AssetPreviewKind.AnimatorController => TrySerializeStructuredPreview(preview),
+            AssetPreviewKind.Text or AssetPreviewKind.Summary => TryResolveTextPayload(preview),
+            _ => preview.BinaryContent is { Length: > 0 }
+                ? preview.BinaryContent
+                : TryResolveTextPayload(preview) ?? TrySerializeStructuredPreview(preview)
+        };
 
-        var textContent = preview.FullTextContent ?? preview.TextContent;
-        if (!string.IsNullOrEmpty(textContent))
+        if (content is { Length: > 0 })
         {
-            return new ExtractionPayload(Encoding.UTF8.GetBytes(textContent), SourcePayloadFilePath: null);
-        }
-
-        var structuredContent = TrySerializeStructuredPreview(preview);
-        if (structuredContent is { Length: > 0 })
-        {
-            return new ExtractionPayload(structuredContent, SourcePayloadFilePath: null);
+            return new ExtractionPayload(content, SourcePayloadFilePath: null);
         }
 
         return new ExtractionPayload(Content: null, preview.PreviewPayloadFilePath);
+    }
+
+    private static byte[]? ResolveMeshPayload(
+        AssetPreviewDto preview,
+        AssetDetailsDto targetDetails,
+        string suggestedOutputPath)
+    {
+        return MeshAssetExportPayloadBuilder.BuildPayload(
+            preview,
+            targetDetails,
+            suggestedOutputPath,
+            () => TrySerializeStructuredPreview(preview));
+    }
+
+    private static byte[]? ResolveMonoBehaviourPayload(
+        AssetPreviewDto preview,
+        AssetDetailsDto targetDetails,
+        string suggestedOutputPath)
+    {
+        return MonoBehaviourAssetExportPayloadBuilder.BuildPayload(
+            preview,
+            targetDetails,
+            suggestedOutputPath,
+            () => TrySerializeStructuredPreview(preview));
+    }
+
+    private static byte[]? TryResolveTextPayload(AssetPreviewDto preview)
+    {
+        var textContent = preview.FullTextContent ?? preview.TextContent;
+        return string.IsNullOrEmpty(textContent)
+            ? null
+            : Encoding.UTF8.GetBytes(textContent);
     }
 
     private static byte[]? TrySerializeStructuredPreview(AssetPreviewDto preview)
@@ -215,12 +256,12 @@ public sealed class WorkspaceAssetExtractionExporter
             AssetPreviewKind.Audio => ResolveAudioExtension(preview.ContentType),
             AssetPreviewKind.Text => ResolveTextExtension(sourceName),
             AssetPreviewKind.Binary => ResolveBinaryExtension(sourceName),
-            AssetPreviewKind.Mesh => ".mesh.json",
+            AssetPreviewKind.Mesh => ".obj",
             AssetPreviewKind.Material => ".material.json",
             AssetPreviewKind.AnimationClip => ".animation-clip.json",
             AssetPreviewKind.Font => ".font.json",
             AssetPreviewKind.GameObject => ".game-object.json",
-            AssetPreviewKind.MonoBehaviour => ".mono-behaviour.json",
+            AssetPreviewKind.MonoBehaviour => ".typetree.json",
             AssetPreviewKind.AnimatorController => ".animator-controller.json",
             AssetPreviewKind.Summary => ".summary.txt",
             _ => ".bin"

@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
@@ -231,6 +232,19 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
                 synchronizePaneSelection: true);
     }
 
+    public Task RefreshSpineGroupDocumentTabAsync(SpineAssetGroupDocumentTabViewModel? spineGroupTab)
+    {
+        if (spineGroupTab is null || _documentWorkspace.ActiveBundleTab is not { } bundleTab)
+        {
+            return Task.CompletedTask;
+        }
+
+        RefreshSpineGroupTabFromPrimaryPaneIfChanged(spineGroupTab);
+        _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
+        _notifyActionStates();
+        return LoadSpineGroupDetailsAsync(bundleTab, spineGroupTab, forceReload: true);
+    }
+
     private SpineAssetGroupDocumentTabViewModel? ResolvePreferredSpineGroupDocumentTab(
         BundleDocumentTabViewModel bundleTab)
     {
@@ -280,6 +294,8 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
         ArgumentNullException.ThrowIfNull(bundleTab);
         ArgumentNullException.ThrowIfNull(spineGroupTab);
 
+        RefreshSpineGroupTabFromPrimaryPaneIfChanged(spineGroupTab);
+
         var wasAlreadyActiveGroupTab = ReferenceEquals(bundleTab.ActiveSpineGroupTab, spineGroupTab);
         bundleTab.SetActiveSpineGroupTab(spineGroupTab);
         _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
@@ -311,14 +327,111 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
 
         _requestWorkspaceBrowserStatePersistence();
         _notifyActionStates();
-        await LoadSpineGroupDetailsAsync(bundleTab, spineGroupTab);
+        await LoadSpineGroupDetailsAsync(bundleTab, spineGroupTab, forceReload: false);
+    }
+
+    private void RefreshSpineGroupTabFromPrimaryPaneIfChanged(SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        var refreshedGroup = _primaryPane.SpineGroupItems
+            .FirstOrDefault(entry => string.Equals(
+                entry.Item.GroupId,
+                spineGroupTab.GroupId,
+                StringComparison.Ordinal))
+            ?.Item;
+        if (refreshedGroup is null ||
+            HasSameSpineGroupSnapshot(spineGroupTab.Item, refreshedGroup))
+        {
+            return;
+        }
+
+        spineGroupTab.ApplyGroup(refreshedGroup);
+    }
+
+    private static bool HasSameSpineGroupSnapshot(
+        SpineAssetGroupDto left,
+        SpineAssetGroupDto right)
+    {
+        return string.Equals(left.GroupId, right.GroupId, StringComparison.Ordinal) &&
+               left.BundleId.Equals(right.BundleId) &&
+               string.Equals(left.DisplayName, right.DisplayName, StringComparison.Ordinal) &&
+               string.Equals(left.GroupKey, right.GroupKey, StringComparison.Ordinal) &&
+               HasSameParts(left.SkeletonAssets, right.SkeletonAssets) &&
+               HasSameParts(left.AtlasAssets, right.AtlasAssets) &&
+               HasSameParts(left.TexturePageAssets, right.TexturePageAssets) &&
+               HasSameDiagnostics(left.Diagnostics, right.Diagnostics);
+    }
+
+    private static bool HasSameParts(
+        IReadOnlyList<SpineAssetGroupPartDto> left,
+        IReadOnlyList<SpineAssetGroupPartDto> right)
+    {
+        if (left.Count != right.Count)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < left.Count; index++)
+        {
+            if (!HasSamePart(left[index], right[index]))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool HasSamePart(
+        SpineAssetGroupPartDto left,
+        SpineAssetGroupPartDto right)
+    {
+        return left.Role == right.Role &&
+               left.BundleId.Equals(right.BundleId) &&
+               left.AssetId.Equals(right.AssetId) &&
+               left.AssetType == right.AssetType &&
+               string.Equals(left.BundleDisplayName, right.BundleDisplayName, StringComparison.Ordinal) &&
+               string.Equals(left.Name, right.Name, StringComparison.Ordinal) &&
+               string.Equals(left.AssetPath, right.AssetPath, StringComparison.Ordinal) &&
+               string.Equals(left.AssetTypeDisplayName, right.AssetTypeDisplayName, StringComparison.Ordinal) &&
+               Nullable.Equals(left.LastExtractedAtUtc, right.LastExtractedAtUtc);
+    }
+
+    private static bool HasSameDiagnostics(
+        IReadOnlyList<SpineAssetGroupDiagnosticDto> left,
+        IReadOnlyList<SpineAssetGroupDiagnosticDto> right)
+    {
+        if (left.Count != right.Count)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < left.Count; index++)
+        {
+            if (left[index].Kind != right[index].Kind ||
+                !string.Equals(left[index].GroupKey, right[index].GroupKey, StringComparison.Ordinal) ||
+                !string.Equals(left[index].AtlasPageName, right[index].AtlasPageName, StringComparison.Ordinal) ||
+                left[index].AtlasPageWidth != right[index].AtlasPageWidth ||
+                left[index].AtlasPageHeight != right[index].AtlasPageHeight ||
+                left[index].TextureWidth != right[index].TextureWidth ||
+                left[index].TextureHeight != right[index].TextureHeight ||
+                left[index].AnimationUnsupportedFeature != right[index].AnimationUnsupportedFeature ||
+                !string.Equals(left[index].SpineVersion, right[index].SpineVersion, StringComparison.Ordinal) ||
+                !string.Equals(left[index].RuntimeAdapterKey, right[index].RuntimeAdapterKey, StringComparison.Ordinal) ||
+                !HasSameParts(left[index].RelatedParts, right[index].RelatedParts))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private async Task LoadSpineGroupDetailsAsync(
         BundleDocumentTabViewModel bundleTab,
-        SpineAssetGroupDocumentTabViewModel spineGroupTab)
+        SpineAssetGroupDocumentTabViewModel spineGroupTab,
+        bool forceReload)
     {
-        if (spineGroupTab.Details is not null)
+        if (!forceReload && spineGroupTab.Details is not null)
         {
             return;
         }

@@ -37,6 +37,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             App.CurrentApp.AppLogService,
             App.CurrentApp.AppNotificationService,
             App.CurrentApp.LocalizationService,
+            App.CurrentApp.WorkspaceOperationChangeNotifier,
             App.CurrentApp.FilePickerService,
             App.CurrentApp.WorkspaceContextService,
             App.CurrentApp.WorkspaceImportCoordinatorService,
@@ -376,11 +377,6 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         await ViewModel.ApplyPendingReplacementAsync();
     }
 
-    private async void OnInspectorUndoReplacementRequested(object sender, EventArgs e)
-    {
-        await ViewModel.UndoAppliedReplacementAsync();
-    }
-
     private void OnWorkspaceShellPageStateChanged(
         object? sender,
         BundleExplorerPageStateChangedEventArgs<BundleExplorerWorkspaceShellPageStateChange> e)
@@ -411,6 +407,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         ViewModel.DocumentWorkspace.PageStateChanged -= OnDocumentWorkspacePageStateChanged;
         ViewModel.BundlePane.PageStateChanged -= OnBundlePanePageStateChanged;
         ViewModel.WorkspaceShell.PageStateChanged -= OnWorkspaceShellPageStateChanged;
+        ViewModel.Dispose();
         _paneLayoutCoordinator.Stop();
         _chromeCoordinator.Stop();
     }

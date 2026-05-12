@@ -158,7 +158,8 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
                     PreferredDisplaySizeInBytes: asset.PreferredDisplaySizeInBytes,
                     HasPreview: asset.HasPreview,
                     IsModified: asset.IsModified,
-                    AssetTypeDisplayName: asset.AssetTypeDisplayName))
+                    AssetTypeDisplayName: asset.AssetTypeDisplayName,
+                    LastExtractedAtUtc: asset.LastExtractedAtUtc))
                 .ToArray();
 
             assetListResult = new AssetListResultDto(

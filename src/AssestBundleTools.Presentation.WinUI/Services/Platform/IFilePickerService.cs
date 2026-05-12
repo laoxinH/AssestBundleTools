@@ -43,10 +43,17 @@ public interface IFilePickerService
     /// </summary>
     Task<string?> PickAssetExtractionOutputFileAsync(
         AssetType assetType,
+        string? assetTypeDisplayName,
         string assetName,
         string? assetPath,
         string? containerPath,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 为资产列表多选批量提取流程选择目标目录。
+    /// 返回 <see langword="null"/> 表示用户主动取消，不应视为错误。
+    /// </summary>
+    Task<string?> PickAssetBatchExtractionOutputDirectoryAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 为当前资源替换流程选择一个外部文件来源。

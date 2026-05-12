@@ -44,6 +44,14 @@ public sealed partial class AssetPaneView : UserControl
             SpineGroupListView,
             () => ViewModel);
         _assetNameToolTipCoordinator = new AssetPaneAssetNameToolTipCoordinator();
+        AssetListView.AddHandler(
+            PointerWheelChangedEvent,
+            new PointerEventHandler(OnAssetPaneListPointerWheelChanged),
+            handledEventsToo: true);
+        SpineGroupListView.AddHandler(
+            PointerWheelChangedEvent,
+            new PointerEventHandler(OnAssetPaneListPointerWheelChanged),
+            handledEventsToo: true);
         ApplyLocalizedText();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
@@ -86,22 +94,57 @@ public sealed partial class AssetPaneView : UserControl
         view.SynchronizeSelectionFromViewModel();
         view.SynchronizeSpineGroupSelectionFromViewModel();
         view.UpdateViewModeToggleState();
+        view.UpdateListSelectionMode();
         view.UpdateSearchState(useTransitions: false);
         view.UpdateSearchToggleToolTip();
     }
 
     private void OnAssetListSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (ViewModel?.IsAssetViewMode != true)
+        {
+            _selectionCoordinator.TryApplyAssetSelectionToViewModel();
+            return;
+        }
+
+        if (ViewModel?.IsMultiSelectionMode == true)
+        {
+            _selectionCoordinator.TryApplyAssetSelectionToViewModel();
+            return;
+        }
+
         if (_selectionCoordinator.TryApplyAssetSelectionToViewModel())
         {
+            if (ViewModel?.IsMultiSelectionMode == true)
+            {
+                return;
+            }
+
             AssetSelectionChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
     private void OnSpineGroupListSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (ViewModel?.IsSpineGroupViewMode != true)
+        {
+            _selectionCoordinator.TryApplySpineGroupSelectionToViewModel();
+            return;
+        }
+
+        if (ViewModel?.IsMultiSelectionMode == true)
+        {
+            _selectionCoordinator.TryApplySpineGroupSelectionToViewModel();
+            return;
+        }
+
         if (_selectionCoordinator.TryApplySpineGroupSelectionToViewModel())
         {
+            if (ViewModel?.IsMultiSelectionMode == true)
+            {
+                return;
+            }
+
             AssetSelectionChanged?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -170,52 +213,6 @@ public sealed partial class AssetPaneView : UserControl
         BatchExtractRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    private void OnAssetRowContextFlyoutOpening(object sender, object e)
-    {
-        ConfigureAssetRowContextFlyout(sender as MenuFlyout);
-    }
-
-    private void OnSpineGroupRowContextFlyoutOpening(object sender, object e)
-    {
-        ConfigureAssetRowContextFlyout(sender as MenuFlyout);
-    }
-
-    private void OnOpenAssetPaneItemInNewWindowMenuItemClick(object sender, RoutedEventArgs e)
-    {
-        if (TrySelectContextTarget(sender, preserveExistingSelection: false))
-        {
-            OpenSelectedItemInNewWindowRequested?.Invoke(this, EventArgs.Empty);
-        }
-    }
-
-    private void OnExtractAssetPaneItemMenuItemClick(object sender, RoutedEventArgs e)
-    {
-        if (TrySelectContextTarget(sender, preserveExistingSelection: false))
-        {
-            ExtractSelectedItemRequested?.Invoke(this, EventArgs.Empty);
-        }
-    }
-
-    private void OnReplaceAssetPaneItemMenuItemClick(object sender, RoutedEventArgs e)
-    {
-        if (TrySelectContextTarget(sender, preserveExistingSelection: false, allowSpineGroup: false))
-        {
-            ReplaceSelectedAssetRequested?.Invoke(this, EventArgs.Empty);
-        }
-    }
-
-    private void OnEnterAssetPaneItemMultiSelectionMenuItemClick(object sender, RoutedEventArgs e)
-    {
-        TrySelectContextTarget(sender, preserveExistingSelection: true);
-        if (ViewModel?.IsSpineGroupViewMode == true)
-        {
-            SpineGroupListView.Focus(FocusState.Programmatic);
-            return;
-        }
-
-        AssetListView.Focus(FocusState.Programmatic);
-    }
-
     private void OnSearchToggleButtonClick(object sender, RoutedEventArgs e)
     {
         if (ViewModel is null)
@@ -239,12 +236,14 @@ public sealed partial class AssetPaneView : UserControl
         SynchronizeSelectionFromViewModel();
         SynchronizeSpineGroupSelectionFromViewModel();
         UpdateViewModeToggleState();
+        UpdateListSelectionMode();
         UpdateSearchState(useTransitions: false);
         UpdateSearchToggleToolTip();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        EndMultiSelectionDragGesture();
         DetachFromViewModel(_observedViewModel);
         _searchCoordinator.Stop();
         _assetNameToolTipCoordinator.Close();
@@ -300,10 +299,27 @@ public sealed partial class AssetPaneView : UserControl
             if (DispatcherQueue.HasThreadAccess)
             {
                 UpdateViewModeToggleState();
+                UpdateListSelectionMode();
                 return;
             }
 
-            DispatcherQueue.TryEnqueue(UpdateViewModeToggleState);
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                UpdateViewModeToggleState();
+                UpdateListSelectionMode();
+            });
+            return;
+        }
+
+        if (e.PropertyName is nameof(AssetPaneViewModel.IsMultiSelectionMode))
+        {
+            if (DispatcherQueue.HasThreadAccess)
+            {
+                UpdateListSelectionMode();
+                return;
+            }
+
+            DispatcherQueue.TryEnqueue(UpdateListSelectionMode);
             return;
         }
 
@@ -366,75 +382,6 @@ public sealed partial class AssetPaneView : UserControl
         _searchCoordinator.UpdateSearchState(ViewModel, useTransitions);
     }
 
-    /// <summary>
-    /// 资产名称提示只在名称列局部生效，并使用更短的延迟打开，
-    /// 避免沿用系统默认等待时间导致“已经想确认名字了，但提示还没出来”。
-    /// </summary>
-    private void OnAssetNamePointerEntered(object sender, PointerRoutedEventArgs e)
-    {
-        if (sender is not TextBlock textBlock)
-        {
-            return;
-        }
-
-        _assetNameToolTipCoordinator.OpenAfterDelay(textBlock);
-    }
-
-    private void OnAssetNamePointerExited(object sender, PointerRoutedEventArgs e)
-    {
-        if (sender is not TextBlock textBlock)
-        {
-            return;
-        }
-
-        _assetNameToolTipCoordinator.CloseFor(textBlock);
-    }
-
-    private void OnAssetNamePointerPressed(object sender, PointerRoutedEventArgs e)
-    {
-        if (sender is not TextBlock textBlock)
-        {
-            return;
-        }
-
-        _assetNameToolTipCoordinator.CloseFor(textBlock);
-    }
-
-    private void OnAssetNameTextBlockUnloaded(object sender, RoutedEventArgs e)
-    {
-        if (sender is not TextBlock textBlock)
-        {
-            return;
-        }
-
-        _assetNameToolTipCoordinator.CloseFor(textBlock);
-    }
-
-    private void OnAssetRowPointerEntered(object sender, PointerRoutedEventArgs e)
-    {
-        AssetPaneRowVisualState.Update(sender, isPointerOver: true, isPressed: false);
-    }
-
-    private void OnAssetRowPointerExited(object sender, PointerRoutedEventArgs e)
-    {
-        AssetPaneRowVisualState.Update(sender, isPointerOver: false, isPressed: false);
-    }
-
-    private void OnAssetRowPointerPressed(object sender, PointerRoutedEventArgs e)
-    {
-        AssetPaneRowVisualState.Update(sender, isPointerOver: true, isPressed: true);
-    }
-
-    private void OnAssetRowPointerReleased(object sender, PointerRoutedEventArgs e)
-    {
-        AssetPaneRowVisualState.Update(sender, isPointerOver: true, isPressed: false);
-    }
-
-    private void OnAssetRowPointerCanceled(object sender, PointerRoutedEventArgs e)
-    {
-        AssetPaneRowVisualState.Update(sender, isPointerOver: false, isPressed: false);
-    }
-
     private void UpdateSearchToggleToolTip()
     {
         _searchCoordinator.UpdateSearchToggleToolTip(ViewModel);
@@ -449,7 +396,7 @@ public sealed partial class AssetPaneView : UserControl
         PreviewOnlyToggleButton.Content = UiText.Get(ResourceKeys.AssetPaneViewPreviewOnlyToggleButtonContent);
         MultiSelectionLabelText.Text = UiText.Get(ResourceKeys.AssetPaneViewMultiSelectionLabel);
         MultiSelectionUnitText.Text = UiText.Get(ResourceKeys.AssetPaneViewMultiSelectionUnit);
-        BatchExtractSelectedButton.Content = UiText.Get(ResourceKeys.AssetPaneViewBatchExtractSelectedButton);
+        ApplyMultiSelectionLocalizedText();
         AssetNameHeaderText.Text = UiText.Get(ResourceKeys.AssetPaneViewAssetNameHeaderText);
         AssetTypeHeaderText.Text = UiText.Get(ResourceKeys.AssetPaneViewAssetTypeHeaderText);
         AssetSizeHeaderText.Text = UiText.Get(ResourceKeys.AssetPaneViewAssetSizeHeaderText);
@@ -460,55 +407,6 @@ public sealed partial class AssetPaneView : UserControl
         SpineGroupStateHeaderText.Text = UiText.Get(ResourceKeys.AssetPaneViewAssetStateHeaderText);
         EmptyStateHintText.Text = UiText.Get(ResourceKeys.AssetPaneViewEmptyStateHintText);
         UpdateSearchToggleToolTip();
-    }
-
-    private void ConfigureAssetRowContextFlyout(MenuFlyout? flyout)
-    {
-        if (flyout is null)
-        {
-            return;
-        }
-
-        var canExecute = ViewModel is not null && !ViewModel.IsBusy;
-        foreach (var item in flyout.Items.OfType<MenuFlyoutItem>())
-        {
-            item.IsEnabled = canExecute;
-            switch (item.Name)
-            {
-                case "OpenAssetPaneItemInNewWindowMenuItem":
-                    item.Text = UiText.Get(ResourceKeys.AssetEditorWindowOpenInNewWindowText);
-                    break;
-                case "ExtractAssetPaneItemMenuItem":
-                    item.Text = UiText.Get(ResourceKeys.InspectorExtractButton);
-                    break;
-                case "ReplaceAssetPaneItemMenuItem":
-                    item.Text = UiText.Get(ResourceKeys.AssetPaneViewContextReplaceText);
-                    item.IsEnabled = canExecute && ViewModel?.IsAssetViewMode == true;
-                    break;
-                case "EnterAssetPaneItemMultiSelectionMenuItem":
-                    item.Text = UiText.Get(ResourceKeys.AssetPaneViewContextEnterMultiSelectionText);
-                    break;
-            }
-        }
-    }
-
-    private bool TrySelectContextTarget(
-        object sender,
-        bool preserveExistingSelection,
-        bool allowSpineGroup = true)
-    {
-        var target = (sender as FrameworkElement)?.Tag;
-        if (target is AssetListEntryViewModel assetEntry)
-        {
-            return _selectionCoordinator.SelectAssetForContextAction(assetEntry, preserveExistingSelection);
-        }
-
-        if (allowSpineGroup && target is SpineAssetGroupEntryViewModel spineGroupEntry)
-        {
-            return _selectionCoordinator.SelectSpineGroupForContextAction(spineGroupEntry, preserveExistingSelection);
-        }
-
-        return false;
     }
 
     private void SetModifiedOnlyToggleState(bool isEnabled)

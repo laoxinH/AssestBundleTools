@@ -21,7 +21,7 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
 {
     // 资源包索引当前新增外部资产级 PPtr 占位、工作区级 CAB 反查和 GameObject 组件聚合依赖，
     // 需要提升版本以触发旧索引缓存自动重建。
-    private const string ParserVersion = "assetstools.net/3.0.4-dependency-graph.6";
+    private const string ParserVersion = "assetstools.net/3.0.4-dependency-graph.7";
 
     private static readonly HashSet<AssetClassID> MetadataOnlyAssetClassIds =
     [
@@ -295,7 +295,7 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
                     SizeInBytes: assetInfo.ByteSize,
                     PreferredDisplaySizeInBytes: AssetsToolsAssetDisplayMetadataResolver.ResolvePreferredDisplaySizeInBytes(classId, baseField),
                     HasPreview: IsPreviewAvailable(classId),
-                    CanExtract: CanExtract(assetType),
+                    CanExtract: CanExtract(classId),
                     CanReplace: CanReplace(assetType),
                     IncludeInAssetList: ShouldIncludeAsset(classId, rawAssetName, containerPath)));
             }
@@ -415,9 +415,9 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
         return !MetadataOnlyAssetClassIds.Contains(classId);
     }
 
-    private static bool CanExtract(AssetType assetType)
+    private static bool CanExtract(AssetClassID classId)
     {
-        return assetType is not AssetType.Unknown;
+        return !MetadataOnlyAssetClassIds.Contains(classId);
     }
 
     private static bool CanReplace(AssetType assetType)

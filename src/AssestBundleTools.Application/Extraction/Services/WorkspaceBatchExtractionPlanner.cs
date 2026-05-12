@@ -128,8 +128,8 @@ internal static class WorkspaceBatchExtractionPlanner
             AssetType.Sprite => ".png",
             AssetType.TextAsset => ".txt",
             AssetType.AudioClip => ".wav",
-            AssetType.Mesh => ".mesh",
-            AssetType.Material => ".mat",
+            AssetType.Mesh => ".obj",
+            AssetType.Material => ".material.json",
             _ => ".bin"
         };
 }

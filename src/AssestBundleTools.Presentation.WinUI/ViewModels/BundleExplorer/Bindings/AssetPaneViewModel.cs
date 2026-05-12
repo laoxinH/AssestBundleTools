@@ -10,7 +10,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 /// <summary>
 /// 表示中间区域一个资产窗格的全部展示状态。
 /// </summary>
-public sealed class AssetPaneViewModel : ObservableObject
+public sealed partial class AssetPaneViewModel : ObservableObject
 {
     private readonly AssetPaneAssetListState _assetList = new();
     private readonly AssetPaneSpineGroupListState _spineGroupList = new();
@@ -26,6 +26,8 @@ public sealed class AssetPaneViewModel : ObservableObject
     private bool _showPreviewableOnly;
     private bool _supportsBatchExtractionQuickAction;
     private bool _isBusy;
+    private bool _isAssetMultiSelectionMode;
+    private bool _isSpineGroupMultiSelectionMode;
     private PaneId _paneId;
 
     public AssetPaneViewModel()
@@ -218,6 +220,7 @@ public sealed class AssetPaneViewModel : ObservableObject
             }
 
             _assetList.SetSelectedAsset(value);
+            SetAssetMultiSelectionMode(false);
             OnPropertyChanged();
             NotifySelectionStateChanged();
         }
@@ -234,8 +237,9 @@ public sealed class AssetPaneViewModel : ObservableObject
             }
 
             _spineGroupList.SetSelectedSpineGroup(value);
+            SetSpineGroupMultiSelectionMode(false);
             OnPropertyChanged();
-            OnPropertyChanged(nameof(SelectedSpineGroupCount));
+            NotifySelectionStateChanged();
         }
     }
 
@@ -249,13 +253,22 @@ public sealed class AssetPaneViewModel : ObservableObject
 
     public int SelectedSpineGroupCount => SelectedSpineGroups.Count;
 
-    public bool HasMultipleSelection => SelectedAssetCount > 1;
+    public int SelectedItemCount =>
+        IsSpineGroupViewMode ? SelectedSpineGroupCount : SelectedAssetCount;
+
+    public bool IsMultiSelectionMode =>
+        IsSpineGroupViewMode ? _isSpineGroupMultiSelectionMode : _isAssetMultiSelectionMode;
+
+    public bool HasSelectedItems => SelectedItemCount > 0;
+
+    public bool HasMultipleSelection =>
+        IsSpineGroupViewMode ? SelectedSpineGroupCount > 1 : SelectedAssetCount > 1;
 
     public bool CanBatchExtractSelectedAssets =>
-        IsAssetViewMode &&
         SupportsBatchExtractionQuickAction &&
         !IsBusy &&
-        HasMultipleSelection;
+        ((IsAssetViewMode && _isAssetMultiSelectionMode && SelectedAssetCount > 0) ||
+         (IsSpineGroupViewMode && _isSpineGroupMultiSelectionMode && SelectedSpineGroupCount > 0));
 
     public bool CanToggleSearch => !IsBusy && CurrentSourceItemCount > 0;
 
@@ -270,7 +283,7 @@ public sealed class AssetPaneViewModel : ObservableObject
     public Visibility AssetFilterVisibility => IsAssetViewMode ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility MultiSelectionQuickActionsVisibility =>
-        IsAssetViewMode && SupportsBatchExtractionQuickAction && HasMultipleSelection
+        SupportsBatchExtractionQuickAction && IsMultiSelectionMode && CurrentVisibleItemCount > 0
             ? Visibility.Visible
             : Visibility.Collapsed;
 
@@ -317,6 +330,7 @@ public sealed class AssetPaneViewModel : ObservableObject
             preferredSelectedAssetId,
             ShowModifiedOnly,
             ShowPreviewableOnly);
+        SetAssetMultiSelectionMode(false);
         OnPropertyChanged(nameof(CanToggleSearch));
         OnPropertyChanged(nameof(SelectedAsset));
         NotifySelectionStateChanged();
@@ -332,9 +346,11 @@ public sealed class AssetPaneViewModel : ObservableObject
         CurrentBundleDisplayName = currentBundleDisplayName;
         EmptyStateText = emptyStateText;
         _spineGroupList.ReplaceItems(items, selectedGroupId);
+        SetSpineGroupMultiSelectionMode(false);
         OnPropertyChanged(nameof(CanToggleSearch));
         OnPropertyChanged(nameof(SelectedSpineGroup));
         NotifyListStateChanged();
+        NotifySelectionStateChanged();
     }
 
     public void ClearItems(string emptyStateText)
@@ -343,6 +359,8 @@ public sealed class AssetPaneViewModel : ObservableObject
         EmptyStateText = emptyStateText;
         _assetList.Clear();
         _spineGroupList.Clear();
+        SetAssetMultiSelectionMode(false);
+        SetSpineGroupMultiSelectionMode(false);
         IsSearchExpanded = false;
         OnPropertyChanged(nameof(SelectedAsset));
         OnPropertyChanged(nameof(SelectedSpineGroup));
@@ -381,6 +399,11 @@ public sealed class AssetPaneViewModel : ObservableObject
         AssetListEntryViewModel? primarySelectedAsset)
     {
         _assetList.UpdateSelection(selectedAssets, primarySelectedAsset);
+        if (SelectedAssetCount > 1)
+        {
+            SetAssetMultiSelectionMode(true);
+        }
+
         OnPropertyChanged(nameof(SelectedAsset));
         NotifySelectionStateChanged();
     }
@@ -395,8 +418,13 @@ public sealed class AssetPaneViewModel : ObservableObject
         SpineAssetGroupEntryViewModel? primarySelectedGroup)
     {
         _spineGroupList.UpdateSelection(selectedSpineGroups, primarySelectedGroup);
+        if (SelectedSpineGroupCount > 1)
+        {
+            SetSpineGroupMultiSelectionMode(true);
+        }
+
         OnPropertyChanged(nameof(SelectedSpineGroup));
-        OnPropertyChanged(nameof(SelectedSpineGroupCount));
+        NotifySelectionStateChanged();
     }
 
     /// <summary>
@@ -406,6 +434,7 @@ public sealed class AssetPaneViewModel : ObservableObject
     public void ClearSelection()
     {
         _assetList.ClearSelection();
+        SetAssetMultiSelectionMode(false);
         OnPropertyChanged(nameof(SelectedAsset));
         NotifySelectionStateChanged();
     }
@@ -446,6 +475,7 @@ public sealed class AssetPaneViewModel : ObservableObject
             return false;
         }
 
+        SetAssetMultiSelectionMode(false);
         OnPropertyChanged(nameof(SelectedAsset));
         NotifySelectionStateChanged();
         return true;
@@ -465,7 +495,10 @@ public sealed class AssetPaneViewModel : ObservableObject
             return false;
         }
 
-        SelectedSpineGroup = target;
+        _spineGroupList.SetSelectedSpineGroup(target);
+        SetSpineGroupMultiSelectionMode(false);
+        OnPropertyChanged(nameof(SelectedSpineGroup));
+        NotifySelectionStateChanged();
         return true;
     }
 
@@ -474,6 +507,7 @@ public sealed class AssetPaneViewModel : ObservableObject
         OnPropertyChanged(nameof(AssetListVisibility));
         OnPropertyChanged(nameof(SpineGroupListVisibility));
         OnPropertyChanged(nameof(EmptyStateVisibility));
+        OnPropertyChanged(nameof(MultiSelectionQuickActionsVisibility));
     }
 
     private void ApplyLocalFilters(AssetId? preferredSelectedAssetId = null)
@@ -490,8 +524,13 @@ public sealed class AssetPaneViewModel : ObservableObject
     private void NotifySelectionStateChanged()
     {
         _assetList.UpdateSelectionState();
+        _spineGroupList.UpdateSelectionState();
         OnPropertyChanged(nameof(SelectedAssetCount));
         OnPropertyChanged(nameof(HasMultipleSelection));
+        OnPropertyChanged(nameof(SelectedSpineGroupCount));
+        OnPropertyChanged(nameof(SelectedItemCount));
+        OnPropertyChanged(nameof(HasSelectedItems));
+        OnPropertyChanged(nameof(IsMultiSelectionMode));
         OnPropertyChanged(nameof(CanBatchExtractSelectedAssets));
         OnPropertyChanged(nameof(MultiSelectionQuickActionsVisibility));
     }
@@ -501,6 +540,10 @@ public sealed class AssetPaneViewModel : ObservableObject
         OnPropertyChanged(nameof(IsAssetViewMode));
         OnPropertyChanged(nameof(IsSpineGroupViewMode));
         OnPropertyChanged(nameof(AssetFilterVisibility));
+        OnPropertyChanged(nameof(SelectedItemCount));
+        OnPropertyChanged(nameof(HasSelectedItems));
+        OnPropertyChanged(nameof(HasMultipleSelection));
+        OnPropertyChanged(nameof(IsMultiSelectionMode));
         OnPropertyChanged(nameof(CanBatchExtractSelectedAssets));
         OnPropertyChanged(nameof(CanToggleSearch));
         OnPropertyChanged(nameof(MultiSelectionQuickActionsVisibility));

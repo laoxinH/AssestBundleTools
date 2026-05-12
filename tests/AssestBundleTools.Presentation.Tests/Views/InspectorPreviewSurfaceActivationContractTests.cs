@@ -19,6 +19,26 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
     }
 
     [Fact]
+    public void InspectorPanelActionBar_ShouldExposeOnlyLightweightExtractAndModifyActions()
+    {
+        var xaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorPanelView.xaml"));
+
+        Assert.Contains("x:Name=\"ExtractButton\"", xaml);
+        Assert.Contains("x:Name=\"ModifyButton\"", xaml);
+        Assert.Contains("IsEnabled=\"{x:Bind ViewModel.CanModify, Mode=OneWay}\"", xaml);
+        Assert.DoesNotContain("x:Name=\"ApplyReplacementButton\"", xaml);
+        Assert.DoesNotContain("x:Name=\"UndoReplacementButton\"", xaml);
+    }
+
+    [Fact]
     public void SpinePreviewSurface_ShouldFollowParentPreviewActivation()
     {
         var xaml = File.ReadAllText(

@@ -149,7 +149,8 @@ internal static class AppCompositionRoot
         var extractSpineAssetGroupHandler = new ExtractSpineAssetGroupHandler(
             workspaceSessionRegistry,
             loadSpineAssetGroupDetailsHandler,
-            extractAssetHandler);
+            extractAssetHandler,
+            workspaceExtractionOperationRecorder);
         var getWorkspaceBatchReplacementPreviewHandler = new GetWorkspaceBatchReplacementPreviewHandler(workspaceSessionRegistry);
         var executeWorkspaceBatchReplacementHandler = new ExecuteWorkspaceBatchReplacementHandler(workspaceSessionRegistry);
         var getFileReplacementCandidateHandler = new GetFileReplacementCandidateHandler(workspaceSessionRegistry);
@@ -196,7 +197,8 @@ internal static class AppCompositionRoot
             getAssetPreviewHandler: getAssetPreviewHandler,
             loadSpineAssetGroupDetailsHandler: loadSpineAssetGroupDetailsHandler,
             openAssetInPaneHandler: openAssetInPaneHandler);
-        var workspaceAssetOperationGateway = new WorkspaceAssetOperationGateway(
+        var workspaceOperationChangeNotifier = new WorkspaceOperationChangeNotifier();
+        var workspaceAssetOperationGatewayCore = new WorkspaceAssetOperationGateway(
             extractAssetHandler: extractAssetHandler,
             extractSpineAssetGroupHandler: extractSpineAssetGroupHandler,
             getFileReplacementCandidateHandler: getFileReplacementCandidateHandler,
@@ -204,7 +206,10 @@ internal static class AppCompositionRoot
             replaceAssetFromFileHandler: replaceAssetFromFileHandler,
             replaceAssetFromWorkspaceHandler: replaceAssetFromWorkspaceHandler,
             undoAssetReplacementHandler: undoAssetReplacementHandler);
-        var workspaceBatchOperationsGateway = new WorkspaceBatchOperationsGateway(
+        var workspaceAssetOperationGateway = new NotifyingWorkspaceAssetOperationGateway(
+            workspaceAssetOperationGatewayCore,
+            workspaceOperationChangeNotifier);
+        var workspaceBatchOperationsGatewayCore = new WorkspaceBatchOperationsGateway(
             getWorkspaceChangeSummaryHandler: getWorkspaceChangeSummaryHandler,
             getWorkspaceSavePreviewHandler: getWorkspaceSavePreviewHandler,
             saveWorkspaceAsNewBundleHandler: saveWorkspaceAsNewBundleHandler,
@@ -212,6 +217,9 @@ internal static class AppCompositionRoot
             extractWorkspaceAssetsHandler: extractWorkspaceAssetsHandler,
             getWorkspaceBatchReplacementPreviewHandler: getWorkspaceBatchReplacementPreviewHandler,
             executeWorkspaceBatchReplacementHandler: executeWorkspaceBatchReplacementHandler);
+        var workspaceBatchOperationsGateway = new NotifyingWorkspaceBatchOperationsGateway(
+            workspaceBatchOperationsGatewayCore,
+            workspaceOperationChangeNotifier);
         var workspaceCatalogGateway = new WorkspaceCatalogGateway(
             getWorkspaceCatalogSnapshotHandler: getWorkspaceCatalogSnapshotHandler,
             registerWorkspaceCatalogEntryHandler: registerWorkspaceCatalogEntryHandler,
@@ -260,6 +268,7 @@ internal static class AppCompositionRoot
             WorkspaceAssetInspectionGateway: workspaceAssetInspectionGateway,
             WorkspaceAssetOperationGateway: workspaceAssetOperationGateway,
             WorkspaceBatchOperationsGateway: workspaceBatchOperationsGateway,
+            WorkspaceOperationChangeNotifier: workspaceOperationChangeNotifier,
             AssetEditDraftRestorePlanGateway: assetEditDraftRestorePlanGateway,
             WorkspaceContextService: workspaceContextService,
             WorkspaceProcessCoordinatorService: workspaceProcessCoordinatorService,

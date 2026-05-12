@@ -13,6 +13,28 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 public sealed class InspectorPanelViewModelTests
 {
     [Fact]
+    public void CanModify_ShouldFollowReplacementSelectionOrPendingApplyState()
+    {
+        var viewModel = CreateViewModel();
+        var changedProperties = new List<string?>();
+        viewModel.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        Assert.False(viewModel.CanModify);
+
+        viewModel.CanSelectReplacementSource = true;
+
+        Assert.True(viewModel.CanModify);
+        Assert.Contains(nameof(InspectorPanelViewModel.CanModify), changedProperties);
+
+        changedProperties.Clear();
+        viewModel.CanSelectReplacementSource = false;
+        viewModel.CanApplyReplacement = true;
+
+        Assert.True(viewModel.CanModify);
+        Assert.Contains(nameof(InspectorPanelViewModel.CanModify), changedProperties);
+    }
+
+    [Fact]
     public void Apply_ShouldShowAvailablePathsAsSeparateRows()
     {
         var viewModel = CreateViewModel();

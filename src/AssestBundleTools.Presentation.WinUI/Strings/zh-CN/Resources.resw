@@ -798,6 +798,15 @@
   <data name="AssetPaneView.BatchExtractSelectedButton.Content" xml:space="preserve">
     <value>提取选中</value>
   </data>
+  <data name="AssetPaneView.ExitMultiSelectionButton.ToolTip" xml:space="preserve">
+    <value>退出多选</value>
+  </data>
+  <data name="AssetPaneView.SelectAllMultiSelectionButton.ToolTip" xml:space="preserve">
+    <value>全选</value>
+  </data>
+  <data name="AssetPaneView.InvertMultiSelectionButton.ToolTip" xml:space="preserve">
+    <value>反选</value>
+  </data>
   <data name="AssetPaneView.AssetNameHeaderText.Text" xml:space="preserve">
     <value>名称</value>
   </data>
@@ -1830,6 +1839,9 @@
   <data name="InspectorPanelView.MonoBehaviourPreview.ReferencesCardTitle.Text" xml:space="preserve">
     <value>引用明细</value>
   </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.TypeTreeJsonCardTitle.Text" xml:space="preserve">
+    <value>字段树 TypeTree JSON</value>
+  </data>
   <data name="InspectorPanelView.MonoBehaviourPreview.Name.Label" xml:space="preserve">
     <value>名称</value>
   </data>
@@ -1916,6 +1928,21 @@
   </data>
   <data name="InspectorPanelView.MonoBehaviourPreview.ScriptUnresolvedName.Format" xml:space="preserve">
     <value>未解析脚本 · PathId {0}</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.TypeTreeNodeCount.Label" xml:space="preserve">
+    <value>节点数</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.TypeTreeStatus.Label" xml:space="preserve">
+    <value>状态</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.TypeTreeStatusComplete.Text" xml:space="preserve">
+    <value>完整</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.TypeTreeStatusTruncated.Text" xml:space="preserve">
+    <value>已截断</value>
+  </data>
+  <data name="InspectorPanelView.MonoBehaviourPreview.TypeTreeJsonContent.Label" xml:space="preserve">
+    <value>JSON</value>
   </data>
   <data name="InspectorPanelView.AnimatorControllerPreview.Structure.Format" xml:space="preserve">
     <value>层 {0} · 参数 {1}</value>
@@ -2132,6 +2159,9 @@
   </data>
   <data name="InspectorPanelView.ExtractButton.Content" xml:space="preserve">
     <value>提取</value>
+  </data>
+  <data name="InspectorPanelView.ModifyButton.Content" xml:space="preserve">
+    <value>修改</value>
   </data>
   <data name="InspectorPanelView.SelectReplacementButton.Content" xml:space="preserve">
     <value>工作区来源</value>
@@ -3186,6 +3216,9 @@
   <data name="BundleExplorer.Log.AssetExtractionSelectionCancelled" xml:space="preserve">
     <value>已取消为“{0}”选择提取保存位置。</value>
   </data>
+  <data name="BundleExplorer.Log.BatchAssetExtractionSelectionCancelled" xml:space="preserve">
+    <value>已取消为 {0} 项选中资源选择批量提取目录。</value>
+  </data>
   <data name="BundleExplorer.Log.BatchAssetsExtracted" xml:space="preserve">
     <value>已批量提取 {0} 项资源，首个输出路径：{1}</value>
   </data>
@@ -3194,6 +3227,12 @@
   </data>
   <data name="BundleExplorer.Log.SpineGroupExtractionSelectionCancelled" xml:space="preserve">
     <value>已取消为 Spine 资源组“{0}”选择提取目录。</value>
+  </data>
+  <data name="BundleExplorer.Log.BatchSpineGroupExtractionSelectionCancelled" xml:space="preserve">
+    <value>已取消为 {0} 个 Spine 资源组选择批量提取目录。</value>
+  </data>
+  <data name="BundleExplorer.Log.BatchSpineGroupsExtracted" xml:space="preserve">
+    <value>已批量提取 Spine 资源组：完成 {0}/{1} 组，成功资源 {2} 项，失败 {3} 项，输出根目录：{4}</value>
   </data>
   <data name="BundleExplorer.Log.ReplacementSourceSelected" xml:space="preserve">
     <value>已为“{2}”选择工作区替换源：{0} / {1}</value>
@@ -3255,6 +3294,9 @@
   <data name="BundleExplorer.Notification.SpineGroupExtracted" xml:space="preserve">
     <value>已完成 Spine 资源组“{0}”提取：成功 {1} 项，失败 {2} 项。</value>
   </data>
+  <data name="BundleExplorer.Notification.BatchSpineGroupsExtracted" xml:space="preserve">
+    <value>Spine 资源组批量提取完成：{0}/{1} 组，成功资源 {2} 项，失败 {3} 项。</value>
+  </data>
   <data name="BundleExplorer.Notification.ReplacementSourceSelected" xml:space="preserve">
     <value>已选中工作区替换源：{0}</value>
   </data>
@@ -3282,8 +3324,26 @@
   <data name="FilePicker.Extraction.Type.Audio" xml:space="preserve">
     <value>音频文件</value>
   </data>
+  <data name="FilePicker.Extraction.Type.Obj" xml:space="preserve">
+    <value>OBJ 模型文件</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.Fbx" xml:space="preserve">
+    <value>FBX 模型文件</value>
+  </data>
   <data name="FilePicker.Extraction.Type.Json" xml:space="preserve">
     <value>JSON 文件</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.Yaml" xml:space="preserve">
+    <value>YAML 文件</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.MonoBehaviourTypeTreeJson" xml:space="preserve">
+    <value>MonoBehaviour TypeTree JSON</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.MonoBehaviourSummaryJson" xml:space="preserve">
+    <value>MonoBehaviour 摘要 JSON</value>
+  </data>
+  <data name="FilePicker.Extraction.Type.MonoBehaviourFields" xml:space="preserve">
+    <value>MonoBehaviour 原始字段文件</value>
   </data>
   <data name="FilePicker.Extraction.Type.Binary" xml:space="preserve">
     <value>二进制文件</value>

@@ -1,5 +1,6 @@
 using AssestBundleTools.Presentation.WinUI.Localization;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
@@ -78,8 +79,6 @@ public sealed partial class InspectorPanelView : UserControl
 
     public event EventHandler? ApplyReplacementRequested;
 
-    public event EventHandler? UndoReplacementRequested;
-
     public event EventHandler? OpenPreviewLocationRequested;
 
     public event EventHandler<ResolvedAssetOpenRequestedEventArgs>? ResolvedAssetOpenRequested;
@@ -96,19 +95,15 @@ public sealed partial class InspectorPanelView : UserControl
         SelectFileReplacementSourceRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    private void OnSelectReplacementButtonClick(object sender, RoutedEventArgs e)
+    private void OnModifyButtonClick(object sender, RoutedEventArgs e)
     {
+        if (ViewModel?.CanApplyReplacement == true)
+        {
+            ApplyReplacementRequested?.Invoke(this, EventArgs.Empty);
+            return;
+        }
+
         SelectReplacementSourceRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    private void OnApplyReplacementButtonClick(object sender, RoutedEventArgs e)
-    {
-        ApplyReplacementRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    private void OnUndoReplacementButtonClick(object sender, RoutedEventArgs e)
-    {
-        UndoReplacementRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnPreviewSurfaceOpenPreviewLocationRequested(object? sender, EventArgs e)
@@ -174,12 +169,18 @@ public sealed partial class InspectorPanelView : UserControl
         FileReplacementCapabilityLabelText.Text = UiText.Get(ResourceKeys.InspectorFileReplacementCapabilityLabel);
         WorkspaceReplacementCapabilityLabelText.Text = UiText.Get(ResourceKeys.InspectorWorkspaceReplacementCapabilityLabel);
         ChangeSummaryTitleText.Text = UiText.Get(ResourceKeys.InspectorChangeSummaryTitle);
-
-        ExtractButton.Content = UiText.Get(ResourceKeys.InspectorExtractButton);
         SelectFileReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectFileReplacementButton);
-        SelectReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectReplacementButton);
-        ApplyReplacementButton.Content = UiText.Get(ResourceKeys.InspectorApplyReplacementButton);
-        UndoReplacementButton.Content = UiText.Get(ResourceKeys.InspectorUndoReplacementButton);
+
+        ApplyActionButtonText(ExtractButton, ExtractButtonText, ResourceKeys.InspectorExtractButton);
+        ApplyActionButtonText(ModifyButton, ModifyButtonText, ResourceKeys.InspectorModifyButton);
+    }
+
+    private static void ApplyActionButtonText(Button button, TextBlock textBlock, string resourceKey)
+    {
+        var text = UiText.Get(resourceKey);
+        textBlock.Text = text;
+        AutomationProperties.SetName(button, text);
+        ToolTipService.SetToolTip(button, text);
     }
 
 }

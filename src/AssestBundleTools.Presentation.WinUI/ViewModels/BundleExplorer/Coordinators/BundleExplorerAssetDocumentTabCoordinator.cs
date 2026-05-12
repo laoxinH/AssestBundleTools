@@ -240,6 +240,32 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         _notifyActionStates();
     }
 
+    public async Task RefreshAssetDocumentTabDetailsAsync(AssetDocumentTabViewModel? assetTab)
+    {
+        if (assetTab is null || _workspaceShell.WorkspaceSummary is not { } workspaceSummary)
+        {
+            return;
+        }
+
+        var detailsQuery = new GetAssetDetailsQuery(
+            WorkspaceId: workspaceSummary.WorkspaceId,
+            BundleId: assetTab.BundleId,
+            AssetId: assetTab.AssetId);
+        var detailsResult = await _backgroundTaskRunner.RunAsync(
+            token => _workspaceAssetInspectionGateway.GetAssetDetailsAsync(detailsQuery, token));
+
+        if (!TryGetValue(detailsResult, out var details))
+        {
+            return;
+        }
+
+        ReapplyAssetDocumentTab(assetTab, details);
+        if (ReferenceEquals(assetTab, _documentWorkspace.ActiveAssetDocumentTab))
+        {
+            _documentWorkspace.NotifyAssetDocumentHostStateChanged();
+        }
+    }
+
     private AssetDocumentTabViewModel? ResolvePreferredAssetDocumentTab(BundleDocumentTabViewModel bundleTab)
     {
         if (bundleTab.ActiveAssetTab is not null)

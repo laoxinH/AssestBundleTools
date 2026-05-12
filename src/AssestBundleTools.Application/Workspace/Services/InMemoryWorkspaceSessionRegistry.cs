@@ -137,7 +137,8 @@ public sealed partial class InMemoryWorkspaceSessionRegistry : IWorkspaceSession
                     PreferredDisplaySizeInBytes: asset.PreferredDisplaySizeInBytes,
                     HasPreview: asset.HasPreview,
                     IsModified: asset.IsModified,
-                    AssetTypeDisplayName: asset.AssetTypeDisplayName))
+                    AssetTypeDisplayName: asset.AssetTypeDisplayName,
+                    LastExtractedAtUtc: asset.LastExtractedAtUtc))
                 .ToArray();
 
             assetListResult = new AssetListResultDto(

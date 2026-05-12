@@ -31,9 +31,14 @@ internal sealed class AssetPaneSelectionViewCoordinator
             return false;
         }
 
+        var selectedAssets = _assetListView.SelectedItems
+            .OfType<AssetListEntryViewModel>()
+            .ToArray();
         _getViewModel()?.UpdateSelection(
-            _assetListView.SelectedItems.OfType<AssetListEntryViewModel>(),
-            _assetListView.SelectedItem as AssetListEntryViewModel);
+            selectedAssets,
+            AssetPaneListViewSelectionWriter.ResolvePrimarySelection(
+                selectedAssets,
+                _assetListView.SelectedItem as AssetListEntryViewModel));
         return true;
     }
 
@@ -44,9 +49,14 @@ internal sealed class AssetPaneSelectionViewCoordinator
             return false;
         }
 
+        var selectedSpineGroups = _spineGroupListView.SelectedItems
+            .OfType<SpineAssetGroupEntryViewModel>()
+            .ToArray();
         _getViewModel()?.UpdateSpineGroupSelection(
-            _spineGroupListView.SelectedItems.OfType<SpineAssetGroupEntryViewModel>(),
-            _spineGroupListView.SelectedItem as SpineAssetGroupEntryViewModel);
+            selectedSpineGroups,
+            AssetPaneListViewSelectionWriter.ResolvePrimarySelection(
+                selectedSpineGroups,
+                _spineGroupListView.SelectedItem as SpineAssetGroupEntryViewModel));
         return true;
     }
 
@@ -81,6 +91,99 @@ internal sealed class AssetPaneSelectionViewCoordinator
                 targetSelection);
             _assetListView.UpdateLayout();
             _assetListView.ScrollIntoView(targetSelection);
+            return true;
+        }
+        finally
+        {
+            _isSynchronizingAssetSelectionFromViewModel = false;
+        }
+    }
+
+    public bool ToggleAssetSelectionInMultiSelectionMode(AssetListEntryViewModel targetSelection)
+    {
+        ArgumentNullException.ThrowIfNull(targetSelection);
+
+        var viewModel = _getViewModel();
+        if (viewModel is null ||
+            !viewModel.IsAssetViewMode ||
+            !viewModel.IsMultiSelectionMode ||
+            !viewModel.Items.Contains(targetSelection))
+        {
+            return false;
+        }
+
+        return ApplyAssetSelectionInMultiSelectionMode(
+            viewModel,
+            targetSelection,
+            !viewModel.SelectedAssets.Contains(targetSelection));
+    }
+
+    public bool ToggleAssetSelectionRangeInMultiSelectionMode(
+        AssetListEntryViewModel anchorSelection,
+        AssetListEntryViewModel targetSelection)
+    {
+        ArgumentNullException.ThrowIfNull(anchorSelection);
+        ArgumentNullException.ThrowIfNull(targetSelection);
+
+        var viewModel = _getViewModel();
+        if (viewModel is null ||
+            !viewModel.IsAssetViewMode ||
+            !viewModel.IsMultiSelectionMode ||
+            !viewModel.Items.Contains(anchorSelection) ||
+            !viewModel.Items.Contains(targetSelection))
+        {
+            return false;
+        }
+
+        return ApplyAssetSelectionToggleRangeInMultiSelectionMode(viewModel, anchorSelection, targetSelection);
+    }
+
+    private bool ApplyAssetSelectionInMultiSelectionMode(
+        AssetPaneViewModel viewModel,
+        AssetListEntryViewModel targetSelection,
+        bool shouldSelect)
+    {
+        var mutation = AssetPaneSelectionRangeResolver.Resolve(
+            viewModel.SelectedAssets,
+            viewModel.Items,
+            targetSelection,
+            targetSelection,
+            shouldSelect,
+            viewModel.SelectedAsset);
+
+        _isSynchronizingAssetSelectionFromViewModel = true;
+        try
+        {
+            viewModel.UpdateSelection(mutation.SelectedItems, mutation.PrimarySelection);
+            return true;
+        }
+        finally
+        {
+            _isSynchronizingAssetSelectionFromViewModel = false;
+        }
+    }
+
+    private bool ApplyAssetSelectionToggleRangeInMultiSelectionMode(
+        AssetPaneViewModel viewModel,
+        AssetListEntryViewModel anchorSelection,
+        AssetListEntryViewModel targetSelection)
+    {
+        if (ReferenceEquals(anchorSelection, targetSelection))
+        {
+            return false;
+        }
+
+        var mutation = AssetPaneSelectionRangeResolver.ResolveToggleRange(
+            viewModel.SelectedAssets,
+            viewModel.Items,
+            anchorSelection,
+            targetSelection,
+            viewModel.SelectedAsset);
+
+        _isSynchronizingAssetSelectionFromViewModel = true;
+        try
+        {
+            viewModel.UpdateSelection(mutation.SelectedItems, mutation.PrimarySelection);
             return true;
         }
         finally
@@ -128,6 +231,99 @@ internal sealed class AssetPaneSelectionViewCoordinator
         }
     }
 
+    public bool ToggleSpineGroupSelectionInMultiSelectionMode(SpineAssetGroupEntryViewModel targetSelection)
+    {
+        ArgumentNullException.ThrowIfNull(targetSelection);
+
+        var viewModel = _getViewModel();
+        if (viewModel is null ||
+            !viewModel.IsSpineGroupViewMode ||
+            !viewModel.IsMultiSelectionMode ||
+            !viewModel.SpineGroupItems.Contains(targetSelection))
+        {
+            return false;
+        }
+
+        return ApplySpineGroupSelectionInMultiSelectionMode(
+            viewModel,
+            targetSelection,
+            !viewModel.SelectedSpineGroups.Contains(targetSelection));
+    }
+
+    public bool ToggleSpineGroupSelectionRangeInMultiSelectionMode(
+        SpineAssetGroupEntryViewModel anchorSelection,
+        SpineAssetGroupEntryViewModel targetSelection)
+    {
+        ArgumentNullException.ThrowIfNull(anchorSelection);
+        ArgumentNullException.ThrowIfNull(targetSelection);
+
+        var viewModel = _getViewModel();
+        if (viewModel is null ||
+            !viewModel.IsSpineGroupViewMode ||
+            !viewModel.IsMultiSelectionMode ||
+            !viewModel.SpineGroupItems.Contains(anchorSelection) ||
+            !viewModel.SpineGroupItems.Contains(targetSelection))
+        {
+            return false;
+        }
+
+        return ApplySpineGroupSelectionToggleRangeInMultiSelectionMode(viewModel, anchorSelection, targetSelection);
+    }
+
+    private bool ApplySpineGroupSelectionInMultiSelectionMode(
+        AssetPaneViewModel viewModel,
+        SpineAssetGroupEntryViewModel targetSelection,
+        bool shouldSelect)
+    {
+        var mutation = AssetPaneSelectionRangeResolver.Resolve(
+            viewModel.SelectedSpineGroups,
+            viewModel.SpineGroupItems,
+            targetSelection,
+            targetSelection,
+            shouldSelect,
+            viewModel.SelectedSpineGroup);
+
+        _isSynchronizingSpineGroupSelectionFromViewModel = true;
+        try
+        {
+            viewModel.UpdateSpineGroupSelection(mutation.SelectedItems, mutation.PrimarySelection);
+            return true;
+        }
+        finally
+        {
+            _isSynchronizingSpineGroupSelectionFromViewModel = false;
+        }
+    }
+
+    private bool ApplySpineGroupSelectionToggleRangeInMultiSelectionMode(
+        AssetPaneViewModel viewModel,
+        SpineAssetGroupEntryViewModel anchorSelection,
+        SpineAssetGroupEntryViewModel targetSelection)
+    {
+        if (ReferenceEquals(anchorSelection, targetSelection))
+        {
+            return false;
+        }
+
+        var mutation = AssetPaneSelectionRangeResolver.ResolveToggleRange(
+            viewModel.SelectedSpineGroups,
+            viewModel.SpineGroupItems,
+            anchorSelection,
+            targetSelection,
+            viewModel.SelectedSpineGroup);
+
+        _isSynchronizingSpineGroupSelectionFromViewModel = true;
+        try
+        {
+            viewModel.UpdateSpineGroupSelection(mutation.SelectedItems, mutation.PrimarySelection);
+            return true;
+        }
+        finally
+        {
+            _isSynchronizingSpineGroupSelectionFromViewModel = false;
+        }
+    }
+
     public void SynchronizeAssetSelectionFromViewModel()
     {
         if (_isSynchronizingAssetSelectionFromViewModel)
@@ -166,12 +362,10 @@ internal sealed class AssetPaneSelectionViewCoordinator
                 _assetListView.SelectedItem = targetSelection;
             }
 
-            if (_assetListView.SelectedItems.Count != 1 ||
-                !ReferenceEquals(_assetListView.SelectedItems[0], targetSelection))
-            {
-                _assetListView.SelectedItems.Clear();
-                _assetListView.SelectedItems.Add(targetSelection);
-            }
+            AssetPaneListViewSelectionWriter.ApplySelection(
+                _assetListView,
+                viewModel.SelectedAssets,
+                targetSelection);
 
             _assetListView.ScrollIntoView(targetSelection);
         }
@@ -220,15 +414,10 @@ internal sealed class AssetPaneSelectionViewCoordinator
                 _spineGroupListView.SelectedItem = targetSelection;
             }
 
-            if (_spineGroupListView.SelectedItems.Count != viewModel.SelectedSpineGroups.Count ||
-                viewModel.SelectedSpineGroups.Any(item => !_spineGroupListView.SelectedItems.Contains(item)))
-            {
-                _spineGroupListView.SelectedItems.Clear();
-                foreach (var selectedGroup in viewModel.SelectedSpineGroups)
-                {
-                    _spineGroupListView.SelectedItems.Add(selectedGroup);
-                }
-            }
+            AssetPaneListViewSelectionWriter.ApplySelection(
+                _spineGroupListView,
+                viewModel.SelectedSpineGroups,
+                targetSelection);
 
             _spineGroupListView.ScrollIntoView(targetSelection);
         }
@@ -273,4 +462,5 @@ internal sealed class AssetPaneSelectionViewCoordinator
         _spineGroupListView.UpdateLayout();
         _spineGroupListView.ScrollIntoView(targetSelection);
     }
+
 }

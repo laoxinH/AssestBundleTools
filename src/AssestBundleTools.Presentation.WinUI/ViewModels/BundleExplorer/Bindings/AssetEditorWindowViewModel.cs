@@ -21,7 +21,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 /// <summary>
 /// 独立资源编辑窗口的资产文档组状态与资源级动作编排。
 /// </summary>
-public sealed partial class AssetEditorWindowViewModel : ObservableObject
+public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisposable
 {
     private readonly IWorkspaceAssetInspectionGateway _workspaceAssetInspectionGateway;
     private readonly ILocalizationService _localizationService;
@@ -35,6 +35,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject
     private readonly ISpineAssetGroupDetailsLoader _spineGroupDetailsLoader;
     private readonly BundleExplorerAssetPreviewLoadCoordinator _assetPreviewLoadCoordinator;
     private readonly AssetEditorWindowAssetActionCoordinator _assetActionCoordinator;
+    private readonly WorkspaceOperationChangeRefreshCoordinator _operationChangeRefreshCoordinator;
     private readonly InspectorInformationTextSet _inspectorInformationTextSet;
     private readonly InspectorPanelViewModel _emptyInspector;
     private bool _isBusy;
@@ -43,6 +44,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject
         AssetDocumentTabViewModel initialAssetTab,
         IWorkspaceAssetInspectionGateway workspaceAssetInspectionGateway,
         IWorkspaceAssetOperationGateway workspaceAssetOperationGateway,
+        IWorkspaceOperationChangeNotifier workspaceOperationChangeNotifier,
         IAppLogService appLogService,
         IAppNotificationService appNotificationService,
         ILocalizationService localizationService,
@@ -58,6 +60,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject
             CreateSingleAssetGroup(initialAssetTab),
             workspaceAssetInspectionGateway,
             workspaceAssetOperationGateway,
+            workspaceOperationChangeNotifier,
             appLogService,
             appNotificationService,
             localizationService,
@@ -76,6 +79,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject
         AssetDocumentGroupTransfer initialAssetGroup,
         IWorkspaceAssetInspectionGateway workspaceAssetInspectionGateway,
         IWorkspaceAssetOperationGateway workspaceAssetOperationGateway,
+        IWorkspaceOperationChangeNotifier workspaceOperationChangeNotifier,
         IAppLogService appLogService,
         IAppNotificationService appNotificationService,
         ILocalizationService localizationService,
@@ -91,6 +95,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(initialAssetGroup);
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
         ArgumentNullException.ThrowIfNull(workspaceAssetOperationGateway);
+        ArgumentNullException.ThrowIfNull(workspaceOperationChangeNotifier);
         ArgumentNullException.ThrowIfNull(appLogService);
         ArgumentNullException.ThrowIfNull(appNotificationService);
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
@@ -147,7 +152,6 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject
             () => Inspector,
             () => IsBusy,
             value => IsBusy = value,
-            ReloadActiveAssetDocumentAsync,
             ReapplyAssetDocumentState);
         _inspectorInformationTextSet = InspectorInformationTextSetFactory.Create(_localizationService);
         _emptyInspector = new InspectorPanelViewModel(_inspectorInformationTextSet);
@@ -155,6 +159,11 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject
 
         DocumentGroup.AddDocumentTabs(initialAssetGroup);
         SyncActiveDocumentState();
+        _operationChangeRefreshCoordinator = new WorkspaceOperationChangeRefreshCoordinator(
+            workspaceOperationChangeNotifier,
+            () => _workspaceShell.WorkspaceSummary?.WorkspaceId,
+            () => IsBusy,
+            RefreshOperationAffectedStateAsync);
     }
 
     public event EventHandler? EmptyGroupRequested;
@@ -175,9 +184,12 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject
             if (SetProperty(ref _isBusy, value))
             {
                 NotifyActionStates();
+                _operationChangeRefreshCoordinator.HandleBusyStateChanged(value);
             }
         }
     }
+
+    public void Dispose() => _operationChangeRefreshCoordinator.Dispose();
 
     public async Task ActivateAssetDocumentTabAsync(AssetDocumentTabViewModel? assetTab)
     {
@@ -341,17 +353,6 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject
         _assetPreviewLoadCoordinator.PrewarmBackgroundPreviews(DocumentGroup.AssetTabs, assetTab);
     }
 
-    private async Task ReloadActiveAssetDocumentAsync()
-    {
-        if (DocumentGroup.ActiveAssetTab is not { } assetTab)
-        {
-            return;
-        }
-
-        assetTab.Inspector.Preview.ResetState();
-        await LoadAssetDocumentTabAsync(assetTab, promotePreviewAfterLoad: true);
-    }
-
     private void ReapplyAssetDocumentState(AssetDocumentTabViewModel assetTab, AssetDetailsDto details)
     {
         _assetInspectorPresenter.PresentAssetDocumentTab(
@@ -360,6 +361,62 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject
             canEdit: ReferenceEquals(assetTab, DocumentGroup.ActiveAssetTab),
             isBusy: IsBusy);
         NotifyActionStates();
+    }
+
+    private void ReapplySpineGroupDocumentState(SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
+        NotifyActionStates();
+        OnPropertyChanged(nameof(Inspector));
+        OnPropertyChanged(nameof(WindowTitle));
+    }
+
+    private async Task RefreshOperationAffectedStateAsync()
+    {
+        if (DocumentGroup.ActiveAssetTab is { } assetTab)
+        {
+            await RefreshAssetDocumentDetailsAsync(assetTab);
+            return;
+        }
+
+        if (DocumentGroup.ActiveSpineGroupTab is { } spineGroupTab)
+        {
+            await RefreshSpineGroupDocumentDetailsAsync(spineGroupTab);
+        }
+    }
+
+    private async Task RefreshAssetDocumentDetailsAsync(AssetDocumentTabViewModel assetTab)
+    {
+        if (_workspaceShell.WorkspaceSummary is not { } workspaceSummary)
+        {
+            return;
+        }
+
+        var detailsResult = await _backgroundTaskRunner.RunAsync(
+            token => _workspaceAssetInspectionGateway.GetAssetDetailsAsync(
+                new GetAssetDetailsQuery(
+                    WorkspaceId: workspaceSummary.WorkspaceId,
+                    BundleId: assetTab.BundleId,
+                    AssetId: assetTab.AssetId),
+                token));
+        if (TryGetValue(detailsResult, out var details))
+        {
+            ReapplyAssetDocumentState(assetTab, details);
+        }
+    }
+
+    private async Task RefreshSpineGroupDocumentDetailsAsync(SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        var loadResult = await _spineGroupDetailsLoader.LoadAsync(spineGroupTab);
+        if (loadResult is not null)
+        {
+            spineGroupTab.ApplyDetails(
+                loadResult.Details,
+                loadResult.TexturePreview,
+                loadResult.AnimationTextures);
+        }
+
+        ReapplySpineGroupDocumentState(spineGroupTab);
     }
 
     private void SyncActiveDocumentState()

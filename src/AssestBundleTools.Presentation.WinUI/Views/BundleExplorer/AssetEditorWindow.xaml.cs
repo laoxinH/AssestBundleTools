@@ -196,11 +196,6 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         await ViewModel.ApplyPendingReplacementAsync();
     }
 
-    private async void OnInspectorUndoReplacementRequested(object sender, EventArgs e)
-    {
-        await ViewModel.UndoAppliedReplacementAsync();
-    }
-
     private async void OnInspectorSpineAtlasPageSelectionRequested(
         object sender,
         SpineAtlasPageSelectionRequestedEventArgs e)
@@ -265,6 +260,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         _assetTabStateObserver.Dispose();
         ViewModel.EmptyGroupRequested -= OnEmptyGroupRequested;
         Closed -= OnClosed;
+        ViewModel.Dispose();
         ViewModel.DocumentGroup.Clear();
     }
 

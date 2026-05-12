@@ -26,7 +26,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         _audioPayloadTranscodingService = audioPayloadTranscodingService ?? throw new ArgumentNullException(nameof(audioPayloadTranscodingService));
     }
 
-    public string GeneratorVersion => "assetstools.preview/25";
+    public string GeneratorVersion => "assetstools.preview/26";
 
     public async Task<Result<AssetPreviewContentDto>> GenerateAsync(
         AssetPreviewBuildRequestDto request,

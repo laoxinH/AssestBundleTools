@@ -771,7 +771,20 @@ internal static partial class GetAssetPreviewHandlerTests
                     TypeName: "Array",
                     ChildCount: 2,
                     Depth: 1)
-            ]);
+            ],
+            TypeTreeJsonText: """
+            {
+              "m_GameObject": {
+                "m_FileID": 0,
+                "m_PathID": 120
+              },
+              "m_Enabled": 1,
+              "m_Name": "HeroLogic",
+              "m_Health": 100
+            }
+            """,
+            TypeTreeNodeCount: 6,
+            IsTypeTreeJsonTruncated: false);
     }
 
     private static AssetPreviewAnimatorControllerDto CreateAnimatorControllerPreview()

@@ -334,6 +334,7 @@ internal static partial class AssetsToolsRealSampleDependencyTests
                 $"script={FormatMonoBehaviourProbeScript(summary.Preview.Script)}, " +
                 $"fields={summary.Preview.FieldCount}, scalars={summary.Preview.ScalarFieldCount}, " +
                 $"arrays={summary.Preview.ArrayFieldCount}, refs={summary.Preview.ReferenceCount}, " +
+                $"typetreeNodes={summary.Preview.TypeTreeNodeCount}, " +
                 $"truncated(fields={summary.Preview.IsFieldListTruncated}, refs={summary.Preview.IsReferenceListTruncated}).");
             Console.WriteLine($"[INFO]   groups: {FormatMonoBehaviourProbeGroups(summary.Distribution.RootGroups)}");
             Console.WriteLine($"[INFO]   containers: {FormatMonoBehaviourProbeContainers(summary.Distribution.Containers)}");
@@ -361,6 +362,13 @@ internal static partial class AssetsToolsRealSampleDependencyTests
         TestAssert.True(
             rankedSummaries.Any(static summary => summary.Preview.Containers is { Count: > 0 }),
             "Real MonoBehaviour preview should expose serialized container summaries.");
+        TestAssert.True(
+            !string.IsNullOrWhiteSpace(heavySummary.Preview.TypeTreeJsonText) &&
+            heavySummary.Preview.TypeTreeJsonText.Contains("\"m_GameObject\"", StringComparison.Ordinal),
+            "Real MonoBehaviour preview should expose a TypeTree JSON field tree.");
+        TestAssert.True(
+            heavySummary.Preview.TypeTreeNodeCount > 0,
+            "Real MonoBehaviour TypeTree JSON should report visited node count.");
         return Task.CompletedTask;
     }
 

@@ -14,4 +14,5 @@ public sealed record SpineAssetGroupPartDto(
     string Name,
     string AssetPath,
     AssetType AssetType,
-    string? AssetTypeDisplayName);
+    string? AssetTypeDisplayName,
+    DateTimeOffset? LastExtractedAtUtc = null);

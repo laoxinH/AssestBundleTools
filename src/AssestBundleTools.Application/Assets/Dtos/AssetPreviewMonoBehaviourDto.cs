@@ -14,7 +14,10 @@ public sealed record AssetPreviewMonoBehaviourDto(
     IReadOnlyList<AssetPreviewMonoBehaviourFieldGroupDto>? FieldGroups = null,
     IReadOnlyList<AssetPreviewMonoBehaviourContainerDto>? Containers = null,
     bool IsFieldListTruncated = false,
-    bool IsReferenceListTruncated = false);
+    bool IsReferenceListTruncated = false,
+    string? TypeTreeJsonText = null,
+    int TypeTreeNodeCount = 0,
+    bool IsTypeTreeJsonTruncated = false);
 
 public sealed record AssetPreviewMonoBehaviourScriptDto(
     long FileId,

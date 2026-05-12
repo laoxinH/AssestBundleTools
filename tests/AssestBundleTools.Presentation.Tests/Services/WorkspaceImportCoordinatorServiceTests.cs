@@ -160,10 +160,14 @@ public sealed class WorkspaceImportCoordinatorServiceTests
 
         public Task<string?> PickAssetExtractionOutputFileAsync(
             AssetType assetType,
+            string? assetTypeDisplayName,
             string assetName,
             string? assetPath,
             string? containerPath,
             CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
+
+        public Task<string?> PickAssetBatchExtractionOutputDirectoryAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult<string?>(null);
 
         public Task<string?> PickReplacementSourceFileAsync(

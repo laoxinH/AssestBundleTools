@@ -181,6 +181,92 @@ public sealed class AssetPaneViewModelTests
         Assert.True(secondAsset.IsSelected);
         Assert.Equal(1, viewModel.SelectedAssetCount);
         Assert.False(viewModel.HasMultipleSelection);
+        Assert.False(viewModel.IsMultiSelectionMode);
+    }
+
+    [Fact]
+    public void EnterMultiSelectionMode_ShouldShowQuickActions_ForSingleAssetSelection()
+    {
+        var viewModel = new AssetPaneViewModel
+        {
+            SupportsBatchExtractionQuickAction = true
+        };
+        var firstAsset = CreateAssetEntry("asset-1");
+        var secondAsset = CreateAssetEntry("asset-2");
+        viewModel.ReplaceItems("ui.ab", [firstAsset, secondAsset], "empty");
+        viewModel.UpdateSelection([firstAsset], firstAsset);
+
+        viewModel.EnterMultiSelectionMode();
+
+        Assert.True(viewModel.IsMultiSelectionMode);
+        Assert.Equal(1, viewModel.SelectedItemCount);
+        Assert.True(viewModel.CanBatchExtractSelectedAssets);
+        Assert.Equal(Visibility.Visible, viewModel.MultiSelectionQuickActionsVisibility);
+    }
+
+    [Fact]
+    public void SelectAllVisibleItems_ShouldEnterAssetMultiSelectionMode()
+    {
+        var viewModel = new AssetPaneViewModel
+        {
+            SupportsBatchExtractionQuickAction = true
+        };
+        var firstAsset = CreateAssetEntry("asset-1");
+        var secondAsset = CreateAssetEntry("asset-2");
+        viewModel.ReplaceItems("ui.ab", [firstAsset, secondAsset], "empty");
+
+        viewModel.SelectAllVisibleItems();
+
+        Assert.True(viewModel.IsMultiSelectionMode);
+        Assert.Equal(2, viewModel.SelectedAssetCount);
+        Assert.Collection(
+            viewModel.SelectedAssets,
+            selected => Assert.Same(firstAsset, selected),
+            selected => Assert.Same(secondAsset, selected));
+        Assert.True(firstAsset.IsSelected);
+        Assert.True(secondAsset.IsSelected);
+    }
+
+    [Fact]
+    public void InvertVisibleSelection_ShouldToggleAssetSelection_WithoutLeavingMultiSelectionMode()
+    {
+        var viewModel = new AssetPaneViewModel
+        {
+            SupportsBatchExtractionQuickAction = true
+        };
+        var firstAsset = CreateAssetEntry("asset-1");
+        var secondAsset = CreateAssetEntry("asset-2");
+        viewModel.ReplaceItems("ui.ab", [firstAsset, secondAsset], "empty");
+        viewModel.UpdateSelection([firstAsset], firstAsset);
+        viewModel.EnterMultiSelectionMode();
+
+        viewModel.InvertVisibleSelection();
+
+        Assert.True(viewModel.IsMultiSelectionMode);
+        Assert.Collection(viewModel.SelectedAssets, selected => Assert.Same(secondAsset, selected));
+        Assert.False(firstAsset.IsSelected);
+        Assert.True(secondAsset.IsSelected);
+    }
+
+    [Fact]
+    public void ExitMultiSelectionMode_ShouldCollapseAssetSelectionToPrimary()
+    {
+        var viewModel = new AssetPaneViewModel
+        {
+            SupportsBatchExtractionQuickAction = true
+        };
+        var firstAsset = CreateAssetEntry("asset-1");
+        var secondAsset = CreateAssetEntry("asset-2");
+        viewModel.ReplaceItems("ui.ab", [firstAsset, secondAsset], "empty");
+        viewModel.UpdateSelection([firstAsset, secondAsset], secondAsset);
+
+        viewModel.ExitMultiSelectionMode();
+
+        Assert.False(viewModel.IsMultiSelectionMode);
+        Assert.Same(secondAsset, viewModel.SelectedAsset);
+        Assert.Collection(viewModel.SelectedAssets, selected => Assert.Same(secondAsset, selected));
+        Assert.False(firstAsset.IsSelected);
+        Assert.True(secondAsset.IsSelected);
     }
 
     [Fact]
@@ -217,7 +303,10 @@ public sealed class AssetPaneViewModelTests
     [Fact]
     public void UpdateSpineGroupSelection_ShouldPreserveMultiSelection()
     {
-        var viewModel = new AssetPaneViewModel();
+        var viewModel = new AssetPaneViewModel
+        {
+            ViewMode = AssetPaneViewMode.SpineGroups
+        };
         var firstGroup = CreateSpineGroupEntry("hero");
         var secondGroup = CreateSpineGroupEntry("enemy");
         viewModel.ReplaceSpineGroups("ui.ab", [firstGroup, secondGroup], "no spine");
@@ -232,6 +321,27 @@ public sealed class AssetPaneViewModelTests
         Assert.True(firstGroup.IsSelected);
         Assert.True(secondGroup.IsSelected);
         Assert.Equal(2, viewModel.SelectedSpineGroupCount);
+        Assert.True(viewModel.IsMultiSelectionMode);
+    }
+
+    [Fact]
+    public void SpineGroupMultiSelection_ShouldUseSpineCount_AndEnableBatchExtraction()
+    {
+        var viewModel = new AssetPaneViewModel
+        {
+            SupportsBatchExtractionQuickAction = true,
+            ViewMode = AssetPaneViewMode.SpineGroups
+        };
+        var firstGroup = CreateSpineGroupEntry("hero");
+        var secondGroup = CreateSpineGroupEntry("enemy");
+        viewModel.ReplaceSpineGroups("ui.ab", [firstGroup, secondGroup], "no spine");
+
+        viewModel.SelectAllVisibleItems();
+
+        Assert.True(viewModel.IsMultiSelectionMode);
+        Assert.Equal(2, viewModel.SelectedItemCount);
+        Assert.Equal(Visibility.Visible, viewModel.MultiSelectionQuickActionsVisibility);
+        Assert.True(viewModel.CanBatchExtractSelectedAssets);
     }
 
     [Fact]

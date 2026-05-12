@@ -296,6 +296,7 @@ public sealed partial class BundleExplorerPage
                 detachedGroup,
                 App.CurrentApp.WorkspaceAssetInspectionGateway,
                 App.CurrentApp.WorkspaceAssetOperationGateway,
+                App.CurrentApp.WorkspaceOperationChangeNotifier,
                 App.CurrentApp.AppLogService,
                 App.CurrentApp.AppNotificationService,
                 App.CurrentApp.LocalizationService,

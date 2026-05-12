@@ -64,6 +64,51 @@ internal sealed class AssetPaneSpineGroupListState
         UpdateSelectionState();
     }
 
+    public void SelectAllVisibleItems()
+    {
+        SelectedSpineGroups.Clear();
+        foreach (var item in Items)
+        {
+            SelectedSpineGroups.Add(item);
+        }
+
+        SelectedSpineGroup = SelectedSpineGroups.LastOrDefault();
+        UpdateSelectionState();
+    }
+
+    public void InvertVisibleSelection()
+    {
+        var selectedSet = SelectedSpineGroups.ToHashSet();
+        var invertedItems = Items
+            .Where(item => !selectedSet.Contains(item))
+            .ToArray();
+
+        SelectedSpineGroups.Clear();
+        foreach (var item in invertedItems)
+        {
+            SelectedSpineGroups.Add(item);
+        }
+
+        SelectedSpineGroup = SelectedSpineGroups.LastOrDefault();
+        UpdateSelectionState();
+    }
+
+    public void CollapseSelectionToPrimary()
+    {
+        if (SelectedSpineGroup is null || !SelectedSpineGroups.Contains(SelectedSpineGroup))
+        {
+            SelectedSpineGroup = SelectedSpineGroups.LastOrDefault();
+        }
+
+        SelectedSpineGroups.Clear();
+        if (SelectedSpineGroup is not null)
+        {
+            SelectedSpineGroups.Add(SelectedSpineGroup);
+        }
+
+        UpdateSelectionState();
+    }
+
     public void Clear()
     {
         foreach (var item in _sourceItems)
@@ -98,7 +143,7 @@ internal sealed class AssetPaneSpineGroupListState
         UpdateSelectionState();
     }
 
-    private void UpdateSelectionState()
+    public void UpdateSelectionState()
     {
         foreach (var item in _sourceItems)
         {

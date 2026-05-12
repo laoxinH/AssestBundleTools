@@ -1620,7 +1620,6 @@
                         SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
                         SelectReplacementSourceRequested="OnInspectorSelectReplacementSourceRequested"
                         ApplyReplacementRequested="OnInspectorApplyReplacementRequested"
-                        UndoReplacementRequested="OnInspectorUndoReplacementRequested"
                         SpineAtlasPageSelectionRequested="OnInspectorSpineAtlasPageSelectionRequested"
                         ViewModel="{x:Bind ViewModel.AssetWorkflow.Inspector, Mode=OneWay}" />
                 </Grid>

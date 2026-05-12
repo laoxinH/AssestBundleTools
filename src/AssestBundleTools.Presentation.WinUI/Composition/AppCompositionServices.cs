@@ -19,6 +19,7 @@ internal sealed record AppCompositionServices(
     IWorkspaceAssetInspectionGateway WorkspaceAssetInspectionGateway,
     IWorkspaceAssetOperationGateway WorkspaceAssetOperationGateway,
     IWorkspaceBatchOperationsGateway WorkspaceBatchOperationsGateway,
+    IWorkspaceOperationChangeNotifier WorkspaceOperationChangeNotifier,
     IAssetEditDraftRestorePlanGateway AssetEditDraftRestorePlanGateway,
     IWorkspaceContextService WorkspaceContextService,
     IWorkspaceProcessCoordinatorService WorkspaceProcessCoordinatorService,

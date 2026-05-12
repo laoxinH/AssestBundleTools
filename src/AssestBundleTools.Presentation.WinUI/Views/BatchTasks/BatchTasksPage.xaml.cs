@@ -15,6 +15,7 @@ public sealed partial class BatchTasksPage : Page
         ViewModel = new BatchTasksViewModel(
             App.CurrentApp.WorkspaceBatchOperationsGateway,
             App.CurrentApp.WorkspaceContextService,
+            App.CurrentApp.WorkspaceOperationChangeNotifier,
             App.CurrentApp.LocalizationService,
             App.CurrentApp.AppLogService,
             App.CurrentApp.WorkspaceImportCoordinatorService);

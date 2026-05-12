@@ -39,12 +39,15 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
 
     private readonly IWorkspaceBatchOperationsGateway _workspaceBatchOperationsGateway;
     private readonly IWorkspaceContextService _workspaceContextService;
+    private readonly WorkspaceOperationChangeRefreshCoordinator _operationChangeRefreshCoordinator;
     private readonly ILocalizationService _localizationService;
     private readonly IAppLogService _appLogService;
     private readonly IWorkspaceImportCoordinatorService _workspaceImportCoordinatorService;
     private readonly BatchTasksPresentationPresenter _presentationPresenter;
     private bool _isInitialized;
     private bool _isBusy;
+    private bool _hasPendingRefreshRequest;
+    private bool _isRefreshLoopActive;
     private string? _activeWorkspaceId;
     private string _workspaceOverviewText = string.Empty;
     private string _changeSummaryText = string.Empty;
@@ -67,6 +70,7 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
     public BatchTasksViewModel(
         IWorkspaceBatchOperationsGateway workspaceBatchOperationsGateway,
         IWorkspaceContextService workspaceContextService,
+        IWorkspaceOperationChangeNotifier workspaceOperationChangeNotifier,
         ILocalizationService localizationService,
         IAppLogService appLogService,
         IWorkspaceImportCoordinatorService workspaceImportCoordinatorService)
@@ -76,6 +80,11 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _workspaceImportCoordinatorService = workspaceImportCoordinatorService ?? throw new ArgumentNullException(nameof(workspaceImportCoordinatorService));
+        _operationChangeRefreshCoordinator = new WorkspaceOperationChangeRefreshCoordinator(
+            workspaceOperationChangeNotifier ?? throw new ArgumentNullException(nameof(workspaceOperationChangeNotifier)),
+            () => _workspaceContextService.CurrentWorkspaceSummary?.WorkspaceId,
+            () => IsBusy,
+            RefreshAsync);
         _presentationPresenter = new BatchTasksPresentationPresenter(this, _localizationService);
 
         _presentationPresenter.InitializeStaticState();
@@ -149,6 +158,13 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
                 RunBatchExtractCommand.NotifyCanExecuteChanged();
                 RunBatchReplaceCommand.NotifyCanExecuteChanged();
                 RunSaveCommand.NotifyCanExecuteChanged();
+
+                if (!value && _hasPendingRefreshRequest)
+                {
+                    _ = RefreshAsync();
+                }
+
+                _operationChangeRefreshCoordinator.HandleBusyStateChanged(value);
             }
         }
     }
@@ -320,16 +336,36 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
     {
         _workspaceContextService.CurrentWorkspaceChanged -= OnCurrentWorkspaceChanged;
         _workspaceContextService.WorkspaceEntriesChanged -= OnWorkspaceEntriesChanged;
+        _operationChangeRefreshCoordinator.Dispose();
         _isInitialized = false;
     }
 
     public async Task RefreshAsync()
     {
-        if (IsBusy)
+        if (IsBusy || _isRefreshLoopActive)
         {
+            _hasPendingRefreshRequest = true;
             return;
         }
 
+        _isRefreshLoopActive = true;
+        try
+        {
+            do
+            {
+                _hasPendingRefreshRequest = false;
+                await RefreshOnceAsync();
+            }
+            while (_hasPendingRefreshRequest);
+        }
+        finally
+        {
+            _isRefreshLoopActive = false;
+        }
+    }
+
+    private async Task RefreshOnceAsync()
+    {
         var currentWorkspaceSummary = _workspaceContextService.CurrentWorkspaceSummary;
         if (currentWorkspaceSummary is null)
         {
