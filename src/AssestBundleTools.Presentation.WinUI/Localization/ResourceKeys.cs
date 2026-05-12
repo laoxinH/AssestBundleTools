@@ -22,6 +22,10 @@ public static class ResourceKeys
     public const string ShellDescriptionWorkbench = "Shell.Description.Workbench";
     public const string ShellDescriptionBatchTasks = "Shell.Description.BatchTasks";
     public const string ShellDescriptionSettingsDiagnostics = "Shell.Description.SettingsDiagnostics";
+    public const string AppStatusBarReadyText = "AppStatusBar.Ready.Text";
+    public const string AppStatusBarWorkingText = "AppStatusBar.Working.Text";
+    public const string AppStatusBarBackgroundTaskFallbackText = "AppStatusBar.BackgroundTask.Fallback.Text";
+    public const string AppStatusBarProgressFormat = "AppStatusBar.Progress.Format";
     public const string HomePageBadgeText = "HomePage.BadgeText.Text";
     public const string HomePageTitle = "HomePage.PageTitleText.Text";
     public const string HomePageSubtitle = "HomePage.PageSubtitleText.Text";
@@ -236,6 +240,7 @@ public static class ResourceKeys
     public const string BatchTasksBatchExtractLastRunNone = "BatchTasksPage.BatchExtract.LastRun.None";
     public const string BatchTasksBatchExtractLastRunFormat = "BatchTasksPage.BatchExtract.LastRun.Format";
     public const string BatchTasksBatchExtractLogExecutedFormat = "BatchTasksPage.BatchExtract.Log.Executed.Format";
+    public const string BatchTasksBatchExtractStatusText = "BatchTasksPage.BatchExtract.Status.Text";
     public const string BatchTasksBatchReplaceScopeFormat = "BatchTasksPage.BatchReplace.Scope.Format";
     public const string BatchTasksBatchReplaceScopeEmpty = "BatchTasksPage.BatchReplace.Scope.Empty";
     public const string BatchTasksBatchReplaceEmpty = "BatchTasksPage.BatchReplace.Empty";
@@ -375,6 +380,7 @@ public static class ResourceKeys
     public const string BundleExplorerLogAssetExtractionSelectionCancelled = "BundleExplorer.Log.AssetExtractionSelectionCancelled";
     public const string BundleExplorerLogBatchAssetExtractionSelectionCancelled = "BundleExplorer.Log.BatchAssetExtractionSelectionCancelled";
     public const string BundleExplorerLogBatchAssetsExtracted = "BundleExplorer.Log.BatchAssetsExtracted";
+    public const string BundleExplorerLogBatchExtractionFailuresSuppressed = "BundleExplorer.Log.BatchExtractionFailuresSuppressed";
     public const string BundleExplorerLogSpineGroupExtracted = "BundleExplorer.Log.SpineGroupExtracted";
     public const string BundleExplorerLogSpineGroupExtractionSelectionCancelled = "BundleExplorer.Log.SpineGroupExtractionSelectionCancelled";
     public const string BundleExplorerLogBatchSpineGroupExtractionSelectionCancelled = "BundleExplorer.Log.BatchSpineGroupExtractionSelectionCancelled";
@@ -398,6 +404,8 @@ public static class ResourceKeys
     public const string BundleExplorerNotificationResolvedAssetNavigationUnavailableFormat = "BundleExplorer.Notification.ResolvedAssetNavigationUnavailable.Format";
     public const string BundleExplorerNotificationAssetExtracted = "BundleExplorer.Notification.AssetExtracted";
     public const string BundleExplorerNotificationBatchAssetsExtracted = "BundleExplorer.Notification.BatchAssetsExtracted";
+    public const string BundleExplorerStatusExtractSelectedAssets = "BundleExplorer.Status.ExtractSelectedAssets";
+    public const string BundleExplorerStatusExtractSelectedSpineGroups = "BundleExplorer.Status.ExtractSelectedSpineGroups";
     public const string BundleExplorerNotificationSpineGroupExtracted = "BundleExplorer.Notification.SpineGroupExtracted";
     public const string BundleExplorerNotificationBatchSpineGroupsExtracted = "BundleExplorer.Notification.BatchSpineGroupsExtracted";
     public const string BundleExplorerNotificationReplacementSourceSelected = "BundleExplorer.Notification.ReplacementSourceSelected";

@@ -56,7 +56,8 @@ public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
         IWorkspaceImportCoordinatorService workspaceImportCoordinatorService,
         IBackgroundTaskRunner backgroundTaskRunner,
         IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
-        IPathNavigationService pathNavigationService)
+        IPathNavigationService pathNavigationService,
+        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null)
     {
         ArgumentNullException.ThrowIfNull(workspaceExplorerGateway);
         ArgumentNullException.ThrowIfNull(workspaceAssetInspectionGateway);
@@ -103,7 +104,8 @@ public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
             _documentWorkspace,
             isBusyProvider: () => IsBusy,
             setBusyState: value => IsBusy = value,
-            requestWorkspaceBrowserStatePersistence: RequestWorkspaceBrowserStatePersistence);
+            requestWorkspaceBrowserStatePersistence: RequestWorkspaceBrowserStatePersistence,
+            backgroundTaskStatusService: backgroundTaskStatusService);
         _bundleTabCoordinator = new BundleExplorerBundleTabCoordinator(
             _bundlePane,
             _documentWorkspace,

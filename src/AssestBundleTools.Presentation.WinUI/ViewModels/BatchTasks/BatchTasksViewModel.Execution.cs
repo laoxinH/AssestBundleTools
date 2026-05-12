@@ -21,12 +21,15 @@ public sealed partial class BatchTasksViewModel
         IsBusy = true;
         try
         {
-            var result = await _workspaceBatchOperationsGateway.ExtractWorkspaceAssetsAsync(
-                new ExtractWorkspaceAssetsCommand(
-                    WorkspaceId: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceId,
-                    AssetTypeFilter: SelectedBatchExtractAssetTypeOption?.AssetType,
-                    WorkspaceKey: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceKey,
-                    WorkspaceDataRootPath: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceDataRootPath));
+            using var taskHandle = _backgroundTaskStatusService.BeginTask(
+                _localizationService.GetRequiredString(ResourceKeys.BatchTasksBatchExtractStatusText));
+            var command = new ExtractWorkspaceAssetsCommand(
+                WorkspaceId: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceId,
+                AssetTypeFilter: SelectedBatchExtractAssetTypeOption?.AssetType,
+                WorkspaceKey: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceKey,
+                WorkspaceDataRootPath: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceDataRootPath);
+            var result = await _backgroundTaskRunner.RunAsync(
+                token => _workspaceBatchOperationsGateway.ExtractWorkspaceAssetsAsync(command, token));
 
             if (!TryGetValue(result, out WorkspaceBatchExtractionResultDto? extractionResult))
             {

@@ -12,6 +12,8 @@ public interface IBundleExplorerDocumentWorkspaceHost
 {
     event EventHandler? AssetDocumentHostStateChanged;
 
+    IEnumerable<BundleDocumentTabViewModel> OpenBundleTabs { get; }
+
     BundleDocumentTabViewModel? ActiveBundleTab { get; }
 
     AssetDocumentTabViewModel? ActiveAssetDocumentTab { get; }

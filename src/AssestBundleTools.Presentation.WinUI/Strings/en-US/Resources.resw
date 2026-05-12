@@ -120,6 +120,18 @@
   <data name="Shell.Description.SettingsDiagnostics" xml:space="preserve">
     <value>The centralized place for detailed logs, environment checks, and later language and diagnostics settings.</value>
   </data>
+  <data name="AppStatusBar.Ready.Text" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="AppStatusBar.Working.Text" xml:space="preserve">
+    <value>Working</value>
+  </data>
+  <data name="AppStatusBar.BackgroundTask.Fallback.Text" xml:space="preserve">
+    <value>Background task</value>
+  </data>
+  <data name="AppStatusBar.Progress.Format" xml:space="preserve">
+    <value>{0}/{1}</value>
+  </data>
   <data name="HomePage.PageTitleText.Text" xml:space="preserve">
     <value>Console</value>
   </data>
@@ -2856,6 +2868,9 @@
   <data name="BatchTasksPage.BatchExtract.Log.Executed.Format" xml:space="preserve">
     <value>Executed bulk extraction and wrote {0} assets across {1} bundles. Output directory: {2}</value>
   </data>
+  <data name="BatchTasksPage.BatchExtract.Status.Text" xml:space="preserve">
+    <value>Running batch extraction</value>
+  </data>
   <data name="BatchTasksPage.BatchReplace.Scope.Format" xml:space="preserve">
     <value>Current workspace: {0}</value>
   </data>
@@ -3222,6 +3237,9 @@
   <data name="BundleExplorer.Log.BatchAssetsExtracted" xml:space="preserve">
     <value>Extracted {0} assets in bulk. First output path: {1}</value>
   </data>
+  <data name="BundleExplorer.Log.BatchExtractionFailuresSuppressed" xml:space="preserve">
+    <value>{0} additional batch extraction failure details were folded into the summary.</value>
+  </data>
   <data name="BundleExplorer.Log.SpineGroupExtracted" xml:space="preserve">
     <value>Extracted Spine group "{0}". Completed: {1}; failed: {2}; output directory: {3}</value>
   </data>
@@ -3290,6 +3308,12 @@
   </data>
   <data name="BundleExplorer.Notification.BatchAssetsExtracted" xml:space="preserve">
     <value>Exported {0} assets.</value>
+  </data>
+  <data name="BundleExplorer.Status.ExtractSelectedAssets" xml:space="preserve">
+    <value>Extracting selected assets</value>
+  </data>
+  <data name="BundleExplorer.Status.ExtractSelectedSpineGroups" xml:space="preserve">
+    <value>Extracting selected Spine groups</value>
   </data>
   <data name="BundleExplorer.Notification.SpineGroupExtracted" xml:space="preserve">
     <value>Finished extracting Spine group "{0}": {1} completed, {2} failed.</value>

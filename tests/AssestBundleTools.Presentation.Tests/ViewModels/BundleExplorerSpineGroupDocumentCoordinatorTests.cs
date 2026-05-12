@@ -81,6 +81,40 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
     }
 
     [Fact]
+    public async Task RefreshSpineGroupDocumentTabAsync_ShouldRefreshInactiveOpenTab()
+    {
+        var context = CreateContext();
+        var extractedAtUtc = new DateTimeOffset(2026, 5, 12, 9, 45, 0, TimeSpan.Zero);
+        var loader = new TestSpineAssetGroupDetailsLoader
+        {
+            LoadHandler = tab =>
+            {
+                var refreshedGroup = CreateSpineGroup(tab.GroupId, tab.DisplayName, extractedAtUtc);
+                return Task.FromResult<SpineAssetGroupDetailsLoadResult?>(new SpineAssetGroupDetailsLoadResult(
+                    new SpineAssetGroupDetailsDto(refreshedGroup, [], [], refreshedGroup.Diagnostics),
+                    TexturePreview: null));
+            }
+        };
+        var coordinator = CreateCoordinator(context, loader);
+        var activeTab = context.HostCoordinator.CreateSpineGroupDocumentTab(
+            CreateSpineGroup("hero", "Hero"));
+        var inactiveTab = context.HostCoordinator.CreateSpineGroupDocumentTab(
+            CreateSpineGroup("enemy", "Enemy"));
+        context.BundleTab.AddSpineGroupTab(activeTab, activate: true);
+        context.BundleTab.AddSpineGroupTab(inactiveTab, activate: false);
+
+        await coordinator.RefreshSpineGroupDocumentTabAsync(inactiveTab);
+
+        Assert.Equal(1, loader.LoadCallCount);
+        Assert.Same(activeTab, context.BundleTab.ActiveSpineGroupTab);
+        Assert.Equal(extractedAtUtc, inactiveTab.Item.SkeletonAssets[0].LastExtractedAtUtc);
+        Assert.Equal(
+            ResourceKeys.InspectorChangeSummaryExtractOnlyFormat + ":" +
+            extractedAtUtc.ToLocalTime().ToString("G", CultureInfo.CurrentCulture),
+            inactiveTab.Inspector.ChangeSummaryText);
+    }
+
+    [Fact]
     public async Task HandlePrimaryPaneSelectionChangedAsync_ShouldShowLoadingWhileSpineDetailsArePending()
     {
         var context = CreateContext();

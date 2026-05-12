@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Extraction.Commands;
@@ -18,24 +17,37 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionH
 /// </summary>
 internal sealed class BundleExplorerAssetExtractionActionHandler
 {
+    private const int MaxBatchFailureDetails = 3;
+
     private readonly IWorkspaceAssetOperationGateway _workspaceAssetOperationGateway;
     private readonly IAppLogService _appLogService;
     private readonly IAppNotificationService _appNotificationService;
     private readonly ILocalizationService _localizationService;
     private readonly IFilePickerService _filePickerService;
+    private readonly BundleExplorerBatchExtractionBackgroundExecutor _batchExtractionExecutor;
+    private bool _isBatchExtractionRunning;
 
     public BundleExplorerAssetExtractionActionHandler(
         IWorkspaceAssetOperationGateway workspaceAssetOperationGateway,
         IAppLogService appLogService,
         IAppNotificationService appNotificationService,
         ILocalizationService localizationService,
-        IFilePickerService filePickerService)
+        IFilePickerService filePickerService,
+        IBackgroundTaskRunner? backgroundTaskRunner = null,
+        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
+        IWorkspaceOperationChangeNotifier? operationChangeNotifier = null)
     {
         _workspaceAssetOperationGateway = workspaceAssetOperationGateway ?? throw new ArgumentNullException(nameof(workspaceAssetOperationGateway));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _filePickerService = filePickerService ?? throw new ArgumentNullException(nameof(filePickerService));
+        _batchExtractionExecutor = new BundleExplorerBatchExtractionBackgroundExecutor(
+            _workspaceAssetOperationGateway,
+            _localizationService,
+            backgroundTaskRunner,
+            backgroundTaskStatusService,
+            operationChangeNotifier);
     }
 
     public async Task ExtractSelectedAssetAsync(
@@ -133,10 +145,15 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
             return;
         }
 
+        if (_isBatchExtractionRunning)
+        {
+            return;
+        }
+
+        string? selectedOutputDirectory;
         setBusyState(true);
         try
         {
-            string? selectedOutputDirectory;
             try
             {
                 selectedOutputDirectory = await _filePickerService.PickAssetBatchExtractionOutputDirectoryAsync();
@@ -160,56 +177,48 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
                     selectedEntries.Count));
                 return;
             }
+        }
+        finally
+        {
+            setBusyState(false);
+        }
 
-            var extractedResults = new List<AssetExtractionResultDto>(selectedEntries.Count);
-
-            foreach (var entry in selectedEntries)
+        _isBatchExtractionRunning = true;
+        try
+        {
+            var executionResult = await _batchExtractionExecutor.ExtractAssetsAsync(
+                workspaceSummary,
+                selectedEntries,
+                defaultBundleDisplayName,
+                selectedOutputDirectory);
+            if (executionResult.IsCancelled)
             {
-                var result = await _workspaceAssetOperationGateway.ExtractAssetAsync(
-                    new ExtractAssetCommand(
-                        workspaceSummary.WorkspaceId,
-                        entry.Item.BundleId,
-                        entry.Item.AssetId,
-                        workspaceSummary.WorkspaceKey,
-                        workspaceSummary.WorkspaceDataRootPath,
-                        BuildBatchExtractionSuggestedPath(
-                            selectedOutputDirectory,
-                            entry,
-                            defaultBundleDisplayName)));
-
-                if (!TryGetValue(result, out var extractionResult, appendResultFailure))
-                {
-                    continue;
-                }
-
-                extractedResults.Add(extractionResult);
-                _appLogService.AppendInfo(_localizationService.GetFormattedString(
-                    ResourceKeys.BundleExplorerLogAssetExtracted,
-                    extractionResult.AssetName,
-                    ResolveExtractionOutputPath(extractionResult)));
+                return;
             }
 
-            if (extractedResults.Count == 0)
+            AppendFailures(executionResult.Failures, appendResultFailure);
+
+            if (executionResult.ExtractedResults.Count == 0)
             {
                 return;
             }
 
             _appLogService.AppendInfo(_localizationService.GetFormattedString(
                 ResourceKeys.BundleExplorerLogBatchAssetsExtracted,
-                extractedResults.Count,
-                ResolveExtractionOutputPath(extractedResults[0])));
+                executionResult.ExtractedResults.Count,
+                ResolveExtractionOutputPath(executionResult.ExtractedResults[0])));
 
             ShowOperationNotification(
                 GetString(ResourceKeys.AppNotificationSuccessTitle),
                 _localizationService.GetFormattedString(
                     ResourceKeys.BundleExplorerNotificationBatchAssetsExtracted,
-                    extractedResults.Count),
+                    executionResult.ExtractedResults.Count),
                 AppNotificationSeverity.Success);
 
         }
         finally
         {
-            setBusyState(false);
+            _isBatchExtractionRunning = false;
         }
     }
 
@@ -309,10 +318,15 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
             return;
         }
 
+        if (_isBatchExtractionRunning)
+        {
+            return;
+        }
+
+        string? selectedOutputDirectory;
         setBusyState(true);
         try
         {
-            string? selectedOutputDirectory;
             try
             {
                 selectedOutputDirectory = await _filePickerService.PickAssetBatchExtractionOutputDirectoryAsync();
@@ -336,50 +350,40 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
                     selectedEntries.Count));
                 return;
             }
+        }
+        finally
+        {
+            setBusyState(false);
+        }
 
-            var extractionResults = new List<SpineAssetGroupExtractionResultDto>(selectedEntries.Count);
-
-            foreach (var entry in selectedEntries)
-            {
-                var result = await _workspaceAssetOperationGateway.ExtractSpineAssetGroupAsync(
-                    new ExtractSpineAssetGroupCommand(
-                        workspaceSummary.WorkspaceId,
-                        workspaceSummary.WorkspaceKey ?? string.Empty,
-                        workspaceSummary.WorkspaceDataRootPath ?? string.Empty,
-                        entry.Item.BundleId,
-                        entry.Item.GroupId,
-                        SpineBatchExtractionOutputDirectoryResolver.Build(
-                            selectedOutputDirectory,
-                            entry,
-                            defaultBundleDisplayName)));
-
-                if (!TryGetValue(result, out var extractionResult, appendResultFailure))
-                {
-                    continue;
-                }
-
-                extractionResults.Add(extractionResult);
-                _appLogService.AppendInfo(_localizationService.GetFormattedString(
-                    ResourceKeys.BundleExplorerLogSpineGroupExtracted,
-                    extractionResult.GroupDisplayName,
-                    extractionResult.ExtractedAssetCount,
-                    extractionResult.FailedAssetCount,
-                    extractionResult.SuggestedOutputDirectory));
-            }
-
-            if (extractionResults.Count == 0)
+        _isBatchExtractionRunning = true;
+        try
+        {
+            var executionResult = await _batchExtractionExecutor.ExtractSpineGroupsAsync(
+                workspaceSummary,
+                selectedEntries,
+                defaultBundleDisplayName,
+                selectedOutputDirectory);
+            if (executionResult.IsCancelled)
             {
                 return;
             }
 
-            var extractedAssetCount = extractionResults.Sum(static result => result.ExtractedAssetCount);
-            var failedAssetCount = extractionResults.Sum(static result => result.FailedAssetCount);
-            var failedGroupCount = selectedEntries.Count - extractionResults.Count;
+            AppendFailures(executionResult.Failures, appendResultFailure);
+
+            if (executionResult.ExtractionResults.Count == 0)
+            {
+                return;
+            }
+
+            var extractedAssetCount = executionResult.ExtractionResults.Sum(static result => result.ExtractedAssetCount);
+            var failedAssetCount = executionResult.ExtractionResults.Sum(static result => result.FailedAssetCount);
+            var failedGroupCount = selectedEntries.Count - executionResult.ExtractionResults.Count;
             var totalFailureCount = failedAssetCount + failedGroupCount;
 
             _appLogService.AppendInfo(_localizationService.GetFormattedString(
                 ResourceKeys.BundleExplorerLogBatchSpineGroupsExtracted,
-                extractionResults.Count,
+                executionResult.ExtractionResults.Count,
                 selectedEntries.Count,
                 extractedAssetCount,
                 totalFailureCount,
@@ -391,7 +395,7 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
                     : ResourceKeys.AppNotificationWarningTitle),
                 _localizationService.GetFormattedString(
                     ResourceKeys.BundleExplorerNotificationBatchSpineGroupsExtracted,
-                    extractionResults.Count,
+                    executionResult.ExtractionResults.Count,
                     selectedEntries.Count,
                     extractedAssetCount,
                     totalFailureCount),
@@ -402,7 +406,7 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
         }
         finally
         {
-            setBusyState(false);
+            _isBatchExtractionRunning = false;
         }
     }
 
@@ -428,6 +432,33 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
         return false;
     }
 
+    private void AppendFailures(
+        IReadOnlyList<IReadOnlyList<AppError>> failures,
+        Action<IReadOnlyList<AppError>> appendResultFailure)
+    {
+        var appendedFailureCount = 0;
+        foreach (var failure in failures)
+        {
+            if (failure.Count > 0)
+            {
+                appendResultFailure(failure);
+                appendedFailureCount++;
+                if (appendedFailureCount >= MaxBatchFailureDetails)
+                {
+                    break;
+                }
+            }
+        }
+
+        var omittedFailureCount = failures.Count(static failure => failure.Count > 0) - appendedFailureCount;
+        if (omittedFailureCount > 0)
+        {
+            _appLogService.AppendWarning(_localizationService.GetFormattedString(
+                ResourceKeys.BundleExplorerLogBatchExtractionFailuresSuppressed,
+                omittedFailureCount));
+        }
+    }
+
     private void ShowOperationNotification(string title, string message, AppNotificationSeverity severity)
     {
         _appNotificationService.Show(title, message, severity);
@@ -437,24 +468,6 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
         string.IsNullOrWhiteSpace(result.OutputPath)
             ? result.SuggestedOutputPath
             : result.OutputPath;
-
-    private static string BuildBatchExtractionSuggestedPath(
-        string selectedOutputDirectory,
-        AssetListEntryViewModel entry,
-        string defaultBundleDisplayName)
-    {
-        var placeholderFileName = string.IsNullOrWhiteSpace(entry.Item.Name)
-            ? entry.Item.AssetId.Value
-            : entry.Item.Name;
-        return Path.Combine(
-            BundleBatchExtractionOutputDirectoryResolver.BuildAssetTypeDirectory(
-                selectedOutputDirectory,
-                defaultBundleDisplayName,
-                entry.Item.BundleId,
-                entry.Item.AssetTypeDisplayName,
-                entry.Item.AssetType),
-            placeholderFileName);
-    }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
 }

@@ -210,6 +210,11 @@ Presentation 层保留两个协同层次：
   workspaces/
     <workspace-key>.json
   cache/
+    bundles/
+      <workspace-key>/
+        <bundle-cache-key>/
+          manifest.json
+          normalized.bundle
     bundle-index/
       <workspace-key>/
         <bundle-cache-key>.json
@@ -234,6 +239,9 @@ Presentation 层保留两个协同层次：
   负责保存最近工作区列表、固定项、排序、最后激活工作区等轻量索引。
 - `<user-selected-workspace-data-root>/workspaces/<workspace-key>.json`
   负责保存某个工作区自己的用户偏好和恢复信息。
+- `cache/bundles/...`
+  负责保存已解密、已标准化、可被 Reader / Preview / Extraction 直接读取的资源包物理缓存。
+  该缓存是可重建派生产物，不是工作区元数据，也不是用户源文件的替代来源。
 - `cache/bundle-index/...`
   负责保存每个 AB 文件的解析索引缓存，用于加速资源包列表、资产列表和基础恢复。
 - `cache/previews/...`
@@ -241,6 +249,7 @@ Presentation 层保留两个协同层次：
 - `staging/decrypt/...`
   负责保存解密阶段派生文件、外部进程结果文件与短期工作目录；
   路径必须带上 `workspaceKey + decryptorId + bundleCacheKey` 或等价唯一段，避免后续并行导入时仅凭同名源文件发生覆写冲突。
+  后续稳定实现中，`staging/decrypt` 只承载单次解密执行的临时文件和结果文件；可复用的标准化资源包应晋升到 `cache/bundles`。
 - `staging/changes/...`
   负责保存结构化变更暂存，不与轻量元数据混写。
 
@@ -378,6 +387,64 @@ Presentation 层保留两个协同层次：
 - `serializedFileName`
 - `pathId`
 
+### 5.3.1 标准化资源包物理缓存
+
+标准化资源包物理缓存用于把原始 AB 经解密、必要解包或格式标准化后的结果保存到工作区数据目录，供后续 Reader、预览生成、提取导出和 Spine 资源组解析共同复用。
+
+推荐目录：
+
+```text
+cache/
+  bundles/
+    <workspace-key>/
+      <bundle-cache-key>/
+        manifest.json
+        normalized.bundle
+```
+
+`manifest.json` 建议字段：
+
+- `workspaceKey`
+- `bundleCacheKey`
+- `sourceFingerprint`
+- `sourcePath`
+- `decryptorId`
+- `decryptorVersion`
+- `normalizerVersion`
+- `artifactFileName`
+- `artifactFingerprint`
+- `artifactSizeInBytes`
+- `createdAtUtc`
+- `lastAccessedAtUtc`
+- `diagnostics[]`
+
+设计规则：
+
+- 该缓存是派生 artifact，可删除、可重建，不作为用户源文件或操作记录事实来源。
+- 导入刷新、首次预览、首次提取都可以触发缓存生成，但生成入口必须收敛在 Application / Infrastructure 边界内，Presentation 不直接创建或读取该文件。
+- `IAssetBundleReader`、`IAssetPreviewGenerator`、提取导出器和 Spine 详情加载都应优先使用同一份标准化资源包路径，避免各链路分别对原始 AB 重复解密或解包。
+- `PassThrough` 场景可以先只在 manifest 中记录原始文件可直接读取，并在确有收益或需要解包规避内存峰值时再 materialize `normalized.bundle`；外部解密器或压缩 bundle 场景应优先落为可复用物理 artifact。
+- 缓存身份不能只使用文件路径；至少要包含 `workspaceKey + bundleCacheKey + sourceFingerprint + decryptorId + decryptorVersion + normalizerVersion`。
+- 源文件指纹、解密器身份、解密器版本或标准化版本变化时，该 artifact 必须失效，并级联失效依赖它的资源包索引缓存和预览缓存。
+- 工作区关闭不要求删除该缓存；移除工作区记录、移除资源包来源或显式清理缓存时才删除对应 artifact。
+
+### 5.3.2 活跃资源包加载会话缓存
+
+活跃资源包加载会话缓存是进程内短生命周期缓存，用于复用 `AssetsManager.LoadBundleFile(...)` 和 `LoadAssetsFileFromBundle(...)` 之后的加载上下文，解决多预览标签、批量提取、Spine 整组提取在短时间内对同一 AB 重复物理打开和重复解析的问题。
+
+它不写入工作区目录，也不参与重启恢复。
+
+设计规则：
+
+- 缓存 key 应基于标准化资源包 artifact 身份，而不是单纯文件路径；推荐使用 `workspaceKey + bundleCacheKey + artifactFingerprint + normalizerVersion`。
+- 必须支持 single-flight：同一 key 的首次加载尚未完成时，后续请求应等待同一个加载任务，而不是并发启动多个 `LoadBundleFile`。
+- 缓存对象通过 lease 暴露给 Infrastructure 内部消费者；有活动 lease 时不得卸载，最后一个 lease 释放后再进入滑动 TTL。
+- TTL 应为滑动过期，每次命中刷新过期时间；首版建议取 `30-120` 秒，并支持后续通过设置或诊断调整。
+- 应设置最大保留数量或内存预算，并按 LRU / 最近访问时间淘汰；大 bundle、解包失败或内存不足诊断命中的 bundle 可以使用更短 TTL 或直接禁用后台预热复用。
+- 当前应默认把同一 loaded session 的 AssetsTools 访问串行化或使用 bundle 级 `SemaphoreSlim` 保护，不假设 `AssetsManager / BundleFileInstance / AssetsFileInstance` 可安全多线程无锁并发读取。
+- 工作区关闭、资源包移除、导入刷新失效、标准化 artifact 失效、解密器变更或内存压力触发时，必须主动驱逐对应 loaded session。
+- 该缓存属于 Infrastructure 实现细节，不得把 AssetsTools.NET 类型暴露到 Application DTO、Presentation ViewModel 或工作区持久化状态。
+
 ### 5.4 预览缓存
 
 建议拆成：
@@ -461,7 +528,7 @@ Presentation 层保留两个协同层次：
 
 ### 5.6 缓存失效规则
 
-解析缓存和预览缓存必须是“可重建的”。
+标准化资源包物理缓存、解析缓存和预览缓存必须是“可重建的”。
 
 建议至少基于以下字段判断失效：
 
@@ -478,7 +545,8 @@ Presentation 层保留两个协同层次：
 
 - 导入刷新不再先整工作区清空 `BundleIndexCacheStore`
 - 对同一 `bundleCacheKey` 会优先基于上述字段执行命中复用
-- 对失效或已移除的资源包，只清理对应的资源包索引缓存与关联预览缓存
+- 对失效或已移除的资源包，只清理对应的标准化资源包物理缓存、资源包索引缓存与关联预览缓存
+- 进程内活跃资源包加载会话缓存不落盘；上述持久缓存失效时，必须同步驱逐对应 loaded session，避免继续读取旧 artifact
 
 ### 5.7 多线程导入与并行度规则
 
@@ -774,8 +842,9 @@ Presentation 层保留两个协同层次：
 1. 先修正预览执行队列的槽位释放语义：UI 可在取消或超时后停止等待，但底层预览任务真正完成前不应释放对应 worker 槽，避免旧解包仍在运行时继续放入新解包任务。
 2. 收紧后台预热策略：对缓存未命中、大 bundle 或已发生内存不足的 bundle，后台预热应跳过或只复用已有预览缓存；前台活动资产预览优先。
 3. 为同一 `workspaceKey + bundleCacheKey` 引入 bundle 级 single-flight 或低并发闸门，避免同一个 bundle 被多个预览任务同时重复解包。
-4. 评估引入磁盘级 unpack cache：把压缩 bundle 解包为工作区缓存 artifact，并用 `source fingerprint + decryptorId + decryptorVersion + bundleCacheKey` 或等价身份控制失效；后续 Reader 与 Preview 都优先复用该 artifact，而不是每个预览缓存未命中时重新内存解包。
-5. 对 `OutOfMemoryException` 补专用诊断分类和短期退避：在保留堆栈 detail 的同时，提示“预览生成内存不足”，并暂停同 bundle 的后台预热，避免连续失败。
+4. 引入标准化资源包物理缓存：把压缩、解密或需要标准化的 bundle 落为 `cache/bundles/<workspaceKey>/<bundleCacheKey>/normalized.bundle` 这类工作区缓存 artifact，并用 `source fingerprint + decryptorId + decryptorVersion + normalizerVersion + bundleCacheKey` 或等价身份控制失效；后续 Reader、Preview、Extraction 与 Spine 组解析都优先复用该 artifact，而不是每个预览缓存未命中时重新内存解包。
+5. 在物理缓存之上引入进程内 loaded-session 缓存：对同一标准化 artifact 做 single-flight 加载、lease 使用、滑动 TTL 和容量上限管理，避免多标签预览或批量提取同时重复 `LoadBundleFile`。
+6. 对 `OutOfMemoryException` 补专用诊断分类和短期退避：在保留堆栈 detail 的同时，提示“预览生成内存不足”，并暂停同 bundle 的后台预热，避免连续失败。
 
 ## 10. 执行结论
 
@@ -802,6 +871,8 @@ Presentation 层保留两个协同层次：
 - 拖拽导入的页面桥接应优先挂在具体工作区区域，而不是整页根节点
 - AB 真实解析结果应优先写入独立缓存层，而不是写进工作区元数据文件
 - 解密后的临时文件默认属于 `staging` 层，不应混入工作区元数据
+- 可复用的标准化资源包应属于 `cache/bundles` 层，并作为 Reader、预览、提取和 Spine 解析的共同物理输入；它可以被清理和重建，不能成为操作记录或撤销语义的事实来源
+- 进程内 loaded-session 缓存只负责短时间复用已加载 AB 上下文，必须使用 single-flight、lease、滑动 TTL、容量上限和主动失效；该缓存不得暴露 AssetsTools.NET 对象到 Application 或 Presentation
 - 同一工作区的导入刷新默认只允许一个运行中作业；当前多线程导入也只允许在 `Application` 导入链路内部按 bundle 粒度做受控并行，并维持“串行计划 -> 有界并行 worker -> 串行提交”的三段模型
 - 通过工作区向导新建或打开工作区时，仍可显式选择当前窗口或新窗口
 - 工作区向导应优先用“工作区数据目录”识别已有工作区，并在新建时显式处理目录冲突

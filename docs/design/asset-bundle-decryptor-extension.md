@@ -64,14 +64,18 @@
 推荐位置：
 
 - 临时工作文件：`staging/decrypt/...`
-- 未来如果确有必要的可复用明文缓存：`cache/decrypted-bundles/...`
+- 可复用标准化资源包缓存：`cache/bundles/<workspaceKey>/<bundleCacheKey>/...`
 
-当前阶段默认先采用临时工作文件，不默认长期保留明文解密结果。
+当前阶段已经明确后续演进为“两层缓存”：
+
+- `staging/decrypt` 只承载单次解密执行的临时文件、外部进程结果文件和诊断材料。
+- `cache/bundles` 承载已解密、已标准化、可直接被 Reader / Preview / Extraction 读取的可重建物理 artifact。
 
 补充约束：
 
 - 工作区“默认使用哪个解密器”属于轻量恢复配置，应写入 `WorkspaceMetadataDto.AssetBundleDecryptorId`
 - 真正的解密输出文件与探测结果仍应留在 `staging / cache` 层，不回写工作区元数据
+- `cache/bundles` 中的标准化 artifact 不是用户源文件副本，也不是撤销 / 恢复事实来源；源文件指纹、解密器身份、解密器版本或标准化版本变化时必须重建
 
 ## 3. 推荐分层
 
@@ -221,14 +225,16 @@ Presentation 不负责：
 1. 工作区入口记录导入来源
 2. 根据用户配置或自动识别选择解密器
 3. 解密到 `staging/decrypt/...`
-4. 真实 `IAssetBundleReader` 读取输出文件
-5. 把解析索引写入 `cache/bundle-index/...`
-6. 在工作台真正请求时按需生成预览，并把预览派生内容写入 `cache/previews/...`
+4. 将可复用结果晋升或写入 `cache/bundles/...` 标准化资源包缓存
+5. 真实 `IAssetBundleReader` 读取标准化资源包 artifact
+6. 把解析索引写入 `cache/bundle-index/...`
+7. 在工作台真正请求时按需生成预览，并把预览派生内容写入 `cache/previews/...`
 
 缓存失效时除了原始 AB 指纹外，还应纳入：
 
 - `decryptorId`
 - `decryptorVersion`
+- `normalizerVersion`
 
 否则同一个源文件在切换解密器实现后，旧缓存可能继续误命中。
 
@@ -271,7 +277,7 @@ Presentation 不负责：
 当前明确暂不实现：
 
 - 自动识别结果的完整 UI 诊断与冲突决策流程
-- 明文解密结果长期缓存策略
+- 把解密结果作为不可重建的长期明文副本管理；后续只实现可失效、可清理、可重建的 `cache/bundles` 标准化 artifact
 - 更通用的插件安装、签名与市场机制
 
 ## 8. 下一步建议
@@ -279,7 +285,7 @@ Presentation 不负责：
 建议按下面顺序继续推进：
 
 1. 明确工作区级“自动检测 / 指定解密器 / 仅直读”策略，并定义冲突处理规则
-2. 评估是否需要把部分明文结果短期缓存到 `cache/decrypted-bundles/...`
+2. 实现 `cache/bundles` 标准化资源包物理缓存，并让 Reader / Preview / Extraction 统一通过该 artifact 读取
 3. 补齐更完整的失败诊断与自动识别结果表达
 4. 再评估是否需要把预览摘要进一步结构化，降低后续本地化和富展示成本
 5. 最后再评估是否需要更通用的插件安装与签名机制

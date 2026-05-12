@@ -120,6 +120,18 @@
   <data name="Shell.Description.SettingsDiagnostics" xml:space="preserve">
     <value>用于集中查看详细日志、环境检查结果，并在后续接入语言与诊断相关设置。</value>
   </data>
+  <data name="AppStatusBar.Ready.Text" xml:space="preserve">
+    <value>就绪</value>
+  </data>
+  <data name="AppStatusBar.Working.Text" xml:space="preserve">
+    <value>正在处理</value>
+  </data>
+  <data name="AppStatusBar.BackgroundTask.Fallback.Text" xml:space="preserve">
+    <value>后台任务</value>
+  </data>
+  <data name="AppStatusBar.Progress.Format" xml:space="preserve">
+    <value>{0}/{1}</value>
+  </data>
   <data name="HomePage.PageTitleText.Text" xml:space="preserve">
     <value>控制台</value>
   </data>
@@ -2856,6 +2868,9 @@
   <data name="BatchTasksPage.BatchExtract.Log.Executed.Format" xml:space="preserve">
     <value>已执行批量提取，写出 {0} 个资源、覆盖 {1} 个资源包，输出目录：{2}</value>
   </data>
+  <data name="BatchTasksPage.BatchExtract.Status.Text" xml:space="preserve">
+    <value>正在执行批处理页提取</value>
+  </data>
   <data name="BatchTasksPage.BatchReplace.Scope.Format" xml:space="preserve">
     <value>当前工作区：{0}</value>
   </data>
@@ -3222,6 +3237,9 @@
   <data name="BundleExplorer.Log.BatchAssetsExtracted" xml:space="preserve">
     <value>已批量提取 {0} 项资源，首个输出路径：{1}</value>
   </data>
+  <data name="BundleExplorer.Log.BatchExtractionFailuresSuppressed" xml:space="preserve">
+    <value>批量提取还有 {0} 条失败明细已合并省略，请以本次批量结果摘要为准。</value>
+  </data>
   <data name="BundleExplorer.Log.SpineGroupExtracted" xml:space="preserve">
     <value>已整组提取 Spine 资源“{0}”，成功 {1} 项，失败 {2} 项，输出目录：{3}</value>
   </data>
@@ -3290,6 +3308,12 @@
   </data>
   <data name="BundleExplorer.Notification.BatchAssetsExtracted" xml:space="preserve">
     <value>已完成 {0} 项资源的提取写出。</value>
+  </data>
+  <data name="BundleExplorer.Status.ExtractSelectedAssets" xml:space="preserve">
+    <value>正在提取选中资源</value>
+  </data>
+  <data name="BundleExplorer.Status.ExtractSelectedSpineGroups" xml:space="preserve">
+    <value>正在提取选中 Spine 资源组</value>
   </data>
   <data name="BundleExplorer.Notification.SpineGroupExtracted" xml:space="preserve">
     <value>已完成 Spine 资源组“{0}”提取：成功 {1} 项，失败 {2} 项。</value>

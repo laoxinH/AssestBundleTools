@@ -219,6 +219,8 @@ Presentation 负责把这些结构化字段格式化为用户可见文本；Appl
 
 提取属于“外部输出操作”，不修改资源包内容。
 
+提取的 payload 获取可以复用预览缓存、标准化资源包物理缓存和进程内 loaded-session 缓存，但这些缓存只负责性能和资源复用，不参与提取操作事实语义。
+
 记录规则：
 
 1. 用户确认提取计划后，先写入 `ExtractAsset / ExtractBatch` 的 `Planned` 或 `Pending` 记录。
@@ -231,6 +233,12 @@ Presentation 负责把这些结构化字段格式化为用户可见文本；Appl
 - `Applied`：恢复为“已提取”记录，结果明细可继续展示。
 - `Pending`：启动后标记为 `Interrupted`，批处理页提示用户重新执行或标记失败。
 - 输出文件缺失：操作仍可恢复，但结果标记为“输出文件不可用”，不自动删除记录。
+
+缓存边界：
+
+- 预览缓存命中、标准化资源包 artifact 命中或 loaded-session 命中都不能单独生成操作记录；只有用户确认的提取 / 替换 / 保存等动作才进入 `operations[]`。
+- 批量提取和 Spine 整组提取后续可以按 AB 复用同一个标准化 artifact 和 loaded session，但仍必须为每个成功导出的组成资源记录独立 `ExtractAsset`，并按批量 / Spine 入口追加汇总记录。
+- 提取撤销只撤销工作区操作记录和物化提取状态，不删除 `cache/bundles`、`cache/previews` 或用户输出目录中的文件；缓存清理属于独立缓存维护动作。
 
 ### 7.2 工作区内替换
 
@@ -401,6 +409,7 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 ### 第三阶段：提取操作接入
 
 - 已让单资源提取通过现有 `GetAssetPreviewQuery` 管线取得真实 payload，并由 Presentation 先选择保存文件、Application 保留用户选择的文件名、Infrastructure 文件写出端口落到导出文件。
+- 已明确后续提取性能优化不改变操作记录事实模型：预览、提取和 Spine 解析应共享 `cache/bundles` 标准化资源包物理缓存与进程内 loaded-session 缓存；缓存命中只减少解密、解包和 `LoadBundleFile` 开销，不替代 `ExtractAsset / ExtractBatch` 操作记录。
 - 已覆盖 `Image / Audio / Binary` 二进制 payload、`Text / Summary` 完整文本 payload，`Mesh` 可导入专业建模软件的 OBJ 预览几何导出，以及 `Material / AnimationClip / Font / GameObject / MonoBehaviour / AnimatorController` 结构化 JSON payload 的统一写出策略。
 - 当前导出格式按“能直接进入专业软件优先，其次保留完整结构化摘要”的推荐表落地：
   - `Texture2D / Sprite`：PNG。来源为预览管线生成的无损图片 payload，不做有损压缩。
@@ -413,11 +422,12 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 - 已让普通资源批量提取复用单资源提取链路，并追加 `ExtractBatch` 汇总记录；资产窗格多选批量提取会在用户选择的输出根目录下按 `<输出根目录>/<AB 资源包名称>/<资源类型>/` 组织文件，当前批处理仍以“继续处理可成功项，汇总失败数”为第一版策略。
 - 已让 Spine 资源组整组提取复用单资源提取链路：组级入口负责解析 skeleton / atlas / atlas page 主贴图和独立 alpha 贴图匹配；每个组成资源仍追加独立 `ExtractAsset` 操作记录并更新资源级 `LastExtractedAtUtc`，组级入口同时追加一条 `ExtractBatch` 汇总记录，记录 Spine 组目标、输出目录、成功 / 失败数量和已关联资源 ID。工作区变更摘要会保留已提取的隐藏依赖资产，避免 Spine 组关联资源已经导出但“最近变更记录”被资产列表可见性过滤掉；窗口化 Spine 详情在提取成功后也会即时重投影当前项变更摘要。
 - 已让资产窗格的 Spine 资源组多选模式接入批量提取入口：用户选择一次输出根目录后，Presentation 为每个组把应用层输出目录设置为 `<输出根目录>/<AB 资源包名称>`，应用层单组提取再在该目录下创建组名子目录并写出组成资源。
+- 已把资产窗格多选批量提取和 Spine 资源组多选批量提取的逐项写出循环移动到 Presentation 后台任务 runner；Shell 级后台任务状态服务负责显示任务标题、当前对象和进度。该状态条只表达当前会话中的运行中反馈，不进入 `operations[]`，也不改变 `ExtractAsset / ExtractBatch` 的事实记录、撤销和恢复语义。后台批量提取的状态上报必须做 UI 合并刷新：后台线程只更新最新任务状态，Shell 状态条在 UI 线程按最新状态投影，避免大量小文件逐项写出时向 DispatcherQueue 注入成百上千个进度刷新。批量提取成功日志默认写摘要，不逐资源插入日志；失败明细也应有限展示，避免操作完成阶段因为日志集合膨胀造成二次卡顿。
 - 已让工作区打开时把 `Applied ExtractAsset` 操作物化回资源 `LastExtractedAtUtc`，用于重启后恢复已提取状态。
 - 已在 Presentation 层增加工作区操作变更通知管线：组合根用 notifying gateway 包装 `IWorkspaceAssetOperationGateway / IWorkspaceBatchOperationsGateway`，单资源提取、Spine 组提取、普通批量提取、替换、撤销替换和保存骨架成功后会发布当前 `WorkspaceId` 的读模型失效事件。订阅者包括：
   - 批处理页：活动工作区匹配时自动重新读取 `WorkspaceChangeSummaryDto / SavePreview / BatchPreview`。
-  - 主工作台资源详情区：通过 `WorkspaceOperationChangeRefreshCoordinator` 合并通知，先保留当前详情标签刷新资源 / Spine 列表读模型，再重读当前激活资源或 Spine 资源组详情，使“变更”页签自动更新。
-  - 独立资源编辑窗口：订阅同一通知，重读当前激活资源或 Spine 资源组详情，窗口化场景不再依赖发起操作的一侧手动重投影。
+  - 主工作台资源详情区：通过 `WorkspaceOperationChangeRefreshCoordinator` 合并通知，重读当前工作区已打开的全部资源 / Spine 详情标签，使批量操作后未激活标签的“变更”页签也能自动更新；操作记录变化不重载资产 / Spine 列表，避免提取完成后打断列表滚动、筛选和选择状态。
+  - 独立资源编辑窗口：订阅同一通知，重读窗口内已打开的全部资源或 Spine 资源组详情，窗口化场景不再依赖发起操作的一侧手动重投影。
   操作入口只负责执行命令、清理本地候选状态和展示结果反馈，不再在提取 / 替换 / 撤销成功后手动调用页面刷新回调；非持久化的候选来源选择仍允许即时重投影当前详情。
 - 提取撤销仍未实现；当前原则保持为“只撤销工作区提取标记，不自动删除用户目录中的外部文件”。
 - 批处理页的中断、失败和输出文件不可用状态展示仍待细化。
@@ -439,6 +449,7 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 - Application 定义操作记录 DTO、恢复计划、撤销语义和物化规则。
 - Infrastructure 只负责 JSON 持久化、外部文件指纹、真实导出 / 写包实现。
 - Presentation 只负责触发命令、展示恢复计划、接收用户选择、本地化文本，以及页面级读模型失效协调；操作变更通知不得反向进入 Application，也不得让页面直接读取 `staging/changes`。
+- Presentation 可以维护 Shell 级后台任务状态条来展示运行中任务进度；该状态条属于瞬时 UI 状态，不得作为恢复、撤销、批处理历史或变更摘要的数据来源。
 - 页面或窗口订阅操作通知时必须按 `WorkspaceId` 过滤，并在自身忙碌时合并为一次待刷新请求；统一使用 `WorkspaceOperationChangeRefreshCoordinator`，不要在新的操作 handler 中新增“成功后刷新某个页面”的回调。
 - 发起操作的 handler 可以更新仅存在于当前 UI 的瞬时状态，例如清理待替换候选；已持久化的提取 / 替换 / 撤销 / 保存状态必须通过通知后的读模型重读来反映到详情页和批处理页。
 - 工作区元数据只保存轻量浏览状态；操作记录属于 `staging/changes`。

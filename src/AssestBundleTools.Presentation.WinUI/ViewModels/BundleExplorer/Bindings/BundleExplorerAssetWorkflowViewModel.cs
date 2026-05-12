@@ -62,7 +62,8 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         IBundleExplorerDocumentWorkspaceHost documentWorkspace,
         Func<bool> isBusyProvider,
         Action<bool> setBusyState,
-        Action requestWorkspaceBrowserStatePersistence)
+        Action requestWorkspaceBrowserStatePersistence,
+        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         ArgumentNullException.ThrowIfNull(workspaceExplorerGateway);
@@ -102,7 +103,10 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             appLogService,
             appNotificationService,
             _localizationService,
-            filePickerService);
+            filePickerService,
+            backgroundTaskRunner,
+            backgroundTaskStatusService,
+            workspaceOperationChangeNotifier);
         PrimaryPane = new AssetPaneViewModel();
         _assetDocumentHostCoordinator = new BundleExplorerAssetDocumentHostCoordinator(
             _documentWorkspace,
@@ -181,8 +185,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         var operationReadModelRefreshHandler = new BundleExplorerOperationReadModelRefreshHandler(
             _documentWorkspace,
             _assetDocumentTabCoordinator,
-            _spineGroupDocumentCoordinator,
-            () => RefreshPrimaryPaneAsync(preserveCurrentDocumentTab: true));
+            _spineGroupDocumentCoordinator);
         _operationChangeRefreshCoordinator = new WorkspaceOperationChangeRefreshCoordinator(
             workspaceOperationChangeNotifier,
             () => _workspaceShell.WorkspaceSummary?.WorkspaceId,

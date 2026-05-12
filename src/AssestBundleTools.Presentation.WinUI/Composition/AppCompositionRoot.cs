@@ -247,6 +247,7 @@ internal static class AppCompositionRoot
         var workspaceWindowService = new WorkspaceWindowService(workspaceProcessCoordinatorService);
         var appNotificationService = new AppNotificationService();
         var appLogService = new AppLogService(localizationService);
+        var appBackgroundTaskStatusService = new AppBackgroundTaskStatusService(localizationService);
         var backgroundTaskRunner = new ThreadPoolBackgroundTaskRunner();
         var workspaceImportCoordinatorService = new WorkspaceImportCoordinatorService(
             workspaceContextService,
@@ -281,6 +282,7 @@ internal static class AppCompositionRoot
             WorkspaceWindowService: workspaceWindowService,
             AppNotificationService: appNotificationService,
             AppLogService: appLogService,
+            AppBackgroundTaskStatusService: appBackgroundTaskStatusService,
             BackgroundTaskRunner: backgroundTaskRunner,
             WorkspaceImportCoordinatorService: workspaceImportCoordinatorService,
             SpineAnimationRuntimePlaybackService: spineAnimationRuntimePreviewService);

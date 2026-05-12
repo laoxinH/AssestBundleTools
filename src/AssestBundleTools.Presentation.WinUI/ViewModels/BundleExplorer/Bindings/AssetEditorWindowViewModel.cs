@@ -55,7 +55,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         IBundleExplorerWorkspaceShellHost workspaceShell,
         IBundleExplorerBundlePaneHost bundlePane,
         Func<AssetDocumentTabViewModel, Task<bool>> moveAssetDocumentToMainWindowAsync,
-        Func<AssetDocumentGroupTransfer, Task<bool>> moveAssetDocumentGroupToMainWindowAsync)
+        Func<AssetDocumentGroupTransfer, Task<bool>> moveAssetDocumentGroupToMainWindowAsync,
+        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null)
         : this(
             CreateSingleAssetGroup(initialAssetTab),
             workspaceAssetInspectionGateway,
@@ -71,7 +72,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             workspaceShell,
             bundlePane,
             moveAssetDocumentToMainWindowAsync,
-            moveAssetDocumentGroupToMainWindowAsync)
+            moveAssetDocumentGroupToMainWindowAsync,
+            backgroundTaskStatusService)
     {
     }
 
@@ -90,7 +92,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         IBundleExplorerWorkspaceShellHost workspaceShell,
         IBundleExplorerBundlePaneHost bundlePane,
         Func<AssetDocumentTabViewModel, Task<bool>> moveAssetDocumentToMainWindowAsync,
-        Func<AssetDocumentGroupTransfer, Task<bool>> moveAssetDocumentGroupToMainWindowAsync)
+        Func<AssetDocumentGroupTransfer, Task<bool>> moveAssetDocumentGroupToMainWindowAsync,
+        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null)
     {
         ArgumentNullException.ThrowIfNull(initialAssetGroup);
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
@@ -139,7 +142,10 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             appLogService,
             appNotificationService,
             _localizationService,
-            filePickerService);
+            filePickerService,
+            _backgroundTaskRunner,
+            backgroundTaskStatusService,
+            workspaceOperationChangeNotifier);
         _assetActionCoordinator = new AssetEditorWindowAssetActionCoordinator(
             _workspaceShell,
             pathNavigationService,
@@ -373,13 +379,14 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
 
     private async Task RefreshOperationAffectedStateAsync()
     {
-        if (DocumentGroup.ActiveAssetTab is { } assetTab)
+        var assetTabs = DocumentGroup.AssetTabs.ToArray();
+        foreach (var assetTab in assetTabs)
         {
             await RefreshAssetDocumentDetailsAsync(assetTab);
-            return;
         }
 
-        if (DocumentGroup.ActiveSpineGroupTab is { } spineGroupTab)
+        var spineGroupTabs = DocumentGroup.SpineGroupTabs.ToArray();
+        foreach (var spineGroupTab in spineGroupTabs)
         {
             await RefreshSpineGroupDocumentDetailsAsync(spineGroupTab);
         }

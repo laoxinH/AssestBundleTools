@@ -53,6 +53,7 @@ public partial class App : Microsoft.UI.Xaml.Application
             WorkspaceWindowService = services.WorkspaceWindowService;
             AppNotificationService = services.AppNotificationService;
             AppLogService = services.AppLogService;
+            AppBackgroundTaskStatusService = services.AppBackgroundTaskStatusService;
             BackgroundTaskRunner = services.BackgroundTaskRunner;
             WorkspaceImportCoordinatorService = services.WorkspaceImportCoordinatorService;
             SpineAnimationRuntimePlaybackService = services.SpineAnimationRuntimePlaybackService;
@@ -112,6 +113,8 @@ public partial class App : Microsoft.UI.Xaml.Application
     public IAppNotificationService AppNotificationService { get; }
 
     public IAppLogService AppLogService { get; }
+
+    public IAppBackgroundTaskStatusService AppBackgroundTaskStatusService { get; }
 
     public IBackgroundTaskRunner BackgroundTaskRunner { get; }
 

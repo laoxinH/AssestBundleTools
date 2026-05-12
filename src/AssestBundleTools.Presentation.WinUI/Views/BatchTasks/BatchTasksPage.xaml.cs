@@ -18,7 +18,9 @@ public sealed partial class BatchTasksPage : Page
             App.CurrentApp.WorkspaceOperationChangeNotifier,
             App.CurrentApp.LocalizationService,
             App.CurrentApp.AppLogService,
-            App.CurrentApp.WorkspaceImportCoordinatorService);
+            App.CurrentApp.WorkspaceImportCoordinatorService,
+            App.CurrentApp.BackgroundTaskRunner,
+            App.CurrentApp.AppBackgroundTaskStatusService);
 
         InitializeComponent();
         ApplyLocalizedText();

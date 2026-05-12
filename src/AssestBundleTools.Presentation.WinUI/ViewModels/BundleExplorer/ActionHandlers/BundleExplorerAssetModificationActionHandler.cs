@@ -30,7 +30,10 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         IAppLogService appLogService,
         IAppNotificationService appNotificationService,
         ILocalizationService localizationService,
-        IFilePickerService filePickerService)
+        IFilePickerService filePickerService,
+        IBackgroundTaskRunner? backgroundTaskRunner = null,
+        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
+        IWorkspaceOperationChangeNotifier? operationChangeNotifier = null)
     {
         _workspaceAssetOperationGateway = workspaceAssetOperationGateway ?? throw new ArgumentNullException(nameof(workspaceAssetOperationGateway));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
@@ -42,7 +45,10 @@ internal sealed class BundleExplorerAssetModificationActionHandler
             _appLogService,
             _appNotificationService,
             _localizationService,
-            _filePickerService);
+            _filePickerService,
+            backgroundTaskRunner,
+            backgroundTaskStatusService,
+            operationChangeNotifier);
     }
 
     public Task ExtractSelectedAssetAsync(

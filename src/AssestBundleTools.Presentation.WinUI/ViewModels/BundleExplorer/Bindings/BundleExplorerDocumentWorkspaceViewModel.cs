@@ -32,6 +32,8 @@ public sealed class BundleExplorerDocumentWorkspaceViewModel : ObservableObject,
 
     public ObservableCollection<BundleDocumentTabViewModel> BundleTabs { get; } = new();
 
+    public IEnumerable<BundleDocumentTabViewModel> OpenBundleTabs => BundleTabs;
+
     public ObservableCollection<AssetDocumentTabViewModel> CurrentAssetTabs =>
         ActiveBundleTab?.AssetTabs ?? _emptyAssetTabs;
 

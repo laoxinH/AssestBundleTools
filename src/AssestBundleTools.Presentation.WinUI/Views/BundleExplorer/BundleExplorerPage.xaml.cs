@@ -43,7 +43,8 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             App.CurrentApp.WorkspaceImportCoordinatorService,
             App.CurrentApp.BackgroundTaskRunner,
             App.CurrentApp.AssetBundleDecryptorRegistry,
-            App.CurrentApp.PathNavigationService);
+            App.CurrentApp.PathNavigationService,
+            App.CurrentApp.AppBackgroundTaskStatusService);
 
         InitializeComponent();
 

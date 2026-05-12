@@ -234,15 +234,26 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
 
     public Task RefreshSpineGroupDocumentTabAsync(SpineAssetGroupDocumentTabViewModel? spineGroupTab)
     {
-        if (spineGroupTab is null || _documentWorkspace.ActiveBundleTab is not { } bundleTab)
+        if (spineGroupTab is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var bundleTab = _documentWorkspace.OpenBundleTabs
+            .FirstOrDefault(tab => tab.SpineGroupTabs.Contains(spineGroupTab));
+        if (bundleTab is null)
         {
             return Task.CompletedTask;
         }
 
         RefreshSpineGroupTabFromPrimaryPaneIfChanged(spineGroupTab);
         _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
-        _notifyActionStates();
-        return LoadSpineGroupDetailsAsync(bundleTab, spineGroupTab, forceReload: true);
+        if (IsCurrentVisibleSpineGroupTab(bundleTab, spineGroupTab))
+        {
+            _notifyActionStates();
+        }
+
+        return LoadSpineGroupDetailsAsync(bundleTab, spineGroupTab, forceReload: true, requireActive: false);
     }
 
     private SpineAssetGroupDocumentTabViewModel? ResolvePreferredSpineGroupDocumentTab(
@@ -327,7 +338,7 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
 
         _requestWorkspaceBrowserStatePersistence();
         _notifyActionStates();
-        await LoadSpineGroupDetailsAsync(bundleTab, spineGroupTab, forceReload: false);
+        await LoadSpineGroupDetailsAsync(bundleTab, spineGroupTab, forceReload: false, requireActive: true);
     }
 
     private void RefreshSpineGroupTabFromPrimaryPaneIfChanged(SpineAssetGroupDocumentTabViewModel spineGroupTab)
@@ -429,7 +440,8 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
     private async Task LoadSpineGroupDetailsAsync(
         BundleDocumentTabViewModel bundleTab,
         SpineAssetGroupDocumentTabViewModel spineGroupTab,
-        bool forceReload)
+        bool forceReload,
+        bool requireActive)
     {
         if (!forceReload && spineGroupTab.Details is not null)
         {
@@ -443,16 +455,21 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
         if (!expectedBundleId.Equals(spineGroupTab.BundleId) ||
             !string.Equals(expectedGroupId, spineGroupTab.GroupId, StringComparison.Ordinal) ||
             !ReferenceEquals(expectedGroup, spineGroupTab.Item) ||
-            !ReferenceEquals(bundleTab.ActiveSpineGroupTab, spineGroupTab))
+            (requireActive && !ReferenceEquals(bundleTab.ActiveSpineGroupTab, spineGroupTab)))
         {
             return;
         }
 
+        var isCurrentVisibleTab = IsCurrentVisibleSpineGroupTab(bundleTab, spineGroupTab);
         if (loadResult is null)
         {
             _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
-            _documentWorkspace.NotifyAssetDocumentHostStateChanged();
-            _notifyActionStates();
+            if (isCurrentVisibleTab)
+            {
+                _documentWorkspace.NotifyAssetDocumentHostStateChanged();
+                _notifyActionStates();
+            }
+
             return;
         }
 
@@ -461,10 +478,19 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
             loadResult.TexturePreview,
             loadResult.AnimationTextures);
         _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
-        _documentWorkspace.NotifyAssetDocumentHostStateChanged();
-        _requestWorkspaceBrowserStatePersistence();
-        _notifyActionStates();
+        if (isCurrentVisibleTab)
+        {
+            _documentWorkspace.NotifyAssetDocumentHostStateChanged();
+            _requestWorkspaceBrowserStatePersistence();
+            _notifyActionStates();
+        }
     }
+
+    private bool IsCurrentVisibleSpineGroupTab(
+        BundleDocumentTabViewModel bundleTab,
+        SpineAssetGroupDocumentTabViewModel spineGroupTab) =>
+        ReferenceEquals(_documentWorkspace.ActiveBundleTab, bundleTab) &&
+        ReferenceEquals(bundleTab.ActiveSpineGroupTab, spineGroupTab);
 
     private void ClearActiveSpineGroupDocument(BundleDocumentTabViewModel bundleTab)
     {

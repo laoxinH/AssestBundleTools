@@ -39,8 +39,15 @@ public sealed partial class ShellPage : Page
         _launchRequest = launchRequest;
         _windowMode = ResolveInitialWindowMode(launchRequest);
         NotificationService = App.CurrentApp.AppNotificationService;
+        BackgroundTaskStatusService = App.CurrentApp.AppBackgroundTaskStatusService;
         ViewModel = new ShellViewModel(App.CurrentApp.LocalizationService);
         InitializeComponent();
+        if (BackgroundTaskStatusService is AppBackgroundTaskStatusService backgroundTaskStatusService)
+        {
+            backgroundTaskStatusService.AttachDispatcherQueue(DispatcherQueue);
+        }
+
+        AppStatusBar.DataContext = BackgroundTaskStatusService;
         ApplyLocalizedText();
         ApplyWindowMode();
         Loaded += OnLoaded;
@@ -49,6 +56,8 @@ public sealed partial class ShellPage : Page
     public ShellViewModel ViewModel { get; }
 
     public IAppNotificationService NotificationService { get; }
+
+    public IAppBackgroundTaskStatusService BackgroundTaskStatusService { get; }
 
     internal AssestBundleTools.Presentation.WinUI.MainWindow? HostWindow => _hostWindow;
 

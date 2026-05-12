@@ -11,6 +11,7 @@ using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.Tests.Testing;
+using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -31,12 +32,16 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
         {
             BatchExtractionOutputDirectory = @"D:\Exports\Selected"
         };
+        var backgroundTaskRunner = new TestBackgroundTaskRunner();
+        var backgroundTaskStatusService = new RecordingBackgroundTaskStatusService();
         var handler = new BundleExplorerAssetExtractionActionHandler(
             gateway,
             new TestAppLogService(),
             new TestAppNotificationService(),
             new TestLocalizationService(),
-            filePicker);
+            filePicker,
+            backgroundTaskRunner,
+            backgroundTaskStatusService);
         var workspaceSummary = CreateWorkspaceSummary();
         var firstEntry = CreateAssetEntry("asset-1", "hero");
         var secondEntry = CreateAssetEntry("asset-2", "hero_alpha");
@@ -62,6 +67,12 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
         Assert.Equal(secondEntry.Item.AssetId, gateway.ExtractAssetCommands[1].AssetId);
         Assert.EndsWith("hero_alpha", gateway.ExtractAssetCommands[1].SuggestedOutputPath, StringComparison.Ordinal);
         Assert.Equal([true, false], busyStates);
+        Assert.Equal(1, backgroundTaskRunner.RunCallCount);
+        var task = Assert.Single(backgroundTaskStatusService.Tasks);
+        Assert.Equal(ResourceKeys.BundleExplorerStatusExtractSelectedAssets, task.Title);
+        Assert.Equal(2, task.TotalCount);
+        Assert.True(task.IsDisposed);
+        Assert.Contains(task.ProgressReports, report => report.CompletedCount == 2 && report.TotalCount == 2);
     }
 
     [Fact]
@@ -100,12 +111,16 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
         {
             BatchExtractionOutputDirectory = @"D:\Exports\Selected"
         };
+        var backgroundTaskRunner = new TestBackgroundTaskRunner();
+        var backgroundTaskStatusService = new RecordingBackgroundTaskStatusService();
         var handler = new BundleExplorerAssetExtractionActionHandler(
             gateway,
             new TestAppLogService(),
             new TestAppNotificationService(),
             new TestLocalizationService(),
-            filePicker);
+            filePicker,
+            backgroundTaskRunner,
+            backgroundTaskStatusService);
         var firstEntry = CreateSpineGroupEntry("group-1", "char_1001_amiya2.ab");
         var secondEntry = CreateSpineGroupEntry("group-2", "char_1001_amiya2.ab");
         var busyStates = new List<bool>();
@@ -127,6 +142,12 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
                 Path.Combine(filePicker.BatchExtractionOutputDirectory!, "char_1001_amiya2.ab"),
                 command.OutputDirectory));
         Assert.Equal([true, false], busyStates);
+        Assert.Equal(1, backgroundTaskRunner.RunCallCount);
+        var task = Assert.Single(backgroundTaskStatusService.Tasks);
+        Assert.Equal(ResourceKeys.BundleExplorerStatusExtractSelectedSpineGroups, task.Title);
+        Assert.Equal(2, task.TotalCount);
+        Assert.True(task.IsDisposed);
+        Assert.Contains(task.ProgressReports, report => report.CompletedCount == 2 && report.TotalCount == 2);
     }
 
     [Fact]
@@ -410,6 +431,72 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
     }
+
+    private sealed class RecordingBackgroundTaskStatusService : IAppBackgroundTaskStatusService
+    {
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public List<RecordingBackgroundTaskHandle> Tasks { get; } = [];
+
+        public string StatusText => string.Empty;
+
+        public string ProgressText => string.Empty;
+
+        public double ProgressValue => 0d;
+
+        public bool IsProgressIndeterminate => false;
+
+        public Microsoft.UI.Xaml.Visibility ProgressVisibility => Microsoft.UI.Xaml.Visibility.Collapsed;
+
+        public string StatusGlyph => string.Empty;
+
+        public IAppBackgroundTaskHandle BeginTask(string title, int? totalCount = null)
+        {
+            var task = new RecordingBackgroundTaskHandle(title, totalCount);
+            Tasks.Add(task);
+            return task;
+        }
+    }
+
+    private sealed class RecordingBackgroundTaskHandle : IAppBackgroundTaskHandle
+    {
+        public RecordingBackgroundTaskHandle(string title, int? totalCount)
+        {
+            Title = title;
+            TotalCount = totalCount;
+        }
+
+        public string Title { get; }
+
+        public int? TotalCount { get; }
+
+        public bool IsDisposed { get; private set; }
+
+        public List<ProgressReport> ProgressReports { get; } = [];
+
+        public List<string?> IndeterminateReports { get; } = [];
+
+        public void ReportProgress(int completedCount, int totalCount, string? detail = null)
+        {
+            ProgressReports.Add(new ProgressReport(completedCount, totalCount, detail));
+        }
+
+        public void ReportIndeterminate(string? detail = null)
+        {
+            IndeterminateReports.Add(detail);
+        }
+
+        public void Dispose()
+        {
+            IsDisposed = true;
+        }
+    }
+
+    private sealed record ProgressReport(int CompletedCount, int TotalCount, string? Detail);
 
     private sealed class TestPathNavigationService : IPathNavigationService
     {

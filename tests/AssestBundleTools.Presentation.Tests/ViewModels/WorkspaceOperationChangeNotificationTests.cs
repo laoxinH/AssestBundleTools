@@ -1,3 +1,6 @@
+using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Queries;
+using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Extraction.Commands;
 using AssestBundleTools.Application.Extraction.Dtos;
@@ -9,6 +12,7 @@ using AssestBundleTools.Application.Replacement.Queries;
 using AssestBundleTools.Application.Saving.Commands;
 using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Application.Saving.Queries;
+using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Queries;
 using AssestBundleTools.Application.Workspace.Services;
@@ -18,6 +22,7 @@ using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.Tests.Testing;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BatchTasks;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 namespace AssestBundleTools.Presentation.Tests.ViewModels;
 
@@ -44,6 +49,33 @@ public sealed class WorkspaceOperationChangeNotificationTests
         var notification = Assert.Single(receivedEvents);
         Assert.Equal(workspaceId, notification.WorkspaceId);
         Assert.Equal(WorkspaceOperationChangeKind.Extraction, notification.ChangeKind);
+    }
+
+    [Fact]
+    public void BeginNotificationBatch_ShouldDeferAndCoalesceWorkspaceOperationChanges()
+    {
+        var workspaceId = new WorkspaceId("workspace-operation-batch");
+        var notifier = new WorkspaceOperationChangeNotifier();
+        var receivedEvents = new List<WorkspaceOperationChangedEventArgs>();
+        notifier.WorkspaceOperationsChanged += (_, e) => receivedEvents.Add(e);
+
+        using (notifier.BeginNotificationBatch())
+        {
+            notifier.NotifyWorkspaceOperationsChanged(
+                workspaceId,
+                WorkspaceOperationChangeKind.Extraction);
+            notifier.NotifyWorkspaceOperationsChanged(
+                workspaceId,
+                WorkspaceOperationChangeKind.Replacement);
+
+            Assert.Empty(receivedEvents);
+        }
+
+        var notification = Assert.Single(receivedEvents);
+        Assert.Equal(workspaceId, notification.WorkspaceId);
+        Assert.Equal(
+            WorkspaceOperationChangeKind.Extraction | WorkspaceOperationChangeKind.Replacement,
+            notification.ChangeKind);
     }
 
     [Fact]
@@ -131,6 +163,129 @@ public sealed class WorkspaceOperationChangeNotificationTests
         Assert.Equal(queryCountBeforeNotification, batchGateway.ChangeSummaryQueryCount);
         Assert.False(viewModel.HasChanges);
         Assert.Empty(viewModel.RecentChanges);
+    }
+
+    [Fact]
+    public async Task BundleExplorerViewModel_ShouldRefreshOpenDetailsWithoutReloadingAssetList_WhenCurrentWorkspaceOperationChanges()
+    {
+        var localizationService = new TestLocalizationService();
+        var workspaceRequest = PresentationTestDataFactory.CreateNavigationRequest("operation-detail-refresh");
+        var workspaceSummary = PresentationTestDataFactory.CreateWorkspaceSummary(workspaceRequest);
+        var bundleId = new BundleId("bundle-ui");
+        var assetId = new AssetId("asset-button");
+        var inactiveAssetId = new AssetId("asset-hidden-button");
+        var extractedAtUtc = new DateTimeOffset(2026, 5, 12, 9, 30, 0, TimeSpan.Zero);
+        var loadAssetListCount = 0;
+        var getAssetDetailsCount = 0;
+        var returnExtractionState = false;
+        var notifier = new WorkspaceOperationChangeNotifier();
+        var workspaceContextService = new TestWorkspaceContextService();
+        var explorerGateway = new TestWorkspaceExplorerGateway
+        {
+            OpenWorkspaceHandler = _ => Task.FromResult(Result<WorkspaceSummaryDto>.Success(workspaceSummary)),
+            LoadBundleTreeHandler = _ => Task.FromResult(Result<IReadOnlyList<BundleTreeNodeDto>>.Success(
+                PresentationTestDataFactory.CreateBundleTree("ui"))),
+            LoadAssetListHandler = query =>
+            {
+                loadAssetListCount++;
+                return Task.FromResult(Result<AssetListResultDto>.Success(
+                    new AssetListResultDto(
+                        query.WorkspaceId,
+                        query.BundleId,
+                        "ui",
+                        query.SearchKeyword,
+                        query.AssetTypeFilter,
+                        TotalCount: 1,
+                        FilteredCount: 1,
+                        Items:
+                        [
+                            new AssetListItemDto(
+                                assetId,
+                                bundleId,
+                                "Button",
+                                "Assets/UI/Button.png",
+                                AssetType.Texture2D,
+                                SizeInBytes: 128,
+                                PreferredDisplaySizeInBytes: null,
+                                HasPreview: true,
+                                IsModified: false)
+                        ],
+                        query.AssetTypeDisplayNameFilter,
+                        TypeFacets: Array.Empty<AssetTypeFacetDto>())));
+            }
+        };
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            OpenAssetInPaneHandler = command => Task.FromResult(Result<AssetPaneContextDto>.Success(
+                new AssetPaneContextDto(
+                    command.WorkspaceId,
+                    command.PaneId,
+                    command.BundleId,
+                    command.AssetId,
+                    "Button",
+                    WorkspaceMode.SinglePane))),
+            GetAssetDetailsHandler = query =>
+            {
+                getAssetDetailsCount++;
+                var details = BundleExplorerPreviewTestSupport.CreateAssetDetails(
+                    query.WorkspaceId,
+                    query.BundleId,
+                    query.AssetId) with
+                {
+                    Name = query.AssetId.Equals(inactiveAssetId) ? "HiddenButton" : "Button"
+                };
+                if (returnExtractionState)
+                {
+                    details = details with { LastExtractedAtUtc = extractedAtUtc };
+                }
+
+                return Task.FromResult(Result<AssetDetailsDto>.Success(details));
+            },
+            GetAssetPreviewHandler = query => Task.FromResult(BundleExplorerPreviewTestSupport.CreateSummaryPreviewResult(query))
+        };
+        using var viewModel = new BundleExplorerViewModel(
+            explorerGateway,
+            inspectionGateway,
+            new SuccessfulWorkspaceAssetOperationGateway(),
+            new TestAssetEditDraftRestorePlanGateway(),
+            new TestAppLogService(),
+            new TestAppNotificationService(),
+            localizationService,
+            notifier,
+            new NoopFilePickerService(),
+            workspaceContextService,
+            new NoopWorkspaceImportCoordinatorService(),
+            new TestBackgroundTaskRunner(),
+            new TestAssetBundleDecryptorRegistry(),
+            new NoopPathNavigationService());
+
+        await viewModel.InitializeAsync(workspaceRequest);
+        var assetEntry = Assert.Single(viewModel.AssetWorkflow.PrimaryPane.Items);
+        viewModel.AssetWorkflow.PrimaryPane.SelectedAsset = assetEntry;
+        await viewModel.HandlePrimaryPaneSelectionChangedAsync();
+        var activeAssetTab = Assert.IsType<AssetDocumentTabViewModel>(
+            viewModel.DocumentWorkspace.ActiveAssetDocumentTab);
+        var inactiveAssetTab = viewModel.AssetWorkflow.CreateAssetDocumentTab(
+            bundleId,
+            inactiveAssetId,
+            "HiddenButton");
+        viewModel.DocumentWorkspace.ActiveBundleTab!.AddAssetTab(inactiveAssetTab, activate: false);
+        var loadAssetListCountBeforeNotification = loadAssetListCount;
+        var getAssetDetailsCountBeforeNotification = getAssetDetailsCount;
+
+        returnExtractionState = true;
+        notifier.NotifyWorkspaceOperationsChanged(
+            workspaceSummary.WorkspaceId,
+            WorkspaceOperationChangeKind.Extraction);
+
+        await BundleExplorerPreviewTestSupport.WaitUntilAsync(
+            () => inactiveAssetTab.Details?.LastExtractedAtUtc == extractedAtUtc);
+        Assert.Equal(loadAssetListCountBeforeNotification, loadAssetListCount);
+        Assert.True(getAssetDetailsCount >= getAssetDetailsCountBeforeNotification + 2);
+        Assert.Equal(
+            extractedAtUtc,
+            activeAssetTab.Details?.LastExtractedAtUtc);
+        Assert.Same(activeAssetTab, viewModel.DocumentWorkspace.ActiveAssetDocumentTab);
     }
 
     [Fact]
@@ -351,5 +506,45 @@ public sealed class WorkspaceOperationChangeNotificationTests
             IProgress<WorkspaceImportProgressDto>? progress = null,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(false);
+    }
+
+    private sealed class NoopFilePickerService : IFilePickerService
+    {
+        public Task<string?> PickWorkspaceDataDirectoryAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
+
+        public Task<IReadOnlyList<string>> PickBundleFilePathsAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<string>>(Array.Empty<string>());
+
+        public Task<string?> PickBundleImportDirectoryAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
+
+        public Task<string?> PickSpineFrameSequenceExportDirectoryAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
+
+        public Task<string?> PickSpineAssetGroupExtractionDirectoryAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
+
+        public Task<string?> PickAssetExtractionOutputFileAsync(
+            AssetType assetType,
+            string? assetTypeDisplayName,
+            string assetName,
+            string? assetPath,
+            string? containerPath,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
+
+        public Task<string?> PickAssetBatchExtractionOutputDirectoryAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
+
+        public Task<string?> PickReplacementSourceFileAsync(
+            AssetType targetAssetType,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
+    }
+
+    private sealed class NoopPathNavigationService : IPathNavigationService
+    {
+        public bool TryOpenContainingFolder(string path) => false;
     }
 }

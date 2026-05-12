@@ -9,6 +9,8 @@ public interface IWorkspaceOperationChangeNotifier
 {
     event EventHandler<WorkspaceOperationChangedEventArgs>? WorkspaceOperationsChanged;
 
+    IDisposable BeginNotificationBatch();
+
     void NotifyWorkspaceOperationsChanged(
         WorkspaceId workspaceId,
         WorkspaceOperationChangeKind changeKind);
