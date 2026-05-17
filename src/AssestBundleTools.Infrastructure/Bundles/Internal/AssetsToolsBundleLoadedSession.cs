@@ -7,7 +7,7 @@ namespace AssestBundleTools.Infrastructure.Bundles.Internal;
 /// </summary>
 internal sealed class AssetsToolsBundleLoadedSession : IDisposable
 {
-    private AssetsToolsBundleLoadedSession(
+    internal AssetsToolsBundleLoadedSession(
         string bundlePath,
         AssetsManager assetsManager,
         BundleFileInstance bundleInstance,

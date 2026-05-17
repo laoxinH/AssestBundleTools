@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace AssestBundleTools.Infrastructure.Bundles.Internal;
 
 /// <summary>
@@ -7,11 +9,17 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
 {
     private static readonly TimeSpan DefaultIdleRetention = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan CleanupPeriod = TimeSpan.FromSeconds(10);
+    private const int DefaultMaximumRetainedSessions = 6;
+    private const int DefaultMemoryPressureRetainedSessions = 1;
+    private const double DefaultMemoryPressureThresholdRatio = 0.85;
 
     private readonly object _syncRoot = new();
     private readonly Dictionary<string, CacheEntry> _entries = new(StringComparer.OrdinalIgnoreCase);
     private readonly Func<string, AssetsToolsBundleLoadedSession> _sessionLoader;
     private readonly TimeSpan _idleRetention;
+    private readonly int _maximumRetainedSessions;
+    private readonly int _memoryPressureRetainedSessions;
+    private readonly Func<bool> _memoryPressureEvaluator;
     private readonly Timer _cleanupTimer;
     private bool _isDisposed;
 
@@ -25,13 +33,34 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
     internal AssetsToolsBundleLoadedSessionCache(
         Func<string, AssetsToolsBundleLoadedSession> sessionLoader,
         TimeSpan idleRetention)
+        : this(
+            sessionLoader,
+            idleRetention,
+            DefaultMaximumRetainedSessions,
+            DefaultMemoryPressureRetainedSessions,
+            IsProcessUnderMemoryPressure)
+    {
+    }
+
+    internal AssetsToolsBundleLoadedSessionCache(
+        Func<string, AssetsToolsBundleLoadedSession> sessionLoader,
+        TimeSpan idleRetention,
+        int maximumRetainedSessions,
+        int memoryPressureRetainedSessions,
+        Func<bool>? memoryPressureEvaluator = null)
     {
         _sessionLoader = sessionLoader ?? throw new ArgumentNullException(nameof(sessionLoader));
         _idleRetention = idleRetention > TimeSpan.Zero
             ? idleRetention
             : DefaultIdleRetention;
+        _maximumRetainedSessions = Math.Max(1, maximumRetainedSessions);
+        _memoryPressureRetainedSessions = Math.Clamp(
+            memoryPressureRetainedSessions,
+            0,
+            _maximumRetainedSessions);
+        _memoryPressureEvaluator = memoryPressureEvaluator ?? IsProcessUnderMemoryPressure;
         _cleanupTimer = new Timer(
-            static state => ((AssetsToolsBundleLoadedSessionCache)state!).TrimExpiredEntries(),
+            static state => ((AssetsToolsBundleLoadedSessionCache)state!).TrimRetainedEntries(),
             this,
             CleanupPeriod,
             CleanupPeriod);
@@ -57,6 +86,7 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
         var resolvedBundlePath = Path.GetFullPath(bundlePath);
         var cacheKey = ResolveCacheKey(resolvedBundlePath, sessionCacheKey);
         var entry = GetOrCreateEntry(cacheKey, resolvedBundlePath);
+        TrimRetainedEntries();
         try
         {
             var session = await entry.SessionTask.WaitAsync(cancellationToken);
@@ -156,6 +186,7 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
     private void Release(string cacheKey, CacheEntry entry, bool removeEntry = false)
     {
         AssetsToolsBundleLoadedSession? disposableSession = null;
+        var shouldTrim = false;
         lock (_syncRoot)
         {
             if (entry.LeaseCount > 0)
@@ -164,27 +195,39 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
             }
 
             entry.LastAccessUtc = DateTimeOffset.UtcNow;
-            if ((!removeEntry && !entry.IsInvalidated) || entry.LeaseCount > 0)
+            if (entry.LeaseCount > 0)
             {
                 return;
             }
 
-            if (_entries.TryGetValue(cacheKey, out var currentEntry) && ReferenceEquals(currentEntry, entry))
+            if (!removeEntry && !entry.IsInvalidated)
             {
-                _entries.Remove(cacheKey);
+                shouldTrim = true;
             }
+            else
+            {
+                if (_entries.TryGetValue(cacheKey, out var currentEntry) && ReferenceEquals(currentEntry, entry))
+                {
+                    _entries.Remove(cacheKey);
+                }
 
-            disposableSession = TryGetDisposableCompletedSession(entry);
+                disposableSession = TryGetDisposableCompletedSession(entry);
+            }
         }
 
         disposableSession?.Dispose();
         DisposeWhenCompletedIfNeeded(entry);
+        if (shouldTrim)
+        {
+            TrimRetainedEntries();
+        }
     }
 
-    private void TrimExpiredEntries()
+    private void TrimRetainedEntries()
     {
         List<AssetsToolsBundleLoadedSession> disposableSessions = [];
         var now = DateTimeOffset.UtcNow;
+        var isUnderMemoryPressure = IsUnderMemoryPressure();
         lock (_syncRoot)
         {
             if (_isDisposed)
@@ -206,13 +249,56 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
                 if (entry.SessionTask.IsCompletedSuccessfully)
                 {
                     disposableSessions.Add(entry.SessionTask.Result);
+                    WriteDiagnostic($"Expired idle loaded session. Key={pair.Key}.");
                 }
             }
+
+            var targetRetainedSessions = isUnderMemoryPressure
+                ? _memoryPressureRetainedSessions
+                : _maximumRetainedSessions;
+            TrimOverCapacityEntries(targetRetainedSessions, isUnderMemoryPressure, disposableSessions);
         }
 
         foreach (var session in disposableSessions)
         {
             session.Dispose();
+        }
+    }
+
+    private void TrimOverCapacityEntries(
+        int targetRetainedSessions,
+        bool isUnderMemoryPressure,
+        List<AssetsToolsBundleLoadedSession> disposableSessions)
+    {
+        if (_entries.Count <= targetRetainedSessions)
+        {
+            return;
+        }
+
+        var candidates = _entries
+            .Where(static pair => pair.Value.LeaseCount == 0 && pair.Value.SessionTask.IsCompleted)
+            .OrderBy(static pair => pair.Value.LastAccessUtc)
+            .ThenBy(static pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        foreach (var pair in candidates)
+        {
+            if (_entries.Count <= targetRetainedSessions)
+            {
+                break;
+            }
+
+            if (!_entries.Remove(pair.Key))
+            {
+                continue;
+            }
+
+            if (pair.Value.SessionTask.IsCompletedSuccessfully)
+            {
+                disposableSessions.Add(pair.Value.SessionTask.Result);
+            }
+
+            var reason = isUnderMemoryPressure ? "memory pressure" : "capacity";
+            WriteDiagnostic($"Evicted loaded session due to {reason}. Key={pair.Key}; Target={targetRetainedSessions}.");
         }
     }
 
@@ -287,6 +373,36 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
             CancellationToken.None,
             TaskContinuationOptions.ExecuteSynchronously,
             TaskScheduler.Default);
+    }
+
+    private bool IsUnderMemoryPressure()
+    {
+        try
+        {
+            return _memoryPressureEvaluator();
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool IsProcessUnderMemoryPressure()
+    {
+        var memoryInfo = GC.GetGCMemoryInfo();
+        if (memoryInfo.HighMemoryLoadThresholdBytes <= 0)
+        {
+            return false;
+        }
+
+        return memoryInfo.MemoryLoadBytes >=
+               memoryInfo.HighMemoryLoadThresholdBytes * DefaultMemoryPressureThresholdRatio;
+    }
+
+    [Conditional("DEBUG")]
+    private static void WriteDiagnostic(string message)
+    {
+        Debug.WriteLine($"[AssetsToolsBundleLoadedSessionCache] {message}");
     }
 
     private sealed class CacheEntry

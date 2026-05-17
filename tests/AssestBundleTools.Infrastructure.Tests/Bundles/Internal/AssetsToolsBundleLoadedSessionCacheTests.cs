@@ -1,3 +1,4 @@
+using AssetsTools.NET.Extra;
 using AssestBundleTools.Infrastructure.Bundles.Internal;
 using AssestBundleTools.Infrastructure.Tests.Testing;
 
@@ -131,6 +132,74 @@ internal static class AssetsToolsBundleLoadedSessionCacheTests
             "A failed physical load should be evicted so a later request can retry.");
     }
 
+    public static async Task AcquireAsync_ShouldEvictLeastRecentlyUsedIdleSession_WhenCapacityIsExceeded()
+    {
+        var loadCount = 0;
+        using var cache = new AssetsToolsBundleLoadedSessionCache(
+            path =>
+            {
+                Interlocked.Increment(ref loadCount);
+                return CreateLoadedSession(path);
+            },
+            TimeSpan.FromMinutes(5),
+            maximumRetainedSessions: 1,
+            memoryPressureRetainedSessions: 1,
+            memoryPressureEvaluator: static () => false);
+        var firstBundlePath = Path.Combine(Path.GetTempPath(), $"bundle-a-{Guid.NewGuid():N}.ab");
+        var secondBundlePath = Path.Combine(Path.GetTempPath(), $"bundle-b-{Guid.NewGuid():N}.ab");
+
+        using (await cache.AcquireAsync(firstBundlePath, "bundle-artifact|workspace-a|bundle-a|normalizer|fingerprint-a", CancellationToken.None))
+        {
+        }
+
+        using (await cache.AcquireAsync(secondBundlePath, "bundle-artifact|workspace-a|bundle-b|normalizer|fingerprint-b", CancellationToken.None))
+        {
+        }
+
+        using (await cache.AcquireAsync(firstBundlePath, "bundle-artifact|workspace-a|bundle-a|normalizer|fingerprint-a", CancellationToken.None))
+        {
+        }
+
+        TestAssert.Equal(
+            3,
+            Volatile.Read(ref loadCount),
+            "The idle loaded session over the capacity limit should be evicted and loaded again on the next acquire.");
+    }
+
+    public static async Task AcquireAsync_ShouldRetreatToPressureLimit_WhenMemoryPressureIsReported()
+    {
+        var loadCount = 0;
+        using var cache = new AssetsToolsBundleLoadedSessionCache(
+            path =>
+            {
+                Interlocked.Increment(ref loadCount);
+                return CreateLoadedSession(path);
+            },
+            TimeSpan.FromMinutes(5),
+            maximumRetainedSessions: 4,
+            memoryPressureRetainedSessions: 1,
+            memoryPressureEvaluator: static () => true);
+        var firstBundlePath = Path.Combine(Path.GetTempPath(), $"bundle-a-{Guid.NewGuid():N}.ab");
+        var secondBundlePath = Path.Combine(Path.GetTempPath(), $"bundle-b-{Guid.NewGuid():N}.ab");
+
+        using (await cache.AcquireAsync(firstBundlePath, "bundle-artifact|workspace-a|bundle-a|normalizer|fingerprint-a", CancellationToken.None))
+        {
+        }
+
+        using (await cache.AcquireAsync(secondBundlePath, "bundle-artifact|workspace-a|bundle-b|normalizer|fingerprint-b", CancellationToken.None))
+        {
+        }
+
+        using (await cache.AcquireAsync(firstBundlePath, "bundle-artifact|workspace-a|bundle-a|normalizer|fingerprint-a", CancellationToken.None))
+        {
+        }
+
+        TestAssert.Equal(
+            3,
+            Volatile.Read(ref loadCount),
+            "Memory pressure should trim idle loaded sessions down to the pressure retention limit.");
+    }
+
     public static async Task InvalidateBundleArtifact_ShouldRemoveMatchingArtifactIdentity()
     {
         using var firstLoaderEntered = new ManualResetEventSlim();
@@ -239,5 +308,15 @@ internal static class AssetsToolsBundleLoadedSessionCacheTests
         }
 
         throw new InvalidOperationException("Expected the bundle load task to fail.");
+    }
+
+    private static AssetsToolsBundleLoadedSession CreateLoadedSession(string bundlePath)
+    {
+        return new AssetsToolsBundleLoadedSession(
+            bundlePath,
+            new AssetsManager(),
+            bundleInstance: null!,
+            Array.Empty<AssetsFileInstance>(),
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
     }
 }

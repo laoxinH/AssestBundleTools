@@ -176,6 +176,14 @@ internal static class InfrastructureTestSuite
             AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldRemoveFailedLoadEntry);
         await RunTestAsync(
             failures,
+            nameof(AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldEvictLeastRecentlyUsedIdleSession_WhenCapacityIsExceeded),
+            AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldEvictLeastRecentlyUsedIdleSession_WhenCapacityIsExceeded);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldRetreatToPressureLimit_WhenMemoryPressureIsReported),
+            AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldRetreatToPressureLimit_WhenMemoryPressureIsReported);
+        await RunTestAsync(
+            failures,
             nameof(AssetsToolsBundleLoadedSessionCacheTests.InvalidateBundleArtifact_ShouldRemoveMatchingArtifactIdentity),
             AssetsToolsBundleLoadedSessionCacheTests.InvalidateBundleArtifact_ShouldRemoveMatchingArtifactIdentity);
         await RunTestAsync(
