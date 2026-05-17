@@ -15,6 +15,7 @@ public enum AssetPreviewMessageKey
     DecryptorResolveFailed = 3,
     DecryptionFailed = 4,
     GenerationFailed = 5,
+    OutOfMemory = 6,
     AudioPayloadMissing = 20,
     AudioUnknownContainerUnsupported = 21,
     AudioUnsupportedContainer = 22,

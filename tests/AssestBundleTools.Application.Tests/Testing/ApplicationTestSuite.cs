@@ -237,6 +237,10 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldReturnFallbackSummary_WhenPreviewGenerationFails);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldReturnOutOfMemoryFallbackSummary_WhenPreviewGenerationRunsOutOfMemory),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldReturnOutOfMemoryFallbackSummary_WhenPreviewGenerationRunsOutOfMemory);
+        await RunTestAsync(
+            failures,
             nameof(ReplacementWorkflowHandlerTests.GetFileReplacementCandidateHandler_ShouldPreferTargetAssetType_WhenSharedExtensionMatches),
             ReplacementWorkflowHandlerTests.GetFileReplacementCandidateHandler_ShouldPreferTargetAssetType_WhenSharedExtensionMatches);
         await RunReplacementOperationRecorderTestsAsync(failures);

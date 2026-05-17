@@ -2322,6 +2322,9 @@
   <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.GenerationFailed" xml:space="preserve">
     <value>预览生成失败</value>
   </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.OutOfMemory" xml:space="preserve">
+    <value>内存不足</value>
+  </data>
   <data name="InspectorPanelView.PreviewMessage.MetadataOnly.Text" xml:space="preserve">
     <value>当前资源类型暂不提供富预览，下方信息卡已保留可用摘要字段。</value>
   </data>
@@ -2336,6 +2339,9 @@
   </data>
   <data name="InspectorPanelView.PreviewMessage.GenerationFailed.Text" xml:space="preserve">
     <value>预览生成器未能解析当前资源内容，暂时只能显示摘要状态。</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.OutOfMemory.Text" xml:space="preserve">
+    <value>当前资源预览需要的内存超出可用范围，已暂停同资源包后台预热并保留摘要状态。</value>
   </data>
   <data name="InspectorPanelView.PreviewMessage.AudioPayloadMissing.Text" xml:space="preserve">
     <value>当前 AudioClip 未包含可读取的音频载荷，暂时只能显示摘要信息。</value>
@@ -3899,5 +3905,8 @@
   </data>
   <data name="Error.Bundle.Preview.GenerationFailed" xml:space="preserve">
     <value>生成资源预览时发生未预期错误：{0}</value>
+  </data>
+  <data name="Error.Bundle.Preview.OutOfMemory" xml:space="preserve">
+    <value>生成资源预览时内存不足：{0}</value>
   </data>
 </root>

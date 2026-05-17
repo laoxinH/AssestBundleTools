@@ -289,6 +289,73 @@ public sealed class BundleExplorerAssetPreviewSchedulingTests
         Assert.Equal([recentAssetId, oldAssetId], previewQueryAssetIds.ToArray());
     }
 
+    [Fact]
+    public async Task LoadInspectorPreviewAsync_ShouldRetreatBackgroundPrewarmForSameBundle_WhenPreviewRunsOutOfMemory()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-memory");
+        var outOfMemoryAssetId = new AssetId("asset-oom");
+        var skippedAssetId = new AssetId("asset-skipped");
+        var foregroundAssetId = new AssetId("asset-foreground");
+        var resumedAssetId = new AssetId("asset-resumed");
+        var context = CreatePreviewContext(workspaceId, "PreviewPrewarmMemoryRetreat");
+        var previewQueryAssetIds = new List<AssetId>();
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            GetAssetPreviewHandler = query =>
+            {
+                previewQueryAssetIds.Add(query.AssetId);
+                return Task.FromResult(query.AssetId.Equals(outOfMemoryAssetId)
+                    ? CreateOutOfMemoryPreviewResult(query)
+                    : CreateSummaryPreviewResult(query));
+            }
+        };
+        var coordinator = CreateCoordinator(context, inspectionGateway, previewWorkerCount: 2);
+        var outOfMemoryTab = CreateAssetTab(bundleId, outOfMemoryAssetId, context.LocalizationService);
+        var skippedTab = CreateAssetTab(bundleId, skippedAssetId, context.LocalizationService);
+        var foregroundTab = CreateAssetTab(bundleId, foregroundAssetId, context.LocalizationService);
+        var resumedTab = CreateAssetTab(bundleId, resumedAssetId, context.LocalizationService);
+        var outOfMemoryDetails = CreateAssetDetails(workspaceId, bundleId, outOfMemoryAssetId);
+        var skippedDetails = CreateAssetDetails(workspaceId, bundleId, skippedAssetId);
+        var foregroundDetails = CreateAssetDetails(workspaceId, bundleId, foregroundAssetId);
+        var resumedDetails = CreateAssetDetails(workspaceId, bundleId, resumedAssetId);
+        outOfMemoryTab.ApplyDetails(outOfMemoryDetails);
+        skippedTab.ApplyDetails(skippedDetails);
+        foregroundTab.ApplyDetails(foregroundDetails);
+        resumedTab.ApplyDetails(resumedDetails);
+
+        await coordinator.LoadInspectorPreviewAsync(
+            outOfMemoryTab,
+            outOfMemoryDetails,
+            static _ => "failed",
+            () => true,
+            AssetPreviewLoadPriority.BackgroundPrewarm);
+        await coordinator.LoadInspectorPreviewAsync(
+            skippedTab,
+            skippedDetails,
+            static _ => "failed",
+            () => true,
+            AssetPreviewLoadPriority.BackgroundPrewarm);
+        await coordinator.LoadInspectorPreviewAsync(
+            foregroundTab,
+            foregroundDetails,
+            static _ => "failed",
+            () => true,
+            AssetPreviewLoadPriority.Foreground);
+        await coordinator.LoadInspectorPreviewAsync(
+            resumedTab,
+            resumedDetails,
+            static _ => "failed",
+            () => true,
+            AssetPreviewLoadPriority.BackgroundPrewarm);
+
+        Assert.Equal(
+            [outOfMemoryAssetId, foregroundAssetId, resumedAssetId],
+            previewQueryAssetIds);
+        Assert.False(skippedTab.Inspector.Preview.IsPreviewLoading);
+        Assert.Equal(string.Empty, skippedTab.Inspector.Preview.PreviewText);
+    }
+
     private static PreviewContext CreatePreviewContext(WorkspaceId workspaceId, string workspaceName)
     {
         var localizationService = new TestLocalizationService();
@@ -342,6 +409,27 @@ public sealed class BundleExplorerAssetPreviewSchedulingTests
             context.WorkspaceRequest.WorkspaceDataRootPath,
             bundleId,
             assetId);
+    }
+
+    private static Result<AssetPreviewDto> CreateOutOfMemoryPreviewResult(GetAssetPreviewQuery query)
+    {
+        return Result<AssetPreviewDto>.Success(new AssetPreviewDto(
+            WorkspaceId: query.WorkspaceId,
+            BundleId: query.BundleId,
+            AssetId: query.AssetId,
+            Kind: AssetPreviewKind.Summary,
+            ContentType: "text/plain",
+            TextContent: null,
+            BinaryContent: null,
+            PreviewPayloadFilePath: null,
+            PreviewInfoItems: Array.Empty<AssetPreviewInfoItemDto>(),
+            PreviewMessage: new AssetPreviewMessageDto(AssetPreviewMessageKey.OutOfMemory),
+            PreferredDisplaySizeInBytes: null,
+            IsFromCache: false,
+            GeneratedAtUtc: DateTimeOffset.UtcNow,
+            Diagnostic: new AssetPreviewDiagnosticDto(
+                AssetPreviewCacheStatusKind.Missing,
+                AssetPreviewFallbackReasonKind.OutOfMemory)));
     }
 
     private sealed record PreviewContext(

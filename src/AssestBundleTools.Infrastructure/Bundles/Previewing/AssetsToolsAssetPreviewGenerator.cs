@@ -112,6 +112,13 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         {
             return Result<AssetPreviewContentDto>.Cancelled();
         }
+        catch (OutOfMemoryException exception)
+        {
+            return Result<AssetPreviewContentDto>.Failure(
+                ApplicationErrors.BundlePreviewOutOfMemory(
+                    request.ResolvedBundlePath,
+                    exception.ToString()));
+        }
         catch (Exception exception)
         {
             return Result<AssetPreviewContentDto>.Failure(

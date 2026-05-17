@@ -963,4 +963,58 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(1, generator.GenerateCallCount, "Generation failure path should invoke preview generator once.");
         TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Fallback summary should not write preview cache.");
     }
+
+    public static async Task HandleAsync_ShouldReturnOutOfMemoryFallbackSummary_WhenPreviewGenerationRunsOutOfMemory()
+    {
+        const string resolvedBundlePath = @"C:\Temp\preview.bundle";
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        var previewCacheStore = new TestPreviewCacheStore();
+        var decryptorDescriptor = CreatePassThroughDecryptorDescriptor();
+        var decryptor = new TestAssetBundleDecryptor(decryptorDescriptor)
+        {
+            DecryptResultFactory = _ => Task.FromResult(Result<AssetBundleDecryptionResultDto>.Success(
+                new AssetBundleDecryptionResultDto(
+                    Decryptor: decryptorDescriptor,
+                    ResolvedBundlePath: resolvedBundlePath,
+                    ProducedDerivedFile: false,
+                    BundleFingerprint: bundleCacheEntry.SourceFingerprint,
+                    DiagnosticMessage: null)))
+        };
+        var generator = new TestAssetPreviewGenerator
+        {
+            GenerateResultFactory = _ => Task.FromResult(Result<AssetPreviewContentDto>.Failure(
+                ApplicationErrors.BundlePreviewOutOfMemory(resolvedBundlePath, "allocation failed")))
+        };
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService());
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Out-of-memory preview generation should fall back to a summary preview.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(AssetPreviewKind.Summary, preview.Kind, "Fallback preview should use summary kind.");
+        TestAssert.Equal(AssetPreviewMessageKey.OutOfMemory, preview.PreviewMessage?.Key, "Fallback summary should report memory pressure.");
+        TestAssert.Equal(AssetPreviewFallbackReasonKind.OutOfMemory, preview.Diagnostic.FallbackReason, "Diagnostic should report preview memory pressure.");
+        TestAssert.Equal(AssetPreviewCacheStatusKind.Missing, preview.Diagnostic.CacheStatus, "Missing preview cache should be reported.");
+        TestAssert.Equal("Error.Bundle.Preview.OutOfMemory", preview.Diagnostic.DetailMessage?.MessageToken, "Diagnostic detail should preserve the structured memory error token.");
+        TestAssert.Equal(
+            "allocation failed",
+            TestAssert.Single(preview.Diagnostic.DetailMessage?.Arguments ?? Array.Empty<string>()),
+            "Out-of-memory fallback detail should carry the diagnostic detail.");
+        TestAssert.Equal("text/plain; charset=utf-8", preview.ContentType, "Fallback summary should use plain text content type.");
+        TestAssert.Equal(null, preview.BinaryContent, "Fallback summary should not include binary payload.");
+        TestAssert.Equal(null, preview.TextContent, "Fallback summary should not include decoded text payload.");
+        TestAssert.False(preview.IsFromCache, "Fallback summary should not be marked as cache hit.");
+        TestAssert.Equal(1, decryptor.DecryptCallCount, "Generation failure path should still decrypt once.");
+        TestAssert.Equal(1, generator.GenerateCallCount, "Generation failure path should invoke preview generator once.");
+        TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Fallback summary should not write preview cache.");
+    }
 }

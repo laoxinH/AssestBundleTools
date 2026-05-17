@@ -374,6 +374,14 @@ public static class ApplicationErrors
             messageToken: "Error.Bundle.Preview.GenerationFailed",
             parameters: CreateParameters(("Detail", ResolveDiagnosticDetail(detail, bundlePath))));
 
+    public static AppError BundlePreviewOutOfMemory(string bundlePath, string? detail = null) =>
+        new(
+            code: "Bundle.Preview.OutOfMemory",
+            category: ErrorCategory.Unknown,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Preview.OutOfMemory",
+            parameters: CreateParameters(("Detail", ResolveDiagnosticDetail(detail, bundlePath))));
+
     public static AppError BundleDecryptorCatalogIdRequired() =>
         new(
             code: "Bundle.Decryptor.Catalog.IdRequired",

@@ -9,5 +9,6 @@ public enum AssetPreviewFallbackReasonKind
     MissingLocator = 1,
     DecryptorResolveFailed = 2,
     DecryptionFailed = 3,
-    GenerationFailed = 4
+    GenerationFailed = 4,
+    OutOfMemory = 5
 }

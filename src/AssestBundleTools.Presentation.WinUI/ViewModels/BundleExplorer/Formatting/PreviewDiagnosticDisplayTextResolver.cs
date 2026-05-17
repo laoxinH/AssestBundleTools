@@ -35,6 +35,7 @@ internal sealed class PreviewDiagnosticDisplayTextResolver
             AssetPreviewFallbackReasonKind.DecryptorResolveFailed => GetString(ResourceKeys.InspectorPreviewDiagnosticFallbackReasonDecryptorResolveFailed),
             AssetPreviewFallbackReasonKind.DecryptionFailed => GetString(ResourceKeys.InspectorPreviewDiagnosticFallbackReasonDecryptionFailed),
             AssetPreviewFallbackReasonKind.GenerationFailed => GetString(ResourceKeys.InspectorPreviewDiagnosticFallbackReasonGenerationFailed),
+            AssetPreviewFallbackReasonKind.OutOfMemory => GetString(ResourceKeys.InspectorPreviewDiagnosticFallbackReasonOutOfMemory),
             _ => fallbackReason.ToString()
         };
     }

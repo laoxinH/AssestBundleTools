@@ -2322,6 +2322,9 @@
   <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.GenerationFailed" xml:space="preserve">
     <value>Preview generation failed</value>
   </data>
+  <data name="InspectorPanelView.PreviewDiagnostic.FallbackReason.OutOfMemory" xml:space="preserve">
+    <value>Out of memory</value>
+  </data>
   <data name="InspectorPanelView.PreviewMessage.MetadataOnly.Text" xml:space="preserve">
     <value>This asset type does not provide a rich preview yet. The information cards below still retain the available summary fields.</value>
   </data>
@@ -2336,6 +2339,9 @@
   </data>
   <data name="InspectorPanelView.PreviewMessage.GenerationFailed.Text" xml:space="preserve">
     <value>The preview generator could not parse the current asset content, so only a summary can be shown right now.</value>
+  </data>
+  <data name="InspectorPanelView.PreviewMessage.OutOfMemory.Text" xml:space="preserve">
+    <value>This preview needs more memory than is currently available. Background prewarm for the same bundle has been paused and only the summary is shown.</value>
   </data>
   <data name="InspectorPanelView.PreviewMessage.AudioPayloadMissing.Text" xml:space="preserve">
     <value>This AudioClip does not contain a readable audio payload, so only summary information is available.</value>
@@ -3899,5 +3905,8 @@
   </data>
   <data name="Error.Bundle.Preview.GenerationFailed" xml:space="preserve">
     <value>An unexpected error occurred while generating the asset preview: {0}</value>
+  </data>
+  <data name="Error.Bundle.Preview.OutOfMemory" xml:space="preserve">
+    <value>Not enough memory was available while generating the asset preview: {0}</value>
   </data>
 </root>

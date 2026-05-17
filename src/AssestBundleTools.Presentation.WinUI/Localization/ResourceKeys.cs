@@ -607,6 +607,7 @@ public static class ResourceKeys
     public const string ErrorBundlePreviewAssetLocatorMissing = "Error.Bundle.Preview.AssetLocatorMissing";
     public const string ErrorBundlePreviewFieldTreeUnavailable = "Error.Bundle.Preview.FieldTreeUnavailable";
     public const string ErrorBundlePreviewGenerationFailed = "Error.Bundle.Preview.GenerationFailed";
+    public const string ErrorBundlePreviewOutOfMemory = "Error.Bundle.Preview.OutOfMemory";
     public const string ErrorAssetSpineGroupIdRequired = "Error.Asset.SpineGroup.Query.GroupIdRequired";
     public const string ErrorAssetSpineGroupNotFound = "Error.Asset.SpineGroup.NotFound";
     public const string ErrorAssetExtractSpineGroupNoCandidates = "Error.Asset.Extract.SpineGroup.NoCandidates";
@@ -1099,6 +1100,7 @@ public static class ResourceKeys
     public const string InspectorPreviewDiagnosticFallbackReasonDecryptorResolveFailed = "InspectorPanelView.PreviewDiagnostic.FallbackReason.DecryptorResolveFailed";
     public const string InspectorPreviewDiagnosticFallbackReasonDecryptionFailed = "InspectorPanelView.PreviewDiagnostic.FallbackReason.DecryptionFailed";
     public const string InspectorPreviewDiagnosticFallbackReasonGenerationFailed = "InspectorPanelView.PreviewDiagnostic.FallbackReason.GenerationFailed";
+    public const string InspectorPreviewDiagnosticFallbackReasonOutOfMemory = "InspectorPanelView.PreviewDiagnostic.FallbackReason.OutOfMemory";
     public const string InspectorReferencedByTitle = "InspectorPanelView.ReferencedByTitleText.Text";
     public const string InspectorDependencyClosureTitle = "InspectorPanelView.DependencyClosureTitleText.Text";
     public const string InspectorBundleExternalDependenciesTitle = "InspectorPanelView.BundleExternalDependenciesTitleText.Text";

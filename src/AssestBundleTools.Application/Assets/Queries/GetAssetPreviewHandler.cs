@@ -215,13 +215,14 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
 
         if (!previewContentResult.IsSuccess || previewContentResult.Value is null)
         {
+            var fallback = AssetPreviewGenerationFallbackResolver.Resolve(previewContentResult.Errors);
             return Result<AssetPreviewDto>.Success(BuildFallbackSummaryPreview(
                 query,
-                AssetPreviewMessageKey.GenerationFailed,
+                fallback.MessageKey,
                 new AssetPreviewDiagnosticDto(
-                    CacheStatus: cacheEvaluation.CacheStatus,
-                    FallbackReason: AssetPreviewFallbackReasonKind.GenerationFailed,
-                    DetailMessage: AppErrorLocalizedMessageMapper.CreateFromFirstError(previewContentResult.Errors))));
+                    cacheEvaluation.CacheStatus,
+                    fallback.FallbackReason,
+                    AppErrorLocalizedMessageMapper.CreateFromFirstError(previewContentResult.Errors))));
         }
 
         var generatedAtUtc = DateTimeOffset.UtcNow;

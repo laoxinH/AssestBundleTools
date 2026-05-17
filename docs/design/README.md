@@ -70,7 +70,7 @@
 下一轮默认按“先统一后台任务流程，再让提取/替换顺畅，最后进入真实写包”的顺序推进：
 
 1. 统一后台任务流程第一阶段
-   按 [background-task-scheduling.md](background-task-scheduling.md) 建立 Presentation 层统一调度契约、profile、进度和状态条投影；当前已迁移工作区打开 / 导入外层任务、预览队列、Spine 详情载荷、批量提取、批量替换骨架和保存骨架，并接入 `cache/bundles` 标准化资源包物理缓存、artifact 生成 single-flight、usage / LRU prune、设置页显式清理入口、偏好驱动自动容量治理，以及基于 artifact identity 的 loaded-session 复用 / 主动失效。后续继续补内存压力退避和导出 / 写包共享入口。
+   按 [background-task-scheduling.md](background-task-scheduling.md) 建立 Presentation 层统一调度契约、profile、进度和状态条投影；当前已迁移工作区打开 / 导入外层任务、预览队列、Spine 详情载荷、批量提取、批量替换骨架和保存骨架，并接入 `cache/bundles` 标准化资源包物理缓存、artifact 生成 single-flight、usage / LRU prune、设置页显式清理入口、偏好驱动自动容量治理、基于 artifact identity 的 loaded-session 复用 / 主动失效 / 容量退避，以及预览 `OutOfMemory` 专用诊断和同 bundle 后台预热短期退避。后续继续补导出 / 写包共享入口。
 2. 提取流程顺滑化
    先按 [workspace-recoverable-operation-records.md](workspace-recoverable-operation-records.md) 建立可恢复操作记录，再明确单资源、多选、批量提取的输出目录、命名冲突、进度、取消、结果明细和日志入口。
 3. 真实提取落地

@@ -740,7 +740,7 @@ cache/
 - 资产详情预览加载采用当前活动标签优先策略：切换到其他资产详情标签时，旧标签的未完成前台预览请求会被标记为失效并降级为后台预热；新活动标签按 `PreviewForeground` 重新调度，前台调用方取消可释放前台 profile 槽。已打开标签的后台预热按最近激活、最近打开优先，而不是单纯集合顺序。
 - 当前 Infrastructure 已接入 `AssetsToolsBundleLoadedSessionCache`：同一标准化 artifact identity 的 `LoadBundleFile(..., unpackIfPacked: true)` 和 `LoadAssetsFileFromBundle(...)` 通过 single-flight 进入一次加载任务，成功后用 lease 方式短时复用，并以 30 秒滑动 TTL 驱逐；默认最多保留 6 个空闲 loaded session，检测到 GC 内存压力时会退避到 1 个空闲 session，活动 lease 和仍在底层同步加载的任务不会被硬中断；同一 loaded session 的 AssetsTools 访问默认串行化，避免假设第三方对象可无锁并发。该 cache 当前由 `AssetsToolsAssetBundleReader`、`AssetsToolsAssetPreviewGenerator` 和经预览管线导出的提取共享；没有 artifact identity 的直接调用回退到物理路径 key。
 - 当前已接入首版 `cache/bundles` 标准化资源包物理缓存：导入、预览、提取和 Spine 详情链路会通过 Application artifact resolver 复用同一 manifest；外部解密派生结果与 PassThrough 原始可读包都会晋升为 `normalized.bundle`，后续读取不再继续指向用户源文件。
-- 仍需继续治理的预览内存风险：loaded-session 和标准化 artifact 已覆盖 Reader / Preview / Extraction 的路径复用，artifact 生成阶段也已按资源包键串行化，artifact store 已提供 usage / LRU prune、设置页显式清理入口和偏好驱动自动容量治理，loaded-session 也已按标准化 artifact identity 复用、容量上限、内存压力退避并在 artifact 删除 / prune / 工作区记录删除时主动失效；但真实导出 / 写包共享入口仍未完成。连续打开多个不同大 bundle 的缓存未命中预览时，前台优先、后台预热退避和 OutOfMemory 专用诊断仍需按 9.2 继续收口。
+- 仍需继续治理的预览内存风险：loaded-session 和标准化 artifact 已覆盖 Reader / Preview / Extraction 的路径复用，artifact 生成阶段也已按资源包键串行化，artifact store 已提供 usage / LRU prune、设置页显式清理入口和偏好驱动自动容量治理，loaded-session 也已按标准化 artifact identity 复用、容量上限、内存压力退避并在 artifact 删除 / prune / 工作区记录删除时主动失效；预览 `OutOfMemoryException` 当前会进入专用诊断并触发同 bundle 后台预热短期退避。真实导出 / 写包共享入口仍未完成，连续打开多个不同大 bundle 的缓存未命中预览时仍应继续关注整体内存峰值。
 - 当前预览类型覆盖如下：
   - 图像预览：`Texture2D`、`Sprite`
   - 文本预览：`TextAsset`、`Shader`
@@ -849,12 +849,12 @@ cache/
 - 后台预热会对已打开资产详情标签发起预览请求；Mesh 贴图叠加预览还会通过同一预览管线请求关联 `Texture2D / Sprite` 载荷。这些路径在缓存未命中且源 bundle 较大时会放大解包内存压力。
 - `x64` 运行能提高可用地址空间，但只能缓解症状，不能替代预览解包生命周期与缓存策略治理。
 
-后续收口建议：
+当前收口状态：
 
-1. 继续收紧后台预热策略：对缓存未命中、大 bundle 或已发生内存不足的 bundle，后台预热应跳过或只复用已有预览缓存；前台活动资产预览优先。
+1. 后台预热策略已完成一轮收紧：对已发生内存不足的 bundle，后台预热会短期跳过，前台活动资产预览仍优先执行；缓存未命中 / 大 bundle 的更细粒度预测跳过仍按真实样本再扩展。
 2. 补齐标准化资源包物理缓存的容量治理：当前 `cache/bundles` 已落地并被 Reader / Preview / Extraction / Spine 详情复用，artifact 生成阶段已按资源包键 single-flight，manifest 已回写 `lastAccessedAtUtc`，Infrastructure store 已支持 usage 统计、按大小 / 数量上限的 LRU prune、显式清理入口和偏好驱动自动清理；后续应增加更完整清理诊断。
 3. 当前已覆盖 Reader / Preview / Extraction、并基于标准化 artifact identity 复用的 AssetsTools loaded-session 缓存已补齐默认容量上限和内存压力退避；后续继续补真实导出 / 写包共享入口。
-4. 对 `OutOfMemoryException` 补专用诊断分类和短期退避：在保留堆栈 detail 的同时，提示“预览生成内存不足”，并暂停同 bundle 的后台预热，避免连续失败。
+4. `OutOfMemoryException` 已有专用诊断分类和短期退避：Infrastructure 保留异常 detail，Application 暴露 `Bundle.Preview.OutOfMemory / AssetPreviewFallbackReasonKind.OutOfMemory`，Presentation 暂停同 bundle 后台预热并在 DEBUG 输出退避诊断，避免连续失败。
 
 ## 10. 执行结论
 
@@ -870,7 +870,7 @@ cache/
 - 资源包标签页属于页面级状态，不直接侵入 Application 层
 - 当前已通过工作区元数据文件恢复资源包标签页与活动筛选状态
 - 当前已通过工作区元数据文件恢复资源包标签页下的资产详情标签、活动资产标签与检查器页签位置
-- 资产预览查询通过 Presentation 预览执行队列后台运行，预览 worker 总数由应用偏好控制：自动模式为 `clamp(Environment.ProcessorCount / 2, 1, 4)`，也可在“设置与诊断”页固定为 `1-4`。执行队列保留 1 个前台槽优先服务当前活动资产详情标签，其余槽用于已打开资产详情标签的后台预热。若并发度为 1，则后台预热不参与竞争；快速切换到新标签时，新活动标签按前台优先级重开，旧活动标签取消前台请求并在仍打开时降级为后台预热，后台预热按最近激活 / 最近打开优先，已完成的预览则直接复用。Spine runtime 当前帧使用独立 `SpineRuntimeFrame` profile，不与普通详情预览争用槽位。关闭资产标签、关闭资源包标签、重建标签集合或工作区失效时，必须取消对应标签范围内的预览请求。导入、预览、提取、导出和后续保存 / 重建的 Presentation 层后台任务调度统一边界见 [background-task-scheduling.md](background-task-scheduling.md)。
+- 资产预览查询通过 Presentation 预览执行队列后台运行，预览 worker 总数由应用偏好控制：自动模式为 `clamp(Environment.ProcessorCount / 2, 1, 4)`，也可在“设置与诊断”页固定为 `1-4`。执行队列保留 1 个前台槽优先服务当前活动资产详情标签，其余槽用于已打开资产详情标签的后台预热。若并发度为 1，则后台预热不参与竞争；快速切换到新标签时，新活动标签按前台优先级重开，旧活动标签取消前台请求并在仍打开时降级为后台预热，后台预热按最近激活 / 最近打开优先，已完成的预览则直接复用。若某个 bundle 的预览生成返回 `OutOfMemory`，同 bundle 后台预热会短期退避，前台用户请求仍可执行且成功后清除退避。Spine runtime 当前帧使用独立 `SpineRuntimeFrame` profile，不与普通详情预览争用槽位。关闭资产标签、关闭资源包标签、重建标签集合或工作区失效时，必须取消对应标签范围内的预览请求。导入、预览、提取、导出和后续保存 / 重建的 Presentation 层后台任务调度统一边界见 [background-task-scheduling.md](background-task-scheduling.md)。
 - 工作区默认解密器属于工作区元数据，由工作区向导设置，并在工作台状态标签中呈现
 - 导入入口先收口到 Presentation 共享协调服务，再通过 Application 层统一登记工作区导入来源，并进一步接到解密、读取和缓存写入链路
 - 真实导入前若需要解密，应先通过独立解密器扩展点把来源转换为可读取文件，再进入 `IAssetBundleReader`
