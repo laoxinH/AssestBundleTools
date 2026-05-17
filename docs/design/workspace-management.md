@@ -432,11 +432,11 @@ cache/
 
 - Application 已新增 `IBundleArtifactStore`、`BundleArtifactManifestDto`、`BundleArtifactSaveRequestDto` 和 `WorkspaceBundleArtifactResolver`，导入 worker 与资源详情预览查询都会先通过同一条 artifact resolver 取得可读取 bundle 路径。
 - Infrastructure 已新增 `JsonBundleArtifactStore`，目录落在 `cache/bundles/<workspaceKey>/<bundleCacheKey>/`；外部解密器等 `ProducedDerivedFile=true` 的结果会复制为 `normalized.bundle` 并写入 `manifest.json`，`PassThrough` 场景首版只写 manifest 指向原始可读文件。
-- `manifest.json` 首版已实际记录 `workspaceKey / bundleCacheKey / resolvedBundlePath / isMaterialized / sourceFingerprint / bundleFingerprint / decryptorId / decryptorVersion / normalizerVersion / createdAtUtc`。`lastAccessedAtUtc`、容量统计和诊断数组仍属于后续增强字段。
+- `manifest.json` 当前已实际记录 `workspaceKey / bundleCacheKey / resolvedBundlePath / isMaterialized / sourceFingerprint / bundleFingerprint / decryptorId / decryptorVersion / normalizerVersion / createdAtUtc / lastAccessedAtUtc`。容量统计和诊断数组仍属于后续增强字段。
 - 标准化 artifact 的复用判定当前基于 `workspaceKey + bundleCacheKey + sourceFingerprint + decryptorId + decryptorVersion + normalizerVersion`；不匹配或物理文件缺失时会删除旧 artifact 并重新解密 / 保存。
 - `WorkspaceBundleArtifactResolver` 已对同一 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 的 artifact 生成阶段加 single-flight 闸门；并发预览、提取或导入命中同一资源包时，后续请求会等待首个生成请求完成，再通过 manifest 复用同一 artifact。
 - 资源包移除、工作区记录移除和工作区数据重置都会同步清理 `cache/bundles`。导入刷新中若只是 parser / tool 版本变化，会保留仍有效的标准化 artifact，只清理旧索引与预览缓存，避免刚生成的新 `normalized.bundle` 被提交阶段误删。
-- 首版仍未实现容量上限、`lastAccessedAtUtc` 回写和内存压力退避；loaded-session 已基于标准化 artifact identity 复用，后续继续按 5.3.2 与 9.2 补主动失效和导出 / 写包共享入口。
+- 首版仍未实现容量上限和内存压力退避；标准化 artifact 在保存和成功复用时会回写 `lastAccessedAtUtc`，loaded-session 已基于标准化 artifact identity 复用，后续继续按 5.3.2 与 9.2 补主动失效和导出 / 写包共享入口。
 
 ### 5.3.2 活跃资源包加载会话缓存
 
@@ -852,7 +852,7 @@ cache/
 后续收口建议：
 
 1. 继续收紧后台预热策略：对缓存未命中、大 bundle 或已发生内存不足的 bundle，后台预热应跳过或只复用已有预览缓存；前台活动资产预览优先。
-2. 补齐标准化资源包物理缓存的容量治理：当前 `cache/bundles` 首版已落地并被 Reader / Preview / Extraction / Spine 详情复用，artifact 生成阶段已按资源包键 single-flight；后续应增加 `lastAccessedAtUtc`、容量上限和显式清理入口。
+2. 补齐标准化资源包物理缓存的容量治理：当前 `cache/bundles` 首版已落地并被 Reader / Preview / Extraction / Spine 详情复用，artifact 生成阶段已按资源包键 single-flight，manifest 已回写 `lastAccessedAtUtc`；后续应增加容量上限和显式清理入口。
 3. 为当前已覆盖 Reader / Preview / Extraction、并基于标准化 artifact identity 复用的 AssetsTools loaded-session 缓存补齐容量上限、主动失效、内存压力退避和真实导出 / 写包共享入口。
 4. 对 `OutOfMemoryException` 补专用诊断分类和短期退避：在保留堆栈 detail 的同时，提示“预览生成内存不足”，并暂停同 bundle 的后台预热，避免连续失败。
 

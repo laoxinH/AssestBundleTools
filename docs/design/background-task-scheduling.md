@@ -437,9 +437,9 @@ BackgroundWorkProgress
 
 调度器不直接规定缓存格式，也不把缓存命中写成操作记录。
 
-当前已引入首版标准化 `cache/bundles` artifact 和进程内 `AssetsToolsBundleLoadedSessionCache`：导入 / 预览 / 提取 / Spine 详情会先通过 `WorkspaceBundleArtifactResolver` 取得同一可读 bundle 路径；resolver 会对同一 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 的 artifact 生成请求做 single-flight 串行化，后续等待者在首个请求写入 manifest 后直接复用结果。随后 `WorkspaceBundleArtifactResolver` 会从 manifest 派生 `bundle-artifact | workspaceKey | bundleCacheKey | normalizerVersion | bundleFingerprint` 形态的 loaded-session identity，Reader 和预览生成器把该 identity 传给 `AssetsToolsBundleLoadedSessionCache`；同一 identity 的 `LoadBundleFile / LoadAssetsFileFromBundle` 通过 single-flight 进入一次加载任务，成功后以 lease 方式短时复用，并用 30 秒滑动 TTL 驱逐。若调用方没有 artifact identity，Infrastructure 仍回退到物理路径 key。`AssetsToolsAssetBundleReader` 和 `AssetsToolsAssetPreviewGenerator` 默认共享同一个进程内 cache；提取当前通过 `WorkspaceAssetExtractionExporter -> GetAssetPreviewHandler` 获取 payload，因此也会复用同一 loaded-session。
+当前已引入首版标准化 `cache/bundles` artifact 和进程内 `AssetsToolsBundleLoadedSessionCache`：导入 / 预览 / 提取 / Spine 详情会先通过 `WorkspaceBundleArtifactResolver` 取得同一可读 bundle 路径；resolver 会对同一 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 的 artifact 生成请求做 single-flight 串行化，后续等待者在首个请求写入 manifest 后直接复用结果，并在保存或成功复用 manifest 时回写 `lastAccessedAtUtc`。随后 `WorkspaceBundleArtifactResolver` 会从 manifest 派生 `bundle-artifact | workspaceKey | bundleCacheKey | normalizerVersion | bundleFingerprint` 形态的 loaded-session identity，Reader 和预览生成器把该 identity 传给 `AssetsToolsBundleLoadedSessionCache`；同一 identity 的 `LoadBundleFile / LoadAssetsFileFromBundle` 通过 single-flight 进入一次加载任务，成功后以 lease 方式短时复用，并用 30 秒滑动 TTL 驱逐。若调用方没有 artifact identity，Infrastructure 仍回退到物理路径 key。`AssetsToolsAssetBundleReader` 和 `AssetsToolsAssetPreviewGenerator` 默认共享同一个进程内 cache；提取当前通过 `WorkspaceAssetExtractionExporter -> GetAssetPreviewHandler` 获取 payload，因此也会复用同一 loaded-session。
 
-后续应让 `Export / SaveRebuild` 也共享同一套标准化 artifact 和 loaded-session 身份模型。当前已经解决同一进程内、同一 bundle artifact 生成和同一 artifact identity loaded-session 的重复加载；下一步要补容量上限、主动失效、内存压力退避和真实导出 / 写包共享入口。
+后续应让 `Export / SaveRebuild` 也共享同一套标准化 artifact 和 loaded-session 身份模型。当前已经解决同一进程内、同一 bundle artifact 生成、artifact 访问时间回写和同一 artifact identity loaded-session 的重复加载；下一步要补容量上限、主动失效、内存压力退避和真实导出 / 写包共享入口。
 
 ## 15. 状态持久化边界
 

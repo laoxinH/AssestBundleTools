@@ -79,12 +79,30 @@ public sealed class JsonBundleArtifactStore : IBundleArtifactStore
             DecryptorId: request.DecryptorId,
             DecryptorVersion: request.DecryptorVersion,
             NormalizerVersion: request.NormalizerVersion,
-            CreatedAtUtc: request.CreatedAtUtc);
+            CreatedAtUtc: request.CreatedAtUtc,
+            LastAccessedAtUtc: request.CreatedAtUtc);
         JsonWorkspaceFileStorageHelper.WriteJsonAtomically(
             _storagePaths.GetBundleArtifactManifestFilePath(request.WorkspaceKey, request.BundleCacheKey),
             manifest,
             JsonWorkspaceSerialization.SerializerOptions);
         return manifest;
+    }
+
+    public BundleArtifactManifestDto UpdateLastAccessed(
+        BundleArtifactManifestDto manifest,
+        DateTimeOffset lastAccessedAtUtc)
+    {
+        ArgumentNullException.ThrowIfNull(manifest);
+
+        var updatedManifest = manifest with
+        {
+            LastAccessedAtUtc = lastAccessedAtUtc,
+        };
+        JsonWorkspaceFileStorageHelper.WriteJsonAtomically(
+            _storagePaths.GetBundleArtifactManifestFilePath(manifest.WorkspaceKey, manifest.BundleCacheKey),
+            updatedManifest,
+            JsonWorkspaceSerialization.SerializerOptions);
+        return updatedManifest;
     }
 
     public void Delete(string workspaceKey, string bundleCacheKey)

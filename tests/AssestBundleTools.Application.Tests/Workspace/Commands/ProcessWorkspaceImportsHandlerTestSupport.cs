@@ -107,7 +107,8 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
                 DecryptorId: request.DecryptorId,
                 DecryptorVersion: request.DecryptorVersion,
                 NormalizerVersion: request.NormalizerVersion,
-                CreatedAtUtc: request.CreatedAtUtc);
+                CreatedAtUtc: request.CreatedAtUtc,
+                LastAccessedAtUtc: request.CreatedAtUtc);
             lock (_syncRoot)
             {
                 _manifests.RemoveAll(existingManifest =>
@@ -117,6 +118,28 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
             }
 
             return manifest;
+        }
+
+        public BundleArtifactManifestDto UpdateLastAccessed(
+            BundleArtifactManifestDto manifest,
+            DateTimeOffset lastAccessedAtUtc)
+        {
+            var updatedManifest = manifest with
+            {
+                LastAccessedAtUtc = lastAccessedAtUtc,
+            };
+            lock (_syncRoot)
+            {
+                var index = _manifests.FindIndex(existingManifest =>
+                    string.Equals(existingManifest.WorkspaceKey, manifest.WorkspaceKey, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(existingManifest.BundleCacheKey, manifest.BundleCacheKey, StringComparison.OrdinalIgnoreCase));
+                if (index >= 0)
+                {
+                    _manifests[index] = updatedManifest;
+                }
+            }
+
+            return updatedManifest;
         }
 
         public void Delete(string workspaceKey, string bundleCacheKey)

@@ -95,11 +95,12 @@ internal static class WorkspaceBundleArtifactResolver
             var cachedBundlePath = bundleArtifactStore.ResolveBundlePath(manifest!);
             if (!string.IsNullOrWhiteSpace(cachedBundlePath))
             {
+                var accessedManifest = bundleArtifactStore.UpdateLastAccessed(manifest!, createdAtUtc);
                 return Result<WorkspaceBundleArtifactResolutionDto>.Success(
                     new WorkspaceBundleArtifactResolutionDto(
                         cachedBundlePath,
-                        manifest!,
-                        CreateBundleSessionCacheKey(manifest!),
+                        accessedManifest,
+                        CreateBundleSessionCacheKey(accessedManifest),
                         decryptor.Descriptor,
                         IsFromCache: true,
                         DiagnosticMessage: null));

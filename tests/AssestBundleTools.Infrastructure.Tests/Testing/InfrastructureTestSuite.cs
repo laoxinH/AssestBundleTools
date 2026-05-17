@@ -76,6 +76,10 @@ internal static class InfrastructureTestSuite
             JsonBundleArtifactStoreTests.Save_ShouldKeepPassThroughBundlePath_InManifestOnly);
         await RunTestAsync(
             failures,
+            nameof(JsonBundleArtifactStoreTests.UpdateLastAccessed_ShouldPersistManifestAccessTime),
+            JsonBundleArtifactStoreTests.UpdateLastAccessed_ShouldPersistManifestAccessTime);
+        await RunTestAsync(
+            failures,
             nameof(JsonBundleArtifactStoreTests.DeleteWorkspace_ShouldRemoveBundleArtifactDirectory),
             JsonBundleArtifactStoreTests.DeleteWorkspace_ShouldRemoveBundleArtifactDirectory);
         await RunTestAsync(

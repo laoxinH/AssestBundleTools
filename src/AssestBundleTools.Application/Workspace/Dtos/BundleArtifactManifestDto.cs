@@ -17,4 +17,5 @@ public sealed record BundleArtifactManifestDto(
     string DecryptorId,
     string? DecryptorVersion,
     string NormalizerVersion,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    DateTimeOffset? LastAccessedAtUtc = null);

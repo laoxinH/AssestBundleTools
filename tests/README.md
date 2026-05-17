@@ -27,7 +27,7 @@
 - 缓存型工作区运行时依赖图中的反向引用、依赖闭包、Mesh 贴图关联，以及外部 `PPtr` 占位到当前工作区已导入资产的跨 Bundle 解析
 - 缓存型工作区运行时资产列表中的动态类型 Facet、隐藏图节点排除、以及 `Unknown + Unity 类型名` 的资产级筛选
 - 预览缓存描述文件 / 载荷文件的保存回读、删除清理，以及缺失 payload / 非法 payload path 下的容错加载与清理
-- 标准化 bundle artifact store 的派生 bundle 复制落盘、PassThrough manifest-only 记录、工作区级删除清理，以及 loaded-session 对相同 artifact identity 的 in-flight 复用和不同 artifact identity 的隔离
+- 标准化 bundle artifact store 的派生 bundle 复制落盘、PassThrough manifest-only 记录、`lastAccessedAtUtc` 初始化 / 回写、工作区级删除清理，以及 loaded-session 对相同 artifact identity 的 in-flight 复用和不同 artifact identity 的隔离
 - `zh-CN / en-US` 资源键一致性与 `ResourceKeys.cs` 覆盖率
 - `Presentation -> Infrastructure` 组合根边界检查
 - `Presentation` 本地化调用不得直接写资源键字面量

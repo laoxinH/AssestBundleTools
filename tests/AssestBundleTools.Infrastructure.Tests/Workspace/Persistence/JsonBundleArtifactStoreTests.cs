@@ -32,6 +32,7 @@ internal static class JsonBundleArtifactStoreTests
             "Saved bundle artifact manifest should be readable.");
         TestAssert.True(restoredManifest.IsMaterialized, "Derived bundle should be materialized into cache/bundles.");
         TestAssert.Equal(manifest.ResolvedBundlePath, restoredManifest.ResolvedBundlePath, "Manifest path should round-trip.");
+        TestAssert.Equal(manifest.CreatedAtUtc, restoredManifest.LastAccessedAtUtc, "Saving artifact manifest should initialize last access time.");
         TestAssert.True(
             restoredManifest.ResolvedBundlePath.EndsWith(
                 Path.Combine("cache", "bundles", "workspace-a", "bundle-cache-a", "normalized.bundle"),
@@ -80,6 +81,36 @@ internal static class JsonBundleArtifactStoreTests
             manifest.ResolvedBundlePath,
             store.ResolveBundlePath(manifest),
             "Pass-through manifest should resolve to the original file while it exists.");
+    }
+
+    public static void UpdateLastAccessed_ShouldPersistManifestAccessTime()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        Directory.CreateDirectory(temporaryDirectory.DirectoryPath);
+        var sourceBundlePath = Path.Combine(temporaryDirectory.DirectoryPath, "source.ab");
+        File.WriteAllBytes(sourceBundlePath, [0x10, 0x20]);
+        var store = new JsonBundleArtifactStore(temporaryDirectory.DirectoryPath);
+        var manifest = store.Save(new BundleArtifactSaveRequestDto(
+            WorkspaceKey: "workspace-access",
+            BundleCacheKey: "bundle-cache-access",
+            SourceFingerprint: CreateFingerprint(sourceBundlePath, 2),
+            DecryptorId: "builtin.pass-through",
+            DecryptorVersion: "1.0.0",
+            NormalizerVersion: "bundle-artifact/1",
+            ResolvedBundlePath: sourceBundlePath,
+            ProducedDerivedFile: false,
+            ResolvedBundleFingerprint: CreateFingerprint(sourceBundlePath, 2),
+            CreatedAtUtc: new DateTimeOffset(2026, 5, 17, 10, 5, 0, TimeSpan.Zero)));
+        var accessedAtUtc = new DateTimeOffset(2026, 5, 17, 11, 30, 0, TimeSpan.Zero);
+
+        var updatedManifest = store.UpdateLastAccessed(manifest, accessedAtUtc);
+        var restoredManifest = TestAssert.NotNull(
+            store.Load("workspace-access", "bundle-cache-access"),
+            "Updated bundle artifact manifest should be readable.");
+
+        TestAssert.Equal(accessedAtUtc, updatedManifest.LastAccessedAtUtc, "Updated manifest should expose the new access time.");
+        TestAssert.Equal(accessedAtUtc, restoredManifest.LastAccessedAtUtc, "Updated access time should be persisted.");
+        TestAssert.Equal(manifest.CreatedAtUtc, restoredManifest.CreatedAtUtc, "Touching access time should not rewrite creation time.");
     }
 
     public static void DeleteWorkspace_ShouldRemoveBundleArtifactDirectory()

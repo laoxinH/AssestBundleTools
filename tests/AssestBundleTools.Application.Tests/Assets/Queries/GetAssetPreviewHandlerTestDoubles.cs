@@ -169,6 +169,12 @@ internal static partial class GetAssetPreviewHandlerTests
 
         public int SaveCallCount => Volatile.Read(ref _saveCallCount);
 
+        private int _updateLastAccessedCallCount;
+
+        public int UpdateLastAccessedCallCount => Volatile.Read(ref _updateLastAccessedCallCount);
+
+        public BundleArtifactManifestDto? LastAccessedManifest { get; private set; }
+
         public BundleArtifactManifestDto? Load(string workspaceKey, string bundleCacheKey)
         {
             lock (_syncRoot)
@@ -194,7 +200,8 @@ internal static partial class GetAssetPreviewHandlerTests
                 DecryptorId: request.DecryptorId,
                 DecryptorVersion: request.DecryptorVersion,
                 NormalizerVersion: request.NormalizerVersion,
-                CreatedAtUtc: request.CreatedAtUtc);
+                CreatedAtUtc: request.CreatedAtUtc,
+                LastAccessedAtUtc: request.CreatedAtUtc);
             lock (_syncRoot)
             {
                 _manifests.RemoveAll(existingManifest =>
@@ -204,6 +211,30 @@ internal static partial class GetAssetPreviewHandlerTests
             }
 
             return manifest;
+        }
+
+        public BundleArtifactManifestDto UpdateLastAccessed(
+            BundleArtifactManifestDto manifest,
+            DateTimeOffset lastAccessedAtUtc)
+        {
+            Interlocked.Increment(ref _updateLastAccessedCallCount);
+            var updatedManifest = manifest with
+            {
+                LastAccessedAtUtc = lastAccessedAtUtc,
+            };
+            lock (_syncRoot)
+            {
+                LastAccessedManifest = updatedManifest;
+                var index = _manifests.FindIndex(existingManifest =>
+                    string.Equals(existingManifest.WorkspaceKey, manifest.WorkspaceKey, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(existingManifest.BundleCacheKey, manifest.BundleCacheKey, StringComparison.OrdinalIgnoreCase));
+                if (index >= 0)
+                {
+                    _manifests[index] = updatedManifest;
+                }
+            }
+
+            return updatedManifest;
         }
 
         public void Delete(string workspaceKey, string bundleCacheKey)

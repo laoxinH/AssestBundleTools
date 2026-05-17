@@ -289,6 +289,14 @@ internal static class RemoveWorkspaceBundleHandlerTests
 
         public BundleArtifactManifestDto Save(BundleArtifactSaveRequestDto request) => throw new NotSupportedException();
 
+        public BundleArtifactManifestDto UpdateLastAccessed(
+            BundleArtifactManifestDto manifest,
+            DateTimeOffset lastAccessedAtUtc) =>
+            manifest with
+            {
+                LastAccessedAtUtc = lastAccessedAtUtc,
+            };
+
         public void Delete(string workspaceKey, string bundleCacheKey)
         {
             DeleteOperations.Add((workspaceKey, bundleCacheKey));

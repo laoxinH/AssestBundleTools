@@ -13,6 +13,8 @@ public interface IBundleArtifactStore
 
     BundleArtifactManifestDto Save(BundleArtifactSaveRequestDto request);
 
+    BundleArtifactManifestDto UpdateLastAccessed(BundleArtifactManifestDto manifest, DateTimeOffset lastAccessedAtUtc);
+
     void Delete(string workspaceKey, string bundleCacheKey);
 
     void DeleteWorkspace(string workspaceKey);

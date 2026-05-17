@@ -157,6 +157,10 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldReuseBundleArtifactManifest_WhenPreviewCacheMisses);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUpdateBundleArtifactLastAccess_WhenManifestIsReused),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldUpdateBundleArtifactLastAccess_WhenManifestIsReused);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldSingleFlightBundleArtifactGeneration_WhenConcurrentPreviewCacheMisses),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldSingleFlightBundleArtifactGeneration_WhenConcurrentPreviewCacheMisses);
         await RunTestAsync(
