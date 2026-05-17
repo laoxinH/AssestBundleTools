@@ -17,4 +17,5 @@ public sealed record AssetPreviewBuildRequestDto(
     string AssetTypeDisplayName,
     long SizeInBytes,
     string SerializedFileName,
-    long PathId);
+    long PathId,
+    string? BundleSessionCacheKey = null);

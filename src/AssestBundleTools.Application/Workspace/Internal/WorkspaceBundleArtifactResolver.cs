@@ -99,6 +99,7 @@ internal static class WorkspaceBundleArtifactResolver
                     new WorkspaceBundleArtifactResolutionDto(
                         cachedBundlePath,
                         manifest!,
+                        CreateBundleSessionCacheKey(manifest!),
                         decryptor.Descriptor,
                         IsFromCache: true,
                         DiagnosticMessage: null));
@@ -146,9 +147,10 @@ internal static class WorkspaceBundleArtifactResolver
             new WorkspaceBundleArtifactResolutionDto(
                 resolvedBundlePath,
                 savedManifest,
+                CreateBundleSessionCacheKey(savedManifest),
                 decryptionResult.Value.Decryptor,
                 IsFromCache: false,
-            DiagnosticMessage: decryptionResult.Value.DiagnosticMessage));
+                DiagnosticMessage: decryptionResult.Value.DiagnosticMessage));
     }
 
     private static string CreateResolutionGateKey(
@@ -161,6 +163,21 @@ internal static class WorkspaceBundleArtifactResolver
             workspaceKey.Trim(),
             workspaceDataRootPath.Trim(),
             bundleCacheKey.Trim());
+    }
+
+    private static string CreateBundleSessionCacheKey(BundleArtifactManifestDto manifest)
+    {
+        var fingerprint = manifest.BundleFingerprint;
+        return string.Join(
+            '|',
+            "bundle-artifact",
+            manifest.WorkspaceKey.Trim(),
+            manifest.BundleCacheKey.Trim(),
+            manifest.NormalizerVersion.Trim(),
+            fingerprint.SourcePath.Trim(),
+            fingerprint.FileSizeInBytes.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            fingerprint.LastWriteTimeUtc.UtcTicks.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            fingerprint.ContentHash?.Trim() ?? string.Empty);
     }
 
     private static ResolutionGateEntry RentResolutionGate(string key)

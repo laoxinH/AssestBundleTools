@@ -7,6 +7,7 @@ namespace AssestBundleTools.Application.Workspace.Internal;
 internal sealed record WorkspaceBundleArtifactResolutionDto(
     string ResolvedBundlePath,
     BundleArtifactManifestDto Manifest,
+    string BundleSessionCacheKey,
     AssetBundleDecryptorDescriptorDto Decryptor,
     bool IsFromCache,
     LocalizedMessageDto? DiagnosticMessage);

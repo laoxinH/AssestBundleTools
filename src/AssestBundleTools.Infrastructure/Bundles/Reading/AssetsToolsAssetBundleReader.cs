@@ -95,7 +95,10 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
         AssetsToolsBundleLoadedSessionLease? sessionLease = null;
         try
         {
-            sessionLease = await _bundleSessionCache.AcquireAsync(request.BundlePath, cancellationToken);
+            sessionLease = await _bundleSessionCache.AcquireAsync(
+                request.BundlePath,
+                request.BundleSessionCacheKey,
+                cancellationToken);
             var session = sessionLease.Session;
             await session.ExecutionGate.WaitAsync(cancellationToken);
             try

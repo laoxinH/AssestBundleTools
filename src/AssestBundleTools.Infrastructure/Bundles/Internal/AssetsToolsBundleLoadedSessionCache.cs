@@ -41,13 +41,22 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
         string bundlePath,
         CancellationToken cancellationToken)
     {
+        return await AcquireAsync(bundlePath, sessionCacheKey: null, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<AssetsToolsBundleLoadedSessionLease> AcquireAsync(
+        string bundlePath,
+        string? sessionCacheKey,
+        CancellationToken cancellationToken)
+    {
         if (string.IsNullOrWhiteSpace(bundlePath))
         {
             throw new ArgumentException("Bundle path is required.", nameof(bundlePath));
         }
 
-        var cacheKey = Path.GetFullPath(bundlePath);
-        var entry = GetOrCreateEntry(cacheKey);
+        var resolvedBundlePath = Path.GetFullPath(bundlePath);
+        var cacheKey = ResolveCacheKey(resolvedBundlePath, sessionCacheKey);
+        var entry = GetOrCreateEntry(cacheKey, resolvedBundlePath);
         try
         {
             var session = await entry.SessionTask.WaitAsync(cancellationToken);
@@ -89,7 +98,14 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
         }
     }
 
-    private CacheEntry GetOrCreateEntry(string cacheKey)
+    private static string ResolveCacheKey(string resolvedBundlePath, string? sessionCacheKey)
+    {
+        return string.IsNullOrWhiteSpace(sessionCacheKey)
+            ? resolvedBundlePath
+            : sessionCacheKey.Trim();
+    }
+
+    private CacheEntry GetOrCreateEntry(string cacheKey, string bundlePath)
     {
         lock (_syncRoot)
         {
@@ -97,7 +113,7 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
 
             if (!_entries.TryGetValue(cacheKey, out var entry))
             {
-                entry = new CacheEntry(Task.Run(() => _sessionLoader(cacheKey)));
+                entry = new CacheEntry(Task.Run(() => _sessionLoader(bundlePath)));
                 _entries[cacheKey] = entry;
             }
 

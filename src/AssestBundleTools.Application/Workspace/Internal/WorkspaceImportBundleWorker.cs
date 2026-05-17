@@ -97,7 +97,8 @@ internal sealed class WorkspaceImportBundleWorker
                 BundlePath: artifactResult.Value.ResolvedBundlePath,
                 LogicalPath: discoveredFile.LogicalPath,
                 WorkspaceKey: plan.Command.WorkspaceKey,
-                WorkspaceDataRootPath: plan.Command.WorkspaceDataRootPath),
+                WorkspaceDataRootPath: plan.Command.WorkspaceDataRootPath,
+                BundleSessionCacheKey: artifactResult.Value.BundleSessionCacheKey),
             cancellationToken);
         if (readResult.IsCancelled)
         {

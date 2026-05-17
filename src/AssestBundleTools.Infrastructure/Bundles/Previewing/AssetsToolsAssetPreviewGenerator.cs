@@ -58,7 +58,10 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
 
         try
         {
-            sessionLease = await _bundleSessionCache.AcquireAsync(request.ResolvedBundlePath, cancellationToken);
+            sessionLease = await _bundleSessionCache.AcquireAsync(
+                request.ResolvedBundlePath,
+                request.BundleSessionCacheKey,
+                cancellationToken);
             var session = sessionLease.Session;
             await session.ExecutionGate.WaitAsync(cancellationToken);
             try

@@ -7,4 +7,5 @@ public sealed record AssetBundleReadRequestDto(
     string BundlePath,
     string LogicalPath,
     string WorkspaceKey,
-    string WorkspaceDataRootPath);
+    string WorkspaceDataRootPath,
+    string? BundleSessionCacheKey = null);

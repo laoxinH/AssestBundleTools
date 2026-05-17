@@ -144,6 +144,14 @@ internal static class InfrastructureTestSuite
             AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldShareInFlightLoad_ForSameBundlePath);
         await RunTestAsync(
             failures,
+            nameof(AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldShareInFlightLoad_ForSameExplicitCacheKey),
+            AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldShareInFlightLoad_ForSameExplicitCacheKey);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldNotShareInFlightLoad_WhenExplicitCacheKeysDiffer),
+            AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldNotShareInFlightLoad_WhenExplicitCacheKeysDiffer);
+        await RunTestAsync(
+            failures,
             nameof(AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldRemoveFailedLoadEntry),
             AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldRemoveFailedLoadEntry);
         await RunTestAsync(

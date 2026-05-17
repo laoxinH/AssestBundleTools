@@ -39,6 +39,77 @@ internal static class AssetsToolsBundleLoadedSessionCacheTests
         await AssertLoadFailedAsync(secondTask);
     }
 
+    public static async Task AcquireAsync_ShouldShareInFlightLoad_ForSameExplicitCacheKey()
+    {
+        using var loaderEntered = new ManualResetEventSlim();
+        using var releaseLoader = new ManualResetEventSlim();
+        var loadCount = 0;
+        using var cache = new AssetsToolsBundleLoadedSessionCache(
+            _ =>
+            {
+                Interlocked.Increment(ref loadCount);
+                loaderEntered.Set();
+                releaseLoader.Wait(TimeSpan.FromSeconds(5));
+                throw new InvalidOperationException("load failed");
+            },
+            TimeSpan.FromSeconds(30));
+        var firstBundlePath = Path.Combine(Path.GetTempPath(), $"bundle-{Guid.NewGuid():N}.ab");
+        var secondBundlePath = Path.Combine(Path.GetTempPath(), $"bundle-{Guid.NewGuid():N}.ab");
+        const string sessionCacheKey = "artifact|workspace|bundle|fingerprint-a";
+
+        var firstTask = cache.AcquireAsync(firstBundlePath, sessionCacheKey, CancellationToken.None);
+        TestAssert.True(
+            loaderEntered.Wait(TimeSpan.FromSeconds(5)),
+            "The first acquire should start the physical load for the explicit identity.");
+
+        var secondTask = cache.AcquireAsync(secondBundlePath, sessionCacheKey, CancellationToken.None);
+        await Task.Delay(50);
+
+        TestAssert.Equal(
+            1,
+            Volatile.Read(ref loadCount),
+            "Concurrent acquires with the same explicit artifact identity should share one in-flight load.");
+
+        releaseLoader.Set();
+        await AssertLoadFailedAsync(firstTask);
+        await AssertLoadFailedAsync(secondTask);
+    }
+
+    public static async Task AcquireAsync_ShouldNotShareInFlightLoad_WhenExplicitCacheKeysDiffer()
+    {
+        using var bothLoadersEntered = new ManualResetEventSlim();
+        using var releaseLoaders = new ManualResetEventSlim();
+        var loadCount = 0;
+        using var cache = new AssetsToolsBundleLoadedSessionCache(
+            _ =>
+            {
+                if (Interlocked.Increment(ref loadCount) == 2)
+                {
+                    bothLoadersEntered.Set();
+                }
+
+                releaseLoaders.Wait(TimeSpan.FromSeconds(5));
+                throw new InvalidOperationException("load failed");
+            },
+            TimeSpan.FromSeconds(30));
+        var bundlePath = Path.Combine(Path.GetTempPath(), $"bundle-{Guid.NewGuid():N}.ab");
+
+        var firstTask = cache.AcquireAsync(bundlePath, "artifact|workspace|bundle|fingerprint-a", CancellationToken.None);
+        var secondTask = cache.AcquireAsync(bundlePath, "artifact|workspace|bundle|fingerprint-b", CancellationToken.None);
+
+        TestAssert.True(
+            bothLoadersEntered.Wait(TimeSpan.FromSeconds(5)),
+            "Different explicit artifact identities should start separate physical load tasks.");
+        TestAssert.Equal(
+            2,
+            Volatile.Read(ref loadCount),
+            "Different artifact fingerprints for the same physical path should not reuse the old loaded session.");
+
+        releaseLoaders.Set();
+        await AssertLoadFailedAsync(firstTask);
+        await AssertLoadFailedAsync(secondTask);
+    }
+
     public static async Task AcquireAsync_ShouldRemoveFailedLoadEntry()
     {
         var loadCount = 0;

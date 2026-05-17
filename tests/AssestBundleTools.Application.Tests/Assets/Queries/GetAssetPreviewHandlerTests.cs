@@ -184,6 +184,9 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(0, decryptor.DecryptCallCount, "Reusable bundle artifact should avoid invoking decryptor.");
         TestAssert.Equal(1, generator.GenerateCallCount, "Preview content should still be generated on preview cache miss.");
         TestAssert.Equal(artifactBundlePath, generator.LastRequest?.ResolvedBundlePath, "Generator request should use artifact path.");
+        TestAssert.True(
+            generator.LastRequest?.BundleSessionCacheKey?.Contains(bundleCacheEntry.BundleCacheKey, StringComparison.OrdinalIgnoreCase) == true,
+            "Generator request should carry the artifact identity for loaded-session reuse.");
         TestAssert.Equal(0, bundleArtifactStore.SaveCallCount, "Reusable bundle artifact should not rewrite manifest.");
     }
 
@@ -247,6 +250,9 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(1, decryptor.DecryptCallCount, "Artifact generation should still invoke decryptor once after both requests finish.");
         TestAssert.Equal(1, bundleArtifactStore.SaveCallCount, "Shared artifact generation should save one manifest.");
         TestAssert.Equal(resolvedBundlePath, generator.LastRequest?.ResolvedBundlePath, "Preview generator should receive the shared artifact path.");
+        TestAssert.True(
+            generator.LastRequest?.BundleSessionCacheKey?.Contains("bundle-artifact", StringComparison.OrdinalIgnoreCase) == true,
+            "Preview generation should carry a standardized artifact cache identity.");
     }
 
     public static async Task HandleAsync_ShouldHydrateCachedMeshGeometry_WhenPreviewCacheStillMatches()

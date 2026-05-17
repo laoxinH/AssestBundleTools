@@ -196,7 +196,8 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             AssetTypeDisplayName: ResolveAssetTypeDisplayName(assetCacheEntry),
             SizeInBytes: assetCacheEntry.SizeInBytes,
             SerializedFileName: assetCacheEntry.SerializedFileName,
-            PathId: assetCacheEntry.PathId);
+            PathId: assetCacheEntry.PathId,
+            BundleSessionCacheKey: artifactResult.Value.BundleSessionCacheKey);
 
         var previewContentResult = await _assetPreviewGenerator.GenerateAsync(buildRequest, cancellationToken);
         if (previewContentResult.IsCancelled)
