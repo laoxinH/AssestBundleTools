@@ -10,6 +10,8 @@ namespace AssestBundleTools.Application.Workspace.Services;
 /// </remarks>
 public interface IWorkspaceDataStoreFactory
 {
+    IBundleArtifactStore CreateBundleArtifactStore(string? rootDirectoryPath = null);
+
     IBundleIndexCacheStore CreateBundleIndexCacheStore(string? rootDirectoryPath = null);
 
     IPreviewCacheStore CreatePreviewCacheStore(string? rootDirectoryPath = null);

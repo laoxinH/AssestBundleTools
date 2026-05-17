@@ -36,7 +36,7 @@
 | --- | --- | --- | --- |
 | 工作区打开 / 导入 | `WorkspaceImportCoordinatorService`、`BundleExplorerWorkspaceBindingCoordinator`、`IBackgroundTaskRunner` | 外层任务已离开 UI 线程；Application 内部已有 `workspaceKey` 执行闸门和 bundle 粒度 worker 池 | 外层任务、导入进度覆盖层和 Shell 状态条尚未统一为同一个任务模型 |
 | Application 导入 worker | `WorkspaceImportProcessingCoordinator -> WorkspaceImportWorkerPool -> WorkspaceImportCommitter` | `串行计划 -> 有界并行 worker -> 串行提交`，默认 worker 并发度 `1-4` | 该 worker 池属于业务一致性边界，不应被 Presentation 调度器接管 |
-| 资源预览 | `AssetPreviewQueryExecutor` + `IBackgroundWorkScheduler` + `AssetsToolsBundleLoadedSessionCache` | 前台槽优先服务活动详情标签，后台槽用于已打开标签预热；支持取消、超时、调度器 profile 闸门和 AssetsTools loaded-session single-flight；Reader、预览生成器和通过预览管线导出的提取共享同一进程内 session cache | 标准化物理 bundle 缓存、容量上限、主动失效、内存压力退避和完整可观测队列仍需后续补齐 |
+| 资源预览 | `AssetPreviewQueryExecutor` + `IBackgroundWorkScheduler` + `WorkspaceBundleArtifactResolver` + `AssetsToolsBundleLoadedSessionCache` | 前台槽优先服务活动详情标签，后台槽用于已打开标签预热；支持取消、超时、调度器 profile 闸门；导入 / 预览 / 提取 / Spine 详情会优先复用 `cache/bundles` 标准化 artifact；artifact 生成阶段按 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 串行化，AssetsTools loaded-session 再对 artifact 物理路径做 single-flight / lease 复用 | 容量上限、主动失效、内存压力退避、loaded-session artifact fingerprint key 和完整可观测队列仍需后续补齐 |
 | Spine 详情、贴图载荷和 runtime 帧 | `SpineAssetGroupDetailsLoader`、`InspectorSpineAnimationPreviewSurfaceView` + `IBackgroundWorkScheduler` | 组详情 / 贴图载荷通过 `PreviewForeground` 后台加载，runtime 当前帧通过独立 `SpineRuntimeFrame` profile 运行；均不让 UI 直接读 AB | Spine 序列帧导出和后续导出 profile 仍需继续统一 |
 | 批量提取 | `BundleExplorerBatchExtractionBackgroundExecutor`、`BatchTasksViewModel.Execution` | 已通过后台 runner 执行，并向 Shell 状态条上报进度 | 任务取消、并发限制、队列排队和完成结果展示仍偏局部实现 |
 | Shell 状态条 | `IAppBackgroundTaskStatusService` | 能显示当前任务、进度和不确定进度，并把刷新合并到 UI 线程 | 当前是手动 begin/report 模型，尚未和调度器的任务生命周期自然绑定 |
@@ -268,7 +268,7 @@ Profile 是调度策略，不是业务类型本身。同一个 Application 用�
 
 ### 9.3 资源包闸门与 Single-flight
 
-针对 `workspaceKey + bundleCacheKey` 应保留资源包级 single-flight 方向。当前已在 Infrastructure 内部落地首版“物理 bundle 路径 -> loaded session”的 single-flight，并由 AssetsTools Reader、预览生成器和经预览管线导出的提取共享；后续需升级为标准化 artifact 身份，并继续扩展到真实导出 / 写包：
+针对 `workspaceKey + bundleCacheKey` 应保留资源包级 single-flight 方向。当前已落地三层复用：第一层是 Application 侧 `WorkspaceBundleArtifactResolver` 对 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 做 artifact 生成闸门，避免并发预览、提取或导入同时重跑解密 / 标准化；第二层是 Application / Infrastructure 之间的 `cache/bundles` 标准化 artifact manifest，导入、预览、提取和 Spine 详情先复用同一可读 bundle 路径；第三层是 Infrastructure 内部“物理 bundle 路径 -> loaded session”的 single-flight，并由 AssetsTools Reader、预览生成器和经预览管线导出的提取共享。后续仍需把 loaded-session key 升级为标准化 artifact 身份：
 
 - 多个预览、提取或 Spine 组解析同时需要同一个 bundle 时，只允许一个标准化 / 加载请求进入物理读取，其余请求等待同一个结果或复用 loaded-session。
 - UI 请求取消或超时后，如果底层同步解包已经开始，调度槽不应立刻释放给新的同类 bundle load。底层任务完成、失败或被真正取消后再释放，避免旧解包仍在运行时继续放入新解包导致内存峰值失控。
@@ -437,9 +437,9 @@ BackgroundWorkProgress
 
 调度器不直接规定缓存格式，也不把缓存命中写成操作记录。
 
-当前 Infrastructure 已引入首版进程内 `AssetsToolsBundleLoadedSessionCache`：同一物理 bundle 路径的 `LoadBundleFile / LoadAssetsFileFromBundle` 通过 single-flight 进入一次加载任务，成功后以 lease 方式短时复用，并用 30 秒滑动 TTL 驱逐；同一 session 的 AssetsTools 访问默认串行化，不假设第三方对象可无锁并发读取。`AssetsToolsAssetBundleReader` 和 `AssetsToolsAssetPreviewGenerator` 默认共享同一个进程内 cache；提取当前通过 `WorkspaceAssetExtractionExporter -> GetAssetPreviewHandler` 获取 payload，因此也会复用同一 loaded-session。
+当前已引入首版标准化 `cache/bundles` artifact 和进程内 `AssetsToolsBundleLoadedSessionCache`：导入 / 预览 / 提取 / Spine 详情会先通过 `WorkspaceBundleArtifactResolver` 取得同一可读 bundle 路径；resolver 会对同一 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 的 artifact 生成请求做 single-flight 串行化，后续等待者在首个请求写入 manifest 后直接复用结果。随后同一物理 bundle 路径的 `LoadBundleFile / LoadAssetsFileFromBundle` 通过 single-flight 进入一次加载任务，成功后以 lease 方式短时复用，并用 30 秒滑动 TTL 驱逐；同一 session 的 AssetsTools 访问默认串行化，不假设第三方对象可无锁并发读取。`AssetsToolsAssetBundleReader` 和 `AssetsToolsAssetPreviewGenerator` 默认共享同一个进程内 cache；提取当前通过 `WorkspaceAssetExtractionExporter -> GetAssetPreviewHandler` 获取 payload，因此也会复用同一 loaded-session。
 
-后续应让 `SingleExtraction / BatchExtraction / Export` 与预览共享同一套标准化 `cache/bundles` artifact 和 loaded-session 身份模型。当前已经解决同一进程内、同一物理路径的重复加载；下一步要把 cache key 从物理路径升级为标准化 artifact 身份，避免解密 / 标准化产物刷新后误复用旧上下文。
+后续应让 `Export / SaveRebuild` 也共享同一套标准化 artifact 和 loaded-session 身份模型。当前已经解决同一进程内、同一 bundle artifact 生成和同一物理路径 loaded-session 的重复加载；下一步要把 loaded-session cache key 从物理路径升级为标准化 artifact fingerprint，避免解密 / 标准化产物刷新后误复用旧上下文。
 
 ## 15. 状态持久化边界
 

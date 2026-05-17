@@ -125,6 +125,9 @@ internal static class WorkspaceChangeSetAssetEditDraftStoreTests
 
         public string? LastWorkspaceChangeStoreRootPath { get; private set; }
 
+        public IBundleArtifactStore CreateBundleArtifactStore(string? rootDirectoryPath = null) =>
+            throw new NotSupportedException();
+
         public IBundleIndexCacheStore CreateBundleIndexCacheStore(string? rootDirectoryPath = null) =>
             throw new NotSupportedException();
 

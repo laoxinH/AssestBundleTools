@@ -43,6 +43,7 @@ internal sealed class WorkspaceImportProcessingPlanBuilder
                 ApplicationErrors.WorkspaceImportMetadataNotFound(command.WorkspaceKey));
         }
 
+        var bundleArtifactStore = _workspaceDataStoreFactory.CreateBundleArtifactStore(command.WorkspaceDataRootPath);
         var bundleIndexCacheStore = _workspaceDataStoreFactory.CreateBundleIndexCacheStore(command.WorkspaceDataRootPath);
         var previewCacheStore = _workspaceDataStoreFactory.CreatePreviewCacheStore(command.WorkspaceDataRootPath);
         var importedSources = metadata.ImportedSources ?? Array.Empty<WorkspaceImportedSourceDto>();
@@ -65,6 +66,7 @@ internal sealed class WorkspaceImportProcessingPlanBuilder
                 Command: command,
                 MetadataStore: metadataStore,
                 Metadata: metadata,
+                BundleArtifactStore: bundleArtifactStore,
                 BundleIndexCacheStore: bundleIndexCacheStore,
                 PreviewCacheStore: previewCacheStore,
                 ProcessedAtUtc: DateTimeOffset.UtcNow,

@@ -1,0 +1,434 @@
+using System.Text;
+using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Services;
+using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Extraction.Dtos;
+using AssestBundleTools.Application.Replacement.Dtos;
+using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Application.Workspace.Services;
+using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Bundles;
+using AssestBundleTools.Domain.Workspace;
+
+namespace AssestBundleTools.Application.Tests.Assets.Queries;
+
+internal static partial class GetAssetPreviewHandlerTests
+{
+    private sealed class TestWorkspaceSessionRegistry : IWorkspaceSessionRegistry
+    {
+        public WorkspaceSummaryDto OpenWorkspace(WorkspaceSessionOpenRequestDto request) => throw new NotSupportedException();
+
+        public bool ContainsWorkspace(WorkspaceId workspaceId) => true;
+
+        public bool ContainsBundle(WorkspaceId workspaceId, BundleId bundleId) => true;
+
+        public bool ContainsAsset(WorkspaceId workspaceId, BundleId bundleId, AssetId assetId) => true;
+
+        public bool TryGetBundleTree(WorkspaceId workspaceId, out IReadOnlyList<BundleTreeNodeDto> bundleTree)
+        {
+            bundleTree = null!;
+            throw new NotSupportedException();
+        }
+
+        public bool TryGetAssetList(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            string? searchKeyword,
+            AssetType? assetTypeFilter,
+            string? assetTypeDisplayNameFilter,
+            out AssetListResultDto? assetListResult)
+        {
+            assetListResult = null;
+            throw new NotSupportedException();
+        }
+
+        public bool TryGetAssetDetails(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            out AssetDetailsDto? assetDetails)
+        {
+            assetDetails = null;
+            throw new NotSupportedException();
+        }
+
+        public bool TryGetWorkspaceChangeSummary(
+            WorkspaceId workspaceId,
+            out WorkspaceChangeSummaryDto? changeSummary)
+        {
+            changeSummary = null;
+            throw new NotSupportedException();
+        }
+
+        public bool TryExtractAsset(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            out AssetExtractionResultDto? extractionResult)
+        {
+            extractionResult = null;
+            throw new NotSupportedException();
+        }
+
+        public bool TryGetWorkspaceReplacementCandidates(
+            WorkspaceId workspaceId,
+            BundleId targetBundleId,
+            AssetId targetAssetId,
+            out IReadOnlyList<WorkspaceReplacementCandidateDto> candidates)
+        {
+            candidates = null!;
+            throw new NotSupportedException();
+        }
+
+        public bool TryReplaceAssetFromFile(
+            WorkspaceId workspaceId,
+            BundleId targetBundleId,
+            AssetId targetAssetId,
+            string sourceFilePath,
+            AssetType sourceAssetType,
+            out AssetFileReplacementResultDto? replacementResult)
+        {
+            replacementResult = null;
+            throw new NotSupportedException();
+        }
+
+        public bool TryReplaceAssetFromWorkspace(
+            WorkspaceId workspaceId,
+            BundleId targetBundleId,
+            AssetId targetAssetId,
+            BundleId sourceBundleId,
+            AssetId sourceAssetId,
+            out AssetReplacementResultDto? replacementResult)
+        {
+            replacementResult = null;
+            throw new NotSupportedException();
+        }
+
+        public bool TryUndoAssetReplacement(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            out AssetReplacementUndoResultDto? undoResult)
+        {
+            undoResult = null;
+            throw new NotSupportedException();
+        }
+
+        public bool TryOpenAssetInPane(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            PaneId paneId,
+            out AssetPaneContextDto? paneContext)
+        {
+            paneContext = null;
+            throw new NotSupportedException();
+        }
+    }
+
+    private sealed class TestWorkspaceDataStoreFactory : IWorkspaceDataStoreFactory
+    {
+        private readonly IBundleArtifactStore _bundleArtifactStore;
+        private readonly IBundleIndexCacheStore _bundleIndexCacheStore;
+        private readonly IPreviewCacheStore _previewCacheStore;
+
+        public TestWorkspaceDataStoreFactory(
+            IBundleIndexCacheStore bundleIndexCacheStore,
+            IPreviewCacheStore previewCacheStore,
+            IBundleArtifactStore? bundleArtifactStore = null)
+        {
+            _bundleArtifactStore = bundleArtifactStore ?? new TestBundleArtifactStore();
+            _bundleIndexCacheStore = bundleIndexCacheStore;
+            _previewCacheStore = previewCacheStore;
+        }
+
+        public IBundleArtifactStore CreateBundleArtifactStore(string? rootDirectoryPath = null) => _bundleArtifactStore;
+
+        public IBundleIndexCacheStore CreateBundleIndexCacheStore(string? rootDirectoryPath = null) => _bundleIndexCacheStore;
+
+        public IPreviewCacheStore CreatePreviewCacheStore(string? rootDirectoryPath = null) => _previewCacheStore;
+
+        public IWorkspaceChangeStore CreateWorkspaceChangeStore(string? rootDirectoryPath = null) => throw new NotSupportedException();
+
+        public string GetDefaultRootDirectoryPath() => @"D:\WorkspaceData";
+    }
+
+    private sealed class TestBundleArtifactStore : IBundleArtifactStore
+    {
+        private readonly object _syncRoot = new();
+        private readonly List<BundleArtifactManifestDto> _manifests;
+
+        public TestBundleArtifactStore(IReadOnlyList<BundleArtifactManifestDto>? manifests = null)
+        {
+            _manifests = manifests?.ToList() ?? [];
+        }
+
+        private int _saveCallCount;
+
+        public int SaveCallCount => Volatile.Read(ref _saveCallCount);
+
+        public BundleArtifactManifestDto? Load(string workspaceKey, string bundleCacheKey)
+        {
+            lock (_syncRoot)
+            {
+                return _manifests.FirstOrDefault(manifest =>
+                    string.Equals(manifest.WorkspaceKey, workspaceKey, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(manifest.BundleCacheKey, bundleCacheKey, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        public string? ResolveBundlePath(BundleArtifactManifestDto manifest) => manifest.ResolvedBundlePath;
+
+        public BundleArtifactManifestDto Save(BundleArtifactSaveRequestDto request)
+        {
+            Interlocked.Increment(ref _saveCallCount);
+            var manifest = new BundleArtifactManifestDto(
+                WorkspaceKey: request.WorkspaceKey,
+                BundleCacheKey: request.BundleCacheKey,
+                ResolvedBundlePath: request.ResolvedBundlePath,
+                IsMaterialized: request.ProducedDerivedFile,
+                SourceFingerprint: request.SourceFingerprint,
+                BundleFingerprint: request.ResolvedBundleFingerprint,
+                DecryptorId: request.DecryptorId,
+                DecryptorVersion: request.DecryptorVersion,
+                NormalizerVersion: request.NormalizerVersion,
+                CreatedAtUtc: request.CreatedAtUtc);
+            lock (_syncRoot)
+            {
+                _manifests.RemoveAll(existingManifest =>
+                    string.Equals(existingManifest.WorkspaceKey, request.WorkspaceKey, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(existingManifest.BundleCacheKey, request.BundleCacheKey, StringComparison.OrdinalIgnoreCase));
+                _manifests.Add(manifest);
+            }
+
+            return manifest;
+        }
+
+        public void Delete(string workspaceKey, string bundleCacheKey)
+        {
+            lock (_syncRoot)
+            {
+                _manifests.RemoveAll(manifest =>
+                    string.Equals(manifest.WorkspaceKey, workspaceKey, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(manifest.BundleCacheKey, bundleCacheKey, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        public void DeleteWorkspace(string workspaceKey)
+        {
+            lock (_syncRoot)
+            {
+                _manifests.RemoveAll(manifest =>
+                    string.Equals(manifest.WorkspaceKey, workspaceKey, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+    }
+
+    private sealed class TestBundleIndexCacheStore : IBundleIndexCacheStore
+    {
+        private readonly IReadOnlyList<BundleIndexCacheEntryDto> _entries;
+
+        public TestBundleIndexCacheStore(IReadOnlyList<BundleIndexCacheEntryDto> entries)
+        {
+            _entries = entries;
+        }
+
+        public BundleIndexCacheEntryDto? Load(string workspaceKey, string bundleCacheKey) => throw new NotSupportedException();
+
+        public IReadOnlyList<BundleIndexCacheEntryDto> LoadAll(string workspaceKey) => _entries;
+
+        public void Save(BundleIndexCacheEntryDto cacheEntry) => throw new NotSupportedException();
+
+        public void Delete(string workspaceKey, string bundleCacheKey) => throw new NotSupportedException();
+
+        public void DeleteWorkspace(string workspaceKey) => throw new NotSupportedException();
+    }
+
+    private sealed class TestPreviewCacheStore : IPreviewCacheStore
+    {
+        private readonly object _syncRoot = new();
+        private PreviewCachePayloadDto? _payload;
+        private string? _resolvedPayloadFilePath;
+
+        public TestPreviewCacheStore(
+            PreviewCachePayloadDto? payload = null,
+            string? resolvedPayloadFilePath = null)
+        {
+            _payload = payload;
+            _resolvedPayloadFilePath = resolvedPayloadFilePath;
+        }
+
+        private int _saveCallCount;
+
+        public int SaveCallCount => Volatile.Read(ref _saveCallCount);
+
+        public PreviewCachePayloadDto? LastSavedPayload { get; private set; }
+
+        public PreviewCachePayloadDto? Load(string workspaceKey, string previewCacheKey)
+        {
+            lock (_syncRoot)
+            {
+                return _payload is not null &&
+                       string.Equals(_payload.Descriptor.WorkspaceKey, workspaceKey, StringComparison.OrdinalIgnoreCase) &&
+                       string.Equals(_payload.Descriptor.PreviewCacheKey, previewCacheKey, StringComparison.OrdinalIgnoreCase)
+                    ? _payload
+                    : null;
+            }
+        }
+
+        public IReadOnlyList<PreviewCacheDescriptorDto> LoadDescriptors(string workspaceKey)
+        {
+            lock (_syncRoot)
+            {
+                return _payload is not null &&
+                       string.Equals(_payload.Descriptor.WorkspaceKey, workspaceKey, StringComparison.OrdinalIgnoreCase)
+                    ? [_payload.Descriptor]
+                    : Array.Empty<PreviewCacheDescriptorDto>();
+            }
+        }
+
+        public string? ResolvePayloadFilePath(PreviewCacheDescriptorDto descriptor)
+        {
+            lock (_syncRoot)
+            {
+                return _payload is not null &&
+                       string.Equals(_payload.Descriptor.PreviewCacheKey, descriptor.PreviewCacheKey, StringComparison.OrdinalIgnoreCase)
+                    ? _resolvedPayloadFilePath
+                    : null;
+            }
+        }
+
+        public void Save(PreviewCachePayloadDto previewCachePayload)
+        {
+            Interlocked.Increment(ref _saveCallCount);
+            lock (_syncRoot)
+            {
+                LastSavedPayload = previewCachePayload;
+                _payload = previewCachePayload;
+                _resolvedPayloadFilePath ??= Path.Combine(@"D:\WorkspaceData\preview-cache", previewCachePayload.Descriptor.RelativePayloadPath);
+            }
+        }
+
+        public void Delete(string workspaceKey, string previewCacheKey) => throw new NotSupportedException();
+
+        public void DeleteWorkspace(string workspaceKey) => throw new NotSupportedException();
+
+        public string? GetSavedTextContent()
+        {
+            lock (_syncRoot)
+            {
+                return LastSavedPayload is null
+                    ? null
+                    : Encoding.UTF8.GetString(LastSavedPayload.Content);
+            }
+        }
+    }
+
+    private sealed class TestAssetBundleDecryptorRegistry : IAssetBundleDecryptorRegistry
+    {
+        private readonly IAssetBundleDecryptor _decryptor;
+
+        public TestAssetBundleDecryptorRegistry(IAssetBundleDecryptor decryptor)
+        {
+            _decryptor = decryptor;
+        }
+
+        public IReadOnlyList<IAssetBundleDecryptor> GetAll() => [_decryptor];
+
+        public bool TryGet(string decryptorId, out IAssetBundleDecryptor decryptor)
+        {
+            decryptor = _decryptor;
+            return string.Equals(_decryptor.Descriptor.Id, decryptorId, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    private sealed class TestAssetBundleDecryptor : IAssetBundleDecryptor
+    {
+        public TestAssetBundleDecryptor(AssetBundleDecryptorDescriptorDto descriptor)
+        {
+            Descriptor = descriptor;
+        }
+
+        public AssetBundleDecryptorDescriptorDto Descriptor { get; }
+
+        public Func<AssetBundleDecryptionRequestDto, Task<Result<AssetBundleDecryptionResultDto>>>? DecryptResultFactory { get; init; }
+
+        private int _decryptCallCount;
+
+        public int DecryptCallCount => Volatile.Read(ref _decryptCallCount);
+
+        public Task<AssetBundleDecryptorProbeResultDto> ProbeAsync(
+            AssetBundleDecryptorProbeRequestDto request,
+            CancellationToken cancellationToken = default)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<Result<AssetBundleDecryptionResultDto>> DecryptAsync(
+            AssetBundleDecryptionRequestDto request,
+            CancellationToken cancellationToken = default)
+        {
+            Interlocked.Increment(ref _decryptCallCount);
+
+            if (DecryptResultFactory is null)
+            {
+                throw new NotSupportedException();
+            }
+
+            return DecryptResultFactory.Invoke(request);
+        }
+    }
+
+    private sealed class TestAssetPreviewGenerator : IAssetPreviewGenerator
+    {
+        public string GeneratorVersion => "generator-1";
+
+        public Func<AssetPreviewBuildRequestDto, Task<Result<AssetPreviewContentDto>>>? GenerateResultFactory { get; init; }
+
+        private int _generateCallCount;
+
+        public int GenerateCallCount => Volatile.Read(ref _generateCallCount);
+
+        public AssetPreviewBuildRequestDto? LastRequest { get; private set; }
+
+        public Task<Result<AssetPreviewContentDto>> GenerateAsync(
+            AssetPreviewBuildRequestDto request,
+            CancellationToken cancellationToken = default)
+        {
+            Interlocked.Increment(ref _generateCallCount);
+            LastRequest = request;
+
+            if (GenerateResultFactory is null)
+            {
+                throw new NotSupportedException();
+            }
+
+            return GenerateResultFactory.Invoke(request);
+        }
+    }
+
+    private sealed class TestAudioPayloadTranscodingService : IAudioPayloadTranscodingService
+    {
+        private readonly IReadOnlyList<AudioPayloadTranscoderDescriptorDto> _descriptors;
+
+        public TestAudioPayloadTranscodingService(
+            IReadOnlyList<AudioPayloadTranscoderDescriptorDto>? descriptors = null)
+        {
+            _descriptors = descriptors ?? Array.Empty<AudioPayloadTranscoderDescriptorDto>();
+        }
+
+        public IReadOnlyList<AudioPayloadTranscoderDescriptorDto> GetAvailableDescriptors() => _descriptors;
+
+        public AudioPayloadTranscoderDescriptorDto? ResolveDescriptor(string transcoderId)
+        {
+            return _descriptors.FirstOrDefault(descriptor =>
+                string.Equals(descriptor.Id, transcoderId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public Task<AudioPayloadTranscodeResultDto> TryTranscodeAsync(
+            AudioPayloadTranscodeRequestDto request,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    }
+}

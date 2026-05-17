@@ -52,19 +52,22 @@ internal sealed class WorkspaceImportBundleWorker
         }
 
         var decryptor = plan.DecryptorResolution.Decryptor;
-        var decryptionResult = await decryptor.DecryptAsync(
-            new AssetBundleDecryptionRequestDto(
-                SourcePath: discoveredFile.SourcePath,
-                WorkspaceKey: plan.Command.WorkspaceKey,
-                WorkspaceDataRootPath: plan.Command.WorkspaceDataRootPath,
-                BundleCacheKey: bundleCacheKey),
+        var artifactResult = await WorkspaceBundleArtifactResolver.ResolveAsync(
+            plan.BundleArtifactStore,
+            decryptor,
+            plan.Command.WorkspaceKey,
+            plan.Command.WorkspaceDataRootPath,
+            bundleCacheKey,
+            discoveredFile.SourcePath,
+            sourceFingerprint,
+            plan.ProcessedAtUtc,
             cancellationToken);
-        if (decryptionResult.IsCancelled)
+        if (artifactResult.IsCancelled)
         {
             throw new OperationCanceledException(cancellationToken);
         }
 
-        if (!decryptionResult.IsSuccess || decryptionResult.Value is null)
+        if (!artifactResult.IsSuccess || artifactResult.Value is null)
         {
             return CreateFailureResult(
                 discoveredFile,
@@ -74,23 +77,24 @@ internal sealed class WorkspaceImportBundleWorker
                 WorkspaceImportIssueKind.DecryptionFailed,
                 decryptor.Descriptor.Id,
                 detailMessage: null,
-                decryptionResult.Errors);
+                artifactResult.Errors);
         }
 
-        if (!_assetBundleReader.CanRead(decryptionResult.Value.ResolvedBundlePath))
+        if (!_assetBundleReader.CanRead(artifactResult.Value.ResolvedBundlePath))
         {
+            plan.BundleArtifactStore.Delete(plan.Command.WorkspaceKey, bundleCacheKey);
             return CreateSkippedResult(
                 discoveredFile,
                 bundleCacheKey,
                 cacheDecision.Diagnostic,
                 existingCacheEntry is not null,
-                decryptorId: decryptionResult.Value.Decryptor.Id,
-                resolvedBundlePath: decryptionResult.Value.ResolvedBundlePath);
+                decryptorId: artifactResult.Value.Decryptor.Id,
+                resolvedBundlePath: artifactResult.Value.ResolvedBundlePath);
         }
 
         var readResult = await _assetBundleReader.ReadAsync(
             new AssetBundleReadRequestDto(
-                BundlePath: decryptionResult.Value.ResolvedBundlePath,
+                BundlePath: artifactResult.Value.ResolvedBundlePath,
                 LogicalPath: discoveredFile.LogicalPath,
                 WorkspaceKey: plan.Command.WorkspaceKey,
                 WorkspaceDataRootPath: plan.Command.WorkspaceDataRootPath),
@@ -102,13 +106,14 @@ internal sealed class WorkspaceImportBundleWorker
 
         if (!readResult.IsSuccess || readResult.Value is null)
         {
+            plan.BundleArtifactStore.Delete(plan.Command.WorkspaceKey, bundleCacheKey);
             return CreateFailureResult(
                 discoveredFile,
                 bundleCacheKey,
                 cacheDecision.Diagnostic,
                 existingCacheEntry is not null,
                 WorkspaceImportIssueKind.ReadFailed,
-                decryptionResult.Value.Decryptor.Id,
+                artifactResult.Value.Decryptor.Id,
                 detailMessage: null,
                 readResult.Errors);
         }
@@ -125,7 +130,7 @@ internal sealed class WorkspaceImportBundleWorker
                 discoveredFile,
                 bundleCacheKey,
                 sourceFingerprint,
-                decryptionResult.Value,
+                artifactResult.Value,
                 readResult.Value),
             IssueDiagnostic: null);
     }
@@ -224,7 +229,7 @@ internal sealed class WorkspaceImportBundleWorker
         DiscoveredWorkspaceImportFileDto discoveredFile,
         string bundleCacheKey,
         WorkspaceFileFingerprintDto sourceFingerprint,
-        AssetBundleDecryptionResultDto decryptionResult,
+        WorkspaceBundleArtifactResolutionDto artifactResolution,
         AssetBundleReadResultDto readResult)
     {
         return new BundleIndexCacheEntryDto(
@@ -265,8 +270,8 @@ internal sealed class WorkspaceImportBundleWorker
                         .ToArray(),
                     IncludeInAssetList: asset.IncludeInAssetList))
                 .ToArray(),
-            DecryptorId: decryptionResult.Decryptor.Id,
-            DecryptorVersion: decryptionResult.Decryptor.Version,
+            DecryptorId: artifactResolution.Decryptor.Id,
+            DecryptorVersion: artifactResolution.Decryptor.Version,
             SerializedFileNames: readResult.SerializedFileNames);
     }
 

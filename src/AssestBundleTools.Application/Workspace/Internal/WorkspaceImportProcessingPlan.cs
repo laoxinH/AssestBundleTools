@@ -8,6 +8,7 @@ internal sealed record WorkspaceImportProcessingPlan(
     ProcessWorkspaceImportsCommand Command,
     IWorkspaceMetadataStore MetadataStore,
     WorkspaceMetadataDto Metadata,
+    IBundleArtifactStore BundleArtifactStore,
     IBundleIndexCacheStore BundleIndexCacheStore,
     IPreviewCacheStore PreviewCacheStore,
     DateTimeOffset ProcessedAtUtc,

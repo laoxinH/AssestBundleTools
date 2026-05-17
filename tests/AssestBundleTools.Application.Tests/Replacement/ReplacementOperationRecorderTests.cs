@@ -250,6 +250,9 @@ internal static class ReplacementOperationRecorderTests
             _changeStore = changeStore;
         }
 
+        public IBundleArtifactStore CreateBundleArtifactStore(string? rootDirectoryPath = null) =>
+            throw new NotSupportedException();
+
         public IBundleIndexCacheStore CreateBundleIndexCacheStore(string? rootDirectoryPath = null) =>
             throw new NotSupportedException();
 

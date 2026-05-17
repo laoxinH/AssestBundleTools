@@ -225,6 +225,9 @@ internal static class CachedWorkspaceSessionRegistryOperationRestoreTests
             _workspaceChangeStore = workspaceChangeStore;
         }
 
+        public IBundleArtifactStore CreateBundleArtifactStore(string? rootDirectoryPath = null) =>
+            throw new NotSupportedException();
+
         public IBundleIndexCacheStore CreateBundleIndexCacheStore(string? rootDirectoryPath = null) =>
             _bundleIndexCacheStore;
 

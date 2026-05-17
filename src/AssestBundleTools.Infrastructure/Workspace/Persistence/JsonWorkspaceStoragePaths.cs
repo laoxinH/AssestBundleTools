@@ -19,6 +19,7 @@ internal sealed class JsonWorkspaceStoragePaths
         CatalogFilePath = Path.Combine(RootDirectoryPath, "workspace-catalog.json");
         WorkspacesDirectoryPath = Path.Combine(RootDirectoryPath, "workspaces");
         CacheDirectoryPath = Path.Combine(RootDirectoryPath, "cache");
+        BundleArtifactCacheDirectoryPath = Path.Combine(CacheDirectoryPath, "bundles");
         BundleIndexCacheDirectoryPath = Path.Combine(CacheDirectoryPath, "bundle-index");
         PreviewCacheRootDirectoryPath = Path.Combine(CacheDirectoryPath, "previews");
         StagingDirectoryPath = Path.Combine(RootDirectoryPath, "staging");
@@ -32,6 +33,8 @@ internal sealed class JsonWorkspaceStoragePaths
     public string WorkspacesDirectoryPath { get; }
 
     public string CacheDirectoryPath { get; }
+
+    public string BundleArtifactCacheDirectoryPath { get; }
 
     public string BundleIndexCacheDirectoryPath { get; }
 
@@ -49,6 +52,28 @@ internal sealed class JsonWorkspaceStoragePaths
     public string GetBundleIndexCacheDirectoryPath(string workspaceKey)
     {
         return Path.Combine(BundleIndexCacheDirectoryPath, NormalizeFileSegment(workspaceKey, nameof(workspaceKey)));
+    }
+
+    public string GetBundleArtifactWorkspaceDirectoryPath(string workspaceKey)
+    {
+        return Path.Combine(BundleArtifactCacheDirectoryPath, NormalizeFileSegment(workspaceKey, nameof(workspaceKey)));
+    }
+
+    public string GetBundleArtifactDirectoryPath(string workspaceKey, string bundleCacheKey)
+    {
+        return Path.Combine(
+            GetBundleArtifactWorkspaceDirectoryPath(workspaceKey),
+            NormalizeFileSegment(bundleCacheKey, nameof(bundleCacheKey)));
+    }
+
+    public string GetBundleArtifactManifestFilePath(string workspaceKey, string bundleCacheKey)
+    {
+        return Path.Combine(GetBundleArtifactDirectoryPath(workspaceKey, bundleCacheKey), "manifest.json");
+    }
+
+    public string GetBundleArtifactNormalizedFilePath(string workspaceKey, string bundleCacheKey)
+    {
+        return Path.Combine(GetBundleArtifactDirectoryPath(workspaceKey, bundleCacheKey), "normalized.bundle");
     }
 
     public string GetBundleIndexCacheFilePath(string workspaceKey, string bundleCacheKey)

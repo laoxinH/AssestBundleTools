@@ -8,6 +8,7 @@ using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Tests.Testing;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Assets;
 
 namespace AssestBundleTools.Application.Tests.Assets.Queries;
@@ -129,6 +130,123 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(0, decryptor.DecryptCallCount, "Cache hit should not invoke decryptor.");
         TestAssert.Equal(0, generator.GenerateCallCount, "Cache hit should not invoke preview generator.");
         TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Cache hit should not rewrite preview cache.");
+    }
+
+    public static async Task HandleAsync_ShouldReuseBundleArtifactManifest_WhenPreviewCacheMisses()
+    {
+        const string artifactBundlePath = @"D:\WorkspaceData\cache\bundles\workspace-key-1\bundle-cache-001\normalized.bundle";
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        var bundleArtifactStore = new TestBundleArtifactStore(
+        [
+            new BundleArtifactManifestDto(
+                WorkspaceKey: query.WorkspaceKey,
+                BundleCacheKey: bundleCacheEntry.BundleCacheKey,
+                ResolvedBundlePath: artifactBundlePath,
+                IsMaterialized: true,
+                SourceFingerprint: bundleCacheEntry.SourceFingerprint,
+                BundleFingerprint: new WorkspaceFileFingerprintDto(
+                    SourcePath: artifactBundlePath,
+                    FileSizeInBytes: 4096,
+                    LastWriteTimeUtc: new DateTimeOffset(2026, 5, 17, 10, 0, 0, TimeSpan.Zero),
+                    ContentHash: null),
+                DecryptorId: AssetBundleDecryptorIds.BuiltInPassThrough,
+                DecryptorVersion: "1.0.0",
+                NormalizerVersion: "bundle-artifact/1",
+                CreatedAtUtc: new DateTimeOffset(2026, 5, 17, 10, 0, 0, TimeSpan.Zero))
+        ]);
+        var previewCacheStore = new TestPreviewCacheStore();
+        var decryptor = new TestAssetBundleDecryptor(CreatePassThroughDecryptorDescriptor());
+        var generator = new TestAssetPreviewGenerator
+        {
+            GenerateResultFactory = request => Task.FromResult(Result<AssetPreviewContentDto>.Success(
+                new AssetPreviewContentDto(
+                    Kind: AssetPreviewKind.Text,
+                    ContentType: "text/plain; charset=utf-8",
+                    Content: Encoding.UTF8.GetBytes($"artifact path: {request.ResolvedBundlePath}"))))
+        };
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore,
+                bundleArtifactStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService());
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Preview cache miss should generate preview from reusable bundle artifact.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal($"artifact path: {artifactBundlePath}", preview.TextContent, "Preview generator should receive the cached artifact path.");
+        TestAssert.Equal(0, decryptor.DecryptCallCount, "Reusable bundle artifact should avoid invoking decryptor.");
+        TestAssert.Equal(1, generator.GenerateCallCount, "Preview content should still be generated on preview cache miss.");
+        TestAssert.Equal(artifactBundlePath, generator.LastRequest?.ResolvedBundlePath, "Generator request should use artifact path.");
+        TestAssert.Equal(0, bundleArtifactStore.SaveCallCount, "Reusable bundle artifact should not rewrite manifest.");
+    }
+
+    public static async Task HandleAsync_ShouldSingleFlightBundleArtifactGeneration_WhenConcurrentPreviewCacheMisses()
+    {
+        const string resolvedBundlePath = @"C:\Temp\characters-normalized.bundle";
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        var bundleArtifactStore = new TestBundleArtifactStore();
+        var previewCacheStore = new TestPreviewCacheStore();
+        var decryptorDescriptor = CreatePassThroughDecryptorDescriptor();
+        var decryptStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var continueDecrypt = new TaskCompletionSource<Result<AssetBundleDecryptionResultDto>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var decryptor = new TestAssetBundleDecryptor(decryptorDescriptor)
+        {
+            DecryptResultFactory = _ =>
+            {
+                decryptStarted.TrySetResult();
+                return continueDecrypt.Task;
+            }
+        };
+        var generator = new TestAssetPreviewGenerator
+        {
+            GenerateResultFactory = request => Task.FromResult(Result<AssetPreviewContentDto>.Success(
+                new AssetPreviewContentDto(
+                    Kind: AssetPreviewKind.Text,
+                    ContentType: "text/plain; charset=utf-8",
+                    Content: Encoding.UTF8.GetBytes($"generated from {request.ResolvedBundlePath}"))))
+        };
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore,
+                bundleArtifactStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService());
+
+        var firstTask = handler.HandleAsync(query);
+        await decryptStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        var secondTask = handler.HandleAsync(query);
+        await Task.Delay(100);
+        TestAssert.Equal(1, decryptor.DecryptCallCount, "Concurrent artifact requests for the same bundle should share the in-flight generation.");
+
+        continueDecrypt.SetResult(Result<AssetBundleDecryptionResultDto>.Success(
+            new AssetBundleDecryptionResultDto(
+                Decryptor: decryptorDescriptor,
+                ResolvedBundlePath: resolvedBundlePath,
+                ProducedDerivedFile: false,
+                BundleFingerprint: bundleCacheEntry.SourceFingerprint,
+                DiagnosticMessage: null)));
+
+        var firstResult = await firstTask;
+        var secondResult = await secondTask;
+
+        TestAssert.True(firstResult.IsSuccess, "First concurrent preview should complete successfully.");
+        TestAssert.True(secondResult.IsSuccess, "Second concurrent preview should complete successfully.");
+        TestAssert.Equal(1, decryptor.DecryptCallCount, "Artifact generation should still invoke decryptor once after both requests finish.");
+        TestAssert.Equal(1, bundleArtifactStore.SaveCallCount, "Shared artifact generation should save one manifest.");
+        TestAssert.Equal(resolvedBundlePath, generator.LastRequest?.ResolvedBundlePath, "Preview generator should receive the shared artifact path.");
     }
 
     public static async Task HandleAsync_ShouldHydrateCachedMeshGeometry_WhenPreviewCacheStillMatches()

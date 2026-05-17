@@ -95,6 +95,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             return Result<AssetPreviewDto>.Failure(ApplicationErrors.AssetNotFound(query.AssetId));
         }
 
+        var bundleArtifactStore = _workspaceDataStoreFactory.CreateBundleArtifactStore(query.WorkspaceDataRootPath);
         var bundleIndexCacheStore = _workspaceDataStoreFactory.CreateBundleIndexCacheStore(query.WorkspaceDataRootPath);
         var previewCacheStore = _workspaceDataStoreFactory.CreatePreviewCacheStore(query.WorkspaceDataRootPath);
         var bundleCacheEntry = bundleIndexCacheStore.LoadAll(query.WorkspaceKey)
@@ -157,19 +158,22 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                     DetailMessage: AppErrorLocalizedMessageMapper.CreateFromFirstError(decryptorResult.Errors))));
         }
 
-        var decryptionResult = await decryptorResult.Value.DecryptAsync(
-            new AssetBundleDecryptionRequestDto(
-                SourcePath: bundleCacheEntry.SourceFingerprint.SourcePath,
-                WorkspaceKey: query.WorkspaceKey,
-                WorkspaceDataRootPath: query.WorkspaceDataRootPath,
-                BundleCacheKey: bundleCacheEntry.BundleCacheKey),
+        var artifactResult = await WorkspaceBundleArtifactResolver.ResolveAsync(
+            bundleArtifactStore,
+            decryptorResult.Value,
+            query.WorkspaceKey,
+            query.WorkspaceDataRootPath,
+            bundleCacheEntry.BundleCacheKey,
+            bundleCacheEntry.SourceFingerprint.SourcePath,
+            bundleCacheEntry.SourceFingerprint,
+            DateTimeOffset.UtcNow,
             cancellationToken);
-        if (decryptionResult.IsCancelled)
+        if (artifactResult.IsCancelled)
         {
             return Result<AssetPreviewDto>.Cancelled();
         }
 
-        if (!decryptionResult.IsSuccess || decryptionResult.Value is null)
+        if (!artifactResult.IsSuccess || artifactResult.Value is null)
         {
             return Result<AssetPreviewDto>.Success(BuildFallbackSummaryPreview(
                 query,
@@ -177,11 +181,11 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 new AssetPreviewDiagnosticDto(
                     CacheStatus: cacheEvaluation.CacheStatus,
                     FallbackReason: AssetPreviewFallbackReasonKind.DecryptionFailed,
-                    DetailMessage: AppErrorLocalizedMessageMapper.CreateFromFirstError(decryptionResult.Errors))));
+                    DetailMessage: AppErrorLocalizedMessageMapper.CreateFromFirstError(artifactResult.Errors))));
         }
 
         var buildRequest = new AssetPreviewBuildRequestDto(
-            ResolvedBundlePath: decryptionResult.Value.ResolvedBundlePath,
+            ResolvedBundlePath: artifactResult.Value.ResolvedBundlePath,
             WorkspaceKey: query.WorkspaceKey,
             WorkspaceDataRootPath: query.WorkspaceDataRootPath,
             AssetId: assetCacheEntry.AssetId,

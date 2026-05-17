@@ -7,6 +7,13 @@ namespace AssestBundleTools.Infrastructure.Workspace.Persistence;
 /// </summary>
 public sealed class JsonWorkspaceDataStoreFactory : IWorkspaceDataStoreFactory
 {
+    public IBundleArtifactStore CreateBundleArtifactStore(string? rootDirectoryPath = null)
+    {
+        return string.IsNullOrWhiteSpace(rootDirectoryPath)
+            ? new JsonBundleArtifactStore()
+            : new JsonBundleArtifactStore(rootDirectoryPath);
+    }
+
     public IBundleIndexCacheStore CreateBundleIndexCacheStore(string? rootDirectoryPath = null)
     {
         return string.IsNullOrWhiteSpace(rootDirectoryPath)

@@ -220,7 +220,7 @@ Presentation 不负责：
 
 ## 6. 与工作区缓存的关系
 
-真实导入链路未来应按下面的顺序演进：
+真实导入链路当前按下面的顺序演进：
 
 1. 工作区入口记录导入来源
 2. 根据用户配置或自动识别选择解密器
@@ -262,9 +262,10 @@ Presentation 不负责：
 - 当前 Reader 已可从解密后文件中读取序列化资产、资产名和 `m_Container` 路径，供工作台恢复资产列表与基础详情摘要
 - 资源包索引缓存当前已持久化 `decryptorId / decryptorVersion`，并参与导入刷新时的缓存复用判定
 - 当前导入刷新已按 `decryptorId + decryptorVersion + sourceFingerprint + parserVersion + toolVersion` 执行命中复用与失效重建
-- 当解密器切换或来源移除导致索引缓存失效时，当前实现会一并清理对应资源包的预览缓存占位文件
+- 当前已落地 `cache/bundles` 首版标准化资源包物理缓存：导入、预览、提取和 Spine 详情通过 Application artifact resolver 优先取得同一可读 bundle 路径；同一 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 的 artifact 生成阶段会 single-flight 串行化，外部解密器派生输出会从 `staging/decrypt` 晋升为 `normalized.bundle`，PassThrough 场景只写 manifest 并指向原始可读文件
+- 当解密器切换、标准化版本变化或来源移除导致缓存失效时，当前实现会清理对应资源包的物理 artifact、索引缓存与预览缓存；若只是 parser / tool 版本变化并且 artifact 身份仍有效，会保留标准化物理缓存以供重建索引复用
 - 工作台资源详情当前已可在真实读取链路上按需生成预览，并将结果写入 `cache/previews/...`
-- 当前预览链路会在缓存缺失时再次经过工作区已选解密器，确保加密资源包也能生成最新预览
+- 当前预览链路会在预览缓存缺失时先复用 `cache/bundles` manifest；若 artifact 缺失或失效，再经过工作区已选解密器，确保加密资源包也能生成最新预览
 - 当前预览类型覆盖如下：
   - 图像预览：`Texture2D`、`Sprite`
   - 文本预览：`TextAsset`、`Shader`
@@ -277,7 +278,7 @@ Presentation 不负责：
 当前明确暂不实现：
 
 - 自动识别结果的完整 UI 诊断与冲突决策流程
-- 把解密结果作为不可重建的长期明文副本管理；后续只实现可失效、可清理、可重建的 `cache/bundles` 标准化 artifact
+- 把解密结果作为不可重建的长期明文副本管理；当前只实现可失效、可清理、可重建的 `cache/bundles` 标准化 artifact
 - 更通用的插件安装、签名与市场机制
 
 ## 8. 下一步建议
@@ -285,7 +286,7 @@ Presentation 不负责：
 建议按下面顺序继续推进：
 
 1. 明确工作区级“自动检测 / 指定解密器 / 仅直读”策略，并定义冲突处理规则
-2. 实现 `cache/bundles` 标准化资源包物理缓存，并让 Reader / Preview / Extraction 统一通过该 artifact 读取
+2. 为 `cache/bundles` 补齐容量上限、`lastAccessedAtUtc` 和显式清理入口
 3. 补齐更完整的失败诊断与自动识别结果表达
-4. 再评估是否需要把预览摘要进一步结构化，降低后续本地化和富展示成本
+4. 将真实导出 / 写包入口也改为优先消费标准化 artifact，而不是重新走源文件解密
 5. 最后再评估是否需要更通用的插件安装与签名机制

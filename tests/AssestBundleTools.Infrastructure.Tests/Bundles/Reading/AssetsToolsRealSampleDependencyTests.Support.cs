@@ -632,6 +632,9 @@ internal static partial class AssetsToolsRealSampleDependencyTests
             _bundleIndexCacheStore = bundleIndexCacheStore;
         }
 
+        public IBundleArtifactStore CreateBundleArtifactStore(string? rootDirectoryPath = null) =>
+            throw new NotSupportedException();
+
         public IBundleIndexCacheStore CreateBundleIndexCacheStore(string? rootDirectoryPath = null) =>
             _bundleIndexCacheStore;
 

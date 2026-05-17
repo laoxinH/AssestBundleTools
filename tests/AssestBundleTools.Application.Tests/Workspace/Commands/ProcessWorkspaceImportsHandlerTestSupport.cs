@@ -53,6 +53,7 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
 
     private sealed class TestWorkspaceDataStoreFactory : IWorkspaceDataStoreFactory
     {
+        private readonly IBundleArtifactStore _bundleArtifactStore = new TestBundleArtifactStore();
         private readonly IBundleIndexCacheStore _bundleIndexCacheStore;
         private readonly IPreviewCacheStore _previewCacheStore;
 
@@ -64,6 +65,8 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
             _previewCacheStore = previewCacheStore;
         }
 
+        public IBundleArtifactStore CreateBundleArtifactStore(string? rootDirectoryPath = null) => _bundleArtifactStore;
+
         public IBundleIndexCacheStore CreateBundleIndexCacheStore(string? rootDirectoryPath = null) => _bundleIndexCacheStore;
 
         public IPreviewCacheStore CreatePreviewCacheStore(string? rootDirectoryPath = null) => _previewCacheStore;
@@ -71,6 +74,70 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         public IWorkspaceChangeStore CreateWorkspaceChangeStore(string? rootDirectoryPath = null) => new TestWorkspaceChangeStore();
 
         public string GetDefaultRootDirectoryPath() => @"D:\WorkspaceData";
+    }
+
+    private sealed class TestBundleArtifactStore : IBundleArtifactStore
+    {
+        private readonly object _syncRoot = new();
+        private readonly List<BundleArtifactManifestDto> _manifests = [];
+
+        public List<(string WorkspaceKey, string BundleCacheKey)> DeleteOperations { get; } = [];
+
+        public BundleArtifactManifestDto? Load(string workspaceKey, string bundleCacheKey)
+        {
+            lock (_syncRoot)
+            {
+                return _manifests.FirstOrDefault(manifest =>
+                    string.Equals(manifest.WorkspaceKey, workspaceKey, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(manifest.BundleCacheKey, bundleCacheKey, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        public string? ResolveBundlePath(BundleArtifactManifestDto manifest) => manifest.ResolvedBundlePath;
+
+        public BundleArtifactManifestDto Save(BundleArtifactSaveRequestDto request)
+        {
+            var manifest = new BundleArtifactManifestDto(
+                WorkspaceKey: request.WorkspaceKey,
+                BundleCacheKey: request.BundleCacheKey,
+                ResolvedBundlePath: request.ResolvedBundlePath,
+                IsMaterialized: request.ProducedDerivedFile,
+                SourceFingerprint: request.SourceFingerprint,
+                BundleFingerprint: request.ResolvedBundleFingerprint,
+                DecryptorId: request.DecryptorId,
+                DecryptorVersion: request.DecryptorVersion,
+                NormalizerVersion: request.NormalizerVersion,
+                CreatedAtUtc: request.CreatedAtUtc);
+            lock (_syncRoot)
+            {
+                _manifests.RemoveAll(existingManifest =>
+                    string.Equals(existingManifest.WorkspaceKey, request.WorkspaceKey, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(existingManifest.BundleCacheKey, request.BundleCacheKey, StringComparison.OrdinalIgnoreCase));
+                _manifests.Add(manifest);
+            }
+
+            return manifest;
+        }
+
+        public void Delete(string workspaceKey, string bundleCacheKey)
+        {
+            lock (_syncRoot)
+            {
+                DeleteOperations.Add((workspaceKey, bundleCacheKey));
+                _manifests.RemoveAll(manifest =>
+                    string.Equals(manifest.WorkspaceKey, workspaceKey, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(manifest.BundleCacheKey, bundleCacheKey, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        public void DeleteWorkspace(string workspaceKey)
+        {
+            lock (_syncRoot)
+            {
+                _manifests.RemoveAll(manifest =>
+                    string.Equals(manifest.WorkspaceKey, workspaceKey, StringComparison.OrdinalIgnoreCase));
+            }
+        }
     }
 
     private sealed class TestBundleIndexCacheStore : IBundleIndexCacheStore

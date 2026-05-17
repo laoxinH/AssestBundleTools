@@ -79,6 +79,9 @@ public sealed class RemoveWorkspaceCatalogEntryHandler
         var metadataStore = _workspaceMetadataStoreFactory.Create(workspaceDataRootPath);
         metadataStore.Delete(workspaceKey);
 
+        var bundleArtifactStore = _workspaceDataStoreFactory.CreateBundleArtifactStore(workspaceDataRootPath);
+        bundleArtifactStore.DeleteWorkspace(workspaceKey);
+
         var bundleIndexCacheStore = _workspaceDataStoreFactory.CreateBundleIndexCacheStore(workspaceDataRootPath);
         bundleIndexCacheStore.DeleteWorkspace(workspaceKey);
 

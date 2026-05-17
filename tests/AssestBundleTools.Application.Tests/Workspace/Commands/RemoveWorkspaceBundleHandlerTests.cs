@@ -101,6 +101,7 @@ internal static class RemoveWorkspaceBundleHandlerTests
                     ActiveAssetId: "asset-only-removed")
             ]));
         var bundleIndexCacheStore = new TestBundleIndexCacheStore();
+        var bundleArtifactStore = new TestBundleArtifactStore();
         var previewCacheStore = new TestPreviewCacheStore(
         [
             new PreviewCacheDescriptorDto(
@@ -136,7 +137,7 @@ internal static class RemoveWorkspaceBundleHandlerTests
         ]);
         var handler = new RemoveWorkspaceBundleHandler(
             new TestWorkspaceMetadataStoreFactory(metadataStore),
-            new TestWorkspaceDataStoreFactory(bundleIndexCacheStore, previewCacheStore));
+            new TestWorkspaceDataStoreFactory(bundleArtifactStore, bundleIndexCacheStore, previewCacheStore));
 
         var result = await handler.HandleAsync(new RemoveWorkspaceBundleCommand(
             WorkspaceKey: workspaceKey,
@@ -167,6 +168,8 @@ internal static class RemoveWorkspaceBundleHandlerTests
         TestAssert.Equal("asset-keep", remainingEditorWindow.ActiveAssetId, "Editor window focus should move to the remaining tab.");
 
         TestAssert.Equal(1, bundleIndexCacheStore.DeleteOperations.Count, "Bundle index cache should be invalidated once.");
+        TestAssert.Equal(1, bundleArtifactStore.DeleteOperations.Count, "Bundle artifact cache should be invalidated once.");
+        TestAssert.Equal(bundleCacheKey, bundleArtifactStore.DeleteOperations[0].BundleCacheKey, "Bundle artifact invalidation should target the removed bundle cache key.");
         TestAssert.Equal(workspaceKey, bundleIndexCacheStore.DeleteOperations[0].WorkspaceKey, "Bundle cache invalidation should use the current workspace.");
         TestAssert.Equal(bundleCacheKey, bundleIndexCacheStore.DeleteOperations[0].BundleCacheKey, "Bundle cache invalidation should target the removed bundle cache key.");
         TestAssert.Equal(1, previewCacheStore.DeletedPreviewKeys.Count, "Only matching preview cache entries should be removed.");
@@ -176,11 +179,12 @@ internal static class RemoveWorkspaceBundleHandlerTests
     public static async Task HandleAsync_ShouldReturnFailure_WhenWorkspaceMetadataDoesNotExist()
     {
         var metadataStore = new TestWorkspaceMetadataStore(metadata: null);
+        var bundleArtifactStore = new TestBundleArtifactStore();
         var bundleIndexCacheStore = new TestBundleIndexCacheStore();
         var previewCacheStore = new TestPreviewCacheStore(Array.Empty<PreviewCacheDescriptorDto>());
         var handler = new RemoveWorkspaceBundleHandler(
             new TestWorkspaceMetadataStoreFactory(metadataStore),
-            new TestWorkspaceDataStoreFactory(bundleIndexCacheStore, previewCacheStore));
+            new TestWorkspaceDataStoreFactory(bundleArtifactStore, bundleIndexCacheStore, previewCacheStore));
 
         var result = await handler.HandleAsync(new RemoveWorkspaceBundleCommand(
             WorkspaceKey: "workspace-missing",
@@ -194,6 +198,7 @@ internal static class RemoveWorkspaceBundleHandlerTests
             TestAssert.Single(result.Errors).Code,
             "Missing metadata should use the expected error code.");
         TestAssert.Equal(0, metadataStore.SaveCallCount, "Failure should not persist metadata.");
+        TestAssert.Equal(0, bundleArtifactStore.DeleteOperations.Count, "Failure should not invalidate bundle artifact caches.");
         TestAssert.Equal(0, bundleIndexCacheStore.DeleteOperations.Count, "Failure should not invalidate bundle caches.");
         TestAssert.Equal(0, previewCacheStore.DeletedPreviewKeys.Count, "Failure should not invalidate preview caches.");
     }
@@ -249,16 +254,21 @@ internal static class RemoveWorkspaceBundleHandlerTests
 
     private sealed class TestWorkspaceDataStoreFactory : IWorkspaceDataStoreFactory
     {
+        private readonly IBundleArtifactStore _bundleArtifactStore;
         private readonly IBundleIndexCacheStore _bundleIndexCacheStore;
         private readonly IPreviewCacheStore _previewCacheStore;
 
         public TestWorkspaceDataStoreFactory(
+            IBundleArtifactStore bundleArtifactStore,
             IBundleIndexCacheStore bundleIndexCacheStore,
             IPreviewCacheStore previewCacheStore)
         {
+            _bundleArtifactStore = bundleArtifactStore;
             _bundleIndexCacheStore = bundleIndexCacheStore;
             _previewCacheStore = previewCacheStore;
         }
+
+        public IBundleArtifactStore CreateBundleArtifactStore(string? rootDirectoryPath = null) => _bundleArtifactStore;
 
         public IBundleIndexCacheStore CreateBundleIndexCacheStore(string? rootDirectoryPath = null) => _bundleIndexCacheStore;
 
@@ -267,6 +277,26 @@ internal static class RemoveWorkspaceBundleHandlerTests
         public IWorkspaceChangeStore CreateWorkspaceChangeStore(string? rootDirectoryPath = null) => new TestWorkspaceChangeStore();
 
         public string GetDefaultRootDirectoryPath() => @"D:\WorkspaceData";
+    }
+
+    private sealed class TestBundleArtifactStore : IBundleArtifactStore
+    {
+        public List<(string WorkspaceKey, string BundleCacheKey)> DeleteOperations { get; } = [];
+
+        public BundleArtifactManifestDto? Load(string workspaceKey, string bundleCacheKey) => null;
+
+        public string? ResolveBundlePath(BundleArtifactManifestDto manifest) => null;
+
+        public BundleArtifactManifestDto Save(BundleArtifactSaveRequestDto request) => throw new NotSupportedException();
+
+        public void Delete(string workspaceKey, string bundleCacheKey)
+        {
+            DeleteOperations.Add((workspaceKey, bundleCacheKey));
+        }
+
+        public void DeleteWorkspace(string workspaceKey)
+        {
+        }
     }
 
     private sealed class TestBundleIndexCacheStore : IBundleIndexCacheStore

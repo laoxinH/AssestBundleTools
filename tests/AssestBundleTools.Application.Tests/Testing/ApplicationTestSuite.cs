@@ -153,6 +153,14 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldRoundTripCachedImageOverlay_WhenPreviewCacheStillMatches);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldReuseBundleArtifactManifest_WhenPreviewCacheMisses),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldReuseBundleArtifactManifest_WhenPreviewCacheMisses);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldSingleFlightBundleArtifactGeneration_WhenConcurrentPreviewCacheMisses),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldSingleFlightBundleArtifactGeneration_WhenConcurrentPreviewCacheMisses);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedMeshGeometry_WhenPreviewCacheStillMatches),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldHydrateCachedMeshGeometry_WhenPreviewCacheStillMatches);
         await RunTestAsync(

@@ -3,13 +3,14 @@ using AssestBundleTools.Application.Workspace.Services;
 namespace AssestBundleTools.Application.Workspace.Internal;
 
 /// <summary>
-/// 负责清理指定资源包关联的索引缓存与预览派生缓存。
+/// 负责清理指定资源包关联的标准化物理缓存、索引缓存与预览派生缓存。
 /// </summary>
 internal static class WorkspaceBundleArtifactCleanupHelper
 {
     public static void DeleteBundleArtifacts(
         string workspaceKey,
         string bundleCacheKey,
+        IBundleArtifactStore? bundleArtifactStore,
         IBundleIndexCacheStore bundleIndexCacheStore,
         IPreviewCacheStore previewCacheStore,
         IReadOnlyList<string>? previewCacheKeys = null)
@@ -19,6 +20,7 @@ internal static class WorkspaceBundleArtifactCleanupHelper
         ArgumentNullException.ThrowIfNull(bundleIndexCacheStore);
         ArgumentNullException.ThrowIfNull(previewCacheStore);
 
+        bundleArtifactStore?.Delete(workspaceKey, bundleCacheKey);
         bundleIndexCacheStore.Delete(workspaceKey, bundleCacheKey);
 
         if (previewCacheKeys is not null)

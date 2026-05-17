@@ -127,11 +127,13 @@ public sealed class RemoveWorkspaceBundleHandler
         var bundleCacheKey = WorkspaceImportPathUtility.CreateBundleCacheKey(normalizedBundleSourcePath);
         if (!string.IsNullOrWhiteSpace(bundleCacheKey))
         {
+            var bundleArtifactStore = _workspaceDataStoreFactory.CreateBundleArtifactStore(command.WorkspaceDataRootPath);
             var bundleIndexCacheStore = _workspaceDataStoreFactory.CreateBundleIndexCacheStore(command.WorkspaceDataRootPath);
             var previewCacheStore = _workspaceDataStoreFactory.CreatePreviewCacheStore(command.WorkspaceDataRootPath);
             WorkspaceBundleArtifactCleanupHelper.DeleteBundleArtifacts(
                 command.WorkspaceKey,
                 bundleCacheKey,
+                bundleArtifactStore,
                 bundleIndexCacheStore,
                 previewCacheStore);
         }

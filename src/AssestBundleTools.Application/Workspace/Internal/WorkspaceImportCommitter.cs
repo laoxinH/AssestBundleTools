@@ -36,6 +36,8 @@ internal sealed class WorkspaceImportCommitter
                 DeleteBundleArtifacts(
                     plan.Command.WorkspaceKey,
                     existingCacheEntry.BundleCacheKey,
+                    plan.BundleArtifactStore,
+                    false,
                     plan.BundleIndexCacheStore,
                     plan.PreviewCacheStore,
                     previewCacheKeysByBundle);
@@ -89,6 +91,8 @@ internal sealed class WorkspaceImportCommitter
             DeleteBundleArtifacts(
                 plan.Command.WorkspaceKey,
                 staleCacheEntry.BundleCacheKey,
+                plan.BundleArtifactStore,
+                true,
                 plan.BundleIndexCacheStore,
                 plan.PreviewCacheStore,
                 previewCacheKeysByBundle);
@@ -126,6 +130,8 @@ internal sealed class WorkspaceImportCommitter
     private static void DeleteBundleArtifacts(
         string workspaceKey,
         string bundleCacheKey,
+        IBundleArtifactStore bundleArtifactStore,
+        bool deleteBundleArtifact,
         IBundleIndexCacheStore bundleIndexCacheStore,
         IPreviewCacheStore previewCacheStore,
         IDictionary<string, List<string>> previewCacheKeysByBundle)
@@ -133,6 +139,7 @@ internal sealed class WorkspaceImportCommitter
         WorkspaceBundleArtifactCleanupHelper.DeleteBundleArtifacts(
             workspaceKey,
             bundleCacheKey,
+            deleteBundleArtifact ? bundleArtifactStore : null,
             bundleIndexCacheStore,
             previewCacheStore,
             previewCacheKeysByBundle.TryGetValue(bundleCacheKey, out var previewCacheKeys)
