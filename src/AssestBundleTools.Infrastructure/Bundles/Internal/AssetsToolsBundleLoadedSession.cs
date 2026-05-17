@@ -1,14 +1,13 @@
 using AssetsTools.NET.Extra;
-using AssestBundleTools.Infrastructure.Bundles.Internal;
 
-namespace AssestBundleTools.Infrastructure.Bundles.Previewing;
+namespace AssestBundleTools.Infrastructure.Bundles.Internal;
 
 /// <summary>
-/// 缓存单个已加载 bundle 的 AssetsTools 会话，避免并发预览重复物理解包。
+/// 缓存单个已加载 bundle 的 AssetsTools 会话，供读取、预览和提取共享。
 /// </summary>
-internal sealed class AssetsToolsBundlePreviewSession : IDisposable
+internal sealed class AssetsToolsBundleLoadedSession : IDisposable
 {
-    private AssetsToolsBundlePreviewSession(
+    private AssetsToolsBundleLoadedSession(
         string bundlePath,
         AssetsManager assetsManager,
         BundleFileInstance bundleInstance,
@@ -34,7 +33,7 @@ internal sealed class AssetsToolsBundlePreviewSession : IDisposable
 
     public SemaphoreSlim ExecutionGate { get; } = new(1, 1);
 
-    public static AssetsToolsBundlePreviewSession Load(string bundlePath)
+    public static AssetsToolsBundleLoadedSession Load(string bundlePath)
     {
         var assetsManager = new AssetsManager
         {
@@ -48,7 +47,7 @@ internal sealed class AssetsToolsBundlePreviewSession : IDisposable
             var bundleInstance = assetsManager.LoadBundleFile(bundlePath, unpackIfPacked: true);
             var serializedFiles = LoadSerializedFiles(assetsManager, bundleInstance);
             var internalSerializedFileLookup = AssetsToolsBundleDependencyResolver.BuildInternalSerializedFileLookup(serializedFiles);
-            return new AssetsToolsBundlePreviewSession(
+            return new AssetsToolsBundleLoadedSession(
                 bundlePath,
                 assetsManager,
                 bundleInstance,

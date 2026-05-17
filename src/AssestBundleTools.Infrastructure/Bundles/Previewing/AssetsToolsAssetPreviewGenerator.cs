@@ -20,16 +20,16 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
     private const string BinaryContentType = "application/octet-stream";
 
     private readonly IAudioPayloadTranscodingService _audioPayloadTranscodingService;
-    private readonly AssetsToolsBundlePreviewSessionCache _bundleSessionCache;
+    private readonly AssetsToolsBundleLoadedSessionCache _bundleSessionCache;
 
     public AssetsToolsAssetPreviewGenerator(IAudioPayloadTranscodingService audioPayloadTranscodingService)
-        : this(audioPayloadTranscodingService, new AssetsToolsBundlePreviewSessionCache())
+        : this(audioPayloadTranscodingService, AssetsToolsBundleLoadedSessionCache.Shared)
     {
     }
 
     internal AssetsToolsAssetPreviewGenerator(
         IAudioPayloadTranscodingService audioPayloadTranscodingService,
-        AssetsToolsBundlePreviewSessionCache bundleSessionCache)
+        AssetsToolsBundleLoadedSessionCache bundleSessionCache)
     {
         _audioPayloadTranscodingService = audioPayloadTranscodingService ?? throw new ArgumentNullException(nameof(audioPayloadTranscodingService));
         _bundleSessionCache = bundleSessionCache ?? throw new ArgumentNullException(nameof(bundleSessionCache));
@@ -54,7 +54,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
                 ApplicationErrors.BundleSourceMissing(request.ResolvedBundlePath));
         }
 
-        AssetsToolsBundlePreviewSessionLease? sessionLease = null;
+        AssetsToolsBundleLoadedSessionLease? sessionLease = null;
 
         try
         {

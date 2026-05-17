@@ -36,7 +36,7 @@
 | --- | --- | --- | --- |
 | 工作区打开 / 导入 | `WorkspaceImportCoordinatorService`、`BundleExplorerWorkspaceBindingCoordinator`、`IBackgroundTaskRunner` | 外层任务已离开 UI 线程；Application 内部已有 `workspaceKey` 执行闸门和 bundle 粒度 worker 池 | 外层任务、导入进度覆盖层和 Shell 状态条尚未统一为同一个任务模型 |
 | Application 导入 worker | `WorkspaceImportProcessingCoordinator -> WorkspaceImportWorkerPool -> WorkspaceImportCommitter` | `串行计划 -> 有界并行 worker -> 串行提交`，默认 worker 并发度 `1-4` | 该 worker 池属于业务一致性边界，不应被 Presentation 调度器接管 |
-| 资源预览 | `AssetPreviewQueryExecutor` + `IBackgroundWorkScheduler` + `AssetsToolsBundlePreviewSessionCache` | 前台槽优先服务活动详情标签，后台槽用于已打开标签预热；支持取消、超时、调度器 profile 闸门和 AssetsTools loaded-session single-flight | 标准化物理 bundle 缓存、容量上限、内存压力退避和完整可观测队列仍需后续补齐 |
+| 资源预览 | `AssetPreviewQueryExecutor` + `IBackgroundWorkScheduler` + `AssetsToolsBundleLoadedSessionCache` | 前台槽优先服务活动详情标签，后台槽用于已打开标签预热；支持取消、超时、调度器 profile 闸门和 AssetsTools loaded-session single-flight；Reader、预览生成器和通过预览管线导出的提取共享同一进程内 session cache | 标准化物理 bundle 缓存、容量上限、主动失效、内存压力退避和完整可观测队列仍需后续补齐 |
 | Spine 详情、贴图载荷和 runtime 帧 | `SpineAssetGroupDetailsLoader`、`InspectorSpineAnimationPreviewSurfaceView` + `IBackgroundWorkScheduler` | 组详情 / 贴图载荷通过 `PreviewForeground` 后台加载，runtime 当前帧通过独立 `SpineRuntimeFrame` profile 运行；均不让 UI 直接读 AB | Spine 序列帧导出和后续导出 profile 仍需继续统一 |
 | 批量提取 | `BundleExplorerBatchExtractionBackgroundExecutor`、`BatchTasksViewModel.Execution` | 已通过后台 runner 执行，并向 Shell 状态条上报进度 | 任务取消、并发限制、队列排队和完成结果展示仍偏局部实现 |
 | Shell 状态条 | `IAppBackgroundTaskStatusService` | 能显示当前任务、进度和不确定进度，并把刷新合并到 UI 线程 | 当前是手动 begin/report 模型，尚未和调度器的任务生命周期自然绑定 |
@@ -268,7 +268,7 @@ Profile 是调度策略，不是业务类型本身。同一个 Application 用�
 
 ### 9.3 资源包闸门与 Single-flight
 
-针对 `workspaceKey + bundleCacheKey` 应保留资源包级 single-flight 方向。当前已在 AssetsTools 预览生成器内落地首版“物理 bundle 路径 -> loaded session”的 single-flight；后续需升级为标准化 artifact 身份，并扩展到提取 / 导出：
+针对 `workspaceKey + bundleCacheKey` 应保留资源包级 single-flight 方向。当前已在 Infrastructure 内部落地首版“物理 bundle 路径 -> loaded session”的 single-flight，并由 AssetsTools Reader、预览生成器和经预览管线导出的提取共享；后续需升级为标准化 artifact 身份，并继续扩展到真实导出 / 写包：
 
 - 多个预览、提取或 Spine 组解析同时需要同一个 bundle 时，只允许一个标准化 / 加载请求进入物理读取，其余请求等待同一个结果或复用 loaded-session。
 - UI 请求取消或超时后，如果底层同步解包已经开始，调度槽不应立刻释放给新的同类 bundle load。底层任务完成、失败或被真正取消后再释放，避免旧解包仍在运行时继续放入新解包导致内存峰值失控。
@@ -437,9 +437,9 @@ BackgroundWorkProgress
 
 调度器不直接规定缓存格式，也不把缓存命中写成操作记录。
 
-当前 AssetsTools 预览生成器已经引入首版进程内 loaded-session 缓存：同一物理 bundle 路径的 `LoadBundleFile / LoadAssetsFileFromBundle` 通过 single-flight 进入一次加载任务，成功后以 lease 方式短时复用，并用滑动 TTL 驱逐；同一 session 的 AssetsTools 访问默认串行化，不假设第三方对象可无锁并发读取。
+当前 Infrastructure 已引入首版进程内 `AssetsToolsBundleLoadedSessionCache`：同一物理 bundle 路径的 `LoadBundleFile / LoadAssetsFileFromBundle` 通过 single-flight 进入一次加载任务，成功后以 lease 方式短时复用，并用 30 秒滑动 TTL 驱逐；同一 session 的 AssetsTools 访问默认串行化，不假设第三方对象可无锁并发读取。`AssetsToolsAssetBundleReader` 和 `AssetsToolsAssetPreviewGenerator` 默认共享同一个进程内 cache；提取当前通过 `WorkspaceAssetExtractionExporter -> GetAssetPreviewHandler` 获取 payload，因此也会复用同一 loaded-session。
 
-后续应让 `SingleExtraction / BatchExtraction / Export` 与预览共享同一套标准化 `cache/bundles` artifact 和 loaded-session 身份模型。这样可以避免多标签预览、Spine 贴图载荷和批量提取对同一 AB 反复物理解包。
+后续应让 `SingleExtraction / BatchExtraction / Export` 与预览共享同一套标准化 `cache/bundles` artifact 和 loaded-session 身份模型。当前已经解决同一进程内、同一物理路径的重复加载；下一步要把 cache key 从物理路径升级为标准化 artifact 身份，避免解密 / 标准化产物刷新后误复用旧上下文。
 
 ## 15. 状态持久化边界
 
@@ -468,7 +468,7 @@ BackgroundWorkProgress
 - 普通资产详情预览已迁移到 `PreviewForeground / PreviewPrewarm` profile；前台资产预览、Spine 资源组详情和当前贴图页载荷会在 Shell 底部状态条显示轻量加载状态，后台预热保持静默；Texture2D / alpha page 载荷已接入 `PreviewForeground` profile；Spine runtime 当前帧已接入独立 `SpineRuntimeFrame` profile。
 - 快速切换资产详情标签时，旧活动标签会被显式降级为 `PreviewPrewarm`，新活动标签始终重新按 `PreviewForeground` 调度；前台预览请求在调用方取消后会释放前台 profile 槽，避免后台旧请求压住当前可见标签。后台预热候选会按最近激活、最近打开优先，而不是单纯按标签集合顺序。
 - 预览 worker 总数已接入应用偏好设置和“设置与诊断”页，自动模式继续按 CPU 推导并限制在 `1-4`，手动值会同步影响调度器和预览查询执行器。
-- AssetsTools 预览生成器已接入 `AssetsToolsBundlePreviewSessionCache`，对同一物理 bundle 路径提供首版 single-flight、lease、串行访问保护和 30 秒滑动 TTL，减少多标签预览 / Spine 贴图载荷重复 `LoadBundleFile`。
+- Infrastructure 内部已接入 `AssetsToolsBundleLoadedSessionCache`，对同一物理 bundle 路径提供首版 single-flight、lease、串行访问保护和 30 秒滑动 TTL；`AssetsToolsAssetBundleReader`、`AssetsToolsAssetPreviewGenerator` 和经预览管线导出的提取共享该 cache，减少导入读取、详情预览、Spine 贴图载荷和批量提取对同一 AB 的重复 `LoadBundleFile`。
 - 导入进度现在通过 `WorkspaceImportBackgroundProgressBridge` 同时投影给左侧导入遮罩和 Shell 状态条；操作记录与变更页刷新仍走既有 `IWorkspaceOperationChangeNotifier`，没有恢复手动刷新资产列表。
 - 当前实现还没有完整任务详情弹层、全局 CPU/IO/memory 闸门、标准化物理 bundle 缓存、loaded-session 容量上限 / 主动失效或完成结果中心；这些仍按下面迁移计划继续推进。
 
@@ -505,7 +505,7 @@ BackgroundWorkProgress
 - 后台预热已改为按最近激活、最近打开优先提交候选；已不再把单纯集合顺序当作预热顺序。
 - Spine runtime 当前帧已接入 `SpineRuntimeFrame` profile，与普通详情预览分槽。
 - 预览 worker 总数已接入应用偏好设置，自动或手动 `1-4` 会同时影响调度器预热槽和预览查询执行器。
-- AssetsTools 预览生成器已引入首版 loaded-session single-flight，用于复用同一物理 bundle 的已加载上下文；标准化物理缓存、memory-heavy 全局闸门和容量 / 内存压力策略仍留到后续阶段。
+- Infrastructure 内部已引入首版 loaded-session single-flight，用于在 Reader、预览生成器和经预览管线导出的提取之间复用同一物理 bundle 的已加载上下文；标准化物理缓存、memory-heavy 全局闸门和容量 / 内存压力策略仍留到后续阶段。
 
 ### 第四阶段：接入工作区打开与导入外层任务
 
@@ -515,7 +515,7 @@ BackgroundWorkProgress
 
 ### 第五阶段：完善缓存 single-flight 与导出 / 保存
 
-- 将首版 AssetsTools loaded-session single-flight 扩展为基于标准化 bundle artifact 身份的共享缓存，并补容量上限、主动失效、内存压力退避和提取 / 导出共享入口。
+- 将当前基于物理路径的 AssetsTools loaded-session single-flight 升级为基于标准化 bundle artifact 身份的共享缓存，并补容量上限、主动失效、内存压力退避和真实导出 / 写包共享入口。
 - 序列帧导出、Spine 导出、真实保存 / 重建按 `Export / SaveRebuild` profile 接入。
 - 保存 / 重建取消、回滚和检查点语义先在 Application 文档和测试中固化，再实现真实写包。
 

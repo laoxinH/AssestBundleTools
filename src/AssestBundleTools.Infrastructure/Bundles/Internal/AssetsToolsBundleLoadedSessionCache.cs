@@ -1,26 +1,29 @@
-namespace AssestBundleTools.Infrastructure.Bundles.Previewing;
+namespace AssestBundleTools.Infrastructure.Bundles.Internal;
 
 /// <summary>
-/// 为预览链路提供 bundle 级 single-flight 和短时 loaded-session 复用。
+/// 为 AssetsTools bundle 访问提供 bundle 级 single-flight 和短时 loaded-session 复用。
 /// </summary>
-internal sealed class AssetsToolsBundlePreviewSessionCache
+internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
 {
     private static readonly TimeSpan DefaultIdleRetention = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan CleanupPeriod = TimeSpan.FromSeconds(10);
 
     private readonly object _syncRoot = new();
     private readonly Dictionary<string, CacheEntry> _entries = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Func<string, AssetsToolsBundlePreviewSession> _sessionLoader;
+    private readonly Func<string, AssetsToolsBundleLoadedSession> _sessionLoader;
     private readonly TimeSpan _idleRetention;
     private readonly Timer _cleanupTimer;
+    private bool _isDisposed;
 
-    public AssetsToolsBundlePreviewSessionCache()
-        : this(AssetsToolsBundlePreviewSession.Load, DefaultIdleRetention)
+    public static AssetsToolsBundleLoadedSessionCache Shared { get; } = new();
+
+    public AssetsToolsBundleLoadedSessionCache()
+        : this(AssetsToolsBundleLoadedSession.Load, DefaultIdleRetention)
     {
     }
 
-    internal AssetsToolsBundlePreviewSessionCache(
-        Func<string, AssetsToolsBundlePreviewSession> sessionLoader,
+    internal AssetsToolsBundleLoadedSessionCache(
+        Func<string, AssetsToolsBundleLoadedSession> sessionLoader,
         TimeSpan idleRetention)
     {
         _sessionLoader = sessionLoader ?? throw new ArgumentNullException(nameof(sessionLoader));
@@ -28,13 +31,13 @@ internal sealed class AssetsToolsBundlePreviewSessionCache
             ? idleRetention
             : DefaultIdleRetention;
         _cleanupTimer = new Timer(
-            static state => ((AssetsToolsBundlePreviewSessionCache)state!).TrimExpiredEntries(),
+            static state => ((AssetsToolsBundleLoadedSessionCache)state!).TrimExpiredEntries(),
             this,
             CleanupPeriod,
             CleanupPeriod);
     }
 
-    public async Task<AssetsToolsBundlePreviewSessionLease> AcquireAsync(
+    public async Task<AssetsToolsBundleLoadedSessionLease> AcquireAsync(
         string bundlePath,
         CancellationToken cancellationToken)
     {
@@ -48,7 +51,7 @@ internal sealed class AssetsToolsBundlePreviewSessionCache
         try
         {
             var session = await entry.SessionTask.WaitAsync(cancellationToken);
-            return new AssetsToolsBundlePreviewSessionLease(session, () => Release(cacheKey, entry));
+            return new AssetsToolsBundleLoadedSessionLease(session, () => Release(cacheKey, entry));
         }
         catch
         {
@@ -57,10 +60,41 @@ internal sealed class AssetsToolsBundlePreviewSessionCache
         }
     }
 
+    public void Dispose()
+    {
+        List<AssetsToolsBundleLoadedSession> disposableSessions = [];
+        lock (_syncRoot)
+        {
+            if (_isDisposed)
+            {
+                return;
+            }
+
+            _isDisposed = true;
+            foreach (var entry in _entries.Values)
+            {
+                if (entry.SessionTask.IsCompletedSuccessfully)
+                {
+                    disposableSessions.Add(entry.SessionTask.Result);
+                }
+            }
+
+            _entries.Clear();
+        }
+
+        _cleanupTimer.Dispose();
+        foreach (var session in disposableSessions)
+        {
+            session.Dispose();
+        }
+    }
+
     private CacheEntry GetOrCreateEntry(string cacheKey)
     {
         lock (_syncRoot)
         {
+            ObjectDisposedException.ThrowIf(_isDisposed, this);
+
             if (!_entries.TryGetValue(cacheKey, out var entry))
             {
                 entry = new CacheEntry(Task.Run(() => _sessionLoader(cacheKey)));
@@ -75,7 +109,7 @@ internal sealed class AssetsToolsBundlePreviewSessionCache
 
     private void Release(string cacheKey, CacheEntry entry, bool removeEntry = false)
     {
-        AssetsToolsBundlePreviewSession? disposableSession = null;
+        AssetsToolsBundleLoadedSession? disposableSession = null;
         lock (_syncRoot)
         {
             if (entry.LeaseCount > 0)
@@ -104,10 +138,15 @@ internal sealed class AssetsToolsBundlePreviewSessionCache
 
     private void TrimExpiredEntries()
     {
-        List<AssetsToolsBundlePreviewSession> disposableSessions = [];
+        List<AssetsToolsBundleLoadedSession> disposableSessions = [];
         var now = DateTimeOffset.UtcNow;
         lock (_syncRoot)
         {
+            if (_isDisposed)
+            {
+                return;
+            }
+
             foreach (var pair in _entries.ToArray())
             {
                 var entry = pair.Value;
@@ -134,13 +173,13 @@ internal sealed class AssetsToolsBundlePreviewSessionCache
 
     private sealed class CacheEntry
     {
-        public CacheEntry(Task<AssetsToolsBundlePreviewSession> sessionTask)
+        public CacheEntry(Task<AssetsToolsBundleLoadedSession> sessionTask)
         {
             SessionTask = sessionTask;
             LastAccessUtc = DateTimeOffset.UtcNow;
         }
 
-        public Task<AssetsToolsBundlePreviewSession> SessionTask { get; }
+        public Task<AssetsToolsBundleLoadedSession> SessionTask { get; }
 
         public int LeaseCount { get; set; }
 
@@ -148,20 +187,20 @@ internal sealed class AssetsToolsBundlePreviewSessionCache
     }
 }
 
-internal sealed class AssetsToolsBundlePreviewSessionLease : IDisposable
+internal sealed class AssetsToolsBundleLoadedSessionLease : IDisposable
 {
     private readonly Action _release;
     private int _isDisposed;
 
-    public AssetsToolsBundlePreviewSessionLease(
-        AssetsToolsBundlePreviewSession session,
+    public AssetsToolsBundleLoadedSessionLease(
+        AssetsToolsBundleLoadedSession session,
         Action release)
     {
         Session = session ?? throw new ArgumentNullException(nameof(session));
         _release = release ?? throw new ArgumentNullException(nameof(release));
     }
 
-    public AssetsToolsBundlePreviewSession Session { get; }
+    public AssetsToolsBundleLoadedSession Session { get; }
 
     public void Dispose()
     {

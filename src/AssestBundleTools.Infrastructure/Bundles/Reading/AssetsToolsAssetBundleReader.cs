@@ -1,4 +1,3 @@
-using System.Text;
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 using AssestBundleTools.Application.Bundles.Dtos;
@@ -49,6 +48,18 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
         AssetClassID.SpriteAtlas
     ];
 
+    private readonly AssetsToolsBundleLoadedSessionCache _bundleSessionCache;
+
+    public AssetsToolsAssetBundleReader()
+        : this(AssetsToolsBundleLoadedSessionCache.Shared)
+    {
+    }
+
+    internal AssetsToolsAssetBundleReader(AssetsToolsBundleLoadedSessionCache bundleSessionCache)
+    {
+        _bundleSessionCache = bundleSessionCache ?? throw new ArgumentNullException(nameof(bundleSessionCache));
+    }
+
     public string CacheParserVersion => ParserVersion;
 
     public bool CanRead(string bundlePath) => UnityAssetBundleFileInspector.CanTreatAsBundle(bundlePath);
@@ -58,7 +69,7 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
         return string.Equals(parserVersion, ParserVersion, StringComparison.OrdinalIgnoreCase);
     }
 
-    public Task<Result<AssetBundleReadResultDto>> ReadAsync(
+    public async Task<Result<AssetBundleReadResultDto>> ReadAsync(
         AssetBundleReadRequestDto request,
         CancellationToken cancellationToken = default)
     {
@@ -66,139 +77,116 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
 
         if (cancellationToken.IsCancellationRequested)
         {
-            return Task.FromResult(Result<AssetBundleReadResultDto>.Cancelled());
+            return Result<AssetBundleReadResultDto>.Cancelled();
         }
 
         if (!File.Exists(request.BundlePath))
         {
-            return Task.FromResult(Result<AssetBundleReadResultDto>.Failure(
-                ApplicationErrors.BundleSourceMissing(request.BundlePath)));
+            return Result<AssetBundleReadResultDto>.Failure(
+                ApplicationErrors.BundleSourceMissing(request.BundlePath));
         }
 
         if (!CanRead(request.BundlePath))
         {
-            return Task.FromResult(Result<AssetBundleReadResultDto>.Failure(
-                ApplicationErrors.BundleReadFormatUnrecognized(request.BundlePath)));
+            return Result<AssetBundleReadResultDto>.Failure(
+                ApplicationErrors.BundleReadFormatUnrecognized(request.BundlePath));
         }
 
+        AssetsToolsBundleLoadedSessionLease? sessionLease = null;
         try
         {
-            var logicalPath = UnityAssetBundleFileInspector.NormalizeLogicalPath(request.LogicalPath, request.BundlePath);
-            var readGraph = ReadBundleGraph(request.BundlePath, cancellationToken);
-            var result = new AssetBundleReadResultDto(
-                DisplayName: Path.GetFileName(request.BundlePath),
-                LogicalPath: logicalPath,
-                ParserVersion: CacheParserVersion,
-                Dependencies: readGraph.BundleDependencies,
-                Assets: readGraph.Assets,
-                SerializedFileNames: readGraph.SerializedFileNames);
+            sessionLease = await _bundleSessionCache.AcquireAsync(request.BundlePath, cancellationToken);
+            var session = sessionLease.Session;
+            await session.ExecutionGate.WaitAsync(cancellationToken);
+            try
+            {
+                var logicalPath = UnityAssetBundleFileInspector.NormalizeLogicalPath(request.LogicalPath, request.BundlePath);
+                var readGraph = ReadBundleGraph(session, cancellationToken);
+                var result = new AssetBundleReadResultDto(
+                    DisplayName: Path.GetFileName(request.BundlePath),
+                    LogicalPath: logicalPath,
+                    ParserVersion: CacheParserVersion,
+                    Dependencies: readGraph.BundleDependencies,
+                    Assets: readGraph.Assets,
+                    SerializedFileNames: readGraph.SerializedFileNames);
 
-            return Task.FromResult(Result<AssetBundleReadResultDto>.Success(result));
+                return Result<AssetBundleReadResultDto>.Success(result);
+            }
+            finally
+            {
+                session.ExecutionGate.Release();
+            }
         }
         catch (OperationCanceledException)
         {
-            return Task.FromResult(Result<AssetBundleReadResultDto>.Cancelled());
+            return Result<AssetBundleReadResultDto>.Cancelled();
         }
         catch (Exception)
         {
-            return Task.FromResult(Result<AssetBundleReadResultDto>.Failure(
-                ApplicationErrors.BundleReadUnexpected(request.BundlePath)));
+            return Result<AssetBundleReadResultDto>.Failure(
+                ApplicationErrors.BundleReadUnexpected(request.BundlePath));
+        }
+        finally
+        {
+            sessionLease?.Dispose();
         }
     }
 
     private static BundleReadGraph ReadBundleGraph(
-        string bundlePath,
+        AssetsToolsBundleLoadedSession session,
         CancellationToken cancellationToken)
     {
-        var assetsManager = new AssetsManager
-        {
-            UseQuickLookup = true,
-            UseTemplateFieldCache = true,
-            UseMonoTemplateFieldCache = true
-        };
+        var serializedFiles = session.SerializedFiles;
+        var containerLookup = BuildContainerLookup(session.AssetsManager, serializedFiles, cancellationToken);
+        var rawAssets = CollectRawAssets(session.AssetsManager, serializedFiles, containerLookup, cancellationToken);
+        var assetLookup = rawAssets.ToDictionary(
+            static asset => new AssetsToolsAssetObjectKey(asset.SerializedFileName, asset.PathId),
+            static asset => new AssetsToolsResolvedAssetDescriptor(
+                AssetId: asset.AssetId,
+                AssetName: asset.AssetName,
+                AssetType: asset.AssetType.ToString(),
+                AssetTypeDisplayName: asset.AssetTypeDisplayName,
+                SerializedFileName: asset.SerializedFileName,
+                PathId: asset.PathId,
+                SerializedFile: asset.SerializedFile,
+                BaseField: asset.BaseField));
 
-        try
-        {
-            var bundleInstance = assetsManager.LoadBundleFile(bundlePath, unpackIfPacked: true);
-            var serializedFiles = LoadSerializedFiles(assetsManager, bundleInstance, cancellationToken);
-            var containerLookup = BuildContainerLookup(assetsManager, serializedFiles, cancellationToken);
-            var rawAssets = CollectRawAssets(assetsManager, serializedFiles, containerLookup, cancellationToken);
-            var internalSerializedFileLookup = AssetsToolsBundleDependencyResolver.BuildInternalSerializedFileLookup(serializedFiles);
-            var assetLookup = rawAssets.ToDictionary(
-                static asset => new AssetsToolsAssetObjectKey(asset.SerializedFileName, asset.PathId),
-                static asset => new AssetsToolsResolvedAssetDescriptor(
-                    AssetId: asset.AssetId,
-                    AssetName: asset.AssetName,
-                    AssetType: asset.AssetType.ToString(),
-                    AssetTypeDisplayName: asset.AssetTypeDisplayName,
-                    SerializedFileName: asset.SerializedFileName,
-                    PathId: asset.PathId,
-                    SerializedFile: asset.SerializedFile,
-                    BaseField: asset.BaseField));
+        var assets = rawAssets
+            .Select(asset => new AssetBundleReadAssetDto(
+                AssetId: asset.AssetId,
+                AssetName: asset.AssetName,
+                AssetType: asset.AssetType.ToString(),
+                AssetPath: asset.AssetPath,
+                ContainerPath: asset.ContainerPath,
+                SizeInBytes: asset.SizeInBytes,
+                PreferredDisplaySizeInBytes: asset.PreferredDisplaySizeInBytes,
+                HasPreview: asset.HasPreview,
+                CanExtract: asset.CanExtract,
+                CanReplace: asset.CanReplace,
+                SerializedFileName: asset.SerializedFileName,
+                PathId: asset.PathId,
+                AssetTypeDisplayName: asset.AssetTypeDisplayName,
+                Dependencies: AssetsToolsAssetDependencyResolver.ResolveDependencies(
+                    asset.AssetId,
+                    asset.SerializedFile,
+                    asset.BaseField,
+                    asset.AssetTypeDisplayName,
+                    assetLookup,
+                    session.InternalSerializedFileLookup),
+                IncludeInAssetList: asset.IncludeInAssetList))
+            .OrderBy(static asset => asset.AssetPath, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static asset => asset.AssetName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
-            var assets = rawAssets
-                .Select(asset => new AssetBundleReadAssetDto(
-                    AssetId: asset.AssetId,
-                    AssetName: asset.AssetName,
-                    AssetType: asset.AssetType.ToString(),
-                    AssetPath: asset.AssetPath,
-                    ContainerPath: asset.ContainerPath,
-                    SizeInBytes: asset.SizeInBytes,
-                    PreferredDisplaySizeInBytes: asset.PreferredDisplaySizeInBytes,
-                    HasPreview: asset.HasPreview,
-                    CanExtract: asset.CanExtract,
-                    CanReplace: asset.CanReplace,
-                    SerializedFileName: asset.SerializedFileName,
-                    PathId: asset.PathId,
-                    AssetTypeDisplayName: asset.AssetTypeDisplayName,
-                    Dependencies: AssetsToolsAssetDependencyResolver.ResolveDependencies(
-                        asset.AssetId,
-                        asset.SerializedFile,
-                        asset.BaseField,
-                        asset.AssetTypeDisplayName,
-                        assetLookup,
-                        internalSerializedFileLookup),
-                    IncludeInAssetList: asset.IncludeInAssetList))
-                .OrderBy(static asset => asset.AssetPath, StringComparer.OrdinalIgnoreCase)
-                .ThenBy(static asset => asset.AssetName, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
-
-            return new BundleReadGraph(
-                SerializedFileNames: serializedFiles
-                    .Select(static file => file.name)
-                    .Where(static fileName => !string.IsNullOrWhiteSpace(fileName))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(static fileName => fileName, StringComparer.OrdinalIgnoreCase)
-                    .ToArray(),
-                Assets: assets,
-                BundleDependencies: AssetsToolsBundleDependencyResolver.ResolveBundleDependencies(serializedFiles));
-        }
-        finally
-        {
-            assetsManager.UnloadAll(unloadClassData: false);
-        }
-    }
-
-    private static IReadOnlyList<AssetsFileInstance> LoadSerializedFiles(
-        AssetsManager assetsManager,
-        BundleFileInstance bundleInstance,
-        CancellationToken cancellationToken)
-    {
-        var serializedFiles = new List<AssetsFileInstance>();
-        var directoryInfos = bundleInstance.file.BlockAndDirInfo.DirectoryInfos;
-        for (var index = 0; index < directoryInfos.Count; index++)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            if (!bundleInstance.file.IsAssetsFile(index))
-            {
-                continue;
-            }
-
-            serializedFiles.Add(assetsManager.LoadAssetsFileFromBundle(bundleInstance, index, loadDeps: false));
-        }
-
-        return serializedFiles;
+        return new BundleReadGraph(
+            SerializedFileNames: serializedFiles
+                .Select(static file => file.name)
+                .Where(static fileName => !string.IsNullOrWhiteSpace(fileName))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(static fileName => fileName, StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
+            Assets: assets,
+            BundleDependencies: AssetsToolsBundleDependencyResolver.ResolveBundleDependencies(serializedFiles));
     }
 
     private static IReadOnlyDictionary<AssetsToolsAssetObjectKey, string> BuildContainerLookup(

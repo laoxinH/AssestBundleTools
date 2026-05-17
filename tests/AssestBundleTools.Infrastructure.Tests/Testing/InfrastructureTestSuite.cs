@@ -1,4 +1,5 @@
 using AssestBundleTools.Infrastructure.Tests.Bundles.Decryption;
+using AssestBundleTools.Infrastructure.Tests.Bundles.Internal;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Reading;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Previewing;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Persistence;
@@ -125,6 +126,14 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(AssetsToolsAssetPreviewGeneratorTests.GenerateAsync_ShouldReturnGenerationFailureDetail_WhenUnexpectedExceptionOccurs),
             AssetsToolsAssetPreviewGeneratorTests.GenerateAsync_ShouldReturnGenerationFailureDetail_WhenUnexpectedExceptionOccurs);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldShareInFlightLoad_ForSameBundlePath),
+            AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldShareInFlightLoad_ForSameBundlePath);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldRemoveFailedLoadEntry),
+            AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldRemoveFailedLoadEntry);
         await RunTestAsync(
             failures,
             nameof(AssetsToolsTextAssetPreviewClassifierTests.TryDecodeReadableTextPayload_ShouldAcceptJsonSkelText),
