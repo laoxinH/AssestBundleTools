@@ -113,6 +113,81 @@ internal static class JsonBundleArtifactStoreTests
         TestAssert.Equal(manifest.CreatedAtUtc, restoredManifest.CreatedAtUtc, "Touching access time should not rewrite creation time.");
     }
 
+    public static void GetUsage_ShouldReturnArtifactEntriesAndTotalSize()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonBundleArtifactStore(temporaryDirectory.DirectoryPath);
+        SaveMaterializedArtifact(
+            temporaryDirectory.DirectoryPath,
+            store,
+            "workspace-usage",
+            "bundle-cache-a",
+            [0x01, 0x02, 0x03],
+            new DateTimeOffset(2026, 5, 17, 10, 0, 0, TimeSpan.Zero));
+        SaveMaterializedArtifact(
+            temporaryDirectory.DirectoryPath,
+            store,
+            "workspace-usage",
+            "bundle-cache-b",
+            [0x04, 0x05],
+            new DateTimeOffset(2026, 5, 17, 10, 5, 0, TimeSpan.Zero));
+
+        var usage = store.GetUsage("workspace-usage");
+
+        TestAssert.Equal(2, usage.ArtifactCount, "Usage should count saved artifact manifests.");
+        TestAssert.Equal(2, usage.Entries.Count, "Usage should expose each artifact entry.");
+        TestAssert.True(usage.TotalSizeInBytes >= 5, "Usage should include materialized bundle bytes.");
+        TestAssert.True(
+            usage.Entries.Any(static entry => string.Equals(entry.BundleCacheKey, "bundle-cache-a", StringComparison.OrdinalIgnoreCase)),
+            "Usage should include the first artifact.");
+        TestAssert.True(
+            usage.Entries.All(static entry => entry.LastAccessedAtUtc is not null),
+            "Usage entries should expose last access times.");
+    }
+
+    public static void Prune_ShouldDeleteLeastRecentlyAccessedArtifacts_WhenSizeLimitIsExceeded()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonBundleArtifactStore(temporaryDirectory.DirectoryPath);
+        var oldManifest = SaveMaterializedArtifact(
+            temporaryDirectory.DirectoryPath,
+            store,
+            "workspace-prune",
+            "bundle-cache-old",
+            [0x01, 0x02, 0x03],
+            new DateTimeOffset(2026, 5, 17, 9, 0, 0, TimeSpan.Zero));
+        var newManifest = SaveMaterializedArtifact(
+            temporaryDirectory.DirectoryPath,
+            store,
+            "workspace-prune",
+            "bundle-cache-new",
+            [0x04, 0x05, 0x06, 0x07],
+            new DateTimeOffset(2026, 5, 17, 10, 0, 0, TimeSpan.Zero));
+        store.UpdateLastAccessed(oldManifest, new DateTimeOffset(2026, 5, 17, 9, 30, 0, TimeSpan.Zero));
+        store.UpdateLastAccessed(newManifest, new DateTimeOffset(2026, 5, 17, 11, 0, 0, TimeSpan.Zero));
+        var usageBefore = store.GetUsage("workspace-prune");
+        var oldEntry = usageBefore.Entries.First(entry =>
+            string.Equals(entry.BundleCacheKey, "bundle-cache-old", StringComparison.OrdinalIgnoreCase));
+        var sizeLimit = usageBefore.TotalSizeInBytes - oldEntry.SizeInBytes;
+
+        var pruneResult = store.Prune(new BundleArtifactPruneRequestDto(
+            WorkspaceKey: "workspace-prune",
+            MaximumSizeInBytes: sizeLimit,
+            MaximumArtifactCount: null));
+
+        TestAssert.Equal(2, pruneResult.ArtifactCountBefore, "Prune should report the original artifact count.");
+        TestAssert.Equal(1, pruneResult.ArtifactCountAfter, "Prune should remove one artifact to reach the size limit.");
+        TestAssert.True(pruneResult.SizeAfterInBytes <= sizeLimit, "Prune should reduce size to the requested limit.");
+        TestAssert.Equal(
+            "bundle-cache-old",
+            TestAssert.Single(pruneResult.PrunedEntries).BundleCacheKey,
+            "Prune should remove the least recently accessed artifact first.");
+        TestAssert.Null(store.Load("workspace-prune", "bundle-cache-old"), "Pruned artifact manifest should be removed.");
+        TestAssert.True(
+            store.Load("workspace-prune", "bundle-cache-new") is not null,
+            "Newer artifact should remain after LRU pruning.");
+    }
+
     public static void DeleteWorkspace_ShouldRemoveBundleArtifactDirectory()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();
@@ -148,4 +223,29 @@ internal static class JsonBundleArtifactStoreTests
             FileSizeInBytes: size,
             LastWriteTimeUtc: new DateTimeOffset(2026, 5, 17, 9, 0, 0, TimeSpan.Zero),
             ContentHash: null);
+
+    private static BundleArtifactManifestDto SaveMaterializedArtifact(
+        string rootDirectoryPath,
+        JsonBundleArtifactStore store,
+        string workspaceKey,
+        string bundleCacheKey,
+        byte[] bytes,
+        DateTimeOffset createdAtUtc)
+    {
+        var sourceBundlePath = Path.Combine(rootDirectoryPath, "staging", $"{bundleCacheKey}.ab");
+        Directory.CreateDirectory(Path.GetDirectoryName(sourceBundlePath)!);
+        File.WriteAllBytes(sourceBundlePath, bytes);
+
+        return store.Save(new BundleArtifactSaveRequestDto(
+            WorkspaceKey: workspaceKey,
+            BundleCacheKey: bundleCacheKey,
+            SourceFingerprint: CreateFingerprint(sourceBundlePath, bytes.Length),
+            DecryptorId: "decryptor-a",
+            DecryptorVersion: "1.0.0",
+            NormalizerVersion: "bundle-artifact/1",
+            ResolvedBundlePath: sourceBundlePath,
+            ProducedDerivedFile: true,
+            ResolvedBundleFingerprint: CreateFingerprint(sourceBundlePath, bytes.Length),
+            CreatedAtUtc: createdAtUtc));
+    }
 }

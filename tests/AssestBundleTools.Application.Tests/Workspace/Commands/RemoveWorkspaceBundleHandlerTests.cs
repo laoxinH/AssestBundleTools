@@ -297,6 +297,12 @@ internal static class RemoveWorkspaceBundleHandlerTests
                 LastAccessedAtUtc = lastAccessedAtUtc,
             };
 
+        public BundleArtifactCacheUsageDto GetUsage(string? workspaceKey = null) =>
+            new(0, 0, Array.Empty<BundleArtifactCacheEntryDto>());
+
+        public BundleArtifactPruneResultDto Prune(BundleArtifactPruneRequestDto request) =>
+            new(0, 0, 0, 0, Array.Empty<BundleArtifactCacheEntryDto>());
+
         public void Delete(string workspaceKey, string bundleCacheKey)
         {
             DeleteOperations.Add((workspaceKey, bundleCacheKey));

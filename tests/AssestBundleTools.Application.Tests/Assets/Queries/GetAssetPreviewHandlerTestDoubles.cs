@@ -237,6 +237,28 @@ internal static partial class GetAssetPreviewHandlerTests
             return updatedManifest;
         }
 
+        public BundleArtifactCacheUsageDto GetUsage(string? workspaceKey = null)
+        {
+            lock (_syncRoot)
+            {
+                var entries = _manifests
+                    .Where(manifest => string.IsNullOrWhiteSpace(workspaceKey) ||
+                                       string.Equals(manifest.WorkspaceKey, workspaceKey, StringComparison.OrdinalIgnoreCase))
+                    .Select(static manifest => new BundleArtifactCacheEntryDto(
+                        WorkspaceKey: manifest.WorkspaceKey,
+                        BundleCacheKey: manifest.BundleCacheKey,
+                        SizeInBytes: 0,
+                        CreatedAtUtc: manifest.CreatedAtUtc,
+                        LastAccessedAtUtc: manifest.LastAccessedAtUtc,
+                        IsMaterialized: manifest.IsMaterialized))
+                    .ToArray();
+                return new BundleArtifactCacheUsageDto(0, entries.Length, entries);
+            }
+        }
+
+        public BundleArtifactPruneResultDto Prune(BundleArtifactPruneRequestDto request) =>
+            new(0, 0, 0, 0, Array.Empty<BundleArtifactCacheEntryDto>());
+
         public void Delete(string workspaceKey, string bundleCacheKey)
         {
             lock (_syncRoot)

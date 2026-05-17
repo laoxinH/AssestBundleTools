@@ -15,6 +15,10 @@ public interface IBundleArtifactStore
 
     BundleArtifactManifestDto UpdateLastAccessed(BundleArtifactManifestDto manifest, DateTimeOffset lastAccessedAtUtc);
 
+    BundleArtifactCacheUsageDto GetUsage(string? workspaceKey = null);
+
+    BundleArtifactPruneResultDto Prune(BundleArtifactPruneRequestDto request);
+
     void Delete(string workspaceKey, string bundleCacheKey);
 
     void DeleteWorkspace(string workspaceKey);

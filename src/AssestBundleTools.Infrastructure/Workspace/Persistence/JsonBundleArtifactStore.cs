@@ -105,6 +105,64 @@ public sealed class JsonBundleArtifactStore : IBundleArtifactStore
         return updatedManifest;
     }
 
+    public BundleArtifactCacheUsageDto GetUsage(string? workspaceKey = null)
+    {
+        var entries = EnumerateCacheEntries(workspaceKey)
+            .OrderBy(static entry => entry.WorkspaceKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static entry => entry.BundleCacheKey, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return new BundleArtifactCacheUsageDto(
+            TotalSizeInBytes: entries.Sum(static entry => entry.SizeInBytes),
+            ArtifactCount: entries.Length,
+            Entries: entries);
+    }
+
+    public BundleArtifactPruneResultDto Prune(BundleArtifactPruneRequestDto request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (request.MaximumSizeInBytes is < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(request.MaximumSizeInBytes));
+        }
+
+        if (request.MaximumArtifactCount is < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(request.MaximumArtifactCount));
+        }
+
+        var usageBefore = GetUsage(request.WorkspaceKey);
+        var targetSizeInBytes = request.MaximumSizeInBytes ?? long.MaxValue;
+        var targetArtifactCount = request.MaximumArtifactCount ?? int.MaxValue;
+        var sizeAfter = usageBefore.TotalSizeInBytes;
+        var countAfter = usageBefore.ArtifactCount;
+        var prunedEntries = new List<BundleArtifactCacheEntryDto>();
+
+        foreach (var entry in usageBefore.Entries
+                     .OrderBy(static entry => entry.LastAccessedAtUtc ?? entry.CreatedAtUtc)
+                     .ThenBy(static entry => entry.CreatedAtUtc)
+                     .ThenBy(static entry => entry.WorkspaceKey, StringComparer.OrdinalIgnoreCase)
+                     .ThenBy(static entry => entry.BundleCacheKey, StringComparer.OrdinalIgnoreCase))
+        {
+            if (sizeAfter <= targetSizeInBytes && countAfter <= targetArtifactCount)
+            {
+                break;
+            }
+
+            Delete(entry.WorkspaceKey, entry.BundleCacheKey);
+            prunedEntries.Add(entry);
+            sizeAfter -= entry.SizeInBytes;
+            countAfter--;
+        }
+
+        return new BundleArtifactPruneResultDto(
+            SizeBeforeInBytes: usageBefore.TotalSizeInBytes,
+            SizeAfterInBytes: Math.Max(0, sizeAfter),
+            ArtifactCountBefore: usageBefore.ArtifactCount,
+            ArtifactCountAfter: Math.Max(0, countAfter),
+            PrunedEntries: prunedEntries);
+    }
+
     public void Delete(string workspaceKey, string bundleCacheKey)
     {
         if (string.IsNullOrWhiteSpace(workspaceKey) || string.IsNullOrWhiteSpace(bundleCacheKey))
@@ -147,6 +205,79 @@ public sealed class JsonBundleArtifactStore : IBundleArtifactStore
         }
 
         return targetPath;
+    }
+
+    private IEnumerable<BundleArtifactCacheEntryDto> EnumerateCacheEntries(string? workspaceKey)
+    {
+        foreach (var artifactDirectoryPath in EnumerateArtifactDirectories(workspaceKey))
+        {
+            var manifestFilePath = Path.Combine(artifactDirectoryPath, "manifest.json");
+            var manifest = JsonWorkspaceFileStorageHelper.TryReadJson<BundleArtifactManifestDto>(
+                manifestFilePath,
+                JsonWorkspaceSerialization.SerializerOptions);
+            if (manifest is null)
+            {
+                continue;
+            }
+
+            yield return new BundleArtifactCacheEntryDto(
+                WorkspaceKey: manifest.WorkspaceKey,
+                BundleCacheKey: manifest.BundleCacheKey,
+                SizeInBytes: CalculateDirectorySize(artifactDirectoryPath),
+                CreatedAtUtc: manifest.CreatedAtUtc,
+                LastAccessedAtUtc: manifest.LastAccessedAtUtc,
+                IsMaterialized: manifest.IsMaterialized);
+        }
+    }
+
+    private IEnumerable<string> EnumerateArtifactDirectories(string? workspaceKey)
+    {
+        if (!string.IsNullOrWhiteSpace(workspaceKey))
+        {
+            var workspaceDirectoryPath = _storagePaths.GetBundleArtifactWorkspaceDirectoryPath(workspaceKey);
+            return Directory.Exists(workspaceDirectoryPath)
+                ? Directory.EnumerateDirectories(workspaceDirectoryPath)
+                : [];
+        }
+
+        if (!Directory.Exists(_storagePaths.BundleArtifactCacheDirectoryPath))
+        {
+            return [];
+        }
+
+        return Directory.EnumerateDirectories(_storagePaths.BundleArtifactCacheDirectoryPath)
+            .SelectMany(static workspaceDirectoryPath => Directory.EnumerateDirectories(workspaceDirectoryPath));
+    }
+
+    private static long CalculateDirectorySize(string directoryPath)
+    {
+        try
+        {
+            return Directory.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories)
+                .Sum(static filePath =>
+                {
+                    try
+                    {
+                        return new FileInfo(filePath).Length;
+                    }
+                    catch (IOException)
+                    {
+                        return 0;
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        return 0;
+                    }
+                });
+        }
+        catch (IOException)
+        {
+            return 0;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return 0;
+        }
     }
 
     private bool IsInsideArtifactDirectory(BundleArtifactManifestDto manifest, string resolvedPath)

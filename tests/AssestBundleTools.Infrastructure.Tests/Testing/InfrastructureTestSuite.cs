@@ -80,6 +80,14 @@ internal static class InfrastructureTestSuite
             JsonBundleArtifactStoreTests.UpdateLastAccessed_ShouldPersistManifestAccessTime);
         await RunTestAsync(
             failures,
+            nameof(JsonBundleArtifactStoreTests.GetUsage_ShouldReturnArtifactEntriesAndTotalSize),
+            JsonBundleArtifactStoreTests.GetUsage_ShouldReturnArtifactEntriesAndTotalSize);
+        await RunTestAsync(
+            failures,
+            nameof(JsonBundleArtifactStoreTests.Prune_ShouldDeleteLeastRecentlyAccessedArtifacts_WhenSizeLimitIsExceeded),
+            JsonBundleArtifactStoreTests.Prune_ShouldDeleteLeastRecentlyAccessedArtifacts_WhenSizeLimitIsExceeded);
+        await RunTestAsync(
+            failures,
             nameof(JsonBundleArtifactStoreTests.DeleteWorkspace_ShouldRemoveBundleArtifactDirectory),
             JsonBundleArtifactStoreTests.DeleteWorkspace_ShouldRemoveBundleArtifactDirectory);
         await RunTestAsync(
