@@ -46,7 +46,7 @@ internal static class JsonBundleArtifactStoreTests
             "Stored materialized bundle path should resolve while the file exists.");
     }
 
-    public static void Save_ShouldKeepPassThroughBundlePath_InManifestOnly()
+    public static void Save_ShouldMaterializePassThroughBundle_AndRoundTripManifest()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();
         Directory.CreateDirectory(temporaryDirectory.DirectoryPath);
@@ -66,9 +66,13 @@ internal static class JsonBundleArtifactStoreTests
             ResolvedBundleFingerprint: CreateFingerprint(sourceBundlePath, 2),
             CreatedAtUtc: new DateTimeOffset(2026, 5, 17, 10, 5, 0, TimeSpan.Zero)));
 
-        TestAssert.False(manifest.IsMaterialized, "Pass-through bundles should not be copied during the first cache pass.");
-        TestAssert.Equal(Path.GetFullPath(sourceBundlePath), manifest.ResolvedBundlePath, "Manifest should reference the readable source path.");
-        TestAssert.False(
+        TestAssert.True(manifest.IsMaterialized, "Pass-through bundles should be materialized into the standardized cache.");
+        TestAssert.True(
+            manifest.ResolvedBundlePath.EndsWith(
+                Path.Combine("cache", "bundles", "workspace-a", "bundle-cache-pass-through", "normalized.bundle"),
+                StringComparison.OrdinalIgnoreCase),
+            "Pass-through manifest should reference the standardized bundle cache path.");
+        TestAssert.True(
             File.Exists(Path.Combine(
                 temporaryDirectory.DirectoryPath,
                 "cache",
@@ -76,11 +80,37 @@ internal static class JsonBundleArtifactStoreTests
                 "workspace-a",
                 "bundle-cache-pass-through",
                 "normalized.bundle")),
-            "Pass-through cache should not create normalized.bundle.");
+            "Pass-through cache should create normalized.bundle.");
+        TestAssert.Equal(2, new FileInfo(manifest.ResolvedBundlePath).Length, "Materialized bundle bytes should match the source.");
         TestAssert.Equal(
             manifest.ResolvedBundlePath,
             store.ResolveBundlePath(manifest),
-            "Pass-through manifest should resolve to the original file while it exists.");
+            "Pass-through manifest should resolve to the materialized file while it exists.");
+    }
+
+    public static void ResolveBundlePath_ShouldRejectLegacyManifestOnlyPassThroughArtifact()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        Directory.CreateDirectory(temporaryDirectory.DirectoryPath);
+        var sourceBundlePath = Path.Combine(temporaryDirectory.DirectoryPath, "source.ab");
+        File.WriteAllBytes(sourceBundlePath, [0x10, 0x20]);
+        var store = new JsonBundleArtifactStore(temporaryDirectory.DirectoryPath);
+        var legacyManifest = new BundleArtifactManifestDto(
+            WorkspaceKey: "workspace-a",
+            BundleCacheKey: "bundle-cache-pass-through",
+            ResolvedBundlePath: sourceBundlePath,
+            IsMaterialized: false,
+            SourceFingerprint: CreateFingerprint(sourceBundlePath, 2),
+            BundleFingerprint: CreateFingerprint(sourceBundlePath, 2),
+            DecryptorId: "builtin.pass-through",
+            DecryptorVersion: "1.0.0",
+            NormalizerVersion: "bundle-artifact/1",
+            CreatedAtUtc: new DateTimeOffset(2026, 5, 17, 10, 5, 0, TimeSpan.Zero),
+            LastAccessedAtUtc: new DateTimeOffset(2026, 5, 17, 10, 5, 0, TimeSpan.Zero));
+
+        TestAssert.Null(
+            store.ResolveBundlePath(legacyManifest),
+            "Legacy manifest-only pass-through artifacts should be regenerated into normalized.bundle.");
     }
 
     public static void UpdateLastAccessed_ShouldPersistManifestAccessTime()

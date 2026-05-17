@@ -45,7 +45,12 @@ public sealed class JsonBundleArtifactStore : IBundleArtifactStore
             return null;
         }
 
-        if (manifest.IsMaterialized && !IsInsideArtifactDirectory(manifest, resolvedPath))
+        if (!manifest.IsMaterialized)
+        {
+            return null;
+        }
+
+        if (!IsInsideArtifactDirectory(manifest, resolvedPath))
         {
             return null;
         }
@@ -61,10 +66,7 @@ public sealed class JsonBundleArtifactStore : IBundleArtifactStore
         ArgumentException.ThrowIfNullOrWhiteSpace(request.ResolvedBundlePath);
 
         var sourcePath = Path.GetFullPath(request.ResolvedBundlePath);
-        var isMaterialized = request.ProducedDerivedFile;
-        var bundlePath = isMaterialized
-            ? CopyMaterializedBundle(request.WorkspaceKey, request.BundleCacheKey, sourcePath)
-            : sourcePath;
+        var bundlePath = CopyMaterializedBundle(request.WorkspaceKey, request.BundleCacheKey, sourcePath);
         var bundleFingerprint = File.Exists(bundlePath)
             ? AssetBundleFileFingerprintFactory.Create(bundlePath)
             : request.ResolvedBundleFingerprint;
@@ -73,7 +75,7 @@ public sealed class JsonBundleArtifactStore : IBundleArtifactStore
             WorkspaceKey: request.WorkspaceKey,
             BundleCacheKey: request.BundleCacheKey,
             ResolvedBundlePath: bundlePath,
-            IsMaterialized: isMaterialized,
+            IsMaterialized: true,
             SourceFingerprint: request.SourceFingerprint,
             BundleFingerprint: bundleFingerprint,
             DecryptorId: request.DecryptorId,

@@ -65,6 +65,18 @@ internal static partial class ApplicationTestSuite
             RemoveWorkspaceBundleHandlerTests.HandleAsync_ShouldReturnFailure_WhenWorkspaceMetadataDoesNotExist);
         await RunTestAsync(
             failures,
+            nameof(BundleArtifactCacheMaintenanceHandlerTests.GetUsage_ShouldReadUsage_FromRequestedWorkspaceDataRootAndWorkspace),
+            BundleArtifactCacheMaintenanceHandlerTests.GetUsage_ShouldReadUsage_FromRequestedWorkspaceDataRootAndWorkspace);
+        await RunTestAsync(
+            failures,
+            nameof(BundleArtifactCacheMaintenanceHandlerTests.Prune_ShouldUseRequestedLimits_AndReturnPruneResult),
+            BundleArtifactCacheMaintenanceHandlerTests.Prune_ShouldUseRequestedLimits_AndReturnPruneResult);
+        await RunTestAsync(
+            failures,
+            nameof(BundleArtifactCacheMaintenanceHandlerTests.Prune_ShouldReturnValidationFailure_WhenLimitsAreNegative),
+            BundleArtifactCacheMaintenanceHandlerTests.Prune_ShouldReturnValidationFailure_WhenLimitsAreNegative);
+        await RunTestAsync(
+            failures,
             nameof(RegisterWorkspaceImportHandlerTests.HandleAsync_ShouldNormalizeDistinctPaths_UpdateExistingSource_AndClearReimportedExcludedPath),
             RegisterWorkspaceImportHandlerTests.HandleAsync_ShouldNormalizeDistinctPaths_UpdateExistingSource_AndClearReimportedExcludedPath);
         await RunTestAsync(

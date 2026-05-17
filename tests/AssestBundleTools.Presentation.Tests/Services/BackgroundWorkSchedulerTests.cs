@@ -88,6 +88,51 @@ public sealed class BackgroundWorkSchedulerTests
     }
 
     [Fact]
+    public async Task RunAsync_ShouldSerializeMaintenanceProfile()
+    {
+        var scheduler = new BackgroundWorkScheduler(
+            new TestBackgroundTaskRunner(),
+            NullAppBackgroundTaskStatusService.Instance);
+        var firstEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var secondEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var firstTask = scheduler.RunAsync(
+            new BackgroundWorkRequest<int>(
+                BackgroundWorkProfile.Maintenance,
+                async _ =>
+                {
+                    firstEntered.SetResult();
+                    await releaseFirst.Task;
+                    return 1;
+                })
+            {
+                ShowInStatusBar = false
+            });
+        await firstEntered.Task;
+
+        var secondTask = scheduler.RunAsync(
+            new BackgroundWorkRequest<int>(
+                BackgroundWorkProfile.Maintenance,
+                _ =>
+                {
+                    secondEntered.SetResult();
+                    return Task.FromResult(2);
+                })
+            {
+                ShowInStatusBar = false
+            });
+
+        var enteredBeforeRelease = await Task.WhenAny(secondEntered.Task, Task.Delay(50));
+        Assert.NotSame(secondEntered.Task, enteredBeforeRelease);
+
+        releaseFirst.SetResult();
+        Assert.Equal(1, await firstTask);
+        Assert.Equal(2, await secondTask);
+        Assert.True(secondEntered.Task.IsCompleted);
+    }
+
+    [Fact]
     public async Task RunAsync_ShouldBeginStatusAfterProfileGateIsAcquired()
     {
         var statusService = new RecordingBackgroundTaskStatusService();

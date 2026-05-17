@@ -5,6 +5,7 @@ using AssestBundleTools.Application.Bundles.Commands;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
@@ -16,10 +17,6 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.SettingsDiagnostics;
 /// <summary>
 /// 表示“设置与诊断”页面当前阶段的展示状态。
 /// </summary>
-/// <remarks>
-/// 当前先聚焦承接应用级日志中心，后续再继续向这里补语言切换、
-/// 环境诊断、日志导出和调试开关等设置项。
-/// </remarks>
 public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
 {
     private readonly IAppLogService _appLogService;
@@ -51,6 +48,8 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
         IWorkspaceContextService workspaceContextService,
         ILocalizationService localizationService,
         IWorkspaceImportCoordinatorService workspaceImportCoordinatorService,
+        IWorkspaceCacheMaintenanceGateway workspaceCacheMaintenanceGateway,
+        IBackgroundWorkScheduler backgroundWorkScheduler,
         IAssetBundleDecryptorCatalogService assetBundleDecryptorCatalogService,
         IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry)
     {
@@ -61,6 +60,13 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _workspaceImportCoordinatorService = workspaceImportCoordinatorService ?? throw new ArgumentNullException(nameof(workspaceImportCoordinatorService));
         _assetBundleDecryptorCatalogService = assetBundleDecryptorCatalogService ?? throw new ArgumentNullException(nameof(assetBundleDecryptorCatalogService));
+        BundleArtifactCache = new SettingsBundleArtifactCacheViewModel(
+            workspaceCacheMaintenanceGateway,
+            _workspaceContextService,
+            _localizationService,
+            _appNotificationService,
+            _appLogService,
+            backgroundWorkScheduler);
         _decryptorEntryPresenter = new SettingsDecryptorCatalogEntryPresenter(
             _localizationService,
             assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry)));
@@ -93,6 +99,8 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
     public ObservableCollection<SettingsWorkspaceEntryItemViewModel> WorkspaceEntries { get; } = new();
 
     public ObservableCollection<SettingsDecryptorCatalogEntryItemViewModel> DecryptorEntries { get; } = new();
+
+    public SettingsBundleArtifactCacheViewModel BundleArtifactCache { get; }
 
     public AsyncRelayCommand ImportBundleFilesCommand { get; }
 
@@ -146,10 +154,6 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
         private set => SetProperty(ref _workspaceCatalogSummaryText, value);
     }
 
-    /// <summary>
-    /// 控制应用启动时是否自动恢复上次活动工作区。
-    /// 这个偏好属于窗口 / 启动体验层面的设置，不下沉到业务用例。
-    /// </summary>
     public bool RestoreLastWorkspaceOnStartup
     {
         get => _restoreLastWorkspaceOnStartup;
@@ -274,6 +278,7 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
+        await BundleArtifactCache.InitializeAsync(cancellationToken);
         await RefreshDecryptorCatalogAsync(cancellationToken);
     }
 
@@ -358,6 +363,7 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
     {
         _workspaceContextService.CurrentWorkspaceChanged -= OnWorkspaceContextChanged;
         _workspaceContextService.WorkspaceEntriesChanged -= OnWorkspaceContextChanged;
+        BundleArtifactCache.Dispose();
     }
 
     private void ShowErrorNotification(string messageResourceKey)

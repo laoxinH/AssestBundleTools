@@ -3141,6 +3141,48 @@
   <data name="SettingsDiagnosticsPage.PreviewWorkerCount.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the preview worker count. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
   </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.Title" xml:space="preserve">
+    <value>Standardized Bundle Cache</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.Hint" xml:space="preserve">
+    <value>Review cache/bundles usage for the current workspace and clear rebuildable normalized.bundle artifacts.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.Target.Format" xml:space="preserve">
+    <value>Current workspace: {0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.Summary.Format" xml:space="preserve">
+    <value>{0} artifacts using {1}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.Empty" xml:space="preserve">
+    <value>The current workspace has no standardized bundle cache yet.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.NoWorkspace" xml:space="preserve">
+    <value>No active workspace</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.NoWorkspaceHint" xml:space="preserve">
+    <value>Open a workspace to review and clear its standardized bundle cache.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.RefreshButton" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearButton" xml:space="preserve">
+    <value>Clear Current Workspace</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.RefreshStatusTitle" xml:space="preserve">
+    <value>Measuring standardized cache</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearStatusTitle" xml:space="preserve">
+    <value>Clearing standardized cache</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.RefreshFailedMessage" xml:space="preserve">
+    <value>Failed to read standardized bundle cache usage. Try again later.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearFailedMessage" xml:space="preserve">
+    <value>Failed to clear standardized bundle cache. Check cache directory permissions or try again later.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearSucceeded.Format" xml:space="preserve">
+    <value>Cleared {0} artifacts and released {1}.</value>
+  </data>
   <data name="SettingsDiagnosticsPage.ResponsibilityTitleText.Text" xml:space="preserve">
     <value>Page Role</value>
   </data>
@@ -3455,6 +3497,9 @@
   </data>
   <data name="Error.Workspace.Import.BundleSourcePathRequired" xml:space="preserve">
     <value>A bundle source path is required before removing it from the workspace.</value>
+  </data>
+  <data name="Error.Workspace.Cache.BundleArtifact.PruneLimitInvalid" xml:space="preserve">
+    <value>The standardized bundle cache pruning limits cannot be negative.</value>
   </data>
   <data name="Error.Bundle.Query.BundleIdRequired" xml:space="preserve">
     <value>A bundle id is required before querying a bundle.</value>

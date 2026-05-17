@@ -613,7 +613,7 @@ src/AssestBundleTools.Application/
 - 当前导入处理协调器已完成第二阶段收口：`Application` 内部的 `PlanBuilder -> Worker Pool -> Committer` 三段模型与 bundle 粒度有界并行已经落地，没有把并发扩散到 `Presentation` 或 `WorkspaceSessionRegistry`
 - 多线程导入的默认 worker 并发度当前已通过 `WorkspaceImportExecutionOptionsResolver` 固化为：逻辑核心数 `<= 1` 用 `1`，`2-4` 用 `2`，`5-6` 用 `3`，`>= 7` 用 `4`；用户也可在“设置与诊断”中固定为 `1-4` 个 worker；第一版每个工作区导入上限不超过 `4`
 - 当前导入结果已补上 `Planning / Screening / Worker / Commit / Total` 五段耗时诊断，并额外记录 `ProbeDuration / ProbeDecryptorCount / ProbeEvaluationCount`，可直接为后续 `Probe` 并发评估提供依据
-- 当前已落地首版 `cache/bundles` 标准化资源包物理缓存：Application 通过 `IBundleArtifactStore` 与 `WorkspaceBundleArtifactResolver` 收束导入、预览、提取和 Spine 详情的可读 bundle 路径，并对同一资源包的 artifact 生成阶段做 single-flight 串行化；Infrastructure 通过 `JsonBundleArtifactStore` 把外部解密派生结果晋升为 `normalized.bundle`，PassThrough 场景写 manifest 并继续指向原始可读文件；manifest 保存和成功复用时会回写 `lastAccessedAtUtc`，artifact store 已提供 usage 统计和按大小 / 数量上限的 LRU prune 能力
+- 当前已落地首版 `cache/bundles` 标准化资源包物理缓存：Application 通过 `IBundleArtifactStore` 与 `WorkspaceBundleArtifactResolver` 收束导入、预览、提取和 Spine 详情的可读 bundle 路径，并对同一资源包的 artifact 生成阶段做 single-flight 串行化；Infrastructure 通过 `JsonBundleArtifactStore` 把外部解密派生结果和 PassThrough 原始可读包统一晋升为 `normalized.bundle`；manifest 保存和成功复用时会回写 `lastAccessedAtUtc`，artifact store 已提供 usage 统计和按大小 / 数量上限的 LRU prune 能力，设置与诊断页已提供当前工作区显式清理入口
 - 当前预览查询链路已补上结构化预览诊断：会把预览缓存命中 / 失效原因，以及 `定位信息缺失 / 解密器不可用 / 解密失败 / 预览生成失败` 等摘要回退原因统一沉到应用层 DTO
 - 当前预览诊断 detail 已从裸字符串进一步收口为 `LocalizedMessageDto` 结构化消息；检查器不再直接显示由 `Application / Infrastructure` 拼装的原始诊断句子
 - 当前 Reader 直检与预览生成阶段的稳定失败原因已抬升为标准错误令牌，例如“来源资源包缺失 / 资源包格式无法识别 / 无兼容 Reader / 序列化文件定位失败 / 资产定位失败 / 字段树加载失败”，避免基础设施层继续拼接英文细节
@@ -945,7 +945,7 @@ src/AssestBundleTools.Application/
 - 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补 `RegisterWorkspaceImportHandler` 的路径去重、更新计数、路径类型统计与排除列表修正
 - 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补 `ProcessWorkspaceImportsHandler` 的缓存复用命中、解密失败、Reader 拒绝、读取失败、标准化 bundle artifact 复用，以及陈旧 bundle artifact / index / preview 缓存清理与 `SourceRemoved` 诊断
 - 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补 `GetAssetPreviewHandler` 的预览缓存命中、标准化 bundle artifact manifest 命中时跳过解密器、并发预览缓存 miss 时 artifact 生成 single-flight、`SourceFingerprint / Identity / GeneratorVersion / AudioTranscoder` 失效重建、音频摘要在新转码器可用时的升级重建，以及预览解密失败、预览生成失败摘要回退链路
-- 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Infrastructure.Tests` 当前也已补 `JsonPreviewCacheStore` 在缺失 payload / 非法 payload path 下的容错加载、路径解析与描述文件清理，以及 `JsonBundleArtifactStore` 的派生 bundle 复制落盘、PassThrough manifest-only 记录和工作区级删除清理
+- 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Infrastructure.Tests` 当前也已补 `JsonPreviewCacheStore` 在缺失 payload / 非法 payload path 下的容错加载、路径解析与描述文件清理，以及 `JsonBundleArtifactStore` 的派生 / PassThrough bundle 统一复制落盘、旧版 manifest-only 记录拒绝复用和工作区级删除清理
 - 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补替换链路中的文件候选类型解析、来源路径校验、缺失资源失败、类型不匹配、工作区候选空集失败、单资源文件/工作区替换、撤销替换，以及批量替换预览/执行摘要链路
 - 已继续扩展 D-06 第三轮回归：`tests/AssestBundleTools.Application.Tests` 当前也已补 `GetWorkspaceSavePreviewHandler / SaveWorkspaceAsNewBundleHandler` 的保存预览空态、资源包分组聚合、缺失工作区、无候选失败与执行摘要链路
 - 已完成 D-07 第二轮收口：宿主程序自身的启动/壳层异常提示与页面代码中残留的资源键字面量已继续收口到资源键常量和标准错误令牌；当前仅保留外部工具原始输出作为诊断回退文本，而不再作为主提示文案

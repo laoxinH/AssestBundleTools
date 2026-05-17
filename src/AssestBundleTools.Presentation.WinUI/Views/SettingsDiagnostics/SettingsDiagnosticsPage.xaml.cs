@@ -19,6 +19,8 @@ public sealed partial class SettingsDiagnosticsPage : Page
             App.CurrentApp.WorkspaceContextService,
             App.CurrentApp.LocalizationService,
             App.CurrentApp.WorkspaceImportCoordinatorService,
+            App.CurrentApp.WorkspaceCacheMaintenanceGateway,
+            App.CurrentApp.BackgroundWorkScheduler,
             App.CurrentApp.AssetBundleDecryptorCatalogService,
             App.CurrentApp.AssetBundleDecryptorRegistry);
 
@@ -86,6 +88,10 @@ public sealed partial class SettingsDiagnosticsPage : Page
             UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionThree),
             UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionFour)
         };
+        BundleArtifactCacheTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheTitle);
+        BundleArtifactCacheHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheHint);
+        RefreshBundleArtifactCacheButtonText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheRefreshButton);
+        ClearBundleArtifactCacheButtonText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheClearButton);
         ResponsibilityTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsResponsibilityTitle);
         ResponsibilityBodyText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsResponsibilityBody);
         DiagnosticsTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsDiagnosticsTitle);

@@ -72,8 +72,12 @@ internal static class InfrastructureTestSuite
             JsonBundleArtifactStoreTests.Save_ShouldMaterializeDerivedBundle_AndRoundTripManifest);
         await RunTestAsync(
             failures,
-            nameof(JsonBundleArtifactStoreTests.Save_ShouldKeepPassThroughBundlePath_InManifestOnly),
-            JsonBundleArtifactStoreTests.Save_ShouldKeepPassThroughBundlePath_InManifestOnly);
+            nameof(JsonBundleArtifactStoreTests.Save_ShouldMaterializePassThroughBundle_AndRoundTripManifest),
+            JsonBundleArtifactStoreTests.Save_ShouldMaterializePassThroughBundle_AndRoundTripManifest);
+        await RunTestAsync(
+            failures,
+            nameof(JsonBundleArtifactStoreTests.ResolveBundlePath_ShouldRejectLegacyManifestOnlyPassThroughArtifact),
+            JsonBundleArtifactStoreTests.ResolveBundlePath_ShouldRejectLegacyManifestOnlyPassThroughArtifact);
         await RunTestAsync(
             failures,
             nameof(JsonBundleArtifactStoreTests.UpdateLastAccessed_ShouldPersistManifestAccessTime),

@@ -66,6 +66,13 @@ public static class ApplicationErrors
             severity: ErrorSeverity.Warning,
             messageToken: "Error.Workspace.Import.BundleSourcePathRequired");
 
+    public static AppError BundleArtifactCachePruneLimitInvalid() =>
+        new(
+            code: "Workspace.Cache.BundleArtifact.PruneLimitInvalid",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Workspace.Cache.BundleArtifact.PruneLimitInvalid");
+
     public static AppError WorkspaceImportMetadataNotFound(string workspaceKey) =>
         new(
             code: "Workspace.Import.MetadataNotFound",

@@ -497,6 +497,72 @@
                             <StackPanel Spacing="12">
                                 <StackPanel Spacing="6">
                                     <TextBlock
+                                        x:Name="BundleArtifactCacheTitleText"
+                                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                    <TextBlock
+                                        x:Name="BundleArtifactCacheHintText"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        TextWrapping="WrapWholeWords" />
+                                </StackPanel>
+
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind ViewModel.BundleArtifactCache.TargetText, Mode=OneWay}"
+                                    TextWrapping="WrapWholeWords" />
+                                <TextBlock
+                                    FontWeight="SemiBold"
+                                    Text="{x:Bind ViewModel.BundleArtifactCache.SummaryText, Mode=OneWay}"
+                                    TextWrapping="WrapWholeWords" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    Text="{x:Bind ViewModel.BundleArtifactCache.LastResultText, Mode=OneWay}"
+                                    TextWrapping="WrapWholeWords"
+                                    Visibility="{x:Bind ViewModel.BundleArtifactCache.LastResultVisibility, Mode=OneWay}" />
+
+                                <StackPanel
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                                    <Button
+                                        Style="{StaticResource WorkspaceInlineActionButtonStyle}"
+                                        Command="{x:Bind ViewModel.BundleArtifactCache.RefreshCommand, Mode=OneWay}">
+                                        <StackPanel
+                                            Orientation="Horizontal"
+                                            Spacing="8">
+                                            <FontIcon
+                                                FontFamily="Segoe Fluent Icons"
+                                                FontSize="14"
+                                                Glyph="&#xE72C;" />
+                                            <TextBlock
+                                                x:Name="RefreshBundleArtifactCacheButtonText"
+                                                VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+
+                                    <Button
+                                        Style="{StaticResource WorkspaceInlineActionButtonStyle}"
+                                        Command="{x:Bind ViewModel.BundleArtifactCache.ClearCommand, Mode=OneWay}">
+                                        <StackPanel
+                                            Orientation="Horizontal"
+                                            Spacing="8">
+                                            <FontIcon
+                                                FontFamily="Segoe Fluent Icons"
+                                                FontSize="14"
+                                                Glyph="&#xE74D;" />
+                                            <TextBlock
+                                                x:Name="ClearBundleArtifactCacheButtonText"
+                                                VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border
+                            Style="{StaticResource SettingsInsetCardStyle}"
+                            Padding="16">
+                            <StackPanel Spacing="12">
+                                <StackPanel Spacing="6">
+                                    <TextBlock
                                         x:Name="WorkspaceImportPerformanceTitleText"
                                         Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
                                     <TextBlock

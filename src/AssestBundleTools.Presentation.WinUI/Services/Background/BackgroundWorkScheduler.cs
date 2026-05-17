@@ -18,6 +18,7 @@ public sealed class BackgroundWorkScheduler : IBackgroundWorkScheduler
     private readonly SemaphoreSlim _batchExtractionGate = new(1, 1);
     private readonly SemaphoreSlim _batchReplacementGate = new(1, 1);
     private readonly SemaphoreSlim _saveRebuildGate = new(1, 1);
+    private readonly SemaphoreSlim _maintenanceGate = new(1, 1);
 
     public BackgroundWorkScheduler(
         IBackgroundTaskRunner backgroundTaskRunner,
@@ -262,6 +263,7 @@ public sealed class BackgroundWorkScheduler : IBackgroundWorkScheduler
             BackgroundWorkProfile.BatchExtraction => _batchExtractionGate,
             BackgroundWorkProfile.BatchReplacement => _batchReplacementGate,
             BackgroundWorkProfile.SaveRebuild => _saveRebuildGate,
+            BackgroundWorkProfile.Maintenance => _maintenanceGate,
             _ => null
         };
 

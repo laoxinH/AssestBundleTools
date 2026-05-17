@@ -3141,6 +3141,48 @@
   <data name="SettingsDiagnosticsPage.PreviewWorkerCount.SaveFailedMessage" xml:space="preserve">
     <value>保存预览线程数量失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
   </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.Title" xml:space="preserve">
+    <value>标准化资源包缓存</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.Hint" xml:space="preserve">
+    <value>查看当前工作区的 cache/bundles 占用，并可清理可重建的 normalized.bundle artifact。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.Target.Format" xml:space="preserve">
+    <value>当前工作区：{0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.Summary.Format" xml:space="preserve">
+    <value>{0} 个 artifact，占用 {1}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.Empty" xml:space="preserve">
+    <value>当前工作区还没有标准化资源包缓存。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.NoWorkspace" xml:space="preserve">
+    <value>当前没有活动工作区</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.NoWorkspaceHint" xml:space="preserve">
+    <value>打开工作区后可查看并清理该工作区的标准化资源包缓存。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.RefreshButton" xml:space="preserve">
+    <value>刷新</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearButton" xml:space="preserve">
+    <value>清理当前工作区</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.RefreshStatusTitle" xml:space="preserve">
+    <value>统计标准化缓存</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearStatusTitle" xml:space="preserve">
+    <value>清理标准化缓存</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.RefreshFailedMessage" xml:space="preserve">
+    <value>读取标准化资源包缓存占用失败，请稍后重试。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearFailedMessage" xml:space="preserve">
+    <value>清理标准化资源包缓存失败，请检查缓存目录权限或稍后重试。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearSucceeded.Format" xml:space="preserve">
+    <value>已清理 {0} 个 artifact，释放 {1}。</value>
+  </data>
   <data name="SettingsDiagnosticsPage.ResponsibilityTitleText.Text" xml:space="preserve">
     <value>页面职责</value>
   </data>
@@ -3455,6 +3497,9 @@
   </data>
   <data name="Error.Workspace.Import.BundleSourcePathRequired" xml:space="preserve">
     <value>从工作区移除资源包前需要提供资源包来源路径。</value>
+  </data>
+  <data name="Error.Workspace.Cache.BundleArtifact.PruneLimitInvalid" xml:space="preserve">
+    <value>标准化资源包缓存清理上限不能为负数。</value>
   </data>
   <data name="Error.Bundle.Query.BundleIdRequired" xml:space="preserve">
     <value>查询 Bundle 前需要提供 Bundle 标识。</value>

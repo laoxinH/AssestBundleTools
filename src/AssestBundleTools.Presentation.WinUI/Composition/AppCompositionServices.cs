@@ -26,6 +26,7 @@ internal sealed record AppCompositionServices(
     IFilePickerService FilePickerService,
     IPathNavigationService PathNavigationService,
     IWorkspaceCatalogGateway WorkspaceCatalogGateway,
+    IWorkspaceCacheMaintenanceGateway WorkspaceCacheMaintenanceGateway,
     IAssetBundleDecryptorCatalogService AssetBundleDecryptorCatalogService,
     IWorkspaceDialogService WorkspaceDialogService,
     IAppInteractionFeedbackService AppInteractionFeedbackService,

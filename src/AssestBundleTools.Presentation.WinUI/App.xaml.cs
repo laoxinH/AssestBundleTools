@@ -47,6 +47,7 @@ public partial class App : Microsoft.UI.Xaml.Application
             FilePickerService = services.FilePickerService;
             PathNavigationService = services.PathNavigationService;
             WorkspaceCatalogGateway = services.WorkspaceCatalogGateway;
+            WorkspaceCacheMaintenanceGateway = services.WorkspaceCacheMaintenanceGateway;
             AssetBundleDecryptorCatalogService = services.AssetBundleDecryptorCatalogService;
             WorkspaceDialogService = services.WorkspaceDialogService;
             AppInteractionFeedbackService = services.AppInteractionFeedbackService;
@@ -102,6 +103,8 @@ public partial class App : Microsoft.UI.Xaml.Application
     public IPathNavigationService PathNavigationService { get; }
 
     public IWorkspaceCatalogGateway WorkspaceCatalogGateway { get; }
+
+    public IWorkspaceCacheMaintenanceGateway WorkspaceCacheMaintenanceGateway { get; }
 
     public IAssetBundleDecryptorCatalogService AssetBundleDecryptorCatalogService { get; }
 

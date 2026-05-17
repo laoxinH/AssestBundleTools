@@ -175,6 +175,8 @@ internal static class AppCompositionRoot
             workspaceMetadataStoreFactory,
             workspaceDataStoreFactory);
         var setWorkspaceCatalogEntryPinnedStateHandler = new SetWorkspaceCatalogEntryPinnedStateHandler(workspaceCatalogStore);
+        var getBundleArtifactCacheUsageHandler = new GetBundleArtifactCacheUsageHandler(workspaceDataStoreFactory);
+        var pruneBundleArtifactCacheHandler = new PruneBundleArtifactCacheHandler(workspaceDataStoreFactory);
         var getAssetBundleDecryptorCatalogEntriesHandler = new GetAssetBundleDecryptorCatalogEntriesHandler(assetBundleDecryptorCatalogStore);
         var upsertAssetBundleDecryptorHandler = new UpsertAssetBundleDecryptorHandler(assetBundleDecryptorCatalogStore);
         var deleteAssetBundleDecryptorHandler = new DeleteAssetBundleDecryptorHandler(assetBundleDecryptorCatalogStore);
@@ -225,6 +227,9 @@ internal static class AppCompositionRoot
             registerWorkspaceCatalogEntryHandler: registerWorkspaceCatalogEntryHandler,
             removeWorkspaceCatalogEntryHandler: removeWorkspaceCatalogEntryHandler,
             setWorkspaceCatalogEntryPinnedStateHandler: setWorkspaceCatalogEntryPinnedStateHandler);
+        var workspaceCacheMaintenanceGateway = new WorkspaceCacheMaintenanceGateway(
+            getBundleArtifactCacheUsageHandler,
+            pruneBundleArtifactCacheHandler);
         var assetEditDraftRestorePlanGateway = new AssetEditDraftRestorePlanGateway(
             getAssetEditDraftRestorePlanHandler);
 
@@ -281,6 +286,7 @@ internal static class AppCompositionRoot
             FilePickerService: filePickerService,
             PathNavigationService: pathNavigationService,
             WorkspaceCatalogGateway: workspaceCatalogGateway,
+            WorkspaceCacheMaintenanceGateway: workspaceCacheMaintenanceGateway,
             AssetBundleDecryptorCatalogService: assetBundleDecryptorCatalogService,
             WorkspaceDialogService: workspaceDialogService,
             AppInteractionFeedbackService: appInteractionFeedbackService,
