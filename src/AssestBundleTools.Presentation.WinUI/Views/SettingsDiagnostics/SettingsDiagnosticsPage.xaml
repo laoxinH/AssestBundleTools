@@ -519,6 +519,24 @@
                                     TextWrapping="WrapWholeWords"
                                     Visibility="{x:Bind ViewModel.BundleArtifactCache.LastResultVisibility, Mode=OneWay}" />
 
+                                <ToggleSwitch
+                                    x:Name="BundleArtifactCacheAutoPruneToggleSwitch"
+                                    IsOn="{x:Bind ViewModel.BundleArtifactCache.AutoPruneEnabled, Mode=TwoWay}" />
+
+                                <TextBlock
+                                    x:Name="BundleArtifactCacheAutoPruneDescriptionText"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="WrapWholeWords" />
+
+                                <TextBlock
+                                    x:Name="BundleArtifactCacheMaximumSizeLabelText"
+                                    FontWeight="SemiBold" />
+
+                                <RadioButtons
+                                    x:Name="BundleArtifactCacheMaximumSizeRadioButtons"
+                                    MaxColumns="3"
+                                    SelectedIndex="{x:Bind ViewModel.BundleArtifactCache.MaximumSizeSelectedIndex, Mode=TwoWay}" />
+
                                 <StackPanel
                                     Orientation="Horizontal"
                                     Spacing="8">

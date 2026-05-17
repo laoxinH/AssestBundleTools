@@ -27,7 +27,9 @@ public sealed class OpenWorkspaceHandler : ICommandHandler<OpenWorkspaceCommand,
         IWorkspaceImportExecutionOptionsResolver workspaceImportExecutionOptionsResolver,
         IAssetBundleSourceInspector assetBundleSourceInspector,
         IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
-        IAssetBundleReader assetBundleReader)
+        IAssetBundleReader assetBundleReader,
+        IBundleArtifactSessionInvalidator? bundleArtifactSessionInvalidator = null,
+        IBundleArtifactCachePrunePolicy? bundleArtifactCachePrunePolicy = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _workspaceMetadataStoreFactory = workspaceMetadataStoreFactory
@@ -41,7 +43,9 @@ public sealed class OpenWorkspaceHandler : ICommandHandler<OpenWorkspaceCommand,
             workspaceImportExecutionOptionsResolver ?? throw new ArgumentNullException(nameof(workspaceImportExecutionOptionsResolver)),
             assetBundleSourceInspector ?? throw new ArgumentNullException(nameof(assetBundleSourceInspector)),
             assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry)),
-            assetBundleReader ?? throw new ArgumentNullException(nameof(assetBundleReader)));
+            assetBundleReader ?? throw new ArgumentNullException(nameof(assetBundleReader)),
+            bundleArtifactSessionInvalidator,
+            bundleArtifactCachePrunePolicy);
     }
 
     public async Task<Result<WorkspaceSummaryDto>> HandleAsync(

@@ -6,6 +6,14 @@ namespace AssestBundleTools.Application.Workspace.Internal;
 
 internal sealed class WorkspaceImportCommitter
 {
+    private readonly IBundleArtifactSessionInvalidator _bundleArtifactSessionInvalidator;
+
+    public WorkspaceImportCommitter(IBundleArtifactSessionInvalidator bundleArtifactSessionInvalidator)
+    {
+        _bundleArtifactSessionInvalidator = bundleArtifactSessionInvalidator
+                                             ?? throw new ArgumentNullException(nameof(bundleArtifactSessionInvalidator));
+    }
+
     public WorkspaceImportProcessingResultDto Commit(
         WorkspaceImportProcessingPlan plan,
         IReadOnlyList<WorkspaceImportBundleWorkResult> workerResults)
@@ -40,7 +48,8 @@ internal sealed class WorkspaceImportCommitter
                     false,
                     plan.BundleIndexCacheStore,
                     plan.PreviewCacheStore,
-                    previewCacheKeysByBundle);
+                    previewCacheKeysByBundle,
+                    _bundleArtifactSessionInvalidator);
                 existingCacheEntries.Remove(existingCacheEntry.BundleCacheKey);
             }
 
@@ -95,7 +104,8 @@ internal sealed class WorkspaceImportCommitter
                 true,
                 plan.BundleIndexCacheStore,
                 plan.PreviewCacheStore,
-                previewCacheKeysByBundle);
+                previewCacheKeysByBundle,
+                _bundleArtifactSessionInvalidator);
         }
 
         var decryptor = plan.DecryptorResolution.Decryptor;
@@ -134,7 +144,8 @@ internal sealed class WorkspaceImportCommitter
         bool deleteBundleArtifact,
         IBundleIndexCacheStore bundleIndexCacheStore,
         IPreviewCacheStore previewCacheStore,
-        IDictionary<string, List<string>> previewCacheKeysByBundle)
+        IDictionary<string, List<string>> previewCacheKeysByBundle,
+        IBundleArtifactSessionInvalidator bundleArtifactSessionInvalidator)
     {
         WorkspaceBundleArtifactCleanupHelper.DeleteBundleArtifacts(
             workspaceKey,
@@ -144,7 +155,8 @@ internal sealed class WorkspaceImportCommitter
             previewCacheStore,
             previewCacheKeysByBundle.TryGetValue(bundleCacheKey, out var previewCacheKeys)
                 ? previewCacheKeys
-                : Array.Empty<string>());
+                : Array.Empty<string>(),
+            bundleArtifactSessionInvalidator);
 
         previewCacheKeysByBundle.Remove(bundleCacheKey);
     }

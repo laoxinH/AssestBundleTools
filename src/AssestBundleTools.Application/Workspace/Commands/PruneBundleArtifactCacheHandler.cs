@@ -13,11 +13,16 @@ public sealed class PruneBundleArtifactCacheHandler
     : ICommandHandler<PruneBundleArtifactCacheCommand, Result<BundleArtifactPruneResultDto>>
 {
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
+    private readonly IBundleArtifactSessionInvalidator _bundleArtifactSessionInvalidator;
 
-    public PruneBundleArtifactCacheHandler(IWorkspaceDataStoreFactory workspaceDataStoreFactory)
+    public PruneBundleArtifactCacheHandler(
+        IWorkspaceDataStoreFactory workspaceDataStoreFactory,
+        IBundleArtifactSessionInvalidator? bundleArtifactSessionInvalidator = null)
     {
         _workspaceDataStoreFactory = workspaceDataStoreFactory
                                      ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
+        _bundleArtifactSessionInvalidator = bundleArtifactSessionInvalidator
+                                            ?? NoOpBundleArtifactSessionInvalidator.Instance;
     }
 
     public Task<Result<BundleArtifactPruneResultDto>> HandleAsync(
@@ -42,6 +47,13 @@ public sealed class PruneBundleArtifactCacheHandler
             command.WorkspaceKey,
             command.MaximumSizeInBytes,
             command.MaximumArtifactCount));
+        foreach (var prunedEntry in result.PrunedEntries)
+        {
+            _bundleArtifactSessionInvalidator.InvalidateBundleArtifact(
+                prunedEntry.WorkspaceKey,
+                prunedEntry.BundleCacheKey);
+        }
+
         return Task.FromResult(Result<BundleArtifactPruneResultDto>.Success(result));
     }
 }

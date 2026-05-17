@@ -175,6 +175,12 @@ internal static partial class GetAssetPreviewHandlerTests
 
         public BundleArtifactManifestDto? LastAccessedManifest { get; private set; }
 
+        public BundleArtifactPruneRequestDto? LastPruneRequest { get; private set; }
+
+        private int _pruneCallCount;
+
+        public int PruneCallCount => Volatile.Read(ref _pruneCallCount);
+
         public BundleArtifactManifestDto? Load(string workspaceKey, string bundleCacheKey)
         {
             lock (_syncRoot)
@@ -256,8 +262,12 @@ internal static partial class GetAssetPreviewHandlerTests
             }
         }
 
-        public BundleArtifactPruneResultDto Prune(BundleArtifactPruneRequestDto request) =>
-            new(0, 0, 0, 0, Array.Empty<BundleArtifactCacheEntryDto>());
+        public BundleArtifactPruneResultDto Prune(BundleArtifactPruneRequestDto request)
+        {
+            Interlocked.Increment(ref _pruneCallCount);
+            LastPruneRequest = request;
+            return new(0, 0, 0, 0, Array.Empty<BundleArtifactCacheEntryDto>());
+        }
 
         public void Delete(string workspaceKey, string bundleCacheKey)
         {

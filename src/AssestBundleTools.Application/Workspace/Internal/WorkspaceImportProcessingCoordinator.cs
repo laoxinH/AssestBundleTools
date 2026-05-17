@@ -27,9 +27,13 @@ internal sealed class WorkspaceImportProcessingCoordinator
         IWorkspaceImportExecutionOptionsResolver workspaceImportExecutionOptionsResolver,
         IAssetBundleSourceInspector assetBundleSourceInspector,
         IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
-        IAssetBundleReader assetBundleReader)
+        IAssetBundleReader assetBundleReader,
+        IBundleArtifactSessionInvalidator? bundleArtifactSessionInvalidator = null,
+        IBundleArtifactCachePrunePolicy? bundleArtifactCachePrunePolicy = null)
     {
         _workspaceImportExecutionGate = workspaceImportExecutionGate ?? throw new ArgumentNullException(nameof(workspaceImportExecutionGate));
+        var sessionInvalidator = bundleArtifactSessionInvalidator ?? NoOpBundleArtifactSessionInvalidator.Instance;
+        var prunePolicy = bundleArtifactCachePrunePolicy ?? NoOpBundleArtifactCachePrunePolicy.Instance;
         var screeningCoordinator = new WorkspaceImportCandidateScreeningCoordinator(
             assetBundleSourceInspector ?? throw new ArgumentNullException(nameof(assetBundleSourceInspector)),
             assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry)));
@@ -38,12 +42,14 @@ internal sealed class WorkspaceImportProcessingCoordinator
             workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory)),
             workspaceImportSourceDiscoveryService ?? throw new ArgumentNullException(nameof(workspaceImportSourceDiscoveryService)),
             screeningCoordinator,
-            workspaceImportExecutionOptionsResolver ?? throw new ArgumentNullException(nameof(workspaceImportExecutionOptionsResolver)));
+            workspaceImportExecutionOptionsResolver ?? throw new ArgumentNullException(nameof(workspaceImportExecutionOptionsResolver)),
+            sessionInvalidator,
+            prunePolicy);
         _workspaceImportWorkerPool = new WorkspaceImportWorkerPool(
             new WorkspaceImportBundleWorker(
                 workspaceImportFileSystemService ?? throw new ArgumentNullException(nameof(workspaceImportFileSystemService)),
                 assetBundleReader ?? throw new ArgumentNullException(nameof(assetBundleReader))));
-        _workspaceImportCommitter = new WorkspaceImportCommitter();
+        _workspaceImportCommitter = new WorkspaceImportCommitter(sessionInvalidator);
     }
 
     public async Task<Result<WorkspaceImportProcessingResultDto>> ProcessAsync(

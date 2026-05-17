@@ -17,6 +17,7 @@ public sealed class SettingsBundleArtifactCacheViewModel : ObservableObject, IDi
 {
     private readonly IWorkspaceCacheMaintenanceGateway _workspaceCacheMaintenanceGateway;
     private readonly IWorkspaceContextService _workspaceContextService;
+    private readonly IAppPreferencesService _appPreferencesService;
     private readonly ILocalizationService _localizationService;
     private readonly IAppNotificationService _appNotificationService;
     private readonly IAppLogService _appLogService;
@@ -26,11 +27,14 @@ public sealed class SettingsBundleArtifactCacheViewModel : ObservableObject, IDi
     private string _targetText = string.Empty;
     private string _summaryText = string.Empty;
     private string _lastResultText = string.Empty;
+    private bool _autoPruneEnabled;
+    private int _maximumSizeSelectedIndex;
     private bool _isBusy;
 
     public SettingsBundleArtifactCacheViewModel(
         IWorkspaceCacheMaintenanceGateway workspaceCacheMaintenanceGateway,
         IWorkspaceContextService workspaceContextService,
+        IAppPreferencesService appPreferencesService,
         ILocalizationService localizationService,
         IAppNotificationService appNotificationService,
         IAppLogService appLogService,
@@ -39,6 +43,7 @@ public sealed class SettingsBundleArtifactCacheViewModel : ObservableObject, IDi
         _workspaceCacheMaintenanceGateway = workspaceCacheMaintenanceGateway
                                             ?? throw new ArgumentNullException(nameof(workspaceCacheMaintenanceGateway));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
+        _appPreferencesService = appPreferencesService ?? throw new ArgumentNullException(nameof(appPreferencesService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
@@ -46,6 +51,10 @@ public sealed class SettingsBundleArtifactCacheViewModel : ObservableObject, IDi
         _valueFormatter = new LocalizedValueFormatter(_localizationService);
         RefreshCommand = new AsyncRelayCommand(RefreshAsync, CanRefresh);
         ClearCommand = new AsyncRelayCommand(ClearAsync, CanClear);
+        _autoPruneEnabled = _appPreferencesService.BundleArtifactCacheAutoPruneEnabled;
+        _maximumSizeSelectedIndex =
+            SettingsDiagnosticsPreferenceOptionMapper.ConvertBundleArtifactCacheMaximumSizeToSelectedIndex(
+                _appPreferencesService.BundleArtifactCacheMaximumSizeInBytes);
         _workspaceContextService.CurrentWorkspaceChanged += OnWorkspaceContextChanged;
         _workspaceContextService.WorkspaceEntriesChanged += OnWorkspaceContextChanged;
         ApplyNoWorkspaceState();
@@ -81,6 +90,53 @@ public sealed class SettingsBundleArtifactCacheViewModel : ObservableObject, IDi
 
     public Visibility LastResultVisibility =>
         string.IsNullOrWhiteSpace(LastResultText) ? Visibility.Collapsed : Visibility.Visible;
+
+    public bool AutoPruneEnabled
+    {
+        get => _autoPruneEnabled;
+        set
+        {
+            if (_autoPruneEnabled == value)
+            {
+                return;
+            }
+
+            if (_appPreferencesService.TrySetBundleArtifactCacheAutoPruneEnabled(value))
+            {
+                SetProperty(ref _autoPruneEnabled, value);
+                return;
+            }
+
+            ShowFailure(ResourceKeys.SettingsDiagnosticsBundleArtifactCachePreferenceSaveFailedMessage);
+            OnPropertyChanged();
+        }
+    }
+
+    public int MaximumSizeSelectedIndex
+    {
+        get => _maximumSizeSelectedIndex;
+        set
+        {
+            var maximumSizeInBytes =
+                SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToBundleArtifactCacheMaximumSize(value);
+            var selectedIndex =
+                SettingsDiagnosticsPreferenceOptionMapper.ConvertBundleArtifactCacheMaximumSizeToSelectedIndex(
+                    maximumSizeInBytes);
+            if (_maximumSizeSelectedIndex == selectedIndex)
+            {
+                return;
+            }
+
+            if (_appPreferencesService.TrySetBundleArtifactCacheMaximumSizeInBytes(maximumSizeInBytes))
+            {
+                SetProperty(ref _maximumSizeSelectedIndex, selectedIndex);
+                return;
+            }
+
+            ShowFailure(ResourceKeys.SettingsDiagnosticsBundleArtifactCachePreferenceSaveFailedMessage);
+            OnPropertyChanged();
+        }
+    }
 
     public bool HasActiveWorkspace => TryResolveCurrentWorkspaceScope(out _, out _, out _);
 

@@ -92,6 +92,10 @@ internal static class InfrastructureTestSuite
             JsonBundleArtifactStoreTests.Prune_ShouldDeleteLeastRecentlyAccessedArtifacts_WhenSizeLimitIsExceeded);
         await RunTestAsync(
             failures,
+            nameof(JsonBundleArtifactStoreTests.Prune_ShouldPreserveProtectedArtifact_WhenSizeLimitIsExceeded),
+            JsonBundleArtifactStoreTests.Prune_ShouldPreserveProtectedArtifact_WhenSizeLimitIsExceeded);
+        await RunTestAsync(
+            failures,
             nameof(JsonBundleArtifactStoreTests.DeleteWorkspace_ShouldRemoveBundleArtifactDirectory),
             JsonBundleArtifactStoreTests.DeleteWorkspace_ShouldRemoveBundleArtifactDirectory);
         await RunTestAsync(
@@ -170,6 +174,14 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldRemoveFailedLoadEntry),
             AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldRemoveFailedLoadEntry);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsBundleLoadedSessionCacheTests.InvalidateBundleArtifact_ShouldRemoveMatchingArtifactIdentity),
+            AssetsToolsBundleLoadedSessionCacheTests.InvalidateBundleArtifact_ShouldRemoveMatchingArtifactIdentity);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsBundleLoadedSessionCacheTests.InvalidateWorkspace_ShouldRemoveMatchingWorkspaceArtifactIdentities),
+            AssetsToolsBundleLoadedSessionCacheTests.InvalidateWorkspace_ShouldRemoveMatchingWorkspaceArtifactIdentities);
         await RunTestAsync(
             failures,
             nameof(AssetsToolsTextAssetPreviewClassifierTests.TryDecodeReadableTextPayload_ShouldAcceptJsonSkelText),

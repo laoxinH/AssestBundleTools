@@ -13,7 +13,8 @@ internal static class WorkspaceBundleArtifactCleanupHelper
         IBundleArtifactStore? bundleArtifactStore,
         IBundleIndexCacheStore bundleIndexCacheStore,
         IPreviewCacheStore previewCacheStore,
-        IReadOnlyList<string>? previewCacheKeys = null)
+        IReadOnlyList<string>? previewCacheKeys = null,
+        IBundleArtifactSessionInvalidator? bundleArtifactSessionInvalidator = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workspaceKey);
         ArgumentException.ThrowIfNullOrWhiteSpace(bundleCacheKey);
@@ -21,6 +22,12 @@ internal static class WorkspaceBundleArtifactCleanupHelper
         ArgumentNullException.ThrowIfNull(previewCacheStore);
 
         bundleArtifactStore?.Delete(workspaceKey, bundleCacheKey);
+        if (bundleArtifactStore is not null)
+        {
+            (bundleArtifactSessionInvalidator ?? NoOpBundleArtifactSessionInvalidator.Instance)
+                .InvalidateBundleArtifact(workspaceKey, bundleCacheKey);
+        }
+
         bundleIndexCacheStore.Delete(workspaceKey, bundleCacheKey);
 
         if (previewCacheKeys is not null)

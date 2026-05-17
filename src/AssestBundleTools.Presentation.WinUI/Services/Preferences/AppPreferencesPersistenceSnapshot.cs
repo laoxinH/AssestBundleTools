@@ -11,4 +11,6 @@ internal sealed record AppPreferencesPersistenceSnapshot(
     bool RestoreLastWorkspaceOnStartup,
     string RecentWorkspaceOpenBehavior,
     int WorkspaceImportWorkerCount,
-    int PreviewWorkerCount);
+    int PreviewWorkerCount,
+    bool BundleArtifactCacheAutoPruneEnabled = true,
+    long BundleArtifactCacheMaximumSizeInBytes = AppPreferencesService.DefaultBundleArtifactCacheMaximumSizeInBytes);

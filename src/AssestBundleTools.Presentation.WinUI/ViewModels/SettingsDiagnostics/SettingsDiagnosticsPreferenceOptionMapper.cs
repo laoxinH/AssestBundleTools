@@ -50,4 +50,27 @@ internal static class SettingsDiagnosticsPreferenceOptionMapper
     {
         return AppPreferencesService.CoercePreviewWorkerCount(selectedIndex);
     }
+
+    public static int ConvertBundleArtifactCacheMaximumSizeToSelectedIndex(long maximumSizeInBytes)
+    {
+        return AppPreferencesService.CoerceBundleArtifactCacheMaximumSizeInBytes(maximumSizeInBytes) switch
+        {
+            2L * 1024L * 1024L * 1024L => 1,
+            8L * 1024L * 1024L * 1024L => 3,
+            16L * 1024L * 1024L * 1024L => 4,
+            _ => 2
+        };
+    }
+
+    public static long ConvertSelectedIndexToBundleArtifactCacheMaximumSize(int selectedIndex)
+    {
+        return selectedIndex switch
+        {
+            0 => 1L * 1024L * 1024L * 1024L,
+            1 => 2L * 1024L * 1024L * 1024L,
+            3 => 8L * 1024L * 1024L * 1024L,
+            4 => 16L * 1024L * 1024L * 1024L,
+            _ => AppPreferencesService.DefaultBundleArtifactCacheMaximumSizeInBytes
+        };
+    }
 }

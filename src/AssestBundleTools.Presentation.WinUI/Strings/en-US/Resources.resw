@@ -3162,6 +3162,30 @@
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.NoWorkspaceHint" xml:space="preserve">
     <value>Open a workspace to review and clear its standardized bundle cache.</value>
   </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.AutoPrune.Header" xml:space="preserve">
+    <value>Automatic Capacity Governance</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.AutoPrune.Description" xml:space="preserve">
+    <value>After import, preview, or extraction first generates a standardized bundle, the oldest artifacts are pruned to this limit. The freshly generated artifact is protected.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Label" xml:space="preserve">
+    <value>Current workspace capacity limit</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Option.OneGb" xml:space="preserve">
+    <value>1 GB</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Option.TwoGb" xml:space="preserve">
+    <value>2 GB</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Option.FourGb" xml:space="preserve">
+    <value>4 GB</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Option.EightGb" xml:space="preserve">
+    <value>8 GB</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Option.SixteenGb" xml:space="preserve">
+    <value>16 GB</value>
+  </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.RefreshButton" xml:space="preserve">
     <value>Refresh</value>
   </data>
@@ -3179,6 +3203,9 @@
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearFailedMessage" xml:space="preserve">
     <value>Failed to clear standardized bundle cache. Check cache directory permissions or try again later.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.PreferenceSaveFailedMessage" xml:space="preserve">
+    <value>Failed to save standardized bundle cache settings. Check access to the app data directory.</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearSucceeded.Format" xml:space="preserve">
     <value>Cleared {0} artifacts and released {1}.</value>

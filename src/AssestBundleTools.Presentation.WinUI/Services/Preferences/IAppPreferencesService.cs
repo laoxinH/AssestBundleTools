@@ -18,6 +18,10 @@ public interface IAppPreferencesService
 
     int PreviewWorkerCount { get; }
 
+    bool BundleArtifactCacheAutoPruneEnabled { get; }
+
+    long BundleArtifactCacheMaximumSizeInBytes { get; }
+
     bool TrySetRestoreLastWorkspaceOnStartup(bool value);
 
     bool TrySetRecentWorkspaceOpenBehavior(RecentWorkspaceOpenBehavior value);
@@ -25,4 +29,8 @@ public interface IAppPreferencesService
     bool TrySetWorkspaceImportWorkerCount(int value);
 
     bool TrySetPreviewWorkerCount(int value);
+
+    bool TrySetBundleArtifactCacheAutoPruneEnabled(bool value);
+
+    bool TrySetBundleArtifactCacheMaximumSizeInBytes(long value);
 }

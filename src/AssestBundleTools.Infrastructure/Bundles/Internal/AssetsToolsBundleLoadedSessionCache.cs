@@ -69,6 +69,36 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
         }
     }
 
+    public void InvalidateBundleArtifact(string workspaceKey, string bundleCacheKey)
+    {
+        if (string.IsNullOrWhiteSpace(workspaceKey) ||
+            string.IsNullOrWhiteSpace(bundleCacheKey))
+        {
+            return;
+        }
+
+        InvalidateByPrefix(string.Join(
+            '|',
+            "bundle-artifact",
+            workspaceKey.Trim(),
+            bundleCacheKey.Trim(),
+            string.Empty));
+    }
+
+    public void InvalidateWorkspace(string workspaceKey)
+    {
+        if (string.IsNullOrWhiteSpace(workspaceKey))
+        {
+            return;
+        }
+
+        InvalidateByPrefix(string.Join(
+            '|',
+            "bundle-artifact",
+            workspaceKey.Trim(),
+            string.Empty));
+    }
+
     public void Dispose()
     {
         List<AssetsToolsBundleLoadedSession> disposableSessions = [];
@@ -134,7 +164,7 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
             }
 
             entry.LastAccessUtc = DateTimeOffset.UtcNow;
-            if (!removeEntry || entry.LeaseCount > 0)
+            if ((!removeEntry && !entry.IsInvalidated) || entry.LeaseCount > 0)
             {
                 return;
             }
@@ -142,14 +172,13 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
             if (_entries.TryGetValue(cacheKey, out var currentEntry) && ReferenceEquals(currentEntry, entry))
             {
                 _entries.Remove(cacheKey);
-                if (entry.SessionTask.IsCompletedSuccessfully)
-                {
-                    disposableSession = entry.SessionTask.Result;
-                }
             }
+
+            disposableSession = TryGetDisposableCompletedSession(entry);
         }
 
         disposableSession?.Dispose();
+        DisposeWhenCompletedIfNeeded(entry);
     }
 
     private void TrimExpiredEntries()
@@ -187,6 +216,79 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
         }
     }
 
+    private void InvalidateByPrefix(string keyPrefix)
+    {
+        List<CacheEntry> invalidatedEntries = [];
+        List<AssetsToolsBundleLoadedSession> disposableSessions = [];
+        lock (_syncRoot)
+        {
+            if (_isDisposed)
+            {
+                return;
+            }
+
+            foreach (var pair in _entries.ToArray())
+            {
+                if (!pair.Key.StartsWith(keyPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                _entries.Remove(pair.Key);
+                pair.Value.IsInvalidated = true;
+                if (pair.Value.LeaseCount == 0)
+                {
+                    var disposableSession = TryGetDisposableCompletedSession(pair.Value);
+                    if (disposableSession is not null)
+                    {
+                        disposableSessions.Add(disposableSession);
+                    }
+                    else
+                    {
+                        invalidatedEntries.Add(pair.Value);
+                    }
+                }
+            }
+        }
+
+        foreach (var session in disposableSessions)
+        {
+            session.Dispose();
+        }
+
+        foreach (var entry in invalidatedEntries)
+        {
+            DisposeWhenCompletedIfNeeded(entry);
+        }
+    }
+
+    private static AssetsToolsBundleLoadedSession? TryGetDisposableCompletedSession(CacheEntry entry)
+    {
+        return entry.LeaseCount == 0 && entry.SessionTask.IsCompletedSuccessfully
+            ? entry.SessionTask.Result
+            : null;
+    }
+
+    private static void DisposeWhenCompletedIfNeeded(CacheEntry entry)
+    {
+        if (entry.LeaseCount != 0 || entry.SessionTask.IsCompleted)
+        {
+            return;
+        }
+
+        _ = entry.SessionTask.ContinueWith(
+            static task =>
+            {
+                if (task.Status == TaskStatus.RanToCompletion)
+                {
+                    task.Result.Dispose();
+                }
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
+    }
+
     private sealed class CacheEntry
     {
         public CacheEntry(Task<AssetsToolsBundleLoadedSession> sessionTask)
@@ -200,6 +302,8 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
         public int LeaseCount { get; set; }
 
         public DateTimeOffset LastAccessUtc { get; set; }
+
+        public bool IsInvalidated { get; set; }
     }
 }
 

@@ -31,19 +31,25 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
     private readonly IAssetBundleDecryptorRegistry _assetBundleDecryptorRegistry;
     private readonly IAssetPreviewGenerator _assetPreviewGenerator;
     private readonly IAudioPayloadTranscodingService _audioPayloadTranscodingService;
+    private readonly IBundleArtifactSessionInvalidator _bundleArtifactSessionInvalidator;
+    private readonly IBundleArtifactCachePrunePolicy _bundleArtifactCachePrunePolicy;
 
     public GetAssetPreviewHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
         IWorkspaceDataStoreFactory workspaceDataStoreFactory,
         IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
         IAssetPreviewGenerator assetPreviewGenerator,
-        IAudioPayloadTranscodingService audioPayloadTranscodingService)
+        IAudioPayloadTranscodingService audioPayloadTranscodingService,
+        IBundleArtifactSessionInvalidator? bundleArtifactSessionInvalidator = null,
+        IBundleArtifactCachePrunePolicy? bundleArtifactCachePrunePolicy = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
         _assetBundleDecryptorRegistry = assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry));
         _assetPreviewGenerator = assetPreviewGenerator ?? throw new ArgumentNullException(nameof(assetPreviewGenerator));
         _audioPayloadTranscodingService = audioPayloadTranscodingService ?? throw new ArgumentNullException(nameof(audioPayloadTranscodingService));
+        _bundleArtifactSessionInvalidator = bundleArtifactSessionInvalidator ?? NoOpBundleArtifactSessionInvalidator.Instance;
+        _bundleArtifactCachePrunePolicy = bundleArtifactCachePrunePolicy ?? NoOpBundleArtifactCachePrunePolicy.Instance;
     }
 
     public async Task<Result<AssetPreviewDto>> HandleAsync(
@@ -167,7 +173,9 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             bundleCacheEntry.SourceFingerprint.SourcePath,
             bundleCacheEntry.SourceFingerprint,
             DateTimeOffset.UtcNow,
-            cancellationToken);
+            cancellationToken,
+            _bundleArtifactSessionInvalidator,
+            _bundleArtifactCachePrunePolicy);
         if (artifactResult.IsCancelled)
         {
             return Result<AssetPreviewDto>.Cancelled();

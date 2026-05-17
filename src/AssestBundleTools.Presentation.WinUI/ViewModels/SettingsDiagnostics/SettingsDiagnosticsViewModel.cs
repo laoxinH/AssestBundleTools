@@ -63,6 +63,7 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
         BundleArtifactCache = new SettingsBundleArtifactCacheViewModel(
             workspaceCacheMaintenanceGateway,
             _workspaceContextService,
+            _appPreferencesService,
             _localizationService,
             _appNotificationService,
             _appLogService,

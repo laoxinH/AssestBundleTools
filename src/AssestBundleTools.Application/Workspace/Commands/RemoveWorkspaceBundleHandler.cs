@@ -15,13 +15,16 @@ public sealed class RemoveWorkspaceBundleHandler
 {
     private readonly IWorkspaceMetadataStoreFactory _workspaceMetadataStoreFactory;
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
+    private readonly IBundleArtifactSessionInvalidator _bundleArtifactSessionInvalidator;
 
     public RemoveWorkspaceBundleHandler(
         IWorkspaceMetadataStoreFactory workspaceMetadataStoreFactory,
-        IWorkspaceDataStoreFactory workspaceDataStoreFactory)
+        IWorkspaceDataStoreFactory workspaceDataStoreFactory,
+        IBundleArtifactSessionInvalidator? bundleArtifactSessionInvalidator = null)
     {
         _workspaceMetadataStoreFactory = workspaceMetadataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceMetadataStoreFactory));
         _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
+        _bundleArtifactSessionInvalidator = bundleArtifactSessionInvalidator ?? NoOpBundleArtifactSessionInvalidator.Instance;
     }
 
     public Task<Result<WorkspaceBundleRemovalResultDto>> HandleAsync(
@@ -135,7 +138,8 @@ public sealed class RemoveWorkspaceBundleHandler
                 bundleCacheKey,
                 bundleArtifactStore,
                 bundleIndexCacheStore,
-                previewCacheStore);
+                previewCacheStore,
+                bundleArtifactSessionInvalidator: _bundleArtifactSessionInvalidator);
         }
 
         return Task.FromResult(Result<WorkspaceBundleRemovalResultDto>.Success(

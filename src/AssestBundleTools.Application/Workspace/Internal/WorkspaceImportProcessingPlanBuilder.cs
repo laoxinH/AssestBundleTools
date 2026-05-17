@@ -16,19 +16,25 @@ internal sealed class WorkspaceImportProcessingPlanBuilder
     private readonly IWorkspaceImportSourceDiscoveryService _workspaceImportSourceDiscoveryService;
     private readonly WorkspaceImportCandidateScreeningCoordinator _workspaceImportCandidateScreeningCoordinator;
     private readonly IWorkspaceImportExecutionOptionsResolver _workspaceImportExecutionOptionsResolver;
+    private readonly IBundleArtifactSessionInvalidator _bundleArtifactSessionInvalidator;
+    private readonly IBundleArtifactCachePrunePolicy _bundleArtifactCachePrunePolicy;
 
     public WorkspaceImportProcessingPlanBuilder(
         IWorkspaceMetadataStoreFactory workspaceMetadataStoreFactory,
         IWorkspaceDataStoreFactory workspaceDataStoreFactory,
         IWorkspaceImportSourceDiscoveryService workspaceImportSourceDiscoveryService,
         WorkspaceImportCandidateScreeningCoordinator workspaceImportCandidateScreeningCoordinator,
-        IWorkspaceImportExecutionOptionsResolver workspaceImportExecutionOptionsResolver)
+        IWorkspaceImportExecutionOptionsResolver workspaceImportExecutionOptionsResolver,
+        IBundleArtifactSessionInvalidator bundleArtifactSessionInvalidator,
+        IBundleArtifactCachePrunePolicy bundleArtifactCachePrunePolicy)
     {
         _workspaceMetadataStoreFactory = workspaceMetadataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceMetadataStoreFactory));
         _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
         _workspaceImportSourceDiscoveryService = workspaceImportSourceDiscoveryService ?? throw new ArgumentNullException(nameof(workspaceImportSourceDiscoveryService));
         _workspaceImportCandidateScreeningCoordinator = workspaceImportCandidateScreeningCoordinator ?? throw new ArgumentNullException(nameof(workspaceImportCandidateScreeningCoordinator));
         _workspaceImportExecutionOptionsResolver = workspaceImportExecutionOptionsResolver ?? throw new ArgumentNullException(nameof(workspaceImportExecutionOptionsResolver));
+        _bundleArtifactSessionInvalidator = bundleArtifactSessionInvalidator ?? throw new ArgumentNullException(nameof(bundleArtifactSessionInvalidator));
+        _bundleArtifactCachePrunePolicy = bundleArtifactCachePrunePolicy ?? throw new ArgumentNullException(nameof(bundleArtifactCachePrunePolicy));
     }
 
     public async Task<Result<WorkspaceImportProcessingPlan>> BuildAsync(
@@ -79,7 +85,9 @@ internal sealed class WorkspaceImportProcessingPlanBuilder
                     .ToDictionary(static entry => entry.BundleCacheKey, StringComparer.OrdinalIgnoreCase),
                 PreviewCacheKeysByBundleCacheKey: BuildPreviewCacheKeysByBundle(
                     previewCacheStore.LoadDescriptors(command.WorkspaceKey)),
-                ExecutionOptions: _workspaceImportExecutionOptionsResolver.ResolveOptions()));
+                ExecutionOptions: _workspaceImportExecutionOptionsResolver.ResolveOptions(),
+                BundleArtifactSessionInvalidator: _bundleArtifactSessionInvalidator,
+                BundleArtifactCachePrunePolicy: _bundleArtifactCachePrunePolicy));
     }
 
     private static Dictionary<string, IReadOnlyList<string>> BuildPreviewCacheKeysByBundle(

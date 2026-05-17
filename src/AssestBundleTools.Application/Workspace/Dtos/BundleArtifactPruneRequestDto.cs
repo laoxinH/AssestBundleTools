@@ -6,4 +6,5 @@ namespace AssestBundleTools.Application.Workspace.Dtos;
 public sealed record BundleArtifactPruneRequestDto(
     string? WorkspaceKey,
     long? MaximumSizeInBytes,
-    int? MaximumArtifactCount);
+    int? MaximumArtifactCount,
+    IReadOnlyList<string>? ProtectedBundleCacheKeys = null);

@@ -19,4 +19,6 @@ internal sealed record WorkspaceImportProcessingPlan(
     string CurrentToolVersion,
     IReadOnlyDictionary<string, BundleIndexCacheEntryDto> ExistingCacheEntriesByBundleCacheKey,
     IReadOnlyDictionary<string, IReadOnlyList<string>> PreviewCacheKeysByBundleCacheKey,
-    WorkspaceImportExecutionOptions ExecutionOptions);
+    WorkspaceImportExecutionOptions ExecutionOptions,
+    IBundleArtifactSessionInvalidator BundleArtifactSessionInvalidator,
+    IBundleArtifactCachePrunePolicy BundleArtifactCachePrunePolicy);

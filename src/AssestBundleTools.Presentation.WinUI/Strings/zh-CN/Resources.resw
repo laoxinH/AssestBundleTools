@@ -3162,6 +3162,30 @@
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.NoWorkspaceHint" xml:space="preserve">
     <value>打开工作区后可查看并清理该工作区的标准化资源包缓存。</value>
   </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.AutoPrune.Header" xml:space="preserve">
+    <value>自动容量治理</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.AutoPrune.Description" xml:space="preserve">
+    <value>导入、预览或提取首次生成标准化 bundle 后，按当前容量上限清理最久未访问的旧 artifact；刚生成的 artifact 会被保护。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Label" xml:space="preserve">
+    <value>当前工作区容量上限</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Option.OneGb" xml:space="preserve">
+    <value>1 GB</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Option.TwoGb" xml:space="preserve">
+    <value>2 GB</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Option.FourGb" xml:space="preserve">
+    <value>4 GB</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Option.EightGb" xml:space="preserve">
+    <value>8 GB</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Option.SixteenGb" xml:space="preserve">
+    <value>16 GB</value>
+  </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.RefreshButton" xml:space="preserve">
     <value>刷新</value>
   </data>
@@ -3179,6 +3203,9 @@
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearFailedMessage" xml:space="preserve">
     <value>清理标准化资源包缓存失败，请检查缓存目录权限或稍后重试。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.PreferenceSaveFailedMessage" xml:space="preserve">
+    <value>保存标准化资源包缓存设置失败，请检查应用数据目录权限。</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearSucceeded.Format" xml:space="preserve">
     <value>已清理 {0} 个 artifact，释放 {1}。</value>

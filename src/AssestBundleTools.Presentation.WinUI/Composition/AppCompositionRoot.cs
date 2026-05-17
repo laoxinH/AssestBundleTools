@@ -62,6 +62,7 @@ internal static class AppCompositionRoot
 
         var localizationService = new ResourceLocalizationService();
         var appPreferencesService = new AppPreferencesService(appPreferencesStore);
+        var bundleArtifactCachePrunePolicy = new PreferencesBundleArtifactCachePrunePolicy(appPreferencesService);
 
         var assetBundleDecryptorRegistry = new ReloadableAssetBundleDecryptorRegistry();
         Action reloadAssetBundleDecryptorRegistry = () => assetBundleDecryptorRegistry.Reload();
@@ -84,6 +85,7 @@ internal static class AppCompositionRoot
             new HeuristicAssetBundleReader());
         var audioPayloadTranscodingService = new AudioPayloadTranscodingService();
         var assetPreviewGenerator = new AssetsToolsAssetPreviewGenerator(audioPayloadTranscodingService);
+        var bundleArtifactSessionInvalidator = new AssetsToolsBundleArtifactSessionInvalidator();
         var spineAnimationRuntimePreviewService = new SpineAnimationRuntimePreviewService();
 
         var openWorkspaceHandler = new OpenWorkspaceHandler(
@@ -96,7 +98,9 @@ internal static class AppCompositionRoot
             workspaceImportExecutionOptionsResolver: workspaceImportExecutionOptionsResolver,
             assetBundleSourceInspector: assetBundleSourceInspector,
             assetBundleDecryptorRegistry: assetBundleDecryptorRegistry,
-            assetBundleReader: assetBundleReader);
+            assetBundleReader: assetBundleReader,
+            bundleArtifactSessionInvalidator: bundleArtifactSessionInvalidator,
+            bundleArtifactCachePrunePolicy: bundleArtifactCachePrunePolicy);
         var registerWorkspaceImportHandler = new RegisterWorkspaceImportHandler(
             workspaceMetadataStoreFactory,
             workspaceImportFileSystemService);
@@ -109,10 +113,13 @@ internal static class AppCompositionRoot
             workspaceImportExecutionOptionsResolver,
             assetBundleSourceInspector,
             assetBundleDecryptorRegistry,
-            assetBundleReader);
+            assetBundleReader,
+            bundleArtifactSessionInvalidator,
+            bundleArtifactCachePrunePolicy);
         var removeWorkspaceBundleHandler = new RemoveWorkspaceBundleHandler(
             workspaceMetadataStoreFactory,
-            workspaceDataStoreFactory);
+            workspaceDataStoreFactory,
+            bundleArtifactSessionInvalidator);
         var loadBundleTreeHandler = new LoadBundleTreeHandler(workspaceSessionRegistry);
         var loadAssetListHandler = new LoadAssetListHandler(workspaceSessionRegistry);
         var loadSpineAssetGroupsHandler = new LoadSpineAssetGroupsHandler(workspaceSessionRegistry);
@@ -122,7 +129,9 @@ internal static class AppCompositionRoot
             workspaceDataStoreFactory,
             assetBundleDecryptorRegistry,
             assetPreviewGenerator,
-            audioPayloadTranscodingService);
+            audioPayloadTranscodingService,
+            bundleArtifactSessionInvalidator,
+            bundleArtifactCachePrunePolicy);
         var loadSpineAssetGroupDetailsHandler = new LoadSpineAssetGroupDetailsHandler(
             workspaceSessionRegistry,
             getAssetPreviewHandler,
@@ -173,10 +182,13 @@ internal static class AppCompositionRoot
         var removeWorkspaceCatalogEntryHandler = new RemoveWorkspaceCatalogEntryHandler(
             workspaceCatalogStore,
             workspaceMetadataStoreFactory,
-            workspaceDataStoreFactory);
+            workspaceDataStoreFactory,
+            bundleArtifactSessionInvalidator);
         var setWorkspaceCatalogEntryPinnedStateHandler = new SetWorkspaceCatalogEntryPinnedStateHandler(workspaceCatalogStore);
         var getBundleArtifactCacheUsageHandler = new GetBundleArtifactCacheUsageHandler(workspaceDataStoreFactory);
-        var pruneBundleArtifactCacheHandler = new PruneBundleArtifactCacheHandler(workspaceDataStoreFactory);
+        var pruneBundleArtifactCacheHandler = new PruneBundleArtifactCacheHandler(
+            workspaceDataStoreFactory,
+            bundleArtifactSessionInvalidator);
         var getAssetBundleDecryptorCatalogEntriesHandler = new GetAssetBundleDecryptorCatalogEntriesHandler(assetBundleDecryptorCatalogStore);
         var upsertAssetBundleDecryptorHandler = new UpsertAssetBundleDecryptorHandler(assetBundleDecryptorCatalogStore);
         var deleteAssetBundleDecryptorHandler = new DeleteAssetBundleDecryptorHandler(assetBundleDecryptorCatalogStore);

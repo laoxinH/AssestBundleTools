@@ -173,6 +173,10 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldUpdateBundleArtifactLastAccess_WhenManifestIsReused);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldApplyAutoPrunePolicy_AfterArtifactSave),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldApplyAutoPrunePolicy_AfterArtifactSave);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldSingleFlightBundleArtifactGeneration_WhenConcurrentPreviewCacheMisses),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldSingleFlightBundleArtifactGeneration_WhenConcurrentPreviewCacheMisses);
         await RunTestAsync(

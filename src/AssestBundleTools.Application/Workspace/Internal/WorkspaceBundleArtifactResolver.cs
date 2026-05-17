@@ -25,7 +25,9 @@ internal static class WorkspaceBundleArtifactResolver
         string sourcePath,
         WorkspaceFileFingerprintDto sourceFingerprint,
         DateTimeOffset createdAtUtc,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IBundleArtifactSessionInvalidator? bundleArtifactSessionInvalidator = null,
+        IBundleArtifactCachePrunePolicy? bundleArtifactCachePrunePolicy = null)
     {
         ArgumentNullException.ThrowIfNull(bundleArtifactStore);
         ArgumentNullException.ThrowIfNull(decryptor);
@@ -55,7 +57,9 @@ internal static class WorkspaceBundleArtifactResolver
                     sourcePath,
                     sourceFingerprint,
                     createdAtUtc,
-                    cancellationToken).ConfigureAwait(false);
+                    cancellationToken,
+                    bundleArtifactSessionInvalidator ?? NoOpBundleArtifactSessionInvalidator.Instance,
+                    bundleArtifactCachePrunePolicy ?? NoOpBundleArtifactCachePrunePolicy.Instance).ConfigureAwait(false);
             }
             finally
             {
@@ -87,7 +91,9 @@ internal static class WorkspaceBundleArtifactResolver
         string sourcePath,
         WorkspaceFileFingerprintDto sourceFingerprint,
         DateTimeOffset createdAtUtc,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IBundleArtifactSessionInvalidator bundleArtifactSessionInvalidator,
+        IBundleArtifactCachePrunePolicy bundleArtifactCachePrunePolicy)
     {
         var manifest = bundleArtifactStore.Load(workspaceKey, bundleCacheKey);
         if (CanReuseManifest(manifest, workspaceKey, bundleCacheKey, sourceFingerprint, decryptor.Descriptor))
@@ -110,6 +116,7 @@ internal static class WorkspaceBundleArtifactResolver
         if (manifest is not null)
         {
             bundleArtifactStore.Delete(workspaceKey, bundleCacheKey);
+            bundleArtifactSessionInvalidator.InvalidateBundleArtifact(workspaceKey, bundleCacheKey);
         }
 
         var decryptionResult = await decryptor.DecryptAsync(
@@ -143,6 +150,12 @@ internal static class WorkspaceBundleArtifactResolver
 
         var resolvedBundlePath = bundleArtifactStore.ResolveBundlePath(savedManifest)
                                  ?? savedManifest.ResolvedBundlePath;
+        PruneAfterSave(
+            bundleArtifactStore,
+            savedManifest.WorkspaceKey,
+            savedManifest.BundleCacheKey,
+            bundleArtifactSessionInvalidator,
+            bundleArtifactCachePrunePolicy);
 
         return Result<WorkspaceBundleArtifactResolutionDto>.Success(
             new WorkspaceBundleArtifactResolutionDto(
@@ -232,6 +245,28 @@ internal static class WorkspaceBundleArtifactResolver
                string.Equals(manifest.DecryptorVersion, decryptor.Version, StringComparison.OrdinalIgnoreCase) &&
                string.Equals(manifest.NormalizerVersion, NormalizerVersion, StringComparison.OrdinalIgnoreCase) &&
                WorkspaceFileFingerprintComparer.Matches(manifest.SourceFingerprint, sourceFingerprint);
+    }
+
+    private static void PruneAfterSave(
+        IBundleArtifactStore bundleArtifactStore,
+        string workspaceKey,
+        string bundleCacheKey,
+        IBundleArtifactSessionInvalidator bundleArtifactSessionInvalidator,
+        IBundleArtifactCachePrunePolicy bundleArtifactCachePrunePolicy)
+    {
+        var request = bundleArtifactCachePrunePolicy.CreateRequest(workspaceKey, bundleCacheKey);
+        if (request is null)
+        {
+            return;
+        }
+
+        var result = bundleArtifactStore.Prune(request);
+        foreach (var prunedEntry in result.PrunedEntries)
+        {
+            bundleArtifactSessionInvalidator.InvalidateBundleArtifact(
+                prunedEntry.WorkspaceKey,
+                prunedEntry.BundleCacheKey);
+        }
     }
 
     private sealed class ResolutionGateEntry

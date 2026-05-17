@@ -11,6 +11,9 @@ public sealed class AppPreferencesService : IAppPreferencesService
     public const int AutomaticPreviewWorkerCount = 0;
     public const int MinimumManualPreviewWorkerCount = 1;
     public const int MaximumManualPreviewWorkerCount = 4;
+    public const long MinimumBundleArtifactCacheMaximumSizeInBytes = 1L * 1024L * 1024L * 1024L;
+    public const long DefaultBundleArtifactCacheMaximumSizeInBytes = 4L * 1024L * 1024L * 1024L;
+    public const long MaximumBundleArtifactCacheMaximumSizeInBytes = 16L * 1024L * 1024L * 1024L;
     private const string CurrentWindowBehaviorKey = "currentWindow";
     private const string NewWindowBehaviorKey = "newWindow";
     private const string AskEveryTimeBehaviorKey = "askEveryTime";
@@ -31,6 +34,11 @@ public sealed class AppPreferencesService : IAppPreferencesService
     public int WorkspaceImportWorkerCount => CoerceWorkspaceImportWorkerCount(_currentSnapshot.WorkspaceImportWorkerCount);
 
     public int PreviewWorkerCount => CoercePreviewWorkerCount(_currentSnapshot.PreviewWorkerCount);
+
+    public bool BundleArtifactCacheAutoPruneEnabled => _currentSnapshot.BundleArtifactCacheAutoPruneEnabled;
+
+    public long BundleArtifactCacheMaximumSizeInBytes =>
+        CoerceBundleArtifactCacheMaximumSizeInBytes(_currentSnapshot.BundleArtifactCacheMaximumSizeInBytes);
 
     public bool TrySetRestoreLastWorkspaceOnStartup(bool value)
     {
@@ -150,6 +158,63 @@ public sealed class AppPreferencesService : IAppPreferencesService
         }
     }
 
+    public bool TrySetBundleArtifactCacheAutoPruneEnabled(bool value)
+    {
+        if (_currentSnapshot.BundleArtifactCacheAutoPruneEnabled == value)
+        {
+            return true;
+        }
+
+        var updatedSnapshot = _currentSnapshot with
+        {
+            BundleArtifactCacheAutoPruneEnabled = value
+        };
+
+        try
+        {
+            _preferencesStore.Save(updatedSnapshot);
+            _currentSnapshot = updatedSnapshot;
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    public bool TrySetBundleArtifactCacheMaximumSizeInBytes(long value)
+    {
+        var coercedValue = CoerceBundleArtifactCacheMaximumSizeInBytes(value);
+        if (_currentSnapshot.BundleArtifactCacheMaximumSizeInBytes == coercedValue)
+        {
+            return true;
+        }
+
+        var updatedSnapshot = _currentSnapshot with
+        {
+            BundleArtifactCacheMaximumSizeInBytes = coercedValue
+        };
+
+        try
+        {
+            _preferencesStore.Save(updatedSnapshot);
+            _currentSnapshot = updatedSnapshot;
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
     private static RecentWorkspaceOpenBehavior DeserializeRecentWorkspaceOpenBehavior(string? behaviorKey)
     {
         return behaviorKey switch
@@ -194,5 +259,13 @@ public sealed class AppPreferencesService : IAppPreferencesService
             value,
             MinimumManualPreviewWorkerCount,
             MaximumManualPreviewWorkerCount);
+    }
+
+    public static long CoerceBundleArtifactCacheMaximumSizeInBytes(long value)
+    {
+        return Math.Clamp(
+            value <= 0 ? DefaultBundleArtifactCacheMaximumSizeInBytes : value,
+            MinimumBundleArtifactCacheMaximumSizeInBytes,
+            MaximumBundleArtifactCacheMaximumSizeInBytes);
     }
 }

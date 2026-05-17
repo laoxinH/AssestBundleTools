@@ -19,15 +19,19 @@ public sealed class RemoveWorkspaceCatalogEntryHandler
     private readonly IWorkspaceCatalogStore _workspaceCatalogStore;
     private readonly IWorkspaceMetadataStoreFactory _workspaceMetadataStoreFactory;
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
+    private readonly IBundleArtifactSessionInvalidator _bundleArtifactSessionInvalidator;
 
     public RemoveWorkspaceCatalogEntryHandler(
         IWorkspaceCatalogStore workspaceCatalogStore,
         IWorkspaceMetadataStoreFactory workspaceMetadataStoreFactory,
-        IWorkspaceDataStoreFactory workspaceDataStoreFactory)
+        IWorkspaceDataStoreFactory workspaceDataStoreFactory,
+        IBundleArtifactSessionInvalidator? bundleArtifactSessionInvalidator = null)
     {
         _workspaceCatalogStore = workspaceCatalogStore ?? throw new ArgumentNullException(nameof(workspaceCatalogStore));
         _workspaceMetadataStoreFactory = workspaceMetadataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceMetadataStoreFactory));
         _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
+        _bundleArtifactSessionInvalidator = bundleArtifactSessionInvalidator
+                                            ?? NoOpBundleArtifactSessionInvalidator.Instance;
     }
 
     public Task<Result<WorkspaceCatalogSnapshotDto>> HandleAsync(
@@ -81,6 +85,7 @@ public sealed class RemoveWorkspaceCatalogEntryHandler
 
         var bundleArtifactStore = _workspaceDataStoreFactory.CreateBundleArtifactStore(workspaceDataRootPath);
         bundleArtifactStore.DeleteWorkspace(workspaceKey);
+        _bundleArtifactSessionInvalidator.InvalidateWorkspace(workspaceKey);
 
         var bundleIndexCacheStore = _workspaceDataStoreFactory.CreateBundleIndexCacheStore(workspaceDataRootPath);
         bundleIndexCacheStore.DeleteWorkspace(workspaceKey);

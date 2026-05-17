@@ -218,6 +218,50 @@ internal static class JsonBundleArtifactStoreTests
             "Newer artifact should remain after LRU pruning.");
     }
 
+    public static void Prune_ShouldPreserveProtectedArtifact_WhenSizeLimitIsExceeded()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonBundleArtifactStore(temporaryDirectory.DirectoryPath);
+        var oldManifest = SaveMaterializedArtifact(
+            temporaryDirectory.DirectoryPath,
+            store,
+            "workspace-protected-prune",
+            "bundle-cache-old",
+            [0x01, 0x02, 0x03],
+            new DateTimeOffset(2026, 5, 17, 9, 0, 0, TimeSpan.Zero));
+        var newManifest = SaveMaterializedArtifact(
+            temporaryDirectory.DirectoryPath,
+            store,
+            "workspace-protected-prune",
+            "bundle-cache-new",
+            [0x04, 0x05, 0x06, 0x07],
+            new DateTimeOffset(2026, 5, 17, 10, 0, 0, TimeSpan.Zero));
+        store.UpdateLastAccessed(oldManifest, new DateTimeOffset(2026, 5, 17, 9, 30, 0, TimeSpan.Zero));
+        store.UpdateLastAccessed(newManifest, new DateTimeOffset(2026, 5, 17, 11, 0, 0, TimeSpan.Zero));
+        var usageBefore = store.GetUsage("workspace-protected-prune");
+        var oldEntry = usageBefore.Entries.First(entry =>
+            string.Equals(entry.BundleCacheKey, "bundle-cache-old", StringComparison.OrdinalIgnoreCase));
+        var sizeLimit = usageBefore.TotalSizeInBytes - oldEntry.SizeInBytes;
+
+        var pruneResult = store.Prune(new BundleArtifactPruneRequestDto(
+            WorkspaceKey: "workspace-protected-prune",
+            MaximumSizeInBytes: sizeLimit,
+            MaximumArtifactCount: null,
+            ProtectedBundleCacheKeys: ["bundle-cache-old"]));
+
+        TestAssert.Equal(
+            "bundle-cache-new",
+            TestAssert.Single(pruneResult.PrunedEntries).BundleCacheKey,
+            "Prune should skip protected artifacts and remove the next eligible artifact.");
+        TestAssert.True(
+            store.Load("workspace-protected-prune", "bundle-cache-old") is not null,
+            "Protected artifact should remain after pruning.");
+        TestAssert.Null(
+            store.Load("workspace-protected-prune", "bundle-cache-new"),
+            "Unprotected artifact should be removed when it is the only eligible candidate.");
+    }
+
+
     public static void DeleteWorkspace_ShouldRemoveBundleArtifactDirectory()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();

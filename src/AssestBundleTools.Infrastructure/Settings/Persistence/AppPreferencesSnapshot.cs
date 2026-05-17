@@ -11,11 +11,17 @@ public sealed record AppPreferencesSnapshot(
     bool RestoreLastWorkspaceOnStartup,
     string RecentWorkspaceOpenBehavior,
     int WorkspaceImportWorkerCount,
-    int PreviewWorkerCount = 0)
+    int PreviewWorkerCount = 0,
+    bool BundleArtifactCacheAutoPruneEnabled = true,
+    long BundleArtifactCacheMaximumSizeInBytes = AppPreferencesSnapshot.DefaultBundleArtifactCacheMaximumSizeInBytes)
 {
+    public const long DefaultBundleArtifactCacheMaximumSizeInBytes = 4L * 1024L * 1024L * 1024L;
+
     public static AppPreferencesSnapshot Default { get; } = new(
         RestoreLastWorkspaceOnStartup: true,
         RecentWorkspaceOpenBehavior: "currentWindow",
         WorkspaceImportWorkerCount: 0,
-        PreviewWorkerCount: 0);
+        PreviewWorkerCount: 0,
+        BundleArtifactCacheAutoPruneEnabled: true,
+        BundleArtifactCacheMaximumSizeInBytes: DefaultBundleArtifactCacheMaximumSizeInBytes);
 }

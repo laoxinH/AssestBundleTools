@@ -56,7 +56,8 @@ internal static class BundleArtifactCacheMaintenanceHandlerTests
                 ArtifactCountAfter: 0,
                 PrunedEntries: [prunedEntry]));
         var factory = new TestWorkspaceDataStoreFactory(store);
-        var handler = new PruneBundleArtifactCacheHandler(factory);
+        var invalidator = new TestBundleArtifactSessionInvalidator();
+        var handler = new PruneBundleArtifactCacheHandler(factory, invalidator);
 
         var result = await handler.HandleAsync(new PruneBundleArtifactCacheCommand(
             WorkspaceDataRootPath: @"D:\WorkspaceData",
@@ -71,6 +72,9 @@ internal static class BundleArtifactCacheMaintenanceHandlerTests
         TestAssert.Equal(0, store.LastPruneRequest?.MaximumArtifactCount ?? -1, "Handler should pass requested count limit.");
         TestAssert.Equal(128L, result.Value?.SizeBeforeInBytes ?? -1, "Result should expose pre-prune size.");
         TestAssert.Equal(0L, result.Value?.SizeAfterInBytes ?? -1, "Result should expose post-prune size.");
+        var invalidatedArtifact = TestAssert.Single(invalidator.InvalidatedBundleArtifacts);
+        TestAssert.Equal("workspace-a", invalidatedArtifact.WorkspaceKey, "Pruned artifacts should invalidate loaded sessions.");
+        TestAssert.Equal("bundle-old", invalidatedArtifact.BundleCacheKey, "Loaded-session invalidation should target pruned bundle artifacts.");
     }
 
     public static async Task Prune_ShouldReturnValidationFailure_WhenLimitsAreNegative()
@@ -160,5 +164,22 @@ internal static class BundleArtifactCacheMaintenanceHandlerTests
         public void Delete(string workspaceKey, string bundleCacheKey) => throw new NotSupportedException();
 
         public void DeleteWorkspace(string workspaceKey) => throw new NotSupportedException();
+    }
+
+    private sealed class TestBundleArtifactSessionInvalidator : IBundleArtifactSessionInvalidator
+    {
+        public List<(string WorkspaceKey, string BundleCacheKey)> InvalidatedBundleArtifacts { get; } = [];
+
+        public List<string> InvalidatedWorkspaces { get; } = [];
+
+        public void InvalidateBundleArtifact(string workspaceKey, string bundleCacheKey)
+        {
+            InvalidatedBundleArtifacts.Add((workspaceKey, bundleCacheKey));
+        }
+
+        public void InvalidateWorkspace(string workspaceKey)
+        {
+            InvalidatedWorkspaces.Add(workspaceKey);
+        }
     }
 }

@@ -90,6 +90,17 @@ public sealed partial class SettingsDiagnosticsPage : Page
         };
         BundleArtifactCacheTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheTitle);
         BundleArtifactCacheHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheHint);
+        BundleArtifactCacheAutoPruneToggleSwitch.Header = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheAutoPruneHeader);
+        BundleArtifactCacheAutoPruneDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheAutoPruneDescription);
+        BundleArtifactCacheMaximumSizeLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeLabel);
+        BundleArtifactCacheMaximumSizeRadioButtons.ItemsSource = new[]
+        {
+            UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeOptionOneGb),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeOptionTwoGb),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeOptionFourGb),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeOptionEightGb),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeOptionSixteenGb)
+        };
         RefreshBundleArtifactCacheButtonText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheRefreshButton);
         ClearBundleArtifactCacheButtonText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheClearButton);
         ResponsibilityTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsResponsibilityTitle);

@@ -61,7 +61,9 @@ internal sealed class WorkspaceImportBundleWorker
             discoveredFile.SourcePath,
             sourceFingerprint,
             plan.ProcessedAtUtc,
-            cancellationToken);
+            cancellationToken,
+            plan.BundleArtifactSessionInvalidator,
+            plan.BundleArtifactCachePrunePolicy);
         if (artifactResult.IsCancelled)
         {
             throw new OperationCanceledException(cancellationToken);
@@ -83,6 +85,7 @@ internal sealed class WorkspaceImportBundleWorker
         if (!_assetBundleReader.CanRead(artifactResult.Value.ResolvedBundlePath))
         {
             plan.BundleArtifactStore.Delete(plan.Command.WorkspaceKey, bundleCacheKey);
+            plan.BundleArtifactSessionInvalidator.InvalidateBundleArtifact(plan.Command.WorkspaceKey, bundleCacheKey);
             return CreateSkippedResult(
                 discoveredFile,
                 bundleCacheKey,
@@ -108,6 +111,7 @@ internal sealed class WorkspaceImportBundleWorker
         if (!readResult.IsSuccess || readResult.Value is null)
         {
             plan.BundleArtifactStore.Delete(plan.Command.WorkspaceKey, bundleCacheKey);
+            plan.BundleArtifactSessionInvalidator.InvalidateBundleArtifact(plan.Command.WorkspaceKey, bundleCacheKey);
             return CreateFailureResult(
                 discoveredFile,
                 bundleCacheKey,

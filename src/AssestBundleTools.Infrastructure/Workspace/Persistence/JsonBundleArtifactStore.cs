@@ -136,6 +136,10 @@ public sealed class JsonBundleArtifactStore : IBundleArtifactStore
         var usageBefore = GetUsage(request.WorkspaceKey);
         var targetSizeInBytes = request.MaximumSizeInBytes ?? long.MaxValue;
         var targetArtifactCount = request.MaximumArtifactCount ?? int.MaxValue;
+        var protectedBundleCacheKeys = (request.ProtectedBundleCacheKeys ?? Array.Empty<string>())
+            .Where(static key => !string.IsNullOrWhiteSpace(key))
+            .Select(static key => key.Trim())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var sizeAfter = usageBefore.TotalSizeInBytes;
         var countAfter = usageBefore.ArtifactCount;
         var prunedEntries = new List<BundleArtifactCacheEntryDto>();
@@ -149,6 +153,11 @@ public sealed class JsonBundleArtifactStore : IBundleArtifactStore
             if (sizeAfter <= targetSizeInBytes && countAfter <= targetArtifactCount)
             {
                 break;
+            }
+
+            if (protectedBundleCacheKeys.Contains(entry.BundleCacheKey))
+            {
+                continue;
             }
 
             Delete(entry.WorkspaceKey, entry.BundleCacheKey);

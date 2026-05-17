@@ -102,6 +102,7 @@ internal static class RemoveWorkspaceBundleHandlerTests
             ]));
         var bundleIndexCacheStore = new TestBundleIndexCacheStore();
         var bundleArtifactStore = new TestBundleArtifactStore();
+        var invalidator = new TestBundleArtifactSessionInvalidator();
         var previewCacheStore = new TestPreviewCacheStore(
         [
             new PreviewCacheDescriptorDto(
@@ -137,7 +138,8 @@ internal static class RemoveWorkspaceBundleHandlerTests
         ]);
         var handler = new RemoveWorkspaceBundleHandler(
             new TestWorkspaceMetadataStoreFactory(metadataStore),
-            new TestWorkspaceDataStoreFactory(bundleArtifactStore, bundleIndexCacheStore, previewCacheStore));
+            new TestWorkspaceDataStoreFactory(bundleArtifactStore, bundleIndexCacheStore, previewCacheStore),
+            invalidator);
 
         var result = await handler.HandleAsync(new RemoveWorkspaceBundleCommand(
             WorkspaceKey: workspaceKey,
@@ -169,6 +171,9 @@ internal static class RemoveWorkspaceBundleHandlerTests
 
         TestAssert.Equal(1, bundleIndexCacheStore.DeleteOperations.Count, "Bundle index cache should be invalidated once.");
         TestAssert.Equal(1, bundleArtifactStore.DeleteOperations.Count, "Bundle artifact cache should be invalidated once.");
+        var invalidatedArtifact = TestAssert.Single(invalidator.InvalidatedBundleArtifacts);
+        TestAssert.Equal(workspaceKey, invalidatedArtifact.WorkspaceKey, "Loaded-session invalidation should use the current workspace.");
+        TestAssert.Equal(bundleCacheKey, invalidatedArtifact.BundleCacheKey, "Loaded-session invalidation should target the removed bundle cache key.");
         TestAssert.Equal(bundleCacheKey, bundleArtifactStore.DeleteOperations[0].BundleCacheKey, "Bundle artifact invalidation should target the removed bundle cache key.");
         TestAssert.Equal(workspaceKey, bundleIndexCacheStore.DeleteOperations[0].WorkspaceKey, "Bundle cache invalidation should use the current workspace.");
         TestAssert.Equal(bundleCacheKey, bundleIndexCacheStore.DeleteOperations[0].BundleCacheKey, "Bundle cache invalidation should target the removed bundle cache key.");
@@ -383,6 +388,20 @@ internal static class RemoveWorkspaceBundleHandlerTests
         }
 
         public void Delete(string workspaceKey)
+        {
+        }
+    }
+
+    private sealed class TestBundleArtifactSessionInvalidator : IBundleArtifactSessionInvalidator
+    {
+        public List<(string WorkspaceKey, string BundleCacheKey)> InvalidatedBundleArtifacts { get; } = [];
+
+        public void InvalidateBundleArtifact(string workspaceKey, string bundleCacheKey)
+        {
+            InvalidatedBundleArtifacts.Add((workspaceKey, bundleCacheKey));
+        }
+
+        public void InvalidateWorkspace(string workspaceKey)
         {
         }
     }

@@ -24,7 +24,9 @@ public sealed class ProcessWorkspaceImportsHandler
         IWorkspaceImportExecutionOptionsResolver workspaceImportExecutionOptionsResolver,
         IAssetBundleSourceInspector assetBundleSourceInspector,
         IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
-        IAssetBundleReader assetBundleReader)
+        IAssetBundleReader assetBundleReader,
+        IBundleArtifactSessionInvalidator? bundleArtifactSessionInvalidator = null,
+        IBundleArtifactCachePrunePolicy? bundleArtifactCachePrunePolicy = null)
     {
         _coordinator = new WorkspaceImportProcessingCoordinator(
             workspaceMetadataStoreFactory,
@@ -35,7 +37,9 @@ public sealed class ProcessWorkspaceImportsHandler
             workspaceImportExecutionOptionsResolver,
             assetBundleSourceInspector,
             assetBundleDecryptorRegistry,
-            assetBundleReader);
+            assetBundleReader,
+            bundleArtifactSessionInvalidator,
+            bundleArtifactCachePrunePolicy);
     }
 
     public Task<Result<WorkspaceImportProcessingResultDto>> HandleAsync(

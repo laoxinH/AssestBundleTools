@@ -131,6 +131,102 @@ internal static class AssetsToolsBundleLoadedSessionCacheTests
             "A failed physical load should be evicted so a later request can retry.");
     }
 
+    public static async Task InvalidateBundleArtifact_ShouldRemoveMatchingArtifactIdentity()
+    {
+        using var firstLoaderEntered = new ManualResetEventSlim();
+        using var secondLoaderEntered = new ManualResetEventSlim();
+        using var releaseLoaders = new ManualResetEventSlim();
+        var loadCount = 0;
+        using var cache = new AssetsToolsBundleLoadedSessionCache(
+            _ =>
+            {
+                var currentCount = Interlocked.Increment(ref loadCount);
+                if (currentCount == 1)
+                {
+                    firstLoaderEntered.Set();
+                }
+
+                if (currentCount == 2)
+                {
+                    secondLoaderEntered.Set();
+                }
+
+                releaseLoaders.Wait(TimeSpan.FromSeconds(5));
+                throw new InvalidOperationException("load failed");
+            },
+            TimeSpan.FromSeconds(30));
+        var bundlePath = Path.Combine(Path.GetTempPath(), $"bundle-{Guid.NewGuid():N}.ab");
+        const string sessionCacheKey = "bundle-artifact|workspace-a|bundle-a|normalizer|fingerprint-a";
+
+        var firstTask = cache.AcquireAsync(bundlePath, sessionCacheKey, CancellationToken.None);
+        TestAssert.True(
+            firstLoaderEntered.Wait(TimeSpan.FromSeconds(5)),
+            "The first acquire should start the first physical load.");
+
+        cache.InvalidateBundleArtifact("workspace-a", "bundle-a");
+        var secondTask = cache.AcquireAsync(bundlePath, sessionCacheKey, CancellationToken.None);
+
+        TestAssert.True(
+            secondLoaderEntered.Wait(TimeSpan.FromSeconds(5)),
+            "Invalidating a bundle artifact should let the next acquire start a fresh load.");
+        TestAssert.Equal(
+            2,
+            Volatile.Read(ref loadCount),
+            "The invalidated artifact identity should no longer share the old in-flight entry.");
+
+        releaseLoaders.Set();
+        await AssertLoadFailedAsync(firstTask);
+        await AssertLoadFailedAsync(secondTask);
+    }
+
+    public static async Task InvalidateWorkspace_ShouldRemoveMatchingWorkspaceArtifactIdentities()
+    {
+        using var firstLoaderEntered = new ManualResetEventSlim();
+        using var secondLoaderEntered = new ManualResetEventSlim();
+        using var releaseLoaders = new ManualResetEventSlim();
+        var loadCount = 0;
+        using var cache = new AssetsToolsBundleLoadedSessionCache(
+            _ =>
+            {
+                var currentCount = Interlocked.Increment(ref loadCount);
+                if (currentCount == 1)
+                {
+                    firstLoaderEntered.Set();
+                }
+
+                if (currentCount == 2)
+                {
+                    secondLoaderEntered.Set();
+                }
+
+                releaseLoaders.Wait(TimeSpan.FromSeconds(5));
+                throw new InvalidOperationException("load failed");
+            },
+            TimeSpan.FromSeconds(30));
+        var bundlePath = Path.Combine(Path.GetTempPath(), $"bundle-{Guid.NewGuid():N}.ab");
+        const string sessionCacheKey = "bundle-artifact|workspace-a|bundle-a|normalizer|fingerprint-a";
+
+        var firstTask = cache.AcquireAsync(bundlePath, sessionCacheKey, CancellationToken.None);
+        TestAssert.True(
+            firstLoaderEntered.Wait(TimeSpan.FromSeconds(5)),
+            "The first acquire should start the first physical load.");
+
+        cache.InvalidateWorkspace("workspace-a");
+        var secondTask = cache.AcquireAsync(bundlePath, sessionCacheKey, CancellationToken.None);
+
+        TestAssert.True(
+            secondLoaderEntered.Wait(TimeSpan.FromSeconds(5)),
+            "Invalidating a workspace should let matching artifact identities start fresh loads.");
+        TestAssert.Equal(
+            2,
+            Volatile.Read(ref loadCount),
+            "Workspace invalidation should remove existing artifact identity entries for that workspace.");
+
+        releaseLoaders.Set();
+        await AssertLoadFailedAsync(firstTask);
+        await AssertLoadFailedAsync(secondTask);
+    }
+
     private static async Task AssertLoadFailedAsync(Task<AssetsToolsBundleLoadedSessionLease> task)
     {
         try
