@@ -1,6 +1,8 @@
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
+using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Workspace.Services;
+using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
@@ -15,18 +17,25 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
     private readonly IWorkspaceAssetInspectionGateway _workspaceAssetInspectionGateway;
     private readonly IWorkspaceContextService _workspaceContextService;
     private readonly IBundleExplorerWorkspaceShellHost _workspaceShell;
-    private readonly IBackgroundTaskRunner _backgroundTaskRunner;
+    private readonly IBackgroundWorkScheduler _backgroundWorkScheduler;
+    private readonly ILocalizationService? _localizationService;
 
     public SpineAssetGroupDetailsLoader(
         IWorkspaceAssetInspectionGateway workspaceAssetInspectionGateway,
         IWorkspaceContextService workspaceContextService,
         IBundleExplorerWorkspaceShellHost workspaceShell,
-        IBackgroundTaskRunner backgroundTaskRunner)
+        IBackgroundTaskRunner backgroundTaskRunner,
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null,
+        ILocalizationService? localizationService = null)
     {
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _workspaceShell = workspaceShell ?? throw new ArgumentNullException(nameof(workspaceShell));
-        _backgroundTaskRunner = backgroundTaskRunner ?? throw new ArgumentNullException(nameof(backgroundTaskRunner));
+        ArgumentNullException.ThrowIfNull(backgroundTaskRunner);
+        _backgroundWorkScheduler = backgroundWorkScheduler ?? new BackgroundWorkScheduler(
+            backgroundTaskRunner,
+            NullAppBackgroundTaskStatusService.Instance);
+        _localizationService = localizationService;
     }
 
     public async Task<SpineAssetGroupDetailsLoadResult?> LoadAsync(
@@ -42,8 +51,20 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
 
         try
         {
-            var result = await _backgroundTaskRunner.RunAsync(
-                token => _workspaceAssetInspectionGateway.LoadSpineAssetGroupDetailsAsync(query, token),
+            var result = await _backgroundWorkScheduler.RunAsync(
+                new BackgroundWorkRequest<Result<SpineAssetGroupDetailsDto>>(
+                    BackgroundWorkProfile.PreviewForeground,
+                    context => _workspaceAssetInspectionGateway.LoadSpineAssetGroupDetailsAsync(query, context.CancellationToken))
+                {
+                    SemanticKind = BackgroundWorkSemanticKind.TransientRead,
+                    Priority = BackgroundWorkPriority.UserBlocking,
+                    WorkspaceId = query.WorkspaceId.Value,
+                    WorkspaceKey = query.WorkspaceKey,
+                    BundleCacheKey = query.BundleId.Value,
+                    ResourceKey = query.GroupId,
+                    StatusTitle = CreatePreviewStatusTitle(groupTab.DisplayName),
+                    ShowInStatusBar = _localizationService is not null
+                },
                 cancellationToken);
             if (!result.IsSuccess || result.Value is null)
             {
@@ -224,8 +245,20 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
             detailsQuery.WorkspaceDataRootPath,
             texturePageAsset.BundleId,
             texturePageAsset.AssetId);
-        var previewResult = await _backgroundTaskRunner.RunAsync(
-            token => _workspaceAssetInspectionGateway.GetAssetPreviewAsync(previewQuery, token),
+        var previewResult = await _backgroundWorkScheduler.RunAsync(
+            new BackgroundWorkRequest<Result<AssetPreviewDto>>(
+                BackgroundWorkProfile.PreviewForeground,
+                context => _workspaceAssetInspectionGateway.GetAssetPreviewAsync(previewQuery, context.CancellationToken))
+            {
+                SemanticKind = BackgroundWorkSemanticKind.TransientRead,
+                Priority = BackgroundWorkPriority.UserBlocking,
+                WorkspaceId = previewQuery.WorkspaceId.Value,
+                WorkspaceKey = previewQuery.WorkspaceKey,
+                BundleCacheKey = previewQuery.BundleId.Value,
+                ResourceKey = previewQuery.AssetId.Value,
+                StatusTitle = CreatePreviewStatusTitle(ResolveTexturePreviewDisplayName(atlasPage)),
+                ShowInStatusBar = _localizationService is not null
+            },
             cancellationToken);
         if (!previewResult.IsSuccess ||
             previewResult.Value is not { Kind: AssetPreviewKind.Image } preview)
@@ -270,6 +303,33 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
         }
 
         return details.AtlasPages.FirstOrDefault(static page => page.TexturePageAsset is not null);
+    }
+
+    private string? CreatePreviewStatusTitle(string? displayName)
+    {
+        if (_localizationService is null)
+        {
+            return null;
+        }
+
+        var normalizedDisplayName = string.IsNullOrWhiteSpace(displayName)
+            ? _localizationService.GetRequiredString(ResourceKeys.InspectorSpineGroupAssetType)
+            : displayName.Trim();
+        return _localizationService.GetFormattedString(
+            ResourceKeys.BundleExplorerStatusLoadPreviewFormat,
+            normalizedDisplayName);
+    }
+
+    private static string ResolveTexturePreviewDisplayName(SpineAtlasPageDto atlasPage)
+    {
+        if (!string.IsNullOrWhiteSpace(atlasPage.TexturePageAsset?.Name))
+        {
+            return atlasPage.TexturePageAsset.Name.Trim();
+        }
+
+        return string.IsNullOrWhiteSpace(atlasPage.Name)
+            ? atlasPage.TexturePageAsset?.AssetId.Value ?? string.Empty
+            : atlasPage.Name.Trim();
     }
 
     private bool TryCreateQuery(

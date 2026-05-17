@@ -320,8 +320,9 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         ArgumentNullException.ThrowIfNull(bundleTab);
         ArgumentNullException.ThrowIfNull(assetTab);
 
-        var wasAlreadyActiveAssetTab = ReferenceEquals(bundleTab.ActiveAssetTab, assetTab);
-        bundleTab.SetActiveAssetTab(assetTab);
+        var previousActiveAssetTab = bundleTab.ActiveAssetTab;
+        var wasAlreadyActiveAssetTab = ReferenceEquals(previousActiveAssetTab, assetTab);
+        bundleTab.SetActiveAssetTab(assetTab, cancelPreviousAsset: false);
 
         if (wasAlreadyActiveAssetTab)
         {
@@ -361,12 +362,18 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
             SchedulePreviewLoadingForActiveBundleTab(
                 bundleTab,
                 assetTab,
-                promoteActiveLoadingPreview: !wasAlreadyActiveAssetTab);
+                promoteActiveLoadingPreview: !wasAlreadyActiveAssetTab,
+                previousActiveAssetTab);
             _requestWorkspaceBrowserStatePersistence();
             return;
         }
 
-        await LoadAssetDocumentTabAsync(bundleTab, assetTab, writeLog, promotePreviewAfterLoad: !wasAlreadyActiveAssetTab);
+        await LoadAssetDocumentTabAsync(
+            bundleTab,
+            assetTab,
+            writeLog,
+            promotePreviewAfterLoad: !wasAlreadyActiveAssetTab,
+            previousActiveAssetTab);
         _requestWorkspaceBrowserStatePersistence();
     }
 
@@ -374,7 +381,8 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         BundleDocumentTabViewModel bundleTab,
         AssetDocumentTabViewModel assetTab,
         bool writeLog,
-        bool promotePreviewAfterLoad)
+        bool promotePreviewAfterLoad,
+        AssetDocumentTabViewModel? previousActiveAssetTab)
     {
         if (_workspaceShell.WorkspaceSummary is null)
         {
@@ -415,7 +423,8 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         SchedulePreviewLoadingForActiveBundleTab(
             bundleTab,
             assetTab,
-            promotePreviewAfterLoad);
+            promotePreviewAfterLoad,
+            previousActiveAssetTab);
 
         if (writeLog)
         {
@@ -426,12 +435,20 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
     private void SchedulePreviewLoadingForActiveBundleTab(
         BundleDocumentTabViewModel bundleTab,
         AssetDocumentTabViewModel activeAssetTab,
-        bool promoteActiveLoadingPreview)
+        bool promoteActiveLoadingPreview,
+        AssetDocumentTabViewModel? previousActiveAssetTab)
     {
         ArgumentNullException.ThrowIfNull(bundleTab);
         ArgumentNullException.ThrowIfNull(activeAssetTab);
 
         _assetPreviewLoadCoordinator.LoadForegroundPreview(activeAssetTab, promoteActiveLoadingPreview);
+        if (!ReferenceEquals(previousActiveAssetTab, activeAssetTab))
+        {
+            _assetPreviewLoadCoordinator.DemotePreviewToBackgroundPrewarm(
+                previousActiveAssetTab,
+                bundleTab.AssetTabs);
+        }
+
         _assetPreviewLoadCoordinator.PrewarmBackgroundPreviews(bundleTab, activeAssetTab);
     }
 

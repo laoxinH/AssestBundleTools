@@ -132,6 +132,9 @@
   <data name="AppStatusBar.Progress.Format" xml:space="preserve">
     <value>{0}/{1}</value>
   </data>
+  <data name="AppStatusBar.CancelTask.ToolTip" xml:space="preserve">
+    <value>Cancel current background task</value>
+  </data>
   <data name="HomePage.PageTitleText.Text" xml:space="preserve">
     <value>Console</value>
   </data>
@@ -2871,6 +2874,9 @@
   <data name="BatchTasksPage.BatchExtract.Status.Text" xml:space="preserve">
     <value>Running batch extraction</value>
   </data>
+  <data name="BatchTasksPage.BatchReplace.Status.Text" xml:space="preserve">
+    <value>Running batch replacement skeleton</value>
+  </data>
   <data name="BatchTasksPage.BatchReplace.Scope.Format" xml:space="preserve">
     <value>Current workspace: {0}</value>
   </data>
@@ -2936,6 +2942,9 @@
   </data>
   <data name="BatchTasksPage.SaveExecution.Log.Executed.Format" xml:space="preserve">
     <value>Executed the save skeleton for {0} bundles covering {1} tracked changes. Suggested output directory: {2}</value>
+  </data>
+  <data name="BatchTasksPage.SaveExecution.Status.Text" xml:space="preserve">
+    <value>Verifying save-output skeleton</value>
   </data>
   <data name="BatchTasksPage.TaskResultStatusCompleted" xml:space="preserve">
     <value>Completed</value>
@@ -3099,6 +3108,27 @@
   <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.Four" xml:space="preserve">
     <value>4 workers</value>
   </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Label" xml:space="preserve">
+    <value>Preview worker count</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Description" xml:space="preserve">
+    <value>Automatic mode derives 1 to 4 preview slots from the CPU count. A fixed value limits the total concurrency for active previews and background prewarm, while the active tab always keeps the foreground slot.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Option.Automatic" xml:space="preserve">
+    <value>Automatic</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Option.One" xml:space="preserve">
+    <value>1 worker</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Option.Two" xml:space="preserve">
+    <value>2 workers</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Option.Three" xml:space="preserve">
+    <value>3 workers</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Option.Four" xml:space="preserve">
+    <value>4 workers</value>
+  </data>
   <data name="SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the startup restore preference. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
   </data>
@@ -3107,6 +3137,9 @@
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the import worker count. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.SaveFailedMessage" xml:space="preserve">
+    <value>Failed to save the preview worker count. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
   </data>
   <data name="SettingsDiagnosticsPage.ResponsibilityTitleText.Text" xml:space="preserve">
     <value>Page Role</value>
@@ -3308,6 +3341,9 @@
   </data>
   <data name="BundleExplorer.Notification.BatchAssetsExtracted" xml:space="preserve">
     <value>Exported {0} assets.</value>
+  </data>
+  <data name="BundleExplorer.Status.LoadPreview.Format" xml:space="preserve">
+    <value>Loading preview: {0}</value>
   </data>
   <data name="BundleExplorer.Status.ExtractSelectedAssets" xml:space="preserve">
     <value>Extracting selected assets</value>

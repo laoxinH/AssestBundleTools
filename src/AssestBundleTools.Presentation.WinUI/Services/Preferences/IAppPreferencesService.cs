@@ -16,9 +16,13 @@ public interface IAppPreferencesService
 
     int WorkspaceImportWorkerCount { get; }
 
+    int PreviewWorkerCount { get; }
+
     bool TrySetRestoreLastWorkspaceOnStartup(bool value);
 
     bool TrySetRecentWorkspaceOpenBehavior(RecentWorkspaceOpenBehavior value);
 
     bool TrySetWorkspaceImportWorkerCount(int value);
+
+    bool TrySetPreviewWorkerCount(int value);
 }

@@ -727,8 +727,9 @@ cache/
 - 当资源包索引失效或导入来源移除时，当前实现会同步清理对应 `bundleCacheKey` 下的预览缓存描述与内容文件
 - 工作台资源详情当前已正式接入 `PreviewCacheStore` 的按需生成、命中与失效清理链路
 - 当前图片预览缓存已按资源独立落盘，不再共用单一 `payload.txt / payload.png` 覆写文件；Sprite 裁切结果会作为同一预览缓存项下的 `focus.png` 附加载荷保存
-- 资产详情预览加载采用当前活动标签优先策略：切换到其他资产详情标签时，旧标签的未完成预览请求会被标记为失效并清空旧 loading 状态；尚未开始的旧请求会跳过，已经开始但不再相关的旧请求不会回写 UI，用户切回旧标签时再按需懒加载预览
-- 已确认一个后续需要治理的预览内存风险：连续打开多个缓存未命中的资源预览时，`AssetsTools.NET` 在 `LoadBundleFile(..., unpackIfPacked: true)` 阶段可能通过 LZMA 把压缩 bundle 解到内存流；若旧预览任务已经进入同步解包，取消或超时不能立刻打断底层解包，后台预热、前台切换和 Mesh 关联贴图预览叠加时可能把实际内存峰值推高，并触发 `OutOfMemoryException`。当前先保留结构化诊断展示堆栈，后续应按 9.2 的方向收口。
+- 资产详情预览加载采用当前活动标签优先策略：切换到其他资产详情标签时，旧标签的未完成前台预览请求会被标记为失效并降级为后台预热；新活动标签按 `PreviewForeground` 重新调度，前台调用方取消可释放前台 profile 槽。已打开标签的后台预热按最近激活、最近打开优先，而不是单纯集合顺序。
+- 当前 AssetsTools 预览生成器已接入首版 loaded-session 缓存：同一物理 bundle 路径的 `LoadBundleFile(..., unpackIfPacked: true)` 和 `LoadAssetsFileFromBundle(...)` 通过 single-flight 进入一次加载任务，成功后用 lease 方式短时复用，并以 30 秒滑动 TTL 驱逐；同一 loaded session 的 AssetsTools 访问默认串行化，避免假设第三方对象可无锁并发。
+- 仍需继续治理的预览内存风险：首版 loaded-session 只覆盖进程内预览生成器的物理加载复用，还没有标准化 `cache/bundles` artifact、容量上限、主动失效、内存压力退避和跨提取 / 导出共享身份；连续打开多个不同大 bundle 的缓存未命中预览时，内存峰值仍需按 9.2 继续收口。
 - 当前预览类型覆盖如下：
   - 图像预览：`Texture2D`、`Sprite`
   - 文本预览：`TextAsset`、`Shader`
@@ -839,12 +840,10 @@ cache/
 
 后续收口建议：
 
-1. 先修正预览执行队列的槽位释放语义：UI 可在取消或超时后停止等待，但底层预览任务真正完成前不应释放对应 worker 槽，避免旧解包仍在运行时继续放入新解包任务。
-2. 收紧后台预热策略：对缓存未命中、大 bundle 或已发生内存不足的 bundle，后台预热应跳过或只复用已有预览缓存；前台活动资产预览优先。
-3. 为同一 `workspaceKey + bundleCacheKey` 引入 bundle 级 single-flight 或低并发闸门，避免同一个 bundle 被多个预览任务同时重复解包。
-4. 引入标准化资源包物理缓存：把压缩、解密或需要标准化的 bundle 落为 `cache/bundles/<workspaceKey>/<bundleCacheKey>/normalized.bundle` 这类工作区缓存 artifact，并用 `source fingerprint + decryptorId + decryptorVersion + normalizerVersion + bundleCacheKey` 或等价身份控制失效；后续 Reader、Preview、Extraction 与 Spine 组解析都优先复用该 artifact，而不是每个预览缓存未命中时重新内存解包。
-5. 在物理缓存之上引入进程内 loaded-session 缓存：对同一标准化 artifact 做 single-flight 加载、lease 使用、滑动 TTL 和容量上限管理，避免多标签预览或批量提取同时重复 `LoadBundleFile`。
-6. 对 `OutOfMemoryException` 补专用诊断分类和短期退避：在保留堆栈 detail 的同时，提示“预览生成内存不足”，并暂停同 bundle 的后台预热，避免连续失败。
+1. 继续收紧后台预热策略：对缓存未命中、大 bundle 或已发生内存不足的 bundle，后台预热应跳过或只复用已有预览缓存；前台活动资产预览优先。
+2. 引入标准化资源包物理缓存：把压缩、解密或需要标准化的 bundle 落为 `cache/bundles/<workspaceKey>/<bundleCacheKey>/normalized.bundle` 这类工作区缓存 artifact，并用 `source fingerprint + decryptorId + decryptorVersion + normalizerVersion + bundleCacheKey` 或等价身份控制失效；后续 Reader、Preview、Extraction 与 Spine 组解析都优先复用该 artifact，而不是每个预览缓存未命中时重新内存解包。
+3. 将当前基于物理路径的 AssetsTools loaded-session 首版实现升级为基于标准化 artifact 身份的共享缓存，补齐容量上限、主动失效、内存压力退避和提取 / 导出共享入口。
+4. 对 `OutOfMemoryException` 补专用诊断分类和短期退避：在保留堆栈 detail 的同时，提示“预览生成内存不足”，并暂停同 bundle 的后台预热，避免连续失败。
 
 ## 10. 执行结论
 
@@ -860,7 +859,7 @@ cache/
 - 资源包标签页属于页面级状态，不直接侵入 Application 层
 - 当前已通过工作区元数据文件恢复资源包标签页与活动筛选状态
 - 当前已通过工作区元数据文件恢复资源包标签页下的资产详情标签、活动资产标签与检查器页签位置
-- 资产预览查询通过 Presentation 预览执行队列后台运行，默认并发度为 `clamp(Environment.ProcessorCount / 2, 1, 4)`；执行队列保留 1 个前台槽优先服务当前活动资产详情标签，其余槽用于已打开资产详情标签的后台预热。若并发度为 1，则后台预热不参与竞争；切换到尚未完成的标签时，应取消该标签旧的后台请求并以前台优先级重开，已完成的预览则直接复用。关闭资产标签、关闭资源包标签、重建标签集合或工作区失效时，必须取消对应标签范围内的预览请求。
+- 资产预览查询通过 Presentation 预览执行队列后台运行，预览 worker 总数由应用偏好控制：自动模式为 `clamp(Environment.ProcessorCount / 2, 1, 4)`，也可在“设置与诊断”页固定为 `1-4`。执行队列保留 1 个前台槽优先服务当前活动资产详情标签，其余槽用于已打开资产详情标签的后台预热。若并发度为 1，则后台预热不参与竞争；快速切换到新标签时，新活动标签按前台优先级重开，旧活动标签取消前台请求并在仍打开时降级为后台预热，后台预热按最近激活 / 最近打开优先，已完成的预览则直接复用。Spine runtime 当前帧使用独立 `SpineRuntimeFrame` profile，不与普通详情预览争用槽位。关闭资产标签、关闭资源包标签、重建标签集合或工作区失效时，必须取消对应标签范围内的预览请求。导入、预览、提取、导出和后续保存 / 重建的 Presentation 层后台任务调度统一边界见 [background-task-scheduling.md](background-task-scheduling.md)。
 - 工作区默认解密器属于工作区元数据，由工作区向导设置，并在工作台状态标签中呈现
 - 导入入口先收口到 Presentation 共享协调服务，再通过 Application 层统一登记工作区导入来源，并进一步接到解密、读取和缓存写入链路
 - 真实导入前若需要解密，应先通过独立解密器扩展点把来源转换为可读取文件，再进入 `IAssetBundleReader`
@@ -872,7 +871,7 @@ cache/
 - AB 真实解析结果应优先写入独立缓存层，而不是写进工作区元数据文件
 - 解密后的临时文件默认属于 `staging` 层，不应混入工作区元数据
 - 可复用的标准化资源包应属于 `cache/bundles` 层，并作为 Reader、预览、提取和 Spine 解析的共同物理输入；它可以被清理和重建，不能成为操作记录或撤销语义的事实来源
-- 进程内 loaded-session 缓存只负责短时间复用已加载 AB 上下文，必须使用 single-flight、lease、滑动 TTL、容量上限和主动失效；该缓存不得暴露 AssetsTools.NET 对象到 Application 或 Presentation
+- 进程内 loaded-session 缓存只负责短时间复用已加载 AB 上下文；当前 AssetsTools 预览生成器已落地首版 single-flight、lease、串行访问保护和 30 秒滑动 TTL，后续还需补齐基于标准化 artifact 的身份、容量上限、主动失效和提取 / 导出共享入口；该缓存不得暴露 AssetsTools.NET 对象到 Application 或 Presentation
 - 同一工作区的导入刷新默认只允许一个运行中作业；当前多线程导入也只允许在 `Application` 导入链路内部按 bundle 粒度做受控并行，并维持“串行计划 -> 有界并行 worker -> 串行提交”的三段模型
 - 通过工作区向导新建或打开工作区时，仍可显式选择当前窗口或新窗口
 - 工作区向导应优先用“工作区数据目录”识别已有工作区，并在新建时显式处理目录冲突

@@ -57,7 +57,9 @@ public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
         IBackgroundTaskRunner backgroundTaskRunner,
         IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
         IPathNavigationService pathNavigationService,
-        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null)
+        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null,
+        Func<int>? previewWorkerCountProvider = null)
     {
         ArgumentNullException.ThrowIfNull(workspaceExplorerGateway);
         ArgumentNullException.ThrowIfNull(workspaceAssetInspectionGateway);
@@ -105,7 +107,9 @@ public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
             isBusyProvider: () => IsBusy,
             setBusyState: value => IsBusy = value,
             requestWorkspaceBrowserStatePersistence: RequestWorkspaceBrowserStatePersistence,
-            backgroundTaskStatusService: backgroundTaskStatusService);
+            backgroundTaskStatusService: backgroundTaskStatusService,
+            backgroundWorkScheduler: backgroundWorkScheduler,
+            previewWorkerCountProvider: previewWorkerCountProvider);
         _bundleTabCoordinator = new BundleExplorerBundleTabCoordinator(
             _bundlePane,
             _documentWorkspace,
@@ -159,7 +163,8 @@ public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
             _browserStateCoordinator,
             isBusyProvider: () => IsBusy,
             setBusyState: value => IsBusy = value,
-            openBundleAsync: _bundleTabCoordinator.OpenBundleAsync);
+            openBundleAsync: _bundleTabCoordinator.OpenBundleAsync,
+            backgroundWorkScheduler: backgroundWorkScheduler);
         _workspaceImportActionHandler = new BundleExplorerWorkspaceImportActionHandler(
             workspaceImportCoordinatorService,
             _workspaceImportProgress,

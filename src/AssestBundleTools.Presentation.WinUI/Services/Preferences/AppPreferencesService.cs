@@ -8,6 +8,9 @@ public sealed class AppPreferencesService : IAppPreferencesService
     public const int AutomaticWorkspaceImportWorkerCount = 0;
     public const int MinimumManualWorkspaceImportWorkerCount = 1;
     public const int MaximumManualWorkspaceImportWorkerCount = 4;
+    public const int AutomaticPreviewWorkerCount = 0;
+    public const int MinimumManualPreviewWorkerCount = 1;
+    public const int MaximumManualPreviewWorkerCount = 4;
     private const string CurrentWindowBehaviorKey = "currentWindow";
     private const string NewWindowBehaviorKey = "newWindow";
     private const string AskEveryTimeBehaviorKey = "askEveryTime";
@@ -26,6 +29,8 @@ public sealed class AppPreferencesService : IAppPreferencesService
         DeserializeRecentWorkspaceOpenBehavior(_currentSnapshot.RecentWorkspaceOpenBehavior);
 
     public int WorkspaceImportWorkerCount => CoerceWorkspaceImportWorkerCount(_currentSnapshot.WorkspaceImportWorkerCount);
+
+    public int PreviewWorkerCount => CoercePreviewWorkerCount(_currentSnapshot.PreviewWorkerCount);
 
     public bool TrySetRestoreLastWorkspaceOnStartup(bool value)
     {
@@ -116,6 +121,35 @@ public sealed class AppPreferencesService : IAppPreferencesService
         }
     }
 
+    public bool TrySetPreviewWorkerCount(int value)
+    {
+        var coercedValue = CoercePreviewWorkerCount(value);
+        if (_currentSnapshot.PreviewWorkerCount == coercedValue)
+        {
+            return true;
+        }
+
+        var updatedSnapshot = _currentSnapshot with
+        {
+            PreviewWorkerCount = coercedValue
+        };
+
+        try
+        {
+            _preferencesStore.Save(updatedSnapshot);
+            _currentSnapshot = updatedSnapshot;
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
     private static RecentWorkspaceOpenBehavior DeserializeRecentWorkspaceOpenBehavior(string? behaviorKey)
     {
         return behaviorKey switch
@@ -147,5 +181,18 @@ public sealed class AppPreferencesService : IAppPreferencesService
             value,
             MinimumManualWorkspaceImportWorkerCount,
             MaximumManualWorkspaceImportWorkerCount);
+    }
+
+    public static int CoercePreviewWorkerCount(int value)
+    {
+        if (value == AutomaticPreviewWorkerCount)
+        {
+            return AutomaticPreviewWorkerCount;
+        }
+
+        return Math.Clamp(
+            value,
+            MinimumManualPreviewWorkerCount,
+            MaximumManualPreviewWorkerCount);
     }
 }

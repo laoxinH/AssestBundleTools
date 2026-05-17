@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Common.Results;
@@ -6,9 +7,11 @@ using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.Tests.Testing;
+using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 using static AssestBundleTools.Presentation.Tests.ViewModels.BundleExplorerPreviewTestSupport;
 
@@ -108,6 +111,184 @@ public sealed class BundleExplorerAssetPreviewSchedulingTests
         Assert.Equal(string.Empty, assetTab.Inspector.Preview.PreviewText);
     }
 
+    [Fact]
+    public async Task LoadInspectorPreviewAsync_ShouldShowForegroundPreviewInShellStatus()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-ui");
+        var assetId = new AssetId("asset-current");
+        var context = CreatePreviewContext(workspaceId, "PreviewStatusBar");
+        var statusService = new RecordingBackgroundTaskStatusService();
+        var scheduler = new BackgroundWorkScheduler(
+            new TestBackgroundTaskRunner(),
+            statusService,
+            previewWorkerCount: 2);
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            GetAssetPreviewHandler = query => Task.FromResult(CreateSummaryPreviewResult(query))
+        };
+        var coordinator = new BundleExplorerAssetPreviewCoordinator(
+            inspectionGateway,
+            context.WorkspaceContextService,
+            context.WorkspaceShell,
+            context.AppLogService,
+            context.LocalizationService,
+            new TestBackgroundTaskRunner(),
+            previewWorkerCount: 2,
+            backgroundWorkScheduler: scheduler);
+        var assetTab = CreateAssetTab(bundleId, assetId, context.LocalizationService);
+        var details = CreateAssetDetails(workspaceId, bundleId, assetId);
+        assetTab.ApplyDetails(details);
+
+        await coordinator.LoadInspectorPreviewAsync(
+            assetTab,
+            details,
+            static _ => "failed",
+            () => true,
+            AssetPreviewLoadPriority.Foreground);
+
+        var task = Assert.Single(statusService.Tasks);
+        Assert.Equal($"{ResourceKeys.BundleExplorerStatusLoadPreviewFormat}:Button", task.Title);
+        Assert.Null(task.TotalCount);
+        Assert.True(task.IsDisposed);
+    }
+
+    [Fact]
+    public async Task LoadInspectorPreviewAsync_ShouldKeepBackgroundPrewarmOutOfShellStatus()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-ui");
+        var assetId = new AssetId("asset-background");
+        var context = CreatePreviewContext(workspaceId, "PreviewPrewarmStatusBar");
+        var statusService = new RecordingBackgroundTaskStatusService();
+        var scheduler = new BackgroundWorkScheduler(
+            new TestBackgroundTaskRunner(),
+            statusService,
+            previewWorkerCount: 2);
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            GetAssetPreviewHandler = query => Task.FromResult(CreateSummaryPreviewResult(query))
+        };
+        var coordinator = new BundleExplorerAssetPreviewCoordinator(
+            inspectionGateway,
+            context.WorkspaceContextService,
+            context.WorkspaceShell,
+            context.AppLogService,
+            context.LocalizationService,
+            new TestBackgroundTaskRunner(),
+            previewWorkerCount: 2,
+            backgroundWorkScheduler: scheduler);
+        var assetTab = CreateAssetTab(bundleId, assetId, context.LocalizationService);
+        var details = CreateAssetDetails(workspaceId, bundleId, assetId);
+        assetTab.ApplyDetails(details);
+
+        await coordinator.LoadInspectorPreviewAsync(
+            assetTab,
+            details,
+            static _ => "failed",
+            () => true,
+            AssetPreviewLoadPriority.BackgroundPrewarm);
+
+        Assert.Empty(statusService.Tasks);
+    }
+
+    [Fact]
+    public async Task LoadSpineGroupDetailsAsync_ShouldShowForegroundPreviewInShellStatus()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-spine");
+        var context = CreatePreviewContext(workspaceId, "SpinePreviewStatusBar");
+        var statusService = new RecordingBackgroundTaskStatusService();
+        var scheduler = new BackgroundWorkScheduler(
+            new TestBackgroundTaskRunner(),
+            statusService,
+            previewWorkerCount: 2);
+        var group = new SpineAssetGroupDto(
+            GroupId: "spine-group",
+            BundleId: bundleId,
+            DisplayName: "Amiya Spine",
+            GroupKey: "spine-group-key",
+            SkeletonAssets: Array.Empty<SpineAssetGroupPartDto>(),
+            AtlasAssets: Array.Empty<SpineAssetGroupPartDto>(),
+            TexturePageAssets: Array.Empty<SpineAssetGroupPartDto>(),
+            Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>());
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            LoadSpineAssetGroupDetailsHandler = _ => Task.FromResult(Result<SpineAssetGroupDetailsDto>.Success(
+                new SpineAssetGroupDetailsDto(
+                    group,
+                    Array.Empty<SpineSkeletonSummaryDto>(),
+                    Array.Empty<SpineAtlasPageDto>(),
+                    Array.Empty<SpineAssetGroupDiagnosticDto>())))
+        };
+        var loader = new SpineAssetGroupDetailsLoader(
+            inspectionGateway,
+            context.WorkspaceContextService,
+            context.WorkspaceShell,
+            new TestBackgroundTaskRunner(),
+            scheduler,
+            context.LocalizationService);
+        var groupTab = new SpineAssetGroupDocumentTabViewModel(
+            group,
+            InspectorInformationTextSetFactory.Create(context.LocalizationService));
+
+        var result = await loader.LoadAsync(groupTab);
+
+        Assert.NotNull(result);
+        var task = Assert.Single(statusService.Tasks);
+        Assert.Equal($"{ResourceKeys.BundleExplorerStatusLoadPreviewFormat}:Amiya Spine", task.Title);
+        Assert.True(task.IsDisposed);
+    }
+
+    [Fact]
+    public async Task PrewarmBackgroundPreviews_ShouldPrioritizeRecentlyActivatedTabs()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-ui");
+        var oldAssetId = new AssetId("asset-old");
+        var recentAssetId = new AssetId("asset-recent");
+        var foregroundAssetId = new AssetId("asset-foreground");
+        var context = CreatePreviewContext(workspaceId, "PreviewPrewarmRecent");
+        var previewQueryAssetIds = new ConcurrentQueue<AssetId>();
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            GetAssetPreviewHandler = query =>
+            {
+                previewQueryAssetIds.Enqueue(query.AssetId);
+                return Task.FromResult(CreateSummaryPreviewResult(query));
+            }
+        };
+        var previewCoordinator = CreateCoordinator(context, inspectionGateway, previewWorkerCount: 2);
+        AssetDocumentTabViewModel? activeAssetTab = null;
+        var loadCoordinator = new BundleExplorerAssetPreviewLoadCoordinator(
+            previewCoordinator,
+            () => activeAssetTab,
+            static _ => "failed");
+        var oldTab = CreateAssetTab(bundleId, oldAssetId, context.LocalizationService);
+        var recentTab = CreateAssetTab(bundleId, recentAssetId, context.LocalizationService);
+        var foregroundTab = CreateAssetTab(bundleId, foregroundAssetId, context.LocalizationService);
+        oldTab.ApplyDetails(CreateAssetDetails(workspaceId, bundleId, oldAssetId));
+        recentTab.ApplyDetails(CreateAssetDetails(workspaceId, bundleId, recentAssetId));
+        foregroundTab.ApplyDetails(CreateAssetDetails(workspaceId, bundleId, foregroundAssetId));
+
+        oldTab.Inspector.ShowPreviewMessage("loaded");
+        activeAssetTab = oldTab;
+        loadCoordinator.LoadForegroundPreview(oldTab, promoteLoadingPreview: false);
+        recentTab.Inspector.ShowPreviewMessage("loaded");
+        activeAssetTab = recentTab;
+        loadCoordinator.LoadForegroundPreview(recentTab, promoteLoadingPreview: false);
+        oldTab.Inspector.Preview.ResetState();
+        recentTab.Inspector.Preview.ResetState();
+
+        activeAssetTab = foregroundTab;
+        loadCoordinator.PrewarmBackgroundPreviews(
+            [oldTab, recentTab, foregroundTab],
+            foregroundTab);
+        await WaitUntilAsync(() => previewQueryAssetIds.Count == 2);
+
+        Assert.Equal([recentAssetId, oldAssetId], previewQueryAssetIds.ToArray());
+    }
+
     private static PreviewContext CreatePreviewContext(WorkspaceId workspaceId, string workspaceName)
     {
         var localizationService = new TestLocalizationService();
@@ -169,4 +350,62 @@ public sealed class BundleExplorerAssetPreviewSchedulingTests
         TestWorkspaceContextService WorkspaceContextService,
         BundleExplorerWorkspaceShellViewModel WorkspaceShell,
         WorkspaceNavigationRequest WorkspaceRequest);
+
+    private sealed class RecordingBackgroundTaskStatusService : IAppBackgroundTaskStatusService
+    {
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public List<RecordingBackgroundTaskHandle> Tasks { get; } = [];
+
+        public string StatusText => string.Empty;
+
+        public string ProgressText => string.Empty;
+
+        public double ProgressValue => 0d;
+
+        public bool IsProgressIndeterminate => false;
+
+        public Microsoft.UI.Xaml.Visibility ProgressVisibility => Microsoft.UI.Xaml.Visibility.Collapsed;
+
+        public string StatusGlyph => string.Empty;
+
+        public IAppBackgroundTaskHandle BeginTask(string title, int? totalCount = null)
+        {
+            var task = new RecordingBackgroundTaskHandle(title, totalCount);
+            Tasks.Add(task);
+            return task;
+        }
+    }
+
+    private sealed class RecordingBackgroundTaskHandle : IAppBackgroundTaskHandle
+    {
+        public RecordingBackgroundTaskHandle(string title, int? totalCount)
+        {
+            Title = title;
+            TotalCount = totalCount;
+        }
+
+        public string Title { get; }
+
+        public int? TotalCount { get; }
+
+        public bool IsDisposed { get; private set; }
+
+        public void ReportProgress(int completedCount, int totalCount, string? detail = null)
+        {
+        }
+
+        public void ReportIndeterminate(string? detail = null)
+        {
+        }
+
+        public void Dispose()
+        {
+            IsDisposed = true;
+        }
+    }
 }

@@ -42,6 +42,7 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
     private bool _restoreLastWorkspaceOnStartup;
     private int _recentWorkspaceOpenBehaviorSelectedIndex;
     private int _workspaceImportWorkerCountSelectedIndex;
+    private int _previewWorkerCountSelectedIndex;
 
     public SettingsDiagnosticsViewModel(
         IAppLogService appLogService,
@@ -78,6 +79,9 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
         _workspaceImportWorkerCountSelectedIndex =
             SettingsDiagnosticsPreferenceOptionMapper.ConvertWorkspaceImportWorkerCountToSelectedIndex(
                 _appPreferencesService.WorkspaceImportWorkerCount);
+        _previewWorkerCountSelectedIndex =
+            SettingsDiagnosticsPreferenceOptionMapper.ConvertPreviewWorkerCountToSelectedIndex(
+                _appPreferencesService.PreviewWorkerCount);
         _workspaceContextService.CurrentWorkspaceChanged += OnWorkspaceContextChanged;
         _workspaceContextService.WorkspaceEntriesChanged += OnWorkspaceContextChanged;
 
@@ -216,6 +220,30 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
 
             _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountSaveFailedMessage));
             ShowErrorNotification(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountSaveFailedMessage);
+            OnPropertyChanged();
+        }
+    }
+
+    public int PreviewWorkerCountSelectedIndex
+    {
+        get => _previewWorkerCountSelectedIndex;
+        set
+        {
+            var selectedIndex = SettingsDiagnosticsPreferenceOptionMapper.ConvertPreviewWorkerCountToSelectedIndex(value);
+            if (_previewWorkerCountSelectedIndex == selectedIndex)
+            {
+                return;
+            }
+
+            var workerCount = SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToPreviewWorkerCount(selectedIndex);
+            if (_appPreferencesService.TrySetPreviewWorkerCount(workerCount))
+            {
+                SetProperty(ref _previewWorkerCountSelectedIndex, selectedIndex);
+                return;
+            }
+
+            _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountSaveFailedMessage));
+            ShowErrorNotification(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountSaveFailedMessage);
             OnPropertyChanged();
         }
     }

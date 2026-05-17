@@ -17,7 +17,18 @@ public interface IAppBackgroundTaskStatusService : INotifyPropertyChanged
 
     string StatusGlyph { get; }
 
+    bool CanCancelCurrentTask => false;
+
+    Visibility CancelVisibility => Visibility.Collapsed;
+
     IAppBackgroundTaskHandle BeginTask(string title, int? totalCount = null);
+
+    IAppBackgroundTaskHandle BeginTask(BackgroundTaskStatusRequest request) =>
+        BeginTask(request.Title, request.TotalCount);
+
+    void CancelCurrentTask()
+    {
+    }
 }
 
 public interface IAppBackgroundTaskHandle : IDisposable
@@ -26,3 +37,9 @@ public interface IAppBackgroundTaskHandle : IDisposable
 
     void ReportIndeterminate(string? detail = null);
 }
+
+public sealed record BackgroundTaskStatusRequest(
+    string Title,
+    int? TotalCount = null,
+    Guid? TaskId = null,
+    Action? CancelAction = null);

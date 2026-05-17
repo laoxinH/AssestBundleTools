@@ -21,7 +21,8 @@ internal sealed class InfrastructureAppPreferencesPersistenceStore : IAppPrefere
         return new AppPreferencesPersistenceSnapshot(
             snapshot.RestoreLastWorkspaceOnStartup,
             snapshot.RecentWorkspaceOpenBehavior,
-            snapshot.WorkspaceImportWorkerCount);
+            snapshot.WorkspaceImportWorkerCount,
+            snapshot.PreviewWorkerCount);
     }
 
     public void Save(AppPreferencesPersistenceSnapshot snapshot)
@@ -31,6 +32,7 @@ internal sealed class InfrastructureAppPreferencesPersistenceStore : IAppPrefere
         _store.Save(new AppPreferencesSnapshot(
             snapshot.RestoreLastWorkspaceOnStartup,
             snapshot.RecentWorkspaceOpenBehavior,
-            snapshot.WorkspaceImportWorkerCount));
+            snapshot.WorkspaceImportWorkerCount,
+            snapshot.PreviewWorkerCount));
     }
 }

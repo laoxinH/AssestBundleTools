@@ -22,6 +22,11 @@ public sealed class WorkspaceImportCoordinatorServiceTests
         var appLogService = new TestAppLogService();
         var notificationService = new TestAppNotificationService();
         var workspaceContextService = new TestWorkspaceContextService();
+        var backgroundTaskRunner = new TestBackgroundTaskRunner();
+        var backgroundTaskStatusService = new RecordingBackgroundTaskStatusService();
+        var backgroundWorkScheduler = new BackgroundWorkScheduler(
+            backgroundTaskRunner,
+            backgroundTaskStatusService);
         var navigationRequest = PresentationTestDataFactory.CreateNavigationRequest("ImportPerformance");
         var workspaceSummary = PresentationTestDataFactory.CreateWorkspaceSummary(navigationRequest);
         workspaceContextService.RegisterOrActivateWorkspace(
@@ -35,7 +40,8 @@ public sealed class WorkspaceImportCoordinatorServiceTests
             appLogService,
             notificationService,
             localizationService,
-            new InlineBackgroundTaskRunner());
+            backgroundTaskRunner,
+            backgroundWorkScheduler);
 
         var result = await service.RequestDragDropImportAsync(
             [@"C:\Bundles\hero.ab"]);
@@ -53,6 +59,18 @@ public sealed class WorkspaceImportCoordinatorServiceTests
                 message,
                 $"{ResourceKeys.WorkspaceImportLogProbePerformanceFormat}:12|1|1",
                 StringComparison.Ordinal));
+        Assert.Equal(1, backgroundTaskRunner.RunCallCount);
+        var task = Assert.Single(backgroundTaskStatusService.Tasks);
+        Assert.Equal(ResourceKeys.WorkspaceImportBusyOverlayTitle, task.Title);
+        Assert.True(task.IsDisposed);
+        Assert.Contains(
+            task.ProgressReports,
+            report => report.CompletedCount == 1 &&
+                      report.TotalCount == 1 &&
+                      string.Equals(
+                          $"{ResourceKeys.WorkspaceImportBusyOverlayProgressCurrentBundleFormat}:hero.ab",
+                          report.Detail,
+                          StringComparison.Ordinal));
     }
 
     private sealed class SuccessfulImportWorkspaceExplorerGateway : IWorkspaceExplorerGateway
@@ -91,6 +109,12 @@ public sealed class WorkspaceImportCoordinatorServiceTests
             ProcessWorkspaceImportsCommand command,
             CancellationToken cancellationToken = default)
         {
+            command.Progress?.Report(new WorkspaceImportProgressDto(
+                WorkspaceImportProgressStage.ProcessingBundles,
+                CompletedBundleCount: 1,
+                TotalBundleCount: 1,
+                CurrentBundleLogicalPath: "hero.ab"));
+
             return Task.FromResult(Result<WorkspaceImportProcessingResultDto>.Success(
                 new WorkspaceImportProcessingResultDto(
                     WorkspaceKey: command.WorkspaceKey,
@@ -176,13 +200,66 @@ public sealed class WorkspaceImportCoordinatorServiceTests
             Task.FromResult<string?>(null);
     }
 
-    private sealed class InlineBackgroundTaskRunner : IBackgroundTaskRunner
+    private sealed class RecordingBackgroundTaskStatusService : IAppBackgroundTaskStatusService
     {
-        public Task<TResult> RunAsync<TResult>(
-            Func<CancellationToken, Task<TResult>> operation,
-            CancellationToken cancellationToken = default)
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged
         {
-            return operation(cancellationToken);
+            add { }
+            remove { }
+        }
+
+        public List<RecordingBackgroundTaskHandle> Tasks { get; } = [];
+
+        public string StatusText => string.Empty;
+
+        public string ProgressText => string.Empty;
+
+        public double ProgressValue => 0d;
+
+        public bool IsProgressIndeterminate => false;
+
+        public Microsoft.UI.Xaml.Visibility ProgressVisibility => Microsoft.UI.Xaml.Visibility.Collapsed;
+
+        public string StatusGlyph => string.Empty;
+
+        public IAppBackgroundTaskHandle BeginTask(string title, int? totalCount = null)
+        {
+            var task = new RecordingBackgroundTaskHandle(title, totalCount);
+            Tasks.Add(task);
+            return task;
         }
     }
+
+    private sealed class RecordingBackgroundTaskHandle : IAppBackgroundTaskHandle
+    {
+        public RecordingBackgroundTaskHandle(string title, int? totalCount)
+        {
+            Title = title;
+            TotalCount = totalCount;
+        }
+
+        public string Title { get; }
+
+        public int? TotalCount { get; }
+
+        public bool IsDisposed { get; private set; }
+
+        public List<ProgressReport> ProgressReports { get; } = [];
+
+        public void ReportProgress(int completedCount, int totalCount, string? detail = null)
+        {
+            ProgressReports.Add(new ProgressReport(completedCount, totalCount, detail));
+        }
+
+        public void ReportIndeterminate(string? detail = null)
+        {
+        }
+
+        public void Dispose()
+        {
+            IsDisposed = true;
+        }
+    }
+
+    private sealed record ProgressReport(int CompletedCount, int TotalCount, string? Detail);
 }

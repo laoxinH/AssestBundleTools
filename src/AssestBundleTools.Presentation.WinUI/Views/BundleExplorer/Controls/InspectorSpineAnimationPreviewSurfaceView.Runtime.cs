@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Services;
+using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.UI.Xaml.Media;
 
@@ -9,6 +10,8 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView
 {
     private readonly ISpineAnimationRuntimePlaybackService? _runtimePlaybackService =
         ResolveRuntimePlaybackService();
+    private readonly IBackgroundWorkScheduler? _backgroundWorkScheduler =
+        ResolveBackgroundWorkScheduler();
 
     private ISpineAnimationRuntimePlaybackSession? _runtimePlaybackSession;
     private SpineAnimationRuntimePlaybackSourceDto? _runtimePlaybackSource;
@@ -113,7 +116,21 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView
         SpineAnimationRuntimePlaybackSessionResultDto result;
         try
         {
-            result = await _runtimePlaybackService!.TryCreateSessionAsync(source, cancellationToken);
+            result = _backgroundWorkScheduler is null
+                ? await _runtimePlaybackService!.TryCreateSessionAsync(source, cancellationToken)
+                : await _backgroundWorkScheduler.RunAsync(
+                    new BackgroundWorkRequest<SpineAnimationRuntimePlaybackSessionResultDto>(
+                        BackgroundWorkProfile.SpineRuntimeFrame,
+                        context => _runtimePlaybackService!.TryCreateSessionAsync(source, context.CancellationToken))
+                    {
+                        SemanticKind = BackgroundWorkSemanticKind.TransientRead,
+                        Priority = BackgroundWorkPriority.UserBlocking,
+                        BundleCacheKey = source.SkeletonAsset.BundleId.Value,
+                        ResourceKey = source.GroupKey,
+                        ShowInStatusBar = false,
+                        ReleaseProfileGateOnCallerCancellation = true
+                    },
+                    cancellationToken);
         }
         catch (OperationCanceledException)
         {
@@ -183,7 +200,20 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView
         SpineAnimationRuntimePlaybackFrameResultDto result;
         try
         {
-            result = await session.GetFrameAsync(request, cancellationToken);
+            result = _backgroundWorkScheduler is null
+                ? await session.GetFrameAsync(request, cancellationToken)
+                : await _backgroundWorkScheduler.RunAsync(
+                    new BackgroundWorkRequest<SpineAnimationRuntimePlaybackFrameResultDto>(
+                        BackgroundWorkProfile.SpineRuntimeFrame,
+                        context => session.GetFrameAsync(request, context.CancellationToken))
+                    {
+                        SemanticKind = BackgroundWorkSemanticKind.TransientRead,
+                        Priority = BackgroundWorkPriority.UserBlocking,
+                        ResourceKey = request.AnimationName,
+                        ShowInStatusBar = false,
+                        ReleaseProfileGateOnCallerCancellation = true
+                    },
+                    cancellationToken);
         }
         catch (OperationCanceledException)
         {
@@ -287,6 +317,18 @@ public sealed partial class InspectorSpineAnimationPreviewSurfaceView
         try
         {
             return App.CurrentApp.SpineAnimationRuntimePlaybackService;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static IBackgroundWorkScheduler? ResolveBackgroundWorkScheduler()
+    {
+        try
+        {
+            return App.CurrentApp.BackgroundWorkScheduler;
         }
         catch
         {

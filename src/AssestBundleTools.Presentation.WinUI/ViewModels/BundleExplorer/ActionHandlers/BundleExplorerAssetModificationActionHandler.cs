@@ -33,7 +33,8 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         IFilePickerService filePickerService,
         IBackgroundTaskRunner? backgroundTaskRunner = null,
         IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
-        IWorkspaceOperationChangeNotifier? operationChangeNotifier = null)
+        IWorkspaceOperationChangeNotifier? operationChangeNotifier = null,
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null)
     {
         _workspaceAssetOperationGateway = workspaceAssetOperationGateway ?? throw new ArgumentNullException(nameof(workspaceAssetOperationGateway));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
@@ -48,7 +49,8 @@ internal sealed class BundleExplorerAssetModificationActionHandler
             _filePickerService,
             backgroundTaskRunner,
             backgroundTaskStatusService,
-            operationChangeNotifier);
+            operationChangeNotifier,
+            backgroundWorkScheduler);
     }
 
     public Task ExtractSelectedAssetAsync(

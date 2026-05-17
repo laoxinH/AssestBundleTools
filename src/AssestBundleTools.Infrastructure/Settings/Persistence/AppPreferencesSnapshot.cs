@@ -10,10 +10,12 @@ namespace AssestBundleTools.Infrastructure.Settings.Persistence;
 public sealed record AppPreferencesSnapshot(
     bool RestoreLastWorkspaceOnStartup,
     string RecentWorkspaceOpenBehavior,
-    int WorkspaceImportWorkerCount)
+    int WorkspaceImportWorkerCount,
+    int PreviewWorkerCount = 0)
 {
     public static AppPreferencesSnapshot Default { get; } = new(
         RestoreLastWorkspaceOnStartup: true,
         RecentWorkspaceOpenBehavior: "currentWindow",
-        WorkspaceImportWorkerCount: 0);
+        WorkspaceImportWorkerCount: 0,
+        PreviewWorkerCount: 0);
 }

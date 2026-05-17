@@ -518,6 +518,20 @@
                                     x:Name="WorkspaceImportWorkerCountDescriptionText"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     TextWrapping="WrapWholeWords" />
+
+                                <TextBlock
+                                    x:Name="PreviewWorkerCountLabelText"
+                                    FontWeight="SemiBold" />
+
+                                <RadioButtons
+                                    x:Name="PreviewWorkerCountRadioButtons"
+                                    MaxColumns="3"
+                                    SelectedIndex="{x:Bind ViewModel.PreviewWorkerCountSelectedIndex, Mode=TwoWay}" />
+
+                                <TextBlock
+                                    x:Name="PreviewWorkerCountDescriptionText"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="WrapWholeWords" />
                             </StackPanel>
                         </Border>
 

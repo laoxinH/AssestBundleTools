@@ -36,7 +36,9 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         ILocalizationService localizationService,
         IBackgroundTaskRunner backgroundTaskRunner,
         TimeSpan? previewQueryTimeout = null,
-        int? previewWorkerCount = null)
+        int? previewWorkerCount = null,
+        Func<int>? previewWorkerCountProvider = null,
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null)
     {
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
@@ -48,7 +50,10 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
             _workspaceAssetInspectionGateway,
             backgroundTaskRunner,
             NormalizePreviewQueryTimeout(previewQueryTimeout),
-            AssetPreviewExecutionOptionsResolver.NormalizePreviewWorkerCount(previewWorkerCount));
+            AssetPreviewExecutionOptionsResolver.NormalizePreviewWorkerCount(previewWorkerCount),
+            previewWorkerCountProvider,
+            backgroundWorkScheduler,
+            () => GetString(ResourceKeys.InspectorPreviewLoadingText));
         var texturePreviewPayloadLoader = new TexturePreviewPayloadLoader(_previewQueryExecutor);
         var meshTextureOverlayPreviewLoader = new MeshTextureOverlayPreviewLoader(texturePreviewPayloadLoader);
         var materialTexturePreviewLoader = new MaterialTexturePreviewLoader(texturePreviewPayloadLoader);
@@ -153,7 +158,8 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
             previewQuery,
             previewRequest.CancellationToken,
             priority,
-            () => IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant));
+            () => IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant),
+            CreatePreviewStatusTitle(details));
         if (previewResult is null)
         {
             ResetPreviewIfCurrent(assetTab, details, previewRequest);
@@ -298,13 +304,15 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         GetAssetPreviewQuery previewQuery,
         CancellationToken previewCancellationToken,
         AssetPreviewLoadPriority priority,
-        Func<bool> isPreviewRequestCurrentAndRelevant)
+        Func<bool> isPreviewRequestCurrentAndRelevant,
+        string? statusTitle = null)
     {
         return await _previewQueryExecutor.ExecuteAsync(
             previewQuery,
             previewCancellationToken,
             priority,
-            isPreviewRequestCurrentAndRelevant);
+            isPreviewRequestCurrentAndRelevant,
+            statusTitle);
     }
 
     private void LogPreviewDisplayFailure(string assetName, string reason)
@@ -357,6 +365,18 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
     {
         return assetTab.IsPreviewRequestCurrent(details, previewRequest) &&
                (isPreviewRelevant is null || isPreviewRelevant());
+    }
+
+    private string CreatePreviewStatusTitle(AssetDetailsDto details)
+    {
+        ArgumentNullException.ThrowIfNull(details);
+
+        var displayName = string.IsNullOrWhiteSpace(details.Name)
+            ? details.AssetId.Value
+            : details.Name.Trim();
+        return _localizationService.GetFormattedString(
+            ResourceKeys.BundleExplorerStatusLoadPreviewFormat,
+            displayName);
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);

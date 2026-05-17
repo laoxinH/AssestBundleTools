@@ -4,7 +4,7 @@
 
 本文档用于收束 `docs/design` 下的文档状态，明确哪些文档是当前规范入口，哪些是专题记录，哪些仅作为历史兼容入口保留。
 
-当前状态更新时间：2026-05-10。上一轮 Spine 预览、状态恢复、资源详情滚动和 UI 按钮样式已经完成阶段性提交，下一步开发重心回到提取、替换和保存输出主线。
+当前状态更新时间：2026-05-16。上一轮 Spine 预览、状态恢复、资源详情滚动和 UI 按钮样式已经完成阶段性提交；当前开发重心先收束统一后台任务流程，再继续推进提取、替换和保存输出主线。
 
 ## 2. 当前规范入口
 
@@ -33,6 +33,8 @@
   资源编辑窗口、资产文档标签、独立窗口恢复和编辑草稿边界。
 - [workspace-recoverable-operation-records.md](workspace-recoverable-operation-records.md)
   工作区提取、替换、编辑草稿和保存输出的可恢复操作记录、撤销与重启恢复设计。
+- [background-task-scheduling.md](background-task-scheduling.md)
+  导入、预览、提取、导出和后续保存 / 重建的统一后台任务调度、并发闸门、进度与状态条边界。
 - [asset-bundle-decryptor-extension.md](asset-bundle-decryptor-extension.md)
   解密器扩展点、外部进程协议和工作区缓存关系。
 - [spine-runtime-playback-session.md](spine-runtime-playback-session.md)
@@ -65,15 +67,17 @@
 
 ## 6. 下一步开发主线
 
-下一轮默认按“先让提取/替换顺畅，再进入真实写包”的顺序推进：
+下一轮默认按“先统一后台任务流程，再让提取/替换顺畅，最后进入真实写包”的顺序推进：
 
-1. 提取流程顺滑化
+1. 统一后台任务流程第一阶段
+   按 [background-task-scheduling.md](background-task-scheduling.md) 建立 Presentation 层统一调度契约、profile、进度和状态条投影；当前已迁移工作区打开 / 导入外层任务、预览队列、Spine 详情载荷、批量提取、批量替换骨架和保存骨架，后续再迁移 bundle single-flight 与导出。
+2. 提取流程顺滑化
    先按 [workspace-recoverable-operation-records.md](workspace-recoverable-operation-records.md) 建立可恢复操作记录，再明确单资源、多选、批量提取的输出目录、命名冲突、进度、取消、结果明细和日志入口。
-2. 真实提取落地
+3. 真实提取落地
    在 Application 用例后接 Infrastructure 导出实现，保持原始资源目录只读，输出目标必须由用户显式选择或确认。
-3. 替换流程顺滑化
+4. 替换流程顺滑化
    补强文件来源选择、兼容性诊断、替换预览、撤销和批量替换结果明细，避免替换状态分散在多个页面。
-4. 保存 / 重建前置设计
+5. 保存 / 重建前置设计
    在保存前预览、输出计划、覆盖保护、失败分类和回滚边界明确后，再进入真实写包。
-5. 回归与文档同步
+6. 回归与文档同步
    每个小里程碑都同步补 Application / Infrastructure / Presentation 回归，并更新路线图中对应状态。

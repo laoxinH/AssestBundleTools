@@ -76,6 +76,16 @@ public sealed partial class SettingsDiagnosticsPage : Page
             UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionThree),
             UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionFour)
         };
+        PreviewWorkerCountLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountLabel);
+        PreviewWorkerCountDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountDescription);
+        PreviewWorkerCountRadioButtons.ItemsSource = new[]
+        {
+            UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionAutomatic),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionOne),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionTwo),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionThree),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionFour)
+        };
         ResponsibilityTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsResponsibilityTitle);
         ResponsibilityBodyText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsResponsibilityBody);
         DiagnosticsTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsDiagnosticsTitle);

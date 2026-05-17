@@ -63,7 +63,9 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         Func<bool> isBusyProvider,
         Action<bool> setBusyState,
         Action requestWorkspaceBrowserStatePersistence,
-        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null)
+        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null,
+        Func<int>? previewWorkerCountProvider = null)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         ArgumentNullException.ThrowIfNull(workspaceExplorerGateway);
@@ -97,7 +99,9 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             _workspaceShell,
             appLogService,
             _localizationService,
-            backgroundTaskRunner);
+            backgroundTaskRunner,
+            previewWorkerCountProvider: previewWorkerCountProvider,
+            backgroundWorkScheduler: backgroundWorkScheduler);
         var modificationActionHandler = new BundleExplorerAssetModificationActionHandler(
             workspaceAssetOperationGateway,
             appLogService,
@@ -106,7 +110,8 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             filePickerService,
             backgroundTaskRunner,
             backgroundTaskStatusService,
-            workspaceOperationChangeNotifier);
+            workspaceOperationChangeNotifier,
+            backgroundWorkScheduler);
         PrimaryPane = new AssetPaneViewModel();
         _assetDocumentHostCoordinator = new BundleExplorerAssetDocumentHostCoordinator(
             _documentWorkspace,
@@ -145,7 +150,9 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
                 workspaceAssetInspectionGateway,
                 workspaceContextService,
                 _workspaceShell,
-                backgroundTaskRunner),
+                backgroundTaskRunner,
+                backgroundWorkScheduler,
+                _localizationService),
             _requestWorkspaceBrowserStatePersistence,
             () => NotifyActionStates());
         _assetPaneCoordinator = new BundleExplorerAssetPaneCoordinator(

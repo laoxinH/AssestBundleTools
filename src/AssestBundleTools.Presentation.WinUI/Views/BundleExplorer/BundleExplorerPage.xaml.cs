@@ -44,7 +44,9 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             App.CurrentApp.BackgroundTaskRunner,
             App.CurrentApp.AssetBundleDecryptorRegistry,
             App.CurrentApp.PathNavigationService,
-            App.CurrentApp.AppBackgroundTaskStatusService);
+            App.CurrentApp.AppBackgroundTaskStatusService,
+            App.CurrentApp.BackgroundWorkScheduler,
+            () => App.CurrentApp.AppPreferencesService.PreviewWorkerCount);
 
         InitializeComponent();
 

@@ -20,7 +20,8 @@ public sealed partial class BatchTasksPage : Page
             App.CurrentApp.AppLogService,
             App.CurrentApp.WorkspaceImportCoordinatorService,
             App.CurrentApp.BackgroundTaskRunner,
-            App.CurrentApp.AppBackgroundTaskStatusService);
+            App.CurrentApp.AppBackgroundTaskStatusService,
+            App.CurrentApp.BackgroundWorkScheduler);
 
         InitializeComponent();
         ApplyLocalizedText();

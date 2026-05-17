@@ -122,7 +122,14 @@ public sealed partial class AssetDocumentGroupViewModel : ObservableObject
 
     public void SetActiveAssetTab(AssetDocumentTabViewModel? assetTab)
     {
-        SetActiveDocumentTab(assetTab is null ? null : GetOrAddAssetDocumentTab(assetTab));
+        SetActiveAssetTab(assetTab, cancelPreviousAsset: true);
+    }
+
+    public void SetActiveAssetTab(AssetDocumentTabViewModel? assetTab, bool cancelPreviousAsset)
+    {
+        SetActiveDocumentTab(
+            assetTab is null ? null : GetOrAddAssetDocumentTab(assetTab),
+            cancelPreviousAsset);
     }
 
     public void ClearActiveAssetTab()

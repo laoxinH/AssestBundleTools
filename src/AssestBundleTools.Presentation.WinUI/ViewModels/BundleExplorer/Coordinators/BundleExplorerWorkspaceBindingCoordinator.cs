@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Bundles.Queries;
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
@@ -29,6 +30,7 @@ internal sealed class BundleExplorerWorkspaceBindingCoordinator
     private readonly IWorkspaceContextService _workspaceContextService;
     private readonly BundleExplorerOperationFeedbackBridge _operationFeedbackBridge;
     private readonly IBackgroundTaskRunner _backgroundTaskRunner;
+    private readonly IBackgroundWorkScheduler _backgroundWorkScheduler;
     private readonly BundleExplorerWorkspaceShellViewModel _workspaceShell;
     private readonly BundleExplorerBundlePaneViewModel _bundlePane;
     private readonly BundleExplorerDocumentWorkspaceViewModel _documentWorkspace;
@@ -55,7 +57,8 @@ internal sealed class BundleExplorerWorkspaceBindingCoordinator
         IBundleExplorerBrowserStateCoordinator browserStateCoordinator,
         Func<bool> isBusyProvider,
         Action<bool> setBusyState,
-        Func<BundleNodeViewModel, bool, Task> openBundleAsync)
+        Func<BundleNodeViewModel, bool, Task> openBundleAsync,
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null)
     {
         _workspaceExplorerGateway = workspaceExplorerGateway ?? throw new ArgumentNullException(nameof(workspaceExplorerGateway));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
@@ -63,6 +66,9 @@ internal sealed class BundleExplorerWorkspaceBindingCoordinator
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _operationFeedbackBridge = operationFeedbackBridge ?? throw new ArgumentNullException(nameof(operationFeedbackBridge));
         _backgroundTaskRunner = backgroundTaskRunner ?? throw new ArgumentNullException(nameof(backgroundTaskRunner));
+        _backgroundWorkScheduler = backgroundWorkScheduler ?? new BackgroundWorkScheduler(
+            _backgroundTaskRunner,
+            NullAppBackgroundTaskStatusService.Instance);
         _workspaceShell = workspaceShell ?? throw new ArgumentNullException(nameof(workspaceShell));
         _bundlePane = bundlePane ?? throw new ArgumentNullException(nameof(bundlePane));
         _documentWorkspace = documentWorkspace ?? throw new ArgumentNullException(nameof(documentWorkspace));
@@ -110,14 +116,29 @@ internal sealed class BundleExplorerWorkspaceBindingCoordinator
 
             _appLogService.AppendInfo(GetString(ResourceKeys.BundleExplorerLogInitializing));
 
-            var openWorkspaceCommand = new OpenWorkspaceCommand(
-                WorkspacePath: resolvedNavigationRequest.SourcePath,
-                WorkspaceDataRootPath: resolvedNavigationRequest.WorkspaceDataRootPath,
-                WorkspaceDisplayName: resolvedNavigationRequest.WorkspaceDisplayName,
-                InitialMode: WorkspaceMode.SinglePane,
-                ImportProgress: importProgress);
-            var openResult = await _backgroundTaskRunner.RunAsync(
-                token => _workspaceExplorerGateway.OpenWorkspaceAsync(openWorkspaceCommand, token));
+            var workspaceKey = WorkspaceCatalogKeyFactory.CreateWorkspaceKey(
+                resolvedNavigationRequest.SourcePath,
+                resolvedNavigationRequest.WorkspaceDataRootPath);
+            var openResult = await _backgroundWorkScheduler.RunAsync(
+                new BackgroundWorkRequest<Result<WorkspaceSummaryDto>>(
+                    BackgroundWorkProfile.WorkspaceOpen,
+                    context => _workspaceExplorerGateway.OpenWorkspaceAsync(
+                        new OpenWorkspaceCommand(
+                            WorkspacePath: resolvedNavigationRequest.SourcePath,
+                            WorkspaceDataRootPath: resolvedNavigationRequest.WorkspaceDataRootPath,
+                            WorkspaceDisplayName: resolvedNavigationRequest.WorkspaceDisplayName,
+                            InitialMode: WorkspaceMode.SinglePane,
+                            ImportProgress: new WorkspaceImportBackgroundProgressBridge(
+                                importProgress,
+                                context.Progress,
+                                _localizationService)),
+                        context.CancellationToken))
+                {
+                    SemanticKind = BackgroundWorkSemanticKind.TransientRead,
+                    Priority = BackgroundWorkPriority.UserBlocking,
+                    WorkspaceKey = workspaceKey,
+                    StatusTitle = GetString(ResourceKeys.BundleExplorerLogInitializing)
+                });
 
             if (!_operationFeedbackBridge.TryGetValue(openResult, out var workspaceSummary))
             {

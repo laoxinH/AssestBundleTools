@@ -23,11 +23,15 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 /// </remarks>
 public sealed class AssetDocumentTabViewModel : ObservableObject
 {
+    private static long s_previewOpenSequence;
+
     private BundleId _bundleId;
     private AssetId _assetId;
     private string _displayName;
     private string _toolTipText;
     private bool _canEdit;
+    private readonly long _previewOpenSequence;
+    private long _previewActivationSequence;
     private long _previewRequestVersion;
     private AssetPreviewRequest? _activePreviewRequest;
     private AssetDocumentEditDraftReference? _editDraftReference;
@@ -46,6 +50,7 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
             ? assetId.Value
             : displayName.Trim();
         _toolTipText = _displayName;
+        _previewOpenSequence = Interlocked.Increment(ref s_previewOpenSequence);
         PaneId = PaneId.New();
         Inspector = new InspectorPanelViewModel(
             inspectorInformationTextSet ?? throw new ArgumentNullException(nameof(inspectorInformationTextSet)));
@@ -108,6 +113,27 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
     public AssetDocumentEditDraftReference? EditDraftReference => _editDraftReference;
 
     public bool HasEditDraft => _editDraftReference is not null;
+
+    internal long PreviewOpenSequence => _previewOpenSequence;
+
+    internal long PreviewActivationSequence => Interlocked.Read(ref _previewActivationSequence);
+
+    internal void MarkPreviewActivated(long sequence)
+    {
+        while (true)
+        {
+            var current = Interlocked.Read(ref _previewActivationSequence);
+            if (sequence <= current)
+            {
+                return;
+            }
+
+            if (Interlocked.CompareExchange(ref _previewActivationSequence, sequence, current) == current)
+            {
+                return;
+            }
+        }
+    }
 
     /// <summary>
     /// 资产标签页会在运行期保留自己的详情和候选状态，

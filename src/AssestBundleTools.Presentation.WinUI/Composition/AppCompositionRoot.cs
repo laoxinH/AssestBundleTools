@@ -249,6 +249,10 @@ internal static class AppCompositionRoot
         var appLogService = new AppLogService(localizationService);
         var appBackgroundTaskStatusService = new AppBackgroundTaskStatusService(localizationService);
         var backgroundTaskRunner = new ThreadPoolBackgroundTaskRunner();
+        var backgroundWorkScheduler = new BackgroundWorkScheduler(
+            backgroundTaskRunner,
+            appBackgroundTaskStatusService,
+            () => appPreferencesService.PreviewWorkerCount);
         var workspaceImportCoordinatorService = new WorkspaceImportCoordinatorService(
             workspaceContextService,
             workspaceExplorerGateway,
@@ -256,7 +260,8 @@ internal static class AppCompositionRoot
             appLogService,
             appNotificationService,
             localizationService,
-            backgroundTaskRunner);
+            backgroundTaskRunner,
+            backgroundWorkScheduler);
 
         StartupDiagnostics.Log("Composition root services created.");
 
@@ -284,6 +289,7 @@ internal static class AppCompositionRoot
             AppLogService: appLogService,
             AppBackgroundTaskStatusService: appBackgroundTaskStatusService,
             BackgroundTaskRunner: backgroundTaskRunner,
+            BackgroundWorkScheduler: backgroundWorkScheduler,
             WorkspaceImportCoordinatorService: workspaceImportCoordinatorService,
             SpineAnimationRuntimePlaybackService: spineAnimationRuntimePreviewService);
     }

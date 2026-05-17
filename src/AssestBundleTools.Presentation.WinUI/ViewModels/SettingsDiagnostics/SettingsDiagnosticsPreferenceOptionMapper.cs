@@ -40,4 +40,14 @@ internal static class SettingsDiagnosticsPreferenceOptionMapper
     {
         return AppPreferencesService.CoerceWorkspaceImportWorkerCount(selectedIndex);
     }
+
+    public static int ConvertPreviewWorkerCountToSelectedIndex(int workerCount)
+    {
+        return AppPreferencesService.CoercePreviewWorkerCount(workerCount);
+    }
+
+    public static int ConvertSelectedIndexToPreviewWorkerCount(int selectedIndex)
+    {
+        return AppPreferencesService.CoercePreviewWorkerCount(selectedIndex);
+    }
 }

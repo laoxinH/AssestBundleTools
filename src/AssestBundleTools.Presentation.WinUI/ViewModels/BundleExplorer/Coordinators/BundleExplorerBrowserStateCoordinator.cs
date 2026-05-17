@@ -129,14 +129,16 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
 
     public void CancelWorkspaceBrowserStatePersistence()
     {
-        if (_workspaceBrowserStatePersistenceCts is null)
+        var cancellationSource = Interlocked.Exchange(
+            ref _workspaceBrowserStatePersistenceCts,
+            null);
+        if (cancellationSource is null)
         {
             return;
         }
 
-        _workspaceBrowserStatePersistenceCts.Cancel();
-        _workspaceBrowserStatePersistenceCts.Dispose();
-        _workspaceBrowserStatePersistenceCts = null;
+        cancellationSource.Cancel();
+        cancellationSource.Dispose();
     }
 
     public void ClearPendingAssetEditorWindowRestoreState()

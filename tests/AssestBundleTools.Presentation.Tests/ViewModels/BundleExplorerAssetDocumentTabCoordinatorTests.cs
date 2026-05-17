@@ -121,7 +121,7 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
     }
 
     [Fact]
-    public async Task ActivateAssetDocumentTabAsync_ShouldPromoteCurrentPreviewWithoutCancellingPreviousTab()
+    public async Task ActivateAssetDocumentTabAsync_ShouldPromoteCurrentPreviewAndDemotePreviousPreview()
     {
         var workspaceId = WorkspaceId.New();
         var bundleId = new BundleId("bundle-ui");
@@ -152,7 +152,7 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
                     : Task.FromResult(CreateSummaryPreviewResult(query));
             }
         };
-        var coordinator = CreateCoordinator(context, inspectionGateway);
+        var coordinator = CreateCoordinator(context, inspectionGateway, previewWorkerCount: 2);
         var firstTab = context.HostCoordinator.CreateAssetDocumentTab(bundleId, firstAssetId, "Button");
         var secondTab = context.HostCoordinator.CreateAssetDocumentTab(bundleId, secondAssetId, "Panel");
         context.BundleTab.AddAssetTab(firstTab, activate: false);
@@ -160,8 +160,11 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
 
         await coordinator.ActivateAssetDocumentTabAsync(firstTab);
         await WaitUntilAsync(() => firstTab.Inspector.Preview.IsPreviewLoading);
+        await WaitUntilAsync(() => previewQueryAssetIds.Count == 1);
         await coordinator.ActivateAssetDocumentTabAsync(secondTab);
         await WaitUntilAsync(() => secondTab.Inspector.Preview.PreviewText == "summary");
+        await WaitUntilAsync(() => firstTab.Inspector.Preview.PreviewText == "summary");
+
         firstPreviewCanFinish.SetResult(CreateSummaryPreviewResult(new GetAssetPreviewQuery(
             workspaceId,
             WorkspaceCatalogKeyFactory.CreateWorkspaceKey(
@@ -174,7 +177,8 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
         await WaitUntilAsync(() => firstTab.Inspector.Preview.PreviewText == "summary");
 
         Assert.False(secondTab.Inspector.Preview.IsPreviewLoading);
-        Assert.Equal([firstAssetId, secondAssetId, firstAssetId], previewQueryAssetIds);
+        Assert.Equal(2, previewQueryAssetIds.Count(assetId => assetId.Equals(firstAssetId)));
+        Assert.Equal(1, previewQueryAssetIds.Count(assetId => assetId.Equals(secondAssetId)));
     }
 
     [Fact]
@@ -399,7 +403,8 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
 
     private static BundleExplorerAssetDocumentTabCoordinator CreateCoordinator(
         CoordinatorContext context,
-        TestWorkspaceAssetInspectionGateway inspectionGateway)
+        TestWorkspaceAssetInspectionGateway inspectionGateway,
+        int? previewWorkerCount = null)
     {
         var previewCoordinator = new BundleExplorerAssetPreviewCoordinator(
             inspectionGateway,
@@ -407,7 +412,8 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
             context.WorkspaceShell,
             context.AppLogService,
             context.LocalizationService,
-            context.BackgroundTaskRunner);
+            context.BackgroundTaskRunner,
+            previewWorkerCount: previewWorkerCount);
 
         return new BundleExplorerAssetDocumentTabCoordinator(
             inspectionGateway,

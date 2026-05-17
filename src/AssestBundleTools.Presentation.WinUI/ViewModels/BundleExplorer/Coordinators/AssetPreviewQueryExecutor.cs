@@ -13,40 +13,46 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordin
 internal sealed class AssetPreviewQueryExecutor
 {
     private readonly IWorkspaceAssetInspectionGateway _workspaceAssetInspectionGateway;
-    private readonly IBackgroundTaskRunner _backgroundTaskRunner;
-    private readonly SemaphoreSlim _foregroundPreviewQueryGate = new(1, 1);
-    private readonly SemaphoreSlim? _backgroundPreviewQueryGate;
+    private readonly IBackgroundWorkScheduler _backgroundWorkScheduler;
     private readonly TimeSpan _previewQueryTimeout;
+    private readonly Func<int> _previewWorkerCountProvider;
+    private readonly Func<string>? _foregroundStatusTitleProvider;
 
     public AssetPreviewQueryExecutor(
         IWorkspaceAssetInspectionGateway workspaceAssetInspectionGateway,
         IBackgroundTaskRunner backgroundTaskRunner,
         TimeSpan previewQueryTimeout,
-        int previewWorkerCount)
+        int previewWorkerCount,
+        Func<int>? previewWorkerCountProvider = null,
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null,
+        Func<string>? foregroundStatusTitleProvider = null)
     {
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
-        _backgroundTaskRunner = backgroundTaskRunner ?? throw new ArgumentNullException(nameof(backgroundTaskRunner));
+        ArgumentNullException.ThrowIfNull(backgroundTaskRunner);
         _previewQueryTimeout = previewQueryTimeout > TimeSpan.Zero
             ? previewQueryTimeout
             : throw new ArgumentOutOfRangeException(nameof(previewQueryTimeout));
-        var normalizedPreviewWorkerCount = AssetPreviewExecutionOptionsResolver.NormalizePreviewWorkerCount(previewWorkerCount);
-        var backgroundWorkerCount = normalizedPreviewWorkerCount - 1;
-        _backgroundPreviewQueryGate = backgroundWorkerCount > 0
-            ? new SemaphoreSlim(backgroundWorkerCount, backgroundWorkerCount)
-            : null;
+        _previewWorkerCountProvider = previewWorkerCountProvider
+            ?? (() => AssetPreviewExecutionOptionsResolver.NormalizePreviewWorkerCount(previewWorkerCount));
+        _backgroundWorkScheduler = backgroundWorkScheduler ?? new BackgroundWorkScheduler(
+            backgroundTaskRunner,
+            NullAppBackgroundTaskStatusService.Instance,
+            _previewWorkerCountProvider);
+        _foregroundStatusTitleProvider = foregroundStatusTitleProvider;
     }
 
     public async Task<Result<AssetPreviewDto>?> ExecuteAsync(
         GetAssetPreviewQuery previewQuery,
         CancellationToken previewCancellationToken,
         AssetPreviewLoadPriority priority,
-        Func<bool> isPreviewRequestCurrentAndRelevant)
+        Func<bool> isPreviewRequestCurrentAndRelevant,
+        string? statusTitle = null)
     {
         ArgumentNullException.ThrowIfNull(previewQuery);
         ArgumentNullException.ThrowIfNull(isPreviewRequestCurrentAndRelevant);
 
-        var previewQueryGate = ResolvePreviewQueryGate(priority);
-        if (previewQueryGate is null)
+        if (priority == AssetPreviewLoadPriority.BackgroundPrewarm &&
+            AssetPreviewExecutionOptionsResolver.NormalizePreviewWorkerCount(_previewWorkerCountProvider()) <= 1)
         {
             if (isPreviewRequestCurrentAndRelevant())
             {
@@ -56,87 +62,56 @@ internal sealed class AssetPreviewQueryExecutor
             return null;
         }
 
-        using var timeoutCancellationSource = new CancellationTokenSource(_previewQueryTimeout);
-        var linkedCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(
-            timeoutCancellationSource.Token,
+        return await _backgroundWorkScheduler.RunAsync(
+            new BackgroundWorkRequest<Result<AssetPreviewDto>?>(
+                ResolvePreviewProfile(priority),
+                context =>
+            {
+                if (!isPreviewRequestCurrentAndRelevant())
+                {
+                    return Task.FromResult<Result<AssetPreviewDto>?>(null);
+                }
+
+                return GetPreviewAsync(previewQuery, context.CancellationToken);
+            })
+            {
+                SemanticKind = BackgroundWorkSemanticKind.TransientRead,
+                Priority = priority == AssetPreviewLoadPriority.Foreground
+                    ? BackgroundWorkPriority.UserBlocking
+                    : BackgroundWorkPriority.Background,
+                WorkspaceId = previewQuery.WorkspaceId.Value,
+                WorkspaceKey = previewQuery.WorkspaceKey,
+                BundleCacheKey = previewQuery.BundleId.Value,
+                ResourceKey = previewQuery.AssetId.Value,
+                StatusTitle = priority == AssetPreviewLoadPriority.Foreground
+                    ? ResolveForegroundStatusTitle(statusTitle)
+                    : null,
+                ShowInStatusBar = priority == AssetPreviewLoadPriority.Foreground,
+                Timeout = _previewQueryTimeout,
+                ReleaseProfileGateOnCallerCancellation = priority == AssetPreviewLoadPriority.Foreground
+            },
             previewCancellationToken);
-        var cancellationToken = linkedCancellationSource.Token;
-        Task<Result<AssetPreviewDto>>? previewTask = null;
-        var shouldReleaseGate = false;
-        var shouldDisposeLinkedCancellationSource = true;
-
-        try
-        {
-            await previewQueryGate.WaitAsync(cancellationToken);
-            shouldReleaseGate = true;
-            if (!isPreviewRequestCurrentAndRelevant())
-            {
-                return null;
-            }
-
-            previewTask = _backgroundTaskRunner.RunAsync(
-                token => _workspaceAssetInspectionGateway.GetAssetPreviewAsync(previewQuery, token),
-                cancellationToken);
-            return await previewTask.WaitAsync(cancellationToken);
-        }
-        catch (OperationCanceledException) when (previewCancellationToken.IsCancellationRequested)
-        {
-            if (shouldReleaseGate && previewTask is not null && !previewTask.IsCompleted)
-            {
-                previewQueryGate.Release();
-                _ = ObserveAbandonedPreviewTaskAsync(previewTask, linkedCancellationSource);
-                shouldDisposeLinkedCancellationSource = false;
-                shouldReleaseGate = false;
-            }
-
-            throw;
-        }
-        catch (OperationCanceledException) when (timeoutCancellationSource.IsCancellationRequested)
-        {
-            if (shouldReleaseGate && previewTask is not null && !previewTask.IsCompleted)
-            {
-                previewQueryGate.Release();
-                _ = ObserveAbandonedPreviewTaskAsync(previewTask, linkedCancellationSource);
-                shouldDisposeLinkedCancellationSource = false;
-                shouldReleaseGate = false;
-            }
-
-            throw new TimeoutException();
-        }
-        finally
-        {
-            if (shouldReleaseGate)
-            {
-                previewQueryGate.Release();
-            }
-
-            if (shouldDisposeLinkedCancellationSource)
-            {
-                linkedCancellationSource.Dispose();
-            }
-        }
     }
 
-    private SemaphoreSlim? ResolvePreviewQueryGate(AssetPreviewLoadPriority priority) =>
-        priority == AssetPreviewLoadPriority.Foreground
-            ? _foregroundPreviewQueryGate
-            : _backgroundPreviewQueryGate;
-
-    private static async Task ObserveAbandonedPreviewTaskAsync(
-        Task previewTask,
-        CancellationTokenSource linkedCancellationSource)
+    private async Task<Result<AssetPreviewDto>?> GetPreviewAsync(
+        GetAssetPreviewQuery previewQuery,
+        CancellationToken cancellationToken)
     {
-        try
+        return await _workspaceAssetInspectionGateway.GetAssetPreviewAsync(previewQuery, cancellationToken);
+    }
+
+    private static BackgroundWorkProfile ResolvePreviewProfile(AssetPreviewLoadPriority priority) =>
+        priority == AssetPreviewLoadPriority.Foreground
+            ? BackgroundWorkProfile.PreviewForeground
+            : BackgroundWorkProfile.PreviewPrewarm;
+
+    private string? ResolveForegroundStatusTitle(string? statusTitle)
+    {
+        if (!string.IsNullOrWhiteSpace(statusTitle))
         {
-            await previewTask.ConfigureAwait(false);
+            return statusTitle.Trim();
         }
-        catch
-        {
-            // 旧请求已被新的活动标签取代，异常只需被观察避免未处理任务噪声。
-        }
-        finally
-        {
-            linkedCancellationSource.Dispose();
-        }
+
+        return _foregroundStatusTitleProvider?.Invoke();
     }
 }

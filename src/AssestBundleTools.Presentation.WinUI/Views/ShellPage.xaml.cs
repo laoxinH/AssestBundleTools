@@ -59,6 +59,9 @@ public sealed partial class ShellPage : Page
 
     public IAppBackgroundTaskStatusService BackgroundTaskStatusService { get; }
 
+    public string CancelBackgroundTaskToolTipText =>
+        App.CurrentApp.LocalizationService.GetRequiredString(ResourceKeys.AppStatusBarCancelTaskToolTip);
+
     internal AssestBundleTools.Presentation.WinUI.MainWindow? HostWindow => _hostWindow;
 
     private enum ShellWindowMode
@@ -106,6 +109,11 @@ public sealed partial class ShellPage : Page
         }
 
         NavigateTo(navigationKey, parameter: null, updateSelection: false);
+    }
+
+    private void OnCancelBackgroundTaskButtonClick(object sender, RoutedEventArgs e)
+    {
+        BackgroundTaskStatusService.CancelCurrentTask();
     }
 
     internal void NavigateToSection(string navigationKey, object? parameter = null)

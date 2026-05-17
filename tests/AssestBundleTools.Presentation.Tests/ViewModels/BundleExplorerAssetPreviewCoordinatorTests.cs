@@ -382,7 +382,7 @@ public sealed class BundleExplorerAssetPreviewCoordinatorTests
     }
 
     [Fact]
-    public async Task LoadInspectorPreviewAsync_ShouldNotBlockCurrentPreview_WhenPreviousStartedPreviewIsCancelled()
+    public async Task LoadInspectorPreviewAsync_ShouldReleaseForegroundSlot_WhenCallerCancelsPreviousPreview()
     {
         var workspaceId = WorkspaceId.New();
         var bundleId = new BundleId("bundle-ui");
@@ -443,11 +443,16 @@ public sealed class BundleExplorerAssetPreviewCoordinatorTests
             secondDetails,
             static _ => "failed",
             () => ReferenceEquals(activeTab, secondTab));
-        await WaitUntilAsync(() => secondTab.Inspector.Preview.PreviewText == "summary");
-
+        var secondQueryStarted = WaitUntilAsync(() => previewQueryAssetIds.Count == 2);
+        var startedBeforeFirstCompleted = await Task.WhenAny(
+            secondQueryStarted,
+            Task.Delay(50));
+        Assert.Same(secondQueryStarted, startedBeforeFirstCompleted);
         Assert.Equal([firstAssetId, secondAssetId], previewQueryAssetIds);
 
         firstPreviewCanFinish.SetResult(Result<AssetPreviewDto>.Cancelled());
+        await WaitUntilAsync(() => secondTab.Inspector.Preview.PreviewText == "summary");
+
         await Task.WhenAll(firstLoad, secondLoad);
     }
 

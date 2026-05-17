@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
@@ -24,7 +25,7 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
     private readonly IAppLogService _appLogService;
     private readonly IAppNotificationService _appNotificationService;
     private readonly ILocalizationService _localizationService;
-    private readonly IBackgroundTaskRunner _backgroundTaskRunner;
+    private readonly IBackgroundWorkScheduler _backgroundWorkScheduler;
 
     public WorkspaceImportCoordinatorService(
         IWorkspaceContextService workspaceContextService,
@@ -33,7 +34,8 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
         IAppLogService appLogService,
         IAppNotificationService appNotificationService,
         ILocalizationService localizationService,
-        IBackgroundTaskRunner backgroundTaskRunner)
+        IBackgroundTaskRunner backgroundTaskRunner,
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null)
     {
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _workspaceExplorerGateway = workspaceExplorerGateway ?? throw new ArgumentNullException(nameof(workspaceExplorerGateway));
@@ -41,7 +43,10 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
-        _backgroundTaskRunner = backgroundTaskRunner ?? throw new ArgumentNullException(nameof(backgroundTaskRunner));
+        ArgumentNullException.ThrowIfNull(backgroundTaskRunner);
+        _backgroundWorkScheduler = backgroundWorkScheduler ?? new BackgroundWorkScheduler(
+            backgroundTaskRunner,
+            NullAppBackgroundTaskStatusService.Instance);
     }
 
     public bool HasActiveWorkspace => _workspaceContextService.CurrentWorkspaceSummary is not null;
@@ -155,14 +160,36 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
             return false;
         }
 
-        var processingResult = await _backgroundTaskRunner.RunAsync(
-            backgroundCancellationToken => _workspaceExplorerGateway.ProcessWorkspaceImportsAsync(
-                new ProcessWorkspaceImportsCommand(
-                    WorkspaceKey: workspaceEntry.WorkspaceKey,
-                    WorkspaceDataRootPath: workspaceEntry.WorkspaceDataRootPath,
-                    Progress: progress),
-                backgroundCancellationToken),
+        Result<WorkspaceImportProcessingResultDto> processingResult;
+        try
+        {
+            processingResult = await _backgroundWorkScheduler.RunAsync(
+                new BackgroundWorkRequest<Result<WorkspaceImportProcessingResultDto>>(
+                    BackgroundWorkProfile.WorkspaceImport,
+                    context => _workspaceExplorerGateway.ProcessWorkspaceImportsAsync(
+                        new ProcessWorkspaceImportsCommand(
+                            WorkspaceKey: workspaceEntry.WorkspaceKey,
+                            WorkspaceDataRootPath: workspaceEntry.WorkspaceDataRootPath,
+                            Progress: new WorkspaceImportBackgroundProgressBridge(
+                                progress,
+                                context.Progress,
+                                _localizationService)),
+                        context.CancellationToken))
+            {
+                SemanticKind = BackgroundWorkSemanticKind.WorkspaceMutation,
+                Priority = BackgroundWorkPriority.Visible,
+                WorkspaceId = workspaceSummary.WorkspaceId.Value,
+                WorkspaceKey = workspaceEntry.WorkspaceKey,
+                StatusTitle = _localizationService.GetRequiredString(ResourceKeys.WorkspaceImportBusyOverlayTitle),
+                CanCancel = true
+            },
             cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+
         if (processingResult.IsCancelled)
         {
             return false;

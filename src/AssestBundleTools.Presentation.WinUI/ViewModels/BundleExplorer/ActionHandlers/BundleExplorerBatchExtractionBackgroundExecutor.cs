@@ -18,8 +18,7 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
 {
     private readonly IWorkspaceAssetOperationGateway _workspaceAssetOperationGateway;
     private readonly ILocalizationService _localizationService;
-    private readonly IBackgroundTaskRunner _backgroundTaskRunner;
-    private readonly IAppBackgroundTaskStatusService _backgroundTaskStatusService;
+    private readonly IBackgroundWorkScheduler _backgroundWorkScheduler;
     private readonly IWorkspaceOperationChangeNotifier? _operationChangeNotifier;
 
     public BundleExplorerBatchExtractionBackgroundExecutor(
@@ -27,12 +26,14 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
         ILocalizationService localizationService,
         IBackgroundTaskRunner? backgroundTaskRunner,
         IAppBackgroundTaskStatusService? backgroundTaskStatusService,
-        IWorkspaceOperationChangeNotifier? operationChangeNotifier)
+        IWorkspaceOperationChangeNotifier? operationChangeNotifier,
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null)
     {
         _workspaceAssetOperationGateway = workspaceAssetOperationGateway ?? throw new ArgumentNullException(nameof(workspaceAssetOperationGateway));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
-        _backgroundTaskRunner = backgroundTaskRunner ?? InlineBackgroundTaskRunner.Instance;
-        _backgroundTaskStatusService = backgroundTaskStatusService ?? NullAppBackgroundTaskStatusService.Instance;
+        _backgroundWorkScheduler = backgroundWorkScheduler ?? new BackgroundWorkScheduler(
+            backgroundTaskRunner ?? InlineBackgroundTaskRunner.Instance,
+            backgroundTaskStatusService ?? NullAppBackgroundTaskStatusService.Instance);
         _operationChangeNotifier = operationChangeNotifier;
     }
 
@@ -61,23 +62,25 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
                         defaultBundleDisplayName))))
             .ToArray();
 
-        using var taskHandle = _backgroundTaskStatusService.BeginTask(
-            _localizationService.GetRequiredString(ResourceKeys.BundleExplorerStatusExtractSelectedAssets),
-            extractionItems.Length);
         using var notificationBatch = _operationChangeNotifier?.BeginNotificationBatch();
 
-        return await _backgroundTaskRunner.RunAsync(
-            async token =>
+        try
+        {
+            return await _backgroundWorkScheduler.RunAsync(
+                new BackgroundWorkRequest<BundleExplorerBatchAssetExtractionExecutionResult>(
+                    BackgroundWorkProfile.BatchExtraction,
+                    async context =>
             {
                 var extractedResults = new List<AssetExtractionResultDto>(extractionItems.Length);
                 var failures = new List<IReadOnlyList<AppError>>();
 
                 for (var index = 0; index < extractionItems.Length; index++)
                 {
+                    var token = context.CancellationToken;
                     token.ThrowIfCancellationRequested();
 
                     var item = extractionItems[index];
-                    taskHandle.ReportProgress(index, extractionItems.Length, item.DisplayName);
+                    context.Progress.ReportProgress(index, extractionItems.Length, item.DisplayName);
 
                     var result = await _workspaceAssetOperationGateway.ExtractAssetAsync(
                         item.Command,
@@ -100,15 +103,32 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
                         failures.Add(result.Errors);
                     }
 
-                    taskHandle.ReportProgress(index + 1, extractionItems.Length, item.DisplayName);
+                    context.Progress.ReportProgress(index + 1, extractionItems.Length, item.DisplayName);
                 }
 
                 return new BundleExplorerBatchAssetExtractionExecutionResult(
                     extractedResults,
                     failures,
                     IsCancelled: false);
+            })
+            {
+                SemanticKind = BackgroundWorkSemanticKind.VisibleOutput,
+                Priority = BackgroundWorkPriority.Visible,
+                WorkspaceId = workspaceSummary.WorkspaceId.Value,
+                WorkspaceKey = workspaceSummary.WorkspaceKey,
+                StatusTitle = _localizationService.GetRequiredString(ResourceKeys.BundleExplorerStatusExtractSelectedAssets),
+                TotalCount = extractionItems.Length,
+                CanCancel = true
             },
             cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return new BundleExplorerBatchAssetExtractionExecutionResult(
+                Array.Empty<AssetExtractionResultDto>(),
+                Array.Empty<IReadOnlyList<AppError>>(),
+                IsCancelled: true);
+        }
     }
 
     public async Task<BundleExplorerBatchSpineGroupExtractionExecutionResult> ExtractSpineGroupsAsync(
@@ -136,23 +156,25 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
                         defaultBundleDisplayName))))
             .ToArray();
 
-        using var taskHandle = _backgroundTaskStatusService.BeginTask(
-            _localizationService.GetRequiredString(ResourceKeys.BundleExplorerStatusExtractSelectedSpineGroups),
-            extractionItems.Length);
         using var notificationBatch = _operationChangeNotifier?.BeginNotificationBatch();
 
-        return await _backgroundTaskRunner.RunAsync(
-            async token =>
+        try
+        {
+            return await _backgroundWorkScheduler.RunAsync(
+                new BackgroundWorkRequest<BundleExplorerBatchSpineGroupExtractionExecutionResult>(
+                    BackgroundWorkProfile.BatchExtraction,
+                    async context =>
             {
                 var extractionResults = new List<SpineAssetGroupExtractionResultDto>(extractionItems.Length);
                 var failures = new List<IReadOnlyList<AppError>>();
 
                 for (var index = 0; index < extractionItems.Length; index++)
                 {
+                    var token = context.CancellationToken;
                     token.ThrowIfCancellationRequested();
 
                     var item = extractionItems[index];
-                    taskHandle.ReportProgress(index, extractionItems.Length, item.DisplayName);
+                    context.Progress.ReportProgress(index, extractionItems.Length, item.DisplayName);
 
                     var result = await _workspaceAssetOperationGateway.ExtractSpineAssetGroupAsync(
                         item.Command,
@@ -175,15 +197,32 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
                         failures.Add(result.Errors);
                     }
 
-                    taskHandle.ReportProgress(index + 1, extractionItems.Length, item.DisplayName);
+                    context.Progress.ReportProgress(index + 1, extractionItems.Length, item.DisplayName);
                 }
 
                 return new BundleExplorerBatchSpineGroupExtractionExecutionResult(
                     extractionResults,
                     failures,
                     IsCancelled: false);
+            })
+            {
+                SemanticKind = BackgroundWorkSemanticKind.VisibleOutput,
+                Priority = BackgroundWorkPriority.Visible,
+                WorkspaceId = workspaceSummary.WorkspaceId.Value,
+                WorkspaceKey = workspaceSummary.WorkspaceKey,
+                StatusTitle = _localizationService.GetRequiredString(ResourceKeys.BundleExplorerStatusExtractSelectedSpineGroups),
+                TotalCount = extractionItems.Length,
+                CanCancel = true
             },
             cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return new BundleExplorerBatchSpineGroupExtractionExecutionResult(
+                Array.Empty<SpineAssetGroupExtractionResultDto>(),
+                Array.Empty<IReadOnlyList<AppError>>(),
+                IsCancelled: true);
+        }
     }
 
     private static string BuildBatchExtractionSuggestedPath(

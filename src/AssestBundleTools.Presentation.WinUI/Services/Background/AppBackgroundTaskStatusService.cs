@@ -24,6 +24,8 @@ public sealed class AppBackgroundTaskStatusService : ObservableObject, IAppBackg
     private double _progressValue;
     private bool _isProgressIndeterminate;
     private Visibility _progressVisibility = Visibility.Collapsed;
+    private bool _canCancelCurrentTask;
+    private Visibility _cancelVisibility = Visibility.Collapsed;
     private string _statusGlyph = IdleGlyph;
 
     public AppBackgroundTaskStatusService(ILocalizationService localizationService)
@@ -77,15 +79,35 @@ public sealed class AppBackgroundTaskStatusService : ObservableObject, IAppBackg
         private set => SetProperty(ref _statusGlyph, value);
     }
 
+    public bool CanCancelCurrentTask
+    {
+        get => _canCancelCurrentTask;
+        private set => SetProperty(ref _canCancelCurrentTask, value);
+    }
+
+    public Visibility CancelVisibility
+    {
+        get => _cancelVisibility;
+        private set => SetProperty(ref _cancelVisibility, value);
+    }
+
     public IAppBackgroundTaskHandle BeginTask(string title, int? totalCount = null)
     {
-        var normalizedTitle = string.IsNullOrWhiteSpace(title)
+        return BeginTask(new BackgroundTaskStatusRequest(title, totalCount));
+    }
+
+    public IAppBackgroundTaskHandle BeginTask(BackgroundTaskStatusRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var normalizedTitle = string.IsNullOrWhiteSpace(request.Title)
             ? GetString(ResourceKeys.AppStatusBarBackgroundTaskFallbackText)
-            : title.Trim();
+            : request.Title.Trim();
         var task = new BackgroundTaskState(
-            Guid.NewGuid(),
+            request.TaskId ?? Guid.NewGuid(),
             normalizedTitle,
-            totalCount is > 0 ? totalCount : null);
+            request.TotalCount is > 0 ? request.TotalCount : null,
+            request.CancelAction);
 
         lock (_sync)
         {
@@ -95,6 +117,26 @@ public sealed class AppBackgroundTaskStatusService : ObservableObject, IAppBackg
         RequestApplyCurrentTask();
 
         return new BackgroundTaskHandle(this, task.Id);
+    }
+
+    public void CancelCurrentTask()
+    {
+        Action? cancelAction;
+        lock (_sync)
+        {
+            var currentTask = ResolveCurrentTask();
+            if (currentTask?.CancelAction is null)
+            {
+                return;
+            }
+
+            cancelAction = currentTask.CancelAction;
+            currentTask.CancelAction = null;
+            currentTask.LastUpdatedAtUtc = DateTimeOffset.UtcNow;
+        }
+
+        RequestApplyCurrentTask();
+        cancelAction();
     }
 
     private void ReportProgress(
@@ -166,6 +208,8 @@ public sealed class AppBackgroundTaskStatusService : ObservableObject, IAppBackg
             ProgressValue = 0d;
             IsProgressIndeterminate = false;
             ProgressVisibility = Visibility.Collapsed;
+            CanCancelCurrentTask = false;
+            CancelVisibility = Visibility.Collapsed;
             StatusGlyph = IdleGlyph;
             return;
         }
@@ -175,6 +219,10 @@ public sealed class AppBackgroundTaskStatusService : ObservableObject, IAppBackg
             : $"{currentTask.Title} - {currentTask.Detail}";
         StatusGlyph = ActiveGlyph;
         ProgressVisibility = Visibility.Visible;
+        CanCancelCurrentTask = currentTask.CancelAction is not null;
+        CancelVisibility = currentTask.CancelAction is null
+            ? Visibility.Collapsed
+            : Visibility.Visible;
         IsProgressIndeterminate = currentTask.IsIndeterminate || currentTask.TotalCount is null;
 
         if (currentTask.TotalCount is { } totalCount)
@@ -197,6 +245,11 @@ public sealed class AppBackgroundTaskStatusService : ObservableObject, IAppBackg
 
     private BackgroundTaskState? FindTask(Guid taskId) =>
         _tasks.FirstOrDefault(task => task.Id == taskId);
+
+    private BackgroundTaskState? ResolveCurrentTask() =>
+        _tasks
+            .OrderByDescending(static task => task.LastUpdatedAtUtc)
+            .FirstOrDefault();
 
     private void RequestApplyCurrentTask()
     {
@@ -291,11 +344,13 @@ public sealed class AppBackgroundTaskStatusService : ObservableObject, IAppBackg
         public BackgroundTaskState(
             Guid id,
             string title,
-            int? totalCount)
+            int? totalCount,
+            Action? cancelAction)
         {
             Id = id;
             Title = title;
             TotalCount = totalCount;
+            CancelAction = cancelAction;
             IsIndeterminate = totalCount is null;
             LastUpdatedAtUtc = DateTimeOffset.UtcNow;
         }
@@ -311,6 +366,8 @@ public sealed class AppBackgroundTaskStatusService : ObservableObject, IAppBackg
         public string? Detail { get; set; }
 
         public bool IsIndeterminate { get; set; }
+
+        public Action? CancelAction { get; set; }
 
         public DateTimeOffset LastUpdatedAtUtc { get; set; }
     }

@@ -34,5 +34,6 @@ internal sealed record AppCompositionServices(
     IAppLogService AppLogService,
     IAppBackgroundTaskStatusService AppBackgroundTaskStatusService,
     IBackgroundTaskRunner BackgroundTaskRunner,
+    IBackgroundWorkScheduler BackgroundWorkScheduler,
     IWorkspaceImportCoordinatorService WorkspaceImportCoordinatorService,
     ISpineAnimationRuntimePlaybackService SpineAnimationRuntimePlaybackService);

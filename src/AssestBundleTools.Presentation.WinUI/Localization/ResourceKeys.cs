@@ -26,6 +26,7 @@ public static class ResourceKeys
     public const string AppStatusBarWorkingText = "AppStatusBar.Working.Text";
     public const string AppStatusBarBackgroundTaskFallbackText = "AppStatusBar.BackgroundTask.Fallback.Text";
     public const string AppStatusBarProgressFormat = "AppStatusBar.Progress.Format";
+    public const string AppStatusBarCancelTaskToolTip = "AppStatusBar.CancelTask.ToolTip";
     public const string HomePageBadgeText = "HomePage.BadgeText.Text";
     public const string HomePageTitle = "HomePage.PageTitleText.Text";
     public const string HomePageSubtitle = "HomePage.PageSubtitleText.Text";
@@ -241,6 +242,7 @@ public static class ResourceKeys
     public const string BatchTasksBatchExtractLastRunFormat = "BatchTasksPage.BatchExtract.LastRun.Format";
     public const string BatchTasksBatchExtractLogExecutedFormat = "BatchTasksPage.BatchExtract.Log.Executed.Format";
     public const string BatchTasksBatchExtractStatusText = "BatchTasksPage.BatchExtract.Status.Text";
+    public const string BatchTasksBatchReplaceStatusText = "BatchTasksPage.BatchReplace.Status.Text";
     public const string BatchTasksBatchReplaceScopeFormat = "BatchTasksPage.BatchReplace.Scope.Format";
     public const string BatchTasksBatchReplaceScopeEmpty = "BatchTasksPage.BatchReplace.Scope.Empty";
     public const string BatchTasksBatchReplaceEmpty = "BatchTasksPage.BatchReplace.Empty";
@@ -263,6 +265,7 @@ public static class ResourceKeys
     public const string BatchTasksSaveExecutionLastRunNone = "BatchTasksPage.SaveExecution.LastRun.None";
     public const string BatchTasksSaveExecutionLastRunFormat = "BatchTasksPage.SaveExecution.LastRun.Format";
     public const string BatchTasksSaveExecutionLogExecutedFormat = "BatchTasksPage.SaveExecution.Log.Executed.Format";
+    public const string BatchTasksSaveExecutionStatusText = "BatchTasksPage.SaveExecution.Status.Text";
     public const string BatchTasksTaskResultStatusCompleted = "BatchTasksPage.TaskResultStatusCompleted";
     public const string BatchTasksTaskResultBatchExtractTitle = "BatchTasksPage.TaskResult.BatchExtract.Title";
     public const string BatchTasksTaskResultBatchExtractSummaryFormat = "BatchTasksPage.TaskResult.BatchExtract.Summary.Format";
@@ -339,9 +342,17 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsWorkspaceImportWorkerCountOptionTwo = "SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.Two";
     public const string SettingsDiagnosticsWorkspaceImportWorkerCountOptionThree = "SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.Three";
     public const string SettingsDiagnosticsWorkspaceImportWorkerCountOptionFour = "SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.Four";
+    public const string SettingsDiagnosticsPreviewWorkerCountLabel = "SettingsDiagnosticsPage.PreviewWorkerCount.Label";
+    public const string SettingsDiagnosticsPreviewWorkerCountDescription = "SettingsDiagnosticsPage.PreviewWorkerCount.Description";
+    public const string SettingsDiagnosticsPreviewWorkerCountOptionAutomatic = "SettingsDiagnosticsPage.PreviewWorkerCount.Option.Automatic";
+    public const string SettingsDiagnosticsPreviewWorkerCountOptionOne = "SettingsDiagnosticsPage.PreviewWorkerCount.Option.One";
+    public const string SettingsDiagnosticsPreviewWorkerCountOptionTwo = "SettingsDiagnosticsPage.PreviewWorkerCount.Option.Two";
+    public const string SettingsDiagnosticsPreviewWorkerCountOptionThree = "SettingsDiagnosticsPage.PreviewWorkerCount.Option.Three";
+    public const string SettingsDiagnosticsPreviewWorkerCountOptionFour = "SettingsDiagnosticsPage.PreviewWorkerCount.Option.Four";
     public const string SettingsDiagnosticsStartupBehaviorSaveFailedMessage = "SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage";
     public const string SettingsDiagnosticsRecentWorkspaceOpenBehaviorSaveFailedMessage = "SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.SaveFailedMessage";
     public const string SettingsDiagnosticsWorkspaceImportWorkerCountSaveFailedMessage = "SettingsDiagnosticsPage.WorkspaceImportWorkerCount.SaveFailedMessage";
+    public const string SettingsDiagnosticsPreviewWorkerCountSaveFailedMessage = "SettingsDiagnosticsPage.PreviewWorkerCount.SaveFailedMessage";
     public const string SettingsDiagnosticsResponsibilityTitle = "SettingsDiagnosticsPage.ResponsibilityTitleText.Text";
     public const string SettingsDiagnosticsResponsibilityBody = "SettingsDiagnosticsPage.ResponsibilityBodyText.Text";
     public const string SettingsDiagnosticsDiagnosticsTitle = "SettingsDiagnosticsPage.DiagnosticsTitleText.Text";
@@ -404,6 +415,7 @@ public static class ResourceKeys
     public const string BundleExplorerNotificationResolvedAssetNavigationUnavailableFormat = "BundleExplorer.Notification.ResolvedAssetNavigationUnavailable.Format";
     public const string BundleExplorerNotificationAssetExtracted = "BundleExplorer.Notification.AssetExtracted";
     public const string BundleExplorerNotificationBatchAssetsExtracted = "BundleExplorer.Notification.BatchAssetsExtracted";
+    public const string BundleExplorerStatusLoadPreviewFormat = "BundleExplorer.Status.LoadPreview.Format";
     public const string BundleExplorerStatusExtractSelectedAssets = "BundleExplorer.Status.ExtractSelectedAssets";
     public const string BundleExplorerStatusExtractSelectedSpineGroups = "BundleExplorer.Status.ExtractSelectedSpineGroups";
     public const string BundleExplorerNotificationSpineGroupExtracted = "BundleExplorer.Notification.SpineGroupExtracted";

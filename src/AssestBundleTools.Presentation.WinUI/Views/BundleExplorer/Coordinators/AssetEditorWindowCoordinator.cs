@@ -308,7 +308,9 @@ public sealed partial class BundleExplorerPage
                 _owner.ViewModel.BundlePane,
                 _owner.ViewModel.AttachAssetDocumentTabFromEditorWindowAsync,
                 _owner.ViewModel.AttachAssetDocumentGroupFromEditorWindowAsync,
-                App.CurrentApp.AppBackgroundTaskStatusService);
+                App.CurrentApp.AppBackgroundTaskStatusService,
+                App.CurrentApp.BackgroundWorkScheduler,
+                () => App.CurrentApp.AppPreferencesService.PreviewWorkerCount);
             var window = new AssetEditorWindow(
                 viewModel,
                 OpenDocumentInNewWindowFromEditorAsync,

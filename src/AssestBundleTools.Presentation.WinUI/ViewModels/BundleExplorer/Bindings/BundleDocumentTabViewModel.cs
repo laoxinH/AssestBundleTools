@@ -231,6 +231,11 @@ public sealed class BundleDocumentTabViewModel : ObservableObject
         DocumentGroup.SetActiveAssetTab(assetTab);
     }
 
+    public void SetActiveAssetTab(AssetDocumentTabViewModel? assetTab, bool cancelPreviousAsset)
+    {
+        DocumentGroup.SetActiveAssetTab(assetTab, cancelPreviousAsset);
+    }
+
     public void ClearActiveAssetTab()
     {
         DocumentGroup.ClearActiveAssetTab();

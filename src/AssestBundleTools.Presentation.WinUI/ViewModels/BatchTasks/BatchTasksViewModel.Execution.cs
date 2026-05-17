@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Extraction.Commands;
 using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Replacement;
@@ -6,6 +7,7 @@ using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Saving.Commands;
 using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Presentation.WinUI.Localization;
+using AssestBundleTools.Presentation.WinUI.Services;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BatchTasks;
 
@@ -21,15 +23,24 @@ public sealed partial class BatchTasksViewModel
         IsBusy = true;
         try
         {
-            using var taskHandle = _backgroundTaskStatusService.BeginTask(
-                _localizationService.GetRequiredString(ResourceKeys.BatchTasksBatchExtractStatusText));
             var command = new ExtractWorkspaceAssetsCommand(
                 WorkspaceId: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceId,
                 AssetTypeFilter: SelectedBatchExtractAssetTypeOption?.AssetType,
                 WorkspaceKey: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceKey,
                 WorkspaceDataRootPath: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceDataRootPath);
-            var result = await _backgroundTaskRunner.RunAsync(
-                token => _workspaceBatchOperationsGateway.ExtractWorkspaceAssetsAsync(command, token));
+            var result = await _backgroundWorkScheduler.RunAsync(
+                new BackgroundWorkRequest<Result<WorkspaceBatchExtractionResultDto>>(
+                    BackgroundWorkProfile.BatchExtraction,
+                    context => _workspaceBatchOperationsGateway.ExtractWorkspaceAssetsAsync(
+                        command,
+                        context.CancellationToken))
+                {
+                    SemanticKind = BackgroundWorkSemanticKind.VisibleOutput,
+                    Priority = BackgroundWorkPriority.Visible,
+                    WorkspaceId = command.WorkspaceId.Value,
+                    WorkspaceKey = command.WorkspaceKey,
+                    StatusTitle = _localizationService.GetRequiredString(ResourceKeys.BatchTasksBatchExtractStatusText)
+                });
 
             if (!TryGetValue(result, out WorkspaceBatchExtractionResultDto? extractionResult))
             {
@@ -70,10 +81,21 @@ public sealed partial class BatchTasksViewModel
         IsBusy = true;
         try
         {
-            var result = await _workspaceBatchOperationsGateway.ExecuteWorkspaceBatchReplacementAsync(
-                new ExecuteWorkspaceBatchReplacementCommand(
-                    WorkspaceId: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceId,
-                    SourceFilter: SelectedBatchReplaceSourceOption?.SourceKind ?? BatchReplacementSourceKind.All));
+            var command = new ExecuteWorkspaceBatchReplacementCommand(
+                WorkspaceId: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceId,
+                SourceFilter: SelectedBatchReplaceSourceOption?.SourceKind ?? BatchReplacementSourceKind.All);
+            var result = await _backgroundWorkScheduler.RunAsync(
+                new BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>(
+                    BackgroundWorkProfile.BatchReplacement,
+                    context => _workspaceBatchOperationsGateway.ExecuteWorkspaceBatchReplacementAsync(
+                        command,
+                        context.CancellationToken))
+                {
+                    SemanticKind = BackgroundWorkSemanticKind.WorkspaceMutation,
+                    Priority = BackgroundWorkPriority.Visible,
+                    WorkspaceId = command.WorkspaceId.Value,
+                    StatusTitle = _localizationService.GetRequiredString(ResourceKeys.BatchTasksBatchReplaceStatusText)
+                });
 
             if (!TryGetValue(result, out WorkspaceBatchReplacementResultDto? replacementResult))
             {
@@ -116,9 +138,20 @@ public sealed partial class BatchTasksViewModel
         IsBusy = true;
         try
         {
-            var result = await _workspaceBatchOperationsGateway.SaveWorkspaceAsNewBundleAsync(
-                new SaveWorkspaceAsNewBundleCommand(
-                    WorkspaceId: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceId));
+            var command = new SaveWorkspaceAsNewBundleCommand(
+                WorkspaceId: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceId);
+            var result = await _backgroundWorkScheduler.RunAsync(
+                new BackgroundWorkRequest<Result<WorkspaceSaveExecutionResultDto>>(
+                    BackgroundWorkProfile.SaveRebuild,
+                    context => _workspaceBatchOperationsGateway.SaveWorkspaceAsNewBundleAsync(
+                        command,
+                        context.CancellationToken))
+                {
+                    SemanticKind = BackgroundWorkSemanticKind.WorkspaceMutation,
+                    Priority = BackgroundWorkPriority.Visible,
+                    WorkspaceId = command.WorkspaceId.Value,
+                    StatusTitle = _localizationService.GetRequiredString(ResourceKeys.BatchTasksSaveExecutionStatusText)
+                });
 
             if (!TryGetValue(result, out WorkspaceSaveExecutionResultDto? saveResult))
             {

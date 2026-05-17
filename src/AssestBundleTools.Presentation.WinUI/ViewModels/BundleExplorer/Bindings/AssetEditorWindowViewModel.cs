@@ -56,7 +56,9 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         IBundleExplorerBundlePaneHost bundlePane,
         Func<AssetDocumentTabViewModel, Task<bool>> moveAssetDocumentToMainWindowAsync,
         Func<AssetDocumentGroupTransfer, Task<bool>> moveAssetDocumentGroupToMainWindowAsync,
-        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null)
+        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null,
+        Func<int>? previewWorkerCountProvider = null)
         : this(
             CreateSingleAssetGroup(initialAssetTab),
             workspaceAssetInspectionGateway,
@@ -73,7 +75,9 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             bundlePane,
             moveAssetDocumentToMainWindowAsync,
             moveAssetDocumentGroupToMainWindowAsync,
-            backgroundTaskStatusService)
+            backgroundTaskStatusService,
+            backgroundWorkScheduler,
+            previewWorkerCountProvider)
     {
     }
 
@@ -93,7 +97,9 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         IBundleExplorerBundlePaneHost bundlePane,
         Func<AssetDocumentTabViewModel, Task<bool>> moveAssetDocumentToMainWindowAsync,
         Func<AssetDocumentGroupTransfer, Task<bool>> moveAssetDocumentGroupToMainWindowAsync,
-        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null)
+        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null,
+        Func<int>? previewWorkerCountProvider = null)
     {
         ArgumentNullException.ThrowIfNull(initialAssetGroup);
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
@@ -125,14 +131,18 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             _workspaceAssetInspectionGateway,
             workspaceContextService,
             _workspaceShell,
-            _backgroundTaskRunner);
+            _backgroundTaskRunner,
+            backgroundWorkScheduler,
+            _localizationService);
         var assetPreviewCoordinator = new BundleExplorerAssetPreviewCoordinator(
             _workspaceAssetInspectionGateway,
             workspaceContextService,
             _workspaceShell,
             appLogService,
             _localizationService,
-            _backgroundTaskRunner);
+            _backgroundTaskRunner,
+            previewWorkerCountProvider: previewWorkerCountProvider,
+            backgroundWorkScheduler: backgroundWorkScheduler);
         _assetPreviewLoadCoordinator = new BundleExplorerAssetPreviewLoadCoordinator(
             assetPreviewCoordinator,
             () => DocumentGroup.ActiveAssetTab,
@@ -145,7 +155,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             filePickerService,
             _backgroundTaskRunner,
             backgroundTaskStatusService,
-            workspaceOperationChangeNotifier);
+            workspaceOperationChangeNotifier,
+            backgroundWorkScheduler);
         _assetActionCoordinator = new AssetEditorWindowAssetActionCoordinator(
             _workspaceShell,
             pathNavigationService,
@@ -204,18 +215,29 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             return;
         }
 
-        var wasAlreadyActiveAssetTab = ReferenceEquals(DocumentGroup.ActiveAssetTab, assetTab);
-        DocumentGroup.SetActiveAssetTab(assetTab);
+        var previousActiveAssetTab = DocumentGroup.ActiveAssetTab;
+        var wasAlreadyActiveAssetTab = ReferenceEquals(previousActiveAssetTab, assetTab);
+        DocumentGroup.SetActiveAssetTab(assetTab, cancelPreviousAsset: false);
         SyncActiveDocumentState();
 
         if (CanReuseLoadedAssetDocumentTabContent(assetTab))
         {
             _assetPreviewLoadCoordinator.LoadForegroundPreview(assetTab, promoteLoadingPreview: !wasAlreadyActiveAssetTab);
+            if (!wasAlreadyActiveAssetTab)
+            {
+                _assetPreviewLoadCoordinator.DemotePreviewToBackgroundPrewarm(
+                    previousActiveAssetTab,
+                    DocumentGroup.AssetTabs);
+            }
+
             _assetPreviewLoadCoordinator.PrewarmBackgroundPreviews(DocumentGroup.AssetTabs, assetTab);
             return;
         }
 
-        await LoadAssetDocumentTabAsync(assetTab, promotePreviewAfterLoad: !wasAlreadyActiveAssetTab);
+        await LoadAssetDocumentTabAsync(
+            assetTab,
+            promotePreviewAfterLoad: !wasAlreadyActiveAssetTab,
+            previousActiveAssetTab);
     }
 
     public Task ActivateDocumentTabAsync(AssetDocumentTabItemViewModel? documentTab)
@@ -322,7 +344,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
 
     private async Task LoadAssetDocumentTabAsync(
         AssetDocumentTabViewModel assetTab,
-        bool promotePreviewAfterLoad)
+        bool promotePreviewAfterLoad,
+        AssetDocumentTabViewModel? previousActiveAssetTab)
     {
         if (_workspaceShell.WorkspaceSummary is not { } workspaceSummary)
         {
@@ -356,6 +379,13 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
 
         ReapplyAssetDocumentState(assetTab, details);
         _assetPreviewLoadCoordinator.LoadForegroundPreview(assetTab, promotePreviewAfterLoad);
+        if (!ReferenceEquals(previousActiveAssetTab, assetTab))
+        {
+            _assetPreviewLoadCoordinator.DemotePreviewToBackgroundPrewarm(
+                previousActiveAssetTab,
+                DocumentGroup.AssetTabs);
+        }
+
         _assetPreviewLoadCoordinator.PrewarmBackgroundPreviews(DocumentGroup.AssetTabs, assetTab);
     }
 

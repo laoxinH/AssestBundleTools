@@ -20,10 +20,19 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
     private const string BinaryContentType = "application/octet-stream";
 
     private readonly IAudioPayloadTranscodingService _audioPayloadTranscodingService;
+    private readonly AssetsToolsBundlePreviewSessionCache _bundleSessionCache;
 
     public AssetsToolsAssetPreviewGenerator(IAudioPayloadTranscodingService audioPayloadTranscodingService)
+        : this(audioPayloadTranscodingService, new AssetsToolsBundlePreviewSessionCache())
+    {
+    }
+
+    internal AssetsToolsAssetPreviewGenerator(
+        IAudioPayloadTranscodingService audioPayloadTranscodingService,
+        AssetsToolsBundlePreviewSessionCache bundleSessionCache)
     {
         _audioPayloadTranscodingService = audioPayloadTranscodingService ?? throw new ArgumentNullException(nameof(audioPayloadTranscodingService));
+        _bundleSessionCache = bundleSessionCache ?? throw new ArgumentNullException(nameof(bundleSessionCache));
     }
 
     public string GeneratorVersion => "assetstools.preview/26";
@@ -45,53 +54,56 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
                 ApplicationErrors.BundleSourceMissing(request.ResolvedBundlePath));
         }
 
-        var assetsManager = new AssetsManager
-        {
-            UseQuickLookup = true,
-            UseTemplateFieldCache = true,
-            UseMonoTemplateFieldCache = true
-        };
+        AssetsToolsBundlePreviewSessionLease? sessionLease = null;
 
         try
         {
-            var bundleInstance = assetsManager.LoadBundleFile(request.ResolvedBundlePath, unpackIfPacked: true);
-            var serializedFiles = LoadSerializedFiles(assetsManager, bundleInstance, cancellationToken);
-            var serializedFile = serializedFiles.FirstOrDefault(file =>
-                string.Equals(file.name, request.SerializedFileName, StringComparison.OrdinalIgnoreCase));
-            if (serializedFile is null)
+            sessionLease = await _bundleSessionCache.AcquireAsync(request.ResolvedBundlePath, cancellationToken);
+            var session = sessionLease.Session;
+            await session.ExecutionGate.WaitAsync(cancellationToken);
+            try
             {
-                return Result<AssetPreviewContentDto>.Failure(
-                    ApplicationErrors.BundlePreviewSerializedFileLocatorMissing(request.ResolvedBundlePath));
-            }
+                cancellationToken.ThrowIfCancellationRequested();
+                var serializedFile = session.SerializedFiles.FirstOrDefault(file =>
+                    string.Equals(file.name, request.SerializedFileName, StringComparison.OrdinalIgnoreCase));
+                if (serializedFile is null)
+                {
+                    return Result<AssetPreviewContentDto>.Failure(
+                        ApplicationErrors.BundlePreviewSerializedFileLocatorMissing(request.ResolvedBundlePath));
+                }
 
-            if (!AssetsToolsFieldReader.TryFindAssetInfoByPathId(serializedFile, request.PathId, out var assetInfo))
+                if (!AssetsToolsFieldReader.TryFindAssetInfoByPathId(serializedFile, request.PathId, out var assetInfo))
+                {
+                    return Result<AssetPreviewContentDto>.Failure(
+                        ApplicationErrors.BundlePreviewAssetLocatorMissing(request.ResolvedBundlePath));
+                }
+
+                var baseField = AssetsToolsFieldReader.TryGetBaseField(session.AssetsManager, serializedFile, assetInfo);
+                if (baseField is null)
+                {
+                    return Result<AssetPreviewContentDto>.Failure(
+                        ApplicationErrors.BundlePreviewFieldTreeUnavailable(request.ResolvedBundlePath));
+                }
+
+                var classId = ResolveClassId(assetInfo.TypeId);
+                var previewContent = await BuildPreviewContentAsync(
+                    session.AssetsManager,
+                    session.BundleInstance,
+                    serializedFile,
+                    assetInfo,
+                    baseField,
+                    classId,
+                    session.SerializedFiles,
+                    session.InternalSerializedFileLookup,
+                    request,
+                    cancellationToken);
+
+                return Result<AssetPreviewContentDto>.Success(previewContent);
+            }
+            finally
             {
-                return Result<AssetPreviewContentDto>.Failure(
-                    ApplicationErrors.BundlePreviewAssetLocatorMissing(request.ResolvedBundlePath));
+                session.ExecutionGate.Release();
             }
-
-            var internalSerializedFileLookup = AssetsToolsBundleDependencyResolver.BuildInternalSerializedFileLookup(serializedFiles);
-            var baseField = AssetsToolsFieldReader.TryGetBaseField(assetsManager, serializedFile, assetInfo);
-            if (baseField is null)
-            {
-                return Result<AssetPreviewContentDto>.Failure(
-                    ApplicationErrors.BundlePreviewFieldTreeUnavailable(request.ResolvedBundlePath));
-            }
-
-            var classId = ResolveClassId(assetInfo.TypeId);
-            var previewContent = await BuildPreviewContentAsync(
-                assetsManager,
-                bundleInstance,
-                serializedFile,
-                assetInfo,
-                baseField,
-                classId,
-                serializedFiles,
-                internalSerializedFileLookup,
-                request,
-                cancellationToken);
-
-            return Result<AssetPreviewContentDto>.Success(previewContent);
         }
         catch (OperationCanceledException)
         {
@@ -106,31 +118,8 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         }
         finally
         {
-            assetsManager.UnloadAll(unloadClassData: false);
+            sessionLease?.Dispose();
         }
-    }
-
-    private static IReadOnlyList<AssetsFileInstance> LoadSerializedFiles(
-        AssetsManager assetsManager,
-        BundleFileInstance bundleInstance,
-        CancellationToken cancellationToken)
-    {
-        var serializedFiles = new List<AssetsFileInstance>();
-        var directoryInfos = bundleInstance.file.BlockAndDirInfo.DirectoryInfos;
-
-        for (var index = 0; index < directoryInfos.Count; index++)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            if (!bundleInstance.file.IsAssetsFile(index))
-            {
-                continue;
-            }
-
-            serializedFiles.Add(assetsManager.LoadAssetsFileFromBundle(bundleInstance, index, loadDeps: false));
-        }
-
-        return serializedFiles;
     }
 
     private async Task<AssetPreviewContentDto> BuildPreviewContentAsync(

@@ -132,6 +132,9 @@
   <data name="AppStatusBar.Progress.Format" xml:space="preserve">
     <value>{0}/{1}</value>
   </data>
+  <data name="AppStatusBar.CancelTask.ToolTip" xml:space="preserve">
+    <value>取消当前后台任务</value>
+  </data>
   <data name="HomePage.PageTitleText.Text" xml:space="preserve">
     <value>控制台</value>
   </data>
@@ -2871,6 +2874,9 @@
   <data name="BatchTasksPage.BatchExtract.Status.Text" xml:space="preserve">
     <value>正在执行批处理页提取</value>
   </data>
+  <data name="BatchTasksPage.BatchReplace.Status.Text" xml:space="preserve">
+    <value>正在执行批量替换骨架</value>
+  </data>
   <data name="BatchTasksPage.BatchReplace.Scope.Format" xml:space="preserve">
     <value>当前工作区：{0}</value>
   </data>
@@ -2936,6 +2942,9 @@
   </data>
   <data name="BatchTasksPage.SaveExecution.Log.Executed.Format" xml:space="preserve">
     <value>已执行保存骨架，计划输出 {0} 个资源包、覆盖 {1} 项变更，建议输出目录：{2}</value>
+  </data>
+  <data name="BatchTasksPage.SaveExecution.Status.Text" xml:space="preserve">
+    <value>正在验证保存输出骨架</value>
   </data>
   <data name="BatchTasksPage.TaskResultStatusCompleted" xml:space="preserve">
     <value>已完成</value>
@@ -3099,6 +3108,27 @@
   <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.Four" xml:space="preserve">
     <value>4 个</value>
   </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Label" xml:space="preserve">
+    <value>预览线程数量</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Description" xml:space="preserve">
+    <value>自动模式会按机器核心数推导 1 到 4 个预览槽；固定数量会限制资源详情和后台预热的总并发，其中当前激活标签始终保留前台槽。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Option.Automatic" xml:space="preserve">
+    <value>自动</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Option.One" xml:space="preserve">
+    <value>1 个</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Option.Two" xml:space="preserve">
+    <value>2 个</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Option.Three" xml:space="preserve">
+    <value>3 个</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Option.Four" xml:space="preserve">
+    <value>4 个</value>
+  </data>
   <data name="SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage" xml:space="preserve">
     <value>保存启动恢复偏好失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
   </data>
@@ -3107,6 +3137,9 @@
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.SaveFailedMessage" xml:space="preserve">
     <value>保存导入 worker 数量失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.SaveFailedMessage" xml:space="preserve">
+    <value>保存预览线程数量失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
   </data>
   <data name="SettingsDiagnosticsPage.ResponsibilityTitleText.Text" xml:space="preserve">
     <value>页面职责</value>
@@ -3308,6 +3341,9 @@
   </data>
   <data name="BundleExplorer.Notification.BatchAssetsExtracted" xml:space="preserve">
     <value>已完成 {0} 项资源的提取写出。</value>
+  </data>
+  <data name="BundleExplorer.Status.LoadPreview.Format" xml:space="preserve">
+    <value>正在加载预览：{0}</value>
   </data>
   <data name="BundleExplorer.Status.ExtractSelectedAssets" xml:space="preserve">
     <value>正在提取选中资源</value>

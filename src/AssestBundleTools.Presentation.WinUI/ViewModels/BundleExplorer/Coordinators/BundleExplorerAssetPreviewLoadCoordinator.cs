@@ -12,6 +12,7 @@ internal sealed class BundleExplorerAssetPreviewLoadCoordinator
     private readonly BundleExplorerAssetPreviewCoordinator _assetPreviewCoordinator;
     private readonly Func<AssetDocumentTabViewModel?> _activeAssetTabProvider;
     private readonly Func<IReadOnlyList<AppError>, string> _formatFirstErrorMessage;
+    private long _previewActivationSequence;
 
     public BundleExplorerAssetPreviewLoadCoordinator(
         BundleExplorerAssetPreviewCoordinator assetPreviewCoordinator,
@@ -26,6 +27,11 @@ internal sealed class BundleExplorerAssetPreviewLoadCoordinator
     public void LoadForegroundPreview(AssetDocumentTabViewModel assetTab, bool promoteLoadingPreview)
     {
         ArgumentNullException.ThrowIfNull(assetTab);
+
+        if (ReferenceEquals(assetTab, _activeAssetTabProvider()))
+        {
+            assetTab.MarkPreviewActivated(Interlocked.Increment(ref _previewActivationSequence));
+        }
 
         if (!ReferenceEquals(assetTab, _activeAssetTabProvider()) ||
             assetTab.Details is not { } details ||
@@ -48,6 +54,40 @@ internal sealed class BundleExplorerAssetPreviewLoadCoordinator
             AssetPreviewLoadPriority.Foreground);
     }
 
+    public void DemotePreviewToBackgroundPrewarm(
+        AssetDocumentTabViewModel? assetTab,
+        IEnumerable<AssetDocumentTabViewModel> assetTabs)
+    {
+        ArgumentNullException.ThrowIfNull(assetTabs);
+
+        if (assetTab is null ||
+            assetTab.Details is not { } details ||
+            HasStablePreviewContent(assetTab.Inspector.Preview))
+        {
+            return;
+        }
+
+        var openAssetTabs = assetTabs as IReadOnlyList<AssetDocumentTabViewModel> ?? assetTabs.ToArray();
+        if (!openAssetTabs.Contains(assetTab) ||
+            ReferenceEquals(assetTab, _activeAssetTabProvider()))
+        {
+            return;
+        }
+
+        if (assetTab.Inspector.Preview.IsPreviewLoading)
+        {
+            assetTab.CancelPreviewRequest();
+        }
+
+        _ = _assetPreviewCoordinator.LoadInspectorPreviewAsync(
+            assetTab,
+            details,
+            _formatFirstErrorMessage,
+            () => openAssetTabs.Contains(assetTab) &&
+                  !ReferenceEquals(assetTab, _activeAssetTabProvider()),
+            AssetPreviewLoadPriority.BackgroundPrewarm);
+    }
+
     public void PrewarmBackgroundPreviews(BundleDocumentTabViewModel bundleTab, AssetDocumentTabViewModel foregroundAssetTab)
     {
         ArgumentNullException.ThrowIfNull(bundleTab);
@@ -63,7 +103,8 @@ internal sealed class BundleExplorerAssetPreviewLoadCoordinator
         ArgumentNullException.ThrowIfNull(assetTabs);
         ArgumentNullException.ThrowIfNull(foregroundAssetTab);
 
-        foreach (var assetTab in assetTabs)
+        var openAssetTabs = assetTabs as IReadOnlyList<AssetDocumentTabViewModel> ?? assetTabs.ToArray();
+        foreach (var assetTab in OrderPrewarmCandidates(openAssetTabs))
         {
             if (ReferenceEquals(assetTab, foregroundAssetTab) ||
                 assetTab.Details is not { } details ||
@@ -76,7 +117,8 @@ internal sealed class BundleExplorerAssetPreviewLoadCoordinator
                 assetTab,
                 details,
                 _formatFirstErrorMessage,
-                () => assetTabs.Contains(assetTab),
+                () => openAssetTabs.Contains(assetTab) &&
+                      !ReferenceEquals(assetTab, _activeAssetTabProvider()),
                 AssetPreviewLoadPriority.BackgroundPrewarm);
         }
     }
@@ -92,10 +134,26 @@ internal sealed class BundleExplorerAssetPreviewLoadCoordinator
     {
         ArgumentNullException.ThrowIfNull(preview);
 
+        if (preview.IsPreviewLoading)
+        {
+            return false;
+        }
+
         return preview.Image.ImageSource is not null ||
                preview.PreviewAudioSource is not null ||
                preview.Mesh.Geometry is not null ||
                !string.IsNullOrWhiteSpace(preview.PreviewText) ||
                !string.IsNullOrWhiteSpace(preview.PreviewStatusText);
+    }
+
+    private static IEnumerable<AssetDocumentTabViewModel> OrderPrewarmCandidates(
+        IReadOnlyList<AssetDocumentTabViewModel> openAssetTabs)
+    {
+        return openAssetTabs
+            .Select((assetTab, index) => new { AssetTab = assetTab, Index = index })
+            .OrderByDescending(item => item.AssetTab.PreviewActivationSequence)
+            .ThenByDescending(item => item.AssetTab.PreviewOpenSequence)
+            .ThenByDescending(item => item.Index)
+            .Select(static item => item.AssetTab);
     }
 }

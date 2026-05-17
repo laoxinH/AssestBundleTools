@@ -45,6 +45,7 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
     private readonly IWorkspaceImportCoordinatorService _workspaceImportCoordinatorService;
     private readonly IBackgroundTaskRunner _backgroundTaskRunner;
     private readonly IAppBackgroundTaskStatusService _backgroundTaskStatusService;
+    private readonly IBackgroundWorkScheduler _backgroundWorkScheduler;
     private readonly BatchTasksPresentationPresenter _presentationPresenter;
     private bool _isInitialized;
     private bool _isBusy;
@@ -77,7 +78,8 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
         IAppLogService appLogService,
         IWorkspaceImportCoordinatorService workspaceImportCoordinatorService,
         IBackgroundTaskRunner? backgroundTaskRunner = null,
-        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null)
+        IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null)
     {
         _workspaceBatchOperationsGateway = workspaceBatchOperationsGateway ?? throw new ArgumentNullException(nameof(workspaceBatchOperationsGateway));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
@@ -86,6 +88,9 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
         _workspaceImportCoordinatorService = workspaceImportCoordinatorService ?? throw new ArgumentNullException(nameof(workspaceImportCoordinatorService));
         _backgroundTaskRunner = backgroundTaskRunner ?? InlineBackgroundTaskRunner.Instance;
         _backgroundTaskStatusService = backgroundTaskStatusService ?? NullAppBackgroundTaskStatusService.Instance;
+        _backgroundWorkScheduler = backgroundWorkScheduler ?? new BackgroundWorkScheduler(
+            _backgroundTaskRunner,
+            _backgroundTaskStatusService);
         _operationChangeRefreshCoordinator = new WorkspaceOperationChangeRefreshCoordinator(
             workspaceOperationChangeNotifier ?? throw new ArgumentNullException(nameof(workspaceOperationChangeNotifier)),
             () => _workspaceContextService.CurrentWorkspaceSummary?.WorkspaceId,
