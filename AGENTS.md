@@ -137,6 +137,8 @@ After editing:
 - Never revert user changes unless explicitly asked.
 - Do not clean up unrelated dirty files.
 - Keep commits focused and architecture-safe.
+- When a distinct modification task is clearly completed, create one focused git commit for that task before close-out.
+- Do not commit unfinished, exploratory, or inconclusive work; for example, a bug investigation or fix that has not reached a clear completion point should remain uncommitted.
 - If you introduce a temporary transitional structure during refactor, make the transition explicit and keep the repo buildable.
 
 ## 9. When Unsure
