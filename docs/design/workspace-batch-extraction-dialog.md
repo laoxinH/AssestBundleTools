@@ -228,7 +228,7 @@ GC 压力退避：
 - `ExtractWorkspaceAssetsCommand.Progress` 上报结构化 `WorkspaceBatchExtractionProgressDto`；Application 只提供阶段、当前资源包 / 当前项、总数、成功 / 失败计数和 GC 退避标记，Presentation 负责本地化为 Shell 状态条文案。
 - Shell 状态条显示当前任务标题、当前资源包 / 当前资源或 Spine 组、已完成数和总数；准备阶段显示本次候选项数与候选资源包数。
 - 高频进度必须合并投影，不逐资源向 UI 线程刷大量更新。
-- 用户主动取消不视为失败；Presentation 应以信息 toast / 日志提示批量提取已取消，已写出的文件保留在目标目录，不显示“未预期错误”。
+- 用户主动取消不视为失败；Presentation 只结束当前流程并依赖 Shell 状态条收敛任务状态，不额外弹出成功 / 失败 / 信息 toast，也不显示“未预期错误”。
 - 任务完成后通过现有 `IWorkspaceOperationChangeNotifier` 刷新资源详情变更页、批处理页摘要和独立资源编辑窗口，不手动刷新资产列表。
 
 ## 8. 输出布局

@@ -53,7 +53,7 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
     }
 
     [Fact]
-    public void WorkspaceBatchExtractionCancellation_ShouldUseInformationalFeedback()
+    public void WorkspaceBatchExtractionCancellation_ShouldUseSilentNonFailureFeedback()
     {
         var repositoryRoot = FindRepositoryRoot();
         var coordinator = File.ReadAllText(Path.Combine(
@@ -64,26 +64,11 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
             "BundleExplorer",
             "Coordinators",
             "BundleExplorerWorkspaceBatchExtractionCoordinator.cs"));
-        var resourceKeys = File.ReadAllText(Path.Combine(
+        var workspaceCancellationDoc = File.ReadAllText(Path.Combine(
             repositoryRoot,
-            "src",
-            "AssestBundleTools.Presentation.WinUI",
-            "Localization",
-            "ResourceKeys.cs"));
-        var zhResources = File.ReadAllText(Path.Combine(
-            repositoryRoot,
-            "src",
-            "AssestBundleTools.Presentation.WinUI",
-            "Strings",
-            "zh-CN",
-            "Resources.resw"));
-        var enResources = File.ReadAllText(Path.Combine(
-            repositoryRoot,
-            "src",
-            "AssestBundleTools.Presentation.WinUI",
-            "Strings",
-            "en-US",
-            "Resources.resw"));
+            "docs",
+            "design",
+            "workspace-batch-extraction-dialog.md"));
 
         var executionStart = coordinator.IndexOf(
             "private async Task ExecuteSubmittedExtractionAsync",
@@ -96,14 +81,22 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
             "CommonUnexpectedFailure",
             executionStart,
             StringComparison.Ordinal);
+        var resultCancellation = coordinator.IndexOf(
+            "if (result.IsCancelled)",
+            executionStart,
+            StringComparison.Ordinal);
+        var successMessage = coordinator.IndexOf(
+            "WorkspaceBatchExtractionDialogCompletedMessageFormat",
+            executionStart,
+            StringComparison.Ordinal);
 
         Assert.True(cancellationCatch > executionStart);
         Assert.True(unexpectedCatch > cancellationCatch);
-        Assert.Contains("HandleExtractionCancelled();", coordinator);
-        Assert.Contains("AppNotificationSeverity.Informational", coordinator);
-        Assert.Contains("WorkspaceBatchExtractionDialogCancelledMessage", resourceKeys);
-        Assert.Contains("WorkspaceBatchExtractionDialog.CancelledMessage", zhResources);
-        Assert.Contains("WorkspaceBatchExtractionDialog.CancelledMessage", enResources);
+        Assert.True(resultCancellation > unexpectedCatch);
+        Assert.True(successMessage > resultCancellation);
+        Assert.DoesNotContain("HandleExtractionCancelled", coordinator);
+        Assert.DoesNotContain("WorkspaceBatchExtractionDialogCancelledMessage", coordinator);
+        Assert.Contains("不额外弹出成功 / 失败 / 信息 toast", workspaceCancellationDoc);
     }
 
     [Fact]

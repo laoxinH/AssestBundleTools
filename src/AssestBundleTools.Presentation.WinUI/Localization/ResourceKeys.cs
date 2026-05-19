@@ -543,7 +543,6 @@ public static class ResourceKeys
     public const string WorkspaceBatchExtractionDialogProgressSpineGroupFormat = "WorkspaceBatchExtractionDialog.Progress.SpineGroup.Format";
     public const string WorkspaceBatchExtractionDialogProgressMemoryThrottledSuffix = "WorkspaceBatchExtractionDialog.Progress.MemoryThrottledSuffix";
     public const string WorkspaceBatchExtractionDialogCompletedMessageFormat = "WorkspaceBatchExtractionDialog.CompletedMessage.Format";
-    public const string WorkspaceBatchExtractionDialogCancelledMessage = "WorkspaceBatchExtractionDialog.CancelledMessage";
     public const string WorkspaceBatchExtractionDialogNoBundlesMessage = "WorkspaceBatchExtractionDialog.NoBundlesMessage";
     public const string BundleExplorerPageLeftPanelTitle = "BundleExplorerPage.LeftPanelTitleText.Text";
     public const string BundleExplorerPageBundleSearchTextBoxPlaceholder = "BundleExplorerPage.BundleSearchTextBox.PlaceholderText";
