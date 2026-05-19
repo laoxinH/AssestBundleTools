@@ -726,6 +726,9 @@
   <data name="WorkspaceBatchExtractionDialog.CompletedMessage.Format" xml:space="preserve">
     <value>Batch extraction completed: {0} assets, {1} bundles, {2} Spine groups, output to {3}</value>
   </data>
+  <data name="WorkspaceBatchExtractionDialog.CancelledMessage" xml:space="preserve">
+    <value>Batch extraction was cancelled. Files already written remain in the output directory.</value>
+  </data>
   <data name="WorkspaceBatchExtractionDialog.NoBundlesMessage" xml:space="preserve">
     <value>The current workspace has no selectable bundles.</value>
   </data>

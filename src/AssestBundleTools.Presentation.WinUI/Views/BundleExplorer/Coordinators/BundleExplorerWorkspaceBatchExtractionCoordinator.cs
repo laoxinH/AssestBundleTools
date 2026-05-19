@@ -226,12 +226,23 @@ public sealed partial class BundleExplorerPage
                         CanCancel = true
                     });
             }
+            catch (OperationCanceledException)
+            {
+                HandleExtractionCancelled();
+                return;
+            }
             catch
             {
                 _appNotificationService.Show(
                     GetString(ResourceKeys.AppNotificationErrorTitle),
                     GetString(ResourceKeys.CommonUnexpectedFailure),
                     AppNotificationSeverity.Error);
+                return;
+            }
+
+            if (result.IsCancelled)
+            {
+                HandleExtractionCancelled();
                 return;
             }
 
@@ -251,6 +262,16 @@ public sealed partial class BundleExplorerPage
                 GetString(ResourceKeys.AppNotificationSuccessTitle),
                 message,
                 AppNotificationSeverity.Success);
+        }
+
+        private void HandleExtractionCancelled()
+        {
+            var message = GetString(ResourceKeys.WorkspaceBatchExtractionDialogCancelledMessage);
+            _appLogService.AppendInfo(message);
+            _appNotificationService.Show(
+                GetString(ResourceKeys.AppNotificationInfoTitle),
+                message,
+                AppNotificationSeverity.Informational);
         }
 
         private async Task<string?> ResolveSubmittedOutputDirectoryAsync(

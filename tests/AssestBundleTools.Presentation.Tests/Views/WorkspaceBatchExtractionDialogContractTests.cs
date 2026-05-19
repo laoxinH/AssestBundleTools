@@ -53,6 +53,60 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
     }
 
     [Fact]
+    public void WorkspaceBatchExtractionCancellation_ShouldUseInformationalFeedback()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var coordinator = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Coordinators",
+            "BundleExplorerWorkspaceBatchExtractionCoordinator.cs"));
+        var resourceKeys = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Localization",
+            "ResourceKeys.cs"));
+        var zhResources = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Strings",
+            "zh-CN",
+            "Resources.resw"));
+        var enResources = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Strings",
+            "en-US",
+            "Resources.resw"));
+
+        var executionStart = coordinator.IndexOf(
+            "private async Task ExecuteSubmittedExtractionAsync",
+            StringComparison.Ordinal);
+        var cancellationCatch = coordinator.IndexOf(
+            "catch (OperationCanceledException)",
+            executionStart,
+            StringComparison.Ordinal);
+        var unexpectedCatch = coordinator.IndexOf(
+            "CommonUnexpectedFailure",
+            executionStart,
+            StringComparison.Ordinal);
+
+        Assert.True(cancellationCatch > executionStart);
+        Assert.True(unexpectedCatch > cancellationCatch);
+        Assert.Contains("HandleExtractionCancelled();", coordinator);
+        Assert.Contains("AppNotificationSeverity.Informational", coordinator);
+        Assert.Contains("WorkspaceBatchExtractionDialogCancelledMessage", resourceKeys);
+        Assert.Contains("WorkspaceBatchExtractionDialog.CancelledMessage", zhResources);
+        Assert.Contains("WorkspaceBatchExtractionDialog.CancelledMessage", enResources);
+    }
+
+    [Fact]
     public void WindowContent_ShouldExposeBundleCategoryAndDeferredOutputSelections()
     {
         var repositoryRoot = FindRepositoryRoot();
