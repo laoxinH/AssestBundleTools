@@ -7,6 +7,7 @@ using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Extraction.Commands;
 using AssestBundleTools.Application.Extraction.Dtos;
+using AssestBundleTools.Application.Extraction.Queries;
 using AssestBundleTools.Application.Extraction.Services;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Tests.Testing;
@@ -231,6 +232,499 @@ internal static partial class ExtractionWorkflowHandlerTests
         TestAssert.Equal(2, operations[^1].Result?.CompletedCount ?? 0, "Batch operation should record completed count.");
     }
 
+    public static async Task ExtractWorkspaceAssetsHandler_ShouldReportWorkspaceBatchProgress()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleId = new BundleId("bundle.dynamic");
+        var shaderAssetId = new AssetId("asset.shader");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            shaderAssetId,
+            AssetType.Unknown,
+            "HeroShader",
+            "Assets/HeroShader.shader",
+            "Shader"));
+        var progress = new RecordingProgress<WorkspaceBatchExtractionProgressDto>();
+        var batchHandler = new ExtractWorkspaceAssetsHandler(registry);
+
+        var result = await batchHandler.HandleAsync(new ExtractWorkspaceAssetsCommand(
+            workspaceId,
+            WorkspaceKey: WorkspaceKey,
+            WorkspaceDataRootPath: WorkspaceDataRootPath,
+            SelectedBundleIds: new[] { bundleId },
+            SelectedCategories: new[] { WorkspaceBatchExtractionCategoryDto.FromAssetType(AssetType.Unknown, "Shader") },
+            Progress: progress));
+
+        TestAssert.True(result.IsSuccess, "Batch extraction should succeed.");
+        TestAssert.True(
+            progress.Reports.Any(static report =>
+                report.Kind == WorkspaceBatchExtractionProgressKind.Preparing &&
+                report.TotalItemCount == 1 &&
+                report.CandidateBundleCount == 1),
+            "Progress should report a preparing snapshot with deterministic totals.");
+        TestAssert.True(
+            progress.Reports.Any(report =>
+                report.Kind == WorkspaceBatchExtractionProgressKind.Asset &&
+                report.BundleDisplayName == "bundle.dynamic.ab" &&
+                report.ItemDisplayName == "HeroShader" &&
+                report.AssetType == AssetType.Unknown &&
+                report.AssetTypeDisplayName == "Shader"),
+            "Progress should identify the current bundle, item, and workspace-provided asset type name.");
+        TestAssert.True(
+            progress.Reports.Any(static report =>
+                report.Kind == WorkspaceBatchExtractionProgressKind.Asset &&
+                report.CompletedItemCount == 1 &&
+                report.SucceededItemCount == 1 &&
+                report.FailedItemCount == 0),
+            "Progress should publish the completed item count after extraction.");
+    }
+
+    public static async Task GetWorkspaceBatchExtractionPreviewHandler_ShouldRespectSelectedBundlesAndCategories()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleA = new BundleId("bundle.a");
+        var bundleB = new BundleId("bundle.b");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleA,
+            new AssetId("asset.texture.a"),
+            AssetType.Texture2D,
+            "TextureA",
+            "Assets/TextureA"));
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleA,
+            new AssetId("asset.text.a"),
+            AssetType.TextAsset,
+            "TextA",
+            "Assets/TextA.txt"));
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleB,
+            new AssetId("asset.sprite.b"),
+            AssetType.Sprite,
+            "SpriteB",
+            "Assets/SpriteB"));
+        var handler = new GetWorkspaceBatchExtractionPreviewHandler(registry);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchExtractionPreviewQuery(
+            workspaceId,
+            OutputDirectory: @"D:\Out",
+            SelectedBundleIds: new[] { bundleA },
+            SelectedCategories: new[]
+            {
+                WorkspaceBatchExtractionCategoryDto.FromAssetType(AssetType.Texture2D),
+                WorkspaceBatchExtractionCategoryDto.FromAssetType(AssetType.Sprite)
+            }));
+
+        TestAssert.True(result.IsSuccess, "Workspace batch preview should succeed.");
+        TestAssert.Equal(1, result.Value?.CandidateAssetCount ?? 0, "Preview should only include matching assets from selected bundles.");
+        TestAssert.Equal(1, result.Value?.CandidateBundleCount ?? 0, "Preview should only include bundles with matching candidates.");
+        var bundlePlan = TestAssert.Single(result.Value?.BundlePlans ?? Array.Empty<WorkspaceBatchExtractionBundlePlanDto>());
+        TestAssert.Equal(bundleA, bundlePlan.BundleId, "Preview should keep the selected bundle identity.");
+        TestAssert.Equal(1, bundlePlan.AssetCount, "Preview should aggregate only matching category assets.");
+        TestAssert.Equal(2, result.Value?.SelectedCategories?.Count ?? 0, "Preview should echo the explicit category selection.");
+        var categoryPlans = result.Value?.CategoryPlans ?? Array.Empty<WorkspaceBatchExtractionCategoryPlanDto>();
+        TestAssert.True(
+            categoryPlans.Any(plan =>
+                plan.Category == WorkspaceBatchExtractionCategoryDto.FromAssetType(AssetType.Texture2D) &&
+                plan.CandidateCount == 1),
+            "Preview should expose per-category candidate counts for the selected bundle range.");
+        TestAssert.True(
+            categoryPlans.Any(plan =>
+                plan.Category == WorkspaceBatchExtractionCategoryDto.FromAssetType(AssetType.TextAsset) &&
+                plan.CandidateCount == 1),
+            "Category counts should include unselected types that exist in the selected bundles.");
+        TestAssert.False(
+            categoryPlans.Any(plan => plan.Category == WorkspaceBatchExtractionCategoryDto.FromAssetType(AssetType.Sprite)),
+            "Category counts should not include asset types that only exist in unchecked bundles.");
+    }
+
+    public static async Task GetWorkspaceBatchExtractionPreviewHandler_ShouldExposeUnknownTypeDisplayNames()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleId = new BundleId("bundle.dynamic");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            new AssetId("asset.shader"),
+            AssetType.Unknown,
+            "HeroShader",
+            "Assets/HeroShader.shader",
+            "Shader"));
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            new AssetId("asset.behaviour"),
+            AssetType.Unknown,
+            "HeroBehaviour",
+            "Assets/HeroBehaviour.asset",
+            "MonoBehaviour"));
+        var handler = new GetWorkspaceBatchExtractionPreviewHandler(registry);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchExtractionPreviewQuery(
+            workspaceId,
+            OutputDirectory: @"D:\Out",
+            SelectedBundleIds: new[] { bundleId },
+            SelectedCategories: new[] { WorkspaceBatchExtractionCategoryDto.All }));
+
+        TestAssert.True(result.IsSuccess, "Workspace batch preview should succeed for dynamic unknown Unity types.");
+        var categoryPlans = result.Value?.CategoryPlans ?? Array.Empty<WorkspaceBatchExtractionCategoryPlanDto>();
+        TestAssert.True(
+            categoryPlans.Any(static plan =>
+                plan.Category == WorkspaceBatchExtractionCategoryDto.FromAssetType(AssetType.Unknown, "Shader") &&
+                plan.CandidateCount == 1),
+            "Category plans should preserve the workspace-provided Shader type name.");
+        TestAssert.True(
+            categoryPlans.Any(static plan =>
+                plan.Category == WorkspaceBatchExtractionCategoryDto.FromAssetType(AssetType.Unknown, "MonoBehaviour") &&
+                plan.CandidateCount == 1),
+            "Category plans should not collapse different unknown Unity type names into one generic Unknown row.");
+    }
+
+    public static async Task GetWorkspaceBatchExtractionPreviewHandler_ShouldIncludeSpineGroups_WhenAllCategoryIsSelected()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleId = new BundleId("bundle.char_1001_amiya2");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        RegisterSpineGroupAssets(workspaceId, bundleId, registry);
+        var handler = new GetWorkspaceBatchExtractionPreviewHandler(
+            registry,
+            new LoadSpineAssetGroupsHandler(registry));
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchExtractionPreviewQuery(
+            workspaceId,
+            OutputDirectory: @"D:\Out",
+            SelectedBundleIds: new[] { bundleId },
+            SelectedCategories: new[] { WorkspaceBatchExtractionCategoryDto.All }));
+
+        TestAssert.True(result.IsSuccess, "Workspace batch preview should succeed with Spine planning enabled.");
+        TestAssert.Equal(4, result.Value?.CandidateAssetCount ?? 0, "All should include regular asset candidates.");
+        TestAssert.Equal(1, result.Value?.CandidateSpineGroupCount ?? 0, "All should include Spine group candidates.");
+        var bundlePlan = TestAssert.Single(result.Value?.BundlePlans ?? Array.Empty<WorkspaceBatchExtractionBundlePlanDto>());
+        TestAssert.Equal(4, bundlePlan.AssetCount, "Bundle plan should keep the regular asset count.");
+        TestAssert.Equal(1, bundlePlan.SpineGroupCount, "Bundle plan should keep the Spine group count.");
+        TestAssert.True(
+            (result.Value?.CategoryPlans ?? Array.Empty<WorkspaceBatchExtractionCategoryPlanDto>())
+                .Any(static plan =>
+                    plan.Category == WorkspaceBatchExtractionCategoryDto.SpineGroup &&
+                    plan.CandidateCount == 1),
+            "Category plans should expose Spine group candidates for the selected bundles.");
+    }
+
+    public static async Task ExtractWorkspaceAssetsHandler_ShouldRespectSelectedBundlesAndCategories()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleA = new BundleId("bundle.a");
+        var bundleB = new BundleId("bundle.b");
+        var textureA = new AssetId("asset.texture.a");
+        var textA = new AssetId("asset.text.a");
+        var textureB = new AssetId("asset.texture.b");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleA,
+            textureA,
+            AssetType.Texture2D,
+            "TextureA",
+            "Assets/TextureA"));
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleA,
+            textA,
+            AssetType.TextAsset,
+            "TextA",
+            "Assets/TextA.txt"));
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleB,
+            textureB,
+            AssetType.Texture2D,
+            "TextureB",
+            "Assets/TextureB"));
+        var previewHandler = new TestAssetPreviewHandler();
+        previewHandler.RegisterPreview(CreateBinaryPreview(
+            workspaceId,
+            bundleA,
+            textureA,
+            AssetPreviewKind.Image,
+            "image/png",
+            [1, 2, 3]));
+        previewHandler.RegisterPreview(CreateTextPreview(workspaceId, bundleA, textA, "text", "text"));
+        previewHandler.RegisterPreview(CreateBinaryPreview(
+            workspaceId,
+            bundleB,
+            textureB,
+            AssetPreviewKind.Image,
+            "image/png",
+            [4, 5, 6]));
+        var fileStore = new TestAssetExtractionFileStore();
+        var changeStore = new TestWorkspaceChangeStore();
+        var singleHandler = CreateHandler(registry, previewHandler, fileStore, changeStore);
+        var recorder = new WorkspaceExtractionOperationRecorder(
+            new TestWorkspaceDataStoreFactory(changeStore),
+            new WorkspaceOperationLogService());
+        var batchHandler = new ExtractWorkspaceAssetsHandler(registry, singleHandler, recorder);
+
+        var result = await batchHandler.HandleAsync(new ExtractWorkspaceAssetsCommand(
+            workspaceId,
+            OutputDirectory: @"D:\Out",
+            WorkspaceKey: WorkspaceKey,
+            WorkspaceDataRootPath: WorkspaceDataRootPath,
+            SelectedBundleIds: new[] { bundleA },
+            SelectedCategories: new[] { WorkspaceBatchExtractionCategoryDto.FromAssetType(AssetType.Texture2D) }));
+
+        TestAssert.True(result.IsSuccess, "Selected bundle/category extraction should succeed.");
+        TestAssert.Equal(1, result.Value?.ExtractedAssetCount ?? 0, "Only the selected bundle and category should be extracted.");
+        var writeRequest = TestAssert.Single(fileStore.Requests);
+        TestAssert.True(
+            writeRequest.SuggestedOutputPath.EndsWith(@"bundle.a.ab\Texture2D\TextureA.png", StringComparison.OrdinalIgnoreCase),
+            "Workspace batch output should be grouped by bundle display name and asset type.");
+        TestAssert.Equal(1, result.Value?.SelectedCategories?.Count ?? 0, "Result should echo the explicit category selection.");
+    }
+
+    public static async Task ExtractWorkspaceAssetsHandler_ShouldFilterUnknownTypeByDisplayName()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleId = new BundleId("bundle.dynamic");
+        var shaderAssetId = new AssetId("asset.shader");
+        var behaviourAssetId = new AssetId("asset.behaviour");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            shaderAssetId,
+            AssetType.Unknown,
+            "HeroShader",
+            "Assets/HeroShader.shader",
+            "Shader"));
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            behaviourAssetId,
+            AssetType.Unknown,
+            "HeroBehaviour",
+            "Assets/HeroBehaviour.asset",
+            "MonoBehaviour"));
+        var batchHandler = new ExtractWorkspaceAssetsHandler(registry);
+
+        var result = await batchHandler.HandleAsync(new ExtractWorkspaceAssetsCommand(
+            workspaceId,
+            OutputDirectory: @"D:\Out",
+            WorkspaceKey: WorkspaceKey,
+            WorkspaceDataRootPath: WorkspaceDataRootPath,
+            SelectedBundleIds: new[] { bundleId },
+            SelectedCategories: new[] { WorkspaceBatchExtractionCategoryDto.FromAssetType(AssetType.Unknown, "Shader") }));
+
+        TestAssert.True(result.IsSuccess, "Selected dynamic unknown type extraction should succeed.");
+        TestAssert.Equal(1, result.Value?.ExtractedAssetCount ?? 0, "Only the matching unknown display-name category should be extracted.");
+        TestAssert.True(registry.ExtractedAssets.Contains((bundleId.Value, shaderAssetId.Value)), "The Shader asset should be extracted.");
+        TestAssert.False(registry.ExtractedAssets.Contains((bundleId.Value, behaviourAssetId.Value)), "The MonoBehaviour asset should not be extracted by the Shader category.");
+        TestAssert.Equal(
+            WorkspaceBatchExtractionCategoryDto.FromAssetType(AssetType.Unknown, "Shader"),
+            TestAssert.Single(result.Value?.SelectedCategories ?? Array.Empty<WorkspaceBatchExtractionCategoryDto>()),
+            "Result should preserve the selected unknown display-name category.");
+    }
+
+    public static async Task ExtractWorkspaceAssetsHandler_ShouldExtractSpineGroups_WhenAllCategoryIsSelected()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleId = new BundleId("bundle.char_1001_amiya2");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        var parts = RegisterSpineGroupAssets(workspaceId, bundleId, registry);
+        var previewHandler = new TestAssetPreviewHandler();
+        RegisterSpineGroupPreviews(workspaceId, bundleId, parts, previewHandler);
+        var fileStore = new TestAssetExtractionFileStore();
+        var changeStore = new TestWorkspaceChangeStore();
+        var singleHandler = CreateHandler(registry, previewHandler, fileStore, changeStore);
+        var recorder = new WorkspaceExtractionOperationRecorder(
+            new TestWorkspaceDataStoreFactory(changeStore),
+            new WorkspaceOperationLogService());
+        var batchHandler = new ExtractWorkspaceAssetsHandler(
+            registry,
+            singleHandler,
+            recorder,
+            new LoadSpineAssetGroupsHandler(registry),
+            new ExtractSpineAssetGroupHandler(
+                registry,
+                new LoadSpineAssetGroupDetailsHandler(registry, previewHandler),
+                singleHandler,
+                recorder));
+
+        var result = await batchHandler.HandleAsync(new ExtractWorkspaceAssetsCommand(
+            workspaceId,
+            OutputDirectory: @"D:\Out",
+            WorkspaceKey: WorkspaceKey,
+            WorkspaceDataRootPath: WorkspaceDataRootPath,
+            SelectedBundleIds: new[] { bundleId },
+            SelectedCategories: new[] { WorkspaceBatchExtractionCategoryDto.All }));
+
+        TestAssert.True(result.IsSuccess, "All-category workspace extraction should succeed with Spine groups.");
+        TestAssert.Equal(1, result.Value?.ExtractedSpineGroupCount ?? 0, "All should execute planned Spine group extraction.");
+        TestAssert.Equal(1, result.Value?.SpineGroupResults?.Count ?? 0, "Result should expose Spine group extraction details.");
+        TestAssert.True(
+            fileStore.Requests.Any(static request => request.SuggestedOutputPath.Contains(@"bundle.char_1001_amiya2.ab\char_1001_amiya2", StringComparison.OrdinalIgnoreCase)),
+            "Spine group output should be nested under the bundle directory and group directory.");
+    }
+
+    public static async Task ExtractWorkspaceAssetsHandler_ShouldExtractBundlesInParallel_AndKeepSameBundleSequential()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleA = new BundleId("bundle.a");
+        var bundleB = new BundleId("bundle.b");
+        var bundleC = new BundleId("bundle.c");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        var assets = new[]
+        {
+            (BundleId: bundleA, AssetId: new AssetId("asset.a.1"), Name: "A1"),
+            (BundleId: bundleA, AssetId: new AssetId("asset.a.2"), Name: "A2"),
+            (BundleId: bundleB, AssetId: new AssetId("asset.b.1"), Name: "B1"),
+            (BundleId: bundleC, AssetId: new AssetId("asset.c.1"), Name: "C1")
+        };
+        foreach (var asset in assets)
+        {
+            registry.RegisterAsset(CreateAssetDetails(
+                workspaceId,
+                asset.BundleId,
+                asset.AssetId,
+                AssetType.TextAsset,
+                asset.Name,
+                $"Assets/{asset.Name}.txt"));
+        }
+
+        var activePreviews = 0;
+        var maxConcurrentPreviews = 0;
+        var activeBundleAPreviews = 0;
+        var maxConcurrentBundleAPreviews = 0;
+        var previewHandler = new TestAssetPreviewHandler
+        {
+            BeforeReturnAsync = async (query, cancellationToken) =>
+            {
+                var currentPreviews = Interlocked.Increment(ref activePreviews);
+                RecordMaximumConcurrency(ref maxConcurrentPreviews, currentPreviews);
+                var isBundleA = query.BundleId.Equals(bundleA);
+                if (isBundleA)
+                {
+                    var currentBundleAPreviews = Interlocked.Increment(ref activeBundleAPreviews);
+                    RecordMaximumConcurrency(ref maxConcurrentBundleAPreviews, currentBundleAPreviews);
+                }
+
+                try
+                {
+                    await Task.Delay(120, cancellationToken);
+                }
+                finally
+                {
+                    if (isBundleA)
+                    {
+                        Interlocked.Decrement(ref activeBundleAPreviews);
+                    }
+
+                    Interlocked.Decrement(ref activePreviews);
+                }
+            }
+        };
+        foreach (var asset in assets)
+        {
+            previewHandler.RegisterPreview(CreateTextPreview(workspaceId, asset.BundleId, asset.AssetId, asset.Name, asset.Name));
+        }
+
+        var fileStore = new TestAssetExtractionFileStore();
+        var changeStore = new TestWorkspaceChangeStore();
+        var singleHandler = CreateHandler(registry, previewHandler, fileStore, changeStore);
+        var recorder = new WorkspaceExtractionOperationRecorder(
+            new TestWorkspaceDataStoreFactory(changeStore),
+            new WorkspaceOperationLogService());
+        var batchHandler = new ExtractWorkspaceAssetsHandler(
+            registry,
+            singleHandler,
+            recorder,
+            processorCountProvider: () => 8,
+            memoryPressureEvaluator: () => false);
+
+        var result = await batchHandler.HandleAsync(new ExtractWorkspaceAssetsCommand(
+            workspaceId,
+            WorkspaceKey: WorkspaceKey,
+            WorkspaceDataRootPath: WorkspaceDataRootPath));
+
+        TestAssert.True(result.IsSuccess, "Batch extraction should succeed.");
+        TestAssert.Equal(4, result.Value?.ExtractedAssetCount ?? 0, "All planned assets should be extracted.");
+        TestAssert.True(maxConcurrentPreviews > 1, "Different bundles should be extracted in parallel when CPU allows it.");
+        TestAssert.Equal(1, maxConcurrentBundleAPreviews, "Assets from the same bundle should remain sequential.");
+        TestAssert.Equal(5, changeStore.SavedChangeSet?.Operations?.Count ?? 0, "Parallel extraction should not lose operation records.");
+    }
+
+    public static async Task ExtractWorkspaceAssetsHandler_ShouldThrottleCrossBundleParallelism_WhenMemoryPressureIsHigh()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        var assets = Enumerable.Range(1, 4)
+            .Select(index => (
+                BundleId: new BundleId($"bundle.{index}"),
+                AssetId: new AssetId($"asset.{index}"),
+                Name: $"Asset{index}"))
+            .ToArray();
+        foreach (var asset in assets)
+        {
+            registry.RegisterAsset(CreateAssetDetails(
+                workspaceId,
+                asset.BundleId,
+                asset.AssetId,
+                AssetType.TextAsset,
+                asset.Name,
+                $"Assets/{asset.Name}.txt"));
+        }
+
+        var activePreviews = 0;
+        var maxConcurrentPreviews = 0;
+        var previewHandler = new TestAssetPreviewHandler
+        {
+            BeforeReturnAsync = async (_, cancellationToken) =>
+            {
+                var currentPreviews = Interlocked.Increment(ref activePreviews);
+                RecordMaximumConcurrency(ref maxConcurrentPreviews, currentPreviews);
+                try
+                {
+                    await Task.Delay(80, cancellationToken);
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref activePreviews);
+                }
+            }
+        };
+        foreach (var asset in assets)
+        {
+            previewHandler.RegisterPreview(CreateTextPreview(workspaceId, asset.BundleId, asset.AssetId, asset.Name, asset.Name));
+        }
+
+        var fileStore = new TestAssetExtractionFileStore();
+        var changeStore = new TestWorkspaceChangeStore();
+        var singleHandler = CreateHandler(registry, previewHandler, fileStore, changeStore);
+        var recorder = new WorkspaceExtractionOperationRecorder(
+            new TestWorkspaceDataStoreFactory(changeStore),
+            new WorkspaceOperationLogService());
+        var batchHandler = new ExtractWorkspaceAssetsHandler(
+            registry,
+            singleHandler,
+            recorder,
+            processorCountProvider: () => 8,
+            memoryPressureEvaluator: () => true);
+
+        var result = await batchHandler.HandleAsync(new ExtractWorkspaceAssetsCommand(
+            workspaceId,
+            WorkspaceKey: WorkspaceKey,
+            WorkspaceDataRootPath: WorkspaceDataRootPath));
+
+        TestAssert.True(result.IsSuccess, "Batch extraction should still succeed under memory pressure.");
+        TestAssert.Equal(4, result.Value?.ExtractedAssetCount ?? 0, "All planned assets should be extracted.");
+        TestAssert.Equal(1, maxConcurrentPreviews, "High memory pressure should throttle cross-bundle extraction to one active bundle.");
+    }
+
     public static async Task ExtractSpineAssetGroupHandler_ShouldExtractSkeletonAtlasTextureAndAlphaPages()
     {
         var workspaceId = new WorkspaceId("workspace-session-1");
@@ -361,6 +855,97 @@ internal static partial class ExtractionWorkflowHandlerTests
         TestAssert.Equal(4, operations[^1].Result?.AffectedAssetIds?.Count ?? 0, "Spine group summary should list affected part asset ids.");
     }
 
+    private static SpineGroupAssetIds RegisterSpineGroupAssets(
+        WorkspaceId workspaceId,
+        BundleId bundleId,
+        TestWorkspaceSessionRegistry registry)
+    {
+        var parts = new SpineGroupAssetIds(
+            SkeletonAssetId: new AssetId("asset.skel"),
+            AtlasAssetId: new AssetId("asset.atlas"),
+            TextureAssetId: new AssetId("asset.texture"),
+            AlphaTextureAssetId: new AssetId("asset.texture.alpha"));
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            parts.SkeletonAssetId,
+            AssetType.TextAsset,
+            "char_1001_amiya2.skel.bytes",
+            "Assets/Characters/char_1001_amiya2.skel.bytes"));
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            parts.AtlasAssetId,
+            AssetType.TextAsset,
+            "char_1001_amiya2.atlas",
+            "Assets/Characters/char_1001_amiya2.atlas"));
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            parts.TextureAssetId,
+            AssetType.Texture2D,
+            "char_1001_amiya2",
+            "Assets/Characters/char_1001_amiya2.png"));
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            parts.AlphaTextureAssetId,
+            AssetType.Texture2D,
+            "char_1001_amiya2_alpha",
+            "Assets/Characters/char_1001_amiya2_alpha.png"));
+        return parts;
+    }
+
+    private static void RegisterSpineGroupPreviews(
+        WorkspaceId workspaceId,
+        BundleId bundleId,
+        SpineGroupAssetIds parts,
+        TestAssetPreviewHandler previewHandler)
+    {
+        previewHandler.RegisterPreview(CreateBinaryPreview(
+            workspaceId,
+            bundleId,
+            parts.SkeletonAssetId,
+            AssetPreviewKind.Binary,
+            "application/octet-stream",
+            [0x1c, 0x00, 0x00, 0x00]));
+        previewHandler.RegisterPreview(CreateTextPreview(
+            workspaceId,
+            bundleId,
+            parts.AtlasAssetId,
+            "atlas",
+            """
+            char_1001_amiya2.png
+            size: 512,512
+            format: RGBA8888
+            filter: Linear,Linear
+            repeat: none
+            body
+              bounds: 0,0,128,128
+              rotate: false
+            """));
+        previewHandler.RegisterPreview(CreateBinaryPreview(
+            workspaceId,
+            bundleId,
+            parts.TextureAssetId,
+            AssetPreviewKind.Image,
+            "image/png",
+            [1, 2, 3]));
+        previewHandler.RegisterPreview(CreateBinaryPreview(
+            workspaceId,
+            bundleId,
+            parts.AlphaTextureAssetId,
+            AssetPreviewKind.Image,
+            "image/png",
+            [4, 5, 6]));
+    }
+
+    private sealed record SpineGroupAssetIds(
+        AssetId SkeletonAssetId,
+        AssetId AtlasAssetId,
+        AssetId TextureAssetId,
+        AssetId AlphaTextureAssetId);
+
     private const string WorkspaceKey = "workspace-a";
     private const string WorkspaceDataRootPath = @"D:\WorkspaceData\A";
 
@@ -464,30 +1049,91 @@ internal static partial class ExtractionWorkflowHandlerTests
             AssetPreviewCacheStatusKind.Missing,
             AssetPreviewFallbackReasonKind.None);
 
+    private static void RecordMaximumConcurrency(ref int target, int candidate)
+    {
+        while (true)
+        {
+            var current = Volatile.Read(ref target);
+            if (candidate <= current)
+            {
+                return;
+            }
+
+            if (Interlocked.CompareExchange(ref target, candidate, current) == current)
+            {
+                return;
+            }
+        }
+    }
+
+    private sealed class RecordingProgress<T> : IProgress<T>
+    {
+        private readonly object _syncRoot = new();
+        private readonly List<T> _reports = [];
+
+        public IReadOnlyList<T> Reports
+        {
+            get
+            {
+                lock (_syncRoot)
+                {
+                    return _reports.ToArray();
+                }
+            }
+        }
+
+        public void Report(T value)
+        {
+            lock (_syncRoot)
+            {
+                _reports.Add(value);
+            }
+        }
+    }
+
     private sealed class TestAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>>
     {
         private readonly Dictionary<(string BundleId, string AssetId), AssetPreviewDto> _previews = new();
+        private readonly object _syncRoot = new();
 
         public GetAssetPreviewQuery? LastQuery { get; private set; }
 
+        public Func<GetAssetPreviewQuery, CancellationToken, Task>? BeforeReturnAsync { get; init; }
+
         public void RegisterPreview(AssetPreviewDto preview)
         {
-            _previews[(preview.BundleId.Value, preview.AssetId.Value)] = preview;
+            lock (_syncRoot)
+            {
+                _previews[(preview.BundleId.Value, preview.AssetId.Value)] = preview;
+            }
         }
 
-        public Task<Result<AssetPreviewDto>> HandleAsync(
+        public async Task<Result<AssetPreviewDto>> HandleAsync(
             GetAssetPreviewQuery query,
             CancellationToken cancellationToken = default)
         {
-            LastQuery = query;
-            return Task.FromResult(_previews.TryGetValue((query.BundleId.Value, query.AssetId.Value), out var preview)
+            AssetPreviewDto? preview;
+            lock (_syncRoot)
+            {
+                LastQuery = query;
+                _previews.TryGetValue((query.BundleId.Value, query.AssetId.Value), out preview);
+            }
+
+            if (BeforeReturnAsync is not null)
+            {
+                await BeforeReturnAsync(query, cancellationToken);
+            }
+
+            return preview is not null
                 ? Result<AssetPreviewDto>.Success(preview)
-                : Result<AssetPreviewDto>.Failure(ApplicationErrors.AssetNotFound(query.AssetId)));
+                : Result<AssetPreviewDto>.Failure(ApplicationErrors.AssetNotFound(query.AssetId));
         }
     }
 
     private sealed class TestAssetExtractionFileStore : IAssetExtractionFileStore
     {
+        private readonly object _syncRoot = new();
+
         public List<AssetExtractionWriteRequestDto> Requests { get; } = [];
 
         public AssetExtractionWriteResultDto? LastResult { get; private set; }
@@ -496,13 +1142,16 @@ internal static partial class ExtractionWorkflowHandlerTests
             AssetExtractionWriteRequestDto request,
             CancellationToken cancellationToken = default)
         {
-            Requests.Add(request);
-            LastResult = new AssetExtractionWriteResultDto(
-                OutputPath: $@"D:\Exports\{Path.GetFileName(request.SuggestedOutputPath)}",
-                OutputDirectory: @"D:\Exports",
-                OutputSizeInBytes: request.Content?.Length ?? 16,
-                OutputFileExists: true);
-            return Task.FromResult(Result<AssetExtractionWriteResultDto>.Success(LastResult));
+            lock (_syncRoot)
+            {
+                Requests.Add(request);
+                LastResult = new AssetExtractionWriteResultDto(
+                    OutputPath: $@"D:\Exports\{Path.GetFileName(request.SuggestedOutputPath)}",
+                    OutputDirectory: @"D:\Exports",
+                    OutputSizeInBytes: request.Content?.Length ?? 16,
+                    OutputFileExists: true);
+                return Task.FromResult(Result<AssetExtractionWriteResultDto>.Success(LastResult));
+            }
         }
     }
 
@@ -551,7 +1200,10 @@ internal static partial class ExtractionWorkflowHandlerTests
 
         public void Save(WorkspaceChangeSetDto changeSet)
         {
-            SavedChangeSet = changeSet;
+            lock (this)
+            {
+                SavedChangeSet = changeSet;
+            }
         }
 
         public void Delete(string workspaceKey) =>
@@ -560,6 +1212,7 @@ internal static partial class ExtractionWorkflowHandlerTests
 
     private sealed class TestWorkspaceSessionRegistry : IWorkspaceSessionRegistry
     {
+        private readonly object _syncRoot = new();
         private readonly WorkspaceId _workspaceId;
         private readonly Dictionary<(string BundleId, string AssetId), AssetDetailsDto> _assetDetails = new();
 
@@ -572,7 +1225,10 @@ internal static partial class ExtractionWorkflowHandlerTests
 
         public void RegisterAsset(AssetDetailsDto details)
         {
-            _assetDetails[(details.BundleId.Value, details.AssetId.Value)] = details;
+            lock (_syncRoot)
+            {
+                _assetDetails[(details.BundleId.Value, details.AssetId.Value)] = details;
+            }
         }
 
         public WorkspaceSummaryDto OpenWorkspace(WorkspaceSessionOpenRequestDto request) =>
@@ -613,6 +1269,12 @@ internal static partial class ExtractionWorkflowHandlerTests
             var items = _assetDetails.Values
                 .Where(asset => asset.BundleId.Equals(bundleId))
                 .Where(asset => assetTypeFilter is null || asset.AssetType == assetTypeFilter)
+                .Where(asset =>
+                    string.IsNullOrWhiteSpace(assetTypeDisplayNameFilter) ||
+                    string.Equals(
+                        asset.AssetTypeDisplayName,
+                        assetTypeDisplayNameFilter.Trim(),
+                        StringComparison.OrdinalIgnoreCase))
                 .Select(asset => new AssetListItemDto(
                     AssetId: asset.AssetId,
                     BundleId: asset.BundleId,
@@ -660,21 +1322,24 @@ internal static partial class ExtractionWorkflowHandlerTests
             AssetId assetId,
             out AssetExtractionResultDto? extractionResult)
         {
-            if (!_assetDetails.TryGetValue((bundleId.Value, assetId.Value), out var details))
+            lock (_syncRoot)
             {
-                extractionResult = null;
-                return false;
-            }
+                if (!_assetDetails.TryGetValue((bundleId.Value, assetId.Value), out var details))
+                {
+                    extractionResult = null;
+                    return false;
+                }
 
-            ExtractedAssets.Add((bundleId.Value, assetId.Value));
-            extractionResult = new AssetExtractionResultDto(
-                WorkspaceId: workspaceId,
-                BundleId: bundleId,
-                AssetId: assetId,
-                AssetName: details.Name,
-                SuggestedOutputPath: "legacy-output",
-                ExtractedAtUtc: DateTimeOffset.UtcNow);
-            return true;
+                ExtractedAssets.Add((bundleId.Value, assetId.Value));
+                extractionResult = new AssetExtractionResultDto(
+                    WorkspaceId: workspaceId,
+                    BundleId: bundleId,
+                    AssetId: assetId,
+                    AssetName: details.Name,
+                    SuggestedOutputPath: "legacy-output",
+                    ExtractedAtUtc: DateTimeOffset.UtcNow);
+                return true;
+            }
         }
 
         public bool TryGetWorkspaceReplacementCandidates(

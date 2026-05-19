@@ -52,6 +52,42 @@ internal static partial class ApplicationTestSuite
             ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldExtractBatch_AndAppendBatchOperation);
         await RunTestAsync(
             failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldReportWorkspaceBatchProgress),
+            ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldReportWorkspaceBatchProgress);
+        await RunTestAsync(
+            failures,
+            nameof(ExtractionWorkflowHandlerTests.GetWorkspaceBatchExtractionPreviewHandler_ShouldRespectSelectedBundlesAndCategories),
+            ExtractionWorkflowHandlerTests.GetWorkspaceBatchExtractionPreviewHandler_ShouldRespectSelectedBundlesAndCategories);
+        await RunTestAsync(
+            failures,
+            nameof(ExtractionWorkflowHandlerTests.GetWorkspaceBatchExtractionPreviewHandler_ShouldExposeUnknownTypeDisplayNames),
+            ExtractionWorkflowHandlerTests.GetWorkspaceBatchExtractionPreviewHandler_ShouldExposeUnknownTypeDisplayNames);
+        await RunTestAsync(
+            failures,
+            nameof(ExtractionWorkflowHandlerTests.GetWorkspaceBatchExtractionPreviewHandler_ShouldIncludeSpineGroups_WhenAllCategoryIsSelected),
+            ExtractionWorkflowHandlerTests.GetWorkspaceBatchExtractionPreviewHandler_ShouldIncludeSpineGroups_WhenAllCategoryIsSelected);
+        await RunTestAsync(
+            failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldRespectSelectedBundlesAndCategories),
+            ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldRespectSelectedBundlesAndCategories);
+        await RunTestAsync(
+            failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldFilterUnknownTypeByDisplayName),
+            ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldFilterUnknownTypeByDisplayName);
+        await RunTestAsync(
+            failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldExtractSpineGroups_WhenAllCategoryIsSelected),
+            ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldExtractSpineGroups_WhenAllCategoryIsSelected);
+        await RunTestAsync(
+            failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldExtractBundlesInParallel_AndKeepSameBundleSequential),
+            ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldExtractBundlesInParallel_AndKeepSameBundleSequential);
+        await RunTestAsync(
+            failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldThrottleCrossBundleParallelism_WhenMemoryPressureIsHigh),
+            ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldThrottleCrossBundleParallelism_WhenMemoryPressureIsHigh);
+        await RunTestAsync(
+            failures,
             nameof(ExtractionWorkflowHandlerTests.ExtractSpineAssetGroupHandler_ShouldExtractSkeletonAtlasTextureAndAlphaPages),
             ExtractionWorkflowHandlerTests.ExtractSpineAssetGroupHandler_ShouldExtractSkeletonAtlasTextureAndAlphaPages);
     }

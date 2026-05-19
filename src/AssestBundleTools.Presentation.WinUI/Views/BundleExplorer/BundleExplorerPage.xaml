@@ -377,7 +377,7 @@
 
                 <Button
                     x:Name="BatchExtractChipButton"
-                    Click="OnBatchExtractChipButtonClick"
+                    Click="OnWorkspaceBatchExtractChipButtonClick"
                     IsEnabled="{x:Bind ViewModel.WorkspaceShell.HasWorkspace, Mode=OneWay}"
                     Style="{StaticResource WorkspaceSecondaryActionChipButtonStyle}">
                     <Grid ColumnSpacing="8">

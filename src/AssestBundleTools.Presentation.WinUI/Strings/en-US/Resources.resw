@@ -135,6 +135,66 @@
   <data name="AppStatusBar.CancelTask.ToolTip" xml:space="preserve">
     <value>Cancel current background task</value>
   </data>
+  <data name="AppStatusBar.TaskCount.Format" xml:space="preserve">
+    <value>Tasks: {0}</value>
+  </data>
+  <data name="AppStatusBar.TaskSummary.ToolTip.Format" xml:space="preserve">
+    <value>View background tasks ({0})</value>
+  </data>
+  <data name="AppStatusBar.TaskSummary.AutomationName.Format" xml:space="preserve">
+    <value>Background tasks, active: {0}</value>
+  </data>
+  <data name="AppStatusBar.TaskFlyout.Title" xml:space="preserve">
+    <value>Background tasks</value>
+  </data>
+  <data name="AppStatusBar.TaskFlyout.EmptyText" xml:space="preserve">
+    <value>No background tasks are running</value>
+  </data>
+  <data name="AppStatusBar.Task.Cancel.ToolTip" xml:space="preserve">
+    <value>Cancel this background task</value>
+  </data>
+  <data name="AppStatusBar.Task.Status.Queued" xml:space="preserve">
+    <value>Queued</value>
+  </data>
+  <data name="AppStatusBar.Task.Status.Running" xml:space="preserve">
+    <value>Running</value>
+  </data>
+  <data name="AppStatusBar.Task.Status.Cancelling" xml:space="preserve">
+    <value>Cancelling</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.WorkspaceOpen" xml:space="preserve">
+    <value>Opening workspace</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.WorkspaceImport" xml:space="preserve">
+    <value>Importing workspace resources</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.PreviewForeground" xml:space="preserve">
+    <value>Loading asset preview</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.PreviewPrewarm" xml:space="preserve">
+    <value>Prewarming asset preview</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.SpineRuntimeFrame" xml:space="preserve">
+    <value>Rendering Spine preview frame</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.SingleExtraction" xml:space="preserve">
+    <value>Extracting asset</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.BatchExtraction" xml:space="preserve">
+    <value>Batch extraction</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.BatchReplacement" xml:space="preserve">
+    <value>Batch replacement</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.Export" xml:space="preserve">
+    <value>Exporting resources</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.SaveRebuild" xml:space="preserve">
+    <value>Saving / rebuilding</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.Maintenance" xml:space="preserve">
+    <value>Maintenance task</value>
+  </data>
   <data name="HomePage.PageTitleText.Text" xml:space="preserve">
     <value>Console</value>
   </data>
@@ -521,6 +581,153 @@
   </data>
   <data name="BundleExplorerPage.SaveAsBundleButton.Content" xml:space="preserve">
     <value>Save As New Bundle</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Title" xml:space="preserve">
+    <value>Batch Extract</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.PrimaryButton" xml:space="preserve">
+    <value>Start Extraction</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.CloseButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.BundleSection.Title" xml:space="preserve">
+    <value>Bundle Scope</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.BundleSection.Hint" xml:space="preserve">
+    <value>Select the bundles in this workspace that should be extracted.</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.BundleSearch.Placeholder" xml:space="preserve">
+    <value>Search bundle name or path</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.SelectAllBundlesButton" xml:space="preserve">
+    <value>Select All</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.ClearBundleSelectionButton" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Bundle.EmptyState" xml:space="preserve">
+    <value>No matching bundles.</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Bundle.AssetCount.Format" xml:space="preserve">
+    <value>{0} items</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.SelectedBundleSummary.Format" xml:space="preserve">
+    <value>{0} / {1} bundles selected</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.CategorySection.Title" xml:space="preserve">
+    <value>Asset Types</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.CategorySection.Hint" xml:space="preserve">
+    <value>Choose all, or combine several export categories manually.</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.All" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.Texture2D" xml:space="preserve">
+    <value>Texture2D</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.Sprite" xml:space="preserve">
+    <value>Sprite</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.TextAsset" xml:space="preserve">
+    <value>TextAsset</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.AudioClip" xml:space="preserve">
+    <value>AudioClip</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.Mesh" xml:space="preserve">
+    <value>Mesh</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.Material" xml:space="preserve">
+    <value>Material</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.AnimationClip" xml:space="preserve">
+    <value>AnimationClip</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.Font" xml:space="preserve">
+    <value>Font</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.GameObject" xml:space="preserve">
+    <value>GameObject</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.MonoBehaviour" xml:space="preserve">
+    <value>MonoBehaviour</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.AnimatorController" xml:space="preserve">
+    <value>AnimatorController</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.Spine" xml:space="preserve">
+    <value>Spine</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.CandidateCount.Format" xml:space="preserve">
+    <value>{0} items</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.UseWorkspaceExtractionDirectory.Label" xml:space="preserve">
+    <value>Export to workspace extraction directory</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.UseWorkspaceExtractionDirectory.ToolTip" xml:space="preserve">
+    <value>Uses the extraction directory under the current workspace data directory without opening a folder picker.</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.WorkspaceExtractionDirectoryUnavailable" xml:space="preserve">
+    <value>The current workspace has no available data directory, so the workspace extraction directory cannot be used.</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.OutputSection.Title" xml:space="preserve">
+    <value>Output Directory</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.OutputSection.Hint" xml:space="preserve">
+    <value>Regular assets are grouped by bundle and type; Spine groups are grouped by bundle and group name.</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.BrowseOutputDirectoryButton" xml:space="preserve">
+    <value>Choose Folder</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.OutputDirectory.Empty" xml:space="preserve">
+    <value>No output directory selected</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.PreviewSection.Title" xml:space="preserve">
+    <value>Plan Summary</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Preview.Waiting" xml:space="preserve">
+    <value>A candidate summary appears after bundle or type selection changes.</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Preview.Loading" xml:space="preserve">
+    <value>Building plan summary...</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Preview.Unavailable" xml:space="preserve">
+    <value>No candidate summary is available for the current selection.</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Preview.Summary.Format" xml:space="preserve">
+    <value>{0} bundles, {1} regular assets, {2} Spine groups, about {3}</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Validation.BundleRequired" xml:space="preserve">
+    <value>Select at least one bundle.</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Validation.CategoryRequired" xml:space="preserve">
+    <value>Select at least one asset type.</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Validation.OutputDirectoryRequired" xml:space="preserve">
+    <value>Select an output directory.</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Status.Title" xml:space="preserve">
+    <value>Batch extracting</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Progress.Preparing.Format" xml:space="preserve">
+    <value>Preparing {0} items from {1} bundles</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Progress.Asset.Format" xml:space="preserve">
+    <value>Extracting {1} ({2}) · {0} · {3} succeeded, {4} failed{5}</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Progress.SpineGroup.Format" xml:space="preserve">
+    <value>Extracting Spine group {1} · {0} · {2} succeeded, {3} failed{4}</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Progress.MemoryThrottledSuffix" xml:space="preserve">
+    <value> · throttled for memory pressure</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.CompletedMessage.Format" xml:space="preserve">
+    <value>Batch extraction completed: {0} assets, {1} bundles, {2} Spine groups, output to {3}</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.NoBundlesMessage" xml:space="preserve">
+    <value>The current workspace has no selectable bundles.</value>
   </data>
   <data name="BundleExplorerPage.GlobalSearchTextBox.PlaceholderText" xml:space="preserve">
     <value>Global search (coming later)</value>
@@ -2937,6 +3144,15 @@
   <data name="BatchTasksPage.SavePreview.Risk.ConflictDeferred" xml:space="preserve">
     <value>Output-directory conflict checks and collision handling will be formally connected in the later save milestone.</value>
   </data>
+  <data name="BatchTasksPage.SavePreview.Risk.OutputReady.Format" xml:space="preserve">
+    <value>{0} target bundle output paths have been preflighted with no overwrite conflict found.</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.Risk.OutputBlocked.Format" xml:space="preserve">
+    <value>{0} target output paths are already occupied or blocked by the directory structure. Real save will not overwrite them automatically.</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.Risk.ArtifactUnresolved.Format" xml:space="preserve">
+    <value>{0} bundles still lack reusable standardized input and must be materialized before real writing.</value>
+  </data>
   <data name="BatchTasksPage.SavePreview.Risk.ExecutionDeferred" xml:space="preserve">
     <value>This page currently provides only the pre-save preview surface. Real bundle writing is not enabled yet.</value>
   </data>
@@ -3148,31 +3364,31 @@
     <value>Failed to save the preview worker count. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Title" xml:space="preserve">
-    <value>Standardized Bundle Cache</value>
+    <value>Current Workspace Cache</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Hint" xml:space="preserve">
-    <value>Review cache/bundles usage for the current workspace and clear rebuildable normalized.bundle artifacts.</value>
+    <value>Review standardized bundle and preview cache usage for the current workspace, and clear these rebuildable derived artifacts.</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Target.Format" xml:space="preserve">
     <value>Current workspace: {0}</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Summary.Format" xml:space="preserve">
-    <value>{0} artifacts using {1}</value>
+    <value>{0} cache entries using {1} ({2} standardized bundles, {3} previews)</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Empty" xml:space="preserve">
-    <value>The current workspace has no standardized bundle cache yet.</value>
+    <value>The current workspace has no clearable cache yet.</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.NoWorkspace" xml:space="preserve">
     <value>No active workspace</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.NoWorkspaceHint" xml:space="preserve">
-    <value>Open a workspace to review and clear its standardized bundle cache.</value>
+    <value>Open a workspace to review and clear its standardized bundle and preview caches.</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.AutoPrune.Header" xml:space="preserve">
     <value>Automatic Capacity Governance</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.AutoPrune.Description" xml:space="preserve">
-    <value>After import, preview, or extraction first generates a standardized bundle, the oldest artifacts are pruned to this limit. The freshly generated artifact is protected.</value>
+    <value>After import, preview, or extraction generates a standardized bundle or preview cache, the oldest derived entries of that cache type are pruned to this limit. The freshly generated bundle or preview entry is protected.</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Label" xml:space="preserve">
     <value>Current workspace capacity limit</value>
@@ -3199,19 +3415,19 @@
     <value>Clear Current Workspace</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.RefreshStatusTitle" xml:space="preserve">
-    <value>Measuring standardized cache</value>
+    <value>Measuring workspace cache</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearStatusTitle" xml:space="preserve">
-    <value>Clearing standardized cache</value>
+    <value>Clearing workspace cache</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.RefreshFailedMessage" xml:space="preserve">
-    <value>Failed to read standardized bundle cache usage. Try again later.</value>
+    <value>Failed to read workspace cache usage. Try again later.</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearFailedMessage" xml:space="preserve">
-    <value>Failed to clear standardized bundle cache. Check cache directory permissions or try again later.</value>
+    <value>Failed to clear workspace cache. Check cache directory permissions or try again later.</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.PreferenceSaveFailedMessage" xml:space="preserve">
-    <value>Failed to save standardized bundle cache settings. Check access to the app data directory.</value>
+    <value>Failed to save workspace cache settings. Check access to the app data directory.</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearSucceeded.Format" xml:space="preserve">
     <value>Cleared {0} artifacts and released {1}.</value>
@@ -3252,8 +3468,17 @@
   <data name="BundleExplorer.Status.AssetCount.Label" xml:space="preserve">
     <value>Assets</value>
   </data>
-  <data name="BundleExplorer.Status.WorkspaceSessionCount.Label" xml:space="preserve">
-    <value>Registered Workspaces</value>
+  <data name="BundleExplorer.Status.WorkspaceCache.Label" xml:space="preserve">
+    <value>Workspace Cache</value>
+  </data>
+  <data name="BundleExplorer.Status.WorkspaceCache.Value.Format" xml:space="preserve">
+    <value>{0} · {1} entries</value>
+  </data>
+  <data name="BundleExplorer.Status.WorkspaceCache.Loading" xml:space="preserve">
+    <value>Measuring</value>
+  </data>
+  <data name="BundleExplorer.Status.WorkspaceCache.Unavailable" xml:space="preserve">
+    <value>Unavailable</value>
   </data>
   <data name="BundleExplorer.Status.Selection.Label" xml:space="preserve">
     <value>Selection</value>

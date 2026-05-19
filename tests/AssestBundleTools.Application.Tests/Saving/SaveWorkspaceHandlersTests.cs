@@ -5,7 +5,9 @@ using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Saving.Commands;
+using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Application.Saving.Queries;
+using AssestBundleTools.Application.Saving.Services;
 using AssestBundleTools.Application.Tests.Testing;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
@@ -15,7 +17,7 @@ using AssestBundleTools.Domain.Workspace;
 
 namespace AssestBundleTools.Application.Tests.Saving;
 
-internal static class SaveWorkspaceHandlersTests
+internal static partial class SaveWorkspaceHandlersTests
 {
     public static async Task GetWorkspaceSavePreviewHandler_ShouldReturnFailure_WhenWorkspaceDoesNotExist()
     {
@@ -113,6 +115,54 @@ internal static class SaveWorkspaceHandlersTests
         TestAssert.Equal(0, secondPlan.FileReplacementCount, "Zeta bundle should report file replacements within the bundle.");
     }
 
+    public static async Task GetWorkspaceSavePreviewHandler_ShouldExposeOutputPreflightBlockers()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var outputProbe = new TestWorkspaceSaveOutputProbe();
+        outputProbe.BlockedFileNames.Add("Alpha.ab");
+        var registry = new TestWorkspaceSessionRegistry
+        {
+            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(
+                workspaceId,
+                [
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-alpha"),
+                        assetId: new AssetId("asset-1"),
+                        bundleDisplayName: "Alpha.ab",
+                        assetName: "ConfigText",
+                        isModified: true),
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-zeta"),
+                        assetId: new AssetId("asset-2"),
+                        bundleDisplayName: "zeta.ab",
+                        assetName: "EnemyPortrait",
+                        isModified: true)
+                ])
+        };
+        var handler = new GetWorkspaceSavePreviewHandler(
+            registry,
+            outputProbe: outputProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceSavePreviewQuery(workspaceId));
+
+        TestAssert.True(result.IsSuccess, "Save preview should succeed while exposing output preflight blockers.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(1, preview.OutputReadyBundleCount, "One output path should be writable.");
+        TestAssert.Equal(1, preview.OutputBlockedBundleCount, "One output path should be blocked.");
+        TestAssert.Equal(0, preview.OutputUnprobedBundleCount, "A configured output probe should inspect every planned bundle.");
+        TestAssert.False(preview.IsReadyForWrite, "Blocked output should prevent the plan from being marked ready for real writing.");
+
+        var alphaPlan = preview.BundlePlans[0];
+        TestAssert.Equal("Alpha.ab", alphaPlan.BundleDisplayName, "Alpha should remain first by display name.");
+        TestAssert.Equal(WorkspaceSaveOutputReadiness.FileAlreadyExists, alphaPlan.OutputReadiness, "Existing output files should be explicit blockers.");
+        TestAssert.True(alphaPlan.IsOutputWriteBlocked, "Existing output files should block real writing.");
+        TestAssert.Equal("Save.Output.FileAlreadyExists", alphaPlan.OutputDiagnosticCode, "Blocked output should carry a stable diagnostic code.");
+
+        var zetaPlan = preview.BundlePlans[1];
+        TestAssert.Equal(WorkspaceSaveOutputReadiness.Ready, zetaPlan.OutputReadiness, "Non-existing output path should be marked ready.");
+        TestAssert.False(zetaPlan.IsOutputWriteBlocked, "Ready output path should not block real writing.");
+    }
+
     public static async Task SaveWorkspaceAsNewBundleHandler_ShouldReturnFailure_WhenWorkspaceDoesNotExist()
     {
         var registry = new TestWorkspaceSessionRegistry
@@ -189,6 +239,44 @@ internal static class SaveWorkspaceHandlersTests
         TestAssert.True(
             execution.CompletedAtUtc >= beforeExecution && execution.CompletedAtUtc <= afterExecution,
             "Execution timestamp should be captured during handler execution.");
+    }
+
+    public static async Task SaveWorkspaceAsNewBundleHandler_ShouldReportOutputPreflightCounts()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var outputProbe = new TestWorkspaceSaveOutputProbe();
+        outputProbe.BlockedFileNames.Add("zeta.ab");
+        var registry = new TestWorkspaceSessionRegistry
+        {
+            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(
+                workspaceId,
+                [
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-alpha"),
+                        assetId: new AssetId("asset-1"),
+                        bundleDisplayName: "Alpha.ab",
+                        assetName: "ConfigText",
+                        isModified: true),
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-zeta"),
+                        assetId: new AssetId("asset-2"),
+                        bundleDisplayName: "zeta.ab",
+                        assetName: "EnemyPortrait",
+                        isModified: true)
+                ])
+        };
+        var handler = new SaveWorkspaceAsNewBundleHandler(
+            registry,
+            outputProbe: outputProbe);
+
+        var result = await handler.HandleAsync(new SaveWorkspaceAsNewBundleCommand(workspaceId));
+
+        TestAssert.True(result.IsSuccess, "Current save skeleton should still return an execution summary.");
+        var execution = result.Value ?? throw new InvalidOperationException("Expected save execution result.");
+        TestAssert.Equal(1, execution.OutputReadyBundleCount, "Execution summary should preserve ready output count.");
+        TestAssert.Equal(1, execution.OutputBlockedBundleCount, "Execution summary should preserve blocked output count.");
+        TestAssert.Equal(0, execution.OutputUnprobedBundleCount, "Execution summary should preserve unprobed output count.");
+        TestAssert.False(execution.IsReadyForWrite, "Blocked output should keep real-write readiness false.");
     }
 
     private static WorkspaceId CreateWorkspaceId() => new("workspace-save-1");
@@ -353,6 +441,24 @@ internal static class SaveWorkspaceHandlersTests
         {
             paneContext = null;
             throw new NotSupportedException();
+        }
+    }
+
+    private sealed class TestWorkspaceSaveOutputProbe : IWorkspaceSaveOutputProbe
+    {
+        public HashSet<string> BlockedFileNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        public WorkspaceSaveOutputProbeResult Probe(WorkspaceSaveOutputProbeRequest request)
+        {
+            var fileName = Path.GetFileName(request.OutputFilePath);
+            if (BlockedFileNames.Contains(fileName))
+            {
+                return WorkspaceSaveOutputProbeResult.Blocked(
+                    WorkspaceSaveOutputReadiness.FileAlreadyExists,
+                    "Save.Output.FileAlreadyExists");
+            }
+
+            return WorkspaceSaveOutputProbeResult.Ready();
         }
     }
 }

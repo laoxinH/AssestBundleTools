@@ -18,4 +18,7 @@ public sealed record WorkspaceBatchExtractionPreviewDto(
     int CandidateAssetCount,
     int CandidateBundleCount,
     long TotalSizeInBytes,
-    IReadOnlyList<WorkspaceBatchExtractionBundlePlanDto> BundlePlans);
+    IReadOnlyList<WorkspaceBatchExtractionBundlePlanDto> BundlePlans,
+    IReadOnlyList<WorkspaceBatchExtractionCategoryDto>? SelectedCategories = null,
+    int CandidateSpineGroupCount = 0,
+    IReadOnlyList<WorkspaceBatchExtractionCategoryPlanDto>? CategoryPlans = null);

@@ -4,7 +4,7 @@
 
 本文档用于收束 `docs/design` 下的文档状态，明确哪些文档是当前规范入口，哪些是专题记录，哪些仅作为历史兼容入口保留。
 
-当前状态更新时间：2026-05-16。上一轮 Spine 预览、状态恢复、资源详情滚动和 UI 按钮样式已经完成阶段性提交；当前开发重心先收束统一后台任务流程，再继续推进提取、替换和保存输出主线。
+当前状态更新时间：2026-05-18。上一轮 Spine 预览、状态恢复、资源详情滚动和 UI 按钮样式已经完成阶段性提交；当前开发重心先收束统一后台任务流程，再继续推进提取、替换和保存输出主线。
 
 ## 2. 当前规范入口
 
@@ -35,6 +35,8 @@
   工作区提取、替换、编辑草稿和保存输出的可恢复操作记录、撤销与重启恢复设计。
 - [background-task-scheduling.md](background-task-scheduling.md)
   导入、预览、提取、导出和后续保存 / 重建的统一后台任务调度、并发闸门、进度与状态条边界。
+- [workspace-batch-extraction-dialog.md](workspace-batch-extraction-dialog.md)
+  工作台顶部批量提取入口从跳转批处理页改为当前工作区内资源包 / 类型选择对话框的设计与第一版落地状态。
 - [asset-bundle-decryptor-extension.md](asset-bundle-decryptor-extension.md)
   解密器扩展点、外部进程协议和工作区缓存关系。
 - [spine-runtime-playback-session.md](spine-runtime-playback-session.md)
@@ -70,9 +72,9 @@
 下一轮默认按“先统一后台任务流程，再让提取/替换顺畅，最后进入真实写包”的顺序推进：
 
 1. 统一后台任务流程第一阶段
-   按 [background-task-scheduling.md](background-task-scheduling.md) 建立 Presentation 层统一调度契约、profile、进度和状态条投影；当前已迁移工作区打开 / 导入外层任务、预览队列、Spine 详情载荷、批量提取、批量替换骨架和保存骨架，并接入 `cache/bundles` 标准化资源包物理缓存、artifact 生成 single-flight、usage / LRU prune、设置页显式清理入口、偏好驱动自动容量治理、基于 artifact identity 的 loaded-session 复用 / 主动失效 / 容量退避，以及预览 `OutOfMemory` 专用诊断和同 bundle 后台预热短期退避。后续继续补导出 / 写包共享入口。
+   按 [background-task-scheduling.md](background-task-scheduling.md) 建立 Presentation 层统一调度契约、profile、进度和状态条投影；当前已迁移工作区打开 / 导入外层任务、预览队列、Spine 详情载荷、批量提取、批量替换骨架和保存骨架，并接入 `cache/bundles` 标准化资源包物理缓存、artifact 生成 single-flight、usage / LRU prune、设置页显式清理入口、偏好驱动自动容量治理、`cache/previews` 预览缓存 usage / prune / 自动容量治理、当前工作区聚合缓存统计 / 清理、基于 artifact identity 的 loaded-session 复用 / 主动失效 / 容量退避，以及预览 `OutOfMemory` 专用诊断和同 bundle 后台预热短期退避。SaveRebuild 保存计划已读取现有标准化 artifact 和 loaded-session identity，并通过输出路径 preflight 暴露覆盖 blockers；后续真实写包入口继续沿这份只读输入图补齐 materialization、最终冲突确认、取消和回滚语义。
 2. 提取流程顺滑化
-   先按 [workspace-recoverable-operation-records.md](workspace-recoverable-operation-records.md) 建立可恢复操作记录，再明确单资源、多选、批量提取的输出目录、命名冲突、进度、取消、结果明细和日志入口。
+   已按 [workspace-batch-extraction-dialog.md](workspace-batch-extraction-dialog.md) 把工作台顶部批量提取收敛为当前工作区内的资源包 / 类型选择对话框；后续继续补命名冲突、取消结果明细、输出文件缺失诊断和批处理页历史摘要收口。
 3. 真实提取落地
    在 Application 用例后接 Infrastructure 导出实现，保持原始资源目录只读，输出目标必须由用户显式选择或确认。
 4. 替换流程顺滑化

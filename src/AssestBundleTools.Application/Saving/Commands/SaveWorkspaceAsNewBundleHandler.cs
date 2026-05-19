@@ -17,10 +17,19 @@ namespace AssestBundleTools.Application.Saving.Commands;
 public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorkspaceAsNewBundleCommand, Result<WorkspaceSaveExecutionResultDto>>
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
+    private readonly WorkspaceSaveArtifactInputResolver? _artifactInputResolver;
+    private readonly IWorkspaceSaveOutputProbe? _outputProbe;
 
-    public SaveWorkspaceAsNewBundleHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
+    public SaveWorkspaceAsNewBundleHandler(
+        IWorkspaceSessionRegistry workspaceSessionRegistry,
+        IWorkspaceDataStoreFactory? workspaceDataStoreFactory = null,
+        IWorkspaceSaveOutputProbe? outputProbe = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
+        _artifactInputResolver = workspaceDataStoreFactory is null
+            ? null
+            : new WorkspaceSaveArtifactInputResolver(workspaceDataStoreFactory);
+        _outputProbe = outputProbe;
     }
 
     public Task<Result<WorkspaceSaveExecutionResultDto>> HandleAsync(
@@ -42,7 +51,14 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
             return Task.FromResult(Result<WorkspaceSaveExecutionResultDto>.Failure(ApplicationErrors.WorkspaceNotFound(command.WorkspaceId)));
         }
 
-        var plan = WorkspaceSavePlanner.BuildPlan(_workspaceSessionRegistry, command.WorkspaceId, command.OutputDirectory);
+        var plan = WorkspaceSavePlanner.BuildPlan(
+            _workspaceSessionRegistry,
+            command.WorkspaceId,
+            command.OutputDirectory,
+            _artifactInputResolver,
+            _outputProbe,
+            command.WorkspaceKey,
+            command.WorkspaceDataRootPath);
         if (plan.BundlePlans.Count == 0)
         {
             return Task.FromResult(Result<WorkspaceSaveExecutionResultDto>.Failure(ApplicationErrors.NoSaveCandidates(command.WorkspaceId)));
@@ -55,6 +71,12 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
                 OutputDirectory: plan.OutputDirectory,
                 PlannedBundleCount: plan.BundlePlans.Count,
                 TotalChangeCount: plan.TotalChangeCount,
-                CompletedAtUtc: DateTimeOffset.UtcNow)));
+                CompletedAtUtc: DateTimeOffset.UtcNow,
+                ResolvedArtifactInputCount: plan.ResolvedArtifactInputCount,
+                UnresolvedArtifactInputCount: plan.UnresolvedArtifactInputCount,
+                OutputReadyBundleCount: plan.OutputReadyBundleCount,
+                OutputBlockedBundleCount: plan.OutputBlockedBundleCount,
+                OutputUnprobedBundleCount: plan.OutputUnprobedBundleCount,
+                IsReadyForWrite: plan.IsReadyForWrite)));
     }
 }

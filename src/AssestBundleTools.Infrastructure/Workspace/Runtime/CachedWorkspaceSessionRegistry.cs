@@ -37,7 +37,7 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
         var bundleIndexCacheStore = _workspaceDataStoreFactory.CreateBundleIndexCacheStore(request.WorkspaceDataRootPath);
         var cacheEntries = bundleIndexCacheStore.LoadAll(request.WorkspaceKey)
             .OrderBy(entry => entry.LogicalPath, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(entry => entry.DisplayName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(entry => ResolveBundleDisplayName(entry), StringComparer.OrdinalIgnoreCase)
             .ToArray();
         var serializedFileBundleLookup = BuildSerializedFileBundleLookup(cacheEntries);
         var assetDependencyTargetLookup = BuildAssetDependencyTargetLookup(cacheEntries);

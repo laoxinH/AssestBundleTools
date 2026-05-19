@@ -5,6 +5,7 @@ using AssestBundleTools.Infrastructure.Tests.Bundles.Previewing;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Persistence;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Extraction;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Runtime;
+using AssestBundleTools.Infrastructure.Tests.Workspace.Saving;
 
 namespace AssestBundleTools.Infrastructure.Tests.Testing;
 
@@ -50,6 +51,14 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(JsonPreviewCacheStoreTests.Delete_ShouldRemoveDescriptorPayload_AndPruneEmptyPayloadDirectory),
             JsonPreviewCacheStoreTests.Delete_ShouldRemoveDescriptorPayload_AndPruneEmptyPayloadDirectory);
+        await RunTestAsync(
+            failures,
+            nameof(JsonPreviewCacheStoreTests.GetUsage_ShouldReturnPreviewEntriesAndTotalSize),
+            JsonPreviewCacheStoreTests.GetUsage_ShouldReturnPreviewEntriesAndTotalSize);
+        await RunTestAsync(
+            failures,
+            nameof(JsonPreviewCacheStoreTests.Prune_ShouldDeleteOldestPreviewEntries_WhenCountLimitIsExceeded),
+            JsonPreviewCacheStoreTests.Prune_ShouldDeleteOldestPreviewEntries_WhenCountLimitIsExceeded);
         await RunTestAsync(
             failures,
             nameof(JsonPreviewCacheStoreTests.Load_ShouldReturnNull_WhenDescriptorExistsButPayloadFileIsMissing),
@@ -106,6 +115,22 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(FileSystemAssetExtractionFileStoreTests.WriteAsync_ShouldCopySourcePayload_WhenContentIsNotProvided),
             FileSystemAssetExtractionFileStoreTests.WriteAsync_ShouldCopySourcePayload_WhenContentIsNotProvided);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemWorkspaceSaveOutputProbeTests.Probe_ShouldReportReady_WhenTargetDoesNotExist),
+            FileSystemWorkspaceSaveOutputProbeTests.Probe_ShouldReportReady_WhenTargetDoesNotExist);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemWorkspaceSaveOutputProbeTests.Probe_ShouldReportExistingFile_AsWriteBlocker),
+            FileSystemWorkspaceSaveOutputProbeTests.Probe_ShouldReportExistingFile_AsWriteBlocker);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemWorkspaceSaveOutputProbeTests.Probe_ShouldReportDirectorySegmentBlockedByFile),
+            FileSystemWorkspaceSaveOutputProbeTests.Probe_ShouldReportDirectorySegmentBlockedByFile);
+        await RunTestAsync(
+            failures,
+            nameof(CachedWorkspaceSessionRegistryTests.OpenWorkspace_ShouldRepairLegacyNormalizedBundleDisplayName_FromSourcePath),
+            CachedWorkspaceSessionRegistryTests.OpenWorkspace_ShouldRepairLegacyNormalizedBundleDisplayName_FromSourcePath);
         await RunTestAsync(
             failures,
             nameof(CachedWorkspaceSessionRegistryTests.TryGetAssetDetails_ShouldResolveMeshTextureAssociations_FromRendererPath),
@@ -174,6 +199,10 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldRemoveFailedLoadEntry),
             AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldRemoveFailedLoadEntry);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldRetainInFlightLoad_WhenWaitingAcquireIsCancelled),
+            AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldRetainInFlightLoad_WhenWaitingAcquireIsCancelled);
         await RunTestAsync(
             failures,
             nameof(AssetsToolsBundleLoadedSessionCacheTests.AcquireAsync_ShouldEvictLeastRecentlyUsedIdleSession_WhenCapacityIsExceeded),

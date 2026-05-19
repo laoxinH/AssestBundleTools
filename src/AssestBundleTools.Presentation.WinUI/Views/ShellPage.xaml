@@ -107,7 +107,7 @@
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="0,1,0,0">
             <Grid
-                ColumnDefinitions="Auto,*,Auto,Auto,Auto"
+                ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto"
                 ColumnSpacing="10"
                 Padding="12,0">
                 <StackPanel
@@ -130,20 +130,67 @@
                 </StackPanel>
 
                 <Button
+                    x:Name="BackgroundTaskSummaryRegion"
                     Grid.Column="2"
-                    Width="24"
-                    Height="24"
+                    MinWidth="82"
+                    Height="22"
+                    MinHeight="22"
+                    Padding="6,0"
+                    VerticalAlignment="Center"
+                    AutomationProperties.HelpText="{Binding TaskSummaryToolTipText}"
+                    AutomationProperties.Name="{Binding TaskSummaryAutomationName}"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    BorderThickness="0"
+                    Click="OnBackgroundTaskSummaryClick"
+                    CornerRadius="4"
+                    DataContext="{x:Bind BackgroundTasks, Mode=OneWay}"
+                    PointerEntered="OnBackgroundTaskSummaryPointerEntered"
+                    PointerExited="OnBackgroundTaskSummaryPointerExited"
+                    Visibility="{Binding TaskSummaryVisibility}">
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="5">
+                        <FontIcon
+                            FontFamily="Segoe MDL2 Assets"
+                            FontSize="10"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Glyph="&#xE823;" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{Binding TaskCountText}" />
+                    </StackPanel>
+                </Button>
+
+                <Button
+                    Grid.Column="3"
+                    Width="20"
+                    Height="20"
+                    MinWidth="20"
+                    MinHeight="20"
                     Padding="0"
+                    AutomationProperties.Name="{x:Bind CancelBackgroundTaskToolTipText, Mode=OneTime}"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    BorderThickness="0"
+                    CornerRadius="4"
                     VerticalAlignment="Center"
                     Click="OnCancelBackgroundTaskButtonClick"
                     IsEnabled="{Binding CanCancelCurrentTask, Mode=OneWay}"
-                    ToolTipService.ToolTip="{x:Bind CancelBackgroundTaskToolTipText, Mode=OneWay}"
+                    ToolTipService.ToolTip="{x:Bind CancelBackgroundTaskToolTipText, Mode=OneTime}"
                     Visibility="{Binding CancelVisibility, Mode=OneWay}">
-                    <SymbolIcon Symbol="Cancel" />
+                    <FontIcon
+                        FontFamily="Segoe MDL2 Assets"
+                        FontSize="10"
+                        Glyph="&#xE711;" />
                 </Button>
 
                 <ProgressBar
-                    Grid.Column="3"
+                    Grid.Column="4"
                     Width="150"
                     Height="3"
                     VerticalAlignment="Center"
@@ -154,7 +201,7 @@
                     Visibility="{Binding ProgressVisibility, Mode=OneWay}" />
 
                 <TextBlock
-                    Grid.Column="4"
+                    Grid.Column="5"
                     MinWidth="44"
                     VerticalAlignment="Center"
                     FontSize="12"
@@ -162,6 +209,138 @@
                     Text="{Binding ProgressText, Mode=OneWay}"
                     TextAlignment="Right" />
             </Grid>
+        </Border>
+
+        <Border
+            x:Name="BackgroundTasksPanelHost"
+            Grid.RowSpan="2"
+            Width="390"
+            Margin="0,0,58,34"
+            Padding="12"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Canvas.ZIndex="20"
+            Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            DataContext="{x:Bind BackgroundTasks, Mode=OneWay}"
+            PointerEntered="OnBackgroundTasksPanelPointerEntered"
+            PointerExited="OnBackgroundTasksPanelPointerExited"
+            Visibility="Collapsed">
+            <StackPanel Spacing="10">
+                <TextBlock
+                    FontSize="13"
+                    FontWeight="SemiBold"
+                    Text="{Binding PanelTitle}" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{Binding EmptyText}"
+                    Visibility="{Binding EmptyVisibility}" />
+                <ScrollViewer
+                    MaxHeight="330"
+                    HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Tasks}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border
+                                    Margin="0,0,0,8"
+                                    Padding="10,8"
+                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                    <Grid
+                                        ColumnDefinitions="Auto,*,Auto,Auto"
+                                        ColumnSpacing="8"
+                                        RowDefinitions="Auto,Auto,Auto">
+                                        <FontIcon
+                                            Grid.RowSpan="2"
+                                            Width="18"
+                                            Margin="0,2,0,0"
+                                            HorizontalAlignment="Center"
+                                            FontFamily="Segoe MDL2 Assets"
+                                            FontSize="11"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Glyph="{Binding StatusGlyph}" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
+                                            FontWeight="SemiBold"
+                                            Text="{Binding Title}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <Border
+                                            Grid.Column="2"
+                                            Padding="6,1"
+                                            VerticalAlignment="Center"
+                                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                            CornerRadius="3">
+                                            <TextBlock
+                                                FontSize="11"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="{Binding StatusText}" />
+                                        </Border>
+                                        <Button
+                                            Grid.Column="3"
+                                            Grid.RowSpan="3"
+                                            Width="20"
+                                            Height="20"
+                                            MinWidth="20"
+                                            MinHeight="20"
+                                            Padding="0"
+                                            AutomationProperties.Name="{Binding CancelToolTipText}"
+                                            Background="Transparent"
+                                            BorderBrush="Transparent"
+                                            BorderThickness="0"
+                                            Command="{Binding CancelCommand}"
+                                            CornerRadius="4"
+                                            ToolTipService.ToolTip="{Binding CancelToolTipText}"
+                                            Visibility="{Binding CancelVisibility}">
+                                            <FontIcon
+                                                FontFamily="Segoe MDL2 Assets"
+                                                FontSize="10"
+                                                Glyph="&#xE711;" />
+                                        </Button>
+                                        <TextBlock
+                                            Grid.Row="1"
+                                            Grid.Column="1"
+                                            Grid.ColumnSpan="2"
+                                            Margin="0,2,0,0"
+                                            FontSize="11"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{Binding DetailText}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <ProgressBar
+                                            Grid.Row="2"
+                                            Grid.Column="1"
+                                            Height="3"
+                                            Margin="0,8,0,0"
+                                            VerticalAlignment="Center"
+                                            IsIndeterminate="{Binding IsProgressIndeterminate}"
+                                            Maximum="100"
+                                            Minimum="0"
+                                            Value="{Binding ProgressValue}"
+                                            Visibility="{Binding ProgressVisibility}" />
+                                        <TextBlock
+                                            Grid.Row="2"
+                                            Grid.Column="2"
+                                            Grid.ColumnSpan="2"
+                                            Margin="0,4,0,0"
+                                            MinWidth="42"
+                                            VerticalAlignment="Center"
+                                            FontSize="11"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{Binding ProgressText}"
+                                            TextAlignment="Right" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
         </Border>
     </Grid>
 </Page>

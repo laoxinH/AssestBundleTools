@@ -33,6 +33,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
     private readonly IAudioPayloadTranscodingService _audioPayloadTranscodingService;
     private readonly IBundleArtifactSessionInvalidator _bundleArtifactSessionInvalidator;
     private readonly IBundleArtifactCachePrunePolicy _bundleArtifactCachePrunePolicy;
+    private readonly IPreviewCachePrunePolicy _previewCachePrunePolicy;
 
     public GetAssetPreviewHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
@@ -41,7 +42,8 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         IAssetPreviewGenerator assetPreviewGenerator,
         IAudioPayloadTranscodingService audioPayloadTranscodingService,
         IBundleArtifactSessionInvalidator? bundleArtifactSessionInvalidator = null,
-        IBundleArtifactCachePrunePolicy? bundleArtifactCachePrunePolicy = null)
+        IBundleArtifactCachePrunePolicy? bundleArtifactCachePrunePolicy = null,
+        IPreviewCachePrunePolicy? previewCachePrunePolicy = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
@@ -50,6 +52,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         _audioPayloadTranscodingService = audioPayloadTranscodingService ?? throw new ArgumentNullException(nameof(audioPayloadTranscodingService));
         _bundleArtifactSessionInvalidator = bundleArtifactSessionInvalidator ?? NoOpBundleArtifactSessionInvalidator.Instance;
         _bundleArtifactCachePrunePolicy = bundleArtifactCachePrunePolicy ?? NoOpBundleArtifactCachePrunePolicy.Instance;
+        _previewCachePrunePolicy = previewCachePrunePolicy ?? NoOpPreviewCachePrunePolicy.Instance;
     }
 
     public async Task<Result<AssetPreviewDto>> HandleAsync(
@@ -249,6 +252,11 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             descriptor,
             previewContent.Content,
             previewContent.ImageFocus?.BinaryContent));
+        PrunePreviewCacheAfterSave(
+            previewCacheStore,
+            query.WorkspaceKey,
+            previewCacheKey,
+            _previewCachePrunePolicy);
 
         return Result<AssetPreviewDto>.Success(AssetPreviewDtoMapper.MapPreviewDto(
             query,
@@ -404,6 +412,21 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         var normalizedKey = $"{bundleCacheKey.ToLowerInvariant()}::{assetId.ToLowerInvariant()}";
         var bytes = Encoding.UTF8.GetBytes(normalizedKey);
         return Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+    }
+
+    private static void PrunePreviewCacheAfterSave(
+        IPreviewCacheStore previewCacheStore,
+        string workspaceKey,
+        string previewCacheKey,
+        IPreviewCachePrunePolicy previewCachePrunePolicy)
+    {
+        var request = previewCachePrunePolicy.CreateRequest(workspaceKey, previewCacheKey);
+        if (request is null)
+        {
+            return;
+        }
+
+        previewCacheStore.Prune(request);
     }
 
     private static string ResolvePayloadFileName(string previewCacheKey, AssetPreviewContentDto previewContent)

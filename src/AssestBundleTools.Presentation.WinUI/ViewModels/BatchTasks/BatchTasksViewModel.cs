@@ -402,7 +402,10 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
             }
 
             var savePreviewResult = await _workspaceBatchOperationsGateway.GetWorkspaceSavePreviewAsync(
-                new GetWorkspaceSavePreviewQuery(currentWorkspaceSummary.WorkspaceId));
+                new GetWorkspaceSavePreviewQuery(
+                    currentWorkspaceSummary.WorkspaceId,
+                    WorkspaceKey: currentWorkspaceSummary.WorkspaceKey,
+                    WorkspaceDataRootPath: currentWorkspaceSummary.WorkspaceDataRootPath));
 
             if (!TryGetValue(savePreviewResult, out var savePreview))
             {

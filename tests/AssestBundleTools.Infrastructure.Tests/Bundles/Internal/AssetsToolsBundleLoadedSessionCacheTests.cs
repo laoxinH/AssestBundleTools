@@ -132,6 +132,43 @@ internal static class AssetsToolsBundleLoadedSessionCacheTests
             "A failed physical load should be evicted so a later request can retry.");
     }
 
+    public static async Task AcquireAsync_ShouldRetainInFlightLoad_WhenWaitingAcquireIsCancelled()
+    {
+        using var loaderEntered = new ManualResetEventSlim();
+        using var releaseLoader = new ManualResetEventSlim();
+        using var cancellation = new CancellationTokenSource();
+        var loadCount = 0;
+        using var cache = new AssetsToolsBundleLoadedSessionCache(
+            path =>
+            {
+                Interlocked.Increment(ref loadCount);
+                loaderEntered.Set();
+                releaseLoader.Wait(TimeSpan.FromSeconds(5));
+                return CreateLoadedSession(path);
+            },
+            TimeSpan.FromSeconds(30));
+        var bundlePath = Path.Combine(Path.GetTempPath(), $"bundle-{Guid.NewGuid():N}.ab");
+        const string sessionCacheKey = "bundle-artifact|workspace-a|bundle-a|normalizer|fingerprint-a";
+
+        var cancelledAcquireTask = cache.AcquireAsync(bundlePath, sessionCacheKey, cancellation.Token);
+        TestAssert.True(
+            loaderEntered.Wait(TimeSpan.FromSeconds(5)),
+            "The first acquire should start the physical load.");
+
+        cancellation.Cancel();
+        await AssertCanceledAsync(cancelledAcquireTask);
+        releaseLoader.Set();
+
+        using var retainedLease = await cache.AcquireAsync(bundlePath, sessionCacheKey, CancellationToken.None);
+        await retainedLease.Session.ExecutionGate.WaitAsync(CancellationToken.None);
+        retainedLease.Session.ExecutionGate.Release();
+
+        TestAssert.Equal(
+            1,
+            Volatile.Read(ref loadCount),
+            "Cancelling a waiter should not dispose the retained in-flight session or force a second physical load.");
+    }
+
     public static async Task AcquireAsync_ShouldEvictLeastRecentlyUsedIdleSession_WhenCapacityIsExceeded()
     {
         var loadCount = 0;
@@ -308,6 +345,20 @@ internal static class AssetsToolsBundleLoadedSessionCacheTests
         }
 
         throw new InvalidOperationException("Expected the bundle load task to fail.");
+    }
+
+    private static async Task AssertCanceledAsync(Task<AssetsToolsBundleLoadedSessionLease> task)
+    {
+        try
+        {
+            await task;
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException("Expected the bundle load task to be cancelled.");
     }
 
     private static AssetsToolsBundleLoadedSession CreateLoadedSession(string bundlePath)

@@ -10,12 +10,15 @@ namespace AssestBundleTools.Infrastructure.Workspace.Runtime;
 
 public sealed partial class CachedWorkspaceSessionRegistry
 {
+    private const string NormalizedBundleArtifactFileName = "normalized.bundle";
+
     private static CachedBundleState MapBundleState(
         BundleIndexCacheEntryDto cacheEntry,
         IReadOnlyDictionary<string, IReadOnlyList<WorkspaceSerializedFileBundleTarget>> serializedFileBundleLookup,
         WorkspaceAssetDependencyTargetLookup assetDependencyTargetLookup)
     {
         var bundleId = ResolveBundleId(cacheEntry);
+        var displayName = ResolveBundleDisplayName(cacheEntry);
 
         var assets = cacheEntry.Assets
             .Select(asset => MapAssetState(bundleId, asset, assetDependencyTargetLookup))
@@ -23,8 +26,8 @@ public sealed partial class CachedWorkspaceSessionRegistry
 
         return new CachedBundleState(
             BundleId: bundleId,
-            DisplayName: cacheEntry.DisplayName,
-            LogicalPath: NormalizeLogicalPath(cacheEntry.LogicalPath, cacheEntry.DisplayName),
+            DisplayName: displayName,
+            LogicalPath: NormalizeLogicalPath(cacheEntry.LogicalPath, displayName),
             SourcePath: cacheEntry.SourceFingerprint.SourcePath ?? string.Empty,
             BundleExternalDependencies: MapBundleExternalDependencies(cacheEntry.Dependencies, serializedFileBundleLookup),
             Assets: assets);
@@ -210,10 +213,11 @@ public sealed partial class CachedWorkspaceSessionRegistry
 
         foreach (var cacheEntry in cacheEntries)
         {
+            var displayName = ResolveBundleDisplayName(cacheEntry);
             var bundleTarget = new WorkspaceSerializedFileBundleTarget(
                 BundleId: ResolveBundleId(cacheEntry),
-                DisplayName: cacheEntry.DisplayName,
-                LogicalPath: NormalizeLogicalPath(cacheEntry.LogicalPath, cacheEntry.DisplayName));
+                DisplayName: displayName,
+                LogicalPath: NormalizeLogicalPath(cacheEntry.LogicalPath, displayName));
 
             var serializedFileNames = (cacheEntry.SerializedFileNames is { Count: > 0 }
                     ? cacheEntry.SerializedFileNames
@@ -399,5 +403,39 @@ public sealed partial class CachedWorkspaceSessionRegistry
     private static string NormalizeAssetObjectLookupKey(string value)
     {
         return NormalizeExternalLookupKey(value).ToLowerInvariant();
+    }
+
+    private static string ResolveBundleDisplayName(BundleIndexCacheEntryDto cacheEntry)
+    {
+        if (!ShouldRepairBundleDisplayName(cacheEntry.DisplayName))
+        {
+            return cacheEntry.DisplayName.Trim();
+        }
+
+        // 兼容早期索引缓存把标准化 artifact 文件名写入 DisplayName 的情况。
+        return TryGetLeafName(cacheEntry.SourceFingerprint.SourcePath) ??
+               TryGetLeafName(cacheEntry.LogicalPath) ??
+               cacheEntry.DisplayName.Trim();
+    }
+
+    private static bool ShouldRepairBundleDisplayName(string displayName)
+    {
+        return string.IsNullOrWhiteSpace(displayName) ||
+               string.Equals(
+                   displayName.Trim(),
+                   NormalizedBundleArtifactFileName,
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? TryGetLeafName(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        var normalizedPath = path.Trim().Replace('\\', '/');
+        var leafName = normalizedPath.Split('/', StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
+        return string.IsNullOrWhiteSpace(leafName) ? null : leafName;
     }
 }

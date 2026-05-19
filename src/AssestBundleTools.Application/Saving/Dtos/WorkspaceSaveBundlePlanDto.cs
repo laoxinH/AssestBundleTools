@@ -13,4 +13,12 @@ public sealed record WorkspaceSaveBundlePlanDto(
     int ModifiedAssetCount,
     int ExtractedAssetCount,
     int WorkspaceReplacementCount,
-    int FileReplacementCount);
+    int FileReplacementCount,
+    string? BundleCacheKey = null,
+    bool HasStandardizedArtifact = false,
+    string? ArtifactBundlePath = null,
+    string? BundleSessionCacheKey = null,
+    string? ArtifactDiagnosticCode = null,
+    WorkspaceSaveOutputReadiness OutputReadiness = WorkspaceSaveOutputReadiness.NotProbed,
+    bool IsOutputWriteBlocked = false,
+    string? OutputDiagnosticCode = null);

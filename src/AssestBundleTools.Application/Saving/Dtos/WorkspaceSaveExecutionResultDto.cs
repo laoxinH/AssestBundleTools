@@ -11,4 +11,10 @@ public sealed record WorkspaceSaveExecutionResultDto(
     string OutputDirectory,
     int PlannedBundleCount,
     int TotalChangeCount,
-    DateTimeOffset CompletedAtUtc);
+    DateTimeOffset CompletedAtUtc,
+    int ResolvedArtifactInputCount = 0,
+    int UnresolvedArtifactInputCount = 0,
+    int OutputReadyBundleCount = 0,
+    int OutputBlockedBundleCount = 0,
+    int OutputUnprobedBundleCount = 0,
+    bool IsReadyForWrite = false);

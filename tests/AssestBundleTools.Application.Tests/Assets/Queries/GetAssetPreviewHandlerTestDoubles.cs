@@ -329,6 +329,12 @@ internal static partial class GetAssetPreviewHandlerTests
 
         public PreviewCachePayloadDto? LastSavedPayload { get; private set; }
 
+        public PreviewCachePruneRequestDto? LastPruneRequest { get; private set; }
+
+        private int _pruneCallCount;
+
+        public int PruneCallCount => Volatile.Read(ref _pruneCallCount);
+
         public PreviewCachePayloadDto? Load(string workspaceKey, string previewCacheKey)
         {
             lock (_syncRoot)
@@ -372,6 +378,18 @@ internal static partial class GetAssetPreviewHandlerTests
                 _payload = previewCachePayload;
                 _resolvedPayloadFilePath ??= Path.Combine(@"D:\WorkspaceData\preview-cache", previewCachePayload.Descriptor.RelativePayloadPath);
             }
+        }
+
+        public PreviewCachePruneResultDto Prune(PreviewCachePruneRequestDto request)
+        {
+            Interlocked.Increment(ref _pruneCallCount);
+            LastPruneRequest = request;
+            return new PreviewCachePruneResultDto(
+                SizeBeforeInBytes: 0,
+                SizeAfterInBytes: 0,
+                EntryCountBefore: 0,
+                EntryCountAfter: 0,
+                PrunedEntries: Array.Empty<PreviewCacheEntryDto>());
         }
 
         public void Delete(string workspaceKey, string previewCacheKey) => throw new NotSupportedException();

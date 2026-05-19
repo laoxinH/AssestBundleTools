@@ -59,6 +59,7 @@ public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
         IPathNavigationService pathNavigationService,
         IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
         IBackgroundWorkScheduler? backgroundWorkScheduler = null,
+        IWorkspaceCacheMaintenanceGateway? workspaceCacheMaintenanceGateway = null,
         Func<int>? previewWorkerCountProvider = null)
     {
         ArgumentNullException.ThrowIfNull(workspaceExplorerGateway);
@@ -78,7 +79,9 @@ public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
         _workspaceShell = new BundleExplorerWorkspaceShellViewModel(
             localizationService,
             workspaceContextService,
-            assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry)));
+            assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry)),
+            workspaceCacheMaintenanceGateway,
+            backgroundWorkScheduler);
         _workspaceShell.PageStateChanged += OnWorkspaceShellPageStateChanged;
         _bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
         _bundlePane.BrowserStateChanged += OnBundlePaneBrowserStateChanged;
@@ -258,6 +261,7 @@ public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
     {
         _assetWorkflow.Dispose();
         _workspaceShell.PageStateChanged -= OnWorkspaceShellPageStateChanged;
+        _workspaceShell.Dispose();
         _bundlePane.BrowserStateChanged -= OnBundlePaneBrowserStateChanged;
     }
 

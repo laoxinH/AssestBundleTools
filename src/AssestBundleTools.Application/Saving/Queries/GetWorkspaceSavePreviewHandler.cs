@@ -13,10 +13,19 @@ namespace AssestBundleTools.Application.Saving.Queries;
 public sealed class GetWorkspaceSavePreviewHandler : IQueryHandler<GetWorkspaceSavePreviewQuery, Result<WorkspaceSavePreviewDto>>
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
+    private readonly WorkspaceSaveArtifactInputResolver? _artifactInputResolver;
+    private readonly IWorkspaceSaveOutputProbe? _outputProbe;
 
-    public GetWorkspaceSavePreviewHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
+    public GetWorkspaceSavePreviewHandler(
+        IWorkspaceSessionRegistry workspaceSessionRegistry,
+        IWorkspaceDataStoreFactory? workspaceDataStoreFactory = null,
+        IWorkspaceSaveOutputProbe? outputProbe = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
+        _artifactInputResolver = workspaceDataStoreFactory is null
+            ? null
+            : new WorkspaceSaveArtifactInputResolver(workspaceDataStoreFactory);
+        _outputProbe = outputProbe;
     }
 
     public Task<Result<WorkspaceSavePreviewDto>> HandleAsync(
@@ -38,7 +47,14 @@ public sealed class GetWorkspaceSavePreviewHandler : IQueryHandler<GetWorkspaceS
             return Task.FromResult(Result<WorkspaceSavePreviewDto>.Failure(ApplicationErrors.WorkspaceNotFound(query.WorkspaceId)));
         }
 
-        var plan = WorkspaceSavePlanner.BuildPlan(_workspaceSessionRegistry, query.WorkspaceId, query.OutputDirectory);
+        var plan = WorkspaceSavePlanner.BuildPlan(
+            _workspaceSessionRegistry,
+            query.WorkspaceId,
+            query.OutputDirectory,
+            _artifactInputResolver,
+            _outputProbe,
+            query.WorkspaceKey,
+            query.WorkspaceDataRootPath);
         var bundlePlans = plan.BundlePlans
             .Select(bundlePlan => new WorkspaceSaveBundlePlanDto(
                 BundleId: bundlePlan.BundleId,
@@ -48,7 +64,15 @@ public sealed class GetWorkspaceSavePreviewHandler : IQueryHandler<GetWorkspaceS
                 ModifiedAssetCount: bundlePlan.ModifiedAssetCount,
                 ExtractedAssetCount: bundlePlan.ExtractedAssetCount,
                 WorkspaceReplacementCount: bundlePlan.WorkspaceReplacementCount,
-                FileReplacementCount: bundlePlan.FileReplacementCount))
+                FileReplacementCount: bundlePlan.FileReplacementCount,
+                BundleCacheKey: bundlePlan.ArtifactInput.BundleCacheKey,
+                HasStandardizedArtifact: bundlePlan.ArtifactInput.HasStandardizedArtifact,
+                ArtifactBundlePath: bundlePlan.ArtifactInput.ArtifactBundlePath,
+                BundleSessionCacheKey: bundlePlan.ArtifactInput.BundleSessionCacheKey,
+                ArtifactDiagnosticCode: bundlePlan.ArtifactInput.ArtifactDiagnosticCode,
+                OutputReadiness: bundlePlan.OutputPreflight.Readiness,
+                IsOutputWriteBlocked: bundlePlan.OutputPreflight.IsWriteBlocked,
+                OutputDiagnosticCode: bundlePlan.OutputPreflight.DiagnosticCode))
             .ToArray();
 
         var preview = new WorkspaceSavePreviewDto(
@@ -61,7 +85,13 @@ public sealed class GetWorkspaceSavePreviewHandler : IQueryHandler<GetWorkspaceS
             ExtractedAssetCount: plan.ExtractedAssetCount,
             WorkspaceReplacementCount: plan.WorkspaceReplacementCount,
             FileReplacementCount: plan.FileReplacementCount,
-            BundlePlans: bundlePlans);
+            BundlePlans: bundlePlans,
+            ResolvedArtifactInputCount: plan.ResolvedArtifactInputCount,
+            UnresolvedArtifactInputCount: plan.UnresolvedArtifactInputCount,
+            OutputReadyBundleCount: plan.OutputReadyBundleCount,
+            OutputBlockedBundleCount: plan.OutputBlockedBundleCount,
+            OutputUnprobedBundleCount: plan.OutputUnprobedBundleCount,
+            IsReadyForWrite: plan.IsReadyForWrite);
 
         return Task.FromResult(Result<WorkspaceSavePreviewDto>.Success(preview));
     }

@@ -1,4 +1,6 @@
 using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Application.Extraction.Dtos;
+using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
 
 namespace AssestBundleTools.Application.Extraction.Queries;
@@ -9,4 +11,6 @@ namespace AssestBundleTools.Application.Extraction.Queries;
 public sealed record GetWorkspaceBatchExtractionPreviewQuery(
     WorkspaceId WorkspaceId,
     AssetType? AssetTypeFilter = null,
-    string? OutputDirectory = null);
+    string? OutputDirectory = null,
+    IReadOnlyList<BundleId>? SelectedBundleIds = null,
+    IReadOnlyList<WorkspaceBatchExtractionCategoryDto>? SelectedCategories = null);

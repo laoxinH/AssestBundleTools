@@ -249,6 +249,106 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         TestAssert.Equal(1, bundleIndexCacheStore.SavedEntries.Count, "Successful import should persist one bundle cache entry.");
     }
 
+    public static async Task HandleAsync_ShouldPreserveSourceFileName_WhenReaderReadsNormalizedBundleArtifact()
+    {
+        const string workspaceKey = "workspace-display-name";
+        const string workspaceDataRootPath = @"D:\WorkspaceData";
+        const string sourcePath = @"C:\Bundles\ab\char_151_myrtle.ab";
+        const string logicalPath = "ab/char_151_myrtle.ab";
+        const string normalizedBundlePath =
+            @"D:\WorkspaceData\cache\bundles\workspace-display-name\bundle-cache-001\normalized.bundle";
+        var sourceFingerprint = new WorkspaceFileFingerprintDto(
+            SourcePath: sourcePath,
+            FileSizeInBytes: 12288,
+            LastWriteTimeUtc: new DateTimeOffset(2026, 5, 17, 10, 0, 0, TimeSpan.Zero),
+            ContentHash: "hash-myrtle-source");
+        var normalizedBundleFingerprint = new WorkspaceFileFingerprintDto(
+            SourcePath: normalizedBundlePath,
+            FileSizeInBytes: 12288,
+            LastWriteTimeUtc: new DateTimeOffset(2026, 5, 17, 10, 1, 0, TimeSpan.Zero),
+            ContentHash: "hash-myrtle-normalized");
+        var metadataStore = new TestWorkspaceMetadataStore(new WorkspaceMetadataDto(
+            WorkspaceKey: workspaceKey,
+            DisplayName: "Display Name Workspace",
+            SourcePath: @"C:\Bundles",
+            CreatedAtUtc: new DateTimeOffset(2026, 5, 17, 9, 0, 0, TimeSpan.Zero),
+            LastOpenedAtUtc: new DateTimeOffset(2026, 5, 17, 9, 30, 0, TimeSpan.Zero),
+            LastBundleId: null,
+            LastAssetId: null,
+            LastOutputDirectory: null,
+            BundleSearchKeyword: string.Empty,
+            AssetSearchKeyword: string.Empty,
+            AssetTypeFilter: null,
+            ShowModifiedOnly: false,
+            ShowPreviewableOnly: false,
+            OpenBundleTabs: Array.Empty<WorkspaceMetadataBundleTabDto>(),
+            ActiveBundleTabId: null,
+            ImportedSources:
+            [
+                new WorkspaceImportedSourceDto(
+                    Path: sourcePath,
+                    ImportOrigin: WorkspaceImportOriginKind.BundleFiles,
+                    PathKind: WorkspaceImportPathKind.File,
+                    RecordedAtUtc: new DateTimeOffset(2026, 5, 17, 10, 0, 0, TimeSpan.Zero))
+            ],
+            AssetBundleDecryptorId: AssetBundleDecryptorIds.BuiltInPassThrough,
+            ExcludedBundleSourcePaths: Array.Empty<string>()));
+        var bundleIndexCacheStore = new TestBundleIndexCacheStore(Array.Empty<BundleIndexCacheEntryDto>());
+        var previewCacheStore = new TestPreviewCacheStore(Array.Empty<PreviewCacheDescriptorDto>());
+        var decryptorDescriptor = CreatePassThroughDecryptorDescriptor();
+        var decryptor = new TestAssetBundleDecryptor(decryptorDescriptor)
+        {
+            DecryptResultFactory = _ => Task.FromResult(Result<AssetBundleDecryptionResultDto>.Success(
+                CreateDecryptionResult(decryptorDescriptor, normalizedBundleFingerprint, normalizedBundlePath)))
+        };
+        var sourceDiscoveryService = new TestWorkspaceImportSourceDiscoveryService(
+        [
+            new DiscoveredWorkspaceImportFileDto(sourcePath, logicalPath)
+        ]);
+        var fileSystemService = new TestWorkspaceImportFileSystemService(
+            new Dictionary<string, WorkspaceFileFingerprintDto>(StringComparer.OrdinalIgnoreCase)
+            {
+                [sourcePath] = sourceFingerprint
+            });
+        AssetBundleReadRequestDto? capturedReadRequest = null;
+        var reader = new TestAssetBundleReader
+        {
+            ReadResultFactory = request =>
+            {
+                capturedReadRequest = request;
+                return Task.FromResult(Result<AssetBundleReadResultDto>.Success(
+                    new AssetBundleReadResultDto(
+                        DisplayName: "normalized.bundle",
+                        LogicalPath: request.LogicalPath,
+                        ParserVersion: "parser-1",
+                        Dependencies: Array.Empty<string>(),
+                        Assets: Array.Empty<AssetBundleReadAssetDto>())));
+            }
+        };
+        var handler = new ProcessWorkspaceImportsHandler(
+            new TestWorkspaceMetadataStoreFactory(metadataStore),
+            new TestWorkspaceDataStoreFactory(bundleIndexCacheStore, previewCacheStore),
+            sourceDiscoveryService,
+            fileSystemService,
+            new WorkspaceImportExecutionGate(),
+            new WorkspaceImportExecutionOptionsResolver(),
+            new TestAssetBundleSourceInspector(),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            reader);
+
+        var result = await handler.HandleAsync(new ProcessWorkspaceImportsCommand(
+            WorkspaceKey: workspaceKey,
+            WorkspaceDataRootPath: workspaceDataRootPath));
+
+        TestAssert.True(result.IsSuccess, "Successful import should complete.");
+        var savedEntry = TestAssert.Single(bundleIndexCacheStore.SavedEntries);
+        TestAssert.Equal("char_151_myrtle.ab", savedEntry.DisplayName, "Bundle display name should come from the imported source file, not the normalized artifact file.");
+        TestAssert.Equal(logicalPath, savedEntry.LogicalPath, "Logical path should still preserve the discovered workspace-relative path.");
+        TestAssert.Equal(sourcePath, savedEntry.SourceFingerprint.SourcePath, "Source fingerprint should continue to point at the imported source.");
+        TestAssert.Equal(1, reader.ReadCallCount, "Import should still read the resolved normalized artifact once.");
+        TestAssert.Equal(normalizedBundlePath, capturedReadRequest?.BundlePath ?? string.Empty, "Reader should still consume the normalized artifact path.");
+    }
+
     public static async Task HandleAsync_ShouldProcessCandidateBundlesInParallel_WhenExecutionOptionsAllowMultipleWorkers()
     {
         const string workspaceKey = "workspace-parallel";

@@ -14,4 +14,7 @@ public sealed record WorkspaceBatchExtractionResultDto(
     int ExtractedBundleCount,
     DateTimeOffset CompletedAtUtc,
     int FailedAssetCount = 0,
-    IReadOnlyList<AssetExtractionResultDto>? AssetResults = null);
+    IReadOnlyList<AssetExtractionResultDto>? AssetResults = null,
+    IReadOnlyList<WorkspaceBatchExtractionCategoryDto>? SelectedCategories = null,
+    int ExtractedSpineGroupCount = 0,
+    IReadOnlyList<SpineAssetGroupExtractionResultDto>? SpineGroupResults = null);

@@ -82,6 +82,52 @@ internal static class WorkspaceBundleArtifactResolver
         }
     }
 
+    public static WorkspaceBundleArtifactExistingInputResolutionDto TryResolveExistingInput(
+        IBundleArtifactStore bundleArtifactStore,
+        string workspaceKey,
+        string bundleCacheKey,
+        WorkspaceFileFingerprintDto sourceFingerprint,
+        string? decryptorId,
+        string? decryptorVersion,
+        DateTimeOffset accessedAtUtc)
+    {
+        ArgumentNullException.ThrowIfNull(bundleArtifactStore);
+        ArgumentException.ThrowIfNullOrWhiteSpace(workspaceKey);
+        ArgumentException.ThrowIfNullOrWhiteSpace(bundleCacheKey);
+        ArgumentNullException.ThrowIfNull(sourceFingerprint);
+
+        var manifest = bundleArtifactStore.Load(workspaceKey, bundleCacheKey);
+        if (manifest is null)
+        {
+            return new WorkspaceBundleArtifactExistingInputResolutionDto(
+                WorkspaceBundleArtifactExistingInputStatus.MissingManifest,
+                Input: null);
+        }
+
+        if (!CanReuseManifest(manifest, workspaceKey, bundleCacheKey, sourceFingerprint, decryptorId, decryptorVersion))
+        {
+            return new WorkspaceBundleArtifactExistingInputResolutionDto(
+                WorkspaceBundleArtifactExistingInputStatus.StaleManifest,
+                Input: null);
+        }
+
+        var cachedBundlePath = bundleArtifactStore.ResolveBundlePath(manifest);
+        if (string.IsNullOrWhiteSpace(cachedBundlePath))
+        {
+            return new WorkspaceBundleArtifactExistingInputResolutionDto(
+                WorkspaceBundleArtifactExistingInputStatus.MissingBundlePath,
+                Input: null);
+        }
+
+        var accessedManifest = bundleArtifactStore.UpdateLastAccessed(manifest, accessedAtUtc);
+        return new WorkspaceBundleArtifactExistingInputResolutionDto(
+            WorkspaceBundleArtifactExistingInputStatus.Resolved,
+            new WorkspaceBundleArtifactInputDto(
+                cachedBundlePath,
+                accessedManifest,
+                CreateBundleSessionCacheKey(accessedManifest)));
+    }
+
     private static async Task<Result<WorkspaceBundleArtifactResolutionDto>> ResolveCoreAsync(
         IBundleArtifactStore bundleArtifactStore,
         IAssetBundleDecryptor decryptor,
@@ -179,7 +225,7 @@ internal static class WorkspaceBundleArtifactResolver
             bundleCacheKey.Trim());
     }
 
-    private static string CreateBundleSessionCacheKey(BundleArtifactManifestDto manifest)
+    internal static string CreateBundleSessionCacheKey(BundleArtifactManifestDto manifest)
     {
         var fingerprint = manifest.BundleFingerprint;
         return string.Join(
@@ -238,11 +284,29 @@ internal static class WorkspaceBundleArtifactResolver
         WorkspaceFileFingerprintDto sourceFingerprint,
         AssetBundleDecryptorDescriptorDto decryptor)
     {
+        return CanReuseManifest(
+            manifest,
+            workspaceKey,
+            bundleCacheKey,
+            sourceFingerprint,
+            decryptor.Id,
+            decryptor.Version);
+    }
+
+    private static bool CanReuseManifest(
+        BundleArtifactManifestDto? manifest,
+        string workspaceKey,
+        string bundleCacheKey,
+        WorkspaceFileFingerprintDto sourceFingerprint,
+        string? decryptorId,
+        string? decryptorVersion)
+    {
         return manifest is not null &&
                string.Equals(manifest.WorkspaceKey, workspaceKey, StringComparison.Ordinal) &&
                string.Equals(manifest.BundleCacheKey, bundleCacheKey, StringComparison.OrdinalIgnoreCase) &&
-               string.Equals(manifest.DecryptorId, decryptor.Id, StringComparison.OrdinalIgnoreCase) &&
-               string.Equals(manifest.DecryptorVersion, decryptor.Version, StringComparison.OrdinalIgnoreCase) &&
+               !string.IsNullOrWhiteSpace(decryptorId) &&
+               string.Equals(manifest.DecryptorId, decryptorId, StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(manifest.DecryptorVersion ?? string.Empty, decryptorVersion ?? string.Empty, StringComparison.OrdinalIgnoreCase) &&
                string.Equals(manifest.NormalizerVersion, NormalizerVersion, StringComparison.OrdinalIgnoreCase) &&
                WorkspaceFileFingerprintComparer.Matches(manifest.SourceFingerprint, sourceFingerprint);
     }

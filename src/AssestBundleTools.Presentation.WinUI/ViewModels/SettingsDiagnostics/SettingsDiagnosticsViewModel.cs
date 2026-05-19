@@ -60,7 +60,7 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _workspaceImportCoordinatorService = workspaceImportCoordinatorService ?? throw new ArgumentNullException(nameof(workspaceImportCoordinatorService));
         _assetBundleDecryptorCatalogService = assetBundleDecryptorCatalogService ?? throw new ArgumentNullException(nameof(assetBundleDecryptorCatalogService));
-        BundleArtifactCache = new SettingsBundleArtifactCacheViewModel(
+        BundleArtifactCache = new SettingsWorkspaceCacheViewModel(
             workspaceCacheMaintenanceGateway,
             _workspaceContextService,
             _appPreferencesService,
@@ -101,7 +101,7 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
 
     public ObservableCollection<SettingsDecryptorCatalogEntryItemViewModel> DecryptorEntries { get; } = new();
 
-    public SettingsBundleArtifactCacheViewModel BundleArtifactCache { get; }
+    public SettingsWorkspaceCacheViewModel BundleArtifactCache { get; }
 
     public AsyncRelayCommand ImportBundleFilesCommand { get; }
 

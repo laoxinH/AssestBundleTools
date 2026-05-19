@@ -88,6 +88,68 @@ internal static class JsonPreviewCacheStoreTests
         TestAssert.False(Directory.Exists(payloadDirectoryPath), "Empty payload directory should be pruned after deletion.");
     }
 
+    public static void GetUsage_ShouldReturnPreviewEntriesAndTotalSize()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonPreviewCacheStore(temporaryDirectory.DirectoryPath);
+        var descriptor = CreateDescriptor(
+            workspaceKey: "workspace-a",
+            previewCacheKey: "preview-usage",
+            bundleCacheKey: "bundle-cache-usage",
+            relativePayloadPath: "payloads/images/preview-usage.bin");
+
+        store.Save(new PreviewCachePayloadDto(
+            descriptor,
+            new byte[] { 0x01, 0x02, 0x03 },
+            new byte[] { 0x04, 0x05 }));
+
+        var usage = store.GetUsage("workspace-a");
+
+        TestAssert.Equal(1, usage.EntryCount, "Usage should include saved preview descriptor.");
+        TestAssert.True(usage.TotalSizeInBytes >= 5, "Usage should include payload bytes.");
+        var entry = TestAssert.Single(usage.Entries);
+        TestAssert.Equal("preview-usage", entry.PreviewCacheKey, "Usage entry should expose preview cache key.");
+        TestAssert.Equal("bundle-cache-usage", entry.BundleCacheKey, "Usage entry should expose bundle cache key.");
+        TestAssert.True(entry.SizeInBytes >= 5, "Entry size should include payload and descriptor bytes.");
+    }
+
+    public static void Prune_ShouldDeleteOldestPreviewEntries_WhenCountLimitIsExceeded()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonPreviewCacheStore(temporaryDirectory.DirectoryPath);
+        var oldDescriptor = CreateDescriptor(
+            workspaceKey: "workspace-a",
+            previewCacheKey: "preview-old",
+            bundleCacheKey: "bundle-cache-old",
+            relativePayloadPath: "payloads/images/preview-old.bin") with
+        {
+            GeneratedAtUtc = new DateTimeOffset(2026, 5, 17, 8, 0, 0, TimeSpan.Zero)
+        };
+        var newDescriptor = CreateDescriptor(
+            workspaceKey: "workspace-a",
+            previewCacheKey: "preview-new",
+            bundleCacheKey: "bundle-cache-new",
+            relativePayloadPath: "payloads/images/preview-new.bin") with
+        {
+            GeneratedAtUtc = new DateTimeOffset(2026, 5, 17, 9, 0, 0, TimeSpan.Zero)
+        };
+
+        store.Save(new PreviewCachePayloadDto(oldDescriptor, new byte[] { 0x10 }));
+        store.Save(new PreviewCachePayloadDto(newDescriptor, new byte[] { 0x20 }));
+
+        var result = store.Prune(new PreviewCachePruneRequestDto(
+            WorkspaceKey: "workspace-a",
+            MaximumSizeInBytes: null,
+            MaximumEntryCount: 1));
+
+        TestAssert.Equal(2, result.EntryCountBefore, "Prune result should report pre-prune count.");
+        TestAssert.Equal(1, result.EntryCountAfter, "Prune result should report post-prune count.");
+        var prunedEntry = TestAssert.Single(result.PrunedEntries);
+        TestAssert.Equal("preview-old", prunedEntry.PreviewCacheKey, "Oldest preview should be pruned first.");
+        TestAssert.Null(store.Load("workspace-a", "preview-old"), "Pruned preview should be removed.");
+        TestAssert.NotNull(store.Load("workspace-a", "preview-new"), "Newest preview should remain.");
+    }
+
     public static void Load_ShouldReturnNull_WhenDescriptorExistsButPayloadFileIsMissing()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();

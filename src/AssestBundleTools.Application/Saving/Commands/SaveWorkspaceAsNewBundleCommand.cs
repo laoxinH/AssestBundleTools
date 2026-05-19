@@ -7,4 +7,6 @@ namespace AssestBundleTools.Application.Saving.Commands;
 /// </summary>
 public sealed record SaveWorkspaceAsNewBundleCommand(
     WorkspaceId WorkspaceId,
-    string? OutputDirectory = null);
+    string? OutputDirectory = null,
+    string? WorkspaceKey = null,
+    string? WorkspaceDataRootPath = null);

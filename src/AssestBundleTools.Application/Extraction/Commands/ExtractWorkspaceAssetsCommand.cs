@@ -1,4 +1,6 @@
 using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Application.Extraction.Dtos;
+using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
 
 namespace AssestBundleTools.Application.Extraction.Commands;
@@ -11,4 +13,7 @@ public sealed record ExtractWorkspaceAssetsCommand(
     AssetType? AssetTypeFilter = null,
     string? OutputDirectory = null,
     string? WorkspaceKey = null,
-    string? WorkspaceDataRootPath = null);
+    string? WorkspaceDataRootPath = null,
+    IReadOnlyList<BundleId>? SelectedBundleIds = null,
+    IReadOnlyList<WorkspaceBatchExtractionCategoryDto>? SelectedCategories = null,
+    IProgress<WorkspaceBatchExtractionProgressDto>? Progress = null);

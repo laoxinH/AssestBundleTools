@@ -9,4 +9,5 @@ public sealed record WorkspaceBatchExtractionBundlePlanDto(
     BundleId BundleId,
     string BundleDisplayName,
     int AssetCount,
-    long TotalSizeInBytes);
+    long TotalSizeInBytes,
+    int SpineGroupCount = 0);

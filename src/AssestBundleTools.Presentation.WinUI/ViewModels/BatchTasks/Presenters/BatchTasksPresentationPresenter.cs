@@ -205,7 +205,26 @@ public sealed partial class BatchTasksViewModel
 
             _owner.SaveRiskNotes.Clear();
             _owner.SaveRiskNotes.Add(new BatchTaskTextItemViewModel(GetString(ResourceKeys.BatchTasksSavePreviewRiskNoOverwrite)));
-            _owner.SaveRiskNotes.Add(new BatchTaskTextItemViewModel(GetString(ResourceKeys.BatchTasksSavePreviewRiskConflictDeferred)));
+            if (preview.OutputBlockedBundleCount > 0)
+            {
+                _owner.SaveRiskNotes.Add(new BatchTaskTextItemViewModel(_localizationService.GetFormattedString(
+                    ResourceKeys.BatchTasksSavePreviewRiskOutputBlockedFormat,
+                    preview.OutputBlockedBundleCount)));
+            }
+            else if (preview.OutputReadyBundleCount > 0)
+            {
+                _owner.SaveRiskNotes.Add(new BatchTaskTextItemViewModel(_localizationService.GetFormattedString(
+                    ResourceKeys.BatchTasksSavePreviewRiskOutputReadyFormat,
+                    preview.OutputReadyBundleCount)));
+            }
+
+            if (preview.UnresolvedArtifactInputCount > 0)
+            {
+                _owner.SaveRiskNotes.Add(new BatchTaskTextItemViewModel(_localizationService.GetFormattedString(
+                    ResourceKeys.BatchTasksSavePreviewRiskArtifactUnresolvedFormat,
+                    preview.UnresolvedArtifactInputCount)));
+            }
+
             _owner.SaveRiskNotes.Add(new BatchTaskTextItemViewModel(GetString(ResourceKeys.BatchTasksSavePreviewRiskExecutionDeferred)));
 
             _owner.NotifyWorkspaceState();

@@ -1,4 +1,5 @@
 using System.IO;
+using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Workspace;
 
@@ -16,7 +17,12 @@ internal static class WorkspaceSavePlanner
     public static WorkspaceSavePlan BuildPlan(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
         WorkspaceId workspaceId,
-        string? outputDirectory)
+        string? outputDirectory,
+        WorkspaceSaveArtifactInputResolver? artifactInputResolver = null,
+        IWorkspaceSaveOutputProbe? outputProbe = null,
+        string? workspaceKey = null,
+        string? workspaceDataRootPath = null,
+        DateTimeOffset? plannedAtUtc = null)
     {
         ArgumentNullException.ThrowIfNull(workspaceSessionRegistry);
 
@@ -32,29 +38,52 @@ internal static class WorkspaceSavePlanner
                 ExtractedAssetCount: 0,
                 WorkspaceReplacementCount: 0,
                 FileReplacementCount: 0,
+                ResolvedArtifactInputCount: 0,
+                UnresolvedArtifactInputCount: 0,
+                OutputReadyBundleCount: 0,
+                OutputBlockedBundleCount: 0,
+                OutputUnprobedBundleCount: 0,
+                IsReadyForWrite: false,
                 BundlePlans: Array.Empty<PlannedWorkspaceBundleSave>());
         }
 
         var resolvedOutputDirectory = ResolveOutputDirectory(outputDirectory, changeSummary.WorkspaceDisplayName);
-        var bundlePlans = changeSummary.Items
+        var bundleGroups = changeSummary.Items
             .GroupBy(
                 item => new { item.BundleId, item.BundleDisplayName },
                 static item => item)
             .OrderBy(group => group.Key.BundleDisplayName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        var artifactInputs = artifactInputResolver?.ResolveInputs(
+            workspaceKey,
+            workspaceDataRootPath,
+            bundleGroups.Select(static group => group.Key.BundleId).Distinct().ToArray(),
+            plannedAtUtc ?? DateTimeOffset.UtcNow);
+
+        var bundlePlans = bundleGroups
             .Select(group =>
             {
                 var items = group.ToArray();
+                var artifactInput = ResolveArtifactInput(artifactInputs, group.Key.BundleId);
+                var outputFilePath = Path.Combine(resolvedOutputDirectory, group.Key.BundleDisplayName);
+                var outputPreflight = ResolveOutputPreflight(outputProbe, outputFilePath);
                 return new PlannedWorkspaceBundleSave(
                     BundleId: group.Key.BundleId,
                     BundleDisplayName: group.Key.BundleDisplayName,
-                    OutputFilePath: Path.Combine(resolvedOutputDirectory, group.Key.BundleDisplayName),
+                    OutputFilePath: outputFilePath,
                     ChangeCount: items.Length,
                     ModifiedAssetCount: items.Count(static item => item.IsModified),
                     ExtractedAssetCount: items.Count(static item => item.LastExtractedAtUtc.HasValue),
                     WorkspaceReplacementCount: items.Count(static item => !string.IsNullOrWhiteSpace(item.WorkspaceReplacementSourceAssetName)),
-                    FileReplacementCount: items.Count(static item => !string.IsNullOrWhiteSpace(item.FileReplacementSourceFileName)));
+                    FileReplacementCount: items.Count(static item => !string.IsNullOrWhiteSpace(item.FileReplacementSourceFileName)),
+                    ArtifactInput: artifactInput,
+                    OutputPreflight: outputPreflight);
             })
             .ToArray();
+        var outputReadyBundleCount = bundlePlans.Count(static plan => plan.OutputPreflight.Readiness == WorkspaceSaveOutputReadiness.Ready);
+        var outputBlockedBundleCount = bundlePlans.Count(static plan => plan.OutputPreflight.IsWriteBlocked);
+        var outputUnprobedBundleCount = bundlePlans.Count(static plan => plan.OutputPreflight.Readiness == WorkspaceSaveOutputReadiness.NotProbed);
+        var unresolvedArtifactInputCount = bundlePlans.Count(static plan => !plan.ArtifactInput.HasStandardizedArtifact);
 
         return new WorkspaceSavePlan(
             WorkspaceId: changeSummary.WorkspaceId,
@@ -65,6 +94,14 @@ internal static class WorkspaceSavePlanner
             ExtractedAssetCount: changeSummary.ExtractedAssetCount,
             WorkspaceReplacementCount: changeSummary.WorkspaceReplacementCount,
             FileReplacementCount: changeSummary.FileReplacementCount,
+            ResolvedArtifactInputCount: bundlePlans.Count(static plan => plan.ArtifactInput.HasStandardizedArtifact),
+            UnresolvedArtifactInputCount: unresolvedArtifactInputCount,
+            OutputReadyBundleCount: outputReadyBundleCount,
+            OutputBlockedBundleCount: outputBlockedBundleCount,
+            OutputUnprobedBundleCount: outputUnprobedBundleCount,
+            IsReadyForWrite: unresolvedArtifactInputCount == 0 &&
+                             outputBlockedBundleCount == 0 &&
+                             outputUnprobedBundleCount == 0,
             BundlePlans: bundlePlans);
     }
 
@@ -81,6 +118,40 @@ internal static class WorkspaceSavePlanner
 
         return Path.Combine("Outputs", workspaceDisplayName);
     }
+
+    private static WorkspaceSaveBundleArtifactInput ResolveArtifactInput(
+        IReadOnlyDictionary<string, WorkspaceSaveBundleArtifactInput>? artifactInputs,
+        Domain.Bundles.BundleId bundleId)
+    {
+        if (artifactInputs is not null &&
+            artifactInputs.TryGetValue(bundleId.Value, out var artifactInput))
+        {
+            return artifactInput;
+        }
+
+        return WorkspaceSaveBundleArtifactInput.Unresolved(
+            bundleCacheKey: null,
+            diagnosticCode: "Save.Artifact.NotResolved");
+    }
+
+    private static WorkspaceSaveBundleOutputPreflight ResolveOutputPreflight(
+        IWorkspaceSaveOutputProbe? outputProbe,
+        string outputFilePath)
+    {
+        if (outputProbe is null)
+        {
+            return new WorkspaceSaveBundleOutputPreflight(
+                WorkspaceSaveOutputReadiness.NotProbed,
+                IsWriteBlocked: false,
+                DiagnosticCode: null);
+        }
+
+        var result = outputProbe.Probe(new WorkspaceSaveOutputProbeRequest(outputFilePath));
+        return new WorkspaceSaveBundleOutputPreflight(
+            result.Readiness,
+            result.IsWriteBlocked,
+            result.DiagnosticCode);
+    }
 }
 
 /// <summary>
@@ -95,6 +166,12 @@ internal sealed record WorkspaceSavePlan(
     int ExtractedAssetCount,
     int WorkspaceReplacementCount,
     int FileReplacementCount,
+    int ResolvedArtifactInputCount,
+    int UnresolvedArtifactInputCount,
+    int OutputReadyBundleCount,
+    int OutputBlockedBundleCount,
+    int OutputUnprobedBundleCount,
+    bool IsReadyForWrite,
     IReadOnlyList<PlannedWorkspaceBundleSave> BundlePlans);
 
 /// <summary>
@@ -108,4 +185,11 @@ internal sealed record PlannedWorkspaceBundleSave(
     int ModifiedAssetCount,
     int ExtractedAssetCount,
     int WorkspaceReplacementCount,
-    int FileReplacementCount);
+    int FileReplacementCount,
+    WorkspaceSaveBundleArtifactInput ArtifactInput,
+    WorkspaceSaveBundleOutputPreflight OutputPreflight);
+
+internal sealed record WorkspaceSaveBundleOutputPreflight(
+    WorkspaceSaveOutputReadiness Readiness,
+    bool IsWriteBlocked,
+    string? DiagnosticCode);

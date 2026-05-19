@@ -10,6 +10,44 @@ namespace AssestBundleTools.Infrastructure.Tests.Workspace.Runtime;
 
 internal static class CachedWorkspaceSessionRegistryTests
 {
+    public static void OpenWorkspace_ShouldRepairLegacyNormalizedBundleDisplayName_FromSourcePath()
+    {
+        const string bundleId = "bundle.myrtle";
+        const string sourcePath = @"C:\Bundles\ab\char_151_myrtle.ab";
+        const string logicalPath = "ab/char_151_myrtle.ab";
+        var cacheEntry = new BundleIndexCacheEntryDto(
+            WorkspaceKey: "workspace-a",
+            BundleCacheKey: "bundle-cache-myrtle",
+            BundleId: bundleId,
+            DisplayName: "normalized.bundle",
+            LogicalPath: logicalPath,
+            SourceFingerprint: new WorkspaceFileFingerprintDto(sourcePath, 100, DateTimeOffset.UnixEpoch, "hash"),
+            CachedAtUtc: DateTimeOffset.UnixEpoch,
+            ParserVersion: "test",
+            ToolVersion: "test",
+            Dependencies: Array.Empty<string>(),
+            Assets: Array.Empty<BundleIndexAssetCacheEntryDto>(),
+            SerializedFileNames: ["CAB-myrtle"]);
+        var bundleIndexCacheStore = new TestBundleIndexCacheStore([cacheEntry]);
+        var registry = new CachedWorkspaceSessionRegistry(new TestWorkspaceDataStoreFactory(bundleIndexCacheStore));
+
+        var summary = registry.OpenWorkspace(new WorkspaceSessionOpenRequestDto(
+            WorkspaceKey: "workspace-a",
+            WorkspacePath: "workspace",
+            WorkspaceDataRootPath: "data",
+            WorkspaceDisplayName: "Workspace A",
+            InitialMode: WorkspaceMode.SinglePane));
+        var hasBundleTree = registry.TryGetBundleTree(summary.WorkspaceId, out var bundleTree);
+
+        TestAssert.True(hasBundleTree, "Bundle tree should be available after workspace open.");
+        var groupNode = TestAssert.Single(bundleTree);
+        TestAssert.Equal("ab", groupNode.DisplayName, "Bundle group should still come from the logical path.");
+        var bundleNode = TestAssert.Single(groupNode.Children);
+        TestAssert.Equal("char_151_myrtle.ab", bundleNode.DisplayName, "Legacy normalized artifact display names should be repaired from the source file.");
+        TestAssert.Equal(logicalPath, bundleNode.LogicalPath, "Repair should not replace the workspace-relative logical path.");
+        TestAssert.Equal(sourcePath, bundleNode.SourcePath, "Bundle tree should keep the original source path.");
+    }
+
     public static void TryGetAssetDetails_ShouldResolveMeshTextureAssociations_FromRendererPath()
     {
         var meshId = "mesh-1";

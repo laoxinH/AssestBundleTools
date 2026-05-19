@@ -17,6 +17,7 @@ public sealed class WorkspaceExtractionOperationRecorder
 
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
     private readonly IWorkspaceOperationLogService _operationLogService;
+    private readonly object _syncRoot = new();
 
     public WorkspaceExtractionOperationRecorder(
         IWorkspaceDataStoreFactory workspaceDataStoreFactory,
@@ -31,113 +32,122 @@ public sealed class WorkspaceExtractionOperationRecorder
         AssetDetailsDto targetDetails,
         AssetExtractionResultDto result)
     {
-        if (!TryLoadChangeSet(command.WorkspaceKey, command.WorkspaceDataRootPath, out var workspaceKey, out var store, out var changeSet))
+        lock (_syncRoot)
         {
-            return;
+            if (!TryLoadChangeSet(command.WorkspaceKey, command.WorkspaceDataRootPath, out var workspaceKey, out var store, out var changeSet))
+            {
+                return;
+            }
+
+            var appendRequest = new WorkspaceOperationAppendRequestDto(
+                WorkspaceKey: workspaceKey,
+                OperationKind: WorkspaceOperationKind.ExtractAsset,
+                Status: WorkspaceOperationStatus.Applied,
+                Target: CreateTarget(targetDetails),
+                Source: new WorkspaceOperationSourceDto(
+                    SourceKind: SourceKindWorkspace,
+                    OutputDirectory: result.OutputDirectory),
+                PreviousState: new WorkspaceOperationStateDto(
+                    WasModified: targetDetails.IsModified,
+                    LastExtractedAtUtc: targetDetails.LastExtractedAtUtc),
+                Result: new WorkspaceOperationResultDto(
+                    OutputPath: result.OutputPath,
+                    OutputDirectory: result.OutputDirectory,
+                    OutputFileExists: result.OutputFileExists,
+                    AffectedBundleIds: new[] { result.BundleId.Value },
+                    AffectedAssetIds: new[] { result.AssetId.Value },
+                    CompletedCount: 1,
+                    FailedCount: 0),
+                CreatedAtUtc: result.ExtractedAtUtc,
+                AppliedAtUtc: result.ExtractedAtUtc,
+                CompletedAtUtc: result.ExtractedAtUtc);
+
+            store.Save(_operationLogService.AppendOperation(changeSet, appendRequest));
         }
-
-        var appendRequest = new WorkspaceOperationAppendRequestDto(
-            WorkspaceKey: workspaceKey,
-            OperationKind: WorkspaceOperationKind.ExtractAsset,
-            Status: WorkspaceOperationStatus.Applied,
-            Target: CreateTarget(targetDetails),
-            Source: new WorkspaceOperationSourceDto(
-                SourceKind: SourceKindWorkspace,
-                OutputDirectory: result.OutputDirectory),
-            PreviousState: new WorkspaceOperationStateDto(
-                WasModified: targetDetails.IsModified,
-                LastExtractedAtUtc: targetDetails.LastExtractedAtUtc),
-            Result: new WorkspaceOperationResultDto(
-                OutputPath: result.OutputPath,
-                OutputDirectory: result.OutputDirectory,
-                OutputFileExists: result.OutputFileExists,
-                AffectedBundleIds: new[] { result.BundleId.Value },
-                AffectedAssetIds: new[] { result.AssetId.Value },
-                CompletedCount: 1,
-                FailedCount: 0),
-            CreatedAtUtc: result.ExtractedAtUtc,
-            AppliedAtUtc: result.ExtractedAtUtc,
-            CompletedAtUtc: result.ExtractedAtUtc);
-
-        store.Save(_operationLogService.AppendOperation(changeSet, appendRequest));
     }
 
     public void RecordBatchExtraction(
         ExtractWorkspaceAssetsCommand command,
         WorkspaceBatchExtractionResultDto result)
     {
-        if (!TryLoadChangeSet(command.WorkspaceKey, command.WorkspaceDataRootPath, out var workspaceKey, out var store, out var changeSet))
+        lock (_syncRoot)
         {
-            return;
+            if (!TryLoadChangeSet(command.WorkspaceKey, command.WorkspaceDataRootPath, out var workspaceKey, out var store, out var changeSet))
+            {
+                return;
+            }
+
+            var assetResults = result.AssetResults ?? Array.Empty<AssetExtractionResultDto>();
+            var appendRequest = new WorkspaceOperationAppendRequestDto(
+                WorkspaceKey: workspaceKey,
+                OperationKind: WorkspaceOperationKind.ExtractBatch,
+                Status: WorkspaceOperationStatus.Applied,
+                Source: new WorkspaceOperationSourceDto(
+                    SourceKind: SourceKindWorkspace,
+                    OutputDirectory: result.SuggestedOutputDirectory),
+                Result: new WorkspaceOperationResultDto(
+                    OutputDirectory: result.SuggestedOutputDirectory,
+                    AffectedBundleIds: assetResults
+                        .Select(static asset => asset.BundleId.Value)
+                        .Distinct(StringComparer.Ordinal)
+                        .ToArray(),
+                    AffectedAssetIds: assetResults
+                        .Select(static asset => asset.AssetId.Value)
+                        .Distinct(StringComparer.Ordinal)
+                        .ToArray(),
+                    CompletedCount: result.ExtractedAssetCount,
+                    FailedCount: result.FailedAssetCount),
+                CreatedAtUtc: result.CompletedAtUtc,
+                AppliedAtUtc: result.CompletedAtUtc,
+                CompletedAtUtc: result.CompletedAtUtc);
+
+            store.Save(_operationLogService.AppendOperation(changeSet, appendRequest));
         }
-
-        var assetResults = result.AssetResults ?? Array.Empty<AssetExtractionResultDto>();
-        var appendRequest = new WorkspaceOperationAppendRequestDto(
-            WorkspaceKey: workspaceKey,
-            OperationKind: WorkspaceOperationKind.ExtractBatch,
-            Status: WorkspaceOperationStatus.Applied,
-            Source: new WorkspaceOperationSourceDto(
-                SourceKind: SourceKindWorkspace,
-                OutputDirectory: result.SuggestedOutputDirectory),
-            Result: new WorkspaceOperationResultDto(
-                OutputDirectory: result.SuggestedOutputDirectory,
-                AffectedBundleIds: assetResults
-                    .Select(static asset => asset.BundleId.Value)
-                    .Distinct(StringComparer.Ordinal)
-                    .ToArray(),
-                AffectedAssetIds: assetResults
-                    .Select(static asset => asset.AssetId.Value)
-                    .Distinct(StringComparer.Ordinal)
-                    .ToArray(),
-                CompletedCount: result.ExtractedAssetCount,
-                FailedCount: result.FailedAssetCount),
-            CreatedAtUtc: result.CompletedAtUtc,
-            AppliedAtUtc: result.CompletedAtUtc,
-            CompletedAtUtc: result.CompletedAtUtc);
-
-        store.Save(_operationLogService.AppendOperation(changeSet, appendRequest));
     }
 
     public void RecordSpineAssetGroupExtraction(
         ExtractSpineAssetGroupCommand command,
         SpineAssetGroupExtractionResultDto result)
     {
-        if (!TryLoadChangeSet(command.WorkspaceKey, command.WorkspaceDataRootPath, out var workspaceKey, out var store, out var changeSet))
+        lock (_syncRoot)
         {
-            return;
+            if (!TryLoadChangeSet(command.WorkspaceKey, command.WorkspaceDataRootPath, out var workspaceKey, out var store, out var changeSet))
+            {
+                return;
+            }
+
+            var assetResults = result.AssetResults ?? Array.Empty<AssetExtractionResultDto>();
+            var appendRequest = new WorkspaceOperationAppendRequestDto(
+                WorkspaceKey: workspaceKey,
+                OperationKind: WorkspaceOperationKind.ExtractBatch,
+                Status: WorkspaceOperationStatus.Applied,
+                Target: new WorkspaceOperationTargetDto(
+                    BundleId: result.BundleId.Value,
+                    AssetId: result.GroupId,
+                    AssetName: result.GroupDisplayName,
+                    AssetType: TargetTypeSpineAssetGroup,
+                    AssetTypeDisplayName: TargetTypeDisplayNameSpine),
+                Source: new WorkspaceOperationSourceDto(
+                    SourceKind: SourceKindWorkspace,
+                    OutputDirectory: result.SuggestedOutputDirectory),
+                Result: new WorkspaceOperationResultDto(
+                    OutputDirectory: result.SuggestedOutputDirectory,
+                    AffectedBundleIds: assetResults
+                        .Select(static asset => asset.BundleId.Value)
+                        .Distinct(StringComparer.Ordinal)
+                        .ToArray(),
+                    AffectedAssetIds: assetResults
+                        .Select(static asset => asset.AssetId.Value)
+                        .Distinct(StringComparer.Ordinal)
+                        .ToArray(),
+                    CompletedCount: result.ExtractedAssetCount,
+                    FailedCount: result.FailedAssetCount),
+                CreatedAtUtc: result.CompletedAtUtc,
+                AppliedAtUtc: result.CompletedAtUtc,
+                CompletedAtUtc: result.CompletedAtUtc);
+
+            store.Save(_operationLogService.AppendOperation(changeSet, appendRequest));
         }
-
-        var assetResults = result.AssetResults ?? Array.Empty<AssetExtractionResultDto>();
-        var appendRequest = new WorkspaceOperationAppendRequestDto(
-            WorkspaceKey: workspaceKey,
-            OperationKind: WorkspaceOperationKind.ExtractBatch,
-            Status: WorkspaceOperationStatus.Applied,
-            Target: new WorkspaceOperationTargetDto(
-                BundleId: result.BundleId.Value,
-                AssetId: result.GroupId,
-                AssetName: result.GroupDisplayName,
-                AssetType: TargetTypeSpineAssetGroup,
-                AssetTypeDisplayName: TargetTypeDisplayNameSpine),
-            Source: new WorkspaceOperationSourceDto(
-                SourceKind: SourceKindWorkspace,
-                OutputDirectory: result.SuggestedOutputDirectory),
-            Result: new WorkspaceOperationResultDto(
-                OutputDirectory: result.SuggestedOutputDirectory,
-                AffectedBundleIds: assetResults
-                    .Select(static asset => asset.BundleId.Value)
-                    .Distinct(StringComparer.Ordinal)
-                    .ToArray(),
-                AffectedAssetIds: assetResults
-                    .Select(static asset => asset.AssetId.Value)
-                    .Distinct(StringComparer.Ordinal)
-                    .ToArray(),
-                CompletedCount: result.ExtractedAssetCount,
-                FailedCount: result.FailedAssetCount),
-            CreatedAtUtc: result.CompletedAtUtc,
-            AppliedAtUtc: result.CompletedAtUtc,
-            CompletedAtUtc: result.CompletedAtUtc);
-
-        store.Save(_operationLogService.AppendOperation(changeSet, appendRequest));
     }
 
     private bool TryLoadChangeSet(

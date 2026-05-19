@@ -11,9 +11,9 @@ using Microsoft.UI.Xaml;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.SettingsDiagnostics;
 
 /// <summary>
-/// 承载设置页中的标准化 bundle artifact 缓存治理状态。
+/// 承载设置页中的当前工作区缓存治理状态。
 /// </summary>
-public sealed class SettingsBundleArtifactCacheViewModel : ObservableObject, IDisposable
+public sealed class SettingsWorkspaceCacheViewModel : ObservableObject, IDisposable
 {
     private readonly IWorkspaceCacheMaintenanceGateway _workspaceCacheMaintenanceGateway;
     private readonly IWorkspaceContextService _workspaceContextService;
@@ -23,7 +23,7 @@ public sealed class SettingsBundleArtifactCacheViewModel : ObservableObject, IDi
     private readonly IAppLogService _appLogService;
     private readonly IBackgroundWorkScheduler _backgroundWorkScheduler;
     private readonly LocalizedValueFormatter _valueFormatter;
-    private BundleArtifactCacheUsageDto? _usage;
+    private WorkspaceCacheUsageDto? _usage;
     private string _targetText = string.Empty;
     private string _summaryText = string.Empty;
     private string _lastResultText = string.Empty;
@@ -31,7 +31,7 @@ public sealed class SettingsBundleArtifactCacheViewModel : ObservableObject, IDi
     private int _maximumSizeSelectedIndex;
     private bool _isBusy;
 
-    public SettingsBundleArtifactCacheViewModel(
+    public SettingsWorkspaceCacheViewModel(
         IWorkspaceCacheMaintenanceGateway workspaceCacheMaintenanceGateway,
         IWorkspaceContextService workspaceContextService,
         IAppPreferencesService appPreferencesService,
@@ -140,7 +140,7 @@ public sealed class SettingsBundleArtifactCacheViewModel : ObservableObject, IDi
 
     public bool HasActiveWorkspace => TryResolveCurrentWorkspaceScope(out _, out _, out _);
 
-    public bool HasCacheEntries => (_usage?.ArtifactCount ?? 0) > 0;
+    public bool HasCacheEntries => (_usage?.TotalEntryCount ?? 0) > 0;
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
@@ -172,13 +172,13 @@ public sealed class SettingsBundleArtifactCacheViewModel : ObservableObject, IDi
                 ResourceKeys.SettingsDiagnosticsBundleArtifactCacheTargetFormat,
                 displayName);
             var usageResult = await _backgroundWorkScheduler.RunAsync(
-                new BackgroundWorkRequest<Result<BundleArtifactCacheUsageDto>>(
+                new BackgroundWorkRequest<Result<WorkspaceCacheUsageDto>>(
                     BackgroundWorkProfile.Maintenance,
                     async context =>
                     {
                         context.Progress.ReportIndeterminate(GetString(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheRefreshStatusTitle));
-                        return await _workspaceCacheMaintenanceGateway.GetBundleArtifactCacheUsageAsync(
-                            new GetBundleArtifactCacheUsageQuery(workspaceDataRootPath, workspaceKey),
+                        return await _workspaceCacheMaintenanceGateway.GetWorkspaceCacheUsageAsync(
+                            new GetWorkspaceCacheUsageQuery(workspaceDataRootPath, workspaceKey),
                             context.CancellationToken);
                     })
                 {
@@ -210,18 +210,16 @@ public sealed class SettingsBundleArtifactCacheViewModel : ObservableObject, IDi
         await ExecuteBusyAsync(async () =>
         {
             var beforeSize = _usage?.TotalSizeInBytes ?? 0;
-            var pruneResult = await _backgroundWorkScheduler.RunAsync(
-                new BackgroundWorkRequest<Result<BundleArtifactPruneResultDto>>(
+            var clearResult = await _backgroundWorkScheduler.RunAsync(
+                new BackgroundWorkRequest<Result<WorkspaceCacheClearResultDto>>(
                     BackgroundWorkProfile.Maintenance,
                     async context =>
                     {
                         context.Progress.ReportIndeterminate(GetString(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheClearStatusTitle));
-                        return await _workspaceCacheMaintenanceGateway.PruneBundleArtifactCacheAsync(
-                            new PruneBundleArtifactCacheCommand(
+                        return await _workspaceCacheMaintenanceGateway.ClearWorkspaceCacheAsync(
+                            new ClearWorkspaceCacheCommand(
                                 workspaceDataRootPath,
-                                workspaceKey,
-                                MaximumSizeInBytes: 0,
-                                MaximumArtifactCount: 0),
+                                workspaceKey),
                             context.CancellationToken);
                     })
                 {
@@ -232,31 +230,34 @@ public sealed class SettingsBundleArtifactCacheViewModel : ObservableObject, IDi
                     ShowInStatusBar = true
                 });
 
-            if (!pruneResult.IsSuccess || pruneResult.Value is null)
+            if (!clearResult.IsSuccess || clearResult.Value is null)
             {
                 ShowFailure(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheClearFailedMessage);
                 return;
             }
 
-            var releasedBytes = Math.Max(0, beforeSize - pruneResult.Value.SizeAfterInBytes);
+            var releasedBytes = Math.Max(0, beforeSize - clearResult.Value.SizeAfterInBytes);
             LastResultText = _localizationService.GetFormattedString(
                 ResourceKeys.SettingsDiagnosticsBundleArtifactCacheClearSucceededFormat,
-                pruneResult.Value.PrunedEntries.Count,
+                clearResult.Value.EntryCountBefore - clearResult.Value.EntryCountAfter,
                 _valueFormatter.FormatDetailedByteSize(releasedBytes));
             _appNotificationService.Show(
                 GetString(ResourceKeys.AppNotificationSuccessTitle),
                 LastResultText,
                 AppNotificationSeverity.Success);
-            _usage = new BundleArtifactCacheUsageDto(
-                pruneResult.Value.SizeAfterInBytes,
-                pruneResult.Value.ArtifactCountAfter,
-                Array.Empty<BundleArtifactCacheEntryDto>());
-            SummaryText = _usage.ArtifactCount == 0
+            _usage = new WorkspaceCacheUsageDto(
+                clearResult.Value.SizeAfterInBytes,
+                clearResult.Value.EntryCountAfter,
+                clearResult.Value.BundleArtifactCacheResult.ToUsage(),
+                clearResult.Value.PreviewCacheResult.ToUsage());
+            SummaryText = _usage.TotalEntryCount == 0
                 ? GetString(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheEmpty)
                 : _localizationService.GetFormattedString(
                     ResourceKeys.SettingsDiagnosticsBundleArtifactCacheSummaryFormat,
-                    _usage.ArtifactCount,
-                    _valueFormatter.FormatDetailedByteSize(_usage.TotalSizeInBytes));
+                    _usage.TotalEntryCount,
+                    _valueFormatter.FormatDetailedByteSize(_usage.TotalSizeInBytes),
+                    _usage.BundleArtifactCache.ArtifactCount,
+                    _usage.PreviewCache.EntryCount);
             NotifyCacheState();
         });
     }
@@ -281,7 +282,7 @@ public sealed class SettingsBundleArtifactCacheViewModel : ObservableObject, IDi
         }
     }
 
-    private bool TryApplyUsageResult(Result<BundleArtifactCacheUsageDto> result, string failureResourceKey)
+    private bool TryApplyUsageResult(Result<WorkspaceCacheUsageDto> result, string failureResourceKey)
     {
         if (!result.IsSuccess || result.Value is null)
         {
@@ -290,12 +291,14 @@ public sealed class SettingsBundleArtifactCacheViewModel : ObservableObject, IDi
         }
 
         _usage = result.Value;
-        SummaryText = _usage.ArtifactCount == 0
+        SummaryText = _usage.TotalEntryCount == 0
             ? GetString(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheEmpty)
             : _localizationService.GetFormattedString(
                 ResourceKeys.SettingsDiagnosticsBundleArtifactCacheSummaryFormat,
-                _usage.ArtifactCount,
-                _valueFormatter.FormatDetailedByteSize(_usage.TotalSizeInBytes));
+                _usage.TotalEntryCount,
+                _valueFormatter.FormatDetailedByteSize(_usage.TotalSizeInBytes),
+                _usage.BundleArtifactCache.ArtifactCount,
+                _usage.PreviewCache.EntryCount);
         NotifyCacheState();
         return true;
     }
@@ -364,4 +367,23 @@ public sealed class SettingsBundleArtifactCacheViewModel : ObservableObject, IDi
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
+}
+
+file static class WorkspaceCacheSettingsDtoMapper
+{
+    public static BundleArtifactCacheUsageDto ToUsage(this BundleArtifactPruneResultDto result)
+    {
+        return new BundleArtifactCacheUsageDto(
+            result.SizeAfterInBytes,
+            result.ArtifactCountAfter,
+            Array.Empty<BundleArtifactCacheEntryDto>());
+    }
+
+    public static PreviewCacheUsageDto ToUsage(this PreviewCachePruneResultDto result)
+    {
+        return new PreviewCacheUsageDto(
+            result.SizeAfterInBytes,
+            result.EntryCountAfter,
+            Array.Empty<PreviewCacheEntryDto>());
+    }
 }

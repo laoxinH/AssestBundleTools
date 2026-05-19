@@ -10,6 +10,16 @@ namespace AssestBundleTools.Application.Workspace.Services;
 /// </summary>
 public interface IWorkspaceCacheMaintenanceGateway
 {
+    event EventHandler<WorkspaceCacheChangedEventArgs>? WorkspaceCacheChanged;
+
+    Task<Result<WorkspaceCacheUsageDto>> GetWorkspaceCacheUsageAsync(
+        GetWorkspaceCacheUsageQuery query,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<WorkspaceCacheClearResultDto>> ClearWorkspaceCacheAsync(
+        ClearWorkspaceCacheCommand command,
+        CancellationToken cancellationToken = default);
+
     Task<Result<BundleArtifactCacheUsageDto>> GetBundleArtifactCacheUsageAsync(
         GetBundleArtifactCacheUsageQuery query,
         CancellationToken cancellationToken = default);

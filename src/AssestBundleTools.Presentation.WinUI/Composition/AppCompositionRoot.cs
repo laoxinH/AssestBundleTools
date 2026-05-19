@@ -25,6 +25,7 @@ using AssestBundleTools.Infrastructure.Workspace.Extraction;
 using AssestBundleTools.Infrastructure.Workspace.Importing;
 using AssestBundleTools.Infrastructure.Workspace.Persistence;
 using AssestBundleTools.Infrastructure.Workspace.Runtime;
+using AssestBundleTools.Infrastructure.Workspace.Saving;
 using AssestBundleTools.Presentation.WinUI.Diagnostics;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
@@ -87,6 +88,7 @@ internal static class AppCompositionRoot
         var assetPreviewGenerator = new AssetsToolsAssetPreviewGenerator(audioPayloadTranscodingService);
         var bundleArtifactSessionInvalidator = new AssetsToolsBundleArtifactSessionInvalidator();
         var spineAnimationRuntimePreviewService = new SpineAnimationRuntimePreviewService();
+        var workspaceSaveOutputProbe = new FileSystemWorkspaceSaveOutputProbe();
 
         var openWorkspaceHandler = new OpenWorkspaceHandler(
             workspaceSessionRegistry: workspaceSessionRegistry,
@@ -131,14 +133,21 @@ internal static class AppCompositionRoot
             assetPreviewGenerator,
             audioPayloadTranscodingService,
             bundleArtifactSessionInvalidator,
+            bundleArtifactCachePrunePolicy,
             bundleArtifactCachePrunePolicy);
         var loadSpineAssetGroupDetailsHandler = new LoadSpineAssetGroupDetailsHandler(
             workspaceSessionRegistry,
             getAssetPreviewHandler,
             spineAnimationRuntimePreviewService);
         var getWorkspaceChangeSummaryHandler = new GetWorkspaceChangeSummaryHandler(workspaceSessionRegistry);
-        var getWorkspaceSavePreviewHandler = new GetWorkspaceSavePreviewHandler(workspaceSessionRegistry);
-        var saveWorkspaceAsNewBundleHandler = new SaveWorkspaceAsNewBundleHandler(workspaceSessionRegistry);
+        var getWorkspaceSavePreviewHandler = new GetWorkspaceSavePreviewHandler(
+            workspaceSessionRegistry,
+            workspaceDataStoreFactory,
+            workspaceSaveOutputProbe);
+        var saveWorkspaceAsNewBundleHandler = new SaveWorkspaceAsNewBundleHandler(
+            workspaceSessionRegistry,
+            workspaceDataStoreFactory,
+            workspaceSaveOutputProbe);
         var assetExtractionFileStore = new FileSystemAssetExtractionFileStore();
         var workspaceAssetExtractionExporter = new WorkspaceAssetExtractionExporter(
             getAssetPreviewHandler,
@@ -150,16 +159,20 @@ internal static class AppCompositionRoot
             workspaceSessionRegistry,
             workspaceAssetExtractionExporter,
             workspaceExtractionOperationRecorder);
-        var getWorkspaceBatchExtractionPreviewHandler = new GetWorkspaceBatchExtractionPreviewHandler(workspaceSessionRegistry);
-        var extractWorkspaceAssetsHandler = new ExtractWorkspaceAssetsHandler(
+        var getWorkspaceBatchExtractionPreviewHandler = new GetWorkspaceBatchExtractionPreviewHandler(
             workspaceSessionRegistry,
-            extractAssetHandler,
-            workspaceExtractionOperationRecorder);
+            loadSpineAssetGroupsHandler);
         var extractSpineAssetGroupHandler = new ExtractSpineAssetGroupHandler(
             workspaceSessionRegistry,
             loadSpineAssetGroupDetailsHandler,
             extractAssetHandler,
             workspaceExtractionOperationRecorder);
+        var extractWorkspaceAssetsHandler = new ExtractWorkspaceAssetsHandler(
+            workspaceSessionRegistry,
+            extractAssetHandler,
+            workspaceExtractionOperationRecorder,
+            loadSpineAssetGroupsHandler,
+            extractSpineAssetGroupHandler);
         var getWorkspaceBatchReplacementPreviewHandler = new GetWorkspaceBatchReplacementPreviewHandler(workspaceSessionRegistry);
         var executeWorkspaceBatchReplacementHandler = new ExecuteWorkspaceBatchReplacementHandler(workspaceSessionRegistry);
         var getFileReplacementCandidateHandler = new GetFileReplacementCandidateHandler(workspaceSessionRegistry);
@@ -185,6 +198,10 @@ internal static class AppCompositionRoot
             workspaceDataStoreFactory,
             bundleArtifactSessionInvalidator);
         var setWorkspaceCatalogEntryPinnedStateHandler = new SetWorkspaceCatalogEntryPinnedStateHandler(workspaceCatalogStore);
+        var getWorkspaceCacheUsageHandler = new GetWorkspaceCacheUsageHandler(workspaceDataStoreFactory);
+        var clearWorkspaceCacheHandler = new ClearWorkspaceCacheHandler(
+            workspaceDataStoreFactory,
+            bundleArtifactSessionInvalidator);
         var getBundleArtifactCacheUsageHandler = new GetBundleArtifactCacheUsageHandler(workspaceDataStoreFactory);
         var pruneBundleArtifactCacheHandler = new PruneBundleArtifactCacheHandler(
             workspaceDataStoreFactory,
@@ -240,6 +257,8 @@ internal static class AppCompositionRoot
             removeWorkspaceCatalogEntryHandler: removeWorkspaceCatalogEntryHandler,
             setWorkspaceCatalogEntryPinnedStateHandler: setWorkspaceCatalogEntryPinnedStateHandler);
         var workspaceCacheMaintenanceGateway = new WorkspaceCacheMaintenanceGateway(
+            getWorkspaceCacheUsageHandler,
+            clearWorkspaceCacheHandler,
             getBundleArtifactCacheUsageHandler,
             pruneBundleArtifactCacheHandler);
         var assetEditDraftRestorePlanGateway = new AssetEditDraftRestorePlanGateway(

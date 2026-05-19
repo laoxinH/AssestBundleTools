@@ -173,8 +173,15 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
 
             if (!_entries.TryGetValue(cacheKey, out var entry))
             {
-                entry = new CacheEntry(Task.Run(() => _sessionLoader(bundlePath)));
+                entry = new CacheEntry(Task.Run(() => LoadSessionWithDiagnostics(bundlePath, cacheKey)));
                 _entries[cacheKey] = entry;
+                WriteDiagnostic(
+                    $"Acquire miss. Key={cacheKey}; LeasesAfter=1; Entries={_entries.Count}; Path={bundlePath}.");
+            }
+            else
+            {
+                WriteDiagnostic(
+                    $"Acquire {ResolveAcquireDiagnosticKind(entry)}. Key={cacheKey}; LeasesAfter={entry.LeaseCount + 1}; Entries={_entries.Count}; Path={bundlePath}.");
             }
 
             entry.LeaseCount++;
@@ -182,6 +189,32 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
             return entry;
         }
     }
+
+    private AssetsToolsBundleLoadedSession LoadSessionWithDiagnostics(string bundlePath, string cacheKey)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        WriteDiagnostic($"Load start. Key={cacheKey}; Path={bundlePath}.");
+        try
+        {
+            var session = _sessionLoader(bundlePath);
+            WriteDiagnostic(
+                $"Load completed. Key={cacheKey}; DurationMs={stopwatch.ElapsedMilliseconds}; SerializedFiles={session.SerializedFiles.Count}; Path={bundlePath}.");
+            return session;
+        }
+        catch (Exception ex)
+        {
+            WriteDiagnostic(
+                $"Load failed. Key={cacheKey}; DurationMs={stopwatch.ElapsedMilliseconds}; Error={ex.GetType().Name}; Message={ex.Message}; Path={bundlePath}.");
+            throw;
+        }
+    }
+
+    private static string ResolveAcquireDiagnosticKind(CacheEntry entry) =>
+        !entry.SessionTask.IsCompleted ? "in-flight" :
+        entry.SessionTask.IsCompletedSuccessfully ? "hit" :
+        entry.SessionTask.IsCanceled ? "canceled" :
+        entry.SessionTask.IsFaulted ? "faulted" :
+        "completed";
 
     private void Release(string cacheKey, CacheEntry entry, bool removeEntry = false)
     {
@@ -216,7 +249,11 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
         }
 
         disposableSession?.Dispose();
-        DisposeWhenCompletedIfNeeded(entry);
+        if (!shouldTrim)
+        {
+            DisposeWhenCompletedIfNeeded(entry);
+        }
+
         if (shouldTrim)
         {
             TrimRetainedEntries();

@@ -241,7 +241,7 @@ internal sealed class WorkspaceImportBundleWorker
             WorkspaceKey: plan.Command.WorkspaceKey,
             BundleCacheKey: bundleCacheKey,
             BundleId: WorkspaceImportPathUtility.CreateBundleId(discoveredFile.SourcePath),
-            DisplayName: readResult.DisplayName,
+            DisplayName: ResolveImportedBundleDisplayName(discoveredFile, readResult),
             LogicalPath: readResult.LogicalPath,
             SourceFingerprint: sourceFingerprint,
             CachedAtUtc: plan.ProcessedAtUtc,
@@ -278,6 +278,27 @@ internal sealed class WorkspaceImportBundleWorker
             DecryptorId: artifactResolution.Decryptor.Id,
             DecryptorVersion: artifactResolution.Decryptor.Version,
             SerializedFileNames: readResult.SerializedFileNames);
+    }
+
+    private static string ResolveImportedBundleDisplayName(
+        DiscoveredWorkspaceImportFileDto discoveredFile,
+        AssetBundleReadResultDto readResult)
+    {
+        return TryGetLeafName(discoveredFile.SourcePath) ??
+               TryGetLeafName(discoveredFile.LogicalPath) ??
+               readResult.DisplayName;
+    }
+
+    private static string? TryGetLeafName(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        var normalizedPath = path.Trim().Replace('\\', '/');
+        var leafName = normalizedPath.Split('/', StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
+        return string.IsNullOrWhiteSpace(leafName) ? null : leafName;
     }
 
     private sealed record CacheDecision(

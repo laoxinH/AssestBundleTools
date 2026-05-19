@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.Views.BatchTasks;
@@ -6,6 +7,7 @@ using AssestBundleTools.Presentation.WinUI.Views.Home;
 using AssestBundleTools.Presentation.WinUI.Views.SettingsDiagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 
 using AssestBundleTools.Presentation.WinUI.ViewModels.Shell.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Shell.Contracts;
@@ -25,7 +27,10 @@ public sealed partial class ShellPage : Page
 {
     private readonly AssestBundleTools.Presentation.WinUI.MainWindow? _hostWindow;
     private readonly ShellLaunchRequest? _launchRequest;
+    private readonly DispatcherTimer _backgroundTaskPanelCloseTimer = new();
     private bool _isSynchronizingNavigationSelection;
+    private bool _isPointerOverBackgroundTaskSummary;
+    private bool _isPointerOverBackgroundTasksPanel;
     private ShellWindowMode _windowMode;
 
     public ShellPage()
@@ -40,6 +45,10 @@ public sealed partial class ShellPage : Page
         _windowMode = ResolveInitialWindowMode(launchRequest);
         NotificationService = App.CurrentApp.AppNotificationService;
         BackgroundTaskStatusService = App.CurrentApp.AppBackgroundTaskStatusService;
+        BackgroundTasks = new ShellBackgroundTasksViewModel(
+            App.CurrentApp.BackgroundWorkScheduler,
+            App.CurrentApp.LocalizationService,
+            DispatcherQueue);
         ViewModel = new ShellViewModel(App.CurrentApp.LocalizationService);
         InitializeComponent();
         if (BackgroundTaskStatusService is AppBackgroundTaskStatusService backgroundTaskStatusService)
@@ -48,9 +57,13 @@ public sealed partial class ShellPage : Page
         }
 
         AppStatusBar.DataContext = BackgroundTaskStatusService;
+        BackgroundTasks.PropertyChanged += OnBackgroundTasksPropertyChanged;
+        _backgroundTaskPanelCloseTimer.Interval = TimeSpan.FromMilliseconds(260);
+        _backgroundTaskPanelCloseTimer.Tick += OnBackgroundTaskPanelCloseTimerTick;
         ApplyLocalizedText();
         ApplyWindowMode();
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
     }
 
     public ShellViewModel ViewModel { get; }
@@ -58,6 +71,8 @@ public sealed partial class ShellPage : Page
     public IAppNotificationService NotificationService { get; }
 
     public IAppBackgroundTaskStatusService BackgroundTaskStatusService { get; }
+
+    public ShellBackgroundTasksViewModel BackgroundTasks { get; }
 
     public string CancelBackgroundTaskToolTipText =>
         App.CurrentApp.LocalizationService.GetRequiredString(ResourceKeys.AppStatusBarCancelTaskToolTip);
@@ -114,6 +129,44 @@ public sealed partial class ShellPage : Page
     private void OnCancelBackgroundTaskButtonClick(object sender, RoutedEventArgs e)
     {
         BackgroundTaskStatusService.CancelCurrentTask();
+    }
+
+    private void OnBackgroundTaskSummaryPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        _isPointerOverBackgroundTaskSummary = true;
+        _backgroundTaskPanelCloseTimer.Stop();
+        ShowBackgroundTasksPanel();
+    }
+
+    private void OnBackgroundTaskSummaryPointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        _isPointerOverBackgroundTaskSummary = false;
+        QueueBackgroundTaskPanelClose();
+    }
+
+    private void OnBackgroundTaskSummaryClick(object sender, RoutedEventArgs e)
+    {
+        ShowBackgroundTasksPanel();
+    }
+
+    private void OnBackgroundTasksPanelPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        _isPointerOverBackgroundTasksPanel = true;
+        _backgroundTaskPanelCloseTimer.Stop();
+    }
+
+    private void OnBackgroundTasksPanelPointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        _isPointerOverBackgroundTasksPanel = false;
+        QueueBackgroundTaskPanelClose();
+    }
+
+    private void ShowBackgroundTasksPanel()
+    {
+        if (BackgroundTasks.TaskCount > 0)
+        {
+            BackgroundTasksPanelHost.Visibility = Visibility.Visible;
+        }
     }
 
     internal void NavigateToSection(string navigationKey, object? parameter = null)
@@ -255,6 +308,43 @@ public sealed partial class ShellPage : Page
         PaneSubtitleText.Text = UiText.Get(ResourceKeys.ShellPaneSubtitle);
         BatchTasksNavItem.Content = UiText.Get(ResourceKeys.ShellBatchTasksNavItemContent);
         SettingsDiagnosticsNavItem.Content = UiText.Get(ResourceKeys.ShellSettingsDiagnosticsNavItemContent);
+    }
+
+    private void OnBackgroundTasksPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ShellBackgroundTasksViewModel.TaskCount) &&
+            BackgroundTasks.TaskCount == 0)
+        {
+            HideBackgroundTasksPanel();
+        }
+    }
+
+    private void QueueBackgroundTaskPanelClose()
+    {
+        _backgroundTaskPanelCloseTimer.Stop();
+        _backgroundTaskPanelCloseTimer.Start();
+    }
+
+    private void OnBackgroundTaskPanelCloseTimerTick(object? sender, object e)
+    {
+        _backgroundTaskPanelCloseTimer.Stop();
+        if (!_isPointerOverBackgroundTaskSummary && !_isPointerOverBackgroundTasksPanel)
+        {
+            HideBackgroundTasksPanel();
+        }
+    }
+
+    private void HideBackgroundTasksPanel()
+    {
+        BackgroundTasksPanelHost.Visibility = Visibility.Collapsed;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        BackgroundTasks.PropertyChanged -= OnBackgroundTasksPropertyChanged;
+        BackgroundTasks.Dispose();
+        _backgroundTaskPanelCloseTimer.Stop();
+        _backgroundTaskPanelCloseTimer.Tick -= OnBackgroundTaskPanelCloseTimerTick;
     }
 
     /// <summary>

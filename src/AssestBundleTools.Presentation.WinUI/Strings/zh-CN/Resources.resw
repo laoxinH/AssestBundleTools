@@ -135,6 +135,66 @@
   <data name="AppStatusBar.CancelTask.ToolTip" xml:space="preserve">
     <value>取消当前后台任务</value>
   </data>
+  <data name="AppStatusBar.TaskCount.Format" xml:space="preserve">
+    <value>{0} 个后台任务</value>
+  </data>
+  <data name="AppStatusBar.TaskSummary.ToolTip.Format" xml:space="preserve">
+    <value>查看 {0} 个后台任务</value>
+  </data>
+  <data name="AppStatusBar.TaskSummary.AutomationName.Format" xml:space="preserve">
+    <value>后台任务，当前 {0} 个</value>
+  </data>
+  <data name="AppStatusBar.TaskFlyout.Title" xml:space="preserve">
+    <value>后台任务</value>
+  </data>
+  <data name="AppStatusBar.TaskFlyout.EmptyText" xml:space="preserve">
+    <value>当前没有后台任务</value>
+  </data>
+  <data name="AppStatusBar.Task.Cancel.ToolTip" xml:space="preserve">
+    <value>取消此后台任务</value>
+  </data>
+  <data name="AppStatusBar.Task.Status.Queued" xml:space="preserve">
+    <value>排队中</value>
+  </data>
+  <data name="AppStatusBar.Task.Status.Running" xml:space="preserve">
+    <value>运行中</value>
+  </data>
+  <data name="AppStatusBar.Task.Status.Cancelling" xml:space="preserve">
+    <value>正在取消</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.WorkspaceOpen" xml:space="preserve">
+    <value>打开工作区</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.WorkspaceImport" xml:space="preserve">
+    <value>导入工作区资源</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.PreviewForeground" xml:space="preserve">
+    <value>加载资源预览</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.PreviewPrewarm" xml:space="preserve">
+    <value>预热资源预览</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.SpineRuntimeFrame" xml:space="preserve">
+    <value>生成 Spine 预览帧</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.SingleExtraction" xml:space="preserve">
+    <value>提取资源</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.BatchExtraction" xml:space="preserve">
+    <value>批量提取</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.BatchReplacement" xml:space="preserve">
+    <value>批量替换</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.Export" xml:space="preserve">
+    <value>导出资源</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.SaveRebuild" xml:space="preserve">
+    <value>保存 / 重建</value>
+  </data>
+  <data name="AppStatusBar.Task.Profile.Maintenance" xml:space="preserve">
+    <value>维护任务</value>
+  </data>
   <data name="HomePage.PageTitleText.Text" xml:space="preserve">
     <value>控制台</value>
   </data>
@@ -521,6 +581,153 @@
   </data>
   <data name="BundleExplorerPage.SaveAsBundleButton.Content" xml:space="preserve">
     <value>保存为新包</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Title" xml:space="preserve">
+    <value>批量提取</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.PrimaryButton" xml:space="preserve">
+    <value>开始提取</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.CloseButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.BundleSection.Title" xml:space="preserve">
+    <value>资源包范围</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.BundleSection.Hint" xml:space="preserve">
+    <value>选择当前工作区中需要参与提取的资源包。</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.BundleSearch.Placeholder" xml:space="preserve">
+    <value>搜索资源包名称或路径</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.SelectAllBundlesButton" xml:space="preserve">
+    <value>全选</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.ClearBundleSelectionButton" xml:space="preserve">
+    <value>清空</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Bundle.EmptyState" xml:space="preserve">
+    <value>没有匹配的资源包。</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Bundle.AssetCount.Format" xml:space="preserve">
+    <value>{0} 项</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.SelectedBundleSummary.Format" xml:space="preserve">
+    <value>已选 {0} / {1} 个资源包</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.CategorySection.Title" xml:space="preserve">
+    <value>资源类型</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.CategorySection.Hint" xml:space="preserve">
+    <value>选择全部，或手动组合多个可导出类别。</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.All" xml:space="preserve">
+    <value>全部</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.Texture2D" xml:space="preserve">
+    <value>Texture2D</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.Sprite" xml:space="preserve">
+    <value>Sprite</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.TextAsset" xml:space="preserve">
+    <value>TextAsset</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.AudioClip" xml:space="preserve">
+    <value>AudioClip</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.Mesh" xml:space="preserve">
+    <value>Mesh</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.Material" xml:space="preserve">
+    <value>Material</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.AnimationClip" xml:space="preserve">
+    <value>AnimationClip</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.Font" xml:space="preserve">
+    <value>Font</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.GameObject" xml:space="preserve">
+    <value>GameObject</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.MonoBehaviour" xml:space="preserve">
+    <value>MonoBehaviour</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.AnimatorController" xml:space="preserve">
+    <value>AnimatorController</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.Spine" xml:space="preserve">
+    <value>Spine</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Category.CandidateCount.Format" xml:space="preserve">
+    <value>{0} 项</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.UseWorkspaceExtractionDirectory.Label" xml:space="preserve">
+    <value>导出到工作区提取目录</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.UseWorkspaceExtractionDirectory.ToolTip" xml:space="preserve">
+    <value>勾选后直接使用当前工作区数据目录下的提取目录，开始提取时不再弹出目录选择。</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.WorkspaceExtractionDirectoryUnavailable" xml:space="preserve">
+    <value>当前工作区没有可用的数据目录，无法使用工作区提取目录。</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.OutputSection.Title" xml:space="preserve">
+    <value>输出目录</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.OutputSection.Hint" xml:space="preserve">
+    <value>普通资源会按资源包和类型分组输出，Spine 组会按资源包和组名输出。</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.BrowseOutputDirectoryButton" xml:space="preserve">
+    <value>选择目录</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.OutputDirectory.Empty" xml:space="preserve">
+    <value>尚未选择输出目录</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.PreviewSection.Title" xml:space="preserve">
+    <value>计划摘要</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Preview.Waiting" xml:space="preserve">
+    <value>调整资源包或类型后会生成候选摘要。</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Preview.Loading" xml:space="preserve">
+    <value>正在生成计划摘要...</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Preview.Unavailable" xml:space="preserve">
+    <value>当前选择下没有可展示的候选摘要。</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Preview.Summary.Format" xml:space="preserve">
+    <value>{0} 个资源包，{1} 个普通资源，{2} 个 Spine 组，约 {3}</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Validation.BundleRequired" xml:space="preserve">
+    <value>请选择至少一个资源包。</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Validation.CategoryRequired" xml:space="preserve">
+    <value>请选择至少一个资源类型。</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Validation.OutputDirectoryRequired" xml:space="preserve">
+    <value>请选择输出目录。</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Status.Title" xml:space="preserve">
+    <value>正在批量提取</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Progress.Preparing.Format" xml:space="preserve">
+    <value>准备提取 {0} 项，来自 {1} 个资源包</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Progress.Asset.Format" xml:space="preserve">
+    <value>正在提取 {1}（{2}） · {0} · 成功 {3}，失败 {4}{5}</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Progress.SpineGroup.Format" xml:space="preserve">
+    <value>正在提取 Spine 组 {1} · {0} · 成功 {2}，失败 {3}{4}</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Progress.MemoryThrottledSuffix" xml:space="preserve">
+    <value> · 内存压力退避中</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.CompletedMessage.Format" xml:space="preserve">
+    <value>批量提取完成：{0} 个资源，{1} 个资源包，{2} 个 Spine 组，输出到 {3}</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.NoBundlesMessage" xml:space="preserve">
+    <value>当前工作区没有可选择的资源包。</value>
   </data>
   <data name="BundleExplorerPage.GlobalSearchTextBox.PlaceholderText" xml:space="preserve">
     <value>全局搜索（后续接入）</value>
@@ -2937,6 +3144,15 @@
   <data name="BatchTasksPage.SavePreview.Risk.ConflictDeferred" xml:space="preserve">
     <value>输出目录冲突检查和命名冲突处理将在后续保存能力阶段正式接入。</value>
   </data>
+  <data name="BatchTasksPage.SavePreview.Risk.OutputReady.Format" xml:space="preserve">
+    <value>已预检 {0} 个目标资源包输出路径，当前未发现覆盖冲突。</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.Risk.OutputBlocked.Format" xml:space="preserve">
+    <value>发现 {0} 个目标输出路径已被占用或被目录结构阻塞，真实保存不会自动覆盖这些文件。</value>
+  </data>
+  <data name="BatchTasksPage.SavePreview.Risk.ArtifactUnresolved.Format" xml:space="preserve">
+    <value>仍有 {0} 个资源包缺少可复用的标准化输入，真实写包前需要先完成 materialize。</value>
+  </data>
   <data name="BatchTasksPage.SavePreview.Risk.ExecutionDeferred" xml:space="preserve">
     <value>当前页面只负责保存前预览和摘要承载，真实写包动作暂未启用。</value>
   </data>
@@ -3148,31 +3364,31 @@
     <value>保存预览线程数量失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Title" xml:space="preserve">
-    <value>标准化资源包缓存</value>
+    <value>当前工作区缓存</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Hint" xml:space="preserve">
-    <value>查看当前工作区的 cache/bundles 占用，并可清理可重建的 normalized.bundle artifact。</value>
+    <value>查看当前工作区的标准化资源包和预览缓存占用，并可清理这些可重建派生产物。</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Target.Format" xml:space="preserve">
     <value>当前工作区：{0}</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Summary.Format" xml:space="preserve">
-    <value>{0} 个 artifact，占用 {1}</value>
+    <value>{0} 个缓存项，占用 {1}（标准化资源包 {2} 个，预览 {3} 个）</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Empty" xml:space="preserve">
-    <value>当前工作区还没有标准化资源包缓存。</value>
+    <value>当前工作区还没有可清理缓存。</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.NoWorkspace" xml:space="preserve">
     <value>当前没有活动工作区</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.NoWorkspaceHint" xml:space="preserve">
-    <value>打开工作区后可查看并清理该工作区的标准化资源包缓存。</value>
+    <value>打开工作区后可查看并清理该工作区的标准化资源包和预览缓存。</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.AutoPrune.Header" xml:space="preserve">
     <value>自动容量治理</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.AutoPrune.Description" xml:space="preserve">
-    <value>导入、预览或提取首次生成标准化 bundle 后，按当前容量上限清理最久未访问的旧 artifact；刚生成的 artifact 会被保护。</value>
+    <value>导入、预览或提取生成标准化 bundle 或预览缓存后，按当前容量上限清理各自最旧的派生产物；刚生成的 bundle 或预览项会被保护。</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Label" xml:space="preserve">
     <value>当前工作区容量上限</value>
@@ -3199,19 +3415,19 @@
     <value>清理当前工作区</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.RefreshStatusTitle" xml:space="preserve">
-    <value>统计标准化缓存</value>
+    <value>统计工作区缓存</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearStatusTitle" xml:space="preserve">
-    <value>清理标准化缓存</value>
+    <value>清理工作区缓存</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.RefreshFailedMessage" xml:space="preserve">
-    <value>读取标准化资源包缓存占用失败，请稍后重试。</value>
+    <value>读取工作区缓存占用失败，请稍后重试。</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearFailedMessage" xml:space="preserve">
-    <value>清理标准化资源包缓存失败，请检查缓存目录权限或稍后重试。</value>
+    <value>清理工作区缓存失败，请检查缓存目录权限或稍后重试。</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.PreferenceSaveFailedMessage" xml:space="preserve">
-    <value>保存标准化资源包缓存设置失败，请检查应用数据目录权限。</value>
+    <value>保存工作区缓存设置失败，请检查应用数据目录权限。</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearSucceeded.Format" xml:space="preserve">
     <value>已清理 {0} 个 artifact，释放 {1}。</value>
@@ -3252,8 +3468,17 @@
   <data name="BundleExplorer.Status.AssetCount.Label" xml:space="preserve">
     <value>资源</value>
   </data>
-  <data name="BundleExplorer.Status.WorkspaceSessionCount.Label" xml:space="preserve">
-    <value>已登记工作区</value>
+  <data name="BundleExplorer.Status.WorkspaceCache.Label" xml:space="preserve">
+    <value>工作区缓存</value>
+  </data>
+  <data name="BundleExplorer.Status.WorkspaceCache.Value.Format" xml:space="preserve">
+    <value>{0} · {1} 项</value>
+  </data>
+  <data name="BundleExplorer.Status.WorkspaceCache.Loading" xml:space="preserve">
+    <value>统计中</value>
+  </data>
+  <data name="BundleExplorer.Status.WorkspaceCache.Unavailable" xml:space="preserve">
+    <value>读取失败</value>
   </data>
   <data name="BundleExplorer.Status.Selection.Label" xml:space="preserve">
     <value>当前选中</value>

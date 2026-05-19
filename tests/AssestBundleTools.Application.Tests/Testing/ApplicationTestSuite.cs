@@ -77,6 +77,14 @@ internal static partial class ApplicationTestSuite
             BundleArtifactCacheMaintenanceHandlerTests.Prune_ShouldReturnValidationFailure_WhenLimitsAreNegative);
         await RunTestAsync(
             failures,
+            nameof(BundleArtifactCacheMaintenanceHandlerTests.GetWorkspaceCacheUsage_ShouldAggregateBundleArtifactAndPreviewUsage),
+            BundleArtifactCacheMaintenanceHandlerTests.GetWorkspaceCacheUsage_ShouldAggregateBundleArtifactAndPreviewUsage);
+        await RunTestAsync(
+            failures,
+            nameof(BundleArtifactCacheMaintenanceHandlerTests.ClearWorkspaceCache_ShouldClearBundleArtifactsAndPreviewCache),
+            BundleArtifactCacheMaintenanceHandlerTests.ClearWorkspaceCache_ShouldClearBundleArtifactsAndPreviewCache);
+        await RunTestAsync(
+            failures,
             nameof(RegisterWorkspaceImportHandlerTests.HandleAsync_ShouldNormalizeDistinctPaths_UpdateExistingSource_AndClearReimportedExcludedPath),
             RegisterWorkspaceImportHandlerTests.HandleAsync_ShouldNormalizeDistinctPaths_UpdateExistingSource_AndClearReimportedExcludedPath);
         await RunTestAsync(
@@ -99,6 +107,10 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldPassBundleCacheKeyToDecryptorRequest),
             ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldPassBundleCacheKeyToDecryptorRequest);
+        await RunTestAsync(
+            failures,
+            nameof(ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldPreserveSourceFileName_WhenReaderReadsNormalizedBundleArtifact),
+            ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldPreserveSourceFileName_WhenReaderReadsNormalizedBundleArtifact);
         await RunTestAsync(
             failures,
             nameof(ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldProcessCandidateBundlesInParallel_WhenExecutionOptionsAllowMultipleWorkers),
@@ -175,6 +187,10 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldApplyAutoPrunePolicy_AfterArtifactSave),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldApplyAutoPrunePolicy_AfterArtifactSave);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldApplyPreviewAutoPrunePolicy_AfterPreviewSave),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldApplyPreviewAutoPrunePolicy_AfterPreviewSave);
         await RunTestAsync(
             failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldSingleFlightBundleArtifactGeneration_WhenConcurrentPreviewCacheMisses),
@@ -318,6 +334,14 @@ internal static partial class ApplicationTestSuite
             SaveWorkspaceHandlersTests.GetWorkspaceSavePreviewHandler_ShouldGroupBundlePlans_AndResolveDefaultOutputDirectory);
         await RunTestAsync(
             failures,
+            nameof(SaveWorkspaceHandlersTests.GetWorkspaceSavePreviewHandler_ShouldExposeOutputPreflightBlockers),
+            SaveWorkspaceHandlersTests.GetWorkspaceSavePreviewHandler_ShouldExposeOutputPreflightBlockers);
+        await RunTestAsync(
+            failures,
+            nameof(SaveWorkspaceHandlersTests.GetWorkspaceSavePreviewHandler_ShouldResolveExistingArtifactInputs_FromWorkspaceCache),
+            SaveWorkspaceHandlersTests.GetWorkspaceSavePreviewHandler_ShouldResolveExistingArtifactInputs_FromWorkspaceCache);
+        await RunTestAsync(
+            failures,
             nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldReturnFailure_WhenWorkspaceDoesNotExist),
             SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldReturnFailure_WhenWorkspaceDoesNotExist);
         await RunTestAsync(
@@ -328,6 +352,14 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldReturnExecutionSummary_WhenBundlePlansExist),
             SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldReturnExecutionSummary_WhenBundlePlansExist);
+        await RunTestAsync(
+            failures,
+            nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldReportOutputPreflightCounts),
+            SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldReportOutputPreflightCounts);
+        await RunTestAsync(
+            failures,
+            nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldReportArtifactInputCounts_WhenContextIsProvided),
+            SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldReportArtifactInputCounts_WhenContextIsProvided);
 
         if (failures.Count == 0)
         {

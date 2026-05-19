@@ -36,7 +36,7 @@
 | --- | --- | --- | --- |
 | 工作区打开 / 导入 | `WorkspaceImportCoordinatorService`、`BundleExplorerWorkspaceBindingCoordinator`、`IBackgroundTaskRunner` | 外层任务已离开 UI 线程；Application 内部已有 `workspaceKey` 执行闸门和 bundle 粒度 worker 池 | 外层任务、导入进度覆盖层和 Shell 状态条尚未统一为同一个任务模型 |
 | Application 导入 worker | `WorkspaceImportProcessingCoordinator -> WorkspaceImportWorkerPool -> WorkspaceImportCommitter` | `串行计划 -> 有界并行 worker -> 串行提交`，默认 worker 并发度 `1-4` | 该 worker 池属于业务一致性边界，不应被 Presentation 调度器接管 |
-| 资源预览 | `AssetPreviewQueryExecutor` + `IBackgroundWorkScheduler` + `WorkspaceBundleArtifactResolver` + `AssetsToolsBundleLoadedSessionCache` | 前台槽优先服务活动详情标签，后台槽用于已打开标签预热；支持取消、超时、调度器 profile 闸门；导入 / 预览 / 提取 / Spine 详情会优先复用 `cache/bundles` 标准化 artifact；artifact 生成阶段按 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 串行化，标准化 artifact 已有 usage / LRU prune、设置页显式清理入口和偏好驱动自动容量治理，AssetsTools loaded-session 再按标准化 artifact identity 做 single-flight / lease 复用，并在 artifact 删除 / prune 时主动失效；loaded-session 已有默认 6 个空闲会话上限和 GC 内存压力下 1 个空闲会话退避；预览生成 `OutOfMemoryException` 会映射为专用诊断，并让同 bundle 后台预热短期退避 | 完整可观测队列、任务详情和后续写包共享入口仍需后续补齐 |
+| 资源预览 | `AssetPreviewQueryExecutor` + `IBackgroundWorkScheduler` + `WorkspaceBundleArtifactResolver` + `AssetsToolsBundleLoadedSessionCache` | 前台槽优先服务活动详情标签，后台槽用于已打开标签预热；支持取消、超时、调度器 profile 闸门；导入 / 预览 / 提取 / Spine 详情会优先复用 `cache/bundles` 标准化 artifact；artifact 生成阶段按 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 串行化，标准化 artifact 已有 usage / LRU prune、设置页显式清理入口和偏好驱动自动容量治理；预览缓存已有 usage / prune，并纳入当前工作区缓存聚合统计、设置页显式清理和偏好驱动自动容量治理；AssetsTools loaded-session 再按标准化 artifact identity 做 single-flight / lease 复用，并在 artifact 删除 / prune 时主动失效；loaded-session 已有默认 6 个空闲会话上限和 GC 内存压力下 1 个空闲会话退避；预览生成 `OutOfMemoryException` 会映射为专用诊断，并让同 bundle 后台预热短期退避 | 完整可观测队列、任务详情和后续写包共享入口仍需后续补齐 |
 | Spine 详情、贴图载荷和 runtime 帧 | `SpineAssetGroupDetailsLoader`、`InspectorSpineAnimationPreviewSurfaceView` + `IBackgroundWorkScheduler` | 组详情 / 贴图载荷通过 `PreviewForeground` 后台加载，runtime 当前帧通过独立 `SpineRuntimeFrame` profile 运行；均不让 UI 直接读 AB | Spine 序列帧导出和后续导出 profile 仍需继续统一 |
 | 批量提取 | `BundleExplorerBatchExtractionBackgroundExecutor`、`BatchTasksViewModel.Execution` | 已通过后台 runner 执行，并向 Shell 状态条上报进度 | 任务取消、并发限制、队列排队和完成结果展示仍偏局部实现 |
 | Shell 状态条 | `IAppBackgroundTaskStatusService` | 能显示当前任务、进度和不确定进度，并把刷新合并到 UI 线程 | 当前是手动 begin/report 模型，尚未和调度器的任务生命周期自然绑定 |
@@ -239,7 +239,7 @@ BackgroundWorkCompletion
 | `PreviewPrewarm` | 已打开但未激活标签的预览预热 | 低 | 使用剩余预览槽；压力大时可跳过 | 页面切换、内存压力、缓存未命中时可取消或降级 | 默认不抢占状态条 |
 | `SpineRuntimeFrame` | Spine runtime 当前帧生成 | 交互 | 受预览 / runtime session 控制 | 播放停止、seek、skin / animation 切换时取消旧帧 | 默认不进入全局状态条 |
 | `SingleExtraction` | 单资源提取、单 Spine 组提取 | 可见后台 | 每用户动作 1 | 用户可取消；已完成项保留结果 | 显示 |
-| `BatchExtraction` | 普通资源多选提取、Spine 组批量提取 | 可见后台 | 每工作区 1；必要时全局低并发 | 用户可取消；继续处理可成功项 | 显示确定进度 |
+| `BatchExtraction` | 普通资源多选提取、Spine 组批量提取、工作区级批量提取对话框执行 | 可见后台 | 每工作区 1；Application 内部可按 AB 资源包受控并行，默认 `CPU/2`、最大 `4`，GC 压力下退避到 `1`；同 AB 内顺序执行 | 用户可取消；继续处理可成功项 | 显示确定进度 |
 | `BatchReplacement` | 后续真实批量替换 | 可见后台 | 每工作区 1 | 用户可取消；以操作记录恢复 | 显示 |
 | `Export` | 序列帧导出、资源组导出、后续素材包导出 | 可见后台 | 每工作区或每资源组受控 | 用户可取消；已输出文件按结果记录 | 显示 |
 | `SaveRebuild` | 另存为新包、真实写包、重建输出 | 最高可见后台 | 每工作区独占 | 强取消 / 回滚语义需由 Application 定义 | 显示并保留结果入口 |
@@ -301,7 +301,11 @@ Shell 底部状态条只显示当前会话中的后台状态：
 - 当前处理对象。
 - 确定性进度或不确定进度。
 - 简短运行状态。
+- 当前调度器会话内后台任务数量。
 - 对声明 `CanCancel` 的当前任务显示取消入口。
+- 鼠标悬停在任务数量区域时直接显示轻量任务悬浮面板，列出 `IBackgroundWorkScheduler.CurrentTasks` 中的所有当前任务、排队 / 运行 / 正在取消状态、进度和单任务取消入口；鼠标离开数量区域与悬浮面板后自动关闭。数量区域同时作为可聚焦轻量按钮，支持点击 / 键盘激活同一面板；数量区域不叠加普通 tooltip，避免系统 tooltip 与任务面板争用同一次悬停。
+
+工作区级批量提取的进度由 Application 通过结构化 `WorkspaceBatchExtractionProgressDto` 上报，Presentation 再格式化为本地化状态条 detail。该 detail 应显示准备阶段总项数 / 候选资源包数，运行阶段当前资源包、当前普通资源或 Spine 组、成功 / 失败项计数，并在 GC 内存压力退避时附加短提示；调度器仍只接收已经格式化好的瞬时展示文本，不把本地化规则下沉到 Application。
 
 状态条不得替代：
 
@@ -330,9 +334,11 @@ BackgroundWorkProgress
 - 不允许每个小文件写出都直接向 DispatcherQueue 排队一次 UI 更新。
 - 批量任务完成后日志默认写摘要；失败明细应有限展示或进入可展开结果，不逐项刷爆日志集合。
 
-当多个可见后台任务同时运行时，状态条默认展示最近更新或最高优先级任务，并保留后续扩展为任务列表 / 弹出详情的空间。
+当多个后台任务同时存在时，状态条主文本默认展示最近更新的可见任务；任务数量和悬浮面板负责展示完整调度器快照。悬浮面板是瞬时 Presentation 投影，不写入工作区事实，也不替代批处理结果面板或日志明细。
 
 当前第一版 Shell 状态条已接入 `BackgroundTaskStatusRequest`：调度器在任务真正获得 profile 闸门后创建状态条 handle，并把可取消任务的 `taskId / cancelAction` 交给状态条服务。状态条取消按钮只触发调度器取消当前任务的 `CancellationToken`，不直接推断业务回滚；业务链路必须继续用自身结果、操作记录和恢复计划表达最终状态。
+
+当前任务数量和悬浮面板直接订阅 `IBackgroundWorkScheduler.TasksChanged` 并读取 `CurrentTasks`，因此排队中但尚未获得 profile 闸门的任务也会出现在悬浮面板中；Shell 主状态文本仍只在任务获得闸门并创建状态条 handle 后展示该任务。
 
 ## 12. 取消、超时与异常观测
 
@@ -381,7 +387,7 @@ BackgroundWorkProgress
 2. 已打开但未激活标签使用 `PreviewPrewarm`。
 3. 新打开或新激活的资产详情标签必须立即按 `PreviewForeground` 调度；快速切走的旧活动标签如果仍打开，则取消旧前台请求并重新排入 `PreviewPrewarm`，避免旧前台预览阻塞当前可见标签。
 4. 预览 worker 总数由“设置与诊断”页的预览线程数量控制，支持自动和 `1-4` 固定值；其中前台槽固定为 1，其余槽用于后台预热。设置为 1 时后台预热可跳过。
-5. 前台预览的调用方取消可以提前释放 `PreviewForeground` profile 槽，让新的活动标签快速进入前台调度；这只释放 Presentation profile 槽，已经进入底层 `LoadBundleFile` 的工作由 Infrastructure loaded-session single-flight / lease 控制，不能因为 UI 取消而提前卸载仍被使用的 bundle 上下文。
+5. 前台预览的调用方取消可以提前释放 `PreviewForeground` profile 槽，让新的活动标签快速进入前台调度；这只释放 Presentation profile 槽，已经进入底层 `LoadBundleFile` 的工作由 Infrastructure loaded-session single-flight / lease 控制，不能因为 UI 取消而提前卸载仍被使用或仍保留在缓存里的 bundle 上下文。
 6. 前台资产预览、Spine 组详情和当前贴图页载荷会向 Shell 底部状态条投影轻量“正在加载预览”状态；后台预热不进入全局状态条，避免快速打开大量标签时刷屏。
 7. Spine 组详情、Texture2D page 载荷和 alpha page 载荷进入 `PreviewForeground`；Spine runtime 当前帧进入独立 `SpineRuntimeFrame`，避免动画播放帧和普通详情预览互相挤占槽位。
 8. 预览任务继续只消费 Application DTO 和预览载荷，不让 Presentation 读取 AB。
@@ -420,10 +426,17 @@ BackgroundWorkProgress
 3. 保存前预览仍是 Application 查询，不应因为调度器存在而跳过保存计划。
 4. 保存成功后通过检查点标记已消费操作；失败保留可恢复诊断。
 5. 覆盖、回滚、冲突、部分失败等语义由 Application 文档化后再实现。
+6. Export / SaveRebuild 后续真实读包必须共享 `WorkspaceBundleArtifactResolver`，通过 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 取得标准化 artifact；不得重新从用户源路径、解密 staging 或历史 manifest-only 记录旁路读取。
+7. Export / SaveRebuild 的 Application 命令上下文必须显式携带 `workspaceKey / workspaceDataRootPath / bundleCacheKey`，并在计划阶段形成“目标 bundle -> artifact identity”的只读输入图；当前保存预览和保存骨架已从现有 `bundle-index + artifact manifest` 解析该输入图，但仍不触发 artifact materialization。
+8. 保存预览和保存骨架应通过 `IWorkspaceSaveOutputProbe` 做目标输出路径预检，把已存在目标文件、目标路径是目录、目录链被文件阻塞、非法路径等输出 blockers 暴露为结构化 DTO；该 preflight 不创建目录、不写文件，也不替代真实写包阶段的最终冲突确认。
+9. Infrastructure 写包 / 导出适配器只接收标准化 bundle 路径、loaded-session identity、操作变更集和输出路径；不得反向依赖 Application store 或 Presentation 状态。
+10. 成功复用或生成 artifact 后应回写 `lastAccessedAtUtc`，并按现有偏好触发容量治理；当前正在参与导出 / 写包的 artifact 必须进入 `ProtectedBundleCacheKeys`，避免任务中途被自身 prune 删除。
+11. 如果真实写包需要可变 bundle 上下文，仍应先以标准化 artifact 作为只读基线，再在写包工作目录或 staging 中创建可变副本；不得把 loaded-session 中的第三方对象暴露为跨层共享编辑状态。
 
 禁止：
 
 - 在 Presentation 中直接修改 bundle 文件。
+- Export / SaveRebuild 绕过 artifact resolver 重新解密、重新解包或直接打开用户源 AB。
 - 将导出 / 保存任务完成状态只存在 Shell 状态条中。
 - 用后台任务队列顺序代替保存冲突检测。
 
@@ -438,11 +451,11 @@ BackgroundWorkProgress
 
 调度器不直接规定缓存格式，也不把缓存命中写成操作记录。
 
-当前已引入标准化 `cache/bundles` artifact 和进程内 `AssetsToolsBundleLoadedSessionCache`：导入 / 预览 / 提取 / Spine 详情会先通过 `WorkspaceBundleArtifactResolver` 取得同一可读 bundle 路径；resolver 会对同一 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 的 artifact 生成请求做 single-flight 串行化，后续等待者在首个请求写入 manifest 后直接复用结果，并在保存或成功复用 manifest 时回写 `lastAccessedAtUtc`。`IBundleArtifactStore.GetUsage(...)` 已能统计 artifact 数量、字节数和访问时间，`Prune(...)` 已能按 `MaximumSizeInBytes / MaximumArtifactCount` 使用 LRU 删除最旧 artifact；`WorkspaceCacheMaintenanceGateway` 与设置 / 诊断页已提供当前工作区 usage 展示、显式清理入口和自动容量治理偏好，清理任务通过 `Maintenance` profile 投影到 Shell 状态条。导入、预览或提取首次保存 artifact 后，会按偏好设置触发当前工作区容量治理，并通过 `ProtectedBundleCacheKeys` 保护刚生成的 artifact，避免生成后立刻被自身 prune 删除。随后 `WorkspaceBundleArtifactResolver` 会从 manifest 派生 `bundle-artifact | workspaceKey | bundleCacheKey | normalizerVersion | bundleFingerprint` 形态的 loaded-session identity，Reader 和预览生成器把该 identity 传给 `AssetsToolsBundleLoadedSessionCache`；同一 identity 的 `LoadBundleFile / LoadAssetsFileFromBundle` 通过 single-flight 进入一次加载任务，成功后以 lease 方式短时复用，并用 30 秒滑动 TTL 驱逐。loaded-session 默认最多保留 6 个空闲会话，GC 内存压力达到阈值时退避到 1 个空闲会话，容量或压力淘汰事件在 DEBUG 输出中记录；若调用方没有 artifact identity，Infrastructure 仍回退到物理路径 key。`AssetsToolsAssetPreviewGenerator` 会把 `OutOfMemoryException` 映射成 `Bundle.Preview.OutOfMemory`，`GetAssetPreviewHandler` 进一步落到 `AssetPreviewFallbackReasonKind.OutOfMemory`，Presentation 据此暂停同 bundle 的后台预热并在 DEBUG 输出 `preview.prewarm retreat-*` 诊断。`AssetsToolsAssetBundleReader` 和 `AssetsToolsAssetPreviewGenerator` 默认共享同一个进程内 cache；提取当前通过 `WorkspaceAssetExtractionExporter -> GetAssetPreviewHandler` 获取 payload，因此也会复用同一 loaded-session。
+当前已引入标准化 `cache/bundles` artifact、`cache/previews` 预览缓存和进程内 `AssetsToolsBundleLoadedSessionCache`：导入 / 预览 / 提取 / Spine 详情会先通过 `WorkspaceBundleArtifactResolver` 取得同一可读 bundle 路径；resolver 会对同一 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 的 artifact 生成请求做 single-flight 串行化，后续等待者在首个请求写入 manifest 后直接复用结果，并在保存或成功复用 manifest 时回写 `lastAccessedAtUtc`。`IBundleArtifactStore.GetUsage(...)` 已能统计 artifact 数量、字节数和访问时间，`Prune(...)` 已能按 `MaximumSizeInBytes / MaximumArtifactCount` 使用 LRU 删除最旧 artifact；`IPreviewCacheStore.GetUsage(...) / Prune(...)` 已能统计并清理预览描述、主 payload 和 `imageFocus` payload。`WorkspaceCacheMaintenanceGateway` 的 UI 聚合入口会同时汇总 / 清理标准化 bundle artifact 与预览缓存，工作台顶部状态标签也读取同一个聚合 usage。清理任务通过 `Maintenance` profile 投影到 Shell 状态条。导入、预览或提取首次保存 artifact 后，会按偏好设置触发当前工作区容量治理，并通过 `ProtectedBundleCacheKeys` 保护刚生成的 artifact，避免生成后立刻被自身 prune 删除；`GetAssetPreviewHandler` 保存预览 payload 后也会通过 `IPreviewCachePrunePolicy` 触发预览缓存容量治理，并用 `ProtectedPreviewCacheKeys` 保护刚生成的预览项。随后 `WorkspaceBundleArtifactResolver` 会从 manifest 派生 `bundle-artifact | workspaceKey | bundleCacheKey | normalizerVersion | bundleFingerprint` 形态的 loaded-session identity，Reader 和预览生成器把该 identity 传给 `AssetsToolsBundleLoadedSessionCache`；同一 identity 的 `LoadBundleFile / LoadAssetsFileFromBundle` 通过 single-flight 进入一次加载任务，成功后以 lease 方式短时复用，并用 30 秒滑动 TTL 驱逐。loaded-session 默认最多保留 6 个空闲会话，GC 内存压力达到阈值时退避到 1 个空闲会话；DEBUG 包会输出 `Acquire miss / in-flight / hit`、`Load start / completed / failed`、空闲过期和容量 / 内存压力淘汰事件，用于验证多预览、批量提取和 Spine 组提取是否复用同一加载会话；若调用方没有 artifact identity，Infrastructure 仍回退到物理路径 key。`AssetsToolsAssetPreviewGenerator` 会把 `OutOfMemoryException` 映射成 `Bundle.Preview.OutOfMemory`，`GetAssetPreviewHandler` 进一步落到 `AssetPreviewFallbackReasonKind.OutOfMemory`，Presentation 据此暂停同 bundle 的后台预热并在 DEBUG 输出 `preview.prewarm retreat-*` 诊断。`AssetsToolsAssetBundleReader` 和 `AssetsToolsAssetPreviewGenerator` 默认共享同一个进程内 cache；提取当前通过 `WorkspaceAssetExtractionExporter -> GetAssetPreviewHandler` 获取 payload，因此也会复用同一 loaded-session。
 
 artifact 删除、prune、资源包移除、工作区记录删除、导入刷新失效和标准化版本失效时，Application 通过 `IBundleArtifactSessionInvalidator` 通知 Infrastructure 主动摘除对应 loaded-session 条目；新请求不会继续命中旧 identity，已经取得 lease 或正在底层同步读取的旧任务会自然完成，最后一个 lease 释放后再 dispose。
 
-后续应让 `Export / SaveRebuild` 也共享同一套标准化 artifact 和 loaded-session 身份模型。当前提取 / Export 通过预览管线已经复用 artifact resolver 与 loaded-session；SaveRebuild 仍是保存骨架，命令尚未携带 `workspaceKey / workspaceDataRootPath` 等真实写包所需上下文，因此本阶段不强行触发 artifact materialization。当前已经解决同一进程内、同一 bundle artifact 生成、artifact 访问时间回写、artifact usage / LRU prune、显式 / 自动清理入口、同一 artifact identity loaded-session 重复加载、artifact 删除后的主动失效、loaded-session 容量上限、内存压力退避、预览 OOM 专用诊断和后台预热短期退避；下一步要补真实写包共享入口。
+Export / SaveRebuild 共享 artifact resolver 已进入保存计划骨架的只读输入阶段：`GetWorkspaceSavePreviewQuery / SaveWorkspaceAsNewBundleCommand` 会携带 `workspaceKey / workspaceDataRootPath`，Application 通过 `bundle-index` 找到每个目标 bundle 的 `bundleCacheKey`，再用 `WorkspaceBundleArtifactResolver.TryResolveExistingInput(...)` 读取已有标准化 artifact manifest、回写 `lastAccessedAtUtc` 并派生 loaded-session identity。保存计划同时通过 `IWorkspaceSaveOutputProbe` 对目标输出路径做无副作用 preflight，并把输出路径可写、未探测、已存在文件、目标为目录、目录链被文件阻塞、非法路径和探测失败投影为结构化状态与诊断码。缺失、陈旧或物理路径不可解析的 artifact 只会在计划中标记诊断，不会在保存预览 / 保存骨架中触发解密、复制或 materialization；输出 preflight 也不会创建目录或写入文件。真实写包的最终冲突确认、取消、回滚和可变副本语义仍未定稿；后续实现时，Infrastructure 导出 / 写包适配器应直接消费这份只读输入图，并在需要时由真实计划阶段显式 materialize 缺失 artifact。当前已经解决同一进程内、同一 bundle artifact 生成、artifact 访问时间回写、artifact usage / LRU prune、显式 / 自动清理入口、同一 artifact identity loaded-session 重复加载、artifact 删除后的主动失效、loaded-session 容量上限、内存压力退避、预览 OOM 专用诊断、后台预热短期退避、SaveRebuild 保存计划读取现有 artifact identity，以及保存输出路径 preflight；下一步真实写包入口不得新增平行读取路径。
 
 ## 15. 状态持久化边界
 
@@ -465,18 +478,18 @@ artifact 删除、prune、资源包移除、工作区记录删除、导入刷新
 - `BackgroundWorkScheduler` 已提供 `StartAsync`、`BackgroundWorkHandle<T>`、`CurrentTasks`、`TasksChanged` 和 `TryCancel(taskId)`；任务快照包含 profile、语义分类、优先级、工作区 / bundle / resource 关联、标题、进度、状态、是否状态条可见和是否可取消。
 - 当前运行中任务状态由 `BackgroundWorkTaskRegistry` 统一维护；调度器只负责执行原语、profile 闸门、取消源串联和状态条投影，避免后续导入、预览、提取、导出继续各自维护一套可观察任务表。
 - Shell 底部状态条已支持当前可取消任务的图标取消按钮；当前接入的可取消任务包括工作区导入处理阶段、资源列表普通资源批量提取和 Spine 资源组批量提取。
-- 设置与诊断页已通过 Application 的 `WorkspaceCacheMaintenanceGateway` 展示当前工作区标准化 bundle artifact usage，并通过 `Maintenance` profile 显式清理当前工作区 `cache/bundles` artifact；该入口只删除可重建 artifact，不写操作记录，也不刷新资产列表。设置页还提供自动容量治理偏好，导入 / 预览 / 提取首次生成 artifact 后会按当前工作区容量上限自动 prune。
+- 设置与诊断页已通过 Application 的 `WorkspaceCacheMaintenanceGateway` 展示当前工作区聚合缓存 usage，统计范围包含 `cache/bundles` 标准化 bundle artifact 和 `cache/previews` 预览缓存；显式清理通过 `Maintenance` profile 同时清理两类可重建派生产物，不写操作记录，也不刷新资产列表。设置页还提供自动容量治理偏好，当前自动策略作用于标准化 bundle artifact 和预览缓存：导入 / 预览 / 提取首次生成 artifact 后会按当前工作区容量上限自动 prune，预览 payload 保存后也会按同一上限 prune 最旧预览项。
 - 组合根已创建单例调度器，`App` 暴露同一 `BackgroundWorkScheduler` 给工作台、批处理页和独立资源编辑窗口使用，避免同类任务各自临时创建调度器。
-- 资源列表多选批量提取、Spine 资源组多选批量提取和批处理页批量提取已迁移到 `BatchExtraction` profile；批处理页批量替换骨架已迁移到 `BatchReplacement` profile；保存骨架已迁移到 `SaveRebuild` profile。
+- 资源列表多选批量提取、Spine 资源组多选批量提取、批处理页批量提取和工作区级批量提取对话框已迁移到 `BatchExtraction` profile；工作区顶部入口不再跳转批处理页执行；批处理页批量替换骨架已迁移到 `BatchReplacement` profile；保存骨架已迁移到 `SaveRebuild` profile。
 - 工作区打开外层已迁移到 `WorkspaceOpen` profile；文件 / 目录 / 拖拽导入的处理阶段已迁移到 `WorkspaceImport` profile。Application 内部导入 worker 池仍保持在应用层一致性边界内。
 - 普通资产详情预览已迁移到 `PreviewForeground / PreviewPrewarm` profile；前台资产预览、Spine 资源组详情和当前贴图页载荷会在 Shell 底部状态条显示轻量加载状态，后台预热保持静默；Texture2D / alpha page 载荷已接入 `PreviewForeground` profile；Spine runtime 当前帧已接入独立 `SpineRuntimeFrame` profile。
 - 快速切换资产详情标签时，旧活动标签会被显式降级为 `PreviewPrewarm`，新活动标签始终重新按 `PreviewForeground` 调度；前台预览请求在调用方取消后会释放前台 profile 槽，避免后台旧请求压住当前可见标签。后台预热候选会按最近激活、最近打开优先，而不是单纯按标签集合顺序。
 - 预览 worker 总数已接入应用偏好设置和“设置与诊断”页，自动模式继续按 CPU 推导并限制在 `1-4`，手动值会同步影响调度器和预览查询执行器。
 - Infrastructure 内部已接入 `AssetsToolsBundleLoadedSessionCache`，对同一标准化 artifact identity 提供 single-flight、lease、串行访问保护、30 秒滑动 TTL、默认 6 个空闲会话容量上限和 GC 内存压力下 1 个空闲会话退避；没有 artifact identity 的直接调用回退到物理路径 key。`AssetsToolsAssetBundleReader`、`AssetsToolsAssetPreviewGenerator` 和经预览管线导出的提取共享该 cache，减少导入读取、详情预览、Spine 贴图载荷和批量提取对同一 AB 的重复 `LoadBundleFile`；artifact 删除 / prune 时会主动失效对应 identity，避免物理缓存被清理后新请求继续使用旧 loaded session。
 - 导入进度现在通过 `WorkspaceImportBackgroundProgressBridge` 同时投影给左侧导入遮罩和 Shell 状态条；操作记录与变更页刷新仍走既有 `IWorkspaceOperationChangeNotifier`，没有恢复手动刷新资产列表。
-- 当前实现还没有完整任务详情弹层、全局 CPU/IO/memory 闸门或完成结果中心；loaded-session 容量上限和内存压力退避已先在 Infrastructure cache 内落地。
+- 当前实现还没有完整任务详情弹层、全局 CPU/IO/memory 闸门或完成结果中心；loaded-session 容量上限和内存压力退避已先在 Infrastructure cache 内落地；SaveRebuild 保存计划已能读取现有 artifact identity，并能预检目标输出路径 blockers，但仍不执行真实写包或自动 materialize 缺失 artifact。
 
-当前设计判断：后台调度、标准化物理缓存、loaded-session 和预览缓存的职责边界已经清晰，足以继续承载提取 / 预览 / Spine 详情复用；容量治理已经补上显式清理、偏好驱动自动清理、artifact 删除后的 loaded-session 主动驱逐、loaded-session 容量上限和内存压力退避。缓存命中与清理细节本轮先通过 DEBUG 日志体现，不新增诊断面板；Export / SaveRebuild 的真实写包共享入口仍需在 M10 命令上下文和写包语义明确后落地。
+当前设计判断：后台调度、标准化物理缓存、loaded-session、预览缓存和保存输出 preflight 的职责边界已经清晰，足以继续承载提取 / 预览 / Spine 详情复用；容量治理已经补上显式清理、偏好驱动自动清理、artifact 删除后的 loaded-session 主动驱逐、loaded-session 容量上限和内存压力退避。缓存命中与清理细节本轮先通过 DEBUG 日志体现，其中 loaded-session 会直接记录 `Acquire miss / in-flight / hit` 和真实 `Load start / completed / failed`，不新增诊断面板；Export / SaveRebuild 已在保存骨架中形成只读 artifact 输入图和输出路径 blocker 预检，真实写包仍需在 M10 补最终冲突确认、取消、回滚、缺失 artifact materialization 和可变副本语义。
 
 对应回归：
 
@@ -487,6 +500,7 @@ artifact 删除、prune、资源包移除、工作区记录删除、导入刷新
 - `BackgroundWorkSchedulerTests` 覆盖 `SpineRuntimeFrame` 与普通 `PreviewForeground` 使用独立 profile 槽。
 - `BundleExplorerAssetDocumentTabCoordinatorTests` 覆盖快速切换时当前标签优先进入前台预览、旧标签降级为后台预热。
 - `BundleExplorerAssetPreviewSchedulingTests` 覆盖前台资产预览 / Spine 组详情会投影到 Shell 状态服务、后台预热不投影状态服务，以及后台预热按最近激活标签优先调度。
+- `SaveWorkspaceHandlersTests` 覆盖保存计划会暴露输出路径 preflight blockers，`FileSystemWorkspaceSaveOutputProbeTests` 覆盖不存在目标、已存在文件和目录链文件阻塞三类基础探测。
 
 ## 17. 建议迁移计划
 
@@ -521,7 +535,7 @@ artifact 删除、prune、资源包移除、工作区记录删除、导入刷新
 
 ### 第五阶段：完善缓存 single-flight 与导出 / 保存
 
-- 当前基于标准化 bundle artifact 身份的 AssetsTools loaded-session single-flight 已补容量上限和内存压力退避；后续补真实导出 / 写包共享入口。
+- 当前基于标准化 bundle artifact 身份的 AssetsTools loaded-session single-flight 已补容量上限和内存压力退避；SaveRebuild 已补保存计划只读 artifact 输入图，后续补真实导出 / 写包执行入口。
 - 序列帧导出、Spine 导出、真实保存 / 重建按 `Export / SaveRebuild` profile 接入。
 - 保存 / 重建取消、回滚和检查点语义先在 Application 文档和测试中固化，再实现真实写包。
 

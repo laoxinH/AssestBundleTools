@@ -25,6 +25,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     private readonly BundleExplorerPagePaneLayoutCoordinator _paneLayoutCoordinator;
     private readonly BundleExplorerPageTabCoordinator _tabCoordinator;
     private readonly AssetEditorWindowCoordinator _assetEditorWindowCoordinator;
+    private readonly BundleExplorerWorkspaceBatchExtractionCoordinator _workspaceBatchExtractionCoordinator;
     private WorkspaceNavigationRequest? _workspaceNavigationRequest;
 
     public BundleExplorerPage()
@@ -46,6 +47,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             App.CurrentApp.PathNavigationService,
             App.CurrentApp.AppBackgroundTaskStatusService,
             App.CurrentApp.BackgroundWorkScheduler,
+            App.CurrentApp.WorkspaceCacheMaintenanceGateway,
             () => App.CurrentApp.AppPreferencesService.PreviewWorkerCount);
 
         InitializeComponent();
@@ -55,6 +57,15 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         _paneLayoutCoordinator = new BundleExplorerPagePaneLayoutCoordinator(this);
         _tabCoordinator = new BundleExplorerPageTabCoordinator(this);
         _assetEditorWindowCoordinator = new AssetEditorWindowCoordinator(this);
+        _workspaceBatchExtractionCoordinator = new BundleExplorerWorkspaceBatchExtractionCoordinator(
+            this,
+            App.CurrentApp.WorkspaceBatchOperationsGateway,
+            App.CurrentApp.WorkspaceContextService,
+            App.CurrentApp.FilePickerService,
+            App.CurrentApp.BackgroundWorkScheduler,
+            App.CurrentApp.AppLogService,
+            App.CurrentApp.AppNotificationService,
+            App.CurrentApp.LocalizationService);
         ViewModel.SetAssetEditorWindowStateSnapshotProvider(
             _assetEditorWindowCoordinator.CaptureOpenWindowMetadata);
 
@@ -310,8 +321,10 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     private void OnBundlePaneCollapseButtonClick(object sender, RoutedEventArgs e) =>
         ViewModel.ToggleBundlePaneCollapsed();
 
-    private void OnBatchExtractChipButtonClick(object sender, RoutedEventArgs e) =>
-        Frame?.Navigate(typeof(BatchTasksPage));
+    private async void OnWorkspaceBatchExtractChipButtonClick(object sender, RoutedEventArgs e)
+    {
+        await _workspaceBatchExtractionCoordinator.ShowAsync();
+    }
 
     private void OnReturnToConsoleIconButtonClick(object sender, RoutedEventArgs e) =>
         _navigationCoordinator.NavigateToConsole();

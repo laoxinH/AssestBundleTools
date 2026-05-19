@@ -117,6 +117,62 @@ internal static partial class GetAssetPreviewHandlerTests
             "Auto prune should protect the artifact that was just generated.");
     }
 
+    public static async Task HandleAsync_ShouldApplyPreviewAutoPrunePolicy_AfterPreviewSave()
+    {
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        var bundleArtifactStore = new TestBundleArtifactStore(
+        [
+            new BundleArtifactManifestDto(
+                WorkspaceKey: query.WorkspaceKey,
+                BundleCacheKey: bundleCacheEntry.BundleCacheKey,
+                ResolvedBundlePath: @"D:\WorkspaceData\cache\bundles\workspace-key-1\bundle-cache-001\normalized.bundle",
+                IsMaterialized: true,
+                SourceFingerprint: bundleCacheEntry.SourceFingerprint,
+                BundleFingerprint: bundleCacheEntry.SourceFingerprint,
+                DecryptorId: AssetBundleDecryptorIds.BuiltInPassThrough,
+                DecryptorVersion: "1.0.0",
+                NormalizerVersion: "bundle-artifact/1",
+                CreatedAtUtc: new DateTimeOffset(2026, 5, 17, 10, 0, 0, TimeSpan.Zero))
+        ]);
+        var previewCacheStore = new TestPreviewCacheStore();
+        var decryptor = new TestAssetBundleDecryptor(CreatePassThroughDecryptorDescriptor());
+        var generator = new TestAssetPreviewGenerator
+        {
+            GenerateResultFactory = _ => Task.FromResult(Result<AssetPreviewContentDto>.Success(
+                new AssetPreviewContentDto(
+                    Kind: AssetPreviewKind.Text,
+                    ContentType: "text/plain; charset=utf-8",
+                    Content: Encoding.UTF8.GetBytes("preview payload"))))
+        };
+        var prunePolicy = new TestPreviewCachePrunePolicy(128L);
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore,
+                bundleArtifactStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService(),
+            previewCachePrunePolicy: prunePolicy);
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Preview generation should succeed after saving preview payload.");
+        TestAssert.Equal(1, previewCacheStore.SaveCallCount, "Cache miss should save one preview payload.");
+        TestAssert.Equal(1, previewCacheStore.PruneCallCount, "Preview auto prune policy should run after preview save.");
+        TestAssert.Equal(query.WorkspaceKey, previewCacheStore.LastPruneRequest?.WorkspaceKey, "Preview prune should target the current workspace.");
+        TestAssert.Equal(128L, previewCacheStore.LastPruneRequest?.MaximumSizeInBytes ?? -1, "Preview prune should use the configured capacity limit.");
+        var protectedPreviewCacheKeys = previewCacheStore.LastPruneRequest is null
+            ? Array.Empty<string>()
+            : previewCacheStore.LastPruneRequest.ProtectedPreviewCacheKeys?.ToArray() ?? Array.Empty<string>();
+        TestAssert.Equal(
+            previewCacheStore.LastSavedPayload?.Descriptor.PreviewCacheKey,
+            TestAssert.Single(protectedPreviewCacheKeys),
+            "Preview prune should protect the payload that was just generated.");
+    }
+
     private sealed class TestBundleArtifactCachePrunePolicy : IBundleArtifactCachePrunePolicy
     {
         private readonly long _maximumSizeInBytes;
@@ -132,5 +188,22 @@ internal static partial class GetAssetPreviewHandlerTests
                 MaximumSizeInBytes: _maximumSizeInBytes,
                 MaximumArtifactCount: null,
                 ProtectedBundleCacheKeys: [protectedBundleCacheKey]);
+    }
+
+    private sealed class TestPreviewCachePrunePolicy : IPreviewCachePrunePolicy
+    {
+        private readonly long _maximumSizeInBytes;
+
+        public TestPreviewCachePrunePolicy(long maximumSizeInBytes)
+        {
+            _maximumSizeInBytes = maximumSizeInBytes;
+        }
+
+        public PreviewCachePruneRequestDto? CreateRequest(string workspaceKey, string protectedPreviewCacheKey) =>
+            new(
+                WorkspaceKey: workspaceKey,
+                MaximumSizeInBytes: _maximumSizeInBytes,
+                MaximumEntryCount: null,
+                ProtectedPreviewCacheKeys: new HashSet<string>([protectedPreviewCacheKey], StringComparer.OrdinalIgnoreCase));
     }
 }

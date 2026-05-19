@@ -102,6 +102,76 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
             descriptor.RelativePayloadPath);
     }
 
+    public PreviewCacheUsageDto GetUsage(string workspaceKey)
+    {
+        var entries = EnumerateCacheEntries(workspaceKey)
+            .OrderBy(static entry => entry.WorkspaceKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static entry => entry.PreviewCacheKey, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return new PreviewCacheUsageDto(
+            TotalSizeInBytes: entries.Sum(static entry => entry.SizeInBytes),
+            EntryCount: entries.Length,
+            Entries: entries);
+    }
+
+    public PreviewCachePruneResultDto Prune(PreviewCachePruneRequestDto request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (request.MaximumSizeInBytes is < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(request.MaximumSizeInBytes));
+        }
+
+        if (request.MaximumEntryCount is < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(request.MaximumEntryCount));
+        }
+
+        var usageBefore = GetUsage(request.WorkspaceKey);
+        var targetSizeInBytes = request.MaximumSizeInBytes ?? long.MaxValue;
+        var targetEntryCount = request.MaximumEntryCount ?? int.MaxValue;
+        IEnumerable<string> protectedPreviewCacheKeysSource =
+            request.ProtectedPreviewCacheKeys is null
+                ? Array.Empty<string>()
+                : request.ProtectedPreviewCacheKeys;
+        var protectedPreviewCacheKeys = protectedPreviewCacheKeysSource
+            .Where(static key => !string.IsNullOrWhiteSpace(key))
+            .Select(static key => key.Trim())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var sizeAfter = usageBefore.TotalSizeInBytes;
+        var entryCountAfter = usageBefore.EntryCount;
+        var prunedEntries = new List<PreviewCacheEntryDto>();
+
+        foreach (var entry in usageBefore.Entries
+                     .OrderBy(static entry => entry.GeneratedAtUtc)
+                     .ThenBy(static entry => entry.WorkspaceKey, StringComparer.OrdinalIgnoreCase)
+                     .ThenBy(static entry => entry.PreviewCacheKey, StringComparer.OrdinalIgnoreCase))
+        {
+            if (sizeAfter <= targetSizeInBytes && entryCountAfter <= targetEntryCount)
+            {
+                break;
+            }
+
+            if (protectedPreviewCacheKeys.Contains(entry.PreviewCacheKey))
+            {
+                continue;
+            }
+
+            Delete(entry.WorkspaceKey, entry.PreviewCacheKey);
+            prunedEntries.Add(entry);
+            sizeAfter -= entry.SizeInBytes;
+            entryCountAfter--;
+        }
+
+        return new PreviewCachePruneResultDto(
+            SizeBeforeInBytes: usageBefore.TotalSizeInBytes,
+            SizeAfterInBytes: Math.Max(0, sizeAfter),
+            EntryCountBefore: usageBefore.EntryCount,
+            EntryCountAfter: Math.Max(0, entryCountAfter),
+            PrunedEntries: prunedEntries);
+    }
+
     public void Save(PreviewCachePayloadDto previewCachePayload)
     {
         ArgumentNullException.ThrowIfNull(previewCachePayload);
@@ -190,6 +260,67 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
             _storagePaths.GetPreviewCacheDirectoryPath(workspaceKey));
     }
 
+    private IEnumerable<PreviewCacheEntryDto> EnumerateCacheEntries(string workspaceKey)
+    {
+        if (string.IsNullOrWhiteSpace(workspaceKey))
+        {
+            return [];
+        }
+
+        var workspacePreviewDirectoryPath = _storagePaths.GetPreviewCacheDirectoryPath(workspaceKey);
+        if (!Directory.Exists(workspacePreviewDirectoryPath))
+        {
+            return [];
+        }
+
+        return Directory.EnumerateFiles(workspacePreviewDirectoryPath, "*.json", SearchOption.TopDirectoryOnly)
+            .Select(TryCreateCacheEntry)
+            .Where(static entry => entry is not null)
+            .Select(static entry => entry!);
+    }
+
+    private PreviewCacheEntryDto? TryCreateCacheEntry(string descriptorFilePath)
+    {
+        var descriptor = JsonWorkspaceFileStorageHelper.TryReadJson<PreviewCacheDescriptorDto>(
+            descriptorFilePath,
+            JsonWorkspaceSerialization.SerializerOptions);
+        if (descriptor is null)
+        {
+            return null;
+        }
+
+        var sizeInBytes = GetFileSize(descriptorFilePath);
+        var payloadFilePath = TryResolvePayloadFilePath(
+            descriptor.WorkspaceKey,
+            descriptor.PreviewCacheKey,
+            descriptor.RelativePayloadPath);
+        if (!string.IsNullOrWhiteSpace(payloadFilePath))
+        {
+            sizeInBytes += GetFileSize(payloadFilePath);
+        }
+
+        if (!string.IsNullOrWhiteSpace(descriptor.ImageFocus?.RelativePayloadPath))
+        {
+            var imageFocusPayloadFilePath = TryResolvePayloadFilePath(
+                descriptor.WorkspaceKey,
+                descriptor.PreviewCacheKey,
+                descriptor.ImageFocus.RelativePayloadPath);
+            if (!string.IsNullOrWhiteSpace(imageFocusPayloadFilePath))
+            {
+                sizeInBytes += GetFileSize(imageFocusPayloadFilePath);
+            }
+        }
+
+        return new PreviewCacheEntryDto(
+            descriptor.WorkspaceKey,
+            descriptor.PreviewCacheKey,
+            descriptor.BundleCacheKey,
+            descriptor.AssetId,
+            descriptor.PreviewKind,
+            sizeInBytes,
+            descriptor.GeneratedAtUtc);
+    }
+
     private string? TryResolvePayloadFilePath(
         string workspaceKey,
         string previewCacheKey,
@@ -222,5 +353,21 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
         return string.IsNullOrWhiteSpace(imageFocusPayloadFilePath)
             ? null
             : JsonWorkspaceFileStorageHelper.TryReadBytes(imageFocusPayloadFilePath);
+    }
+
+    private static long GetFileSize(string filePath)
+    {
+        try
+        {
+            return File.Exists(filePath) ? new FileInfo(filePath).Length : 0;
+        }
+        catch (IOException)
+        {
+            return 0;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return 0;
+        }
     }
 }

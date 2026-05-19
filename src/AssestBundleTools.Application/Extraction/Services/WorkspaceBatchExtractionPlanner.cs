@@ -1,5 +1,7 @@
 using System.IO;
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
@@ -20,9 +22,15 @@ internal static class WorkspaceBatchExtractionPlanner
         IWorkspaceSessionRegistry workspaceSessionRegistry,
         WorkspaceId workspaceId,
         AssetType? assetTypeFilter,
-        string? outputDirectory)
+        string? outputDirectory,
+        IReadOnlyList<BundleId>? selectedBundleIds = null,
+        IReadOnlyList<WorkspaceBatchExtractionCategoryDto>? selectedCategories = null)
     {
         ArgumentNullException.ThrowIfNull(workspaceSessionRegistry);
+
+        var normalizedCategories = NormalizeCategories(assetTypeFilter, selectedCategories);
+        var includesAllUnityAssetTypes = IncludesAll(normalizedCategories) || normalizedCategories.Count == 0;
+        var selectedBundleIdSet = CreateBundleIdSet(selectedBundleIds);
 
         if (!workspaceSessionRegistry.TryGetBundleTree(workspaceId, out var bundleTree))
         {
@@ -30,11 +38,17 @@ internal static class WorkspaceBatchExtractionPlanner
                 WorkspaceDisplayName: string.Empty,
                 SuggestedOutputDirectory: string.Empty,
                 AssetTypeFilter: assetTypeFilter,
-                Assets: Array.Empty<PlannedAssetExtraction>());
+                SelectedCategories: normalizedCategories,
+                BundleScopes: Array.Empty<PlannedBundleExtractionScope>(),
+                Assets: Array.Empty<PlannedAssetExtraction>(),
+                SpineGroups: Array.Empty<PlannedSpineGroupExtraction>());
         }
 
-        var bundleNodes = EnumerateBundleNodes(bundleTree).ToArray();
+        var bundleNodes = EnumerateBundleNodes(bundleTree)
+            .Where(node => selectedBundleIdSet is null || selectedBundleIdSet.Contains(node.BundleId.Value))
+            .ToArray();
         var plannedAssets = new List<PlannedAssetExtraction>(capacity: 64);
+        var resolvedOutputDirectory = ResolveOutputDirectory(outputDirectory, workspaceId, assetTypeFilter, normalizedCategories);
 
         foreach (var bundleNode in bundleNodes)
         {
@@ -42,8 +56,8 @@ internal static class WorkspaceBatchExtractionPlanner
                     workspaceId,
                     bundleNode.BundleId,
                     searchKeyword: null,
-                    assetTypeFilter: assetTypeFilter,
-                    assetTypeDisplayNameFilter: null,
+                    assetTypeFilter: ResolveSingleAssetTypeFilter(assetTypeFilter, normalizedCategories),
+                    assetTypeDisplayNameFilter: ResolveSingleAssetTypeDisplayNameFilter(normalizedCategories),
                     out var assetListResult))
             {
                 continue;
@@ -51,27 +65,39 @@ internal static class WorkspaceBatchExtractionPlanner
 
             foreach (var item in assetListResult!.Items)
             {
+                if (!MatchesSelectedUnityCategory(item, normalizedCategories, includesAllUnityAssetTypes))
+                {
+                    continue;
+                }
+
                 plannedAssets.Add(new PlannedAssetExtraction(
                     BundleId: item.BundleId,
                     AssetId: item.AssetId,
                     BundleDisplayName: assetListResult.BundleDisplayName,
                     AssetName: item.Name,
                     AssetType: item.AssetType,
+                    AssetTypeDisplayName: item.AssetTypeDisplayName,
                     SizeInBytes: item.SizeInBytes,
                     SuggestedOutputPath: BuildSuggestedOutputPath(
-                        ResolveOutputDirectory(outputDirectory, workspaceId, assetTypeFilter),
+                        resolvedOutputDirectory,
                         assetListResult.BundleDisplayName,
                         item.Name,
-                        item.AssetType)));
+                        item.AssetType,
+                        item.AssetTypeDisplayName)));
             }
         }
 
         var workspaceDisplayName = ResolveWorkspaceDisplayName(bundleNodes);
         return new WorkspaceBatchExtractionPlan(
             WorkspaceDisplayName: workspaceDisplayName,
-            SuggestedOutputDirectory: ResolveOutputDirectory(outputDirectory, workspaceId, assetTypeFilter),
+            SuggestedOutputDirectory: resolvedOutputDirectory,
             AssetTypeFilter: assetTypeFilter,
-            Assets: plannedAssets);
+            SelectedCategories: normalizedCategories,
+            BundleScopes: bundleNodes
+                .Select(static node => new PlannedBundleExtractionScope(node.BundleId, node.DisplayName))
+                .ToArray(),
+            Assets: plannedAssets,
+            SpineGroups: Array.Empty<PlannedSpineGroupExtraction>());
     }
 
     private static IEnumerable<BundleTreeNodeDto> EnumerateBundleNodes(IEnumerable<BundleTreeNodeDto> nodes)
@@ -98,14 +124,19 @@ internal static class WorkspaceBatchExtractionPlanner
         return bundleNodes.Any() ? "CurrentWorkspace" : string.Empty;
     }
 
-    public static string ResolveOutputDirectory(string? outputDirectory, WorkspaceId workspaceId, AssetType? assetTypeFilter)
+    public static string ResolveOutputDirectory(
+        string? outputDirectory,
+        WorkspaceId workspaceId,
+        AssetType? assetTypeFilter,
+        IReadOnlyList<WorkspaceBatchExtractionCategoryDto>? selectedCategories = null)
     {
         if (!string.IsNullOrWhiteSpace(outputDirectory))
         {
             return outputDirectory.Trim();
         }
 
-        var scopeFolder = assetTypeFilter?.ToString() ?? "AllAssets";
+        var normalizedCategories = NormalizeCategories(assetTypeFilter, selectedCategories);
+        var scopeFolder = ResolveOutputScopeFolder(assetTypeFilter, normalizedCategories);
         return Path.Combine("Exports", workspaceId.Value, scopeFolder);
     }
 
@@ -113,12 +144,320 @@ internal static class WorkspaceBatchExtractionPlanner
         string outputDirectory,
         string bundleDisplayName,
         string assetName,
-        AssetType assetType)
+        AssetType assetType,
+        string? assetTypeDisplayName = null)
     {
         return Path.Combine(
             outputDirectory,
-            Path.GetFileNameWithoutExtension(bundleDisplayName),
-            $"{assetName}{GetAssetExtension(assetType)}");
+            SanitizePathSegment(bundleDisplayName),
+            SanitizePathSegment(ResolveAssetTypeFolderName(assetTypeDisplayName, assetType)),
+            $"{SanitizeFileName(assetName)}{GetAssetExtension(assetType)}");
+    }
+
+    public static string BuildBundleOutputDirectory(
+        string outputDirectory,
+        string bundleDisplayName) =>
+        Path.Combine(outputDirectory, SanitizePathSegment(bundleDisplayName));
+
+    public static IReadOnlyList<WorkspaceBatchExtractionCategoryPlanDto> BuildCategoryPlans(
+        IWorkspaceSessionRegistry workspaceSessionRegistry,
+        WorkspaceId workspaceId,
+        IReadOnlyList<BundleId>? selectedBundleIds,
+        IReadOnlyList<PlannedSpineGroupExtraction>? spineGroups)
+    {
+        ArgumentNullException.ThrowIfNull(workspaceSessionRegistry);
+
+        if (!workspaceSessionRegistry.TryGetBundleTree(workspaceId, out var bundleTree))
+        {
+            return Array.Empty<WorkspaceBatchExtractionCategoryPlanDto>();
+        }
+
+        var selectedBundleIdSet = CreateBundleIdSet(selectedBundleIds);
+        var bundleNodes = EnumerateBundleNodes(bundleTree)
+            .Where(node => selectedBundleIdSet is null || selectedBundleIdSet.Contains(node.BundleId.Value))
+            .ToArray();
+        var categoryCounts = new Dictionary<WorkspaceBatchExtractionCategoryDto, CategoryCount>();
+
+        foreach (var bundleNode in bundleNodes)
+        {
+            if (!workspaceSessionRegistry.TryGetAssetList(
+                    workspaceId,
+                    bundleNode.BundleId,
+                    searchKeyword: null,
+                    assetTypeFilter: null,
+                    assetTypeDisplayNameFilter: null,
+                    out var assetListResult))
+            {
+                continue;
+            }
+
+            foreach (var item in assetListResult!.Items)
+            {
+                AddCategoryCount(
+                    categoryCounts,
+                    CreateCategoryFromAssetListItem(item),
+                    item);
+            }
+        }
+
+        var plannedSpineGroupCount = spineGroups?.Count ?? 0;
+        var allCandidateCount = categoryCounts.Values.Sum(static count => count.CandidateCount) + plannedSpineGroupCount;
+        var totalSizeInBytes = categoryCounts.Values.Sum(static count => count.TotalSizeInBytes);
+        if (allCandidateCount == 0)
+        {
+            return Array.Empty<WorkspaceBatchExtractionCategoryPlanDto>();
+        }
+
+        var plans = new List<WorkspaceBatchExtractionCategoryPlanDto>
+        {
+            new(
+                WorkspaceBatchExtractionCategoryDto.All,
+                allCandidateCount,
+                totalSizeInBytes)
+        };
+
+        plans.AddRange(categoryCounts
+            .OrderBy(static pair => ResolveCategorySortOrder(pair.Key))
+            .ThenBy(static pair => ResolveCategorySortName(pair.Key), StringComparer.OrdinalIgnoreCase)
+            .Select(static pair => new WorkspaceBatchExtractionCategoryPlanDto(
+                pair.Key,
+                pair.Value.CandidateCount,
+                pair.Value.TotalSizeInBytes)));
+
+        if (plannedSpineGroupCount > 0)
+        {
+            plans.Add(new WorkspaceBatchExtractionCategoryPlanDto(
+                WorkspaceBatchExtractionCategoryDto.SpineGroup,
+                plannedSpineGroupCount,
+                TotalSizeInBytes: 0));
+        }
+
+        return plans;
+    }
+
+    public static bool IncludesSpineGroups(IReadOnlyList<WorkspaceBatchExtractionCategoryDto> categories) =>
+        IncludesAll(categories) ||
+        categories.Any(static category => category.Kind == WorkspaceBatchExtractionCategoryKind.SpineGroup);
+
+    public static IReadOnlyList<WorkspaceBatchExtractionCategoryDto> NormalizeCategories(
+        AssetType? assetTypeFilter,
+        IReadOnlyList<WorkspaceBatchExtractionCategoryDto>? selectedCategories)
+    {
+        if (selectedCategories is { Count: > 0 })
+        {
+            return selectedCategories
+                .Select(static category => NormalizeCategory(category))
+                .Where(static category => category is not null)
+                .Select(static category => category!)
+                .Distinct()
+                .ToArray();
+        }
+
+        return assetTypeFilter is { } assetType
+            ? new[] { WorkspaceBatchExtractionCategoryDto.FromAssetType(assetType) }
+            : Array.Empty<WorkspaceBatchExtractionCategoryDto>();
+    }
+
+    public static IReadOnlyList<WorkspaceBatchExtractionCategoryDto> NormalizeForResult(
+        AssetType? assetTypeFilter,
+        IReadOnlyList<WorkspaceBatchExtractionCategoryDto>? selectedCategories) =>
+        NormalizeCategories(assetTypeFilter, selectedCategories);
+
+    public static bool IsExplicitCategorySelection(
+        IReadOnlyList<WorkspaceBatchExtractionCategoryDto>? selectedCategories) =>
+        selectedCategories is { Count: > 0 };
+
+    private static AssetType? ResolveSingleAssetTypeFilter(
+        AssetType? assetTypeFilter,
+        IReadOnlyList<WorkspaceBatchExtractionCategoryDto> normalizedCategories)
+    {
+        if (normalizedCategories.Count == 0)
+        {
+            return assetTypeFilter;
+        }
+
+        if (IncludesAll(normalizedCategories))
+        {
+            return null;
+        }
+
+        var assetTypes = normalizedCategories
+            .Where(static category => category.Kind == WorkspaceBatchExtractionCategoryKind.UnityAssetType)
+            .Select(static category => category.AssetType)
+            .OfType<AssetType>()
+            .Distinct()
+            .ToArray();
+        return assetTypes.Length == 1 ? assetTypes[0] : null;
+    }
+
+    private static string? ResolveSingleAssetTypeDisplayNameFilter(
+        IReadOnlyList<WorkspaceBatchExtractionCategoryDto> normalizedCategories)
+    {
+        if (normalizedCategories.Count == 0 || IncludesAll(normalizedCategories))
+        {
+            return null;
+        }
+
+        var unityCategories = normalizedCategories
+            .Where(static category => category.Kind == WorkspaceBatchExtractionCategoryKind.UnityAssetType)
+            .ToArray();
+        return unityCategories.Length == 1
+            ? unityCategories[0].AssetTypeDisplayName
+            : null;
+    }
+
+    private static HashSet<string>? CreateBundleIdSet(IReadOnlyList<BundleId>? selectedBundleIds)
+    {
+        if (selectedBundleIds is null || selectedBundleIds.Count == 0)
+        {
+            return null;
+        }
+
+        return selectedBundleIds
+            .Select(static id => id.Value)
+            .Where(static value => !string.IsNullOrWhiteSpace(value))
+            .ToHashSet(StringComparer.Ordinal);
+    }
+
+    private static bool IncludesAll(IReadOnlyList<WorkspaceBatchExtractionCategoryDto> categories) =>
+        categories.Any(static category => category.Kind == WorkspaceBatchExtractionCategoryKind.All);
+
+    private static string ResolveOutputScopeFolder(
+        AssetType? assetTypeFilter,
+        IReadOnlyList<WorkspaceBatchExtractionCategoryDto> categories)
+    {
+        if (categories.Count == 0)
+        {
+            return assetTypeFilter?.ToString() ?? "AllAssets";
+        }
+
+        if (IncludesAll(categories))
+        {
+            return "AllAssets";
+        }
+
+        if (categories.Count == 1)
+        {
+            var category = categories[0];
+            return category.Kind == WorkspaceBatchExtractionCategoryKind.SpineGroup
+                ? "Spine"
+                : category.AssetTypeDisplayName ?? category.AssetType?.ToString() ?? "SelectedAssets";
+        }
+
+        return "SelectedAssets";
+    }
+
+    private static WorkspaceBatchExtractionCategoryDto? NormalizeCategory(
+        WorkspaceBatchExtractionCategoryDto category)
+    {
+        return category.Kind switch
+        {
+            WorkspaceBatchExtractionCategoryKind.All => WorkspaceBatchExtractionCategoryDto.All,
+            WorkspaceBatchExtractionCategoryKind.SpineGroup => WorkspaceBatchExtractionCategoryDto.SpineGroup,
+            WorkspaceBatchExtractionCategoryKind.UnityAssetType when category.AssetType is { } assetType =>
+                WorkspaceBatchExtractionCategoryDto.FromAssetType(assetType, category.AssetTypeDisplayName),
+            _ => null
+        };
+    }
+
+    private static bool MatchesSelectedUnityCategory(
+        AssetListItemDto item,
+        IReadOnlyList<WorkspaceBatchExtractionCategoryDto> categories,
+        bool includesAllUnityAssetTypes)
+    {
+        if (includesAllUnityAssetTypes)
+        {
+            return true;
+        }
+
+        return categories.Any(category =>
+            category.Kind == WorkspaceBatchExtractionCategoryKind.UnityAssetType &&
+            category.AssetType == item.AssetType &&
+            MatchesAssetTypeDisplayName(item.AssetTypeDisplayName, category.AssetTypeDisplayName));
+    }
+
+    private static WorkspaceBatchExtractionCategoryDto CreateCategoryFromAssetListItem(
+        AssetListItemDto item) =>
+        WorkspaceBatchExtractionCategoryDto.FromAssetType(
+            item.AssetType,
+            item.AssetType == AssetType.Unknown
+                ? NormalizeAssetTypeDisplayName(item.AssetTypeDisplayName)
+                : null);
+
+    private static bool MatchesAssetTypeDisplayName(
+        string? itemDisplayName,
+        string? categoryDisplayName) =>
+        string.IsNullOrWhiteSpace(categoryDisplayName) ||
+        string.Equals(
+            NormalizeAssetTypeDisplayName(itemDisplayName),
+            categoryDisplayName,
+            StringComparison.OrdinalIgnoreCase);
+
+    private static string? NormalizeAssetTypeDisplayName(string? assetTypeDisplayName) =>
+        string.IsNullOrWhiteSpace(assetTypeDisplayName)
+            ? null
+            : assetTypeDisplayName.Trim();
+
+    private static string ResolveAssetTypeFolderName(string? assetTypeDisplayName, AssetType assetType) =>
+        string.IsNullOrWhiteSpace(assetTypeDisplayName)
+            ? assetType.ToString()
+            : assetTypeDisplayName.Trim();
+
+    private static void AddCategoryCount(
+        IDictionary<WorkspaceBatchExtractionCategoryDto, CategoryCount> categoryCounts,
+        WorkspaceBatchExtractionCategoryDto category,
+        AssetListItemDto item)
+    {
+        categoryCounts.TryGetValue(category, out var existing);
+        categoryCounts[category] = new CategoryCount(
+            existing.CandidateCount + 1,
+            existing.TotalSizeInBytes + item.SizeInBytes);
+    }
+
+    private static int ResolveCategorySortOrder(WorkspaceBatchExtractionCategoryDto category)
+    {
+        if (category.Kind != WorkspaceBatchExtractionCategoryKind.UnityAssetType)
+        {
+            return category.Kind == WorkspaceBatchExtractionCategoryKind.All ? 0 : 10_000;
+        }
+
+        return category.AssetType switch
+        {
+            AssetType.Texture2D => 10,
+            AssetType.Sprite => 20,
+            AssetType.TextAsset => 30,
+            AssetType.AudioClip => 40,
+            AssetType.Mesh => 50,
+            AssetType.Material => 60,
+            AssetType.Unknown => 1_000,
+            _ => 1_500 + (int)(category.AssetType ?? AssetType.Unknown)
+        };
+    }
+
+    private static string ResolveCategorySortName(WorkspaceBatchExtractionCategoryDto category) =>
+        category.AssetTypeDisplayName ?? category.AssetType?.ToString() ?? category.Kind.ToString();
+
+    private static string SanitizeFileName(string fileName)
+    {
+        var normalized = SanitizePathSegment(fileName);
+        return string.IsNullOrWhiteSpace(normalized)
+            ? "asset"
+            : normalized;
+    }
+
+    private static string SanitizePathSegment(string segment)
+    {
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var sanitized = new string(segment
+            .Trim()
+            .Select(ch => invalidChars.Contains(ch) ? '_' : ch)
+            .ToArray())
+            .Trim()
+            .TrimEnd('.');
+
+        return string.IsNullOrWhiteSpace(sanitized)
+            ? "bundle"
+            : sanitized;
     }
 
     private static string GetAssetExtension(AssetType assetType) =>
@@ -132,6 +471,10 @@ internal static class WorkspaceBatchExtractionPlanner
             AssetType.Material => ".material.json",
             _ => ".bin"
         };
+
+    private readonly record struct CategoryCount(
+        int CandidateCount,
+        long TotalSizeInBytes);
 }
 
 /// <summary>
@@ -141,7 +484,14 @@ internal sealed record WorkspaceBatchExtractionPlan(
     string WorkspaceDisplayName,
     string SuggestedOutputDirectory,
     AssetType? AssetTypeFilter,
-    IReadOnlyList<PlannedAssetExtraction> Assets);
+    IReadOnlyList<WorkspaceBatchExtractionCategoryDto> SelectedCategories,
+    IReadOnlyList<PlannedBundleExtractionScope> BundleScopes,
+    IReadOnlyList<PlannedAssetExtraction> Assets,
+    IReadOnlyList<PlannedSpineGroupExtraction> SpineGroups);
+
+internal sealed record PlannedBundleExtractionScope(
+    BundleId BundleId,
+    string BundleDisplayName);
 
 /// <summary>
 /// 表示单个即将参与批量提取的资源。
@@ -152,5 +502,13 @@ internal sealed record PlannedAssetExtraction(
     string BundleDisplayName,
     string AssetName,
     AssetType AssetType,
+    string? AssetTypeDisplayName,
     long SizeInBytes,
     string SuggestedOutputPath);
+
+internal sealed record PlannedSpineGroupExtraction(
+    BundleId BundleId,
+    string BundleDisplayName,
+    string GroupId,
+    string GroupDisplayName,
+    string SuggestedOutputDirectory);

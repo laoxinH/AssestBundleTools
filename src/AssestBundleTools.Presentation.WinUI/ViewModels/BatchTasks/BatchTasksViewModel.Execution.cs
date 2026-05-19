@@ -139,7 +139,9 @@ public sealed partial class BatchTasksViewModel
         try
         {
             var command = new SaveWorkspaceAsNewBundleCommand(
-                WorkspaceId: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceId);
+                WorkspaceId: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceId,
+                WorkspaceKey: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceKey,
+                WorkspaceDataRootPath: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceDataRootPath);
             var result = await _backgroundWorkScheduler.RunAsync(
                 new BackgroundWorkRequest<Result<WorkspaceSaveExecutionResultDto>>(
                     BackgroundWorkProfile.SaveRebuild,

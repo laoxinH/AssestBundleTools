@@ -7,4 +7,6 @@ namespace AssestBundleTools.Application.Saving.Queries;
 /// </summary>
 public sealed record GetWorkspaceSavePreviewQuery(
     WorkspaceId WorkspaceId,
-    string? OutputDirectory = null);
+    string? OutputDirectory = null,
+    string? WorkspaceKey = null,
+    string? WorkspaceDataRootPath = null);

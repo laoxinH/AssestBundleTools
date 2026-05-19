@@ -237,7 +237,7 @@ Presentation 负责把这些结构化字段格式化为用户可见文本；Appl
 缓存边界：
 
 - 预览缓存命中、标准化资源包 artifact 命中或 loaded-session 命中都不能单独生成操作记录；只有用户确认的提取 / 替换 / 保存等动作才进入 `operations[]`。
-- 批量提取和 Spine 整组提取后续可以按 AB 复用同一个标准化 artifact 和 loaded session，但仍必须为每个成功导出的组成资源记录独立 `ExtractAsset`，并按批量 / Spine 入口追加汇总记录。
+- 批量提取和 Spine 整组提取可以按 AB 复用同一个标准化 artifact 和 loaded session，但仍必须为每个成功导出的组成资源记录独立 `ExtractAsset`，并按批量 / Spine 入口追加汇总记录。
 - 提取撤销只撤销工作区操作记录和物化提取状态，不删除 `cache/bundles`、`cache/previews` 或用户输出目录中的文件；缓存清理属于独立缓存维护动作。
 
 ### 7.2 工作区内替换
@@ -420,6 +420,7 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
   - `MonoBehaviour`：默认写 TypeTree JSON 字段树，保存文件对话框额外提供摘要 JSON、YAML 投影和原始字段清单文本；TypeTree JSON 来自 Infrastructure 读取到的 Unity 字段树，摘要 / YAML / 字段文本来自当前 Application 预览 DTO，均不等同于 Unity 原始二进制对象，字段清单在预览字段被截断时会写入警告。
 - 已让单资源提取追加 `ExtractAsset` 操作记录，保存实际输出路径、输出目录、输出文件存在性和完成时间。
 - 已让普通资源批量提取复用单资源提取链路，并追加 `ExtractBatch` 汇总记录；资产窗格多选批量提取会在用户选择的输出根目录下按 `<输出根目录>/<AB 资源包名称>/<资源类型>/` 组织文件，当前批处理仍以“继续处理可成功项，汇总失败数”为第一版策略。
+- 工作台顶部工作区级批量提取入口已改为对话框：用户选择当前工作区资源包范围，窗口按当前勾选资源包动态生成 `全部 / Texture2D / Sprite / Spine` 等导出类别及候选数量；点击开始后再选择输出根目录，或勾选工作区提取目录后直接使用 `<workspaceDataRootPath>/extractions`，随后提交 `BatchExtraction` 后台任务。工作区级批量提取在单个后台任务内按 AB 资源包受控并行，默认并发度为 `CPU/2`、最大 `4`，GC 压力下退避到 `1`，同一 AB 内仍按计划顺序提取，以兼顾吞吐、内存峰值和 loaded-session 访问安全；它仍必须复用 `ExtractAsset / ExtractBatch` 操作记录语义，不把对话框状态或 Shell 进度当作事实来源。详细见 [workspace-batch-extraction-dialog.md](workspace-batch-extraction-dialog.md)。
 - 已让 Spine 资源组整组提取复用单资源提取链路：组级入口负责解析 skeleton / atlas / atlas page 主贴图和独立 alpha 贴图匹配；每个组成资源仍追加独立 `ExtractAsset` 操作记录并更新资源级 `LastExtractedAtUtc`，组级入口同时追加一条 `ExtractBatch` 汇总记录，记录 Spine 组目标、输出目录、成功 / 失败数量和已关联资源 ID。工作区变更摘要会保留已提取的隐藏依赖资产，避免 Spine 组关联资源已经导出但“最近变更记录”被资产列表可见性过滤掉；窗口化 Spine 详情在提取成功后也会即时重投影当前项变更摘要。
 - 已让资产窗格的 Spine 资源组多选模式接入批量提取入口：用户选择一次输出根目录后，Presentation 为每个组把应用层输出目录设置为 `<输出根目录>/<AB 资源包名称>`，应用层单组提取再在该目录下创建组名子目录并写出组成资源。
 - 已把资产窗格多选批量提取和 Spine 资源组多选批量提取的逐项写出循环移动到 Presentation 后台任务 runner；Shell 级后台任务状态服务负责显示任务标题、当前对象和进度。该状态条只表达当前会话中的运行中反馈，不进入 `operations[]`，也不改变 `ExtractAsset / ExtractBatch` 的事实记录、撤销和恢复语义。后台批量提取的状态上报必须做 UI 合并刷新：后台线程只更新最新任务状态，Shell 状态条在 UI 线程按最新状态投影，避免大量小文件逐项写出时向 DispatcherQueue 注入成百上千个进度刷新。批量提取成功日志默认写摘要，不逐资源插入日志；失败明细也应有限展示，避免操作完成阶段因为日志集合膨胀造成二次卡顿。

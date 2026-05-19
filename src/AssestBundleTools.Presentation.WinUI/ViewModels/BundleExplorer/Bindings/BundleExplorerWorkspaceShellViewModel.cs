@@ -3,7 +3,9 @@ using System.Globalization;
 using System.Diagnostics.CodeAnalysis;
 using AssestBundleTools.Application.Bundles;
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Application.Workspace.Queries;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
@@ -24,22 +26,40 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 /// 这层只负责“当前有没有工作区、它的导航参数是什么、顶部状态标签如何展示”。
 /// 真正的导入、读取、预览和替换流程仍由外层编排 ViewModel 驱动，避免把流程控制和页面壳层状态继续混在一起。
 /// </remarks>
-public sealed class BundleExplorerWorkspaceShellViewModel : ObservableObject, IBundleExplorerWorkspaceShellHost
+public sealed class BundleExplorerWorkspaceShellViewModel : ObservableObject, IBundleExplorerWorkspaceShellHost, IDisposable
 {
     private readonly ILocalizationService _localizationService;
     private readonly IWorkspaceContextService _workspaceContextService;
     private readonly IAssetBundleDecryptorRegistry _assetBundleDecryptorRegistry;
+    private readonly IWorkspaceCacheMaintenanceGateway? _workspaceCacheMaintenanceGateway;
+    private readonly IBackgroundWorkScheduler? _backgroundWorkScheduler;
+    private readonly LocalizedValueFormatter _valueFormatter;
     private WorkspaceSummaryDto? _workspaceSummary;
     private WorkspaceNavigationRequest? _activeWorkspaceNavigationRequest;
+    private string _workspaceCacheUsageText;
+    private int _workspaceCacheUsageRefreshVersion;
 
     public BundleExplorerWorkspaceShellViewModel(
         ILocalizationService localizationService,
         IWorkspaceContextService workspaceContextService,
-        IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry)
+        IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
+        IWorkspaceCacheMaintenanceGateway? workspaceCacheMaintenanceGateway = null,
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _assetBundleDecryptorRegistry = assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry));
+        _workspaceCacheMaintenanceGateway = workspaceCacheMaintenanceGateway;
+        _backgroundWorkScheduler = backgroundWorkScheduler;
+        _valueFormatter = new LocalizedValueFormatter(_localizationService);
+        _workspaceCacheUsageText = GetString(ResourceKeys.BundleExplorerStatusNotLoaded);
+
+        _workspaceContextService.CurrentWorkspaceChanged += OnWorkspaceContextChanged;
+        _workspaceContextService.WorkspaceEntriesChanged += OnWorkspaceContextChanged;
+        if (_workspaceCacheMaintenanceGateway is not null)
+        {
+            _workspaceCacheMaintenanceGateway.WorkspaceCacheChanged += OnWorkspaceCacheChanged;
+        }
 
         RefreshWorkspaceStatusChips();
     }
@@ -113,8 +133,10 @@ public sealed class BundleExplorerWorkspaceShellViewModel : ObservableObject, IB
             WorkspaceDataRootPath = resolvedNavigationRequest.WorkspaceDataRootPath ?? string.Empty,
             ForceNewWorkspaceSession = false
         };
+        _workspaceCacheUsageText = GetString(ResourceKeys.BundleExplorerStatusWorkspaceCacheLoading);
 
         NotifyWorkspaceShellChanged();
+        ScheduleWorkspaceCacheUsageRefresh();
         return _activeWorkspaceNavigationRequest;
     }
 
@@ -125,7 +147,19 @@ public sealed class BundleExplorerWorkspaceShellViewModel : ObservableObject, IB
     {
         _activeWorkspaceNavigationRequest = null;
         _workspaceSummary = null;
+        _workspaceCacheUsageText = GetString(ResourceKeys.BundleExplorerStatusNotLoaded);
+        _workspaceCacheUsageRefreshVersion++;
         NotifyWorkspaceShellChanged();
+    }
+
+    public void Dispose()
+    {
+        _workspaceContextService.CurrentWorkspaceChanged -= OnWorkspaceContextChanged;
+        _workspaceContextService.WorkspaceEntriesChanged -= OnWorkspaceContextChanged;
+        if (_workspaceCacheMaintenanceGateway is not null)
+        {
+            _workspaceCacheMaintenanceGateway.WorkspaceCacheChanged -= OnWorkspaceCacheChanged;
+        }
     }
 
     private WorkspaceNavigationRequest? BuildNavigationRequestFromWorkspaceSummary(WorkspaceSummaryDto? workspaceSummary)
@@ -185,9 +219,9 @@ public sealed class BundleExplorerWorkspaceShellViewModel : ObservableObject, IB
                 "\uE8B7"));
 
             WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
-                GetString(ResourceKeys.BundleExplorerStatusWorkspaceSessionCountLabel),
-                _workspaceContextService.WorkspaceEntryCount.ToString(CultureInfo.CurrentCulture),
-                "\uE71D"));
+                GetString(ResourceKeys.BundleExplorerStatusWorkspaceCacheLabel),
+                GetString(ResourceKeys.BundleExplorerStatusNotLoaded),
+                "\uE8D7"));
 
             WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
                 GetString(ResourceKeys.BundleExplorerStatusCurrentDecryptorLabel),
@@ -209,13 +243,153 @@ public sealed class BundleExplorerWorkspaceShellViewModel : ObservableObject, IB
             _workspaceSummary.AssetCount.ToString(CultureInfo.CurrentCulture),
             "\uE8A5"));
         WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
-            GetString(ResourceKeys.BundleExplorerStatusWorkspaceSessionCountLabel),
-            _workspaceContextService.WorkspaceEntryCount.ToString(CultureInfo.CurrentCulture),
-            "\uE71D"));
+            GetString(ResourceKeys.BundleExplorerStatusWorkspaceCacheLabel),
+            _workspaceCacheUsageText,
+            "\uE8D7"));
         WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
             GetString(ResourceKeys.BundleExplorerStatusCurrentDecryptorLabel),
             ResolveCurrentDecryptorDisplayName(),
             "\uE9CA"));
+    }
+
+    private void ScheduleWorkspaceCacheUsageRefresh()
+    {
+        if (_workspaceCacheMaintenanceGateway is null)
+        {
+            return;
+        }
+
+        var refreshVersion = ++_workspaceCacheUsageRefreshVersion;
+        _ = RefreshWorkspaceCacheUsageAsync(refreshVersion);
+    }
+
+    private async Task RefreshWorkspaceCacheUsageAsync(int refreshVersion)
+    {
+        if (!TryResolveCurrentWorkspaceCacheScope(out var workspaceKey, out var workspaceDataRootPath))
+        {
+            ApplyWorkspaceCacheUsageText(
+                refreshVersion,
+                GetString(ResourceKeys.BundleExplorerStatusNotLoaded));
+            return;
+        }
+
+        ApplyWorkspaceCacheUsageText(
+            refreshVersion,
+            GetString(ResourceKeys.BundleExplorerStatusWorkspaceCacheLoading));
+
+        Result<WorkspaceCacheUsageDto> result;
+        try
+        {
+            if (_backgroundWorkScheduler is not null)
+            {
+                result = await _backgroundWorkScheduler.RunAsync(
+                    new BackgroundWorkRequest<Result<WorkspaceCacheUsageDto>>(
+                        BackgroundWorkProfile.Maintenance,
+                        context => _workspaceCacheMaintenanceGateway!.GetWorkspaceCacheUsageAsync(
+                            new GetWorkspaceCacheUsageQuery(workspaceDataRootPath, workspaceKey),
+                            context.CancellationToken))
+                    {
+                        SemanticKind = BackgroundWorkSemanticKind.TransientRead,
+                        Priority = BackgroundWorkPriority.Maintenance,
+                        WorkspaceKey = workspaceKey,
+                        StatusTitle = GetString(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheRefreshStatusTitle),
+                        ShowInStatusBar = false
+                    });
+            }
+            else
+            {
+                result = await _workspaceCacheMaintenanceGateway!.GetWorkspaceCacheUsageAsync(
+                    new GetWorkspaceCacheUsageQuery(workspaceDataRootPath, workspaceKey));
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        catch
+        {
+            ApplyWorkspaceCacheUsageText(
+                refreshVersion,
+                GetString(ResourceKeys.BundleExplorerStatusWorkspaceCacheUnavailable));
+            return;
+        }
+
+        if (!result.IsSuccess || result.Value is null)
+        {
+            ApplyWorkspaceCacheUsageText(
+                refreshVersion,
+                GetString(ResourceKeys.BundleExplorerStatusWorkspaceCacheUnavailable));
+            return;
+        }
+
+        var usage = result.Value;
+        ApplyWorkspaceCacheUsageText(
+            refreshVersion,
+            _localizationService.GetFormattedString(
+                ResourceKeys.BundleExplorerStatusWorkspaceCacheValueFormat,
+                _valueFormatter.FormatCompactByteSize(usage.TotalSizeInBytes),
+                usage.TotalEntryCount.ToString(CultureInfo.CurrentCulture)));
+    }
+
+    private bool TryResolveCurrentWorkspaceCacheScope(
+        out string workspaceKey,
+        out string? workspaceDataRootPath)
+    {
+        if (_workspaceContextService.TryGetCurrentWorkspaceEntry(out var entry) &&
+            entry is not null &&
+            !string.IsNullOrWhiteSpace(entry.WorkspaceKey))
+        {
+            workspaceKey = entry.WorkspaceKey;
+            workspaceDataRootPath = entry.WorkspaceDataRootPath;
+            return true;
+        }
+
+        if (_workspaceSummary is not null &&
+            _activeWorkspaceNavigationRequest is not null)
+        {
+            workspaceKey = WorkspaceCatalogKeyFactory.CreateWorkspaceKey(
+                _workspaceSummary.SourcePath,
+                _activeWorkspaceNavigationRequest.WorkspaceDataRootPath);
+            workspaceDataRootPath = _activeWorkspaceNavigationRequest.WorkspaceDataRootPath;
+            return true;
+        }
+
+        workspaceKey = string.Empty;
+        workspaceDataRootPath = null;
+        return false;
+    }
+
+    private void ApplyWorkspaceCacheUsageText(int refreshVersion, string text)
+    {
+        if (refreshVersion != _workspaceCacheUsageRefreshVersion ||
+            string.Equals(_workspaceCacheUsageText, text, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _workspaceCacheUsageText = text;
+        RefreshWorkspaceStatusChips();
+        OnPropertyChanged(nameof(WorkspaceStatusChips));
+        NotifyPageStateChanged(BundleExplorerWorkspaceShellPageStateChange.StatusChips);
+    }
+
+    private void OnWorkspaceContextChanged(object? sender, EventArgs e)
+    {
+        RefreshWorkspaceStatusChips();
+        OnPropertyChanged(nameof(WorkspaceStatusChips));
+        NotifyPageStateChanged(BundleExplorerWorkspaceShellPageStateChange.StatusChips);
+        ScheduleWorkspaceCacheUsageRefresh();
+    }
+
+    private void OnWorkspaceCacheChanged(object? sender, WorkspaceCacheChangedEventArgs e)
+    {
+        if (!TryResolveCurrentWorkspaceCacheScope(out var workspaceKey, out _) ||
+            !string.Equals(workspaceKey, e.WorkspaceKey, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        ScheduleWorkspaceCacheUsageRefresh();
     }
 
     private void NotifyWorkspaceShellChanged()
