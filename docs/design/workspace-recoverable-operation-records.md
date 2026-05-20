@@ -75,7 +75,7 @@ checkpoints[]      # 后续：保存 / 导出检查点
 
 当前设计不立即实现：
 
-- 完整 redo 栈。
+- 完整跨操作全局 redo 栈；当前只实现目标资源级替换 redo，用于重做最近一次被撤销的替换。
 - 保存后跨输出包自动反向写回。
 - 自动删除用户已经导出的外部文件。
 - 真实编辑草稿内容格式。
@@ -146,6 +146,7 @@ diagnostics[]
 - `ReplaceFromWorkspace`
 - `ReplaceFromFile`
 - `UndoReplacement`
+- `RedoReplacement`
 - `EditDraftCreated`
 - `EditDraftUpdated`
 - `EditDraftApplied`
@@ -255,11 +256,19 @@ Presentation 负责把这些结构化字段格式化为用户可见文本；Appl
 3. 同一目标资源的多次替换形成顺序栈，新的替换可以 `supersedesOperationId` 指向上一次仍生效的替换。
 4. 物化状态只采用该目标资源最新的未撤销替换。
 
+当前第一版已把 `Texture2D` 作为修改链路的首个稳定类型接入：文件替换和工作区内替换都会先形成操作记录和运行时待保存状态，详情预览再按当前物化出的有效替换来源投影图片载荷；目标资产的 `BundleId / AssetId / PathId / Unity 类型` 等原始身份不随预览来源改变。后续 `Sprite / Spine / Mesh / Material` 等类型应复用同一“操作记录 -> 有效读模型 -> 预览投影”链路，而不是各自维护独立 UI 状态。
+
 撤销规则：
 
 - 撤销最新替换时，追加 `UndoReplacement` 操作，并把目标恢复到 `previousState`。
 - 如果 `previousState` 为空，目标恢复为原始未修改状态。
 - 如果 `previousState` 指向更早的替换，目标恢复为该替换的来源。
+
+重做规则：
+
+- 重做目标资源最近一次被撤销的替换时，追加 `RedoReplacement` 操作，而不是删除 `UndoReplacement` 历史。
+- `RedoReplacement` 只恢复该目标资源当前 redo 槽中的替换来源；如果同一目标在撤销后又应用了新的替换，旧 redo 槽应失效。
+- 当前 redo 是替换链路的目标资源级能力，不等同于跨提取、编辑、保存等所有操作的全局 redo 栈。
 
 恢复规则：
 
@@ -389,6 +398,8 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 - 批处理结果和日志可追溯；
 - 后续 redo 或历史查看有基础。
 
+当前替换链路已经落地目标资源级 redo：`RedoReplacement` 会作为新的操作事实追加，并重新物化为当前有效替换。该能力服务于替换记录和有效预览闭环，完整跨操作 redo 栈仍不在当前阶段范围内。
+
 ## 11. 与现有代码的演进关系
 
 建议分阶段落地。
@@ -408,9 +419,12 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
   在成功应用后追加操作记录。
 - `WorkspaceSummaryDto` 已携带轻量 `WorkspaceKey / WorkspaceDataRootPath`，Presentation 通过命令传给 Application；Presentation 不直接读写 `staging/changes`。
 - 已新增替换操作 recorder，由 Application 通过 `IWorkspaceDataStoreFactory` 读取并保存 `WorkspaceChangeSetDto`。
+- 已新增替换操作物化器和 `WorkspaceReplacementReadModelService`，导出 / 保存阶段后续应从该读模型读取当前有效替换列表，而不是扫描 UI 状态或直接解释兼容摘要字段。
+- 已让 `RedoAssetReplacementHandler` 追加 `RedoReplacement` 操作，并把当前会话内目标资源的 redo 槽重新应用为有效替换。
+- 已把 `Texture2D` 文件替换和工作区内替换接入有效预览：预览查询会优先读取当前物化替换来源，文件来源由 Infrastructure 的文件预览端口读取，工作区来源递归复用既有预览管线并把预览身份投影回目标资产。
 - `CachedWorkspaceSessionRegistry.OpenWorkspace` 已在打开工作区时读取 `operations[]`，并把当前生效的替换操作投影到运行时状态。
 - `WorkspaceChangeSummaryDto` 继续保持现有形状，替换状态可由重启恢复后的运行时状态生成。
-- 当前仍未完成来源文件指纹校验、来源缺失恢复计划、当前会话内多层撤销的精确回退 UI 提示；这些进入后续恢复计划 / 撤销栈细化。
+- 当前仍未完成来源文件指纹校验、来源缺失恢复计划、完整跨操作 redo 栈、批量替换结果明细和真实写包消费；这些进入后续恢复计划 / 保存导出细化。
 
 ### 第三阶段：提取操作接入
 
@@ -470,6 +484,9 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 - `JsonWorkspaceChangeStore` 可 round-trip `operations[]`、旧 `changes[]` 和 `editDrafts[]`。
 - 替换操作记录可在重启后恢复为当前替换状态。
 - 多次替换同一目标后，撤销只回退最新替换。
+- 目标资源级 `RedoReplacement` 可在撤销后恢复最近一次替换，并在应用新替换后失效旧 redo 槽。
+- `WorkspaceReplacementReadModelService` 可按操作事实流物化当前有效替换，供后续保存 / 统一导出消费。
+- `Texture2D` 文件替换和工作区内替换的详情预览显示有效来源，并保持目标资产身份不变。
 - 文件替换来源缺失或指纹变化时，恢复计划给出结构化诊断。
 - 提取中断后重启显示 `Interrupted`，不会误报为成功。
 - `Committed` 操作不参与普通撤销。

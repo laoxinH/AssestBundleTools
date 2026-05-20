@@ -2397,6 +2397,9 @@
   <data name="InspectorPanelView.UndoReplacementButton.Content" xml:space="preserve">
     <value>Undo</value>
   </data>
+  <data name="InspectorPanelView.RedoReplacementButton.Content" xml:space="preserve">
+    <value>Redo</value>
+  </data>
   <data name="InspectorPanelView.PreviewSurfaceTitleText.Text" xml:space="preserve">
     <value>Preview Surface Skeleton</value>
   </data>
@@ -3606,6 +3609,9 @@
   <data name="BundleExplorer.Log.ReplacementUndone" xml:space="preserve">
     <value>Undid the applied replacement for "{0}"</value>
   </data>
+  <data name="BundleExplorer.Log.ReplacementRedone" xml:space="preserve">
+    <value>Redid the replacement for "{0}"</value>
+  </data>
   <data name="BundleExplorer.Notification.WorkspaceLoaded" xml:space="preserve">
     <value>Workspace "{0}" loaded with {1} bundles and {2} assets.</value>
   </data>
@@ -3674,6 +3680,9 @@
   </data>
   <data name="BundleExplorer.Notification.ReplacementUndone" xml:space="preserve">
     <value>Replacement undone: {0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.ReplacementRedone" xml:space="preserve">
+    <value>Replacement redone: {0}</value>
   </data>
   <data name="FilePicker.Extraction.Type.Image" xml:space="preserve">
     <value>Image File</value>
@@ -3812,6 +3821,9 @@
   </data>
   <data name="Error.Asset.Replace.NoAppliedChange" xml:space="preserve">
     <value>No applied replacement is available to undo for this asset: {0}</value>
+  </data>
+  <data name="Error.Asset.Replace.NoRedoChange" xml:space="preserve">
+    <value>No replacement is available to redo for this asset: {0}</value>
   </data>
   <data name="Error.Asset.Replace.SourceFilePathRequired" xml:space="preserve">
     <value>A file path is required before applying a file replacement.</value>

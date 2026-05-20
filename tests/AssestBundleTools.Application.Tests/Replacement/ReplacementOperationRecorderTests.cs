@@ -208,6 +208,158 @@ internal static class ReplacementOperationRecorderTests
         TestAssert.Equal(@"C:\Imports\hero.png", undoOperation.PreviousState?.ReplacementSource?.SourceFilePath, "Undo previous replacement source should be recorded.");
     }
 
+    public static async Task RedoAssetReplacementHandler_ShouldAppendRedoOperation_ForLatestUndoRecord()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var workspaceKey = "workspace-a";
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.target");
+        var now = new DateTimeOffset(2026, 5, 10, 13, 30, 0, TimeSpan.Zero);
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            AssetType.Texture2D,
+            "HeroTexture"));
+        registry.TryRedoAssetReplacementResult = new AssetReplacementRedoResultDto(
+            WorkspaceId: workspaceId,
+            TargetBundleId: targetBundleId,
+            TargetAssetId: targetAssetId,
+            TargetAssetName: "HeroTexture",
+            RedoneAtUtc: now.AddMinutes(1));
+        var existingChangeSet = new WorkspaceChangeSetDto(
+            WorkspaceKey: workspaceKey,
+            UpdatedAtUtc: now,
+            Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+            EditDrafts: Array.Empty<WorkspaceAssetEditDraftDescriptorDto>(),
+            SchemaVersion: WorkspaceChangeSetDto.CurrentSchemaVersion,
+            OperationSequence: 4,
+            Operations:
+            [
+                new WorkspaceOperationRecordDto(
+                    OperationId: "replace-latest",
+                    Sequence: 3,
+                    OperationKind: WorkspaceOperationKind.ReplaceFromFile,
+                    Status: WorkspaceOperationStatus.Applied,
+                    WorkspaceKey: workspaceKey,
+                    Target: new WorkspaceOperationTargetDto(BundleId: targetBundleId.Value, AssetId: targetAssetId.Value),
+                    Source: new WorkspaceOperationSourceDto(SourceKind: "file", SourceFilePath: @"C:\Imports\hero.png"),
+                    PreviousState: null,
+                    Result: null,
+                    CreatedAtUtc: now,
+                    AppliedAtUtc: now),
+                new WorkspaceOperationRecordDto(
+                    OperationId: "undo-latest",
+                    Sequence: 4,
+                    OperationKind: WorkspaceOperationKind.UndoReplacement,
+                    Status: WorkspaceOperationStatus.Applied,
+                    WorkspaceKey: workspaceKey,
+                    Target: new WorkspaceOperationTargetDto(BundleId: targetBundleId.Value, AssetId: targetAssetId.Value),
+                    Source: null,
+                    PreviousState: null,
+                    Result: null,
+                    CreatedAtUtc: now.AddMinutes(1),
+                    AppliedAtUtc: now.AddMinutes(1),
+                    SupersedesOperationId: "replace-latest")
+            ]);
+        var changeStore = new TestWorkspaceChangeStore { ChangeSet = existingChangeSet };
+        var recorder = new WorkspaceReplacementOperationRecorder(
+            new TestWorkspaceDataStoreFactory(changeStore),
+            new WorkspaceOperationLogService());
+        var handler = new RedoAssetReplacementHandler(registry, recorder);
+
+        var result = await handler.HandleAsync(new RedoAssetReplacementCommand(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            workspaceKey,
+            @"D:\WorkspaceData\A"));
+
+        TestAssert.True(result.IsSuccess, "Redo should succeed.");
+        var savedOperations = changeStore.SavedChangeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>();
+        TestAssert.Equal(3, savedOperations.Count, "Redo operation should append to the log.");
+        var redoOperation = savedOperations[2];
+        TestAssert.Equal(WorkspaceOperationKind.RedoReplacement, redoOperation.OperationKind, "Redo should be recorded as its own operation.");
+        TestAssert.Equal("undo-latest", redoOperation.SupersedesOperationId, "Redo should point at the latest undo record.");
+        TestAssert.Equal(now.AddMinutes(1), redoOperation.AppliedAtUtc, "Redo should record the redo timestamp.");
+    }
+
+    public static Task WorkspaceReplacementReadModelService_ShouldMaterializeEffectiveReplacement_ForRedoStack()
+    {
+        var workspaceKey = "workspace-a";
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.target");
+        var now = new DateTimeOffset(2026, 5, 10, 14, 0, 0, TimeSpan.Zero);
+        var changeStore = new TestWorkspaceChangeStore
+        {
+            ChangeSet = new WorkspaceChangeSetDto(
+                WorkspaceKey: workspaceKey,
+                UpdatedAtUtc: now,
+                Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+                EditDrafts: Array.Empty<WorkspaceAssetEditDraftDescriptorDto>(),
+                SchemaVersion: WorkspaceChangeSetDto.CurrentSchemaVersion,
+                OperationSequence: 3,
+                Operations:
+                [
+                    new WorkspaceOperationRecordDto(
+                        OperationId: "replace-file",
+                        Sequence: 1,
+                        OperationKind: WorkspaceOperationKind.ReplaceFromFile,
+                        Status: WorkspaceOperationStatus.Applied,
+                        WorkspaceKey: workspaceKey,
+                        Target: new WorkspaceOperationTargetDto(BundleId: targetBundleId.Value, AssetId: targetAssetId.Value),
+                        Source: new WorkspaceOperationSourceDto(
+                            SourceKind: "file",
+                            SourceFilePath: @"C:\Imports\hero.png",
+                            SourceFileName: "hero.png",
+                            SourceAssetType: AssetType.Texture2D.ToString()),
+                        PreviousState: null,
+                        Result: null,
+                        CreatedAtUtc: now,
+                        AppliedAtUtc: now),
+                    new WorkspaceOperationRecordDto(
+                        OperationId: "undo-file",
+                        Sequence: 2,
+                        OperationKind: WorkspaceOperationKind.UndoReplacement,
+                        Status: WorkspaceOperationStatus.Applied,
+                        WorkspaceKey: workspaceKey,
+                        Target: new WorkspaceOperationTargetDto(BundleId: targetBundleId.Value, AssetId: targetAssetId.Value),
+                        Source: null,
+                        PreviousState: null,
+                        Result: null,
+                        CreatedAtUtc: now.AddMinutes(1),
+                        AppliedAtUtc: now.AddMinutes(1)),
+                    new WorkspaceOperationRecordDto(
+                        OperationId: "redo-file",
+                        Sequence: 3,
+                        OperationKind: WorkspaceOperationKind.RedoReplacement,
+                        Status: WorkspaceOperationStatus.Applied,
+                        WorkspaceKey: workspaceKey,
+                        Target: new WorkspaceOperationTargetDto(BundleId: targetBundleId.Value, AssetId: targetAssetId.Value),
+                        Source: null,
+                        PreviousState: null,
+                        Result: null,
+                        CreatedAtUtc: now.AddMinutes(2),
+                        AppliedAtUtc: now.AddMinutes(2))
+                ])
+        };
+        var service = new WorkspaceReplacementReadModelService(
+            new TestWorkspaceDataStoreFactory(changeStore));
+
+        var result = service.GetEffectiveReplacements(workspaceKey, @"D:\WorkspaceData\A");
+
+        TestAssert.True(result.IsSuccess, "Replacement read model should materialize from operation records.");
+        var replacement = TestAssert.Single(
+            result.Value?.EffectiveReplacements ?? Array.Empty<WorkspaceEffectiveReplacementDto>());
+        TestAssert.Equal("replace-file", replacement.OperationId, "Redo should restore the original replacement source operation.");
+        TestAssert.Equal(targetBundleId.Value, replacement.Target.BundleId, "Effective replacement should preserve target bundle.");
+        TestAssert.Equal(targetAssetId.Value, replacement.Target.AssetId, "Effective replacement should preserve target asset.");
+        TestAssert.Equal(@"C:\Imports\hero.png", replacement.Source.SourceFilePath, "Effective replacement should expose export-readable source data.");
+
+        return Task.CompletedTask;
+    }
+
     private static AssetDetailsDto CreateAssetDetails(
         WorkspaceId workspaceId,
         BundleId bundleId,
@@ -293,7 +445,7 @@ internal static class ReplacementOperationRecorderTests
             throw new NotSupportedException();
     }
 
-    private sealed class TestWorkspaceSessionRegistry : IWorkspaceSessionRegistry
+    private sealed class TestWorkspaceSessionRegistry : IWorkspaceSessionRegistry, IWorkspaceReplacementRedoSessionRegistry
     {
         private readonly Dictionary<(string BundleId, string AssetId), AssetDetailsDto> _assetDetails = new();
 
@@ -302,6 +454,8 @@ internal static class ReplacementOperationRecorderTests
         public AssetReplacementResultDto? TryReplaceAssetFromWorkspaceResult { get; set; }
 
         public AssetReplacementUndoResultDto? TryUndoAssetReplacementResult { get; set; }
+
+        public AssetReplacementRedoResultDto? TryRedoAssetReplacementResult { get; set; }
 
         public void RegisterAssetDetails(AssetDetailsDto details)
         {
@@ -357,6 +511,16 @@ internal static class ReplacementOperationRecorderTests
         {
             undoResult = TryUndoAssetReplacementResult;
             return undoResult is not null;
+        }
+
+        public bool TryRedoAssetReplacement(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            out AssetReplacementRedoResultDto? redoResult)
+        {
+            redoResult = TryRedoAssetReplacementResult;
+            return redoResult is not null;
         }
 
         public bool TryGetBundleTree(WorkspaceId workspaceId, out IReadOnlyList<BundleTreeNodeDto> bundleTree) =>

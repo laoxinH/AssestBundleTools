@@ -183,6 +183,10 @@
                                 x:Name="UndoReplacementButton"
                                 Click="OnUndoReplacementButtonClick"
                                 IsEnabled="{x:Bind ViewModel.Inspector.CanUndoReplacement, Mode=OneWay}" />
+                            <Button
+                                x:Name="RedoReplacementButton"
+                                Click="OnRedoReplacementButtonClick"
+                                IsEnabled="{x:Bind ViewModel.Inspector.CanRedoReplacement, Mode=OneWay}" />
                         </StackPanel>
                     </ScrollViewer>
                 </Border>

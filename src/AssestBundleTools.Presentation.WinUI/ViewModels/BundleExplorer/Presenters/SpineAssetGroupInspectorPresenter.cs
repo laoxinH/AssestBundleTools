@@ -116,6 +116,7 @@ internal sealed class SpineAssetGroupInspectorPresenter
         inspector.CanSelectReplacementSource = false;
         inspector.CanApplyReplacement = false;
         inspector.CanUndoReplacement = false;
+        inspector.CanRedoReplacement = false;
     }
 
     private AssetDependencyViewModel CreatePartDependency(SpineAssetGroupPartDto part)

@@ -175,7 +175,8 @@ internal sealed class BundleExplorerAssetInspectorPresenter
             dependencyClosureItems: (details.DependencyClosure ?? Array.Empty<AssetDependencyDto>())
                 .Select(MapDependency),
             bundleExternalDependencies: (details.BundleExternalDependencies ?? Array.Empty<BundleExternalDependencyDto>())
-                .Select(MapBundleExternalDependency));
+                .Select(MapBundleExternalDependency),
+            canRedoReplacement: canEdit && !isBusy && details.CanRedoReplacement);
     }
 
     public void SyncInspectorActionStates(
@@ -193,6 +194,7 @@ internal sealed class BundleExplorerAssetInspectorPresenter
             inspector.CanSelectReplacementSource = false;
             inspector.CanApplyReplacement = false;
             inspector.CanUndoReplacement = false;
+            inspector.CanRedoReplacement = false;
             return;
         }
 
@@ -201,9 +203,10 @@ internal sealed class BundleExplorerAssetInspectorPresenter
         inspector.CanSelectReplacementSource = !isBusy && assetTab.CanEdit && details.CanReplaceFromWorkspace;
         inspector.CanApplyReplacement = !isBusy &&
                                        assetTab.CanEdit &&
-                                       (assetTab.PendingWorkspaceReplacementCandidate is not null ||
-                                        assetTab.PendingFileReplacementCandidate is not null);
+                                        (assetTab.PendingWorkspaceReplacementCandidate is not null ||
+                                         assetTab.PendingFileReplacementCandidate is not null);
         inspector.CanUndoReplacement = !isBusy && assetTab.CanEdit && HasAppliedReplacement(details);
+        inspector.CanRedoReplacement = !isBusy && assetTab.CanEdit && details.CanRedoReplacement;
     }
 
     private AssetDependencyViewModel MapDependency(AssetDependencyDto dependency)

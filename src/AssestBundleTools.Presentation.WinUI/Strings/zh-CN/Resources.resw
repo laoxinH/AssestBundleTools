@@ -2397,6 +2397,9 @@
   <data name="InspectorPanelView.UndoReplacementButton.Content" xml:space="preserve">
     <value>撤销</value>
   </data>
+  <data name="InspectorPanelView.RedoReplacementButton.Content" xml:space="preserve">
+    <value>重做</value>
+  </data>
   <data name="InspectorPanelView.PreviewSurfaceTitleText.Text" xml:space="preserve">
     <value>预览区骨架</value>
   </data>
@@ -3606,6 +3609,9 @@
   <data name="BundleExplorer.Log.ReplacementUndone" xml:space="preserve">
     <value>已撤销资源“{0}”的已应用替换</value>
   </data>
+  <data name="BundleExplorer.Log.ReplacementRedone" xml:space="preserve">
+    <value>已重做资源“{0}”的替换</value>
+  </data>
   <data name="BundleExplorer.Notification.WorkspaceLoaded" xml:space="preserve">
     <value>已加载工作区“{0}”，共 {1} 个 Bundle、{2} 个资源。</value>
   </data>
@@ -3674,6 +3680,9 @@
   </data>
   <data name="BundleExplorer.Notification.ReplacementUndone" xml:space="preserve">
     <value>已撤销替换：{0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.ReplacementRedone" xml:space="preserve">
+    <value>已重做替换：{0}</value>
   </data>
   <data name="FilePicker.Extraction.Type.Image" xml:space="preserve">
     <value>图像文件</value>
@@ -3812,6 +3821,9 @@
   </data>
   <data name="Error.Asset.Replace.NoAppliedChange" xml:space="preserve">
     <value>当前资源没有可撤销的已应用替换：{0}</value>
+  </data>
+  <data name="Error.Asset.Replace.NoRedoChange" xml:space="preserve">
+    <value>当前资源没有可重做的替换：{0}</value>
   </data>
   <data name="Error.Asset.Replace.SourceFilePathRequired" xml:space="preserve">
     <value>应用文件替换前需要提供文件路径。</value>

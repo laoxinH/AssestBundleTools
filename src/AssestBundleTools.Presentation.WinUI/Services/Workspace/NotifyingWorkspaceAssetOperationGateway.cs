@@ -80,6 +80,15 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         return result;
     }
 
+    public async Task<Result<AssetReplacementRedoResultDto>> RedoAssetReplacementAsync(
+        RedoAssetReplacementCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _inner.RedoAssetReplacementAsync(command, cancellationToken);
+        NotifyIfSucceeded(result, command.WorkspaceId, WorkspaceOperationChangeKind.Replacement);
+        return result;
+    }
+
     private void NotifyIfSucceeded<T>(
         Result<T> result,
         WorkspaceId workspaceId,

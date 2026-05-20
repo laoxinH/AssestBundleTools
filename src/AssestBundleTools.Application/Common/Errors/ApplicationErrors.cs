@@ -490,6 +490,15 @@ public static class ApplicationErrors
             parameters: CreateParameters(("AssetId", assetId.ToString())),
             isUserActionable: true);
 
+    public static AppError NoRedoReplacement(AssetId assetId) =>
+        new(
+            code: "Asset.Replace.NoRedoChange",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.Replace.NoRedoChange",
+            parameters: CreateParameters(("AssetId", assetId.ToString())),
+            isUserActionable: true);
+
     public static AppError WorkspaceNotFound(WorkspaceId workspaceId) =>
         new(
             code: "Workspace.Query.NotFound",

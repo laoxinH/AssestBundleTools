@@ -192,6 +192,25 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
             _operationFeedbackBridge.AppendResultFailure);
     }
 
+    public async Task RedoAppliedReplacementAsync()
+    {
+        if (!TryGetActiveAssetCommandContext(
+                static (_, details) => details.CanRedoReplacement,
+                out var workspaceSummary,
+                out var assetTab,
+                out var details))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.RedoAppliedReplacementAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            _setBusy,
+            _operationFeedbackBridge.AppendResultFailure);
+    }
+
     private bool TryGetActiveAssetDocumentState(
         [NotNullWhen(true)] out AssetDocumentTabViewModel? assetTab,
         [NotNullWhen(true)] out AssetDetailsDto? details)

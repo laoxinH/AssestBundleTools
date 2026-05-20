@@ -397,6 +397,65 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.Equal(0, registry.TryUndoAssetReplacementCallCount, "Missing asset should not invoke the registry.");
     }
 
+    public static async Task RedoAssetReplacementHandler_ShouldApplyRedo_WhenRedoSnapshotExists()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.target");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            assetType: AssetType.Texture2D,
+            assetName: "HeroTexture"));
+        registry.TryRedoAssetReplacementResult = new AssetReplacementRedoResultDto(
+            WorkspaceId: workspaceId,
+            TargetBundleId: targetBundleId,
+            TargetAssetId: targetAssetId,
+            TargetAssetName: "HeroTexture",
+            RedoneAtUtc: new DateTimeOffset(2026, 5, 20, 8, 0, 0, TimeSpan.Zero));
+        var handler = new RedoAssetReplacementHandler(registry);
+
+        var result = await handler.HandleAsync(new RedoAssetReplacementCommand(
+            workspaceId,
+            targetBundleId,
+            targetAssetId));
+
+        TestAssert.True(result.IsSuccess, "Redo should succeed when the registry exposes a redo snapshot.");
+        var redo = result.Value ?? throw new InvalidOperationException("Expected redo result.");
+        TestAssert.Equal("HeroTexture", redo.TargetAssetName, "Redo result should expose target asset name.");
+        TestAssert.Equal(1, registry.TryRedoAssetReplacementCallCount, "Redo should invoke the redo-capable registry once.");
+    }
+
+    public static async Task RedoAssetReplacementHandler_ShouldReturnFailure_WhenNoRedoSnapshotExists()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.target");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            assetType: AssetType.Texture2D,
+            assetName: "HeroTexture"));
+        registry.TryRedoAssetReplacementReturnValue = false;
+        var handler = new RedoAssetReplacementHandler(registry);
+
+        var result = await handler.HandleAsync(new RedoAssetReplacementCommand(
+            workspaceId,
+            targetBundleId,
+            targetAssetId));
+
+        TestAssert.True(result.IsFailure, "Redo should fail when no redo snapshot exists.");
+        TestAssert.Equal(
+            "Asset.Replace.NoRedoChange",
+            TestAssert.Single(result.Errors).Code,
+            "Failure should report that no redo replacement exists.");
+        TestAssert.Equal(1, registry.TryRedoAssetReplacementCallCount, "Redo attempt should still hit the registry once.");
+    }
+
     public static async Task GetWorkspaceBatchReplacementPreviewHandler_ShouldGroupCandidates_ByBundleAndSourceFilter()
     {
         var workspaceId = CreateWorkspaceId();
@@ -597,7 +656,7 @@ internal static class ReplacementWorkflowHandlerTests
             LastChangedAtUtc: appliedAtUtc);
     }
 
-    private sealed class TestWorkspaceSessionRegistry : IWorkspaceSessionRegistry
+    private sealed class TestWorkspaceSessionRegistry : IWorkspaceSessionRegistry, IWorkspaceReplacementRedoSessionRegistry
     {
         private readonly Dictionary<(string BundleId, string AssetId), AssetDetailsDto> _assetDetails =
             new();
@@ -616,6 +675,10 @@ internal static class ReplacementWorkflowHandlerTests
 
         public bool TryUndoAssetReplacementReturnValue { get; set; } = true;
 
+        public AssetReplacementRedoResultDto? TryRedoAssetReplacementResult { get; set; }
+
+        public bool TryRedoAssetReplacementReturnValue { get; set; } = true;
+
         public WorkspaceChangeSummaryDto? WorkspaceChangeSummary { get; set; }
 
         public int TryReplaceAssetFromFileCallCount { get; private set; }
@@ -623,6 +686,8 @@ internal static class ReplacementWorkflowHandlerTests
         public int TryReplaceAssetFromWorkspaceCallCount { get; private set; }
 
         public int TryUndoAssetReplacementCallCount { get; private set; }
+
+        public int TryRedoAssetReplacementCallCount { get; private set; }
 
         public string? LastFileReplacementSourceFilePath { get; private set; }
 
@@ -748,6 +813,17 @@ internal static class ReplacementWorkflowHandlerTests
             TryUndoAssetReplacementCallCount++;
             undoResult = TryUndoAssetReplacementResult;
             return TryUndoAssetReplacementReturnValue;
+        }
+
+        public bool TryRedoAssetReplacement(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            out AssetReplacementRedoResultDto? redoResult)
+        {
+            TryRedoAssetReplacementCallCount++;
+            redoResult = TryRedoAssetReplacementResult;
+            return TryRedoAssetReplacementReturnValue && redoResult is not null;
         }
 
         public bool TryOpenAssetInPane(

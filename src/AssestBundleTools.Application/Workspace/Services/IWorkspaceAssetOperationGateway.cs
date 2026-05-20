@@ -39,4 +39,8 @@ public interface IWorkspaceAssetOperationGateway
     Task<Result<AssetReplacementUndoResultDto>> UndoAssetReplacementAsync(
         UndoAssetReplacementCommand command,
         CancellationToken cancellationToken = default);
+
+    Task<Result<AssetReplacementRedoResultDto>> RedoAssetReplacementAsync(
+        RedoAssetReplacementCommand command,
+        CancellationToken cancellationToken = default);
 }

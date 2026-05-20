@@ -79,6 +79,47 @@ internal static partial class GetAssetPreviewHandlerTests
             DecryptorVersion: "1.0.0");
     }
 
+    private static AssetDetailsDto CreateAssetDetails(
+        GetAssetPreviewQuery query,
+        string? name = null,
+        string? fileReplacementSourceFileName = null,
+        string? fileReplacementSourcePath = null,
+        BundleId? workspaceReplacementSourceBundleId = null,
+        AssetId? workspaceReplacementSourceAssetId = null,
+        string? workspaceReplacementSourceBundleDisplayName = null,
+        string? workspaceReplacementSourceAssetName = null)
+    {
+        var hasFileReplacement = !string.IsNullOrWhiteSpace(fileReplacementSourcePath);
+        var hasWorkspaceReplacement = workspaceReplacementSourceBundleId.HasValue &&
+                                      workspaceReplacementSourceAssetId.HasValue;
+        return new AssetDetailsDto(
+            WorkspaceId: query.WorkspaceId,
+            BundleId: query.BundleId,
+            AssetId: query.AssetId,
+            Name: name ?? "HeroPortrait",
+            AssetPath: "Assets/HeroPortrait.png",
+            ContainerPath: "Assets",
+            AssetType: AssetType.Texture2D,
+            SizeInBytes: 256,
+            PreferredDisplaySizeInBytes: 256,
+            PathId: 12345,
+            IsModified: hasFileReplacement || hasWorkspaceReplacement,
+            CanExtract: true,
+            CanReplaceFromFile: true,
+            CanReplaceFromWorkspace: true,
+            WorkspaceReplacementSourceBundleDisplayName: workspaceReplacementSourceBundleDisplayName,
+            WorkspaceReplacementSourceAssetName: workspaceReplacementSourceAssetName,
+            WorkspaceReplacementSourceAssetType: hasWorkspaceReplacement ? AssetType.Texture2D : null,
+            FileReplacementSourceFileName: fileReplacementSourceFileName,
+            FileReplacementSourcePath: fileReplacementSourcePath,
+            FileReplacementSourceAssetType: hasFileReplacement ? AssetType.Texture2D : null,
+            LastExtractedAtUtc: null,
+            Dependencies: Array.Empty<AssetDependencyDto>(),
+            AssetTypeDisplayName: AssetType.Texture2D.ToString(),
+            WorkspaceReplacementSourceBundleId: workspaceReplacementSourceBundleId,
+            WorkspaceReplacementSourceAssetId: workspaceReplacementSourceAssetId);
+    }
+
     private static AssetBundleDecryptorDescriptorDto CreatePassThroughDecryptorDescriptor()
     {
         return new AssetBundleDecryptorDescriptorDto(

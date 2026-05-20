@@ -14,6 +14,7 @@ public enum WorkspaceOperationKind
     ReplaceFromWorkspace,
     ReplaceFromFile,
     UndoReplacement,
+    RedoReplacement,
     EditDraftCreated,
     EditDraftUpdated,
     EditDraftApplied,

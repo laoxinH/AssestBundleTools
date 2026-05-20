@@ -240,6 +240,10 @@ public sealed partial class CachedWorkspaceSessionRegistry
         public AppliedWorkspaceReplacementState? AppliedWorkspaceReplacement { get; set; }
 
         public AppliedFileReplacementState? AppliedFileReplacement { get; set; }
+
+        public List<AppliedReplacementSnapshot?> ReplacementUndoStack { get; } = [];
+
+        public List<AppliedReplacementSnapshot?> ReplacementRedoStack { get; } = [];
     }
 
     private sealed record AppliedWorkspaceReplacementState(
@@ -255,4 +259,76 @@ public sealed partial class CachedWorkspaceSessionRegistry
         string SourceFileName,
         AssetType SourceAssetType,
         DateTimeOffset AppliedAtUtc);
+
+    private sealed record AppliedReplacementSnapshot(
+        AppliedWorkspaceReplacementState? WorkspaceReplacement,
+        AppliedFileReplacementState? FileReplacement);
+
+    private static void ApplyReplacementSnapshot(
+        CachedAssetState assetState,
+        AppliedReplacementSnapshot replacementSnapshot)
+    {
+        assetState.ReplacementUndoStack.Add(CaptureReplacementSnapshot(assetState));
+        assetState.ReplacementRedoStack.Clear();
+        RestoreReplacementSnapshot(assetState, replacementSnapshot);
+    }
+
+    private static void UndoReplacementSnapshot(CachedAssetState assetState)
+    {
+        var currentReplacement = CaptureReplacementSnapshot(assetState);
+        if (currentReplacement is null)
+        {
+            return;
+        }
+
+        assetState.ReplacementRedoStack.Add(currentReplacement);
+        RestoreReplacementSnapshot(assetState, PopReplacementSnapshot(assetState.ReplacementUndoStack));
+    }
+
+    private static void RedoReplacementSnapshot(CachedAssetState assetState)
+    {
+        var redoReplacement = PopReplacementSnapshot(assetState.ReplacementRedoStack);
+        if (redoReplacement is null)
+        {
+            return;
+        }
+
+        assetState.ReplacementUndoStack.Add(CaptureReplacementSnapshot(assetState));
+        RestoreReplacementSnapshot(assetState, redoReplacement);
+    }
+
+    private static AppliedReplacementSnapshot? CaptureReplacementSnapshot(CachedAssetState assetState)
+    {
+        if (assetState.AppliedWorkspaceReplacement is null &&
+            assetState.AppliedFileReplacement is null)
+        {
+            return null;
+        }
+
+        return new AppliedReplacementSnapshot(
+            assetState.AppliedWorkspaceReplacement,
+            assetState.AppliedFileReplacement);
+    }
+
+    private static void RestoreReplacementSnapshot(
+        CachedAssetState assetState,
+        AppliedReplacementSnapshot? replacementSnapshot)
+    {
+        assetState.AppliedWorkspaceReplacement = replacementSnapshot?.WorkspaceReplacement;
+        assetState.AppliedFileReplacement = replacementSnapshot?.FileReplacement;
+        assetState.IsModified = replacementSnapshot is not null;
+    }
+
+    private static AppliedReplacementSnapshot? PopReplacementSnapshot(
+        IList<AppliedReplacementSnapshot?> stack)
+    {
+        if (stack.Count == 0)
+        {
+            return null;
+        }
+
+        var snapshot = stack[^1];
+        stack.RemoveAt(stack.Count - 1);
+        return snapshot;
+    }
 }

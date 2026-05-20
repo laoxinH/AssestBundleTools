@@ -35,6 +35,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     private bool _canSelectReplacementSource;
     private bool _canApplyReplacement;
     private bool _canUndoReplacement;
+    private bool _canRedoReplacement;
     private bool _hasSelection;
     private int _selectedSectionIndex;
     private readonly InspectorInformationCardPresenter _informationCardPresenter;
@@ -180,6 +181,12 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         set => SetProperty(ref _canUndoReplacement, value);
     }
 
+    public bool CanRedoReplacement
+    {
+        get => _canRedoReplacement;
+        set => SetProperty(ref _canRedoReplacement, value);
+    }
+
     public bool CanModify => CanSelectReplacementSource || CanApplyReplacement;
 
     /// <summary>
@@ -282,6 +289,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         CanSelectReplacementSource = false;
         CanApplyReplacement = false;
         CanUndoReplacement = false;
+        CanRedoReplacement = false;
         AssetDependencies.Clear();
         ReferencedByDependencies.Clear();
         DependencyClosureItems.Clear();
@@ -316,7 +324,8 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         IEnumerable<AssetDependencyViewModel> assetDependencies,
         IEnumerable<AssetDependencyViewModel> referencedByDependencies,
         IEnumerable<AssetDependencyViewModel> dependencyClosureItems,
-        IEnumerable<BundleExternalDependencyViewModel> bundleExternalDependencies)
+        IEnumerable<BundleExternalDependencyViewModel> bundleExternalDependencies,
+        bool canRedoReplacement = false)
     {
         AssetName = assetName;
         BundleDisplayName = bundleDisplayName;
@@ -336,6 +345,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         CanSelectReplacementSource = canSelectReplacementSource;
         CanApplyReplacement = canApplyReplacement;
         CanUndoReplacement = canUndoReplacement;
+        CanRedoReplacement = canRedoReplacement;
 
         ReplaceCollection(AssetDependencies, assetDependencies);
         ReplaceCollection(ReferencedByDependencies, referencedByDependencies);

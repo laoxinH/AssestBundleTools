@@ -19,6 +19,7 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
     private readonly ReplaceAssetFromFileHandler _replaceAssetFromFileHandler;
     private readonly ReplaceAssetFromWorkspaceHandler _replaceAssetFromWorkspaceHandler;
     private readonly UndoAssetReplacementHandler _undoAssetReplacementHandler;
+    private readonly RedoAssetReplacementHandler _redoAssetReplacementHandler;
 
     public WorkspaceAssetOperationGateway(
         ExtractAssetHandler extractAssetHandler,
@@ -27,7 +28,8 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         GetWorkspaceReplacementCandidatesHandler getWorkspaceReplacementCandidatesHandler,
         ReplaceAssetFromFileHandler replaceAssetFromFileHandler,
         ReplaceAssetFromWorkspaceHandler replaceAssetFromWorkspaceHandler,
-        UndoAssetReplacementHandler undoAssetReplacementHandler)
+        UndoAssetReplacementHandler undoAssetReplacementHandler,
+        RedoAssetReplacementHandler redoAssetReplacementHandler)
     {
         _extractAssetHandler = extractAssetHandler ?? throw new ArgumentNullException(nameof(extractAssetHandler));
         _extractSpineAssetGroupHandler = extractSpineAssetGroupHandler ?? throw new ArgumentNullException(nameof(extractSpineAssetGroupHandler));
@@ -36,6 +38,7 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         _replaceAssetFromFileHandler = replaceAssetFromFileHandler ?? throw new ArgumentNullException(nameof(replaceAssetFromFileHandler));
         _replaceAssetFromWorkspaceHandler = replaceAssetFromWorkspaceHandler ?? throw new ArgumentNullException(nameof(replaceAssetFromWorkspaceHandler));
         _undoAssetReplacementHandler = undoAssetReplacementHandler ?? throw new ArgumentNullException(nameof(undoAssetReplacementHandler));
+        _redoAssetReplacementHandler = redoAssetReplacementHandler ?? throw new ArgumentNullException(nameof(redoAssetReplacementHandler));
     }
 
     public Task<Result<AssetExtractionResultDto>> ExtractAssetAsync(
@@ -72,4 +75,9 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         UndoAssetReplacementCommand command,
         CancellationToken cancellationToken = default) =>
         _undoAssetReplacementHandler.HandleAsync(command, cancellationToken);
+
+    public Task<Result<AssetReplacementRedoResultDto>> RedoAssetReplacementAsync(
+        RedoAssetReplacementCommand command,
+        CancellationToken cancellationToken = default) =>
+        _redoAssetReplacementHandler.HandleAsync(command, cancellationToken);
 }

@@ -139,13 +139,15 @@ public sealed partial class CachedWorkspaceSessionRegistry
                 sourceFileName = normalizedSourcePath;
             }
 
-            targetAssetState.IsModified = true;
-            targetAssetState.AppliedWorkspaceReplacement = null;
-            targetAssetState.AppliedFileReplacement = new AppliedFileReplacementState(
-                normalizedSourcePath,
-                sourceFileName,
-                sourceAssetType,
-                appliedAtUtc);
+            ApplyReplacementSnapshot(
+                targetAssetState,
+                new AppliedReplacementSnapshot(
+                    WorkspaceReplacement: null,
+                    FileReplacement: new AppliedFileReplacementState(
+                        normalizedSourcePath,
+                        sourceFileName,
+                        sourceAssetType,
+                        appliedAtUtc)));
 
             replacementResult = new AssetFileReplacementResultDto(
                 WorkspaceId: workspaceState.Summary.WorkspaceId,
@@ -181,15 +183,17 @@ public sealed partial class CachedWorkspaceSessionRegistry
             }
 
             var replacedAtUtc = DateTimeOffset.UtcNow;
-            targetAssetState.IsModified = true;
-            targetAssetState.AppliedFileReplacement = null;
-            targetAssetState.AppliedWorkspaceReplacement = new AppliedWorkspaceReplacementState(
-                sourceBundleState.BundleId,
-                sourceAssetState.AssetId,
-                sourceBundleState.DisplayName,
-                sourceAssetState.Name,
-                sourceAssetState.AssetType,
-                replacedAtUtc);
+            ApplyReplacementSnapshot(
+                targetAssetState,
+                new AppliedReplacementSnapshot(
+                    WorkspaceReplacement: new AppliedWorkspaceReplacementState(
+                        sourceBundleState.BundleId,
+                        sourceAssetState.AssetId,
+                        sourceBundleState.DisplayName,
+                        sourceAssetState.Name,
+                        sourceAssetState.AssetType,
+                        replacedAtUtc),
+                    FileReplacement: null));
 
             replacementResult = new AssetReplacementResultDto(
                 WorkspaceId: workspaceState.Summary.WorkspaceId,
@@ -222,15 +226,41 @@ public sealed partial class CachedWorkspaceSessionRegistry
                 return false;
             }
 
-            assetState.AppliedWorkspaceReplacement = null;
-            assetState.AppliedFileReplacement = null;
-            assetState.IsModified = false;
+            UndoReplacementSnapshot(assetState);
 
             undoResult = new AssetReplacementUndoResultDto(
                 WorkspaceId: workspaceState.Summary.WorkspaceId,
                 TargetBundleId: bundleState.BundleId,
                 TargetAssetId: assetState.AssetId,
                 TargetAssetName: assetState.Name);
+
+            return true;
+        }
+    }
+
+    public bool TryRedoAssetReplacement(
+        WorkspaceId workspaceId,
+        BundleId bundleId,
+        AssetId assetId,
+        out AssetReplacementRedoResultDto? redoResult)
+    {
+        lock (_syncRoot)
+        {
+            if (!TryGetAssetStateUnsafe(workspaceId, bundleId, assetId, out var assetState, out var bundleState, out var workspaceState) ||
+                assetState.ReplacementRedoStack.Count == 0)
+            {
+                redoResult = null;
+                return false;
+            }
+
+            RedoReplacementSnapshot(assetState);
+
+            redoResult = new AssetReplacementRedoResultDto(
+                WorkspaceId: workspaceState.Summary.WorkspaceId,
+                TargetBundleId: bundleState.BundleId,
+                TargetAssetId: assetState.AssetId,
+                TargetAssetName: assetState.Name,
+                RedoneAtUtc: DateTimeOffset.UtcNow);
 
             return true;
         }
@@ -248,11 +278,15 @@ public sealed partial class CachedWorkspaceSessionRegistry
 
         var changeStore = _workspaceDataStoreFactory.CreateWorkspaceChangeStore(request.WorkspaceDataRootPath);
         var changeSet = changeStore.Load(request.WorkspaceKey);
-        foreach (var operation in _operationLogService.GetActiveOperations(changeSet)
+        foreach (var operation in (changeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>())
+            .Where(static operation => operation is not null)
+            .Where(static operation => operation.Status == WorkspaceOperationStatus.Applied)
             .OrderBy(static operation => operation.Sequence))
         {
             ApplyPersistedExtractionOperation(workspaceState, operation);
             ApplyPersistedReplacementOperation(workspaceState, operation);
+            ApplyPersistedUndoReplacementOperation(workspaceState, operation);
+            ApplyPersistedRedoReplacementOperation(workspaceState, operation);
         }
     }
 
@@ -326,13 +360,15 @@ public sealed partial class CachedWorkspaceSessionRegistry
             sourceFileName = sourceFilePath;
         }
 
-        targetAssetState.IsModified = true;
-        targetAssetState.AppliedWorkspaceReplacement = null;
-        targetAssetState.AppliedFileReplacement = new AppliedFileReplacementState(
-            sourceFilePath,
-            sourceFileName,
-            ParseAssetType(operation.Source.SourceAssetType ?? targetAssetState.AssetType.ToString()),
-            operation.AppliedAtUtc ?? operation.CompletedAtUtc ?? operation.CreatedAtUtc);
+        ApplyReplacementSnapshot(
+            targetAssetState,
+            new AppliedReplacementSnapshot(
+                WorkspaceReplacement: null,
+                FileReplacement: new AppliedFileReplacementState(
+                    sourceFilePath,
+                    sourceFileName,
+                    ParseAssetType(operation.Source.SourceAssetType ?? targetAssetState.AssetType.ToString()),
+                    operation.AppliedAtUtc ?? operation.CompletedAtUtc ?? operation.CreatedAtUtc)));
     }
 
     private static void ApplyPersistedWorkspaceReplacement(
@@ -355,14 +391,60 @@ public sealed partial class CachedWorkspaceSessionRegistry
             return;
         }
 
-        targetAssetState.IsModified = true;
-        targetAssetState.AppliedFileReplacement = null;
-        targetAssetState.AppliedWorkspaceReplacement = new AppliedWorkspaceReplacementState(
-            sourceBundleState.BundleId,
-            sourceAssetState.AssetId,
-            sourceBundleState.DisplayName,
-            sourceAssetState.Name,
-            sourceAssetState.AssetType,
-            operation.AppliedAtUtc ?? operation.CompletedAtUtc ?? operation.CreatedAtUtc);
+        ApplyReplacementSnapshot(
+            targetAssetState,
+            new AppliedReplacementSnapshot(
+                WorkspaceReplacement: new AppliedWorkspaceReplacementState(
+                    sourceBundleState.BundleId,
+                    sourceAssetState.AssetId,
+                    sourceBundleState.DisplayName,
+                    sourceAssetState.Name,
+                    sourceAssetState.AssetType,
+                    operation.AppliedAtUtc ?? operation.CompletedAtUtc ?? operation.CreatedAtUtc),
+                FileReplacement: null));
+    }
+
+    private static void ApplyPersistedUndoReplacementOperation(
+        WorkspaceSessionState workspaceState,
+        WorkspaceOperationRecordDto operation)
+    {
+        if (operation.OperationKind != WorkspaceOperationKind.UndoReplacement ||
+            string.IsNullOrWhiteSpace(operation.Target?.BundleId) ||
+            string.IsNullOrWhiteSpace(operation.Target.AssetId) ||
+            !workspaceState.BundlesById.TryGetValue(operation.Target.BundleId, out var targetBundleState))
+        {
+            return;
+        }
+
+        var targetAssetState = targetBundleState.Assets.FirstOrDefault(asset =>
+            string.Equals(asset.AssetId.Value, operation.Target.AssetId, StringComparison.Ordinal));
+        if (targetAssetState is null || !targetAssetState.CanReplace)
+        {
+            return;
+        }
+
+        UndoReplacementSnapshot(targetAssetState);
+    }
+
+    private static void ApplyPersistedRedoReplacementOperation(
+        WorkspaceSessionState workspaceState,
+        WorkspaceOperationRecordDto operation)
+    {
+        if (operation.OperationKind != WorkspaceOperationKind.RedoReplacement ||
+            string.IsNullOrWhiteSpace(operation.Target?.BundleId) ||
+            string.IsNullOrWhiteSpace(operation.Target.AssetId) ||
+            !workspaceState.BundlesById.TryGetValue(operation.Target.BundleId, out var targetBundleState))
+        {
+            return;
+        }
+
+        var targetAssetState = targetBundleState.Assets.FirstOrDefault(asset =>
+            string.Equals(asset.AssetId.Value, operation.Target.AssetId, StringComparison.Ordinal));
+        if (targetAssetState is null || !targetAssetState.CanReplace)
+        {
+            return;
+        }
+
+        RedoReplacementSnapshot(targetAssetState);
     }
 }

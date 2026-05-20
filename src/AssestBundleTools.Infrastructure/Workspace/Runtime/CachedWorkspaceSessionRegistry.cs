@@ -15,7 +15,7 @@ namespace AssestBundleTools.Infrastructure.Workspace.Runtime;
 /// 当前阶段只要求资源包列表摆脱假数据，因此该实现优先消费
 /// `cache/bundle-index` 中的读模型，并在资产级真实解析接入前保持轻量可扩展。
 /// </remarks>
-public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRegistry
+public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRegistry, IWorkspaceReplacementRedoSessionRegistry
 {
     private readonly object _syncRoot = new();
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
@@ -224,7 +224,10 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
                 SerializedFileName: assetState.SerializedFileName,
                 TextureAssociations: workspaceState.TryGetTextureAssociations(assetState.AssetId, out var textureAssociations)
                     ? textureAssociations
-                    : Array.Empty<AssetDependencyDto>());
+                    : Array.Empty<AssetDependencyDto>(),
+                WorkspaceReplacementSourceBundleId: assetState.AppliedWorkspaceReplacement?.SourceBundleId,
+                WorkspaceReplacementSourceAssetId: assetState.AppliedWorkspaceReplacement?.SourceAssetId,
+                CanRedoReplacement: assetState.ReplacementRedoStack.Count > 0);
 
             return true;
         }

@@ -8,10 +8,12 @@ using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Messages;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Replacement.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Internal;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Bundles;
 
 namespace AssestBundleTools.Application.Assets.Queries;
 
@@ -34,6 +36,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
     private readonly IBundleArtifactSessionInvalidator _bundleArtifactSessionInvalidator;
     private readonly IBundleArtifactCachePrunePolicy _bundleArtifactCachePrunePolicy;
     private readonly IPreviewCachePrunePolicy _previewCachePrunePolicy;
+    private readonly ReplacementEffectivePreviewResolver _replacementEffectivePreviewResolver;
 
     public GetAssetPreviewHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
@@ -43,7 +46,8 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         IAudioPayloadTranscodingService audioPayloadTranscodingService,
         IBundleArtifactSessionInvalidator? bundleArtifactSessionInvalidator = null,
         IBundleArtifactCachePrunePolicy? bundleArtifactCachePrunePolicy = null,
-        IPreviewCachePrunePolicy? previewCachePrunePolicy = null)
+        IPreviewCachePrunePolicy? previewCachePrunePolicy = null,
+        IReplacementPreviewSourceProvider? replacementPreviewSourceProvider = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
@@ -53,10 +57,19 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         _bundleArtifactSessionInvalidator = bundleArtifactSessionInvalidator ?? NoOpBundleArtifactSessionInvalidator.Instance;
         _bundleArtifactCachePrunePolicy = bundleArtifactCachePrunePolicy ?? NoOpBundleArtifactCachePrunePolicy.Instance;
         _previewCachePrunePolicy = previewCachePrunePolicy ?? NoOpPreviewCachePrunePolicy.Instance;
+        _replacementEffectivePreviewResolver = new ReplacementEffectivePreviewResolver(
+            _workspaceSessionRegistry,
+            replacementPreviewSourceProvider);
     }
 
-    public async Task<Result<AssetPreviewDto>> HandleAsync(
+    public Task<Result<AssetPreviewDto>> HandleAsync(
         GetAssetPreviewQuery query,
+        CancellationToken cancellationToken = default) =>
+        HandlePreviewAsync(query, [], cancellationToken);
+
+    private async Task<Result<AssetPreviewDto>> HandlePreviewAsync(
+        GetAssetPreviewQuery query,
+        HashSet<string> replacementPreviewStack,
         CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
@@ -119,6 +132,17 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         if (assetCacheEntry is null)
         {
             return Result<AssetPreviewDto>.Failure(ApplicationErrors.AssetNotFound(query.AssetId));
+        }
+
+        var effectiveReplacementPreview = await _replacementEffectivePreviewResolver.TryLoadAsync(
+            query,
+            assetCacheEntry,
+            replacementPreviewStack,
+            HandlePreviewAsync,
+            cancellationToken);
+        if (effectiveReplacementPreview is not null)
+        {
+            return effectiveReplacementPreview;
         }
 
         var previewCacheKey = CreatePreviewCacheKey(bundleCacheEntry.BundleCacheKey, assetCacheEntry.AssetId);
@@ -504,4 +528,5 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         PreviewCachePayloadDto? Payload,
         AssetPreviewCacheStatusKind CacheStatus,
         LocalizedMessageDto? DetailMessage);
+
 }

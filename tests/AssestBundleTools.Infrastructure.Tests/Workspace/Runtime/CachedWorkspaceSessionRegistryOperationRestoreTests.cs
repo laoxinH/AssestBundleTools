@@ -128,6 +128,80 @@ internal static class CachedWorkspaceSessionRegistryOperationRestoreTests
         TestAssert.Equal(null, details.WorkspaceReplacementSourceAssetName, "Superseded workspace replacement should not be materialized.");
     }
 
+    public static void OpenWorkspace_ShouldMaterializePersistedRedoReplacementOperation_FromChangeSet()
+    {
+        var workspaceKey = "workspace-a";
+        var bundleId = "bundle.textures";
+        var targetAssetId = "asset.target";
+        var sourceAssetId = "asset.source";
+        var now = new DateTimeOffset(2026, 5, 10, 14, 0, 0, TimeSpan.Zero);
+        var cacheEntry = new BundleIndexCacheEntryDto(
+            WorkspaceKey: workspaceKey,
+            BundleCacheKey: "bundle-cache-textures",
+            BundleId: bundleId,
+            DisplayName: "textures.ab",
+            LogicalPath: "textures.ab",
+            SourceFingerprint: new WorkspaceFileFingerprintDto("textures.ab", 100, DateTimeOffset.UnixEpoch, "hash"),
+            CachedAtUtc: DateTimeOffset.UnixEpoch,
+            ParserVersion: "test",
+            ToolVersion: "test",
+            Dependencies: Array.Empty<string>(),
+            Assets:
+            [
+                CreateAsset(targetAssetId, "HeroTexture", AssetType.Texture2D, "Texture2D", pathId: 10),
+                CreateAsset(sourceAssetId, "EnemyTexture", AssetType.Texture2D, "Texture2D", pathId: 20)
+            ],
+            SerializedFileNames: ["CAB-textures"]);
+        var baseChangeSet = CreateReplacementChangeSet(workspaceKey, bundleId, targetAssetId, sourceAssetId, now);
+        var changeSet = baseChangeSet with
+        {
+            OperationSequence = 4,
+            Operations = baseChangeSet.Operations!
+                .Concat(
+                [
+                    new WorkspaceOperationRecordDto(
+                        OperationId: "redo-workspace",
+                        Sequence: 4,
+                        OperationKind: WorkspaceOperationKind.RedoReplacement,
+                        Status: WorkspaceOperationStatus.Applied,
+                        WorkspaceKey: workspaceKey,
+                        Target: new WorkspaceOperationTargetDto(BundleId: bundleId, AssetId: targetAssetId),
+                        Source: null,
+                        PreviousState: null,
+                        Result: null,
+                        CreatedAtUtc: now.AddSeconds(3),
+                        AppliedAtUtc: now.AddSeconds(3),
+                        SupersedesOperationId: "undo-workspace")
+                ])
+                .ToArray()
+        };
+        var registry = new CachedWorkspaceSessionRegistry(
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([cacheEntry]),
+                new TestWorkspaceChangeStore(changeSet)),
+            new WorkspaceOperationLogService());
+
+        var summary = registry.OpenWorkspace(new WorkspaceSessionOpenRequestDto(
+            WorkspaceKey: workspaceKey,
+            WorkspacePath: "workspace",
+            WorkspaceDataRootPath: "data",
+            WorkspaceDisplayName: "Workspace A",
+            InitialMode: WorkspaceMode.SinglePane));
+        var hasDetails = registry.TryGetAssetDetails(
+            summary.WorkspaceId,
+            new BundleId(bundleId),
+            new AssetId(targetAssetId),
+            out var details);
+
+        TestAssert.True(hasDetails, "Target details should be available.");
+        TestAssert.True(details!.IsModified, "Redo should restore modified replacement state.");
+        TestAssert.Equal("EnemyTexture", details.WorkspaceReplacementSourceAssetName, "Redo should restore the workspace replacement source.");
+        TestAssert.Equal(bundleId, details.WorkspaceReplacementSourceBundleId?.Value, "Redo should restore source bundle id for export/read-model consumers.");
+        TestAssert.Equal(sourceAssetId, details.WorkspaceReplacementSourceAssetId?.Value, "Redo should restore source asset id for export/read-model consumers.");
+        TestAssert.Equal(null, details.FileReplacementSourceFileName, "Redo of workspace replacement should no longer expose the older file source.");
+        TestAssert.False(details.CanRedoReplacement, "After redo, the target should no longer advertise another redo step.");
+    }
+
     private static WorkspaceChangeSetDto CreateReplacementChangeSet(
         string workspaceKey,
         string bundleId,

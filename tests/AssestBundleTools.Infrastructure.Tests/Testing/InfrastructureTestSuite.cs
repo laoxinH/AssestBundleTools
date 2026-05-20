@@ -161,6 +161,10 @@ internal static class InfrastructureTestSuite
             CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedReplacementOperations_FromChangeSet);
         await RunTestAsync(
             failures,
+            nameof(CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedRedoReplacementOperation_FromChangeSet),
+            CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedRedoReplacementOperation_FromChangeSet);
+        await RunTestAsync(
+            failures,
             nameof(AssetsToolsRealSampleDependencyTests.Cone002Mesh_ShouldExposeRendererMaterialPath_ButNoTextureAssociation_FromRealDependencyGraph),
             AssetsToolsRealSampleDependencyTests.Cone002Mesh_ShouldExposeRendererMaterialPath_ButNoTextureAssociation_FromRealDependencyGraph);
         await RunTestAsync(

@@ -86,6 +86,7 @@ internal static class AppCompositionRoot
             new HeuristicAssetBundleReader());
         var audioPayloadTranscodingService = new AudioPayloadTranscodingService();
         var assetPreviewGenerator = new AssetsToolsAssetPreviewGenerator(audioPayloadTranscodingService);
+        var replacementPreviewSourceProvider = new FileSystemReplacementPreviewSourceProvider();
         var bundleArtifactSessionInvalidator = new AssetsToolsBundleArtifactSessionInvalidator();
         var spineAnimationRuntimePreviewService = new SpineAnimationRuntimePreviewService();
         var workspaceSaveOutputProbe = new FileSystemWorkspaceSaveOutputProbe();
@@ -134,7 +135,8 @@ internal static class AppCompositionRoot
             audioPayloadTranscodingService,
             bundleArtifactSessionInvalidator,
             bundleArtifactCachePrunePolicy,
-            bundleArtifactCachePrunePolicy);
+            bundleArtifactCachePrunePolicy,
+            replacementPreviewSourceProvider);
         var loadSpineAssetGroupDetailsHandler = new LoadSpineAssetGroupDetailsHandler(
             workspaceSessionRegistry,
             getAssetPreviewHandler,
@@ -189,6 +191,9 @@ internal static class AppCompositionRoot
         var undoAssetReplacementHandler = new UndoAssetReplacementHandler(
             workspaceSessionRegistry,
             workspaceReplacementOperationRecorder);
+        var redoAssetReplacementHandler = new RedoAssetReplacementHandler(
+            workspaceSessionRegistry,
+            workspaceReplacementOperationRecorder);
         var openAssetInPaneHandler = new OpenAssetInPaneHandler(workspaceSessionRegistry);
         var getWorkspaceCatalogSnapshotHandler = new GetWorkspaceCatalogSnapshotHandler(workspaceCatalogStore);
         var registerWorkspaceCatalogEntryHandler = new RegisterWorkspaceCatalogEntryHandler(workspaceCatalogStore);
@@ -236,7 +241,8 @@ internal static class AppCompositionRoot
             getWorkspaceReplacementCandidatesHandler: getWorkspaceReplacementCandidatesHandler,
             replaceAssetFromFileHandler: replaceAssetFromFileHandler,
             replaceAssetFromWorkspaceHandler: replaceAssetFromWorkspaceHandler,
-            undoAssetReplacementHandler: undoAssetReplacementHandler);
+            undoAssetReplacementHandler: undoAssetReplacementHandler,
+            redoAssetReplacementHandler: redoAssetReplacementHandler);
         var workspaceAssetOperationGateway = new NotifyingWorkspaceAssetOperationGateway(
             workspaceAssetOperationGatewayCore,
             workspaceOperationChangeNotifier);

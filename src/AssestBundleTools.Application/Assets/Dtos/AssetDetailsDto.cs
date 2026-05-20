@@ -36,4 +36,7 @@ public sealed record AssetDetailsDto(
     string? AssetTypeDisplayName = null,
     IReadOnlyList<BundleExternalDependencyDto>? BundleExternalDependencies = null,
     string? SerializedFileName = null,
-    IReadOnlyList<AssetDependencyDto>? TextureAssociations = null);
+    IReadOnlyList<AssetDependencyDto>? TextureAssociations = null,
+    BundleId? WorkspaceReplacementSourceBundleId = null,
+    AssetId? WorkspaceReplacementSourceAssetId = null,
+    bool CanRedoReplacement = false);

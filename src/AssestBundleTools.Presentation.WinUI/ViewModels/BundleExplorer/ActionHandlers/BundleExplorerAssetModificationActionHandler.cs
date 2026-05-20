@@ -369,6 +369,54 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         }
     }
 
+    public async Task RedoAppliedReplacementAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        AssetDocumentTabViewModel assetTab,
+        AssetDetailsDto details,
+        Action<bool> setBusyState,
+        Action<IReadOnlyList<AppError>> appendResultFailure)
+    {
+        ArgumentNullException.ThrowIfNull(workspaceSummary);
+        ArgumentNullException.ThrowIfNull(assetTab);
+        ArgumentNullException.ThrowIfNull(details);
+        ArgumentNullException.ThrowIfNull(setBusyState);
+        ArgumentNullException.ThrowIfNull(appendResultFailure);
+
+        setBusyState(true);
+        try
+        {
+            var result = await _workspaceAssetOperationGateway.RedoAssetReplacementAsync(
+                new RedoAssetReplacementCommand(
+                    workspaceSummary.WorkspaceId,
+                    details.BundleId,
+                    details.AssetId,
+                    workspaceSummary.WorkspaceKey,
+                    workspaceSummary.WorkspaceDataRootPath));
+
+            if (!TryGetValue(result, out var redoResult, appendResultFailure))
+            {
+                return;
+            }
+
+            _appLogService.AppendInfo(_localizationService.GetFormattedString(
+                ResourceKeys.BundleExplorerLogReplacementRedone,
+                redoResult.TargetAssetName));
+
+            ShowOperationNotification(
+                GetString(ResourceKeys.AppNotificationInfoTitle),
+                _localizationService.GetFormattedString(
+                    ResourceKeys.BundleExplorerNotificationReplacementRedone,
+                    redoResult.TargetAssetName),
+                AppNotificationSeverity.Informational);
+
+            assetTab.ClearPendingReplacementCandidates();
+        }
+        finally
+        {
+            setBusyState(false);
+        }
+    }
+
     private bool TryGetValue<T>(
         Result<T> result,
         [NotNullWhen(true)] out T? value,

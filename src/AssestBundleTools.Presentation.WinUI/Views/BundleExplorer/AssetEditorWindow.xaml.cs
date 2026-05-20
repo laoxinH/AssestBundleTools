@@ -171,6 +171,11 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         await ViewModel.UndoAppliedReplacementAsync();
     }
 
+    private async void OnRedoReplacementButtonClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.RedoAppliedReplacementAsync();
+    }
+
     private async void OnInspectorExtractRequested(object sender, EventArgs e)
     {
         await ViewModel.ExtractSelectedAssetAsync();
@@ -282,6 +287,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         SelectFileReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectFileReplacementButton);
         ApplyReplacementButton.Content = UiText.Get(ResourceKeys.InspectorApplyReplacementButton);
         UndoReplacementButton.Content = UiText.Get(ResourceKeys.InspectorUndoReplacementButton);
+        RedoReplacementButton.Content = UiText.Get(ResourceKeys.InspectorRedoReplacementButton);
     }
 
     private void UpdateWindowTitle()

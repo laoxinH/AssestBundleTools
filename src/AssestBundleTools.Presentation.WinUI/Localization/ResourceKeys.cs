@@ -452,6 +452,7 @@ public static class ResourceKeys
     public const string BundleExplorerLogFileReplacementApplied = "BundleExplorer.Log.FileReplacementApplied";
     public const string BundleExplorerLogReplacementApplied = "BundleExplorer.Log.ReplacementApplied";
     public const string BundleExplorerLogReplacementUndone = "BundleExplorer.Log.ReplacementUndone";
+    public const string BundleExplorerLogReplacementRedone = "BundleExplorer.Log.ReplacementRedone";
     public const string BundleExplorerNotificationWorkspaceLoaded = "BundleExplorer.Notification.WorkspaceLoaded";
     public const string BundleExplorerNotificationBundleFileImportRequested = "BundleExplorer.Notification.BundleFileImportRequested";
     public const string BundleExplorerNotificationBundleDirectoryImportRequested = "BundleExplorer.Notification.BundleDirectoryImportRequested";
@@ -475,6 +476,7 @@ public static class ResourceKeys
     public const string BundleExplorerNotificationFileReplacementApplied = "BundleExplorer.Notification.FileReplacementApplied";
     public const string BundleExplorerNotificationReplacementApplied = "BundleExplorer.Notification.ReplacementApplied";
     public const string BundleExplorerNotificationReplacementUndone = "BundleExplorer.Notification.ReplacementUndone";
+    public const string BundleExplorerNotificationReplacementRedone = "BundleExplorer.Notification.ReplacementRedone";
     public const string FilePickerExtractionTypeImage = "FilePicker.Extraction.Type.Image";
     public const string FilePickerExtractionTypeText = "FilePicker.Extraction.Type.Text";
     public const string FilePickerExtractionTypeAudio = "FilePicker.Extraction.Type.Audio";
@@ -1193,6 +1195,7 @@ public static class ResourceKeys
     public const string InspectorSelectReplacementButton = "InspectorPanelView.SelectReplacementButton.Content";
     public const string InspectorApplyReplacementButton = "InspectorPanelView.ApplyReplacementButton.Content";
     public const string InspectorUndoReplacementButton = "InspectorPanelView.UndoReplacementButton.Content";
+    public const string InspectorRedoReplacementButton = "InspectorPanelView.RedoReplacementButton.Content";
     public const string InspectorDependencyMetadataWithPathIdFormat = "InspectorPanelView.DependencyMetadataWithPathId.Format";
     public const string InspectorDependencyDepthFormat = "InspectorPanelView.DependencyDepth.Format";
     public const string InspectorBundleExternalDependencyKindArchiveSerializedFile = "InspectorPanelView.BundleExternalDependencyKind.ArchiveSerializedFile";

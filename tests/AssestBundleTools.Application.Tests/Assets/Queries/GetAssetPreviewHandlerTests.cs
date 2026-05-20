@@ -55,6 +55,135 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Cache hit should not rewrite preview cache.");
     }
 
+    public static async Task HandleAsync_ShouldUseFileReplacementPreview_ForTexture2D()
+    {
+        const string replacementFilePath = @"C:\Imports\hero-replacement.png";
+        var replacementBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x10 };
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        var previewCacheStore = new TestPreviewCacheStore();
+        var decryptor = new TestAssetBundleDecryptor(CreatePassThroughDecryptorDescriptor());
+        var generator = new TestAssetPreviewGenerator();
+        var replacementPreviewSourceProvider = new TestReplacementPreviewSourceProvider(
+            Result<AssetPreviewContentDto>.Success(new AssetPreviewContentDto(
+                Kind: AssetPreviewKind.Image,
+                ContentType: "image/png",
+                Content: replacementBytes,
+                PreferredDisplaySizeInBytes: replacementBytes.Length)));
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(
+            [
+                CreateAssetDetails(
+                    query,
+                    fileReplacementSourceFileName: "hero-replacement.png",
+                    fileReplacementSourcePath: replacementFilePath)
+            ]),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService(),
+            replacementPreviewSourceProvider: replacementPreviewSourceProvider);
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Texture2D file replacement should provide the effective preview payload.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(query.BundleId, preview.BundleId, "Effective preview should keep the target bundle identity.");
+        TestAssert.Equal(query.AssetId, preview.AssetId, "Effective preview should keep the target asset identity.");
+        TestAssert.Equal(AssetPreviewKind.Image, preview.Kind, "Texture2D replacement preview should be an image.");
+        TestAssert.Equal("image/png", preview.ContentType, "Replacement preview should preserve provider content type.");
+        TestAssert.True(
+            preview.BinaryContent is not null &&
+            preview.BinaryContent.AsSpan().SequenceEqual(replacementBytes),
+            "Replacement preview should expose the file source bytes.");
+        TestAssert.Equal(replacementFilePath, preview.PreviewPayloadFilePath, "Replacement preview should expose the selected source path.");
+        TestAssert.False(preview.IsFromCache, "Replacement preview should not be reported as a cached original preview.");
+        TestAssert.Equal(AssetPreviewFallbackReasonKind.None, preview.Diagnostic.FallbackReason, "Successful replacement preview should not fall back.");
+        TestAssert.Equal(1, replacementPreviewSourceProvider.LoadFilePreviewCallCount, "Replacement source provider should be used once.");
+        TestAssert.Equal(0, decryptor.DecryptCallCount, "Effective file preview should not decrypt the original bundle.");
+        TestAssert.Equal(0, generator.GenerateCallCount, "Effective file preview should not generate original preview content.");
+        TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Effective file preview should not rewrite original preview cache.");
+    }
+
+    public static async Task HandleAsync_ShouldUseWorkspaceReplacementPreview_WithTargetIdentity()
+    {
+        const string resolvedBundlePath = @"C:\Temp\characters.bundle";
+        var sourceAssetId = new AssetId("asset.002");
+        var sourceBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x22 };
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        bundleCacheEntry = bundleCacheEntry with
+        {
+            Assets =
+            [
+                bundleCacheEntry.Assets[0],
+                bundleCacheEntry.Assets[0] with
+                {
+                    AssetId = sourceAssetId.Value,
+                    AssetName = "HeroPortraitSource",
+                    AssetPath = "Assets/HeroPortraitSource.png",
+                    PathId = 54321
+                }
+            ]
+        };
+        var previewCacheStore = new TestPreviewCacheStore();
+        var decryptorDescriptor = CreatePassThroughDecryptorDescriptor();
+        var decryptor = new TestAssetBundleDecryptor(decryptorDescriptor)
+        {
+            DecryptResultFactory = _ => Task.FromResult(Result<AssetBundleDecryptionResultDto>.Success(
+                new AssetBundleDecryptionResultDto(
+                    Decryptor: decryptorDescriptor,
+                    ResolvedBundlePath: resolvedBundlePath,
+                    ProducedDerivedFile: false,
+                    BundleFingerprint: bundleCacheEntry.SourceFingerprint,
+                    DiagnosticMessage: null)))
+        };
+        var generator = new TestAssetPreviewGenerator
+        {
+            GenerateResultFactory = request => Task.FromResult(Result<AssetPreviewContentDto>.Success(
+                new AssetPreviewContentDto(
+                    Kind: AssetPreviewKind.Image,
+                    ContentType: "image/png",
+                    Content: sourceBytes,
+                    PreferredDisplaySizeInBytes: sourceBytes.Length)))
+        };
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(
+            [
+                CreateAssetDetails(
+                    query,
+                    workspaceReplacementSourceBundleId: query.BundleId,
+                    workspaceReplacementSourceAssetId: sourceAssetId,
+                    workspaceReplacementSourceBundleDisplayName: "characters",
+                    workspaceReplacementSourceAssetName: "HeroPortraitSource")
+            ]),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService());
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Workspace replacement should resolve the source asset preview.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(query.BundleId, preview.BundleId, "Workspace replacement preview should keep the target bundle identity.");
+        TestAssert.Equal(query.AssetId, preview.AssetId, "Workspace replacement preview should keep the target asset identity.");
+        TestAssert.Equal(AssetPreviewKind.Image, preview.Kind, "Workspace replacement preview should expose the source preview kind.");
+        TestAssert.True(
+            preview.BinaryContent is not null &&
+            preview.BinaryContent.AsSpan().SequenceEqual(sourceBytes),
+            "Workspace replacement preview should expose source preview bytes.");
+        TestAssert.Equal(1, decryptor.DecryptCallCount, "Workspace source preview should generate source content once.");
+        TestAssert.Equal(1, generator.GenerateCallCount, "Workspace source preview should call the generator once.");
+        TestAssert.Equal(sourceAssetId.Value, generator.LastRequest?.AssetId, "Preview generator should be asked for the replacement source asset.");
+    }
+
     public static async Task HandleAsync_ShouldRoundTripCachedImageOverlay_WhenPreviewCacheStillMatches()
     {
         const string resolvedPayloadFilePath = @"D:\WorkspaceData\preview-cache\bundle-cache-001\asset-001.png";

@@ -18,5 +18,13 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(ReplacementOperationRecorderTests.UndoAssetReplacementHandler_ShouldAppendUndoOperation_ForLatestActiveReplacementRecord),
             ReplacementOperationRecorderTests.UndoAssetReplacementHandler_ShouldAppendUndoOperation_ForLatestActiveReplacementRecord);
+        await RunTestAsync(
+            failures,
+            nameof(ReplacementOperationRecorderTests.RedoAssetReplacementHandler_ShouldAppendRedoOperation_ForLatestUndoRecord),
+            ReplacementOperationRecorderTests.RedoAssetReplacementHandler_ShouldAppendRedoOperation_ForLatestUndoRecord);
+        await RunTestAsync(
+            failures,
+            nameof(ReplacementOperationRecorderTests.WorkspaceReplacementReadModelService_ShouldMaterializeEffectiveReplacement_ForRedoStack),
+            ReplacementOperationRecorderTests.WorkspaceReplacementReadModelService_ShouldMaterializeEffectiveReplacement_ForRedoStack);
     }
 }

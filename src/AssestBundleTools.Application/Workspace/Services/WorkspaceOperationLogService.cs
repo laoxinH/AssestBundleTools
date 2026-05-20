@@ -131,7 +131,7 @@ public sealed class WorkspaceOperationLogService : IWorkspaceOperationLogService
         return operations
             .Where(static operation => operation.Status == WorkspaceOperationStatus.Applied)
             .Where(operation => !supersededOperationIds.Contains(operation.OperationId))
-            .Where(static operation => operation.OperationKind != WorkspaceOperationKind.UndoReplacement)
+            .Where(static operation => operation.OperationKind is not WorkspaceOperationKind.UndoReplacement and not WorkspaceOperationKind.RedoReplacement)
             .ToArray();
     }
 

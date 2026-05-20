@@ -16,13 +16,16 @@ public sealed class WorkspaceReplacementOperationRecorder
 
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
     private readonly IWorkspaceOperationLogService _operationLogService;
+    private readonly WorkspaceReplacementStateMaterializer _replacementStateMaterializer;
 
     public WorkspaceReplacementOperationRecorder(
         IWorkspaceDataStoreFactory workspaceDataStoreFactory,
-        IWorkspaceOperationLogService operationLogService)
+        IWorkspaceOperationLogService operationLogService,
+        WorkspaceReplacementStateMaterializer? replacementStateMaterializer = null)
     {
         _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
         _operationLogService = operationLogService ?? throw new ArgumentNullException(nameof(operationLogService));
+        _replacementStateMaterializer = replacementStateMaterializer ?? new WorkspaceReplacementStateMaterializer();
     }
 
     public void RecordFileReplacement(
@@ -113,6 +116,34 @@ public sealed class WorkspaceReplacementOperationRecorder
         store.Save(_operationLogService.AppendOperation(changeSet, appendRequest));
     }
 
+    public void RecordRedoReplacement(
+        RedoAssetReplacementCommand command,
+        AssetDetailsDto targetDetails,
+        AssetReplacementRedoResultDto result)
+    {
+        if (!TryLoadChangeSet(command.WorkspaceKey, command.WorkspaceDataRootPath, out var workspaceKey, out var store, out var changeSet))
+        {
+            return;
+        }
+
+        var recordedAtUtc = result.RedoneAtUtc;
+        var appendRequest = new WorkspaceOperationAppendRequestDto(
+            WorkspaceKey: workspaceKey,
+            OperationKind: WorkspaceOperationKind.RedoReplacement,
+            Status: WorkspaceOperationStatus.Applied,
+            Target: CreateTarget(targetDetails),
+            PreviousState: CreatePreviousState(targetDetails),
+            CreatedAtUtc: recordedAtUtc,
+            AppliedAtUtc: recordedAtUtc,
+            CompletedAtUtc: recordedAtUtc,
+            SupersedesOperationId: _replacementStateMaterializer.FindLatestUndoOperationId(
+                changeSet,
+                targetDetails.BundleId.Value,
+                targetDetails.AssetId.Value));
+
+        store.Save(_operationLogService.AppendOperation(changeSet, appendRequest));
+    }
+
     private bool TryLoadChangeSet(
         string? workspaceKey,
         string? workspaceDataRootPath,
@@ -139,15 +170,7 @@ public sealed class WorkspaceReplacementOperationRecorder
         WorkspaceChangeSetDto? changeSet,
         string bundleId,
         string assetId) =>
-        _operationLogService.GetActiveOperations(changeSet)
-            .Where(static operation =>
-                operation.OperationKind is WorkspaceOperationKind.ReplaceFromFile or WorkspaceOperationKind.ReplaceFromWorkspace)
-            .Where(operation =>
-                string.Equals(operation.Target?.BundleId, bundleId, StringComparison.Ordinal) &&
-                string.Equals(operation.Target?.AssetId, assetId, StringComparison.Ordinal))
-            .OrderByDescending(static operation => operation.Sequence)
-            .Select(static operation => operation.OperationId)
-            .FirstOrDefault();
+        _replacementStateMaterializer.FindLatestEffectiveReplacementOperationId(changeSet, bundleId, assetId);
 
     private static WorkspaceOperationTargetDto CreateTarget(AssetDetailsDto details) =>
         new(
@@ -180,7 +203,9 @@ public sealed class WorkspaceReplacementOperationRecorder
         {
             return new WorkspaceOperationSourceDto(
                 SourceKind: SourceKindWorkspace,
+                SourceBundleId: details.WorkspaceReplacementSourceBundleId?.Value,
                 SourceBundleDisplayName: details.WorkspaceReplacementSourceBundleDisplayName,
+                SourceAssetId: details.WorkspaceReplacementSourceAssetId?.Value,
                 SourceAssetName: details.WorkspaceReplacementSourceAssetName,
                 SourceAssetType: details.WorkspaceReplacementSourceAssetType?.ToString());
         }

@@ -226,5 +226,10 @@ public sealed class BundleExplorerViewModelResolvedAssetNavigationTests
             UndoAssetReplacementCommand command,
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
+
+        public Task<Result<AssetReplacementRedoResultDto>> RedoAssetReplacementAsync(
+            RedoAssetReplacementCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
     }
 }

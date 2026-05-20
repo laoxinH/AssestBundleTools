@@ -283,6 +283,25 @@ internal sealed class BundleExplorerAssetCommandCoordinator
             _operationFeedbackBridge.AppendResultFailure);
     }
 
+    public async Task RedoAppliedReplacementAsync()
+    {
+        if (!TryGetActiveAssetCommandContext(
+                static (_, details) => details.CanRedoReplacement,
+                out var workspaceSummary,
+                out var assetTab,
+                out var details))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.RedoAppliedReplacementAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            _setBusyState,
+            _operationFeedbackBridge.AppendResultFailure);
+    }
+
     private bool CanExecuteActiveAssetCommand(Func<AssetDocumentTabViewModel, AssetDetailsDto, bool> canExecute)
     {
         ArgumentNullException.ThrowIfNull(canExecute);

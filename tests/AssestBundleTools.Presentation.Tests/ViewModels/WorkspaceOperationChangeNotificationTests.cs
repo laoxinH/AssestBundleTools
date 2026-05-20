@@ -485,6 +485,11 @@ public sealed class WorkspaceOperationChangeNotificationTests
             UndoAssetReplacementCommand command,
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
+
+        public Task<Result<AssetReplacementRedoResultDto>> RedoAssetReplacementAsync(
+            RedoAssetReplacementCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class NoopWorkspaceImportCoordinatorService : IWorkspaceImportCoordinatorService

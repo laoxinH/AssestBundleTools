@@ -6,6 +6,7 @@ using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Replacement.Dtos;
+using AssestBundleTools.Application.Replacement.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
@@ -18,6 +19,17 @@ internal static partial class GetAssetPreviewHandlerTests
 {
     private sealed class TestWorkspaceSessionRegistry : IWorkspaceSessionRegistry
     {
+        private readonly Dictionary<string, AssetDetailsDto> _assetDetailsByKey = new(StringComparer.Ordinal);
+
+        public TestWorkspaceSessionRegistry(
+            IReadOnlyList<AssetDetailsDto>? assetDetails = null)
+        {
+            foreach (var details in assetDetails ?? Array.Empty<AssetDetailsDto>())
+            {
+                _assetDetailsByKey[CreateAssetDetailsKey(details.BundleId, details.AssetId)] = details;
+            }
+        }
+
         public WorkspaceSummaryDto OpenWorkspace(WorkspaceSessionOpenRequestDto request) => throw new NotSupportedException();
 
         public bool ContainsWorkspace(WorkspaceId workspaceId) => true;
@@ -50,8 +62,13 @@ internal static partial class GetAssetPreviewHandlerTests
             AssetId assetId,
             out AssetDetailsDto? assetDetails)
         {
-            assetDetails = null;
-            throw new NotSupportedException();
+            if (_assetDetailsByKey.TryGetValue(CreateAssetDetailsKey(bundleId, assetId), out assetDetails))
+            {
+                return true;
+            }
+
+            assetDetails = CreateDefaultAssetDetails(workspaceId, bundleId, assetId);
+            return true;
         }
 
         public bool TryGetWorkspaceChangeSummary(
@@ -126,6 +143,38 @@ internal static partial class GetAssetPreviewHandlerTests
             paneContext = null;
             throw new NotSupportedException();
         }
+
+        private static AssetDetailsDto CreateDefaultAssetDetails(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId) =>
+            new(
+                WorkspaceId: workspaceId,
+                BundleId: bundleId,
+                AssetId: assetId,
+                Name: assetId.Value,
+                AssetPath: $"Assets/{assetId.Value}.png",
+                ContainerPath: "Assets",
+                AssetType: AssetType.Texture2D,
+                SizeInBytes: 256,
+                PreferredDisplaySizeInBytes: 256,
+                PathId: 12345,
+                IsModified: false,
+                CanExtract: true,
+                CanReplaceFromFile: true,
+                CanReplaceFromWorkspace: true,
+                WorkspaceReplacementSourceBundleDisplayName: null,
+                WorkspaceReplacementSourceAssetName: null,
+                WorkspaceReplacementSourceAssetType: null,
+                FileReplacementSourceFileName: null,
+                FileReplacementSourcePath: null,
+                FileReplacementSourceAssetType: null,
+                LastExtractedAtUtc: null,
+                Dependencies: Array.Empty<AssetDependencyDto>(),
+                AssetTypeDisplayName: AssetType.Texture2D.ToString());
+
+        private static string CreateAssetDetailsKey(BundleId bundleId, AssetId assetId) =>
+            string.Concat(bundleId.Value, "\n", assetId.Value);
     }
 
     private sealed class TestWorkspaceDataStoreFactory : IWorkspaceDataStoreFactory
@@ -511,5 +560,32 @@ internal static partial class GetAssetPreviewHandlerTests
         public Task<AudioPayloadTranscodeResultDto> TryTranscodeAsync(
             AudioPayloadTranscodeRequestDto request,
             CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    }
+
+    private sealed class TestReplacementPreviewSourceProvider : IReplacementPreviewSourceProvider
+    {
+        private readonly Result<AssetPreviewContentDto> _result;
+
+        public TestReplacementPreviewSourceProvider(Result<AssetPreviewContentDto> result)
+        {
+            _result = result;
+        }
+
+        public int LoadFilePreviewCallCount { get; private set; }
+
+        public AssetDetailsDto? LastTargetDetails { get; private set; }
+
+        public string? LastSourceFilePath { get; private set; }
+
+        public Task<Result<AssetPreviewContentDto>> LoadFilePreviewAsync(
+            AssetDetailsDto targetDetails,
+            string sourceFilePath,
+            CancellationToken cancellationToken = default)
+        {
+            LoadFilePreviewCallCount++;
+            LastTargetDetails = targetDetails;
+            LastSourceFilePath = sourceFilePath;
+            return Task.FromResult(_result);
+        }
     }
 }

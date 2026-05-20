@@ -532,6 +532,8 @@ public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
 
     public Task UndoAppliedReplacementAsync() => _assetWorkflow.UndoAppliedReplacementAsync();
 
+    public Task RedoAppliedReplacementAsync() => _assetWorkflow.RedoAppliedReplacementAsync();
+
     /// <summary>
     /// 页面级交互仍有多处历史入口会请求浏览状态持久化。
     /// 这里保留一层薄封装，把触发统一转交给专用协调对象。

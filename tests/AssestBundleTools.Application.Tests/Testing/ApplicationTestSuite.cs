@@ -169,6 +169,14 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldReturnCachedPreview_WhenPreviewCacheStillMatches);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUseFileReplacementPreview_ForTexture2D),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldUseFileReplacementPreview_ForTexture2D);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUseWorkspaceReplacementPreview_WithTargetIdentity),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldUseWorkspaceReplacementPreview_WithTargetIdentity);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldCacheFullText_AndExposeBoundedDisplayText_WhenGeneratedTextIsLong),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldCacheFullText_AndExposeBoundedDisplayText_WhenGeneratedTextIsLong);
         await RunTestAsync(
@@ -308,6 +316,14 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(ReplacementWorkflowHandlerTests.UndoAssetReplacementHandler_ShouldReturnFailure_WhenTargetAssetDoesNotExist),
             ReplacementWorkflowHandlerTests.UndoAssetReplacementHandler_ShouldReturnFailure_WhenTargetAssetDoesNotExist);
+        await RunTestAsync(
+            failures,
+            nameof(ReplacementWorkflowHandlerTests.RedoAssetReplacementHandler_ShouldApplyRedo_WhenRedoSnapshotExists),
+            ReplacementWorkflowHandlerTests.RedoAssetReplacementHandler_ShouldApplyRedo_WhenRedoSnapshotExists);
+        await RunTestAsync(
+            failures,
+            nameof(ReplacementWorkflowHandlerTests.RedoAssetReplacementHandler_ShouldReturnFailure_WhenNoRedoSnapshotExists),
+            ReplacementWorkflowHandlerTests.RedoAssetReplacementHandler_ShouldReturnFailure_WhenNoRedoSnapshotExists);
         await RunTestAsync(
             failures,
             nameof(ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPreviewHandler_ShouldGroupCandidates_ByBundleAndSourceFilter),
