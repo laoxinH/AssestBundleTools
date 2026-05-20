@@ -425,13 +425,14 @@ BackgroundWorkProgress
 2. 真实保存 / 重建使用 `SaveRebuild` profile，并占用工作区写入独占闸门。
 3. 保存前预览仍是 Application 查询，不应因为调度器存在而跳过保存计划。
 4. 保存成功后通过检查点标记已消费操作；失败保留可恢复诊断。
-5. 覆盖、回滚、冲突、部分失败等语义由 Application 文档化后再实现。
-6. Export / SaveRebuild 后续真实读包必须共享 `WorkspaceBundleArtifactResolver`，通过 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 取得标准化 artifact；不得重新从用户源路径、解密 staging 或历史 manifest-only 记录旁路读取。
-7. Export / SaveRebuild 的 Application 命令上下文必须显式携带 `workspaceKey / workspaceDataRootPath / bundleCacheKey`，并在计划阶段形成“目标 bundle -> artifact identity”的只读输入图；当前保存预览和保存骨架已从现有 `bundle-index + artifact manifest` 解析该输入图，但仍不触发 artifact materialization。
-8. 保存预览和保存骨架应通过 `IWorkspaceSaveOutputProbe` 做目标输出路径预检，把已存在目标文件、目标路径是目录、目录链被文件阻塞、非法路径等输出 blockers 暴露为结构化 DTO；该 preflight 不创建目录、不写文件，也不替代真实写包阶段的最终冲突确认。
-9. Infrastructure 写包 / 导出适配器只接收标准化 bundle 路径、loaded-session identity、操作变更集和输出路径；不得反向依赖 Application store 或 Presentation 状态。
-10. 成功复用或生成 artifact 后应回写 `lastAccessedAtUtc`，并按现有偏好触发容量治理；当前正在参与导出 / 写包的 artifact 必须进入 `ProtectedBundleCacheKeys`，避免任务中途被自身 prune 删除。
-11. 如果真实写包需要可变 bundle 上下文，仍应先以标准化 artifact 作为只读基线，再在写包工作目录或 staging 中创建可变副本；不得把 loaded-session 中的第三方对象暴露为跨层共享编辑状态。
+5. 替换 / 编辑命令只追加可恢复操作记录并更新待保存状态；真实 AB 替换和写包只在 Export / SaveRebuild 消费操作记录时发生。
+6. 覆盖、回滚、冲突、部分失败等语义由 Application 文档化后再实现。
+7. Export / SaveRebuild 后续真实读包必须共享 `WorkspaceBundleArtifactResolver`，通过 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 取得标准化 artifact；不得重新从用户源路径、解密 staging 或历史 manifest-only 记录旁路读取。
+8. Export / SaveRebuild 的 Application 命令上下文必须显式携带 `workspaceKey / workspaceDataRootPath / bundleCacheKey`，并在计划阶段形成“目标 bundle -> artifact identity”的只读输入图；当前保存预览和保存骨架已从现有 `bundle-index + artifact manifest` 解析该输入图，但仍不触发 artifact materialization。
+9. 保存预览和保存骨架应通过 `IWorkspaceSaveOutputProbe` 做目标输出路径预检，把已存在目标文件、目标路径是目录、目录链被文件阻塞、非法路径等输出 blockers 暴露为结构化 DTO；该 preflight 不创建目录、不写文件，也不替代真实写包阶段的最终冲突确认。
+10. Infrastructure 写包 / 导出适配器只接收标准化 bundle 路径、loaded-session identity、操作变更集和输出路径；不得反向依赖 Application store 或 Presentation 状态。
+11. 成功复用或生成 artifact 后应回写 `lastAccessedAtUtc`，并按现有偏好触发容量治理；当前正在参与导出 / 写包的 artifact 必须进入 `ProtectedBundleCacheKeys`，避免任务中途被自身 prune 删除。
+12. 如果真实写包需要可变 bundle 上下文，仍应先以标准化 artifact 作为只读基线，再在写包工作目录或 staging 中创建可变副本；不得把 loaded-session 中的第三方对象暴露为跨层共享编辑状态。
 
 禁止：
 
@@ -456,6 +457,8 @@ BackgroundWorkProgress
 artifact 删除、prune、资源包移除、工作区记录删除、导入刷新失效和标准化版本失效时，Application 通过 `IBundleArtifactSessionInvalidator` 通知 Infrastructure 主动摘除对应 loaded-session 条目；新请求不会继续命中旧 identity，已经取得 lease 或正在底层同步读取的旧任务会自然完成，最后一个 lease 释放后再 dispose。
 
 Export / SaveRebuild 共享 artifact resolver 已进入保存计划骨架的只读输入阶段：`GetWorkspaceSavePreviewQuery / SaveWorkspaceAsNewBundleCommand` 会携带 `workspaceKey / workspaceDataRootPath`，Application 通过 `bundle-index` 找到每个目标 bundle 的 `bundleCacheKey`，再用 `WorkspaceBundleArtifactResolver.TryResolveExistingInput(...)` 读取已有标准化 artifact manifest、回写 `lastAccessedAtUtc` 并派生 loaded-session identity。保存计划同时通过 `IWorkspaceSaveOutputProbe` 对目标输出路径做无副作用 preflight，并把输出路径可写、未探测、已存在文件、目标为目录、目录链被文件阻塞、非法路径和探测失败投影为结构化状态与诊断码。缺失、陈旧或物理路径不可解析的 artifact 只会在计划中标记诊断，不会在保存预览 / 保存骨架中触发解密、复制或 materialization；输出 preflight 也不会创建目录或写入文件。真实写包的最终冲突确认、取消、回滚和可变副本语义仍未定稿；后续实现时，Infrastructure 导出 / 写包适配器应直接消费这份只读输入图，并在需要时由真实计划阶段显式 materialize 缺失 artifact。当前已经解决同一进程内、同一 bundle artifact 生成、artifact 访问时间回写、artifact usage / LRU prune、显式 / 自动清理入口、同一 artifact identity loaded-session 重复加载、artifact 删除后的主动失效、loaded-session 容量上限、内存压力退避、预览 OOM 专用诊断、后台预热短期退避、SaveRebuild 保存计划读取现有 artifact identity，以及保存输出路径 preflight；下一步真实写包入口不得新增平行读取路径。
+
+该段中的“未定稿”仅指最终冲突确认、取消、回滚和可变副本细节；核心边界已经固定为：修改阶段只记录和物化操作，真实 AB 替换在统一导出 / 保存重建阶段消费操作记录后执行。
 
 ## 15. 状态持久化边界
 
