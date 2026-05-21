@@ -56,6 +56,35 @@ public sealed class WorkspaceOperationChangeNotificationTests
     }
 
     [Fact]
+    public async Task DeleteWorkspaceOperationRecordAsync_ShouldNotifyAffectedAssetRefresh()
+    {
+        var workspaceId = new WorkspaceId("workspace-operation-delete-notify");
+        var notifier = new WorkspaceOperationChangeNotifier();
+        var receivedEvents = new List<WorkspaceOperationChangedEventArgs>();
+        notifier.WorkspaceOperationsChanged += (_, e) => receivedEvents.Add(e);
+        var gateway = new NotifyingWorkspaceAssetOperationGateway(
+            new SuccessfulWorkspaceAssetOperationGateway(),
+            notifier);
+
+        var result = await gateway.DeleteWorkspaceOperationRecordAsync(
+            new DeleteWorkspaceOperationRecordCommand(
+                workspaceId,
+                "operation-1",
+                "workspace-a",
+                @"D:\WorkspaceData\A"));
+
+        Assert.True(result.IsSuccess);
+        var notification = Assert.Single(receivedEvents);
+        Assert.Equal(workspaceId, notification.WorkspaceId);
+        Assert.Equal(
+            WorkspaceOperationChangeKind.Extraction | WorkspaceOperationChangeKind.Replacement,
+            notification.ChangeKind);
+        var affectedAsset = Assert.Single(notification.AffectedAssets);
+        Assert.Equal(new BundleId("bundle-textures"), affectedAsset.BundleId);
+        Assert.Equal(new AssetId("asset-texture"), affectedAsset.AssetId);
+    }
+
+    [Fact]
     public void BeginNotificationBatch_ShouldDeferAndCoalesceWorkspaceOperationChanges()
     {
         var workspaceId = new WorkspaceId("workspace-operation-batch");
@@ -623,6 +652,17 @@ public sealed class WorkspaceOperationChangeNotificationTests
             RedoAssetReplacementCommand command,
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
+
+        public Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(
+            DeleteWorkspaceOperationRecordCommand command,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result<WorkspaceOperationRecordDeletedResultDto>.Success(
+                new WorkspaceOperationRecordDeletedResultDto(
+                    command.WorkspaceId,
+                    command.OperationId,
+                    new BundleId("bundle-textures"),
+                    new AssetId("asset-texture"),
+                    DateTimeOffset.UtcNow)));
     }
 
     private sealed class NoopWorkspaceImportCoordinatorService : IWorkspaceImportCoordinatorService

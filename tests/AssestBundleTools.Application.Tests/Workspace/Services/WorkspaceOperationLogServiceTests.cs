@@ -135,6 +135,85 @@ internal static class WorkspaceOperationLogServiceTests
         return Task.CompletedTask;
     }
 
+    public static Task DeleteOperationRecord_ShouldRemoveRecord_AndPreserveSequenceWatermark()
+    {
+        var service = new WorkspaceOperationLogService();
+        var now = new DateTimeOffset(2026, 5, 10, 10, 30, 0, TimeSpan.Zero);
+        var changeSet = service.AppendOperation(
+            null,
+            new WorkspaceOperationAppendRequestDto(
+                WorkspaceKey: "workspace-a",
+                OperationKind: WorkspaceOperationKind.ExtractAsset,
+                Status: WorkspaceOperationStatus.Applied,
+                OperationId: "extract-1",
+                CreatedAtUtc: now));
+        changeSet = service.AppendOperation(
+            changeSet,
+            new WorkspaceOperationAppendRequestDto(
+                WorkspaceKey: "workspace-a",
+                OperationKind: WorkspaceOperationKind.ReplaceFromFile,
+                Status: WorkspaceOperationStatus.Applied,
+                OperationId: "replace-1",
+                CreatedAtUtc: now.AddSeconds(1)));
+        changeSet = service.AppendOperation(
+            changeSet,
+            new WorkspaceOperationAppendRequestDto(
+                WorkspaceKey: "workspace-a",
+                OperationKind: WorkspaceOperationKind.RedoReplacement,
+                Status: WorkspaceOperationStatus.Applied,
+                OperationId: "redo-1",
+                SupersedesOperationId: "extract-1",
+                CreatedAtUtc: now.AddSeconds(2)));
+
+        var updated = service.DeleteOperationRecord(changeSet, " extract-1 ", now.AddMinutes(1));
+
+        TestAssert.Equal(3, updated.OperationSequence, "Deleting a record must not lower the append sequence watermark.");
+        var operation = TestAssert.Single(updated.Operations ?? Array.Empty<WorkspaceOperationRecordDto>());
+        TestAssert.Equal("replace-1", operation.OperationId, "The requested operation and dependent records should be removed.");
+        TestAssert.Equal(now.AddMinutes(1), updated.UpdatedAtUtc, "Delete should update the change set timestamp.");
+        return Task.CompletedTask;
+    }
+
+    public static Task AppendOperation_ShouldRespectRecordLimit_AndProtectCurrentReplacementChain()
+    {
+        var service = new WorkspaceOperationLogService(() => 2);
+        var now = new DateTimeOffset(2026, 5, 10, 12, 0, 0, TimeSpan.Zero);
+        var changeSet = service.AppendOperation(
+            null,
+            CreateReplacementAppendRequest("replace-1", "asset-a", now));
+        changeSet = service.AppendOperation(
+            changeSet,
+            CreateReplacementAppendRequest("replace-2", "asset-a", now.AddSeconds(1)));
+        changeSet = service.AppendOperation(
+            changeSet,
+            new WorkspaceOperationAppendRequestDto(
+                WorkspaceKey: "workspace-a",
+                OperationKind: WorkspaceOperationKind.UndoReplacement,
+                Status: WorkspaceOperationStatus.Applied,
+                OperationId: "undo-1",
+                Target: CreateTarget("asset-a"),
+                CreatedAtUtc: now.AddSeconds(2)));
+        changeSet = service.AppendOperation(
+            changeSet,
+            new WorkspaceOperationAppendRequestDto(
+                WorkspaceKey: "workspace-a",
+                OperationKind: WorkspaceOperationKind.ExtractAsset,
+                Status: WorkspaceOperationStatus.Applied,
+                OperationId: "extract-1",
+                Target: CreateTarget("asset-b"),
+                CreatedAtUtc: now.AddSeconds(3)));
+
+        var operationIds = (changeSet.Operations ?? Array.Empty<WorkspaceOperationRecordDto>())
+            .Select(static operation => operation.OperationId)
+            .ToArray();
+
+        TestAssert.True(operationIds.Contains("replace-1"), "The replacement currently materialized after undo must be retained.");
+        TestAssert.True(operationIds.Contains("replace-2"), "The later operation needed to replay the undo chain must be retained.");
+        TestAssert.True(operationIds.Contains("undo-1"), "The undo operation must stay with the protected replacement chain.");
+        TestAssert.True(operationIds.Contains("extract-1"), "The latest extraction for a target should be retained.");
+        return Task.CompletedTask;
+    }
+
     public static Task CreateRecoveryPlan_ShouldReportPendingOperationsAsInterrupted()
     {
         var service = new WorkspaceOperationLogService();
@@ -157,4 +236,25 @@ internal static class WorkspaceOperationLogServiceTests
         TestAssert.Equal(WorkspaceOperationRecoveryActionKind.MarkFailed, item.RecommendedAction, "Recovery plan should recommend a conservative action.");
         return Task.CompletedTask;
     }
+
+    private static WorkspaceOperationAppendRequestDto CreateReplacementAppendRequest(
+        string operationId,
+        string assetId,
+        DateTimeOffset createdAtUtc) =>
+        new(
+            WorkspaceKey: "workspace-a",
+            OperationKind: WorkspaceOperationKind.ReplaceFromFile,
+            Status: WorkspaceOperationStatus.Applied,
+            OperationId: operationId,
+            Target: CreateTarget(assetId),
+            Source: new WorkspaceOperationSourceDto(
+                SourceKind: "file",
+                SourceFilePath: $@"C:\Source\{operationId}.png"),
+            CreatedAtUtc: createdAtUtc);
+
+    private static WorkspaceOperationTargetDto CreateTarget(string assetId) =>
+        new(
+            BundleId: "bundle-a",
+            AssetId: assetId,
+            AssetType: "Texture2D");
 }

@@ -79,6 +79,7 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
         Assert.Contains("ItemsSource=\"{x:Bind ViewModel.ChangeRecords, Mode=OneWay}\"", xaml);
         Assert.Contains("OnChangeRecordUndoReplacementButtonClick", xaml);
         Assert.Contains("OnChangeRecordRedoReplacementButtonClick", xaml);
+        Assert.Contains("OnChangeRecordDeleteButtonClick", xaml);
         Assert.Contains("ViewModel.ChangeRecordsEmptyStateVisibility", xaml);
     }
 

@@ -75,7 +75,7 @@ checkpoints[]      # 后续：保存 / 导出检查点
 
 当前设计不立即实现：
 
-- 完整跨操作全局 redo 栈；当前只实现目标资源级替换 redo，用于重做最近一次被撤销的替换。
+- 完整跨操作全局 redo 栈；当前只实现目标资源级替换 redo，用于重做最近一次被撤销的替换，或从资源详情变更卡片重新应用某条历史替换记录。
 - 保存后跨输出包自动反向写回。
 - 自动删除用户已经导出的外部文件。
 - 真实编辑草稿内容格式。
@@ -268,6 +268,7 @@ Presentation 负责把这些结构化字段格式化为用户可见文本；Appl
 
 - 重做目标资源最近一次被撤销的替换时，追加 `RedoReplacement` 操作，而不是删除 `UndoReplacement` 历史。
 - `RedoReplacement` 只恢复该目标资源当前 redo 槽中的替换来源；如果同一目标在撤销后又应用了新的替换，旧 redo 槽应失效。
+- 资源详情变更卡片上的“重做”可以指定某条历史 `ReplaceFromFile / ReplaceFromWorkspace` 记录；此时追加的 `RedoReplacement` 必须携带被重做记录的 `source`，并以 `supersedesOperationId` 指向该历史替换记录，使重启后的物化读模型仍能把该历史记录标记为当前有效。
 - 当前 redo 是替换链路的目标资源级能力，不等同于跨提取、编辑、保存等所有操作的全局 redo 栈。
 
 恢复规则：
@@ -400,6 +401,16 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 
 当前替换链路已经落地目标资源级 redo：`RedoReplacement` 会作为新的操作事实追加，并重新物化为当前有效替换。该能力服务于替换记录和有效预览闭环，完整跨操作 redo 栈仍不在当前阶段范围内。
 
+## 10.1 记录清理与上限
+
+操作记录属于工作区暂存事实流，但不应无限增长。当前设置页提供“工作区操作记录”上限，默认保留 `250` 条，可调整为 `100 / 250 / 500 / 1000`。追加新操作时，`WorkspaceOperationLogService` 会按上限裁剪较旧记录，并优先保护：
+
+- 当前仍生效的替换链路，以及重放该链路所需的后续 `UndoReplacement / RedoReplacement` 操作。
+- 每个目标资源最近一次 `ExtractAsset`。
+- `Pending / Interrupted / Failed / Invalid` 等仍需要恢复或诊断的记录。
+
+删除单条可见操作记录时，Application 通过删除命令更新 `operations[]`，并让当前运行时会话按更新后的事实流重放。若被删除记录被后续 `supersedesOperationId` 引用，引用它的派生记录也会级联删除，避免留下不可解释的“幽灵生效”状态。删除记录只影响工作区操作历史和物化状态，不删除用户导出的外部文件，也不清理可重建预览 / bundle 缓存。
+
 ## 11. 与现有代码的演进关系
 
 建议分阶段落地。
@@ -420,9 +431,9 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 - `WorkspaceSummaryDto` 已携带轻量 `WorkspaceKey / WorkspaceDataRootPath`，Presentation 通过命令传给 Application；Presentation 不直接读写 `staging/changes`。
 - 已新增替换操作 recorder，由 Application 通过 `IWorkspaceDataStoreFactory` 读取并保存 `WorkspaceChangeSetDto`。
 - 已新增替换操作物化器和 `WorkspaceReplacementReadModelService`，导出 / 保存阶段后续应从该读模型读取当前有效替换列表，而不是扫描 UI 状态或直接解释兼容摘要字段。
-- 已让 `RedoAssetReplacementHandler` 追加 `RedoReplacement` 操作，并把当前会话内目标资源的 redo 槽重新应用为有效替换。
+- 已让 `RedoAssetReplacementHandler` 追加 `RedoReplacement` 操作，并把当前会话内目标资源的 redo 槽或指定历史替换记录重新应用为有效替换；指定历史记录重做会保存来源信息，供重启恢复和后续保存 / 导出消费。
 - 已把 `Texture2D` 文件替换和工作区内替换接入有效预览：预览查询会优先读取当前物化替换来源，文件来源由 Infrastructure 的文件预览端口读取，工作区来源递归复用既有预览管线并把预览身份投影回目标资产。
-- 已让资产详情读模型投影当前目标资产的独立操作记录：`ReplaceFromFile / ReplaceFromWorkspace` 在检查器 `变更` 分段分别显示为单独修改记录，同一目标多次修改保留多条修改记录；`ExtractAsset` 在资源详情中只展示最近一次提取记录，避免重复提取记录挤占修改历史。撤销 / 重做入口只作用于当前目标资源级替换栈，不与提取记录混用。
+- 已让资产详情读模型投影当前目标资产的独立操作记录：`ReplaceFromFile / ReplaceFromWorkspace` 在检查器 `变更` 分段分别显示为单独修改记录，同一目标多次修改保留多条修改记录；`ExtractAsset` 在资源详情中只展示最近一次提取记录，避免重复提取记录挤占修改历史。变更卡片会标记实际生效的替换记录；只有该记录显示撤销，其他替换记录显示重做。删除记录和记录上限都通过 Application 操作日志服务处理，Presentation 只展示卡片并触发命令。
 - `CachedWorkspaceSessionRegistry.OpenWorkspace` 已在打开工作区时读取 `operations[]`，并把当前生效的替换操作投影到运行时状态。
 - `WorkspaceChangeSummaryDto` 继续保持现有形状，替换状态可由重启恢复后的运行时状态生成。
 - 当前仍未完成来源文件指纹校验、来源缺失恢复计划、完整跨操作 redo 栈、批量替换结果明细和真实写包消费；这些进入后续恢复计划 / 保存导出细化。
@@ -453,6 +464,7 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
   操作入口只负责执行命令、清理本地候选状态和展示结果反馈，不再在提取 / 替换 / 撤销成功后手动调用页面刷新回调；非持久化的候选来源选择仍允许即时重投影当前详情。
 - 提取撤销仍未实现；当前原则保持为“只撤销工作区提取标记，不自动删除用户目录中的外部文件”。
 - 详情页修改记录现在来自 Application / Infrastructure 投影出的资产级操作记录；Presentation 只本地化展示文本和触发撤销 / 重做命令，不直接读取 `staging/changes`。
+- 设置页当前提供操作记录保留上限；该设置只控制持久化操作事实流的裁剪策略，不改变后台任务状态条、toast 或日志中心的瞬时展示。
 - 批处理页的中断、失败和输出文件不可用状态展示仍待细化。
 
 ### 第四阶段：编辑草稿与操作记录合流

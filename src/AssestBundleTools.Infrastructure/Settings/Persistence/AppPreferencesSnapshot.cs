@@ -13,9 +13,11 @@ public sealed record AppPreferencesSnapshot(
     int WorkspaceImportWorkerCount,
     int PreviewWorkerCount = 0,
     bool BundleArtifactCacheAutoPruneEnabled = true,
-    long BundleArtifactCacheMaximumSizeInBytes = AppPreferencesSnapshot.DefaultBundleArtifactCacheMaximumSizeInBytes)
+    long BundleArtifactCacheMaximumSizeInBytes = AppPreferencesSnapshot.DefaultBundleArtifactCacheMaximumSizeInBytes,
+    int OperationRecordLimit = AppPreferencesSnapshot.DefaultOperationRecordLimit)
 {
     public const long DefaultBundleArtifactCacheMaximumSizeInBytes = 4L * 1024L * 1024L * 1024L;
+    public const int DefaultOperationRecordLimit = 250;
 
     public static AppPreferencesSnapshot Default { get; } = new(
         RestoreLastWorkspaceOnStartup: true,
@@ -23,5 +25,6 @@ public sealed record AppPreferencesSnapshot(
         WorkspaceImportWorkerCount: 0,
         PreviewWorkerCount: 0,
         BundleArtifactCacheAutoPruneEnabled: true,
-        BundleArtifactCacheMaximumSizeInBytes: DefaultBundleArtifactCacheMaximumSizeInBytes);
+        BundleArtifactCacheMaximumSizeInBytes: DefaultBundleArtifactCacheMaximumSizeInBytes,
+        OperationRecordLimit: DefaultOperationRecordLimit);
 }

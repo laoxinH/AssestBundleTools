@@ -4,6 +4,8 @@ using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Replacement.Commands;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Queries;
+using AssestBundleTools.Application.Workspace.Commands;
+using AssestBundleTools.Application.Workspace.Dtos;
 
 namespace AssestBundleTools.Application.Workspace.Services;
 
@@ -20,6 +22,7 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
     private readonly ReplaceAssetFromWorkspaceHandler _replaceAssetFromWorkspaceHandler;
     private readonly UndoAssetReplacementHandler _undoAssetReplacementHandler;
     private readonly RedoAssetReplacementHandler _redoAssetReplacementHandler;
+    private readonly DeleteWorkspaceOperationRecordHandler _deleteWorkspaceOperationRecordHandler;
 
     public WorkspaceAssetOperationGateway(
         ExtractAssetHandler extractAssetHandler,
@@ -29,7 +32,8 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         ReplaceAssetFromFileHandler replaceAssetFromFileHandler,
         ReplaceAssetFromWorkspaceHandler replaceAssetFromWorkspaceHandler,
         UndoAssetReplacementHandler undoAssetReplacementHandler,
-        RedoAssetReplacementHandler redoAssetReplacementHandler)
+        RedoAssetReplacementHandler redoAssetReplacementHandler,
+        DeleteWorkspaceOperationRecordHandler deleteWorkspaceOperationRecordHandler)
     {
         _extractAssetHandler = extractAssetHandler ?? throw new ArgumentNullException(nameof(extractAssetHandler));
         _extractSpineAssetGroupHandler = extractSpineAssetGroupHandler ?? throw new ArgumentNullException(nameof(extractSpineAssetGroupHandler));
@@ -39,6 +43,7 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         _replaceAssetFromWorkspaceHandler = replaceAssetFromWorkspaceHandler ?? throw new ArgumentNullException(nameof(replaceAssetFromWorkspaceHandler));
         _undoAssetReplacementHandler = undoAssetReplacementHandler ?? throw new ArgumentNullException(nameof(undoAssetReplacementHandler));
         _redoAssetReplacementHandler = redoAssetReplacementHandler ?? throw new ArgumentNullException(nameof(redoAssetReplacementHandler));
+        _deleteWorkspaceOperationRecordHandler = deleteWorkspaceOperationRecordHandler ?? throw new ArgumentNullException(nameof(deleteWorkspaceOperationRecordHandler));
     }
 
     public Task<Result<AssetExtractionResultDto>> ExtractAssetAsync(
@@ -80,4 +85,9 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         RedoAssetReplacementCommand command,
         CancellationToken cancellationToken = default) =>
         _redoAssetReplacementHandler.HandleAsync(command, cancellationToken);
+
+    public Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(
+        DeleteWorkspaceOperationRecordCommand command,
+        CancellationToken cancellationToken = default) =>
+        _deleteWorkspaceOperationRecordHandler.HandleAsync(command, cancellationToken);
 }

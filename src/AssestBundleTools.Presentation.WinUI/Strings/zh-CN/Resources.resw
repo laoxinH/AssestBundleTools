@@ -2400,6 +2400,9 @@
   <data name="InspectorPanelView.RedoReplacementButton.Content" xml:space="preserve">
     <value>重做</value>
   </data>
+  <data name="InspectorPanelView.DeleteChangeRecordButton.Content" xml:space="preserve">
+    <value>删除</value>
+  </data>
   <data name="InspectorPanelView.PreviewSurfaceTitleText.Text" xml:space="preserve">
     <value>预览区骨架</value>
   </data>
@@ -2507,6 +2510,30 @@
   </data>
   <data name="InspectorPanelView.ChangeRecord.WorkspaceReplacement.Format" xml:space="preserve">
     <value>修改：使用工作区资源 {0} / {1}（{2}）</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.Extraction.Title" xml:space="preserve">
+    <value>资源提取</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.FileReplacement.Title" xml:space="preserve">
+    <value>文件修改</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.WorkspaceReplacement.Title" xml:space="preserve">
+    <value>工作区修改</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.EffectiveBadge" xml:space="preserve">
+    <value>生效中</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.RedoBadge" xml:space="preserve">
+    <value>可重做</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.LatestExtractionBadge" xml:space="preserve">
+    <value>最近提取</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.Source.Format" xml:space="preserve">
+    <value>来源：{0}</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.Time.Format" xml:space="preserve">
+    <value>时间：{0}</value>
   </data>
   <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.Hit" xml:space="preserve">
     <value>命中缓存</value>
@@ -3363,6 +3390,30 @@
   <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Option.Four" xml:space="preserve">
     <value>4 个</value>
   </data>
+  <data name="SettingsDiagnosticsPage.OperationRecords.Title" xml:space="preserve">
+    <value>工作区操作记录</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecords.Hint" xml:space="preserve">
+    <value>限制持久化操作记录数量，避免提取、修改和撤销记录长期无限增长；当前生效替换和最近提取会被优先保留。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.Label" xml:space="preserve">
+    <value>记录保留上限</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.Description" xml:space="preserve">
+    <value>超过上限时会优先裁剪较旧的非关键记录。调高上限可保留更长的撤销/重做历史。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.Option.OneHundred" xml:space="preserve">
+    <value>100 条</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.Option.TwoHundredFifty" xml:space="preserve">
+    <value>250 条</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.Option.FiveHundred" xml:space="preserve">
+    <value>500 条</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.Option.OneThousand" xml:space="preserve">
+    <value>1000 条</value>
+  </data>
   <data name="SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage" xml:space="preserve">
     <value>保存启动恢复偏好失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
   </data>
@@ -3374,6 +3425,9 @@
   </data>
   <data name="SettingsDiagnosticsPage.PreviewWorkerCount.SaveFailedMessage" xml:space="preserve">
     <value>保存预览线程数量失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.SaveFailedMessage" xml:space="preserve">
+    <value>保存操作记录上限失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Title" xml:space="preserve">
     <value>当前工作区缓存</value>
@@ -3621,6 +3675,9 @@
   <data name="BundleExplorer.Log.ReplacementRedone" xml:space="preserve">
     <value>已重做资源“{0}”的替换</value>
   </data>
+  <data name="BundleExplorer.Log.OperationRecordDeleted" xml:space="preserve">
+    <value>已删除资源“{0}”的一条操作记录</value>
+  </data>
   <data name="BundleExplorer.Notification.WorkspaceLoaded" xml:space="preserve">
     <value>已加载工作区“{0}”，共 {1} 个 Bundle、{2} 个资源。</value>
   </data>
@@ -3692,6 +3749,9 @@
   </data>
   <data name="BundleExplorer.Notification.ReplacementRedone" xml:space="preserve">
     <value>已重做替换：{0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.OperationRecordDeleted" xml:space="preserve">
+    <value>已删除操作记录：{0}</value>
   </data>
   <data name="FilePicker.Extraction.Type.Image" xml:space="preserve">
     <value>图像文件</value>
@@ -3833,6 +3893,9 @@
   </data>
   <data name="Error.Asset.Replace.NoRedoChange" xml:space="preserve">
     <value>当前资源没有可重做的替换：{0}</value>
+  </data>
+  <data name="Error.Workspace.OperationRecord.NotFound" xml:space="preserve">
+    <value>找不到要删除的工作区操作记录：{0}</value>
   </data>
   <data name="Error.Asset.Replace.SourceFilePathRequired" xml:space="preserve">
     <value>应用文件替换前需要提供文件路径。</value>

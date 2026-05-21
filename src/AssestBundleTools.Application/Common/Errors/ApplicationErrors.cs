@@ -499,6 +499,15 @@ public static class ApplicationErrors
             parameters: CreateParameters(("AssetId", assetId.ToString())),
             isUserActionable: true);
 
+    public static AppError WorkspaceOperationRecordNotFound(string operationId) =>
+        new(
+            code: "Workspace.OperationRecord.NotFound",
+            category: ErrorCategory.NotFound,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Workspace.OperationRecord.NotFound",
+            parameters: CreateParameters(("OperationId", operationId)),
+            isUserActionable: true);
+
     public static AppError WorkspaceNotFound(WorkspaceId workspaceId) =>
         new(
             code: "Workspace.Query.NotFound",

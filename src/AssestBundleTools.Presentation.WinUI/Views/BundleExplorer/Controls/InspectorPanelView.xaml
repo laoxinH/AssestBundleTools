@@ -43,6 +43,38 @@
                 Value="Top" />
         </Style>
 
+        <Style
+            x:Key="InspectorChangeRecordTagButtonStyle"
+            TargetType="Button">
+            <Setter
+                Property="Background"
+                Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter
+                Property="BorderBrush"
+                Value="Transparent" />
+            <Setter
+                Property="BorderThickness"
+                Value="0" />
+            <Setter
+                Property="CornerRadius"
+                Value="12" />
+            <Setter
+                Property="Padding"
+                Value="10,0" />
+            <Setter
+                Property="MinHeight"
+                Value="28" />
+            <Setter
+                Property="MinWidth"
+                Value="0" />
+            <Setter
+                Property="FontSize"
+                Value="12" />
+            <Setter
+                Property="FontWeight"
+                Value="SemiBold" />
+        </Style>
+
     </UserControl.Resources>
 
     <Grid>
@@ -547,43 +579,95 @@
                                             <DataTemplate x:DataType="viewModels:InspectorChangeRecordViewModel">
                                                 <Border
                                                     Margin="0,0,0,8"
-                                                    Padding="10"
-                                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                                    Padding="12"
+                                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                    BorderThickness="1"
                                                     CornerRadius="8">
-                                                    <Grid ColumnSpacing="8">
+                                                    <Grid ColumnSpacing="10">
                                                         <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" />
                                                             <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
                                                         </Grid.ColumnDefinitions>
-                                                        <StackPanel Spacing="4">
+                                                        <Border
+                                                            Width="32"
+                                                            Height="32"
+                                                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                            CornerRadius="16">
+                                                            <FontIcon
+                                                                FontFamily="Segoe Fluent Icons"
+                                                                FontSize="14"
+                                                                Glyph="{x:Bind Glyph, Mode=OneTime}" />
+                                                        </Border>
+                                                        <StackPanel
+                                                            Grid.Column="1"
+                                                            Spacing="8">
+                                                            <Grid ColumnSpacing="8">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock
+                                                                    VerticalAlignment="Center"
+                                                                    FontWeight="SemiBold"
+                                                                    Text="{x:Bind TitleText, Mode=OneTime}"
+                                                                    TextWrapping="WrapWholeWords" />
+                                                                <Border
+                                                                    Grid.Column="1"
+                                                                    Padding="8,3"
+                                                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                                    CornerRadius="10"
+                                                                    Visibility="{x:Bind BadgeVisibility, Mode=OneTime}">
+                                                                    <TextBlock
+                                                                        FontSize="12"
+                                                                        FontWeight="SemiBold"
+                                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                        Text="{x:Bind BadgeText, Mode=OneTime}" />
+                                                                </Border>
+                                                            </Grid>
+
                                                             <TextBlock
-                                                                FontWeight="SemiBold"
-                                                                Text="{x:Bind PrimaryText, Mode=OneTime}"
+                                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                Text="{x:Bind SourceText, Mode=OneTime}"
+                                                                TextWrapping="WrapWholeWords"
+                                                                Visibility="{x:Bind SourceTextVisibility, Mode=OneTime}" />
+                                                            <TextBlock
+                                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                                Text="{x:Bind TimeText, Mode=OneTime}"
                                                                 TextWrapping="WrapWholeWords" />
                                                             <TextBlock
                                                                 FontFamily="Cascadia Mono"
-                                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                FontSize="12"
+                                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                                                 Text="{x:Bind SecondaryText, Mode=OneTime}"
                                                                 TextWrapping="WrapWholeWords"
                                                                 Visibility="{x:Bind SecondaryTextVisibility, Mode=OneTime}" />
-                                                        </StackPanel>
-                                                        <StackPanel
-                                                            Grid.Column="1"
-                                                            VerticalAlignment="Top"
-                                                            Orientation="Horizontal"
-                                                            Spacing="6">
-                                                            <Button
-                                                                Click="OnChangeRecordUndoReplacementButtonClick"
-                                                                Content="{x:Bind UndoButtonText, Mode=OneTime}"
-                                                                IsEnabled="{Binding ViewModel.CanUndoReplacement, ElementName=InspectorPanelRoot}"
-                                                                Style="{StaticResource WorkspaceInlineActionButtonStyle}"
-                                                                Visibility="{x:Bind UndoButtonVisibility, Mode=OneTime}" />
-                                                            <Button
-                                                                Click="OnChangeRecordRedoReplacementButtonClick"
-                                                                Content="{x:Bind RedoButtonText, Mode=OneTime}"
-                                                                IsEnabled="{Binding ViewModel.CanRedoReplacement, ElementName=InspectorPanelRoot}"
-                                                                Style="{StaticResource WorkspaceInlineActionButtonStyle}"
-                                                                Visibility="{x:Bind RedoButtonVisibility, Mode=OneTime}" />
+
+                                                            <StackPanel
+                                                                Orientation="Horizontal"
+                                                                Spacing="6">
+                                                                <Button
+                                                                    Click="OnChangeRecordUndoReplacementButtonClick"
+                                                                    Content="{x:Bind UndoButtonText, Mode=OneTime}"
+                                                                    IsEnabled="{x:Bind IsActionEnabled, Mode=OneTime}"
+                                                                    Style="{StaticResource InspectorChangeRecordTagButtonStyle}"
+                                                                    Tag="{x:Bind OperationId, Mode=OneTime}"
+                                                                    Visibility="{x:Bind UndoButtonVisibility, Mode=OneTime}" />
+                                                                <Button
+                                                                    Click="OnChangeRecordRedoReplacementButtonClick"
+                                                                    Content="{x:Bind RedoButtonText, Mode=OneTime}"
+                                                                    IsEnabled="{x:Bind IsActionEnabled, Mode=OneTime}"
+                                                                    Style="{StaticResource InspectorChangeRecordTagButtonStyle}"
+                                                                    Tag="{x:Bind OperationId, Mode=OneTime}"
+                                                                    Visibility="{x:Bind RedoButtonVisibility, Mode=OneTime}" />
+                                                                <Button
+                                                                    Click="OnChangeRecordDeleteButtonClick"
+                                                                    Content="{x:Bind DeleteButtonText, Mode=OneTime}"
+                                                                    IsEnabled="{x:Bind IsActionEnabled, Mode=OneTime}"
+                                                                    Style="{StaticResource InspectorChangeRecordTagButtonStyle}"
+                                                                    Tag="{x:Bind OperationId, Mode=OneTime}"
+                                                                    Visibility="{x:Bind DeleteButtonVisibility, Mode=OneTime}" />
+                                                            </StackPanel>
                                                         </StackPanel>
                                                     </Grid>
                                                 </Border>

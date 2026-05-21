@@ -119,7 +119,8 @@ public sealed class WorkspaceReplacementOperationRecorder
     public void RecordRedoReplacement(
         RedoAssetReplacementCommand command,
         AssetDetailsDto targetDetails,
-        AssetReplacementRedoResultDto result)
+        AssetReplacementRedoResultDto result,
+        WorkspaceOperationRecordDto? replacementOperation = null)
     {
         if (!TryLoadChangeSet(command.WorkspaceKey, command.WorkspaceDataRootPath, out var workspaceKey, out var store, out var changeSet))
         {
@@ -127,21 +128,53 @@ public sealed class WorkspaceReplacementOperationRecorder
         }
 
         var recordedAtUtc = result.RedoneAtUtc;
+        var source = replacementOperation?.Source;
         var appendRequest = new WorkspaceOperationAppendRequestDto(
             WorkspaceKey: workspaceKey,
             OperationKind: WorkspaceOperationKind.RedoReplacement,
             Status: WorkspaceOperationStatus.Applied,
             Target: CreateTarget(targetDetails),
+            Source: source,
             PreviousState: CreatePreviousState(targetDetails),
+            Result: source is null
+                ? null
+                : new WorkspaceOperationResultDto(ReplacementSourceKind: source.SourceKind),
             CreatedAtUtc: recordedAtUtc,
             AppliedAtUtc: recordedAtUtc,
             CompletedAtUtc: recordedAtUtc,
-            SupersedesOperationId: _replacementStateMaterializer.FindLatestUndoOperationId(
-                changeSet,
-                targetDetails.BundleId.Value,
-                targetDetails.AssetId.Value));
+            SupersedesOperationId: replacementOperation?.OperationId ??
+                                  _replacementStateMaterializer.FindLatestUndoOperationId(
+                                      changeSet,
+                                      targetDetails.BundleId.Value,
+                                      targetDetails.AssetId.Value));
 
         store.Save(_operationLogService.AppendOperation(changeSet, appendRequest));
+    }
+
+    public bool TryFindReplacementOperation(
+        RedoAssetReplacementCommand command,
+        out WorkspaceOperationRecordDto? replacementOperation)
+    {
+        replacementOperation = null;
+        if (string.IsNullOrWhiteSpace(command.ReplacementOperationId) ||
+            !TryLoadChangeSet(command.WorkspaceKey, command.WorkspaceDataRootPath, out _, out _, out var changeSet))
+        {
+            return false;
+        }
+
+        var operationId = command.ReplacementOperationId.Trim();
+        replacementOperation = (changeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>())
+            .Where(static operation => operation is not null)
+            .Where(static operation => operation.Status == WorkspaceOperationStatus.Applied)
+            .Where(static operation => operation.OperationKind is
+                WorkspaceOperationKind.ReplaceFromFile or
+                WorkspaceOperationKind.ReplaceFromWorkspace)
+            .FirstOrDefault(operation =>
+                string.Equals(operation.OperationId, operationId, StringComparison.Ordinal) &&
+                string.Equals(operation.Target?.BundleId, command.BundleId.Value, StringComparison.Ordinal) &&
+                string.Equals(operation.Target?.AssetId, command.AssetId.Value, StringComparison.Ordinal));
+
+        return replacementOperation is not null;
     }
 
     private bool TryLoadChangeSet(

@@ -22,26 +22,25 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
     public IReadOnlyList<InspectorChangeRecordViewModel> CreateChangeRecords(
         AssetDetailsDto details,
         bool canUndoReplacement,
-        bool canRedoReplacement)
+        bool canRedoReplacement,
+        bool canManageRecords)
     {
         ArgumentNullException.ThrowIfNull(details);
 
         var sourceRecords = NormalizeChangeRecords(details);
-        var firstReplacementActionAssigned = false;
         var records = new List<InspectorChangeRecordViewModel>(sourceRecords.Count);
         foreach (var record in sourceRecords)
         {
             var isReplacementRecord = IsReplacementRecord(record);
-            var showUndo = false;
-            var showRedo = false;
-            if (isReplacementRecord && !firstReplacementActionAssigned)
-            {
-                showUndo = canUndoReplacement;
-                showRedo = !showUndo && canRedoReplacement;
-                firstReplacementActionAssigned = showUndo || showRedo;
-            }
+            var showUndo = isReplacementRecord && record.IsEffectiveReplacement && canUndoReplacement;
+            var showRedo = isReplacementRecord && !record.IsEffectiveReplacement;
 
-            records.Add(CreateChangeRecord(record, showUndo, showRedo));
+            records.Add(CreateChangeRecord(
+                record,
+                showUndo,
+                showRedo,
+                canManageRecords && !string.IsNullOrWhiteSpace(record.OperationId),
+                canManageRecords || canRedoReplacement));
         }
 
         return records;
@@ -78,7 +77,8 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
                 Kind: AssetChangeRecordKind.FileReplacement,
                 CreatedAtUtc: DateTimeOffset.MinValue,
                 SourceFileName: details.FileReplacementSourceFileName,
-                SourceFilePath: details.FileReplacementSourcePath));
+                SourceFilePath: details.FileReplacementSourcePath,
+                IsEffectiveReplacement: true));
         }
 
         if (!string.IsNullOrWhiteSpace(details.WorkspaceReplacementSourceAssetName) ||
@@ -88,7 +88,8 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
                 Kind: AssetChangeRecordKind.WorkspaceReplacement,
                 CreatedAtUtc: DateTimeOffset.MinValue,
                 SourceBundleDisplayName: details.WorkspaceReplacementSourceBundleDisplayName,
-                SourceAssetName: details.WorkspaceReplacementSourceAssetName));
+                SourceAssetName: details.WorkspaceReplacementSourceAssetName,
+                IsEffectiveReplacement: true));
         }
 
         if (details.LastExtractedAtUtc is { } extractedAtUtc)
@@ -105,36 +106,69 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
     private InspectorChangeRecordViewModel CreateChangeRecord(
         AssetChangeRecordDto record,
         bool showUndo,
-        bool showRedo)
+        bool showRedo,
+        bool showDelete,
+        bool isActionEnabled)
     {
         return new InspectorChangeRecordViewModel(
-            PrimaryText: BuildPrimaryText(record),
+            OperationId: record.OperationId ?? string.Empty,
+            TitleText: BuildTitleText(record),
+            BadgeText: BuildBadgeText(record),
+            SourceText: BuildSourceText(record),
+            TimeText: _localizationService.GetFormattedString(
+                ResourceKeys.InspectorChangeRecordTimeFormat,
+                FormatTimestamp(record.DisplayTimestampUtc)),
             SecondaryText: BuildSecondaryText(record),
             ShowsUndoReplacement: showUndo,
             ShowsRedoReplacement: showRedo,
+            ShowsDeleteRecord: showDelete,
+            IsActionEnabled: isActionEnabled,
             UndoButtonText: GetString(ResourceKeys.InspectorUndoReplacementButton),
-            RedoButtonText: GetString(ResourceKeys.InspectorRedoReplacementButton));
+            RedoButtonText: GetString(ResourceKeys.InspectorRedoReplacementButton),
+            DeleteButtonText: GetString(ResourceKeys.InspectorDeleteChangeRecordButton),
+            Glyph: BuildGlyph(record));
     }
 
-    private string BuildPrimaryText(AssetChangeRecordDto record)
+    private string BuildTitleText(AssetChangeRecordDto record)
     {
-        var timestamp = FormatTimestamp(record.DisplayTimestampUtc);
         return record.Kind switch
         {
-            AssetChangeRecordKind.FileReplacement => _localizationService.GetFormattedString(
-                ResourceKeys.InspectorChangeRecordFileReplacementFormat,
-                ResolveDisplayValue(record.SourceFileName ?? record.SourceFilePath),
-                timestamp),
-            AssetChangeRecordKind.WorkspaceReplacement => _localizationService.GetFormattedString(
-                ResourceKeys.InspectorChangeRecordWorkspaceReplacementFormat,
-                ResolveDisplayValue(record.SourceBundleDisplayName),
-                ResolveDisplayValue(record.SourceAssetName),
-                timestamp),
-            AssetChangeRecordKind.Extraction => _localizationService.GetFormattedString(
-                ResourceKeys.InspectorChangeRecordExtractFormat,
-                timestamp),
+            AssetChangeRecordKind.FileReplacement => GetString(ResourceKeys.InspectorChangeRecordFileReplacementTitle),
+            AssetChangeRecordKind.WorkspaceReplacement => GetString(ResourceKeys.InspectorChangeRecordWorkspaceReplacementTitle),
+            AssetChangeRecordKind.Extraction => GetString(ResourceKeys.InspectorChangeRecordExtractionTitle),
             _ => GetString(ResourceKeys.InspectorChangeSummaryNone)
         };
+    }
+
+    private string BuildBadgeText(AssetChangeRecordDto record)
+    {
+        if (IsReplacementRecord(record))
+        {
+            return record.IsEffectiveReplacement
+                ? GetString(ResourceKeys.InspectorChangeRecordEffectiveBadge)
+                : GetString(ResourceKeys.InspectorChangeRecordRedoBadge);
+        }
+
+        return record.Kind == AssetChangeRecordKind.Extraction
+            ? GetString(ResourceKeys.InspectorChangeRecordLatestExtractionBadge)
+            : string.Empty;
+    }
+
+    private string BuildSourceText(AssetChangeRecordDto record)
+    {
+        var source = record.Kind switch
+        {
+            AssetChangeRecordKind.FileReplacement => ResolveDisplayValue(record.SourceFileName ?? record.SourceFilePath),
+            AssetChangeRecordKind.WorkspaceReplacement => string.Concat(
+                ResolveDisplayValue(record.SourceBundleDisplayName),
+                " / ",
+                ResolveDisplayValue(record.SourceAssetName)),
+            _ => string.Empty
+        };
+
+        return string.IsNullOrWhiteSpace(source)
+            ? string.Empty
+            : _localizationService.GetFormattedString(ResourceKeys.InspectorChangeRecordSourceFormat, source);
     }
 
     private string BuildSecondaryText(AssetChangeRecordDto record)
@@ -158,6 +192,15 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
 
     private static bool IsReplacementRecord(AssetChangeRecordDto record) =>
         record.Kind is AssetChangeRecordKind.FileReplacement or AssetChangeRecordKind.WorkspaceReplacement;
+
+    private static string BuildGlyph(AssetChangeRecordDto record) =>
+        record.Kind switch
+        {
+            AssetChangeRecordKind.FileReplacement => "\uE8B7",
+            AssetChangeRecordKind.WorkspaceReplacement => "\uE8A5",
+            AssetChangeRecordKind.Extraction => "\uE896",
+            _ => "\uE946"
+        };
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
 }

@@ -14,6 +14,9 @@ public sealed class AppPreferencesService : IAppPreferencesService
     public const long MinimumBundleArtifactCacheMaximumSizeInBytes = 1L * 1024L * 1024L * 1024L;
     public const long DefaultBundleArtifactCacheMaximumSizeInBytes = 4L * 1024L * 1024L * 1024L;
     public const long MaximumBundleArtifactCacheMaximumSizeInBytes = 16L * 1024L * 1024L * 1024L;
+    public const int MinimumOperationRecordLimit = 100;
+    public const int DefaultOperationRecordLimit = 250;
+    public const int MaximumOperationRecordLimit = 1000;
     private const string CurrentWindowBehaviorKey = "currentWindow";
     private const string NewWindowBehaviorKey = "newWindow";
     private const string AskEveryTimeBehaviorKey = "askEveryTime";
@@ -39,6 +42,8 @@ public sealed class AppPreferencesService : IAppPreferencesService
 
     public long BundleArtifactCacheMaximumSizeInBytes =>
         CoerceBundleArtifactCacheMaximumSizeInBytes(_currentSnapshot.BundleArtifactCacheMaximumSizeInBytes);
+
+    public int OperationRecordLimit => CoerceOperationRecordLimit(_currentSnapshot.OperationRecordLimit);
 
     public bool TrySetRestoreLastWorkspaceOnStartup(bool value)
     {
@@ -215,6 +220,35 @@ public sealed class AppPreferencesService : IAppPreferencesService
         }
     }
 
+    public bool TrySetOperationRecordLimit(int value)
+    {
+        var coercedValue = CoerceOperationRecordLimit(value);
+        if (_currentSnapshot.OperationRecordLimit == coercedValue)
+        {
+            return true;
+        }
+
+        var updatedSnapshot = _currentSnapshot with
+        {
+            OperationRecordLimit = coercedValue
+        };
+
+        try
+        {
+            _preferencesStore.Save(updatedSnapshot);
+            _currentSnapshot = updatedSnapshot;
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
     private static RecentWorkspaceOpenBehavior DeserializeRecentWorkspaceOpenBehavior(string? behaviorKey)
     {
         return behaviorKey switch
@@ -267,5 +301,13 @@ public sealed class AppPreferencesService : IAppPreferencesService
             value <= 0 ? DefaultBundleArtifactCacheMaximumSizeInBytes : value,
             MinimumBundleArtifactCacheMaximumSizeInBytes,
             MaximumBundleArtifactCacheMaximumSizeInBytes);
+    }
+
+    public static int CoerceOperationRecordLimit(int value)
+    {
+        return Math.Clamp(
+            value <= 0 ? DefaultOperationRecordLimit : value,
+            MinimumOperationRecordLimit,
+            MaximumOperationRecordLimit);
     }
 }

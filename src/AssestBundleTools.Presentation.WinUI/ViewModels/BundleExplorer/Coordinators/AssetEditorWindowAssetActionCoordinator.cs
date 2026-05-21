@@ -211,10 +211,10 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
             _operationFeedbackBridge.AppendResultFailure);
     }
 
-    public async Task RedoAppliedReplacementAsync()
+    public async Task RedoAppliedReplacementAsync(string? replacementOperationId = null)
     {
         if (!TryGetActiveAssetCommandContext(
-                static (_, details) => details.CanRedoReplacement,
+                (_, details) => !string.IsNullOrWhiteSpace(replacementOperationId) || details.CanRedoReplacement,
                 out var workspaceSummary,
                 out var assetTab,
                 out var details))
@@ -226,6 +226,28 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
             workspaceSummary,
             assetTab,
             details,
+            _setBusy,
+            _operationFeedbackBridge.AppendResultFailure,
+            replacementOperationId);
+    }
+
+    public async Task DeleteChangeRecordAsync(string? operationId)
+    {
+        if (string.IsNullOrWhiteSpace(operationId) ||
+            !TryGetActiveAssetCommandContext(
+                static (_, _) => true,
+                out var workspaceSummary,
+                out var assetTab,
+                out var details))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.DeleteChangeRecordAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            operationId,
             _setBusy,
             _operationFeedbackBridge.AppendResultFailure);
     }

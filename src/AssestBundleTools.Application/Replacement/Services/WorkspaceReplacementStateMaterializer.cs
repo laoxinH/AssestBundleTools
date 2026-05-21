@@ -30,7 +30,7 @@ public sealed class WorkspaceReplacementStateMaterializer
                     ApplyUndo(state);
                     break;
                 case WorkspaceOperationKind.RedoReplacement:
-                    ApplyRedo(state);
+                    ApplyRedo(state, operation);
                     break;
             }
         }
@@ -136,8 +136,24 @@ public sealed class WorkspaceReplacementStateMaterializer
         state.Current = PopOrDefault(state.UndoStack);
     }
 
-    private static void ApplyRedo(TargetReplacementState state)
+    private static void ApplyRedo(
+        TargetReplacementState state,
+        WorkspaceOperationRecordDto operation)
     {
+        if (operation.Source is not null &&
+            !string.IsNullOrWhiteSpace(operation.SupersedesOperationId))
+        {
+            state.UndoStack.Add(state.Current);
+            state.RedoStack.Clear();
+            state.Current = new WorkspaceEffectiveReplacementDto(
+                operation.SupersedesOperationId.Trim(),
+                operation.Sequence,
+                operation.Target!,
+                operation.Source,
+                operation.AppliedAtUtc ?? operation.CompletedAtUtc ?? operation.CreatedAtUtc);
+            return;
+        }
+
         var redoReplacement = PopOrDefault(state.RedoStack);
         if (redoReplacement is null)
         {

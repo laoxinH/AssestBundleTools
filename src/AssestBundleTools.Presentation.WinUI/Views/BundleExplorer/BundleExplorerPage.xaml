@@ -1622,6 +1622,7 @@
                         ApplyReplacementRequested="OnInspectorApplyReplacementRequested"
                         UndoReplacementRequested="OnInspectorUndoReplacementRequested"
                         RedoReplacementRequested="OnInspectorRedoReplacementRequested"
+                        DeleteChangeRecordRequested="OnInspectorDeleteChangeRecordRequested"
                         SpineAtlasPageSelectionRequested="OnInspectorSpineAtlasPageSelectionRequested"
                         ViewModel="{x:Bind ViewModel.AssetWorkflow.Inspector, Mode=OneWay}" />
                 </Grid>

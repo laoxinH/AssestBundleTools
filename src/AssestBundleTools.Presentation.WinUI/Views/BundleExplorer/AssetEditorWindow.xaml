@@ -205,6 +205,7 @@
                     ModifyFromFileReplacementSourceRequested="OnInspectorModifyFromFileReplacementSourceRequested"
                     OpenPreviewLocationRequested="OnInspectorOpenPreviewLocationRequested"
                     RedoReplacementRequested="OnInspectorRedoReplacementRequested"
+                    DeleteChangeRecordRequested="OnInspectorDeleteChangeRecordRequested"
                     ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested"
                     SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
                     UndoReplacementRequested="OnInspectorUndoReplacementRequested"

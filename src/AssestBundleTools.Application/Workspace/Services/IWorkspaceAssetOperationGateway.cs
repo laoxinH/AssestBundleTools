@@ -4,6 +4,8 @@ using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Replacement.Commands;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Queries;
+using AssestBundleTools.Application.Workspace.Commands;
+using AssestBundleTools.Application.Workspace.Dtos;
 
 namespace AssestBundleTools.Application.Workspace.Services;
 
@@ -42,5 +44,9 @@ public interface IWorkspaceAssetOperationGateway
 
     Task<Result<AssetReplacementRedoResultDto>> RedoAssetReplacementAsync(
         RedoAssetReplacementCommand command,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(
+        DeleteWorkspaceOperationRecordCommand command,
         CancellationToken cancellationToken = default);
 }

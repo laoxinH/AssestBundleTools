@@ -13,4 +13,5 @@ internal sealed record AppPreferencesPersistenceSnapshot(
     int WorkspaceImportWorkerCount,
     int PreviewWorkerCount,
     bool BundleArtifactCacheAutoPruneEnabled = true,
-    long BundleArtifactCacheMaximumSizeInBytes = AppPreferencesService.DefaultBundleArtifactCacheMaximumSizeInBytes);
+    long BundleArtifactCacheMaximumSizeInBytes = AppPreferencesService.DefaultBundleArtifactCacheMaximumSizeInBytes,
+    int OperationRecordLimit = AppPreferencesService.DefaultOperationRecordLimit);

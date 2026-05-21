@@ -8,6 +8,13 @@ namespace AssestBundleTools.Application.Workspace.Services;
 /// </summary>
 public sealed class WorkspaceOperationLogService : IWorkspaceOperationLogService
 {
+    private readonly WorkspaceOperationRecordLimitPolicy _recordLimitPolicy;
+
+    public WorkspaceOperationLogService(Func<int>? operationRecordLimitProvider = null)
+    {
+        _recordLimitPolicy = new WorkspaceOperationRecordLimitPolicy(operationRecordLimitProvider);
+    }
+
     public WorkspaceChangeSetDto AppendOperation(
         WorkspaceChangeSetDto? changeSet,
         WorkspaceOperationAppendRequestDto request)
@@ -59,7 +66,7 @@ public sealed class WorkspaceOperationLogService : IWorkspaceOperationLogService
             UpdatedAtUtc = createdAtUtc,
             SchemaVersion = WorkspaceChangeSetDto.CurrentSchemaVersion,
             OperationSequence = nextSequence,
-            Operations = existingOperations.Append(operation).ToArray()
+            Operations = _recordLimitPolicy.Apply(existingOperations.Append(operation).ToArray())
         };
     }
 
@@ -110,6 +117,33 @@ public sealed class WorkspaceOperationLogService : IWorkspaceOperationLogService
             SchemaVersion = WorkspaceChangeSetDto.CurrentSchemaVersion,
             OperationSequence = Math.Max(changeSet.OperationSequence, operations.Max(static operation => operation.Sequence)),
             Operations = operations
+        };
+    }
+
+    public WorkspaceChangeSetDto DeleteOperationRecord(
+        WorkspaceChangeSetDto changeSet,
+        string operationId,
+        DateTimeOffset? deletedAtUtc = null)
+    {
+        ArgumentNullException.ThrowIfNull(changeSet);
+
+        var normalizedOperationId = NormalizeRequired(operationId, nameof(operationId));
+        var operations = NormalizeOperations(changeSet.Operations);
+        var operationIdsToDelete = CollectOperationIdsToDelete(operations, normalizedOperationId);
+        var updatedOperations = operations
+            .Where(operation => !operationIdsToDelete.Contains(operation.OperationId))
+            .ToArray();
+        if (updatedOperations.Length == operations.Count)
+        {
+            throw new ArgumentException("Operation id was not found in the change set.", nameof(operationId));
+        }
+
+        return NormalizeChangeSet(changeSet, changeSet.WorkspaceKey) with
+        {
+            UpdatedAtUtc = deletedAtUtc ?? DateTimeOffset.UtcNow,
+            SchemaVersion = WorkspaceChangeSetDto.CurrentSchemaVersion,
+            OperationSequence = changeSet.OperationSequence,
+            Operations = updatedOperations
         };
     }
 
@@ -229,6 +263,34 @@ public sealed class WorkspaceOperationLogService : IWorkspaceOperationLogService
                 .Where(static operation => operation is not null)
                 .OrderBy(static operation => operation.Sequence)
                 .ToArray();
+
+    private static ISet<string> CollectOperationIdsToDelete(
+        IReadOnlyList<WorkspaceOperationRecordDto> operations,
+        string rootOperationId)
+    {
+        var idsToDelete = new HashSet<string>(StringComparer.Ordinal)
+        {
+            rootOperationId
+        };
+
+        var changed = true;
+        while (changed)
+        {
+            changed = false;
+            foreach (var operation in operations)
+            {
+                if (string.IsNullOrWhiteSpace(operation.SupersedesOperationId) ||
+                    !idsToDelete.Contains(operation.SupersedesOperationId))
+                {
+                    continue;
+                }
+
+                changed |= idsToDelete.Add(operation.OperationId);
+            }
+        }
+
+        return idsToDelete;
+    }
 
     private static IReadOnlyList<WorkspaceOperationDiagnosticDto>? NormalizeDiagnostics(
         IReadOnlyList<WorkspaceOperationDiagnosticDto>? diagnostics)

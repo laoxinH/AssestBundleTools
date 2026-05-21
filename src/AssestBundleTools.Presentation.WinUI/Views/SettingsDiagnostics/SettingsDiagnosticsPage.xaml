@@ -497,6 +497,36 @@
                             <StackPanel Spacing="12">
                                 <StackPanel Spacing="6">
                                     <TextBlock
+                                        x:Name="OperationRecordsTitleText"
+                                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                    <TextBlock
+                                        x:Name="OperationRecordsHintText"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        TextWrapping="WrapWholeWords" />
+                                </StackPanel>
+
+                                <TextBlock
+                                    x:Name="OperationRecordLimitLabelText"
+                                    FontWeight="SemiBold" />
+
+                                <RadioButtons
+                                    x:Name="OperationRecordLimitRadioButtons"
+                                    MaxColumns="4"
+                                    SelectedIndex="{x:Bind ViewModel.OperationRecordLimitSelectedIndex, Mode=TwoWay}" />
+
+                                <TextBlock
+                                    x:Name="OperationRecordLimitDescriptionText"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="WrapWholeWords" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border
+                            Style="{StaticResource SettingsInsetCardStyle}"
+                            Padding="16">
+                            <StackPanel Spacing="12">
+                                <StackPanel Spacing="6">
+                                    <TextBlock
                                         x:Name="BundleArtifactCacheTitleText"
                                         Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
                                     <TextBlock

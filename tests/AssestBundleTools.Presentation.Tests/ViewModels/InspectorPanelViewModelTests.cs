@@ -55,12 +55,20 @@ public sealed class InspectorPanelViewModelTests
     {
         var viewModel = CreateViewModel();
         var changeRecord = new InspectorChangeRecordViewModel(
-            "Modified",
-            @"C:\Imports\hero.png",
+            OperationId: "op-1",
+            TitleText: "Modified",
+            BadgeText: "Effective",
+            SourceText: "Source: hero.png",
+            TimeText: "Time: now",
+            SecondaryText: @"C:\Imports\hero.png",
             ShowsUndoReplacement: true,
             ShowsRedoReplacement: false,
+            ShowsDeleteRecord: true,
+            IsActionEnabled: true,
             UndoButtonText: "Undo",
-            RedoButtonText: "Redo");
+            RedoButtonText: "Redo",
+            DeleteButtonText: "Delete",
+            Glyph: "\uE8B7");
 
         ApplyBasicDetails(
             viewModel,
@@ -107,19 +115,16 @@ public sealed class InspectorPanelViewModelTests
         var records = presenter.CreateChangeRecords(
             details,
             canUndoReplacement: false,
-            canRedoReplacement: false);
+            canRedoReplacement: false,
+            canManageRecords: true);
 
         Assert.Equal(2, records.Count);
         Assert.Equal(
             1,
-            records.Count(record => record.PrimaryText.StartsWith(
-                ResourceKeys.InspectorChangeRecordExtractFormat,
-                StringComparison.Ordinal)));
+            records.Count(record => record.TitleText == ResourceKeys.InspectorChangeRecordExtractionTitle));
         Assert.Contains(
             latestExtractionAtUtc.ToLocalTime().ToString("G"),
-            records.Single(record => record.PrimaryText.StartsWith(
-                ResourceKeys.InspectorChangeRecordExtractFormat,
-                StringComparison.Ordinal)).PrimaryText);
+            records.Single(record => record.TitleText == ResourceKeys.InspectorChangeRecordExtractionTitle).TimeText);
     }
 
     [Fact]

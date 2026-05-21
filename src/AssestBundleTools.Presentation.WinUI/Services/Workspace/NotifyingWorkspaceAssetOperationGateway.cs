@@ -4,6 +4,8 @@ using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Replacement.Commands;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Queries;
+using AssestBundleTools.Application.Workspace.Commands;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
@@ -71,7 +73,7 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         NotifyIfSucceeded(
             result,
             command.WorkspaceId,
-            WorkspaceOperationChangeKind.Replacement,
+            WorkspaceOperationChangeKind.Extraction | WorkspaceOperationChangeKind.Replacement,
             CreateAffectedAsset(command.TargetBundleId, command.TargetAssetId));
         return result;
     }
@@ -112,6 +114,21 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
             command.WorkspaceId,
             WorkspaceOperationChangeKind.Replacement,
             CreateAffectedAsset(command.BundleId, command.AssetId));
+        return result;
+    }
+
+    public async Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(
+        DeleteWorkspaceOperationRecordCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _inner.DeleteWorkspaceOperationRecordAsync(command, cancellationToken);
+        NotifyIfSucceeded(
+            result,
+            command.WorkspaceId,
+            WorkspaceOperationChangeKind.Extraction | WorkspaceOperationChangeKind.Replacement,
+            result.Value?.BundleId is { } bundleId && result.Value.AssetId is { } assetId
+                ? CreateAffectedAsset(bundleId, assetId)
+                : null);
         return result;
     }
 

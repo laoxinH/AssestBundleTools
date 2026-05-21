@@ -231,5 +231,10 @@ public sealed class BundleExplorerViewModelResolvedAssetNavigationTests
             RedoAssetReplacementCommand command,
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
+
+        public Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(
+            DeleteWorkspaceOperationRecordCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
     }
 }

@@ -81,7 +81,9 @@ public sealed partial class InspectorPanelView : UserControl
 
     public event EventHandler? UndoReplacementRequested;
 
-    public event EventHandler? RedoReplacementRequested;
+    public event EventHandler<InspectorChangeRecordActionRequestedEventArgs>? RedoReplacementRequested;
+
+    public event EventHandler<InspectorChangeRecordActionRequestedEventArgs>? DeleteChangeRecordRequested;
 
     public event EventHandler? OpenPreviewLocationRequested;
 
@@ -119,7 +121,12 @@ public sealed partial class InspectorPanelView : UserControl
 
     private void OnChangeRecordRedoReplacementButtonClick(object sender, RoutedEventArgs e)
     {
-        RedoReplacementRequested?.Invoke(this, EventArgs.Empty);
+        RedoReplacementRequested?.Invoke(this, new InspectorChangeRecordActionRequestedEventArgs(GetOperationId(sender)));
+    }
+
+    private void OnChangeRecordDeleteButtonClick(object sender, RoutedEventArgs e)
+    {
+        DeleteChangeRecordRequested?.Invoke(this, new InspectorChangeRecordActionRequestedEventArgs(GetOperationId(sender)));
     }
 
     private void OnPreviewSurfaceOpenPreviewLocationRequested(object? sender, EventArgs e)
@@ -200,4 +207,20 @@ public sealed partial class InspectorPanelView : UserControl
         ToolTipService.SetToolTip(button, text);
     }
 
+    private static string? GetOperationId(object sender) =>
+        sender is FrameworkElement { Tag: string operationId } &&
+        !string.IsNullOrWhiteSpace(operationId)
+            ? operationId.Trim()
+            : null;
+
+}
+
+public sealed class InspectorChangeRecordActionRequestedEventArgs : EventArgs
+{
+    public InspectorChangeRecordActionRequestedEventArgs(string? operationId)
+    {
+        OperationId = string.IsNullOrWhiteSpace(operationId) ? null : operationId.Trim();
+    }
+
+    public string? OperationId { get; }
 }

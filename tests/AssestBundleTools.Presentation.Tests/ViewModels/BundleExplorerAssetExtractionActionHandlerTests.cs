@@ -5,6 +5,7 @@ using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Replacement.Commands;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Queries;
+using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
@@ -528,6 +529,11 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
 
         public Task<Result<AssetReplacementRedoResultDto>> RedoAssetReplacementAsync(
             RedoAssetReplacementCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(
+            DeleteWorkspaceOperationRecordCommand command,
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
     }

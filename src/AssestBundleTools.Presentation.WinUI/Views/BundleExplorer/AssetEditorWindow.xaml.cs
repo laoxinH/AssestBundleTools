@@ -206,9 +206,18 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         await ViewModel.UndoAppliedReplacementAsync();
     }
 
-    private async void OnInspectorRedoReplacementRequested(object sender, EventArgs e)
+    private async void OnInspectorRedoReplacementRequested(
+        object sender,
+        InspectorChangeRecordActionRequestedEventArgs e)
     {
-        await ViewModel.RedoAppliedReplacementAsync();
+        await ViewModel.RedoAppliedReplacementAsync(e.OperationId);
+    }
+
+    private async void OnInspectorDeleteChangeRecordRequested(
+        object sender,
+        InspectorChangeRecordActionRequestedEventArgs e)
+    {
+        await ViewModel.DeleteChangeRecordAsync(e.OperationId);
     }
 
     private async void OnInspectorSpineAtlasPageSelectionRequested(

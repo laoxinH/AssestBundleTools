@@ -73,4 +73,26 @@ internal static class SettingsDiagnosticsPreferenceOptionMapper
             _ => AppPreferencesService.DefaultBundleArtifactCacheMaximumSizeInBytes
         };
     }
+
+    public static int ConvertOperationRecordLimitToSelectedIndex(int operationRecordLimit)
+    {
+        return AppPreferencesService.CoerceOperationRecordLimit(operationRecordLimit) switch
+        {
+            100 => 0,
+            500 => 2,
+            1000 => 3,
+            _ => 1
+        };
+    }
+
+    public static int ConvertSelectedIndexToOperationRecordLimit(int selectedIndex)
+    {
+        return selectedIndex switch
+        {
+            0 => 100,
+            2 => 500,
+            3 => 1000,
+            _ => AppPreferencesService.DefaultOperationRecordLimit
+        };
+    }
 }

@@ -2400,6 +2400,9 @@
   <data name="InspectorPanelView.RedoReplacementButton.Content" xml:space="preserve">
     <value>Redo</value>
   </data>
+  <data name="InspectorPanelView.DeleteChangeRecordButton.Content" xml:space="preserve">
+    <value>Delete</value>
+  </data>
   <data name="InspectorPanelView.PreviewSurfaceTitleText.Text" xml:space="preserve">
     <value>Preview Surface Skeleton</value>
   </data>
@@ -2507,6 +2510,30 @@
   </data>
   <data name="InspectorPanelView.ChangeRecord.WorkspaceReplacement.Format" xml:space="preserve">
     <value>Modified from workspace asset {0} / {1} ({2})</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.Extraction.Title" xml:space="preserve">
+    <value>Asset Extraction</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.FileReplacement.Title" xml:space="preserve">
+    <value>File Edit</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.WorkspaceReplacement.Title" xml:space="preserve">
+    <value>Workspace Edit</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.EffectiveBadge" xml:space="preserve">
+    <value>Effective</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.RedoBadge" xml:space="preserve">
+    <value>Redoable</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.LatestExtractionBadge" xml:space="preserve">
+    <value>Latest Extract</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.Source.Format" xml:space="preserve">
+    <value>Source: {0}</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.Time.Format" xml:space="preserve">
+    <value>Time: {0}</value>
   </data>
   <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.Hit" xml:space="preserve">
     <value>Cache hit</value>
@@ -3363,6 +3390,30 @@
   <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Option.Four" xml:space="preserve">
     <value>4 workers</value>
   </data>
+  <data name="SettingsDiagnosticsPage.OperationRecords.Title" xml:space="preserve">
+    <value>Workspace Operation Records</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecords.Hint" xml:space="preserve">
+    <value>Limit persisted operation records so extraction, edit, undo, and redo history cannot grow forever. Effective replacements and latest extractions are retained first.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.Label" xml:space="preserve">
+    <value>Record retention limit</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.Description" xml:space="preserve">
+    <value>When the limit is exceeded, older non-critical records are trimmed first. Raise the limit to keep a longer undo/redo history.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.Option.OneHundred" xml:space="preserve">
+    <value>100 records</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.Option.TwoHundredFifty" xml:space="preserve">
+    <value>250 records</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.Option.FiveHundred" xml:space="preserve">
+    <value>500 records</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.Option.OneThousand" xml:space="preserve">
+    <value>1000 records</value>
+  </data>
   <data name="SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the startup restore preference. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
   </data>
@@ -3374,6 +3425,9 @@
   </data>
   <data name="SettingsDiagnosticsPage.PreviewWorkerCount.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the preview worker count. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.SaveFailedMessage" xml:space="preserve">
+    <value>Failed to save the operation record limit. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Title" xml:space="preserve">
     <value>Current Workspace Cache</value>
@@ -3621,6 +3675,9 @@
   <data name="BundleExplorer.Log.ReplacementRedone" xml:space="preserve">
     <value>Redid the replacement for "{0}"</value>
   </data>
+  <data name="BundleExplorer.Log.OperationRecordDeleted" xml:space="preserve">
+    <value>Deleted an operation record for "{0}"</value>
+  </data>
   <data name="BundleExplorer.Notification.WorkspaceLoaded" xml:space="preserve">
     <value>Workspace "{0}" loaded with {1} bundles and {2} assets.</value>
   </data>
@@ -3692,6 +3749,9 @@
   </data>
   <data name="BundleExplorer.Notification.ReplacementRedone" xml:space="preserve">
     <value>Replacement redone: {0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.OperationRecordDeleted" xml:space="preserve">
+    <value>Operation record deleted: {0}</value>
   </data>
   <data name="FilePicker.Extraction.Type.Image" xml:space="preserve">
     <value>Image File</value>
@@ -3833,6 +3893,9 @@
   </data>
   <data name="Error.Asset.Replace.NoRedoChange" xml:space="preserve">
     <value>No replacement is available to redo for this asset: {0}</value>
+  </data>
+  <data name="Error.Workspace.OperationRecord.NotFound" xml:space="preserve">
+    <value>Workspace operation record not found: {0}</value>
   </data>
   <data name="Error.Asset.Replace.SourceFilePathRequired" xml:space="preserve">
     <value>A file path is required before applying a file replacement.</value>

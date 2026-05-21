@@ -19,6 +19,11 @@ public interface IWorkspaceOperationLogService
         string? checkpointId = null,
         IReadOnlyList<WorkspaceOperationDiagnosticDto>? diagnostics = null);
 
+    WorkspaceChangeSetDto DeleteOperationRecord(
+        WorkspaceChangeSetDto changeSet,
+        string operationId,
+        DateTimeOffset? deletedAtUtc = null);
+
     IReadOnlyList<WorkspaceOperationRecordDto> GetActiveOperations(WorkspaceChangeSetDto? changeSet);
 
     WorkspaceOperationRecoveryPlanDto CreateRecoveryPlan(WorkspaceChangeSetDto? changeSet);

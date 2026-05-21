@@ -22,6 +22,8 @@ public interface IAppPreferencesService
 
     long BundleArtifactCacheMaximumSizeInBytes { get; }
 
+    int OperationRecordLimit { get; }
+
     bool TrySetRestoreLastWorkspaceOnStartup(bool value);
 
     bool TrySetRecentWorkspaceOpenBehavior(RecentWorkspaceOpenBehavior value);
@@ -33,4 +35,6 @@ public interface IAppPreferencesService
     bool TrySetBundleArtifactCacheAutoPruneEnabled(bool value);
 
     bool TrySetBundleArtifactCacheMaximumSizeInBytes(long value);
+
+    bool TrySetOperationRecordLimit(int value);
 }

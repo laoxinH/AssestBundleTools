@@ -20,6 +20,14 @@ internal static partial class ApplicationTestSuite
             WorkspaceOperationLogServiceTests.GetActiveOperations_ShouldExcludeAppliedUndoTargets);
         await RunTestAsync(
             failures,
+            nameof(WorkspaceOperationLogServiceTests.DeleteOperationRecord_ShouldRemoveRecord_AndPreserveSequenceWatermark),
+            WorkspaceOperationLogServiceTests.DeleteOperationRecord_ShouldRemoveRecord_AndPreserveSequenceWatermark);
+        await RunTestAsync(
+            failures,
+            nameof(WorkspaceOperationLogServiceTests.AppendOperation_ShouldRespectRecordLimit_AndProtectCurrentReplacementChain),
+            WorkspaceOperationLogServiceTests.AppendOperation_ShouldRespectRecordLimit_AndProtectCurrentReplacementChain);
+        await RunTestAsync(
+            failures,
             nameof(WorkspaceOperationLogServiceTests.CreateRecoveryPlan_ShouldReportPendingOperationsAsInterrupted),
             WorkspaceOperationLogServiceTests.CreateRecoveryPlan_ShouldReportPendingOperationsAsInterrupted);
     }

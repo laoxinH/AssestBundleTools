@@ -40,6 +40,7 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
     private int _recentWorkspaceOpenBehaviorSelectedIndex;
     private int _workspaceImportWorkerCountSelectedIndex;
     private int _previewWorkerCountSelectedIndex;
+    private int _operationRecordLimitSelectedIndex;
 
     public SettingsDiagnosticsViewModel(
         IAppLogService appLogService,
@@ -89,6 +90,9 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
         _previewWorkerCountSelectedIndex =
             SettingsDiagnosticsPreferenceOptionMapper.ConvertPreviewWorkerCountToSelectedIndex(
                 _appPreferencesService.PreviewWorkerCount);
+        _operationRecordLimitSelectedIndex =
+            SettingsDiagnosticsPreferenceOptionMapper.ConvertOperationRecordLimitToSelectedIndex(
+                _appPreferencesService.OperationRecordLimit);
         _workspaceContextService.CurrentWorkspaceChanged += OnWorkspaceContextChanged;
         _workspaceContextService.WorkspaceEntriesChanged += OnWorkspaceContextChanged;
 
@@ -249,6 +253,31 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
 
             _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountSaveFailedMessage));
             ShowErrorNotification(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountSaveFailedMessage);
+            OnPropertyChanged();
+        }
+    }
+
+    public int OperationRecordLimitSelectedIndex
+    {
+        get => _operationRecordLimitSelectedIndex;
+        set
+        {
+            var selectedIndex = SettingsDiagnosticsPreferenceOptionMapper.ConvertOperationRecordLimitToSelectedIndex(
+                SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToOperationRecordLimit(value));
+            if (_operationRecordLimitSelectedIndex == selectedIndex)
+            {
+                return;
+            }
+
+            var operationRecordLimit = SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToOperationRecordLimit(selectedIndex);
+            if (_appPreferencesService.TrySetOperationRecordLimit(operationRecordLimit))
+            {
+                SetProperty(ref _operationRecordLimitSelectedIndex, selectedIndex);
+                return;
+            }
+
+            _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsOperationRecordLimitSaveFailedMessage));
+            ShowErrorNotification(ResourceKeys.SettingsDiagnosticsOperationRecordLimitSaveFailedMessage);
             OnPropertyChanged();
         }
     }

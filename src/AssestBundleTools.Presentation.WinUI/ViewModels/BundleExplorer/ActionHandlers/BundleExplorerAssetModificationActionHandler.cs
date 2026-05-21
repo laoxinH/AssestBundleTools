@@ -4,6 +4,7 @@ using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Replacement.Commands;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Queries;
+using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Common.Errors;
@@ -372,7 +373,8 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
         Action<bool> setBusyState,
-        Action<IReadOnlyList<AppError>> appendResultFailure)
+        Action<IReadOnlyList<AppError>> appendResultFailure,
+        string? replacementOperationId = null)
     {
         ArgumentNullException.ThrowIfNull(workspaceSummary);
         ArgumentNullException.ThrowIfNull(assetTab);
@@ -389,7 +391,8 @@ internal sealed class BundleExplorerAssetModificationActionHandler
                     details.BundleId,
                     details.AssetId,
                     workspaceSummary.WorkspaceKey,
-                    workspaceSummary.WorkspaceDataRootPath));
+                    workspaceSummary.WorkspaceDataRootPath,
+                    replacementOperationId));
 
             if (!TryGetValue(result, out var redoResult, appendResultFailure))
             {
@@ -405,6 +408,55 @@ internal sealed class BundleExplorerAssetModificationActionHandler
                 _localizationService.GetFormattedString(
                     ResourceKeys.BundleExplorerNotificationReplacementRedone,
                     redoResult.TargetAssetName),
+                AppNotificationSeverity.Informational);
+
+            assetTab.ClearPendingReplacementCandidates();
+        }
+        finally
+        {
+            setBusyState(false);
+        }
+    }
+
+    public async Task DeleteChangeRecordAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        AssetDocumentTabViewModel assetTab,
+        AssetDetailsDto details,
+        string operationId,
+        Action<bool> setBusyState,
+        Action<IReadOnlyList<AppError>> appendResultFailure)
+    {
+        ArgumentNullException.ThrowIfNull(workspaceSummary);
+        ArgumentNullException.ThrowIfNull(assetTab);
+        ArgumentNullException.ThrowIfNull(details);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
+        ArgumentNullException.ThrowIfNull(setBusyState);
+        ArgumentNullException.ThrowIfNull(appendResultFailure);
+
+        setBusyState(true);
+        try
+        {
+            var result = await _workspaceAssetOperationGateway.DeleteWorkspaceOperationRecordAsync(
+                new DeleteWorkspaceOperationRecordCommand(
+                    workspaceSummary.WorkspaceId,
+                    operationId,
+                    workspaceSummary.WorkspaceKey,
+                    workspaceSummary.WorkspaceDataRootPath));
+
+            if (!TryGetValue(result, out _, appendResultFailure))
+            {
+                return;
+            }
+
+            _appLogService.AppendInfo(_localizationService.GetFormattedString(
+                ResourceKeys.BundleExplorerLogOperationRecordDeleted,
+                details.Name));
+
+            ShowOperationNotification(
+                GetString(ResourceKeys.AppNotificationInfoTitle),
+                _localizationService.GetFormattedString(
+                    ResourceKeys.BundleExplorerNotificationOperationRecordDeleted,
+                    details.Name),
                 AppNotificationSeverity.Informational);
 
             assetTab.ClearPendingReplacementCandidates();

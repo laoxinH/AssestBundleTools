@@ -335,7 +335,11 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
 
     public Task UndoAppliedReplacementAsync() => _assetActionCoordinator.UndoAppliedReplacementAsync();
 
-    public Task RedoAppliedReplacementAsync() => _assetActionCoordinator.RedoAppliedReplacementAsync();
+    public Task RedoAppliedReplacementAsync(string? replacementOperationId = null) =>
+        _assetActionCoordinator.RedoAppliedReplacementAsync(replacementOperationId);
+
+    public Task DeleteChangeRecordAsync(string? operationId) =>
+        _assetActionCoordinator.DeleteChangeRecordAsync(operationId);
 
     private AssetDocumentTabViewModel CreateAssetDocumentTab(
         BundleId bundleId,

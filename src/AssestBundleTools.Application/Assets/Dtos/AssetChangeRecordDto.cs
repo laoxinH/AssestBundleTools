@@ -12,11 +12,17 @@ public sealed record AssetChangeRecordDto(
     string? SourceBundleDisplayName = null,
     string? SourceAssetName = null,
     string? SourceFileName = null,
-    string? SourceFilePath = null)
+    string? SourceFilePath = null,
+    string? OperationId = null,
+    long Sequence = 0,
+    string? SupersedesOperationId = null,
+    bool IsEffectiveReplacement = false)
 {
     public DateTimeOffset DisplayTimestampUtc => AppliedAtUtc ?? CreatedAtUtc;
 
-    public static AssetChangeRecordDto FromOperation(WorkspaceOperationRecordDto operation)
+    public static AssetChangeRecordDto FromOperation(
+        WorkspaceOperationRecordDto operation,
+        bool isEffectiveReplacement = false)
     {
         ArgumentNullException.ThrowIfNull(operation);
 
@@ -27,7 +33,11 @@ public sealed record AssetChangeRecordDto(
             SourceBundleDisplayName: operation.Source?.SourceBundleDisplayName,
             SourceAssetName: operation.Source?.SourceAssetName,
             SourceFileName: operation.Source?.SourceFileName,
-            SourceFilePath: operation.Source?.SourceFilePath);
+            SourceFilePath: operation.Source?.SourceFilePath,
+            OperationId: operation.OperationId,
+            Sequence: operation.Sequence,
+            SupersedesOperationId: operation.SupersedesOperationId,
+            IsEffectiveReplacement: isEffectiveReplacement);
     }
 
     private static AssetChangeRecordKind MapKind(WorkspaceOperationKind operationKind) =>

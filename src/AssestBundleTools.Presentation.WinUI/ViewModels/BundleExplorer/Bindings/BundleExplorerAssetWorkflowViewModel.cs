@@ -421,7 +421,11 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
 
     public Task UndoAppliedReplacementAsync() => _assetCommandCoordinator.UndoAppliedReplacementAsync();
 
-    public Task RedoAppliedReplacementAsync() => _assetCommandCoordinator.RedoAppliedReplacementAsync();
+    public Task RedoAppliedReplacementAsync(string? replacementOperationId = null) =>
+        _assetCommandCoordinator.RedoAppliedReplacementAsync(replacementOperationId);
+
+    public Task DeleteChangeRecordAsync(string? operationId) =>
+        _assetCommandCoordinator.DeleteChangeRecordAsync(operationId);
 
     private void ReapplyActiveAssetDocumentTab(AssetDocumentTabViewModel assetTab, AssetDetailsDto details) =>
         _assetDocumentTabCoordinator.ReapplyAssetDocumentTab(assetTab, details);

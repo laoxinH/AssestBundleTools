@@ -285,6 +285,95 @@ internal static class ReplacementOperationRecorderTests
         TestAssert.Equal(now.AddMinutes(1), redoOperation.AppliedAtUtc, "Redo should record the redo timestamp.");
     }
 
+    public static async Task RedoAssetReplacementHandler_ShouldReapplySelectedReplacementRecord()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var workspaceKey = "workspace-a";
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.target");
+        var now = new DateTimeOffset(2026, 5, 10, 13, 45, 0, TimeSpan.Zero);
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            AssetType.Texture2D,
+            "HeroTexture"));
+        registry.TryReplaceAssetFromFileResult = new AssetFileReplacementResultDto(
+            WorkspaceId: workspaceId,
+            TargetBundleId: targetBundleId,
+            TargetAssetId: targetAssetId,
+            TargetAssetName: "HeroTexture",
+            SourceFilePath: @"C:\Imports\hero-old.png",
+            SourceFileName: "hero-old.png",
+            SourceAssetType: AssetType.Texture2D,
+            ReplacedAtUtc: now.AddMinutes(2));
+        var existingChangeSet = new WorkspaceChangeSetDto(
+            WorkspaceKey: workspaceKey,
+            UpdatedAtUtc: now,
+            Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+            EditDrafts: Array.Empty<WorkspaceAssetEditDraftDescriptorDto>(),
+            SchemaVersion: WorkspaceChangeSetDto.CurrentSchemaVersion,
+            OperationSequence: 2,
+            Operations:
+            [
+                new WorkspaceOperationRecordDto(
+                    OperationId: "replace-old",
+                    Sequence: 1,
+                    OperationKind: WorkspaceOperationKind.ReplaceFromFile,
+                    Status: WorkspaceOperationStatus.Applied,
+                    WorkspaceKey: workspaceKey,
+                    Target: new WorkspaceOperationTargetDto(BundleId: targetBundleId.Value, AssetId: targetAssetId.Value),
+                    Source: new WorkspaceOperationSourceDto(
+                        SourceKind: "file",
+                        SourceFilePath: @"C:\Imports\hero-old.png",
+                        SourceFileName: "hero-old.png",
+                        SourceAssetType: AssetType.Texture2D.ToString()),
+                    PreviousState: null,
+                    Result: null,
+                    CreatedAtUtc: now,
+                    AppliedAtUtc: now),
+                new WorkspaceOperationRecordDto(
+                    OperationId: "replace-new",
+                    Sequence: 2,
+                    OperationKind: WorkspaceOperationKind.ReplaceFromFile,
+                    Status: WorkspaceOperationStatus.Applied,
+                    WorkspaceKey: workspaceKey,
+                    Target: new WorkspaceOperationTargetDto(BundleId: targetBundleId.Value, AssetId: targetAssetId.Value),
+                    Source: new WorkspaceOperationSourceDto(
+                        SourceKind: "file",
+                        SourceFilePath: @"C:\Imports\hero-new.png",
+                        SourceFileName: "hero-new.png",
+                        SourceAssetType: AssetType.Texture2D.ToString()),
+                    PreviousState: null,
+                    Result: null,
+                    CreatedAtUtc: now.AddMinutes(1),
+                    AppliedAtUtc: now.AddMinutes(1),
+                    SupersedesOperationId: "replace-old")
+            ]);
+        var changeStore = new TestWorkspaceChangeStore { ChangeSet = existingChangeSet };
+        var recorder = new WorkspaceReplacementOperationRecorder(
+            new TestWorkspaceDataStoreFactory(changeStore),
+            new WorkspaceOperationLogService());
+        var handler = new RedoAssetReplacementHandler(registry, recorder);
+
+        var result = await handler.HandleAsync(new RedoAssetReplacementCommand(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            workspaceKey,
+            @"D:\WorkspaceData\A",
+            ReplacementOperationId: "replace-old"));
+
+        TestAssert.True(result.IsSuccess, "Redoing a selected historical replacement should succeed.");
+        var savedOperations = changeStore.SavedChangeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>();
+        TestAssert.Equal(3, savedOperations.Count, "Selected redo should append a redo operation.");
+        var redoOperation = savedOperations[2];
+        TestAssert.Equal(WorkspaceOperationKind.RedoReplacement, redoOperation.OperationKind, "Selected redo should still be recorded as redo.");
+        TestAssert.Equal("replace-old", redoOperation.SupersedesOperationId, "Selected redo should point at the historical replacement record.");
+        TestAssert.Equal(@"C:\Imports\hero-old.png", redoOperation.Source?.SourceFilePath, "Selected redo should persist the source needed for replay.");
+    }
+
     public static Task WorkspaceReplacementReadModelService_ShouldMaterializeEffectiveReplacement_ForRedoStack()
     {
         var workspaceKey = "workspace-a";
@@ -357,6 +446,88 @@ internal static class ReplacementOperationRecorderTests
         TestAssert.Equal(targetAssetId.Value, replacement.Target.AssetId, "Effective replacement should preserve target asset.");
         TestAssert.Equal(@"C:\Imports\hero.png", replacement.Source.SourceFilePath, "Effective replacement should expose export-readable source data.");
 
+        return Task.CompletedTask;
+    }
+
+    public static Task WorkspaceReplacementReadModelService_ShouldMaterializeSelectedRedoSource()
+    {
+        var workspaceKey = "workspace-a";
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.target");
+        var now = new DateTimeOffset(2026, 5, 10, 14, 30, 0, TimeSpan.Zero);
+        var changeStore = new TestWorkspaceChangeStore
+        {
+            ChangeSet = new WorkspaceChangeSetDto(
+                WorkspaceKey: workspaceKey,
+                UpdatedAtUtc: now,
+                Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+                EditDrafts: Array.Empty<WorkspaceAssetEditDraftDescriptorDto>(),
+                SchemaVersion: WorkspaceChangeSetDto.CurrentSchemaVersion,
+                OperationSequence: 3,
+                Operations:
+                [
+                    new WorkspaceOperationRecordDto(
+                        OperationId: "replace-old",
+                        Sequence: 1,
+                        OperationKind: WorkspaceOperationKind.ReplaceFromFile,
+                        Status: WorkspaceOperationStatus.Applied,
+                        WorkspaceKey: workspaceKey,
+                        Target: new WorkspaceOperationTargetDto(BundleId: targetBundleId.Value, AssetId: targetAssetId.Value),
+                        Source: new WorkspaceOperationSourceDto(
+                            SourceKind: "file",
+                            SourceFilePath: @"C:\Imports\old.png",
+                            SourceFileName: "old.png",
+                            SourceAssetType: AssetType.Texture2D.ToString()),
+                        PreviousState: null,
+                        Result: null,
+                        CreatedAtUtc: now,
+                        AppliedAtUtc: now),
+                    new WorkspaceOperationRecordDto(
+                        OperationId: "replace-new",
+                        Sequence: 2,
+                        OperationKind: WorkspaceOperationKind.ReplaceFromFile,
+                        Status: WorkspaceOperationStatus.Applied,
+                        WorkspaceKey: workspaceKey,
+                        Target: new WorkspaceOperationTargetDto(BundleId: targetBundleId.Value, AssetId: targetAssetId.Value),
+                        Source: new WorkspaceOperationSourceDto(
+                            SourceKind: "file",
+                            SourceFilePath: @"C:\Imports\new.png",
+                            SourceFileName: "new.png",
+                            SourceAssetType: AssetType.Texture2D.ToString()),
+                        PreviousState: null,
+                        Result: null,
+                        CreatedAtUtc: now.AddMinutes(1),
+                        AppliedAtUtc: now.AddMinutes(1),
+                        SupersedesOperationId: "replace-old"),
+                    new WorkspaceOperationRecordDto(
+                        OperationId: "redo-old",
+                        Sequence: 3,
+                        OperationKind: WorkspaceOperationKind.RedoReplacement,
+                        Status: WorkspaceOperationStatus.Applied,
+                        WorkspaceKey: workspaceKey,
+                        Target: new WorkspaceOperationTargetDto(BundleId: targetBundleId.Value, AssetId: targetAssetId.Value),
+                        Source: new WorkspaceOperationSourceDto(
+                            SourceKind: "file",
+                            SourceFilePath: @"C:\Imports\old.png",
+                            SourceFileName: "old.png",
+                            SourceAssetType: AssetType.Texture2D.ToString()),
+                        PreviousState: null,
+                        Result: null,
+                        CreatedAtUtc: now.AddMinutes(2),
+                        AppliedAtUtc: now.AddMinutes(2),
+                        SupersedesOperationId: "replace-old")
+                ])
+        };
+        var service = new WorkspaceReplacementReadModelService(
+            new TestWorkspaceDataStoreFactory(changeStore));
+
+        var result = service.GetEffectiveReplacements(workspaceKey, @"D:\WorkspaceData\A");
+
+        TestAssert.True(result.IsSuccess, "Selected redo should materialize from its persisted source.");
+        var replacement = TestAssert.Single(
+            result.Value?.EffectiveReplacements ?? Array.Empty<WorkspaceEffectiveReplacementDto>());
+        TestAssert.Equal("replace-old", replacement.OperationId, "Selected redo should reactivate the historical replacement record.");
+        TestAssert.Equal(@"C:\Imports\old.png", replacement.Source.SourceFilePath, "Selected redo should expose the selected source.");
         return Task.CompletedTask;
     }
 

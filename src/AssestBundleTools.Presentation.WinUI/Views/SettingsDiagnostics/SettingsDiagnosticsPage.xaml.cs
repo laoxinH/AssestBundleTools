@@ -88,6 +88,17 @@ public sealed partial class SettingsDiagnosticsPage : Page
             UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionThree),
             UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionFour)
         };
+        OperationRecordsTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordsTitle);
+        OperationRecordsHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordsHint);
+        OperationRecordLimitLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitLabel);
+        OperationRecordLimitDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitDescription);
+        OperationRecordLimitRadioButtons.ItemsSource = new[]
+        {
+            UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitOptionOneHundred),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitOptionTwoHundredFifty),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitOptionFiveHundred),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitOptionOneThousand)
+        };
         BundleArtifactCacheTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheTitle);
         BundleArtifactCacheHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheHint);
         BundleArtifactCacheAutoPruneToggleSwitch.Header = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheAutoPruneHeader);

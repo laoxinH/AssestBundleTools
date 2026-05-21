@@ -50,10 +50,13 @@ internal static class AppCompositionRoot
         StartupDiagnostics.Log("Creating composition root services.");
 
         var appPreferencesStore = new InfrastructureAppPreferencesPersistenceStore(new JsonAppPreferencesStore());
+        var localizationService = new ResourceLocalizationService();
+        var appPreferencesService = new AppPreferencesService(appPreferencesStore);
         var workspaceCatalogStore = new JsonWorkspaceCatalogStore();
         var workspaceMetadataStoreFactory = new JsonWorkspaceMetadataStoreFactory();
         var workspaceDataStoreFactory = new JsonWorkspaceDataStoreFactory();
-        var workspaceOperationLogService = new WorkspaceOperationLogService();
+        var workspaceOperationLogService = new WorkspaceOperationLogService(
+            () => appPreferencesService.OperationRecordLimit);
         var workspaceSessionRegistry = new CachedWorkspaceSessionRegistry(
             workspaceDataStoreFactory,
             workspaceOperationLogService);
@@ -61,8 +64,6 @@ internal static class AppCompositionRoot
             workspaceMetadataStoreFactory,
             workspaceDataStoreFactory);
 
-        var localizationService = new ResourceLocalizationService();
-        var appPreferencesService = new AppPreferencesService(appPreferencesStore);
         var bundleArtifactCachePrunePolicy = new PreferencesBundleArtifactCachePrunePolicy(appPreferencesService);
 
         var assetBundleDecryptorRegistry = new ReloadableAssetBundleDecryptorRegistry();
@@ -194,6 +195,10 @@ internal static class AppCompositionRoot
         var redoAssetReplacementHandler = new RedoAssetReplacementHandler(
             workspaceSessionRegistry,
             workspaceReplacementOperationRecorder);
+        var deleteWorkspaceOperationRecordHandler = new DeleteWorkspaceOperationRecordHandler(
+            workspaceSessionRegistry,
+            workspaceDataStoreFactory,
+            workspaceOperationLogService);
         var openAssetInPaneHandler = new OpenAssetInPaneHandler(workspaceSessionRegistry);
         var getWorkspaceCatalogSnapshotHandler = new GetWorkspaceCatalogSnapshotHandler(workspaceCatalogStore);
         var registerWorkspaceCatalogEntryHandler = new RegisterWorkspaceCatalogEntryHandler(workspaceCatalogStore);
@@ -242,7 +247,8 @@ internal static class AppCompositionRoot
             replaceAssetFromFileHandler: replaceAssetFromFileHandler,
             replaceAssetFromWorkspaceHandler: replaceAssetFromWorkspaceHandler,
             undoAssetReplacementHandler: undoAssetReplacementHandler,
-            redoAssetReplacementHandler: redoAssetReplacementHandler);
+            redoAssetReplacementHandler: redoAssetReplacementHandler,
+            deleteWorkspaceOperationRecordHandler: deleteWorkspaceOperationRecordHandler);
         var workspaceAssetOperationGateway = new NotifyingWorkspaceAssetOperationGateway(
             workspaceAssetOperationGatewayCore,
             workspaceOperationChangeNotifier);
