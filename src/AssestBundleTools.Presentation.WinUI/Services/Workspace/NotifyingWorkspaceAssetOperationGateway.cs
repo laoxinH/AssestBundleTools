@@ -5,6 +5,8 @@ using AssestBundleTools.Application.Replacement.Commands;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Queries;
 using AssestBundleTools.Application.Workspace.Services;
+using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
 
 namespace AssestBundleTools.Presentation.WinUI.Services;
@@ -30,7 +32,11 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         CancellationToken cancellationToken = default)
     {
         var result = await _inner.ExtractAssetAsync(command, cancellationToken);
-        NotifyIfSucceeded(result, command.WorkspaceId, WorkspaceOperationChangeKind.Extraction);
+        NotifyIfSucceeded(
+            result,
+            command.WorkspaceId,
+            WorkspaceOperationChangeKind.Extraction,
+            CreateAffectedAsset(command.BundleId, command.AssetId));
         return result;
     }
 
@@ -39,7 +45,11 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         CancellationToken cancellationToken = default)
     {
         var result = await _inner.ExtractSpineAssetGroupAsync(command, cancellationToken);
-        NotifyIfSucceeded(result, command.WorkspaceId, WorkspaceOperationChangeKind.Extraction);
+        NotifyIfSucceeded(
+            result,
+            command.WorkspaceId,
+            WorkspaceOperationChangeKind.Extraction,
+            CreateAffectedAssets(result.Value?.AssetResults));
         return result;
     }
 
@@ -58,7 +68,11 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         CancellationToken cancellationToken = default)
     {
         var result = await _inner.ReplaceAssetFromFileAsync(command, cancellationToken);
-        NotifyIfSucceeded(result, command.WorkspaceId, WorkspaceOperationChangeKind.Replacement);
+        NotifyIfSucceeded(
+            result,
+            command.WorkspaceId,
+            WorkspaceOperationChangeKind.Replacement,
+            CreateAffectedAsset(command.TargetBundleId, command.TargetAssetId));
         return result;
     }
 
@@ -67,7 +81,11 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         CancellationToken cancellationToken = default)
     {
         var result = await _inner.ReplaceAssetFromWorkspaceAsync(command, cancellationToken);
-        NotifyIfSucceeded(result, command.WorkspaceId, WorkspaceOperationChangeKind.Replacement);
+        NotifyIfSucceeded(
+            result,
+            command.WorkspaceId,
+            WorkspaceOperationChangeKind.Replacement,
+            CreateAffectedAsset(command.TargetBundleId, command.TargetAssetId));
         return result;
     }
 
@@ -76,7 +94,11 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         CancellationToken cancellationToken = default)
     {
         var result = await _inner.UndoAssetReplacementAsync(command, cancellationToken);
-        NotifyIfSucceeded(result, command.WorkspaceId, WorkspaceOperationChangeKind.Replacement);
+        NotifyIfSucceeded(
+            result,
+            command.WorkspaceId,
+            WorkspaceOperationChangeKind.Replacement,
+            CreateAffectedAsset(command.BundleId, command.AssetId));
         return result;
     }
 
@@ -85,18 +107,35 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         CancellationToken cancellationToken = default)
     {
         var result = await _inner.RedoAssetReplacementAsync(command, cancellationToken);
-        NotifyIfSucceeded(result, command.WorkspaceId, WorkspaceOperationChangeKind.Replacement);
+        NotifyIfSucceeded(
+            result,
+            command.WorkspaceId,
+            WorkspaceOperationChangeKind.Replacement,
+            CreateAffectedAsset(command.BundleId, command.AssetId));
         return result;
     }
 
     private void NotifyIfSucceeded<T>(
         Result<T> result,
         WorkspaceId workspaceId,
-        WorkspaceOperationChangeKind changeKind)
+        WorkspaceOperationChangeKind changeKind,
+        IReadOnlyList<WorkspaceOperationAffectedAsset>? affectedAssets = null)
     {
         if (result.IsSuccess)
         {
-            _operationChangeNotifier.NotifyWorkspaceOperationsChanged(workspaceId, changeKind);
+            _operationChangeNotifier.NotifyWorkspaceOperationsChanged(workspaceId, changeKind, affectedAssets);
         }
     }
+
+    private static IReadOnlyList<WorkspaceOperationAffectedAsset> CreateAffectedAsset(
+        BundleId bundleId,
+        AssetId assetId) =>
+        [new WorkspaceOperationAffectedAsset(bundleId, assetId)];
+
+    private static IReadOnlyList<WorkspaceOperationAffectedAsset> CreateAffectedAssets(
+        IReadOnlyList<AssetExtractionResultDto>? assetResults) =>
+        assetResults?
+            .Select(static result => new WorkspaceOperationAffectedAsset(result.BundleId, result.AssetId))
+            .ToArray() ??
+        Array.Empty<WorkspaceOperationAffectedAsset>();
 }

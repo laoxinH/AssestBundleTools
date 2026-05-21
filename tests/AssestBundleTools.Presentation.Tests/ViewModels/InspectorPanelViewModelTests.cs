@@ -3,8 +3,12 @@ using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
+using AssestBundleTools.Domain.Workspace;
+using AssestBundleTools.Presentation.Tests.Testing;
+using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media.Imaging;
 
@@ -68,6 +72,54 @@ public sealed class InspectorPanelViewModelTests
         Assert.Equal(changeRecord, viewModel.ChangeRecords[0]);
         Assert.Equal(Visibility.Visible, viewModel.ChangeRecordsListVisibility);
         Assert.Equal(Visibility.Collapsed, viewModel.ChangeRecordsEmptyStateVisibility);
+    }
+
+    [Fact]
+    public void ChangeRecordPresenter_ShouldKeepOnlyLatestExtractionRecord()
+    {
+        var presenter = new BundleExplorerAssetChangeRecordPresenter(new TestLocalizationService());
+        var oldExtractionAtUtc = new DateTimeOffset(2026, 5, 20, 8, 0, 0, TimeSpan.Zero);
+        var latestExtractionAtUtc = new DateTimeOffset(2026, 5, 21, 8, 0, 0, TimeSpan.Zero);
+        var details = BundleExplorerPreviewTestSupport.CreateAssetDetails(
+            new WorkspaceId("workspace-ui"),
+            new BundleId("bundle-ui"),
+            new AssetId("asset-1")) with
+        {
+            ChangeRecords =
+            [
+                new AssetChangeRecordDto(
+                    AssetChangeRecordKind.Extraction,
+                    CreatedAtUtc: oldExtractionAtUtc,
+                    AppliedAtUtc: oldExtractionAtUtc),
+                new AssetChangeRecordDto(
+                    AssetChangeRecordKind.FileReplacement,
+                    CreatedAtUtc: latestExtractionAtUtc.AddMinutes(-10),
+                    AppliedAtUtc: latestExtractionAtUtc.AddMinutes(-10),
+                    SourceFileName: "hero.png",
+                    SourceFilePath: @"D:\Imports\hero.png"),
+                new AssetChangeRecordDto(
+                    AssetChangeRecordKind.Extraction,
+                    CreatedAtUtc: latestExtractionAtUtc,
+                    AppliedAtUtc: latestExtractionAtUtc)
+            ]
+        };
+
+        var records = presenter.CreateChangeRecords(
+            details,
+            canUndoReplacement: false,
+            canRedoReplacement: false);
+
+        Assert.Equal(2, records.Count);
+        Assert.Equal(
+            1,
+            records.Count(record => record.PrimaryText.StartsWith(
+                ResourceKeys.InspectorChangeRecordExtractFormat,
+                StringComparison.Ordinal)));
+        Assert.Contains(
+            latestExtractionAtUtc.ToLocalTime().ToString("G"),
+            records.Single(record => record.PrimaryText.StartsWith(
+                ResourceKeys.InspectorChangeRecordExtractFormat,
+                StringComparison.Ordinal)).PrimaryText);
     }
 
     [Fact]

@@ -262,6 +262,7 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         var shouldReloadPreview = AssetPreviewInvalidationPolicy.HasReplacementProjectionChanged(
             assetTab.Details,
             details);
+        ApplyAssetOperationStateToPrimaryPane(details);
         ReapplyAssetDocumentTab(assetTab, details);
         if (shouldReloadPreview)
         {
@@ -279,6 +280,38 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         {
             _documentWorkspace.NotifyAssetDocumentHostStateChanged();
         }
+    }
+
+    public async Task RefreshAssetListEntryDetailsAsync(
+        BundleId bundleId,
+        AssetId assetId)
+    {
+        if (_workspaceShell.WorkspaceSummary is not { } workspaceSummary ||
+            _documentWorkspace.ActiveBundleTab is not { } activeBundleTab ||
+            !activeBundleTab.BundleId.Equals(bundleId))
+        {
+            return;
+        }
+
+        var detailsResult = await _backgroundTaskRunner.RunAsync(
+            token => _workspaceAssetInspectionGateway.GetAssetDetailsAsync(
+                new GetAssetDetailsQuery(
+                    WorkspaceId: workspaceSummary.WorkspaceId,
+                    BundleId: bundleId,
+                    AssetId: assetId),
+                token));
+
+        if (TryGetValue(detailsResult, out var details))
+        {
+            ApplyAssetOperationStateToPrimaryPane(details);
+        }
+    }
+
+    private void ApplyAssetOperationStateToPrimaryPane(AssetDetailsDto details)
+    {
+        _primaryPane.ApplyAssetOperationState(
+            details,
+            _assetInspectorPresenter.CreateAssetStateText(details.IsModified));
     }
 
     private AssetDocumentTabViewModel? ResolvePreferredAssetDocumentTab(BundleDocumentTabViewModel bundleTab)

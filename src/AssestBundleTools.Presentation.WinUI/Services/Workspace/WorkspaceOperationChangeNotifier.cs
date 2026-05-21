@@ -25,7 +25,8 @@ public sealed class WorkspaceOperationChangeNotifier : IWorkspaceOperationChange
 
     public void NotifyWorkspaceOperationsChanged(
         WorkspaceId workspaceId,
-        WorkspaceOperationChangeKind changeKind)
+        WorkspaceOperationChangeKind changeKind,
+        IReadOnlyList<WorkspaceOperationAffectedAsset>? affectedAssets = null)
     {
         if (changeKind == WorkspaceOperationChangeKind.None)
         {
@@ -35,11 +36,11 @@ public sealed class WorkspaceOperationChangeNotifier : IWorkspaceOperationChange
         var currentBatch = _currentBatch.Value;
         if (currentBatch is not null)
         {
-            currentBatch.Add(workspaceId, changeKind);
+            currentBatch.Add(workspaceId, changeKind, affectedAssets);
             return;
         }
 
-        var eventArgs = new WorkspaceOperationChangedEventArgs(workspaceId, changeKind);
+        var eventArgs = new WorkspaceOperationChangedEventArgs(workspaceId, changeKind, affectedAssets);
         Raise(eventArgs);
     }
 
@@ -125,7 +126,8 @@ public sealed class WorkspaceOperationChangeNotifier : IWorkspaceOperationChange
 
         public void Add(
             WorkspaceId workspaceId,
-            WorkspaceOperationChangeKind changeKind)
+            WorkspaceOperationChangeKind changeKind,
+            IReadOnlyList<WorkspaceOperationAffectedAsset>? affectedAssets)
         {
             if (changeKind == WorkspaceOperationChangeKind.None)
             {
@@ -133,23 +135,27 @@ public sealed class WorkspaceOperationChangeNotifier : IWorkspaceOperationChange
             }
 
             var key = workspaceId.Value;
+            var eventArgs = new WorkspaceOperationChangedEventArgs(
+                workspaceId,
+                changeKind,
+                affectedAssets);
             if (_pending.TryGetValue(key, out var existing))
             {
-                _pending[key] = existing with
-                {
-                    ChangeKind = existing.ChangeKind | changeKind
-                };
+                _pending[key] = new PendingNotification(existing.EventArgs.Merge(eventArgs));
                 return;
             }
 
-            _pending[key] = new PendingNotification(workspaceId, changeKind);
+            _pending[key] = new PendingNotification(eventArgs);
         }
 
         public void Merge(NotificationBatchState child)
         {
             foreach (var item in child._pending.Values)
             {
-                Add(item.WorkspaceId, item.ChangeKind);
+                Add(
+                    item.EventArgs.WorkspaceId,
+                    item.EventArgs.ChangeKind,
+                    item.EventArgs.AffectedAssets);
             }
         }
 
@@ -157,14 +163,10 @@ public sealed class WorkspaceOperationChangeNotifier : IWorkspaceOperationChange
         {
             foreach (var item in _pending.Values)
             {
-                yield return new WorkspaceOperationChangedEventArgs(
-                    item.WorkspaceId,
-                    item.ChangeKind);
+                yield return item.EventArgs;
             }
         }
     }
 
-    private sealed record PendingNotification(
-        WorkspaceId WorkspaceId,
-        WorkspaceOperationChangeKind ChangeKind);
+    private sealed record PendingNotification(WorkspaceOperationChangedEventArgs EventArgs);
 }

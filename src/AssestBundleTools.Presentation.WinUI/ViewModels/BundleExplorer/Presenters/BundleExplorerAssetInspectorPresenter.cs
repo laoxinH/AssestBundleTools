@@ -96,10 +96,13 @@ internal sealed class BundleExplorerAssetInspectorPresenter
             assetTypeText: ResolveAssetTypeDisplayName(item.AssetType, item.AssetTypeDisplayName),
             sizeText: _localizedValueFormatter.FormatCompactByteSize(
                 ResolveDisplaySizeInBytes(item.SizeInBytes, item.PreferredDisplaySizeInBytes)),
-            stateText: item.IsModified
-                ? GetString(ResourceKeys.AssetStateModified)
-                : GetString(ResourceKeys.AssetStateOriginal));
+            stateText: CreateAssetStateText(item.IsModified));
     }
+
+    public string CreateAssetStateText(bool isModified) =>
+        isModified
+            ? GetString(ResourceKeys.AssetStateModified)
+            : GetString(ResourceKeys.AssetStateOriginal);
 
     public SpineAssetGroupEntryViewModel CreateSpineAssetGroupEntry(SpineAssetGroupDto item)
     {

@@ -49,11 +49,18 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
 
     private IReadOnlyList<AssetChangeRecordDto> NormalizeChangeRecords(AssetDetailsDto details)
     {
-        var records = (details.ChangeRecords ?? Array.Empty<AssetChangeRecordDto>())
+        var candidateRecords = (details.ChangeRecords ?? Array.Empty<AssetChangeRecordDto>())
             .Where(static record => record.Kind is
                 AssetChangeRecordKind.Extraction or
                 AssetChangeRecordKind.FileReplacement or
                 AssetChangeRecordKind.WorkspaceReplacement)
+            .ToArray();
+        var records = candidateRecords
+            .Where(static record => record.Kind is not AssetChangeRecordKind.Extraction)
+            .Concat(candidateRecords
+                .Where(static record => record.Kind == AssetChangeRecordKind.Extraction)
+                .OrderByDescending(static record => record.DisplayTimestampUtc)
+                .Take(1))
             .OrderByDescending(static record => record.DisplayTimestampUtc)
             .ToArray();
         return records.Length > 0

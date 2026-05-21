@@ -2,11 +2,6 @@ using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using Microsoft.UI.Xaml;
 
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
@@ -18,6 +13,8 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 /// </remarks>
 public sealed class AssetListEntryViewModel : ObservableObject
 {
+    private AssetListItemDto _item;
+    private string _stateText;
     private bool _isSelected;
 
     public AssetListEntryViewModel(
@@ -26,19 +23,27 @@ public sealed class AssetListEntryViewModel : ObservableObject
         string sizeText,
         string stateText)
     {
-        Item = item;
+        _item = item;
         AssetTypeText = assetTypeText;
         SizeText = sizeText;
-        StateText = stateText;
+        _stateText = stateText;
     }
 
-    public AssetListItemDto Item { get; }
+    public AssetListItemDto Item
+    {
+        get => _item;
+        private set => SetProperty(ref _item, value);
+    }
 
     public string AssetTypeText { get; }
 
     public string SizeText { get; }
 
-    public string StateText { get; }
+    public string StateText
+    {
+        get => _stateText;
+        private set => SetProperty(ref _stateText, value);
+    }
 
     /// <summary>
     /// 统一由 UI 层提供名称展示文本，避免 XAML 直接深入 DTO 结构绑定。
@@ -75,4 +80,17 @@ public sealed class AssetListEntryViewModel : ObservableObject
     public Visibility SelectionIndicatorVisibility => IsSelected ? Visibility.Visible : Visibility.Collapsed;
 
     public double SelectionBackgroundOpacity => IsSelected ? 1d : 0d;
+
+    public void ApplyOperationState(
+        bool isModified,
+        DateTimeOffset? lastExtractedAtUtc,
+        string stateText)
+    {
+        Item = Item with
+        {
+            IsModified = isModified,
+            LastExtractedAtUtc = lastExtractedAtUtc
+        };
+        StateText = stateText;
+    }
 }

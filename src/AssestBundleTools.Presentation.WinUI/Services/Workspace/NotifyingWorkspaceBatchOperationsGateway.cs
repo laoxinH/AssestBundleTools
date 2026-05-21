@@ -60,7 +60,11 @@ internal sealed class NotifyingWorkspaceBatchOperationsGateway : IWorkspaceBatch
         CancellationToken cancellationToken = default)
     {
         var result = await _inner.ExtractWorkspaceAssetsAsync(command, cancellationToken);
-        NotifyIfSucceeded(result, command.WorkspaceId, WorkspaceOperationChangeKind.Extraction);
+        NotifyIfSucceeded(
+            result,
+            command.WorkspaceId,
+            WorkspaceOperationChangeKind.Extraction,
+            CreateAffectedAssets(result.Value));
         return result;
     }
 
@@ -81,11 +85,29 @@ internal sealed class NotifyingWorkspaceBatchOperationsGateway : IWorkspaceBatch
     private void NotifyIfSucceeded<T>(
         Result<T> result,
         WorkspaceId workspaceId,
-        WorkspaceOperationChangeKind changeKind)
+        WorkspaceOperationChangeKind changeKind,
+        IReadOnlyList<WorkspaceOperationAffectedAsset>? affectedAssets = null)
     {
         if (result.IsSuccess)
         {
-            _operationChangeNotifier.NotifyWorkspaceOperationsChanged(workspaceId, changeKind);
+            _operationChangeNotifier.NotifyWorkspaceOperationsChanged(workspaceId, changeKind, affectedAssets);
         }
+    }
+
+    private static IReadOnlyList<WorkspaceOperationAffectedAsset> CreateAffectedAssets(
+        WorkspaceBatchExtractionResultDto? result)
+    {
+        if (result is null)
+        {
+            return Array.Empty<WorkspaceOperationAffectedAsset>();
+        }
+
+        return (result.AssetResults ?? Array.Empty<AssetExtractionResultDto>())
+            .Concat((result.SpineGroupResults ?? Array.Empty<SpineAssetGroupExtractionResultDto>())
+                .SelectMany(static groupResult => groupResult.AssetResults))
+            .Select(static assetResult => new WorkspaceOperationAffectedAsset(
+                assetResult.BundleId,
+                assetResult.AssetId))
+            .ToArray();
     }
 }

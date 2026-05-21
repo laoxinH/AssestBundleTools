@@ -1,6 +1,7 @@
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
+using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.UI.Xaml;
 
@@ -301,6 +302,27 @@ public sealed class AssetPaneViewModelTests
     }
 
     [Fact]
+    public void ApplyAssetOperationState_ShouldUpdateExistingAssetRowWithoutReplacingList()
+    {
+        var viewModel = new AssetPaneViewModel();
+        var assetEntry = CreateAssetEntry("asset-1");
+        viewModel.ReplaceItems("ui.ab", [assetEntry], "empty");
+        viewModel.SelectedAsset = assetEntry;
+        var extractedAtUtc = new DateTimeOffset(2026, 5, 21, 9, 0, 0, TimeSpan.Zero);
+
+        var updated = viewModel.ApplyAssetOperationState(
+            CreateAssetDetails(assetEntry.Item.BundleId, assetEntry.Item.AssetId, isModified: true, extractedAtUtc),
+            "Modified");
+
+        Assert.True(updated);
+        Assert.Same(assetEntry, Assert.Single(viewModel.Items));
+        Assert.Same(assetEntry, viewModel.SelectedAsset);
+        Assert.True(assetEntry.Item.IsModified);
+        Assert.Equal(extractedAtUtc, assetEntry.Item.LastExtractedAtUtc);
+        Assert.Equal("Modified", assetEntry.StateText);
+    }
+
+    [Fact]
     public void UpdateSpineGroupSelection_ShouldPreserveMultiSelection()
     {
         var viewModel = new AssetPaneViewModel
@@ -387,6 +409,37 @@ public sealed class AssetPaneViewModelTests
             "Texture2D",
             "128 B",
             "Original");
+    }
+
+    private static AssetDetailsDto CreateAssetDetails(
+        BundleId bundleId,
+        AssetId assetId,
+        bool isModified,
+        DateTimeOffset? lastExtractedAtUtc)
+    {
+        return new AssetDetailsDto(
+            WorkspaceId: new WorkspaceId("workspace-ui"),
+            BundleId: bundleId,
+            AssetId: assetId,
+            Name: $"{assetId.Value}.png",
+            AssetPath: $"Assets/{assetId.Value}.png",
+            ContainerPath: $"Assets/{assetId.Value}.png",
+            AssetType: AssetType.Texture2D,
+            SizeInBytes: 128,
+            PreferredDisplaySizeInBytes: null,
+            PathId: 1,
+            IsModified: isModified,
+            CanExtract: true,
+            CanReplaceFromFile: true,
+            CanReplaceFromWorkspace: true,
+            WorkspaceReplacementSourceBundleDisplayName: null,
+            WorkspaceReplacementSourceAssetName: null,
+            WorkspaceReplacementSourceAssetType: null,
+            FileReplacementSourceFileName: null,
+            FileReplacementSourcePath: null,
+            FileReplacementSourceAssetType: null,
+            LastExtractedAtUtc: lastExtractedAtUtc,
+            Dependencies: Array.Empty<AssetDependencyDto>());
     }
 
     private static SpineAssetGroupEntryViewModel CreateSpineGroupEntry(string groupId)

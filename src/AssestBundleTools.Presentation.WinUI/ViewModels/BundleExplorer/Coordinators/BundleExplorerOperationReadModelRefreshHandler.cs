@@ -1,4 +1,6 @@
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.Services;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 
@@ -21,8 +23,16 @@ internal sealed class BundleExplorerOperationReadModelRefreshHandler
         _spineGroupDocumentCoordinator = spineGroupDocumentCoordinator ?? throw new ArgumentNullException(nameof(spineGroupDocumentCoordinator));
     }
 
-    public async Task RefreshAsync()
+    public async Task RefreshAsync(WorkspaceOperationChangedEventArgs eventArgs)
     {
+        ArgumentNullException.ThrowIfNull(eventArgs);
+
+        if (!eventArgs.IsWorkspaceWide)
+        {
+            await RefreshAffectedTargetsAsync(eventArgs.AffectedAssets);
+            return;
+        }
+
         var assetTabs = _documentWorkspace.OpenBundleTabs
             .SelectMany(static bundleTab => bundleTab.AssetTabs)
             .Distinct()
@@ -41,4 +51,57 @@ internal sealed class BundleExplorerOperationReadModelRefreshHandler
             await _spineGroupDocumentCoordinator.RefreshSpineGroupDocumentTabAsync(spineGroupTab);
         }
     }
+
+    private async Task RefreshAffectedTargetsAsync(
+        IReadOnlyList<WorkspaceOperationAffectedAsset> affectedAssets)
+    {
+        foreach (var affectedAsset in affectedAssets)
+        {
+            var matchedAssetTabs = _documentWorkspace.OpenBundleTabs
+                .SelectMany(static bundleTab => bundleTab.AssetTabs)
+                .Where(assetTab => MatchesAsset(assetTab, affectedAsset))
+                .Distinct()
+                .ToArray();
+
+            if (matchedAssetTabs.Length == 0)
+            {
+                await _assetDocumentTabCoordinator.RefreshAssetListEntryDetailsAsync(
+                    affectedAsset.BundleId,
+                    affectedAsset.AssetId);
+            }
+            else
+            {
+                foreach (var assetTab in matchedAssetTabs)
+                {
+                    await _assetDocumentTabCoordinator.RefreshAssetDocumentTabDetailsAsync(assetTab);
+                }
+            }
+
+            var matchedSpineGroupTabs = _documentWorkspace.OpenBundleTabs
+                .SelectMany(static bundleTab => bundleTab.SpineGroupTabs)
+                .Where(spineGroupTab => SpineGroupContainsAsset(spineGroupTab, affectedAsset))
+                .Distinct()
+                .ToArray();
+            foreach (var spineGroupTab in matchedSpineGroupTabs)
+            {
+                await _spineGroupDocumentCoordinator.RefreshSpineGroupDocumentTabAsync(spineGroupTab);
+            }
+        }
+    }
+
+    private static bool MatchesAsset(
+        AssetDocumentTabViewModel assetTab,
+        WorkspaceOperationAffectedAsset affectedAsset) =>
+        assetTab.BundleId.Equals(affectedAsset.BundleId) &&
+        assetTab.AssetId.Equals(affectedAsset.AssetId);
+
+    private static bool SpineGroupContainsAsset(
+        SpineAssetGroupDocumentTabViewModel spineGroupTab,
+        WorkspaceOperationAffectedAsset affectedAsset) =>
+        spineGroupTab.Item.SkeletonAssets
+            .Concat(spineGroupTab.Item.AtlasAssets)
+            .Concat(spineGroupTab.Item.TexturePageAssets)
+            .Any(part =>
+                part.BundleId.Equals(affectedAsset.BundleId) &&
+                part.AssetId.Equals(affectedAsset.AssetId));
 }

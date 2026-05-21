@@ -482,7 +482,7 @@
                                 <TextBlock
                                     Grid.Column="3"
                                     Style="{StaticResource AssetPaneBodyCellTextStyle}"
-                                    Text="{x:Bind StateText}" />
+                                    Text="{x:Bind StateText, Mode=OneWay}" />
                             </Grid>
                         </Grid>
                     </DataTemplate>
@@ -660,7 +660,7 @@
                                 <TextBlock
                                     Grid.Column="3"
                                     Style="{StaticResource AssetPaneBodyCellTextStyle}"
-                                    Text="{x:Bind StateText}" />
+                                    Text="{x:Bind StateText, Mode=OneWay}" />
                             </Grid>
                         </Grid>
                     </DataTemplate>

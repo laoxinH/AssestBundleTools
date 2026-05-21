@@ -422,7 +422,7 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 - 已新增替换操作物化器和 `WorkspaceReplacementReadModelService`，导出 / 保存阶段后续应从该读模型读取当前有效替换列表，而不是扫描 UI 状态或直接解释兼容摘要字段。
 - 已让 `RedoAssetReplacementHandler` 追加 `RedoReplacement` 操作，并把当前会话内目标资源的 redo 槽重新应用为有效替换。
 - 已把 `Texture2D` 文件替换和工作区内替换接入有效预览：预览查询会优先读取当前物化替换来源，文件来源由 Infrastructure 的文件预览端口读取，工作区来源递归复用既有预览管线并把预览身份投影回目标资产。
-- 已让资产详情读模型投影当前目标资产的独立操作记录：`ReplaceFromFile / ReplaceFromWorkspace / ExtractAsset` 在检查器 `变更` 分段分别显示为单独记录；同一目标多次修改保留多条修改记录，撤销 / 重做入口只作用于当前目标资源级替换栈，不与提取记录混用。
+- 已让资产详情读模型投影当前目标资产的独立操作记录：`ReplaceFromFile / ReplaceFromWorkspace` 在检查器 `变更` 分段分别显示为单独修改记录，同一目标多次修改保留多条修改记录；`ExtractAsset` 在资源详情中只展示最近一次提取记录，避免重复提取记录挤占修改历史。撤销 / 重做入口只作用于当前目标资源级替换栈，不与提取记录混用。
 - `CachedWorkspaceSessionRegistry.OpenWorkspace` 已在打开工作区时读取 `operations[]`，并把当前生效的替换操作投影到运行时状态。
 - `WorkspaceChangeSummaryDto` 继续保持现有形状，替换状态可由重启恢复后的运行时状态生成。
 - 当前仍未完成来源文件指纹校验、来源缺失恢复计划、完整跨操作 redo 栈、批量替换结果明细和真实写包消费；这些进入后续恢复计划 / 保存导出细化。
@@ -448,8 +448,8 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 - 已让工作区打开时把 `Applied ExtractAsset` 操作物化回资源 `LastExtractedAtUtc`，用于重启后恢复已提取状态。
 - 已在 Presentation 层增加工作区操作变更通知管线：组合根用 notifying gateway 包装 `IWorkspaceAssetOperationGateway / IWorkspaceBatchOperationsGateway`，单资源提取、Spine 组提取、普通批量提取、替换、撤销替换和保存骨架成功后会发布当前 `WorkspaceId` 的读模型失效事件。订阅者包括：
   - 批处理页：活动工作区匹配时自动重新读取 `WorkspaceChangeSummaryDto / SavePreview / BatchPreview`。
-  - 主工作台资源详情区：通过 `WorkspaceOperationChangeRefreshCoordinator` 合并通知，重读当前工作区已打开的全部资源 / Spine 详情标签，使批量操作后未激活标签的“变更”页签也能自动更新；操作记录变化不重载资产 / Spine 列表，避免提取完成后打断列表滚动、筛选和选择状态。
-  - 独立资源编辑窗口：订阅同一通知，重读窗口内已打开的全部资源或 Spine 资源组详情，窗口化场景不再依赖发起操作的一侧手动重投影。
+  - 主工作台资源详情区：通过 `WorkspaceOperationChangeRefreshCoordinator` 合并通知。通知携带资产目标时，只重读命中的资源详情、关联 Spine 详情和当前资产列表中对应行的状态；通知未携带目标时才回退到重读当前工作区已打开的全部资源 / Spine 详情标签。这样批量操作后未激活标签的“变更”页签仍能更新，同时单资源修改不会触发无关预览任务；操作记录变化不重载资产 / Spine 列表，避免提取完成后打断列表滚动、筛选和选择状态。
+  - 独立资源编辑窗口：订阅同一通知；通知携带资产目标时只重读窗口内命中的资产或关联 Spine 资源组，窗口化场景不再依赖发起操作的一侧手动重投影。
   操作入口只负责执行命令、清理本地候选状态和展示结果反馈，不再在提取 / 替换 / 撤销成功后手动调用页面刷新回调；非持久化的候选来源选择仍允许即时重投影当前详情。
 - 提取撤销仍未实现；当前原则保持为“只撤销工作区提取标记，不自动删除用户目录中的外部文件”。
 - 详情页修改记录现在来自 Application / Infrastructure 投影出的资产级操作记录；Presentation 只本地化展示文本和触发撤销 / 重做命令，不直接读取 `staging/changes`。

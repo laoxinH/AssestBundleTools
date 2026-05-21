@@ -412,21 +412,6 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         OnPropertyChanged(nameof(WindowTitle));
     }
 
-    private async Task RefreshOperationAffectedStateAsync()
-    {
-        var assetTabs = DocumentGroup.AssetTabs.ToArray();
-        foreach (var assetTab in assetTabs)
-        {
-            await RefreshAssetDocumentDetailsAsync(assetTab);
-        }
-
-        var spineGroupTabs = DocumentGroup.SpineGroupTabs.ToArray();
-        foreach (var spineGroupTab in spineGroupTabs)
-        {
-            await RefreshSpineGroupDocumentDetailsAsync(spineGroupTab);
-        }
-    }
-
     private async Task RefreshAssetDocumentDetailsAsync(AssetDocumentTabViewModel assetTab)
     {
         if (_workspaceShell.WorkspaceSummary is not { } workspaceSummary)

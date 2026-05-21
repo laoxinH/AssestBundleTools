@@ -302,6 +302,24 @@ public sealed class AssetPaneViewSelectionContractTests
     }
 
     [Fact]
+    public void AssetPaneAssetStateText_ShouldUseOneWayBinding_ForOperationRefresh()
+    {
+        var xaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "AssetPaneView.xaml"));
+
+        Assert.Equal(
+            2,
+            CountOccurrences(xaml, "Text=\"{x:Bind StateText, Mode=OneWay}\""));
+    }
+
+    [Fact]
     public void AssetPaneMultiSelectionBar_ShouldExposeIconCommands()
     {
         var xaml = File.ReadAllText(
@@ -384,5 +402,22 @@ public sealed class AssetPaneViewSelectionContractTests
         }
 
         throw new DirectoryNotFoundException("Repository root was not found from the test output directory.");
+    }
+
+    private static int CountOccurrences(string source, string value)
+    {
+        var count = 0;
+        var startIndex = 0;
+        while (true)
+        {
+            var index = source.IndexOf(value, startIndex, StringComparison.Ordinal);
+            if (index < 0)
+            {
+                return count;
+            }
+
+            count++;
+            startIndex = index + value.Length;
+        }
     }
 }

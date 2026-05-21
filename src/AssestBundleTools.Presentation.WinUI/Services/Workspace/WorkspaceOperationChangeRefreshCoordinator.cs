@@ -10,8 +10,8 @@ internal sealed class WorkspaceOperationChangeRefreshCoordinator : IDisposable
     private readonly IWorkspaceOperationChangeNotifier _operationChangeNotifier;
     private readonly Func<WorkspaceId?> _currentWorkspaceIdProvider;
     private readonly Func<bool> _isBusyProvider;
-    private readonly Func<Task> _refreshAsync;
-    private bool _hasPendingRefreshRequest;
+    private readonly Func<WorkspaceOperationChangedEventArgs, Task> _refreshAsync;
+    private WorkspaceOperationChangedEventArgs? _pendingRefreshEventArgs;
     private bool _isRefreshLoopActive;
     private bool _isDisposed;
 
@@ -20,6 +20,20 @@ internal sealed class WorkspaceOperationChangeRefreshCoordinator : IDisposable
         Func<WorkspaceId?> currentWorkspaceIdProvider,
         Func<bool> isBusyProvider,
         Func<Task> refreshAsync)
+        : this(
+            operationChangeNotifier,
+            currentWorkspaceIdProvider,
+            isBusyProvider,
+            _ => refreshAsync())
+    {
+        ArgumentNullException.ThrowIfNull(refreshAsync);
+    }
+
+    public WorkspaceOperationChangeRefreshCoordinator(
+        IWorkspaceOperationChangeNotifier operationChangeNotifier,
+        Func<WorkspaceId?> currentWorkspaceIdProvider,
+        Func<bool> isBusyProvider,
+        Func<WorkspaceOperationChangedEventArgs, Task> refreshAsync)
     {
         _operationChangeNotifier = operationChangeNotifier ?? throw new ArgumentNullException(nameof(operationChangeNotifier));
         _currentWorkspaceIdProvider = currentWorkspaceIdProvider ?? throw new ArgumentNullException(nameof(currentWorkspaceIdProvider));
@@ -41,9 +55,9 @@ internal sealed class WorkspaceOperationChangeRefreshCoordinator : IDisposable
 
     public void HandleBusyStateChanged(bool isBusy)
     {
-        if (!isBusy && _hasPendingRefreshRequest)
+        if (!isBusy && _pendingRefreshEventArgs is { } pendingRefreshEventArgs)
         {
-            _ = RefreshAsync();
+            _ = RefreshAsync(pendingRefreshEventArgs);
         }
     }
 
@@ -56,31 +70,40 @@ internal sealed class WorkspaceOperationChangeRefreshCoordinator : IDisposable
             return;
         }
 
-        await RefreshAsync();
+        await RefreshAsync(eventArgs);
     }
 
-    private async Task RefreshAsync()
+    private async Task RefreshAsync(WorkspaceOperationChangedEventArgs eventArgs)
     {
         if (_isDisposed || _isBusyProvider() || _isRefreshLoopActive)
         {
-            _hasPendingRefreshRequest = true;
+            QueuePendingRefresh(eventArgs);
             return;
         }
 
         _isRefreshLoopActive = true;
         try
         {
+            var nextEventArgs = eventArgs;
             do
             {
-                _hasPendingRefreshRequest = false;
-                await _refreshAsync();
+                _pendingRefreshEventArgs = null;
+                await _refreshAsync(nextEventArgs);
+                nextEventArgs = _pendingRefreshEventArgs!;
             }
-            while (!_isDisposed && _hasPendingRefreshRequest);
+            while (!_isDisposed && nextEventArgs is not null);
         }
         finally
         {
             _isRefreshLoopActive = false;
         }
+    }
+
+    private void QueuePendingRefresh(WorkspaceOperationChangedEventArgs eventArgs)
+    {
+        _pendingRefreshEventArgs = _pendingRefreshEventArgs is null
+            ? eventArgs
+            : _pendingRefreshEventArgs.Merge(eventArgs);
     }
 
     private bool MatchesCurrentWorkspace(WorkspaceId changedWorkspaceId)

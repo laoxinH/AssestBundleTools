@@ -159,6 +159,16 @@ internal sealed class AssetPaneAssetListState
         return true;
     }
 
+    public bool TryGetSourceAsset(
+        AssetId assetId,
+        out AssetListEntryViewModel? assetEntry)
+    {
+        assetEntry = string.IsNullOrWhiteSpace(assetId.Value)
+            ? null
+            : _sourceItems.FirstOrDefault(item => item.Item.AssetId.Equals(assetId));
+        return assetEntry is not null;
+    }
+
     public void ClearSelection()
     {
         SelectedAssets.Clear();

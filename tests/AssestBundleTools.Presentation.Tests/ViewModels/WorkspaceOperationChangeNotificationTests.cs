@@ -20,6 +20,7 @@ using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.Tests.Testing;
+using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BatchTasks;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -49,6 +50,9 @@ public sealed class WorkspaceOperationChangeNotificationTests
         var notification = Assert.Single(receivedEvents);
         Assert.Equal(workspaceId, notification.WorkspaceId);
         Assert.Equal(WorkspaceOperationChangeKind.Extraction, notification.ChangeKind);
+        var affectedAsset = Assert.Single(notification.AffectedAssets);
+        Assert.Equal(new BundleId("bundle-1"), affectedAsset.BundleId);
+        Assert.Equal(new AssetId("asset-1"), affectedAsset.AssetId);
     }
 
     [Fact]
@@ -63,10 +67,12 @@ public sealed class WorkspaceOperationChangeNotificationTests
         {
             notifier.NotifyWorkspaceOperationsChanged(
                 workspaceId,
-                WorkspaceOperationChangeKind.Extraction);
+                WorkspaceOperationChangeKind.Extraction,
+                [new WorkspaceOperationAffectedAsset(new BundleId("bundle-1"), new AssetId("asset-1"))]);
             notifier.NotifyWorkspaceOperationsChanged(
                 workspaceId,
-                WorkspaceOperationChangeKind.Replacement);
+                WorkspaceOperationChangeKind.Replacement,
+                [new WorkspaceOperationAffectedAsset(new BundleId("bundle-1"), new AssetId("asset-2"))]);
 
             Assert.Empty(receivedEvents);
         }
@@ -76,6 +82,7 @@ public sealed class WorkspaceOperationChangeNotificationTests
         Assert.Equal(
             WorkspaceOperationChangeKind.Extraction | WorkspaceOperationChangeKind.Replacement,
             notification.ChangeKind);
+        Assert.Equal(2, notification.AffectedAssets.Count);
     }
 
     [Fact]
@@ -286,6 +293,132 @@ public sealed class WorkspaceOperationChangeNotificationTests
             extractedAtUtc,
             activeAssetTab.Details?.LastExtractedAtUtc);
         Assert.Same(activeAssetTab, viewModel.DocumentWorkspace.ActiveAssetDocumentTab);
+    }
+
+    [Fact]
+    public async Task BundleExplorerViewModel_ShouldRefreshOnlyAffectedAsset_WhenOperationTargetsSingleAsset()
+    {
+        var localizationService = new TestLocalizationService();
+        var workspaceRequest = PresentationTestDataFactory.CreateNavigationRequest("operation-targeted-refresh");
+        var workspaceSummary = PresentationTestDataFactory.CreateWorkspaceSummary(workspaceRequest);
+        var bundleId = new BundleId("bundle-ui");
+        var assetId = new AssetId("asset-button");
+        var inactiveAssetId = new AssetId("asset-hidden-button");
+        var loadAssetListCount = 0;
+        var getAssetDetailsCount = 0;
+        var returnReplacementState = false;
+        var notifier = new WorkspaceOperationChangeNotifier();
+        var workspaceContextService = new TestWorkspaceContextService();
+        var explorerGateway = new TestWorkspaceExplorerGateway
+        {
+            OpenWorkspaceHandler = _ => Task.FromResult(Result<WorkspaceSummaryDto>.Success(workspaceSummary)),
+            LoadBundleTreeHandler = _ => Task.FromResult(Result<IReadOnlyList<BundleTreeNodeDto>>.Success(
+                PresentationTestDataFactory.CreateBundleTree("ui"))),
+            LoadAssetListHandler = query =>
+            {
+                loadAssetListCount++;
+                return Task.FromResult(Result<AssetListResultDto>.Success(
+                    new AssetListResultDto(
+                        query.WorkspaceId,
+                        query.BundleId,
+                        "ui",
+                        query.SearchKeyword,
+                        query.AssetTypeFilter,
+                        TotalCount: 1,
+                        FilteredCount: 1,
+                        Items:
+                        [
+                            new AssetListItemDto(
+                                assetId,
+                                bundleId,
+                                "Button",
+                                "Assets/UI/Button.png",
+                                AssetType.Texture2D,
+                                SizeInBytes: 128,
+                                PreferredDisplaySizeInBytes: null,
+                                HasPreview: true,
+                                IsModified: false)
+                        ],
+                        query.AssetTypeDisplayNameFilter,
+                        TypeFacets: Array.Empty<AssetTypeFacetDto>())));
+            }
+        };
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            OpenAssetInPaneHandler = command => Task.FromResult(Result<AssetPaneContextDto>.Success(
+                new AssetPaneContextDto(
+                    command.WorkspaceId,
+                    command.PaneId,
+                    command.BundleId,
+                    command.AssetId,
+                    "Button",
+                    WorkspaceMode.SinglePane))),
+            GetAssetDetailsHandler = query =>
+            {
+                getAssetDetailsCount++;
+                var details = BundleExplorerPreviewTestSupport.CreateAssetDetails(
+                    query.WorkspaceId,
+                    query.BundleId,
+                    query.AssetId) with
+                {
+                    Name = query.AssetId.Equals(inactiveAssetId) ? "HiddenButton" : "Button",
+                    IsModified = returnReplacementState && query.AssetId.Equals(assetId),
+                    FileReplacementSourceFileName = returnReplacementState && query.AssetId.Equals(assetId)
+                        ? "ButtonReplacement.png"
+                        : null,
+                    FileReplacementSourcePath = returnReplacementState && query.AssetId.Equals(assetId)
+                        ? @"D:\Imports\ButtonReplacement.png"
+                        : null
+                };
+
+                return Task.FromResult(Result<AssetDetailsDto>.Success(details));
+            },
+            GetAssetPreviewHandler = query => Task.FromResult(BundleExplorerPreviewTestSupport.CreateSummaryPreviewResult(query))
+        };
+        using var viewModel = new BundleExplorerViewModel(
+            explorerGateway,
+            inspectionGateway,
+            new SuccessfulWorkspaceAssetOperationGateway(),
+            new TestAssetEditDraftRestorePlanGateway(),
+            new TestAppLogService(),
+            new TestAppNotificationService(),
+            localizationService,
+            notifier,
+            new NoopFilePickerService(),
+            workspaceContextService,
+            new NoopWorkspaceImportCoordinatorService(),
+            new TestBackgroundTaskRunner(),
+            new TestAssetBundleDecryptorRegistry(),
+            new NoopPathNavigationService());
+
+        await viewModel.InitializeAsync(workspaceRequest);
+        var assetEntry = Assert.Single(viewModel.AssetWorkflow.PrimaryPane.Items);
+        viewModel.AssetWorkflow.PrimaryPane.SelectedAsset = assetEntry;
+        await viewModel.HandlePrimaryPaneSelectionChangedAsync();
+        var activeAssetTab = Assert.IsType<AssetDocumentTabViewModel>(
+            viewModel.DocumentWorkspace.ActiveAssetDocumentTab);
+        var inactiveAssetTab = viewModel.AssetWorkflow.CreateAssetDocumentTab(
+            bundleId,
+            inactiveAssetId,
+            "HiddenButton");
+        viewModel.DocumentWorkspace.ActiveBundleTab!.AddAssetTab(inactiveAssetTab, activate: false);
+        var loadAssetListCountBeforeNotification = loadAssetListCount;
+        var getAssetDetailsCountBeforeNotification = getAssetDetailsCount;
+
+        returnReplacementState = true;
+        notifier.NotifyWorkspaceOperationsChanged(
+            workspaceSummary.WorkspaceId,
+            WorkspaceOperationChangeKind.Replacement,
+            [new WorkspaceOperationAffectedAsset(bundleId, assetId)]);
+
+        await BundleExplorerPreviewTestSupport.WaitUntilAsync(
+            () => activeAssetTab.Details?.IsModified == true);
+
+        Assert.Equal(loadAssetListCountBeforeNotification, loadAssetListCount);
+        Assert.Equal(getAssetDetailsCountBeforeNotification + 1, getAssetDetailsCount);
+        Assert.Null(inactiveAssetTab.Details);
+        Assert.True(assetEntry.Item.IsModified);
+        Assert.Equal(ResourceKeys.AssetStateModified, assetEntry.StateText);
     }
 
     [Fact]
