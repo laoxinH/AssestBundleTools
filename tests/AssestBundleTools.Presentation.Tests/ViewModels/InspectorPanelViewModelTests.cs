@@ -114,8 +114,6 @@ public sealed class InspectorPanelViewModelTests
 
         var records = presenter.CreateChangeRecords(
             details,
-            canUndoReplacement: false,
-            canRedoReplacement: false,
             canManageRecords: true);
 
         Assert.Equal(2, records.Count);
@@ -125,6 +123,51 @@ public sealed class InspectorPanelViewModelTests
         Assert.Contains(
             latestExtractionAtUtc.ToLocalTime().ToString("G"),
             records.Single(record => record.TitleText == ResourceKeys.InspectorChangeRecordExtractionTitle).TimeText);
+    }
+
+    [Fact]
+    public void ChangeRecordPresenter_ShouldExposeReplacementActionsByRecordState()
+    {
+        var presenter = new BundleExplorerAssetChangeRecordPresenter(new TestLocalizationService());
+        var appliedAtUtc = new DateTimeOffset(2026, 5, 21, 8, 0, 0, TimeSpan.Zero);
+        var details = BundleExplorerPreviewTestSupport.CreateAssetDetails(
+            new WorkspaceId("workspace-ui"),
+            new BundleId("bundle-ui"),
+            new AssetId("asset-1")) with
+        {
+            ChangeRecords =
+            [
+                new AssetChangeRecordDto(
+                    AssetChangeRecordKind.FileReplacement,
+                    CreatedAtUtc: appliedAtUtc.AddMinutes(-20),
+                    AppliedAtUtc: appliedAtUtc.AddMinutes(-20),
+                    SourceFileName: "old.png",
+                    SourceFilePath: @"D:\Imports\old.png",
+                    OperationId: "op-old"),
+                new AssetChangeRecordDto(
+                    AssetChangeRecordKind.FileReplacement,
+                    CreatedAtUtc: appliedAtUtc,
+                    AppliedAtUtc: appliedAtUtc,
+                    SourceFileName: "current.png",
+                    SourceFilePath: @"D:\Imports\current.png",
+                    OperationId: "op-current",
+                    IsEffectiveReplacement: true)
+            ]
+        };
+
+        var records = presenter.CreateChangeRecords(details, canManageRecords: true);
+
+        var currentRecord = Assert.Single(records, static record => record.OperationId == "op-current");
+        Assert.True(currentRecord.ShowsUndoReplacement);
+        Assert.False(currentRecord.ShowsRedoReplacement);
+        Assert.True(currentRecord.ShowsDeleteRecord);
+        Assert.True(currentRecord.IsActionEnabled);
+
+        var oldRecord = Assert.Single(records, static record => record.OperationId == "op-old");
+        Assert.False(oldRecord.ShowsUndoReplacement);
+        Assert.True(oldRecord.ShowsRedoReplacement);
+        Assert.True(oldRecord.ShowsDeleteRecord);
+        Assert.True(oldRecord.IsActionEnabled);
     }
 
     [Fact]

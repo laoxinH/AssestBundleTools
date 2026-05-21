@@ -21,8 +21,6 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
 
     public IReadOnlyList<InspectorChangeRecordViewModel> CreateChangeRecords(
         AssetDetailsDto details,
-        bool canUndoReplacement,
-        bool canRedoReplacement,
         bool canManageRecords)
     {
         ArgumentNullException.ThrowIfNull(details);
@@ -32,7 +30,7 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
         foreach (var record in sourceRecords)
         {
             var isReplacementRecord = IsReplacementRecord(record);
-            var showUndo = isReplacementRecord && record.IsEffectiveReplacement && canUndoReplacement;
+            var showUndo = isReplacementRecord && record.IsEffectiveReplacement;
             var showRedo = isReplacementRecord && !record.IsEffectiveReplacement;
 
             records.Add(CreateChangeRecord(
@@ -40,7 +38,7 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
                 showUndo,
                 showRedo,
                 canManageRecords && !string.IsNullOrWhiteSpace(record.OperationId),
-                canManageRecords || canRedoReplacement));
+                canManageRecords && (showUndo || !string.IsNullOrWhiteSpace(record.OperationId))));
         }
 
         return records;

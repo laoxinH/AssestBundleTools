@@ -139,7 +139,7 @@ internal sealed class BundleExplorerAssetInspectorPresenter
 
         var canUndoReplacement = canEdit && !isBusy && HasAppliedReplacement(details);
         var canRedoReplacement = canEdit && !isBusy && details.CanRedoReplacement;
-        var canManageChangeRecords = canEdit && !isBusy;
+        var canManageChangeRecords = canEdit;
 
         assetTab.ApplyDetails(details);
         assetTab.CanEdit = canEdit;
@@ -188,8 +188,6 @@ internal sealed class BundleExplorerAssetInspectorPresenter
             canRedoReplacement: canRedoReplacement,
             changeRecords: _changeRecordPresenter.CreateChangeRecords(
                 details,
-                canUndoReplacement,
-                canRedoReplacement,
                 canManageChangeRecords));
     }
 

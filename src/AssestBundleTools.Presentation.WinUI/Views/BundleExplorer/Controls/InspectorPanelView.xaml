@@ -51,10 +51,13 @@
                 Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
             <Setter
                 Property="BorderBrush"
-                Value="Transparent" />
+                Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
             <Setter
                 Property="BorderThickness"
-                Value="0" />
+                Value="1" />
+            <Setter
+                Property="Foreground"
+                Value="{ThemeResource TextFillColorPrimaryBrush}" />
             <Setter
                 Property="CornerRadius"
                 Value="12" />
