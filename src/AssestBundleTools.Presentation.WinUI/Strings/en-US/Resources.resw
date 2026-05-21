@@ -2499,6 +2499,15 @@
   <data name="InspectorPanelView.ChangeSummary.FileReplacementAndExtract.Format" xml:space="preserve">
     <value>File replacement applied: {0}. Last extracted at: {1}</value>
   </data>
+  <data name="InspectorPanelView.ChangeRecord.Extract.Format" xml:space="preserve">
+    <value>Extracted: {0}</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.FileReplacement.Format" xml:space="preserve">
+    <value>Modified from file {0} ({1})</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.WorkspaceReplacement.Format" xml:space="preserve">
+    <value>Modified from workspace asset {0} / {1} ({2})</value>
+  </data>
   <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.Hit" xml:space="preserve">
     <value>Cache hit</value>
   </data>

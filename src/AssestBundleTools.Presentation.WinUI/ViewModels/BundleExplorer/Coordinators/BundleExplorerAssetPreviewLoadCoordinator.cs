@@ -54,6 +54,20 @@ internal sealed class BundleExplorerAssetPreviewLoadCoordinator
             AssetPreviewLoadPriority.Foreground);
     }
 
+    public void InvalidatePreview(AssetDocumentTabViewModel assetTab)
+    {
+        ArgumentNullException.ThrowIfNull(assetTab);
+
+        assetTab.CancelPreviewRequest();
+        assetTab.Inspector.Preview.ResetState();
+    }
+
+    public void ReloadForegroundPreview(AssetDocumentTabViewModel assetTab)
+    {
+        InvalidatePreview(assetTab);
+        LoadForegroundPreview(assetTab, promoteLoadingPreview: true);
+    }
+
     public void DemotePreviewToBackgroundPrewarm(
         AssetDocumentTabViewModel? assetTab,
         IEnumerable<AssetDocumentTabViewModel> assetTabs)

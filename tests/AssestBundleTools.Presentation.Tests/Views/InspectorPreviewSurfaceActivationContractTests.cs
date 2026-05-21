@@ -39,7 +39,7 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
     }
 
     [Fact]
-    public void InspectorModifyButton_ShouldUseFileReplacementSourceWithoutWorkspaceFallback()
+    public void InspectorModifyButton_ShouldUseImmediateFileModificationWithoutWorkspaceFallback()
     {
         var code = File.ReadAllText(
             Path.Combine(
@@ -54,16 +54,32 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
             code.IndexOf("private void OnModifyButtonClick", StringComparison.Ordinal)..
             code.IndexOf("private void OnPreviewSurfaceOpenPreviewLocationRequested", StringComparison.Ordinal)];
 
-        var applyGuardIndex = handler.IndexOf("ViewModel?.CanApplyReplacement == true", StringComparison.Ordinal);
-        var applyInvokeIndex = handler.IndexOf("ApplyReplacementRequested?.Invoke", StringComparison.Ordinal);
         var fileGuardIndex = handler.IndexOf("ViewModel?.CanSelectFileReplacementSource == true", StringComparison.Ordinal);
-        var fileInvokeIndex = handler.IndexOf("SelectFileReplacementSourceRequested?.Invoke", StringComparison.Ordinal);
+        var fileInvokeIndex = handler.IndexOf("ModifyFromFileReplacementSourceRequested?.Invoke", StringComparison.Ordinal);
 
-        Assert.True(applyGuardIndex >= 0);
-        Assert.True(applyGuardIndex < applyInvokeIndex);
-        Assert.True(applyInvokeIndex < fileGuardIndex);
+        Assert.DoesNotContain("ApplyReplacementRequested?.Invoke", handler);
         Assert.True(fileGuardIndex < fileInvokeIndex);
+        Assert.DoesNotContain("SelectFileReplacementSourceRequested?.Invoke", handler);
         Assert.DoesNotContain("SelectReplacementSourceRequested?.Invoke", handler);
+    }
+
+    [Fact]
+    public void InspectorChangesSection_ShouldExposeSeparateRecordsWithUndoRedoCommands()
+    {
+        var xaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorPanelView.xaml"));
+
+        Assert.Contains("ItemsSource=\"{x:Bind ViewModel.ChangeRecords, Mode=OneWay}\"", xaml);
+        Assert.Contains("OnChangeRecordUndoReplacementButtonClick", xaml);
+        Assert.Contains("OnChangeRecordRedoReplacementButtonClick", xaml);
+        Assert.Contains("ViewModel.ChangeRecordsEmptyStateVisibility", xaml);
     }
 
     [Fact]

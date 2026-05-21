@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <UserControl
     x:Class="AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls.InspectorPanelView"
+    x:Name="InspectorPanelRoot"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls"
@@ -445,11 +446,16 @@
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                 Text="{x:Bind ViewModel.ReplacementSourceText, Mode=OneWay}"
                                                 TextWrapping="WrapWholeWords" />
-                                            <Button
-                                                x:Name="SelectFileReplacementButton"
-                                                HorizontalAlignment="Left"
-                                                Click="OnSelectFileReplacementButtonClick"
-                                                IsEnabled="{x:Bind ViewModel.CanSelectFileReplacementSource, Mode=OneWay}" />
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Button
+                                                    x:Name="SelectFileReplacementButton"
+                                                    Click="OnSelectFileReplacementButtonClick"
+                                                    IsEnabled="{x:Bind ViewModel.CanSelectFileReplacementSource, Mode=OneWay}" />
+                                                <Button
+                                                    x:Name="ApplySelectedReplacementButton"
+                                                    Click="OnApplySelectedReplacementButtonClick"
+                                                    IsEnabled="{x:Bind ViewModel.CanApplyReplacement, Mode=OneWay}" />
+                                            </StackPanel>
                                         </StackPanel>
                                     </Border>
 
@@ -526,12 +532,64 @@
                                     <Border
                                         Padding="12"
                                         Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                        CornerRadius="10">
+                                        CornerRadius="10"
+                                        Visibility="{x:Bind ViewModel.ChangeRecordsEmptyStateVisibility, Mode=OneWay}">
                                         <TextBlock
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                             Text="{x:Bind ViewModel.ChangeSummaryText, Mode=OneWay}"
                                             TextWrapping="WrapWholeWords" />
                                     </Border>
+
+                                    <ItemsControl
+                                        ItemsSource="{x:Bind ViewModel.ChangeRecords, Mode=OneWay}"
+                                        Visibility="{x:Bind ViewModel.ChangeRecordsListVisibility, Mode=OneWay}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="viewModels:InspectorChangeRecordViewModel">
+                                                <Border
+                                                    Margin="0,0,0,8"
+                                                    Padding="10"
+                                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                                    CornerRadius="8">
+                                                    <Grid ColumnSpacing="8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Spacing="4">
+                                                            <TextBlock
+                                                                FontWeight="SemiBold"
+                                                                Text="{x:Bind PrimaryText, Mode=OneTime}"
+                                                                TextWrapping="WrapWholeWords" />
+                                                            <TextBlock
+                                                                FontFamily="Cascadia Mono"
+                                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                Text="{x:Bind SecondaryText, Mode=OneTime}"
+                                                                TextWrapping="WrapWholeWords"
+                                                                Visibility="{x:Bind SecondaryTextVisibility, Mode=OneTime}" />
+                                                        </StackPanel>
+                                                        <StackPanel
+                                                            Grid.Column="1"
+                                                            VerticalAlignment="Top"
+                                                            Orientation="Horizontal"
+                                                            Spacing="6">
+                                                            <Button
+                                                                Click="OnChangeRecordUndoReplacementButtonClick"
+                                                                Content="{x:Bind UndoButtonText, Mode=OneTime}"
+                                                                IsEnabled="{Binding ViewModel.CanUndoReplacement, ElementName=InspectorPanelRoot}"
+                                                                Style="{StaticResource WorkspaceInlineActionButtonStyle}"
+                                                                Visibility="{x:Bind UndoButtonVisibility, Mode=OneTime}" />
+                                                            <Button
+                                                                Click="OnChangeRecordRedoReplacementButtonClick"
+                                                                Content="{x:Bind RedoButtonText, Mode=OneTime}"
+                                                                IsEnabled="{Binding ViewModel.CanRedoReplacement, ElementName=InspectorPanelRoot}"
+                                                                Style="{StaticResource WorkspaceInlineActionButtonStyle}"
+                                                                Visibility="{x:Bind RedoButtonVisibility, Mode=OneTime}" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>

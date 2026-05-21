@@ -259,7 +259,22 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
             return;
         }
 
+        var shouldReloadPreview = AssetPreviewInvalidationPolicy.HasReplacementProjectionChanged(
+            assetTab.Details,
+            details);
         ReapplyAssetDocumentTab(assetTab, details);
+        if (shouldReloadPreview)
+        {
+            if (ReferenceEquals(assetTab, _documentWorkspace.ActiveAssetDocumentTab))
+            {
+                _assetPreviewLoadCoordinator.ReloadForegroundPreview(assetTab);
+            }
+            else
+            {
+                _assetPreviewLoadCoordinator.InvalidatePreview(assetTab);
+            }
+        }
+
         if (ReferenceEquals(assetTab, _documentWorkspace.ActiveAssetDocumentTab))
         {
             _documentWorkspace.NotifyAssetDocumentHostStateChanged();

@@ -232,6 +232,46 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
         Assert.Empty(gateway.ExtractAssetCommands);
     }
 
+    [Fact]
+    public async Task ModifyFromFileReplacementSourceAsync_ShouldPickAndApplyFileImmediately()
+    {
+        var gateway = new RecordingWorkspaceAssetOperationGateway();
+        var filePicker = new RecordingFilePickerService
+        {
+            ReplacementSourceFilePath = @"D:\Imports\hero.png"
+        };
+        var handler = new BundleExplorerAssetModificationActionHandler(
+            gateway,
+            new TestAppLogService(),
+            new TestAppNotificationService(),
+            new TestLocalizationService(),
+            filePicker);
+        var workspaceSummary = CreateWorkspaceSummary();
+        var assetTab = new AssetDocumentTabViewModel(
+            new BundleId("bundle-ui"),
+            new AssetId("asset-1"),
+            "hero",
+            CreateInspectorTextSet());
+        var details = CreateAssetDetails();
+        var busyStates = new List<bool>();
+        var reapplyCount = 0;
+
+        await handler.ModifyFromFileReplacementSourceAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            busyStates.Add,
+            _ => throw new InvalidOperationException("File modification should not fail in this test."));
+
+        Assert.Equal(1, filePicker.ReplacementSourceFilePickCount);
+        Assert.Single(gateway.FileReplacementCandidateQueries);
+        Assert.Single(gateway.ReplaceAssetFromFileCommands);
+        Assert.Equal(filePicker.ReplacementSourceFilePath, gateway.ReplaceAssetFromFileCommands[0].SourceFilePath);
+        Assert.Null(assetTab.PendingFileReplacementCandidate);
+        Assert.Equal([true, false], busyStates);
+        Assert.Equal(0, reapplyCount);
+    }
+
     private static WorkspaceSummaryDto CreateWorkspaceSummary() =>
         new(
             WorkspaceId: new WorkspaceId("workspace-1"),
@@ -287,6 +327,31 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
             "0 pages",
             "Ready");
 
+    private static AssetDetailsDto CreateAssetDetails() =>
+        new(
+            WorkspaceId: new WorkspaceId("workspace-1"),
+            BundleId: new BundleId("bundle-ui"),
+            AssetId: new AssetId("asset-1"),
+            Name: "hero",
+            AssetPath: "Assets/hero.png",
+            ContainerPath: "Assets/hero.png",
+            AssetType: AssetType.Texture2D,
+            SizeInBytes: 128,
+            PreferredDisplaySizeInBytes: null,
+            PathId: 1,
+            IsModified: false,
+            CanExtract: true,
+            CanReplaceFromFile: true,
+            CanReplaceFromWorkspace: true,
+            WorkspaceReplacementSourceBundleDisplayName: null,
+            WorkspaceReplacementSourceAssetName: null,
+            WorkspaceReplacementSourceAssetType: null,
+            FileReplacementSourceFileName: null,
+            FileReplacementSourcePath: null,
+            FileReplacementSourceAssetType: null,
+            LastExtractedAtUtc: null,
+            Dependencies: Array.Empty<AssetDependencyDto>());
+
     private static InspectorInformationTextSet CreateInspectorTextSet() =>
         new(
             BasicInfoTitle: "Basic",
@@ -311,9 +376,13 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
 
         public string? SpineGroupExtractionDirectory { get; init; }
 
+        public string? ReplacementSourceFilePath { get; init; }
+
         public int BatchExtractionOutputDirectoryPickCount { get; private set; }
 
         public int SpineGroupExtractionDirectoryPickCount { get; private set; }
+
+        public int ReplacementSourceFilePickCount { get; private set; }
 
         public Task<string?> PickWorkspaceDataDirectoryAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult<string?>(null);
@@ -350,8 +419,11 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
 
         public Task<string?> PickReplacementSourceFileAsync(
             AssetType targetAssetType,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult<string?>(null);
+            CancellationToken cancellationToken = default)
+        {
+            ReplacementSourceFilePickCount++;
+            return Task.FromResult(ReplacementSourceFilePath);
+        }
     }
 
     private sealed class RecordingWorkspaceAssetOperationGateway : IWorkspaceAssetOperationGateway
@@ -359,6 +431,10 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
         public List<ExtractAssetCommand> ExtractAssetCommands { get; } = [];
 
         public List<ExtractSpineAssetGroupCommand> ExtractSpineAssetGroupCommands { get; } = [];
+
+        public List<GetFileReplacementCandidateQuery> FileReplacementCandidateQueries { get; } = [];
+
+        public List<ReplaceAssetFromFileCommand> ReplaceAssetFromFileCommands { get; } = [];
 
         public DateTimeOffset NextExtractedAtUtc { get; init; } = DateTimeOffset.UtcNow;
 
@@ -408,8 +484,15 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
 
         public Task<Result<FileReplacementCandidateDto>> GetFileReplacementCandidateAsync(
             GetFileReplacementCandidateQuery query,
-            CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
+            CancellationToken cancellationToken = default)
+        {
+            FileReplacementCandidateQueries.Add(query);
+            return Task.FromResult(Result<FileReplacementCandidateDto>.Success(
+                new FileReplacementCandidateDto(
+                    SourceFilePath: query.SourceFilePath,
+                    SourceFileName: Path.GetFileName(query.SourceFilePath),
+                    SourceAssetType: AssetType.Texture2D)));
+        }
 
         public Task<Result<IReadOnlyList<WorkspaceReplacementCandidateDto>>> GetWorkspaceReplacementCandidatesAsync(
             GetWorkspaceReplacementCandidatesQuery query,
@@ -418,8 +501,20 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
 
         public Task<Result<AssetFileReplacementResultDto>> ReplaceAssetFromFileAsync(
             ReplaceAssetFromFileCommand command,
-            CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
+            CancellationToken cancellationToken = default)
+        {
+            ReplaceAssetFromFileCommands.Add(command);
+            return Task.FromResult(Result<AssetFileReplacementResultDto>.Success(
+                new AssetFileReplacementResultDto(
+                    command.WorkspaceId,
+                    command.TargetBundleId,
+                    command.TargetAssetId,
+                    "hero",
+                    command.SourceFilePath,
+                    Path.GetFileName(command.SourceFilePath),
+                    command.SourceAssetType,
+                    DateTimeOffset.UtcNow)));
+        }
 
         public Task<Result<AssetReplacementResultDto>> ReplaceAssetFromWorkspaceAsync(
             ReplaceAssetFromWorkspaceCommand command,

@@ -75,7 +75,13 @@ public sealed partial class InspectorPanelView : UserControl
 
     public event EventHandler? SelectFileReplacementSourceRequested;
 
+    public event EventHandler? ModifyFromFileReplacementSourceRequested;
+
     public event EventHandler? ApplyReplacementRequested;
+
+    public event EventHandler? UndoReplacementRequested;
+
+    public event EventHandler? RedoReplacementRequested;
 
     public event EventHandler? OpenPreviewLocationRequested;
 
@@ -93,18 +99,27 @@ public sealed partial class InspectorPanelView : UserControl
         SelectFileReplacementSourceRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    private void OnApplySelectedReplacementButtonClick(object sender, RoutedEventArgs e)
+    {
+        ApplyReplacementRequested?.Invoke(this, EventArgs.Empty);
+    }
+
     private void OnModifyButtonClick(object sender, RoutedEventArgs e)
     {
-        if (ViewModel?.CanApplyReplacement == true)
-        {
-            ApplyReplacementRequested?.Invoke(this, EventArgs.Empty);
-            return;
-        }
-
         if (ViewModel?.CanSelectFileReplacementSource == true)
         {
-            SelectFileReplacementSourceRequested?.Invoke(this, EventArgs.Empty);
+            ModifyFromFileReplacementSourceRequested?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    private void OnChangeRecordUndoReplacementButtonClick(object sender, RoutedEventArgs e)
+    {
+        UndoReplacementRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnChangeRecordRedoReplacementButtonClick(object sender, RoutedEventArgs e)
+    {
+        RedoReplacementRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnPreviewSurfaceOpenPreviewLocationRequested(object? sender, EventArgs e)
@@ -171,6 +186,7 @@ public sealed partial class InspectorPanelView : UserControl
         WorkspaceReplacementCapabilityLabelText.Text = UiText.Get(ResourceKeys.InspectorWorkspaceReplacementCapabilityLabel);
         ChangeSummaryTitleText.Text = UiText.Get(ResourceKeys.InspectorChangeSummaryTitle);
         SelectFileReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectFileReplacementButton);
+        ApplySelectedReplacementButton.Content = UiText.Get(ResourceKeys.InspectorApplyReplacementButton);
 
         ApplyActionButtonText(ExtractButton, ExtractButtonText, ResourceKeys.InspectorExtractButton);
         ApplyActionButtonText(ModifyButton, ModifyButtonText, ResourceKeys.InspectorModifyButton);

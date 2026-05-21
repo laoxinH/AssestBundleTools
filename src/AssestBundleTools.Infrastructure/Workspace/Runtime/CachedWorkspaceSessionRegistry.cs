@@ -227,7 +227,8 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
                     : Array.Empty<AssetDependencyDto>(),
                 WorkspaceReplacementSourceBundleId: assetState.AppliedWorkspaceReplacement?.SourceBundleId,
                 WorkspaceReplacementSourceAssetId: assetState.AppliedWorkspaceReplacement?.SourceAssetId,
-                CanRedoReplacement: assetState.ReplacementRedoStack.Count > 0);
+                CanRedoReplacement: assetState.ReplacementRedoStack.Count > 0,
+                ChangeRecords: BuildAssetChangeRecords(workspaceState, bundleState, assetState));
 
             return true;
         }
@@ -402,6 +403,105 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
             FileReplacementAppliedAtUtc: fileReplacementAppliedAtUtc,
             LastChangedAtUtc: lastChangedAtUtc == default ? null : lastChangedAtUtc);
     }
+
+    private IReadOnlyList<AssetChangeRecordDto> BuildAssetChangeRecords(
+        WorkspaceSessionState workspaceState,
+        CachedBundleState bundleState,
+        CachedAssetState assetState)
+    {
+        var persistedRecords = LoadPersistedAssetChangeRecords(
+                workspaceState.Summary,
+                bundleState.BundleId,
+                assetState.AssetId)
+            .ToArray();
+        return persistedRecords.Length > 0
+            ? persistedRecords
+            : BuildRuntimeAssetChangeRecordFallback(assetState);
+    }
+
+    private IEnumerable<AssetChangeRecordDto> LoadPersistedAssetChangeRecords(
+        WorkspaceSummaryDto workspaceSummary,
+        BundleId bundleId,
+        AssetId assetId)
+    {
+        if (string.IsNullOrWhiteSpace(workspaceSummary.WorkspaceKey) ||
+            string.IsNullOrWhiteSpace(workspaceSummary.WorkspaceDataRootPath))
+        {
+            yield break;
+        }
+
+        WorkspaceChangeSetDto? changeSet;
+        try
+        {
+            var changeStore = _workspaceDataStoreFactory.CreateWorkspaceChangeStore(
+                workspaceSummary.WorkspaceDataRootPath.Trim());
+            changeSet = changeStore.Load(workspaceSummary.WorkspaceKey.Trim());
+        }
+        catch (NotSupportedException)
+        {
+            yield break;
+        }
+
+        foreach (var operation in (changeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>())
+            .Where(static operation => operation is not null)
+            .Where(static operation => operation.Status == WorkspaceOperationStatus.Applied)
+            .Where(static operation => operation.OperationKind is
+                WorkspaceOperationKind.ExtractAsset or
+                WorkspaceOperationKind.ReplaceFromFile or
+                WorkspaceOperationKind.ReplaceFromWorkspace)
+            .Where(operation => OperationTargetsAsset(operation, bundleId, assetId))
+            .OrderByDescending(static operation => operation.Sequence))
+        {
+            var record = AssetChangeRecordDto.FromOperation(operation);
+            if (record.Kind != AssetChangeRecordKind.Unknown)
+            {
+                yield return record;
+            }
+        }
+    }
+
+    private static IReadOnlyList<AssetChangeRecordDto> BuildRuntimeAssetChangeRecordFallback(CachedAssetState assetState)
+    {
+        var records = new List<AssetChangeRecordDto>();
+        if (assetState.AppliedFileReplacement is { } fileReplacement)
+        {
+            records.Add(new AssetChangeRecordDto(
+                Kind: AssetChangeRecordKind.FileReplacement,
+                CreatedAtUtc: fileReplacement.AppliedAtUtc,
+                AppliedAtUtc: fileReplacement.AppliedAtUtc,
+                SourceFileName: fileReplacement.SourceFileName,
+                SourceFilePath: fileReplacement.SourceFilePath));
+        }
+
+        if (assetState.AppliedWorkspaceReplacement is { } workspaceReplacement)
+        {
+            records.Add(new AssetChangeRecordDto(
+                Kind: AssetChangeRecordKind.WorkspaceReplacement,
+                CreatedAtUtc: workspaceReplacement.AppliedAtUtc,
+                AppliedAtUtc: workspaceReplacement.AppliedAtUtc,
+                SourceBundleDisplayName: workspaceReplacement.SourceBundleDisplayName,
+                SourceAssetName: workspaceReplacement.SourceAssetName));
+        }
+
+        if (assetState.LastExtractedAtUtc is { } extractedAtUtc)
+        {
+            records.Add(new AssetChangeRecordDto(
+                Kind: AssetChangeRecordKind.Extraction,
+                CreatedAtUtc: extractedAtUtc,
+                AppliedAtUtc: extractedAtUtc));
+        }
+
+        return records
+            .OrderByDescending(static record => record.DisplayTimestampUtc)
+            .ToArray();
+    }
+
+    private static bool OperationTargetsAsset(
+        WorkspaceOperationRecordDto operation,
+        BundleId bundleId,
+        AssetId assetId) =>
+        string.Equals(operation.Target?.BundleId, bundleId.Value, StringComparison.Ordinal) &&
+        string.Equals(operation.Target?.AssetId, assetId.Value, StringComparison.Ordinal);
 
     private static string GetAssetExtension(AssetType assetType) =>
         assetType switch

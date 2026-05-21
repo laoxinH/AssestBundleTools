@@ -166,13 +166,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     public bool CanApplyReplacement
     {
         get => _canApplyReplacement;
-        set
-        {
-            if (SetProperty(ref _canApplyReplacement, value))
-            {
-                OnPropertyChanged(nameof(CanModify));
-            }
-        }
+        set => SetProperty(ref _canApplyReplacement, value);
     }
 
     public bool CanUndoReplacement
@@ -187,9 +181,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         set => SetProperty(ref _canRedoReplacement, value);
     }
 
-    public bool CanModify =>
-        CanSelectFileReplacementSource ||
-        CanApplyReplacement;
+    public bool CanModify => CanSelectFileReplacementSource;
 
     /// <summary>
     /// 右侧详情区的页签位置属于页面级浏览状态，
@@ -227,6 +219,8 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     public ObservableCollection<BundleExternalDependencyViewModel> BundleExternalDependencies { get; } = new();
 
     public ObservableCollection<InspectorInfoCardViewModel> InformationCards { get; } = new();
+
+    public ObservableCollection<InspectorChangeRecordViewModel> ChangeRecords { get; } = new();
 
     public bool HasSelection
     {
@@ -270,6 +264,12 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
             ? Visibility.Visible
             : Visibility.Collapsed;
 
+    public Visibility ChangeRecordsListVisibility =>
+        ChangeRecords.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility ChangeRecordsEmptyStateVisibility =>
+        ChangeRecords.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
     public void Clear(string emptyStateText)
     {
         EmptyStateText = emptyStateText;
@@ -296,10 +296,12 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         ReferencedByDependencies.Clear();
         DependencyClosureItems.Clear();
         BundleExternalDependencies.Clear();
+        ChangeRecords.Clear();
         SpineAtlasPageSelector.Clear();
         Preview.ResetState();
         ResetSectionScrollPositions();
         NotifyDependencyStateChanged();
+        NotifyChangeRecordStateChanged();
         HasSelection = false;
         RebuildInformationCards();
     }
@@ -327,7 +329,8 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         IEnumerable<AssetDependencyViewModel> referencedByDependencies,
         IEnumerable<AssetDependencyViewModel> dependencyClosureItems,
         IEnumerable<BundleExternalDependencyViewModel> bundleExternalDependencies,
-        bool canRedoReplacement = false)
+        bool canRedoReplacement = false,
+        IEnumerable<InspectorChangeRecordViewModel>? changeRecords = null)
     {
         AssetName = assetName;
         BundleDisplayName = bundleDisplayName;
@@ -353,9 +356,11 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         ReplaceCollection(ReferencedByDependencies, referencedByDependencies);
         ReplaceCollection(DependencyClosureItems, dependencyClosureItems);
         ReplaceCollection(BundleExternalDependencies, bundleExternalDependencies);
+        ReplaceCollection(ChangeRecords, changeRecords ?? Array.Empty<InspectorChangeRecordViewModel>());
         SpineAtlasPageSelector.Clear();
 
         NotifyDependencyStateChanged();
+        NotifyChangeRecordStateChanged();
         HasSelection = true;
         RebuildInformationCards();
     }
@@ -387,6 +392,12 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         OnPropertyChanged(nameof(DependencyClosureVisibility));
         OnPropertyChanged(nameof(BundleExternalDependenciesVisibility));
         OnPropertyChanged(nameof(DependenciesEmptyStateVisibility));
+    }
+
+    private void NotifyChangeRecordStateChanged()
+    {
+        OnPropertyChanged(nameof(ChangeRecordsListVisibility));
+        OnPropertyChanged(nameof(ChangeRecordsEmptyStateVisibility));
     }
 
     /// <summary>

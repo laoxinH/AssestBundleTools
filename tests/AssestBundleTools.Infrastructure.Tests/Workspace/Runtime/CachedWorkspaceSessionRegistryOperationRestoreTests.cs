@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
@@ -76,6 +77,8 @@ internal static class CachedWorkspaceSessionRegistryOperationRestoreTests
 
         TestAssert.True(hasDetails, "Extracted asset details should be available.");
         TestAssert.Equal(now, details!.LastExtractedAtUtc, "Persisted extraction should restore the last extracted timestamp.");
+        TestAssert.Equal(1, details.ChangeRecords?.Count ?? 0, "Extracted asset details should expose an independent extraction record.");
+        TestAssert.Equal(AssetChangeRecordKind.Extraction, details.ChangeRecords![0].Kind, "Extraction record kind should be projected from operations.");
     }
 
     public static void OpenWorkspace_ShouldMaterializePersistedReplacementOperations_FromChangeSet()
@@ -126,6 +129,7 @@ internal static class CachedWorkspaceSessionRegistryOperationRestoreTests
         TestAssert.Equal(@"C:\Imports\hero.png", details.FileReplacementSourcePath, "Undo should reveal the previous active file replacement.");
         TestAssert.Equal("hero.png", details.FileReplacementSourceFileName, "File replacement name should be restored.");
         TestAssert.Equal(null, details.WorkspaceReplacementSourceAssetName, "Superseded workspace replacement should not be materialized.");
+        TestAssert.Equal(2, details.ChangeRecords?.Count(record => record.Kind is AssetChangeRecordKind.FileReplacement or AssetChangeRecordKind.WorkspaceReplacement) ?? 0, "Repeated replacements should remain visible as separate operation records.");
     }
 
     public static void OpenWorkspace_ShouldMaterializePersistedRedoReplacementOperation_FromChangeSet()

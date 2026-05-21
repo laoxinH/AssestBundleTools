@@ -349,7 +349,7 @@ public sealed class AssetPaneViewSelectionContractTests
     }
 
     [Fact]
-    public void BundleExplorerPage_AssetPaneReplaceContextMenu_ShouldUseFileReplacementSource()
+    public void BundleExplorerPage_AssetPaneModifyContextMenu_ShouldApplyFileModificationImmediately()
     {
         var code = File.ReadAllText(
             Path.Combine(
@@ -364,7 +364,8 @@ public sealed class AssetPaneViewSelectionContractTests
             code.IndexOf("private async void OnInspectorSelectFileReplacementSourceRequested", StringComparison.Ordinal)];
 
         Assert.Contains("HandleMainAssetSelectionChangedAsync", handler);
-        Assert.Contains("SelectFileReplacementSourceAsync", handler);
+        Assert.Contains("ModifyFromFileReplacementSourceAsync", handler);
+        Assert.DoesNotContain("SelectFileReplacementSourceAsync", handler);
         Assert.DoesNotContain("SelectWorkspaceReplacementSourceAsync", handler);
     }
 

@@ -528,6 +528,8 @@ public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
 
     public Task SelectFileReplacementSourceAsync() => _assetWorkflow.SelectFileReplacementSourceAsync();
 
+    public Task ModifyFromFileReplacementSourceAsync() => _assetWorkflow.ModifyFromFileReplacementSourceAsync();
+
     public Task ApplyPendingReplacementAsync() => _assetWorkflow.ApplyPendingReplacementAsync();
 
     public Task UndoAppliedReplacementAsync() => _assetWorkflow.UndoAppliedReplacementAsync();

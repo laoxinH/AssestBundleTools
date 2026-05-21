@@ -153,6 +153,25 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
             _operationFeedbackBridge.AppendResultFailure);
     }
 
+    public async Task ModifyFromFileReplacementSourceAsync()
+    {
+        if (!TryGetActiveAssetCommandContext(
+                static (_, details) => details.CanReplaceFromFile,
+                out var workspaceSummary,
+                out var assetTab,
+                out var details))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.ModifyFromFileReplacementSourceAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            _setBusy,
+            _operationFeedbackBridge.AppendResultFailure);
+    }
+
     public async Task ApplyPendingReplacementAsync()
     {
         if (!TryGetActiveAssetCommandContext(

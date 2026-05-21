@@ -375,7 +375,12 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     private async void OnPrimaryPaneReplaceSelectedAssetRequested(object sender, EventArgs e)
     {
         await _assetEditorWindowCoordinator.HandleMainAssetSelectionChangedAsync();
-        await ViewModel.SelectFileReplacementSourceAsync();
+        await ViewModel.ModifyFromFileReplacementSourceAsync();
+    }
+
+    private async void OnInspectorModifyFromFileReplacementSourceRequested(object sender, EventArgs e)
+    {
+        await ViewModel.ModifyFromFileReplacementSourceAsync();
     }
 
     private async void OnInspectorSelectFileReplacementSourceRequested(object sender, EventArgs e)
@@ -386,6 +391,16 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     private async void OnInspectorApplyReplacementRequested(object sender, EventArgs e)
     {
         await ViewModel.ApplyPendingReplacementAsync();
+    }
+
+    private async void OnInspectorUndoReplacementRequested(object sender, EventArgs e)
+    {
+        await ViewModel.UndoAppliedReplacementAsync();
+    }
+
+    private async void OnInspectorRedoReplacementRequested(object sender, EventArgs e)
+    {
+        await ViewModel.RedoAppliedReplacementAsync();
     }
 
     private void OnWorkspaceShellPageStateChanged(

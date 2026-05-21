@@ -328,6 +328,9 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
     public Task SelectFileReplacementSourceAsync() =>
         _assetActionCoordinator.SelectFileReplacementSourceAsync();
 
+    public Task ModifyFromFileReplacementSourceAsync() =>
+        _assetActionCoordinator.ModifyFromFileReplacementSourceAsync();
+
     public Task ApplyPendingReplacementAsync() => _assetActionCoordinator.ApplyPendingReplacementAsync();
 
     public Task UndoAppliedReplacementAsync() => _assetActionCoordinator.UndoAppliedReplacementAsync();
@@ -440,7 +443,21 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
                 token));
         if (TryGetValue(detailsResult, out var details))
         {
+            var shouldReloadPreview = AssetPreviewInvalidationPolicy.HasReplacementProjectionChanged(
+                assetTab.Details,
+                details);
             ReapplyAssetDocumentState(assetTab, details);
+            if (shouldReloadPreview)
+            {
+                if (ReferenceEquals(assetTab, DocumentGroup.ActiveAssetTab))
+                {
+                    _assetPreviewLoadCoordinator.ReloadForegroundPreview(assetTab);
+                }
+                else
+                {
+                    _assetPreviewLoadCoordinator.InvalidatePreview(assetTab);
+                }
+            }
         }
     }
 

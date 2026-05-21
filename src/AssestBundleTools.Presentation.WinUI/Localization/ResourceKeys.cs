@@ -1166,6 +1166,9 @@ public static class ResourceKeys
     public const string InspectorChangeSummaryReplacementAndExtractFormat = "InspectorPanelView.ChangeSummary.ReplacementAndExtract.Format";
     public const string InspectorChangeSummaryFileReplacementOnlyFormat = "InspectorPanelView.ChangeSummary.FileReplacementOnly.Format";
     public const string InspectorChangeSummaryFileReplacementAndExtractFormat = "InspectorPanelView.ChangeSummary.FileReplacementAndExtract.Format";
+    public const string InspectorChangeRecordExtractFormat = "InspectorPanelView.ChangeRecord.Extract.Format";
+    public const string InspectorChangeRecordFileReplacementFormat = "InspectorPanelView.ChangeRecord.FileReplacement.Format";
+    public const string InspectorChangeRecordWorkspaceReplacementFormat = "InspectorPanelView.ChangeRecord.WorkspaceReplacement.Format";
     public const string InspectorPreviewDiagnosticCacheStatusHit = "InspectorPanelView.PreviewDiagnostic.CacheStatus.Hit";
     public const string InspectorPreviewDiagnosticCacheStatusMissing = "InspectorPanelView.PreviewDiagnostic.CacheStatus.Missing";
     public const string InspectorPreviewDiagnosticCacheStatusIdentityChanged = "InspectorPanelView.PreviewDiagnostic.CacheStatus.IdentityChanged";

@@ -30,6 +30,7 @@ internal sealed class BundleExplorerAssetInspectorPresenter
     private readonly IBundleExplorerBundlePaneHost _bundlePane;
     private readonly ILocalizationService _localizationService;
     private readonly LocalizedValueFormatter _localizedValueFormatter;
+    private readonly BundleExplorerAssetChangeRecordPresenter _changeRecordPresenter;
 
     public BundleExplorerAssetInspectorPresenter(
         IBundleExplorerBundlePaneHost bundlePane,
@@ -38,6 +39,7 @@ internal sealed class BundleExplorerAssetInspectorPresenter
         _bundlePane = bundlePane ?? throw new ArgumentNullException(nameof(bundlePane));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _localizedValueFormatter = new LocalizedValueFormatter(_localizationService);
+        _changeRecordPresenter = new BundleExplorerAssetChangeRecordPresenter(_localizationService);
     }
 
     public IReadOnlyList<AssetTypeOptionViewModel> CreateAssetTypeOptions(
@@ -132,6 +134,9 @@ internal sealed class BundleExplorerAssetInspectorPresenter
         ArgumentNullException.ThrowIfNull(assetTab);
         ArgumentNullException.ThrowIfNull(details);
 
+        var canUndoReplacement = canEdit && !isBusy && HasAppliedReplacement(details);
+        var canRedoReplacement = canEdit && !isBusy && details.CanRedoReplacement;
+
         assetTab.ApplyDetails(details);
         assetTab.CanEdit = canEdit;
 
@@ -161,14 +166,14 @@ internal sealed class BundleExplorerAssetInspectorPresenter
                 details,
                 assetTab.PendingWorkspaceReplacementCandidate,
                 assetTab.PendingFileReplacementCandidate),
-            changeSummaryText: BuildChangeSummaryText(details),
+            changeSummaryText: _changeRecordPresenter.EmptyText,
             canExtract: canEdit && !isBusy && details.CanExtract,
             canSelectFileReplacementSource: canEdit && !isBusy && details.CanReplaceFromFile,
             canSelectReplacementSource: canEdit && !isBusy && details.CanReplaceFromWorkspace,
             canApplyReplacement: canEdit && !isBusy &&
                                  (assetTab.PendingWorkspaceReplacementCandidate is not null ||
                                   assetTab.PendingFileReplacementCandidate is not null),
-            canUndoReplacement: canEdit && !isBusy && HasAppliedReplacement(details),
+            canUndoReplacement: canUndoReplacement,
             assetDependencies: details.Dependencies.Select(MapDependency),
             referencedByDependencies: (details.ReferencedBy ?? Array.Empty<AssetDependencyDto>())
                 .Select(MapDependency),
@@ -176,7 +181,11 @@ internal sealed class BundleExplorerAssetInspectorPresenter
                 .Select(MapDependency),
             bundleExternalDependencies: (details.BundleExternalDependencies ?? Array.Empty<BundleExternalDependencyDto>())
                 .Select(MapBundleExternalDependency),
-            canRedoReplacement: canEdit && !isBusy && details.CanRedoReplacement);
+            canRedoReplacement: canRedoReplacement,
+            changeRecords: _changeRecordPresenter.CreateChangeRecords(
+                details,
+                canUndoReplacement,
+                canRedoReplacement));
     }
 
     public void SyncInspectorActionStates(
@@ -422,56 +431,6 @@ internal sealed class BundleExplorerAssetInspectorPresenter
         return GetString(ResourceKeys.InspectorReplacementStatusNone);
     }
 
-    private string BuildChangeSummaryText(AssetDetailsDto details)
-    {
-        var hasFileReplacement = !string.IsNullOrWhiteSpace(details.FileReplacementSourceFileName) &&
-                                 !string.IsNullOrWhiteSpace(details.FileReplacementSourcePath);
-        var hasReplacement = !string.IsNullOrWhiteSpace(details.WorkspaceReplacementSourceAssetName) &&
-                             !string.IsNullOrWhiteSpace(details.WorkspaceReplacementSourceBundleDisplayName);
-        var hasExtraction = details.LastExtractedAtUtc.HasValue;
-
-        if (hasFileReplacement && hasExtraction)
-        {
-            return _localizationService.GetFormattedString(
-                ResourceKeys.InspectorChangeSummaryFileReplacementAndExtractFormat,
-                details.FileReplacementSourceFileName!,
-                FormatTimestamp(details.LastExtractedAtUtc!.Value));
-        }
-
-        if (hasFileReplacement)
-        {
-            return _localizationService.GetFormattedString(
-                ResourceKeys.InspectorChangeSummaryFileReplacementOnlyFormat,
-                details.FileReplacementSourceFileName!);
-        }
-
-        if (hasReplacement && hasExtraction)
-        {
-            return _localizationService.GetFormattedString(
-                ResourceKeys.InspectorChangeSummaryReplacementAndExtractFormat,
-                details.WorkspaceReplacementSourceBundleDisplayName!,
-                details.WorkspaceReplacementSourceAssetName!,
-                FormatTimestamp(details.LastExtractedAtUtc!.Value));
-        }
-
-        if (hasReplacement)
-        {
-            return _localizationService.GetFormattedString(
-                ResourceKeys.InspectorChangeSummaryReplacementOnlyFormat,
-                details.WorkspaceReplacementSourceBundleDisplayName!,
-                details.WorkspaceReplacementSourceAssetName!);
-        }
-
-        if (hasExtraction)
-        {
-            return _localizationService.GetFormattedString(
-                ResourceKeys.InspectorChangeSummaryExtractOnlyFormat,
-                FormatTimestamp(details.LastExtractedAtUtc!.Value));
-        }
-
-        return GetString(ResourceKeys.InspectorChangeSummaryNone);
-    }
-
     private static bool HasAppliedReplacement(AssetDetailsDto details)
     {
         return !string.IsNullOrWhiteSpace(details.WorkspaceReplacementSourceAssetName) ||
@@ -485,11 +444,5 @@ internal sealed class BundleExplorerAssetInspectorPresenter
             : sizeInBytes;
     }
 
-    private string FormatTimestamp(DateTimeOffset timestamp)
-    {
-        return timestamp.ToLocalTime().ToString("G", CultureInfo.CurrentCulture);
-    }
-
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
 }
-

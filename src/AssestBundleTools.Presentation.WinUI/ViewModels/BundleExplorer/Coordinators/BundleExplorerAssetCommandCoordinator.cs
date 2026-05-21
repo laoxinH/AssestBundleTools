@@ -244,6 +244,25 @@ internal sealed class BundleExplorerAssetCommandCoordinator
             _operationFeedbackBridge.AppendResultFailure);
     }
 
+    public async Task ModifyFromFileReplacementSourceAsync()
+    {
+        if (!TryGetActiveAssetCommandContext(
+                static (_, details) => details.CanReplaceFromFile,
+                out var workspaceSummary,
+                out var assetTab,
+                out var details))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.ModifyFromFileReplacementSourceAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            _setBusyState,
+            _operationFeedbackBridge.AppendResultFailure);
+    }
+
     public async Task ApplyPendingReplacementAsync()
     {
         if (!TryGetActiveAssetCommandContext(

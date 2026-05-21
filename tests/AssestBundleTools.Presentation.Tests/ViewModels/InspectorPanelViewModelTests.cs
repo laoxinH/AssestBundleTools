@@ -13,7 +13,7 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 public sealed class InspectorPanelViewModelTests
 {
     [Fact]
-    public void CanModify_ShouldFollowFileReplacementOrPendingApplyState()
+    public void CanModify_ShouldFollowImmediateFileReplacementCapabilityOnly()
     {
         var viewModel = CreateViewModel();
         var changedProperties = new List<string?>();
@@ -42,8 +42,32 @@ public sealed class InspectorPanelViewModelTests
         viewModel.CanSelectReplacementSource = false;
         viewModel.CanApplyReplacement = true;
 
-        Assert.True(viewModel.CanModify);
-        Assert.Contains(nameof(InspectorPanelViewModel.CanModify), changedProperties);
+        Assert.False(viewModel.CanModify);
+        Assert.DoesNotContain(nameof(InspectorPanelViewModel.CanModify), changedProperties);
+    }
+
+    [Fact]
+    public void Apply_ShouldExposeSeparateChangeRecords()
+    {
+        var viewModel = CreateViewModel();
+        var changeRecord = new InspectorChangeRecordViewModel(
+            "Modified",
+            @"C:\Imports\hero.png",
+            ShowsUndoReplacement: true,
+            ShowsRedoReplacement: false,
+            UndoButtonText: "Undo",
+            RedoButtonText: "Redo");
+
+        ApplyBasicDetails(
+            viewModel,
+            containerPath: string.Empty,
+            serializedFileName: "CAB-test",
+            changeRecords: [changeRecord]);
+
+        Assert.Single(viewModel.ChangeRecords);
+        Assert.Equal(changeRecord, viewModel.ChangeRecords[0]);
+        Assert.Equal(Visibility.Visible, viewModel.ChangeRecordsListVisibility);
+        Assert.Equal(Visibility.Collapsed, viewModel.ChangeRecordsEmptyStateVisibility);
     }
 
     [Fact]
@@ -305,7 +329,8 @@ public sealed class InspectorPanelViewModelTests
     private static void ApplyBasicDetails(
         InspectorPanelViewModel viewModel,
         string containerPath,
-        string serializedFileName)
+        string serializedFileName,
+        IEnumerable<InspectorChangeRecordViewModel>? changeRecords = null)
     {
         viewModel.Apply(
             assetName: "Sprite",
@@ -329,7 +354,8 @@ public sealed class InspectorPanelViewModelTests
             assetDependencies: Array.Empty<AssetDependencyViewModel>(),
             referencedByDependencies: Array.Empty<AssetDependencyViewModel>(),
             dependencyClosureItems: Array.Empty<AssetDependencyViewModel>(),
-            bundleExternalDependencies: Array.Empty<BundleExternalDependencyViewModel>());
+            bundleExternalDependencies: Array.Empty<BundleExternalDependencyViewModel>(),
+            changeRecords: changeRecords);
     }
 
     private static BitmapImage CreateBitmapImageStub()

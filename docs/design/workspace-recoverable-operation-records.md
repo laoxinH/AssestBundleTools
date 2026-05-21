@@ -256,7 +256,7 @@ Presentation 负责把这些结构化字段格式化为用户可见文本；Appl
 3. 同一目标资源的多次替换形成顺序栈，新的替换可以 `supersedesOperationId` 指向上一次仍生效的替换。
 4. 物化状态只采用该目标资源最新的未撤销替换。
 
-当前第一版已把 `Texture2D` 作为修改链路的首个稳定类型接入：文件替换和工作区内替换都会先形成操作记录和运行时待保存状态，详情预览再按当前物化出的有效替换来源投影图片载荷；目标资产的 `BundleId / AssetId / PathId / Unity 类型` 等原始身份不随预览来源改变。后续 `Sprite / Spine / Mesh / Material` 等类型应复用同一“操作记录 -> 有效读模型 -> 预览投影”链路，而不是各自维护独立 UI 状态。
+当前第一版已把 `Texture2D` 作为修改链路的首个稳定类型接入：文件替换和工作区内替换都会先形成操作记录和运行时待保存状态，详情预览再按当前物化出的有效替换来源投影图片载荷；目标资产的 `BundleId / AssetId / PathId / Unity 类型` 等原始身份不随预览来源改变。右键 `修改` 与资源详情操作区 `修改` 共用同一个文件来源快捷入口，会选择图片文件并立即追加新的 `ReplaceFromFile` 操作；显式候选选择仍属于页面级待应用状态，不作为最终事实。后续 `Sprite / Spine / Mesh / Material` 等类型应复用同一“操作记录 -> 有效读模型 -> 预览投影”链路，而不是各自维护独立 UI 状态。
 
 撤销规则：
 
@@ -422,6 +422,7 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 - 已新增替换操作物化器和 `WorkspaceReplacementReadModelService`，导出 / 保存阶段后续应从该读模型读取当前有效替换列表，而不是扫描 UI 状态或直接解释兼容摘要字段。
 - 已让 `RedoAssetReplacementHandler` 追加 `RedoReplacement` 操作，并把当前会话内目标资源的 redo 槽重新应用为有效替换。
 - 已把 `Texture2D` 文件替换和工作区内替换接入有效预览：预览查询会优先读取当前物化替换来源，文件来源由 Infrastructure 的文件预览端口读取，工作区来源递归复用既有预览管线并把预览身份投影回目标资产。
+- 已让资产详情读模型投影当前目标资产的独立操作记录：`ReplaceFromFile / ReplaceFromWorkspace / ExtractAsset` 在检查器 `变更` 分段分别显示为单独记录；同一目标多次修改保留多条修改记录，撤销 / 重做入口只作用于当前目标资源级替换栈，不与提取记录混用。
 - `CachedWorkspaceSessionRegistry.OpenWorkspace` 已在打开工作区时读取 `operations[]`，并把当前生效的替换操作投影到运行时状态。
 - `WorkspaceChangeSummaryDto` 继续保持现有形状，替换状态可由重启恢复后的运行时状态生成。
 - 当前仍未完成来源文件指纹校验、来源缺失恢复计划、完整跨操作 redo 栈、批量替换结果明细和真实写包消费；这些进入后续恢复计划 / 保存导出细化。
@@ -451,6 +452,7 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
   - 独立资源编辑窗口：订阅同一通知，重读窗口内已打开的全部资源或 Spine 资源组详情，窗口化场景不再依赖发起操作的一侧手动重投影。
   操作入口只负责执行命令、清理本地候选状态和展示结果反馈，不再在提取 / 替换 / 撤销成功后手动调用页面刷新回调；非持久化的候选来源选择仍允许即时重投影当前详情。
 - 提取撤销仍未实现；当前原则保持为“只撤销工作区提取标记，不自动删除用户目录中的外部文件”。
+- 详情页修改记录现在来自 Application / Infrastructure 投影出的资产级操作记录；Presentation 只本地化展示文本和触发撤销 / 重做命令，不直接读取 `staging/changes`。
 - 批处理页的中断、失败和输出文件不可用状态展示仍待细化。
 
 ### 第四阶段：编辑草稿与操作记录合流

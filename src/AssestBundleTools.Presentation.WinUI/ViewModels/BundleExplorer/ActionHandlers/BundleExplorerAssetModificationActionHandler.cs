@@ -22,7 +22,7 @@ internal sealed class BundleExplorerAssetModificationActionHandler
     private readonly IAppLogService _appLogService;
     private readonly IAppNotificationService _appNotificationService;
     private readonly ILocalizationService _localizationService;
-    private readonly IFilePickerService _filePickerService;
+    private readonly BundleExplorerFileReplacementActionExecutor _fileReplacementActionExecutor;
     private readonly BundleExplorerAssetExtractionActionHandler _extractionActionHandler;
 
     public BundleExplorerAssetModificationActionHandler(
@@ -40,13 +40,19 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
-        _filePickerService = filePickerService ?? throw new ArgumentNullException(nameof(filePickerService));
+        ArgumentNullException.ThrowIfNull(filePickerService);
+        _fileReplacementActionExecutor = new BundleExplorerFileReplacementActionExecutor(
+            _workspaceAssetOperationGateway,
+            _appLogService,
+            _appNotificationService,
+            _localizationService,
+            filePickerService);
         _extractionActionHandler = new BundleExplorerAssetExtractionActionHandler(
             _workspaceAssetOperationGateway,
             _appLogService,
             _appNotificationService,
             _localizationService,
-            _filePickerService,
+            filePickerService,
             backgroundTaskRunner,
             backgroundTaskStatusService,
             operationChangeNotifier,
@@ -171,39 +177,11 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         setBusyState(true);
         try
         {
-            string? selectedFilePath;
-            try
-            {
-                selectedFilePath = await _filePickerService.PickReplacementSourceFileAsync(details.AssetType);
-            }
-            catch (Exception ex)
-            {
-                _appLogService.AppendError(_localizationService.GetFormattedString(
-                    ResourceKeys.BundleExplorerLogFilePickerOpenFailedFormat,
-                    ex.GetType().Name));
-                ShowOperationNotification(
-                    GetString(ResourceKeys.AppNotificationErrorTitle),
-                    GetString(ResourceKeys.BundleExplorerNotificationFilePickerOpenFailed),
-                    AppNotificationSeverity.Error);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(selectedFilePath))
-            {
-                _appLogService.AppendInfo(_localizationService.GetFormattedString(
-                    ResourceKeys.BundleExplorerLogFileReplacementSelectionCancelled,
-                    details.Name));
-                return;
-            }
-
-            var result = await _workspaceAssetOperationGateway.GetFileReplacementCandidateAsync(
-                new GetFileReplacementCandidateQuery(
-                    workspaceSummary.WorkspaceId,
-                    details.BundleId,
-                    details.AssetId,
-                    selectedFilePath));
-
-            if (!TryGetValue(result, out var candidate, appendResultFailure))
+            var candidate = await _fileReplacementActionExecutor.PickFileReplacementCandidateAsync(
+                workspaceSummary,
+                details,
+                appendResultFailure);
+            if (candidate is null)
             {
                 return;
             }
@@ -230,6 +208,46 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         }
     }
 
+    public async Task ModifyFromFileReplacementSourceAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        AssetDocumentTabViewModel assetTab,
+        AssetDetailsDto details,
+        Action<bool> setBusyState,
+        Action<IReadOnlyList<AppError>> appendResultFailure)
+    {
+        ArgumentNullException.ThrowIfNull(workspaceSummary);
+        ArgumentNullException.ThrowIfNull(assetTab);
+        ArgumentNullException.ThrowIfNull(details);
+        ArgumentNullException.ThrowIfNull(setBusyState);
+        ArgumentNullException.ThrowIfNull(appendResultFailure);
+
+        setBusyState(true);
+        try
+        {
+            var candidate = await _fileReplacementActionExecutor.PickFileReplacementCandidateAsync(
+                workspaceSummary,
+                details,
+                appendResultFailure);
+            if (candidate is null)
+            {
+                return;
+            }
+
+            if (await _fileReplacementActionExecutor.ApplyFileReplacementAsync(
+                    workspaceSummary,
+                    details,
+                    candidate,
+                    appendResultFailure))
+            {
+                assetTab.ClearPendingReplacementCandidates();
+            }
+        }
+        finally
+        {
+            setBusyState(false);
+        }
+    }
+
     public async Task ApplyPendingReplacementAsync(
         WorkspaceSummaryDto workspaceSummary,
         AssetDocumentTabViewModel assetTab,
@@ -248,35 +266,15 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         {
             if (assetTab.PendingFileReplacementCandidate is not null)
             {
-                var fileResult = await _workspaceAssetOperationGateway.ReplaceAssetFromFileAsync(
-                    new ReplaceAssetFromFileCommand(
-                        workspaceSummary.WorkspaceId,
-                        details.BundleId,
-                        details.AssetId,
-                        assetTab.PendingFileReplacementCandidate.SourceFilePath,
-                        assetTab.PendingFileReplacementCandidate.SourceAssetType,
-                        workspaceSummary.WorkspaceKey,
-                        workspaceSummary.WorkspaceDataRootPath));
-
-                if (!TryGetValue(fileResult, out var fileReplacementResult, appendResultFailure))
+                if (await _fileReplacementActionExecutor.ApplyFileReplacementAsync(
+                        workspaceSummary,
+                        details,
+                        assetTab.PendingFileReplacementCandidate,
+                        appendResultFailure))
                 {
-                    return;
+                    assetTab.ClearPendingReplacementCandidates();
                 }
 
-                _appLogService.AppendInfo(_localizationService.GetFormattedString(
-                    ResourceKeys.BundleExplorerLogFileReplacementApplied,
-                    fileReplacementResult.TargetAssetName,
-                    fileReplacementResult.SourceFileName,
-                    fileReplacementResult.SourceFilePath));
-
-                ShowOperationNotification(
-                    GetString(ResourceKeys.AppNotificationSuccessTitle),
-                    _localizationService.GetFormattedString(
-                        ResourceKeys.BundleExplorerNotificationFileReplacementApplied,
-                        fileReplacementResult.TargetAssetName),
-                    AppNotificationSeverity.Success);
-
-                assetTab.ClearPendingReplacementCandidates();
                 return;
             }
 

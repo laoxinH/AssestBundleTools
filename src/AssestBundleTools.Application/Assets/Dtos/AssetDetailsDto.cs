@@ -39,4 +39,5 @@ public sealed record AssetDetailsDto(
     IReadOnlyList<AssetDependencyDto>? TextureAssociations = null,
     BundleId? WorkspaceReplacementSourceBundleId = null,
     AssetId? WorkspaceReplacementSourceAssetId = null,
-    bool CanRedoReplacement = false);
+    bool CanRedoReplacement = false,
+    IReadOnlyList<AssetChangeRecordDto>? ChangeRecords = null);

@@ -2499,6 +2499,15 @@
   <data name="InspectorPanelView.ChangeSummary.FileReplacementAndExtract.Format" xml:space="preserve">
     <value>已应用文件替换：{0}，最近一次提取时间：{1}</value>
   </data>
+  <data name="InspectorPanelView.ChangeRecord.Extract.Format" xml:space="preserve">
+    <value>提取：{0}</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.FileReplacement.Format" xml:space="preserve">
+    <value>修改：使用文件 {0}（{1}）</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.WorkspaceReplacement.Format" xml:space="preserve">
+    <value>修改：使用工作区资源 {0} / {1}（{2}）</value>
+  </data>
   <data name="InspectorPanelView.PreviewDiagnostic.CacheStatus.Hit" xml:space="preserve">
     <value>命中缓存</value>
   </data>

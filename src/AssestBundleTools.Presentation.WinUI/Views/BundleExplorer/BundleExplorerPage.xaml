@@ -1617,8 +1617,11 @@
                         ExtractRequested="OnInspectorExtractRequested"
                         OpenPreviewLocationRequested="OnInspectorOpenPreviewLocationRequested"
                         ResolvedAssetOpenRequested="OnInspectorResolvedAssetOpenRequested"
+                        ModifyFromFileReplacementSourceRequested="OnInspectorModifyFromFileReplacementSourceRequested"
                         SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
                         ApplyReplacementRequested="OnInspectorApplyReplacementRequested"
+                        UndoReplacementRequested="OnInspectorUndoReplacementRequested"
+                        RedoReplacementRequested="OnInspectorRedoReplacementRequested"
                         SpineAtlasPageSelectionRequested="OnInspectorSpineAtlasPageSelectionRequested"
                         ViewModel="{x:Bind ViewModel.AssetWorkflow.Inspector, Mode=OneWay}" />
                 </Grid>

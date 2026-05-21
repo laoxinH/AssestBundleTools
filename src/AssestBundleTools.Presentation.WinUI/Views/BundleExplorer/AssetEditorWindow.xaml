@@ -202,9 +202,12 @@
                     ViewModel="{x:Bind ViewModel.Inspector, Mode=OneWay}"
                     ApplyReplacementRequested="OnInspectorApplyReplacementRequested"
                     ExtractRequested="OnInspectorExtractRequested"
+                    ModifyFromFileReplacementSourceRequested="OnInspectorModifyFromFileReplacementSourceRequested"
                     OpenPreviewLocationRequested="OnInspectorOpenPreviewLocationRequested"
+                    RedoReplacementRequested="OnInspectorRedoReplacementRequested"
                     ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested"
                     SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
+                    UndoReplacementRequested="OnInspectorUndoReplacementRequested"
                     SpineAtlasPageSelectionRequested="OnInspectorSpineAtlasPageSelectionRequested" />
             </Border>
         </Grid>

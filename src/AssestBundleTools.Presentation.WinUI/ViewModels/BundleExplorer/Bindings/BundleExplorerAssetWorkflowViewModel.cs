@@ -415,6 +415,8 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
 
     public Task SelectFileReplacementSourceAsync() => _assetCommandCoordinator.SelectFileReplacementSourceAsync();
 
+    public Task ModifyFromFileReplacementSourceAsync() => _assetCommandCoordinator.ModifyFromFileReplacementSourceAsync();
+
     public Task ApplyPendingReplacementAsync() => _assetCommandCoordinator.ApplyPendingReplacementAsync();
 
     public Task UndoAppliedReplacementAsync() => _assetCommandCoordinator.UndoAppliedReplacementAsync();
