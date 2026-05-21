@@ -383,11 +383,6 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         await ViewModel.SelectFileReplacementSourceAsync();
     }
 
-    private async void OnInspectorSelectReplacementSourceRequested(object sender, EventArgs e)
-    {
-        await ViewModel.SelectWorkspaceReplacementSourceAsync();
-    }
-
     private async void OnInspectorApplyReplacementRequested(object sender, EventArgs e)
     {
         await ViewModel.ApplyPendingReplacementAsync();

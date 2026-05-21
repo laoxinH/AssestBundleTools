@@ -205,7 +205,6 @@
                     OpenPreviewLocationRequested="OnInspectorOpenPreviewLocationRequested"
                     ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested"
                     SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
-                    SelectReplacementSourceRequested="OnInspectorSelectReplacementSourceRequested"
                     SpineAtlasPageSelectionRequested="OnInspectorSpineAtlasPageSelectionRequested" />
             </Border>
         </Grid>

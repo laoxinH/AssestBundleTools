@@ -39,6 +39,34 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
     }
 
     [Fact]
+    public void InspectorModifyButton_ShouldUseFileReplacementSourceWithoutWorkspaceFallback()
+    {
+        var code = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorPanelView.xaml.cs"));
+        var handler = code[
+            code.IndexOf("private void OnModifyButtonClick", StringComparison.Ordinal)..
+            code.IndexOf("private void OnPreviewSurfaceOpenPreviewLocationRequested", StringComparison.Ordinal)];
+
+        var applyGuardIndex = handler.IndexOf("ViewModel?.CanApplyReplacement == true", StringComparison.Ordinal);
+        var applyInvokeIndex = handler.IndexOf("ApplyReplacementRequested?.Invoke", StringComparison.Ordinal);
+        var fileGuardIndex = handler.IndexOf("ViewModel?.CanSelectFileReplacementSource == true", StringComparison.Ordinal);
+        var fileInvokeIndex = handler.IndexOf("SelectFileReplacementSourceRequested?.Invoke", StringComparison.Ordinal);
+
+        Assert.True(applyGuardIndex >= 0);
+        Assert.True(applyGuardIndex < applyInvokeIndex);
+        Assert.True(applyInvokeIndex < fileGuardIndex);
+        Assert.True(fileGuardIndex < fileInvokeIndex);
+        Assert.DoesNotContain("SelectReplacementSourceRequested?.Invoke", handler);
+    }
+
+    [Fact]
     public void SpinePreviewSurface_ShouldFollowParentPreviewActivation()
     {
         var xaml = File.ReadAllText(

@@ -1618,7 +1618,6 @@
                         OpenPreviewLocationRequested="OnInspectorOpenPreviewLocationRequested"
                         ResolvedAssetOpenRequested="OnInspectorResolvedAssetOpenRequested"
                         SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
-                        SelectReplacementSourceRequested="OnInspectorSelectReplacementSourceRequested"
                         ApplyReplacementRequested="OnInspectorApplyReplacementRequested"
                         SpineAtlasPageSelectionRequested="OnInspectorSpineAtlasPageSelectionRequested"
                         ViewModel="{x:Bind ViewModel.AssetWorkflow.Inspector, Mode=OneWay}" />

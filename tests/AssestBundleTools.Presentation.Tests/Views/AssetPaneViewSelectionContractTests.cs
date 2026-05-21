@@ -348,6 +348,26 @@ public sealed class AssetPaneViewSelectionContractTests
             xaml);
     }
 
+    [Fact]
+    public void BundleExplorerPage_AssetPaneReplaceContextMenu_ShouldUseFileReplacementSource()
+    {
+        var code = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "BundleExplorerPage.xaml.cs"));
+        var handler = code[
+            code.IndexOf("private async void OnPrimaryPaneReplaceSelectedAssetRequested", StringComparison.Ordinal)..
+            code.IndexOf("private async void OnInspectorSelectFileReplacementSourceRequested", StringComparison.Ordinal)];
+
+        Assert.Contains("HandleMainAssetSelectionChangedAsync", handler);
+        Assert.Contains("SelectFileReplacementSourceAsync", handler);
+        Assert.DoesNotContain("SelectWorkspaceReplacementSourceAsync", handler);
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

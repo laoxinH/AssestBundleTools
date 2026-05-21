@@ -148,19 +148,19 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     public bool CanSelectFileReplacementSource
     {
         get => _canSelectFileReplacementSource;
-        set => SetProperty(ref _canSelectFileReplacementSource, value);
+        set
+        {
+            if (SetProperty(ref _canSelectFileReplacementSource, value))
+            {
+                OnPropertyChanged(nameof(CanModify));
+            }
+        }
     }
 
     public bool CanSelectReplacementSource
     {
         get => _canSelectReplacementSource;
-        set
-        {
-            if (SetProperty(ref _canSelectReplacementSource, value))
-            {
-                OnPropertyChanged(nameof(CanModify));
-            }
-        }
+        set => SetProperty(ref _canSelectReplacementSource, value);
     }
 
     public bool CanApplyReplacement
@@ -187,7 +187,9 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         set => SetProperty(ref _canRedoReplacement, value);
     }
 
-    public bool CanModify => CanSelectReplacementSource || CanApplyReplacement;
+    public bool CanModify =>
+        CanSelectFileReplacementSource ||
+        CanApplyReplacement;
 
     /// <summary>
     /// 右侧详情区的页签位置属于页面级浏览状态，

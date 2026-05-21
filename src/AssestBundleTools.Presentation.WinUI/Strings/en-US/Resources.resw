@@ -1063,7 +1063,7 @@
     <value>Switch a bundle on the left, adjust search, or change views to refresh the list shown in this pane.</value>
   </data>
   <data name="AssetPaneView.Context.Replace.Text" xml:space="preserve">
-    <value>Replace</value>
+    <value>Edit</value>
   </data>
   <data name="AssetPaneView.Context.EnterMultiSelection.Text" xml:space="preserve">
     <value>Enter Multi-Select</value>

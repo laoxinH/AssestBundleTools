@@ -75,8 +75,6 @@ public sealed partial class InspectorPanelView : UserControl
 
     public event EventHandler? SelectFileReplacementSourceRequested;
 
-    public event EventHandler? SelectReplacementSourceRequested;
-
     public event EventHandler? ApplyReplacementRequested;
 
     public event EventHandler? OpenPreviewLocationRequested;
@@ -103,7 +101,10 @@ public sealed partial class InspectorPanelView : UserControl
             return;
         }
 
-        SelectReplacementSourceRequested?.Invoke(this, EventArgs.Empty);
+        if (ViewModel?.CanSelectFileReplacementSource == true)
+        {
+            SelectFileReplacementSourceRequested?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     private void OnPreviewSurfaceOpenPreviewLocationRequested(object? sender, EventArgs e)
