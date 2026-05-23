@@ -4,6 +4,7 @@ using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
@@ -83,6 +84,12 @@ public sealed partial class SpriteEditGeometryPanelView : UserControl
 
     private void OnObservedViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(InspectorPreviewImageViewModel.IsSpriteEditDragActive) &&
+            _observedViewModel?.IsSpriteEditDragActive == true)
+        {
+            ReleaseSpriteEditGeometryInputFocus();
+        }
+
         QueueBindingsUpdate();
     }
 
@@ -145,6 +152,17 @@ public sealed partial class SpriteEditGeometryPanelView : UserControl
         {
             _isBindingsUpdateQueued = false;
         }
+    }
+
+    private void ReleaseSpriteEditGeometryInputFocus()
+    {
+        if (!DispatcherQueue.HasThreadAccess)
+        {
+            DispatcherQueue.TryEnqueue(ReleaseSpriteEditGeometryInputFocus);
+            return;
+        }
+
+        _ = SpriteEditFocusSinkButton.Focus(FocusState.Programmatic);
     }
 
     private static SpriteEditGeometryInputKind ResolveSpriteEditGeometryInputKind(NumberBox sender)

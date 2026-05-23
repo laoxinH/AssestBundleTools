@@ -332,6 +332,34 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
     }
 
     [Fact]
+    public void SpriteEditGeometryPanel_ShouldReleaseNumberInputFocusWhenPreviewDragStarts()
+    {
+        var panelXaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "SpriteEditGeometryPanelView.xaml"));
+        var panelCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "SpriteEditGeometryPanelView.xaml.cs"));
+
+        Assert.Contains("x:Name=\"SpriteEditFocusSinkButton\"", panelXaml);
+        Assert.Contains("AutomationProperties.AccessibilityView=\"Raw\"", panelXaml);
+        Assert.Contains("ReleaseSpriteEditGeometryInputFocus();", panelCode);
+        Assert.Contains("SpriteEditFocusSinkButton.Focus(FocusState.Programmatic)", panelCode);
+    }
+
+    [Fact]
     public void ImagePreviewViewportHost_ShouldReceivePointerInputAcrossTransparentAreas()
     {
         var imagePreviewXaml = File.ReadAllText(
