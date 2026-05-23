@@ -64,6 +64,7 @@
 
     <Grid
         x:Name="PreviewImageViewportHost"
+        Background="Transparent"
         PointerCanceled="OnPreviewImagePointerReleased"
         PointerCaptureLost="OnPreviewImagePointerReleased"
         PointerMoved="OnPreviewImagePointerMoved"

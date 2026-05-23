@@ -295,6 +295,41 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
     }
 
     [Fact]
+    public void SpriteEditGeometryPanel_ShouldUseTextOnlyNumberInput()
+    {
+        var panelXaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "SpriteEditGeometryPanelView.xaml"));
+
+        Assert.Contains("SpinButtonPlacementMode\" Value=\"Hidden\"", panelXaml);
+        Assert.DoesNotContain("SpinButtonPlacementMode\" Value=\"Compact\"", panelXaml);
+    }
+
+    [Fact]
+    public void ImagePreviewViewportHost_ShouldReceivePointerInputAcrossTransparentAreas()
+    {
+        var imagePreviewXaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorImagePreviewSurfaceView.xaml"));
+
+        Assert.Contains("x:Name=\"PreviewImageViewportHost\"", imagePreviewXaml);
+        Assert.Contains("Background=\"Transparent\"", imagePreviewXaml);
+        Assert.Contains("PointerPressed=\"OnPreviewImagePointerPressed\"", imagePreviewXaml);
+    }
+
+    [Fact]
     public void SpineD3DPreviewBackend_ShouldDrawPreviewBackground()
     {
         var backendCode = File.ReadAllText(

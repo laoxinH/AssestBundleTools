@@ -226,27 +226,7 @@ public sealed class InspectorPreviewImageViewModelTests
     public void SpriteEditDrag_ShouldMoveCropBoxAndPivotTogether()
     {
         var viewModel = new InspectorPreviewImageViewModel();
-        viewModel.Apply(
-            CreateImageSourceStub(),
-            imagePixelWidth: 100,
-            imagePixelHeight: 100,
-            overlayDisplayState: new SpritePreviewOverlayDisplayState(
-                CanvasWidth: 100,
-                CanvasHeight: 100,
-                RegionX: 10,
-                RegionY: 20,
-                RegionWidth: 30,
-                RegionHeight: 40,
-                PivotX: 20,
-                PivotY: 30,
-                BorderLeft: null,
-                BorderTop: null,
-                BorderRight: null,
-                BorderBottom: null,
-                BadgeText: "sprite"),
-            focusPreviewDisplayState: null);
-        viewModel.UpdateViewport(200d, 200d);
-        viewModel.RequestSpriteEditMode();
+        ApplySpriteEditPreview(viewModel);
 
         Assert.True(viewModel.TryBeginSpriteEditDrag(60d, 100d));
         viewModel.UpdateSpriteEditDrag(80d, 120d);
@@ -258,6 +238,38 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(80d, viewModel.OverlayHeight, precision: 3);
         Assert.Equal(60d, viewModel.PivotX, precision: 3);
         Assert.Equal(80d, viewModel.PivotY, precision: 3);
+    }
+
+    [Theory]
+    [InlineData(20d, 80d, 30d, 80d, 30d, 40d, 50d, 80d)]
+    [InlineData(80d, 80d, 70d, 80d, 20d, 40d, 50d, 80d)]
+    [InlineData(50d, 40d, 50d, 50d, 20d, 50d, 60d, 70d)]
+    [InlineData(50d, 120d, 50d, 110d, 20d, 40d, 60d, 70d)]
+    [InlineData(20d, 40d, 30d, 50d, 30d, 50d, 50d, 70d)]
+    [InlineData(80d, 40d, 70d, 50d, 20d, 50d, 50d, 70d)]
+    [InlineData(20d, 120d, 30d, 110d, 30d, 40d, 50d, 70d)]
+    [InlineData(80d, 120d, 70d, 110d, 20d, 40d, 50d, 70d)]
+    public void SpriteEditDrag_ShouldResizeCropBoxFromEdgesAndCorners(
+        double startViewportX,
+        double startViewportY,
+        double endViewportX,
+        double endViewportY,
+        double expectedOverlayX,
+        double expectedOverlayY,
+        double expectedOverlayWidth,
+        double expectedOverlayHeight)
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(viewModel);
+
+        Assert.True(viewModel.TryBeginSpriteEditDrag(startViewportX, startViewportY));
+        viewModel.UpdateSpriteEditDrag(endViewportX, endViewportY);
+        viewModel.CompleteSpriteEditDrag();
+
+        Assert.Equal(expectedOverlayX, viewModel.OverlayX, precision: 3);
+        Assert.Equal(expectedOverlayY, viewModel.OverlayY, precision: 3);
+        Assert.Equal(expectedOverlayWidth, viewModel.OverlayWidth, precision: 3);
+        Assert.Equal(expectedOverlayHeight, viewModel.OverlayHeight, precision: 3);
     }
 
     [Fact]
@@ -311,5 +323,30 @@ public sealed class InspectorPreviewImageViewModelTests
     private static ImageSource CreateImageSourceStub()
     {
         return (BitmapImage)RuntimeHelpers.GetUninitializedObject(typeof(BitmapImage));
+    }
+
+    private static void ApplySpriteEditPreview(InspectorPreviewImageViewModel viewModel)
+    {
+        viewModel.Apply(
+            CreateImageSourceStub(),
+            imagePixelWidth: 100,
+            imagePixelHeight: 100,
+            overlayDisplayState: new SpritePreviewOverlayDisplayState(
+                CanvasWidth: 100,
+                CanvasHeight: 100,
+                RegionX: 10,
+                RegionY: 20,
+                RegionWidth: 30,
+                RegionHeight: 40,
+                PivotX: 20,
+                PivotY: 30,
+                BorderLeft: null,
+                BorderTop: null,
+                BorderRight: null,
+                BorderBottom: null,
+                BadgeText: "sprite"),
+            focusPreviewDisplayState: null);
+        viewModel.UpdateViewport(200d, 200d);
+        viewModel.RequestSpriteEditMode();
     }
 }
