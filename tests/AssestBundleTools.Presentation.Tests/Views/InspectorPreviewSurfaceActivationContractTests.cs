@@ -356,7 +356,10 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
         Assert.Contains("x:Name=\"SpriteEditFocusSinkButton\"", panelXaml);
         Assert.Contains("AutomationProperties.AccessibilityView=\"Raw\"", panelXaml);
         Assert.Contains("ReleaseSpriteEditGeometryInputFocus();", panelCode);
-        Assert.Contains("SpriteEditFocusSinkButton.Focus(FocusState.Programmatic)", panelCode);
+        Assert.Contains("ResolveFocusedSpriteEditGeometryNumberBox();", panelCode);
+        Assert.Contains("ResetSpriteEditGeometryNumberBox(focusedNumberBox);", panelCode);
+        Assert.Contains("TryFocusSpriteEditFocusSink()", panelCode);
+        Assert.Contains("SpriteEditFocusSinkButton.IsTabStop = true", panelCode);
     }
 
     [Fact]

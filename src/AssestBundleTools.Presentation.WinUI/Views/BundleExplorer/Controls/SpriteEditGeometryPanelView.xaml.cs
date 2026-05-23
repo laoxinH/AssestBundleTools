@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
@@ -162,7 +163,76 @@ public sealed partial class SpriteEditGeometryPanelView : UserControl
             return;
         }
 
-        _ = SpriteEditFocusSinkButton.Focus(FocusState.Programmatic);
+        var focusedNumberBox = ResolveFocusedSpriteEditGeometryNumberBox();
+        if (focusedNumberBox is not null)
+        {
+            ResetSpriteEditGeometryNumberBox(focusedNumberBox);
+        }
+
+        _ = TryFocusSpriteEditFocusSink();
+    }
+
+    private bool TryFocusSpriteEditFocusSink()
+    {
+        var wasTabStop = SpriteEditFocusSinkButton.IsTabStop;
+        SpriteEditFocusSinkButton.IsTabStop = true;
+        try
+        {
+            return SpriteEditFocusSinkButton.Focus(FocusState.Programmatic);
+        }
+        finally
+        {
+            SpriteEditFocusSinkButton.IsTabStop = wasTabStop;
+        }
+    }
+
+    private NumberBox? ResolveFocusedSpriteEditGeometryNumberBox()
+    {
+        var focusedElement = XamlRoot is null
+            ? FocusManager.GetFocusedElement()
+            : FocusManager.GetFocusedElement(XamlRoot);
+
+        if (focusedElement is not DependencyObject focusedDependencyObject)
+        {
+            return null;
+        }
+
+        if (focusedDependencyObject is TextBox textBox)
+        {
+            textBox.Select(textBox.Text.Length, 0);
+        }
+
+        return ResolveSpriteEditGeometryNumberBoxes()
+            .FirstOrDefault(numberBox => IsElementOrVisualDescendantOf(focusedDependencyObject, numberBox));
+    }
+
+    private static void ResetSpriteEditGeometryNumberBox(NumberBox numberBox)
+    {
+        numberBox.IsEnabled = false;
+        numberBox.IsEnabled = true;
+    }
+
+    private IEnumerable<NumberBox> ResolveSpriteEditGeometryNumberBoxes()
+    {
+        yield return SpriteEditCropXNumberBox;
+        yield return SpriteEditCropYNumberBox;
+        yield return SpriteEditCropWidthNumberBox;
+        yield return SpriteEditCropHeightNumberBox;
+        yield return SpriteEditPivotXNumberBox;
+        yield return SpriteEditPivotYNumberBox;
+    }
+
+    private static bool IsElementOrVisualDescendantOf(DependencyObject element, DependencyObject ancestor)
+    {
+        for (var current = element; current is not null; current = VisualTreeHelper.GetParent(current))
+        {
+            if (ReferenceEquals(current, ancestor))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static SpriteEditGeometryInputKind ResolveSpriteEditGeometryInputKind(NumberBox sender)
