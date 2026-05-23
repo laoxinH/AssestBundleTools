@@ -1,8 +1,6 @@
 using System.ComponentModel;
-using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -19,7 +17,6 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
     private bool _isDragging;
     private bool _isEditingSpriteOverlay;
     private bool _isBindingsUpdateQueued;
-    private bool _isUpdatingSpriteEditGeometryFields;
     private Point _lastPointerPosition;
 
     public static readonly DependencyProperty ViewModelProperty =
@@ -34,7 +31,6 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
         InitializeComponent();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
-        ApplyLocalizedText();
     }
 
     public InspectorPreviewImageViewModel? ViewModel
@@ -211,25 +207,6 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
         e.Handled = true;
     }
 
-    private void OnSpriteEditGeometryNumberBoxValueChanged(
-        NumberBox sender,
-        NumberBoxValueChangedEventArgs args)
-    {
-        if (_isUpdatingSpriteEditGeometryFields ||
-            ViewModel?.IsSpriteEditModeActive != true)
-        {
-            return;
-        }
-
-        ViewModel.UpdateSpriteEditGeometryFromInput(
-            SpriteEditCropXNumberBox.Value,
-            SpriteEditCropYNumberBox.Value,
-            SpriteEditCropWidthNumberBox.Value,
-            SpriteEditCropHeightNumberBox.Value,
-            SpriteEditPivotXNumberBox.Value,
-            SpriteEditPivotYNumberBox.Value);
-    }
-
     private void RefreshPreviewImageViewport()
     {
         PreviewImageViewportHost.Clip = new RectangleGeometry
@@ -256,15 +233,7 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
         }
 
         _isBindingsUpdateQueued = false;
-        _isUpdatingSpriteEditGeometryFields = true;
-        try
-        {
-            Bindings.Update();
-        }
-        finally
-        {
-            _isUpdatingSpriteEditGeometryFields = false;
-        }
+        Bindings.Update();
     }
 
     private void QueueBindingsUpdate()
@@ -285,45 +254,6 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
         {
             _isBindingsUpdateQueued = false;
         }
-    }
-
-    private void ApplyLocalizedText()
-    {
-        SpriteEditGeometryTitleText.Text = UiText.Get(ResourceKeys.InspectorSpriteEditGeometryTitle);
-        ApplySpriteEditNumberBoxText(
-            SpriteEditCropXLabelText,
-            SpriteEditCropXNumberBox,
-            ResourceKeys.InspectorSpriteEditCropXLabel);
-        ApplySpriteEditNumberBoxText(
-            SpriteEditCropYLabelText,
-            SpriteEditCropYNumberBox,
-            ResourceKeys.InspectorSpriteEditCropYLabel);
-        ApplySpriteEditNumberBoxText(
-            SpriteEditCropWidthLabelText,
-            SpriteEditCropWidthNumberBox,
-            ResourceKeys.InspectorSpriteEditCropWidthLabel);
-        ApplySpriteEditNumberBoxText(
-            SpriteEditCropHeightLabelText,
-            SpriteEditCropHeightNumberBox,
-            ResourceKeys.InspectorSpriteEditCropHeightLabel);
-        ApplySpriteEditNumberBoxText(
-            SpriteEditPivotXLabelText,
-            SpriteEditPivotXNumberBox,
-            ResourceKeys.InspectorSpriteEditPivotXLabel);
-        ApplySpriteEditNumberBoxText(
-            SpriteEditPivotYLabelText,
-            SpriteEditPivotYNumberBox,
-            ResourceKeys.InspectorSpriteEditPivotYLabel);
-    }
-
-    private static void ApplySpriteEditNumberBoxText(
-        TextBlock label,
-        NumberBox numberBox,
-        string resourceKey)
-    {
-        var text = UiText.Get(resourceKey);
-        label.Text = text;
-        AutomationProperties.SetName(numberBox, text);
     }
 }
 

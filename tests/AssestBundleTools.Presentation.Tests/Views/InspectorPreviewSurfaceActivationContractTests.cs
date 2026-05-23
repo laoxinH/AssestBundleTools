@@ -255,6 +255,46 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
     }
 
     [Fact]
+    public void SpriteEditGeometryPanel_ShouldLiveBetweenEditorPreviewAndActionBar()
+    {
+        var imagePreviewXaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorImagePreviewSurfaceView.xaml"));
+        var assetEditorXaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "AssetEditorWindow.xaml"));
+
+        Assert.DoesNotContain("SpriteEditGeometryPanelView", imagePreviewXaml);
+        Assert.DoesNotContain("SpriteEditGeometryNumberBox", imagePreviewXaml);
+        Assert.Contains("<controls:SpriteEditGeometryPanelView", assetEditorXaml);
+        Assert.Contains(
+            "Visibility=\"{x:Bind ViewModel.Inspector.Preview.Image.SpriteEditGeometryPanelVisibility, Mode=OneWay}\"",
+            assetEditorXaml);
+        Assert.Contains(
+            "ViewModel=\"{x:Bind ViewModel.Inspector.Preview.Image, Mode=OneWay}\"",
+            assetEditorXaml);
+
+        var previewIndex = assetEditorXaml.IndexOf("<controls:InspectorPreviewSurfaceView", StringComparison.Ordinal);
+        var geometryIndex = assetEditorXaml.IndexOf("<controls:SpriteEditGeometryPanelView", StringComparison.Ordinal);
+        var actionBarIndex = assetEditorXaml.IndexOf("x:Name=\"MoveToMainWindowButton\"", StringComparison.Ordinal);
+
+        Assert.True(previewIndex >= 0);
+        Assert.True(geometryIndex > previewIndex);
+        Assert.True(actionBarIndex > geometryIndex);
+    }
+
+    [Fact]
     public void SpineD3DPreviewBackend_ShouldDrawPreviewBackground()
     {
         var backendCode = File.ReadAllText(
