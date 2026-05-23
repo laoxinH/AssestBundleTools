@@ -78,6 +78,38 @@ public sealed partial class BundleExplorerPage
             }
         }
 
+        public async Task OpenSpriteAssetEditWindowAsync(AssetDocumentTabViewModel? assetTab)
+        {
+            if (assetTab?.Details?.AssetType != AssetType.Sprite)
+            {
+                return;
+            }
+
+            if (await TryActivateOpenSpriteEditorWindowAsync(assetTab.BundleId, assetTab.AssetId))
+            {
+                return;
+            }
+
+            assetTab.RequestSpriteEditMode();
+            await OpenAssetDocumentInNewWindowAsync(assetTab);
+        }
+
+        public async Task OpenSpriteAssetEditWindowAsync(BundleId bundleId, AssetId assetId)
+        {
+            if (await TryActivateOpenSpriteEditorWindowAsync(bundleId, assetId))
+            {
+                return;
+            }
+
+            var assetTab = _owner.ViewModel.DocumentWorkspace.ActiveAssetDocumentTab;
+            if (assetTab is not null &&
+                assetTab.BundleId.Equals(bundleId) &&
+                assetTab.AssetId.Equals(assetId))
+            {
+                await OpenSpriteAssetEditWindowAsync(assetTab);
+            }
+        }
+
         public async Task OpenDocumentInNewWindowAsync(AssetDocumentTabItemViewModel? documentTab)
         {
             if (documentTab?.AssetTab is { } assetTab)
@@ -286,6 +318,24 @@ public sealed partial class BundleExplorerPage
         private AssetEditorWindow CreateAssetEditorWindow(AssetDocumentTabViewModel detachedAssetTab)
         {
             return CreateAssetEditorWindow(new AssetDocumentGroupTransfer([detachedAssetTab], detachedAssetTab));
+        }
+
+        private async Task<bool> TryActivateOpenSpriteEditorWindowAsync(BundleId bundleId, AssetId assetId)
+        {
+            foreach (var window in _windows)
+            {
+                if (!window.ViewModel.DocumentGroup.TryGetAssetTab(bundleId, assetId, out var assetTab) ||
+                    assetTab.Details?.AssetType != AssetType.Sprite)
+                {
+                    continue;
+                }
+
+                assetTab.RequestSpriteEditMode();
+                await window.TryActivateAssetDocumentTabAsync(bundleId, assetId);
+                return true;
+            }
+
+            return false;
         }
 
         private AssetEditorWindow CreateAssetEditorWindow(

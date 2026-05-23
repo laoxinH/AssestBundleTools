@@ -175,6 +175,62 @@
                         <TranslateTransform X="-5" Y="-5" />
                     </Ellipse.RenderTransform>
                 </Ellipse>
+
+                <Ellipse
+                    Width="10"
+                    Height="10"
+                    Canvas.Left="{x:Bind ViewModel.OverlayX, Mode=OneWay}"
+                    Canvas.Top="{x:Bind ViewModel.OverlayY, Mode=OneWay}"
+                    Fill="{ThemeResource AccentFillColorDefaultBrush}"
+                    Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                    StrokeThickness="1"
+                    Visibility="{x:Bind ViewModel.SpriteEditHandleVisibility, Mode=OneWay}">
+                    <Ellipse.RenderTransform>
+                        <TranslateTransform X="-5" Y="-5" />
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+
+                <Ellipse
+                    Width="10"
+                    Height="10"
+                    Canvas.Left="{x:Bind ViewModel.OverlayRightX, Mode=OneWay}"
+                    Canvas.Top="{x:Bind ViewModel.OverlayY, Mode=OneWay}"
+                    Fill="{ThemeResource AccentFillColorDefaultBrush}"
+                    Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                    StrokeThickness="1"
+                    Visibility="{x:Bind ViewModel.SpriteEditHandleVisibility, Mode=OneWay}">
+                    <Ellipse.RenderTransform>
+                        <TranslateTransform X="-5" Y="-5" />
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+
+                <Ellipse
+                    Width="10"
+                    Height="10"
+                    Canvas.Left="{x:Bind ViewModel.OverlayX, Mode=OneWay}"
+                    Canvas.Top="{x:Bind ViewModel.OverlayBottomY, Mode=OneWay}"
+                    Fill="{ThemeResource AccentFillColorDefaultBrush}"
+                    Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                    StrokeThickness="1"
+                    Visibility="{x:Bind ViewModel.SpriteEditHandleVisibility, Mode=OneWay}">
+                    <Ellipse.RenderTransform>
+                        <TranslateTransform X="-5" Y="-5" />
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+
+                <Ellipse
+                    Width="10"
+                    Height="10"
+                    Canvas.Left="{x:Bind ViewModel.OverlayRightX, Mode=OneWay}"
+                    Canvas.Top="{x:Bind ViewModel.OverlayBottomY, Mode=OneWay}"
+                    Fill="{ThemeResource AccentFillColorDefaultBrush}"
+                    Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                    StrokeThickness="1"
+                    Visibility="{x:Bind ViewModel.SpriteEditHandleVisibility, Mode=OneWay}">
+                    <Ellipse.RenderTransform>
+                        <TranslateTransform X="-5" Y="-5" />
+                    </Ellipse.RenderTransform>
+                </Ellipse>
             </Canvas>
 
             <Border
@@ -183,7 +239,7 @@
                 HorizontalAlignment="Left"
                 VerticalAlignment="Bottom"
                 Style="{StaticResource InspectorPreviewOverlayBadgeBorderStyle}"
-                Visibility="{x:Bind ViewModel.OverlayVisibility, Mode=OneWay}">
+                Visibility="{x:Bind ViewModel.OverlayBadgeVisibility, Mode=OneWay}">
                 <TextBlock
                     Style="{StaticResource InspectorPreviewOverlayBadgeTextStyle}"
                     Text="{x:Bind ViewModel.OverlayLabelText, Mode=OneWay}" />

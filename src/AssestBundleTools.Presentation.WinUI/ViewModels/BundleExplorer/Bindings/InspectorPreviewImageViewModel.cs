@@ -89,6 +89,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
 
         RecalculateImageLayout();
         RecalculateOverlays();
+        TryActivateRequestedSpriteEditMode();
         NotifyVisibilityChanged();
     }
 
@@ -125,6 +126,11 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
 
     internal void ZoomBy(double scale, double? anchorX = null, double? anchorY = null)
     {
+        if (IsSpriteEditModeActive)
+        {
+            return;
+        }
+
         if (_viewportState.ZoomBy(scale, anchorX, anchorY, ResolveActiveImageViewportSource()))
         {
             NotifyViewStatePropertiesChanged();
@@ -136,6 +142,11 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
 
     internal void PanBy(double deltaX, double deltaY)
     {
+        if (IsSpriteEditModeActive)
+        {
+            return;
+        }
+
         if (_viewportState.PanBy(deltaX, deltaY, ResolveActiveImageViewportSource()))
         {
             NotifyViewStatePropertiesChanged();
@@ -147,6 +158,11 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
 
     internal void ResetView()
     {
+        if (IsSpriteEditModeActive)
+        {
+            return;
+        }
+
         if (_viewportState.Reset(ResolveActiveImageViewportSource()))
         {
             NotifyViewStatePropertiesChanged();
@@ -159,6 +175,8 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
     internal void Clear()
     {
         _isVisible = false;
+        _isSpriteEditModeActive = false;
+        _spriteEditDragState = null;
         _viewportState.UpdateViewport(0d, 0d);
         _overlayState.Clear();
         _regionOverlayState.Clear();
@@ -185,6 +203,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         OverlayLabelText = string.Empty;
         RegionOverlayBadgeText = string.Empty;
         ClearOverlayLayout();
+        NotifySpriteEditStateChanged();
         NotifyRegionOverlayVisibilityChanged();
         NotifyVisibilityChanged();
     }
@@ -248,6 +267,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         BorderHorizontalLeft = 0d;
         BorderHorizontalRight = 0d;
         BorderHorizontalWidth = 0d;
+        NotifyOverlayGeometryChanged();
         NotifyOverlayVisibilityChanged();
     }
 
@@ -259,11 +279,23 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
             return;
         }
 
-        if (!_overlayState.TryCalculateLayout(
+        var layout = default(PreviewImageOverlayPresentationLayout);
+        bool hasLayout;
+        if (IsSpriteEditModeActive)
+        {
+            hasLayout = TryCalculateSpriteEditImageLayout(CanvasWidth, CanvasHeight, out var imageLayout) &&
+                        _overlayState.TryCalculateLayoutFromImageLayout(imageLayout, out layout);
+        }
+        else
+        {
+            hasLayout = _overlayState.TryCalculateLayout(
                 CanvasWidth,
                 CanvasHeight,
                 _viewportState,
-                out var layout))
+                out layout);
+        }
+
+        if (!hasLayout)
         {
             ClearOverlayLayout();
             return;
@@ -285,6 +317,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         BorderHorizontalLeft = layout.BorderHorizontalLeft;
         BorderHorizontalRight = layout.BorderHorizontalRight;
         BorderHorizontalWidth = layout.BorderHorizontalWidth;
+        NotifyOverlayGeometryChanged();
         NotifyOverlayVisibilityChanged();
     }
 
@@ -310,6 +343,8 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(Visibility));
         OnPropertyChanged(nameof(ControlsVisibility));
+        OnPropertyChanged(nameof(ImageViewportControlsVisibility));
+        OnPropertyChanged(nameof(SpriteDisplayModeControlVisibility));
         OnPropertyChanged(nameof(SpriteFocusPreviewVisibility));
         NotifyInfoBadgeVisibilityChanged();
         NotifyRegionOverlayVisibilityChanged();
@@ -333,7 +368,11 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
 
     private void ApplyImageLayout(double sourceWidth, double sourceHeight, bool fullImage)
     {
-        if (!_viewportState.TryCalculateLayout(sourceWidth, sourceHeight, out var layout))
+        PreviewImageViewportLayout layout;
+        var hasLayout = fullImage && IsSpriteEditModeActive
+            ? TryCalculateSpriteEditImageLayout(sourceWidth, sourceHeight, out layout)
+            : _viewportState.TryCalculateLayout(sourceWidth, sourceHeight, out layout);
+        if (!hasLayout)
         {
             if (fullImage)
             {
@@ -389,8 +428,16 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
     private void NotifyOverlayVisibilityChanged()
     {
         OnPropertyChanged(nameof(OverlayVisibility));
+        OnPropertyChanged(nameof(OverlayBadgeVisibility));
+        OnPropertyChanged(nameof(SpriteEditHandleVisibility));
         OnPropertyChanged(nameof(PivotVisibility));
         OnPropertyChanged(nameof(BorderVisibility));
+    }
+
+    private void NotifyOverlayGeometryChanged()
+    {
+        OnPropertyChanged(nameof(OverlayRightX));
+        OnPropertyChanged(nameof(OverlayBottomY));
     }
 
     private void NotifyRegionOverlayVisibilityChanged()
@@ -425,6 +472,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         RecalculateOverlays();
         NotifyInfoBadgeVisibilityChanged();
         NotifyRegionOverlayVisibilityChanged();
+        NotifySpriteEditStateChanged();
     }
 
     private void NotifyViewStatePropertiesChanged()

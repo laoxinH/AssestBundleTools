@@ -14,6 +14,14 @@ internal sealed class PreviewImageOverlayState
 
     public string LabelText { get; private set; } = string.Empty;
 
+    public double SourceX => _sourceX;
+
+    public double SourceY => _sourceY;
+
+    public double SourceWidth => _sourceWidth;
+
+    public double SourceHeight => _sourceHeight;
+
     public double? PivotSourceX { get; private set; }
 
     public double? PivotSourceY { get; private set; }
@@ -71,6 +79,36 @@ internal sealed class PreviewImageOverlayState
             : overlayDisplayState.BadgeText.Trim();
     }
 
+    public void UpdateEditableGeometry(
+        double canvasWidth,
+        double canvasHeight,
+        double regionX,
+        double regionY,
+        double regionWidth,
+        double regionHeight,
+        double? pivotX,
+        double? pivotY)
+    {
+        var normalizedCanvasWidth = Math.Max(1d, canvasWidth);
+        var normalizedCanvasHeight = Math.Max(1d, canvasHeight);
+        _sourceWidth = Math.Clamp(NormalizeFinite(regionWidth, 1d), 1d, normalizedCanvasWidth);
+        _sourceHeight = Math.Clamp(NormalizeFinite(regionHeight, 1d), 1d, normalizedCanvasHeight);
+        _sourceX = Math.Clamp(NormalizeFinite(regionX, 0d), 0d, Math.Max(0d, normalizedCanvasWidth - _sourceWidth));
+        _sourceY = Math.Clamp(NormalizeFinite(regionY, 0d), 0d, Math.Max(0d, normalizedCanvasHeight - _sourceHeight));
+
+        if (pivotX.HasValue && pivotY.HasValue)
+        {
+            PivotSourceX = Math.Clamp(
+                NormalizeFinite(pivotX.Value, _sourceX + (_sourceWidth / 2d)),
+                _sourceX,
+                _sourceX + _sourceWidth);
+            PivotSourceY = Math.Clamp(
+                NormalizeFinite(pivotY.Value, _sourceY + (_sourceHeight / 2d)),
+                _sourceY,
+                _sourceY + _sourceHeight);
+        }
+    }
+
     public bool TryCalculateLayout(
         double sourceCanvasWidth,
         double sourceCanvasHeight,
@@ -107,6 +145,28 @@ internal sealed class PreviewImageOverlayState
         return true;
     }
 
+    public bool TryCalculateLayoutFromImageLayout(
+        PreviewImageViewportLayout imageLayout,
+        out PreviewImageOverlayPresentationLayout presentationLayout)
+    {
+        presentationLayout = default;
+        if (!HasOverlay || imageLayout.ImageScale <= 0d)
+        {
+            return false;
+        }
+
+        var layout = new PreviewImageOverlayLayout(
+            imageLayout.ImageOffsetX + (_sourceX * imageLayout.ImageScale),
+            imageLayout.ImageOffsetY + (_sourceY * imageLayout.ImageScale),
+            _sourceWidth * imageLayout.ImageScale,
+            _sourceHeight * imageLayout.ImageScale,
+            imageLayout.ImageScale,
+            imageLayout.ImageOffsetX,
+            imageLayout.ImageOffsetY);
+        presentationLayout = CreatePresentationLayout(layout);
+        return true;
+    }
+
     private PreviewImageOverlayPresentationLayout CreatePresentationLayout(PreviewImageOverlayLayout layout)
     {
         var scale = layout.ImageScale;
@@ -131,6 +191,11 @@ internal sealed class PreviewImageOverlayState
             layout.OverlayX,
             layout.OverlayX + layout.OverlayWidth,
             layout.OverlayWidth);
+    }
+
+    private static double NormalizeFinite(double value, double fallback)
+    {
+        return double.IsFinite(value) ? value : fallback;
     }
 }
 

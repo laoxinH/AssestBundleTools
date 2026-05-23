@@ -151,6 +151,11 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         await ViewModel.ExtractSelectedAssetAsync();
     }
 
+    private async void OnModifyButtonClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.ModifyFromFileReplacementSourceAsync();
+    }
+
     private async void OnSelectReplacementButtonClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.SelectWorkspaceReplacementSourceAsync();
@@ -302,6 +307,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
             AssetEditorGroupDragHandle,
             UiText.Get(ResourceKeys.AssetEditorWindowDragGroupHandleToolTip));
         ExtractButton.Content = UiText.Get(ResourceKeys.InspectorExtractButton);
+        ModifyButton.Content = UiText.Get(ResourceKeys.InspectorModifyButton);
         SelectReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectReplacementButton);
         SelectFileReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectFileReplacementButton);
         ApplyReplacementButton.Content = UiText.Get(ResourceKeys.InspectorApplyReplacementButton);

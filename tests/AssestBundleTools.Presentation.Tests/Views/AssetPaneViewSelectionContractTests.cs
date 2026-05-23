@@ -367,7 +367,7 @@ public sealed class AssetPaneViewSelectionContractTests
     }
 
     [Fact]
-    public void BundleExplorerPage_AssetPaneModifyContextMenu_ShouldApplyFileModificationImmediately()
+    public void BundleExplorerPage_AssetPaneModifyContextMenu_ShouldRouteSpriteToEditorAndFallbackToFileModification()
     {
         var code = File.ReadAllText(
             Path.Combine(
@@ -382,7 +382,9 @@ public sealed class AssetPaneViewSelectionContractTests
             code.IndexOf("private async void OnInspectorSelectFileReplacementSourceRequested", StringComparison.Ordinal)];
 
         Assert.Contains("HandleMainAssetSelectionChangedAsync", handler);
-        Assert.Contains("ModifyFromFileReplacementSourceAsync", handler);
+        Assert.Contains("OpenSpriteAssetEditWindowAsync", handler);
+        Assert.Contains("ModifySelectedAssetAsync", handler);
+        Assert.Contains("ModifyFromFileReplacementSourceAsync", code);
         Assert.DoesNotContain("SelectFileReplacementSourceAsync", handler);
         Assert.DoesNotContain("SelectWorkspaceReplacementSourceAsync", handler);
     }

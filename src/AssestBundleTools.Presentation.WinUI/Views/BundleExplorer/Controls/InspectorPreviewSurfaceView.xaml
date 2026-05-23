@@ -253,7 +253,7 @@
                         x:Name="ImageZoomOutButton"
                         Click="OnImageZoomOutButtonClick"
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
-                        Visibility="{x:Bind ViewModel.Preview.Image.ControlsVisibility, Mode=OneWay}">
+                        Visibility="{x:Bind ViewModel.Preview.Image.ImageViewportControlsVisibility, Mode=OneWay}">
                         <FontIcon
                             FontFamily="Segoe Fluent Icons"
                             FontSize="13"
@@ -275,7 +275,7 @@
                         x:Name="SpriteDisplayModeButton"
                         Click="OnSpriteDisplayModeButtonClick"
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
-                        Visibility="{x:Bind ViewModel.Preview.Image.DisplayOptions.SpriteModeSwitchVisibility, Mode=OneWay}">
+                        Visibility="{x:Bind ViewModel.Preview.Image.SpriteDisplayModeControlVisibility, Mode=OneWay}">
                         <FontIcon
                             FontFamily="Segoe Fluent Icons"
                             FontSize="13"
@@ -286,7 +286,7 @@
                         x:Name="ImageZoomInButton"
                         Click="OnImageZoomInButtonClick"
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
-                        Visibility="{x:Bind ViewModel.Preview.Image.ControlsVisibility, Mode=OneWay}">
+                        Visibility="{x:Bind ViewModel.Preview.Image.ImageViewportControlsVisibility, Mode=OneWay}">
                         <FontIcon
                             FontFamily="Segoe Fluent Icons"
                             FontSize="13"
@@ -297,7 +297,7 @@
                         x:Name="ImageResetButton"
                         Click="OnImageResetButtonClick"
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
-                        Visibility="{x:Bind ViewModel.Preview.Image.ControlsVisibility, Mode=OneWay}">
+                        Visibility="{x:Bind ViewModel.Preview.Image.ImageViewportControlsVisibility, Mode=OneWay}">
                         <FontIcon
                             FontFamily="Segoe Fluent Icons"
                             FontSize="13"

@@ -168,6 +168,10 @@
                                 Click="OnExtractButtonClick"
                                 IsEnabled="{x:Bind ViewModel.Inspector.CanExtract, Mode=OneWay}" />
                             <Button
+                                x:Name="ModifyButton"
+                                Click="OnModifyButtonClick"
+                                IsEnabled="{x:Bind ViewModel.Inspector.CanModify, Mode=OneWay}" />
+                            <Button
                                 x:Name="SelectReplacementButton"
                                 Click="OnSelectReplacementButtonClick"
                                 IsEnabled="{x:Bind ViewModel.Inspector.CanSelectReplacementSource, Mode=OneWay}" />

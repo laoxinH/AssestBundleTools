@@ -5,6 +5,7 @@ using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Domain.Assets;
 using Microsoft.UI.Xaml.Media;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
@@ -162,6 +163,11 @@ internal sealed class AssetPreviewResultPresenter
             _assetPreviewDisplayFormatter.BuildSpritePreviewOverlayDisplayState(preview),
             spriteFocusPreviewDisplayState,
             _assetPreviewDisplayFormatter.BuildImagePreviewInfoDisplayState(preview.PreviewInfoItems));
+        if (details.AssetType == AssetType.Sprite)
+        {
+            assetTab.TryApplySpriteEditModeRequest();
+        }
+
         ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
         return true;
     }

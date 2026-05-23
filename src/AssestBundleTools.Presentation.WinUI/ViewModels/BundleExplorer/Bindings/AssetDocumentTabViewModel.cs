@@ -37,6 +37,7 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
     private AssetDocumentEditDraftReference? _editDraftReference;
     private bool _isRestoringPreviewImageDisplayOptions;
     private bool _isRestoringPreviewMeshDisplayOptions;
+    private bool _isSpriteEditModeRequested;
 
     public AssetDocumentTabViewModel(
         BundleId bundleId,
@@ -113,6 +114,8 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
     public AssetDocumentEditDraftReference? EditDraftReference => _editDraftReference;
 
     public bool HasEditDraft => _editDraftReference is not null;
+
+    public bool IsSpriteEditModeRequested => _isSpriteEditModeRequested;
 
     internal long PreviewOpenSequence => _previewOpenSequence;
 
@@ -198,6 +201,36 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
     public void ClearEditDraftReference()
     {
         SetEditDraftReference(null);
+    }
+
+    public void RequestSpriteEditMode()
+    {
+        if (!_isSpriteEditModeRequested)
+        {
+            _isSpriteEditModeRequested = true;
+            OnPropertyChanged(nameof(IsSpriteEditModeRequested));
+        }
+
+        Inspector.Preview.Image.RequestSpriteEditMode();
+    }
+
+    public void CancelSpriteEditMode()
+    {
+        if (_isSpriteEditModeRequested)
+        {
+            _isSpriteEditModeRequested = false;
+            OnPropertyChanged(nameof(IsSpriteEditModeRequested));
+        }
+
+        Inspector.Preview.Image.CancelSpriteEditMode();
+    }
+
+    internal void TryApplySpriteEditModeRequest()
+    {
+        if (_isSpriteEditModeRequested)
+        {
+            Inspector.Preview.Image.RequestSpriteEditMode();
+        }
     }
 
     public void RestoreSelectedInspectorSection(string? sectionKey)

@@ -328,8 +328,15 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
     public Task SelectFileReplacementSourceAsync() =>
         _assetActionCoordinator.SelectFileReplacementSourceAsync();
 
-    public Task ModifyFromFileReplacementSourceAsync() =>
-        _assetActionCoordinator.ModifyFromFileReplacementSourceAsync();
+    public Task ModifyFromFileReplacementSourceAsync()
+    {
+        if (RequestSpriteEditModeForActiveAsset())
+        {
+            return Task.CompletedTask;
+        }
+
+        return _assetActionCoordinator.ModifyFromFileReplacementSourceAsync();
+    }
 
     public Task ApplyPendingReplacementAsync() => _assetActionCoordinator.ApplyPendingReplacementAsync();
 
@@ -340,6 +347,18 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
 
     public Task DeleteChangeRecordAsync(string? operationId) =>
         _assetActionCoordinator.DeleteChangeRecordAsync(operationId);
+
+    public bool RequestSpriteEditModeForActiveAsset()
+    {
+        var assetTab = DocumentGroup.ActiveAssetTab;
+        if (assetTab?.Details?.AssetType != AssetType.Sprite)
+        {
+            return false;
+        }
+
+        assetTab.RequestSpriteEditMode();
+        return true;
+    }
 
     private AssetDocumentTabViewModel CreateAssetDocumentTab(
         BundleId bundleId,

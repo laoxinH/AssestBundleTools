@@ -174,6 +174,86 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(Visibility.Visible, viewModel.RegionOverlayBadgeVisibility);
     }
 
+    [Fact]
+    public void RequestSpriteEditMode_ShouldLockImageToViewportFit_AndHideViewportTools()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        viewModel.Apply(
+            CreateImageSourceStub(),
+            imagePixelWidth: 100,
+            imagePixelHeight: 50,
+            overlayDisplayState: new SpritePreviewOverlayDisplayState(
+                CanvasWidth: 100,
+                CanvasHeight: 50,
+                RegionX: 10,
+                RegionY: 8,
+                RegionWidth: 20,
+                RegionHeight: 12,
+                PivotX: 20,
+                PivotY: 14,
+                BorderLeft: null,
+                BorderTop: null,
+                BorderRight: null,
+                BorderBottom: null,
+                BadgeText: "sprite"),
+            focusPreviewDisplayState: null);
+        viewModel.UpdateViewport(400d, 400d);
+
+        viewModel.RequestSpriteEditMode();
+        viewModel.ZoomBy(2d);
+        viewModel.PanBy(30d, 20d);
+
+        Assert.True(viewModel.IsSpriteEditModeActive);
+        Assert.Equal(Visibility.Collapsed, viewModel.ImageViewportControlsVisibility);
+        Assert.Equal(Visibility.Collapsed, viewModel.SpriteDisplayModeControlVisibility);
+        Assert.Equal(Visibility.Visible, viewModel.SpriteEditHandleVisibility);
+        Assert.Equal(400d, viewModel.FullImageWidth, precision: 3);
+        Assert.Equal(200d, viewModel.FullImageHeight, precision: 3);
+        Assert.Equal(0d, viewModel.FullImageX, precision: 3);
+        Assert.Equal(100d, viewModel.FullImageY, precision: 3);
+        Assert.Equal(1d, viewModel.Zoom);
+        Assert.Equal(0d, viewModel.PanX);
+        Assert.Equal(0d, viewModel.PanY);
+    }
+
+    [Fact]
+    public void SpriteEditDrag_ShouldMoveCropBoxAndPivotTogether()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        viewModel.Apply(
+            CreateImageSourceStub(),
+            imagePixelWidth: 100,
+            imagePixelHeight: 100,
+            overlayDisplayState: new SpritePreviewOverlayDisplayState(
+                CanvasWidth: 100,
+                CanvasHeight: 100,
+                RegionX: 10,
+                RegionY: 20,
+                RegionWidth: 30,
+                RegionHeight: 40,
+                PivotX: 20,
+                PivotY: 30,
+                BorderLeft: null,
+                BorderTop: null,
+                BorderRight: null,
+                BorderBottom: null,
+                BadgeText: "sprite"),
+            focusPreviewDisplayState: null);
+        viewModel.UpdateViewport(200d, 200d);
+        viewModel.RequestSpriteEditMode();
+
+        Assert.True(viewModel.TryBeginSpriteEditDrag(60d, 100d));
+        viewModel.UpdateSpriteEditDrag(80d, 120d);
+        viewModel.CompleteSpriteEditDrag();
+
+        Assert.Equal(40d, viewModel.OverlayX, precision: 3);
+        Assert.Equal(60d, viewModel.OverlayY, precision: 3);
+        Assert.Equal(60d, viewModel.OverlayWidth, precision: 3);
+        Assert.Equal(80d, viewModel.OverlayHeight, precision: 3);
+        Assert.Equal(60d, viewModel.PivotX, precision: 3);
+        Assert.Equal(80d, viewModel.PivotY, precision: 3);
+    }
+
     private static ImageSource CreateImageSourceStub()
     {
         return (BitmapImage)RuntimeHelpers.GetUninitializedObject(typeof(BitmapImage));

@@ -15,6 +15,7 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
 
     private InspectorPreviewImageViewModel? _observedViewModel;
     private bool _isDragging;
+    private bool _isEditingSpriteOverlay;
     private bool _isBindingsUpdateQueued;
     private Point _lastPointerPosition;
 
@@ -64,6 +65,7 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
     {
         DetachObservedViewModel(_observedViewModel);
         _isDragging = false;
+        _isEditingSpriteOverlay = false;
     }
 
     private void AttachObservedViewModel(InspectorPreviewImageViewModel? viewModel)
@@ -129,6 +131,19 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
             return;
         }
 
+        if (ViewModel.IsSpriteEditModeActive)
+        {
+            if (!ViewModel.TryBeginSpriteEditDrag(point.Position.X, point.Position.Y))
+            {
+                return;
+            }
+
+            _isEditingSpriteOverlay = true;
+            PreviewImageViewportHost.CapturePointer(e.Pointer);
+            e.Handled = true;
+            return;
+        }
+
         _isDragging = true;
         _lastPointerPosition = point.Position;
         PreviewImageViewportHost.CapturePointer(e.Pointer);
@@ -137,12 +152,24 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
 
     private void OnPreviewImagePointerMoved(object sender, PointerRoutedEventArgs e)
     {
-        if (!_isDragging || ViewModel is null)
+        if (ViewModel is null)
         {
             return;
         }
 
         var currentPosition = e.GetCurrentPoint(PreviewImageViewportHost).Position;
+        if (_isEditingSpriteOverlay)
+        {
+            ViewModel.UpdateSpriteEditDrag(currentPosition.X, currentPosition.Y);
+            e.Handled = true;
+            return;
+        }
+
+        if (!_isDragging)
+        {
+            return;
+        }
+
         ViewModel.PanBy(
             currentPosition.X - _lastPointerPosition.X,
             currentPosition.Y - _lastPointerPosition.Y);
@@ -152,6 +179,8 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
 
     private void OnPreviewImagePointerReleased(object sender, PointerRoutedEventArgs e)
     {
+        ViewModel?.CompleteSpriteEditDrag();
+        _isEditingSpriteOverlay = false;
         _isDragging = false;
         PreviewImageViewportHost.ReleasePointerCapture(e.Pointer);
         e.Handled = true;
@@ -161,6 +190,12 @@ public sealed partial class InspectorImagePreviewSurfaceView : UserControl
     {
         if (ViewModel?.Visibility != Visibility.Visible)
         {
+            return;
+        }
+
+        if (ViewModel.IsSpriteEditModeActive)
+        {
+            e.Handled = true;
             return;
         }
 

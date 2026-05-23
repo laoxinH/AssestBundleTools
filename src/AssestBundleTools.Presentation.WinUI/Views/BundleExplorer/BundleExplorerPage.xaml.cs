@@ -1,3 +1,4 @@
+using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -374,13 +375,22 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
 
     private async void OnPrimaryPaneReplaceSelectedAssetRequested(object sender, EventArgs e)
     {
+        var selectedAsset = ViewModel.AssetWorkflow.PrimaryPane.SelectedAsset?.Item;
         await _assetEditorWindowCoordinator.HandleMainAssetSelectionChangedAsync();
-        await ViewModel.ModifyFromFileReplacementSourceAsync();
+        if (selectedAsset?.AssetType == AssetType.Sprite)
+        {
+            await _assetEditorWindowCoordinator.OpenSpriteAssetEditWindowAsync(
+                selectedAsset.BundleId,
+                selectedAsset.AssetId);
+            return;
+        }
+
+        await ModifySelectedAssetAsync();
     }
 
     private async void OnInspectorModifyFromFileReplacementSourceRequested(object sender, EventArgs e)
     {
-        await ViewModel.ModifyFromFileReplacementSourceAsync();
+        await ModifySelectedAssetAsync();
     }
 
     private async void OnInspectorSelectFileReplacementSourceRequested(object sender, EventArgs e)
@@ -445,6 +455,24 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         ViewModel.Dispose();
         _paneLayoutCoordinator.Stop();
         _chromeCoordinator.Stop();
+    }
+
+    private async Task ModifySelectedAssetAsync()
+    {
+        if (TryGetActiveSpriteAssetDocumentTab(out var spriteAssetTab))
+        {
+            await _assetEditorWindowCoordinator.OpenSpriteAssetEditWindowAsync(spriteAssetTab);
+            return;
+        }
+
+        await ViewModel.ModifyFromFileReplacementSourceAsync();
+    }
+
+    private bool TryGetActiveSpriteAssetDocumentTab(
+        [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out AssetDocumentTabViewModel? assetTab)
+    {
+        assetTab = ViewModel.DocumentWorkspace.ActiveAssetDocumentTab;
+        return assetTab?.Details?.AssetType == AssetType.Sprite;
     }
 
     bool IAssetDocumentTabDragHost.CanStartAssetDocumentTabDrag(AssetDocumentTabItemViewModel documentTab)
