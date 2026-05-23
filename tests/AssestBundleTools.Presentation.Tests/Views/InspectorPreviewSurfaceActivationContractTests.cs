@@ -312,6 +312,23 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
     }
 
     [Fact]
+    public void SpriteEditGeometryPanel_ShouldNotWriteBackWhilePreviewDragIsActive()
+    {
+        var panelCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "SpriteEditGeometryPanelView.xaml.cs"));
+
+        Assert.Contains("ViewModel.IsSpriteEditDragActive", panelCode);
+        Assert.Contains("ViewModel.UpdateSpriteEditGeometryFromInput", panelCode);
+    }
+
+    [Fact]
     public void ImagePreviewViewportHost_ShouldReceivePointerInputAcrossTransparentAreas()
     {
         var imagePreviewXaml = File.ReadAllText(
@@ -348,6 +365,25 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
         Assert.Contains("SpriteEditBottomRightCoordinateText", imagePreviewXaml);
         Assert.Contains("SpriteEditTopLengthText", imagePreviewXaml);
         Assert.Contains("SpriteEditRightLengthText", imagePreviewXaml);
+    }
+
+    [Fact]
+    public void SpriteEditPreview_ShouldUseIndependentFrameLinesWhileEditing()
+    {
+        var imagePreviewXaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorImagePreviewSurfaceView.xaml"));
+
+        Assert.Contains("OverlayFrameVisibility", imagePreviewXaml);
+        Assert.Contains("SpriteEditFrameVisibility", imagePreviewXaml);
+        Assert.Contains("X2=\"{x:Bind ViewModel.OverlayRightX, Mode=OneWay}\"", imagePreviewXaml);
+        Assert.Contains("Y2=\"{x:Bind ViewModel.OverlayBottomY, Mode=OneWay}\"", imagePreviewXaml);
     }
 
     [Fact]

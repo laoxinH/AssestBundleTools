@@ -43,6 +43,85 @@ public sealed class InspectorPreviewImageSpriteEditDragTests
         Assert.Equal(152d, viewModel.FullImageHeight, precision: 3);
     }
 
+    [Fact]
+    public void SpriteEditGeometryInput_ShouldBeIgnoredWhileDragIsActive()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(viewModel);
+        var startViewportX = MapSourceXToViewport(viewModel, 10d);
+        var startViewportY = MapSourceYToViewport(viewModel, 20d);
+        var endViewportX = MapSourceXToViewport(viewModel, 15d);
+        var endViewportY = MapSourceYToViewport(viewModel, 25d);
+
+        Assert.True(viewModel.TryBeginSpriteEditDrag(startViewportX, startViewportY));
+        Assert.True(viewModel.IsSpriteEditDragActive);
+
+        viewModel.UpdateSpriteEditGeometryFromInput(
+            cropX: 99d,
+            cropY: 88d,
+            cropWidth: 77d,
+            cropHeight: 66d,
+            pivotX: 55d,
+            pivotY: 44d);
+        viewModel.UpdateSpriteEditDrag(endViewportX, endViewportY);
+        viewModel.CompleteSpriteEditDrag();
+
+        Assert.False(viewModel.IsSpriteEditDragActive);
+        Assert.Equal(15d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(25d, viewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(25d, viewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(35d, viewModel.SpriteEditCropHeight, precision: 3);
+        Assert.Equal(20d, viewModel.SpriteEditPivotX, precision: 3);
+        Assert.Equal(30d, viewModel.SpriteEditPivotY, precision: 3);
+    }
+
+    [Theory]
+    [InlineData(10d, 20d, 15d, 25d, false, false, true, true)]
+    [InlineData(40d, 20d, 45d, 25d, true, false, false, true)]
+    [InlineData(10d, 60d, 15d, 65d, false, true, true, false)]
+    [InlineData(40d, 60d, 45d, 65d, true, true, false, false)]
+    [InlineData(10d, 40d, 15d, 45d, false, true, true, true)]
+    [InlineData(40d, 40d, 45d, 45d, true, true, false, true)]
+    [InlineData(25d, 20d, 30d, 25d, true, false, true, true)]
+    [InlineData(25d, 60d, 30d, 65d, true, true, true, false)]
+    public void SpriteEditResize_ShouldKeepExpectedOppositeEdgesFixed(
+        double startSourceX,
+        double startSourceY,
+        double endSourceX,
+        double endSourceY,
+        bool keepLeft,
+        bool keepTop,
+        bool keepRight,
+        bool keepBottom)
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(viewModel);
+        var originalLeft = viewModel.SpriteEditCropX;
+        var originalTop = viewModel.SpriteEditCropY;
+        var originalRight = viewModel.SpriteEditCropX + viewModel.SpriteEditCropWidth;
+        var originalBottom = viewModel.SpriteEditCropY + viewModel.SpriteEditCropHeight;
+        var originalViewportLeft = viewModel.OverlayX;
+        var originalViewportTop = viewModel.OverlayY;
+        var originalViewportRight = viewModel.OverlayRightX;
+        var originalViewportBottom = viewModel.OverlayBottomY;
+
+        Assert.True(viewModel.TryBeginSpriteEditDrag(
+            MapSourceXToViewport(viewModel, startSourceX),
+            MapSourceYToViewport(viewModel, startSourceY)));
+        viewModel.UpdateSpriteEditDrag(
+            MapSourceXToViewport(viewModel, endSourceX),
+            MapSourceYToViewport(viewModel, endSourceY));
+
+        AssertEdge(keepLeft, originalLeft, viewModel.SpriteEditCropX);
+        AssertEdge(keepTop, originalTop, viewModel.SpriteEditCropY);
+        AssertEdge(keepRight, originalRight, viewModel.SpriteEditCropX + viewModel.SpriteEditCropWidth);
+        AssertEdge(keepBottom, originalBottom, viewModel.SpriteEditCropY + viewModel.SpriteEditCropHeight);
+        AssertEdge(keepLeft, originalViewportLeft, viewModel.OverlayX);
+        AssertEdge(keepTop, originalViewportTop, viewModel.OverlayY);
+        AssertEdge(keepRight, originalViewportRight, viewModel.OverlayRightX);
+        AssertEdge(keepBottom, originalViewportBottom, viewModel.OverlayBottomY);
+    }
+
     private static void ApplySpriteEditPreview(InspectorPreviewImageViewModel viewModel)
     {
         viewModel.Apply(
@@ -81,5 +160,17 @@ public sealed class InspectorPreviewImageSpriteEditDragTests
     private static double MapSourceYToViewport(InspectorPreviewImageViewModel viewModel, double sourceY)
     {
         return viewModel.FullImageY + (sourceY * (viewModel.FullImageHeight / viewModel.CanvasHeight));
+    }
+
+    private static void AssertEdge(bool shouldKeep, double expected, double actual)
+    {
+        if (shouldKeep)
+        {
+            Assert.Equal(expected, actual, precision: 3);
+        }
+        else
+        {
+            Assert.NotEqual(expected, actual, precision: 3);
+        }
     }
 }

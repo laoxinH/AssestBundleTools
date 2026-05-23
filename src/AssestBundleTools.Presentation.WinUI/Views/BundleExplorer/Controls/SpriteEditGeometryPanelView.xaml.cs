@@ -91,7 +91,8 @@ public sealed partial class SpriteEditGeometryPanelView : UserControl
         NumberBoxValueChangedEventArgs args)
     {
         if (_isUpdatingSpriteEditGeometryFields ||
-            ViewModel?.IsSpriteEditModeActive != true)
+            ViewModel?.IsSpriteEditModeActive != true ||
+            ViewModel.IsSpriteEditDragActive)
         {
             return;
         }

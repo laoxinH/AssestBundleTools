@@ -183,6 +183,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         _isSpriteEditModeActive = false;
         _spriteEditDragState = null;
         _deferredSpriteEditViewport = null;
+        OnPropertyChanged(nameof(IsSpriteEditDragActive));
         _viewportState.UpdateViewport(0d, 0d);
         _overlayState.Clear();
         _regionOverlayState.Clear();
@@ -289,7 +290,9 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         bool hasLayout;
         if (IsSpriteEditModeActive)
         {
-            hasLayout = TryCalculateSpriteEditImageLayout(CanvasWidth, CanvasHeight, out var imageLayout) &&
+            hasLayout = _spriteEditDragState is { } dragState
+                ? TryCalculateSpriteEditOverlayLayout(dragState.ViewportMapping, out layout)
+                : TryCalculateSpriteEditImageLayout(CanvasWidth, CanvasHeight, out var imageLayout) &&
                         _overlayState.TryCalculateLayoutFromImageLayout(imageLayout, out layout);
         }
         else
@@ -431,37 +434,6 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         return null;
     }
 
-    private void NotifyOverlayVisibilityChanged()
-    {
-        OnPropertyChanged(nameof(OverlayVisibility));
-        OnPropertyChanged(nameof(OverlayBadgeVisibility));
-        OnPropertyChanged(nameof(SpriteEditHandleVisibility));
-        OnPropertyChanged(nameof(SpriteEditMeasurementVisibility));
-        OnPropertyChanged(nameof(PivotVisibility));
-        OnPropertyChanged(nameof(BorderVisibility));
-    }
-
-    private void NotifyOverlayGeometryChanged()
-    {
-        OnPropertyChanged(nameof(OverlayRightX));
-        OnPropertyChanged(nameof(OverlayBottomY));
-        NotifySpriteEditGeometryChanged();
-        NotifySpriteEditMeasurementChanged();
-    }
-
-    private void NotifyRegionOverlayVisibilityChanged()
-    {
-        OnPropertyChanged(nameof(RegionOverlayVisibility));
-        OnPropertyChanged(nameof(RegionOverlayBadgeVisibility));
-    }
-
-    private void NotifyInfoBadgeVisibilityChanged()
-    {
-        OnPropertyChanged(nameof(InfoBadgeVisibility));
-        OnPropertyChanged(nameof(InfoBadgeSecondaryVisibility));
-        OnPropertyChanged(nameof(InfoBadgeDetailVisibility));
-    }
-
     private void OnDisplayOptionsPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName is not (
@@ -483,16 +455,4 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         NotifyRegionOverlayVisibilityChanged();
         NotifySpriteEditStateChanged();
     }
-
-    private void NotifyViewStatePropertiesChanged()
-    {
-        OnPropertyChanged(nameof(Zoom));
-        OnPropertyChanged(nameof(PanX));
-        OnPropertyChanged(nameof(PanY));
-    }
-
-    private bool HasInfoBadgeText =>
-        !string.IsNullOrWhiteSpace(InfoBadgePrimaryText) ||
-        !string.IsNullOrWhiteSpace(InfoBadgeSecondaryText) ||
-        !string.IsNullOrWhiteSpace(InfoBadgeDetailText);
 }

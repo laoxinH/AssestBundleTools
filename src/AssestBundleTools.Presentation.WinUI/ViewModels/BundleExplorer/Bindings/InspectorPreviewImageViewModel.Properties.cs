@@ -257,6 +257,18 @@ public sealed partial class InspectorPreviewImageViewModel
             ? Visibility.Visible
             : Visibility.Collapsed;
 
+    public Visibility OverlayFrameVisibility =>
+        OverlayVisibility == Visibility.Visible &&
+        !IsSpriteEditModeActive
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    public Visibility SpriteEditFrameVisibility =>
+        OverlayVisibility == Visibility.Visible &&
+        IsSpriteEditModeActive
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
     public Visibility RegionOverlayVisibility =>
         Visibility == Visibility.Visible &&
         DisplayOptions.FullImagePreviewVisibility == Visibility.Visible &&

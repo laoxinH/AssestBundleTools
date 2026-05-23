@@ -49,6 +49,8 @@ public sealed partial class InspectorPreviewImageViewModel
 
     public double OverlayBottomY => OverlayY + OverlayHeight;
 
+    public bool IsSpriteEditDragActive => _spriteEditDragState is not null;
+
     internal void RequestSpriteEditMode()
     {
         _isSpriteEditModeRequested = true;
@@ -59,6 +61,7 @@ public sealed partial class InspectorPreviewImageViewModel
     {
         _isSpriteEditModeRequested = false;
         _spriteEditDragState = null;
+        OnPropertyChanged(nameof(IsSpriteEditDragActive));
         IsSpriteEditModeActive = false;
         if (_deferredSpriteEditViewport is not null)
         {
@@ -73,7 +76,14 @@ public sealed partial class InspectorPreviewImageViewModel
     internal bool TryBeginSpriteEditDrag(double viewportX, double viewportY)
     {
         if (!IsSpriteEditModeActive ||
-            !TryMapViewportPointToSource(viewportX, viewportY, clampToImage: false, out var sourceX, out var sourceY))
+            !TryCreateSpriteEditDragViewportMapping(out var viewportMapping) ||
+            !TryMapViewportPointToSource(
+                viewportX,
+                viewportY,
+                clampToImage: false,
+                viewportMapping,
+                out var sourceX,
+                out var sourceY))
         {
             return false;
         }
@@ -93,14 +103,22 @@ public sealed partial class InspectorPreviewImageViewModel
             _overlayState.SourceWidth,
             _overlayState.SourceHeight,
             ResolvePivotSourceX(),
-            ResolvePivotSourceY());
+            ResolvePivotSourceY(),
+            viewportMapping);
+        OnPropertyChanged(nameof(IsSpriteEditDragActive));
         return true;
     }
 
     internal void UpdateSpriteEditDrag(double viewportX, double viewportY)
     {
         if (_spriteEditDragState is not { } dragState ||
-            !TryMapViewportPointToSource(viewportX, viewportY, clampToImage: false, out var sourceX, out var sourceY))
+            !TryMapViewportPointToSource(
+                viewportX,
+                viewportY,
+                clampToImage: false,
+                dragState.ViewportMapping,
+                out var sourceX,
+                out var sourceY))
         {
             return;
         }
@@ -152,6 +170,7 @@ public sealed partial class InspectorPreviewImageViewModel
     internal void CompleteSpriteEditDrag()
     {
         _spriteEditDragState = null;
+        OnPropertyChanged(nameof(IsSpriteEditDragActive));
         ApplyDeferredSpriteEditViewportUpdate();
     }
 
@@ -223,50 +242,6 @@ public sealed partial class InspectorPreviewImageViewModel
             width,
             height,
             scale);
-        return true;
-    }
-
-    private bool TryMapViewportPointToSource(
-        double viewportX,
-        double viewportY,
-        bool clampToImage,
-        out double sourceX,
-        out double sourceY)
-    {
-        sourceX = 0d;
-        sourceY = 0d;
-        if (FullImageWidth <= 0d ||
-            FullImageHeight <= 0d ||
-            CanvasWidth <= 0d ||
-            CanvasHeight <= 0d)
-        {
-            return false;
-        }
-
-        var scaleX = FullImageWidth / CanvasWidth;
-        var scaleY = FullImageHeight / CanvasHeight;
-        if (!double.IsFinite(scaleX) ||
-            !double.IsFinite(scaleY) ||
-            scaleX <= 0d ||
-            scaleY <= 0d)
-        {
-            return false;
-        }
-
-        sourceX = (viewportX - FullImageX) / scaleX;
-        sourceY = (viewportY - FullImageY) / scaleY;
-        if (!double.IsFinite(sourceX) || !double.IsFinite(sourceY))
-        {
-            return false;
-        }
-
-        if (!clampToImage)
-        {
-            return true;
-        }
-
-        sourceX = Math.Clamp(sourceX, 0d, CanvasWidth);
-        sourceY = Math.Clamp(sourceY, 0d, CanvasHeight);
         return true;
     }
 
@@ -413,6 +388,8 @@ public sealed partial class InspectorPreviewImageViewModel
     {
         OnPropertyChanged(nameof(ImageViewportControlsVisibility));
         OnPropertyChanged(nameof(SpriteDisplayModeControlVisibility));
+        OnPropertyChanged(nameof(OverlayFrameVisibility));
+        OnPropertyChanged(nameof(SpriteEditFrameVisibility));
         OnPropertyChanged(nameof(SpriteEditHandleVisibility));
         OnPropertyChanged(nameof(SpriteEditGeometryPanelVisibility));
         OnPropertyChanged(nameof(SpriteEditMeasurementVisibility));
@@ -439,33 +416,3 @@ public sealed partial class InspectorPreviewImageViewModel
         return Math.Sqrt((deltaX * deltaX) + (deltaY * deltaY));
     }
 }
-
-internal enum SpriteEditDragKind
-{
-    None,
-    Move,
-    Pivot,
-    ResizeLeft,
-    ResizeRight,
-    ResizeTop,
-    ResizeBottom,
-    ResizeTopLeft,
-    ResizeTopRight,
-    ResizeBottomLeft,
-    ResizeBottomRight
-}
-
-internal readonly record struct SpriteEditDragState(
-    SpriteEditDragKind Kind,
-    double StartPointerSourceX,
-    double StartPointerSourceY,
-    double StartRegionX,
-    double StartRegionY,
-    double StartRegionWidth,
-    double StartRegionHeight,
-    double StartPivotX,
-    double StartPivotY);
-
-internal readonly record struct SpriteEditDeferredViewport(
-    double Width,
-    double Height);

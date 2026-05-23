@@ -140,7 +140,8 @@
                     RadiusY="6"
                     Fill="Transparent"
                     Stroke="#CC101418"
-                    StrokeThickness="1.5" />
+                    StrokeThickness="1.5"
+                    Visibility="{x:Bind ViewModel.OverlayFrameVisibility, Mode=OneWay}" />
 
                 <Rectangle
                     Canvas.Left="{x:Bind ViewModel.OverlayX, Mode=OneWay}"
@@ -151,7 +152,69 @@
                     RadiusY="6"
                     Fill="Transparent"
                     Stroke="{ThemeResource AccentFillColorDefaultBrush}"
-                    StrokeThickness="0.75" />
+                    StrokeThickness="0.75"
+                    Visibility="{x:Bind ViewModel.OverlayFrameVisibility, Mode=OneWay}" />
+
+                <Canvas
+                    IsHitTestVisible="False"
+                    Visibility="{x:Bind ViewModel.SpriteEditFrameVisibility, Mode=OneWay}">
+                    <Line
+                        X1="{x:Bind ViewModel.OverlayX, Mode=OneWay}"
+                        X2="{x:Bind ViewModel.OverlayRightX, Mode=OneWay}"
+                        Y1="{x:Bind ViewModel.OverlayY, Mode=OneWay}"
+                        Y2="{x:Bind ViewModel.OverlayY, Mode=OneWay}"
+                        Stroke="#CC101418"
+                        StrokeThickness="1.5" />
+                    <Line
+                        X1="{x:Bind ViewModel.OverlayX, Mode=OneWay}"
+                        X2="{x:Bind ViewModel.OverlayRightX, Mode=OneWay}"
+                        Y1="{x:Bind ViewModel.OverlayBottomY, Mode=OneWay}"
+                        Y2="{x:Bind ViewModel.OverlayBottomY, Mode=OneWay}"
+                        Stroke="#CC101418"
+                        StrokeThickness="1.5" />
+                    <Line
+                        X1="{x:Bind ViewModel.OverlayX, Mode=OneWay}"
+                        X2="{x:Bind ViewModel.OverlayX, Mode=OneWay}"
+                        Y1="{x:Bind ViewModel.OverlayY, Mode=OneWay}"
+                        Y2="{x:Bind ViewModel.OverlayBottomY, Mode=OneWay}"
+                        Stroke="#CC101418"
+                        StrokeThickness="1.5" />
+                    <Line
+                        X1="{x:Bind ViewModel.OverlayRightX, Mode=OneWay}"
+                        X2="{x:Bind ViewModel.OverlayRightX, Mode=OneWay}"
+                        Y1="{x:Bind ViewModel.OverlayY, Mode=OneWay}"
+                        Y2="{x:Bind ViewModel.OverlayBottomY, Mode=OneWay}"
+                        Stroke="#CC101418"
+                        StrokeThickness="1.5" />
+                    <Line
+                        X1="{x:Bind ViewModel.OverlayX, Mode=OneWay}"
+                        X2="{x:Bind ViewModel.OverlayRightX, Mode=OneWay}"
+                        Y1="{x:Bind ViewModel.OverlayY, Mode=OneWay}"
+                        Y2="{x:Bind ViewModel.OverlayY, Mode=OneWay}"
+                        Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                        StrokeThickness="0.75" />
+                    <Line
+                        X1="{x:Bind ViewModel.OverlayX, Mode=OneWay}"
+                        X2="{x:Bind ViewModel.OverlayRightX, Mode=OneWay}"
+                        Y1="{x:Bind ViewModel.OverlayBottomY, Mode=OneWay}"
+                        Y2="{x:Bind ViewModel.OverlayBottomY, Mode=OneWay}"
+                        Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                        StrokeThickness="0.75" />
+                    <Line
+                        X1="{x:Bind ViewModel.OverlayX, Mode=OneWay}"
+                        X2="{x:Bind ViewModel.OverlayX, Mode=OneWay}"
+                        Y1="{x:Bind ViewModel.OverlayY, Mode=OneWay}"
+                        Y2="{x:Bind ViewModel.OverlayBottomY, Mode=OneWay}"
+                        Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                        StrokeThickness="0.75" />
+                    <Line
+                        X1="{x:Bind ViewModel.OverlayRightX, Mode=OneWay}"
+                        X2="{x:Bind ViewModel.OverlayRightX, Mode=OneWay}"
+                        Y1="{x:Bind ViewModel.OverlayY, Mode=OneWay}"
+                        Y2="{x:Bind ViewModel.OverlayBottomY, Mode=OneWay}"
+                        Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                        StrokeThickness="0.75" />
+                </Canvas>
 
                 <Line
                     X1="{x:Bind ViewModel.BorderLeftX, Mode=OneWay}"

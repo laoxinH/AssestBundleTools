@@ -29,7 +29,7 @@ public sealed partial class InspectorPreviewImageViewModel
         double pivotX,
         double pivotY)
     {
-        if (!IsSpriteEditModeActive || !_overlayState.HasOverlay)
+        if (!IsSpriteEditModeActive || !_overlayState.HasOverlay || IsSpriteEditDragActive)
         {
             return;
         }
