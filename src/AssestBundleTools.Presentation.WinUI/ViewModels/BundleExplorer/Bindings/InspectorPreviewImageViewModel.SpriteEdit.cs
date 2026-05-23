@@ -114,8 +114,8 @@ public sealed partial class InspectorPreviewImageViewModel
         }
         else if (dragState.Kind == SpriteEditDragKind.Move)
         {
-            nextX = ClampRegionOrigin(dragState.StartRegionX + deltaX, dragState.StartRegionWidth, CanvasWidth);
-            nextY = ClampRegionOrigin(dragState.StartRegionY + deltaY, dragState.StartRegionHeight, CanvasHeight);
+            nextX = ClampRegionMinimum(dragState.StartRegionX + deltaX);
+            nextY = ClampRegionMinimum(dragState.StartRegionY + deltaY);
             nextPivotX = dragState.StartPivotX + (nextX - dragState.StartRegionX);
             nextPivotY = dragState.StartPivotY + (nextY - dragState.StartRegionY);
         }
@@ -392,6 +392,11 @@ public sealed partial class InspectorPreviewImageViewModel
     private static double ClampRegionOrigin(double value, double size, double canvasSize)
     {
         return Math.Clamp(value, 0d, Math.Max(0d, canvasSize - size));
+    }
+
+    private static double ClampRegionMinimum(double value)
+    {
+        return Math.Max(0d, value);
     }
 
     private static double Distance(double x1, double y1, double x2, double y2)

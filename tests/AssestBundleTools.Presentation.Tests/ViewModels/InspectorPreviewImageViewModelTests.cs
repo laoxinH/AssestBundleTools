@@ -239,6 +239,43 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(40d, viewModel.SpriteEditPivotY, precision: 3);
     }
 
+    [Fact]
+    public void SpriteEditOrigin_ShouldAllowPositiveValuesWhenCropMatchesCanvas()
+    {
+        var inputViewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(inputViewModel);
+        inputViewModel.UpdateSpriteEditGeometryFromInput(
+            cropX: 0d,
+            cropY: 0d,
+            cropWidth: 100d,
+            cropHeight: 100d,
+            pivotX: 50d,
+            pivotY: 50d);
+
+        inputViewModel.UpdateSpriteEditGeometryFromInput(
+            cropX: 5d,
+            cropY: 7d,
+            cropWidth: 100d,
+            cropHeight: 100d,
+            pivotX: 50d,
+            pivotY: 50d);
+
+        Assert.Equal(5d, inputViewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(7d, inputViewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(100d, inputViewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(100d, inputViewModel.SpriteEditCropHeight, precision: 3);
+
+        var dragViewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(dragViewModel);
+        dragViewModel.UpdateSpriteEditGeometryFromInput(0d, 0d, 100d, 100d, 50d, 50d);
+        DragFromSource(dragViewModel, 20d, 20d, 30d, 40d);
+
+        Assert.Equal(10d, dragViewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(20d, dragViewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(100d, dragViewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(100d, dragViewModel.SpriteEditCropHeight, precision: 3);
+    }
+
     [Theory]
     [InlineData(10d, 40d, 15d, 40d, 15d, 20d, 25d, 40d)]
     [InlineData(40d, 40d, 35d, 40d, 10d, 20d, 25d, 40d)]

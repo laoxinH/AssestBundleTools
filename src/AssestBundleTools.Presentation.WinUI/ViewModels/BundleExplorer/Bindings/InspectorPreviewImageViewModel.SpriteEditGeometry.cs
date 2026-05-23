@@ -40,14 +40,8 @@ public sealed partial class InspectorPreviewImageViewModel
         var nextHeight = ClampRegionSize(
             NormalizeFinite(cropHeight, _overlayState.SourceHeight),
             CanvasHeight);
-        var nextX = ClampRegionOrigin(
-            NormalizeFinite(cropX, _overlayState.SourceX),
-            nextWidth,
-            CanvasWidth);
-        var nextY = ClampRegionOrigin(
-            NormalizeFinite(cropY, _overlayState.SourceY),
-            nextHeight,
-            CanvasHeight);
+        var nextX = ClampRegionMinimum(NormalizeFinite(cropX, _overlayState.SourceX));
+        var nextY = ClampRegionMinimum(NormalizeFinite(cropY, _overlayState.SourceY));
         var nextPivotX = NormalizeFinite(pivotX, ResolvePivotSourceX());
         var nextPivotY = NormalizeFinite(pivotY, ResolvePivotSourceY());
 

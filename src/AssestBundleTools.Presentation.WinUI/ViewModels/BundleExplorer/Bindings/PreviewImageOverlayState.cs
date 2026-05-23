@@ -93,8 +93,8 @@ internal sealed class PreviewImageOverlayState
         var normalizedCanvasHeight = Math.Max(1d, canvasHeight);
         _sourceWidth = Math.Clamp(NormalizeFinite(regionWidth, 1d), 1d, normalizedCanvasWidth);
         _sourceHeight = Math.Clamp(NormalizeFinite(regionHeight, 1d), 1d, normalizedCanvasHeight);
-        _sourceX = Math.Clamp(NormalizeFinite(regionX, 0d), 0d, Math.Max(0d, normalizedCanvasWidth - _sourceWidth));
-        _sourceY = Math.Clamp(NormalizeFinite(regionY, 0d), 0d, Math.Max(0d, normalizedCanvasHeight - _sourceHeight));
+        _sourceX = Math.Max(0d, NormalizeFinite(regionX, 0d));
+        _sourceY = Math.Max(0d, NormalizeFinite(regionY, 0d));
 
         if (pivotX.HasValue && pivotY.HasValue)
         {
