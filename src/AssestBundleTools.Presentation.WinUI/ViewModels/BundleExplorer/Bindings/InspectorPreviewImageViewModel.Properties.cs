@@ -266,6 +266,7 @@ public sealed partial class InspectorPreviewImageViewModel
 
     public Visibility RegionOverlayBadgeVisibility =>
         RegionOverlayVisibility == Visibility.Visible &&
+        !IsSpriteEditModeActive &&
         !string.IsNullOrWhiteSpace(RegionOverlayBadgeText)
             ? Visibility.Visible
             : Visibility.Collapsed;
@@ -273,6 +274,7 @@ public sealed partial class InspectorPreviewImageViewModel
     public Visibility InfoBadgeVisibility =>
         Visibility == Visibility.Visible &&
         DisplayOptions.FullImagePreviewVisibility == Visibility.Visible &&
+        !IsSpriteEditModeActive &&
         HasInfoBadgeText
             ? Visibility.Visible
             : Visibility.Collapsed;

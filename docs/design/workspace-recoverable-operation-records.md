@@ -302,7 +302,7 @@ Presentation 负责把这些结构化字段格式化为用户可见文本；Appl
 - `WorkspaceAssetEditDraftDescriptorDto`
 - `AssetEditDraftRestorePlan`
 
-当前 Sprite 裁切框 / pivot 修改第一阶段只落地窗口模式中的临时编辑工作面：用户可进入编辑态并调整几何，但该几何尚未写入 `editDrafts[]` 或 `operations[]`，也不参与撤销、重做和保存输出。后续把 Sprite 编辑接入正式链路时，应先把裁切框、pivot、来源预览指纹和草稿模式持久化为编辑草稿，再通过 `EditDraftApplied` 物化为工作区操作记录，避免把临时 UI 状态伪装成已生效修改。
+当前 Sprite 裁切框 / pivot 修改第一阶段只落地窗口模式中的临时编辑工作面：用户可进入编辑态，通过拖拽或底部数值面板调整几何，但该几何尚未写入 `editDrafts[]` 或 `operations[]`，也不参与撤销、重做和保存输出。后续把 Sprite 编辑接入正式链路时，应先把裁切框、pivot、来源预览指纹和草稿模式持久化为编辑草稿，再通过 `EditDraftApplied` 物化为工作区操作记录，避免把临时 UI 状态伪装成已生效修改。
 
 后续操作记录只引用草稿，不直接保存草稿内容：
 

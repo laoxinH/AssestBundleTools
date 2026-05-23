@@ -132,16 +132,13 @@ public sealed partial class InspectorPreviewImageViewModel
 
         nextPivotX = Math.Clamp(nextPivotX, nextX, nextX + nextWidth);
         nextPivotY = Math.Clamp(nextPivotY, nextY, nextY + nextHeight);
-        _overlayState.UpdateEditableGeometry(
-            CanvasWidth,
-            CanvasHeight,
+        ApplySpriteEditGeometry(
             nextX,
             nextY,
             nextWidth,
             nextHeight,
             nextPivotX,
             nextPivotY);
-        RecalculateOverlayLayout();
     }
 
     internal void CompleteSpriteEditDrag()
@@ -379,7 +376,10 @@ public sealed partial class InspectorPreviewImageViewModel
         OnPropertyChanged(nameof(ImageViewportControlsVisibility));
         OnPropertyChanged(nameof(SpriteDisplayModeControlVisibility));
         OnPropertyChanged(nameof(SpriteEditHandleVisibility));
+        OnPropertyChanged(nameof(SpriteEditGeometryPanelVisibility));
         OnPropertyChanged(nameof(OverlayBadgeVisibility));
+        NotifyInfoBadgeVisibilityChanged();
+        NotifyRegionOverlayVisibilityChanged();
     }
 
     private static double ClampRegionOrigin(double value, double size, double canvasSize)

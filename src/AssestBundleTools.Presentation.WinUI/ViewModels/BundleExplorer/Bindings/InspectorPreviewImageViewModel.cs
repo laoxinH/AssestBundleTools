@@ -438,6 +438,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(OverlayRightX));
         OnPropertyChanged(nameof(OverlayBottomY));
+        NotifySpriteEditGeometryChanged();
     }
 
     private void NotifyRegionOverlayVisibilityChanged()

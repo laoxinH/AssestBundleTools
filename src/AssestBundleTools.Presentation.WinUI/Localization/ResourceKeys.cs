@@ -859,6 +859,13 @@ public static class ResourceKeys
     public const string InspectorSpritePreviewOverlayBadgeWithPivotFormat = "InspectorPanelView.SpritePreviewOverlay.BadgeWithPivot.Format";
     public const string InspectorSpriteFocusPreviewTitle = "InspectorPanelView.SpriteFocusPreview.Title";
     public const string InspectorSpriteFocusPreviewSizeFormat = "InspectorPanelView.SpriteFocusPreview.Size.Format";
+    public const string InspectorSpriteEditGeometryTitle = "InspectorPanelView.SpriteEditGeometry.Title";
+    public const string InspectorSpriteEditCropXLabel = "InspectorPanelView.SpriteEditGeometry.CropX.Label";
+    public const string InspectorSpriteEditCropYLabel = "InspectorPanelView.SpriteEditGeometry.CropY.Label";
+    public const string InspectorSpriteEditCropWidthLabel = "InspectorPanelView.SpriteEditGeometry.CropWidth.Label";
+    public const string InspectorSpriteEditCropHeightLabel = "InspectorPanelView.SpriteEditGeometry.CropHeight.Label";
+    public const string InspectorSpriteEditPivotXLabel = "InspectorPanelView.SpriteEditGeometry.PivotX.Label";
+    public const string InspectorSpriteEditPivotYLabel = "InspectorPanelView.SpriteEditGeometry.PivotY.Label";
     public const string InspectorMeshPreviewBadgeFormat = "InspectorPanelView.MeshPreview.Badge.Format";
     public const string InspectorMeshPreviewUvBadgeFormat = "InspectorPanelView.MeshPreview.UvBadge.Format";
     public const string InspectorMeshPreviewTextureAssociationFormat = "InspectorPanelView.MeshPreview.TextureAssociation.Format";

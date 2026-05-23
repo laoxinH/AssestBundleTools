@@ -196,7 +196,11 @@ public sealed class InspectorPreviewImageViewModelTests
                 BorderRight: null,
                 BorderBottom: null,
                 BadgeText: "sprite"),
-            focusPreviewDisplayState: null);
+            focusPreviewDisplayState: null,
+            infoDisplayState: new ImagePreviewInfoDisplayState(
+                "Size 100 x 50 px",
+                "Encoding RGBA32",
+                "Format ID 47"));
         viewModel.UpdateViewport(400d, 400d);
 
         viewModel.RequestSpriteEditMode();
@@ -207,6 +211,8 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(Visibility.Collapsed, viewModel.ImageViewportControlsVisibility);
         Assert.Equal(Visibility.Collapsed, viewModel.SpriteDisplayModeControlVisibility);
         Assert.Equal(Visibility.Visible, viewModel.SpriteEditHandleVisibility);
+        Assert.Equal(Visibility.Visible, viewModel.SpriteEditGeometryPanelVisibility);
+        Assert.Equal(Visibility.Collapsed, viewModel.InfoBadgeVisibility);
         Assert.Equal(400d, viewModel.FullImageWidth, precision: 3);
         Assert.Equal(200d, viewModel.FullImageHeight, precision: 3);
         Assert.Equal(0d, viewModel.FullImageX, precision: 3);
@@ -252,6 +258,54 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(80d, viewModel.OverlayHeight, precision: 3);
         Assert.Equal(60d, viewModel.PivotX, precision: 3);
         Assert.Equal(80d, viewModel.PivotY, precision: 3);
+    }
+
+    [Fact]
+    public void SpriteEditGeometryInput_ShouldUpdateCropBoxAndPivot()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        viewModel.Apply(
+            CreateImageSourceStub(),
+            imagePixelWidth: 100,
+            imagePixelHeight: 100,
+            overlayDisplayState: new SpritePreviewOverlayDisplayState(
+                CanvasWidth: 100,
+                CanvasHeight: 100,
+                RegionX: 10,
+                RegionY: 20,
+                RegionWidth: 30,
+                RegionHeight: 40,
+                PivotX: 20,
+                PivotY: 30,
+                BorderLeft: null,
+                BorderTop: null,
+                BorderRight: null,
+                BorderBottom: null,
+                BadgeText: "sprite"),
+            focusPreviewDisplayState: null);
+        viewModel.UpdateViewport(200d, 200d);
+        viewModel.RequestSpriteEditMode();
+
+        viewModel.UpdateSpriteEditGeometryFromInput(
+            cropX: 20d,
+            cropY: 10d,
+            cropWidth: 40d,
+            cropHeight: 50d,
+            pivotX: 35d,
+            pivotY: 45d);
+
+        Assert.Equal(20d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(10d, viewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(40d, viewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(50d, viewModel.SpriteEditCropHeight, precision: 3);
+        Assert.Equal(35d, viewModel.SpriteEditPivotX, precision: 3);
+        Assert.Equal(45d, viewModel.SpriteEditPivotY, precision: 3);
+        Assert.Equal(40d, viewModel.OverlayX, precision: 3);
+        Assert.Equal(20d, viewModel.OverlayY, precision: 3);
+        Assert.Equal(80d, viewModel.OverlayWidth, precision: 3);
+        Assert.Equal(100d, viewModel.OverlayHeight, precision: 3);
+        Assert.Equal(70d, viewModel.PivotX, precision: 3);
+        Assert.Equal(90d, viewModel.PivotY, precision: 3);
     }
 
     private static ImageSource CreateImageSourceStub()

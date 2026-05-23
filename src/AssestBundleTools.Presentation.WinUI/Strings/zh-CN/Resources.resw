@@ -1452,6 +1452,27 @@
   <data name="InspectorPanelView.SpriteFocusPreview.Size.Format" xml:space="preserve">
     <value>{0} x {1} px</value>
   </data>
+  <data name="InspectorPanelView.SpriteEditGeometry.Title" xml:space="preserve">
+    <value>裁切框</value>
+  </data>
+  <data name="InspectorPanelView.SpriteEditGeometry.CropX.Label" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="InspectorPanelView.SpriteEditGeometry.CropY.Label" xml:space="preserve">
+    <value>Y</value>
+  </data>
+  <data name="InspectorPanelView.SpriteEditGeometry.CropWidth.Label" xml:space="preserve">
+    <value>宽</value>
+  </data>
+  <data name="InspectorPanelView.SpriteEditGeometry.CropHeight.Label" xml:space="preserve">
+    <value>高</value>
+  </data>
+  <data name="InspectorPanelView.SpriteEditGeometry.PivotX.Label" xml:space="preserve">
+    <value>Pivot X</value>
+  </data>
+  <data name="InspectorPanelView.SpriteEditGeometry.PivotY.Label" xml:space="preserve">
+    <value>Pivot Y</value>
+  </data>
   <data name="InspectorPanelView.MeshPreview.Badge.Format" xml:space="preserve">
     <value>{0} 顶点 · {1} 边</value>
   </data>
