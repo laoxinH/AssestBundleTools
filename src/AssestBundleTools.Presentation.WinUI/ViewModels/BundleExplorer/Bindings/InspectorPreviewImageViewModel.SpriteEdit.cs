@@ -6,6 +6,7 @@ public sealed partial class InspectorPreviewImageViewModel
 {
     private const double SpriteEditHandleHitRadius = 12d;
     private const double SpriteEditMinimumRegionSize = 2d;
+    private const double SpriteEditViewportPadding = 24d;
 
     private bool _isSpriteEditModeRequested;
     private bool _isSpriteEditModeActive;
@@ -130,8 +131,8 @@ public sealed partial class InspectorPreviewImageViewModel
                 out nextHeight);
         }
 
-        nextPivotX = Math.Clamp(nextPivotX, 0d, CanvasWidth);
-        nextPivotY = Math.Clamp(nextPivotY, 0d, CanvasHeight);
+        nextPivotX = Math.Clamp(nextPivotX, nextX, nextX + nextWidth);
+        nextPivotY = Math.Clamp(nextPivotY, nextY, nextY + nextHeight);
         ApplySpriteEditGeometry(
             nextX,
             nextY,
@@ -172,9 +173,13 @@ public sealed partial class InspectorPreviewImageViewModel
 
         var normalizedSourceWidth = Math.Max(1d, sourceWidth);
         var normalizedSourceHeight = Math.Max(1d, sourceHeight);
+        var horizontalPadding = Math.Min(SpriteEditViewportPadding, _viewportState.ViewportWidth / 4d);
+        var verticalPadding = Math.Min(SpriteEditViewportPadding, _viewportState.ViewportHeight / 4d);
+        var availableWidth = Math.Max(1d, _viewportState.ViewportWidth - (horizontalPadding * 2d));
+        var availableHeight = Math.Max(1d, _viewportState.ViewportHeight - (verticalPadding * 2d));
         var scale = Math.Min(
-            _viewportState.ViewportWidth / normalizedSourceWidth,
-            _viewportState.ViewportHeight / normalizedSourceHeight);
+            availableWidth / normalizedSourceWidth,
+            availableHeight / normalizedSourceHeight);
         if (!double.IsFinite(scale) || scale <= 0d)
         {
             return false;
@@ -377,7 +382,9 @@ public sealed partial class InspectorPreviewImageViewModel
         OnPropertyChanged(nameof(SpriteDisplayModeControlVisibility));
         OnPropertyChanged(nameof(SpriteEditHandleVisibility));
         OnPropertyChanged(nameof(SpriteEditGeometryPanelVisibility));
+        OnPropertyChanged(nameof(SpriteEditMeasurementVisibility));
         OnPropertyChanged(nameof(OverlayBadgeVisibility));
+        NotifySpriteEditMeasurementChanged();
         NotifyInfoBadgeVisibilityChanged();
         NotifyRegionOverlayVisibilityChanged();
     }

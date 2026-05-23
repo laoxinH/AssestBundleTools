@@ -99,13 +99,13 @@ internal sealed class PreviewImageOverlayState
         if (pivotX.HasValue && pivotY.HasValue)
         {
             PivotSourceX = Math.Clamp(
-                NormalizeFinite(pivotX.Value, PivotSourceX ?? _sourceX + (_sourceWidth / 2d)),
-                0d,
-                normalizedCanvasWidth);
+                NormalizeFinite(pivotX.Value, _sourceX + (_sourceWidth / 2d)),
+                _sourceX,
+                _sourceX + _sourceWidth);
             PivotSourceY = Math.Clamp(
-                NormalizeFinite(pivotY.Value, PivotSourceY ?? _sourceY + (_sourceHeight / 2d)),
-                0d,
-                normalizedCanvasHeight);
+                NormalizeFinite(pivotY.Value, _sourceY + (_sourceHeight / 2d)),
+                _sourceY,
+                _sourceY + _sourceHeight);
         }
     }
 

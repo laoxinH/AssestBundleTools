@@ -33,6 +33,29 @@
         </Style>
 
         <Style
+            x:Key="InspectorSpriteEditMeasurementBorderStyle"
+            TargetType="Border">
+            <Setter Property="Height" Value="18" />
+            <Setter Property="Padding" Value="4,1" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Opacity" Value="0.92" />
+        </Style>
+
+        <Style
+            x:Key="InspectorSpriteEditMeasurementTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+
+        <Style
             x:Key="InspectorPreviewRegionOverlayItemContainerStyle"
             TargetType="ContentPresenter">
             <Setter Property="Canvas.Left" Value="{Binding X}" />
@@ -163,6 +186,38 @@
                     StrokeThickness="0.75"
                     Visibility="{x:Bind ViewModel.BorderVisibility, Mode=OneWay}" />
 
+                <Canvas
+                    IsHitTestVisible="False"
+                    Visibility="{x:Bind ViewModel.SpriteEditMeasurementVisibility, Mode=OneWay}">
+                    <Line
+                        X1="{x:Bind ViewModel.SpriteEditAxisOriginX, Mode=OneWay}"
+                        X2="{x:Bind ViewModel.SpriteEditAxisXEndX, Mode=OneWay}"
+                        Y1="{x:Bind ViewModel.SpriteEditAxisOriginY, Mode=OneWay}"
+                        Y2="{x:Bind ViewModel.SpriteEditAxisOriginY, Mode=OneWay}"
+                        Opacity="0.62"
+                        Stroke="{ThemeResource TextFillColorSecondaryBrush}"
+                        StrokeThickness="1" />
+                    <Line
+                        X1="{x:Bind ViewModel.SpriteEditAxisOriginX, Mode=OneWay}"
+                        X2="{x:Bind ViewModel.SpriteEditAxisOriginX, Mode=OneWay}"
+                        Y1="{x:Bind ViewModel.SpriteEditAxisOriginY, Mode=OneWay}"
+                        Y2="{x:Bind ViewModel.SpriteEditAxisYEndY, Mode=OneWay}"
+                        Opacity="0.62"
+                        Stroke="{ThemeResource TextFillColorSecondaryBrush}"
+                        StrokeThickness="1" />
+                    <Ellipse
+                        Width="5"
+                        Height="5"
+                        Canvas.Left="{x:Bind ViewModel.SpriteEditAxisOriginX, Mode=OneWay}"
+                        Canvas.Top="{x:Bind ViewModel.SpriteEditAxisOriginY, Mode=OneWay}"
+                        Fill="{ThemeResource TextFillColorSecondaryBrush}"
+                        Opacity="0.72">
+                        <Ellipse.RenderTransform>
+                            <TranslateTransform X="-2.5" Y="-2.5" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+                </Canvas>
+
                 <Ellipse
                     Width="10"
                     Height="10"
@@ -232,6 +287,83 @@
                         <TranslateTransform X="-5" Y="-5" />
                     </Ellipse.RenderTransform>
                 </Ellipse>
+
+                <Canvas
+                    IsHitTestVisible="False"
+                    Visibility="{x:Bind ViewModel.SpriteEditMeasurementVisibility, Mode=OneWay}">
+                    <Border
+                        Width="82"
+                        Canvas.Left="{x:Bind ViewModel.SpriteEditTopLeftCoordinateLabelX, Mode=OneWay}"
+                        Canvas.Top="{x:Bind ViewModel.SpriteEditTopLeftCoordinateLabelY, Mode=OneWay}"
+                        Style="{StaticResource InspectorSpriteEditMeasurementBorderStyle}">
+                        <TextBlock
+                            Style="{StaticResource InspectorSpriteEditMeasurementTextStyle}"
+                            Text="{x:Bind ViewModel.SpriteEditTopLeftCoordinateText, Mode=OneWay}" />
+                    </Border>
+                    <Border
+                        Width="82"
+                        Canvas.Left="{x:Bind ViewModel.SpriteEditTopRightCoordinateLabelX, Mode=OneWay}"
+                        Canvas.Top="{x:Bind ViewModel.SpriteEditTopRightCoordinateLabelY, Mode=OneWay}"
+                        Style="{StaticResource InspectorSpriteEditMeasurementBorderStyle}">
+                        <TextBlock
+                            Style="{StaticResource InspectorSpriteEditMeasurementTextStyle}"
+                            Text="{x:Bind ViewModel.SpriteEditTopRightCoordinateText, Mode=OneWay}" />
+                    </Border>
+                    <Border
+                        Width="82"
+                        Canvas.Left="{x:Bind ViewModel.SpriteEditBottomLeftCoordinateLabelX, Mode=OneWay}"
+                        Canvas.Top="{x:Bind ViewModel.SpriteEditBottomLeftCoordinateLabelY, Mode=OneWay}"
+                        Style="{StaticResource InspectorSpriteEditMeasurementBorderStyle}">
+                        <TextBlock
+                            Style="{StaticResource InspectorSpriteEditMeasurementTextStyle}"
+                            Text="{x:Bind ViewModel.SpriteEditBottomLeftCoordinateText, Mode=OneWay}" />
+                    </Border>
+                    <Border
+                        Width="82"
+                        Canvas.Left="{x:Bind ViewModel.SpriteEditBottomRightCoordinateLabelX, Mode=OneWay}"
+                        Canvas.Top="{x:Bind ViewModel.SpriteEditBottomRightCoordinateLabelY, Mode=OneWay}"
+                        Style="{StaticResource InspectorSpriteEditMeasurementBorderStyle}">
+                        <TextBlock
+                            Style="{StaticResource InspectorSpriteEditMeasurementTextStyle}"
+                            Text="{x:Bind ViewModel.SpriteEditBottomRightCoordinateText, Mode=OneWay}" />
+                    </Border>
+                    <Border
+                        Width="56"
+                        Canvas.Left="{x:Bind ViewModel.SpriteEditTopLengthLabelX, Mode=OneWay}"
+                        Canvas.Top="{x:Bind ViewModel.SpriteEditTopLengthLabelY, Mode=OneWay}"
+                        Style="{StaticResource InspectorSpriteEditMeasurementBorderStyle}">
+                        <TextBlock
+                            Style="{StaticResource InspectorSpriteEditMeasurementTextStyle}"
+                            Text="{x:Bind ViewModel.SpriteEditTopLengthText, Mode=OneWay}" />
+                    </Border>
+                    <Border
+                        Width="56"
+                        Canvas.Left="{x:Bind ViewModel.SpriteEditBottomLengthLabelX, Mode=OneWay}"
+                        Canvas.Top="{x:Bind ViewModel.SpriteEditBottomLengthLabelY, Mode=OneWay}"
+                        Style="{StaticResource InspectorSpriteEditMeasurementBorderStyle}">
+                        <TextBlock
+                            Style="{StaticResource InspectorSpriteEditMeasurementTextStyle}"
+                            Text="{x:Bind ViewModel.SpriteEditBottomLengthText, Mode=OneWay}" />
+                    </Border>
+                    <Border
+                        Width="56"
+                        Canvas.Left="{x:Bind ViewModel.SpriteEditLeftLengthLabelX, Mode=OneWay}"
+                        Canvas.Top="{x:Bind ViewModel.SpriteEditLeftLengthLabelY, Mode=OneWay}"
+                        Style="{StaticResource InspectorSpriteEditMeasurementBorderStyle}">
+                        <TextBlock
+                            Style="{StaticResource InspectorSpriteEditMeasurementTextStyle}"
+                            Text="{x:Bind ViewModel.SpriteEditLeftLengthText, Mode=OneWay}" />
+                    </Border>
+                    <Border
+                        Width="56"
+                        Canvas.Left="{x:Bind ViewModel.SpriteEditRightLengthLabelX, Mode=OneWay}"
+                        Canvas.Top="{x:Bind ViewModel.SpriteEditRightLengthLabelY, Mode=OneWay}"
+                        Style="{StaticResource InspectorSpriteEditMeasurementBorderStyle}">
+                        <TextBlock
+                            Style="{StaticResource InspectorSpriteEditMeasurementTextStyle}"
+                            Text="{x:Bind ViewModel.SpriteEditRightLengthText, Mode=OneWay}" />
+                    </Border>
+                </Canvas>
             </Canvas>
 
             <Border

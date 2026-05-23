@@ -213,13 +213,14 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(Visibility.Visible, viewModel.SpriteEditHandleVisibility);
         Assert.Equal(Visibility.Visible, viewModel.SpriteEditGeometryPanelVisibility);
         Assert.Equal(Visibility.Collapsed, viewModel.InfoBadgeVisibility);
-        Assert.Equal(400d, viewModel.FullImageWidth, precision: 3);
-        Assert.Equal(200d, viewModel.FullImageHeight, precision: 3);
-        Assert.Equal(0d, viewModel.FullImageX, precision: 3);
-        Assert.Equal(100d, viewModel.FullImageY, precision: 3);
+        Assert.Equal(352d, viewModel.FullImageWidth, precision: 3);
+        Assert.Equal(176d, viewModel.FullImageHeight, precision: 3);
+        Assert.Equal(24d, viewModel.FullImageX, precision: 3);
+        Assert.Equal(112d, viewModel.FullImageY, precision: 3);
         Assert.Equal(1d, viewModel.Zoom);
         Assert.Equal(0d, viewModel.PanX);
         Assert.Equal(0d, viewModel.PanY);
+        Assert.Equal(Visibility.Visible, viewModel.SpriteEditMeasurementVisibility);
     }
 
     [Fact]
@@ -228,70 +229,62 @@ public sealed class InspectorPreviewImageViewModelTests
         var viewModel = new InspectorPreviewImageViewModel();
         ApplySpriteEditPreview(viewModel);
 
-        Assert.True(viewModel.TryBeginSpriteEditDrag(60d, 100d));
-        viewModel.UpdateSpriteEditDrag(80d, 120d);
-        viewModel.CompleteSpriteEditDrag();
+        DragFromSource(viewModel, 30d, 40d, 40d, 50d);
 
-        Assert.Equal(40d, viewModel.OverlayX, precision: 3);
-        Assert.Equal(60d, viewModel.OverlayY, precision: 3);
-        Assert.Equal(60d, viewModel.OverlayWidth, precision: 3);
-        Assert.Equal(80d, viewModel.OverlayHeight, precision: 3);
-        Assert.Equal(60d, viewModel.PivotX, precision: 3);
-        Assert.Equal(80d, viewModel.PivotY, precision: 3);
+        Assert.Equal(20d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(30d, viewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(30d, viewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(40d, viewModel.SpriteEditCropHeight, precision: 3);
+        Assert.Equal(30d, viewModel.SpriteEditPivotX, precision: 3);
+        Assert.Equal(40d, viewModel.SpriteEditPivotY, precision: 3);
     }
 
     [Theory]
-    [InlineData(20d, 80d, 30d, 80d, 30d, 40d, 50d, 80d)]
-    [InlineData(80d, 80d, 70d, 80d, 20d, 40d, 50d, 80d)]
-    [InlineData(50d, 40d, 50d, 50d, 20d, 50d, 60d, 70d)]
-    [InlineData(50d, 120d, 50d, 110d, 20d, 40d, 60d, 70d)]
-    [InlineData(20d, 40d, 30d, 50d, 30d, 50d, 50d, 70d)]
-    [InlineData(80d, 40d, 70d, 50d, 20d, 50d, 50d, 70d)]
-    [InlineData(20d, 120d, 30d, 110d, 30d, 40d, 50d, 70d)]
-    [InlineData(80d, 120d, 70d, 110d, 20d, 40d, 50d, 70d)]
+    [InlineData(10d, 40d, 15d, 40d, 15d, 20d, 25d, 40d)]
+    [InlineData(40d, 40d, 35d, 40d, 10d, 20d, 25d, 40d)]
+    [InlineData(25d, 20d, 25d, 25d, 10d, 25d, 30d, 35d)]
+    [InlineData(25d, 60d, 25d, 55d, 10d, 20d, 30d, 35d)]
+    [InlineData(10d, 20d, 15d, 25d, 15d, 25d, 25d, 35d)]
+    [InlineData(40d, 20d, 35d, 25d, 10d, 25d, 25d, 35d)]
+    [InlineData(10d, 60d, 15d, 55d, 15d, 20d, 25d, 35d)]
+    [InlineData(40d, 60d, 35d, 55d, 10d, 20d, 25d, 35d)]
     public void SpriteEditDrag_ShouldResizeCropBoxFromEdgesAndCorners(
-        double startViewportX,
-        double startViewportY,
-        double endViewportX,
-        double endViewportY,
-        double expectedOverlayX,
-        double expectedOverlayY,
-        double expectedOverlayWidth,
-        double expectedOverlayHeight)
+        double startSourceX,
+        double startSourceY,
+        double endSourceX,
+        double endSourceY,
+        double expectedCropX,
+        double expectedCropY,
+        double expectedCropWidth,
+        double expectedCropHeight)
     {
         var viewModel = new InspectorPreviewImageViewModel();
         ApplySpriteEditPreview(viewModel);
 
-        Assert.True(viewModel.TryBeginSpriteEditDrag(startViewportX, startViewportY));
-        viewModel.UpdateSpriteEditDrag(endViewportX, endViewportY);
-        viewModel.CompleteSpriteEditDrag();
+        DragFromSource(viewModel, startSourceX, startSourceY, endSourceX, endSourceY);
 
-        Assert.Equal(expectedOverlayX, viewModel.OverlayX, precision: 3);
-        Assert.Equal(expectedOverlayY, viewModel.OverlayY, precision: 3);
-        Assert.Equal(expectedOverlayWidth, viewModel.OverlayWidth, precision: 3);
-        Assert.Equal(expectedOverlayHeight, viewModel.OverlayHeight, precision: 3);
-        Assert.Equal(40d, viewModel.PivotX, precision: 3);
-        Assert.Equal(60d, viewModel.PivotY, precision: 3);
+        Assert.Equal(expectedCropX, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(expectedCropY, viewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(expectedCropWidth, viewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(expectedCropHeight, viewModel.SpriteEditCropHeight, precision: 3);
+        Assert.Equal(20d, viewModel.SpriteEditPivotX, precision: 3);
+        Assert.Equal(30d, viewModel.SpriteEditPivotY, precision: 3);
     }
 
     [Fact]
-    public void SpriteEditDrag_ShouldKeepPivotFixedWhenResizeCrossesPivot()
+    public void SpriteEditDrag_ShouldClampPivotInsideCropBoxWhenResizeCrossesPivot()
     {
         var viewModel = new InspectorPreviewImageViewModel();
         ApplySpriteEditPreview(viewModel);
 
-        Assert.True(viewModel.TryBeginSpriteEditDrag(20d, 40d));
-        viewModel.UpdateSpriteEditDrag(70d, 90d);
-        viewModel.CompleteSpriteEditDrag();
+        DragFromSource(viewModel, 10d, 20d, 35d, 45d);
 
-        Assert.Equal(70d, viewModel.OverlayX, precision: 3);
-        Assert.Equal(90d, viewModel.OverlayY, precision: 3);
-        Assert.Equal(10d, viewModel.OverlayWidth, precision: 3);
-        Assert.Equal(30d, viewModel.OverlayHeight, precision: 3);
-        Assert.Equal(80d, viewModel.OverlayRightX, precision: 3);
-        Assert.Equal(120d, viewModel.OverlayBottomY, precision: 3);
-        Assert.Equal(40d, viewModel.PivotX, precision: 3);
-        Assert.Equal(60d, viewModel.PivotY, precision: 3);
+        Assert.Equal(35d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(45d, viewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(5d, viewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(15d, viewModel.SpriteEditCropHeight, precision: 3);
+        Assert.Equal(35d, viewModel.SpriteEditPivotX, precision: 3);
+        Assert.Equal(45d, viewModel.SpriteEditPivotY, precision: 3);
     }
 
     [Fact]
@@ -334,16 +327,16 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(50d, viewModel.SpriteEditCropHeight, precision: 3);
         Assert.Equal(35d, viewModel.SpriteEditPivotX, precision: 3);
         Assert.Equal(45d, viewModel.SpriteEditPivotY, precision: 3);
-        Assert.Equal(40d, viewModel.OverlayX, precision: 3);
-        Assert.Equal(20d, viewModel.OverlayY, precision: 3);
-        Assert.Equal(80d, viewModel.OverlayWidth, precision: 3);
-        Assert.Equal(100d, viewModel.OverlayHeight, precision: 3);
-        Assert.Equal(70d, viewModel.PivotX, precision: 3);
-        Assert.Equal(90d, viewModel.PivotY, precision: 3);
+        Assert.Equal(MapSourceXToViewport(viewModel, 20d), viewModel.OverlayX, precision: 3);
+        Assert.Equal(MapSourceYToViewport(viewModel, 10d), viewModel.OverlayY, precision: 3);
+        Assert.Equal(MapSourceWidthToViewport(viewModel, 40d), viewModel.OverlayWidth, precision: 3);
+        Assert.Equal(MapSourceHeightToViewport(viewModel, 50d), viewModel.OverlayHeight, precision: 3);
+        Assert.Equal(MapSourceXToViewport(viewModel, 35d), viewModel.PivotX, precision: 3);
+        Assert.Equal(MapSourceYToViewport(viewModel, 45d), viewModel.PivotY, precision: 3);
     }
 
     [Fact]
-    public void SpriteEditGeometryInput_ShouldAllowPivotOutsideCropBox()
+    public void SpriteEditGeometryInput_ShouldClampPivotInsideCropBox()
     {
         var viewModel = new InspectorPreviewImageViewModel();
         ApplySpriteEditPreview(viewModel);
@@ -360,14 +353,31 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(50d, viewModel.SpriteEditCropY, precision: 3);
         Assert.Equal(10d, viewModel.SpriteEditCropWidth, precision: 3);
         Assert.Equal(10d, viewModel.SpriteEditCropHeight, precision: 3);
-        Assert.Equal(20d, viewModel.SpriteEditPivotX, precision: 3);
-        Assert.Equal(30d, viewModel.SpriteEditPivotY, precision: 3);
-        Assert.Equal(80d, viewModel.OverlayX, precision: 3);
-        Assert.Equal(100d, viewModel.OverlayY, precision: 3);
-        Assert.Equal(20d, viewModel.OverlayWidth, precision: 3);
-        Assert.Equal(20d, viewModel.OverlayHeight, precision: 3);
-        Assert.Equal(40d, viewModel.PivotX, precision: 3);
-        Assert.Equal(60d, viewModel.PivotY, precision: 3);
+        Assert.Equal(40d, viewModel.SpriteEditPivotX, precision: 3);
+        Assert.Equal(50d, viewModel.SpriteEditPivotY, precision: 3);
+    }
+
+    [Fact]
+    public void SpriteEditMeasurements_ShouldExposeCoordinatesLengthsAndAxis()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(viewModel);
+
+        Assert.Equal(Visibility.Visible, viewModel.SpriteEditMeasurementVisibility);
+        Assert.Equal("(10, 20)", viewModel.SpriteEditTopLeftCoordinateText);
+        Assert.Equal("(40, 20)", viewModel.SpriteEditTopRightCoordinateText);
+        Assert.Equal("(10, 60)", viewModel.SpriteEditBottomLeftCoordinateText);
+        Assert.Equal("(40, 60)", viewModel.SpriteEditBottomRightCoordinateText);
+        Assert.Equal("30", viewModel.SpriteEditTopLengthText);
+        Assert.Equal("30", viewModel.SpriteEditBottomLengthText);
+        Assert.Equal("40", viewModel.SpriteEditLeftLengthText);
+        Assert.Equal("40", viewModel.SpriteEditRightLengthText);
+        Assert.True(viewModel.FullImageX > 0d);
+        Assert.True(viewModel.FullImageY > 0d);
+        Assert.Equal(viewModel.FullImageX, viewModel.SpriteEditAxisOriginX, precision: 3);
+        Assert.Equal(viewModel.FullImageY, viewModel.SpriteEditAxisOriginY, precision: 3);
+        Assert.True(viewModel.SpriteEditAxisXEndX > viewModel.SpriteEditAxisOriginX);
+        Assert.True(viewModel.SpriteEditAxisYEndY > viewModel.SpriteEditAxisOriginY);
     }
 
     private static ImageSource CreateImageSourceStub()
@@ -398,5 +408,42 @@ public sealed class InspectorPreviewImageViewModelTests
             focusPreviewDisplayState: null);
         viewModel.UpdateViewport(200d, 200d);
         viewModel.RequestSpriteEditMode();
+    }
+
+    private static void DragFromSource(
+        InspectorPreviewImageViewModel viewModel,
+        double startSourceX,
+        double startSourceY,
+        double endSourceX,
+        double endSourceY)
+    {
+        var startViewportX = MapSourceXToViewport(viewModel, startSourceX);
+        var startViewportY = MapSourceYToViewport(viewModel, startSourceY);
+        var endViewportX = MapSourceXToViewport(viewModel, endSourceX);
+        var endViewportY = MapSourceYToViewport(viewModel, endSourceY);
+
+        Assert.True(viewModel.TryBeginSpriteEditDrag(startViewportX, startViewportY));
+        viewModel.UpdateSpriteEditDrag(endViewportX, endViewportY);
+        viewModel.CompleteSpriteEditDrag();
+    }
+
+    private static double MapSourceXToViewport(InspectorPreviewImageViewModel viewModel, double sourceX)
+    {
+        return viewModel.FullImageX + (sourceX * (viewModel.FullImageWidth / viewModel.CanvasWidth));
+    }
+
+    private static double MapSourceYToViewport(InspectorPreviewImageViewModel viewModel, double sourceY)
+    {
+        return viewModel.FullImageY + (sourceY * (viewModel.FullImageHeight / viewModel.CanvasHeight));
+    }
+
+    private static double MapSourceWidthToViewport(InspectorPreviewImageViewModel viewModel, double sourceWidth)
+    {
+        return sourceWidth * (viewModel.FullImageWidth / viewModel.CanvasWidth);
+    }
+
+    private static double MapSourceHeightToViewport(InspectorPreviewImageViewModel viewModel, double sourceHeight)
+    {
+        return sourceHeight * (viewModel.FullImageHeight / viewModel.CanvasHeight);
     }
 }

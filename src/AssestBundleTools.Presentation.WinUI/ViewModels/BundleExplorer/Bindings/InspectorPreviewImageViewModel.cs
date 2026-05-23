@@ -430,6 +430,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         OnPropertyChanged(nameof(OverlayVisibility));
         OnPropertyChanged(nameof(OverlayBadgeVisibility));
         OnPropertyChanged(nameof(SpriteEditHandleVisibility));
+        OnPropertyChanged(nameof(SpriteEditMeasurementVisibility));
         OnPropertyChanged(nameof(PivotVisibility));
         OnPropertyChanged(nameof(BorderVisibility));
     }
@@ -439,6 +440,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         OnPropertyChanged(nameof(OverlayRightX));
         OnPropertyChanged(nameof(OverlayBottomY));
         NotifySpriteEditGeometryChanged();
+        NotifySpriteEditMeasurementChanged();
     }
 
     private void NotifyRegionOverlayVisibilityChanged()

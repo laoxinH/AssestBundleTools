@@ -330,6 +330,27 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
     }
 
     [Fact]
+    public void SpriteEditPreview_ShouldExposeMeasurementOverlay()
+    {
+        var imagePreviewXaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorImagePreviewSurfaceView.xaml"));
+
+        Assert.Contains("SpriteEditMeasurementVisibility", imagePreviewXaml);
+        Assert.Contains("SpriteEditAxisOriginX", imagePreviewXaml);
+        Assert.Contains("SpriteEditTopLeftCoordinateText", imagePreviewXaml);
+        Assert.Contains("SpriteEditBottomRightCoordinateText", imagePreviewXaml);
+        Assert.Contains("SpriteEditTopLengthText", imagePreviewXaml);
+        Assert.Contains("SpriteEditRightLengthText", imagePreviewXaml);
+    }
+
+    [Fact]
     public void SpineD3DPreviewBackend_ShouldDrawPreviewBackground()
     {
         var backendCode = File.ReadAllText(
