@@ -103,6 +103,11 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
             return;
         }
 
+        if (TryDeferSpriteEditViewportUpdate(viewportWidth, viewportHeight))
+        {
+            return;
+        }
+
         _viewportState.UpdateViewport(viewportWidth, viewportHeight);
         if (_viewportState.ClampPan(ResolveActiveImageViewportSource()))
         {
@@ -177,6 +182,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         _isVisible = false;
         _isSpriteEditModeActive = false;
         _spriteEditDragState = null;
+        _deferredSpriteEditViewport = null;
         _viewportState.UpdateViewport(0d, 0d);
         _overlayState.Clear();
         _regionOverlayState.Clear();

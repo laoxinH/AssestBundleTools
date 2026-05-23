@@ -11,6 +11,7 @@ public sealed partial class InspectorPreviewImageViewModel
     private bool _isSpriteEditModeRequested;
     private bool _isSpriteEditModeActive;
     private SpriteEditDragState? _spriteEditDragState;
+    private SpriteEditDeferredViewport? _deferredSpriteEditViewport;
 
     public bool IsSpriteEditModeActive
     {
@@ -59,6 +60,12 @@ public sealed partial class InspectorPreviewImageViewModel
         _isSpriteEditModeRequested = false;
         _spriteEditDragState = null;
         IsSpriteEditModeActive = false;
+        if (_deferredSpriteEditViewport is not null)
+        {
+            ApplyDeferredSpriteEditViewportUpdate();
+            return;
+        }
+
         RecalculateImageLayout();
         RecalculateOverlays();
     }
@@ -145,6 +152,29 @@ public sealed partial class InspectorPreviewImageViewModel
     internal void CompleteSpriteEditDrag()
     {
         _spriteEditDragState = null;
+        ApplyDeferredSpriteEditViewportUpdate();
+    }
+
+    private bool TryDeferSpriteEditViewportUpdate(double viewportWidth, double viewportHeight)
+    {
+        if (!IsSpriteEditModeActive || _spriteEditDragState is null)
+        {
+            return false;
+        }
+
+        _deferredSpriteEditViewport = new SpriteEditDeferredViewport(viewportWidth, viewportHeight);
+        return true;
+    }
+
+    private void ApplyDeferredSpriteEditViewportUpdate()
+    {
+        if (_deferredSpriteEditViewport is not { } deferredViewport)
+        {
+            return;
+        }
+
+        _deferredSpriteEditViewport = null;
+        UpdateViewport(deferredViewport.Width, deferredViewport.Height);
     }
 
     private void TryActivateRequestedSpriteEditMode()
@@ -435,3 +465,7 @@ internal readonly record struct SpriteEditDragState(
     double StartRegionHeight,
     double StartPivotX,
     double StartPivotY);
+
+internal readonly record struct SpriteEditDeferredViewport(
+    double Width,
+    double Height);
