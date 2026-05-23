@@ -66,7 +66,7 @@ public sealed partial class InspectorPreviewImageViewModel
     internal bool TryBeginSpriteEditDrag(double viewportX, double viewportY)
     {
         if (!IsSpriteEditModeActive ||
-            !TryMapViewportPointToSource(viewportX, viewportY, clampToImage: true, out var sourceX, out var sourceY))
+            !TryMapViewportPointToSource(viewportX, viewportY, clampToImage: false, out var sourceX, out var sourceY))
         {
             return false;
         }
@@ -93,7 +93,7 @@ public sealed partial class InspectorPreviewImageViewModel
     internal void UpdateSpriteEditDrag(double viewportX, double viewportY)
     {
         if (_spriteEditDragState is not { } dragState ||
-            !TryMapViewportPointToSource(viewportX, viewportY, clampToImage: true, out var sourceX, out var sourceY))
+            !TryMapViewportPointToSource(viewportX, viewportY, clampToImage: false, out var sourceX, out var sourceY))
         {
             return;
         }
@@ -225,9 +225,14 @@ public sealed partial class InspectorPreviewImageViewModel
 
         sourceX = (viewportX - FullImageX) / scaleX;
         sourceY = (viewportY - FullImageY) / scaleY;
+        if (!double.IsFinite(sourceX) || !double.IsFinite(sourceY))
+        {
+            return false;
+        }
+
         if (!clampToImage)
         {
-            return sourceX >= 0d && sourceX <= CanvasWidth && sourceY >= 0d && sourceY <= CanvasHeight;
+            return true;
         }
 
         sourceX = Math.Clamp(sourceX, 0d, CanvasWidth);
@@ -330,10 +335,9 @@ public sealed partial class InspectorPreviewImageViewModel
             SpriteEditDragKind.ResizeTopRight or
             SpriteEditDragKind.ResizeBottomRight)
         {
-            right = Math.Clamp(
-                dragState.StartRegionX + dragState.StartRegionWidth + deltaX,
+            right = Math.Max(
                 left + SpriteEditMinimumRegionSize,
-                CanvasWidth);
+                dragState.StartRegionX + dragState.StartRegionWidth + deltaX);
         }
 
         if (dragState.Kind is
@@ -352,10 +356,9 @@ public sealed partial class InspectorPreviewImageViewModel
             SpriteEditDragKind.ResizeBottomLeft or
             SpriteEditDragKind.ResizeBottomRight)
         {
-            bottom = Math.Clamp(
-                dragState.StartRegionY + dragState.StartRegionHeight + deltaY,
+            bottom = Math.Max(
                 top + SpriteEditMinimumRegionSize,
-                CanvasHeight);
+                dragState.StartRegionY + dragState.StartRegionHeight + deltaY);
         }
 
         nextX = left;

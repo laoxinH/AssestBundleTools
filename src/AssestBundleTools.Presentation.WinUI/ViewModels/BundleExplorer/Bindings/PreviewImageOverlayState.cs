@@ -89,10 +89,8 @@ internal sealed class PreviewImageOverlayState
         double? pivotX,
         double? pivotY)
     {
-        var normalizedCanvasWidth = Math.Max(1d, canvasWidth);
-        var normalizedCanvasHeight = Math.Max(1d, canvasHeight);
-        _sourceWidth = Math.Clamp(NormalizeFinite(regionWidth, 1d), 1d, normalizedCanvasWidth);
-        _sourceHeight = Math.Clamp(NormalizeFinite(regionHeight, 1d), 1d, normalizedCanvasHeight);
+        _sourceWidth = Math.Max(1d, NormalizeFinite(regionWidth, 1d));
+        _sourceHeight = Math.Max(1d, NormalizeFinite(regionHeight, 1d));
         _sourceX = Math.Max(0d, NormalizeFinite(regionX, 0d));
         _sourceY = Math.Max(0d, NormalizeFinite(regionY, 0d));
 

@@ -276,6 +276,42 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(100d, dragViewModel.SpriteEditCropHeight, precision: 3);
     }
 
+    [Fact]
+    public void SpriteEditResize_ShouldKeepOppositeEdgeOrCornerAnchoredWhenCropExtendsPastCanvas()
+    {
+        var leftEdgeViewModel = CreateExtendedSpriteEditRegion();
+        DragFromSource(leftEdgeViewModel, 5d, 50d, 0d, 50d);
+
+        Assert.Equal(0d, leftEdgeViewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(7d, leftEdgeViewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(105d, leftEdgeViewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(100d, leftEdgeViewModel.SpriteEditCropHeight, precision: 3);
+
+        var topEdgeViewModel = CreateExtendedSpriteEditRegion();
+        DragFromSource(topEdgeViewModel, 50d, 7d, 50d, 0d);
+
+        Assert.Equal(5d, topEdgeViewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(0d, topEdgeViewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(100d, topEdgeViewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(107d, topEdgeViewModel.SpriteEditCropHeight, precision: 3);
+
+        var topLeftViewModel = CreateExtendedSpriteEditRegion();
+        DragFromSource(topLeftViewModel, 5d, 7d, 0d, 0d);
+
+        Assert.Equal(0d, topLeftViewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(0d, topLeftViewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(105d, topLeftViewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(107d, topLeftViewModel.SpriteEditCropHeight, precision: 3);
+
+        var rightEdgeViewModel = CreateExtendedSpriteEditRegion();
+        DragFromSource(rightEdgeViewModel, 105d, 50d, 110d, 50d);
+
+        Assert.Equal(5d, rightEdgeViewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(7d, rightEdgeViewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(105d, rightEdgeViewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(100d, rightEdgeViewModel.SpriteEditCropHeight, precision: 3);
+    }
+
     [Theory]
     [InlineData(10d, 40d, 15d, 40d, 15d, 20d, 25d, 40d)]
     [InlineData(40d, 40d, 35d, 40d, 10d, 20d, 25d, 40d)]
@@ -445,6 +481,20 @@ public sealed class InspectorPreviewImageViewModelTests
             focusPreviewDisplayState: null);
         viewModel.UpdateViewport(200d, 200d);
         viewModel.RequestSpriteEditMode();
+    }
+
+    private static InspectorPreviewImageViewModel CreateExtendedSpriteEditRegion()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(viewModel);
+        viewModel.UpdateSpriteEditGeometryFromInput(
+            cropX: 5d,
+            cropY: 7d,
+            cropWidth: 100d,
+            cropHeight: 100d,
+            pivotX: 50d,
+            pivotY: 50d);
+        return viewModel;
     }
 
     private static void DragFromSource(

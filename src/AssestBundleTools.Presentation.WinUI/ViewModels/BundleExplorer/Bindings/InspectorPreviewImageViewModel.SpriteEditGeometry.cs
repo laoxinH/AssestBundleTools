@@ -88,10 +88,9 @@ public sealed partial class InspectorPreviewImageViewModel
     private static double ClampRegionSize(double value, double canvasSize)
     {
         var normalizedCanvasSize = Math.Max(1d, canvasSize);
-        return Math.Clamp(
-            value,
+        return Math.Max(
             Math.Min(SpriteEditMinimumRegionSize, normalizedCanvasSize),
-            normalizedCanvasSize);
+            value);
     }
 
     private static double NormalizeFinite(double value, double fallback)
