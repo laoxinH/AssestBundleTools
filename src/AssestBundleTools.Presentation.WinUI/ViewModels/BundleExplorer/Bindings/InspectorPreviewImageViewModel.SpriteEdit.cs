@@ -130,8 +130,8 @@ public sealed partial class InspectorPreviewImageViewModel
                 out nextHeight);
         }
 
-        nextPivotX = Math.Clamp(nextPivotX, nextX, nextX + nextWidth);
-        nextPivotY = Math.Clamp(nextPivotY, nextY, nextY + nextHeight);
+        nextPivotX = Math.Clamp(nextPivotX, 0d, CanvasWidth);
+        nextPivotY = Math.Clamp(nextPivotY, 0d, CanvasHeight);
         ApplySpriteEditGeometry(
             nextX,
             nextY,

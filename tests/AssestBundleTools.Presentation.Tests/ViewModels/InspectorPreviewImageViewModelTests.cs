@@ -270,6 +270,28 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(expectedOverlayY, viewModel.OverlayY, precision: 3);
         Assert.Equal(expectedOverlayWidth, viewModel.OverlayWidth, precision: 3);
         Assert.Equal(expectedOverlayHeight, viewModel.OverlayHeight, precision: 3);
+        Assert.Equal(40d, viewModel.PivotX, precision: 3);
+        Assert.Equal(60d, viewModel.PivotY, precision: 3);
+    }
+
+    [Fact]
+    public void SpriteEditDrag_ShouldKeepPivotFixedWhenResizeCrossesPivot()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(viewModel);
+
+        Assert.True(viewModel.TryBeginSpriteEditDrag(20d, 40d));
+        viewModel.UpdateSpriteEditDrag(70d, 90d);
+        viewModel.CompleteSpriteEditDrag();
+
+        Assert.Equal(70d, viewModel.OverlayX, precision: 3);
+        Assert.Equal(90d, viewModel.OverlayY, precision: 3);
+        Assert.Equal(10d, viewModel.OverlayWidth, precision: 3);
+        Assert.Equal(30d, viewModel.OverlayHeight, precision: 3);
+        Assert.Equal(80d, viewModel.OverlayRightX, precision: 3);
+        Assert.Equal(120d, viewModel.OverlayBottomY, precision: 3);
+        Assert.Equal(40d, viewModel.PivotX, precision: 3);
+        Assert.Equal(60d, viewModel.PivotY, precision: 3);
     }
 
     [Fact]
@@ -318,6 +340,34 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(100d, viewModel.OverlayHeight, precision: 3);
         Assert.Equal(70d, viewModel.PivotX, precision: 3);
         Assert.Equal(90d, viewModel.PivotY, precision: 3);
+    }
+
+    [Fact]
+    public void SpriteEditGeometryInput_ShouldAllowPivotOutsideCropBox()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(viewModel);
+
+        viewModel.UpdateSpriteEditGeometryFromInput(
+            cropX: 40d,
+            cropY: 50d,
+            cropWidth: 10d,
+            cropHeight: 10d,
+            pivotX: 20d,
+            pivotY: 30d);
+
+        Assert.Equal(40d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(50d, viewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(10d, viewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(10d, viewModel.SpriteEditCropHeight, precision: 3);
+        Assert.Equal(20d, viewModel.SpriteEditPivotX, precision: 3);
+        Assert.Equal(30d, viewModel.SpriteEditPivotY, precision: 3);
+        Assert.Equal(80d, viewModel.OverlayX, precision: 3);
+        Assert.Equal(100d, viewModel.OverlayY, precision: 3);
+        Assert.Equal(20d, viewModel.OverlayWidth, precision: 3);
+        Assert.Equal(20d, viewModel.OverlayHeight, precision: 3);
+        Assert.Equal(40d, viewModel.PivotX, precision: 3);
+        Assert.Equal(60d, viewModel.PivotY, precision: 3);
     }
 
     private static ImageSource CreateImageSourceStub()
