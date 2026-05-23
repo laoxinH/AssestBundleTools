@@ -326,6 +326,9 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
 
         Assert.Contains("ViewModel.IsSpriteEditDragActive", panelCode);
         Assert.Contains("ViewModel.UpdateSpriteEditGeometryFromInput", panelCode);
+        Assert.Contains("ResolveSpriteEditGeometryInputKind(sender)", panelCode);
+        Assert.Contains("SpriteEditGeometryInputKind.Pivot", panelCode);
+        Assert.Contains("SpriteEditGeometryInputKind.Crop", panelCode);
     }
 
     [Fact]

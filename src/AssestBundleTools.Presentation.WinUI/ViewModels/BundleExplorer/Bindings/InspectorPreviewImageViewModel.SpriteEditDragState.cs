@@ -15,6 +15,12 @@ internal enum SpriteEditDragKind
     ResizeBottomRight
 }
 
+internal enum SpriteEditGeometryInputKind
+{
+    Crop,
+    Pivot
+}
+
 internal readonly record struct SpriteEditDragState(
     SpriteEditDragKind Kind,
     double StartPointerSourceX,
@@ -23,8 +29,6 @@ internal readonly record struct SpriteEditDragState(
     double StartRegionY,
     double StartRegionWidth,
     double StartRegionHeight,
-    double StartPivotX,
-    double StartPivotY,
     SpriteEditDragViewportMapping ViewportMapping);
 
 internal readonly record struct SpriteEditDeferredViewport(

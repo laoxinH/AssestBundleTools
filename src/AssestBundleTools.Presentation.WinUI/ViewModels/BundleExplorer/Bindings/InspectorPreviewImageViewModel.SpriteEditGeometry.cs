@@ -27,7 +27,8 @@ public sealed partial class InspectorPreviewImageViewModel
         double cropWidth,
         double cropHeight,
         double pivotX,
-        double pivotY)
+        double pivotY,
+        SpriteEditGeometryInputKind inputKind)
     {
         if (!IsSpriteEditModeActive || !_overlayState.HasOverlay || IsSpriteEditDragActive)
         {
@@ -42,8 +43,16 @@ public sealed partial class InspectorPreviewImageViewModel
             CanvasHeight);
         var nextX = ClampRegionMinimum(NormalizeFinite(cropX, _overlayState.SourceX));
         var nextY = ClampRegionMinimum(NormalizeFinite(cropY, _overlayState.SourceY));
-        var nextPivotX = NormalizeFinite(pivotX, ResolvePivotSourceX());
-        var nextPivotY = NormalizeFinite(pivotY, ResolvePivotSourceY());
+        var shouldRefreshPivotRelativePosition = inputKind == SpriteEditGeometryInputKind.Pivot;
+        var (nextPivotX, nextPivotY) = shouldRefreshPivotRelativePosition
+            ? (
+                NormalizeFinite(pivotX, ResolvePivotSourceX()),
+                NormalizeFinite(pivotY, ResolvePivotSourceY()))
+            : ResolveSpriteEditPivotFromRelative(
+                nextX,
+                nextY,
+                nextWidth,
+                nextHeight);
 
         ApplySpriteEditGeometry(
             nextX,
@@ -51,7 +60,8 @@ public sealed partial class InspectorPreviewImageViewModel
             nextWidth,
             nextHeight,
             nextPivotX,
-            nextPivotY);
+            nextPivotY,
+            shouldRefreshPivotRelativePosition);
     }
 
     private void ApplySpriteEditGeometry(
@@ -60,7 +70,8 @@ public sealed partial class InspectorPreviewImageViewModel
         double cropWidth,
         double cropHeight,
         double pivotX,
-        double pivotY)
+        double pivotY,
+        bool refreshPivotRelativePosition)
     {
         _overlayState.UpdateEditableGeometry(
             CanvasWidth,
@@ -71,6 +82,11 @@ public sealed partial class InspectorPreviewImageViewModel
             cropHeight,
             pivotX,
             pivotY);
+        if (refreshPivotRelativePosition)
+        {
+            RefreshSpriteEditPivotRelativePositionFromOverlay();
+        }
+
         RecalculateOverlayLayout();
     }
 

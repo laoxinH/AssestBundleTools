@@ -250,7 +250,8 @@ public sealed class InspectorPreviewImageViewModelTests
             cropWidth: 100d,
             cropHeight: 100d,
             pivotX: 50d,
-            pivotY: 50d);
+            pivotY: 50d,
+            inputKind: SpriteEditGeometryInputKind.Pivot);
 
         inputViewModel.UpdateSpriteEditGeometryFromInput(
             cropX: 5d,
@@ -258,7 +259,8 @@ public sealed class InspectorPreviewImageViewModelTests
             cropWidth: 100d,
             cropHeight: 100d,
             pivotX: 50d,
-            pivotY: 50d);
+            pivotY: 50d,
+            inputKind: SpriteEditGeometryInputKind.Crop);
 
         Assert.Equal(5d, inputViewModel.SpriteEditCropX, precision: 3);
         Assert.Equal(7d, inputViewModel.SpriteEditCropY, precision: 3);
@@ -267,7 +269,14 @@ public sealed class InspectorPreviewImageViewModelTests
 
         var dragViewModel = new InspectorPreviewImageViewModel();
         ApplySpriteEditPreview(dragViewModel);
-        dragViewModel.UpdateSpriteEditGeometryFromInput(0d, 0d, 100d, 100d, 50d, 50d);
+        dragViewModel.UpdateSpriteEditGeometryFromInput(
+            0d,
+            0d,
+            100d,
+            100d,
+            50d,
+            50d,
+            SpriteEditGeometryInputKind.Pivot);
         DragFromSource(dragViewModel, 20d, 20d, 30d, 40d);
 
         Assert.Equal(10d, dragViewModel.SpriteEditCropX, precision: 3);
@@ -340,12 +349,10 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(expectedCropY, viewModel.SpriteEditCropY, precision: 3);
         Assert.Equal(expectedCropWidth, viewModel.SpriteEditCropWidth, precision: 3);
         Assert.Equal(expectedCropHeight, viewModel.SpriteEditCropHeight, precision: 3);
-        Assert.Equal(20d, viewModel.SpriteEditPivotX, precision: 3);
-        Assert.Equal(30d, viewModel.SpriteEditPivotY, precision: 3);
     }
 
     [Fact]
-    public void SpriteEditDrag_ShouldClampPivotInsideCropBoxWhenResizeCrossesPivot()
+    public void SpriteEditDrag_ShouldKeepPivotRelativeWhenResizeCrossesPreviousPivot()
     {
         var viewModel = new InspectorPreviewImageViewModel();
         ApplySpriteEditPreview(viewModel);
@@ -356,8 +363,8 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(45d, viewModel.SpriteEditCropY, precision: 3);
         Assert.Equal(5d, viewModel.SpriteEditCropWidth, precision: 3);
         Assert.Equal(15d, viewModel.SpriteEditCropHeight, precision: 3);
-        Assert.Equal(35d, viewModel.SpriteEditPivotX, precision: 3);
-        Assert.Equal(45d, viewModel.SpriteEditPivotY, precision: 3);
+        Assert.Equal(36.667d, viewModel.SpriteEditPivotX, precision: 3);
+        Assert.Equal(48.75d, viewModel.SpriteEditPivotY, precision: 3);
     }
 
     [Fact]
@@ -392,7 +399,8 @@ public sealed class InspectorPreviewImageViewModelTests
             cropWidth: 40d,
             cropHeight: 50d,
             pivotX: 35d,
-            pivotY: 45d);
+            pivotY: 45d,
+            inputKind: SpriteEditGeometryInputKind.Pivot);
 
         Assert.Equal(20d, viewModel.SpriteEditCropX, precision: 3);
         Assert.Equal(10d, viewModel.SpriteEditCropY, precision: 3);
@@ -420,7 +428,8 @@ public sealed class InspectorPreviewImageViewModelTests
             cropWidth: 10d,
             cropHeight: 10d,
             pivotX: 20d,
-            pivotY: 30d);
+            pivotY: 30d,
+            inputKind: SpriteEditGeometryInputKind.Pivot);
 
         Assert.Equal(40d, viewModel.SpriteEditCropX, precision: 3);
         Assert.Equal(50d, viewModel.SpriteEditCropY, precision: 3);
@@ -428,6 +437,60 @@ public sealed class InspectorPreviewImageViewModelTests
         Assert.Equal(10d, viewModel.SpriteEditCropHeight, precision: 3);
         Assert.Equal(40d, viewModel.SpriteEditPivotX, precision: 3);
         Assert.Equal(50d, viewModel.SpriteEditPivotY, precision: 3);
+    }
+
+    [Fact]
+    public void SpriteEditGeometryInput_ShouldKeepPivotRelativeWhenCropChanges()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(viewModel);
+
+        viewModel.UpdateSpriteEditGeometryFromInput(
+            cropX: 20d,
+            cropY: 30d,
+            cropWidth: 60d,
+            cropHeight: 80d,
+            pivotX: 20d,
+            pivotY: 30d,
+            inputKind: SpriteEditGeometryInputKind.Crop);
+
+        Assert.Equal(20d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(30d, viewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(60d, viewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(80d, viewModel.SpriteEditCropHeight, precision: 3);
+        Assert.Equal(40d, viewModel.SpriteEditPivotX, precision: 3);
+        Assert.Equal(50d, viewModel.SpriteEditPivotY, precision: 3);
+    }
+
+    [Fact]
+    public void SpriteEditGeometryInput_ShouldRefreshPivotRelativePositionForNextCropInput()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(viewModel);
+
+        viewModel.UpdateSpriteEditGeometryFromInput(
+            cropX: 10d,
+            cropY: 20d,
+            cropWidth: 30d,
+            cropHeight: 40d,
+            pivotX: 35d,
+            pivotY: 50d,
+            inputKind: SpriteEditGeometryInputKind.Pivot);
+        viewModel.UpdateSpriteEditGeometryFromInput(
+            cropX: 20d,
+            cropY: 30d,
+            cropWidth: 60d,
+            cropHeight: 80d,
+            pivotX: 35d,
+            pivotY: 50d,
+            inputKind: SpriteEditGeometryInputKind.Crop);
+
+        Assert.Equal(20d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(30d, viewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(60d, viewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(80d, viewModel.SpriteEditCropHeight, precision: 3);
+        Assert.Equal(70d, viewModel.SpriteEditPivotX, precision: 3);
+        Assert.Equal(90d, viewModel.SpriteEditPivotY, precision: 3);
     }
 
     [Fact]
@@ -493,7 +556,8 @@ public sealed class InspectorPreviewImageViewModelTests
             cropWidth: 100d,
             cropHeight: 100d,
             pivotX: 50d,
-            pivotY: 50d);
+            pivotY: 50d,
+            inputKind: SpriteEditGeometryInputKind.Pivot);
         return viewModel;
     }
 

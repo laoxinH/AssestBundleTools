@@ -94,6 +94,7 @@ public sealed partial class InspectorPreviewImageViewModel
             return false;
         }
 
+        RefreshSpriteEditPivotRelativePositionFromOverlay();
         _spriteEditDragState = new SpriteEditDragState(
             dragKind,
             sourceX,
@@ -102,8 +103,6 @@ public sealed partial class InspectorPreviewImageViewModel
             _overlayState.SourceY,
             _overlayState.SourceWidth,
             _overlayState.SourceHeight,
-            ResolvePivotSourceX(),
-            ResolvePivotSourceY(),
             viewportMapping);
         OnPropertyChanged(nameof(IsSpriteEditDragActive));
         return true;
@@ -129,8 +128,9 @@ public sealed partial class InspectorPreviewImageViewModel
         var nextY = dragState.StartRegionY;
         var nextWidth = dragState.StartRegionWidth;
         var nextHeight = dragState.StartRegionHeight;
-        var nextPivotX = dragState.StartPivotX;
-        var nextPivotY = dragState.StartPivotY;
+        double nextPivotX;
+        double nextPivotY;
+        var shouldRefreshPivotRelativePosition = dragState.Kind == SpriteEditDragKind.Pivot;
 
         if (dragState.Kind == SpriteEditDragKind.Pivot)
         {
@@ -141,8 +141,11 @@ public sealed partial class InspectorPreviewImageViewModel
         {
             nextX = ClampRegionMinimum(dragState.StartRegionX + deltaX);
             nextY = ClampRegionMinimum(dragState.StartRegionY + deltaY);
-            nextPivotX = dragState.StartPivotX + (nextX - dragState.StartRegionX);
-            nextPivotY = dragState.StartPivotY + (nextY - dragState.StartRegionY);
+            (nextPivotX, nextPivotY) = ResolveSpriteEditPivotFromRelative(
+                nextX,
+                nextY,
+                nextWidth,
+                nextHeight);
         }
         else
         {
@@ -154,6 +157,11 @@ public sealed partial class InspectorPreviewImageViewModel
                 out nextY,
                 out nextWidth,
                 out nextHeight);
+            (nextPivotX, nextPivotY) = ResolveSpriteEditPivotFromRelative(
+                nextX,
+                nextY,
+                nextWidth,
+                nextHeight);
         }
 
         nextPivotX = Math.Clamp(nextPivotX, nextX, nextX + nextWidth);
@@ -164,7 +172,8 @@ public sealed partial class InspectorPreviewImageViewModel
             nextWidth,
             nextHeight,
             nextPivotX,
-            nextPivotY);
+            nextPivotY,
+            shouldRefreshPivotRelativePosition);
     }
 
     internal void CompleteSpriteEditDrag()
@@ -207,6 +216,7 @@ public sealed partial class InspectorPreviewImageViewModel
 
         DisplayOptions.UseSpriteCropPreview();
         _viewportState.Reset(ResolveActiveImageViewportSource());
+        InitializeSpriteEditPivotRelativePosition();
         IsSpriteEditModeActive = true;
         RecalculateImageLayout();
         RecalculateOverlays();

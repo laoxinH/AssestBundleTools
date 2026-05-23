@@ -103,7 +103,8 @@ public sealed partial class SpriteEditGeometryPanelView : UserControl
             SpriteEditCropWidthNumberBox.Value,
             SpriteEditCropHeightNumberBox.Value,
             SpriteEditPivotXNumberBox.Value,
-            SpriteEditPivotYNumberBox.Value);
+            SpriteEditPivotYNumberBox.Value,
+            ResolveSpriteEditGeometryInputKind(sender));
     }
 
     private void UpdateBindingsNow()
@@ -144,6 +145,13 @@ public sealed partial class SpriteEditGeometryPanelView : UserControl
         {
             _isBindingsUpdateQueued = false;
         }
+    }
+
+    private static SpriteEditGeometryInputKind ResolveSpriteEditGeometryInputKind(NumberBox sender)
+    {
+        return sender.Name is nameof(SpriteEditPivotXNumberBox) or nameof(SpriteEditPivotYNumberBox)
+            ? SpriteEditGeometryInputKind.Pivot
+            : SpriteEditGeometryInputKind.Crop;
     }
 
     private void ApplyLocalizedText()
