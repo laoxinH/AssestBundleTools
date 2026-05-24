@@ -338,11 +338,15 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         return _assetActionCoordinator.ModifyFromFileReplacementSourceAsync();
     }
 
+    public Task SelectSpriteTextureReplacementSourceAsync() =>
+        _assetActionCoordinator.SelectSpriteTextureReplacementSourceAsync();
+
     public Task ApplyPendingReplacementAsync() => _assetActionCoordinator.ApplyPendingReplacementAsync();
 
     public Task ApplySpriteEditAsync() => _assetActionCoordinator.ApplySpriteEditAsync();
 
-    public Task UndoAppliedReplacementAsync() => _assetActionCoordinator.UndoAppliedReplacementAsync();
+    public Task UndoAppliedReplacementAsync(string? replacementOperationId = null) =>
+        _assetActionCoordinator.UndoAppliedReplacementAsync(replacementOperationId);
 
     public Task RedoAppliedReplacementAsync(string? replacementOperationId = null) =>
         _assetActionCoordinator.RedoAppliedReplacementAsync(replacementOperationId);

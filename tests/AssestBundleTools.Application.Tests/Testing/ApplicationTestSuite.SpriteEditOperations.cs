@@ -14,5 +14,9 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(SpriteEditOperationRecorderTests.ApplySpriteEditHandler_ShouldReturnFailure_WhenGeometryIsInvalid),
             SpriteEditOperationRecorderTests.ApplySpriteEditHandler_ShouldReturnFailure_WhenGeometryIsInvalid);
+        await RunTestAsync(
+            failures,
+            nameof(SpriteEditOperationRecorderTests.ApplySpriteEditHandler_ShouldAppendLinkedTextureReplacement_WhenSpriteSaveIncludesAssociatedTexture),
+            SpriteEditOperationRecorderTests.ApplySpriteEditHandler_ShouldAppendLinkedTextureReplacement_WhenSpriteSaveIncludesAssociatedTexture);
     }
 }

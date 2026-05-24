@@ -169,6 +169,7 @@
                                 IsPreviewActive="{x:Bind ShowDetailsPreview, Mode=OneWay}"
                                 ViewModel="{x:Bind ViewModel, Mode=OneWay}"
                                 OpenPreviewLocationRequested="OnPreviewSurfaceOpenPreviewLocationRequested"
+                                SpriteTextureReplacementRequested="OnPreviewSurfaceSpriteTextureReplacementRequested"
                                 ResolvedAssetOpenRequested="OnPreviewSurfaceResolvedAssetOpenRequested"
                                 Visibility="{x:Bind DetailsPreviewVisibility, Mode=OneWay}" />
 

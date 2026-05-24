@@ -112,6 +112,7 @@ checkpointId
 batchId
 supersedesOperationId
 diagnostics[]
+relations[]
 ```
 
 字段说明：
@@ -136,6 +137,8 @@ diagnostics[]
   标记该操作是否已被某次保存或导出消费。
 - `diagnostics[]`
   稳定错误码或结构化消息令牌，不保存原始异常文案作为主提示。
+- `relations[]`
+  描述该操作和其他资源 / 操作之间的可恢复强关联。它不替代 `target`，而是让同一事实可以在关联资源的变更页中投影、刷新和执行撤销 / 重做。
 
 ### 6.1 `operationKind`
 
@@ -214,6 +217,28 @@ source:
 
 Presentation 负责把这些结构化字段格式化为用户可见文本；Application 和 Infrastructure 不保存面向用户的整句文案。
 
+### 6.4 跨资源操作关联
+
+跨资源编辑不得用 UI 私有状态硬连。需要把关联写入 `WorkspaceOperationRecordDto.relations[]`，当前稳定字段为：
+
+```text
+relationId
+relationKind
+role
+relatedTarget
+relatedOperationId
+```
+
+当前已使用的 `relationKind` 为 `linked-resource-operation`，用于表达“一个用户确认动作同时影响拥有者资源和被关联资源”。`role=owner` 表示当前操作所属的主资源编辑记录，`role=subject` 表示真正被替换或修改的关联资源记录。`relatedTarget` 保存对端资源身份，`relatedOperationId` 保存对端操作记录身份；同一组关联操作共享 `batchId / relationId`。
+
+关联记录的规则：
+
+1. 每条操作仍必须有自己的 `target`、`source`、`previousState` 和 `operationKind`，不得把两个资源的不同修改混成一条记录。
+2. 资源详情变更页可以把“目标为其他资源、但 `relations[]` 指向当前资源”的替换记录投影为关联替换记录。
+3. 从关联资源变更页发起撤销 / 重做时，命令可以携带被投影记录的 `operationId`；Application 必须根据该记录解析真实 `target` 后再执行替换撤销 / 重做。
+4. 操作完成通知、删除记录通知和读模型刷新必须同时覆盖 `target` 与 `relatedTarget`，确保多窗口和关联资源详情同步刷新。
+5. 删除一条记录只删除被选中的操作及其 supersedes 派生记录；关联的几何编辑和关联的文件替换是独立操作，除非未来明确提供“删除整组关联批次”命令。
+
 ## 7. 当前操作语义
 
 ### 7.1 提取
@@ -269,6 +294,7 @@ Presentation 负责把这些结构化字段格式化为用户可见文本；Appl
 - 重做目标资源最近一次被撤销的替换时，追加 `RedoReplacement` 操作，而不是删除 `UndoReplacement` 历史。
 - `RedoReplacement` 只恢复该目标资源当前 redo 槽中的替换来源；如果同一目标在撤销后又应用了新的替换，旧 redo 槽应失效。
 - 资源详情变更卡片上的“重做”可以指定某条历史 `ReplaceFromFile / ReplaceFromWorkspace` 记录；此时追加的 `RedoReplacement` 必须携带被重做记录的 `source`，并以 `supersedesOperationId` 指向该历史替换记录，使重启后的物化读模型仍能把该历史记录标记为当前有效。
+- 如果撤销 / 重做来自关联资源变更卡片，命令携带的 `replacementOperationId` 用于解析真实替换目标；追加的 `UndoReplacement / RedoReplacement` 继续携带原替换记录的 `relations[]`，因此对端资源和当前资源的变更页会同步刷新。
 - 当前 redo 是替换链路的目标资源级能力，不等同于跨提取、编辑、保存等所有操作的全局 redo 栈。
 
 恢复规则：
@@ -305,6 +331,8 @@ Presentation 负责把这些结构化字段格式化为用户可见文本；Appl
 - `WorkspaceOperationResultDto.SpriteEditGeometry`
 
 当前 Sprite 裁切框 / pivot 修改已经从临时编辑工作面进入工作区操作记录链路：用户在资源编辑窗口中调整几何后，通过窗口操作区的“保存 Sprite 编辑”把当前裁切框、pivot、画布尺寸和草稿模式应用到工作区运行时状态，并追加一条 `EditDraftApplied` 操作记录。该记录的 `source.sourceKind` 为 `draft`，`source.draftMode` 为 `sprite-geometry`，`source.draftId` 指向本次几何草稿；`result.spriteEditGeometry` 保存当前轻量几何，用于重启恢复、读模型重放、预览投影和后续统一导出读取。`editDrafts[]` 只保存草稿描述、指纹、更新时间和摘要，不保存图片或 AB 载荷。
+
+Sprite 编辑态中的“替换 Texture2D”不是立即保存的独立替换动作。用户选择图片文件后，只在 Sprite 文档标签上形成待保存的关联文件替换候选；点击“保存 Sprite 编辑”时，Application 先验证该 Texture2D 确实来自 Sprite 的依赖或贴图关联，再把 Texture2D 文件替换应用到运行时状态，并与 Sprite 几何一起追加两条独立操作记录：一条目标为 Texture2D 的 `ReplaceFromFile`，一条目标为 Sprite 的 `EditDraftApplied`。两条记录通过 `relations[] / batchId` 互相关联，Texture2D 记录进入原 Texture2D 资产的变更记录，Sprite 变更页同时把该 Texture2D 替换投影为关联替换记录；Sprite 几何记录和 Texture2D 替换记录仍可分开撤销 / 重做 / 删除。
 
 Sprite 编辑应用后仍不改写原始 AB、标准化 artifact 或预览缓存源文件；实际 AB 对象裁切 / pivot 写入只允许在后续保存 / 重建 / 统一导出阶段读取已物化的 Sprite 编辑状态后执行。删除某条 Sprite 编辑操作记录时，运行时会按剩余 `operations[]` 重新物化当前目标资源的最新有效 Sprite 几何；若删除最新记录，上一条同目标 Sprite 编辑自动成为有效几何。
 

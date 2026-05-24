@@ -2,6 +2,7 @@ using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Replacement.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 
@@ -54,10 +55,11 @@ public sealed partial class CachedWorkspaceSessionRegistry
             .Where(static operation => operation is not null)
             .Where(static operation => operation.Status == WorkspaceOperationStatus.Applied)
             .ToArray();
-        var effectiveReplacementOperationId = _replacementStateMaterializer.FindLatestEffectiveReplacementOperationId(
-            changeSet,
-            bundleId.Value,
-            assetId.Value);
+        var effectiveReplacementOperationIds = _replacementStateMaterializer
+            .Materialize(changeSet)
+            .EffectiveReplacements
+            .Select(static replacement => replacement.OperationId)
+            .ToHashSet(StringComparer.Ordinal);
         var effectiveSpriteEditOperationId = _spriteEditStateMaterializer.FindLatestEffectiveSpriteEditOperationId(
             changeSet,
             bundleId.Value,
@@ -69,13 +71,15 @@ public sealed partial class CachedWorkspaceSessionRegistry
                 WorkspaceOperationKind.ReplaceFromFile or
                 WorkspaceOperationKind.ReplaceFromWorkspace or
                 WorkspaceOperationKind.EditDraftApplied)
-            .Where(operation => OperationTargetsAsset(operation, bundleId, assetId))
+            .Where(operation => OperationConcernsAssetChangeRecord(operation, bundleId, assetId))
             .OrderByDescending(static operation => operation.Sequence))
         {
+            var isRelatedOperation = !OperationTargetsAsset(operation, bundleId, assetId);
             var record = AssetChangeRecordDto.FromOperation(
                 operation,
-                string.Equals(operation.OperationId, effectiveReplacementOperationId, StringComparison.Ordinal) ||
-                string.Equals(operation.OperationId, effectiveSpriteEditOperationId, StringComparison.Ordinal));
+                effectiveReplacementOperationIds.Contains(operation.OperationId) ||
+                string.Equals(operation.OperationId, effectiveSpriteEditOperationId, StringComparison.Ordinal),
+                isRelatedOperation);
             if (record.Kind != AssetChangeRecordKind.Unknown)
             {
                 yield return record;
@@ -138,4 +142,21 @@ public sealed partial class CachedWorkspaceSessionRegistry
         AssetId assetId) =>
         string.Equals(operation.Target?.BundleId, bundleId.Value, StringComparison.Ordinal) &&
         string.Equals(operation.Target?.AssetId, assetId.Value, StringComparison.Ordinal);
+
+    private static bool OperationConcernsAssetChangeRecord(
+        WorkspaceOperationRecordDto operation,
+        BundleId bundleId,
+        AssetId assetId)
+    {
+        if (OperationTargetsAsset(operation, bundleId, assetId))
+        {
+            return true;
+        }
+
+        return operation.OperationKind is WorkspaceOperationKind.ReplaceFromFile or WorkspaceOperationKind.ReplaceFromWorkspace &&
+               WorkspaceOperationRelationMatcher.OperationConcernsTarget(
+                   operation,
+                   bundleId.Value,
+                   assetId.Value);
+    }
 }

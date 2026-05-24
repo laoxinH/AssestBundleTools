@@ -1446,6 +1446,9 @@
   <data name="InspectorPanelView.SpriteEdit.FullSize.ToolTip" xml:space="preserve">
     <value>Use the full image as the crop region</value>
   </data>
+  <data name="InspectorPanelView.SpriteEdit.ReplaceTexture.ToolTip" xml:space="preserve">
+    <value>Select an image for the linked Texture2D</value>
+  </data>
   <data name="InspectorPanelView.SpritePreviewOverlay.Badge.Format" xml:space="preserve">
     <value>Crop Preview&#x0a;x={0}, y={1}&#x0a;Size {2} x {3}</value>
   </data>
@@ -2553,6 +2556,9 @@
   <data name="InspectorPanelView.ChangeRecord.SpriteEdit.Title" xml:space="preserve">
     <value>Sprite Edit</value>
   </data>
+  <data name="InspectorPanelView.ChangeRecord.AssociatedFileReplacement.Title" xml:space="preserve">
+    <value>Linked Asset Edit</value>
+  </data>
   <data name="InspectorPanelView.ChangeRecord.EffectiveBadge" xml:space="preserve">
     <value>Effective</value>
   </data>
@@ -2564,6 +2570,9 @@
   </data>
   <data name="InspectorPanelView.ChangeRecord.Source.Format" xml:space="preserve">
     <value>Source: {0}</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.Target.Format" xml:space="preserve">
+    <value>Target: {0}</value>
   </data>
   <data name="InspectorPanelView.ChangeRecord.SpriteEdit.Source" xml:space="preserve">
     <value>Crop / Pivot</value>
@@ -3717,6 +3726,9 @@
   <data name="BundleExplorer.Log.FileReplacementApplied" xml:space="preserve">
     <value>Replaced "{0}" with file {1} ({2})</value>
   </data>
+  <data name="BundleExplorer.Log.SpriteTextureReplacementSourceSelected" xml:space="preserve">
+    <value>Selected file source {0} for linked texture "{1}" on Sprite "{2}"</value>
+  </data>
   <data name="BundleExplorer.Log.ReplacementApplied" xml:space="preserve">
     <value>Replaced "{0}" with {1} / {2}</value>
   </data>
@@ -3794,6 +3806,12 @@
   </data>
   <data name="BundleExplorer.Notification.FileReplacementApplied" xml:space="preserve">
     <value>File replacement applied: {0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.SpriteTextureNotFound" xml:space="preserve">
+    <value>No replaceable linked Texture2D was resolved for the current Sprite.</value>
+  </data>
+  <data name="BundleExplorer.Notification.SpriteTextureReplacementSourceSelected" xml:space="preserve">
+    <value>Linked texture source selected: {0}</value>
   </data>
   <data name="BundleExplorer.Notification.ReplacementApplied" xml:space="preserve">
     <value>Workspace replacement applied: {0}</value>
@@ -3932,6 +3950,9 @@
   </data>
   <data name="Error.Asset.EditDraft.InvalidGeometry" xml:space="preserve">
     <value>The current Sprite crop geometry is invalid. Adjust the crop frame and save again.</value>
+  </data>
+  <data name="Error.Asset.EditDraft.AssociatedAssetNotFound" xml:space="preserve">
+    <value>The selected linked asset is not associated with the current Sprite and cannot be saved.</value>
   </data>
   <data name="Error.Asset.EditDraft.NotFound" xml:space="preserve">
     <value>Draft {1} ({2}) was not found in workspace {0}; it may have been discarded or cleaned up.</value>

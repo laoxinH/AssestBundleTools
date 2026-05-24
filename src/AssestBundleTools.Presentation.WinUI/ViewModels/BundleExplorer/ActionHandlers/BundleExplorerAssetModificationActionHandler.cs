@@ -1,8 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Common.Results;
-using AssestBundleTools.Application.Replacement.Commands;
-using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Queries;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
@@ -25,6 +23,8 @@ internal sealed class BundleExplorerAssetModificationActionHandler
     private readonly BundleExplorerFileReplacementActionExecutor _fileReplacementActionExecutor;
     private readonly BundleExplorerAssetExtractionActionHandler _extractionActionHandler;
     private readonly BundleExplorerSpriteEditActionHandler _spriteEditActionHandler;
+    private readonly BundleExplorerSpriteTextureReplacementActionHandler _spriteTextureReplacementActionHandler;
+    private readonly BundleExplorerReplacementActionHandler _replacementActionHandler;
     private readonly BundleExplorerChangeRecordActionHandler _changeRecordActionHandler;
 
     public BundleExplorerAssetModificationActionHandler(
@@ -64,6 +64,17 @@ internal sealed class BundleExplorerAssetModificationActionHandler
             _appLogService,
             _appNotificationService,
             _localizationService);
+        _spriteTextureReplacementActionHandler = new BundleExplorerSpriteTextureReplacementActionHandler(
+            _fileReplacementActionExecutor,
+            _appLogService,
+            _appNotificationService,
+            _localizationService);
+        _replacementActionHandler = new BundleExplorerReplacementActionHandler(
+            _workspaceAssetOperationGateway,
+            _appLogService,
+            _appNotificationService,
+            _localizationService,
+            _fileReplacementActionExecutor);
         _changeRecordActionHandler = new BundleExplorerChangeRecordActionHandler(
             _workspaceAssetOperationGateway,
             _appLogService,
@@ -260,174 +271,61 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         }
     }
 
-    public async Task ApplyPendingReplacementAsync(
+    public Task SelectSpriteTextureReplacementSourceAsync(
         WorkspaceSummaryDto workspaceSummary,
         AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
         Action<bool> setBusyState,
-        Action<IReadOnlyList<AppError>> appendResultFailure)
-    {
-        ArgumentNullException.ThrowIfNull(workspaceSummary);
-        ArgumentNullException.ThrowIfNull(assetTab);
-        ArgumentNullException.ThrowIfNull(details);
-        ArgumentNullException.ThrowIfNull(setBusyState);
-        ArgumentNullException.ThrowIfNull(appendResultFailure);
+        Action<IReadOnlyList<AppError>> appendResultFailure) =>
+        _spriteTextureReplacementActionHandler.SelectTextureReplacementSourceAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            setBusyState,
+            appendResultFailure);
 
-        setBusyState(true);
-        try
-        {
-            if (assetTab.PendingFileReplacementCandidate is not null)
-            {
-                if (await _fileReplacementActionExecutor.ApplyFileReplacementAsync(
-                        workspaceSummary,
-                        details,
-                        assetTab.PendingFileReplacementCandidate,
-                        appendResultFailure))
-                {
-                    assetTab.ClearPendingReplacementCandidates();
-                }
-
-                return;
-            }
-
-            if (assetTab.PendingWorkspaceReplacementCandidate is null)
-            {
-                return;
-            }
-
-            var workspaceResult = await _workspaceAssetOperationGateway.ReplaceAssetFromWorkspaceAsync(
-                new ReplaceAssetFromWorkspaceCommand(
-                    workspaceSummary.WorkspaceId,
-                    details.BundleId,
-                    details.AssetId,
-                    assetTab.PendingWorkspaceReplacementCandidate.SourceBundleId,
-                    assetTab.PendingWorkspaceReplacementCandidate.SourceAssetId,
-                    workspaceSummary.WorkspaceKey,
-                    workspaceSummary.WorkspaceDataRootPath));
-
-            if (!TryGetValue(workspaceResult, out var replacementResult, appendResultFailure))
-            {
-                return;
-            }
-
-            _appLogService.AppendInfo(_localizationService.GetFormattedString(
-                ResourceKeys.BundleExplorerLogReplacementApplied,
-                replacementResult.TargetAssetName,
-                replacementResult.SourceBundleDisplayName,
-                replacementResult.SourceAssetName));
-
-            ShowOperationNotification(
-                GetString(ResourceKeys.AppNotificationSuccessTitle),
-                _localizationService.GetFormattedString(
-                    ResourceKeys.BundleExplorerNotificationReplacementApplied,
-                    replacementResult.TargetAssetName),
-                AppNotificationSeverity.Success);
-
-            assetTab.ClearPendingReplacementCandidates();
-        }
-        finally
-        {
-            setBusyState(false);
-        }
-    }
-
-    public async Task UndoAppliedReplacementAsync(
+    public Task ApplyPendingReplacementAsync(
         WorkspaceSummaryDto workspaceSummary,
         AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
         Action<bool> setBusyState,
-        Action<IReadOnlyList<AppError>> appendResultFailure)
-    {
-        ArgumentNullException.ThrowIfNull(workspaceSummary);
-        ArgumentNullException.ThrowIfNull(assetTab);
-        ArgumentNullException.ThrowIfNull(details);
-        ArgumentNullException.ThrowIfNull(setBusyState);
-        ArgumentNullException.ThrowIfNull(appendResultFailure);
+        Action<IReadOnlyList<AppError>> appendResultFailure) =>
+        _replacementActionHandler.ApplyPendingReplacementAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            setBusyState,
+            appendResultFailure);
 
-        setBusyState(true);
-        try
-        {
-            var result = await _workspaceAssetOperationGateway.UndoAssetReplacementAsync(
-                new UndoAssetReplacementCommand(
-                    workspaceSummary.WorkspaceId,
-                    details.BundleId,
-                    details.AssetId,
-                    workspaceSummary.WorkspaceKey,
-                    workspaceSummary.WorkspaceDataRootPath));
-
-            if (!TryGetValue(result, out var undoResult, appendResultFailure))
-            {
-                return;
-            }
-
-            _appLogService.AppendInfo(_localizationService.GetFormattedString(
-                ResourceKeys.BundleExplorerLogReplacementUndone,
-                undoResult.TargetAssetName));
-
-            ShowOperationNotification(
-                GetString(ResourceKeys.AppNotificationInfoTitle),
-                _localizationService.GetFormattedString(
-                    ResourceKeys.BundleExplorerNotificationReplacementUndone,
-                    undoResult.TargetAssetName),
-                AppNotificationSeverity.Informational);
-
-            assetTab.ClearPendingReplacementCandidates();
-        }
-        finally
-        {
-            setBusyState(false);
-        }
-    }
-
-    public async Task RedoAppliedReplacementAsync(
+    public Task UndoAppliedReplacementAsync(
         WorkspaceSummaryDto workspaceSummary,
         AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
         Action<bool> setBusyState,
         Action<IReadOnlyList<AppError>> appendResultFailure,
-        string? replacementOperationId = null)
-    {
-        ArgumentNullException.ThrowIfNull(workspaceSummary);
-        ArgumentNullException.ThrowIfNull(assetTab);
-        ArgumentNullException.ThrowIfNull(details);
-        ArgumentNullException.ThrowIfNull(setBusyState);
-        ArgumentNullException.ThrowIfNull(appendResultFailure);
+        string? replacementOperationId = null) =>
+        _replacementActionHandler.UndoAppliedReplacementAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            setBusyState,
+            appendResultFailure,
+            replacementOperationId);
 
-        setBusyState(true);
-        try
-        {
-            var result = await _workspaceAssetOperationGateway.RedoAssetReplacementAsync(
-                new RedoAssetReplacementCommand(
-                    workspaceSummary.WorkspaceId,
-                    details.BundleId,
-                    details.AssetId,
-                    workspaceSummary.WorkspaceKey,
-                    workspaceSummary.WorkspaceDataRootPath,
-                    replacementOperationId));
-
-            if (!TryGetValue(result, out var redoResult, appendResultFailure))
-            {
-                return;
-            }
-
-            _appLogService.AppendInfo(_localizationService.GetFormattedString(
-                ResourceKeys.BundleExplorerLogReplacementRedone,
-                redoResult.TargetAssetName));
-
-            ShowOperationNotification(
-                GetString(ResourceKeys.AppNotificationInfoTitle),
-                _localizationService.GetFormattedString(
-                    ResourceKeys.BundleExplorerNotificationReplacementRedone,
-                    redoResult.TargetAssetName),
-                AppNotificationSeverity.Informational);
-
-            assetTab.ClearPendingReplacementCandidates();
-        }
-        finally
-        {
-            setBusyState(false);
-        }
-    }
+    public Task RedoAppliedReplacementAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        AssetDocumentTabViewModel assetTab,
+        AssetDetailsDto details,
+        Action<bool> setBusyState,
+        Action<IReadOnlyList<AppError>> appendResultFailure,
+        string? replacementOperationId = null) =>
+        _replacementActionHandler.RedoAppliedReplacementAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            setBusyState,
+            appendResultFailure,
+            replacementOperationId);
 
     public Task ApplySpriteEditAsync(
         WorkspaceSummaryDto workspaceSummary,

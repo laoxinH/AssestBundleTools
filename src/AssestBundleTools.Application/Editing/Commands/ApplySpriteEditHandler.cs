@@ -1,12 +1,15 @@
 using System.Globalization;
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Editing.Services;
+using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Common.Errors;
 
 namespace AssestBundleTools.Application.Editing.Commands;
 
@@ -77,6 +80,32 @@ public sealed class ApplySpriteEditHandler : ICommandHandler<ApplySpriteEditComm
                 ApplicationErrors.AssetEditDraftInvalidGeometry(command.AssetId)));
         }
 
+        if (!TryPrepareAssociatedFileReplacement(
+                command,
+                targetDetails!,
+                out var associatedTargetDetails,
+                out var associatedFailure))
+        {
+            return Task.FromResult(Result<AssetSpriteEditAppliedResultDto>.Failure(associatedFailure!));
+        }
+
+        AssetFileReplacementResultDto? associatedReplacementResult = null;
+        if (command.AssociatedFileReplacement is { } associatedFileReplacement)
+        {
+            if (!_workspaceSessionRegistry.TryReplaceAssetFromFile(
+                    command.WorkspaceId,
+                    associatedFileReplacement.TargetBundleId,
+                    associatedFileReplacement.TargetAssetId,
+                    associatedFileReplacement.SourceFilePath,
+                    associatedFileReplacement.SourceAssetType,
+                    out associatedReplacementResult) ||
+                associatedReplacementResult is null)
+            {
+                return Task.FromResult(Result<AssetSpriteEditAppliedResultDto>.Failure(
+                    ApplicationErrors.AssetNotFound(associatedFileReplacement.TargetAssetId)));
+            }
+        }
+
         var draftId = NormalizeOptional(command.DraftId) ?? CreateDraftId();
         var draftMode = NormalizeOptional(command.DraftMode) ?? WorkspaceSpriteEditOperationRecorder.SpriteGeometryDraftMode;
         if (!_spriteEditSessionRegistry.TryApplySpriteEdit(
@@ -89,12 +118,99 @@ public sealed class ApplySpriteEditHandler : ICommandHandler<ApplySpriteEditComm
                 out var editResult) ||
             editResult is null)
         {
+            TryRollbackAssociatedReplacement(command);
             return Task.FromResult(Result<AssetSpriteEditAppliedResultDto>.Failure(ApplicationErrors.AssetNotFound(command.AssetId)));
         }
 
-        _operationRecorder?.RecordSpriteEdit(command, targetDetails, editResult);
+        editResult = editResult with
+        {
+            AssociatedFileReplacement = associatedReplacementResult
+        };
+
+        _operationRecorder?.RecordSpriteEdit(
+            command,
+            targetDetails,
+            editResult,
+            associatedTargetDetails,
+            associatedReplacementResult);
 
         return Task.FromResult(Result<AssetSpriteEditAppliedResultDto>.Success(editResult));
+    }
+
+    private bool TryPrepareAssociatedFileReplacement(
+        ApplySpriteEditCommand command,
+        AssetDetailsDto spriteDetails,
+        out AssetDetailsDto? associatedTargetDetails,
+        out AppError? failure)
+    {
+        associatedTargetDetails = null;
+        failure = null;
+
+        if (command.AssociatedFileReplacement is not { } associatedReplacement)
+        {
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(associatedReplacement.TargetBundleId.Value))
+        {
+            failure = ApplicationErrors.BundleIdRequired();
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(associatedReplacement.TargetAssetId.Value))
+        {
+            failure = ApplicationErrors.AssetIdRequired();
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(associatedReplacement.SourceFilePath))
+        {
+            failure = ApplicationErrors.SourceFilePathRequired();
+            return false;
+        }
+
+        if (!_workspaceSessionRegistry.TryGetAssetDetails(
+                command.WorkspaceId,
+                associatedReplacement.TargetBundleId,
+                associatedReplacement.TargetAssetId,
+                out associatedTargetDetails) ||
+            associatedTargetDetails is null)
+        {
+            failure = ApplicationErrors.AssetNotFound(associatedReplacement.TargetAssetId);
+            return false;
+        }
+
+        if (!IsAssociatedTexture(spriteDetails, associatedTargetDetails))
+        {
+            failure = ApplicationErrors.AssetEditAssociatedAssetNotFound(
+                spriteDetails.AssetId,
+                associatedReplacement.TargetAssetId);
+            return false;
+        }
+
+        if (associatedTargetDetails.AssetType != associatedReplacement.SourceAssetType)
+        {
+            failure = ApplicationErrors.AssetTypeMismatch(
+                associatedReplacement.SourceAssetType,
+                associatedTargetDetails.AssetType);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void TryRollbackAssociatedReplacement(ApplySpriteEditCommand command)
+    {
+        if (command.AssociatedFileReplacement is not { } associatedReplacement)
+        {
+            return;
+        }
+
+        _workspaceSessionRegistry.TryUndoAssetReplacement(
+            command.WorkspaceId,
+            associatedReplacement.TargetBundleId,
+            associatedReplacement.TargetAssetId,
+            out _);
     }
 
     private static WorkspaceSpriteEditGeometryDto NormalizeGeometry(
@@ -133,4 +249,38 @@ public sealed class ApplySpriteEditHandler : ICommandHandler<ApplySpriteEditComm
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static bool IsAssociatedTexture(
+        AssetDetailsDto spriteDetails,
+        AssetDetailsDto associatedDetails)
+    {
+        if (associatedDetails.AssetType != AssetType.Texture2D)
+        {
+            return false;
+        }
+
+        return EnumerateTextureDependencies(spriteDetails)
+            .Any(dependency =>
+                dependency.BundleId.Equals(associatedDetails.BundleId) &&
+                dependency.AssetId.Equals(associatedDetails.AssetId));
+    }
+
+    private static IEnumerable<AssetDependencyDto> EnumerateTextureDependencies(AssetDetailsDto details)
+    {
+        foreach (var dependency in details.Dependencies)
+        {
+            if (dependency.AssetType == AssetType.Texture2D)
+            {
+                yield return dependency;
+            }
+        }
+
+        foreach (var dependency in details.TextureAssociations ?? Array.Empty<AssetDependencyDto>())
+        {
+            if (dependency.AssetType == AssetType.Texture2D)
+            {
+                yield return dependency;
+            }
+        }
+    }
 }

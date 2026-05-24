@@ -50,6 +50,7 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
             .Where(static record => record.Kind is
                 AssetChangeRecordKind.Extraction or
                 AssetChangeRecordKind.FileReplacement or
+                AssetChangeRecordKind.AssociatedFileReplacement or
                 AssetChangeRecordKind.WorkspaceReplacement or
                 AssetChangeRecordKind.SpriteEdit)
             .ToArray();
@@ -143,6 +144,7 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
         return record.Kind switch
         {
             AssetChangeRecordKind.FileReplacement => GetString(ResourceKeys.InspectorChangeRecordFileReplacementTitle),
+            AssetChangeRecordKind.AssociatedFileReplacement => GetString(ResourceKeys.InspectorChangeRecordAssociatedFileReplacementTitle),
             AssetChangeRecordKind.WorkspaceReplacement => GetString(ResourceKeys.InspectorChangeRecordWorkspaceReplacementTitle),
             AssetChangeRecordKind.SpriteEdit => GetString(ResourceKeys.InspectorChangeRecordSpriteEditTitle),
             AssetChangeRecordKind.Extraction => GetString(ResourceKeys.InspectorChangeRecordExtractionTitle),
@@ -175,7 +177,7 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
     {
         var source = record.Kind switch
         {
-            AssetChangeRecordKind.FileReplacement => ResolveDisplayValue(record.SourceFileName ?? record.SourceFilePath),
+            AssetChangeRecordKind.FileReplacement or AssetChangeRecordKind.AssociatedFileReplacement => ResolveDisplayValue(record.SourceFileName ?? record.SourceFilePath),
             AssetChangeRecordKind.WorkspaceReplacement => string.Concat(
                 ResolveDisplayValue(record.SourceBundleDisplayName),
                 " / ",
@@ -191,9 +193,18 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
 
     private string BuildSecondaryText(AssetChangeRecordDto record)
     {
-        return record.Kind == AssetChangeRecordKind.FileReplacement
-            ? record.SourceFilePath?.Trim() ?? string.Empty
-            : string.Empty;
+        if (record.Kind == AssetChangeRecordKind.FileReplacement)
+        {
+            return record.SourceFilePath?.Trim() ?? string.Empty;
+        }
+
+        if (record.Kind == AssetChangeRecordKind.AssociatedFileReplacement)
+        {
+            var target = ResolveDisplayValue(record.TargetAssetName ?? record.TargetAssetId);
+            return _localizationService.GetFormattedString(ResourceKeys.InspectorChangeRecordTargetFormat, target);
+        }
+
+        return string.Empty;
     }
 
     private string ResolveDisplayValue(string? value) =>
@@ -209,12 +220,15 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
     }
 
     private static bool IsReplacementRecord(AssetChangeRecordDto record) =>
-        record.Kind is AssetChangeRecordKind.FileReplacement or AssetChangeRecordKind.WorkspaceReplacement;
+        record.Kind is AssetChangeRecordKind.FileReplacement or
+            AssetChangeRecordKind.WorkspaceReplacement or
+            AssetChangeRecordKind.AssociatedFileReplacement;
 
     private static string BuildGlyph(AssetChangeRecordDto record) =>
         record.Kind switch
         {
             AssetChangeRecordKind.FileReplacement => "\uE8B7",
+            AssetChangeRecordKind.AssociatedFileReplacement => "\uE91B",
             AssetChangeRecordKind.WorkspaceReplacement => "\uE8A5",
             AssetChangeRecordKind.SpriteEdit => "\uE70F",
             AssetChangeRecordKind.Extraction => "\uE896",

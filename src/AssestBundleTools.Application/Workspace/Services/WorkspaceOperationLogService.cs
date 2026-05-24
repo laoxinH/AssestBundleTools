@@ -59,7 +59,8 @@ public sealed class WorkspaceOperationLogService : IWorkspaceOperationLogService
             CheckpointId: NormalizeOptional(request.CheckpointId),
             BatchId: NormalizeOptional(request.BatchId),
             SupersedesOperationId: NormalizeOptional(request.SupersedesOperationId),
-            Diagnostics: NormalizeDiagnostics(request.Diagnostics));
+            Diagnostics: NormalizeDiagnostics(request.Diagnostics),
+            Relations: NormalizeRelations(request.Relations));
 
         return NormalizeChangeSet(changeSet, workspaceKey) with
         {
@@ -311,6 +312,36 @@ public sealed class WorkspaceOperationLogService : IWorkspaceOperationLogService
                 SourcePath = NormalizeOptional(diagnostic.SourcePath)
             })
             .ToArray();
+    }
+
+    private static IReadOnlyList<WorkspaceOperationRelationDto>? NormalizeRelations(
+        IReadOnlyList<WorkspaceOperationRelationDto>? relations)
+    {
+        if (relations is null)
+        {
+            return null;
+        }
+
+        var normalizedRelations = relations
+            .Where(static relation => relation is not null)
+            .Select(static relation => relation with
+            {
+                RelationId = string.IsNullOrWhiteSpace(relation.RelationId)
+                    ? Guid.NewGuid().ToString("N")
+                    : relation.RelationId.Trim(),
+                RelationKind = string.IsNullOrWhiteSpace(relation.RelationKind)
+                    ? WorkspaceOperationRelationNames.LinkedResourceOperation
+                    : relation.RelationKind.Trim(),
+                Role = string.IsNullOrWhiteSpace(relation.Role)
+                    ? WorkspaceOperationRelationNames.SubjectRole
+                    : relation.Role.Trim(),
+                RelatedOperationId = NormalizeOptional(relation.RelatedOperationId)
+            })
+            .ToArray();
+
+        return normalizedRelations.Length == 0
+            ? null
+            : normalizedRelations;
     }
 
     private static string NormalizeRequired(string value, string parameterName)

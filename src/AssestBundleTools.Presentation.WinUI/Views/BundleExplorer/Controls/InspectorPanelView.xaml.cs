@@ -79,13 +79,15 @@ public sealed partial class InspectorPanelView : UserControl
 
     public event EventHandler? ApplyReplacementRequested;
 
-    public event EventHandler? UndoReplacementRequested;
+    public event EventHandler<InspectorChangeRecordActionRequestedEventArgs>? UndoReplacementRequested;
 
     public event EventHandler<InspectorChangeRecordActionRequestedEventArgs>? RedoReplacementRequested;
 
     public event EventHandler<InspectorChangeRecordActionRequestedEventArgs>? DeleteChangeRecordRequested;
 
     public event EventHandler? OpenPreviewLocationRequested;
+
+    public event EventHandler? SpriteTextureReplacementRequested;
 
     public event EventHandler<ResolvedAssetOpenRequestedEventArgs>? ResolvedAssetOpenRequested;
 
@@ -116,7 +118,7 @@ public sealed partial class InspectorPanelView : UserControl
 
     private void OnChangeRecordUndoReplacementButtonClick(object sender, RoutedEventArgs e)
     {
-        UndoReplacementRequested?.Invoke(this, EventArgs.Empty);
+        UndoReplacementRequested?.Invoke(this, new InspectorChangeRecordActionRequestedEventArgs(GetOperationId(sender)));
     }
 
     private void OnChangeRecordRedoReplacementButtonClick(object sender, RoutedEventArgs e)
@@ -132,6 +134,11 @@ public sealed partial class InspectorPanelView : UserControl
     private void OnPreviewSurfaceOpenPreviewLocationRequested(object? sender, EventArgs e)
     {
         OpenPreviewLocationRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnPreviewSurfaceSpriteTextureReplacementRequested(object? sender, EventArgs e)
+    {
+        SpriteTextureReplacementRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnPreviewSurfaceResolvedAssetOpenRequested(

@@ -19,16 +19,26 @@ public sealed record AssetChangeRecordDto(
     bool IsEffectiveReplacement = false,
     string? DraftId = null,
     string? DraftMode = null,
-    bool IsEffectiveEdit = false)
+    bool IsEffectiveEdit = false,
+    string? TargetBundleId = null,
+    string? TargetAssetId = null,
+    string? TargetAssetName = null,
+    string? TargetAssetType = null,
+    bool IsRelatedOperation = false)
 {
     public DateTimeOffset DisplayTimestampUtc => AppliedAtUtc ?? CreatedAtUtc;
 
     public static AssetChangeRecordDto FromOperation(
         WorkspaceOperationRecordDto operation,
-        bool isEffectiveOperation = false)
+        bool isEffectiveOperation = false,
+        bool isRelatedOperation = false)
     {
         ArgumentNullException.ThrowIfNull(operation);
         var kind = MapKind(operation.OperationKind);
+        if (isRelatedOperation && kind == AssetChangeRecordKind.FileReplacement)
+        {
+            kind = AssetChangeRecordKind.AssociatedFileReplacement;
+        }
 
         return new AssetChangeRecordDto(
             Kind: kind,
@@ -42,10 +52,17 @@ public sealed record AssetChangeRecordDto(
             Sequence: operation.Sequence,
             SupersedesOperationId: operation.SupersedesOperationId,
             IsEffectiveReplacement: isEffectiveOperation &&
-                kind is AssetChangeRecordKind.FileReplacement or AssetChangeRecordKind.WorkspaceReplacement,
+                kind is AssetChangeRecordKind.FileReplacement or
+                    AssetChangeRecordKind.WorkspaceReplacement or
+                    AssetChangeRecordKind.AssociatedFileReplacement,
             DraftId: operation.Source?.DraftId ?? operation.Result?.DraftId,
             DraftMode: operation.Source?.DraftMode,
-            IsEffectiveEdit: isEffectiveOperation && kind == AssetChangeRecordKind.SpriteEdit);
+            IsEffectiveEdit: isEffectiveOperation && kind == AssetChangeRecordKind.SpriteEdit,
+            TargetBundleId: operation.Target?.BundleId,
+            TargetAssetId: operation.Target?.AssetId,
+            TargetAssetName: operation.Target?.AssetName,
+            TargetAssetType: operation.Target?.AssetType,
+            IsRelatedOperation: isRelatedOperation);
     }
 
     private static AssetChangeRecordKind MapKind(WorkspaceOperationKind operationKind) =>

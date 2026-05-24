@@ -1619,6 +1619,7 @@
                         ResolvedAssetOpenRequested="OnInspectorResolvedAssetOpenRequested"
                         ModifyFromFileReplacementSourceRequested="OnInspectorModifyFromFileReplacementSourceRequested"
                         SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
+                        SpriteTextureReplacementRequested="OnInspectorSpriteTextureReplacementRequested"
                         ApplyReplacementRequested="OnInspectorApplyReplacementRequested"
                         UndoReplacementRequested="OnInspectorUndoReplacementRequested"
                         RedoReplacementRequested="OnInspectorRedoReplacementRequested"

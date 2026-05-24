@@ -204,6 +204,11 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         await ViewModel.SelectFileReplacementSourceAsync();
     }
 
+    private async void OnInspectorSpriteTextureReplacementRequested(object sender, EventArgs e)
+    {
+        await ViewModel.SelectSpriteTextureReplacementSourceAsync();
+    }
+
     private async void OnInspectorModifyFromFileReplacementSourceRequested(object sender, EventArgs e)
     {
         await ViewModel.ModifyFromFileReplacementSourceAsync();
@@ -214,9 +219,11 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         await ViewModel.ApplyPendingReplacementAsync();
     }
 
-    private async void OnInspectorUndoReplacementRequested(object sender, EventArgs e)
+    private async void OnInspectorUndoReplacementRequested(
+        object sender,
+        InspectorChangeRecordActionRequestedEventArgs e)
     {
-        await ViewModel.UndoAppliedReplacementAsync();
+        await ViewModel.UndoAppliedReplacementAsync(e.OperationId);
     }
 
     private async void OnInspectorRedoReplacementRequested(
@@ -243,6 +250,11 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
     private void OnPreviewSurfaceOpenPreviewLocationRequested(object sender, EventArgs e)
     {
         ViewModel.OpenCurrentPreviewLocation();
+    }
+
+    private async void OnPreviewSurfaceSpriteTextureReplacementRequested(object sender, EventArgs e)
+    {
+        await ViewModel.SelectSpriteTextureReplacementSourceAsync();
     }
 
     private async void OnResolvedAssetOpenRequested(

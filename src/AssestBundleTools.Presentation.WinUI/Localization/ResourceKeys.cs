@@ -464,6 +464,7 @@ public static class ResourceKeys
     public const string BundleExplorerLogFilePickerOpenFailedFormat = "BundleExplorer.Log.FilePickerOpenFailed.Format";
     public const string BundleExplorerLogFileReplacementSourceSelected = "BundleExplorer.Log.FileReplacementSourceSelected";
     public const string BundleExplorerLogFileReplacementApplied = "BundleExplorer.Log.FileReplacementApplied";
+    public const string BundleExplorerLogSpriteTextureReplacementSourceSelected = "BundleExplorer.Log.SpriteTextureReplacementSourceSelected";
     public const string BundleExplorerLogReplacementApplied = "BundleExplorer.Log.ReplacementApplied";
     public const string BundleExplorerLogReplacementUndone = "BundleExplorer.Log.ReplacementUndone";
     public const string BundleExplorerLogReplacementRedone = "BundleExplorer.Log.ReplacementRedone";
@@ -490,6 +491,8 @@ public static class ResourceKeys
     public const string BundleExplorerNotificationFilePickerOpenFailed = "BundleExplorer.Notification.FilePickerOpenFailed";
     public const string BundleExplorerNotificationFileReplacementSourceSelected = "BundleExplorer.Notification.FileReplacementSourceSelected";
     public const string BundleExplorerNotificationFileReplacementApplied = "BundleExplorer.Notification.FileReplacementApplied";
+    public const string BundleExplorerNotificationSpriteTextureNotFound = "BundleExplorer.Notification.SpriteTextureNotFound";
+    public const string BundleExplorerNotificationSpriteTextureReplacementSourceSelected = "BundleExplorer.Notification.SpriteTextureReplacementSourceSelected";
     public const string BundleExplorerNotificationReplacementApplied = "BundleExplorer.Notification.ReplacementApplied";
     public const string BundleExplorerNotificationReplacementUndone = "BundleExplorer.Notification.ReplacementUndone";
     public const string BundleExplorerNotificationReplacementRedone = "BundleExplorer.Notification.ReplacementRedone";
@@ -865,6 +868,7 @@ public static class ResourceKeys
     public const string InspectorSpriteCropPreviewModeToolTip = "InspectorPanelView.SpriteCropPreviewModeButton.ToolTip";
     public const string InspectorSpriteEditResetOriginalToolTip = "InspectorPanelView.SpriteEdit.ResetOriginal.ToolTip";
     public const string InspectorSpriteEditFullSizeToolTip = "InspectorPanelView.SpriteEdit.FullSize.ToolTip";
+    public const string InspectorSpriteEditReplaceTextureToolTip = "InspectorPanelView.SpriteEdit.ReplaceTexture.ToolTip";
     public const string InspectorSpritePreviewOverlayBadgeFormat = "InspectorPanelView.SpritePreviewOverlay.Badge.Format";
     public const string InspectorSpritePreviewOverlayBadgeWithPivotFormat = "InspectorPanelView.SpritePreviewOverlay.BadgeWithPivot.Format";
     public const string InspectorSpriteFocusPreviewTitle = "InspectorPanelView.SpriteFocusPreview.Title";
@@ -1201,10 +1205,12 @@ public static class ResourceKeys
     public const string InspectorChangeRecordFileReplacementTitle = "InspectorPanelView.ChangeRecord.FileReplacement.Title";
     public const string InspectorChangeRecordWorkspaceReplacementTitle = "InspectorPanelView.ChangeRecord.WorkspaceReplacement.Title";
     public const string InspectorChangeRecordSpriteEditTitle = "InspectorPanelView.ChangeRecord.SpriteEdit.Title";
+    public const string InspectorChangeRecordAssociatedFileReplacementTitle = "InspectorPanelView.ChangeRecord.AssociatedFileReplacement.Title";
     public const string InspectorChangeRecordEffectiveBadge = "InspectorPanelView.ChangeRecord.EffectiveBadge";
     public const string InspectorChangeRecordRedoBadge = "InspectorPanelView.ChangeRecord.RedoBadge";
     public const string InspectorChangeRecordLatestExtractionBadge = "InspectorPanelView.ChangeRecord.LatestExtractionBadge";
     public const string InspectorChangeRecordSourceFormat = "InspectorPanelView.ChangeRecord.Source.Format";
+    public const string InspectorChangeRecordTargetFormat = "InspectorPanelView.ChangeRecord.Target.Format";
     public const string InspectorChangeRecordSpriteEditSource = "InspectorPanelView.ChangeRecord.SpriteEdit.Source";
     public const string InspectorChangeRecordTimeFormat = "InspectorPanelView.ChangeRecord.Time.Format";
     public const string InspectorPreviewDiagnosticCacheStatusHit = "InspectorPanelView.PreviewDiagnostic.CacheStatus.Hit";

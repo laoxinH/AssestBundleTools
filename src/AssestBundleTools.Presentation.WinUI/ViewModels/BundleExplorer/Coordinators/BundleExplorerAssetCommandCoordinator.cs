@@ -263,6 +263,25 @@ internal sealed class BundleExplorerAssetCommandCoordinator
             _operationFeedbackBridge.AppendResultFailure);
     }
 
+    public async Task SelectSpriteTextureReplacementSourceAsync()
+    {
+        if (!TryGetActiveAssetCommandContext(
+                static (_, details) => details.AssetType == Domain.Assets.AssetType.Sprite,
+                out var workspaceSummary,
+                out var assetTab,
+                out var details))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.SelectSpriteTextureReplacementSourceAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            _setBusyState,
+            _operationFeedbackBridge.AppendResultFailure);
+    }
+
     public async Task ApplyPendingReplacementAsync()
     {
         if (!TryGetActiveAssetCommandContext(
@@ -283,10 +302,10 @@ internal sealed class BundleExplorerAssetCommandCoordinator
             _operationFeedbackBridge.AppendResultFailure);
     }
 
-    public async Task UndoAppliedReplacementAsync()
+    public async Task UndoAppliedReplacementAsync(string? replacementOperationId = null)
     {
         if (!TryGetActiveAssetCommandContext(
-                static (_, details) => HasAppliedReplacement(details),
+                (_, details) => !string.IsNullOrWhiteSpace(replacementOperationId) || HasAppliedReplacement(details),
                 out var workspaceSummary,
                 out var assetTab,
                 out var details))
@@ -299,7 +318,8 @@ internal sealed class BundleExplorerAssetCommandCoordinator
             assetTab,
             details,
             _setBusyState,
-            _operationFeedbackBridge.AppendResultFailure);
+            _operationFeedbackBridge.AppendResultFailure,
+            replacementOperationId);
     }
 
     public async Task RedoAppliedReplacementAsync(string? replacementOperationId = null)

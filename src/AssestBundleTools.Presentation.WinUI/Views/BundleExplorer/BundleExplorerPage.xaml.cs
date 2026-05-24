@@ -398,14 +398,21 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         await ViewModel.SelectFileReplacementSourceAsync();
     }
 
+    private async void OnInspectorSpriteTextureReplacementRequested(object sender, EventArgs e)
+    {
+        await ViewModel.SelectSpriteTextureReplacementSourceAsync();
+    }
+
     private async void OnInspectorApplyReplacementRequested(object sender, EventArgs e)
     {
         await ViewModel.ApplyPendingReplacementAsync();
     }
 
-    private async void OnInspectorUndoReplacementRequested(object sender, EventArgs e)
+    private async void OnInspectorUndoReplacementRequested(
+        object sender,
+        InspectorChangeRecordActionRequestedEventArgs e)
     {
-        await ViewModel.UndoAppliedReplacementAsync();
+        await ViewModel.UndoAppliedReplacementAsync(e.OperationId);
     }
 
     private async void OnInspectorRedoReplacementRequested(

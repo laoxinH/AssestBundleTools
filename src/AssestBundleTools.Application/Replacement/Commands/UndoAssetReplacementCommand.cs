@@ -12,4 +12,5 @@ public sealed record UndoAssetReplacementCommand(
     BundleId BundleId,
     AssetId AssetId,
     string? WorkspaceKey = null,
-    string? WorkspaceDataRootPath = null);
+    string? WorkspaceDataRootPath = null,
+    string? ReplacementOperationId = null);

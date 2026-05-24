@@ -133,6 +133,7 @@
                     UseAvailablePreviewSpace="True"
                     ViewModel="{x:Bind ViewModel.Inspector, Mode=OneWay}"
                     OpenPreviewLocationRequested="OnPreviewSurfaceOpenPreviewLocationRequested"
+                    SpriteTextureReplacementRequested="OnPreviewSurfaceSpriteTextureReplacementRequested"
                     ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested" />
 
                 <controls:SpriteEditGeometryPanelView
@@ -210,6 +211,7 @@
                     DeleteChangeRecordRequested="OnInspectorDeleteChangeRecordRequested"
                     ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested"
                     SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
+                    SpriteTextureReplacementRequested="OnInspectorSpriteTextureReplacementRequested"
                     UndoReplacementRequested="OnInspectorUndoReplacementRequested"
                     SpineAtlasPageSelectionRequested="OnInspectorSpineAtlasPageSelectionRequested" />
             </Border>

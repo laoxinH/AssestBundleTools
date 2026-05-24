@@ -102,6 +102,10 @@ public sealed class WorkspaceReplacementOperationRecorder
         }
 
         var recordedAtUtc = DateTimeOffset.UtcNow;
+        var latestReplacementOperation = FindLatestActiveReplacementOperation(
+            changeSet,
+            targetDetails.BundleId.Value,
+            targetDetails.AssetId.Value);
         var appendRequest = new WorkspaceOperationAppendRequestDto(
             WorkspaceKey: workspaceKey,
             OperationKind: WorkspaceOperationKind.UndoReplacement,
@@ -111,7 +115,8 @@ public sealed class WorkspaceReplacementOperationRecorder
             CreatedAtUtc: recordedAtUtc,
             AppliedAtUtc: recordedAtUtc,
             CompletedAtUtc: recordedAtUtc,
-            SupersedesOperationId: FindLatestActiveReplacementOperationId(changeSet, targetDetails.BundleId.Value, targetDetails.AssetId.Value));
+            SupersedesOperationId: latestReplacementOperation?.OperationId,
+            Relations: latestReplacementOperation?.Relations);
 
         store.Save(_operationLogService.AppendOperation(changeSet, appendRequest));
     }
@@ -129,6 +134,9 @@ public sealed class WorkspaceReplacementOperationRecorder
 
         var recordedAtUtc = result.RedoneAtUtc;
         var source = replacementOperation?.Source;
+        var latestUndoOperation = replacementOperation is null
+            ? FindLatestUndoOperation(changeSet, targetDetails.BundleId.Value, targetDetails.AssetId.Value)
+            : null;
         var appendRequest = new WorkspaceOperationAppendRequestDto(
             WorkspaceKey: workspaceKey,
             OperationKind: WorkspaceOperationKind.RedoReplacement,
@@ -143,10 +151,8 @@ public sealed class WorkspaceReplacementOperationRecorder
             AppliedAtUtc: recordedAtUtc,
             CompletedAtUtc: recordedAtUtc,
             SupersedesOperationId: replacementOperation?.OperationId ??
-                                  _replacementStateMaterializer.FindLatestUndoOperationId(
-                                      changeSet,
-                                      targetDetails.BundleId.Value,
-                                      targetDetails.AssetId.Value));
+                                  latestUndoOperation?.OperationId,
+            Relations: replacementOperation?.Relations ?? latestUndoOperation?.Relations);
 
         store.Save(_operationLogService.AppendOperation(changeSet, appendRequest));
     }
@@ -155,14 +161,44 @@ public sealed class WorkspaceReplacementOperationRecorder
         RedoAssetReplacementCommand command,
         out WorkspaceOperationRecordDto? replacementOperation)
     {
+        return TryFindReplacementOperation(
+            command.ReplacementOperationId,
+            command.WorkspaceKey,
+            command.WorkspaceDataRootPath,
+            command.BundleId.Value,
+            command.AssetId.Value,
+            out replacementOperation);
+    }
+
+    public bool TryFindReplacementOperation(
+        UndoAssetReplacementCommand command,
+        out WorkspaceOperationRecordDto? replacementOperation)
+    {
+        return TryFindReplacementOperation(
+            command.ReplacementOperationId,
+            command.WorkspaceKey,
+            command.WorkspaceDataRootPath,
+            command.BundleId.Value,
+            command.AssetId.Value,
+            out replacementOperation);
+    }
+
+    private bool TryFindReplacementOperation(
+        string? replacementOperationId,
+        string? workspaceKey,
+        string? workspaceDataRootPath,
+        string contextBundleId,
+        string contextAssetId,
+        out WorkspaceOperationRecordDto? replacementOperation)
+    {
         replacementOperation = null;
-        if (string.IsNullOrWhiteSpace(command.ReplacementOperationId) ||
-            !TryLoadChangeSet(command.WorkspaceKey, command.WorkspaceDataRootPath, out _, out _, out var changeSet))
+        if (string.IsNullOrWhiteSpace(replacementOperationId) ||
+            !TryLoadChangeSet(workspaceKey, workspaceDataRootPath, out _, out _, out var changeSet))
         {
             return false;
         }
 
-        var operationId = command.ReplacementOperationId.Trim();
+        var operationId = replacementOperationId.Trim();
         replacementOperation = (changeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>())
             .Where(static operation => operation is not null)
             .Where(static operation => operation.Status == WorkspaceOperationStatus.Applied)
@@ -171,8 +207,10 @@ public sealed class WorkspaceReplacementOperationRecorder
                 WorkspaceOperationKind.ReplaceFromWorkspace)
             .FirstOrDefault(operation =>
                 string.Equals(operation.OperationId, operationId, StringComparison.Ordinal) &&
-                string.Equals(operation.Target?.BundleId, command.BundleId.Value, StringComparison.Ordinal) &&
-                string.Equals(operation.Target?.AssetId, command.AssetId.Value, StringComparison.Ordinal));
+                WorkspaceOperationRelationMatcher.OperationConcernsTarget(
+                    operation,
+                    contextBundleId,
+                    contextAssetId));
 
         return replacementOperation is not null;
     }
@@ -204,6 +242,34 @@ public sealed class WorkspaceReplacementOperationRecorder
         string bundleId,
         string assetId) =>
         _replacementStateMaterializer.FindLatestEffectiveReplacementOperationId(changeSet, bundleId, assetId);
+
+    private WorkspaceOperationRecordDto? FindLatestActiveReplacementOperation(
+        WorkspaceChangeSetDto? changeSet,
+        string bundleId,
+        string assetId)
+    {
+        var operationId = FindLatestActiveReplacementOperationId(changeSet, bundleId, assetId);
+        if (string.IsNullOrWhiteSpace(operationId))
+        {
+            return null;
+        }
+
+        return (changeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>())
+            .Where(static operation => operation is not null)
+            .FirstOrDefault(operation => string.Equals(operation.OperationId, operationId, StringComparison.Ordinal));
+    }
+
+    private static WorkspaceOperationRecordDto? FindLatestUndoOperation(
+        WorkspaceChangeSetDto? changeSet,
+        string bundleId,
+        string assetId) =>
+        (changeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>())
+            .Where(static operation => operation is not null)
+            .Where(static operation => operation.Status == WorkspaceOperationStatus.Applied)
+            .Where(static operation => operation.OperationKind == WorkspaceOperationKind.UndoReplacement)
+            .Where(operation => WorkspaceOperationRelationMatcher.TargetMatches(operation.Target, bundleId, assetId))
+            .OrderByDescending(static operation => operation.Sequence)
+            .FirstOrDefault();
 
     private static WorkspaceOperationTargetDto CreateTarget(AssetDetailsDto details) =>
         new(

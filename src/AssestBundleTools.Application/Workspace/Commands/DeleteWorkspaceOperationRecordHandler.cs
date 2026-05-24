@@ -96,8 +96,33 @@ public sealed class DeleteWorkspaceOperationRecordHandler : ICommandHandler<Dele
             deletedOperation.OperationId,
             TryParseBundleId(deletedOperation.Target?.BundleId),
             TryParseAssetId(deletedOperation.Target?.AssetId),
-            deletedAtUtc);
+            deletedAtUtc,
+            CreateAffectedTargets(deletedOperation));
         return Task.FromResult(Result<WorkspaceOperationRecordDeletedResultDto>.Success(result));
+    }
+
+    private static IReadOnlyList<WorkspaceOperationTargetDto> CreateAffectedTargets(
+        WorkspaceOperationRecordDto operation)
+    {
+        var targets = new List<WorkspaceOperationTargetDto>();
+        if (operation.Target is not null)
+        {
+            targets.Add(operation.Target);
+        }
+
+        foreach (var relation in operation.Relations ?? Array.Empty<WorkspaceOperationRelationDto>())
+        {
+            if (relation.RelatedTarget is not null)
+            {
+                targets.Add(relation.RelatedTarget);
+            }
+        }
+
+        return targets
+            .Where(static target => !string.IsNullOrWhiteSpace(target.BundleId) && !string.IsNullOrWhiteSpace(target.AssetId))
+            .GroupBy(static target => string.Concat(target.BundleId, "\n", target.AssetId), StringComparer.Ordinal)
+            .Select(static group => group.First())
+            .ToArray();
     }
 
     private static BundleId? TryParseBundleId(string? value) =>

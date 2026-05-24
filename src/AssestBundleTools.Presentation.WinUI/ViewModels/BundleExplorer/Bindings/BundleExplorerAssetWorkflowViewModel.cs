@@ -417,9 +417,13 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
 
     public Task ModifyFromFileReplacementSourceAsync() => _assetCommandCoordinator.ModifyFromFileReplacementSourceAsync();
 
+    public Task SelectSpriteTextureReplacementSourceAsync() =>
+        _assetCommandCoordinator.SelectSpriteTextureReplacementSourceAsync();
+
     public Task ApplyPendingReplacementAsync() => _assetCommandCoordinator.ApplyPendingReplacementAsync();
 
-    public Task UndoAppliedReplacementAsync() => _assetCommandCoordinator.UndoAppliedReplacementAsync();
+    public Task UndoAppliedReplacementAsync(string? replacementOperationId = null) =>
+        _assetCommandCoordinator.UndoAppliedReplacementAsync(replacementOperationId);
 
     public Task RedoAppliedReplacementAsync(string? replacementOperationId = null) =>
         _assetCommandCoordinator.RedoAppliedReplacementAsync(replacementOperationId);

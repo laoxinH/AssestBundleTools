@@ -6,6 +6,8 @@ using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Queries;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
+using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
@@ -40,12 +42,27 @@ internal sealed class BundleExplorerFileReplacementActionExecutor
     public async Task<FileReplacementCandidateDto?> PickFileReplacementCandidateAsync(
         WorkspaceSummaryDto workspaceSummary,
         AssetDetailsDto details,
+        Action<IReadOnlyList<AppError>> appendResultFailure) =>
+        await PickFileReplacementCandidateAsync(
+            workspaceSummary,
+            details.BundleId,
+            details.AssetId,
+            details.AssetType,
+            details.Name,
+            appendResultFailure);
+
+    public async Task<FileReplacementCandidateDto?> PickFileReplacementCandidateAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        BundleId targetBundleId,
+        AssetId targetAssetId,
+        AssetType targetAssetType,
+        string targetAssetName,
         Action<IReadOnlyList<AppError>> appendResultFailure)
     {
         string? selectedFilePath;
         try
         {
-            selectedFilePath = await _filePickerService.PickReplacementSourceFileAsync(details.AssetType);
+            selectedFilePath = await _filePickerService.PickReplacementSourceFileAsync(targetAssetType);
         }
         catch (Exception ex)
         {
@@ -63,15 +80,15 @@ internal sealed class BundleExplorerFileReplacementActionExecutor
         {
             _appLogService.AppendInfo(_localizationService.GetFormattedString(
                 ResourceKeys.BundleExplorerLogFileReplacementSelectionCancelled,
-                details.Name));
+                targetAssetName));
             return null;
         }
 
         var result = await _workspaceAssetOperationGateway.GetFileReplacementCandidateAsync(
             new GetFileReplacementCandidateQuery(
                 workspaceSummary.WorkspaceId,
-                details.BundleId,
-                details.AssetId,
+                targetBundleId,
+                targetAssetId,
                 selectedFilePath));
 
         return TryGetValue(result, out var candidate, appendResultFailure)

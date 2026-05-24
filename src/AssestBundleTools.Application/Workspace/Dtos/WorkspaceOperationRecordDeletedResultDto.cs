@@ -12,4 +12,5 @@ public sealed record WorkspaceOperationRecordDeletedResultDto(
     string OperationId,
     BundleId? BundleId = null,
     AssetId? AssetId = null,
-    DateTimeOffset DeletedAtUtc = default);
+    DateTimeOffset DeletedAtUtc = default,
+    IReadOnlyList<WorkspaceOperationTargetDto>? AffectedTargets = null);

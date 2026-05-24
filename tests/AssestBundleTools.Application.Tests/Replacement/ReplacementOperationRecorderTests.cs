@@ -374,6 +374,202 @@ internal static class ReplacementOperationRecorderTests
         TestAssert.Equal(@"C:\Imports\hero-old.png", redoOperation.Source?.SourceFilePath, "Selected redo should persist the source needed for replay.");
     }
 
+    public static async Task UndoAssetReplacementHandler_ShouldResolveLinkedReplacementTarget_FromRelatedAssetContext()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var workspaceKey = "workspace-a";
+        var spriteBundleId = new BundleId("bundle.sprites");
+        var spriteAssetId = new AssetId("asset.hero-sprite");
+        var textureBundleId = new BundleId("bundle.textures");
+        var textureAssetId = new AssetId("asset.hero-texture");
+        var now = new DateTimeOffset(2026, 5, 24, 11, 0, 0, TimeSpan.Zero);
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, spriteBundleId, spriteAssetId, AssetType.Sprite, "HeroSprite"));
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            textureBundleId,
+            textureAssetId,
+            AssetType.Texture2D,
+            "HeroTexture",
+            isModified: true,
+            fileReplacementSourceFileName: "hero.png",
+            fileReplacementSourcePath: @"C:\Imports\hero.png"));
+        registry.TryUndoAssetReplacementResult = new AssetReplacementUndoResultDto(
+            workspaceId,
+            textureBundleId,
+            textureAssetId,
+            "HeroTexture");
+        var relation = new WorkspaceOperationRelationDto(
+            RelationId: "rel-sprite-texture",
+            RelationKind: WorkspaceOperationRelationNames.LinkedResourceOperation,
+            Role: WorkspaceOperationRelationNames.SubjectRole,
+            RelatedTarget: new WorkspaceOperationTargetDto(
+                BundleId: spriteBundleId.Value,
+                AssetId: spriteAssetId.Value,
+                AssetName: "HeroSprite",
+                AssetType: AssetType.Sprite.ToString()));
+        var changeStore = new TestWorkspaceChangeStore
+        {
+            ChangeSet = new WorkspaceChangeSetDto(
+                WorkspaceKey: workspaceKey,
+                UpdatedAtUtc: now,
+                Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+                EditDrafts: Array.Empty<WorkspaceAssetEditDraftDescriptorDto>(),
+                SchemaVersion: WorkspaceChangeSetDto.CurrentSchemaVersion,
+                OperationSequence: 1,
+                Operations:
+                [
+                    new WorkspaceOperationRecordDto(
+                        OperationId: "replace-texture",
+                        Sequence: 1,
+                        OperationKind: WorkspaceOperationKind.ReplaceFromFile,
+                        Status: WorkspaceOperationStatus.Applied,
+                        WorkspaceKey: workspaceKey,
+                        Target: new WorkspaceOperationTargetDto(
+                            BundleId: textureBundleId.Value,
+                            AssetId: textureAssetId.Value,
+                            AssetName: "HeroTexture",
+                            AssetType: AssetType.Texture2D.ToString()),
+                        Source: new WorkspaceOperationSourceDto(
+                            SourceKind: "file",
+                            SourceFilePath: @"C:\Imports\hero.png",
+                            SourceFileName: "hero.png",
+                            SourceAssetType: AssetType.Texture2D.ToString()),
+                        PreviousState: null,
+                        Result: null,
+                        CreatedAtUtc: now,
+                        AppliedAtUtc: now,
+                        Relations: [relation])
+                ])
+        };
+        var recorder = new WorkspaceReplacementOperationRecorder(
+            new TestWorkspaceDataStoreFactory(changeStore),
+            new WorkspaceOperationLogService());
+        var handler = new UndoAssetReplacementHandler(registry, recorder);
+
+        var result = await handler.HandleAsync(new UndoAssetReplacementCommand(
+            workspaceId,
+            spriteBundleId,
+            spriteAssetId,
+            workspaceKey,
+            @"D:\WorkspaceData\A",
+            ReplacementOperationId: "replace-texture"));
+
+        TestAssert.True(result.IsSuccess, "Undo from a related Sprite context should succeed.");
+        TestAssert.Equal(textureBundleId, registry.LastUndoTargetBundleId, "Undo should target the linked Texture2D bundle.");
+        TestAssert.Equal(textureAssetId, registry.LastUndoTargetAssetId, "Undo should target the linked Texture2D asset.");
+        var undoOperation = (changeStore.SavedChangeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>()).Last();
+        TestAssert.Equal(WorkspaceOperationKind.UndoReplacement, undoOperation.OperationKind, "Linked undo should append an undo operation.");
+        TestAssert.Equal(textureBundleId.Value, undoOperation.Target?.BundleId, "Linked undo operation target should remain Texture2D.");
+        TestAssert.Equal("replace-texture", undoOperation.SupersedesOperationId, "Linked undo should supersede the selected replacement.");
+        TestAssert.Equal(spriteBundleId.Value, TestAssert.Single(undoOperation.Relations ?? Array.Empty<WorkspaceOperationRelationDto>()).RelatedTarget?.BundleId, "Linked undo should preserve the related Sprite target.");
+    }
+
+    public static async Task RedoAssetReplacementHandler_ShouldResolveLinkedReplacementTarget_FromRelatedAssetContext()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var workspaceKey = "workspace-a";
+        var spriteBundleId = new BundleId("bundle.sprites");
+        var spriteAssetId = new AssetId("asset.hero-sprite");
+        var textureBundleId = new BundleId("bundle.textures");
+        var textureAssetId = new AssetId("asset.hero-texture");
+        var now = new DateTimeOffset(2026, 5, 24, 11, 30, 0, TimeSpan.Zero);
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, spriteBundleId, spriteAssetId, AssetType.Sprite, "HeroSprite"));
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, textureBundleId, textureAssetId, AssetType.Texture2D, "HeroTexture"));
+        registry.TryReplaceAssetFromFileResult = new AssetFileReplacementResultDto(
+            workspaceId,
+            textureBundleId,
+            textureAssetId,
+            "HeroTexture",
+            @"C:\Imports\hero.png",
+            "hero.png",
+            AssetType.Texture2D,
+            now.AddMinutes(1));
+        var relation = new WorkspaceOperationRelationDto(
+            RelationId: "rel-sprite-texture",
+            RelationKind: WorkspaceOperationRelationNames.LinkedResourceOperation,
+            Role: WorkspaceOperationRelationNames.SubjectRole,
+            RelatedTarget: new WorkspaceOperationTargetDto(
+                BundleId: spriteBundleId.Value,
+                AssetId: spriteAssetId.Value,
+                AssetName: "HeroSprite",
+                AssetType: AssetType.Sprite.ToString()));
+        var changeStore = new TestWorkspaceChangeStore
+        {
+            ChangeSet = new WorkspaceChangeSetDto(
+                WorkspaceKey: workspaceKey,
+                UpdatedAtUtc: now,
+                Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+                EditDrafts: Array.Empty<WorkspaceAssetEditDraftDescriptorDto>(),
+                SchemaVersion: WorkspaceChangeSetDto.CurrentSchemaVersion,
+                OperationSequence: 2,
+                Operations:
+                [
+                    new WorkspaceOperationRecordDto(
+                        OperationId: "replace-texture",
+                        Sequence: 1,
+                        OperationKind: WorkspaceOperationKind.ReplaceFromFile,
+                        Status: WorkspaceOperationStatus.Applied,
+                        WorkspaceKey: workspaceKey,
+                        Target: new WorkspaceOperationTargetDto(
+                            BundleId: textureBundleId.Value,
+                            AssetId: textureAssetId.Value,
+                            AssetName: "HeroTexture",
+                            AssetType: AssetType.Texture2D.ToString()),
+                        Source: new WorkspaceOperationSourceDto(
+                            SourceKind: "file",
+                            SourceFilePath: @"C:\Imports\hero.png",
+                            SourceFileName: "hero.png",
+                            SourceAssetType: AssetType.Texture2D.ToString()),
+                        PreviousState: null,
+                        Result: null,
+                        CreatedAtUtc: now,
+                        AppliedAtUtc: now,
+                        Relations: [relation]),
+                    new WorkspaceOperationRecordDto(
+                        OperationId: "undo-texture",
+                        Sequence: 2,
+                        OperationKind: WorkspaceOperationKind.UndoReplacement,
+                        Status: WorkspaceOperationStatus.Applied,
+                        WorkspaceKey: workspaceKey,
+                        Target: new WorkspaceOperationTargetDto(
+                            BundleId: textureBundleId.Value,
+                            AssetId: textureAssetId.Value,
+                            AssetName: "HeroTexture",
+                            AssetType: AssetType.Texture2D.ToString()),
+                        Source: null,
+                        PreviousState: null,
+                        Result: null,
+                        CreatedAtUtc: now.AddMinutes(1),
+                        AppliedAtUtc: now.AddMinutes(1),
+                        SupersedesOperationId: "replace-texture",
+                        Relations: [relation])
+                ])
+        };
+        var recorder = new WorkspaceReplacementOperationRecorder(
+            new TestWorkspaceDataStoreFactory(changeStore),
+            new WorkspaceOperationLogService());
+        var handler = new RedoAssetReplacementHandler(registry, recorder);
+
+        var result = await handler.HandleAsync(new RedoAssetReplacementCommand(
+            workspaceId,
+            spriteBundleId,
+            spriteAssetId,
+            workspaceKey,
+            @"D:\WorkspaceData\A",
+            ReplacementOperationId: "replace-texture"));
+
+        TestAssert.True(result.IsSuccess, "Redo from a related Sprite context should succeed.");
+        TestAssert.Equal(textureBundleId, registry.LastFileReplacementTargetBundleId, "Redo should target the linked Texture2D bundle.");
+        TestAssert.Equal(textureAssetId, registry.LastFileReplacementTargetAssetId, "Redo should target the linked Texture2D asset.");
+        var redoOperation = (changeStore.SavedChangeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>()).Last();
+        TestAssert.Equal(WorkspaceOperationKind.RedoReplacement, redoOperation.OperationKind, "Linked redo should append a redo operation.");
+        TestAssert.Equal(textureBundleId.Value, redoOperation.Target?.BundleId, "Linked redo operation target should remain Texture2D.");
+        TestAssert.Equal("replace-texture", redoOperation.SupersedesOperationId, "Linked redo should point back to the selected replacement.");
+        TestAssert.Equal(spriteBundleId.Value, TestAssert.Single(redoOperation.Relations ?? Array.Empty<WorkspaceOperationRelationDto>()).RelatedTarget?.BundleId, "Linked redo should preserve the related Sprite target.");
+    }
+
     public static Task WorkspaceReplacementReadModelService_ShouldMaterializeEffectiveReplacement_ForRedoStack()
     {
         var workspaceKey = "workspace-a";
@@ -628,6 +824,14 @@ internal static class ReplacementOperationRecorderTests
 
         public AssetReplacementRedoResultDto? TryRedoAssetReplacementResult { get; set; }
 
+        public BundleId? LastFileReplacementTargetBundleId { get; private set; }
+
+        public AssetId? LastFileReplacementTargetAssetId { get; private set; }
+
+        public BundleId? LastUndoTargetBundleId { get; private set; }
+
+        public AssetId? LastUndoTargetAssetId { get; private set; }
+
         public void RegisterAssetDetails(AssetDetailsDto details)
         {
             _assetDetails[(details.BundleId.Value, details.AssetId.Value)] = details;
@@ -658,6 +862,8 @@ internal static class ReplacementOperationRecorderTests
             AssetType sourceAssetType,
             out AssetFileReplacementResultDto? replacementResult)
         {
+            LastFileReplacementTargetBundleId = targetBundleId;
+            LastFileReplacementTargetAssetId = targetAssetId;
             replacementResult = TryReplaceAssetFromFileResult;
             return replacementResult is not null;
         }
@@ -680,6 +886,8 @@ internal static class ReplacementOperationRecorderTests
             AssetId assetId,
             out AssetReplacementUndoResultDto? undoResult)
         {
+            LastUndoTargetBundleId = bundleId;
+            LastUndoTargetAssetId = assetId;
             undoResult = TryUndoAssetReplacementResult;
             return undoResult is not null;
         }

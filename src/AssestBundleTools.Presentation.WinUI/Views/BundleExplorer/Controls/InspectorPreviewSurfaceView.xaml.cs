@@ -44,6 +44,8 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
 
     public event EventHandler? OpenPreviewLocationRequested;
 
+    public event EventHandler? SpriteTextureReplacementRequested;
+
     public event EventHandler<ResolvedAssetOpenRequestedEventArgs>? ResolvedAssetOpenRequested;
 
     private static void OnViewModelPropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
@@ -68,6 +70,7 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
         ToolTipService.SetToolTip(ImageResetButton, UiText.Get(ResourceKeys.InspectorPreviewImageResetToolTip));
         ApplyButtonAssistiveText(SpriteEditResetOriginalButton, UiText.Get(ResourceKeys.InspectorSpriteEditResetOriginalToolTip));
         ApplyButtonAssistiveText(SpriteEditFullSizeButton, UiText.Get(ResourceKeys.InspectorSpriteEditFullSizeToolTip));
+        ApplyButtonAssistiveText(SpriteEditReplaceTextureButton, UiText.Get(ResourceKeys.InspectorSpriteEditReplaceTextureToolTip));
         ToolTipService.SetToolTip(MeshZoomInButton, UiText.Get(ResourceKeys.InspectorMeshPreviewZoomInToolTip));
         ToolTipService.SetToolTip(MeshZoomOutButton, UiText.Get(ResourceKeys.InspectorMeshPreviewZoomOutToolTip));
         ToolTipService.SetToolTip(MeshResetButton, UiText.Get(ResourceKeys.InspectorMeshPreviewResetToolTip));
@@ -279,6 +282,11 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
     private void OnSpriteEditFullSizeButtonClick(object sender, RoutedEventArgs e)
     {
         ViewModel?.Preview.Image.UseFullImageForSpriteEditGeometry();
+    }
+
+    private void OnSpriteEditReplaceTextureButtonClick(object sender, RoutedEventArgs e)
+    {
+        SpriteTextureReplacementRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnMeshZoomOutButtonClick(object sender, RoutedEventArgs e)

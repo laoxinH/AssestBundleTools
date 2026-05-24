@@ -19,4 +19,5 @@ public sealed record WorkspaceOperationAppendRequestDto(
     string? CheckpointId = null,
     string? BatchId = null,
     string? SupersedesOperationId = null,
-    IReadOnlyList<WorkspaceOperationDiagnosticDto>? Diagnostics = null);
+    IReadOnlyList<WorkspaceOperationDiagnosticDto>? Diagnostics = null,
+    IReadOnlyList<WorkspaceOperationRelationDto>? Relations = null);

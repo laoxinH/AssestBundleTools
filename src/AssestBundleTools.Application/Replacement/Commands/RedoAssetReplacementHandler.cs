@@ -72,7 +72,7 @@ public sealed class RedoAssetReplacementHandler : ICommandHandler<RedoAssetRepla
 
         if (!string.IsNullOrWhiteSpace(command.ReplacementOperationId))
         {
-            return Task.FromResult(RedoSpecificReplacement(command, targetDetails!));
+            return Task.FromResult(RedoSpecificReplacement(command));
         }
 
         if (_workspaceSessionRegistry is not IWorkspaceReplacementRedoSessionRegistry redoSessionRegistry ||
@@ -92,20 +92,31 @@ public sealed class RedoAssetReplacementHandler : ICommandHandler<RedoAssetRepla
     }
 
     private Result<AssetReplacementRedoResultDto> RedoSpecificReplacement(
-        RedoAssetReplacementCommand command,
-        AssetDetailsDto targetDetails)
+        RedoAssetReplacementCommand command)
     {
         if (_operationRecorder is null ||
             !_operationRecorder.TryFindReplacementOperation(command, out var replacementOperation) ||
-            replacementOperation?.Source is null)
+            replacementOperation?.Source is null ||
+            !TryResolveReplacementTarget(replacementOperation, out var targetBundleId, out var targetAssetId) ||
+            !_workspaceSessionRegistry.TryGetAssetDetails(
+                command.WorkspaceId,
+                targetBundleId,
+                targetAssetId,
+                out var targetDetails) ||
+            targetDetails is null)
         {
             return Result<AssetReplacementRedoResultDto>.Failure(ApplicationErrors.NoRedoReplacement(command.AssetId));
         }
 
+        var targetCommand = command with
+        {
+            BundleId = targetBundleId,
+            AssetId = targetAssetId
+        };
         var redoResult = replacementOperation.OperationKind switch
         {
-            WorkspaceOperationKind.ReplaceFromFile => RedoFileReplacement(command, targetDetails, replacementOperation),
-            WorkspaceOperationKind.ReplaceFromWorkspace => RedoWorkspaceReplacement(command, replacementOperation),
+            WorkspaceOperationKind.ReplaceFromFile => RedoFileReplacement(targetCommand, targetDetails, replacementOperation),
+            WorkspaceOperationKind.ReplaceFromWorkspace => RedoWorkspaceReplacement(targetCommand, replacementOperation),
             _ => null
         };
         if (redoResult is null)
@@ -113,7 +124,7 @@ public sealed class RedoAssetReplacementHandler : ICommandHandler<RedoAssetRepla
             return Result<AssetReplacementRedoResultDto>.Failure(ApplicationErrors.NoRedoReplacement(command.AssetId));
         }
 
-        _operationRecorder.RecordRedoReplacement(command, targetDetails, redoResult, replacementOperation);
+        _operationRecorder.RecordRedoReplacement(targetCommand, targetDetails, redoResult, replacementOperation);
         return Result<AssetReplacementRedoResultDto>.Success(redoResult);
     }
 
@@ -181,4 +192,20 @@ public sealed class RedoAssetReplacementHandler : ICommandHandler<RedoAssetRepla
         Enum.TryParse<AssetType>(value, ignoreCase: true, out var parsed)
             ? parsed
             : fallback;
+
+    private static bool TryResolveReplacementTarget(
+        WorkspaceOperationRecordDto? operation,
+        out BundleId bundleId,
+        out AssetId assetId)
+    {
+        if (BundleId.TryParse(operation?.Target?.BundleId, out bundleId) &&
+            AssetId.TryParse(operation?.Target?.AssetId, out assetId))
+        {
+            return true;
+        }
+
+        bundleId = default;
+        assetId = default;
+        return false;
+    }
 }

@@ -572,6 +572,17 @@ public static class ApplicationErrors
             parameters: CreateParameters(("AssetId", assetId.ToString())),
             isUserActionable: true);
 
+    public static AppError AssetEditAssociatedAssetNotFound(AssetId ownerAssetId, AssetId associatedAssetId) =>
+        new(
+            code: "Asset.EditDraft.AssociatedAssetNotFound",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.EditDraft.AssociatedAssetNotFound",
+            parameters: CreateParameters(
+                ("OwnerAssetId", ownerAssetId.ToString()),
+                ("AssociatedAssetId", associatedAssetId.ToString())),
+            isUserActionable: true);
+
     public static AppError AssetEditDraftNotFound(
         string workspaceKey,
         string draftId,
