@@ -287,7 +287,7 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
 
         var previewIndex = assetEditorXaml.IndexOf("<controls:InspectorPreviewSurfaceView", StringComparison.Ordinal);
         var geometryIndex = assetEditorXaml.IndexOf("<controls:SpriteEditGeometryPanelView", StringComparison.Ordinal);
-        var actionBarIndex = assetEditorXaml.IndexOf("x:Name=\"MoveToMainWindowButton\"", StringComparison.Ordinal);
+        var actionBarIndex = assetEditorXaml.IndexOf("x:Name=\"ExtractButton\"", StringComparison.Ordinal);
 
         Assert.True(previewIndex >= 0);
         Assert.True(geometryIndex > previewIndex);

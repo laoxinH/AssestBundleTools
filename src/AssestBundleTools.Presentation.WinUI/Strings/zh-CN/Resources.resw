@@ -3372,6 +3372,18 @@
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Option.AskEveryTime" xml:space="preserve">
     <value>每次询问</value>
   </data>
+  <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.Label" xml:space="preserve">
+    <value>资源编辑窗口关闭方式</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.Description" xml:space="preserve">
+    <value>控制独立资源编辑窗口中关闭标签或窗口时的行为。回到主窗口会复用“移动到主窗口”链路，直接关闭只移除当前窗口内的标签。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.Option.ReturnToMainWindow" xml:space="preserve">
+    <value>回到主窗口</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.Option.DirectClose" xml:space="preserve">
+    <value>直接关闭</value>
+  </data>
   <data name="SettingsDiagnosticsPage.WorkspaceImportPerformance.Title" xml:space="preserve">
     <value>导入性能</value>
   </data>
@@ -3449,6 +3461,9 @@
   </data>
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.SaveFailedMessage" xml:space="preserve">
     <value>保存最近工作区打开方式失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.SaveFailedMessage" xml:space="preserve">
+    <value>保存资源编辑窗口关闭方式失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.SaveFailedMessage" xml:space="preserve">
     <value>保存导入 worker 数量失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>

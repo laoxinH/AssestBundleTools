@@ -21,6 +21,7 @@ internal sealed class InfrastructureAppPreferencesPersistenceStore : IAppPrefere
         return new AppPreferencesPersistenceSnapshot(
             snapshot.RestoreLastWorkspaceOnStartup,
             snapshot.RecentWorkspaceOpenBehavior,
+            snapshot.AssetEditorCloseBehavior,
             snapshot.WorkspaceImportWorkerCount,
             snapshot.PreviewWorkerCount,
             snapshot.BundleArtifactCacheAutoPruneEnabled,
@@ -39,6 +40,7 @@ internal sealed class InfrastructureAppPreferencesPersistenceStore : IAppPrefere
             snapshot.PreviewWorkerCount,
             snapshot.BundleArtifactCacheAutoPruneEnabled,
             snapshot.BundleArtifactCacheMaximumSizeInBytes,
-            snapshot.OperationRecordLimit));
+            snapshot.OperationRecordLimit,
+            snapshot.AssetEditorCloseBehavior));
     }
 }

@@ -17,9 +17,12 @@ public sealed class AppPreferencesService : IAppPreferencesService
     public const int MinimumOperationRecordLimit = 100;
     public const int DefaultOperationRecordLimit = 250;
     public const int MaximumOperationRecordLimit = 1000;
+    public const string DefaultAssetEditorCloseBehaviorKey = ReturnToMainWindowCloseBehaviorKey;
     private const string CurrentWindowBehaviorKey = "currentWindow";
     private const string NewWindowBehaviorKey = "newWindow";
     private const string AskEveryTimeBehaviorKey = "askEveryTime";
+    private const string ReturnToMainWindowCloseBehaviorKey = "returnToMainWindow";
+    private const string DirectCloseBehaviorKey = "directClose";
     private readonly IAppPreferencesPersistenceStore _preferencesStore;
     private AppPreferencesPersistenceSnapshot _currentSnapshot;
 
@@ -33,6 +36,9 @@ public sealed class AppPreferencesService : IAppPreferencesService
 
     public RecentWorkspaceOpenBehavior RecentWorkspaceOpenBehavior =>
         DeserializeRecentWorkspaceOpenBehavior(_currentSnapshot.RecentWorkspaceOpenBehavior);
+
+    public AssetEditorCloseBehavior AssetEditorCloseBehavior =>
+        DeserializeAssetEditorCloseBehavior(_currentSnapshot.AssetEditorCloseBehavior);
 
     public int WorkspaceImportWorkerCount => CoerceWorkspaceImportWorkerCount(_currentSnapshot.WorkspaceImportWorkerCount);
 
@@ -87,6 +93,38 @@ public sealed class AppPreferencesService : IAppPreferencesService
         var updatedSnapshot = _currentSnapshot with
         {
             RecentWorkspaceOpenBehavior = serializedValue
+        };
+
+        try
+        {
+            _preferencesStore.Save(updatedSnapshot);
+            _currentSnapshot = updatedSnapshot;
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    public bool TrySetAssetEditorCloseBehavior(AssetEditorCloseBehavior value)
+    {
+        var serializedValue = SerializeAssetEditorCloseBehavior(value);
+        if (string.Equals(
+                _currentSnapshot.AssetEditorCloseBehavior,
+                serializedValue,
+                StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        var updatedSnapshot = _currentSnapshot with
+        {
+            AssetEditorCloseBehavior = serializedValue
         };
 
         try
@@ -266,6 +304,24 @@ public sealed class AppPreferencesService : IAppPreferencesService
             RecentWorkspaceOpenBehavior.NewWindow => NewWindowBehaviorKey,
             RecentWorkspaceOpenBehavior.AskEveryTime => AskEveryTimeBehaviorKey,
             _ => CurrentWindowBehaviorKey
+        };
+    }
+
+    private static AssetEditorCloseBehavior DeserializeAssetEditorCloseBehavior(string? behaviorKey)
+    {
+        return behaviorKey switch
+        {
+            DirectCloseBehaviorKey => AssetEditorCloseBehavior.DirectClose,
+            _ => AssetEditorCloseBehavior.ReturnToMainWindow
+        };
+    }
+
+    private static string SerializeAssetEditorCloseBehavior(AssetEditorCloseBehavior behavior)
+    {
+        return behavior switch
+        {
+            AssetEditorCloseBehavior.DirectClose => DirectCloseBehaviorKey,
+            _ => ReturnToMainWindowCloseBehaviorKey
         };
     }
 

@@ -14,6 +14,8 @@ public interface IAppPreferencesService
 
     RecentWorkspaceOpenBehavior RecentWorkspaceOpenBehavior { get; }
 
+    AssetEditorCloseBehavior AssetEditorCloseBehavior { get; }
+
     int WorkspaceImportWorkerCount { get; }
 
     int PreviewWorkerCount { get; }
@@ -27,6 +29,8 @@ public interface IAppPreferencesService
     bool TrySetRestoreLastWorkspaceOnStartup(bool value);
 
     bool TrySetRecentWorkspaceOpenBehavior(RecentWorkspaceOpenBehavior value);
+
+    bool TrySetAssetEditorCloseBehavior(AssetEditorCloseBehavior value);
 
     bool TrySetWorkspaceImportWorkerCount(int value);
 

@@ -17,7 +17,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.SettingsDiagnostics;
 /// <summary>
 /// 表示“设置与诊断”页面当前阶段的展示状态。
 /// </summary>
-public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
+public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
 {
     private readonly IAppLogService _appLogService;
     private readonly IAppNotificationService _appNotificationService;
@@ -36,12 +36,6 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
     private string _activeWorkspaceSessionSummary = string.Empty;
     private string _activeWorkspaceAvailabilitySummary = string.Empty;
     private string _workspaceCatalogSummaryText = string.Empty;
-    private bool _restoreLastWorkspaceOnStartup;
-    private int _recentWorkspaceOpenBehaviorSelectedIndex;
-    private int _workspaceImportWorkerCountSelectedIndex;
-    private int _previewWorkerCountSelectedIndex;
-    private int _operationRecordLimitSelectedIndex;
-
     public SettingsDiagnosticsViewModel(
         IAppLogService appLogService,
         IAppNotificationService appNotificationService,
@@ -84,6 +78,9 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
         _recentWorkspaceOpenBehaviorSelectedIndex =
             SettingsDiagnosticsPreferenceOptionMapper.ConvertRecentWorkspaceOpenBehaviorToSelectedIndex(
                 _appPreferencesService.RecentWorkspaceOpenBehavior);
+        _assetEditorCloseBehaviorSelectedIndex =
+            SettingsDiagnosticsPreferenceOptionMapper.ConvertAssetEditorCloseBehaviorToSelectedIndex(
+                _appPreferencesService.AssetEditorCloseBehavior);
         _workspaceImportWorkerCountSelectedIndex =
             SettingsDiagnosticsPreferenceOptionMapper.ConvertWorkspaceImportWorkerCountToSelectedIndex(
                 _appPreferencesService.WorkspaceImportWorkerCount);
@@ -157,129 +154,6 @@ public sealed class SettingsDiagnosticsViewModel : ObservableObject, IDisposable
     {
         get => _workspaceCatalogSummaryText;
         private set => SetProperty(ref _workspaceCatalogSummaryText, value);
-    }
-
-    public bool RestoreLastWorkspaceOnStartup
-    {
-        get => _restoreLastWorkspaceOnStartup;
-        set
-        {
-            if (_restoreLastWorkspaceOnStartup == value)
-            {
-                return;
-            }
-
-            if (_appPreferencesService.TrySetRestoreLastWorkspaceOnStartup(value))
-            {
-                SetProperty(ref _restoreLastWorkspaceOnStartup, value);
-                return;
-            }
-
-            _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsStartupBehaviorSaveFailedMessage));
-            ShowErrorNotification(ResourceKeys.SettingsDiagnosticsStartupBehaviorSaveFailedMessage);
-            OnPropertyChanged();
-        }
-    }
-
-    /// <summary>
-    /// 控制台中“最近工作区”的默认打开策略。
-    /// 当前窗口、新建窗口或每次询问。
-    /// </summary>
-    public int RecentWorkspaceOpenBehaviorSelectedIndex
-    {
-        get => _recentWorkspaceOpenBehaviorSelectedIndex;
-        set
-        {
-            var selectedIndex = SettingsDiagnosticsPreferenceOptionMapper.CoerceRecentWorkspaceOpenBehaviorSelectedIndex(value);
-            if (_recentWorkspaceOpenBehaviorSelectedIndex == selectedIndex)
-            {
-                return;
-            }
-
-            var openBehavior = SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToRecentWorkspaceOpenBehavior(selectedIndex);
-            if (_appPreferencesService.TrySetRecentWorkspaceOpenBehavior(openBehavior))
-            {
-                SetProperty(ref _recentWorkspaceOpenBehaviorSelectedIndex, selectedIndex);
-                return;
-            }
-
-            _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorSaveFailedMessage));
-            ShowErrorNotification(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorSaveFailedMessage);
-            OnPropertyChanged();
-        }
-    }
-
-    public int WorkspaceImportWorkerCountSelectedIndex
-    {
-        get => _workspaceImportWorkerCountSelectedIndex;
-        set
-        {
-            var selectedIndex = SettingsDiagnosticsPreferenceOptionMapper.ConvertWorkspaceImportWorkerCountToSelectedIndex(value);
-            if (_workspaceImportWorkerCountSelectedIndex == selectedIndex)
-            {
-                return;
-            }
-
-            var workerCount = SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToWorkspaceImportWorkerCount(selectedIndex);
-            if (_appPreferencesService.TrySetWorkspaceImportWorkerCount(workerCount))
-            {
-                SetProperty(ref _workspaceImportWorkerCountSelectedIndex, selectedIndex);
-                return;
-            }
-
-            _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountSaveFailedMessage));
-            ShowErrorNotification(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountSaveFailedMessage);
-            OnPropertyChanged();
-        }
-    }
-
-    public int PreviewWorkerCountSelectedIndex
-    {
-        get => _previewWorkerCountSelectedIndex;
-        set
-        {
-            var selectedIndex = SettingsDiagnosticsPreferenceOptionMapper.ConvertPreviewWorkerCountToSelectedIndex(value);
-            if (_previewWorkerCountSelectedIndex == selectedIndex)
-            {
-                return;
-            }
-
-            var workerCount = SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToPreviewWorkerCount(selectedIndex);
-            if (_appPreferencesService.TrySetPreviewWorkerCount(workerCount))
-            {
-                SetProperty(ref _previewWorkerCountSelectedIndex, selectedIndex);
-                return;
-            }
-
-            _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountSaveFailedMessage));
-            ShowErrorNotification(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountSaveFailedMessage);
-            OnPropertyChanged();
-        }
-    }
-
-    public int OperationRecordLimitSelectedIndex
-    {
-        get => _operationRecordLimitSelectedIndex;
-        set
-        {
-            var selectedIndex = SettingsDiagnosticsPreferenceOptionMapper.ConvertOperationRecordLimitToSelectedIndex(
-                SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToOperationRecordLimit(value));
-            if (_operationRecordLimitSelectedIndex == selectedIndex)
-            {
-                return;
-            }
-
-            var operationRecordLimit = SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToOperationRecordLimit(selectedIndex);
-            if (_appPreferencesService.TrySetOperationRecordLimit(operationRecordLimit))
-            {
-                SetProperty(ref _operationRecordLimitSelectedIndex, selectedIndex);
-                return;
-            }
-
-            _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsOperationRecordLimitSaveFailedMessage));
-            ShowErrorNotification(ResourceKeys.SettingsDiagnosticsOperationRecordLimitSaveFailedMessage);
-            OnPropertyChanged();
-        }
     }
 
     public bool HasActiveWorkspace => _workspaceContextService.CurrentWorkspaceSummary is not null;

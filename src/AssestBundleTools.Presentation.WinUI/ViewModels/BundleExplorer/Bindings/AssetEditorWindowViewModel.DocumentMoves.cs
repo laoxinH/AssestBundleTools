@@ -4,19 +4,25 @@ public sealed partial class AssetEditorWindowViewModel
 {
     public async Task MoveAssetDocumentToMainWindowAsync(AssetDocumentTabViewModel? assetTab)
     {
+        await TryMoveAssetDocumentToMainWindowAsync(assetTab);
+    }
+
+    public async Task<bool> TryMoveAssetDocumentToMainWindowAsync(AssetDocumentTabViewModel? assetTab)
+    {
         var detachedAssetTab = await DetachAssetDocumentTabForExternalHostAsync(assetTab);
         if (detachedAssetTab is null)
         {
-            return;
+            return false;
         }
 
         if (await _moveAssetDocumentToMainWindowAsync(detachedAssetTab))
         {
             await CompleteExternalAssetDocumentMoveAsync();
-            return;
+            return true;
         }
 
         await RestoreDetachedAssetDocumentTabAsync(detachedAssetTab);
+        return false;
     }
 
     public Task MoveActiveAssetDocumentToMainWindowAsync() =>
@@ -29,37 +35,49 @@ public sealed partial class AssetEditorWindowViewModel
 
     public async Task MoveDocumentToMainWindowAsync(AssetDocumentTabItemViewModel? documentTab)
     {
+        await TryMoveDocumentToMainWindowAsync(documentTab);
+    }
+
+    public async Task<bool> TryMoveDocumentToMainWindowAsync(AssetDocumentTabItemViewModel? documentTab)
+    {
         var detachedDocumentTab = await DetachDocumentTabForExternalHostAsync(documentTab);
         if (detachedDocumentTab is null)
         {
-            return;
+            return false;
         }
 
         var transfer = new AssetDocumentGroupTransfer([detachedDocumentTab], detachedDocumentTab);
         if (await _moveAssetDocumentGroupToMainWindowAsync(transfer))
         {
             await CompleteExternalAssetDocumentMoveAsync();
-            return;
+            return true;
         }
 
         await RestoreDetachedDocumentTabAsync(detachedDocumentTab);
+        return false;
     }
 
     public async Task MoveAssetDocumentGroupToMainWindowAsync()
     {
+        await TryMoveAssetDocumentGroupToMainWindowAsync();
+    }
+
+    public async Task<bool> TryMoveAssetDocumentGroupToMainWindowAsync()
+    {
         var transfer = await DetachAssetDocumentGroupForExternalHostAsync();
         if (transfer is null)
         {
-            return;
+            return false;
         }
 
         if (await _moveAssetDocumentGroupToMainWindowAsync(transfer))
         {
             await CompleteExternalAssetDocumentMoveAsync();
-            return;
+            return true;
         }
 
         await RestoreDetachedAssetDocumentGroupAsync(transfer);
+        return false;
     }
 
     public async Task<AssetDocumentTabViewModel?> DetachAssetDocumentTabForExternalHostAsync(

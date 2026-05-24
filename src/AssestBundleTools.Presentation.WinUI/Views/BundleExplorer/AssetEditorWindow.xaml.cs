@@ -20,6 +20,9 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
     private readonly AssetEditorWindowAssetTabStateObserver _assetTabStateObserver;
     private bool _isInitialized;
     private bool _isSynchronizingSelection;
+    private bool _allowDirectClose;
+    private bool _hasDirectCloseBeenRequested;
+    private bool _isProcessingCloseRequest;
 
     public AssetEditorWindow(
         AssetEditorWindowViewModel viewModel,
@@ -277,7 +280,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 
     private void OnEmptyGroupRequested(object? sender, EventArgs e)
     {
-        Close();
+        CloseWithoutReturningToMainWindow();
     }
 
     private void OnClosed(object sender, WindowEventArgs args)
@@ -285,6 +288,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         PublishCurrentLayout();
         if (_appWindow is not null)
         {
+            _appWindow.Closing -= OnAppWindowClosing;
             _appWindow.Changed -= OnAppWindowChanged;
             _appWindow = null;
         }
@@ -305,9 +309,6 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 
     private void ApplyLocalizedText()
     {
-        MoveToMainWindowButton.Content = UiText.Get(ResourceKeys.AssetEditorWindowMoveToMainWindowText);
-        MoveGroupToMainWindowButton.Content = UiText.Get(ResourceKeys.AssetEditorWindowMoveGroupToMainWindowText);
-        OpenGroupInNewWindowButton.Content = UiText.Get(ResourceKeys.AssetEditorWindowOpenGroupInNewWindowText);
         ToolTipService.SetToolTip(
             AssetEditorGroupDragHandle,
             UiText.Get(ResourceKeys.AssetEditorWindowDragGroupHandleToolTip));
@@ -324,6 +325,18 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
     private void UpdateWindowTitle()
     {
         Title = ViewModel.WindowTitle;
+    }
+
+    internal void CloseWithoutReturningToMainWindow()
+    {
+        if (_hasDirectCloseBeenRequested)
+        {
+            return;
+        }
+
+        _hasDirectCloseBeenRequested = true;
+        _allowDirectClose = true;
+        Close();
     }
 
 }

@@ -10,6 +10,7 @@ namespace AssestBundleTools.Presentation.WinUI.Services;
 internal sealed record AppPreferencesPersistenceSnapshot(
     bool RestoreLastWorkspaceOnStartup,
     string RecentWorkspaceOpenBehavior,
+    string AssetEditorCloseBehavior,
     int WorkspaceImportWorkerCount,
     int PreviewWorkerCount,
     bool BundleArtifactCacheAutoPruneEnabled = true,

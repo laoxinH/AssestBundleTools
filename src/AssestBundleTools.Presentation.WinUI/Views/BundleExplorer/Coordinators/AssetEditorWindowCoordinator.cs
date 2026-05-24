@@ -264,7 +264,7 @@ public sealed partial class BundleExplorerPage
                 window.Closed -= OnAssetEditorWindowClosed;
                 window.LayoutSnapshotChanged -= OnAssetEditorWindowLayoutSnapshotChanged;
                 window.GroupSnapshotChanged -= OnAssetEditorWindowGroupSnapshotChanged;
-                window.Close();
+                window.CloseWithoutReturningToMainWindow();
             }
 
             _windows.Clear();

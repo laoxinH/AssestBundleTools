@@ -14,14 +14,17 @@ public sealed record AppPreferencesSnapshot(
     int PreviewWorkerCount = 0,
     bool BundleArtifactCacheAutoPruneEnabled = true,
     long BundleArtifactCacheMaximumSizeInBytes = AppPreferencesSnapshot.DefaultBundleArtifactCacheMaximumSizeInBytes,
-    int OperationRecordLimit = AppPreferencesSnapshot.DefaultOperationRecordLimit)
+    int OperationRecordLimit = AppPreferencesSnapshot.DefaultOperationRecordLimit,
+    string AssetEditorCloseBehavior = AppPreferencesSnapshot.DefaultAssetEditorCloseBehavior)
 {
     public const long DefaultBundleArtifactCacheMaximumSizeInBytes = 4L * 1024L * 1024L * 1024L;
     public const int DefaultOperationRecordLimit = 250;
+    public const string DefaultAssetEditorCloseBehavior = "returnToMainWindow";
 
     public static AppPreferencesSnapshot Default { get; } = new(
         RestoreLastWorkspaceOnStartup: true,
         RecentWorkspaceOpenBehavior: "currentWindow",
+        AssetEditorCloseBehavior: DefaultAssetEditorCloseBehavior,
         WorkspaceImportWorkerCount: 0,
         PreviewWorkerCount: 0,
         BundleArtifactCacheAutoPruneEnabled: true,

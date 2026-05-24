@@ -3372,6 +3372,18 @@
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Option.AskEveryTime" xml:space="preserve">
     <value>Ask every time</value>
   </data>
+  <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.Label" xml:space="preserve">
+    <value>Asset editor close behavior</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.Description" xml:space="preserve">
+    <value>Controls what happens when tabs or windows are closed in independent asset editor windows. Return to main window reuses the move-to-main-window flow; direct close only removes the tabs from that editor window.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.Option.ReturnToMainWindow" xml:space="preserve">
+    <value>Return to main window</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.Option.DirectClose" xml:space="preserve">
+    <value>Direct close</value>
+  </data>
   <data name="SettingsDiagnosticsPage.WorkspaceImportPerformance.Title" xml:space="preserve">
     <value>Import Performance</value>
   </data>
@@ -3449,6 +3461,9 @@
   </data>
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the recent-workspace opening behavior. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.SaveFailedMessage" xml:space="preserve">
+    <value>Failed to save the asset editor close behavior. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the import worker count. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>

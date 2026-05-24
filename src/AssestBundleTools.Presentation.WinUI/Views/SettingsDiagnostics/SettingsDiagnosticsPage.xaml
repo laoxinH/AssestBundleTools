@@ -488,6 +488,20 @@
                                     x:Name="RecentWorkspaceOpenBehaviorDescriptionText"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     TextWrapping="WrapWholeWords" />
+
+                                <TextBlock
+                                    x:Name="AssetEditorCloseBehaviorLabelText"
+                                    FontWeight="SemiBold" />
+
+                                <RadioButtons
+                                    x:Name="AssetEditorCloseBehaviorRadioButtons"
+                                    MaxColumns="2"
+                                    SelectedIndex="{x:Bind ViewModel.AssetEditorCloseBehaviorSelectedIndex, Mode=TwoWay}" />
+
+                                <TextBlock
+                                    x:Name="AssetEditorCloseBehaviorDescriptionText"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="WrapWholeWords" />
                             </StackPanel>
                         </Border>
 

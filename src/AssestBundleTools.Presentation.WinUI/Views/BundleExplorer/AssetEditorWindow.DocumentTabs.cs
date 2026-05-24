@@ -24,7 +24,7 @@ public sealed partial class AssetEditorWindow
     {
         if (TryResolveDocumentTab(args.Item, args.Tab, out var documentTab))
         {
-            await ViewModel.CloseDocumentTabAsync(documentTab);
+            await CloseDocumentTabForUserRequestAsync(documentTab);
         }
     }
 
@@ -108,23 +108,15 @@ public sealed partial class AssetEditorWindow
     {
         if (TryGetTaggedValue(sender, out AssetDocumentTabItemViewModel? documentTab))
         {
-            await ViewModel.CloseDocumentTabAsync(documentTab);
+            await CloseDocumentTabForUserRequestAsync(documentTab);
         }
     }
 
-    private async void OnMoveActiveAssetDocumentToMainWindowButtonClick(object sender, RoutedEventArgs e)
+    private Task CloseDocumentTabForUserRequestAsync(AssetDocumentTabItemViewModel documentTab)
     {
-        await ViewModel.MoveActiveAssetDocumentToMainWindowAsync();
-    }
-
-    private async void OnMoveAssetDocumentGroupToMainWindowButtonClick(object sender, RoutedEventArgs e)
-    {
-        await ViewModel.MoveAssetDocumentGroupToMainWindowAsync();
-    }
-
-    private async void OnOpenAssetDocumentGroupInNewWindowButtonClick(object sender, RoutedEventArgs e)
-    {
-        await _openAssetDocumentGroupInNewWindowAsync(this);
+        return ShouldReturnDocumentsToMainWindowOnClose()
+            ? ViewModel.TryMoveDocumentToMainWindowAsync(documentTab)
+            : ViewModel.CloseDocumentTabAsync(documentTab);
     }
 
     private void SynchronizeSelection() =>

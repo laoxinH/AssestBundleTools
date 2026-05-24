@@ -31,6 +31,31 @@ internal static class SettingsDiagnosticsPreferenceOptionMapper
             : 0;
     }
 
+    public static int ConvertAssetEditorCloseBehaviorToSelectedIndex(AssetEditorCloseBehavior behavior)
+    {
+        return behavior switch
+        {
+            AssetEditorCloseBehavior.DirectClose => 1,
+            _ => 0
+        };
+    }
+
+    public static AssetEditorCloseBehavior ConvertSelectedIndexToAssetEditorCloseBehavior(int selectedIndex)
+    {
+        return selectedIndex switch
+        {
+            1 => AssetEditorCloseBehavior.DirectClose,
+            _ => AssetEditorCloseBehavior.ReturnToMainWindow
+        };
+    }
+
+    public static int CoerceAssetEditorCloseBehaviorSelectedIndex(int selectedIndex)
+    {
+        return selectedIndex is >= 0 and <= 1
+            ? selectedIndex
+            : 0;
+    }
+
     public static int ConvertWorkspaceImportWorkerCountToSelectedIndex(int workerCount)
     {
         return AppPreferencesService.CoerceWorkspaceImportWorkerCount(workerCount);

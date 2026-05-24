@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using AssestBundleTools.Presentation.WinUI.Services;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Windows.Graphics;
@@ -98,6 +99,7 @@ public sealed partial class AssetEditorWindow
             _appWindow = AppWindow.GetFromWindowId(windowId);
             if (_appWindow is not null)
             {
+                _appWindow.Closing += OnAppWindowClosing;
                 _appWindow.Changed += OnAppWindowChanged;
             }
         }
@@ -116,6 +118,60 @@ public sealed partial class AssetEditorWindow
         }
 
         PublishCurrentLayout();
+    }
+
+    private void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
+    {
+        if (_allowDirectClose ||
+            !ShouldReturnDocumentsToMainWindowOnClose() ||
+            !ViewModel.DocumentGroup.HasDocumentTabs)
+        {
+            return;
+        }
+
+        args.Cancel = true;
+        if (_isProcessingCloseRequest)
+        {
+            return;
+        }
+
+        _ = ReturnDocumentGroupToMainWindowAndCloseAsync();
+    }
+
+    private bool ShouldReturnDocumentsToMainWindowOnClose() =>
+        App.CurrentApp.AppPreferencesService.AssetEditorCloseBehavior ==
+        AssetEditorCloseBehavior.ReturnToMainWindow;
+
+    private async Task ReturnDocumentGroupToMainWindowAndCloseAsync()
+    {
+        if (_isProcessingCloseRequest)
+        {
+            return;
+        }
+
+        _isProcessingCloseRequest = true;
+        try
+        {
+            if (!ViewModel.DocumentGroup.HasDocumentTabs)
+            {
+                CloseWithoutReturningToMainWindow();
+                return;
+            }
+
+            var movedToMainWindow = await ViewModel.TryMoveAssetDocumentGroupToMainWindowAsync();
+            if (movedToMainWindow || !ViewModel.DocumentGroup.HasDocumentTabs)
+            {
+                CloseWithoutReturningToMainWindow();
+                return;
+            }
+        }
+        finally
+        {
+            if (!_allowDirectClose)
+            {
+                _isProcessingCloseRequest = false;
+            }
+        }
     }
 
     private void PublishCurrentLayout()

@@ -356,6 +356,10 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsRecentWorkspaceOpenBehaviorOptionCurrentWindow = "SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Option.CurrentWindow";
     public const string SettingsDiagnosticsRecentWorkspaceOpenBehaviorOptionNewWindow = "SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Option.NewWindow";
     public const string SettingsDiagnosticsRecentWorkspaceOpenBehaviorOptionAskEveryTime = "SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Option.AskEveryTime";
+    public const string SettingsDiagnosticsAssetEditorCloseBehaviorLabel = "SettingsDiagnosticsPage.AssetEditorCloseBehavior.Label";
+    public const string SettingsDiagnosticsAssetEditorCloseBehaviorDescription = "SettingsDiagnosticsPage.AssetEditorCloseBehavior.Description";
+    public const string SettingsDiagnosticsAssetEditorCloseBehaviorOptionReturnToMainWindow = "SettingsDiagnosticsPage.AssetEditorCloseBehavior.Option.ReturnToMainWindow";
+    public const string SettingsDiagnosticsAssetEditorCloseBehaviorOptionDirectClose = "SettingsDiagnosticsPage.AssetEditorCloseBehavior.Option.DirectClose";
     public const string SettingsDiagnosticsWorkspaceImportPerformanceTitle = "SettingsDiagnosticsPage.WorkspaceImportPerformance.Title";
     public const string SettingsDiagnosticsWorkspaceImportPerformanceHint = "SettingsDiagnosticsPage.WorkspaceImportPerformance.Hint";
     public const string SettingsDiagnosticsWorkspaceImportWorkerCountLabel = "SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Label";
@@ -382,6 +386,7 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsOperationRecordLimitOptionOneThousand = "SettingsDiagnosticsPage.OperationRecordLimit.Option.OneThousand";
     public const string SettingsDiagnosticsStartupBehaviorSaveFailedMessage = "SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage";
     public const string SettingsDiagnosticsRecentWorkspaceOpenBehaviorSaveFailedMessage = "SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.SaveFailedMessage";
+    public const string SettingsDiagnosticsAssetEditorCloseBehaviorSaveFailedMessage = "SettingsDiagnosticsPage.AssetEditorCloseBehavior.SaveFailedMessage";
     public const string SettingsDiagnosticsWorkspaceImportWorkerCountSaveFailedMessage = "SettingsDiagnosticsPage.WorkspaceImportWorkerCount.SaveFailedMessage";
     public const string SettingsDiagnosticsPreviewWorkerCountSaveFailedMessage = "SettingsDiagnosticsPage.PreviewWorkerCount.SaveFailedMessage";
     public const string SettingsDiagnosticsOperationRecordLimitSaveFailedMessage = "SettingsDiagnosticsPage.OperationRecordLimit.SaveFailedMessage";
