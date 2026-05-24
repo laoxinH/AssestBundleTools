@@ -1,4 +1,6 @@
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Editing.Commands;
+using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Extraction.Commands;
 using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Replacement.Commands;
@@ -22,6 +24,7 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
     private readonly ReplaceAssetFromWorkspaceHandler _replaceAssetFromWorkspaceHandler;
     private readonly UndoAssetReplacementHandler _undoAssetReplacementHandler;
     private readonly RedoAssetReplacementHandler _redoAssetReplacementHandler;
+    private readonly ApplySpriteEditHandler _applySpriteEditHandler;
     private readonly DeleteWorkspaceOperationRecordHandler _deleteWorkspaceOperationRecordHandler;
 
     public WorkspaceAssetOperationGateway(
@@ -33,6 +36,7 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         ReplaceAssetFromWorkspaceHandler replaceAssetFromWorkspaceHandler,
         UndoAssetReplacementHandler undoAssetReplacementHandler,
         RedoAssetReplacementHandler redoAssetReplacementHandler,
+        ApplySpriteEditHandler applySpriteEditHandler,
         DeleteWorkspaceOperationRecordHandler deleteWorkspaceOperationRecordHandler)
     {
         _extractAssetHandler = extractAssetHandler ?? throw new ArgumentNullException(nameof(extractAssetHandler));
@@ -43,6 +47,7 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         _replaceAssetFromWorkspaceHandler = replaceAssetFromWorkspaceHandler ?? throw new ArgumentNullException(nameof(replaceAssetFromWorkspaceHandler));
         _undoAssetReplacementHandler = undoAssetReplacementHandler ?? throw new ArgumentNullException(nameof(undoAssetReplacementHandler));
         _redoAssetReplacementHandler = redoAssetReplacementHandler ?? throw new ArgumentNullException(nameof(redoAssetReplacementHandler));
+        _applySpriteEditHandler = applySpriteEditHandler ?? throw new ArgumentNullException(nameof(applySpriteEditHandler));
         _deleteWorkspaceOperationRecordHandler = deleteWorkspaceOperationRecordHandler ?? throw new ArgumentNullException(nameof(deleteWorkspaceOperationRecordHandler));
     }
 
@@ -85,6 +90,11 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         RedoAssetReplacementCommand command,
         CancellationToken cancellationToken = default) =>
         _redoAssetReplacementHandler.HandleAsync(command, cancellationToken);
+
+    public Task<Result<AssetSpriteEditAppliedResultDto>> ApplySpriteEditAsync(
+        ApplySpriteEditCommand command,
+        CancellationToken cancellationToken = default) =>
+        _applySpriteEditHandler.HandleAsync(command, cancellationToken);
 
     public Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(
         DeleteWorkspaceOperationRecordCommand command,

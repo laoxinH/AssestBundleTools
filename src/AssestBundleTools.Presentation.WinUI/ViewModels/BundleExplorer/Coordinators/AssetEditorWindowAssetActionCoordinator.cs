@@ -231,6 +231,32 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
             replacementOperationId);
     }
 
+    public async Task ApplySpriteEditAsync()
+    {
+        if (!TryGetActiveAssetCommandContext(
+                static (_, details) => details.AssetType == Domain.Assets.AssetType.Sprite,
+                out var workspaceSummary,
+                out var assetTab,
+                out var details))
+        {
+            return;
+        }
+
+        var geometry = assetTab.Inspector.Preview.Image.CreateSpriteEditGeometry();
+        if (geometry is null)
+        {
+            return;
+        }
+
+        await _modificationActionHandler.ApplySpriteEditAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            geometry,
+            _setBusy,
+            _operationFeedbackBridge.AppendResultFailure);
+    }
+
     public async Task DeleteChangeRecordAsync(string? operationId)
     {
         if (string.IsNullOrWhiteSpace(operationId) ||

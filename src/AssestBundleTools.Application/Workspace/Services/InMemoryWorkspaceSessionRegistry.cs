@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Assets;
@@ -11,7 +12,7 @@ namespace AssestBundleTools.Application.Workspace.Services;
 /// <summary>
 /// 基于内存的临时工作区注册表，用于 M2 阶段打通用例与假数据链路。
 /// </summary>
-public sealed partial class InMemoryWorkspaceSessionRegistry : IWorkspaceSessionRegistry, IWorkspaceReplacementRedoSessionRegistry
+public sealed partial class InMemoryWorkspaceSessionRegistry : IWorkspaceSessionRegistry, IWorkspaceReplacementRedoSessionRegistry, IWorkspaceSpriteEditSessionRegistry
 {
     private readonly object _syncRoot = new();
     private readonly Dictionary<string, WorkspaceSessionState> _workspaceStates = new(StringComparer.Ordinal);
@@ -195,7 +196,9 @@ public sealed partial class InMemoryWorkspaceSessionRegistry : IWorkspaceSession
                 AssetTypeDisplayName: assetState.AssetTypeDisplayName,
                 WorkspaceReplacementSourceBundleId: assetState.AppliedWorkspaceReplacement?.SourceBundleId,
                 WorkspaceReplacementSourceAssetId: assetState.AppliedWorkspaceReplacement?.SourceAssetId,
-                CanRedoReplacement: assetState.ReplacementRedoStack.Count > 0);
+                CanRedoReplacement: assetState.ReplacementRedoStack.Count > 0,
+                SpriteEditGeometry: assetState.AppliedSpriteEdit?.Geometry,
+                SpriteEditAppliedAtUtc: assetState.AppliedSpriteEdit?.AppliedAtUtc);
 
             return true;
         }
@@ -379,7 +382,8 @@ public sealed partial class InMemoryWorkspaceSessionRegistry : IWorkspaceSession
     {
         var workspaceReplacementAppliedAtUtc = assetState.AppliedWorkspaceReplacement?.AppliedAtUtc;
         var fileReplacementAppliedAtUtc = assetState.AppliedFileReplacement?.AppliedAtUtc;
-        var lastChangedAtUtc = new[] { assetState.LastExtractedAtUtc, workspaceReplacementAppliedAtUtc, fileReplacementAppliedAtUtc }
+        var spriteEditAppliedAtUtc = assetState.AppliedSpriteEdit?.AppliedAtUtc;
+        var lastChangedAtUtc = new[] { assetState.LastExtractedAtUtc, workspaceReplacementAppliedAtUtc, fileReplacementAppliedAtUtc, spriteEditAppliedAtUtc }
             .Where(static timestamp => timestamp.HasValue)
             .Select(static timestamp => timestamp!.Value)
             .OrderByDescending(static timestamp => timestamp)
@@ -388,7 +392,8 @@ public sealed partial class InMemoryWorkspaceSessionRegistry : IWorkspaceSession
         var hasTrackedChange = assetState.IsModified ||
                                assetState.LastExtractedAtUtc.HasValue ||
                                workspaceReplacementAppliedAtUtc.HasValue ||
-                               fileReplacementAppliedAtUtc.HasValue;
+                               fileReplacementAppliedAtUtc.HasValue ||
+                               spriteEditAppliedAtUtc.HasValue;
 
         if (!hasTrackedChange)
         {

@@ -462,6 +462,7 @@ public static class ResourceKeys
     public const string BundleExplorerLogReplacementApplied = "BundleExplorer.Log.ReplacementApplied";
     public const string BundleExplorerLogReplacementUndone = "BundleExplorer.Log.ReplacementUndone";
     public const string BundleExplorerLogReplacementRedone = "BundleExplorer.Log.ReplacementRedone";
+    public const string BundleExplorerLogSpriteEditApplied = "BundleExplorer.Log.SpriteEditApplied";
     public const string BundleExplorerLogOperationRecordDeleted = "BundleExplorer.Log.OperationRecordDeleted";
     public const string BundleExplorerNotificationWorkspaceLoaded = "BundleExplorer.Notification.WorkspaceLoaded";
     public const string BundleExplorerNotificationBundleFileImportRequested = "BundleExplorer.Notification.BundleFileImportRequested";
@@ -487,6 +488,7 @@ public static class ResourceKeys
     public const string BundleExplorerNotificationReplacementApplied = "BundleExplorer.Notification.ReplacementApplied";
     public const string BundleExplorerNotificationReplacementUndone = "BundleExplorer.Notification.ReplacementUndone";
     public const string BundleExplorerNotificationReplacementRedone = "BundleExplorer.Notification.ReplacementRedone";
+    public const string BundleExplorerNotificationSpriteEditApplied = "BundleExplorer.Notification.SpriteEditApplied";
     public const string BundleExplorerNotificationOperationRecordDeleted = "BundleExplorer.Notification.OperationRecordDeleted";
     public const string FilePickerExtractionTypeImage = "FilePicker.Extraction.Type.Image";
     public const string FilePickerExtractionTypeText = "FilePicker.Extraction.Type.Text";
@@ -704,6 +706,7 @@ public static class ResourceKeys
     public const string ErrorAssetEditDraftReferenceRequired = "Error.Asset.EditDraft.ReferenceRequired";
     public const string ErrorAssetEditDraftIdRequired = "Error.Asset.EditDraft.IdRequired";
     public const string ErrorAssetEditDraftModeRequired = "Error.Asset.EditDraft.ModeRequired";
+    public const string ErrorAssetEditDraftInvalidGeometry = "Error.Asset.EditDraft.InvalidGeometry";
     public const string ErrorAssetEditDraftNotFound = "Error.Asset.EditDraft.NotFound";
     public const string ErrorAssetEditDraftSourceMismatch = "Error.Asset.EditDraft.SourceMismatch";
     public const string ErrorAssetEditDraftExpired = "Error.Asset.EditDraft.Expired";
@@ -1190,10 +1193,12 @@ public static class ResourceKeys
     public const string InspectorChangeRecordExtractionTitle = "InspectorPanelView.ChangeRecord.Extraction.Title";
     public const string InspectorChangeRecordFileReplacementTitle = "InspectorPanelView.ChangeRecord.FileReplacement.Title";
     public const string InspectorChangeRecordWorkspaceReplacementTitle = "InspectorPanelView.ChangeRecord.WorkspaceReplacement.Title";
+    public const string InspectorChangeRecordSpriteEditTitle = "InspectorPanelView.ChangeRecord.SpriteEdit.Title";
     public const string InspectorChangeRecordEffectiveBadge = "InspectorPanelView.ChangeRecord.EffectiveBadge";
     public const string InspectorChangeRecordRedoBadge = "InspectorPanelView.ChangeRecord.RedoBadge";
     public const string InspectorChangeRecordLatestExtractionBadge = "InspectorPanelView.ChangeRecord.LatestExtractionBadge";
     public const string InspectorChangeRecordSourceFormat = "InspectorPanelView.ChangeRecord.Source.Format";
+    public const string InspectorChangeRecordSpriteEditSource = "InspectorPanelView.ChangeRecord.SpriteEdit.Source";
     public const string InspectorChangeRecordTimeFormat = "InspectorPanelView.ChangeRecord.Time.Format";
     public const string InspectorPreviewDiagnosticCacheStatusHit = "InspectorPanelView.PreviewDiagnostic.CacheStatus.Hit";
     public const string InspectorPreviewDiagnosticCacheStatusMissing = "InspectorPanelView.PreviewDiagnostic.CacheStatus.Missing";
@@ -1223,6 +1228,7 @@ public static class ResourceKeys
     public const string InspectorSelectFileReplacementButton = "InspectorPanelView.SelectFileReplacementButton.Content";
     public const string InspectorSelectReplacementButton = "InspectorPanelView.SelectReplacementButton.Content";
     public const string InspectorApplyReplacementButton = "InspectorPanelView.ApplyReplacementButton.Content";
+    public const string InspectorApplySpriteEditButton = "InspectorPanelView.ApplySpriteEditButton.Content";
     public const string InspectorUndoReplacementButton = "InspectorPanelView.UndoReplacementButton.Content";
     public const string InspectorRedoReplacementButton = "InspectorPanelView.RedoReplacementButton.Content";
     public const string InspectorDeleteChangeRecordButton = "InspectorPanelView.DeleteChangeRecordButton.Content";

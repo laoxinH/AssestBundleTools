@@ -8,5 +8,6 @@ public enum AssetChangeRecordKind
     Unknown = 0,
     Extraction = 1,
     FileReplacement = 2,
-    WorkspaceReplacement = 3
+    WorkspaceReplacement = 3,
+    SpriteEdit = 4
 }

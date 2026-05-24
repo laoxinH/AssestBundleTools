@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Workspace.Dtos;
 using Microsoft.UI.Xaml;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -20,6 +21,30 @@ public sealed partial class InspectorPreviewImageViewModel
     public double SpriteEditPivotX => ResolvePivotSourceX();
 
     public double SpriteEditPivotY => ResolvePivotSourceY();
+
+    internal WorkspaceSpriteEditGeometryDto? CreateSpriteEditGeometry()
+    {
+        if (!IsSpriteEditModeActive || !_overlayState.HasOverlay)
+        {
+            return null;
+        }
+
+        var geometry = new WorkspaceSpriteEditGeometryDto(
+            NormalizePositive(CanvasWidth, fallback: 1d),
+            NormalizePositive(CanvasHeight, fallback: 1d),
+            Math.Max(0d, NormalizeFinite(SpriteEditCropX, 0d)),
+            Math.Max(0d, NormalizeFinite(SpriteEditCropY, 0d)),
+            NormalizePositive(SpriteEditCropWidth, SpriteEditMinimumRegionSize),
+            NormalizePositive(SpriteEditCropHeight, SpriteEditMinimumRegionSize),
+            NormalizeFinite(SpriteEditPivotX, SpriteEditCropX + (SpriteEditCropWidth / 2d)),
+            NormalizeFinite(SpriteEditPivotY, SpriteEditCropY + (SpriteEditCropHeight / 2d)));
+
+        return geometry with
+        {
+            PivotX = Math.Clamp(geometry.PivotX, geometry.RegionX, geometry.RegionX + geometry.RegionWidth),
+            PivotY = Math.Clamp(geometry.PivotY, geometry.RegionY, geometry.RegionY + geometry.RegionHeight)
+        };
+    }
 
     internal void UpdateSpriteEditGeometryFromInput(
         double cropX,
@@ -112,5 +137,12 @@ public sealed partial class InspectorPreviewImageViewModel
     private static double NormalizeFinite(double value, double fallback)
     {
         return double.IsFinite(value) ? value : fallback;
+    }
+
+    private static double NormalizePositive(double value, double fallback)
+    {
+        return double.IsFinite(value) && value > 0d
+            ? value
+            : fallback;
     }
 }

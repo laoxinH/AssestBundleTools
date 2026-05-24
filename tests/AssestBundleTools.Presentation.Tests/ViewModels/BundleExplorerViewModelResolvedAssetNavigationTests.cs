@@ -2,6 +2,8 @@ using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Editing.Commands;
+using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Extraction.Commands;
 using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Replacement.Commands;
@@ -229,6 +231,11 @@ public sealed class BundleExplorerViewModelResolvedAssetNavigationTests
 
         public Task<Result<AssetReplacementRedoResultDto>> RedoAssetReplacementAsync(
             RedoAssetReplacementCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<AssetSpriteEditAppliedResultDto>> ApplySpriteEditAsync(
+            ApplySpriteEditCommand command,
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 

@@ -15,7 +15,7 @@ namespace AssestBundleTools.Infrastructure.Workspace.Runtime;
 /// 当前阶段只要求资源包列表摆脱假数据，因此该实现优先消费
 /// `cache/bundle-index` 中的读模型，并在资产级真实解析接入前保持轻量可扩展。
 /// </remarks>
-public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRegistry, IWorkspaceReplacementRedoSessionRegistry, IWorkspaceOperationReplaySessionRegistry
+public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRegistry, IWorkspaceReplacementRedoSessionRegistry, IWorkspaceSpriteEditSessionRegistry, IWorkspaceOperationReplaySessionRegistry
 {
     private readonly object _syncRoot = new();
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
@@ -228,7 +228,9 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
                 WorkspaceReplacementSourceBundleId: assetState.AppliedWorkspaceReplacement?.SourceBundleId,
                 WorkspaceReplacementSourceAssetId: assetState.AppliedWorkspaceReplacement?.SourceAssetId,
                 CanRedoReplacement: assetState.ReplacementRedoStack.Count > 0,
-                ChangeRecords: BuildAssetChangeRecords(workspaceState, bundleState, assetState));
+                ChangeRecords: BuildAssetChangeRecords(workspaceState, bundleState, assetState),
+                SpriteEditGeometry: assetState.AppliedSpriteEdit?.Geometry,
+                SpriteEditAppliedAtUtc: assetState.AppliedSpriteEdit?.AppliedAtUtc);
 
             return true;
         }
@@ -372,7 +374,8 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
     {
         var workspaceReplacementAppliedAtUtc = assetState.AppliedWorkspaceReplacement?.AppliedAtUtc;
         var fileReplacementAppliedAtUtc = assetState.AppliedFileReplacement?.AppliedAtUtc;
-        var lastChangedAtUtc = new[] { assetState.LastExtractedAtUtc, workspaceReplacementAppliedAtUtc, fileReplacementAppliedAtUtc }
+        var spriteEditAppliedAtUtc = assetState.AppliedSpriteEdit?.AppliedAtUtc;
+        var lastChangedAtUtc = new[] { assetState.LastExtractedAtUtc, workspaceReplacementAppliedAtUtc, fileReplacementAppliedAtUtc, spriteEditAppliedAtUtc }
             .Where(static timestamp => timestamp.HasValue)
             .Select(static timestamp => timestamp!.Value)
             .OrderByDescending(static timestamp => timestamp)
@@ -381,7 +384,8 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
         var hasTrackedChange = assetState.IsModified ||
                                assetState.LastExtractedAtUtc.HasValue ||
                                workspaceReplacementAppliedAtUtc.HasValue ||
-                               fileReplacementAppliedAtUtc.HasValue;
+                               fileReplacementAppliedAtUtc.HasValue ||
+                               spriteEditAppliedAtUtc.HasValue;
         if (!hasTrackedChange)
         {
             return null;

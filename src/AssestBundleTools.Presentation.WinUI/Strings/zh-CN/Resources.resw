@@ -2415,6 +2415,9 @@
   <data name="InspectorPanelView.ApplyReplacementButton.Content" xml:space="preserve">
     <value>应用替换</value>
   </data>
+  <data name="InspectorPanelView.ApplySpriteEditButton.Content" xml:space="preserve">
+    <value>保存 Sprite 编辑</value>
+  </data>
   <data name="InspectorPanelView.UndoReplacementButton.Content" xml:space="preserve">
     <value>撤销</value>
   </data>
@@ -2541,6 +2544,9 @@
   <data name="InspectorPanelView.ChangeRecord.WorkspaceReplacement.Title" xml:space="preserve">
     <value>工作区修改</value>
   </data>
+  <data name="InspectorPanelView.ChangeRecord.SpriteEdit.Title" xml:space="preserve">
+    <value>Sprite 编辑</value>
+  </data>
   <data name="InspectorPanelView.ChangeRecord.EffectiveBadge" xml:space="preserve">
     <value>生效中</value>
   </data>
@@ -2552,6 +2558,9 @@
   </data>
   <data name="InspectorPanelView.ChangeRecord.Source.Format" xml:space="preserve">
     <value>来源：{0}</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.SpriteEdit.Source" xml:space="preserve">
+    <value>裁切框 / Pivot</value>
   </data>
   <data name="InspectorPanelView.ChangeRecord.Time.Format" xml:space="preserve">
     <value>时间：{0}</value>
@@ -3696,6 +3705,9 @@
   <data name="BundleExplorer.Log.ReplacementRedone" xml:space="preserve">
     <value>已重做资源“{0}”的替换</value>
   </data>
+  <data name="BundleExplorer.Log.SpriteEditApplied" xml:space="preserve">
+    <value>已保存资源“{0}”的 Sprite 裁切编辑</value>
+  </data>
   <data name="BundleExplorer.Log.OperationRecordDeleted" xml:space="preserve">
     <value>已删除资源“{0}”的一条操作记录</value>
   </data>
@@ -3770,6 +3782,9 @@
   </data>
   <data name="BundleExplorer.Notification.ReplacementRedone" xml:space="preserve">
     <value>已重做替换：{0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.SpriteEditApplied" xml:space="preserve">
+    <value>已保存 Sprite 编辑：{0}</value>
   </data>
   <data name="BundleExplorer.Notification.OperationRecordDeleted" xml:space="preserve">
     <value>已删除操作记录：{0}</value>
@@ -3893,6 +3908,9 @@
   </data>
   <data name="Error.Asset.EditDraft.ModeRequired" xml:space="preserve">
     <value>草稿引用缺少草稿模式，无法恢复编辑草稿。</value>
+  </data>
+  <data name="Error.Asset.EditDraft.InvalidGeometry" xml:space="preserve">
+    <value>当前 Sprite 裁切参数无效，请调整裁切框后再保存。</value>
   </data>
   <data name="Error.Asset.EditDraft.NotFound" xml:space="preserve">
     <value>未找到工作区 {0} 中的草稿 {1}（{2}），可能已被丢弃或清理。</value>

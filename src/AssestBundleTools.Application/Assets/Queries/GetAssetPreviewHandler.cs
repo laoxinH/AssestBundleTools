@@ -147,14 +147,16 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
 
         var previewCacheKey = CreatePreviewCacheKey(bundleCacheEntry.BundleCacheKey, assetCacheEntry.AssetId);
         var cachedPreviewPayload = previewCacheStore.Load(query.WorkspaceKey, previewCacheKey);
-        var cacheEvaluation = EvaluatePreviewCache(
+        var cacheEvaluation = AssetPreviewCacheEvaluator.Evaluate(
             bundleCacheEntry,
             assetCacheEntry,
             previewCacheKey,
-            cachedPreviewPayload);
+            cachedPreviewPayload,
+            _assetPreviewGenerator.GeneratorVersion,
+            _audioPayloadTranscodingService);
         if (cacheEvaluation.IsHit && cacheEvaluation.Payload is not null)
         {
-            return Result<AssetPreviewDto>.Success(AssetPreviewDtoMapper.MapPreviewDto(
+            var cachedPreview = AssetPreviewDtoMapper.MapPreviewDto(
                 query,
                 cacheEvaluation.Payload.Descriptor,
                 cacheEvaluation.Payload.Content,
@@ -163,7 +165,12 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 isFromCache: true,
                 diagnostic: new AssetPreviewDiagnosticDto(
                     CacheStatus: AssetPreviewCacheStatusKind.Hit,
-                    FallbackReason: AssetPreviewFallbackReasonKind.None)));
+                    FallbackReason: AssetPreviewFallbackReasonKind.None));
+            return Result<AssetPreviewDto>.Success(AssetPreviewSpriteEditProjector.ApplyIfAvailable(
+                _workspaceSessionRegistry,
+                query,
+                assetCacheEntry,
+                cachedPreview));
         }
 
         if (string.IsNullOrWhiteSpace(assetCacheEntry.SerializedFileName))
@@ -282,7 +289,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             previewCacheKey,
             _previewCachePrunePolicy);
 
-        return Result<AssetPreviewDto>.Success(AssetPreviewDtoMapper.MapPreviewDto(
+        var generatedPreview = AssetPreviewDtoMapper.MapPreviewDto(
             query,
             descriptor,
             previewContent.Content,
@@ -292,119 +299,12 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             diagnostic: new AssetPreviewDiagnosticDto(
                 CacheStatus: cacheEvaluation.CacheStatus,
                 FallbackReason: AssetPreviewFallbackReasonKind.None,
-                DetailMessage: cacheEvaluation.DetailMessage)));
-    }
-
-    private PreviewCacheEvaluationResult EvaluatePreviewCache(
-        BundleIndexCacheEntryDto bundleCacheEntry,
-        BundleIndexAssetCacheEntryDto assetCacheEntry,
-        string previewCacheKey,
-        PreviewCachePayloadDto? previewCachePayload)
-    {
-        if (previewCachePayload?.Descriptor is null)
-        {
-            return new PreviewCacheEvaluationResult(
-                IsHit: false,
-                Payload: null,
-                CacheStatus: AssetPreviewCacheStatusKind.Missing,
-                DetailMessage: null);
-        }
-
-        var descriptor = previewCachePayload.Descriptor;
-        var sourceMatches = WorkspaceFileFingerprintComparer.Matches(
-            descriptor.SourceFingerprint,
-            bundleCacheEntry.SourceFingerprint);
-        if (!string.Equals(descriptor.PreviewCacheKey, previewCacheKey, StringComparison.OrdinalIgnoreCase) ||
-            !string.Equals(descriptor.BundleCacheKey, bundleCacheEntry.BundleCacheKey, StringComparison.OrdinalIgnoreCase) ||
-            !string.Equals(descriptor.AssetId, assetCacheEntry.AssetId, StringComparison.Ordinal) ||
-            !sourceMatches)
-        {
-            var cacheStatus = sourceMatches
-                ? AssetPreviewCacheStatusKind.IdentityChanged
-                : AssetPreviewCacheStatusKind.SourceFingerprintChanged;
-            return new PreviewCacheEvaluationResult(
-                IsHit: false,
-                Payload: null,
-                CacheStatus: cacheStatus,
-                DetailMessage: null);
-        }
-
-        if (!string.Equals(descriptor.GeneratorVersion, _assetPreviewGenerator.GeneratorVersion, StringComparison.OrdinalIgnoreCase))
-        {
-            return new PreviewCacheEvaluationResult(
-                IsHit: false,
-                Payload: null,
-                CacheStatus: AssetPreviewCacheStatusKind.GeneratorVersionChanged,
-                DetailMessage: null);
-        }
-
-        var audioTranscoderEvaluation = EvaluateAudioTranscoderCache(descriptor, assetCacheEntry);
-        if (!audioTranscoderEvaluation.IsHit)
-        {
-            return audioTranscoderEvaluation;
-        }
-
-        // 预览缓存和资源包索引缓存一样，属于“缓存命中识别”的一部分。
-        // 这里只在资源身份、来源指纹和生成器版本都仍然一致时才复用旧预览，
-        // 避免资源包更新后继续误用过期缩略图或文本摘要。
-        return new PreviewCacheEvaluationResult(
-            IsHit: true,
-            Payload: previewCachePayload,
-            CacheStatus: AssetPreviewCacheStatusKind.Hit,
-            DetailMessage: null);
-    }
-
-    private PreviewCacheEvaluationResult EvaluateAudioTranscoderCache(
-        PreviewCacheDescriptorDto descriptor,
-        BundleIndexAssetCacheEntryDto assetCacheEntry)
-    {
-        if (!string.IsNullOrWhiteSpace(descriptor.AudioTranscoderId))
-        {
-            var currentDescriptor = _audioPayloadTranscodingService.ResolveDescriptor(descriptor.AudioTranscoderId);
-            if (currentDescriptor is null)
-            {
-                return new PreviewCacheEvaluationResult(
-                    IsHit: false,
-                    Payload: null,
-                    CacheStatus: AssetPreviewCacheStatusKind.AudioTranscoderChanged,
-                    DetailMessage: null);
-            }
-
-            if (!string.Equals(currentDescriptor.Version, descriptor.AudioTranscoderVersion, StringComparison.OrdinalIgnoreCase))
-            {
-                return new PreviewCacheEvaluationResult(
-                    IsHit: false,
-                    Payload: null,
-                    CacheStatus: AssetPreviewCacheStatusKind.AudioTranscoderChanged,
-                    DetailMessage: null);
-            }
-
-            return new PreviewCacheEvaluationResult(
-                IsHit: true,
-                Payload: null,
-                CacheStatus: AssetPreviewCacheStatusKind.Hit,
-                DetailMessage: null);
-        }
-
-        // 音频摘要若是在“无转码器”环境下生成，后续安装转码器后应允许自动重建，
-        // 这样旧摘要才能升级为真实可播放预览，而不会长期卡在第一次回退结果上。
-        var isAudioSummaryPreview =
-            string.Equals(assetCacheEntry.AssetType, AssetType.AudioClip.ToString(), StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(descriptor.PreviewKind, AssetPreviewKind.Summary.ToString(), StringComparison.OrdinalIgnoreCase);
-        if (isAudioSummaryPreview && _audioPayloadTranscodingService.GetAvailableDescriptors().Count > 0)
-        {
-            return new PreviewCacheEvaluationResult(
-                IsHit: false,
-                Payload: null,
-                CacheStatus: AssetPreviewCacheStatusKind.AudioTranscoderChanged,
-                DetailMessage: null);
-        }
-
-        return new PreviewCacheEvaluationResult(
-            IsHit: true,
-            Payload: null,
-            CacheStatus: AssetPreviewCacheStatusKind.Hit,
-            DetailMessage: null);
+                DetailMessage: cacheEvaluation.DetailMessage));
+        return Result<AssetPreviewDto>.Success(AssetPreviewSpriteEditProjector.ApplyIfAvailable(
+            _workspaceSessionRegistry,
+            query,
+            assetCacheEntry,
+            generatedPreview));
     }
 
     private static AssetPreviewDto BuildFallbackSummaryPreview(
@@ -522,11 +422,5 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             ? AssetType.Unknown.ToString()
             : assetCacheEntry.AssetType.Trim();
     }
-
-    private sealed record PreviewCacheEvaluationResult(
-        bool IsHit,
-        PreviewCachePayloadDto? Payload,
-        AssetPreviewCacheStatusKind CacheStatus,
-        LocalizedMessageDto? DetailMessage);
 
 }

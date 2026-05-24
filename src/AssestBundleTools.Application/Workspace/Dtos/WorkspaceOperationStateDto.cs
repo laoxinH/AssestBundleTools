@@ -8,4 +8,5 @@ public sealed record WorkspaceOperationStateDto(
     DateTimeOffset? LastExtractedAtUtc = null,
     WorkspaceOperationSourceDto? ReplacementSource = null,
     string? DraftId = null,
-    string? CheckpointId = null);
+    string? CheckpointId = null,
+    WorkspaceSpriteEditGeometryDto? SpriteEditGeometry = null);

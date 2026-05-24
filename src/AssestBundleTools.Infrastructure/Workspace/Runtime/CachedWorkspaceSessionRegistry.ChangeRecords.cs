@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Replacement.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Assets;
@@ -9,6 +10,7 @@ namespace AssestBundleTools.Infrastructure.Workspace.Runtime;
 public sealed partial class CachedWorkspaceSessionRegistry
 {
     private readonly WorkspaceReplacementStateMaterializer _replacementStateMaterializer = new();
+    private readonly WorkspaceSpriteEditStateMaterializer _spriteEditStateMaterializer = new();
 
     private IReadOnlyList<AssetChangeRecordDto> BuildAssetChangeRecords(
         WorkspaceSessionState workspaceState,
@@ -56,18 +58,24 @@ public sealed partial class CachedWorkspaceSessionRegistry
             changeSet,
             bundleId.Value,
             assetId.Value);
+        var effectiveSpriteEditOperationId = _spriteEditStateMaterializer.FindLatestEffectiveSpriteEditOperationId(
+            changeSet,
+            bundleId.Value,
+            assetId.Value);
 
         foreach (var operation in operations
             .Where(static operation => operation.OperationKind is
                 WorkspaceOperationKind.ExtractAsset or
                 WorkspaceOperationKind.ReplaceFromFile or
-                WorkspaceOperationKind.ReplaceFromWorkspace)
+                WorkspaceOperationKind.ReplaceFromWorkspace or
+                WorkspaceOperationKind.EditDraftApplied)
             .Where(operation => OperationTargetsAsset(operation, bundleId, assetId))
             .OrderByDescending(static operation => operation.Sequence))
         {
             var record = AssetChangeRecordDto.FromOperation(
                 operation,
-                string.Equals(operation.OperationId, effectiveReplacementOperationId, StringComparison.Ordinal));
+                string.Equals(operation.OperationId, effectiveReplacementOperationId, StringComparison.Ordinal) ||
+                string.Equals(operation.OperationId, effectiveSpriteEditOperationId, StringComparison.Ordinal));
             if (record.Kind != AssetChangeRecordKind.Unknown)
             {
                 yield return record;
@@ -106,6 +114,17 @@ public sealed partial class CachedWorkspaceSessionRegistry
                 Kind: AssetChangeRecordKind.Extraction,
                 CreatedAtUtc: extractedAtUtc,
                 AppliedAtUtc: extractedAtUtc));
+        }
+
+        if (assetState.AppliedSpriteEdit is { } spriteEdit)
+        {
+            records.Add(new AssetChangeRecordDto(
+                Kind: AssetChangeRecordKind.SpriteEdit,
+                CreatedAtUtc: spriteEdit.AppliedAtUtc,
+                AppliedAtUtc: spriteEdit.AppliedAtUtc,
+                DraftId: spriteEdit.DraftId,
+                DraftMode: spriteEdit.DraftMode,
+                IsEffectiveEdit: true));
         }
 
         return records

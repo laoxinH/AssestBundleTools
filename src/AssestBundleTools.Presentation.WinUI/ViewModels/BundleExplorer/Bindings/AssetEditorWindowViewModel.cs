@@ -340,6 +340,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
 
     public Task ApplyPendingReplacementAsync() => _assetActionCoordinator.ApplyPendingReplacementAsync();
 
+    public Task ApplySpriteEditAsync() => _assetActionCoordinator.ApplySpriteEditAsync();
+
     public Task UndoAppliedReplacementAsync() => _assetActionCoordinator.UndoAppliedReplacementAsync();
 
     public Task RedoAppliedReplacementAsync(string? replacementOperationId = null) =>
@@ -451,7 +453,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
                 token));
         if (TryGetValue(detailsResult, out var details))
         {
-            var shouldReloadPreview = AssetPreviewInvalidationPolicy.HasReplacementProjectionChanged(
+            var shouldReloadPreview = AssetPreviewInvalidationPolicy.HasEffectivePreviewProjectionChanged(
                 assetTab.Details,
                 details);
             ReapplyAssetDocumentState(assetTab, details);

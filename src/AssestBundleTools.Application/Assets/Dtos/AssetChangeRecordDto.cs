@@ -16,18 +16,22 @@ public sealed record AssetChangeRecordDto(
     string? OperationId = null,
     long Sequence = 0,
     string? SupersedesOperationId = null,
-    bool IsEffectiveReplacement = false)
+    bool IsEffectiveReplacement = false,
+    string? DraftId = null,
+    string? DraftMode = null,
+    bool IsEffectiveEdit = false)
 {
     public DateTimeOffset DisplayTimestampUtc => AppliedAtUtc ?? CreatedAtUtc;
 
     public static AssetChangeRecordDto FromOperation(
         WorkspaceOperationRecordDto operation,
-        bool isEffectiveReplacement = false)
+        bool isEffectiveOperation = false)
     {
         ArgumentNullException.ThrowIfNull(operation);
+        var kind = MapKind(operation.OperationKind);
 
         return new AssetChangeRecordDto(
-            Kind: MapKind(operation.OperationKind),
+            Kind: kind,
             CreatedAtUtc: operation.CreatedAtUtc,
             AppliedAtUtc: operation.AppliedAtUtc ?? operation.CompletedAtUtc,
             SourceBundleDisplayName: operation.Source?.SourceBundleDisplayName,
@@ -37,7 +41,11 @@ public sealed record AssetChangeRecordDto(
             OperationId: operation.OperationId,
             Sequence: operation.Sequence,
             SupersedesOperationId: operation.SupersedesOperationId,
-            IsEffectiveReplacement: isEffectiveReplacement);
+            IsEffectiveReplacement: isEffectiveOperation &&
+                kind is AssetChangeRecordKind.FileReplacement or AssetChangeRecordKind.WorkspaceReplacement,
+            DraftId: operation.Source?.DraftId ?? operation.Result?.DraftId,
+            DraftMode: operation.Source?.DraftMode,
+            IsEffectiveEdit: isEffectiveOperation && kind == AssetChangeRecordKind.SpriteEdit);
     }
 
     private static AssetChangeRecordKind MapKind(WorkspaceOperationKind operationKind) =>
@@ -46,6 +54,7 @@ public sealed record AssetChangeRecordDto(
             WorkspaceOperationKind.ReplaceFromFile => AssetChangeRecordKind.FileReplacement,
             WorkspaceOperationKind.ReplaceFromWorkspace => AssetChangeRecordKind.WorkspaceReplacement,
             WorkspaceOperationKind.ExtractAsset => AssetChangeRecordKind.Extraction,
+            WorkspaceOperationKind.EditDraftApplied => AssetChangeRecordKind.SpriteEdit,
             _ => AssetChangeRecordKind.Unknown
         };
 }

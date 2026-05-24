@@ -267,6 +267,7 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(ReplacementWorkflowHandlerTests.GetFileReplacementCandidateHandler_ShouldPreferTargetAssetType_WhenSharedExtensionMatches),
             ReplacementWorkflowHandlerTests.GetFileReplacementCandidateHandler_ShouldPreferTargetAssetType_WhenSharedExtensionMatches);
+        await RunSpriteEditOperationTestsAsync(failures);
         await RunReplacementOperationRecorderTestsAsync(failures);
         await RunTestAsync(
             failures,

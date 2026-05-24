@@ -1,4 +1,6 @@
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Editing.Commands;
+using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Extraction.Commands;
 using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Replacement.Commands;
@@ -117,6 +119,19 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         return result;
     }
 
+    public async Task<Result<AssetSpriteEditAppliedResultDto>> ApplySpriteEditAsync(
+        ApplySpriteEditCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _inner.ApplySpriteEditAsync(command, cancellationToken);
+        NotifyIfSucceeded(
+            result,
+            command.WorkspaceId,
+            WorkspaceOperationChangeKind.Edit,
+            CreateAffectedAsset(command.BundleId, command.AssetId));
+        return result;
+    }
+
     public async Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(
         DeleteWorkspaceOperationRecordCommand command,
         CancellationToken cancellationToken = default)
@@ -125,7 +140,7 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         NotifyIfSucceeded(
             result,
             command.WorkspaceId,
-            WorkspaceOperationChangeKind.Extraction | WorkspaceOperationChangeKind.Replacement,
+            WorkspaceOperationChangeKind.Extraction | WorkspaceOperationChangeKind.Replacement | WorkspaceOperationChangeKind.Edit,
             result.Value?.BundleId is { } bundleId && result.Value.AssetId is { } assetId
                 ? CreateAffectedAsset(bundleId, assetId)
                 : null);

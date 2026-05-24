@@ -4,7 +4,6 @@ using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Replacement.Commands;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Queries;
-using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Common.Errors;
@@ -25,6 +24,8 @@ internal sealed class BundleExplorerAssetModificationActionHandler
     private readonly ILocalizationService _localizationService;
     private readonly BundleExplorerFileReplacementActionExecutor _fileReplacementActionExecutor;
     private readonly BundleExplorerAssetExtractionActionHandler _extractionActionHandler;
+    private readonly BundleExplorerSpriteEditActionHandler _spriteEditActionHandler;
+    private readonly BundleExplorerChangeRecordActionHandler _changeRecordActionHandler;
 
     public BundleExplorerAssetModificationActionHandler(
         IWorkspaceAssetOperationGateway workspaceAssetOperationGateway,
@@ -58,6 +59,16 @@ internal sealed class BundleExplorerAssetModificationActionHandler
             backgroundTaskStatusService,
             operationChangeNotifier,
             backgroundWorkScheduler);
+        _spriteEditActionHandler = new BundleExplorerSpriteEditActionHandler(
+            _workspaceAssetOperationGateway,
+            _appLogService,
+            _appNotificationService,
+            _localizationService);
+        _changeRecordActionHandler = new BundleExplorerChangeRecordActionHandler(
+            _workspaceAssetOperationGateway,
+            _appLogService,
+            _appNotificationService,
+            _localizationService);
     }
 
     public Task ExtractSelectedAssetAsync(
@@ -418,54 +429,35 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         }
     }
 
-    public async Task DeleteChangeRecordAsync(
+    public Task ApplySpriteEditAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        AssetDocumentTabViewModel assetTab,
+        AssetDetailsDto details,
+        WorkspaceSpriteEditGeometryDto geometry,
+        Action<bool> setBusyState,
+        Action<IReadOnlyList<AppError>> appendResultFailure) =>
+        _spriteEditActionHandler.ApplySpriteEditAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            geometry,
+            setBusyState,
+            appendResultFailure);
+
+    public Task DeleteChangeRecordAsync(
         WorkspaceSummaryDto workspaceSummary,
         AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
         string operationId,
         Action<bool> setBusyState,
-        Action<IReadOnlyList<AppError>> appendResultFailure)
-    {
-        ArgumentNullException.ThrowIfNull(workspaceSummary);
-        ArgumentNullException.ThrowIfNull(assetTab);
-        ArgumentNullException.ThrowIfNull(details);
-        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
-        ArgumentNullException.ThrowIfNull(setBusyState);
-        ArgumentNullException.ThrowIfNull(appendResultFailure);
-
-        setBusyState(true);
-        try
-        {
-            var result = await _workspaceAssetOperationGateway.DeleteWorkspaceOperationRecordAsync(
-                new DeleteWorkspaceOperationRecordCommand(
-                    workspaceSummary.WorkspaceId,
-                    operationId,
-                    workspaceSummary.WorkspaceKey,
-                    workspaceSummary.WorkspaceDataRootPath));
-
-            if (!TryGetValue(result, out _, appendResultFailure))
-            {
-                return;
-            }
-
-            _appLogService.AppendInfo(_localizationService.GetFormattedString(
-                ResourceKeys.BundleExplorerLogOperationRecordDeleted,
-                details.Name));
-
-            ShowOperationNotification(
-                GetString(ResourceKeys.AppNotificationInfoTitle),
-                _localizationService.GetFormattedString(
-                    ResourceKeys.BundleExplorerNotificationOperationRecordDeleted,
-                    details.Name),
-                AppNotificationSeverity.Informational);
-
-            assetTab.ClearPendingReplacementCandidates();
-        }
-        finally
-        {
-            setBusyState(false);
-        }
-    }
+        Action<IReadOnlyList<AppError>> appendResultFailure) =>
+        _changeRecordActionHandler.DeleteChangeRecordAsync(
+            workspaceSummary,
+            assetTab,
+            details,
+            operationId,
+            setBusyState,
+            appendResultFailure);
 
     private bool TryGetValue<T>(
         Result<T> result,

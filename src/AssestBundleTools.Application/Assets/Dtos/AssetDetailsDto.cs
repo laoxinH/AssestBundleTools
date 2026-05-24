@@ -2,6 +2,7 @@ using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Workspace.Dtos;
 
 namespace AssestBundleTools.Application.Assets.Dtos;
 
@@ -40,4 +41,6 @@ public sealed record AssetDetailsDto(
     BundleId? WorkspaceReplacementSourceBundleId = null,
     AssetId? WorkspaceReplacementSourceAssetId = null,
     bool CanRedoReplacement = false,
-    IReadOnlyList<AssetChangeRecordDto>? ChangeRecords = null);
+    IReadOnlyList<AssetChangeRecordDto>? ChangeRecords = null,
+    WorkspaceSpriteEditGeometryDto? SpriteEditGeometry = null,
+    DateTimeOffset? SpriteEditAppliedAtUtc = null);

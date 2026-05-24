@@ -563,6 +563,15 @@ public static class ApplicationErrors
             severity: ErrorSeverity.Warning,
             messageToken: "Error.Asset.EditDraft.ModeRequired");
 
+    public static AppError AssetEditDraftInvalidGeometry(AssetId assetId) =>
+        new(
+            code: "Asset.EditDraft.InvalidGeometry",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.EditDraft.InvalidGeometry",
+            parameters: CreateParameters(("AssetId", assetId.ToString())),
+            isUserActionable: true);
+
     public static AppError AssetEditDraftNotFound(
         string workspaceKey,
         string draftId,

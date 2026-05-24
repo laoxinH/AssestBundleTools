@@ -2,6 +2,8 @@ using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Editing.Commands;
+using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Extraction.Commands;
 using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Extraction.Queries;
@@ -77,11 +79,38 @@ public sealed class WorkspaceOperationChangeNotificationTests
         var notification = Assert.Single(receivedEvents);
         Assert.Equal(workspaceId, notification.WorkspaceId);
         Assert.Equal(
-            WorkspaceOperationChangeKind.Extraction | WorkspaceOperationChangeKind.Replacement,
+            WorkspaceOperationChangeKind.Extraction | WorkspaceOperationChangeKind.Replacement | WorkspaceOperationChangeKind.Edit,
             notification.ChangeKind);
         var affectedAsset = Assert.Single(notification.AffectedAssets);
         Assert.Equal(new BundleId("bundle-textures"), affectedAsset.BundleId);
         Assert.Equal(new AssetId("asset-texture"), affectedAsset.AssetId);
+    }
+
+    [Fact]
+    public async Task ApplySpriteEditAsync_ShouldNotifyTargetAssetEditRefresh()
+    {
+        var workspaceId = new WorkspaceId("workspace-sprite-edit-notify");
+        var notifier = new WorkspaceOperationChangeNotifier();
+        var receivedEvents = new List<WorkspaceOperationChangedEventArgs>();
+        notifier.WorkspaceOperationsChanged += (_, e) => receivedEvents.Add(e);
+        var gateway = new NotifyingWorkspaceAssetOperationGateway(
+            new SuccessfulWorkspaceAssetOperationGateway(),
+            notifier);
+
+        var result = await gateway.ApplySpriteEditAsync(
+            new ApplySpriteEditCommand(
+                workspaceId,
+                new BundleId("bundle-1"),
+                new AssetId("sprite-1"),
+                new WorkspaceSpriteEditGeometryDto(256, 128, 4, 8, 64, 32, 36, 24)));
+
+        Assert.True(result.IsSuccess);
+        var notification = Assert.Single(receivedEvents);
+        Assert.Equal(workspaceId, notification.WorkspaceId);
+        Assert.Equal(WorkspaceOperationChangeKind.Edit, notification.ChangeKind);
+        var affectedAsset = Assert.Single(notification.AffectedAssets);
+        Assert.Equal(new BundleId("bundle-1"), affectedAsset.BundleId);
+        Assert.Equal(new AssetId("sprite-1"), affectedAsset.AssetId);
     }
 
     [Fact]
@@ -652,6 +681,20 @@ public sealed class WorkspaceOperationChangeNotificationTests
             RedoAssetReplacementCommand command,
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
+
+        public Task<Result<AssetSpriteEditAppliedResultDto>> ApplySpriteEditAsync(
+            ApplySpriteEditCommand command,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result<AssetSpriteEditAppliedResultDto>.Success(
+                new AssetSpriteEditAppliedResultDto(
+                    command.WorkspaceId,
+                    command.BundleId,
+                    command.AssetId,
+                    "sprite",
+                    "draft-sprite",
+                    "sprite-geometry",
+                    command.Geometry,
+                    DateTimeOffset.UtcNow)));
 
         public Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(
             DeleteWorkspaceOperationRecordCommand command,

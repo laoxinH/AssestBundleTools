@@ -2,6 +2,7 @@ using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Bundles.Commands;
 using AssestBundleTools.Application.Bundles.Queries;
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Editing.Commands;
 using AssestBundleTools.Application.Editing.Queries;
 using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Extraction.Commands;
@@ -195,6 +196,13 @@ internal static class AppCompositionRoot
         var redoAssetReplacementHandler = new RedoAssetReplacementHandler(
             workspaceSessionRegistry,
             workspaceReplacementOperationRecorder);
+        var workspaceSpriteEditOperationRecorder = new WorkspaceSpriteEditOperationRecorder(
+            workspaceDataStoreFactory,
+            workspaceOperationLogService);
+        var applySpriteEditHandler = new ApplySpriteEditHandler(
+            workspaceSessionRegistry,
+            workspaceSessionRegistry,
+            workspaceSpriteEditOperationRecorder);
         var deleteWorkspaceOperationRecordHandler = new DeleteWorkspaceOperationRecordHandler(
             workspaceSessionRegistry,
             workspaceDataStoreFactory,
@@ -248,6 +256,7 @@ internal static class AppCompositionRoot
             replaceAssetFromWorkspaceHandler: replaceAssetFromWorkspaceHandler,
             undoAssetReplacementHandler: undoAssetReplacementHandler,
             redoAssetReplacementHandler: redoAssetReplacementHandler,
+            applySpriteEditHandler: applySpriteEditHandler,
             deleteWorkspaceOperationRecordHandler: deleteWorkspaceOperationRecordHandler);
         var workspaceAssetOperationGateway = new NotifyingWorkspaceAssetOperationGateway(
             workspaceAssetOperationGatewayCore,

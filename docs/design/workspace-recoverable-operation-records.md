@@ -294,17 +294,21 @@ Presentation 负责把这些结构化字段格式化为用户可见文本；Appl
 
 ### 7.4 编辑草稿
 
-编辑草稿分为“草稿描述”和“草稿内容”两层。
+编辑草稿分为“草稿描述”“轻量已应用结果”和后续“大载荷草稿内容”三层。
 
-当前已落地的是描述层：
+当前已落地的是描述层和 Sprite 几何的轻量已应用结果：
 
 - `editDrafts[]`
 - `WorkspaceAssetEditDraftDescriptorDto`
 - `AssetEditDraftRestorePlan`
+- `WorkspaceOperationKind.EditDraftApplied`
+- `WorkspaceOperationResultDto.SpriteEditGeometry`
 
-当前 Sprite 裁切框 / pivot 修改第一阶段只落地窗口模式中的临时编辑工作面：用户可进入编辑态，通过拖拽或预览框下方的独立数值面板调整几何，但该几何尚未写入 `editDrafts[]` 或 `operations[]`，也不参与撤销、重做和保存输出。后续把 Sprite 编辑接入正式链路时，应先把裁切框、pivot、来源预览指纹和草稿模式持久化为编辑草稿，再通过 `EditDraftApplied` 物化为工作区操作记录，避免把临时 UI 状态伪装成已生效修改。
+当前 Sprite 裁切框 / pivot 修改已经从临时编辑工作面进入工作区操作记录链路：用户在资源编辑窗口中调整几何后，通过窗口操作区的“保存 Sprite 编辑”把当前裁切框、pivot、画布尺寸和草稿模式应用到工作区运行时状态，并追加一条 `EditDraftApplied` 操作记录。该记录的 `source.sourceKind` 为 `draft`，`source.draftMode` 为 `sprite-geometry`，`source.draftId` 指向本次几何草稿；`result.spriteEditGeometry` 保存当前轻量几何，用于重启恢复、读模型重放、预览投影和后续统一导出读取。`editDrafts[]` 只保存草稿描述、指纹、更新时间和摘要，不保存图片或 AB 载荷。
 
-后续操作记录只引用草稿，不直接保存草稿内容：
+Sprite 编辑应用后仍不改写原始 AB、标准化 artifact 或预览缓存源文件；实际 AB 对象裁切 / pivot 写入只允许在后续保存 / 重建 / 统一导出阶段读取已物化的 Sprite 编辑状态后执行。删除某条 Sprite 编辑操作记录时，运行时会按剩余 `operations[]` 重新物化当前目标资源的最新有效 Sprite 几何；若删除最新记录，上一条同目标 Sprite 编辑自动成为有效几何。
+
+后续大载荷编辑操作记录应引用草稿，不直接保存草稿内容：
 
 - `EditDraftCreated`
 - `EditDraftUpdated`
@@ -436,7 +440,7 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 - 已让 `RedoAssetReplacementHandler` 追加 `RedoReplacement` 操作，并把当前会话内目标资源的 redo 槽或指定历史替换记录重新应用为有效替换；指定历史记录重做会保存来源信息，供重启恢复和后续保存 / 导出消费。
 - 已把 `Texture2D` 文件替换和工作区内替换接入有效预览：预览查询会优先读取当前物化替换来源，文件来源由 Infrastructure 的文件预览端口读取，工作区来源递归复用既有预览管线并把预览身份投影回目标资产。
 - 已让资产详情读模型投影当前目标资产的独立操作记录：`ReplaceFromFile / ReplaceFromWorkspace` 在检查器 `变更` 分段分别显示为单独修改记录，同一目标多次修改保留多条修改记录；`ExtractAsset` 在资源详情中只展示最近一次提取记录，避免重复提取记录挤占修改历史。变更卡片会标记实际生效的替换记录；只有该记录显示撤销，其他替换记录显示重做。删除记录和记录上限都通过 Application 操作日志服务处理，Presentation 只展示卡片并触发命令。
-- `CachedWorkspaceSessionRegistry.OpenWorkspace` 已在打开工作区时读取 `operations[]`，并把当前生效的替换操作投影到运行时状态。
+- `CachedWorkspaceSessionRegistry.OpenWorkspace` 已在打开工作区时读取 `operations[]`，并把当前生效的替换操作和 Sprite 几何编辑操作投影到运行时状态。
 - `WorkspaceChangeSummaryDto` 继续保持现有形状，替换状态可由重启恢复后的运行时状态生成。
 - 当前仍未完成来源文件指纹校验、来源缺失恢复计划、完整跨操作 redo 栈、批量替换结果明细和真实写包消费；这些进入后续恢复计划 / 保存导出细化。
 
@@ -471,9 +475,10 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 
 ### 第四阶段：编辑草稿与操作记录合流
 
-- `editDrafts[]` 继续保存草稿描述。
-- 操作记录引用 `draftId / draftMode`。
-- 草稿内容落到 `staging/drafts/` 后，再补真实恢复 / 丢弃 / 应用流程。
+- 已让 Sprite 裁切框 / pivot 几何通过 `EditDraftApplied` 追加操作记录，并在 `Result.SpriteEditGeometry` 中保存轻量几何。
+- `editDrafts[]` 继续保存草稿描述、指纹和摘要；当前 Sprite 几何不生成单独草稿内容文件。
+- 操作记录引用 `draftId / draftMode`，保存 / 导出阶段后续应从物化状态读取有效 Sprite 几何。
+- 大载荷草稿内容落到 `staging/drafts/` 后，再补真实恢复 / 丢弃 / 应用流程。
 
 ### 第五阶段：保存检查点
 

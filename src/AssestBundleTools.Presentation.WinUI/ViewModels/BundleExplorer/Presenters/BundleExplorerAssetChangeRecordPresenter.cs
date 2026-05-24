@@ -50,7 +50,8 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
             .Where(static record => record.Kind is
                 AssetChangeRecordKind.Extraction or
                 AssetChangeRecordKind.FileReplacement or
-                AssetChangeRecordKind.WorkspaceReplacement)
+                AssetChangeRecordKind.WorkspaceReplacement or
+                AssetChangeRecordKind.SpriteEdit)
             .ToArray();
         var records = candidateRecords
             .Where(static record => record.Kind is not AssetChangeRecordKind.Extraction)
@@ -98,6 +99,16 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
                 AppliedAtUtc: extractedAtUtc));
         }
 
+        if (details.SpriteEditGeometry is not null &&
+            details.SpriteEditAppliedAtUtc is { } spriteEditAppliedAtUtc)
+        {
+            records.Add(new AssetChangeRecordDto(
+                Kind: AssetChangeRecordKind.SpriteEdit,
+                CreatedAtUtc: spriteEditAppliedAtUtc,
+                AppliedAtUtc: spriteEditAppliedAtUtc,
+                IsEffectiveEdit: true));
+        }
+
         return records;
     }
 
@@ -133,6 +144,7 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
         {
             AssetChangeRecordKind.FileReplacement => GetString(ResourceKeys.InspectorChangeRecordFileReplacementTitle),
             AssetChangeRecordKind.WorkspaceReplacement => GetString(ResourceKeys.InspectorChangeRecordWorkspaceReplacementTitle),
+            AssetChangeRecordKind.SpriteEdit => GetString(ResourceKeys.InspectorChangeRecordSpriteEditTitle),
             AssetChangeRecordKind.Extraction => GetString(ResourceKeys.InspectorChangeRecordExtractionTitle),
             _ => GetString(ResourceKeys.InspectorChangeSummaryNone)
         };
@@ -145,6 +157,13 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
             return record.IsEffectiveReplacement
                 ? GetString(ResourceKeys.InspectorChangeRecordEffectiveBadge)
                 : GetString(ResourceKeys.InspectorChangeRecordRedoBadge);
+        }
+
+        if (record.Kind == AssetChangeRecordKind.SpriteEdit)
+        {
+            return record.IsEffectiveEdit
+                ? GetString(ResourceKeys.InspectorChangeRecordEffectiveBadge)
+                : string.Empty;
         }
 
         return record.Kind == AssetChangeRecordKind.Extraction
@@ -161,6 +180,7 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
                 ResolveDisplayValue(record.SourceBundleDisplayName),
                 " / ",
                 ResolveDisplayValue(record.SourceAssetName)),
+            AssetChangeRecordKind.SpriteEdit => GetString(ResourceKeys.InspectorChangeRecordSpriteEditSource),
             _ => string.Empty
         };
 
@@ -196,6 +216,7 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
         {
             AssetChangeRecordKind.FileReplacement => "\uE8B7",
             AssetChangeRecordKind.WorkspaceReplacement => "\uE8A5",
+            AssetChangeRecordKind.SpriteEdit => "\uE70F",
             AssetChangeRecordKind.Extraction => "\uE896",
             _ => "\uE946"
         };

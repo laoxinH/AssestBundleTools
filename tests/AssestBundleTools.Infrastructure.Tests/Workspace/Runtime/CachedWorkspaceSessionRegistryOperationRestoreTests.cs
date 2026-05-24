@@ -206,6 +206,83 @@ internal static class CachedWorkspaceSessionRegistryOperationRestoreTests
         TestAssert.False(details.CanRedoReplacement, "After redo, the target should no longer advertise another redo step.");
     }
 
+    public static void OpenWorkspace_ShouldMaterializePersistedSpriteEditOperation_FromChangeSet()
+    {
+        var workspaceKey = "workspace-a";
+        var bundleId = "bundle.sprites";
+        var assetId = "asset.sprite";
+        var now = new DateTimeOffset(2026, 5, 24, 10, 0, 0, TimeSpan.Zero);
+        var geometry = new WorkspaceSpriteEditGeometryDto(256, 128, 4, 8, 64, 32, 36, 24);
+        var cacheEntry = new BundleIndexCacheEntryDto(
+            WorkspaceKey: workspaceKey,
+            BundleCacheKey: "bundle-cache-sprites",
+            BundleId: bundleId,
+            DisplayName: "sprites.ab",
+            LogicalPath: "sprites.ab",
+            SourceFingerprint: new WorkspaceFileFingerprintDto("sprites.ab", 100, DateTimeOffset.UnixEpoch, "hash"),
+            CachedAtUtc: DateTimeOffset.UnixEpoch,
+            ParserVersion: "test",
+            ToolVersion: "test",
+            Dependencies: Array.Empty<string>(),
+            Assets:
+            [
+                CreateAsset(assetId, "HeroSprite", AssetType.Sprite, "Sprite", pathId: 10)
+            ],
+            SerializedFileNames: ["CAB-sprites"]);
+        var changeSet = new WorkspaceChangeSetDto(
+            WorkspaceKey: workspaceKey,
+            UpdatedAtUtc: now,
+            Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+            EditDrafts: Array.Empty<WorkspaceAssetEditDraftDescriptorDto>(),
+            SchemaVersion: WorkspaceChangeSetDto.CurrentSchemaVersion,
+            OperationSequence: 1,
+            Operations:
+            [
+                new WorkspaceOperationRecordDto(
+                    OperationId: "sprite-edit",
+                    Sequence: 1,
+                    OperationKind: WorkspaceOperationKind.EditDraftApplied,
+                    Status: WorkspaceOperationStatus.Applied,
+                    WorkspaceKey: workspaceKey,
+                    Target: new WorkspaceOperationTargetDto(BundleId: bundleId, AssetId: assetId),
+                    Source: new WorkspaceOperationSourceDto(
+                        SourceKind: "draft",
+                        DraftId: "draft-sprite-1",
+                        DraftMode: "sprite-geometry"),
+                    PreviousState: null,
+                    Result: new WorkspaceOperationResultDto(
+                        DraftId: "draft-sprite-1",
+                        SpriteEditGeometry: geometry),
+                    CreatedAtUtc: now,
+                    AppliedAtUtc: now)
+            ]);
+        var registry = new CachedWorkspaceSessionRegistry(
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([cacheEntry]),
+                new TestWorkspaceChangeStore(changeSet)),
+            new WorkspaceOperationLogService());
+
+        var summary = registry.OpenWorkspace(new WorkspaceSessionOpenRequestDto(
+            WorkspaceKey: workspaceKey,
+            WorkspacePath: "workspace",
+            WorkspaceDataRootPath: "data",
+            WorkspaceDisplayName: "Workspace A",
+            InitialMode: WorkspaceMode.SinglePane));
+        var hasDetails = registry.TryGetAssetDetails(
+            summary.WorkspaceId,
+            new BundleId(bundleId),
+            new AssetId(assetId),
+            out var details);
+
+        TestAssert.True(hasDetails, "Sprite details should be available.");
+        TestAssert.True(details!.IsModified, "Persisted Sprite edit should mark the asset as modified.");
+        TestAssert.Equal(geometry, details.SpriteEditGeometry, "Persisted Sprite geometry should be restored.");
+        TestAssert.Equal(now, details.SpriteEditAppliedAtUtc, "Persisted Sprite edit timestamp should be restored.");
+        var changeRecord = TestAssert.Single(details.ChangeRecords ?? Array.Empty<AssetChangeRecordDto>());
+        TestAssert.Equal(AssetChangeRecordKind.SpriteEdit, changeRecord.Kind, "Sprite edit should be projected as a change record.");
+        TestAssert.True(changeRecord.IsEffectiveEdit, "Restored Sprite edit should be marked effective.");
+    }
+
     private static WorkspaceChangeSetDto CreateReplacementChangeSet(
         string workspaceKey,
         string bundleId,

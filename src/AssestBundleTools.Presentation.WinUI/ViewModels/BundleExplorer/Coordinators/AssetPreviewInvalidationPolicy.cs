@@ -7,7 +7,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordin
 /// </summary>
 internal static class AssetPreviewInvalidationPolicy
 {
-    public static bool HasReplacementProjectionChanged(
+    public static bool HasEffectivePreviewProjectionChanged(
         AssetDetailsDto? previousDetails,
         AssetDetailsDto currentDetails)
     {
@@ -34,7 +34,11 @@ internal static class AssetPreviewInvalidationPolicy
                    currentDetails.WorkspaceReplacementSourceAssetId?.Value,
                    StringComparison.Ordinal) ||
                GetLatestReplacementRecordTimestamp(previousDetails) !=
-               GetLatestReplacementRecordTimestamp(currentDetails);
+               GetLatestReplacementRecordTimestamp(currentDetails) ||
+               !Equals(previousDetails.SpriteEditGeometry, currentDetails.SpriteEditGeometry) ||
+               previousDetails.SpriteEditAppliedAtUtc != currentDetails.SpriteEditAppliedAtUtc ||
+               GetLatestSpriteEditRecordTimestamp(previousDetails) !=
+               GetLatestSpriteEditRecordTimestamp(currentDetails);
     }
 
     private static DateTimeOffset? GetLatestReplacementRecordTimestamp(AssetDetailsDto details)
@@ -43,6 +47,15 @@ internal static class AssetPreviewInvalidationPolicy
             .Where(static record => record.Kind is
                 AssetChangeRecordKind.FileReplacement or
                 AssetChangeRecordKind.WorkspaceReplacement)
+            .OrderByDescending(static record => record.DisplayTimestampUtc)
+            .Select(static record => (DateTimeOffset?)record.DisplayTimestampUtc)
+            .FirstOrDefault();
+    }
+
+    private static DateTimeOffset? GetLatestSpriteEditRecordTimestamp(AssetDetailsDto details)
+    {
+        return details.ChangeRecords?
+            .Where(static record => record.Kind == AssetChangeRecordKind.SpriteEdit)
             .OrderByDescending(static record => record.DisplayTimestampUtc)
             .Select(static record => (DateTimeOffset?)record.DisplayTimestampUtc)
             .FirstOrDefault();

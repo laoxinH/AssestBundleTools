@@ -310,6 +310,8 @@ public sealed partial class InMemoryWorkspaceSessionRegistry
 
         public AppliedFileReplacementState? AppliedFileReplacement { get; set; }
 
+        public AppliedSpriteEditState? AppliedSpriteEdit { get; set; }
+
         public List<AppliedReplacementSnapshot?> ReplacementUndoStack { get; } = [];
 
         public List<AppliedReplacementSnapshot?> ReplacementRedoStack { get; } = [];
@@ -327,6 +329,12 @@ public sealed partial class InMemoryWorkspaceSessionRegistry
         string SourceFilePath,
         string SourceFileName,
         AssetType SourceAssetType,
+        DateTimeOffset AppliedAtUtc);
+
+    private sealed record AppliedSpriteEditState(
+        string DraftId,
+        string DraftMode,
+        WorkspaceSpriteEditGeometryDto Geometry,
         DateTimeOffset AppliedAtUtc);
 
     private sealed record AppliedReplacementSnapshot(
@@ -385,7 +393,23 @@ public sealed partial class InMemoryWorkspaceSessionRegistry
     {
         assetState.AppliedWorkspaceReplacement = replacementSnapshot?.WorkspaceReplacement;
         assetState.AppliedFileReplacement = replacementSnapshot?.FileReplacement;
-        assetState.IsModified = replacementSnapshot is not null;
+        RefreshModifiedState(assetState);
+    }
+
+    private static void ApplySpriteEditState(
+        SampleAssetState assetState,
+        AppliedSpriteEditState spriteEdit)
+    {
+        assetState.AppliedSpriteEdit = spriteEdit;
+        RefreshModifiedState(assetState);
+    }
+
+    private static void RefreshModifiedState(SampleAssetState assetState)
+    {
+        assetState.IsModified =
+            assetState.AppliedWorkspaceReplacement is not null ||
+            assetState.AppliedFileReplacement is not null ||
+            assetState.AppliedSpriteEdit is not null;
     }
 
     private static AppliedReplacementSnapshot? PopReplacementSnapshot(

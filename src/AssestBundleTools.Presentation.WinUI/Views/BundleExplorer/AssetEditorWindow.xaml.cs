@@ -171,6 +171,11 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         await ViewModel.ApplyPendingReplacementAsync();
     }
 
+    private async void OnApplySpriteEditButtonClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.ApplySpriteEditAsync();
+    }
+
     private async void OnUndoReplacementButtonClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.UndoAppliedReplacementAsync();
@@ -311,6 +316,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         SelectReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectReplacementButton);
         SelectFileReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectFileReplacementButton);
         ApplyReplacementButton.Content = UiText.Get(ResourceKeys.InspectorApplyReplacementButton);
+        ApplySpriteEditButton.Content = UiText.Get(ResourceKeys.InspectorApplySpriteEditButton);
         UndoReplacementButton.Content = UiText.Get(ResourceKeys.InspectorUndoReplacementButton);
         RedoReplacementButton.Content = UiText.Get(ResourceKeys.InspectorRedoReplacementButton);
     }

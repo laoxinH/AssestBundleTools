@@ -1,4 +1,6 @@
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Editing.Commands;
+using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Extraction.Commands;
 using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Replacement.Commands;
@@ -44,6 +46,10 @@ public interface IWorkspaceAssetOperationGateway
 
     Task<Result<AssetReplacementRedoResultDto>> RedoAssetReplacementAsync(
         RedoAssetReplacementCommand command,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<AssetSpriteEditAppliedResultDto>> ApplySpriteEditAsync(
+        ApplySpriteEditCommand command,
         CancellationToken cancellationToken = default);
 
     Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(

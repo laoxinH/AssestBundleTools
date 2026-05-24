@@ -32,7 +32,8 @@ public enum WorkspaceOperationChangeKind
     None = 0,
     Extraction = 1,
     Replacement = 2,
-    Save = 4
+    Save = 4,
+    Edit = 8
 }
 
 public sealed class WorkspaceOperationChangedEventArgs : EventArgs
