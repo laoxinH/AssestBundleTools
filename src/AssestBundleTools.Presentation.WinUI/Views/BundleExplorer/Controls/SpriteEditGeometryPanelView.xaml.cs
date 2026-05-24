@@ -11,9 +11,12 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 public sealed partial class SpriteEditGeometryPanelView : UserControl
 {
+    private const double SpriteEditGeometryValueTolerance = 0.0001d;
+
     private InspectorPreviewImageViewModel? _observedViewModel;
     private bool _isBindingsUpdateQueued;
     private bool _isUpdatingSpriteEditGeometryFields;
+    private int _spriteEditGeometryBindingUpdateVersion;
 
     public static readonly DependencyProperty ViewModelProperty =
         DependencyProperty.Register(
@@ -99,8 +102,10 @@ public sealed partial class SpriteEditGeometryPanelView : UserControl
         NumberBoxValueChangedEventArgs args)
     {
         if (_isUpdatingSpriteEditGeometryFields ||
+            _isBindingsUpdateQueued ||
             ViewModel?.IsSpriteEditModeActive != true ||
-            ViewModel.IsSpriteEditDragActive)
+            ViewModel.IsSpriteEditDragActive ||
+            IsSpriteEditGeometryValueSynchronizedWithViewModel(sender, ViewModel))
         {
             return;
         }
@@ -124,12 +129,24 @@ public sealed partial class SpriteEditGeometryPanelView : UserControl
         }
 
         _isBindingsUpdateQueued = false;
+        var updateVersion = ++_spriteEditGeometryBindingUpdateVersion;
         _isUpdatingSpriteEditGeometryFields = true;
         try
         {
             Bindings.Update();
         }
         finally
+        {
+            if (!DispatcherQueue.TryEnqueue(() => CompleteSpriteEditGeometryBindingUpdate(updateVersion)))
+            {
+                CompleteSpriteEditGeometryBindingUpdate(updateVersion);
+            }
+        }
+    }
+
+    private void CompleteSpriteEditGeometryBindingUpdate(int updateVersion)
+    {
+        if (updateVersion == _spriteEditGeometryBindingUpdateVersion)
         {
             _isUpdatingSpriteEditGeometryFields = false;
         }
@@ -240,6 +257,34 @@ public sealed partial class SpriteEditGeometryPanelView : UserControl
         return sender.Name is nameof(SpriteEditPivotXNumberBox) or nameof(SpriteEditPivotYNumberBox)
             ? SpriteEditGeometryInputKind.Pivot
             : SpriteEditGeometryInputKind.Crop;
+    }
+
+    private static bool IsSpriteEditGeometryValueSynchronizedWithViewModel(
+        NumberBox sender,
+        InspectorPreviewImageViewModel viewModel)
+    {
+        var currentValue = sender.Name switch
+        {
+            nameof(SpriteEditCropXNumberBox) => viewModel.SpriteEditCropX,
+            nameof(SpriteEditCropYNumberBox) => viewModel.SpriteEditCropY,
+            nameof(SpriteEditCropWidthNumberBox) => viewModel.SpriteEditCropWidth,
+            nameof(SpriteEditCropHeightNumberBox) => viewModel.SpriteEditCropHeight,
+            nameof(SpriteEditPivotXNumberBox) => viewModel.SpriteEditPivotX,
+            nameof(SpriteEditPivotYNumberBox) => viewModel.SpriteEditPivotY,
+            _ => double.NaN
+        };
+
+        return AreSpriteEditGeometryValuesClose(sender.Value, currentValue);
+    }
+
+    private static bool AreSpriteEditGeometryValuesClose(double left, double right)
+    {
+        if (!double.IsFinite(left) || !double.IsFinite(right))
+        {
+            return false;
+        }
+
+        return Math.Abs(left - right) <= SpriteEditGeometryValueTolerance;
     }
 
     private void ApplyLocalizedText()

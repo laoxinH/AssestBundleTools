@@ -332,6 +332,26 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
     }
 
     [Fact]
+    public void SpriteEditGeometryPanel_ShouldNotWriteBackProgrammaticBindingUpdates()
+    {
+        var panelCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "SpriteEditGeometryPanelView.xaml.cs"));
+
+        Assert.Contains("_isUpdatingSpriteEditGeometryFields", panelCode);
+        Assert.Contains("_isBindingsUpdateQueued", panelCode);
+        Assert.Contains("CompleteSpriteEditGeometryBindingUpdate", panelCode);
+        Assert.Contains("IsSpriteEditGeometryValueSynchronizedWithViewModel(sender, ViewModel)", panelCode);
+        Assert.Contains("SpriteEditGeometryValueTolerance", panelCode);
+    }
+
+    [Fact]
     public void SpriteEditGeometryPanel_ShouldReleaseNumberInputFocusWhenPreviewDragStarts()
     {
         var panelXaml = File.ReadAllText(
