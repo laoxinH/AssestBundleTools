@@ -9,6 +9,7 @@ public sealed partial class InspectorPreviewImageViewModel
         OnPropertyChanged(nameof(OverlayBadgeVisibility));
         OnPropertyChanged(nameof(SpriteEditFrameVisibility));
         OnPropertyChanged(nameof(SpriteEditHandleVisibility));
+        OnPropertyChanged(nameof(SpriteEditActionControlsVisibility));
         OnPropertyChanged(nameof(SpriteEditMeasurementVisibility));
         OnPropertyChanged(nameof(PivotVisibility));
         OnPropertyChanged(nameof(BorderVisibility));

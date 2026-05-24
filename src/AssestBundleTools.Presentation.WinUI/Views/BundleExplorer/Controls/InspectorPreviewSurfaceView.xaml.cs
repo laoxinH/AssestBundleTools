@@ -1,6 +1,7 @@
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Windows.Media.Playback;
@@ -65,6 +66,8 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
         ToolTipService.SetToolTip(ImageZoomInButton, UiText.Get(ResourceKeys.InspectorPreviewImageZoomInToolTip));
         ToolTipService.SetToolTip(ImageZoomOutButton, UiText.Get(ResourceKeys.InspectorPreviewImageZoomOutToolTip));
         ToolTipService.SetToolTip(ImageResetButton, UiText.Get(ResourceKeys.InspectorPreviewImageResetToolTip));
+        ApplyButtonAssistiveText(SpriteEditResetOriginalButton, UiText.Get(ResourceKeys.InspectorSpriteEditResetOriginalToolTip));
+        ApplyButtonAssistiveText(SpriteEditFullSizeButton, UiText.Get(ResourceKeys.InspectorSpriteEditFullSizeToolTip));
         ToolTipService.SetToolTip(MeshZoomInButton, UiText.Get(ResourceKeys.InspectorMeshPreviewZoomInToolTip));
         ToolTipService.SetToolTip(MeshZoomOutButton, UiText.Get(ResourceKeys.InspectorMeshPreviewZoomOutToolTip));
         ToolTipService.SetToolTip(MeshResetButton, UiText.Get(ResourceKeys.InspectorMeshPreviewResetToolTip));
@@ -268,6 +271,16 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
         ViewModel?.Preview.Image.ResetView();
     }
 
+    private void OnSpriteEditResetOriginalButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.Preview.Image.ResetSpriteEditGeometryToOriginal();
+    }
+
+    private void OnSpriteEditFullSizeButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.Preview.Image.UseFullImageForSpriteEditGeometry();
+    }
+
     private void OnMeshZoomOutButtonClick(object sender, RoutedEventArgs e)
     {
         ViewModel?.Preview.Mesh.ZoomBy(0.84d);
@@ -354,6 +367,12 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
             UiText.Get(mesh.IsMeshGridSelected
                 ? ResourceKeys.InspectorMeshPreviewHideGridToolTip
                 : ResourceKeys.InspectorMeshPreviewShowGridToolTip));
+    }
+
+    private static void ApplyButtonAssistiveText(Button button, string text)
+    {
+        ToolTipService.SetToolTip(button, text);
+        AutomationProperties.SetName(button, text);
     }
 
     private void AttachAudioPlayer(MediaPlayer? mediaPlayer)

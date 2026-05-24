@@ -89,6 +89,44 @@ public sealed partial class InspectorPreviewImageViewModel
             shouldRefreshPivotRelativePosition);
     }
 
+    internal void ResetSpriteEditGeometryToOriginal()
+    {
+        if (!IsSpriteEditModeActive ||
+            !_overlayState.HasOverlay ||
+            IsSpriteEditDragActive ||
+            !_overlayState.TryResetEditableGeometryToOriginal())
+        {
+            return;
+        }
+
+        RefreshSpriteEditPivotRelativePositionFromOverlay();
+        RecalculateOverlayLayout();
+    }
+
+    internal void UseFullImageForSpriteEditGeometry()
+    {
+        if (!IsSpriteEditModeActive || !_overlayState.HasOverlay || IsSpriteEditDragActive)
+        {
+            return;
+        }
+
+        var nextWidth = NormalizePositive(CanvasWidth, 1d);
+        var nextHeight = NormalizePositive(CanvasHeight, 1d);
+        var (nextPivotX, nextPivotY) = ResolveSpriteEditPivotFromRelative(
+            cropX: 0d,
+            cropY: 0d,
+            cropWidth: nextWidth,
+            cropHeight: nextHeight);
+        ApplySpriteEditGeometry(
+            cropX: 0d,
+            cropY: 0d,
+            cropWidth: nextWidth,
+            cropHeight: nextHeight,
+            pivotX: nextPivotX,
+            pivotY: nextPivotY,
+            refreshPivotRelativePosition: false);
+    }
+
     private void ApplySpriteEditGeometry(
         double cropX,
         double cropY,

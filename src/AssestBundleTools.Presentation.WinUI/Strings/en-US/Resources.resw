@@ -1440,6 +1440,12 @@
   <data name="InspectorPanelView.SpriteCropPreviewModeButton.ToolTip" xml:space="preserve">
     <value>Show crop preview</value>
   </data>
+  <data name="InspectorPanelView.SpriteEdit.ResetOriginal.ToolTip" xml:space="preserve">
+    <value>Reset original Sprite parameters</value>
+  </data>
+  <data name="InspectorPanelView.SpriteEdit.FullSize.ToolTip" xml:space="preserve">
+    <value>Use the full image as the crop region</value>
+  </data>
   <data name="InspectorPanelView.SpritePreviewOverlay.Badge.Format" xml:space="preserve">
     <value>Crop Preview&#x0a;x={0}, y={1}&#x0a;Size {2} x {3}</value>
   </data>

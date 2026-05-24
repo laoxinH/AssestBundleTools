@@ -272,6 +272,28 @@
                     </Button>
 
                     <Button
+                        x:Name="SpriteEditResetOriginalButton"
+                        Click="OnSpriteEditResetOriginalButtonClick"
+                        Style="{StaticResource InspectorPreviewActionButtonStyle}"
+                        Visibility="{x:Bind ViewModel.Preview.Image.SpriteEditActionControlsVisibility, Mode=OneWay}">
+                        <FontIcon
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="13"
+                            Glyph="&#xE7A7;" />
+                    </Button>
+
+                    <Button
+                        x:Name="SpriteEditFullSizeButton"
+                        Click="OnSpriteEditFullSizeButtonClick"
+                        Style="{StaticResource InspectorPreviewActionButtonStyle}"
+                        Visibility="{x:Bind ViewModel.Preview.Image.SpriteEditActionControlsVisibility, Mode=OneWay}">
+                        <FontIcon
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="13"
+                            Glyph="&#xE740;" />
+                    </Button>
+
+                    <Button
                         x:Name="SpriteDisplayModeButton"
                         Click="OnSpriteDisplayModeButtonClick"
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"

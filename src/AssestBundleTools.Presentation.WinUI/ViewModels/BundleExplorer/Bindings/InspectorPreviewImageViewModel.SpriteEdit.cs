@@ -40,6 +40,11 @@ public sealed partial class InspectorPreviewImageViewModel
             ? Visibility.Visible
             : Visibility.Collapsed;
 
+    public Visibility SpriteEditActionControlsVisibility =>
+        IsSpriteEditModeActive && OverlayVisibility == Visibility.Visible
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
     public Visibility OverlayBadgeVisibility =>
         OverlayVisibility == Visibility.Visible && !IsSpriteEditModeActive
             ? Visibility.Visible
@@ -401,6 +406,7 @@ public sealed partial class InspectorPreviewImageViewModel
         OnPropertyChanged(nameof(OverlayFrameVisibility));
         OnPropertyChanged(nameof(SpriteEditFrameVisibility));
         OnPropertyChanged(nameof(SpriteEditHandleVisibility));
+        OnPropertyChanged(nameof(SpriteEditActionControlsVisibility));
         OnPropertyChanged(nameof(SpriteEditGeometryPanelVisibility));
         OnPropertyChanged(nameof(SpriteEditMeasurementVisibility));
         OnPropertyChanged(nameof(OverlayBadgeVisibility));

@@ -494,6 +494,54 @@ public sealed class InspectorPreviewImageViewModelTests
     }
 
     [Fact]
+    public void SpriteEditResetOriginal_ShouldRestoreInitialCropAndPivot()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(viewModel);
+        viewModel.UpdateSpriteEditGeometryFromInput(
+            cropX: 20d,
+            cropY: 30d,
+            cropWidth: 60d,
+            cropHeight: 80d,
+            pivotX: 70d,
+            pivotY: 90d,
+            inputKind: SpriteEditGeometryInputKind.Pivot);
+
+        viewModel.ResetSpriteEditGeometryToOriginal();
+
+        Assert.Equal(10d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(20d, viewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(30d, viewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(40d, viewModel.SpriteEditCropHeight, precision: 3);
+        Assert.Equal(20d, viewModel.SpriteEditPivotX, precision: 3);
+        Assert.Equal(30d, viewModel.SpriteEditPivotY, precision: 3);
+    }
+
+    [Fact]
+    public void SpriteEditFullSize_ShouldUseWholeCanvasAndKeepCurrentPivotRatio()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(viewModel);
+        viewModel.UpdateSpriteEditGeometryFromInput(
+            cropX: 10d,
+            cropY: 20d,
+            cropWidth: 30d,
+            cropHeight: 40d,
+            pivotX: 35d,
+            pivotY: 50d,
+            inputKind: SpriteEditGeometryInputKind.Pivot);
+
+        viewModel.UseFullImageForSpriteEditGeometry();
+
+        Assert.Equal(0d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(0d, viewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(100d, viewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(100d, viewModel.SpriteEditCropHeight, precision: 3);
+        Assert.Equal(83.333d, viewModel.SpriteEditPivotX, precision: 3);
+        Assert.Equal(75d, viewModel.SpriteEditPivotY, precision: 3);
+    }
+
+    [Fact]
     public void SpriteEditMeasurements_ShouldExposeCoordinatesLengthsAndAxis()
     {
         var viewModel = new InspectorPreviewImageViewModel();

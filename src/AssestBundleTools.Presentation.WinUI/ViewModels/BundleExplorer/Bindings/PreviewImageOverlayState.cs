@@ -11,6 +11,17 @@ internal sealed class PreviewImageOverlayState
     private double _sourceY;
     private double _sourceWidth;
     private double _sourceHeight;
+    private double _originalSourceX;
+    private double _originalSourceY;
+    private double _originalSourceWidth;
+    private double _originalSourceHeight;
+    private double? _originalPivotSourceX;
+    private double? _originalPivotSourceY;
+    private double? _originalBorderSourceLeft;
+    private double? _originalBorderSourceTop;
+    private double? _originalBorderSourceRight;
+    private double? _originalBorderSourceBottom;
+    private bool _hasOriginalOverlay;
 
     public string LabelText { get; private set; } = string.Empty;
 
@@ -59,6 +70,17 @@ internal sealed class PreviewImageOverlayState
         BorderSourceTop = null;
         BorderSourceRight = null;
         BorderSourceBottom = null;
+        _originalSourceX = 0d;
+        _originalSourceY = 0d;
+        _originalSourceWidth = 0d;
+        _originalSourceHeight = 0d;
+        _originalPivotSourceX = null;
+        _originalPivotSourceY = null;
+        _originalBorderSourceLeft = null;
+        _originalBorderSourceTop = null;
+        _originalBorderSourceRight = null;
+        _originalBorderSourceBottom = null;
+        _hasOriginalOverlay = false;
         LabelText = string.Empty;
     }
 
@@ -77,6 +99,7 @@ internal sealed class PreviewImageOverlayState
         LabelText = string.IsNullOrWhiteSpace(overlayDisplayState?.BadgeText)
             ? string.Empty
             : overlayDisplayState.BadgeText.Trim();
+        CaptureOriginalGeometry();
     }
 
     public void UpdateEditableGeometry(
@@ -105,6 +128,26 @@ internal sealed class PreviewImageOverlayState
                 _sourceY,
                 _sourceY + _sourceHeight);
         }
+    }
+
+    public bool TryResetEditableGeometryToOriginal()
+    {
+        if (!_hasOriginalOverlay)
+        {
+            return false;
+        }
+
+        _sourceX = _originalSourceX;
+        _sourceY = _originalSourceY;
+        _sourceWidth = _originalSourceWidth;
+        _sourceHeight = _originalSourceHeight;
+        PivotSourceX = _originalPivotSourceX;
+        PivotSourceY = _originalPivotSourceY;
+        BorderSourceLeft = _originalBorderSourceLeft;
+        BorderSourceTop = _originalBorderSourceTop;
+        BorderSourceRight = _originalBorderSourceRight;
+        BorderSourceBottom = _originalBorderSourceBottom;
+        return true;
     }
 
     public bool TryCalculateLayout(
@@ -189,6 +232,21 @@ internal sealed class PreviewImageOverlayState
             layout.OverlayX,
             layout.OverlayX + layout.OverlayWidth,
             layout.OverlayWidth);
+    }
+
+    private void CaptureOriginalGeometry()
+    {
+        _originalSourceX = _sourceX;
+        _originalSourceY = _sourceY;
+        _originalSourceWidth = _sourceWidth;
+        _originalSourceHeight = _sourceHeight;
+        _originalPivotSourceX = PivotSourceX;
+        _originalPivotSourceY = PivotSourceY;
+        _originalBorderSourceLeft = BorderSourceLeft;
+        _originalBorderSourceTop = BorderSourceTop;
+        _originalBorderSourceRight = BorderSourceRight;
+        _originalBorderSourceBottom = BorderSourceBottom;
+        _hasOriginalOverlay = HasOverlay;
     }
 
     private static double NormalizeFinite(double value, double fallback)

@@ -1440,6 +1440,12 @@
   <data name="InspectorPanelView.SpriteCropPreviewModeButton.ToolTip" xml:space="preserve">
     <value>显示裁切预览</value>
   </data>
+  <data name="InspectorPanelView.SpriteEdit.ResetOriginal.ToolTip" xml:space="preserve">
+    <value>复位原始 Sprite 参数</value>
+  </data>
+  <data name="InspectorPanelView.SpriteEdit.FullSize.ToolTip" xml:space="preserve">
+    <value>使用整张图片作为裁切区域</value>
+  </data>
   <data name="InspectorPanelView.SpritePreviewOverlay.Badge.Format" xml:space="preserve">
     <value>裁切预览&#x0a;x={0}, y={1}&#x0a;尺寸 {2} x {3}</value>
   </data>

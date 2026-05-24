@@ -363,6 +363,42 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
     }
 
     [Fact]
+    public void SpriteEditPreviewToolbar_ShouldExposeGeometryShortcutsOnlyWhileEditing()
+    {
+        var previewSurfaceXaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorPreviewSurfaceView.xaml"));
+        var previewSurfaceCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorPreviewSurfaceView.xaml.cs"));
+
+        Assert.Contains("x:Name=\"SpriteEditResetOriginalButton\"", previewSurfaceXaml);
+        Assert.Contains("x:Name=\"SpriteEditFullSizeButton\"", previewSurfaceXaml);
+        Assert.Contains(
+            "Visibility=\"{x:Bind ViewModel.Preview.Image.SpriteEditActionControlsVisibility, Mode=OneWay}\"",
+            previewSurfaceXaml);
+        Assert.Contains("OnSpriteEditResetOriginalButtonClick", previewSurfaceXaml);
+        Assert.Contains("OnSpriteEditFullSizeButtonClick", previewSurfaceXaml);
+        Assert.Contains("ResetSpriteEditGeometryToOriginal()", previewSurfaceCode);
+        Assert.Contains("UseFullImageForSpriteEditGeometry()", previewSurfaceCode);
+        Assert.Contains("InspectorSpriteEditResetOriginalToolTip", previewSurfaceCode);
+        Assert.Contains("InspectorSpriteEditFullSizeToolTip", previewSurfaceCode);
+        Assert.Contains("AutomationProperties.SetName(button, text)", previewSurfaceCode);
+    }
+
+    [Fact]
     public void ImagePreviewViewportHost_ShouldReceivePointerInputAcrossTransparentAreas()
     {
         var imagePreviewXaml = File.ReadAllText(
