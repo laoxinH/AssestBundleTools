@@ -5,6 +5,7 @@ using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
@@ -159,34 +160,24 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         await ViewModel.ModifyFromFileReplacementSourceAsync();
     }
 
-    private async void OnSelectReplacementButtonClick(object sender, RoutedEventArgs e)
-    {
-        await ViewModel.SelectWorkspaceReplacementSourceAsync();
-    }
-
-    private async void OnSelectFileReplacementButtonClick(object sender, RoutedEventArgs e)
-    {
-        await ViewModel.SelectFileReplacementSourceAsync();
-    }
-
-    private async void OnApplyReplacementButtonClick(object sender, RoutedEventArgs e)
-    {
-        await ViewModel.ApplyPendingReplacementAsync();
-    }
-
-    private async void OnApplySpriteEditButtonClick(object sender, RoutedEventArgs e)
+    private async void OnSaveSpriteEditButtonClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.ApplySpriteEditAsync();
     }
 
-    private async void OnUndoReplacementButtonClick(object sender, RoutedEventArgs e)
+    private async void OnExitSpriteEditButtonClick(object sender, RoutedEventArgs e)
     {
-        await ViewModel.UndoAppliedReplacementAsync();
+        await ExitSpriteEditModeAsync();
     }
 
-    private async void OnRedoReplacementButtonClick(object sender, RoutedEventArgs e)
+    private void OnUndoSpriteEditButtonClick(object sender, RoutedEventArgs e)
     {
-        await ViewModel.RedoAppliedReplacementAsync();
+        ViewModel.UndoSpriteEditForActiveAsset();
+    }
+
+    private void OnRedoSpriteEditButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.RedoSpriteEditForActiveAsset();
     }
 
     private async void OnInspectorExtractRequested(object sender, EventArgs e)
@@ -324,14 +315,62 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         ToolTipService.SetToolTip(
             AssetEditorGroupDragHandle,
             UiText.Get(ResourceKeys.AssetEditorWindowDragGroupHandleToolTip));
-        ExtractButton.Content = UiText.Get(ResourceKeys.InspectorExtractButton);
-        ModifyButton.Content = UiText.Get(ResourceKeys.InspectorModifyButton);
-        SelectReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectReplacementButton);
-        SelectFileReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectFileReplacementButton);
-        ApplyReplacementButton.Content = UiText.Get(ResourceKeys.InspectorApplyReplacementButton);
-        ApplySpriteEditButton.Content = UiText.Get(ResourceKeys.InspectorApplySpriteEditButton);
-        UndoReplacementButton.Content = UiText.Get(ResourceKeys.InspectorUndoReplacementButton);
-        RedoReplacementButton.Content = UiText.Get(ResourceKeys.InspectorRedoReplacementButton);
+        ApplyActionButtonText(ExtractButton, ExtractButtonText, ResourceKeys.InspectorExtractButton);
+        ApplyActionButtonText(ModifyButton, ModifyButtonText, ResourceKeys.InspectorModifyButton);
+        ApplyActionButtonText(SaveSpriteEditButton, SaveSpriteEditButtonText, ResourceKeys.InspectorApplySpriteEditButton);
+        ApplyActionButtonText(ExitSpriteEditButton, ExitSpriteEditButtonText, ResourceKeys.InspectorExitSpriteEditButton);
+        ApplyActionButtonText(UndoSpriteEditButton, UndoSpriteEditButtonText, ResourceKeys.InspectorUndoReplacementButton);
+        ApplyActionButtonText(RedoSpriteEditButton, RedoSpriteEditButtonText, ResourceKeys.InspectorRedoReplacementButton);
+    }
+
+    private async Task ExitSpriteEditModeAsync()
+    {
+        var image = ViewModel.Inspector.Preview.Image;
+        if (!image.HasUnsavedSpriteEditChanges)
+        {
+            ViewModel.ExitSpriteEditModeForActiveAsset(discardChanges: false);
+            return;
+        }
+
+        if (ContentRoot.XamlRoot is null)
+        {
+            return;
+        }
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = ContentRoot.XamlRoot,
+            Title = UiText.Get(ResourceKeys.InspectorUnsavedSpriteEditDialogTitle),
+            Content = UiText.Get(ResourceKeys.InspectorUnsavedSpriteEditDialogDescription),
+            PrimaryButtonText = UiText.Get(ResourceKeys.InspectorApplySpriteEditButton),
+            SecondaryButtonText = UiText.Get(ResourceKeys.CommonDiscardButton),
+            CloseButtonText = UiText.Get(ResourceKeys.CommonCancelButton),
+            DefaultButton = ContentDialogButton.Primary
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            if (await ViewModel.ApplySpriteEditAsync())
+            {
+                ViewModel.ExitSpriteEditModeForActiveAsset(discardChanges: false);
+            }
+
+            return;
+        }
+
+        if (result == ContentDialogResult.Secondary)
+        {
+            ViewModel.ExitSpriteEditModeForActiveAsset(discardChanges: true);
+        }
+    }
+
+    private static void ApplyActionButtonText(Button button, TextBlock textBlock, string resourceKey)
+    {
+        var text = UiText.Get(resourceKey);
+        textBlock.Text = text;
+        AutomationProperties.SetName(button, text);
+        ToolTipService.SetToolTip(button, text);
     }
 
     private void UpdateWindowTitle()

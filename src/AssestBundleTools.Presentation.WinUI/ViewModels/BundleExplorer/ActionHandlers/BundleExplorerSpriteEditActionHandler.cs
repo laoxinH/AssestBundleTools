@@ -33,7 +33,7 @@ internal sealed class BundleExplorerSpriteEditActionHandler
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
     }
 
-    public async Task ApplySpriteEditAsync(
+    public async Task<bool> ApplySpriteEditAsync(
         WorkspaceSummaryDto workspaceSummary,
         AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
@@ -62,7 +62,7 @@ internal sealed class BundleExplorerSpriteEditActionHandler
 
             if (!TryGetValue(result, out var editResult, appendResultFailure))
             {
-                return;
+                return false;
             }
 
             _appLogService.AppendInfo(_localizationService.GetFormattedString(
@@ -77,6 +77,7 @@ internal sealed class BundleExplorerSpriteEditActionHandler
                 AppNotificationSeverity.Success);
 
             assetTab.ClearPendingReplacementCandidates();
+            return true;
         }
         finally
         {

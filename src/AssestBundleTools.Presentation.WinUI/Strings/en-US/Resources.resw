@@ -780,6 +780,12 @@
   <data name="AppNotification.CloseButton.ToolTip" xml:space="preserve">
     <value>Dismiss notification</value>
   </data>
+  <data name="Common.CancelButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Common.DiscardButton" xml:space="preserve">
+    <value>Don't Save</value>
+  </data>
   <data name="WorkspaceImport.Button.Files.Text" xml:space="preserve">
     <value>Import Files</value>
   </data>
@@ -2426,6 +2432,15 @@
   </data>
   <data name="InspectorPanelView.ApplySpriteEditButton.Content" xml:space="preserve">
     <value>Save Sprite Edit</value>
+  </data>
+  <data name="InspectorPanelView.ExitSpriteEditButton.Content" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="InspectorPanelView.SpriteEdit.UnsavedDialog.Title" xml:space="preserve">
+    <value>Save the current Sprite edit?</value>
+  </data>
+  <data name="InspectorPanelView.SpriteEdit.UnsavedDialog.Description" xml:space="preserve">
+    <value>The crop rectangle or pivot has unsaved changes. Saving adds a Sprite edit operation record; choosing Don't Save discards this edit session and returns to preview.</value>
   </data>
   <data name="InspectorPanelView.UndoReplacementButton.Content" xml:space="preserve">
     <value>Undo</value>

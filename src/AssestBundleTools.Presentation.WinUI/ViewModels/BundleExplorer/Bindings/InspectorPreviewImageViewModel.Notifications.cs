@@ -10,6 +10,8 @@ public sealed partial class InspectorPreviewImageViewModel
         OnPropertyChanged(nameof(SpriteEditFrameVisibility));
         OnPropertyChanged(nameof(SpriteEditHandleVisibility));
         OnPropertyChanged(nameof(SpriteEditActionControlsVisibility));
+        OnPropertyChanged(nameof(SpriteEditActionBarEditVisibility));
+        OnPropertyChanged(nameof(SpriteEditActionBarNormalVisibility));
         OnPropertyChanged(nameof(SpriteEditMeasurementVisibility));
         OnPropertyChanged(nameof(PivotVisibility));
         OnPropertyChanged(nameof(BorderVisibility));

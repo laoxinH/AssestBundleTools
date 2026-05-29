@@ -184,6 +184,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         _spriteEditDragState = null;
         _deferredSpriteEditViewport = null;
         ResetSpriteEditPivotRelativePosition();
+        ClearSpriteEditHistory();
         OnPropertyChanged(nameof(IsSpriteEditDragActive));
         _viewportState.UpdateViewport(0d, 0d);
         _overlayState.Clear();

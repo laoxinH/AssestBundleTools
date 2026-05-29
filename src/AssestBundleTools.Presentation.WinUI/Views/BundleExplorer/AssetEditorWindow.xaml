@@ -145,52 +145,136 @@
                 <Border
                     Grid.Row="2"
                     Margin="0,8,0,0"
-                    Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="12">
+                    Padding="0,2"
+                    Background="Transparent">
                     <ScrollViewer
                         HorizontalScrollBarVisibility="Auto"
                         HorizontalScrollMode="Enabled"
                         VerticalScrollBarVisibility="Disabled"
                         VerticalScrollMode="Disabled"
                         ZoomMode="Disabled">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button
-                                x:Name="ExtractButton"
-                                Click="OnExtractButtonClick"
-                                IsEnabled="{x:Bind ViewModel.Inspector.CanExtract, Mode=OneWay}" />
-                            <Button
-                                x:Name="ModifyButton"
-                                Click="OnModifyButtonClick"
-                                IsEnabled="{x:Bind ViewModel.Inspector.CanModify, Mode=OneWay}" />
-                            <Button
-                                x:Name="ApplySpriteEditButton"
-                                Click="OnApplySpriteEditButtonClick"
-                                IsEnabled="{x:Bind ViewModel.Inspector.CanModify, Mode=OneWay}"
-                                Visibility="{x:Bind ViewModel.Inspector.Preview.Image.SpriteEditGeometryPanelVisibility, Mode=OneWay}" />
-                            <Button
-                                x:Name="SelectReplacementButton"
-                                Click="OnSelectReplacementButtonClick"
-                                IsEnabled="{x:Bind ViewModel.Inspector.CanSelectReplacementSource, Mode=OneWay}" />
-                            <Button
-                                x:Name="SelectFileReplacementButton"
-                                Click="OnSelectFileReplacementButtonClick"
-                                IsEnabled="{x:Bind ViewModel.Inspector.CanSelectFileReplacementSource, Mode=OneWay}" />
-                            <Button
-                                x:Name="ApplyReplacementButton"
-                                Click="OnApplyReplacementButtonClick"
-                                IsEnabled="{x:Bind ViewModel.Inspector.CanApplyReplacement, Mode=OneWay}" />
-                            <Button
-                                x:Name="UndoReplacementButton"
-                                Click="OnUndoReplacementButtonClick"
-                                IsEnabled="{x:Bind ViewModel.Inspector.CanUndoReplacement, Mode=OneWay}" />
-                            <Button
-                                x:Name="RedoReplacementButton"
-                                Click="OnRedoReplacementButtonClick"
-                                IsEnabled="{x:Bind ViewModel.Inspector.CanRedoReplacement, Mode=OneWay}" />
-                        </StackPanel>
+                        <Grid>
+                            <StackPanel
+                                Orientation="Horizontal"
+                                Spacing="0"
+                                Visibility="{x:Bind ViewModel.Inspector.Preview.Image.SpriteEditActionBarNormalVisibility, Mode=OneWay}">
+                                <Button
+                                    x:Name="ExtractButton"
+                                    Click="OnExtractButtonClick"
+                                    IsEnabled="{x:Bind ViewModel.Inspector.CanExtract, Mode=OneWay}"
+                                    Style="{StaticResource WorkspaceOperationButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="12"
+                                            Glyph="&#xE896;" />
+                                        <TextBlock x:Name="ExtractButtonText" />
+                                    </StackPanel>
+                                </Button>
+
+                                <Border
+                                    Width="1"
+                                    Height="16"
+                                    Margin="2,0"
+                                    VerticalAlignment="Center"
+                                    Background="{ThemeResource ControlStrokeColorDefaultBrush}" />
+
+                                <Button
+                                    x:Name="ModifyButton"
+                                    Click="OnModifyButtonClick"
+                                    IsEnabled="{x:Bind ViewModel.Inspector.CanModify, Mode=OneWay}"
+                                    Style="{StaticResource WorkspaceOperationButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="12"
+                                            Glyph="&#xE70F;" />
+                                        <TextBlock x:Name="ModifyButtonText" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+
+                            <StackPanel
+                                Orientation="Horizontal"
+                                Spacing="0"
+                                Visibility="{x:Bind ViewModel.Inspector.Preview.Image.SpriteEditActionBarEditVisibility, Mode=OneWay}">
+                                <Button
+                                    x:Name="SaveSpriteEditButton"
+                                    Click="OnSaveSpriteEditButtonClick"
+                                    IsEnabled="{x:Bind ViewModel.Inspector.Preview.Image.CanSaveSpriteEdit, Mode=OneWay}"
+                                    Style="{StaticResource WorkspaceOperationButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="12"
+                                            Glyph="&#xE74E;" />
+                                        <TextBlock x:Name="SaveSpriteEditButtonText" />
+                                    </StackPanel>
+                                </Button>
+
+                                <Border
+                                    Width="1"
+                                    Height="16"
+                                    Margin="2,0"
+                                    VerticalAlignment="Center"
+                                    Background="{ThemeResource ControlStrokeColorDefaultBrush}" />
+
+                                <Button
+                                    x:Name="ExitSpriteEditButton"
+                                    Click="OnExitSpriteEditButtonClick"
+                                    Style="{StaticResource WorkspaceOperationButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="12"
+                                            Glyph="&#xE8BB;" />
+                                        <TextBlock x:Name="ExitSpriteEditButtonText" />
+                                    </StackPanel>
+                                </Button>
+
+                                <Border
+                                    Width="1"
+                                    Height="16"
+                                    Margin="2,0"
+                                    VerticalAlignment="Center"
+                                    Background="{ThemeResource ControlStrokeColorDefaultBrush}" />
+
+                                <Button
+                                    x:Name="UndoSpriteEditButton"
+                                    Click="OnUndoSpriteEditButtonClick"
+                                    IsEnabled="{x:Bind ViewModel.Inspector.Preview.Image.CanUndoSpriteEdit, Mode=OneWay}"
+                                    Style="{StaticResource WorkspaceOperationButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="12"
+                                            Glyph="&#xE7A7;" />
+                                        <TextBlock x:Name="UndoSpriteEditButtonText" />
+                                    </StackPanel>
+                                </Button>
+
+                                <Border
+                                    Width="1"
+                                    Height="16"
+                                    Margin="2,0"
+                                    VerticalAlignment="Center"
+                                    Background="{ThemeResource ControlStrokeColorDefaultBrush}" />
+
+                                <Button
+                                    x:Name="RedoSpriteEditButton"
+                                    Click="OnRedoSpriteEditButtonClick"
+                                    IsEnabled="{x:Bind ViewModel.Inspector.Preview.Image.CanRedoSpriteEdit, Mode=OneWay}"
+                                    Style="{StaticResource WorkspaceOperationButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="12"
+                                            Glyph="&#xE7A6;" />
+                                        <TextBlock x:Name="RedoSpriteEditButtonText" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
                     </ScrollViewer>
                 </Border>
             </Grid>

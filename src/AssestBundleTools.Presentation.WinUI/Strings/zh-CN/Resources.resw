@@ -780,6 +780,12 @@
   <data name="AppNotification.CloseButton.ToolTip" xml:space="preserve">
     <value>关闭提示</value>
   </data>
+  <data name="Common.CancelButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Common.DiscardButton" xml:space="preserve">
+    <value>不保存</value>
+  </data>
   <data name="WorkspaceImport.Button.Files.Text" xml:space="preserve">
     <value>文件导入</value>
   </data>
@@ -2426,6 +2432,15 @@
   </data>
   <data name="InspectorPanelView.ApplySpriteEditButton.Content" xml:space="preserve">
     <value>保存 Sprite 编辑</value>
+  </data>
+  <data name="InspectorPanelView.ExitSpriteEditButton.Content" xml:space="preserve">
+    <value>退出</value>
+  </data>
+  <data name="InspectorPanelView.SpriteEdit.UnsavedDialog.Title" xml:space="preserve">
+    <value>保存当前 Sprite 编辑？</value>
+  </data>
+  <data name="InspectorPanelView.SpriteEdit.UnsavedDialog.Description" xml:space="preserve">
+    <value>当前裁切框或 pivot 存在未保存修改。保存会追加一条 Sprite 编辑操作记录；不保存会丢弃本次编辑会话中的修改并返回预览。</value>
   </data>
   <data name="InspectorPanelView.UndoReplacementButton.Content" xml:space="preserve">
     <value>撤销</value>

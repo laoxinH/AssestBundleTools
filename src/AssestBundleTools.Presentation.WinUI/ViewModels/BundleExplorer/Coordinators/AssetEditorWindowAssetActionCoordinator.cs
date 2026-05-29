@@ -113,26 +113,6 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
             _operationFeedbackBridge.AppendResultFailure);
     }
 
-    public async Task SelectWorkspaceReplacementSourceAsync()
-    {
-        if (!TryGetActiveAssetCommandContext(
-                static (_, details) => details.CanReplaceFromWorkspace,
-                out var workspaceSummary,
-                out var assetTab,
-                out var details))
-        {
-            return;
-        }
-
-        await _modificationActionHandler.SelectWorkspaceReplacementSourceAsync(
-            workspaceSummary,
-            assetTab,
-            details,
-            _reapplyAssetDocumentState,
-            _setBusy,
-            _operationFeedbackBridge.AppendResultFailure);
-    }
-
     public async Task SelectFileReplacementSourceAsync()
     {
         if (!TryGetActiveAssetCommandContext(
@@ -251,7 +231,7 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
             replacementOperationId);
     }
 
-    public async Task ApplySpriteEditAsync()
+    public async Task<bool> ApplySpriteEditAsync()
     {
         if (!TryGetActiveAssetCommandContext(
                 static (_, details) => details.AssetType == Domain.Assets.AssetType.Sprite,
@@ -259,16 +239,16 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
                 out var assetTab,
                 out var details))
         {
-            return;
+            return false;
         }
 
         var geometry = assetTab.Inspector.Preview.Image.CreateSpriteEditGeometry();
         if (geometry is null)
         {
-            return;
+            return false;
         }
 
-        await _modificationActionHandler.ApplySpriteEditAsync(
+        return await _modificationActionHandler.ApplySpriteEditAsync(
             workspaceSummary,
             assetTab,
             details,

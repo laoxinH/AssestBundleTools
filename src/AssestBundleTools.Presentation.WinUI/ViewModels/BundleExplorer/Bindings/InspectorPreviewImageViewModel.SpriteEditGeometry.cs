@@ -101,6 +101,7 @@ public sealed partial class InspectorPreviewImageViewModel
 
         RefreshSpriteEditPivotRelativePositionFromOverlay();
         RecalculateOverlayLayout();
+        RecordSpriteEditGeometryHistory();
     }
 
     internal void UseFullImageForSpriteEditGeometry()
@@ -134,7 +135,8 @@ public sealed partial class InspectorPreviewImageViewModel
         double cropHeight,
         double pivotX,
         double pivotY,
-        bool refreshPivotRelativePosition)
+        bool refreshPivotRelativePosition,
+        bool recordHistory = true)
     {
         _overlayState.UpdateEditableGeometry(
             CanvasWidth,
@@ -151,6 +153,10 @@ public sealed partial class InspectorPreviewImageViewModel
         }
 
         RecalculateOverlayLayout();
+        if (recordHistory)
+        {
+            RecordSpriteEditGeometryHistory();
+        }
     }
 
     private void NotifySpriteEditGeometryChanged()
@@ -162,6 +168,7 @@ public sealed partial class InspectorPreviewImageViewModel
         OnPropertyChanged(nameof(SpriteEditPivotX));
         OnPropertyChanged(nameof(SpriteEditPivotY));
         OnPropertyChanged(nameof(SpriteEditGeometryPanelVisibility));
+        NotifySpriteEditHistoryStateChanged();
     }
 
     private static double ClampRegionSize(double value, double canvasSize)

@@ -326,7 +326,7 @@ internal sealed class BundleExplorerAssetModificationActionHandler
             appendResultFailure,
             replacementOperationId);
 
-    public Task ApplySpriteEditAsync(
+    public Task<bool> ApplySpriteEditAsync(
         WorkspaceSummaryDto workspaceSummary,
         AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,

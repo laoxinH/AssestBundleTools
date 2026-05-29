@@ -583,6 +583,77 @@ public sealed class InspectorPreviewImageViewModelTests
     }
 
     [Fact]
+    public void SpriteEditHistory_ShouldTrackDirtyUndoRedoAndSavedBaseline()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(viewModel);
+
+        Assert.False(viewModel.HasUnsavedSpriteEditChanges);
+        Assert.False(viewModel.CanSaveSpriteEdit);
+        Assert.False(viewModel.CanUndoSpriteEdit);
+        Assert.False(viewModel.CanRedoSpriteEdit);
+
+        viewModel.UpdateSpriteEditGeometryFromInput(
+            cropX: 20d,
+            cropY: 30d,
+            cropWidth: 60d,
+            cropHeight: 80d,
+            pivotX: 70d,
+            pivotY: 90d,
+            inputKind: SpriteEditGeometryInputKind.Pivot);
+
+        Assert.True(viewModel.HasUnsavedSpriteEditChanges);
+        Assert.True(viewModel.CanSaveSpriteEdit);
+        Assert.True(viewModel.CanUndoSpriteEdit);
+        Assert.False(viewModel.CanRedoSpriteEdit);
+
+        viewModel.UndoSpriteEdit();
+
+        Assert.Equal(10d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(20d, viewModel.SpriteEditCropY, precision: 3);
+        Assert.False(viewModel.HasUnsavedSpriteEditChanges);
+        Assert.False(viewModel.CanUndoSpriteEdit);
+        Assert.True(viewModel.CanRedoSpriteEdit);
+
+        viewModel.RedoSpriteEdit();
+        viewModel.MarkSpriteEditSaved();
+
+        Assert.Equal(20d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.False(viewModel.HasUnsavedSpriteEditChanges);
+        Assert.False(viewModel.CanSaveSpriteEdit);
+        Assert.True(viewModel.CanUndoSpriteEdit);
+    }
+
+    [Fact]
+    public void SpriteEditDiscardChanges_ShouldRestoreSavedGeometry()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(viewModel);
+        viewModel.UpdateSpriteEditGeometryFromInput(
+            cropX: 20d,
+            cropY: 30d,
+            cropWidth: 60d,
+            cropHeight: 80d,
+            pivotX: 70d,
+            pivotY: 90d,
+            inputKind: SpriteEditGeometryInputKind.Pivot);
+        viewModel.MarkSpriteEditSaved();
+
+        viewModel.UseFullImageForSpriteEditGeometry();
+        viewModel.DiscardSpriteEditChanges();
+
+        Assert.Equal(20d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(30d, viewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(60d, viewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(80d, viewModel.SpriteEditCropHeight, precision: 3);
+        Assert.Equal(70d, viewModel.SpriteEditPivotX, precision: 3);
+        Assert.Equal(90d, viewModel.SpriteEditPivotY, precision: 3);
+        Assert.False(viewModel.HasUnsavedSpriteEditChanges);
+        Assert.False(viewModel.CanUndoSpriteEdit);
+        Assert.False(viewModel.CanRedoSpriteEdit);
+    }
+
+    [Fact]
     public void SpriteEditMeasurements_ShouldExposeCoordinatesLengthsAndAxis()
     {
         var viewModel = new InspectorPreviewImageViewModel();

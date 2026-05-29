@@ -323,9 +323,6 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
 
     public Task ExtractSelectedAssetAsync() => _assetActionCoordinator.ExtractSelectedAssetAsync();
 
-    public Task SelectWorkspaceReplacementSourceAsync() =>
-        _assetActionCoordinator.SelectWorkspaceReplacementSourceAsync();
-
     public Task SelectFileReplacementSourceAsync() =>
         _assetActionCoordinator.SelectFileReplacementSourceAsync();
 
@@ -344,7 +341,38 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
 
     public Task ApplyPendingReplacementAsync() => _assetActionCoordinator.ApplyPendingReplacementAsync();
 
-    public Task ApplySpriteEditAsync() => _assetActionCoordinator.ApplySpriteEditAsync();
+    public async Task<bool> ApplySpriteEditAsync()
+    {
+        var applied = await _assetActionCoordinator.ApplySpriteEditAsync();
+        if (applied)
+        {
+            DocumentGroup.ActiveAssetTab?.Inspector.Preview.Image.MarkSpriteEditSaved();
+        }
+
+        return applied;
+    }
+
+    public void ExitSpriteEditModeForActiveAsset(bool discardChanges)
+    {
+        var assetTab = DocumentGroup.ActiveAssetTab;
+        if (assetTab is null)
+        {
+            return;
+        }
+
+        if (discardChanges)
+        {
+            assetTab.Inspector.Preview.Image.DiscardSpriteEditChanges();
+        }
+
+        assetTab.CancelSpriteEditMode();
+    }
+
+    public void UndoSpriteEditForActiveAsset() =>
+        DocumentGroup.ActiveAssetTab?.Inspector.Preview.Image.UndoSpriteEdit();
+
+    public void RedoSpriteEditForActiveAsset() =>
+        DocumentGroup.ActiveAssetTab?.Inspector.Preview.Image.RedoSpriteEdit();
 
     public Task UndoAppliedReplacementAsync(string? replacementOperationId = null) =>
         _assetActionCoordinator.UndoAppliedReplacementAsync(replacementOperationId);

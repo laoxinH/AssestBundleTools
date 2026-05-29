@@ -287,11 +287,52 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
 
         var previewIndex = assetEditorXaml.IndexOf("<controls:InspectorPreviewSurfaceView", StringComparison.Ordinal);
         var geometryIndex = assetEditorXaml.IndexOf("<controls:SpriteEditGeometryPanelView", StringComparison.Ordinal);
-        var actionBarIndex = assetEditorXaml.IndexOf("x:Name=\"ExtractButton\"", StringComparison.Ordinal);
+        var actionBarIndex = assetEditorXaml.IndexOf("x:Name=\"SaveSpriteEditButton\"", StringComparison.Ordinal);
 
         Assert.True(previewIndex >= 0);
         Assert.True(geometryIndex > previewIndex);
         Assert.True(actionBarIndex > geometryIndex);
+    }
+
+    [Fact]
+    public void AssetEditorWindowActionBar_ShouldUseLightweightNormalAndSpriteEditActions()
+    {
+        var assetEditorXaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "AssetEditorWindow.xaml"));
+        var assetEditorCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "AssetEditorWindow.xaml.cs"));
+
+        Assert.Contains("Style=\"{StaticResource WorkspaceOperationButtonStyle}\"", assetEditorXaml);
+        Assert.Contains("x:Name=\"ExtractButton\"", assetEditorXaml);
+        Assert.Contains("x:Name=\"ModifyButton\"", assetEditorXaml);
+        Assert.Contains("x:Name=\"SaveSpriteEditButton\"", assetEditorXaml);
+        Assert.Contains("x:Name=\"ExitSpriteEditButton\"", assetEditorXaml);
+        Assert.Contains("x:Name=\"UndoSpriteEditButton\"", assetEditorXaml);
+        Assert.Contains("x:Name=\"RedoSpriteEditButton\"", assetEditorXaml);
+        Assert.Contains("CanSaveSpriteEdit", assetEditorXaml);
+        Assert.Contains("CanUndoSpriteEdit", assetEditorXaml);
+        Assert.Contains("CanRedoSpriteEdit", assetEditorXaml);
+        Assert.Contains("SpriteEditActionBarNormalVisibility", assetEditorXaml);
+        Assert.Contains("SpriteEditActionBarEditVisibility", assetEditorXaml);
+        Assert.DoesNotContain("x:Name=\"SelectReplacementButton\"", assetEditorXaml);
+        Assert.DoesNotContain("x:Name=\"SelectFileReplacementButton\"", assetEditorXaml);
+        Assert.DoesNotContain("x:Name=\"ApplyReplacementButton\"", assetEditorXaml);
+        Assert.DoesNotContain("x:Name=\"UndoReplacementButton\"", assetEditorXaml);
+        Assert.DoesNotContain("x:Name=\"RedoReplacementButton\"", assetEditorXaml);
+        Assert.Contains("InspectorUnsavedSpriteEditDialogTitle", assetEditorCode);
+        Assert.Contains("ExitSpriteEditModeForActiveAsset(discardChanges: true)", assetEditorCode);
     }
 
     [Fact]

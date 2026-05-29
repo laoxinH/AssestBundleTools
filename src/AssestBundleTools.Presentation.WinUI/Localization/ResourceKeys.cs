@@ -140,6 +140,8 @@ public static class ResourceKeys
     public const string AppNotificationWarningTitle = "AppNotification.WarningTitle";
     public const string AppNotificationErrorTitle = "AppNotification.ErrorTitle";
     public const string AppNotificationCloseButtonToolTip = "AppNotification.CloseButton.ToolTip";
+    public const string CommonCancelButton = "Common.CancelButton";
+    public const string CommonDiscardButton = "Common.DiscardButton";
     public const string CommonUnexpectedFailure = "Common.UnexpectedFailure";
     public const string CommonByteSizeCompactMegabytesFormat = "Common.ByteSize.Compact.Megabytes.Format";
     public const string CommonByteSizeCompactKilobytesFormat = "Common.ByteSize.Compact.Kilobytes.Format";
@@ -1240,6 +1242,9 @@ public static class ResourceKeys
     public const string InspectorSelectReplacementButton = "InspectorPanelView.SelectReplacementButton.Content";
     public const string InspectorApplyReplacementButton = "InspectorPanelView.ApplyReplacementButton.Content";
     public const string InspectorApplySpriteEditButton = "InspectorPanelView.ApplySpriteEditButton.Content";
+    public const string InspectorExitSpriteEditButton = "InspectorPanelView.ExitSpriteEditButton.Content";
+    public const string InspectorUnsavedSpriteEditDialogTitle = "InspectorPanelView.SpriteEdit.UnsavedDialog.Title";
+    public const string InspectorUnsavedSpriteEditDialogDescription = "InspectorPanelView.SpriteEdit.UnsavedDialog.Description";
     public const string InspectorUndoReplacementButton = "InspectorPanelView.UndoReplacementButton.Content";
     public const string InspectorRedoReplacementButton = "InspectorPanelView.RedoReplacementButton.Content";
     public const string InspectorDeleteChangeRecordButton = "InspectorPanelView.DeleteChangeRecordButton.Content";

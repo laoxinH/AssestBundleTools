@@ -45,6 +45,16 @@ public sealed partial class InspectorPreviewImageViewModel
             ? Visibility.Visible
             : Visibility.Collapsed;
 
+    public Visibility SpriteEditActionBarEditVisibility =>
+        IsSpriteEditModeActive
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    public Visibility SpriteEditActionBarNormalVisibility =>
+        IsSpriteEditModeActive
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+
     public Visibility OverlayBadgeVisibility =>
         OverlayVisibility == Visibility.Visible && !IsSpriteEditModeActive
             ? Visibility.Visible
@@ -68,6 +78,7 @@ public sealed partial class InspectorPreviewImageViewModel
         _spriteEditDragState = null;
         OnPropertyChanged(nameof(IsSpriteEditDragActive));
         IsSpriteEditModeActive = false;
+        ClearSpriteEditHistory();
         if (_deferredSpriteEditViewport is not null)
         {
             ApplyDeferredSpriteEditViewportUpdate();
@@ -178,13 +189,15 @@ public sealed partial class InspectorPreviewImageViewModel
             nextHeight,
             nextPivotX,
             nextPivotY,
-            shouldRefreshPivotRelativePosition);
+            shouldRefreshPivotRelativePosition,
+            recordHistory: false);
     }
 
     internal void CompleteSpriteEditDrag()
     {
         _spriteEditDragState = null;
         OnPropertyChanged(nameof(IsSpriteEditDragActive));
+        RecordSpriteEditGeometryHistory();
         ApplyDeferredSpriteEditViewportUpdate();
     }
 
@@ -225,6 +238,7 @@ public sealed partial class InspectorPreviewImageViewModel
         IsSpriteEditModeActive = true;
         RecalculateImageLayout();
         RecalculateOverlays();
+        InitializeSpriteEditHistory();
     }
 
     private bool TryCalculateSpriteEditImageLayout(double sourceWidth, double sourceHeight, out PreviewImageViewportLayout layout)
@@ -407,9 +421,12 @@ public sealed partial class InspectorPreviewImageViewModel
         OnPropertyChanged(nameof(SpriteEditFrameVisibility));
         OnPropertyChanged(nameof(SpriteEditHandleVisibility));
         OnPropertyChanged(nameof(SpriteEditActionControlsVisibility));
+        OnPropertyChanged(nameof(SpriteEditActionBarEditVisibility));
+        OnPropertyChanged(nameof(SpriteEditActionBarNormalVisibility));
         OnPropertyChanged(nameof(SpriteEditGeometryPanelVisibility));
         OnPropertyChanged(nameof(SpriteEditMeasurementVisibility));
         OnPropertyChanged(nameof(OverlayBadgeVisibility));
+        NotifySpriteEditHistoryStateChanged();
         NotifySpriteEditMeasurementChanged();
         NotifyInfoBadgeVisibilityChanged();
         NotifyRegionOverlayVisibilityChanged();
