@@ -66,7 +66,6 @@ internal sealed class BundleExplorerAssetModificationActionHandler
             _localizationService);
         _spriteTextureReplacementActionHandler = new BundleExplorerSpriteTextureReplacementActionHandler(
             _fileReplacementActionExecutor,
-            _appLogService,
             _appNotificationService,
             _localizationService);
         _replacementActionHandler = new BundleExplorerReplacementActionHandler(

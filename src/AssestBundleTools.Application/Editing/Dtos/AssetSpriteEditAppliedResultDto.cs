@@ -1,5 +1,4 @@
 using AssestBundleTools.Application.Workspace.Dtos;
-using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
@@ -17,5 +16,4 @@ public sealed record AssetSpriteEditAppliedResultDto(
     string DraftId,
     string DraftMode,
     WorkspaceSpriteEditGeometryDto Geometry,
-    DateTimeOffset AppliedAtUtc,
-    AssetFileReplacementResultDto? AssociatedFileReplacement = null);
+    DateTimeOffset AppliedAtUtc);

@@ -2,7 +2,6 @@ using System.Diagnostics.CodeAnalysis;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Editing.Commands;
-using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Common.Errors;
@@ -59,8 +58,7 @@ internal sealed class BundleExplorerSpriteEditActionHandler
                     details.AssetId,
                     geometry,
                     workspaceSummary.WorkspaceKey,
-                    workspaceSummary.WorkspaceDataRootPath,
-                    AssociatedFileReplacement: CreateAssociatedFileReplacement(assetTab.PendingAssociatedFileReplacementCandidate)));
+                    workspaceSummary.WorkspaceDataRootPath));
 
             if (!TryGetValue(result, out var editResult, appendResultFailure))
             {
@@ -79,23 +77,12 @@ internal sealed class BundleExplorerSpriteEditActionHandler
                 AppNotificationSeverity.Success);
 
             assetTab.ClearPendingReplacementCandidates();
-            assetTab.ClearPendingAssociatedFileReplacementCandidate();
         }
         finally
         {
             setBusyState(false);
         }
     }
-
-    private static AssociatedAssetFileReplacementDto? CreateAssociatedFileReplacement(
-        AssociatedAssetFileReplacementCandidate? candidate) =>
-        candidate is null
-            ? null
-            : new AssociatedAssetFileReplacementDto(
-                candidate.TargetBundleId,
-                candidate.TargetAssetId,
-                candidate.Candidate.SourceFilePath,
-                candidate.Candidate.SourceAssetType);
 
     private static bool TryGetValue<T>(
         Result<T> result,

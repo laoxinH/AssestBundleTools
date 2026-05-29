@@ -11,23 +11,20 @@ using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 
 /// <summary>
-/// 选择 Sprite 关联 Texture2D 的待保存替换来源。
+/// 通过 Sprite 编辑入口立即替换其关联 Texture2D。
 /// </summary>
 internal sealed class BundleExplorerSpriteTextureReplacementActionHandler
 {
     private readonly BundleExplorerFileReplacementActionExecutor _fileReplacementActionExecutor;
-    private readonly IAppLogService _appLogService;
     private readonly IAppNotificationService _appNotificationService;
     private readonly ILocalizationService _localizationService;
 
     public BundleExplorerSpriteTextureReplacementActionHandler(
         BundleExplorerFileReplacementActionExecutor fileReplacementActionExecutor,
-        IAppLogService appLogService,
         IAppNotificationService appNotificationService,
         ILocalizationService localizationService)
     {
         _fileReplacementActionExecutor = fileReplacementActionExecutor ?? throw new ArgumentNullException(nameof(fileReplacementActionExecutor));
-        _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
     }
@@ -69,37 +66,22 @@ internal sealed class BundleExplorerSpriteTextureReplacementActionHandler
                 return;
             }
 
-            assetTab.UpdatePendingAssociatedFileReplacementCandidate(
-                CreatePendingCandidate(textureDependency, candidate));
-
-            _appLogService.AppendInfo(_localizationService.GetFormattedString(
-                ResourceKeys.BundleExplorerLogSpriteTextureReplacementSourceSelected,
-                candidate.SourceFileName,
-                textureDependency.Name,
-                details.Name));
-
-            ShowOperationNotification(
-                GetString(ResourceKeys.AppNotificationInfoTitle),
-                _localizationService.GetFormattedString(
-                    ResourceKeys.BundleExplorerNotificationSpriteTextureReplacementSourceSelected,
-                    candidate.SourceFileName),
-                AppNotificationSeverity.Informational);
+            if (!await _fileReplacementActionExecutor.ApplyFileReplacementAsync(
+                    workspaceSummary,
+                    textureDependency.BundleId,
+                    textureDependency.AssetId,
+                    textureDependency.Name,
+                    candidate,
+                    appendResultFailure))
+            {
+                return;
+            }
         }
         finally
         {
             setBusyState(false);
         }
     }
-
-    private static AssociatedAssetFileReplacementCandidate CreatePendingCandidate(
-        AssetDependencyDto textureDependency,
-        FileReplacementCandidateDto candidate) =>
-        new(
-            textureDependency.BundleId,
-            textureDependency.AssetId,
-            textureDependency.Name,
-            AssetType.Texture2D,
-            candidate);
 
     private static bool TryResolvePrimarySpriteTexture(
         AssetDetailsDto details,

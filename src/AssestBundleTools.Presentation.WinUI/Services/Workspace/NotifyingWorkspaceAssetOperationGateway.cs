@@ -146,20 +146,10 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         NotifyIfSucceeded(
             result,
             command.WorkspaceId,
-            result.Value?.AssociatedFileReplacement is null
-                ? WorkspaceOperationChangeKind.Edit
-                : WorkspaceOperationChangeKind.Edit | WorkspaceOperationChangeKind.Replacement,
-            result.Value?.AssociatedFileReplacement is { } associatedReplacement
-                ? ExpandAffectedAssets(
-                    command.WorkspaceId,
-                    CreateAffectedAssets(
-                        command.BundleId,
-                        command.AssetId,
-                        associatedReplacement.TargetBundleId,
-                        associatedReplacement.TargetAssetId))
-                : ExpandAffectedAssets(
-                    command.WorkspaceId,
-                    CreateAffectedAsset(command.BundleId, command.AssetId)));
+            WorkspaceOperationChangeKind.Edit,
+            ExpandAffectedAssets(
+                command.WorkspaceId,
+                CreateAffectedAsset(command.BundleId, command.AssetId)));
         return result;
     }
 

@@ -111,8 +111,6 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
 
     public FileReplacementCandidateDto? PendingFileReplacementCandidate { get; private set; }
 
-    internal AssociatedAssetFileReplacementCandidate? PendingAssociatedFileReplacementCandidate { get; private set; }
-
     public AssetDocumentEditDraftReference? EditDraftReference => _editDraftReference;
 
     public bool HasEditDraft => _editDraftReference is not null;
@@ -181,17 +179,6 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
     {
         PendingWorkspaceReplacementCandidate = null;
         PendingFileReplacementCandidate = null;
-    }
-
-    internal void UpdatePendingAssociatedFileReplacementCandidate(
-        AssociatedAssetFileReplacementCandidate? candidate)
-    {
-        PendingAssociatedFileReplacementCandidate = candidate;
-    }
-
-    internal void ClearPendingAssociatedFileReplacementCandidate()
-    {
-        PendingAssociatedFileReplacementCandidate = null;
     }
 
     public void SetEditDraftReference(AssetDocumentEditDraftReference? draftReference)

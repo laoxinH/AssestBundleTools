@@ -464,7 +464,6 @@ public static class ResourceKeys
     public const string BundleExplorerLogFilePickerOpenFailedFormat = "BundleExplorer.Log.FilePickerOpenFailed.Format";
     public const string BundleExplorerLogFileReplacementSourceSelected = "BundleExplorer.Log.FileReplacementSourceSelected";
     public const string BundleExplorerLogFileReplacementApplied = "BundleExplorer.Log.FileReplacementApplied";
-    public const string BundleExplorerLogSpriteTextureReplacementSourceSelected = "BundleExplorer.Log.SpriteTextureReplacementSourceSelected";
     public const string BundleExplorerLogReplacementApplied = "BundleExplorer.Log.ReplacementApplied";
     public const string BundleExplorerLogReplacementUndone = "BundleExplorer.Log.ReplacementUndone";
     public const string BundleExplorerLogReplacementRedone = "BundleExplorer.Log.ReplacementRedone";
@@ -492,7 +491,6 @@ public static class ResourceKeys
     public const string BundleExplorerNotificationFileReplacementSourceSelected = "BundleExplorer.Notification.FileReplacementSourceSelected";
     public const string BundleExplorerNotificationFileReplacementApplied = "BundleExplorer.Notification.FileReplacementApplied";
     public const string BundleExplorerNotificationSpriteTextureNotFound = "BundleExplorer.Notification.SpriteTextureNotFound";
-    public const string BundleExplorerNotificationSpriteTextureReplacementSourceSelected = "BundleExplorer.Notification.SpriteTextureReplacementSourceSelected";
     public const string BundleExplorerNotificationReplacementApplied = "BundleExplorer.Notification.ReplacementApplied";
     public const string BundleExplorerNotificationReplacementUndone = "BundleExplorer.Notification.ReplacementUndone";
     public const string BundleExplorerNotificationReplacementRedone = "BundleExplorer.Notification.ReplacementRedone";

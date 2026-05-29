@@ -3726,9 +3726,6 @@
   <data name="BundleExplorer.Log.FileReplacementApplied" xml:space="preserve">
     <value>已将“{0}”替换为文件 {1}（{2}）</value>
   </data>
-  <data name="BundleExplorer.Log.SpriteTextureReplacementSourceSelected" xml:space="preserve">
-    <value>已为 Sprite“{2}”的关联贴图“{1}”选择文件来源：{0}</value>
-  </data>
   <data name="BundleExplorer.Log.ReplacementApplied" xml:space="preserve">
     <value>已将“{0}”替换为 {1} / {2}</value>
   </data>
@@ -3809,9 +3806,6 @@
   </data>
   <data name="BundleExplorer.Notification.SpriteTextureNotFound" xml:space="preserve">
     <value>当前 Sprite 未解析到可替换的关联 Texture2D。</value>
-  </data>
-  <data name="BundleExplorer.Notification.SpriteTextureReplacementSourceSelected" xml:space="preserve">
-    <value>已选择关联贴图来源：{0}</value>
   </data>
   <data name="BundleExplorer.Notification.ReplacementApplied" xml:space="preserve">
     <value>已应用工作区替换：{0}</value>

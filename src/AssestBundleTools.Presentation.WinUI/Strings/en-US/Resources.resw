@@ -3726,9 +3726,6 @@
   <data name="BundleExplorer.Log.FileReplacementApplied" xml:space="preserve">
     <value>Replaced "{0}" with file {1} ({2})</value>
   </data>
-  <data name="BundleExplorer.Log.SpriteTextureReplacementSourceSelected" xml:space="preserve">
-    <value>Selected file source {0} for linked texture "{1}" on Sprite "{2}"</value>
-  </data>
   <data name="BundleExplorer.Log.ReplacementApplied" xml:space="preserve">
     <value>Replaced "{0}" with {1} / {2}</value>
   </data>
@@ -3809,9 +3806,6 @@
   </data>
   <data name="BundleExplorer.Notification.SpriteTextureNotFound" xml:space="preserve">
     <value>No replaceable linked Texture2D was resolved for the current Sprite.</value>
-  </data>
-  <data name="BundleExplorer.Notification.SpriteTextureReplacementSourceSelected" xml:space="preserve">
-    <value>Linked texture source selected: {0}</value>
   </data>
   <data name="BundleExplorer.Notification.ReplacementApplied" xml:space="preserve">
     <value>Workspace replacement applied: {0}</value>

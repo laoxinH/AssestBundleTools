@@ -341,7 +341,7 @@ relatedOperationId
 
 当前 Sprite 裁切框 / pivot 修改已经从临时编辑工作面进入工作区操作记录链路：用户在资源编辑窗口中调整几何后，通过窗口操作区的“保存 Sprite 编辑”把当前裁切框、pivot、画布尺寸和草稿模式应用到工作区运行时状态，并追加一条 `EditDraftApplied` 操作记录。该记录的 `source.sourceKind` 为 `draft`，`source.draftMode` 为 `sprite-geometry`，`source.draftId` 指向本次几何草稿；`result.spriteEditGeometry` 保存当前轻量几何，用于重启恢复、读模型重放、预览投影和后续统一导出读取。`editDrafts[]` 只保存草稿描述、指纹、更新时间和摘要，不保存图片或 AB 载荷。
 
-Sprite 编辑态中的“替换 Texture2D”不是立即保存的独立替换动作。用户选择图片文件后，只在 Sprite 文档标签上形成待保存的关联文件替换候选；点击“保存 Sprite 编辑”时，Application 先验证该 Texture2D 确实来自 Sprite 的依赖或贴图关联，再把 Texture2D 文件替换应用到运行时状态，并与 Sprite 几何一起追加两条独立操作记录：一条目标为 Texture2D 的 `ReplaceFromFile`，一条目标为 Sprite 的 `EditDraftApplied`。两条记录通过 `relations[] / batchId` 互相关联，Texture2D 记录进入原 Texture2D 资产的变更记录，Sprite 变更页同时把该 Texture2D 替换投影为关联替换记录；Sprite 几何记录和 Texture2D 替换记录仍可分开撤销 / 重做 / 删除。
+Sprite 编辑态中的“替换 Texture2D”与直接修改 Texture2D 资产保持一致：用户选择图片文件后立即对 Sprite 关联的 Texture2D 执行 `ReplaceFromFile`，追加目标为 Texture2D 的独立替换操作记录，并通过隐式依赖影响刷新 Sprite 和 Texture2D 两侧详情、变更记录与有效预览。它不再作为 Sprite 文档标签上的待保存候选，也不等待“保存 Sprite 编辑”。“保存 Sprite 编辑”只应用当前裁切框 / pivot 几何并追加目标为 Sprite 的 `EditDraftApplied` 记录；Sprite 几何记录和 Texture2D 替换记录仍是两条可独立撤销 / 重做 / 删除的操作事实。
 
 如果用户不是从 Sprite 编辑保存入口，而是直接在 Texture2D 资产详情或资源列表中修改该贴图，运行时依赖影响查询仍会把依赖该 Texture2D 的 Sprite 纳入受影响资产。Sprite 详情会通过同一变更记录投影显示关联替换记录，并在预览中使用 Texture2D 的当前有效图片载荷；这条路径不创建额外 Sprite 操作记录，也不把直接贴图替换伪装成 Sprite 编辑。
 

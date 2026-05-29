@@ -1,5 +1,4 @@
 using AssestBundleTools.Application.Workspace.Dtos;
-using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
@@ -17,5 +16,4 @@ public sealed record ApplySpriteEditCommand(
     string? WorkspaceKey = null,
     string? WorkspaceDataRootPath = null,
     string? DraftId = null,
-    string? DraftMode = null,
-    AssociatedAssetFileReplacementDto? AssociatedFileReplacement = null);
+    string? DraftMode = null);

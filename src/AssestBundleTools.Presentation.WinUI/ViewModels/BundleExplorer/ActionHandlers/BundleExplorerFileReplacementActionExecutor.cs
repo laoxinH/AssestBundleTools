@@ -100,13 +100,28 @@ internal sealed class BundleExplorerFileReplacementActionExecutor
         WorkspaceSummaryDto workspaceSummary,
         AssetDetailsDto details,
         FileReplacementCandidateDto candidate,
+        Action<IReadOnlyList<AppError>> appendResultFailure) =>
+        await ApplyFileReplacementAsync(
+            workspaceSummary,
+            details.BundleId,
+            details.AssetId,
+            details.Name,
+            candidate,
+            appendResultFailure);
+
+    public async Task<bool> ApplyFileReplacementAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        BundleId targetBundleId,
+        AssetId targetAssetId,
+        string targetAssetName,
+        FileReplacementCandidateDto candidate,
         Action<IReadOnlyList<AppError>> appendResultFailure)
     {
         var fileResult = await _workspaceAssetOperationGateway.ReplaceAssetFromFileAsync(
             new ReplaceAssetFromFileCommand(
                 workspaceSummary.WorkspaceId,
-                details.BundleId,
-                details.AssetId,
+                targetBundleId,
+                targetAssetId,
                 candidate.SourceFilePath,
                 candidate.SourceAssetType,
                 workspaceSummary.WorkspaceKey,
@@ -125,10 +140,12 @@ internal sealed class BundleExplorerFileReplacementActionExecutor
 
         ShowOperationNotification(
             GetString(ResourceKeys.AppNotificationSuccessTitle),
-            _localizationService.GetFormattedString(
-                ResourceKeys.BundleExplorerNotificationFileReplacementApplied,
-                fileReplacementResult.TargetAssetName),
-            AppNotificationSeverity.Success);
+                _localizationService.GetFormattedString(
+                    ResourceKeys.BundleExplorerNotificationFileReplacementApplied,
+                    string.IsNullOrWhiteSpace(fileReplacementResult.TargetAssetName)
+                        ? targetAssetName
+                        : fileReplacementResult.TargetAssetName),
+                AppNotificationSeverity.Success);
 
         return true;
     }

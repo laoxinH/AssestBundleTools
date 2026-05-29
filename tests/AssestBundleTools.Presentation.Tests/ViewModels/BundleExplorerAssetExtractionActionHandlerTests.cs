@@ -275,6 +275,50 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
         Assert.Equal(0, reapplyCount);
     }
 
+    [Fact]
+    public async Task SelectSpriteTextureReplacementSourceAsync_ShouldPickAndApplyLinkedTextureImmediately()
+    {
+        var gateway = new RecordingWorkspaceAssetOperationGateway();
+        var filePicker = new RecordingFilePickerService
+        {
+            ReplacementSourceFilePath = @"D:\Imports\hero-linked.png"
+        };
+        var handler = new BundleExplorerAssetModificationActionHandler(
+            gateway,
+            new TestAppLogService(),
+            new TestAppNotificationService(),
+            new TestLocalizationService(),
+            filePicker);
+        var textureBundleId = new BundleId("bundle-textures");
+        var textureAssetId = new AssetId("asset-linked-texture");
+        var assetTab = new AssetDocumentTabViewModel(
+            new BundleId("bundle-ui"),
+            new AssetId("asset-sprite"),
+            "hero sprite",
+            CreateInspectorTextSet());
+        var details = CreateSpriteDetails(textureBundleId, textureAssetId);
+        var busyStates = new List<bool>();
+
+        await handler.SelectSpriteTextureReplacementSourceAsync(
+            CreateWorkspaceSummary(),
+            assetTab,
+            details,
+            busyStates.Add,
+            _ => throw new InvalidOperationException("Sprite texture replacement should not fail in this test."));
+
+        Assert.Equal(1, filePicker.ReplacementSourceFilePickCount);
+        var candidateQuery = Assert.Single(gateway.FileReplacementCandidateQueries);
+        Assert.Equal(textureBundleId, candidateQuery.TargetBundleId);
+        Assert.Equal(textureAssetId, candidateQuery.TargetAssetId);
+        var replacementCommand = Assert.Single(gateway.ReplaceAssetFromFileCommands);
+        Assert.Equal(textureBundleId, replacementCommand.TargetBundleId);
+        Assert.Equal(textureAssetId, replacementCommand.TargetAssetId);
+        Assert.Equal(filePicker.ReplacementSourceFilePath, replacementCommand.SourceFilePath);
+        Assert.Null(assetTab.PendingFileReplacementCandidate);
+        Assert.Null(assetTab.PendingWorkspaceReplacementCandidate);
+        Assert.Equal([true, false], busyStates);
+    }
+
     private static WorkspaceSummaryDto CreateWorkspaceSummary() =>
         new(
             WorkspaceId: new WorkspaceId("workspace-1"),
@@ -354,6 +398,22 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
             FileReplacementSourceAssetType: null,
             LastExtractedAtUtc: null,
             Dependencies: Array.Empty<AssetDependencyDto>());
+
+    private static AssetDetailsDto CreateSpriteDetails(BundleId textureBundleId, AssetId textureAssetId) =>
+        CreateAssetDetails() with
+        {
+            AssetId = new AssetId("asset-sprite"),
+            Name = "hero sprite",
+            AssetType = AssetType.Sprite,
+            Dependencies =
+            [
+                new AssetDependencyDto(
+                    textureAssetId,
+                    textureBundleId,
+                    "hero linked texture",
+                    AssetType.Texture2D)
+            ]
+        };
 
     private static InspectorInformationTextSet CreateInspectorTextSet() =>
         new(
