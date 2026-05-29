@@ -177,6 +177,10 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldUseWorkspaceReplacementPreview_WithTargetIdentity);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUseAssociatedTextureReplacementPreview_ForSprite),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldUseAssociatedTextureReplacementPreview_ForSprite);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldCacheFullText_AndExposeBoundedDisplayText_WhenGeneratedTextIsLong),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldCacheFullText_AndExposeBoundedDisplayText_WhenGeneratedTextIsLong);
         await RunTestAsync(

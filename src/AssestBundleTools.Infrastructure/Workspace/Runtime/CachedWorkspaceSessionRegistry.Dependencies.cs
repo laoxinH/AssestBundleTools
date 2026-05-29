@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Assets;
 
 namespace AssestBundleTools.Infrastructure.Workspace.Runtime;
@@ -115,6 +116,68 @@ public sealed partial class CachedWorkspaceSessionRegistry
         }
 
         return textureAssociations;
+    }
+
+    private static IReadOnlyList<WorkspaceAssociatedAssetImpactDto> BuildAssociatedAssetImpacts(
+        WorkspaceSessionState workspaceState,
+        AssetId changedAssetId)
+    {
+        if (string.IsNullOrWhiteSpace(changedAssetId.Value))
+        {
+            return Array.Empty<WorkspaceAssociatedAssetImpactDto>();
+        }
+
+        var impactsByAssetId = new Dictionary<string, WorkspaceAssociatedAssetImpactDto>(StringComparer.Ordinal);
+        if (workspaceState.TryGetReverseDependencies(changedAssetId, out var directDependents))
+        {
+            foreach (var dependent in directDependents)
+            {
+                AddAssociatedAssetImpact(impactsByAssetId, dependent);
+            }
+        }
+
+        foreach (var assetNode in workspaceState.AssetsById.Values)
+        {
+            if (!assetNode.AssetState.IncludeInAssetList)
+            {
+                continue;
+            }
+
+            if (!workspaceState.TryGetTextureAssociations(assetNode.AssetState.AssetId, out var textureAssociations) ||
+                !textureAssociations.Any(textureAssociation =>
+                    string.Equals(textureAssociation.AssetId.Value, changedAssetId.Value, StringComparison.Ordinal)))
+            {
+                continue;
+            }
+
+            AddAssociatedAssetImpact(impactsByAssetId, CreateDependencyDescriptor(assetNode));
+        }
+
+        impactsByAssetId.Remove(changedAssetId.Value);
+        return impactsByAssetId.Values
+            .OrderBy(static impact => impact.Name, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static impact => impact.BundleId.Value, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static impact => impact.PathId)
+            .ToArray();
+    }
+
+    private static void AddAssociatedAssetImpact(
+        IDictionary<string, WorkspaceAssociatedAssetImpactDto> impactsByAssetId,
+        AssetDependencyDto dependency)
+    {
+        if (string.IsNullOrWhiteSpace(dependency.AssetId.Value) ||
+            impactsByAssetId.ContainsKey(dependency.AssetId.Value))
+        {
+            return;
+        }
+
+        impactsByAssetId[dependency.AssetId.Value] = new WorkspaceAssociatedAssetImpactDto(
+            dependency.BundleId,
+            dependency.AssetId,
+            dependency.Name,
+            dependency.AssetType,
+            dependency.PathId,
+            dependency.AssetTypeDisplayName);
     }
 
     private static IReadOnlyList<AssetDependencyDto> BuildTextureAssociationsForMesh(

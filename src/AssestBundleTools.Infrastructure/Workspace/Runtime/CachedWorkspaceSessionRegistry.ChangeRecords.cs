@@ -19,9 +19,9 @@ public sealed partial class CachedWorkspaceSessionRegistry
         CachedAssetState assetState)
     {
         var persistedRecords = LoadPersistedAssetChangeRecords(
-                workspaceState.Summary,
+                workspaceState,
                 bundleState.BundleId,
-                assetState.AssetId)
+                assetState)
             .ToArray();
         return persistedRecords.Length > 0
             ? persistedRecords
@@ -29,10 +29,12 @@ public sealed partial class CachedWorkspaceSessionRegistry
     }
 
     private IEnumerable<AssetChangeRecordDto> LoadPersistedAssetChangeRecords(
-        WorkspaceSummaryDto workspaceSummary,
+        WorkspaceSessionState workspaceState,
         BundleId bundleId,
-        AssetId assetId)
+        CachedAssetState assetState)
     {
+        var workspaceSummary = workspaceState.Summary;
+        var assetId = assetState.AssetId;
         if (string.IsNullOrWhiteSpace(workspaceSummary.WorkspaceKey) ||
             string.IsNullOrWhiteSpace(workspaceSummary.WorkspaceDataRootPath))
         {
@@ -64,6 +66,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
             changeSet,
             bundleId.Value,
             assetId.Value);
+        var implicitDependencyAssetKeys = GetImplicitDependencyAssetKeys(workspaceState, assetState);
 
         foreach (var operation in operations
             .Where(static operation => operation.OperationKind is
@@ -71,7 +74,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
                 WorkspaceOperationKind.ReplaceFromFile or
                 WorkspaceOperationKind.ReplaceFromWorkspace or
                 WorkspaceOperationKind.EditDraftApplied)
-            .Where(operation => OperationConcernsAssetChangeRecord(operation, bundleId, assetId))
+            .Where(operation => OperationConcernsAssetChangeRecord(operation, bundleId, assetId, implicitDependencyAssetKeys))
             .OrderByDescending(static operation => operation.Sequence))
         {
             var isRelatedOperation = !OperationTargetsAsset(operation, bundleId, assetId);
@@ -146,17 +149,61 @@ public sealed partial class CachedWorkspaceSessionRegistry
     private static bool OperationConcernsAssetChangeRecord(
         WorkspaceOperationRecordDto operation,
         BundleId bundleId,
-        AssetId assetId)
+        AssetId assetId,
+        ISet<string> implicitDependencyAssetKeys)
     {
         if (OperationTargetsAsset(operation, bundleId, assetId))
         {
             return true;
         }
 
-        return operation.OperationKind is WorkspaceOperationKind.ReplaceFromFile or WorkspaceOperationKind.ReplaceFromWorkspace &&
-               WorkspaceOperationRelationMatcher.OperationConcernsTarget(
-                   operation,
-                   bundleId.Value,
-                   assetId.Value);
+        if (operation.OperationKind is not (WorkspaceOperationKind.ReplaceFromFile or WorkspaceOperationKind.ReplaceFromWorkspace))
+        {
+            return false;
+        }
+
+        if (WorkspaceOperationRelationMatcher.OperationConcernsTarget(
+                operation,
+                bundleId.Value,
+                assetId.Value))
+        {
+            return true;
+        }
+
+        return !string.IsNullOrWhiteSpace(operation.Target?.BundleId) &&
+               !string.IsNullOrWhiteSpace(operation.Target.AssetId) &&
+               implicitDependencyAssetKeys.Contains(CreateAssetKey(operation.Target.BundleId, operation.Target.AssetId));
     }
+
+    private static ISet<string> GetImplicitDependencyAssetKeys(
+        WorkspaceSessionState workspaceState,
+        CachedAssetState assetState)
+    {
+        var assetKeys = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var dependency in assetState.Dependencies)
+        {
+            if (!string.IsNullOrWhiteSpace(dependency.BundleId.Value) &&
+                !string.IsNullOrWhiteSpace(dependency.AssetId.Value))
+            {
+                assetKeys.Add(CreateAssetKey(dependency.BundleId.Value, dependency.AssetId.Value));
+            }
+        }
+
+        if (workspaceState.TryGetTextureAssociations(assetState.AssetId, out var textureAssociations))
+        {
+            foreach (var textureAssociation in textureAssociations)
+            {
+                if (!string.IsNullOrWhiteSpace(textureAssociation.BundleId.Value) &&
+                    !string.IsNullOrWhiteSpace(textureAssociation.AssetId.Value))
+                {
+                    assetKeys.Add(CreateAssetKey(textureAssociation.BundleId.Value, textureAssociation.AssetId.Value));
+                }
+            }
+        }
+
+        return assetKeys;
+    }
+
+    private static string CreateAssetKey(string bundleId, string assetId) =>
+        string.Concat(bundleId, "\n", assetId);
 }

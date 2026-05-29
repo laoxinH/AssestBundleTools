@@ -389,6 +389,54 @@ internal static class CachedWorkspaceSessionRegistryTests
         TestAssert.Equal(1, changeSummary.ExtractedAssetCount, "Summary extracted count should include hidden extracted dependencies.");
     }
 
+    public static void TryGetAssociatedAssetImpacts_ShouldReturnVisibleDependents_WhenTextureChanges()
+    {
+        var bundleId = "bundle.sprites";
+        var spriteId = "asset.sprite";
+        var textureId = "asset.texture";
+        var cacheEntry = new BundleIndexCacheEntryDto(
+            WorkspaceKey: "workspace-a",
+            BundleCacheKey: "bundle-cache-sprites",
+            BundleId: bundleId,
+            DisplayName: "sprites.ab",
+            LogicalPath: "sprites.ab",
+            SourceFingerprint: new WorkspaceFileFingerprintDto("sprites.ab", 100, DateTimeOffset.UnixEpoch, "hash"),
+            CachedAtUtc: DateTimeOffset.UnixEpoch,
+            ParserVersion: "test",
+            ToolVersion: "test",
+            Dependencies: Array.Empty<string>(),
+            Assets:
+            [
+                CreateAsset(spriteId, "HeroSprite", AssetType.Sprite, "Sprite", pathId: 10, dependencies:
+                [
+                    CreateDependency(textureId, "HeroTexture", AssetType.Texture2D, "Texture2D", pathId: 20)
+                ]),
+                CreateAsset(textureId, "HeroTexture", AssetType.Texture2D, "Texture2D", pathId: 20)
+            ],
+            SerializedFileNames: ["CAB-sprites"]);
+        var bundleIndexCacheStore = new TestBundleIndexCacheStore([cacheEntry]);
+        var registry = new CachedWorkspaceSessionRegistry(new TestWorkspaceDataStoreFactory(bundleIndexCacheStore));
+
+        var summary = registry.OpenWorkspace(new WorkspaceSessionOpenRequestDto(
+            WorkspaceKey: "workspace-a",
+            WorkspacePath: "workspace",
+            WorkspaceDataRootPath: "data",
+            WorkspaceDisplayName: "Workspace A",
+            InitialMode: WorkspaceMode.SinglePane));
+
+        var hasImpacts = registry.TryGetAssociatedAssetImpacts(
+            summary.WorkspaceId,
+            new BundleId(bundleId),
+            new AssetId(textureId),
+            out var impacts);
+
+        TestAssert.True(hasImpacts, "Associated impact query should be available for loaded assets.");
+        var impact = TestAssert.Single(impacts);
+        TestAssert.Equal(spriteId, impact.AssetId.Value, "Texture changes should affect Sprite dependents.");
+        TestAssert.Equal(bundleId, impact.BundleId.Value, "Associated impact should keep dependent bundle identity.");
+        TestAssert.Equal(AssetType.Sprite, impact.AssetType, "Associated impact should keep dependent asset type.");
+    }
+
     private static BundleIndexAssetCacheEntryDto CreateAsset(
         string assetId,
         string name,

@@ -15,7 +15,12 @@ namespace AssestBundleTools.Infrastructure.Workspace.Runtime;
 /// 当前阶段只要求资源包列表摆脱假数据，因此该实现优先消费
 /// `cache/bundle-index` 中的读模型，并在资产级真实解析接入前保持轻量可扩展。
 /// </remarks>
-public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRegistry, IWorkspaceReplacementRedoSessionRegistry, IWorkspaceSpriteEditSessionRegistry, IWorkspaceOperationReplaySessionRegistry
+public sealed partial class CachedWorkspaceSessionRegistry :
+    IWorkspaceSessionRegistry,
+    IWorkspaceAssociatedAssetImpactRegistry,
+    IWorkspaceReplacementRedoSessionRegistry,
+    IWorkspaceSpriteEditSessionRegistry,
+    IWorkspaceOperationReplaySessionRegistry
 {
     private readonly object _syncRoot = new();
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
@@ -232,6 +237,25 @@ public sealed partial class CachedWorkspaceSessionRegistry : IWorkspaceSessionRe
                 SpriteEditGeometry: assetState.AppliedSpriteEdit?.Geometry,
                 SpriteEditAppliedAtUtc: assetState.AppliedSpriteEdit?.AppliedAtUtc);
 
+            return true;
+        }
+    }
+
+    public bool TryGetAssociatedAssetImpacts(
+        WorkspaceId workspaceId,
+        BundleId bundleId,
+        AssetId assetId,
+        out IReadOnlyList<WorkspaceAssociatedAssetImpactDto> impacts)
+    {
+        lock (_syncRoot)
+        {
+            if (!TryGetAssetStateUnsafe(workspaceId, bundleId, assetId, out _, out _, out var workspaceState))
+            {
+                impacts = Array.Empty<WorkspaceAssociatedAssetImpactDto>();
+                return false;
+            }
+
+            impacts = BuildAssociatedAssetImpacts(workspaceState, assetId);
             return true;
         }
     }

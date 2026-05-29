@@ -82,12 +82,15 @@ internal static partial class GetAssetPreviewHandlerTests
     private static AssetDetailsDto CreateAssetDetails(
         GetAssetPreviewQuery query,
         string? name = null,
+        AssetType assetType = AssetType.Texture2D,
         string? fileReplacementSourceFileName = null,
         string? fileReplacementSourcePath = null,
         BundleId? workspaceReplacementSourceBundleId = null,
         AssetId? workspaceReplacementSourceAssetId = null,
         string? workspaceReplacementSourceBundleDisplayName = null,
-        string? workspaceReplacementSourceAssetName = null)
+        string? workspaceReplacementSourceAssetName = null,
+        IReadOnlyList<AssetDependencyDto>? dependencies = null,
+        IReadOnlyList<AssetDependencyDto>? textureAssociations = null)
     {
         var hasFileReplacement = !string.IsNullOrWhiteSpace(fileReplacementSourcePath);
         var hasWorkspaceReplacement = workspaceReplacementSourceBundleId.HasValue &&
@@ -99,7 +102,7 @@ internal static partial class GetAssetPreviewHandlerTests
             Name: name ?? "HeroPortrait",
             AssetPath: "Assets/HeroPortrait.png",
             ContainerPath: "Assets",
-            AssetType: AssetType.Texture2D,
+            AssetType: assetType,
             SizeInBytes: 256,
             PreferredDisplaySizeInBytes: 256,
             PathId: 12345,
@@ -109,15 +112,34 @@ internal static partial class GetAssetPreviewHandlerTests
             CanReplaceFromWorkspace: true,
             WorkspaceReplacementSourceBundleDisplayName: workspaceReplacementSourceBundleDisplayName,
             WorkspaceReplacementSourceAssetName: workspaceReplacementSourceAssetName,
-            WorkspaceReplacementSourceAssetType: hasWorkspaceReplacement ? AssetType.Texture2D : null,
+            WorkspaceReplacementSourceAssetType: hasWorkspaceReplacement ? assetType : null,
             FileReplacementSourceFileName: fileReplacementSourceFileName,
             FileReplacementSourcePath: fileReplacementSourcePath,
-            FileReplacementSourceAssetType: hasFileReplacement ? AssetType.Texture2D : null,
+            FileReplacementSourceAssetType: hasFileReplacement ? assetType : null,
             LastExtractedAtUtc: null,
-            Dependencies: Array.Empty<AssetDependencyDto>(),
-            AssetTypeDisplayName: AssetType.Texture2D.ToString(),
+            Dependencies: dependencies ?? Array.Empty<AssetDependencyDto>(),
+            AssetTypeDisplayName: assetType.ToString(),
+            TextureAssociations: textureAssociations,
             WorkspaceReplacementSourceBundleId: workspaceReplacementSourceBundleId,
             WorkspaceReplacementSourceAssetId: workspaceReplacementSourceAssetId);
+    }
+
+    private static BundleIndexAssetCacheEntryDto CreateAssetCacheEntry(string assetId)
+    {
+        return new BundleIndexAssetCacheEntryDto(
+            AssetId: assetId,
+            AssetName: "HeroPortrait",
+            AssetType: AssetType.Texture2D.ToString(),
+            AssetPath: "Assets/HeroPortrait.png",
+            ContainerPath: null,
+            SizeInBytes: 256,
+            PreferredDisplaySizeInBytes: 256,
+            HasPreview: true,
+            CanExtract: true,
+            CanReplace: true,
+            SerializedFileName: "characters.assets",
+            PathId: 12345,
+            AssetTypeDisplayName: AssetType.Texture2D.ToString());
     }
 
     private static AssetBundleDecryptorDescriptorDto CreatePassThroughDecryptorDescriptor()

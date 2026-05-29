@@ -239,6 +239,15 @@ relatedOperationId
 4. 操作完成通知、删除记录通知和读模型刷新必须同时覆盖 `target` 与 `relatedTarget`，确保多窗口和关联资源详情同步刷新。
 5. 删除一条记录只删除被选中的操作及其 supersedes 派生记录；关联的几何编辑和关联的文件替换是独立操作，除非未来明确提供“删除整组关联批次”命令。
 
+`relations[]` 只表达“同一个用户确认动作同时写入多条强关联操作”的事实，不应滥用来补依赖图。资源 A 被修改时，依赖 A 的 Sprite、Mesh、Material、Spine 组等资源需要同步刷新预览和变更读模型，这类行为属于“隐式依赖影响”。当前通过 Application 层的 `IWorkspaceAssociatedAssetImpactRegistry` 查询工作区运行时依赖图，由 Infrastructure 基于反向依赖和贴图关联实现；Presentation 的操作通知网关只消费这个抽象来扩展受影响资产列表，不直接遍历依赖图或读取工作区暂存文件。
+
+隐式依赖影响的规则：
+
+1. 不额外生成新的操作记录，也不改写原操作的 `relations[]`。
+2. 依赖资源详情页可以把“目标是其依赖资产”的替换操作投影为关联替换记录，撤销 / 重做仍携带原操作 `operationId` 并由 Application 解析真实目标。
+3. 操作通知扩展后的受影响资产应包含真实 `target` 和依赖它的可展示资源，确保主窗口与独立资源编辑窗口都能局部刷新。
+4. 有效预览投影应优先消费依赖资源的当前有效载荷；例如 Sprite 预览的底图使用关联 Texture2D 当前有效替换结果，同时保留 Sprite 自身裁切 / pivot 覆盖层和原始身份信息。
+
 ## 7. 当前操作语义
 
 ### 7.1 提取
@@ -333,6 +342,8 @@ relatedOperationId
 当前 Sprite 裁切框 / pivot 修改已经从临时编辑工作面进入工作区操作记录链路：用户在资源编辑窗口中调整几何后，通过窗口操作区的“保存 Sprite 编辑”把当前裁切框、pivot、画布尺寸和草稿模式应用到工作区运行时状态，并追加一条 `EditDraftApplied` 操作记录。该记录的 `source.sourceKind` 为 `draft`，`source.draftMode` 为 `sprite-geometry`，`source.draftId` 指向本次几何草稿；`result.spriteEditGeometry` 保存当前轻量几何，用于重启恢复、读模型重放、预览投影和后续统一导出读取。`editDrafts[]` 只保存草稿描述、指纹、更新时间和摘要，不保存图片或 AB 载荷。
 
 Sprite 编辑态中的“替换 Texture2D”不是立即保存的独立替换动作。用户选择图片文件后，只在 Sprite 文档标签上形成待保存的关联文件替换候选；点击“保存 Sprite 编辑”时，Application 先验证该 Texture2D 确实来自 Sprite 的依赖或贴图关联，再把 Texture2D 文件替换应用到运行时状态，并与 Sprite 几何一起追加两条独立操作记录：一条目标为 Texture2D 的 `ReplaceFromFile`，一条目标为 Sprite 的 `EditDraftApplied`。两条记录通过 `relations[] / batchId` 互相关联，Texture2D 记录进入原 Texture2D 资产的变更记录，Sprite 变更页同时把该 Texture2D 替换投影为关联替换记录；Sprite 几何记录和 Texture2D 替换记录仍可分开撤销 / 重做 / 删除。
+
+如果用户不是从 Sprite 编辑保存入口，而是直接在 Texture2D 资产详情或资源列表中修改该贴图，运行时依赖影响查询仍会把依赖该 Texture2D 的 Sprite 纳入受影响资产。Sprite 详情会通过同一变更记录投影显示关联替换记录，并在预览中使用 Texture2D 的当前有效图片载荷；这条路径不创建额外 Sprite 操作记录，也不把直接贴图替换伪装成 Sprite 编辑。
 
 Sprite 编辑应用后仍不改写原始 AB、标准化 artifact 或预览缓存源文件；实际 AB 对象裁切 / pivot 写入只允许在后续保存 / 重建 / 统一导出阶段读取已物化的 Sprite 编辑状态后执行。删除某条 Sprite 编辑操作记录时，运行时会按剩余 `operations[]` 重新物化当前目标资源的最新有效 Sprite 几何；若删除最新记录，上一条同目标 Sprite 编辑自动成为有效几何。
 
@@ -521,7 +532,7 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 - Presentation 只负责触发命令、展示恢复计划、接收用户选择、本地化文本，以及页面级读模型失效协调；操作变更通知不得反向进入 Application，也不得让页面直接读取 `staging/changes`。
 - Presentation 可以维护 Shell 级后台任务状态条来展示运行中任务进度；该状态条属于瞬时 UI 状态，不得作为恢复、撤销、批处理历史或变更摘要的数据来源。
 - 页面或窗口订阅操作通知时必须按 `WorkspaceId` 过滤，并在自身忙碌时合并为一次待刷新请求；统一使用 `WorkspaceOperationChangeRefreshCoordinator`，不要在新的操作 handler 中新增“成功后刷新某个页面”的回调。
-- 发起操作的 handler 可以更新仅存在于当前 UI 的瞬时状态，例如清理待替换候选；已持久化的提取 / 替换 / 撤销 / 保存状态必须通过通知后的读模型重读来反映到详情页和批处理页。
+- 发起操作的 handler 可以更新仅存在于当前 UI 的瞬时状态，例如清理待替换候选；已持久化的提取 / 替换 / 撤销 / 保存状态必须通过通知后的读模型重读来反映到详情页和批处理页。通知携带资产目标时，应先通过应用层关联影响查询扩展到依赖这些目标的资源，再由页面 / 窗口按目标局部刷新。
 - 工作区元数据只保存轻量浏览状态；操作记录属于 `staging/changes`。
 - 预览缓存仍是可重建缓存，不得成为撤销事实来源。
 - 外部工具 stdout / stderr 只能作为诊断 detail，不进入操作主提示。

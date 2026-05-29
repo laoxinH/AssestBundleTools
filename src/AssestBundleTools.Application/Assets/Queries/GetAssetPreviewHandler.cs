@@ -166,11 +166,13 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 diagnostic: new AssetPreviewDiagnosticDto(
                     CacheStatus: AssetPreviewCacheStatusKind.Hit,
                     FallbackReason: AssetPreviewFallbackReasonKind.None));
-            return Result<AssetPreviewDto>.Success(AssetPreviewSpriteEditProjector.ApplyIfAvailable(
+            return Result<AssetPreviewDto>.Success(await ApplyEffectivePreviewProjectorsAsync(
                 _workspaceSessionRegistry,
                 query,
                 assetCacheEntry,
-                cachedPreview));
+                cachedPreview,
+                replacementPreviewStack,
+                cancellationToken));
         }
 
         if (string.IsNullOrWhiteSpace(assetCacheEntry.SerializedFileName))
@@ -300,11 +302,36 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 CacheStatus: cacheEvaluation.CacheStatus,
                 FallbackReason: AssetPreviewFallbackReasonKind.None,
                 DetailMessage: cacheEvaluation.DetailMessage));
-        return Result<AssetPreviewDto>.Success(AssetPreviewSpriteEditProjector.ApplyIfAvailable(
+        return Result<AssetPreviewDto>.Success(await ApplyEffectivePreviewProjectorsAsync(
             _workspaceSessionRegistry,
             query,
             assetCacheEntry,
-            generatedPreview));
+            generatedPreview,
+            replacementPreviewStack,
+            cancellationToken));
+    }
+
+    private async Task<AssetPreviewDto> ApplyEffectivePreviewProjectorsAsync(
+        IWorkspaceSessionRegistry workspaceSessionRegistry,
+        GetAssetPreviewQuery query,
+        BundleIndexAssetCacheEntryDto assetCacheEntry,
+        AssetPreviewDto preview,
+        HashSet<string> replacementPreviewStack,
+        CancellationToken cancellationToken)
+    {
+        var projectedPreview = AssetPreviewSpriteEditProjector.ApplyIfAvailable(
+            workspaceSessionRegistry,
+            query,
+            assetCacheEntry,
+            preview);
+        return await AssetPreviewAssociatedTextureProjector.ApplyIfAvailableAsync(
+            workspaceSessionRegistry,
+            query,
+            assetCacheEntry,
+            projectedPreview,
+            replacementPreviewStack,
+            HandlePreviewAsync,
+            cancellationToken);
     }
 
     private static AssetPreviewDto BuildFallbackSummaryPreview(

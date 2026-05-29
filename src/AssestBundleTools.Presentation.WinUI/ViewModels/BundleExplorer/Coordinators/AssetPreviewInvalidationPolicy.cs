@@ -46,7 +46,8 @@ internal static class AssetPreviewInvalidationPolicy
         return details.ChangeRecords?
             .Where(static record => record.Kind is
                 AssetChangeRecordKind.FileReplacement or
-                AssetChangeRecordKind.WorkspaceReplacement)
+                AssetChangeRecordKind.WorkspaceReplacement or
+                AssetChangeRecordKind.AssociatedFileReplacement)
             .OrderByDescending(static record => record.DisplayTimestampUtc)
             .Select(static record => (DateTimeOffset?)record.DisplayTimestampUtc)
             .FirstOrDefault();

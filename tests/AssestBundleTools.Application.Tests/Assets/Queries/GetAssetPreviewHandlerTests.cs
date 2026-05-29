@@ -184,6 +184,124 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(sourceAssetId.Value, generator.LastRequest?.AssetId, "Preview generator should be asked for the replacement source asset.");
     }
 
+    public static async Task HandleAsync_ShouldUseAssociatedTextureReplacementPreview_ForSprite()
+    {
+        const string replacementFilePath = @"C:\Imports\hero-texture.png";
+        var spriteAssetId = new AssetId("asset.sprite");
+        var textureAssetId = new AssetId("asset.texture");
+        var replacementBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x33 };
+        var originalSpriteBytes = Encoding.UTF8.GetBytes("original sprite");
+        var query = CreateQuery() with
+        {
+            AssetId = spriteAssetId
+        };
+        var spriteOverlay = new AssetPreviewImageOverlayDto(
+            CanvasPixelWidth: 256,
+            CanvasPixelHeight: 128,
+            HighlightRegion: new AssetPreviewImageRegionDto(16, 24, 64, 32),
+            PivotPoint: new AssetPreviewImagePointDto(48, 40),
+            NineSliceBorder: null);
+        var spriteEntry = CreateAssetCacheEntry(query.AssetId.Value) with
+        {
+            AssetName = "HeroSprite",
+            AssetType = AssetType.Sprite.ToString(),
+            AssetTypeDisplayName = AssetType.Sprite.ToString(),
+            AssetPath = "Assets/HeroSprite.sprite",
+            PathId = 10
+        };
+        var textureEntry = CreateAssetCacheEntry(textureAssetId.Value) with
+        {
+            AssetName = "HeroTexture",
+            AssetType = AssetType.Texture2D.ToString(),
+            AssetTypeDisplayName = AssetType.Texture2D.ToString(),
+            AssetPath = "Assets/HeroTexture.png",
+            PathId = 20
+        };
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value) with
+        {
+            Assets = [spriteEntry, textureEntry]
+        };
+        var previewCacheStore = new TestPreviewCacheStore();
+        var decryptorDescriptor = CreatePassThroughDecryptorDescriptor();
+        var decryptor = new TestAssetBundleDecryptor(decryptorDescriptor)
+        {
+            DecryptResultFactory = _ => Task.FromResult(Result<AssetBundleDecryptionResultDto>.Success(
+                new AssetBundleDecryptionResultDto(
+                    Decryptor: decryptorDescriptor,
+                    ResolvedBundlePath: @"C:\Temp\sprites.bundle",
+                    ProducedDerivedFile: false,
+                    BundleFingerprint: bundleCacheEntry.SourceFingerprint,
+                    DiagnosticMessage: null)))
+        };
+        var generator = new TestAssetPreviewGenerator
+        {
+            GenerateResultFactory = request =>
+            {
+                if (string.Equals(request.AssetId, spriteAssetId.Value, StringComparison.Ordinal))
+                {
+                    return Task.FromResult(Result<AssetPreviewContentDto>.Success(
+                        new AssetPreviewContentDto(
+                            Kind: AssetPreviewKind.Image,
+                            ContentType: "image/png",
+                            Content: originalSpriteBytes,
+                            ImageOverlay: spriteOverlay)));
+                }
+
+                throw new InvalidOperationException("Texture file replacement should be loaded from the replacement source provider.");
+            }
+        };
+        var replacementPreviewSourceProvider = new TestReplacementPreviewSourceProvider(
+            Result<AssetPreviewContentDto>.Success(new AssetPreviewContentDto(
+                Kind: AssetPreviewKind.Image,
+                ContentType: "image/png",
+                Content: replacementBytes,
+                PreferredDisplaySizeInBytes: replacementBytes.Length)));
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(
+            [
+                CreateAssetDetails(
+                    query,
+                    assetType: AssetType.Sprite,
+                    dependencies:
+                    [
+                        new AssetDependencyDto(
+                            textureAssetId,
+                            query.BundleId,
+                            "HeroTexture",
+                            AssetType.Texture2D,
+                            PathId: 20,
+                            AssetTypeDisplayName: AssetType.Texture2D.ToString())
+                    ]),
+                CreateAssetDetails(
+                    query with { AssetId = textureAssetId },
+                    fileReplacementSourceFileName: "hero-texture.png",
+                    fileReplacementSourcePath: replacementFilePath)
+            ]),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService(),
+            replacementPreviewSourceProvider: replacementPreviewSourceProvider);
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Sprite preview should use the effective associated Texture2D payload.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(query.BundleId, preview.BundleId, "Sprite preview should keep Sprite bundle identity.");
+        TestAssert.Equal(spriteAssetId, preview.AssetId, "Sprite preview should keep Sprite asset identity.");
+        TestAssert.Equal(AssetPreviewKind.Image, preview.Kind, "Sprite associated texture projection should remain an image preview.");
+        TestAssert.True(
+            preview.BinaryContent is not null &&
+            preview.BinaryContent.AsSpan().SequenceEqual(replacementBytes),
+            "Sprite preview should expose the associated Texture2D replacement bytes.");
+        TestAssert.Equal(spriteOverlay, preview.ImageOverlay, "Sprite overlay should be preserved over the replacement texture payload.");
+        TestAssert.Equal(1, replacementPreviewSourceProvider.LoadFilePreviewCallCount, "Associated Texture2D replacement preview should load once.");
+        TestAssert.Equal(1, generator.GenerateCallCount, "Only the original Sprite preview should be generated for overlay metadata.");
+        TestAssert.Equal(1, decryptor.DecryptCallCount, "Generating the Sprite overlay should decrypt the original bundle once.");
+    }
+
     public static async Task HandleAsync_ShouldRoundTripCachedImageOverlay_WhenPreviewCacheStillMatches()
     {
         const string resolvedPayloadFilePath = @"D:\WorkspaceData\preview-cache\bundle-cache-001\asset-001.png";

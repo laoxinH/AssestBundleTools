@@ -283,6 +283,100 @@ internal static class CachedWorkspaceSessionRegistryOperationRestoreTests
         TestAssert.True(changeRecord.IsEffectiveEdit, "Restored Sprite edit should be marked effective.");
     }
 
+    public static void TryGetAssetDetails_ShouldProjectDependencyReplacement_AsAssociatedChangeRecord()
+    {
+        var workspaceKey = "workspace-a";
+        var bundleId = "bundle.sprites";
+        var spriteAssetId = "asset.sprite";
+        var textureAssetId = "asset.texture";
+        var now = new DateTimeOffset(2026, 5, 26, 11, 0, 0, TimeSpan.Zero);
+        var cacheEntry = new BundleIndexCacheEntryDto(
+            WorkspaceKey: workspaceKey,
+            BundleCacheKey: "bundle-cache-sprites",
+            BundleId: bundleId,
+            DisplayName: "sprites.ab",
+            LogicalPath: "sprites.ab",
+            SourceFingerprint: new WorkspaceFileFingerprintDto("sprites.ab", 100, DateTimeOffset.UnixEpoch, "hash"),
+            CachedAtUtc: DateTimeOffset.UnixEpoch,
+            ParserVersion: "test",
+            ToolVersion: "test",
+            Dependencies: Array.Empty<string>(),
+            Assets:
+            [
+                CreateAsset(
+                    spriteAssetId,
+                    "HeroSprite",
+                    AssetType.Sprite,
+                    "Sprite",
+                    pathId: 10,
+                    dependencies:
+                    [
+                        new BundleIndexAssetDependencyCacheEntryDto(
+                            AssetId: textureAssetId,
+                            AssetName: "HeroTexture",
+                            AssetType: AssetType.Texture2D.ToString(),
+                            PathId: 20,
+                            AssetTypeDisplayName: "Texture2D")
+                    ]),
+                CreateAsset(textureAssetId, "HeroTexture", AssetType.Texture2D, "Texture2D", pathId: 20)
+            ],
+            SerializedFileNames: ["CAB-sprites"]);
+        var changeSet = new WorkspaceChangeSetDto(
+            WorkspaceKey: workspaceKey,
+            UpdatedAtUtc: now,
+            Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+            EditDrafts: Array.Empty<WorkspaceAssetEditDraftDescriptorDto>(),
+            SchemaVersion: WorkspaceChangeSetDto.CurrentSchemaVersion,
+            OperationSequence: 1,
+            Operations:
+            [
+                new WorkspaceOperationRecordDto(
+                    OperationId: "replace-texture-file",
+                    Sequence: 1,
+                    OperationKind: WorkspaceOperationKind.ReplaceFromFile,
+                    Status: WorkspaceOperationStatus.Applied,
+                    WorkspaceKey: workspaceKey,
+                    Target: new WorkspaceOperationTargetDto(
+                        BundleId: bundleId,
+                        AssetId: textureAssetId,
+                        AssetName: "HeroTexture",
+                        AssetType: AssetType.Texture2D.ToString()),
+                    Source: new WorkspaceOperationSourceDto(
+                        SourceKind: "file",
+                        SourceFilePath: @"C:\Imports\hero-texture.png",
+                        SourceFileName: "hero-texture.png",
+                        SourceAssetType: AssetType.Texture2D.ToString()),
+                    PreviousState: null,
+                    Result: null,
+                    CreatedAtUtc: now,
+                    AppliedAtUtc: now)
+            ]);
+        var registry = new CachedWorkspaceSessionRegistry(
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([cacheEntry]),
+                new TestWorkspaceChangeStore(changeSet)),
+            new WorkspaceOperationLogService());
+
+        var summary = registry.OpenWorkspace(new WorkspaceSessionOpenRequestDto(
+            WorkspaceKey: workspaceKey,
+            WorkspacePath: "workspace",
+            WorkspaceDataRootPath: "data",
+            WorkspaceDisplayName: "Workspace A",
+            InitialMode: WorkspaceMode.SinglePane));
+        var hasSpriteDetails = registry.TryGetAssetDetails(
+            summary.WorkspaceId,
+            new BundleId(bundleId),
+            new AssetId(spriteAssetId),
+            out var spriteDetails);
+
+        TestAssert.True(hasSpriteDetails, "Sprite details should be available.");
+        var associatedRecord = TestAssert.Single(spriteDetails!.ChangeRecords ?? Array.Empty<AssetChangeRecordDto>());
+        TestAssert.Equal(AssetChangeRecordKind.AssociatedFileReplacement, associatedRecord.Kind, "Texture replacement should be projected as an associated Sprite record.");
+        TestAssert.True(associatedRecord.IsRelatedOperation, "Projected dependency replacement should be marked as related.");
+        TestAssert.True(associatedRecord.IsEffectiveReplacement, "Projected dependency replacement should keep its effective state.");
+        TestAssert.Equal(textureAssetId, associatedRecord.TargetAssetId, "Associated record should retain the real modified target.");
+    }
+
     private static WorkspaceChangeSetDto CreateReplacementChangeSet(
         string workspaceKey,
         string bundleId,
@@ -349,7 +443,8 @@ internal static class CachedWorkspaceSessionRegistryOperationRestoreTests
         string name,
         AssetType assetType,
         string? displayType,
-        long pathId) =>
+        long pathId,
+        IReadOnlyList<BundleIndexAssetDependencyCacheEntryDto>? dependencies = null) =>
         new(
             AssetId: assetId,
             AssetName: name,
@@ -364,7 +459,7 @@ internal static class CachedWorkspaceSessionRegistryOperationRestoreTests
             SerializedFileName: "CAB-test",
             PathId: pathId,
             AssetTypeDisplayName: displayType,
-            Dependencies: Array.Empty<BundleIndexAssetDependencyCacheEntryDto>(),
+            Dependencies: dependencies ?? Array.Empty<BundleIndexAssetDependencyCacheEntryDto>(),
             IncludeInAssetList: true);
 
     private sealed class TestWorkspaceDataStoreFactory : IWorkspaceDataStoreFactory

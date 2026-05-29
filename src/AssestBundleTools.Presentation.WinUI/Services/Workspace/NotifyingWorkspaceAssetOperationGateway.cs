@@ -22,13 +22,16 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
 {
     private readonly IWorkspaceAssetOperationGateway _inner;
     private readonly IWorkspaceOperationChangeNotifier _operationChangeNotifier;
+    private readonly IWorkspaceAssociatedAssetImpactRegistry? _associatedAssetImpactRegistry;
 
     public NotifyingWorkspaceAssetOperationGateway(
         IWorkspaceAssetOperationGateway inner,
-        IWorkspaceOperationChangeNotifier operationChangeNotifier)
+        IWorkspaceOperationChangeNotifier operationChangeNotifier,
+        IWorkspaceAssociatedAssetImpactRegistry? associatedAssetImpactRegistry = null)
     {
         _inner = inner ?? throw new ArgumentNullException(nameof(inner));
         _operationChangeNotifier = operationChangeNotifier ?? throw new ArgumentNullException(nameof(operationChangeNotifier));
+        _associatedAssetImpactRegistry = associatedAssetImpactRegistry;
     }
 
     public async Task<Result<AssetExtractionResultDto>> ExtractAssetAsync(
@@ -76,7 +79,9 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
             result,
             command.WorkspaceId,
             WorkspaceOperationChangeKind.Extraction | WorkspaceOperationChangeKind.Replacement,
-            CreateAffectedAsset(command.TargetBundleId, command.TargetAssetId));
+            ExpandAffectedAssets(
+                command.WorkspaceId,
+                CreateAffectedAsset(command.TargetBundleId, command.TargetAssetId)));
         return result;
     }
 
@@ -89,7 +94,9 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
             result,
             command.WorkspaceId,
             WorkspaceOperationChangeKind.Replacement,
-            CreateAffectedAsset(command.TargetBundleId, command.TargetAssetId));
+            ExpandAffectedAssets(
+                command.WorkspaceId,
+                CreateAffectedAsset(command.TargetBundleId, command.TargetAssetId)));
         return result;
     }
 
@@ -102,11 +109,13 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
             result,
             command.WorkspaceId,
             WorkspaceOperationChangeKind.Replacement,
-            CreateAffectedAssets(
-                command.BundleId,
-                command.AssetId,
-                result.Value?.TargetBundleId,
-                result.Value?.TargetAssetId));
+            ExpandAffectedAssets(
+                command.WorkspaceId,
+                CreateAffectedAssets(
+                    command.BundleId,
+                    command.AssetId,
+                    result.Value?.TargetBundleId,
+                    result.Value?.TargetAssetId)));
         return result;
     }
 
@@ -119,11 +128,13 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
             result,
             command.WorkspaceId,
             WorkspaceOperationChangeKind.Replacement,
-            CreateAffectedAssets(
-                command.BundleId,
-                command.AssetId,
-                result.Value?.TargetBundleId,
-                result.Value?.TargetAssetId));
+            ExpandAffectedAssets(
+                command.WorkspaceId,
+                CreateAffectedAssets(
+                    command.BundleId,
+                    command.AssetId,
+                    result.Value?.TargetBundleId,
+                    result.Value?.TargetAssetId)));
         return result;
     }
 
@@ -139,12 +150,16 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
                 ? WorkspaceOperationChangeKind.Edit
                 : WorkspaceOperationChangeKind.Edit | WorkspaceOperationChangeKind.Replacement,
             result.Value?.AssociatedFileReplacement is { } associatedReplacement
-                ? CreateAffectedAssets(
-                    command.BundleId,
-                    command.AssetId,
-                    associatedReplacement.TargetBundleId,
-                    associatedReplacement.TargetAssetId)
-                : CreateAffectedAsset(command.BundleId, command.AssetId));
+                ? ExpandAffectedAssets(
+                    command.WorkspaceId,
+                    CreateAffectedAssets(
+                        command.BundleId,
+                        command.AssetId,
+                        associatedReplacement.TargetBundleId,
+                        associatedReplacement.TargetAssetId))
+                : ExpandAffectedAssets(
+                    command.WorkspaceId,
+                    CreateAffectedAsset(command.BundleId, command.AssetId)));
         return result;
     }
 
@@ -157,7 +172,9 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
             result,
             command.WorkspaceId,
             WorkspaceOperationChangeKind.Extraction | WorkspaceOperationChangeKind.Replacement | WorkspaceOperationChangeKind.Edit,
-            CreateAffectedAssets(result.Value));
+            ExpandAffectedAssets(
+                command.WorkspaceId,
+                CreateAffectedAssets(result.Value)));
         return result;
     }
 
@@ -178,6 +195,36 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         AssetId assetId) =>
         [new WorkspaceOperationAffectedAsset(bundleId, assetId)];
 
+    private IReadOnlyList<WorkspaceOperationAffectedAsset>? ExpandAffectedAssets(
+        WorkspaceId workspaceId,
+        IReadOnlyList<WorkspaceOperationAffectedAsset>? affectedAssets)
+    {
+        if (_associatedAssetImpactRegistry is null ||
+            affectedAssets is null ||
+            affectedAssets.Count == 0)
+        {
+            return affectedAssets;
+        }
+
+        var expandedAssets = new List<WorkspaceOperationAffectedAsset>(affectedAssets);
+        foreach (var affectedAsset in affectedAssets)
+        {
+            if (!_associatedAssetImpactRegistry.TryGetAssociatedAssetImpacts(
+                    workspaceId,
+                    affectedAsset.BundleId,
+                    affectedAsset.AssetId,
+                    out var impacts))
+            {
+                continue;
+            }
+
+            expandedAssets.AddRange(impacts.Select(static impact =>
+                new WorkspaceOperationAffectedAsset(impact.BundleId, impact.AssetId)));
+        }
+
+        return NormalizeAffectedAssets(expandedAssets);
+    }
+
     private static IReadOnlyList<WorkspaceOperationAffectedAsset> CreateAffectedAssets(
         BundleId primaryBundleId,
         AssetId primaryAssetId,
@@ -193,10 +240,7 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
             affectedAssets.Add(new WorkspaceOperationAffectedAsset(secondaryBundleId.Value, secondaryAssetId.Value));
         }
 
-        return affectedAssets
-            .GroupBy(static item => string.Concat(item.BundleId.Value, "\n", item.AssetId.Value), StringComparer.Ordinal)
-            .Select(static group => group.First())
-            .ToArray();
+        return NormalizeAffectedAssets(affectedAssets);
     }
 
     private static IReadOnlyList<WorkspaceOperationAffectedAsset>? CreateAffectedAssets(
@@ -232,4 +276,12 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
             .Select(static result => new WorkspaceOperationAffectedAsset(result.BundleId, result.AssetId))
             .ToArray() ??
         Array.Empty<WorkspaceOperationAffectedAsset>();
+
+    private static IReadOnlyList<WorkspaceOperationAffectedAsset> NormalizeAffectedAssets(
+        IEnumerable<WorkspaceOperationAffectedAsset> affectedAssets) =>
+        affectedAssets
+            .Where(static item => item is not null)
+            .GroupBy(static item => string.Concat(item.BundleId.Value, "\n", item.AssetId.Value), StringComparer.Ordinal)
+            .Select(static group => group.First())
+            .ToArray();
 }

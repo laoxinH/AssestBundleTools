@@ -260,7 +260,8 @@ internal static class AppCompositionRoot
             deleteWorkspaceOperationRecordHandler: deleteWorkspaceOperationRecordHandler);
         var workspaceAssetOperationGateway = new NotifyingWorkspaceAssetOperationGateway(
             workspaceAssetOperationGatewayCore,
-            workspaceOperationChangeNotifier);
+            workspaceOperationChangeNotifier,
+            workspaceSessionRegistry);
         var workspaceBatchOperationsGatewayCore = new WorkspaceBatchOperationsGateway(
             getWorkspaceChangeSummaryHandler: getWorkspaceChangeSummaryHandler,
             getWorkspaceSavePreviewHandler: getWorkspaceSavePreviewHandler,

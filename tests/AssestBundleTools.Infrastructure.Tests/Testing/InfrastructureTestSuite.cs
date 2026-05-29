@@ -153,6 +153,10 @@ internal static class InfrastructureTestSuite
             CachedWorkspaceSessionRegistryTests.TryGetWorkspaceChangeSummary_ShouldIncludeHiddenExtractedAssets);
         await RunTestAsync(
             failures,
+            nameof(CachedWorkspaceSessionRegistryTests.TryGetAssociatedAssetImpacts_ShouldReturnVisibleDependents_WhenTextureChanges),
+            CachedWorkspaceSessionRegistryTests.TryGetAssociatedAssetImpacts_ShouldReturnVisibleDependents_WhenTextureChanges);
+        await RunTestAsync(
+            failures,
             nameof(CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedExtractionOperations_FromChangeSet),
             CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedExtractionOperations_FromChangeSet);
         await RunTestAsync(
@@ -167,6 +171,10 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedSpriteEditOperation_FromChangeSet),
             CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedSpriteEditOperation_FromChangeSet);
+        await RunTestAsync(
+            failures,
+            nameof(CachedWorkspaceSessionRegistryOperationRestoreTests.TryGetAssetDetails_ShouldProjectDependencyReplacement_AsAssociatedChangeRecord),
+            CachedWorkspaceSessionRegistryOperationRestoreTests.TryGetAssetDetails_ShouldProjectDependencyReplacement_AsAssociatedChangeRecord);
         await RunTestAsync(
             failures,
             nameof(AssetsToolsRealSampleDependencyTests.Cone002Mesh_ShouldExposeRendererMaterialPath_ButNoTextureAssociation_FromRealDependencyGraph),

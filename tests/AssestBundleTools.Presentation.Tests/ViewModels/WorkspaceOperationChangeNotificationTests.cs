@@ -114,6 +114,47 @@ public sealed class WorkspaceOperationChangeNotificationTests
     }
 
     [Fact]
+    public async Task ReplaceAssetFromFileAsync_ShouldNotifyAssociatedAssetRefresh_WhenImpactRegistryFindsDependents()
+    {
+        var workspaceId = new WorkspaceId("workspace-associated-impact-notify");
+        var textureBundleId = new BundleId("bundle-1");
+        var textureAssetId = new AssetId("texture-1");
+        var spriteAssetId = new AssetId("sprite-1");
+        var notifier = new WorkspaceOperationChangeNotifier();
+        var receivedEvents = new List<WorkspaceOperationChangedEventArgs>();
+        notifier.WorkspaceOperationsChanged += (_, e) => receivedEvents.Add(e);
+        var gateway = new NotifyingWorkspaceAssetOperationGateway(
+            new SuccessfulWorkspaceAssetOperationGateway(),
+            notifier,
+            new TestAssociatedAssetImpactRegistry(
+                new WorkspaceAssociatedAssetImpactDto(
+                    textureBundleId,
+                    spriteAssetId,
+                    "HeroSprite",
+                    AssetType.Sprite,
+                    PathId: 12,
+                    AssetTypeDisplayName: "Sprite")));
+
+        var result = await gateway.ReplaceAssetFromFileAsync(
+            new ReplaceAssetFromFileCommand(
+                workspaceId,
+                textureBundleId,
+                textureAssetId,
+                @"C:\Imports\texture.png",
+                AssetType.Texture2D));
+
+        Assert.True(result.IsSuccess);
+        var notification = Assert.Single(receivedEvents);
+        Assert.Equal(WorkspaceOperationChangeKind.Extraction | WorkspaceOperationChangeKind.Replacement, notification.ChangeKind);
+        Assert.Contains(notification.AffectedAssets, affected =>
+            affected.BundleId.Equals(textureBundleId) &&
+            affected.AssetId.Equals(textureAssetId));
+        Assert.Contains(notification.AffectedAssets, affected =>
+            affected.BundleId.Equals(textureBundleId) &&
+            affected.AssetId.Equals(spriteAssetId));
+    }
+
+    [Fact]
     public void BeginNotificationBatch_ShouldDeferAndCoalesceWorkspaceOperationChanges()
     {
         var workspaceId = new WorkspaceId("workspace-operation-batch");
@@ -665,7 +706,16 @@ public sealed class WorkspaceOperationChangeNotificationTests
         public Task<Result<AssetFileReplacementResultDto>> ReplaceAssetFromFileAsync(
             ReplaceAssetFromFileCommand command,
             CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
+            Task.FromResult(Result<AssetFileReplacementResultDto>.Success(
+                new AssetFileReplacementResultDto(
+                    command.WorkspaceId,
+                    command.TargetBundleId,
+                    command.TargetAssetId,
+                    "texture",
+                    command.SourceFilePath,
+                    Path.GetFileName(command.SourceFilePath),
+                    command.SourceAssetType,
+                    DateTimeOffset.UtcNow)));
 
         public Task<Result<AssetReplacementResultDto>> ReplaceAssetFromWorkspaceAsync(
             ReplaceAssetFromWorkspaceCommand command,
@@ -706,6 +756,26 @@ public sealed class WorkspaceOperationChangeNotificationTests
                     new BundleId("bundle-textures"),
                     new AssetId("asset-texture"),
                     DateTimeOffset.UtcNow)));
+    }
+
+    private sealed class TestAssociatedAssetImpactRegistry : IWorkspaceAssociatedAssetImpactRegistry
+    {
+        private readonly IReadOnlyList<WorkspaceAssociatedAssetImpactDto> _impacts;
+
+        public TestAssociatedAssetImpactRegistry(params WorkspaceAssociatedAssetImpactDto[] impacts)
+        {
+            _impacts = impacts;
+        }
+
+        public bool TryGetAssociatedAssetImpacts(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            out IReadOnlyList<WorkspaceAssociatedAssetImpactDto> impacts)
+        {
+            impacts = _impacts;
+            return true;
+        }
     }
 
     private sealed class NoopWorkspaceImportCoordinatorService : IWorkspaceImportCoordinatorService
