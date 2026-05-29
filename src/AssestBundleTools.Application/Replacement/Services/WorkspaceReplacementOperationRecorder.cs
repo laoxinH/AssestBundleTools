@@ -165,8 +165,6 @@ public sealed class WorkspaceReplacementOperationRecorder
             command.ReplacementOperationId,
             command.WorkspaceKey,
             command.WorkspaceDataRootPath,
-            command.BundleId.Value,
-            command.AssetId.Value,
             out replacementOperation);
     }
 
@@ -178,8 +176,6 @@ public sealed class WorkspaceReplacementOperationRecorder
             command.ReplacementOperationId,
             command.WorkspaceKey,
             command.WorkspaceDataRootPath,
-            command.BundleId.Value,
-            command.AssetId.Value,
             out replacementOperation);
     }
 
@@ -187,8 +183,6 @@ public sealed class WorkspaceReplacementOperationRecorder
         string? replacementOperationId,
         string? workspaceKey,
         string? workspaceDataRootPath,
-        string contextBundleId,
-        string contextAssetId,
         out WorkspaceOperationRecordDto? replacementOperation)
     {
         replacementOperation = null;
@@ -206,11 +200,7 @@ public sealed class WorkspaceReplacementOperationRecorder
                 WorkspaceOperationKind.ReplaceFromFile or
                 WorkspaceOperationKind.ReplaceFromWorkspace)
             .FirstOrDefault(operation =>
-                string.Equals(operation.OperationId, operationId, StringComparison.Ordinal) &&
-                WorkspaceOperationRelationMatcher.OperationConcernsTarget(
-                    operation,
-                    contextBundleId,
-                    contextAssetId));
+                string.Equals(operation.OperationId, operationId, StringComparison.Ordinal));
 
         return replacementOperation is not null;
     }

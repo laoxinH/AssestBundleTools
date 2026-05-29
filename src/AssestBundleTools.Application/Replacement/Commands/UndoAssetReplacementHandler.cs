@@ -17,13 +17,16 @@ public sealed class UndoAssetReplacementHandler : ICommandHandler<UndoAssetRepla
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly WorkspaceReplacementOperationRecorder? _operationRecorder;
+    private readonly IWorkspaceAssociatedAssetImpactRegistry? _associatedAssetImpactRegistry;
 
     public UndoAssetReplacementHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
-        WorkspaceReplacementOperationRecorder? operationRecorder = null)
+        WorkspaceReplacementOperationRecorder? operationRecorder = null,
+        IWorkspaceAssociatedAssetImpactRegistry? associatedAssetImpactRegistry = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _operationRecorder = operationRecorder;
+        _associatedAssetImpactRegistry = associatedAssetImpactRegistry;
     }
 
     public Task<Result<AssetReplacementUndoResultDto>> HandleAsync(
@@ -62,6 +65,12 @@ public sealed class UndoAssetReplacementHandler : ICommandHandler<UndoAssetRepla
         {
             if (_operationRecorder is null ||
                 !_operationRecorder.TryFindReplacementOperation(command, out replacementOperation) ||
+                !WorkspaceReplacementOperationContextMatcher.CanUseFromContext(
+                    replacementOperation!,
+                    command.WorkspaceId,
+                    command.BundleId,
+                    command.AssetId,
+                    _associatedAssetImpactRegistry) ||
                 !TryResolveReplacementTarget(replacementOperation, out targetBundleId, out targetAssetId))
             {
                 return Task.FromResult(Result<AssetReplacementUndoResultDto>.Failure(

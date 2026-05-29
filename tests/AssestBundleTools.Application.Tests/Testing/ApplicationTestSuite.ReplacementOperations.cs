@@ -36,6 +36,14 @@ internal static partial class ApplicationTestSuite
             ReplacementOperationRecorderTests.RedoAssetReplacementHandler_ShouldResolveLinkedReplacementTarget_FromRelatedAssetContext);
         await RunTestAsync(
             failures,
+            nameof(ReplacementOperationRecorderTests.UndoAssetReplacementHandler_ShouldResolveImplicitDependencyReplacementTarget_FromProjectedRecord),
+            ReplacementOperationRecorderTests.UndoAssetReplacementHandler_ShouldResolveImplicitDependencyReplacementTarget_FromProjectedRecord);
+        await RunTestAsync(
+            failures,
+            nameof(ReplacementOperationRecorderTests.RedoAssetReplacementHandler_ShouldResolveImplicitDependencyReplacementTarget_FromProjectedRecord),
+            ReplacementOperationRecorderTests.RedoAssetReplacementHandler_ShouldResolveImplicitDependencyReplacementTarget_FromProjectedRecord);
+        await RunTestAsync(
+            failures,
             nameof(ReplacementOperationRecorderTests.WorkspaceReplacementReadModelService_ShouldMaterializeEffectiveReplacement_ForRedoStack),
             ReplacementOperationRecorderTests.WorkspaceReplacementReadModelService_ShouldMaterializeEffectiveReplacement_ForRedoStack);
         await RunTestAsync(

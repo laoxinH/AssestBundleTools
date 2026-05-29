@@ -222,6 +222,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
 
         if (CanReuseLoadedAssetDocumentTabContent(assetTab))
         {
+            ReapplyAssetDocumentState(assetTab, assetTab.Details!);
             _assetPreviewLoadCoordinator.LoadForegroundPreview(assetTab, promoteLoadingPreview: !wasAlreadyActiveAssetTab);
             if (!wasAlreadyActiveAssetTab)
             {

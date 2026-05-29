@@ -402,6 +402,7 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
 
         if (CanReuseLoadedAssetDocumentTabContent(assetTab))
         {
+            ReapplyAssetDocumentTab(assetTab, assetTab.Details!);
             if (writeLog && assetTab.Details is not null)
             {
                 AppendAssetFocusedLog(assetTab.Details);

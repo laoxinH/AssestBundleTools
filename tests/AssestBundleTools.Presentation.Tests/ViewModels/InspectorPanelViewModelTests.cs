@@ -171,6 +171,43 @@ public sealed class InspectorPanelViewModelTests
     }
 
     [Fact]
+    public void ChangeRecordPresenter_ShouldEnableProjectedAssociatedReplacementActions()
+    {
+        var presenter = new BundleExplorerAssetChangeRecordPresenter(new TestLocalizationService());
+        var appliedAtUtc = new DateTimeOffset(2026, 5, 29, 9, 0, 0, TimeSpan.Zero);
+        var details = BundleExplorerPreviewTestSupport.CreateAssetDetails(
+            new WorkspaceId("workspace-ui"),
+            new BundleId("bundle-ui"),
+            new AssetId("asset-sprite")) with
+        {
+            ChangeRecords =
+            [
+                new AssetChangeRecordDto(
+                    AssetChangeRecordKind.AssociatedFileReplacement,
+                    CreatedAtUtc: appliedAtUtc,
+                    AppliedAtUtc: appliedAtUtc,
+                    SourceFileName: "texture.png",
+                    SourceFilePath: @"D:\Imports\texture.png",
+                    OperationId: "replace-texture",
+                    IsEffectiveReplacement: true,
+                    TargetBundleId: "bundle-ui",
+                    TargetAssetId: "asset-texture",
+                    TargetAssetName: "HeroTexture",
+                    TargetAssetType: AssetType.Texture2D.ToString(),
+                    IsRelatedOperation: true)
+            ]
+        };
+
+        var records = presenter.CreateChangeRecords(details, canManageRecords: true);
+
+        var record = Assert.Single(records);
+        Assert.True(record.ShowsUndoReplacement);
+        Assert.False(record.ShowsRedoReplacement);
+        Assert.True(record.ShowsDeleteRecord);
+        Assert.True(record.IsActionEnabled);
+    }
+
+    [Fact]
     public void Apply_ShouldShowAvailablePathsAsSeparateRows()
     {
         var viewModel = CreateViewModel();

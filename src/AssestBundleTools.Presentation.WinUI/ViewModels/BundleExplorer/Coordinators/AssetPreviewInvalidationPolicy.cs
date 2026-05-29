@@ -33,24 +33,38 @@ internal static class AssetPreviewInvalidationPolicy
                    previousDetails.WorkspaceReplacementSourceAssetId?.Value,
                    currentDetails.WorkspaceReplacementSourceAssetId?.Value,
                    StringComparison.Ordinal) ||
-               GetLatestReplacementRecordTimestamp(previousDetails) !=
-               GetLatestReplacementRecordTimestamp(currentDetails) ||
+               !string.Equals(
+                   GetReplacementProjectionSignature(previousDetails),
+                   GetReplacementProjectionSignature(currentDetails),
+                   StringComparison.Ordinal) ||
                !Equals(previousDetails.SpriteEditGeometry, currentDetails.SpriteEditGeometry) ||
                previousDetails.SpriteEditAppliedAtUtc != currentDetails.SpriteEditAppliedAtUtc ||
                GetLatestSpriteEditRecordTimestamp(previousDetails) !=
                GetLatestSpriteEditRecordTimestamp(currentDetails);
     }
 
-    private static DateTimeOffset? GetLatestReplacementRecordTimestamp(AssetDetailsDto details)
+    private static string GetReplacementProjectionSignature(AssetDetailsDto details)
     {
-        return details.ChangeRecords?
+        return string.Join(
+            "\u001f",
+            details.ChangeRecords?
             .Where(static record => record.Kind is
                 AssetChangeRecordKind.FileReplacement or
                 AssetChangeRecordKind.WorkspaceReplacement or
                 AssetChangeRecordKind.AssociatedFileReplacement)
-            .OrderByDescending(static record => record.DisplayTimestampUtc)
-            .Select(static record => (DateTimeOffset?)record.DisplayTimestampUtc)
-            .FirstOrDefault();
+            .OrderByDescending(static record => record.Sequence)
+            .ThenByDescending(static record => record.DisplayTimestampUtc)
+            .Select(static record => string.Join(
+                "\u001e",
+                record.Kind.ToString(),
+                record.OperationId ?? string.Empty,
+                record.IsEffectiveReplacement ? "1" : "0",
+                record.TargetBundleId ?? string.Empty,
+                record.TargetAssetId ?? string.Empty,
+                record.SourceFilePath ?? string.Empty,
+                record.SourceFileName ?? string.Empty,
+                record.DisplayTimestampUtc.UtcTicks.ToString(System.Globalization.CultureInfo.InvariantCulture))) ??
+            Array.Empty<string>());
     }
 
     private static DateTimeOffset? GetLatestSpriteEditRecordTimestamp(AssetDetailsDto details)

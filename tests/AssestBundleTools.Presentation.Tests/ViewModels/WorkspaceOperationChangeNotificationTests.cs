@@ -155,6 +155,103 @@ public sealed class WorkspaceOperationChangeNotificationTests
     }
 
     [Fact]
+    public async Task UndoAssetReplacementAsync_ShouldNotifyAssociatedAssetRefresh_WhenProjectedRecordResolvesTarget()
+    {
+        var workspaceId = new WorkspaceId("workspace-associated-undo-notify");
+        var spriteBundleId = new BundleId("bundle-1");
+        var spriteAssetId = new AssetId("sprite-1");
+        var textureBundleId = new BundleId("bundle-1");
+        var textureAssetId = new AssetId("texture-1");
+        var notifier = new WorkspaceOperationChangeNotifier();
+        var receivedEvents = new List<WorkspaceOperationChangedEventArgs>();
+        notifier.WorkspaceOperationsChanged += (_, e) => receivedEvents.Add(e);
+        var gateway = new NotifyingWorkspaceAssetOperationGateway(
+            new SuccessfulWorkspaceAssetOperationGateway
+            {
+                UndoResult = new AssetReplacementUndoResultDto(
+                    workspaceId,
+                    textureBundleId,
+                    textureAssetId,
+                    "HeroTexture")
+            },
+            notifier,
+            new TestAssociatedAssetImpactRegistry(
+                new WorkspaceAssociatedAssetImpactDto(
+                    textureBundleId,
+                    spriteAssetId,
+                    "HeroSprite",
+                    AssetType.Sprite,
+                    PathId: 12,
+                    AssetTypeDisplayName: "Sprite")));
+
+        var result = await gateway.UndoAssetReplacementAsync(
+            new UndoAssetReplacementCommand(
+                workspaceId,
+                spriteBundleId,
+                spriteAssetId,
+                ReplacementOperationId: "replace-texture"));
+
+        Assert.True(result.IsSuccess);
+        var notification = Assert.Single(receivedEvents);
+        Assert.Equal(WorkspaceOperationChangeKind.Replacement, notification.ChangeKind);
+        Assert.Contains(notification.AffectedAssets, affected =>
+            affected.BundleId.Equals(spriteBundleId) &&
+            affected.AssetId.Equals(spriteAssetId));
+        Assert.Contains(notification.AffectedAssets, affected =>
+            affected.BundleId.Equals(textureBundleId) &&
+            affected.AssetId.Equals(textureAssetId));
+    }
+
+    [Fact]
+    public async Task RedoAssetReplacementAsync_ShouldNotifyAssociatedAssetRefresh_WhenProjectedRecordResolvesTarget()
+    {
+        var workspaceId = new WorkspaceId("workspace-associated-redo-notify");
+        var spriteBundleId = new BundleId("bundle-1");
+        var spriteAssetId = new AssetId("sprite-1");
+        var textureBundleId = new BundleId("bundle-1");
+        var textureAssetId = new AssetId("texture-1");
+        var notifier = new WorkspaceOperationChangeNotifier();
+        var receivedEvents = new List<WorkspaceOperationChangedEventArgs>();
+        notifier.WorkspaceOperationsChanged += (_, e) => receivedEvents.Add(e);
+        var gateway = new NotifyingWorkspaceAssetOperationGateway(
+            new SuccessfulWorkspaceAssetOperationGateway
+            {
+                RedoResult = new AssetReplacementRedoResultDto(
+                    workspaceId,
+                    textureBundleId,
+                    textureAssetId,
+                    "HeroTexture",
+                    DateTimeOffset.UtcNow)
+            },
+            notifier,
+            new TestAssociatedAssetImpactRegistry(
+                new WorkspaceAssociatedAssetImpactDto(
+                    textureBundleId,
+                    spriteAssetId,
+                    "HeroSprite",
+                    AssetType.Sprite,
+                    PathId: 12,
+                    AssetTypeDisplayName: "Sprite")));
+
+        var result = await gateway.RedoAssetReplacementAsync(
+            new RedoAssetReplacementCommand(
+                workspaceId,
+                spriteBundleId,
+                spriteAssetId,
+                ReplacementOperationId: "replace-texture"));
+
+        Assert.True(result.IsSuccess);
+        var notification = Assert.Single(receivedEvents);
+        Assert.Equal(WorkspaceOperationChangeKind.Replacement, notification.ChangeKind);
+        Assert.Contains(notification.AffectedAssets, affected =>
+            affected.BundleId.Equals(spriteBundleId) &&
+            affected.AssetId.Equals(spriteAssetId));
+        Assert.Contains(notification.AffectedAssets, affected =>
+            affected.BundleId.Equals(textureBundleId) &&
+            affected.AssetId.Equals(textureAssetId));
+    }
+
+    [Fact]
     public void BeginNotificationBatch_ShouldDeferAndCoalesceWorkspaceOperationChanges()
     {
         var workspaceId = new WorkspaceId("workspace-operation-batch");
@@ -676,6 +773,10 @@ public sealed class WorkspaceOperationChangeNotificationTests
 
     private sealed class SuccessfulWorkspaceAssetOperationGateway : IWorkspaceAssetOperationGateway
     {
+        public AssetReplacementUndoResultDto? UndoResult { get; init; }
+
+        public AssetReplacementRedoResultDto? RedoResult { get; init; }
+
         public Task<Result<AssetExtractionResultDto>> ExtractAssetAsync(
             ExtractAssetCommand command,
             CancellationToken cancellationToken = default) =>
@@ -725,12 +826,25 @@ public sealed class WorkspaceOperationChangeNotificationTests
         public Task<Result<AssetReplacementUndoResultDto>> UndoAssetReplacementAsync(
             UndoAssetReplacementCommand command,
             CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
+            Task.FromResult(Result<AssetReplacementUndoResultDto>.Success(
+                UndoResult ??
+                new AssetReplacementUndoResultDto(
+                    command.WorkspaceId,
+                    command.BundleId,
+                    command.AssetId,
+                    "texture")));
 
         public Task<Result<AssetReplacementRedoResultDto>> RedoAssetReplacementAsync(
             RedoAssetReplacementCommand command,
             CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
+            Task.FromResult(Result<AssetReplacementRedoResultDto>.Success(
+                RedoResult ??
+                new AssetReplacementRedoResultDto(
+                    command.WorkspaceId,
+                    command.BundleId,
+                    command.AssetId,
+                    "texture",
+                    DateTimeOffset.UtcNow)));
 
         public Task<Result<AssetSpriteEditAppliedResultDto>> ApplySpriteEditAsync(
             ApplySpriteEditCommand command,

@@ -18,13 +18,16 @@ public sealed class RedoAssetReplacementHandler : ICommandHandler<RedoAssetRepla
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly WorkspaceReplacementOperationRecorder? _operationRecorder;
+    private readonly IWorkspaceAssociatedAssetImpactRegistry? _associatedAssetImpactRegistry;
 
     public RedoAssetReplacementHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
-        WorkspaceReplacementOperationRecorder? operationRecorder = null)
+        WorkspaceReplacementOperationRecorder? operationRecorder = null,
+        IWorkspaceAssociatedAssetImpactRegistry? associatedAssetImpactRegistry = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _operationRecorder = operationRecorder;
+        _associatedAssetImpactRegistry = associatedAssetImpactRegistry;
     }
 
     public Task<Result<AssetReplacementRedoResultDto>> HandleAsync(
@@ -97,6 +100,12 @@ public sealed class RedoAssetReplacementHandler : ICommandHandler<RedoAssetRepla
         if (_operationRecorder is null ||
             !_operationRecorder.TryFindReplacementOperation(command, out var replacementOperation) ||
             replacementOperation?.Source is null ||
+            !WorkspaceReplacementOperationContextMatcher.CanUseFromContext(
+                replacementOperation,
+                command.WorkspaceId,
+                command.BundleId,
+                command.AssetId,
+                _associatedAssetImpactRegistry) ||
             !TryResolveReplacementTarget(replacementOperation, out var targetBundleId, out var targetAssetId) ||
             !_workspaceSessionRegistry.TryGetAssetDetails(
                 command.WorkspaceId,

@@ -192,10 +192,12 @@ internal static class AppCompositionRoot
             workspaceReplacementOperationRecorder);
         var undoAssetReplacementHandler = new UndoAssetReplacementHandler(
             workspaceSessionRegistry,
-            workspaceReplacementOperationRecorder);
+            workspaceReplacementOperationRecorder,
+            workspaceSessionRegistry);
         var redoAssetReplacementHandler = new RedoAssetReplacementHandler(
             workspaceSessionRegistry,
-            workspaceReplacementOperationRecorder);
+            workspaceReplacementOperationRecorder,
+            workspaceSessionRegistry);
         var workspaceSpriteEditOperationRecorder = new WorkspaceSpriteEditOperationRecorder(
             workspaceDataStoreFactory,
             workspaceOperationLogService);
