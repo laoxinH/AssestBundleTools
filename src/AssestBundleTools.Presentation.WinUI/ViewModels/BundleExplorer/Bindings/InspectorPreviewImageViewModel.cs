@@ -221,12 +221,12 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         int imagePixelHeight,
         SpritePreviewOverlayDisplayState? overlayDisplayState)
     {
-        CanvasWidth = overlayDisplayState is { CanvasWidth: > 0 }
-            ? overlayDisplayState.CanvasWidth
-            : Math.Max(1, imagePixelWidth);
-        CanvasHeight = overlayDisplayState is { CanvasHeight: > 0 }
-            ? overlayDisplayState.CanvasHeight
-            : Math.Max(1, imagePixelHeight);
+        CanvasWidth = imagePixelWidth > 0
+            ? imagePixelWidth
+            : Math.Max(1d, overlayDisplayState?.CanvasWidth ?? 1d);
+        CanvasHeight = imagePixelHeight > 0
+            ? imagePixelHeight
+            : Math.Max(1d, overlayDisplayState?.CanvasHeight ?? 1d);
 
         _overlayState.Apply(overlayDisplayState);
         OverlayLabelText = _overlayState.LabelText;

@@ -224,6 +224,47 @@ public sealed class InspectorPreviewImageViewModelTests
     }
 
     [Fact]
+    public void SpritePreview_ShouldUseCurrentImageDimensionsAsEditableCanvas_WhenOverlayCanvasDiffers()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        viewModel.Apply(
+            CreateImageSourceStub(),
+            imagePixelWidth: 160,
+            imagePixelHeight: 90,
+            overlayDisplayState: new SpritePreviewOverlayDisplayState(
+                CanvasWidth: 100,
+                CanvasHeight: 100,
+                RegionX: 10,
+                RegionY: 20,
+                RegionWidth: 30,
+                RegionHeight: 40,
+                PivotX: 20,
+                PivotY: 30,
+                BorderLeft: null,
+                BorderTop: null,
+                BorderRight: null,
+                BorderBottom: null,
+                BadgeText: "sprite"),
+            focusPreviewDisplayState: null);
+        viewModel.UpdateViewport(320d, 200d);
+        viewModel.RequestSpriteEditMode();
+
+        Assert.Equal(160d, viewModel.CanvasWidth, precision: 3);
+        Assert.Equal(90d, viewModel.CanvasHeight, precision: 3);
+        Assert.Equal(270.222d, viewModel.FullImageWidth, precision: 3);
+        Assert.Equal(152d, viewModel.FullImageHeight, precision: 3);
+        Assert.Equal(10d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(20d, viewModel.SpriteEditCropY, precision: 3);
+
+        viewModel.UseFullImageForSpriteEditGeometry();
+
+        Assert.Equal(0d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(0d, viewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(160d, viewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(90d, viewModel.SpriteEditCropHeight, precision: 3);
+    }
+
+    [Fact]
     public void SpriteEditDrag_ShouldMoveCropBoxAndPivotTogether()
     {
         var viewModel = new InspectorPreviewImageViewModel();
