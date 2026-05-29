@@ -625,6 +625,102 @@ public sealed class InspectorPreviewImageViewModelTests
     }
 
     [Fact]
+    public void SpriteEditSession_ShouldPreserveUnsavedGeometry_WhenPreviewReloads()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(viewModel);
+        viewModel.UpdateSpriteEditGeometryFromInput(
+            cropX: 20d,
+            cropY: 30d,
+            cropWidth: 60d,
+            cropHeight: 80d,
+            pivotX: 70d,
+            pivotY: 90d,
+            inputKind: SpriteEditGeometryInputKind.Pivot);
+
+        viewModel.Apply(
+            CreateImageSourceStub(),
+            imagePixelWidth: 200,
+            imagePixelHeight: 160,
+            overlayDisplayState: new SpritePreviewOverlayDisplayState(
+                CanvasWidth: 100,
+                CanvasHeight: 100,
+                RegionX: 10,
+                RegionY: 20,
+                RegionWidth: 30,
+                RegionHeight: 40,
+                PivotX: 20,
+                PivotY: 30,
+                BorderLeft: null,
+                BorderTop: null,
+                BorderRight: null,
+                BorderBottom: null,
+                BadgeText: "sprite"),
+            focusPreviewDisplayState: null);
+
+        Assert.True(viewModel.IsSpriteEditModeActive);
+        Assert.Equal(200d, viewModel.CanvasWidth, precision: 3);
+        Assert.Equal(160d, viewModel.CanvasHeight, precision: 3);
+        Assert.Equal(20d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(30d, viewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(60d, viewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(80d, viewModel.SpriteEditCropHeight, precision: 3);
+        Assert.Equal(70d, viewModel.SpriteEditPivotX, precision: 3);
+        Assert.Equal(90d, viewModel.SpriteEditPivotY, precision: 3);
+        Assert.True(viewModel.HasUnsavedSpriteEditChanges);
+        Assert.True(viewModel.CanUndoSpriteEdit);
+
+        viewModel.UndoSpriteEdit();
+
+        Assert.Equal(10d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(20d, viewModel.SpriteEditCropY, precision: 3);
+        Assert.False(viewModel.HasUnsavedSpriteEditChanges);
+        Assert.False(viewModel.CanUndoSpriteEdit);
+        Assert.True(viewModel.CanRedoSpriteEdit);
+    }
+
+    [Fact]
+    public void SpriteEditSession_ShouldUseReloadedEffectiveGeometry_WhenNoTemporaryEditExists()
+    {
+        var viewModel = new InspectorPreviewImageViewModel();
+        ApplySpriteEditPreview(viewModel);
+
+        viewModel.Apply(
+            CreateImageSourceStub(),
+            imagePixelWidth: 200,
+            imagePixelHeight: 160,
+            overlayDisplayState: new SpritePreviewOverlayDisplayState(
+                CanvasWidth: 100,
+                CanvasHeight: 100,
+                RegionX: 24,
+                RegionY: 28,
+                RegionWidth: 64,
+                RegionHeight: 72,
+                PivotX: 48,
+                PivotY: 52,
+                BorderLeft: null,
+                BorderTop: null,
+                BorderRight: null,
+                BorderBottom: null,
+                BadgeText: "sprite"),
+            focusPreviewDisplayState: null);
+
+        Assert.True(viewModel.IsSpriteEditModeActive);
+        Assert.Equal(200d, viewModel.CanvasWidth, precision: 3);
+        Assert.Equal(160d, viewModel.CanvasHeight, precision: 3);
+        Assert.Equal(24d, viewModel.SpriteEditCropX, precision: 3);
+        Assert.Equal(28d, viewModel.SpriteEditCropY, precision: 3);
+        Assert.Equal(64d, viewModel.SpriteEditCropWidth, precision: 3);
+        Assert.Equal(72d, viewModel.SpriteEditCropHeight, precision: 3);
+        Assert.Equal(48d, viewModel.SpriteEditPivotX, precision: 3);
+        Assert.Equal(52d, viewModel.SpriteEditPivotY, precision: 3);
+        Assert.False(viewModel.HasUnsavedSpriteEditChanges);
+        Assert.False(viewModel.CanSaveSpriteEdit);
+        Assert.False(viewModel.CanUndoSpriteEdit);
+        Assert.False(viewModel.CanRedoSpriteEdit);
+    }
+
+    [Fact]
     public void SpriteEditDiscardChanges_ShouldRestoreSavedGeometry()
     {
         var viewModel = new InspectorPreviewImageViewModel();

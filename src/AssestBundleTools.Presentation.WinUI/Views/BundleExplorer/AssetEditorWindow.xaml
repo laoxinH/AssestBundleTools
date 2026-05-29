@@ -227,7 +227,7 @@
                                         <FontIcon
                                             FontFamily="Segoe Fluent Icons"
                                             FontSize="12"
-                                            Glyph="&#xE8BB;" />
+                                            Glyph="&#xE72B;" />
                                         <TextBlock x:Name="ExitSpriteEditButtonText" />
                                     </StackPanel>
                                 </Button>

@@ -175,6 +175,87 @@ public sealed partial class InspectorPreviewImageViewModel
         OnPropertyChanged(nameof(CanRedoSpriteEdit));
     }
 
+    private SpriteEditSessionSnapshot? CaptureSpriteEditSessionSnapshot()
+    {
+        if (!_isSpriteEditModeRequested || !IsSpriteEditModeActive || !_overlayState.HasOverlay)
+        {
+            return null;
+        }
+
+        var currentGeometry = CreateSpriteEditGeometry();
+        var hasUnsavedGeometry = !AreSpriteEditGeometriesEqual(currentGeometry, _savedSpriteEditGeometry);
+        var hasTemporaryHistory = _spriteEditGeometryHistory.Count > 1;
+        if (!hasUnsavedGeometry && !hasTemporaryHistory)
+        {
+            return null;
+        }
+
+        return new SpriteEditSessionSnapshot(
+            currentGeometry,
+            _savedSpriteEditGeometry,
+            [.. _spriteEditGeometryHistory],
+            _spriteEditGeometryHistoryIndex);
+    }
+
+    private void TryRestoreSpriteEditSessionSnapshot(SpriteEditSessionSnapshot? snapshot)
+    {
+        if (snapshot is null ||
+            !_isSpriteEditModeRequested ||
+            !IsSpriteEditModeActive ||
+            !_overlayState.HasOverlay)
+        {
+            return;
+        }
+
+        var normalizedHistory = snapshot.History
+            .Select(NormalizeSpriteEditGeometryForCurrentCanvas)
+            .Where(static geometry => geometry is not null)
+            .Select(static geometry => geometry!)
+            .ToList();
+        var normalizedCurrent = NormalizeSpriteEditGeometryForCurrentCanvas(snapshot.CurrentGeometry);
+        if (normalizedCurrent is not null &&
+            (normalizedHistory.Count == 0 ||
+             !normalizedHistory.Any(geometry => AreSpriteEditGeometriesEqual(geometry, normalizedCurrent))))
+        {
+            normalizedHistory.Add(normalizedCurrent);
+        }
+
+        if (normalizedHistory.Count == 0)
+        {
+            return;
+        }
+
+        _savedSpriteEditGeometry = NormalizeSpriteEditGeometryForCurrentCanvas(snapshot.SavedGeometry);
+        _spriteEditGeometryHistory.Clear();
+        _spriteEditGeometryHistory.AddRange(normalizedHistory);
+        _spriteEditGeometryHistoryIndex = Math.Clamp(
+            snapshot.HistoryIndex,
+            0,
+            _spriteEditGeometryHistory.Count - 1);
+
+        var activeGeometry = normalizedCurrent ?? _spriteEditGeometryHistory[_spriteEditGeometryHistoryIndex];
+        ApplySpriteEditGeometrySnapshot(activeGeometry);
+
+        var activeHistoryIndex = _spriteEditGeometryHistory.FindIndex(
+            geometry => AreSpriteEditGeometriesEqual(geometry, activeGeometry));
+        _spriteEditGeometryHistoryIndex = activeHistoryIndex >= 0
+            ? activeHistoryIndex
+            : _spriteEditGeometryHistoryIndex;
+        NotifySpriteEditHistoryStateChanged();
+    }
+
+    private WorkspaceSpriteEditGeometryDto? NormalizeSpriteEditGeometryForCurrentCanvas(
+        WorkspaceSpriteEditGeometryDto? geometry)
+    {
+        return geometry is null
+            ? null
+            : geometry with
+            {
+                CanvasWidth = NormalizePositive(CanvasWidth, fallback: 1d),
+                CanvasHeight = NormalizePositive(CanvasHeight, fallback: 1d)
+            };
+    }
+
     private static bool AreSpriteEditGeometriesEqual(
         WorkspaceSpriteEditGeometryDto? left,
         WorkspaceSpriteEditGeometryDto? right)
@@ -196,4 +277,10 @@ public sealed partial class InspectorPreviewImageViewModel
 
     private static bool AreSpriteEditGeometryValuesClose(double left, double right) =>
         Math.Abs(left - right) <= 0.0001d;
+
+    private sealed record SpriteEditSessionSnapshot(
+        WorkspaceSpriteEditGeometryDto? CurrentGeometry,
+        WorkspaceSpriteEditGeometryDto? SavedGeometry,
+        IReadOnlyList<WorkspaceSpriteEditGeometryDto> History,
+        int HistoryIndex);
 }

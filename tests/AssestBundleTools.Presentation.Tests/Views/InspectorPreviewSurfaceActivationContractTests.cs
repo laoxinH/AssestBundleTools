@@ -321,6 +321,8 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
         Assert.Contains("x:Name=\"ExitSpriteEditButton\"", assetEditorXaml);
         Assert.Contains("x:Name=\"UndoSpriteEditButton\"", assetEditorXaml);
         Assert.Contains("x:Name=\"RedoSpriteEditButton\"", assetEditorXaml);
+        Assert.Contains("Glyph=\"&#xE72B;\"", assetEditorXaml);
+        Assert.DoesNotContain("Glyph=\"&#xE8BB;\"", assetEditorXaml);
         Assert.Contains("CanSaveSpriteEdit", assetEditorXaml);
         Assert.Contains("CanUndoSpriteEdit", assetEditorXaml);
         Assert.Contains("CanRedoSpriteEdit", assetEditorXaml);

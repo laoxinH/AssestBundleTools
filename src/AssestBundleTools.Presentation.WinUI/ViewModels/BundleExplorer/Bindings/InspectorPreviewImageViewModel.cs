@@ -75,6 +75,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(imageSource);
 
+        var spriteEditSessionSnapshot = CaptureSpriteEditSessionSnapshot();
         Clear();
         _isVisible = true;
         ApplyDisplayState(imagePixelWidth, imagePixelHeight, overlayDisplayState);
@@ -90,6 +91,7 @@ public sealed partial class InspectorPreviewImageViewModel : ObservableObject
         RecalculateImageLayout();
         RecalculateOverlays();
         TryActivateRequestedSpriteEditMode();
+        TryRestoreSpriteEditSessionSnapshot(spriteEditSessionSnapshot);
         NotifyVisibilityChanged();
     }
 
