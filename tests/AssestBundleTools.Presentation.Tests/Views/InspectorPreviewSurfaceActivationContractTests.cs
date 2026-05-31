@@ -333,8 +333,38 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
         Assert.DoesNotContain("x:Name=\"ApplyReplacementButton\"", assetEditorXaml);
         Assert.DoesNotContain("x:Name=\"UndoReplacementButton\"", assetEditorXaml);
         Assert.DoesNotContain("x:Name=\"RedoReplacementButton\"", assetEditorXaml);
+        Assert.Contains("TryExitSpriteEditModeAsync", assetEditorCode);
         Assert.Contains("InspectorUnsavedSpriteEditDialogTitle", assetEditorCode);
         Assert.Contains("ExitSpriteEditModeForActiveAsset(discardChanges: true)", assetEditorCode);
+    }
+
+    [Fact]
+    public void AssetEditorWindowClose_ShouldResolveSpriteEditModeBeforeCloseBehavior()
+    {
+        var assetEditorCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "AssetEditorWindow.xaml.cs"));
+        var assetEditorLayoutCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "AssetEditorWindow.Layout.cs"));
+
+        Assert.Contains("private async Task<bool> TryExitSpriteEditModeAsync()", assetEditorCode);
+        Assert.Contains("return false;", assetEditorCode);
+        Assert.Contains("ShouldHandleUserCloseRequest()", assetEditorLayoutCode);
+        Assert.Contains("ViewModel.Inspector.Preview.Image.IsSpriteEditModeActive", assetEditorLayoutCode);
+        Assert.Contains("await TryExitSpriteEditModeAsync()", assetEditorLayoutCode);
+        Assert.Contains("!ShouldReturnDocumentsToMainWindowOnClose()", assetEditorLayoutCode);
+        Assert.Contains("CloseWithoutReturningToMainWindow();", assetEditorLayoutCode);
     }
 
     [Fact]

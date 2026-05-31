@@ -167,7 +167,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 
     private async void OnExitSpriteEditButtonClick(object sender, RoutedEventArgs e)
     {
-        await ExitSpriteEditModeAsync();
+        await TryExitSpriteEditModeAsync();
     }
 
     private void OnUndoSpriteEditButtonClick(object sender, RoutedEventArgs e)
@@ -323,18 +323,23 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         ApplyActionButtonText(RedoSpriteEditButton, RedoSpriteEditButtonText, ResourceKeys.InspectorRedoReplacementButton);
     }
 
-    private async Task ExitSpriteEditModeAsync()
+    private async Task<bool> TryExitSpriteEditModeAsync()
     {
         var image = ViewModel.Inspector.Preview.Image;
+        if (!image.IsSpriteEditModeActive)
+        {
+            return true;
+        }
+
         if (!image.HasUnsavedSpriteEditChanges)
         {
             ViewModel.ExitSpriteEditModeForActiveAsset(discardChanges: false);
-            return;
+            return true;
         }
 
         if (ContentRoot.XamlRoot is null)
         {
-            return;
+            return false;
         }
 
         var dialog = new ContentDialog
@@ -354,15 +359,19 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
             if (await ViewModel.ApplySpriteEditAsync())
             {
                 ViewModel.ExitSpriteEditModeForActiveAsset(discardChanges: false);
+                return true;
             }
 
-            return;
+            return false;
         }
 
         if (result == ContentDialogResult.Secondary)
         {
             ViewModel.ExitSpriteEditModeForActiveAsset(discardChanges: true);
+            return true;
         }
+
+        return false;
     }
 
     private static void ApplyActionButtonText(Button button, TextBlock textBlock, string resourceKey)

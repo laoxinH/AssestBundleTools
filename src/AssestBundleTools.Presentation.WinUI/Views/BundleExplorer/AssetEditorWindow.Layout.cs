@@ -122,9 +122,7 @@ public sealed partial class AssetEditorWindow
 
     private void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
     {
-        if (_allowDirectClose ||
-            !ShouldReturnDocumentsToMainWindowOnClose() ||
-            !ViewModel.DocumentGroup.HasDocumentTabs)
+        if (_allowDirectClose || !ShouldHandleUserCloseRequest())
         {
             return;
         }
@@ -135,14 +133,18 @@ public sealed partial class AssetEditorWindow
             return;
         }
 
-        _ = ReturnDocumentGroupToMainWindowAndCloseAsync();
+        _ = HandleUserCloseRequestAsync();
     }
+
+    private bool ShouldHandleUserCloseRequest() =>
+        ViewModel.Inspector.Preview.Image.IsSpriteEditModeActive ||
+        (ShouldReturnDocumentsToMainWindowOnClose() && ViewModel.DocumentGroup.HasDocumentTabs);
 
     private bool ShouldReturnDocumentsToMainWindowOnClose() =>
         App.CurrentApp.AppPreferencesService.AssetEditorCloseBehavior ==
         AssetEditorCloseBehavior.ReturnToMainWindow;
 
-    private async Task ReturnDocumentGroupToMainWindowAndCloseAsync()
+    private async Task HandleUserCloseRequestAsync()
     {
         if (_isProcessingCloseRequest)
         {
@@ -152,7 +154,13 @@ public sealed partial class AssetEditorWindow
         _isProcessingCloseRequest = true;
         try
         {
-            if (!ViewModel.DocumentGroup.HasDocumentTabs)
+            if (!await TryExitSpriteEditModeAsync())
+            {
+                return;
+            }
+
+            if (!ViewModel.DocumentGroup.HasDocumentTabs ||
+                !ShouldReturnDocumentsToMainWindowOnClose())
             {
                 CloseWithoutReturningToMainWindow();
                 return;
