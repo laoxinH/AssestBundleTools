@@ -368,6 +368,27 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
     }
 
     [Fact]
+    public void AssetEditorWindowTabClose_ShouldResolveSpriteEditModeBeforeClosingOrReturningTab()
+    {
+        var assetEditorTabCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "AssetEditorWindow.DocumentTabs.cs"));
+
+        Assert.Contains("private async Task<bool> CloseDocumentTabForUserRequestAsync", assetEditorTabCode);
+        Assert.Contains("TryResolveSpriteEditModeBeforeClosingDocumentTabAsync", assetEditorTabCode);
+        Assert.Contains("documentTab.AssetTab?.Inspector.Preview.Image.IsSpriteEditModeActive", assetEditorTabCode);
+        Assert.Contains("await ViewModel.ActivateDocumentTabAsync(documentTab)", assetEditorTabCode);
+        Assert.Contains("return await TryExitSpriteEditModeAsync();", assetEditorTabCode);
+        Assert.Contains("return await ViewModel.TryMoveDocumentToMainWindowAsync(documentTab);", assetEditorTabCode);
+        Assert.Contains("await ViewModel.CloseDocumentTabAsync(documentTab);", assetEditorTabCode);
+    }
+
+    [Fact]
     public void SpriteEditGeometryPanel_ShouldUseTextOnlyNumberInput()
     {
         var panelXaml = File.ReadAllText(

@@ -112,11 +112,37 @@ public sealed partial class AssetEditorWindow
         }
     }
 
-    private Task CloseDocumentTabForUserRequestAsync(AssetDocumentTabItemViewModel documentTab)
+    private async Task<bool> CloseDocumentTabForUserRequestAsync(AssetDocumentTabItemViewModel documentTab)
     {
-        return ShouldReturnDocumentsToMainWindowOnClose()
-            ? ViewModel.TryMoveDocumentToMainWindowAsync(documentTab)
-            : ViewModel.CloseDocumentTabAsync(documentTab);
+        if (!await TryResolveSpriteEditModeBeforeClosingDocumentTabAsync(documentTab))
+        {
+            return false;
+        }
+
+        if (ShouldReturnDocumentsToMainWindowOnClose())
+        {
+            return await ViewModel.TryMoveDocumentToMainWindowAsync(documentTab);
+        }
+
+        await ViewModel.CloseDocumentTabAsync(documentTab);
+        return true;
+    }
+
+    private async Task<bool> TryResolveSpriteEditModeBeforeClosingDocumentTabAsync(
+        AssetDocumentTabItemViewModel documentTab)
+    {
+        if (documentTab.AssetTab?.Inspector.Preview.Image.IsSpriteEditModeActive != true)
+        {
+            return true;
+        }
+
+        if (!ReferenceEquals(ViewModel.DocumentGroup.ActiveDocumentTab, documentTab))
+        {
+            await ViewModel.ActivateDocumentTabAsync(documentTab);
+            SynchronizeSelection(documentTab);
+        }
+
+        return await TryExitSpriteEditModeAsync();
     }
 
     private void SynchronizeSelection() =>
