@@ -62,4 +62,10 @@ public interface IFilePickerService
     Task<string?> PickReplacementSourceFileAsync(
         AssetType targetAssetType,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 为 Spine 组成文件批量匹配选择一个外部来源目录。
+    /// 返回 <see langword="null"/> 表示用户主动取消，不应视为错误。
+    /// </summary>
+    Task<string?> PickSpineReplacementSourceDirectoryAsync(CancellationToken cancellationToken = default);
 }

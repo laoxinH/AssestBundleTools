@@ -1,6 +1,7 @@
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
+using AssestBundleTools.Application.Assets.Dtos;
 
 namespace AssestBundleTools.Application.Assets.Queries;
 
@@ -12,4 +13,5 @@ public sealed record GetAssetPreviewQuery(
     string WorkspaceKey,
     string WorkspaceDataRootPath,
     BundleId BundleId,
-    AssetId AssetId);
+    AssetId AssetId,
+    AssetPreviewSourceOverrideDto? PreviewSourceOverride = null);

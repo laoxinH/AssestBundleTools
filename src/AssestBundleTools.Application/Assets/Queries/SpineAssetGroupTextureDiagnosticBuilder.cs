@@ -92,12 +92,7 @@ internal sealed class SpineAssetGroupTextureDiagnosticBuilder
         }
 
         var previewResult = await _assetPreviewQueryHandler.HandleAsync(
-            new GetAssetPreviewQuery(
-                query.WorkspaceId,
-                query.WorkspaceKey,
-                query.WorkspaceDataRootPath,
-                texturePageAsset.BundleId,
-                texturePageAsset.AssetId),
+            SpineAssetGroupPreviewQueryFactory.Create(query, texturePageAsset),
             cancellationToken);
         previewResultsByTextureKey[textureKey] = previewResult;
         return previewResult;

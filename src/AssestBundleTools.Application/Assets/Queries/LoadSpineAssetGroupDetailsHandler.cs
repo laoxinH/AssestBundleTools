@@ -105,12 +105,7 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
             }
 
             var atlasPreviewResult = await _assetPreviewQueryHandler.HandleAsync(
-                new GetAssetPreviewQuery(
-                    query.WorkspaceId,
-                    query.WorkspaceKey,
-                    query.WorkspaceDataRootPath,
-                    atlasAsset.BundleId,
-                    atlasAsset.AssetId),
+                SpineAssetGroupPreviewQueryFactory.Create(query, atlasAsset),
                 cancellationToken);
             if (atlasPreviewResult.IsCancelled)
             {

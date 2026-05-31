@@ -70,6 +70,67 @@ internal static class ReplacementOperationRecorderTests
         TestAssert.Equal(false, savedOperation.PreviousState?.WasModified, "Previous modified state should be recorded.");
     }
 
+    public static async Task ReplaceAssetFromFileHandler_ShouldAppendBatchAndRelations_WhenOperationContextIsProvided()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var workspaceKey = "workspace-a";
+        var workspaceDataRootPath = @"D:\WorkspaceData\A";
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.texture");
+        var spineGroupTarget = new WorkspaceOperationTargetDto(
+            BundleId: targetBundleId.Value,
+            AssetName: "HeroSpine",
+            AssetType: "SpineAssetGroup",
+            SourceFingerprint: "spine-group-hero");
+        var relation = new WorkspaceOperationRelationDto(
+            RelationId: "rel-spine-1",
+            RelationKind: WorkspaceOperationRelationNames.LinkedResourceOperation,
+            Role: WorkspaceOperationRelationNames.SubjectRole,
+            RelatedTarget: spineGroupTarget);
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            AssetType.Texture2D,
+            "HeroPage"));
+        registry.TryReplaceAssetFromFileResult = new AssetFileReplacementResultDto(
+            WorkspaceId: workspaceId,
+            TargetBundleId: targetBundleId,
+            TargetAssetId: targetAssetId,
+            TargetAssetName: "HeroPage",
+            SourceFilePath: @"C:\Imports\hero.png",
+            SourceFileName: "hero.png",
+            SourceAssetType: AssetType.Texture2D,
+            ReplacedAtUtc: new DateTimeOffset(2026, 5, 10, 12, 10, 0, TimeSpan.Zero));
+        var changeStore = new TestWorkspaceChangeStore();
+        var recorder = new WorkspaceReplacementOperationRecorder(
+            new TestWorkspaceDataStoreFactory(changeStore),
+            new WorkspaceOperationLogService());
+        var handler = new ReplaceAssetFromFileHandler(registry, recorder);
+
+        var result = await handler.HandleAsync(new ReplaceAssetFromFileCommand(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            @"C:\Imports\hero.png",
+            AssetType.Texture2D,
+            workspaceKey,
+            workspaceDataRootPath,
+            new ReplacementOperationContextDto(
+                BatchId: "batch-spine-1",
+                Relations: [relation])));
+
+        TestAssert.True(result.IsSuccess, "File replacement should still succeed with operation context.");
+        var savedOperation = TestAssert.Single(changeStore.SavedChangeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>());
+        TestAssert.Equal("batch-spine-1", savedOperation.BatchId, "Batch id should be persisted for grouped replacements.");
+        var savedRelation = TestAssert.Single(savedOperation.Relations ?? Array.Empty<WorkspaceOperationRelationDto>());
+        TestAssert.Equal("rel-spine-1", savedRelation.RelationId, "Relation id should be preserved.");
+        TestAssert.Equal(WorkspaceOperationRelationNames.SubjectRole, savedRelation.Role, "Relation role should be preserved.");
+        TestAssert.Equal("SpineAssetGroup", savedRelation.RelatedTarget?.AssetType, "Related Spine group target should be preserved.");
+        TestAssert.Equal("spine-group-hero", savedRelation.RelatedTarget?.SourceFingerprint, "Related Spine group identity should be preserved.");
+    }
+
     public static async Task ReplaceAssetFromWorkspaceHandler_ShouldSupersedeLatestActiveReplacementRecord()
     {
         var workspaceId = new WorkspaceId("workspace-session-1");

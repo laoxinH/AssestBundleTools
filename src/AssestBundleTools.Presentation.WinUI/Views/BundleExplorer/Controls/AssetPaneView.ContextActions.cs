@@ -35,7 +35,7 @@ public sealed partial class AssetPaneView
 
     private void OnReplaceAssetPaneItemMenuItemClick(object sender, RoutedEventArgs e)
     {
-        if (TrySelectContextTarget(sender, preserveExistingSelection: false, allowSpineGroup: false))
+        if (TrySelectContextTarget(sender, preserveExistingSelection: false))
         {
             ReplaceSelectedAssetRequested?.Invoke(this, EventArgs.Empty);
         }
@@ -74,7 +74,7 @@ public sealed partial class AssetPaneView
                     break;
                 case "ReplaceAssetPaneItemMenuItem":
                     item.Text = UiText.Get(ResourceKeys.AssetPaneViewContextReplaceText);
-                    item.IsEnabled = canExecute && ViewModel?.IsAssetViewMode == true;
+                    item.IsEnabled = canExecute;
                     break;
                 case "EnterAssetPaneItemMultiSelectionMenuItem":
                     item.Text = UiText.Get(ResourceKeys.AssetPaneViewContextEnterMultiSelectionText);

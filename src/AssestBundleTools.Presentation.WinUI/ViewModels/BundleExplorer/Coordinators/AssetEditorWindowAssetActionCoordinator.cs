@@ -152,6 +152,34 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
             _operationFeedbackBridge.AppendResultFailure);
     }
 
+    public async Task<bool> SelectSpineEditPartFileAsync(SpineAssetGroupEditPartViewModel? part)
+    {
+        if (part is null ||
+            !TryGetActiveSpineGroupEditContext(out var workspaceSummary, out var spineGroupTab))
+        {
+            return false;
+        }
+
+        return await _modificationActionHandler.SelectSpineEditPartFileAsync(
+            workspaceSummary,
+            spineGroupTab,
+            part,
+            _setBusy,
+            _operationFeedbackBridge.AppendResultFailure);
+    }
+
+    public async Task<bool> SelectSpineEditBatchSourceDirectoryAsync()
+    {
+        if (!TryGetActiveSpineGroupEditContext(out _, out var spineGroupTab))
+        {
+            return false;
+        }
+
+        return await _modificationActionHandler.SelectSpineEditBatchSourceDirectoryAsync(
+            spineGroupTab,
+            _setBusy);
+    }
+
     public async Task SelectSpriteTextureReplacementSourceAsync()
     {
         if (!TryGetActiveAssetCommandContext(
@@ -257,6 +285,20 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
             _operationFeedbackBridge.AppendResultFailure);
     }
 
+    public async Task<bool> ApplySpineEditAsync()
+    {
+        if (!TryGetActiveSpineGroupEditContext(out var workspaceSummary, out var spineGroupTab))
+        {
+            return false;
+        }
+
+        return await _modificationActionHandler.ApplySpineEditAsync(
+            workspaceSummary,
+            spineGroupTab,
+            _setBusy,
+            _operationFeedbackBridge.AppendResultFailure);
+    }
+
     public async Task DeleteChangeRecordAsync(string? operationId)
     {
         if (string.IsNullOrWhiteSpace(operationId) ||
@@ -326,6 +368,24 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
         if (_isBusyProvider() ||
             workspaceSummary is null ||
             spineGroupTab is null)
+        {
+            workspaceSummary = null;
+            spineGroupTab = null;
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool TryGetActiveSpineGroupEditContext(
+        [NotNullWhen(true)] out WorkspaceSummaryDto? workspaceSummary,
+        [NotNullWhen(true)] out SpineAssetGroupDocumentTabViewModel? spineGroupTab)
+    {
+        workspaceSummary = _workspaceShell.WorkspaceSummary;
+        spineGroupTab = _activeSpineGroupTabProvider();
+        if (_isBusyProvider() ||
+            workspaceSummary is null ||
+            spineGroupTab?.SpineEditDraft is null)
         {
             workspaceSummary = null;
             spineGroupTab = null;

@@ -265,6 +265,18 @@ internal static class InfrastructureTestSuite
             AssetsToolsTextAssetPreviewClassifierTests.IsSpineSkeletonPath_ShouldMatchSkelAndSkelBytes);
         await RunTestAsync(
             failures,
+            nameof(FileSystemReplacementPreviewSourceProviderTests.LoadFilePreviewAsync_ShouldReturnNormalizedText_ForTextAssetAtlas),
+            FileSystemReplacementPreviewSourceProviderTests.LoadFilePreviewAsync_ShouldReturnNormalizedText_ForTextAssetAtlas);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemReplacementPreviewSourceProviderTests.LoadFilePreviewAsync_ShouldReturnBinary_ForBinarySkelTextAsset),
+            FileSystemReplacementPreviewSourceProviderTests.LoadFilePreviewAsync_ShouldReturnBinary_ForBinarySkelTextAsset);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemReplacementPreviewSourceProviderTests.LoadFilePreviewAsync_ShouldReturnImagePayload_ForTextureReplacement),
+            FileSystemReplacementPreviewSourceProviderTests.LoadFilePreviewAsync_ShouldReturnImagePayload_ForTextureReplacement);
+        await RunTestAsync(
+            failures,
             nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV42RuntimeDrawCommands_FromJsonSkeleton),
             SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV42RuntimeDrawCommands_FromJsonSkeleton);
         await RunTestAsync(

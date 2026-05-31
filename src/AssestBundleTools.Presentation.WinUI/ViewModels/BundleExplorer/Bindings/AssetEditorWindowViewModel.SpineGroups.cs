@@ -63,6 +63,19 @@ public sealed partial class AssetEditorWindowViewModel
         OnPropertyChanged(nameof(Inspector));
     }
 
+    public Task ReloadActiveSpineGroupDetailsAsync()
+    {
+        return DocumentGroup.ActiveSpineGroupTab is { } spineGroupTab
+            ? ReloadSpineGroupDetailsAsync(spineGroupTab)
+            : Task.CompletedTask;
+    }
+
+    private Task ReloadSpineGroupDetailsAsync(SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        spineGroupTab.ClearDetails();
+        return LoadSpineGroupDetailsAsync(spineGroupTab);
+    }
+
     private async Task LoadSpineGroupDetailsAsync(SpineAssetGroupDocumentTabViewModel spineGroupTab)
     {
         if (spineGroupTab.Details is not null)

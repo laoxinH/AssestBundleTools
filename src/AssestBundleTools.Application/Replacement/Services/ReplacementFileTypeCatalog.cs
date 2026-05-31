@@ -19,7 +19,7 @@ public static class ReplacementFileTypeCatalog
         {
             [AssetType.Texture2D] = [".png", ".jpg", ".jpeg", ".bmp", ".tga", ".dds"],
             [AssetType.Sprite] = [".png", ".jpg", ".jpeg", ".bmp", ".tga", ".dds"],
-            [AssetType.TextAsset] = [".txt", ".json", ".xml", ".bytes", ".csv"],
+            [AssetType.TextAsset] = [".txt", ".json", ".xml", ".bytes", ".csv", ".skel", ".atlas"],
             [AssetType.AudioClip] = [".wav", ".mp3", ".ogg"],
             [AssetType.Mesh] = [".mesh", ".fbx", ".obj"],
             [AssetType.Material] = [".mat"],
@@ -40,6 +40,8 @@ public static class ReplacementFileTypeCatalog
             [".xml"] = [AssetType.TextAsset],
             [".bytes"] = [AssetType.TextAsset],
             [".csv"] = [AssetType.TextAsset],
+            [".skel"] = [AssetType.TextAsset],
+            [".atlas"] = [AssetType.TextAsset],
             [".wav"] = [AssetType.AudioClip],
             [".mp3"] = [AssetType.AudioClip],
             [".ogg"] = [AssetType.AudioClip],

@@ -198,6 +198,9 @@ public sealed class WorkspaceImportCoordinatorServiceTests
             AssetType targetAssetType,
             CancellationToken cancellationToken = default) =>
             Task.FromResult<string?>(null);
+
+        public Task<string?> PickSpineReplacementSourceDirectoryAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
     }
 
     private sealed class RecordingBackgroundTaskStatusService : IAppBackgroundTaskStatusService

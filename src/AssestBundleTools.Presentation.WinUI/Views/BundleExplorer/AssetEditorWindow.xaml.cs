@@ -180,6 +180,38 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         ViewModel.RedoSpriteEditForActiveAsset();
     }
 
+    private async void OnSaveSpineEditButtonClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.ApplySpineEditAsync();
+    }
+
+    private async void OnExitSpineEditButtonClick(object sender, RoutedEventArgs e)
+    {
+        await TryExitSpineEditModeAsync();
+    }
+
+    private async void OnUndoSpineEditButtonClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.UndoSpineEditForActiveGroupAsync();
+    }
+
+    private async void OnRedoSpineEditButtonClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.RedoSpineEditForActiveGroupAsync();
+    }
+
+    private async void OnSpineEditPartFileSelectionRequested(
+        object sender,
+        SpineEditPartFileSelectionRequestedEventArgs e)
+    {
+        await ViewModel.SelectSpineEditPartFileAsync(e.Part);
+    }
+
+    private async void OnSpineEditBatchMatchRequested(object sender, EventArgs e)
+    {
+        await ViewModel.SelectSpineEditBatchSourceDirectoryAsync();
+    }
+
     private async void OnInspectorExtractRequested(object sender, EventArgs e)
     {
         await ViewModel.ExtractSelectedAssetAsync();
@@ -321,6 +353,10 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         ApplyActionButtonText(ExitSpriteEditButton, ExitSpriteEditButtonText, ResourceKeys.InspectorExitSpriteEditButton);
         ApplyActionButtonText(UndoSpriteEditButton, UndoSpriteEditButtonText, ResourceKeys.InspectorUndoReplacementButton);
         ApplyActionButtonText(RedoSpriteEditButton, RedoSpriteEditButtonText, ResourceKeys.InspectorRedoReplacementButton);
+        ApplyActionButtonText(SaveSpineEditButton, SaveSpineEditButtonText, ResourceKeys.InspectorApplySpineEditButton);
+        ApplyActionButtonText(ExitSpineEditButton, ExitSpineEditButtonText, ResourceKeys.InspectorExitSpriteEditButton);
+        ApplyActionButtonText(UndoSpineEditButton, UndoSpineEditButtonText, ResourceKeys.InspectorUndoReplacementButton);
+        ApplyActionButtonText(RedoSpineEditButton, RedoSpineEditButtonText, ResourceKeys.InspectorRedoReplacementButton);
     }
 
     private async Task<bool> TryExitSpriteEditModeAsync()
@@ -347,7 +383,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
             XamlRoot = ContentRoot.XamlRoot,
             Title = UiText.Get(ResourceKeys.InspectorUnsavedSpriteEditDialogTitle),
             Content = UiText.Get(ResourceKeys.InspectorUnsavedSpriteEditDialogDescription),
-            PrimaryButtonText = UiText.Get(ResourceKeys.InspectorApplySpriteEditButton),
+            PrimaryButtonText = UiText.Get(ResourceKeys.InspectorApplySpineEditButton),
             SecondaryButtonText = UiText.Get(ResourceKeys.CommonDiscardButton),
             CloseButtonText = UiText.Get(ResourceKeys.CommonCancelButton),
             DefaultButton = ContentDialogButton.Primary
@@ -368,6 +404,51 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         if (result == ContentDialogResult.Secondary)
         {
             ViewModel.ExitSpriteEditModeForActiveAsset(discardChanges: true);
+            return true;
+        }
+
+        return false;
+    }
+
+    private async Task<bool> TryExitSpineEditModeAsync()
+    {
+        var spineGroupTab = ViewModel.DocumentGroup.ActiveSpineGroupTab;
+        if (spineGroupTab?.IsSpineEditModeActive != true)
+        {
+            return true;
+        }
+
+        if (spineGroupTab.SpineEditDraft?.HasChanges != true)
+        {
+            await ViewModel.ExitSpineEditModeForActiveGroupAsync(discardChanges: false);
+            return true;
+        }
+
+        if (ContentRoot.XamlRoot is null)
+        {
+            return false;
+        }
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = ContentRoot.XamlRoot,
+            Title = UiText.Get(ResourceKeys.InspectorUnsavedSpineEditDialogTitle),
+            Content = UiText.Get(ResourceKeys.InspectorUnsavedSpineEditDialogDescription),
+            PrimaryButtonText = UiText.Get(ResourceKeys.InspectorApplySpriteEditButton),
+            SecondaryButtonText = UiText.Get(ResourceKeys.CommonDiscardButton),
+            CloseButtonText = UiText.Get(ResourceKeys.CommonCancelButton),
+            DefaultButton = ContentDialogButton.Primary
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            return await ViewModel.ApplySpineEditAsync();
+        }
+
+        if (result == ContentDialogResult.Secondary)
+        {
+            await ViewModel.ExitSpineEditModeForActiveGroupAsync(discardChanges: true);
             return true;
         }
 

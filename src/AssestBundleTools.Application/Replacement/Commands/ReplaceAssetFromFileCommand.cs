@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
@@ -14,4 +15,5 @@ public sealed record ReplaceAssetFromFileCommand(
     string SourceFilePath,
     AssetType SourceAssetType,
     string? WorkspaceKey = null,
-    string? WorkspaceDataRootPath = null);
+    string? WorkspaceDataRootPath = null,
+    ReplacementOperationContextDto? OperationContext = null);

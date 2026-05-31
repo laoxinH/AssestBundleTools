@@ -114,7 +114,7 @@ public sealed partial class AssetEditorWindow
 
     private async Task<bool> CloseDocumentTabForUserRequestAsync(AssetDocumentTabItemViewModel documentTab)
     {
-        if (!await TryResolveSpriteEditModeBeforeClosingDocumentTabAsync(documentTab))
+        if (!await TryResolveEditModeBeforeClosingDocumentTabAsync(documentTab))
         {
             return false;
         }
@@ -128,10 +128,11 @@ public sealed partial class AssetEditorWindow
         return true;
     }
 
-    private async Task<bool> TryResolveSpriteEditModeBeforeClosingDocumentTabAsync(
+    private async Task<bool> TryResolveEditModeBeforeClosingDocumentTabAsync(
         AssetDocumentTabItemViewModel documentTab)
     {
-        if (documentTab.AssetTab?.Inspector.Preview.Image.IsSpriteEditModeActive != true)
+        if (documentTab.AssetTab?.Inspector.Preview.Image.IsSpriteEditModeActive != true &&
+            documentTab.SpineGroupTab?.IsSpineEditModeActive != true)
         {
             return true;
         }
@@ -142,7 +143,12 @@ public sealed partial class AssetEditorWindow
             SynchronizeSelection(documentTab);
         }
 
-        return await TryExitSpriteEditModeAsync();
+        if (documentTab.AssetTab?.Inspector.Preview.Image.IsSpriteEditModeActive == true)
+        {
+            return await TryExitSpriteEditModeAsync();
+        }
+
+        return await TryExitSpineEditModeAsync();
     }
 
     private void SynchronizeSelection() =>

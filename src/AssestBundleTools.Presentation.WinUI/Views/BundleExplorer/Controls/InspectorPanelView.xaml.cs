@@ -110,7 +110,7 @@ public sealed partial class InspectorPanelView : UserControl
 
     private void OnModifyButtonClick(object sender, RoutedEventArgs e)
     {
-        if (ViewModel?.CanSelectFileReplacementSource == true)
+        if (ViewModel?.CanModify == true)
         {
             ModifyFromFileReplacementSourceRequested?.Invoke(this, EventArgs.Empty);
         }

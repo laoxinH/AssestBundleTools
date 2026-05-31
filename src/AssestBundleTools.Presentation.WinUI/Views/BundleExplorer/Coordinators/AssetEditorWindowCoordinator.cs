@@ -110,6 +110,34 @@ public sealed partial class BundleExplorerPage
             }
         }
 
+        public async Task OpenSpineGroupEditWindowAsync(SpineAssetGroupDocumentTabViewModel? spineGroupTab)
+        {
+            if (spineGroupTab is null)
+            {
+                return;
+            }
+
+            if (await TryActivateOpenSpineEditorWindowAsync(spineGroupTab.BundleId, spineGroupTab.GroupId))
+            {
+                return;
+            }
+
+            await OpenDocumentInNewWindowAsync(AssetDocumentTabItemViewModel.FromSpineGroup(spineGroupTab));
+            foreach (var window in _windows)
+            {
+                if (!window.ViewModel.DocumentGroup.TryGetSpineGroupTab(
+                        spineGroupTab.BundleId,
+                        spineGroupTab.GroupId,
+                        out _))
+                {
+                    continue;
+                }
+
+                window.ViewModel.RequestSpineEditModeForActiveGroup();
+                return;
+            }
+        }
+
         public async Task OpenDocumentInNewWindowAsync(AssetDocumentTabItemViewModel? documentTab)
         {
             if (documentTab?.AssetTab is { } assetTab)
@@ -330,8 +358,25 @@ public sealed partial class BundleExplorerPage
                     continue;
                 }
 
-                assetTab.RequestSpriteEditMode();
                 await window.TryActivateAssetDocumentTabAsync(bundleId, assetId);
+                window.ViewModel.RequestSpriteEditModeForActiveAsset();
+                return true;
+            }
+
+            return false;
+        }
+
+        private async Task<bool> TryActivateOpenSpineEditorWindowAsync(BundleId bundleId, string groupId)
+        {
+            foreach (var window in _windows)
+            {
+                if (!window.ViewModel.DocumentGroup.TryGetSpineGroupTab(bundleId, groupId, out var spineGroupTab))
+                {
+                    continue;
+                }
+
+                await window.TryActivateSpineGroupDocumentTabAsync(bundleId, groupId);
+                window.ViewModel.RequestSpineEditModeForActiveGroup();
                 return true;
             }
 

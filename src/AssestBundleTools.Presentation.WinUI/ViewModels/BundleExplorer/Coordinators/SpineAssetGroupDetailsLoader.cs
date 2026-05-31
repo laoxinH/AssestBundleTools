@@ -6,6 +6,8 @@ using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Bundles;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 
@@ -244,7 +246,8 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
             detailsQuery.WorkspaceKey,
             detailsQuery.WorkspaceDataRootPath,
             texturePageAsset.BundleId,
-            texturePageAsset.AssetId);
+            texturePageAsset.AssetId,
+            ResolvePreviewSourceOverride(detailsQuery, texturePageAsset.BundleId, texturePageAsset.AssetId));
         var previewResult = await _backgroundWorkScheduler.RunAsync(
             new BackgroundWorkRequest<Result<AssetPreviewDto>>(
                 BackgroundWorkProfile.PreviewForeground,
@@ -347,7 +350,8 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
                 workspaceEntry.WorkspaceKey,
                 workspaceEntry.WorkspaceDataRootPath,
                 groupTab.BundleId,
-                groupTab.GroupId);
+                groupTab.GroupId,
+                CreatePreviewSourceOverrides(groupTab));
             return true;
         }
 
@@ -375,7 +379,35 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
             workspaceKey,
             activeWorkspaceNavigationRequest.WorkspaceDataRootPath,
             groupTab.BundleId,
-            groupTab.GroupId);
+            groupTab.GroupId,
+            CreatePreviewSourceOverrides(groupTab));
         return true;
     }
+
+    private static IReadOnlyList<AssetPreviewSourceOverrideDto>? CreatePreviewSourceOverrides(
+        SpineAssetGroupDocumentTabViewModel groupTab)
+    {
+        var changedParts = groupTab.SpineEditDraft?.ChangedParts;
+        if (changedParts is not { Count: > 0 })
+        {
+            return null;
+        }
+
+        return changedParts
+            .Where(static part => !string.IsNullOrWhiteSpace(part.SelectedSourceFilePath))
+            .Select(static part => new AssetPreviewSourceOverrideDto(
+                part.BundleId,
+                new AssetId(part.AssetId),
+                part.SelectedSourceFilePath!))
+            .ToArray();
+    }
+
+    private static AssetPreviewSourceOverrideDto? ResolvePreviewSourceOverride(
+        LoadSpineAssetGroupDetailsQuery detailsQuery,
+        BundleId bundleId,
+        AssetId assetId) =>
+        detailsQuery.PreviewSourceOverrides?.FirstOrDefault(candidate =>
+            candidate.BundleId.Equals(bundleId) &&
+            candidate.AssetId.Equals(assetId) &&
+            !string.IsNullOrWhiteSpace(candidate.SourceFilePath));
 }

@@ -17,7 +17,7 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 public sealed class InspectorPanelViewModelTests
 {
     [Fact]
-    public void CanModify_ShouldFollowImmediateFileReplacementCapabilityOnly()
+    public void CanModify_ShouldBeIndependentFromReplacementSourceButtons()
     {
         var viewModel = CreateViewModel();
         var changedProperties = new List<string?>();
@@ -27,27 +27,27 @@ public sealed class InspectorPanelViewModelTests
 
         viewModel.CanSelectFileReplacementSource = true;
 
+        Assert.False(viewModel.CanModify);
+        Assert.DoesNotContain(nameof(InspectorPanelViewModel.CanModify), changedProperties);
+
+        changedProperties.Clear();
+        viewModel.CanModify = true;
+
         Assert.True(viewModel.CanModify);
         Assert.Contains(nameof(InspectorPanelViewModel.CanModify), changedProperties);
 
         changedProperties.Clear();
         viewModel.CanSelectFileReplacementSource = false;
 
-        Assert.False(viewModel.CanModify);
-        Assert.Contains(nameof(InspectorPanelViewModel.CanModify), changedProperties);
-
-        changedProperties.Clear();
-        viewModel.CanSelectReplacementSource = true;
-
-        Assert.False(viewModel.CanModify);
+        Assert.True(viewModel.CanModify);
         Assert.DoesNotContain(nameof(InspectorPanelViewModel.CanModify), changedProperties);
 
         changedProperties.Clear();
+        viewModel.CanModify = false;
         viewModel.CanSelectReplacementSource = false;
         viewModel.CanApplyReplacement = true;
 
         Assert.False(viewModel.CanModify);
-        Assert.DoesNotContain(nameof(InspectorPanelViewModel.CanModify), changedProperties);
     }
 
     [Fact]

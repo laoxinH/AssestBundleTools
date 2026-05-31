@@ -68,12 +68,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
         CancellationToken cancellationToken)
     {
         var previewResult = await _assetPreviewQueryHandler.HandleAsync(
-            new GetAssetPreviewQuery(
-                query.WorkspaceId,
-                query.WorkspaceKey,
-                query.WorkspaceDataRootPath,
-                skeletonAsset.BundleId,
-                skeletonAsset.AssetId),
+            SpineAssetGroupPreviewQueryFactory.Create(query, skeletonAsset),
             cancellationToken);
         if (previewResult.IsCancelled)
         {
@@ -144,12 +139,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
         CancellationToken cancellationToken)
     {
         var previewResult = await _assetPreviewQueryHandler.HandleAsync(
-            new GetAssetPreviewQuery(
-                query.WorkspaceId,
-                query.WorkspaceKey,
-                query.WorkspaceDataRootPath,
-                skeletonAsset.BundleId,
-                skeletonAsset.AssetId),
+            SpineAssetGroupPreviewQueryFactory.Create(query, skeletonAsset),
             cancellationToken);
         if (previewResult.IsCancelled)
         {

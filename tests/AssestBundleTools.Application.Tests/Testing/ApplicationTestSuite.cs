@@ -173,6 +173,14 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldUseFileReplacementPreview_ForTexture2D);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUsePreviewSourceOverride_ForTextAsset),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldUsePreviewSourceOverride_ForTextAsset);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUseFileReplacementPreview_ForTextAsset),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldUseFileReplacementPreview_ForTextAsset);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUseWorkspaceReplacementPreview_WithTargetIdentity),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldUseWorkspaceReplacementPreview_WithTargetIdentity);
         await RunTestAsync(

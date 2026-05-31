@@ -38,6 +38,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
     private readonly WorkspaceOperationChangeRefreshCoordinator _operationChangeRefreshCoordinator;
     private readonly InspectorInformationTextSet _inspectorInformationTextSet;
     private readonly InspectorPanelViewModel _emptyInspector;
+    private InspectorPreviewImageViewModel? _observedSpriteEditImage;
     private bool _isBusy;
 
     public AssetEditorWindowViewModel(
@@ -206,7 +207,11 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         }
     }
 
-    public void Dispose() => _operationChangeRefreshCoordinator.Dispose();
+    public void Dispose()
+    {
+        ClearObservedSpriteEditImage();
+        _operationChangeRefreshCoordinator.Dispose();
+    }
 
     public async Task ActivateAssetDocumentTabAsync(AssetDocumentTabViewModel? assetTab)
     {
@@ -319,82 +324,6 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         DocumentGroup.ReorderAssetTabs(orderedTabs);
     }
 
-    public void OpenCurrentPreviewLocation() => _assetActionCoordinator.OpenCurrentPreviewLocation();
-
-    public Task ExtractSelectedAssetAsync() => _assetActionCoordinator.ExtractSelectedAssetAsync();
-
-    public Task SelectFileReplacementSourceAsync() =>
-        _assetActionCoordinator.SelectFileReplacementSourceAsync();
-
-    public Task ModifyFromFileReplacementSourceAsync()
-    {
-        if (RequestSpriteEditModeForActiveAsset())
-        {
-            return Task.CompletedTask;
-        }
-
-        return _assetActionCoordinator.ModifyFromFileReplacementSourceAsync();
-    }
-
-    public Task SelectSpriteTextureReplacementSourceAsync() =>
-        _assetActionCoordinator.SelectSpriteTextureReplacementSourceAsync();
-
-    public Task ApplyPendingReplacementAsync() => _assetActionCoordinator.ApplyPendingReplacementAsync();
-
-    public async Task<bool> ApplySpriteEditAsync()
-    {
-        var applied = await _assetActionCoordinator.ApplySpriteEditAsync();
-        if (applied)
-        {
-            DocumentGroup.ActiveAssetTab?.Inspector.Preview.Image.MarkSpriteEditSaved();
-        }
-
-        return applied;
-    }
-
-    public void ExitSpriteEditModeForActiveAsset(bool discardChanges)
-    {
-        var assetTab = DocumentGroup.ActiveAssetTab;
-        if (assetTab is null)
-        {
-            return;
-        }
-
-        if (discardChanges)
-        {
-            assetTab.Inspector.Preview.Image.DiscardSpriteEditChanges();
-        }
-
-        assetTab.CancelSpriteEditMode();
-    }
-
-    public void UndoSpriteEditForActiveAsset() =>
-        DocumentGroup.ActiveAssetTab?.Inspector.Preview.Image.UndoSpriteEdit();
-
-    public void RedoSpriteEditForActiveAsset() =>
-        DocumentGroup.ActiveAssetTab?.Inspector.Preview.Image.RedoSpriteEdit();
-
-    public Task UndoAppliedReplacementAsync(string? replacementOperationId = null) =>
-        _assetActionCoordinator.UndoAppliedReplacementAsync(replacementOperationId);
-
-    public Task RedoAppliedReplacementAsync(string? replacementOperationId = null) =>
-        _assetActionCoordinator.RedoAppliedReplacementAsync(replacementOperationId);
-
-    public Task DeleteChangeRecordAsync(string? operationId) =>
-        _assetActionCoordinator.DeleteChangeRecordAsync(operationId);
-
-    public bool RequestSpriteEditModeForActiveAsset()
-    {
-        var assetTab = DocumentGroup.ActiveAssetTab;
-        if (assetTab?.Details?.AssetType != AssetType.Sprite)
-        {
-            return false;
-        }
-
-        assetTab.RequestSpriteEditMode();
-        return true;
-    }
-
     private AssetDocumentTabViewModel CreateAssetDocumentTab(
         BundleId bundleId,
         AssetId assetId,
@@ -460,12 +389,14 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             canEdit: ReferenceEquals(assetTab, DocumentGroup.ActiveAssetTab),
             isBusy: IsBusy);
         NotifyActionStates();
+        NotifyActionBarStates();
     }
 
     private void ReapplySpineGroupDocumentState(SpineAssetGroupDocumentTabViewModel spineGroupTab)
     {
         _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
         NotifyActionStates();
+        NotifyActionBarStates();
         OnPropertyChanged(nameof(Inspector));
         OnPropertyChanged(nameof(WindowTitle));
     }
@@ -477,7 +408,9 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             assetTab.CanEdit = ReferenceEquals(assetTab, DocumentGroup.ActiveAssetTab);
         }
 
+        ObserveActiveSpriteEditImage();
         NotifyActionStates();
+        NotifyActionBarStates();
         OnPropertyChanged(nameof(Inspector));
         OnPropertyChanged(nameof(WindowTitle));
     }

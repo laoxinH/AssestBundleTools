@@ -1488,6 +1488,33 @@
   <data name="InspectorPanelView.SpriteEditGeometry.PivotY.Label" xml:space="preserve">
     <value>Pivot Y</value>
   </data>
+  <data name="InspectorPanelView.SpineEdit.Title" xml:space="preserve">
+    <value>Spine Parts</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.Description" xml:space="preserve">
+    <value>Select skeleton, atlas, or texture page sources. Saving records replacements on the real component assets.</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.BatchMatchButton.Content" xml:space="preserve">
+    <value>Match Folder</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.SelectFileButton.Content" xml:space="preserve">
+    <value>Select File</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.ChangedBadge" xml:space="preserve">
+    <value>Selected</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.NoParts.Text" xml:space="preserve">
+    <value>This Spine group has no replaceable component assets.</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.NoDraftSource.Text" xml:space="preserve">
+    <value>No replacement source selected</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.SelectedStatus.Text" xml:space="preserve">
+    <value>Added to draft</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.UnchangedStatus.Text" xml:space="preserve">
+    <value>Unchanged</value>
+  </data>
   <data name="InspectorPanelView.MeshPreview.Badge.Format" xml:space="preserve">
     <value>{0} vertices · {1} edges</value>
   </data>
@@ -2433,6 +2460,9 @@
   <data name="InspectorPanelView.ApplySpriteEditButton.Content" xml:space="preserve">
     <value>Save Sprite Edit</value>
   </data>
+  <data name="InspectorPanelView.ApplySpineEditButton.Content" xml:space="preserve">
+    <value>Save Spine Edit</value>
+  </data>
   <data name="InspectorPanelView.ExitSpriteEditButton.Content" xml:space="preserve">
     <value>Exit</value>
   </data>
@@ -2441,6 +2471,12 @@
   </data>
   <data name="InspectorPanelView.SpriteEdit.UnsavedDialog.Description" xml:space="preserve">
     <value>The crop rectangle or pivot has unsaved changes. Saving adds a Sprite edit operation record; choosing Don't Save discards this edit session and returns to preview.</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.UnsavedDialog.Title" xml:space="preserve">
+    <value>Save current Spine edit?</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.UnsavedDialog.Description" xml:space="preserve">
+    <value>The component file draft has unsaved changes. Saving creates replacement records on the real component assets; discarding drops this edit session draft and returns to preview.</value>
   </data>
   <data name="InspectorPanelView.UndoReplacementButton.Content" xml:space="preserve">
     <value>Undo</value>

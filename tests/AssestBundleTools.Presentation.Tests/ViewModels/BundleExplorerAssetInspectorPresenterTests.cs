@@ -95,6 +95,47 @@ public sealed class BundleExplorerAssetInspectorPresenterTests
         Assert.Equal("Texture2D", dependency.Target.AssetTypeText);
     }
 
+    [Fact]
+    public void SpineGroupPresenter_ShouldEnableModifyWithoutEnablingReplacementSourceSelection()
+    {
+        var localizationService = new TestLocalizationService();
+        var bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
+        var presenter = new SpineAssetGroupInspectorPresenter(bundlePane, localizationService);
+        var bundleId = new BundleId("bundle-spine");
+        var groupTab = new SpineAssetGroupDocumentTabViewModel(
+            new SpineAssetGroupDto(
+                GroupId: "hero",
+                BundleId: bundleId,
+                DisplayName: "hero",
+                GroupKey: "characters/hero",
+                SkeletonAssets:
+                [
+                    new SpineAssetGroupPartDto(
+                        SpineAssetGroupPartRole.Skeleton,
+                        bundleId,
+                        new AssetId("hero-json"),
+                        "spine.ab",
+                        "hero.json",
+                        "Assets/hero.json",
+                        AssetType.TextAsset,
+                        "TextAsset")
+                ],
+                AtlasAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                TexturePageAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>()),
+            InspectorInformationTextSetFactory.Create(localizationService));
+
+        presenter.PresentSpineGroupDocumentTab(groupTab);
+
+        Assert.True(groupTab.Inspector.CanModify);
+        Assert.False(groupTab.Inspector.CanSelectFileReplacementSource);
+
+        presenter.SyncInspectorActionStates(groupTab.Inspector, groupTab, isBusy: true);
+
+        Assert.False(groupTab.Inspector.CanModify);
+        Assert.False(groupTab.Inspector.CanSelectFileReplacementSource);
+    }
+
     private static IReadOnlyList<BundleTreeNodeDto> CreateBundleTree(
         BundleId bundleId,
         string displayName)

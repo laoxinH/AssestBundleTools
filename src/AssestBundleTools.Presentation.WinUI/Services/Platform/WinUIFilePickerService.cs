@@ -147,6 +147,11 @@ public sealed class WinUIFilePickerService : IFilePickerService
         return selectedFile?.Path;
     }
 
+    public Task<string?> PickSpineReplacementSourceDirectoryAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(PickExportDirectory(cancellationToken));
+    }
+
     private FolderPicker CreateFolderPicker()
     {
         var ownerWindow = RequireOwnerWindow();

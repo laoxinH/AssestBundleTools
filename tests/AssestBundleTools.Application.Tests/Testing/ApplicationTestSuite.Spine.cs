@@ -36,6 +36,10 @@ internal static partial class ApplicationTestSuite
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseAtlasPagesAndRegions_FromPreviewPipeline);
         await RunTestAsync(
             failures,
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldUsePreviewSourceOverride_ForDraftAtlasText),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldUsePreviewSourceOverride_ForDraftAtlasText);
+        await RunTestAsync(
+            failures,
             nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseAtlasFromFullTextContent_WhenDisplayTextIsBounded),
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseAtlasFromFullTextContent_WhenDisplayTextIsBounded);
         await RunTestAsync(

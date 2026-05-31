@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
@@ -12,6 +13,9 @@ namespace AssestBundleTools.Infrastructure.Bundles.Previewing;
 /// </summary>
 public sealed class FileSystemReplacementPreviewSourceProvider : IReplacementPreviewSourceProvider
 {
+    private const string BinaryContentType = "application/octet-stream";
+    private const string TextContentType = "text/plain; charset=utf-8";
+
     public async Task<Result<AssetPreviewContentDto>> LoadFilePreviewAsync(
         AssetDetailsDto targetDetails,
         string sourceFilePath,
@@ -22,12 +26,6 @@ public sealed class FileSystemReplacementPreviewSourceProvider : IReplacementPre
         if (cancellationToken.IsCancellationRequested)
         {
             return Result<AssetPreviewContentDto>.Cancelled();
-        }
-
-        if (targetDetails.AssetType != AssetType.Texture2D)
-        {
-            return Result<AssetPreviewContentDto>.Failure(
-                ApplicationErrors.BundlePreviewGenerationFailed(sourceFilePath, "Replacement preview type is not supported."));
         }
 
         if (string.IsNullOrWhiteSpace(sourceFilePath))
@@ -46,12 +44,21 @@ public sealed class FileSystemReplacementPreviewSourceProvider : IReplacementPre
             }
 
             var content = await File.ReadAllBytesAsync(normalizedPath, cancellationToken).ConfigureAwait(false);
-            return Result<AssetPreviewContentDto>.Success(
-                new AssetPreviewContentDto(
-                    Kind: AssetPreviewKind.Image,
-                    ContentType: ResolveImageContentType(normalizedPath),
-                    Content: content,
-                    PreferredDisplaySizeInBytes: content.LongLength));
+            return targetDetails.AssetType switch
+            {
+                AssetType.Texture2D or AssetType.Sprite => Result<AssetPreviewContentDto>.Success(
+                    new AssetPreviewContentDto(
+                        Kind: AssetPreviewKind.Image,
+                        ContentType: ResolveImageContentType(normalizedPath),
+                        Content: content,
+                        PreferredDisplaySizeInBytes: content.LongLength)),
+                AssetType.TextAsset => Result<AssetPreviewContentDto>.Success(
+                    CreateTextAssetPreview(normalizedPath, content)),
+                _ => Result<AssetPreviewContentDto>.Failure(
+                    ApplicationErrors.BundlePreviewGenerationFailed(
+                        normalizedPath,
+                        "Replacement preview type is not supported."))
+            };
         }
         catch (OperationCanceledException)
         {
@@ -75,4 +82,140 @@ public sealed class FileSystemReplacementPreviewSourceProvider : IReplacementPre
             _ => "image/png"
         };
     }
+
+    private static AssetPreviewContentDto CreateTextAssetPreview(
+        string sourceFilePath,
+        byte[] content)
+    {
+        if (ShouldKeepBinary(sourceFilePath, content, out var textContent))
+        {
+            return new AssetPreviewContentDto(
+                Kind: AssetPreviewKind.Binary,
+                ContentType: BinaryContentType,
+                Content: content,
+                PreviewInfoItems:
+                [
+                    new AssetPreviewInfoItemDto(
+                        AssetPreviewInfoKey.SerializedObjectSize,
+                        AssetPreviewInfoValueKind.Integer,
+                        Int64Value: content.LongLength)
+                ],
+                PreferredDisplaySizeInBytes: content.LongLength);
+        }
+
+        return new AssetPreviewContentDto(
+            Kind: AssetPreviewKind.Text,
+            ContentType: TextContentType,
+            Content: Encoding.UTF8.GetBytes(NormalizeTextContent(textContent)),
+            PreviewInfoItems: Array.Empty<AssetPreviewInfoItemDto>(),
+            PreferredDisplaySizeInBytes: null);
+    }
+
+    private static bool ShouldKeepBinary(
+        string sourceFilePath,
+        byte[] content,
+        out string textContent)
+    {
+        textContent = string.Empty;
+        if (content.Length == 0)
+        {
+            return false;
+        }
+
+        if (!TryDecodeText(content, out textContent))
+        {
+            return true;
+        }
+
+        textContent = textContent.TrimStart('\uFEFF').TrimEnd('\0');
+        if (!IsReadableText(textContent))
+        {
+            return true;
+        }
+
+        var extension = Path.GetExtension(sourceFilePath);
+        return extension.Equals(".skel", StringComparison.OrdinalIgnoreCase) &&
+               !LooksLikeJsonObject(textContent);
+    }
+
+    private static bool TryDecodeText(byte[] content, out string textContent)
+    {
+        textContent = string.Empty;
+        try
+        {
+            if (content.Length >= 2 &&
+                content[0] == 0xFF &&
+                content[1] == 0xFE)
+            {
+                textContent = new UnicodeEncoding(
+                    bigEndian: false,
+                    byteOrderMark: true,
+                    throwOnInvalidBytes: true).GetString(content);
+                return true;
+            }
+
+            if (content.Length >= 2 &&
+                content[0] == 0xFE &&
+                content[1] == 0xFF)
+            {
+                textContent = new UnicodeEncoding(
+                    bigEndian: true,
+                    byteOrderMark: true,
+                    throwOnInvalidBytes: true).GetString(content);
+                return true;
+            }
+
+            textContent = new UTF8Encoding(
+                encoderShouldEmitUTF8Identifier: false,
+                throwOnInvalidBytes: true).GetString(content);
+            return true;
+        }
+        catch (DecoderFallbackException)
+        {
+            return false;
+        }
+    }
+
+    private static bool IsReadableText(string? textContent)
+    {
+        if (string.IsNullOrWhiteSpace(textContent))
+        {
+            return false;
+        }
+
+        foreach (var character in textContent)
+        {
+            if (character == '\uFFFD')
+            {
+                return false;
+            }
+
+            if (char.IsControl(character) &&
+                character is not ('\t' or '\n' or '\r'))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool LooksLikeJsonObject(string textContent)
+    {
+        foreach (var character in textContent)
+        {
+            if (char.IsWhiteSpace(character))
+            {
+                continue;
+            }
+
+            return character == '{';
+        }
+
+        return false;
+    }
+
+    private static string NormalizeTextContent(string textContent) =>
+        textContent.Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n');
 }

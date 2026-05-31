@@ -138,6 +138,7 @@ public sealed partial class AssetEditorWindow
 
     private bool ShouldHandleUserCloseRequest() =>
         ViewModel.Inspector.Preview.Image.IsSpriteEditModeActive ||
+        ViewModel.DocumentGroup.ActiveSpineGroupTab?.IsSpineEditModeActive == true ||
         (ShouldReturnDocumentsToMainWindowOnClose() && ViewModel.DocumentGroup.HasDocumentTabs);
 
     private bool ShouldReturnDocumentsToMainWindowOnClose() =>
@@ -155,6 +156,11 @@ public sealed partial class AssetEditorWindow
         try
         {
             if (!await TryExitSpriteEditModeAsync())
+            {
+                return;
+            }
+
+            if (!await TryExitSpineEditModeAsync())
             {
                 return;
             }

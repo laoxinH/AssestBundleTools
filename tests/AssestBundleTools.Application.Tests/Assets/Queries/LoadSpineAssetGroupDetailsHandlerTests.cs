@@ -87,6 +87,67 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
             "The diagnostic should identify the .skel unsupported feature.");
     }
 
+    public static async Task HandleAsync_ShouldUsePreviewSourceOverride_ForDraftAtlasText()
+    {
+        var workspaceId = new WorkspaceId("workspace-a");
+        var spineBundleId = new BundleId("bundle.spine");
+        var atlasAssetId = new AssetId("atlas-hero");
+        var spineAssets = CreateAssetList(
+            workspaceId,
+            spineBundleId,
+            "spine.ab",
+            CreateItem(spineBundleId, "skeleton-hero", "Assets/Hero/Hero.skel.bytes", AssetType.TextAsset),
+            CreateItem(spineBundleId, atlasAssetId.Value, "Assets/Hero/Hero.atlas", AssetType.TextAsset),
+            CreateItem(spineBundleId, "texture-hero", "Assets/Hero/Hero.png", AssetType.Texture2D));
+        GetAssetPreviewQuery? atlasQuery = null;
+        var previewHandler = new TestAssetPreviewHandler(query =>
+        {
+            if (query.AssetId.Equals(atlasAssetId))
+            {
+                atlasQuery = query;
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(query, """
+                    draft.png
+                    size: 128,64
+                    draft-head
+                      xy: 4, 8
+                      size: 16, 24
+                    """));
+            }
+
+            return query.AssetId.Value == "texture-hero"
+                ? Result<AssetPreviewDto>.Success(CreateImagePreview(query, 128, 64))
+                : Result<AssetPreviewDto>.Success(CreateBinaryPreview(query, [1, 2, 3]));
+        });
+        var handler = new LoadSpineAssetGroupDetailsHandler(
+            new TestWorkspaceSessionRegistry(workspaceId, [spineAssets]),
+            previewHandler);
+
+        var result = await handler.HandleAsync(CreateQuery(workspaceId, spineBundleId) with
+        {
+            PreviewSourceOverrides =
+            [
+                new AssetPreviewSourceOverrideDto(
+                    spineBundleId,
+                    atlasAssetId,
+                    @"C:\Imports\Hero.draft.atlas")
+            ]
+        });
+
+        TestAssert.True(result.IsSuccess, "Spine group details should load with draft atlas preview overrides.");
+        TestAssert.Equal(
+            @"C:\Imports\Hero.draft.atlas",
+            atlasQuery?.PreviewSourceOverride?.SourceFilePath,
+            "Atlas preview query should carry the draft source override.");
+        var page = TestAssert.Single(result.Value?.AtlasPages ?? Array.Empty<SpineAtlasPageDto>());
+        TestAssert.Equal("draft.png", page.Name, "Draft atlas text should drive parsed page names.");
+        TestAssert.Equal(128, page.Width, "Draft atlas text should drive parsed page width.");
+        TestAssert.Equal(64, page.Height, "Draft atlas text should drive parsed page height.");
+        var region = TestAssert.Single(page.Regions);
+        TestAssert.Equal("draft-head", region.Name, "Draft atlas text should drive parsed regions.");
+        TestAssert.Equal(4, region.X, "Draft atlas text should drive region coordinates.");
+        TestAssert.Equal(24, region.Height, "Draft atlas text should drive region size.");
+    }
+
     public static async Task HandleAsync_ShouldParseJsonSkeletonSummary_FromPreviewPipeline()
     {
         var workspaceId = new WorkspaceId("workspace-a");

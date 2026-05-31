@@ -108,6 +108,124 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Effective file preview should not rewrite original preview cache.");
     }
 
+    public static async Task HandleAsync_ShouldUsePreviewSourceOverride_ForTextAsset()
+    {
+        const string overrideFilePath = @"C:\Imports\hero.atlas";
+        const string atlasText = "hero.png\nsize: 256,128\nhead\n  xy: 0, 0\n  size: 32, 32\n";
+
+        var query = CreateQuery() with
+        {
+            PreviewSourceOverride = new AssetPreviewSourceOverrideDto(
+                new AssestBundleTools.Domain.Bundles.BundleId("bundle.001"),
+                new AssestBundleTools.Domain.Assets.AssetId("asset.001"),
+                overrideFilePath)
+        };
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        bundleCacheEntry = bundleCacheEntry with
+        {
+            Assets =
+            [
+                bundleCacheEntry.Assets[0] with
+                {
+                    AssetType = AssetType.TextAsset.ToString(),
+                    AssetTypeDisplayName = AssetType.TextAsset.ToString(),
+                    AssetPath = "Assets/Hero/Hero.atlas",
+                    AssetName = "Hero.atlas"
+                }
+            ]
+        };
+        var previewCacheStore = new TestPreviewCacheStore();
+        var decryptor = new TestAssetBundleDecryptor(CreatePassThroughDecryptorDescriptor());
+        var generator = new TestAssetPreviewGenerator();
+        var replacementPreviewSourceProvider = new TestReplacementPreviewSourceProvider(
+            Result<AssetPreviewContentDto>.Success(new AssetPreviewContentDto(
+                Kind: AssetPreviewKind.Text,
+                ContentType: "text/plain; charset=utf-8",
+                Content: Encoding.UTF8.GetBytes(atlasText))));
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService(),
+            replacementPreviewSourceProvider: replacementPreviewSourceProvider);
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Preview source overrides should provide draft TextAsset preview content.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(query.BundleId, preview.BundleId, "Override preview should keep the target bundle identity.");
+        TestAssert.Equal(query.AssetId, preview.AssetId, "Override preview should keep the target asset identity.");
+        TestAssert.Equal(AssetPreviewKind.Text, preview.Kind, "TextAsset overrides should expose text preview content.");
+        TestAssert.Equal(atlasText, preview.FullTextContent, "Override text should be available to structured text readers.");
+        TestAssert.Equal(overrideFilePath, preview.PreviewPayloadFilePath, "Override preview should expose the draft source path.");
+        TestAssert.Equal(1, replacementPreviewSourceProvider.LoadFilePreviewCallCount, "Override preview should read exactly one external file source.");
+        TestAssert.Equal(AssetType.TextAsset, replacementPreviewSourceProvider.LastTargetDetails?.AssetType, "Override target details should preserve the indexed asset type.");
+        TestAssert.Equal(0, decryptor.DecryptCallCount, "Override preview should not decrypt the original bundle.");
+        TestAssert.Equal(0, generator.GenerateCallCount, "Override preview should not generate original preview content.");
+        TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Override preview should not write the original preview cache.");
+    }
+
+    public static async Task HandleAsync_ShouldUseFileReplacementPreview_ForTextAsset()
+    {
+        const string replacementFilePath = @"C:\Imports\hero.atlas";
+        const string atlasText = "hero.png\nsize: 512,256\n";
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        bundleCacheEntry = bundleCacheEntry with
+        {
+            Assets =
+            [
+                bundleCacheEntry.Assets[0] with
+                {
+                    AssetType = AssetType.TextAsset.ToString(),
+                    AssetTypeDisplayName = AssetType.TextAsset.ToString(),
+                    AssetPath = "Assets/Hero/Hero.atlas",
+                    AssetName = "Hero.atlas"
+                }
+            ]
+        };
+        var previewCacheStore = new TestPreviewCacheStore();
+        var decryptor = new TestAssetBundleDecryptor(CreatePassThroughDecryptorDescriptor());
+        var generator = new TestAssetPreviewGenerator();
+        var replacementPreviewSourceProvider = new TestReplacementPreviewSourceProvider(
+            Result<AssetPreviewContentDto>.Success(new AssetPreviewContentDto(
+                Kind: AssetPreviewKind.Text,
+                ContentType: "text/plain; charset=utf-8",
+                Content: Encoding.UTF8.GetBytes(atlasText))));
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(
+            [
+                CreateAssetDetails(
+                    query,
+                    assetType: AssetType.TextAsset,
+                    fileReplacementSourceFileName: "hero.atlas",
+                    fileReplacementSourcePath: replacementFilePath)
+            ]),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService(),
+            replacementPreviewSourceProvider: replacementPreviewSourceProvider);
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "TextAsset file replacement should provide the effective preview payload.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(AssetPreviewKind.Text, preview.Kind, "TextAsset replacement preview should be text.");
+        TestAssert.Equal(atlasText, preview.FullTextContent, "TextAsset replacement preview should expose full text.");
+        TestAssert.Equal(replacementFilePath, preview.PreviewPayloadFilePath, "TextAsset replacement preview should expose the selected source path.");
+        TestAssert.Equal(1, replacementPreviewSourceProvider.LoadFilePreviewCallCount, "TextAsset replacement preview should load one file source.");
+        TestAssert.Equal(0, decryptor.DecryptCallCount, "TextAsset file preview should not decrypt the original bundle.");
+        TestAssert.Equal(0, generator.GenerateCallCount, "TextAsset file preview should not generate original preview content.");
+        TestAssert.Equal(0, previewCacheStore.SaveCallCount, "TextAsset file preview should not rewrite original preview cache.");
+    }
+
     public static async Task HandleAsync_ShouldUseWorkspaceReplacementPreview_WithTargetIdentity()
     {
         const string resolvedBundlePath = @"C:\Temp\characters.bundle";

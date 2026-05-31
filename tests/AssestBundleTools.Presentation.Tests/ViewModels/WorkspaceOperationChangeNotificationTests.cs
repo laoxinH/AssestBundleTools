@@ -946,6 +946,9 @@ public sealed class WorkspaceOperationChangeNotificationTests
             AssetType targetAssetType,
             CancellationToken cancellationToken = default) =>
             Task.FromResult<string?>(null);
+
+        public Task<string?> PickSpineReplacementSourceDirectoryAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
     }
 
     private sealed class NoopPathNavigationService : IPathNavigationService

@@ -1395,6 +1395,33 @@
   <data name="InspectorPanelView.SpineGroup.RuntimeAdapter.Unavailable.Format" xml:space="preserve">
     <value>{0} · 暂无适配器</value>
   </data>
+  <data name="InspectorPanelView.SpineEdit.Title" xml:space="preserve">
+    <value>Spine 组成文件</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.Description" xml:space="preserve">
+    <value>选择 skeleton、atlas 或贴图 page 来源，保存时会拆分为真实组成资产替换记录。</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.BatchMatchButton.Content" xml:space="preserve">
+    <value>文件夹匹配</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.SelectFileButton.Content" xml:space="preserve">
+    <value>选择文件</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.ChangedBadge" xml:space="preserve">
+    <value>已选择</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.NoParts.Text" xml:space="preserve">
+    <value>当前 Spine 组没有可替换的组成资产。</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.NoDraftSource.Text" xml:space="preserve">
+    <value>尚未选择替换来源</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.SelectedStatus.Text" xml:space="preserve">
+    <value>已加入草稿</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.UnchangedStatus.Text" xml:space="preserve">
+    <value>未修改</value>
+  </data>
   <data name="InspectorPanelView.SpineAnimationPreview.AnimationSelector.ToolTip" xml:space="preserve">
     <value>选择 Spine 动画</value>
   </data>
@@ -2433,6 +2460,9 @@
   <data name="InspectorPanelView.ApplySpriteEditButton.Content" xml:space="preserve">
     <value>保存 Sprite 编辑</value>
   </data>
+  <data name="InspectorPanelView.ApplySpineEditButton.Content" xml:space="preserve">
+    <value>保存 Spine 编辑</value>
+  </data>
   <data name="InspectorPanelView.ExitSpriteEditButton.Content" xml:space="preserve">
     <value>退出</value>
   </data>
@@ -2441,6 +2471,12 @@
   </data>
   <data name="InspectorPanelView.SpriteEdit.UnsavedDialog.Description" xml:space="preserve">
     <value>当前裁切框或 pivot 存在未保存修改。保存会追加一条 Sprite 编辑操作记录；不保存会丢弃本次编辑会话中的修改并返回预览。</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.UnsavedDialog.Title" xml:space="preserve">
+    <value>保存当前 Spine 编辑？</value>
+  </data>
+  <data name="InspectorPanelView.SpineEdit.UnsavedDialog.Description" xml:space="preserve">
+    <value>当前组成文件草稿存在未保存修改。保存会追加真实组成资产的替换记录；不保存会丢弃本次编辑会话中的草稿并返回预览。</value>
   </data>
   <data name="InspectorPanelView.UndoReplacementButton.Content" xml:space="preserve">
     <value>撤销</value>

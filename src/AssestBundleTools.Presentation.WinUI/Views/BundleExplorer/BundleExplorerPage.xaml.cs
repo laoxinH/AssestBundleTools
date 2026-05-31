@@ -472,6 +472,12 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             return;
         }
 
+        if (TryGetActiveSpineGroupDocumentTab(out var spineGroupTab))
+        {
+            await _assetEditorWindowCoordinator.OpenSpineGroupEditWindowAsync(spineGroupTab);
+            return;
+        }
+
         await ViewModel.ModifyFromFileReplacementSourceAsync();
     }
 
@@ -480,6 +486,13 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     {
         assetTab = ViewModel.DocumentWorkspace.ActiveAssetDocumentTab;
         return assetTab?.Details?.AssetType == AssetType.Sprite;
+    }
+
+    private bool TryGetActiveSpineGroupDocumentTab(
+        [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out SpineAssetGroupDocumentTabViewModel? spineGroupTab)
+    {
+        spineGroupTab = ViewModel.DocumentWorkspace.ActiveSpineGroupDocumentTab;
+        return spineGroupTab is not null;
     }
 
     bool IAssetDocumentTabDragHost.CanStartAssetDocumentTabDrag(AssetDocumentTabItemViewModel documentTab)

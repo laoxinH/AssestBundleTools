@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
 
@@ -11,4 +12,5 @@ public sealed record LoadSpineAssetGroupDetailsQuery(
     string WorkspaceKey,
     string WorkspaceDataRootPath,
     BundleId BundleId,
-    string GroupId);
+    string GroupId,
+    IReadOnlyList<AssetPreviewSourceOverrideDto>? PreviewSourceOverrides = null);

@@ -36,6 +36,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     private bool _canApplyReplacement;
     private bool _canUndoReplacement;
     private bool _canRedoReplacement;
+    private bool _canModify;
     private bool _hasSelection;
     private int _selectedSectionIndex;
     private readonly InspectorInformationCardPresenter _informationCardPresenter;
@@ -148,13 +149,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     public bool CanSelectFileReplacementSource
     {
         get => _canSelectFileReplacementSource;
-        set
-        {
-            if (SetProperty(ref _canSelectFileReplacementSource, value))
-            {
-                OnPropertyChanged(nameof(CanModify));
-            }
-        }
+        set => SetProperty(ref _canSelectFileReplacementSource, value);
     }
 
     public bool CanSelectReplacementSource
@@ -181,7 +176,11 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         set => SetProperty(ref _canRedoReplacement, value);
     }
 
-    public bool CanModify => CanSelectFileReplacementSource;
+    public bool CanModify
+    {
+        get => _canModify;
+        set => SetProperty(ref _canModify, value);
+    }
 
     /// <summary>
     /// 右侧详情区的页签位置属于页面级浏览状态，
@@ -292,6 +291,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         CanApplyReplacement = false;
         CanUndoReplacement = false;
         CanRedoReplacement = false;
+        CanModify = false;
         AssetDependencies.Clear();
         ReferencedByDependencies.Clear();
         DependencyClosureItems.Clear();
@@ -330,7 +330,8 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         IEnumerable<AssetDependencyViewModel> dependencyClosureItems,
         IEnumerable<BundleExternalDependencyViewModel> bundleExternalDependencies,
         bool canRedoReplacement = false,
-        IEnumerable<InspectorChangeRecordViewModel>? changeRecords = null)
+        IEnumerable<InspectorChangeRecordViewModel>? changeRecords = null,
+        bool? canModify = null)
     {
         AssetName = assetName;
         BundleDisplayName = bundleDisplayName;
@@ -351,6 +352,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         CanApplyReplacement = canApplyReplacement;
         CanUndoReplacement = canUndoReplacement;
         CanRedoReplacement = canRedoReplacement;
+        CanModify = canModify ?? canSelectFileReplacementSource;
 
         ReplaceCollection(AssetDependencies, assetDependencies);
         ReplaceCollection(ReferencedByDependencies, referencedByDependencies);

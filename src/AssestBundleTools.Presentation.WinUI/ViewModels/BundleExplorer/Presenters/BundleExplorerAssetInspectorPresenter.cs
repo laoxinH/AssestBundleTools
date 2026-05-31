@@ -188,7 +188,8 @@ internal sealed class BundleExplorerAssetInspectorPresenter
             canRedoReplacement: canRedoReplacement,
             changeRecords: _changeRecordPresenter.CreateChangeRecords(
                 details,
-                canManageChangeRecords));
+                canManageChangeRecords),
+            canModify: canEdit && !isBusy && details.CanReplaceFromFile);
     }
 
     public void SyncInspectorActionStates(
@@ -207,6 +208,7 @@ internal sealed class BundleExplorerAssetInspectorPresenter
             inspector.CanApplyReplacement = false;
             inspector.CanUndoReplacement = false;
             inspector.CanRedoReplacement = false;
+            inspector.CanModify = false;
             return;
         }
 
@@ -219,6 +221,7 @@ internal sealed class BundleExplorerAssetInspectorPresenter
                                          assetTab.PendingFileReplacementCandidate is not null);
         inspector.CanUndoReplacement = !isBusy && assetTab.CanEdit && HasAppliedReplacement(details);
         inspector.CanRedoReplacement = !isBusy && assetTab.CanEdit && details.CanRedoReplacement;
+        inspector.CanModify = !isBusy && assetTab.CanEdit && details.CanReplaceFromFile;
     }
 
     private AssetDependencyViewModel MapDependency(AssetDependencyDto dependency)

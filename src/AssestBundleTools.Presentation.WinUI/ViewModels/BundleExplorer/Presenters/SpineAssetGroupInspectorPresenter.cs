@@ -66,7 +66,8 @@ internal sealed class SpineAssetGroupInspectorPresenter
             assetDependencies: parts.Select(CreatePartDependency),
             referencedByDependencies: Array.Empty<AssetDependencyViewModel>(),
             dependencyClosureItems: Array.Empty<AssetDependencyViewModel>(),
-            bundleExternalDependencies: Array.Empty<BundleExternalDependencyViewModel>());
+            bundleExternalDependencies: Array.Empty<BundleExternalDependencyViewModel>(),
+            canModify: parts.Length > 0);
         groupTab.Inspector.SpineAtlasPageSelector.Apply(
             groupTab.AtlasPageOptions,
             groupTab.SelectedAtlasPageOption);
@@ -117,6 +118,9 @@ internal sealed class SpineAssetGroupInspectorPresenter
         inspector.CanApplyReplacement = false;
         inspector.CanUndoReplacement = false;
         inspector.CanRedoReplacement = false;
+        inspector.CanModify = !isBusy &&
+                              groupTab is not null &&
+                              EnumerateParts(groupTab.Item).Any();
     }
 
     private AssetDependencyViewModel CreatePartDependency(SpineAssetGroupPartDto part)

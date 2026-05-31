@@ -487,6 +487,9 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
             ReplacementSourceFilePickCount++;
             return Task.FromResult(ReplacementSourceFilePath);
         }
+
+        public Task<string?> PickSpineReplacementSourceDirectoryAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
     }
 
     private sealed class RecordingWorkspaceAssetOperationGateway : IWorkspaceAssetOperationGateway

@@ -12,6 +12,10 @@ internal static partial class ApplicationTestSuite
             ReplacementOperationRecorderTests.ReplaceAssetFromFileHandler_ShouldAppendOperationRecord_WhenWorkspaceStagingIsAvailable);
         await RunTestAsync(
             failures,
+            nameof(ReplacementOperationRecorderTests.ReplaceAssetFromFileHandler_ShouldAppendBatchAndRelations_WhenOperationContextIsProvided),
+            ReplacementOperationRecorderTests.ReplaceAssetFromFileHandler_ShouldAppendBatchAndRelations_WhenOperationContextIsProvided);
+        await RunTestAsync(
+            failures,
             nameof(ReplacementOperationRecorderTests.ReplaceAssetFromWorkspaceHandler_ShouldSupersedeLatestActiveReplacementRecord),
             ReplacementOperationRecorderTests.ReplaceAssetFromWorkspaceHandler_ShouldSupersedeLatestActiveReplacementRecord);
         await RunTestAsync(

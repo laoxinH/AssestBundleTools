@@ -54,7 +54,7 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
             code.IndexOf("private void OnModifyButtonClick", StringComparison.Ordinal)..
             code.IndexOf("private void OnPreviewSurfaceOpenPreviewLocationRequested", StringComparison.Ordinal)];
 
-        var fileGuardIndex = handler.IndexOf("ViewModel?.CanSelectFileReplacementSource == true", StringComparison.Ordinal);
+        var fileGuardIndex = handler.IndexOf("ViewModel?.CanModify == true", StringComparison.Ordinal);
         var fileInvokeIndex = handler.IndexOf("ModifyFromFileReplacementSourceRequested?.Invoke", StringComparison.Ordinal);
 
         Assert.DoesNotContain("ApplyReplacementRequested?.Invoke", handler);
@@ -326,8 +326,9 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
         Assert.Contains("CanSaveSpriteEdit", assetEditorXaml);
         Assert.Contains("CanUndoSpriteEdit", assetEditorXaml);
         Assert.Contains("CanRedoSpriteEdit", assetEditorXaml);
-        Assert.Contains("SpriteEditActionBarNormalVisibility", assetEditorXaml);
-        Assert.Contains("SpriteEditActionBarEditVisibility", assetEditorXaml);
+        Assert.Contains("NormalActionBarVisibility", assetEditorXaml);
+        Assert.Contains("SpriteEditActionBarVisibility", assetEditorXaml);
+        Assert.Contains("SpineEditActionBarVisibility", assetEditorXaml);
         Assert.DoesNotContain("x:Name=\"SelectReplacementButton\"", assetEditorXaml);
         Assert.DoesNotContain("x:Name=\"SelectFileReplacementButton\"", assetEditorXaml);
         Assert.DoesNotContain("x:Name=\"ApplyReplacementButton\"", assetEditorXaml);
@@ -380,10 +381,12 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
                 "AssetEditorWindow.DocumentTabs.cs"));
 
         Assert.Contains("private async Task<bool> CloseDocumentTabForUserRequestAsync", assetEditorTabCode);
-        Assert.Contains("TryResolveSpriteEditModeBeforeClosingDocumentTabAsync", assetEditorTabCode);
+        Assert.Contains("TryResolveEditModeBeforeClosingDocumentTabAsync", assetEditorTabCode);
         Assert.Contains("documentTab.AssetTab?.Inspector.Preview.Image.IsSpriteEditModeActive", assetEditorTabCode);
+        Assert.Contains("documentTab.SpineGroupTab?.IsSpineEditModeActive", assetEditorTabCode);
         Assert.Contains("await ViewModel.ActivateDocumentTabAsync(documentTab)", assetEditorTabCode);
         Assert.Contains("return await TryExitSpriteEditModeAsync();", assetEditorTabCode);
+        Assert.Contains("return await TryExitSpineEditModeAsync();", assetEditorTabCode);
         Assert.Contains("return await ViewModel.TryMoveDocumentToMainWindowAsync(documentTab);", assetEditorTabCode);
         Assert.Contains("await ViewModel.CloseDocumentTabAsync(documentTab);", assetEditorTabCode);
     }

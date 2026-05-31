@@ -5,6 +5,7 @@ using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
+using Microsoft.UI.Xaml;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
@@ -22,6 +23,7 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
     private WorkspaceSpinePreviewStateDto? _previewState;
     private string _displayName;
     private string _toolTipText;
+    private SpineAssetGroupEditDraftViewModel? _spineEditDraft;
 
     public SpineAssetGroupDocumentTabViewModel(
         SpineAssetGroupDto item,
@@ -98,6 +100,39 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
 
     public InspectorPanelViewModel Inspector { get; }
 
+    public SpineAssetGroupEditDraftViewModel? SpineEditDraft
+    {
+        get => _spineEditDraft;
+        private set
+        {
+            if (SetProperty(ref _spineEditDraft, value))
+            {
+                OnPropertyChanged(nameof(IsSpineEditModeActive));
+                OnPropertyChanged(nameof(SpineEditPanelVisibility));
+                OnPropertyChanged(nameof(SpineEditActionBarVisibility));
+                OnPropertyChanged(nameof(SpineEditNormalActionBarVisibility));
+                OnPropertyChanged(nameof(CanSaveSpineEdit));
+                OnPropertyChanged(nameof(CanUndoSpineEdit));
+                OnPropertyChanged(nameof(CanRedoSpineEdit));
+                PreviewStateChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+    }
+
+    public bool IsSpineEditModeActive => SpineEditDraft is not null;
+
+    public Visibility SpineEditPanelVisibility => IsSpineEditModeActive ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility SpineEditActionBarVisibility => IsSpineEditModeActive ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility SpineEditNormalActionBarVisibility => IsSpineEditModeActive ? Visibility.Collapsed : Visibility.Visible;
+
+    public bool CanSaveSpineEdit => SpineEditDraft?.HasChanges == true;
+
+    public bool CanUndoSpineEdit => SpineEditDraft?.CanUndo == true;
+
+    public bool CanRedoSpineEdit => SpineEditDraft?.CanRedo == true;
+
     public void ApplyGroup(SpineAssetGroupDto item)
     {
         ArgumentNullException.ThrowIfNull(item);
@@ -109,6 +144,35 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
         Item = item;
         DisplayName = ResolveDisplayName(item);
         ToolTipText = CreateToolTipText(item);
+    }
+
+    internal void StartSpineEditMode(SpineAssetGroupEditDraftViewModel editDraft)
+    {
+        ArgumentNullException.ThrowIfNull(editDraft);
+
+        SpineEditDraft = editDraft;
+    }
+
+    internal void ExitSpineEditMode(bool discardChanges)
+    {
+        SpineEditDraft = null;
+    }
+
+    internal void ClearDetails()
+    {
+        Details = null;
+        TexturePreview = null;
+        AnimationTextures = new Dictionary<string, SpineAnimationPreviewTextureState>(StringComparer.Ordinal);
+        ClearAtlasPageOptions();
+    }
+
+    internal void NotifySpineEditStateChanged()
+    {
+        SpineEditDraft?.NotifyStateChanged();
+        OnPropertyChanged(nameof(CanSaveSpineEdit));
+        OnPropertyChanged(nameof(CanUndoSpineEdit));
+        OnPropertyChanged(nameof(CanRedoSpineEdit));
+        PreviewStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     internal void ApplyDetails(

@@ -36,7 +36,20 @@ internal sealed class ReplacementEffectivePreviewResolver
         Func<GetAssetPreviewQuery, HashSet<string>, CancellationToken, Task<Result<AssetPreviewDto>>> loadPreviewAsync,
         CancellationToken cancellationToken)
     {
-        if (ParseAssetType(assetCacheEntry.AssetType) != AssetType.Texture2D ||
+        if (query.PreviewSourceOverride is { } previewSourceOverride &&
+            previewSourceOverride.BundleId.Equals(query.BundleId) &&
+            previewSourceOverride.AssetId.Equals(query.AssetId))
+        {
+            var overrideDetails = CreateTargetDetails(query, assetCacheEntry);
+            return await TryLoadFileReplacementPreviewAsync(
+                query,
+                overrideDetails,
+                previewSourceOverride.SourceFilePath,
+                cancellationToken);
+        }
+
+        var assetType = ParseAssetType(assetCacheEntry.AssetType);
+        if (!IsFileReplacementPreviewSupported(assetType) ||
             !_workspaceSessionRegistry.TryGetAssetDetails(
                 query.WorkspaceId,
                 query.BundleId,
@@ -223,4 +236,39 @@ internal sealed class ReplacementEffectivePreviewResolver
 
     private static string CreateTargetKey(string bundleId, string assetId) =>
         $"{bundleId}\u001f{assetId}";
+
+    private static bool IsFileReplacementPreviewSupported(AssetType assetType) =>
+        assetType is AssetType.Texture2D or AssetType.TextAsset;
+
+    private static AssetDetailsDto CreateTargetDetails(
+        GetAssetPreviewQuery query,
+        BundleIndexAssetCacheEntryDto assetCacheEntry)
+    {
+        var assetType = ParseAssetType(assetCacheEntry.AssetType);
+        return new AssetDetailsDto(
+            WorkspaceId: query.WorkspaceId,
+            BundleId: query.BundleId,
+            AssetId: query.AssetId,
+            Name: assetCacheEntry.AssetName,
+            AssetPath: assetCacheEntry.AssetPath,
+            ContainerPath: assetCacheEntry.ContainerPath ?? string.Empty,
+            AssetType: assetType,
+            SizeInBytes: assetCacheEntry.SizeInBytes,
+            PreferredDisplaySizeInBytes: assetCacheEntry.PreferredDisplaySizeInBytes,
+            PathId: assetCacheEntry.PathId,
+            IsModified: false,
+            CanExtract: assetCacheEntry.CanExtract,
+            CanReplaceFromFile: assetCacheEntry.CanReplace,
+            CanReplaceFromWorkspace: assetCacheEntry.CanReplace,
+            WorkspaceReplacementSourceBundleDisplayName: null,
+            WorkspaceReplacementSourceAssetName: null,
+            WorkspaceReplacementSourceAssetType: null,
+            FileReplacementSourceFileName: null,
+            FileReplacementSourcePath: null,
+            FileReplacementSourceAssetType: null,
+            LastExtractedAtUtc: null,
+            Dependencies: Array.Empty<AssetDependencyDto>(),
+            AssetTypeDisplayName: assetCacheEntry.AssetTypeDisplayName,
+            SerializedFileName: assetCacheEntry.SerializedFileName);
+    }
 }

@@ -96,18 +96,49 @@ internal sealed class BundleExplorerFileReplacementActionExecutor
             : null;
     }
 
+    public async Task<FileReplacementCandidateDto?> GetFileReplacementCandidateAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        BundleId targetBundleId,
+        AssetId targetAssetId,
+        string sourceFilePath,
+        Action<IReadOnlyList<AppError>> appendResultFailure)
+    {
+        ArgumentNullException.ThrowIfNull(workspaceSummary);
+        ArgumentNullException.ThrowIfNull(targetBundleId);
+        ArgumentNullException.ThrowIfNull(targetAssetId);
+        ArgumentNullException.ThrowIfNull(appendResultFailure);
+
+        if (string.IsNullOrWhiteSpace(sourceFilePath))
+        {
+            return null;
+        }
+
+        var result = await _workspaceAssetOperationGateway.GetFileReplacementCandidateAsync(
+            new GetFileReplacementCandidateQuery(
+                workspaceSummary.WorkspaceId,
+                targetBundleId,
+                targetAssetId,
+                sourceFilePath));
+
+        return TryGetValue(result, out var candidate, appendResultFailure)
+            ? candidate
+            : null;
+    }
+
     public async Task<bool> ApplyFileReplacementAsync(
         WorkspaceSummaryDto workspaceSummary,
         AssetDetailsDto details,
         FileReplacementCandidateDto candidate,
-        Action<IReadOnlyList<AppError>> appendResultFailure) =>
+        Action<IReadOnlyList<AppError>> appendResultFailure,
+        ReplacementOperationContextDto? operationContext = null) =>
         await ApplyFileReplacementAsync(
             workspaceSummary,
             details.BundleId,
             details.AssetId,
             details.Name,
             candidate,
-            appendResultFailure);
+            appendResultFailure,
+            operationContext);
 
     public async Task<bool> ApplyFileReplacementAsync(
         WorkspaceSummaryDto workspaceSummary,
@@ -115,7 +146,8 @@ internal sealed class BundleExplorerFileReplacementActionExecutor
         AssetId targetAssetId,
         string targetAssetName,
         FileReplacementCandidateDto candidate,
-        Action<IReadOnlyList<AppError>> appendResultFailure)
+        Action<IReadOnlyList<AppError>> appendResultFailure,
+        ReplacementOperationContextDto? operationContext = null)
     {
         var fileResult = await _workspaceAssetOperationGateway.ReplaceAssetFromFileAsync(
             new ReplaceAssetFromFileCommand(
@@ -125,7 +157,8 @@ internal sealed class BundleExplorerFileReplacementActionExecutor
                 candidate.SourceFilePath,
                 candidate.SourceAssetType,
                 workspaceSummary.WorkspaceKey,
-                workspaceSummary.WorkspaceDataRootPath));
+                workspaceSummary.WorkspaceDataRootPath,
+                operationContext));
 
         if (!TryGetValue(fileResult, out var fileReplacementResult, appendResultFailure))
         {

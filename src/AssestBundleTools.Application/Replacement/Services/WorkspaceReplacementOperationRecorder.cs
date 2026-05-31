@@ -53,7 +53,9 @@ public sealed class WorkspaceReplacementOperationRecorder
             CreatedAtUtc: result.ReplacedAtUtc,
             AppliedAtUtc: result.ReplacedAtUtc,
             CompletedAtUtc: result.ReplacedAtUtc,
-            SupersedesOperationId: FindLatestActiveReplacementOperationId(changeSet, targetDetails.BundleId.Value, targetDetails.AssetId.Value));
+            BatchId: command.OperationContext?.BatchId,
+            SupersedesOperationId: FindLatestActiveReplacementOperationId(changeSet, targetDetails.BundleId.Value, targetDetails.AssetId.Value),
+            Relations: command.OperationContext?.Relations);
 
         store.Save(_operationLogService.AppendOperation(changeSet, appendRequest));
     }
