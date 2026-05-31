@@ -242,7 +242,9 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
 
     public async Task RefreshAssetDocumentTabDetailsAsync(AssetDocumentTabViewModel? assetTab)
     {
-        if (assetTab is null || _workspaceShell.WorkspaceSummary is not { } workspaceSummary)
+        if (assetTab is null ||
+            !TryResolveOwnerBundleTab(assetTab, out _) ||
+            _workspaceShell.WorkspaceSummary is not { } workspaceSummary)
         {
             return;
         }
@@ -254,7 +256,8 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         var detailsResult = await _backgroundTaskRunner.RunAsync(
             token => _workspaceAssetInspectionGateway.GetAssetDetailsAsync(detailsQuery, token));
 
-        if (!TryGetValue(detailsResult, out var details))
+        if (!TryResolveOwnerBundleTab(assetTab, out _) ||
+            !TryGetValue(detailsResult, out var details))
         {
             return;
         }
@@ -280,6 +283,17 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
         {
             _documentWorkspace.NotifyAssetDocumentHostStateChanged();
         }
+    }
+
+    private bool TryResolveOwnerBundleTab(
+        AssetDocumentTabViewModel assetTab,
+        [NotNullWhen(true)] out BundleDocumentTabViewModel? bundleTab)
+    {
+        ArgumentNullException.ThrowIfNull(assetTab);
+
+        bundleTab = _documentWorkspace.OpenBundleTabs
+            .FirstOrDefault(tab => tab.AssetTabs.Contains(assetTab));
+        return bundleTab is not null;
     }
 
     public async Task RefreshAssetListEntryDetailsAsync(

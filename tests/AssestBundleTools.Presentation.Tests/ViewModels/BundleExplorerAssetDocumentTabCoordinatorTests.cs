@@ -230,6 +230,47 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
     }
 
     [Fact]
+    public async Task RefreshAssetDocumentTabDetailsAsync_ShouldNotClearPreview_WhenTabWasDetachedDuringRefresh()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-ui");
+        var assetId = new AssetId("asset-button");
+        var context = CreateCoordinatorContext(workspaceId, "DetachedDuringRefresh");
+        var currentDetails = CreateAssetDetails(workspaceId, bundleId, assetId);
+        var refreshedDetails = currentDetails with
+        {
+            SpriteEditAppliedAtUtc = DateTimeOffset.UtcNow
+        };
+        var detailsCanFinish = new TaskCompletionSource<Result<AssetDetailsDto>>();
+        var previewQueryAssetIds = new List<AssetId>();
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            GetAssetDetailsHandler = _ => detailsCanFinish.Task,
+            GetAssetPreviewHandler = query =>
+            {
+                previewQueryAssetIds.Add(query.AssetId);
+                return Task.FromResult(CreateSummaryPreviewResult(query));
+            }
+        };
+        var coordinator = CreateCoordinator(context, inspectionGateway);
+        var assetTab = context.HostCoordinator.CreateAssetDocumentTab(bundleId, assetId, "Button");
+        assetTab.ApplyDetails(currentDetails);
+        assetTab.Inspector.ShowPreviewMessage("loaded");
+        context.BundleTab.AddAssetTab(assetTab, activate: true);
+
+        var refreshTask = coordinator.RefreshAssetDocumentTabDetailsAsync(assetTab);
+        await WaitUntilAsync(() => context.BackgroundTaskRunner.RunCallCount == 1);
+        Assert.True(context.BundleTab.DetachAssetTab(assetTab));
+
+        detailsCanFinish.SetResult(Result<AssetDetailsDto>.Success(refreshedDetails));
+        await refreshTask;
+
+        Assert.Equal("loaded", assetTab.Inspector.Preview.PreviewStatusText);
+        Assert.Equal(currentDetails, assetTab.Details);
+        Assert.Empty(previewQueryAssetIds);
+    }
+
+    [Fact]
     public void AssetDocumentTabPreviewImageDisplayOptions_ShouldRequestBrowserStatePersistence_WhenUserChangesModes()
     {
         var context = CreateCoordinatorContext(WorkspaceId.New(), "PreviewOptionsPersistence");

@@ -470,54 +470,6 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         OnPropertyChanged(nameof(WindowTitle));
     }
 
-    private async Task RefreshAssetDocumentDetailsAsync(AssetDocumentTabViewModel assetTab)
-    {
-        if (_workspaceShell.WorkspaceSummary is not { } workspaceSummary)
-        {
-            return;
-        }
-
-        var detailsResult = await _backgroundTaskRunner.RunAsync(
-            token => _workspaceAssetInspectionGateway.GetAssetDetailsAsync(
-                new GetAssetDetailsQuery(
-                    WorkspaceId: workspaceSummary.WorkspaceId,
-                    BundleId: assetTab.BundleId,
-                    AssetId: assetTab.AssetId),
-                token));
-        if (TryGetValue(detailsResult, out var details))
-        {
-            var shouldReloadPreview = AssetPreviewInvalidationPolicy.HasEffectivePreviewProjectionChanged(
-                assetTab.Details,
-                details);
-            ReapplyAssetDocumentState(assetTab, details);
-            if (shouldReloadPreview)
-            {
-                if (ReferenceEquals(assetTab, DocumentGroup.ActiveAssetTab))
-                {
-                    _assetPreviewLoadCoordinator.ReloadForegroundPreview(assetTab);
-                }
-                else
-                {
-                    _assetPreviewLoadCoordinator.InvalidatePreview(assetTab);
-                }
-            }
-        }
-    }
-
-    private async Task RefreshSpineGroupDocumentDetailsAsync(SpineAssetGroupDocumentTabViewModel spineGroupTab)
-    {
-        var loadResult = await _spineGroupDetailsLoader.LoadAsync(spineGroupTab);
-        if (loadResult is not null)
-        {
-            spineGroupTab.ApplyDetails(
-                loadResult.Details,
-                loadResult.TexturePreview,
-                loadResult.AnimationTextures);
-        }
-
-        ReapplySpineGroupDocumentState(spineGroupTab);
-    }
-
     private void SyncActiveDocumentState()
     {
         foreach (var assetTab in DocumentGroup.AssetTabs)

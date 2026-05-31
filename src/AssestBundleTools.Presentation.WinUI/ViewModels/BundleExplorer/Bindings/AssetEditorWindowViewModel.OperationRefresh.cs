@@ -1,4 +1,6 @@
 using AssestBundleTools.Presentation.WinUI.Services;
+using AssestBundleTools.Application.Assets.Queries;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
@@ -30,6 +32,70 @@ public sealed partial class AssetEditorWindowViewModel
         {
             await RefreshSpineGroupDocumentDetailsAsync(spineGroupTab);
         }
+    }
+
+    private async Task RefreshAssetDocumentDetailsAsync(AssetDocumentTabViewModel assetTab)
+    {
+        if (!DocumentGroup.AssetTabs.Contains(assetTab) ||
+            _workspaceShell.WorkspaceSummary is not { } workspaceSummary)
+        {
+            return;
+        }
+
+        var detailsResult = await _backgroundTaskRunner.RunAsync(
+            token => _workspaceAssetInspectionGateway.GetAssetDetailsAsync(
+                new GetAssetDetailsQuery(
+                    WorkspaceId: workspaceSummary.WorkspaceId,
+                    BundleId: assetTab.BundleId,
+                    AssetId: assetTab.AssetId),
+                token));
+        if (!DocumentGroup.AssetTabs.Contains(assetTab) ||
+            !TryGetValue(detailsResult, out var details))
+        {
+            return;
+        }
+
+        var shouldReloadPreview = AssetPreviewInvalidationPolicy.HasEffectivePreviewProjectionChanged(
+            assetTab.Details,
+            details);
+        ReapplyAssetDocumentState(assetTab, details);
+        if (!shouldReloadPreview)
+        {
+            return;
+        }
+
+        if (ReferenceEquals(assetTab, DocumentGroup.ActiveAssetTab))
+        {
+            _assetPreviewLoadCoordinator.ReloadForegroundPreview(assetTab);
+        }
+        else
+        {
+            _assetPreviewLoadCoordinator.InvalidatePreview(assetTab);
+        }
+    }
+
+    private async Task RefreshSpineGroupDocumentDetailsAsync(SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        if (!DocumentGroup.SpineGroupTabs.Contains(spineGroupTab))
+        {
+            return;
+        }
+
+        var loadResult = await _spineGroupDetailsLoader.LoadAsync(spineGroupTab);
+        if (!DocumentGroup.SpineGroupTabs.Contains(spineGroupTab))
+        {
+            return;
+        }
+
+        if (loadResult is not null)
+        {
+            spineGroupTab.ApplyDetails(
+                loadResult.Details,
+                loadResult.TexturePreview,
+                loadResult.AnimationTextures);
+        }
+
+        ReapplySpineGroupDocumentState(spineGroupTab);
     }
 
     private static bool SpineGroupContainsAsset(

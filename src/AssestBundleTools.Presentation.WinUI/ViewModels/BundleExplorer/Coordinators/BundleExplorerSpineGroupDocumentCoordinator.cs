@@ -452,7 +452,8 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
         var expectedBundleId = spineGroupTab.BundleId;
         var expectedGroup = spineGroupTab.Item;
         var loadResult = await _spineGroupDetailsLoader.LoadAsync(spineGroupTab);
-        if (!expectedBundleId.Equals(spineGroupTab.BundleId) ||
+        if (!bundleTab.SpineGroupTabs.Contains(spineGroupTab) ||
+            !expectedBundleId.Equals(spineGroupTab.BundleId) ||
             !string.Equals(expectedGroupId, spineGroupTab.GroupId, StringComparison.Ordinal) ||
             !ReferenceEquals(expectedGroup, spineGroupTab.Item) ||
             (requireActive && !ReferenceEquals(bundleTab.ActiveSpineGroupTab, spineGroupTab)))
