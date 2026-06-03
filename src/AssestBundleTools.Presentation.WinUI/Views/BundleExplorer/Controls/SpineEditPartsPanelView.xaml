@@ -82,7 +82,8 @@
 
             <ScrollViewer
                 Grid.Row="2"
-                MaxHeight="260"
+                MaxHeight="170"
+                MinHeight="0"
                 VerticalScrollBarVisibility="Auto"
                 VerticalScrollMode="Enabled"
                 Visibility="{x:Bind ViewModel.PartsVisibility, Mode=OneWay}"

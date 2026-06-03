@@ -120,15 +120,16 @@
 
             <Grid MinHeight="0">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" MinHeight="340" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <controls:InspectorPreviewSurfaceView
-                    MinHeight="0"
+                    MinHeight="340"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
+                    AvailablePreviewSurfaceMinHeight="340"
                     FixedPreviewSurfaceHeight="520"
                     UseAvailablePreviewSpace="True"
                     ViewModel="{x:Bind ViewModel.Inspector, Mode=OneWay}"
