@@ -143,14 +143,6 @@
                     Visibility="{x:Bind ViewModel.Inspector.Preview.Image.SpriteEditGeometryPanelVisibility, Mode=OneWay}"
                     ViewModel="{x:Bind ViewModel.Inspector.Preview.Image, Mode=OneWay}" />
 
-                <controls:SpineEditPartsPanelView
-                    Grid.Row="1"
-                    Margin="0,8,0,0"
-                    Visibility="{x:Bind ViewModel.SpineEditPanelVisibility, Mode=OneWay}"
-                    ViewModel="{x:Bind ViewModel.DocumentGroup.ActiveSpineGroupTab.SpineEditDraft, Mode=OneWay}"
-                    BatchMatchRequested="OnSpineEditBatchMatchRequested"
-                    PartFileSelectionRequested="OnSpineEditPartFileSelectionRequested" />
-
                 <Border
                     Grid.Row="2"
                     Margin="0,8,0,0"
@@ -376,6 +368,8 @@
                 <controls:InspectorPanelView
                     ShowActionBar="False"
                     ShowDetailsPreview="False"
+                    SpineEditDraft="{x:Bind ViewModel.ActiveSpineEditDraft, Mode=OneWay}"
+                    SpineEditPanelVisibility="{x:Bind ViewModel.SpineEditPanelVisibility, Mode=OneWay}"
                     ViewModel="{x:Bind ViewModel.Inspector, Mode=OneWay}"
                     ApplyReplacementRequested="OnInspectorApplyReplacementRequested"
                     ExtractRequested="OnInspectorExtractRequested"
@@ -385,6 +379,8 @@
                     DeleteChangeRecordRequested="OnInspectorDeleteChangeRecordRequested"
                     ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested"
                     SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
+                    SpineEditBatchMatchRequested="OnSpineEditBatchMatchRequested"
+                    SpineEditPartFileSelectionRequested="OnSpineEditPartFileSelectionRequested"
                     SpriteTextureReplacementRequested="OnInspectorSpriteTextureReplacementRequested"
                     UndoReplacementRequested="OnInspectorUndoReplacementRequested"
                     SpineAtlasPageSelectionRequested="OnInspectorSpineAtlasPageSelectionRequested" />

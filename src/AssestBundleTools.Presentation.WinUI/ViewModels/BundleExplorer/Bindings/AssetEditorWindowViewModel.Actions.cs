@@ -175,6 +175,7 @@ public sealed partial class AssetEditorWindowViewModel
                 _localizationService));
         }
 
+        spineGroupTab.Inspector.SelectReplacementSection();
         NotifyActionStates();
         NotifyActionBarStates();
         OnPropertyChanged(nameof(Inspector));

@@ -76,7 +76,7 @@
 3. 右侧 `信息区` 固定承载内层分段，宽度可调整，但不应挤压到无法阅读信息卡。
 4. 顶部资产文档标签组只表示“打开了哪些资源”。内层分段只表示“当前资源看哪类信息”，二者视觉层级必须明显区分。
 5. 窗口过窄时，优先保持预览 / 编辑区域可操作；信息区允许进入最小宽度或后续折叠为抽屉式区域。
-6. 默认资源编辑窗口尺寸下，左侧主操作区必须优先保留可见预览画布。Spine 编辑态的组成文件替换区只能作为预览下方的受限滚动区展示，不能用 `Auto` 内容高度把动画预览视口压缩到不可见。
+6. 默认资源编辑窗口尺寸下，左侧主操作区必须优先保留可见预览画布。Spine 编辑态的组成文件替换区归入右侧信息区 `替换` 分段；左侧不再用 `Auto` 组成文件面板参与主操作区测量，避免把动画预览视口压缩到不可见。
 
 ## 7. 预览 / 编辑区域
 
@@ -90,9 +90,9 @@
 5. AudioClip：保留试听工具面，后续波形或幅度摘要也应在此区域扩展。
 6. Spine 资源组：当前已在主窗口组文档中展示 JSON skeleton 轻量结构摘要、atlas region overlay、atlas page 选择器和结构化诊断，诊断覆盖 page 未匹配 Texture2D、Texture2D 预览不可用、page 尺寸与图片尺寸不一致等情况；实验性 JSON fallback 动画预览当前支持多 skin 的 region attachment、bone rotate / translate / scale、slot attachment、draw order 和 slot color / rgb / rgba / alpha 时间线，linked mesh、权重顶点、deform、slot 双颜色、event、IK / transform / path / physics 约束、Bezier 曲线等尚未完整解释的特性仍投影为结构化诊断。SpineViewer 只作为基础播放、动画 / skin 切换和导出边界参考，本项目不复刻其完整查看器、调试渲染、多轨道混合、动态壁纸、PSD 或编辑器级能力。当前已完成 V38 / V42 JSON 与 binary skeleton adapter、runtime playback session、D3D11 渲染后端和固定 FPS 帧序列采样基础；Presentation 仍只消费 Application DTO / draw command / Texture2D 预览载荷，具体 runtime 对象必须封装在 Infrastructure adapter 内。播放体验层当前提供动画选择、真实 skin 切换、播放速度、进度拖动、播放 / 暂停、上一帧 / 下一帧、重播和 setup pose；后续优先把这些基础能力稳定化并产品化导出，不主动扩展更多官方 runtime 版本或复杂 runtime 行为。当前 Application 已提供 `LoadSpineAssetGroupsQuery / LoadSpineAssetGroupDetailsQuery` 的轻量组读模型，主窗口资产窗格已接入 `资源 / Spine 组` 切换用于浏览组摘要。选择 Spine 组会在主窗口右侧复用现有资源详情窗格打开组文档，身份为 `BundleId + GroupId`，检查器展示组摘要、组成资产跳转、skeleton 摘要、诊断摘要、atlas page / region、page 选择器、当前 page 的 overlay、runtime adapter 状态和可用时的实验性动画预览；Spine 组文档可与普通资产文档混在同一个资源文档标签组中，并可跟随统一资源编辑窗口进行会话内拖出、组合和放回。
 
-Spine 修改第一阶段定位为“资源组替换装配台”，不是骨骼 / 动画编辑器。用户从 Spine 组行或组文档点击 `修改` 时，应打开或激活资源编辑窗口并进入 Spine 编辑态；左侧继续保留动画预览画布和基础播放工具，预览下方、功能按钮上方扩展一个独立的组成文件替换区，按 `Skeleton`、`Atlas`、`Texture pages` 三组展示当前组成资产、草稿来源、匹配状态和诊断。组成文件替换区在默认窗口高度下应露出标题和主要条目，但列表本身必须拥有内部滚动上限，把高度让给动画预览画布。`Skeleton` 支持选择 `.skel / .json / .bytes` 等 skeleton 文件，`Atlas` 支持选择 atlas 文本文件，`Texture pages` 支持逐 page 选择图片文件，并提供按文件夹批量匹配 skeleton、atlas 和 page 图片的入口。选择文件后只进入当前 Spine 编辑草稿并立即以“原始组 + 当前草稿替换”重新投影预览；在点击保存前，不生成工作区操作记录，也不改变组成资产的已应用替换状态。编辑态功能区只显示 `保存 / 退出 / 撤销 / 重做`：保存仅在草稿相对上次保存基线存在修改时启用，保存时把本次草稿拆成目标为真实组成资产的多条 `ReplaceFromFile` 操作记录；退出若存在未保存草稿，复用保存 / 丢弃 / 取消确认；撤销和重做只重放当前编辑会话内最多 20 步的临时组成文件选择历史。
+Spine 修改第一阶段定位为“资源组替换装配台”，不是骨骼 / 动画编辑器。用户从 Spine 组行或组文档点击 `修改` 时，应打开或激活资源编辑窗口并进入 Spine 编辑态；左侧继续保留动画预览画布和基础播放工具，右侧信息区自动选中 `替换` 分段，并在该分段内展示组成文件替换装配台，按 `Skeleton`、`Atlas`、`Texture pages` 三组展示当前组成资产、草稿来源、匹配状态和诊断。组成文件替换装配台跟随信息区滚动，不再位于预览下方，也不得通过独立高度测量挤压动画预览画布；默认窗口高度下应露出标题和主要条目。`Skeleton` 支持选择 `.skel / .json / .bytes` 等 skeleton 文件，`Atlas` 支持选择 atlas 文本文件，`Texture pages` 支持逐 page 选择图片文件，并提供按文件夹批量匹配 skeleton、atlas 和 page 图片的入口。选择文件后只进入当前 Spine 编辑草稿并立即以“原始组 + 当前草稿替换”重新投影预览；在点击保存前，不生成工作区操作记录，也不改变组成资产的已应用替换状态。编辑态功能区只显示 `保存 / 退出 / 撤销 / 重做`：保存仅在草稿相对上次保存基线存在修改时启用，保存时把本次草稿拆成目标为真实组成资产的多条 `ReplaceFromFile` 操作记录；退出若存在未保存草稿，复用保存 / 丢弃 / 取消确认；撤销和重做只重放当前编辑会话内最多 20 步的临时组成文件选择历史。
 
-Spine 编辑保存时不得把整个 Spine 组伪装成一个可写 Unity 资产。`Texture2D` page、atlas `TextAsset`、skeleton `TextAsset` 仍分别形成独立替换记录，并共享同一个 `batchId / relationId`，使 Spine 组 `变更` 分段能投影为同一组 Spine 修改卡片，同时组成资产自己的详情页也能看到真实目标记录并支持撤销 / 重做 / 删除。保存后的有效预览通过工作区操作记录物化出的组成资产有效载荷重新生成：atlas parser、runtime adapter、D3D / Win2D 播放面仍只消费 Application 层聚合 DTO、预览 sidecar 和图片载荷，不在 Presentation 中直接读取资源包、解析外部文件或持有 runtime 对象。若草稿组合存在缺失 page、atlas 与图片尺寸不一致、skeleton 与 atlas 不匹配或 runtime adapter 不支持等问题，编辑区和右侧 `替换` 分段都应展示结构化诊断，并允许用户继续替换缺失组成文件；富预览必须稳定回退为结构化摘要，不能显示空白。
+Spine 编辑保存时不得把整个 Spine 组伪装成一个可写 Unity 资产。`Texture2D` page、atlas `TextAsset`、skeleton `TextAsset` 仍分别形成独立替换记录，并共享同一个 `batchId / relationId`，使 Spine 组 `变更` 分段能投影为同一组 Spine 修改卡片，同时组成资产自己的详情页也能看到真实目标记录并支持撤销 / 重做 / 删除。保存后的有效预览通过工作区操作记录物化出的组成资产有效载荷重新生成：atlas parser、runtime adapter、D3D / Win2D 播放面仍只消费 Application 层聚合 DTO、预览 sidecar 和图片载荷，不在 Presentation 中直接读取资源包、解析外部文件或持有 runtime 对象。若草稿组合存在缺失 page、atlas 与图片尺寸不一致、skeleton 与 atlas 不匹配或 runtime adapter 不支持等问题，左侧预览区和右侧 `替换` 分段都应展示结构化诊断，并允许用户继续替换缺失组成文件；富预览必须稳定回退为结构化摘要，不能显示空白。
 
 Spine 动画预览的长期播放路线不再继续扩大整段 `sampled frames` 和全量 D3D batch 预热，当前实时预览已接入 Application 定义、Infrastructure 实现的 runtime playback session；Presentation 按真实 elapsed delta 计算播放时间，并只接收当前帧 DTO 进行渲染。JSON fallback 也通过 sampled fallback playback session 接入同一 Presentation 路径。详细契约见 [spine-runtime-playback-session.md](spine-runtime-playback-session.md)。
 
@@ -116,7 +116,7 @@ Spine 动画预览的长期播放路线不再继续扩大整段 `sampled frames`
 - 窗口模式左下功能区不再常驻展示 `移动到主窗口`、`全部移动到主窗口`、`在新窗口打开` 这类宿主搬运按钮；标签 / 标签组搬运继续通过拖拽、标签上下文命令和关闭策略承载，避免编辑动作区被窗口管理命令挤占。
 - 功能区采用与主窗口检查器一致的轻量标签式按钮样式，不再使用独立卡片边框包裹整组命令；普通预览态只保留高频 `提取 / 修改` 入口，替换应用、操作记录撤销 / 重做和删除继续在右侧 `替换 / 变更` 分段承载，避免同一动作在窗口底部重复出现。
 - Sprite 编辑态功能区只显示 `保存 / 退出 / 撤销 / 重做`：保存只在有未保存几何时启用，退出在有未保存几何时弹出保存 / 丢弃 / 取消确认，撤销和重做只重放当前编辑会话的临时几何历史，历史上限为 20 步。用户直接关闭资源编辑窗口或关闭处于 Sprite 编辑态的资源标签时，也必须先复用同一未保存确认；选择保存或丢弃后先退出编辑态回到预览状态，再继续窗口关闭、标签关闭或放回主窗口流程，选择取消则保持编辑态并取消本次关闭。
-- Spine 编辑态功能区同样只显示 `保存 / 退出 / 撤销 / 重做`：保存把当前组成文件草稿拆分成真实组成资产的替换操作记录，退出在有未保存草稿时确认保存或丢弃，撤销和重做只作用于当前编辑会话的文件选择草稿历史，不提前写入工作区操作记录。组成文件选择、批量匹配、匹配诊断和当前草稿摘要应放在预览 / 编辑区域内的独立替换区或右侧 `替换` 分段，不塞进底部功能区。
+- Spine 编辑态功能区同样只显示 `保存 / 退出 / 撤销 / 重做`：保存把当前组成文件草稿拆分成真实组成资产的替换操作记录，退出在有未保存草稿时确认保存或丢弃，撤销和重做只作用于当前编辑会话的文件选择草稿历史，不提前写入工作区操作记录。组成文件选择、批量匹配、匹配诊断和当前草稿摘要应放在右侧信息区 `替换` 分段，不塞进底部功能区。
 - 功能区命令仍走现有 Application 用例和 Presentation 协调器，不绕过替换 / 保存 / 预览管线。
 
 ## 9. 信息区

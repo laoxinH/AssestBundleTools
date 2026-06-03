@@ -37,6 +37,20 @@ public sealed partial class InspectorPanelView : UserControl
             typeof(InspectorPanelView),
             new PropertyMetadata(true, OnLayoutOptionPropertyChanged));
 
+    public static readonly DependencyProperty SpineEditDraftProperty =
+        DependencyProperty.Register(
+            nameof(SpineEditDraft),
+            typeof(SpineAssetGroupEditDraftViewModel),
+            typeof(InspectorPanelView),
+            new PropertyMetadata(null, OnLayoutOptionPropertyChanged));
+
+    public static readonly DependencyProperty SpineEditPanelVisibilityProperty =
+        DependencyProperty.Register(
+            nameof(SpineEditPanelVisibility),
+            typeof(Visibility),
+            typeof(InspectorPanelView),
+            new PropertyMetadata(Visibility.Collapsed, OnLayoutOptionPropertyChanged));
+
     public InspectorPanelView()
     {
         InitializeComponent();
@@ -67,6 +81,18 @@ public sealed partial class InspectorPanelView : UserControl
         set => SetValue(ShowActionBarProperty, value);
     }
 
+    public SpineAssetGroupEditDraftViewModel? SpineEditDraft
+    {
+        get => (SpineAssetGroupEditDraftViewModel?)GetValue(SpineEditDraftProperty);
+        set => SetValue(SpineEditDraftProperty, value);
+    }
+
+    public Visibility SpineEditPanelVisibility
+    {
+        get => (Visibility)GetValue(SpineEditPanelVisibilityProperty);
+        set => SetValue(SpineEditPanelVisibilityProperty, value);
+    }
+
     public Visibility DetailsPreviewVisibility => ShowDetailsPreview ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility ActionBarVisibility => ShowActionBar ? Visibility.Visible : Visibility.Collapsed;
@@ -92,6 +118,10 @@ public sealed partial class InspectorPanelView : UserControl
     public event EventHandler<ResolvedAssetOpenRequestedEventArgs>? ResolvedAssetOpenRequested;
 
     public event EventHandler<SpineAtlasPageSelectionRequestedEventArgs>? SpineAtlasPageSelectionRequested;
+
+    public event EventHandler<SpineEditPartFileSelectionRequestedEventArgs>? SpineEditPartFileSelectionRequested;
+
+    public event EventHandler? SpineEditBatchMatchRequested;
 
     private void OnExtractButtonClick(object sender, RoutedEventArgs e)
     {
@@ -160,6 +190,18 @@ public sealed partial class InspectorPanelView : UserControl
         SpineAtlasPageSelectionRequestedEventArgs e)
     {
         SpineAtlasPageSelectionRequested?.Invoke(this, e);
+    }
+
+    private void OnSpineEditPartFileSelectionRequested(
+        object? sender,
+        SpineEditPartFileSelectionRequestedEventArgs e)
+    {
+        SpineEditPartFileSelectionRequested?.Invoke(this, e);
+    }
+
+    private void OnSpineEditBatchMatchRequested(object? sender, EventArgs e)
+    {
+        SpineEditBatchMatchRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnResolvedAssetOpenButtonClick(object sender, RoutedEventArgs e)

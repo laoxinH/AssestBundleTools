@@ -80,80 +80,74 @@
                 TextWrapping="WrapWholeWords"
                 Visibility="{x:Bind ViewModel.EmptyVisibility, Mode=OneWay}" />
 
-            <ScrollViewer
+            <ItemsControl
                 Grid.Row="2"
-                MaxHeight="170"
-                MinHeight="0"
-                VerticalScrollBarVisibility="Auto"
-                VerticalScrollMode="Enabled"
-                Visibility="{x:Bind ViewModel.PartsVisibility, Mode=OneWay}"
-                ZoomMode="Disabled">
-                <ItemsControl ItemsSource="{x:Bind ViewModel.Parts, Mode=OneWay}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="viewModels:SpineAssetGroupEditPartViewModel">
-                            <Border
-                                Margin="0,0,0,8"
-                                Padding="10"
-                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                BorderThickness="1"
-                                CornerRadius="8">
-                                <Grid ColumnSpacing="10">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
+                ItemsSource="{x:Bind ViewModel.Parts, Mode=OneWay}"
+                Visibility="{x:Bind ViewModel.PartsVisibility, Mode=OneWay}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:SpineAssetGroupEditPartViewModel">
+                        <Border
+                            Margin="0,0,0,8"
+                            Padding="10"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
 
-                                    <StackPanel Spacing="4">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                <StackPanel Spacing="4">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock
+                                            Style="{StaticResource SpineEditPartRoleTextStyle}"
+                                            Text="{x:Bind RoleText, Mode=OneWay}" />
+                                        <Border
+                                            Padding="7,2"
+                                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                            CornerRadius="9"
+                                            Visibility="{x:Bind ChangedBadgeVisibility, Mode=OneWay}">
                                             <TextBlock
-                                                Style="{StaticResource SpineEditPartRoleTextStyle}"
-                                                Text="{x:Bind RoleText, Mode=OneWay}" />
-                                            <Border
-                                                Padding="7,2"
-                                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                                CornerRadius="9"
-                                                Visibility="{x:Bind ChangedBadgeVisibility, Mode=OneWay}">
-                                                <TextBlock
-                                                    FontSize="11"
-                                                    FontWeight="SemiBold"
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Text="{Binding ViewModel.ChangedBadgeText, ElementName=Root}" />
-                                            </Border>
-                                        </StackPanel>
-                                        <TextBlock
-                                            FontWeight="SemiBold"
-                                            Text="{x:Bind DisplayName, Mode=OneWay}"
-                                            TextWrapping="WrapWholeWords" />
-                                        <TextBlock
-                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                            Text="{x:Bind MetadataText, Mode=OneWay}"
-                                            TextWrapping="WrapWholeWords" />
-                                        <TextBlock
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{x:Bind SourceText, Mode=OneWay}"
-                                            TextWrapping="WrapWholeWords" />
+                                                FontSize="11"
+                                                FontWeight="SemiBold"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="{Binding ViewModel.ChangedBadgeText, ElementName=Root}" />
+                                        </Border>
                                     </StackPanel>
+                                    <TextBlock
+                                        FontWeight="SemiBold"
+                                        Text="{x:Bind DisplayName, Mode=OneWay}"
+                                        TextWrapping="WrapWholeWords" />
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                        Text="{x:Bind MetadataText, Mode=OneWay}"
+                                        TextWrapping="WrapWholeWords" />
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{x:Bind SourceText, Mode=OneWay}"
+                                        TextWrapping="WrapWholeWords" />
+                                </StackPanel>
 
-                                    <Button
-                                        Grid.Column="1"
-                                        Click="OnSelectPartFileButtonClick"
-                                        Style="{StaticResource SpineEditSmallTagButtonStyle}"
-                                        Tag="{Binding}">
-                                        <StackPanel Orientation="Horizontal" Spacing="5">
-                                            <FontIcon
-                                                FontFamily="Segoe Fluent Icons"
-                                                FontSize="12"
-                                                Glyph="&#xE8E5;" />
-                                            <TextBlock Text="{x:Bind SelectButtonText, Mode=OneWay}" />
-                                        </StackPanel>
-                                    </Button>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+                                <Button
+                                    Grid.Column="1"
+                                    Click="OnSelectPartFileButtonClick"
+                                    Style="{StaticResource SpineEditSmallTagButtonStyle}"
+                                    Tag="{Binding}">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="12"
+                                            Glyph="&#xE8E5;" />
+                                        <TextBlock Text="{x:Bind SelectButtonText, Mode=OneWay}" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </Grid>
     </Border>
 </UserControl>

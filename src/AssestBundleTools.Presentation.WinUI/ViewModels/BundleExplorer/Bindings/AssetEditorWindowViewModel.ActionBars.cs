@@ -16,6 +16,9 @@ public sealed partial class AssetEditorWindowViewModel
     public Visibility SpineEditPanelVisibility =>
         DocumentGroup.ActiveSpineGroupTab?.SpineEditPanelVisibility ?? Visibility.Collapsed;
 
+    public SpineAssetGroupEditDraftViewModel? ActiveSpineEditDraft =>
+        DocumentGroup.ActiveSpineGroupTab?.SpineEditDraft;
+
     public Visibility SpineEditActionBarVisibility =>
         IsSpineEditModeActive ? Visibility.Visible : Visibility.Collapsed;
 
@@ -39,6 +42,7 @@ public sealed partial class AssetEditorWindowViewModel
         OnPropertyChanged(nameof(NormalActionBarVisibility));
         OnPropertyChanged(nameof(SpriteEditActionBarVisibility));
         OnPropertyChanged(nameof(SpineEditPanelVisibility));
+        OnPropertyChanged(nameof(ActiveSpineEditDraft));
         OnPropertyChanged(nameof(SpineEditActionBarVisibility));
         OnPropertyChanged(nameof(CanSaveSpineEdit));
         OnPropertyChanged(nameof(CanUndoSpineEdit));

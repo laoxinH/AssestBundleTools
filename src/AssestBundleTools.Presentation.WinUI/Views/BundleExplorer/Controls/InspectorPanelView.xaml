@@ -449,6 +449,12 @@
                         ViewChanged="OnSectionScrollViewerViewChanged"
                         Visibility="{x:Bind ViewModel.ReplacementSectionVisibility, Mode=OneWay}">
                         <StackPanel Padding="8" Spacing="8">
+                                    <controls:SpineEditPartsPanelView
+                                        Visibility="{x:Bind SpineEditPanelVisibility, Mode=OneWay}"
+                                        ViewModel="{x:Bind SpineEditDraft, Mode=OneWay}"
+                                        BatchMatchRequested="OnSpineEditBatchMatchRequested"
+                                        PartFileSelectionRequested="OnSpineEditPartFileSelectionRequested" />
+
                                     <Border
                                         Padding="12"
                                         Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"

@@ -372,6 +372,11 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         SelectedSectionIndex = GetSectionIndex(sectionKey);
     }
 
+    public void SelectReplacementSection()
+    {
+        SelectedSectionIndex = GetSectionIndex(ReplacementSectionKey);
+    }
+
     private void RebuildInformationCards()
     {
         _informationCardPresenter.RebuildInformationCards(
