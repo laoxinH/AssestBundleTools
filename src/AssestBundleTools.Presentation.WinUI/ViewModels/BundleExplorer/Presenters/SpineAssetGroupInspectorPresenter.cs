@@ -69,7 +69,7 @@ internal sealed class SpineAssetGroupInspectorPresenter
             referencedByDependencies: Array.Empty<AssetDependencyViewModel>(),
             dependencyClosureItems: Array.Empty<AssetDependencyViewModel>(),
             bundleExternalDependencies: Array.Empty<BundleExternalDependencyViewModel>(),
-            changeRecords: _changeRecordPresenter.CreateChangeRecords(parts, canManageRecords: false),
+            changeRecords: _changeRecordPresenter.CreateChangeRecords(parts, canManageRecords: true),
             canModify: parts.Length > 0);
         groupTab.Inspector.SpineAtlasPageSelector.Apply(
             groupTab.AtlasPageOptions,

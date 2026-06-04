@@ -3,12 +3,12 @@ using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
-
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 
 /// <summary>
@@ -304,61 +304,107 @@ internal sealed class BundleExplorerAssetCommandCoordinator
 
     public async Task UndoAppliedReplacementAsync(string? replacementOperationId = null)
     {
-        if (!TryGetActiveAssetCommandContext(
-                (_, details) => !string.IsNullOrWhiteSpace(replacementOperationId) || HasAppliedReplacement(details),
+        if (TryGetActiveAssetCommandContext(
+                (_, details) => !string.IsNullOrWhiteSpace(replacementOperationId) || AssetCommandEligibility.HasAppliedReplacement(details),
                 out var workspaceSummary,
                 out var assetTab,
                 out var details))
         {
+            await _modificationActionHandler.UndoAppliedReplacementAsync(
+                workspaceSummary,
+                assetTab,
+                details,
+                _setBusyState,
+                _operationFeedbackBridge.AppendResultFailure,
+                replacementOperationId);
             return;
         }
 
-        await _modificationActionHandler.UndoAppliedReplacementAsync(
+        if (!TryGetProjectedSpineChangeRecordContext(
+                replacementOperationId,
+                out workspaceSummary,
+                out var target))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.UndoProjectedReplacementAsync(
             workspaceSummary,
-            assetTab,
-            details,
+            target,
+            replacementOperationId!,
             _setBusyState,
-            _operationFeedbackBridge.AppendResultFailure,
-            replacementOperationId);
+            _operationFeedbackBridge.AppendResultFailure);
     }
 
     public async Task RedoAppliedReplacementAsync(string? replacementOperationId = null)
     {
-        if (!TryGetActiveAssetCommandContext(
+        if (TryGetActiveAssetCommandContext(
                 (_, details) => !string.IsNullOrWhiteSpace(replacementOperationId) || details.CanRedoReplacement,
                 out var workspaceSummary,
                 out var assetTab,
                 out var details))
         {
+            await _modificationActionHandler.RedoAppliedReplacementAsync(
+                workspaceSummary,
+                assetTab,
+                details,
+                _setBusyState,
+                _operationFeedbackBridge.AppendResultFailure,
+                replacementOperationId);
             return;
         }
 
-        await _modificationActionHandler.RedoAppliedReplacementAsync(
+        if (!TryGetProjectedSpineChangeRecordContext(
+                replacementOperationId,
+                out workspaceSummary,
+                out var target))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.RedoProjectedReplacementAsync(
             workspaceSummary,
-            assetTab,
-            details,
+            target,
+            replacementOperationId!,
             _setBusyState,
-            _operationFeedbackBridge.AppendResultFailure,
-            replacementOperationId);
+            _operationFeedbackBridge.AppendResultFailure);
     }
 
     public async Task DeleteChangeRecordAsync(string? operationId)
     {
-        if (string.IsNullOrWhiteSpace(operationId) ||
-            !TryGetActiveAssetCommandContext(
+        if (string.IsNullOrWhiteSpace(operationId))
+        {
+            return;
+        }
+
+        if (TryGetActiveAssetCommandContext(
                 static (_, _) => true,
                 out var workspaceSummary,
                 out var assetTab,
                 out var details))
         {
+            await _modificationActionHandler.DeleteChangeRecordAsync(
+                workspaceSummary,
+                assetTab,
+                details,
+                operationId,
+                _setBusyState,
+                _operationFeedbackBridge.AppendResultFailure);
             return;
         }
 
-        await _modificationActionHandler.DeleteChangeRecordAsync(
+        if (!TryGetProjectedSpineChangeRecordContext(
+                operationId,
+                out workspaceSummary,
+                out var target))
+        {
+            return;
+        }
+
+        await _modificationActionHandler.DeleteProjectedChangeRecordAsync(
             workspaceSummary,
-            assetTab,
-            details,
-            operationId,
+            target,
+            operationId!,
             _setBusyState,
             _operationFeedbackBridge.AppendResultFailure);
     }
@@ -406,6 +452,31 @@ internal sealed class BundleExplorerAssetCommandCoordinator
         return true;
     }
 
+    private bool TryGetProjectedSpineChangeRecordContext(
+        string? operationId,
+        [NotNullWhen(true)] out WorkspaceSummaryDto? workspaceSummary,
+        [NotNullWhen(true)] out ProjectedChangeRecordTarget? target)
+    {
+        workspaceSummary = _workspaceShell.WorkspaceSummary;
+        target = null;
+        if (_isBusyProvider() ||
+            workspaceSummary is null ||
+            string.IsNullOrWhiteSpace(operationId) ||
+            !TryGetActiveSpineGroupDocumentState(out var spineGroupTab))
+        {
+            workspaceSummary = null;
+            return false;
+        }
+
+        if (!ProjectedChangeRecordTargetResolver.TryResolve(spineGroupTab, operationId, out target))
+        {
+            workspaceSummary = null;
+            return false;
+        }
+
+        return true;
+    }
+
     private bool TryGetActiveSpineGroupExtractionContext(
         [NotNullWhen(true)] out WorkspaceSummaryDto? workspaceSummary,
         [NotNullWhen(true)] out SpineAssetGroupDocumentTabViewModel? spineGroupTab)
@@ -421,14 +492,6 @@ internal sealed class BundleExplorerAssetCommandCoordinator
         }
 
         return true;
-    }
-
-    private static bool HasAppliedReplacement(AssetDetailsDto details)
-    {
-        ArgumentNullException.ThrowIfNull(details);
-
-        return !string.IsNullOrWhiteSpace(details.WorkspaceReplacementSourceAssetName) ||
-               !string.IsNullOrWhiteSpace(details.FileReplacementSourceFileName);
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);

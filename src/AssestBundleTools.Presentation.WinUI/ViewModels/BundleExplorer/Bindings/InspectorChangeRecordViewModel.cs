@@ -7,6 +7,9 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 /// </summary>
 public sealed record InspectorChangeRecordViewModel(
     string OperationId,
+    string TargetBundleId,
+    string TargetAssetId,
+    string TargetAssetName,
     string TitleText,
     string BadgeText,
     string SourceText,
@@ -22,6 +25,10 @@ public sealed record InspectorChangeRecordViewModel(
     string Glyph)
 {
     public bool HasOperationId => !string.IsNullOrWhiteSpace(OperationId);
+
+    public bool HasTargetAsset =>
+        !string.IsNullOrWhiteSpace(TargetBundleId) &&
+        !string.IsNullOrWhiteSpace(TargetAssetId);
 
     public Visibility SourceTextVisibility =>
         string.IsNullOrWhiteSpace(SourceText)

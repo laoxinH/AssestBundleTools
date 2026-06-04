@@ -4,6 +4,8 @@ using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Replacement.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
+using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
@@ -107,17 +109,84 @@ internal sealed class BundleExplorerReplacementActionHandler
         }
     }
 
-    public async Task UndoAppliedReplacementAsync(
+    public Task UndoAppliedReplacementAsync(
         WorkspaceSummaryDto workspaceSummary,
         AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
         Action<bool> setBusyState,
         Action<IReadOnlyList<AppError>> appendResultFailure,
-        string? replacementOperationId = null)
+        string? replacementOperationId = null) =>
+        UndoReplacementAsync(
+            workspaceSummary,
+            details.BundleId,
+            details.AssetId,
+            details.Name,
+            replacementOperationId,
+            setBusyState,
+            appendResultFailure,
+            assetTab.ClearPendingReplacementCandidates);
+
+    public Task UndoProjectedReplacementAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        ProjectedChangeRecordTarget target,
+        string replacementOperationId,
+        Action<bool> setBusyState,
+        Action<IReadOnlyList<AppError>> appendResultFailure) =>
+        UndoReplacementAsync(
+            workspaceSummary,
+            target.BundleId,
+            target.AssetId,
+            target.AssetName,
+            replacementOperationId,
+            setBusyState,
+            appendResultFailure,
+            clearPendingReplacementCandidates: null);
+
+    public Task RedoAppliedReplacementAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        AssetDocumentTabViewModel assetTab,
+        AssetDetailsDto details,
+        Action<bool> setBusyState,
+        Action<IReadOnlyList<AppError>> appendResultFailure,
+        string? replacementOperationId = null) =>
+        RedoReplacementAsync(
+            workspaceSummary,
+            details.BundleId,
+            details.AssetId,
+            details.Name,
+            replacementOperationId,
+            setBusyState,
+            appendResultFailure,
+            assetTab.ClearPendingReplacementCandidates);
+
+    public Task RedoProjectedReplacementAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        ProjectedChangeRecordTarget target,
+        string replacementOperationId,
+        Action<bool> setBusyState,
+        Action<IReadOnlyList<AppError>> appendResultFailure) =>
+        RedoReplacementAsync(
+            workspaceSummary,
+            target.BundleId,
+            target.AssetId,
+            target.AssetName,
+            replacementOperationId,
+            setBusyState,
+            appendResultFailure,
+            clearPendingReplacementCandidates: null);
+
+    private async Task UndoReplacementAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        BundleId bundleId,
+        AssetId assetId,
+        string targetAssetName,
+        string? replacementOperationId,
+        Action<bool> setBusyState,
+        Action<IReadOnlyList<AppError>> appendResultFailure,
+        Action? clearPendingReplacementCandidates)
     {
         ArgumentNullException.ThrowIfNull(workspaceSummary);
-        ArgumentNullException.ThrowIfNull(assetTab);
-        ArgumentNullException.ThrowIfNull(details);
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetAssetName);
         ArgumentNullException.ThrowIfNull(setBusyState);
         ArgumentNullException.ThrowIfNull(appendResultFailure);
 
@@ -127,8 +196,8 @@ internal sealed class BundleExplorerReplacementActionHandler
             var result = await _workspaceAssetOperationGateway.UndoAssetReplacementAsync(
                 new UndoAssetReplacementCommand(
                     workspaceSummary.WorkspaceId,
-                    details.BundleId,
-                    details.AssetId,
+                    bundleId,
+                    assetId,
                     workspaceSummary.WorkspaceKey,
                     workspaceSummary.WorkspaceDataRootPath,
                     replacementOperationId));
@@ -149,7 +218,7 @@ internal sealed class BundleExplorerReplacementActionHandler
                     undoResult.TargetAssetName),
                 AppNotificationSeverity.Informational);
 
-            assetTab.ClearPendingReplacementCandidates();
+            clearPendingReplacementCandidates?.Invoke();
         }
         finally
         {
@@ -157,17 +226,18 @@ internal sealed class BundleExplorerReplacementActionHandler
         }
     }
 
-    public async Task RedoAppliedReplacementAsync(
+    private async Task RedoReplacementAsync(
         WorkspaceSummaryDto workspaceSummary,
-        AssetDocumentTabViewModel assetTab,
-        AssetDetailsDto details,
+        BundleId bundleId,
+        AssetId assetId,
+        string targetAssetName,
+        string? replacementOperationId,
         Action<bool> setBusyState,
         Action<IReadOnlyList<AppError>> appendResultFailure,
-        string? replacementOperationId = null)
+        Action? clearPendingReplacementCandidates)
     {
         ArgumentNullException.ThrowIfNull(workspaceSummary);
-        ArgumentNullException.ThrowIfNull(assetTab);
-        ArgumentNullException.ThrowIfNull(details);
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetAssetName);
         ArgumentNullException.ThrowIfNull(setBusyState);
         ArgumentNullException.ThrowIfNull(appendResultFailure);
 
@@ -177,8 +247,8 @@ internal sealed class BundleExplorerReplacementActionHandler
             var result = await _workspaceAssetOperationGateway.RedoAssetReplacementAsync(
                 new RedoAssetReplacementCommand(
                     workspaceSummary.WorkspaceId,
-                    details.BundleId,
-                    details.AssetId,
+                    bundleId,
+                    assetId,
                     workspaceSummary.WorkspaceKey,
                     workspaceSummary.WorkspaceDataRootPath,
                     replacementOperationId));
@@ -199,7 +269,7 @@ internal sealed class BundleExplorerReplacementActionHandler
                     redoResult.TargetAssetName),
                 AppNotificationSeverity.Informational);
 
-            assetTab.ClearPendingReplacementCandidates();
+            clearPendingReplacementCandidates?.Invoke();
         }
         finally
         {

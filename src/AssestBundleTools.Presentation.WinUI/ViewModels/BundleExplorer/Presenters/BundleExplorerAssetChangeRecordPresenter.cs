@@ -146,6 +146,9 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
     {
         return new InspectorChangeRecordViewModel(
             OperationId: record.OperationId ?? string.Empty,
+            TargetBundleId: record.TargetBundleId ?? string.Empty,
+            TargetAssetId: record.TargetAssetId ?? string.Empty,
+            TargetAssetName: ResolveDisplayValue(record.TargetAssetName ?? record.TargetAssetId),
             TitleText: BuildTitleText(record),
             BadgeText: BuildBadgeText(record),
             SourceText: BuildSourceText(record),

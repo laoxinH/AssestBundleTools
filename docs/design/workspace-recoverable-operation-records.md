@@ -238,6 +238,7 @@ relatedOperationId
 3. 从关联资源变更页发起撤销 / 重做时，命令可以携带被投影记录的 `operationId`；Application 必须根据该记录解析真实 `target` 后再执行替换撤销 / 重做。
 4. 操作完成通知、删除记录通知和读模型刷新必须同时覆盖 `target` 与 `relatedTarget`，确保多窗口和关联资源详情同步刷新。
 5. 删除一条记录只删除被选中的操作及其 supersedes 派生记录；关联的几何编辑和关联的文件替换是独立操作，除非未来明确提供“删除整组关联批次”命令。
+6. Spine 组 `变更` 分段属于组文档对真实组成资产记录的投影；组级卡片可以直接提供撤销 / 重做 / 删除，但命令必须携带被投影记录的真实 `operationId` 和组成资产 `target`，不得对 `GroupId` 伪造资产目标。
 
 `relations[]` 只表达“同一个用户确认动作同时写入多条强关联操作”的事实，不应滥用来补依赖图。资源 A 被修改时，依赖 A 的 Sprite、Mesh、Material、Spine 组等资源需要同步刷新预览和变更读模型，这类行为属于“隐式依赖影响”。当前通过 Application 层的 `IWorkspaceAssociatedAssetImpactRegistry` 查询工作区运行时依赖图，由 Infrastructure 基于反向依赖和贴图关联实现；Presentation 的操作通知网关只消费这个抽象来扩展受影响资产列表，不直接遍历依赖图或读取工作区暂存文件。
 
@@ -347,7 +348,7 @@ Sprite 编辑态中的“替换 Texture2D”与直接修改 Texture2D 资产保�
 
 Sprite 编辑应用后仍不改写原始 AB、标准化 artifact 或预览缓存源文件；实际 AB 对象裁切 / pivot 写入只允许在后续保存 / 重建 / 统一导出阶段读取已物化的 Sprite 编辑状态后执行。删除某条 Sprite 编辑操作记录时，运行时会按剩余 `operations[]` 重新物化当前目标资源的最新有效 Sprite 几何；若删除最新记录，上一条同目标 Sprite 编辑自动成为有效几何。
 
-Spine 编辑第一阶段属于“组成文件替换草稿”，而不是新的 Unity 资产写入类型。用户在 Spine 组编辑态中选择 skeleton、atlas 或 texture page 文件后，先只写入当前资源文档的临时编辑草稿并刷新组级有效预览；在点击保存前，不追加 `operations[]`，也不改变真实组成资产的已应用替换状态。若组成资产已有已应用文件替换，编辑态替换页以该来源路径作为当前基线展示；用户选择新来源后才形成未保存草稿。保存 Spine 编辑时，应把草稿拆分成多条目标为真实组成资产的 `ReplaceFromFile` 操作记录：texture page 对应 `Texture2D`，atlas 对应承载 atlas 文本的 `TextAsset`，skeleton 对应承载 `.skel / .json / .bytes` 的 `TextAsset` 或当前识别出的 skeleton 组成资产。每条记录仍必须拥有自己的 `target`、`source`、`previousState`、`result` 和撤销 / 重做语义；这些记录共享同一个 `batchId / relationId`，并在 `relations[]` 中把 Spine 组文档作为 owner 投影、真实组成资产作为 subject 记录。Spine 组的 `变更` 分段可以把同批次记录聚合显示为一组 Spine 修改卡片，但该聚合必须来自组成资产的真实变更读模型，不应追加目标为 Spine 组本身的虚假替换操作；组成资产详情页仍展示各自真实记录并允许独立撤销、重做和删除。
+Spine 编辑第一阶段属于“组成文件替换草稿”，而不是新的 Unity 资产写入类型。用户在 Spine 组编辑态中选择 skeleton、atlas 或 texture page 文件后，先只写入当前资源文档的临时编辑草稿并刷新组级有效预览；在点击保存前，不追加 `operations[]`，也不改变真实组成资产的已应用替换状态。若组成资产已有已应用文件替换，编辑态替换页以该来源路径作为当前基线展示；用户选择新来源后才形成未保存草稿。保存 Spine 编辑时，应把草稿拆分成多条目标为真实组成资产的 `ReplaceFromFile` 操作记录：texture page 对应 `Texture2D`，atlas 对应承载 atlas 文本的 `TextAsset`，skeleton 对应承载 `.skel / .json / .bytes` 的 `TextAsset` 或当前识别出的 skeleton 组成资产。每条记录仍必须拥有自己的 `target`、`source`、`previousState`、`result` 和撤销 / 重做语义；这些记录共享同一个 `batchId / relationId`，并在 `relations[]` 中把 Spine 组文档作为 owner 投影、真实组成资产作为 subject 记录。Spine 组的 `变更` 分段可以把同批次记录聚合显示为一组 Spine 修改卡片，但该聚合必须来自组成资产的真实变更读模型，不应追加目标为 Spine 组本身的虚假替换操作；组级卡片上的撤销、重做和删除也必须作用于真实组成资产记录；组成资产详情页仍展示各自真实记录并允许独立撤销、重做和删除。
 
 Spine 编辑草稿预览不得绕过有效读模型。编辑态预览输入为原始 Spine 组详情叠加当前未保存草稿文件；保存后的预览输入为工作区操作记录物化出的 skeleton、atlas 和 texture page 当前有效载荷。若组成文件不匹配、缺少 page、atlas 声明尺寸与图片尺寸不一致或 runtime adapter 无法解释，Application 应返回结构化诊断，Presentation 只展示诊断和稳定摘要回退，不把外部解析异常或原始 stdout/stderr 作为主提示。实际 AB 对象替换和写包仍只在后续保存 / 重建 / 统一导出阶段消费这些组成资产替换记录。
 

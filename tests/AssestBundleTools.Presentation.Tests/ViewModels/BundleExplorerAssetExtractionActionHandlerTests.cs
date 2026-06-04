@@ -319,6 +319,62 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
         Assert.Equal([true, false], busyStates);
     }
 
+    [Fact]
+    public async Task UndoAppliedReplacementAsync_ShouldUseProjectedSpinePartTarget_WhenSpineGroupRecordIsActive()
+    {
+        var gateway = new RecordingWorkspaceAssetOperationGateway();
+        var coordinator = CreateSpineGroupCommandCoordinator(gateway);
+
+        await coordinator.UndoAppliedReplacementAsync("replace-texture");
+
+        var command = Assert.Single(gateway.UndoAssetReplacementCommands);
+        Assert.Equal(new BundleId("bundle-ui"), command.BundleId);
+        Assert.Equal(new AssetId("texture-page"), command.AssetId);
+        Assert.Equal("replace-texture", command.ReplacementOperationId);
+        Assert.Equal(["busy:true", "busy:false"], gateway.BusyTransitions);
+    }
+
+    [Fact]
+    public async Task RedoAppliedReplacementAsync_ShouldUseProjectedSpinePartTarget_WhenSpineGroupRecordIsActive()
+    {
+        var gateway = new RecordingWorkspaceAssetOperationGateway();
+        var coordinator = CreateSpineGroupCommandCoordinator(gateway, isEffectiveReplacement: false);
+
+        await coordinator.RedoAppliedReplacementAsync("replace-texture");
+
+        var command = Assert.Single(gateway.RedoAssetReplacementCommands);
+        Assert.Equal(new BundleId("bundle-ui"), command.BundleId);
+        Assert.Equal(new AssetId("texture-page"), command.AssetId);
+        Assert.Equal("replace-texture", command.ReplacementOperationId);
+        Assert.Equal(["busy:true", "busy:false"], gateway.BusyTransitions);
+    }
+
+    [Fact]
+    public async Task DeleteChangeRecordAsync_ShouldUseProjectedSpinePartTarget_WhenSpineGroupRecordIsActive()
+    {
+        var gateway = new RecordingWorkspaceAssetOperationGateway();
+        var coordinator = CreateSpineGroupCommandCoordinator(gateway);
+
+        await coordinator.DeleteChangeRecordAsync("replace-texture");
+
+        var command = Assert.Single(gateway.DeleteWorkspaceOperationRecordCommands);
+        Assert.Equal("replace-texture", command.OperationId);
+        Assert.Equal(["busy:true", "busy:false"], gateway.BusyTransitions);
+    }
+
+    [Fact]
+    public async Task AssetEditorDeleteChangeRecordAsync_ShouldUseProjectedSpinePartTarget_WhenSpineGroupRecordIsActive()
+    {
+        var gateway = new RecordingWorkspaceAssetOperationGateway();
+        var coordinator = CreateSpineGroupEditorActionCoordinator(gateway);
+
+        await coordinator.DeleteChangeRecordAsync("replace-texture");
+
+        var command = Assert.Single(gateway.DeleteWorkspaceOperationRecordCommands);
+        Assert.Equal("replace-texture", command.OperationId);
+        Assert.Equal(["busy:true", "busy:false"], gateway.BusyTransitions);
+    }
+
     private static WorkspaceSummaryDto CreateWorkspaceSummary() =>
         new(
             WorkspaceId: new WorkspaceId("workspace-1"),
@@ -415,6 +471,112 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
             ]
         };
 
+    private static BundleExplorerAssetCommandCoordinator CreateSpineGroupCommandCoordinator(
+        RecordingWorkspaceAssetOperationGateway gateway,
+        bool isEffectiveReplacement = true)
+    {
+        var localizationService = new TestLocalizationService();
+        var appLogService = new TestAppLogService();
+        var notificationService = new TestAppNotificationService();
+        var modificationActionHandler = new BundleExplorerAssetModificationActionHandler(
+            gateway,
+            appLogService,
+            notificationService,
+            localizationService,
+            new RecordingFilePickerService());
+        var spineGroupTab = CreatePresentedSpineGroupTab(localizationService, isEffectiveReplacement);
+
+        return new BundleExplorerAssetCommandCoordinator(
+            appLogService,
+            localizationService,
+            new TestPathNavigationService(),
+            new TestWorkspaceShellHost(CreateWorkspaceSummary()),
+            new AssetPaneViewModel(),
+            modificationActionHandler,
+            new BundleExplorerOperationFeedbackBridge(appLogService, notificationService, localizationService),
+            () => false,
+            value => gateway.BusyTransitions.Add($"busy:{value.ToString().ToLowerInvariant()}"),
+            () => spineGroupTab.Inspector,
+            () => null,
+            () => spineGroupTab,
+            (_, _) => throw new NotSupportedException());
+    }
+
+    private static AssetEditorWindowAssetActionCoordinator CreateSpineGroupEditorActionCoordinator(
+        RecordingWorkspaceAssetOperationGateway gateway,
+        bool isEffectiveReplacement = true)
+    {
+        var localizationService = new TestLocalizationService();
+        var appLogService = new TestAppLogService();
+        var notificationService = new TestAppNotificationService();
+        var modificationActionHandler = new BundleExplorerAssetModificationActionHandler(
+            gateway,
+            appLogService,
+            notificationService,
+            localizationService,
+            new RecordingFilePickerService());
+        var spineGroupTab = CreatePresentedSpineGroupTab(localizationService, isEffectiveReplacement);
+
+        return new AssetEditorWindowAssetActionCoordinator(
+            new TestWorkspaceShellHost(CreateWorkspaceSummary()),
+            new TestPathNavigationService(),
+            appLogService,
+            localizationService,
+            new BundleExplorerOperationFeedbackBridge(appLogService, notificationService, localizationService),
+            modificationActionHandler,
+            () => null,
+            () => spineGroupTab,
+            () => spineGroupTab.Inspector,
+            () => false,
+            value => gateway.BusyTransitions.Add($"busy:{value.ToString().ToLowerInvariant()}"),
+            (_, _) => throw new NotSupportedException());
+    }
+
+    private static SpineAssetGroupDocumentTabViewModel CreatePresentedSpineGroupTab(
+        ILocalizationService localizationService,
+        bool isEffectiveReplacement)
+    {
+        var spineGroupTab = new SpineAssetGroupDocumentTabViewModel(
+            new SpineAssetGroupDto(
+                GroupId: "group-1",
+                BundleId: new BundleId("bundle-ui"),
+                DisplayName: "group-1",
+                GroupKey: "characters/group-1",
+                SkeletonAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                AtlasAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                TexturePageAssets:
+                [
+                    new SpineAssetGroupPartDto(
+                        SpineAssetGroupPartRole.TexturePage,
+                        new BundleId("bundle-ui"),
+                        new AssetId("texture-page"),
+                        "bundle.ab",
+                        "hero.png",
+                        "Assets/hero.png",
+                        AssetType.Texture2D,
+                        "Texture2D",
+                        ChangeRecords:
+                        [
+                            new AssetChangeRecordDto(
+                                AssetChangeRecordKind.FileReplacement,
+                                CreatedAtUtc: DateTimeOffset.UtcNow,
+                                AppliedAtUtc: DateTimeOffset.UtcNow,
+                                SourceFileName: "hero-new.png",
+                                SourceFilePath: @"D:\Imports\hero-new.png",
+                                OperationId: "replace-texture",
+                                IsEffectiveReplacement: isEffectiveReplacement)
+                        ])
+                ],
+                Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>()),
+            CreateInspectorTextSet());
+        new SpineAssetGroupInspectorPresenter(
+            new TestBundlePaneHost(),
+            localizationService)
+            .PresentSpineGroupDocumentTab(spineGroupTab);
+
+        return spineGroupTab;
+    }
+
     private static InspectorInformationTextSet CreateInspectorTextSet() =>
         new(
             BasicInfoTitle: "Basic",
@@ -501,6 +663,14 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
         public List<GetFileReplacementCandidateQuery> FileReplacementCandidateQueries { get; } = [];
 
         public List<ReplaceAssetFromFileCommand> ReplaceAssetFromFileCommands { get; } = [];
+
+        public List<UndoAssetReplacementCommand> UndoAssetReplacementCommands { get; } = [];
+
+        public List<RedoAssetReplacementCommand> RedoAssetReplacementCommands { get; } = [];
+
+        public List<DeleteWorkspaceOperationRecordCommand> DeleteWorkspaceOperationRecordCommands { get; } = [];
+
+        public List<string> BusyTransitions { get; } = [];
 
         public DateTimeOffset NextExtractedAtUtc { get; init; } = DateTimeOffset.UtcNow;
 
@@ -589,13 +759,30 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
 
         public Task<Result<AssetReplacementUndoResultDto>> UndoAssetReplacementAsync(
             UndoAssetReplacementCommand command,
-            CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
+            CancellationToken cancellationToken = default)
+        {
+            UndoAssetReplacementCommands.Add(command);
+            return Task.FromResult(Result<AssetReplacementUndoResultDto>.Success(
+                new AssetReplacementUndoResultDto(
+                    command.WorkspaceId,
+                    command.BundleId,
+                    command.AssetId,
+                    "hero.png")));
+        }
 
         public Task<Result<AssetReplacementRedoResultDto>> RedoAssetReplacementAsync(
             RedoAssetReplacementCommand command,
-            CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
+            CancellationToken cancellationToken = default)
+        {
+            RedoAssetReplacementCommands.Add(command);
+            return Task.FromResult(Result<AssetReplacementRedoResultDto>.Success(
+                new AssetReplacementRedoResultDto(
+                    command.WorkspaceId,
+                    command.BundleId,
+                    command.AssetId,
+                    "hero.png",
+                    DateTimeOffset.UtcNow)));
+        }
 
         public Task<Result<AssetSpriteEditAppliedResultDto>> ApplySpriteEditAsync(
             ApplySpriteEditCommand command,
@@ -604,8 +791,42 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
 
         public Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(
             DeleteWorkspaceOperationRecordCommand command,
-            CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
+            CancellationToken cancellationToken = default)
+        {
+            DeleteWorkspaceOperationRecordCommands.Add(command);
+            return Task.FromResult(Result<WorkspaceOperationRecordDeletedResultDto>.Success(
+                new WorkspaceOperationRecordDeletedResultDto(
+                    command.WorkspaceId,
+                    command.OperationId,
+                    new BundleId("bundle-ui"),
+                    new AssetId("texture-page"),
+                    DateTimeOffset.UtcNow,
+                    AffectedTargets:
+                    [
+                        new WorkspaceOperationTargetDto(
+                            BundleId: "bundle-ui",
+                            AssetId: "texture-page",
+                            AssetName: "hero.png",
+                            AssetType: AssetType.Texture2D.ToString())
+                    ])));
+        }
+    }
+
+    private sealed class TestBundlePaneHost : IBundleExplorerBundlePaneHost
+    {
+        public void SetSelectedBundle(BundleNodeViewModel? bundleNode)
+        {
+        }
+
+        public BundleNodeViewModel? FindBundleNodeByDisplayName(string displayName) => null;
+
+        public string ResolveBundleDisplayName(BundleId bundleId) => bundleId.Value;
+
+        public string ResolvePrimaryPaneEmptyStateText(
+            string noWorkspaceText,
+            string emptyWorkspaceText,
+            string noOpenTabsText) =>
+            noOpenTabsText;
     }
 
     private sealed class RecordingBackgroundTaskStatusService : IAppBackgroundTaskStatusService

@@ -56,6 +56,9 @@ public sealed class InspectorPanelViewModelTests
         var viewModel = CreateViewModel();
         var changeRecord = new InspectorChangeRecordViewModel(
             OperationId: "op-1",
+            TargetBundleId: "bundle",
+            TargetAssetId: "asset-1",
+            TargetAssetName: "Sprite",
             TitleText: "Modified",
             BadgeText: "Effective",
             SourceText: "Source: hero.png",

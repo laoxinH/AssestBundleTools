@@ -184,11 +184,15 @@ public sealed class BundleExplorerAssetInspectorPresenterTests
         Assert.Equal(ResourceKeys.InspectorChangeRecordAssociatedFileReplacementTitle, record.TitleText);
         Assert.Contains("hero.png", record.SecondaryText, StringComparison.Ordinal);
         Assert.Contains(@"C:\Imports\hero-replace.png", record.SecondaryText, StringComparison.Ordinal);
+        Assert.Equal("bundle-spine", record.TargetBundleId);
+        Assert.Equal("hero-texture", record.TargetAssetId);
+        Assert.Equal("hero.png", record.TargetAssetName);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, groupTab.Inspector.ChangeRecordsListVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Collapsed, groupTab.Inspector.ChangeRecordsEmptyStateVisibility);
-        Assert.False(record.ShowsUndoReplacement);
+        Assert.True(record.ShowsUndoReplacement);
         Assert.False(record.ShowsRedoReplacement);
-        Assert.False(record.ShowsDeleteRecord);
+        Assert.True(record.ShowsDeleteRecord);
+        Assert.True(record.IsActionEnabled);
     }
 
     private static IReadOnlyList<BundleTreeNodeDto> CreateBundleTree(

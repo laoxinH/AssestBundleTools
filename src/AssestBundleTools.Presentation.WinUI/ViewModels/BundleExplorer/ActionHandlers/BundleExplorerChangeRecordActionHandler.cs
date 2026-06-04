@@ -33,18 +33,46 @@ internal sealed class BundleExplorerChangeRecordActionHandler
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
     }
 
-    public async Task DeleteChangeRecordAsync(
+    public Task DeleteChangeRecordAsync(
         WorkspaceSummaryDto workspaceSummary,
         AssetDocumentTabViewModel assetTab,
         AssetDetailsDto details,
         string operationId,
         Action<bool> setBusyState,
-        Action<IReadOnlyList<AppError>> appendResultFailure)
+        Action<IReadOnlyList<AppError>> appendResultFailure) =>
+        DeleteChangeRecordAsync(
+            workspaceSummary,
+            operationId,
+            details.Name,
+            setBusyState,
+            appendResultFailure,
+            assetTab.ClearPendingReplacementCandidates);
+
+    public Task DeleteProjectedChangeRecordAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        ProjectedChangeRecordTarget target,
+        string operationId,
+        Action<bool> setBusyState,
+        Action<IReadOnlyList<AppError>> appendResultFailure) =>
+        DeleteChangeRecordAsync(
+            workspaceSummary,
+            operationId,
+            target.AssetName,
+            setBusyState,
+            appendResultFailure,
+            clearPendingReplacementCandidates: null);
+
+    private async Task DeleteChangeRecordAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        string operationId,
+        string targetAssetName,
+        Action<bool> setBusyState,
+        Action<IReadOnlyList<AppError>> appendResultFailure,
+        Action? clearPendingReplacementCandidates)
     {
         ArgumentNullException.ThrowIfNull(workspaceSummary);
-        ArgumentNullException.ThrowIfNull(assetTab);
-        ArgumentNullException.ThrowIfNull(details);
         ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetAssetName);
         ArgumentNullException.ThrowIfNull(setBusyState);
         ArgumentNullException.ThrowIfNull(appendResultFailure);
 
@@ -65,16 +93,16 @@ internal sealed class BundleExplorerChangeRecordActionHandler
 
             _appLogService.AppendInfo(_localizationService.GetFormattedString(
                 ResourceKeys.BundleExplorerLogOperationRecordDeleted,
-                details.Name));
+                targetAssetName));
 
             _appNotificationService.Show(
                 GetString(ResourceKeys.AppNotificationInfoTitle),
                 _localizationService.GetFormattedString(
                     ResourceKeys.BundleExplorerNotificationOperationRecordDeleted,
-                    details.Name),
+                    targetAssetName),
                 AppNotificationSeverity.Informational);
 
-            assetTab.ClearPendingReplacementCandidates();
+            clearPendingReplacementCandidates?.Invoke();
         }
         finally
         {
