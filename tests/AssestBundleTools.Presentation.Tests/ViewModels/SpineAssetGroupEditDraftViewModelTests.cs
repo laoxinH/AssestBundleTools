@@ -9,6 +9,75 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 public sealed class SpineAssetGroupEditDraftViewModelTests
 {
     [Fact]
+    public void Constructor_ShouldExposeAppliedReplacementSourceWithoutDraftChange()
+    {
+        var appliedSourcePath = @"C:\Imports\hero.png";
+        var bundleId = new BundleId("bundle-spine");
+        var draft = new SpineAssetGroupEditDraftViewModel(
+            new SpineAssetGroupDto(
+                GroupId: "spine-hero",
+                BundleId: bundleId,
+                DisplayName: "hero",
+                GroupKey: "hero",
+                SkeletonAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                AtlasAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                TexturePageAssets:
+                [
+                    CreatePart(
+                        SpineAssetGroupPartRole.TexturePage,
+                        bundleId,
+                        "texture",
+                        "hero.png",
+                        AssetType.Texture2D,
+                        appliedSourcePath)
+                ],
+                Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>()),
+            new TestLocalizationService());
+
+        var part = Assert.Single(draft.Parts);
+
+        Assert.False(draft.HasChanges);
+        Assert.Null(part.SelectedSourceFilePath);
+        Assert.Equal(appliedSourcePath, part.AppliedSourceFilePath);
+        Assert.Equal(appliedSourcePath, part.SourceText);
+    }
+
+    [Fact]
+    public void MarkSaved_ShouldPromoteSelectedSourceToAppliedSource()
+    {
+        var bundleId = new BundleId("bundle-spine");
+        var draft = new SpineAssetGroupEditDraftViewModel(
+            new SpineAssetGroupDto(
+                GroupId: "spine-hero",
+                BundleId: bundleId,
+                DisplayName: "hero",
+                GroupKey: "hero",
+                SkeletonAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                AtlasAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                TexturePageAssets:
+                [
+                    CreatePart(
+                        SpineAssetGroupPartRole.TexturePage,
+                        bundleId,
+                        "texture",
+                        "hero.png",
+                        AssetType.Texture2D)
+                ],
+                Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>()),
+            new TestLocalizationService());
+        var part = Assert.Single(draft.Parts);
+        var selectedSourcePath = @"D:\Replacement\hero.png";
+
+        Assert.True(draft.ApplyPartSource(part, selectedSourcePath));
+        draft.MarkSaved();
+
+        Assert.False(draft.HasChanges);
+        Assert.Null(part.SelectedSourceFilePath);
+        Assert.Equal(selectedSourcePath, part.AppliedSourceFilePath);
+        Assert.Equal(selectedSourcePath, part.SourceText);
+    }
+
+    [Fact]
     public void ApplyDirectoryMatches_ShouldMatchByPartRoleAndExtension()
     {
         var directoryPath = Path.Combine(Path.GetTempPath(), $"abt-spine-edit-{Guid.NewGuid():N}");
@@ -75,7 +144,8 @@ public sealed class SpineAssetGroupEditDraftViewModelTests
         BundleId bundleId,
         string assetId,
         string name,
-        AssetType assetType) =>
+        AssetType assetType,
+        string? fileReplacementSourcePath = null) =>
         new(
             role,
             bundleId,
@@ -84,5 +154,6 @@ public sealed class SpineAssetGroupEditDraftViewModelTests
             name,
             $"Assets/Spine/{name}",
             assetType,
-            assetType.ToString());
+            assetType.ToString(),
+            FileReplacementSourcePath: fileReplacementSourcePath);
 }

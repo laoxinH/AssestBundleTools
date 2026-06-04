@@ -19,6 +19,7 @@ internal sealed class SpineAssetGroupInspectorPresenter
     private readonly AssetPreviewDisplayFormatter _assetPreviewDisplayFormatter;
     private readonly PreviewDiagnosticDisplayTextResolver _previewDiagnosticDisplayTextResolver;
     private readonly SpineAssetGroupDiagnosticDisplayFormatter _diagnosticDisplayFormatter;
+    private readonly SpineAssetGroupChangeRecordPresenter _changeRecordPresenter;
 
     public SpineAssetGroupInspectorPresenter(
         IBundleExplorerBundlePaneHost bundlePane,
@@ -29,6 +30,7 @@ internal sealed class SpineAssetGroupInspectorPresenter
         _assetPreviewDisplayFormatter = new AssetPreviewDisplayFormatter(_localizationService);
         _previewDiagnosticDisplayTextResolver = new PreviewDiagnosticDisplayTextResolver(_localizationService);
         _diagnosticDisplayFormatter = new SpineAssetGroupDiagnosticDisplayFormatter(_localizationService);
+        _changeRecordPresenter = new SpineAssetGroupChangeRecordPresenter(_localizationService);
     }
 
     public void PresentSpineGroupDocumentTab(SpineAssetGroupDocumentTabViewModel groupTab)
@@ -57,7 +59,7 @@ internal sealed class SpineAssetGroupInspectorPresenter
             workspaceReplacementCapabilityText: GetString(ResourceKeys.InspectorCapabilityUnavailable),
             replacementSourceText: GetString(ResourceKeys.InspectorReplacementSourceNone),
             replacementStatusText: GetString(ResourceKeys.InspectorReplacementStatusNone),
-            changeSummaryText: BuildChangeSummaryText(parts),
+            changeSummaryText: _changeRecordPresenter.BuildSummaryText(parts),
             canExtract: parts.Length > 0,
             canSelectFileReplacementSource: false,
             canSelectReplacementSource: false,
@@ -67,6 +69,7 @@ internal sealed class SpineAssetGroupInspectorPresenter
             referencedByDependencies: Array.Empty<AssetDependencyViewModel>(),
             dependencyClosureItems: Array.Empty<AssetDependencyViewModel>(),
             bundleExternalDependencies: Array.Empty<BundleExternalDependencyViewModel>(),
+            changeRecords: _changeRecordPresenter.CreateChangeRecords(parts, canManageRecords: false),
             canModify: parts.Length > 0);
         groupTab.Inspector.SpineAtlasPageSelector.Apply(
             groupTab.AtlasPageOptions,
@@ -211,21 +214,6 @@ internal sealed class SpineAssetGroupInspectorPresenter
         return _localizationService.GetFormattedString(
             ResourceKeys.InspectorSpineGroupRuntimeAdapterUnavailableFormat,
             runtime.SpineVersion ?? string.Empty);
-    }
-
-    private string BuildChangeSummaryText(IReadOnlyList<SpineAssetGroupPartDto> parts)
-    {
-        var lastExtractedAtUtc = parts
-            .Select(static part => part.LastExtractedAtUtc)
-            .OfType<DateTimeOffset>()
-            .DefaultIfEmpty()
-            .Max();
-
-        return lastExtractedAtUtc == default
-            ? GetString(ResourceKeys.InspectorChangeSummaryNone)
-            : _localizationService.GetFormattedString(
-                ResourceKeys.InspectorChangeSummaryExtractOnlyFormat,
-                lastExtractedAtUtc.ToLocalTime().ToString("G", CultureInfo.CurrentCulture));
     }
 
     private IReadOnlyList<InspectorInfoRowViewModel> BuildGroupPreviewInfoRows(

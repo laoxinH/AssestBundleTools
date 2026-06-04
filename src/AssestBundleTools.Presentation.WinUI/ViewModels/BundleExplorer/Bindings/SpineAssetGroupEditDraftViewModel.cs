@@ -153,7 +153,7 @@ public sealed class SpineAssetGroupEditDraftViewModel : ObservableObject
     {
         foreach (var part in Parts)
         {
-            part.SetSelectedSourceFilePath(null);
+            part.MarkSelectedSourceSaved();
         }
 
         _history.Clear();
@@ -179,7 +179,8 @@ public sealed class SpineAssetGroupEditDraftViewModel : ObservableObject
             GetString(ResourceKeys.InspectorSpineEditSelectFileButton),
             GetString(ResourceKeys.InspectorSpineEditNoDraftSourceText),
             GetString(ResourceKeys.InspectorSpineEditSelectedStatusText),
-            GetString(ResourceKeys.InspectorSpineEditUnchangedStatusText));
+            GetString(ResourceKeys.InspectorSpineEditUnchangedStatusText),
+            part.FileReplacementSourcePath);
 
     private void PushHistorySnapshot()
     {

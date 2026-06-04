@@ -136,6 +136,61 @@ public sealed class BundleExplorerAssetInspectorPresenterTests
         Assert.False(groupTab.Inspector.CanSelectFileReplacementSource);
     }
 
+    [Fact]
+    public void SpineGroupPresenter_ShouldProjectPartReplacementRecordsToChanges()
+    {
+        var localizationService = new TestLocalizationService();
+        var bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
+        var presenter = new SpineAssetGroupInspectorPresenter(bundlePane, localizationService);
+        var bundleId = new BundleId("bundle-spine");
+        var appliedAtUtc = new DateTimeOffset(2026, 6, 4, 10, 0, 0, TimeSpan.Zero);
+        var groupTab = new SpineAssetGroupDocumentTabViewModel(
+            new SpineAssetGroupDto(
+                GroupId: "hero",
+                BundleId: bundleId,
+                DisplayName: "hero",
+                GroupKey: "characters/hero",
+                SkeletonAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                AtlasAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                TexturePageAssets:
+                [
+                    new SpineAssetGroupPartDto(
+                        SpineAssetGroupPartRole.TexturePage,
+                        bundleId,
+                        new AssetId("hero-texture"),
+                        "spine.ab",
+                        "hero.png",
+                        "Assets/hero.png",
+                        AssetType.Texture2D,
+                        "Texture2D",
+                        ChangeRecords:
+                        [
+                            new AssetChangeRecordDto(
+                                AssetChangeRecordKind.FileReplacement,
+                                CreatedAtUtc: appliedAtUtc,
+                                AppliedAtUtc: appliedAtUtc,
+                                SourceFileName: "hero-replace.png",
+                                SourceFilePath: @"C:\Imports\hero-replace.png",
+                                OperationId: "replace-texture",
+                                IsEffectiveReplacement: true)
+                        ])
+                ],
+                Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>()),
+            InspectorInformationTextSetFactory.Create(localizationService));
+
+        presenter.PresentSpineGroupDocumentTab(groupTab);
+
+        var record = Assert.Single(groupTab.Inspector.ChangeRecords);
+        Assert.Equal(ResourceKeys.InspectorChangeRecordAssociatedFileReplacementTitle, record.TitleText);
+        Assert.Contains("hero.png", record.SecondaryText, StringComparison.Ordinal);
+        Assert.Contains(@"C:\Imports\hero-replace.png", record.SecondaryText, StringComparison.Ordinal);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, groupTab.Inspector.ChangeRecordsListVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Collapsed, groupTab.Inspector.ChangeRecordsEmptyStateVisibility);
+        Assert.False(record.ShowsUndoReplacement);
+        Assert.False(record.ShowsRedoReplacement);
+        Assert.False(record.ShowsDeleteRecord);
+    }
+
     private static IReadOnlyList<BundleTreeNodeDto> CreateBundleTree(
         BundleId bundleId,
         string displayName)

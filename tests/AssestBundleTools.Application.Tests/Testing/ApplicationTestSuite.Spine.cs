@@ -20,6 +20,10 @@ internal static partial class ApplicationTestSuite
             LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldExposePartExtractionState);
         await RunTestAsync(
             failures,
+            nameof(LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldExposePartReplacementStateAndChangeRecords),
+            LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldExposePartReplacementStateAndChangeRecords);
+        await RunTestAsync(
+            failures,
             nameof(LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldMatchExtensionlessJsonSkeleton_WithSameNameAtlas),
             LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldMatchExtensionlessJsonSkeleton_WithSameNameAtlas);
         await RunTestAsync(

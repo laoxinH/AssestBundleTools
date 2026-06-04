@@ -40,7 +40,8 @@ internal static partial class SpineAssetGroupDetector
                 textCandidatesByAssetKey,
                 textParts,
                 classifiedTextPartKeys,
-                anchorGroupKeys);
+                anchorGroupKeys,
+                assetDetailsByAssetKey);
         }
 
         foreach (var atlasHost in details
@@ -54,7 +55,8 @@ internal static partial class SpineAssetGroupDetector
                 textCandidatesByAssetKey,
                 textParts,
                 classifiedTextPartKeys,
-                anchorGroupKeys);
+                anchorGroupKeys,
+                assetDetailsByAssetKey);
         }
     }
 
@@ -65,7 +67,8 @@ internal static partial class SpineAssetGroupDetector
         IReadOnlyDictionary<string, AssetCandidate> textCandidatesByAssetKey,
         ICollection<ClassifiedPart> textParts,
         ISet<string> classifiedTextPartKeys,
-        ISet<string> anchorGroupKeys)
+        ISet<string> anchorGroupKeys,
+        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey)
     {
         foreach (var dependency in dependencyOwner.Dependencies)
         {
@@ -91,7 +94,7 @@ internal static partial class SpineAssetGroupDetector
             var classifiedPart = new ClassifiedPart(
                 groupKey,
                 role,
-                CreatePart(candidate, role));
+                CreatePart(candidate, role, assetDetailsByAssetKey));
             textParts.Add(classifiedPart);
             classifiedTextPartKeys.Add(dependencyKey);
             if (candidate.Bundle.BundleId.Equals(targetBundleId))

@@ -11,7 +11,8 @@ internal static partial class SpineAssetGroupDetector
         IReadOnlyList<AssetCandidate> candidates,
         ICollection<ClassifiedPart> textParts,
         ISet<string> classifiedTextPartKeys,
-        ISet<string> anchorGroupKeys)
+        ISet<string> anchorGroupKeys,
+        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey)
     {
         var atlasGroupKeys = textParts
             .Where(static part => part.Role == SpineAssetGroupPartRole.Atlas)
@@ -30,7 +31,11 @@ internal static partial class SpineAssetGroupDetector
                 continue;
             }
 
-            if (!TryCreateExtensionlessSkeletonPart(candidate, atlasGroupKeys, out var classifiedPart))
+            if (!TryCreateExtensionlessSkeletonPart(
+                    candidate,
+                    atlasGroupKeys,
+                    assetDetailsByAssetKey,
+                    out var classifiedPart))
             {
                 continue;
             }
@@ -47,6 +52,7 @@ internal static partial class SpineAssetGroupDetector
     private static bool TryCreateExtensionlessSkeletonPart(
         AssetCandidate candidate,
         IReadOnlySet<string> atlasGroupKeys,
+        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey,
         out ClassifiedPart classifiedPart)
     {
         foreach (var path in EnumerateCandidatePaths(candidate.Item))
@@ -58,7 +64,7 @@ internal static partial class SpineAssetGroupDetector
                 classifiedPart = new ClassifiedPart(
                     groupKey,
                     SpineAssetGroupPartRole.Skeleton,
-                    CreatePart(candidate, SpineAssetGroupPartRole.Skeleton));
+                    CreatePart(candidate, SpineAssetGroupPartRole.Skeleton, assetDetailsByAssetKey));
                 return true;
             }
         }

@@ -30,5 +30,9 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(WorkspaceOperationLogServiceTests.CreateRecoveryPlan_ShouldReportPendingOperationsAsInterrupted),
             WorkspaceOperationLogServiceTests.CreateRecoveryPlan_ShouldReportPendingOperationsAsInterrupted);
+        await RunTestAsync(
+            failures,
+            nameof(WorkspaceOperationRelationMatcherTests.OperationConcernsTarget_ShouldMatchRelatedSourceFingerprint),
+            WorkspaceOperationRelationMatcherTests.OperationConcernsTarget_ShouldMatchRelatedSourceFingerprint);
     }
 }

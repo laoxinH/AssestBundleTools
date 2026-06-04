@@ -15,4 +15,8 @@ public sealed record SpineAssetGroupPartDto(
     string AssetPath,
     AssetType AssetType,
     string? AssetTypeDisplayName,
-    DateTimeOffset? LastExtractedAtUtc = null);
+    DateTimeOffset? LastExtractedAtUtc = null,
+    string? FileReplacementSourceFileName = null,
+    string? FileReplacementSourcePath = null,
+    AssetType? FileReplacementSourceAssetType = null,
+    IReadOnlyList<AssetChangeRecordDto>? ChangeRecords = null);

@@ -113,6 +113,79 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
             "Spine part metadata should retain the resource-level extraction timestamp.");
     }
 
+    public static async Task HandleAsync_ShouldExposePartReplacementStateAndChangeRecords()
+    {
+        var appliedAtUtc = new DateTimeOffset(2026, 6, 4, 9, 30, 0, TimeSpan.Zero);
+        var replacementSourcePath = @"C:\Imports\Hero.png";
+        var workspaceId = new WorkspaceId("workspace-a");
+        var spineBundleId = new BundleId("bundle.spine");
+        var spineAssets = CreateAssetList(
+            workspaceId,
+            spineBundleId,
+            "spine.ab",
+            CreateItem(spineBundleId, "skeleton-hero", "Assets/Hero/Hero.skel", AssetType.TextAsset),
+            CreateItem(spineBundleId, "atlas-hero", "Assets/Hero/Hero.atlas", AssetType.TextAsset),
+            CreateItem(
+                spineBundleId,
+                "texture-hero",
+                "Assets/Hero/Hero.png",
+                AssetType.Texture2D,
+                isModified: true));
+        var details = new[]
+        {
+            CreateDetails(
+                workspaceId,
+                spineBundleId,
+                "texture-hero",
+                "Assets/Hero/Hero.png",
+                AssetType.Texture2D,
+                nameof(AssetType.Texture2D),
+                dependencies: Array.Empty<AssetDependencyDto>(),
+                fileReplacementSourceFileName: "Hero.png",
+                fileReplacementSourcePath: replacementSourcePath,
+                fileReplacementSourceAssetType: AssetType.Texture2D,
+                changeRecords:
+                [
+                    new AssetChangeRecordDto(
+                        AssetChangeRecordKind.FileReplacement,
+                        CreatedAtUtc: appliedAtUtc,
+                        AppliedAtUtc: appliedAtUtc,
+                        SourceFileName: "Hero.png",
+                        SourceFilePath: replacementSourcePath,
+                        OperationId: "replace-texture",
+                        IsEffectiveReplacement: true)
+                ])
+        };
+        var handler = new LoadSpineAssetGroupsHandler(new TestWorkspaceSessionRegistry(
+            workspaceId,
+            [spineAssets],
+            details));
+
+        var result = await handler.HandleAsync(new LoadSpineAssetGroupsQuery(
+            workspaceId,
+            spineBundleId));
+
+        TestAssert.True(result.IsSuccess, "Spine group query should carry component replacement metadata.");
+        var group = TestAssert.Single(result.Value!.Items);
+        var texturePage = TestAssert.Single(group.TexturePageAssets);
+        TestAssert.Equal(
+            replacementSourcePath,
+            texturePage.FileReplacementSourcePath,
+            "Spine texture page rows should expose the current applied file replacement source.");
+        var changeRecord = TestAssert.Single(texturePage.ChangeRecords ?? Array.Empty<AssetChangeRecordDto>());
+        TestAssert.Equal(
+            AssetChangeRecordKind.FileReplacement,
+            changeRecord.Kind,
+            "Spine part change records should preserve the real component replacement kind before group projection.");
+        TestAssert.Equal(
+            replacementSourcePath,
+            changeRecord.SourceFilePath,
+            "Spine part change records should keep the applied source path.");
+        TestAssert.True(
+            changeRecord.IsEffectiveReplacement,
+            "Spine part change records should retain effective replacement state.");
+    }
+
     public static async Task HandleAsync_ShouldSplitDuplicateSpineResourcesUsingDependencyLinks()
     {
         var workspaceId = new WorkspaceId("workspace-a");
@@ -232,7 +305,8 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
         string assetPath,
         AssetType assetType,
         string? assetTypeDisplayName = null,
-        DateTimeOffset? lastExtractedAtUtc = null)
+        DateTimeOffset? lastExtractedAtUtc = null,
+        bool isModified = false)
     {
         var assetName = assetPath.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
         return new AssetListItemDto(
@@ -244,7 +318,7 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
             SizeInBytes: 1,
             PreferredDisplaySizeInBytes: null,
             HasPreview: true,
-            IsModified: false,
+            IsModified: isModified,
             AssetTypeDisplayName: assetTypeDisplayName ?? assetType.ToString(),
             LastExtractedAtUtc: lastExtractedAtUtc);
     }
@@ -256,7 +330,13 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
         string assetPath,
         AssetType assetType,
         string? assetTypeDisplayName,
-        IReadOnlyList<AssetDependencyDto> dependencies)
+        IReadOnlyList<AssetDependencyDto> dependencies,
+        string? fileReplacementSourceFileName = null,
+        string? fileReplacementSourcePath = null,
+        AssetType? fileReplacementSourceAssetType = null,
+        DateTimeOffset? lastExtractedAtUtc = null,
+        IReadOnlyList<AssetChangeRecordDto>? changeRecords = null,
+        bool isModified = false)
     {
         var assetName = assetPath.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
         return new AssetDetailsDto(
@@ -270,19 +350,20 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
             SizeInBytes: 1,
             PreferredDisplaySizeInBytes: null,
             PathId: 0,
-            IsModified: false,
+            IsModified: isModified,
             CanExtract: true,
             CanReplaceFromFile: true,
             CanReplaceFromWorkspace: true,
             WorkspaceReplacementSourceBundleDisplayName: null,
             WorkspaceReplacementSourceAssetName: null,
             WorkspaceReplacementSourceAssetType: null,
-            FileReplacementSourceFileName: null,
-            FileReplacementSourcePath: null,
-            FileReplacementSourceAssetType: null,
-            LastExtractedAtUtc: null,
+            FileReplacementSourceFileName: fileReplacementSourceFileName,
+            FileReplacementSourcePath: fileReplacementSourcePath,
+            FileReplacementSourceAssetType: fileReplacementSourceAssetType,
+            LastExtractedAtUtc: lastExtractedAtUtc,
             Dependencies: dependencies,
-            AssetTypeDisplayName: assetTypeDisplayName ?? assetType.ToString());
+            AssetTypeDisplayName: assetTypeDisplayName ?? assetType.ToString(),
+            ChangeRecords: changeRecords);
     }
 
     private static AssetDependencyDto CreateDependency(

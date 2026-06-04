@@ -13,6 +13,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 public sealed class SpineAssetGroupEditPartViewModel : ObservableObject
 {
     private string? _selectedSourceFilePath;
+    private string? _appliedSourceFilePath;
 
     public SpineAssetGroupEditPartViewModel(
         SpineAssetGroupPartDto part,
@@ -20,7 +21,8 @@ public sealed class SpineAssetGroupEditPartViewModel : ObservableObject
         string selectButtonText,
         string notSelectedText,
         string selectedStatusText,
-        string unchangedStatusText)
+        string unchangedStatusText,
+        string? appliedSourceFilePath = null)
     {
         Part = part ?? throw new ArgumentNullException(nameof(part));
         RoleText = roleText ?? throw new ArgumentNullException(nameof(roleText));
@@ -28,6 +30,7 @@ public sealed class SpineAssetGroupEditPartViewModel : ObservableObject
         NotSelectedText = notSelectedText ?? throw new ArgumentNullException(nameof(notSelectedText));
         SelectedStatusText = selectedStatusText ?? throw new ArgumentNullException(nameof(selectedStatusText));
         UnchangedStatusText = unchangedStatusText ?? throw new ArgumentNullException(nameof(unchangedStatusText));
+        _appliedSourceFilePath = NormalizeFilePath(appliedSourceFilePath);
     }
 
     public SpineAssetGroupPartDto Part { get; }
@@ -71,13 +74,36 @@ public sealed class SpineAssetGroupEditPartViewModel : ObservableObject
         }
     }
 
+    public string? AppliedSourceFilePath
+    {
+        get => _appliedSourceFilePath;
+        private set
+        {
+            if (SetProperty(ref _appliedSourceFilePath, NormalizeFilePath(value)))
+            {
+                OnPropertyChanged(nameof(SourceText));
+            }
+        }
+    }
+
     public string SelectedSourceFileName => string.IsNullOrWhiteSpace(SelectedSourceFilePath)
         ? string.Empty
         : Path.GetFileName(SelectedSourceFilePath);
 
-    public string SourceText => string.IsNullOrWhiteSpace(SelectedSourceFilePath)
-        ? NotSelectedText
-        : SelectedSourceFilePath!;
+    public string SourceText
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(SelectedSourceFilePath))
+            {
+                return SelectedSourceFilePath!;
+            }
+
+            return string.IsNullOrWhiteSpace(AppliedSourceFilePath)
+                ? NotSelectedText
+                : AppliedSourceFilePath!;
+        }
+    }
 
     public string StatusText => IsChanged ? SelectedStatusText : UnchangedStatusText;
 
@@ -88,6 +114,16 @@ public sealed class SpineAssetGroupEditPartViewModel : ObservableObject
     public void SetSelectedSourceFilePath(string? sourceFilePath)
     {
         SelectedSourceFilePath = sourceFilePath;
+    }
+
+    public void MarkSelectedSourceSaved()
+    {
+        if (!string.IsNullOrWhiteSpace(SelectedSourceFilePath))
+        {
+            AppliedSourceFilePath = SelectedSourceFilePath;
+        }
+
+        SelectedSourceFilePath = null;
     }
 
     private static string? NormalizeFilePath(string? sourceFilePath) =>

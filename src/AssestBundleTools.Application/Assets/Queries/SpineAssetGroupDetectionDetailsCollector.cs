@@ -51,6 +51,7 @@ internal static class SpineAssetGroupDetectionDetailsCollector
     }
 
     private static bool IsSpineLinkCandidate(AssetListItemDto item) =>
+        item.AssetType is (AssetType.TextAsset or AssetType.Texture2D) && item.IsModified ||
         item.AssetType == AssetType.Material ||
         string.Equals(item.AssetTypeDisplayName, "MonoBehaviour", StringComparison.OrdinalIgnoreCase);
 }

@@ -26,12 +26,29 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
         ArgumentNullException.ThrowIfNull(details);
 
         var sourceRecords = NormalizeChangeRecords(details);
+        return CreateChangeRecordViewModels(sourceRecords, canManageRecords);
+    }
+
+    public IReadOnlyList<InspectorChangeRecordViewModel> CreateChangeRecords(
+        IReadOnlyList<AssetChangeRecordDto> changeRecords,
+        bool canManageRecords)
+    {
+        ArgumentNullException.ThrowIfNull(changeRecords);
+
+        var sourceRecords = NormalizeChangeRecords(changeRecords);
+        return CreateChangeRecordViewModels(sourceRecords, canManageRecords);
+    }
+
+    private IReadOnlyList<InspectorChangeRecordViewModel> CreateChangeRecordViewModels(
+        IReadOnlyList<AssetChangeRecordDto> sourceRecords,
+        bool canManageRecords)
+    {
         var records = new List<InspectorChangeRecordViewModel>(sourceRecords.Count);
         foreach (var record in sourceRecords)
         {
             var isReplacementRecord = IsReplacementRecord(record);
-            var showUndo = isReplacementRecord && record.IsEffectiveReplacement;
-            var showRedo = isReplacementRecord && !record.IsEffectiveReplacement;
+            var showUndo = canManageRecords && isReplacementRecord && record.IsEffectiveReplacement;
+            var showRedo = canManageRecords && isReplacementRecord && !record.IsEffectiveReplacement;
 
             records.Add(CreateChangeRecord(
                 record,
@@ -46,7 +63,16 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
 
     private IReadOnlyList<AssetChangeRecordDto> NormalizeChangeRecords(AssetDetailsDto details)
     {
-        var candidateRecords = (details.ChangeRecords ?? Array.Empty<AssetChangeRecordDto>())
+        var records = NormalizeChangeRecords(details.ChangeRecords ?? Array.Empty<AssetChangeRecordDto>());
+        return records.Count > 0
+            ? records
+            : CreateEffectiveStateFallbackRecords(details);
+    }
+
+    private static IReadOnlyList<AssetChangeRecordDto> NormalizeChangeRecords(
+        IReadOnlyList<AssetChangeRecordDto> changeRecords)
+    {
+        var candidateRecords = changeRecords
             .Where(static record => record.Kind is
                 AssetChangeRecordKind.Extraction or
                 AssetChangeRecordKind.FileReplacement or
@@ -62,9 +88,7 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
                 .Take(1))
             .OrderByDescending(static record => record.DisplayTimestampUtc)
             .ToArray();
-        return records.Length > 0
-            ? records
-            : CreateEffectiveStateFallbackRecords(details);
+        return records;
     }
 
     private static IReadOnlyList<AssetChangeRecordDto> CreateEffectiveStateFallbackRecords(AssetDetailsDto details)
@@ -201,7 +225,10 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
         if (record.Kind == AssetChangeRecordKind.AssociatedFileReplacement)
         {
             var target = ResolveDisplayValue(record.TargetAssetName ?? record.TargetAssetId);
-            return _localizationService.GetFormattedString(ResourceKeys.InspectorChangeRecordTargetFormat, target);
+            var targetText = _localizationService.GetFormattedString(ResourceKeys.InspectorChangeRecordTargetFormat, target);
+            return string.IsNullOrWhiteSpace(record.SourceFilePath)
+                ? targetText
+                : string.Concat(targetText, Environment.NewLine, record.SourceFilePath.Trim());
         }
 
         return string.Empty;
