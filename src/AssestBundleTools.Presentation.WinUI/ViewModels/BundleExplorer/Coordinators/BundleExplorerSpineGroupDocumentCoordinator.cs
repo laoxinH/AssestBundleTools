@@ -288,7 +288,7 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
         }
         else
         {
-            spineGroupTab.ApplyGroup(entry.Item);
+            ApplyGroupIfSnapshotChanged(spineGroupTab, entry.Item);
         }
 
         await SetActiveSpineGroupDocumentTabAsync(
@@ -349,8 +349,19 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
                 spineGroupTab.GroupId,
                 StringComparison.Ordinal))
             ?.Item;
-        if (refreshedGroup is null ||
-            HasSameSpineGroupSnapshot(spineGroupTab.Item, refreshedGroup))
+        if (refreshedGroup is null)
+        {
+            return;
+        }
+
+        ApplyGroupIfSnapshotChanged(spineGroupTab, refreshedGroup);
+    }
+
+    private static void ApplyGroupIfSnapshotChanged(
+        SpineAssetGroupDocumentTabViewModel spineGroupTab,
+        SpineAssetGroupDto refreshedGroup)
+    {
+        if (HasSameSpineGroupSnapshot(spineGroupTab.Item, refreshedGroup))
         {
             return;
         }

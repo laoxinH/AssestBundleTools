@@ -44,6 +44,37 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
     }
 
     [Fact]
+    public async Task HandlePrimaryPaneSelectionChangedAsync_ShouldReuseLoadedDetails_WhenExistingTabSnapshotUnchanged()
+    {
+        var context = CreateContext();
+        var loader = new TestSpineAssetGroupDetailsLoader
+        {
+            LoadHandler = tab => Task.FromResult<SpineAssetGroupDetailsLoadResult?>(new SpineAssetGroupDetailsLoadResult(
+                new SpineAssetGroupDetailsDto(tab.Item, [], [], tab.Item.Diagnostics),
+                TexturePreview: null))
+        };
+        var coordinator = CreateCoordinator(context, loader);
+        var entry = CreateSpineGroupEntry("hero", "Hero");
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.SpineGroups;
+        context.PrimaryPane.ReplaceSpineGroups("ui.ab", [entry], "empty");
+        context.PrimaryPane.UpdateSpineGroupSelection(entry);
+        await coordinator.HandlePrimaryPaneSelectionChangedAsync(
+            isSynchronizingPrimaryPaneState: false,
+            captureActiveTabState: static () => { });
+
+        var groupTab = Assert.Single(context.BundleTab.SpineGroupTabs);
+        Assert.NotNull(groupTab.Details);
+
+        await coordinator.HandlePrimaryPaneSelectionChangedAsync(
+            isSynchronizingPrimaryPaneState: false,
+            captureActiveTabState: static () => { });
+
+        Assert.Equal(1, loader.LoadCallCount);
+        Assert.NotNull(groupTab.Details);
+        Assert.False(groupTab.Inspector.Preview.IsPreviewLoading);
+    }
+
+    [Fact]
     public async Task ActivateSpineGroupDocumentTabAsync_ShouldRefreshExtractionSummaryFromPane()
     {
         var context = CreateContext();
