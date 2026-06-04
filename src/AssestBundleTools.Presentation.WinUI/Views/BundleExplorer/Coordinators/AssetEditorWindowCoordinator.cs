@@ -411,6 +411,7 @@ public sealed partial class BundleExplorerPage
                 OpenDocumentInNewWindowFromEditorAsync,
                 OpenAssetDocumentGroupInNewWindowFromEditorAsync,
                 _openConflictActivator.TryActivateFromEditorAsync);
+            App.CurrentApp.RegisterAuxiliaryWindow(window);
             var initialLayout = preferredLayout is { } layout && AssetEditorWindowLayoutSafety.CanRestoreSize(layout)
                 ? layout
                 : _windowStateStore.CreateNextWindowLayout();

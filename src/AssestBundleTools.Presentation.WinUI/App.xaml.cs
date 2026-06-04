@@ -18,7 +18,9 @@ namespace AssestBundleTools.Presentation.WinUI;
 public partial class App : Microsoft.UI.Xaml.Application
 {
     private readonly List<MainWindow> _windows = [];
+    private readonly List<Microsoft.UI.Xaml.Window> _activeOwnerWindows = [];
     private MainWindow? _activeWindow;
+    private Microsoft.UI.Xaml.Window? _activeOwnerWindow;
     private IAssetBundleDecryptorRegistry _assetBundleDecryptorRegistry;
     private readonly Action _reloadAssetBundleDecryptorRegistry;
 
@@ -29,7 +31,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         try
         {
             var services = AppCompositionRoot.Build(new AppCompositionContext(
-                ActiveWindowAccessor: () => _activeWindow,
+                ActiveWindowAccessor: ResolveActiveOwnerWindow,
                 WorkspaceActivationRequestedHandler: OnWorkspaceProcessActivationRequested));
 
             LocalizationService = services.LocalizationService;
@@ -169,6 +171,12 @@ public partial class App : Microsoft.UI.Xaml.Application
         return window;
     }
 
+    public void RegisterAuxiliaryWindow(Microsoft.UI.Xaml.Window window)
+    {
+        ArgumentNullException.ThrowIfNull(window);
+        RegisterOwnerWindow(window);
+    }
+
     /// <summary>
     /// 统一处理“工作区是否已经打开”的激活逻辑。
     /// 1. 先检查当前进程中的窗口是否已经承载该工作区；
@@ -287,34 +295,85 @@ public partial class App : Microsoft.UI.Xaml.Application
     {
         _windows.Add(window);
         _activeWindow = window;
-        window.Activated += OnWindowActivated;
-        window.Closed += OnWindowClosed;
+        RegisterOwnerWindow(window);
+    }
+
+    private void RegisterOwnerWindow(Microsoft.UI.Xaml.Window window)
+    {
+        if (!_activeOwnerWindows.Contains(window))
+        {
+            _activeOwnerWindows.Add(window);
+            window.Activated += OnWindowActivated;
+            window.Closed += OnWindowClosed;
+        }
+
+        PromoteOwnerWindow(window);
     }
 
     private void OnWindowActivated(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs e)
     {
-        if (sender is MainWindow window)
+        if (e.WindowActivationState == Microsoft.UI.Xaml.WindowActivationState.Deactivated)
         {
-            _activeWindow = window;
+            return;
+        }
+
+        if (sender is not Microsoft.UI.Xaml.Window window)
+        {
+            return;
+        }
+
+        PromoteOwnerWindow(window);
+        if (sender is MainWindow mainWindow)
+        {
+            _activeWindow = mainWindow;
         }
     }
 
     private void OnWindowClosed(object sender, Microsoft.UI.Xaml.WindowEventArgs args)
     {
-        if (sender is not MainWindow window)
+        if (sender is not Microsoft.UI.Xaml.Window window)
         {
             return;
         }
 
         window.Activated -= OnWindowActivated;
         window.Closed -= OnWindowClosed;
-        UnregisterWindowWorkspace(window);
-        _windows.Remove(window);
+        _activeOwnerWindows.Remove(window);
 
-        if (ReferenceEquals(_activeWindow, window))
+        if (ReferenceEquals(_activeOwnerWindow, window))
+        {
+            _activeOwnerWindow = _activeOwnerWindows.LastOrDefault();
+        }
+
+        if (sender is not MainWindow mainWindow)
+        {
+            return;
+        }
+
+        UnregisterWindowWorkspace(mainWindow);
+        _windows.Remove(mainWindow);
+
+        if (ReferenceEquals(_activeWindow, mainWindow))
         {
             _activeWindow = _windows.LastOrDefault();
         }
+    }
+
+    private Microsoft.UI.Xaml.Window? ResolveActiveOwnerWindow()
+    {
+        if (_activeOwnerWindow is not null)
+        {
+            return _activeOwnerWindow;
+        }
+
+        return _activeOwnerWindows.LastOrDefault() ?? _activeWindow;
+    }
+
+    private void PromoteOwnerWindow(Microsoft.UI.Xaml.Window window)
+    {
+        _activeOwnerWindows.Remove(window);
+        _activeOwnerWindows.Add(window);
+        _activeOwnerWindow = window;
     }
 
     private static string CreateWorkspaceKey(WorkspaceNavigationRequest navigationRequest)
