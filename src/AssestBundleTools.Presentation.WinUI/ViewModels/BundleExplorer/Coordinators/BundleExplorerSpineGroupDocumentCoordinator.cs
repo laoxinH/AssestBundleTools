@@ -17,6 +17,7 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
     private readonly ISpineAssetGroupDetailsLoader _spineGroupDetailsLoader;
     private readonly Action _requestWorkspaceBrowserStatePersistence;
     private readonly Action _notifyActionStates;
+    private readonly Dictionary<SpineAssetGroupDocumentTabViewModel, PendingSpineGroupDetailsLoad> _pendingSpineGroupDetailsLoads = new();
     private int _spineGroupDocumentStateSynchronizationDepth;
 
     public BundleExplorerSpineGroupDocumentCoordinator(
@@ -459,6 +460,47 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator
             return;
         }
 
+        if (!forceReload &&
+            _pendingSpineGroupDetailsLoads.TryGetValue(spineGroupTab, out var pendingLoad) &&
+            ReferenceEquals(pendingLoad.GroupSnapshot, spineGroupTab.Item))
+        {
+            await pendingLoad.LoadTask;
+            return;
+        }
+
+        var loadTask = LoadSpineGroupDetailsCoreAsync(bundleTab, spineGroupTab, requireActive);
+        if (!forceReload)
+        {
+            var trackedLoad = new PendingSpineGroupDetailsLoad(spineGroupTab.Item, loadTask);
+            _pendingSpineGroupDetailsLoads[spineGroupTab] = trackedLoad;
+            try
+            {
+                await loadTask;
+            }
+            finally
+            {
+                if (_pendingSpineGroupDetailsLoads.TryGetValue(spineGroupTab, out var currentLoad) &&
+                    ReferenceEquals(currentLoad, trackedLoad))
+                {
+                    _pendingSpineGroupDetailsLoads.Remove(spineGroupTab);
+                }
+            }
+
+            return;
+        }
+
+        await loadTask;
+    }
+
+    private sealed record PendingSpineGroupDetailsLoad(
+        SpineAssetGroupDto GroupSnapshot,
+        Task LoadTask);
+
+    private async Task LoadSpineGroupDetailsCoreAsync(
+        BundleDocumentTabViewModel bundleTab,
+        SpineAssetGroupDocumentTabViewModel spineGroupTab,
+        bool requireActive)
+    {
         var expectedGroupId = spineGroupTab.GroupId;
         var expectedBundleId = spineGroupTab.BundleId;
         var expectedGroup = spineGroupTab.Item;

@@ -181,6 +181,45 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
     }
 
     [Fact]
+    public async Task ActivateSpineGroupDocumentTabAsync_ShouldReusePendingDetailsLoad_WhenNewTabSelectionEventFiresBeforeLoadCompletes()
+    {
+        var context = CreateContext();
+        var entry = CreateSpineGroupEntry("hero", "Hero");
+        var loadCompletion = new TaskCompletionSource<SpineAssetGroupDetailsLoadResult?>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var loader = new TestSpineAssetGroupDetailsLoader
+        {
+            LoadHandler = _ => loadCompletion.Task
+        };
+        var coordinator = CreateCoordinator(context, loader);
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.SpineGroups;
+        context.PrimaryPane.ReplaceSpineGroups("ui.ab", [entry], "empty");
+        context.PrimaryPane.UpdateSpineGroupSelection(entry);
+
+        var firstLoadTask = coordinator.HandlePrimaryPaneSelectionChangedAsync(
+            isSynchronizingPrimaryPaneState: false,
+            captureActiveTabState: static () => { });
+
+        var groupTab = Assert.Single(context.BundleTab.SpineGroupTabs);
+        Assert.False(firstLoadTask.IsCompleted);
+        Assert.Equal(1, loader.LoadCallCount);
+
+        var secondLoadTask = coordinator.ActivateSpineGroupDocumentTabAsync(groupTab);
+
+        Assert.False(secondLoadTask.IsCompleted);
+        Assert.Equal(1, loader.LoadCallCount);
+
+        loadCompletion.SetResult(new SpineAssetGroupDetailsLoadResult(
+            new SpineAssetGroupDetailsDto(groupTab.Item, [], [], groupTab.Item.Diagnostics),
+            TexturePreview: null));
+        await Task.WhenAll(firstLoadTask, secondLoadTask);
+
+        Assert.Equal(1, loader.LoadCallCount);
+        Assert.NotNull(groupTab.Details);
+        Assert.False(groupTab.Inspector.Preview.IsPreviewLoading);
+    }
+
+    [Fact]
     public async Task HandlePrimaryPaneSelectionChangedAsync_ShouldRestoreSummaryPreview_WhenSpineDetailsLoadFails()
     {
         var context = CreateContext();
