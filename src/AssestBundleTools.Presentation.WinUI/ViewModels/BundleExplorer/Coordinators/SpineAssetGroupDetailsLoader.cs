@@ -73,16 +73,67 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
                 return null;
             }
 
-            var texturePreview = await TryLoadTexturePreviewSafelyAsync(
-                query,
-                result.Value,
-                groupTab.SelectedAtlasPageOption,
-                cancellationToken);
             var animationTextures = await TryLoadAnimationTexturePreviewsSafelyAsync(
                 query,
                 result.Value,
                 cancellationToken);
-            return new SpineAssetGroupDetailsLoadResult(result.Value, texturePreview, animationTextures);
+            if (result.Value.AnimationPreview is not null &&
+                animationTextures.Count > 0)
+            {
+                return new SpineAssetGroupDetailsLoadResult(result.Value, null, animationTextures);
+            }
+
+            var diagnosticDetails = await TryLoadInteractiveDiagnosticsAsync(
+                query,
+                result.Value,
+                cancellationToken);
+            var details = diagnosticDetails ?? result.Value;
+            return new SpineAssetGroupDetailsLoadResult(details, null, animationTextures);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task<SpineAssetGroupDetailsDto?> TryLoadInteractiveDiagnosticsAsync(
+        LoadSpineAssetGroupDetailsQuery previewQuery,
+        SpineAssetGroupDetailsDto previewDetails,
+        CancellationToken cancellationToken)
+    {
+        if (HasDiagnosticDetails(previewDetails))
+        {
+            return null;
+        }
+
+        try
+        {
+            var diagnosticsQuery = previewQuery with
+            {
+                LoadMode = SpineAssetGroupDetailsLoadMode.InteractiveDiagnostics
+            };
+            var result = await _backgroundWorkScheduler.RunAsync(
+                new BackgroundWorkRequest<Result<SpineAssetGroupDetailsDto>>(
+                    BackgroundWorkProfile.PreviewForeground,
+                    context => _workspaceAssetInspectionGateway.LoadSpineAssetGroupDetailsAsync(
+                        diagnosticsQuery,
+                        context.CancellationToken))
+                {
+                    SemanticKind = BackgroundWorkSemanticKind.TransientRead,
+                    Priority = BackgroundWorkPriority.UserBlocking,
+                    WorkspaceId = diagnosticsQuery.WorkspaceId.Value,
+                    WorkspaceKey = diagnosticsQuery.WorkspaceKey,
+                    BundleCacheKey = diagnosticsQuery.BundleId.Value,
+                    ResourceKey = diagnosticsQuery.GroupId,
+                    StatusTitle = CreatePreviewStatusTitle(previewDetails.Group.DisplayName),
+                    ShowInStatusBar = _localizationService is not null
+                },
+                cancellationToken);
+            return result.IsSuccess ? result.Value : null;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -113,29 +164,6 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
                 query,
                 atlasPageOption.AtlasPage,
                 cancellationToken);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private async Task<SpineAssetGroupTexturePreviewState?> TryLoadTexturePreviewSafelyAsync(
-        LoadSpineAssetGroupDetailsQuery detailsQuery,
-        SpineAssetGroupDetailsDto details,
-        SpineAtlasPageOptionViewModel? preferredAtlasPageOption,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var atlasPage = ResolveTexturePreviewAtlasPage(details, preferredAtlasPageOption);
-            return atlasPage is null
-                ? null
-                : await TryLoadTexturePreviewAsync(detailsQuery, atlasPage, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -280,34 +308,6 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
                 imageSource.PixelHeight);
     }
 
-    private static SpineAtlasPageDto? ResolveTexturePreviewAtlasPage(
-        SpineAssetGroupDetailsDto details,
-        SpineAtlasPageOptionViewModel? preferredAtlasPageOption)
-    {
-        if (preferredAtlasPageOption is not null &&
-            preferredAtlasPageOption.Index >= 0 &&
-            preferredAtlasPageOption.Index < details.AtlasPages.Count &&
-            string.Equals(
-                details.AtlasPages[preferredAtlasPageOption.Index].Name,
-                preferredAtlasPageOption.AtlasPage.Name,
-                StringComparison.Ordinal))
-        {
-            return details.AtlasPages[preferredAtlasPageOption.Index];
-        }
-
-        if (preferredAtlasPageOption is not null)
-        {
-            var preferredByName = details.AtlasPages.FirstOrDefault(page =>
-                string.Equals(page.Name, preferredAtlasPageOption.AtlasPage.Name, StringComparison.Ordinal));
-            if (preferredByName is not null)
-            {
-                return preferredByName;
-            }
-        }
-
-        return details.AtlasPages.FirstOrDefault(static page => page.TexturePageAsset is not null);
-    }
-
     private string? CreatePreviewStatusTitle(string? displayName)
     {
         if (_localizationService is null)
@@ -351,7 +351,8 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
                 workspaceEntry.WorkspaceDataRootPath,
                 groupTab.BundleId,
                 groupTab.GroupId,
-                CreatePreviewSourceOverrides(groupTab));
+                CreatePreviewSourceOverrides(groupTab),
+                SpineAssetGroupDetailsLoadMode.InteractivePreview);
             return true;
         }
 
@@ -380,7 +381,8 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
             activeWorkspaceNavigationRequest.WorkspaceDataRootPath,
             groupTab.BundleId,
             groupTab.GroupId,
-            CreatePreviewSourceOverrides(groupTab));
+            CreatePreviewSourceOverrides(groupTab),
+            SpineAssetGroupDetailsLoadMode.InteractivePreview);
         return true;
     }
 
@@ -410,4 +412,14 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
             candidate.BundleId.Equals(bundleId) &&
             candidate.AssetId.Equals(assetId) &&
             !string.IsNullOrWhiteSpace(candidate.SourceFilePath));
+
+    private static bool HasDiagnosticDetails(SpineAssetGroupDetailsDto details) =>
+        details.Diagnostics.Any(static diagnostic =>
+            diagnostic.Kind is
+                SpineAssetGroupDiagnosticKind.AnimationPreviewRuntimeUnsupported or
+                SpineAssetGroupDiagnosticKind.AnimationPreviewUnsupportedFeature or
+                SpineAssetGroupDiagnosticKind.SkeletonPreviewUnavailable or
+                SpineAssetGroupDiagnosticKind.SkeletonJsonParseFailed or
+                SpineAssetGroupDiagnosticKind.AtlasPreviewUnavailable or
+                SpineAssetGroupDiagnosticKind.AtlasParseFailed);
 }

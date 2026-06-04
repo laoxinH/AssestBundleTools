@@ -92,10 +92,9 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
         var atlasPages = new List<SpineAtlasPageDto>();
         var atlasTexts = new List<string>();
         var diagnostics = new List<SpineAssetGroupDiagnosticDto>(group.Diagnostics);
-        var skeletonSummaryResult = await _skeletonSummaryBuilder.BuildAsync(
+        var skeletonSummaryResult = await BuildSkeletonSummariesAsync(
             query,
-            group.GroupKey,
-            group.SkeletonAssets,
+            group,
             cancellationToken);
         if (skeletonSummaryResult.IsCancelled)
         {
@@ -134,18 +133,22 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
             }
 
             atlasTexts.Add(atlasText);
-            var textureDiagnostics = await _textureDiagnosticBuilder.BuildAsync(
-                query,
-                group.GroupKey,
-                atlasAsset,
-                parsedPages,
-                cancellationToken);
-            if (textureDiagnostics.IsCancelled)
+            if (ShouldBuildTextureDiagnostics(query))
             {
-                return Result<SpineAssetGroupDetailsDto>.Cancelled();
+                var textureDiagnostics = await _textureDiagnosticBuilder.BuildAsync(
+                    query,
+                    group.GroupKey,
+                    atlasAsset,
+                    parsedPages,
+                    cancellationToken);
+                if (textureDiagnostics.IsCancelled)
+                {
+                    return Result<SpineAssetGroupDetailsDto>.Cancelled();
+                }
+
+                diagnostics.AddRange(textureDiagnostics.Diagnostics);
             }
 
-            diagnostics.AddRange(textureDiagnostics.Diagnostics);
             atlasPages.AddRange(parsedPages);
         }
 
@@ -169,6 +172,29 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
             diagnostics,
             animationPreviewResult.Preview));
     }
+
+    private async Task<SpineSkeletonSummaryBuilder.SkeletonSummaryResult> BuildSkeletonSummariesAsync(
+        LoadSpineAssetGroupDetailsQuery query,
+        SpineAssetGroupDto group,
+        CancellationToken cancellationToken)
+    {
+        if (!ShouldBuildSkeletonSummaries(query))
+        {
+            return SpineSkeletonSummaryBuilder.SkeletonSummaryResult.Empty;
+        }
+
+        return await _skeletonSummaryBuilder.BuildAsync(
+            query,
+            group.GroupKey,
+            group.SkeletonAssets,
+            cancellationToken);
+    }
+
+    private static bool ShouldBuildSkeletonSummaries(LoadSpineAssetGroupDetailsQuery query) =>
+        query.LoadMode != SpineAssetGroupDetailsLoadMode.InteractivePreview;
+
+    private static bool ShouldBuildTextureDiagnostics(LoadSpineAssetGroupDetailsQuery query) =>
+        query.LoadMode != SpineAssetGroupDetailsLoadMode.InteractivePreview;
 
     private Result<SpineAssetGroupDetailsDto>? ValidateQuery(LoadSpineAssetGroupDetailsQuery query)
     {

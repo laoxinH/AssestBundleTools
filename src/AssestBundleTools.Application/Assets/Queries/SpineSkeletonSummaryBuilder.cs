@@ -225,5 +225,8 @@ internal sealed class SpineSkeletonSummaryBuilder
     {
         public static SkeletonSummaryResult Cancelled { get; } =
             new(true, Array.Empty<SpineSkeletonSummaryDto>(), Array.Empty<SpineAssetGroupDiagnosticDto>());
+
+        public static SkeletonSummaryResult Empty { get; } =
+            new(false, Array.Empty<SpineSkeletonSummaryDto>(), Array.Empty<SpineAssetGroupDiagnosticDto>());
     }
 }

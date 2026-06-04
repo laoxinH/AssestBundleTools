@@ -15,6 +15,10 @@ public sealed record SpineAnimationRuntimePreviewResultDto(
     public static SpineAnimationRuntimePreviewResultDto Cancelled { get; } =
         new(false, true, null, Array.Empty<SpineAssetGroupDiagnosticDto>());
 
+    public static SpineAnimationRuntimePreviewResultDto NotHandledWithDiagnostics(
+        IReadOnlyList<SpineAssetGroupDiagnosticDto>? diagnostics) =>
+        new(false, false, null, diagnostics ?? Array.Empty<SpineAssetGroupDiagnosticDto>());
+
     public static SpineAnimationRuntimePreviewResultDto Handled(
         SpineAnimationPreviewDto? preview,
         IReadOnlyList<SpineAssetGroupDiagnosticDto>? diagnostics = null) =>

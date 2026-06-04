@@ -235,9 +235,120 @@ public sealed class BundleExplorerAssetPreviewSchedulingTests
         var result = await loader.LoadAsync(groupTab);
 
         Assert.NotNull(result);
-        var task = Assert.Single(statusService.Tasks);
+        Assert.NotEmpty(statusService.Tasks);
+        var task = statusService.Tasks[0];
         Assert.Equal($"{ResourceKeys.BundleExplorerStatusLoadPreviewFormat}:Amiya Spine", task.Title);
-        Assert.True(task.IsDisposed);
+        Assert.All(statusService.Tasks, static task => Assert.True(task.IsDisposed));
+    }
+
+    [Fact]
+    public async Task LoadSpineGroupDetailsAsync_ShouldUseInteractivePreviewQuery()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-spine");
+        var context = CreatePreviewContext(workspaceId, "SpinePreviewFastPath");
+        var group = CreateSpineGroup(bundleId);
+        var queries = new List<LoadSpineAssetGroupDetailsQuery>();
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            LoadSpineAssetGroupDetailsHandler = query =>
+            {
+                queries.Add(query);
+                return Task.FromResult(Result<SpineAssetGroupDetailsDto>.Success(
+                    new SpineAssetGroupDetailsDto(
+                        group,
+                        Array.Empty<SpineSkeletonSummaryDto>(),
+                        Array.Empty<SpineAtlasPageDto>(),
+                        Array.Empty<SpineAssetGroupDiagnosticDto>())));
+            }
+        };
+        var loader = new SpineAssetGroupDetailsLoader(
+            inspectionGateway,
+            context.WorkspaceContextService,
+            context.WorkspaceShell,
+            new TestBackgroundTaskRunner(),
+            localizationService: context.LocalizationService);
+        var groupTab = new SpineAssetGroupDocumentTabViewModel(
+            group,
+            InspectorInformationTextSetFactory.Create(context.LocalizationService));
+
+        var result = await loader.LoadAsync(groupTab);
+
+        Assert.NotNull(result);
+        Assert.NotEmpty(queries);
+        var query = queries[0];
+        Assert.Equal(SpineAssetGroupDetailsLoadMode.InteractivePreview, query.LoadMode);
+    }
+
+    [Fact]
+    public async Task LoadSpineGroupDetailsAsync_ShouldLoadInteractiveDiagnostics_WhenAnimationHasNoTexturePayload()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-spine");
+        var context = CreatePreviewContext(workspaceId, "SpinePreviewDiagnostics");
+        var group = CreateSpineGroup(bundleId);
+        var queries = new List<LoadSpineAssetGroupDetailsQuery>();
+        var texturePreviewQueryCount = 0;
+        var previewDetails = new SpineAssetGroupDetailsDto(
+            group,
+            Array.Empty<SpineSkeletonSummaryDto>(),
+            [
+                new SpineAtlasPageDto(
+                    "missing.png",
+                    64,
+                    64,
+                    TexturePageAsset: null,
+                    Regions: Array.Empty<SpineAtlasRegionDto>())
+            ],
+            Array.Empty<SpineAssetGroupDiagnosticDto>(),
+            CreateMinimalAnimationPreview(group.SkeletonAssets[0]));
+        var diagnosticsDetails = previewDetails with
+        {
+            Diagnostics =
+            [
+                new SpineAssetGroupDiagnosticDto(
+                    SpineAssetGroupDiagnosticKind.AtlasPageTextureUnmatched,
+                    group.GroupKey,
+                    group.AtlasAssets,
+                    AtlasPageName: "missing.png")
+            ]
+        };
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            GetAssetPreviewHandler = _ =>
+            {
+                texturePreviewQueryCount++;
+                throw new InvalidOperationException("Initial Spine diagnostics should not request texture previews.");
+            },
+            LoadSpineAssetGroupDetailsHandler = query =>
+            {
+                queries.Add(query);
+                return Task.FromResult(Result<SpineAssetGroupDetailsDto>.Success(
+                    query.LoadMode == SpineAssetGroupDetailsLoadMode.InteractiveDiagnostics
+                        ? diagnosticsDetails
+                        : previewDetails));
+            }
+        };
+        var loader = new SpineAssetGroupDetailsLoader(
+            inspectionGateway,
+            context.WorkspaceContextService,
+            context.WorkspaceShell,
+            new TestBackgroundTaskRunner(),
+            localizationService: context.LocalizationService);
+        var groupTab = new SpineAssetGroupDocumentTabViewModel(
+            group,
+            InspectorInformationTextSetFactory.Create(context.LocalizationService));
+
+        var result = await loader.LoadAsync(groupTab);
+
+        Assert.NotNull(result);
+        Assert.Equal(
+            [SpineAssetGroupDetailsLoadMode.InteractivePreview, SpineAssetGroupDetailsLoadMode.InteractiveDiagnostics],
+            queries.Select(static query => query.LoadMode).ToArray());
+        Assert.Contains(
+            result!.Details.Diagnostics,
+            static diagnostic => diagnostic.Kind == SpineAssetGroupDiagnosticKind.AtlasPageTextureUnmatched);
+        Assert.Equal(0, texturePreviewQueryCount);
     }
 
     [Fact]
@@ -430,6 +541,86 @@ public sealed class BundleExplorerAssetPreviewSchedulingTests
             Diagnostic: new AssetPreviewDiagnosticDto(
                 AssetPreviewCacheStatusKind.Missing,
                 AssetPreviewFallbackReasonKind.OutOfMemory)));
+    }
+
+    private static SpineAssetGroupDto CreateSpineGroup(BundleId bundleId)
+    {
+        var skeleton = new SpineAssetGroupPartDto(
+            Role: SpineAssetGroupPartRole.Skeleton,
+            BundleId: bundleId,
+            AssetId: new AssetId("skeleton"),
+            BundleDisplayName: "spine.ab",
+            Name: "skeleton.json",
+            AssetPath: "Assets/Spine/skeleton.json",
+            AssetType: AssetType.TextAsset,
+            AssetTypeDisplayName: null);
+        var atlas = new SpineAssetGroupPartDto(
+            Role: SpineAssetGroupPartRole.Atlas,
+            BundleId: bundleId,
+            AssetId: new AssetId("atlas"),
+            BundleDisplayName: "spine.ab",
+            Name: "skeleton.atlas",
+            AssetPath: "Assets/Spine/skeleton.atlas",
+            AssetType: AssetType.TextAsset,
+            AssetTypeDisplayName: null);
+        return new SpineAssetGroupDto(
+            GroupId: "spine-group",
+            BundleId: bundleId,
+            DisplayName: "Amiya Spine",
+            GroupKey: "spine-group-key",
+            SkeletonAssets: [skeleton],
+            AtlasAssets: [atlas],
+            TexturePageAssets: Array.Empty<SpineAssetGroupPartDto>(),
+            Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>());
+    }
+
+    private static SpineAnimationPreviewDto CreateMinimalAnimationPreview(SpineAssetGroupPartDto skeletonAsset)
+    {
+        var runtime = new SpineAnimationRuntimeDto(
+            "4.2.74",
+            Major: 4,
+            Minor: 2,
+            AdapterKey: "V42",
+            SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable);
+        var animation = new SpineAnimationClipDto(
+            "idle",
+            Duration: 1d,
+            BoneTimelines: Array.Empty<SpineAnimationBoneTimelineDto>(),
+            SlotAttachmentTimelines: Array.Empty<SpineAnimationSlotAttachmentTimelineDto>());
+        return new SpineAnimationPreviewDto(
+            skeletonAsset,
+            "4.2.74",
+            Bones:
+            [
+                new SpineAnimationBoneDto(
+                    "root",
+                    ParentName: null,
+                    X: 0d,
+                    Y: 0d,
+                    Rotation: 0d,
+                    ScaleX: 1d,
+                    ScaleY: 1d)
+            ],
+            Slots:
+            [
+                new SpineAnimationSlotDto(
+                    "body",
+                    "root",
+                    SetupAttachmentName: null,
+                    DrawOrder: 0)
+            ],
+            Attachments: Array.Empty<SpineAnimationAttachmentDto>(),
+            Animations: [animation],
+            runtime)
+        {
+            PlaybackSource = new SpineAnimationRuntimePlaybackSourceDto(
+                "spine-group-key",
+                skeletonAsset,
+                SkeletonJson: "{}",
+                runtime,
+                AtlasPages: Array.Empty<SpineAtlasPageDto>(),
+                AtlasTexts: Array.Empty<string>())
+        };
     }
 
     private sealed record PreviewContext(

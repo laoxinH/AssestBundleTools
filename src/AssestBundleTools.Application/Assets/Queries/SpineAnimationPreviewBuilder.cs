@@ -86,6 +86,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
             skeletonJson,
             atlasPages,
             atlasTexts,
+            query.LoadMode,
             cancellationToken);
     }
 
@@ -95,6 +96,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
         string skeletonJson,
         IReadOnlyList<SpineAtlasPageDto> atlasPages,
         IReadOnlyList<string> atlasTexts,
+        SpineAssetGroupDetailsLoadMode loadMode,
         CancellationToken cancellationToken)
     {
         var runtimePreviewResult = await TryBuildRuntimePreviewAsync(
@@ -116,6 +118,12 @@ internal sealed partial class SpineAnimationPreviewBuilder
                 false,
                 runtimePreviewResult.Preview,
                 runtimePreviewResult.Diagnostics);
+        }
+
+        if (loadMode == SpineAssetGroupDetailsLoadMode.InteractivePreview &&
+            runtimePreviewResult.Diagnostics.Count > 0)
+        {
+            return SpineAnimationPreviewBuildResult.EmptyWithDiagnostics(runtimePreviewResult.Diagnostics);
         }
 
         return TryBuildPreview(
@@ -178,6 +186,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
                 skeletonJson,
                 atlasPages,
                 atlasTexts,
+                query.LoadMode,
                 cancellationToken);
             if (jsonPreviewResult.IsCancelled ||
                 jsonPreviewResult.Preview is not null ||

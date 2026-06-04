@@ -13,4 +13,5 @@ public sealed record LoadSpineAssetGroupDetailsQuery(
     string WorkspaceDataRootPath,
     BundleId BundleId,
     string GroupId,
-    IReadOnlyList<AssetPreviewSourceOverrideDto>? PreviewSourceOverrides = null);
+    IReadOnlyList<AssetPreviewSourceOverrideDto>? PreviewSourceOverrides = null,
+    SpineAssetGroupDetailsLoadMode LoadMode = SpineAssetGroupDetailsLoadMode.Full);

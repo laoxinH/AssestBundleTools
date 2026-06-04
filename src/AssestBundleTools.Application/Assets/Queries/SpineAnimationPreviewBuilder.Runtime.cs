@@ -23,10 +23,16 @@ internal sealed partial class SpineAnimationPreviewBuilder
         var runtime = SpineAnimationRuntimeResolver.Resolve(null);
         string? spineVersion = null;
         if (!string.IsNullOrWhiteSpace(skeletonJson) &&
-            (!TryResolveRuntime(skeletonJson, out spineVersion, out runtime) ||
-             runtime.SupportKind != SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable))
+            !TryResolveRuntime(skeletonJson, out spineVersion, out runtime))
         {
             return SpineAnimationRuntimePreviewResultDto.NotHandled;
+        }
+
+        if (!string.IsNullOrWhiteSpace(skeletonJson) &&
+            runtime.SupportKind != SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable)
+        {
+            return SpineAnimationRuntimePreviewResultDto.NotHandledWithDiagnostics(
+                BuildRuntimeDiagnostics(skeletonAsset, groupKey, runtime));
         }
 
         var result = await _runtimePreviewService.TryBuildPreviewAsync(

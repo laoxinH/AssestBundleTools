@@ -37,7 +37,7 @@
 | 工作区打开 / 导入 | `WorkspaceImportCoordinatorService`、`BundleExplorerWorkspaceBindingCoordinator`、`IBackgroundTaskRunner` | 外层任务已离开 UI 线程；Application 内部已有 `workspaceKey` 执行闸门和 bundle 粒度 worker 池 | 外层任务、导入进度覆盖层和 Shell 状态条尚未统一为同一个任务模型 |
 | Application 导入 worker | `WorkspaceImportProcessingCoordinator -> WorkspaceImportWorkerPool -> WorkspaceImportCommitter` | `串行计划 -> 有界并行 worker -> 串行提交`，默认 worker 并发度 `1-4` | 该 worker 池属于业务一致性边界，不应被 Presentation 调度器接管 |
 | 资源预览 | `AssetPreviewQueryExecutor` + `IBackgroundWorkScheduler` + `WorkspaceBundleArtifactResolver` + `AssetsToolsBundleLoadedSessionCache` | 前台槽优先服务活动详情标签，后台槽用于已打开标签预热；支持取消、超时、调度器 profile 闸门；导入 / 预览 / 提取 / Spine 详情会优先复用 `cache/bundles` 标准化 artifact；artifact 生成阶段按 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 串行化，标准化 artifact 已有 usage / LRU prune、设置页显式清理入口和偏好驱动自动容量治理；预览缓存已有 usage / prune，并纳入当前工作区缓存聚合统计、设置页显式清理和偏好驱动自动容量治理；AssetsTools loaded-session 再按标准化 artifact identity 做 single-flight / lease 复用，并在 artifact 删除 / prune 时主动失效；loaded-session 已有默认 6 个空闲会话上限和 GC 内存压力下 1 个空闲会话退避；预览生成 `OutOfMemoryException` 会映射为专用诊断，并让同 bundle 后台预热短期退避 | 完整可观测队列、任务详情和后续写包共享入口仍需后续补齐 |
-| Spine 详情、贴图载荷和 runtime 帧 | `SpineAssetGroupDetailsLoader`、`InspectorSpineAnimationPreviewSurfaceView` + `IBackgroundWorkScheduler` | 组详情 / 贴图载荷通过 `PreviewForeground` 后台加载，runtime 当前帧通过独立 `SpineRuntimeFrame` profile 运行；均不让 UI 直接读 AB | Spine 序列帧导出和后续导出 profile 仍需继续统一 |
+| Spine 详情、贴图载荷和 runtime 帧 | `SpineAssetGroupDetailsLoader`、`InspectorSpineAnimationPreviewSurfaceView` + `IBackgroundWorkScheduler` | 组详情 / 贴图载荷通过 `PreviewForeground` 后台加载，runtime 当前帧通过独立 `SpineRuntimeFrame` profile 运行；初始组详情先用交互预览快路径加载可播放动画所需内容，播放失败且缺少明确诊断时才补跑完整诊断；均不让 UI 直接读 AB | Spine 序列帧导出和后续导出 profile 仍需继续统一 |
 | 批量提取 | `BundleExplorerBatchExtractionBackgroundExecutor`、`BatchTasksViewModel.Execution` | 已通过后台 runner 执行，并向 Shell 状态条上报进度 | 任务取消、并发限制、队列排队和完成结果展示仍偏局部实现 |
 | Shell 状态条 | `IAppBackgroundTaskStatusService` | 能显示当前任务、进度和不确定进度，并把刷新合并到 UI 线程 | 当前是手动 begin/report 模型，尚未和调度器的任务生命周期自然绑定 |
 
@@ -485,7 +485,7 @@ Export / SaveRebuild 共享 artifact resolver 已进入保存计划骨架的只�
 - 组合根已创建单例调度器，`App` 暴露同一 `BackgroundWorkScheduler` 给工作台、批处理页和独立资源编辑窗口使用，避免同类任务各自临时创建调度器。
 - 资源列表多选批量提取、Spine 资源组多选批量提取、批处理页批量提取和工作区级批量提取对话框已迁移到 `BatchExtraction` profile；工作区顶部入口不再跳转批处理页执行；批处理页批量替换骨架已迁移到 `BatchReplacement` profile；保存骨架已迁移到 `SaveRebuild` profile。
 - 工作区打开外层已迁移到 `WorkspaceOpen` profile；文件 / 目录 / 拖拽导入的处理阶段已迁移到 `WorkspaceImport` profile。Application 内部导入 worker 池仍保持在应用层一致性边界内。
-- 普通资产详情预览已迁移到 `PreviewForeground / PreviewPrewarm` profile；前台资产预览、Spine 资源组详情和当前贴图页载荷会在 Shell 底部状态条显示轻量加载状态，后台预热保持静默；Texture2D / alpha page 载荷已接入 `PreviewForeground` profile；Spine runtime 当前帧已接入独立 `SpineRuntimeFrame` profile。
+- 普通资产详情预览已迁移到 `PreviewForeground / PreviewPrewarm` profile；前台资产预览、Spine 资源组详情和当前贴图页载荷会在 Shell 底部状态条显示轻量加载状态，后台预热保持静默；Texture2D / alpha page 载荷已接入 `PreviewForeground` profile；Spine 组详情初始打开使用 `InteractivePreview` 模式，跳过 skeleton 摘要和 Texture2D 尺寸诊断，无法形成可显示动画贴图载荷且快路径没有明确诊断时才补跑 `InteractiveDiagnostics`；Spine runtime 当前帧已接入独立 `SpineRuntimeFrame` profile。
 - 快速切换资产详情标签时，旧活动标签会被显式降级为 `PreviewPrewarm`，新活动标签始终重新按 `PreviewForeground` 调度；前台预览请求在调用方取消后会释放前台 profile 槽，避免后台旧请求压住当前可见标签。后台预热候选会按最近激活、最近打开优先，而不是单纯按标签集合顺序。
 - 预览 worker 总数已接入应用偏好设置和“设置与诊断”页，自动模式继续按 CPU 推导并限制在 `1-4`，手动值会同步影响调度器和预览查询执行器。
 - Infrastructure 内部已接入 `AssetsToolsBundleLoadedSessionCache`，对同一标准化 artifact identity 提供 single-flight、lease、串行访问保护、30 秒滑动 TTL、默认 6 个空闲会话容量上限和 GC 内存压力下 1 个空闲会话退避；没有 artifact identity 的直接调用回退到物理路径 key。`AssetsToolsAssetBundleReader`、`AssetsToolsAssetPreviewGenerator` 和经预览管线导出的提取共享该 cache，减少导入读取、详情预览、Spine 贴图载荷和批量提取对同一 AB 的重复 `LoadBundleFile`；artifact 删除 / prune 时会主动失效对应 identity，避免物理缓存被清理后新请求继续使用旧 loaded session。
@@ -522,7 +522,7 @@ Export / SaveRebuild 共享 artifact resolver 已进入保存计划骨架的只�
 ### 第三阶段：接入预览执行队列
 
 - `AssetPreviewQueryExecutor` 的前台 / 后台闸门已迁入调度器 `PreviewForeground / PreviewPrewarm` profile。
-- Spine 详情和贴图载荷加载已改走 `PreviewForeground` profile。
+- Spine 详情和贴图载荷加载已改走 `PreviewForeground` profile；Spine 组初始交互预览先加载播放所需 skeleton / atlas / runtime 载荷，播放不可用时再补跑完整诊断，避免打开标签时默认执行 Texture2D 尺寸校验和 atlas overlay 解码。
 - 预览 profile 已区分取消 / 超时后的槽位释放语义：超时放弃的任务仍会持有 profile 闸门直到后台任务真实结束；前台预览在调用方取消时可释放 `PreviewForeground` profile 槽，用于快速切换场景。
 - 快速切换资产详情标签时，旧活动标签取消前台请求并降级为 `PreviewPrewarm`，新活动标签始终按 `PreviewForeground` 调度。
 - 后台预热已改为按最近激活、最近打开优先提交候选；已不再把单纯集合顺序当作预热顺序。

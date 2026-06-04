@@ -84,6 +84,14 @@ internal static partial class ApplicationTestSuite
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldReportUnsupportedRuntimeVersion_WhenNoAdapterMatches);
         await RunTestAsync(
             failures,
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldSkipTextureDiagnostics_InInteractivePreviewMode),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldSkipTextureDiagnostics_InInteractivePreviewMode);
+        await RunTestAsync(
+            failures,
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldNotBuildJsonFallback_ForUnsupportedRuntime_InInteractivePreviewMode),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldNotBuildJsonFallback_ForUnsupportedRuntime_InInteractivePreviewMode);
+        await RunTestAsync(
+            failures,
             nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldResolveSpineRuntimeMatrix_ByMajorMinorVersion),
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldResolveSpineRuntimeMatrix_ByMajorMinorVersion);
         await RunTestAsync(

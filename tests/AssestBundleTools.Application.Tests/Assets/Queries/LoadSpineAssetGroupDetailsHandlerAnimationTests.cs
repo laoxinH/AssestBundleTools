@@ -234,6 +234,115 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
         TestAssert.Equal("4.3.0", diagnostic.SpineVersion, "Runtime diagnostics should preserve the version.");
     }
 
+    public static async Task HandleAsync_ShouldSkipTextureDiagnostics_InInteractivePreviewMode()
+    {
+        var workspaceId = new WorkspaceId("workspace-a");
+        var spineBundleId = new BundleId("bundle.spine");
+        var skeletonAssetId = new AssetId("skeleton-hero");
+        var atlasAssetId = new AssetId("atlas-hero");
+        var spineAssets = CreateAssetList(
+            workspaceId,
+            spineBundleId,
+            "spine.ab",
+            CreateItem(spineBundleId, skeletonAssetId.Value, "Assets/Hero/Hero.json", AssetType.TextAsset),
+            CreateItem(spineBundleId, atlasAssetId.Value, "Assets/Hero/Hero.atlas", AssetType.TextAsset),
+            CreateItem(spineBundleId, "texture-hero", "Assets/Hero/Hero.png", AssetType.Texture2D));
+        var previewedAssetIds = new List<AssetId>();
+        var previewHandler = new TestAssetPreviewHandler(query =>
+        {
+            previewedAssetIds.Add(query.AssetId);
+            if (query.AssetId.Equals(skeletonAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(
+                    query,
+                    CreateMinimalSkeletonJson("4.1.24")));
+            }
+
+            if (query.AssetId.Equals(atlasAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(query, """
+                    Hero.png
+                    size: 64,64
+                    body
+                      xy: 0, 0
+                      size: 32, 32
+                    """));
+            }
+
+            return Result<AssetPreviewDto>.Success(CreateImagePreview(query, 64, 64));
+        });
+        var handler = new LoadSpineAssetGroupDetailsHandler(
+            new TestWorkspaceSessionRegistry(workspaceId, [spineAssets]),
+            previewHandler);
+
+        var query = CreateQuery(workspaceId, spineBundleId) with
+        {
+            LoadMode = SpineAssetGroupDetailsLoadMode.InteractivePreview
+        };
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Interactive preview mode should still load a playable Spine preview.");
+        TestAssert.True(result.Value?.AnimationPreview is not null, "Interactive preview should keep animation data.");
+        TestAssert.Empty(result.Value!.SkeletonSummaries, "Interactive preview should skip skeleton summary parsing.");
+        TestAssert.Empty(result.Value.Diagnostics, "Interactive preview should not emit texture diagnostics for a playable group.");
+        TestAssert.False(
+            previewedAssetIds.Any(static assetId => assetId.Value == "texture-hero"),
+            "Interactive preview details should not decode Texture2D pages for diagnostics.");
+    }
+
+    public static async Task HandleAsync_ShouldNotBuildJsonFallback_ForUnsupportedRuntime_InInteractivePreviewMode()
+    {
+        var workspaceId = new WorkspaceId("workspace-a");
+        var spineBundleId = new BundleId("bundle.spine");
+        var skeletonAssetId = new AssetId("skeleton-hero");
+        var atlasAssetId = new AssetId("atlas-hero");
+        var spineAssets = CreateAssetList(
+            workspaceId,
+            spineBundleId,
+            "spine.ab",
+            CreateItem(spineBundleId, skeletonAssetId.Value, "Assets/Hero/Hero.json", AssetType.TextAsset),
+            CreateItem(spineBundleId, atlasAssetId.Value, "Assets/Hero/Hero.atlas", AssetType.TextAsset),
+            CreateItem(spineBundleId, "texture-hero", "Assets/Hero/Hero.png", AssetType.Texture2D));
+        var previewHandler = new TestAssetPreviewHandler(query =>
+        {
+            if (query.AssetId.Equals(skeletonAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(
+                    query,
+                    CreateMinimalSkeletonJson("4.3.0")));
+            }
+
+            if (query.AssetId.Equals(atlasAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(query, """
+                    Hero.png
+                    size: 64,64
+                    body
+                      xy: 0, 0
+                      size: 32, 32
+                    """));
+            }
+
+            return Result<AssetPreviewDto>.Success(CreateImagePreview(query, 64, 64));
+        });
+        var handler = new LoadSpineAssetGroupDetailsHandler(
+            new TestWorkspaceSessionRegistry(workspaceId, [spineAssets]),
+            previewHandler);
+
+        var query = CreateQuery(workspaceId, spineBundleId) with
+        {
+            LoadMode = SpineAssetGroupDetailsLoadMode.InteractivePreview
+        };
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Unsupported runtime should be reported as diagnostic-only.");
+        TestAssert.True(result.Value?.AnimationPreview is null, "Interactive preview should not create JSON fallback for unsupported runtimes.");
+        var diagnostic = FindDiagnostic(
+            result.Value?.Diagnostics ?? Array.Empty<SpineAssetGroupDiagnosticDto>(),
+            SpineAssetGroupDiagnosticKind.AnimationPreviewRuntimeUnsupported);
+        TestAssert.Equal("4.3.0", diagnostic.SpineVersion, "Unsupported runtime diagnostics should preserve the requested version.");
+    }
+
     public static async Task HandleAsync_ShouldResolveSpineRuntimeMatrix_ByMajorMinorVersion()
     {
         var versions = new (string SpineVersion, string AdapterKey)[]
