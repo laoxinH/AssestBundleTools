@@ -96,6 +96,11 @@ public sealed class LoadSpineAssetGroupsHandler : IQueryHandler<LoadSpineAssetGr
             query.SearchKeyword,
             assetLists,
             assetDetailsByAssetKey);
+        result = SpineAssetGroupPartDetailsHydrator.HydrateResult(
+            _workspaceSessionRegistry,
+            query.WorkspaceId,
+            result,
+            cancellationToken);
 
         return Task.FromResult(Result<SpineAssetGroupListResultDto>.Success(result));
     }

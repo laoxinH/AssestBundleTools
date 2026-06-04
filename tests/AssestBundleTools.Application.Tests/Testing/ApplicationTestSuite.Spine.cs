@@ -24,6 +24,10 @@ internal static partial class ApplicationTestSuite
             LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldExposePartReplacementStateAndChangeRecords);
         await RunTestAsync(
             failures,
+            nameof(LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldExposeUndonePartReplacementHistory_WhenComponentIsNotModified),
+            LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldExposeUndonePartReplacementHistory_WhenComponentIsNotModified);
+        await RunTestAsync(
+            failures,
             nameof(LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldMatchExtensionlessJsonSkeleton_WithSameNameAtlas),
             LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldMatchExtensionlessJsonSkeleton_WithSameNameAtlas);
         await RunTestAsync(
@@ -38,6 +42,10 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseAtlasPagesAndRegions_FromPreviewPipeline),
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseAtlasPagesAndRegions_FromPreviewPipeline);
+        await RunTestAsync(
+            failures,
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldExposeUndonePartReplacementHistory_InGroupDetails),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldExposeUndonePartReplacementHistory_InGroupDetails);
         await RunTestAsync(
             failures,
             nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldUsePreviewSourceOverride_ForDraftAtlasText),

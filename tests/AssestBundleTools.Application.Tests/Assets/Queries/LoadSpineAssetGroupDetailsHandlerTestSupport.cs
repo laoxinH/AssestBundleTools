@@ -223,15 +223,21 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
     {
         private readonly WorkspaceId _workspaceId;
         private readonly IReadOnlyDictionary<string, AssetListResultDto> _assetListsByBundleId;
+        private readonly IReadOnlyDictionary<string, AssetDetailsDto> _assetDetailsByAssetKey;
 
         public TestWorkspaceSessionRegistry(
             WorkspaceId workspaceId,
-            IReadOnlyList<AssetListResultDto> assetLists)
+            IReadOnlyList<AssetListResultDto> assetLists,
+            IReadOnlyList<AssetDetailsDto>? assetDetails = null)
         {
             _workspaceId = workspaceId;
             _assetListsByBundleId = assetLists.ToDictionary(
                 static list => list.BundleId.Value,
                 StringComparer.Ordinal);
+            _assetDetailsByAssetKey = (assetDetails ?? Array.Empty<AssetDetailsDto>())
+                .ToDictionary(
+                    static details => CreateAssetKey(details.BundleId, details.AssetId),
+                    StringComparer.OrdinalIgnoreCase);
         }
 
         public WorkspaceSummaryDto OpenWorkspace(WorkspaceSessionOpenRequestDto request) =>
@@ -292,9 +298,19 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
             AssetId assetId,
             out AssetDetailsDto? assetDetails)
         {
-            assetDetails = null;
-            return false;
+            if (!ContainsWorkspace(workspaceId))
+            {
+                assetDetails = null;
+                return false;
+            }
+
+            return _assetDetailsByAssetKey.TryGetValue(
+                CreateAssetKey(bundleId, assetId),
+                out assetDetails);
         }
+
+        private static string CreateAssetKey(BundleId bundleId, AssetId assetId) =>
+            string.Concat(bundleId.Value, "\n", assetId.Value);
 
         public bool TryGetWorkspaceChangeSummary(
             WorkspaceId workspaceId,

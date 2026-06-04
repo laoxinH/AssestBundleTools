@@ -83,6 +83,12 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
             return Result<SpineAssetGroupDetailsDto>.Failure(ApplicationErrors.SpineAssetGroupNotFound(query.GroupId.Trim()));
         }
 
+        group = SpineAssetGroupPartDetailsHydrator.HydrateGroup(
+            _workspaceSessionRegistry,
+            query.WorkspaceId,
+            group,
+            cancellationToken);
+
         var atlasPages = new List<SpineAtlasPageDto>();
         var atlasTexts = new List<string>();
         var diagnostics = new List<SpineAssetGroupDiagnosticDto>(group.Diagnostics);
