@@ -27,113 +27,134 @@
         </Style>
     </UserControl.Resources>
 
-    <Border
-        Padding="12,10"
-        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        BorderThickness="1"
-        CornerRadius="10"
+    <Grid
+        RowSpacing="10"
         Visibility="{x:Bind ViewModel.Visibility, Mode=OneWay}">
-        <Grid RowSpacing="10">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-            <Grid ColumnSpacing="8">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <StackPanel Spacing="3">
-                    <TextBlock
-                        FontSize="13"
-                        FontWeight="SemiBold"
-                        Text="{x:Bind ViewModel.TitleText, Mode=OneWay}" />
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{x:Bind ViewModel.DescriptionText, Mode=OneWay}"
-                        TextWrapping="WrapWholeWords" />
-                </StackPanel>
-
-                <Button
-                    x:Name="BatchMatchButton"
-                    Grid.Column="1"
-                    Click="OnBatchMatchButtonClick"
-                    Style="{StaticResource SpineEditSmallTagButtonStyle}">
-                    <StackPanel Orientation="Horizontal" Spacing="5">
-                        <FontIcon
-                            FontFamily="Segoe Fluent Icons"
-                            FontSize="12"
-                            Glyph="&#xE8B7;" />
-                        <TextBlock Text="{x:Bind ViewModel.BatchMatchButtonText, Mode=OneWay}" />
-                    </StackPanel>
-                </Button>
-            </Grid>
+        <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
             <TextBlock
-                Grid.Row="1"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="{x:Bind ViewModel.EmptyText, Mode=OneWay}"
+                FontSize="16"
+                FontWeight="SemiBold"
+                Text="{x:Bind ViewModel.TitleText, Mode=OneWay}"
                 TextWrapping="WrapWholeWords"
-                Visibility="{x:Bind ViewModel.EmptyVisibility, Mode=OneWay}" />
+                VerticalAlignment="Center" />
 
-            <ItemsControl
-                Grid.Row="2"
-                ItemsSource="{x:Bind ViewModel.Parts, Mode=OneWay}"
-                Visibility="{x:Bind ViewModel.PartsVisibility, Mode=OneWay}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="viewModels:SpineAssetGroupEditPartViewModel">
-                        <Border
-                            Margin="0,0,0,8"
-                            Padding="10"
-                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                            BorderThickness="1"
-                            CornerRadius="8">
-                            <Grid ColumnSpacing="10">
+            <Button
+                x:Name="BatchMatchButton"
+                Grid.Column="1"
+                Click="OnBatchMatchButtonClick"
+                Style="{StaticResource SpineEditSmallTagButtonStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                    <FontIcon
+                        FontFamily="Segoe Fluent Icons"
+                        FontSize="12"
+                        Glyph="&#xE8B7;" />
+                    <TextBlock Text="{x:Bind ViewModel.BatchMatchButtonText, Mode=OneWay}" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <TextBlock
+            Grid.Row="1"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            Text="{x:Bind ViewModel.DescriptionText, Mode=OneWay}"
+            TextWrapping="WrapWholeWords" />
+
+        <TextBlock
+            Grid.Row="2"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            Text="{x:Bind ViewModel.EmptyText, Mode=OneWay}"
+            TextWrapping="WrapWholeWords"
+            Visibility="{x:Bind ViewModel.EmptyVisibility, Mode=OneWay}" />
+
+        <ItemsControl
+            Grid.Row="3"
+            ItemsSource="{x:Bind ViewModel.Parts, Mode=OneWay}"
+            Visibility="{x:Bind ViewModel.PartsVisibility, Mode=OneWay}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="viewModels:SpineAssetGroupEditPartViewModel">
+                    <Border
+                        Margin="0,0,0,8"
+                        Padding="12"
+                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <Grid RowSpacing="8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock
+                                    Style="{StaticResource SpineEditPartRoleTextStyle}"
+                                    Text="{x:Bind RoleText, Mode=OneWay}" />
+                                <Border
+                                    Padding="7,2"
+                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                    CornerRadius="9"
+                                    Visibility="{x:Bind ChangedBadgeVisibility, Mode=OneWay}">
+                                    <TextBlock
+                                        FontSize="11"
+                                        FontWeight="SemiBold"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding ViewModel.ChangedBadgeText, ElementName=Root}" />
+                                </Border>
+                            </StackPanel>
+
+                            <TextBlock
+                                Grid.Row="1"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                MaxLines="2"
+                                Text="{x:Bind DisplayName, Mode=OneWay}"
+                                TextWrapping="WrapWholeWords" />
+
+                            <TextBlock
+                                Grid.Row="2"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                MaxLines="2"
+                                Text="{x:Bind MetadataText, Mode=OneWay}"
+                                TextTrimming="CharacterEllipsis"
+                                TextWrapping="WrapWholeWords"
+                                ToolTipService.ToolTip="{x:Bind MetadataText, Mode=OneWay}" />
+
+                            <Grid
+                                Grid.Row="3"
+                                ColumnSpacing="8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
-                                <StackPanel Spacing="4">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <TextBlock
-                                            Style="{StaticResource SpineEditPartRoleTextStyle}"
-                                            Text="{x:Bind RoleText, Mode=OneWay}" />
-                                        <Border
-                                            Padding="7,2"
-                                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                            CornerRadius="9"
-                                            Visibility="{x:Bind ChangedBadgeVisibility, Mode=OneWay}">
-                                            <TextBlock
-                                                FontSize="11"
-                                                FontWeight="SemiBold"
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Text="{Binding ViewModel.ChangedBadgeText, ElementName=Root}" />
-                                        </Border>
-                                    </StackPanel>
-                                    <TextBlock
-                                        FontWeight="SemiBold"
-                                        Text="{x:Bind DisplayName, Mode=OneWay}"
-                                        TextWrapping="WrapWholeWords" />
-                                    <TextBlock
-                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                        Text="{x:Bind MetadataText, Mode=OneWay}"
-                                        TextWrapping="WrapWholeWords" />
-                                    <TextBlock
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="{x:Bind SourceText, Mode=OneWay}"
-                                        TextWrapping="WrapWholeWords" />
-                                </StackPanel>
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    MaxLines="2"
+                                    Text="{x:Bind SourceText, Mode=OneWay}"
+                                    TextTrimming="CharacterEllipsis"
+                                    TextWrapping="WrapWholeWords"
+                                    ToolTipService.ToolTip="{x:Bind SourceText, Mode=OneWay}"
+                                    VerticalAlignment="Center" />
 
                                 <Button
                                     Grid.Column="1"
                                     Click="OnSelectPartFileButtonClick"
                                     Style="{StaticResource SpineEditSmallTagButtonStyle}"
+                                    VerticalAlignment="Center"
                                     Tag="{Binding}">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon
@@ -144,10 +165,10 @@
                                     </StackPanel>
                                 </Button>
                             </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </Grid>
-    </Border>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Grid>
 </UserControl>

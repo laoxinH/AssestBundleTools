@@ -448,101 +448,105 @@
                         Tag="2"
                         ViewChanged="OnSectionScrollViewerViewChanged"
                         Visibility="{x:Bind ViewModel.ReplacementSectionVisibility, Mode=OneWay}">
-                        <StackPanel Padding="8" Spacing="8">
-                                    <controls:SpineEditPartsPanelView
-                                        Visibility="{x:Bind SpineEditPanelVisibility, Mode=OneWay}"
-                                        ViewModel="{x:Bind SpineEditDraft, Mode=OneWay}"
-                                        BatchMatchRequested="OnSpineEditBatchMatchRequested"
-                                        PartFileSelectionRequested="OnSpineEditPartFileSelectionRequested" />
+                        <StackPanel Padding="8" Spacing="10">
+                            <controls:SpineEditPartsPanelView
+                                Visibility="{x:Bind SpineEditPanelVisibility, Mode=OneWay}"
+                                ViewModel="{x:Bind SpineEditDraft, Mode=OneWay}"
+                                BatchMatchRequested="OnSpineEditBatchMatchRequested"
+                                PartFileSelectionRequested="OnSpineEditPartFileSelectionRequested" />
 
-                                    <Border
-                                        Padding="12"
-                                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                        CornerRadius="10">
-                                        <StackPanel Spacing="6">
-                                            <TextBlock
-                                                x:Name="ReplacementTargetTitleText"
-                                                Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                            <TextBlock
-                                                Text="{x:Bind ViewModel.AssetName, Mode=OneWay}"
-                                                TextWrapping="WrapWholeWords" />
-                                            <TextBlock
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Text="{x:Bind ViewModel.BundleDisplayName, Mode=OneWay}"
-                                                TextWrapping="WrapWholeWords" />
-                                            <TextBlock
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Text="{x:Bind ViewModel.AssetTypeText, Mode=OneWay}" />
+                            <StackPanel
+                                Spacing="8"
+                                Visibility="{x:Bind StandardReplacementContentVisibility, Mode=OneWay}">
+                                <Border
+                                    Padding="12"
+                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                    CornerRadius="10">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock
+                                            x:Name="ReplacementTargetTitleText"
+                                            Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                        <TextBlock
+                                            Text="{x:Bind ViewModel.AssetName, Mode=OneWay}"
+                                            TextWrapping="WrapWholeWords" />
+                                        <TextBlock
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{x:Bind ViewModel.BundleDisplayName, Mode=OneWay}"
+                                            TextWrapping="WrapWholeWords" />
+                                        <TextBlock
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{x:Bind ViewModel.AssetTypeText, Mode=OneWay}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border
+                                    Padding="12"
+                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                    CornerRadius="10">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock
+                                            x:Name="ReplacementSourceTitleText"
+                                            Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                        <TextBlock
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{x:Bind ViewModel.ReplacementSourceText, Mode=OneWay}"
+                                            TextWrapping="WrapWholeWords" />
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Button
+                                                x:Name="SelectFileReplacementButton"
+                                                Click="OnSelectFileReplacementButtonClick"
+                                                IsEnabled="{x:Bind ViewModel.CanSelectFileReplacementSource, Mode=OneWay}" />
+                                            <Button
+                                                x:Name="ApplySelectedReplacementButton"
+                                                Click="OnApplySelectedReplacementButtonClick"
+                                                IsEnabled="{x:Bind ViewModel.CanApplyReplacement, Mode=OneWay}" />
                                         </StackPanel>
-                                    </Border>
+                                    </StackPanel>
+                                </Border>
 
-                                    <Border
-                                        Padding="12"
-                                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                        CornerRadius="10">
-                                        <StackPanel Spacing="6">
-                                            <TextBlock
-                                                x:Name="ReplacementSourceTitleText"
-                                                Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                            <TextBlock
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Text="{x:Bind ViewModel.ReplacementSourceText, Mode=OneWay}"
-                                                TextWrapping="WrapWholeWords" />
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Button
-                                                    x:Name="SelectFileReplacementButton"
-                                                    Click="OnSelectFileReplacementButtonClick"
-                                                    IsEnabled="{x:Bind ViewModel.CanSelectFileReplacementSource, Mode=OneWay}" />
-                                                <Button
-                                                    x:Name="ApplySelectedReplacementButton"
-                                                    Click="OnApplySelectedReplacementButtonClick"
-                                                    IsEnabled="{x:Bind ViewModel.CanApplyReplacement, Mode=OneWay}" />
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
+                                <Border
+                                    Padding="12"
+                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                    CornerRadius="10">
+                                    <StackPanel Spacing="8">
+                                        <TextBlock
+                                            x:Name="ReplacementCompatibilityTitleText"
+                                            Style="{ThemeResource BodyStrongTextBlockStyle}" />
 
-                                    <Border
-                                        Padding="12"
-                                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                        CornerRadius="10">
-                                        <StackPanel Spacing="8">
-                                            <TextBlock
-                                                x:Name="ReplacementCompatibilityTitleText"
-                                                Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                        <Grid ColumnSpacing="8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock x:Name="ExtractCapabilityLabelText" FontWeight="SemiBold" />
+                                            <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.ExtractCapabilityText, Mode=OneWay}" />
+                                        </Grid>
 
-                                            <Grid ColumnSpacing="8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="ExtractCapabilityLabelText" FontWeight="SemiBold" />
-                                                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.ExtractCapabilityText, Mode=OneWay}" />
-                                            </Grid>
+                                        <Grid ColumnSpacing="8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock x:Name="FileReplacementCapabilityLabelText" FontWeight="SemiBold" />
+                                            <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.FileReplacementCapabilityText, Mode=OneWay}" />
+                                        </Grid>
 
-                                            <Grid ColumnSpacing="8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="FileReplacementCapabilityLabelText" FontWeight="SemiBold" />
-                                                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.FileReplacementCapabilityText, Mode=OneWay}" />
-                                            </Grid>
+                                        <Grid ColumnSpacing="8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock x:Name="WorkspaceReplacementCapabilityLabelText" FontWeight="SemiBold" />
+                                            <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.WorkspaceReplacementCapabilityText, Mode=OneWay}" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
 
-                                            <Grid ColumnSpacing="8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="WorkspaceReplacementCapabilityLabelText" FontWeight="SemiBold" />
-                                                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.WorkspaceReplacementCapabilityText, Mode=OneWay}" />
-                                            </Grid>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <TextBlock
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="{x:Bind ViewModel.ReplacementStatusText, Mode=OneWay}"
-                                        TextWrapping="WrapWholeWords" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind ViewModel.ReplacementStatusText, Mode=OneWay}"
+                                    TextWrapping="WrapWholeWords" />
+                            </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
 

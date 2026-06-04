@@ -97,6 +97,9 @@ public sealed partial class InspectorPanelView : UserControl
 
     public Visibility ActionBarVisibility => ShowActionBar ? Visibility.Visible : Visibility.Collapsed;
 
+    public Visibility StandardReplacementContentVisibility =>
+        SpineEditPanelVisibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+
     public event EventHandler? ExtractRequested;
 
     public event EventHandler? SelectFileReplacementSourceRequested;
