@@ -47,7 +47,8 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
             new SpineAssetGroupInspectorPresenter(bundlePane, context.LocalizationService),
             loader ?? new TestSpineAssetGroupDetailsLoader(),
             static () => { },
-            static () => { });
+            static () => { },
+            TimeSpan.Zero);
     }
 
     private static SpineAssetGroupEntryViewModel CreateSpineGroupEntry(

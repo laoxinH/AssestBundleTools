@@ -33,6 +33,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
     private readonly BundleExplorerAssetInspectorPresenter _assetInspectorPresenter;
     private readonly SpineAssetGroupInspectorPresenter _spineGroupInspectorPresenter;
     private readonly ISpineAssetGroupDetailsLoader _spineGroupDetailsLoader;
+    private readonly SpineAssetGroupDetailsRefreshScheduler _spineGroupDetailsRefreshScheduler;
     private readonly BundleExplorerAssetPreviewLoadCoordinator _assetPreviewLoadCoordinator;
     private readonly AssetEditorWindowAssetActionCoordinator _assetActionCoordinator;
     private readonly WorkspaceOperationChangeRefreshCoordinator _operationChangeRefreshCoordinator;
@@ -135,6 +136,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             _backgroundTaskRunner,
             backgroundWorkScheduler,
             _localizationService);
+        _spineGroupDetailsRefreshScheduler = new SpineAssetGroupDetailsRefreshScheduler(
+            RefreshSpineGroupDocumentDetailsFromRequestAsync);
         var assetPreviewCoordinator = new BundleExplorerAssetPreviewCoordinator(
             _workspaceAssetInspectionGateway,
             workspaceContextService,
@@ -211,6 +214,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
     {
         ClearObservedSpriteEditImage();
         _operationChangeRefreshCoordinator.Dispose();
+        _spineGroupDetailsRefreshScheduler.Dispose();
     }
 
     public async Task ActivateAssetDocumentTabAsync(AssetDocumentTabViewModel? assetTab)

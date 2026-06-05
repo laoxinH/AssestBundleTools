@@ -393,6 +393,7 @@ BackgroundWorkProgress
 8. 预览任务继续只消费 Application DTO 和预览载荷，不让 Presentation 读取 AB。
 9. 预览缓存命中时可快速返回；缓存未命中时受 bundle single-flight 和 memory-heavy 闸门限制。
 10. 预览生成阶段若返回 `OutOfMemory` 诊断，当前 bundle 的后台预热会短期退避；前台活动标签请求仍可继续显式发起，成功后会清除该退避。
+11. Spine 资源组在编辑草稿来源变化、撤销 / 重做编辑草稿、退出编辑模式或操作通知命中组成资产时，不直接逐次重建预览；Presentation 先即时重投影替换页、变更记录和操作按钮状态，再按 Spine 文档标签页进入 `SpineAssetGroupDetailsRefreshScheduler` 合并刷新。调度器以组快照、组成资产当前替换记录和编辑草稿来源路径形成输入签名，签名未变的重复通知不重启延迟；签名变化时取消排队或运行中的旧请求，只有最新签名允许应用结果。新打开 / 新激活且尚无详情的标签仍走立即前台加载。
 
 禁止：
 
@@ -400,6 +401,7 @@ BackgroundWorkProgress
 - 后台预热抢占当前活动标签的前台槽。
 - 取消 UI 请求后立即释放底层 bundle load 槽。
 - 把加载中的提示文本当作稳定预览内容；加载态只能表示已有工作，不能阻止标签被降级或重新调度。
+- 在全局操作通知器中为了 Spine 预览做通用 debounce；操作事实和轻量读模型应保持即时刷新，只有重型 Spine 预览重载按文档标签页合并。
 
 ### 13.3 提取
 

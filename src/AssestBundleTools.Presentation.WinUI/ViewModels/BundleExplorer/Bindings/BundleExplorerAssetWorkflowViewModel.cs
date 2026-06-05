@@ -231,6 +231,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
     {
         _documentWorkspace.AssetDocumentHostStateChanged -= OnAssetDocumentHostStateChanged;
         _operationChangeRefreshCoordinator.Dispose();
+        _spineGroupDocumentCoordinator.Dispose();
     }
 
     public AssetDocumentTabViewModel CreateAssetDocumentTab(

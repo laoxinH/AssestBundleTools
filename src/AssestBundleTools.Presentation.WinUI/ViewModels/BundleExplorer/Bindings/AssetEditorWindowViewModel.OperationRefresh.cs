@@ -30,7 +30,7 @@ public sealed partial class AssetEditorWindowViewModel
                 .ToArray();
         foreach (var spineGroupTab in spineGroupTabs)
         {
-            await RefreshSpineGroupDocumentDetailsAsync(spineGroupTab);
+            QueueSpineGroupDocumentDetailsRefresh(spineGroupTab);
         }
     }
 
@@ -74,15 +74,41 @@ public sealed partial class AssetEditorWindowViewModel
         }
     }
 
-    private async Task RefreshSpineGroupDocumentDetailsAsync(SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    private void QueueSpineGroupDocumentDetailsRefresh(SpineAssetGroupDocumentTabViewModel spineGroupTab)
     {
         if (!DocumentGroup.SpineGroupTabs.Contains(spineGroupTab))
         {
             return;
         }
 
-        var loadResult = await _spineGroupDetailsLoader.LoadAsync(spineGroupTab);
+        ReapplySpineGroupDocumentState(spineGroupTab);
+        _ = _spineGroupDetailsRefreshScheduler.RequestAsync(spineGroupTab);
+    }
+
+    private Task RefreshSpineGroupDocumentDetailsFromRequestAsync(SpineAssetGroupDetailsRefreshRequest request)
+    {
+        return !request.IsCurrent
+            ? Task.CompletedTask
+            : RefreshSpineGroupDocumentDetailsAsync(request.GroupTab, request.CancellationToken, () => request.IsCurrent);
+    }
+
+    private async Task RefreshSpineGroupDocumentDetailsAsync(
+        SpineAssetGroupDocumentTabViewModel spineGroupTab,
+        CancellationToken cancellationToken,
+        Func<bool>? isCurrent = null)
+    {
         if (!DocumentGroup.SpineGroupTabs.Contains(spineGroupTab))
+        {
+            return;
+        }
+
+        var expectedGroupId = spineGroupTab.GroupId;
+        var expectedGroup = spineGroupTab.Item;
+        var loadResult = await _spineGroupDetailsLoader.LoadAsync(spineGroupTab, cancellationToken);
+        if (!DocumentGroup.SpineGroupTabs.Contains(spineGroupTab) ||
+            !string.Equals(expectedGroupId, spineGroupTab.GroupId, StringComparison.Ordinal) ||
+            !ReferenceEquals(expectedGroup, spineGroupTab.Item) ||
+            isCurrent?.Invoke() == false)
         {
             return;
         }

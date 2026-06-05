@@ -24,6 +24,7 @@ public sealed partial class AssetEditorWindowViewModel
 
         var wasActive = ReferenceEquals(DocumentGroup.ActiveSpineGroupTab, spineGroupTab);
         DocumentGroup.RemoveSpineGroupTab(spineGroupTab);
+        _spineGroupDetailsRefreshScheduler.Cancel(spineGroupTab);
         if (!DocumentGroup.HasDocumentTabs)
         {
             EmptyGroupRequested?.Invoke(this, EventArgs.Empty);
@@ -72,8 +73,8 @@ public sealed partial class AssetEditorWindowViewModel
 
     private Task ReloadSpineGroupDetailsAsync(SpineAssetGroupDocumentTabViewModel spineGroupTab)
     {
-        spineGroupTab.ClearDetails();
-        return LoadSpineGroupDetailsAsync(spineGroupTab);
+        QueueSpineGroupDocumentDetailsRefresh(spineGroupTab);
+        return Task.CompletedTask;
     }
 
     private async Task LoadSpineGroupDetailsAsync(SpineAssetGroupDocumentTabViewModel spineGroupTab)

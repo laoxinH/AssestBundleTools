@@ -48,7 +48,7 @@ internal sealed class BundleExplorerOperationReadModelRefreshHandler
             .ToArray();
         foreach (var spineGroupTab in spineGroupTabs)
         {
-            await _spineGroupDocumentCoordinator.RefreshSpineGroupDocumentTabAsync(spineGroupTab);
+            _spineGroupDocumentCoordinator.QueueSpineGroupDocumentTabRefresh(spineGroupTab);
         }
     }
 
@@ -84,7 +84,7 @@ internal sealed class BundleExplorerOperationReadModelRefreshHandler
                 .ToArray();
             foreach (var spineGroupTab in matchedSpineGroupTabs)
             {
-                await _spineGroupDocumentCoordinator.RefreshSpineGroupDocumentTabAsync(spineGroupTab);
+                _spineGroupDocumentCoordinator.QueueSpineGroupDocumentTabRefresh(spineGroupTab);
             }
         }
     }
