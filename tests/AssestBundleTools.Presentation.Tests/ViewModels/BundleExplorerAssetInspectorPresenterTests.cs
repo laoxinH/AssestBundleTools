@@ -8,6 +8,7 @@ using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.State;
 using static AssestBundleTools.Presentation.Tests.ViewModels.BundleExplorerPreviewTestSupport;
 
 namespace AssestBundleTools.Presentation.Tests.ViewModels;
@@ -193,6 +194,92 @@ public sealed class BundleExplorerAssetInspectorPresenterTests
         Assert.False(record.ShowsRedoReplacement);
         Assert.True(record.ShowsDeleteRecord);
         Assert.True(record.IsActionEnabled);
+    }
+
+    [Fact]
+    public void ChangeRecordPresenters_ShouldProjectPendingState_ForSameOperationAcrossAssetAndSpineGroup()
+    {
+        var localizationService = new TestLocalizationService();
+        var bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
+        var pendingTracker = new WorkspaceOperationPendingTracker();
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-spine");
+        var operationId = "replace-texture";
+        using var pendingScope = pendingTracker.Begin(workspaceId, operationId);
+        var assetPresenter = new BundleExplorerAssetInspectorPresenter(
+            bundlePane,
+            localizationService,
+            pendingTracker);
+        var spinePresenter = new SpineAssetGroupInspectorPresenter(
+            bundlePane,
+            localizationService,
+            pendingTracker,
+            () => workspaceId);
+        var changeRecord = new AssetChangeRecordDto(
+            AssetChangeRecordKind.FileReplacement,
+            CreatedAtUtc: DateTimeOffset.UnixEpoch,
+            OperationId: operationId,
+            IsEffectiveReplacement: true,
+            TargetBundleId: bundleId.Value,
+            TargetAssetId: "hero-texture",
+            SourceFileName: "hero.png");
+        var assetTab = new AssetDocumentTabViewModel(
+            bundleId,
+            new AssetId("hero-texture"),
+            "hero.png",
+            InspectorInformationTextSetFactory.Create(localizationService));
+        var assetDetails = CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            assetTab.AssetId) with
+        {
+            IsModified = true,
+            ChangeRecords = [changeRecord]
+        };
+        var groupTab = new SpineAssetGroupDocumentTabViewModel(
+            new SpineAssetGroupDto(
+                GroupId: "hero",
+                BundleId: bundleId,
+                DisplayName: "hero",
+                GroupKey: "characters/hero",
+                SkeletonAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                AtlasAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                TexturePageAssets:
+                [
+                    new SpineAssetGroupPartDto(
+                        SpineAssetGroupPartRole.TexturePage,
+                        bundleId,
+                        new AssetId("hero-texture"),
+                        "spine.ab",
+                        "hero.png",
+                        "Assets/hero.png",
+                        AssetType.Texture2D,
+                        "Texture2D",
+                        ChangeRecords: [changeRecord])
+                ],
+                Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>()),
+            InspectorInformationTextSetFactory.Create(localizationService));
+        groupTab.ApplyDetails(
+            new SpineAssetGroupDetailsDto(
+                Group: groupTab.Item,
+                AtlasPages: Array.Empty<SpineAtlasPageDto>(),
+                SkeletonSummaries: Array.Empty<SpineSkeletonSummaryDto>(),
+                Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>(),
+                AnimationPreview: null),
+            texturePreview: null,
+            animationTextures: new Dictionary<string, SpineAnimationPreviewTextureState>());
+
+        assetPresenter.PresentAssetDocumentTab(assetTab, assetDetails, canEdit: true, isBusy: false);
+        spinePresenter.PresentSpineGroupDocumentTab(groupTab);
+
+        var assetRecord = Assert.Single(assetTab.Inspector.ChangeRecords);
+        var spineRecord = Assert.Single(groupTab.Inspector.ChangeRecords);
+        Assert.True(assetRecord.IsPending);
+        Assert.False(assetRecord.IsActionEnabled);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, assetRecord.PendingVisibility);
+        Assert.True(spineRecord.IsPending);
+        Assert.False(spineRecord.IsActionEnabled);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, spineRecord.PendingVisibility);
     }
 
     private static IReadOnlyList<BundleTreeNodeDto> CreateBundleTree(

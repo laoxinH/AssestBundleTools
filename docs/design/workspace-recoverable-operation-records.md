@@ -519,6 +519,7 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
   - 主工作台资源详情区：通过 `WorkspaceOperationChangeRefreshCoordinator` 合并通知。通知携带资产目标时，只重读命中的资源详情、关联 Spine 详情和当前资产列表中对应行的状态；通知未携带目标时才回退到重读当前工作区已打开的全部资源 / Spine 详情标签。这样批量操作后未激活标签的“变更”页签仍能更新，同时单资源修改不会触发无关预览任务；操作记录变化不重载资产 / Spine 列表，避免提取完成后打断列表滚动、筛选和选择状态。普通资产文档和 Spine 组的操作通知都已拆成轻量操作投影刷新和富预览刷新两步：普通资产先刷新 `ChangeRecords / CanRedoReplacement / replacement source` 等轻量字段，Spine 组先刷新组成资产 `ChangeRecords` 并重投影变更按钮，再按文档标签页内输入签名合并重型预览；同一批 skeleton / atlas / texture page 替换通知只会排入一次最新预览刷新，且预览刷新不得用旧快照覆盖已更新的操作投影。
   - 独立资源编辑窗口：订阅同一通知；通知携带资产目标时只重读窗口内命中的资产或关联 Spine 资源组，窗口化场景不再依赖发起操作的一侧手动重投影。窗口内普通资产、Spine 编辑草稿来源变化和操作通知后的组刷新同样先同步轻量操作投影，再按文档标签页合并富预览刷新，替换来源、变更记录和操作按钮状态保持即时重投影。
   操作入口只负责执行命令、清理本地候选状态和展示结果反馈，不再在提取 / 替换 / 撤销成功后手动调用页面刷新回调；非持久化的候选来源选择仍允许即时重投影当前详情。
+- 已在 Presentation 层增加 `workspaceId + operationId` 维度的瞬时 pending tracker，用于检查器变更卡片撤销 / 重做 / 删除执行期间的 loading / disabled 投影。该状态会同步到真实目标、关联资源、Spine 聚合组以及主窗口 / 独立资源编辑窗口中的同一 `operationId` 可见卡片，但不写入 `operations[]`，也不改变持久化 `Pending / Applied / Undone` 等操作事实状态。
 - 提取撤销仍未实现；当前原则保持为“只撤销工作区提取标记，不自动删除用户目录中的外部文件”。
 - 详情页修改记录现在来自 Application / Infrastructure 投影出的资产级操作记录；Presentation 只本地化展示文本和触发撤销 / 重做命令，不直接读取 `staging/changes`。
 - 设置页当前提供操作记录保留上限；该设置只控制持久化操作事实流的裁剪策略，不改变后台任务状态条、toast 或日志中心的瞬时展示。

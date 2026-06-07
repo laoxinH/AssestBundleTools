@@ -14,6 +14,7 @@ using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.State;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -38,6 +39,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
     private readonly BundleExplorerAssetPreviewLoadCoordinator _assetPreviewLoadCoordinator;
     private readonly AssetEditorWindowAssetActionCoordinator _assetActionCoordinator;
     private readonly WorkspaceOperationChangeRefreshCoordinator _operationChangeRefreshCoordinator;
+    private readonly WorkspaceOperationPendingProjectionCoordinator _pendingProjectionCoordinator;
     private readonly InspectorInformationTextSet _inspectorInformationTextSet;
     private readonly InspectorPanelViewModel _emptyInspector;
     private InspectorPreviewImageViewModel? _observedSpriteEditImage;
@@ -61,7 +63,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         Func<AssetDocumentGroupTransfer, Task<bool>> moveAssetDocumentGroupToMainWindowAsync,
         IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
         IBackgroundWorkScheduler? backgroundWorkScheduler = null,
-        Func<int>? previewWorkerCountProvider = null)
+        Func<int>? previewWorkerCountProvider = null,
+        WorkspaceOperationPendingTracker? operationPendingTracker = null)
         : this(
             CreateSingleAssetGroup(initialAssetTab),
             workspaceAssetInspectionGateway,
@@ -80,7 +83,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             moveAssetDocumentGroupToMainWindowAsync,
             backgroundTaskStatusService,
             backgroundWorkScheduler,
-            previewWorkerCountProvider)
+            previewWorkerCountProvider,
+            operationPendingTracker)
     {
     }
 
@@ -102,7 +106,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         Func<AssetDocumentGroupTransfer, Task<bool>> moveAssetDocumentGroupToMainWindowAsync,
         IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
         IBackgroundWorkScheduler? backgroundWorkScheduler = null,
-        Func<int>? previewWorkerCountProvider = null)
+        Func<int>? previewWorkerCountProvider = null,
+        WorkspaceOperationPendingTracker? operationPendingTracker = null)
     {
         ArgumentNullException.ThrowIfNull(initialAssetGroup);
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
@@ -124,12 +129,16 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             appLogService,
             appNotificationService,
             _localizationService);
+        operationPendingTracker ??= new WorkspaceOperationPendingTracker();
         _assetInspectorPresenter = new BundleExplorerAssetInspectorPresenter(
             bundlePane,
-            _localizationService);
+            _localizationService,
+            operationPendingTracker);
         _spineGroupInspectorPresenter = new SpineAssetGroupInspectorPresenter(
             bundlePane,
-            _localizationService);
+            _localizationService,
+            operationPendingTracker,
+            () => _workspaceShell.WorkspaceSummary?.WorkspaceId);
         _spineGroupDetailsLoader = new SpineAssetGroupDetailsLoader(
             _workspaceAssetInspectionGateway,
             workspaceContextService,
@@ -169,7 +178,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             _backgroundTaskRunner,
             backgroundTaskStatusService,
             workspaceOperationChangeNotifier,
-            backgroundWorkScheduler);
+            backgroundWorkScheduler,
+            operationPendingTracker);
         _assetActionCoordinator = new AssetEditorWindowAssetActionCoordinator(
             _workspaceShell,
             pathNavigationService,
@@ -194,6 +204,11 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             () => _workspaceShell.WorkspaceSummary?.WorkspaceId,
             () => IsBusy,
             RefreshOperationAffectedStateAsync);
+        _pendingProjectionCoordinator = new WorkspaceOperationPendingProjectionCoordinator(
+            operationPendingTracker,
+            () => DocumentGroup.AssetTabs,
+            () => DocumentGroup.SpineGroupTabs,
+            () => _workspaceShell.WorkspaceSummary?.WorkspaceId);
     }
 
     public event EventHandler? EmptyGroupRequested;
@@ -222,6 +237,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
     public void Dispose()
     {
         ClearObservedSpriteEditImage();
+        _pendingProjectionCoordinator.Dispose();
         _operationChangeRefreshCoordinator.Dispose();
         _spineGroupDetailsRefreshScheduler.Dispose();
     }

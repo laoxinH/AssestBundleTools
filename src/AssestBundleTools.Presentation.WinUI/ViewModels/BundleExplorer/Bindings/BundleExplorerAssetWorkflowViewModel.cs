@@ -12,6 +12,7 @@ using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.State;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
@@ -42,6 +43,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
     private readonly BundleExplorerActiveDocumentLocator _activeDocumentLocator;
     private readonly BundleExplorerAssetCommandCoordinator _assetCommandCoordinator;
     private readonly WorkspaceOperationChangeRefreshCoordinator _operationChangeRefreshCoordinator;
+    private readonly WorkspaceOperationPendingProjectionCoordinator _pendingProjectionCoordinator;
 
     internal event EventHandler<BundleExplorerPageStateChangedEventArgs<BundleExplorerAssetWorkflowPageStateChange>>? PageStateChanged;
 
@@ -87,12 +89,16 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             appLogService,
             appNotificationService,
             _localizationService);
+        OperationPendingTracker = new WorkspaceOperationPendingTracker();
         _assetInspectorPresenter = new BundleExplorerAssetInspectorPresenter(
             _bundlePane,
-            _localizationService);
+            _localizationService,
+            OperationPendingTracker);
         _spineGroupInspectorPresenter = new SpineAssetGroupInspectorPresenter(
             _bundlePane,
-            _localizationService);
+            _localizationService,
+            OperationPendingTracker,
+            () => _workspaceShell.WorkspaceSummary?.WorkspaceId);
         _assetPreviewCoordinator = new BundleExplorerAssetPreviewCoordinator(
             workspaceAssetInspectionGateway,
             workspaceContextService,
@@ -111,7 +117,8 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             backgroundTaskRunner,
             backgroundTaskStatusService,
             workspaceOperationChangeNotifier,
-            backgroundWorkScheduler);
+            backgroundWorkScheduler,
+            OperationPendingTracker);
         PrimaryPane = new AssetPaneViewModel();
         _assetDocumentHostCoordinator = new BundleExplorerAssetDocumentHostCoordinator(
             _documentWorkspace,
@@ -207,10 +214,16 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             () => _workspaceShell.WorkspaceSummary?.WorkspaceId,
             () => IsBusy,
             operationReadModelRefreshHandler.RefreshAsync);
+        _pendingProjectionCoordinator = new WorkspaceOperationPendingProjectionCoordinator(
+            OperationPendingTracker,
+            _documentWorkspace,
+            () => _workspaceShell.WorkspaceSummary?.WorkspaceId);
         _documentWorkspace.AssetDocumentHostStateChanged += OnAssetDocumentHostStateChanged;
     }
 
     public AssetPaneViewModel PrimaryPane { get; }
+
+    public WorkspaceOperationPendingTracker OperationPendingTracker { get; }
 
     public InspectorPanelViewModel Inspector => _assetDocumentHostCoordinator.CurrentInspector;
 
@@ -239,6 +252,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
     public void Dispose()
     {
         _documentWorkspace.AssetDocumentHostStateChanged -= OnAssetDocumentHostStateChanged;
+        _pendingProjectionCoordinator.Dispose();
         _operationChangeRefreshCoordinator.Dispose();
         _spineGroupDocumentCoordinator.Dispose();
     }

@@ -8,6 +8,7 @@ using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.State;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 
@@ -37,7 +38,8 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         IBackgroundTaskRunner? backgroundTaskRunner = null,
         IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
         IWorkspaceOperationChangeNotifier? operationChangeNotifier = null,
-        IBackgroundWorkScheduler? backgroundWorkScheduler = null)
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null,
+        WorkspaceOperationPendingTracker? operationPendingTracker = null)
     {
         _workspaceAssetOperationGateway = workspaceAssetOperationGateway ?? throw new ArgumentNullException(nameof(workspaceAssetOperationGateway));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
@@ -74,12 +76,14 @@ internal sealed class BundleExplorerAssetModificationActionHandler
             _appLogService,
             _appNotificationService,
             _localizationService,
-            _fileReplacementActionExecutor);
+            _fileReplacementActionExecutor,
+            operationPendingTracker);
         _changeRecordActionHandler = new BundleExplorerChangeRecordActionHandler(
             _workspaceAssetOperationGateway,
             _appLogService,
             _appNotificationService,
-            _localizationService);
+            _localizationService,
+            operationPendingTracker);
         _spineEditActionHandler = new BundleExplorerSpineEditActionHandler(
             _fileReplacementActionExecutor,
             filePickerService,

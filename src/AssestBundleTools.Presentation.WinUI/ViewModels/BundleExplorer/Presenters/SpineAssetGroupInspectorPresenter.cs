@@ -2,10 +2,12 @@ using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.State;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 
@@ -20,17 +22,23 @@ internal sealed class SpineAssetGroupInspectorPresenter
     private readonly PreviewDiagnosticDisplayTextResolver _previewDiagnosticDisplayTextResolver;
     private readonly SpineAssetGroupDiagnosticDisplayFormatter _diagnosticDisplayFormatter;
     private readonly SpineAssetGroupChangeRecordPresenter _changeRecordPresenter;
+    private readonly Func<WorkspaceId?> _workspaceIdProvider;
 
     public SpineAssetGroupInspectorPresenter(
         IBundleExplorerBundlePaneHost bundlePane,
-        ILocalizationService localizationService)
+        ILocalizationService localizationService,
+        WorkspaceOperationPendingTracker? pendingTracker = null,
+        Func<WorkspaceId?>? workspaceIdProvider = null)
     {
         _bundlePane = bundlePane ?? throw new ArgumentNullException(nameof(bundlePane));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _assetPreviewDisplayFormatter = new AssetPreviewDisplayFormatter(_localizationService);
         _previewDiagnosticDisplayTextResolver = new PreviewDiagnosticDisplayTextResolver(_localizationService);
         _diagnosticDisplayFormatter = new SpineAssetGroupDiagnosticDisplayFormatter(_localizationService);
-        _changeRecordPresenter = new SpineAssetGroupChangeRecordPresenter(_localizationService);
+        _changeRecordPresenter = new SpineAssetGroupChangeRecordPresenter(
+            _localizationService,
+            pendingTracker);
+        _workspaceIdProvider = workspaceIdProvider ?? (() => null);
     }
 
     public void PresentSpineGroupDocumentTab(SpineAssetGroupDocumentTabViewModel groupTab)
@@ -69,7 +77,10 @@ internal sealed class SpineAssetGroupInspectorPresenter
             referencedByDependencies: Array.Empty<AssetDependencyViewModel>(),
             dependencyClosureItems: Array.Empty<AssetDependencyViewModel>(),
             bundleExternalDependencies: Array.Empty<BundleExternalDependencyViewModel>(),
-            changeRecords: _changeRecordPresenter.CreateChangeRecords(parts, canManageRecords: true),
+            changeRecords: _changeRecordPresenter.CreateChangeRecords(
+                parts,
+                canManageRecords: true,
+                _workspaceIdProvider()),
             canModify: parts.Length > 0);
         groupTab.Inspector.SpineAtlasPageSelector.Apply(
             groupTab.AtlasPageOptions,

@@ -10,6 +10,7 @@ using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.State;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 
@@ -23,19 +24,22 @@ internal sealed class BundleExplorerReplacementActionHandler
     private readonly IAppNotificationService _appNotificationService;
     private readonly ILocalizationService _localizationService;
     private readonly BundleExplorerFileReplacementActionExecutor _fileReplacementActionExecutor;
+    private readonly WorkspaceOperationPendingTracker? _operationPendingTracker;
 
     public BundleExplorerReplacementActionHandler(
         IWorkspaceAssetOperationGateway workspaceAssetOperationGateway,
         IAppLogService appLogService,
         IAppNotificationService appNotificationService,
         ILocalizationService localizationService,
-        BundleExplorerFileReplacementActionExecutor fileReplacementActionExecutor)
+        BundleExplorerFileReplacementActionExecutor fileReplacementActionExecutor,
+        WorkspaceOperationPendingTracker? operationPendingTracker = null)
     {
         _workspaceAssetOperationGateway = workspaceAssetOperationGateway ?? throw new ArgumentNullException(nameof(workspaceAssetOperationGateway));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _fileReplacementActionExecutor = fileReplacementActionExecutor ?? throw new ArgumentNullException(nameof(fileReplacementActionExecutor));
+        _operationPendingTracker = operationPendingTracker;
     }
 
     public async Task ApplyPendingReplacementAsync(
@@ -191,6 +195,7 @@ internal sealed class BundleExplorerReplacementActionHandler
         ArgumentNullException.ThrowIfNull(appendResultFailure);
 
         setBusyState(true);
+        using var pendingScope = BeginPendingScope(workspaceSummary, replacementOperationId);
         try
         {
             var result = await _workspaceAssetOperationGateway.UndoAssetReplacementAsync(
@@ -301,6 +306,13 @@ internal sealed class BundleExplorerReplacementActionHandler
     private void ShowOperationNotification(string title, string message, AppNotificationSeverity severity)
     {
         _appNotificationService.Show(title, message, severity);
+    }
+
+    private IDisposable? BeginPendingScope(WorkspaceSummaryDto workspaceSummary, string? operationId)
+    {
+        return string.IsNullOrWhiteSpace(operationId)
+            ? null
+            : _operationPendingTracker?.Begin(workspaceSummary.WorkspaceId, operationId);
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);

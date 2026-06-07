@@ -274,13 +274,13 @@ Pending 清除规则：
 
 ## 11. 与现有实现的迁移路径
 
-### 第一阶段：稳定 pending 状态
+### 第一阶段：稳定 pending 状态（已落地基础实现）
 
-- 新增 Presentation 层 pending tracker。
-- `InspectorChangeRecordViewModel` 增加 pending / loading / disabled 投影字段。
-- 操作按钮触发时按 target 和 operationId 标记 pending。
-- 现有通知到达或命令失败后清理 pending。
-- 关联资源投影使用同一 pending 键。
+- 已新增 Presentation 层 `WorkspaceOperationPendingTracker`，以 `workspaceId + operationId` 作为短生命周期键。
+- `InspectorChangeRecordViewModel` 已增加 `IsPending / PendingVisibility / IsActionEnabled` 投影字段；检查器变更卡片的撤销、重做、删除按钮在 pending 时显示轻量 `ProgressRing` 并禁用。
+- 资源详情、Spine 聚合详情、主窗口和独立资源编辑窗口共用同一 pending tracker；同一 `operationId` 在真实目标、直接关联资源、隐式依赖资源和聚合资源中的可见卡片会同步进入 / 退出 pending。
+- 操作按钮触发时，撤销 / 重做 / 删除记录按真实 `operationId` 标记 pending；普通“应用新替换”尚未产生可见记录，不进入 operationId pending。
+- 当前清除时机由命令作用域驱动：命令失败会清除 pending 并恢复旧事实状态；命令成功返回后清除 pending，随后轻量投影刷新继续通过现有操作通知同步新事实状态。富预览仍独立 loading，不再阻塞变更卡片按钮状态。
 
 ### 第二阶段：拆轻量操作投影刷新
 
@@ -290,7 +290,7 @@ Pending 清除规则：
 - 已让主窗口和独立资源编辑窗口在 Spine 组命中操作通知时先执行轻量操作投影刷新，再排 animation details 重载。
 - 已为 Spine 预览调度拆出“仅刷新富预览”的入口，避免预览重载前用主面板旧快照覆盖已经更新的轻量操作投影。
 - 当前关联影响扩展已覆盖所有可展示直接反向引用资源，`Texture2D` 只是首个稳定验证类型；`.atlas / .skel / .json` 等 `TextAsset` 以及其他直接引用目标也应通过同一通知扩展和轻量投影刷新路径同步。
-- Pending tracker 和统一通知 DTO 演进仍属于后续阶段。
+- 统一通知 DTO 演进仍属于后续阶段；pending tracker 已在 Presentation 层先行落地为瞬时 UI 状态，不进入 Application 操作事实流。
 
 ### 第三阶段：演进通知 DTO
 

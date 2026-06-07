@@ -1,7 +1,9 @@
 using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.State;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 
@@ -11,10 +13,14 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Present
 internal sealed class BundleExplorerAssetChangeRecordPresenter
 {
     private readonly ILocalizationService _localizationService;
+    private readonly WorkspaceOperationPendingTracker? _pendingTracker;
 
-    public BundleExplorerAssetChangeRecordPresenter(ILocalizationService localizationService)
+    public BundleExplorerAssetChangeRecordPresenter(
+        ILocalizationService localizationService,
+        WorkspaceOperationPendingTracker? pendingTracker = null)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+        _pendingTracker = pendingTracker;
     }
 
     public string EmptyText => GetString(ResourceKeys.InspectorChangeSummaryNone);
@@ -26,20 +32,22 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
         ArgumentNullException.ThrowIfNull(details);
 
         var sourceRecords = NormalizeChangeRecords(details);
-        return CreateChangeRecordViewModels(sourceRecords, canManageRecords);
+        return CreateChangeRecordViewModels(details.WorkspaceId, sourceRecords, canManageRecords);
     }
 
     public IReadOnlyList<InspectorChangeRecordViewModel> CreateChangeRecords(
         IReadOnlyList<AssetChangeRecordDto> changeRecords,
-        bool canManageRecords)
+        bool canManageRecords,
+        WorkspaceId? workspaceId = null)
     {
         ArgumentNullException.ThrowIfNull(changeRecords);
 
         var sourceRecords = NormalizeChangeRecords(changeRecords);
-        return CreateChangeRecordViewModels(sourceRecords, canManageRecords);
+        return CreateChangeRecordViewModels(workspaceId, sourceRecords, canManageRecords);
     }
 
     private IReadOnlyList<InspectorChangeRecordViewModel> CreateChangeRecordViewModels(
+        WorkspaceId? workspaceId,
         IReadOnlyList<AssetChangeRecordDto> sourceRecords,
         bool canManageRecords)
     {
@@ -51,6 +59,7 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
             var showRedo = canManageRecords && isReplacementRecord && !record.IsEffectiveReplacement;
 
             records.Add(CreateChangeRecord(
+                workspaceId,
                 record,
                 showUndo,
                 showRedo,
@@ -138,6 +147,7 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
     }
 
     private InspectorChangeRecordViewModel CreateChangeRecord(
+        WorkspaceId? workspaceId,
         AssetChangeRecordDto record,
         bool showUndo,
         bool showRedo,
@@ -159,7 +169,9 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
             ShowsUndoReplacement: showUndo,
             ShowsRedoReplacement: showRedo,
             ShowsDeleteRecord: showDelete,
-            IsActionEnabled: isActionEnabled,
+            CanExecuteAction: isActionEnabled,
+            IsPending: workspaceId.HasValue &&
+                _pendingTracker?.IsPending(workspaceId.Value, record.OperationId) == true,
             UndoButtonText: GetString(ResourceKeys.InspectorUndoReplacementButton),
             RedoButtonText: GetString(ResourceKeys.InspectorRedoReplacementButton),
             DeleteButtonText: GetString(ResourceKeys.InspectorDeleteChangeRecordButton),

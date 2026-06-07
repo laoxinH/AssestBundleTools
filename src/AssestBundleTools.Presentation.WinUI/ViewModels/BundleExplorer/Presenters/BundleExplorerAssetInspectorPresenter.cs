@@ -9,6 +9,7 @@ using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.State;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 
@@ -34,12 +35,15 @@ internal sealed class BundleExplorerAssetInspectorPresenter
 
     public BundleExplorerAssetInspectorPresenter(
         IBundleExplorerBundlePaneHost bundlePane,
-        ILocalizationService localizationService)
+        ILocalizationService localizationService,
+        WorkspaceOperationPendingTracker? pendingTracker = null)
     {
         _bundlePane = bundlePane ?? throw new ArgumentNullException(nameof(bundlePane));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _localizedValueFormatter = new LocalizedValueFormatter(_localizationService);
-        _changeRecordPresenter = new BundleExplorerAssetChangeRecordPresenter(_localizationService);
+        _changeRecordPresenter = new BundleExplorerAssetChangeRecordPresenter(
+            _localizationService,
+            pendingTracker);
     }
 
     public IReadOnlyList<AssetTypeOptionViewModel> CreateAssetTypeOptions(

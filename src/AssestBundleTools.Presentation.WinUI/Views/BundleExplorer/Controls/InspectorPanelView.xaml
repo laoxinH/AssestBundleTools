@@ -662,25 +662,49 @@
                                                                 Spacing="6">
                                                                 <Button
                                                                     Click="OnChangeRecordUndoReplacementButtonClick"
-                                                                    Content="{x:Bind UndoButtonText, Mode=OneTime}"
-                                                                    IsEnabled="{x:Bind IsActionEnabled, Mode=OneTime}"
+                                                                    IsEnabled="{x:Bind IsActionEnabled, Mode=OneWay}"
                                                                     Style="{StaticResource InspectorChangeRecordTagButtonStyle}"
                                                                     Tag="{x:Bind OperationId, Mode=OneTime}"
-                                                                    Visibility="{x:Bind UndoButtonVisibility, Mode=OneTime}" />
+                                                                    Visibility="{x:Bind UndoButtonVisibility, Mode=OneTime}">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                                                        <ProgressRing
+                                                                            Width="12"
+                                                                            Height="12"
+                                                                            IsActive="{x:Bind IsPending, Mode=OneWay}"
+                                                                            Visibility="{x:Bind PendingVisibility, Mode=OneWay}" />
+                                                                        <TextBlock Text="{x:Bind UndoButtonText, Mode=OneTime}" />
+                                                                    </StackPanel>
+                                                                </Button>
                                                                 <Button
                                                                     Click="OnChangeRecordRedoReplacementButtonClick"
-                                                                    Content="{x:Bind RedoButtonText, Mode=OneTime}"
-                                                                    IsEnabled="{x:Bind IsActionEnabled, Mode=OneTime}"
+                                                                    IsEnabled="{x:Bind IsActionEnabled, Mode=OneWay}"
                                                                     Style="{StaticResource InspectorChangeRecordTagButtonStyle}"
                                                                     Tag="{x:Bind OperationId, Mode=OneTime}"
-                                                                    Visibility="{x:Bind RedoButtonVisibility, Mode=OneTime}" />
+                                                                    Visibility="{x:Bind RedoButtonVisibility, Mode=OneTime}">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                                                        <ProgressRing
+                                                                            Width="12"
+                                                                            Height="12"
+                                                                            IsActive="{x:Bind IsPending, Mode=OneWay}"
+                                                                            Visibility="{x:Bind PendingVisibility, Mode=OneWay}" />
+                                                                        <TextBlock Text="{x:Bind RedoButtonText, Mode=OneTime}" />
+                                                                    </StackPanel>
+                                                                </Button>
                                                                 <Button
                                                                     Click="OnChangeRecordDeleteButtonClick"
-                                                                    Content="{x:Bind DeleteButtonText, Mode=OneTime}"
-                                                                    IsEnabled="{x:Bind IsActionEnabled, Mode=OneTime}"
+                                                                    IsEnabled="{x:Bind IsActionEnabled, Mode=OneWay}"
                                                                     Style="{StaticResource InspectorChangeRecordTagButtonStyle}"
                                                                     Tag="{x:Bind OperationId, Mode=OneTime}"
-                                                                    Visibility="{x:Bind DeleteButtonVisibility, Mode=OneTime}" />
+                                                                    Visibility="{x:Bind DeleteButtonVisibility, Mode=OneTime}">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                                                        <ProgressRing
+                                                                            Width="12"
+                                                                            Height="12"
+                                                                            IsActive="{x:Bind IsPending, Mode=OneWay}"
+                                                                            Visibility="{x:Bind PendingVisibility, Mode=OneWay}" />
+                                                                        <TextBlock Text="{x:Bind DeleteButtonText, Mode=OneTime}" />
+                                                                    </StackPanel>
+                                                                </Button>
                                                             </StackPanel>
                                                         </StackPanel>
                                                     </Grid>

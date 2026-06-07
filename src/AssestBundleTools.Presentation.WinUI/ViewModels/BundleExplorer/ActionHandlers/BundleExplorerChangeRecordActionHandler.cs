@@ -8,6 +8,7 @@ using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.State;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
 
@@ -20,17 +21,20 @@ internal sealed class BundleExplorerChangeRecordActionHandler
     private readonly IAppLogService _appLogService;
     private readonly IAppNotificationService _appNotificationService;
     private readonly ILocalizationService _localizationService;
+    private readonly WorkspaceOperationPendingTracker? _operationPendingTracker;
 
     public BundleExplorerChangeRecordActionHandler(
         IWorkspaceAssetOperationGateway workspaceAssetOperationGateway,
         IAppLogService appLogService,
         IAppNotificationService appNotificationService,
-        ILocalizationService localizationService)
+        ILocalizationService localizationService,
+        WorkspaceOperationPendingTracker? operationPendingTracker = null)
     {
         _workspaceAssetOperationGateway = workspaceAssetOperationGateway ?? throw new ArgumentNullException(nameof(workspaceAssetOperationGateway));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+        _operationPendingTracker = operationPendingTracker;
     }
 
     public Task DeleteChangeRecordAsync(
@@ -77,6 +81,9 @@ internal sealed class BundleExplorerChangeRecordActionHandler
         ArgumentNullException.ThrowIfNull(appendResultFailure);
 
         setBusyState(true);
+        using var pendingScope = _operationPendingTracker?.Begin(
+            workspaceSummary.WorkspaceId,
+            operationId);
         try
         {
             var result = await _workspaceAssetOperationGateway.DeleteWorkspaceOperationRecordAsync(

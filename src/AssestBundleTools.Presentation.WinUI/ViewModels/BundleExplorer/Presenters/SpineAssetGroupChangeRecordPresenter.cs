@@ -1,7 +1,9 @@
 using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.State;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 
@@ -13,10 +15,14 @@ internal sealed class SpineAssetGroupChangeRecordPresenter
     private readonly ILocalizationService _localizationService;
     private readonly BundleExplorerAssetChangeRecordPresenter _assetChangeRecordPresenter;
 
-    public SpineAssetGroupChangeRecordPresenter(ILocalizationService localizationService)
+    public SpineAssetGroupChangeRecordPresenter(
+        ILocalizationService localizationService,
+        WorkspaceOperationPendingTracker? pendingTracker = null)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
-        _assetChangeRecordPresenter = new BundleExplorerAssetChangeRecordPresenter(_localizationService);
+        _assetChangeRecordPresenter = new BundleExplorerAssetChangeRecordPresenter(
+            _localizationService,
+            pendingTracker);
     }
 
     public string BuildSummaryText(IReadOnlyList<SpineAssetGroupPartDto> parts)
@@ -36,13 +42,15 @@ internal sealed class SpineAssetGroupChangeRecordPresenter
 
     public IReadOnlyList<InspectorChangeRecordViewModel> CreateChangeRecords(
         IReadOnlyList<SpineAssetGroupPartDto> parts,
-        bool canManageRecords)
+        bool canManageRecords,
+        WorkspaceId? workspaceId = null)
     {
         ArgumentNullException.ThrowIfNull(parts);
 
         return _assetChangeRecordPresenter.CreateChangeRecords(
             CreateGroupChangeRecords(parts),
-            canManageRecords);
+            canManageRecords,
+            workspaceId);
     }
 
     private static IReadOnlyList<AssetChangeRecordDto> CreateGroupChangeRecords(
