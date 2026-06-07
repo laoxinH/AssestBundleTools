@@ -157,6 +157,11 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
             AssetId.Value);
     }
 
+    internal void ApplyOperationProjection(AssetDetailsDto details)
+    {
+        ApplyDetails(details);
+    }
+
     public void UpdatePendingWorkspaceReplacementCandidate(WorkspaceReplacementCandidateDto? candidate)
     {
         PendingWorkspaceReplacementCandidate = candidate;

@@ -7,6 +7,8 @@
 该模型不是 Spine 专用机制。它应覆盖：
 
 - `Texture2D` 修改影响 `Sprite`
+- `TextAsset` 修改影响直接引用它的 Spine / MonoBehaviour / GameObject 等宿主资源，例如 `.atlas / .skel / .json` 文本资源
+- `Material / Sprite / Mesh / TextAsset` 等可被直接引用资源修改后，影响所有可展示的直接引用宿主
 - `Texture2D / Sprite` 修改影响 `Mesh / Material / GameObject / ParticleSystemRenderer` 等引用型预览
 - Spine 资源组中的 skeleton / atlas / texture page 组成资产修改影响组文档
 - 普通资产详情、聚合资产详情、主窗口和独立资源编辑窗口之间的双向撤销 / 重做 / 删除记录同步
@@ -235,6 +237,8 @@ Pending 清除规则：
 - Texture2D 修改影响 Sprite。
 - Texture2D / Sprite 修改影响 Mesh 贴图叠加。
 - Texture2D 修改影响 Material / GameObject 摘要。
+- TextAsset 修改影响直接引用它的 Spine / MonoBehaviour / GameObject 等宿主资源，例如 `.atlas / .skel / .json`。
+- Material / Sprite / Mesh / TextAsset 等直接引用目标变化时，所有可展示直接引用宿主都应进入轻量操作投影刷新。
 - Spine texture page 修改影响 Spine 组动画预览。
 
 隐式依赖规则：
@@ -281,11 +285,12 @@ Pending 清除规则：
 ### 第二阶段：拆轻量操作投影刷新
 
 - 已在 Presentation 层新增 `AssociatedAssetOperationProjectionRefreshCoordinator`，作为轻量刷新协调器，独立于预览加载协调器。
-- 普通资产文档刷新 `ChangeRecords / CanRedoReplacement`。
+- 已让普通资产文档在命中操作通知时先刷新 `ChangeRecords / CanRedoReplacement / IsModified / replacement source` 等轻量操作投影，再走原有完整详情和预览刷新流程。
 - 已让 Spine 聚合资源文档在操作通知后优先刷新组成资产 `ChangeRecords`，并重新投影组级变更页按钮状态。
 - 已让主窗口和独立资源编辑窗口在 Spine 组命中操作通知时先执行轻量操作投影刷新，再排 animation details 重载。
 - 已为 Spine 预览调度拆出“仅刷新富预览”的入口，避免预览重载前用主面板旧快照覆盖已经更新的轻量操作投影。
-- 普通资产文档轻量刷新、pending tracker 和统一通知 DTO 演进仍属于后续阶段。
+- 当前关联影响扩展已覆盖所有可展示直接反向引用资源，`Texture2D` 只是首个稳定验证类型；`.atlas / .skel / .json` 等 `TextAsset` 以及其他直接引用目标也应通过同一通知扩展和轻量投影刷新路径同步。
+- Pending tracker 和统一通知 DTO 演进仍属于后续阶段。
 
 ### 第三阶段：演进通知 DTO
 
@@ -305,7 +310,7 @@ Pending 清除规则：
 Application / Infrastructure：
 
 - 操作通知结果能给出真实目标和关联目标。
-- 隐式依赖查询能从 Texture2D 找到 Sprite / Mesh / Material / Spine 组组成影响。
+- 隐式依赖查询能从 Texture2D 找到 Sprite / Mesh / Material / Spine 组组成影响，并能从 TextAsset 等直接引用目标找到直接引用宿主。
 - 关联资源撤销 / 重做通过 `operationId` 解析真实目标。
 - 删除记录后 affected targets 覆盖真实目标和关联目标。
 

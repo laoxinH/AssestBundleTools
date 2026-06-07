@@ -437,6 +437,57 @@ internal static class CachedWorkspaceSessionRegistryTests
         TestAssert.Equal(AssetType.Sprite, impact.AssetType, "Associated impact should keep dependent asset type.");
     }
 
+    public static void TryGetAssociatedAssetImpacts_ShouldReturnDirectDependents_WhenTextAssetChanges()
+    {
+        var bundleId = "bundle.spine";
+        var skeletonId = "asset.skeleton";
+        var atlasId = "asset.atlas";
+        var hostId = "asset.host";
+        var cacheEntry = new BundleIndexCacheEntryDto(
+            WorkspaceKey: "workspace-a",
+            BundleCacheKey: "bundle-cache-spine",
+            BundleId: bundleId,
+            DisplayName: "spine.ab",
+            LogicalPath: "spine.ab",
+            SourceFingerprint: new WorkspaceFileFingerprintDto("spine.ab", 100, DateTimeOffset.UnixEpoch, "hash"),
+            CachedAtUtc: DateTimeOffset.UnixEpoch,
+            ParserVersion: "test",
+            ToolVersion: "test",
+            Dependencies: Array.Empty<string>(),
+            Assets:
+            [
+                CreateAsset(hostId, "HeroSpineHost", AssetType.Unknown, "MonoBehaviour", pathId: 10, dependencies:
+                [
+                    CreateDependency(skeletonId, "Hero.skel", AssetType.TextAsset, "TextAsset", pathId: 20),
+                    CreateDependency(atlasId, "Hero.atlas", AssetType.TextAsset, "TextAsset", pathId: 30)
+                ]),
+                CreateAsset(skeletonId, "Hero.skel", AssetType.TextAsset, "TextAsset", pathId: 20),
+                CreateAsset(atlasId, "Hero.atlas", AssetType.TextAsset, "TextAsset", pathId: 30)
+            ],
+            SerializedFileNames: ["CAB-spine"]);
+        var bundleIndexCacheStore = new TestBundleIndexCacheStore([cacheEntry]);
+        var registry = new CachedWorkspaceSessionRegistry(new TestWorkspaceDataStoreFactory(bundleIndexCacheStore));
+
+        var summary = registry.OpenWorkspace(new WorkspaceSessionOpenRequestDto(
+            WorkspaceKey: "workspace-a",
+            WorkspacePath: "workspace",
+            WorkspaceDataRootPath: "data",
+            WorkspaceDisplayName: "Workspace A",
+            InitialMode: WorkspaceMode.SinglePane));
+
+        var hasImpacts = registry.TryGetAssociatedAssetImpacts(
+            summary.WorkspaceId,
+            new BundleId(bundleId),
+            new AssetId(skeletonId),
+            out var impacts);
+
+        TestAssert.True(hasImpacts, "Associated impact query should be available for loaded text assets.");
+        var impact = TestAssert.Single(impacts);
+        TestAssert.Equal(hostId, impact.AssetId.Value, "Text asset changes should affect direct dependents.");
+        TestAssert.Equal(bundleId, impact.BundleId.Value, "Associated impact should keep dependent bundle identity.");
+        TestAssert.Equal("MonoBehaviour", impact.AssetTypeDisplayName, "Associated impact should preserve dynamic dependent type text.");
+    }
+
     private static BundleIndexAssetCacheEntryDto CreateAsset(
         string assetId,
         string name,

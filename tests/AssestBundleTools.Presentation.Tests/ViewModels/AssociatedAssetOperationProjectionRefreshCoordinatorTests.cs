@@ -21,6 +21,7 @@ public sealed class AssociatedAssetOperationProjectionRefreshCoordinatorTests
     {
         var localizationService = new TestLocalizationService();
         var bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
+        var assetPresenter = new BundleExplorerAssetInspectorPresenter(bundlePane, localizationService);
         var presenter = new SpineAssetGroupInspectorPresenter(bundlePane, localizationService);
         var group = CreateSpineGroup(
             new AssetChangeRecordDto(
@@ -54,8 +55,10 @@ public sealed class AssociatedAssetOperationProjectionRefreshCoordinatorTests
         var coordinator = new AssociatedAssetOperationProjectionRefreshCoordinator(
             gateway,
             new TestBackgroundTaskRunner(),
+            assetPresenter,
             presenter,
             () => new WorkspaceId("workspace"),
+            () => false,
             _ => { });
 
         var updated = await coordinator.RefreshSpineGroupOperationProjectionAsync(
@@ -68,6 +71,74 @@ public sealed class AssociatedAssetOperationProjectionRefreshCoordinatorTests
         Assert.True(record.ShowsRedoReplacement);
         Assert.NotNull(groupTab.Item.TexturePageAssets[0].ChangeRecords);
         Assert.False(groupTab.Item.TexturePageAssets[0].ChangeRecords![0].IsEffectiveReplacement);
+    }
+
+    [Fact]
+    public async Task RefreshAssetDocumentOperationProjectionAsync_ShouldUpdateAssociatedTextAssetRecordActions()
+    {
+        var localizationService = new TestLocalizationService();
+        var bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
+        var assetPresenter = new BundleExplorerAssetInspectorPresenter(bundlePane, localizationService);
+        var spinePresenter = new SpineAssetGroupInspectorPresenter(bundlePane, localizationService);
+        var hostDetails = CreateAssetDetails(
+            new BundleId("bundle-ui"),
+            new AssetId("hero-host"),
+            "hero.prefab",
+            AssetType.Unknown,
+            "MonoBehaviour",
+            new AssetChangeRecordDto(
+                AssetChangeRecordKind.AssociatedFileReplacement,
+                CreatedAtUtc: DateTimeOffset.UnixEpoch,
+                OperationId: "replace-skeleton",
+                IsEffectiveReplacement: true,
+                TargetBundleId: "bundle-ui",
+                TargetAssetId: "hero-skeleton",
+                SourceFileName: "hero.skel",
+                IsRelatedOperation: true));
+        var assetTab = new AssetDocumentTabViewModel(
+            hostDetails.BundleId,
+            hostDetails.AssetId,
+            hostDetails.Name,
+            InspectorInformationTextSetFactory.Create(localizationService));
+        assetPresenter.PresentAssetDocumentTab(assetTab, hostDetails, canEdit: true, isBusy: false);
+        Assert.True(Assert.Single(assetTab.Inspector.ChangeRecords).ShowsUndoReplacement);
+
+        var gateway = new TestWorkspaceAssetInspectionGateway
+        {
+            GetAssetDetailsHandler = _ => Task.FromResult(Result<AssetDetailsDto>.Success(CreateAssetDetails(
+                hostDetails.BundleId,
+                hostDetails.AssetId,
+                hostDetails.Name,
+                hostDetails.AssetType,
+                hostDetails.AssetTypeDisplayName ?? "MonoBehaviour",
+                new AssetChangeRecordDto(
+                    AssetChangeRecordKind.AssociatedFileReplacement,
+                    CreatedAtUtc: DateTimeOffset.UnixEpoch,
+                    OperationId: "replace-skeleton",
+                    IsEffectiveReplacement: false,
+                    TargetBundleId: "bundle-ui",
+                    TargetAssetId: "hero-skeleton",
+                    SourceFileName: "hero.skel",
+                    IsRelatedOperation: true))))
+        };
+        var coordinator = new AssociatedAssetOperationProjectionRefreshCoordinator(
+            gateway,
+            new TestBackgroundTaskRunner(),
+            assetPresenter,
+            spinePresenter,
+            () => new WorkspaceId("workspace"),
+            () => false,
+            _ => { });
+
+        var updated = await coordinator.RefreshAssetDocumentOperationProjectionAsync(assetTab);
+
+        Assert.True(updated);
+        var record = Assert.Single(assetTab.Inspector.ChangeRecords);
+        Assert.False(record.ShowsUndoReplacement);
+        Assert.True(record.ShowsRedoReplacement);
+        Assert.NotNull(assetTab.Details?.ChangeRecords);
+        Assert.False(assetTab.Details!.ChangeRecords![0].IsEffectiveReplacement);
+        Assert.Equal("hero-skeleton", assetTab.Details.ChangeRecords[0].TargetAssetId);
     }
 
     private static SpineAssetGroupDto CreateSpineGroup(AssetChangeRecordDto textureChangeRecord)
@@ -122,15 +193,30 @@ public sealed class AssociatedAssetOperationProjectionRefreshCoordinatorTests
         BundleId bundleId,
         AssetId assetId,
         AssetChangeRecordDto changeRecord) =>
+        CreateAssetDetails(
+            bundleId,
+            assetId,
+            "hero.png",
+            AssetType.Texture2D,
+            "Texture2D",
+            changeRecord);
+
+    private static AssetDetailsDto CreateAssetDetails(
+        BundleId bundleId,
+        AssetId assetId,
+        string name,
+        AssetType assetType,
+        string assetTypeDisplayName,
+        AssetChangeRecordDto changeRecord) =>
         new(
             WorkspaceId: new WorkspaceId("workspace"),
             BundleId: bundleId,
             AssetId: assetId,
-            Name: "hero.png",
-            AssetPath: "Assets/hero.png",
+            Name: name,
+            AssetPath: $"Assets/{name}",
             ContainerPath: "CAB",
-            AssetType: AssetType.Texture2D,
-            AssetTypeDisplayName: "Texture2D",
+            AssetType: assetType,
+            AssetTypeDisplayName: assetTypeDisplayName,
             SerializedFileName: "ui.ab",
             PathId: 1,
             SizeInBytes: 1,

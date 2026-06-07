@@ -136,6 +136,8 @@ public sealed partial class CachedWorkspaceSessionRegistry
             }
         }
 
+        // 直接反向引用覆盖 Texture2D / TextAsset / Material / Sprite 等通用关联资源；
+        // Mesh 的贴图化预览还需要额外保留从 Renderer/Material 链路推导出的间接贴图影响。
         foreach (var assetNode in workspaceState.AssetsById.Values)
         {
             if (!assetNode.AssetState.IncludeInAssetList)

@@ -161,6 +161,10 @@ internal static class InfrastructureTestSuite
             CachedWorkspaceSessionRegistryTests.TryGetAssociatedAssetImpacts_ShouldReturnVisibleDependents_WhenTextureChanges);
         await RunTestAsync(
             failures,
+            nameof(CachedWorkspaceSessionRegistryTests.TryGetAssociatedAssetImpacts_ShouldReturnDirectDependents_WhenTextAssetChanges),
+            CachedWorkspaceSessionRegistryTests.TryGetAssociatedAssetImpacts_ShouldReturnDirectDependents_WhenTextAssetChanges);
+        await RunTestAsync(
+            failures,
             nameof(CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedExtractionOperations_FromChangeSet),
             CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedExtractionOperations_FromChangeSet);
         await RunTestAsync(

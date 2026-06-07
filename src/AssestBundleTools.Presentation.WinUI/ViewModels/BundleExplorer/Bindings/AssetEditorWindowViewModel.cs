@@ -142,8 +142,10 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         _operationProjectionRefreshCoordinator = new AssociatedAssetOperationProjectionRefreshCoordinator(
             _workspaceAssetInspectionGateway,
             _backgroundTaskRunner,
+            _assetInspectorPresenter,
             _spineGroupInspectorPresenter,
             () => _workspaceShell.WorkspaceSummary?.WorkspaceId,
+            () => IsBusy,
             _operationFeedbackBridge.AppendResultFailure);
         var assetPreviewCoordinator = new BundleExplorerAssetPreviewCoordinator(
             _workspaceAssetInspectionGateway,

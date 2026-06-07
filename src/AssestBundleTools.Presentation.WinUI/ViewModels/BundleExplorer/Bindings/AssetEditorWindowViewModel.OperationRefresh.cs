@@ -19,6 +19,7 @@ public sealed partial class AssetEditorWindowViewModel
                 .ToArray();
         foreach (var assetTab in assetTabs)
         {
+            await _operationProjectionRefreshCoordinator.RefreshAssetDocumentOperationProjectionAsync(assetTab);
             await RefreshAssetDocumentDetailsAsync(assetTab);
         }
 
