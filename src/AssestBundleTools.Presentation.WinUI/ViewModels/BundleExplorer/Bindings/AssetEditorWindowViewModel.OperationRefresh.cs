@@ -59,8 +59,9 @@ public sealed partial class AssetEditorWindowViewModel
             return;
         }
 
+        var previewInvalidationBaseline = assetTab.ConsumePreviewInvalidationBaseline() ?? assetTab.Details;
         var shouldReloadPreview = AssetPreviewInvalidationPolicy.HasEffectivePreviewProjectionChanged(
-            assetTab.Details,
+            previewInvalidationBaseline,
             details);
         ReapplyAssetDocumentState(assetTab, details);
         if (!shouldReloadPreview)

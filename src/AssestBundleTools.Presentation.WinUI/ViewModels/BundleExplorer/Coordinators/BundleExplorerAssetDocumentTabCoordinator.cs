@@ -262,8 +262,9 @@ internal sealed class BundleExplorerAssetDocumentTabCoordinator
             return;
         }
 
+        var previewInvalidationBaseline = assetTab.ConsumePreviewInvalidationBaseline() ?? assetTab.Details;
         var shouldReloadPreview = AssetPreviewInvalidationPolicy.HasEffectivePreviewProjectionChanged(
-            assetTab.Details,
+            previewInvalidationBaseline,
             details);
         ApplyAssetOperationStateToPrimaryPane(details);
         ReapplyAssetDocumentTab(assetTab, details);

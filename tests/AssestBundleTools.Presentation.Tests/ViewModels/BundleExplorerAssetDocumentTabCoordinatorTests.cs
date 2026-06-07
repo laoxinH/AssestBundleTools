@@ -271,6 +271,55 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
     }
 
     [Fact]
+    public async Task RefreshAssetDocumentTabDetailsAsync_ShouldReloadPreview_WhenOperationProjectionAlreadyUpdatedDetails()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-ui");
+        var assetId = new AssetId("asset-button");
+        var context = CreateCoordinatorContext(workspaceId, "ProjectionPreviewInvalidation");
+        var currentDetails = CreateAssetDetails(workspaceId, bundleId, assetId);
+        var refreshedDetails = currentDetails with
+        {
+            FileReplacementSourceFileName = "button-new.png",
+            FileReplacementSourcePath = @"C:\tmp\button-new.png",
+            FileReplacementSourceAssetType = AssetType.Texture2D,
+            ChangeRecords =
+            [
+                new AssetChangeRecordDto(
+                    AssetChangeRecordKind.AssociatedFileReplacement,
+                    DateTimeOffset.UnixEpoch,
+                    OperationId: "replace-texture",
+                    Sequence: 1,
+                    IsEffectiveReplacement: true,
+                    TargetBundleId: bundleId.Value,
+                    TargetAssetId: "asset-texture",
+                    SourceFileName: "button-new.png")
+            ]
+        };
+        var previewQueryAssetIds = new List<AssetId>();
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            GetAssetDetailsHandler = _ => Task.FromResult(Result<AssetDetailsDto>.Success(refreshedDetails)),
+            GetAssetPreviewHandler = query =>
+            {
+                previewQueryAssetIds.Add(query.AssetId);
+                return Task.FromResult(CreateSummaryPreviewResult(query));
+            }
+        };
+        var coordinator = CreateCoordinator(context, inspectionGateway);
+        var assetTab = context.HostCoordinator.CreateAssetDocumentTab(bundleId, assetId, "Button");
+        assetTab.ApplyDetails(currentDetails);
+        assetTab.Inspector.ShowPreviewMessage("loaded");
+        context.BundleTab.AddAssetTab(assetTab, activate: true);
+
+        assetTab.ApplyOperationProjection(refreshedDetails);
+        await coordinator.RefreshAssetDocumentTabDetailsAsync(assetTab);
+        await WaitUntilAsync(() => previewQueryAssetIds.Count > 0);
+
+        Assert.Equal([assetId], previewQueryAssetIds);
+    }
+
+    [Fact]
     public void AssetDocumentTabPreviewImageDisplayOptions_ShouldRequestBrowserStatePersistence_WhenUserChangesModes()
     {
         var context = CreateCoordinatorContext(WorkspaceId.New(), "PreviewOptionsPersistence");
