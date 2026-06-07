@@ -33,6 +33,8 @@
   资源编辑窗口、资产文档标签、独立窗口恢复和编辑草稿边界。
 - [workspace-recoverable-operation-records.md](workspace-recoverable-operation-records.md)
   工作区提取、替换、编辑草稿和保存输出的可恢复操作记录、撤销与重启恢复设计。
+- [workspace-associated-asset-synchronization.md](workspace-associated-asset-synchronization.md)
+  工作区操作后真实目标资源、隐式依赖资源、聚合资源文档和独立编辑窗口之间的通用同步模型。
 - [background-task-scheduling.md](background-task-scheduling.md)
   导入、预览、提取、导出和后续保存 / 重建的统一后台任务调度、并发闸门、进度与状态条边界。
 - [workspace-batch-extraction-dialog.md](workspace-batch-extraction-dialog.md)

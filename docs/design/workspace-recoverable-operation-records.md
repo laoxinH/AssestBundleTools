@@ -243,6 +243,10 @@ relatedOperationId
 
 `relations[]` 只表达“同一个用户确认动作同时写入多条强关联操作”的事实，不应滥用来补依赖图。资源 A 被修改时，依赖 A 的 Sprite、Mesh、Material、Spine 组等资源需要同步刷新预览和变更读模型，这类行为属于“隐式依赖影响”。当前通过 Application 层的 `IWorkspaceAssociatedAssetImpactRegistry` 查询工作区运行时依赖图，由 Infrastructure 基于反向依赖和贴图关联实现；Presentation 的操作通知网关只消费这个抽象来扩展受影响资产列表，不直接遍历依赖图或读取工作区暂存文件。
 
+隐式依赖影响和跨窗口同步的长期通用规则见
+[workspace-associated-asset-synchronization.md](workspace-associated-asset-synchronization.md)。
+本节继续保留操作记录层面的事实流约束。
+
 隐式依赖影响的规则：
 
 1. 不额外生成新的操作记录，也不改写原操作的 `relations[]`。
