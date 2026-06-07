@@ -46,7 +46,11 @@ internal sealed class NotifyingWorkspaceBatchOperationsGateway : IWorkspaceBatch
         CancellationToken cancellationToken = default)
     {
         var result = await _inner.SaveWorkspaceAsNewBundleAsync(command, cancellationToken);
-        NotifyIfSucceeded(result, command.WorkspaceId, WorkspaceOperationChangeKind.Save);
+        NotifyIfSucceeded(
+            result,
+            command.WorkspaceId,
+            WorkspaceOperationChangeKind.Save,
+            reason: WorkspaceOperationChangeReason.SaveCheckpointChanged);
         return result;
     }
 
@@ -64,7 +68,8 @@ internal sealed class NotifyingWorkspaceBatchOperationsGateway : IWorkspaceBatch
             result,
             command.WorkspaceId,
             WorkspaceOperationChangeKind.Extraction,
-            CreateAffectedAssets(result.Value));
+            CreateAffectedAssets(result.Value),
+            WorkspaceOperationChangeReason.BatchExtractionRecorded);
         return result;
     }
 
@@ -78,7 +83,11 @@ internal sealed class NotifyingWorkspaceBatchOperationsGateway : IWorkspaceBatch
         CancellationToken cancellationToken = default)
     {
         var result = await _inner.ExecuteWorkspaceBatchReplacementAsync(command, cancellationToken);
-        NotifyIfSucceeded(result, command.WorkspaceId, WorkspaceOperationChangeKind.Replacement);
+        NotifyIfSucceeded(
+            result,
+            command.WorkspaceId,
+            WorkspaceOperationChangeKind.Replacement,
+            reason: WorkspaceOperationChangeReason.BatchReplacementApplied);
         return result;
     }
 
@@ -86,11 +95,16 @@ internal sealed class NotifyingWorkspaceBatchOperationsGateway : IWorkspaceBatch
         Result<T> result,
         WorkspaceId workspaceId,
         WorkspaceOperationChangeKind changeKind,
-        IReadOnlyList<WorkspaceOperationAffectedAsset>? affectedAssets = null)
+        IReadOnlyList<WorkspaceOperationAffectedAsset>? affectedAssets = null,
+        WorkspaceOperationChangeReason reason = WorkspaceOperationChangeReason.Unspecified)
     {
         if (result.IsSuccess)
         {
-            _operationChangeNotifier.NotifyWorkspaceOperationsChanged(workspaceId, changeKind, affectedAssets);
+            _operationChangeNotifier.NotifyWorkspaceOperationsChanged(
+                workspaceId,
+                changeKind,
+                affectedAssets,
+                reason);
         }
     }
 

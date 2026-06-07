@@ -43,7 +43,8 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
             result,
             command.WorkspaceId,
             WorkspaceOperationChangeKind.Extraction,
-            CreateAffectedAsset(command.BundleId, command.AssetId));
+            CreateAffectedAsset(command.BundleId, command.AssetId),
+            WorkspaceOperationChangeReason.ExtractionRecorded);
         return result;
     }
 
@@ -56,7 +57,8 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
             result,
             command.WorkspaceId,
             WorkspaceOperationChangeKind.Extraction,
-            CreateAffectedAssets(result.Value?.AssetResults));
+            CreateAffectedAssets(result.Value?.AssetResults),
+            WorkspaceOperationChangeReason.ExtractionRecorded);
         return result;
     }
 
@@ -81,7 +83,8 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
             WorkspaceOperationChangeKind.Extraction | WorkspaceOperationChangeKind.Replacement,
             ExpandAffectedAssets(
                 command.WorkspaceId,
-                CreateAffectedAsset(command.TargetBundleId, command.TargetAssetId)));
+                CreateAffectedAsset(command.TargetBundleId, command.TargetAssetId)),
+            WorkspaceOperationChangeReason.ReplacementApplied);
         return result;
     }
 
@@ -96,7 +99,8 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
             WorkspaceOperationChangeKind.Replacement,
             ExpandAffectedAssets(
                 command.WorkspaceId,
-                CreateAffectedAsset(command.TargetBundleId, command.TargetAssetId)));
+                CreateAffectedAsset(command.TargetBundleId, command.TargetAssetId)),
+            WorkspaceOperationChangeReason.ReplacementApplied);
         return result;
     }
 
@@ -115,7 +119,9 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
                     command.BundleId,
                     command.AssetId,
                     result.Value?.TargetBundleId,
-                    result.Value?.TargetAssetId)));
+                    result.Value?.TargetAssetId)),
+            WorkspaceOperationChangeReason.ReplacementUndone,
+            CreateOperationIds(command.ReplacementOperationId));
         return result;
     }
 
@@ -134,7 +140,9 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
                     command.BundleId,
                     command.AssetId,
                     result.Value?.TargetBundleId,
-                    result.Value?.TargetAssetId)));
+                    result.Value?.TargetAssetId)),
+            WorkspaceOperationChangeReason.ReplacementRedone,
+            CreateOperationIds(command.ReplacementOperationId));
         return result;
     }
 
@@ -149,7 +157,8 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
             WorkspaceOperationChangeKind.Edit,
             ExpandAffectedAssets(
                 command.WorkspaceId,
-                CreateAffectedAsset(command.BundleId, command.AssetId)));
+                CreateAffectedAsset(command.BundleId, command.AssetId)),
+            WorkspaceOperationChangeReason.EditApplied);
         return result;
     }
 
@@ -164,7 +173,9 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
             WorkspaceOperationChangeKind.Extraction | WorkspaceOperationChangeKind.Replacement | WorkspaceOperationChangeKind.Edit,
             ExpandAffectedAssets(
                 command.WorkspaceId,
-                CreateAffectedAssets(result.Value)));
+                CreateAffectedAssets(result.Value)),
+            WorkspaceOperationChangeReason.RecordDeleted,
+            CreateOperationIds(result.Value?.OperationId ?? command.OperationId));
         return result;
     }
 
@@ -172,11 +183,18 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         Result<T> result,
         WorkspaceId workspaceId,
         WorkspaceOperationChangeKind changeKind,
-        IReadOnlyList<WorkspaceOperationAffectedAsset>? affectedAssets = null)
+        IReadOnlyList<WorkspaceOperationAffectedAsset>? affectedAssets = null,
+        WorkspaceOperationChangeReason reason = WorkspaceOperationChangeReason.Unspecified,
+        IReadOnlyList<string>? operationIds = null)
     {
         if (result.IsSuccess)
         {
-            _operationChangeNotifier.NotifyWorkspaceOperationsChanged(workspaceId, changeKind, affectedAssets);
+            _operationChangeNotifier.NotifyWorkspaceOperationsChanged(
+                workspaceId,
+                changeKind,
+                affectedAssets,
+                reason,
+                operationIds);
         }
     }
 
@@ -199,38 +217,57 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         var expandedAssets = new List<WorkspaceOperationAffectedAsset>(affectedAssets);
         foreach (var affectedAsset in affectedAssets)
         {
+            var primaryAsset = new WorkspaceOperationAffectedAsset(
+                affectedAsset.BundleId,
+                affectedAsset.AssetId,
+                WorkspaceOperationAffectedAssetRole.PrimaryTarget);
             if (!_associatedAssetImpactRegistry.TryGetAssociatedAssetImpacts(
                     workspaceId,
-                    affectedAsset.BundleId,
-                    affectedAsset.AssetId,
+                    primaryAsset.BundleId,
+                    primaryAsset.AssetId,
                     out var impacts))
             {
                 continue;
             }
 
             expandedAssets.AddRange(impacts.Select(static impact =>
-                new WorkspaceOperationAffectedAsset(impact.BundleId, impact.AssetId)));
+                new WorkspaceOperationAffectedAsset(
+                    impact.BundleId,
+                    impact.AssetId,
+                    WorkspaceOperationAffectedAssetRole.ImplicitAffectedTarget)));
         }
 
         return NormalizeAffectedAssets(expandedAssets);
     }
 
     private static IReadOnlyList<WorkspaceOperationAffectedAsset> CreateAffectedAssets(
-        BundleId primaryBundleId,
-        AssetId primaryAssetId,
-        BundleId? secondaryBundleId,
-        AssetId? secondaryAssetId)
+        BundleId requestedBundleId,
+        AssetId requestedAssetId,
+        BundleId? actualTargetBundleId,
+        AssetId? actualTargetAssetId)
     {
-        var affectedAssets = new List<WorkspaceOperationAffectedAsset>
+        if (actualTargetBundleId.HasValue && actualTargetAssetId.HasValue)
         {
-            new(primaryBundleId, primaryAssetId)
-        };
-        if (secondaryBundleId.HasValue && secondaryAssetId.HasValue)
-        {
-            affectedAssets.Add(new WorkspaceOperationAffectedAsset(secondaryBundleId.Value, secondaryAssetId.Value));
+            var affectedAssets = new List<WorkspaceOperationAffectedAsset>
+            {
+                new(
+                    actualTargetBundleId.Value,
+                    actualTargetAssetId.Value,
+                    WorkspaceOperationAffectedAssetRole.PrimaryTarget)
+            };
+            if (!actualTargetBundleId.Value.Equals(requestedBundleId) ||
+                !actualTargetAssetId.Value.Equals(requestedAssetId))
+            {
+                affectedAssets.Add(new WorkspaceOperationAffectedAsset(
+                    requestedBundleId,
+                    requestedAssetId,
+                    WorkspaceOperationAffectedAssetRole.RelatedTarget));
+            }
+
+            return NormalizeAffectedAssets(affectedAssets);
         }
 
-        return NormalizeAffectedAssets(affectedAssets);
+        return CreateAffectedAsset(requestedBundleId, requestedAssetId);
     }
 
     private static IReadOnlyList<WorkspaceOperationAffectedAsset>? CreateAffectedAssets(
@@ -272,6 +309,22 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         affectedAssets
             .Where(static item => item is not null)
             .GroupBy(static item => string.Concat(item.BundleId.Value, "\n", item.AssetId.Value), StringComparer.Ordinal)
-            .Select(static group => group.First())
+            .Select(static group => group
+                .OrderBy(static item => GetRolePriority(item.Role))
+                .First())
             .ToArray();
+
+    private static int GetRolePriority(WorkspaceOperationAffectedAssetRole role) =>
+        role switch
+        {
+            WorkspaceOperationAffectedAssetRole.PrimaryTarget => 0,
+            WorkspaceOperationAffectedAssetRole.RelatedTarget => 1,
+            WorkspaceOperationAffectedAssetRole.ImplicitAffectedTarget => 2,
+            _ => 3
+        };
+
+    private static IReadOnlyList<string>? CreateOperationIds(string? operationId) =>
+        string.IsNullOrWhiteSpace(operationId)
+            ? null
+            : [operationId.Trim()];
 }

@@ -106,7 +106,7 @@ Presentation 不得：
 - `AffectedAssets`
 - workspace-wide 标记
 
-长期应演进为操作读模型事件，建议补充：
+当前已演进为操作读模型事件，新增字段为：
 
 ```text
 operationIds[]
@@ -130,7 +130,16 @@ reason
 - `reason`
   稳定枚举，例如 `ReplacementApplied / ReplacementUndone / ReplacementRedone / RecordDeleted / EditApplied / ExtractionRecorded / SaveCheckpointChanged`。
 
-在未完成事件 DTO 演进前，现有 `AffectedAssets` 仍可作为兼容输入，但刷新协调器应在内部尽量归一为“受影响目标集合 + 相关 operationId 集合”。
+`AffectedAssets` 作为兼容集合继续保留，并由 `primaryTargets / relatedTargets / implicitAffectedTargets` 合并归一而来；现有刷新协调器可以继续消费 `AffectedAssets`，新实现必须优先填充更精确的 role、reason 和 operationIds。撤销 / 重做 / 删除记录等从可见变更卡片发起的操作必须携带被操作的真实 `operationId`；应用新替换若 Application 结果 DTO 暂未返回新建 operation id，则通知可以先只携带 `reason + primaryTargets`，但后续扩展结果 DTO 时必须补齐。
+
+后续处理任何替换或修改时，不得回退到“操作成功后手动刷新某个 ViewModel”的局部模式。正确顺序必须是：
+
+```text
+Application 写入 operations[] 事实
+  -> Notifying gateway 发布带 reason / targets / operationIds 的通知
+  -> 轻量操作投影先刷新
+  -> 富预览按 invalidation policy 异步刷新
+```
 
 ## 6. 轻量操作投影刷新
 
@@ -292,12 +301,13 @@ Pending 清除规则：
 - 当前关联影响扩展已覆盖所有可展示直接反向引用资源，`Texture2D` 只是首个稳定验证类型；`.atlas / .skel / .json` 等 `TextAsset` 以及其他直接引用目标也应通过同一通知扩展和轻量投影刷新路径同步。
 - 统一通知 DTO 演进仍属于后续阶段；pending tracker 已在 Presentation 层先行落地为瞬时 UI 状态，不进入 Application 操作事实流。
 
-### 第三阶段：演进通知 DTO
+### 第三阶段：演进通知 DTO（已落地基础实现）
 
-- 通知事件补充 `operationIds / primaryTargets / relatedTargets / implicitAffectedTargets / reason`。
-- `NotifyingWorkspaceAssetOperationGateway` 从命令结果中优先提取真实 affected targets。
-- 删除记录、撤销、重做场景尽量携带被影响 operation id。
-- 保留旧 `AffectedAssets` 兼容一段时间。
+- 通知事件已补充 `OperationIds / PrimaryTargets / RelatedTargets / ImplicitAffectedTargets / Reason`。
+- `NotifyingWorkspaceAssetOperationGateway` 已按操作类型填充稳定 `Reason`，并从命令结果中优先提取真实目标；从关联资源投影发起撤销 / 重做时，真实目标标记为 `PrimaryTarget`，发起投影资源标记为 `RelatedTarget`。
+- 关联影响 registry 扩展出的依赖资源已标记为 `ImplicitAffectedTarget`。
+- 删除记录、撤销、重做场景已尽量携带被影响 `operationId`；新替换应用的新增 operation id 仍需等待 Application 结果 DTO 后续扩展。
+- 旧 `AffectedAssets` 继续保留为兼容集合，刷新协调器仍可消费，但新增代码不得只依赖无角色的 affected 集合表达复杂关联语义。
 
 ### 第四阶段：统一预览失效策略
 
@@ -334,3 +344,4 @@ Presentation：
 3. 关联资源、聚合资源和多窗口共享同一操作事实与 pending 语义。
 4. Spine 只是这套模型中的复杂聚合资源案例，不应拥有独立的同步规则。
 5. 新增资源类型的关联预览必须接入同一同步模型，而不是在 ViewModel 中手写局部互刷。
+6. 后续所有替换、编辑和删除记录修改都必须发布带 `reason / targets / operationIds` 的操作通知，并先刷新轻量操作投影；不得在操作 handler 中恢复“成功后直接刷新某个页面或某个资源类型”的手写回调。

@@ -26,7 +26,9 @@ public sealed class WorkspaceOperationChangeNotifier : IWorkspaceOperationChange
     public void NotifyWorkspaceOperationsChanged(
         WorkspaceId workspaceId,
         WorkspaceOperationChangeKind changeKind,
-        IReadOnlyList<WorkspaceOperationAffectedAsset>? affectedAssets = null)
+        IReadOnlyList<WorkspaceOperationAffectedAsset>? affectedAssets = null,
+        WorkspaceOperationChangeReason reason = WorkspaceOperationChangeReason.Unspecified,
+        IReadOnlyList<string>? operationIds = null)
     {
         if (changeKind == WorkspaceOperationChangeKind.None)
         {
@@ -36,11 +38,16 @@ public sealed class WorkspaceOperationChangeNotifier : IWorkspaceOperationChange
         var currentBatch = _currentBatch.Value;
         if (currentBatch is not null)
         {
-            currentBatch.Add(workspaceId, changeKind, affectedAssets);
+            currentBatch.Add(workspaceId, changeKind, affectedAssets, reason, operationIds);
             return;
         }
 
-        var eventArgs = new WorkspaceOperationChangedEventArgs(workspaceId, changeKind, affectedAssets);
+        var eventArgs = new WorkspaceOperationChangedEventArgs(
+            workspaceId,
+            changeKind,
+            affectedAssets,
+            reason,
+            operationIds);
         Raise(eventArgs);
     }
 
@@ -127,7 +134,9 @@ public sealed class WorkspaceOperationChangeNotifier : IWorkspaceOperationChange
         public void Add(
             WorkspaceId workspaceId,
             WorkspaceOperationChangeKind changeKind,
-            IReadOnlyList<WorkspaceOperationAffectedAsset>? affectedAssets)
+            IReadOnlyList<WorkspaceOperationAffectedAsset>? affectedAssets,
+            WorkspaceOperationChangeReason reason,
+            IReadOnlyList<string>? operationIds)
         {
             if (changeKind == WorkspaceOperationChangeKind.None)
             {
@@ -138,7 +147,9 @@ public sealed class WorkspaceOperationChangeNotifier : IWorkspaceOperationChange
             var eventArgs = new WorkspaceOperationChangedEventArgs(
                 workspaceId,
                 changeKind,
-                affectedAssets);
+                affectedAssets,
+                reason,
+                operationIds);
             if (_pending.TryGetValue(key, out var existing))
             {
                 _pending[key] = new PendingNotification(existing.EventArgs.Merge(eventArgs));
@@ -155,7 +166,9 @@ public sealed class WorkspaceOperationChangeNotifier : IWorkspaceOperationChange
                 Add(
                     item.EventArgs.WorkspaceId,
                     item.EventArgs.ChangeKind,
-                    item.EventArgs.AffectedAssets);
+                    item.EventArgs.AffectedAssets,
+                    item.EventArgs.Reason,
+                    item.EventArgs.OperationIds);
             }
         }
 
