@@ -171,4 +171,46 @@ internal static class JsonWorkspaceChangeStoreTests
         TestAssert.Equal(0, (restoredChangeSet.Operations ?? Array.Empty<WorkspaceOperationRecordDto>()).Count, "Legacy operations should default to empty.");
         TestAssert.Equal("extract:bundle-a:asset-1", TestAssert.Single(restoredChangeSet.Changes).ChangeKey, "Legacy changes should still load.");
     }
+
+    public static void Save_ShouldReplaceChangeSet_WhenExistingFileHasSharedReadLease()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonWorkspaceChangeStore(temporaryDirectory.DirectoryPath);
+        var initialChangeSet = CreateMinimalChangeSet(
+            workspaceKey: "workspace-a",
+            updatedAtUtc: new DateTimeOffset(2026, 6, 7, 10, 0, 0, TimeSpan.Zero));
+        store.Save(initialChangeSet);
+        var changeFilePath = Path.Combine(
+            temporaryDirectory.DirectoryPath,
+            "staging",
+            "changes",
+            "workspace-a.json");
+
+        using var readLease = File.Open(
+            changeFilePath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.ReadWrite | FileShare.Delete);
+        var updatedAtUtc = new DateTimeOffset(2026, 6, 7, 10, 1, 0, TimeSpan.Zero);
+        var updatedChangeSet = CreateMinimalChangeSet(
+            workspaceKey: "workspace-a",
+            updatedAtUtc: updatedAtUtc);
+
+        store.Save(updatedChangeSet);
+        var loadedChangeSet = store.Load("workspace-a");
+
+        var restoredChangeSet = TestAssert.NotNull(loadedChangeSet, "Updated change set should be readable while an old read lease is open.");
+        TestAssert.Equal(updatedAtUtc, restoredChangeSet.UpdatedAtUtc, "Atomic replace should publish the updated change set.");
+    }
+
+    private static WorkspaceChangeSetDto CreateMinimalChangeSet(
+        string workspaceKey,
+        DateTimeOffset updatedAtUtc) =>
+        new(
+            WorkspaceKey: workspaceKey,
+            UpdatedAtUtc: updatedAtUtc,
+            Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+            EditDrafts: Array.Empty<WorkspaceAssetEditDraftDescriptorDto>(),
+            SchemaVersion: WorkspaceChangeSetDto.CurrentSchemaVersion,
+            Operations: Array.Empty<WorkspaceOperationRecordDto>());
 }

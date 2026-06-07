@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 
 namespace AssestBundleTools.Infrastructure.Workspace.Persistence;
@@ -11,6 +12,8 @@ namespace AssestBundleTools.Infrastructure.Workspace.Persistence;
 /// </remarks>
 internal static class JsonWorkspaceFileStorageHelper
 {
+    private static readonly ConcurrentDictionary<string, object> FileWriteLocks = new(StringComparer.OrdinalIgnoreCase);
+
     public static T? TryReadJson<T>(string filePath, JsonSerializerOptions serializerOptions)
         where T : class
     {
@@ -21,8 +24,11 @@ internal static class JsonWorkspaceFileStorageHelper
 
         try
         {
-            using var stream = File.OpenRead(filePath);
-            return JsonSerializer.Deserialize<T>(stream, serializerOptions);
+            lock (GetFileWriteLock(filePath))
+            {
+                using var stream = OpenSharedReadStream(filePath);
+                return JsonSerializer.Deserialize<T>(stream, serializerOptions);
+            }
         }
         catch (IOException)
         {
@@ -43,7 +49,13 @@ internal static class JsonWorkspaceFileStorageHelper
 
         try
         {
-            return File.ReadAllBytes(filePath);
+            lock (GetFileWriteLock(filePath))
+            {
+                using var stream = OpenSharedReadStream(filePath);
+                using var memoryStream = new MemoryStream();
+                stream.CopyTo(memoryStream);
+                return memoryStream.ToArray();
+            }
         }
         catch (IOException)
         {
@@ -55,10 +67,20 @@ internal static class JsonWorkspaceFileStorageHelper
     {
         Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
 
-        var temporaryFilePath = CreateTemporaryFilePath(filePath);
-        var jsonText = JsonSerializer.Serialize(value, serializerOptions);
-        File.WriteAllText(temporaryFilePath, jsonText);
-        File.Move(temporaryFilePath, filePath, overwrite: true);
+        lock (GetFileWriteLock(filePath))
+        {
+            var temporaryFilePath = CreateTemporaryFilePath(filePath);
+            try
+            {
+                var jsonText = JsonSerializer.Serialize(value, serializerOptions);
+                File.WriteAllText(temporaryFilePath, jsonText);
+                PublishTemporaryFile(temporaryFilePath, filePath);
+            }
+            finally
+            {
+                DeleteTemporaryFileIfExists(temporaryFilePath);
+            }
+        }
     }
 
     public static void WriteBytesAtomically(string filePath, byte[] content)
@@ -67,19 +89,32 @@ internal static class JsonWorkspaceFileStorageHelper
 
         Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
 
-        var temporaryFilePath = CreateTemporaryFilePath(filePath);
-        File.WriteAllBytes(temporaryFilePath, content);
-        File.Move(temporaryFilePath, filePath, overwrite: true);
+        lock (GetFileWriteLock(filePath))
+        {
+            var temporaryFilePath = CreateTemporaryFilePath(filePath);
+            try
+            {
+                File.WriteAllBytes(temporaryFilePath, content);
+                PublishTemporaryFile(temporaryFilePath, filePath);
+            }
+            finally
+            {
+                DeleteTemporaryFileIfExists(temporaryFilePath);
+            }
+        }
     }
 
     public static void DeleteFileIfExists(string filePath)
     {
-        if (!File.Exists(filePath))
+        lock (GetFileWriteLock(filePath))
         {
-            return;
-        }
+            if (!File.Exists(filePath))
+            {
+                return;
+            }
 
-        File.Delete(filePath);
+            File.Delete(filePath);
+        }
     }
 
     public static void DeleteDirectoryIfExists(string directoryPath)
@@ -94,4 +129,58 @@ internal static class JsonWorkspaceFileStorageHelper
 
     private static string CreateTemporaryFilePath(string filePath) =>
         $"{filePath}.{Guid.NewGuid():N}.tmp";
+
+    private static FileStream OpenSharedReadStream(string filePath) =>
+        new(
+            filePath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.ReadWrite | FileShare.Delete);
+
+    private static object GetFileWriteLock(string filePath) =>
+        FileWriteLocks.GetOrAdd(Path.GetFullPath(filePath), static _ => new object());
+
+    private static void PublishTemporaryFile(string temporaryFilePath, string filePath)
+    {
+        try
+        {
+            File.Move(temporaryFilePath, filePath, overwrite: true);
+            return;
+        }
+        catch (UnauthorizedAccessException) when (File.Exists(filePath))
+        {
+        }
+        catch (IOException) when (File.Exists(filePath))
+        {
+        }
+
+        using var sourceStream = new FileStream(
+            temporaryFilePath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read);
+        using var targetStream = new FileStream(
+            filePath,
+            FileMode.Create,
+            FileAccess.Write,
+            FileShare.ReadWrite | FileShare.Delete);
+        sourceStream.CopyTo(targetStream);
+    }
+
+    private static void DeleteTemporaryFileIfExists(string temporaryFilePath)
+    {
+        try
+        {
+            if (File.Exists(temporaryFilePath))
+            {
+                File.Delete(temporaryFilePath);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
 }

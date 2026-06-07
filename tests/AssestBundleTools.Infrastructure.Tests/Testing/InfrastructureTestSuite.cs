@@ -45,6 +45,10 @@ internal static class InfrastructureTestSuite
             JsonWorkspaceChangeStoreTests.Load_ShouldReadLegacyChangeSetWithoutOperationFields);
         await RunTestAsync(
             failures,
+            nameof(JsonWorkspaceChangeStoreTests.Save_ShouldReplaceChangeSet_WhenExistingFileHasSharedReadLease),
+            JsonWorkspaceChangeStoreTests.Save_ShouldReplaceChangeSet_WhenExistingFileHasSharedReadLease);
+        await RunTestAsync(
+            failures,
             nameof(JsonPreviewCacheStoreTests.Save_ShouldRoundTripDescriptorAndPayload),
             JsonPreviewCacheStoreTests.Save_ShouldRoundTripDescriptorAndPayload);
         await RunTestAsync(
