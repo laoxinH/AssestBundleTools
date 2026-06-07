@@ -12,15 +12,18 @@ internal sealed class BundleExplorerOperationReadModelRefreshHandler
     private readonly IBundleExplorerDocumentWorkspaceHost _documentWorkspace;
     private readonly BundleExplorerAssetDocumentTabCoordinator _assetDocumentTabCoordinator;
     private readonly BundleExplorerSpineGroupDocumentCoordinator _spineGroupDocumentCoordinator;
+    private readonly AssociatedAssetOperationProjectionRefreshCoordinator _operationProjectionRefreshCoordinator;
 
     public BundleExplorerOperationReadModelRefreshHandler(
         IBundleExplorerDocumentWorkspaceHost documentWorkspace,
         BundleExplorerAssetDocumentTabCoordinator assetDocumentTabCoordinator,
-        BundleExplorerSpineGroupDocumentCoordinator spineGroupDocumentCoordinator)
+        BundleExplorerSpineGroupDocumentCoordinator spineGroupDocumentCoordinator,
+        AssociatedAssetOperationProjectionRefreshCoordinator operationProjectionRefreshCoordinator)
     {
         _documentWorkspace = documentWorkspace ?? throw new ArgumentNullException(nameof(documentWorkspace));
         _assetDocumentTabCoordinator = assetDocumentTabCoordinator ?? throw new ArgumentNullException(nameof(assetDocumentTabCoordinator));
         _spineGroupDocumentCoordinator = spineGroupDocumentCoordinator ?? throw new ArgumentNullException(nameof(spineGroupDocumentCoordinator));
+        _operationProjectionRefreshCoordinator = operationProjectionRefreshCoordinator ?? throw new ArgumentNullException(nameof(operationProjectionRefreshCoordinator));
     }
 
     public async Task RefreshAsync(WorkspaceOperationChangedEventArgs eventArgs)
@@ -48,7 +51,8 @@ internal sealed class BundleExplorerOperationReadModelRefreshHandler
             .ToArray();
         foreach (var spineGroupTab in spineGroupTabs)
         {
-            _spineGroupDocumentCoordinator.QueueSpineGroupDocumentTabRefresh(spineGroupTab);
+            await _operationProjectionRefreshCoordinator.RefreshSpineGroupOperationProjectionAsync(spineGroupTab);
+            _spineGroupDocumentCoordinator.QueueSpineGroupDocumentPreviewRefresh(spineGroupTab);
         }
     }
 
@@ -84,7 +88,10 @@ internal sealed class BundleExplorerOperationReadModelRefreshHandler
                 .ToArray();
             foreach (var spineGroupTab in matchedSpineGroupTabs)
             {
-                _spineGroupDocumentCoordinator.QueueSpineGroupDocumentTabRefresh(spineGroupTab);
+                await _operationProjectionRefreshCoordinator.RefreshSpineGroupOperationProjectionAsync(
+                    spineGroupTab,
+                    [affectedAsset]);
+                _spineGroupDocumentCoordinator.QueueSpineGroupDocumentPreviewRefresh(spineGroupTab);
             }
         }
     }

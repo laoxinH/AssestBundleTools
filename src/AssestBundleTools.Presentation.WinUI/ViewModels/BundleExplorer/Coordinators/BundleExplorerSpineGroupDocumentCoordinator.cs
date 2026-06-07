@@ -254,7 +254,7 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator : IDisposable
 
     public Task RefreshSpineGroupDocumentTabAsync(SpineAssetGroupDocumentTabViewModel? spineGroupTab)
     {
-        if (!PrepareSpineGroupDocumentTabRefresh(spineGroupTab))
+        if (!PrepareSpineGroupDocumentTabRefresh(spineGroupTab, refreshFromPrimaryPane: true))
         {
             return Task.CompletedTask;
         }
@@ -264,7 +264,7 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator : IDisposable
 
     public void QueueSpineGroupDocumentTabRefresh(SpineAssetGroupDocumentTabViewModel? spineGroupTab)
     {
-        if (!PrepareSpineGroupDocumentTabRefresh(spineGroupTab))
+        if (!PrepareSpineGroupDocumentTabRefresh(spineGroupTab, refreshFromPrimaryPane: true))
         {
             return;
         }
@@ -272,7 +272,19 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator : IDisposable
         _ = _detailsRefreshScheduler.RequestAsync(spineGroupTab!);
     }
 
-    private bool PrepareSpineGroupDocumentTabRefresh(SpineAssetGroupDocumentTabViewModel? spineGroupTab)
+    public void QueueSpineGroupDocumentPreviewRefresh(SpineAssetGroupDocumentTabViewModel? spineGroupTab)
+    {
+        if (!PrepareSpineGroupDocumentTabRefresh(spineGroupTab, refreshFromPrimaryPane: false))
+        {
+            return;
+        }
+
+        _ = _detailsRefreshScheduler.RequestAsync(spineGroupTab!);
+    }
+
+    private bool PrepareSpineGroupDocumentTabRefresh(
+        SpineAssetGroupDocumentTabViewModel? spineGroupTab,
+        bool refreshFromPrimaryPane)
     {
         if (spineGroupTab is null)
         {
@@ -286,7 +298,11 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator : IDisposable
             return false;
         }
 
-        RefreshSpineGroupTabFromPrimaryPaneIfChanged(spineGroupTab);
+        if (refreshFromPrimaryPane)
+        {
+            RefreshSpineGroupTabFromPrimaryPaneIfChanged(spineGroupTab);
+        }
+
         _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
         _spineGroupInspectorPresenter.PresentSpineGroupPreviewLoading(spineGroupTab);
         if (IsCurrentVisibleSpineGroupTab(bundleTab, spineGroupTab))

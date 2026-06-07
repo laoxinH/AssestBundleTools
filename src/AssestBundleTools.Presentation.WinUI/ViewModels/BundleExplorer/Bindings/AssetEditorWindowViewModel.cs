@@ -34,6 +34,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
     private readonly SpineAssetGroupInspectorPresenter _spineGroupInspectorPresenter;
     private readonly ISpineAssetGroupDetailsLoader _spineGroupDetailsLoader;
     private readonly SpineAssetGroupDetailsRefreshScheduler _spineGroupDetailsRefreshScheduler;
+    private readonly AssociatedAssetOperationProjectionRefreshCoordinator _operationProjectionRefreshCoordinator;
     private readonly BundleExplorerAssetPreviewLoadCoordinator _assetPreviewLoadCoordinator;
     private readonly AssetEditorWindowAssetActionCoordinator _assetActionCoordinator;
     private readonly WorkspaceOperationChangeRefreshCoordinator _operationChangeRefreshCoordinator;
@@ -138,6 +139,12 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             _localizationService);
         _spineGroupDetailsRefreshScheduler = new SpineAssetGroupDetailsRefreshScheduler(
             RefreshSpineGroupDocumentDetailsFromRequestAsync);
+        _operationProjectionRefreshCoordinator = new AssociatedAssetOperationProjectionRefreshCoordinator(
+            _workspaceAssetInspectionGateway,
+            _backgroundTaskRunner,
+            _spineGroupInspectorPresenter,
+            () => _workspaceShell.WorkspaceSummary?.WorkspaceId,
+            _operationFeedbackBridge.AppendResultFailure);
         var assetPreviewCoordinator = new BundleExplorerAssetPreviewCoordinator(
             _workspaceAssetInspectionGateway,
             workspaceContextService,

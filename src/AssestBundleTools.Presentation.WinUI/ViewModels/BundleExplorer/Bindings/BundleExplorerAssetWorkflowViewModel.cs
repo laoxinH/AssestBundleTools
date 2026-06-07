@@ -189,10 +189,17 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             () => ActiveAssetDocumentTab,
             () => _documentWorkspace.ActiveSpineGroupDocumentTab,
             ReapplyActiveAssetDocumentTab);
+        var operationProjectionRefreshCoordinator = new AssociatedAssetOperationProjectionRefreshCoordinator(
+            workspaceAssetInspectionGateway,
+            backgroundTaskRunner,
+            _spineGroupInspectorPresenter,
+            () => _workspaceShell.WorkspaceSummary?.WorkspaceId,
+            _operationFeedbackBridge.AppendResultFailure);
         var operationReadModelRefreshHandler = new BundleExplorerOperationReadModelRefreshHandler(
             _documentWorkspace,
             _assetDocumentTabCoordinator,
-            _spineGroupDocumentCoordinator);
+            _spineGroupDocumentCoordinator,
+            operationProjectionRefreshCoordinator);
         _operationChangeRefreshCoordinator = new WorkspaceOperationChangeRefreshCoordinator(
             workspaceOperationChangeNotifier,
             () => _workspaceShell.WorkspaceSummary?.WorkspaceId,

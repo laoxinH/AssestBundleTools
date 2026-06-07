@@ -195,6 +195,20 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
         ToolTipText = CreateToolTipText(details.Group);
     }
 
+    internal void ApplyOperationProjection(SpineAssetGroupDto group)
+    {
+        ArgumentNullException.ThrowIfNull(group);
+
+        Item = group;
+        if (Details is not null)
+        {
+            Details = Details with { Group = group };
+        }
+
+        DisplayName = ResolveDisplayName(group);
+        ToolTipText = CreateToolTipText(group);
+    }
+
     internal bool SelectAtlasPageOption(SpineAtlasPageOptionViewModel option)
     {
         ArgumentNullException.ThrowIfNull(option);

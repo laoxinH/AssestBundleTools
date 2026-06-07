@@ -30,6 +30,9 @@ public sealed partial class AssetEditorWindowViewModel
                 .ToArray();
         foreach (var spineGroupTab in spineGroupTabs)
         {
+            await _operationProjectionRefreshCoordinator.RefreshSpineGroupOperationProjectionAsync(
+                spineGroupTab,
+                eventArgs.IsWorkspaceWide ? null : eventArgs.AffectedAssets);
             QueueSpineGroupDocumentDetailsRefresh(spineGroupTab);
         }
     }

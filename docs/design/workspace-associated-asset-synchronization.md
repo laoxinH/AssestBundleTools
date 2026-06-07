@@ -280,10 +280,12 @@ Pending 清除规则：
 
 ### 第二阶段：拆轻量操作投影刷新
 
-- 新增轻量刷新协调器，独立于预览加载协调器。
+- 已在 Presentation 层新增 `AssociatedAssetOperationProjectionRefreshCoordinator`，作为轻量刷新协调器，独立于预览加载协调器。
 - 普通资产文档刷新 `ChangeRecords / CanRedoReplacement`。
-- 聚合资源文档刷新组成资产 `ChangeRecords`。
-- Spine 组先更新变更页，再排 animation details 重载。
+- 已让 Spine 聚合资源文档在操作通知后优先刷新组成资产 `ChangeRecords`，并重新投影组级变更页按钮状态。
+- 已让主窗口和独立资源编辑窗口在 Spine 组命中操作通知时先执行轻量操作投影刷新，再排 animation details 重载。
+- 已为 Spine 预览调度拆出“仅刷新富预览”的入口，避免预览重载前用主面板旧快照覆盖已经更新的轻量操作投影。
+- 普通资产文档轻量刷新、pending tracker 和统一通知 DTO 演进仍属于后续阶段。
 
 ### 第三阶段：演进通知 DTO
 

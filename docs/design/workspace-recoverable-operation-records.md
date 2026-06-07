@@ -514,8 +514,8 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 - 已让工作区打开时把 `Applied ExtractAsset` 操作物化回资源 `LastExtractedAtUtc`，用于重启后恢复已提取状态。
 - 已在 Presentation 层增加工作区操作变更通知管线：组合根用 notifying gateway 包装 `IWorkspaceAssetOperationGateway / IWorkspaceBatchOperationsGateway`，单资源提取、Spine 组提取、普通批量提取、替换、撤销替换和保存骨架成功后会发布当前 `WorkspaceId` 的读模型失效事件。订阅者包括：
   - 批处理页：活动工作区匹配时自动重新读取 `WorkspaceChangeSummaryDto / SavePreview / BatchPreview`。
-  - 主工作台资源详情区：通过 `WorkspaceOperationChangeRefreshCoordinator` 合并通知。通知携带资产目标时，只重读命中的资源详情、关联 Spine 详情和当前资产列表中对应行的状态；通知未携带目标时才回退到重读当前工作区已打开的全部资源 / Spine 详情标签。这样批量操作后未激活标签的“变更”页签仍能更新，同时单资源修改不会触发无关预览任务；操作记录变化不重载资产 / Spine 列表，避免提取完成后打断列表滚动、筛选和选择状态。Spine 组的重型预览重载不在操作通知器里全局 debounce，而是在命中的 Spine 文档标签页内按输入签名合并；同一批 skeleton / atlas / texture page 替换通知只会排入一次最新预览刷新。
-  - 独立资源编辑窗口：订阅同一通知；通知携带资产目标时只重读窗口内命中的资产或关联 Spine 资源组，窗口化场景不再依赖发起操作的一侧手动重投影。窗口内 Spine 编辑草稿来源变化和操作通知后的组预览刷新同样按文档标签页合并，替换来源、变更记录和操作按钮状态保持即时重投影。
+  - 主工作台资源详情区：通过 `WorkspaceOperationChangeRefreshCoordinator` 合并通知。通知携带资产目标时，只重读命中的资源详情、关联 Spine 详情和当前资产列表中对应行的状态；通知未携带目标时才回退到重读当前工作区已打开的全部资源 / Spine 详情标签。这样批量操作后未激活标签的“变更”页签仍能更新，同时单资源修改不会触发无关预览任务；操作记录变化不重载资产 / Spine 列表，避免提取完成后打断列表滚动、筛选和选择状态。Spine 组的操作通知已拆成轻量操作投影刷新和富预览刷新两步：先刷新组成资产 `ChangeRecords` 并重投影变更按钮，再按文档标签页内输入签名合并重型预览；同一批 skeleton / atlas / texture page 替换通知只会排入一次最新预览刷新，且预览刷新不得用旧快照覆盖已更新的操作投影。
+  - 独立资源编辑窗口：订阅同一通知；通知携带资产目标时只重读窗口内命中的资产或关联 Spine 资源组，窗口化场景不再依赖发起操作的一侧手动重投影。窗口内 Spine 编辑草稿来源变化和操作通知后的组刷新同样先同步轻量操作投影，再按文档标签页合并富预览刷新，替换来源、变更记录和操作按钮状态保持即时重投影。
   操作入口只负责执行命令、清理本地候选状态和展示结果反馈，不再在提取 / 替换 / 撤销成功后手动调用页面刷新回调；非持久化的候选来源选择仍允许即时重投影当前详情。
 - 提取撤销仍未实现；当前原则保持为“只撤销工作区提取标记，不自动删除用户目录中的外部文件”。
 - 详情页修改记录现在来自 Application / Infrastructure 投影出的资产级操作记录；Presentation 只本地化展示文本和触发撤销 / 重做命令，不直接读取 `staging/changes`。
