@@ -22,6 +22,24 @@ public sealed class AssetEditorWindowOperationRefreshContractTests
         Assert.Contains("_assetPreviewLoadCoordinator.InvalidatePreview(assetTab);", operationRefreshCode);
     }
 
+    [Fact]
+    public void SpineEditExit_ShouldReloadOnlyWhenDraftHadUnsavedChanges()
+    {
+        var actionsCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "ViewModels",
+                "BundleExplorer",
+                "Bindings",
+                "AssetEditorWindowViewModel.Actions.cs"));
+
+        Assert.Contains("var shouldReloadPreview = spineGroupTab.ExitSpineEditMode(discardChanges);", actionsCode);
+        Assert.Contains("if (shouldReloadPreview)", actionsCode);
+        Assert.Contains("await ReloadSpineGroupDetailsAsync(spineGroupTab);", actionsCode);
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

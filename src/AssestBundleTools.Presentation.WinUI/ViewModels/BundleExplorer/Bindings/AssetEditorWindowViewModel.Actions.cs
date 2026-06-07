@@ -115,8 +115,12 @@ public sealed partial class AssetEditorWindowViewModel
             return;
         }
 
-        spineGroupTab.ExitSpineEditMode(discardChanges);
-        await ReloadSpineGroupDetailsAsync(spineGroupTab);
+        var shouldReloadPreview = spineGroupTab.ExitSpineEditMode(discardChanges);
+        if (shouldReloadPreview)
+        {
+            await ReloadSpineGroupDetailsAsync(spineGroupTab);
+        }
+
         NotifyActionStates();
         NotifyActionBarStates();
         OnPropertyChanged(nameof(Inspector));

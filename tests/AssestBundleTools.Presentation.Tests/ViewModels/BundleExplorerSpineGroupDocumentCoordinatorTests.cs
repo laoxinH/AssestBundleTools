@@ -3,6 +3,7 @@ using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 using System.Globalization;
 using Microsoft.UI.Xaml;
 
@@ -143,6 +144,40 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
             ResourceKeys.InspectorChangeSummaryExtractOnlyFormat + ":" +
             extractedAtUtc.ToLocalTime().ToString("G", CultureInfo.CurrentCulture),
             inactiveTab.Inspector.ChangeSummaryText);
+    }
+
+    [Fact]
+    public async Task RefreshSpineGroupDocumentTabAsync_ShouldShowLoadingWhileReloadingExistingPreview()
+    {
+        var context = CreateContext();
+        var loadCompletion = new TaskCompletionSource<SpineAssetGroupDetailsLoadResult?>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var loader = new TestSpineAssetGroupDetailsLoader
+        {
+            LoadHandler = tab => loadCompletion.Task
+        };
+        var coordinator = CreateCoordinator(context, loader);
+        var groupTab = context.HostCoordinator.CreateSpineGroupDocumentTab(
+            CreateSpineGroup("hero", "Hero"));
+        groupTab.ApplyDetails(new SpineAssetGroupDetailsDto(groupTab.Item, [], [], groupTab.Item.Diagnostics));
+        new SpineAssetGroupInspectorPresenter(
+                new BundleExplorerBundlePaneViewModel(context.LocalizationService),
+                context.LocalizationService)
+            .PresentSpineGroupDocumentTab(groupTab);
+        context.BundleTab.AddSpineGroupTab(groupTab, activate: true);
+
+        var refreshTask = coordinator.RefreshSpineGroupDocumentTabAsync(groupTab);
+
+        Assert.False(refreshTask.IsCompleted);
+        Assert.True(groupTab.Inspector.Preview.IsPreviewLoading);
+        Assert.Equal(ResourceKeys.InspectorPreviewLoadingText, groupTab.Inspector.Preview.PreviewStatusText);
+
+        loadCompletion.SetResult(new SpineAssetGroupDetailsLoadResult(
+            new SpineAssetGroupDetailsDto(groupTab.Item, [], [], groupTab.Item.Diagnostics),
+            TexturePreview: null));
+        await refreshTask;
+
+        Assert.False(groupTab.Inspector.Preview.IsPreviewLoading);
     }
 
     [Fact]

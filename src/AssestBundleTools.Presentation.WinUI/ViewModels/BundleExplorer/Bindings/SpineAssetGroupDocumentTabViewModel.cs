@@ -153,9 +153,11 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
         SpineEditDraft = editDraft;
     }
 
-    internal void ExitSpineEditMode(bool discardChanges)
+    internal bool ExitSpineEditMode(bool discardChanges)
     {
+        var hadUnsavedChanges = SpineEditDraft?.HasChanges == true;
         SpineEditDraft = null;
+        return hadUnsavedChanges;
     }
 
     internal void ClearDetails()

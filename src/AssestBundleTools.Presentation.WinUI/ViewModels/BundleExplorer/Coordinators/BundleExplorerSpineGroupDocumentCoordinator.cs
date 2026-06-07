@@ -288,6 +288,7 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator : IDisposable
 
         RefreshSpineGroupTabFromPrimaryPaneIfChanged(spineGroupTab);
         _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
+        _spineGroupInspectorPresenter.PresentSpineGroupPreviewLoading(spineGroupTab);
         if (IsCurrentVisibleSpineGroupTab(bundleTab, spineGroupTab))
         {
             _notifyActionStates();

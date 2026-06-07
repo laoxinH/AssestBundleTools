@@ -82,6 +82,8 @@ public sealed partial class AssetEditorWindowViewModel
         }
 
         ReapplySpineGroupDocumentState(spineGroupTab);
+        _spineGroupInspectorPresenter.PresentSpineGroupPreviewLoading(spineGroupTab);
+        OnPropertyChanged(nameof(Inspector));
         _ = _spineGroupDetailsRefreshScheduler.RequestAsync(spineGroupTab);
     }
 
