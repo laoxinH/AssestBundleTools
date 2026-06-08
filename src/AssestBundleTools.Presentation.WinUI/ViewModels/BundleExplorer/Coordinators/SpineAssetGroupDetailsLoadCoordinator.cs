@@ -127,6 +127,7 @@ internal sealed class SpineAssetGroupDetailsLoadCoordinator
             loadResult.Details,
             loadResult.TexturePreview,
             loadResult.AnimationTextures);
+        groupTab.MarkPreviewInputLoaded(SpineAssetGroupPreviewInputSignature.Create(groupTab));
         _presenter.PresentSpineGroupDocumentTab(groupTab);
         if (isCurrentVisibleTab)
         {

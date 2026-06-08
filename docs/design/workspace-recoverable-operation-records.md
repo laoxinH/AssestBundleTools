@@ -300,6 +300,8 @@ relatedOperationId
 
 后续任何替换或修改入口都必须遵守当前关联资源同步模型：先由 Application 追加或更新 `operations[]`，再由 notifying gateway 发布带 `reason / primaryTargets / relatedTargets / implicitAffectedTargets / operationIds` 的操作通知，随后 Presentation 先刷新轻量操作投影，再按统一预览失效策略刷新富预览。不得为了某个资源类型的局部体验，在 handler、ViewModel 或控件中直接读写 `staging/changes`、手动互刷关联资源，或让预览加载完成决定撤销 / 重做按钮事实状态。
 
+当编辑入口已经提供草稿实时富预览时，保存动作不应再作为固定富预览刷新触发器。保存只追加 / 更新操作事实并退出草稿态；Presentation 通过操作通知刷新 `ChangeRecords / CanUndo / CanRedo / IsEffective` 等轻量投影。富预览只在保存后的物化有效输入与已加载草稿预览输入不同、草稿预览未成功加载，或统一预览输入签名变化时重新加载。
+
 撤销规则：
 
 - 撤销最新替换时，追加 `UndoReplacement` 操作，并把目标恢复到 `previousState`。

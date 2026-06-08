@@ -98,7 +98,6 @@ public sealed partial class AssetEditorWindowViewModel
             if (DocumentGroup.ActiveSpineGroupTab is { } spineGroupTab)
             {
                 spineGroupTab.ExitSpineEditMode(discardChanges: false);
-                await ReloadSpineGroupDetailsAsync(spineGroupTab);
             }
 
             NotifyActionBarStates();

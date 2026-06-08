@@ -24,6 +24,7 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
     private string _displayName;
     private string _toolTipText;
     private SpineAssetGroupEditDraftViewModel? _spineEditDraft;
+    private string? _loadedPreviewInputSignature;
 
     public SpineAssetGroupDocumentTabViewModel(
         SpineAssetGroupDto item,
@@ -133,6 +134,12 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
 
     public bool CanRedoSpineEdit => SpineEditDraft?.CanRedo == true;
 
+    internal string? LoadedPreviewInputSignature
+    {
+        get => _loadedPreviewInputSignature;
+        private set => _loadedPreviewInputSignature = value;
+    }
+
     public void ApplyGroup(SpineAssetGroupDto item)
     {
         ArgumentNullException.ThrowIfNull(item);
@@ -140,6 +147,7 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
         Details = null;
         TexturePreview = null;
         AnimationTextures = new Dictionary<string, SpineAnimationPreviewTextureState>(StringComparer.Ordinal);
+        LoadedPreviewInputSignature = null;
         ClearAtlasPageOptions();
         Item = item;
         DisplayName = ResolveDisplayName(item);
@@ -165,6 +173,7 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
         Details = null;
         TexturePreview = null;
         AnimationTextures = new Dictionary<string, SpineAnimationPreviewTextureState>(StringComparer.Ordinal);
+        LoadedPreviewInputSignature = null;
         ClearAtlasPageOptions();
     }
 
@@ -193,6 +202,11 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
             : new Dictionary<string, SpineAnimationPreviewTextureState>(StringComparer.Ordinal);
         DisplayName = ResolveDisplayName(details.Group);
         ToolTipText = CreateToolTipText(details.Group);
+    }
+
+    internal void MarkPreviewInputLoaded(string inputSignature)
+    {
+        LoadedPreviewInputSignature = inputSignature ?? throw new ArgumentNullException(nameof(inputSignature));
     }
 
     internal void ApplyOperationProjection(SpineAssetGroupDto group)

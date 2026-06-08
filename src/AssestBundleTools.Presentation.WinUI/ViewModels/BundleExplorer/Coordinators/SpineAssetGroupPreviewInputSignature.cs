@@ -10,43 +10,83 @@ internal static class SpineAssetGroupPreviewInputSignature
         ArgumentNullException.ThrowIfNull(groupTab);
 
         var parts = EnumerateParts(groupTab.Item)
-            .Select(static part => string.Join(
+            .Select(part => string.Join(
                 "\u001f",
                 part.Role,
                 part.BundleId.Value,
                 part.AssetId.Value,
-                part.FileReplacementSourcePath ?? string.Empty,
-                part.FileReplacementSourceFileName ?? string.Empty,
-                part.FileReplacementSourceAssetType?.ToString() ?? string.Empty,
-                string.Join(",", (part.ChangeRecords ?? Array.Empty<AssetChangeRecordDto>())
-                    .Select(static record => string.Join(
-                        ":",
-                        record.OperationId,
-                        record.Kind,
-                        record.IsEffectiveReplacement,
-                        record.IsEffectiveEdit,
-                        record.AppliedAtUtc?.ToUnixTimeMilliseconds().ToString() ?? string.Empty,
-                        record.SourceFilePath ?? string.Empty)))))
+                ResolveEffectiveSourcePath(groupTab, part),
+                ResolveEffectiveSourceFileName(groupTab, part),
+                ResolveEffectiveSourceAssetType(groupTab, part)))
             .OrderBy(static value => value, StringComparer.Ordinal)
             .ToArray();
-
-        var draftParts = groupTab.SpineEditDraft?.Parts
-            .Select(static part => string.Join(
-                "\u001f",
-                part.BundleId.Value,
-                part.AssetId,
-                part.SelectedSourceFilePath ?? string.Empty))
-            .OrderBy(static value => value, StringComparer.Ordinal)
-            .ToArray() ?? Array.Empty<string>();
 
         return string.Join(
             "\u001e",
             groupTab.BundleId.Value,
             groupTab.GroupId,
             string.Join("\u001d", parts),
-            string.Join("\u001d", EnumerateDiagnostics(groupTab.Item)),
-            string.Join("\u001d", draftParts));
+            string.Join("\u001d", EnumerateDiagnostics(groupTab.Item)));
     }
+
+    public static bool MatchesLoadedPreviewInput(SpineAssetGroupDocumentTabViewModel groupTab)
+    {
+        ArgumentNullException.ThrowIfNull(groupTab);
+
+        if (groupTab.Details is null ||
+            string.IsNullOrWhiteSpace(groupTab.LoadedPreviewInputSignature))
+        {
+            return false;
+        }
+
+        return string.Equals(
+            groupTab.LoadedPreviewInputSignature,
+            Create(groupTab),
+            StringComparison.Ordinal);
+    }
+
+    private static string ResolveEffectiveSourcePath(
+        SpineAssetGroupDocumentTabViewModel groupTab,
+        SpineAssetGroupPartDto part)
+    {
+        var draftSourcePath = groupTab.SpineEditDraft?.Parts
+            .FirstOrDefault(draftPart =>
+                draftPart.BundleId.Equals(part.BundleId) &&
+                string.Equals(draftPart.AssetId, part.AssetId.Value, StringComparison.Ordinal))
+            ?.SelectedSourceFilePath;
+        return NormalizeSourcePath(draftSourcePath ?? part.FileReplacementSourcePath);
+    }
+
+    private static string ResolveEffectiveSourceFileName(
+        SpineAssetGroupDocumentTabViewModel groupTab,
+        SpineAssetGroupPartDto part)
+    {
+        var effectiveSourcePath = ResolveEffectiveSourcePath(groupTab, part);
+        if (!string.IsNullOrWhiteSpace(effectiveSourcePath))
+        {
+            return Path.GetFileName(effectiveSourcePath);
+        }
+
+        return part.FileReplacementSourceFileName ?? string.Empty;
+    }
+
+    private static string ResolveEffectiveSourceAssetType(
+        SpineAssetGroupDocumentTabViewModel groupTab,
+        SpineAssetGroupPartDto part)
+    {
+        var effectiveSourcePath = ResolveEffectiveSourcePath(groupTab, part);
+        if (string.IsNullOrWhiteSpace(effectiveSourcePath))
+        {
+            return string.Empty;
+        }
+
+        return (part.FileReplacementSourceAssetType ?? part.AssetType).ToString();
+    }
+
+    private static string NormalizeSourcePath(string? sourcePath) =>
+        string.IsNullOrWhiteSpace(sourcePath)
+            ? string.Empty
+            : sourcePath.Trim();
 
     private static IEnumerable<SpineAssetGroupPartDto> EnumerateParts(SpineAssetGroupDto group)
     {

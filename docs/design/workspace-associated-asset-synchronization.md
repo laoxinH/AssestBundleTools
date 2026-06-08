@@ -189,6 +189,7 @@ RefreshOperationProjectionAsync(workspaceId, affectedTargets, operationIds)
 3. 预览区可以显示 loading / stale / diagnostic。
 4. 预览失败不得回滚操作按钮状态。
 5. 预览刷新完成后不得覆盖已经更新过的轻量操作投影，除非携带更新后的同一版本操作投影。
+6. 草稿编辑已经按最终输入实时刷新过富预览时，点击保存不得无条件再次刷新富预览；保存只负责写入操作事实、退出草稿态并通过通知刷新轻量操作投影。只有草稿预览输入与保存后物化输入不同、草稿预览未成功加载，或保存后有效预览输入签名确实变化时，才重新排富预览刷新。
 
 ## 8. Pending 状态模型
 
@@ -316,6 +317,7 @@ Pending 清除规则：
 - 让 Texture2D、Sprite、Mesh、Material、Spine 都通过同一 preview invalidation policy 判断是否刷新富预览。
 - 预览刷新不得重置轻量操作投影。
 - 对聚合文档建立“轻量 parts refresh”和“full details refresh”的明确 API 边界。
+- Spine 组已先落地有效内容签名：签名只包含组成资产身份、诊断结构和当前有效替换来源，不包含 `ChangeRecords / LastExtractedAtUtc / operationId` 等操作投影字段。操作通知只改变记录按钮或 badge 时，应刷新轻量投影并跳过富预览 loading；草稿实时预览保存后若物化来源相同，也应跳过重复 animation details 重载。
 
 ## 12. 测试建议
 

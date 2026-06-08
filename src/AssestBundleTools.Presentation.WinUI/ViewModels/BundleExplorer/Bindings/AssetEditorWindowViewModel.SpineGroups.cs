@@ -1,3 +1,5 @@
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
+
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 public sealed partial class AssetEditorWindowViewModel
@@ -100,6 +102,7 @@ public sealed partial class AssetEditorWindowViewModel
                 loadResult.Details,
                 loadResult.TexturePreview,
                 loadResult.AnimationTextures);
+            spineGroupTab.MarkPreviewInputLoaded(SpineAssetGroupPreviewInputSignature.Create(spineGroupTab));
             _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
             OnPropertyChanged(nameof(Inspector));
         }

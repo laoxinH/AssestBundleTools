@@ -302,6 +302,11 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator : IDisposable
         {
             RefreshSpineGroupTabFromPrimaryPaneIfChanged(spineGroupTab);
         }
+        else if (HasLoadedPreviewForCurrentInput(spineGroupTab))
+        {
+            _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
+            return false;
+        }
 
         _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
         _spineGroupInspectorPresenter.PresentSpineGroupPreviewLoading(spineGroupTab);
@@ -311,6 +316,11 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator : IDisposable
         }
 
         return true;
+    }
+
+    private static bool HasLoadedPreviewForCurrentInput(SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        return SpineAssetGroupPreviewInputSignature.MatchesLoadedPreviewInput(spineGroupTab);
     }
 
     private SpineAssetGroupDocumentTabViewModel? ResolvePreferredSpineGroupDocumentTab(

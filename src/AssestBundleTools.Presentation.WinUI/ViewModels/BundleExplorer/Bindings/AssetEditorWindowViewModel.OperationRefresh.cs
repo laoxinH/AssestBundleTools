@@ -87,9 +87,19 @@ public sealed partial class AssetEditorWindowViewModel
         }
 
         ReapplySpineGroupDocumentState(spineGroupTab);
+        if (HasLoadedSpinePreviewForCurrentInput(spineGroupTab))
+        {
+            return;
+        }
+
         _spineGroupInspectorPresenter.PresentSpineGroupPreviewLoading(spineGroupTab);
         OnPropertyChanged(nameof(Inspector));
         _ = _spineGroupDetailsRefreshScheduler.RequestAsync(spineGroupTab);
+    }
+
+    private static bool HasLoadedSpinePreviewForCurrentInput(SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        return SpineAssetGroupPreviewInputSignature.MatchesLoadedPreviewInput(spineGroupTab);
     }
 
     private Task RefreshSpineGroupDocumentDetailsFromRequestAsync(SpineAssetGroupDetailsRefreshRequest request)
@@ -126,6 +136,7 @@ public sealed partial class AssetEditorWindowViewModel
                 loadResult.Details,
                 loadResult.TexturePreview,
                 loadResult.AnimationTextures);
+            spineGroupTab.MarkPreviewInputLoaded(SpineAssetGroupPreviewInputSignature.Create(spineGroupTab));
         }
 
         ReapplySpineGroupDocumentState(spineGroupTab);

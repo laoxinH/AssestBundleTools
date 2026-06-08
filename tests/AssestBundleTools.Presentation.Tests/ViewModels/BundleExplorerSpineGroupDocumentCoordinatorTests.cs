@@ -201,6 +201,43 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
     }
 
     [Fact]
+    public async Task QueueSpineGroupDocumentPreviewRefresh_ShouldSkipReload_WhenSavedProjectionMatchesLoadedDraftPreview()
+    {
+        var context = CreateContext();
+        var group = CreateSpineGroup("hero", "Hero");
+        var loader = new TestSpineAssetGroupDetailsLoader
+        {
+            LoadHandler = tab => Task.FromResult<SpineAssetGroupDetailsLoadResult?>(new SpineAssetGroupDetailsLoadResult(
+                new SpineAssetGroupDetailsDto(tab.Item, [], [], tab.Item.Diagnostics),
+                TexturePreview: null))
+        };
+        var coordinator = CreateCoordinator(context, loader);
+        var groupTab = context.HostCoordinator.CreateSpineGroupDocumentTab(group);
+        context.BundleTab.AddSpineGroupTab(groupTab, activate: true);
+        groupTab.StartSpineEditMode(new SpineAssetGroupEditDraftViewModel(group, context.LocalizationService));
+        var draft = Assert.IsType<SpineAssetGroupEditDraftViewModel>(groupTab.SpineEditDraft);
+        var texturePart = Assert.Single(
+            draft.Parts,
+            part => part.Part.Role == SpineAssetGroupPartRole.TexturePage);
+        Assert.True(draft.ApplyPartSource(
+            texturePart,
+            @"C:\workspace\replacement.png"));
+
+        await coordinator.RefreshSpineGroupDocumentTabAsync(groupTab);
+        Assert.Equal(1, loader.LoadCallCount);
+        Assert.NotNull(groupTab.LoadedPreviewInputSignature);
+
+        groupTab.ExitSpineEditMode(discardChanges: false);
+        groupTab.ApplyOperationProjection(CreateSpineGroupWithTextureReplacement("hero", "Hero"));
+
+        coordinator.QueueSpineGroupDocumentPreviewRefresh(groupTab);
+        await Task.Delay(50);
+
+        Assert.Equal(1, loader.LoadCallCount);
+        Assert.False(groupTab.Inspector.Preview.IsPreviewLoading);
+    }
+
+    [Fact]
     public async Task HandlePrimaryPaneSelectionChangedAsync_ShouldShowLoadingWhileSpineDetailsArePending()
     {
         var context = CreateContext();

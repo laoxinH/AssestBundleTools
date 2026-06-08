@@ -23,7 +23,7 @@ public sealed class AssetEditorWindowOperationRefreshContractTests
     }
 
     [Fact]
-    public void SpineEditExit_ShouldReloadOnlyWhenDraftHadUnsavedChanges()
+    public void SpineEditExit_ShouldReloadOnlyWhenDiscardingUnsavedDraft()
     {
         var actionsCode = File.ReadAllText(
             Path.Combine(
@@ -38,6 +38,12 @@ public sealed class AssetEditorWindowOperationRefreshContractTests
         Assert.Contains("var shouldReloadPreview = spineGroupTab.ExitSpineEditMode(discardChanges);", actionsCode);
         Assert.Contains("if (shouldReloadPreview)", actionsCode);
         Assert.Contains("await ReloadSpineGroupDetailsAsync(spineGroupTab);", actionsCode);
+
+        var applyMethod = actionsCode[
+            actionsCode.IndexOf("public async Task<bool> ApplySpineEditAsync()", StringComparison.Ordinal)..actionsCode.IndexOf(
+                "public async Task ExitSpineEditModeForActiveGroupAsync",
+                StringComparison.Ordinal)];
+        Assert.DoesNotContain("ReloadSpineGroupDetailsAsync", applyMethod);
     }
 
     private static string FindRepositoryRoot()
