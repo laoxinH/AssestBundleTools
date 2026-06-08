@@ -56,8 +56,8 @@
         <Grid
             Grid.Row="1"
             MinHeight="0"
-            Padding="44,28,44,40"
-            RowSpacing="20">
+            Padding="44,28,44,32"
+            RowSpacing="18">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -68,17 +68,17 @@
                 <StackPanel Spacing="10">
                     <TextBlock
                         x:Name="WindowTitleText"
-                        FontSize="40"
+                        FontSize="38"
                         FontWeight="SemiBold"
                         TextWrapping="WrapWholeWords" />
                     <TextBlock
                         x:Name="WindowSubtitleText"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        FontSize="16"
+                        FontSize="15"
                         TextWrapping="WrapWholeWords" />
                     <TextBlock
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        FontSize="16"
+                        FontSize="15"
                         Text="{Binding HeaderSummaryText}"
                         TextWrapping="WrapWholeWords" />
                 </StackPanel>
@@ -95,12 +95,12 @@
 
             <Border
                 Grid.Row="2"
-                Padding="26"
+                Padding="20"
                 Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="8">
-                <Grid ColumnSpacing="22">
+                <Grid ColumnSpacing="20">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
@@ -163,20 +163,21 @@
                         x:Name="UseWorkspaceExtractionDirectoryCheckBox"
                         Grid.Column="2"
                         MaxWidth="320"
+                        MinWidth="0"
                         VerticalAlignment="Center"
                         IsChecked="{Binding UseWorkspaceExtractionDirectory, Mode=TwoWay}" />
 
                     <Button
                         x:Name="CancelButton"
                         Grid.Column="3"
-                        MinWidth="140"
+                        Width="142"
                         MinHeight="52"
                         VerticalAlignment="Center"
                         Click="OnCancelButtonClick" />
                     <Button
                         x:Name="StartExtractionButton"
                         Grid.Column="4"
-                        MinWidth="164"
+                        Width="204"
                         MinHeight="52"
                         VerticalAlignment="Center"
                         Click="OnStartExtractionButtonClick"
