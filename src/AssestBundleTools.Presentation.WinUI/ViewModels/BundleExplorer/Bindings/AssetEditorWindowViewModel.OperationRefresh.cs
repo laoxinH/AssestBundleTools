@@ -9,6 +9,7 @@ public sealed partial class AssetEditorWindowViewModel
     private async Task RefreshOperationAffectedStateAsync(WorkspaceOperationChangedEventArgs eventArgs)
     {
         ArgumentNullException.ThrowIfNull(eventArgs);
+        var shouldRefreshPreview = ShouldRefreshPreview(eventArgs);
 
         var assetTabs = eventArgs.IsWorkspaceWide
             ? DocumentGroup.AssetTabs.ToArray()
@@ -34,7 +35,10 @@ public sealed partial class AssetEditorWindowViewModel
             await _operationProjectionRefreshCoordinator.RefreshSpineGroupOperationProjectionAsync(
                 spineGroupTab,
                 eventArgs.IsWorkspaceWide ? null : eventArgs.AffectedAssets);
-            QueueSpineGroupDocumentDetailsRefresh(spineGroupTab);
+            if (shouldRefreshPreview)
+            {
+                QueueSpineGroupDocumentDetailsRefresh(spineGroupTab);
+            }
         }
     }
 
@@ -151,4 +155,16 @@ public sealed partial class AssetEditorWindowViewModel
             .Any(part =>
                 part.BundleId.Equals(affectedAsset.BundleId) &&
                 part.AssetId.Equals(affectedAsset.AssetId));
+
+    private static bool ShouldRefreshPreview(WorkspaceOperationChangedEventArgs eventArgs)
+    {
+        var contentChangingKinds =
+            WorkspaceOperationChangeKind.Replacement |
+            WorkspaceOperationChangeKind.Edit;
+        return (eventArgs.ChangeKind & contentChangingKinds) != WorkspaceOperationChangeKind.None ||
+               eventArgs.Reason is WorkspaceOperationChangeReason.ReplacementApplied or
+                   WorkspaceOperationChangeReason.ReplacementUndone or
+                   WorkspaceOperationChangeReason.ReplacementRedone or
+                   WorkspaceOperationChangeReason.EditApplied;
+    }
 }

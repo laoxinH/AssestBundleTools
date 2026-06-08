@@ -4035,6 +4035,9 @@
   <data name="Error.Workspace.OperationRecord.NotFound" xml:space="preserve">
     <value>找不到要删除的工作区操作记录：{0}</value>
   </data>
+  <data name="Error.Workspace.OperationRecord.DeleteNotAllowed" xml:space="preserve">
+    <value>提取记录是导出历史，不能删除：{0}</value>
+  </data>
   <data name="Error.Asset.Replace.SourceFilePathRequired" xml:space="preserve">
     <value>应用文件替换前需要提供文件路径。</value>
   </data>

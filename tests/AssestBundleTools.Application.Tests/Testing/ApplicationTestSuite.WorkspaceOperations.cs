@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Tests.Workspace.Commands;
 using AssestBundleTools.Application.Tests.Workspace.Services;
 
 namespace AssestBundleTools.Application.Tests.Testing;
@@ -34,5 +35,13 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(WorkspaceOperationRelationMatcherTests.OperationConcernsTarget_ShouldMatchRelatedSourceFingerprint),
             WorkspaceOperationRelationMatcherTests.OperationConcernsTarget_ShouldMatchRelatedSourceFingerprint);
+        await RunTestAsync(
+            failures,
+            nameof(DeleteWorkspaceOperationRecordHandlerTests.HandleAsync_ShouldRejectExtractionOperationDeletion),
+            DeleteWorkspaceOperationRecordHandlerTests.HandleAsync_ShouldRejectExtractionOperationDeletion);
+        await RunTestAsync(
+            failures,
+            nameof(DeleteWorkspaceOperationRecordHandlerTests.HandleAsync_ShouldRejectBatchExtractionOperationDeletion),
+            DeleteWorkspaceOperationRecordHandlerTests.HandleAsync_ShouldRejectBatchExtractionOperationDeletion);
     }
 }

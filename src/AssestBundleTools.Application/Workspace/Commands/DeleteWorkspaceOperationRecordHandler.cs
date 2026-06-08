@@ -79,6 +79,12 @@ public sealed class DeleteWorkspaceOperationRecordHandler : ICommandHandler<Dele
                 ApplicationErrors.WorkspaceOperationRecordNotFound(command.OperationId)));
         }
 
+        if (IsProtectedOperationRecord(deletedOperation))
+        {
+            return Task.FromResult(Result<WorkspaceOperationRecordDeletedResultDto>.Failure(
+                ApplicationErrors.WorkspaceOperationRecordDeleteNotAllowed(deletedOperation.OperationId)));
+        }
+
         var deletedAtUtc = DateTimeOffset.UtcNow;
         var updatedChangeSet = _operationLogService.DeleteOperationRecord(
             changeSet,
@@ -100,6 +106,10 @@ public sealed class DeleteWorkspaceOperationRecordHandler : ICommandHandler<Dele
             CreateAffectedTargets(deletedOperation));
         return Task.FromResult(Result<WorkspaceOperationRecordDeletedResultDto>.Success(result));
     }
+
+    private static bool IsProtectedOperationRecord(WorkspaceOperationRecordDto operation) =>
+        operation.OperationKind is WorkspaceOperationKind.ExtractAsset or
+            WorkspaceOperationKind.ExtractBatch;
 
     private static IReadOnlyList<WorkspaceOperationTargetDto> CreateAffectedTargets(
         WorkspaceOperationRecordDto operation)

@@ -57,14 +57,17 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
             var isReplacementRecord = IsReplacementRecord(record);
             var showUndo = canManageRecords && isReplacementRecord && record.IsEffectiveReplacement;
             var showRedo = canManageRecords && isReplacementRecord && !record.IsEffectiveReplacement;
+            var showDelete = canManageRecords &&
+                record.Kind != AssetChangeRecordKind.Extraction &&
+                !string.IsNullOrWhiteSpace(record.OperationId);
 
             records.Add(CreateChangeRecord(
                 workspaceId,
                 record,
                 showUndo,
                 showRedo,
-                canManageRecords && !string.IsNullOrWhiteSpace(record.OperationId),
-                canManageRecords && (showUndo || !string.IsNullOrWhiteSpace(record.OperationId))));
+                showDelete,
+                canManageRecords && (showUndo || showDelete)));
         }
 
         return records;

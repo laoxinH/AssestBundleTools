@@ -112,7 +112,8 @@ public sealed class InspectorPanelViewModelTests
                 new AssetChangeRecordDto(
                     AssetChangeRecordKind.Extraction,
                     CreatedAtUtc: latestExtractionAtUtc,
-                    AppliedAtUtc: latestExtractionAtUtc)
+                    AppliedAtUtc: latestExtractionAtUtc,
+                    OperationId: "extract-latest")
             ]
         };
 
@@ -127,6 +128,8 @@ public sealed class InspectorPanelViewModelTests
         Assert.Contains(
             latestExtractionAtUtc.ToLocalTime().ToString("G"),
             records.Single(record => record.TitleText == ResourceKeys.InspectorChangeRecordExtractionTitle).TimeText);
+        Assert.False(
+            records.Single(record => record.TitleText == ResourceKeys.InspectorChangeRecordExtractionTitle).ShowsDeleteRecord);
     }
 
     [Fact]

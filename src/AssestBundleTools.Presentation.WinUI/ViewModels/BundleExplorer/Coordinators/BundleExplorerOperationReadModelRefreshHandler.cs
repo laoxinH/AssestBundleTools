@@ -29,10 +29,11 @@ internal sealed class BundleExplorerOperationReadModelRefreshHandler
     public async Task RefreshAsync(WorkspaceOperationChangedEventArgs eventArgs)
     {
         ArgumentNullException.ThrowIfNull(eventArgs);
+        var shouldRefreshPreview = ShouldRefreshPreview(eventArgs);
 
         if (!eventArgs.IsWorkspaceWide)
         {
-            await RefreshAffectedTargetsAsync(eventArgs.AffectedAssets);
+            await RefreshAffectedTargetsAsync(eventArgs.AffectedAssets, shouldRefreshPreview);
             return;
         }
 
@@ -52,12 +53,16 @@ internal sealed class BundleExplorerOperationReadModelRefreshHandler
         foreach (var spineGroupTab in spineGroupTabs)
         {
             await _operationProjectionRefreshCoordinator.RefreshSpineGroupOperationProjectionAsync(spineGroupTab);
-            _spineGroupDocumentCoordinator.QueueSpineGroupDocumentPreviewRefresh(spineGroupTab);
+            if (shouldRefreshPreview)
+            {
+                _spineGroupDocumentCoordinator.QueueSpineGroupDocumentPreviewRefresh(spineGroupTab);
+            }
         }
     }
 
     private async Task RefreshAffectedTargetsAsync(
-        IReadOnlyList<WorkspaceOperationAffectedAsset> affectedAssets)
+        IReadOnlyList<WorkspaceOperationAffectedAsset> affectedAssets,
+        bool shouldRefreshPreview)
     {
         foreach (var affectedAsset in affectedAssets)
         {
@@ -92,9 +97,24 @@ internal sealed class BundleExplorerOperationReadModelRefreshHandler
                 await _operationProjectionRefreshCoordinator.RefreshSpineGroupOperationProjectionAsync(
                     spineGroupTab,
                     [affectedAsset]);
-                _spineGroupDocumentCoordinator.QueueSpineGroupDocumentPreviewRefresh(spineGroupTab);
+                if (shouldRefreshPreview)
+                {
+                    _spineGroupDocumentCoordinator.QueueSpineGroupDocumentPreviewRefresh(spineGroupTab);
+                }
             }
         }
+    }
+
+    private static bool ShouldRefreshPreview(WorkspaceOperationChangedEventArgs eventArgs)
+    {
+        var contentChangingKinds =
+            WorkspaceOperationChangeKind.Replacement |
+            WorkspaceOperationChangeKind.Edit;
+        return (eventArgs.ChangeKind & contentChangingKinds) != WorkspaceOperationChangeKind.None ||
+               eventArgs.Reason is WorkspaceOperationChangeReason.ReplacementApplied or
+                   WorkspaceOperationChangeReason.ReplacementUndone or
+                   WorkspaceOperationChangeReason.ReplacementRedone or
+                   WorkspaceOperationChangeReason.EditApplied;
     }
 
     private static bool MatchesAsset(

@@ -508,6 +508,15 @@ public static class ApplicationErrors
             parameters: CreateParameters(("OperationId", operationId)),
             isUserActionable: true);
 
+    public static AppError WorkspaceOperationRecordDeleteNotAllowed(string operationId) =>
+        new(
+            code: "Workspace.OperationRecord.DeleteNotAllowed",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Workspace.OperationRecord.DeleteNotAllowed",
+            parameters: CreateParameters(("OperationId", operationId)),
+            isUserActionable: true);
+
     public static AppError WorkspaceNotFound(WorkspaceId workspaceId) =>
         new(
             code: "Workspace.Query.NotFound",

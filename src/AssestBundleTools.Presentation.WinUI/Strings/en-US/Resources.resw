@@ -4035,6 +4035,9 @@
   <data name="Error.Workspace.OperationRecord.NotFound" xml:space="preserve">
     <value>Workspace operation record not found: {0}</value>
   </data>
+  <data name="Error.Workspace.OperationRecord.DeleteNotAllowed" xml:space="preserve">
+    <value>Extraction records are export history and cannot be deleted: {0}</value>
+  </data>
   <data name="Error.Asset.Replace.SourceFilePathRequired" xml:space="preserve">
     <value>A file path is required before applying a file replacement.</value>
   </data>
