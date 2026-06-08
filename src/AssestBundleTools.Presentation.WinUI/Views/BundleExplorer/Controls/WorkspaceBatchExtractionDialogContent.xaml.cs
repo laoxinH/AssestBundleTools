@@ -34,7 +34,7 @@ public sealed partial class WorkspaceBatchExtractionDialogContent : UserControl
         CategorySectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceBatchExtractionDialogCategorySectionHint);
     }
 
-    private void OnBundleSearchTextChanged(object sender, TextChangedEventArgs e)
+    private void OnBundleSearchTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs e)
     {
         ViewModel.BundleSearchKeyword = BundleSearchTextBox.Text;
     }
