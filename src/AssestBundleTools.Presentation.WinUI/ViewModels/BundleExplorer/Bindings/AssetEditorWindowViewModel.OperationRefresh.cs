@@ -29,6 +29,7 @@ public sealed partial class AssetEditorWindowViewModel
             : DocumentGroup.SpineGroupTabs
                 .Where(spineGroupTab => eventArgs.AffectedAssets.Any(affectedAsset =>
                     SpineGroupContainsAsset(spineGroupTab, affectedAsset)))
+                .Distinct()
                 .ToArray();
         foreach (var spineGroupTab in spineGroupTabs)
         {

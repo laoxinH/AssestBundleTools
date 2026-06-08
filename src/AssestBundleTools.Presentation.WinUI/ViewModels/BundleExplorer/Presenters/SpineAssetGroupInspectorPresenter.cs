@@ -117,6 +117,23 @@ internal sealed class SpineAssetGroupInspectorPresenter
         groupTab.Inspector.SetPreviewLoading(GetString(ResourceKeys.InspectorPreviewLoadingText));
     }
 
+    public void PresentSpineGroupOperationProjection(
+        SpineAssetGroupDocumentTabViewModel groupTab,
+        bool isBusy)
+    {
+        ArgumentNullException.ThrowIfNull(groupTab);
+
+        var parts = EnumerateParts(groupTab.Item).ToArray();
+        groupTab.Inspector.ApplyOperationProjection(
+            changeSummaryText: _changeRecordPresenter.BuildSummaryText(parts),
+            canExtract: !isBusy && parts.Length > 0,
+            canModify: !isBusy && parts.Length > 0,
+            changeRecords: _changeRecordPresenter.CreateChangeRecords(
+                parts,
+                canManageRecords: true,
+                _workspaceIdProvider()));
+    }
+
     public void SyncInspectorActionStates(
         InspectorPanelViewModel inspector,
         SpineAssetGroupDocumentTabViewModel? groupTab,

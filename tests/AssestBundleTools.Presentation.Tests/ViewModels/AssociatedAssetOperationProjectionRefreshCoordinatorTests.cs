@@ -36,7 +36,10 @@ public sealed class AssociatedAssetOperationProjectionRefreshCoordinatorTests
             group,
             InspectorInformationTextSetFactory.Create(localizationService));
         presenter.PresentSpineGroupDocumentTab(groupTab);
+        groupTab.Inspector.SetPreviewLoading("existing-preview-loading");
         Assert.True(Assert.Single(groupTab.Inspector.ChangeRecords).ShowsUndoReplacement);
+        Assert.True(groupTab.Inspector.Preview.IsPreviewLoading);
+        Assert.Equal("existing-preview-loading", groupTab.Inspector.Preview.PreviewStatusText);
 
         var gateway = new TestWorkspaceAssetInspectionGateway
         {
@@ -71,6 +74,8 @@ public sealed class AssociatedAssetOperationProjectionRefreshCoordinatorTests
         Assert.True(record.ShowsRedoReplacement);
         Assert.NotNull(groupTab.Item.TexturePageAssets[0].ChangeRecords);
         Assert.False(groupTab.Item.TexturePageAssets[0].ChangeRecords![0].IsEffectiveReplacement);
+        Assert.True(groupTab.Inspector.Preview.IsPreviewLoading);
+        Assert.Equal("existing-preview-loading", groupTab.Inspector.Preview.PreviewStatusText);
     }
 
     [Fact]

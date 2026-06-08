@@ -367,6 +367,19 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         RebuildInformationCards();
     }
 
+    internal void ApplyOperationProjection(
+        string changeSummaryText,
+        bool canExtract,
+        bool canModify,
+        IEnumerable<InspectorChangeRecordViewModel>? changeRecords = null)
+    {
+        ChangeSummaryText = changeSummaryText;
+        CanExtract = canExtract;
+        CanModify = canModify;
+        ReplaceCollection(ChangeRecords, changeRecords ?? Array.Empty<InspectorChangeRecordViewModel>());
+        NotifyChangeRecordStateChanged();
+    }
+
     public void RestoreSelectedSection(string? sectionKey)
     {
         SelectedSectionIndex = GetSectionIndex(sectionKey);

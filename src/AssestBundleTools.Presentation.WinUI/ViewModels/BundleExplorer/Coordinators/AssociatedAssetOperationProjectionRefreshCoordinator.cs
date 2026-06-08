@@ -105,7 +105,9 @@ internal sealed class AssociatedAssetOperationProjectionRefreshCoordinator
         }
 
         spineGroupTab.ApplyOperationProjection(refreshedGroup);
-        _spineGroupInspectorPresenter.PresentSpineGroupDocumentTab(spineGroupTab);
+        _spineGroupInspectorPresenter.PresentSpineGroupOperationProjection(
+            spineGroupTab,
+            _isBusyProvider());
         return true;
     }
 

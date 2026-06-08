@@ -64,6 +64,7 @@ internal sealed class BundleExplorerOperationReadModelRefreshHandler
         IReadOnlyList<WorkspaceOperationAffectedAsset> affectedAssets,
         bool shouldRefreshPreview)
     {
+        var matchedSpineGroupTabs = new HashSet<SpineAssetGroupDocumentTabViewModel>();
         foreach (var affectedAsset in affectedAssets)
         {
             var matchedAssetTabs = _documentWorkspace.OpenBundleTabs
@@ -87,20 +88,23 @@ internal sealed class BundleExplorerOperationReadModelRefreshHandler
                 }
             }
 
-            var matchedSpineGroupTabs = _documentWorkspace.OpenBundleTabs
+            foreach (var spineGroupTab in _documentWorkspace.OpenBundleTabs
                 .SelectMany(static bundleTab => bundleTab.SpineGroupTabs)
                 .Where(spineGroupTab => SpineGroupContainsAsset(spineGroupTab, affectedAsset))
-                .Distinct()
-                .ToArray();
-            foreach (var spineGroupTab in matchedSpineGroupTabs)
+                .Distinct())
             {
-                await _operationProjectionRefreshCoordinator.RefreshSpineGroupOperationProjectionAsync(
-                    spineGroupTab,
-                    [affectedAsset]);
-                if (shouldRefreshPreview)
-                {
-                    _spineGroupDocumentCoordinator.QueueSpineGroupDocumentPreviewRefresh(spineGroupTab);
-                }
+                matchedSpineGroupTabs.Add(spineGroupTab);
+            }
+        }
+
+        foreach (var spineGroupTab in matchedSpineGroupTabs)
+        {
+            await _operationProjectionRefreshCoordinator.RefreshSpineGroupOperationProjectionAsync(
+                spineGroupTab,
+                affectedAssets);
+            if (shouldRefreshPreview)
+            {
+                _spineGroupDocumentCoordinator.QueueSpineGroupDocumentPreviewRefresh(spineGroupTab);
             }
         }
     }
