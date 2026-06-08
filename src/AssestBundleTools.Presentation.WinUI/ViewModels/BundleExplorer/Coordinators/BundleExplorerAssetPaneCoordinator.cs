@@ -248,7 +248,8 @@ internal sealed class BundleExplorerAssetPaneCoordinator
         var spineGroupListQuery = new LoadSpineAssetGroupsQuery(
             WorkspaceId: workspaceId,
             BundleId: bundleNode.BundleId,
-            SearchKeyword: NormalizeSearchKeyword(pane.SearchKeyword));
+            SearchKeyword: NormalizeSearchKeyword(pane.SearchKeyword),
+            WorkspaceDataRootPath: _workspaceShell.WorkspaceSummary?.WorkspaceDataRootPath);
         var spineGroupList = _unwrapSpineAssetGroupListResult(await _backgroundTaskRunner.RunAsync(
             token => _workspaceExplorerGateway.LoadSpineAssetGroupsAsync(spineGroupListQuery, token)));
 

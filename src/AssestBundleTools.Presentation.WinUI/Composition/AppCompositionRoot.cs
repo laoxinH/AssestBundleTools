@@ -127,7 +127,9 @@ internal static class AppCompositionRoot
             bundleArtifactSessionInvalidator);
         var loadBundleTreeHandler = new LoadBundleTreeHandler(workspaceSessionRegistry);
         var loadAssetListHandler = new LoadAssetListHandler(workspaceSessionRegistry);
-        var loadSpineAssetGroupsHandler = new LoadSpineAssetGroupsHandler(workspaceSessionRegistry);
+        var loadSpineAssetGroupsHandler = new LoadSpineAssetGroupsHandler(
+            workspaceSessionRegistry,
+            workspaceDataStoreFactory);
         var getAssetDetailsHandler = new GetAssetDetailsHandler(workspaceSessionRegistry);
         var getAssetPreviewHandler = new GetAssetPreviewHandler(
             workspaceSessionRegistry,

@@ -128,6 +128,8 @@ public sealed class RemoveWorkspaceBundleHandler
         metadataStore.Save(updatedMetadata);
 
         var bundleCacheKey = WorkspaceImportPathUtility.CreateBundleCacheKey(normalizedBundleSourcePath);
+        var spineGroupCatalogCacheStore = _workspaceDataStoreFactory.CreateSpineGroupCatalogCacheStore(command.WorkspaceDataRootPath);
+        spineGroupCatalogCacheStore.DeleteWorkspace(command.WorkspaceKey);
         if (!string.IsNullOrWhiteSpace(bundleCacheKey))
         {
             var bundleArtifactStore = _workspaceDataStoreFactory.CreateBundleArtifactStore(command.WorkspaceDataRootPath);

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Common.Abstractions;
@@ -13,10 +14,18 @@ namespace AssestBundleTools.Application.Assets.Queries;
 public sealed class LoadSpineAssetGroupsHandler : IQueryHandler<LoadSpineAssetGroupsQuery, Result<SpineAssetGroupListResultDto>>
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
+    private readonly IWorkspaceDataStoreFactory? _workspaceDataStoreFactory;
+    private readonly SpineGroupCatalogCacheCoordinator _runtimeCacheCoordinator;
+    private readonly ConcurrentDictionary<string, SpineGroupCatalogCacheCoordinator> _persistentCacheCoordinators =
+        new(StringComparer.OrdinalIgnoreCase);
 
-    public LoadSpineAssetGroupsHandler(IWorkspaceSessionRegistry workspaceSessionRegistry)
+    public LoadSpineAssetGroupsHandler(
+        IWorkspaceSessionRegistry workspaceSessionRegistry,
+        IWorkspaceDataStoreFactory? workspaceDataStoreFactory = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
+        _workspaceDataStoreFactory = workspaceDataStoreFactory;
+        _runtimeCacheCoordinator = new SpineGroupCatalogCacheCoordinator(persistentStore: null);
     }
 
     public Task<Result<SpineAssetGroupListResultDto>> HandleAsync(
@@ -89,13 +98,23 @@ public sealed class LoadSpineAssetGroupsHandler : IQueryHandler<LoadSpineAssetGr
             return Task.FromResult(Result<SpineAssetGroupListResultDto>.Cancelled());
         }
 
-        var result = SpineAssetGroupDetector.CreateResult(
-            query.WorkspaceId,
-            query.BundleId,
-            targetBundleDisplayName,
-            query.SearchKeyword,
-            assetLists,
-            assetDetailsByAssetKey);
+        SpineAssetGroupListResultDto result;
+        try
+        {
+            result = CreateCatalogCacheCoordinator(query).GetOrBuildResult(
+                query.WorkspaceId,
+                query.BundleId,
+                targetBundleDisplayName,
+                query.SearchKeyword,
+                assetLists,
+                assetDetailsByAssetKey,
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return Task.FromResult(Result<SpineAssetGroupListResultDto>.Cancelled());
+        }
+
         result = SpineAssetGroupPartDetailsHydrator.HydrateResult(
             _workspaceSessionRegistry,
             query.WorkspaceId,
@@ -103,6 +122,20 @@ public sealed class LoadSpineAssetGroupsHandler : IQueryHandler<LoadSpineAssetGr
             cancellationToken);
 
         return Task.FromResult(Result<SpineAssetGroupListResultDto>.Success(result));
+    }
+
+    private SpineGroupCatalogCacheCoordinator CreateCatalogCacheCoordinator(LoadSpineAssetGroupsQuery query)
+    {
+        if (_workspaceDataStoreFactory is null ||
+            string.IsNullOrWhiteSpace(query.WorkspaceDataRootPath))
+        {
+            return _runtimeCacheCoordinator;
+        }
+
+        var workspaceDataRootPath = query.WorkspaceDataRootPath.Trim();
+        return _persistentCacheCoordinators.GetOrAdd(workspaceDataRootPath, rootPath =>
+            new SpineGroupCatalogCacheCoordinator(
+                _workspaceDataStoreFactory.CreateSpineGroupCatalogCacheStore(rootPath)));
     }
 
     private static IEnumerable<BundleTreeNodeDto> FlattenBundleNodes(IEnumerable<BundleTreeNodeDto> nodes)

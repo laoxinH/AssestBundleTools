@@ -40,7 +40,8 @@ internal static partial class SpineAssetGroupDetector
         string targetBundleDisplayName,
         string? searchKeyword,
         IReadOnlyList<AssetListResultDto> bundleAssetLists,
-        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey = null)
+        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey = null,
+        bool includeAssetDetailState = true)
     {
         ArgumentNullException.ThrowIfNull(bundleAssetLists);
 
@@ -54,7 +55,7 @@ internal static partial class SpineAssetGroupDetector
         var classifiedTextPartKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var candidate in candidates)
         {
-            if (!TryCreateTextPart(candidate, assetDetailsByAssetKey, out var classifiedPart))
+            if (!TryCreateTextPart(candidate, assetDetailsByAssetKey, includeAssetDetailState, out var classifiedPart))
             {
                 continue;
             }
@@ -73,7 +74,8 @@ internal static partial class SpineAssetGroupDetector
             textParts,
             classifiedTextPartKeys,
             anchorGroupKeys,
-            assetDetailsByAssetKey);
+            assetDetailsByAssetKey,
+            includeAssetDetailState);
 
         AddExtensionlessSkeletonParts(
             targetBundleId,
@@ -81,10 +83,11 @@ internal static partial class SpineAssetGroupDetector
             textParts,
             classifiedTextPartKeys,
             anchorGroupKeys,
-            assetDetailsByAssetKey);
+            assetDetailsByAssetKey,
+            includeAssetDetailState);
 
         var textureCandidates = candidates
-            .Select(candidate => TryCreateTexturePart(candidate, assetDetailsByAssetKey))
+            .Select(candidate => TryCreateTexturePart(candidate, assetDetailsByAssetKey, includeAssetDetailState))
             .Where(static candidate => candidate is not null)
             .Select(static candidate => candidate!)
             .ToArray();
@@ -93,7 +96,8 @@ internal static partial class SpineAssetGroupDetector
             candidates,
             textParts,
             textureCandidates,
-            assetDetailsByAssetKey);
+            assetDetailsByAssetKey,
+            includeAssetDetailState);
         var linkedGroupKeys = CreateLinkedGroupKeySet(linkedGroups, textParts);
 
         var allGroups = anchorGroupKeys
@@ -209,6 +213,7 @@ internal static partial class SpineAssetGroupDetector
     private static bool TryCreateTextPart(
         AssetCandidate candidate,
         IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey,
+        bool includeAssetDetailState,
         out ClassifiedPart classifiedPart)
     {
         if (candidate.Item.AssetType != AssetType.TextAsset)
@@ -224,7 +229,7 @@ internal static partial class SpineAssetGroupDetector
                 classifiedPart = new ClassifiedPart(
                     NormalizeGroupKey(atlasGroupKey),
                     SpineAssetGroupPartRole.Atlas,
-                    CreatePart(candidate, SpineAssetGroupPartRole.Atlas, assetDetailsByAssetKey));
+                    CreatePart(candidate, SpineAssetGroupPartRole.Atlas, assetDetailsByAssetKey, includeAssetDetailState));
                 return !string.IsNullOrWhiteSpace(classifiedPart.GroupKey);
             }
 
@@ -233,7 +238,7 @@ internal static partial class SpineAssetGroupDetector
                 classifiedPart = new ClassifiedPart(
                     NormalizeGroupKey(skeletonGroupKey),
                     SpineAssetGroupPartRole.Skeleton,
-                    CreatePart(candidate, SpineAssetGroupPartRole.Skeleton, assetDetailsByAssetKey));
+                    CreatePart(candidate, SpineAssetGroupPartRole.Skeleton, assetDetailsByAssetKey, includeAssetDetailState));
                 return !string.IsNullOrWhiteSpace(classifiedPart.GroupKey);
             }
         }
@@ -244,7 +249,8 @@ internal static partial class SpineAssetGroupDetector
 
     private static TextureCandidate? TryCreateTexturePart(
         AssetCandidate candidate,
-        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey)
+        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey,
+        bool includeAssetDetailState)
     {
         if (candidate.Item.AssetType != AssetType.Texture2D)
         {
@@ -259,13 +265,14 @@ internal static partial class SpineAssetGroupDetector
 
         return keys.Length == 0
             ? null
-            : new TextureCandidate(keys, CreatePart(candidate, SpineAssetGroupPartRole.TexturePage, assetDetailsByAssetKey));
+            : new TextureCandidate(keys, CreatePart(candidate, SpineAssetGroupPartRole.TexturePage, assetDetailsByAssetKey, includeAssetDetailState));
     }
 
     private static SpineAssetGroupPartDto CreatePart(
         AssetCandidate candidate,
         SpineAssetGroupPartRole role,
-        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey)
+        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey,
+        bool includeAssetDetailState)
     {
         var assetDetails = ResolveAssetDetails(candidate, assetDetailsByAssetKey);
         return new SpineAssetGroupPartDto(
@@ -277,11 +284,13 @@ internal static partial class SpineAssetGroupDetector
             AssetPath: candidate.Item.AssetPath,
             AssetType: candidate.Item.AssetType,
             AssetTypeDisplayName: candidate.Item.AssetTypeDisplayName,
-            LastExtractedAtUtc: assetDetails?.LastExtractedAtUtc ?? candidate.Item.LastExtractedAtUtc,
-            FileReplacementSourceFileName: assetDetails?.FileReplacementSourceFileName,
-            FileReplacementSourcePath: assetDetails?.FileReplacementSourcePath,
-            FileReplacementSourceAssetType: assetDetails?.FileReplacementSourceAssetType,
-            ChangeRecords: assetDetails?.ChangeRecords);
+            LastExtractedAtUtc: includeAssetDetailState
+                ? assetDetails?.LastExtractedAtUtc ?? candidate.Item.LastExtractedAtUtc
+                : candidate.Item.LastExtractedAtUtc,
+            FileReplacementSourceFileName: includeAssetDetailState ? assetDetails?.FileReplacementSourceFileName : null,
+            FileReplacementSourcePath: includeAssetDetailState ? assetDetails?.FileReplacementSourcePath : null,
+            FileReplacementSourceAssetType: includeAssetDetailState ? assetDetails?.FileReplacementSourceAssetType : null,
+            ChangeRecords: includeAssetDetailState ? assetDetails?.ChangeRecords : null);
     }
 
     private static AssetDetailsDto? ResolveAssetDetails(
@@ -384,7 +393,7 @@ internal static partial class SpineAssetGroupDetector
                char.IsDigit(suffixMarker);
     }
 
-    private static bool MatchesSearch(SpineAssetGroupDto group, string? normalizedSearchKeyword)
+    internal static bool MatchesSearch(SpineAssetGroupDto group, string? normalizedSearchKeyword)
     {
         if (normalizedSearchKeyword is null)
         {
@@ -464,7 +473,7 @@ internal static partial class SpineAssetGroupDetector
             : value;
     }
 
-    private static string? NormalizeSearchKeyword(string? searchKeyword) =>
+    internal static string? NormalizeSearchKeyword(string? searchKeyword) =>
         string.IsNullOrWhiteSpace(searchKeyword) ? null : searchKeyword.Trim();
 
     private readonly record struct AssetCandidate(

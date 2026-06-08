@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Workspace.Services;
 
 namespace AssestBundleTools.Infrastructure.Workspace.Persistence;
@@ -19,6 +20,13 @@ public sealed class JsonWorkspaceDataStoreFactory : IWorkspaceDataStoreFactory
         return string.IsNullOrWhiteSpace(rootDirectoryPath)
             ? new JsonBundleIndexCacheStore()
             : new JsonBundleIndexCacheStore(rootDirectoryPath);
+    }
+
+    public ISpineGroupCatalogCacheStore CreateSpineGroupCatalogCacheStore(string? rootDirectoryPath = null)
+    {
+        return string.IsNullOrWhiteSpace(rootDirectoryPath)
+            ? new JsonSpineGroupCatalogCacheStore()
+            : new JsonSpineGroupCatalogCacheStore(rootDirectoryPath);
     }
 
     public IPreviewCacheStore CreatePreviewCacheStore(string? rootDirectoryPath = null)

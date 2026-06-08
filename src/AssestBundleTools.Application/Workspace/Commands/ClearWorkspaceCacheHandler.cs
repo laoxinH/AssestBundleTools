@@ -37,6 +37,7 @@ public sealed class ClearWorkspaceCacheHandler
 
         var bundleArtifactStore = _workspaceDataStoreFactory.CreateBundleArtifactStore(command.WorkspaceDataRootPath);
         var previewCacheStore = _workspaceDataStoreFactory.CreatePreviewCacheStore(command.WorkspaceDataRootPath);
+        var spineGroupCatalogCacheStore = _workspaceDataStoreFactory.CreateSpineGroupCatalogCacheStore(command.WorkspaceDataRootPath);
         var bundleArtifactResult = bundleArtifactStore.Prune(new BundleArtifactPruneRequestDto(
             command.WorkspaceKey,
             MaximumSizeInBytes: 0,
@@ -45,6 +46,7 @@ public sealed class ClearWorkspaceCacheHandler
             command.WorkspaceKey,
             MaximumSizeInBytes: 0,
             MaximumEntryCount: 0));
+        spineGroupCatalogCacheStore.DeleteWorkspace(command.WorkspaceKey);
 
         foreach (var prunedEntry in bundleArtifactResult.PrunedEntries)
         {

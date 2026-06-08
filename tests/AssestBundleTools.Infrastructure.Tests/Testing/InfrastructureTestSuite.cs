@@ -81,6 +81,10 @@ internal static class InfrastructureTestSuite
             JsonPreviewCacheStoreTests.Delete_ShouldRemoveDescriptor_WhenStoredDescriptorPayloadPathIsInvalid);
         await RunTestAsync(
             failures,
+            nameof(JsonSpineGroupCatalogCacheStoreTests.Save_ShouldRoundTripCatalogEntry_AndDeleteWorkspace),
+            JsonSpineGroupCatalogCacheStoreTests.Save_ShouldRoundTripCatalogEntry_AndDeleteWorkspace);
+        await RunTestAsync(
+            failures,
             nameof(JsonBundleArtifactStoreTests.Save_ShouldMaterializeDerivedBundle_AndRoundTripManifest),
             JsonBundleArtifactStoreTests.Save_ShouldMaterializeDerivedBundle_AndRoundTripManifest);
         await RunTestAsync(

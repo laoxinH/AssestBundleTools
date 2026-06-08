@@ -272,13 +272,13 @@ Presentation 层保留两个协同层次：
 ### 4.1 Spine 组目录缓存
 
 Spine 组列表是跨资产、跨资源包的派生读模型，不应在每次从普通资产列表切换到 `Spine 组` 时重新遍历所有 bundle 资产索引。
-后续实现应把它收口为“运行时目录缓存 + 工作区派生目录缓存”的两层模型：
+当前第一版已经把它收口为“运行时目录缓存 + 工作区派生目录缓存”的两层模型：
 
 1. 运行时目录缓存
-   活动工作区会话内优先复用已构建的 `SpineGroupCatalog`，供资源包标签切换、列表搜索、窗口模式放回 / 窗口化和同一工作区内多宿主共享。
+   `LoadSpineAssetGroupsHandler` 通过进程内 `SpineGroupCatalogCacheCoordinator` 优先复用已构建的 `SpineGroupCatalog`，供资源包标签切换、列表搜索、窗口模式放回 / 窗口化和同一工作区内多宿主共享。
 2. 工作区派生目录缓存
-   将可重建目录写入 `cache/spine-groups/<workspace-key>/catalog.json` 或等价分片文件，供工作区重开后复用。
-   持久化文件必须携带 `schemaVersion`、`workspaceKey`、参与目录构建的 bundle index fingerprint 集合、`spineGroupDetectorVersion`、依赖图 / 匹配规则版本、创建时间和最近访问时间。
+   当查询携带工作区数据根时，`JsonSpineGroupCatalogCacheStore` 会将可重建目录写入 `cache/spine-groups/<workspace-key>/catalog.json`，供工作区重开后复用。
+   持久化文件携带 `schemaVersion`、`workspaceKey`、`catalogFingerprint`、参与目录构建的 bundle index fingerprint、`detectorVersion`、创建时间和最近访问时间。
 
 目录缓存只保存列表和搜索所需的轻量信息：
 
@@ -302,10 +302,11 @@ Spine 组列表是跨资产、跨资源包的派生读模型，不应在每次�
 
 并发与一致性：
 
-- 冷缓存构建必须按 `workspaceKey + catalogFingerprint` 做 single-flight，同一工作区内多个标签或窗口同时请求 Spine 组列表时只允许一个目录构建任务执行，其他请求等待或复用最近有效快照。
+- 冷缓存构建当前按 `workspaceKey + catalogFingerprint` 使用进程内 single-flight，同一工作区内多个标签或窗口同时请求 Spine 组列表时只允许一个目录构建任务执行，其他请求等待或复用最近有效快照。
 - 如果存在旧目录且新目录正在后台重建，Presentation 可继续展示旧目录的投影并标记轻量加载状态；没有任何可用目录时才显示空载入状态。
-- 目录构建完成后再叠加操作记录投影，避免把变更记录状态固化进结构性目录缓存，导致撤销 / 重做频繁写缓存。
-- 显式清理工作区缓存可以删除该目录；删除后下一次进入 `Spine 组` 视图重新构建，不写操作记录。
+- 目录缓存保存前会剥离组成资产的当前替换来源和变更记录；查询返回前再通过当前工作区 session 重新 hydrate 操作记录投影，避免把变更记录状态固化进结构性目录缓存，导致撤销 / 重做频繁写缓存。
+- 显式清理工作区缓存、移除资源包和移除工作区记录会删除该目录；删除后下一次进入 `Spine 组` 视图重新构建，不写操作记录。
+- 当前第一版 `WorkspaceCacheUsageDto` 仍只统计 `cache/bundles` 和 `cache/previews`，`cache/spine-groups` 已参与清理和结构失效，但尚未纳入工作台顶部缓存总量展示。
 
 ## 5. 建议保存内容
 

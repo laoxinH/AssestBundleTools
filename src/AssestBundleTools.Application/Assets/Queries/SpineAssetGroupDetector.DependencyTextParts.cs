@@ -12,7 +12,8 @@ internal static partial class SpineAssetGroupDetector
         ICollection<ClassifiedPart> textParts,
         ISet<string> classifiedTextPartKeys,
         ISet<string> anchorGroupKeys,
-        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey)
+        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey,
+        bool includeAssetDetailState)
     {
         if (assetDetailsByAssetKey is not { Count: > 0 })
         {
@@ -41,7 +42,8 @@ internal static partial class SpineAssetGroupDetector
                 textParts,
                 classifiedTextPartKeys,
                 anchorGroupKeys,
-                assetDetailsByAssetKey);
+                assetDetailsByAssetKey,
+                includeAssetDetailState);
         }
 
         foreach (var atlasHost in details
@@ -56,7 +58,8 @@ internal static partial class SpineAssetGroupDetector
                 textParts,
                 classifiedTextPartKeys,
                 anchorGroupKeys,
-                assetDetailsByAssetKey);
+                assetDetailsByAssetKey,
+                includeAssetDetailState);
         }
     }
 
@@ -68,7 +71,8 @@ internal static partial class SpineAssetGroupDetector
         ICollection<ClassifiedPart> textParts,
         ISet<string> classifiedTextPartKeys,
         ISet<string> anchorGroupKeys,
-        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey)
+        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey,
+        bool includeAssetDetailState)
     {
         foreach (var dependency in dependencyOwner.Dependencies)
         {
@@ -94,7 +98,7 @@ internal static partial class SpineAssetGroupDetector
             var classifiedPart = new ClassifiedPart(
                 groupKey,
                 role,
-                CreatePart(candidate, role, assetDetailsByAssetKey));
+                CreatePart(candidate, role, assetDetailsByAssetKey, includeAssetDetailState));
             textParts.Add(classifiedPart);
             classifiedTextPartKeys.Add(dependencyKey);
             if (candidate.Bundle.BundleId.Equals(targetBundleId))

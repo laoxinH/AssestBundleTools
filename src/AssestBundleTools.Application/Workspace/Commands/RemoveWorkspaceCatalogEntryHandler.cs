@@ -93,6 +93,9 @@ public sealed class RemoveWorkspaceCatalogEntryHandler
         var previewCacheStore = _workspaceDataStoreFactory.CreatePreviewCacheStore(workspaceDataRootPath);
         previewCacheStore.DeleteWorkspace(workspaceKey);
 
+        var spineGroupCatalogCacheStore = _workspaceDataStoreFactory.CreateSpineGroupCatalogCacheStore(workspaceDataRootPath);
+        spineGroupCatalogCacheStore.DeleteWorkspace(workspaceKey);
+
         var workspaceChangeStore = _workspaceDataStoreFactory.CreateWorkspaceChangeStore(workspaceDataRootPath);
         workspaceChangeStore.Delete(workspaceKey);
     }

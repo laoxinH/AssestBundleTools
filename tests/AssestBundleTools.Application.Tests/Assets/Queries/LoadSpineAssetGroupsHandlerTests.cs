@@ -186,6 +186,63 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
             "Spine part change records should retain effective replacement state.");
     }
 
+    public static async Task HandleAsync_ShouldHydrateReplacementState_AfterCatalogCacheHit()
+    {
+        var appliedAtUtc = new DateTimeOffset(2026, 6, 8, 10, 0, 0, TimeSpan.Zero);
+        var workspaceId = new WorkspaceId("workspace-a");
+        var spineBundleId = new BundleId("bundle.spine");
+        var spineAssets = CreateAssetList(
+            workspaceId,
+            spineBundleId,
+            "spine.ab",
+            CreateItem(spineBundleId, "skeleton-hero", "Assets/Hero/Hero.skel", AssetType.TextAsset),
+            CreateItem(spineBundleId, "atlas-hero", "Assets/Hero/Hero.atlas", AssetType.TextAsset),
+            CreateItem(spineBundleId, "texture-hero", "Assets/Hero/Hero.png", AssetType.Texture2D));
+        var mutableRegistry = new TestWorkspaceSessionRegistry(
+            workspaceId,
+            [spineAssets],
+            [
+                CreateDetails(
+                    workspaceId,
+                    spineBundleId,
+                    "texture-hero",
+                    "Assets/Hero/Hero.png",
+                    AssetType.Texture2D,
+                    nameof(AssetType.Texture2D),
+                    dependencies: Array.Empty<AssetDependencyDto>(),
+                    fileReplacementSourceFileName: "Hero.png",
+                    fileReplacementSourcePath: @"C:\Imports\Hero.png",
+                    fileReplacementSourceAssetType: AssetType.Texture2D,
+                    changeRecords:
+                    [
+                        new AssetChangeRecordDto(
+                            AssetChangeRecordKind.FileReplacement,
+                            CreatedAtUtc: appliedAtUtc,
+                            AppliedAtUtc: appliedAtUtc,
+                            SourceFileName: "Hero.png",
+                            SourceFilePath: @"C:\Imports\Hero.png",
+                            OperationId: "replace-texture",
+                            IsEffectiveReplacement: true)
+                    ])
+            ]);
+        var handler = new LoadSpineAssetGroupsHandler(mutableRegistry);
+
+        var first = await handler.HandleAsync(new LoadSpineAssetGroupsQuery(workspaceId, spineBundleId));
+        TestAssert.True(first.IsSuccess, "Initial query should build the runtime catalog.");
+        TestAssert.True(
+            TestAssert.Single(first.Value!.Items).TexturePageAssets[0].ChangeRecords is not null,
+            "Initial hydrated result should expose current replacement records.");
+
+        mutableRegistry.ReplaceDetails(Array.Empty<AssetDetailsDto>());
+
+        var second = await handler.HandleAsync(new LoadSpineAssetGroupsQuery(workspaceId, spineBundleId));
+
+        TestAssert.True(second.IsSuccess, "Second query should reuse the catalog and hydrate current details.");
+        var texturePage = TestAssert.Single(TestAssert.Single(second.Value!.Items).TexturePageAssets);
+        TestAssert.Equal(null, texturePage.FileReplacementSourcePath, "Catalog cache hits must not retain stale replacement source state.");
+        TestAssert.Equal(null, texturePage.ChangeRecords, "Catalog cache hits must rehydrate change records from the current session state.");
+    }
+
     public static async Task HandleAsync_ShouldSplitDuplicateSpineResourcesUsingDependencyLinks()
     {
         var workspaceId = new WorkspaceId("workspace-a");
@@ -396,7 +453,7 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
     {
         private readonly WorkspaceId _workspaceId;
         private readonly IReadOnlyDictionary<string, AssetListResultDto> _assetListsByBundleId;
-        private readonly IReadOnlyDictionary<string, AssetDetailsDto> _assetDetailsByAssetKey;
+        private IReadOnlyDictionary<string, AssetDetailsDto> _assetDetailsByAssetKey;
 
         public TestWorkspaceSessionRegistry(
             WorkspaceId workspaceId,
@@ -411,6 +468,13 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
                 .ToDictionary(
                     static details => CreateAssetKey(details.BundleId, details.AssetId),
                     StringComparer.OrdinalIgnoreCase);
+        }
+
+        public void ReplaceDetails(IReadOnlyList<AssetDetailsDto> assetDetails)
+        {
+            _assetDetailsByAssetKey = assetDetails.ToDictionary(
+                static details => CreateAssetKey(details.BundleId, details.AssetId),
+                StringComparer.OrdinalIgnoreCase);
         }
 
         public WorkspaceSummaryDto OpenWorkspace(WorkspaceSessionOpenRequestDto request) =>

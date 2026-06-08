@@ -21,6 +21,7 @@ internal sealed class JsonWorkspaceStoragePaths
         CacheDirectoryPath = Path.Combine(RootDirectoryPath, "cache");
         BundleArtifactCacheDirectoryPath = Path.Combine(CacheDirectoryPath, "bundles");
         BundleIndexCacheDirectoryPath = Path.Combine(CacheDirectoryPath, "bundle-index");
+        SpineGroupCatalogCacheDirectoryPath = Path.Combine(CacheDirectoryPath, "spine-groups");
         PreviewCacheRootDirectoryPath = Path.Combine(CacheDirectoryPath, "previews");
         StagingDirectoryPath = Path.Combine(RootDirectoryPath, "staging");
         WorkspaceChangesDirectoryPath = Path.Combine(StagingDirectoryPath, "changes");
@@ -37,6 +38,8 @@ internal sealed class JsonWorkspaceStoragePaths
     public string BundleArtifactCacheDirectoryPath { get; }
 
     public string BundleIndexCacheDirectoryPath { get; }
+
+    public string SpineGroupCatalogCacheDirectoryPath { get; }
 
     public string PreviewCacheRootDirectoryPath { get; }
 
@@ -81,6 +84,16 @@ internal sealed class JsonWorkspaceStoragePaths
         return Path.Combine(
             GetBundleIndexCacheDirectoryPath(workspaceKey),
             $"{NormalizeFileSegment(bundleCacheKey, nameof(bundleCacheKey))}.json");
+    }
+
+    public string GetSpineGroupCatalogCacheDirectoryPath(string workspaceKey)
+    {
+        return Path.Combine(SpineGroupCatalogCacheDirectoryPath, NormalizeFileSegment(workspaceKey, nameof(workspaceKey)));
+    }
+
+    public string GetSpineGroupCatalogCacheFilePath(string workspaceKey)
+    {
+        return Path.Combine(GetSpineGroupCatalogCacheDirectoryPath(workspaceKey), "catalog.json");
     }
 
     public string GetPreviewCacheDirectoryPath(string workspaceKey)

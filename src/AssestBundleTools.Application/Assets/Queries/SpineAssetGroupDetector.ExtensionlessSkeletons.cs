@@ -12,7 +12,8 @@ internal static partial class SpineAssetGroupDetector
         ICollection<ClassifiedPart> textParts,
         ISet<string> classifiedTextPartKeys,
         ISet<string> anchorGroupKeys,
-        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey)
+        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey,
+        bool includeAssetDetailState)
     {
         var atlasGroupKeys = textParts
             .Where(static part => part.Role == SpineAssetGroupPartRole.Atlas)
@@ -35,6 +36,7 @@ internal static partial class SpineAssetGroupDetector
                     candidate,
                     atlasGroupKeys,
                     assetDetailsByAssetKey,
+                    includeAssetDetailState,
                     out var classifiedPart))
             {
                 continue;
@@ -53,6 +55,7 @@ internal static partial class SpineAssetGroupDetector
         AssetCandidate candidate,
         IReadOnlySet<string> atlasGroupKeys,
         IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey,
+        bool includeAssetDetailState,
         out ClassifiedPart classifiedPart)
     {
         foreach (var path in EnumerateCandidatePaths(candidate.Item))
@@ -64,7 +67,7 @@ internal static partial class SpineAssetGroupDetector
                 classifiedPart = new ClassifiedPart(
                     groupKey,
                     SpineAssetGroupPartRole.Skeleton,
-                    CreatePart(candidate, SpineAssetGroupPartRole.Skeleton, assetDetailsByAssetKey));
+                    CreatePart(candidate, SpineAssetGroupPartRole.Skeleton, assetDetailsByAssetKey, includeAssetDetailState));
                 return true;
             }
         }

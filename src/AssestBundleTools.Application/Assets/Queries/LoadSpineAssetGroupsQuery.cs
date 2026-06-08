@@ -9,4 +9,5 @@ namespace AssestBundleTools.Application.Assets.Queries;
 public sealed record LoadSpineAssetGroupsQuery(
     WorkspaceId WorkspaceId,
     BundleId BundleId,
-    string? SearchKeyword = null);
+    string? SearchKeyword = null,
+    string? WorkspaceDataRootPath = null);

@@ -1,3 +1,5 @@
+using AssestBundleTools.Application.Assets.Services;
+
 namespace AssestBundleTools.Application.Workspace.Services;
 
 /// <summary>
@@ -13,6 +15,9 @@ public interface IWorkspaceDataStoreFactory
     IBundleArtifactStore CreateBundleArtifactStore(string? rootDirectoryPath = null);
 
     IBundleIndexCacheStore CreateBundleIndexCacheStore(string? rootDirectoryPath = null);
+
+    ISpineGroupCatalogCacheStore CreateSpineGroupCatalogCacheStore(string? rootDirectoryPath = null) =>
+        NoOpSpineGroupCatalogCacheStore.Instance;
 
     IPreviewCacheStore CreatePreviewCacheStore(string? rootDirectoryPath = null);
 

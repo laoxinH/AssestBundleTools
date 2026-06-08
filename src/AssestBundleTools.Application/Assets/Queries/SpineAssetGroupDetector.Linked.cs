@@ -14,7 +14,8 @@ internal static partial class SpineAssetGroupDetector
         IReadOnlyList<AssetCandidate> candidates,
         IReadOnlyList<ClassifiedPart> textParts,
         IReadOnlyList<TextureCandidate> textureCandidates,
-        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey)
+        IReadOnlyDictionary<string, AssetDetailsDto>? assetDetailsByAssetKey,
+        bool includeAssetDetailState)
     {
         if (assetDetailsByAssetKey is not { Count: > 0 })
         {
