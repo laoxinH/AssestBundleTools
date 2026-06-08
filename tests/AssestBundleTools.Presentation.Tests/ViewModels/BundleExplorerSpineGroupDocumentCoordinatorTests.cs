@@ -76,7 +76,7 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
     }
 
     [Fact]
-    public async Task ActivateSpineGroupDocumentTabAsync_ShouldRefreshExtractionSummaryFromPane()
+    public async Task ActivateSpineGroupDocumentTabAsync_ShouldNotRefreshOperationProjectionFromPane()
     {
         var context = CreateContext();
         var loader = new TestSpineAssetGroupDetailsLoader
@@ -104,12 +104,32 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
 
         await coordinator.ActivateSpineGroupDocumentTabAsync(groupTab);
 
-        Assert.Equal(2, loader.LoadCallCount);
-        Assert.Equal(extractedAtUtc, groupTab.Item.SkeletonAssets[0].LastExtractedAtUtc);
-        Assert.Equal(
-            ResourceKeys.InspectorChangeSummaryExtractOnlyFormat + ":" +
-            extractedAtUtc.ToLocalTime().ToString("G", CultureInfo.CurrentCulture),
-            groupTab.Inspector.ChangeSummaryText);
+        Assert.Equal(1, loader.LoadCallCount);
+        Assert.Null(groupTab.Item.SkeletonAssets[0].LastExtractedAtUtc);
+        Assert.Equal(ResourceKeys.InspectorChangeSummaryNone, groupTab.Inspector.ChangeSummaryText);
+    }
+
+    [Fact]
+    public async Task ActivateSpineGroupDocumentTabAsync_ShouldPreserveLoadedPreview_WhenPaneSnapshotHasStaleOperationProjection()
+    {
+        var context = CreateContext();
+        var loader = new TestSpineAssetGroupDetailsLoader();
+        var coordinator = CreateCoordinator(context, loader);
+        var paneEntry = CreateSpineGroupEntry("hero", "Hero");
+        var changedGroup = CreateSpineGroupWithTextureReplacement("hero", "Hero");
+        var groupTab = context.HostCoordinator.CreateSpineGroupDocumentTab(changedGroup);
+        groupTab.ApplyDetails(new SpineAssetGroupDetailsDto(changedGroup, [], [], changedGroup.Diagnostics));
+        context.BundleTab.AddSpineGroupTab(groupTab, activate: false);
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.SpineGroups;
+        context.PrimaryPane.ReplaceSpineGroups("ui.ab", [paneEntry], "empty");
+
+        await coordinator.ActivateSpineGroupDocumentTabAsync(groupTab);
+
+        Assert.Equal(0, loader.LoadCallCount);
+        Assert.NotNull(groupTab.Details);
+        Assert.Equal("replacement.png", groupTab.Item.TexturePageAssets[0].FileReplacementSourceFileName);
+        Assert.NotNull(groupTab.Item.TexturePageAssets[0].ChangeRecords);
+        Assert.False(groupTab.Inspector.Preview.IsPreviewLoading);
     }
 
     [Fact]

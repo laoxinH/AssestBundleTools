@@ -170,6 +170,8 @@ RefreshOperationProjectionAsync(workspaceId, affectedTargets, operationIds)
 
 对于 Spine 组，第一步不应等待 animation preview details 完整重载；只要 skeleton / atlas / texture page 组成资产的 `ChangeRecords` 更新，就应立即重投影组级 `变更` 分段。
 
+聚合文档的结构快照与操作投影快照必须分离。左侧列表、标签激活、主窗口与独立窗口之间的文档迁移，只能用列表中的组结构信息修正文档身份、名称、组成资产和诊断结构；不得用列表中可能滞后的提取时间、替换来源或 `ChangeRecords` 覆盖已打开文档的轻量操作投影，也不得因此清空已加载的富预览。操作投影只能通过操作通知后的轻量刷新路径更新。
+
 ## 7. 富预览刷新
 
 富预览刷新继续按资源类型分发：

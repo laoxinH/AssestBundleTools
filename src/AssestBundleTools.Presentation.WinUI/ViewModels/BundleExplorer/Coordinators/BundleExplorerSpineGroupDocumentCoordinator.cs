@@ -422,7 +422,7 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator : IDisposable
         SpineAssetGroupDocumentTabViewModel spineGroupTab,
         SpineAssetGroupDto refreshedGroup)
     {
-        if (SpineAssetGroupSnapshotComparer.HasSameSnapshot(spineGroupTab.Item, refreshedGroup))
+        if (SpineAssetGroupSnapshotComparer.HasSameStructureSnapshot(spineGroupTab.Item, refreshedGroup))
         {
             return;
         }

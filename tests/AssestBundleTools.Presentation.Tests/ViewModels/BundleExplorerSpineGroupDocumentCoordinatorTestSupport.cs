@@ -116,6 +116,38 @@ public sealed partial class BundleExplorerSpineGroupDocumentCoordinatorTests
             Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>());
     }
 
+    private static SpineAssetGroupDto CreateSpineGroupWithTextureReplacement(
+        string groupId,
+        string displayName)
+    {
+        var group = CreateSpineGroup(groupId, displayName);
+        var texturePart = group.TexturePageAssets[0];
+        return group with
+        {
+            TexturePageAssets =
+            [
+                texturePart with
+                {
+                    FileReplacementSourceFileName = "replacement.png",
+                    FileReplacementSourcePath = @"C:\workspace\replacement.png",
+                    FileReplacementSourceAssetType = AssetType.Texture2D,
+                    ChangeRecords =
+                    [
+                        new AssetChangeRecordDto(
+                            AssetChangeRecordKind.FileReplacement,
+                            CreatedAtUtc: DateTimeOffset.UnixEpoch,
+                            SourceFileName: "replacement.png",
+                            SourceFilePath: @"C:\workspace\replacement.png",
+                            OperationId: "replace-texture",
+                            IsEffectiveReplacement: true,
+                            TargetBundleId: texturePart.BundleId.Value,
+                            TargetAssetId: texturePart.AssetId.Value)
+                    ]
+                }
+            ]
+        };
+    }
+
     private static AssetPreviewDto CreateImagePreview(
         SpineAssetGroupPartDto texturePageAsset,
         byte[]? binaryContent = null)
