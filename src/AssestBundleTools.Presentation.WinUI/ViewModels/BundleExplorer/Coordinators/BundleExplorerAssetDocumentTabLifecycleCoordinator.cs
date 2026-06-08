@@ -169,6 +169,8 @@ internal sealed class BundleExplorerAssetDocumentTabLifecycleCoordinator
     {
         try
         {
+            await Task.Yield();
+
             if (!ownerTab.AssetTabs.Contains(assetTab))
             {
                 return;

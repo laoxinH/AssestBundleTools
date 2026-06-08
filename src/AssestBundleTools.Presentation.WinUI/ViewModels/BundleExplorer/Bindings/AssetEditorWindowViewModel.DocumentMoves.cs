@@ -187,15 +187,16 @@ public sealed partial class AssetEditorWindowViewModel
         return ActivateDocumentTabAsync(documentTab);
     }
 
-    public async Task CompleteExternalAssetDocumentMoveAsync()
+    public Task CompleteExternalAssetDocumentMoveAsync()
     {
         if (!DocumentGroup.HasDocumentTabs)
         {
             EmptyGroupRequested?.Invoke(this, EventArgs.Empty);
-            return;
+            return Task.CompletedTask;
         }
 
-        await ActivateDocumentTabAsync(DocumentGroup.ActiveDocumentTab);
+        QueueFallbackDocumentActivation();
+        return Task.CompletedTask;
     }
 
     private void QueueFallbackDocumentActivation()
@@ -213,6 +214,8 @@ public sealed partial class AssetEditorWindowViewModel
 
         try
         {
+            await Task.Yield();
+
             if (!DocumentGroup.DocumentTabs.Contains(documentTab))
             {
                 return;

@@ -204,31 +204,30 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator : IDisposable
         _notifyActionStates();
     }
 
-    public async Task<SpineAssetGroupDocumentTabViewModel?> DetachSpineGroupDocumentTabForExternalHostAsync(
+    public Task<SpineAssetGroupDocumentTabViewModel?> DetachSpineGroupDocumentTabForExternalHostAsync(
         SpineAssetGroupDocumentTabViewModel? spineGroupTab)
     {
         if (spineGroupTab is null || _documentWorkspace.ActiveBundleTab is null)
         {
-            return null;
+            return Task.FromResult<SpineAssetGroupDocumentTabViewModel?>(null);
         }
 
         var ownerTab = _documentWorkspace.ActiveBundleTab;
         var wasActive = ReferenceEquals(ownerTab.ActiveSpineGroupTab, spineGroupTab);
         if (!ownerTab.DetachSpineGroupTab(spineGroupTab))
         {
-            return null;
+            return Task.FromResult<SpineAssetGroupDocumentTabViewModel?>(null);
         }
 
         _detailsRefreshScheduler.Cancel(spineGroupTab);
 
         if (wasActive && ownerTab.ActiveSpineGroupTab is not null)
         {
-            await SetActiveSpineGroupDocumentTabAsync(
-                ownerTab,
-                ownerTab.ActiveSpineGroupTab,
-                synchronizePaneSelection: true);
+            QueueFallbackSpineGroupDocumentActivation(ownerTab, ownerTab.ActiveSpineGroupTab);
+            return Task.FromResult<SpineAssetGroupDocumentTabViewModel?>(spineGroupTab);
         }
-        else if (wasActive)
+
+        if (wasActive)
         {
             _primaryPane.SelectedSpineGroup = null;
         }
@@ -236,7 +235,7 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator : IDisposable
         _documentWorkspace.NotifyAssetDocumentHostStateChanged();
         _requestWorkspaceBrowserStatePersistence();
         _notifyActionStates();
-        return spineGroupTab;
+        return Task.FromResult<SpineAssetGroupDocumentTabViewModel?>(spineGroupTab);
     }
 
     public Task RestoreDetachedSpineGroupDocumentTabAsync(
@@ -451,6 +450,40 @@ internal sealed class BundleExplorerSpineGroupDocumentCoordinator : IDisposable
         bundleTab.SetActiveSpineGroupTab(null);
         _documentWorkspace.NotifyAssetDocumentHostStateChanged();
         _notifyActionStates();
+    }
+
+    private void QueueFallbackSpineGroupDocumentActivation(
+        BundleDocumentTabViewModel ownerTab,
+        SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        _documentWorkspace.NotifyAssetDocumentHostStateChanged();
+        _requestWorkspaceBrowserStatePersistence();
+        _notifyActionStates();
+        _ = ActivateFallbackSpineGroupDocumentAsync(ownerTab, spineGroupTab);
+    }
+
+    private async Task ActivateFallbackSpineGroupDocumentAsync(
+        BundleDocumentTabViewModel ownerTab,
+        SpineAssetGroupDocumentTabViewModel spineGroupTab)
+    {
+        try
+        {
+            await Task.Yield();
+
+            if (!ownerTab.SpineGroupTabs.Contains(spineGroupTab))
+            {
+                return;
+            }
+
+            await SetActiveSpineGroupDocumentTabAsync(
+                ownerTab,
+                spineGroupTab,
+                synchronizePaneSelection: true);
+        }
+        catch
+        {
+            // Spine 组窗口化应先完成；源宿主相邻组刷新失败留给后续激活恢复。
+        }
     }
 
     private void BeginSpineGroupDocumentStateSynchronization()

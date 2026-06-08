@@ -404,7 +404,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
 
         if (wasActive && ownerTab.ActiveDocumentTab is { } activeDocumentTab)
         {
-            QueueFallbackDocumentActivation(activeDocumentTab);
+            QueueFallbackDocumentActivation(ownerTab, activeDocumentTab);
             return Task.FromResult<AssetDocumentTabItemViewModel?>(documentTab);
         }
 
@@ -418,18 +418,24 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         return Task.FromResult<AssetDocumentTabItemViewModel?>(documentTab);
     }
 
-    private void QueueFallbackDocumentActivation(AssetDocumentTabItemViewModel documentTab)
+    private void QueueFallbackDocumentActivation(
+        BundleDocumentTabViewModel ownerTab,
+        AssetDocumentTabItemViewModel documentTab)
     {
         _documentWorkspace.NotifyAssetDocumentHostStateChanged();
         _requestWorkspaceBrowserStatePersistence();
-        _ = ActivateFallbackDocumentTabAsync(documentTab);
+        _ = ActivateFallbackDocumentTabAsync(ownerTab, documentTab);
     }
 
-    private async Task ActivateFallbackDocumentTabAsync(AssetDocumentTabItemViewModel documentTab)
+    private async Task ActivateFallbackDocumentTabAsync(
+        BundleDocumentTabViewModel ownerTab,
+        AssetDocumentTabItemViewModel documentTab)
     {
         try
         {
-            if (ActiveBundleTab is null || !ActiveBundleTab.DocumentTabs.Contains(documentTab))
+            await Task.Yield();
+
+            if (!ownerTab.DocumentTabs.Contains(documentTab))
             {
                 return;
             }
