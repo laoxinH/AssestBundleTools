@@ -89,6 +89,23 @@ public sealed class WorkspaceBatchExtractionDialogViewModelTests
     }
 
     [Fact]
+    public void SetPreviewLoading_ShouldDisableSubmissionUntilPreviewCompletes()
+    {
+        var viewModel = CreateViewModel(new BundleId("bundle-ui"));
+
+        viewModel.SetPreviewLoading();
+
+        Assert.False(viewModel.CanSubmit);
+        viewModel.VisibleBundles.Single(bundle => bundle.BundleId.Equals(new BundleId("bundle-ui"))).IsSelected = false;
+        viewModel.VisibleBundles.Single(bundle => bundle.BundleId.Equals(new BundleId("bundle-spine"))).IsSelected = true;
+        Assert.Equal(new[] { new BundleId("bundle-spine") }, viewModel.SelectedBundleIds);
+
+        viewModel.ApplyPreview(CreatePreview());
+
+        Assert.True(viewModel.CanSubmit);
+    }
+
+    [Fact]
     public void ApplyPreview_ShouldRebuildCategoryOptionsWithCandidateCounts()
     {
         var viewModel = CreateViewModel(new BundleId("bundle-ui"));

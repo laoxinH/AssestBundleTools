@@ -118,6 +118,7 @@ public sealed class WorkspaceBatchExtractionDialogViewModel : ObservableObject
             if (SetProperty(ref _isPreviewLoading, value))
             {
                 OnPropertyChanged(nameof(PreviewLoadingVisibility));
+                OnPropertyChanged(nameof(CanSubmit));
             }
         }
     }
@@ -131,6 +132,7 @@ public sealed class WorkspaceBatchExtractionDialogViewModel : ObservableObject
         VisibleBundles.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
     public bool CanSubmit =>
+        !IsPreviewLoading &&
         SelectedBundleIds.Count > 0 &&
         SelectedCategories.Count > 0;
 

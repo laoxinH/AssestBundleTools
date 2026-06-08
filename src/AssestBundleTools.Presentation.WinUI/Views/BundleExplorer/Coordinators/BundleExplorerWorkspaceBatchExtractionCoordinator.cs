@@ -19,6 +19,8 @@ public sealed partial class BundleExplorerPage
 {
     private sealed class BundleExplorerWorkspaceBatchExtractionCoordinator
     {
+        private static readonly TimeSpan PreviewRefreshDebounceDelay = TimeSpan.FromMilliseconds(180);
+
         private readonly BundleExplorerPage _owner;
         private readonly IWorkspaceBatchOperationsGateway _workspaceBatchOperationsGateway;
         private readonly IWorkspaceContextService _workspaceContextService;
@@ -163,6 +165,8 @@ public sealed partial class BundleExplorerPage
             try
             {
                 var cancellationToken = cancellationSource.Token;
+                await Task.Delay(PreviewRefreshDebounceDelay, cancellationToken);
+
                 var selectedBundleIds = viewModel.SelectedBundleIds;
                 if (selectedBundleIds.Count == 0)
                 {
