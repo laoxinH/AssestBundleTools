@@ -56,8 +56,8 @@
         <Grid
             Grid.Row="1"
             MinHeight="0"
-            Padding="44,28,44,32"
-            RowSpacing="18">
+            Padding="44,24,44,32"
+            RowSpacing="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -68,7 +68,7 @@
                 <StackPanel Spacing="10">
                     <TextBlock
                         x:Name="WindowTitleText"
-                        FontSize="38"
+                        FontSize="40"
                         FontWeight="SemiBold"
                         TextWrapping="WrapWholeWords" />
                     <TextBlock
@@ -95,12 +95,12 @@
 
             <Border
                 Grid.Row="2"
-                Padding="20"
+                Padding="18"
                 Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="8">
-                <Grid ColumnSpacing="20">
+                <Grid ColumnSpacing="18">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
@@ -164,6 +164,7 @@
                         Grid.Column="2"
                         MaxWidth="320"
                         MinWidth="0"
+                        FontSize="14"
                         VerticalAlignment="Center"
                         IsChecked="{Binding UseWorkspaceExtractionDirectory, Mode=TwoWay}" />
 
@@ -171,14 +172,16 @@
                         x:Name="CancelButton"
                         Grid.Column="3"
                         Width="142"
-                        MinHeight="52"
+                        MinHeight="48"
+                        FontSize="14"
                         VerticalAlignment="Center"
                         Click="OnCancelButtonClick" />
                     <Button
                         x:Name="StartExtractionButton"
                         Grid.Column="4"
-                        Width="204"
-                        MinHeight="52"
+                        Width="198"
+                        MinHeight="48"
+                        FontSize="14"
                         VerticalAlignment="Center"
                         Click="OnStartExtractionButtonClick"
                         IsEnabled="{Binding CanSubmit}"

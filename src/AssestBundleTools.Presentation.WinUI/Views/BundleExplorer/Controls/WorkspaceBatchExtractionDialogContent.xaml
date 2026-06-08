@@ -30,15 +30,16 @@
             <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="30,28" />
+            <Setter Property="Padding" Value="18,28" />
         </Style>
         <Style
             x:Key="BatchExtractionCompactButtonStyle"
             TargetType="Button">
-            <Setter Property="MinHeight" Value="44" />
-            <Setter Property="MinWidth" Value="100" />
-            <Setter Property="Padding" Value="18,0" />
+            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="MinWidth" Value="90" />
+            <Setter Property="Padding" Value="16,0" />
             <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="FontSize" Value="14" />
         </Style>
     </UserControl.Resources>
 
@@ -60,7 +61,7 @@
             Style="{StaticResource BatchExtractionPanelCardStyle}">
             <Grid
                 MinHeight="0"
-                RowSpacing="16">
+                RowSpacing="14">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -101,7 +102,7 @@
                 <Grid Grid.Row="1">
                     <TextBox
                         x:Name="BundleSearchTextBox"
-                        Height="52"
+                        Height="50"
                         Padding="48,0,16,0"
                         TextChanged="OnBundleSearchTextChanged" />
                     <FontIcon
@@ -160,6 +161,7 @@
                                                 TextTrimming="CharacterEllipsis" />
                                             <TextBlock
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                FontSize="13"
                                                 Text="{Binding LogicalPath}"
                                                 TextTrimming="CharacterEllipsis" />
                                         </StackPanel>
@@ -208,7 +210,7 @@
                 Style="{StaticResource BatchExtractionPanelCardStyle}">
                 <Grid
                     MinHeight="0"
-                    RowSpacing="16">
+                    RowSpacing="14">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
