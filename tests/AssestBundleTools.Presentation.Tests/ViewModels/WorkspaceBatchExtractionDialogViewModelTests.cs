@@ -96,6 +96,9 @@ public sealed class WorkspaceBatchExtractionDialogViewModelTests
         viewModel.ApplyPreview(CreatePreview());
 
         Assert.Equal(3, viewModel.CategoryOptions.Count);
+        Assert.Equal(
+            $"{ResourceKeys.WorkspaceBatchExtractionDialogHeaderSummaryFormat}:1|3|{ResourceKeys.CommonByteSizeCompactBytesFormat}:0",
+            viewModel.HeaderSummaryText);
         var textureOption = viewModel.CategoryOptions.Single(
             option => option.Category.AssetType == AssetType.Texture2D);
         Assert.Equal(2, textureOption.CandidateCount);

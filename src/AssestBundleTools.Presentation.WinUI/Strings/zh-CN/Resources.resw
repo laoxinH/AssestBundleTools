@@ -585,6 +585,12 @@
   <data name="WorkspaceBatchExtractionDialog.Title" xml:space="preserve">
     <value>批量提取</value>
   </data>
+  <data name="WorkspaceBatchExtractionDialog.Header.Hint" xml:space="preserve">
+    <value>选择资源包与资源类型，确认后开始导出。</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Header.Summary.Format" xml:space="preserve">
+    <value>已选择 {0} 个资源包 · {1} 项资源 · 约 {2}</value>
+  </data>
   <data name="WorkspaceBatchExtractionDialog.PrimaryButton" xml:space="preserve">
     <value>开始提取</value>
   </data>
@@ -622,7 +628,7 @@
     <value>选择全部，或手动组合多个可导出类别。</value>
   </data>
   <data name="WorkspaceBatchExtractionDialog.Category.All" xml:space="preserve">
-    <value>全部</value>
+    <value>全部资源</value>
   </data>
   <data name="WorkspaceBatchExtractionDialog.Category.Texture2D" xml:space="preserve">
     <value>Texture2D</value>

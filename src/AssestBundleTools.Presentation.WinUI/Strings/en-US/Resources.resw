@@ -585,6 +585,12 @@
   <data name="WorkspaceBatchExtractionDialog.Title" xml:space="preserve">
     <value>Batch Extract</value>
   </data>
+  <data name="WorkspaceBatchExtractionDialog.Header.Hint" xml:space="preserve">
+    <value>Select bundles and asset types, then start the export.</value>
+  </data>
+  <data name="WorkspaceBatchExtractionDialog.Header.Summary.Format" xml:space="preserve">
+    <value>Selected {0} bundles · {1} assets · about {2}</value>
+  </data>
   <data name="WorkspaceBatchExtractionDialog.PrimaryButton" xml:space="preserve">
     <value>Start Extraction</value>
   </data>
@@ -622,7 +628,7 @@
     <value>Choose all, or combine several export categories manually.</value>
   </data>
   <data name="WorkspaceBatchExtractionDialog.Category.All" xml:space="preserve">
-    <value>All</value>
+    <value>All Assets</value>
   </data>
   <data name="WorkspaceBatchExtractionDialog.Category.Texture2D" xml:space="preserve">
     <value>Texture2D</value>

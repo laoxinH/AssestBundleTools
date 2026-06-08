@@ -16,10 +16,10 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 /// </summary>
 public sealed partial class WorkspaceBatchExtractionWindow : Window
 {
-    private const int InitialWidth = 1120;
-    private const int InitialHeight = 760;
-    private const int MinimumWidth = 980;
-    private const int MinimumHeight = 700;
+    private const int InitialWidth = 1536;
+    private const int InitialHeight = 1024;
+    private const int MinimumWidth = 1180;
+    private const int MinimumHeight = 780;
     private const int SwShow = 5;
     private const int SwRestore = 9;
     private readonly WorkspaceBatchExtractionDialogContent _content;
@@ -117,6 +117,7 @@ public sealed partial class WorkspaceBatchExtractionWindow : Window
         Title = title;
         TitleBarText.Text = title;
         WindowTitleText.Text = title;
+        WindowSubtitleText.Text = UiText.Get(ResourceKeys.WorkspaceBatchExtractionDialogHeaderHint);
         PlanSummaryTitleText.Text = UiText.Get(ResourceKeys.WorkspaceBatchExtractionDialogPreviewSectionTitle);
         UseWorkspaceExtractionDirectoryCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceBatchExtractionDialogUseWorkspaceExtractionDirectoryLabel);
         ToolTipService.SetToolTip(

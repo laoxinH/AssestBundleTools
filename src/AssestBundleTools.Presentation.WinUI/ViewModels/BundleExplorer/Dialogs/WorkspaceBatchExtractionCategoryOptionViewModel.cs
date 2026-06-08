@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
+using Microsoft.UI.Xaml;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
 
@@ -32,6 +33,9 @@ public sealed class WorkspaceBatchExtractionCategoryOptionViewModel : Observable
     public int CandidateCount { get; }
 
     public bool IsAllCategory => Category.Kind == WorkspaceBatchExtractionCategoryKind.All;
+
+    public Visibility AllCategoryDividerVisibility =>
+        IsAllCategory ? Visibility.Visible : Visibility.Collapsed;
 
     public bool IsSelected
     {
