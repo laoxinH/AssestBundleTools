@@ -80,44 +80,44 @@ public sealed partial class AssetEditorWindowViewModel
         return false;
     }
 
-    public async Task<AssetDocumentTabViewModel?> DetachAssetDocumentTabForExternalHostAsync(
+    public Task<AssetDocumentTabViewModel?> DetachAssetDocumentTabForExternalHostAsync(
         AssetDocumentTabViewModel? assetTab)
     {
         if (assetTab is null || IsBusy || !DocumentGroup.DetachAssetTab(assetTab))
         {
-            return null;
+            return Task.FromResult<AssetDocumentTabViewModel?>(null);
         }
 
         if (DocumentGroup.HasDocumentTabs)
         {
-            await ActivateDocumentTabAsync(DocumentGroup.ActiveDocumentTab);
+            QueueFallbackDocumentActivation();
         }
         else
         {
             SyncActiveDocumentState();
         }
 
-        return assetTab;
+        return Task.FromResult<AssetDocumentTabViewModel?>(assetTab);
     }
 
-    public async Task<AssetDocumentTabItemViewModel?> DetachDocumentTabForExternalHostAsync(
+    public Task<AssetDocumentTabItemViewModel?> DetachDocumentTabForExternalHostAsync(
         AssetDocumentTabItemViewModel? documentTab)
     {
         if (documentTab is null || IsBusy || !DocumentGroup.DetachDocumentTab(documentTab))
         {
-            return null;
+            return Task.FromResult<AssetDocumentTabItemViewModel?>(null);
         }
 
         if (DocumentGroup.HasDocumentTabs)
         {
-            await ActivateDocumentTabAsync(DocumentGroup.ActiveDocumentTab);
+            QueueFallbackDocumentActivation();
         }
         else
         {
             SyncActiveDocumentState();
         }
 
-        return documentTab;
+        return Task.FromResult<AssetDocumentTabItemViewModel?>(documentTab);
     }
 
     public Task<AssetDocumentGroupTransfer?> DetachAssetDocumentGroupForExternalHostAsync()
@@ -196,5 +196,33 @@ public sealed partial class AssetEditorWindowViewModel
         }
 
         await ActivateDocumentTabAsync(DocumentGroup.ActiveDocumentTab);
+    }
+
+    private void QueueFallbackDocumentActivation()
+    {
+        SyncActiveDocumentState();
+        _ = ActivateFallbackDocumentTabAsync(DocumentGroup.ActiveDocumentTab);
+    }
+
+    private async Task ActivateFallbackDocumentTabAsync(AssetDocumentTabItemViewModel? documentTab)
+    {
+        if (documentTab is null)
+        {
+            return;
+        }
+
+        try
+        {
+            if (!DocumentGroup.DocumentTabs.Contains(documentTab))
+            {
+                return;
+            }
+
+            await ActivateDocumentTabAsync(documentTab);
+        }
+        catch
+        {
+            // 标签迁出已完成；剩余标签刷新失败不能阻塞窗口移动。
+        }
     }
 }

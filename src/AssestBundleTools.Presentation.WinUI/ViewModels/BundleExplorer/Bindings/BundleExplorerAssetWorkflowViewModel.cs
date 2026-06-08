@@ -387,25 +387,25 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         AssetDocumentTabViewModel? assetTab) =>
         _assetDocumentTabCoordinator.DetachAssetDocumentTabForExternalHostAsync(assetTab);
 
-    public async Task<AssetDocumentTabItemViewModel?> DetachDocumentTabForExternalHostAsync(
+    public Task<AssetDocumentTabItemViewModel?> DetachDocumentTabForExternalHostAsync(
         AssetDocumentTabItemViewModel? documentTab)
     {
         if (documentTab is null || ActiveBundleTab is null || !ActiveBundleTab.DocumentTabs.Contains(documentTab))
         {
-            return null;
+            return Task.FromResult<AssetDocumentTabItemViewModel?>(null);
         }
 
         var ownerTab = ActiveBundleTab;
         var wasActive = ReferenceEquals(ownerTab.ActiveDocumentTab, documentTab);
         if (!ownerTab.DetachDocumentTab(documentTab))
         {
-            return null;
+            return Task.FromResult<AssetDocumentTabItemViewModel?>(null);
         }
 
         if (wasActive && ownerTab.ActiveDocumentTab is { } activeDocumentTab)
         {
-            await ActivateDocumentTabAsync(activeDocumentTab);
-            return documentTab;
+            QueueFallbackDocumentActivation(activeDocumentTab);
+            return Task.FromResult<AssetDocumentTabItemViewModel?>(documentTab);
         }
 
         if (wasActive)
@@ -415,7 +415,31 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
 
         _documentWorkspace.NotifyAssetDocumentHostStateChanged();
         _requestWorkspaceBrowserStatePersistence();
-        return documentTab;
+        return Task.FromResult<AssetDocumentTabItemViewModel?>(documentTab);
+    }
+
+    private void QueueFallbackDocumentActivation(AssetDocumentTabItemViewModel documentTab)
+    {
+        _documentWorkspace.NotifyAssetDocumentHostStateChanged();
+        _requestWorkspaceBrowserStatePersistence();
+        _ = ActivateFallbackDocumentTabAsync(documentTab);
+    }
+
+    private async Task ActivateFallbackDocumentTabAsync(AssetDocumentTabItemViewModel documentTab)
+    {
+        try
+        {
+            if (ActiveBundleTab is null || !ActiveBundleTab.DocumentTabs.Contains(documentTab))
+            {
+                return;
+            }
+
+            await ActivateDocumentTabAsync(documentTab);
+        }
+        catch
+        {
+            // 窗口化迁出应先完成；剩余标签刷新失败留给后续用户激活恢复。
+        }
     }
 
     public Task<AssetDocumentGroupTransfer?> DetachActiveAssetDocumentGroupForExternalHostAsync() =>

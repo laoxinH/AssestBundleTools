@@ -271,6 +271,57 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
     }
 
     [Fact]
+    public async Task DetachAssetDocumentTabForExternalHostAsync_ShouldNotWaitForFallbackTabDetailsLoad()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-ui");
+        var firstAssetId = new AssetId("asset-current");
+        var fallbackAssetId = new AssetId("asset-fallback");
+        var context = CreateCoordinatorContext(workspaceId, "DetachDoesNotWait");
+        var fallbackDetails = CreateAssetDetails(workspaceId, bundleId, fallbackAssetId);
+        var fallbackOpenCanFinish = new TaskCompletionSource<Result<AssetPaneContextDto>>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            OpenAssetInPaneHandler = command => command.AssetId.Equals(fallbackAssetId)
+                ? fallbackOpenCanFinish.Task
+                : Task.FromResult(Result<AssetPaneContextDto>.Success(new AssetPaneContextDto(
+                    command.WorkspaceId,
+                    command.PaneId,
+                    command.BundleId,
+                    command.AssetId,
+                    "Asset",
+                    WorkspaceMode.SinglePane))),
+            GetAssetDetailsHandler = query => Task.FromResult(Result<AssetDetailsDto>.Success(fallbackDetails)),
+            GetAssetPreviewHandler = query => Task.FromResult(CreateSummaryPreviewResult(query))
+        };
+        var coordinator = CreateCoordinator(context, inspectionGateway);
+        var currentTab = context.HostCoordinator.CreateAssetDocumentTab(bundleId, firstAssetId, "Current");
+        var fallbackTab = context.HostCoordinator.CreateAssetDocumentTab(bundleId, fallbackAssetId, "Fallback");
+        currentTab.ApplyDetails(CreateAssetDetails(workspaceId, bundleId, firstAssetId));
+        context.BundleTab.AddAssetTab(currentTab, activate: true);
+        context.BundleTab.AddAssetTab(fallbackTab, activate: false);
+
+        var detachTask = coordinator.DetachAssetDocumentTabForExternalHostAsync(currentTab);
+        var completedTask = await Task.WhenAny(detachTask, Task.Delay(250));
+
+        Assert.Same(detachTask, completedTask);
+        Assert.Same(currentTab, await detachTask);
+        Assert.DoesNotContain(currentTab, context.BundleTab.AssetTabs);
+        Assert.Same(fallbackTab, context.BundleTab.ActiveAssetTab);
+        Assert.Null(fallbackTab.Details);
+
+        fallbackOpenCanFinish.SetResult(Result<AssetPaneContextDto>.Success(new AssetPaneContextDto(
+            workspaceId,
+            fallbackTab.PaneId,
+            bundleId,
+            fallbackAssetId,
+            "Fallback",
+            WorkspaceMode.SinglePane)));
+        await WaitUntilAsync(() => fallbackTab.Details is not null);
+    }
+
+    [Fact]
     public async Task RefreshAssetDocumentTabDetailsAsync_ShouldReloadPreview_WhenOperationProjectionAlreadyUpdatedDetails()
     {
         var workspaceId = WorkspaceId.New();

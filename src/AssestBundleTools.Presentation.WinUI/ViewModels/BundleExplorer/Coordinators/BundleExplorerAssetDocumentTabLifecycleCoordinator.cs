@@ -118,41 +118,68 @@ internal sealed class BundleExplorerAssetDocumentTabLifecycleCoordinator
         return Task.CompletedTask;
     }
 
-    public async Task<AssetDocumentTabViewModel?> DetachAssetDocumentTabForExternalHostAsync(
+    public Task<AssetDocumentTabViewModel?> DetachAssetDocumentTabForExternalHostAsync(
         AssetDocumentTabViewModel? assetTab)
     {
         if (assetTab is null || _documentWorkspace.ActiveBundleTab is null)
         {
-            return null;
+            return Task.FromResult<AssetDocumentTabViewModel?>(null);
         }
 
         var ownerTab = _documentWorkspace.ActiveBundleTab;
         if (!ownerTab.AssetTabs.Contains(assetTab))
         {
-            return null;
+            return Task.FromResult<AssetDocumentTabViewModel?>(null);
         }
 
         var wasActive = ReferenceEquals(ownerTab.ActiveAssetTab, assetTab);
         if (!ownerTab.DetachAssetTab(assetTab))
         {
-            return null;
+            return Task.FromResult<AssetDocumentTabViewModel?>(null);
         }
 
         if (!wasActive)
         {
             NotifyHostChangedAndPersist();
-            return assetTab;
+            return Task.FromResult<AssetDocumentTabViewModel?>(assetTab);
         }
 
         if (ownerTab.ActiveAssetTab is not null)
         {
-            await _setActiveAssetDocumentTabAsync(ownerTab, ownerTab.ActiveAssetTab, true, false);
-            return assetTab;
+            QueueFallbackAssetDocumentActivation(ownerTab, ownerTab.ActiveAssetTab);
+            return Task.FromResult<AssetDocumentTabViewModel?>(assetTab);
         }
 
         _primaryPane.ClearSelection();
         NotifyHostChangedAndPersist();
-        return assetTab;
+        return Task.FromResult<AssetDocumentTabViewModel?>(assetTab);
+    }
+
+    private void QueueFallbackAssetDocumentActivation(
+        BundleDocumentTabViewModel ownerTab,
+        AssetDocumentTabViewModel assetTab)
+    {
+        NotifyHostChangedAndPersist();
+        _ = ActivateFallbackAssetDocumentAsync(ownerTab, assetTab);
+    }
+
+    private async Task ActivateFallbackAssetDocumentAsync(
+        BundleDocumentTabViewModel ownerTab,
+        AssetDocumentTabViewModel assetTab)
+    {
+        try
+        {
+            if (!ownerTab.AssetTabs.Contains(assetTab))
+            {
+                return;
+            }
+
+            await _setActiveAssetDocumentTabAsync(ownerTab, assetTab, true, false);
+        }
+        catch
+        {
+            // 迁出标签的宿主状态已经完成同步；剩余标签刷新失败不应阻塞窗口化。
+        }
     }
 
     public Task<AssetDocumentGroupTransfer?> DetachActiveAssetDocumentGroupForExternalHostAsync()
