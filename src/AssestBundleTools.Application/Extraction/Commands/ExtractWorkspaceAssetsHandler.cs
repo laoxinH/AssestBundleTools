@@ -75,6 +75,7 @@ public sealed class ExtractWorkspaceAssetsHandler : ICommandHandler<ExtractWorks
             _loadSpineAssetGroupsHandler,
             command.WorkspaceId,
             plan.SuggestedOutputDirectory,
+            command.WorkspaceDataRootPath,
             plan.BundleScopes.Select(static scope => (scope.BundleId, scope.BundleDisplayName)),
             plan.SelectedCategories,
             cancellationToken);

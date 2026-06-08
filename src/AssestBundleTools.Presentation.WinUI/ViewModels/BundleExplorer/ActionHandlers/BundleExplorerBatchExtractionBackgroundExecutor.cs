@@ -131,6 +131,48 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
         }
     }
 
+    public async Task<Result<AssetExtractionResultDto>> ExtractAssetAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        string displayName,
+        ExtractAssetCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(workspaceSummary);
+        ArgumentNullException.ThrowIfNull(command);
+
+        using var notificationBatch = _operationChangeNotifier?.BeginNotificationBatch();
+
+        try
+        {
+            return await _backgroundWorkScheduler.RunAsync(
+                new BackgroundWorkRequest<Result<AssetExtractionResultDto>>(
+                    BackgroundWorkProfile.BatchExtraction,
+                    async context =>
+                    {
+                        context.Progress.ReportProgress(0, 1, displayName);
+                        var result = await _workspaceAssetOperationGateway.ExtractAssetAsync(
+                            command,
+                            context.CancellationToken);
+                        context.Progress.ReportProgress(1, 1, displayName);
+                        return result;
+                    })
+                {
+                    SemanticKind = BackgroundWorkSemanticKind.VisibleOutput,
+                    Priority = BackgroundWorkPriority.Visible,
+                    WorkspaceId = workspaceSummary.WorkspaceId.Value,
+                    WorkspaceKey = workspaceSummary.WorkspaceKey,
+                    StatusTitle = _localizationService.GetRequiredString(ResourceKeys.BundleExplorerStatusExtractSelectedAssets),
+                    TotalCount = 1,
+                    CanCancel = true
+                },
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return Result<AssetExtractionResultDto>.Cancelled();
+        }
+    }
+
     public async Task<BundleExplorerBatchSpineGroupExtractionExecutionResult> ExtractSpineGroupsAsync(
         WorkspaceSummaryDto workspaceSummary,
         IReadOnlyList<SpineAssetGroupEntryViewModel> selectedEntries,
@@ -222,6 +264,48 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
                 Array.Empty<SpineAssetGroupExtractionResultDto>(),
                 Array.Empty<IReadOnlyList<AppError>>(),
                 IsCancelled: true);
+        }
+    }
+
+    public async Task<Result<SpineAssetGroupExtractionResultDto>> ExtractSpineGroupAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        string displayName,
+        ExtractSpineAssetGroupCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(workspaceSummary);
+        ArgumentNullException.ThrowIfNull(command);
+
+        using var notificationBatch = _operationChangeNotifier?.BeginNotificationBatch();
+
+        try
+        {
+            return await _backgroundWorkScheduler.RunAsync(
+                new BackgroundWorkRequest<Result<SpineAssetGroupExtractionResultDto>>(
+                    BackgroundWorkProfile.BatchExtraction,
+                    async context =>
+                    {
+                        context.Progress.ReportProgress(0, 1, displayName);
+                        var result = await _workspaceAssetOperationGateway.ExtractSpineAssetGroupAsync(
+                            command,
+                            context.CancellationToken);
+                        context.Progress.ReportProgress(1, 1, displayName);
+                        return result;
+                    })
+                {
+                    SemanticKind = BackgroundWorkSemanticKind.VisibleOutput,
+                    Priority = BackgroundWorkPriority.Visible,
+                    WorkspaceId = workspaceSummary.WorkspaceId.Value,
+                    WorkspaceKey = workspaceSummary.WorkspaceKey,
+                    StatusTitle = _localizationService.GetRequiredString(ResourceKeys.BundleExplorerStatusExtractSelectedSpineGroups),
+                    TotalCount = 1,
+                    CanCancel = true
+                },
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return Result<SpineAssetGroupExtractionResultDto>.Cancelled();
         }
     }
 

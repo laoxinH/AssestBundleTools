@@ -68,6 +68,10 @@ internal static partial class ApplicationTestSuite
             ExtractionWorkflowHandlerTests.GetWorkspaceBatchExtractionPreviewHandler_ShouldIncludeSpineGroups_WhenAllCategoryIsSelected);
         await RunTestAsync(
             failures,
+            nameof(ExtractionWorkflowHandlerTests.GetWorkspaceBatchExtractionPreviewHandler_ShouldPassWorkspaceDataRootPath_ToSpinePlanner),
+            ExtractionWorkflowHandlerTests.GetWorkspaceBatchExtractionPreviewHandler_ShouldPassWorkspaceDataRootPath_ToSpinePlanner);
+        await RunTestAsync(
+            failures,
             nameof(ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldRespectSelectedBundlesAndCategories),
             ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldRespectSelectedBundlesAndCategories);
         await RunTestAsync(
@@ -80,6 +84,10 @@ internal static partial class ApplicationTestSuite
             ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldExtractSpineGroups_WhenAllCategoryIsSelected);
         await RunTestAsync(
             failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldPassWorkspaceDataRootPath_ToSpinePlanner),
+            ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldPassWorkspaceDataRootPath_ToSpinePlanner);
+        await RunTestAsync(
+            failures,
             nameof(ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldExtractBundlesInParallel_AndKeepSameBundleSequential),
             ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldExtractBundlesInParallel_AndKeepSameBundleSequential);
         await RunTestAsync(
@@ -90,5 +98,9 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(ExtractionWorkflowHandlerTests.ExtractSpineAssetGroupHandler_ShouldExtractSkeletonAtlasTextureAndAlphaPages),
             ExtractionWorkflowHandlerTests.ExtractSpineAssetGroupHandler_ShouldExtractSkeletonAtlasTextureAndAlphaPages);
+        await RunTestAsync(
+            failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractSpineAssetGroupHandler_ShouldUseExtractionPlanDetailsMode),
+            ExtractionWorkflowHandlerTests.ExtractSpineAssetGroupHandler_ShouldUseExtractionPlanDetailsMode);
     }
 }

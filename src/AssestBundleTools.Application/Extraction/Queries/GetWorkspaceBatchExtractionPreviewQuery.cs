@@ -12,5 +12,6 @@ public sealed record GetWorkspaceBatchExtractionPreviewQuery(
     WorkspaceId WorkspaceId,
     AssetType? AssetTypeFilter = null,
     string? OutputDirectory = null,
+    string? WorkspaceDataRootPath = null,
     IReadOnlyList<BundleId>? SelectedBundleIds = null,
     IReadOnlyList<WorkspaceBatchExtractionCategoryDto>? SelectedCategories = null);

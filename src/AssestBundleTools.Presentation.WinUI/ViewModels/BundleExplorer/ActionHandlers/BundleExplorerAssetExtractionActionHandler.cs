@@ -96,15 +96,18 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
                 return;
             }
 
-            var result = await _workspaceAssetOperationGateway.ExtractAssetAsync(
-                new ExtractAssetCommand(
-                    workspaceSummary.WorkspaceId,
-                    details.BundleId,
-                    details.AssetId,
-                    workspaceSummary.WorkspaceKey,
-                    workspaceSummary.WorkspaceDataRootPath,
-                    selectedOutputPath,
-                    PreserveSuggestedFileName: true));
+            var command = new ExtractAssetCommand(
+                workspaceSummary.WorkspaceId,
+                details.BundleId,
+                details.AssetId,
+                workspaceSummary.WorkspaceKey,
+                workspaceSummary.WorkspaceDataRootPath,
+                selectedOutputPath,
+                PreserveSuggestedFileName: true);
+            var result = await _batchExtractionExecutor.ExtractAssetAsync(
+                workspaceSummary,
+                details.Name,
+                command);
 
             if (!TryGetValue(result, out var extractionResult, appendResultFailure))
             {
@@ -263,14 +266,17 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
                 return;
             }
 
-            var result = await _workspaceAssetOperationGateway.ExtractSpineAssetGroupAsync(
-                new ExtractSpineAssetGroupCommand(
-                    workspaceSummary.WorkspaceId,
-                    workspaceSummary.WorkspaceKey ?? string.Empty,
-                    workspaceSummary.WorkspaceDataRootPath ?? string.Empty,
-                    spineGroupTab.BundleId,
-                    spineGroupTab.GroupId,
-                    selectedOutputDirectory));
+            var command = new ExtractSpineAssetGroupCommand(
+                workspaceSummary.WorkspaceId,
+                workspaceSummary.WorkspaceKey ?? string.Empty,
+                workspaceSummary.WorkspaceDataRootPath ?? string.Empty,
+                spineGroupTab.BundleId,
+                spineGroupTab.GroupId,
+                selectedOutputDirectory);
+            var result = await _batchExtractionExecutor.ExtractSpineGroupAsync(
+                workspaceSummary,
+                spineGroupTab.DisplayName,
+                command);
 
             if (!TryGetValue(result, out var extractionResult, appendResultFailure))
             {

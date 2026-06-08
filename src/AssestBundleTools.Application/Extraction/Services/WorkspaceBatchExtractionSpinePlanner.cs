@@ -17,6 +17,7 @@ internal static class WorkspaceBatchExtractionSpinePlanner
         IQueryHandler<LoadSpineAssetGroupsQuery, Result<SpineAssetGroupListResultDto>>? loadSpineAssetGroupsHandler,
         WorkspaceId workspaceId,
         string outputDirectory,
+        string? workspaceDataRootPath,
         IEnumerable<(BundleId BundleId, string BundleDisplayName)> bundleScopes,
         IReadOnlyList<WorkspaceBatchExtractionCategoryDto> categories,
         CancellationToken cancellationToken)
@@ -33,7 +34,10 @@ internal static class WorkspaceBatchExtractionSpinePlanner
             cancellationToken.ThrowIfCancellationRequested();
 
             var result = await loadSpineAssetGroupsHandler.HandleAsync(
-                new LoadSpineAssetGroupsQuery(workspaceId, bundleScope.BundleId),
+                new LoadSpineAssetGroupsQuery(
+                    workspaceId,
+                    bundleScope.BundleId,
+                    WorkspaceDataRootPath: workspaceDataRootPath),
                 cancellationToken);
             if (result.IsCancelled)
             {

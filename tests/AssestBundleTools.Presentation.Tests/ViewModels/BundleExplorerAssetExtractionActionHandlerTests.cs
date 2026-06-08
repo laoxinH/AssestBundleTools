@@ -25,7 +25,7 @@ using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 
 namespace AssestBundleTools.Presentation.Tests.ViewModels;
 
-public sealed class BundleExplorerAssetExtractionActionHandlerTests
+public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
 {
     [Fact]
     public async Task ExtractSelectedAssetsAsync_ShouldAskForOutputDirectory_AndPassItToEachExtractionCommand()
@@ -151,39 +151,6 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
         Assert.Equal(2, task.TotalCount);
         Assert.True(task.IsDisposed);
         Assert.Contains(task.ProgressReports, report => report.CompletedCount == 2 && report.TotalCount == 2);
-    }
-
-    [Fact]
-    public async Task ExtractSpineAssetGroupAsync_ShouldLeaveTabRefreshToOperationNotification()
-    {
-        var extractedAtUtc = new DateTimeOffset(2026, 5, 12, 8, 30, 0, TimeSpan.Zero);
-        var gateway = new RecordingWorkspaceAssetOperationGateway
-        {
-            NextExtractedAtUtc = extractedAtUtc
-        };
-        var filePicker = new RecordingFilePickerService
-        {
-            SpineGroupExtractionDirectory = @"D:\Exports\Spine"
-        };
-        var handler = new BundleExplorerAssetExtractionActionHandler(
-            gateway,
-            new TestAppLogService(),
-            new TestAppNotificationService(),
-            new TestLocalizationService(),
-            filePicker);
-        var groupTab = new SpineAssetGroupDocumentTabViewModel(
-            CreateSpineGroupEntry("group-1", "char_1001_amiya2.ab").Item,
-            CreateInspectorTextSet());
-
-        await handler.ExtractSpineAssetGroupAsync(
-            CreateWorkspaceSummary(),
-            groupTab,
-            _ => { },
-            _ => throw new InvalidOperationException("Spine group extraction should not fail in this test."));
-
-        Assert.Equal(1, filePicker.SpineGroupExtractionDirectoryPickCount);
-        Assert.Single(gateway.ExtractSpineAssetGroupCommands);
-        Assert.Null(groupTab.Item.SkeletonAssets[0].LastExtractedAtUtc);
     }
 
     [Fact]
@@ -597,6 +564,8 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
 
     private sealed class RecordingFilePickerService : IFilePickerService
     {
+        public string? AssetExtractionOutputFilePath { get; init; }
+
         public string? BatchExtractionOutputDirectory { get; init; }
 
         public string? SpineGroupExtractionDirectory { get; init; }
@@ -606,6 +575,8 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
         public int BatchExtractionOutputDirectoryPickCount { get; private set; }
 
         public int SpineGroupExtractionDirectoryPickCount { get; private set; }
+
+        public int AssetExtractionOutputFilePickCount { get; private set; }
 
         public int ReplacementSourceFilePickCount { get; private set; }
 
@@ -633,8 +604,11 @@ public sealed class BundleExplorerAssetExtractionActionHandlerTests
             string assetName,
             string? assetPath,
             string? containerPath,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult<string?>(null);
+            CancellationToken cancellationToken = default)
+        {
+            AssetExtractionOutputFilePickCount++;
+            return Task.FromResult(AssetExtractionOutputFilePath);
+        }
 
         public Task<string?> PickAssetBatchExtractionOutputDirectoryAsync(CancellationToken cancellationToken = default)
         {

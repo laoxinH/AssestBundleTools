@@ -409,11 +409,12 @@ BackgroundWorkProgress
 
 接入方式：
 
-1. 单资源提取在用户完成保存位置 / 格式选择后提交 `SingleExtraction`。
+1. 单资源提取和单 Spine 组提取在用户完成保存位置 / 目录选择后必须提交可见后台任务。当前实现复用 `BatchExtraction` profile 的单项任务壳，以便统一状态条、取消、进度和操作变更通知；后续若恢复独立 `SingleExtraction` profile，也必须保持同样的后台与状态投影语义，不能回退为 UI 线程直接等待。
 2. 普通资源多选和 Spine 组多选提交 `BatchExtraction`。
 3. 提取内部继续复用 Application 提取命令和预览 / 导出载荷管线。
 4. 每个成功导出的组成资源按操作记录模型追加 `ExtractAsset`，批量或 Spine 组入口追加 `ExtractBatch` 汇总。
 5. 成功后由工作区操作变更通知触发读模型重读；不手动刷新资产列表。
+6. Spine 组提取只需要导出组成资产，不需要重建交互预览诊断；正式提取应使用 `SpineAssetGroupDetailsLoadMode.ExtractionPlan`，跳过 skeleton 摘要、Texture2D 尺寸诊断和 runtime 动画预览构建。
 
 禁止：
 
@@ -457,7 +458,7 @@ BackgroundWorkProgress
 
 调度器不直接规定缓存格式，也不把缓存命中写成操作记录。
 
-Spine 组目录缓存遵循 [workspace-management.md](workspace-management.md) 中的 `cache/spine-groups` 规则：它是跨资源包资产索引的派生读模型，用于服务 `资源 / Spine 组` 列表、搜索和资源包标签切换，不保存 atlas 详情、Texture2D 图片载荷、runtime 预览 DTO 或撤销 / 重做事实。当前 `LoadSpineAssetGroupsHandler` 已接入运行时目录缓存，并在查询携带工作区数据根时通过 `JsonSpineGroupCatalogCacheStore` 复用 `cache/spine-groups/<workspace-key>/catalog.json`；命中运行时目录或工作区派生目录时，列表刷新只做内存投影和当前操作记录 hydrate，不再提前收集用于目录检测的 Material / MonoBehaviour / 修改 Texture2D / TextAsset 详情，也不进入 Shell 底部后台任务列表；冷构建时才收集检测详情，并按 `workspaceKey + catalogFingerprint` 做 single-flight，避免同一工作区多个标签或独立资源编辑窗口同时触发重复检测。若冷构建耗时超过交互阈值，后续实现可把它迁入 `TransientRead` profile 并显示轻量加载状态，但不应像导入、提取或保存那样默认常驻全局任务列表。
+Spine 组目录缓存遵循 [workspace-management.md](workspace-management.md) 中的 `cache/spine-groups` 规则：它是跨资源包资产索引的派生读模型，用于服务 `资源 / Spine 组` 列表、搜索、资源包标签切换和批量提取 Spine 计划，不保存 atlas 详情、Texture2D 图片载荷、runtime 预览 DTO 或撤销 / 重做事实。当前 `LoadSpineAssetGroupsHandler` 已接入运行时目录缓存，并在查询携带工作区数据根时通过 `JsonSpineGroupCatalogCacheStore` 复用 `cache/spine-groups/<workspace-key>/catalog.json`；命中运行时目录或工作区派生目录时，列表刷新和批量提取计划只做内存投影和当前操作记录 hydrate，不再提前收集用于目录检测的 Material / MonoBehaviour / 修改 Texture2D / TextAsset 详情，也不进入 Shell 底部后台任务列表；冷构建时才收集检测详情，并按 `workspaceKey + catalogFingerprint` 做 single-flight，避免同一工作区多个标签、独立资源编辑窗口或批量提取计划同时触发重复检测。若冷构建耗时超过交互阈值，后续实现可把它迁入 `TransientRead` profile 并显示轻量加载状态，但不应像导入、提取或保存那样默认常驻全局任务列表。
 
 Spine 组目录缓存的失效由结构性输入决定：bundle index 指纹集合、Spine 组检测版本、依赖图 / 名称归一化规则和资源包导入 / 移除状态。替换、Spine 组成文件编辑保存、撤销 / 重做和删除操作记录通常只改变有效内容和修改状态，应在目录查询返回时通过工作区操作记录读模型叠加投影，不应把每次操作记录变化都升级为目录重建。
 
@@ -490,10 +491,10 @@ Export / SaveRebuild 共享 artifact resolver 已进入保存计划骨架的只�
 - `BackgroundWorkScheduler` 已提供 `StartAsync`、`BackgroundWorkHandle<T>`、`CurrentTasks`、`TasksChanged` 和 `TryCancel(taskId)`；任务快照包含 profile、语义分类、优先级、工作区 / bundle / resource 关联、标题、进度、状态、是否状态条可见和是否可取消。
 - 当前运行中任务状态由 `BackgroundWorkTaskRegistry` 统一维护；调度器只负责执行原语、profile 闸门、取消源串联和状态条投影，避免后续导入、预览、提取、导出继续各自维护一套可观察任务表。
 - 主资产窗格的普通资源列表和 Spine 组列表查询已通过 `IBackgroundTaskRunner` 离开 UI 线程。尤其 Spine 组列表加载会调用 Application 组检测、详情收集和组成资产 hydrate，视图从普通资源切到 Spine 组时不得在 WinUI 事件调用栈内同步执行这些 CPU / 读取型工作。
-- Shell 底部状态条已支持当前可取消任务的图标取消按钮；当前接入的可取消任务包括工作区导入处理阶段、资源列表普通资源批量提取和 Spine 资源组批量提取。
+- Shell 底部状态条已支持当前可取消任务的图标取消按钮；当前接入的可取消任务包括工作区导入处理阶段、单资源提取、单 Spine 组提取、资源列表普通资源批量提取和 Spine 资源组批量提取。
 - 设置与诊断页已通过 Application 的 `WorkspaceCacheMaintenanceGateway` 展示当前工作区聚合缓存 usage，统计范围包含 `cache/bundles` 标准化 bundle artifact 和 `cache/previews` 预览缓存；显式清理通过 `Maintenance` profile 同时清理两类可重建派生产物，不写操作记录，也不刷新资产列表。设置页还提供自动容量治理偏好，当前自动策略作用于标准化 bundle artifact 和预览缓存：导入 / 预览 / 提取首次生成 artifact 后会按当前工作区容量上限自动 prune，预览 payload 保存后也会按同一上限 prune 最旧预览项。
 - 组合根已创建单例调度器，`App` 暴露同一 `BackgroundWorkScheduler` 给工作台、批处理页和独立资源编辑窗口使用，避免同类任务各自临时创建调度器。
-- 资源列表多选批量提取、Spine 资源组多选批量提取、批处理页批量提取和工作区级批量提取对话框已迁移到 `BatchExtraction` profile；工作区顶部入口不再跳转批处理页执行；批处理页批量替换骨架已迁移到 `BatchReplacement` profile；保存骨架已迁移到 `SaveRebuild` profile。
+- 单资源提取、单 Spine 组提取、资源列表多选批量提取、Spine 资源组多选批量提取、批处理页批量提取和工作区级批量提取对话框已迁移到 `BatchExtraction` profile；工作区顶部入口不再跳转批处理页执行；批处理页批量替换骨架已迁移到 `BatchReplacement` profile；保存骨架已迁移到 `SaveRebuild` profile。
 - 工作区打开外层已迁移到 `WorkspaceOpen` profile；文件 / 目录 / 拖拽导入的处理阶段已迁移到 `WorkspaceImport` profile。Application 内部导入 worker 池仍保持在应用层一致性边界内。
 - 普通资产详情预览已迁移到 `PreviewForeground / PreviewPrewarm` profile；前台资产预览、Spine 资源组详情和当前贴图页载荷会在 Shell 底部状态条显示轻量加载状态，后台预热保持静默；Texture2D / alpha page 载荷已接入 `PreviewForeground` profile；Spine 组详情初始打开使用 `InteractivePreview` 模式，跳过 skeleton 摘要和 Texture2D 尺寸诊断，无法形成可显示动画贴图载荷且快路径没有明确诊断时才补跑 `InteractiveDiagnostics`；Spine runtime 当前帧已接入独立 `SpineRuntimeFrame` profile。
 - 快速切换资产详情标签时，旧活动标签会被显式降级为 `PreviewPrewarm`，新活动标签始终重新按 `PreviewForeground` 调度；前台预览请求在调用方取消后会释放前台 profile 槽，避免后台旧请求压住当前可见标签。后台预热候选会按最近激活、最近打开优先，而不是单纯按标签集合顺序。

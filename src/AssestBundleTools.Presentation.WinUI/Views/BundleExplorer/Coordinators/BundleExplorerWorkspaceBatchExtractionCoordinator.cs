@@ -92,12 +92,12 @@ public sealed partial class BundleExplorerPage
 
             void OnViewModelStateChanged(object? sender, EventArgs args)
             {
-                SchedulePreviewRefresh(viewModel, workspaceSummary.WorkspaceId);
+                SchedulePreviewRefresh(viewModel, workspaceSummary.WorkspaceId, workspaceDataRootPath);
             }
 
             viewModel.StateChanged += OnViewModelStateChanged;
             var submissionTask = window.ShowForSubmissionAsync();
-            SchedulePreviewRefreshAfterWindowShown(viewModel, workspaceSummary.WorkspaceId);
+            SchedulePreviewRefreshAfterWindowShown(viewModel, workspaceSummary.WorkspaceId, workspaceDataRootPath);
             var submission = await submissionTask;
             viewModel.StateChanged -= OnViewModelStateChanged;
             CancelPendingPreviewRefresh();
@@ -131,21 +131,23 @@ public sealed partial class BundleExplorerPage
 
         private void SchedulePreviewRefreshAfterWindowShown(
             WorkspaceBatchExtractionDialogViewModel viewModel,
-            Domain.Workspace.WorkspaceId workspaceId)
+            Domain.Workspace.WorkspaceId workspaceId,
+            string? workspaceDataRootPath)
         {
             if (_owner.DispatcherQueue.TryEnqueue(
                     DispatcherQueuePriority.Low,
-                    () => SchedulePreviewRefresh(viewModel, workspaceId)))
+                    () => SchedulePreviewRefresh(viewModel, workspaceId, workspaceDataRootPath)))
             {
                 return;
             }
 
-            SchedulePreviewRefresh(viewModel, workspaceId);
+            SchedulePreviewRefresh(viewModel, workspaceId, workspaceDataRootPath);
         }
 
         private void SchedulePreviewRefresh(
             WorkspaceBatchExtractionDialogViewModel viewModel,
-            Domain.Workspace.WorkspaceId workspaceId)
+            Domain.Workspace.WorkspaceId workspaceId,
+            string? workspaceDataRootPath)
         {
             var version = Interlocked.Increment(ref _previewRequestVersion);
             var cancellationSource = new CancellationTokenSource();
@@ -153,12 +155,13 @@ public sealed partial class BundleExplorerPage
                 ref _previewRefreshCancellationSource,
                 cancellationSource);
             previousCancellationSource?.Cancel();
-            _ = RefreshPreviewAsync(viewModel, workspaceId, version, cancellationSource);
+            _ = RefreshPreviewAsync(viewModel, workspaceId, workspaceDataRootPath, version, cancellationSource);
         }
 
         private async Task RefreshPreviewAsync(
             WorkspaceBatchExtractionDialogViewModel viewModel,
             Domain.Workspace.WorkspaceId workspaceId,
+            string? workspaceDataRootPath,
             int version,
             CancellationTokenSource cancellationSource)
         {
@@ -187,6 +190,7 @@ public sealed partial class BundleExplorerPage
                             context => _workspaceBatchOperationsGateway.GetWorkspaceBatchExtractionPreviewAsync(
                                 new GetWorkspaceBatchExtractionPreviewQuery(
                                     workspaceId,
+                                    WorkspaceDataRootPath: workspaceDataRootPath,
                                     SelectedBundleIds: selectedBundleIds,
                                     SelectedCategories: selectedCategories),
                                 context.CancellationToken))

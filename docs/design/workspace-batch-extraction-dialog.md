@@ -281,7 +281,8 @@ Spine 不是普通资源类型文件夹。它表示“整组导出”，包含 s
 
 - 普通资源提取、Spine 组提取、预览和详情读取继续通过标准化 bundle artifact 与 loaded-session 复用链路。
 - 对话框不新增直接读取 AB 的路径。
-- 对话框首屏只应使用已经在工作区读模型中的资源包摘要和初始选择状态；动态类别、候选数量、Spine 组数量和总大小由后台计划预览补齐。后续优化应优先复用资产类型 facets、SpineGroupCatalog 运行时 / 派生缓存，并减少 `BuildPlan` 与 `BuildCategoryPlans` 对同一资源包资产列表的重复遍历。
+- 对话框首屏只应使用已经在工作区读模型中的资源包摘要和初始选择状态；动态类别、候选数量、Spine 组数量和总大小由后台计划预览补齐。批量提取预览查询与正式执行命令都必须把当前 `workspaceDataRootPath` 传给 Spine 计划器，使 `LoadSpineAssetGroupsQuery` 可以命中运行时目录缓存或 `cache/spine-groups/<workspace-key>/catalog.json` 派生缓存。后续优化应优先复用资产类型 facets、SpineGroupCatalog 运行时 / 派生缓存，并减少 `BuildPlan` 与 `BuildCategoryPlans` 对同一资源包资产列表的重复遍历。
+- Spine 组正式提取只需要组成资产清单和 atlas page 匹配结果，不需要重建交互预览诊断或 runtime 动画预览；提取入口应使用 `SpineAssetGroupDetailsLoadMode.ExtractionPlan`，避免在“检查资源 / 开始提取”阶段重复执行完整预览读取流程。
 - DEBUG 包中已有的 loaded-session `Acquire miss / in-flight / hit` 和 `Load start / completed / failed` 日志可以用于验证该批量入口是否复用同一 AB 加载会话。
 
 ## 10. 与批处理页关系
@@ -311,9 +312,11 @@ Spine 不是普通资源类型文件夹。它表示“整组导出”，包含 s
 2. 窗口 Presentation
    已新增工作台批量提取 ViewModel / Coordinator / 独立 Window，顶部按钮改为打开工作区批量提取窗口，不再 `Navigate(typeof(BatchTasksPage))`，也不再使用 `ContentDialog` 挤压主体布局。窗口打开流程已调整为先显示窗口，再通过统一后台调度的 `TransientRead` profile 静默刷新计划预览，避免资源聚合阻塞主窗口首帧。
 3. 执行链路
-   对话框确认后提交 `BatchExtraction` 后台任务，执行命令复用普通资源提取和 Spine 组提取能力，完成后通过既有操作变更通知刷新相关读模型。
+   对话框确认后提交 `BatchExtraction` 后台任务，执行命令复用普通资源提取和 Spine 组提取能力；普通资源、单资源、Spine 组和批量入口均通过后台任务壳执行，不在 UI 动作调用栈中直接等待重型提取；完成后通过既有操作变更通知刷新相关读模型。
 4. 跨 AB 并发
    执行用例已按 AB 分组，在单个后台任务内部执行跨 AB 受控并行、同 AB 内顺序提取；默认并发度为 `CPU/2`、最大 `4`，GC 压力下退避到 `1`。
+5. Spine 缓存复用
+   批量提取预览与正式执行已经把 `workspaceDataRootPath` 传入 Spine 组计划器，避免工作区派生目录缓存存在时仍每次冷构建 Spine 组列表；单 Spine 组提取使用 `ExtractionPlan` 详情模式，避免提取前重复构建 skeleton 摘要、Texture2D 诊断和 runtime 动画预览。
 
 仍待收口：
 
@@ -329,6 +332,8 @@ Application 已覆盖并需持续保持：
 - 多资源包范围只规划被选中的资源包。
 - 多导出类别可以同时规划 `Texture2D / Sprite / Spine`。
 - `All` 覆盖当前支持的普通资源和 Spine 组。
+- 批量提取预览和正式执行会把 `workspaceDataRootPath` 传给 Spine 组计划查询，保证可以复用工作区 SpineGroupCatalog 派生缓存。
+- Spine 组正式提取使用 `ExtractionPlan` 详情模式，不回退到完整交互预览详情构建。
 - 普通资源输出路径为 `<输出根>/<AB>/<资源类型>/<文件名>`。
 - Spine 组输出沿用 `<输出根>/<AB>/<组名>/...`。
 - 无候选、部分失败、取消和成功摘要返回稳定 DTO。
@@ -340,6 +345,7 @@ Presentation 已覆盖并需持续保持：
 - 窗口在未选资源包或未选类别时禁用确认；输出目录在确认后通过目录选择器或工作区提取目录选项解析。
 - `All` 和显式多选类别的状态转换稳定。
 - 确认后提交 `BackgroundWorkProfile.BatchExtraction`。
+- 单资源和单 Spine 组提取也必须通过可见后台任务提交，不能阻塞主窗口。
 - 打开窗口不会在首帧前同步生成计划；计划预览通过静默 `TransientRead` profile 后台任务刷新，关闭窗口或选择变化会取消旧请求。
 - 计划预览 loading 期间保持范围、类别和输出方式可编辑，只禁用确认提取；预览完成或失败收敛后，如果当前选择有效则恢复确认。
 - 快速连续变更选择时，旧预览请求会被取消并由请求代次丢弃过期结果，最终只允许最新选择对应的摘要更新 UI。

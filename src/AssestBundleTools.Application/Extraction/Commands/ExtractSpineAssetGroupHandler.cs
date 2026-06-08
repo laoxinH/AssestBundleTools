@@ -54,7 +54,8 @@ public sealed class ExtractSpineAssetGroupHandler : ICommandHandler<ExtractSpine
                 command.WorkspaceKey,
                 command.WorkspaceDataRootPath,
                 command.BundleId,
-                command.GroupId),
+                command.GroupId,
+                LoadMode: SpineAssetGroupDetailsLoadMode.ExtractionPlan),
             cancellationToken);
         if (detailsResult.IsCancelled)
         {

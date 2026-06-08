@@ -152,7 +152,7 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
             atlasPages.AddRange(parsedPages);
         }
 
-        var animationPreviewResult = await _animationPreviewBuilder.BuildAsync(
+        var animationPreviewResult = await BuildAnimationPreviewAsync(
             query,
             group.GroupKey,
             group.SkeletonAssets,
@@ -173,6 +173,28 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
             animationPreviewResult.Preview));
     }
 
+    private async Task<SpineAnimationPreviewBuildResult> BuildAnimationPreviewAsync(
+        LoadSpineAssetGroupDetailsQuery query,
+        string groupKey,
+        IReadOnlyList<SpineAssetGroupPartDto> skeletonAssets,
+        IReadOnlyList<SpineAtlasPageDto> atlasPages,
+        IReadOnlyList<string> atlasTexts,
+        CancellationToken cancellationToken)
+    {
+        if (query.LoadMode == SpineAssetGroupDetailsLoadMode.ExtractionPlan)
+        {
+            return SpineAnimationPreviewBuildResult.Empty;
+        }
+
+        return await _animationPreviewBuilder.BuildAsync(
+            query,
+            groupKey,
+            skeletonAssets,
+            atlasPages,
+            atlasTexts,
+            cancellationToken);
+    }
+
     private async Task<SpineSkeletonSummaryBuilder.SkeletonSummaryResult> BuildSkeletonSummariesAsync(
         LoadSpineAssetGroupDetailsQuery query,
         SpineAssetGroupDto group,
@@ -191,10 +213,12 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
     }
 
     private static bool ShouldBuildSkeletonSummaries(LoadSpineAssetGroupDetailsQuery query) =>
-        query.LoadMode != SpineAssetGroupDetailsLoadMode.InteractivePreview;
+        query.LoadMode is not SpineAssetGroupDetailsLoadMode.InteractivePreview
+            and not SpineAssetGroupDetailsLoadMode.ExtractionPlan;
 
     private static bool ShouldBuildTextureDiagnostics(LoadSpineAssetGroupDetailsQuery query) =>
-        query.LoadMode != SpineAssetGroupDetailsLoadMode.InteractivePreview;
+        query.LoadMode is not SpineAssetGroupDetailsLoadMode.InteractivePreview
+            and not SpineAssetGroupDetailsLoadMode.ExtractionPlan;
 
     private Result<SpineAssetGroupDetailsDto>? ValidateQuery(LoadSpineAssetGroupDetailsQuery query)
     {

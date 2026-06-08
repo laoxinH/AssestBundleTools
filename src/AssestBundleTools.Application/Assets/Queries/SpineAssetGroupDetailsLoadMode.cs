@@ -7,5 +7,6 @@ public enum SpineAssetGroupDetailsLoadMode
 {
     Full = 0,
     InteractivePreview = 1,
-    InteractiveDiagnostics = 2
+    InteractiveDiagnostics = 2,
+    ExtractionPlan = 3
 }

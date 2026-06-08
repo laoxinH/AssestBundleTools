@@ -415,7 +415,8 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
             var batchExtractionPreviewResult = await _workspaceBatchOperationsGateway.GetWorkspaceBatchExtractionPreviewAsync(
                 new GetWorkspaceBatchExtractionPreviewQuery(
                     currentWorkspaceSummary.WorkspaceId,
-                    SelectedBatchExtractAssetTypeOption?.AssetType));
+                    SelectedBatchExtractAssetTypeOption?.AssetType,
+                    WorkspaceDataRootPath: currentWorkspaceSummary.WorkspaceDataRootPath));
 
             if (!TryGetValue(batchExtractionPreviewResult, out var batchExtractionPreview))
             {
