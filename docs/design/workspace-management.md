@@ -218,6 +218,9 @@ Presentation 层保留两个协同层次：
     bundle-index/
       <workspace-key>/
         <bundle-cache-key>.json
+    spine-groups/
+      <workspace-key>/
+        catalog.json
     previews/
       <workspace-key>/
         <preview-cache-key>.json
@@ -244,6 +247,9 @@ Presentation 层保留两个协同层次：
   该缓存是可重建派生产物，不是工作区元数据，也不是用户源文件的替代来源。
 - `cache/bundle-index/...`
   负责保存每个 AB 文件的解析索引缓存，用于加速资源包列表、资产列表和基础恢复。
+- `cache/spine-groups/...`
+  负责保存当前工作区内 Spine 资源组目录的派生读模型，用于避免在 `资源 / Spine 组` 视图切换、资源包标签切换和窗口宿主迁移时重复遍历全工作区资产索引。
+  该目录是可删除、可重建缓存，不是工作区元数据，也不是 Spine 详情、atlas 解析结果或预览载荷的事实来源。
 - `cache/previews/...`
   负责保存缩略图、文本片段等预览派生缓存。
 - `staging/decrypt/...`
@@ -262,6 +268,44 @@ Presentation 层保留两个协同层次：
 - 新建工作区导航必须视为一次性新运行时会话，即使数据目录与此前删除或打开过的工作区相同，也不得激活或恢复旧页面状态。
 - 删除当前活动工作区记录时，Presentation 必须同步清理当前活动上下文、窗口注册和进程级占用；
   后续在相同数据目录中新建工作区时不得激活或恢复删除前的资源包树、资产列表或浏览状态
+
+### 4.1 Spine 组目录缓存
+
+Spine 组列表是跨资产、跨资源包的派生读模型，不应在每次从普通资产列表切换到 `Spine 组` 时重新遍历所有 bundle 资产索引。
+后续实现应把它收口为“运行时目录缓存 + 工作区派生目录缓存”的两层模型：
+
+1. 运行时目录缓存
+   活动工作区会话内优先复用已构建的 `SpineGroupCatalog`，供资源包标签切换、列表搜索、窗口模式放回 / 窗口化和同一工作区内多宿主共享。
+2. 工作区派生目录缓存
+   将可重建目录写入 `cache/spine-groups/<workspace-key>/catalog.json` 或等价分片文件，供工作区重开后复用。
+   持久化文件必须携带 `schemaVersion`、`workspaceKey`、参与目录构建的 bundle index fingerprint 集合、`spineGroupDetectorVersion`、依赖图 / 匹配规则版本、创建时间和最近访问时间。
+
+目录缓存只保存列表和搜索所需的轻量信息：
+
+- 稳定 `GroupId`、组名和归一化搜索 token。
+- skeleton / atlas / texture page 的资产身份、显示名、所在 bundle 和基础类型。
+- texture page 数、组成资产数量和轻量诊断摘要。
+- 能够从目录快速投影到当前资源包的锚点 bundle / group 关系。
+
+目录缓存不得保存：
+
+- atlas 完整文本、region overlay、Texture2D 图片 payload、runtime animation DTO 或完整详情诊断。
+- 已解析的第三方 runtime 对象、WinUI 控件状态或 D3D / Win2D 资源。
+- 替换后的有效载荷本体或撤销 / 重做事实。
+
+失效规则：
+
+- 任一参与匹配的 bundle index 指纹变化、资源包被导入 / 移除、Reader parser 版本变化、Spine 组检测版本变化、依赖图或名称归一化规则变化时，目录缓存必须失效或换 key 重建。
+- 搜索关键字、当前资源包标签、列表本地筛选和窗口宿主变化只做内存投影，不进入昂贵目录构建 key。
+- 普通替换、Spine 组成文件编辑保存、撤销 / 重做和删除操作记录通常不改变 Unity 资产身份与组成员关系，不应强制重跑目录检测；它们通过工作区操作记录读模型在查询返回时叠加“已修改 / 当前有效状态 / 关联影响”投影。
+- 只有未来出现会改变资产身份、名称、路径、类型或组匹配关系的操作时，才把该操作声明为结构性失效源。
+
+并发与一致性：
+
+- 冷缓存构建必须按 `workspaceKey + catalogFingerprint` 做 single-flight，同一工作区内多个标签或窗口同时请求 Spine 组列表时只允许一个目录构建任务执行，其他请求等待或复用最近有效快照。
+- 如果存在旧目录且新目录正在后台重建，Presentation 可继续展示旧目录的投影并标记轻量加载状态；没有任何可用目录时才显示空载入状态。
+- 目录构建完成后再叠加操作记录投影，避免把变更记录状态固化进结构性目录缓存，导致撤销 / 重做频繁写缓存。
+- 显式清理工作区缓存可以删除该目录；删除后下一次进入 `Spine 组` 视图重新构建，不写操作记录。
 
 ## 5. 建议保存内容
 

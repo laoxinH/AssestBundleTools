@@ -35,7 +35,7 @@
 | 链路 | 当前承载点 | 已有能力 | 当前不足 |
 | --- | --- | --- | --- |
 | 工作区打开 / 导入 | `WorkspaceImportCoordinatorService`、`BundleExplorerWorkspaceBindingCoordinator`、`IBackgroundTaskRunner` | 外层任务已离开 UI 线程；Application 内部已有 `workspaceKey` 执行闸门和 bundle 粒度 worker 池 | 外层任务、导入进度覆盖层和 Shell 状态条尚未统一为同一个任务模型 |
-| 资产列表 / Spine 组列表 | `BundleExplorerAssetPaneCoordinator` + `IBackgroundTaskRunner` | 普通资源列表和 Spine 组聚合列表查询已离开 UI 线程；Spine 组检测可遍历多 bundle 资产列表、收集详情并 hydrate 组成资产，不再在视图模式切换调用栈内阻塞主窗口 | 仍是执行原语级后台化，暂未接入可观察调度 profile；若后续列表查询需要取消、进度或去重，应迁入统一调度器 |
+| 资产列表 / Spine 组列表 | `BundleExplorerAssetPaneCoordinator` + `IBackgroundTaskRunner` | 普通资源列表和 Spine 组聚合列表查询已离开 UI 线程；Spine 组检测可遍历多 bundle 资产列表、收集详情并 hydrate 组成资产，不再在视图模式切换调用栈内阻塞主窗口 | Spine 组列表后续应优先命中工作区 `SpineGroupCatalog` 运行时 / 派生目录缓存，冷构建按工作区 single-flight 去重；只有冷构建耗时明显或需要取消 / 进度时，才迁入统一调度 profile |
 | Application 导入 worker | `WorkspaceImportProcessingCoordinator -> WorkspaceImportWorkerPool -> WorkspaceImportCommitter` | `串行计划 -> 有界并行 worker -> 串行提交`，默认 worker 并发度 `1-4` | 该 worker 池属于业务一致性边界，不应被 Presentation 调度器接管 |
 | 资源预览 | `AssetPreviewQueryExecutor` + `IBackgroundWorkScheduler` + `WorkspaceBundleArtifactResolver` + `AssetsToolsBundleLoadedSessionCache` | 前台槽优先服务活动详情标签，后台槽用于已打开标签预热；支持取消、超时、调度器 profile 闸门；导入 / 预览 / 提取 / Spine 详情会优先复用 `cache/bundles` 标准化 artifact；artifact 生成阶段按 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 串行化，标准化 artifact 已有 usage / LRU prune、设置页显式清理入口和偏好驱动自动容量治理；预览缓存已有 usage / prune，并纳入当前工作区缓存聚合统计、设置页显式清理和偏好驱动自动容量治理；AssetsTools loaded-session 再按标准化 artifact identity 做 single-flight / lease 复用，并在 artifact 删除 / prune 时主动失效；loaded-session 已有默认 6 个空闲会话上限和 GC 内存压力下 1 个空闲会话退避；预览生成 `OutOfMemoryException` 会映射为专用诊断，并让同 bundle 后台预热短期退避 | 完整可观测队列、任务详情和后续写包共享入口仍需后续补齐 |
 | Spine 详情、贴图载荷和 runtime 帧 | `SpineAssetGroupDetailsLoader`、`InspectorSpineAnimationPreviewSurfaceView` + `IBackgroundWorkScheduler` | 组详情 / 贴图载荷通过 `PreviewForeground` 后台加载，runtime 当前帧通过独立 `SpineRuntimeFrame` profile 运行；初始组详情先用交互预览快路径加载可播放动画所需内容，播放失败且缺少明确诊断时才补跑完整诊断；均不让 UI 直接读 AB | Spine 序列帧导出和后续导出 profile 仍需继续统一 |
@@ -239,6 +239,7 @@ BackgroundWorkCompletion
 | `PreviewForeground` | 当前活动资源详情预览、当前 Spine 详情 | 最高交互优先 | 前台槽 1 | 新请求替代旧请求；标签关闭取消 | 显示轻量加载状态 |
 | `PreviewPrewarm` | 已打开但未激活标签的预览预热 | 低 | 使用剩余预览槽；压力大时可跳过 | 页面切换、内存压力、缓存未命中时可取消或降级 | 默认不抢占状态条 |
 | `SpineRuntimeFrame` | Spine runtime 当前帧生成 | 交互 | 受预览 / runtime session 控制 | 播放停止、seek、skin / animation 切换时取消旧帧 | 默认不进入全局状态条 |
+| `TransientRead` | 资产列表、Spine 组目录冷构建等可缓存读模型 | 交互后台 | 每工作区同类 single-flight；命中缓存时不入队 | 视图切换、工作区切换或更新请求替代旧请求 | 默认不进入全局状态条；冷构建超过阈值时可显示轻量状态 |
 | `SingleExtraction` | 单资源提取、单 Spine 组提取 | 可见后台 | 每用户动作 1 | 用户可取消；已完成项保留结果 | 显示 |
 | `BatchExtraction` | 普通资源多选提取、Spine 组批量提取、工作区级批量提取对话框执行 | 可见后台 | 每工作区 1；Application 内部可按 AB 资源包受控并行，默认 `CPU/2`、最大 `4`，GC 压力下退避到 `1`；同 AB 内顺序执行 | 用户可取消；继续处理可成功项 | 显示确定进度 |
 | `BatchReplacement` | 后续真实批量替换 | 可见后台 | 每工作区 1 | 用户可取消；以操作记录恢复 | 显示 |
@@ -451,9 +452,14 @@ BackgroundWorkProgress
 - 调度器决定什么时候允许任务进入解包 / 读取 / 写出。
 - 标准化 bundle 物理缓存决定是否需要重新解密、解压或标准化文件。
 - loaded-session 缓存决定短时间内是否复用已经加载的 AB 上下文。
+- Spine 组目录缓存决定是否需要重新遍历当前工作区的 bundle index 来构建聚合组列表。
 - 预览缓存决定是否可以直接返回已有 payload / sidecar。
 
 调度器不直接规定缓存格式，也不把缓存命中写成操作记录。
+
+Spine 组目录缓存遵循 [workspace-management.md](workspace-management.md) 中的 `cache/spine-groups` 规则：它是跨资源包资产索引的派生读模型，用于服务 `资源 / Spine 组` 列表、搜索和资源包标签切换，不保存 atlas 详情、Texture2D 图片载荷、runtime 预览 DTO 或撤销 / 重做事实。命中运行时目录或工作区派生目录时，列表刷新应只做内存投影，不进入 Shell 底部后台任务列表；冷构建时按 `workspaceKey + catalogFingerprint` 做 single-flight，避免同一工作区多个标签或独立资源编辑窗口同时触发重复检测。若冷构建耗时超过交互阈值，后续实现可把它迁入 `TransientRead` profile 并显示轻量加载状态，但不应像导入、提取或保存那样默认常驻全局任务列表。
+
+Spine 组目录缓存的失效由结构性输入决定：bundle index 指纹集合、Spine 组检测版本、依赖图 / 名称归一化规则和资源包导入 / 移除状态。替换、Spine 组成文件编辑保存、撤销 / 重做和删除操作记录通常只改变有效内容和修改状态，应在目录查询返回时通过工作区操作记录读模型叠加投影，不应把每次操作记录变化都升级为目录重建。
 
 当前已引入标准化 `cache/bundles` artifact、`cache/previews` 预览缓存和进程内 `AssetsToolsBundleLoadedSessionCache`：导入 / 预览 / 提取 / Spine 详情会先通过 `WorkspaceBundleArtifactResolver` 取得同一可读 bundle 路径；resolver 会对同一 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 的 artifact 生成请求做 single-flight 串行化，后续等待者在首个请求写入 manifest 后直接复用结果，并在保存或成功复用 manifest 时回写 `lastAccessedAtUtc`。`IBundleArtifactStore.GetUsage(...)` 已能统计 artifact 数量、字节数和访问时间，`Prune(...)` 已能按 `MaximumSizeInBytes / MaximumArtifactCount` 使用 LRU 删除最旧 artifact；`IPreviewCacheStore.GetUsage(...) / Prune(...)` 已能统计并清理预览描述、主 payload 和 `imageFocus` payload。`WorkspaceCacheMaintenanceGateway` 的 UI 聚合入口会同时汇总 / 清理标准化 bundle artifact 与预览缓存，工作台顶部状态标签也读取同一个聚合 usage。清理任务通过 `Maintenance` profile 投影到 Shell 状态条。导入、预览或提取首次保存 artifact 后，会按偏好设置触发当前工作区容量治理，并通过 `ProtectedBundleCacheKeys` 保护刚生成的 artifact，避免生成后立刻被自身 prune 删除；`GetAssetPreviewHandler` 保存预览 payload 后也会通过 `IPreviewCachePrunePolicy` 触发预览缓存容量治理，并用 `ProtectedPreviewCacheKeys` 保护刚生成的预览项。随后 `WorkspaceBundleArtifactResolver` 会从 manifest 派生 `bundle-artifact | workspaceKey | bundleCacheKey | normalizerVersion | bundleFingerprint` 形态的 loaded-session identity，Reader 和预览生成器把该 identity 传给 `AssetsToolsBundleLoadedSessionCache`；同一 identity 的 `LoadBundleFile / LoadAssetsFileFromBundle` 通过 single-flight 进入一次加载任务，成功后以 lease 方式短时复用，并用 30 秒滑动 TTL 驱逐。loaded-session 默认最多保留 6 个空闲会话，GC 内存压力达到阈值时退避到 1 个空闲会话；DEBUG 包会输出 `Acquire miss / in-flight / hit`、`Load start / completed / failed`、空闲过期和容量 / 内存压力淘汰事件，用于验证多预览、批量提取和 Spine 组提取是否复用同一加载会话；若调用方没有 artifact identity，Infrastructure 仍回退到物理路径 key。`AssetsToolsAssetPreviewGenerator` 会把 `OutOfMemoryException` 映射成 `Bundle.Preview.OutOfMemory`，`GetAssetPreviewHandler` 进一步落到 `AssetPreviewFallbackReasonKind.OutOfMemory`，Presentation 据此暂停同 bundle 的后台预热并在 DEBUG 输出 `preview.prewarm retreat-*` 诊断。`AssetsToolsAssetBundleReader` 和 `AssetsToolsAssetPreviewGenerator` 默认共享同一个进程内 cache；提取当前通过 `WorkspaceAssetExtractionExporter -> GetAssetPreviewHandler` 获取 payload，因此也会复用同一 loaded-session。
 
