@@ -35,11 +35,11 @@
         <Style
             x:Key="BatchExtractionCompactButtonStyle"
             TargetType="Button">
-            <Setter Property="MinHeight" Value="40" />
-            <Setter Property="MinWidth" Value="90" />
-            <Setter Property="Padding" Value="16,0" />
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="MinWidth" Value="78" />
+            <Setter Property="Padding" Value="12,0" />
             <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontSize" Value="13" />
         </Style>
     </UserControl.Resources>
 
@@ -102,15 +102,17 @@
                 <Grid Grid.Row="1">
                     <TextBox
                         x:Name="BundleSearchTextBox"
-                        Height="50"
-                        Padding="48,0,16,0"
+                        Height="42"
+                        Padding="44,0,14,0"
+                        FontSize="14"
+                        VerticalContentAlignment="Center"
                         TextChanged="OnBundleSearchTextChanged" />
                     <FontIcon
-                        Margin="18,0,0,0"
+                        Margin="16,0,0,0"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         FontFamily="Segoe Fluent Icons"
-                        FontSize="18"
+                        FontSize="16"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Glyph="&#xE721;"
                         IsHitTestVisible="False" />
@@ -126,7 +128,7 @@
                         <ListView.ItemContainerStyle>
                             <Style TargetType="ListViewItem">
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                <Setter Property="MinHeight" Value="78" />
+                                <Setter Property="MinHeight" Value="66" />
                                 <Setter Property="Padding" Value="0" />
                             </Style>
                         </ListView.ItemContainerStyle>
@@ -134,16 +136,16 @@
                             <DataTemplate>
                                 <Grid>
                                     <Grid
-                                        Padding="12,10"
-                                        ColumnSpacing="14">
+                                        Padding="10,6"
+                                        ColumnSpacing="12">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="50" />
+                                            <ColumnDefinition Width="44" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <Grid VerticalAlignment="Center">
                                             <CheckBox
-                                                Width="32"
+                                                Width="28"
                                                 MinWidth="0"
                                                 Padding="0"
                                                 HorizontalAlignment="Left"
@@ -155,13 +157,13 @@
                                             VerticalAlignment="Center"
                                             Spacing="4">
                                             <TextBlock
-                                                FontSize="15"
+                                                FontSize="14"
                                                 FontWeight="SemiBold"
                                                 Text="{Binding DisplayName}"
                                                 TextTrimming="CharacterEllipsis" />
                                             <TextBlock
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                FontSize="13"
+                                                FontSize="12"
                                                 Text="{Binding LogicalPath}"
                                                 TextTrimming="CharacterEllipsis" />
                                         </StackPanel>
@@ -169,7 +171,7 @@
                                             Grid.Column="2"
                                             VerticalAlignment="Center"
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            FontSize="14"
+                                            FontSize="13"
                                             Text="{Binding AssetCountText}" />
                                     </Grid>
                                     <Rectangle
@@ -238,16 +240,16 @@
                                 <DataTemplate>
                                     <Grid>
                                         <Grid
-                                            MinHeight="54"
-                                            ColumnSpacing="14">
+                                            MinHeight="46"
+                                            ColumnSpacing="12">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="32" />
+                                                <ColumnDefinition Width="30" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <Grid VerticalAlignment="Center">
                                                 <CheckBox
-                                                    Width="32"
+                                                    Width="28"
                                                     MinWidth="0"
                                                     Padding="0"
                                                     HorizontalAlignment="Left"
@@ -257,14 +259,14 @@
                                             <TextBlock
                                                 Grid.Column="1"
                                                 VerticalAlignment="Center"
-                                                FontSize="15"
+                                                FontSize="14"
                                                 Text="{Binding DisplayName}"
                                                 TextTrimming="CharacterEllipsis" />
                                             <TextBlock
                                                 Grid.Column="2"
                                                 VerticalAlignment="Center"
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                FontSize="14"
+                                                FontSize="13"
                                                 Text="{Binding CandidateCountText}" />
                                         </Grid>
                                         <Rectangle

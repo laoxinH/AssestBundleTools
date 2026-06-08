@@ -68,7 +68,7 @@
                 <StackPanel Spacing="10">
                     <TextBlock
                         x:Name="WindowTitleText"
-                        FontSize="40"
+                        FontSize="34"
                         FontWeight="SemiBold"
                         TextWrapping="WrapWholeWords" />
                     <TextBlock
@@ -110,15 +110,15 @@
                     </Grid.ColumnDefinitions>
 
                     <Border
-                        Width="44"
-                        Height="44"
+                        Width="40"
+                        Height="40"
                         VerticalAlignment="Center"
                         Background="{ThemeResource AccentFillColorTertiaryBrush}"
                         CornerRadius="8">
                         <FontIcon
                             VerticalAlignment="Center"
                             FontFamily="Segoe Fluent Icons"
-                            FontSize="22"
+                            FontSize="20"
                             Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                             Glyph="&#xE8A5;" />
                     </Border>
@@ -171,17 +171,17 @@
                     <Button
                         x:Name="CancelButton"
                         Grid.Column="3"
-                        Width="142"
-                        MinHeight="48"
-                        FontSize="14"
+                        Width="136"
+                        MinHeight="44"
+                        FontSize="13"
                         VerticalAlignment="Center"
                         Click="OnCancelButtonClick" />
                     <Button
                         x:Name="StartExtractionButton"
                         Grid.Column="4"
-                        Width="198"
-                        MinHeight="48"
-                        FontSize="14"
+                        Width="188"
+                        MinHeight="44"
+                        FontSize="13"
                         VerticalAlignment="Center"
                         Click="OnStartExtractionButtonClick"
                         IsEnabled="{Binding CanSubmit}"
