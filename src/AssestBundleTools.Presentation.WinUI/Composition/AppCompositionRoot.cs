@@ -172,7 +172,8 @@ internal static class AppCompositionRoot
             workspaceSessionRegistry,
             loadSpineAssetGroupDetailsHandler,
             extractAssetHandler,
-            workspaceExtractionOperationRecorder);
+            workspaceExtractionOperationRecorder,
+            loadSpineAssetGroupsHandler);
         var extractWorkspaceAssetsHandler = new ExtractWorkspaceAssetsHandler(
             workspaceSessionRegistry,
             extractAssetHandler,

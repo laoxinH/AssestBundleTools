@@ -18,6 +18,7 @@ public sealed class ExtractSpineAssetGroupHandler : ICommandHandler<ExtractSpine
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly IQueryHandler<LoadSpineAssetGroupDetailsQuery, Result<SpineAssetGroupDetailsDto>> _loadSpineAssetGroupDetailsHandler;
+    private readonly IQueryHandler<LoadSpineAssetGroupsQuery, Result<SpineAssetGroupListResultDto>>? _loadSpineAssetGroupsHandler;
     private readonly ExtractAssetHandler _extractAssetHandler;
     private readonly WorkspaceExtractionOperationRecorder? _operationRecorder;
 
@@ -25,12 +26,14 @@ public sealed class ExtractSpineAssetGroupHandler : ICommandHandler<ExtractSpine
         IWorkspaceSessionRegistry workspaceSessionRegistry,
         IQueryHandler<LoadSpineAssetGroupDetailsQuery, Result<SpineAssetGroupDetailsDto>> loadSpineAssetGroupDetailsHandler,
         ExtractAssetHandler extractAssetHandler,
-        WorkspaceExtractionOperationRecorder? operationRecorder = null)
+        WorkspaceExtractionOperationRecorder? operationRecorder = null,
+        IQueryHandler<LoadSpineAssetGroupsQuery, Result<SpineAssetGroupListResultDto>>? loadSpineAssetGroupsHandler = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _loadSpineAssetGroupDetailsHandler = loadSpineAssetGroupDetailsHandler ?? throw new ArgumentNullException(nameof(loadSpineAssetGroupDetailsHandler));
         _extractAssetHandler = extractAssetHandler ?? throw new ArgumentNullException(nameof(extractAssetHandler));
         _operationRecorder = operationRecorder;
+        _loadSpineAssetGroupsHandler = loadSpineAssetGroupsHandler;
     }
 
     public async Task<Result<SpineAssetGroupExtractionResultDto>> HandleAsync(
@@ -48,34 +51,26 @@ public sealed class ExtractSpineAssetGroupHandler : ICommandHandler<ExtractSpine
             return validationResult;
         }
 
-        var detailsResult = await _loadSpineAssetGroupDetailsHandler.HandleAsync(
-            new LoadSpineAssetGroupDetailsQuery(
-                command.WorkspaceId,
-                command.WorkspaceKey,
-                command.WorkspaceDataRootPath,
-                command.BundleId,
-                command.GroupId,
-                LoadMode: SpineAssetGroupDetailsLoadMode.ExtractionPlan),
-            cancellationToken);
-        if (detailsResult.IsCancelled)
+        var planResult = await ResolveExtractionPlanAsync(command, cancellationToken);
+        if (planResult.IsCancelled)
         {
             return Result<SpineAssetGroupExtractionResultDto>.Cancelled();
         }
 
-        if (!detailsResult.IsSuccess || detailsResult.Value is null)
+        if (!planResult.IsSuccess || planResult.Value is null)
         {
-            return Result<SpineAssetGroupExtractionResultDto>.Failure(detailsResult.Errors);
+            return Result<SpineAssetGroupExtractionResultDto>.Failure(planResult.Errors);
         }
 
-        var details = detailsResult.Value;
-        var plannedParts = ResolveExtractionParts(details);
+        var extractionPlan = planResult.Value;
+        var plannedParts = extractionPlan.Parts;
         if (plannedParts.Count == 0)
         {
             return Result<SpineAssetGroupExtractionResultDto>.Failure(
                 ApplicationErrors.NoSpineAssetGroupExtractionCandidates(command.GroupId));
         }
 
-        var groupOutputDirectory = BuildGroupOutputDirectory(command.OutputDirectory, details.Group);
+        var groupOutputDirectory = BuildGroupOutputDirectory(command.OutputDirectory, extractionPlan.Group);
         var extractedResults = new List<AssetExtractionResultDto>(plannedParts.Count);
         var failures = new List<AppError>();
 
@@ -120,8 +115,8 @@ public sealed class ExtractSpineAssetGroupHandler : ICommandHandler<ExtractSpine
         var result = new SpineAssetGroupExtractionResultDto(
             command.WorkspaceId,
             command.BundleId,
-            details.Group.GroupId,
-            details.Group.DisplayName,
+            extractionPlan.Group.GroupId,
+            extractionPlan.Group.DisplayName,
             groupOutputDirectory,
             extractedResults.Count,
             failures.Count,
@@ -131,6 +126,79 @@ public sealed class ExtractSpineAssetGroupHandler : ICommandHandler<ExtractSpine
         _operationRecorder?.RecordSpineAssetGroupExtraction(command, result);
 
         return Result<SpineAssetGroupExtractionResultDto>.Success(result);
+    }
+
+    private async Task<Result<SpineAssetGroupExtractionPlan>> ResolveExtractionPlanAsync(
+        ExtractSpineAssetGroupCommand command,
+        CancellationToken cancellationToken)
+    {
+        var catalogPlanResult = await TryResolveCatalogExtractionPlanAsync(command, cancellationToken);
+        if (catalogPlanResult is not null)
+        {
+            return catalogPlanResult;
+        }
+
+        var detailsResult = await _loadSpineAssetGroupDetailsHandler.HandleAsync(
+            new LoadSpineAssetGroupDetailsQuery(
+                command.WorkspaceId,
+                command.WorkspaceKey,
+                command.WorkspaceDataRootPath,
+                command.BundleId,
+                command.GroupId,
+                LoadMode: SpineAssetGroupDetailsLoadMode.ExtractionPlan),
+            cancellationToken);
+        if (detailsResult.IsCancelled)
+        {
+            return Result<SpineAssetGroupExtractionPlan>.Cancelled();
+        }
+
+        if (!detailsResult.IsSuccess || detailsResult.Value is null)
+        {
+            return Result<SpineAssetGroupExtractionPlan>.Failure(detailsResult.Errors);
+        }
+
+        return Result<SpineAssetGroupExtractionPlan>.Success(
+            new SpineAssetGroupExtractionPlan(
+                detailsResult.Value.Group,
+                ResolveExtractionParts(detailsResult.Value)));
+    }
+
+    private async Task<Result<SpineAssetGroupExtractionPlan>?> TryResolveCatalogExtractionPlanAsync(
+        ExtractSpineAssetGroupCommand command,
+        CancellationToken cancellationToken)
+    {
+        if (_loadSpineAssetGroupsHandler is null)
+        {
+            return null;
+        }
+
+        var groupsResult = await _loadSpineAssetGroupsHandler.HandleAsync(
+            new LoadSpineAssetGroupsQuery(
+                command.WorkspaceId,
+                command.BundleId,
+                WorkspaceDataRootPath: command.WorkspaceDataRootPath),
+            cancellationToken);
+        if (groupsResult.IsCancelled)
+        {
+            return Result<SpineAssetGroupExtractionPlan>.Cancelled();
+        }
+
+        if (!groupsResult.IsSuccess || groupsResult.Value is null)
+        {
+            return null;
+        }
+
+        var group = groupsResult.Value.Items.FirstOrDefault(candidate =>
+            string.Equals(candidate.GroupId, command.GroupId, StringComparison.Ordinal));
+        if (group is null)
+        {
+            return null;
+        }
+
+        var plannedParts = ResolveCatalogExtractionParts(group);
+        return plannedParts.Count == 0
+            ? null
+            : Result<SpineAssetGroupExtractionPlan>.Success(new SpineAssetGroupExtractionPlan(group, plannedParts));
     }
 
     private Result<SpineAssetGroupExtractionResultDto>? ValidateCommand(ExtractSpineAssetGroupCommand command)
@@ -239,6 +307,16 @@ public sealed class ExtractSpineAssetGroupHandler : ICommandHandler<ExtractSpine
         }
     }
 
+    private static IReadOnlyList<SpineAssetGroupPartDto> ResolveCatalogExtractionParts(SpineAssetGroupDto group)
+    {
+        var parts = new List<SpineAssetGroupPartDto>();
+        var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        AddRange(parts, keys, group.SkeletonAssets);
+        AddRange(parts, keys, group.AtlasAssets);
+        AddRange(parts, keys, group.TexturePageAssets);
+        return parts;
+    }
+
     private static string CreatePartKey(SpineAssetGroupPartDto part) =>
         string.Concat(part.BundleId.Value, "\n", part.AssetId.Value);
 
@@ -311,4 +389,8 @@ public sealed class ExtractSpineAssetGroupHandler : ICommandHandler<ExtractSpine
             ? "spine-group"
             : sanitized;
     }
+
+    private sealed record SpineAssetGroupExtractionPlan(
+        SpineAssetGroupDto Group,
+        IReadOnlyList<SpineAssetGroupPartDto> Parts);
 }

@@ -92,7 +92,8 @@ internal static partial class ExtractionWorkflowHandlerTests
                 registry,
                 new LoadSpineAssetGroupDetailsHandler(registry, previewHandler),
                 singleHandler,
-                recorder));
+                recorder,
+                new LoadSpineAssetGroupsHandler(registry)));
 
         var result = await batchHandler.HandleAsync(new ExtractWorkspaceAssetsCommand(
             workspaceId,
@@ -224,6 +225,40 @@ internal static partial class ExtractionWorkflowHandlerTests
         TestAssert.True(result.IsSuccess, "Spine group extraction should succeed with recorded details.");
         var query = TestAssert.Single(detailsHandler.Queries);
         TestAssert.Equal(SpineAssetGroupDetailsLoadMode.ExtractionPlan, query.LoadMode, "Spine group extraction should use the light extraction planning mode instead of rebuilding full preview details.");
+    }
+
+    public static async Task ExtractSpineAssetGroupHandler_ShouldPreferCatalogPlan_WhenAvailable()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleId = new BundleId("bundle.char_1001_amiya2");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        var parts = RegisterSpineGroupAssets(workspaceId, bundleId, registry);
+        var previewHandler = new TestAssetPreviewHandler();
+        RegisterSpineGroupPreviews(workspaceId, bundleId, parts, previewHandler);
+        var fileStore = new TestAssetExtractionFileStore();
+        var changeStore = new TestWorkspaceChangeStore();
+        var singleHandler = CreateHandler(registry, previewHandler, fileStore, changeStore);
+        var detailsHandler = new RecordingSpineGroupDetailsHandler(CreateSpineGroupDto(bundleId));
+        var groupsHandler = new RecordingSpineGroupListHandler();
+        var handler = new ExtractSpineAssetGroupHandler(
+            registry,
+            detailsHandler,
+            singleHandler,
+            loadSpineAssetGroupsHandler: groupsHandler);
+
+        var result = await handler.HandleAsync(new ExtractSpineAssetGroupCommand(
+            workspaceId,
+            WorkspaceKey,
+            WorkspaceDataRootPath,
+            bundleId,
+            "spine-group:bundle.char_1001_amiya2:assets/characters/char_1001_amiya2",
+            @"D:\Selected"));
+
+        TestAssert.True(result.IsSuccess, "Spine group extraction should succeed from the catalog plan.");
+        TestAssert.Equal(0, detailsHandler.Queries.Count, "Catalog-backed Spine extraction should not load group details before extracting.");
+        var query = TestAssert.Single(groupsHandler.Queries);
+        TestAssert.Equal(WorkspaceDataRootPath, query.WorkspaceDataRootPath, "Catalog-backed Spine extraction should pass workspace data root for persistent catalog reuse.");
+        TestAssert.Equal(4, fileStore.Requests.Count, "Catalog-backed Spine extraction should export all known group parts.");
     }
 
     private static SpineAssetGroupDto CreateSpineGroupDto(BundleId bundleId) =>

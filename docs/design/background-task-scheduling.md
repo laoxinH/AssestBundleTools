@@ -414,7 +414,7 @@ BackgroundWorkProgress
 3. 提取内部继续复用 Application 提取命令和预览 / 导出载荷管线。
 4. 每个成功导出的组成资源按操作记录模型追加 `ExtractAsset`，批量或 Spine 组入口追加 `ExtractBatch` 汇总。
 5. 成功后由工作区操作变更通知触发读模型重读；不手动刷新资产列表。
-6. Spine 组提取只需要导出组成资产，不需要重建交互预览诊断；正式提取应使用 `SpineAssetGroupDetailsLoadMode.ExtractionPlan`，跳过 skeleton 摘要、Texture2D 尺寸诊断和 runtime 动画预览构建。
+6. Spine 组提取只需要导出组成资产，不需要重建交互预览诊断；正式提取应优先从 `SpineGroupCatalog` 的 skeleton / atlas / texture part 清单生成提取计划，只有目录缺失或计划不完整时才回退 `SpineAssetGroupDetailsLoadMode.ExtractionPlan` 详情模式。`ExtractionPlan` 必须跳过 skeleton 摘要、Texture2D 尺寸诊断和 runtime 动画预览构建。
 
 禁止：
 
@@ -458,7 +458,7 @@ BackgroundWorkProgress
 
 调度器不直接规定缓存格式，也不把缓存命中写成操作记录。
 
-Spine 组目录缓存遵循 [workspace-management.md](workspace-management.md) 中的 `cache/spine-groups` 规则：它是跨资源包资产索引的派生读模型，用于服务 `资源 / Spine 组` 列表、搜索、资源包标签切换和批量提取 Spine 计划，不保存 atlas 详情、Texture2D 图片载荷、runtime 预览 DTO 或撤销 / 重做事实。当前 `LoadSpineAssetGroupsHandler` 已接入运行时目录缓存，并在查询携带工作区数据根时通过 `JsonSpineGroupCatalogCacheStore` 复用 `cache/spine-groups/<workspace-key>/catalog.json`；命中运行时目录或工作区派生目录时，列表刷新和批量提取计划只做内存投影和当前操作记录 hydrate，不再提前收集用于目录检测的 Material / MonoBehaviour / 修改 Texture2D / TextAsset 详情，也不进入 Shell 底部后台任务列表；冷构建时才收集检测详情，并按 `workspaceKey + catalogFingerprint` 做 single-flight，避免同一工作区多个标签、独立资源编辑窗口或批量提取计划同时触发重复检测。若冷构建耗时超过交互阈值，后续实现可把它迁入 `TransientRead` profile 并显示轻量加载状态，但不应像导入、提取或保存那样默认常驻全局任务列表。
+Spine 组目录缓存遵循 [workspace-management.md](workspace-management.md) 中的 `cache/spine-groups` 规则：它是跨资源包资产索引的派生读模型，用于服务 `资源 / Spine 组` 列表、搜索、资源包标签切换、批量提取 Spine 计划和单个 Spine 组提取计划，不保存 atlas 详情、Texture2D 图片载荷、runtime 预览 DTO 或撤销 / 重做事实。该目录缓存同时有进程内运行时层和 `cache/spine-groups/<workspace-key>/catalog.json` 持久化层；重启应用后，只要工作区数据根、bundle index 指纹和检测版本仍匹配，就会重新加载持久化 catalog，而不是重新扫描 AB 构建目录。当前 `LoadSpineAssetGroupsHandler` 已接入运行时目录缓存，并在查询携带工作区数据根时通过 `JsonSpineGroupCatalogCacheStore` 复用持久化目录；命中运行时目录或工作区派生目录时，列表刷新、批量提取计划和单个 Spine 组提取计划只做内存投影和当前操作记录 hydrate，不再提前收集用于目录检测的 Material / MonoBehaviour / 修改 Texture2D / TextAsset 详情，也不进入 Shell 底部后台任务列表；冷构建时才收集检测详情，并按 `workspaceKey + catalogFingerprint` 做 single-flight，避免同一工作区多个标签、独立资源编辑窗口或批量提取计划同时触发重复检测。若冷构建耗时超过交互阈值，后续实现可把它迁入 `TransientRead` profile 并显示轻量加载状态，但不应像导入、提取或保存那样默认常驻全局任务列表。
 
 Spine 组目录缓存的失效由结构性输入决定：bundle index 指纹集合、Spine 组检测版本、依赖图 / 名称归一化规则和资源包导入 / 移除状态。替换、Spine 组成文件编辑保存、撤销 / 重做和删除操作记录通常只改变有效内容和修改状态，应在目录查询返回时通过工作区操作记录读模型叠加投影，不应把每次操作记录变化都升级为目录重建。
 

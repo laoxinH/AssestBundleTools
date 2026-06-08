@@ -282,7 +282,7 @@ Spine 不是普通资源类型文件夹。它表示“整组导出”，包含 s
 - 普通资源提取、Spine 组提取、预览和详情读取继续通过标准化 bundle artifact 与 loaded-session 复用链路。
 - 对话框不新增直接读取 AB 的路径。
 - 对话框首屏只应使用已经在工作区读模型中的资源包摘要和初始选择状态；动态类别、候选数量、Spine 组数量和总大小由后台计划预览补齐。批量提取预览查询与正式执行命令都必须把当前 `workspaceDataRootPath` 传给 Spine 计划器，使 `LoadSpineAssetGroupsQuery` 可以命中运行时目录缓存或 `cache/spine-groups/<workspace-key>/catalog.json` 派生缓存。后续优化应优先复用资产类型 facets、SpineGroupCatalog 运行时 / 派生缓存，并减少 `BuildPlan` 与 `BuildCategoryPlans` 对同一资源包资产列表的重复遍历。
-- Spine 组正式提取只需要组成资产清单和 atlas page 匹配结果，不需要重建交互预览诊断或 runtime 动画预览；提取入口应使用 `SpineAssetGroupDetailsLoadMode.ExtractionPlan`，避免在“检查资源 / 开始提取”阶段重复执行完整预览读取流程。
+- Spine 组正式提取只需要组成资产清单，不需要重建交互预览诊断或 runtime 动画预览；提取入口应优先从 `SpineGroupCatalog` 的 skeleton / atlas / texture part 清单生成计划，并让每个组成资源继续走单资源提取和预览 payload 缓存。只有 catalog 缺失、目标组未命中或组成清单不完整时，才回退 `SpineAssetGroupDetailsLoadMode.ExtractionPlan` 详情模式，避免在“检查资源 / 开始提取”阶段重复执行完整预览读取流程。
 - DEBUG 包中已有的 loaded-session `Acquire miss / in-flight / hit` 和 `Load start / completed / failed` 日志可以用于验证该批量入口是否复用同一 AB 加载会话。
 
 ## 10. 与批处理页关系
@@ -316,7 +316,7 @@ Spine 不是普通资源类型文件夹。它表示“整组导出”，包含 s
 4. 跨 AB 并发
    执行用例已按 AB 分组，在单个后台任务内部执行跨 AB 受控并行、同 AB 内顺序提取；默认并发度为 `CPU/2`、最大 `4`，GC 压力下退避到 `1`。
 5. Spine 缓存复用
-   批量提取预览与正式执行已经把 `workspaceDataRootPath` 传入 Spine 组计划器，避免工作区派生目录缓存存在时仍每次冷构建 Spine 组列表；单 Spine 组提取使用 `ExtractionPlan` 详情模式，避免提取前重复构建 skeleton 摘要、Texture2D 诊断和 runtime 动画预览。
+   批量提取预览、正式执行和单 Spine 组提取都会把 `workspaceDataRootPath` 传入 Spine 组计划器，避免工作区派生目录缓存存在时仍每次冷构建 Spine 组列表；单 Spine 组提取优先使用 `SpineGroupCatalog` 清单，目录不可用时才使用 `ExtractionPlan` 详情模式，避免提取前重复构建 skeleton 摘要、Texture2D 诊断和 runtime 动画预览。
 
 仍待收口：
 
@@ -333,7 +333,7 @@ Application 已覆盖并需持续保持：
 - 多导出类别可以同时规划 `Texture2D / Sprite / Spine`。
 - `All` 覆盖当前支持的普通资源和 Spine 组。
 - 批量提取预览和正式执行会把 `workspaceDataRootPath` 传给 Spine 组计划查询，保证可以复用工作区 SpineGroupCatalog 派生缓存。
-- Spine 组正式提取使用 `ExtractionPlan` 详情模式，不回退到完整交互预览详情构建。
+- Spine 组正式提取优先使用 `SpineGroupCatalog` 清单；catalog 命中时不得加载组详情，catalog 不可用时使用 `ExtractionPlan` 详情模式，不回退到完整交互预览详情构建。
 - 普通资源输出路径为 `<输出根>/<AB>/<资源类型>/<文件名>`。
 - Spine 组输出沿用 `<输出根>/<AB>/<组名>/...`。
 - 无候选、部分失败、取消和成功摘要返回稳定 DTO。

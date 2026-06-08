@@ -102,5 +102,9 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(ExtractionWorkflowHandlerTests.ExtractSpineAssetGroupHandler_ShouldUseExtractionPlanDetailsMode),
             ExtractionWorkflowHandlerTests.ExtractSpineAssetGroupHandler_ShouldUseExtractionPlanDetailsMode);
+        await RunTestAsync(
+            failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractSpineAssetGroupHandler_ShouldPreferCatalogPlan_WhenAvailable),
+            ExtractionWorkflowHandlerTests.ExtractSpineAssetGroupHandler_ShouldPreferCatalogPlan_WhenAvailable);
     }
 }
