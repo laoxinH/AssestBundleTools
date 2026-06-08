@@ -68,6 +68,21 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
         Assert.False(context.Coordinator.IsSynchronizingPrimaryPaneState);
     }
 
+    [Fact]
+    public async Task RefreshPrimaryPaneAsync_ShouldRunSpineGroupListQueryThroughBackgroundRunner()
+    {
+        var context = CreateContext();
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.SpineGroups;
+
+        await context.Coordinator.RefreshPrimaryPaneAsync(
+            context.CaptureActiveTabState,
+            preserveCurrentDocumentTab: true);
+
+        Assert.Equal(1, context.BackgroundTaskRunner.RunCallCount);
+        Assert.Equal(typeof(Result<SpineAssetGroupListResultDto>), context.BackgroundTaskRunner.LastResultType);
+        Assert.Single(context.PrimaryPane.SpineGroupItems);
+    }
+
     private static TestContext CreateContext()
     {
         var localizationService = new TestLocalizationService();
@@ -110,6 +125,7 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
         var synchronizeInspectorCallCount = 0;
         bool? observedSynchronizationDuringInspectorSync = null;
         BundleExplorerAssetPaneCoordinator? coordinator = null;
+        var backgroundTaskRunner = new TestBackgroundTaskRunner();
         coordinator = new BundleExplorerAssetPaneCoordinator(
             CreateWorkspaceExplorerGateway(workspaceSummary.WorkspaceId, bundleNode.BundleId, bundleNode.DisplayName),
             new TestAppLogService(),
@@ -121,6 +137,7 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
             () => bundleTab,
             result => result.IsSuccess ? result.Value : null,
             result => result.IsSuccess ? result.Value : null,
+            backgroundTaskRunner,
             _ =>
             {
                 synchronizeInspectorCallCount++;
@@ -136,6 +153,7 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
             primaryPane,
             bundleTab,
             coordinator,
+            backgroundTaskRunner,
             () => synchronizeInspectorCallCount,
             () => observedSynchronizationDuringInspectorSync);
     }
@@ -245,6 +263,7 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
         AssetPaneViewModel PrimaryPane,
         BundleDocumentTabViewModel BundleTab,
         BundleExplorerAssetPaneCoordinator Coordinator,
+        TestBackgroundTaskRunner BackgroundTaskRunner,
         Func<int> GetSynchronizeInspectorCallCount,
         Func<bool?> GetObservedSynchronizationDuringInspectorSync)
     {

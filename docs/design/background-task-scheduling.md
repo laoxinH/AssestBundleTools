@@ -35,6 +35,7 @@
 | 链路 | 当前承载点 | 已有能力 | 当前不足 |
 | --- | --- | --- | --- |
 | 工作区打开 / 导入 | `WorkspaceImportCoordinatorService`、`BundleExplorerWorkspaceBindingCoordinator`、`IBackgroundTaskRunner` | 外层任务已离开 UI 线程；Application 内部已有 `workspaceKey` 执行闸门和 bundle 粒度 worker 池 | 外层任务、导入进度覆盖层和 Shell 状态条尚未统一为同一个任务模型 |
+| 资产列表 / Spine 组列表 | `BundleExplorerAssetPaneCoordinator` + `IBackgroundTaskRunner` | 普通资源列表和 Spine 组聚合列表查询已离开 UI 线程；Spine 组检测可遍历多 bundle 资产列表、收集详情并 hydrate 组成资产，不再在视图模式切换调用栈内阻塞主窗口 | 仍是执行原语级后台化，暂未接入可观察调度 profile；若后续列表查询需要取消、进度或去重，应迁入统一调度器 |
 | Application 导入 worker | `WorkspaceImportProcessingCoordinator -> WorkspaceImportWorkerPool -> WorkspaceImportCommitter` | `串行计划 -> 有界并行 worker -> 串行提交`，默认 worker 并发度 `1-4` | 该 worker 池属于业务一致性边界，不应被 Presentation 调度器接管 |
 | 资源预览 | `AssetPreviewQueryExecutor` + `IBackgroundWorkScheduler` + `WorkspaceBundleArtifactResolver` + `AssetsToolsBundleLoadedSessionCache` | 前台槽优先服务活动详情标签，后台槽用于已打开标签预热；支持取消、超时、调度器 profile 闸门；导入 / 预览 / 提取 / Spine 详情会优先复用 `cache/bundles` 标准化 artifact；artifact 生成阶段按 `workspaceKey + workspaceDataRootPath + bundleCacheKey` 串行化，标准化 artifact 已有 usage / LRU prune、设置页显式清理入口和偏好驱动自动容量治理；预览缓存已有 usage / prune，并纳入当前工作区缓存聚合统计、设置页显式清理和偏好驱动自动容量治理；AssetsTools loaded-session 再按标准化 artifact identity 做 single-flight / lease 复用，并在 artifact 删除 / prune 时主动失效；loaded-session 已有默认 6 个空闲会话上限和 GC 内存压力下 1 个空闲会话退避；预览生成 `OutOfMemoryException` 会映射为专用诊断，并让同 bundle 后台预热短期退避 | 完整可观测队列、任务详情和后续写包共享入口仍需后续补齐 |
 | Spine 详情、贴图载荷和 runtime 帧 | `SpineAssetGroupDetailsLoader`、`InspectorSpineAnimationPreviewSurfaceView` + `IBackgroundWorkScheduler` | 组详情 / 贴图载荷通过 `PreviewForeground` 后台加载，runtime 当前帧通过独立 `SpineRuntimeFrame` profile 运行；初始组详情先用交互预览快路径加载可播放动画所需内容，播放失败且缺少明确诊断时才补跑完整诊断；均不让 UI 直接读 AB | Spine 序列帧导出和后续导出 profile 仍需继续统一 |
@@ -482,6 +483,7 @@ Export / SaveRebuild 共享 artifact resolver 已进入保存计划骨架的只�
 - `BackgroundWorkScheduler` 当前复用既有 `IBackgroundTaskRunner` 作为执行原语，并把可见任务生命周期投影到 `IAppBackgroundTaskStatusService`；`WorkspaceOpen / WorkspaceImport / PreviewForeground / PreviewPrewarm / SpineRuntimeFrame / BatchExtraction / BatchReplacement / SaveRebuild` 已有第一版 profile 闸门。
 - `BackgroundWorkScheduler` 已提供 `StartAsync`、`BackgroundWorkHandle<T>`、`CurrentTasks`、`TasksChanged` 和 `TryCancel(taskId)`；任务快照包含 profile、语义分类、优先级、工作区 / bundle / resource 关联、标题、进度、状态、是否状态条可见和是否可取消。
 - 当前运行中任务状态由 `BackgroundWorkTaskRegistry` 统一维护；调度器只负责执行原语、profile 闸门、取消源串联和状态条投影，避免后续导入、预览、提取、导出继续各自维护一套可观察任务表。
+- 主资产窗格的普通资源列表和 Spine 组列表查询已通过 `IBackgroundTaskRunner` 离开 UI 线程。尤其 Spine 组列表加载会调用 Application 组检测、详情收集和组成资产 hydrate，视图从普通资源切到 Spine 组时不得在 WinUI 事件调用栈内同步执行这些 CPU / 读取型工作。
 - Shell 底部状态条已支持当前可取消任务的图标取消按钮；当前接入的可取消任务包括工作区导入处理阶段、资源列表普通资源批量提取和 Spine 资源组批量提取。
 - 设置与诊断页已通过 Application 的 `WorkspaceCacheMaintenanceGateway` 展示当前工作区聚合缓存 usage，统计范围包含 `cache/bundles` 标准化 bundle artifact 和 `cache/previews` 预览缓存；显式清理通过 `Maintenance` profile 同时清理两类可重建派生产物，不写操作记录，也不刷新资产列表。设置页还提供自动容量治理偏好，当前自动策略作用于标准化 bundle artifact 和预览缓存：导入 / 预览 / 提取首次生成 artifact 后会按当前工作区容量上限自动 prune，预览 payload 保存后也会按同一上限 prune 最旧预览项。
 - 组合根已创建单例调度器，`App` 暴露同一 `BackgroundWorkScheduler` 给工作台、批处理页和独立资源编辑窗口使用，避免同类任务各自临时创建调度器。

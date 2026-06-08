@@ -23,6 +23,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordin
 internal sealed class BundleExplorerAssetPaneCoordinator
 {
     private readonly IWorkspaceExplorerGateway _workspaceExplorerGateway;
+    private readonly IBackgroundTaskRunner _backgroundTaskRunner;
     private readonly IAppLogService _appLogService;
     private readonly ILocalizationService _localizationService;
     private readonly IBundleExplorerWorkspaceShellHost _workspaceShell;
@@ -49,12 +50,14 @@ internal sealed class BundleExplorerAssetPaneCoordinator
         Func<BundleDocumentTabViewModel?> getActiveBundleTab,
         Func<Result<AssetListResultDto>, AssetListResultDto?> unwrapAssetListResult,
         Func<Result<SpineAssetGroupListResultDto>, SpineAssetGroupListResultDto?> unwrapSpineAssetGroupListResult,
+        IBackgroundTaskRunner backgroundTaskRunner,
         Func<bool, Task> synchronizeInspectorWithActiveBundleTabAsync,
         Action<bool> clearCurrentInspectorHostState,
         Action clearActiveTabState,
         Action requestWorkspaceBrowserStatePersistence)
     {
         _workspaceExplorerGateway = workspaceExplorerGateway ?? throw new ArgumentNullException(nameof(workspaceExplorerGateway));
+        _backgroundTaskRunner = backgroundTaskRunner ?? throw new ArgumentNullException(nameof(backgroundTaskRunner));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _workspaceShell = workspaceShell ?? throw new ArgumentNullException(nameof(workspaceShell));
@@ -201,13 +204,14 @@ internal sealed class BundleExplorerAssetPaneCoordinator
             return;
         }
 
-        var assetList = _unwrapAssetListResult(await _workspaceExplorerGateway.LoadAssetListAsync(
-            new LoadAssetListQuery(
-                WorkspaceId: workspaceSummary.WorkspaceId,
-                BundleId: bundleNode.BundleId,
-                SearchKeyword: NormalizeSearchKeyword(pane.SearchKeyword),
-                AssetTypeFilter: pane.SelectedAssetType,
-                AssetTypeDisplayNameFilter: pane.SelectedAssetTypeDisplayNameFilter)));
+        var assetListQuery = new LoadAssetListQuery(
+            WorkspaceId: workspaceSummary.WorkspaceId,
+            BundleId: bundleNode.BundleId,
+            SearchKeyword: NormalizeSearchKeyword(pane.SearchKeyword),
+            AssetTypeFilter: pane.SelectedAssetType,
+            AssetTypeDisplayNameFilter: pane.SelectedAssetTypeDisplayNameFilter);
+        var assetList = _unwrapAssetListResult(await _backgroundTaskRunner.RunAsync(
+            token => _workspaceExplorerGateway.LoadAssetListAsync(assetListQuery, token)));
 
         if (assetList is null)
         {
@@ -241,11 +245,12 @@ internal sealed class BundleExplorerAssetPaneCoordinator
         BundleNodeViewModel bundleNode,
         WorkspaceId workspaceId)
     {
-        var spineGroupList = _unwrapSpineAssetGroupListResult(await _workspaceExplorerGateway.LoadSpineAssetGroupsAsync(
-            new LoadSpineAssetGroupsQuery(
-                WorkspaceId: workspaceId,
-                BundleId: bundleNode.BundleId,
-                SearchKeyword: NormalizeSearchKeyword(pane.SearchKeyword))));
+        var spineGroupListQuery = new LoadSpineAssetGroupsQuery(
+            WorkspaceId: workspaceId,
+            BundleId: bundleNode.BundleId,
+            SearchKeyword: NormalizeSearchKeyword(pane.SearchKeyword));
+        var spineGroupList = _unwrapSpineAssetGroupListResult(await _backgroundTaskRunner.RunAsync(
+            token => _workspaceExplorerGateway.LoadSpineAssetGroupsAsync(spineGroupListQuery, token)));
 
         if (spineGroupList is null)
         {

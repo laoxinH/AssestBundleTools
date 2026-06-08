@@ -173,6 +173,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             getActiveBundleTab: () => ActiveBundleTab,
             unwrapAssetListResult: UnwrapAssetListResult,
             unwrapSpineAssetGroupListResult: UnwrapSpineAssetGroupListResult,
+            backgroundTaskRunner,
             synchronizeInspectorWithActiveBundleTabAsync: SynchronizeInspectorWithActiveBundleTabAsync,
             clearCurrentInspectorHostState: _assetDocumentHostCoordinator.ClearCurrentInspectorHostState,
             clearActiveTabState: ClearActiveTabState,
