@@ -3678,6 +3678,12 @@
   <data name="BundleExplorer.EmptyState.NoSpineGroups" xml:space="preserve">
     <value>No recognizable Spine groups are available for the current bundle and search.</value>
   </data>
+  <data name="BundleExplorer.EmptyState.LoadingAssets" xml:space="preserve">
+    <value>Loading assets for the current bundle...</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.LoadingSpineGroups" xml:space="preserve">
+    <value>Loading Spine groups for the current bundle...</value>
+  </data>
   <data name="BundleExplorer.EmptyState.NoOpenTabs" xml:space="preserve">
     <value>No bundle tabs are open yet. Click a bundle on the left to start browsing.</value>
   </data>

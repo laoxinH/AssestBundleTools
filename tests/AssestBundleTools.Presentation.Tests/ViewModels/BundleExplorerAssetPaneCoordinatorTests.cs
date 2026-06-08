@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
+using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Assets;
@@ -83,7 +84,103 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
         Assert.Single(context.PrimaryPane.SpineGroupItems);
     }
 
-    private static TestContext CreateContext()
+    [Fact]
+    public async Task RefreshPrimaryPaneAsync_ShouldClearStaleSpineGroups_WhileLoadingCurrentBundle()
+    {
+        var operationEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseOperation = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var backgroundTaskRunner = new TestBackgroundTaskRunner
+        {
+            RunAsyncHandler = async (operation, token) =>
+            {
+                operationEntered.SetResult();
+                await releaseOperation.Task.WaitAsync(token);
+                return await operation(token);
+            }
+        };
+        var context = CreateContext(backgroundTaskRunner: backgroundTaskRunner);
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.SpineGroups;
+        SpineAssetGroupDto[] previousGroups =
+        [
+            CreateSpineGroup(new BundleId("bundle-previous"), "previous")
+        ];
+        context.PrimaryPane.ReplaceSpineGroups(
+            "ui",
+            previousGroups.Select(context.CreateSpineGroupEntry),
+            "empty");
+
+        var refreshTask = context.Coordinator.RefreshPrimaryPaneAsync(
+            context.CaptureActiveTabState,
+            preserveCurrentDocumentTab: true);
+        await operationEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Empty(context.PrimaryPane.SpineGroupItems);
+        Assert.Equal("ui", context.PrimaryPane.CurrentBundleDisplayName);
+        Assert.Equal(ResourceKeys.BundleExplorerLoadingSpineGroups, context.PrimaryPane.EmptyStateText);
+
+        releaseOperation.SetResult();
+        await refreshTask.WaitAsync(TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task RefreshPrimaryPaneAsync_ShouldIgnoreStaleSpineGroupResult_AfterBundleSwitch()
+    {
+        var firstOperationEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseFirstOperation = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var runCallIndex = 0;
+        var backgroundTaskRunner = new TestBackgroundTaskRunner
+        {
+            RunAsyncHandler = async (operation, token) =>
+            {
+                if (Interlocked.Increment(ref runCallIndex) == 1)
+                {
+                    firstOperationEntered.SetResult();
+                    await releaseFirstOperation.Task.WaitAsync(token);
+                }
+
+                return await operation(token);
+            }
+        };
+        var context = CreateContext(
+            bundleNames: ["first", "second"],
+            backgroundTaskRunner: backgroundTaskRunner);
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.SpineGroups;
+        var firstBundleNode = context.FindBundleNode("first");
+        var secondBundleNode = context.FindBundleNode("second");
+        var firstBundleTab = context.BundleTab;
+        var secondBundleTab = new BundleDocumentTabViewModel(
+            secondBundleNode.BundleId,
+            secondBundleNode.DisplayName,
+            secondBundleNode.LogicalPath,
+            isPreview: false);
+        secondBundleTab.CaptureFromPane(context.PrimaryPane);
+
+        var firstRefreshTask = context.Coordinator.LoadActiveBundleTabAsync(
+            firstBundleTab,
+            firstBundleNode,
+            writeSelectionLog: false);
+        await firstOperationEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        await context.Coordinator.LoadActiveBundleTabAsync(
+            secondBundleTab,
+            secondBundleNode,
+            writeSelectionLog: false);
+
+        Assert.Collection(
+            context.PrimaryPane.SpineGroupItems,
+            item => Assert.Equal("bundle-second-group", item.Item.GroupId));
+
+        releaseFirstOperation.SetResult();
+        await firstRefreshTask.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Collection(
+            context.PrimaryPane.SpineGroupItems,
+            item => Assert.Equal("bundle-second-group", item.Item.GroupId));
+    }
+
+    private static TestContext CreateContext(
+        IReadOnlyList<string>? bundleNames = null,
+        TestBackgroundTaskRunner? backgroundTaskRunner = null)
     {
         var localizationService = new TestLocalizationService();
         var workspaceContextService = new TestWorkspaceContextService();
@@ -101,8 +198,10 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
         workspaceShell.ApplyWorkspace(workspaceSummary, workspaceRequest);
 
         var bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
-        bundlePane.RebuildBundleGroups(PresentationTestDataFactory.CreateBundleTree("ui"));
-        var bundleNode = bundlePane.FindBundleNode(new BundleId("bundle-ui"))!;
+        var normalizedBundleNames = bundleNames is { Count: > 0 } ? bundleNames : ["ui"];
+        bundlePane.RebuildBundleGroups(CreateBundleTree(normalizedBundleNames));
+        var firstBundleName = normalizedBundleNames[0];
+        var bundleNode = bundlePane.FindBundleNode(new BundleId($"bundle-{firstBundleName}"))!;
         var primaryPane = new AssetPaneViewModel();
         primaryPane.ConfigurePane(
             PaneId.New(),
@@ -125,9 +224,9 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
         var synchronizeInspectorCallCount = 0;
         bool? observedSynchronizationDuringInspectorSync = null;
         BundleExplorerAssetPaneCoordinator? coordinator = null;
-        var backgroundTaskRunner = new TestBackgroundTaskRunner();
+        backgroundTaskRunner ??= new TestBackgroundTaskRunner();
         coordinator = new BundleExplorerAssetPaneCoordinator(
-            CreateWorkspaceExplorerGateway(workspaceSummary.WorkspaceId, bundleNode.BundleId, bundleNode.DisplayName),
+            CreateWorkspaceExplorerGateway(workspaceSummary.WorkspaceId),
             new TestAppLogService(),
             localizationService,
             workspaceShell,
@@ -158,10 +257,7 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
             () => observedSynchronizationDuringInspectorSync);
     }
 
-    private static TestWorkspaceExplorerGateway CreateWorkspaceExplorerGateway(
-        WorkspaceId workspaceId,
-        BundleId bundleId,
-        string bundleDisplayName)
+    private static TestWorkspaceExplorerGateway CreateWorkspaceExplorerGateway(WorkspaceId workspaceId)
     {
         return new TestWorkspaceExplorerGateway
         {
@@ -170,8 +266,8 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
             LoadAssetListHandler = query => Task.FromResult(Result<AssetListResultDto>.Success(
                 new AssetListResultDto(
                     workspaceId,
-                    bundleId,
-                    bundleDisplayName,
+                    query.BundleId,
+                    query.BundleId.Value,
                     query.SearchKeyword,
                     query.AssetTypeFilter,
                     TotalCount: 1,
@@ -180,7 +276,7 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
                     [
                         new AssetListItemDto(
                             new AssetId("asset-button"),
-                            bundleId,
+                            query.BundleId,
                             "Button",
                             "Assets/Button.png",
                             AssetType.Texture2D,
@@ -193,16 +289,40 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
             LoadSpineAssetGroupsHandler = query => Task.FromResult(Result<SpineAssetGroupListResultDto>.Success(
                 new SpineAssetGroupListResultDto(
                     workspaceId,
-                    bundleId,
-                    bundleDisplayName,
+                    query.BundleId,
+                    query.BundleId.Value,
                     query.SearchKeyword,
                     TotalCount: 1,
                     FilteredCount: 1,
                     Items:
                     [
-                        CreateSpineGroup(bundleId, "hero")
+                        CreateSpineGroup(query.BundleId, $"{query.BundleId.Value}-group")
                     ])))
         };
+    }
+
+    private static IReadOnlyList<BundleTreeNodeDto> CreateBundleTree(IReadOnlyList<string> bundleNames)
+    {
+        return
+        [
+            new BundleTreeNodeDto(
+                BundleId: new BundleId("group-root"),
+                DisplayName: "Root",
+                LogicalPath: "Root",
+                SourcePath: string.Empty,
+                IsVirtualFolder: true,
+                AssetCount: 0,
+                Children: bundleNames
+                    .Select(name => new BundleTreeNodeDto(
+                        BundleId: new BundleId($"bundle-{name}"),
+                        DisplayName: name,
+                        LogicalPath: $"{name}.ab",
+                        SourcePath: $@"C:\Bundles\{name}.ab",
+                        IsVirtualFolder: false,
+                        AssetCount: 2,
+                        Children: Array.Empty<BundleTreeNodeDto>()))
+                    .ToArray())
+        ];
     }
 
     private static AssetListEntryViewModel CreateAssetListEntry(BundleId bundleId, AssetId assetId)
@@ -271,9 +391,26 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
 
         public bool? ObservedSynchronizationDuringInspectorSync => GetObservedSynchronizationDuringInspectorSync();
 
+        public BundleNodeViewModel FindBundleNode(string displayName)
+        {
+            return new BundleNodeViewModel(
+                new BundleId($"bundle-{displayName}"),
+                displayName,
+                $"{displayName}.ab",
+                $@"C:\Bundles\{displayName}.ab",
+                assetCount: 2);
+        }
+
         public void CaptureActiveTabState()
         {
             BundleTab.CaptureFromPane(PrimaryPane);
         }
+
+        public SpineAssetGroupEntryViewModel CreateSpineGroupEntry(SpineAssetGroupDto group) =>
+            new(
+                group,
+                "Skeleton 1 / Atlas 0",
+                "0 pages",
+                "Ready");
     }
 }

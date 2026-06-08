@@ -438,6 +438,8 @@ public static class ResourceKeys
     public const string BundleExplorerEmptyWorkspace = "BundleExplorer.EmptyState.EmptyWorkspace";
     public const string BundleExplorerNoAssets = "BundleExplorer.EmptyState.NoAssets";
     public const string BundleExplorerNoSpineGroups = "BundleExplorer.EmptyState.NoSpineGroups";
+    public const string BundleExplorerLoadingAssets = "BundleExplorer.EmptyState.LoadingAssets";
+    public const string BundleExplorerLoadingSpineGroups = "BundleExplorer.EmptyState.LoadingSpineGroups";
     public const string BundleExplorerNoOpenTabs = "BundleExplorer.EmptyState.NoOpenTabs";
     public const string BundleExplorerInspectorEmpty = "BundleExplorer.Inspector.EmptyState";
     public const string BundleExplorerSelectionNone = "BundleExplorer.Selection.None";

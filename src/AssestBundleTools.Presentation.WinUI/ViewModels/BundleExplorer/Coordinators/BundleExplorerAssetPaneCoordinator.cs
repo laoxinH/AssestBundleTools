@@ -38,6 +38,7 @@ internal sealed class BundleExplorerAssetPaneCoordinator
     private readonly Action _clearActiveTabState;
     private readonly Action _requestWorkspaceBrowserStatePersistence;
     private int _primaryPaneStateSynchronizationDepth;
+    private int _primaryPaneLoadVersion;
 
     public BundleExplorerAssetPaneCoordinator(
         IWorkspaceExplorerGateway workspaceExplorerGateway,
@@ -93,11 +94,15 @@ internal sealed class BundleExplorerAssetPaneCoordinator
                 return;
             }
 
-            await LoadBundleIntoPaneAsync(
+            var loaded = await LoadBundleIntoPaneAsync(
                 _primaryPane,
                 bundleNode,
                 clearInspectorOnEmpty: true,
                 preferredSelectedAssetId: tab.SelectedAssetId);
+            if (!loaded)
+            {
+                return;
+            }
         }
         finally
         {
@@ -169,11 +174,15 @@ internal sealed class BundleExplorerAssetPaneCoordinator
             ? _getActiveBundleTab()?.SelectedAssetId
             : null;
 
-        await LoadBundleIntoPaneAsync(
+        var loaded = await LoadBundleIntoPaneAsync(
             pane,
             bundleNode,
             clearInspectorOnEmpty,
             preferredSelectedAssetId);
+        if (!loaded)
+        {
+            return;
+        }
 
         if (ReferenceEquals(pane, _primaryPane) && !preserveCurrentDocumentTab)
         {
@@ -186,7 +195,7 @@ internal sealed class BundleExplorerAssetPaneCoordinator
             bundleNode.DisplayName));
     }
 
-    private async Task LoadBundleIntoPaneAsync(
+    private async Task<bool> LoadBundleIntoPaneAsync(
         AssetPaneViewModel pane,
         BundleNodeViewModel bundleNode,
         bool clearInspectorOnEmpty,
@@ -195,15 +204,25 @@ internal sealed class BundleExplorerAssetPaneCoordinator
         var workspaceSummary = _workspaceShell.WorkspaceSummary;
         if (workspaceSummary is null)
         {
-            return;
+            return false;
         }
 
+        var loadVersion = BeginPaneLoad(pane);
         if (pane.IsSpineGroupViewMode)
         {
-            await LoadSpineGroupsIntoPaneAsync(pane, bundleNode, workspaceSummary.WorkspaceId);
-            return;
+            pane.BeginSpineGroupListLoading(
+                bundleNode.DisplayName,
+                GetString(ResourceKeys.BundleExplorerLoadingSpineGroups));
+            return await LoadSpineGroupsIntoPaneAsync(
+                pane,
+                bundleNode,
+                workspaceSummary.WorkspaceId,
+                loadVersion);
         }
 
+        pane.BeginAssetListLoading(
+            bundleNode.DisplayName,
+            GetString(ResourceKeys.BundleExplorerLoadingAssets));
         var assetListQuery = new LoadAssetListQuery(
             WorkspaceId: workspaceSummary.WorkspaceId,
             BundleId: bundleNode.BundleId,
@@ -213,10 +232,15 @@ internal sealed class BundleExplorerAssetPaneCoordinator
         var assetList = _unwrapAssetListResult(await _backgroundTaskRunner.RunAsync(
             token => _workspaceExplorerGateway.LoadAssetListAsync(assetListQuery, token)));
 
+        if (!IsPaneLoadCurrent(pane, loadVersion))
+        {
+            return false;
+        }
+
         if (assetList is null)
         {
             ClearPaneItems(pane, clearInspectorOnEmpty);
-            return;
+            return true;
         }
 
         pane.ReplaceAssetTypeOptions(_assetInspectorPresenter.CreateAssetTypeOptions(assetList.TypeFacets));
@@ -238,12 +262,14 @@ internal sealed class BundleExplorerAssetPaneCoordinator
             pane.PaneTitle,
             bundleNode.DisplayName,
             assetList.FilteredCount));
+        return true;
     }
 
-    private async Task LoadSpineGroupsIntoPaneAsync(
+    private async Task<bool> LoadSpineGroupsIntoPaneAsync(
         AssetPaneViewModel pane,
         BundleNodeViewModel bundleNode,
-        WorkspaceId workspaceId)
+        WorkspaceId workspaceId,
+        int loadVersion)
     {
         var spineGroupListQuery = new LoadSpineAssetGroupsQuery(
             WorkspaceId: workspaceId,
@@ -253,10 +279,15 @@ internal sealed class BundleExplorerAssetPaneCoordinator
         var spineGroupList = _unwrapSpineAssetGroupListResult(await _backgroundTaskRunner.RunAsync(
             token => _workspaceExplorerGateway.LoadSpineAssetGroupsAsync(spineGroupListQuery, token)));
 
+        if (!IsPaneLoadCurrent(pane, loadVersion))
+        {
+            return false;
+        }
+
         if (spineGroupList is null)
         {
             ClearPaneItems(pane, clearInspectorOnEmpty: false);
-            return;
+            return true;
         }
 
         var entries = spineGroupList.Items
@@ -273,10 +304,12 @@ internal sealed class BundleExplorerAssetPaneCoordinator
             pane.PaneTitle,
             bundleNode.DisplayName,
             spineGroupList.FilteredCount));
+        return true;
     }
 
     private void ClearPaneItems(AssetPaneViewModel pane, bool clearInspectorOnEmpty)
     {
+        InvalidatePaneLoad(pane);
         pane.ClearItems(GetString(
             pane.IsSpineGroupViewMode
                 ? ResourceKeys.BundleExplorerNoSpineGroups
@@ -290,6 +323,23 @@ internal sealed class BundleExplorerAssetPaneCoordinator
 
     private static string? NormalizeSearchKeyword(string searchKeyword) =>
         string.IsNullOrWhiteSpace(searchKeyword) ? null : searchKeyword.Trim();
+
+    private int BeginPaneLoad(AssetPaneViewModel pane) =>
+        ReferenceEquals(pane, _primaryPane)
+            ? Interlocked.Increment(ref _primaryPaneLoadVersion)
+            : 0;
+
+    private void InvalidatePaneLoad(AssetPaneViewModel pane)
+    {
+        if (ReferenceEquals(pane, _primaryPane))
+        {
+            Interlocked.Increment(ref _primaryPaneLoadVersion);
+        }
+    }
+
+    private bool IsPaneLoadCurrent(AssetPaneViewModel pane, int loadVersion) =>
+        !ReferenceEquals(pane, _primaryPane) ||
+        Volatile.Read(ref _primaryPaneLoadVersion) == loadVersion;
 
     private void BeginPrimaryPaneStateSynchronization()
     {
