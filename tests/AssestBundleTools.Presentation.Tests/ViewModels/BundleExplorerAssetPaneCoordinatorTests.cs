@@ -85,7 +85,7 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
     }
 
     [Fact]
-    public async Task RefreshPrimaryPaneAsync_ShouldClearStaleSpineGroups_WhileLoadingCurrentBundle()
+    public async Task RefreshPrimaryPaneAsync_ShouldPreserveCurrentSpineGroups_WhileRefreshingSameBundle()
     {
         var operationEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var releaseOperation = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -100,13 +100,13 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
         };
         var context = CreateContext(backgroundTaskRunner: backgroundTaskRunner);
         context.PrimaryPane.ViewMode = AssetPaneViewMode.SpineGroups;
-        SpineAssetGroupDto[] previousGroups =
+        SpineAssetGroupDto[] currentGroups =
         [
-            CreateSpineGroup(new BundleId("bundle-previous"), "previous")
+            CreateSpineGroup(new BundleId("bundle-ui"), "current")
         ];
         context.PrimaryPane.ReplaceSpineGroups(
             "ui",
-            previousGroups.Select(context.CreateSpineGroupEntry),
+            currentGroups.Select(context.CreateSpineGroupEntry),
             "empty");
 
         var refreshTask = context.Coordinator.RefreshPrimaryPaneAsync(
@@ -114,12 +114,58 @@ public sealed class BundleExplorerAssetPaneCoordinatorTests
             preserveCurrentDocumentTab: true);
         await operationEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
-        Assert.Empty(context.PrimaryPane.SpineGroupItems);
+        Assert.Collection(
+            context.PrimaryPane.SpineGroupItems,
+            item => Assert.Equal("current", item.Item.GroupId));
         Assert.Equal("ui", context.PrimaryPane.CurrentBundleDisplayName);
-        Assert.Equal(ResourceKeys.BundleExplorerLoadingSpineGroups, context.PrimaryPane.EmptyStateText);
+        Assert.Equal("empty", context.PrimaryPane.EmptyStateText);
 
         releaseOperation.SetResult();
         await refreshTask.WaitAsync(TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task LoadActiveBundleTabAsync_ShouldClearStaleSpineGroups_WhileLoadingDifferentBundle()
+    {
+        var operationEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseOperation = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var backgroundTaskRunner = new TestBackgroundTaskRunner
+        {
+            RunAsyncHandler = async (operation, token) =>
+            {
+                operationEntered.SetResult();
+                await releaseOperation.Task.WaitAsync(token);
+                return await operation(token);
+            }
+        };
+        var context = CreateContext(
+            bundleNames: ["first", "second"],
+            backgroundTaskRunner: backgroundTaskRunner);
+        context.PrimaryPane.ViewMode = AssetPaneViewMode.SpineGroups;
+        context.PrimaryPane.ReplaceSpineGroups(
+            "first",
+            [context.CreateSpineGroupEntry(CreateSpineGroup(new BundleId("bundle-first"), "first-current"))],
+            "empty");
+        var secondBundleNode = context.FindBundleNode("second");
+        var secondBundleTab = new BundleDocumentTabViewModel(
+            secondBundleNode.BundleId,
+            secondBundleNode.DisplayName,
+            secondBundleNode.LogicalPath,
+            isPreview: false);
+        secondBundleTab.CaptureFromPane(context.PrimaryPane);
+
+        var loadTask = context.Coordinator.LoadActiveBundleTabAsync(
+            secondBundleTab,
+            secondBundleNode,
+            writeSelectionLog: false);
+        await operationEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Empty(context.PrimaryPane.SpineGroupItems);
+        Assert.Equal("second", context.PrimaryPane.CurrentBundleDisplayName);
+        Assert.Equal(ResourceKeys.BundleExplorerLoadingSpineGroups, context.PrimaryPane.EmptyStateText);
+
+        releaseOperation.SetResult();
+        await loadTask.WaitAsync(TimeSpan.FromSeconds(5));
     }
 
     [Fact]

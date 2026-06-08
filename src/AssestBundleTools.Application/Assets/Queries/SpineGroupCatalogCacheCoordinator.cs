@@ -31,11 +31,11 @@ internal sealed class SpineGroupCatalogCacheCoordinator
         string targetBundleDisplayName,
         string? searchKeyword,
         IReadOnlyList<AssetListResultDto> assetLists,
-        IReadOnlyDictionary<string, AssetDetailsDto> assetDetailsByAssetKey,
+        Func<CancellationToken, IReadOnlyDictionary<string, AssetDetailsDto>> collectAssetDetailsByAssetKey,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(assetLists);
-        ArgumentNullException.ThrowIfNull(assetDetailsByAssetKey);
+        ArgumentNullException.ThrowIfNull(collectAssetDetailsByAssetKey);
 
         var bundleIndexFingerprint = CreateBundleIndexFingerprint(assetLists);
         var catalogFingerprint = CreateCatalogFingerprint(workspaceId, bundleIndexFingerprint);
@@ -47,7 +47,7 @@ internal sealed class SpineGroupCatalogCacheCoordinator
                 catalogFingerprint,
                 bundleIndexFingerprint,
                 assetLists,
-                assetDetailsByAssetKey,
+                collectAssetDetailsByAssetKey,
                 cancellationToken),
             LazyThreadSafetyMode.ExecutionAndPublication));
         SpineGroupCatalogCacheEntryDto catalogEntry;
@@ -74,7 +74,7 @@ internal sealed class SpineGroupCatalogCacheCoordinator
         string catalogFingerprint,
         string bundleIndexFingerprint,
         IReadOnlyList<AssetListResultDto> assetLists,
-        IReadOnlyDictionary<string, AssetDetailsDto> assetDetailsByAssetKey,
+        Func<CancellationToken, IReadOnlyDictionary<string, AssetDetailsDto>> collectAssetDetailsByAssetKey,
         CancellationToken cancellationToken)
     {
         var workspaceKey = workspaceId.Value;
@@ -89,6 +89,9 @@ internal sealed class SpineGroupCatalogCacheCoordinator
                 return accessedEntry;
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var assetDetailsByAssetKey = collectAssetDetailsByAssetKey(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
             var builtEntry = BuildCatalog(

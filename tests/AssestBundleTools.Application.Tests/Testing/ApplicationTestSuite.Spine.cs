@@ -28,6 +28,10 @@ internal static partial class ApplicationTestSuite
             LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldHydrateReplacementState_AfterCatalogCacheHit);
         await RunTestAsync(
             failures,
+            nameof(LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldSkipDetectionDetailsCollection_AfterCatalogCacheHit),
+            LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldSkipDetectionDetailsCollection_AfterCatalogCacheHit);
+        await RunTestAsync(
+            failures,
             nameof(LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldExposeUndonePartReplacementHistory_WhenComponentIsNotModified),
             LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldExposeUndonePartReplacementHistory_WhenComponentIsNotModified);
         await RunTestAsync(

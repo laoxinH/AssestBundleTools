@@ -210,9 +210,13 @@ internal sealed class BundleExplorerAssetPaneCoordinator
         var loadVersion = BeginPaneLoad(pane);
         if (pane.IsSpineGroupViewMode)
         {
-            pane.BeginSpineGroupListLoading(
-                bundleNode.DisplayName,
-                GetString(ResourceKeys.BundleExplorerLoadingSpineGroups));
+            if (!CanPreserveCurrentSpineGroupList(pane, bundleNode))
+            {
+                pane.BeginSpineGroupListLoading(
+                    bundleNode.DisplayName,
+                    GetString(ResourceKeys.BundleExplorerLoadingSpineGroups));
+            }
+
             return await LoadSpineGroupsIntoPaneAsync(
                 pane,
                 bundleNode,
@@ -220,9 +224,13 @@ internal sealed class BundleExplorerAssetPaneCoordinator
                 loadVersion);
         }
 
-        pane.BeginAssetListLoading(
-            bundleNode.DisplayName,
-            GetString(ResourceKeys.BundleExplorerLoadingAssets));
+        if (!CanPreserveCurrentAssetList(pane, bundleNode))
+        {
+            pane.BeginAssetListLoading(
+                bundleNode.DisplayName,
+                GetString(ResourceKeys.BundleExplorerLoadingAssets));
+        }
+
         var assetListQuery = new LoadAssetListQuery(
             WorkspaceId: workspaceSummary.WorkspaceId,
             BundleId: bundleNode.BundleId,
@@ -340,6 +348,14 @@ internal sealed class BundleExplorerAssetPaneCoordinator
     private bool IsPaneLoadCurrent(AssetPaneViewModel pane, int loadVersion) =>
         !ReferenceEquals(pane, _primaryPane) ||
         Volatile.Read(ref _primaryPaneLoadVersion) == loadVersion;
+
+    private static bool CanPreserveCurrentAssetList(AssetPaneViewModel pane, BundleNodeViewModel bundleNode) =>
+        pane.HasCurrentAssetListSnapshot &&
+        string.Equals(pane.CurrentBundleDisplayName, bundleNode.DisplayName, StringComparison.Ordinal);
+
+    private static bool CanPreserveCurrentSpineGroupList(AssetPaneViewModel pane, BundleNodeViewModel bundleNode) =>
+        pane.HasCurrentSpineGroupListSnapshot &&
+        string.Equals(pane.CurrentBundleDisplayName, bundleNode.DisplayName, StringComparison.Ordinal);
 
     private void BeginPrimaryPaneStateSynchronization()
     {

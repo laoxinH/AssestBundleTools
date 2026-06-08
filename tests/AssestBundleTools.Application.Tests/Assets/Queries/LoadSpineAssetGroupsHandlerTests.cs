@@ -243,6 +243,49 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
         TestAssert.Equal(null, texturePage.ChangeRecords, "Catalog cache hits must rehydrate change records from the current session state.");
     }
 
+    public static async Task HandleAsync_ShouldSkipDetectionDetailsCollection_AfterCatalogCacheHit()
+    {
+        var workspaceId = new WorkspaceId("workspace-a");
+        var spineBundleId = new BundleId("bundle.spine");
+        var spineAssets = CreateAssetList(
+            workspaceId,
+            spineBundleId,
+            "spine.ab",
+            CreateItem(spineBundleId, "skeleton-hero", "Assets/Hero/Hero.skel", AssetType.TextAsset),
+            CreateItem(spineBundleId, "atlas-hero", "Assets/Hero/Hero.atlas", AssetType.TextAsset),
+            CreateItem(spineBundleId, "texture-hero", "Assets/Hero/Hero.png", AssetType.Texture2D),
+            CreateItem(spineBundleId, "material-heavy", "Assets/Hero/Hero_Material", AssetType.Material));
+        var mutableRegistry = new TestWorkspaceSessionRegistry(
+            workspaceId,
+            [spineAssets],
+            [
+                CreateDetails(
+                    workspaceId,
+                    spineBundleId,
+                    "material-heavy",
+                    "Assets/Hero/Hero_Material",
+                    AssetType.Material,
+                    nameof(AssetType.Material),
+                    dependencies: Array.Empty<AssetDependencyDto>())
+            ]);
+        var handler = new LoadSpineAssetGroupsHandler(mutableRegistry);
+
+        var first = await handler.HandleAsync(new LoadSpineAssetGroupsQuery(workspaceId, spineBundleId));
+        TestAssert.True(first.IsSuccess, "Initial query should build the runtime catalog.");
+        TestAssert.True(
+            mutableRegistry.RequestedAssetIds.Contains("material-heavy", StringComparer.Ordinal),
+            "Cold catalog build should collect detection details for link candidates.");
+
+        mutableRegistry.ClearRequestedAssetIds();
+
+        var second = await handler.HandleAsync(new LoadSpineAssetGroupsQuery(workspaceId, spineBundleId));
+
+        TestAssert.True(second.IsSuccess, "Second query should reuse the runtime catalog.");
+        TestAssert.False(
+            mutableRegistry.RequestedAssetIds.Contains("material-heavy", StringComparer.Ordinal),
+            "Catalog cache hits should not collect detection-only asset details before projection.");
+    }
+
     public static async Task HandleAsync_ShouldSplitDuplicateSpineResourcesUsingDependencyLinks()
     {
         var workspaceId = new WorkspaceId("workspace-a");
@@ -453,6 +496,7 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
     {
         private readonly WorkspaceId _workspaceId;
         private readonly IReadOnlyDictionary<string, AssetListResultDto> _assetListsByBundleId;
+        private readonly List<string> _requestedAssetIds = [];
         private IReadOnlyDictionary<string, AssetDetailsDto> _assetDetailsByAssetKey;
 
         public TestWorkspaceSessionRegistry(
@@ -475,6 +519,13 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
             _assetDetailsByAssetKey = assetDetails.ToDictionary(
                 static details => CreateAssetKey(details.BundleId, details.AssetId),
                 StringComparer.OrdinalIgnoreCase);
+        }
+
+        public IReadOnlyList<string> RequestedAssetIds => _requestedAssetIds;
+
+        public void ClearRequestedAssetIds()
+        {
+            _requestedAssetIds.Clear();
         }
 
         public WorkspaceSummaryDto OpenWorkspace(WorkspaceSessionOpenRequestDto request) =>
@@ -535,6 +586,7 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
             AssetId assetId,
             out AssetDetailsDto? assetDetails)
         {
+            _requestedAssetIds.Add(assetId.Value);
             if (!ContainsWorkspace(workspaceId))
             {
                 assetDetails = null;

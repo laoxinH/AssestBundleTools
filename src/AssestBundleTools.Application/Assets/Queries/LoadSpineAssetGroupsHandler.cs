@@ -88,16 +88,6 @@ public sealed class LoadSpineAssetGroupsHandler : IQueryHandler<LoadSpineAssetGr
             }
         }
 
-        var assetDetailsByAssetKey = SpineAssetGroupDetectionDetailsCollector.Collect(
-            _workspaceSessionRegistry,
-            query.WorkspaceId,
-            assetLists,
-            cancellationToken);
-        if (cancellationToken.IsCancellationRequested)
-        {
-            return Task.FromResult(Result<SpineAssetGroupListResultDto>.Cancelled());
-        }
-
         SpineAssetGroupListResultDto result;
         try
         {
@@ -107,7 +97,11 @@ public sealed class LoadSpineAssetGroupsHandler : IQueryHandler<LoadSpineAssetGr
                 targetBundleDisplayName,
                 query.SearchKeyword,
                 assetLists,
-                assetDetailsByAssetKey,
+                token => SpineAssetGroupDetectionDetailsCollector.Collect(
+                    _workspaceSessionRegistry,
+                    query.WorkspaceId,
+                    assetLists,
+                    token),
                 cancellationToken);
         }
         catch (OperationCanceledException)

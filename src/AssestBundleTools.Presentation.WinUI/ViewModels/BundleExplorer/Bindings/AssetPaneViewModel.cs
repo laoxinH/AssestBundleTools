@@ -272,6 +272,12 @@ public sealed partial class AssetPaneViewModel : ObservableObject
 
     public bool CanToggleSearch => !IsBusy && CurrentSourceItemCount > 0;
 
+    public bool HasCurrentAssetListSnapshot =>
+        IsAssetViewMode && _assetList.SourceCount > 0;
+
+    public bool HasCurrentSpineGroupListSnapshot =>
+        IsSpineGroupViewMode && _spineGroupList.SourceCount > 0;
+
     public string SearchToggleGlyph => IsSearchExpanded ? "\uE711" : "\uE721";
 
     public Visibility AssetListVisibility => IsAssetViewMode && Items.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
