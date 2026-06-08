@@ -522,7 +522,6 @@ public static class ResourceKeys
     public const string BundleExplorerPageSaveAsBundleButton = "BundleExplorerPage.SaveAsBundleButton.Content";
     public const string WorkspaceBatchExtractionDialogTitle = "WorkspaceBatchExtractionDialog.Title";
     public const string WorkspaceBatchExtractionDialogHeaderHint = "WorkspaceBatchExtractionDialog.Header.Hint";
-    public const string WorkspaceBatchExtractionDialogHeaderSummaryFormat = "WorkspaceBatchExtractionDialog.Header.Summary.Format";
     public const string WorkspaceBatchExtractionDialogPrimaryButton = "WorkspaceBatchExtractionDialog.PrimaryButton";
     public const string WorkspaceBatchExtractionDialogCloseButton = "WorkspaceBatchExtractionDialog.CloseButton";
     public const string WorkspaceBatchExtractionDialogBundleSectionTitle = "WorkspaceBatchExtractionDialog.BundleSection.Title";

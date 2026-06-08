@@ -23,7 +23,6 @@ public sealed class WorkspaceBatchExtractionDialogViewModel : ObservableObject
     private bool _isApplyingCategorySelection;
     private string _bundleSearchKeyword = string.Empty;
     private string _planSummaryText;
-    private string _headerSummaryText;
     private string _validationText;
     private bool _isPreviewLoading;
     private bool _useWorkspaceExtractionDirectory;
@@ -36,11 +35,6 @@ public sealed class WorkspaceBatchExtractionDialogViewModel : ObservableObject
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _valueFormatter = new LocalizedValueFormatter(_localizationService);
         _planSummaryText = GetString(ResourceKeys.WorkspaceBatchExtractionDialogPreviewWaiting);
-        _headerSummaryText = _localizationService.GetFormattedString(
-            ResourceKeys.WorkspaceBatchExtractionDialogHeaderSummaryFormat,
-            "0",
-            "0",
-            _valueFormatter.FormatCompactByteSize(0));
         _validationText = string.Empty;
 
         foreach (var bundleNode in bundleNodes)
@@ -102,12 +96,6 @@ public sealed class WorkspaceBatchExtractionDialogViewModel : ObservableObject
     {
         get => _planSummaryText;
         private set => SetProperty(ref _planSummaryText, value);
-    }
-
-    public string HeaderSummaryText
-    {
-        get => _headerSummaryText;
-        private set => SetProperty(ref _headerSummaryText, value);
     }
 
     public string ValidationText
@@ -203,11 +191,6 @@ public sealed class WorkspaceBatchExtractionDialogViewModel : ObservableObject
         var candidateAssetCount = preview.CandidateAssetCount.ToString(CultureInfo.CurrentCulture);
         var candidateBundleCount = preview.CandidateBundleCount.ToString(CultureInfo.CurrentCulture);
         var candidateSpineGroupCount = preview.CandidateSpineGroupCount.ToString(CultureInfo.CurrentCulture);
-        HeaderSummaryText = _localizationService.GetFormattedString(
-            ResourceKeys.WorkspaceBatchExtractionDialogHeaderSummaryFormat,
-            candidateBundleCount,
-            preview.CandidateAssetCount.ToString(CultureInfo.CurrentCulture),
-            _valueFormatter.FormatCompactByteSize(preview.TotalSizeInBytes));
         PlanSummaryText = _localizationService.GetFormattedString(
             ResourceKeys.WorkspaceBatchExtractionDialogPreviewSummaryFormat,
             candidateBundleCount,

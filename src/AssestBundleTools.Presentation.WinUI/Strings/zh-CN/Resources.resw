@@ -588,9 +588,6 @@
   <data name="WorkspaceBatchExtractionDialog.Header.Hint" xml:space="preserve">
     <value>选择资源包与资源类型，确认后开始导出。</value>
   </data>
-  <data name="WorkspaceBatchExtractionDialog.Header.Summary.Format" xml:space="preserve">
-    <value>已选择 {0} 个资源包 · {1} 项资源 · 约 {2}</value>
-  </data>
   <data name="WorkspaceBatchExtractionDialog.PrimaryButton" xml:space="preserve">
     <value>开始提取</value>
   </data>

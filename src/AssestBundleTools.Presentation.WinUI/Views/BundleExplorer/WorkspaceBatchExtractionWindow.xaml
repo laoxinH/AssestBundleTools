@@ -57,7 +57,7 @@
             Grid.Row="1"
             MinHeight="0"
             Padding="44,24,44,32"
-            RowSpacing="20">
+            RowSpacing="12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -76,11 +76,6 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         FontSize="15"
                         TextWrapping="WrapWholeWords" />
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        FontSize="15"
-                        Text="{Binding HeaderSummaryText}"
-                        TextWrapping="WrapWholeWords" />
                 </StackPanel>
             </Grid>
 
@@ -95,12 +90,12 @@
 
             <Border
                 Grid.Row="2"
-                Padding="18"
+                Padding="14"
                 Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="8">
-                <Grid ColumnSpacing="18">
+                <Grid ColumnSpacing="16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
@@ -110,15 +105,15 @@
                     </Grid.ColumnDefinitions>
 
                     <Border
-                        Width="40"
-                        Height="40"
+                        Width="36"
+                        Height="36"
                         VerticalAlignment="Center"
                         Background="{ThemeResource AccentFillColorTertiaryBrush}"
                         CornerRadius="8">
                         <FontIcon
                             VerticalAlignment="Center"
                             FontFamily="Segoe Fluent Icons"
-                            FontSize="20"
+                            FontSize="18"
                             Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                             Glyph="&#xE8A5;" />
                     </Border>
@@ -164,23 +159,23 @@
                         Grid.Column="2"
                         MaxWidth="320"
                         MinWidth="0"
-                        FontSize="14"
+                        FontSize="13"
                         VerticalAlignment="Center"
                         IsChecked="{Binding UseWorkspaceExtractionDirectory, Mode=TwoWay}" />
 
                     <Button
                         x:Name="CancelButton"
                         Grid.Column="3"
-                        Width="136"
-                        MinHeight="44"
+                        Width="118"
+                        MinHeight="38"
                         FontSize="13"
                         VerticalAlignment="Center"
                         Click="OnCancelButtonClick" />
                     <Button
                         x:Name="StartExtractionButton"
                         Grid.Column="4"
-                        Width="188"
-                        MinHeight="44"
+                        Width="160"
+                        MinHeight="38"
                         FontSize="13"
                         VerticalAlignment="Center"
                         Click="OnStartExtractionButtonClick"

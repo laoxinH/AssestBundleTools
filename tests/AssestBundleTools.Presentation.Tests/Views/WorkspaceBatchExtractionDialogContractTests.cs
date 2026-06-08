@@ -127,7 +127,6 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
         Assert.DoesNotContain("ItemsWrapGrid", contentXaml);
         Assert.Contains("UseWorkspaceExtractionDirectoryCheckBox", windowXaml);
         Assert.Contains("UseWorkspaceExtractionDirectory", windowXaml);
-        Assert.Contains("Text=\"{Binding HeaderSummaryText}\"", windowXaml);
         Assert.Contains("Text=\"{Binding PlanSummaryText}\"", windowXaml);
         Assert.Contains("HorizontalAlignment=\"Stretch\"", contentXaml);
         Assert.Contains("HorizontalContentAlignment=\"Stretch\"", windowXaml);

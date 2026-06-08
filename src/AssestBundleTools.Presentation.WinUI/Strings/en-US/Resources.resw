@@ -588,9 +588,6 @@
   <data name="WorkspaceBatchExtractionDialog.Header.Hint" xml:space="preserve">
     <value>Select bundles and asset types, then start the export.</value>
   </data>
-  <data name="WorkspaceBatchExtractionDialog.Header.Summary.Format" xml:space="preserve">
-    <value>Selected {0} bundles · {1} assets · about {2}</value>
-  </data>
   <data name="WorkspaceBatchExtractionDialog.PrimaryButton" xml:space="preserve">
     <value>Start Extraction</value>
   </data>
