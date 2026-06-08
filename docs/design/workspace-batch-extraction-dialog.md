@@ -92,6 +92,8 @@
 - 搜索框需要使用原生搜索输入反馈，图标、占位文本、输入文本和清除按钮必须垂直居中，并保留鼠标聚焦时的底部边框强调；主体面板和底部计划摘要使用同一套主题化卡片层级与浅阴影，避免厚重浮层质感。
 - 顶部入口再次触发时优先激活既有批量提取窗口，不重复打开多个同类窗口。
 - 窗口关闭或取消时不提交任务；点击开始后才把提交对象交回 coordinator，并继续复用 `BatchExtraction` 后台任务。
+- 打开窗口时必须先完成独立窗口创建与首帧显示，再启动计划预览刷新。资源包资产列表聚合、类别统计、Spine 组目录读取和计划大小计算都不得在 `ShowForSubmissionAsync()` 之前运行，也不得在 WinUI 事件调用栈内同步阻塞主窗口。
+- 计划预览刷新属于可丢弃的 `TransientRead`，应通过统一后台调度的 `TransientRead` profile 执行，默认静默不进入 Shell 底部状态条；窗口内部使用加载态表达当前计划正在生成。用户改变资源包或类别选择、关闭窗口或提交任务时，旧预览请求必须取消，并用请求代次丢弃过期结果。
 
 WinUI 控件选择建议：
 
@@ -227,6 +229,7 @@ GC 压力退避：
 执行规则：
 
 - 批量提取窗口只负责收集用户输入、展示计划和提交任务。
+- 批量提取窗口的“计划预览”不是正式提取任务。它只用于窗口内摘要和类别候选数量，应按静默 `TransientRead` profile 调度，允许取消、丢弃和重新计算；只有用户点击 `开始提取` 后，才提交可见 `BatchExtraction` 后台任务并进入 Shell 状态条。
 - 真实提取循环按 AB 分组并行执行，同一 AB 内按计划项顺序执行；可成功项继续处理、失败项汇总、操作记录追加由 Application 用例负责。
 - `ExtractWorkspaceAssetsCommand.Progress` 上报结构化 `WorkspaceBatchExtractionProgressDto`；Application 只提供阶段、当前资源包 / 当前项、总数、成功 / 失败计数和 GC 退避标记，Presentation 负责本地化为 Shell 状态条文案。
 - Shell 状态条显示当前任务标题、当前资源包 / 当前资源或 Spine 组、已完成数和总数；准备阶段显示本次候选项数与候选资源包数。
@@ -276,6 +279,7 @@ Spine 不是普通资源类型文件夹。它表示“整组导出”，包含 s
 
 - 普通资源提取、Spine 组提取、预览和详情读取继续通过标准化 bundle artifact 与 loaded-session 复用链路。
 - 对话框不新增直接读取 AB 的路径。
+- 对话框首屏只应使用已经在工作区读模型中的资源包摘要和初始选择状态；动态类别、候选数量、Spine 组数量和总大小由后台计划预览补齐。后续优化应优先复用资产类型 facets、SpineGroupCatalog 运行时 / 派生缓存，并减少 `BuildPlan` 与 `BuildCategoryPlans` 对同一资源包资产列表的重复遍历。
 - DEBUG 包中已有的 loaded-session `Acquire miss / in-flight / hit` 和 `Load start / completed / failed` 日志可以用于验证该批量入口是否复用同一 AB 加载会话。
 
 ## 10. 与批处理页关系
@@ -303,7 +307,7 @@ Spine 不是普通资源类型文件夹。它表示“整组导出”，包含 s
 1. Application 计划模型
    `GetWorkspaceBatchExtractionPreviewQuery` 和 `ExtractWorkspaceAssetsCommand` 已扩展资源包范围、多导出类别、`All` 与 `SpineGroup` 类别；普通资源和 Spine 组共享计划入口；预览 DTO 同时返回当前勾选资源包内的动态类别统计。
 2. 窗口 Presentation
-   已新增工作台批量提取 ViewModel / Coordinator / 独立 Window，顶部按钮改为打开工作区批量提取窗口，不再 `Navigate(typeof(BatchTasksPage))`，也不再使用 `ContentDialog` 挤压主体布局。
+   已新增工作台批量提取 ViewModel / Coordinator / 独立 Window，顶部按钮改为打开工作区批量提取窗口，不再 `Navigate(typeof(BatchTasksPage))`，也不再使用 `ContentDialog` 挤压主体布局。窗口打开流程已调整为先显示窗口，再通过统一后台调度的 `TransientRead` profile 静默刷新计划预览，避免资源聚合阻塞主窗口首帧。
 3. 执行链路
    对话框确认后提交 `BatchExtraction` 后台任务，执行命令复用普通资源提取和 Spine 组提取能力，完成后通过既有操作变更通知刷新相关读模型。
 4. 跨 AB 并发
@@ -312,7 +316,8 @@ Spine 不是普通资源类型文件夹。它表示“整组导出”，包含 s
 仍待收口：
 
 - 批处理页批量提取区域改为复用新契约或明确降级为摘要入口。
-- 窗口预览刷新可继续增加 debounce / in-flight 取消，减少快速勾选时的无效计划查询。
+- 窗口预览刷新已具备 in-flight 取消和过期结果丢弃；后续可继续增加 debounce，减少快速勾选时的无效计划查询。
+- 计划预览内部仍可继续优化为单次扫描和缓存优先，避免普通资源计划、类别统计和 Spine 组目录分别重复读取相同工作区资产列表。
 - 当前动态类别只会出现 Domain `AssetType` 已支持且当前勾选资源包中实际存在的类型；`AnimationClip / Font / GameObject / MonoBehaviour / AnimatorController` 等类型需要等领域枚举与提取支持扩展后再自然进入预览计划。
 
 ## 12. 测试建议
@@ -333,6 +338,7 @@ Presentation 已覆盖并需持续保持：
 - 窗口在未选资源包或未选类别时禁用确认；输出目录在确认后通过目录选择器或工作区提取目录选项解析。
 - `All` 和显式多选类别的状态转换稳定。
 - 确认后提交 `BackgroundWorkProfile.BatchExtraction`。
+- 打开窗口不会在首帧前同步生成计划；计划预览通过静默 `TransientRead` profile 后台任务刷新，关闭窗口或选择变化会取消旧请求。
 - 任务完成后依赖操作变更通知刷新，不直接刷新资产列表。
 
 Localization / guardrail 测试继续覆盖：

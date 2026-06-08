@@ -191,6 +191,7 @@ public sealed class ShellBackgroundTaskItemViewModel : ObservableObject
             BackgroundWorkProfile.PreviewForeground => ResourceKeys.AppStatusBarTaskProfilePreviewForeground,
             BackgroundWorkProfile.PreviewPrewarm => ResourceKeys.AppStatusBarTaskProfilePreviewPrewarm,
             BackgroundWorkProfile.SpineRuntimeFrame => ResourceKeys.AppStatusBarTaskProfileSpineRuntimeFrame,
+            BackgroundWorkProfile.TransientRead => ResourceKeys.AppStatusBarTaskProfileTransientRead,
             BackgroundWorkProfile.SingleExtraction => ResourceKeys.AppStatusBarTaskProfileSingleExtraction,
             BackgroundWorkProfile.BatchExtraction => ResourceKeys.AppStatusBarTaskProfileBatchExtraction,
             BackgroundWorkProfile.BatchReplacement => ResourceKeys.AppStatusBarTaskProfileBatchReplacement,

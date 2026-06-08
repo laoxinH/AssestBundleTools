@@ -133,6 +133,31 @@ public sealed class BackgroundWorkSchedulerTests
     }
 
     [Fact]
+    public async Task RunAsync_ShouldRunTransientRead_WhenPreviewPrewarmSlotsAreDisabled()
+    {
+        var scheduler = new BackgroundWorkScheduler(
+            new TestBackgroundTaskRunner(),
+            NullAppBackgroundTaskStatusService.Instance,
+            previewWorkerCount: 1);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var task = scheduler.RunAsync(
+            new BackgroundWorkRequest<int>(
+                BackgroundWorkProfile.TransientRead,
+                _ =>
+                {
+                    entered.SetResult();
+                    return Task.FromResult(7);
+                })
+            {
+                ShowInStatusBar = false
+            });
+
+        await entered.Task;
+        Assert.Equal(7, await task);
+    }
+
+    [Fact]
     public async Task RunAsync_ShouldBeginStatusAfterProfileGateIsAcquired()
     {
         var statusService = new RecordingBackgroundTaskStatusService();

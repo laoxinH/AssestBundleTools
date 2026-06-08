@@ -239,7 +239,7 @@ BackgroundWorkCompletion
 | `PreviewForeground` | 当前活动资源详情预览、当前 Spine 详情 | 最高交互优先 | 前台槽 1 | 新请求替代旧请求；标签关闭取消 | 显示轻量加载状态 |
 | `PreviewPrewarm` | 已打开但未激活标签的预览预热 | 低 | 使用剩余预览槽；压力大时可跳过 | 页面切换、内存压力、缓存未命中时可取消或降级 | 默认不抢占状态条 |
 | `SpineRuntimeFrame` | Spine runtime 当前帧生成 | 交互 | 受预览 / runtime session 控制 | 播放停止、seek、skin / animation 切换时取消旧帧 | 默认不进入全局状态条 |
-| `TransientRead` | 资产列表、Spine 组目录冷构建等可缓存读模型 | 交互后台 | 每工作区同类 single-flight；命中缓存时不入队 | 视图切换、工作区切换或更新请求替代旧请求 | 默认不进入全局状态条；冷构建超过阈值时可显示轻量状态 |
+| `TransientRead` | 资产列表、Spine 组目录冷构建、批量提取计划预览等可缓存或可丢弃读模型 | 交互后台 | 当前调度器 profile 槽 1；具体用例可在 Application 内部继续 single-flight / 缓存命中跳过 | 视图切换、工作区切换、窗口关闭、提交或更新请求替代旧请求 | 默认不进入全局状态条；冷构建超过阈值时可显示轻量状态 |
 | `SingleExtraction` | 单资源提取、单 Spine 组提取 | 可见后台 | 每用户动作 1 | 用户可取消；已完成项保留结果 | 显示 |
 | `BatchExtraction` | 普通资源多选提取、Spine 组批量提取、工作区级批量提取对话框执行 | 可见后台 | 每工作区 1；Application 内部可按 AB 资源包受控并行，默认 `CPU/2`、最大 `4`，GC 压力下退避到 `1`；同 AB 内顺序执行 | 用户可取消；继续处理可成功项 | 显示确定进度 |
 | `BatchReplacement` | 后续真实批量替换 | 可见后台 | 每工作区 1 | 用户可取消；以操作记录恢复 | 显示 |

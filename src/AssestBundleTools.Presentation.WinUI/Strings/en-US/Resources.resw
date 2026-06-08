@@ -177,6 +177,9 @@
   <data name="AppStatusBar.Task.Profile.SpineRuntimeFrame" xml:space="preserve">
     <value>Rendering Spine preview frame</value>
   </data>
+  <data name="AppStatusBar.Task.Profile.TransientRead" xml:space="preserve">
+    <value>Refreshing read model</value>
+  </data>
   <data name="AppStatusBar.Task.Profile.SingleExtraction" xml:space="preserve">
     <value>Extracting asset</value>
   </data>

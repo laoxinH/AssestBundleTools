@@ -53,6 +53,42 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
     }
 
     [Fact]
+    public void WorkspaceBatchExtractionPreview_ShouldBeDeferredAndRunAsSilentTransientRead()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var coordinator = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Coordinators",
+            "BundleExplorerWorkspaceBatchExtractionCoordinator.cs"));
+
+        var showCall = coordinator.IndexOf(
+            "var submissionTask = window.ShowForSubmissionAsync();",
+            StringComparison.Ordinal);
+        var deferredPreviewCall = coordinator.IndexOf(
+            "SchedulePreviewRefreshAfterWindowShown",
+            showCall,
+            StringComparison.Ordinal);
+        var awaitSubmission = coordinator.IndexOf(
+            "var submission = await submissionTask;",
+            showCall,
+            StringComparison.Ordinal);
+
+        Assert.True(showCall >= 0);
+        Assert.True(deferredPreviewCall > showCall);
+        Assert.True(awaitSubmission > deferredPreviewCall);
+        Assert.Contains("DispatcherQueuePriority.Low", coordinator);
+        Assert.Contains("new BackgroundWorkRequest<Result<WorkspaceBatchExtractionPreviewDto>>", coordinator);
+        Assert.Contains("BackgroundWorkProfile.TransientRead", coordinator);
+        Assert.Contains("SemanticKind = BackgroundWorkSemanticKind.TransientRead", coordinator);
+        Assert.Contains("ShowInStatusBar = false", coordinator);
+        Assert.Contains("CancelPendingPreviewRefresh();", coordinator);
+    }
+
+    [Fact]
     public void WorkspaceBatchExtractionCancellation_ShouldUseSilentNonFailureFeedback()
     {
         var repositoryRoot = FindRepositoryRoot();

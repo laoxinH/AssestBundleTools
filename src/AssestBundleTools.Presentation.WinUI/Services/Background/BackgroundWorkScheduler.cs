@@ -15,6 +15,7 @@ public sealed class BackgroundWorkScheduler : IBackgroundWorkScheduler
     private readonly SemaphoreSlim _previewForegroundGate = new(1, 1);
     private readonly DynamicConcurrencyGate _previewPrewarmGate;
     private readonly SemaphoreSlim _spineRuntimeFrameGate = new(1, 1);
+    private readonly SemaphoreSlim _transientReadGate = new(1, 1);
     private readonly SemaphoreSlim _batchExtractionGate = new(1, 1);
     private readonly SemaphoreSlim _batchReplacementGate = new(1, 1);
     private readonly SemaphoreSlim _saveRebuildGate = new(1, 1);
@@ -260,6 +261,7 @@ public sealed class BackgroundWorkScheduler : IBackgroundWorkScheduler
             BackgroundWorkProfile.WorkspaceImport => _workspaceImportGate,
             BackgroundWorkProfile.PreviewForeground => _previewForegroundGate,
             BackgroundWorkProfile.SpineRuntimeFrame => _spineRuntimeFrameGate,
+            BackgroundWorkProfile.TransientRead => _transientReadGate,
             BackgroundWorkProfile.BatchExtraction => _batchExtractionGate,
             BackgroundWorkProfile.BatchReplacement => _batchReplacementGate,
             BackgroundWorkProfile.SaveRebuild => _saveRebuildGate,

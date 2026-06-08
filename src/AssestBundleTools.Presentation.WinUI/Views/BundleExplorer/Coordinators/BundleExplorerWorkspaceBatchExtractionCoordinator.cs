@@ -10,6 +10,7 @@ using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
@@ -28,6 +29,7 @@ public sealed partial class BundleExplorerPage
         private readonly ILocalizationService _localizationService;
         private readonly WorkspaceBatchExtractionProgressFormatter _batchExtractionProgressFormatter;
         private WorkspaceBatchExtractionWindow? _activeBatchExtractionWindow;
+        private CancellationTokenSource? _previewRefreshCancellationSource;
         private int _previewRequestVersion;
 
         public BundleExplorerWorkspaceBatchExtractionCoordinator(
@@ -92,9 +94,11 @@ public sealed partial class BundleExplorerPage
             }
 
             viewModel.StateChanged += OnViewModelStateChanged;
-            SchedulePreviewRefresh(viewModel, workspaceSummary.WorkspaceId);
-            var submission = await window.ShowForSubmissionAsync();
+            var submissionTask = window.ShowForSubmissionAsync();
+            SchedulePreviewRefreshAfterWindowShown(viewModel, workspaceSummary.WorkspaceId);
+            var submission = await submissionTask;
             viewModel.StateChanged -= OnViewModelStateChanged;
+            CancelPendingPreviewRefresh();
             window.Closed -= OnBatchExtractionWindowClosed;
             if (ReferenceEquals(_activeBatchExtractionWindow, window))
             {
@@ -118,7 +122,23 @@ public sealed partial class BundleExplorerPage
                 {
                     _activeBatchExtractionWindow = null;
                 }
+
+                CancelPendingPreviewRefresh();
             }
+        }
+
+        private void SchedulePreviewRefreshAfterWindowShown(
+            WorkspaceBatchExtractionDialogViewModel viewModel,
+            Domain.Workspace.WorkspaceId workspaceId)
+        {
+            if (_owner.DispatcherQueue.TryEnqueue(
+                    DispatcherQueuePriority.Low,
+                    () => SchedulePreviewRefresh(viewModel, workspaceId)))
+            {
+                return;
+            }
+
+            SchedulePreviewRefresh(viewModel, workspaceId);
         }
 
         private void SchedulePreviewRefresh(
@@ -126,55 +146,101 @@ public sealed partial class BundleExplorerPage
             Domain.Workspace.WorkspaceId workspaceId)
         {
             var version = Interlocked.Increment(ref _previewRequestVersion);
-            _ = RefreshPreviewAsync(viewModel, workspaceId, version);
+            var cancellationSource = new CancellationTokenSource();
+            var previousCancellationSource = Interlocked.Exchange(
+                ref _previewRefreshCancellationSource,
+                cancellationSource);
+            previousCancellationSource?.Cancel();
+            _ = RefreshPreviewAsync(viewModel, workspaceId, version, cancellationSource);
         }
 
         private async Task RefreshPreviewAsync(
             WorkspaceBatchExtractionDialogViewModel viewModel,
             Domain.Workspace.WorkspaceId workspaceId,
-            int version)
+            int version,
+            CancellationTokenSource cancellationSource)
         {
-            if (viewModel.SelectedBundleIds.Count == 0)
-            {
-                viewModel.ApplyPreviewUnavailable();
-                return;
-            }
-
-            viewModel.SetPreviewLoading();
-            var selectedCategories = viewModel.SelectedCategories.Count == 0
-                ? new[] { WorkspaceBatchExtractionCategoryDto.All }
-                : viewModel.SelectedCategories;
-            Result<WorkspaceBatchExtractionPreviewDto> result;
             try
             {
-                result = await _workspaceBatchOperationsGateway.GetWorkspaceBatchExtractionPreviewAsync(
-                    new GetWorkspaceBatchExtractionPreviewQuery(
-                        workspaceId,
-                        SelectedBundleIds: viewModel.SelectedBundleIds,
-                        SelectedCategories: selectedCategories));
-            }
-            catch
-            {
-                if (version == _previewRequestVersion)
+                var cancellationToken = cancellationSource.Token;
+                var selectedBundleIds = viewModel.SelectedBundleIds;
+                if (selectedBundleIds.Count == 0)
+                {
+                    viewModel.ApplyPreviewUnavailable();
+                    return;
+                }
+
+                viewModel.SetPreviewLoading();
+                var selectedCategories = viewModel.SelectedCategories.Count == 0
+                    ? new[] { WorkspaceBatchExtractionCategoryDto.All }
+                    : viewModel.SelectedCategories;
+                Result<WorkspaceBatchExtractionPreviewDto> result;
+                try
+                {
+                    result = await _backgroundWorkScheduler.RunAsync(
+                        new BackgroundWorkRequest<Result<WorkspaceBatchExtractionPreviewDto>>(
+                            BackgroundWorkProfile.TransientRead,
+                            context => _workspaceBatchOperationsGateway.GetWorkspaceBatchExtractionPreviewAsync(
+                                new GetWorkspaceBatchExtractionPreviewQuery(
+                                    workspaceId,
+                                    SelectedBundleIds: selectedBundleIds,
+                                    SelectedCategories: selectedCategories),
+                                context.CancellationToken))
+                        {
+                            SemanticKind = BackgroundWorkSemanticKind.TransientRead,
+                            Priority = BackgroundWorkPriority.Background,
+                            WorkspaceId = workspaceId.Value,
+                            ShowInStatusBar = false,
+                            CanCancel = true,
+                            ReleaseProfileGateOnCallerCancellation = true
+                        },
+                        cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+                catch
+                {
+                    if (version == _previewRequestVersion)
+                    {
+                        viewModel.ApplyPreviewUnavailable();
+                    }
+
+                    return;
+                }
+
+                if (version != _previewRequestVersion)
+                {
+                    return;
+                }
+
+                if (result.IsSuccess && result.Value is not null)
+                {
+                    viewModel.ApplyPreview(result.Value);
+                    return;
+                }
+
+                if (!result.IsCancelled)
                 {
                     viewModel.ApplyPreviewUnavailable();
                 }
-
-                return;
             }
-
-            if (version != _previewRequestVersion)
+            finally
             {
-                return;
+                Interlocked.CompareExchange(
+                    ref _previewRefreshCancellationSource,
+                    null,
+                    cancellationSource);
+                cancellationSource.Dispose();
             }
+        }
 
-            if (result.IsSuccess && result.Value is not null)
-            {
-                viewModel.ApplyPreview(result.Value);
-                return;
-            }
-
-            viewModel.ApplyPreviewUnavailable();
+        private void CancelPendingPreviewRefresh()
+        {
+            Interlocked.Increment(ref _previewRequestVersion);
+            var cancellationSource = Interlocked.Exchange(ref _previewRefreshCancellationSource, null);
+            cancellationSource?.Cancel();
         }
 
         private async Task ExecuteSubmittedExtractionAsync(

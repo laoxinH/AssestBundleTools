@@ -202,7 +202,7 @@
 
             <Border
                 Style="{StaticResource BatchExtractionPanelCardStyle}"
-                Translation="0,0,4">
+                Translation="0,0,8">
                 <Grid
                     MinHeight="0"
                     RowSpacing="14">

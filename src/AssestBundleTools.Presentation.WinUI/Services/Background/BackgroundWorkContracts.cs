@@ -7,6 +7,7 @@ public enum BackgroundWorkProfile
     PreviewForeground,
     PreviewPrewarm,
     SpineRuntimeFrame,
+    TransientRead,
     SingleExtraction,
     BatchExtraction,
     BatchReplacement,

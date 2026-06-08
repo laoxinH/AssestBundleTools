@@ -177,6 +177,9 @@
   <data name="AppStatusBar.Task.Profile.SpineRuntimeFrame" xml:space="preserve">
     <value>生成 Spine 预览帧</value>
   </data>
+  <data name="AppStatusBar.Task.Profile.TransientRead" xml:space="preserve">
+    <value>刷新读模型</value>
+  </data>
   <data name="AppStatusBar.Task.Profile.SingleExtraction" xml:space="preserve">
     <value>提取资源</value>
   </data>

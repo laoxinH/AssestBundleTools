@@ -41,6 +41,7 @@ public static class ResourceKeys
     public const string AppStatusBarTaskProfilePreviewForeground = "AppStatusBar.Task.Profile.PreviewForeground";
     public const string AppStatusBarTaskProfilePreviewPrewarm = "AppStatusBar.Task.Profile.PreviewPrewarm";
     public const string AppStatusBarTaskProfileSpineRuntimeFrame = "AppStatusBar.Task.Profile.SpineRuntimeFrame";
+    public const string AppStatusBarTaskProfileTransientRead = "AppStatusBar.Task.Profile.TransientRead";
     public const string AppStatusBarTaskProfileSingleExtraction = "AppStatusBar.Task.Profile.SingleExtraction";
     public const string AppStatusBarTaskProfileBatchExtraction = "AppStatusBar.Task.Profile.BatchExtraction";
     public const string AppStatusBarTaskProfileBatchReplacement = "AppStatusBar.Task.Profile.BatchReplacement";
