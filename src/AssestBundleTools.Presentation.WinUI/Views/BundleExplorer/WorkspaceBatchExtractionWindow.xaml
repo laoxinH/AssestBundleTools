@@ -100,7 +100,7 @@
                 BorderThickness="1"
                 CornerRadius="8"
                 Shadow="{StaticResource BatchExtractionCardShadow}"
-                Translation="0,0,16">
+                Translation="0,0,4">
                 <Grid ColumnSpacing="16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
