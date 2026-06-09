@@ -107,8 +107,8 @@ internal static partial class ExtractionWorkflowHandlerTests
         TestAssert.Equal(1, result.Value?.ExtractedSpineGroupCount ?? 0, "All should execute planned Spine group extraction.");
         TestAssert.Equal(1, result.Value?.SpineGroupResults?.Count ?? 0, "Result should expose Spine group extraction details.");
         TestAssert.True(
-            fileStore.Requests.Any(static request => request.SuggestedOutputPath.Contains(@"bundle.char_1001_amiya2.ab\char_1001_amiya2", StringComparison.OrdinalIgnoreCase)),
-            "Spine group output should be nested under the bundle directory and group directory.");
+            fileStore.Requests.Any(static request => request.SuggestedOutputPath.Contains(@"bundle.char_1001_amiya2.ab\Spine\char_1001_amiya2", StringComparison.OrdinalIgnoreCase)),
+            "Spine group output should be nested under the bundle Spine directory and group directory.");
     }
 
     public static async Task ExtractWorkspaceAssetsHandler_ShouldPassWorkspaceDataRootPath_ToSpinePlanner()

@@ -7,6 +7,8 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionH
 /// </summary>
 internal static class SpineBatchExtractionOutputDirectoryResolver
 {
+    private const string SpineFolderName = "Spine";
+
     public static string Build(
         string selectedOutputDirectory,
         SpineAssetGroupEntryViewModel entry,
@@ -15,10 +17,12 @@ internal static class SpineBatchExtractionOutputDirectoryResolver
         ArgumentException.ThrowIfNullOrWhiteSpace(selectedOutputDirectory);
         ArgumentNullException.ThrowIfNull(entry);
 
-        return BundleBatchExtractionOutputDirectoryResolver.Build(
-            selectedOutputDirectory,
-            ResolveBundleDisplayName(entry, defaultBundleDisplayName),
-            entry.Item.BundleId);
+        return Path.Combine(
+            BundleBatchExtractionOutputDirectoryResolver.Build(
+                selectedOutputDirectory,
+                ResolveBundleDisplayName(entry, defaultBundleDisplayName),
+                entry.Item.BundleId),
+            SpineFolderName);
     }
 
     private static string ResolveBundleDisplayName(

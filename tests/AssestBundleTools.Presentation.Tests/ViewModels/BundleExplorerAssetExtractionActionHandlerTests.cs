@@ -107,7 +107,7 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
     }
 
     [Fact]
-    public async Task ExtractSelectedSpineAssetGroupsAsync_ShouldUseBundleDirectoryUnderSelectedRoot()
+    public async Task ExtractSelectedSpineAssetGroupsAsync_ShouldUseBundleSpineDirectoryUnderSelectedRoot()
     {
         var gateway = new RecordingWorkspaceAssetOperationGateway();
         var filePicker = new RecordingFilePickerService
@@ -142,7 +142,7 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
         Assert.All(
             gateway.ExtractSpineAssetGroupCommands,
             command => Assert.Equal(
-                Path.Combine(filePicker.BatchExtractionOutputDirectory!, "char_1001_amiya2.ab"),
+                Path.Combine(filePicker.BatchExtractionOutputDirectory!, "char_1001_amiya2.ab", "Spine"),
                 command.OutputDirectory));
         Assert.Equal([true, false], busyStates);
         Assert.Equal(1, backgroundTaskRunner.RunCallCount);

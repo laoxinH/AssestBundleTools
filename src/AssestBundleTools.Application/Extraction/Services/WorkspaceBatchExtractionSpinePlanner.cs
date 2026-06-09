@@ -1,3 +1,4 @@
+using System.IO;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Common.Abstractions;
@@ -13,6 +14,8 @@ namespace AssestBundleTools.Application.Extraction.Services;
 /// </summary>
 internal static class WorkspaceBatchExtractionSpinePlanner
 {
+    private const string SpineFolderName = "Spine";
+
     public static async Task<IReadOnlyList<PlannedSpineGroupExtraction>> BuildSpineGroupsAsync(
         IQueryHandler<LoadSpineAssetGroupsQuery, Result<SpineAssetGroupListResultDto>>? loadSpineAssetGroupsHandler,
         WorkspaceId workspaceId,
@@ -56,7 +59,7 @@ internal static class WorkspaceBatchExtractionSpinePlanner
                     result.Value.BundleDisplayName,
                     group.GroupId,
                     group.DisplayName,
-                    WorkspaceBatchExtractionPlanner.BuildBundleOutputDirectory(
+                    BuildSpineOutputDirectory(
                         outputDirectory,
                         result.Value.BundleDisplayName)));
             }
@@ -64,4 +67,13 @@ internal static class WorkspaceBatchExtractionSpinePlanner
 
         return plannedGroups;
     }
+
+    private static string BuildSpineOutputDirectory(
+        string outputDirectory,
+        string bundleDisplayName) =>
+        Path.Combine(
+            WorkspaceBatchExtractionPlanner.BuildBundleOutputDirectory(
+                outputDirectory,
+                bundleDisplayName),
+            SpineFolderName);
 }
