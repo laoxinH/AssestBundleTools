@@ -239,7 +239,7 @@ GC 压力退避：
 - 用户主动取消不视为失败；Presentation 只结束当前流程并依赖 Shell 状态条收敛任务状态，不额外弹出成功 / 失败 / 信息 toast，也不显示“未预期错误”。
 - 任务完成后通过现有 `IWorkspaceOperationChangeNotifier` 刷新资源详情变更页、批处理页摘要和独立资源编辑窗口，不手动刷新资产列表。
 
-## 8. 输出布局
+## 8. 输出布局与命名身份
 
 普通资源输出沿用已记录的多选批量提取布局：
 
@@ -254,13 +254,72 @@ D:\Exports\char_1001_amiya2.ab\Texture2D\avatar.png
 D:\Exports\char_1001_amiya2.ab\Sprite\portrait.png
 ```
 
-Spine 类别沿用当前 Spine 组提取语义：
+Spine 类别使用独立的聚合类型目录：
 
 ```text
-<输出根目录>/<AB 资源包名称>/<Spine 组名>/...
+<输出根目录>/<AB 资源包名称>/Spine/<Spine 组名>/...
 ```
 
-Spine 不是普通资源类型文件夹。它表示“整组导出”，包含 skeleton、atlas、主贴图和可匹配的 alpha 贴图。若后续希望统一为 `<AB>/Spine/<组名>/...`，需要作为单独的输出布局迁移记录，并同步更新操作记录文档、测试和用户迁移说明。
+Spine 不是普通 Unity `AssetType`，而是“整组导出”，包含 skeleton、atlas、主贴图和可匹配的 alpha 贴图。`Spine` 目录与 `Texture2D / Sprite / TextAsset` 等普通类型目录处于同一层级，组目录再由单组提取逻辑创建。
+
+### 8.1 稳定身份优先
+
+所有导出、显示去重和后续批量匹配替换都必须以稳定身份为准，而不是以用户可见名称为准：
+
+- 普通 Unity 资产身份：`workspaceId + bundleId + assetId` 为主键；读模型和 manifest 继续携带 `pathId / assetType / assetTypeDisplayName / originalName / containerPath` 作为诊断、排序和人工核对信息。
+- Spine 资源组身份：`workspaceId + bundleId + groupId` 为主键；组内组成文件继续保存真实组成资产的 `assetId / role / originalName / containerPath`。
+- 显示名、导出文件名和目录名只是身份的投影，允许为了可读性追加后缀，但不得成为替换或恢复的唯一依据。
+
+### 8.2 显示名与文件名去重
+
+普通资源和 Spine 资源组必须使用同一套确定性去重策略：
+
+1. 在同一个碰撞作用域内，先按“基础显示名 + 输出扩展名”分组。
+   - 普通资源的作用域是 `<AB>/<资源类型>/`。
+   - Spine 组的作用域是 `<AB>/Spine/`。
+   - Spine 组内部组成文件的作用域是 `<AB>/Spine/<组名>/`。
+2. 分组内只有一个候选时，保留原始基础名。
+3. 分组内存在多个候选时，对所有候选都追加 ` [n]`，从 `1` 开始，而不是只给第二个之后追加后缀。这样列表展示、导出目录和用户截图中的语义保持一致，例如 `char_452_bstalk_snow#4 [1]`、`char_452_bstalk_snow#4 [2]`。
+4. `n` 的排序必须稳定：优先按 `pathId` 或资源导入顺序，其次按 `assetId`，最后按 `containerPath / originalName` 做兜底；Spine 组按 `groupId` 和组成资产稳定排序。排序不得依赖当前 UI 列表筛选、当前滚动位置或后台任务完成顺序。
+5. 清理非法路径字符后如果再次发生碰撞，仍按清理后的基础名重新分组去重。
+6. 空名称或无法安全落盘的名称使用稳定兜底，例如 `<资源类型> #<pathId>`；仍参与同一去重流程。
+
+普通资源当前不能继续把同名 `Texture2D / TextAsset / MonoBehaviour` 直接写到同一文件路径并覆盖。正式实现时，计划预览阶段就应计算唯一 `SuggestedOutputPath`，执行阶段只消费计划结果，不在写文件端临时猜测新文件名。
+
+### 8.3 导出 Manifest
+
+为支撑后续工作区级批量匹配替换，批量提取必须生成机器可读 manifest，而不是让替换入口反向解析文件名。推荐在本次批量输出根目录下写入 `_abt-export-manifest.json`，并在 Spine 组目录中可选写入轻量 `_abt-spine-group.json` 便于人工迁移。manifest 属于外部导出元数据，不进入工作区操作事实流；操作记录只保存 manifest 路径或摘要。
+
+Manifest 至少包含：
+
+```text
+schemaVersion
+workspaceKey
+exportedAtUtc
+outputRoot
+items[]
+  relativePath
+  bundleId
+  bundleDisplayName
+  assetId
+  pathId
+  assetType
+  assetTypeDisplayName
+  originalName
+  disambiguatedName
+  containerPath
+  outputRole        // Asset / SpineSkeleton / SpineAtlas / SpineTexturePage / SpineAlphaTexturePage
+  spineGroupId?
+  spineGroupDisplayName?
+  contentFingerprint?
+```
+
+后续批量替换的推荐匹配优先级：
+
+1. 用户选择了带 `_abt-export-manifest.json` 的目录时，优先按 manifest 中的 `bundleId + assetId` 或 `bundleId + groupId + role` 精确匹配。
+2. manifest 缺失时，才退回“目录层级 + 去重后文件名 + 类型兼容”的启发式匹配，并把重名、类型不一致、多候选和缺失项作为需要用户确认的诊断，不自动静默替换。
+3. 批量替换预览必须展示匹配来源：`ManifestExact / NameHeuristic / Ambiguous / Missing / TypeMismatch`，并允许用户排除不确定项。
+4. 即使命中 manifest，替换执行仍要校验目标资产存在、类型兼容和来源文件可读；manifest 不替代 Application 的替换校验。
 
 去重规则：
 
@@ -317,9 +376,12 @@ Spine 不是普通资源类型文件夹。它表示“整组导出”，包含 s
    执行用例已按 AB 分组，在单个后台任务内部执行跨 AB 受控并行、同 AB 内顺序提取；默认并发度为 `CPU/2`、最大 `4`，GC 压力下退避到 `1`。
 5. Spine 缓存复用
    批量提取预览、正式执行和单 Spine 组提取都会把 `workspaceDataRootPath` 传入 Spine 组计划器，避免工作区派生目录缓存存在时仍每次冷构建 Spine 组列表；单 Spine 组提取优先使用 `SpineGroupCatalog` 清单，目录不可用时才使用 `ExtractionPlan` 详情模式，避免提取前重复构建 skeleton 摘要、Texture2D 诊断和 runtime 动画预览。
+6. Spine 输出分层
+   工作区级和资产窗格多选 Spine 组批量提取已统一输出到 `<输出根>/<AB>/Spine/<组名>/...`，避免 Spine 组目录散落在 AB 根目录。
 
 仍待收口：
 
+- 普通资源显示名 / 导出文件名的重名去重、批量提取 manifest 和后续批量替换 manifest 精确匹配仍待实现；实现前不得继续扩大依赖文件名启发式匹配的范围。
 - 批处理页批量提取区域改为复用新契约或明确降级为摘要入口。
 - 窗口预览刷新已具备 in-flight 取消和过期结果丢弃；后续可继续增加 debounce，减少快速勾选时的无效计划查询。
 - 计划预览内部仍可继续优化为单次扫描和缓存优先，避免普通资源计划、类别统计和 Spine 组目录分别重复读取相同工作区资产列表。
@@ -335,7 +397,9 @@ Application 已覆盖并需持续保持：
 - 批量提取预览和正式执行会把 `workspaceDataRootPath` 传给 Spine 组计划查询，保证可以复用工作区 SpineGroupCatalog 派生缓存。
 - Spine 组正式提取优先使用 `SpineGroupCatalog` 清单；catalog 命中时不得加载组详情，catalog 不可用时使用 `ExtractionPlan` 详情模式，不回退到完整交互预览详情构建。
 - 普通资源输出路径为 `<输出根>/<AB>/<资源类型>/<文件名>`。
-- Spine 组输出沿用 `<输出根>/<AB>/<组名>/...`。
+- Spine 组输出为 `<输出根>/<AB>/Spine/<组名>/...`。
+- 普通资源与 Spine 组的重名输出必须使用稳定去重后缀，不能覆盖同目录同名文件。
+- 批量提取 manifest 必须记录导出路径到稳定资产身份的映射，供后续批量替换精确匹配。
 - 无候选、部分失败、取消和成功摘要返回稳定 DTO。
 - `ExtractAsset / ExtractBatch` 操作记录追加语义保持不变。
 
