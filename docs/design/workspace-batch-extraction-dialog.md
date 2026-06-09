@@ -311,15 +311,20 @@ items[]
   outputRole        // Asset / SpineSkeleton / SpineAtlas / SpineTexturePage / SpineAlphaTexturePage
   spineGroupId?
   spineGroupDisplayName?
-  contentFingerprint?
+  exportedFileSizeInBytes
+  exportedFileHashAlgorithm  // first version: MD5
+  exportedFileHash
+  exportedFileLastWriteTimeUtc
 ```
 
 后续批量替换的推荐匹配优先级：
 
 1. 用户选择了带 `_abt-export-manifest.json` 的目录时，优先按 manifest 中的 `bundleId + assetId` 或 `bundleId + groupId + role` 精确匹配。
-2. manifest 缺失时，才退回“目录层级 + 去重后文件名 + 类型兼容”的启发式匹配，并把重名、类型不一致、多候选和缺失项作为需要用户确认的诊断，不自动静默替换。
-3. 批量替换预览必须展示匹配来源：`ManifestExact / NameHeuristic / Ambiguous / Missing / TypeMismatch`，并允许用户排除不确定项。
-4. 即使命中 manifest，替换执行仍要校验目标资产存在、类型兼容和来源文件可读；manifest 不替代 Application 的替换校验。
+2. manifest 精确匹配模式下，批量替换预览必须重新计算当前外部文件的 MD5，并与 manifest 中的 `exportedFileHash` 比较；只有文件存在且内容哈希发生变化的项才进入可替换候选。哈希未变化的项应计入 `Unchanged` 摘要，不创建替换候选、不追加操作记录，也不打扰用户确认列表。
+3. 文件缺失、哈希无法计算、manifest 哈希算法不支持或 manifest 项损坏时，不应把该项当作“未变化”；应返回结构化诊断，例如 `Missing / HashUnavailable / ManifestUnsupported / ManifestInvalid`，由用户决定是否重新导出或改用启发式导入。
+4. manifest 缺失时，才退回“目录层级 + 去重后文件名 + 类型兼容”的启发式匹配。启发式模式没有可靠的导出基线，不按 MD5 过滤未变化文件；它只负责发现可能匹配项，并把重名、类型不一致、多候选和缺失项作为需要用户确认的诊断，不自动静默替换。
+5. 批量替换预览必须展示匹配来源：`ManifestChanged / ManifestUnchanged / NameHeuristic / Ambiguous / Missing / TypeMismatch / HashUnavailable`，并允许用户排除不确定项。
+6. 即使命中 manifest 且 MD5 发生变化，替换执行仍要校验目标资产存在、类型兼容和来源文件可读；manifest 不替代 Application 的替换校验。
 
 去重规则：
 
