@@ -2,6 +2,7 @@ using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Extraction.Services;
 using AssestBundleTools.Application.Workspace.Services;
 
 namespace AssestBundleTools.Application.Assets.Queries;
@@ -55,6 +56,9 @@ public sealed class LoadAssetListHandler : IQueryHandler<LoadAssetListQuery, Res
             query.AssetTypeDisplayNameFilter,
             out var assetListResult);
 
-        return Task.FromResult(Result<AssetListResultDto>.Success(assetListResult!));
+        return Task.FromResult(Result<AssetListResultDto>.Success(assetListResult! with
+        {
+            Items = WorkspaceAssetExportNameProjection.ApplyToAssetList(assetListResult.Items)
+        }));
     }
 }

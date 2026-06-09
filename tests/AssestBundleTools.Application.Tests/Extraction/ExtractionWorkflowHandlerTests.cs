@@ -500,6 +500,112 @@ internal static partial class ExtractionWorkflowHandlerTests
             "Result should preserve the selected unknown display-name category.");
     }
 
+    public static async Task LoadAssetListHandler_ShouldDisambiguateDuplicateAssetNames()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleId = new BundleId("bundle.duplicates");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            new AssetId("asset.path-2"),
+            AssetType.Texture2D,
+            "shared_texture",
+            "Assets/B/shared_texture.png",
+            pathId: 2));
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            new AssetId("asset.path-1"),
+            AssetType.Texture2D,
+            "shared_texture",
+            "Assets/A/shared_texture.png",
+            pathId: 1));
+        var handler = new LoadAssetListHandler(registry);
+
+        var result = await handler.HandleAsync(new LoadAssetListQuery(workspaceId, bundleId));
+
+        TestAssert.True(result.IsSuccess, "Asset list should load duplicate names.");
+        var items = result.Value?.Items
+            .OrderBy(static item => item.PathId)
+            .ToArray() ?? Array.Empty<AssetListItemDto>();
+        TestAssert.Equal(2, items.Length, "Both duplicate assets should remain visible.");
+        TestAssert.Equal("shared_texture [1]", items[0].DisplayName, "First duplicate should receive a stable display suffix.");
+        TestAssert.Equal("shared_texture [2]", items[1].DisplayName, "Second duplicate should receive a stable display suffix.");
+        TestAssert.Equal("shared_texture [1].png", items[0].ExportFileName, "First duplicate should receive a unique export file name.");
+        TestAssert.Equal("shared_texture [2].png", items[1].ExportFileName, "Second duplicate should receive a unique export file name.");
+    }
+
+    public static async Task ExtractWorkspaceAssetsHandler_ShouldDisambiguateDuplicateAssetOutputPaths()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleId = new BundleId("bundle.duplicates");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        var firstAssetId = new AssetId("asset.path-1");
+        var secondAssetId = new AssetId("asset.path-2");
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            firstAssetId,
+            AssetType.Texture2D,
+            "shared_texture",
+            "Assets/A/shared_texture.png",
+            pathId: 1));
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            secondAssetId,
+            AssetType.Texture2D,
+            "shared_texture",
+            "Assets/B/shared_texture.png",
+            pathId: 2));
+        var previewHandler = new TestAssetPreviewHandler();
+        previewHandler.RegisterPreview(CreateBinaryPreview(
+            workspaceId,
+            bundleId,
+            firstAssetId,
+            AssetPreviewKind.Image,
+            "image/png",
+            [1]));
+        previewHandler.RegisterPreview(CreateBinaryPreview(
+            workspaceId,
+            bundleId,
+            secondAssetId,
+            AssetPreviewKind.Image,
+            "image/png",
+            [2]));
+        var fileStore = new TestAssetExtractionFileStore();
+        var changeStore = new TestWorkspaceChangeStore();
+        var singleHandler = CreateHandler(registry, previewHandler, fileStore, changeStore);
+        var batchHandler = new ExtractWorkspaceAssetsHandler(
+            registry,
+            singleHandler,
+            new WorkspaceExtractionOperationRecorder(
+                new TestWorkspaceDataStoreFactory(changeStore),
+                new WorkspaceOperationLogService()));
+
+        var result = await batchHandler.HandleAsync(new ExtractWorkspaceAssetsCommand(
+            workspaceId,
+            OutputDirectory: @"D:\Out",
+            WorkspaceKey: WorkspaceKey,
+            WorkspaceDataRootPath: WorkspaceDataRootPath,
+            SelectedBundleIds: new[] { bundleId },
+            SelectedCategories: new[] { WorkspaceBatchExtractionCategoryDto.FromAssetType(AssetType.Texture2D) }));
+
+        TestAssert.True(result.IsSuccess, "Batch extraction should succeed for duplicate asset names.");
+        var requestedPaths = fileStore.Requests
+            .Select(static request => request.SuggestedOutputPath)
+            .OrderBy(static path => path, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        TestAssert.Equal(2, requestedPaths.Length, "Both duplicate assets should be written.");
+        TestAssert.True(
+            requestedPaths.Any(static path => path.EndsWith(@"bundle.duplicates.ab\Texture2D\shared_texture [1].png", StringComparison.OrdinalIgnoreCase)),
+            "First duplicate output path should use [1] suffix.");
+        TestAssert.True(
+            requestedPaths.Any(static path => path.EndsWith(@"bundle.duplicates.ab\Texture2D\shared_texture [2].png", StringComparison.OrdinalIgnoreCase)),
+            "Second duplicate output path should use [2] suffix.");
+    }
+
     public static async Task ExtractWorkspaceAssetsHandler_ShouldExtractBundlesInParallel_AndKeepSameBundleSequential()
     {
         var workspaceId = new WorkspaceId("workspace-session-1");
@@ -768,7 +874,8 @@ internal static partial class ExtractionWorkflowHandlerTests
         AssetType assetType,
         string assetName,
         string assetPath,
-        string? assetTypeDisplayName = null) =>
+        string? assetTypeDisplayName = null,
+        long pathId = 12345) =>
         new(
             WorkspaceId: workspaceId,
             BundleId: bundleId,
@@ -779,7 +886,7 @@ internal static partial class ExtractionWorkflowHandlerTests
             AssetType: assetType,
             SizeInBytes: 256,
             PreferredDisplaySizeInBytes: 256,
-            PathId: 12345,
+            PathId: pathId,
             IsModified: false,
             CanExtract: true,
             CanReplaceFromFile: true,
@@ -1084,7 +1191,8 @@ internal static partial class ExtractionWorkflowHandlerTests
                     PreferredDisplaySizeInBytes: asset.PreferredDisplaySizeInBytes,
                     HasPreview: true,
                     IsModified: asset.IsModified,
-                    AssetTypeDisplayName: asset.AssetTypeDisplayName))
+                    AssetTypeDisplayName: asset.AssetTypeDisplayName,
+                    PathId: asset.PathId))
                 .ToArray();
 
             assetListResult = new AssetListResultDto(

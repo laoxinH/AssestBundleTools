@@ -194,16 +194,22 @@ public sealed class WorkspaceAssetExtractionExporter
         }
 
         var directory = Path.GetDirectoryName(suggestedOutputPath);
-        var fileName = BuildOutputFileName(targetDetails, preview);
+        var fileName = BuildOutputFileName(targetDetails, preview, Path.GetFileName(suggestedOutputPath));
         return string.IsNullOrWhiteSpace(directory)
             ? fileName
             : Path.Combine(directory, fileName);
     }
 
-    private static string BuildOutputFileName(AssetDetailsDto targetDetails, AssetPreviewDto preview)
+    private static string BuildOutputFileName(
+        AssetDetailsDto targetDetails,
+        AssetPreviewDto preview,
+        string? suggestedFileName)
     {
-        var sourceName = ResolveSourceFileName(targetDetails);
-        var extension = ResolveOutputExtension(sourceName, preview);
+        var defaultSourceName = ResolveSourceFileName(targetDetails);
+        var extension = ResolveOutputExtension(defaultSourceName, preview);
+        var sourceName = ShouldPreferSourceFileName(targetDetails, preview, defaultSourceName, extension, suggestedFileName)
+            ? defaultSourceName
+            : ResolveSuggestedFileNameStem(suggestedFileName, extension) ?? defaultSourceName;
 
         if (sourceName.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
         {
@@ -211,6 +217,49 @@ public sealed class WorkspaceAssetExtractionExporter
         }
 
         return $"{sourceName}{extension}";
+    }
+
+    private static bool ShouldPreferSourceFileName(
+        AssetDetailsDto targetDetails,
+        AssetPreviewDto preview,
+        string sourceName,
+        string outputExtension,
+        string? suggestedFileName)
+    {
+        if (string.IsNullOrWhiteSpace(suggestedFileName))
+        {
+            return false;
+        }
+
+        var sourceExtension = Path.GetExtension(sourceName);
+        if (string.IsNullOrWhiteSpace(sourceExtension))
+        {
+            return false;
+        }
+
+        var plannedExtension = WorkspaceAssetExportNameProjection.GetAssetExtension(targetDetails.AssetType);
+        return (preview.Kind is AssetPreviewKind.Text or AssetPreviewKind.Binary) &&
+               Path.GetExtension(suggestedFileName)
+                   .Equals(plannedExtension, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? ResolveSuggestedFileNameStem(string? suggestedFileName, string extension)
+    {
+        if (string.IsNullOrWhiteSpace(suggestedFileName))
+        {
+            return null;
+        }
+
+        var trimmed = suggestedFileName.Trim();
+        if (trimmed.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+        {
+            return trimmed;
+        }
+
+        var stem = Path.GetFileNameWithoutExtension(trimmed);
+        return string.IsNullOrWhiteSpace(stem)
+            ? null
+            : stem;
     }
 
     private static string ResolveSourceFileName(AssetDetailsDto targetDetails)

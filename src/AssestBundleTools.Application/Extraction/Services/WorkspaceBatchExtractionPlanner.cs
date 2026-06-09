@@ -63,13 +63,12 @@ internal static class WorkspaceBatchExtractionPlanner
                 continue;
             }
 
-            foreach (var item in assetListResult!.Items)
+            var projectedItems = WorkspaceAssetExportNameProjection.ApplyToAssetList(
+                assetListResult!.Items
+                    .Where(item => MatchesSelectedUnityCategory(item, normalizedCategories, includesAllUnityAssetTypes))
+                    .ToArray());
+            foreach (var item in projectedItems)
             {
-                if (!MatchesSelectedUnityCategory(item, normalizedCategories, includesAllUnityAssetTypes))
-                {
-                    continue;
-                }
-
                 plannedAssets.Add(new PlannedAssetExtraction(
                     BundleId: item.BundleId,
                     AssetId: item.AssetId,
@@ -83,7 +82,8 @@ internal static class WorkspaceBatchExtractionPlanner
                         assetListResult.BundleDisplayName,
                         item.Name,
                         item.AssetType,
-                        item.AssetTypeDisplayName)));
+                        item.AssetTypeDisplayName,
+                        item.ExportFileName)));
             }
         }
 
@@ -145,19 +145,25 @@ internal static class WorkspaceBatchExtractionPlanner
         string bundleDisplayName,
         string assetName,
         AssetType assetType,
-        string? assetTypeDisplayName = null)
+        string? assetTypeDisplayName = null,
+        string? exportFileName = null)
     {
+        var fileName = string.IsNullOrWhiteSpace(exportFileName)
+            ? $"{WorkspaceAssetExportNameProjection.SanitizeFileName(assetName)}{WorkspaceAssetExportNameProjection.GetAssetExtension(assetType)}"
+            : exportFileName.Trim();
+
         return Path.Combine(
             outputDirectory,
-            SanitizePathSegment(bundleDisplayName),
-            SanitizePathSegment(ResolveAssetTypeFolderName(assetTypeDisplayName, assetType)),
-            $"{SanitizeFileName(assetName)}{GetAssetExtension(assetType)}");
+            WorkspaceAssetExportNameProjection.SanitizePathSegment(bundleDisplayName),
+            WorkspaceAssetExportNameProjection.SanitizePathSegment(
+                WorkspaceAssetExportNameProjection.ResolveAssetTypeFolderName(assetTypeDisplayName, assetType)),
+            fileName);
     }
 
     public static string BuildBundleOutputDirectory(
         string outputDirectory,
         string bundleDisplayName) =>
-        Path.Combine(outputDirectory, SanitizePathSegment(bundleDisplayName));
+        Path.Combine(outputDirectory, WorkspaceAssetExportNameProjection.SanitizePathSegment(bundleDisplayName));
 
     public static IReadOnlyList<WorkspaceBatchExtractionCategoryPlanDto> BuildCategoryPlans(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
@@ -398,11 +404,6 @@ internal static class WorkspaceBatchExtractionPlanner
             ? null
             : assetTypeDisplayName.Trim();
 
-    private static string ResolveAssetTypeFolderName(string? assetTypeDisplayName, AssetType assetType) =>
-        string.IsNullOrWhiteSpace(assetTypeDisplayName)
-            ? assetType.ToString()
-            : assetTypeDisplayName.Trim();
-
     private static void AddCategoryCount(
         IDictionary<WorkspaceBatchExtractionCategoryDto, CategoryCount> categoryCounts,
         WorkspaceBatchExtractionCategoryDto category,
@@ -436,41 +437,6 @@ internal static class WorkspaceBatchExtractionPlanner
 
     private static string ResolveCategorySortName(WorkspaceBatchExtractionCategoryDto category) =>
         category.AssetTypeDisplayName ?? category.AssetType?.ToString() ?? category.Kind.ToString();
-
-    private static string SanitizeFileName(string fileName)
-    {
-        var normalized = SanitizePathSegment(fileName);
-        return string.IsNullOrWhiteSpace(normalized)
-            ? "asset"
-            : normalized;
-    }
-
-    private static string SanitizePathSegment(string segment)
-    {
-        var invalidChars = Path.GetInvalidFileNameChars();
-        var sanitized = new string(segment
-            .Trim()
-            .Select(ch => invalidChars.Contains(ch) ? '_' : ch)
-            .ToArray())
-            .Trim()
-            .TrimEnd('.');
-
-        return string.IsNullOrWhiteSpace(sanitized)
-            ? "bundle"
-            : sanitized;
-    }
-
-    private static string GetAssetExtension(AssetType assetType) =>
-        assetType switch
-        {
-            AssetType.Texture2D => ".png",
-            AssetType.Sprite => ".png",
-            AssetType.TextAsset => ".txt",
-            AssetType.AudioClip => ".wav",
-            AssetType.Mesh => ".obj",
-            AssetType.Material => ".material.json",
-            _ => ".bin"
-        };
 
     private readonly record struct CategoryCount(
         int CandidateCount,

@@ -2,6 +2,7 @@ using System.IO;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Extraction.Commands;
 using AssestBundleTools.Application.Extraction.Dtos;
+using AssestBundleTools.Application.Extraction.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Common.Errors;
@@ -314,9 +315,12 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
         AssetListEntryViewModel entry,
         string defaultBundleDisplayName)
     {
-        var placeholderFileName = string.IsNullOrWhiteSpace(entry.Item.Name)
-            ? entry.Item.AssetId.Value
-            : entry.Item.Name;
+        var fileName = string.IsNullOrWhiteSpace(entry.Item.ExportFileName)
+            ? WorkspaceAssetExportNameProjection.SanitizeFileName(
+                string.IsNullOrWhiteSpace(entry.Item.Name)
+                    ? entry.Item.AssetId.Value
+                    : entry.Item.Name)
+            : entry.Item.ExportFileName;
         return Path.Combine(
             BundleBatchExtractionOutputDirectoryResolver.BuildAssetTypeDirectory(
                 selectedOutputDirectory,
@@ -324,7 +328,7 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
                 entry.Item.BundleId,
                 entry.Item.AssetTypeDisplayName,
                 entry.Item.AssetType),
-            placeholderFileName);
+            fileName);
     }
 
     private sealed record AssetBatchExtractionItem(

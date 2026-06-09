@@ -80,6 +80,14 @@ internal static partial class ApplicationTestSuite
             ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldFilterUnknownTypeByDisplayName);
         await RunTestAsync(
             failures,
+            nameof(ExtractionWorkflowHandlerTests.LoadAssetListHandler_ShouldDisambiguateDuplicateAssetNames),
+            ExtractionWorkflowHandlerTests.LoadAssetListHandler_ShouldDisambiguateDuplicateAssetNames);
+        await RunTestAsync(
+            failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldDisambiguateDuplicateAssetOutputPaths),
+            ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldDisambiguateDuplicateAssetOutputPaths);
+        await RunTestAsync(
+            failures,
             nameof(ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldExtractSpineGroups_WhenAllCategoryIsSelected),
             ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldExtractSpineGroups_WhenAllCategoryIsSelected);
         await RunTestAsync(

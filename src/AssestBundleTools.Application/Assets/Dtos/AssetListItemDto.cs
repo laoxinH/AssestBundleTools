@@ -17,4 +17,7 @@ public sealed record AssetListItemDto(
     bool HasPreview,
     bool IsModified,
     string? AssetTypeDisplayName = null,
-    DateTimeOffset? LastExtractedAtUtc = null);
+    DateTimeOffset? LastExtractedAtUtc = null,
+    long PathId = 0,
+    string? DisplayName = null,
+    string? ExportFileName = null);

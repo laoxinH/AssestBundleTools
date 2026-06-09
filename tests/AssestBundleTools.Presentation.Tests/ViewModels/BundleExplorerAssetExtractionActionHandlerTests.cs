@@ -79,6 +79,47 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
     }
 
     [Fact]
+    public async Task ExtractSelectedAssetsAsync_ShouldUseDisambiguatedExportFileNames()
+    {
+        var gateway = new RecordingWorkspaceAssetOperationGateway();
+        var filePicker = new RecordingFilePickerService
+        {
+            BatchExtractionOutputDirectory = @"D:\Exports\Selected"
+        };
+        var handler = new BundleExplorerAssetExtractionActionHandler(
+            gateway,
+            new TestAppLogService(),
+            new TestAppNotificationService(),
+            new TestLocalizationService(),
+            filePicker);
+        var firstEntry = CreateAssetEntry(
+            "asset-1",
+            "shared_texture",
+            exportFileName: "shared_texture [1].png");
+        var secondEntry = CreateAssetEntry(
+            "asset-2",
+            "shared_texture",
+            exportFileName: "shared_texture [2].png");
+
+        await handler.ExtractSelectedAssetsAsync(
+            CreateWorkspaceSummary(),
+            [firstEntry, secondEntry],
+            "char_1001_amiya2.ab",
+            _ => { },
+            _ => throw new InvalidOperationException("Batch extraction should not fail in this test."));
+
+        Assert.Equal(2, gateway.ExtractAssetCommands.Count);
+        Assert.EndsWith(
+            Path.Combine("Texture2D", "shared_texture [1].png"),
+            gateway.ExtractAssetCommands[0].SuggestedOutputPath,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.EndsWith(
+            Path.Combine("Texture2D", "shared_texture [2].png"),
+            gateway.ExtractAssetCommands[1].SuggestedOutputPath,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task ExtractSelectedAssetsAsync_ShouldCancelWithoutExtraction_WhenOutputDirectoryIsNotSelected()
     {
         var gateway = new RecordingWorkspaceAssetOperationGateway();
@@ -355,7 +396,10 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
             WorkspaceKey: "workspace-key",
             WorkspaceDataRootPath: @"C:\WorkspaceData");
 
-    private static AssetListEntryViewModel CreateAssetEntry(string assetId, string name) =>
+    private static AssetListEntryViewModel CreateAssetEntry(
+        string assetId,
+        string name,
+        string? exportFileName = null) =>
         new(
             new AssetListItemDto(
                 new AssetId(assetId),
@@ -366,7 +410,8 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
                 SizeInBytes: 128,
                 PreferredDisplaySizeInBytes: null,
                 HasPreview: true,
-                IsModified: false),
+                IsModified: false,
+                ExportFileName: exportFileName),
             "Texture2D",
             "128 B",
             "Original");

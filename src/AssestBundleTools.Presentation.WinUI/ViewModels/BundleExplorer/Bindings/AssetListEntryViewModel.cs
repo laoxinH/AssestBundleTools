@@ -48,7 +48,9 @@ public sealed class AssetListEntryViewModel : ObservableObject
     /// <summary>
     /// 统一由 UI 层提供名称展示文本，避免 XAML 直接深入 DTO 结构绑定。
     /// </summary>
-    public string DisplayName => Item.Name;
+    public string DisplayName => string.IsNullOrWhiteSpace(Item.DisplayName)
+        ? Item.Name
+        : Item.DisplayName;
 
     /// <summary>
     /// 资源路径继续作为名称列的副标题显示，便于区分同名资产。
@@ -58,7 +60,7 @@ public sealed class AssetListEntryViewModel : ObservableObject
     /// <summary>
     /// 完整名称提示同样收敛在行 ViewModel，减少 XAML 侧重复绑定和告警噪音。
     /// </summary>
-    public string DisplayNameToolTipText => DisplayName;
+    public string DisplayNameToolTipText => Item.Name;
 
     /// <summary>
     /// 行级选中态由窗格 ViewModel 统一维护，

@@ -154,11 +154,15 @@ public sealed class ExtractAssetHandler : ICommandHandler<ExtractAssetCommand, R
                 item.AssetId.Equals(command.AssetId));
             if (assetListItem is not null)
             {
+                var projectedItem = WorkspaceAssetExportNameProjection.ApplyToAssetList(assetListResult.Items)
+                    .FirstOrDefault(item => item.AssetId.Equals(command.AssetId)) ?? assetListItem;
                 return WorkspaceBatchExtractionPlanner.BuildSuggestedOutputPath(
                     WorkspaceBatchExtractionPlanner.ResolveOutputDirectory(null, command.WorkspaceId, null),
                     assetListResult.BundleDisplayName,
-                    assetListItem.Name,
-                    assetListItem.AssetType);
+                    projectedItem.Name,
+                    projectedItem.AssetType,
+                    projectedItem.AssetTypeDisplayName,
+                    projectedItem.ExportFileName);
             }
         }
 
