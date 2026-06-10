@@ -86,7 +86,9 @@ public sealed class WorkspaceExtractionOperationRecorder
                     SourceKind: SourceKindWorkspace,
                     OutputDirectory: result.SuggestedOutputDirectory),
                 Result: new WorkspaceOperationResultDto(
+                    OutputPath: result.ExportManifestPath,
                     OutputDirectory: result.SuggestedOutputDirectory,
+                    OutputFileExists: !string.IsNullOrWhiteSpace(result.ExportManifestPath),
                     AffectedBundleIds: assetResults
                         .Select(static asset => asset.BundleId.Value)
                         .Distinct(StringComparer.Ordinal)

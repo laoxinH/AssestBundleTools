@@ -155,6 +155,7 @@ internal static class AppCompositionRoot
             workspaceDataStoreFactory,
             workspaceSaveOutputProbe);
         var assetExtractionFileStore = new FileSystemAssetExtractionFileStore();
+        var workspaceExportManifestStore = new FileSystemWorkspaceExportManifestStore();
         var workspaceAssetExtractionExporter = new WorkspaceAssetExtractionExporter(
             getAssetPreviewHandler,
             assetExtractionFileStore);
@@ -179,7 +180,8 @@ internal static class AppCompositionRoot
             extractAssetHandler,
             workspaceExtractionOperationRecorder,
             loadSpineAssetGroupsHandler,
-            extractSpineAssetGroupHandler);
+            extractSpineAssetGroupHandler,
+            workspaceExportManifestStore);
         var getWorkspaceBatchReplacementPreviewHandler = new GetWorkspaceBatchReplacementPreviewHandler(workspaceSessionRegistry);
         var executeWorkspaceBatchReplacementHandler = new ExecuteWorkspaceBatchReplacementHandler(workspaceSessionRegistry);
         var getFileReplacementCandidateHandler = new GetFileReplacementCandidateHandler(workspaceSessionRegistry);

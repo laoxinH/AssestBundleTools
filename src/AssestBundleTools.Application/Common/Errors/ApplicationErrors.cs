@@ -195,6 +195,26 @@ public static class ApplicationErrors
                 ("OutputPath", outputPath),
                 ("Detail", detail)));
 
+    public static AppError ExportManifestWriteFailed(string outputPath, string? detail = null) =>
+        new(
+            code: "Asset.Extract.ManifestWriteFailed",
+            category: ErrorCategory.IoFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Asset.Extract.ManifestWriteFailed",
+            parameters: CreateParameters(
+                ("OutputPath", outputPath),
+                ("Detail", detail)));
+
+    public static AppError ExportManifestReadFailed(string manifestPath, string? detail = null) =>
+        new(
+            code: "Asset.Extract.ManifestReadFailed",
+            category: ErrorCategory.IoFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Asset.Extract.ManifestReadFailed",
+            parameters: CreateParameters(
+                ("ManifestPath", manifestPath),
+                ("Detail", detail)));
+
     public static AppError NoBatchReplacementCandidates(WorkspaceId workspaceId) =>
         new(
             code: "Asset.Replace.NoBatchCandidates",

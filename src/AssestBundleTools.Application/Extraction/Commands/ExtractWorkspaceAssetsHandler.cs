@@ -24,6 +24,7 @@ public sealed class ExtractWorkspaceAssetsHandler : ICommandHandler<ExtractWorks
     private readonly ExtractSpineAssetGroupHandler? _extractSpineAssetGroupHandler;
     private readonly IQueryHandler<LoadSpineAssetGroupsQuery, Result<SpineAssetGroupListResultDto>>? _loadSpineAssetGroupsHandler;
     private readonly WorkspaceExtractionOperationRecorder? _operationRecorder;
+    private readonly IWorkspaceExportManifestStore? _exportManifestStore;
     private readonly WorkspaceBatchExtractionConcurrencyPolicy _concurrencyPolicy;
 
     public ExtractWorkspaceAssetsHandler(
@@ -32,6 +33,7 @@ public sealed class ExtractWorkspaceAssetsHandler : ICommandHandler<ExtractWorks
         WorkspaceExtractionOperationRecorder? operationRecorder = null,
         IQueryHandler<LoadSpineAssetGroupsQuery, Result<SpineAssetGroupListResultDto>>? loadSpineAssetGroupsHandler = null,
         ExtractSpineAssetGroupHandler? extractSpineAssetGroupHandler = null,
+        IWorkspaceExportManifestStore? exportManifestStore = null,
         Func<int>? processorCountProvider = null,
         Func<bool>? memoryPressureEvaluator = null)
     {
@@ -40,6 +42,7 @@ public sealed class ExtractWorkspaceAssetsHandler : ICommandHandler<ExtractWorks
         _loadSpineAssetGroupsHandler = loadSpineAssetGroupsHandler;
         _extractSpineAssetGroupHandler = extractSpineAssetGroupHandler;
         _operationRecorder = operationRecorder;
+        _exportManifestStore = exportManifestStore;
         _concurrencyPolicy = new WorkspaceBatchExtractionConcurrencyPolicy(
             processorCountProvider,
             memoryPressureEvaluator);
@@ -147,9 +150,70 @@ public sealed class ExtractWorkspaceAssetsHandler : ICommandHandler<ExtractWorks
                 command.SelectedCategories),
             ExtractedSpineGroupCount: spineGroupResults.Length,
             SpineGroupResults: spineGroupResults);
+
+        var manifestResult = await TrySaveManifestAsync(command, plan, outcomes, batchResult, cancellationToken);
+        if (manifestResult.IsCancelled)
+        {
+            return Result<WorkspaceBatchExtractionResultDto>.Cancelled();
+        }
+
+        if (!manifestResult.IsSuccess)
+        {
+            return Result<WorkspaceBatchExtractionResultDto>.Failure(manifestResult.Errors);
+        }
+
+        if (manifestResult.Value is not null)
+        {
+            batchResult = batchResult with
+            {
+                ExportManifestPath = manifestResult.Value.ManifestPath,
+                ExportManifestItemCount = manifestResult.Value.Manifest.Items.Count
+            };
+        }
+
         _operationRecorder?.RecordBatchExtraction(command, batchResult);
 
         return Result<WorkspaceBatchExtractionResultDto>.Success(batchResult);
+    }
+
+    private async Task<Result<WorkspaceExportManifestSaveResultDto?>> TrySaveManifestAsync(
+        ExtractWorkspaceAssetsCommand command,
+        WorkspaceBatchExtractionPlan plan,
+        IReadOnlyList<BatchExtractionOutcome?> outcomes,
+        WorkspaceBatchExtractionResultDto batchResult,
+        CancellationToken cancellationToken)
+    {
+        if (_exportManifestStore is null)
+        {
+            return Result<WorkspaceExportManifestSaveResultDto?>.Success(null);
+        }
+
+        if (string.IsNullOrWhiteSpace(command.WorkspaceKey))
+        {
+            return Result<WorkspaceExportManifestSaveResultDto?>.Success(null);
+        }
+
+        var sourceItems = WorkspaceExportManifestSourceBuilder.Build(outcomes);
+        if (sourceItems.Count == 0)
+        {
+            return Result<WorkspaceExportManifestSaveResultDto?>.Success(null);
+        }
+
+        var saveResult = await _exportManifestStore.SaveAsync(
+            new WorkspaceExportManifestSaveRequestDto(
+                WorkspaceKey: command.WorkspaceKey.Trim(),
+                ExportedAtUtc: batchResult.CompletedAtUtc,
+                OutputRoot: plan.SuggestedOutputDirectory,
+                Items: sourceItems),
+            cancellationToken);
+        if (saveResult.IsCancelled)
+        {
+            return Result<WorkspaceExportManifestSaveResultDto?>.Cancelled();
+        }
+
+        return saveResult.IsSuccess && saveResult.Value is not null
+            ? Result<WorkspaceExportManifestSaveResultDto?>.Success(saveResult.Value)
+            : Result<WorkspaceExportManifestSaveResultDto?>.Failure(saveResult.Errors);
     }
 
     private async Task<BatchExtractionOutcome?[]> ExecutePlannedItemsAsync(
@@ -340,7 +404,7 @@ public sealed class ExtractWorkspaceAssetsHandler : ICommandHandler<ExtractWorks
                 return;
             }
 
-            outcomes[item.Index] = outcome;
+            outcomes[item.Index] = outcome with { WorkItem = item };
             processedCount++;
             progressState.RecordOutcome(outcome);
             ReportProgress(command, progressState.CreateItemProgress(item, isMemoryThrottled));

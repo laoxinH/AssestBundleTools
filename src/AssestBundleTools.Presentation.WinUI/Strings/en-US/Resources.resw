@@ -4062,6 +4062,12 @@
   <data name="Error.Asset.Extract.WriteFailed" xml:space="preserve">
     <value>Failed to write the extracted file: {0}. Detail: {1}</value>
   </data>
+  <data name="Error.Asset.Extract.ManifestWriteFailed" xml:space="preserve">
+    <value>Failed to write the batch export manifest: {0}. Detail: {1}</value>
+  </data>
+  <data name="Error.Asset.Extract.ManifestReadFailed" xml:space="preserve">
+    <value>Failed to read the batch export manifest: {0}. Detail: {1}</value>
+  </data>
   <data name="Error.Bundle.Save.NoCandidates" xml:space="preserve">
     <value>No bundles are available for the save skeleton in the current workspace: {0}</value>
   </data>

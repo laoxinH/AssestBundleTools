@@ -74,8 +74,11 @@ internal static class WorkspaceBatchExtractionPlanner
                     AssetId: item.AssetId,
                     BundleDisplayName: assetListResult.BundleDisplayName,
                     AssetName: item.Name,
+                    AssetPath: item.AssetPath,
                     AssetType: item.AssetType,
                     AssetTypeDisplayName: item.AssetTypeDisplayName,
+                    PathId: item.PathId,
+                    DisambiguatedName: string.IsNullOrWhiteSpace(item.DisplayName) ? item.Name : item.DisplayName,
                     SizeInBytes: item.SizeInBytes,
                     SuggestedOutputPath: BuildSuggestedOutputPath(
                         resolvedOutputDirectory,
@@ -467,8 +470,11 @@ internal sealed record PlannedAssetExtraction(
     AssetId AssetId,
     string BundleDisplayName,
     string AssetName,
+    string AssetPath,
     AssetType AssetType,
     string? AssetTypeDisplayName,
+    long PathId,
+    string DisambiguatedName,
     long SizeInBytes,
     string SuggestedOutputPath);
 

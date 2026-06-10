@@ -17,4 +17,6 @@ public sealed record WorkspaceBatchExtractionResultDto(
     IReadOnlyList<AssetExtractionResultDto>? AssetResults = null,
     IReadOnlyList<WorkspaceBatchExtractionCategoryDto>? SelectedCategories = null,
     int ExtractedSpineGroupCount = 0,
-    IReadOnlyList<SpineAssetGroupExtractionResultDto>? SpineGroupResults = null);
+    IReadOnlyList<SpineAssetGroupExtractionResultDto>? SpineGroupResults = null,
+    string? ExportManifestPath = null,
+    int? ExportManifestItemCount = null);

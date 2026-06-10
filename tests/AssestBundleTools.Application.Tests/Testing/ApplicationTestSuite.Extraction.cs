@@ -52,6 +52,10 @@ internal static partial class ApplicationTestSuite
             ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldExtractBatch_AndAppendBatchOperation);
         await RunTestAsync(
             failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldWriteExportManifest_ForBatchReplacementReadback),
+            ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldWriteExportManifest_ForBatchReplacementReadback);
+        await RunTestAsync(
+            failures,
             nameof(ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldReportWorkspaceBatchProgress),
             ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldReportWorkspaceBatchProgress);
         await RunTestAsync(

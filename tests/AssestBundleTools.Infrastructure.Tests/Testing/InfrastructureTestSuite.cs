@@ -125,6 +125,10 @@ internal static class InfrastructureTestSuite
             FileSystemAssetExtractionFileStoreTests.WriteAsync_ShouldCopySourcePayload_WhenContentIsNotProvided);
         await RunTestAsync(
             failures,
+            nameof(FileSystemWorkspaceExportManifestStoreTests.SaveAsync_ShouldWriteReadableManifest_WithSizeAndMd5),
+            FileSystemWorkspaceExportManifestStoreTests.SaveAsync_ShouldWriteReadableManifest_WithSizeAndMd5);
+        await RunTestAsync(
+            failures,
             nameof(FileSystemWorkspaceSaveOutputProbeTests.Probe_ShouldReportReady_WhenTargetDoesNotExist),
             FileSystemWorkspaceSaveOutputProbeTests.Probe_ShouldReportReady_WhenTargetDoesNotExist);
         await RunTestAsync(

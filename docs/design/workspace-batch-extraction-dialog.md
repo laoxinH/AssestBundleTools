@@ -317,6 +317,8 @@ items[]
   exportedFileLastWriteTimeUtc
 ```
 
+当前实现已在正式批量提取成功后写出 `<输出根目录>/_abt-export-manifest.json`。manifest 由 Application 层汇总稳定资产身份，由 Infrastructure 层读取真实输出文件的大小、MD5 和最后写入时间后原子写出 JSON；同一个存储端口提供 `LoadAsync`，供后续批量替换入口直接回读，不需要反向解析导出文件名。
+
 后续批量替换的推荐匹配优先级：
 
 1. 用户选择了带 `_abt-export-manifest.json` 的目录时，优先按 manifest 中的 `bundleId + assetId` 或 `bundleId + groupId + role` 精确匹配。
@@ -337,7 +339,7 @@ items[]
 操作记录规则：
 
 - 每个成功导出的普通资源继续追加 `ExtractAsset`。
-- 每次对话框批量任务追加一条 `ExtractBatch` 汇总记录，记录资源包范围、类别范围、输出根目录、成功 / 失败 / 取消数量和完成时间。
+- 每次对话框批量任务追加一条 `ExtractBatch` 汇总记录，记录资源包范围、类别范围、输出根目录、成功 / 失败 / 取消数量和完成时间；正式批量提取生成 manifest 时，`ExtractBatch.Result.OutputPath` 记录 `_abt-export-manifest.json` 的真实路径，`Result.OutputDirectory` 仍记录输出根目录。
 - Spine 组仍按整组提取规则记录组成资源和组级汇总。
 - 输出文件缺失、中断恢复、失败分类和后续撤销语义继续以 [workspace-recoverable-operation-records.md](workspace-recoverable-operation-records.md) 为准。
 
@@ -385,10 +387,12 @@ items[]
    工作区级和资产窗格多选 Spine 组批量提取已统一输出到 `<输出根>/<AB>/Spine/<组名>/...`，避免 Spine 组目录散落在 AB 根目录。
 7. 普通资源重名去重
    普通资源列表展示和普通资源批量提取路径已接入同一套稳定命名投影：同一 `<AB>/<资源类型>` 下重名资源会按 `pathId / assetId / path` 稳定排序并显示、导出为 `名称 [1]`、`名称 [2]`，避免同名 `Texture2D / TextAsset / MonoBehaviour` 在批量提取时互相覆盖。
+8. 批量导出 manifest
+   正式批量提取已在输出根目录写出 `_abt-export-manifest.json`，记录普通资源和 Spine 组组成资源的稳定身份、导出相对路径、输出角色、文件大小、MD5 和最后写入时间；批量提取结果和 `ExtractBatch` 操作记录都会携带 manifest 路径，后续批量替换可以直接按 manifest 回读执行 size-first / MD5 精确匹配。
 
 仍待收口：
 
-- 批量提取 manifest 和后续批量替换 manifest 精确匹配仍待实现；实现前不得继续扩大依赖文件名启发式匹配的范围。
+- 后续批量替换 manifest 精确匹配仍待实现；实现前不得继续扩大依赖文件名启发式匹配的范围。替换入口必须优先使用 `_abt-export-manifest.json` 中的稳定身份和 size-first / MD5 变更判定，只有 manifest 缺失时才退回启发式文件名匹配。
 - 批处理页批量提取区域改为复用新契约或明确降级为摘要入口。
 - 窗口预览刷新已具备 in-flight 取消和过期结果丢弃；后续可继续增加 debounce，减少快速勾选时的无效计划查询。
 - 计划预览内部仍可继续优化为单次扫描和缓存优先，避免普通资源计划、类别统计和 Spine 组目录分别重复读取相同工作区资产列表。
@@ -406,7 +410,7 @@ Application 已覆盖并需持续保持：
 - 普通资源输出路径为 `<输出根>/<AB>/<资源类型>/<文件名>`。
 - Spine 组输出为 `<输出根>/<AB>/Spine/<组名>/...`。
 - 普通资源与 Spine 组的重名输出必须使用稳定去重后缀，不能覆盖同目录同名文件。
-- 批量提取 manifest 必须记录导出路径到稳定资产身份的映射，供后续批量替换精确匹配。
+- 批量提取 manifest 必须记录导出路径到稳定资产身份的映射，供后续批量替换精确匹配；当前已覆盖 manifest 写出、真实文件大小 / MD5 记录和 DTO 回读。
 - 无候选、部分失败、取消和成功摘要返回稳定 DTO。
 - `ExtractAsset / ExtractBatch` 操作记录追加语义保持不变。
 

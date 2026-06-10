@@ -232,6 +232,73 @@ internal static partial class ExtractionWorkflowHandlerTests
         TestAssert.Equal(2, operations[^1].Result?.CompletedCount ?? 0, "Batch operation should record completed count.");
     }
 
+    public static async Task ExtractWorkspaceAssetsHandler_ShouldWriteExportManifest_ForBatchReplacementReadback()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleId = new BundleId("bundle.manifest");
+        var assetId = new AssetId("asset.texture");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            assetId,
+            AssetType.Texture2D,
+            "HeroTexture",
+            "Assets/Textures/HeroTexture",
+            pathId: 42));
+        var previewHandler = new TestAssetPreviewHandler();
+        previewHandler.RegisterPreview(CreateBinaryPreview(
+            workspaceId,
+            bundleId,
+            assetId,
+            AssetPreviewKind.Image,
+            "image/png",
+            [1, 2, 3]));
+        var fileStore = new TestAssetExtractionFileStore();
+        var changeStore = new TestWorkspaceChangeStore();
+        var manifestStore = new TestWorkspaceExportManifestStore();
+        var singleHandler = CreateHandler(registry, previewHandler, fileStore, changeStore);
+        var recorder = new WorkspaceExtractionOperationRecorder(
+            new TestWorkspaceDataStoreFactory(changeStore),
+            new WorkspaceOperationLogService());
+        var batchHandler = new ExtractWorkspaceAssetsHandler(
+            registry,
+            singleHandler,
+            recorder,
+            exportManifestStore: manifestStore);
+
+        var result = await batchHandler.HandleAsync(new ExtractWorkspaceAssetsCommand(
+            workspaceId,
+            OutputDirectory: @"D:\Out",
+            WorkspaceKey: WorkspaceKey,
+            WorkspaceDataRootPath: WorkspaceDataRootPath,
+            SelectedBundleIds: new[] { bundleId },
+            SelectedCategories: new[] { WorkspaceBatchExtractionCategoryDto.FromAssetType(AssetType.Texture2D) }));
+
+        TestAssert.True(result.IsSuccess, "Batch extraction should succeed and write a manifest.");
+        TestAssert.Equal(@"D:\Out\_abt-export-manifest.json", result.Value?.ExportManifestPath, "Result should expose the manifest path.");
+        TestAssert.Equal(1, result.Value?.ExportManifestItemCount ?? 0, "Result should expose manifest item count.");
+
+        TestAssert.True(manifestStore.LastRequest is not null, "Manifest store should receive a save request.");
+        var manifestRequest = manifestStore.LastRequest!;
+        TestAssert.Equal(WorkspaceKey, manifestRequest.WorkspaceKey, "Manifest should keep the workspace key.");
+        TestAssert.Equal(@"D:\Out", manifestRequest.OutputRoot, "Manifest should keep the batch output root.");
+        var manifestItem = TestAssert.Single(manifestRequest.Items);
+        TestAssert.Equal(bundleId, manifestItem.BundleId, "Manifest source item should keep bundle identity.");
+        TestAssert.Equal(assetId, manifestItem.AssetId, "Manifest source item should keep asset identity.");
+        TestAssert.Equal(42L, manifestItem.PathId, "Manifest source item should keep path id for replacement diagnostics.");
+        TestAssert.Equal("Texture2D", manifestItem.AssetType, "Manifest source item should keep asset type.");
+        TestAssert.Equal("HeroTexture", manifestItem.OriginalName, "Manifest source item should keep original name.");
+        TestAssert.Equal("HeroTexture", manifestItem.DisambiguatedName, "Manifest source item should keep projected display/export name.");
+        TestAssert.Equal("Assets/Textures/HeroTexture", manifestItem.ContainerPath, "Manifest source item should keep original container path.");
+        TestAssert.Equal(WorkspaceExportManifestOutputRole.Asset, manifestItem.OutputRole, "Ordinary asset exports should be marked as Asset.");
+
+        var batchOperation = changeStore.SavedChangeSet?.Operations?.LastOrDefault();
+        TestAssert.Equal(WorkspaceOperationKind.ExtractBatch, batchOperation?.OperationKind, "Batch operation should still be appended.");
+        TestAssert.Equal(@"D:\Out\_abt-export-manifest.json", batchOperation?.Result?.OutputPath, "Batch operation should record manifest path.");
+        TestAssert.Equal(true, batchOperation?.Result?.OutputFileExists, "Batch operation should mark manifest output availability.");
+    }
+
     public static async Task ExtractWorkspaceAssetsHandler_ShouldReportWorkspaceBatchProgress()
     {
         var workspaceId = new WorkspaceId("workspace-session-1");
@@ -1059,6 +1126,53 @@ internal static partial class ExtractionWorkflowHandlerTests
                 return Task.FromResult(Result<AssetExtractionWriteResultDto>.Success(LastResult));
             }
         }
+    }
+
+    private sealed class TestWorkspaceExportManifestStore : IWorkspaceExportManifestStore
+    {
+        public WorkspaceExportManifestSaveRequestDto? LastRequest { get; private set; }
+
+        public Task<Result<WorkspaceExportManifestSaveResultDto>> SaveAsync(
+            WorkspaceExportManifestSaveRequestDto request,
+            CancellationToken cancellationToken = default)
+        {
+            LastRequest = request;
+            var items = request.Items
+                .Select(source => new WorkspaceExportManifestItemDto(
+                    RelativePath: Path.GetFileName(source.OutputPath),
+                    BundleId: source.BundleId.Value,
+                    BundleDisplayName: source.BundleDisplayName,
+                    AssetId: source.AssetId.Value,
+                    PathId: source.PathId,
+                    AssetType: source.AssetType,
+                    AssetTypeDisplayName: source.AssetTypeDisplayName,
+                    OriginalName: source.OriginalName,
+                    DisambiguatedName: source.DisambiguatedName,
+                    ContainerPath: source.ContainerPath,
+                    OutputRole: source.OutputRole,
+                    SpineGroupId: source.SpineGroupId,
+                    SpineGroupDisplayName: source.SpineGroupDisplayName,
+                    ExportedFileSizeInBytes: 3,
+                    ExportedFileHashAlgorithm: "MD5",
+                    ExportedFileHash: "5289df737df57326fcdd22597afb1fac",
+                    ExportedFileLastWriteTimeUtc: request.ExportedAtUtc))
+                .ToArray();
+            var manifest = new WorkspaceExportManifestDto(
+                SchemaVersion: 1,
+                WorkspaceKey: request.WorkspaceKey,
+                ExportedAtUtc: request.ExportedAtUtc,
+                OutputRoot: request.OutputRoot,
+                Items: items);
+            return Task.FromResult(Result<WorkspaceExportManifestSaveResultDto>.Success(
+                new WorkspaceExportManifestSaveResultDto(
+                    Path.Combine(request.OutputRoot, "_abt-export-manifest.json"),
+                    manifest)));
+        }
+
+        public Task<Result<WorkspaceExportManifestDto>> LoadAsync(
+            string manifestPath,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class TestWorkspaceDataStoreFactory : IWorkspaceDataStoreFactory

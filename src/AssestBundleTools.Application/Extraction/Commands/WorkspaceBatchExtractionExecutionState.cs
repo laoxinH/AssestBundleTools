@@ -60,13 +60,18 @@ internal sealed record BatchExtractionOutcome(
     IReadOnlyList<AssetExtractionResultDto>? AssetResults,
     SpineAssetGroupExtractionResultDto? SpineGroupResult,
     IReadOnlyList<AppError>? Errors,
-    bool IsCancelled)
+    bool IsCancelled,
+    IndexedPlannedExtractionWorkItem? WorkItem = null)
 {
-    public static BatchExtractionOutcome AssetSuccess(AssetExtractionResultDto result) =>
-        new(new[] { result }, null, null, IsCancelled: false);
+    public static BatchExtractionOutcome AssetSuccess(
+        AssetExtractionResultDto result,
+        IndexedPlannedExtractionWorkItem? workItem = null) =>
+        new(new[] { result }, null, null, IsCancelled: false, workItem);
 
-    public static BatchExtractionOutcome SpineSuccess(SpineAssetGroupExtractionResultDto result) =>
-        new(result.AssetResults, result, null, IsCancelled: false);
+    public static BatchExtractionOutcome SpineSuccess(
+        SpineAssetGroupExtractionResultDto result,
+        IndexedPlannedExtractionWorkItem? workItem = null) =>
+        new(result.AssetResults, result, null, IsCancelled: false, workItem);
 
     public static BatchExtractionOutcome Failure(IReadOnlyList<AppError> errors) =>
         new(null, null, errors, IsCancelled: false);

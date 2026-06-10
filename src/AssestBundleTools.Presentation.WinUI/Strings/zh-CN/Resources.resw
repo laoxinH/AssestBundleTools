@@ -4062,6 +4062,12 @@
   <data name="Error.Asset.Extract.WriteFailed" xml:space="preserve">
     <value>写出提取文件失败：{0}。详情：{1}</value>
   </data>
+  <data name="Error.Asset.Extract.ManifestWriteFailed" xml:space="preserve">
+    <value>写出批量导出清单失败：{0}。详情：{1}</value>
+  </data>
+  <data name="Error.Asset.Extract.ManifestReadFailed" xml:space="preserve">
+    <value>读取批量导出清单失败：{0}。详情：{1}</value>
+  </data>
   <data name="Error.Bundle.Save.NoCandidates" xml:space="preserve">
     <value>当前工作区没有可执行保存骨架的资源包：{0}</value>
   </data>
