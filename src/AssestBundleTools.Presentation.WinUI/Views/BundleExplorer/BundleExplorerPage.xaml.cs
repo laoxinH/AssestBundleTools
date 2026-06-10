@@ -27,6 +27,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     private readonly BundleExplorerPageTabCoordinator _tabCoordinator;
     private readonly AssetEditorWindowCoordinator _assetEditorWindowCoordinator;
     private readonly BundleExplorerWorkspaceBatchExtractionCoordinator _workspaceBatchExtractionCoordinator;
+    private readonly BundleExplorerWorkspaceBatchReplacementCoordinator _workspaceBatchReplacementCoordinator;
     private WorkspaceNavigationRequest? _workspaceNavigationRequest;
 
     public BundleExplorerPage()
@@ -65,6 +66,14 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             App.CurrentApp.FilePickerService,
             App.CurrentApp.BackgroundWorkScheduler,
             App.CurrentApp.AppLogService,
+            App.CurrentApp.AppNotificationService,
+            App.CurrentApp.LocalizationService);
+        _workspaceBatchReplacementCoordinator = new BundleExplorerWorkspaceBatchReplacementCoordinator(
+            this,
+            App.CurrentApp.WorkspaceBatchOperationsGateway,
+            App.CurrentApp.WorkspaceContextService,
+            App.CurrentApp.FilePickerService,
+            App.CurrentApp.BackgroundWorkScheduler,
             App.CurrentApp.AppNotificationService,
             App.CurrentApp.LocalizationService);
         ViewModel.SetAssetEditorWindowStateSnapshotProvider(
@@ -325,6 +334,11 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     private async void OnWorkspaceBatchExtractChipButtonClick(object sender, RoutedEventArgs e)
     {
         await _workspaceBatchExtractionCoordinator.ShowAsync();
+    }
+
+    private async void OnWorkspaceBatchReplaceChipButtonClick(object sender, RoutedEventArgs e)
+    {
+        await _workspaceBatchReplacementCoordinator.ShowAsync();
     }
 
     private void OnReturnToConsoleIconButtonClick(object sender, RoutedEventArgs e) =>

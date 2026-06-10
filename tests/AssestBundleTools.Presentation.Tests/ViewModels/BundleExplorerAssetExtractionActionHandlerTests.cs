@@ -661,6 +661,9 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
             return Task.FromResult(BatchExtractionOutputDirectory);
         }
 
+        public Task<string?> PickWorkspaceBatchReplacementSourceDirectoryAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
+
         public Task<string?> PickReplacementSourceFileAsync(
             AssetType targetAssetType,
             CancellationToken cancellationToken = default)

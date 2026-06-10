@@ -78,6 +78,11 @@ internal sealed class NotifyingWorkspaceBatchOperationsGateway : IWorkspaceBatch
         CancellationToken cancellationToken = default) =>
         _inner.GetWorkspaceBatchReplacementPreviewAsync(query, cancellationToken);
 
+    public Task<Result<WorkspaceBatchReplacementPlanDto>> GetWorkspaceBatchReplacementPlanAsync(
+        GetWorkspaceBatchReplacementPlanQuery query,
+        CancellationToken cancellationToken = default) =>
+        _inner.GetWorkspaceBatchReplacementPlanAsync(query, cancellationToken);
+
     public async Task<Result<WorkspaceBatchReplacementResultDto>> ExecuteWorkspaceBatchReplacementAsync(
         ExecuteWorkspaceBatchReplacementCommand command,
         CancellationToken cancellationToken = default)

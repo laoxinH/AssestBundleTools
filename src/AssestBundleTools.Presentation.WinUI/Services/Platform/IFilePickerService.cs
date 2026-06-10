@@ -56,6 +56,12 @@ public interface IFilePickerService
     Task<string?> PickAssetBatchExtractionOutputDirectoryAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// 为工作区级批量替换选择外部来源目录。
+    /// 返回 <see langword="null"/> 表示用户主动取消，不应视为错误。
+    /// </summary>
+    Task<string?> PickWorkspaceBatchReplacementSourceDirectoryAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// 为当前资源替换流程选择一个外部文件来源。
     /// 返回 <see langword="null"/> 表示用户主动取消，不应视为错误。
     /// </summary>

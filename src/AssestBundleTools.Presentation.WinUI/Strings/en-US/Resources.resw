@@ -582,6 +582,9 @@
   <data name="BundleExplorerPage.BatchExtractButton.Content" xml:space="preserve">
     <value>Batch Extract</value>
   </data>
+  <data name="BundleExplorerPage.BatchReplaceButton.Content" xml:space="preserve">
+    <value>Batch Replace</value>
+  </data>
   <data name="BundleExplorerPage.SaveAsBundleButton.Content" xml:space="preserve">
     <value>Save As New Bundle</value>
   </data>
@@ -734,6 +737,105 @@
   </data>
   <data name="WorkspaceBatchExtractionDialog.NoBundlesMessage" xml:space="preserve">
     <value>The current workspace has no selectable bundles.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Title" xml:space="preserve">
+    <value>Batch Replace</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Header.Hint" xml:space="preserve">
+    <value>Read changed files from an export directory and apply them to the current workspace.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.PrimaryButton" xml:space="preserve">
+    <value>Start Replace</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.CloseButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.SourceSection.Title" xml:space="preserve">
+    <value>Source Directory</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.SourceSection.Hint" xml:space="preserve">
+    <value>Select a batch export directory that contains _abt-export-manifest.json.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.ChooseSourceDirectoryButton" xml:space="preserve">
+    <value>Choose Folder</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.RefreshButton" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.SourceMode.Auto" xml:space="preserve">
+    <value>Auto Match</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Source.NotSelected" xml:space="preserve">
+    <value>No source directory selected.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Source.ManifestSummary.Format" xml:space="preserve">
+    <value>Manifest exact match: {0} items, {1} changed, {2} need attention.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Source.HeuristicSummary" xml:space="preserve">
+    <value>Heuristic matching is not enabled yet. Select an export directory with a manifest.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.BundleSection.Title" xml:space="preserve">
+    <value>Bundle Scope</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.BundleSection.Hint" xml:space="preserve">
+    <value>Select the bundles that participate in batch replacement.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.SelectAllBundlesButton" xml:space="preserve">
+    <value>Select All</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.ClearBundleSelectionButton" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.CandidateSection.Title" xml:space="preserve">
+    <value>Replacement Candidates</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.CandidateSection.Hint" xml:space="preserve">
+    <value>This phase only builds the manifest exact-match plan; execution will open in the next phase.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.CandidateSearch.Placeholder" xml:space="preserve">
+    <value>Search candidates</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Source.EmptyState" xml:space="preserve">
+    <value>Select a source directory to show replacement candidates here.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.PreviewSection.Title" xml:space="preserve">
+    <value>Plan Summary</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Preview.Waiting" xml:space="preserve">
+    <value>Select a source directory to build a batch replacement plan.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Preview.Loading" xml:space="preserve">
+    <value>Building replacement plan...</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Preview.Unavailable" xml:space="preserve">
+    <value>Unable to build the replacement plan.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Preview.Summary.Format" xml:space="preserve">
+    <value>{0} changed, {1} unchanged, {2} need attention.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Heuristic.Pending" xml:space="preserve">
+    <value>No usable manifest was found. Heuristic matching will be added in a later phase.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Changed" xml:space="preserve">
+    <value>Changed</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Unchanged" xml:space="preserve">
+    <value>Unchanged</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Missing" xml:space="preserve">
+    <value>Missing</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.TargetMissing" xml:space="preserve">
+    <value>Target missing</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.TypeMismatch" xml:space="preserve">
+    <value>Type mismatch</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.HeuristicPending" xml:space="preserve">
+    <value>Pending</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Issue" xml:space="preserve">
+    <value>Issue</value>
   </data>
   <data name="BundleExplorerPage.GlobalSearchTextBox.PlaceholderText" xml:space="preserve">
     <value>Global search (coming later)</value>
@@ -4043,6 +4145,12 @@
   </data>
   <data name="Error.Asset.Replace.NoBatchCandidates" xml:space="preserve">
     <value>No assets are available for the bulk replacement skeleton in the current workspace under the selected filter: {0}</value>
+  </data>
+  <data name="Error.Asset.Replace.BatchSourceDirectoryRequired" xml:space="preserve">
+    <value>Select an export directory before generating a batch replacement plan.</value>
+  </data>
+  <data name="Error.Asset.Replace.BatchSourceFileReadFailed" xml:space="preserve">
+    <value>Failed to read the batch replacement source file: {0}. {1}</value>
   </data>
   <data name="Error.Asset.Extract.NoBatchCandidates" xml:space="preserve">
     <value>No candidates are available for bulk extraction under the current filter: {0}</value>

@@ -224,6 +224,24 @@ public static class ApplicationErrors
             parameters: CreateParameters(("WorkspaceId", workspaceId.ToString())),
             isUserActionable: true);
 
+    public static AppError BatchReplacementSourceDirectoryRequired() =>
+        new(
+            code: "Asset.Replace.BatchSourceDirectoryRequired",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.Replace.BatchSourceDirectoryRequired",
+            isUserActionable: true);
+
+    public static AppError BatchReplacementSourceFileReadFailed(string sourcePath, string? detail = null) =>
+        new(
+            code: "Asset.Replace.BatchSourceFileReadFailed",
+            category: ErrorCategory.IoFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Asset.Replace.BatchSourceFileReadFailed",
+            parameters: CreateParameters(
+                ("SourcePath", sourcePath),
+                ("Detail", detail)));
+
     public static AppError NoSaveCandidates(WorkspaceId workspaceId) =>
         new(
             code: "Bundle.Save.NoCandidates",

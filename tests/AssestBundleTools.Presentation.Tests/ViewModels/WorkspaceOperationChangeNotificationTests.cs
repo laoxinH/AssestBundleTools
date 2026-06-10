@@ -790,6 +790,23 @@ public sealed class WorkspaceOperationChangeNotificationTests
                     FileReplacementCount: 0,
                     BundlePlans: Array.Empty<WorkspaceBatchReplacementBundlePlanDto>())));
 
+        public Task<Result<WorkspaceBatchReplacementPlanDto>> GetWorkspaceBatchReplacementPlanAsync(
+            GetWorkspaceBatchReplacementPlanQuery query,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result<WorkspaceBatchReplacementPlanDto>.Success(
+                new WorkspaceBatchReplacementPlanDto(
+                    query.WorkspaceId,
+                    query.SourceRootDirectory,
+                    WorkspaceBatchReplacementMatchingMode.Manifest,
+                    ManifestPath: null,
+                    ManifestWorkspaceKey: query.WorkspaceKey,
+                    TotalManifestItemCount: 0,
+                    ChangedCount: 0,
+                    UnchangedCount: 0,
+                    MissingCount: 0,
+                    IssueCount: 0,
+                    Candidates: Array.Empty<WorkspaceBatchReplacementCandidateDto>())));
+
         public Task<Result<WorkspaceBatchReplacementResultDto>> ExecuteWorkspaceBatchReplacementAsync(
             ExecuteWorkspaceBatchReplacementCommand command,
             CancellationToken cancellationToken = default) =>
@@ -965,6 +982,9 @@ public sealed class WorkspaceOperationChangeNotificationTests
             Task.FromResult<string?>(null);
 
         public Task<string?> PickAssetBatchExtractionOutputDirectoryAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
+
+        public Task<string?> PickWorkspaceBatchReplacementSourceDirectoryAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult<string?>(null);
 
         public Task<string?> PickReplacementSourceFileAsync(

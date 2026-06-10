@@ -160,6 +160,9 @@ public sealed class BundleExplorerViewModelResolvedAssetNavigationTests
         public Task<string?> PickAssetBatchExtractionOutputDirectoryAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult<string?>(null);
 
+        public Task<string?> PickWorkspaceBatchReplacementSourceDirectoryAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<string?>(null);
+
         public Task<string?> PickReplacementSourceFileAsync(
             AssetType targetAssetType,
             CancellationToken cancellationToken = default) =>

@@ -30,6 +30,7 @@ public sealed partial class BundleExplorerPage
             ToolTipService.SetToolTip(_owner.ReturnToConsoleIconButton, UiText.Get(ResourceKeys.BundleExplorerPageReturnToConsoleButton));
             _owner.RefreshChipText.Text = UiText.Get(ResourceKeys.BundleExplorerPageRefreshButton);
             _owner.BatchExtractChipText.Text = UiText.Get(ResourceKeys.BundleExplorerPageBatchExtractButton);
+            _owner.BatchReplaceChipText.Text = UiText.Get(ResourceKeys.BundleExplorerPageBatchReplaceButton);
             _owner.SaveAsBundleChipText.Text = UiText.Get(ResourceKeys.BundleExplorerPageSaveAsBundleButton);
             _owner.LeftPanelTitleText.Text = UiText.Get(ResourceKeys.BundleExplorerPageLeftPanelTitle);
             _owner.BundleSearchTextBox.PlaceholderText = UiText.Get(ResourceKeys.BundleExplorerPageBundleSearchTextBoxPlaceholder);

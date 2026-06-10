@@ -24,6 +24,7 @@ public sealed class WorkspaceBatchOperationsGateway : IWorkspaceBatchOperationsG
     private readonly GetWorkspaceBatchExtractionPreviewHandler _getWorkspaceBatchExtractionPreviewHandler;
     private readonly ExtractWorkspaceAssetsHandler _extractWorkspaceAssetsHandler;
     private readonly GetWorkspaceBatchReplacementPreviewHandler _getWorkspaceBatchReplacementPreviewHandler;
+    private readonly GetWorkspaceBatchReplacementPlanHandler _getWorkspaceBatchReplacementPlanHandler;
     private readonly ExecuteWorkspaceBatchReplacementHandler _executeWorkspaceBatchReplacementHandler;
 
     public WorkspaceBatchOperationsGateway(
@@ -33,6 +34,7 @@ public sealed class WorkspaceBatchOperationsGateway : IWorkspaceBatchOperationsG
         GetWorkspaceBatchExtractionPreviewHandler getWorkspaceBatchExtractionPreviewHandler,
         ExtractWorkspaceAssetsHandler extractWorkspaceAssetsHandler,
         GetWorkspaceBatchReplacementPreviewHandler getWorkspaceBatchReplacementPreviewHandler,
+        GetWorkspaceBatchReplacementPlanHandler getWorkspaceBatchReplacementPlanHandler,
         ExecuteWorkspaceBatchReplacementHandler executeWorkspaceBatchReplacementHandler)
     {
         _getWorkspaceChangeSummaryHandler = getWorkspaceChangeSummaryHandler ?? throw new ArgumentNullException(nameof(getWorkspaceChangeSummaryHandler));
@@ -41,6 +43,7 @@ public sealed class WorkspaceBatchOperationsGateway : IWorkspaceBatchOperationsG
         _getWorkspaceBatchExtractionPreviewHandler = getWorkspaceBatchExtractionPreviewHandler ?? throw new ArgumentNullException(nameof(getWorkspaceBatchExtractionPreviewHandler));
         _extractWorkspaceAssetsHandler = extractWorkspaceAssetsHandler ?? throw new ArgumentNullException(nameof(extractWorkspaceAssetsHandler));
         _getWorkspaceBatchReplacementPreviewHandler = getWorkspaceBatchReplacementPreviewHandler ?? throw new ArgumentNullException(nameof(getWorkspaceBatchReplacementPreviewHandler));
+        _getWorkspaceBatchReplacementPlanHandler = getWorkspaceBatchReplacementPlanHandler ?? throw new ArgumentNullException(nameof(getWorkspaceBatchReplacementPlanHandler));
         _executeWorkspaceBatchReplacementHandler = executeWorkspaceBatchReplacementHandler ?? throw new ArgumentNullException(nameof(executeWorkspaceBatchReplacementHandler));
     }
 
@@ -73,6 +76,11 @@ public sealed class WorkspaceBatchOperationsGateway : IWorkspaceBatchOperationsG
         GetWorkspaceBatchReplacementPreviewQuery query,
         CancellationToken cancellationToken = default) =>
         _getWorkspaceBatchReplacementPreviewHandler.HandleAsync(query, cancellationToken);
+
+    public Task<Result<WorkspaceBatchReplacementPlanDto>> GetWorkspaceBatchReplacementPlanAsync(
+        GetWorkspaceBatchReplacementPlanQuery query,
+        CancellationToken cancellationToken = default) =>
+        _getWorkspaceBatchReplacementPlanHandler.HandleAsync(query, cancellationToken);
 
     public Task<Result<WorkspaceBatchReplacementResultDto>> ExecuteWorkspaceBatchReplacementAsync(
         ExecuteWorkspaceBatchReplacementCommand command,

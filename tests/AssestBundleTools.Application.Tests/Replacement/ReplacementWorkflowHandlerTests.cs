@@ -1,11 +1,14 @@
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Extraction.Dtos;
+using AssestBundleTools.Application.Extraction.Services;
 using AssestBundleTools.Application.Replacement;
 using AssestBundleTools.Application.Replacement.Commands;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Queries;
+using AssestBundleTools.Application.Replacement.Services;
 using AssestBundleTools.Application.Tests.Testing;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
@@ -578,7 +581,104 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.Equal(2, execution.FileReplacementCount, "File replacement count should reflect matching items.");
     }
 
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldUseManifestSizeFirst_AndHashWhenSizeMatches()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-a");
+        var changedBySizeAssetId = new AssetId("asset-size");
+        var changedByHashAssetId = new AssetId("asset-hash");
+        var unchangedAssetId = new AssetId("asset-same");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, changedBySizeAssetId, AssetType.Texture2D, "SizeChanged"));
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, changedByHashAssetId, AssetType.Texture2D, "HashChanged"));
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, unchangedAssetId, AssetType.Texture2D, "SameTexture"));
+        var manifestStore = new TestWorkspaceExportManifestStore(CreateManifest(
+            "workspace-key",
+            [
+                CreateManifestItem(bundleId, changedBySizeAssetId, "Texture2D/size.png", 100, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                CreateManifestItem(bundleId, changedByHashAssetId, "Texture2D/hash.png", 100, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"),
+                CreateManifestItem(bundleId, unchangedAssetId, "Texture2D/same.png", 100, "cccccccccccccccccccccccccccccccc")
+            ]));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.Register("Texture2D/size.png", exists: true, size: 128, hash: null);
+        sourceProbe.Register("Texture2D/hash.png", exists: true, size: 100, hash: "dddddddddddddddddddddddddddddddd");
+        sourceProbe.Register("Texture2D/same.png", exists: true, size: 100, hash: "cccccccccccccccccccccccccccccccc");
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(registry, manifestStore, sourceProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\Export",
+            WorkspaceBatchReplacementMatchingMode.Manifest));
+
+        TestAssert.True(result.IsSuccess, "Manifest replacement plan should succeed.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected replacement plan.");
+        TestAssert.Equal(2, plan.ChangedCount, "Size mismatch and hash mismatch should both be marked changed.");
+        TestAssert.Equal(1, plan.UnchangedCount, "Equal size and hash should be marked unchanged.");
+        TestAssert.Equal(2, plan.Candidates.Count(candidate => candidate.IsDefaultSelected), "Only changed candidates should be selected by default.");
+        TestAssert.Equal(2, sourceProbe.HashRequestCount, "Hash should only be requested for files whose size matches the manifest.");
+    }
+
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldReturnManifestIssue_WhenWorkspaceKeyDiffers()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var registry = new TestWorkspaceSessionRegistry();
+        var manifestStore = new TestWorkspaceExportManifestStore(CreateManifest("other-workspace", []));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(registry, manifestStore, sourceProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "current-workspace",
+            @"D:\Export",
+            WorkspaceBatchReplacementMatchingMode.Manifest));
+
+        TestAssert.True(result.IsSuccess, "Workspace-key mismatch should be reported as a diagnosable plan, not an exception.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected replacement plan.");
+        TestAssert.Equal(WorkspaceBatchReplacementMatchingMode.Manifest, plan.MatchingMode, "Mismatch still belongs to manifest mode.");
+        TestAssert.Equal(1, plan.IssueCount, "Mismatch should produce one blocking issue.");
+        var candidate = TestAssert.Single(plan.Candidates);
+        TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.ManifestInvalid, candidate.MatchStatus, "Mismatch should block execution.");
+        TestAssert.True(candidate.Diagnostics.Contains("WorkspaceKeyMismatch"), "Diagnostic should explain the blocker.");
+        TestAssert.Equal(0, sourceProbe.SnapshotRequestCount, "No source files should be probed after workspace-key mismatch.");
+    }
+
     private static WorkspaceId CreateWorkspaceId() => new("workspace-session-1");
+
+    private static WorkspaceExportManifestDto CreateManifest(
+        string workspaceKey,
+        IReadOnlyList<WorkspaceExportManifestItemDto> items) =>
+        new(
+            SchemaVersion: 1,
+            WorkspaceKey: workspaceKey,
+            ExportedAtUtc: new DateTimeOffset(2026, 6, 10, 12, 0, 0, TimeSpan.Zero),
+            OutputRoot: @"D:\Export",
+            Items: items);
+
+    private static WorkspaceExportManifestItemDto CreateManifestItem(
+        BundleId bundleId,
+        AssetId assetId,
+        string relativePath,
+        long exportedFileSizeInBytes,
+        string exportedFileHash) =>
+        new(
+            RelativePath: relativePath,
+            BundleId: bundleId.Value,
+            BundleDisplayName: "Alpha",
+            AssetId: assetId.Value,
+            PathId: 12345,
+            AssetType: "Texture2D",
+            AssetTypeDisplayName: "Texture2D",
+            OriginalName: assetId.Value,
+            DisambiguatedName: assetId.Value,
+            ContainerPath: null,
+            OutputRole: WorkspaceExportManifestOutputRole.Asset,
+            SpineGroupId: null,
+            SpineGroupDisplayName: null,
+            ExportedFileSizeInBytes: exportedFileSizeInBytes,
+            ExportedFileHashAlgorithm: "MD5",
+            ExportedFileHash: exportedFileHash,
+            ExportedFileLastWriteTimeUtc: new DateTimeOffset(2026, 6, 10, 12, 0, 0, TimeSpan.Zero));
 
     private static AssetDetailsDto CreateAssetDetails(
         WorkspaceId workspaceId,
@@ -835,6 +935,73 @@ internal static class ReplacementWorkflowHandlerTests
         {
             paneContext = null;
             throw new NotSupportedException();
+        }
+    }
+
+    private sealed class TestWorkspaceExportManifestStore : IWorkspaceExportManifestStore
+    {
+        private readonly WorkspaceExportManifestDto? _manifest;
+
+        public TestWorkspaceExportManifestStore(WorkspaceExportManifestDto? manifest)
+        {
+            _manifest = manifest;
+        }
+
+        public Task<Result<WorkspaceExportManifestSaveResultDto>> SaveAsync(
+            WorkspaceExportManifestSaveRequestDto request,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<WorkspaceExportManifestDto>> LoadAsync(
+            string manifestPath,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(_manifest is null
+                ? Result<WorkspaceExportManifestDto>.Failure(ApplicationErrors.ExportManifestReadFailed(manifestPath, "TestMissing"))
+                : Result<WorkspaceExportManifestDto>.Success(_manifest));
+    }
+
+    private sealed class TestWorkspaceBatchReplacementSourceFileProbe : IWorkspaceBatchReplacementSourceFileProbe
+    {
+        private readonly Dictionary<string, (bool Exists, long? Size, string? Hash)> _snapshots =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        public int SnapshotRequestCount { get; private set; }
+
+        public int HashRequestCount { get; private set; }
+
+        public void Register(string relativePath, bool exists, long? size, string? hash) =>
+            _snapshots[relativePath] = (exists, size, hash);
+
+        public Task<Result<WorkspaceBatchReplacementSourceFileSnapshotDto>> GetSnapshotAsync(
+            string sourceRootDirectory,
+            string relativePath,
+            bool computeHash,
+            CancellationToken cancellationToken = default)
+        {
+            SnapshotRequestCount++;
+            if (computeHash)
+            {
+                HashRequestCount++;
+            }
+
+            if (!_snapshots.TryGetValue(relativePath, out var snapshot))
+            {
+                return Task.FromResult(Result<WorkspaceBatchReplacementSourceFileSnapshotDto>.Success(
+                    new WorkspaceBatchReplacementSourceFileSnapshotDto(
+                        $@"{sourceRootDirectory}\{relativePath}",
+                        Exists: false,
+                        SizeInBytes: null,
+                        HashAlgorithm: null,
+                        Hash: null)));
+            }
+
+            return Task.FromResult(Result<WorkspaceBatchReplacementSourceFileSnapshotDto>.Success(
+                new WorkspaceBatchReplacementSourceFileSnapshotDto(
+                    $@"{sourceRootDirectory}\{relativePath}",
+                    snapshot.Exists,
+                    snapshot.Size,
+                    computeHash ? "MD5" : null,
+                    computeHash ? snapshot.Hash : null)));
         }
     }
 }

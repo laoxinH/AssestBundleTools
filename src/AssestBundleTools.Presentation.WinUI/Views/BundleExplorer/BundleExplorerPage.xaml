@@ -408,6 +408,38 @@
                 </Button>
 
                 <Button
+                    x:Name="BatchReplaceChipButton"
+                    Click="OnWorkspaceBatchReplaceChipButtonClick"
+                    IsEnabled="{x:Bind ViewModel.WorkspaceShell.HasWorkspace, Mode=OneWay}"
+                    Style="{StaticResource WorkspaceSecondaryActionChipButtonStyle}">
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource WorkspaceChipIconBadgeStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="11"
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                Glyph="&#xE8AC;" />
+                        </Border>
+
+                        <TextBlock
+                            x:Name="BatchReplaceChipText"
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                            FontSize="12.5"
+                            FontWeight="SemiBold"
+                            TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                </Button>
+
+                <Button
                     x:Name="SaveAsBundleChipButton"
                     Click="OnSaveAsBundleChipButtonClick"
                     IsEnabled="{x:Bind ViewModel.WorkspaceShell.HasWorkspace, Mode=OneWay}"

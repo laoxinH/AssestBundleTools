@@ -42,6 +42,10 @@ public interface IWorkspaceBatchOperationsGateway
         GetWorkspaceBatchReplacementPreviewQuery query,
         CancellationToken cancellationToken = default);
 
+    Task<Result<WorkspaceBatchReplacementPlanDto>> GetWorkspaceBatchReplacementPlanAsync(
+        GetWorkspaceBatchReplacementPlanQuery query,
+        CancellationToken cancellationToken = default);
+
     Task<Result<WorkspaceBatchReplacementResultDto>> ExecuteWorkspaceBatchReplacementAsync(
         ExecuteWorkspaceBatchReplacementCommand command,
         CancellationToken cancellationToken = default);

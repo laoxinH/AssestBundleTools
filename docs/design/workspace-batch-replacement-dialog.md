@@ -531,12 +531,14 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 第一阶段：窗口与 manifest 计划
 
 - 新增批量替换窗口和 ViewModel。
-- 移除旧批量替换骨架 query / command / planner 及其批处理页入口。
 - 新增 manifest 计划查询，支持目录选择、manifest 回读、size-first / MD5 判定、默认选择状态和诊断。
 - 只生成计划，不执行替换。
+- 当前进度：已完成主工作台 `批量替换` 入口、独立窗口、目录选择、后台 `TransientRead` 计划扫描、manifest 工作区 key 校验、size-first / MD5 变更判定、默认选择状态和中英本地化；`开始替换` 仍保持禁用。
+- 旧批处理页批量替换骨架 query / command / planner 尚未移除，下一阶段开始前必须收口：旧入口不得再承担新批量替换语义，后续历史展示应读取新执行结果或操作记录摘要。
 
 第二阶段：执行与操作记录
 
+- 移除旧批量替换骨架 query / command / planner 及其批处理页执行入口，避免两套不同含义的“批量替换”并存。
 - 新增批量替换执行命令。
 - 逐项复用单资源文件替换能力。
 - Spine 组候选拆成组成资产替换，并共享批次关系。
@@ -557,12 +559,12 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 
 Application 测试：
 
-- manifest 工作区 key 不匹配时阻止执行。
-- manifest 精确匹配按 `bundleId + assetId` 找到普通资源。
+- manifest 工作区 key 不匹配时阻止执行。已覆盖。
+- manifest 精确匹配按 `bundleId + assetId` 找到普通资源。已覆盖基础目标存在校验。
 - Spine manifest 项按 `bundleId + groupId + role + assetId` 生成组成资产候选。
-- 文件大小不同直接进入 `Changed`，不计算 MD5。
-- 文件大小相同且 MD5 相同进入 `Unchanged`，不默认选中。
-- 文件大小相同且 MD5 不同进入 `Changed`。
+- 文件大小不同直接进入 `Changed`，不计算 MD5。已覆盖。
+- 文件大小相同且 MD5 相同进入 `Unchanged`，不默认选中。已覆盖。
+- 文件大小相同且 MD5 不同进入 `Changed`。已覆盖。
 - 缺失文件、hash 失败、类型不兼容返回结构化诊断。
 - 执行只对选中 `Changed` 候选追加替换操作记录。
 - 同一批次的替换记录共享 `batchId`。
@@ -601,3 +603,5 @@ Presentation 测试：
 5. 通过现有通知和预览失效模型刷新 UI。
 
 旧批量替换骨架没有继续兼容价值，实现新窗口时应直接移除，避免形成两套含义不同的“批量替换”。
+
+截至当前实现，主工作台新窗口已经接入 manifest 计划读取，但旧批处理页骨架仍保留为历史入口。后续处理批量替换执行时必须先按本文第二阶段移除旧骨架，再在新 manifest 计划模型上实现真实执行。

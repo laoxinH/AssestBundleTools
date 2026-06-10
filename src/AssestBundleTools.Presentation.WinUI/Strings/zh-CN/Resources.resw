@@ -582,6 +582,9 @@
   <data name="BundleExplorerPage.BatchExtractButton.Content" xml:space="preserve">
     <value>批量提取</value>
   </data>
+  <data name="BundleExplorerPage.BatchReplaceButton.Content" xml:space="preserve">
+    <value>批量替换</value>
+  </data>
   <data name="BundleExplorerPage.SaveAsBundleButton.Content" xml:space="preserve">
     <value>保存为新包</value>
   </data>
@@ -734,6 +737,105 @@
   </data>
   <data name="WorkspaceBatchExtractionDialog.NoBundlesMessage" xml:space="preserve">
     <value>当前工作区没有可选择的资源包。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Title" xml:space="preserve">
+    <value>批量替换</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Header.Hint" xml:space="preserve">
+    <value>从导出目录回读已修改文件，并应用到当前工作区。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.PrimaryButton" xml:space="preserve">
+    <value>开始替换</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.CloseButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.SourceSection.Title" xml:space="preserve">
+    <value>来源目录</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.SourceSection.Hint" xml:space="preserve">
+    <value>选择包含 _abt-export-manifest.json 的批量导出目录。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.ChooseSourceDirectoryButton" xml:space="preserve">
+    <value>选择目录</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.RefreshButton" xml:space="preserve">
+    <value>刷新</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.SourceMode.Auto" xml:space="preserve">
+    <value>自动匹配</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Source.NotSelected" xml:space="preserve">
+    <value>尚未选择来源目录。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Source.ManifestSummary.Format" xml:space="preserve">
+    <value>Manifest 精确匹配：{0} 项，{1} 项已修改，{2} 项需处理。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Source.HeuristicSummary" xml:space="preserve">
+    <value>启发式匹配尚未启用；请选择带 manifest 的导出目录。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.BundleSection.Title" xml:space="preserve">
+    <value>资源包范围</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.BundleSection.Hint" xml:space="preserve">
+    <value>选择参与批量替换的资源包。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.SelectAllBundlesButton" xml:space="preserve">
+    <value>全选</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.ClearBundleSelectionButton" xml:space="preserve">
+    <value>清空</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.CandidateSection.Title" xml:space="preserve">
+    <value>替换候选</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.CandidateSection.Hint" xml:space="preserve">
+    <value>当前阶段只生成 manifest 精确匹配计划，真实执行将在下一阶段开放。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.CandidateSearch.Placeholder" xml:space="preserve">
+    <value>搜索候选资源</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Source.EmptyState" xml:space="preserve">
+    <value>选择来源目录后会在这里显示替换候选。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.PreviewSection.Title" xml:space="preserve">
+    <value>计划摘要</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Preview.Waiting" xml:space="preserve">
+    <value>选择来源目录以生成批量替换计划。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Preview.Loading" xml:space="preserve">
+    <value>正在生成替换计划...</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Preview.Unavailable" xml:space="preserve">
+    <value>无法生成替换计划。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Preview.Summary.Format" xml:space="preserve">
+    <value>{0} 项已修改，{1} 项未变化，{2} 项需处理。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Heuristic.Pending" xml:space="preserve">
+    <value>未找到可用 manifest；启发式匹配将在后续阶段接入。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Changed" xml:space="preserve">
+    <value>已修改</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Unchanged" xml:space="preserve">
+    <value>未变化</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Missing" xml:space="preserve">
+    <value>缺失</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.TargetMissing" xml:space="preserve">
+    <value>目标缺失</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.TypeMismatch" xml:space="preserve">
+    <value>类型不一致</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.HeuristicPending" xml:space="preserve">
+    <value>待接入</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Issue" xml:space="preserve">
+    <value>需处理</value>
   </data>
   <data name="BundleExplorerPage.GlobalSearchTextBox.PlaceholderText" xml:space="preserve">
     <value>全局搜索（后续接入）</value>
@@ -4043,6 +4145,12 @@
   </data>
   <data name="Error.Asset.Replace.NoBatchCandidates" xml:space="preserve">
     <value>当前工作区在给定筛选条件下没有可执行批量替换骨架的资源：{0}</value>
+  </data>
+  <data name="Error.Asset.Replace.BatchSourceDirectoryRequired" xml:space="preserve">
+    <value>生成批量替换计划前需要选择导出目录。</value>
+  </data>
+  <data name="Error.Asset.Replace.BatchSourceFileReadFailed" xml:space="preserve">
+    <value>读取批量替换来源文件失败：{0}。{1}</value>
   </data>
   <data name="Error.Asset.Extract.NoBatchCandidates" xml:space="preserve">
     <value>当前筛选条件下没有可执行批量提取的候选资源：{0}</value>
