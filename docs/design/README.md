@@ -39,6 +39,8 @@
   导入、预览、提取、导出和后续保存 / 重建的统一后台任务调度、并发闸门、进度与状态条边界。
 - [workspace-batch-extraction-dialog.md](workspace-batch-extraction-dialog.md)
   工作台顶部批量提取入口从跳转批处理页改为当前工作区内资源包 / 类型选择对话框的设计与第一版落地状态。
+- [workspace-batch-replacement-dialog.md](workspace-batch-replacement-dialog.md)
+  工作区级批量替换窗口、导出 manifest 回读、size-first / MD5 精确匹配、启发式回退和旧批量替换骨架移除方向。
 - [asset-bundle-decryptor-extension.md](asset-bundle-decryptor-extension.md)
   解密器扩展点、外部进程协议和工作区缓存关系。
 - [spine-runtime-playback-session.md](spine-runtime-playback-session.md)
