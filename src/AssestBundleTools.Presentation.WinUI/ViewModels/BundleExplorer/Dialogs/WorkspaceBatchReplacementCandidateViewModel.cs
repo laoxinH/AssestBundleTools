@@ -35,6 +35,10 @@ public sealed class WorkspaceBatchReplacementCandidateViewModel : ObservableObje
 
     public string SubtitleText { get; }
 
+    public string TypeFilterText => string.IsNullOrWhiteSpace(Candidate.AssetTypeDisplayName)
+        ? Candidate.AssetType.ToString()
+        : Candidate.AssetTypeDisplayName;
+
     public string RelativePath => Candidate.RelativePath;
 
     public bool CanSelect { get; }

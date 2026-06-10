@@ -795,6 +795,12 @@
   <data name="WorkspaceBatchReplacementDialog.CandidateSearch.Placeholder" xml:space="preserve">
     <value>搜索候选资源</value>
   </data>
+  <data name="WorkspaceBatchReplacementDialog.StatusFilter.All" xml:space="preserve">
+    <value>全部状态</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.TypeFilter.All" xml:space="preserve">
+    <value>全部类型</value>
+  </data>
   <data name="WorkspaceBatchReplacementDialog.Source.EmptyState" xml:space="preserve">
     <value>选择来源目录后会在这里显示替换候选。</value>
   </data>

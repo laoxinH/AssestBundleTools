@@ -795,6 +795,12 @@
   <data name="WorkspaceBatchReplacementDialog.CandidateSearch.Placeholder" xml:space="preserve">
     <value>Search candidates</value>
   </data>
+  <data name="WorkspaceBatchReplacementDialog.StatusFilter.All" xml:space="preserve">
+    <value>All statuses</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.TypeFilter.All" xml:space="preserve">
+    <value>All types</value>
+  </data>
   <data name="WorkspaceBatchReplacementDialog.Source.EmptyState" xml:space="preserve">
     <value>Select a source directory to show replacement candidates here.</value>
   </data>

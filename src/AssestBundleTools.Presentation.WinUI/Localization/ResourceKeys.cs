@@ -591,6 +591,8 @@ public static class ResourceKeys
     public const string WorkspaceBatchReplacementDialogCandidateSectionTitle = "WorkspaceBatchReplacementDialog.CandidateSection.Title";
     public const string WorkspaceBatchReplacementDialogCandidateSectionHint = "WorkspaceBatchReplacementDialog.CandidateSection.Hint";
     public const string WorkspaceBatchReplacementDialogCandidateSearchPlaceholder = "WorkspaceBatchReplacementDialog.CandidateSearch.Placeholder";
+    public const string WorkspaceBatchReplacementDialogStatusFilterAll = "WorkspaceBatchReplacementDialog.StatusFilter.All";
+    public const string WorkspaceBatchReplacementDialogTypeFilterAll = "WorkspaceBatchReplacementDialog.TypeFilter.All";
     public const string WorkspaceBatchReplacementDialogSourceEmptyState = "WorkspaceBatchReplacementDialog.Source.EmptyState";
     public const string WorkspaceBatchReplacementDialogPreviewSectionTitle = "WorkspaceBatchReplacementDialog.PreviewSection.Title";
     public const string WorkspaceBatchReplacementDialogPreviewWaiting = "WorkspaceBatchReplacementDialog.Preview.Waiting";

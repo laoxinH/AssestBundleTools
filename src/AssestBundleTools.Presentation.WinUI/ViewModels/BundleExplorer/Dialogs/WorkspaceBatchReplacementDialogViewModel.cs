@@ -19,6 +19,9 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
     private string _sourceSummaryText;
     private string _validationText = string.Empty;
     private bool _isPlanLoading;
+    private string _candidateSearchText = string.Empty;
+    private WorkspaceBatchReplacementFilterOptionViewModel? _selectedStatusFilter;
+    private WorkspaceBatchReplacementFilterOptionViewModel? _selectedTypeFilter;
 
     public WorkspaceBatchReplacementDialogViewModel(
         ILocalizationService localizationService,
@@ -33,6 +36,12 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
     public ObservableCollection<WorkspaceBatchReplacementBundleOptionViewModel> Bundles { get; } = [];
 
     public ObservableCollection<WorkspaceBatchReplacementCandidateViewModel> Candidates { get; } = [];
+
+    public ObservableCollection<WorkspaceBatchReplacementCandidateViewModel> FilteredCandidates { get; } = [];
+
+    public ObservableCollection<WorkspaceBatchReplacementFilterOptionViewModel> StatusFilters { get; } = [];
+
+    public ObservableCollection<WorkspaceBatchReplacementFilterOptionViewModel> TypeFilters { get; } = [];
 
     public string SourceDirectory
     {
@@ -92,7 +101,45 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
 
     public Visibility SourceEmptyVisibility => HasSourceDirectory ? Visibility.Collapsed : Visibility.Visible;
 
+    public bool HasCandidates => Candidates.Count > 0;
+
     public bool CanSubmit => false;
+
+    public string CandidateSearchText
+    {
+        get => _candidateSearchText;
+        set
+        {
+            if (SetProperty(ref _candidateSearchText, value ?? string.Empty))
+            {
+                ApplyCandidateFilters();
+            }
+        }
+    }
+
+    public WorkspaceBatchReplacementFilterOptionViewModel? SelectedStatusFilter
+    {
+        get => _selectedStatusFilter;
+        set
+        {
+            if (SetProperty(ref _selectedStatusFilter, value))
+            {
+                ApplyCandidateFilters();
+            }
+        }
+    }
+
+    public WorkspaceBatchReplacementFilterOptionViewModel? SelectedTypeFilter
+    {
+        get => _selectedTypeFilter;
+        set
+        {
+            if (SetProperty(ref _selectedTypeFilter, value))
+            {
+                ApplyCandidateFilters();
+            }
+        }
+    }
 
     public void SetSourceDirectory(string sourceDirectory)
     {
@@ -114,8 +161,12 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(plan);
         IsPlanLoading = false;
+        UnsubscribeBundleSelectionChanged();
         Candidates.Clear();
+        FilteredCandidates.Clear();
         Bundles.Clear();
+        StatusFilters.Clear();
+        TypeFilters.Clear();
 
         foreach (var candidate in plan.Candidates)
         {
@@ -144,6 +195,8 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
                 group.Count(static candidate => candidate.MatchStatus == WorkspaceBatchReplacementMatchStatus.Changed),
                 group.Count(static candidate => candidate.MatchStatus is not WorkspaceBatchReplacementMatchStatus.Changed and not WorkspaceBatchReplacementMatchStatus.Unchanged)));
         }
+        SubscribeBundleSelectionChanged();
+        RebuildCandidateFilters();
 
         SourceSummaryText = plan.MatchingMode == WorkspaceBatchReplacementMatchingMode.Manifest
             ? _localizationService.GetFormattedString(
@@ -160,6 +213,7 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
         ValidationText = plan.Candidates.Any(static candidate => candidate.MatchStatus == WorkspaceBatchReplacementMatchStatus.HeuristicNotImplemented)
             ? GetString(ResourceKeys.WorkspaceBatchReplacementDialogHeuristicPending)
             : string.Empty;
+        OnPropertyChanged(nameof(HasCandidates));
         OnPropertyChanged(nameof(CanSubmit));
     }
 
@@ -168,6 +222,15 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
         IsPlanLoading = false;
         PlanSummaryText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogPreviewUnavailable);
         ValidationText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogPreviewUnavailable);
+        UnsubscribeBundleSelectionChanged();
+        Candidates.Clear();
+        FilteredCandidates.Clear();
+        Bundles.Clear();
+        StatusFilters.Clear();
+        TypeFilters.Clear();
+        SelectedStatusFilter = null;
+        SelectedTypeFilter = null;
+        OnPropertyChanged(nameof(HasCandidates));
     }
 
     public void SelectAllBundles()
@@ -176,6 +239,7 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
         {
             bundle.IsSelected = true;
         }
+        ApplyCandidateFilters();
     }
 
     public void ClearBundleSelection()
@@ -184,7 +248,136 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
         {
             bundle.IsSelected = false;
         }
+        ApplyCandidateFilters();
     }
+
+    private void RebuildCandidateFilters()
+    {
+        var previousStatusKey = SelectedStatusFilter?.Key;
+        var previousTypeKey = SelectedTypeFilter?.Key;
+        StatusFilters.Clear();
+        TypeFilters.Clear();
+
+        StatusFilters.Add(WorkspaceBatchReplacementFilterOptionViewModel.All(
+            GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusFilterAll)));
+        foreach (var status in Candidates
+            .Select(static candidate => candidate.Candidate.MatchStatus)
+            .Distinct()
+            .OrderBy(static status => status.ToString(), StringComparer.Ordinal))
+        {
+            StatusFilters.Add(new WorkspaceBatchReplacementFilterOptionViewModel(
+                status.ToString(),
+                ResolveStatusText(status)));
+        }
+
+        TypeFilters.Add(WorkspaceBatchReplacementFilterOptionViewModel.All(
+            GetString(ResourceKeys.WorkspaceBatchReplacementDialogTypeFilterAll)));
+        foreach (var typeName in Candidates
+            .Select(static candidate => candidate.TypeFilterText)
+            .Where(static value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(static value => value, StringComparer.CurrentCultureIgnoreCase))
+        {
+            TypeFilters.Add(new WorkspaceBatchReplacementFilterOptionViewModel(typeName, typeName));
+        }
+
+        SelectedStatusFilter = SelectFilter(StatusFilters, previousStatusKey);
+        SelectedTypeFilter = SelectFilter(TypeFilters, previousTypeKey);
+        ApplyCandidateFilters();
+    }
+
+    private void ApplyCandidateFilters()
+    {
+        var selectedBundleIds = Bundles
+            .Where(static bundle => bundle.IsSelected)
+            .Select(static bundle => bundle.BundleId.Value)
+            .ToHashSet(StringComparer.Ordinal);
+        var searchText = CandidateSearchText.Trim();
+        var statusFilter = SelectedStatusFilter?.IsAll == false ? SelectedStatusFilter.Key : null;
+        var typeFilter = SelectedTypeFilter?.IsAll == false ? SelectedTypeFilter.Key : null;
+
+        FilteredCandidates.Clear();
+        foreach (var candidate in Candidates)
+        {
+            if (candidate.BundleId is { } bundleId &&
+                selectedBundleIds.Count > 0 &&
+                !selectedBundleIds.Contains(bundleId.Value))
+            {
+                continue;
+            }
+
+            if (candidate.BundleId is not null &&
+                selectedBundleIds.Count == 0)
+            {
+                continue;
+            }
+
+            if (!string.IsNullOrWhiteSpace(statusFilter) &&
+                !string.Equals(candidate.Candidate.MatchStatus.ToString(), statusFilter, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (!string.IsNullOrWhiteSpace(typeFilter) &&
+                !string.Equals(candidate.TypeFilterText, typeFilter, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (!MatchesSearch(candidate, searchText))
+            {
+                continue;
+            }
+
+            FilteredCandidates.Add(candidate);
+        }
+    }
+
+    private static WorkspaceBatchReplacementFilterOptionViewModel? SelectFilter(
+        ObservableCollection<WorkspaceBatchReplacementFilterOptionViewModel> filters,
+        string? previousKey)
+    {
+        if (!string.IsNullOrWhiteSpace(previousKey))
+        {
+            var restored = filters.FirstOrDefault(filter => string.Equals(filter.Key, previousKey, StringComparison.Ordinal));
+            if (restored is not null)
+            {
+                return restored;
+            }
+        }
+
+        return filters.FirstOrDefault();
+    }
+
+    private static bool MatchesSearch(WorkspaceBatchReplacementCandidateViewModel candidate, string searchText) =>
+        string.IsNullOrWhiteSpace(searchText) ||
+        Contains(candidate.AssetName, searchText) ||
+        Contains(candidate.SubtitleText, searchText) ||
+        Contains(candidate.RelativePath, searchText) ||
+        Contains(candidate.Candidate.ContainerPath, searchText) ||
+        Contains(candidate.Candidate.FullPath, searchText);
+
+    private static bool Contains(string? value, string searchText) =>
+        !string.IsNullOrWhiteSpace(value) &&
+        value.Contains(searchText, StringComparison.CurrentCultureIgnoreCase);
+
+    private void SubscribeBundleSelectionChanged()
+    {
+        foreach (var bundle in Bundles)
+        {
+            bundle.SelectionChanged += OnBundleSelectionChanged;
+        }
+    }
+
+    private void UnsubscribeBundleSelectionChanged()
+    {
+        foreach (var bundle in Bundles)
+        {
+            bundle.SelectionChanged -= OnBundleSelectionChanged;
+        }
+    }
+
+    private void OnBundleSelectionChanged(object? sender, EventArgs e) => ApplyCandidateFilters();
 
     private string BuildSubtitle(WorkspaceBatchReplacementCandidateDto candidate)
     {

@@ -533,7 +533,7 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 - 新增批量替换窗口和 ViewModel。
 - 新增 manifest 计划查询，支持目录选择、manifest 回读、size-first / MD5 判定、默认选择状态和诊断。
 - 只生成计划，不执行替换。
-- 当前进度：已完成主工作台 `批量替换` 入口、独立窗口、目录选择、后台 `TransientRead` 计划扫描、manifest 工作区 key 校验、size-first / MD5 变更判定、默认选择状态和中英本地化；`开始替换` 仍保持禁用。
+- 当前进度：已完成主工作台 `批量替换` 入口、独立窗口、目录选择、后台 `TransientRead` 计划扫描、manifest 工作区 key 校验、size-first / MD5 变更判定、默认选择状态、中英本地化，以及候选区搜索 / 匹配状态 / 资源类型 / 资源包范围的本地过滤；`开始替换` 仍保持禁用。
 - 旧批处理页批量替换骨架 query / command / planner 尚未移除，下一阶段开始前必须收口：旧入口不得再承担新批量替换语义，后续历史展示应读取新执行结果或操作记录摘要。
 
 第二阶段：执行与操作记录

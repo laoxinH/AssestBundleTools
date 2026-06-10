@@ -257,25 +257,42 @@
                         <AutoSuggestBox
                             x:Name="CandidateSearchBox"
                             Height="36"
-                            IsEnabled="False"
+                            IsEnabled="{Binding HasCandidates}"
+                            Text="{Binding CandidateSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                             QueryIcon="Find" />
                         <ComboBox
                             x:Name="StatusFilterComboBox"
                             Grid.Column="1"
                             Width="132"
-                            IsEnabled="False" />
+                            IsEnabled="{Binding HasCandidates}"
+                            ItemsSource="{Binding StatusFilters}"
+                            SelectedItem="{Binding SelectedStatusFilter, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayText}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                         <ComboBox
                             x:Name="TypeFilterComboBox"
                             Grid.Column="2"
                             Width="132"
-                            IsEnabled="False" />
+                            IsEnabled="{Binding HasCandidates}"
+                            ItemsSource="{Binding TypeFilters}"
+                            SelectedItem="{Binding SelectedTypeFilter, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayText}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                     </Grid>
 
                     <Grid
                         Grid.Row="2"
                         MinHeight="0">
                         <ListView
-                            ItemsSource="{Binding Candidates}"
+                            ItemsSource="{Binding FilteredCandidates}"
                             SelectionMode="None">
                             <ListView.ItemContainerStyle>
                                 <Style TargetType="ListViewItem">
