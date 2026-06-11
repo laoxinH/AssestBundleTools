@@ -35,10 +35,12 @@ public sealed partial class WorkspaceBatchReplacementDialogContent : UserControl
         BundleSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogBundleSectionHint);
         SelectAllBundlesButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSelectAllBundlesButton);
         ClearBundleSelectionButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogClearBundleSelectionButton);
+        ChangedBundlesOnlyToggleButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogChangedBundlesOnlyButton);
         CandidateSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogCandidateSectionTitle);
         CandidateSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogCandidateSectionHint);
         CandidateSearchBox.PlaceholderText = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogCandidateSearchPlaceholder);
         SourceEmptyStateText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSourceEmptyState);
+        TypeFilterListView.ItemsSource = ViewModel.TypeFilters;
     }
 
     private void OnChooseSourceDirectoryButtonClick(object sender, RoutedEventArgs e) =>

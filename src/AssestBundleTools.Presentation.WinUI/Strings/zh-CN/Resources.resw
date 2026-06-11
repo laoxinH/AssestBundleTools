@@ -786,6 +786,9 @@
   <data name="WorkspaceBatchReplacementDialog.ClearBundleSelectionButton" xml:space="preserve">
     <value>清空</value>
   </data>
+  <data name="WorkspaceBatchReplacementDialog.ChangedBundlesOnlyButton" xml:space="preserve">
+    <value>仅已变更</value>
+  </data>
   <data name="WorkspaceBatchReplacementDialog.CandidateSection.Title" xml:space="preserve">
     <value>替换候选</value>
   </data>
@@ -800,6 +803,9 @@
   </data>
   <data name="WorkspaceBatchReplacementDialog.TypeFilter.All" xml:space="preserve">
     <value>全部类型</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.TypeFilter.Selected.Format" xml:space="preserve">
+    <value>已选 {0} 类</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Source.EmptyState" xml:space="preserve">
     <value>选择来源目录后会在这里显示替换候选。</value>

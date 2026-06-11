@@ -17,7 +17,12 @@ public sealed class WorkspaceBatchReplacementDialogViewModelTests
         viewModel.ApplyPlan(CreatePlan());
 
         Assert.Equal(3, viewModel.Candidates.Count);
-        Assert.Equal(3, viewModel.FilteredCandidates.Count);
+        Assert.Equal(
+            new[] { "char_452_bstalk_unveiling#4", "hero_mesh" },
+            viewModel.FilteredCandidates.Select(static candidate => candidate.AssetName).ToArray());
+        Assert.Equal(
+            WorkspaceBatchReplacementMatchStatus.Changed.ToString(),
+            viewModel.SelectedStatusFilter?.Key);
 
         viewModel.CandidateSearchText = "unveiling";
 
@@ -26,15 +31,13 @@ public sealed class WorkspaceBatchReplacementDialogViewModelTests
         Assert.Equal(3, viewModel.Candidates.Count);
 
         viewModel.CandidateSearchText = string.Empty;
-        viewModel.SelectedStatusFilter = viewModel.StatusFilters.Single(filter =>
-            string.Equals(filter.Key, WorkspaceBatchReplacementMatchStatus.Changed.ToString(), StringComparison.Ordinal));
 
         Assert.Equal(
             new[] { "char_452_bstalk_unveiling#4", "hero_mesh" },
             viewModel.FilteredCandidates.Select(static candidate => candidate.AssetName).ToArray());
 
-        viewModel.SelectedTypeFilter = viewModel.TypeFilters.Single(filter =>
-            string.Equals(filter.Key, AssetType.Texture2D.ToString(), StringComparison.Ordinal));
+        viewModel.TypeFilters.Single(filter =>
+            string.Equals(filter.Key, AssetType.Texture2D.ToString(), StringComparison.Ordinal)).IsSelected = true;
 
         searched = Assert.Single(viewModel.FilteredCandidates);
         Assert.Equal("char_452_bstalk_unveiling#4", searched.AssetName);
@@ -43,6 +46,48 @@ public sealed class WorkspaceBatchReplacementDialogViewModelTests
 
         Assert.Empty(viewModel.FilteredCandidates);
         Assert.Equal(3, viewModel.Candidates.Count);
+    }
+
+    [Fact]
+    public void ChangedBundlesOnly_ShouldFilterBundleListWithoutChangingSelection()
+    {
+        var viewModel = CreateViewModel();
+        viewModel.ApplyPlan(CreatePlanWithUnchangedBundle());
+
+        Assert.Equal(2, viewModel.FilteredBundles.Count);
+        Assert.True(viewModel.Bundles.All(static bundle => bundle.IsSelected));
+
+        viewModel.ShowChangedBundlesOnly = true;
+
+        var visibleBundle = Assert.Single(viewModel.FilteredBundles);
+        Assert.Equal("bundle-spine", visibleBundle.BundleId.Value);
+        Assert.True(viewModel.Bundles.All(static bundle => bundle.IsSelected));
+    }
+
+    [Fact]
+    public void TypeFilters_ShouldTreatEmptySelectionAsAllTypes()
+    {
+        var viewModel = CreateViewModel();
+        viewModel.ApplyPlan(CreatePlan());
+        viewModel.SelectedStatusFilter = viewModel.StatusFilters.Single(static filter => filter.IsAll);
+
+        Assert.Equal(3, viewModel.FilteredCandidates.Count);
+
+        var textureFilter = viewModel.TypeFilters.Single(filter =>
+            string.Equals(filter.Key, AssetType.Texture2D.ToString(), StringComparison.Ordinal));
+        var meshFilter = viewModel.TypeFilters.Single(filter =>
+            string.Equals(filter.Key, AssetType.Mesh.ToString(), StringComparison.Ordinal));
+        textureFilter.IsSelected = true;
+        meshFilter.IsSelected = true;
+
+        Assert.Equal(
+            new[] { "char_452_bstalk_unveiling#4", "hero_mesh" },
+            viewModel.FilteredCandidates.Select(static candidate => candidate.AssetName).ToArray());
+
+        textureFilter.IsSelected = false;
+        meshFilter.IsSelected = false;
+
+        Assert.Equal(3, viewModel.FilteredCandidates.Count);
     }
 
     private static WorkspaceBatchReplacementDialogViewModel CreateViewModel() =>
@@ -102,6 +147,38 @@ public sealed class WorkspaceBatchReplacementDialogViewModelTests
                     "hero_mesh",
                     "Mesh/hero_mesh.mesh",
                     WorkspaceBatchReplacementMatchStatus.Changed)
+            ]);
+
+    private static WorkspaceBatchReplacementPlanDto CreatePlanWithUnchangedBundle() =>
+        new(
+            new WorkspaceId("workspace-ui"),
+            @"C:\Exports",
+            WorkspaceBatchReplacementMatchingMode.Manifest,
+            @"C:\Exports\_abt-export-manifest.json",
+            "workspace-key",
+            TotalManifestItemCount: 2,
+            ChangedCount: 1,
+            UnchangedCount: 1,
+            MissingCount: 0,
+            IssueCount: 0,
+            Candidates:
+            [
+                CreateCandidate(
+                    "c1",
+                    "bundle-spine",
+                    "char_452_bstalk.ab",
+                    AssetType.Texture2D,
+                    "char_452_bstalk_unveiling#4",
+                    "Texture2D/char_452_bstalk_unveiling#4.png",
+                    WorkspaceBatchReplacementMatchStatus.Changed),
+                CreateCandidate(
+                    "c2",
+                    "bundle-mesh",
+                    "hero_mesh.ab",
+                    AssetType.Mesh,
+                    "hero_mesh",
+                    "Mesh/hero_mesh.mesh",
+                    WorkspaceBatchReplacementMatchStatus.Unchanged)
             ]);
 
     private static WorkspaceBatchReplacementCandidateDto CreateCandidate(

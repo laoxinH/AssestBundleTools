@@ -786,6 +786,9 @@
   <data name="WorkspaceBatchReplacementDialog.ClearBundleSelectionButton" xml:space="preserve">
     <value>Clear</value>
   </data>
+  <data name="WorkspaceBatchReplacementDialog.ChangedBundlesOnlyButton" xml:space="preserve">
+    <value>Changed only</value>
+  </data>
   <data name="WorkspaceBatchReplacementDialog.CandidateSection.Title" xml:space="preserve">
     <value>Replacement Candidates</value>
   </data>
@@ -800,6 +803,9 @@
   </data>
   <data name="WorkspaceBatchReplacementDialog.TypeFilter.All" xml:space="preserve">
     <value>All types</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.TypeFilter.Selected.Format" xml:space="preserve">
+    <value>{0} types</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Source.EmptyState" xml:space="preserve">
     <value>Select a source directory to show replacement candidates here.</value>

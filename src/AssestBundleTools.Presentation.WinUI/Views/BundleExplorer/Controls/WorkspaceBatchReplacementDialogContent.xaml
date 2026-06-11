@@ -162,11 +162,19 @@
                             x:Name="ClearBundleSelectionButton"
                             Click="OnClearBundleSelectionButtonClick"
                             Style="{StaticResource BatchReplacementCompactButtonStyle}" />
+                        <ToggleButton
+                            x:Name="ChangedBundlesOnlyToggleButton"
+                            MinHeight="34"
+                            MinWidth="92"
+                            Padding="12,0"
+                            CornerRadius="8"
+                            FontSize="13"
+                            IsChecked="{Binding ShowChangedBundlesOnly, Mode=TwoWay}" />
                     </StackPanel>
 
                     <ListView
                         Grid.Row="2"
-                        ItemsSource="{Binding Bundles}"
+                        ItemsSource="{Binding FilteredBundles}"
                         SelectionMode="None">
                         <ListView.ItemContainerStyle>
                             <Style TargetType="ListViewItem">
@@ -273,19 +281,58 @@
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
-                        <ComboBox
-                            x:Name="TypeFilterComboBox"
+                        <Button
+                            x:Name="TypeFilterButton"
                             Grid.Column="2"
                             Width="132"
                             IsEnabled="{Binding HasCandidates}"
-                            ItemsSource="{Binding TypeFilters}"
-                            SelectedItem="{Binding SelectedTypeFilter, Mode=TwoWay}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding DisplayText}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                            Style="{StaticResource BatchReplacementCompactButtonStyle}">
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Text="{Binding TypeFilterButtonText}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <FontIcon
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    FontFamily="Segoe Fluent Icons"
+                                    FontSize="10"
+                                    Glyph="&#xE70D;" />
+                            </Grid>
+                            <Button.Flyout>
+                                <Flyout Placement="BottomEdgeAlignedLeft">
+                                    <Border
+                                        MinWidth="160"
+                                        Padding="8"
+                                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                                        <ListView
+                                            x:Name="TypeFilterListView"
+                                            MaxHeight="280"
+                                            SelectionMode="None">
+                                            <ListView.ItemContainerStyle>
+                                                <Style TargetType="ListViewItem">
+                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                    <Setter Property="MinHeight" Value="38" />
+                                                    <Setter Property="Padding" Value="0" />
+                                                </Style>
+                                            </ListView.ItemContainerStyle>
+                                            <ListView.ItemTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox
+                                                        HorizontalAlignment="Stretch"
+                                                        Content="{Binding DisplayText}"
+                                                        IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                                </DataTemplate>
+                                            </ListView.ItemTemplate>
+                                        </ListView>
+                                    </Border>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
                     </Grid>
 
                     <Grid
