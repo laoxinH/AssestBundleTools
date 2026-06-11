@@ -13,6 +13,40 @@ public sealed class FileSystemWorkspaceBatchReplacementSourceFileProbe : IWorksp
 {
     private const string HashAlgorithm = "MD5";
 
+    public Task<Result<IReadOnlyList<WorkspaceBatchReplacementSourceFileEntryDto>>> EnumerateFilesAsync(
+        string sourceRootDirectory,
+        int maxDepth,
+        CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromResult(Result<IReadOnlyList<WorkspaceBatchReplacementSourceFileEntryDto>>.Cancelled());
+        }
+
+        try
+        {
+            var root = Path.GetFullPath(sourceRootDirectory.Trim());
+            if (!Directory.Exists(root))
+            {
+                return Task.FromResult(Result<IReadOnlyList<WorkspaceBatchReplacementSourceFileEntryDto>>.Failure(
+                    ApplicationErrors.BatchReplacementSourceFileReadFailed(sourceRootDirectory, "DirectoryNotFound")));
+            }
+
+            var entries = new List<WorkspaceBatchReplacementSourceFileEntryDto>();
+            EnumerateFiles(root, root, Math.Max(0, maxDepth), entries, cancellationToken);
+            return Task.FromResult(Result<IReadOnlyList<WorkspaceBatchReplacementSourceFileEntryDto>>.Success(entries));
+        }
+        catch (OperationCanceledException)
+        {
+            return Task.FromResult(Result<IReadOnlyList<WorkspaceBatchReplacementSourceFileEntryDto>>.Cancelled());
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return Task.FromResult(Result<IReadOnlyList<WorkspaceBatchReplacementSourceFileEntryDto>>.Failure(
+                ApplicationErrors.BatchReplacementSourceFileReadFailed(sourceRootDirectory, exception.GetType().Name)));
+        }
+    }
+
     public async Task<Result<WorkspaceBatchReplacementSourceFileSnapshotDto>> GetSnapshotAsync(
         string sourceRootDirectory,
         string relativePath,
@@ -72,6 +106,45 @@ public sealed class FileSystemWorkspaceBatchReplacementSourceFileProbe : IWorksp
         {
             return Result<WorkspaceBatchReplacementSourceFileSnapshotDto>.Failure(
                 ApplicationErrors.BatchReplacementSourceFileReadFailed(relativePath, exception.GetType().Name));
+        }
+    }
+
+    private static void EnumerateFiles(
+        string root,
+        string directory,
+        int remainingDepth,
+        List<WorkspaceBatchReplacementSourceFileEntryDto> entries,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        foreach (var filePath in Directory.EnumerateFiles(directory))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var fileInfo = new FileInfo(filePath);
+            if ((fileInfo.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden)
+            {
+                continue;
+            }
+
+            var relativePath = Path.GetRelativePath(root, filePath).Replace(Path.DirectorySeparatorChar, '/');
+            entries.Add(new WorkspaceBatchReplacementSourceFileEntryDto(relativePath, filePath, fileInfo.Length));
+        }
+
+        if (remainingDepth <= 0)
+        {
+            return;
+        }
+
+        foreach (var childDirectory in Directory.EnumerateDirectories(directory))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var directoryInfo = new DirectoryInfo(childDirectory);
+            if ((directoryInfo.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden)
+            {
+                continue;
+            }
+
+            EnumerateFiles(root, childDirectory, remainingDepth - 1, entries, cancellationToken);
         }
     }
 }

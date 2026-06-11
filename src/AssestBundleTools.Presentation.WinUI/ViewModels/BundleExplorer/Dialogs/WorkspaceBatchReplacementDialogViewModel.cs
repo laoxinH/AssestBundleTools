@@ -17,6 +17,7 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
     private string _sourceDirectory = string.Empty;
     private string _planSummaryText;
     private string _sourceSummaryText;
+    private string _sourceModeText;
     private string _validationText = string.Empty;
     private bool _isPlanLoading;
     private bool _showChangedBundlesOnly;
@@ -32,6 +33,7 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
         _bundleNodesById = bundleNodes.ToDictionary(static node => node.BundleId.Value, StringComparer.Ordinal);
         _planSummaryText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogPreviewWaiting);
         _sourceSummaryText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceNotSelected);
+        _sourceModeText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceModeAuto);
         _typeFilterButtonText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogTypeFilterAll);
     }
 
@@ -65,6 +67,12 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
     {
         get => _sourceSummaryText;
         private set => SetProperty(ref _sourceSummaryText, value);
+    }
+
+    public string SourceModeText
+    {
+        get => _sourceModeText;
+        private set => SetProperty(ref _sourceModeText, value);
     }
 
     public string PlanSummaryText
@@ -186,7 +194,7 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
                 candidate,
                 ResolveStatusText(candidate.MatchStatus),
                 BuildSubtitle(candidate),
-                candidate.MatchStatus == WorkspaceBatchReplacementMatchStatus.Changed));
+                CanSelectCandidate(candidate.MatchStatus)));
         }
 
         var groupedBundles = plan.Candidates
@@ -204,27 +212,18 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
                 bundleId,
                 first.BundleDisplayName,
                 logicalPath,
-                group.Count(static candidate => candidate.MatchStatus == WorkspaceBatchReplacementMatchStatus.Changed),
-                group.Count(static candidate => candidate.MatchStatus is not WorkspaceBatchReplacementMatchStatus.Changed and not WorkspaceBatchReplacementMatchStatus.Unchanged)));
+                group.Count(static candidate => IsExecutableMatchStatus(candidate.MatchStatus)),
+                group.Count(static candidate => IsIssueMatchStatus(candidate.MatchStatus))));
         }
         SubscribeBundleSelectionChanged();
         RebuildCandidateFilters();
         ApplyBundleFilters();
 
-        SourceSummaryText = plan.MatchingMode == WorkspaceBatchReplacementMatchingMode.Manifest
-            ? _localizationService.GetFormattedString(
-                ResourceKeys.WorkspaceBatchReplacementDialogSourceManifestSummaryFormat,
-                plan.TotalManifestItemCount.ToString(CultureInfo.CurrentCulture),
-                plan.ChangedCount.ToString(CultureInfo.CurrentCulture),
-                plan.IssueCount.ToString(CultureInfo.CurrentCulture))
-            : GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceHeuristicSummary);
-        PlanSummaryText = _localizationService.GetFormattedString(
-            ResourceKeys.WorkspaceBatchReplacementDialogPreviewSummaryFormat,
-            plan.ChangedCount.ToString(CultureInfo.CurrentCulture),
-            plan.UnchangedCount.ToString(CultureInfo.CurrentCulture),
-            plan.IssueCount.ToString(CultureInfo.CurrentCulture));
-        ValidationText = plan.Candidates.Any(static candidate => candidate.MatchStatus == WorkspaceBatchReplacementMatchStatus.HeuristicNotImplemented)
-            ? GetString(ResourceKeys.WorkspaceBatchReplacementDialogHeuristicPending)
+        SourceModeText = ResolveSourceModeText(plan.MatchingMode);
+        SourceSummaryText = ResolveSourceSummaryText(plan);
+        PlanSummaryText = ResolvePlanSummaryText(plan);
+        ValidationText = plan.MatchingMode == WorkspaceBatchReplacementMatchingMode.Heuristic
+            ? GetString(ResourceKeys.WorkspaceBatchReplacementDialogHeuristicWarning)
             : string.Empty;
         OnPropertyChanged(nameof(HasCandidates));
         OnPropertyChanged(nameof(CanSubmit));
@@ -245,6 +244,7 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
         TypeFilters.Clear();
         SelectedStatusFilter = null;
         TypeFilterButtonText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogTypeFilterAll);
+        SourceModeText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceModeAuto);
         OnPropertyChanged(nameof(HasCandidates));
     }
 
@@ -387,6 +387,10 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
 
         return StatusFilters.FirstOrDefault(filter =>
             string.Equals(filter.Key, WorkspaceBatchReplacementMatchStatus.Changed.ToString(), StringComparison.Ordinal)) ??
+            StatusFilters.FirstOrDefault(filter =>
+                string.Equals(filter.Key, WorkspaceBatchReplacementMatchStatus.HighConfidence.ToString(), StringComparison.Ordinal)) ??
+            StatusFilters.FirstOrDefault(filter =>
+                string.Equals(filter.Key, WorkspaceBatchReplacementMatchStatus.MediumConfidence.ToString(), StringComparison.Ordinal)) ??
             StatusFilters.FirstOrDefault();
     }
 
@@ -486,9 +490,78 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
             WorkspaceBatchReplacementMatchStatus.Missing => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusMissing),
             WorkspaceBatchReplacementMatchStatus.TargetMissing => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusTargetMissing),
             WorkspaceBatchReplacementMatchStatus.TypeMismatch => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusTypeMismatch),
-            WorkspaceBatchReplacementMatchStatus.HeuristicNotImplemented => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusHeuristicPending),
+            WorkspaceBatchReplacementMatchStatus.HighConfidence => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusHighConfidence),
+            WorkspaceBatchReplacementMatchStatus.MediumConfidence => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusMediumConfidence),
+            WorkspaceBatchReplacementMatchStatus.LowConfidence => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusLowConfidence),
+            WorkspaceBatchReplacementMatchStatus.Ambiguous => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusAmbiguous),
+            WorkspaceBatchReplacementMatchStatus.Rejected => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusRejected),
             _ => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusIssue)
         };
+
+    private string ResolveSourceModeText(WorkspaceBatchReplacementMatchingMode matchingMode) =>
+        matchingMode switch
+        {
+            WorkspaceBatchReplacementMatchingMode.Manifest => GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceModeManifest),
+            WorkspaceBatchReplacementMatchingMode.Heuristic => GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceModeHeuristic),
+            _ => GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceModeAuto)
+        };
+
+    private string ResolveSourceSummaryText(WorkspaceBatchReplacementPlanDto plan)
+    {
+        if (plan.MatchingMode == WorkspaceBatchReplacementMatchingMode.Manifest)
+        {
+            return _localizationService.GetFormattedString(
+                ResourceKeys.WorkspaceBatchReplacementDialogSourceManifestSummaryFormat,
+                plan.TotalManifestItemCount.ToString(CultureInfo.CurrentCulture),
+                plan.ChangedCount.ToString(CultureInfo.CurrentCulture),
+                plan.IssueCount.ToString(CultureInfo.CurrentCulture));
+        }
+
+        return _localizationService.GetFormattedString(
+            ResourceKeys.WorkspaceBatchReplacementDialogSourceHeuristicCountsFormat,
+            plan.ChangedCount.ToString(CultureInfo.CurrentCulture),
+            CountConfirmationCandidates(plan).ToString(CultureInfo.CurrentCulture),
+            plan.IssueCount.ToString(CultureInfo.CurrentCulture));
+    }
+
+    private string ResolvePlanSummaryText(WorkspaceBatchReplacementPlanDto plan)
+    {
+        if (plan.MatchingMode == WorkspaceBatchReplacementMatchingMode.Heuristic)
+        {
+            return _localizationService.GetFormattedString(
+                ResourceKeys.WorkspaceBatchReplacementDialogHeuristicPreviewSummaryFormat,
+                plan.ChangedCount.ToString(CultureInfo.CurrentCulture),
+                CountConfirmationCandidates(plan).ToString(CultureInfo.CurrentCulture),
+                plan.IssueCount.ToString(CultureInfo.CurrentCulture));
+        }
+
+        return _localizationService.GetFormattedString(
+            ResourceKeys.WorkspaceBatchReplacementDialogPreviewSummaryFormat,
+            plan.ChangedCount.ToString(CultureInfo.CurrentCulture),
+            plan.UnchangedCount.ToString(CultureInfo.CurrentCulture),
+            plan.IssueCount.ToString(CultureInfo.CurrentCulture));
+    }
+
+    private static int CountConfirmationCandidates(WorkspaceBatchReplacementPlanDto plan) =>
+        plan.Candidates.Count(static candidate => candidate.MatchStatus is
+            WorkspaceBatchReplacementMatchStatus.MediumConfidence or
+            WorkspaceBatchReplacementMatchStatus.LowConfidence or
+            WorkspaceBatchReplacementMatchStatus.Ambiguous);
+
+    private static bool CanSelectCandidate(WorkspaceBatchReplacementMatchStatus status) =>
+        status is
+            WorkspaceBatchReplacementMatchStatus.Changed or
+            WorkspaceBatchReplacementMatchStatus.HighConfidence or
+            WorkspaceBatchReplacementMatchStatus.MediumConfidence or
+            WorkspaceBatchReplacementMatchStatus.LowConfidence;
+
+    private static bool IsExecutableMatchStatus(WorkspaceBatchReplacementMatchStatus status) =>
+        status is WorkspaceBatchReplacementMatchStatus.Changed or WorkspaceBatchReplacementMatchStatus.HighConfidence;
+
+    private static bool IsIssueMatchStatus(WorkspaceBatchReplacementMatchStatus status) =>
+        status is not WorkspaceBatchReplacementMatchStatus.Changed and
+            not WorkspaceBatchReplacementMatchStatus.Unchanged and
+            not WorkspaceBatchReplacementMatchStatus.HighConfidence;
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
 }

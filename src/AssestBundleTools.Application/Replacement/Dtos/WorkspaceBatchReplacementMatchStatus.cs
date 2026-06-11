@@ -12,5 +12,9 @@ public enum WorkspaceBatchReplacementMatchStatus
     TypeMismatch = 4,
     HashUnavailable = 5,
     ManifestInvalid = 6,
-    HeuristicNotImplemented = 7
+    HighConfidence = 7,
+    MediumConfidence = 8,
+    LowConfidence = 9,
+    Ambiguous = 10,
+    Rejected = 11
 }

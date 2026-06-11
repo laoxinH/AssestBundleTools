@@ -8,6 +8,11 @@ namespace AssestBundleTools.Application.Replacement.Services;
 /// </summary>
 public interface IWorkspaceBatchReplacementSourceFileProbe
 {
+    Task<Result<IReadOnlyList<WorkspaceBatchReplacementSourceFileEntryDto>>> EnumerateFilesAsync(
+        string sourceRootDirectory,
+        int maxDepth,
+        CancellationToken cancellationToken = default);
+
     Task<Result<WorkspaceBatchReplacementSourceFileSnapshotDto>> GetSnapshotAsync(
         string sourceRootDirectory,
         string relativePath,

@@ -765,6 +765,12 @@
   <data name="WorkspaceBatchReplacementDialog.SourceMode.Auto" xml:space="preserve">
     <value>Auto Match</value>
   </data>
+  <data name="WorkspaceBatchReplacementDialog.SourceMode.Manifest" xml:space="preserve">
+    <value>Manifest exact match</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.SourceMode.Heuristic" xml:space="preserve">
+    <value>Heuristic match</value>
+  </data>
   <data name="WorkspaceBatchReplacementDialog.Source.NotSelected" xml:space="preserve">
     <value>No source directory selected.</value>
   </data>
@@ -772,7 +778,10 @@
     <value>Manifest exact match: {0} items, {1} changed, {2} need attention.</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Source.HeuristicSummary" xml:space="preserve">
-    <value>Heuristic matching is not enabled yet. Select an export directory with a manifest.</value>
+    <value>No manifest was found. Matching is inferred from directories, types, and names.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Source.HeuristicCounts.Format" xml:space="preserve">
+    <value>Heuristic match: {0} high confidence, {1} need review, {2} cannot run directly.</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.BundleSection.Title" xml:space="preserve">
     <value>Bundle Scope</value>
@@ -825,8 +834,11 @@
   <data name="WorkspaceBatchReplacementDialog.Preview.Summary.Format" xml:space="preserve">
     <value>{0} changed, {1} unchanged, {2} need attention.</value>
   </data>
-  <data name="WorkspaceBatchReplacementDialog.Heuristic.Pending" xml:space="preserve">
-    <value>No usable manifest was found. Heuristic matching will be added in a later phase.</value>
+  <data name="WorkspaceBatchReplacementDialog.Preview.HeuristicSummary.Format" xml:space="preserve">
+    <value>{0} high confidence, {1} need review, {2} cannot run directly.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Heuristic.Warning" xml:space="preserve">
+    <value>No manifest was found. This plan is inferred from directories, types, and names; review candidates before running.</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Status.Changed" xml:space="preserve">
     <value>Changed</value>
@@ -843,11 +855,23 @@
   <data name="WorkspaceBatchReplacementDialog.Status.TypeMismatch" xml:space="preserve">
     <value>Type mismatch</value>
   </data>
-  <data name="WorkspaceBatchReplacementDialog.Status.HeuristicPending" xml:space="preserve">
-    <value>Pending</value>
-  </data>
   <data name="WorkspaceBatchReplacementDialog.Status.Issue" xml:space="preserve">
     <value>Issue</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.HighConfidence" xml:space="preserve">
+    <value>High confidence</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.MediumConfidence" xml:space="preserve">
+    <value>Needs review</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.LowConfidence" xml:space="preserve">
+    <value>Low confidence</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Ambiguous" xml:space="preserve">
+    <value>Ambiguous</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Rejected" xml:space="preserve">
+    <value>Excluded</value>
   </data>
   <data name="BundleExplorerPage.GlobalSearchTextBox.PlaceholderText" xml:space="preserve">
     <value>Global search (coming later)</value>

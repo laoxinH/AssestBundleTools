@@ -62,6 +62,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Grid ColumnSpacing="12">
                     <Grid.ColumnDefinitions>
@@ -105,7 +106,8 @@
                         <TextBlock
                             x:Name="SourceModeText"
                             FontSize="12"
-                            FontWeight="SemiBold" />
+                            FontWeight="SemiBold"
+                            Text="{Binding SourceModeText}" />
                     </Border>
                     <TextBlock
                         Grid.Column="1"
@@ -116,6 +118,13 @@
                         TextTrimming="CharacterEllipsis"
                         TextWrapping="WrapWholeWords" />
                 </Grid>
+                <TextBlock
+                    Grid.Row="2"
+                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                    FontSize="12"
+                    Text="{Binding ValidationText}"
+                    TextWrapping="WrapWholeWords"
+                    Visibility="{Binding ValidationVisibility}" />
             </Grid>
         </Border>
 

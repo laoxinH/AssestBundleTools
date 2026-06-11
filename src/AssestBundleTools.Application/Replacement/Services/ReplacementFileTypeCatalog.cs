@@ -100,6 +100,19 @@ public static class ReplacementFileTypeCatalog
         return AssetType.Unknown;
     }
 
+    public static IReadOnlyList<AssetType> ResolveCandidateAssetTypes(string sourceFilePath)
+    {
+        var normalizedExtension = NormalizeExtension(Path.GetExtension(sourceFilePath));
+        if (normalizedExtension is null)
+        {
+            return Array.Empty<AssetType>();
+        }
+
+        return CandidateAssetTypesByExtension.TryGetValue(normalizedExtension, out var candidateTypes)
+            ? candidateTypes
+            : Array.Empty<AssetType>();
+    }
+
     /// <summary>
     /// 判断给定文件路径是否与目标资源类型兼容。
     /// </summary>

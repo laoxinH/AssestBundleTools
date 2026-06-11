@@ -61,7 +61,12 @@ public sealed class GetWorkspaceBatchReplacementPlanHandler : IQueryHandler<GetW
         var manifestPath = Path.Combine(sourceRootDirectory, ManifestFileName);
         if (query.MatchingMode == WorkspaceBatchReplacementMatchingMode.Heuristic)
         {
-            return Result<WorkspaceBatchReplacementPlanDto>.Success(CreateHeuristicPlaceholderPlan(query, sourceRootDirectory));
+            return Result<WorkspaceBatchReplacementPlanDto>.Success(await WorkspaceBatchReplacementHeuristicPlanner.BuildPlanAsync(
+                _workspaceSessionRegistry,
+                _sourceFileProbe,
+                query.WorkspaceId,
+                sourceRootDirectory,
+                cancellationToken));
         }
 
         var manifestResult = await _manifestStore.LoadAsync(manifestPath, cancellationToken);
@@ -74,7 +79,12 @@ public sealed class GetWorkspaceBatchReplacementPlanHandler : IQueryHandler<GetW
         {
             if (query.MatchingMode == WorkspaceBatchReplacementMatchingMode.Auto)
             {
-                return Result<WorkspaceBatchReplacementPlanDto>.Success(CreateHeuristicPlaceholderPlan(query, sourceRootDirectory));
+                return Result<WorkspaceBatchReplacementPlanDto>.Success(await WorkspaceBatchReplacementHeuristicPlanner.BuildPlanAsync(
+                    _workspaceSessionRegistry,
+                    _sourceFileProbe,
+                    query.WorkspaceId,
+                    sourceRootDirectory,
+                    cancellationToken));
             }
 
             return Result<WorkspaceBatchReplacementPlanDto>.Failure(manifestResult.Errors);
@@ -231,49 +241,6 @@ public sealed class GetWorkspaceBatchReplacementPlanHandler : IQueryHandler<GetW
             IsDefaultSelected: status == WorkspaceBatchReplacementMatchStatus.Changed,
             Diagnostics: diagnostics);
     }
-
-    private static WorkspaceBatchReplacementPlanDto CreateHeuristicPlaceholderPlan(
-        GetWorkspaceBatchReplacementPlanQuery query,
-        string sourceRootDirectory) =>
-        new(
-            query.WorkspaceId,
-            sourceRootDirectory,
-            WorkspaceBatchReplacementMatchingMode.Heuristic,
-            ManifestPath: null,
-            ManifestWorkspaceKey: null,
-            TotalManifestItemCount: 0,
-            ChangedCount: 0,
-            UnchangedCount: 0,
-            MissingCount: 0,
-            IssueCount: 1,
-            Candidates:
-            [
-                new WorkspaceBatchReplacementCandidateDto(
-                    CandidateId: "heuristic-placeholder",
-                    BundleId: null,
-                    BundleDisplayName: string.Empty,
-                    AssetId: null,
-                    PathId: 0,
-                    AssetType: AssetType.Unknown,
-                    AssetTypeDisplayName: null,
-                    AssetName: string.Empty,
-                    ContainerPath: null,
-                    RelativePath: string.Empty,
-                    FullPath: sourceRootDirectory,
-                    CurrentFileSizeInBytes: null,
-                    CurrentFileHashAlgorithm: null,
-                    CurrentFileHash: null,
-                    ExportedFileSizeInBytes: 0,
-                    ExportedFileHashAlgorithm: string.Empty,
-                    ExportedFileHash: string.Empty,
-                    SpineGroupId: null,
-                    SpineGroupDisplayName: null,
-                    OutputRole: string.Empty,
-                    MatchStatus: WorkspaceBatchReplacementMatchStatus.HeuristicNotImplemented,
-                    MatchMode: WorkspaceBatchReplacementMatchingMode.Heuristic,
-                    IsDefaultSelected: false,
-                    Diagnostics: ["HeuristicNotImplemented"])
-            ]);
 
     private static WorkspaceBatchReplacementPlanDto CreateManifestIssuePlan(
         GetWorkspaceBatchReplacementPlanQuery query,

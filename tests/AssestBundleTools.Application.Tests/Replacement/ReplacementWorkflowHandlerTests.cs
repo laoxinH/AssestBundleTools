@@ -643,6 +643,106 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.Equal(0, sourceProbe.SnapshotRequestCount, "No source files should be probed after workspace-key mismatch.");
     }
 
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldBuildHighConfidenceHeuristicCandidate_FromStandardExportPath()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-a");
+        var assetId = new AssetId("asset-texture");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterBundle(workspaceId, bundleId, "char_452_bstalk.ab", "ab/char_452_bstalk.ab");
+        registry.RegisterAssetListItem(new AssetListItemDto(
+            assetId,
+            bundleId,
+            "HeroTexture",
+            "Assets/HeroTexture",
+            AssetType.Texture2D,
+            SizeInBytes: 128,
+            PreferredDisplaySizeInBytes: 128,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: "Texture2D",
+            PathId: 42,
+            DisplayName: "HeroTexture",
+            ExportFileName: "HeroTexture"));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("char_452_bstalk.ab/Texture2D/HeroTexture.png", 128);
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(
+            registry,
+            new TestWorkspaceExportManifestStore(null),
+            sourceProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\Export",
+            WorkspaceBatchReplacementMatchingMode.Auto));
+
+        TestAssert.True(result.IsSuccess, "Missing manifest in auto mode should fall back to heuristic plan.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected replacement plan.");
+        TestAssert.Equal(WorkspaceBatchReplacementMatchingMode.Heuristic, plan.MatchingMode, "Plan should be heuristic.");
+        TestAssert.Equal(1, plan.ChangedCount, "One high-confidence candidate should be counted as executable.");
+        var candidate = TestAssert.Single(plan.Candidates);
+        TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.HighConfidence, candidate.MatchStatus, "Standard path should produce high confidence.");
+        TestAssert.True(candidate.IsDefaultSelected, "High-confidence heuristic candidate should be selected by default.");
+        TestAssert.Equal(bundleId, candidate.BundleId, "Candidate should resolve the target bundle.");
+        TestAssert.Equal(assetId, candidate.AssetId, "Candidate should resolve the target asset.");
+    }
+
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldMarkHeuristicCandidateAmbiguous_WhenTargetsTie()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-a");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterBundle(workspaceId, bundleId, "char_452_bstalk.ab", "ab/char_452_bstalk.ab");
+        registry.RegisterAssetListItem(new AssetListItemDto(
+            new AssetId("asset-texture-a"),
+            bundleId,
+            "HeroTexture",
+            "Assets/HeroTextureA",
+            AssetType.Texture2D,
+            SizeInBytes: 128,
+            PreferredDisplaySizeInBytes: 128,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: "Texture2D",
+            PathId: 42,
+            DisplayName: "HeroTexture",
+            ExportFileName: "HeroTexture"));
+        registry.RegisterAssetListItem(new AssetListItemDto(
+            new AssetId("asset-texture-b"),
+            bundleId,
+            "HeroTexture",
+            "Assets/HeroTextureB",
+            AssetType.Texture2D,
+            SizeInBytes: 128,
+            PreferredDisplaySizeInBytes: 128,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: "Texture2D",
+            PathId: 43,
+            DisplayName: "HeroTexture",
+            ExportFileName: "HeroTexture"));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("char_452_bstalk.ab/Texture2D/HeroTexture.png", 128);
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(
+            registry,
+            new TestWorkspaceExportManifestStore(null),
+            sourceProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\Export",
+            WorkspaceBatchReplacementMatchingMode.Heuristic));
+
+        TestAssert.True(result.IsSuccess, "Heuristic planning should succeed even when a file is ambiguous.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected replacement plan.");
+        var candidate = TestAssert.Single(plan.Candidates);
+        TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.Ambiguous, candidate.MatchStatus, "Tied target scores should be marked ambiguous.");
+        TestAssert.False(candidate.IsDefaultSelected, "Ambiguous heuristic candidate should not be selected by default.");
+        TestAssert.True(candidate.Diagnostics.Contains("Ambiguous"), "Candidate should expose ambiguity diagnostics.");
+    }
+
     private static WorkspaceId CreateWorkspaceId() => new("workspace-session-1");
 
     private static WorkspaceExportManifestDto CreateManifest(
@@ -760,6 +860,9 @@ internal static class ReplacementWorkflowHandlerTests
     {
         private readonly Dictionary<(string BundleId, string AssetId), AssetDetailsDto> _assetDetails =
             new();
+        private readonly List<BundleTreeNodeDto> _bundleTree = new();
+        private readonly Dictionary<string, List<AssetListItemDto>> _assetLists =
+            new(StringComparer.Ordinal);
         private readonly HashSet<string> _bundleIds = new(StringComparer.Ordinal);
 
         public bool ContainsWorkspaceResult { get; set; } = true;
@@ -803,6 +906,37 @@ internal static class ReplacementWorkflowHandlerTests
             _bundleIds.Add(details.BundleId.Value);
         }
 
+        public void RegisterBundle(WorkspaceId workspaceId, BundleId bundleId, string displayName, string logicalPath)
+        {
+            _bundleIds.Add(bundleId.Value);
+            _bundleTree.Add(new BundleTreeNodeDto(
+                bundleId,
+                displayName,
+                logicalPath,
+                SourcePath: logicalPath,
+                IsVirtualFolder: false,
+                AssetCount: 0,
+                Children: Array.Empty<BundleTreeNodeDto>()));
+        }
+
+        public void RegisterAssetListItem(AssetListItemDto item)
+        {
+            _bundleIds.Add(item.BundleId.Value);
+            if (!_assetLists.TryGetValue(item.BundleId.Value, out var items))
+            {
+                items = new List<AssetListItemDto>();
+                _assetLists[item.BundleId.Value] = items;
+            }
+
+            items.Add(item);
+            RegisterAssetDetails(CreateAssetDetails(
+                CreateWorkspaceId(),
+                item.BundleId,
+                item.AssetId,
+                item.AssetType,
+                item.DisplayName ?? item.Name));
+        }
+
         public WorkspaceSummaryDto OpenWorkspace(WorkspaceSessionOpenRequestDto request) => throw new NotSupportedException();
 
         public bool ContainsWorkspace(WorkspaceId workspaceId) => ContainsWorkspaceResult;
@@ -814,8 +948,8 @@ internal static class ReplacementWorkflowHandlerTests
 
         public bool TryGetBundleTree(WorkspaceId workspaceId, out IReadOnlyList<BundleTreeNodeDto> bundleTree)
         {
-            bundleTree = null!;
-            throw new NotSupportedException();
+            bundleTree = _bundleTree;
+            return _bundleTree.Count > 0;
         }
 
         public bool TryGetAssetList(
@@ -826,8 +960,23 @@ internal static class ReplacementWorkflowHandlerTests
             string? assetTypeDisplayNameFilter,
             out AssetListResultDto? assetListResult)
         {
-            assetListResult = null;
-            throw new NotSupportedException();
+            if (!_assetLists.TryGetValue(bundleId.Value, out var items))
+            {
+                assetListResult = null;
+                return false;
+            }
+
+            assetListResult = new AssetListResultDto(
+                WorkspaceId: workspaceId,
+                BundleId: bundleId,
+                BundleDisplayName: bundleId.Value,
+                SearchKeyword: searchKeyword,
+                AssetTypeFilter: assetTypeFilter,
+                TotalCount: items.Count,
+                FilteredCount: items.Count,
+                Items: items,
+                AssetTypeDisplayNameFilter: assetTypeDisplayNameFilter);
+            return true;
         }
 
         public bool TryGetAssetDetails(
@@ -971,6 +1120,24 @@ internal static class ReplacementWorkflowHandlerTests
 
         public void Register(string relativePath, bool exists, long? size, string? hash) =>
             _snapshots[relativePath] = (exists, size, hash);
+
+        public void RegisterFile(string relativePath, long? size) =>
+            _snapshots[relativePath] = (Exists: true, Size: size, Hash: null);
+
+        public Task<Result<IReadOnlyList<WorkspaceBatchReplacementSourceFileEntryDto>>> EnumerateFilesAsync(
+            string sourceRootDirectory,
+            int maxDepth,
+            CancellationToken cancellationToken = default)
+        {
+            IReadOnlyList<WorkspaceBatchReplacementSourceFileEntryDto> files = _snapshots
+                .Where(static pair => pair.Value.Exists)
+                .Select(pair => new WorkspaceBatchReplacementSourceFileEntryDto(
+                    pair.Key,
+                    $@"{sourceRootDirectory}\{pair.Key}",
+                    pair.Value.Size))
+                .ToArray();
+            return Task.FromResult(Result<IReadOnlyList<WorkspaceBatchReplacementSourceFileEntryDto>>.Success(files));
+        }
 
         public Task<Result<WorkspaceBatchReplacementSourceFileSnapshotDto>> GetSnapshotAsync(
             string sourceRootDirectory,

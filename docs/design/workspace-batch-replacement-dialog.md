@@ -536,7 +536,7 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 - 新增批量替换窗口和 ViewModel。
 - 新增 manifest 计划查询，支持目录选择、manifest 回读、size-first / MD5 判定、默认选择状态和诊断。
 - 只生成计划，不执行替换。
-- 当前进度：已完成主工作台 `批量替换` 入口、独立窗口、目录选择、后台 `TransientRead` 计划扫描、manifest 工作区 key 校验、size-first / MD5 变更判定、默认选择状态、中英本地化，以及候选区搜索 / 默认已修改状态 / 多选资源类型 / 资源包范围仅已变更的本地过滤；`开始替换` 仍保持禁用。
+- 当前进度：已完成主工作台 `批量替换` 入口、独立窗口、目录选择、后台 `TransientRead` 计划扫描、manifest 工作区 key 校验、size-first / MD5 变更判定、默认选择状态、中英本地化，以及候选区搜索 / 默认已修改状态 / 多选资源类型 / 资源包范围仅已变更的本地过滤；manifest 缺失时已接入第一版启发式计划，按文件枚举、类型推断、资源包推断、名称归一化和置信度生成 `HighConfidence / MediumConfidence / LowConfidence / Ambiguous / Rejected` 候选，并在 UI 显示启发式风险提示、状态筛选和高置信默认选择；`开始替换` 仍保持禁用。
 - 旧批处理页批量替换骨架 query / command / planner 尚未移除，下一阶段开始前必须收口：旧入口不得再承担新批量替换语义，后续历史展示应读取新执行结果或操作记录摘要。
 
 第二阶段：执行与操作记录
@@ -547,11 +547,11 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 - Spine 组候选拆成组成资产替换，并共享批次关系。
 - 接入 `BatchReplacement` 可见后台任务和操作通知聚合。
 
-第三阶段：启发式回退
+第三阶段：启发式回退增强
 
-- 在 manifest 缺失时提供名称 / 目录 / 类型兼容匹配。
-- 明确 `Ambiguous / TypeMismatch / UnsupportedType` 诊断。
-- 高风险项默认不选中。
+- 当前已在 manifest 缺失时提供保守的名称 / 目录 / 类型兼容匹配。
+- 当前已明确 `Ambiguous / TypeConflict / UnsupportedType / IgnoredTooDeep / MissingTarget` 等诊断，高风险项默认不选中。
+- 后续增强多候选的目标手动选择、启发式候选执行前二次确认、来源文件不可读细分诊断和更完整的低置信搜索辅助。
 
 第四阶段：结果与历史
 
@@ -569,6 +569,8 @@ Application 测试：
 - 文件大小相同且 MD5 相同进入 `Unchanged`，不默认选中。已覆盖。
 - 文件大小相同且 MD5 不同进入 `Changed`。已覆盖。
 - 缺失文件、hash 失败、类型不兼容返回结构化诊断。
+- manifest 缺失时，标准导出目录中的同资源包 / 同类型 / 同名唯一项进入 `HighConfidence` 并默认选中。已覆盖。
+- manifest 缺失时，同分同名目标进入 `Ambiguous` 且默认不选中。已覆盖。
 - 执行只对选中 `Changed` 候选追加替换操作记录。
 - 同一批次的替换记录共享 `batchId`。
 
@@ -607,4 +609,4 @@ Presentation 测试：
 
 旧批量替换骨架没有继续兼容价值，实现新窗口时应直接移除，避免形成两套含义不同的“批量替换”。
 
-截至当前实现，主工作台新窗口已经接入 manifest 计划读取，但旧批处理页骨架仍保留为历史入口。后续处理批量替换执行时必须先按本文第二阶段移除旧骨架，再在新 manifest 计划模型上实现真实执行。
+截至当前实现，主工作台新窗口已经接入 manifest 计划读取和第一版启发式回退计划，但旧批处理页骨架仍保留为历史入口。后续处理批量替换执行时必须先按本文第二阶段移除旧骨架，再在新 manifest / heuristic 计划模型上实现真实执行。

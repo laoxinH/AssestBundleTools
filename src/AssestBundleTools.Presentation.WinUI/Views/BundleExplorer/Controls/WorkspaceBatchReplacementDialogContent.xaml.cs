@@ -30,7 +30,6 @@ public sealed partial class WorkspaceBatchReplacementDialogContent : UserControl
         SourceSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSourceSectionHint);
         ChooseSourceDirectoryButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogChooseSourceDirectoryButton);
         RefreshPlanButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogRefreshButton);
-        SourceModeText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSourceModeAuto);
         BundleSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogBundleSectionTitle);
         BundleSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogBundleSectionHint);
         SelectAllBundlesButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSelectAllBundlesButton);
