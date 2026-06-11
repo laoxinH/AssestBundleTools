@@ -743,6 +743,49 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.True(candidate.Diagnostics.Contains("Ambiguous"), "Candidate should expose ambiguity diagnostics.");
     }
 
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldUseSourceDirectoryName_AsImplicitBundleForHeuristicPlan()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-audio");
+        var assetId = new AssetId("asset-cn-001");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterBundle(workspaceId, bundleId, "Voice_CN_char_002_amiya.ab", "ab/Voice_CN_char_002_amiya.ab");
+        registry.RegisterAssetListItem(new AssetListItemDto(
+            assetId,
+            bundleId,
+            "CN_001",
+            "dyn/audio/sound_beta_2/voice/CN_001",
+            AssetType.AudioClip,
+            SizeInBytes: 160,
+            PreferredDisplaySizeInBytes: 160,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: "AudioClip",
+            PathId: 1001,
+            DisplayName: "CN_001",
+            ExportFileName: "CN_001"));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("AudioClip/CN_001.wav", 72288);
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(
+            registry,
+            new TestWorkspaceExportManifestStore(null),
+            sourceProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\Export\Voice_CN_char_002_amiya.ab",
+            WorkspaceBatchReplacementMatchingMode.Heuristic));
+
+        TestAssert.True(result.IsSuccess, "Heuristic planning should support selecting a single bundle export directory.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected replacement plan.");
+        var candidate = TestAssert.Single(plan.Candidates);
+        TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.HighConfidence, candidate.MatchStatus, "Implicit bundle context should still produce high confidence.");
+        TestAssert.True(candidate.IsDefaultSelected, "High-confidence candidate should remain selected by default.");
+        TestAssert.Equal(bundleId, candidate.BundleId, "Candidate should resolve the bundle from source directory name.");
+        TestAssert.Equal(assetId, candidate.AssetId, "Candidate should resolve the audio target.");
+    }
+
     private static WorkspaceId CreateWorkspaceId() => new("workspace-session-1");
 
     private static WorkspaceExportManifestDto CreateManifest(

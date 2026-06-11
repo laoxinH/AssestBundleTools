@@ -280,6 +280,8 @@ manifest 缺失、损坏或用户显式选择时，才允许启发式匹配。
 - 批量提取标准目录：
   - 普通资源：`<AB>/<类型>/<文件>`
   - Spine 组：`<AB>/Spine/<组名>/<文件>`
+- 单个 AB 导出目录：
+  - 当用户直接选择 `<AB>` 目录时，普通资源允许使用 `<类型>/<文件>`，Spine 组允许使用 `Spine/<组名>/<文件>`；此时来源目录名作为隐式 AB 上下文参与匹配。
 - 用户手工整理目录：
   - 允许缺少 `<AB>` 层或 `<类型>` 层，但置信度必须降低。
   - 不允许递归扫描无限深目录；默认只扫描到 `4` 层，超过深度的文件归为 `IgnoredTooDeep`。
@@ -550,6 +552,7 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 第三阶段：启发式回退增强
 
 - 当前已在 manifest 缺失时提供保守的名称 / 目录 / 类型兼容匹配。
+- 当前已支持用户选择批量导出根目录或单个 AB 导出目录；单个 AB 目录会把目录名作为隐式 AB 上下文。
 - 当前已明确 `Ambiguous / TypeConflict / UnsupportedType / IgnoredTooDeep / MissingTarget` 等诊断，高风险项默认不选中。
 - 后续增强多候选的目标手动选择、启发式候选执行前二次确认、来源文件不可读细分诊断和更完整的低置信搜索辅助。
 

@@ -125,7 +125,7 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
         WorkspaceHeuristicIndex workspaceIndex)
     {
         var diagnostics = new List<string>();
-        var source = AnalyzeSourceFile(sourceFile);
+        var source = AnalyzeSourceFile(sourceRootDirectory, sourceFile);
         diagnostics.AddRange(source.Diagnostics);
         if (source.IsRejected)
         {
@@ -183,7 +183,9 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
             Diagnostics: diagnostics.Distinct(StringComparer.Ordinal).ToArray());
     }
 
-    private static SourceFileAnalysis AnalyzeSourceFile(WorkspaceBatchReplacementSourceFileEntryDto sourceFile)
+    private static SourceFileAnalysis AnalyzeSourceFile(
+        string sourceRootDirectory,
+        WorkspaceBatchReplacementSourceFileEntryDto sourceFile)
     {
         var diagnostics = new List<string>();
         var segments = sourceFile.RelativePath
@@ -223,7 +225,7 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
             segments,
             extension,
             name,
-            ResolveBundleSegment(segments),
+            ResolveBundleSegment(sourceRootDirectory, segments),
             typeSegment,
             spineGroupName,
             explicitType is null ? sourceTypes : [explicitType.Value],
@@ -318,7 +320,8 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
                 evidence.Add("SpineGroupMatched");
             }
 
-            if (source.Segments.Length < 3)
+            if (source.Segments.Length < 2 ||
+                source.Segments.Length < 3 && string.IsNullOrWhiteSpace(source.TypeSegment))
             {
                 score -= 30;
                 evidence.Add("NonStandardDirectory");
@@ -413,8 +416,17 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
                fileName.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string? ResolveBundleSegment(string[] segments) =>
-        segments.Length >= 3 ? segments[0] : null;
+    private static string? ResolveBundleSegment(string sourceRootDirectory, string[] segments)
+    {
+        if (segments.Length >= 3)
+        {
+            return string.Equals(segments[0], SpineSegment, StringComparison.OrdinalIgnoreCase)
+                ? Path.GetFileName(sourceRootDirectory)
+                : segments[0];
+        }
+
+        return segments.Length >= 2 ? Path.GetFileName(sourceRootDirectory) : null;
+    }
 
     private static string? ResolveTypeSegment(string[] segments)
     {
@@ -424,19 +436,29 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
             return segments[1];
         }
 
+        if (segments.Length >= 2 &&
+            !string.Equals(segments[0], SpineSegment, StringComparison.OrdinalIgnoreCase))
+        {
+            return segments[0];
+        }
+
         return null;
     }
 
     private static string? ResolveSpineGroupName(string[] segments) =>
-        segments.Length >= 4 &&
-        string.Equals(segments[1], SpineSegment, StringComparison.OrdinalIgnoreCase)
+        segments.Length >= 4 && string.Equals(segments[1], SpineSegment, StringComparison.OrdinalIgnoreCase)
             ? segments[2]
-            : null;
+            : segments.Length >= 3 && string.Equals(segments[0], SpineSegment, StringComparison.OrdinalIgnoreCase)
+                ? segments[1]
+                : null;
+
+    private static bool IsSpinePath(string[] segments) =>
+        segments.Length >= 2 && string.Equals(segments[0], SpineSegment, StringComparison.OrdinalIgnoreCase) ||
+        segments.Length >= 3 && string.Equals(segments[1], SpineSegment, StringComparison.OrdinalIgnoreCase);
 
     private static string ResolveOutputRole(string extension, string[] segments)
     {
-        if (segments.Length >= 2 &&
-            string.Equals(segments.ElementAtOrDefault(1), SpineSegment, StringComparison.OrdinalIgnoreCase))
+        if (IsSpinePath(segments))
         {
             return extension.ToLowerInvariant() switch
             {
@@ -509,50 +531,4 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
 
     [GeneratedRegex(@"\s\[\d+\]$", RegexOptions.CultureInvariant)]
     private static partial Regex OrdinalSuffixRegex();
-
-    private sealed record WorkspaceHeuristicIndex(
-        IReadOnlyList<BundleIndexEntry> Bundles,
-        IReadOnlyList<AssetIndexEntry> Assets);
-
-    private sealed record BundleIndexEntry(BundleId BundleId, string DisplayName, IReadOnlySet<string> MatchKeys);
-
-    private sealed record AssetIndexEntry(
-        BundleIndexEntry Bundle,
-        AssetId AssetId,
-        string Name,
-        string? DisplayName,
-        string AssetPath,
-        AssetType AssetType,
-        string? AssetTypeDisplayName,
-        long PathId,
-        AssetMatchKeys MatchKeys)
-    {
-        public IReadOnlySet<string> MatchKeysWithoutOrdinal => MatchKeys.WithoutOrdinal;
-    }
-
-    private sealed record AssetMatchKeys(
-        IReadOnlySet<string> Exact,
-        IReadOnlySet<string> WithoutOrdinal)
-    {
-        public bool Contains(string key) => Exact.Contains(key);
-    }
-
-    private sealed record SourceFileAnalysis(
-        string[] Segments,
-        string Extension,
-        string NameWithoutExtension,
-        string? BundleSegment,
-        string? TypeSegment,
-        string? SpineGroupName,
-        IReadOnlyList<AssetType> PossibleAssetTypes,
-        bool IsRejected,
-        IReadOnlyList<string> Diagnostics)
-    {
-        public string OutputRole => ResolveOutputRole(Extension, Segments);
-    }
-
-    private sealed record ScoredTarget(
-        AssetIndexEntry Target,
-        int Score,
-        IReadOnlyList<string> Diagnostics);
 }
