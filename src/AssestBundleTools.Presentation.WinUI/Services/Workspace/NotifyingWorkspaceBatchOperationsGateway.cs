@@ -22,13 +22,16 @@ internal sealed class NotifyingWorkspaceBatchOperationsGateway : IWorkspaceBatch
 {
     private readonly IWorkspaceBatchOperationsGateway _inner;
     private readonly IWorkspaceOperationChangeNotifier _operationChangeNotifier;
+    private readonly IWorkspaceAssociatedAssetImpactRegistry? _associatedAssetImpactRegistry;
 
     public NotifyingWorkspaceBatchOperationsGateway(
         IWorkspaceBatchOperationsGateway inner,
-        IWorkspaceOperationChangeNotifier operationChangeNotifier)
+        IWorkspaceOperationChangeNotifier operationChangeNotifier,
+        IWorkspaceAssociatedAssetImpactRegistry? associatedAssetImpactRegistry = null)
     {
         _inner = inner ?? throw new ArgumentNullException(nameof(inner));
         _operationChangeNotifier = operationChangeNotifier ?? throw new ArgumentNullException(nameof(operationChangeNotifier));
+        _associatedAssetImpactRegistry = associatedAssetImpactRegistry;
     }
 
     public Task<Result<WorkspaceChangeSummaryDto>> GetWorkspaceChangeSummaryAsync(
@@ -87,7 +90,7 @@ internal sealed class NotifyingWorkspaceBatchOperationsGateway : IWorkspaceBatch
             result,
             command.WorkspaceId,
             WorkspaceOperationChangeKind.Replacement,
-            CreateAffectedAssets(result.Value),
+            ExpandAffectedAssets(command.WorkspaceId, CreateAffectedAssets(result.Value)),
             reason: WorkspaceOperationChangeReason.BatchReplacementApplied);
         return result;
     }
@@ -139,7 +142,60 @@ internal sealed class NotifyingWorkspaceBatchOperationsGateway : IWorkspaceBatch
             .Where(static item => item.BundleId is not null && item.AssetId is not null)
             .Select(static item => new WorkspaceOperationAffectedAsset(
                 item.BundleId!.Value,
-                item.AssetId!.Value))
+                item.AssetId!.Value,
+                WorkspaceOperationAffectedAssetRole.PrimaryTarget))
             .ToArray();
     }
+
+    private IReadOnlyList<WorkspaceOperationAffectedAsset>? ExpandAffectedAssets(
+        WorkspaceId workspaceId,
+        IReadOnlyList<WorkspaceOperationAffectedAsset>? affectedAssets)
+    {
+        if (_associatedAssetImpactRegistry is null ||
+            affectedAssets is null ||
+            affectedAssets.Count == 0)
+        {
+            return affectedAssets;
+        }
+
+        var expandedAssets = new List<WorkspaceOperationAffectedAsset>(affectedAssets);
+        foreach (var affectedAsset in affectedAssets)
+        {
+            if (!_associatedAssetImpactRegistry.TryGetAssociatedAssetImpacts(
+                    workspaceId,
+                    affectedAsset.BundleId,
+                    affectedAsset.AssetId,
+                    out var impacts))
+            {
+                continue;
+            }
+
+            expandedAssets.AddRange(impacts.Select(static impact =>
+                new WorkspaceOperationAffectedAsset(
+                    impact.BundleId,
+                    impact.AssetId,
+                    WorkspaceOperationAffectedAssetRole.ImplicitAffectedTarget)));
+        }
+
+        return NormalizeAffectedAssets(expandedAssets);
+    }
+
+    private static IReadOnlyList<WorkspaceOperationAffectedAsset> NormalizeAffectedAssets(
+        IEnumerable<WorkspaceOperationAffectedAsset> affectedAssets) =>
+        affectedAssets
+            .Where(static item => item is not null)
+            .GroupBy(static item => string.Concat(item.BundleId.Value, "\n", item.AssetId.Value), StringComparer.Ordinal)
+            .Select(static group => group
+                .OrderBy(static item => GetRolePriority(item.Role))
+                .First())
+            .ToArray();
+
+    private static int GetRolePriority(WorkspaceOperationAffectedAssetRole role) =>
+        role switch
+        {
+            WorkspaceOperationAffectedAssetRole.PrimaryTarget => 0,
+            WorkspaceOperationAffectedAssetRole.RelatedTarget => 1,
+            WorkspaceOperationAffectedAssetRole.ImplicitAffectedTarget => 2,
+            _ => 3
+        };
 }

@@ -518,7 +518,7 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 通知：
 
 - 成功执行后发布带 `Reason = BatchReplacementApplied` 的工作区操作通知。
-- 通知必须携带已替换资源的 affected targets；跳过项、未变化项和失败项不进入 affected targets。
+- 通知必须携带已替换资源的 affected targets，并通过统一关联资源影响注册表展开隐式受影响目标；跳过项、未变化项和失败项不进入 affected targets。
 - 对 Spine 组成文件同批替换，通知层按组聚合，Presentation 先刷新轻量操作投影，再合并富预览刷新。
 - `Unchanged`、跳过项和失败项不应触发目标预览刷新。
 

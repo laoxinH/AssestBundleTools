@@ -287,7 +287,8 @@ internal static class AppCompositionRoot
             executeWorkspaceBatchReplacementHandler: executeWorkspaceBatchReplacementHandler);
         var workspaceBatchOperationsGateway = new NotifyingWorkspaceBatchOperationsGateway(
             workspaceBatchOperationsGatewayCore,
-            workspaceOperationChangeNotifier);
+            workspaceOperationChangeNotifier,
+            workspaceSessionRegistry);
         var workspaceCatalogGateway = new WorkspaceCatalogGateway(
             getWorkspaceCatalogSnapshotHandler: getWorkspaceCatalogSnapshotHandler,
             registerWorkspaceCatalogEntryHandler: registerWorkspaceCatalogEntryHandler,
