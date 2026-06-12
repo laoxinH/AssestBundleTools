@@ -5,6 +5,27 @@ namespace AssestBundleTools.Application.Replacement.Services;
 
 internal static partial class WorkspaceBatchReplacementHeuristicPlanner
 {
+    private static string? GetDirectoryNameSegment(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        return Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+    }
+
+    private static string? GetParentDirectoryNameSegment(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        var parent = Path.GetDirectoryName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        return GetDirectoryNameSegment(parent);
+    }
+
     private sealed record WorkspaceHeuristicIndex(
         IReadOnlyList<BundleIndexEntry> Bundles,
         IReadOnlyList<AssetIndexEntry> Assets);

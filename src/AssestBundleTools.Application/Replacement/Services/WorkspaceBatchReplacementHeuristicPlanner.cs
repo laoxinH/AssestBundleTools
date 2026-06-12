@@ -204,7 +204,7 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
             return new SourceFileAnalysis(segments, extension, string.Empty, null, null, null, Array.Empty<AssetType>(), true, diagnostics);
         }
 
-        var typeSegment = ResolveTypeSegment(segments);
+        var typeSegment = ResolveTypeSegment(sourceRootDirectory, segments);
         var explicitType = ParseAssetType(typeSegment);
         if (explicitType is not null &&
             !sourceTypes.Contains(explicitType.Value))
@@ -320,8 +320,7 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
                 evidence.Add("SpineGroupMatched");
             }
 
-            if (source.Segments.Length < 2 ||
-                source.Segments.Length < 3 && string.IsNullOrWhiteSpace(source.TypeSegment))
+            if (source.Segments.Length < 3 && string.IsNullOrWhiteSpace(source.TypeSegment))
             {
                 score -= 30;
                 evidence.Add("NonStandardDirectory");
@@ -425,10 +424,17 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
                 : segments[0];
         }
 
-        return segments.Length >= 2 ? Path.GetFileName(sourceRootDirectory) : null;
+        if (segments.Length >= 2)
+        {
+            return GetDirectoryNameSegment(sourceRootDirectory);
+        }
+
+        return ParseAssetType(GetDirectoryNameSegment(sourceRootDirectory)) is not null
+            ? GetParentDirectoryNameSegment(sourceRootDirectory)
+            : null;
     }
 
-    private static string? ResolveTypeSegment(string[] segments)
+    private static string? ResolveTypeSegment(string sourceRootDirectory, string[] segments)
     {
         if (segments.Length >= 3 &&
             !string.Equals(segments[1], SpineSegment, StringComparison.OrdinalIgnoreCase))
@@ -440,6 +446,13 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
             !string.Equals(segments[0], SpineSegment, StringComparison.OrdinalIgnoreCase))
         {
             return segments[0];
+        }
+
+        var rootDirectoryName = GetDirectoryNameSegment(sourceRootDirectory);
+        if (segments.Length >= 1 &&
+            ParseAssetType(rootDirectoryName) is not null)
+        {
+            return rootDirectoryName;
         }
 
         return null;
