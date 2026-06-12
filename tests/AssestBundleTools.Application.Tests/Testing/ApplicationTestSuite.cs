@@ -379,6 +379,10 @@ internal static partial class ApplicationTestSuite
             ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldPreferSpineGroupScope_FromStandardExportRoot);
         await RunTestAsync(
             failures,
+            nameof(ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldPreserveSpineGroupOrdinalScope_FromSpineDirectory),
+            ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldPreserveSpineGroupOrdinalScope_FromSpineDirectory);
+        await RunTestAsync(
+            failures,
             nameof(ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldUseSpineGroupDirectoryAndAncestorBundle_ForHeuristicPlan),
             ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldUseSpineGroupDirectoryAndAncestorBundle_ForHeuristicPlan);
         await RunTestAsync(

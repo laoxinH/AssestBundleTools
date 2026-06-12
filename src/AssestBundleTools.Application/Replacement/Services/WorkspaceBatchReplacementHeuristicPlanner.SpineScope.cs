@@ -13,24 +13,60 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
             return scoredTargets;
         }
 
-        var spineGroupKey = StripOrdinalSuffix(NormalizeName(source.SpineGroupName));
-        var directoryMatches = scoredTargets
-            .Where(target => TargetHasSpineGroupDirectory(target.Target, spineGroupKey))
+        var exactSpineGroupKey = NormalizeName(source.SpineGroupName);
+        var exactDirectoryMatches = scoredTargets
+            .Where(target => TargetHasSpineGroupDirectory(target.Target, exactSpineGroupKey, stripOrdinal: false))
             .ToArray();
-        if (directoryMatches.Length > 0)
+        if (exactDirectoryMatches.Length > 0)
         {
-            return directoryMatches;
+            return PreferSourceExtensionMatches(exactDirectoryMatches, source);
+        }
+
+        var spineGroupKeyWithoutOrdinal = StripOrdinalSuffix(exactSpineGroupKey);
+        var ordinalDirectoryMatches = scoredTargets
+            .Where(target => TargetHasSpineGroupDirectory(target.Target, spineGroupKeyWithoutOrdinal, stripOrdinal: true))
+            .ToArray();
+        if (ordinalDirectoryMatches.Length > 0)
+        {
+            return PreferSourceExtensionMatches(ordinalDirectoryMatches, source);
         }
 
         var groupMatches = scoredTargets
-            .Where(target => target.Target.MatchKeysWithoutOrdinal.Contains(spineGroupKey))
+            .Where(target => target.Target.MatchKeysWithoutOrdinal.Contains(spineGroupKeyWithoutOrdinal))
             .ToArray();
         return groupMatches.Length > 0
             ? groupMatches
             : scoredTargets;
     }
 
-    private static bool TargetHasSpineGroupDirectory(AssetIndexEntry target, string spineGroupKey)
+    private static IReadOnlyList<ScoredTarget> PreferSourceExtensionMatches(
+        IReadOnlyList<ScoredTarget> targets,
+        SourceFileAnalysis source)
+    {
+        if (string.IsNullOrWhiteSpace(source.Extension))
+        {
+            return targets;
+        }
+
+        var extensionMatches = targets
+            .Where(target => TargetExtensionMatchesSource(target.Target, source.Extension))
+            .ToArray();
+        return extensionMatches.Length > 0
+            ? extensionMatches
+            : targets;
+    }
+
+    private static bool TargetExtensionMatchesSource(AssetIndexEntry target, string sourceExtension)
+    {
+        var targetExtension = Path.GetExtension(target.AssetPath);
+        return !string.IsNullOrWhiteSpace(targetExtension) &&
+               string.Equals(targetExtension, sourceExtension, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TargetHasSpineGroupDirectory(
+        AssetIndexEntry target,
+        string spineGroupKey,
+        bool stripOrdinal)
     {
         var segments = target.AssetPath
             .Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -41,7 +77,9 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
 
         return segments
             .Take(segments.Length - 1)
-            .Select(static segment => StripOrdinalSuffix(NormalizeName(segment)))
+            .Select(segment => stripOrdinal
+                ? StripOrdinalSuffix(NormalizeName(segment))
+                : NormalizeName(segment))
             .Contains(spineGroupKey, StringComparer.OrdinalIgnoreCase);
     }
 }

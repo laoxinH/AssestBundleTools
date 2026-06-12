@@ -949,6 +949,42 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.False(candidate.Diagnostics.Contains("Ambiguous"), "Spine group scoped match should not be marked ambiguous.");
     }
 
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldPreserveSpineGroupOrdinalScope_FromSpineDirectory()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-spine");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterBundle(workspaceId, bundleId, "char_1001_amiya2.ab", "ab/char_1001_amiya2.ab");
+        RegisterSpineGroupParts(registry, bundleId, "char_1001_amiya2_casc#1 [1]", "one");
+        RegisterSpineGroupParts(registry, bundleId, "char_1001_amiya2_casc#1 [2]", "two");
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("char_1001_amiya2_casc#1 [1]/char_1001_amiya2_casc#1.atlas", 4096);
+        sourceProbe.RegisterFile("char_1001_amiya2_casc#1 [1]/char_1001_amiya2_casc#1.png", 4096);
+        sourceProbe.RegisterFile("char_1001_amiya2_casc#1 [1]/char_1001_amiya2_casc#1.skel", 4096);
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(
+            registry,
+            new TestWorkspaceExportManifestStore(null),
+            sourceProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\Export\char_1001_amiya2.ab\Spine",
+            WorkspaceBatchReplacementMatchingMode.Heuristic));
+
+        TestAssert.True(result.IsSuccess, "Heuristic planning should support selecting the Spine directory without a manifest.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected replacement plan.");
+        TestAssert.Equal(3, plan.Candidates.Count, "All three source Spine parts should be planned.");
+        foreach (var candidate in plan.Candidates)
+        {
+            TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.HighConfidence, candidate.MatchStatus, "Exact Spine group ordinal should disambiguate same-name group parts.");
+            TestAssert.True(candidate.IsDefaultSelected, "High-confidence Spine parts should be selected by default.");
+            TestAssert.True(candidate.AssetId?.Value.EndsWith("-one", StringComparison.Ordinal) == true, "Candidate should resolve to the [1] group assets.");
+            TestAssert.Equal("char_1001_amiya2_casc#1 [1]", candidate.SpineGroupId, "Candidate should preserve the exact source Spine group.");
+            TestAssert.False(candidate.Diagnostics.Contains("Ambiguous"), "Exact Spine group scope should not be marked ambiguous.");
+        }
+    }
+
     public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldUseSpineGroupDirectoryAndAncestorBundle_ForHeuristicPlan()
     {
         var workspaceId = CreateWorkspaceId();
@@ -995,6 +1031,41 @@ internal static class ReplacementWorkflowHandlerTests
     }
 
     private static WorkspaceId CreateWorkspaceId() => new("workspace-session-1");
+
+    private static void RegisterSpineGroupParts(
+        TestWorkspaceSessionRegistry registry,
+        BundleId bundleId,
+        string groupName,
+        string suffix)
+    {
+        RegisterSpineGroupPart(registry, bundleId, groupName, suffix, "atlas", AssetType.TextAsset);
+        RegisterSpineGroupPart(registry, bundleId, groupName, suffix, "skel", AssetType.TextAsset);
+        RegisterSpineGroupPart(registry, bundleId, groupName, suffix, "png", AssetType.Texture2D);
+    }
+
+    private static void RegisterSpineGroupPart(
+        TestWorkspaceSessionRegistry registry,
+        BundleId bundleId,
+        string groupName,
+        string suffix,
+        string extension,
+        AssetType assetType)
+    {
+        registry.RegisterAssetListItem(new AssetListItemDto(
+            new AssetId($"asset-{extension}-{suffix}"),
+            bundleId,
+            "char_1001_amiya2_casc#1",
+            $"Spine/{groupName}/char_1001_amiya2_casc#1.{extension}",
+            assetType,
+            SizeInBytes: 1024,
+            PreferredDisplaySizeInBytes: 1024,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: assetType.ToString(),
+            PathId: (suffix == "one" ? 3100 : 3200) + extension.Length,
+            DisplayName: "char_1001_amiya2_casc#1",
+            ExportFileName: "char_1001_amiya2_casc#1"));
+    }
 
     private static WorkspaceExportManifestDto CreateManifest(
         string workspaceKey,
