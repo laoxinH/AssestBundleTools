@@ -6,11 +6,13 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs
 
 public sealed partial class WorkspaceBatchReplacementDialogViewModel
 {
-    private string BuildSubtitle(WorkspaceBatchReplacementCandidateDto candidate)
+    private string BuildSubtitle(WorkspaceBatchReplacementCandidateDto candidate, string? typeNameOverride = null)
     {
-        var typeName = string.IsNullOrWhiteSpace(candidate.AssetTypeDisplayName)
-            ? candidate.AssetType.ToString()
-            : candidate.AssetTypeDisplayName;
+        var typeName = !string.IsNullOrWhiteSpace(typeNameOverride)
+            ? typeNameOverride
+            : string.IsNullOrWhiteSpace(candidate.AssetTypeDisplayName)
+                ? candidate.AssetType.ToString()
+                : candidate.AssetTypeDisplayName;
         return $"{candidate.BundleDisplayName} · {typeName}";
     }
 

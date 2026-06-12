@@ -574,6 +574,65 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.Equal(2, sourceProbe.HashRequestCount, "Hash should only be requested for files whose size matches the manifest.");
     }
 
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldKeepSpineGroupMetadata_FromManifestItems()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-spine");
+        var textureAssetId = new AssetId("spine-texture");
+        var atlasAssetId = new AssetId("spine-atlas");
+        var spineGroupId = "char_452_bstalk_snow#4 [1]";
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, textureAssetId, AssetType.Texture2D, "char_452_bstalk_snow#4"));
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, atlasAssetId, AssetType.TextAsset, "char_452_bstalk_snow#4"));
+        var manifestStore = new TestWorkspaceExportManifestStore(CreateManifest(
+            "workspace-key",
+            [
+                CreateManifestItem(
+                    bundleId,
+                    textureAssetId,
+                    "char_452_bstalk.ab/Spine/char_452_bstalk_snow#4 [1]/char_452_bstalk_snow#4.png",
+                    100,
+                    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "Texture2D",
+                    WorkspaceExportManifestOutputRole.SpineTexturePage,
+                    spineGroupId,
+                    spineGroupId),
+                CreateManifestItem(
+                    bundleId,
+                    atlasAssetId,
+                    "char_452_bstalk.ab/Spine/char_452_bstalk_snow#4 [1]/char_452_bstalk_snow#4.atlas",
+                    100,
+                    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                    "TextAsset",
+                    WorkspaceExportManifestOutputRole.SpineAtlas,
+                    spineGroupId,
+                    spineGroupId)
+            ]));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.Register("char_452_bstalk.ab/Spine/char_452_bstalk_snow#4 [1]/char_452_bstalk_snow#4.png", exists: true, size: 128, hash: null);
+        sourceProbe.Register("char_452_bstalk.ab/Spine/char_452_bstalk_snow#4 [1]/char_452_bstalk_snow#4.atlas", exists: true, size: 128, hash: null);
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(registry, manifestStore, sourceProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\Export",
+            WorkspaceBatchReplacementMatchingMode.Manifest));
+
+        TestAssert.True(result.IsSuccess, "Manifest replacement plan should keep Spine metadata.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected replacement plan.");
+        TestAssert.Equal(2, plan.ChangedCount, "Both changed Spine component files should remain executable candidates.");
+        TestAssert.True(
+            plan.Candidates.All(candidate => string.Equals(candidate.SpineGroupId, spineGroupId, StringComparison.Ordinal)),
+            "Manifest candidates for Spine group parts should keep the shared SpineGroupId for UI grouping and execution ordering.");
+        TestAssert.True(
+            plan.Candidates.Any(candidate => candidate.OutputRole == WorkspaceExportManifestOutputRole.SpineTexturePage.ToString()),
+            "Manifest Spine texture page candidates should keep the texture page output role.");
+        TestAssert.True(
+            plan.Candidates.Any(candidate => candidate.OutputRole == WorkspaceExportManifestOutputRole.SpineAtlas.ToString()),
+            "Manifest Spine atlas candidates should keep the atlas output role.");
+    }
+
     public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldReturnManifestIssue_WhenWorkspaceKeyDiffers()
     {
         var workspaceId = CreateWorkspaceId();
@@ -892,21 +951,25 @@ internal static class ReplacementWorkflowHandlerTests
         AssetId assetId,
         string relativePath,
         long exportedFileSizeInBytes,
-        string exportedFileHash) =>
+        string exportedFileHash,
+        string assetType = "Texture2D",
+        WorkspaceExportManifestOutputRole outputRole = WorkspaceExportManifestOutputRole.Asset,
+        string? spineGroupId = null,
+        string? spineGroupDisplayName = null) =>
         new(
             RelativePath: relativePath,
             BundleId: bundleId.Value,
             BundleDisplayName: "Alpha",
             AssetId: assetId.Value,
             PathId: 12345,
-            AssetType: "Texture2D",
-            AssetTypeDisplayName: "Texture2D",
+            AssetType: assetType,
+            AssetTypeDisplayName: assetType,
             OriginalName: assetId.Value,
             DisambiguatedName: assetId.Value,
             ContainerPath: null,
-            OutputRole: WorkspaceExportManifestOutputRole.Asset,
-            SpineGroupId: null,
-            SpineGroupDisplayName: null,
+            OutputRole: outputRole,
+            SpineGroupId: spineGroupId,
+            SpineGroupDisplayName: spineGroupDisplayName,
             ExportedFileSizeInBytes: exportedFileSizeInBytes,
             ExportedFileHashAlgorithm: "MD5",
             ExportedFileHash: exportedFileHash,

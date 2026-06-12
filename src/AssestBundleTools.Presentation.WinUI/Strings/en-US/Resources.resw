@@ -802,7 +802,7 @@
     <value>Replacement Candidates</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.CandidateSection.Hint" xml:space="preserve">
-    <value>This phase only builds the manifest exact-match plan; execution will open in the next phase.</value>
+    <value>Review matched assets and Spine groups, then start replacement.</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.CandidateSearch.Placeholder" xml:space="preserve">
     <value>Search candidates</value>
@@ -812,6 +812,9 @@
   </data>
   <data name="WorkspaceBatchReplacementDialog.TypeFilter.All" xml:space="preserve">
     <value>All types</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.TypeFilter.Spine" xml:space="preserve">
+    <value>Spine</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.TypeFilter.Selected.Format" xml:space="preserve">
     <value>{0} types</value>

@@ -10,7 +10,7 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel
     public IReadOnlyList<WorkspaceBatchReplacementCandidateDto> GetSelectedCandidates() =>
         Candidates
             .Where(static candidate => candidate.IsSelected)
-            .Select(static candidate => candidate.Candidate)
+            .SelectMany(static candidate => candidate.ReplacementCandidates)
             .ToArray();
 
     public void SetExecuting()

@@ -802,7 +802,7 @@
     <value>替换候选</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.CandidateSection.Hint" xml:space="preserve">
-    <value>当前阶段只生成 manifest 精确匹配计划，真实执行将在下一阶段开放。</value>
+    <value>查看已匹配的资源和 Spine 组，确认后开始替换。</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.CandidateSearch.Placeholder" xml:space="preserve">
     <value>搜索候选资源</value>
@@ -812,6 +812,9 @@
   </data>
   <data name="WorkspaceBatchReplacementDialog.TypeFilter.All" xml:space="preserve">
     <value>全部类型</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.TypeFilter.Spine" xml:space="preserve">
+    <value>Spine</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.TypeFilter.Selected.Format" xml:space="preserve">
     <value>已选 {0} 类</value>

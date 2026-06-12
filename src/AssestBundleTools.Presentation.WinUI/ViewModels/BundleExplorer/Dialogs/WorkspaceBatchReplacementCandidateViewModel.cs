@@ -9,37 +9,58 @@ public sealed class WorkspaceBatchReplacementCandidateViewModel : ObservableObje
 {
     private bool _isSelected;
     private bool _isVisible = true;
+    private readonly string? _displayName;
 
     public WorkspaceBatchReplacementCandidateViewModel(
         WorkspaceBatchReplacementCandidateDto candidate,
         string statusText,
         string subtitleText,
-        bool canSelect)
+        bool canSelect,
+        IReadOnlyList<WorkspaceBatchReplacementCandidateDto>? replacementCandidates = null,
+        string? typeFilterKey = null,
+        string? typeFilterText = null,
+        string? displayName = null,
+        string? relativePathText = null)
     {
         Candidate = candidate ?? throw new ArgumentNullException(nameof(candidate));
+        ReplacementCandidates = replacementCandidates is { Count: > 0 }
+            ? replacementCandidates
+            : [candidate];
         StatusText = statusText;
         SubtitleText = subtitleText;
         CanSelect = canSelect;
-        _isSelected = candidate.IsDefaultSelected && canSelect;
+        TypeFilterKey = string.IsNullOrWhiteSpace(typeFilterKey) ? ResolveDefaultTypeFilterText(candidate) : typeFilterKey;
+        TypeFilterText = string.IsNullOrWhiteSpace(typeFilterText) ? ResolveDefaultTypeFilterText(candidate) : typeFilterText;
+        _displayName = displayName;
+        RelativePathText = string.IsNullOrWhiteSpace(relativePathText) ? candidate.RelativePath : relativePathText;
+        _isSelected = ReplacementCandidates.Any(static item => item.IsDefaultSelected) && canSelect;
     }
 
     public WorkspaceBatchReplacementCandidateDto Candidate { get; }
 
+    public IReadOnlyList<WorkspaceBatchReplacementCandidateDto> ReplacementCandidates { get; }
+
     public BundleId? BundleId => Candidate.BundleId;
 
-    public string AssetName => string.IsNullOrWhiteSpace(Candidate.AssetName)
-        ? Candidate.RelativePath
-        : Candidate.AssetName;
+    public string BundleDisplayNameForOrdering => Candidate.BundleDisplayName;
+
+    public string AssetName => !string.IsNullOrWhiteSpace(_displayName)
+        ? _displayName!
+        : string.IsNullOrWhiteSpace(Candidate.AssetName)
+            ? Candidate.RelativePath
+            : Candidate.AssetName;
 
     public string StatusText { get; }
 
     public string SubtitleText { get; }
 
-    public string TypeFilterText => string.IsNullOrWhiteSpace(Candidate.AssetTypeDisplayName)
-        ? Candidate.AssetType.ToString()
-        : Candidate.AssetTypeDisplayName;
+    public string TypeFilterKey { get; }
 
-    public string RelativePath => Candidate.RelativePath;
+    public string TypeFilterText { get; }
+
+    public string RelativePath => RelativePathText;
+
+    public string RelativePathText { get; }
 
     public bool CanSelect { get; }
 
@@ -60,4 +81,9 @@ public sealed class WorkspaceBatchReplacementCandidateViewModel : ObservableObje
         get => _isVisible;
         set => SetProperty(ref _isVisible, value);
     }
+
+    private static string ResolveDefaultTypeFilterText(WorkspaceBatchReplacementCandidateDto candidate) =>
+        string.IsNullOrWhiteSpace(candidate.AssetTypeDisplayName)
+            ? candidate.AssetType.ToString()
+            : candidate.AssetTypeDisplayName;
 }

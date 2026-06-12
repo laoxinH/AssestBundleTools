@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.Localization;
@@ -12,6 +13,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs
 
 public sealed partial class WorkspaceBatchReplacementDialogViewModel : ObservableObject
 {
+    private const string SpineTypeFilterKey = "__spine";
     private readonly ILocalizationService _localizationService;
     private readonly Dictionary<string, BundleNodeViewModel> _bundleNodesById;
     private string _sourceDirectory = string.Empty;
@@ -204,13 +206,9 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
         StatusFilters.Clear();
         TypeFilters.Clear();
 
-        foreach (var candidate in plan.Candidates)
+        foreach (var candidate in CreateDisplayCandidates(plan.Candidates))
         {
-            Candidates.Add(new WorkspaceBatchReplacementCandidateViewModel(
-                candidate,
-                ResolveStatusText(candidate.MatchStatus),
-                BuildSubtitle(candidate),
-                CanSelectCandidate(candidate.MatchStatus)));
+            Candidates.Add(candidate);
         }
         SubscribeCandidateSelectionChanged();
 
@@ -314,13 +312,14 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
                 ResolveStatusText(status)));
         }
 
-        foreach (var typeName in Candidates
-            .Select(static candidate => candidate.TypeFilterText)
-            .Where(static value => !string.IsNullOrWhiteSpace(value))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(static value => value, StringComparer.CurrentCultureIgnoreCase))
+        foreach (var type in Candidates
+            .Select(static candidate => new { candidate.TypeFilterKey, candidate.TypeFilterText })
+            .Where(static value => !string.IsNullOrWhiteSpace(value.TypeFilterKey))
+            .GroupBy(static value => value.TypeFilterKey, StringComparer.OrdinalIgnoreCase)
+            .Select(static group => group.First())
+            .OrderBy(static value => value.TypeFilterText, StringComparer.CurrentCultureIgnoreCase))
         {
-            TypeFilters.Add(new WorkspaceBatchReplacementFilterOptionViewModel(typeName, typeName));
+            TypeFilters.Add(new WorkspaceBatchReplacementFilterOptionViewModel(type.TypeFilterKey, type.TypeFilterText));
         }
 
         SubscribeTypeFilterSelectionChanged();
@@ -380,7 +379,7 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
             }
 
             if (typeFilters.Count > 0 &&
-                !typeFilters.Contains(candidate.TypeFilterText))
+                !typeFilters.Contains(candidate.TypeFilterKey))
             {
                 continue;
             }
@@ -448,7 +447,16 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
         Contains(candidate.SubtitleText, searchText) ||
         Contains(candidate.RelativePath, searchText) ||
         Contains(candidate.Candidate.ContainerPath, searchText) ||
-        Contains(candidate.Candidate.FullPath, searchText);
+        Contains(candidate.Candidate.FullPath, searchText) ||
+        candidate.ReplacementCandidates.Any(item => MatchesSearch(item, searchText));
+
+    private static bool MatchesSearch(WorkspaceBatchReplacementCandidateDto candidate, string searchText) =>
+        Contains(candidate.AssetName, searchText) ||
+        Contains(candidate.RelativePath, searchText) ||
+        Contains(candidate.ContainerPath, searchText) ||
+        Contains(candidate.FullPath, searchText) ||
+        Contains(candidate.SpineGroupDisplayName, searchText) ||
+        Contains(candidate.OutputRole, searchText);
 
     private static bool Contains(string? value, string searchText) =>
         !string.IsNullOrWhiteSpace(value) &&
@@ -495,4 +503,83 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
+
+    private IReadOnlyList<WorkspaceBatchReplacementCandidateViewModel> CreateDisplayCandidates(
+        IReadOnlyList<WorkspaceBatchReplacementCandidateDto> candidates)
+    {
+        var displayCandidates = new List<WorkspaceBatchReplacementCandidateViewModel>();
+        foreach (var ordinaryCandidate in candidates
+                     .Where(static candidate => string.IsNullOrWhiteSpace(candidate.SpineGroupId)))
+        {
+            displayCandidates.Add(CreateCandidateViewModel(ordinaryCandidate));
+        }
+
+        var spineTypeText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogTypeFilterSpine);
+        foreach (var group in candidates
+                     .Where(static candidate => !string.IsNullOrWhiteSpace(candidate.SpineGroupId))
+                     .GroupBy(static candidate => string.Concat(
+                         candidate.BundleId?.Value,
+                         "\n",
+                         candidate.SpineGroupId,
+                         "\n",
+                         candidate.MatchStatus),
+                         StringComparer.Ordinal)
+                     .OrderBy(static group => group.First().BundleDisplayName, StringComparer.OrdinalIgnoreCase)
+                     .ThenBy(static group => group.First().SpineGroupDisplayName ?? group.First().SpineGroupId, StringComparer.OrdinalIgnoreCase))
+        {
+            var groupCandidates = group
+                .OrderBy(static candidate => candidate.OutputRole, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(static candidate => candidate.AssetName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+            var representative = groupCandidates[0];
+            var displayName = string.IsNullOrWhiteSpace(representative.SpineGroupDisplayName)
+                ? representative.AssetName
+                : representative.SpineGroupDisplayName!;
+            displayCandidates.Add(CreateCandidateViewModel(
+                representative,
+                groupCandidates,
+                SpineTypeFilterKey,
+                spineTypeText,
+                displayName,
+                ResolveSpineGroupRelativePath(groupCandidates)));
+        }
+
+        return displayCandidates
+            .OrderBy(static candidate => candidate.BundleDisplayNameForOrdering, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static candidate => candidate.AssetName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static candidate => candidate.RelativePath, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private WorkspaceBatchReplacementCandidateViewModel CreateCandidateViewModel(
+        WorkspaceBatchReplacementCandidateDto candidate,
+        IReadOnlyList<WorkspaceBatchReplacementCandidateDto>? replacementCandidates = null,
+        string? typeFilterKey = null,
+        string? typeFilterText = null,
+        string? displayName = null,
+        string? relativePathText = null) =>
+        new(
+            candidate,
+            ResolveStatusText(candidate.MatchStatus),
+            BuildSubtitle(candidate, typeFilterText),
+            CanSelectCandidate(candidate.MatchStatus),
+            replacementCandidates,
+            typeFilterKey,
+            typeFilterText,
+            displayName,
+            relativePathText);
+
+    private static string ResolveSpineGroupRelativePath(IReadOnlyList<WorkspaceBatchReplacementCandidateDto> candidates)
+    {
+        var first = candidates[0];
+        if (candidates.Count == 1)
+        {
+            return first.RelativePath;
+        }
+
+        var groupPath = Path.GetDirectoryName(first.RelativePath.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar));
+        return string.IsNullOrWhiteSpace(groupPath)
+            ? first.RelativePath
+            : groupPath.Replace(Path.DirectorySeparatorChar, '/');
+    }
 }

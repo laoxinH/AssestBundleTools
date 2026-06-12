@@ -475,6 +475,7 @@ WorkspaceBatchReplacementResultDto
 - Presentation 不直接解析 manifest、不直接计算 MD5、不直接扫描 AB。
 - 执行时仍逐项复用单资源 `ReplaceAssetFromFileHandler` 并追加真实 `ReplaceFromFile` 操作记录；Spine 组替换要拆成真实组成资产的替换记录，并共享同一 `batchId / relationId`。
 - 当前真实执行范围为 `.atlas`、`.skel`、`.json` 文本组成文件、`.png` 图片资源、`.wav/.mp3/.ogg` 音频资源，以及由这些组成文件构成的 Spine 组候选；其他候选只进入跳过结果，不写替换操作记录。
+- 候选区对同一 `SpineGroupId`、同一状态的组成文件采用组级展示和 `Spine` 类型筛选；用户勾选该组级候选时，提交阶段展开为组内真实组成资产候选。
 - 如果一批 Spine 组包含 skeleton、atlas、texture page 多个组成文件，执行完成后只发布一次聚合操作通知，避免预览多次闪烁。
 
 ## 7. 后台任务与性能
@@ -556,6 +557,7 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 - 已新增批量替换执行命令，命令携带 UI 已确认候选快照。
 - 已逐项复用单资源文件替换能力，并通过现有记录器写入 `ReplaceFromFile` 操作记录。
 - 已按“普通候选先执行、Spine 组候选后执行”的顺序处理；Spine 组候选拆成组成资产替换，并共享批次关系和 Spine 组关联关系。
+- 已让批量替换候选区将 manifest / 启发式计划中的 Spine 组成文件按组展示，类型筛选显示独立 `Spine` 选项，提交时再展开为真实组成资产执行。
 - 已接入 `BatchReplacement` 可见后台任务、进度、完成摘要和操作通知聚合。
 - 当前仍未开放低置信/多候选的目标手动确认执行页；这些候选若被用户勾选，会按支持范围执行或进入跳过结果。
 - 批处理任务页中的旧批量替换卡片、旧 source kind 和旧摘要 ViewModel 已移除；工作台级批量替换窗口是唯一入口。
