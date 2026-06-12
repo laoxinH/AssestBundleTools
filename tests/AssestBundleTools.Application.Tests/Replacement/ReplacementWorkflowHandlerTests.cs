@@ -633,6 +633,66 @@ internal static class ReplacementWorkflowHandlerTests
             "Manifest Spine atlas candidates should keep the atlas output role.");
     }
 
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldSupplementSpineDirectories_WhenManifestMissesSpineItems()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-spine");
+        var ordinaryTextureAssetId = new AssetId("ordinary-texture");
+        var spineTextureAssetId = new AssetId("spine-texture");
+        var spineGroupId = "char_1001_amiya2_sale#16 [1]";
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterBundle(workspaceId, bundleId, "char_1001_amiya2.ab", "ab/char_1001_amiya2.ab");
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, ordinaryTextureAssetId, AssetType.Texture2D, "char_1001_amiya2_sale#16"));
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, spineTextureAssetId, AssetType.Texture2D, "char_1001_amiya2_sale#16"));
+        registry.RegisterAssetListItem(new AssetListItemDto(
+            spineTextureAssetId,
+            bundleId,
+            "char_1001_amiya2_sale#16",
+            "CAB/spine/char_1001_amiya2_sale#16",
+            AssetType.Texture2D,
+            SizeInBytes: 160,
+            PreferredDisplaySizeInBytes: 160,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: "Texture2D",
+            PathId: 2001,
+            DisplayName: "char_1001_amiya2_sale#16",
+            ExportFileName: "char_1001_amiya2_sale#16"));
+        var manifestStore = new TestWorkspaceExportManifestStore(CreateManifest(
+            "workspace-key",
+            [
+                CreateManifestItem(
+                    bundleId,
+                    ordinaryTextureAssetId,
+                    "char_1001_amiya2.ab/Texture2D/char_1001_amiya2_sale#16 [1].png",
+                    100,
+                    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            ]));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.Register("char_1001_amiya2.ab/Texture2D/char_1001_amiya2_sale#16 [1].png", exists: true, size: 100, hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        sourceProbe.RegisterFile("char_1001_amiya2.ab/Spine/char_1001_amiya2_sale#16 [1]/char_1001_amiya2_sale#16.png", 219261);
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(registry, manifestStore, sourceProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\Export",
+            WorkspaceBatchReplacementMatchingMode.Manifest));
+
+        TestAssert.True(result.IsSuccess, "Manifest mode should supplement Spine directory candidates that older manifests did not record.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected replacement plan.");
+        var spineCandidate = TestAssert.Single(plan.Candidates
+            .Where(static candidate => !string.IsNullOrWhiteSpace(candidate.SpineGroupId))
+            .ToArray());
+        TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.Changed, spineCandidate.MatchStatus, "High-confidence supplemental Spine candidates should appear as changed in manifest plans.");
+        TestAssert.True(spineCandidate.IsDefaultSelected, "Supplemental executable Spine candidates should be selected by default.");
+        TestAssert.Equal(spineGroupId, spineCandidate.SpineGroupId, "The supplemental candidate should infer the Spine group from the export directory.");
+        TestAssert.Equal("TexturePage", spineCandidate.OutputRole, "The supplemental candidate should keep the Spine texture page role.");
+        TestAssert.True(
+            spineCandidate.Diagnostics.Contains("ManifestSpineDirectorySupplement", StringComparer.Ordinal),
+            "Diagnostics should show that this candidate came from a manifest Spine directory supplement.");
+    }
+
     public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldReturnManifestIssue_WhenWorkspaceKeyDiffers()
     {
         var workspaceId = CreateWorkspaceId();
