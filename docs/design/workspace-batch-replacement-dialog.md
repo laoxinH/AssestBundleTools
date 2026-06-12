@@ -35,7 +35,6 @@
 3. 用户选择外部目录：
    - 如果目录根部存在 `_abt-export-manifest.json`，进入 `Manifest 精确匹配` 模式。
    - 如果没有 manifest，进入 `启发式匹配` 模式，并在窗口中明确标记可靠性较低。
-   - 如果 manifest 存在但未记录同一导出根下的 `Spine/<组名>/<文件>`，允许用启发式规则补充未覆盖的 Spine 组组成候选。
 4. 窗口后台生成替换计划：
    - manifest 模式按稳定身份回读目标资源。
    - 先比较当前文件大小；大小不同直接列为已修改。
@@ -269,8 +268,6 @@ manifest 模式是默认推荐路径。输入为导出目录根部 `_abt-export-
 7. 文件大小相同且 MD5 相同：`Unchanged`
 
 manifest 模式下只有 `Changed` 默认进入可执行候选。`Unchanged` 只展示在摘要或可选筛选中，不追加替换操作记录。
-
-manifest 可读时仍以 manifest 为主，不对普通资源目录做额外启发式扫描。唯一补充例外是导出根下存在 manifest 未覆盖的 Spine 目录：计划生成器可以扫描 `Spine/<组名>/<文件>` 形态，补齐旧 manifest 或普通资源项遮住 Spine 目录时遗漏的 Spine 组成候选。补充候选必须带 `ManifestSpineDirectorySupplement` 诊断，且不得覆盖 manifest 已明确记录的相对路径。
 
 ### 5.2 启发式匹配
 
@@ -561,7 +558,6 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 - 已逐项复用单资源文件替换能力，并通过现有记录器写入 `ReplaceFromFile` 操作记录。
 - 已按“普通候选先执行、Spine 组候选后执行”的顺序处理；Spine 组候选拆成组成资产替换，并共享批次关系和 Spine 组关联关系。
 - 已让批量替换候选区将 manifest / 启发式计划中的 Spine 组成文件按组展示，类型筛选显示独立 `Spine` 选项，提交时再展开为真实组成资产执行。
-- 已让 manifest 计划补充扫描 manifest 未覆盖的 Spine 导出目录，避免旧 manifest 或普通资源 manifest 项遮住实际修改过的 Spine 组目录。
 - 已接入 `BatchReplacement` 可见后台任务、进度、完成摘要和操作通知聚合。
 - 当前仍未开放低置信/多候选的目标手动确认执行页；这些候选若被用户勾选，会按支持范围执行或进入跳过结果。
 - 批处理任务页中的旧批量替换卡片、旧 source kind 和旧摘要 ViewModel 已移除；工作台级批量替换窗口是唯一入口。

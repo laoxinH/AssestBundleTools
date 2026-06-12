@@ -119,14 +119,6 @@ public sealed class GetWorkspaceBatchReplacementPlanHandler : IQueryHandler<GetW
             }
         }
 
-        var supplementalSpineCandidates = await CreateSupplementalManifestSpineCandidatesAsync(
-            query,
-            sourceRootDirectory,
-            manifest,
-            candidates,
-            cancellationToken);
-        candidates.AddRange(supplementalSpineCandidates);
-
         return Result<WorkspaceBatchReplacementPlanDto>.Success(CreatePlan(
             query,
             sourceRootDirectory,
@@ -135,60 +127,6 @@ public sealed class GetWorkspaceBatchReplacementPlanHandler : IQueryHandler<GetW
             manifest.WorkspaceKey,
             manifest.Items.Count,
             candidates));
-    }
-
-    private async Task<IReadOnlyList<WorkspaceBatchReplacementCandidateDto>> CreateSupplementalManifestSpineCandidatesAsync(
-        GetWorkspaceBatchReplacementPlanQuery query,
-        string sourceRootDirectory,
-        WorkspaceExportManifestDto manifest,
-        IReadOnlyList<WorkspaceBatchReplacementCandidateDto> manifestCandidates,
-        CancellationToken cancellationToken)
-    {
-        var manifestPaths = manifest.Items
-            .Select(static item => item.RelativePath)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var candidatePaths = manifestCandidates
-            .Select(static candidate => candidate.RelativePath)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var heuristicPlan = await WorkspaceBatchReplacementHeuristicPlanner.BuildPlanAsync(
-            _workspaceSessionRegistry,
-            _sourceFileProbe,
-            query.WorkspaceId,
-            sourceRootDirectory,
-            cancellationToken);
-
-        return heuristicPlan.Candidates
-            .Where(candidate =>
-                !string.IsNullOrWhiteSpace(candidate.SpineGroupId) &&
-                !manifestPaths.Contains(candidate.RelativePath) &&
-                !candidatePaths.Contains(candidate.RelativePath) &&
-                candidate.MatchStatus is not WorkspaceBatchReplacementMatchStatus.Rejected)
-            .Select(NormalizeSupplementalManifestSpineCandidate)
-            .ToArray();
-    }
-
-    private static WorkspaceBatchReplacementCandidateDto NormalizeSupplementalManifestSpineCandidate(
-        WorkspaceBatchReplacementCandidateDto candidate)
-    {
-        var diagnostics = candidate.Diagnostics
-            .Append("ManifestSpineDirectorySupplement")
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
-        return candidate.MatchStatus == WorkspaceBatchReplacementMatchStatus.HighConfidence
-            ? candidate with
-            {
-                CandidateId = $"manifest-spine-supplement:{candidate.CandidateId}",
-                MatchStatus = WorkspaceBatchReplacementMatchStatus.Changed,
-                MatchMode = WorkspaceBatchReplacementMatchingMode.Manifest,
-                IsDefaultSelected = true,
-                Diagnostics = diagnostics
-            }
-            : candidate with
-            {
-                CandidateId = $"manifest-spine-supplement:{candidate.CandidateId}",
-                MatchMode = WorkspaceBatchReplacementMatchingMode.Manifest,
-                Diagnostics = diagnostics
-            };
     }
 
     private async Task<WorkspaceBatchReplacementCandidateDto> CreateManifestCandidateAsync(
