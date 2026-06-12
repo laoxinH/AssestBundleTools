@@ -26,6 +26,48 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
         return GetDirectoryNameSegment(parent);
     }
 
+    private static string? GetAncestorDirectoryNameSegment(string? path, int parentLevels)
+    {
+        if (string.IsNullOrWhiteSpace(path) ||
+            parentLevels < 1)
+        {
+            return null;
+        }
+
+        var current = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        for (var index = 0; index < parentLevels; index++)
+        {
+            current = Path.GetDirectoryName(current);
+            if (string.IsNullOrWhiteSpace(current))
+            {
+                return null;
+            }
+        }
+
+        return GetDirectoryNameSegment(current);
+    }
+
+    private static SourceRootContext CreateSourceRootContext(string sourceRootDirectory)
+    {
+        var rootName = GetDirectoryNameSegment(sourceRootDirectory);
+        var parentName = GetParentDirectoryNameSegment(sourceRootDirectory);
+        return new SourceRootContext(
+            RootName: rootName,
+            ParentName: parentName,
+            GrandParentName: GetAncestorDirectoryNameSegment(sourceRootDirectory, 2),
+            IsSpineRoot: string.Equals(rootName, SpineSegment, StringComparison.OrdinalIgnoreCase),
+            IsSpineGroupRoot: string.Equals(parentName, SpineSegment, StringComparison.OrdinalIgnoreCase),
+            RootTypeSegment: ParseAssetType(rootName) is null ? null : rootName);
+    }
+
+    private sealed record SourceRootContext(
+        string? RootName,
+        string? ParentName,
+        string? GrandParentName,
+        bool IsSpineRoot,
+        bool IsSpineGroupRoot,
+        string? RootTypeSegment);
+
     private sealed record WorkspaceHeuristicIndex(
         IReadOnlyList<BundleIndexEntry> Bundles,
         IReadOnlyList<AssetIndexEntry> Assets);
@@ -60,9 +102,10 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
         string? SpineGroupName,
         IReadOnlyList<AssetType> PossibleAssetTypes,
         bool IsRejected,
-        IReadOnlyList<string> Diagnostics)
+        IReadOnlyList<string> Diagnostics,
+        bool IsSpineContext)
     {
-        public string OutputRole => ResolveOutputRole(Extension, Segments);
+        public string OutputRole => ResolveOutputRole(Extension, Segments, IsSpineContext);
     }
 
     private sealed record ScoredTarget(AssetIndexEntry Target, int Score, IReadOnlyList<string> Diagnostics);

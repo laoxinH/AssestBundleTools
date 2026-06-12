@@ -830,6 +830,96 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.True(candidate.Diagnostics.Contains("TypeDirectoryMatched"), "Candidate should treat the selected source directory as the type directory.");
     }
 
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldUseSpineDirectoryAndParentBundle_ForHeuristicPlan()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-spine");
+        var assetId = new AssetId("asset-atlas");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterBundle(workspaceId, bundleId, "char_452_bstalk.ab", "ab/char_452_bstalk.ab");
+        registry.RegisterAssetListItem(new AssetListItemDto(
+            assetId,
+            bundleId,
+            "char_452_bstalk_snow#4",
+            "char_452_bstalk_snow#4.atlas",
+            AssetType.TextAsset,
+            SizeInBytes: 512,
+            PreferredDisplaySizeInBytes: 512,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: "TextAsset",
+            PathId: 2001,
+            DisplayName: "char_452_bstalk_snow#4",
+            ExportFileName: "char_452_bstalk_snow#4"));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("char_452_bstalk_snow#4 [1]/char_452_bstalk_snow#4.atlas", 2048);
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(
+            registry,
+            new TestWorkspaceExportManifestStore(null),
+            sourceProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\Export\char_452_bstalk.ab\Spine",
+            WorkspaceBatchReplacementMatchingMode.Heuristic));
+
+        TestAssert.True(result.IsSuccess, "Heuristic planning should support selecting the Spine directory under a bundle export directory.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected replacement plan.");
+        var candidate = TestAssert.Single(plan.Candidates);
+        TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.HighConfidence, candidate.MatchStatus, "Implicit Spine directory context should produce high confidence.");
+        TestAssert.True(candidate.IsDefaultSelected, "High-confidence Spine candidate should remain selected by default.");
+        TestAssert.Equal(bundleId, candidate.BundleId, "Candidate should resolve the bundle from the Spine directory parent.");
+        TestAssert.Equal(assetId, candidate.AssetId, "Candidate should resolve the atlas target.");
+        TestAssert.Equal("char_452_bstalk_snow#4 [1]", candidate.SpineGroupId, "Candidate should resolve the Spine group from the relative path.");
+        TestAssert.Equal("Atlas", candidate.OutputRole, "Atlas files under Spine context should resolve the atlas output role.");
+    }
+
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldUseSpineGroupDirectoryAndAncestorBundle_ForHeuristicPlan()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-spine");
+        var assetId = new AssetId("asset-page");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterBundle(workspaceId, bundleId, "char_452_bstalk.ab", "ab/char_452_bstalk.ab");
+        registry.RegisterAssetListItem(new AssetListItemDto(
+            assetId,
+            bundleId,
+            "char_452_bstalk_snow#4",
+            "char_452_bstalk_snow#4.png",
+            AssetType.Texture2D,
+            SizeInBytes: 1024,
+            PreferredDisplaySizeInBytes: 1024,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: "Texture2D",
+            PathId: 2002,
+            DisplayName: "char_452_bstalk_snow#4",
+            ExportFileName: "char_452_bstalk_snow#4"));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("char_452_bstalk_snow#4.png", 4096);
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(
+            registry,
+            new TestWorkspaceExportManifestStore(null),
+            sourceProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\Export\char_452_bstalk.ab\Spine\char_452_bstalk_snow#4 [1]",
+            WorkspaceBatchReplacementMatchingMode.Heuristic));
+
+        TestAssert.True(result.IsSuccess, "Heuristic planning should support selecting a single Spine group directory.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected replacement plan.");
+        var candidate = TestAssert.Single(plan.Candidates);
+        TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.HighConfidence, candidate.MatchStatus, "Implicit Spine group context should produce high confidence.");
+        TestAssert.True(candidate.IsDefaultSelected, "High-confidence Spine group candidate should remain selected by default.");
+        TestAssert.Equal(bundleId, candidate.BundleId, "Candidate should resolve the bundle from the Spine group directory ancestor.");
+        TestAssert.Equal(assetId, candidate.AssetId, "Candidate should resolve the texture page target.");
+        TestAssert.Equal("char_452_bstalk_snow#4 [1]", candidate.SpineGroupId, "Candidate should resolve the Spine group from the selected directory name.");
+        TestAssert.Equal("TexturePage", candidate.OutputRole, "Texture files under Spine context should resolve the texture page output role.");
+    }
+
     private static WorkspaceId CreateWorkspaceId() => new("workspace-session-1");
 
     private static WorkspaceExportManifestDto CreateManifest(

@@ -193,7 +193,7 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
         if (segments.Length > MaximumDepth)
         {
             diagnostics.Add("IgnoredTooDeep");
-            return new SourceFileAnalysis(segments, Path.GetExtension(sourceFile.RelativePath), string.Empty, null, null, null, Array.Empty<AssetType>(), true, diagnostics);
+            return new SourceFileAnalysis(segments, Path.GetExtension(sourceFile.RelativePath), string.Empty, null, null, null, Array.Empty<AssetType>(), true, diagnostics, false);
         }
 
         var extension = Path.GetExtension(sourceFile.RelativePath);
@@ -201,21 +201,22 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
         if (sourceTypes.Length == 0)
         {
             diagnostics.Add("UnsupportedType");
-            return new SourceFileAnalysis(segments, extension, string.Empty, null, null, null, Array.Empty<AssetType>(), true, diagnostics);
+            return new SourceFileAnalysis(segments, extension, string.Empty, null, null, null, Array.Empty<AssetType>(), true, diagnostics, false);
         }
 
-        var typeSegment = ResolveTypeSegment(sourceRootDirectory, segments);
+        var sourceRoot = CreateSourceRootContext(sourceRootDirectory);
+        var isSpineContext = IsSpineContext(sourceRoot, segments);
+        var typeSegment = ResolveTypeSegment(sourceRoot, segments);
         var explicitType = ParseAssetType(typeSegment);
         if (explicitType is not null &&
             !sourceTypes.Contains(explicitType.Value))
         {
             diagnostics.Add("TypeConflict");
-            return new SourceFileAnalysis(segments, extension, string.Empty, null, typeSegment, null, sourceTypes, true, diagnostics);
+            return new SourceFileAnalysis(segments, extension, string.Empty, null, typeSegment, null, sourceTypes, true, diagnostics, isSpineContext);
         }
 
-        var outputRole = ResolveOutputRole(extension, segments);
         var name = Path.GetFileNameWithoutExtension(sourceFile.RelativePath);
-        var spineGroupName = ResolveSpineGroupName(segments);
+        var spineGroupName = ResolveSpineGroupName(sourceRoot, segments);
         if (!string.IsNullOrWhiteSpace(spineGroupName))
         {
             diagnostics.Add("SpineGroupInferred");
@@ -225,12 +226,13 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
             segments,
             extension,
             name,
-            ResolveBundleSegment(sourceRootDirectory, segments),
+            ResolveBundleSegment(sourceRoot, segments),
             typeSegment,
             spineGroupName,
             explicitType is null ? sourceTypes : [explicitType.Value],
             false,
-            diagnostics);
+            diagnostics,
+            isSpineContext);
     }
 
     private static IReadOnlyList<BundleIndexEntry> ResolveBundleMatches(
@@ -314,13 +316,15 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
             }
 
             if (!string.IsNullOrWhiteSpace(source.SpineGroupName) &&
-                target.MatchKeysWithoutOrdinal.Contains(NormalizeName(source.SpineGroupName)))
+                target.MatchKeysWithoutOrdinal.Contains(StripOrdinalSuffix(NormalizeName(source.SpineGroupName))))
             {
                 score += 15;
                 evidence.Add("SpineGroupMatched");
             }
 
-            if (source.Segments.Length < 3 && string.IsNullOrWhiteSpace(source.TypeSegment))
+            if (!source.IsSpineContext &&
+                source.Segments.Length < 3 &&
+                string.IsNullOrWhiteSpace(source.TypeSegment))
             {
                 score -= 30;
                 evidence.Add("NonStandardDirectory");
@@ -413,76 +417,6 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
         return string.Equals(fileName, "_abt-export-manifest.json", StringComparison.OrdinalIgnoreCase) ||
                fileName.StartsWith("~", StringComparison.Ordinal) ||
                fileName.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static string? ResolveBundleSegment(string sourceRootDirectory, string[] segments)
-    {
-        if (segments.Length >= 3)
-        {
-            return string.Equals(segments[0], SpineSegment, StringComparison.OrdinalIgnoreCase)
-                ? Path.GetFileName(sourceRootDirectory)
-                : segments[0];
-        }
-
-        if (segments.Length >= 2)
-        {
-            return GetDirectoryNameSegment(sourceRootDirectory);
-        }
-
-        return ParseAssetType(GetDirectoryNameSegment(sourceRootDirectory)) is not null
-            ? GetParentDirectoryNameSegment(sourceRootDirectory)
-            : null;
-    }
-
-    private static string? ResolveTypeSegment(string sourceRootDirectory, string[] segments)
-    {
-        if (segments.Length >= 3 &&
-            !string.Equals(segments[1], SpineSegment, StringComparison.OrdinalIgnoreCase))
-        {
-            return segments[1];
-        }
-
-        if (segments.Length >= 2 &&
-            !string.Equals(segments[0], SpineSegment, StringComparison.OrdinalIgnoreCase))
-        {
-            return segments[0];
-        }
-
-        var rootDirectoryName = GetDirectoryNameSegment(sourceRootDirectory);
-        if (segments.Length >= 1 &&
-            ParseAssetType(rootDirectoryName) is not null)
-        {
-            return rootDirectoryName;
-        }
-
-        return null;
-    }
-
-    private static string? ResolveSpineGroupName(string[] segments) =>
-        segments.Length >= 4 && string.Equals(segments[1], SpineSegment, StringComparison.OrdinalIgnoreCase)
-            ? segments[2]
-            : segments.Length >= 3 && string.Equals(segments[0], SpineSegment, StringComparison.OrdinalIgnoreCase)
-                ? segments[1]
-                : null;
-
-    private static bool IsSpinePath(string[] segments) =>
-        segments.Length >= 2 && string.Equals(segments[0], SpineSegment, StringComparison.OrdinalIgnoreCase) ||
-        segments.Length >= 3 && string.Equals(segments[1], SpineSegment, StringComparison.OrdinalIgnoreCase);
-
-    private static string ResolveOutputRole(string extension, string[] segments)
-    {
-        if (IsSpinePath(segments))
-        {
-            return extension.ToLowerInvariant() switch
-            {
-                ".atlas" => "Atlas",
-                ".skel" or ".json" => "Skeleton",
-                ".png" or ".jpg" or ".jpeg" or ".bmp" or ".tga" or ".dds" => "TexturePage",
-                _ => "SpinePart"
-            };
-        }
-
-        return "Asset";
     }
 
     private static AssetType? ParseAssetType(string? value) =>

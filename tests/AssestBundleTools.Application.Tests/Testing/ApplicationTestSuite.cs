@@ -375,6 +375,14 @@ internal static partial class ApplicationTestSuite
             ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldUseSourceDirectoryTypeAndParentBundle_ForHeuristicPlan);
         await RunTestAsync(
             failures,
+            nameof(ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldUseSpineDirectoryAndParentBundle_ForHeuristicPlan),
+            ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldUseSpineDirectoryAndParentBundle_ForHeuristicPlan);
+        await RunTestAsync(
+            failures,
+            nameof(ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldUseSpineGroupDirectoryAndAncestorBundle_ForHeuristicPlan),
+            ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldUseSpineGroupDirectoryAndAncestorBundle_ForHeuristicPlan);
+        await RunTestAsync(
+            failures,
             nameof(SaveWorkspaceHandlersTests.GetWorkspaceSavePreviewHandler_ShouldReturnFailure_WhenWorkspaceDoesNotExist),
             SaveWorkspaceHandlersTests.GetWorkspaceSavePreviewHandler_ShouldReturnFailure_WhenWorkspaceDoesNotExist);
         await RunTestAsync(
