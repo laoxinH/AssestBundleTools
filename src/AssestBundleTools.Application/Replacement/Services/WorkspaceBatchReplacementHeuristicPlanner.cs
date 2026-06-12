@@ -134,6 +134,7 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
 
         var bundleMatches = ResolveBundleMatches(source, workspaceIndex, diagnostics);
         var scoredTargets = ScoreTargets(source, workspaceIndex, bundleMatches, diagnostics)
+            .ApplySpineGroupPreferredScope(source)
             .OrderByDescending(static scored => scored.Score)
             .ThenBy(static scored => scored.Target.Bundle.DisplayName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(static scored => scored.Target.DisplayName, StringComparer.OrdinalIgnoreCase)

@@ -889,6 +889,66 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.Equal("Atlas", candidate.OutputRole, "Atlas files under Spine context should resolve the atlas output role.");
     }
 
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldPreferSpineGroupScope_FromStandardExportRoot()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-spine");
+        var groupAssetId = new AssetId("asset-group-page");
+        var looseAssetId = new AssetId("asset-loose-page");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterBundle(workspaceId, bundleId, "char_1001_amiya2.ab", "ab/char_1001_amiya2.ab");
+        registry.RegisterAssetListItem(new AssetListItemDto(
+            groupAssetId,
+            bundleId,
+            "char_1001_amiya2_casc#1",
+            "Spine/char_1001_amiya2_casc#1 [1]/char_1001_amiya2_casc#1.png",
+            AssetType.Texture2D,
+            SizeInBytes: 1024,
+            PreferredDisplaySizeInBytes: 1024,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: "Texture2D",
+            PathId: 3001,
+            DisplayName: "char_1001_amiya2_casc#1",
+            ExportFileName: "char_1001_amiya2_casc#1"));
+        registry.RegisterAssetListItem(new AssetListItemDto(
+            looseAssetId,
+            bundleId,
+            "char_1001_amiya2_casc#1",
+            "Texture2D/char_1001_amiya2_casc#1.png",
+            AssetType.Texture2D,
+            SizeInBytes: 1024,
+            PreferredDisplaySizeInBytes: 1024,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: "Texture2D",
+            PathId: 3002,
+            DisplayName: "char_1001_amiya2_casc#1",
+            ExportFileName: "char_1001_amiya2_casc#1"));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("char_1001_amiya2.ab/Spine/char_1001_amiya2_casc#1 [1]/char_1001_amiya2_casc#1.png", 4096);
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(
+            registry,
+            new TestWorkspaceExportManifestStore(null),
+            sourceProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\Export",
+            WorkspaceBatchReplacementMatchingMode.Heuristic));
+
+        TestAssert.True(result.IsSuccess, "Heuristic planning should support standard export roots without a manifest.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected replacement plan.");
+        var candidate = TestAssert.Single(plan.Candidates);
+        TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.HighConfidence, candidate.MatchStatus, "Spine group context should disambiguate same-name texture targets.");
+        TestAssert.True(candidate.IsDefaultSelected, "High-confidence Spine texture page should be selected by default.");
+        TestAssert.Equal(groupAssetId, candidate.AssetId, "Candidate should prefer the target whose path belongs to the inferred Spine group.");
+        TestAssert.Equal("char_1001_amiya2_casc#1 [1]", candidate.SpineGroupId, "Candidate should preserve the source Spine group.");
+        TestAssert.Equal("TexturePage", candidate.OutputRole, "Texture files under Spine context should resolve the texture page output role.");
+        TestAssert.False(candidate.Diagnostics.Contains("Ambiguous"), "Spine group scoped match should not be marked ambiguous.");
+    }
+
     public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldUseSpineGroupDirectoryAndAncestorBundle_ForHeuristicPlan()
     {
         var workspaceId = CreateWorkspaceId();
