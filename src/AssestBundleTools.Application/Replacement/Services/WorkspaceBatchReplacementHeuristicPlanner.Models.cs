@@ -72,6 +72,16 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
         IReadOnlyList<BundleIndexEntry> Bundles,
         IReadOnlyList<AssetIndexEntry> Assets);
 
+    private sealed record SpineGroupHeuristicIndex(IReadOnlyList<SpineGroupTargetEntry> Entries)
+    {
+        public static SpineGroupHeuristicIndex Empty { get; } = new(Array.Empty<SpineGroupTargetEntry>());
+    }
+
+    private sealed record SpineGroupTargetEntry(
+        AssetIndexEntry Target,
+        IReadOnlySet<string> GroupMatchKeys,
+        string OutputRole);
+
     private sealed record BundleIndexEntry(BundleId BundleId, string DisplayName, IReadOnlySet<string> MatchKeys);
 
     private sealed record AssetIndexEntry(

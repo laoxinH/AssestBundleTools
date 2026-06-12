@@ -1,6 +1,9 @@
 using System.IO;
 using System.Text.RegularExpressions;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Queries;
+using AssestBundleTools.Application.Common.Abstractions;
+using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
@@ -25,6 +28,7 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
 
     public static async Task<WorkspaceBatchReplacementPlanDto> BuildPlanAsync(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
+        IQueryHandler<LoadSpineAssetGroupsQuery, Result<SpineAssetGroupListResultDto>>? loadSpineAssetGroupsHandler,
         IWorkspaceBatchReplacementSourceFileProbe sourceFileProbe,
         WorkspaceId workspaceId,
         string sourceRootDirectory,
@@ -44,9 +48,14 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
 
         var sourceFiles = sourceFilesResult.Value ?? Array.Empty<WorkspaceBatchReplacementSourceFileEntryDto>();
         var workspaceIndex = BuildWorkspaceIndex(workspaceSessionRegistry, workspaceId);
+        var spineGroupIndex = await BuildSpineGroupIndexAsync(
+            loadSpineAssetGroupsHandler,
+            workspaceId,
+            workspaceIndex,
+            cancellationToken);
         var candidates = sourceFiles
             .Where(static file => !ShouldIgnoreFile(file.RelativePath))
-            .Select(file => CreateCandidate(sourceRootDirectory, file, workspaceIndex))
+            .Select(file => CreateCandidate(sourceRootDirectory, file, workspaceIndex, spineGroupIndex))
             .OrderBy(static candidate => candidate.BundleDisplayName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(static candidate => candidate.AssetName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(static candidate => candidate.RelativePath, StringComparer.OrdinalIgnoreCase)
@@ -122,7 +131,8 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
     private static WorkspaceBatchReplacementCandidateDto CreateCandidate(
         string sourceRootDirectory,
         WorkspaceBatchReplacementSourceFileEntryDto sourceFile,
-        WorkspaceHeuristicIndex workspaceIndex)
+        WorkspaceHeuristicIndex workspaceIndex,
+        SpineGroupHeuristicIndex spineGroupIndex)
     {
         var diagnostics = new List<string>();
         var source = AnalyzeSourceFile(sourceRootDirectory, sourceFile);
@@ -133,6 +143,11 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
         }
 
         var bundleMatches = ResolveBundleMatches(source, workspaceIndex, diagnostics);
+        if (TryResolveSpineGroupTarget(source, bundleMatches, spineGroupIndex, diagnostics, out var spineTarget))
+        {
+            return CreateMatchedCandidate(sourceFile, source, diagnostics, spineTarget, WorkspaceBatchReplacementMatchStatus.HighConfidence);
+        }
+
         var scoredTargets = ScoreTargets(source, workspaceIndex, bundleMatches, diagnostics)
             .ApplySpineGroupPreferredScope(source)
             .OrderByDescending(static scored => scored.Score)
@@ -156,32 +171,7 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
         }
 
         diagnostics.AddRange(top.Diagnostics);
-        var target = top.Target;
-        return new WorkspaceBatchReplacementCandidateDto(
-            CandidateId: $"heuristic:{sourceFile.RelativePath}:{target.Bundle.BundleId.Value}:{target.AssetId.Value}",
-            BundleId: target.Bundle.BundleId,
-            BundleDisplayName: target.Bundle.DisplayName,
-            AssetId: target.AssetId,
-            PathId: target.PathId,
-            AssetType: target.AssetType,
-            AssetTypeDisplayName: target.AssetTypeDisplayName,
-            AssetName: ResolveTargetDisplayName(target),
-            ContainerPath: target.AssetPath,
-            RelativePath: sourceFile.RelativePath,
-            FullPath: sourceFile.FullPath,
-            CurrentFileSizeInBytes: sourceFile.SizeInBytes,
-            CurrentFileHashAlgorithm: null,
-            CurrentFileHash: null,
-            ExportedFileSizeInBytes: 0,
-            ExportedFileHashAlgorithm: string.Empty,
-            ExportedFileHash: string.Empty,
-            SpineGroupId: source.SpineGroupName,
-            SpineGroupDisplayName: source.SpineGroupName,
-            OutputRole: source.OutputRole,
-            MatchStatus: status,
-            MatchMode: WorkspaceBatchReplacementMatchingMode.Heuristic,
-            IsDefaultSelected: status == WorkspaceBatchReplacementMatchStatus.HighConfidence,
-            Diagnostics: diagnostics.Distinct(StringComparer.Ordinal).ToArray());
+        return CreateMatchedCandidate(sourceFile, source, diagnostics, top.Target, status);
     }
 
     private static SourceFileAnalysis AnalyzeSourceFile(

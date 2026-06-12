@@ -187,7 +187,8 @@ internal static class AppCompositionRoot
         var getWorkspaceBatchReplacementPlanHandler = new GetWorkspaceBatchReplacementPlanHandler(
             workspaceSessionRegistry,
             workspaceExportManifestStore,
-            workspaceBatchReplacementSourceFileProbe);
+            workspaceBatchReplacementSourceFileProbe,
+            loadSpineAssetGroupsHandler);
         var getFileReplacementCandidateHandler = new GetFileReplacementCandidateHandler(workspaceSessionRegistry);
         var getWorkspaceReplacementCandidatesHandler = new GetWorkspaceReplacementCandidatesHandler(workspaceSessionRegistry);
         var workspaceReplacementOperationRecorder = new WorkspaceReplacementOperationRecorder(

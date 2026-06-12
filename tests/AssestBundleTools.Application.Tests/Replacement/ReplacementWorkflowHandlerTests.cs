@@ -1,5 +1,6 @@
 using System.IO;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
@@ -1013,12 +1014,48 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.Equal(3, plan.Candidates.Count, "All three source Spine parts should be planned from the standard export root.");
         foreach (var candidate in plan.Candidates)
         {
-            TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.HighConfidence, candidate.MatchStatus, "Exact Spine group ordinal should disambiguate same-name group parts from the export root.");
+            TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.HighConfidence, candidate.MatchStatus, "Exact Spine group ordinal should disambiguate same-name group parts from the export root: " + FormatCandidate(candidate));
             TestAssert.True(candidate.IsDefaultSelected, "High-confidence Spine parts should be selected by default.");
             TestAssert.True(candidate.AssetId?.Value.EndsWith("-one", StringComparison.Ordinal) == true, "Candidate should resolve to the [1] group assets.");
             TestAssert.Equal("char_1001_amiya2.ab", candidate.BundleDisplayName, "Candidate should resolve the bundle from the first path segment.");
             TestAssert.Equal("char_1001_amiya2_casc#1 [1]", candidate.SpineGroupId, "Candidate should preserve the exact source Spine group.");
             TestAssert.False(candidate.Diagnostics.Contains("Ambiguous"), "Exact Spine group scope from the export root should not be marked ambiguous.");
+        }
+    }
+
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldUseSpineGroupCatalog_ForDuplicateHeuristicParts()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-spine");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterBundle(workspaceId, bundleId, "char_1001_amiya2.ab", "ab/char_1001_amiya2.ab");
+        RegisterLinkedDuplicateSpineGroup(registry, workspaceId, bundleId, "one");
+        RegisterLinkedDuplicateSpineGroup(registry, workspaceId, bundleId, "two");
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("char_1001_amiya2.ab/Spine/Hero [1]/Hero.atlas", 4096);
+        sourceProbe.RegisterFile("char_1001_amiya2.ab/Spine/Hero [1]/Hero.png", 4096);
+        sourceProbe.RegisterFile("char_1001_amiya2.ab/Spine/Hero [1]/Hero.skel", 4096);
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(
+            registry,
+            new TestWorkspaceExportManifestStore(null),
+            sourceProbe,
+            new LoadSpineAssetGroupsHandler(registry));
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\Export",
+            WorkspaceBatchReplacementMatchingMode.Heuristic));
+
+        TestAssert.True(result.IsSuccess, "Heuristic planning should use the existing Spine group catalog when manifest is missing.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected replacement plan.");
+        TestAssert.Equal(3, plan.Candidates.Count, "All exported parts from the selected Spine group should be planned.");
+        foreach (var candidate in plan.Candidates)
+        {
+            TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.HighConfidence, candidate.MatchStatus, "Spine catalog should resolve duplicate same-name parts without ambiguity: " + FormatCandidate(candidate));
+            TestAssert.True(candidate.AssetId?.Value.EndsWith("-one", StringComparison.Ordinal) == true, "Candidate should resolve to the first dependency-linked Spine group.");
+            TestAssert.True(candidate.Diagnostics.Contains("SpineGroupCatalogMatched"), "Candidate should expose the catalog match evidence.");
+            TestAssert.False(candidate.Diagnostics.Contains("Ambiguous"), "Catalog-resolved duplicate Spine parts should not be marked ambiguous.");
         }
     }
 
@@ -1069,6 +1106,16 @@ internal static class ReplacementWorkflowHandlerTests
 
     private static WorkspaceId CreateWorkspaceId() => new("workspace-session-1");
 
+    private static string FormatCandidate(WorkspaceBatchReplacementCandidateDto candidate) =>
+        string.Concat(
+            candidate.RelativePath,
+            " => ",
+            candidate.AssetId?.Value ?? "<none>",
+            " / ",
+            candidate.MatchStatus,
+            " / ",
+            string.Join(",", candidate.Diagnostics));
+
     private static void RegisterSpineGroupParts(
         TestWorkspaceSessionRegistry registry,
         BundleId bundleId,
@@ -1103,6 +1150,82 @@ internal static class ReplacementWorkflowHandlerTests
             DisplayName: "char_1001_amiya2_casc#1",
             ExportFileName: "char_1001_amiya2_casc#1"));
     }
+
+    private static void RegisterLinkedDuplicateSpineGroup(
+        TestWorkspaceSessionRegistry registry,
+        WorkspaceId workspaceId,
+        BundleId bundleId,
+        string suffix)
+    {
+        RegisterAssetListItemWithDetails(registry, workspaceId, bundleId, $"skel-{suffix}", "Assets/Hero/Hero.skel", AssetType.TextAsset);
+        RegisterAssetListItemWithDetails(registry, workspaceId, bundleId, $"atlas-{suffix}", "Assets/Hero/Hero.atlas", AssetType.TextAsset);
+        RegisterAssetListItemWithDetails(registry, workspaceId, bundleId, $"texture-{suffix}", "Assets/Hero/Hero.png", AssetType.Texture2D);
+        RegisterAssetListItemWithDetails(registry, workspaceId, bundleId, $"material-{suffix}", "Assets/Hero/Hero_Material", AssetType.Material, dependencies:
+        [
+            CreateDependency(bundleId, $"texture-{suffix}", "Hero", AssetType.Texture2D)
+        ]);
+        RegisterAssetListItemWithDetails(registry, workspaceId, bundleId, $"atlas-object-{suffix}", "Assets/Hero/Hero_Atlas", AssetType.Unknown, "MonoBehaviour", dependencies:
+        [
+            CreateDependency(bundleId, $"atlas-{suffix}", "Hero.atlas", AssetType.TextAsset),
+            CreateDependency(bundleId, $"material-{suffix}", "Hero_Material", AssetType.Material)
+        ]);
+        RegisterAssetListItemWithDetails(registry, workspaceId, bundleId, $"skeleton-data-{suffix}", "Assets/Hero/Hero_SkeletonData", AssetType.Unknown, "MonoBehaviour", dependencies:
+        [
+            CreateDependency(bundleId, $"atlas-object-{suffix}", "Hero_Atlas", AssetType.Unknown, "MonoBehaviour"),
+            CreateDependency(bundleId, $"skel-{suffix}", "Hero.skel", AssetType.TextAsset)
+        ]);
+    }
+
+    private static void RegisterAssetListItemWithDetails(
+        TestWorkspaceSessionRegistry registry,
+        WorkspaceId workspaceId,
+        BundleId bundleId,
+        string assetId,
+        string assetPath,
+        AssetType assetType,
+        string? assetTypeDisplayName = null,
+        IReadOnlyList<AssetDependencyDto>? dependencies = null)
+    {
+        var item = new AssetListItemDto(
+            new AssetId(assetId),
+            bundleId,
+            Path.GetFileNameWithoutExtension(assetPath),
+            assetPath,
+            assetType,
+            SizeInBytes: 1024,
+            PreferredDisplaySizeInBytes: 1024,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: assetTypeDisplayName ?? assetType.ToString(),
+            PathId: assetId.GetHashCode(StringComparison.Ordinal),
+            DisplayName: Path.GetFileNameWithoutExtension(assetPath),
+            ExportFileName: Path.GetFileNameWithoutExtension(assetPath));
+        registry.RegisterAssetListItem(
+            item,
+            CreateAssetDetails(
+                workspaceId,
+                bundleId,
+                item.AssetId,
+                assetType,
+                item.Name,
+                assetPath,
+                assetTypeDisplayName ?? assetType.ToString(),
+                dependencies ?? Array.Empty<AssetDependencyDto>()));
+    }
+
+    private static AssetDependencyDto CreateDependency(
+        BundleId bundleId,
+        string assetId,
+        string name,
+        AssetType assetType,
+        string? assetTypeDisplayName = null) =>
+        new(
+            new AssetId(assetId),
+            bundleId,
+            name,
+            assetType,
+            PathId: 0,
+            AssetTypeDisplayName: assetTypeDisplayName ?? assetType.ToString());
 
     private static WorkspaceExportManifestDto CreateManifest(
         string workspaceKey,
@@ -1183,14 +1306,17 @@ internal static class ReplacementWorkflowHandlerTests
         BundleId bundleId,
         AssetId assetId,
         AssetType assetType,
-        string assetName)
+        string assetName,
+        string? assetPath = null,
+        string? assetTypeDisplayName = null,
+        IReadOnlyList<AssetDependencyDto>? dependencies = null)
     {
         return new AssetDetailsDto(
             WorkspaceId: workspaceId,
             BundleId: bundleId,
             AssetId: assetId,
             Name: assetName,
-            AssetPath: $"Assets/{assetName}",
+            AssetPath: assetPath ?? $"Assets/{assetName}",
             ContainerPath: string.Empty,
             AssetType: assetType,
             SizeInBytes: 256,
@@ -1207,7 +1333,8 @@ internal static class ReplacementWorkflowHandlerTests
             FileReplacementSourcePath: null,
             FileReplacementSourceAssetType: null,
             LastExtractedAtUtc: null,
-            Dependencies: Array.Empty<AssetDependencyDto>());
+            Dependencies: dependencies ?? Array.Empty<AssetDependencyDto>(),
+            AssetTypeDisplayName: assetTypeDisplayName);
     }
 
     private static WorkspaceChangeSummaryDto CreateWorkspaceChangeSummary(
@@ -1321,6 +1448,18 @@ internal static class ReplacementWorkflowHandlerTests
 
         public void RegisterAssetListItem(AssetListItemDto item)
         {
+            RegisterAssetListItem(
+                item,
+                CreateAssetDetails(
+                    CreateWorkspaceId(),
+                    item.BundleId,
+                    item.AssetId,
+                    item.AssetType,
+                    item.DisplayName ?? item.Name));
+        }
+
+        public void RegisterAssetListItem(AssetListItemDto item, AssetDetailsDto details)
+        {
             _bundleIds.Add(item.BundleId.Value);
             if (!_assetLists.TryGetValue(item.BundleId.Value, out var items))
             {
@@ -1329,12 +1468,7 @@ internal static class ReplacementWorkflowHandlerTests
             }
 
             items.Add(item);
-            RegisterAssetDetails(CreateAssetDetails(
-                CreateWorkspaceId(),
-                item.BundleId,
-                item.AssetId,
-                item.AssetType,
-                item.DisplayName ?? item.Name));
+            RegisterAssetDetails(details);
         }
 
         public WorkspaceSummaryDto OpenWorkspace(WorkspaceSessionOpenRequestDto request) => throw new NotSupportedException();

@@ -1,4 +1,6 @@
 using System.IO;
+using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
@@ -22,15 +24,18 @@ public sealed class GetWorkspaceBatchReplacementPlanHandler : IQueryHandler<GetW
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly IWorkspaceExportManifestStore _manifestStore;
     private readonly IWorkspaceBatchReplacementSourceFileProbe _sourceFileProbe;
+    private readonly IQueryHandler<LoadSpineAssetGroupsQuery, Result<SpineAssetGroupListResultDto>>? _loadSpineAssetGroupsHandler;
 
     public GetWorkspaceBatchReplacementPlanHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
         IWorkspaceExportManifestStore manifestStore,
-        IWorkspaceBatchReplacementSourceFileProbe sourceFileProbe)
+        IWorkspaceBatchReplacementSourceFileProbe sourceFileProbe,
+        IQueryHandler<LoadSpineAssetGroupsQuery, Result<SpineAssetGroupListResultDto>>? loadSpineAssetGroupsHandler = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _manifestStore = manifestStore ?? throw new ArgumentNullException(nameof(manifestStore));
         _sourceFileProbe = sourceFileProbe ?? throw new ArgumentNullException(nameof(sourceFileProbe));
+        _loadSpineAssetGroupsHandler = loadSpineAssetGroupsHandler;
     }
 
     public async Task<Result<WorkspaceBatchReplacementPlanDto>> HandleAsync(
@@ -63,6 +68,7 @@ public sealed class GetWorkspaceBatchReplacementPlanHandler : IQueryHandler<GetW
         {
             return Result<WorkspaceBatchReplacementPlanDto>.Success(await WorkspaceBatchReplacementHeuristicPlanner.BuildPlanAsync(
                 _workspaceSessionRegistry,
+                _loadSpineAssetGroupsHandler,
                 _sourceFileProbe,
                 query.WorkspaceId,
                 sourceRootDirectory,
@@ -81,6 +87,7 @@ public sealed class GetWorkspaceBatchReplacementPlanHandler : IQueryHandler<GetW
             {
                 return Result<WorkspaceBatchReplacementPlanDto>.Success(await WorkspaceBatchReplacementHeuristicPlanner.BuildPlanAsync(
                     _workspaceSessionRegistry,
+                    _loadSpineAssetGroupsHandler,
                     _sourceFileProbe,
                     query.WorkspaceId,
                     sourceRootDirectory,

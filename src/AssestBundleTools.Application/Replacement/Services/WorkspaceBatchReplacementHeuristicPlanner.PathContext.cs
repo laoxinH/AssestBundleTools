@@ -34,6 +34,12 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
     private static string? ResolveTypeSegment(SourceRootContext sourceRoot, string[] segments)
     {
         if (segments.Length >= 3 &&
+            string.Equals(segments[1], SpineSegment, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        if (segments.Length >= 3 &&
             !string.Equals(segments[1], SpineSegment, StringComparison.OrdinalIgnoreCase))
         {
             return segments[1];
