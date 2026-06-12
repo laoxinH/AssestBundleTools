@@ -985,6 +985,43 @@ internal static class ReplacementWorkflowHandlerTests
         }
     }
 
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldPreserveSpineGroupOrdinalScope_FromStandardExportRoot()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-spine");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterBundle(workspaceId, bundleId, "char_1001_amiya2.ab", "ab/char_1001_amiya2.ab");
+        RegisterSpineGroupParts(registry, bundleId, "char_1001_amiya2_casc#1 [1]", "one");
+        RegisterSpineGroupParts(registry, bundleId, "char_1001_amiya2_casc#1 [2]", "two");
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("char_1001_amiya2.ab/Spine/char_1001_amiya2_casc#1 [1]/char_1001_amiya2_casc#1.atlas", 4096);
+        sourceProbe.RegisterFile("char_1001_amiya2.ab/Spine/char_1001_amiya2_casc#1 [1]/char_1001_amiya2_casc#1.png", 4096);
+        sourceProbe.RegisterFile("char_1001_amiya2.ab/Spine/char_1001_amiya2_casc#1 [1]/char_1001_amiya2_casc#1.skel", 4096);
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(
+            registry,
+            new TestWorkspaceExportManifestStore(null),
+            sourceProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\Export",
+            WorkspaceBatchReplacementMatchingMode.Heuristic));
+
+        TestAssert.True(result.IsSuccess, "Heuristic planning should support selecting the standard export root without a manifest.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected replacement plan.");
+        TestAssert.Equal(3, plan.Candidates.Count, "All three source Spine parts should be planned from the standard export root.");
+        foreach (var candidate in plan.Candidates)
+        {
+            TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.HighConfidence, candidate.MatchStatus, "Exact Spine group ordinal should disambiguate same-name group parts from the export root.");
+            TestAssert.True(candidate.IsDefaultSelected, "High-confidence Spine parts should be selected by default.");
+            TestAssert.True(candidate.AssetId?.Value.EndsWith("-one", StringComparison.Ordinal) == true, "Candidate should resolve to the [1] group assets.");
+            TestAssert.Equal("char_1001_amiya2.ab", candidate.BundleDisplayName, "Candidate should resolve the bundle from the first path segment.");
+            TestAssert.Equal("char_1001_amiya2_casc#1 [1]", candidate.SpineGroupId, "Candidate should preserve the exact source Spine group.");
+            TestAssert.False(candidate.Diagnostics.Contains("Ambiguous"), "Exact Spine group scope from the export root should not be marked ambiguous.");
+        }
+    }
+
     public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldUseSpineGroupDirectoryAndAncestorBundle_ForHeuristicPlan()
     {
         var workspaceId = CreateWorkspaceId();
