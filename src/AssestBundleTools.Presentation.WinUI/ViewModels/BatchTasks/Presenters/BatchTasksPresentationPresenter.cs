@@ -1,6 +1,5 @@
 using System.Globalization;
 using AssestBundleTools.Application.Extraction.Dtos;
-using AssestBundleTools.Application.Replacement;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
@@ -31,7 +30,6 @@ public sealed partial class BatchTasksViewModel
         public void InitializeStaticState()
         {
             ReplaceBatchExtractAssetTypeOptions(CreateAssetTypeOptions());
-            ReplaceBatchReplacementSourceOptions(CreateBatchReplacementSourceOptions());
             _owner.BatchExtractFileNamePolicyText = GetString(ResourceKeys.BatchTasksBatchExtractFileNamePolicyRetainOriginal);
             _owner.BatchExtractConflictPolicyText = GetString(ResourceKeys.BatchTasksBatchExtractConflictPolicySkipDuplicates);
         }
@@ -44,8 +42,6 @@ public sealed partial class BatchTasksViewModel
             _owner.BatchExtractScopeText = GetString(ResourceKeys.BatchTasksBatchExtractScopeEmpty);
             _owner.BatchExtractOutputDirectoryText = GetString(ResourceKeys.BatchTasksBatchExtractOutputDirectoryEmpty);
             _owner.BatchExtractSummaryText = GetString(ResourceKeys.BatchTasksBatchExtractEmpty);
-            _owner.BatchReplaceScopeText = GetString(ResourceKeys.BatchTasksBatchReplaceScopeEmpty);
-            _owner.BatchReplaceSummaryText = GetString(ResourceKeys.BatchTasksBatchReplaceEmpty);
             _owner.SaveOutputDirectoryText = GetString(ResourceKeys.BatchTasksSavePreviewOutputDirectoryEmpty);
             _owner.SaveFileNamePolicyText = GetString(ResourceKeys.BatchTasksSavePreviewFileNamePolicyRetainOriginal);
             _owner.SavePreviewSummaryText = GetString(ResourceKeys.BatchTasksSavePreviewEmpty);
@@ -53,7 +49,6 @@ public sealed partial class BatchTasksViewModel
             _owner.SummaryCards.Clear();
             _owner.RecentChanges.Clear();
             _owner.BatchExtractionBundles.Clear();
-            _owner.BatchReplacementBundles.Clear();
             _owner.SavePreviewBundles.Clear();
             _owner.SaveRiskNotes.Clear();
             _owner.NotifyWorkspaceState();
@@ -147,35 +142,6 @@ public sealed partial class BatchTasksViewModel
             _owner.NotifyWorkspaceState();
         }
 
-        public void ApplyBatchReplacementPreview(WorkspaceBatchReplacementPreviewDto preview)
-        {
-            _owner.BatchReplaceScopeText = _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksBatchReplaceScopeFormat,
-                preview.WorkspaceDisplayName);
-            _owner.BatchReplaceSummaryText = preview.CandidateAssetCount > 0
-                ? _localizationService.GetFormattedString(
-                    ResourceKeys.BatchTasksBatchReplaceSummaryFormat,
-                    preview.CandidateAssetCount,
-                    preview.CandidateBundleCount,
-                    preview.WorkspaceReplacementCount,
-                    preview.FileReplacementCount)
-                : GetString(ResourceKeys.BatchTasksBatchReplaceEmpty);
-
-            _owner.BatchReplacementBundles.Clear();
-            foreach (var bundlePlan in preview.BundlePlans)
-            {
-                _owner.BatchReplacementBundles.Add(new BatchTaskReplacementBundleItemViewModel(
-                    BundleDisplayName: bundlePlan.BundleDisplayName,
-                    SummaryText: _localizationService.GetFormattedString(
-                        ResourceKeys.BatchTasksBatchReplaceBundlePlanSummaryFormat,
-                        bundlePlan.AssetCount,
-                        bundlePlan.WorkspaceReplacementCount,
-                        bundlePlan.FileReplacementCount)));
-            }
-
-            _owner.NotifyWorkspaceState();
-        }
-
         public void ApplySavePreview(WorkspaceSavePreviewDto preview)
         {
             _owner.SaveOutputDirectoryText = preview.OutputDirectory;
@@ -243,21 +209,6 @@ public sealed partial class BatchTasksViewModel
                 StatusText: GetString(ResourceKeys.BatchTasksTaskResultStatusCompleted),
                 TimeText: FormatTimestamp(extractionResult.CompletedAtUtc));
 
-        public BatchTaskExecutionResultItemViewModel CreateBatchReplacementTaskResult(WorkspaceBatchReplacementResultDto replacementResult) =>
-            new(
-                Title: GetString(ResourceKeys.BatchTasksTaskResultBatchReplaceTitle),
-                SummaryText: _localizationService.GetFormattedString(
-                    ResourceKeys.BatchTasksTaskResultBatchReplaceSummaryFormat,
-                    replacementResult.ProcessedAssetCount,
-                    replacementResult.ProcessedBundleCount),
-                DetailText: _localizationService.GetFormattedString(
-                    ResourceKeys.BatchTasksTaskResultBatchReplaceDetailFormat,
-                    GetBatchReplacementSourceDisplayName(replacementResult.SourceFilter),
-                    replacementResult.WorkspaceReplacementCount,
-                    replacementResult.FileReplacementCount),
-                StatusText: GetString(ResourceKeys.BatchTasksTaskResultStatusCompleted),
-                TimeText: FormatTimestamp(replacementResult.CompletedAtUtc));
-
         public BatchTaskExecutionResultItemViewModel CreateSaveTaskResult(WorkspaceSaveExecutionResultDto saveResult) =>
             new(
                 Title: GetString(ResourceKeys.BatchTasksTaskResultSaveTitle),
@@ -270,14 +221,6 @@ public sealed partial class BatchTasksViewModel
                     saveResult.OutputDirectory),
                 StatusText: GetString(ResourceKeys.BatchTasksTaskResultStatusCompleted),
                 TimeText: FormatTimestamp(saveResult.CompletedAtUtc));
-
-        public string GetBatchReplacementSourceDisplayName(BatchReplacementSourceKind sourceKind) =>
-            sourceKind switch
-            {
-                BatchReplacementSourceKind.Workspace => GetString(ResourceKeys.BatchTasksBatchReplaceSourceFilterWorkspace),
-                BatchReplacementSourceKind.File => GetString(ResourceKeys.BatchTasksBatchReplaceSourceFilterFile),
-                _ => GetString(ResourceKeys.BatchTasksBatchReplaceSourceFilterAll)
-            };
 
         public string FormatTimestamp(DateTimeOffset timestamp) =>
             timestamp.ToLocalTime().ToString("G", CultureInfo.CurrentCulture);
@@ -373,17 +316,6 @@ public sealed partial class BatchTasksViewModel
             _owner.SelectedBatchExtractAssetTypeOption = _owner.BatchExtractAssetTypeOptions.FirstOrDefault();
         }
 
-        private void ReplaceBatchReplacementSourceOptions(IEnumerable<BatchReplacementSourceOptionViewModel> options)
-        {
-            _owner.BatchReplaceSourceOptions.Clear();
-            foreach (var option in options)
-            {
-                _owner.BatchReplaceSourceOptions.Add(option);
-            }
-
-            _owner.SelectedBatchReplaceSourceOption = _owner.BatchReplaceSourceOptions.FirstOrDefault();
-        }
-
         private IEnumerable<AssetTypeOptionViewModel> CreateAssetTypeOptions() =>
             new[]
             {
@@ -394,14 +326,6 @@ public sealed partial class BatchTasksViewModel
                 new AssetTypeOptionViewModel(GetAssetTypeDisplayName(AssetType.AudioClip), AssetType.AudioClip),
                 new AssetTypeOptionViewModel(GetAssetTypeDisplayName(AssetType.Mesh), AssetType.Mesh),
                 new AssetTypeOptionViewModel(GetAssetTypeDisplayName(AssetType.Material), AssetType.Material)
-            };
-
-        private IEnumerable<BatchReplacementSourceOptionViewModel> CreateBatchReplacementSourceOptions() =>
-            new[]
-            {
-                new BatchReplacementSourceOptionViewModel(GetString(ResourceKeys.BatchTasksBatchReplaceSourceFilterAll), BatchReplacementSourceKind.All),
-                new BatchReplacementSourceOptionViewModel(GetString(ResourceKeys.BatchTasksBatchReplaceSourceFilterWorkspace), BatchReplacementSourceKind.Workspace),
-                new BatchReplacementSourceOptionViewModel(GetString(ResourceKeys.BatchTasksBatchReplaceSourceFilterFile), BatchReplacementSourceKind.File)
             };
 
         private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);

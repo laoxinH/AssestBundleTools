@@ -840,6 +840,24 @@
   <data name="WorkspaceBatchReplacementDialog.Heuristic.Warning" xml:space="preserve">
     <value>未找到 manifest，当前计划基于目录、类型和名称推断；请确认候选后再执行。</value>
   </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Title" xml:space="preserve">
+    <value>正在批量替换</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Preparing" xml:space="preserve">
+    <value>正在准备批量替换...</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Item.Format" xml:space="preserve">
+    <value>正在替换 {0}，已完成 {1} 项，失败 {2} 项。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Completed.Message.Format" xml:space="preserve">
+    <value>批量替换完成：{0} 项已替换，{1} 项跳过，{2} 项失败。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Execution.Summary.Format" xml:space="preserve">
+    <value>{0} 项已替换，{1} 项跳过，{2} 项失败。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Execution.PartialFailure" xml:space="preserve">
+    <value>部分候选替换失败，请检查日志或候选状态后重试。</value>
+  </data>
   <data name="WorkspaceBatchReplacementDialog.Status.Changed" xml:space="preserve">
     <value>已修改</value>
   </data>

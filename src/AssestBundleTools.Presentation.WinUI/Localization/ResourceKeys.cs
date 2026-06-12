@@ -606,6 +606,12 @@ public static class ResourceKeys
     public const string WorkspaceBatchReplacementDialogPreviewSummaryFormat = "WorkspaceBatchReplacementDialog.Preview.Summary.Format";
     public const string WorkspaceBatchReplacementDialogHeuristicPreviewSummaryFormat = "WorkspaceBatchReplacementDialog.Preview.HeuristicSummary.Format";
     public const string WorkspaceBatchReplacementDialogHeuristicWarning = "WorkspaceBatchReplacementDialog.Heuristic.Warning";
+    public const string WorkspaceBatchReplacementDialogStatusTitle = "WorkspaceBatchReplacementDialog.Status.Title";
+    public const string WorkspaceBatchReplacementDialogStatusPreparing = "WorkspaceBatchReplacementDialog.Status.Preparing";
+    public const string WorkspaceBatchReplacementDialogStatusItemFormat = "WorkspaceBatchReplacementDialog.Status.Item.Format";
+    public const string WorkspaceBatchReplacementDialogCompletedMessageFormat = "WorkspaceBatchReplacementDialog.Completed.Message.Format";
+    public const string WorkspaceBatchReplacementDialogExecutionSummaryFormat = "WorkspaceBatchReplacementDialog.Execution.Summary.Format";
+    public const string WorkspaceBatchReplacementDialogExecutionPartialFailure = "WorkspaceBatchReplacementDialog.Execution.PartialFailure";
     public const string WorkspaceBatchReplacementDialogStatusChanged = "WorkspaceBatchReplacementDialog.Status.Changed";
     public const string WorkspaceBatchReplacementDialogStatusUnchanged = "WorkspaceBatchReplacementDialog.Status.Unchanged";
     public const string WorkspaceBatchReplacementDialogStatusMissing = "WorkspaceBatchReplacementDialog.Status.Missing";

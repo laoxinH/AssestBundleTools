@@ -45,6 +45,8 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
 
     public event EventHandler? RefreshRequested;
 
+    public event EventHandler? StartReplacementRequested;
+
     public WorkspaceBatchReplacementDialogViewModel ViewModel { get; }
 
     public void BringToFront()
@@ -74,7 +76,7 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
 
     private void OnStartReplacementButtonClick(object sender, RoutedEventArgs e)
     {
-        // 第一阶段只生成计划，真实执行在后续批量替换命令接入后开放。
+        StartReplacementRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnCancelButtonClick(object sender, RoutedEventArgs e) => Close();

@@ -65,13 +65,6 @@ public sealed partial class BatchTasksPage : Page
         SetText(BatchExtractEmptyText, ResourceKeys.BatchTasksBatchExtractEmptyText);
         SetContent(BatchExtractExecuteButton, ResourceKeys.BatchTasksBatchExtractExecuteButton);
         SetText(BatchExtractLastRunLabelText, ResourceKeys.BatchTasksBatchExtractLastRunLabel);
-        SetText(BatchReplaceTitleText, ResourceKeys.BatchTasksBatchReplaceTitle);
-        SetText(BatchReplaceHintText, ResourceKeys.BatchTasksBatchReplaceHint);
-        SetText(BatchReplaceScopeLabelText, ResourceKeys.BatchTasksBatchReplaceScopeLabel);
-        SetText(BatchReplaceSourceFilterLabelText, ResourceKeys.BatchTasksBatchReplaceSourceFilterLabel);
-        SetText(BatchReplaceEmptyText, ResourceKeys.BatchTasksBatchReplaceEmptyText);
-        SetContent(BatchReplaceExecuteButton, ResourceKeys.BatchTasksBatchReplaceExecuteButton);
-        SetText(BatchReplaceLastRunLabelText, ResourceKeys.BatchTasksBatchReplaceLastRunLabel);
         SetText(SavePreviewTitleText, ResourceKeys.BatchTasksSavePreviewTitle);
         SetText(SavePreviewHintText, ResourceKeys.BatchTasksSavePreviewHint);
         SetText(SavePreviewOutputDirectoryLabelText, ResourceKeys.BatchTasksSavePreviewOutputDirectoryLabel);

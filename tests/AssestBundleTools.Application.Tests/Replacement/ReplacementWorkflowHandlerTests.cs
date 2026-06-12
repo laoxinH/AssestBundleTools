@@ -1,3 +1,4 @@
+using System.IO;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Common.Errors;
@@ -459,126 +460,80 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.Equal(1, registry.TryRedoAssetReplacementCallCount, "Redo attempt should still hit the registry once.");
     }
 
-    public static async Task GetWorkspaceBatchReplacementPreviewHandler_ShouldGroupCandidates_ByBundleAndSourceFilter()
+    public static async Task ExecuteWorkspaceBatchReplacementHandler_ShouldReturnFailure_WhenNoCandidatesSelected()
     {
         var workspaceId = CreateWorkspaceId();
-        var registry = new TestWorkspaceSessionRegistry
-        {
-            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(
-                workspaceId,
-                [
-                    CreateChangeItem(
-                        bundleId: new BundleId("bundle-b"),
-                        assetId: new AssetId("asset-1"),
-                        bundleDisplayName: "Zeta",
-                        assetName: "EnemyPortrait",
-                        workspaceReplacementSourceAssetName: "SourcePortrait"),
-                    CreateChangeItem(
-                        bundleId: new BundleId("bundle-a"),
-                        assetId: new AssetId("asset-2"),
-                        bundleDisplayName: "Alpha",
-                        assetName: "ConfigText",
-                        fileReplacementSourceFileName: "config.json"),
-                    CreateChangeItem(
-                        bundleId: new BundleId("bundle-a"),
-                        assetId: new AssetId("asset-3"),
-                        bundleDisplayName: "Alpha",
-                        assetName: "ThemeMusic",
-                        workspaceReplacementSourceAssetName: "SourceTheme",
-                        fileReplacementSourceFileName: "theme.ogg")
-                ])
-        };
-        var handler = new GetWorkspaceBatchReplacementPreviewHandler(registry);
-
-        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPreviewQuery(
-            workspaceId,
-            BatchReplacementSourceKind.Workspace));
-
-        TestAssert.True(result.IsSuccess, "Workspace replacement preview should succeed.");
-        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
-        TestAssert.Equal(2, preview.CandidateAssetCount, "Workspace filter should keep only items with workspace replacement sources.");
-        TestAssert.Equal(2, preview.CandidateBundleCount, "Workspace filter should keep two bundles.");
-        TestAssert.Equal(2, preview.WorkspaceReplacementCount, "Workspace replacement count should reflect filtered items.");
-        TestAssert.Equal(1, preview.FileReplacementCount, "Filtered items should still expose file replacement overlap count.");
-        TestAssert.Equal(2, preview.BundlePlans.Count, "Preview should group filtered items by bundle.");
-
-        var firstBundlePlan = preview.BundlePlans[0];
-        TestAssert.Equal("Alpha", firstBundlePlan.BundleDisplayName, "Bundle plans should be ordered by bundle display name.");
-        TestAssert.Equal(1, firstBundlePlan.AssetCount, "Alpha bundle should keep the overlapping workspace replacement item only.");
-        TestAssert.Equal(1, firstBundlePlan.WorkspaceReplacementCount, "Alpha bundle should expose one workspace replacement.");
-        TestAssert.Equal(1, firstBundlePlan.FileReplacementCount, "Alpha bundle should expose one overlapping file replacement.");
-    }
-
-    public static async Task ExecuteWorkspaceBatchReplacementHandler_ShouldReturnFailure_WhenNoCandidatesMatchFilter()
-    {
-        var workspaceId = CreateWorkspaceId();
-        var registry = new TestWorkspaceSessionRegistry
-        {
-            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(
-                workspaceId,
-                [
-                    CreateChangeItem(
-                        bundleId: new BundleId("bundle-a"),
-                        assetId: new AssetId("asset-1"),
-                        bundleDisplayName: "Alpha",
-                        assetName: "HeroTexture",
-                        workspaceReplacementSourceAssetName: "SourceTexture")
-                ])
-        };
-        var handler = new ExecuteWorkspaceBatchReplacementHandler(registry);
+        var registry = new TestWorkspaceSessionRegistry();
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        var handler = new ExecuteWorkspaceBatchReplacementHandler(registry, new ReplaceAssetFromFileHandler(registry), sourceProbe);
 
         var result = await handler.HandleAsync(new ExecuteWorkspaceBatchReplacementCommand(
             workspaceId,
-            BatchReplacementSourceKind.File));
+            WorkspaceKey: "workspace-key",
+            WorkspaceDataRootPath: "C:\\WorkspaceData",
+            SourceRootDirectory: "C:\\Exports",
+            WorkspaceBatchReplacementMatchingMode.Manifest,
+            Candidates: Array.Empty<WorkspaceBatchReplacementCandidateDto>()));
 
-        TestAssert.True(result.IsFailure, "Batch replacement should fail when no candidates match the source filter.");
+        TestAssert.True(result.IsFailure, "Batch replacement should fail when no candidates are selected.");
         TestAssert.Equal(
             "Asset.Replace.NoBatchCandidates",
             TestAssert.Single(result.Errors).Code,
             "Failure should report that no batch candidates exist.");
     }
 
-    public static async Task ExecuteWorkspaceBatchReplacementHandler_ShouldSummarizeProcessedCounts_WhenCandidatesExist()
+    public static async Task ExecuteWorkspaceBatchReplacementHandler_ShouldApplySelectedCandidates_AndSkipUnsupportedTargets()
     {
         var workspaceId = CreateWorkspaceId();
-        var registry = new TestWorkspaceSessionRegistry
+        var bundleId = new BundleId("bundle-a");
+        var textureAssetId = new AssetId("asset-texture");
+        var atlasAssetId = new AssetId("asset-atlas");
+        var skeletonAssetId = new AssetId("asset-skeleton");
+        var audioAssetId = new AssetId("asset-audio");
+        var meshAssetId = new AssetId("asset-mesh");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, textureAssetId, AssetType.Texture2D, "HeroTexture"));
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, atlasAssetId, AssetType.TextAsset, "HeroAtlas"));
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, skeletonAssetId, AssetType.TextAsset, "HeroSkeleton"));
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, audioAssetId, AssetType.AudioClip, "HeroVoice"));
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, meshAssetId, AssetType.Mesh, "HeroMesh"));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("Texture2D/HeroTexture.png", 128);
+        sourceProbe.RegisterFile("AudioClip/HeroVoice.wav", 128);
+        sourceProbe.RegisterFile("Spine/Hero/Hero.atlas", 128);
+        sourceProbe.RegisterFile("Spine/Hero/Hero.skel", 128);
+        sourceProbe.RegisterFile("Mesh/HeroMesh.obj", 128);
+        var handler = new ExecuteWorkspaceBatchReplacementHandler(registry, new ReplaceAssetFromFileHandler(registry), sourceProbe);
+        var candidates = new[]
         {
-            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(
-                workspaceId,
-                [
-                    CreateChangeItem(
-                        bundleId: new BundleId("bundle-b"),
-                        assetId: new AssetId("asset-1"),
-                        bundleDisplayName: "Zeta",
-                        assetName: "EnemyPortrait",
-                        workspaceReplacementSourceAssetName: "SourcePortrait"),
-                    CreateChangeItem(
-                        bundleId: new BundleId("bundle-a"),
-                        assetId: new AssetId("asset-2"),
-                        bundleDisplayName: "Alpha",
-                        assetName: "ConfigText",
-                        fileReplacementSourceFileName: "config.json"),
-                    CreateChangeItem(
-                        bundleId: new BundleId("bundle-a"),
-                        assetId: new AssetId("asset-3"),
-                        bundleDisplayName: "Alpha",
-                        assetName: "ThemeMusic",
-                        workspaceReplacementSourceAssetName: "SourceTheme",
-                        fileReplacementSourceFileName: "theme.ogg")
-                ])
+            CreateBatchReplacementCandidate(bundleId, textureAssetId, AssetType.Texture2D, "HeroTexture", "Texture2D/HeroTexture.png"),
+            CreateBatchReplacementCandidate(bundleId, atlasAssetId, AssetType.TextAsset, "HeroAtlas", "Spine/Hero/Hero.atlas", spineGroupId: "hero-spine", spineGroupDisplayName: "Hero"),
+            CreateBatchReplacementCandidate(bundleId, audioAssetId, AssetType.AudioClip, "HeroVoice", "AudioClip/HeroVoice.wav"),
+            CreateBatchReplacementCandidate(bundleId, skeletonAssetId, AssetType.TextAsset, "HeroSkeleton", "Spine/Hero/Hero.skel", spineGroupId: "hero-spine", spineGroupDisplayName: "Hero"),
+            CreateBatchReplacementCandidate(bundleId, meshAssetId, AssetType.Mesh, "HeroMesh", "Mesh/HeroMesh.obj")
         };
-        var handler = new ExecuteWorkspaceBatchReplacementHandler(registry);
 
         var result = await handler.HandleAsync(new ExecuteWorkspaceBatchReplacementCommand(
             workspaceId,
-            BatchReplacementSourceKind.All));
+            WorkspaceKey: "workspace-key",
+            WorkspaceDataRootPath: "C:\\WorkspaceData",
+            SourceRootDirectory: "C:\\Exports",
+            WorkspaceBatchReplacementMatchingMode.Manifest,
+            candidates));
 
-        TestAssert.True(result.IsSuccess, "Batch replacement summary should succeed when candidates exist.");
+        TestAssert.True(result.IsSuccess, "Batch replacement should succeed and summarize per-item results.");
         var execution = result.Value ?? throw new InvalidOperationException("Expected batch replacement result.");
-        TestAssert.Equal(3, execution.ProcessedAssetCount, "All replacement-marked assets should be counted.");
-        TestAssert.Equal(2, execution.ProcessedBundleCount, "Processed bundle count should de-duplicate bundle ids.");
-        TestAssert.Equal(2, execution.WorkspaceReplacementCount, "Workspace replacement count should reflect matching items.");
-        TestAssert.Equal(2, execution.FileReplacementCount, "File replacement count should reflect matching items.");
+        TestAssert.Equal(5, execution.RequestedCandidateCount, "All selected candidates should be reflected in the result.");
+        TestAssert.Equal(4, execution.ReplacedAssetCount, "Supported image, text, audio, and Spine component replacements should run through the single-asset replacement handler.");
+        TestAssert.Equal(1, execution.SkippedAssetCount, "Unsupported candidate should be retained as a skipped item result.");
+        TestAssert.Equal(0, execution.FailedAssetCount, "Skipped unsupported types should not be treated as handler failures.");
+        TestAssert.Equal(4, registry.TryReplaceAssetFromFileCallCount, "Only supported candidates should invoke file replacement.");
+        TestAssert.True(
+            registry.FileReplacementSourceFilePaths.Take(2).All(static path => !path.Contains("\\Spine\\", StringComparison.OrdinalIgnoreCase)),
+            "Ordinary resources should execute before Spine group components.");
+        TestAssert.Equal("C:\\Exports\\Spine\\Hero\\Hero.atlas", registry.FileReplacementSourceFilePaths[2], "Spine atlas should execute after ordinary resources.");
+        TestAssert.Equal("C:\\Exports\\Spine\\Hero\\Hero.skel", registry.FileReplacementSourceFilePaths[3], "Spine skeleton should execute after ordinary resources.");
+        TestAssert.Equal(1, execution.ProcessedSpineGroupCount, "Spine component replacements should be summarized as one processed Spine group.");
     }
 
     public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldUseManifestSizeFirst_AndHashWhenSizeMatches()
@@ -957,6 +912,41 @@ internal static class ReplacementWorkflowHandlerTests
             ExportedFileHash: exportedFileHash,
             ExportedFileLastWriteTimeUtc: new DateTimeOffset(2026, 6, 10, 12, 0, 0, TimeSpan.Zero));
 
+    private static WorkspaceBatchReplacementCandidateDto CreateBatchReplacementCandidate(
+        BundleId bundleId,
+        AssetId assetId,
+        AssetType assetType,
+        string assetName,
+        string relativePath,
+        WorkspaceBatchReplacementMatchStatus status = WorkspaceBatchReplacementMatchStatus.Changed,
+        string? spineGroupId = null,
+        string? spineGroupDisplayName = null) =>
+        new(
+            CandidateId: $"candidate:{bundleId.Value}:{assetId.Value}:{relativePath}",
+            BundleId: bundleId,
+            BundleDisplayName: bundleId.Value,
+            AssetId: assetId,
+            PathId: 12345,
+            AssetType: assetType,
+            AssetTypeDisplayName: assetType.ToString(),
+            AssetName: assetName,
+            ContainerPath: null,
+            RelativePath: relativePath,
+            FullPath: $"C:\\Exports\\{relativePath.Replace('/', '\\')}",
+            CurrentFileSizeInBytes: 128,
+            CurrentFileHashAlgorithm: "MD5",
+            CurrentFileHash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            ExportedFileSizeInBytes: 100,
+            ExportedFileHashAlgorithm: "MD5",
+            ExportedFileHash: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            SpineGroupId: spineGroupId,
+            SpineGroupDisplayName: spineGroupDisplayName,
+            OutputRole: WorkspaceExportManifestOutputRole.Asset.ToString(),
+            MatchStatus: status,
+            MatchMode: WorkspaceBatchReplacementMatchingMode.Manifest,
+            IsDefaultSelected: true,
+            Diagnostics: Array.Empty<string>());
+
     private static AssetDetailsDto CreateAssetDetails(
         WorkspaceId workspaceId,
         BundleId bundleId,
@@ -1072,6 +1062,8 @@ internal static class ReplacementWorkflowHandlerTests
         public string? LastFileReplacementSourceFilePath { get; private set; }
 
         public AssetType? LastFileReplacementSourceAssetType { get; private set; }
+
+        public List<string> FileReplacementSourceFilePaths { get; } = [];
 
         public BundleId? LastWorkspaceReplacementSourceBundleId { get; private set; }
 
@@ -1211,7 +1203,21 @@ internal static class ReplacementWorkflowHandlerTests
             TryReplaceAssetFromFileCallCount++;
             LastFileReplacementSourceFilePath = sourceFilePath;
             LastFileReplacementSourceAssetType = sourceAssetType;
+            FileReplacementSourceFilePaths.Add(sourceFilePath);
             replacementResult = TryReplaceAssetFromFileResult;
+            if (replacementResult is null &&
+                _assetDetails.TryGetValue((targetBundleId.Value, targetAssetId.Value), out var details))
+            {
+                replacementResult = new AssetFileReplacementResultDto(
+                    workspaceId,
+                    targetBundleId,
+                    targetAssetId,
+                    details.Name,
+                    sourceFilePath,
+                    Path.GetFileName(sourceFilePath),
+                    sourceAssetType,
+                    DateTimeOffset.UtcNow);
+            }
             return replacementResult is not null;
         }
 

@@ -339,16 +339,12 @@ internal static partial class ApplicationTestSuite
             ReplacementWorkflowHandlerTests.RedoAssetReplacementHandler_ShouldReturnFailure_WhenNoRedoSnapshotExists);
         await RunTestAsync(
             failures,
-            nameof(ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPreviewHandler_ShouldGroupCandidates_ByBundleAndSourceFilter),
-            ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPreviewHandler_ShouldGroupCandidates_ByBundleAndSourceFilter);
+            nameof(ReplacementWorkflowHandlerTests.ExecuteWorkspaceBatchReplacementHandler_ShouldReturnFailure_WhenNoCandidatesSelected),
+            ReplacementWorkflowHandlerTests.ExecuteWorkspaceBatchReplacementHandler_ShouldReturnFailure_WhenNoCandidatesSelected);
         await RunTestAsync(
             failures,
-            nameof(ReplacementWorkflowHandlerTests.ExecuteWorkspaceBatchReplacementHandler_ShouldReturnFailure_WhenNoCandidatesMatchFilter),
-            ReplacementWorkflowHandlerTests.ExecuteWorkspaceBatchReplacementHandler_ShouldReturnFailure_WhenNoCandidatesMatchFilter);
-        await RunTestAsync(
-            failures,
-            nameof(ReplacementWorkflowHandlerTests.ExecuteWorkspaceBatchReplacementHandler_ShouldSummarizeProcessedCounts_WhenCandidatesExist),
-            ReplacementWorkflowHandlerTests.ExecuteWorkspaceBatchReplacementHandler_ShouldSummarizeProcessedCounts_WhenCandidatesExist);
+            nameof(ReplacementWorkflowHandlerTests.ExecuteWorkspaceBatchReplacementHandler_ShouldApplySelectedCandidates_AndSkipUnsupportedTargets),
+            ReplacementWorkflowHandlerTests.ExecuteWorkspaceBatchReplacementHandler_ShouldApplySelectedCandidates_AndSkipUnsupportedTargets);
         await RunTestAsync(
             failures,
             nameof(ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldUseManifestSizeFirst_AndHashWhenSizeMatches),

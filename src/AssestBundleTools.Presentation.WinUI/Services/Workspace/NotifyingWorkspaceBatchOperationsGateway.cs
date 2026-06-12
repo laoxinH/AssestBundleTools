@@ -73,11 +73,6 @@ internal sealed class NotifyingWorkspaceBatchOperationsGateway : IWorkspaceBatch
         return result;
     }
 
-    public Task<Result<WorkspaceBatchReplacementPreviewDto>> GetWorkspaceBatchReplacementPreviewAsync(
-        GetWorkspaceBatchReplacementPreviewQuery query,
-        CancellationToken cancellationToken = default) =>
-        _inner.GetWorkspaceBatchReplacementPreviewAsync(query, cancellationToken);
-
     public Task<Result<WorkspaceBatchReplacementPlanDto>> GetWorkspaceBatchReplacementPlanAsync(
         GetWorkspaceBatchReplacementPlanQuery query,
         CancellationToken cancellationToken = default) =>
@@ -92,6 +87,7 @@ internal sealed class NotifyingWorkspaceBatchOperationsGateway : IWorkspaceBatch
             result,
             command.WorkspaceId,
             WorkspaceOperationChangeKind.Replacement,
+            CreateAffectedAssets(result.Value),
             reason: WorkspaceOperationChangeReason.BatchReplacementApplied);
         return result;
     }
@@ -127,6 +123,23 @@ internal sealed class NotifyingWorkspaceBatchOperationsGateway : IWorkspaceBatch
             .Select(static assetResult => new WorkspaceOperationAffectedAsset(
                 assetResult.BundleId,
                 assetResult.AssetId))
+            .ToArray();
+    }
+
+    private static IReadOnlyList<WorkspaceOperationAffectedAsset> CreateAffectedAssets(
+        WorkspaceBatchReplacementResultDto? result)
+    {
+        if (result is null)
+        {
+            return Array.Empty<WorkspaceOperationAffectedAsset>();
+        }
+
+        return (result.ItemResults ?? Array.Empty<WorkspaceBatchReplacementItemResultDto>())
+            .Where(static item => item.Status == WorkspaceBatchReplacementItemStatus.Replaced)
+            .Where(static item => item.BundleId is not null && item.AssetId is not null)
+            .Select(static item => new WorkspaceOperationAffectedAsset(
+                item.BundleId!.Value,
+                item.AssetId!.Value))
             .ToArray();
     }
 }

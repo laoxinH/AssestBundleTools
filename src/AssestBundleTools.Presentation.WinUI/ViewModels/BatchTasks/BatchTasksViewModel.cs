@@ -5,7 +5,6 @@ using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Extraction.Commands;
 using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Extraction.Queries;
-using AssestBundleTools.Application.Replacement;
 using AssestBundleTools.Application.Replacement.Commands;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Queries;
@@ -27,11 +26,11 @@ using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BatchTasks;
 
 /// <summary>
-/// 承载批处理任务页当前阶段的工作区变更摘要、批量提取、批量替换和保存前摘要状态。
+/// 承载批处理任务页当前阶段的工作区变更摘要、批量提取和保存前摘要状态。
 /// </summary>
 /// <remarks>
 /// 当前页面仍以“工作区变更承载面”为核心职责。
-/// 批量提取已经接入真实导出；批量替换与保存仍保留当前阶段的摘要执行面。
+/// 批量替换已经迁移到工作台级独立窗口，批处理页不再保留旧入口。
 /// </remarks>
 public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
 {
@@ -61,10 +60,6 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
     private string _batchExtractConflictPolicyText = string.Empty;
     private string _batchExtractSummaryText = string.Empty;
     private string _batchExtractLastRunText = string.Empty;
-    private BatchReplacementSourceOptionViewModel? _selectedBatchReplaceSourceOption;
-    private string _batchReplaceScopeText = string.Empty;
-    private string _batchReplaceSummaryText = string.Empty;
-    private string _batchReplaceLastRunText = string.Empty;
     private string _saveOutputDirectoryText = string.Empty;
     private string _saveFileNamePolicyText = string.Empty;
     private string _savePreviewSummaryText = string.Empty;
@@ -117,10 +112,6 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
             executeAsync: RunBatchExtractAsync,
             canExecute: () => !IsBusy && HasWorkspace && HasBatchExtractionCandidates);
 
-        RunBatchReplaceCommand = new AsyncRelayCommand(
-            executeAsync: RunBatchReplacementAsync,
-            canExecute: () => !IsBusy && HasWorkspace && HasBatchReplacementCandidates);
-
         RunSaveCommand = new AsyncRelayCommand(
             executeAsync: RunSaveAsync,
             canExecute: () => !IsBusy && HasWorkspace && HasSavePreviewItems);
@@ -133,10 +124,6 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
     public ObservableCollection<AssetTypeOptionViewModel> BatchExtractAssetTypeOptions { get; } = new();
 
     public ObservableCollection<BatchTaskExtractionBundleItemViewModel> BatchExtractionBundles { get; } = new();
-
-    public ObservableCollection<BatchReplacementSourceOptionViewModel> BatchReplaceSourceOptions { get; } = new();
-
-    public ObservableCollection<BatchTaskReplacementBundleItemViewModel> BatchReplacementBundles { get; } = new();
 
     public ObservableCollection<BatchTaskSaveBundleItemViewModel> SavePreviewBundles { get; } = new();
 
@@ -152,8 +139,6 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
 
     public AsyncRelayCommand RunBatchExtractCommand { get; }
 
-    public AsyncRelayCommand RunBatchReplaceCommand { get; }
-
     public AsyncRelayCommand RunSaveCommand { get; }
 
     public bool IsBusy
@@ -167,7 +152,6 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
                 ImportBundleFilesCommand.NotifyCanExecuteChanged();
                 ImportBundleDirectoryCommand.NotifyCanExecuteChanged();
                 RunBatchExtractCommand.NotifyCanExecuteChanged();
-                RunBatchReplaceCommand.NotifyCanExecuteChanged();
                 RunSaveCommand.NotifyCanExecuteChanged();
 
                 if (!value && _hasPendingRefreshRequest)
@@ -240,36 +224,6 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
         private set => SetProperty(ref _batchExtractLastRunText, value);
     }
 
-    public BatchReplacementSourceOptionViewModel? SelectedBatchReplaceSourceOption
-    {
-        get => _selectedBatchReplaceSourceOption;
-        set
-        {
-            if (SetProperty(ref _selectedBatchReplaceSourceOption, value) && _isInitialized)
-            {
-                _ = RefreshAsync();
-            }
-        }
-    }
-
-    public string BatchReplaceScopeText
-    {
-        get => _batchReplaceScopeText;
-        private set => SetProperty(ref _batchReplaceScopeText, value);
-    }
-
-    public string BatchReplaceSummaryText
-    {
-        get => _batchReplaceSummaryText;
-        private set => SetProperty(ref _batchReplaceSummaryText, value);
-    }
-
-    public string BatchReplaceLastRunText
-    {
-        get => _batchReplaceLastRunText;
-        private set => SetProperty(ref _batchReplaceLastRunText, value);
-    }
-
     public string SaveOutputDirectoryText
     {
         get => _saveOutputDirectoryText;
@@ -300,8 +254,6 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
 
     public bool HasBatchExtractionCandidates => BatchExtractionBundles.Count > 0;
 
-    public bool HasBatchReplacementCandidates => BatchReplacementBundles.Count > 0;
-
     public bool HasSavePreviewItems => SavePreviewBundles.Count > 0;
 
     public bool HasTaskResults => RecentTaskResults.Count > 0;
@@ -317,10 +269,6 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
     public Visibility BatchExtractListVisibility => HasBatchExtractionCandidates ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility BatchExtractEmptyStateVisibility => HasBatchExtractionCandidates ? Visibility.Collapsed : Visibility.Visible;
-
-    public Visibility BatchReplaceListVisibility => HasBatchReplacementCandidates ? Visibility.Visible : Visibility.Collapsed;
-
-    public Visibility BatchReplaceEmptyStateVisibility => HasBatchReplacementCandidates ? Visibility.Collapsed : Visibility.Visible;
 
     public Visibility SavePreviewListVisibility => HasSavePreviewItems ? Visibility.Visible : Visibility.Collapsed;
 
@@ -423,19 +371,8 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            var batchReplacementPreviewResult = await _workspaceBatchOperationsGateway.GetWorkspaceBatchReplacementPreviewAsync(
-                new GetWorkspaceBatchReplacementPreviewQuery(
-                    currentWorkspaceSummary.WorkspaceId,
-                    SelectedBatchReplaceSourceOption?.SourceKind ?? BatchReplacementSourceKind.All));
-
-            if (!TryGetValue(batchReplacementPreviewResult, out var batchReplacementPreview))
-            {
-                return;
-            }
-
             _presentationPresenter.ApplyWorkspaceSummary(summary);
             _presentationPresenter.ApplyBatchExtractionPreview(batchExtractionPreview);
-            _presentationPresenter.ApplyBatchReplacementPreview(batchReplacementPreview);
             _presentationPresenter.ApplySavePreview(savePreview);
         }
         finally
@@ -471,7 +408,6 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
     private void ResetWorkspaceScopedExecutionState(bool clearTaskResults)
     {
         BatchExtractLastRunText = GetString(ResourceKeys.BatchTasksBatchExtractLastRunNone);
-        BatchReplaceLastRunText = GetString(ResourceKeys.BatchTasksBatchReplaceLastRunNone);
         SaveLastRunText = GetString(ResourceKeys.BatchTasksSaveExecutionLastRunNone);
 
         if (clearTaskResults)
@@ -485,7 +421,6 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(HasWorkspace));
         OnPropertyChanged(nameof(HasChanges));
         OnPropertyChanged(nameof(HasBatchExtractionCandidates));
-        OnPropertyChanged(nameof(HasBatchReplacementCandidates));
         OnPropertyChanged(nameof(HasSavePreviewItems));
         OnPropertyChanged(nameof(HasTaskResults));
         OnPropertyChanged(nameof(WorkspaceEmptyStateVisibility));
@@ -494,8 +429,6 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(ChangeEmptyStateVisibility));
         OnPropertyChanged(nameof(BatchExtractListVisibility));
         OnPropertyChanged(nameof(BatchExtractEmptyStateVisibility));
-        OnPropertyChanged(nameof(BatchReplaceListVisibility));
-        OnPropertyChanged(nameof(BatchReplaceEmptyStateVisibility));
         OnPropertyChanged(nameof(SavePreviewListVisibility));
         OnPropertyChanged(nameof(SavePreviewEmptyStateVisibility));
         OnPropertyChanged(nameof(TaskResultListVisibility));
@@ -503,7 +436,6 @@ public sealed partial class BatchTasksViewModel : ObservableObject, IDisposable
         ImportBundleFilesCommand.NotifyCanExecuteChanged();
         ImportBundleDirectoryCommand.NotifyCanExecuteChanged();
         RunBatchExtractCommand.NotifyCanExecuteChanged();
-        RunBatchReplaceCommand.NotifyCanExecuteChanged();
         RunSaveCommand.NotifyCanExecuteChanged();
     }
 

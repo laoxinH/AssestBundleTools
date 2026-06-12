@@ -10,7 +10,7 @@ using Microsoft.UI.Xaml;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
 
-public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
+public sealed partial class WorkspaceBatchReplacementDialogViewModel : ObservableObject
 {
     private readonly ILocalizationService _localizationService;
     private readonly Dictionary<string, BundleNodeViewModel> _bundleNodesById;
@@ -20,6 +20,7 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
     private string _sourceModeText;
     private string _validationText = string.Empty;
     private bool _isPlanLoading;
+    private bool _isExecuting;
     private bool _showChangedBundlesOnly;
     private string _candidateSearchText = string.Empty;
     private WorkspaceBatchReplacementFilterOptionViewModel? _selectedStatusFilter;
@@ -106,6 +107,18 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
         }
     }
 
+    public bool IsExecuting
+    {
+        get => _isExecuting;
+        private set
+        {
+            if (SetProperty(ref _isExecuting, value))
+            {
+                OnPropertyChanged(nameof(CanSubmit));
+            }
+        }
+    }
+
     public Visibility PlanLoadingVisibility => IsPlanLoading ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility ValidationVisibility =>
@@ -115,7 +128,7 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
 
     public bool HasCandidates => Candidates.Count > 0;
 
-    public bool CanSubmit => false;
+    public bool CanSubmit => !IsPlanLoading && !IsExecuting && Candidates.Any(static candidate => candidate.IsSelected);
 
     public bool ShowChangedBundlesOnly
     {
@@ -171,6 +184,7 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
     public void SetPlanLoading()
     {
         IsPlanLoading = true;
+        IsExecuting = false;
         ValidationText = string.Empty;
         PlanSummaryText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogPreviewLoading);
     }
@@ -179,6 +193,8 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(plan);
         IsPlanLoading = false;
+        IsExecuting = false;
+        UnsubscribeCandidateSelectionChanged();
         UnsubscribeBundleSelectionChanged();
         UnsubscribeTypeFilterSelectionChanged();
         Candidates.Clear();
@@ -196,6 +212,7 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
                 BuildSubtitle(candidate),
                 CanSelectCandidate(candidate.MatchStatus)));
         }
+        SubscribeCandidateSelectionChanged();
 
         var groupedBundles = plan.Candidates
             .Where(static candidate => candidate.BundleId is not null)
@@ -232,6 +249,8 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
     public void ApplyPlanUnavailable()
     {
         IsPlanLoading = false;
+        IsExecuting = false;
+        UnsubscribeCandidateSelectionChanged();
         PlanSummaryText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogPreviewUnavailable);
         ValidationText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogPreviewUnavailable);
         UnsubscribeBundleSelectionChanged();
@@ -246,6 +265,7 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
         TypeFilterButtonText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogTypeFilterAll);
         SourceModeText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceModeAuto);
         OnPropertyChanged(nameof(HasCandidates));
+        OnPropertyChanged(nameof(CanSubmit));
     }
 
     public void SelectAllBundles()
@@ -473,95 +493,6 @@ public sealed class WorkspaceBatchReplacementDialogViewModel : ObservableObject
         UpdateTypeFilterButtonText();
         ApplyCandidateFilters();
     }
-
-    private string BuildSubtitle(WorkspaceBatchReplacementCandidateDto candidate)
-    {
-        var typeName = string.IsNullOrWhiteSpace(candidate.AssetTypeDisplayName)
-            ? candidate.AssetType.ToString()
-            : candidate.AssetTypeDisplayName;
-        return $"{candidate.BundleDisplayName} · {typeName}";
-    }
-
-    private string ResolveStatusText(WorkspaceBatchReplacementMatchStatus status) =>
-        status switch
-        {
-            WorkspaceBatchReplacementMatchStatus.Changed => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusChanged),
-            WorkspaceBatchReplacementMatchStatus.Unchanged => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusUnchanged),
-            WorkspaceBatchReplacementMatchStatus.Missing => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusMissing),
-            WorkspaceBatchReplacementMatchStatus.TargetMissing => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusTargetMissing),
-            WorkspaceBatchReplacementMatchStatus.TypeMismatch => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusTypeMismatch),
-            WorkspaceBatchReplacementMatchStatus.HighConfidence => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusHighConfidence),
-            WorkspaceBatchReplacementMatchStatus.MediumConfidence => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusMediumConfidence),
-            WorkspaceBatchReplacementMatchStatus.LowConfidence => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusLowConfidence),
-            WorkspaceBatchReplacementMatchStatus.Ambiguous => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusAmbiguous),
-            WorkspaceBatchReplacementMatchStatus.Rejected => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusRejected),
-            _ => GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusIssue)
-        };
-
-    private string ResolveSourceModeText(WorkspaceBatchReplacementMatchingMode matchingMode) =>
-        matchingMode switch
-        {
-            WorkspaceBatchReplacementMatchingMode.Manifest => GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceModeManifest),
-            WorkspaceBatchReplacementMatchingMode.Heuristic => GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceModeHeuristic),
-            _ => GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceModeAuto)
-        };
-
-    private string ResolveSourceSummaryText(WorkspaceBatchReplacementPlanDto plan)
-    {
-        if (plan.MatchingMode == WorkspaceBatchReplacementMatchingMode.Manifest)
-        {
-            return _localizationService.GetFormattedString(
-                ResourceKeys.WorkspaceBatchReplacementDialogSourceManifestSummaryFormat,
-                plan.TotalManifestItemCount.ToString(CultureInfo.CurrentCulture),
-                plan.ChangedCount.ToString(CultureInfo.CurrentCulture),
-                plan.IssueCount.ToString(CultureInfo.CurrentCulture));
-        }
-
-        return _localizationService.GetFormattedString(
-            ResourceKeys.WorkspaceBatchReplacementDialogSourceHeuristicCountsFormat,
-            plan.ChangedCount.ToString(CultureInfo.CurrentCulture),
-            CountConfirmationCandidates(plan).ToString(CultureInfo.CurrentCulture),
-            plan.IssueCount.ToString(CultureInfo.CurrentCulture));
-    }
-
-    private string ResolvePlanSummaryText(WorkspaceBatchReplacementPlanDto plan)
-    {
-        if (plan.MatchingMode == WorkspaceBatchReplacementMatchingMode.Heuristic)
-        {
-            return _localizationService.GetFormattedString(
-                ResourceKeys.WorkspaceBatchReplacementDialogHeuristicPreviewSummaryFormat,
-                plan.ChangedCount.ToString(CultureInfo.CurrentCulture),
-                CountConfirmationCandidates(plan).ToString(CultureInfo.CurrentCulture),
-                plan.IssueCount.ToString(CultureInfo.CurrentCulture));
-        }
-
-        return _localizationService.GetFormattedString(
-            ResourceKeys.WorkspaceBatchReplacementDialogPreviewSummaryFormat,
-            plan.ChangedCount.ToString(CultureInfo.CurrentCulture),
-            plan.UnchangedCount.ToString(CultureInfo.CurrentCulture),
-            plan.IssueCount.ToString(CultureInfo.CurrentCulture));
-    }
-
-    private static int CountConfirmationCandidates(WorkspaceBatchReplacementPlanDto plan) =>
-        plan.Candidates.Count(static candidate => candidate.MatchStatus is
-            WorkspaceBatchReplacementMatchStatus.MediumConfidence or
-            WorkspaceBatchReplacementMatchStatus.LowConfidence or
-            WorkspaceBatchReplacementMatchStatus.Ambiguous);
-
-    private static bool CanSelectCandidate(WorkspaceBatchReplacementMatchStatus status) =>
-        status is
-            WorkspaceBatchReplacementMatchStatus.Changed or
-            WorkspaceBatchReplacementMatchStatus.HighConfidence or
-            WorkspaceBatchReplacementMatchStatus.MediumConfidence or
-            WorkspaceBatchReplacementMatchStatus.LowConfidence;
-
-    private static bool IsExecutableMatchStatus(WorkspaceBatchReplacementMatchStatus status) =>
-        status is WorkspaceBatchReplacementMatchStatus.Changed or WorkspaceBatchReplacementMatchStatus.HighConfidence;
-
-    private static bool IsIssueMatchStatus(WorkspaceBatchReplacementMatchStatus status) =>
-        status is not WorkspaceBatchReplacementMatchStatus.Changed and
-            not WorkspaceBatchReplacementMatchStatus.Unchanged and
-            not WorkspaceBatchReplacementMatchStatus.HighConfidence;
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
 }

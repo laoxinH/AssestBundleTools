@@ -1,8 +1,10 @@
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Replacement.Commands;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Queries;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
+using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
@@ -45,7 +47,7 @@ public sealed partial class BundleExplorerPage
 
         public async Task ShowAsync()
         {
-            if (_owner.XamlRoot is null || !TryResolveWorkspaceScope(out var workspaceSummary, out var workspaceKey))
+            if (_owner.XamlRoot is null || !TryResolveWorkspaceScope(out var workspaceSummary, out var workspaceKey, out var workspaceDataRootPath))
             {
                 return;
             }
@@ -64,6 +66,7 @@ public sealed partial class BundleExplorerPage
             _activeWindow = window;
             window.SourceDirectoryRequested += OnSourceDirectoryRequested;
             window.RefreshRequested += OnRefreshRequested;
+            window.StartReplacementRequested += OnStartReplacementRequested;
             window.Closed += OnWindowClosed;
             window.Activate();
 
@@ -84,10 +87,16 @@ public sealed partial class BundleExplorerPage
                 await RefreshPlanAsync(workspaceSummary, workspaceKey, viewModel);
             }
 
+            async void OnStartReplacementRequested(object? sender, EventArgs args)
+            {
+                await ExecuteReplacementAsync(workspaceSummary, workspaceKey, workspaceDataRootPath, viewModel);
+            }
+
             void OnWindowClosed(object sender, WindowEventArgs args)
             {
                 window.SourceDirectoryRequested -= OnSourceDirectoryRequested;
                 window.RefreshRequested -= OnRefreshRequested;
+                window.StartReplacementRequested -= OnStartReplacementRequested;
                 window.Closed -= OnWindowClosed;
                 if (ReferenceEquals(_activeWindow, window))
                 {
@@ -96,6 +105,84 @@ public sealed partial class BundleExplorerPage
 
                 CancelPendingPlan();
             }
+        }
+
+        private async Task ExecuteReplacementAsync(
+            WorkspaceSummaryDto workspaceSummary,
+            string? workspaceKey,
+            string? workspaceDataRootPath,
+            WorkspaceBatchReplacementDialogViewModel viewModel)
+        {
+            var selectedCandidates = viewModel.GetSelectedCandidates();
+            if (selectedCandidates.Count == 0 || string.IsNullOrWhiteSpace(viewModel.SourceDirectory))
+            {
+                return;
+            }
+
+            viewModel.SetExecuting();
+            Result<WorkspaceBatchReplacementResultDto> result;
+            try
+            {
+                result = await _backgroundWorkScheduler.RunAsync(
+                    new BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>(
+                        BackgroundWorkProfile.BatchReplacement,
+                        context => _workspaceBatchOperationsGateway.ExecuteWorkspaceBatchReplacementAsync(
+                            new ExecuteWorkspaceBatchReplacementCommand(
+                                workspaceSummary.WorkspaceId,
+                                workspaceKey,
+                                workspaceDataRootPath,
+                                viewModel.SourceDirectory,
+                                WorkspaceBatchReplacementMatchingMode.Auto,
+                                selectedCandidates,
+                                new WorkspaceBatchReplacementProgressBridge(context.Progress, _localizationService)),
+                            context.CancellationToken))
+                    {
+                        SemanticKind = BackgroundWorkSemanticKind.WorkspaceMutation,
+                        Priority = BackgroundWorkPriority.Visible,
+                        WorkspaceId = workspaceSummary.WorkspaceId.Value,
+                        WorkspaceKey = workspaceKey,
+                        StatusTitle = GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusTitle),
+                        TotalCount = selectedCandidates.Count,
+                        CanCancel = true
+                    });
+            }
+            catch (OperationCanceledException)
+            {
+                viewModel.ApplyExecutionUnavailable();
+                return;
+            }
+            catch
+            {
+                viewModel.ApplyExecutionUnavailable();
+                _appNotificationService.Show(
+                    GetString(ResourceKeys.AppNotificationErrorTitle),
+                    GetString(ResourceKeys.CommonUnexpectedFailure),
+                    AppNotificationSeverity.Error);
+                return;
+            }
+
+            if (result.IsCancelled)
+            {
+                viewModel.ApplyExecutionUnavailable();
+                return;
+            }
+
+            if (!TryGetValue(result, out var replacementResult))
+            {
+                viewModel.ApplyExecutionUnavailable();
+                return;
+            }
+
+            viewModel.ApplyExecutionResult(replacementResult);
+            var message = _localizationService.GetFormattedString(
+                ResourceKeys.WorkspaceBatchReplacementDialogCompletedMessageFormat,
+                replacementResult.ReplacedAssetCount,
+                replacementResult.SkippedAssetCount,
+                replacementResult.FailedAssetCount);
+            _appNotificationService.Show(
+                GetString(ResourceKeys.AppNotificationSuccessTitle),
+                message,
+                AppNotificationSeverity.Success);
         }
 
         private async Task RefreshPlanAsync(
@@ -181,7 +268,10 @@ public sealed partial class BundleExplorerPage
             cancellationSource?.Cancel();
         }
 
-        private bool TryResolveWorkspaceScope(out WorkspaceSummaryDto workspaceSummary, out string? workspaceKey)
+        private bool TryResolveWorkspaceScope(
+            out WorkspaceSummaryDto workspaceSummary,
+            out string? workspaceKey,
+            out string? workspaceDataRootPath)
         {
             var resolvedWorkspaceSummary = _workspaceContextService.CurrentWorkspaceSummary
                                            ?? _owner.ViewModel.WorkspaceShell.WorkspaceSummary;
@@ -189,16 +279,91 @@ public sealed partial class BundleExplorerPage
             {
                 workspaceSummary = null!;
                 workspaceKey = null;
+                workspaceDataRootPath = null;
                 return false;
             }
 
             workspaceSummary = resolvedWorkspaceSummary;
-            workspaceKey = _workspaceContextService.TryGetCurrentWorkspaceEntry(out var entry) && entry is not null
-                ? entry.WorkspaceKey
-                : workspaceSummary.WorkspaceKey;
+            if (_workspaceContextService.TryGetCurrentWorkspaceEntry(out var entry) && entry is not null)
+            {
+                workspaceKey = entry.WorkspaceKey;
+                workspaceDataRootPath = entry.WorkspaceDataRootPath;
+                return true;
+            }
+
+            workspaceKey = workspaceSummary.WorkspaceKey;
+            workspaceDataRootPath = workspaceSummary.WorkspaceDataRootPath;
             return true;
         }
 
+        private bool TryGetValue<T>(Result<T> result, out T value)
+        {
+            if (result.IsSuccess && result.Value is not null)
+            {
+                value = result.Value;
+                return true;
+            }
+
+            value = default!;
+            if (!result.IsCancelled)
+            {
+                AppendResultFailure(result.Errors);
+            }
+
+            return false;
+        }
+
+        private void AppendResultFailure(IReadOnlyList<AppError> errors)
+        {
+            if (errors.Count == 0)
+            {
+                return;
+            }
+
+            var message = FormatError(errors[0]);
+            _appNotificationService.Show(
+                GetString(ResourceKeys.AppNotificationErrorTitle),
+                message,
+                AppNotificationSeverity.Error);
+        }
+
+        private string FormatError(AppError error) =>
+            error.Parameters.Count > 0
+                ? _localizationService.GetFormattedString(
+                    error.MessageToken,
+                    error.Parameters.Values.Select(static value => value ?? string.Empty).ToArray())
+                : GetString(error.MessageToken);
+
         private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
+
+        private sealed class WorkspaceBatchReplacementProgressBridge : IProgress<WorkspaceBatchReplacementProgressDto>
+        {
+            private readonly IBackgroundWorkProgress _progress;
+            private readonly ILocalizationService _localizationService;
+
+            public WorkspaceBatchReplacementProgressBridge(
+                IBackgroundWorkProgress progress,
+                ILocalizationService localizationService)
+            {
+                _progress = progress ?? throw new ArgumentNullException(nameof(progress));
+                _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+            }
+
+            public void Report(WorkspaceBatchReplacementProgressDto value)
+            {
+                ArgumentNullException.ThrowIfNull(value);
+
+                var totalCount = Math.Max(1, value.TotalItemCount);
+                var completedCount = Math.Clamp(value.CompletedItemCount, 0, totalCount);
+                var detail = string.IsNullOrWhiteSpace(value.ItemDisplayName)
+                    ? _localizationService.GetRequiredString(ResourceKeys.WorkspaceBatchReplacementDialogStatusPreparing)
+                    : _localizationService.GetFormattedString(
+                        ResourceKeys.WorkspaceBatchReplacementDialogStatusItemFormat,
+                        value.ItemDisplayName,
+                        value.SucceededItemCount,
+                        value.FailedItemCount);
+                _progress.ReportProgress(completedCount, totalCount, detail);
+            }
+        }
     }
 }

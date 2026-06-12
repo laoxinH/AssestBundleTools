@@ -840,6 +840,24 @@
   <data name="WorkspaceBatchReplacementDialog.Heuristic.Warning" xml:space="preserve">
     <value>No manifest was found. This plan is inferred from directories, types, and names; review candidates before running.</value>
   </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Title" xml:space="preserve">
+    <value>Running batch replacement</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Preparing" xml:space="preserve">
+    <value>Preparing batch replacement...</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Status.Item.Format" xml:space="preserve">
+    <value>Replacing {0}; {1} completed, {2} failed.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Completed.Message.Format" xml:space="preserve">
+    <value>Batch replacement completed: {0} replaced, {1} skipped, {2} failed.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Execution.Summary.Format" xml:space="preserve">
+    <value>{0} replaced, {1} skipped, {2} failed.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Execution.PartialFailure" xml:space="preserve">
+    <value>Some candidates failed to replace. Check logs or candidate status, then retry.</value>
+  </data>
   <data name="WorkspaceBatchReplacementDialog.Status.Changed" xml:space="preserve">
     <value>Changed</value>
   </data>

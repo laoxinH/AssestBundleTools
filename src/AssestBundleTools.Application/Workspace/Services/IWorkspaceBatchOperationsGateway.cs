@@ -38,10 +38,6 @@ public interface IWorkspaceBatchOperationsGateway
         ExtractWorkspaceAssetsCommand command,
         CancellationToken cancellationToken = default);
 
-    Task<Result<WorkspaceBatchReplacementPreviewDto>> GetWorkspaceBatchReplacementPreviewAsync(
-        GetWorkspaceBatchReplacementPreviewQuery query,
-        CancellationToken cancellationToken = default);
-
     Task<Result<WorkspaceBatchReplacementPlanDto>> GetWorkspaceBatchReplacementPlanAsync(
         GetWorkspaceBatchReplacementPlanQuery query,
         CancellationToken cancellationToken = default);

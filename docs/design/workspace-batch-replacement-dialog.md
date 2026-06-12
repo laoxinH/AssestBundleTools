@@ -6,10 +6,10 @@
 
 这里的 `批量替换` 指：用户选择一个外部导出目录，把该目录中已修改的文件批量匹配回当前工作区内的 AB 资源，并追加可撤销的替换操作记录。它不是当前批处理页中“把已经进入替换队列的项聚合成摘要”的旧骨架。
 
-后续实现新窗口时，旧的批量替换骨架可以直接移除，不再保留兼容入口：
+当前实现已经移除旧批量替换预览骨架，不再保留兼容入口：
 
 - `GetWorkspaceBatchReplacementPreviewQuery / Handler`
-- `ExecuteWorkspaceBatchReplacementCommand / Handler`
+- 旧语义的 `ExecuteWorkspaceBatchReplacementCommand / Handler`
 - 仅面向旧批处理页摘要的 `WorkspaceBatchReplacementPlanner`
 - 与旧骨架强绑定的批处理页入口和 DTO
 
@@ -400,10 +400,11 @@ GetWorkspaceBatchReplacementPlanQuery
 ExecuteWorkspaceBatchReplacementCommand
   workspaceId
   workspaceKey
+  workspaceDataRootPath
   sourceRootDirectory
   matchingMode
-  selectedCandidateIds[]
-  batchId?
+  candidates[]                 // UI 已确认的候选快照
+  progress?
 ```
 
 计划 DTO 至少包含：
@@ -455,13 +456,15 @@ WorkspaceBatchReplacementCandidateDto
 ```text
 WorkspaceBatchReplacementResultDto
   workspaceId
-  batchId
-  processedCount
-  appliedCount
-  skippedCount
-  failedCount
+  sourceRootDirectory
+  matchingMode
+  requestedCandidateCount
+  replacedAssetCount
+  skippedAssetCount
+  failedAssetCount
+  processedBundleCount
+  processedSpineGroupCount
   completedAtUtc
-  operationIds[]
   itemResults[]
 ```
 
@@ -470,7 +473,8 @@ WorkspaceBatchReplacementResultDto
 - Application 负责读取 manifest DTO、匹配工作区目标、做 size-first / MD5 判定、执行类型兼容校验。
 - Infrastructure 负责 manifest 文件读取、外部文件大小 / hash 读取和文件内容载荷读取。
 - Presentation 不直接解析 manifest、不直接计算 MD5、不直接扫描 AB。
-- 执行时仍逐项追加真实 `ReplaceFromFile` 操作记录；Spine 组替换要拆成真实组成资产的替换记录，并共享同一 `batchId / relationId`。
+- 执行时仍逐项复用单资源 `ReplaceAssetFromFileHandler` 并追加真实 `ReplaceFromFile` 操作记录；Spine 组替换要拆成真实组成资产的替换记录，并共享同一 `batchId / relationId`。
+- 当前真实执行范围为 `.atlas`、`.skel`、`.json` 文本组成文件、`.png` 图片资源、`.wav/.mp3/.ogg` 音频资源，以及由这些组成文件构成的 Spine 组候选；其他候选只进入跳过结果，不写替换操作记录。
 - 如果一批 Spine 组包含 skeleton、atlas、texture page 多个组成文件，执行完成后只发布一次聚合操作通知，避免预览多次闪烁。
 
 ## 7. 后台任务与性能
@@ -487,7 +491,7 @@ WorkspaceBatchReplacementResultDto
 ```text
 BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
   Profile = BatchReplacement
-  SemanticKind = VisibleMutation
+  SemanticKind = WorkspaceMutation
   Priority = Visible
   WorkspaceId = current workspace
   WorkspaceKey = current workspace key
@@ -499,7 +503,7 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 - 单个后台任务承载整批替换。
 - 同一 AB 内顺序执行，避免第三方 loaded-session 对象并发访问风险。
 - 不同 AB 可以受控并行，但第一版可先顺序执行，等替换写入、通知聚合和失败恢复稳定后再扩展并发。
-- 每个候选执行前重新校验目标仍存在、来源文件仍可读、类型仍兼容。
+- 每个候选执行前重新校验目标仍存在、目标仍允许文件替换、类型仍兼容；未实现的目标类型或来源扩展名进入 `Skipped` 结果。
 - 用户取消后保留已成功追加的操作事实，并在结果中标记 `Cancelled`；不回滚已经完成的替换操作记录。
 
 ## 8. 操作记录、通知和预览刷新
@@ -513,8 +517,8 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 
 通知：
 
-- 成功执行后发布带 `Reason = Replacement` 的工作区操作通知。
-- 通知必须携带 `operationIds / primaryTargets / relatedTargets / implicitAffectedTargets`。
+- 成功执行后发布带 `Reason = BatchReplacementApplied` 的工作区操作通知。
+- 通知必须携带已替换资源的 affected targets；跳过项、未变化项和失败项不进入 affected targets。
 - 对 Spine 组成文件同批替换，通知层按组聚合，Presentation 先刷新轻量操作投影，再合并富预览刷新。
 - `Unchanged`、跳过项和失败项不应触发目标预览刷新。
 
@@ -539,21 +543,22 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 
 ## 10. 分阶段落地
 
-第一阶段：窗口与 manifest 计划
+第一阶段：窗口与 manifest 计划（已完成）
 
 - 新增批量替换窗口和 ViewModel。
 - 新增 manifest 计划查询，支持目录选择、manifest 回读、size-first / MD5 判定、默认选择状态和诊断。
-- 只生成计划，不执行替换。
-- 当前进度：已完成主工作台 `批量替换` 入口、独立窗口、目录选择、后台 `TransientRead` 计划扫描、manifest 工作区 key 校验、size-first / MD5 变更判定、默认选择状态、中英本地化，以及候选区搜索 / 默认已修改状态 / 多选资源类型 / 资源包范围仅已变更的本地过滤；manifest 缺失时已接入第一版启发式计划，按文件枚举、类型推断、资源包推断、名称归一化和置信度生成 `HighConfidence / MediumConfidence / LowConfidence / Ambiguous / Rejected` 候选，并在 UI 显示启发式风险提示、状态筛选和高置信默认选择；`开始替换` 仍保持禁用。
-- 旧批处理页批量替换骨架 query / command / planner 尚未移除，下一阶段开始前必须收口：旧入口不得再承担新批量替换语义，后续历史展示应读取新执行结果或操作记录摘要。
+- 当前进度：已完成主工作台 `批量替换` 入口、独立窗口、目录选择、后台 `TransientRead` 计划扫描、manifest 工作区 key 校验、size-first / MD5 变更判定、默认选择状态、中英本地化，以及候选区搜索 / 默认已修改状态 / 多选资源类型 / 资源包范围仅已变更的本地过滤；manifest 缺失时已接入第一版启发式计划，按文件枚举、类型推断、资源包推断、名称归一化和置信度生成 `HighConfidence / MediumConfidence / LowConfidence / Ambiguous / Rejected` 候选，并在 UI 显示启发式风险提示、状态筛选和高置信默认选择。
+- 旧批处理页的批量替换预览 query / handler / planner 已从 Application 网关移除，旧页不再承担批量替换语义；真正入口为工作台级批量替换窗口。
 
-第二阶段：执行与操作记录
+第二阶段：执行与操作记录（已接入第一版）
 
-- 移除旧批量替换骨架 query / command / planner 及其批处理页执行入口，避免两套不同含义的“批量替换”并存。
-- 新增批量替换执行命令。
-- 逐项复用单资源文件替换能力。
-- Spine 组候选拆成组成资产替换，并共享批次关系。
-- 接入 `BatchReplacement` 可见后台任务和操作通知聚合。
+- 已移除旧批量替换预览 query / handler / planner 及其批处理页执行入口，避免两套不同含义的“批量替换”并存。
+- 已新增批量替换执行命令，命令携带 UI 已确认候选快照。
+- 已逐项复用单资源文件替换能力，并通过现有记录器写入 `ReplaceFromFile` 操作记录。
+- 已按“普通候选先执行、Spine 组候选后执行”的顺序处理；Spine 组候选拆成组成资产替换，并共享批次关系和 Spine 组关联关系。
+- 已接入 `BatchReplacement` 可见后台任务、进度、完成摘要和操作通知聚合。
+- 当前仍未开放低置信/多候选的目标手动确认执行页；这些候选若被用户勾选，会按支持范围执行或进入跳过结果。
+- 批处理任务页中的旧批量替换卡片、旧 source kind 和旧摘要 ViewModel 已移除；工作台级批量替换窗口是唯一入口。
 
 第三阶段：启发式回退增强
 
@@ -580,8 +585,8 @@ Application 测试：
 - 缺失文件、hash 失败、类型不兼容返回结构化诊断。
 - manifest 缺失时，标准导出目录中的同资源包 / 同类型 / 同名唯一项进入 `HighConfidence` 并默认选中。已覆盖。
 - manifest 缺失时，同分同名目标进入 `Ambiguous` 且默认不选中。已覆盖。
-- 执行只对选中 `Changed` 候选追加替换操作记录。
-- 同一批次的替换记录共享 `batchId`。
+- 执行只对选中且支持的 `Changed / HighConfidence / MediumConfidence / LowConfidence` 候选追加替换操作记录。已覆盖支持与跳过混合结果。
+- 同一批次的替换记录共享 `batchId`；Spine 组成资产共享 Spine 组 `relationId`。
 
 Infrastructure 测试：
 
@@ -618,4 +623,4 @@ Presentation 测试：
 
 旧批量替换骨架没有继续兼容价值，实现新窗口时应直接移除，避免形成两套含义不同的“批量替换”。
 
-截至当前实现，主工作台新窗口已经接入 manifest 计划读取和第一版启发式回退计划，但旧批处理页骨架仍保留为历史入口。后续处理批量替换执行时必须先按本文第二阶段移除旧骨架，再在新 manifest / heuristic 计划模型上实现真实执行。
+截至当前实现，主工作台新窗口已经接入 manifest 计划读取、第一版启发式回退计划和真实替换执行。真实执行会复用单资源文件替换能力写入 `ReplaceFromFile` 操作记录，并通过聚合通知触发工作区投影和预览刷新；旧批处理页骨架已经移除，后续批量替换开发必须继续基于本文定义的 manifest / heuristic 计划模型和真实资源级操作记录链路推进。

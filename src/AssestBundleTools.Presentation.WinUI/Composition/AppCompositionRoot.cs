@@ -184,12 +184,10 @@ internal static class AppCompositionRoot
             loadSpineAssetGroupsHandler,
             extractSpineAssetGroupHandler,
             workspaceExportManifestStore);
-        var getWorkspaceBatchReplacementPreviewHandler = new GetWorkspaceBatchReplacementPreviewHandler(workspaceSessionRegistry);
         var getWorkspaceBatchReplacementPlanHandler = new GetWorkspaceBatchReplacementPlanHandler(
             workspaceSessionRegistry,
             workspaceExportManifestStore,
             workspaceBatchReplacementSourceFileProbe);
-        var executeWorkspaceBatchReplacementHandler = new ExecuteWorkspaceBatchReplacementHandler(workspaceSessionRegistry);
         var getFileReplacementCandidateHandler = new GetFileReplacementCandidateHandler(workspaceSessionRegistry);
         var getWorkspaceReplacementCandidatesHandler = new GetWorkspaceReplacementCandidatesHandler(workspaceSessionRegistry);
         var workspaceReplacementOperationRecorder = new WorkspaceReplacementOperationRecorder(
@@ -198,6 +196,10 @@ internal static class AppCompositionRoot
         var replaceAssetFromFileHandler = new ReplaceAssetFromFileHandler(
             workspaceSessionRegistry,
             workspaceReplacementOperationRecorder);
+        var executeWorkspaceBatchReplacementHandler = new ExecuteWorkspaceBatchReplacementHandler(
+            workspaceSessionRegistry,
+            replaceAssetFromFileHandler,
+            workspaceBatchReplacementSourceFileProbe);
         var replaceAssetFromWorkspaceHandler = new ReplaceAssetFromWorkspaceHandler(
             workspaceSessionRegistry,
             workspaceReplacementOperationRecorder);
@@ -281,7 +283,6 @@ internal static class AppCompositionRoot
             saveWorkspaceAsNewBundleHandler: saveWorkspaceAsNewBundleHandler,
             getWorkspaceBatchExtractionPreviewHandler: getWorkspaceBatchExtractionPreviewHandler,
             extractWorkspaceAssetsHandler: extractWorkspaceAssetsHandler,
-            getWorkspaceBatchReplacementPreviewHandler: getWorkspaceBatchReplacementPreviewHandler,
             getWorkspaceBatchReplacementPlanHandler: getWorkspaceBatchReplacementPlanHandler,
             executeWorkspaceBatchReplacementHandler: executeWorkspaceBatchReplacementHandler);
         var workspaceBatchOperationsGateway = new NotifyingWorkspaceBatchOperationsGateway(

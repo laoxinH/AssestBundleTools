@@ -1,9 +1,6 @@
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Extraction.Commands;
 using AssestBundleTools.Application.Extraction.Dtos;
-using AssestBundleTools.Application.Replacement;
-using AssestBundleTools.Application.Replacement.Commands;
-using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Saving.Commands;
 using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Presentation.WinUI.Localization;
@@ -60,63 +57,6 @@ public sealed partial class BatchTasksViewModel
                 extractionResult.ExtractedAssetCount,
                 extractionResult.ExtractedBundleCount,
                 extractionResult.SuggestedOutputDirectory));
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    /// <summary>
-    /// 执行批量替换骨架。
-    /// 当前阶段只验证并汇总已经进入替换队列的资源，不重新回放真实替换动作。
-    /// </summary>
-    private async Task RunBatchReplacementAsync()
-    {
-        if (IsBusy || _workspaceContextService.CurrentWorkspaceSummary is null)
-        {
-            return;
-        }
-
-        IsBusy = true;
-        try
-        {
-            var command = new ExecuteWorkspaceBatchReplacementCommand(
-                WorkspaceId: _workspaceContextService.CurrentWorkspaceSummary.WorkspaceId,
-                SourceFilter: SelectedBatchReplaceSourceOption?.SourceKind ?? BatchReplacementSourceKind.All);
-            var result = await _backgroundWorkScheduler.RunAsync(
-                new BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>(
-                    BackgroundWorkProfile.BatchReplacement,
-                    context => _workspaceBatchOperationsGateway.ExecuteWorkspaceBatchReplacementAsync(
-                        command,
-                        context.CancellationToken))
-                {
-                    SemanticKind = BackgroundWorkSemanticKind.WorkspaceMutation,
-                    Priority = BackgroundWorkPriority.Visible,
-                    WorkspaceId = command.WorkspaceId.Value,
-                    StatusTitle = _localizationService.GetRequiredString(ResourceKeys.BatchTasksBatchReplaceStatusText)
-                });
-
-            if (!TryGetValue(result, out WorkspaceBatchReplacementResultDto? replacementResult))
-            {
-                return;
-            }
-
-            BatchReplaceLastRunText = _localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksBatchReplaceLastRunFormat,
-                replacementResult.ProcessedAssetCount,
-                replacementResult.ProcessedBundleCount,
-                replacementResult.WorkspaceReplacementCount,
-                replacementResult.FileReplacementCount,
-                _presentationPresenter.FormatTimestamp(replacementResult.CompletedAtUtc));
-
-            AddTaskExecutionResult(_presentationPresenter.CreateBatchReplacementTaskResult(replacementResult));
-
-            _appLogService.AppendInfo(_localizationService.GetFormattedString(
-                ResourceKeys.BatchTasksBatchReplaceLogExecutedFormat,
-                replacementResult.ProcessedAssetCount,
-                replacementResult.ProcessedBundleCount,
-                _presentationPresenter.GetBatchReplacementSourceDisplayName(replacementResult.SourceFilter)));
         }
         finally
         {

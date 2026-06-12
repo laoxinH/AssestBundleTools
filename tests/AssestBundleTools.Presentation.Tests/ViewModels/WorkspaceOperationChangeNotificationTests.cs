@@ -776,20 +776,6 @@ public sealed class WorkspaceOperationChangeNotificationTests
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
-        public Task<Result<WorkspaceBatchReplacementPreviewDto>> GetWorkspaceBatchReplacementPreviewAsync(
-            GetWorkspaceBatchReplacementPreviewQuery query,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(Result<WorkspaceBatchReplacementPreviewDto>.Success(
-                new WorkspaceBatchReplacementPreviewDto(
-                    WorkspaceId: _workspaceSummary.WorkspaceId,
-                    WorkspaceDisplayName: _workspaceSummary.DisplayName,
-                    SourceFilter: query.SourceFilter,
-                    CandidateAssetCount: 0,
-                    CandidateBundleCount: 0,
-                    WorkspaceReplacementCount: 0,
-                    FileReplacementCount: 0,
-                    BundlePlans: Array.Empty<WorkspaceBatchReplacementBundlePlanDto>())));
-
         public Task<Result<WorkspaceBatchReplacementPlanDto>> GetWorkspaceBatchReplacementPlanAsync(
             GetWorkspaceBatchReplacementPlanQuery query,
             CancellationToken cancellationToken = default) =>
