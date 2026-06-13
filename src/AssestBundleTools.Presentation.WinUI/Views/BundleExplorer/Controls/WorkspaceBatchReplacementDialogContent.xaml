@@ -43,6 +43,20 @@
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="FontSize" Value="13" />
         </Style>
+        <Style
+            x:Key="BatchReplacementHelpButtonStyle"
+            TargetType="Button">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="11" />
+        </Style>
     </UserControl.Resources>
 
     <Grid
@@ -79,21 +93,17 @@
                                 Style="{StaticResource DialogSectionTitleTextStyle}" />
                             <Button
                                 x:Name="SourceSectionHelpButton"
-                                Width="24"
-                                Height="24"
-                                MinWidth="0"
-                                MinHeight="0"
-                                Padding="0"
-                                VerticalAlignment="Center"
-                                Background="{ThemeResource SubtleFillColorTransparentBrush}"
-                                BorderThickness="0"
-                                CornerRadius="12"
-                                FontSize="12">
-                                <TextBlock
+                                Style="{StaticResource BatchReplacementHelpButtonStyle}"
+                                PointerEntered="OnSourceSectionHelpButtonPointerEntered"
+                                PointerExited="OnSourceSectionHelpButtonPointerExited"
+                                ToolTipService.Placement="Right">
+                                <FontIcon
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
-                                    FontWeight="SemiBold"
-                                    Text="?" />
+                                    FontFamily="Segoe Fluent Icons"
+                                    FontSize="11"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Glyph="&#xE897;" />
                             </Button>
                         </StackPanel>
                         <TextBlock

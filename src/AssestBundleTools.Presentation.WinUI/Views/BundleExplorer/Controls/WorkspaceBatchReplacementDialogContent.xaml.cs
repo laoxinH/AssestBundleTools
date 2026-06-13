@@ -11,6 +11,8 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 /// </summary>
 public sealed partial class WorkspaceBatchReplacementDialogContent : UserControl
 {
+    private ToolTip? _sourceSectionHelpToolTip;
+
     public WorkspaceBatchReplacementDialogContent(WorkspaceBatchReplacementDialogViewModel viewModel)
     {
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
@@ -30,7 +32,20 @@ public sealed partial class WorkspaceBatchReplacementDialogContent : UserControl
         SourceSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSourceSectionTitle);
         SourceSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSourceSectionHint);
         var sourceSectionHelpText = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSourceSectionHelp);
-        ToolTipService.SetToolTip(SourceSectionHelpButton, sourceSectionHelpText);
+        _sourceSectionHelpToolTip = new ToolTip
+        {
+            MaxWidth = 360,
+            Placement = Microsoft.UI.Xaml.Controls.Primitives.PlacementMode.Right,
+            Content = new TextBlock
+            {
+                MaxWidth = 320,
+                FontSize = 12,
+                LineHeight = 18,
+                Text = sourceSectionHelpText,
+                TextWrapping = TextWrapping.WrapWholeWords
+            }
+        };
+        ToolTipService.SetToolTip(SourceSectionHelpButton, _sourceSectionHelpToolTip);
         AutomationProperties.SetName(SourceSectionHelpButton, sourceSectionHelpText);
         ChooseSourceDirectoryButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogChooseSourceDirectoryButton);
         RefreshPlanButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogRefreshButton);
@@ -51,6 +66,22 @@ public sealed partial class WorkspaceBatchReplacementDialogContent : UserControl
 
     private void OnRefreshPlanButtonClick(object sender, RoutedEventArgs e) =>
         RefreshRequested?.Invoke(this, EventArgs.Empty);
+
+    private void OnSourceSectionHelpButtonPointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (_sourceSectionHelpToolTip is not null)
+        {
+            _sourceSectionHelpToolTip.IsOpen = true;
+        }
+    }
+
+    private void OnSourceSectionHelpButtonPointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (_sourceSectionHelpToolTip is not null)
+        {
+            _sourceSectionHelpToolTip.IsOpen = false;
+        }
+    }
 
     private void OnSelectAllBundlesButtonClick(object sender, RoutedEventArgs e) =>
         ViewModel.SelectAllBundles();

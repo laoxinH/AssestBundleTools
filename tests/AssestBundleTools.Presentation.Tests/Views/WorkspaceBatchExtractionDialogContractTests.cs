@@ -80,6 +80,38 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
     }
 
     [Fact]
+    public void WorkspaceBatchReplacementSourceHelp_ShouldUseIconButtonAndImmediateHoverTip()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var contentXaml = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Controls",
+            "WorkspaceBatchReplacementDialogContent.xaml"));
+        var contentCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Controls",
+            "WorkspaceBatchReplacementDialogContent.xaml.cs"));
+
+        Assert.Contains("BatchReplacementHelpButtonStyle", contentXaml);
+        Assert.Contains("PointerEntered=\"OnSourceSectionHelpButtonPointerEntered\"", contentXaml);
+        Assert.Contains("PointerExited=\"OnSourceSectionHelpButtonPointerExited\"", contentXaml);
+        Assert.Contains("FontIcon", contentXaml);
+        Assert.Contains("Glyph=\"&#xE897;\"", contentXaml);
+        Assert.DoesNotContain("Text=\"?\"", contentXaml);
+        Assert.Contains("_sourceSectionHelpToolTip.IsOpen = true;", contentCode);
+        Assert.Contains("_sourceSectionHelpToolTip.IsOpen = false;", contentCode);
+        Assert.Contains("TextWrapping = TextWrapping.WrapWholeWords", contentCode);
+    }
+
+    [Fact]
     public void WorkspaceBatchExtractionPreview_ShouldBeDeferredAndRunAsSilentTransientRead()
     {
         var repositoryRoot = FindRepositoryRoot();
