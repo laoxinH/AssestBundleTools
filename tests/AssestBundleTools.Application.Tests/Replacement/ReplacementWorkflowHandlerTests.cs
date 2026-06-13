@@ -758,6 +758,65 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.True(candidate.Diagnostics.Contains("Ambiguous"), "Candidate should expose ambiguity diagnostics.");
     }
 
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldUseOrdinalSuffix_ForDuplicateOrdinaryAssets()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-a");
+        var firstAssetId = new AssetId("asset-texture-one");
+        var secondAssetId = new AssetId("asset-texture-two");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterBundle(workspaceId, bundleId, "char_452_bstalk.ab", "ab/char_452_bstalk.ab");
+        registry.RegisterAssetListItem(new AssetListItemDto(
+            firstAssetId,
+            bundleId,
+            "HeroTexture",
+            "Assets/HeroTexture",
+            AssetType.Texture2D,
+            SizeInBytes: 128,
+            PreferredDisplaySizeInBytes: 128,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: "Texture2D",
+            PathId: 42,
+            DisplayName: "HeroTexture [1]",
+            ExportFileName: "HeroTexture [1]"));
+        registry.RegisterAssetListItem(new AssetListItemDto(
+            secondAssetId,
+            bundleId,
+            "HeroTexture",
+            "Assets/HeroTexture",
+            AssetType.Texture2D,
+            SizeInBytes: 128,
+            PreferredDisplaySizeInBytes: 128,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: "Texture2D",
+            PathId: 43,
+            DisplayName: "HeroTexture [2]",
+            ExportFileName: "HeroTexture [2]"));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("char_452_bstalk.ab/Texture2D/HeroTexture [1].png", 128);
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(
+            registry,
+            new TestWorkspaceExportManifestStore(null),
+            sourceProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\Export",
+            WorkspaceBatchReplacementMatchingMode.Heuristic));
+
+        TestAssert.True(result.IsSuccess, "Heuristic planning should succeed for duplicate ordinary assets.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected replacement plan.");
+        var candidate = TestAssert.Single(plan.Candidates);
+        TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.HighConfidence, candidate.MatchStatus, "Exact ordinal suffix should disambiguate ordinary same-name assets.");
+        TestAssert.True(candidate.IsDefaultSelected, "Ordinal-disambiguated ordinary assets should be selected by default.");
+        TestAssert.Equal(firstAssetId, candidate.AssetId, "Candidate should resolve to the ordinary asset with the matching ordinal suffix.");
+        TestAssert.True(candidate.Diagnostics.Contains("OrdinalSuffixMatched"), "Candidate should expose ordinal suffix match evidence.");
+        TestAssert.False(candidate.Diagnostics.Contains("Ambiguous"), "Ordinal-disambiguated ordinary assets should not be marked ambiguous.");
+    }
+
     public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldUseSourceDirectoryName_AsImplicitBundleForHeuristicPlan()
     {
         var workspaceId = CreateWorkspaceId();

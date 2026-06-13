@@ -150,6 +150,7 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
 
         var scoredTargets = ScoreTargets(source, workspaceIndex, bundleMatches, diagnostics)
             .ApplySpineGroupPreferredScope(source)
+            .ApplyOrdinalPreferredScope(source)
             .OrderByDescending(static scored => scored.Score)
             .ThenBy(static scored => scored.Target.Bundle.DisplayName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(static scored => scored.Target.DisplayName, StringComparer.OrdinalIgnoreCase)
@@ -295,6 +296,11 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
             {
                 score += 40;
                 evidence.Add("NameMatched");
+                if (HasOrdinalSuffix(sourceNameKey))
+                {
+                    score += 10;
+                    evidence.Add("OrdinalSuffixMatched");
+                }
             }
             else if (suffixNameMatch)
             {

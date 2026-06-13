@@ -363,6 +363,10 @@ internal static partial class ApplicationTestSuite
             ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldMarkHeuristicCandidateAmbiguous_WhenTargetsTie);
         await RunTestAsync(
             failures,
+            nameof(ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldUseOrdinalSuffix_ForDuplicateOrdinaryAssets),
+            ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldUseOrdinalSuffix_ForDuplicateOrdinaryAssets);
+        await RunTestAsync(
+            failures,
             nameof(ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldUseSourceDirectoryName_AsImplicitBundleForHeuristicPlan),
             ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldUseSourceDirectoryName_AsImplicitBundleForHeuristicPlan);
         await RunTestAsync(
