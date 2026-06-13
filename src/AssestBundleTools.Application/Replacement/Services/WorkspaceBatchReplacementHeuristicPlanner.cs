@@ -5,6 +5,7 @@ using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Extraction.Services;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
@@ -110,7 +111,8 @@ internal static partial class WorkspaceBatchReplacementHeuristicPlanner
                 continue;
             }
 
-            foreach (var item in assetListResult.Items)
+            var projectedItems = WorkspaceAssetExportNameProjection.ApplyToAssetList(assetListResult.Items);
+            foreach (var item in projectedItems)
             {
                 assets.Add(new AssetIndexEntry(
                     bundle,

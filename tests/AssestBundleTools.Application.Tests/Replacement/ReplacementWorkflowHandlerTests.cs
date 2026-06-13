@@ -777,9 +777,7 @@ internal static class ReplacementWorkflowHandlerTests
             HasPreview: true,
             IsModified: false,
             AssetTypeDisplayName: "Texture2D",
-            PathId: 42,
-            DisplayName: "HeroTexture [1]",
-            ExportFileName: "HeroTexture [1]"));
+            PathId: 42));
         registry.RegisterAssetListItem(new AssetListItemDto(
             secondAssetId,
             bundleId,
@@ -791,9 +789,7 @@ internal static class ReplacementWorkflowHandlerTests
             HasPreview: true,
             IsModified: false,
             AssetTypeDisplayName: "Texture2D",
-            PathId: 43,
-            DisplayName: "HeroTexture [2]",
-            ExportFileName: "HeroTexture [2]"));
+            PathId: 43));
         var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
         sourceProbe.RegisterFile("char_452_bstalk.ab/Texture2D/HeroTexture [1].png", 128);
         var handler = new GetWorkspaceBatchReplacementPlanHandler(
@@ -813,8 +809,64 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.HighConfidence, candidate.MatchStatus, "Exact ordinal suffix should disambiguate ordinary same-name assets.");
         TestAssert.True(candidate.IsDefaultSelected, "Ordinal-disambiguated ordinary assets should be selected by default.");
         TestAssert.Equal(firstAssetId, candidate.AssetId, "Candidate should resolve to the ordinary asset with the matching ordinal suffix.");
+        TestAssert.Equal("HeroTexture [1]", candidate.AssetName, "Candidate should expose the projected duplicate display name.");
         TestAssert.True(candidate.Diagnostics.Contains("OrdinalSuffixMatched"), "Candidate should expose ordinal suffix match evidence.");
         TestAssert.False(candidate.Diagnostics.Contains("Ambiguous"), "Ordinal-disambiguated ordinary assets should not be marked ambiguous.");
+    }
+
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldUseProjectedOrdinalSuffix_FromStandardExportRoot()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-amiya");
+        var firstAssetId = new AssetId("asset-casc-one");
+        var secondAssetId = new AssetId("asset-casc-two");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterBundle(workspaceId, bundleId, "char_1001_amiya2.ab", "ab/char_1001_amiya2.ab");
+        registry.RegisterAssetListItem(new AssetListItemDto(
+            firstAssetId,
+            bundleId,
+            "char_1001_amiya2_casc#1",
+            "Assets/characters/char_1001_amiya2_casc#1_a",
+            AssetType.Texture2D,
+            SizeInBytes: 128,
+            PreferredDisplaySizeInBytes: 128,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: "Texture2D",
+            PathId: 1001));
+        registry.RegisterAssetListItem(new AssetListItemDto(
+            secondAssetId,
+            bundleId,
+            "char_1001_amiya2_casc#1",
+            "Assets/characters/char_1001_amiya2_casc#1_b",
+            AssetType.Texture2D,
+            SizeInBytes: 128,
+            PreferredDisplaySizeInBytes: 128,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: "Texture2D",
+            PathId: 1002));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("char_1001_amiya2.ab/Texture2D/char_1001_amiya2_casc#1 [1].png", 128);
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(
+            registry,
+            new TestWorkspaceExportManifestStore(null),
+            sourceProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\Export",
+            WorkspaceBatchReplacementMatchingMode.Heuristic));
+
+        TestAssert.True(result.IsSuccess, "Heuristic planning should support ordinary duplicate assets from the standard export root.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected replacement plan.");
+        var candidate = TestAssert.Single(plan.Candidates);
+        TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.HighConfidence, candidate.MatchStatus, "Projected export suffix should disambiguate duplicate ordinary assets.");
+        TestAssert.Equal(firstAssetId, candidate.AssetId, "Candidate should resolve to the projected [1] ordinary asset.");
+        TestAssert.Equal("char_1001_amiya2_casc#1 [1]", candidate.AssetName, "Candidate should expose the same disambiguated name shown by the asset list.");
+        TestAssert.True(candidate.Diagnostics.Contains("OrdinalSuffixMatched"), "Candidate should expose ordinal suffix match evidence.");
+        TestAssert.False(candidate.Diagnostics.Contains("Ambiguous"), "Projected ordinal suffix should avoid multi-candidate status.");
     }
 
     public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldUseSourceDirectoryName_AsImplicitBundleForHeuristicPlan()
