@@ -753,9 +753,6 @@
   <data name="WorkspaceBatchReplacementDialog.SourceSection.Title" xml:space="preserve">
     <value>Source Directory</value>
   </data>
-  <data name="WorkspaceBatchReplacementDialog.SourceSection.Hint" xml:space="preserve">
-    <value>Select a batch export directory.</value>
-  </data>
   <data name="WorkspaceBatchReplacementDialog.SourceSection.Help" xml:space="preserve">
     <value>Prefer a batch export directory that contains _abt-export-manifest.json. If no manifest is found, the plan falls back to smart recognition.</value>
   </data>

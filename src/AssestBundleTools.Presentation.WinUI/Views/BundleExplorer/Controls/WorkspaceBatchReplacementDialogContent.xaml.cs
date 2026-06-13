@@ -30,7 +30,6 @@ public sealed partial class WorkspaceBatchReplacementDialogContent : UserControl
     private void ApplyLocalizedText()
     {
         SourceSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSourceSectionTitle);
-        SourceSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSourceSectionHint);
         var sourceSectionHelpText = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSourceSectionHelp);
         _sourceSectionHelpToolTip = new ToolTip
         {

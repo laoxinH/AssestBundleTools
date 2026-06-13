@@ -105,9 +105,6 @@
                                     Glyph="&#xE897;" />
                             </Button>
                         </StackPanel>
-                        <TextBlock
-                            x:Name="SourceSectionHintText"
-                            Style="{StaticResource DialogSecondaryTextStyle}" />
                     </StackPanel>
                     <Button
                         x:Name="ChooseSourceDirectoryButton"

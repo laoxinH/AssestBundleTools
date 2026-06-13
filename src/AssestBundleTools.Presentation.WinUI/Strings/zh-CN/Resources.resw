@@ -753,9 +753,6 @@
   <data name="WorkspaceBatchReplacementDialog.SourceSection.Title" xml:space="preserve">
     <value>来源目录</value>
   </data>
-  <data name="WorkspaceBatchReplacementDialog.SourceSection.Hint" xml:space="preserve">
-    <value>选择批量导出目录。</value>
-  </data>
   <data name="WorkspaceBatchReplacementDialog.SourceSection.Help" xml:space="preserve">
     <value>优先选择包含 _abt-export-manifest.json 的批量导出目录；缺少 manifest 时会自动改用智能识别。</value>
   </data>
