@@ -85,6 +85,36 @@ internal static class FileSystemReplacementPreviewSourceProviderTests
             "Texture replacement preview should pass through the source image payload.");
     }
 
+    public static async Task LoadFilePreviewAsync_ShouldReturnAudioPayload_ForAudioClipReplacement()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        Directory.CreateDirectory(temporaryDirectory.DirectoryPath);
+        var audioPath = Path.Combine(temporaryDirectory.DirectoryPath, "voice.wav");
+        var audioBytes = new byte[]
+        {
+            0x52, 0x49, 0x46, 0x46,
+            0x24, 0x00, 0x00, 0x00,
+            0x57, 0x41, 0x56, 0x45,
+            0x66, 0x6D, 0x74, 0x20
+        };
+        await File.WriteAllBytesAsync(audioPath, audioBytes);
+
+        var provider = new FileSystemReplacementPreviewSourceProvider();
+
+        var result = await provider.LoadFilePreviewAsync(
+            CreateAssetDetails(AssetType.AudioClip, "Voice", "Assets/Audio/voice"),
+            audioPath);
+
+        TestAssert.True(result.IsSuccess, "AudioClip replacement files should produce an audio preview.");
+        var preview = TestAssert.NotNull(result.Value, "Successful preview should include content.");
+        TestAssert.Equal(AssetPreviewKind.Audio, preview.Kind, "AudioClip replacement preview should stay audio.");
+        TestAssert.Equal("audio/wav", preview.ContentType, "WAV replacement preview should expose an audio content type.");
+        TestAssert.True(
+            preview.Content.SequenceEqual(audioBytes),
+            "AudioClip replacement preview should pass through the source audio payload.");
+        TestAssert.Equal(audioBytes.Length, preview.PreferredDisplaySizeInBytes ?? 0, "Audio preview size should match the source file length.");
+    }
+
     private static AssetDetailsDto CreateAssetDetails(
         AssetType assetType,
         string name,

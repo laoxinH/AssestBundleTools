@@ -293,6 +293,10 @@ internal static class InfrastructureTestSuite
             FileSystemReplacementPreviewSourceProviderTests.LoadFilePreviewAsync_ShouldReturnImagePayload_ForTextureReplacement);
         await RunTestAsync(
             failures,
+            nameof(FileSystemReplacementPreviewSourceProviderTests.LoadFilePreviewAsync_ShouldReturnAudioPayload_ForAudioClipReplacement),
+            FileSystemReplacementPreviewSourceProviderTests.LoadFilePreviewAsync_ShouldReturnAudioPayload_ForAudioClipReplacement);
+        await RunTestAsync(
+            failures,
             nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV42RuntimeDrawCommands_FromJsonSkeleton),
             SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldBuildV42RuntimeDrawCommands_FromJsonSkeleton);
         await RunTestAsync(

@@ -54,6 +54,8 @@ public sealed class FileSystemReplacementPreviewSourceProvider : IReplacementPre
                         PreferredDisplaySizeInBytes: content.LongLength)),
                 AssetType.TextAsset => Result<AssetPreviewContentDto>.Success(
                     CreateTextAssetPreview(normalizedPath, content)),
+                AssetType.AudioClip => Result<AssetPreviewContentDto>.Success(
+                    CreateAudioPreview(normalizedPath, content)),
                 _ => Result<AssetPreviewContentDto>.Failure(
                     ApplicationErrors.BundlePreviewGenerationFailed(
                         normalizedPath,
@@ -80,6 +82,69 @@ public sealed class FileSystemReplacementPreviewSourceProvider : IReplacementPre
             ".tga" => "image/x-tga",
             ".dds" => "image/vnd-ms.dds",
             _ => "image/png"
+        };
+    }
+
+    private static AssetPreviewContentDto CreateAudioPreview(
+        string sourceFilePath,
+        byte[] content)
+    {
+        return new AssetPreviewContentDto(
+            Kind: AssetPreviewKind.Audio,
+            ContentType: ResolveAudioContentType(sourceFilePath, content),
+            Content: content,
+            PreviewInfoItems:
+            [
+                new AssetPreviewInfoItemDto(
+                    AssetPreviewInfoKey.AudioPayloadFile,
+                    AssetPreviewInfoValueKind.Text,
+                    TextValue: Path.GetFileName(sourceFilePath)),
+                new AssetPreviewInfoItemDto(
+                    AssetPreviewInfoKey.AudioPayloadSize,
+                    AssetPreviewInfoValueKind.Integer,
+                    Int64Value: content.LongLength)
+            ],
+            PreferredDisplaySizeInBytes: content.LongLength);
+    }
+
+    private static string ResolveAudioContentType(
+        string sourceFilePath,
+        byte[] content)
+    {
+        if (IsWave(content))
+        {
+            return "audio/wav";
+        }
+
+        if (IsOgg(content))
+        {
+            return "audio/ogg";
+        }
+
+        if (IsFlac(content))
+        {
+            return "audio/flac";
+        }
+
+        if (IsMp4(content))
+        {
+            return "audio/mp4";
+        }
+
+        if (IsMp3(content))
+        {
+            return "audio/mpeg";
+        }
+
+        return Path.GetExtension(sourceFilePath).Trim().ToLowerInvariant() switch
+        {
+            ".wav" or ".wave" => "audio/wav",
+            ".ogg" => "audio/ogg",
+            ".mp3" => "audio/mpeg",
+            ".flac" => "audio/flac",
+            ".m4a" or ".mp4" => "audio/mp4",
+            ".aac" => "audio/aac",
+            _ => BinaryContentType
         };
     }
 
@@ -218,4 +283,52 @@ public sealed class FileSystemReplacementPreviewSourceProvider : IReplacementPre
     private static string NormalizeTextContent(string textContent) =>
         textContent.Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
+
+    private static bool IsWave(byte[] content)
+    {
+        return content.Length >= 12 &&
+               content[0] == (byte)'R' &&
+               content[1] == (byte)'I' &&
+               content[2] == (byte)'F' &&
+               content[3] == (byte)'F' &&
+               content[8] == (byte)'W' &&
+               content[9] == (byte)'A' &&
+               content[10] == (byte)'V' &&
+               content[11] == (byte)'E';
+    }
+
+    private static bool IsOgg(byte[] content)
+    {
+        return content.Length >= 4 &&
+               content[0] == (byte)'O' &&
+               content[1] == (byte)'g' &&
+               content[2] == (byte)'g' &&
+               content[3] == (byte)'S';
+    }
+
+    private static bool IsFlac(byte[] content)
+    {
+        return content.Length >= 4 &&
+               content[0] == (byte)'f' &&
+               content[1] == (byte)'L' &&
+               content[2] == (byte)'a' &&
+               content[3] == (byte)'C';
+    }
+
+    private static bool IsMp4(byte[] content)
+    {
+        return content.Length >= 12 &&
+               content[4] == (byte)'f' &&
+               content[5] == (byte)'t' &&
+               content[6] == (byte)'y' &&
+               content[7] == (byte)'p';
+    }
+
+    private static bool IsMp3(byte[] content)
+    {
+        return content.Length >= 3 &&
+               content[0] == (byte)'I' &&
+               content[1] == (byte)'D' &&
+               content[2] == (byte)'3';
+    }
 }
