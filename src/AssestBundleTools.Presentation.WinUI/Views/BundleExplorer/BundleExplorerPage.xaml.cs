@@ -3,11 +3,13 @@ using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
+using AssestBundleTools.Presentation.WinUI.Views;
 using AssestBundleTools.Presentation.WinUI.Views.BatchTasks;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
@@ -90,6 +92,25 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     }
 
     public BundleExplorerViewModel ViewModel { get; }
+
+    internal bool TryGetHostWindow([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out MainWindow? hostWindow)
+    {
+        hostWindow = null;
+        DependencyObject? current = this;
+
+        while (current is not null)
+        {
+            if (current is ShellPage shellPage && shellPage.HostWindow is not null)
+            {
+                hostWindow = shellPage.HostWindow;
+                return true;
+            }
+
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        return false;
+    }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {

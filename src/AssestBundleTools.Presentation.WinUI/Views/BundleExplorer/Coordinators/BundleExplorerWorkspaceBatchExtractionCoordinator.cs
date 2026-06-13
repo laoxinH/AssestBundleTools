@@ -87,6 +87,9 @@ public sealed partial class BundleExplorerPage
             }
 
             var window = new WorkspaceBatchExtractionWindow(viewModel);
+            App.CurrentApp.RegisterAuxiliaryWindow(
+                window,
+                _owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null);
             _activeBatchExtractionWindow = window;
             window.Closed += OnBatchExtractionWindowClosed;
 

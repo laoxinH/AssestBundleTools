@@ -48,8 +48,35 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
 
         Assert.True(File.Exists(windowXamlPath));
         Assert.Contains("new WorkspaceBatchExtractionWindow(viewModel)", coordinator);
+        Assert.Contains("App.CurrentApp.RegisterAuxiliaryWindow(", coordinator);
+        Assert.Contains("_owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null", coordinator);
         Assert.Contains("ShowForSubmissionAsync()", coordinator);
         Assert.DoesNotContain("ContentDialog", coordinator);
+    }
+
+    [Fact]
+    public void WorkspaceBatchReplacement_ShouldRegisterIndependentWindowWithMainOwner()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var appCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "App.xaml.cs"));
+        var coordinator = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Coordinators",
+            "BundleExplorerWorkspaceBatchReplacementCoordinator.cs"));
+
+        Assert.Contains("new WorkspaceBatchReplacementWindow(viewModel)", coordinator);
+        Assert.Contains("App.CurrentApp.RegisterAuxiliaryWindow(", coordinator);
+        Assert.Contains("_owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null", coordinator);
+        Assert.Contains("_auxiliaryWindowOwners", appCode);
+        Assert.Contains("CloseAuxiliaryWindowsOwnedBy(mainWindow);", appCode);
     }
 
     [Fact]

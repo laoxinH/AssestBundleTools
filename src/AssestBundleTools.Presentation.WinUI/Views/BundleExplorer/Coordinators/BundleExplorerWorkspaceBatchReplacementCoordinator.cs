@@ -63,6 +63,9 @@ public sealed partial class BundleExplorerPage
                 .ToArray();
             var viewModel = new WorkspaceBatchReplacementDialogViewModel(_localizationService, bundleNodes);
             var window = new WorkspaceBatchReplacementWindow(viewModel);
+            App.CurrentApp.RegisterAuxiliaryWindow(
+                window,
+                _owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null);
             _activeWindow = window;
             window.SourceDirectoryRequested += OnSourceDirectoryRequested;
             window.RefreshRequested += OnRefreshRequested;

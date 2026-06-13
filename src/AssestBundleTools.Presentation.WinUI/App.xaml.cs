@@ -19,6 +19,7 @@ public partial class App : Microsoft.UI.Xaml.Application
 {
     private readonly List<MainWindow> _windows = [];
     private readonly List<Microsoft.UI.Xaml.Window> _activeOwnerWindows = [];
+    private readonly Dictionary<Microsoft.UI.Xaml.Window, MainWindow> _auxiliaryWindowOwners = [];
     private MainWindow? _activeWindow;
     private Microsoft.UI.Xaml.Window? _activeOwnerWindow;
     private IAssetBundleDecryptorRegistry _assetBundleDecryptorRegistry;
@@ -173,8 +174,17 @@ public partial class App : Microsoft.UI.Xaml.Application
 
     public void RegisterAuxiliaryWindow(Microsoft.UI.Xaml.Window window)
     {
+        RegisterAuxiliaryWindow(window, ownerWindow: null);
+    }
+
+    public void RegisterAuxiliaryWindow(Microsoft.UI.Xaml.Window window, MainWindow? ownerWindow)
+    {
         ArgumentNullException.ThrowIfNull(window);
         RegisterOwnerWindow(window);
+        if (ownerWindow is not null)
+        {
+            _auxiliaryWindowOwners[window] = ownerWindow;
+        }
     }
 
     /// <summary>
@@ -347,15 +357,36 @@ public partial class App : Microsoft.UI.Xaml.Application
 
         if (sender is not MainWindow mainWindow)
         {
+            _auxiliaryWindowOwners.Remove(window);
             return;
         }
 
+        CloseAuxiliaryWindowsOwnedBy(mainWindow);
         UnregisterWindowWorkspace(mainWindow);
         _windows.Remove(mainWindow);
 
         if (ReferenceEquals(_activeWindow, mainWindow))
         {
             _activeWindow = _windows.LastOrDefault();
+        }
+    }
+
+    private void CloseAuxiliaryWindowsOwnedBy(MainWindow ownerWindow)
+    {
+        var ownedWindows = _auxiliaryWindowOwners
+            .Where(pair => ReferenceEquals(pair.Value, ownerWindow))
+            .Select(static pair => pair.Key)
+            .ToArray();
+        foreach (var ownedWindow in ownedWindows)
+        {
+            try
+            {
+                ownedWindow.Close();
+            }
+            catch (Exception ex)
+            {
+                StartupDiagnostics.Log($"Closing owned auxiliary window failed: {ex}");
+            }
         }
     }
 
