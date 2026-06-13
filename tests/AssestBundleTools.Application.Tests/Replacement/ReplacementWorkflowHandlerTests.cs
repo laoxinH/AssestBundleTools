@@ -537,6 +537,89 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.Equal(1, execution.ProcessedSpineGroupCount, "Spine component replacements should be summarized as one processed Spine group.");
     }
 
+    public static async Task ExecuteWorkspaceBatchReplacementHandler_ShouldApplySpriteImageToAssociatedTexture()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-a");
+        var spriteAssetId = new AssetId("asset-sprite");
+        var textureAssetId = new AssetId("asset-texture");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, textureAssetId, AssetType.Texture2D, "HeroTexture"));
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            spriteAssetId,
+            AssetType.Sprite,
+            "HeroSprite",
+            dependencies:
+            [
+                new AssetDependencyDto(textureAssetId, bundleId, "HeroTexture", AssetType.Texture2D)
+            ]));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("Sprite/HeroSprite.png", 128);
+        var handler = new ExecuteWorkspaceBatchReplacementHandler(registry, new ReplaceAssetFromFileHandler(registry), sourceProbe);
+
+        var result = await handler.HandleAsync(new ExecuteWorkspaceBatchReplacementCommand(
+            workspaceId,
+            WorkspaceKey: "workspace-key",
+            WorkspaceDataRootPath: "C:\\WorkspaceData",
+            SourceRootDirectory: "C:\\Exports",
+            WorkspaceBatchReplacementMatchingMode.Manifest,
+            Candidates:
+            [
+                CreateBatchReplacementCandidate(bundleId, spriteAssetId, AssetType.Sprite, "HeroSprite", "Sprite/HeroSprite.png")
+            ]));
+
+        TestAssert.True(result.IsSuccess, "Sprite image batch replacement should succeed through its associated Texture2D.");
+        TestAssert.Equal(1, registry.TryReplaceAssetFromFileCallCount, "Sprite candidate should still execute one file replacement.");
+        TestAssert.Equal(textureAssetId, registry.LastFileReplacementTargetAssetId, "Sprite image replacement should target the associated Texture2D.");
+        TestAssert.Equal(AssetType.Texture2D, registry.LastFileReplacementSourceAssetType, "Sprite image replacement source type should be converted to Texture2D.");
+    }
+
+    public static async Task ExecuteWorkspaceBatchReplacementHandler_ShouldApplyTextureBeforeSpriteOverride_WhenBothTargetSameTexture()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-a");
+        var spriteAssetId = new AssetId("asset-sprite");
+        var textureAssetId = new AssetId("asset-texture");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, textureAssetId, AssetType.Texture2D, "HeroTexture"));
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            spriteAssetId,
+            AssetType.Sprite,
+            "HeroSprite",
+            dependencies:
+            [
+                new AssetDependencyDto(textureAssetId, bundleId, "HeroTexture", AssetType.Texture2D)
+            ]));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("Sprite/HeroSprite.png", 128);
+        sourceProbe.RegisterFile("Texture2D/HeroTexture.png", 128);
+        var handler = new ExecuteWorkspaceBatchReplacementHandler(registry, new ReplaceAssetFromFileHandler(registry), sourceProbe);
+
+        var result = await handler.HandleAsync(new ExecuteWorkspaceBatchReplacementCommand(
+            workspaceId,
+            WorkspaceKey: "workspace-key",
+            WorkspaceDataRootPath: "C:\\WorkspaceData",
+            SourceRootDirectory: "C:\\Exports",
+            WorkspaceBatchReplacementMatchingMode.Manifest,
+            Candidates:
+            [
+                CreateBatchReplacementCandidate(bundleId, spriteAssetId, AssetType.Sprite, "HeroSprite", "Sprite/HeroSprite.png"),
+                CreateBatchReplacementCandidate(bundleId, textureAssetId, AssetType.Texture2D, "HeroTexture", "Texture2D/HeroTexture.png")
+            ]));
+
+        TestAssert.True(result.IsSuccess, "Texture and Sprite candidates should both apply when they target the same texture.");
+        TestAssert.Equal(2, registry.TryReplaceAssetFromFileCallCount, "Both candidates should become replacement operations.");
+        TestAssert.Equal("C:\\Exports\\Texture2D\\HeroTexture.png", registry.FileReplacementSourceFilePaths[0], "Texture2D export should be applied first.");
+        TestAssert.Equal("C:\\Exports\\Sprite\\HeroSprite.png", registry.FileReplacementSourceFilePaths[1], "Sprite export should be applied after Texture2D so it wins.");
+        TestAssert.True(
+            registry.FileReplacementTargetAssetIds.All(id => id == textureAssetId),
+            "Both operations should target the associated Texture2D.");
+    }
+
     public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldUseManifestSizeFirst_AndHashWhenSizeMatches()
     {
         var workspaceId = CreateWorkspaceId();
@@ -1532,7 +1615,11 @@ internal static class ReplacementWorkflowHandlerTests
 
         public AssetType? LastFileReplacementSourceAssetType { get; private set; }
 
+        public AssetId? LastFileReplacementTargetAssetId { get; private set; }
+
         public List<string> FileReplacementSourceFilePaths { get; } = [];
+
+        public List<AssetId> FileReplacementTargetAssetIds { get; } = [];
 
         public BundleId? LastWorkspaceReplacementSourceBundleId { get; private set; }
 
@@ -1679,7 +1766,9 @@ internal static class ReplacementWorkflowHandlerTests
             TryReplaceAssetFromFileCallCount++;
             LastFileReplacementSourceFilePath = sourceFilePath;
             LastFileReplacementSourceAssetType = sourceAssetType;
+            LastFileReplacementTargetAssetId = targetAssetId;
             FileReplacementSourceFilePaths.Add(sourceFilePath);
+            FileReplacementTargetAssetIds.Add(targetAssetId);
             replacementResult = TryReplaceAssetFromFileResult;
             if (replacementResult is null &&
                 _assetDetails.TryGetValue((targetBundleId.Value, targetAssetId.Value), out var details))

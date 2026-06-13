@@ -347,6 +347,14 @@ internal static partial class ApplicationTestSuite
             ReplacementWorkflowHandlerTests.ExecuteWorkspaceBatchReplacementHandler_ShouldApplySelectedCandidates_AndSkipUnsupportedTargets);
         await RunTestAsync(
             failures,
+            nameof(ReplacementWorkflowHandlerTests.ExecuteWorkspaceBatchReplacementHandler_ShouldApplySpriteImageToAssociatedTexture),
+            ReplacementWorkflowHandlerTests.ExecuteWorkspaceBatchReplacementHandler_ShouldApplySpriteImageToAssociatedTexture);
+        await RunTestAsync(
+            failures,
+            nameof(ReplacementWorkflowHandlerTests.ExecuteWorkspaceBatchReplacementHandler_ShouldApplyTextureBeforeSpriteOverride_WhenBothTargetSameTexture),
+            ReplacementWorkflowHandlerTests.ExecuteWorkspaceBatchReplacementHandler_ShouldApplyTextureBeforeSpriteOverride_WhenBothTargetSameTexture);
+        await RunTestAsync(
+            failures,
             nameof(ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldUseManifestSizeFirst_AndHashWhenSizeMatches),
             ReplacementWorkflowHandlerTests.GetWorkspaceBatchReplacementPlanHandler_ShouldUseManifestSizeFirst_AndHashWhenSizeMatches);
         await RunTestAsync(

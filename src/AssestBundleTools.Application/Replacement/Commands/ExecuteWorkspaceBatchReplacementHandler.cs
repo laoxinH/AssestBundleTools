@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Common.Abstractions;
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Replacement.Dtos;
@@ -7,6 +8,7 @@ using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
+using AssestBundleTools.Domain.Workspace;
 
 namespace AssestBundleTools.Application.Replacement.Commands;
 
@@ -56,6 +58,7 @@ public sealed class ExecuteWorkspaceBatchReplacementHandler : ICommandHandler<Ex
             .OrderBy(static candidate => string.IsNullOrWhiteSpace(candidate.SpineGroupId) ? 0 : 1)
             .ThenBy(static candidate => candidate.SpineGroupDisplayName ?? string.Empty, StringComparer.OrdinalIgnoreCase)
             .ThenBy(static candidate => candidate.OutputRole, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static candidate => GetExecutionOrder(candidate.AssetType))
             .ThenBy(static candidate => candidate.AssetName, StringComparer.OrdinalIgnoreCase)
             .ToArray();
         if (candidates.Length == 0)
@@ -150,7 +153,12 @@ public sealed class ExecuteWorkspaceBatchReplacementHandler : ICommandHandler<Ex
             return CreateItemResult(candidate, WorkspaceBatchReplacementItemStatus.Skipped, "target-missing");
         }
 
-        if (!assetDetails.CanReplaceFromFile)
+        if (!TryResolveExecutionTarget(command.WorkspaceId, candidate, assetDetails, out var executionTarget, out var targetDiagnosticCode))
+        {
+            return CreateItemResult(candidate, WorkspaceBatchReplacementItemStatus.Skipped, targetDiagnosticCode);
+        }
+
+        if (!executionTarget.Details.CanReplaceFromFile)
         {
             return CreateItemResult(candidate, WorkspaceBatchReplacementItemStatus.Skipped, "target-not-replaceable");
         }
@@ -158,10 +166,10 @@ public sealed class ExecuteWorkspaceBatchReplacementHandler : ICommandHandler<Ex
         var replaceResult = await _replaceAssetFromFileHandler.HandleAsync(
             new ReplaceAssetFromFileCommand(
                 command.WorkspaceId,
-                candidate.BundleId.Value,
-                candidate.AssetId.Value,
+                executionTarget.BundleId,
+                executionTarget.AssetId,
                 candidate.FullPath,
-                candidate.AssetType,
+                executionTarget.AssetType,
                 command.WorkspaceKey,
                 command.WorkspaceDataRootPath,
                 CreateOperationContext(batchId, candidate, allCandidates)),
@@ -221,6 +229,75 @@ public sealed class ExecuteWorkspaceBatchReplacementHandler : ICommandHandler<Ex
             WorkspaceBatchReplacementMatchStatus.MediumConfidence or
             WorkspaceBatchReplacementMatchStatus.LowConfidence;
 
+    private bool TryResolveExecutionTarget(
+        WorkspaceId workspaceId,
+        WorkspaceBatchReplacementCandidateDto candidate,
+        AssetDetailsDto candidateDetails,
+        out ReplacementExecutionTarget executionTarget,
+        out string? diagnosticCode)
+    {
+        if (candidate.AssetType != AssetType.Sprite)
+        {
+            executionTarget = new ReplacementExecutionTarget(
+                candidate.BundleId!.Value,
+                candidate.AssetId!.Value,
+                candidate.AssetType,
+                candidateDetails);
+            diagnosticCode = null;
+            return true;
+        }
+
+        var textureDependencies = ResolveSpriteTextureDependencies(candidateDetails);
+        if (textureDependencies.Count == 0)
+        {
+            executionTarget = default;
+            diagnosticCode = "sprite-texture-target-missing";
+            return false;
+        }
+
+        if (textureDependencies.Count > 1)
+        {
+            executionTarget = default;
+            diagnosticCode = "sprite-texture-target-ambiguous";
+            return false;
+        }
+
+        var texture = textureDependencies[0];
+        if (!_workspaceSessionRegistry.TryGetAssetDetails(workspaceId, texture.BundleId, texture.AssetId, out var textureDetails) ||
+            textureDetails is null)
+        {
+            executionTarget = default;
+            diagnosticCode = "sprite-texture-target-missing";
+            return false;
+        }
+
+        if (textureDetails.AssetType != AssetType.Texture2D)
+        {
+            executionTarget = default;
+            diagnosticCode = "sprite-texture-target-type-mismatch";
+            return false;
+        }
+
+        executionTarget = new ReplacementExecutionTarget(texture.BundleId, texture.AssetId, AssetType.Texture2D, textureDetails);
+        diagnosticCode = null;
+        return true;
+    }
+
+    private static IReadOnlyList<AssetDependencyDto> ResolveSpriteTextureDependencies(AssetDetailsDto details)
+    {
+        var textureAssociations = (details.TextureAssociations ?? Array.Empty<AssetDependencyDto>())
+            .Where(static dependency => dependency.AssetType == AssetType.Texture2D)
+            .ToArray();
+        var dependencies = textureAssociations.Length > 0
+            ? textureAssociations
+            : details.Dependencies.Where(static dependency => dependency.AssetType == AssetType.Texture2D);
+
+        return dependencies
+            .GroupBy(static dependency => (dependency.BundleId.Value, dependency.AssetId.Value))
+            .Select(static group => group.First())
+            .ToArray();
+    }
+
     private static bool IsSupportedReplacementPayload(WorkspaceBatchReplacementCandidateDto candidate)
     {
         var extension = Path.GetExtension(candidate.FullPath);
@@ -238,6 +315,14 @@ public sealed class ExecuteWorkspaceBatchReplacementHandler : ICommandHandler<Ex
             _ => false
         };
     }
+
+    private static int GetExecutionOrder(AssetType assetType) =>
+        assetType switch
+        {
+            AssetType.Texture2D => 0,
+            AssetType.Sprite => 1,
+            _ => 2
+        };
 
     private static WorkspaceBatchReplacementProgressKind CreateProgressKind(WorkspaceBatchReplacementCandidateDto candidate) =>
         string.IsNullOrWhiteSpace(candidate.SpineGroupId)
@@ -281,4 +366,10 @@ public sealed class ExecuteWorkspaceBatchReplacementHandler : ICommandHandler<Ex
             candidate?.AssetTypeDisplayName,
             candidate?.SpineGroupDisplayName));
     }
+
+    private readonly record struct ReplacementExecutionTarget(
+        BundleId BundleId,
+        AssetId AssetId,
+        AssetType AssetType,
+        AssetDetailsDto Details);
 }
