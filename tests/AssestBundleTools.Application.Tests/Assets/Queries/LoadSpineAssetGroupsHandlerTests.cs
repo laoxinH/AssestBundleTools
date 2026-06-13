@@ -286,6 +286,86 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
             "Catalog cache hits should not collect detection-only asset details before projection.");
     }
 
+    public static async Task HandleAsync_ShouldReturnCancelled_WhenCatalogBuildIsCancelledDuringDetailsCollection()
+    {
+        var workspaceId = new WorkspaceId("workspace-a");
+        var spineBundleId = new BundleId("bundle.spine");
+        var spineAssets = CreateAssetList(
+            workspaceId,
+            spineBundleId,
+            "spine.ab",
+            CreateItem(spineBundleId, "skeleton-hero", "Assets/Hero/Hero.skel", AssetType.TextAsset),
+            CreateItem(spineBundleId, "atlas-hero", "Assets/Hero/Hero.atlas", AssetType.TextAsset),
+            CreateItem(spineBundleId, "material-heavy", "Assets/Hero/Hero_Material", AssetType.Material));
+        using var cancellationSource = new CancellationTokenSource();
+        var registry = new TestWorkspaceSessionRegistry(
+            workspaceId,
+            [spineAssets],
+            [
+                CreateDetails(
+                    workspaceId,
+                    spineBundleId,
+                    "material-heavy",
+                    "Assets/Hero/Hero_Material",
+                    AssetType.Material,
+                    nameof(AssetType.Material),
+                    dependencies: Array.Empty<AssetDependencyDto>())
+            ])
+        {
+            CancelOnAssetDetailsRequest = cancellationSource
+        };
+        var handler = new LoadSpineAssetGroupsHandler(registry);
+
+        var result = await handler.HandleAsync(
+            new LoadSpineAssetGroupsQuery(workspaceId, spineBundleId),
+            cancellationSource.Token);
+
+        TestAssert.True(result.IsCancelled, "Spine catalog cancellation should be returned as a cancelled result without throwing OperationCanceledException.");
+    }
+
+    public static async Task HandleAsync_ShouldBuildCatalogAfterCancelledCatalogBuild()
+    {
+        var workspaceId = new WorkspaceId("workspace-a");
+        var spineBundleId = new BundleId("bundle.spine");
+        var spineAssets = CreateAssetList(
+            workspaceId,
+            spineBundleId,
+            "spine.ab",
+            CreateItem(spineBundleId, "skeleton-hero", "Assets/Hero/Hero.skel", AssetType.TextAsset),
+            CreateItem(spineBundleId, "atlas-hero", "Assets/Hero/Hero.atlas", AssetType.TextAsset),
+            CreateItem(spineBundleId, "texture-hero", "Assets/Hero/Hero.png", AssetType.Texture2D),
+            CreateItem(spineBundleId, "material-heavy", "Assets/Hero/Hero_Material", AssetType.Material));
+        using var cancellationSource = new CancellationTokenSource();
+        var registry = new TestWorkspaceSessionRegistry(
+            workspaceId,
+            [spineAssets],
+            [
+                CreateDetails(
+                    workspaceId,
+                    spineBundleId,
+                    "material-heavy",
+                    "Assets/Hero/Hero_Material",
+                    AssetType.Material,
+                    nameof(AssetType.Material),
+                    dependencies: Array.Empty<AssetDependencyDto>())
+            ])
+        {
+            CancelOnAssetDetailsRequest = cancellationSource
+        };
+        var handler = new LoadSpineAssetGroupsHandler(registry);
+
+        var cancelled = await handler.HandleAsync(
+            new LoadSpineAssetGroupsQuery(workspaceId, spineBundleId),
+            cancellationSource.Token);
+        registry.CancelOnAssetDetailsRequest = null;
+
+        var result = await handler.HandleAsync(new LoadSpineAssetGroupsQuery(workspaceId, spineBundleId));
+
+        TestAssert.True(cancelled.IsCancelled, "First query should observe the cancellation.");
+        TestAssert.True(result.IsSuccess, "Cancelled catalog builds should not poison the runtime cache for future queries.");
+        TestAssert.Single(result.Value!.Items);
+    }
+
     public static async Task HandleAsync_ShouldSplitDuplicateSpineResourcesUsingDependencyLinks()
     {
         var workspaceId = new WorkspaceId("workspace-a");
@@ -523,6 +603,8 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
 
         public IReadOnlyList<string> RequestedAssetIds => _requestedAssetIds;
 
+        public CancellationTokenSource? CancelOnAssetDetailsRequest { get; set; }
+
         public void ClearRequestedAssetIds()
         {
             _requestedAssetIds.Clear();
@@ -587,6 +669,7 @@ internal static partial class LoadSpineAssetGroupsHandlerTests
             out AssetDetailsDto? assetDetails)
         {
             _requestedAssetIds.Add(assetId.Value);
+            CancelOnAssetDetailsRequest?.Cancel();
             if (!ContainsWorkspace(workspaceId))
             {
                 assetDetails = null;

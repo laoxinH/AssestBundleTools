@@ -88,7 +88,7 @@ public sealed class LoadSpineAssetGroupsHandler : IQueryHandler<LoadSpineAssetGr
             }
         }
 
-        SpineAssetGroupListResultDto result;
+        SpineAssetGroupListResultDto? result;
         try
         {
             result = CreateCatalogCacheCoordinator(query).GetOrBuildResult(
@@ -105,6 +105,11 @@ public sealed class LoadSpineAssetGroupsHandler : IQueryHandler<LoadSpineAssetGr
                 cancellationToken);
         }
         catch (OperationCanceledException)
+        {
+            return Task.FromResult(Result<SpineAssetGroupListResultDto>.Cancelled());
+        }
+
+        if (result is null)
         {
             return Task.FromResult(Result<SpineAssetGroupListResultDto>.Cancelled());
         }

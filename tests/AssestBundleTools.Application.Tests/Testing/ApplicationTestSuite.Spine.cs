@@ -32,6 +32,14 @@ internal static partial class ApplicationTestSuite
             LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldSkipDetectionDetailsCollection_AfterCatalogCacheHit);
         await RunTestAsync(
             failures,
+            nameof(LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldReturnCancelled_WhenCatalogBuildIsCancelledDuringDetailsCollection),
+            LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldReturnCancelled_WhenCatalogBuildIsCancelledDuringDetailsCollection);
+        await RunTestAsync(
+            failures,
+            nameof(LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldBuildCatalogAfterCancelledCatalogBuild),
+            LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldBuildCatalogAfterCancelledCatalogBuild);
+        await RunTestAsync(
+            failures,
             nameof(LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldExposeUndonePartReplacementHistory_WhenComponentIsNotModified),
             LoadSpineAssetGroupsHandlerTests.HandleAsync_ShouldExposeUndonePartReplacementHistory_WhenComponentIsNotModified);
         await RunTestAsync(

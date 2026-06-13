@@ -16,7 +16,7 @@ internal sealed class SpineGroupCatalogCacheCoordinator
     public const string DetectorVersion = "spine-group-catalog-v1";
 
     private static readonly JsonSerializerOptions FingerprintSerializerOptions = new(JsonSerializerDefaults.Web);
-    private readonly ConcurrentDictionary<string, Lazy<SpineGroupCatalogCacheEntryDto>> _runtimeEntries = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, Lazy<SpineGroupCatalogBuildResult>> _runtimeEntries = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, object> _buildLocks = new(StringComparer.Ordinal);
     private readonly ISpineGroupCatalogCacheStore? _persistentStore;
 
@@ -25,7 +25,7 @@ internal sealed class SpineGroupCatalogCacheCoordinator
         _persistentStore = persistentStore;
     }
 
-    public SpineAssetGroupListResultDto GetOrBuildResult(
+    public SpineAssetGroupListResultDto? GetOrBuildResult(
         WorkspaceId workspaceId,
         BundleId targetBundleId,
         string targetBundleDisplayName,
@@ -41,7 +41,7 @@ internal sealed class SpineGroupCatalogCacheCoordinator
         var catalogFingerprint = CreateCatalogFingerprint(workspaceId, bundleIndexFingerprint);
         var runtimeKey = string.Concat(workspaceId.Value, "\n", catalogFingerprint);
 
-        var runtimeEntry = _runtimeEntries.GetOrAdd(runtimeKey, _ => new Lazy<SpineGroupCatalogCacheEntryDto>(
+        var runtimeEntry = _runtimeEntries.GetOrAdd(runtimeKey, _ => new Lazy<SpineGroupCatalogBuildResult>(
             () => LoadOrBuildCatalog(
                 workspaceId,
                 catalogFingerprint,
@@ -50,26 +50,22 @@ internal sealed class SpineGroupCatalogCacheCoordinator
                 collectAssetDetailsByAssetKey,
                 cancellationToken),
             LazyThreadSafetyMode.ExecutionAndPublication));
-        SpineGroupCatalogCacheEntryDto catalogEntry;
-        try
-        {
-            catalogEntry = runtimeEntry.Value;
-        }
-        catch (OperationCanceledException)
+        var buildResult = runtimeEntry.Value;
+        if (buildResult.IsCancelled || buildResult.Entry is null)
         {
             _runtimeEntries.TryRemove(runtimeKey, out _);
-            throw;
+            return null;
         }
 
         return ProjectResult(
-            catalogEntry,
+            buildResult.Entry,
             workspaceId,
             targetBundleId,
             targetBundleDisplayName,
             searchKeyword);
     }
 
-    private SpineGroupCatalogCacheEntryDto LoadOrBuildCatalog(
+    private SpineGroupCatalogBuildResult LoadOrBuildCatalog(
         WorkspaceId workspaceId,
         string catalogFingerprint,
         string bundleIndexFingerprint,
@@ -86,13 +82,19 @@ internal sealed class SpineGroupCatalogCacheCoordinator
             {
                 var accessedEntry = persistentEntry! with { LastAccessedAtUtc = DateTimeOffset.UtcNow };
                 _persistentStore?.Save(accessedEntry);
-                return accessedEntry;
+                return SpineGroupCatalogBuildResult.Success(accessedEntry);
             }
 
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return SpineGroupCatalogBuildResult.Cancelled;
+            }
 
             var assetDetailsByAssetKey = collectAssetDetailsByAssetKey(cancellationToken);
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return SpineGroupCatalogBuildResult.Cancelled;
+            }
 
             var builtEntry = BuildCatalog(
                 workspaceId,
@@ -101,12 +103,17 @@ internal sealed class SpineGroupCatalogCacheCoordinator
                 assetLists,
                 assetDetailsByAssetKey,
                 cancellationToken);
+            if (builtEntry is null)
+            {
+                return SpineGroupCatalogBuildResult.Cancelled;
+            }
+
             _persistentStore?.Save(builtEntry);
-            return builtEntry;
+            return SpineGroupCatalogBuildResult.Success(builtEntry);
         }
     }
 
-    private static SpineGroupCatalogCacheEntryDto BuildCatalog(
+    private static SpineGroupCatalogCacheEntryDto? BuildCatalog(
         WorkspaceId workspaceId,
         string catalogFingerprint,
         string bundleIndexFingerprint,
@@ -118,7 +125,10 @@ internal sealed class SpineGroupCatalogCacheCoordinator
         var bundleResults = new List<SpineAssetGroupListResultDto>(assetLists.Count);
         foreach (var assetList in assetLists)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return null;
+            }
 
             bundleResults.Add(SpineAssetGroupDetector.CreateResult(
                 workspaceId,
@@ -244,4 +254,12 @@ internal sealed class SpineGroupCatalogCacheCoordinator
         string? AssetTypeDisplayName,
         long SizeInBytes,
         bool HasPreview);
+
+    private sealed record SpineGroupCatalogBuildResult(SpineGroupCatalogCacheEntryDto? Entry, bool IsCancelled)
+    {
+        public static SpineGroupCatalogBuildResult Cancelled { get; } = new(null, true);
+
+        public static SpineGroupCatalogBuildResult Success(SpineGroupCatalogCacheEntryDto entry) =>
+            new(entry, false);
+    }
 }
