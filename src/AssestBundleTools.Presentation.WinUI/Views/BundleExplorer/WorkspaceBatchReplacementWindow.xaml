@@ -150,10 +150,12 @@
                             TextTrimming="CharacterEllipsis"
                             TextWrapping="WrapWholeWords" />
                         <TextBlock
-                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                            MaxLines="1"
+                            Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                            FontSize="12"
+                            MaxLines="2"
                             Text="{Binding ValidationText}"
                             TextTrimming="CharacterEllipsis"
+                            TextWrapping="WrapWholeWords"
                             Visibility="{Binding ValidationVisibility}" />
                     </StackPanel>
 

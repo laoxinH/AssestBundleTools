@@ -1,5 +1,6 @@
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -28,6 +29,9 @@ public sealed partial class WorkspaceBatchReplacementDialogContent : UserControl
     {
         SourceSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSourceSectionTitle);
         SourceSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSourceSectionHint);
+        var sourceSectionHelpText = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSourceSectionHelp);
+        ToolTipService.SetToolTip(SourceSectionHelpButton, sourceSectionHelpText);
+        AutomationProperties.SetName(SourceSectionHelpButton, sourceSectionHelpText);
         ChooseSourceDirectoryButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogChooseSourceDirectoryButton);
         RefreshPlanButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogRefreshButton);
         BundleSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogBundleSectionTitle);

@@ -754,7 +754,10 @@
     <value>Source Directory</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.SourceSection.Hint" xml:space="preserve">
-    <value>Select a batch export directory that contains _abt-export-manifest.json.</value>
+    <value>Select a batch export directory.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.SourceSection.Help" xml:space="preserve">
+    <value>Prefer a batch export directory that contains _abt-export-manifest.json. If no manifest is found, the plan falls back to smart recognition.</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.ChooseSourceDirectoryButton" xml:space="preserve">
     <value>Choose Folder</value>
@@ -769,7 +772,7 @@
     <value>Manifest exact match</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.SourceMode.Heuristic" xml:space="preserve">
-    <value>Heuristic match</value>
+    <value>Smart recognition</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Source.NotSelected" xml:space="preserve">
     <value>No source directory selected.</value>
@@ -778,10 +781,10 @@
     <value>Manifest exact match: {0} items, {1} changed, {2} need attention.</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Source.HeuristicSummary" xml:space="preserve">
-    <value>No manifest was found. Matching is inferred from directories, types, and names.</value>
+    <value>No manifest was found. Matching uses smart recognition from directories, types, and names.</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Source.HeuristicCounts.Format" xml:space="preserve">
-    <value>Heuristic match: {0} high confidence, {1} need review, {2} cannot run directly.</value>
+    <value>Smart recognition: {0} high confidence, {1} need review, {2} cannot run directly.</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.BundleSection.Title" xml:space="preserve">
     <value>Bundle Scope</value>
@@ -841,7 +844,7 @@
     <value>{0} high confidence, {1} need review, {2} cannot run directly.</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Heuristic.Warning" xml:space="preserve">
-    <value>No manifest was found. This plan is inferred from directories, types, and names; review candidates before running.</value>
+    <value>No manifest was found. This plan uses smart recognition from directories, types, and names; review candidates before running.</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Status.Title" xml:space="preserve">
     <value>Running batch replacement</value>

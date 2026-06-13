@@ -578,6 +578,7 @@ public static class ResourceKeys
     public const string WorkspaceBatchReplacementDialogCloseButton = "WorkspaceBatchReplacementDialog.CloseButton";
     public const string WorkspaceBatchReplacementDialogSourceSectionTitle = "WorkspaceBatchReplacementDialog.SourceSection.Title";
     public const string WorkspaceBatchReplacementDialogSourceSectionHint = "WorkspaceBatchReplacementDialog.SourceSection.Hint";
+    public const string WorkspaceBatchReplacementDialogSourceSectionHelp = "WorkspaceBatchReplacementDialog.SourceSection.Help";
     public const string WorkspaceBatchReplacementDialogChooseSourceDirectoryButton = "WorkspaceBatchReplacementDialog.ChooseSourceDirectoryButton";
     public const string WorkspaceBatchReplacementDialogRefreshButton = "WorkspaceBatchReplacementDialog.RefreshButton";
     public const string WorkspaceBatchReplacementDialogSourceModeAuto = "WorkspaceBatchReplacementDialog.SourceMode.Auto";

@@ -754,7 +754,10 @@
     <value>来源目录</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.SourceSection.Hint" xml:space="preserve">
-    <value>选择包含 _abt-export-manifest.json 的批量导出目录。</value>
+    <value>选择批量导出目录。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.SourceSection.Help" xml:space="preserve">
+    <value>优先选择包含 _abt-export-manifest.json 的批量导出目录；缺少 manifest 时会自动改用智能识别。</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.ChooseSourceDirectoryButton" xml:space="preserve">
     <value>选择目录</value>
@@ -769,7 +772,7 @@
     <value>Manifest 精确匹配</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.SourceMode.Heuristic" xml:space="preserve">
-    <value>启发式匹配</value>
+    <value>智能识别</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Source.NotSelected" xml:space="preserve">
     <value>尚未选择来源目录。</value>
@@ -778,10 +781,10 @@
     <value>Manifest 精确匹配：{0} 项，{1} 项已修改，{2} 项需处理。</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Source.HeuristicSummary" xml:space="preserve">
-    <value>未找到 manifest，匹配基于目录、类型和名称推断。</value>
+    <value>未找到 manifest，匹配基于目录、类型和名称智能识别。</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Source.HeuristicCounts.Format" xml:space="preserve">
-    <value>启发式匹配：{0} 项高置信，{1} 项需确认，{2} 项无法直接执行。</value>
+    <value>智能识别：{0} 项高置信，{1} 项需确认，{2} 项无法直接执行。</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.BundleSection.Title" xml:space="preserve">
     <value>资源包范围</value>
@@ -841,7 +844,7 @@
     <value>{0} 项高置信，{1} 项需确认，{2} 项无法直接执行。</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Heuristic.Warning" xml:space="preserve">
-    <value>未找到 manifest，当前计划基于目录、类型和名称推断；请确认候选后再执行。</value>
+    <value>未找到 manifest，当前计划基于目录、类型和名称智能识别；请确认候选后再执行。</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Status.Title" xml:space="preserve">
     <value>正在批量替换</value>

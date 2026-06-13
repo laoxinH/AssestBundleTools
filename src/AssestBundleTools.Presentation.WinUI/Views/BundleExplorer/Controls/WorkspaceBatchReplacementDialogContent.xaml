@@ -62,7 +62,6 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Grid ColumnSpacing="12">
                     <Grid.ColumnDefinitions>
@@ -71,9 +70,32 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Spacing="4">
-                        <TextBlock
-                            x:Name="SourceSectionTitleText"
-                            Style="{StaticResource DialogSectionTitleTextStyle}" />
+                        <StackPanel
+                            Orientation="Horizontal"
+                            Spacing="6">
+                            <TextBlock
+                                x:Name="SourceSectionTitleText"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource DialogSectionTitleTextStyle}" />
+                            <Button
+                                x:Name="SourceSectionHelpButton"
+                                Width="24"
+                                Height="24"
+                                MinWidth="0"
+                                MinHeight="0"
+                                Padding="0"
+                                VerticalAlignment="Center"
+                                Background="{ThemeResource SubtleFillColorTransparentBrush}"
+                                BorderThickness="0"
+                                CornerRadius="12"
+                                FontSize="12">
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontWeight="SemiBold"
+                                    Text="?" />
+                            </Button>
+                        </StackPanel>
                         <TextBlock
                             x:Name="SourceSectionHintText"
                             Style="{StaticResource DialogSecondaryTextStyle}" />
@@ -118,13 +140,6 @@
                         TextTrimming="CharacterEllipsis"
                         TextWrapping="WrapWholeWords" />
                 </Grid>
-                <TextBlock
-                    Grid.Row="2"
-                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
-                    FontSize="12"
-                    Text="{Binding ValidationText}"
-                    TextWrapping="WrapWholeWords"
-                    Visibility="{Binding ValidationVisibility}" />
             </Grid>
         </Border>
 
