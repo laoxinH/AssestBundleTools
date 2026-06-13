@@ -101,9 +101,14 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
             "WorkspaceBatchReplacementDialogContent.xaml.cs"));
 
         Assert.Contains("BatchReplacementHelpButtonStyle", contentXaml);
+        Assert.Contains("<Setter Property=\"Width\" Value=\"16\" />", contentXaml);
+        Assert.Contains("<Setter Property=\"Height\" Value=\"16\" />", contentXaml);
+        Assert.Contains("<Setter Property=\"Background\" Value=\"{ThemeResource SubtleFillColorTransparentBrush}\" />", contentXaml);
+        Assert.Contains("<Setter Property=\"BorderThickness\" Value=\"0\" />", contentXaml);
         Assert.Contains("PointerEntered=\"OnSourceSectionHelpButtonPointerEntered\"", contentXaml);
         Assert.Contains("PointerExited=\"OnSourceSectionHelpButtonPointerExited\"", contentXaml);
         Assert.Contains("FontIcon", contentXaml);
+        Assert.Contains("FontSize=\"9\"", contentXaml);
         Assert.Contains("Glyph=\"&#xE897;\"", contentXaml);
         Assert.DoesNotContain("Text=\"?\"", contentXaml);
         Assert.Contains("_sourceSectionHelpToolTip.IsOpen = true;", contentCode);
