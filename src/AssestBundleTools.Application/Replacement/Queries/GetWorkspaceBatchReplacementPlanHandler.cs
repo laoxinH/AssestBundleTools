@@ -64,26 +64,9 @@ public sealed class GetWorkspaceBatchReplacementPlanHandler : IQueryHandler<GetW
 
         var sourceRootDirectory = query.SourceRootDirectory.Trim();
         var manifestPath = Path.Combine(sourceRootDirectory, ManifestFileName);
-        if (query.MatchingMode == WorkspaceBatchReplacementMatchingMode.Heuristic)
+        try
         {
-            return Result<WorkspaceBatchReplacementPlanDto>.Success(await WorkspaceBatchReplacementHeuristicPlanner.BuildPlanAsync(
-                _workspaceSessionRegistry,
-                _loadSpineAssetGroupsHandler,
-                _sourceFileProbe,
-                query.WorkspaceId,
-                sourceRootDirectory,
-                cancellationToken));
-        }
-
-        var manifestResult = await _manifestStore.LoadAsync(manifestPath, cancellationToken);
-        if (manifestResult.IsCancelled)
-        {
-            return Result<WorkspaceBatchReplacementPlanDto>.Cancelled();
-        }
-
-        if (!manifestResult.IsSuccess || manifestResult.Value is null)
-        {
-            if (query.MatchingMode == WorkspaceBatchReplacementMatchingMode.Auto)
+            if (query.MatchingMode == WorkspaceBatchReplacementMatchingMode.Heuristic)
             {
                 return Result<WorkspaceBatchReplacementPlanDto>.Success(await WorkspaceBatchReplacementHeuristicPlanner.BuildPlanAsync(
                     _workspaceSessionRegistry,
@@ -94,46 +77,70 @@ public sealed class GetWorkspaceBatchReplacementPlanHandler : IQueryHandler<GetW
                     cancellationToken));
             }
 
-            return Result<WorkspaceBatchReplacementPlanDto>.Failure(manifestResult.Errors);
-        }
+            var manifestResult = await _manifestStore.LoadAsync(manifestPath, cancellationToken);
+            if (manifestResult.IsCancelled)
+            {
+                return Result<WorkspaceBatchReplacementPlanDto>.Cancelled();
+            }
 
-        var manifest = manifestResult.Value;
-        if (!string.IsNullOrWhiteSpace(query.WorkspaceKey) &&
-            !string.Equals(manifest.WorkspaceKey, query.WorkspaceKey.Trim(), StringComparison.Ordinal))
-        {
-            return Result<WorkspaceBatchReplacementPlanDto>.Success(
-                CreateManifestIssuePlan(
+            if (!manifestResult.IsSuccess || manifestResult.Value is null)
+            {
+                if (query.MatchingMode == WorkspaceBatchReplacementMatchingMode.Auto)
+                {
+                    return Result<WorkspaceBatchReplacementPlanDto>.Success(await WorkspaceBatchReplacementHeuristicPlanner.BuildPlanAsync(
+                        _workspaceSessionRegistry,
+                        _loadSpineAssetGroupsHandler,
+                        _sourceFileProbe,
+                        query.WorkspaceId,
+                        sourceRootDirectory,
+                        cancellationToken));
+                }
+
+                return Result<WorkspaceBatchReplacementPlanDto>.Failure(manifestResult.Errors);
+            }
+
+            var manifest = manifestResult.Value;
+            if (!string.IsNullOrWhiteSpace(query.WorkspaceKey) &&
+                !string.Equals(manifest.WorkspaceKey, query.WorkspaceKey.Trim(), StringComparison.Ordinal))
+            {
+                return Result<WorkspaceBatchReplacementPlanDto>.Success(
+                    CreateManifestIssuePlan(
+                        query,
+                        sourceRootDirectory,
+                        manifestPath,
+                        manifest.WorkspaceKey,
+                        manifest.Items.Count,
+                        "WorkspaceKeyMismatch"));
+            }
+
+            var candidates = new List<WorkspaceBatchReplacementCandidateDto>(manifest.Items.Count);
+            foreach (var item in manifest.Items)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var candidate = await CreateManifestCandidateAsync(
                     query,
                     sourceRootDirectory,
-                    manifestPath,
-                    manifest.WorkspaceKey,
-                    manifest.Items.Count,
-                    "WorkspaceKeyMismatch"));
-        }
+                    item,
+                    cancellationToken);
+                if (query.IncludeUnchanged || candidate.MatchStatus != WorkspaceBatchReplacementMatchStatus.Unchanged)
+                {
+                    candidates.Add(candidate);
+                }
+            }
 
-        var candidates = new List<WorkspaceBatchReplacementCandidateDto>(manifest.Items.Count);
-        foreach (var item in manifest.Items)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var candidate = await CreateManifestCandidateAsync(
+            return Result<WorkspaceBatchReplacementPlanDto>.Success(CreatePlan(
                 query,
                 sourceRootDirectory,
-                item,
-                cancellationToken);
-            if (query.IncludeUnchanged || candidate.MatchStatus != WorkspaceBatchReplacementMatchStatus.Unchanged)
-            {
-                candidates.Add(candidate);
-            }
+                WorkspaceBatchReplacementMatchingMode.Manifest,
+                manifestPath,
+                manifest.WorkspaceKey,
+                manifest.Items.Count,
+                candidates));
         }
-
-        return Result<WorkspaceBatchReplacementPlanDto>.Success(CreatePlan(
-            query,
-            sourceRootDirectory,
-            WorkspaceBatchReplacementMatchingMode.Manifest,
-            manifestPath,
-            manifest.WorkspaceKey,
-            manifest.Items.Count,
-            candidates));
+        catch (OperationCanceledException)
+        {
+            return Result<WorkspaceBatchReplacementPlanDto>.Cancelled();
+        }
     }
 
     private async Task<WorkspaceBatchReplacementCandidateDto> CreateManifestCandidateAsync(

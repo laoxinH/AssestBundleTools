@@ -2,6 +2,7 @@ using System.IO;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Extraction.Dtos;
@@ -739,6 +740,44 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.Equal(WorkspaceBatchReplacementMatchStatus.ManifestInvalid, candidate.MatchStatus, "Mismatch should block execution.");
         TestAssert.True(candidate.Diagnostics.Contains("WorkspaceKeyMismatch"), "Diagnostic should explain the blocker.");
         TestAssert.Equal(0, sourceProbe.SnapshotRequestCount, "No source files should be probed after workspace-key mismatch.");
+    }
+
+    public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldReturnCancelled_WhenHeuristicSpineCatalogCancels()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-a");
+        var assetId = new AssetId("asset-atlas");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterBundle(workspaceId, bundleId, "char_1001_amiya2.ab", "ab/char_1001_amiya2.ab");
+        registry.RegisterAssetListItem(new AssetListItemDto(
+            assetId,
+            bundleId,
+            "char_1001_amiya2_casc#1.atlas",
+            "Assets/Spine/char_1001_amiya2_casc#1.atlas",
+            AssetType.TextAsset,
+            SizeInBytes: 128,
+            PreferredDisplaySizeInBytes: 128,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: "TextAsset",
+            PathId: 42,
+            DisplayName: "char_1001_amiya2_casc#1.atlas",
+            ExportFileName: "char_1001_amiya2_casc#1"));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("char_1001_amiya2.ab/Spine/char_1001_amiya2_casc#1 [1]/char_1001_amiya2_casc#1.atlas", 128);
+        var handler = new GetWorkspaceBatchReplacementPlanHandler(
+            registry,
+            new TestWorkspaceExportManifestStore(null),
+            sourceProbe,
+            new CancellingSpineAssetGroupsHandler());
+
+        var result = await handler.HandleAsync(new GetWorkspaceBatchReplacementPlanQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\Export",
+            WorkspaceBatchReplacementMatchingMode.Auto));
+
+        TestAssert.True(result.IsCancelled, "Heuristic plan cancellation from Spine catalog should return a cancelled result instead of surfacing OperationCanceledException.");
     }
 
     public static async Task GetWorkspaceBatchReplacementPlanHandler_ShouldBuildHighConfidenceHeuristicCandidate_FromStandardExportPath()
@@ -1855,6 +1894,15 @@ internal static class ReplacementWorkflowHandlerTests
             Task.FromResult(_manifest is null
                 ? Result<WorkspaceExportManifestDto>.Failure(ApplicationErrors.ExportManifestReadFailed(manifestPath, "TestMissing"))
                 : Result<WorkspaceExportManifestDto>.Success(_manifest));
+    }
+
+    private sealed class CancellingSpineAssetGroupsHandler :
+        IQueryHandler<LoadSpineAssetGroupsQuery, Result<SpineAssetGroupListResultDto>>
+    {
+        public Task<Result<SpineAssetGroupListResultDto>> HandleAsync(
+            LoadSpineAssetGroupsQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new OperationCanceledException(cancellationToken);
     }
 
     private sealed class TestWorkspaceBatchReplacementSourceFileProbe : IWorkspaceBatchReplacementSourceFileProbe
