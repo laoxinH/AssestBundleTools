@@ -226,6 +226,80 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(0, previewCacheStore.SaveCallCount, "TextAsset file preview should not rewrite original preview cache.");
     }
 
+    public static async Task HandleAsync_ShouldUseFileReplacementPreview_ForAudioClip()
+    {
+        const string replacementFilePath = @"C:\Imports\hero-voice.wav";
+        var replacementBytes = new byte[] { 0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x57, 0x41, 0x56, 0x45 };
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        bundleCacheEntry = bundleCacheEntry with
+        {
+            Assets =
+            [
+                bundleCacheEntry.Assets[0] with
+                {
+                    AssetType = AssetType.AudioClip.ToString(),
+                    AssetTypeDisplayName = AssetType.AudioClip.ToString(),
+                    AssetPath = "Assets/Audio/HeroVoice",
+                    AssetName = "HeroVoice"
+                }
+            ]
+        };
+        var previewCachePayload = CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            "old audio summary",
+            generatorVersion: "generator-1");
+        var previewCacheStore = new TestPreviewCacheStore(previewCachePayload);
+        var decryptor = new TestAssetBundleDecryptor(CreatePassThroughDecryptorDescriptor());
+        var generator = new TestAssetPreviewGenerator();
+        var replacementPreviewSourceProvider = new TestReplacementPreviewSourceProvider(
+            Result<AssetPreviewContentDto>.Success(new AssetPreviewContentDto(
+                Kind: AssetPreviewKind.Audio,
+                ContentType: "audio/wav",
+                Content: replacementBytes,
+                PreferredDisplaySizeInBytes: replacementBytes.Length)));
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(
+            [
+                CreateAssetDetails(
+                    query,
+                    name: "HeroVoice",
+                    assetType: AssetType.AudioClip,
+                    fileReplacementSourceFileName: "hero-voice.wav",
+                    fileReplacementSourcePath: replacementFilePath)
+            ]),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService(),
+            replacementPreviewSourceProvider: replacementPreviewSourceProvider);
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "AudioClip file replacement should provide the effective preview payload.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(query.BundleId, preview.BundleId, "Effective audio preview should keep the target bundle identity.");
+        TestAssert.Equal(query.AssetId, preview.AssetId, "Effective audio preview should keep the target asset identity.");
+        TestAssert.Equal(AssetPreviewKind.Audio, preview.Kind, "AudioClip replacement preview should be audio.");
+        TestAssert.Equal("audio/wav", preview.ContentType, "Audio replacement preview should preserve provider content type.");
+        TestAssert.True(
+            preview.BinaryContent is not null &&
+            preview.BinaryContent.AsSpan().SequenceEqual(replacementBytes),
+            "Audio replacement preview should expose the replacement file bytes.");
+        TestAssert.Equal(replacementFilePath, preview.PreviewPayloadFilePath, "Audio replacement preview should expose the selected source path.");
+        TestAssert.False(preview.IsFromCache, "Audio replacement preview should not be reported as a cached original preview.");
+        TestAssert.Equal(AssetPreviewFallbackReasonKind.None, preview.Diagnostic.FallbackReason, "Successful audio replacement preview should not fall back.");
+        TestAssert.Equal(1, replacementPreviewSourceProvider.LoadFilePreviewCallCount, "Audio replacement preview should load one file source.");
+        TestAssert.Equal(AssetType.AudioClip, replacementPreviewSourceProvider.LastTargetDetails?.AssetType, "Audio replacement target details should preserve the indexed asset type.");
+        TestAssert.Equal(0, decryptor.DecryptCallCount, "Audio replacement preview should not decrypt the original bundle.");
+        TestAssert.Equal(0, generator.GenerateCallCount, "Audio replacement preview should not generate original preview content.");
+        TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Audio replacement preview should not rewrite original preview cache.");
+    }
+
     public static async Task HandleAsync_ShouldUseWorkspaceReplacementPreview_WithTargetIdentity()
     {
         const string resolvedBundlePath = @"C:\Temp\characters.bundle";

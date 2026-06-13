@@ -238,7 +238,7 @@ internal sealed class ReplacementEffectivePreviewResolver
         $"{bundleId}\u001f{assetId}";
 
     private static bool IsFileReplacementPreviewSupported(AssetType assetType) =>
-        assetType is AssetType.Texture2D or AssetType.TextAsset;
+        assetType is AssetType.Texture2D or AssetType.TextAsset or AssetType.AudioClip;
 
     private static AssetDetailsDto CreateTargetDetails(
         GetAssetPreviewQuery query,
