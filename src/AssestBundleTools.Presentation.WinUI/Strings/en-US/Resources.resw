@@ -747,6 +747,9 @@
   <data name="WorkspaceBatchReplacementDialog.PrimaryButton" xml:space="preserve">
     <value>Start Replace</value>
   </data>
+  <data name="WorkspaceBatchReplacementDialog.RetryPrimaryButton" xml:space="preserve">
+    <value>Replace Again</value>
+  </data>
   <data name="WorkspaceBatchReplacementDialog.CloseButton" xml:space="preserve">
     <value>Cancel</value>
   </data>
@@ -854,6 +857,9 @@
   </data>
   <data name="WorkspaceBatchReplacementDialog.Completed.Message.Format" xml:space="preserve">
     <value>Batch replacement completed: {0} replaced, {1} skipped, {2} failed.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Execution.Running" xml:space="preserve">
+    <value>Replacing selected resources...</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Execution.Summary.Format" xml:space="preserve">
     <value>{0} replaced, {1} skipped, {2} failed.</value>

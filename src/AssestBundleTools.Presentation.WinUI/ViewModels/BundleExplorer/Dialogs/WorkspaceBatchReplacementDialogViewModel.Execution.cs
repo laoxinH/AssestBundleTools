@@ -16,6 +16,7 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel
     public void SetExecuting()
     {
         IsExecuting = true;
+        PlanSummaryText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogExecutionRunning);
         ValidationText = string.Empty;
     }
 
@@ -23,6 +24,7 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel
     {
         ArgumentNullException.ThrowIfNull(result);
         IsExecuting = false;
+        PrimaryButtonText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogRetryPrimaryButton);
         PlanSummaryText = _localizationService.GetFormattedString(
             ResourceKeys.WorkspaceBatchReplacementDialogExecutionSummaryFormat,
             result.ReplacedAssetCount.ToString(CultureInfo.CurrentCulture),
@@ -37,6 +39,7 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel
     public void ApplyExecutionUnavailable()
     {
         IsExecuting = false;
+        PrimaryButtonText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogRetryPrimaryButton);
         ValidationText = GetString(ResourceKeys.CommonUnexpectedFailure);
         OnPropertyChanged(nameof(CanSubmit));
     }

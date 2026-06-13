@@ -92,6 +92,81 @@ public sealed class WorkspaceBatchReplacementDialogViewModelTests
     }
 
     [Fact]
+    public void InitialState_ShouldDisableReplacementAndBundleFiltersWithoutResources()
+    {
+        var viewModel = CreateViewModel();
+
+        Assert.False(viewModel.HasBundles);
+        Assert.False(viewModel.HasCandidates);
+        Assert.False(viewModel.CanSubmit);
+        Assert.Equal(ResourceKeys.WorkspaceBatchReplacementDialogPrimaryButton, viewModel.PrimaryButtonText);
+    }
+
+    [Fact]
+    public void ExecutionState_ShouldShowRunningSummaryAndRetryAfterCompletion()
+    {
+        var viewModel = CreateViewModel();
+        viewModel.ApplyPlan(CreatePlan());
+
+        Assert.True(viewModel.CanSubmit);
+        Assert.Equal(ResourceKeys.WorkspaceBatchReplacementDialogPrimaryButton, viewModel.PrimaryButtonText);
+
+        viewModel.SetExecuting();
+
+        Assert.False(viewModel.CanSubmit);
+        Assert.True(viewModel.IsSummaryProgressActive);
+        Assert.Equal(ResourceKeys.WorkspaceBatchReplacementDialogExecutionRunning, viewModel.PlanSummaryText);
+        Assert.Equal(ResourceKeys.WorkspaceBatchReplacementDialogPrimaryButton, viewModel.PrimaryButtonText);
+
+        viewModel.ApplyExecutionResult(new WorkspaceBatchReplacementResultDto(
+            new WorkspaceId("workspace-ui"),
+            @"C:\Exports",
+            WorkspaceBatchReplacementMatchingMode.Manifest,
+            RequestedCandidateCount: 2,
+            ReplacedAssetCount: 2,
+            SkippedAssetCount: 0,
+            FailedAssetCount: 0,
+            ProcessedBundleCount: 2,
+            ProcessedSpineGroupCount: 0,
+            CompletedAtUtc: DateTimeOffset.UtcNow,
+            ItemResults: []));
+
+        Assert.True(viewModel.CanSubmit);
+        Assert.False(viewModel.IsSummaryProgressActive);
+        Assert.Equal(ResourceKeys.WorkspaceBatchReplacementDialogRetryPrimaryButton, viewModel.PrimaryButtonText);
+        Assert.StartsWith(ResourceKeys.WorkspaceBatchReplacementDialogExecutionSummaryFormat, viewModel.PlanSummaryText, StringComparison.Ordinal);
+
+        viewModel.SetPlanLoading();
+
+        Assert.False(viewModel.CanSubmit);
+        Assert.True(viewModel.IsSummaryProgressActive);
+        Assert.Equal(ResourceKeys.WorkspaceBatchReplacementDialogRetryPrimaryButton, viewModel.PrimaryButtonText);
+    }
+
+    [Fact]
+    public void SourceDirectoryChange_ShouldRestorePrimaryButtonText()
+    {
+        var viewModel = CreateViewModel();
+        viewModel.ApplyPlan(CreatePlan());
+        viewModel.ApplyExecutionResult(new WorkspaceBatchReplacementResultDto(
+            new WorkspaceId("workspace-ui"),
+            @"C:\Exports",
+            WorkspaceBatchReplacementMatchingMode.Manifest,
+            RequestedCandidateCount: 1,
+            ReplacedAssetCount: 1,
+            SkippedAssetCount: 0,
+            FailedAssetCount: 0,
+            ProcessedBundleCount: 1,
+            ProcessedSpineGroupCount: 0,
+            CompletedAtUtc: DateTimeOffset.UtcNow,
+            ItemResults: []));
+
+        viewModel.SetSourceDirectory(@"C:\Exports2");
+
+        Assert.Equal(ResourceKeys.WorkspaceBatchReplacementDialogPrimaryButton, viewModel.PrimaryButtonText);
+    }
+
+    [Fact]
     public void ApplyPlan_ShouldGroupSpinePartCandidates_AndExposeSpineTypeFilter()
     {
         var viewModel = CreateViewModel();

@@ -101,7 +101,6 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
         WindowTitleText.Text = title;
         WindowSubtitleText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogHeaderHint);
         PlanSummaryTitleText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogPreviewSectionTitle);
-        StartReplacementButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogPrimaryButton);
         CancelButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogCloseButton);
     }
 

@@ -111,6 +111,7 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
         Assert.Contains("FontSize=\"9\"", contentXaml);
         Assert.Contains("Glyph=\"&#xE897;\"", contentXaml);
         Assert.DoesNotContain("Text=\"?\"", contentXaml);
+        Assert.Contains("IsEnabled=\"{Binding HasBundles}\"", contentXaml);
         Assert.Contains("_sourceSectionHelpToolTip.IsOpen = true;", contentCode);
         Assert.Contains("_sourceSectionHelpToolTip.IsOpen = false;", contentCode);
         Assert.Contains("TextWrapping = TextWrapping.WrapWholeWords", contentCode);

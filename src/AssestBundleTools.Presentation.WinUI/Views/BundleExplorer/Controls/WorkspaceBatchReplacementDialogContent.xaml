@@ -187,10 +187,12 @@
                         <Button
                             x:Name="SelectAllBundlesButton"
                             Click="OnSelectAllBundlesButtonClick"
+                            IsEnabled="{Binding HasBundles}"
                             Style="{StaticResource BatchReplacementCompactButtonStyle}" />
                         <Button
                             x:Name="ClearBundleSelectionButton"
                             Click="OnClearBundleSelectionButtonClick"
+                            IsEnabled="{Binding HasBundles}"
                             Style="{StaticResource BatchReplacementCompactButtonStyle}" />
                         <ToggleButton
                             x:Name="ChangedBundlesOnlyToggleButton"
@@ -199,6 +201,7 @@
                             Padding="12,0"
                             CornerRadius="8"
                             FontSize="13"
+                            IsEnabled="{Binding HasBundles}"
                             IsChecked="{Binding ShowChangedBundlesOnly, Mode=TwoWay}" />
                     </StackPanel>
 

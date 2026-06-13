@@ -747,6 +747,9 @@
   <data name="WorkspaceBatchReplacementDialog.PrimaryButton" xml:space="preserve">
     <value>开始替换</value>
   </data>
+  <data name="WorkspaceBatchReplacementDialog.RetryPrimaryButton" xml:space="preserve">
+    <value>重新替换</value>
+  </data>
   <data name="WorkspaceBatchReplacementDialog.CloseButton" xml:space="preserve">
     <value>取消</value>
   </data>
@@ -854,6 +857,9 @@
   </data>
   <data name="WorkspaceBatchReplacementDialog.Completed.Message.Format" xml:space="preserve">
     <value>批量替换完成：{0} 项已替换，{1} 项跳过，{2} 项失败。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Execution.Running" xml:space="preserve">
+    <value>正在替换所选资源...</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Execution.Summary.Format" xml:space="preserve">
     <value>{0} 项已替换，{1} 项跳过，{2} 项失败。</value>

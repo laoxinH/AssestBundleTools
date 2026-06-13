@@ -21,6 +21,7 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
     private string _sourceSummaryText;
     private string _sourceModeText;
     private string _validationText = string.Empty;
+    private string _primaryButtonText;
     private bool _isPlanLoading;
     private bool _isExecuting;
     private bool _showChangedBundlesOnly;
@@ -37,6 +38,7 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
         _planSummaryText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogPreviewWaiting);
         _sourceSummaryText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceNotSelected);
         _sourceModeText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceModeAuto);
+        _primaryButtonText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogPrimaryButton);
         _typeFilterButtonText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogTypeFilterAll);
     }
 
@@ -104,6 +106,7 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
             if (SetProperty(ref _isPlanLoading, value))
             {
                 OnPropertyChanged(nameof(PlanLoadingVisibility));
+                OnPropertyChanged(nameof(IsSummaryProgressActive));
                 OnPropertyChanged(nameof(CanSubmit));
             }
         }
@@ -116,12 +119,16 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
         {
             if (SetProperty(ref _isExecuting, value))
             {
+                OnPropertyChanged(nameof(PlanLoadingVisibility));
                 OnPropertyChanged(nameof(CanSubmit));
+                OnPropertyChanged(nameof(IsSummaryProgressActive));
             }
         }
     }
 
-    public Visibility PlanLoadingVisibility => IsPlanLoading ? Visibility.Visible : Visibility.Collapsed;
+    public bool IsSummaryProgressActive => IsPlanLoading || IsExecuting;
+
+    public Visibility PlanLoadingVisibility => IsSummaryProgressActive ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility ValidationVisibility =>
         string.IsNullOrWhiteSpace(ValidationText) ? Visibility.Collapsed : Visibility.Visible;
@@ -130,7 +137,15 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
 
     public bool HasCandidates => Candidates.Count > 0;
 
+    public bool HasBundles => Bundles.Count > 0;
+
     public bool CanSubmit => !IsPlanLoading && !IsExecuting && Candidates.Any(static candidate => candidate.IsSelected);
+
+    public string PrimaryButtonText
+    {
+        get => _primaryButtonText;
+        private set => SetProperty(ref _primaryButtonText, value);
+    }
 
     public bool ShowChangedBundlesOnly
     {
@@ -180,6 +195,7 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
         SourceSummaryText = HasSourceDirectory
             ? GetString(ResourceKeys.WorkspaceBatchReplacementDialogPreviewLoading)
             : GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceNotSelected);
+        PrimaryButtonText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogPrimaryButton);
         OnPropertyChanged(nameof(SourceEmptyVisibility));
     }
 
@@ -241,6 +257,7 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
             ? GetString(ResourceKeys.WorkspaceBatchReplacementDialogHeuristicWarning)
             : string.Empty;
         OnPropertyChanged(nameof(HasCandidates));
+        OnPropertyChanged(nameof(HasBundles));
         OnPropertyChanged(nameof(CanSubmit));
     }
 
@@ -263,6 +280,7 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
         TypeFilterButtonText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogTypeFilterAll);
         SourceModeText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceModeAuto);
         OnPropertyChanged(nameof(HasCandidates));
+        OnPropertyChanged(nameof(HasBundles));
         OnPropertyChanged(nameof(CanSubmit));
     }
 
@@ -287,219 +305,6 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
     public void ToggleChangedBundlesOnly()
     {
         ShowChangedBundlesOnly = !ShowChangedBundlesOnly;
-    }
-
-    private void RebuildCandidateFilters()
-    {
-        var previousStatusKey = SelectedStatusFilter?.Key;
-        var previousTypeKeys = TypeFilters
-            .Where(static filter => !filter.IsAll && filter.IsSelected)
-            .Select(static filter => filter.Key)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        StatusFilters.Clear();
-        UnsubscribeTypeFilterSelectionChanged();
-        TypeFilters.Clear();
-
-        StatusFilters.Add(WorkspaceBatchReplacementFilterOptionViewModel.All(
-            GetString(ResourceKeys.WorkspaceBatchReplacementDialogStatusFilterAll)));
-        foreach (var status in Candidates
-            .Select(static candidate => candidate.Candidate.MatchStatus)
-            .Distinct()
-            .OrderBy(static status => status.ToString(), StringComparer.Ordinal))
-        {
-            StatusFilters.Add(new WorkspaceBatchReplacementFilterOptionViewModel(
-                status.ToString(),
-                ResolveStatusText(status)));
-        }
-
-        foreach (var type in Candidates
-            .Select(static candidate => new { candidate.TypeFilterKey, candidate.TypeFilterText })
-            .Where(static value => !string.IsNullOrWhiteSpace(value.TypeFilterKey))
-            .GroupBy(static value => value.TypeFilterKey, StringComparer.OrdinalIgnoreCase)
-            .Select(static group => group.First())
-            .OrderBy(static value => value.TypeFilterText, StringComparer.CurrentCultureIgnoreCase))
-        {
-            TypeFilters.Add(new WorkspaceBatchReplacementFilterOptionViewModel(type.TypeFilterKey, type.TypeFilterText));
-        }
-
-        SubscribeTypeFilterSelectionChanged();
-        RestoreTypeFilters(previousTypeKeys);
-        SelectedStatusFilter = SelectDefaultStatusFilter(previousStatusKey);
-        UpdateTypeFilterButtonText();
-        ApplyCandidateFilters();
-    }
-
-    private void ApplyBundleFilters()
-    {
-        FilteredBundles.Clear();
-        foreach (var bundle in Bundles)
-        {
-            if (ShowChangedBundlesOnly && bundle.CandidateCount <= 0)
-            {
-                continue;
-            }
-
-            FilteredBundles.Add(bundle);
-        }
-    }
-
-    private void ApplyCandidateFilters()
-    {
-        var selectedBundleIds = Bundles
-            .Where(static bundle => bundle.IsSelected)
-            .Select(static bundle => bundle.BundleId.Value)
-            .ToHashSet(StringComparer.Ordinal);
-        var searchText = CandidateSearchText.Trim();
-        var statusFilter = SelectedStatusFilter?.IsAll == false ? SelectedStatusFilter.Key : null;
-        var typeFilters = TypeFilters
-            .Where(static filter => !filter.IsAll && filter.IsSelected)
-            .Select(static filter => filter.Key)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        FilteredCandidates.Clear();
-        foreach (var candidate in Candidates)
-        {
-            if (candidate.BundleId is { } bundleId &&
-                selectedBundleIds.Count > 0 &&
-                !selectedBundleIds.Contains(bundleId.Value))
-            {
-                continue;
-            }
-
-            if (candidate.BundleId is not null &&
-                selectedBundleIds.Count == 0)
-            {
-                continue;
-            }
-
-            if (!string.IsNullOrWhiteSpace(statusFilter) &&
-                !string.Equals(candidate.Candidate.MatchStatus.ToString(), statusFilter, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            if (typeFilters.Count > 0 &&
-                !typeFilters.Contains(candidate.TypeFilterKey))
-            {
-                continue;
-            }
-
-            if (!MatchesSearch(candidate, searchText))
-            {
-                continue;
-            }
-
-            FilteredCandidates.Add(candidate);
-        }
-    }
-
-    private WorkspaceBatchReplacementFilterOptionViewModel? SelectDefaultStatusFilter(string? previousKey)
-    {
-        if (!string.IsNullOrWhiteSpace(previousKey))
-        {
-            var restored = StatusFilters.FirstOrDefault(filter => string.Equals(filter.Key, previousKey, StringComparison.Ordinal));
-            if (restored is not null)
-            {
-                return restored;
-            }
-        }
-
-        return StatusFilters.FirstOrDefault(filter =>
-            string.Equals(filter.Key, WorkspaceBatchReplacementMatchStatus.Changed.ToString(), StringComparison.Ordinal)) ??
-            StatusFilters.FirstOrDefault(filter =>
-                string.Equals(filter.Key, WorkspaceBatchReplacementMatchStatus.HighConfidence.ToString(), StringComparison.Ordinal)) ??
-            StatusFilters.FirstOrDefault(filter =>
-                string.Equals(filter.Key, WorkspaceBatchReplacementMatchStatus.MediumConfidence.ToString(), StringComparison.Ordinal)) ??
-            StatusFilters.FirstOrDefault();
-    }
-
-    private void RestoreTypeFilters(IReadOnlySet<string> previousTypeKeys)
-    {
-        if (previousTypeKeys.Count == 0)
-        {
-            return;
-        }
-
-        foreach (var filter in TypeFilters.Where(filter => previousTypeKeys.Contains(filter.Key)))
-        {
-            filter.IsSelected = true;
-        }
-    }
-
-    private void UpdateTypeFilterButtonText()
-    {
-        var selectedFilters = TypeFilters
-            .Where(static filter => filter.IsSelected)
-            .ToArray();
-        TypeFilterButtonText = selectedFilters.Length switch
-        {
-            0 => GetString(ResourceKeys.WorkspaceBatchReplacementDialogTypeFilterAll),
-            1 => selectedFilters[0].DisplayText,
-            _ => _localizationService.GetFormattedString(
-                ResourceKeys.WorkspaceBatchReplacementDialogTypeFilterSelectedFormat,
-                selectedFilters.Length.ToString(CultureInfo.CurrentCulture))
-        };
-    }
-
-    private static bool MatchesSearch(WorkspaceBatchReplacementCandidateViewModel candidate, string searchText) =>
-        string.IsNullOrWhiteSpace(searchText) ||
-        Contains(candidate.AssetName, searchText) ||
-        Contains(candidate.SubtitleText, searchText) ||
-        Contains(candidate.RelativePath, searchText) ||
-        Contains(candidate.Candidate.ContainerPath, searchText) ||
-        Contains(candidate.Candidate.FullPath, searchText) ||
-        candidate.ReplacementCandidates.Any(item => MatchesSearch(item, searchText));
-
-    private static bool MatchesSearch(WorkspaceBatchReplacementCandidateDto candidate, string searchText) =>
-        Contains(candidate.AssetName, searchText) ||
-        Contains(candidate.RelativePath, searchText) ||
-        Contains(candidate.ContainerPath, searchText) ||
-        Contains(candidate.FullPath, searchText) ||
-        Contains(candidate.SpineGroupDisplayName, searchText) ||
-        Contains(candidate.OutputRole, searchText);
-
-    private static bool Contains(string? value, string searchText) =>
-        !string.IsNullOrWhiteSpace(value) &&
-        value.Contains(searchText, StringComparison.CurrentCultureIgnoreCase);
-
-    private void SubscribeBundleSelectionChanged()
-    {
-        foreach (var bundle in Bundles)
-        {
-            bundle.SelectionChanged += OnBundleSelectionChanged;
-        }
-    }
-
-    private void UnsubscribeBundleSelectionChanged()
-    {
-        foreach (var bundle in Bundles)
-        {
-            bundle.SelectionChanged -= OnBundleSelectionChanged;
-        }
-    }
-
-    private void OnBundleSelectionChanged(object? sender, EventArgs e) => ApplyCandidateFilters();
-
-    private void SubscribeTypeFilterSelectionChanged()
-    {
-        foreach (var filter in TypeFilters)
-        {
-            filter.SelectionChanged += OnTypeFilterSelectionChanged;
-        }
-    }
-
-    private void UnsubscribeTypeFilterSelectionChanged()
-    {
-        foreach (var filter in TypeFilters)
-        {
-            filter.SelectionChanged -= OnTypeFilterSelectionChanged;
-        }
-    }
-
-    private void OnTypeFilterSelectionChanged(object? sender, EventArgs e)
-    {
-        UpdateTypeFilterButtonText();
-        ApplyCandidateFilters();
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);

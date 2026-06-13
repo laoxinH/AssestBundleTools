@@ -575,6 +575,7 @@ public static class ResourceKeys
     public const string WorkspaceBatchReplacementDialogTitle = "WorkspaceBatchReplacementDialog.Title";
     public const string WorkspaceBatchReplacementDialogHeaderHint = "WorkspaceBatchReplacementDialog.Header.Hint";
     public const string WorkspaceBatchReplacementDialogPrimaryButton = "WorkspaceBatchReplacementDialog.PrimaryButton";
+    public const string WorkspaceBatchReplacementDialogRetryPrimaryButton = "WorkspaceBatchReplacementDialog.RetryPrimaryButton";
     public const string WorkspaceBatchReplacementDialogCloseButton = "WorkspaceBatchReplacementDialog.CloseButton";
     public const string WorkspaceBatchReplacementDialogSourceSectionTitle = "WorkspaceBatchReplacementDialog.SourceSection.Title";
     public const string WorkspaceBatchReplacementDialogSourceSectionHelp = "WorkspaceBatchReplacementDialog.SourceSection.Help";
@@ -611,6 +612,7 @@ public static class ResourceKeys
     public const string WorkspaceBatchReplacementDialogStatusPreparing = "WorkspaceBatchReplacementDialog.Status.Preparing";
     public const string WorkspaceBatchReplacementDialogStatusItemFormat = "WorkspaceBatchReplacementDialog.Status.Item.Format";
     public const string WorkspaceBatchReplacementDialogCompletedMessageFormat = "WorkspaceBatchReplacementDialog.Completed.Message.Format";
+    public const string WorkspaceBatchReplacementDialogExecutionRunning = "WorkspaceBatchReplacementDialog.Execution.Running";
     public const string WorkspaceBatchReplacementDialogExecutionSummaryFormat = "WorkspaceBatchReplacementDialog.Execution.Summary.Format";
     public const string WorkspaceBatchReplacementDialogExecutionPartialFailure = "WorkspaceBatchReplacementDialog.Execution.PartialFailure";
     public const string WorkspaceBatchReplacementDialogStatusChanged = "WorkspaceBatchReplacementDialog.Status.Changed";
