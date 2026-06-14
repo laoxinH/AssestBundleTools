@@ -538,6 +538,94 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.Equal(1, execution.ProcessedSpineGroupCount, "Spine component replacements should be summarized as one processed Spine group.");
     }
 
+    public static async Task ExecuteWorkspaceBatchReplacementHandler_ShouldExecuteDuplicateOrdinaryCandidateOnce()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-a");
+        var textureAssetId = new AssetId("asset-texture");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, textureAssetId, AssetType.Texture2D, "HeroTexture"));
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("Texture2D/HeroTexture.png", 128);
+        var handler = new ExecuteWorkspaceBatchReplacementHandler(registry, new ReplaceAssetFromFileHandler(registry), sourceProbe);
+        var candidate = CreateBatchReplacementCandidate(
+            bundleId,
+            textureAssetId,
+            AssetType.Texture2D,
+            "HeroTexture",
+            "Texture2D/HeroTexture.png");
+
+        var result = await handler.HandleAsync(new ExecuteWorkspaceBatchReplacementCommand(
+            workspaceId,
+            WorkspaceKey: "workspace-key",
+            WorkspaceDataRootPath: "C:\\WorkspaceData",
+            SourceRootDirectory: "C:\\Exports",
+            WorkspaceBatchReplacementMatchingMode.Manifest,
+            Candidates: [candidate, candidate]));
+
+        TestAssert.True(result.IsSuccess, "Duplicate ordinary candidates should be normalized before execution.");
+        var execution = result.Value ?? throw new InvalidOperationException("Expected batch replacement result.");
+        TestAssert.Equal(1, execution.RequestedCandidateCount, "Duplicate candidates should be counted once in the execution result.");
+        TestAssert.Equal(1, execution.ReplacedAssetCount, "Only one ordinary replacement should be applied.");
+        TestAssert.Equal(1, registry.TryReplaceAssetFromFileCallCount, "Duplicate ordinary candidates should not create duplicate replacement records.");
+        TestAssert.Equal("C:\\Exports\\Texture2D\\HeroTexture.png", registry.FileReplacementSourceFilePaths[0], "The normalized candidate should still execute with its source path.");
+    }
+
+    public static async Task ExecuteWorkspaceBatchReplacementHandler_ShouldRecordOnlyCurrentSpinePartRelation()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var workspaceKey = "workspace-key";
+        var workspaceDataRootPath = "C:\\WorkspaceData";
+        var bundleId = new BundleId("bundle-a");
+        var textureAssetId = new AssetId("asset-texture");
+        var atlasAssetId = new AssetId("asset-atlas");
+        var skeletonAssetId = new AssetId("asset-skeleton");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, textureAssetId, AssetType.Texture2D, "HeroPage"));
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, atlasAssetId, AssetType.TextAsset, "HeroAtlas"));
+        registry.RegisterAssetDetails(CreateAssetDetails(workspaceId, bundleId, skeletonAssetId, AssetType.TextAsset, "HeroSkeleton"));
+        var changeStore = new TestWorkspaceChangeStore();
+        var recorder = new WorkspaceReplacementOperationRecorder(
+            new TestWorkspaceDataStoreFactory(changeStore),
+            new WorkspaceOperationLogService());
+        var sourceProbe = new TestWorkspaceBatchReplacementSourceFileProbe();
+        sourceProbe.RegisterFile("Spine/Hero/Hero.png", 128);
+        sourceProbe.RegisterFile("Spine/Hero/Hero.atlas", 128);
+        sourceProbe.RegisterFile("Spine/Hero/Hero.skel", 128);
+        var handler = new ExecuteWorkspaceBatchReplacementHandler(
+            registry,
+            new ReplaceAssetFromFileHandler(registry, recorder),
+            sourceProbe);
+
+        var result = await handler.HandleAsync(new ExecuteWorkspaceBatchReplacementCommand(
+            workspaceId,
+            workspaceKey,
+            workspaceDataRootPath,
+            SourceRootDirectory: "C:\\Exports",
+            WorkspaceBatchReplacementMatchingMode.Manifest,
+            Candidates:
+            [
+                CreateBatchReplacementCandidate(bundleId, textureAssetId, AssetType.Texture2D, "HeroPage", "Spine/Hero/Hero.png", spineGroupId: "hero-spine", spineGroupDisplayName: "Hero"),
+                CreateBatchReplacementCandidate(bundleId, atlasAssetId, AssetType.TextAsset, "HeroAtlas", "Spine/Hero/Hero.atlas", spineGroupId: "hero-spine", spineGroupDisplayName: "Hero"),
+                CreateBatchReplacementCandidate(bundleId, skeletonAssetId, AssetType.TextAsset, "HeroSkeleton", "Spine/Hero/Hero.skel", spineGroupId: "hero-spine", spineGroupDisplayName: "Hero")
+            ]));
+
+        TestAssert.True(result.IsSuccess, "Spine batch replacement should still execute all group parts.");
+        var operations = changeStore.SavedChangeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>();
+        TestAssert.Equal(3, operations.Count, "Each Spine part should produce one replacement operation.");
+        foreach (var operation in operations)
+        {
+            var relatedTargets = (operation.Relations ?? Array.Empty<WorkspaceOperationRelationDto>())
+                .Where(static relation => relation.RelatedTarget is not null)
+                .Select(static relation => relation.RelatedTarget!)
+                .ToArray();
+
+            TestAssert.Equal(1, relatedTargets.Length, "Spine operation relation should point only to the part being replaced.");
+            TestAssert.Equal(operation.Target?.BundleId, relatedTargets[0].BundleId, "Related target should keep the current operation bundle.");
+            TestAssert.Equal(operation.Target?.AssetId, relatedTargets[0].AssetId, "Related target should keep the current operation asset.");
+        }
+    }
+
     public static async Task ExecuteWorkspaceBatchReplacementHandler_ShouldApplySpriteImageToAssociatedTexture()
     {
         var workspaceId = CreateWorkspaceId();
@@ -1612,6 +1700,44 @@ internal static class ReplacementWorkflowHandlerTests
             FileReplacementSourcePath: string.IsNullOrWhiteSpace(fileReplacementSourceFileName) ? null : $"C:\\Imports\\{fileReplacementSourceFileName}",
             FileReplacementAppliedAtUtc: string.IsNullOrWhiteSpace(fileReplacementSourceFileName) ? null : appliedAtUtc,
             LastChangedAtUtc: appliedAtUtc);
+    }
+
+    private sealed class TestWorkspaceDataStoreFactory : IWorkspaceDataStoreFactory
+    {
+        private readonly TestWorkspaceChangeStore _changeStore;
+
+        public TestWorkspaceDataStoreFactory(TestWorkspaceChangeStore changeStore)
+        {
+            _changeStore = changeStore;
+        }
+
+        public IBundleArtifactStore CreateBundleArtifactStore(string? rootDirectoryPath = null) =>
+            throw new NotSupportedException();
+
+        public IBundleIndexCacheStore CreateBundleIndexCacheStore(string? rootDirectoryPath = null) =>
+            throw new NotSupportedException();
+
+        public IPreviewCacheStore CreatePreviewCacheStore(string? rootDirectoryPath = null) =>
+            throw new NotSupportedException();
+
+        public IWorkspaceChangeStore CreateWorkspaceChangeStore(string? rootDirectoryPath = null) => _changeStore;
+
+        public string GetDefaultRootDirectoryPath() => "C:\\WorkspaceData";
+    }
+
+    private sealed class TestWorkspaceChangeStore : IWorkspaceChangeStore
+    {
+        public WorkspaceChangeSetDto? SavedChangeSet { get; private set; }
+
+        public WorkspaceChangeSetDto? Load(string workspaceKey) => SavedChangeSet;
+
+        public void Save(WorkspaceChangeSetDto changeSet)
+        {
+            SavedChangeSet = changeSet;
+        }
+
+        public void Delete(string workspaceKey) =>
+            throw new NotSupportedException();
     }
 
     private sealed class TestWorkspaceSessionRegistry : IWorkspaceSessionRegistry, IWorkspaceReplacementRedoSessionRegistry

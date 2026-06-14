@@ -53,7 +53,7 @@ public sealed class ExecuteWorkspaceBatchReplacementHandler : ICommandHandler<Ex
             return Result<WorkspaceBatchReplacementResultDto>.Failure(ApplicationErrors.WorkspaceNotFound(command.WorkspaceId));
         }
 
-        var candidates = (command.Candidates ?? Array.Empty<WorkspaceBatchReplacementCandidateDto>())
+        var candidates = NormalizeExecutableCandidates(command.Candidates)
             .Where(IsUserExecutableCandidate)
             .OrderBy(static candidate => string.IsNullOrWhiteSpace(candidate.SpineGroupId) ? 0 : 1)
             .ThenBy(static candidate => candidate.SpineGroupDisplayName ?? string.Empty, StringComparer.OrdinalIgnoreCase)
@@ -201,8 +201,7 @@ public sealed class ExecuteWorkspaceBatchReplacementHandler : ICommandHandler<Ex
         if (!string.IsNullOrWhiteSpace(candidate.SpineGroupId))
         {
             var relationId = $"{SpineRelationPrefix}:{candidate.SpineGroupId.Trim()}";
-            foreach (var groupCandidate in allCandidates
-                         .Where(other => string.Equals(other.SpineGroupId, candidate.SpineGroupId, StringComparison.Ordinal))
+            foreach (var groupCandidate in new[] { candidate }
                          .Where(static other => other.BundleId is not null && other.AssetId is not null))
             {
                 relations.Add(new WorkspaceOperationRelationDto(
@@ -221,6 +220,33 @@ public sealed class ExecuteWorkspaceBatchReplacementHandler : ICommandHandler<Ex
 
         return new ReplacementOperationContextDto(batchId, relations);
     }
+
+    private static IReadOnlyList<WorkspaceBatchReplacementCandidateDto> NormalizeExecutableCandidates(
+        IReadOnlyList<WorkspaceBatchReplacementCandidateDto>? candidates)
+    {
+        if (candidates is null || candidates.Count == 0)
+        {
+            return Array.Empty<WorkspaceBatchReplacementCandidateDto>();
+        }
+
+        return candidates
+            .Where(static candidate => candidate is not null)
+            .GroupBy(CreateCandidateExecutionKey, StringComparer.Ordinal)
+            .Select(static group => group.First())
+            .ToArray();
+    }
+
+    private static string CreateCandidateExecutionKey(WorkspaceBatchReplacementCandidateDto candidate) =>
+        string.Concat(
+            candidate.BundleId?.Value ?? string.Empty,
+            "\n",
+            candidate.AssetId?.Value ?? string.Empty,
+            "\n",
+            candidate.AssetType,
+            "\n",
+            candidate.RelativePath?.Trim() ?? string.Empty,
+            "\n",
+            candidate.SpineGroupId?.Trim() ?? string.Empty);
 
     private static bool IsUserExecutableCandidate(WorkspaceBatchReplacementCandidateDto candidate) =>
         candidate.MatchStatus is
