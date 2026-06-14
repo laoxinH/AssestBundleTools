@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.State;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
@@ -35,12 +36,17 @@ public sealed partial class AssetPaneViewModel
             return false;
         }
 
+        var wasVisible = _assetList.ContainsVisibleAsset(details.AssetId);
         assetEntry.ApplyOperationState(
             details.IsModified,
             details.LastExtractedAtUtc,
             stateText);
 
-        if (ShowModifiedOnly || ShowPreviewableOnly)
+        var isVisible = AssetPaneAssetListState.ShouldBeVisible(
+            assetEntry,
+            ShowModifiedOnly,
+            ShowPreviewableOnly);
+        if (wasVisible != isVisible)
         {
             ApplyLocalFilters(details.AssetId);
         }

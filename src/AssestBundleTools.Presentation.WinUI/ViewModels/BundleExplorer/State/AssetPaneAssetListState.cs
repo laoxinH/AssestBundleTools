@@ -169,6 +169,21 @@ internal sealed class AssetPaneAssetListState
         return assetEntry is not null;
     }
 
+    public bool ContainsVisibleAsset(AssetId assetId) =>
+        !string.IsNullOrWhiteSpace(assetId.Value) &&
+        Items.Any(item => item.Item.AssetId.Equals(assetId));
+
+    public static bool ShouldBeVisible(
+        AssetListEntryViewModel assetEntry,
+        bool showModifiedOnly,
+        bool showPreviewableOnly)
+    {
+        ArgumentNullException.ThrowIfNull(assetEntry);
+
+        return (!showModifiedOnly || assetEntry.Item.IsModified) &&
+               (!showPreviewableOnly || assetEntry.Item.HasPreview);
+    }
+
     public void ClearSelection()
     {
         SelectedAssets.Clear();

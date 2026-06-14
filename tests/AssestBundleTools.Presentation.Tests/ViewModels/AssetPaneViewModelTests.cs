@@ -323,6 +323,31 @@ public sealed class AssetPaneViewModelTests
     }
 
     [Fact]
+    public void ApplyAssetOperationState_ShouldNotRebuildFilteredList_WhenVisibilityIsUnchanged()
+    {
+        var viewModel = new AssetPaneViewModel
+        {
+            ShowModifiedOnly = true
+        };
+        var assetEntry = CreateAssetEntry("asset-1", isModified: true);
+        viewModel.ReplaceItems("ui.ab", [assetEntry], "empty");
+        viewModel.SelectedAsset = assetEntry;
+        var collectionChanged = false;
+        viewModel.Items.CollectionChanged += (_, _) => collectionChanged = true;
+        var extractedAtUtc = new DateTimeOffset(2026, 5, 21, 9, 0, 0, TimeSpan.Zero);
+
+        var updated = viewModel.ApplyAssetOperationState(
+            CreateAssetDetails(assetEntry.Item.BundleId, assetEntry.Item.AssetId, isModified: true, extractedAtUtc),
+            "Modified");
+
+        Assert.True(updated);
+        Assert.False(collectionChanged);
+        Assert.Same(assetEntry, Assert.Single(viewModel.Items));
+        Assert.Same(assetEntry, viewModel.SelectedAsset);
+        Assert.Equal(extractedAtUtc, assetEntry.Item.LastExtractedAtUtc);
+    }
+
+    [Fact]
     public void UpdateSpineGroupSelection_ShouldPreserveMultiSelection()
     {
         var viewModel = new AssetPaneViewModel
@@ -393,7 +418,7 @@ public sealed class AssetPaneViewModelTests
         Assert.Null(viewModel.SelectedSpineGroup);
     }
 
-    private static AssetListEntryViewModel CreateAssetEntry(string assetId)
+    private static AssetListEntryViewModel CreateAssetEntry(string assetId, bool isModified = false)
     {
         return new AssetListEntryViewModel(
             new AssetListItemDto(
@@ -405,10 +430,10 @@ public sealed class AssetPaneViewModelTests
                 SizeInBytes: 128,
                 PreferredDisplaySizeInBytes: null,
                 HasPreview: true,
-                IsModified: false),
+                IsModified: isModified),
             "Texture2D",
             "128 B",
-            "Original");
+            isModified ? "Modified" : "Original");
     }
 
     private static AssetDetailsDto CreateAssetDetails(
