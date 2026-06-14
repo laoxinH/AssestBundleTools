@@ -82,6 +82,7 @@ public sealed class ExtractWorkspaceAssetsHandler : ICommandHandler<ExtractWorks
             command.WorkspaceDataRootPath,
             plan.BundleScopes.Select(static scope => (scope.BundleId, scope.BundleDisplayName)),
             plan.SelectedCategories,
+            command.SelectedSpineGroupIds,
             cancellationToken);
         plan = plan with { SpineGroups = spineGroups };
         WorkspaceBatchExtractionDebugLog.Write(
@@ -125,7 +126,7 @@ public sealed class ExtractWorkspaceAssetsHandler : ICommandHandler<ExtractWorks
             .SelectMany(static outcome => outcome!.Errors!)
             .ToArray();
 
-        if (extractedResults.Length == 0)
+        if (extractedResults.Length == 0 && spineGroupResults.Length == 0)
         {
             return failures.Length == 0
                 ? Result<WorkspaceBatchExtractionResultDto>.Failure(

@@ -61,6 +61,7 @@ public sealed class GetWorkspaceBatchExtractionPreviewHandler : IQueryHandler<Ge
                 query.WorkspaceDataRootPath,
                 plan.BundleScopes.Select(static scope => (scope.BundleId, scope.BundleDisplayName)),
                 new[] { WorkspaceBatchExtractionCategoryDto.SpineGroup },
+                selectedSpineGroupIds: null,
                 cancellationToken);
         }
         catch (OperationCanceledException)

@@ -100,6 +100,10 @@ internal static partial class ApplicationTestSuite
             ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldExtractSpineGroups_WhenAllCategoryIsSelected);
         await RunTestAsync(
             failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldLimitExportManifest_ToSelectedSpineGroups),
+            ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldLimitExportManifest_ToSelectedSpineGroups);
+        await RunTestAsync(
+            failures,
             nameof(ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldPassWorkspaceDataRootPath_ToSpinePlanner),
             ExtractionWorkflowHandlerTests.ExtractWorkspaceAssetsHandler_ShouldPassWorkspaceDataRootPath_ToSpinePlanner);
         await RunTestAsync(

@@ -111,6 +111,63 @@ internal static partial class ExtractionWorkflowHandlerTests
             "Spine group output should be nested under the bundle Spine directory and group directory.");
     }
 
+    public static async Task ExtractWorkspaceAssetsHandler_ShouldLimitExportManifest_ToSelectedSpineGroups()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var selectedBundleId = new BundleId("bundle.char_1001_amiya2");
+        var skippedBundleId = new BundleId("bundle.char_1001_amiya3");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        var selectedParts = RegisterSpineGroupAssets(workspaceId, selectedBundleId, registry);
+        RegisterSpineGroupAssets(workspaceId, skippedBundleId, registry);
+        var previewHandler = new TestAssetPreviewHandler();
+        RegisterSpineGroupPreviews(workspaceId, selectedBundleId, selectedParts, previewHandler);
+        var fileStore = new TestAssetExtractionFileStore();
+        var changeStore = new TestWorkspaceChangeStore();
+        var manifestStore = new TestWorkspaceExportManifestStore();
+        var singleHandler = CreateHandler(registry, previewHandler, fileStore, changeStore);
+        var recorder = new WorkspaceExtractionOperationRecorder(
+            new TestWorkspaceDataStoreFactory(changeStore),
+            new WorkspaceOperationLogService());
+        var batchHandler = new ExtractWorkspaceAssetsHandler(
+            registry,
+            singleHandler,
+            recorder,
+            new LoadSpineAssetGroupsHandler(registry),
+            new ExtractSpineAssetGroupHandler(
+                registry,
+                new LoadSpineAssetGroupDetailsHandler(registry, previewHandler),
+                singleHandler,
+                recorder,
+                new LoadSpineAssetGroupsHandler(registry)),
+            exportManifestStore: manifestStore);
+        const string selectedGroupId = "spine-group:bundle.char_1001_amiya2:assets/characters/char_1001_amiya2";
+
+        var result = await batchHandler.HandleAsync(new ExtractWorkspaceAssetsCommand(
+            workspaceId,
+            OutputDirectory: @"D:\Out",
+            WorkspaceKey: WorkspaceKey,
+            WorkspaceDataRootPath: WorkspaceDataRootPath,
+            SelectedBundleIds: new[] { selectedBundleId, skippedBundleId },
+            SelectedCategories: new[] { WorkspaceBatchExtractionCategoryDto.SpineGroup },
+            SelectedSpineGroupIds: new[] { selectedGroupId }));
+
+        TestAssert.True(result.IsSuccess, "Selected Spine group batch extraction should succeed.");
+        TestAssert.Equal(1, result.Value?.ExtractedSpineGroupCount ?? 0, "Only the selected Spine group should be extracted.");
+        TestAssert.Equal(4, fileStore.Requests.Count, "Only the selected Spine group parts should write output files.");
+        TestAssert.True(
+            fileStore.Requests.All(static request => request.SuggestedOutputPath.Contains("bundle.char_1001_amiya2.ab", StringComparison.OrdinalIgnoreCase)),
+            "Output files should belong to the selected Spine group bundle.");
+
+        var manifestItems = manifestStore.LastRequest?.Items ?? Array.Empty<WorkspaceExportManifestSourceItemDto>();
+        TestAssert.Equal(4, manifestItems.Count, "Manifest should include the selected Spine group parts.");
+        TestAssert.True(
+            manifestItems.All(static item => item.SpineGroupId == selectedGroupId),
+            "Manifest should only include the selected Spine group id.");
+        TestAssert.True(
+            manifestItems.All(static item => item.OutputRole != WorkspaceExportManifestOutputRole.Asset),
+            "Spine group manifest entries should keep their group output roles.");
+    }
+
     public static async Task ExtractWorkspaceAssetsHandler_ShouldPassWorkspaceDataRootPath_ToSpinePlanner()
     {
         var workspaceId = new WorkspaceId("workspace-session-1");

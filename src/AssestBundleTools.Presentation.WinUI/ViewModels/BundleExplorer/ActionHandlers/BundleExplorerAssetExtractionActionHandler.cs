@@ -415,6 +415,67 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
         _isBatchExtractionRunning = true;
         try
         {
+            if (_workspaceBatchOperationsGateway is not null)
+            {
+                var workspaceBatchResult = await _workspaceBatchOperationsGateway.ExtractWorkspaceAssetsAsync(
+                    new ExtractWorkspaceAssetsCommand(
+                        workspaceSummary.WorkspaceId,
+                        OutputDirectory: selectedOutputDirectory,
+                        WorkspaceKey: workspaceSummary.WorkspaceKey,
+                        WorkspaceDataRootPath: workspaceSummary.WorkspaceDataRootPath,
+                        SelectedBundleIds: selectedEntries
+                            .Select(static entry => entry.Item.BundleId)
+                            .Distinct()
+                            .ToArray(),
+                        SelectedCategories: new[] { WorkspaceBatchExtractionCategoryDto.SpineGroup },
+                        SelectedSpineGroupIds: selectedEntries
+                            .Select(static entry => entry.Item.GroupId)
+                            .ToArray()),
+                    CancellationToken.None);
+
+                if (workspaceBatchResult.IsCancelled)
+                {
+                    return;
+                }
+
+                if (!TryGetValue(workspaceBatchResult, out var batchResult, appendResultFailure))
+                {
+                    return;
+                }
+
+                var batchExtractedAssetCount = batchResult.ExtractedSpineGroupCount > 0
+                    ? batchResult.SpineGroupResults?.Sum(static result => result.ExtractedAssetCount) ?? 0
+                    : 0;
+                var batchFailedAssetCount = batchResult.ExtractedSpineGroupCount > 0
+                    ? batchResult.SpineGroupResults?.Sum(static result => result.FailedAssetCount) ?? 0
+                    : 0;
+                var batchFailedGroupCount = selectedEntries.Count - batchResult.ExtractedSpineGroupCount;
+                var batchTotalFailureCount = batchFailedAssetCount + batchFailedGroupCount;
+
+                _appLogService.AppendInfo(_localizationService.GetFormattedString(
+                    ResourceKeys.BundleExplorerLogBatchSpineGroupsExtracted,
+                    batchResult.ExtractedSpineGroupCount,
+                    selectedEntries.Count,
+                    batchExtractedAssetCount,
+                    batchTotalFailureCount,
+                    batchResult.SuggestedOutputDirectory));
+
+                ShowOperationNotification(
+                    GetString(batchTotalFailureCount == 0
+                        ? ResourceKeys.AppNotificationSuccessTitle
+                        : ResourceKeys.AppNotificationWarningTitle),
+                    _localizationService.GetFormattedString(
+                        ResourceKeys.BundleExplorerNotificationBatchSpineGroupsExtracted,
+                        batchResult.ExtractedSpineGroupCount,
+                        selectedEntries.Count,
+                        batchExtractedAssetCount,
+                        batchTotalFailureCount),
+                    batchTotalFailureCount == 0
+                        ? AppNotificationSeverity.Success
+                        : AppNotificationSeverity.Warning);
+                return;
+            }
+
             var executionResult = await _batchExtractionExecutor.ExtractSpineGroupsAsync(
                 workspaceSummary,
                 selectedEntries,

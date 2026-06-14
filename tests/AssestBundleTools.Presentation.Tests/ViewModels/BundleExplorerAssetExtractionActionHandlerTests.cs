@@ -235,6 +235,40 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
     }
 
     [Fact]
+    public async Task ExtractSelectedSpineAssetGroupsAsync_ShouldUseWorkspaceBatchExtraction_WhenBatchGatewayIsAvailable()
+    {
+        var gateway = new RecordingWorkspaceAssetOperationGateway();
+        var batchGateway = new RecordingWorkspaceBatchOperationsGateway();
+        var filePicker = new RecordingFilePickerService
+        {
+            BatchExtractionOutputDirectory = @"D:\Exports\Selected"
+        };
+        var handler = new BundleExplorerAssetExtractionActionHandler(
+            gateway,
+            new TestAppLogService(),
+            new TestAppNotificationService(),
+            new TestLocalizationService(),
+            filePicker,
+            workspaceBatchOperationsGateway: batchGateway);
+        var firstEntry = CreateSpineGroupEntry("group-1", "char_1001_amiya2.ab");
+        var secondEntry = CreateSpineGroupEntry("group-2", "char_1001_amiya2.ab");
+
+        await handler.ExtractSelectedSpineAssetGroupsAsync(
+            CreateWorkspaceSummary(),
+            [firstEntry, secondEntry],
+            defaultBundleDisplayName: "fallback.ab",
+            _ => { },
+            _ => throw new InvalidOperationException("Spine group batch extraction should not fail in this test."));
+
+        Assert.Empty(gateway.ExtractSpineAssetGroupCommands);
+        var command = Assert.Single(batchGateway.ExtractWorkspaceAssetsCommands);
+        Assert.Equal(filePicker.BatchExtractionOutputDirectory, command.OutputDirectory);
+        Assert.Equal([new BundleId("bundle-ui")], command.SelectedBundleIds);
+        Assert.Equal([WorkspaceBatchExtractionCategoryDto.SpineGroup], command.SelectedCategories);
+        Assert.Equal(["group-1", "group-2"], command.SelectedSpineGroupIds);
+    }
+
+    [Fact]
     public async Task ExtractSelectedAssetsAsync_ShouldRouteSpineGroupMultiSelection_ToBatchSpineExtraction()
     {
         var gateway = new RecordingWorkspaceAssetOperationGateway();
@@ -913,6 +947,19 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
                     DateTimeOffset.UtcNow,
                     OutputPath: Path.Combine(command.OutputDirectory ?? string.Empty, "char_1001_amiya2.ab", "Texture2D", $"{assetId.Value}.png")))
                 .ToArray();
+            var spineGroupResults = (command.SelectedSpineGroupIds ?? Array.Empty<string>())
+                .Select(groupId => new SpineAssetGroupExtractionResultDto(
+                    command.WorkspaceId,
+                    new BundleId("bundle-ui"),
+                    groupId,
+                    groupId,
+                    Path.Combine(command.OutputDirectory ?? string.Empty, "char_1001_amiya2.ab", "Spine"),
+                    ExtractedAssetCount: 3,
+                    FailedAssetCount: 0,
+                    DateTimeOffset.UtcNow,
+                    AssetResults: Array.Empty<AssetExtractionResultDto>(),
+                    PlannedParts: Array.Empty<SpineAssetGroupPartDto>()))
+                .ToArray();
             return Task.FromResult(Result<WorkspaceBatchExtractionResultDto>.Success(
                 new WorkspaceBatchExtractionResultDto(
                     command.WorkspaceId,
@@ -921,9 +968,11 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
                     assetResults.Length,
                     ExtractedBundleCount: 1,
                     CompletedAtUtc: DateTimeOffset.UtcNow,
+                    ExtractedSpineGroupCount: spineGroupResults.Length,
                     AssetResults: assetResults,
+                    SpineGroupResults: spineGroupResults,
                     ExportManifestPath: Path.Combine(command.OutputDirectory ?? string.Empty, "_abt-export-manifest.json"),
-                    ExportManifestItemCount: assetResults.Length)));
+                    ExportManifestItemCount: assetResults.Length + spineGroupResults.Length)));
         }
 
         public Task<Result<WorkspaceBatchReplacementPlanDto>> GetWorkspaceBatchReplacementPlanAsync(
