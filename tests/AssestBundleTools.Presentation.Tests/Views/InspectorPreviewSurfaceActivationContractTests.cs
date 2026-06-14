@@ -116,7 +116,7 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
         Assert.Contains("InspectorPreviewStateBadgeBorderStyle", xaml);
         Assert.Contains("ViewModel.Preview.PreviewStateBadgeVisibility", xaml);
         Assert.Contains("ViewModel.Preview.PreviewStateBadgeText", xaml);
-        Assert.Contains("Value=\"{ThemeResource SubtleFillColorSecondaryBrush}\"", xaml);
+        Assert.Contains("Value=\"{ThemeResource AccentFillColorDefaultBrush}\"", xaml);
         Assert.Contains("Property=\"BorderThickness\" Value=\"0\"", xaml);
         Assert.Contains("Canvas.ZIndex=\"10\"", xaml);
         Assert.Contains("Grid.RowSpan=\"2\"", xaml);
