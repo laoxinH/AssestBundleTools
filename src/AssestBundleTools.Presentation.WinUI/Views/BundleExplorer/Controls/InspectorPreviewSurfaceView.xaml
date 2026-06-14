@@ -227,6 +227,31 @@
             <Setter Property="TextWrapping" Value="WrapWholeWords" />
         </Style>
 
+        <Style
+            x:Key="InspectorPreviewStateBadgeBorderStyle"
+            TargetType="Border">
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter
+                Property="Background"
+                Value="{ThemeResource SystemFillColorCautionBackgroundBrush}" />
+            <Setter
+                Property="BorderBrush"
+                Value="{ThemeResource SystemFillColorCautionBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="999" />
+        </Style>
+
+        <Style
+            x:Key="InspectorPreviewStateBadgeTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter
+                Property="Foreground"
+                Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        </Style>
+
     </UserControl.Resources>
 
     <Border
@@ -249,6 +274,14 @@
                 <StackPanel
                     Orientation="Horizontal"
                     Spacing="6">
+                    <Border
+                        Style="{StaticResource InspectorPreviewStateBadgeBorderStyle}"
+                        Visibility="{x:Bind ViewModel.Preview.PreviewStateBadgeVisibility, Mode=OneWay}">
+                        <TextBlock
+                            Style="{StaticResource InspectorPreviewStateBadgeTextStyle}"
+                            Text="{x:Bind ViewModel.Preview.PreviewStateBadgeText, Mode=OneWay}" />
+                    </Border>
+
                     <Button
                         x:Name="ImageZoomOutButton"
                         Click="OnImageZoomOutButtonClick"

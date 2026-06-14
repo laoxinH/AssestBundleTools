@@ -82,6 +82,9 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
             return;
         }
 
+        assetTab.Inspector.Preview.ApplyCurrentAssetModifiedState(
+            details.IsModified,
+            GetString(ResourceKeys.AssetStateModified));
         assetTab.Inspector.SetPreviewLoading(GetString(ResourceKeys.InspectorPreviewLoadingText));
         try
         {

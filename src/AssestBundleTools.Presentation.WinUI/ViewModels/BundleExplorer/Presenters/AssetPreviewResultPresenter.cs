@@ -66,6 +66,10 @@ internal sealed class AssetPreviewResultPresenter
         ArgumentNullException.ThrowIfNull(preview);
         ArgumentNullException.ThrowIfNull(isPreviewRequestCurrentAndRelevant);
 
+        assetTab.Inspector.Preview.ApplyCurrentAssetModifiedState(
+            details.IsModified,
+            GetString(ResourceKeys.AssetStateModified));
+
         var previewInfoRows = _assetPreviewDisplayFormatter.BuildPreviewInfoRows(preview.PreviewInfoItems);
         if (preview.PreferredDisplaySizeInBytes is { } preferredDisplaySizeInBytes && preferredDisplaySizeInBytes > 0)
         {

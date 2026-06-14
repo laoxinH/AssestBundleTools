@@ -17,9 +17,11 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
     private string _previewCacheStatusText = string.Empty;
     private string _previewFallbackReasonText = string.Empty;
     private string _previewDiagnosticDetailText = string.Empty;
+    private string _previewStateBadgeText = string.Empty;
     private AssetPreviewKind _previewKind;
     private bool _isPreviewLoading;
     private bool _hasSelection;
+    private bool _isCurrentAssetModified;
     private IReadOnlyList<InspectorInfoRowViewModel> _previewInfoRows = Array.Empty<InspectorInfoRowViewModel>();
     private IReadOnlyList<InspectorInfoCardViewModel> _additionalInformationCards = Array.Empty<InspectorInfoCardViewModel>();
 
@@ -94,6 +96,18 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
 
     internal string PreviewDiagnosticDetailText => _previewDiagnosticDetailText;
 
+    public string PreviewStateBadgeText
+    {
+        get => _previewStateBadgeText;
+        private set
+        {
+            if (SetProperty(ref _previewStateBadgeText, value))
+            {
+                OnPropertyChanged(nameof(PreviewStateBadgeVisibility));
+            }
+        }
+    }
+
     internal void UpdateHasSelection(bool hasSelection)
     {
         if (_hasSelection == hasSelection)
@@ -102,6 +116,21 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         }
 
         _hasSelection = hasSelection;
+        if (!hasSelection)
+        {
+            _isCurrentAssetModified = false;
+            PreviewStateBadgeText = string.Empty;
+        }
+
+        NotifyPreviewStateChanged();
+    }
+
+    internal void ApplyCurrentAssetModifiedState(bool isModified, string modifiedBadgeText)
+    {
+        _isCurrentAssetModified = isModified;
+        PreviewStateBadgeText = isModified
+            ? NormalizePreviewInfoText(modifiedBadgeText)
+            : string.Empty;
         NotifyPreviewStateChanged();
     }
 
@@ -378,6 +407,7 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         OnPropertyChanged(nameof(PreviewSurfaceHeight));
         OnPropertyChanged(nameof(PreviewSurfaceMinHeight));
         OnPropertyChanged(nameof(UsesFixedPreviewSurfaceHeight));
+        OnPropertyChanged(nameof(PreviewStateBadgeVisibility));
         NotifyAudioPreviewPresentationChanged();
     }
 

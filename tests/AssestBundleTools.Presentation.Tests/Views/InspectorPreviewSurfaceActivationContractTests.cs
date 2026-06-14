@@ -101,6 +101,24 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
     }
 
     [Fact]
+    public void InspectorPreviewSurface_ShouldExposeGenericModifiedBadge()
+    {
+        var xaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorPreviewSurfaceView.xaml"));
+
+        Assert.Contains("InspectorPreviewStateBadgeBorderStyle", xaml);
+        Assert.Contains("ViewModel.Preview.PreviewStateBadgeVisibility", xaml);
+        Assert.Contains("ViewModel.Preview.PreviewStateBadgeText", xaml);
+    }
+
+    [Fact]
     public void SpinePreviewSurface_ShouldBindSliderToThrottledDisplayPlaybackTime()
     {
         var xaml = File.ReadAllText(

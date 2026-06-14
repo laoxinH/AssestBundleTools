@@ -117,4 +117,11 @@ public sealed partial class InspectorPreviewViewModel
         CanOpenPreviewLocation
             ? Visibility.Visible
             : Visibility.Collapsed;
+
+    public Visibility PreviewStateBadgeVisibility =>
+        _hasSelection &&
+        _isCurrentAssetModified &&
+        !string.IsNullOrWhiteSpace(PreviewStateBadgeText)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
 }

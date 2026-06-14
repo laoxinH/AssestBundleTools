@@ -93,9 +93,20 @@ internal static class FileSystemReplacementPreviewSourceProviderTests
         var audioBytes = new byte[]
         {
             0x52, 0x49, 0x46, 0x46,
-            0x24, 0x00, 0x00, 0x00,
+            0x2C, 0x00, 0x00, 0x00,
             0x57, 0x41, 0x56, 0x45,
-            0x66, 0x6D, 0x74, 0x20
+            0x66, 0x6D, 0x74, 0x20,
+            0x10, 0x00, 0x00, 0x00,
+            0x01, 0x00,
+            0x02, 0x00,
+            0x44, 0xAC, 0x00, 0x00,
+            0x10, 0xB1, 0x02, 0x00,
+            0x04, 0x00,
+            0x10, 0x00,
+            0x64, 0x61, 0x74, 0x61,
+            0x08, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
         };
         await File.WriteAllBytesAsync(audioPath, audioBytes);
 
@@ -113,6 +124,25 @@ internal static class FileSystemReplacementPreviewSourceProviderTests
             preview.Content.SequenceEqual(audioBytes),
             "AudioClip replacement preview should pass through the source audio payload.");
         TestAssert.Equal(audioBytes.Length, preview.PreferredDisplaySizeInBytes ?? 0, "Audio preview size should match the source file length.");
+        var previewInfoItems = preview.PreviewInfoItems ?? Array.Empty<AssetPreviewInfoItemDto>();
+        TestAssert.True(
+            previewInfoItems.Any(item => item.Key == AssetPreviewInfoKey.AudioContainer && item.TextValue == "WAV"),
+            "Audio replacement preview should expose a container badge source.");
+        TestAssert.True(
+            previewInfoItems.Any(item => item.Key == AssetPreviewInfoKey.AudioPayloadSize && item.ValueKind == AssetPreviewInfoValueKind.ByteSize),
+            "Audio replacement preview should expose payload size as a byte size.");
+        TestAssert.True(
+            previewInfoItems.Any(item => item.Key == AssetPreviewInfoKey.AudioChannels && item.Int64Value == 2),
+            "Audio replacement preview should expose channel metadata when a WAV header is available.");
+        TestAssert.True(
+            previewInfoItems.Any(item => item.Key == AssetPreviewInfoKey.AudioFrequency && item.Int64Value == 44100),
+            "Audio replacement preview should expose frequency metadata when a WAV header is available.");
+        TestAssert.True(
+            previewInfoItems.Any(item => item.Key == AssetPreviewInfoKey.AudioBitsPerSample && item.Int64Value == 16),
+            "Audio replacement preview should expose bit depth metadata when a WAV header is available.");
+        TestAssert.True(
+            previewInfoItems.Any(item => item.Key == AssetPreviewInfoKey.AudioDuration && item.NumberValue is > 0),
+            "Audio replacement preview should expose duration metadata when a WAV header is available.");
     }
 
     private static AssetDetailsDto CreateAssetDetails(
