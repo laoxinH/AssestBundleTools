@@ -120,8 +120,8 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
         Assert.Contains("Property=\"BorderThickness\" Value=\"0\"", xaml);
         Assert.Contains("Canvas.ZIndex=\"10\"", xaml);
         Assert.Contains("Grid.RowSpan=\"2\"", xaml);
-        Assert.Contains("Margin=\"-8,-8,0,0\"", xaml);
-        Assert.Contains("Property=\"FontSize\" Value=\"10\"", xaml);
+        Assert.Contains("Margin=\"-12,-12,0,0\"", xaml);
+        Assert.Contains("Property=\"FontSize\" Value=\"9\"", xaml);
         Assert.Contains("IsHitTestVisible=\"False\"", xaml);
     }
 
