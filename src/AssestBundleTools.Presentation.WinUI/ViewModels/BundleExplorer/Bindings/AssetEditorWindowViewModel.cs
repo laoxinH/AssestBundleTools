@@ -181,8 +181,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             _backgroundTaskRunner,
             backgroundTaskStatusService,
             workspaceOperationChangeNotifier,
-            backgroundWorkScheduler,
-            operationPendingTracker);
+            backgroundWorkScheduler: backgroundWorkScheduler,
+            operationPendingTracker: operationPendingTracker);
         _assetActionCoordinator = new AssetEditorWindowAssetActionCoordinator(
             _workspaceShell,
             pathNavigationService,

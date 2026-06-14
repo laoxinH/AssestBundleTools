@@ -56,6 +56,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         ILocalizationService localizationService,
         IWorkspaceOperationChangeNotifier workspaceOperationChangeNotifier,
         IFilePickerService filePickerService,
+        IWorkspaceBatchOperationsGateway workspaceBatchOperationsGateway,
         IWorkspaceContextService workspaceContextService,
         IBackgroundTaskRunner backgroundTaskRunner,
         IPathNavigationService pathNavigationService,
@@ -117,6 +118,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             backgroundTaskRunner,
             backgroundTaskStatusService,
             workspaceOperationChangeNotifier,
+            workspaceBatchOperationsGateway,
             backgroundWorkScheduler,
             OperationPendingTracker);
         PrimaryPane = new AssetPaneViewModel();

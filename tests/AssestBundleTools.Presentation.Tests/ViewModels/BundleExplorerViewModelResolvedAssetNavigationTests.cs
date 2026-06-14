@@ -6,11 +6,16 @@ using AssestBundleTools.Application.Editing.Commands;
 using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Extraction.Commands;
 using AssestBundleTools.Application.Extraction.Dtos;
+using AssestBundleTools.Application.Extraction.Queries;
 using AssestBundleTools.Application.Replacement.Commands;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Queries;
+using AssestBundleTools.Application.Saving.Commands;
+using AssestBundleTools.Application.Saving.Dtos;
+using AssestBundleTools.Application.Saving.Queries;
 using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Application.Workspace.Queries;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
@@ -112,6 +117,7 @@ public sealed class BundleExplorerViewModelResolvedAssetNavigationTests
             localizationService,
             new WorkspaceOperationChangeNotifier(),
             new StubFilePickerService(),
+            new StubWorkspaceBatchOperationsGateway(),
             workspaceContextService,
             new StubWorkspaceImportCoordinatorService(),
             new TestBackgroundTaskRunner(),
@@ -191,6 +197,44 @@ public sealed class BundleExplorerViewModelResolvedAssetNavigationTests
             IProgress<WorkspaceImportProgressDto>? progress = null,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(false);
+    }
+
+    private sealed class StubWorkspaceBatchOperationsGateway : IWorkspaceBatchOperationsGateway
+    {
+        public Task<Result<WorkspaceChangeSummaryDto>> GetWorkspaceChangeSummaryAsync(
+            GetWorkspaceChangeSummaryQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<WorkspaceSavePreviewDto>> GetWorkspaceSavePreviewAsync(
+            GetWorkspaceSavePreviewQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<WorkspaceSaveExecutionResultDto>> SaveWorkspaceAsNewBundleAsync(
+            SaveWorkspaceAsNewBundleCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<WorkspaceBatchExtractionPreviewDto>> GetWorkspaceBatchExtractionPreviewAsync(
+            GetWorkspaceBatchExtractionPreviewQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<WorkspaceBatchExtractionResultDto>> ExtractWorkspaceAssetsAsync(
+            ExtractWorkspaceAssetsCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<WorkspaceBatchReplacementPlanDto>> GetWorkspaceBatchReplacementPlanAsync(
+            GetWorkspaceBatchReplacementPlanQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<WorkspaceBatchReplacementResultDto>> ExecuteWorkspaceBatchReplacementAsync(
+            ExecuteWorkspaceBatchReplacementCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class StubPathNavigationService : IPathNavigationService

@@ -24,13 +24,15 @@ internal static class WorkspaceBatchExtractionPlanner
         AssetType? assetTypeFilter,
         string? outputDirectory,
         IReadOnlyList<BundleId>? selectedBundleIds = null,
-        IReadOnlyList<WorkspaceBatchExtractionCategoryDto>? selectedCategories = null)
+        IReadOnlyList<WorkspaceBatchExtractionCategoryDto>? selectedCategories = null,
+        IReadOnlyList<AssetId>? selectedAssetIds = null)
     {
         ArgumentNullException.ThrowIfNull(workspaceSessionRegistry);
 
         var normalizedCategories = NormalizeCategories(assetTypeFilter, selectedCategories);
         var includesAllUnityAssetTypes = IncludesAll(normalizedCategories) || normalizedCategories.Count == 0;
         var selectedBundleIdSet = CreateBundleIdSet(selectedBundleIds);
+        var selectedAssetIdSet = CreateAssetIdSet(selectedAssetIds);
 
         if (!workspaceSessionRegistry.TryGetBundleTree(workspaceId, out var bundleTree))
         {
@@ -66,6 +68,7 @@ internal static class WorkspaceBatchExtractionPlanner
             var projectedItems = WorkspaceAssetExportNameProjection.ApplyToAssetList(
                 assetListResult!.Items
                     .Where(item => MatchesSelectedUnityCategory(item, normalizedCategories, includesAllUnityAssetTypes))
+                    .Where(item => selectedAssetIdSet is null || selectedAssetIdSet.Contains(item.AssetId.Value))
                     .ToArray());
             foreach (var item in projectedItems)
             {
@@ -323,6 +326,19 @@ internal static class WorkspaceBatchExtractionPlanner
         }
 
         return selectedBundleIds
+            .Select(static id => id.Value)
+            .Where(static value => !string.IsNullOrWhiteSpace(value))
+            .ToHashSet(StringComparer.Ordinal);
+    }
+
+    private static HashSet<string>? CreateAssetIdSet(IReadOnlyList<AssetId>? selectedAssetIds)
+    {
+        if (selectedAssetIds is null || selectedAssetIds.Count == 0)
+        {
+            return null;
+        }
+
+        return selectedAssetIds
             .Select(static id => id.Value)
             .Where(static value => !string.IsNullOrWhiteSpace(value))
             .ToHashSet(StringComparer.Ordinal);

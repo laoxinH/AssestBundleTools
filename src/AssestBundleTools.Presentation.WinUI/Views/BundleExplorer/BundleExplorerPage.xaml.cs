@@ -44,6 +44,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             App.CurrentApp.LocalizationService,
             App.CurrentApp.WorkspaceOperationChangeNotifier,
             App.CurrentApp.FilePickerService,
+            App.CurrentApp.WorkspaceBatchOperationsGateway,
             App.CurrentApp.WorkspaceContextService,
             App.CurrentApp.WorkspaceImportCoordinatorService,
             App.CurrentApp.BackgroundTaskRunner,

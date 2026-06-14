@@ -24,6 +24,7 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
     private readonly IAppNotificationService _appNotificationService;
     private readonly ILocalizationService _localizationService;
     private readonly IFilePickerService _filePickerService;
+    private readonly IWorkspaceBatchOperationsGateway? _workspaceBatchOperationsGateway;
     private readonly BundleExplorerBatchExtractionBackgroundExecutor _batchExtractionExecutor;
     private bool _isBatchExtractionRunning;
 
@@ -36,6 +37,7 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
         IBackgroundTaskRunner? backgroundTaskRunner = null,
         IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
         IWorkspaceOperationChangeNotifier? operationChangeNotifier = null,
+        IWorkspaceBatchOperationsGateway? workspaceBatchOperationsGateway = null,
         IBackgroundWorkScheduler? backgroundWorkScheduler = null)
     {
         _workspaceAssetOperationGateway = workspaceAssetOperationGateway ?? throw new ArgumentNullException(nameof(workspaceAssetOperationGateway));
@@ -43,6 +45,7 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _filePickerService = filePickerService ?? throw new ArgumentNullException(nameof(filePickerService));
+        _workspaceBatchOperationsGateway = workspaceBatchOperationsGateway;
         _batchExtractionExecutor = new BundleExplorerBatchExtractionBackgroundExecutor(
             _workspaceAssetOperationGateway,
             _localizationService,
@@ -191,6 +194,51 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
         _isBatchExtractionRunning = true;
         try
         {
+            if (_workspaceBatchOperationsGateway is not null)
+            {
+                var workspaceBatchResult = await _workspaceBatchOperationsGateway.ExtractWorkspaceAssetsAsync(
+                    new ExtractWorkspaceAssetsCommand(
+                        workspaceSummary.WorkspaceId,
+                        OutputDirectory: selectedOutputDirectory,
+                        WorkspaceKey: workspaceSummary.WorkspaceKey,
+                        WorkspaceDataRootPath: workspaceSummary.WorkspaceDataRootPath,
+                        SelectedBundleIds: selectedEntries
+                            .Select(static entry => entry.Item.BundleId)
+                            .Distinct()
+                            .ToArray(),
+                        SelectedAssetIds: selectedEntries
+                            .Select(static entry => entry.Item.AssetId)
+                            .Distinct()
+                            .ToArray()),
+                    CancellationToken.None);
+
+                if (workspaceBatchResult.IsCancelled)
+                {
+                    return;
+                }
+
+                if (!TryGetValue(workspaceBatchResult, out var batchResult, appendResultFailure))
+                {
+                    return;
+                }
+
+                if (batchResult.ExportManifestPath is not null)
+                {
+                    _appLogService.AppendInfo(_localizationService.GetFormattedString(
+                        ResourceKeys.BundleExplorerLogBatchAssetsExtracted,
+                        batchResult.ExtractedAssetCount,
+                        batchResult.ExportManifestPath));
+                }
+
+                ShowOperationNotification(
+                    GetString(ResourceKeys.AppNotificationSuccessTitle),
+                    _localizationService.GetFormattedString(
+                        ResourceKeys.BundleExplorerNotificationBatchAssetsExtracted,
+                        batchResult.ExtractedAssetCount),
+                    AppNotificationSeverity.Success);
+                return;
+            }
+
             var executionResult = await _batchExtractionExecutor.ExtractAssetsAsync(
                 workspaceSummary,
                 selectedEntries,

@@ -38,6 +38,7 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         IBackgroundTaskRunner? backgroundTaskRunner = null,
         IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
         IWorkspaceOperationChangeNotifier? operationChangeNotifier = null,
+        IWorkspaceBatchOperationsGateway? workspaceBatchOperationsGateway = null,
         IBackgroundWorkScheduler? backgroundWorkScheduler = null,
         WorkspaceOperationPendingTracker? operationPendingTracker = null)
     {
@@ -61,6 +62,7 @@ internal sealed class BundleExplorerAssetModificationActionHandler
             backgroundTaskRunner,
             backgroundTaskStatusService,
             operationChangeNotifier,
+            workspaceBatchOperationsGateway,
             backgroundWorkScheduler);
         _spriteEditActionHandler = new BundleExplorerSpriteEditActionHandler(
             _workspaceAssetOperationGateway,

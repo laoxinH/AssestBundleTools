@@ -72,8 +72,9 @@ public sealed class ExtractWorkspaceAssetsHandler : ICommandHandler<ExtractWorks
             command.WorkspaceId,
             command.AssetTypeFilter,
             command.OutputDirectory,
-            command.SelectedBundleIds,
-            command.SelectedCategories);
+            selectedBundleIds: command.SelectedBundleIds,
+            selectedCategories: command.SelectedCategories,
+            selectedAssetIds: command.SelectedAssetIds);
         var spineGroups = await WorkspaceBatchExtractionSpinePlanner.BuildSpineGroupsAsync(
             _loadSpineAssetGroupsHandler,
             command.WorkspaceId,

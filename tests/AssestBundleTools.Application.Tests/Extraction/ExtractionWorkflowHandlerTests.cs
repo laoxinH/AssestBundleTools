@@ -299,6 +299,75 @@ internal static partial class ExtractionWorkflowHandlerTests
         TestAssert.Equal(true, batchOperation?.Result?.OutputFileExists, "Batch operation should mark manifest output availability.");
     }
 
+    public static async Task ExtractWorkspaceAssetsHandler_ShouldLimitExportManifest_ToSelectedAssets()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleId = new BundleId("bundle.selected");
+        var selectedAssetId = new AssetId("asset.selected");
+        var skippedAssetId = new AssetId("asset.skipped");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            selectedAssetId,
+            AssetType.Texture2D,
+            "SelectedTexture",
+            "Assets/Textures/SelectedTexture",
+            pathId: 11));
+        registry.RegisterAsset(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            skippedAssetId,
+            AssetType.Texture2D,
+            "SkippedTexture",
+            "Assets/Textures/SkippedTexture",
+            pathId: 12));
+        var previewHandler = new TestAssetPreviewHandler();
+        previewHandler.RegisterPreview(CreateBinaryPreview(
+            workspaceId,
+            bundleId,
+            selectedAssetId,
+            AssetPreviewKind.Image,
+            "image/png",
+            [1, 2, 3]));
+        previewHandler.RegisterPreview(CreateBinaryPreview(
+            workspaceId,
+            bundleId,
+            skippedAssetId,
+            AssetPreviewKind.Image,
+            "image/png",
+            [4, 5, 6]));
+        var fileStore = new TestAssetExtractionFileStore();
+        var changeStore = new TestWorkspaceChangeStore();
+        var manifestStore = new TestWorkspaceExportManifestStore();
+        var singleHandler = CreateHandler(registry, previewHandler, fileStore, changeStore);
+        var recorder = new WorkspaceExtractionOperationRecorder(
+            new TestWorkspaceDataStoreFactory(changeStore),
+            new WorkspaceOperationLogService());
+        var batchHandler = new ExtractWorkspaceAssetsHandler(
+            registry,
+            singleHandler,
+            recorder,
+            exportManifestStore: manifestStore);
+
+        var result = await batchHandler.HandleAsync(new ExtractWorkspaceAssetsCommand(
+            workspaceId,
+            OutputDirectory: @"D:\Out",
+            WorkspaceKey: WorkspaceKey,
+            WorkspaceDataRootPath: WorkspaceDataRootPath,
+            SelectedBundleIds: new[] { bundleId },
+            SelectedCategories: new[] { WorkspaceBatchExtractionCategoryDto.FromAssetType(AssetType.Texture2D) },
+            SelectedAssetIds: new[] { selectedAssetId }));
+
+        TestAssert.True(result.IsSuccess, "Selected-asset batch extraction should succeed.");
+        TestAssert.Equal(1, result.Value?.ExtractedAssetCount ?? 0, "Only the selected asset should be extracted.");
+        TestAssert.Equal(1, fileStore.Requests.Count, "Only the selected asset should write an output file.");
+
+        var manifestItem = TestAssert.Single(manifestStore.LastRequest?.Items ?? Array.Empty<WorkspaceExportManifestSourceItemDto>());
+        TestAssert.Equal(selectedAssetId, manifestItem.AssetId, "Manifest should include the selected asset.");
+        TestAssert.Equal("SelectedTexture", manifestItem.DisambiguatedName, "Manifest should keep the selected asset export name.");
+    }
+
     public static async Task ExtractWorkspaceAssetsHandler_ShouldReportWorkspaceBatchProgress()
     {
         var workspaceId = new WorkspaceId("workspace-session-1");

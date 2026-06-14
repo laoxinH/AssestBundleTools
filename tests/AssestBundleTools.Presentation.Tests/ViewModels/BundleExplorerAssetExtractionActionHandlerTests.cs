@@ -4,11 +4,16 @@ using AssestBundleTools.Application.Editing.Commands;
 using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Extraction.Commands;
 using AssestBundleTools.Application.Extraction.Dtos;
+using AssestBundleTools.Application.Extraction.Queries;
 using AssestBundleTools.Application.Replacement.Commands;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Queries;
+using AssestBundleTools.Application.Saving.Commands;
+using AssestBundleTools.Application.Saving.Dtos;
+using AssestBundleTools.Application.Saving.Queries;
 using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Application.Workspace.Queries;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
@@ -117,6 +122,41 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
             Path.Combine("Texture2D", "shared_texture [2].png"),
             gateway.ExtractAssetCommands[1].SuggestedOutputPath,
             StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ExtractSelectedAssetsAsync_ShouldUseWorkspaceBatchExtraction_WhenBatchGatewayIsAvailable()
+    {
+        var gateway = new RecordingWorkspaceAssetOperationGateway();
+        var batchGateway = new RecordingWorkspaceBatchOperationsGateway();
+        var filePicker = new RecordingFilePickerService
+        {
+            BatchExtractionOutputDirectory = @"D:\Exports\Selected"
+        };
+        var handler = new BundleExplorerAssetExtractionActionHandler(
+            gateway,
+            new TestAppLogService(),
+            new TestAppNotificationService(),
+            new TestLocalizationService(),
+            filePicker,
+            workspaceBatchOperationsGateway: batchGateway);
+        var firstEntry = CreateAssetEntry("asset-1", "hero");
+        var secondEntry = CreateAssetEntry("asset-2", "hero_alpha");
+
+        await handler.ExtractSelectedAssetsAsync(
+            CreateWorkspaceSummary(),
+            [firstEntry, secondEntry],
+            "char_1001_amiya2.ab",
+            _ => { },
+            _ => throw new InvalidOperationException("Batch extraction should not fail in this test."));
+
+        Assert.Empty(gateway.ExtractAssetCommands);
+        var command = Assert.Single(batchGateway.ExtractWorkspaceAssetsCommands);
+        Assert.Equal(filePicker.BatchExtractionOutputDirectory, command.OutputDirectory);
+        Assert.Equal("workspace-key", command.WorkspaceKey);
+        Assert.Equal(@"C:\WorkspaceData", command.WorkspaceDataRootPath);
+        Assert.Equal([new AssetId("asset-1"), new AssetId("asset-2")], command.SelectedAssetIds);
+        Assert.Equal([new BundleId("bundle-ui")], command.SelectedBundleIds);
     }
 
     [Fact]
@@ -832,6 +872,69 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
                             AssetType: AssetType.Texture2D.ToString())
                     ])));
         }
+    }
+
+    private sealed class RecordingWorkspaceBatchOperationsGateway : IWorkspaceBatchOperationsGateway
+    {
+        public List<ExtractWorkspaceAssetsCommand> ExtractWorkspaceAssetsCommands { get; } = [];
+
+        public Task<Result<WorkspaceChangeSummaryDto>> GetWorkspaceChangeSummaryAsync(
+            GetWorkspaceChangeSummaryQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<WorkspaceSavePreviewDto>> GetWorkspaceSavePreviewAsync(
+            GetWorkspaceSavePreviewQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<WorkspaceSaveExecutionResultDto>> SaveWorkspaceAsNewBundleAsync(
+            SaveWorkspaceAsNewBundleCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<WorkspaceBatchExtractionPreviewDto>> GetWorkspaceBatchExtractionPreviewAsync(
+            GetWorkspaceBatchExtractionPreviewQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<WorkspaceBatchExtractionResultDto>> ExtractWorkspaceAssetsAsync(
+            ExtractWorkspaceAssetsCommand command,
+            CancellationToken cancellationToken = default)
+        {
+            ExtractWorkspaceAssetsCommands.Add(command);
+            var assetResults = (command.SelectedAssetIds ?? Array.Empty<AssetId>())
+                .Select(assetId => new AssetExtractionResultDto(
+                    command.WorkspaceId,
+                    new BundleId("bundle-ui"),
+                    assetId,
+                    assetId.Value,
+                    Path.Combine(command.OutputDirectory ?? string.Empty, "char_1001_amiya2.ab", "Texture2D", $"{assetId.Value}.png"),
+                    DateTimeOffset.UtcNow,
+                    OutputPath: Path.Combine(command.OutputDirectory ?? string.Empty, "char_1001_amiya2.ab", "Texture2D", $"{assetId.Value}.png")))
+                .ToArray();
+            return Task.FromResult(Result<WorkspaceBatchExtractionResultDto>.Success(
+                new WorkspaceBatchExtractionResultDto(
+                    command.WorkspaceId,
+                    command.AssetTypeFilter,
+                    command.OutputDirectory ?? string.Empty,
+                    assetResults.Length,
+                    ExtractedBundleCount: 1,
+                    CompletedAtUtc: DateTimeOffset.UtcNow,
+                    AssetResults: assetResults,
+                    ExportManifestPath: Path.Combine(command.OutputDirectory ?? string.Empty, "_abt-export-manifest.json"),
+                    ExportManifestItemCount: assetResults.Length)));
+        }
+
+        public Task<Result<WorkspaceBatchReplacementPlanDto>> GetWorkspaceBatchReplacementPlanAsync(
+            GetWorkspaceBatchReplacementPlanQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<WorkspaceBatchReplacementResultDto>> ExecuteWorkspaceBatchReplacementAsync(
+            ExecuteWorkspaceBatchReplacementCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class TestBundlePaneHost : IBundleExplorerBundlePaneHost

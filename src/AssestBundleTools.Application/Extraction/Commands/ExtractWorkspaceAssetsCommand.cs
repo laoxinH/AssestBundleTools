@@ -16,4 +16,5 @@ public sealed record ExtractWorkspaceAssetsCommand(
     string? WorkspaceDataRootPath = null,
     IReadOnlyList<BundleId>? SelectedBundleIds = null,
     IReadOnlyList<WorkspaceBatchExtractionCategoryDto>? SelectedCategories = null,
-    IProgress<WorkspaceBatchExtractionProgressDto>? Progress = null);
+    IProgress<WorkspaceBatchExtractionProgressDto>? Progress = null,
+    IReadOnlyList<AssetId>? SelectedAssetIds = null);
