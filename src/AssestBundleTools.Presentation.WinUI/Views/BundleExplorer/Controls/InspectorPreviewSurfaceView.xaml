@@ -230,16 +230,17 @@
         <Style
             x:Key="InspectorPreviewStateBadgeBorderStyle"
             TargetType="Border">
-            <Setter Property="MinHeight" Value="20" />
-            <Setter Property="Padding" Value="7,2" />
+            <Setter Property="MinHeight" Value="18" />
+            <Setter Property="Padding" Value="6,2" />
             <Setter
                 Property="Background"
-                Value="{ThemeResource SystemFillColorCautionBackgroundBrush}" />
+                Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
             <Setter
                 Property="BorderBrush"
-                Value="{ThemeResource SystemFillColorCautionBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
+                Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
             <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Opacity" Value="0.86" />
         </Style>
 
         <Style
@@ -734,17 +735,21 @@
                         Text="{x:Bind ViewModel.Preview.PreviewText, Mode=OneWay}" />
                 </StackPanel>
 
-                <Border
-                    Margin="8"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Top"
-                    Style="{StaticResource InspectorPreviewStateBadgeBorderStyle}"
-                    Visibility="{x:Bind ViewModel.Preview.PreviewStateBadgeVisibility, Mode=OneWay}">
-                    <TextBlock
-                        Style="{StaticResource InspectorPreviewStateBadgeTextStyle}"
-                        Text="{x:Bind ViewModel.Preview.PreviewStateBadgeText, Mode=OneWay}" />
-                </Border>
             </Grid>
+
+            <Border
+                Grid.RowSpan="2"
+                Margin="0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Canvas.ZIndex="10"
+                IsHitTestVisible="False"
+                Style="{StaticResource InspectorPreviewStateBadgeBorderStyle}"
+                Visibility="{x:Bind ViewModel.Preview.PreviewStateBadgeVisibility, Mode=OneWay}">
+                <TextBlock
+                    Style="{StaticResource InspectorPreviewStateBadgeTextStyle}"
+                    Text="{x:Bind ViewModel.Preview.PreviewStateBadgeText, Mode=OneWay}" />
+            </Border>
         </Grid>
     </Border>
 </UserControl>
