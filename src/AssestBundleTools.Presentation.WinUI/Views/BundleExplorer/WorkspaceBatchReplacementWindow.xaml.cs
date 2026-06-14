@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using AssestBundleTools.Presentation.WinUI.Localization;
+using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 using Microsoft.UI;
@@ -25,9 +26,12 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
     private readonly WorkspaceBatchReplacementDialogContent _content;
     private AppWindow? _appWindow;
 
-    public WorkspaceBatchReplacementWindow(WorkspaceBatchReplacementDialogViewModel viewModel)
+    public WorkspaceBatchReplacementWindow(
+        WorkspaceBatchReplacementDialogViewModel viewModel,
+        IAppNotificationService notificationService)
     {
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        NotificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         InitializeComponent();
         ContentRoot.DataContext = ViewModel;
 
@@ -48,6 +52,8 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
     public event EventHandler? StartReplacementRequested;
 
     public WorkspaceBatchReplacementDialogViewModel ViewModel { get; }
+
+    public IAppNotificationService NotificationService { get; }
 
     public void BringToFront()
     {

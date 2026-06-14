@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:shared="using:AssestBundleTools.Presentation.WinUI.Views.Shared"
     mc:Ignorable="d">
 
     <Grid
@@ -181,5 +182,9 @@
                 </Grid>
             </Border>
         </Grid>
+
+        <shared:AppNotificationPresenter
+            Grid.RowSpan="2"
+            NotificationService="{x:Bind NotificationService, Mode=OneWay}" />
     </Grid>
 </Window>

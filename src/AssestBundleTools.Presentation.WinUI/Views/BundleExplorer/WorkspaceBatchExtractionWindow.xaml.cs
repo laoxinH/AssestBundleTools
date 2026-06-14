@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using AssestBundleTools.Presentation.WinUI.Localization;
+using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 using Microsoft.UI;
@@ -29,9 +30,11 @@ public sealed partial class WorkspaceBatchExtractionWindow : Window
     private bool _isCompleting;
 
     public WorkspaceBatchExtractionWindow(
-        WorkspaceBatchExtractionDialogViewModel viewModel)
+        WorkspaceBatchExtractionDialogViewModel viewModel,
+        IAppNotificationService notificationService)
     {
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        NotificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         InitializeComponent();
         ContentRoot.DataContext = ViewModel;
 
@@ -44,6 +47,8 @@ public sealed partial class WorkspaceBatchExtractionWindow : Window
     }
 
     public WorkspaceBatchExtractionDialogViewModel ViewModel { get; }
+
+    public IAppNotificationService NotificationService { get; }
 
     public Task<WorkspaceBatchExtractionDialogSubmission?> ShowForSubmissionAsync()
     {

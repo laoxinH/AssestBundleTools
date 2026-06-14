@@ -62,7 +62,8 @@ public sealed partial class BundleExplorerPage
                 .SelectMany(static group => group.Bundles)
                 .ToArray();
             var viewModel = new WorkspaceBatchReplacementDialogViewModel(_localizationService, bundleNodes);
-            var window = new WorkspaceBatchReplacementWindow(viewModel);
+            var windowNotificationService = new AppNotificationService();
+            var window = new WorkspaceBatchReplacementWindow(viewModel, windowNotificationService);
             App.CurrentApp.RegisterAuxiliaryWindow(
                 window,
                 _owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null);
@@ -157,7 +158,7 @@ public sealed partial class BundleExplorerPage
             catch
             {
                 viewModel.ApplyExecutionUnavailable();
-                _appNotificationService.Show(
+                ShowNotification(
                     GetString(ResourceKeys.AppNotificationErrorTitle),
                     GetString(ResourceKeys.CommonUnexpectedFailure),
                     AppNotificationSeverity.Error);
@@ -182,7 +183,7 @@ public sealed partial class BundleExplorerPage
                 replacementResult.ReplacedAssetCount,
                 replacementResult.SkippedAssetCount,
                 replacementResult.FailedAssetCount);
-            _appNotificationService.Show(
+            ShowNotification(
                 GetString(ResourceKeys.AppNotificationSuccessTitle),
                 message,
                 AppNotificationSeverity.Success);
@@ -251,7 +252,7 @@ public sealed partial class BundleExplorerPage
                 if (version == _planRequestVersion)
                 {
                     viewModel.ApplyPlanUnavailable();
-                    _appNotificationService.Show(
+                    ShowNotification(
                         GetString(ResourceKeys.AppNotificationErrorTitle),
                         GetString(ResourceKeys.CommonUnexpectedFailure),
                         AppNotificationSeverity.Error);
@@ -324,10 +325,16 @@ public sealed partial class BundleExplorerPage
             }
 
             var message = FormatError(errors[0]);
-            _appNotificationService.Show(
+            ShowNotification(
                 GetString(ResourceKeys.AppNotificationErrorTitle),
                 message,
                 AppNotificationSeverity.Error);
+        }
+
+        private void ShowNotification(string title, string message, AppNotificationSeverity severity)
+        {
+            var notificationService = _activeWindow?.NotificationService ?? _appNotificationService;
+            notificationService.Show(title, message, severity);
         }
 
         private string FormatError(AppError error) =>

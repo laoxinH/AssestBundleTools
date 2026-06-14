@@ -47,7 +47,7 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
             "WorkspaceBatchExtractionWindow.xaml");
 
         Assert.True(File.Exists(windowXamlPath));
-        Assert.Contains("new WorkspaceBatchExtractionWindow(viewModel)", coordinator);
+        Assert.Contains("new WorkspaceBatchExtractionWindow(viewModel, windowNotificationService)", coordinator);
         Assert.Contains("App.CurrentApp.RegisterAuxiliaryWindow(", coordinator);
         Assert.Contains("_owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null", coordinator);
         Assert.Contains("ShowForSubmissionAsync()", coordinator);
@@ -72,11 +72,72 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
             "Coordinators",
             "BundleExplorerWorkspaceBatchReplacementCoordinator.cs"));
 
-        Assert.Contains("new WorkspaceBatchReplacementWindow(viewModel)", coordinator);
+        Assert.Contains("new WorkspaceBatchReplacementWindow(viewModel, windowNotificationService)", coordinator);
         Assert.Contains("App.CurrentApp.RegisterAuxiliaryWindow(", coordinator);
         Assert.Contains("_owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null", coordinator);
         Assert.Contains("_auxiliaryWindowOwners", appCode);
         Assert.Contains("CloseAuxiliaryWindowsOwnedBy(mainWindow);", appCode);
+    }
+
+    [Fact]
+    public void WorkspaceBatchWindows_ShouldUseLocalNotificationPresenter()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var extractionCoordinator = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Coordinators",
+            "BundleExplorerWorkspaceBatchExtractionCoordinator.cs"));
+        var replacementCoordinator = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Coordinators",
+            "BundleExplorerWorkspaceBatchReplacementCoordinator.cs"));
+        var extractionWindowXaml = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "WorkspaceBatchExtractionWindow.xaml"));
+        var replacementWindowXaml = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "WorkspaceBatchReplacementWindow.xaml"));
+        var extractionWindowCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "WorkspaceBatchExtractionWindow.xaml.cs"));
+        var replacementWindowCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "WorkspaceBatchReplacementWindow.xaml.cs"));
+
+        Assert.Contains("var windowNotificationService = new AppNotificationService();", extractionCoordinator);
+        Assert.Contains("var windowNotificationService = new AppNotificationService();", replacementCoordinator);
+        Assert.Contains("_activeBatchExtractionWindow?.NotificationService ?? _appNotificationService", extractionCoordinator);
+        Assert.Contains("_activeWindow?.NotificationService ?? _appNotificationService", replacementCoordinator);
+        Assert.Contains("<shared:AppNotificationPresenter", extractionWindowXaml);
+        Assert.Contains("<shared:AppNotificationPresenter", replacementWindowXaml);
+        Assert.Contains("NotificationService=\"{x:Bind NotificationService, Mode=OneWay}\"", extractionWindowXaml);
+        Assert.Contains("NotificationService=\"{x:Bind NotificationService, Mode=OneWay}\"", replacementWindowXaml);
+        Assert.Contains("public IAppNotificationService NotificationService { get; }", extractionWindowCode);
+        Assert.Contains("public IAppNotificationService NotificationService { get; }", replacementWindowCode);
     }
 
     [Fact]

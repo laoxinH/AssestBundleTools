@@ -68,7 +68,7 @@ public sealed partial class BundleExplorerPage
                 .ToArray();
             if (bundleNodes.Length == 0)
             {
-                _appNotificationService.Show(
+                ShowNotification(
                     GetString(ResourceKeys.AppNotificationInfoTitle),
                     GetString(ResourceKeys.WorkspaceBatchExtractionDialogNoBundlesMessage),
                     AppNotificationSeverity.Informational);
@@ -86,7 +86,8 @@ public sealed partial class BundleExplorerPage
                 return;
             }
 
-            var window = new WorkspaceBatchExtractionWindow(viewModel);
+            var windowNotificationService = new AppNotificationService();
+            var window = new WorkspaceBatchExtractionWindow(viewModel, windowNotificationService);
             App.CurrentApp.RegisterAuxiliaryWindow(
                 window,
                 _owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null);
@@ -309,7 +310,7 @@ public sealed partial class BundleExplorerPage
             }
             catch
             {
-                _appNotificationService.Show(
+                ShowNotification(
                     GetString(ResourceKeys.AppNotificationErrorTitle),
                     GetString(ResourceKeys.CommonUnexpectedFailure),
                     AppNotificationSeverity.Error);
@@ -333,7 +334,7 @@ public sealed partial class BundleExplorerPage
                 extractionResult.ExtractedSpineGroupCount,
                 extractionResult.SuggestedOutputDirectory);
             _appLogService.AppendInfo(message);
-            _appNotificationService.Show(
+            ShowNotification(
                 GetString(ResourceKeys.AppNotificationSuccessTitle),
                 message,
                 AppNotificationSeverity.Success);
@@ -354,7 +355,7 @@ public sealed partial class BundleExplorerPage
                 : workspaceDataRootPath;
             if (string.IsNullOrWhiteSpace(dataRootPath))
             {
-                _appNotificationService.Show(
+                ShowNotification(
                     GetString(ResourceKeys.AppNotificationErrorTitle),
                     GetString(ResourceKeys.WorkspaceBatchExtractionDialogWorkspaceExtractionDirectoryUnavailable),
                     AppNotificationSeverity.Error);
@@ -419,10 +420,16 @@ public sealed partial class BundleExplorerPage
 
             var message = FormatError(errors[0]);
             _appLogService.AppendError(message);
-            _appNotificationService.Show(
+            ShowNotification(
                 GetString(ResourceKeys.AppNotificationErrorTitle),
                 message,
                 AppNotificationSeverity.Error);
+        }
+
+        private void ShowNotification(string title, string message, AppNotificationSeverity severity)
+        {
+            var notificationService = _activeBatchExtractionWindow?.NotificationService ?? _appNotificationService;
+            notificationService.Show(title, message, severity);
         }
 
         private string FormatError(AppError error) =>
