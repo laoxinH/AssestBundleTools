@@ -6,6 +6,7 @@
     xmlns:controls="using:AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:shared="using:AssestBundleTools.Presentation.WinUI.Views.Shared"
     xmlns:viewModels="using:AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings"
     mc:Ignorable="d">
 
@@ -401,5 +402,9 @@
                 BorderThickness="2"
                 CornerRadius="12" />
         </Grid>
+
+        <shared:AppNotificationPresenter
+            Grid.RowSpan="2"
+            NotificationService="{x:Bind ViewModel.NotificationService, Mode=OneWay}" />
     </Grid>
 </Window>

@@ -387,13 +387,14 @@ public sealed partial class BundleExplorerPage
             AssetDocumentGroupTransfer detachedGroup,
             AssetEditorWindowLayoutSnapshot? preferredLayout = null)
         {
+            var editorNotificationService = new AppNotificationService();
             var viewModel = new AssetEditorWindowViewModel(
                 detachedGroup,
                 App.CurrentApp.WorkspaceAssetInspectionGateway,
                 App.CurrentApp.WorkspaceAssetOperationGateway,
                 App.CurrentApp.WorkspaceOperationChangeNotifier,
                 App.CurrentApp.AppLogService,
-                App.CurrentApp.AppNotificationService,
+                editorNotificationService,
                 App.CurrentApp.LocalizationService,
                 App.CurrentApp.FilePickerService,
                 App.CurrentApp.WorkspaceContextService,

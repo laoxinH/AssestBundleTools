@@ -26,6 +26,42 @@ public sealed class AssetEditorWindowPickerOwnerContractTests
         Assert.Contains("App.CurrentApp.RegisterAuxiliaryWindow(window);", coordinatorCode);
     }
 
+    [Fact]
+    public void AssetEditorWindowCreation_ShouldUseLocalNotificationPresenter()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var coordinatorCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Coordinators",
+            "AssetEditorWindowCoordinator.cs"));
+        var windowXaml = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "AssetEditorWindow.xaml"));
+        var viewModelCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "ViewModels",
+            "BundleExplorer",
+            "Bindings",
+            "AssetEditorWindowViewModel.cs"));
+
+        Assert.Contains("var editorNotificationService = new AppNotificationService();", coordinatorCode);
+        Assert.Contains("editorNotificationService,", coordinatorCode);
+        Assert.DoesNotContain("App.CurrentApp.AppNotificationService,\r\n                App.CurrentApp.LocalizationService", coordinatorCode);
+        Assert.Contains("<shared:AppNotificationPresenter", windowXaml);
+        Assert.Contains("NotificationService=\"{x:Bind ViewModel.NotificationService, Mode=OneWay}\"", windowXaml);
+        Assert.Contains("public IAppNotificationService NotificationService => _notificationService;", viewModelCode);
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

@@ -26,6 +26,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
 {
     private readonly IWorkspaceAssetInspectionGateway _workspaceAssetInspectionGateway;
     private readonly ILocalizationService _localizationService;
+    private readonly IAppNotificationService _notificationService;
     private readonly IBackgroundTaskRunner _backgroundTaskRunner;
     private readonly IBundleExplorerWorkspaceShellHost _workspaceShell;
     private readonly Func<AssetDocumentTabViewModel, Task<bool>> _moveAssetDocumentToMainWindowAsync;
@@ -88,6 +89,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
     {
     }
 
+    public IAppNotificationService NotificationService => _notificationService;
+
     public AssetEditorWindowViewModel(
         AssetDocumentGroupTransfer initialAssetGroup,
         IWorkspaceAssetInspectionGateway workspaceAssetInspectionGateway,
@@ -114,7 +117,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         ArgumentNullException.ThrowIfNull(workspaceAssetOperationGateway);
         ArgumentNullException.ThrowIfNull(workspaceOperationChangeNotifier);
         ArgumentNullException.ThrowIfNull(appLogService);
-        ArgumentNullException.ThrowIfNull(appNotificationService);
+        _notificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         ArgumentNullException.ThrowIfNull(filePickerService);
         ArgumentNullException.ThrowIfNull(workspaceContextService);
@@ -127,7 +130,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
 
         _operationFeedbackBridge = new BundleExplorerOperationFeedbackBridge(
             appLogService,
-            appNotificationService,
+            _notificationService,
             _localizationService);
         operationPendingTracker ??= new WorkspaceOperationPendingTracker();
         _assetInspectorPresenter = new BundleExplorerAssetInspectorPresenter(
@@ -172,7 +175,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         var modificationActionHandler = new BundleExplorerAssetModificationActionHandler(
             workspaceAssetOperationGateway,
             appLogService,
-            appNotificationService,
+            _notificationService,
             _localizationService,
             filePickerService,
             _backgroundTaskRunner,
