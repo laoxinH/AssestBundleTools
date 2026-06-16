@@ -152,7 +152,35 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
         Assert.Contains("RefreshAudioPreviewSourceBinding", code);
         Assert.Contains("AudioPreviewPlayer.Source = null;", code);
         Assert.Contains("AudioPreviewPlayer.Source = nextSource;", code);
+        Assert.DoesNotContain("Source=\"{x:Bind ViewModel.Preview.PreviewAudioSource", xaml);
         Assert.Contains("DispatcherQueue.TryEnqueue(RefreshAudioTransportState);", code);
+    }
+
+    [Fact]
+    public void AudioPreviewSurface_ShouldDetachMediaSourceWhenPreviewIsInactive()
+    {
+        var code = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorPreviewSurfaceView.xaml.cs"));
+        var activationCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorPreviewSurfaceView.Activation.cs"));
+
+        Assert.Contains("if (!IsPreviewActive)", code);
+        Assert.Contains("AudioPreviewPlayer.Source = null;", code);
+        Assert.Contains("RefreshAudioPreviewSourceBinding();", activationCode);
     }
 
     [Fact]

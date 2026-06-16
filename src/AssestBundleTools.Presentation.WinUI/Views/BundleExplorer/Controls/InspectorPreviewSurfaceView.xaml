@@ -649,8 +649,7 @@
                         AreTransportControlsEnabled="False"
                         AutoPlay="False"
                         IsHitTestVisible="False"
-                        Opacity="0.01"
-                        Source="{x:Bind ViewModel.Preview.PreviewAudioSource, Mode=OneWay}" />
+                        Opacity="0.01" />
 
                     <Grid RowSpacing="8">
                         <Grid.RowDefinitions>

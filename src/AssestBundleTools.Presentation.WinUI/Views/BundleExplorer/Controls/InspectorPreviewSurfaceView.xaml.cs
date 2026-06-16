@@ -434,6 +434,23 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
     private void RefreshAudioPreviewSourceBinding()
     {
         AttachAudioPlayer(AudioPreviewPlayer.MediaPlayer);
+        if (!IsPreviewActive)
+        {
+            if (!ReferenceEquals(_lastAppliedAudioSource, null))
+            {
+                _lastAppliedAudioSource = null;
+                AudioPreviewPlayer.Source = null;
+            }
+
+            _audioTransportTimer.Stop();
+            ApplyAudioTransportState(
+                isEnabled: false,
+                isPlaying: false,
+                currentPosition: TimeSpan.Zero,
+                naturalDuration: TimeSpan.Zero);
+            return;
+        }
+
         var nextSource = ViewModel?.Preview.PreviewAudioSource;
         if (!ReferenceEquals(_lastAppliedAudioSource, nextSource))
         {

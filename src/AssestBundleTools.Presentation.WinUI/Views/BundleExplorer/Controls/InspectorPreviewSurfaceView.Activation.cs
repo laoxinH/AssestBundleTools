@@ -22,6 +22,7 @@ public sealed partial class InspectorPreviewSurfaceView
         if (dependencyObject is InspectorPreviewSurfaceView view)
         {
             view.UpdateBindingsNow();
+            view.RefreshAudioPreviewSourceBinding();
         }
     }
 }
