@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.WorkspaceExportWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:shared="using:AssestBundleTools.Presentation.WinUI.Views.Shared"
+    mc:Ignorable="d">
+
+    <Grid
+        x:Name="ContentRoot"
+        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid
+            x:Name="AppTitleBar"
+            Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+            ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="LeftInsetColumn" Width="0" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition x:Name="RightInsetColumn" Width="0" />
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="1" Padding="14,0" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <FontIcon
+                    VerticalAlignment="Center"
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Glyph="&#xE8B7;" />
+                <TextBlock
+                    x:Name="TitleBarText"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    FontSize="12"
+                    TextTrimming="CharacterEllipsis" />
+            </Grid>
+        </Grid>
+
+        <Grid
+            Grid.Row="1"
+            Padding="44,24,44,32"
+            RowSpacing="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Spacing="10">
+                <TextBlock x:Name="WindowTitleText" FontSize="34" FontWeight="SemiBold" />
+                <TextBlock
+                    x:Name="WindowSubtitleText"
+                    FontSize="15"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="WrapWholeWords" />
+            </StackPanel>
+
+            <ContentControl
+                x:Name="ContentHost"
+                Grid.Row="1"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                VerticalContentAlignment="Stretch" />
+
+            <Border
+                Grid.Row="2"
+                Padding="14"
+                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border
+                        Width="36"
+                        Height="36"
+                        VerticalAlignment="Center"
+                        Background="{ThemeResource AccentFillColorTertiaryBrush}"
+                        CornerRadius="8">
+                        <FontIcon
+                            VerticalAlignment="Center"
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="18"
+                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                            Glyph="&#xE8A5;" />
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                        <TextBlock x:Name="PlanSummaryTitleText" FontSize="13" FontWeight="SemiBold" />
+                        <TextBlock
+                            Text="{Binding PlanSummaryText}"
+                            TextWrapping="WrapWholeWords"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock
+                            Text="{Binding ValidationText}"
+                            TextWrapping="WrapWholeWords"
+                            Foreground="{ThemeResource SystemFillColorCautionBrush}" />
+                    </StackPanel>
+                    <Button
+                        x:Name="CancelButton"
+                        Grid.Column="2"
+                        Width="118"
+                        MinHeight="38"
+                        FontSize="13"
+                        VerticalAlignment="Center"
+                        Click="OnCancelButtonClick" />
+                    <Button
+                        x:Name="StartExportButton"
+                        Grid.Column="3"
+                        Width="160"
+                        MinHeight="38"
+                        FontSize="13"
+                        VerticalAlignment="Center"
+                        Content="{Binding PrimaryButtonText}"
+                        Click="OnStartExportButtonClick"
+                        IsEnabled="{Binding HasExportTargets}"
+                        Style="{StaticResource AccentButtonStyle}" />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <shared:AppNotificationPresenter
+            Grid.RowSpan="2"
+            NotificationService="{x:Bind NotificationService, Mode=OneWay}" />
+    </Grid>
+</Window>

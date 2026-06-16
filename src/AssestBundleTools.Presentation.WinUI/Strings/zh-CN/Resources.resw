@@ -4536,4 +4536,73 @@
   <data name="Error.Bundle.Preview.OutOfMemory" xml:space="preserve">
     <value>生成资源预览时内存不足：{0}</value>
   </data>
+  <data name="WorkspaceExportDialog.Title" xml:space="preserve">
+    <value>工作区导出</value>
+  </data>
+  <data name="WorkspaceExportDialog.Header.Hint" xml:space="preserve">
+    <value>选择已修改的资源包，准备保存为新的 AB 文件。</value>
+  </data>
+  <data name="WorkspaceExportDialog.PrimaryButton" xml:space="preserve">
+    <value>开始导出</value>
+  </data>
+  <data name="WorkspaceExportDialog.CloseButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="WorkspaceExportDialog.SourceSection.Title" xml:space="preserve">
+    <value>导出计划</value>
+  </data>
+  <data name="WorkspaceExportDialog.SourceSummary.Format" xml:space="preserve">
+    <value>{0} 项已修改，{1} 项变更将参与计划。</value>
+  </data>
+  <data name="WorkspaceExportDialog.Processor.Badge" xml:space="preserve">
+    <value>资源处理器</value>
+  </data>
+  <data name="WorkspaceExportDialog.ProcessorNone" xml:space="preserve">
+    <value>无处理器</value>
+  </data>
+  <data name="WorkspaceExportDialog.ProcessorNoneDescription" xml:space="preserve">
+    <value>直接导出当前资源包，不应用额外格式处理。</value>
+  </data>
+  <data name="WorkspaceExportDialog.ProcessorPlaceholder" xml:space="preserve">
+    <value>处理器占位</value>
+  </data>
+  <data name="WorkspaceExportDialog.ProcessorPlaceholderDescription" xml:space="preserve">
+    <value>后续可接入 CLI 型预处理器。</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleSection.Title" xml:space="preserve">
+    <value>资源包范围</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleSection.Hint" xml:space="preserve">
+    <value>选择需要导出的已修改资源包。</value>
+  </data>
+  <data name="WorkspaceExportDialog.SelectAllBundlesButton" xml:space="preserve">
+    <value>全选</value>
+  </data>
+  <data name="WorkspaceExportDialog.ClearBundleSelectionButton" xml:space="preserve">
+    <value>清空</value>
+  </data>
+  <data name="WorkspaceExportDialog.RecentSection.Title" xml:space="preserve">
+    <value>最近修改</value>
+  </data>
+  <data name="WorkspaceExportDialog.RecentChangesSummary.Format" xml:space="preserve">
+    <value>显示最近 {0} 项变更，便于快速确认导出范围。</value>
+  </data>
+  <data name="WorkspaceExportDialog.OutputSection.Title" xml:space="preserve">
+    <value>输出与处理</value>
+  </data>
+  <data name="WorkspaceExportDialog.OutputSection.Hint" xml:space="preserve">
+    <value>当前先预留输出目录与资源处理器选择；真实写包逻辑将在下一步接入。</value>
+  </data>
+  <data name="WorkspaceExportDialog.PreviewSection.Title" xml:space="preserve">
+    <value>计划摘要</value>
+  </data>
+  <data name="WorkspaceExportDialog.PlanSummary.Format" xml:space="preserve">
+    <value>{0} 个资源包，{1} 项变更等待导出。</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleSummary.Format" xml:space="preserve">
+    <value>变更 {0}，修改 {1}，提取 {2}，工作区替换 {3}，文件替换 {4}</value>
+  </data>
+  <data name="WorkspaceExportDialog.ExecutionDeferred" xml:space="preserve">
+    <value>真实导出逻辑尚未接入，当前仅完成导出窗口和计划预览。</value>
+  </data>
 </root>

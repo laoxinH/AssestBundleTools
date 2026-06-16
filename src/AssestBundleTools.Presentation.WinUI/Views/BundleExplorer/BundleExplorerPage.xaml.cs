@@ -4,7 +4,6 @@ using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.Views;
-using AssestBundleTools.Presentation.WinUI.Views.BatchTasks;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -30,6 +29,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     private readonly AssetEditorWindowCoordinator _assetEditorWindowCoordinator;
     private readonly BundleExplorerWorkspaceBatchExtractionCoordinator _workspaceBatchExtractionCoordinator;
     private readonly BundleExplorerWorkspaceBatchReplacementCoordinator _workspaceBatchReplacementCoordinator;
+    private readonly BundleExplorerWorkspaceExportCoordinator _workspaceExportCoordinator;
     private WorkspaceNavigationRequest? _workspaceNavigationRequest;
 
     public BundleExplorerPage()
@@ -78,6 +78,11 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             App.CurrentApp.FilePickerService,
             App.CurrentApp.BackgroundWorkScheduler,
             App.CurrentApp.AppNotificationService,
+            App.CurrentApp.LocalizationService);
+        _workspaceExportCoordinator = new BundleExplorerWorkspaceExportCoordinator(
+            this,
+            App.CurrentApp.WorkspaceBatchOperationsGateway,
+            App.CurrentApp.WorkspaceContextService,
             App.CurrentApp.LocalizationService);
         ViewModel.SetAssetEditorWindowStateSnapshotProvider(
             _assetEditorWindowCoordinator.CaptureOpenWindowMetadata);
@@ -366,8 +371,10 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     private void OnReturnToConsoleIconButtonClick(object sender, RoutedEventArgs e) =>
         _navigationCoordinator.NavigateToConsole();
 
-    private void OnSaveAsBundleChipButtonClick(object sender, RoutedEventArgs e) =>
-        Frame?.Navigate(typeof(BatchTasksPage));
+    private async void OnSaveAsBundleChipButtonClick(object sender, RoutedEventArgs e)
+    {
+        await _workspaceExportCoordinator.ShowAsync();
+    }
 
     private async void OnRestoreAssetEditorWindowsChipButtonClick(object sender, RoutedEventArgs e)
     {

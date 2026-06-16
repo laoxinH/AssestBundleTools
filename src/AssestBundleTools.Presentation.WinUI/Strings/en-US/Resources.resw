@@ -4536,4 +4536,73 @@
   <data name="Error.Bundle.Preview.OutOfMemory" xml:space="preserve">
     <value>Not enough memory was available while generating the asset preview: {0}</value>
   </data>
+  <data name="WorkspaceExportDialog.Title" xml:space="preserve">
+    <value>Workspace Export</value>
+  </data>
+  <data name="WorkspaceExportDialog.Header.Hint" xml:space="preserve">
+    <value>Select modified bundles and prepare them for export as new AB files.</value>
+  </data>
+  <data name="WorkspaceExportDialog.PrimaryButton" xml:space="preserve">
+    <value>Start Export</value>
+  </data>
+  <data name="WorkspaceExportDialog.CloseButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="WorkspaceExportDialog.SourceSection.Title" xml:space="preserve">
+    <value>Export Plan</value>
+  </data>
+  <data name="WorkspaceExportDialog.SourceSummary.Format" xml:space="preserve">
+    <value>{0} modified items, {1} changes included in the plan.</value>
+  </data>
+  <data name="WorkspaceExportDialog.Processor.Badge" xml:space="preserve">
+    <value>Processors</value>
+  </data>
+  <data name="WorkspaceExportDialog.ProcessorNone" xml:space="preserve">
+    <value>No processor</value>
+  </data>
+  <data name="WorkspaceExportDialog.ProcessorNoneDescription" xml:space="preserve">
+    <value>Export bundles directly without any extra format processing.</value>
+  </data>
+  <data name="WorkspaceExportDialog.ProcessorPlaceholder" xml:space="preserve">
+    <value>Processor placeholder</value>
+  </data>
+  <data name="WorkspaceExportDialog.ProcessorPlaceholderDescription" xml:space="preserve">
+    <value>CLI-style preprocessors can be wired in later.</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleSection.Title" xml:space="preserve">
+    <value>Bundle Scope</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleSection.Hint" xml:space="preserve">
+    <value>Choose the modified bundles to export.</value>
+  </data>
+  <data name="WorkspaceExportDialog.SelectAllBundlesButton" xml:space="preserve">
+    <value>Select all</value>
+  </data>
+  <data name="WorkspaceExportDialog.ClearBundleSelectionButton" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="WorkspaceExportDialog.RecentSection.Title" xml:space="preserve">
+    <value>Recent Changes</value>
+  </data>
+  <data name="WorkspaceExportDialog.RecentChangesSummary.Format" xml:space="preserve">
+    <value>Showing the latest {0} changes for quick review.</value>
+  </data>
+  <data name="WorkspaceExportDialog.OutputSection.Title" xml:space="preserve">
+    <value>Output and Processing</value>
+  </data>
+  <data name="WorkspaceExportDialog.OutputSection.Hint" xml:space="preserve">
+    <value>Output directory and processor selection are reserved for the next export pass.</value>
+  </data>
+  <data name="WorkspaceExportDialog.PreviewSection.Title" xml:space="preserve">
+    <value>Plan Summary</value>
+  </data>
+  <data name="WorkspaceExportDialog.PlanSummary.Format" xml:space="preserve">
+    <value>{0} bundles and {1} changes are queued for export.</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleSummary.Format" xml:space="preserve">
+    <value>Changes {0}, modified {1}, extracted {2}, workspace replacement {3}, file replacement {4}</value>
+  </data>
+  <data name="WorkspaceExportDialog.ExecutionDeferred" xml:space="preserve">
+    <value>The real export path is not wired yet. This window currently provides the export plan only.</value>
+  </data>
 </root>
