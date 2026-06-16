@@ -126,6 +126,36 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
     }
 
     [Fact]
+    public void AudioPreviewSurface_ShouldStayCompactAndRebindMediaSource()
+    {
+        var xaml = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorPreviewSurfaceView.xaml"));
+        var code = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "InspectorPreviewSurfaceView.xaml.cs"));
+
+        Assert.Contains("MaxWidth=\"520\"", xaml);
+        Assert.Contains("VerticalAlignment=\"Top\"", xaml);
+        Assert.Contains("RefreshAudioPreviewSourceBinding", code);
+        Assert.Contains("AudioPreviewPlayer.Source = null;", code);
+        Assert.Contains("AudioPreviewPlayer.Source = nextSource;", code);
+        Assert.Contains("DispatcherQueue.TryEnqueue(RefreshAudioTransportState);", code);
+    }
+
+    [Fact]
     public void SpinePreviewSurface_ShouldBindSliderToThrottledDisplayPlaybackTime()
     {
         var xaml = File.ReadAllText(

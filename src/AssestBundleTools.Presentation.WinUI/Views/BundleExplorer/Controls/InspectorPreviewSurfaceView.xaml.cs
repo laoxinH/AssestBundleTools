@@ -15,6 +15,7 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
     private InspectorPreviewViewModel? _observedPreviewViewModel;
     private bool _isUpdatingAudioSliderValue;
     private bool _isBindingsUpdateQueued;
+    private object? _lastAppliedAudioSource;
 
     public static readonly DependencyProperty ViewModelProperty =
         DependencyProperty.Register(
@@ -58,6 +59,7 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
         view.DetachObservedPreviewViewModel((args.OldValue as InspectorPanelViewModel)?.Preview);
         view.AttachObservedPreviewViewModel((args.NewValue as InspectorPanelViewModel)?.Preview);
         view.UpdateBindingsNow();
+        view.RefreshAudioPreviewSourceBinding();
     }
 
     private void ApplyLocalizedText()
@@ -84,12 +86,13 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
         AttachAudioPlayer(AudioPreviewPlayer.MediaPlayer);
         AttachObservedPreviewViewModel(ViewModel?.Preview);
         UpdateBindingsNow();
-        RefreshAudioTransportState();
+        RefreshAudioPreviewSourceBinding();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         _audioTransportTimer.Stop();
+        _lastAppliedAudioSource = null;
         DetachObservedPreviewViewModel(_observedPreviewViewModel);
         DetachAudioPlayer();
     }
@@ -141,7 +144,7 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
             nameof(InspectorPreviewViewModel.PreviewAudioSource) or
             nameof(InspectorPreviewViewModel.PreviewAudioVisibility))
         {
-            RefreshAudioTransportState();
+            RefreshAudioPreviewSourceBinding();
         }
 
         if (propertyName is
@@ -425,6 +428,27 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
             return;
         }
 
+        DispatcherQueue.TryEnqueue(RefreshAudioTransportState);
+    }
+
+    private void RefreshAudioPreviewSourceBinding()
+    {
+        AttachAudioPlayer(AudioPreviewPlayer.MediaPlayer);
+        var nextSource = ViewModel?.Preview.PreviewAudioSource;
+        if (!ReferenceEquals(_lastAppliedAudioSource, nextSource))
+        {
+            _lastAppliedAudioSource = nextSource;
+            AudioPreviewPlayer.Source = null;
+            if (_attachedAudioPlayer?.PlaybackSession is not null)
+            {
+                _attachedAudioPlayer.Pause();
+                _attachedAudioPlayer.PlaybackSession.Position = TimeSpan.Zero;
+            }
+
+            AudioPreviewPlayer.Source = nextSource;
+        }
+
+        RefreshAudioTransportState();
         DispatcherQueue.TryEnqueue(RefreshAudioTransportState);
     }
 

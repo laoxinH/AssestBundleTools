@@ -546,8 +546,9 @@
 
                 <StackPanel
                     Margin="8,0,8,8"
+                    MaxWidth="520"
                     HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch"
+                    VerticalAlignment="Top"
                     Spacing="10"
                     Visibility="{x:Bind ViewModel.Preview.PreviewAudioVisibility, Mode=OneWay}">
                     <Grid ColumnSpacing="10">
