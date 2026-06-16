@@ -18,8 +18,6 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("new BundleExplorerWorkspaceExportCoordinator(", pageCode);
         Assert.Contains("private async void OnSaveAsBundleChipButtonClick", pageCode);
         Assert.Contains("await _workspaceExportCoordinator.ShowAsync();", pageCode);
-        Assert.DoesNotContain("Frame?.Navigate(typeof(BatchTasksPage))", pageCode);
-        Assert.DoesNotContain("using AssestBundleTools.Presentation.WinUI.Views.BatchTasks;", pageCode);
     }
 
     [Fact]

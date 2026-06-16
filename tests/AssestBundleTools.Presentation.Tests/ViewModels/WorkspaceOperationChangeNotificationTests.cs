@@ -24,7 +24,6 @@ using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.Tests.Testing;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
-using AssestBundleTools.Presentation.WinUI.ViewModels.BatchTasks;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 namespace AssestBundleTools.Presentation.Tests.ViewModels;
@@ -302,93 +301,6 @@ public sealed class WorkspaceOperationChangeNotificationTests
         Assert.Equal(WorkspaceOperationChangeReason.Mixed, notification.Reason);
         Assert.Contains("extract-1", notification.OperationIds);
         Assert.Contains("replace-1", notification.OperationIds);
-    }
-
-    [Fact]
-    public async Task BatchTasksViewModel_ShouldRefreshChangeSummary_WhenCurrentWorkspaceOperationChanges()
-    {
-        var workspaceContextService = new TestWorkspaceContextService();
-        var navigationRequest = PresentationTestDataFactory.CreateNavigationRequest("operation-refresh");
-        var workspaceSummary = PresentationTestDataFactory.CreateWorkspaceSummary(navigationRequest);
-        workspaceContextService.SetCurrentWorkspace(
-            workspaceSummary,
-            navigationRequest.WorkspaceDataRootPath,
-            navigationRequest.AssetBundleDecryptorId);
-
-        var batchGateway = new RecordingWorkspaceBatchOperationsGateway(workspaceSummary);
-        var notifier = new WorkspaceOperationChangeNotifier();
-        var viewModel = new BatchTasksViewModel(
-            batchGateway,
-            workspaceContextService,
-            notifier,
-            new TestLocalizationService(),
-            new TestAppLogService(),
-            new NoopWorkspaceImportCoordinatorService());
-
-        await viewModel.InitializeAsync();
-        Assert.False(viewModel.HasChanges);
-        var queryCountBeforeNotification = batchGateway.ChangeSummaryQueryCount;
-
-        batchGateway.ChangeSummary = CreateChangeSummary(
-            workspaceSummary,
-            [
-                CreateChangeItem(
-                    new BundleId("bundle-1"),
-                    new AssetId("asset-1"),
-                    "bundle.ab",
-                    "texture.png")
-            ]);
-
-        notifier.NotifyWorkspaceOperationsChanged(
-            workspaceSummary.WorkspaceId,
-            WorkspaceOperationChangeKind.Extraction);
-
-        Assert.True(batchGateway.ChangeSummaryQueryCount > queryCountBeforeNotification);
-        Assert.True(viewModel.HasChanges);
-        Assert.Single(viewModel.RecentChanges);
-    }
-
-    [Fact]
-    public async Task BatchTasksViewModel_ShouldIgnoreOperationChange_ForDifferentWorkspace()
-    {
-        var workspaceContextService = new TestWorkspaceContextService();
-        var navigationRequest = PresentationTestDataFactory.CreateNavigationRequest("operation-ignore");
-        var workspaceSummary = PresentationTestDataFactory.CreateWorkspaceSummary(navigationRequest);
-        workspaceContextService.SetCurrentWorkspace(
-            workspaceSummary,
-            navigationRequest.WorkspaceDataRootPath,
-            navigationRequest.AssetBundleDecryptorId);
-
-        var batchGateway = new RecordingWorkspaceBatchOperationsGateway(workspaceSummary);
-        var notifier = new WorkspaceOperationChangeNotifier();
-        var viewModel = new BatchTasksViewModel(
-            batchGateway,
-            workspaceContextService,
-            notifier,
-            new TestLocalizationService(),
-            new TestAppLogService(),
-            new NoopWorkspaceImportCoordinatorService());
-
-        await viewModel.InitializeAsync();
-        var queryCountBeforeNotification = batchGateway.ChangeSummaryQueryCount;
-
-        batchGateway.ChangeSummary = CreateChangeSummary(
-            workspaceSummary,
-            [
-                CreateChangeItem(
-                    new BundleId("bundle-1"),
-                    new AssetId("asset-1"),
-                    "bundle.ab",
-                    "texture.png")
-            ]);
-
-        notifier.NotifyWorkspaceOperationsChanged(
-            new WorkspaceId("other-workspace"),
-            WorkspaceOperationChangeKind.Extraction);
-
-        Assert.Equal(queryCountBeforeNotification, batchGateway.ChangeSummaryQueryCount);
-        Assert.False(viewModel.HasChanges);
-        Assert.Empty(viewModel.RecentChanges);
     }
 
     [Fact]

@@ -429,8 +429,6 @@ AssestBundleTools.Presentation.WinUI/
     Workspace/
     AssetBundles/
   Views/
-    BatchTasks/
-      BatchTasksPage.xaml
     BundleExplorer/
       BundleExplorerPage.xaml
       Coordinators/
@@ -1130,13 +1128,13 @@ UI 组件设计必须优先考虑项目级复用性，避免每个页面单独�
 - 工作区导入自动识别、解密器 `probe`、缓存诊断和 Reader 拒绝原因当前已统一改为 `LocalizedMessageDto` 结构化消息，由展示层统一本地化输出。
 - 预览诊断 `Detail` 已进一步从裸字符串收敛为结构化消息；Reader 直检与预览生成阶段的稳定失败原因也已抬升为标准错误令牌，不再由 `Infrastructure` 直接拼英文说明。
 - 解密器设置页中的“保存失败 / 删除失败 / 保存后校验失败”已改为标准错误令牌；工作台预览显示层的兜底日志也不再直接输出 `ex.Message`。
-- `Presentation` 已新增共享值格式化器，`BundleExplorer / BatchTasks / Inspector` 的字节大小展示不再各自硬编码 `MB / KB / B`。
+- `Presentation` 已新增共享值格式化器，`BundleExplorer / Inspector` 以及独立批量操作窗口的字节大小展示不再各自硬编码 `MB / KB / B`。
 - 音频转码器与内置直通解密器已去除直接面向用户的内建说明文本，内置解密器显示语义统一回到稳定标识并由展示层本地化。
 - 外部音频转码与外部解密进程当前已进一步区分“外部工具原始输出”和“宿主程序自身失败原因”：前者只作为回退文本保留，后者统一收敛为稳定消息令牌或标准错误令牌。
 - WinUI 壳层中的文件选择器、跨进程启动协议、工作区新进程启动失败与“缺少回退解密器”等异常当前已统一资源化；启动兜底页也不再直接显示 `exception.Message` 原文。
 - `Presentation` 中残留的 `UiText.Get("...")` 资源键字面量当前已统一回收到 `ResourceKeys`，并新增仓库级测试阻止新的界面代码绕过资源键常量。
 - `WorkspaceContextService` 已完成 D-01 第三轮收口：最近目录恢复、可用性映射、“上次活动工作区”恢复请求推导、激活元数据补齐与浏览状态回写编排已下沉到 `Application.Workspace.Services.WorkspaceContextCatalogService`，主类体量已由约 `545` 行降至约 `261` 行。
-- 已完成 D-02 第三轮收口：`WorkspaceBrowserService / WorkspaceCatalogService` 已从主注入链移除，`BundleExplorerPage`、`BatchTasksPage`、`HomePage` 与对应根级对象当前直接消费 `WorkspaceExplorer / AssetInspection / AssetOperation / BatchOperations / Catalog` 五组窄网关；组合根不再额外制造一层空转发门面。
+- 已完成 D-02 第三轮收口：`WorkspaceBrowserService / WorkspaceCatalogService` 已从主注入链移除，`BundleExplorerPage`、`HomePage` 与独立批量操作窗口当前直接消费 `WorkspaceExplorer / AssetInspection / AssetOperation / BatchOperations / Catalog` 等窄网关；组合根不再额外制造一层空转发门面。
 - `BundleExplorerViewModel` 已继续完成一轮页面级收口：资源包浏览左栏、标签工作区状态、资产工作流、浏览状态协调、结果反馈桥接、工作区绑定编排、资源包标签导航/关闭/激活、导入动作以及资源包节点动作已分别拆入独立子 ViewModel / 协作对象，`BundleExplorerPage` 也已直接迁回子状态宿主绑定，主类进一步退回为页面级 facade 与少量入口转发层，当前约 `511` 行。
 - `BundleExplorer` 页面级共享状态已完成 D-03 第三轮收口：`BundleExplorerPage.xaml / BundleExplorerPage.xaml.cs` 已直接绑定或订阅 `WorkspaceShell / BundlePane / DocumentWorkspace / AssetWorkflow` 的语义化状态宿主，`BundleExplorerPageStateBridge` 已移除；浏览状态持久化仍通过窄事件入口汇总，后续应继续防止新的页面兼容透传属性回灌。
 - `BundleExplorerAssetWorkflowViewModel` 已完成 D-04 第六轮体量收缩：在 `Preview`、`Modification Action`、`Inspector Projection`、`Asset Document Coordination` 与 `Asset Pane Coordination` 之外，资产级命令入口与页面动作编排也已下沉到 `BundleExplorerAssetCommandCoordinator`，共享结果失败反馈统一复用 `BundleExplorerOperationFeedbackBridge`；主类当前约 `273` 行，`BundleExplorerViewModel` 当前约 `511` 行且低于页面级 facade `600` 行软上限。当前若继续收口，重点应转向防止职责回灌和稳定页面内共享状态，而不是继续把页面命令入口碎片化。

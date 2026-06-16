@@ -113,8 +113,8 @@
     - `IWorkspaceAssetOperationGateway`
     - `IWorkspaceBatchOperationsGateway`
     - `IWorkspaceCatalogGateway`
-  - `BundleExplorerPage`、`BatchTasksPage`、`HomePage` 当前已改为直接把对应窄网关注入到页面根对象或 code-behind
-- `WorkspaceImportCoordinatorService`、`BatchTasksViewModel`、`BundleExplorerAssetDocumentTabCoordinator`、
+  - `BundleExplorerPage`、`HomePage` 与独立批量操作窗口当前已改为直接把对应窄网关注入到页面根对象或 code-behind
+- `WorkspaceImportCoordinatorService`、`BundleExplorerAssetDocumentTabCoordinator`、
   `BundleExplorerAssetPreviewCoordinator`、`BundleExplorerAssetPaneCoordinator`、
   `BundleExplorerWorkspaceBindingCoordinator`、`BundleExplorerAssetModificationActionHandler`、
   `BundleExplorerViewModel`、`BundleExplorerAssetWorkflowViewModel`
