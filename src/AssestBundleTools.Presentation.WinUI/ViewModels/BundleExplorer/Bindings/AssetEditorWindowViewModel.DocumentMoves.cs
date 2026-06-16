@@ -88,6 +88,8 @@ public sealed partial class AssetEditorWindowViewModel
             return Task.FromResult<AssetDocumentTabViewModel?>(null);
         }
 
+        assetTab.InvalidateHostBoundPreviewForExternalHostTransfer();
+
         if (DocumentGroup.HasDocumentTabs)
         {
             QueueFallbackDocumentActivation();
@@ -107,6 +109,8 @@ public sealed partial class AssetEditorWindowViewModel
         {
             return Task.FromResult<AssetDocumentTabItemViewModel?>(null);
         }
+
+        documentTab.AssetTab?.InvalidateHostBoundPreviewForExternalHostTransfer();
 
         if (DocumentGroup.HasDocumentTabs)
         {
@@ -128,6 +132,14 @@ public sealed partial class AssetEditorWindowViewModel
         }
 
         var transfer = DocumentGroup.DetachDocumentTabs();
+        if (transfer is not null)
+        {
+            foreach (var assetTab in transfer.DocumentTabs.Select(static documentTab => documentTab.AssetTab).OfType<AssetDocumentTabViewModel>())
+            {
+                assetTab.InvalidateHostBoundPreviewForExternalHostTransfer();
+            }
+        }
+
         SyncActiveDocumentState();
         return Task.FromResult(transfer);
     }

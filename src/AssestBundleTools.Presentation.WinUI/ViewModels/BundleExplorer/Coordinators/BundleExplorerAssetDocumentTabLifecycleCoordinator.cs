@@ -138,6 +138,8 @@ internal sealed class BundleExplorerAssetDocumentTabLifecycleCoordinator
             return Task.FromResult<AssetDocumentTabViewModel?>(null);
         }
 
+        assetTab.InvalidateHostBoundPreviewForExternalHostTransfer();
+
         if (!wasActive)
         {
             NotifyHostChangedAndPersist();
@@ -195,6 +197,11 @@ internal sealed class BundleExplorerAssetDocumentTabLifecycleCoordinator
         if (transfer is null)
         {
             return Task.FromResult<AssetDocumentGroupTransfer?>(null);
+        }
+
+        foreach (var assetTab in transfer.DocumentTabs.Select(static documentTab => documentTab.AssetTab).OfType<AssetDocumentTabViewModel>())
+        {
+            assetTab.InvalidateHostBoundPreviewForExternalHostTransfer();
         }
 
         NotifyHostChangedAndPersist();

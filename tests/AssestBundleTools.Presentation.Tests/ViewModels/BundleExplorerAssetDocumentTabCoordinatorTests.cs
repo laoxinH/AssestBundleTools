@@ -331,6 +331,32 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
     }
 
     [Fact]
+    public async Task DetachAssetDocumentTabForExternalHostAsync_ShouldInvalidateAudioPreviewBeforeHostTransfer()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-audio");
+        var assetId = new AssetId("asset-audio");
+        var context = CreateCoordinatorContext(workspaceId, "DetachAudioHostBoundPreview");
+        var coordinator = CreateCoordinator(context, new TestWorkspaceAssetInspectionGateway());
+        var assetTab = context.HostCoordinator.CreateAssetDocumentTab(bundleId, assetId, "Audio");
+        assetTab.ApplyDetails(CreateAssetDetails(workspaceId, bundleId, assetId) with
+        {
+            AssetType = AssetType.AudioClip,
+            AssetTypeDisplayName = nameof(AssetType.AudioClip)
+        });
+        context.BundleTab.AddAssetTab(assetTab, activate: true);
+        assetTab.BeginPreviewRequest();
+        assetTab.Inspector.SetPreviewLoading("loading");
+
+        var detachedTab = await coordinator.DetachAssetDocumentTabForExternalHostAsync(assetTab);
+
+        Assert.Same(assetTab, detachedTab);
+        Assert.False(assetTab.Inspector.Preview.IsPreviewLoading);
+        Assert.Null(assetTab.Inspector.Preview.PreviewAudioSource);
+        Assert.DoesNotContain(assetTab, context.BundleTab.AssetTabs);
+    }
+
+    [Fact]
     public async Task RefreshAssetDocumentTabDetailsAsync_ShouldReloadPreview_WhenOperationProjectionAlreadyUpdatedDetails()
     {
         var workspaceId = WorkspaceId.New();

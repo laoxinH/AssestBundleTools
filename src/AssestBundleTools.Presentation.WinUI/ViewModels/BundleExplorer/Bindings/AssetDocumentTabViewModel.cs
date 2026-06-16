@@ -323,6 +323,18 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
         }
     }
 
+    internal void InvalidateHostBoundPreviewForExternalHostTransfer()
+    {
+        if (Details?.AssetType != AssetType.AudioClip &&
+            Inspector.Preview.PreviewAudioSource is null)
+        {
+            return;
+        }
+
+        CancelPreviewRequest();
+        Inspector.Preview.ResetState();
+    }
+
     internal void CompletePreviewRequest(AssetPreviewRequest previewRequest)
     {
         ArgumentNullException.ThrowIfNull(previewRequest);
