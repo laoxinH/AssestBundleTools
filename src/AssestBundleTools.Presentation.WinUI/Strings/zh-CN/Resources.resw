@@ -4548,12 +4548,6 @@
   <data name="WorkspaceExportDialog.CloseButton" xml:space="preserve">
     <value>取消</value>
   </data>
-  <data name="WorkspaceExportDialog.ProcessorSection.Title" xml:space="preserve">
-    <value>处理器选择</value>
-  </data>
-  <data name="WorkspaceExportDialog.ProcessorSection.Hint" xml:space="preserve">
-    <value>选择导出前使用的整体资源处理器；真实 CLI 接口将在下一步接入。</value>
-  </data>
   <data name="WorkspaceExportDialog.ResourceProcessorSection.Title" xml:space="preserve">
     <value>资源包处理</value>
   </data>
@@ -4593,17 +4587,32 @@
   <data name="WorkspaceExportDialog.ProcessorNoneDescription" xml:space="preserve">
     <value>直接导出当前资源包，不应用额外格式处理。</value>
   </data>
-  <data name="WorkspaceExportDialog.ProcessorPlaceholder" xml:space="preserve">
-    <value>处理器占位</value>
+  <data name="WorkspaceExportDialog.ProcessorCliPlaceholder" xml:space="preserve">
+    <value>CLI 处理器</value>
   </data>
-  <data name="WorkspaceExportDialog.ProcessorPlaceholderDescription" xml:space="preserve">
-    <value>后续可接入 CLI 型预处理器。</value>
+  <data name="WorkspaceExportDialog.ProcessorCliPlaceholderDescription" xml:space="preserve">
+    <value>预留给该资源类型的 CLI 型预处理器。</value>
   </data>
   <data name="WorkspaceExportDialog.BundleSection.Title" xml:space="preserve">
     <value>资源包范围</value>
   </data>
   <data name="WorkspaceExportDialog.BundleSection.Hint" xml:space="preserve">
     <value>选择需要导出的已修改资源包。</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleSearch.Placeholder" xml:space="preserve">
+    <value>搜索资源包</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleSort.Time" xml:space="preserve">
+    <value>按时间排序</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleSort.Name" xml:space="preserve">
+    <value>按名称排序</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleGroup.Recent" xml:space="preserve">
+    <value>最近修改</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleGroup.Previous" xml:space="preserve">
+    <value>之前修改</value>
   </data>
   <data name="WorkspaceExportDialog.SelectAllBundlesButton" xml:space="preserve">
     <value>全选</value>

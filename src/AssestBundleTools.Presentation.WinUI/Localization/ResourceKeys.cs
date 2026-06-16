@@ -630,8 +630,6 @@ public static class ResourceKeys
     public const string WorkspaceExportDialogHeaderHint = "WorkspaceExportDialog.Header.Hint";
     public const string WorkspaceExportDialogPrimaryButton = "WorkspaceExportDialog.PrimaryButton";
     public const string WorkspaceExportDialogCloseButton = "WorkspaceExportDialog.CloseButton";
-    public const string WorkspaceExportDialogProcessorSectionTitle = "WorkspaceExportDialog.ProcessorSection.Title";
-    public const string WorkspaceExportDialogProcessorSectionHint = "WorkspaceExportDialog.ProcessorSection.Hint";
     public const string WorkspaceExportDialogResourceProcessorSectionTitle = "WorkspaceExportDialog.ResourceProcessorSection.Title";
     public const string WorkspaceExportDialogResourceProcessorSectionHint = "WorkspaceExportDialog.ResourceProcessorSection.Hint";
     public const string WorkspaceExportDialogOutputDirectoryLabel = "WorkspaceExportDialog.OutputDirectory.Label";
@@ -645,10 +643,15 @@ public static class ResourceKeys
     public const string WorkspaceExportDialogResourceProcessorSkelDescription = "WorkspaceExportDialog.ResourceProcessor.SkelDescription";
     public const string WorkspaceExportDialogProcessorNone = "WorkspaceExportDialog.ProcessorNone";
     public const string WorkspaceExportDialogProcessorNoneDescription = "WorkspaceExportDialog.ProcessorNoneDescription";
-    public const string WorkspaceExportDialogProcessorPlaceholder = "WorkspaceExportDialog.ProcessorPlaceholder";
-    public const string WorkspaceExportDialogProcessorPlaceholderDescription = "WorkspaceExportDialog.ProcessorPlaceholderDescription";
+    public const string WorkspaceExportDialogProcessorCliPlaceholder = "WorkspaceExportDialog.ProcessorCliPlaceholder";
+    public const string WorkspaceExportDialogProcessorCliPlaceholderDescription = "WorkspaceExportDialog.ProcessorCliPlaceholderDescription";
     public const string WorkspaceExportDialogBundleSectionTitle = "WorkspaceExportDialog.BundleSection.Title";
     public const string WorkspaceExportDialogBundleSectionHint = "WorkspaceExportDialog.BundleSection.Hint";
+    public const string WorkspaceExportDialogBundleSearchPlaceholder = "WorkspaceExportDialog.BundleSearch.Placeholder";
+    public const string WorkspaceExportDialogBundleSortByTime = "WorkspaceExportDialog.BundleSort.Time";
+    public const string WorkspaceExportDialogBundleSortByName = "WorkspaceExportDialog.BundleSort.Name";
+    public const string WorkspaceExportDialogBundleGroupRecent = "WorkspaceExportDialog.BundleGroup.Recent";
+    public const string WorkspaceExportDialogBundleGroupPrevious = "WorkspaceExportDialog.BundleGroup.Previous";
     public const string WorkspaceExportDialogSelectAllBundlesButton = "WorkspaceExportDialog.SelectAllBundlesButton";
     public const string WorkspaceExportDialogClearBundleSelectionButton = "WorkspaceExportDialog.ClearBundleSelectionButton";
     public const string WorkspaceExportDialogPreviewSectionTitle = "WorkspaceExportDialog.PreviewSection.Title";

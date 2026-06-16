@@ -21,12 +21,11 @@ public sealed partial class WorkspaceExportDialogContent : UserControl
     {
         BundleSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogBundleSectionTitle);
         BundleSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogBundleSectionHint);
+        BundleSearchTextBox.PlaceholderText = UiText.Get(ResourceKeys.WorkspaceExportDialogBundleSearchPlaceholder);
         SelectAllBundlesButton.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogSelectAllBundlesButton);
         ClearBundleSelectionButton.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogClearBundleSelectionButton);
         ResourceProcessorSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorSectionTitle);
         ResourceProcessorSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorSectionHint);
-        ProcessorSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogProcessorSectionTitle);
-        ProcessorSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogProcessorSectionHint);
         OutputDirectoryLabelText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogOutputDirectoryLabel);
     }
 

@@ -4548,12 +4548,6 @@
   <data name="WorkspaceExportDialog.CloseButton" xml:space="preserve">
     <value>Cancel</value>
   </data>
-  <data name="WorkspaceExportDialog.ProcessorSection.Title" xml:space="preserve">
-    <value>Processor Selection</value>
-  </data>
-  <data name="WorkspaceExportDialog.ProcessorSection.Hint" xml:space="preserve">
-    <value>Select the bundle-level processor to use before export. The real CLI interface will be wired in the next step.</value>
-  </data>
   <data name="WorkspaceExportDialog.ResourceProcessorSection.Title" xml:space="preserve">
     <value>Bundle Processing</value>
   </data>
@@ -4593,17 +4587,32 @@
   <data name="WorkspaceExportDialog.ProcessorNoneDescription" xml:space="preserve">
     <value>Export bundles directly without any extra format processing.</value>
   </data>
-  <data name="WorkspaceExportDialog.ProcessorPlaceholder" xml:space="preserve">
-    <value>Processor placeholder</value>
+  <data name="WorkspaceExportDialog.ProcessorCliPlaceholder" xml:space="preserve">
+    <value>CLI processor</value>
   </data>
-  <data name="WorkspaceExportDialog.ProcessorPlaceholderDescription" xml:space="preserve">
-    <value>CLI-style preprocessors can be wired in later.</value>
+  <data name="WorkspaceExportDialog.ProcessorCliPlaceholderDescription" xml:space="preserve">
+    <value>Reserved for a CLI-style preprocessor for this resource type.</value>
   </data>
   <data name="WorkspaceExportDialog.BundleSection.Title" xml:space="preserve">
     <value>Bundle Scope</value>
   </data>
   <data name="WorkspaceExportDialog.BundleSection.Hint" xml:space="preserve">
     <value>Choose the modified bundles to export.</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleSearch.Placeholder" xml:space="preserve">
+    <value>Search bundles</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleSort.Time" xml:space="preserve">
+    <value>Sort by time</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleSort.Name" xml:space="preserve">
+    <value>Sort by name</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleGroup.Recent" xml:space="preserve">
+    <value>Recently modified</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleGroup.Previous" xml:space="preserve">
+    <value>Previously modified</value>
   </data>
   <data name="WorkspaceExportDialog.SelectAllBundlesButton" xml:space="preserve">
     <value>Select all</value>
