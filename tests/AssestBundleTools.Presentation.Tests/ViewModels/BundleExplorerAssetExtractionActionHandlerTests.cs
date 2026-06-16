@@ -133,12 +133,16 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
         {
             BatchExtractionOutputDirectory = @"D:\Exports\Selected"
         };
+        var backgroundTaskRunner = new TestBackgroundTaskRunner();
+        var backgroundTaskStatusService = new RecordingBackgroundTaskStatusService();
         var handler = new BundleExplorerAssetExtractionActionHandler(
             gateway,
             new TestAppLogService(),
             new TestAppNotificationService(),
             new TestLocalizationService(),
             filePicker,
+            backgroundTaskRunner,
+            backgroundTaskStatusService,
             workspaceBatchOperationsGateway: batchGateway);
         var firstEntry = CreateAssetEntry("asset-1", "hero");
         var secondEntry = CreateAssetEntry("asset-2", "hero_alpha");
@@ -157,6 +161,14 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
         Assert.Equal(@"C:\WorkspaceData", command.WorkspaceDataRootPath);
         Assert.Equal([new AssetId("asset-1"), new AssetId("asset-2")], command.SelectedAssetIds);
         Assert.Equal([new BundleId("bundle-ui")], command.SelectedBundleIds);
+        Assert.NotNull(command.Progress);
+        Assert.Equal(1, backgroundTaskRunner.RunCallCount);
+        Assert.Equal(typeof(Result<WorkspaceBatchExtractionResultDto>), backgroundTaskRunner.LastResultType);
+        var task = Assert.Single(backgroundTaskStatusService.Tasks);
+        Assert.Equal(ResourceKeys.BundleExplorerStatusExtractSelectedAssets, task.Title);
+        Assert.Equal(2, task.TotalCount);
+        Assert.True(task.IsDisposed);
+        Assert.Contains(task.ProgressReports, report => report.CompletedCount == 1 && report.TotalCount == 2 && report.Detail == "asset-1");
     }
 
     [Fact]
@@ -243,12 +255,16 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
         {
             BatchExtractionOutputDirectory = @"D:\Exports\Selected"
         };
+        var backgroundTaskRunner = new TestBackgroundTaskRunner();
+        var backgroundTaskStatusService = new RecordingBackgroundTaskStatusService();
         var handler = new BundleExplorerAssetExtractionActionHandler(
             gateway,
             new TestAppLogService(),
             new TestAppNotificationService(),
             new TestLocalizationService(),
             filePicker,
+            backgroundTaskRunner,
+            backgroundTaskStatusService,
             workspaceBatchOperationsGateway: batchGateway);
         var firstEntry = CreateSpineGroupEntry("group-1", "char_1001_amiya2.ab");
         var secondEntry = CreateSpineGroupEntry("group-2", "char_1001_amiya2.ab");
@@ -266,6 +282,14 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
         Assert.Equal([new BundleId("bundle-ui")], command.SelectedBundleIds);
         Assert.Equal([WorkspaceBatchExtractionCategoryDto.SpineGroup], command.SelectedCategories);
         Assert.Equal(["group-1", "group-2"], command.SelectedSpineGroupIds);
+        Assert.NotNull(command.Progress);
+        Assert.Equal(1, backgroundTaskRunner.RunCallCount);
+        Assert.Equal(typeof(Result<WorkspaceBatchExtractionResultDto>), backgroundTaskRunner.LastResultType);
+        var task = Assert.Single(backgroundTaskStatusService.Tasks);
+        Assert.Equal(ResourceKeys.BundleExplorerStatusExtractSelectedSpineGroups, task.Title);
+        Assert.Equal(2, task.TotalCount);
+        Assert.True(task.IsDisposed);
+        Assert.Contains(task.ProgressReports, report => report.CompletedCount == 1 && report.TotalCount == 2 && report.Detail == "group-1");
     }
 
     [Fact]
@@ -937,6 +961,21 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
             CancellationToken cancellationToken = default)
         {
             ExtractWorkspaceAssetsCommands.Add(command);
+            command.Progress?.Report(new WorkspaceBatchExtractionProgressDto(
+                (command.SelectedSpineGroupIds?.Count ?? 0) > 0
+                    ? WorkspaceBatchExtractionProgressKind.SpineGroup
+                    : WorkspaceBatchExtractionProgressKind.Asset,
+                CompletedItemCount: 1,
+                TotalItemCount: Math.Max(
+                    1,
+                    Math.Max(
+                        command.SelectedAssetIds?.Count ?? 0,
+                        command.SelectedSpineGroupIds?.Count ?? 0)),
+                CandidateBundleCount: command.SelectedBundleIds?.Count ?? 0,
+                SucceededItemCount: 1,
+                FailedItemCount: 0,
+                ItemDisplayName: command.SelectedSpineGroupIds?.FirstOrDefault() ??
+                    command.SelectedAssetIds?.Select(static assetId => assetId.Value).FirstOrDefault()));
             var assetResults = (command.SelectedAssetIds ?? Array.Empty<AssetId>())
                 .Select(assetId => new AssetExtractionResultDto(
                     command.WorkspaceId,

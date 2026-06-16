@@ -196,7 +196,8 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
         {
             if (_workspaceBatchOperationsGateway is not null)
             {
-                var workspaceBatchResult = await _workspaceBatchOperationsGateway.ExtractWorkspaceAssetsAsync(
+                var workspaceBatchResult = await _batchExtractionExecutor.ExtractWorkspaceAssetsAsync(
+                    workspaceSummary,
                     new ExtractWorkspaceAssetsCommand(
                         workspaceSummary.WorkspaceId,
                         OutputDirectory: selectedOutputDirectory,
@@ -210,7 +211,7 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
                             .Select(static entry => entry.Item.AssetId)
                             .Distinct()
                             .ToArray()),
-                    CancellationToken.None);
+                    _workspaceBatchOperationsGateway.ExtractWorkspaceAssetsAsync);
 
                 if (workspaceBatchResult.IsCancelled)
                 {
@@ -417,7 +418,8 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
         {
             if (_workspaceBatchOperationsGateway is not null)
             {
-                var workspaceBatchResult = await _workspaceBatchOperationsGateway.ExtractWorkspaceAssetsAsync(
+                var workspaceBatchResult = await _batchExtractionExecutor.ExtractWorkspaceSpineGroupsAsync(
+                    workspaceSummary,
                     new ExtractWorkspaceAssetsCommand(
                         workspaceSummary.WorkspaceId,
                         OutputDirectory: selectedOutputDirectory,
@@ -431,7 +433,7 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
                         SelectedSpineGroupIds: selectedEntries
                             .Select(static entry => entry.Item.GroupId)
                             .ToArray()),
-                    CancellationToken.None);
+                    _workspaceBatchOperationsGateway.ExtractWorkspaceAssetsAsync);
 
                 if (workspaceBatchResult.IsCancelled)
                 {

@@ -132,6 +132,88 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
         }
     }
 
+    public async Task<Result<WorkspaceBatchExtractionResultDto>> ExtractWorkspaceAssetsAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        ExtractWorkspaceAssetsCommand command,
+        Func<ExtractWorkspaceAssetsCommand, CancellationToken, Task<Result<WorkspaceBatchExtractionResultDto>>> executeAsync,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(workspaceSummary);
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(executeAsync);
+
+        using var notificationBatch = _operationChangeNotifier?.BeginNotificationBatch();
+
+        try
+        {
+            return await _backgroundWorkScheduler.RunAsync(
+                new BackgroundWorkRequest<Result<WorkspaceBatchExtractionResultDto>>(
+                    BackgroundWorkProfile.BatchExtraction,
+                    async context =>
+                    {
+                        var progress = new InlineProgress<WorkspaceBatchExtractionProgressDto>(
+                            snapshot => ReportWorkspaceBatchProgress(context, snapshot));
+                        var commandWithProgress = command with { Progress = progress };
+                        return await executeAsync(commandWithProgress, context.CancellationToken);
+                    })
+                {
+                    SemanticKind = BackgroundWorkSemanticKind.VisibleOutput,
+                    Priority = BackgroundWorkPriority.Visible,
+                    WorkspaceId = workspaceSummary.WorkspaceId.Value,
+                    WorkspaceKey = workspaceSummary.WorkspaceKey,
+                    StatusTitle = _localizationService.GetRequiredString(ResourceKeys.BundleExplorerStatusExtractSelectedAssets),
+                    TotalCount = command.SelectedAssetIds?.Count,
+                    CanCancel = true
+                },
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return Result<WorkspaceBatchExtractionResultDto>.Cancelled();
+        }
+    }
+
+    public async Task<Result<WorkspaceBatchExtractionResultDto>> ExtractWorkspaceSpineGroupsAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        ExtractWorkspaceAssetsCommand command,
+        Func<ExtractWorkspaceAssetsCommand, CancellationToken, Task<Result<WorkspaceBatchExtractionResultDto>>> executeAsync,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(workspaceSummary);
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(executeAsync);
+
+        using var notificationBatch = _operationChangeNotifier?.BeginNotificationBatch();
+
+        try
+        {
+            return await _backgroundWorkScheduler.RunAsync(
+                new BackgroundWorkRequest<Result<WorkspaceBatchExtractionResultDto>>(
+                    BackgroundWorkProfile.BatchExtraction,
+                    async context =>
+                    {
+                        var progress = new InlineProgress<WorkspaceBatchExtractionProgressDto>(
+                            snapshot => ReportWorkspaceBatchProgress(context, snapshot));
+                        var commandWithProgress = command with { Progress = progress };
+                        return await executeAsync(commandWithProgress, context.CancellationToken);
+                    })
+                {
+                    SemanticKind = BackgroundWorkSemanticKind.VisibleOutput,
+                    Priority = BackgroundWorkPriority.Visible,
+                    WorkspaceId = workspaceSummary.WorkspaceId.Value,
+                    WorkspaceKey = workspaceSummary.WorkspaceKey,
+                    StatusTitle = _localizationService.GetRequiredString(ResourceKeys.BundleExplorerStatusExtractSelectedSpineGroups),
+                    TotalCount = command.SelectedSpineGroupIds?.Count,
+                    CanCancel = true
+                },
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return Result<WorkspaceBatchExtractionResultDto>.Cancelled();
+        }
+    }
+
     public async Task<Result<AssetExtractionResultDto>> ExtractAssetAsync(
         WorkspaceSummaryDto workspaceSummary,
         string displayName,
@@ -331,6 +413,25 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
             fileName);
     }
 
+    private static void ReportWorkspaceBatchProgress(
+        BackgroundWorkExecutionContext context,
+        WorkspaceBatchExtractionProgressDto snapshot)
+    {
+        var totalCount = snapshot.TotalItemCount > 0
+            ? snapshot.TotalItemCount
+            : Math.Max(snapshot.CompletedItemCount, 1);
+        if (snapshot.Kind == WorkspaceBatchExtractionProgressKind.Preparing)
+        {
+            context.Progress.ReportIndeterminate(snapshot.ItemDisplayName);
+            return;
+        }
+
+        context.Progress.ReportProgress(
+            snapshot.CompletedItemCount,
+            totalCount,
+            snapshot.ItemDisplayName);
+    }
+
     private sealed record AssetBatchExtractionItem(
         string DisplayName,
         ExtractAssetCommand Command);
@@ -338,6 +439,18 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
     private sealed record SpineGroupBatchExtractionItem(
         string DisplayName,
         ExtractSpineAssetGroupCommand Command);
+
+    private sealed class InlineProgress<T> : IProgress<T>
+    {
+        private readonly Action<T> _handler;
+
+        public InlineProgress(Action<T> handler)
+        {
+            _handler = handler ?? throw new ArgumentNullException(nameof(handler));
+        }
+
+        public void Report(T value) => _handler(value);
+    }
 }
 
 internal sealed record BundleExplorerBatchAssetExtractionExecutionResult(
