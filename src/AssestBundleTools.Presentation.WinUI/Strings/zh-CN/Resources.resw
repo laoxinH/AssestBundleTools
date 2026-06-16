@@ -4548,14 +4548,44 @@
   <data name="WorkspaceExportDialog.CloseButton" xml:space="preserve">
     <value>取消</value>
   </data>
-  <data name="WorkspaceExportDialog.SourceSection.Title" xml:space="preserve">
-    <value>导出计划</value>
+  <data name="WorkspaceExportDialog.ProcessorSection.Title" xml:space="preserve">
+    <value>处理器选择</value>
   </data>
-  <data name="WorkspaceExportDialog.SourceSummary.Format" xml:space="preserve">
-    <value>{0} 项已修改，{1} 项变更将参与计划。</value>
+  <data name="WorkspaceExportDialog.ProcessorSection.Hint" xml:space="preserve">
+    <value>选择导出前使用的整体资源处理器；真实 CLI 接口将在下一步接入。</value>
   </data>
-  <data name="WorkspaceExportDialog.Processor.Badge" xml:space="preserve">
-    <value>资源处理器</value>
+  <data name="WorkspaceExportDialog.ResourceProcessorSection.Title" xml:space="preserve">
+    <value>资源包处理</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessorSection.Hint" xml:space="preserve">
+    <value>选择需要纳入预处理链路的资源类型。</value>
+  </data>
+  <data name="WorkspaceExportDialog.OutputDirectory.Label" xml:space="preserve">
+    <value>输出目录</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.Texture2D" xml:space="preserve">
+    <value>Texture2D</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.Texture2DDescription" xml:space="preserve">
+    <value>处理贴图资源与导入格式转换。</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.Audio" xml:space="preserve">
+    <value>音频</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.AudioDescription" xml:space="preserve">
+    <value>处理 AudioClip 载荷与音频格式转换。</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.Atlas" xml:space="preserve">
+    <value>Atlas</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.AtlasDescription" xml:space="preserve">
+    <value>处理 Spine atlas 文本与关联贴图输出。</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.Skel" xml:space="preserve">
+    <value>Skel</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.SkelDescription" xml:space="preserve">
+    <value>处理 Spine skel 骨骼数据与运行时兼容转换。</value>
   </data>
   <data name="WorkspaceExportDialog.ProcessorNone" xml:space="preserve">
     <value>无处理器</value>
@@ -4581,23 +4611,11 @@
   <data name="WorkspaceExportDialog.ClearBundleSelectionButton" xml:space="preserve">
     <value>清空</value>
   </data>
-  <data name="WorkspaceExportDialog.RecentSection.Title" xml:space="preserve">
-    <value>最近修改</value>
-  </data>
-  <data name="WorkspaceExportDialog.RecentChangesSummary.Format" xml:space="preserve">
-    <value>显示最近 {0} 项变更，便于快速确认导出范围。</value>
-  </data>
-  <data name="WorkspaceExportDialog.OutputSection.Title" xml:space="preserve">
-    <value>输出与处理</value>
-  </data>
-  <data name="WorkspaceExportDialog.OutputSection.Hint" xml:space="preserve">
-    <value>当前先预留输出目录与资源处理器选择；真实写包逻辑将在下一步接入。</value>
-  </data>
   <data name="WorkspaceExportDialog.PreviewSection.Title" xml:space="preserve">
     <value>计划摘要</value>
   </data>
   <data name="WorkspaceExportDialog.PlanSummary.Format" xml:space="preserve">
-    <value>{0} 个资源包，{1} 项变更等待导出。</value>
+    <value>已选择 {0} 个资源包，{1} 项变更，应用修改 {2} 项，替换 {3} 项，提取记录 {4} 项。</value>
   </data>
   <data name="WorkspaceExportDialog.BundleSummary.Format" xml:space="preserve">
     <value>变更 {0}，修改 {1}，提取 {2}，工作区替换 {3}，文件替换 {4}</value>

@@ -14,8 +14,6 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs
 public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
 {
     private readonly ILocalizationService _localizationService;
-    private string _sourceSummaryText = string.Empty;
-    private string _recentChangesSummaryText = string.Empty;
     private string _outputDirectoryText = string.Empty;
     private string _planSummaryText = string.Empty;
     private string _validationText = string.Empty;
@@ -30,33 +28,30 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         WorkspaceSavePreviewDto? savePreview)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
-        _sourceSummaryText = changeSummary is null
-            ? string.Empty
-            : _localizationService.GetFormattedString(
-                ResourceKeys.WorkspaceExportDialogSourceSummaryFormat,
-                changeSummary.ModifiedAssetCount,
-                changeSummary.TotalChangeCount);
-        _recentChangesSummaryText = changeSummary is null
-            ? string.Empty
-            : _localizationService.GetFormattedString(
-                ResourceKeys.WorkspaceExportDialogRecentChangesSummaryFormat,
-                Math.Min(changeSummary.Items.Count, 8));
         _outputDirectoryText = savePreview?.OutputDirectory ?? string.Empty;
-        _planSummaryText = savePreview is null
-            ? string.Empty
-            : _localizationService.GetFormattedString(
-                ResourceKeys.WorkspaceExportDialogPlanSummaryFormat,
-                savePreview.PlannedBundleCount,
-                savePreview.TotalChangeCount);
         _primaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPrimaryButton);
 
         Bundles = new ObservableCollection<WorkspaceExportBundleOptionViewModel>(
             CreateBundleOptions(savePreview));
-        RecentChanges = new ObservableCollection<WorkspaceChangeItemDto>(
-            changeSummary?.Items
-                .OrderByDescending(static item => item.LastChangedAtUtc ?? DateTimeOffset.MinValue)
-                .Take(8)
-                .ToArray() ?? Array.Empty<WorkspaceChangeItemDto>());
+        ResourceProcessors = new ObservableCollection<WorkspaceExportResourceProcessorOptionViewModel>
+        {
+            new(
+                "texture2d",
+                _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorTexture2D),
+                _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorTexture2DDescription)),
+            new(
+                "audio",
+                _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAudio),
+                _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAudioDescription)),
+            new(
+                "atlas",
+                _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAtlas),
+                _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAtlasDescription)),
+            new(
+                "skel",
+                _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorSkel),
+                _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorSkelDescription))
+        };
         Processors = new ObservableCollection<WorkspaceExportProcessorOptionViewModel>
         {
             new(
@@ -73,25 +68,15 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         {
             bundle.SelectionChanged += OnBundleSelectionChanged;
         }
+
+        RefreshPlanSummary();
     }
 
     public ObservableCollection<WorkspaceExportBundleOptionViewModel> Bundles { get; }
 
-    public ObservableCollection<WorkspaceChangeItemDto> RecentChanges { get; }
+    public ObservableCollection<WorkspaceExportResourceProcessorOptionViewModel> ResourceProcessors { get; }
 
     public ObservableCollection<WorkspaceExportProcessorOptionViewModel> Processors { get; }
-
-    public string SourceSummaryText
-    {
-        get => _sourceSummaryText;
-        private set => SetProperty(ref _sourceSummaryText, value);
-    }
-
-    public string RecentChangesSummaryText
-    {
-        get => _recentChangesSummaryText;
-        private set => SetProperty(ref _recentChangesSummaryText, value);
-    }
 
     public string OutputDirectoryText
     {
@@ -160,8 +145,25 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         PrimaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPrimaryButton);
     }
 
-    private void OnBundleSelectionChanged(object? sender, EventArgs e) =>
+    private void OnBundleSelectionChanged(object? sender, EventArgs e)
+    {
         OnPropertyChanged(nameof(HasExportTargets));
+        RefreshPlanSummary();
+    }
+
+    private void RefreshPlanSummary()
+    {
+        var selectedBundles = Bundles
+            .Where(static bundle => bundle.IsSelected)
+            .ToArray();
+        PlanSummaryText = _localizationService.GetFormattedString(
+            ResourceKeys.WorkspaceExportDialogPlanSummaryFormat,
+            selectedBundles.Length,
+            selectedBundles.Sum(static bundle => bundle.ChangeCount),
+            selectedBundles.Sum(static bundle => bundle.ModifiedAssetCount),
+            selectedBundles.Sum(static bundle => bundle.WorkspaceReplacementCount + bundle.FileReplacementCount),
+            selectedBundles.Sum(static bundle => bundle.ExtractedAssetCount));
+    }
 
     private IEnumerable<WorkspaceExportBundleOptionViewModel> CreateBundleOptions(WorkspaceSavePreviewDto? savePreview)
     {
@@ -183,6 +185,11 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
                     plan.ExtractedAssetCount,
                     plan.WorkspaceReplacementCount,
                     plan.FileReplacementCount),
+                plan.ChangeCount,
+                plan.ModifiedAssetCount,
+                plan.ExtractedAssetCount,
+                plan.WorkspaceReplacementCount,
+                plan.FileReplacementCount,
                 lastChangedAtUtc: null);
         }
     }

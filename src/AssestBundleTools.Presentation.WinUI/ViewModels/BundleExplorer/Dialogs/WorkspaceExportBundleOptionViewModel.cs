@@ -12,12 +12,22 @@ public sealed class WorkspaceExportBundleOptionViewModel : ObservableObject
         string displayName,
         string outputPath,
         string summaryText,
+        int changeCount,
+        int modifiedAssetCount,
+        int extractedAssetCount,
+        int workspaceReplacementCount,
+        int fileReplacementCount,
         DateTimeOffset? lastChangedAtUtc)
     {
         BundleId = bundleId;
         DisplayName = displayName;
         OutputPath = outputPath;
         SummaryText = summaryText;
+        ChangeCount = changeCount;
+        ModifiedAssetCount = modifiedAssetCount;
+        ExtractedAssetCount = extractedAssetCount;
+        WorkspaceReplacementCount = workspaceReplacementCount;
+        FileReplacementCount = fileReplacementCount;
         LastChangedAtUtc = lastChangedAtUtc;
     }
 
@@ -30,6 +40,16 @@ public sealed class WorkspaceExportBundleOptionViewModel : ObservableObject
     public string OutputPath { get; }
 
     public string SummaryText { get; }
+
+    public int ChangeCount { get; }
+
+    public int ModifiedAssetCount { get; }
+
+    public int ExtractedAssetCount { get; }
+
+    public int WorkspaceReplacementCount { get; }
+
+    public int FileReplacementCount { get; }
 
     public DateTimeOffset? LastChangedAtUtc { get; }
 

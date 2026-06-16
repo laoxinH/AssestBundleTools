@@ -37,72 +37,7 @@
         </Style>
     </UserControl.Resources>
 
-    <Grid RowSpacing="14">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <Border Style="{StaticResource WorkspaceExportPanelCardStyle}" Translation="0,0,8">
-            <Grid RowSpacing="10">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Grid ColumnSpacing="12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="320" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Spacing="4">
-                        <TextBlock
-                            x:Name="SourceSectionTitleText"
-                            Style="{StaticResource WorkspaceExportSectionTitleTextStyle}" />
-                        <TextBlock
-                            Text="{Binding SourceSummaryText}"
-                            Style="{StaticResource WorkspaceExportSecondaryTextStyle}" />
-                    </StackPanel>
-                    <ComboBox
-                        Grid.Column="1"
-                        HorizontalAlignment="Stretch"
-                        ItemsSource="{Binding Processors}"
-                        SelectedItem="{Binding SelectedProcessor, Mode=TwoWay}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Spacing="2">
-                                    <TextBlock FontWeight="SemiBold" Text="{Binding DisplayName}" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="{Binding Description}"
-                                        TextTrimming="CharacterEllipsis" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                </Grid>
-                <Grid Grid.Row="1" ColumnSpacing="10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Border
-                        Padding="10,4"
-                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                        CornerRadius="8">
-                        <TextBlock x:Name="ProcessorBadgeText" FontSize="12" FontWeight="SemiBold" />
-                    </Border>
-                    <TextBlock
-                        Grid.Column="1"
-                        VerticalAlignment="Center"
-                        Text="{Binding OutputDirectoryText}"
-                        TextTrimming="CharacterEllipsis"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                </Grid>
-            </Grid>
-        </Border>
-
-        <Grid Grid.Row="1" ColumnSpacing="14">
+    <Grid ColumnSpacing="14">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="420" MinWidth="360" />
                 <ColumnDefinition Width="*" />
@@ -175,7 +110,7 @@
             <Grid Grid.Column="1" RowSpacing="14">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <Border Style="{StaticResource WorkspaceExportPanelCardStyle}" Translation="0,0,8">
                     <Grid RowSpacing="12">
@@ -185,35 +120,96 @@
                         </Grid.RowDefinitions>
                         <StackPanel Spacing="4">
                             <TextBlock
-                                x:Name="RecentSectionTitleText"
+                                x:Name="ResourceProcessorSectionTitleText"
                                 Style="{StaticResource WorkspaceExportSectionTitleTextStyle}" />
                             <TextBlock
-                                Text="{Binding RecentChangesSummaryText}"
+                                x:Name="ResourceProcessorSectionHintText"
                                 Style="{StaticResource WorkspaceExportSecondaryTextStyle}" />
                         </StackPanel>
-                        <ListView Grid.Row="1" ItemsSource="{Binding RecentChanges}">
+                        <ListView
+                            Grid.Row="1"
+                            ItemsSource="{Binding ResourceProcessors}"
+                            SelectionMode="None">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel Padding="8" Spacing="3">
-                                        <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding AssetName}" />
-                                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{Binding BundleDisplayName}" />
-                                    </StackPanel>
+                                    <Grid Padding="8" ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="34" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox
+                                            Width="28"
+                                            MinWidth="0"
+                                            Padding="0"
+                                            VerticalAlignment="Center"
+                                            IsChecked="{Binding IsEnabled, Mode=TwoWay}" />
+                                        <StackPanel Grid.Column="1" Spacing="3">
+                                            <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding DisplayName}" />
+                                            <TextBlock
+                                                FontSize="12"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="{Binding Description}"
+                                                TextWrapping="WrapWholeWords" />
+                                        </StackPanel>
+                                    </Grid>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
                     </Grid>
                 </Border>
                 <Border Grid.Row="1" Style="{StaticResource WorkspaceExportPanelCardStyle}" Translation="0,0,8">
-                    <StackPanel Spacing="6">
-                        <TextBlock
-                            x:Name="OutputSectionTitleText"
-                            Style="{StaticResource WorkspaceExportSectionTitleTextStyle}" />
-                        <TextBlock
-                            x:Name="OutputSectionHintText"
-                            Style="{StaticResource WorkspaceExportSecondaryTextStyle}" />
-                    </StackPanel>
+                    <Grid RowSpacing="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                x:Name="ProcessorSectionTitleText"
+                                Style="{StaticResource WorkspaceExportSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="ProcessorSectionHintText"
+                                Style="{StaticResource WorkspaceExportSecondaryTextStyle}" />
+                        </StackPanel>
+                        <ComboBox
+                            Grid.Row="1"
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{Binding Processors}"
+                            SelectedItem="{Binding SelectedProcessor, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock FontWeight="SemiBold" Text="{Binding DisplayName}" />
+                                        <TextBlock
+                                            FontSize="12"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{Binding Description}"
+                                            TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Grid Grid.Row="2" ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border
+                                Padding="10,4"
+                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                CornerRadius="8">
+                                <TextBlock x:Name="OutputDirectoryLabelText" FontSize="12" FontWeight="SemiBold" />
+                            </Border>
+                            <TextBlock
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Text="{Binding OutputDirectoryText}"
+                                TextTrimming="CharacterEllipsis"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </Grid>
+                    </Grid>
                 </Border>
             </Grid>
         </Grid>
-    </Grid>
 </UserControl>

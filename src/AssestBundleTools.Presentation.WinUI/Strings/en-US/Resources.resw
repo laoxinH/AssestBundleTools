@@ -4548,14 +4548,44 @@
   <data name="WorkspaceExportDialog.CloseButton" xml:space="preserve">
     <value>Cancel</value>
   </data>
-  <data name="WorkspaceExportDialog.SourceSection.Title" xml:space="preserve">
-    <value>Export Plan</value>
+  <data name="WorkspaceExportDialog.ProcessorSection.Title" xml:space="preserve">
+    <value>Processor Selection</value>
   </data>
-  <data name="WorkspaceExportDialog.SourceSummary.Format" xml:space="preserve">
-    <value>{0} modified items, {1} changes included in the plan.</value>
+  <data name="WorkspaceExportDialog.ProcessorSection.Hint" xml:space="preserve">
+    <value>Select the bundle-level processor to use before export. The real CLI interface will be wired in the next step.</value>
   </data>
-  <data name="WorkspaceExportDialog.Processor.Badge" xml:space="preserve">
-    <value>Processors</value>
+  <data name="WorkspaceExportDialog.ResourceProcessorSection.Title" xml:space="preserve">
+    <value>Bundle Processing</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessorSection.Hint" xml:space="preserve">
+    <value>Choose which resource categories should participate in the preprocessing chain.</value>
+  </data>
+  <data name="WorkspaceExportDialog.OutputDirectory.Label" xml:space="preserve">
+    <value>Output directory</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.Texture2D" xml:space="preserve">
+    <value>Texture2D</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.Texture2DDescription" xml:space="preserve">
+    <value>Process texture resources and import format conversion.</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.Audio" xml:space="preserve">
+    <value>Audio</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.AudioDescription" xml:space="preserve">
+    <value>Process AudioClip payloads and audio format conversion.</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.Atlas" xml:space="preserve">
+    <value>Atlas</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.AtlasDescription" xml:space="preserve">
+    <value>Process Spine atlas text and linked texture output.</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.Skel" xml:space="preserve">
+    <value>Skel</value>
+  </data>
+  <data name="WorkspaceExportDialog.ResourceProcessor.SkelDescription" xml:space="preserve">
+    <value>Process Spine skel data and runtime compatibility conversion.</value>
   </data>
   <data name="WorkspaceExportDialog.ProcessorNone" xml:space="preserve">
     <value>No processor</value>
@@ -4581,23 +4611,11 @@
   <data name="WorkspaceExportDialog.ClearBundleSelectionButton" xml:space="preserve">
     <value>Clear</value>
   </data>
-  <data name="WorkspaceExportDialog.RecentSection.Title" xml:space="preserve">
-    <value>Recent Changes</value>
-  </data>
-  <data name="WorkspaceExportDialog.RecentChangesSummary.Format" xml:space="preserve">
-    <value>Showing the latest {0} changes for quick review.</value>
-  </data>
-  <data name="WorkspaceExportDialog.OutputSection.Title" xml:space="preserve">
-    <value>Output and Processing</value>
-  </data>
-  <data name="WorkspaceExportDialog.OutputSection.Hint" xml:space="preserve">
-    <value>Output directory and processor selection are reserved for the next export pass.</value>
-  </data>
   <data name="WorkspaceExportDialog.PreviewSection.Title" xml:space="preserve">
     <value>Plan Summary</value>
   </data>
   <data name="WorkspaceExportDialog.PlanSummary.Format" xml:space="preserve">
-    <value>{0} bundles and {1} changes are queued for export.</value>
+    <value>{0} bundles selected, {1} changes, {2} applied modifications, {3} replacements, {4} extraction records.</value>
   </data>
   <data name="WorkspaceExportDialog.BundleSummary.Format" xml:space="preserve">
     <value>Changes {0}, modified {1}, extracted {2}, workspace replacement {3}, file replacement {4}</value>

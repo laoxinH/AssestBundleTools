@@ -66,10 +66,20 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("GetWorkspaceChangeSummaryAsync", coordinator);
         Assert.Contains("<shared:AppNotificationPresenter", windowXaml);
         Assert.Contains("ItemsSource=\"{Binding Bundles}\"", contentXaml);
-        Assert.Contains("ItemsSource=\"{Binding RecentChanges}\"", contentXaml);
+        Assert.Contains("ItemsSource=\"{Binding ResourceProcessors}\"", contentXaml);
         Assert.Contains("ItemsSource=\"{Binding Processors}\"", contentXaml);
         Assert.Contains("SelectedItem=\"{Binding SelectedProcessor, Mode=TwoWay}\"", contentXaml);
+        Assert.Contains("ResourceProcessorSectionTitleText", contentXaml);
+        Assert.Contains("ProcessorSectionTitleText", contentXaml);
+        Assert.DoesNotContain("ItemsSource=\"{Binding RecentChanges}\"", contentXaml);
+        Assert.DoesNotContain("RecentSectionTitleText", contentXaml);
+        Assert.DoesNotContain("OutputSectionTitleText", contentXaml);
+        Assert.Contains("RefreshPlanSummary();", viewModel);
         Assert.Contains("WorkspaceExportDialogProcessorPlaceholder", viewModel);
+        Assert.Contains("WorkspaceExportDialogResourceProcessorTexture2D", viewModel);
+        Assert.Contains("WorkspaceExportDialogResourceProcessorAudio", viewModel);
+        Assert.Contains("WorkspaceExportDialogResourceProcessorAtlas", viewModel);
+        Assert.Contains("WorkspaceExportDialogResourceProcessorSkel", viewModel);
     }
 
     private static string FindRepositoryRoot()

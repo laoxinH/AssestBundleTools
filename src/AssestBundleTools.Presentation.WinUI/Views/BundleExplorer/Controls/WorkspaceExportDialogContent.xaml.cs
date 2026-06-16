@@ -19,15 +19,15 @@ public sealed partial class WorkspaceExportDialogContent : UserControl
 
     private void ApplyLocalizedText()
     {
-        SourceSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogSourceSectionTitle);
-        ProcessorBadgeText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogProcessorBadge);
         BundleSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogBundleSectionTitle);
         BundleSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogBundleSectionHint);
         SelectAllBundlesButton.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogSelectAllBundlesButton);
         ClearBundleSelectionButton.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogClearBundleSelectionButton);
-        RecentSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogRecentSectionTitle);
-        OutputSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogOutputSectionTitle);
-        OutputSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogOutputSectionHint);
+        ResourceProcessorSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorSectionTitle);
+        ResourceProcessorSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorSectionHint);
+        ProcessorSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogProcessorSectionTitle);
+        ProcessorSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogProcessorSectionHint);
+        OutputDirectoryLabelText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogOutputDirectoryLabel);
     }
 
     private void OnSelectAllBundlesButtonClick(object sender, RoutedEventArgs e) =>
