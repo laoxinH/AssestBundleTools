@@ -43,6 +43,8 @@
   工作区级批量替换窗口、导出 manifest 回读、size-first / MD5 精确匹配、启发式回退和旧批量替换骨架移除方向。
 - [asset-bundle-decryptor-extension.md](asset-bundle-decryptor-extension.md)
   解密器扩展点、外部进程协议和工作区缓存关系。
+- [plugin-management-page.md](plugin-management-page.md)
+  侧边栏一级插件管理页、导入解密 CLI 插件迁移、导出资源处理 CLI 插件目录和导入 / 导出整合逻辑。
 - [spine-runtime-playback-session.md](spine-runtime-playback-session.md)
   Spine runtime playback session、播放时钟、缓存和诊断边界。
 - [spine-d3d11-performance-baseline.md](spine-d3d11-performance-baseline.md)

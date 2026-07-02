@@ -493,8 +493,8 @@ Export / SaveRebuild 共享 artifact resolver 已进入保存计划骨架的只�
 - 主资产窗格的普通资源列表和 Spine 组列表查询已通过 `IBackgroundTaskRunner` 离开 UI 线程。尤其 Spine 组列表加载会调用 Application 组检测、详情收集和组成资产 hydrate，视图从普通资源切到 Spine 组时不得在 WinUI 事件调用栈内同步执行这些 CPU / 读取型工作。
 - Shell 底部状态条已支持当前可取消任务的图标取消按钮；当前接入的可取消任务包括工作区导入处理阶段、单资源提取、单 Spine 组提取、资源列表普通资源批量提取和 Spine 资源组批量提取。
 - 设置与诊断页已通过 Application 的 `WorkspaceCacheMaintenanceGateway` 展示当前工作区聚合缓存 usage，统计范围包含 `cache/bundles` 标准化 bundle artifact 和 `cache/previews` 预览缓存；显式清理通过 `Maintenance` profile 同时清理两类可重建派生产物，不写操作记录，也不刷新资产列表。设置页还提供自动容量治理偏好，当前自动策略作用于标准化 bundle artifact 和预览缓存：导入 / 预览 / 提取首次生成 artifact 后会按当前工作区容量上限自动 prune，预览 payload 保存后也会按同一上限 prune 最旧预览项。
-- 组合根已创建单例调度器，`App` 暴露同一 `BackgroundWorkScheduler` 给工作台、批处理页和独立资源编辑窗口使用，避免同类任务各自临时创建调度器。
-- 单资源提取、单 Spine 组提取、资源列表多选批量提取、Spine 资源组多选批量提取、批处理页批量提取和工作区级批量提取对话框已迁移到 `BatchExtraction` profile；工作区顶部入口不再跳转批处理页执行；批处理页批量替换骨架已迁移到 `BatchReplacement` profile；保存骨架已迁移到 `SaveRebuild` profile。
+- 组合根已创建单例调度器，`App` 暴露同一 `BackgroundWorkScheduler` 给工作台、独立批量操作窗口、工作区导出窗口和独立资源编辑窗口使用，避免同类任务各自临时创建调度器。
+- 单资源提取、单 Spine 组提取、资源列表多选批量提取、Spine 资源组多选批量提取和工作区级批量提取窗口已迁移到 `BatchExtraction` profile；工作区顶部入口不再跳转旧批处理页执行；工作区级批量替换窗口已迁移到 `BatchReplacement` profile；保存 / 导出骨架已迁移到 `SaveRebuild` profile。
 - 工作区打开外层已迁移到 `WorkspaceOpen` profile；文件 / 目录 / 拖拽导入的处理阶段已迁移到 `WorkspaceImport` profile。Application 内部导入 worker 池仍保持在应用层一致性边界内。
 - 普通资产详情预览已迁移到 `PreviewForeground / PreviewPrewarm` profile；前台资产预览、Spine 资源组详情和当前贴图页载荷会在 Shell 底部状态条显示轻量加载状态，后台预热保持静默；Texture2D / alpha page 载荷已接入 `PreviewForeground` profile；Spine 组详情初始打开使用 `InteractivePreview` 模式，跳过 skeleton 摘要和 Texture2D 尺寸诊断，无法形成可显示动画贴图载荷且快路径没有明确诊断时才补跑 `InteractiveDiagnostics`；Spine runtime 当前帧已接入独立 `SpineRuntimeFrame` profile。
 - 快速切换资产详情标签时，旧活动标签会被显式降级为 `PreviewPrewarm`，新活动标签始终重新按 `PreviewForeground` 调度；前台预览请求在调用方取消后会释放前台 profile 槽，避免后台旧请求压住当前可见标签。后台预热候选会按最近激活、最近打开优先，而不是单纯按标签集合顺序。
@@ -526,8 +526,8 @@ Export / SaveRebuild 共享 artifact resolver 已进入保存计划骨架的只�
 
 ### 第二阶段：接入当前可见后台任务
 
-- 资源列表多选批量提取、Spine 资源组多选批量提取和批处理页批量提取已改为通过调度器提交 `BatchExtraction`。
-- 批处理页批量替换骨架和保存骨架已分别通过调度器提交 `BatchReplacement / SaveRebuild`。
+- 资源列表多选批量提取、Spine 资源组多选批量提取和工作区级批量提取窗口已改为通过调度器提交 `BatchExtraction`。
+- 工作区级批量替换窗口和保存 / 导出骨架已分别通过调度器提交 `BatchReplacement / SaveRebuild`。
 - 保留现有操作记录通知链路，不把页面刷新塞回任务完成回调。
 
 ### 第三阶段：接入预览执行队列
