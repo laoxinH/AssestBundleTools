@@ -332,10 +332,7 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
                      .OrderBy(static group => group.First().BundleDisplayName, StringComparer.OrdinalIgnoreCase)
                      .ThenBy(static group => group.First().SpineGroupDisplayName ?? group.First().SpineGroupId, StringComparer.OrdinalIgnoreCase))
         {
-            var groupCandidates = group
-                .OrderBy(static candidate => candidate.OutputRole, StringComparer.OrdinalIgnoreCase)
-                .ThenBy(static candidate => candidate.AssetName, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+            var groupCandidates = group.ToArray();
             var representative = groupCandidates[0];
             var displayName = string.IsNullOrWhiteSpace(representative.SpineGroupDisplayName)
                 ? representative.AssetName
