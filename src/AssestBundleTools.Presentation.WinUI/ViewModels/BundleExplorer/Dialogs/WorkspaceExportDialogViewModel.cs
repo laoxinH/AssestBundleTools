@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Bundles;
@@ -26,7 +27,8 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     public WorkspaceExportDialogViewModel(
         ILocalizationService localizationService,
         WorkspaceChangeSummaryDto? changeSummary,
-        WorkspaceSavePreviewDto? savePreview)
+        WorkspaceSavePreviewDto? savePreview,
+        IReadOnlyList<ResourceProcessorCatalogEntryDto>? resourceProcessorCatalogEntries = null)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _outputDirectoryText = savePreview?.OutputDirectory ?? string.Empty;
@@ -46,7 +48,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
                 _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogBundleSortByName))
         };
         ResourceProcessors = new ObservableCollection<WorkspaceExportResourceProcessorOptionViewModel>(
-            CreateResourceProcessorOptions());
+            CreateResourceProcessorOptions(resourceProcessorCatalogEntries ?? Array.Empty<ResourceProcessorCatalogEntryDto>()));
         _selectedBundleSortOption = BundleSortOptions.FirstOrDefault();
         foreach (var bundle in Bundles)
         {
@@ -282,41 +284,74 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         }
     }
 
-    private IEnumerable<WorkspaceExportResourceProcessorOptionViewModel> CreateResourceProcessorOptions()
+    private IEnumerable<WorkspaceExportResourceProcessorOptionViewModel> CreateResourceProcessorOptions(
+        IReadOnlyList<ResourceProcessorCatalogEntryDto> catalogEntries)
     {
         yield return new WorkspaceExportResourceProcessorOptionViewModel(
             "texture2d",
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorTexture2D),
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorTexture2DDescription),
-            CreateProcessorOptions("texture2d"));
+            CreateProcessorOptions("texture2d", catalogEntries));
         yield return new WorkspaceExportResourceProcessorOptionViewModel(
             "audio",
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAudio),
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAudioDescription),
-            CreateProcessorOptions("audio"));
+            CreateProcessorOptions("audio", catalogEntries));
         yield return new WorkspaceExportResourceProcessorOptionViewModel(
             "atlas",
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAtlas),
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAtlasDescription),
-            CreateProcessorOptions("atlas"));
+            CreateProcessorOptions("atlas", catalogEntries));
         yield return new WorkspaceExportResourceProcessorOptionViewModel(
             "skel",
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorSkel),
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorSkelDescription),
-            CreateProcessorOptions("skel"));
+            CreateProcessorOptions("skel", catalogEntries));
     }
 
-    private IEnumerable<WorkspaceExportProcessorOptionViewModel> CreateProcessorOptions(string resourceProcessorId)
+    private IEnumerable<WorkspaceExportProcessorOptionViewModel> CreateProcessorOptions(
+        string resourceProcessorId,
+        IReadOnlyList<ResourceProcessorCatalogEntryDto> catalogEntries)
     {
         yield return new WorkspaceExportProcessorOptionViewModel(
             $"{resourceProcessorId}:none",
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogProcessorNone),
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogProcessorNoneDescription));
-        yield return new WorkspaceExportProcessorOptionViewModel(
-            $"{resourceProcessorId}:cli",
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogProcessorCliPlaceholder),
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogProcessorCliPlaceholderDescription));
+
+        foreach (var entry in catalogEntries.Where(entry => IsCompatibleResourceProcessor(entry, resourceProcessorId)))
+        {
+            yield return new WorkspaceExportProcessorOptionViewModel(
+                entry.Id,
+                ResolveProcessorDisplayName(entry),
+                string.IsNullOrWhiteSpace(entry.Description)
+                    ? _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogProcessorCliPlaceholderDescription)
+                    : entry.Description);
+        }
     }
+
+    private static bool IsCompatibleResourceProcessor(
+        ResourceProcessorCatalogEntryDto entry,
+        string resourceProcessorId)
+    {
+        return entry.Status == ResourceProcessorStatus.Available &&
+               entry.ResourceKinds.Any(resourceKind =>
+                   string.Equals(
+                       NormalizeResourceKind(resourceKind),
+                       NormalizeResourceKind(resourceProcessorId),
+                       StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string ResolveProcessorDisplayName(ResourceProcessorCatalogEntryDto entry)
+    {
+        return entry.Id.StartsWith("resource.processor.", StringComparison.OrdinalIgnoreCase)
+            ? _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogProcessorCliPlaceholder)
+            : string.IsNullOrWhiteSpace(entry.DisplayName)
+                ? entry.Id
+                : entry.DisplayName;
+    }
+
+    private static string NormalizeResourceKind(string value) =>
+        value.Trim().Replace("-", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
 
     private static IReadOnlyDictionary<BundleId, DateTimeOffset> BuildBundleLastChangedAtLookup(
         WorkspaceChangeSummaryDto? changeSummary)

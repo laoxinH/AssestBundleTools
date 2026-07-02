@@ -37,6 +37,7 @@ public sealed class ShellViewModel : ObservableObject
         {
             ShellNavigationKeys.LaunchGuide => ResourceKeys.ShellHeaderLaunchGuide,
             ShellNavigationKeys.Workbench => ResourceKeys.ShellHeaderWorkbench,
+            ShellNavigationKeys.PluginManagement => ResourceKeys.ShellHeaderPluginManagement,
             ShellNavigationKeys.SettingsDiagnostics => ResourceKeys.ShellHeaderSettingsDiagnostics,
             _ => ResourceKeys.ShellHeaderLaunchGuide
         };
@@ -45,6 +46,7 @@ public sealed class ShellViewModel : ObservableObject
         {
             ShellNavigationKeys.LaunchGuide => ResourceKeys.ShellDescriptionLaunchGuide,
             ShellNavigationKeys.Workbench => ResourceKeys.ShellDescriptionWorkbench,
+            ShellNavigationKeys.PluginManagement => ResourceKeys.ShellDescriptionPluginManagement,
             ShellNavigationKeys.SettingsDiagnostics => ResourceKeys.ShellDescriptionSettingsDiagnostics,
             _ => ResourceKeys.ShellDescriptionLaunchGuide
         };

@@ -28,6 +28,7 @@ internal sealed record AppCompositionServices(
     IWorkspaceCatalogGateway WorkspaceCatalogGateway,
     IWorkspaceCacheMaintenanceGateway WorkspaceCacheMaintenanceGateway,
     IAssetBundleDecryptorCatalogService AssetBundleDecryptorCatalogService,
+    IResourceProcessorCatalogService ResourceProcessorCatalogService,
     IWorkspaceDialogService WorkspaceDialogService,
     IAppInteractionFeedbackService AppInteractionFeedbackService,
     IWorkspaceWindowService WorkspaceWindowService,

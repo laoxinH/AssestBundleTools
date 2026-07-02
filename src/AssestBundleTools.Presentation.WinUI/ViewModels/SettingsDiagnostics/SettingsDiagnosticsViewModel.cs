@@ -1,9 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
-using AssestBundleTools.Application.Bundles.Commands;
-using AssestBundleTools.Application.Bundles.Dtos;
-using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Common.Errors;
@@ -25,9 +22,6 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
     private readonly IWorkspaceContextService _workspaceContextService;
     private readonly ILocalizationService _localizationService;
     private readonly IWorkspaceImportCoordinatorService _workspaceImportCoordinatorService;
-    private readonly IAssetBundleDecryptorCatalogService _assetBundleDecryptorCatalogService;
-    private readonly SettingsDecryptorCatalogEntryPresenter _decryptorEntryPresenter;
-    private readonly Dictionary<string, AssetBundleDecryptorCatalogEntryDto> _decryptorEntriesById = new(StringComparer.OrdinalIgnoreCase);
     private string _activeWorkspaceDisplayName = string.Empty;
     private string _activeWorkspacePrimaryBadgeText = string.Empty;
     private string _activeWorkspaceSecondaryBadgeText = string.Empty;
@@ -44,9 +38,7 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
         ILocalizationService localizationService,
         IWorkspaceImportCoordinatorService workspaceImportCoordinatorService,
         IWorkspaceCacheMaintenanceGateway workspaceCacheMaintenanceGateway,
-        IBackgroundWorkScheduler backgroundWorkScheduler,
-        IAssetBundleDecryptorCatalogService assetBundleDecryptorCatalogService,
-        IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry)
+        IBackgroundWorkScheduler backgroundWorkScheduler)
     {
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
@@ -54,7 +46,6 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _workspaceImportCoordinatorService = workspaceImportCoordinatorService ?? throw new ArgumentNullException(nameof(workspaceImportCoordinatorService));
-        _assetBundleDecryptorCatalogService = assetBundleDecryptorCatalogService ?? throw new ArgumentNullException(nameof(assetBundleDecryptorCatalogService));
         BundleArtifactCache = new SettingsWorkspaceCacheViewModel(
             workspaceCacheMaintenanceGateway,
             _workspaceContextService,
@@ -63,9 +54,6 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
             _appNotificationService,
             _appLogService,
             backgroundWorkScheduler);
-        _decryptorEntryPresenter = new SettingsDecryptorCatalogEntryPresenter(
-            _localizationService,
-            assetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(assetBundleDecryptorRegistry)));
 
         LogPanel = _appLogService.LogPanel;
         ImportBundleFilesCommand = new AsyncRelayCommand(
@@ -99,8 +87,6 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
     public LogPanelViewModel LogPanel { get; }
 
     public ObservableCollection<SettingsWorkspaceEntryItemViewModel> WorkspaceEntries { get; } = new();
-
-    public ObservableCollection<SettingsDecryptorCatalogEntryItemViewModel> DecryptorEntries { get; } = new();
 
     public SettingsWorkspaceCacheViewModel BundleArtifactCache { get; }
 
@@ -174,93 +160,9 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
 
     public Visibility WorkspaceEntryEmptyVisibility => HasWorkspaceEntries ? Visibility.Collapsed : Visibility.Visible;
 
-    public bool HasDecryptorEntries => DecryptorEntries.Count > 0;
-
-    public Visibility DecryptorEntryListVisibility => HasDecryptorEntries ? Visibility.Visible : Visibility.Collapsed;
-
-    public Visibility DecryptorEntryEmptyVisibility => HasDecryptorEntries ? Visibility.Collapsed : Visibility.Visible;
-
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         await BundleArtifactCache.InitializeAsync(cancellationToken);
-        await RefreshDecryptorCatalogAsync(cancellationToken);
-    }
-
-    public bool TryGetDecryptorEntry(string decryptorId, out AssetBundleDecryptorCatalogEntryDto? entry)
-    {
-        if (string.IsNullOrWhiteSpace(decryptorId))
-        {
-            entry = null;
-            return false;
-        }
-
-        return _decryptorEntriesById.TryGetValue(decryptorId.Trim(), out entry);
-    }
-
-    public async Task RefreshDecryptorCatalogAsync(CancellationToken cancellationToken = default)
-    {
-        var result = await _assetBundleDecryptorCatalogService.GetEntriesAsync(cancellationToken);
-        if (!TryGetValue(result, out var entries, ResourceKeys.SettingsDiagnosticsDecryptorLoadFailedMessage))
-        {
-            return;
-        }
-
-        ReplaceDecryptorEntries(entries ?? Array.Empty<AssetBundleDecryptorCatalogEntryDto>());
-    }
-
-    public async Task<bool> SaveDecryptorAsync(
-        UpsertAssetBundleDecryptorCommand command,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await _assetBundleDecryptorCatalogService.UpsertAsync(command, cancellationToken);
-        if (!TryGetValue(result, out var savedEntry, ResourceKeys.SettingsDiagnosticsDecryptorSaveFailedMessage))
-        {
-            return false;
-        }
-
-        if (savedEntry is null)
-        {
-            return false;
-        }
-
-        await RefreshDecryptorCatalogAsync(cancellationToken);
-        _appNotificationService.Show(
-            GetString(ResourceKeys.AppNotificationSuccessTitle),
-            _localizationService.GetFormattedString(
-                ResourceKeys.SettingsDiagnosticsDecryptorSaveSucceededMessageFormat,
-                _decryptorEntryPresenter.GetDisplayName(savedEntry.Definition.Id)),
-            AppNotificationSeverity.Success);
-        return true;
-    }
-
-    public async Task<bool> DeleteDecryptorAsync(
-        string decryptorId,
-        CancellationToken cancellationToken = default)
-    {
-        if (!TryGetDecryptorEntry(decryptorId, out var entry) ||
-            entry is null)
-        {
-            return false;
-        }
-
-        var targetEntry = entry;
-
-        var result = await _assetBundleDecryptorCatalogService.DeleteAsync(
-            new DeleteAssetBundleDecryptorCommand(decryptorId),
-            cancellationToken);
-        if (!TryGetValue(result, ResourceKeys.SettingsDiagnosticsDecryptorDeleteFailedMessage))
-        {
-            return false;
-        }
-
-        await RefreshDecryptorCatalogAsync(cancellationToken);
-        _appNotificationService.Show(
-            GetString(ResourceKeys.AppNotificationSuccessTitle),
-            _localizationService.GetFormattedString(
-                ResourceKeys.SettingsDiagnosticsDecryptorDeleteSucceededMessageFormat,
-                _decryptorEntryPresenter.GetDisplayName(targetEntry.Definition.Id)),
-            AppNotificationSeverity.Success);
-        return true;
     }
 
     public void Dispose()
@@ -362,20 +264,6 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
         }
     }
 
-    private void ReplaceDecryptorEntries(IReadOnlyList<AssetBundleDecryptorCatalogEntryDto> entries)
-    {
-        _decryptorEntriesById.Clear();
-        DecryptorEntries.Clear();
-
-        foreach (var entry in entries)
-        {
-            _decryptorEntriesById[entry.Definition.Id] = entry;
-            DecryptorEntries.Add(_decryptorEntryPresenter.Build(entry));
-        }
-
-        NotifyWorkspaceState();
-    }
-
     private string BuildSourceSummary(string? sourcePath)
     {
         var sourceText = string.IsNullOrWhiteSpace(sourcePath)
@@ -417,15 +305,12 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
     {
         OnPropertyChanged(nameof(HasActiveWorkspace));
         OnPropertyChanged(nameof(HasWorkspaceEntries));
-        OnPropertyChanged(nameof(HasDecryptorEntries));
         OnPropertyChanged(nameof(ActiveWorkspaceVisibility));
         OnPropertyChanged(nameof(ActiveWorkspaceEmptyVisibility));
         OnPropertyChanged(nameof(ActiveWorkspaceSecondaryBadgeVisibility));
         OnPropertyChanged(nameof(ActiveWorkspaceAvailabilityVisibility));
         OnPropertyChanged(nameof(WorkspaceEntryListVisibility));
         OnPropertyChanged(nameof(WorkspaceEntryEmptyVisibility));
-        OnPropertyChanged(nameof(DecryptorEntryListVisibility));
-        OnPropertyChanged(nameof(DecryptorEntryEmptyVisibility));
         ImportBundleFilesCommand.NotifyCanExecuteChanged();
         ImportBundleDirectoryCommand.NotifyCanExecuteChanged();
     }

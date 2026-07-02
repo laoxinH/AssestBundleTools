@@ -10,5 +10,6 @@ public static class ShellNavigationKeys
 {
     public const string LaunchGuide = "launch-guide";
     public const string Workbench = "workbench";
+    public const string PluginManagement = "plugin-management";
     public const string SettingsDiagnostics = "settings-diagnostics";
 }

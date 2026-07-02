@@ -15,6 +15,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
     private readonly BundleExplorerPage _owner;
     private readonly IWorkspaceBatchOperationsGateway _workspaceBatchOperationsGateway;
     private readonly IWorkspaceContextService _workspaceContextService;
+    private readonly IResourceProcessorCatalogService _resourceProcessorCatalogService;
     private readonly ILocalizationService _localizationService;
     private WorkspaceExportWindow? _activeWindow;
 
@@ -22,11 +23,13 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
         BundleExplorerPage owner,
         IWorkspaceBatchOperationsGateway workspaceBatchOperationsGateway,
         IWorkspaceContextService workspaceContextService,
+        IResourceProcessorCatalogService resourceProcessorCatalogService,
         ILocalizationService localizationService)
     {
         _owner = owner ?? throw new ArgumentNullException(nameof(owner));
         _workspaceBatchOperationsGateway = workspaceBatchOperationsGateway ?? throw new ArgumentNullException(nameof(workspaceBatchOperationsGateway));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
+        _resourceProcessorCatalogService = resourceProcessorCatalogService ?? throw new ArgumentNullException(nameof(resourceProcessorCatalogService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
     }
 
@@ -60,7 +63,17 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
             return;
         }
 
-        var viewModel = new WorkspaceExportDialogViewModel(_localizationService, changeSummary, savePreview);
+        var processorCatalogResult = await _resourceProcessorCatalogService.GetEntriesAsync();
+        if (!TryGetValue(processorCatalogResult, out var processorCatalogEntries))
+        {
+            return;
+        }
+
+        var viewModel = new WorkspaceExportDialogViewModel(
+            _localizationService,
+            changeSummary,
+            savePreview,
+            processorCatalogEntries);
         var windowNotificationService = new AppNotificationService();
         var window = new WorkspaceExportWindow(viewModel, windowNotificationService);
         App.CurrentApp.RegisterAuxiliaryWindow(window, _owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null);

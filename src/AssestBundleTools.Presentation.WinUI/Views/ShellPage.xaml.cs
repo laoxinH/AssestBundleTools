@@ -3,6 +3,7 @@ using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 using AssestBundleTools.Presentation.WinUI.Views.Home;
+using AssestBundleTools.Presentation.WinUI.Views.PluginManagement;
 using AssestBundleTools.Presentation.WinUI.Views.SettingsDiagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -254,6 +255,7 @@ public sealed partial class ShellPage : Page
     {
         return navigationKey switch
         {
+            ShellNavigationKeys.PluginManagement => CreateNavigationTarget(ShellNavigationKeys.PluginManagement),
             ShellNavigationKeys.SettingsDiagnostics => CreateNavigationTarget(ShellNavigationKeys.SettingsDiagnostics),
             _ => CreateNavigationTarget(ShellNavigationKeys.LaunchGuide)
         };
@@ -263,6 +265,7 @@ public sealed partial class ShellPage : Page
     {
         return navigationKey switch
         {
+            ShellNavigationKeys.PluginManagement => CreateNavigationTarget(ShellNavigationKeys.PluginManagement),
             ShellNavigationKeys.SettingsDiagnostics => CreateNavigationTarget(ShellNavigationKeys.SettingsDiagnostics),
             ShellNavigationKeys.LaunchGuide => CreateNavigationTarget(ShellNavigationKeys.Workbench),
             _ => CreateNavigationTarget(ShellNavigationKeys.Workbench)
@@ -281,6 +284,10 @@ public sealed partial class ShellPage : Page
                 navigationKey,
                 typeof(BundleExplorerPage),
                 WorkbenchNavItem),
+            ShellNavigationKeys.PluginManagement => new ShellNavigationTarget(
+                navigationKey,
+                typeof(PluginManagementPage),
+                PluginManagementNavItem),
             ShellNavigationKeys.SettingsDiagnostics => new ShellNavigationTarget(
                 navigationKey,
                 typeof(SettingsDiagnosticsPage),
@@ -299,6 +306,7 @@ public sealed partial class ShellPage : Page
     {
         PaneTitleText.Text = UiText.Get(ResourceKeys.ShellPaneTitle);
         PaneSubtitleText.Text = UiText.Get(ResourceKeys.ShellPaneSubtitle);
+        PluginManagementNavItem.Content = UiText.Get(ResourceKeys.ShellPluginManagementNavItemContent);
         SettingsDiagnosticsNavItem.Content = UiText.Get(ResourceKeys.ShellSettingsDiagnosticsNavItemContent);
     }
 

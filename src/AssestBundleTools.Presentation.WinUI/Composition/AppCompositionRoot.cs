@@ -243,6 +243,7 @@ internal static class AppCompositionRoot
         var getAssetBundleDecryptorCatalogEntriesHandler = new GetAssetBundleDecryptorCatalogEntriesHandler(assetBundleDecryptorCatalogStore);
         var upsertAssetBundleDecryptorHandler = new UpsertAssetBundleDecryptorHandler(assetBundleDecryptorCatalogStore);
         var deleteAssetBundleDecryptorHandler = new DeleteAssetBundleDecryptorHandler(assetBundleDecryptorCatalogStore);
+        var getResourceProcessorCatalogEntriesHandler = new GetResourceProcessorCatalogEntriesHandler();
         var assetEditDraftStore = new WorkspaceChangeSetAssetEditDraftStore(
             workspaceCatalogStore,
             workspaceDataStoreFactory);
@@ -313,6 +314,8 @@ internal static class AppCompositionRoot
             upsertHandler: upsertAssetBundleDecryptorHandler,
             deleteHandler: deleteAssetBundleDecryptorHandler,
             onCatalogChanged: reloadAssetBundleDecryptorRegistry);
+        var resourceProcessorCatalogService = new ResourceProcessorCatalogService(
+            getResourceProcessorCatalogEntriesHandler);
         var appInteractionFeedbackService = new AppInteractionFeedbackService();
         var workspaceDialogService = new WorkspaceDialogService(
             localizationService,
@@ -358,6 +361,7 @@ internal static class AppCompositionRoot
             WorkspaceCatalogGateway: workspaceCatalogGateway,
             WorkspaceCacheMaintenanceGateway: workspaceCacheMaintenanceGateway,
             AssetBundleDecryptorCatalogService: assetBundleDecryptorCatalogService,
+            ResourceProcessorCatalogService: resourceProcessorCatalogService,
             WorkspaceDialogService: workspaceDialogService,
             AppInteractionFeedbackService: appInteractionFeedbackService,
             WorkspaceWindowService: workspaceWindowService,

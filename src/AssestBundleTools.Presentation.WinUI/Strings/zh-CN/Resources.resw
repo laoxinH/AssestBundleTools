@@ -3915,72 +3915,6 @@
   <data name="Error.Presentation.FallbackDecryptorRequired" xml:space="preserve">
     <value>必须存在一个回退资源包解密器。</value>
   </data>
-  <data name="SettingsDiagnosticsPage.DecryptorCatalogTitleText.Text" xml:space="preserve">
-    <value>解密器管理</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorCatalogHintText.Text" xml:space="preserve">
-    <value>管理工作区可复用的资源包解密器定义。保存后，新建工作区可以直接选择这些解密器。</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorCatalogEmptyText.Text" xml:space="preserve">
-    <value>当前还没有可管理的解密器定义。</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorCatalogAddButton.Content" xml:space="preserve">
-    <value>新增解密器</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorCatalogRefreshButton.Content" xml:space="preserve">
-    <value>刷新目录</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorEditButton.Content" xml:space="preserve">
-    <value>编辑</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorDeleteButton.Content" xml:space="preserve">
-    <value>删除</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorBadge.BuiltIn" xml:space="preserve">
-    <value>内置</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorBadge.ReadOnly" xml:space="preserve">
-    <value>只读</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorBadge.UserManaged" xml:space="preserve">
-    <value>用户定义</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorVersion.Format" xml:space="preserve">
-    <value>版本：{0}</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorExecutablePath.Format" xml:space="preserve">
-    <value>可执行入口：{0}</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorManifestPath.Format" xml:space="preserve">
-    <value>清单文件：{0}</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorDelete.Title" xml:space="preserve">
-    <value>删除解密器</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorDelete.Description.Format" xml:space="preserve">
-    <value>确认删除解密器“{0}”吗？标识：{1}</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorDelete.PrimaryButton" xml:space="preserve">
-    <value>删除</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorDelete.CloseButton" xml:space="preserve">
-    <value>取消</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorLoadFailedMessage" xml:space="preserve">
-    <value>解密器目录加载失败。</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorSaveSucceededMessage.Format" xml:space="preserve">
-    <value>已保存解密器：{0}</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorSaveFailedMessage" xml:space="preserve">
-    <value>解密器保存失败。</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorDeleteSucceededMessage.Format" xml:space="preserve">
-    <value>已删除解密器：{0}</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorDeleteFailedMessage" xml:space="preserve">
-    <value>解密器删除失败。</value>
-  </data>
   <data name="BundleExplorer.Status.CurrentDecryptor.Label" xml:space="preserve">
     <value>当前解密器</value>
   </data>
@@ -4262,5 +4196,200 @@
   </data>
   <data name="WorkspaceExportDialog.ExecutionDeferred" xml:space="preserve">
     <value>真实导出逻辑尚未接入，当前仅完成导出窗口和计划预览。</value>
+  </data>
+  <data name="Shell.PluginManagementNavItem.Content" xml:space="preserve">
+    <value>插件管理</value>
+  </data>
+  <data name="Shell.Header.PluginManagement" xml:space="preserve">
+    <value>插件管理</value>
+  </data>
+  <data name="Shell.Description.PluginManagement" xml:space="preserve">
+    <value>管理导入解密 CLI 插件和导出资源处理 CLI 插件。</value>
+  </data>
+  <data name="PluginManagementPage.PageTitleText.Text" xml:space="preserve">
+    <value>插件管理</value>
+  </data>
+  <data name="PluginManagementPage.PageEyebrowText.Text" xml:space="preserve">
+    <value>工作区 / 扩展</value>
+  </data>
+  <data name="PluginManagementPage.PageSubtitleText.Text" xml:space="preserve">
+    <value>管理导入解密插件和导出资源处理插件。</value>
+  </data>
+  <data name="PluginManagementPage.SearchTextBox.PlaceholderText" xml:space="preserve">
+    <value>搜索插件、id 或命令路径</value>
+  </data>
+  <data name="PluginManagementPage.RefreshButton.Content" xml:space="preserve">
+    <value>刷新</value>
+  </data>
+  <data name="PluginManagementPage.Directory.Title" xml:space="preserve">
+    <value>插件目录</value>
+  </data>
+  <data name="PluginManagementPage.Directory.Hint" xml:space="preserve">
+    <value>查看、筛选和维护当前可用的 CLI 插件。</value>
+  </data>
+  <data name="PluginManagementPage.AddDecryptorButton.Content" xml:space="preserve">
+    <value>新增解密插件</value>
+  </data>
+  <data name="PluginManagementPage.Directory.EmptyText" xml:space="preserve">
+    <value>没有匹配的插件。</value>
+  </data>
+  <data name="PluginManagementPage.Details.EmptyText" xml:space="preserve">
+    <value>选择左侧插件查看详情。</value>
+  </data>
+  <data name="PluginManagementPage.EditButton.Content" xml:space="preserve">
+    <value>编辑</value>
+  </data>
+  <data name="PluginManagementPage.ValidateButton.Content" xml:space="preserve">
+    <value>验证</value>
+  </data>
+  <data name="PluginManagementPage.CopyDiagnosticsButton.Content" xml:space="preserve">
+    <value>复制诊断</value>
+  </data>
+  <data name="PluginManagementPage.OpenLocationButton.Content" xml:space="preserve">
+    <value>打开位置</value>
+  </data>
+  <data name="PluginManagementPage.DeleteButton.Content" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="PluginManagementPage.TypeFilter.All" xml:space="preserve">
+    <value>全部类型</value>
+  </data>
+  <data name="PluginManagementPage.Type.ImportDecryptor" xml:space="preserve">
+    <value>导入解密</value>
+  </data>
+  <data name="PluginManagementPage.Type.ExportProcessor" xml:space="preserve">
+    <value>导出处理</value>
+  </data>
+  <data name="PluginManagementPage.Scope.ImportDecryptor" xml:space="preserve">
+    <value>AB 导入前处理</value>
+  </data>
+  <data name="PluginManagementPage.StatusFilter.All" xml:space="preserve">
+    <value>全部状态</value>
+  </data>
+  <data name="PluginManagementPage.Status.Available" xml:space="preserve">
+    <value>可用</value>
+  </data>
+  <data name="PluginManagementPage.Status.Warning" xml:space="preserve">
+    <value>警告</value>
+  </data>
+  <data name="PluginManagementPage.Status.Unavailable" xml:space="preserve">
+    <value>不可用</value>
+  </data>
+  <data name="PluginManagementPage.Badge.BuiltIn" xml:space="preserve">
+    <value>内置</value>
+  </data>
+  <data name="PluginManagementPage.Badge.ReadOnly" xml:space="preserve">
+    <value>只读</value>
+  </data>
+  <data name="PluginManagementPage.Badge.UserManaged" xml:space="preserve">
+    <value>用户管理</value>
+  </data>
+  <data name="PluginManagementPage.Value.Enabled" xml:space="preserve">
+    <value>启用</value>
+  </data>
+  <data name="PluginManagementPage.Value.Disabled" xml:space="preserve">
+    <value>未启用</value>
+  </data>
+  <data name="PluginManagementPage.ResourceKind.Unknown" xml:space="preserve">
+    <value>未知资源类型</value>
+  </data>
+  <data name="PluginManagementPage.ResourceProcessor.DisplayName.Format" xml:space="preserve">
+    <value>{0} CLI 处理器</value>
+  </data>
+  <data name="PluginManagementPage.ResourceProcessor.Description.Format" xml:space="preserve">
+    <value>为 {0} 资源预留的导出前 CLI 处理器目录项。</value>
+  </data>
+  <data name="PluginManagementPage.Timeout.Format" xml:space="preserve">
+    <value>{0} ms</value>
+  </data>
+  <data name="PluginManagementPage.Detail.Id.Label" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="PluginManagementPage.Detail.Version.Label" xml:space="preserve">
+    <value>版本</value>
+  </data>
+  <data name="PluginManagementPage.Detail.Type.Label" xml:space="preserve">
+    <value>类型</value>
+  </data>
+  <data name="PluginManagementPage.Detail.Status.Label" xml:space="preserve">
+    <value>状态</value>
+  </data>
+  <data name="PluginManagementPage.Detail.AutoDetection.Label" xml:space="preserve">
+    <value>自动识别</value>
+  </data>
+  <data name="PluginManagementPage.Detail.Fallback.Label" xml:space="preserve">
+    <value>回退项</value>
+  </data>
+  <data name="PluginManagementPage.Detail.Timeout.Label" xml:space="preserve">
+    <value>超时</value>
+  </data>
+  <data name="PluginManagementPage.Detail.ExecutablePath.Label" xml:space="preserve">
+    <value>可执行文件</value>
+  </data>
+  <data name="PluginManagementPage.Detail.WorkingDirectory.Label" xml:space="preserve">
+    <value>工作目录</value>
+  </data>
+  <data name="PluginManagementPage.Detail.ManifestPath.Label" xml:space="preserve">
+    <value>Manifest</value>
+  </data>
+  <data name="PluginManagementPage.Detail.ProbeArguments.Label" xml:space="preserve">
+    <value>Probe 参数</value>
+  </data>
+  <data name="PluginManagementPage.Detail.DecryptArguments.Label" xml:space="preserve">
+    <value>解密参数</value>
+  </data>
+  <data name="PluginManagementPage.Detail.ResourceKinds.Label" xml:space="preserve">
+    <value>资源类型</value>
+  </data>
+  <data name="PluginManagementPage.Detail.Arguments.Label" xml:space="preserve">
+    <value>处理参数</value>
+  </data>
+  <data name="PluginManagementPage.Diagnostic.SectionTitle" xml:space="preserve">
+    <value>最近诊断</value>
+  </data>
+  <data name="PluginManagementPage.Diagnostic.NotRun" xml:space="preserve">
+    <value>未执行验证。</value>
+  </data>
+  <data name="PluginManagementPage.Diagnostic.NoSelection" xml:space="preserve">
+    <value>尚未选择插件。</value>
+  </data>
+  <data name="PluginManagementPage.Validation.CompletedMessage.Format" xml:space="preserve">
+    <value>{0} 的基础配置检查已完成。</value>
+  </data>
+  <data name="PluginManagementPage.DiagnosticsCopiedMessage" xml:space="preserve">
+    <value>插件诊断已复制。</value>
+  </data>
+  <data name="PluginManagementPage.OpenLocationFailedMessage" xml:space="preserve">
+    <value>无法打开该插件的位置。</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorDelete.Title" xml:space="preserve">
+    <value>删除解密插件</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorDelete.Description.Format" xml:space="preserve">
+    <value>确定删除“{0}”（{1}）吗？该操作会移除用户目录中的插件 manifest。</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorDelete.PrimaryButton" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorDelete.CloseButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorLoadFailedMessage" xml:space="preserve">
+    <value>加载解密插件目录失败。</value>
+  </data>
+  <data name="PluginManagementPage.ProcessorLoadFailedMessage" xml:space="preserve">
+    <value>加载资源处理插件目录失败。</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorSaveSucceededMessage.Format" xml:space="preserve">
+    <value>已保存解密插件“{0}”。</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorSaveFailedMessage" xml:space="preserve">
+    <value>保存解密插件失败。</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorDeleteSucceededMessage.Format" xml:space="preserve">
+    <value>已删除解密插件“{0}”。</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorDeleteFailedMessage" xml:space="preserve">
+    <value>删除解密插件失败。</value>
   </data>
 </root>

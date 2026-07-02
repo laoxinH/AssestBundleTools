@@ -3915,72 +3915,6 @@
   <data name="Error.Presentation.FallbackDecryptorRequired" xml:space="preserve">
     <value>A fallback asset bundle decryptor is required.</value>
   </data>
-  <data name="SettingsDiagnosticsPage.DecryptorCatalogTitleText.Text" xml:space="preserve">
-    <value>Decryptor Catalog</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorCatalogHintText.Text" xml:space="preserve">
-    <value>Manage reusable bundle decryptor definitions. Saved decryptors are available when creating a new workspace.</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorCatalogEmptyText.Text" xml:space="preserve">
-    <value>No manageable decryptor definitions are available yet.</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorCatalogAddButton.Content" xml:space="preserve">
-    <value>Add Decryptor</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorCatalogRefreshButton.Content" xml:space="preserve">
-    <value>Refresh Catalog</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorEditButton.Content" xml:space="preserve">
-    <value>Edit</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorDeleteButton.Content" xml:space="preserve">
-    <value>Delete</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorBadge.BuiltIn" xml:space="preserve">
-    <value>Built-in</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorBadge.ReadOnly" xml:space="preserve">
-    <value>Read-only</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorBadge.UserManaged" xml:space="preserve">
-    <value>User Managed</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorVersion.Format" xml:space="preserve">
-    <value>Version: {0}</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorExecutablePath.Format" xml:space="preserve">
-    <value>Executable: {0}</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorManifestPath.Format" xml:space="preserve">
-    <value>Manifest: {0}</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorDelete.Title" xml:space="preserve">
-    <value>Delete Decryptor</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorDelete.Description.Format" xml:space="preserve">
-    <value>Delete decryptor "{0}"? Identifier: {1}</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorDelete.PrimaryButton" xml:space="preserve">
-    <value>Delete</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorDelete.CloseButton" xml:space="preserve">
-    <value>Cancel</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorLoadFailedMessage" xml:space="preserve">
-    <value>Failed to load the decryptor catalog.</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorSaveSucceededMessage.Format" xml:space="preserve">
-    <value>Saved decryptor: {0}</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorSaveFailedMessage" xml:space="preserve">
-    <value>Failed to save the decryptor.</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorDeleteSucceededMessage.Format" xml:space="preserve">
-    <value>Deleted decryptor: {0}</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DecryptorDeleteFailedMessage" xml:space="preserve">
-    <value>Failed to delete the decryptor.</value>
-  </data>
   <data name="BundleExplorer.Status.CurrentDecryptor.Label" xml:space="preserve">
     <value>Current Decryptor</value>
   </data>
@@ -4262,5 +4196,200 @@
   </data>
   <data name="WorkspaceExportDialog.ExecutionDeferred" xml:space="preserve">
     <value>The real export path is not wired yet. This window currently provides the export plan only.</value>
+  </data>
+  <data name="Shell.PluginManagementNavItem.Content" xml:space="preserve">
+    <value>Plugins</value>
+  </data>
+  <data name="Shell.Header.PluginManagement" xml:space="preserve">
+    <value>Plugin Management</value>
+  </data>
+  <data name="Shell.Description.PluginManagement" xml:space="preserve">
+    <value>Manage import decryptor CLI plugins and export resource processor CLI plugins.</value>
+  </data>
+  <data name="PluginManagementPage.PageTitleText.Text" xml:space="preserve">
+    <value>Plugin Management</value>
+  </data>
+  <data name="PluginManagementPage.PageEyebrowText.Text" xml:space="preserve">
+    <value>Workspace / Extensions</value>
+  </data>
+  <data name="PluginManagementPage.PageSubtitleText.Text" xml:space="preserve">
+    <value>Manage import decryptor plugins and export resource processor plugins.</value>
+  </data>
+  <data name="PluginManagementPage.SearchTextBox.PlaceholderText" xml:space="preserve">
+    <value>Search plugins, ids, or command paths</value>
+  </data>
+  <data name="PluginManagementPage.RefreshButton.Content" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="PluginManagementPage.Directory.Title" xml:space="preserve">
+    <value>Plugin Directory</value>
+  </data>
+  <data name="PluginManagementPage.Directory.Hint" xml:space="preserve">
+    <value>Review, filter, and maintain the available CLI plugins.</value>
+  </data>
+  <data name="PluginManagementPage.AddDecryptorButton.Content" xml:space="preserve">
+    <value>Add Decryptor</value>
+  </data>
+  <data name="PluginManagementPage.Directory.EmptyText" xml:space="preserve">
+    <value>No plugins match the current filters.</value>
+  </data>
+  <data name="PluginManagementPage.Details.EmptyText" xml:space="preserve">
+    <value>Select a plugin on the left to view details.</value>
+  </data>
+  <data name="PluginManagementPage.EditButton.Content" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="PluginManagementPage.ValidateButton.Content" xml:space="preserve">
+    <value>Validate</value>
+  </data>
+  <data name="PluginManagementPage.CopyDiagnosticsButton.Content" xml:space="preserve">
+    <value>Copy Diagnostics</value>
+  </data>
+  <data name="PluginManagementPage.OpenLocationButton.Content" xml:space="preserve">
+    <value>Open Location</value>
+  </data>
+  <data name="PluginManagementPage.DeleteButton.Content" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="PluginManagementPage.TypeFilter.All" xml:space="preserve">
+    <value>All types</value>
+  </data>
+  <data name="PluginManagementPage.Type.ImportDecryptor" xml:space="preserve">
+    <value>Import Decryptor</value>
+  </data>
+  <data name="PluginManagementPage.Type.ExportProcessor" xml:space="preserve">
+    <value>Export Processor</value>
+  </data>
+  <data name="PluginManagementPage.Scope.ImportDecryptor" xml:space="preserve">
+    <value>AB import pre-processing</value>
+  </data>
+  <data name="PluginManagementPage.StatusFilter.All" xml:space="preserve">
+    <value>All status</value>
+  </data>
+  <data name="PluginManagementPage.Status.Available" xml:space="preserve">
+    <value>Available</value>
+  </data>
+  <data name="PluginManagementPage.Status.Warning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="PluginManagementPage.Status.Unavailable" xml:space="preserve">
+    <value>Unavailable</value>
+  </data>
+  <data name="PluginManagementPage.Badge.BuiltIn" xml:space="preserve">
+    <value>Built-in</value>
+  </data>
+  <data name="PluginManagementPage.Badge.ReadOnly" xml:space="preserve">
+    <value>Read-only</value>
+  </data>
+  <data name="PluginManagementPage.Badge.UserManaged" xml:space="preserve">
+    <value>User managed</value>
+  </data>
+  <data name="PluginManagementPage.Value.Enabled" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="PluginManagementPage.Value.Disabled" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="PluginManagementPage.ResourceKind.Unknown" xml:space="preserve">
+    <value>Unknown resource kind</value>
+  </data>
+  <data name="PluginManagementPage.ResourceProcessor.DisplayName.Format" xml:space="preserve">
+    <value>{0} CLI Processor</value>
+  </data>
+  <data name="PluginManagementPage.ResourceProcessor.Description.Format" xml:space="preserve">
+    <value>Reserved export pre-processing CLI entry for {0} resources.</value>
+  </data>
+  <data name="PluginManagementPage.Timeout.Format" xml:space="preserve">
+    <value>{0} ms</value>
+  </data>
+  <data name="PluginManagementPage.Detail.Id.Label" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="PluginManagementPage.Detail.Version.Label" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="PluginManagementPage.Detail.Type.Label" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="PluginManagementPage.Detail.Status.Label" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="PluginManagementPage.Detail.AutoDetection.Label" xml:space="preserve">
+    <value>Auto detection</value>
+  </data>
+  <data name="PluginManagementPage.Detail.Fallback.Label" xml:space="preserve">
+    <value>Fallback</value>
+  </data>
+  <data name="PluginManagementPage.Detail.Timeout.Label" xml:space="preserve">
+    <value>Timeout</value>
+  </data>
+  <data name="PluginManagementPage.Detail.ExecutablePath.Label" xml:space="preserve">
+    <value>Executable</value>
+  </data>
+  <data name="PluginManagementPage.Detail.WorkingDirectory.Label" xml:space="preserve">
+    <value>Working directory</value>
+  </data>
+  <data name="PluginManagementPage.Detail.ManifestPath.Label" xml:space="preserve">
+    <value>Manifest</value>
+  </data>
+  <data name="PluginManagementPage.Detail.ProbeArguments.Label" xml:space="preserve">
+    <value>Probe arguments</value>
+  </data>
+  <data name="PluginManagementPage.Detail.DecryptArguments.Label" xml:space="preserve">
+    <value>Decrypt arguments</value>
+  </data>
+  <data name="PluginManagementPage.Detail.ResourceKinds.Label" xml:space="preserve">
+    <value>Resource kinds</value>
+  </data>
+  <data name="PluginManagementPage.Detail.Arguments.Label" xml:space="preserve">
+    <value>Process arguments</value>
+  </data>
+  <data name="PluginManagementPage.Diagnostic.SectionTitle" xml:space="preserve">
+    <value>Recent Diagnostics</value>
+  </data>
+  <data name="PluginManagementPage.Diagnostic.NotRun" xml:space="preserve">
+    <value>Validation has not run yet.</value>
+  </data>
+  <data name="PluginManagementPage.Diagnostic.NoSelection" xml:space="preserve">
+    <value>No plugin is selected.</value>
+  </data>
+  <data name="PluginManagementPage.Validation.CompletedMessage.Format" xml:space="preserve">
+    <value>Basic configuration check completed for {0}.</value>
+  </data>
+  <data name="PluginManagementPage.DiagnosticsCopiedMessage" xml:space="preserve">
+    <value>Plugin diagnostics copied.</value>
+  </data>
+  <data name="PluginManagementPage.OpenLocationFailedMessage" xml:space="preserve">
+    <value>Unable to open the plugin location.</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorDelete.Title" xml:space="preserve">
+    <value>Delete Decryptor Plugin</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorDelete.Description.Format" xml:space="preserve">
+    <value>Delete "{0}" ({1})? This removes the plugin manifest from the user directory.</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorDelete.PrimaryButton" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorDelete.CloseButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorLoadFailedMessage" xml:space="preserve">
+    <value>Failed to load the decryptor plugin directory.</value>
+  </data>
+  <data name="PluginManagementPage.ProcessorLoadFailedMessage" xml:space="preserve">
+    <value>Failed to load the resource processor plugin directory.</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorSaveSucceededMessage.Format" xml:space="preserve">
+    <value>Saved decryptor plugin "{0}".</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorSaveFailedMessage" xml:space="preserve">
+    <value>Failed to save the decryptor plugin.</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorDeleteSucceededMessage.Format" xml:space="preserve">
+    <value>Deleted decryptor plugin "{0}".</value>
+  </data>
+  <data name="PluginManagementPage.DecryptorDeleteFailedMessage" xml:space="preserve">
+    <value>Failed to delete the decryptor plugin.</value>
   </data>
 </root>

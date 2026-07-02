@@ -62,6 +62,9 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("_owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null", coordinator);
         Assert.Contains("GetWorkspaceSavePreviewAsync", coordinator);
         Assert.Contains("GetWorkspaceChangeSummaryAsync", coordinator);
+        Assert.Contains("IResourceProcessorCatalogService", coordinator);
+        Assert.Contains("_resourceProcessorCatalogService.GetEntriesAsync()", coordinator);
+        Assert.Contains("processorCatalogEntries", coordinator);
         Assert.Contains("<shared:AppNotificationPresenter", windowXaml);
         Assert.Contains("Text=\"{Binding BundleSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}\"", contentXaml);
         Assert.Contains("ItemsSource=\"{Binding BundleSortOptions}\"", contentXaml);
@@ -85,6 +88,8 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("WorkspaceExportDialogBundleGroupPrevious", viewModel);
         Assert.Contains("AppendTimeGroupedVisibleBundles", viewModel);
         Assert.Contains("bundle.DisplayName.Contains(query", viewModel);
+        Assert.Contains("IReadOnlyList<ResourceProcessorCatalogEntryDto>? resourceProcessorCatalogEntries", viewModel);
+        Assert.Contains("IsCompatibleResourceProcessor", viewModel);
         Assert.Contains("WorkspaceExportDialogProcessorCliPlaceholder", viewModel);
         Assert.Contains("WorkspaceExportDialogResourceProcessorTexture2D", viewModel);
         Assert.Contains("WorkspaceExportDialogResourceProcessorAudio", viewModel);
