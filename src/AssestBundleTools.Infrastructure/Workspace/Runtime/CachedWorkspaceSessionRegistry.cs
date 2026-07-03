@@ -66,7 +66,7 @@ public sealed partial class CachedWorkspaceSessionRegistry :
             summary: workspaceSummary,
             bundleTree: CreateBundleTree(bundleStates),
             bundlesById: bundleStates.ToDictionary(static bundle => bundle.BundleId.Value, StringComparer.Ordinal),
-            assetsById: BuildAssetGraphNodes(bundleStates));
+            assetGraphNodesByKey: BuildAssetGraphNodes(bundleStates));
         workspaceState.InitializeDependencyIndexes();
         ApplyPersistedOperations(request, workspaceState);
 
@@ -221,14 +221,14 @@ public sealed partial class CachedWorkspaceSessionRegistry :
                 FileReplacementSourceAssetType: assetState.AppliedFileReplacement?.SourceAssetType,
                 LastExtractedAtUtc: assetState.LastExtractedAtUtc,
                 Dependencies: assetState.Dependencies,
-                ReferencedBy: workspaceState.TryGetReverseDependencies(assetState.AssetId, out var reverseDependencies)
+                ReferencedBy: workspaceState.TryGetReverseDependencies(bundleState.BundleId, assetState.AssetId, out var reverseDependencies)
                     ? reverseDependencies
                     : Array.Empty<AssetDependencyDto>(),
-                DependencyClosure: BuildDependencyClosure(assetState, workspaceState.AssetsById),
+                DependencyClosure: BuildDependencyClosure(assetState, workspaceState.AssetGraphNodesByKey),
                 AssetTypeDisplayName: assetState.AssetTypeDisplayName,
                 BundleExternalDependencies: bundleState.BundleExternalDependencies,
                 SerializedFileName: assetState.SerializedFileName,
-                TextureAssociations: workspaceState.TryGetTextureAssociations(assetState.AssetId, out var textureAssociations)
+                TextureAssociations: workspaceState.TryGetTextureAssociations(bundleState.BundleId, assetState.AssetId, out var textureAssociations)
                     ? textureAssociations
                     : Array.Empty<AssetDependencyDto>(),
                 WorkspaceReplacementSourceBundleId: assetState.AppliedWorkspaceReplacement?.SourceBundleId,
@@ -256,7 +256,7 @@ public sealed partial class CachedWorkspaceSessionRegistry :
                 return false;
             }
 
-            impacts = BuildAssociatedAssetImpacts(workspaceState, assetId);
+            impacts = BuildAssociatedAssetImpacts(workspaceState, bundleId, assetId);
             return true;
         }
     }

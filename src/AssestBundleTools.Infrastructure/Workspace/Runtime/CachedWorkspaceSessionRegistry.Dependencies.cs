@@ -1,6 +1,7 @@
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Bundles;
 
 namespace AssestBundleTools.Infrastructure.Workspace.Runtime;
 
@@ -17,22 +18,23 @@ public sealed partial class CachedWorkspaceSessionRegistry
             .SelectMany(bundleState => bundleState.Assets.Select(assetState => new AssetGraphNodeState(
                 BundleId: bundleState.BundleId,
                 AssetState: assetState)))
-            .ToDictionary(static node => node.AssetState.AssetId.Value, StringComparer.Ordinal);
+            .ToDictionary(static node => CreateAssetKey(node.BundleId.Value, node.AssetState.AssetId.Value), StringComparer.Ordinal);
     }
 
-    private static IReadOnlyDictionary<string, IReadOnlyList<AssetDependencyDto>> BuildReverseDependenciesByAssetId(
-        IReadOnlyDictionary<string, AssetGraphNodeState> assetsById)
+    private static IReadOnlyDictionary<string, IReadOnlyList<AssetDependencyDto>> BuildReverseDependenciesByAssetKey(
+        IReadOnlyDictionary<string, AssetGraphNodeState> assetGraphNodesByKey)
     {
         var reverseDependencies = new Dictionary<string, List<AssetDependencyDto>>(StringComparer.Ordinal);
 
-        foreach (var assetNode in assetsById.Values)
+        foreach (var assetNode in assetGraphNodesByKey.Values)
         {
             foreach (var dependency in assetNode.AssetState.Dependencies)
             {
-                if (!reverseDependencies.TryGetValue(dependency.AssetId.Value, out var reverseDependencyList))
+                var dependencyAssetKey = CreateAssetKey(dependency.BundleId.Value, dependency.AssetId.Value);
+                if (!reverseDependencies.TryGetValue(dependencyAssetKey, out var reverseDependencyList))
                 {
                     reverseDependencyList = new List<AssetDependencyDto>();
-                    reverseDependencies[dependency.AssetId.Value] = reverseDependencyList;
+                    reverseDependencies[dependencyAssetKey] = reverseDependencyList;
                 }
 
                 reverseDependencyList.Add(CreateDependencyDescriptor(assetNode));
@@ -51,7 +53,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
 
     private static IReadOnlyList<AssetDependencyDto> BuildDependencyClosure(
         CachedAssetState sourceAssetState,
-        IReadOnlyDictionary<string, AssetGraphNodeState> assetsById)
+        IReadOnlyDictionary<string, AssetGraphNodeState> assetGraphNodesByKey)
     {
         if (sourceAssetState.Dependencies.Count == 0)
         {
@@ -59,7 +61,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
         }
 
         var closure = new List<AssetDependencyDto>();
-        var visitedAssetIds = new HashSet<string>(StringComparer.Ordinal);
+        var visitedAssetKeys = new HashSet<string>(StringComparer.Ordinal);
         var pendingDependencies = new Queue<(AssetDependencyDto Dependency, int Depth)>();
         foreach (var dependency in sourceAssetState.Dependencies)
         {
@@ -69,7 +71,8 @@ public sealed partial class CachedWorkspaceSessionRegistry
         while (pendingDependencies.Count > 0)
         {
             var (dependency, depth) = pendingDependencies.Dequeue();
-            if (!visitedAssetIds.Add(dependency.AssetId.Value))
+            var dependencyAssetKey = CreateAssetKey(dependency.BundleId.Value, dependency.AssetId.Value);
+            if (!visitedAssetKeys.Add(dependencyAssetKey))
             {
                 continue;
             }
@@ -79,7 +82,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
                 DependencyDepth = depth
             });
 
-            if (!assetsById.TryGetValue(dependency.AssetId.Value, out var dependencyNode))
+            if (!assetGraphNodesByKey.TryGetValue(dependencyAssetKey, out var dependencyNode))
             {
                 continue;
             }
@@ -98,20 +101,20 @@ public sealed partial class CachedWorkspaceSessionRegistry
             .ToArray();
     }
 
-    private static IReadOnlyDictionary<string, IReadOnlyList<AssetDependencyDto>> BuildTextureAssociationsByAssetId(
-        IReadOnlyDictionary<string, AssetGraphNodeState> assetsById,
-        IReadOnlyDictionary<string, IReadOnlyList<AssetDependencyDto>> reverseDependenciesByAssetId)
+    private static IReadOnlyDictionary<string, IReadOnlyList<AssetDependencyDto>> BuildTextureAssociationsByAssetKey(
+        IReadOnlyDictionary<string, AssetGraphNodeState> assetGraphNodesByKey,
+        IReadOnlyDictionary<string, IReadOnlyList<AssetDependencyDto>> reverseDependenciesByAssetKey)
     {
         var textureAssociations = new Dictionary<string, IReadOnlyList<AssetDependencyDto>>(StringComparer.Ordinal);
-        foreach (var assetNode in assetsById.Values.Where(static node => node.AssetState.AssetType == AssetType.Mesh))
+        foreach (var assetNode in assetGraphNodesByKey.Values.Where(static node => node.AssetState.AssetType == AssetType.Mesh))
         {
             var associations = BuildTextureAssociationsForMesh(
-                assetNode.AssetState,
-                assetsById,
-                reverseDependenciesByAssetId);
+                assetNode,
+                assetGraphNodesByKey,
+                reverseDependenciesByAssetKey);
             if (associations.Count > 0)
             {
-                textureAssociations[assetNode.AssetState.AssetId.Value] = associations;
+                textureAssociations[CreateAssetKey(assetNode.BundleId.Value, assetNode.AssetState.AssetId.Value)] = associations;
             }
         }
 
@@ -120,6 +123,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
 
     private static IReadOnlyList<WorkspaceAssociatedAssetImpactDto> BuildAssociatedAssetImpacts(
         WorkspaceSessionState workspaceState,
+        BundleId changedBundleId,
         AssetId changedAssetId)
     {
         if (string.IsNullOrWhiteSpace(changedAssetId.Value))
@@ -127,36 +131,40 @@ public sealed partial class CachedWorkspaceSessionRegistry
             return Array.Empty<WorkspaceAssociatedAssetImpactDto>();
         }
 
-        var impactsByAssetId = new Dictionary<string, WorkspaceAssociatedAssetImpactDto>(StringComparer.Ordinal);
-        if (workspaceState.TryGetReverseDependencies(changedAssetId, out var directDependents))
+        var changedAssetKey = CreateAssetKey(changedBundleId.Value, changedAssetId.Value);
+        var impactsByAssetKey = new Dictionary<string, WorkspaceAssociatedAssetImpactDto>(StringComparer.Ordinal);
+        if (workspaceState.TryGetReverseDependencies(changedBundleId, changedAssetId, out var directDependents))
         {
             foreach (var dependent in directDependents)
             {
-                AddAssociatedAssetImpact(impactsByAssetId, dependent);
+                AddAssociatedAssetImpact(impactsByAssetKey, dependent);
             }
         }
 
         // 直接反向引用覆盖 Texture2D / TextAsset / Material / Sprite 等通用关联资源；
         // Mesh 的贴图化预览还需要额外保留从 Renderer/Material 链路推导出的间接贴图影响。
-        foreach (var assetNode in workspaceState.AssetsById.Values)
+        foreach (var assetNode in workspaceState.AssetGraphNodesByKey.Values)
         {
             if (!assetNode.AssetState.IncludeInAssetList)
             {
                 continue;
             }
 
-            if (!workspaceState.TryGetTextureAssociations(assetNode.AssetState.AssetId, out var textureAssociations) ||
+            if (!workspaceState.TryGetTextureAssociations(assetNode.BundleId, assetNode.AssetState.AssetId, out var textureAssociations) ||
                 !textureAssociations.Any(textureAssociation =>
-                    string.Equals(textureAssociation.AssetId.Value, changedAssetId.Value, StringComparison.Ordinal)))
+                    string.Equals(
+                        CreateAssetKey(textureAssociation.BundleId.Value, textureAssociation.AssetId.Value),
+                        changedAssetKey,
+                        StringComparison.Ordinal)))
             {
                 continue;
             }
 
-            AddAssociatedAssetImpact(impactsByAssetId, CreateDependencyDescriptor(assetNode));
+            AddAssociatedAssetImpact(impactsByAssetKey, CreateDependencyDescriptor(assetNode));
         }
 
-        impactsByAssetId.Remove(changedAssetId.Value);
-        return impactsByAssetId.Values
+        impactsByAssetKey.Remove(changedAssetKey);
+        return impactsByAssetKey.Values
             .OrderBy(static impact => impact.Name, StringComparer.OrdinalIgnoreCase)
             .ThenBy(static impact => impact.BundleId.Value, StringComparer.OrdinalIgnoreCase)
             .ThenBy(static impact => impact.PathId)
@@ -164,16 +172,18 @@ public sealed partial class CachedWorkspaceSessionRegistry
     }
 
     private static void AddAssociatedAssetImpact(
-        IDictionary<string, WorkspaceAssociatedAssetImpactDto> impactsByAssetId,
+        IDictionary<string, WorkspaceAssociatedAssetImpactDto> impactsByAssetKey,
         AssetDependencyDto dependency)
     {
+        var assetKey = CreateAssetKey(dependency.BundleId.Value, dependency.AssetId.Value);
         if (string.IsNullOrWhiteSpace(dependency.AssetId.Value) ||
-            impactsByAssetId.ContainsKey(dependency.AssetId.Value))
+            string.IsNullOrWhiteSpace(dependency.BundleId.Value) ||
+            impactsByAssetKey.ContainsKey(assetKey))
         {
             return;
         }
 
-        impactsByAssetId[dependency.AssetId.Value] = new WorkspaceAssociatedAssetImpactDto(
+        impactsByAssetKey[assetKey] = new WorkspaceAssociatedAssetImpactDto(
             dependency.BundleId,
             dependency.AssetId,
             dependency.Name,
@@ -183,23 +193,25 @@ public sealed partial class CachedWorkspaceSessionRegistry
     }
 
     private static IReadOnlyList<AssetDependencyDto> BuildTextureAssociationsForMesh(
-        CachedAssetState meshAsset,
-        IReadOnlyDictionary<string, AssetGraphNodeState> assetsById,
-        IReadOnlyDictionary<string, IReadOnlyList<AssetDependencyDto>> reverseDependenciesByAssetId)
+        AssetGraphNodeState meshNode,
+        IReadOnlyDictionary<string, AssetGraphNodeState> assetGraphNodesByKey,
+        IReadOnlyDictionary<string, IReadOnlyList<AssetDependencyDto>> reverseDependenciesByAssetKey)
     {
+        var meshAsset = meshNode.AssetState;
+        var meshAssetKey = CreateAssetKey(meshNode.BundleId.Value, meshAsset.AssetId.Value);
         var associations = new List<AssetDependencyDto>();
-        var seenAssetIds = new HashSet<string>(StringComparer.Ordinal);
+        var seenAssetKeys = new HashSet<string>(StringComparer.Ordinal);
 
-        if (reverseDependenciesByAssetId.TryGetValue(meshAsset.AssetId.Value, out var reverseDependencies))
+        if (reverseDependenciesByAssetKey.TryGetValue(meshAssetKey, out var reverseDependencies))
         {
             foreach (var referrer in reverseDependencies.Where(IsMeshTextureAssociationReferrer))
             {
                 AddReachableTextureAssociations(
                     referrer,
-                    meshAsset.AssetId.Value,
-                    assetsById,
+                    meshAssetKey,
+                    assetGraphNodesByKey,
                     associations,
-                    seenAssetIds,
+                    seenAssetKeys,
                     maxDepth: 4);
             }
         }
@@ -209,7 +221,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
             // 主路径无法从 MeshFilter/Renderer 链路抵达贴图时，再兼容少数 Mesh 自身直接挂 Texture2D/Sprite 的结构。
             foreach (var directDependency in meshAsset.Dependencies.Where(static dependency => IsTextureAssociationType(dependency.AssetType)))
             {
-                AddTextureAssociation(directDependency, associations, seenAssetIds);
+                AddTextureAssociation(directDependency, associations, seenAssetKeys);
             }
         }
 
@@ -222,16 +234,16 @@ public sealed partial class CachedWorkspaceSessionRegistry
 
     private static void AddReachableTextureAssociations(
         AssetDependencyDto rootDependency,
-        string sourceMeshAssetId,
-        IReadOnlyDictionary<string, AssetGraphNodeState> assetsById,
+        string sourceMeshAssetKey,
+        IReadOnlyDictionary<string, AssetGraphNodeState> assetGraphNodesByKey,
         ICollection<AssetDependencyDto> associations,
-        ISet<string> seenAssetIds,
+        ISet<string> seenAssetKeys,
         int maxDepth)
     {
-        var visitedAssetIds = new HashSet<string>(StringComparer.Ordinal);
-        if (!string.IsNullOrWhiteSpace(sourceMeshAssetId))
+        var visitedAssetKeys = new HashSet<string>(StringComparer.Ordinal);
+        if (!string.IsNullOrWhiteSpace(sourceMeshAssetKey))
         {
-            visitedAssetIds.Add(sourceMeshAssetId);
+            visitedAssetKeys.Add(sourceMeshAssetKey);
         }
 
         var pending = new Queue<(AssetDependencyDto Dependency, int Depth)>();
@@ -240,25 +252,26 @@ public sealed partial class CachedWorkspaceSessionRegistry
         while (pending.Count > 0)
         {
             var (dependency, depth) = pending.Dequeue();
-            if (!visitedAssetIds.Add(dependency.AssetId.Value) || depth > maxDepth)
+            var dependencyAssetKey = CreateAssetKey(dependency.BundleId.Value, dependency.AssetId.Value);
+            if (!visitedAssetKeys.Add(dependencyAssetKey) || depth > maxDepth)
             {
                 continue;
             }
 
             if (IsTextureAssociationType(dependency.AssetType))
             {
-                AddTextureAssociation(dependency, associations, seenAssetIds);
+                AddTextureAssociation(dependency, associations, seenAssetKeys);
                 continue;
             }
 
-            if (!assetsById.TryGetValue(dependency.AssetId.Value, out var dependencyNode))
+            if (!assetGraphNodesByKey.TryGetValue(dependencyAssetKey, out var dependencyNode))
             {
                 continue;
             }
 
             if (IsTextureAssociationType(dependencyNode.AssetState.AssetType))
             {
-                AddTextureAssociation(CreateDependencyDescriptor(dependencyNode), associations, seenAssetIds);
+                AddTextureAssociation(CreateDependencyDescriptor(dependencyNode), associations, seenAssetKeys);
                 continue;
             }
 
@@ -272,9 +285,9 @@ public sealed partial class CachedWorkspaceSessionRegistry
     private static void AddTextureAssociation(
         AssetDependencyDto textureDependency,
         ICollection<AssetDependencyDto> associations,
-        ISet<string> seenAssetIds)
+        ISet<string> seenAssetKeys)
     {
-        if (seenAssetIds.Add(textureDependency.AssetId.Value))
+        if (seenAssetKeys.Add(CreateAssetKey(textureDependency.BundleId.Value, textureDependency.AssetId.Value)))
         {
             associations.Add(textureDependency);
         }

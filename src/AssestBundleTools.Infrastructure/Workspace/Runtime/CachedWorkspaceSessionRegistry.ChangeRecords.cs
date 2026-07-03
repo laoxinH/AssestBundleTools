@@ -66,7 +66,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
             changeSet,
             bundleId.Value,
             assetId.Value);
-        var implicitDependencyAssetKeys = GetImplicitDependencyAssetKeys(workspaceState, assetState);
+        var implicitDependencyAssetKeys = GetImplicitDependencyAssetKeys(workspaceState, bundleId, assetState);
 
         foreach (var operation in operations
             .Where(static operation => operation.OperationKind is
@@ -177,6 +177,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
 
     private static ISet<string> GetImplicitDependencyAssetKeys(
         WorkspaceSessionState workspaceState,
+        BundleId bundleId,
         CachedAssetState assetState)
     {
         var assetKeys = new HashSet<string>(StringComparer.Ordinal);
@@ -189,7 +190,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
             }
         }
 
-        if (workspaceState.TryGetTextureAssociations(assetState.AssetId, out var textureAssociations))
+        if (workspaceState.TryGetTextureAssociations(bundleId, assetState.AssetId, out var textureAssociations))
         {
             foreach (var textureAssociation in textureAssociations)
             {
@@ -204,6 +205,4 @@ public sealed partial class CachedWorkspaceSessionRegistry
         return assetKeys;
     }
 
-    private static string CreateAssetKey(string bundleId, string assetId) =>
-        string.Concat(bundleId, "\n", assetId);
 }

@@ -15,14 +15,14 @@ public sealed partial class CachedWorkspaceSessionRegistry
             WorkspaceSummaryDto summary,
             IReadOnlyList<BundleTreeNodeDto> bundleTree,
             IReadOnlyDictionary<string, CachedBundleState> bundlesById,
-            IReadOnlyDictionary<string, AssetGraphNodeState> assetsById)
+            IReadOnlyDictionary<string, AssetGraphNodeState> assetGraphNodesByKey)
         {
             Summary = summary;
             BundleTree = bundleTree;
             BundlesById = bundlesById;
-            AssetsById = assetsById;
-            ReverseDependenciesByAssetId = new Dictionary<string, IReadOnlyList<AssetDependencyDto>>(StringComparer.Ordinal);
-            TextureAssociationsByAssetId = new Dictionary<string, IReadOnlyList<AssetDependencyDto>>(StringComparer.Ordinal);
+            AssetGraphNodesByKey = assetGraphNodesByKey;
+            ReverseDependenciesByAssetKey = new Dictionary<string, IReadOnlyList<AssetDependencyDto>>(StringComparer.Ordinal);
+            TextureAssociationsByAssetKey = new Dictionary<string, IReadOnlyList<AssetDependencyDto>>(StringComparer.Ordinal);
         }
 
         public WorkspaceSummaryDto Summary { get; }
@@ -31,24 +31,26 @@ public sealed partial class CachedWorkspaceSessionRegistry
 
         public IReadOnlyDictionary<string, CachedBundleState> BundlesById { get; }
 
-        public IReadOnlyDictionary<string, AssetGraphNodeState> AssetsById { get; }
+        public IReadOnlyDictionary<string, AssetGraphNodeState> AssetGraphNodesByKey { get; }
 
-        public IReadOnlyDictionary<string, IReadOnlyList<AssetDependencyDto>> ReverseDependenciesByAssetId { get; private set; }
+        public IReadOnlyDictionary<string, IReadOnlyList<AssetDependencyDto>> ReverseDependenciesByAssetKey { get; private set; }
 
-        public IReadOnlyDictionary<string, IReadOnlyList<AssetDependencyDto>> TextureAssociationsByAssetId { get; private set; }
+        public IReadOnlyDictionary<string, IReadOnlyList<AssetDependencyDto>> TextureAssociationsByAssetKey { get; private set; }
 
         public void InitializeDependencyIndexes()
         {
-            ReverseDependenciesByAssetId = BuildReverseDependenciesByAssetId(AssetsById);
-            TextureAssociationsByAssetId = BuildTextureAssociationsByAssetId(AssetsById, ReverseDependenciesByAssetId);
+            ReverseDependenciesByAssetKey = BuildReverseDependenciesByAssetKey(AssetGraphNodesByKey);
+            TextureAssociationsByAssetKey = BuildTextureAssociationsByAssetKey(AssetGraphNodesByKey, ReverseDependenciesByAssetKey);
         }
 
         public bool TryGetReverseDependencies(
+            BundleId bundleId,
             AssetId assetId,
             out IReadOnlyList<AssetDependencyDto> reverseDependencies)
         {
+            var assetKey = CreateAssetKey(bundleId.Value, assetId.Value);
             if (!string.IsNullOrWhiteSpace(assetId.Value) &&
-                ReverseDependenciesByAssetId.TryGetValue(assetId.Value, out var cachedReverseDependencies))
+                ReverseDependenciesByAssetKey.TryGetValue(assetKey, out var cachedReverseDependencies))
             {
                 reverseDependencies = cachedReverseDependencies;
                 return true;
@@ -59,11 +61,13 @@ public sealed partial class CachedWorkspaceSessionRegistry
         }
 
         public bool TryGetTextureAssociations(
+            BundleId bundleId,
             AssetId assetId,
             out IReadOnlyList<AssetDependencyDto> textureAssociations)
         {
+            var assetKey = CreateAssetKey(bundleId.Value, assetId.Value);
             if (!string.IsNullOrWhiteSpace(assetId.Value) &&
-                TextureAssociationsByAssetId.TryGetValue(assetId.Value, out var cachedTextureAssociations))
+                TextureAssociationsByAssetKey.TryGetValue(assetKey, out var cachedTextureAssociations))
             {
                 textureAssociations = cachedTextureAssociations;
                 return true;
@@ -77,6 +81,9 @@ public sealed partial class CachedWorkspaceSessionRegistry
     private sealed record AssetGraphNodeState(
         BundleId BundleId,
         CachedAssetState AssetState);
+
+    private static string CreateAssetKey(string bundleId, string assetId) =>
+        string.Concat(bundleId, "\n", assetId);
 
     private sealed record CachedBundleState(
         BundleId BundleId,

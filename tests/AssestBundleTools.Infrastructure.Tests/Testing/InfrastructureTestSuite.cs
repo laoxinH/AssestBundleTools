@@ -154,6 +154,10 @@ internal static class InfrastructureTestSuite
             CachedWorkspaceSessionRegistryTests.OpenWorkspace_ShouldRepairLegacyNormalizedBundleDisplayName_FromSourcePath);
         await RunTestAsync(
             failures,
+            nameof(CachedWorkspaceSessionRegistryDuplicateAssetIdTests.OpenWorkspace_ShouldKeepDuplicateLegacyAssetIdsScopedByBundle),
+            CachedWorkspaceSessionRegistryDuplicateAssetIdTests.OpenWorkspace_ShouldKeepDuplicateLegacyAssetIdsScopedByBundle);
+        await RunTestAsync(
+            failures,
             nameof(CachedWorkspaceSessionRegistryTests.TryGetAssetDetails_ShouldResolveMeshTextureAssociations_FromRendererPath),
             CachedWorkspaceSessionRegistryTests.TryGetAssetDetails_ShouldResolveMeshTextureAssociations_FromRendererPath);
         await RunTestAsync(

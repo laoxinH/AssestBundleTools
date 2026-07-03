@@ -92,7 +92,8 @@ public sealed partial class CachedWorkspaceSessionRegistry
         WorkspaceAssetDependencyTargetLookup assetDependencyTargetLookup)
     {
         if (assetDependencyTargetLookup.TryResolve(dependency, out var resolvedTarget) &&
-            !string.Equals(resolvedTarget.AssetId.Value, sourceAssetId.Value, StringComparison.Ordinal))
+            (!string.Equals(resolvedTarget.AssetId.Value, sourceAssetId.Value, StringComparison.Ordinal) ||
+             !string.Equals(resolvedTarget.BundleId.Value, sourceBundleId.Value, StringComparison.Ordinal)))
         {
             return new AssetDependencyDto(
                 resolvedTarget.AssetId,
