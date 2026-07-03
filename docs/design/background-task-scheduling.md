@@ -244,7 +244,7 @@ BackgroundWorkCompletion
 | `BatchExtraction` | 普通资源多选提取、Spine 组批量提取、工作区级批量提取对话框执行 | 可见后台 | 每工作区 1；Application 内部可按 AB 资源包受控并行，默认 `CPU/2`、最大 `4`，GC 压力下退避到 `1`；同 AB 内顺序执行 | 用户可取消；继续处理可成功项 | 显示确定进度 |
 | `BatchReplacement` | 后续真实批量替换 | 可见后台 | 每工作区 1 | 用户可取消；以操作记录恢复 | 显示 |
 | `Export` | 序列帧导出、资源组导出、后续素材包导出 | 可见后台 | 每工作区或每资源组受控 | 用户可取消；已输出文件按结果记录 | 显示 |
-| `SaveRebuild` | 另存为新包、真实写包、重建输出 | 最高可见后台 | 每工作区独占 | 强取消 / 回滚语义需由 Application 定义 | 显示并保留结果入口 |
+| `SaveRebuild` | 工作区真实导出、另存为新包、真实写包、重建输出 | 最高可见后台 | 每工作区独占；Application 内部可再拆资源处理器 worker 池和 bundle writer worker 池 | 取消、部分成功、单 bundle 原子和检查点语义由 Application 定义 | 显示并保留结果入口 |
 | `Maintenance` | 缓存清理、低优先级诊断 | 最低 | 空闲或低并发 | 可被高优先级任务跳过或暂停 | 默认不显示 |
 
 Profile 是调度策略，不是业务类型本身。同一个 Application 用例可以在不同入口下使用不同 profile，例如当前活动标签请求预览使用 `PreviewForeground`，后台预热同一预览用例使用 `PreviewPrewarm`。
@@ -466,9 +466,11 @@ Spine 组目录缓存的失效由结构性输入决定：bundle index 指纹集�
 
 artifact 删除、prune、资源包移除、工作区记录删除、导入刷新失效和标准化版本失效时，Application 通过 `IBundleArtifactSessionInvalidator` 通知 Infrastructure 主动摘除对应 loaded-session 条目；新请求不会继续命中旧 identity，已经取得 lease 或正在底层同步读取的旧任务会自然完成，最后一个 lease 释放后再 dispose。
 
-Export / SaveRebuild 共享 artifact resolver 已进入保存计划骨架的只读输入阶段：`GetWorkspaceSavePreviewQuery / SaveWorkspaceAsNewBundleCommand` 会携带 `workspaceKey / workspaceDataRootPath`，Application 通过 `bundle-index` 找到每个目标 bundle 的 `bundleCacheKey`，再用 `WorkspaceBundleArtifactResolver.TryResolveExistingInput(...)` 读取已有标准化 artifact manifest、回写 `lastAccessedAtUtc` 并派生 loaded-session identity。保存计划同时通过 `IWorkspaceSaveOutputProbe` 对目标输出路径做无副作用 preflight，并把输出路径可写、未探测、已存在文件、目标为目录、目录链被文件阻塞、非法路径和探测失败投影为结构化状态与诊断码。缺失、陈旧或物理路径不可解析的 artifact 只会在计划中标记诊断，不会在保存预览 / 保存骨架中触发解密、复制或 materialization；输出 preflight 也不会创建目录或写入文件。真实写包的最终冲突确认、取消、回滚和可变副本语义仍未定稿；后续实现时，Infrastructure 导出 / 写包适配器应直接消费这份只读输入图，并在需要时由真实计划阶段显式 materialize 缺失 artifact。当前已经解决同一进程内、同一 bundle artifact 生成、artifact 访问时间回写、artifact usage / LRU prune、显式 / 自动清理入口、同一 artifact identity loaded-session 重复加载、artifact 删除后的主动失效、loaded-session 容量上限、内存压力退避、预览 OOM 专用诊断、后台预热短期退避、SaveRebuild 保存计划读取现有 artifact identity，以及保存输出路径 preflight；下一步真实写包入口不得新增平行读取路径。
+Export / SaveRebuild 共享 artifact resolver 已进入保存计划骨架的只读输入阶段：`GetWorkspaceSavePreviewQuery / SaveWorkspaceAsNewBundleCommand` 会携带 `workspaceKey / workspaceDataRootPath`，Application 通过 `bundle-index` 找到每个目标 bundle 的 `bundleCacheKey`，再用 `WorkspaceBundleArtifactResolver.TryResolveExistingInput(...)` 读取已有标准化 artifact manifest、回写 `lastAccessedAtUtc` 并派生 loaded-session identity。保存计划同时通过 `IWorkspaceSaveOutputProbe` 对目标输出路径做无副作用 preflight，并把输出路径可写、未探测、已存在文件、目标为目录、目录链被文件阻塞、非法路径和探测失败投影为结构化状态与诊断码。缺失、陈旧或物理路径不可解析的 artifact 只会在计划中标记诊断，不会在保存预览 / 保存骨架中触发解密、复制或 materialization；输出 preflight 也不会创建目录或写入文件。
 
-该段中的“未定稿”仅指最终冲突确认、取消、回滚和可变副本细节；核心边界已经固定为：修改阶段只记录和物化操作，真实 AB 替换在统一导出 / 保存重建阶段消费操作记录后执行。
+真实工作区导出 / 保存重建的详细执行契约见 [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md)。后续真实写包入口必须继续消费这份只读 artifact 输入图，并在同一个 `SaveRebuild` 后台任务内部由 Application 拆分资源处理器 worker 池和 bundle writer worker 池：资源处理器阶段跨 bundle / resource item 受控并行，AB 写包阶段跨 bundle 受控并行、同 bundle 单 writer。输出成功后写出 `_abt-bundle-export-manifest.json`，用于向后续应用或导出后处理插件传递 AB 输出路径、hash、处理器选择、检查点和诊断。当前已经解决同一进程内、同一 bundle artifact 生成、artifact 访问时间回写、artifact usage / LRU prune、显式 / 自动清理入口、同一 artifact identity loaded-session 重复加载、artifact 删除后的主动失效、loaded-session 容量上限、内存压力退避、预览 OOM 专用诊断、后台预热短期退避、SaveRebuild 保存计划读取现有 artifact identity，以及保存输出路径 preflight；下一步真实写包入口不得新增平行读取路径。
+
+第一版真实导出边界已经收束为：修改阶段只记录和物化操作，真实 AB 替换在统一导出 / 保存重建阶段消费操作记录后执行；取消、部分成功、单 bundle 原子、检查点和 AB 输出 manifest 细节以 [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md) 为准。
 
 ## 15. 状态持久化边界
 
@@ -503,7 +505,7 @@ Export / SaveRebuild 共享 artifact resolver 已进入保存计划骨架的只�
 - 导入进度现在通过 `WorkspaceImportBackgroundProgressBridge` 同时投影给左侧导入遮罩和 Shell 状态条；操作记录与变更页刷新仍走既有 `IWorkspaceOperationChangeNotifier`，没有恢复手动刷新资产列表。
 - 当前实现还没有完整任务详情弹层、全局 CPU/IO/memory 闸门或完成结果中心；loaded-session 容量上限和内存压力退避已先在 Infrastructure cache 内落地；SaveRebuild 保存计划已能读取现有 artifact identity，并能预检目标输出路径 blockers，但仍不执行真实写包或自动 materialize 缺失 artifact。
 
-当前设计判断：后台调度、标准化物理缓存、loaded-session、预览缓存和保存输出 preflight 的职责边界已经清晰，足以继续承载提取 / 预览 / Spine 详情复用；容量治理已经补上显式清理、偏好驱动自动清理、artifact 删除后的 loaded-session 主动驱逐、loaded-session 容量上限和内存压力退避。缓存命中与清理细节本轮先通过 DEBUG 日志体现，其中 loaded-session 会直接记录 `Acquire miss / in-flight / hit` 和真实 `Load start / completed / failed`，不新增诊断面板；Export / SaveRebuild 已在保存骨架中形成只读 artifact 输入图和输出路径 blocker 预检，真实写包仍需在 M10 补最终冲突确认、取消、回滚、缺失 artifact materialization 和可变副本语义。
+当前设计判断：后台调度、标准化物理缓存、loaded-session、预览缓存和保存输出 preflight 的职责边界已经清晰，足以继续承载提取 / 预览 / Spine 详情复用；容量治理已经补上显式清理、偏好驱动自动清理、artifact 删除后的 loaded-session 主动驱逐、loaded-session 容量上限和内存压力退避。缓存命中与清理细节本轮先通过 DEBUG 日志体现，其中 loaded-session 会直接记录 `Acquire miss / in-flight / hit` 和真实 `Load start / completed / failed`，不新增诊断面板；Export / SaveRebuild 已在保存骨架中形成只读 artifact 输入图和输出路径 blocker 预检，M10 真实导出 / 保存重建按 [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md) 继续补资源处理器 worker 池、bundle writer worker 池、取消 / 部分成功、检查点、缺失 artifact materialization 和 AB 输出 manifest。
 
 对应回归：
 

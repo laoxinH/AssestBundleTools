@@ -271,6 +271,8 @@ WorkspaceExportDialogViewModel 选择资源包与每类处理器
   -> 保存写包继续消费处理后的载荷
 ```
 
+真实导出 / 保存重建阶段的完整多线程设计、处理器执行阶段、AB 写包阶段和 `_abt-bundle-export-manifest.json` 输出契约见 [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md)。插件管理页只维护资源处理器 catalog；处理器并发、失败是否阻断 bundle、取消终止、处理后载荷如何进入写包，都属于 Application 导出用例与 Infrastructure 执行端口职责。
+
 资源处理器的失败语义必须结构化：
 
 - 单个资源处理失败应归类为导出失败项，不应表现为主程序未预期异常。
@@ -352,4 +354,4 @@ Presentation 不得：
 
 - 资源处理器更完整验证，包括可执行文件解析、参数占位符检查、样本输入 probe 和 result JSON 结构校验。
 - 导出处理器默认值偏好与导出窗口跳转插件管理页入口。
-- 保存 / 导出真实写包链路中的资源处理器选择 DTO、CLI 执行、result JSON 解析和失败回填。
+- 保存 / 导出真实写包链路中的资源处理器选择 DTO、CLI 执行、result JSON 解析、失败回填和处理器并发执行，按 [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md) 落地。

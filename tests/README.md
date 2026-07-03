@@ -104,6 +104,6 @@
 - 工作区可恢复操作记录接入保存链路后，补来源缺失 / 指纹不匹配恢复计划、按目标资源撤销栈的当前会话精确回退、Sprite 编辑真实写包消费和保存检查点回归
 - 提取主线已补单资源文本 / 图片真实写出、Mesh OBJ / 静态 FBX 导出、结构化 JSON 摘要导出、MonoBehaviour TypeTree JSON 字段树 / 摘要 JSON / YAML / 原始字段文本导出、单资源保存文件名保留、批量提取操作记录、Spine 资源组 skeleton / atlas / 主贴图 / alpha 贴图整组提取、文件写出端口和提取记录重启恢复回归；后续补命名冲突、取消、失败分类、输出文件缺失恢复诊断和批处理结果明细回归
 - 替换主线已落地 Texture2D 的记录、有效预览、右键 / 检查器快捷修改一致性、独立变更记录、局部预览刷新、资产列表已修改状态即时刷新和目标资源级撤销 / 重做回归；后续继续补文件来源兼容性诊断、来源缺失 / 指纹不匹配恢复计划、批量替换结果明细、更多资源类型有效预览和真实写包消费回归
-- 保存 / 重建进入真实写包前，已补保存输出计划中的目标路径 preflight 和覆盖 blockers；后续继续补最终冲突确认、缺失 artifact materialization、取消 / 回滚和保存检查点回归
+- 保存 / 重建进入真实写包前，已补保存输出计划中的目标路径 preflight 和覆盖 blockers；后续按 `docs/design/workspace-export-save-pipeline.md` 继续补资源处理器选择 DTO、CLI 处理器 fake executor 并发 / 失败 / 取消、bundle writer fake executor 部分成功、AB 输出 manifest、最终冲突确认、缺失 artifact materialization、取消 / 回滚和保存检查点回归
 - 更完整的工作区激活，以及替换/保存链路在真实写包与最终持久化语义落地后的深层回归
 - 结构化错误与资源键的更细粒度自动校验

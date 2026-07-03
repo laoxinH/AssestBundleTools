@@ -543,6 +543,7 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 - 保存输出计划生成检查点。
 - 成功写包后把被消费操作标记为 `Committed`。
 - 失败时保留 `SaveExecutionFailed` 和可恢复诊断。
+- 工作区真实导出第一版按单 bundle 原子、整批可部分成功处理；只有成功输出的 bundle 创建检查点并标记对应操作为 `Committed`，失败 bundle 的操作仍保持待保存状态，详细执行规则见 [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md)。
 
 ## 12. 架构边界
 

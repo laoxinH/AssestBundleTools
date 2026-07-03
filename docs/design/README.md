@@ -4,7 +4,7 @@
 
 本文档用于收束 `docs/design` 下的文档状态，明确哪些文档是当前规范入口，哪些是专题记录，哪些仅作为历史兼容入口保留。
 
-当前状态更新时间：2026-05-18。上一轮 Spine 预览、状态恢复、资源详情滚动和 UI 按钮样式已经完成阶段性提交；当前开发重心先收束统一后台任务流程，再继续推进提取、替换和保存输出主线。
+当前状态更新时间：2026-07-03。当前开发重心已经进入 M10 真实导出 / 保存重建前置设计：先固化后台任务、资源处理器并发、AB 写包并发和输出 manifest 契约，再进入真实写包实现。
 
 ## 2. 当前规范入口
 
@@ -37,6 +37,8 @@
   工作区操作后真实目标资源、隐式依赖资源、聚合资源文档和独立编辑窗口之间的通用同步模型。
 - [background-task-scheduling.md](background-task-scheduling.md)
   导入、预览、提取、导出和后续保存 / 重建的统一后台任务调度、并发闸门、进度与状态条边界。
+- [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md)
+  工作区真实导出 / 保存重建的执行计划、资源处理器并发、AB 写包并发、检查点和 AB 输出 manifest 契约。
 - [workspace-batch-extraction-dialog.md](workspace-batch-extraction-dialog.md)
   工作台顶部批量提取入口从跳转批处理页改为当前工作区内资源包 / 类型选择对话框的设计与第一版落地状态。
 - [workspace-batch-replacement-dialog.md](workspace-batch-replacement-dialog.md)
@@ -70,7 +72,7 @@
 - M0-M7 已完成。
 - M8 提取与替换流程骨架已完成第一轮：候选、替换状态、撤销、批量预览和保存骨架已经有稳定承载面。
 - M9 真实读取、缓存、依赖图和富预览主线已完成阶段性收口；Spine 预览达到基础播放、动画 / skin 切换、状态恢复和 D3D 默认渲染的可继续使用状态。
-- M10 真实保存与重建尚未开始完整实现。
+- M10 真实保存与重建已经进入前置设计，真实写包实现尚未开始完整落地。
 - 当前不再优先扩展新的预览类型或大改工作台布局。
 
 ## 6. 下一步开发主线
@@ -86,6 +88,6 @@
 4. 替换流程顺滑化
    补强文件来源选择、兼容性诊断、替换预览、撤销和批量替换结果明细，避免替换状态分散在多个页面。
 5. 保存 / 重建前置设计
-   在保存前预览、输出计划、覆盖保护、失败分类和回滚边界明确后，再进入真实写包。
+   按 [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md) 先固化真实导出计划、资源处理器并发、AB 写包并发、取消 / 部分成功和 `_abt-bundle-export-manifest.json` 契约，再进入真实写包实现。
 6. 回归与文档同步
    每个小里程碑都同步补 Application / Infrastructure / Presentation 回归，并更新路线图中对应状态。
