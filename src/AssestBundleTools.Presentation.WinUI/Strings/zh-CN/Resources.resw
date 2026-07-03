@@ -3885,6 +3885,21 @@
   <data name="Error.Bundle.Save.ManifestWriteFailed" xml:space="preserve">
     <value>写出 AB 导出清单失败：{0}。详情：{1}</value>
   </data>
+  <data name="Error.Bundle.Save.ResourceProcessor.NotFound" xml:space="preserve">
+    <value>未找到导出资源处理器：{0}</value>
+  </data>
+  <data name="Error.Bundle.Save.ResourceProcessor.Unavailable" xml:space="preserve">
+    <value>导出资源处理器不可用：{0}</value>
+  </data>
+  <data name="Error.Bundle.Save.ResourceProcessor.UnsupportedResourceKind" xml:space="preserve">
+    <value>导出资源处理器“{0}”不支持资源类型：{1}</value>
+  </data>
+  <data name="Error.Bundle.Save.ResourceProcessor.ExecutionFailed" xml:space="preserve">
+    <value>导出资源处理器执行失败：{0}。详情：{1}</value>
+  </data>
+  <data name="Error.Bundle.Save.ResourceProcessor.ResultInvalid" xml:space="preserve">
+    <value>导出资源处理器结果无效：{0}。详情：{1}</value>
+  </data>
   <data name="Error.Bundle.Decrypt.Failed" xml:space="preserve">
     <value>资源包解密失败。解密器：{0}。详情：{1}</value>
   </data>

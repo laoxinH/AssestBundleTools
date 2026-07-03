@@ -30,6 +30,7 @@ internal static class FileSystemWorkspaceBundleExporterTests
             BundleCacheKey: "bundle-cache-key",
             ChangeItems: Array.Empty<AssestBundleTools.Application.Workspace.Dtos.WorkspaceChangeItemDto>(),
             ProcessorSelections: Array.Empty<WorkspaceExportProcessorSelectionDto>(),
+            ProcessorResults: Array.Empty<WorkspaceResourceProcessorExecutionResultDto>(),
             OperationId: "operation"));
 
         TestAssert.True(result.IsSuccess, "Bundle export should succeed.");

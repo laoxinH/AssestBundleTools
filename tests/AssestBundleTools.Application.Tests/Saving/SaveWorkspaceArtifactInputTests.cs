@@ -1,6 +1,8 @@
 using System.IO;
 using System.Linq;
 using AssestBundleTools.Application.Bundles;
+using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Saving.Commands;
@@ -170,8 +172,9 @@ internal static partial class SaveWorkspaceHandlersTests
                         bundleId: alphaBundleId,
                         assetId: new AssetId("asset-1"),
                         bundleDisplayName: "Alpha.ab",
-                        assetName: "ConfigText",
-                        isModified: true),
+                        assetName: "HeroTexture",
+                        isModified: true,
+                        fileReplacementSourceFileName: "hero.png"),
                     CreateChangeItem(
                         bundleId: zetaBundleId,
                         assetId: new AssetId("asset-2"),
@@ -182,6 +185,7 @@ internal static partial class SaveWorkspaceHandlersTests
         };
         var exporter = new RecordingBundleExporter();
         var manifestStore = new RecordingBundleExportManifestStore();
+        var processorExecutor = new RecordingResourceProcessorExecutor();
         var handler = new SaveWorkspaceAsNewBundleHandler(
             registry,
             new TestWorkspaceDataStoreFactory(
@@ -189,7 +193,12 @@ internal static partial class SaveWorkspaceHandlersTests
                 artifactStore),
             new ReadyWorkspaceSaveOutputProbe(),
             exporter,
-            manifestStore);
+            manifestStore,
+            new TestResourceProcessorCatalogStore(
+            [
+                CreateResourceProcessor("resource.processor.texture.png", "Texture2D")
+            ]),
+            processorExecutor);
 
         var result = await handler.HandleAsync(new SaveWorkspaceAsNewBundleCommand(
             workspaceId,
@@ -208,11 +217,76 @@ internal static partial class SaveWorkspaceHandlersTests
         TestAssert.Equal(@"D:\Exports\_abt-bundle-export-manifest.json", execution.ExportManifestPath, "Manifest path should be returned.");
         TestAssert.Equal(alphaBundleId, TestAssert.Single(exporter.Requests).BundleId, "Exporter should receive only the selected bundle.");
         TestAssert.Equal("resource.processor.texture.png", TestAssert.Single(exporter.Requests[0].ProcessorSelections).ProcessorId, "Processor selections should be forwarded to exporter.");
+        TestAssert.Equal("HeroTexture", TestAssert.Single(processorExecutor.WorkItems).AssetName, "File-backed Texture2D changes should create resource processor work items.");
+        TestAssert.Equal("resource.processor.texture.png", TestAssert.Single(exporter.Requests[0].ProcessorResults).ProcessorId, "Processor execution results should be forwarded to exporter.");
         TestAssert.Equal(1, manifestStore.SaveCallCount, "Successful export should save an AB export manifest.");
         TestAssert.Equal(alphaBundleId, TestAssert.Single(manifestStore.LastRequest!.BundleResults).BundleId, "Manifest should include written bundle results.");
         var bundleResult = TestAssert.Single(execution.BundleResults);
         TestAssert.Equal("abc123-md5", bundleResult.WrittenFileMd5, "Execution should preserve exported AB MD5.");
         TestAssert.Equal("abc123-sha256", bundleResult.WrittenFileSha256, "Execution should preserve exported AB SHA-256.");
+    }
+
+    public static async Task SaveWorkspaceAsNewBundleHandler_ShouldSkipBundleWrite_WhenResourceProcessorFails()
+    {
+        const string workspaceKey = "workspace-save-key";
+        const string workspaceDataRootPath = @"D:\WorkspaceData";
+
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-alpha");
+        var indexEntry = CreateBundleIndexEntry(workspaceKey, "bundle-cache-alpha", bundleId, "Alpha.ab");
+        var artifactStore = new TestBundleArtifactStore(
+        [
+            CreateArtifactManifest(
+                workspaceKey,
+                indexEntry.BundleCacheKey,
+                @"D:\WorkspaceData\cache\bundles\workspace-save-key\bundle-cache-alpha\normalized.bundle",
+                indexEntry.SourceFingerprint)
+        ]);
+        var registry = new TestWorkspaceSessionRegistry
+        {
+            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(
+                workspaceId,
+                [
+                    CreateChangeItem(
+                        bundleId: bundleId,
+                        assetId: new AssetId("asset-1"),
+                        bundleDisplayName: "Alpha.ab",
+                        assetName: "HeroTexture",
+                        isModified: true,
+                        fileReplacementSourceFileName: "hero.png")
+                ])
+        };
+        var exporter = new RecordingBundleExporter();
+        var processorExecutor = new RecordingResourceProcessorExecutor(failExecution: true);
+        var handler = new SaveWorkspaceAsNewBundleHandler(
+            registry,
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([indexEntry]),
+                artifactStore),
+            new ReadyWorkspaceSaveOutputProbe(),
+            exporter,
+            new RecordingBundleExportManifestStore(),
+            new TestResourceProcessorCatalogStore(
+            [
+                CreateResourceProcessor("resource.processor.texture.png", "Texture2D")
+            ]),
+            processorExecutor);
+
+        var result = await handler.HandleAsync(new SaveWorkspaceAsNewBundleCommand(
+            workspaceId,
+            OutputDirectory: @"D:\Exports",
+            WorkspaceKey: workspaceKey,
+            WorkspaceDataRootPath: workspaceDataRootPath,
+            ProcessorSelections: [new WorkspaceExportProcessorSelectionDto("Texture2D", "resource.processor.texture.png")]));
+
+        TestAssert.True(result.IsSuccess, "Processor failure should be represented as a failed bundle result.");
+        TestAssert.Empty(exporter.Requests, "A bundle with processor failures should not enter the bundle writer.");
+        var bundleResult = TestAssert.Single(result.Value!.BundleResults);
+        TestAssert.Equal(WorkspaceSaveBundleExecutionStatusDto.Failed, bundleResult.Status, "Processor failure should fail the owning bundle.");
+        TestAssert.Equal("Bundle.Save.ResourceProcessor.ExecutionFailed", bundleResult.DiagnosticCode, "Bundle diagnostic should point at the processor failure.");
+        var summary = TestAssert.Single(bundleResult.ProcessorResults!);
+        TestAssert.Equal(WorkspaceResourceProcessorStatusDto.Failed, summary.Status, "Processor summary should preserve failed status.");
+        TestAssert.Equal(1, summary.FailedCount, "Failed processor item should be counted.");
     }
 
     public static async Task SaveWorkspaceAsNewBundleHandler_ShouldWriteManifest_ForPartialBundleSuccess()
@@ -480,7 +554,100 @@ internal static partial class SaveWorkspaceHandlersTests
                     WrittenFileHash: "abc123-sha256",
                     WrittenFileLastWriteTimeUtc: new DateTimeOffset(2026, 7, 3, 8, 0, 0, TimeSpan.Zero),
                     WrittenFileMd5: "abc123-md5",
-                    WrittenFileSha256: "abc123-sha256")));
+                    WrittenFileSha256: "abc123-sha256",
+                    ProcessorResults: request.ProcessorResults
+                        .GroupBy(static result => new { result.ResourceKind, result.ProcessorId })
+                        .Select(static group => new WorkspaceBundleProcessorExecutionSummaryDto(
+                            group.Key.ResourceKind,
+                            group.Key.ProcessorId,
+                            WorkspaceResourceProcessorStatusDto.Succeeded,
+                            InputCount: group.Count(),
+                            ProcessedCount: group.Count(),
+                            FailedCount: 0,
+                            ResultPaths: group
+                                .Select(static result => result.ResultPath)
+                                .Where(static path => !string.IsNullOrWhiteSpace(path))
+                                .Select(static path => path!)
+                                .ToArray(),
+                            Diagnostics: Array.Empty<WorkspaceResourceProcessorDiagnosticDto>()))
+                        .ToArray())));
+        }
+    }
+
+    private static ResourceProcessorCatalogEntryDto CreateResourceProcessor(
+        string processorId,
+        string resourceKind)
+    {
+        return new ResourceProcessorCatalogEntryDto(
+            processorId,
+            processorId,
+            Version: "1.0.0",
+            Description: string.Empty,
+            ResourceProcessorKind.ExternalProcess,
+            [resourceKind],
+            ResourceProcessorStatus.Available,
+            IsBuiltIn: false,
+            IsReadOnly: false,
+            ManifestFilePath: @"D:\Processors\processor.json",
+            ExecutablePath: @"D:\Processors\processor.exe",
+            WorkingDirectoryPath: null,
+            TimeoutMs: 15000,
+            ProcessArguments: ["--input", "{inputPath}", "--output", "{outputPath}", "--result", "{resultPath}"]);
+    }
+
+    private sealed class TestResourceProcessorCatalogStore : IResourceProcessorCatalogStore
+    {
+        private readonly IReadOnlyList<ResourceProcessorCatalogEntryDto> _entries;
+
+        public TestResourceProcessorCatalogStore(IReadOnlyList<ResourceProcessorCatalogEntryDto> entries)
+        {
+            _entries = entries;
+        }
+
+        public IReadOnlyList<ResourceProcessorCatalogEntryDto> Load() => _entries;
+
+        public void SaveUserManagedProcessor(ResourceProcessorDefinitionDto definition, string? previousProcessorId = null) =>
+            throw new NotSupportedException();
+
+        public void DeleteUserManagedProcessor(string processorId) =>
+            throw new NotSupportedException();
+    }
+
+    private sealed class RecordingResourceProcessorExecutor : IWorkspaceResourceProcessorExecutor
+    {
+        private readonly bool _failExecution;
+
+        public RecordingResourceProcessorExecutor(bool failExecution = false)
+        {
+            _failExecution = failExecution;
+        }
+
+        public List<WorkspaceResourceProcessorWorkItemDto> WorkItems { get; } = [];
+
+        public Task<Result<WorkspaceResourceProcessorExecutionResultDto>> ExecuteAsync(
+            WorkspaceResourceProcessorWorkItemDto workItem,
+            CancellationToken cancellationToken = default)
+        {
+            WorkItems.Add(workItem);
+            if (_failExecution)
+            {
+                return Task.FromResult(Result<WorkspaceResourceProcessorExecutionResultDto>.Failure(
+                    ApplicationErrors.ResourceProcessorExecutionFailed(workItem.Processor.Id, "TestFailure")));
+            }
+
+            return Task.FromResult(Result<WorkspaceResourceProcessorExecutionResultDto>.Success(
+                new WorkspaceResourceProcessorExecutionResultDto(
+                    BundleId: workItem.BundleId,
+                    AssetId: workItem.AssetId,
+                    AssetName: workItem.AssetName,
+                    ResourceKind: workItem.ResourceKind,
+                    ProcessorId: workItem.Processor.Id,
+                    Status: WorkspaceResourceProcessorStatusDto.Succeeded,
+                    InputPath: workItem.InputPayloadPath,
+                    OutputPath: Path.Combine(workItem.StagingDirectoryPath, "output"),
+                    ResultPath: Path.Combine(workItem.StagingDirectoryPath, "result.json"),
+                    Diagnostics: Array.Empty<WorkspaceResourceProcessorDiagnosticDto>(),
+                    ContentType: "image/png")));
         }
     }
 

@@ -3885,6 +3885,21 @@
   <data name="Error.Bundle.Save.ManifestWriteFailed" xml:space="preserve">
     <value>Failed to write the AB export manifest: {0}. Detail: {1}</value>
   </data>
+  <data name="Error.Bundle.Save.ResourceProcessor.NotFound" xml:space="preserve">
+    <value>Export resource processor not found: {0}</value>
+  </data>
+  <data name="Error.Bundle.Save.ResourceProcessor.Unavailable" xml:space="preserve">
+    <value>Export resource processor is unavailable: {0}</value>
+  </data>
+  <data name="Error.Bundle.Save.ResourceProcessor.UnsupportedResourceKind" xml:space="preserve">
+    <value>Export resource processor "{0}" does not support resource kind: {1}</value>
+  </data>
+  <data name="Error.Bundle.Save.ResourceProcessor.ExecutionFailed" xml:space="preserve">
+    <value>Export resource processor failed: {0}. Detail: {1}</value>
+  </data>
+  <data name="Error.Bundle.Save.ResourceProcessor.ResultInvalid" xml:space="preserve">
+    <value>Export resource processor result is invalid: {0}. Detail: {1}</value>
+  </data>
   <data name="Error.Bundle.Decrypt.Failed" xml:space="preserve">
     <value>Bundle decryption failed. Decryptor: {0}. Detail: {1}</value>
   </data>

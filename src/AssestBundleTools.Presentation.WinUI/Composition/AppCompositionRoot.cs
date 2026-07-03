@@ -97,6 +97,7 @@ internal static class AppCompositionRoot
         var workspaceSaveOutputProbe = new FileSystemWorkspaceSaveOutputProbe();
         var workspaceBundleExporter = new FileSystemWorkspaceBundleExporter();
         var workspaceBundleExportManifestStore = new FileSystemWorkspaceBundleExportManifestStore();
+        var workspaceResourceProcessorExecutor = new FileSystemResourceProcessorExecutor();
 
         var openWorkspaceHandler = new OpenWorkspaceHandler(
             workspaceSessionRegistry: workspaceSessionRegistry,
@@ -160,7 +161,9 @@ internal static class AppCompositionRoot
             workspaceDataStoreFactory,
             workspaceSaveOutputProbe,
             workspaceBundleExporter,
-            workspaceBundleExportManifestStore);
+            workspaceBundleExportManifestStore,
+            resourceProcessorCatalogStore,
+            workspaceResourceProcessorExecutor);
         var assetExtractionFileStore = new FileSystemAssetExtractionFileStore();
         var workspaceExportManifestStore = new FileSystemWorkspaceExportManifestStore();
         var workspaceBatchReplacementSourceFileProbe = new FileSystemWorkspaceBatchReplacementSourceFileProbe();

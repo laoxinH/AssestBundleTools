@@ -1,6 +1,7 @@
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Application.Saving.Services;
 using AssestBundleTools.Application.Workspace.Services;
@@ -21,13 +22,16 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
     private readonly IWorkspaceSaveOutputProbe? _outputProbe;
     private readonly IWorkspaceBundleExporter? _bundleExporter;
     private readonly IWorkspaceBundleExportManifestStore? _manifestStore;
+    private readonly WorkspaceSaveResourceProcessorRunner _resourceProcessorRunner;
 
     public SaveWorkspaceAsNewBundleHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
         IWorkspaceDataStoreFactory? workspaceDataStoreFactory = null,
         IWorkspaceSaveOutputProbe? outputProbe = null,
         IWorkspaceBundleExporter? bundleExporter = null,
-        IWorkspaceBundleExportManifestStore? manifestStore = null)
+        IWorkspaceBundleExportManifestStore? manifestStore = null,
+        IResourceProcessorCatalogStore? resourceProcessorCatalogStore = null,
+        IWorkspaceResourceProcessorExecutor? resourceProcessorExecutor = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _artifactInputResolver = workspaceDataStoreFactory is null
@@ -36,6 +40,9 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
         _outputProbe = outputProbe;
         _bundleExporter = bundleExporter;
         _manifestStore = manifestStore;
+        _resourceProcessorRunner = new WorkspaceSaveResourceProcessorRunner(
+            resourceProcessorCatalogStore,
+            resourceProcessorExecutor);
     }
 
     public async Task<Result<WorkspaceSaveExecutionResultDto>> HandleAsync(
@@ -94,13 +101,41 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
 
         var operationId = $"save-{DateTimeOffset.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid():N}";
         var processorSelections = NormalizeProcessorSelections(command.ProcessorSelections);
+        var resourceProcessorPlanResult = _resourceProcessorRunner.BuildPlan(processorSelections);
+        if (resourceProcessorPlanResult.IsFailure)
+        {
+            return Result<WorkspaceSaveExecutionResultDto>.Failure(resourceProcessorPlanResult.Errors);
+        }
+
+        var resourceProcessorPlan = resourceProcessorPlanResult.Value ?? WorkspaceResourceProcessorPlan.Empty;
         IReadOnlyList<WorkspaceSaveBundleExecutionResultDto> bundleResults;
         try
         {
+            var processorResult = await _resourceProcessorRunner.ExecuteAsync(
+                plan,
+                selectedPlans,
+                resourceProcessorPlan,
+                new WorkspaceResourceProcessorExecutionContext(
+                    OperationId: operationId,
+                    WorkspaceKey: command.WorkspaceKey,
+                    WorkspaceDataRootPath: command.WorkspaceDataRootPath,
+                    Progress: command.Progress),
+                cancellationToken);
+            if (processorResult.IsCancelled)
+            {
+                return Result<WorkspaceSaveExecutionResultDto>.Cancelled();
+            }
+
+            if (processorResult.IsFailure)
+            {
+                return Result<WorkspaceSaveExecutionResultDto>.Failure(processorResult.Errors);
+            }
+
             bundleResults = await ExportBundlesAsync(
                 plan,
                 selectedPlans,
                 processorSelections,
+                processorResult.Value ?? WorkspaceResourceProcessorBatchResult.Empty,
                 operationId,
                 command,
                 cancellationToken);
@@ -162,6 +197,7 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
         WorkspaceSavePlan plan,
         IReadOnlyList<PlannedWorkspaceBundleSave> selectedPlans,
         IReadOnlyList<WorkspaceExportProcessorSelectionDto> processorSelections,
+        WorkspaceResourceProcessorBatchResult processorBatchResult,
         string operationId,
         SaveWorkspaceAsNewBundleCommand command,
         CancellationToken cancellationToken)
@@ -173,6 +209,17 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
         var failedCount = 0;
         var tasks = selectedPlans.Select(async selectedPlan =>
         {
+            if (processorBatchResult.FailedBundleDiagnostics.TryGetValue(selectedPlan.BundleId.Value, out var processorFailure))
+            {
+                Interlocked.Increment(ref failedCount);
+                Interlocked.Increment(ref completedCount);
+                return CreateFailedBundleResult(
+                    selectedPlan,
+                    processorFailure,
+                    WorkspaceSaveResourceProcessorRunner.SummarizeResults(
+                        processorBatchResult.ResolveResults(selectedPlan.BundleId)));
+            }
+
             await semaphore.WaitAsync(cancellationToken);
             try
             {
@@ -195,6 +242,7 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
                         BundleCacheKey: selectedPlan.ArtifactInput.BundleCacheKey,
                         ChangeItems: selectedPlan.ChangeItems,
                         ProcessorSelections: processorSelections,
+                        ProcessorResults: processorBatchResult.ResolveResults(selectedPlan.BundleId),
                         OperationId: operationId),
                     cancellationToken);
 
@@ -437,11 +485,13 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
             WrittenFileHash: exportResult.WrittenFileHash,
             WrittenFileLastWriteTimeUtc: exportResult.WrittenFileLastWriteTimeUtc,
             WrittenFileMd5: exportResult.WrittenFileMd5,
-            WrittenFileSha256: exportResult.WrittenFileSha256);
+            WrittenFileSha256: exportResult.WrittenFileSha256,
+            ProcessorResults: exportResult.ProcessorResults);
 
     private static WorkspaceSaveBundleExecutionResultDto CreateFailedBundleResult(
         PlannedWorkspaceBundleSave selectedPlan,
-        Domain.Common.Errors.AppError? error) =>
+        Domain.Common.Errors.AppError? error,
+        IReadOnlyList<WorkspaceBundleProcessorExecutionSummaryDto>? processorResults = null) =>
         new(
             BundleId: selectedPlan.BundleId,
             BundleDisplayName: selectedPlan.BundleDisplayName,
@@ -460,7 +510,8 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
                     "; ",
                     error.Parameters
                         .Where(static parameter => parameter.Value is not null)
-                        .Select(static parameter => $"{parameter.Key}={parameter.Value}")));
+                        .Select(static parameter => $"{parameter.Key}={parameter.Value}")),
+            ProcessorResults: processorResults);
 
     private static int ResolveBundleWriteConcurrency(int? requestedConcurrency, int selectedBundleCount)
     {

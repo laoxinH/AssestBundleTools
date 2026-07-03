@@ -493,6 +493,10 @@ internal static partial class ApplicationTestSuite
             SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldExportSelectedBundles_AndSaveManifest);
         await RunTestAsync(
             failures,
+            nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldSkipBundleWrite_WhenResourceProcessorFails),
+            SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldSkipBundleWrite_WhenResourceProcessorFails);
+        await RunTestAsync(
+            failures,
             nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldWriteManifest_ForPartialBundleSuccess),
             SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldWriteManifest_ForPartialBundleSuccess);
 

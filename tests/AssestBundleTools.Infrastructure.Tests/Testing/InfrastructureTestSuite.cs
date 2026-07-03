@@ -440,6 +440,14 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(FileSystemResourceProcessorCatalogStoreTests.DeleteUserManagedProcessor_ShouldRemoveManifest),
             FileSystemResourceProcessorCatalogStoreTests.DeleteUserManagedProcessor_ShouldRemoveManifest);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemResourceProcessorExecutorTests.ExecuteAsync_ShouldRunCli_AndParseResultJson),
+            FileSystemResourceProcessorExecutorTests.ExecuteAsync_ShouldRunCli_AndParseResultJson);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemResourceProcessorExecutorTests.ExecuteAsync_ShouldRejectOutputPathOutsideStaging),
+            FileSystemResourceProcessorExecutorTests.ExecuteAsync_ShouldRejectOutputPathOutsideStaging);
 
         if (failures.Count == 0)
         {

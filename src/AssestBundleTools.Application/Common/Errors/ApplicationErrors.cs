@@ -293,6 +293,55 @@ public static class ApplicationErrors
                 ("OutputPath", outputPath),
                 ("Detail", detail)));
 
+    public static AppError ResourceProcessorNotFound(string processorId) =>
+        new(
+            code: "Bundle.Save.ResourceProcessor.NotFound",
+            category: ErrorCategory.NotFound,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.ResourceProcessor.NotFound",
+            parameters: CreateParameters(("ProcessorId", processorId)),
+            isUserActionable: true);
+
+    public static AppError ResourceProcessorUnavailable(string processorId) =>
+        new(
+            code: "Bundle.Save.ResourceProcessor.Unavailable",
+            category: ErrorCategory.Configuration,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.ResourceProcessor.Unavailable",
+            parameters: CreateParameters(("ProcessorId", processorId)),
+            isUserActionable: true);
+
+    public static AppError ResourceProcessorUnsupportedResourceKind(string processorId, string resourceKind) =>
+        new(
+            code: "Bundle.Save.ResourceProcessor.UnsupportedResourceKind",
+            category: ErrorCategory.Unsupported,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.ResourceProcessor.UnsupportedResourceKind",
+            parameters: CreateParameters(
+                ("ProcessorId", processorId),
+                ("ResourceKind", resourceKind)),
+            isUserActionable: true);
+
+    public static AppError ResourceProcessorExecutionFailed(string processorId, string? detail = null) =>
+        new(
+            code: "Bundle.Save.ResourceProcessor.ExecutionFailed",
+            category: ErrorCategory.ExternalDependency,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.ResourceProcessor.ExecutionFailed",
+            parameters: CreateParameters(
+                ("ProcessorId", processorId),
+                ("Detail", detail)));
+
+    public static AppError ResourceProcessorResultInvalid(string processorId, string? detail = null) =>
+        new(
+            code: "Bundle.Save.ResourceProcessor.ResultInvalid",
+            category: ErrorCategory.ParseFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.ResourceProcessor.ResultInvalid",
+            parameters: CreateParameters(
+                ("ProcessorId", processorId),
+                ("Detail", detail)));
+
     public static AppError BundleDecryptionFailed(string decryptorId, string? detail = null) =>
         new(
             code: "Bundle.Decrypt.Failed",

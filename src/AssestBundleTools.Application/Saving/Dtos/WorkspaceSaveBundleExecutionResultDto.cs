@@ -23,4 +23,5 @@ public sealed record WorkspaceSaveBundleExecutionResultDto(
     string? WrittenFileMd5 = null,
     string? WrittenFileSha256 = null,
     string? DiagnosticCode = null,
-    string? DiagnosticDetail = null);
+    string? DiagnosticDetail = null,
+    IReadOnlyList<WorkspaceBundleProcessorExecutionSummaryDto>? ProcessorResults = null);

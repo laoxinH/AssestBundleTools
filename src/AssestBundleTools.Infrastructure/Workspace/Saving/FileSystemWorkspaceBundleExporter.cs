@@ -84,7 +84,8 @@ public sealed class FileSystemWorkspaceBundleExporter : IWorkspaceBundleExporter
                     WrittenFileHash: hashes.Sha256,
                     WrittenFileLastWriteTimeUtc: new DateTimeOffset(fileInfo.LastWriteTimeUtc, TimeSpan.Zero),
                     WrittenFileMd5: hashes.Md5,
-                    WrittenFileSha256: hashes.Sha256));
+                    WrittenFileSha256: hashes.Sha256,
+                    ProcessorResults: SummarizeProcessorResults(request.ProcessorResults)));
         }
         catch (OperationCanceledException)
         {
@@ -158,4 +159,67 @@ public sealed class FileSystemWorkspaceBundleExporter : IWorkspaceBundleExporter
     }
 
     private sealed record WorkspaceBundleExportFileHashes(string Md5, string Sha256);
+
+    private static IReadOnlyList<WorkspaceBundleProcessorExecutionSummaryDto> SummarizeProcessorResults(
+        IReadOnlyList<WorkspaceResourceProcessorExecutionResultDto>? processorResults)
+    {
+        if (processorResults is not { Count: > 0 })
+        {
+            return Array.Empty<WorkspaceBundleProcessorExecutionSummaryDto>();
+        }
+
+        return processorResults
+            .GroupBy(
+                static result => new ProcessorSummaryKey(result.ResourceKind, result.ProcessorId),
+                ProcessorSummaryKeyComparer.Instance)
+            .Select(static group =>
+            {
+                var orderedResults = group
+                    .OrderBy(static result => result.AssetName, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(static result => result.AssetId.Value, StringComparer.Ordinal)
+                    .ToArray();
+                var failedCount = orderedResults.Count(static result => result.Status == WorkspaceResourceProcessorStatusDto.Failed);
+                var skippedCount = orderedResults.Count(static result => result.Status == WorkspaceResourceProcessorStatusDto.Skipped);
+                var status = failedCount > 0
+                    ? WorkspaceResourceProcessorStatusDto.Failed
+                    : skippedCount == orderedResults.Length
+                        ? WorkspaceResourceProcessorStatusDto.Skipped
+                        : WorkspaceResourceProcessorStatusDto.Succeeded;
+
+                return new WorkspaceBundleProcessorExecutionSummaryDto(
+                    ResourceKind: group.Key.ResourceKind,
+                    ProcessorId: group.Key.ProcessorId,
+                    Status: status,
+                    InputCount: orderedResults.Length,
+                    ProcessedCount: orderedResults.Count(static result => result.Status == WorkspaceResourceProcessorStatusDto.Succeeded),
+                    FailedCount: failedCount,
+                    ResultPaths: orderedResults
+                        .Select(static result => result.ResultPath)
+                        .Where(static path => !string.IsNullOrWhiteSpace(path))
+                        .Select(static path => path!)
+                        .ToArray(),
+                    Diagnostics: orderedResults
+                        .SelectMany(static result => result.Diagnostics)
+                        .ToArray());
+            })
+            .OrderBy(static summary => summary.ResourceKind, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static summary => summary.ProcessorId, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private readonly record struct ProcessorSummaryKey(string ResourceKind, string ProcessorId);
+
+    private sealed class ProcessorSummaryKeyComparer : IEqualityComparer<ProcessorSummaryKey>
+    {
+        public static ProcessorSummaryKeyComparer Instance { get; } = new();
+
+        public bool Equals(ProcessorSummaryKey x, ProcessorSummaryKey y) =>
+            string.Equals(x.ResourceKind, y.ResourceKind, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(x.ProcessorId, y.ProcessorId, StringComparison.OrdinalIgnoreCase);
+
+        public int GetHashCode(ProcessorSummaryKey obj) =>
+            HashCode.Combine(
+                StringComparer.OrdinalIgnoreCase.GetHashCode(obj.ResourceKind),
+                StringComparer.OrdinalIgnoreCase.GetHashCode(obj.ProcessorId));
+    }
 }

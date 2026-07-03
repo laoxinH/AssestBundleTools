@@ -20,12 +20,15 @@
 - 工作区导出窗口已接到真实 `SaveRebuild` 后台任务：默认输出到 `<workspaceDataRootPath>/exports`，取消“导出到工作区输出目录”后点击开始导出会打开输出目录选择器。
 - `SaveWorkspaceAsNewBundleCommand` 已携带输出目录、选中资源包、资源处理器选择、工作区 artifact 上下文和执行进度回调。
 - Application 已通过 `IWorkspaceBundleExporter` / `IWorkspaceBundleExportManifestStore` 编排第一阶段真实导出：按选中 bundle 有界并发写出，汇总 `Succeeded / PartiallySucceeded / Failed` 结果，并在有成功输出时写出 `_abt-bundle-export-manifest.json`。
+- Application 已定义 `IWorkspaceResourceProcessorExecutor` 和处理器执行 DTO；保存执行会校验资源处理器选择、构建文件替换载荷的资源处理 work item、按有界并发执行、稳定排序结果，并在处理器失败时阻断所属 bundle 写包。
+- Infrastructure 已接入外部 CLI 资源处理器执行：按 catalog 中的 `executablePath / processArguments / timeoutMs` 启动进程，展开占位符，解析 result JSON，校验输出路径范围，捕获诊断并支持取消时终止进程。
 - Infrastructure 第一阶段已实现标准化 artifact 的文件级 AB 输出、同目录临时文件提升、MD5 / SHA-256 记录和 AB 导出 manifest 原子写出。
+- AB 导出 manifest 已记录每个 bundle 的资源处理器结果摘要，包括资源类型、处理器 id、状态、输入 / 成功 / 失败计数、result JSON 路径和诊断。
 
 尚未实现：
 
-- 资源处理器真实执行、result JSON 解析、失败回填和取消终止。
-- 真实 AB 可变副本、资源替换写入和对象级 AssetsTools 写包；当前第一阶段先把可复用标准化 artifact 作为 AB 文件级输出输入。
+- 资源处理器输入目前只覆盖文件替换载荷；工作区内替换、编辑草稿和后续有效载荷端口仍需接入同一资源处理计划。
+- 真实 AB 可变副本、资源替换写入和对象级 AssetsTools 写包；当前第一阶段仍把可复用标准化 artifact 作为 AB 文件级输出输入，并只把处理器结果传给 writer 端口和 manifest。
 - 保存检查点、部分成功和取消 / 回滚语义。
 
 ## 3. 设计结论
@@ -221,6 +224,8 @@ BuildResourceProcessingItems
   -> CollectEffectivePayloads
 ```
 
+当前已落地的第一版处理器阶段先消费 `WorkspaceChangeItemDto.FileReplacementSourcePath` 代表的文件替换载荷，并将处理器输出作为 `WorkspaceResourceProcessorExecutionResultDto` 传给后续 writer 端口和 manifest。对象级 writer 尚未消费这些输出改写 AB 内容；因此“处理器已执行并记录结果”与“处理器输出真正替换进 AB”是两个阶段，后者属于下一步对象级 AssetsTools 写包。
+
 ### 7.1 处理项粒度
 
 第一版处理项粒度为单个资源项：
@@ -281,6 +286,7 @@ result JSON 第一版建议：
 - `outputPath` 必须位于本次 work item 允许的 staging 输出范围内，或等于调用方传入的 `{outputPath}`。
 - stdout / stderr 只能作为诊断 detail；主失败语义以退出码、result JSON 和结构化诊断为准。
 - result JSON 缺失、无法解析、越权输出路径或输出文件缺失都应归类为处理器失败，而不是未预期异常。
+- 处理器进程退出码非零、超时、可执行文件不可用或输入文件缺失会返回 `Bundle.Save.ResourceProcessor.ExecutionFailed`，并生成 failed 处理器结果用于 bundle 结果摘要。
 
 ### 7.3 并发策略
 
@@ -411,10 +417,11 @@ Export.Plan.WorkspaceMissing
 Export.Plan.NoSelectedBundles
 Export.Plan.ArtifactMissing
 Export.Plan.OutputBlocked
-Export.Processor.NotFound
-Export.Processor.UnsupportedResourceKind
-Export.Processor.ExecutionFailed
-Export.Processor.ResultInvalid
+Bundle.Save.ResourceProcessor.NotFound
+Bundle.Save.ResourceProcessor.Unavailable
+Bundle.Save.ResourceProcessor.UnsupportedResourceKind
+Bundle.Save.ResourceProcessor.ExecutionFailed
+Bundle.Save.ResourceProcessor.ResultInvalid
 Export.Bundle.WriteFailed
 Export.Bundle.OutputValidationFailed
 Export.Manifest.WriteFailed
@@ -553,15 +560,14 @@ Application 回归优先覆盖：
 - 导出命令会拒绝缺失工作区、空资源包选择、不可用处理器和不支持资源类型。
 - 导出计划只包含用户选择的资源包，并保留 `bundleId / bundleCacheKey / outputPath`。
 - 资源处理器选择中的“无处理器”不会进入执行队列。
-- 当前第一阶段覆盖选中 bundle 写出、processor selection 透传、bundle writer 跨 bundle 有界并发和输出摘要。
-- 后续补资源处理器 fake executor 的有界并发、失败回填、取消和稳定结果排序。
+- 当前第一阶段覆盖选中 bundle 写出、processor selection 透传、文件替换载荷的资源处理 work item 构建、处理器结果透传、失败回填、失败 bundle 跳过写包、bundle writer 跨 bundle 有界并发和输出摘要。
+- 后续补资源处理器取消、工作区内替换 / 编辑草稿有效载荷和对象级 writer 消费处理器输出的回归。
 - 部分成功时只提交成功 bundle 的检查点。
 
 Infrastructure 回归优先覆盖：
 
 - 资源处理器 result JSON 解析、非法路径拒绝、stdout / stderr 诊断捕获和超时终止。
 - 当前第一阶段覆盖标准化 artifact 文件级输出、同目录临时文件提升、MD5 / SHA-256 记录和 AB 导出 manifest 原子写入。
-- 后续补资源处理器 result JSON 解析、非法路径拒绝、stdout / stderr 诊断捕获和超时终止。
 - 后续补目标已存在 blocker、确认覆盖后的替换路径和对象级 AssetsTools Writer。
 
 Presentation 回归优先覆盖：
@@ -582,14 +588,14 @@ Presentation 回归优先覆盖：
 
 1. [已落地] 扩展 Application 导出命令 DTO，携带资源包范围和资源处理器选择。
 2. [已落地] 复用现有保存预览的 artifact 输入和输出 preflight 构建第一阶段导出计划。
-3. [待补] 定义资源处理器执行端口和 result DTO，先用 fake executor 补 Application 并发与失败回归。
-4. [待补] 在 Infrastructure 接入外部 CLI 资源处理器执行与 result JSON 解析。
+3. [已落地] 定义资源处理器执行端口和 result DTO，并用 fake executor 覆盖 Application 结果透传与失败回填。
+4. [已落地] 在 Infrastructure 接入外部 CLI 资源处理器执行与 result JSON 解析。
 5. [已落地] 定义 `IWorkspaceBundleExporter`，Application 编排 bundle writer 有界并发。
 6. [已部分落地] Infrastructure 已接入标准化 artifact 文件级输出和单 bundle 临时输出提升；后续补真实 AssetsTools 对象级写包。
 7. [已落地] 新增 AB 导出 manifest store，写出 `_abt-bundle-export-manifest.json`。
 8. [待补] 接入保存检查点和操作记录 committed 状态。
 9. [已落地] 将工作区导出窗口的开始按钮接到真实 `SaveRebuild` 后台任务。
-10. [进行中] 补 Presentation、本地化、自动化回归和端到端手动验证。
+10. [进行中] 补 Presentation、本地化、自动化回归和端到端手动验证；当前 CLI 处理器端口已补 Application / Infrastructure / Localization 回归。
 
 ## 15. 收口结论
 

@@ -14,6 +14,7 @@ public sealed record WorkspaceBundleExportRequestDto(
     string? BundleCacheKey,
     IReadOnlyList<WorkspaceChangeItemDto> ChangeItems,
     IReadOnlyList<WorkspaceExportProcessorSelectionDto> ProcessorSelections,
+    IReadOnlyList<WorkspaceResourceProcessorExecutionResultDto> ProcessorResults,
     string OperationId);
 
 public sealed record WorkspaceBundleExportResultDto(
@@ -27,7 +28,8 @@ public sealed record WorkspaceBundleExportResultDto(
     string WrittenFileHash,
     DateTimeOffset WrittenFileLastWriteTimeUtc,
     string? WrittenFileMd5 = null,
-    string? WrittenFileSha256 = null);
+    string? WrittenFileSha256 = null,
+    IReadOnlyList<WorkspaceBundleProcessorExecutionSummaryDto>? ProcessorResults = null);
 
 public sealed record WorkspaceBundleExportManifestSaveRequestDto(
     WorkspaceId WorkspaceId,
@@ -71,8 +73,19 @@ public sealed record WorkspaceBundleExportManifestItemDto(
     string? DiagnosticCode,
     string? DiagnosticDetail,
     string? WrittenFileMd5 = null,
-    string? WrittenFileSha256 = null);
+    string? WrittenFileSha256 = null,
+    IReadOnlyList<WorkspaceBundleExportManifestProcessorResultDto>? ProcessorResults = null);
 
 public sealed record WorkspaceBundleExportManifestProcessorSelectionDto(
     string ResourceKind,
     string? ProcessorId);
+
+public sealed record WorkspaceBundleExportManifestProcessorResultDto(
+    string ResourceKind,
+    string ProcessorId,
+    string Status,
+    int InputCount,
+    int ProcessedCount,
+    int FailedCount,
+    IReadOnlyList<string> ResultPaths,
+    IReadOnlyList<WorkspaceResourceProcessorDiagnosticDto> Diagnostics);

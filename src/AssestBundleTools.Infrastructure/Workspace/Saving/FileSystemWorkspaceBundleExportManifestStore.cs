@@ -104,7 +104,18 @@ public sealed class FileSystemWorkspaceBundleExportManifestStore : IWorkspaceBun
             DiagnosticCode: result.DiagnosticCode,
             DiagnosticDetail: result.DiagnosticDetail,
             WrittenFileMd5: result.WrittenFileMd5,
-            WrittenFileSha256: result.WrittenFileSha256);
+            WrittenFileSha256: result.WrittenFileSha256,
+            ProcessorResults: (result.ProcessorResults ?? Array.Empty<WorkspaceBundleProcessorExecutionSummaryDto>())
+                .Select(static summary => new WorkspaceBundleExportManifestProcessorResultDto(
+                    summary.ResourceKind,
+                    summary.ProcessorId,
+                    summary.Status.ToString(),
+                    summary.InputCount,
+                    summary.ProcessedCount,
+                    summary.FailedCount,
+                    summary.ResultPaths,
+                    summary.Diagnostics))
+                .ToArray());
     }
 
     private static async Task WriteJsonAtomicallyAsync<T>(
