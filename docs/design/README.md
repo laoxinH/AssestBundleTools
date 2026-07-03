@@ -4,7 +4,7 @@
 
 本文档用于收束 `docs/design` 下的文档状态，明确哪些文档是当前规范入口，哪些是专题记录，哪些仅作为历史兼容入口保留。
 
-当前状态更新时间：2026-07-03。当前开发重心已经进入 M10 真实导出 / 保存重建前置设计：先固化后台任务、资源处理器并发、AB 写包并发和输出 manifest 契约，再进入真实写包实现。
+当前状态更新时间：2026-07-03。当前开发重心已经进入 M10 真实导出 / 保存重建：后台任务、资源处理器并发、AB 写包并发和输出 manifest 契约已固化，首版对象级 AssetsTools 写包已经接入，下一步继续补保存检查点、Committed 状态、取消 / 部分成功恢复语义和更多资源类型。
 
 ## 2. 当前规范入口
 
@@ -72,22 +72,22 @@
 - M0-M7 已完成。
 - M8 提取与替换流程骨架已完成第一轮：候选、替换状态、撤销、批量预览和保存骨架已经有稳定承载面。
 - M9 真实读取、缓存、依赖图和富预览主线已完成阶段性收口；Spine 预览达到基础播放、动画 / skin 切换、状态恢复和 D3D 默认渲染的可继续使用状态。
-- M10 真实保存与重建已经进入前置设计，真实写包实现尚未开始完整落地。
+- M10 真实保存与重建已完成首版真实导出链路：CLI 资源处理器、对象级 AssetsTools 写包、AB 输出 manifest 和基础回归已接入；保存检查点、Committed 状态、取消 / 部分成功恢复语义和更广资源类型仍在推进中。
 - 当前不再优先扩展新的预览类型或大改工作台布局。
 
 ## 6. 下一步开发主线
 
-下一轮默认按“先统一后台任务流程，再让提取/替换顺畅，最后进入真实写包”的顺序推进：
+下一轮默认按“继续收口后台任务与真实导出，再补保存检查点和恢复语义”的顺序推进：
 
 1. 统一后台任务流程第一阶段
-   按 [background-task-scheduling.md](background-task-scheduling.md) 建立 Presentation 层统一调度契约、profile、进度和状态条投影；当前已迁移工作区打开 / 导入外层任务、预览队列、Spine 详情载荷、批量提取、批量替换骨架和保存骨架，并接入 `cache/bundles` 标准化资源包物理缓存、artifact 生成 single-flight、usage / LRU prune、设置页显式清理入口、偏好驱动自动容量治理、`cache/previews` 预览缓存 usage / prune / 自动容量治理、当前工作区聚合缓存统计 / 清理、基于 artifact identity 的 loaded-session 复用 / 主动失效 / 容量退避，以及预览 `OutOfMemory` 专用诊断和同 bundle 后台预热短期退避。SaveRebuild 保存计划已读取现有标准化 artifact 和 loaded-session identity，并通过输出路径 preflight 暴露覆盖 blockers；后续真实写包入口继续沿这份只读输入图补齐 materialization、最终冲突确认、取消和回滚语义。
+   按 [background-task-scheduling.md](background-task-scheduling.md) 建立 Presentation 层统一调度契约、profile、进度和状态条投影；当前已迁移工作区打开 / 导入外层任务、预览队列、Spine 详情载荷、批量提取、批量替换骨架和保存 / 导出执行，并接入 `cache/bundles` 标准化资源包物理缓存、artifact 生成 single-flight、usage / LRU prune、设置页显式清理入口、偏好驱动自动容量治理、`cache/previews` 预览缓存 usage / prune / 自动容量治理、当前工作区聚合缓存统计 / 清理、基于 artifact identity 的 loaded-session 复用 / 主动失效 / 容量退避，以及预览 `OutOfMemory` 专用诊断和同 bundle 后台预热短期退避。SaveRebuild 已读取现有标准化 artifact 和 loaded-session identity，通过输出路径 preflight 暴露覆盖 blockers，并接入 CLI 资源处理器、对象级 AssetsTools 写包和 AB 输出 manifest；后续继续沿这份只读输入图补齐 materialization、最终冲突确认、取消和回滚语义。
 2. 提取流程顺滑化
    已按 [workspace-batch-extraction-dialog.md](workspace-batch-extraction-dialog.md) 把工作台顶部批量提取收敛为当前工作区内的资源包 / 类型选择对话框；后续继续补命名冲突、取消结果明细、输出文件缺失诊断和批处理页历史摘要收口。
 3. 真实提取落地
    在 Application 用例后接 Infrastructure 导出实现，保持原始资源目录只读，输出目标必须由用户显式选择或确认。
 4. 替换流程顺滑化
    补强文件来源选择、兼容性诊断、替换预览、撤销和批量替换结果明细，避免替换状态分散在多个页面。
-5. 保存 / 重建前置设计
-   按 [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md) 先固化真实导出计划、资源处理器并发、AB 写包并发、取消 / 部分成功和 `_abt-bundle-export-manifest.json` 契约，再进入真实写包实现。
+5. 保存 / 重建真实导出收口
+   按 [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md) 继续扩展首版对象级写包覆盖面，补保存检查点、Committed 状态、取消 / 部分成功恢复语义、更多资源类型和 `_abt-bundle-export-manifest.json` 后处理契约。
 6. 回归与文档同步
    每个小里程碑都同步补 Application / Infrastructure / Presentation 回归，并更新路线图中对应状态。

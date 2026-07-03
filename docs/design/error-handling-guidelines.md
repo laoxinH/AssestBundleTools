@@ -529,7 +529,7 @@ Parameters = { SourceType: Texture2D, TargetType: TextAsset }
   - 用于提取 payload 写出到目标文件失败时
 - `Bundle.Save.NoCandidates`
   - `MessageToken = Error.Bundle.Save.NoCandidates`
-  - 用于当前工作区没有可执行保存骨架的资源包输出计划时
+  - 用于当前工作区没有可执行保存 / 导出任务的资源包输出计划时
 - `Asset.EditDraft.WorkspaceKeyRequired`
   - `MessageToken = Error.Asset.EditDraft.WorkspaceKeyRequired`
   - 用于草稿恢复候选解析缺少工作区范围时

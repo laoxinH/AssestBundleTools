@@ -10,7 +10,7 @@ namespace AssestBundleTools.Application.Saving.Services;
 /// 负责把当前工作区的保存前信息整理为统一的输出计划。
 /// </summary>
 /// <remarks>
-/// 当前阶段既需要保存前预览，也需要“执行保存骨架”时复用同一份计划。
+/// 当前保存前预览和真实导出执行复用同一份计划。
 /// 因此把资源包聚合、输出目录解析和统计计算集中在这里，避免在多个 Handler 中重复拼装。
 /// </remarks>
 internal static class WorkspaceSavePlanner

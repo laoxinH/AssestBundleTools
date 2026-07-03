@@ -130,8 +130,12 @@ internal static class InfrastructureTestSuite
             FileSystemWorkspaceExportManifestStoreTests.SaveAsync_ShouldWriteReadableManifest_WithSizeAndMd5);
         await RunTestAsync(
             failures,
-            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldCopyArtifactAtomically_AndReportMd5AndSha256),
-            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldCopyArtifactAtomically_AndReportMd5AndSha256);
+            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldFail_WhenNoObjectWriteItemsAreProvided),
+            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldFail_WhenNoObjectWriteItemsAreProvided);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTextAssetObject_WhenRealSampleBundleIsAvailable),
+            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTextAssetObject_WhenRealSampleBundleIsAvailable);
         await RunTestAsync(
             failures,
             nameof(FileSystemWorkspaceBundleExportManifestStoreTests.SaveAsync_ShouldWriteReadableBundleExportManifest_WithHashesAndProcessors),

@@ -328,11 +328,54 @@ internal static partial class SaveWorkspaceHandlersTests
             LastChangedAtUtc: changedAtUtc);
     }
 
+    private static AssetDetailsDto CreateAssetDetails(
+        WorkspaceId workspaceId,
+        BundleId bundleId,
+        AssetId assetId,
+        string assetName,
+        AssetType assetType,
+        string serializedFileName,
+        long pathId)
+    {
+        return new AssetDetailsDto(
+            WorkspaceId: workspaceId,
+            BundleId: bundleId,
+            AssetId: assetId,
+            Name: assetName,
+            AssetPath: assetName,
+            ContainerPath: assetName,
+            AssetType: assetType,
+            SizeInBytes: 128,
+            PreferredDisplaySizeInBytes: 128,
+            PathId: pathId,
+            IsModified: false,
+            CanExtract: true,
+            CanReplaceFromFile: true,
+            CanReplaceFromWorkspace: true,
+            WorkspaceReplacementSourceBundleDisplayName: null,
+            WorkspaceReplacementSourceAssetName: null,
+            WorkspaceReplacementSourceAssetType: null,
+            FileReplacementSourceFileName: null,
+            FileReplacementSourcePath: null,
+            FileReplacementSourceAssetType: null,
+            LastExtractedAtUtc: null,
+            Dependencies: Array.Empty<AssetDependencyDto>(),
+            AssetTypeDisplayName: assetType.ToString(),
+            SerializedFileName: serializedFileName);
+    }
+
     private sealed class TestWorkspaceSessionRegistry : IWorkspaceSessionRegistry
     {
+        private readonly Dictionary<string, AssetDetailsDto> _assetDetails = new(StringComparer.Ordinal);
+
         public bool ContainsWorkspaceResult { get; set; } = true;
 
         public WorkspaceChangeSummaryDto? WorkspaceChangeSummary { get; set; }
+
+        public void AddAssetDetails(AssetDetailsDto details)
+        {
+            _assetDetails[CreateAssetKey(details.BundleId, details.AssetId)] = details;
+        }
 
         public WorkspaceSummaryDto OpenWorkspace(WorkspaceSessionOpenRequestDto request) => throw new NotSupportedException();
 
@@ -366,8 +409,7 @@ internal static partial class SaveWorkspaceHandlersTests
             AssetId assetId,
             out AssetDetailsDto? assetDetails)
         {
-            assetDetails = null;
-            throw new NotSupportedException();
+            return _assetDetails.TryGetValue(CreateAssetKey(bundleId, assetId), out assetDetails);
         }
 
         public bool TryGetWorkspaceChangeSummary(
@@ -442,6 +484,9 @@ internal static partial class SaveWorkspaceHandlersTests
             paneContext = null;
             throw new NotSupportedException();
         }
+
+        private static string CreateAssetKey(BundleId bundleId, AssetId assetId) =>
+            string.Concat(bundleId.Value, "\n", assetId.Value);
     }
 
     private sealed class TestWorkspaceSaveOutputProbe : IWorkspaceSaveOutputProbe

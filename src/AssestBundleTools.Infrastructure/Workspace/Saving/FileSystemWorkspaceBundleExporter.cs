@@ -7,11 +7,10 @@ using AssestBundleTools.Application.Saving.Services;
 namespace AssestBundleTools.Infrastructure.Workspace.Saving;
 
 /// <summary>
-/// 基于文件系统写出单个 AB 文件。
+/// 基于文件系统和 AssetsTools.NET 写出单个 AB 文件。
 /// </summary>
 /// <remarks>
-/// 该实现目前以标准化 artifact 为输入做文件级原子输出；
-/// 后续对象级替换写包会在同一端口内扩展为 AssetsTools 写入实现。
+/// 写包会从标准化 artifact 独立加载 AB，应用对象级替换载荷后再原子提升到目标路径。
 /// </remarks>
 public sealed class FileSystemWorkspaceBundleExporter : IWorkspaceBundleExporter
 {
@@ -52,18 +51,10 @@ public sealed class FileSystemWorkspaceBundleExporter : IWorkspaceBundleExporter
             }
 
             temporaryFilePath = CreateTemporaryFilePath(outputPath);
-            await using (var sourceStream = new FileStream(
-                             sourcePath,
-                             FileMode.Open,
-                             FileAccess.Read,
-                             FileShare.Read))
-            await using (var outputStream = new FileStream(
-                             temporaryFilePath,
-                             FileMode.CreateNew,
-                             FileAccess.Write,
-                             FileShare.None))
+            var writeResult = AssetsToolsWorkspaceBundleObjectWriter.Write(sourcePath, temporaryFilePath, request, cancellationToken);
+            if (writeResult.IsFailure)
             {
-                await sourceStream.CopyToAsync(outputStream, cancellationToken);
+                return Result<WorkspaceBundleExportResultDto>.Failure(writeResult.Errors);
             }
 
             cancellationToken.ThrowIfCancellationRequested();

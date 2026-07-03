@@ -22,13 +22,13 @@
 - Application 已通过 `IWorkspaceBundleExporter` / `IWorkspaceBundleExportManifestStore` 编排第一阶段真实导出：按选中 bundle 有界并发写出，汇总 `Succeeded / PartiallySucceeded / Failed` 结果，并在有成功输出时写出 `_abt-bundle-export-manifest.json`。
 - Application 已定义 `IWorkspaceResourceProcessorExecutor` 和处理器执行 DTO；保存执行会校验资源处理器选择、构建文件替换载荷的资源处理 work item、按有界并发执行、稳定排序结果，并在处理器失败时阻断所属 bundle 写包。
 - Infrastructure 已接入外部 CLI 资源处理器执行：按 catalog 中的 `executablePath / processArguments / timeoutMs` 启动进程，展开占位符，解析 result JSON，校验输出路径范围，捕获诊断并支持取消时终止进程。
-- Infrastructure 第一阶段已实现标准化 artifact 的文件级 AB 输出、同目录临时文件提升、MD5 / SHA-256 记录和 AB 导出 manifest 原子写出。
+- Infrastructure 已把单 bundle writer 从 artifact 文件级复制推进到首版对象级 AssetsTools 写包：从标准化 artifact 独立加载 AB，按 `serializedFileName + pathId` 定位对象，消费文件替换、同 bundle 工作区内替换、Sprite 几何编辑和资源处理器输出载荷，先写入带 replacer 的未压缩 bundle，再按原压缩方式重新打包、提升输出文件并记录 MD5 / SHA-256。
 - AB 导出 manifest 已记录每个 bundle 的资源处理器结果摘要，包括资源类型、处理器 id、状态、输入 / 成功 / 失败计数、result JSON 路径和诊断。
 
 尚未实现：
 
 - 资源处理器输入目前只覆盖文件替换载荷；工作区内替换、编辑草稿和后续有效载荷端口仍需接入同一资源处理计划。
-- 真实 AB 可变副本、资源替换写入和对象级 AssetsTools 写包；当前第一阶段仍把可复用标准化 artifact 作为 AB 文件级输出输入，并只把处理器结果传给 writer 端口和 manifest。
+- 对象级 writer 首版只覆盖 `TextAsset` 文本载荷、`Texture2D` 图片载荷、同 bundle 工作区内对象复制和 Sprite `m_Rect / m_Pivot` 几何写入；跨 bundle 工作区内替换、AudioClip / Mesh / Material / MonoBehaviour 等更多对象类型和更完整的格式转换仍需后续扩展。
 - 保存检查点、部分成功和取消 / 回滚语义。
 
 ## 3. 设计结论
@@ -224,7 +224,7 @@ BuildResourceProcessingItems
   -> CollectEffectivePayloads
 ```
 
-当前已落地的第一版处理器阶段先消费 `WorkspaceChangeItemDto.FileReplacementSourcePath` 代表的文件替换载荷，并将处理器输出作为 `WorkspaceResourceProcessorExecutionResultDto` 传给后续 writer 端口和 manifest。对象级 writer 尚未消费这些输出改写 AB 内容；因此“处理器已执行并记录结果”与“处理器输出真正替换进 AB”是两个阶段，后者属于下一步对象级 AssetsTools 写包。
+当前已落地的第一版处理器阶段先消费 `WorkspaceChangeItemDto.FileReplacementSourcePath` 代表的文件替换载荷，并将处理器输出作为 `WorkspaceResourceProcessorExecutionResultDto` 传给后续 writer 端口和 manifest。对象级 writer 已消费成功处理项的 `outputPath` 作为优先载荷：同一资源存在处理器输出时，写包阶段使用处理器输出替换原始文件替换路径；没有处理器输出时，回退到工作区有效替换源。
 
 ### 7.1 处理项粒度
 
@@ -343,7 +343,7 @@ IWorkspaceBundleExporter
   ExportAsync(WorkspaceBundleExportRequest request, CancellationToken cancellationToken)
 ```
 
-Infrastructure 的当前实现已经消费标准化 artifact 并做文件级 AB 输出；后续对象级实现继续在同一端口内消费有效变更载荷和处理器输出，负责真实 AssetsTools Writer 或可替换写包器。Application 只消费结构化结果。
+Infrastructure 的当前实现已经在同一端口内消费标准化 artifact、有效变更载荷和处理器输出。写包器按 `WorkspaceBundleAssetWriteItemDto` 中的对象身份查找 serialized file 与 path id，调用 AssetsTools replacer 修改对象，再按官方写包流程先输出带 replacer 的未压缩 bundle，随后在需要时按原压缩格式重新 `Pack`。Application 只消费结构化结果。
 
 ### 8.2 写包并发
 
@@ -422,7 +422,7 @@ Bundle.Save.ResourceProcessor.Unavailable
 Bundle.Save.ResourceProcessor.UnsupportedResourceKind
 Bundle.Save.ResourceProcessor.ExecutionFailed
 Bundle.Save.ResourceProcessor.ResultInvalid
-Export.Bundle.WriteFailed
+Bundle.Save.WriteFailed
 Export.Bundle.OutputValidationFailed
 Export.Manifest.WriteFailed
 Export.Operation.CommitFailed
@@ -560,15 +560,15 @@ Application 回归优先覆盖：
 - 导出命令会拒绝缺失工作区、空资源包选择、不可用处理器和不支持资源类型。
 - 导出计划只包含用户选择的资源包，并保留 `bundleId / bundleCacheKey / outputPath`。
 - 资源处理器选择中的“无处理器”不会进入执行队列。
-- 当前第一阶段覆盖选中 bundle 写出、processor selection 透传、文件替换载荷的资源处理 work item 构建、处理器结果透传、失败回填、失败 bundle 跳过写包、bundle writer 跨 bundle 有界并发和输出摘要。
-- 后续补资源处理器取消、工作区内替换 / 编辑草稿有效载荷和对象级 writer 消费处理器输出的回归。
+- 当前第一阶段覆盖选中 bundle 写出、processor selection 透传、文件替换载荷的资源处理 work item 构建、处理器结果透传、失败回填、失败 bundle 跳过写包、bundle writer 跨 bundle 有界并发、对象级写包项透传和输出摘要。
+- 后续补资源处理器取消、工作区内替换 / 编辑草稿有效载荷的更多资源类型和跨 bundle 写包回归。
 - 部分成功时只提交成功 bundle 的检查点。
 
 Infrastructure 回归优先覆盖：
 
 - 资源处理器 result JSON 解析、非法路径拒绝、stdout / stderr 诊断捕获和超时终止。
-- 当前第一阶段覆盖标准化 artifact 文件级输出、同目录临时文件提升、MD5 / SHA-256 记录和 AB 导出 manifest 原子写入。
-- 后续补目标已存在 blocker、确认覆盖后的替换路径和对象级 AssetsTools Writer。
+- 当前第一阶段覆盖空对象写入拒绝、真实样本 TextAsset 对象级写入后读回、同目录临时文件提升、MD5 / SHA-256 记录、资源处理器 result JSON 解析和 AB 导出 manifest 原子写入。
+- 后续补目标已存在 blocker、确认覆盖后的替换路径、Texture2D / Sprite / workspace replacement 的真实样本回归和更多 AssetsTools Writer 类型。
 
 Presentation 回归优先覆盖：
 
@@ -592,11 +592,11 @@ Presentation 回归优先覆盖：
 3. [已落地] 定义资源处理器执行端口和 result DTO，并用 fake executor 覆盖 Application 结果透传与失败回填。
 4. [已落地] 在 Infrastructure 接入外部 CLI 资源处理器执行与 result JSON 解析。
 5. [已落地] 定义 `IWorkspaceBundleExporter`，Application 编排 bundle writer 有界并发。
-6. [已部分落地] Infrastructure 已接入标准化 artifact 文件级输出和单 bundle 临时输出提升；后续补真实 AssetsTools 对象级写包。
+6. [已落地首版] Infrastructure 已接入真实 AssetsTools 对象级写包、处理器输出消费、单 bundle 临时输出提升和写后 hash 记录。
 7. [已落地] 新增 AB 导出 manifest store，写出 `_abt-bundle-export-manifest.json`。
 8. [待补] 接入保存检查点和操作记录 committed 状态。
 9. [已落地] 将工作区导出窗口的开始按钮接到真实 `SaveRebuild` 后台任务。
-10. [进行中] 补 Presentation、本地化、自动化回归和端到端手动验证；当前 CLI 处理器端口已补 Application / Infrastructure / Localization 回归。
+10. [进行中] 补 Presentation、本地化、自动化回归和端到端手动验证；当前 CLI 处理器端口与 TextAsset 对象级写包已补 Application / Infrastructure 回归。
 
 ## 15. 收口结论
 

@@ -226,6 +226,102 @@ internal static partial class SaveWorkspaceHandlersTests
         TestAssert.Equal("abc123-sha256", bundleResult.WrittenFileSha256, "Execution should preserve exported AB SHA-256.");
     }
 
+    public static async Task SaveWorkspaceAsNewBundleHandler_ShouldForwardObjectWriteItems_FromOperationRecords()
+    {
+        const string workspaceKey = "workspace-save-key";
+        const string workspaceDataRootPath = @"D:\WorkspaceData";
+
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-alpha");
+        var assetId = new AssetId("asset-text");
+        var indexEntry = CreateBundleIndexEntry(workspaceKey, "bundle-cache-alpha", bundleId, "Alpha.ab");
+        var artifactStore = new TestBundleArtifactStore(
+        [
+            CreateArtifactManifest(
+                workspaceKey,
+                indexEntry.BundleCacheKey,
+                @"D:\WorkspaceData\cache\bundles\workspace-save-key\bundle-cache-alpha\normalized.bundle",
+                indexEntry.SourceFingerprint)
+        ]);
+        var registry = new TestWorkspaceSessionRegistry
+        {
+            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(
+                workspaceId,
+                [
+                    CreateChangeItem(
+                        bundleId: bundleId,
+                        assetId: assetId,
+                        bundleDisplayName: "Alpha.ab",
+                        assetName: "ConfigText",
+                        isModified: true,
+                        fileReplacementSourceFileName: "config.txt")
+                ])
+        };
+        registry.AddAssetDetails(CreateAssetDetails(workspaceId, bundleId, assetId, "ConfigText", AssetType.TextAsset, "CAB-main", 42));
+        var changeSet = WorkspaceChangeSetDto.Empty(workspaceKey) with
+        {
+            Operations =
+            [
+                new WorkspaceOperationRecordDto(
+                    OperationId: "replace-file-1",
+                    Sequence: 1,
+                    OperationKind: WorkspaceOperationKind.ReplaceFromFile,
+                    Status: WorkspaceOperationStatus.Applied,
+                    WorkspaceKey: workspaceKey,
+                    Target: new WorkspaceOperationTargetDto(
+                        BundleId: bundleId.Value,
+                        AssetId: assetId.Value,
+                        AssetName: "ConfigText",
+                        AssetType: AssetType.TextAsset.ToString(),
+                        AssetTypeDisplayName: "TextAsset",
+                        SerializedFileName: "CAB-main",
+                        PathId: 42),
+                    Source: new WorkspaceOperationSourceDto(
+                        SourceKind: "file",
+                        SourceFilePath: @"C:\Imports\config.txt",
+                        SourceFileName: "config.txt",
+                        SourceAssetType: AssetType.TextAsset.ToString()),
+                    PreviousState: null,
+                    Result: new WorkspaceOperationResultDto(ReplacementSourceKind: "file"),
+                    CreatedAtUtc: new DateTimeOffset(2026, 7, 3, 8, 0, 0, TimeSpan.Zero),
+                    AppliedAtUtc: new DateTimeOffset(2026, 7, 3, 8, 0, 0, TimeSpan.Zero),
+                    CompletedAtUtc: new DateTimeOffset(2026, 7, 3, 8, 0, 0, TimeSpan.Zero))
+            ]
+        };
+        var exporter = new RecordingBundleExporter();
+        var processorExecutor = new RecordingResourceProcessorExecutor();
+        var handler = new SaveWorkspaceAsNewBundleHandler(
+            registry,
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([indexEntry]),
+                artifactStore,
+                new TestWorkspaceChangeStore(changeSet)),
+            new ReadyWorkspaceSaveOutputProbe(),
+            exporter,
+            new RecordingBundleExportManifestStore(),
+            new TestResourceProcessorCatalogStore(
+            [
+                CreateResourceProcessor("resource.processor.text", "atlas")
+            ]),
+            processorExecutor);
+
+        var result = await handler.HandleAsync(new SaveWorkspaceAsNewBundleCommand(
+            workspaceId,
+            OutputDirectory: @"D:\Exports",
+            WorkspaceKey: workspaceKey,
+            WorkspaceDataRootPath: workspaceDataRootPath));
+
+        TestAssert.True(result.IsSuccess, "Save execution should succeed with object write item payloads.");
+        var request = TestAssert.Single(exporter.Requests);
+        var writeItem = TestAssert.Single(request.AssetWriteItems);
+        TestAssert.Equal(bundleId, writeItem.BundleId, "Write item should keep target bundle identity.");
+        TestAssert.Equal(assetId, writeItem.AssetId, "Write item should keep target asset identity.");
+        TestAssert.Equal(AssetType.TextAsset, writeItem.AssetType, "Write item should keep target asset type.");
+        TestAssert.Equal("CAB-main", writeItem.SerializedFileName, "Write item should carry serialized file name for AssetsTools lookup.");
+        TestAssert.Equal(42L, writeItem.PathId, "Write item should carry path id for AssetsTools lookup.");
+        TestAssert.Equal(@"C:\Imports\config.txt", writeItem.SourceFilePath, "Write item should carry file replacement payload path.");
+    }
+
     public static async Task SaveWorkspaceAsNewBundleHandler_ShouldSkipBundleWrite_WhenResourceProcessorFails()
     {
         const string workspaceKey = "workspace-save-key";
@@ -420,12 +516,16 @@ internal static partial class SaveWorkspaceHandlersTests
         private readonly IBundleIndexCacheStore _bundleIndexCacheStore;
         private readonly IBundleArtifactStore _bundleArtifactStore;
 
+        private readonly IWorkspaceChangeStore? _workspaceChangeStore;
+
         public TestWorkspaceDataStoreFactory(
             IBundleIndexCacheStore bundleIndexCacheStore,
-            IBundleArtifactStore bundleArtifactStore)
+            IBundleArtifactStore bundleArtifactStore,
+            IWorkspaceChangeStore? workspaceChangeStore = null)
         {
             _bundleIndexCacheStore = bundleIndexCacheStore;
             _bundleArtifactStore = bundleArtifactStore;
+            _workspaceChangeStore = workspaceChangeStore;
         }
 
         public IBundleArtifactStore CreateBundleArtifactStore(string? rootDirectoryPath = null) => _bundleArtifactStore;
@@ -434,7 +534,8 @@ internal static partial class SaveWorkspaceHandlersTests
 
         public IPreviewCacheStore CreatePreviewCacheStore(string? rootDirectoryPath = null) => throw new NotSupportedException();
 
-        public IWorkspaceChangeStore CreateWorkspaceChangeStore(string? rootDirectoryPath = null) => throw new NotSupportedException();
+        public IWorkspaceChangeStore CreateWorkspaceChangeStore(string? rootDirectoryPath = null) =>
+            _workspaceChangeStore ?? throw new NotSupportedException();
 
         public string GetDefaultRootDirectoryPath() => @"D:\WorkspaceData";
     }
@@ -518,6 +619,28 @@ internal static partial class SaveWorkspaceHandlersTests
     {
         public WorkspaceSaveOutputProbeResult Probe(WorkspaceSaveOutputProbeRequest request) =>
             WorkspaceSaveOutputProbeResult.Ready();
+    }
+
+    private sealed class TestWorkspaceChangeStore : IWorkspaceChangeStore
+    {
+        private WorkspaceChangeSetDto? _changeSet;
+
+        public TestWorkspaceChangeStore(WorkspaceChangeSetDto? changeSet)
+        {
+            _changeSet = changeSet;
+        }
+
+        public WorkspaceChangeSetDto? Load(string workspaceKey) => _changeSet;
+
+        public void Save(WorkspaceChangeSetDto changeSet)
+        {
+            _changeSet = changeSet;
+        }
+
+        public void Delete(string workspaceKey)
+        {
+            _changeSet = null;
+        }
     }
 
     private sealed class RecordingBundleExporter : IWorkspaceBundleExporter

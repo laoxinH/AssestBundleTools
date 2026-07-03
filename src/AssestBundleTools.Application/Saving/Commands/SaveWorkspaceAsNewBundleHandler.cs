@@ -23,6 +23,7 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
     private readonly IWorkspaceBundleExporter? _bundleExporter;
     private readonly IWorkspaceBundleExportManifestStore? _manifestStore;
     private readonly WorkspaceSaveResourceProcessorRunner _resourceProcessorRunner;
+    private readonly IWorkspaceDataStoreFactory? _workspaceDataStoreFactory;
 
     public SaveWorkspaceAsNewBundleHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
@@ -34,6 +35,7 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
         IWorkspaceResourceProcessorExecutor? resourceProcessorExecutor = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
+        _workspaceDataStoreFactory = workspaceDataStoreFactory;
         _artifactInputResolver = workspaceDataStoreFactory is null
             ? null
             : new WorkspaceSaveArtifactInputResolver(workspaceDataStoreFactory);
@@ -203,6 +205,10 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
         CancellationToken cancellationToken)
     {
         var concurrency = ResolveBundleWriteConcurrency(command.BundleWriteConcurrency, selectedPlans.Count);
+        var assetWritePlanBuilder = new WorkspaceBundleAssetWritePlanBuilder(
+            _workspaceSessionRegistry,
+            plan.WorkspaceId,
+            _workspaceDataStoreFactory);
         var semaphore = new SemaphoreSlim(concurrency, concurrency);
         var completedCount = 0;
         var succeededCount = 0;
@@ -241,6 +247,11 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
                         SourceArtifactPath: selectedPlan.ArtifactInput.ArtifactBundlePath!,
                         BundleCacheKey: selectedPlan.ArtifactInput.BundleCacheKey,
                         ChangeItems: selectedPlan.ChangeItems,
+                        AssetWriteItems: assetWritePlanBuilder.Build(
+                            selectedPlan,
+                            command.WorkspaceKey,
+                            command.WorkspaceDataRootPath,
+                            processorBatchResult.ResolveResults(selectedPlan.BundleId)),
                         ProcessorSelections: processorSelections,
                         ProcessorResults: processorBatchResult.ResolveResults(selectedPlan.BundleId),
                         OperationId: operationId),

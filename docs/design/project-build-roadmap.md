@@ -105,7 +105,7 @@ tests/
 - 已完成 GameObject 第一版信息浏览预览：Infrastructure 输出对象基础字段、Transform 摘要、组件列表与常见组件引用的 JSON sidecar，Application 缓存命中后水化为专用 DTO，Presentation 通过独立 Formatter / ViewModel / 控件渲染，并复用详情依赖图进行资源跳转，不在 UI 层解析 AB 或渲染场景
 - 已完成 MonoBehaviour 第一版信息浏览预览并按真实样本补强：Infrastructure 输出对象名、启用状态、MonoScript 摘要、字段分组、常见 Unity 序列化容器、前若干字段和 PPtr 引用的 JSON sidecar，Application 缓存命中后水化为专用 DTO，Presentation 通过独立 Formatter / ViewModel / 控件渲染，并复用详情依赖图进行资源跳转；MonoScript 类名无法解析时只显示未解析脚本 PathId，不在 UI 层解析 AB 或推断脚本业务语义
 - 已完成 AnimatorController 第一版信息浏览预览：Infrastructure 输出控制器名、Layer / Parameter 计数、`m_Controller` 常量区中的 StateMachine / State / Transition / BlendTree / Value 摘要，以及 `m_AnimationClips` 等 PPtr 引用 JSON sidecar，Application 缓存命中后水化为专用 DTO，Presentation 通过独立 Formatter / ViewModel / 控件渲染，并复用详情依赖图进行资源跳转；真实样本中 `m_AnimatorLayers / m_AnimatorParameters` 常为空，首版以 `m_Controller` 常量区摘要为主，不做状态机画布或动画播放模拟
-- 已完成工作区真实导出第一阶段：导出窗口默认可输出到 `<workspaceDataRootPath>/exports`，取消工作区输出后会在开始导出时打开目录选择器；导出任务复用 `SaveRebuild` 后台调度，Application 按选中资源包和资源处理器选择编排有界 bundle writer，Infrastructure 先以标准化 artifact 文件级输出修改后的 AB 占位实现，并写出包含 MD5 / SHA-256、processor selection 和 bundle 结果的 `_abt-bundle-export-manifest.json`；后续补 CLI 资源处理器执行、对象级 AssetsTools 写包和保存检查点
+- 已完成工作区真实导出第一阶段：导出窗口默认可输出到 `<workspaceDataRootPath>/exports`，取消工作区输出后会在开始导出时打开目录选择器；导出任务复用 `SaveRebuild` 后台调度，Application 按选中资源包和资源处理器选择编排有界资源处理器与 bundle writer；Infrastructure 已接入 CLI 资源处理器执行、result JSON 解析、对象级 AssetsTools 写包、处理器输出消费、单 bundle 临时输出提升和包含 MD5 / SHA-256、processor selection、bundle 结果的 `_abt-bundle-export-manifest.json`；后续补保存检查点、Committed 状态、取消 / 部分成功恢复语义和更多资源类型
 
 ## 3. 总体实施原则
 
@@ -549,11 +549,11 @@ src/AssestBundleTools.Application/
 - 检查器替换页中的“选择文件来源”当前已接入真实文件选择器，并把所选路径带入候选校验链路
 - 真正的应用与撤销动作统一收敛到右侧检查器完成
 - 批处理页当前先以工作区变更摘要为主，不直接执行真实批量导出或保存
-- 主工作区“保存为新包”当前先导航到批处理页中的保存前摘要承载，不执行真实写入
+- 主工作区“保存为新包”当前由工作区导出窗口承载真实 `SaveRebuild` 导出执行，批处理页仅保留历史保存摘要入口
 - 主工作区“批量提取”入口已经改为打开工作区级批量提取对话框，不再跳转批处理页；对话框会收集资源包范围，按当前勾选资源包动态展示多类型类别和候选数量，点击开始后再解析输出目录，并提交 `BatchExtraction` 后台任务
 - 批处理页中的“执行批量替换骨架”当前只校验并汇总已进入替换队列的资源，不重复执行真实替换动作
-- 批处理页中的“执行保存骨架”当前只验证输出计划并记录结果，不执行真实写包
-- 保存预览 / 保存骨架已通过 `IWorkspaceSaveOutputProbe` 预检目标输出路径，将输出可写、未探测、目标文件已存在、目标路径为目录、目录链被文件阻塞、非法路径和探测失败投影为结构化 DTO；该流程不创建目录、不写文件。M10 真实导出设计已收束到 [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md)：后续真实写包入口继续使用 `SaveRebuild` 后台任务，Application 内部拆资源处理器 worker 池和 bundle writer worker 池，输出 `_abt-bundle-export-manifest.json`，并按单 bundle 原子、整批可部分成功的方式处理取消、失败和检查点
+- 批处理页中的旧“执行保存骨架”已经由工作区导出窗口承接真实 `SaveRebuild` 导出任务，后续不再把保存停留在只验证输出计划的占位状态
+- 保存预览 / 保存执行已通过 `IWorkspaceSaveOutputProbe` 预检目标输出路径，将输出可写、未探测、目标文件已存在、目标路径为目录、目录链被文件阻塞、非法路径和探测失败投影为结构化 DTO。M10 真实导出设计已收束到 [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md)：真实写包入口继续使用 `SaveRebuild` 后台任务，Application 内部拆资源处理器 worker 池和 bundle writer worker 池，Infrastructure 首版对象级 writer 已消费替换 / 编辑 / 处理器输出并生成 `_abt-bundle-export-manifest.json`；后续继续补确认覆盖、取消 / 部分成功恢复和保存检查点
 - 工作区替换与文件替换共用同一条“应用 / 撤销”动作链路，当前以工作区状态为单一事实来源
 - 应用级工作区上下文开始按“活动工作区 + 已登记工作区列表”演进，为后续切换工作区做准备
 - 已接入工作区目录索引与单工作区元数据文件的 JSON 存储骨架
@@ -810,8 +810,8 @@ src/AssestBundleTools.Application/
 
 - 已稳定、已文档化的行为契约，以及确认过的回归缺陷，应在同一变更中补齐或更新自动化测试。
 - 仍处于骨架、占位或过渡态的流程，只测试当前已经实现并且文档已承认的行为，不提前冻结未来语义。
-- 当前替换与保存链路仍有部分能力停留在骨架阶段；在 `M10` 真实写包与最终持久化语义落地前，测试先覆盖候选解析、兼容性、摘要、保存前预览、资源包聚合、执行骨架结果和已定义失败即可。
-- 当真实写包、冲突处理、取消/回滚或更细粒度失败分类真正进入实现阶段时，需要在同一轮变更中同步补齐对应测试，而不是把未来契约提前写死在当前骨架测试里。
+- 当前替换与保存链路仍有部分能力停留在分阶段落地状态；`M10` 首版真实写包已补对象级 TextAsset 写后读回回归，后续资源类型、冲突处理、取消/回滚和最终持久化语义在对应实现进入时同步补测试。
+- 当更完整真实写包、冲突处理、取消/回滚或更细粒度失败分类进入实现阶段时，需要在同一轮变更中同步补齐对应测试，而不是把未来契约提前写死在当前阶段测试里。
 
 ### 测试分层与依赖限制
 
@@ -836,7 +836,7 @@ src/AssestBundleTools.Application/
 1. 工作区、导入、真实读取、缓存、依赖图和主要富预览已经具备可继续开发的稳定承载面。
 2. Spine 预览支线已完成阶段性收口；后续只围绕基础播放稳定性、高刷新验证、设备恢复和固定 fps 导出做必要修补。
 3. M8 的候选、替换状态、撤销、批处理页承载和保存骨架已经能支撑下一轮真实操作设计。
-4. M10 真实保存 / 重建还不应直接开写；需要先把提取、替换和保存前输出计划的用户流程与错误边界补清楚。
+4. M10 真实保存 / 重建已经开始首版真实写包；下一步应围绕输出冲突、取消 / 部分成功恢复、检查点和更多资源类型继续收口。
 5. 多选批量提取、导入外层任务、预览队列和后续导出 / 保存都已经存在后台化诉求；当前预览队列已接入统一 profile，标准化 bundle artifact 与基于 artifact identity 的 loaded-session single-flight 已成为 Reader / Preview / Extraction 的共享读取基础。SaveRebuild 已在保存计划骨架中读取现有 artifact identity；后续导出 / 写包仍必须共享 artifact resolver 和 loaded-session identity，不得新增绕过标准化 artifact 的平行读取路径。
 
 原因是：
@@ -941,7 +941,7 @@ src/AssestBundleTools.Application/
 - 已继续完成 `BundleExplorerPage.xaml.cs` 的页面协作收口：工作区导航/窗口注册、资源包窗格布局动画、资产文档标签同步与页面静态 chrome 当前已分别下沉到 `BundleExplorerPageNavigationCoordinator / BundleExplorerPagePaneLayoutCoordinator / BundleExplorerPageTabCoordinator / BundleExplorerPageChromeCoordinator`，页面主 code-behind 当前约 `362` 行；后续重点转为防止新的页面视图流程重新长回单一巨型 code-behind
 - 已继续完成资源编辑窗口模式的一轮实现闭环：命令式 `在新窗口中打开 / 移动到主窗口`、标签拖拽、整组拖出 / 放回、窗口快照持久化，以及“启动读取独立窗口快照后弹出可控恢复确认，并保留稍后手动恢复入口”当前已打通。恢复执行已补上不可用资源包的部分失败保留、恢复提示中的显式忽略入口、恢复 bounds 的显示器工作区安全归位，以及“待恢复资产已在主窗口或现有独立窗口中打开”时的冲突预检保留；资产文档标签也已补上轻量 `EditDraftReference` 持久化挂点，恢复提示和工具栏入口会显示带草稿标记和已打开冲突的标签数量，并在关闭冲突标签后刷新恢复入口状态；打开资源详情、依赖跳转或请求新建独立资源编辑窗口时会先激活并切换到任意已打开的同一资产标签，再置前所在窗口，避免重复创建资产标签或独立窗口；独立窗口只有一个标签时，单标签拖出窗口外当前视为取消拖出并保留原窗口，避免重新创建等价窗口后关闭原窗口；当存在草稿标记时，恢复弹窗允许用户决定本次成功打开的标签是否带回这些标记，但实际执行只保留预检为可恢复的草稿标记。Application 层当前已新增 `Editing` 草稿恢复候选契约，可把轻量草稿引用诊断为可恢复、缺失、来源不匹配、过期或引用无效；Presentation 恢复弹窗已在显示前接入该候选计划并展示数量摘要，组合根已通过 `WorkspaceChangeSetAssetEditDraftStore` 从 `staging/changes/<workspaceKey>.json` 的 `editDrafts[]` 读取草稿描述元数据。后续重点转向实现真实草稿确认 / 丢弃 / 恢复队列与内容暂存，再把可恢复候选与编辑器模型合流。窗口模式仍不得绕过 Application 预览 / 替换 / 保存用例，也不得引入 Presentation 到 Infrastructure 的新直接依赖
 - 已完成 `BatchTasksViewModel` 的一轮页面投影收口：工作区摘要、批量提取/替换/保存预览、结果卡片与静态筛选项初始化当前已下沉到 `BatchTasksPresentationPresenter`，页面主 ViewModel 当前约 `533` 行；后续重点转为防止新的展示映射和文本拼装重新回灌回主类
-- 已开始统一后台任务流程第一阶段：`Presentation.WinUI/Services/Background` 已新增 `BackgroundWorkRequest / BackgroundWorkExecutionContext / IBackgroundWorkScheduler` 与任务 profile / 语义分类 / 优先级模型，组合根统一创建调度器；资源列表多选批量提取、Spine 资源组多选批量提取、批处理页批量提取和独立资源编辑窗口提取入口已接入同一 `BatchExtraction` profile，批处理页批量替换骨架与保存骨架已分别接入 `BatchReplacement / SaveRebuild` profile，工作区打开外层与文件 / 目录 / 拖拽导入处理阶段已接入 `WorkspaceOpen / WorkspaceImport` profile，普通资产预览与后台预热已接入 `PreviewForeground / PreviewPrewarm` profile，Spine 详情和贴图载荷已接入 `PreviewForeground` profile，Spine runtime 当前帧已接入独立 `SpineRuntimeFrame` profile。预览 worker 总数已接入设置页自动 / `1-4` 固定值；快速切换资产详情标签时新活动标签优先进入 `PreviewForeground`，旧活动标签降级为 `PreviewPrewarm`，后台预热按最近激活 / 最近打开优先；预览生成出现 `OutOfMemory` 时会以专用诊断回退，并短期暂停同 bundle 后台预热，前台用户请求成功后清除退避。`cache/bundles` 标准化 artifact 已成为 Reader / Preview / Extraction / Spine 详情共享的第一层物理输入，artifact 生成阶段已按资源包键 single-flight；`cache/previews` 预览缓存已纳入当前工作区聚合 usage / clear，并在预览 payload 保存后按偏好自动 prune；Infrastructure 内部 `AssetsToolsBundleLoadedSessionCache` 已接入 loaded-session single-flight、lease、滑动 TTL、默认 6 个空闲会话容量上限、GC 内存压力下 1 个空闲会话退避和 artifact 删除 / prune 主动失效，Reader、预览生成器和经预览管线导出的提取会按标准化 artifact identity 共享同一 bundle 加载上下文，减少重复 `LoadBundleFile`。SaveRebuild 保存预览和保存骨架已通过 `workspaceKey / workspaceDataRootPath` 读取现有标准化 artifact 与 loaded-session identity，缺失或陈旧项只标记诊断，不提前 materialize；真实写包入口落地时必须继续消费这份只读输入图。设置与诊断页已提供当前工作区聚合缓存 usage、显式清理和派生缓存自动容量治理偏好；缓存淘汰与预热退避细节本轮先通过 DEBUG 输出承载，不新增诊断面板。导入进度会同时投影到左侧导入遮罩与 Shell 状态条，操作记录刷新仍保持既有通知链路
+- 已开始统一后台任务流程第一阶段：`Presentation.WinUI/Services/Background` 已新增 `BackgroundWorkRequest / BackgroundWorkExecutionContext / IBackgroundWorkScheduler` 与任务 profile / 语义分类 / 优先级模型，组合根统一创建调度器；资源列表多选批量提取、Spine 资源组多选批量提取、批处理页批量提取和独立资源编辑窗口提取入口已接入同一 `BatchExtraction` profile，批处理页批量替换骨架与保存 / 导出执行已分别接入 `BatchReplacement / SaveRebuild` profile，工作区打开外层与文件 / 目录 / 拖拽导入处理阶段已接入 `WorkspaceOpen / WorkspaceImport` profile，普通资产预览与后台预热已接入 `PreviewForeground / PreviewPrewarm` profile，Spine 详情和贴图载荷已接入 `PreviewForeground` profile，Spine runtime 当前帧已接入独立 `SpineRuntimeFrame` profile。预览 worker 总数已接入设置页自动 / `1-4` 固定值；快速切换资产详情标签时新活动标签优先进入 `PreviewForeground`，旧活动标签降级为 `PreviewPrewarm`，后台预热按最近激活 / 最近打开优先；预览生成出现 `OutOfMemory` 时会以专用诊断回退，并短期暂停同 bundle 后台预热，前台用户请求成功后清除退避。`cache/bundles` 标准化 artifact 已成为 Reader / Preview / Extraction / Spine 详情共享的第一层物理输入，artifact 生成阶段已按资源包键 single-flight；`cache/previews` 预览缓存已纳入当前工作区聚合 usage / clear，并在预览 payload 保存后按偏好自动 prune；Infrastructure 内部 `AssetsToolsBundleLoadedSessionCache` 已接入 loaded-session single-flight、lease、滑动 TTL、默认 6 个空闲会话容量上限、GC 内存压力下 1 个空闲会话退避和 artifact 删除 / prune 主动失效，Reader、预览生成器和经预览管线导出的提取会按标准化 artifact identity 共享同一 bundle 加载上下文，减少重复 `LoadBundleFile`。SaveRebuild 保存预览和执行已通过 `workspaceKey / workspaceDataRootPath` 读取现有标准化 artifact 与 loaded-session identity，缺失或陈旧项只标记诊断，不提前 materialize；真实导出已继续消费这份只读输入图，并接入 CLI 资源处理器、对象级 AssetsTools 写包和 AB 输出 manifest。设置与诊断页已提供当前工作区聚合缓存 usage、显式清理和派生缓存自动容量治理偏好；缓存淘汰与预热退避细节本轮先通过 DEBUG 输出承载，不新增诊断面板。导入进度会同时投影到左侧导入遮罩与 Shell 状态条，操作记录刷新仍保持既有通知链路
 - 已完成 D-05 第一轮边界显式化：`Presentation -> Infrastructure` 的直接引用当前只允许出现在 `src/AssestBundleTools.Presentation.WinUI/Composition/` 目录，`App.xaml.cs` 与普通壳层服务已退回为消费组合结果或依赖 Presentation 窄抽象，并补上仓库级检查防止新的越界引用
 - 已完成 D-06 第一轮最小测试骨架：`tests/AssestBundleTools.Domain.Tests / AssestBundleTools.Application.Tests / AssestBundleTools.Localization.Tests` 已分别覆盖 `AppError`、`Result + 工作区目录关键 Handler` 以及 `zh-CN / en-US` 资源键一致性与 `ResourceKeys` 覆盖校验；后续测试重点转向扩展更多 `Application / Infrastructure` 关键路径
 - 已完成 D-06 第二轮最小测试骨架：`tests/AssestBundleTools.Infrastructure.Tests` 已建立与 `Application.Tests` 一致的零依赖控制台 runner，当前覆盖 `JsonWorkspaceCatalogStore / JsonWorkspaceMetadataStore` 的缺失文件空载入、保存回读与删除清理；`Localization.Tests` 也补上了 `Presentation -> Infrastructure` 与 `ResourceKeys` 集中管理边界检查，四层最小回归入口当前已经齐备
