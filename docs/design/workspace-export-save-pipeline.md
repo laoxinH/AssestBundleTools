@@ -343,7 +343,7 @@ IWorkspaceBundleExporter
   ExportAsync(WorkspaceBundleExportRequest request, CancellationToken cancellationToken)
 ```
 
-Infrastructure 的当前实现已经在同一端口内消费标准化 artifact、有效变更载荷和处理器输出。写包器按 `WorkspaceBundleAssetWriteItemDto` 中的对象身份查找 serialized file 与 path id，调用 AssetsTools replacer 修改对象，再按官方写包流程先输出带 replacer 的未压缩 bundle，随后在需要时按原压缩格式重新 `Pack`。`Texture2D` 写入会先尝试按原纹理格式编码；若原格式编码器不支持，则回退到 `RGBA32`，保持“能导出真实替换内容”优先。Application 只消费结构化结果。
+Infrastructure 的当前实现已经在同一端口内消费标准化 artifact、有效变更载荷和处理器输出。写包器按 `WorkspaceBundleAssetWriteItemDto` 中的对象身份查找 serialized file 与 path id，调用 AssetsTools replacer 修改对象；未压缩源包直接 `Write`，压缩源包先 `Write` 出带 replacer 的未压缩临时 bundle，再读回并按原压缩格式 `Pack` 到最终临时文件。真实样本验证显示，直接对原始压缩 `AssetBundleFile` 执行 `Pack` 不会消费 replacer，导出内容会保持旧对象数据；因此当前未压缩中间文件是保证对象级替换真实生效的写包物化步骤。`Texture2D` 写入会先尝试按原纹理格式编码；若原格式编码器不支持，则回退到 `RGBA32`，保持“能导出真实替换内容”优先。Application 只消费结构化结果。
 
 ### 8.2 写包并发
 
@@ -359,6 +359,7 @@ BundleWriterWorkerCount
 - 同一 bundle 的读取、变更应用和写包串行。
 - 不同 bundle 可以并行写包。
 - writer 运行进程应优先使用 `x64`；`x86` 进程会被 32 位地址空间限制放大大 bundle、Texture2D 编码和压缩重打包时的 `OutOfMemoryException` 风险，不能仅用系统剩余物理内存判断是否安全。
+- 压缩 bundle 的当前 AssetsTools 写包路径会产生完整未压缩临时文件，并在重打包前读回；这会让 LZMA 源包的单包导出耗时明显高于纯对象编码。后续优化应优先补充阶段耗时诊断，再评估更低 IO 的物化方式、可选输出压缩策略，以及最终文件 hash 的单次读取计算。
 - 写包阶段可以复用标准化 artifact identity 和 loaded-session single-flight，但 writer 必须持有独占写入上下文，不得共享可变对象。
 - 输出提升以单 bundle 为原子边界：临时文件完整写出并验证后，才移动或替换最终路径。
 - 如果某个 bundle 失败，不影响已经成功输出的其他 bundle；最终结果为 `Partial`。
