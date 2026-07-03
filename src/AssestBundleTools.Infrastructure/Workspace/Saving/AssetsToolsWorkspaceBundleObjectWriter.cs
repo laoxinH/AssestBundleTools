@@ -334,9 +334,55 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
             return Result<object>.Failure(
                 ApplicationErrors.BundleExportWriteFailed(
                     writeItem.AssetName,
-                    $"Save.BundleWrite.TextureEncodeFailed.{exception.GetType().Name}"));
+                    BuildTextureFailureDetail(baseField, writeItem, payloadPath, exception)));
         }
     }
+
+    private static string BuildTextureFailureDetail(
+        AssetTypeValueField baseField,
+        WorkspaceBundleAssetWriteItemDto writeItem,
+        string payloadPath,
+        Exception exception)
+    {
+        var textureFormat = AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_TextureFormat"));
+        var width = AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_Width"));
+        var height = AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_Height"));
+        return string.Join(
+            "; ",
+            new[]
+            {
+                "Save.BundleWrite.TextureEncodeFailed",
+                $"asset={writeItem.AssetName}",
+                $"pathId={writeItem.PathId}",
+                $"format={FormatTextureFormat(textureFormat)}",
+                $"size={FormatTextureSize(width, height)}",
+                $"payload={Path.GetFileName(payloadPath)}",
+                $"exception={exception.GetType().Name}",
+                $"message={NormalizeDiagnosticText(exception.Message)}"
+            }.Where(static part => !string.IsNullOrWhiteSpace(part)));
+    }
+
+    private static string FormatTextureFormat(int? textureFormat)
+    {
+        if (!textureFormat.HasValue)
+        {
+            return "unknown";
+        }
+
+        return Enum.IsDefined(typeof(TextureFormat), textureFormat.Value)
+            ? $"{(TextureFormat)textureFormat.Value}({textureFormat.Value})"
+            : textureFormat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private static string FormatTextureSize(int? width, int? height) =>
+        width.HasValue && height.HasValue
+            ? $"{width.Value}x{height.Value}"
+            : "unknown";
+
+    private static string NormalizeDiagnosticText(string? value) =>
+        string.IsNullOrWhiteSpace(value)
+            ? "-"
+            : value.Replace(Environment.NewLine, " ", StringComparison.Ordinal).Trim();
 
     private static void CopyMutableAssetFields(
         AssetTypeValueField targetBaseField,

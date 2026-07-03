@@ -91,6 +91,46 @@ public sealed class WorkspaceExportDialogViewModelTests
         Assert.Null(submission.ProcessorSelections.Single(selection => selection.ResourceKind == "audio").ProcessorId);
     }
 
+    [Fact]
+    public void ApplyExecutionResult_ShouldExposeFirstFailedBundleDiagnostic()
+    {
+        var viewModel = new WorkspaceExportDialogViewModel(
+            new TestLocalizationService(),
+            changeSummary: null,
+            savePreview: null);
+
+        viewModel.ApplyExecutionResult(new WorkspaceSaveExecutionResultDto(
+            WorkspaceId: new("workspace-export"),
+            WorkspaceDisplayName: "Workspace Export",
+            OutputDirectory: @"D:\Workspace\exports",
+            PlannedBundleCount: 1,
+            TotalChangeCount: 1,
+            CompletedAtUtc: DateTimeOffset.UtcNow,
+            Status: WorkspaceSaveExecutionStatusDto.Failed,
+            SucceededBundleCount: 0,
+            FailedBundleCount: 1,
+            WrittenBundleCount: 0,
+            BundleResults:
+            [
+                new WorkspaceSaveBundleExecutionResultDto(
+                    BundleId: new BundleId("bundle-alpha"),
+                    BundleDisplayName: "Alpha.ab",
+                    OutputFilePath: @"D:\Workspace\exports\Alpha.ab",
+                    Status: WorkspaceSaveBundleExecutionStatusDto.Failed,
+                    ChangeCount: 1,
+                    ModifiedAssetCount: 1,
+                    WorkspaceReplacementCount: 0,
+                    FileReplacementCount: 1,
+                    DiagnosticCode: "Bundle.Save.WriteFailed",
+                    DiagnosticDetail: "asset=Texture; format=DXT5(12); exception=NotSupportedException")
+            ]));
+
+        Assert.Contains(ResourceKeys.WorkspaceExportDialogExecutionCompletedWithDiagnosticsFormat, viewModel.ValidationText);
+        Assert.Contains("Alpha.ab", viewModel.ValidationText);
+        Assert.Contains("Bundle.Save.WriteFailed", viewModel.ValidationText);
+        Assert.Contains("format=DXT5(12)", viewModel.ValidationText);
+    }
+
     private static ResourceProcessorCatalogEntryDto CreateProcessor(
         string id,
         string displayName,

@@ -567,8 +567,8 @@ Application 回归优先覆盖：
 Infrastructure 回归优先覆盖：
 
 - 资源处理器 result JSON 解析、非法路径拒绝、stdout / stderr 诊断捕获和超时终止。
-- 当前第一阶段覆盖空对象写入拒绝、真实样本 TextAsset 对象级写入后读回、同目录临时文件提升、MD5 / SHA-256 记录、资源处理器 result JSON 解析和 AB 导出 manifest 原子写入。
-- 后续补目标已存在 blocker、确认覆盖后的替换路径、Texture2D / Sprite / workspace replacement 的真实样本回归和更多 AssetsTools Writer 类型。
+- 当前第一阶段覆盖空对象写入拒绝、真实样本 TextAsset / Texture2D 对象级写入后读回、同目录临时文件提升、MD5 / SHA-256 记录、资源处理器 result JSON 解析和 AB 导出 manifest 原子写入。
+- 后续补目标已存在 blocker、确认覆盖后的替换路径、Sprite / workspace replacement 的真实样本回归和更多 AssetsTools Writer 类型。
 
 Presentation 回归优先覆盖：
 
@@ -596,7 +596,7 @@ Presentation 回归优先覆盖：
 7. [已落地] 新增 AB 导出 manifest store，写出 `_abt-bundle-export-manifest.json`。
 8. [待补] 接入保存检查点和操作记录 committed 状态。
 9. [已落地] 将工作区导出窗口的开始按钮接到真实 `SaveRebuild` 后台任务。
-10. [进行中] 补 Presentation、本地化、自动化回归和端到端手动验证；当前 CLI 处理器端口与 TextAsset 对象级写包已补 Application / Infrastructure 回归。
+10. [进行中] 补 Presentation、本地化、自动化回归和端到端手动验证；当前 CLI 处理器端口与 TextAsset / Texture2D 对象级写包已补 Application / Infrastructure 回归。
 
 ## 15. 收口结论
 

@@ -193,10 +193,17 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
 
         IsExecuting = false;
         OutputDirectoryText = result.OutputDirectory;
-        ValidationText = _localizationService.GetFormattedString(
-            ResourceKeys.WorkspaceExportDialogExecutionCompletedFormat,
-            result.WrittenBundleCount,
-            result.FailedBundleCount);
+        var failureDetail = BuildFailureDetail(result);
+        ValidationText = string.IsNullOrWhiteSpace(failureDetail)
+            ? _localizationService.GetFormattedString(
+                ResourceKeys.WorkspaceExportDialogExecutionCompletedFormat,
+                result.WrittenBundleCount,
+                result.FailedBundleCount)
+            : _localizationService.GetFormattedString(
+                ResourceKeys.WorkspaceExportDialogExecutionCompletedWithDiagnosticsFormat,
+                result.WrittenBundleCount,
+                result.FailedBundleCount,
+                failureDetail);
         PrimaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPrimaryButton);
     }
 
@@ -457,6 +464,22 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         return new WorkspaceExportProcessorSelectionDto(
             NormalizeResourceKind(processor.Id),
             selectedProcessorId);
+    }
+
+    private string? BuildFailureDetail(WorkspaceSaveExecutionResultDto result)
+    {
+        var failedBundle = result.BundleResults.FirstOrDefault(static bundle =>
+            bundle.Status == WorkspaceSaveBundleExecutionStatusDto.Failed);
+        if (failedBundle is null)
+        {
+            return null;
+        }
+
+        return _localizationService.GetFormattedString(
+            ResourceKeys.WorkspaceExportDialogFailureDetailFormat,
+            failedBundle.BundleDisplayName,
+            string.IsNullOrWhiteSpace(failedBundle.DiagnosticCode) ? "-" : failedBundle.DiagnosticCode,
+            string.IsNullOrWhiteSpace(failedBundle.DiagnosticDetail) ? "-" : failedBundle.DiagnosticDetail);
     }
 
     private static IReadOnlyDictionary<BundleId, DateTimeOffset> BuildBundleLastChangedAtLookup(

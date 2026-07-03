@@ -4263,6 +4263,12 @@
   <data name="WorkspaceExportDialog.ExecutionCompleted.Format" xml:space="preserve">
     <value>Export completed: {0} bundles written, {1} failed.</value>
   </data>
+  <data name="WorkspaceExportDialog.ExecutionCompleted.WithDiagnostics.Format" xml:space="preserve">
+    <value>Export completed: {0} bundles written, {1} failed. First failure: {2}</value>
+  </data>
+  <data name="WorkspaceExportDialog.FailureDetail.Format" xml:space="preserve">
+    <value>{0}, diagnostic: {1}, detail: {2}</value>
+  </data>
   <data name="WorkspaceExportDialog.StatusTitle" xml:space="preserve">
     <value>Export workspace bundles</value>
   </data>

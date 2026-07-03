@@ -4263,6 +4263,12 @@
   <data name="WorkspaceExportDialog.ExecutionCompleted.Format" xml:space="preserve">
     <value>导出完成：写出 {0} 个资源包，失败 {1} 个。</value>
   </data>
+  <data name="WorkspaceExportDialog.ExecutionCompleted.WithDiagnostics.Format" xml:space="preserve">
+    <value>导出完成：写出 {0} 个资源包，失败 {1} 个。首个失败：{2}</value>
+  </data>
+  <data name="WorkspaceExportDialog.FailureDetail.Format" xml:space="preserve">
+    <value>{0}，诊断：{1}，详情：{2}</value>
+  </data>
   <data name="WorkspaceExportDialog.StatusTitle" xml:space="preserve">
     <value>导出工作区资源包</value>
   </data>

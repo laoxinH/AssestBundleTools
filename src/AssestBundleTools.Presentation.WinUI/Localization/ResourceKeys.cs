@@ -615,6 +615,8 @@ public static class ResourceKeys
     public const string WorkspaceExportDialogExecutionDeferred = "WorkspaceExportDialog.ExecutionDeferred";
     public const string WorkspaceExportDialogExecutionFailed = "WorkspaceExportDialog.ExecutionFailed";
     public const string WorkspaceExportDialogExecutionCompletedFormat = "WorkspaceExportDialog.ExecutionCompleted.Format";
+    public const string WorkspaceExportDialogExecutionCompletedWithDiagnosticsFormat = "WorkspaceExportDialog.ExecutionCompleted.WithDiagnostics.Format";
+    public const string WorkspaceExportDialogFailureDetailFormat = "WorkspaceExportDialog.FailureDetail.Format";
     public const string WorkspaceExportDialogStatusTitle = "WorkspaceExportDialog.StatusTitle";
     public const string WorkspaceExportDialogStatusPreparing = "WorkspaceExportDialog.StatusPreparing";
     public const string WorkspaceExportDialogStatusBundleFormat = "WorkspaceExportDialog.StatusBundle.Format";

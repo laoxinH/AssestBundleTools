@@ -138,6 +138,10 @@ internal static class InfrastructureTestSuite
             FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTextAssetObject_WhenRealSampleBundleIsAvailable);
         await RunTestAsync(
             failures,
+            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTexture2DObject_WhenRealSampleBundleIsAvailable),
+            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTexture2DObject_WhenRealSampleBundleIsAvailable);
+        await RunTestAsync(
+            failures,
             nameof(FileSystemWorkspaceBundleExportManifestStoreTests.SaveAsync_ShouldWriteReadableBundleExportManifest_WithHashesAndProcessors),
             FileSystemWorkspaceBundleExportManifestStoreTests.SaveAsync_ShouldWriteReadableBundleExportManifest_WithHashesAndProcessors);
         await RunTestAsync(

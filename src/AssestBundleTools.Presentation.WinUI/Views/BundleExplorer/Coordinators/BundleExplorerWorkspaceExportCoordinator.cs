@@ -199,15 +199,30 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
         }
 
         viewModel.ApplyExecutionResult(executionResult);
+        var message = BuildExecutionNotificationMessage(executionResult);
+        var severity = executionResult.FailedBundleCount > 0
+            ? AppNotificationSeverity.Warning
+            : AppNotificationSeverity.Success;
+        var title = executionResult.FailedBundleCount > 0
+            ? GetString(ResourceKeys.AppNotificationWarningTitle)
+            : GetString(ResourceKeys.AppNotificationSuccessTitle);
+        ShowNotification(
+            title,
+            message,
+            severity);
+    }
+
+    private string BuildExecutionNotificationMessage(WorkspaceSaveExecutionResultDto executionResult)
+    {
         var message = _localizationService.GetFormattedString(
             ResourceKeys.WorkspaceExportDialogCompletedMessageFormat,
             executionResult.WrittenBundleCount,
             executionResult.FailedBundleCount,
             executionResult.ExportManifestPath ?? string.Empty);
-        ShowNotification(
-            GetString(ResourceKeys.AppNotificationSuccessTitle),
-            message,
-            AppNotificationSeverity.Success);
+        var failureDetail = BuildFailureDetail(executionResult);
+        return string.IsNullOrWhiteSpace(failureDetail)
+            ? message
+            : string.Concat(message, Environment.NewLine, failureDetail);
     }
 
     private bool TryGetValue<T>(Result<T> result, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out T? value)
@@ -292,6 +307,22 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
                 error.MessageToken,
                 error.Parameters.Values.Select(static value => value ?? string.Empty).ToArray())
             : GetString(error.MessageToken);
+
+    private string? BuildFailureDetail(WorkspaceSaveExecutionResultDto executionResult)
+    {
+        var failedBundle = executionResult.BundleResults.FirstOrDefault(static bundle =>
+            bundle.Status == WorkspaceSaveBundleExecutionStatusDto.Failed);
+        if (failedBundle is null)
+        {
+            return null;
+        }
+
+        return _localizationService.GetFormattedString(
+            ResourceKeys.WorkspaceExportDialogFailureDetailFormat,
+            failedBundle.BundleDisplayName,
+            string.IsNullOrWhiteSpace(failedBundle.DiagnosticCode) ? "-" : failedBundle.DiagnosticCode,
+            string.IsNullOrWhiteSpace(failedBundle.DiagnosticDetail) ? "-" : failedBundle.DiagnosticDetail);
+    }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
 
