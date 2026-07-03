@@ -358,6 +358,7 @@ BundleWriterWorkerCount
 
 - 同一 bundle 的读取、变更应用和写包串行。
 - 不同 bundle 可以并行写包。
+- writer 运行进程应优先使用 `x64`；`x86` 进程会被 32 位地址空间限制放大大 bundle、Texture2D 编码和压缩重打包时的 `OutOfMemoryException` 风险，不能仅用系统剩余物理内存判断是否安全。
 - 写包阶段可以复用标准化 artifact identity 和 loaded-session single-flight，但 writer 必须持有独占写入上下文，不得共享可变对象。
 - 输出提升以单 bundle 为原子边界：临时文件完整写出并验证后，才移动或替换最终路径。
 - 如果某个 bundle 失败，不影响已经成功输出的其他 bundle；最终结果为 `Partial`。
@@ -429,6 +430,7 @@ Export.Operation.CommitFailed
 ```
 
 外部 CLI 原始输出、Writer 原始异常和文件系统异常只作为 diagnostic detail，不作为主用户提示。
+Writer 诊断 detail 应包含失败阶段，例如 `load-bundle / apply-changes / write-uncompressed / repack-bundle / write-final-uncompressed`，并附带进程架构、托管内存快照、输入文件大小、压缩类型或目录项数量，便于区分真实物理内存不足、32 位地址空间耗尽和 AssetsTools 写包阶段的大块分配失败。
 
 ## 10. AB 导出修改清单 JSON
 

@@ -134,6 +134,10 @@ internal static class InfrastructureTestSuite
             FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldFail_WhenNoObjectWriteItemsAreProvided);
         await RunTestAsync(
             failures,
+            nameof(BundleExportWriteDiagnosticsTests.ResolveTopLevelDetail_ShouldIncludeStageProcessSourceSizeAndException),
+            BundleExportWriteDiagnosticsTests.ResolveTopLevelDetail_ShouldIncludeStageProcessSourceSizeAndException);
+        await RunTestAsync(
+            failures,
             nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTextAssetObject_WhenRealSampleBundleIsAvailable),
             FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTextAssetObject_WhenRealSampleBundleIsAvailable);
         await RunTestAsync(

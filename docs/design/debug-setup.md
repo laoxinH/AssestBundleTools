@@ -21,6 +21,7 @@
 
 - `Unpackaged` 启动更轻量，适合页面骨架、导航、假数据链路和断点调试
 - `x64` 更适合作为日常开发默认平台，后续接入真实 AB 读取库时也更稳妥
+- 真实 AB 导入、预览和导出写包都应优先跑在 `x64`；`x86` 进程即使系统物理内存充足，也可能因为 32 位地址空间限制在大 bundle / 重压缩阶段抛出 `OutOfMemoryException`
 - `Package Debug` 仅在需要验证打包行为、清单能力或安装态差异时再使用
 
 ## 3. 已落地到仓库的配置
@@ -35,6 +36,7 @@
 - `launchSettings.json` 提供了 `Unpackaged Debug` 和 `Package Debug` 两个启动入口
 - 两个调试入口默认都会设置 `ABT_DISABLE_SYSTEM_BACKDROP=1`，避免系统背景材质在调试环境中影响启动稳定性
 - `Directory.Build.props` 显式固定了 `Debug` 构建下的符号与优化配置，便于断点调试
+- 解决方案里的 `AssestBundleTools.Presentation.WinUI` `Any CPU` 映射保持到 `x64`，避免 VS 顶栏停在 `Any CPU` 时误启动 32 位 UI 进程
 
 ## 4. 在 VS 中第一次使用时的设置
 

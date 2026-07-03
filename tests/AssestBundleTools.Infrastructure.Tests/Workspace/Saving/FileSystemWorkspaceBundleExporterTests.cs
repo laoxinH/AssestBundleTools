@@ -45,6 +45,10 @@ internal static class FileSystemWorkspaceBundleExporterTests
             "Bundle.Save.WriteFailed",
             result.Errors[0].Code,
             "Empty object write requests should return a structured write failure.");
+        TestAssert.Equal(
+            "Save.BundleWrite.NoObjectChanges",
+            result.Errors[0].Parameters.GetValueOrDefault("Detail"),
+            "Empty object write requests should keep a stable diagnostic detail.");
     }
 
     public static async Task ExportAsync_ShouldRewriteTextAssetObject_WhenRealSampleBundleIsAvailable()
@@ -52,6 +56,12 @@ internal static class FileSystemWorkspaceBundleExporterTests
         if (!File.Exists(RealSampleBundlePath))
         {
             Console.WriteLine($"[SKIP] Sample bundle not found: {RealSampleBundlePath}");
+            return;
+        }
+
+        if (!Environment.Is64BitProcess)
+        {
+            Console.WriteLine("[SKIP] Real sample bundle export requires a 64-bit process.");
             return;
         }
 
@@ -111,6 +121,12 @@ internal static class FileSystemWorkspaceBundleExporterTests
         if (!File.Exists(RealSampleBundlePath))
         {
             Console.WriteLine($"[SKIP] Sample bundle not found: {RealSampleBundlePath}");
+            return;
+        }
+
+        if (!Environment.Is64BitProcess)
+        {
+            Console.WriteLine("[SKIP] Real sample bundle export requires a 64-bit process.");
             return;
         }
 

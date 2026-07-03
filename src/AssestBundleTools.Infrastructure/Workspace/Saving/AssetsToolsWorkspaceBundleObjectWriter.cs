@@ -18,6 +18,11 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
     private const string SourceKindFile = "file";
     private const string SourceKindWorkspace = "workspace";
     private const string SourceKindSpriteEdit = "sprite-edit";
+    private const string StageLoadBundle = "load-bundle";
+    private const string StageApplyChanges = "apply-changes";
+    private const string StageWriteUncompressed = "write-uncompressed";
+    private const string StageRepackBundle = "repack-bundle";
+    private const string StageWriteFinalUncompressed = "write-final-uncompressed";
 
     public static Result<object> Write(
         string sourcePath,
@@ -40,30 +45,50 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
 
         try
         {
-            var bundleInstance = assetsManager.LoadBundleFile(sourcePath, unpackIfPacked: true);
+            var bundleInstance = BundleExportWriteDiagnostics.ExecuteStage(
+                StageLoadBundle,
+                request,
+                () => assetsManager.LoadBundleFile(sourcePath, unpackIfPacked: true));
             var serializedFiles = LoadSerializedFiles(assetsManager, bundleInstance);
-            foreach (var writeItem in request.AssetWriteItems)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                var result = ApplyWriteItem(assetsManager, serializedFiles, writeItem);
-                if (result.IsFailure)
+            var applyResult = BundleExportWriteDiagnostics.ExecuteStage(
+                StageApplyChanges,
+                request,
+                () =>
                 {
-                    return result;
-                }
+                    foreach (var writeItem in request.AssetWriteItems)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        var result = ApplyWriteItem(assetsManager, serializedFiles, writeItem);
+                        if (result.IsFailure)
+                        {
+                            return result;
+                        }
+                    }
+
+                    return Result<object>.Success(new object());
+                });
+            if (applyResult.IsFailure)
+            {
+                return applyResult;
             }
 
-            ApplyModifiedSerializedFiles(bundleInstance, serializedFiles);
-            WriteBundleWithReplacers(bundleInstance, temporaryFilePath);
+            BundleExportWriteDiagnostics.ExecuteStage(
+                StageApplyChanges,
+                request,
+                () => ApplyModifiedSerializedFiles(bundleInstance, serializedFiles));
+            WriteBundleWithReplacers(bundleInstance, temporaryFilePath, request);
             return Result<object>.Success(new object());
         }
         catch (OperationCanceledException)
         {
             throw;
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        catch (Exception exception) when (BundleExportWriteDiagnostics.IsDiagnosableWriteException(exception))
         {
             return Result<object>.Failure(
-                ApplicationErrors.BundleExportWriteFailed(request.OutputFilePath, exception.GetType().Name));
+                ApplicationErrors.BundleExportWriteFailed(
+                    request.OutputFilePath,
+                    BundleExportWriteDiagnostics.ResolveTopLevelDetail("write-bundle", request, exception)));
         }
         finally
         {
@@ -73,31 +98,40 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
 
     private static void WriteBundleWithReplacers(
         BundleFileInstance bundleInstance,
-        string temporaryFilePath)
+        string temporaryFilePath,
+        WorkspaceBundleExportRequestDto request)
     {
         if (bundleInstance.originalCompression == AssetBundleCompressionType.None)
         {
-            WriteUncompressedBundle(bundleInstance.file, temporaryFilePath);
+            WriteUncompressedBundle(bundleInstance.file, temporaryFilePath, StageWriteFinalUncompressed, request);
             return;
         }
 
         var uncompressedTemporaryFilePath = CreateSiblingTemporaryFilePath(temporaryFilePath, ".uncompressed");
         try
         {
-            WriteUncompressedBundle(bundleInstance.file, uncompressedTemporaryFilePath);
+            WriteUncompressedBundle(bundleInstance.file, uncompressedTemporaryFilePath, StageWriteUncompressed, request);
             var uncompressedBundle = new AssetBundleFile();
             try
             {
                 using var inputStream = File.OpenRead(uncompressedTemporaryFilePath);
                 using var reader = new AssetsFileReader(inputStream);
-                uncompressedBundle.Read(reader);
+                BundleExportWriteDiagnostics.ExecuteStage(
+                    StageRepackBundle,
+                    request,
+                    BundleExportStageContext.FromBundle(bundleInstance),
+                    () => uncompressedBundle.Read(reader));
                 using var outputStream = new FileStream(
                     temporaryFilePath,
                     FileMode.CreateNew,
                     FileAccess.Write,
                     FileShare.None);
                 using var writer = new AssetsFileWriter(outputStream);
-                uncompressedBundle.Pack(writer, bundleInstance.originalCompression, blockDirAtEnd: false, progress: null);
+                BundleExportWriteDiagnostics.ExecuteStage(
+                    StageRepackBundle,
+                    request,
+                    BundleExportStageContext.FromBundle(bundleInstance),
+                    () => uncompressedBundle.Pack(writer, bundleInstance.originalCompression, blockDirAtEnd: false, progress: null));
             }
             finally
             {
@@ -112,7 +146,9 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
 
     private static void WriteUncompressedBundle(
         AssetBundleFile bundleFile,
-        string outputPath)
+        string outputPath,
+        string stage,
+        WorkspaceBundleExportRequestDto request)
     {
         using var outputStream = new FileStream(
             outputPath,
@@ -120,7 +156,11 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
             FileAccess.Write,
             FileShare.None);
         using var writer = new AssetsFileWriter(outputStream);
-        bundleFile.Write(writer, filePos: -1);
+        BundleExportWriteDiagnostics.ExecuteStage(
+            stage,
+            request,
+            BundleExportStageContext.FromBundle(bundleFile),
+            () => bundleFile.Write(writer, filePos: -1));
     }
 
     private static IReadOnlyList<LoadedSerializedFile> LoadSerializedFiles(
@@ -329,7 +369,7 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
             texture.WriteTo(baseField);
             return Result<object>.Success(new object());
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        catch (Exception exception) when (BundleExportWriteDiagnostics.IsDiagnosableWriteException(exception))
         {
             return Result<object>.Failure(
                 ApplicationErrors.BundleExportWriteFailed(
@@ -357,8 +397,9 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
                 $"format={FormatTextureFormat(textureFormat)}",
                 $"size={FormatTextureSize(width, height)}",
                 $"payload={Path.GetFileName(payloadPath)}",
-                $"exception={exception.GetType().Name}",
-                $"message={NormalizeDiagnosticText(exception.Message)}"
+                $"process={BundleExportWriteDiagnostics.FormatProcessArchitecture()}",
+                BundleExportWriteDiagnostics.FormatManagedMemory(),
+                BundleExportWriteDiagnostics.FormatExceptionDiagnostic(exception)
             }.Where(static part => !string.IsNullOrWhiteSpace(part)));
     }
 
