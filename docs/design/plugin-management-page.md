@@ -35,6 +35,13 @@
 
 页面采用“左侧插件目录 + 右侧详情/配置”的工作型布局，而不是设置页式长表单。插件数量可能增长，目录需要支持搜索、类型筛选和状态筛选；详情区只展示当前选中插件，编辑入口使用对话框或右侧内联编辑面板。
 
+左侧目录在默认视图下必须显式分为两个区块，不能把导入与导出扩展拍平成一组：
+
+- `导入解密`：只包含自动识别、直通解密器和外部进程型解密插件。
+- `导出处理`：只包含资源处理器槽和用户管理的资源处理插件。
+
+搜索和筛选后仍保留这两个区块；某个区块无匹配项时隐藏该区块，两个区块都无匹配项时显示统一空态。
+
 插件类型分为两类：
 
 - `导入解密`：作用于 AB 导入前的源文件转换，输出标准化 bundle artifact。
@@ -201,6 +208,15 @@ executable ...
 - `{workspaceDataRootPath}`
 - `{manifestDirectory}`
 
+第一阶段资源处理器新增 / 编辑器不允许用户输入任意自由资源类型字符串，只提供当前稳定槽位复选：
+
+- `Texture2D`
+- `Audio`
+- `Atlas`
+- `Skel`
+
+后续若新增资源类型槽，先扩展 `resourceKinds` 目录和导出窗口消费规则，再开放到编辑器。`processArguments` 与解密器的 `probeArguments / decryptArguments` 一样按“每行一个参数”编辑，并在 manifest 中保存为数组；目录层不得重新排序或合并参数项。`resourceKinds` 可以去重并规范空白，参数数组必须保留顺序。
+
 插件执行结果继续通过 result JSON 返回，避免主程序解析 stdout / stderr 作为主要语义。
 
 ### 5.4 默认选择
@@ -267,7 +283,7 @@ WorkspaceExportDialogViewModel 选择资源包与每类处理器
 Application 应定义稳定目录和执行契约：
 
 - 现有解密器 catalog / registry 继续保留。
-- 新增导出资源处理器目录 DTO、查询、保存、删除和执行端口。
+- 新增导出资源处理器目录 DTO、查询、保存、删除和后续执行端口。
 - 保存 / 导出命令接收资源处理器选择 DTO，而不是 Presentation ViewModel。
 - 返回结构化诊断和 `Result / AppError`。
 
@@ -324,12 +340,15 @@ Presentation 不得：
 - Shell 新增“插件管理”一级页面，页面采用“目录 + 详情/诊断”的两栏工作型布局。
 - 设置与诊断页已移除解密器管理区；解密器新增、编辑、删除和刷新迁移到插件管理页。
 - 插件管理页支持搜索、类型筛选、状态筛选、打开插件位置、验证占位和复制诊断。
-- Application 新增导出资源处理器 catalog DTO / 查询骨架，首阶段提供 `Texture2D / Audio / Atlas / Skel` 的只读 CLI 占位目录项。
+- 插件目录默认按 `导入解密` 与 `导出处理` 两个区块显示，搜索 / 筛选后仍保持分组，不再把两类插件混排成单列表。
+- Application 新增导出资源处理器 catalog DTO / 查询 / 保存 / 删除契约，首阶段提供 `Texture2D / Audio / Atlas / Skel` 的只读 CLI 占位目录项。
+- Infrastructure 新增基于 manifest 的导出资源处理器 catalog store；用户管理目录为 `%LocalAppData%/AssestBundleTools/resource-processors/`，应用只读目录为 `<app-base-directory>/resource-processors/`。
+- 插件管理页支持新增、编辑和删除用户管理的导出资源处理器；编辑器按当前稳定资源类型槽选择 `resourceKinds`，并按每行一个参数维护 `processArguments`。
 - 工作区导出窗口已改为从资源处理器 catalog 按资源类型槽加载可用处理器，并保留“无处理器”选项。
 - 已补 Shell / 设置页迁移 / 导出窗口 catalog 消费 / Application catalog 查询的回归测试与本地化资源。
 
 仍待后续阶段：
 
-- 资源处理器 manifest 的真实文件系统存储、编辑器、删除和更完整验证。
+- 资源处理器更完整验证，包括可执行文件解析、参数占位符检查、样本输入 probe 和 result JSON 结构校验。
 - 导出处理器默认值偏好与导出窗口跳转插件管理页入口。
 - 保存 / 导出真实写包链路中的资源处理器选择 DTO、CLI 执行、result JSON 解析和失败回填。

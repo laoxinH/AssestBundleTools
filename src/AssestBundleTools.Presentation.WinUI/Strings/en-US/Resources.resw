@@ -4062,6 +4062,42 @@
   <data name="Error.Bundle.Decryptor.Catalog.DeleteFailed" xml:space="preserve">
     <value>Failed to delete the decryptor. Try again later or check Settings and Diagnostics.</value>
   </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.IdRequired" xml:space="preserve">
+    <value>Enter a resource processor identifier.</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.DisplayNameRequired" xml:space="preserve">
+    <value>Enter a resource processor display name.</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.ResourceKindsRequired" xml:space="preserve">
+    <value>Select at least one resource kind.</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.ExecutablePathRequired" xml:space="preserve">
+    <value>Enter a resource processor executable path or command.</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.ProcessArgumentsRequired" xml:space="preserve">
+    <value>Provide at least one process argument.</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.TimeoutInvalid" xml:space="preserve">
+    <value>The resource processor timeout must be greater than 0.</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.NotFound" xml:space="preserve">
+    <value>Resource processor definition not found: {0}</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.ReadOnly" xml:space="preserve">
+    <value>The resource processor definition is read-only and cannot be modified: {0}</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.AlreadyExists" xml:space="preserve">
+    <value>A resource processor definition with the same identifier already exists: {0}</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.SaveVerificationFailed" xml:space="preserve">
+    <value>The resource processor was written, but the save verification failed: {0}</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.SaveFailed" xml:space="preserve">
+    <value>Failed to save the resource processor. Try again later or check Settings and Diagnostics.</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.DeleteFailed" xml:space="preserve">
+    <value>Failed to delete the resource processor. Try again later or check Settings and Diagnostics.</value>
+  </data>
   <data name="Error.Workspace.Import.MetadataNotFound" xml:space="preserve">
     <value>Workspace metadata was not found and import cannot continue: {0}</value>
   </data>
@@ -4230,6 +4266,9 @@
   <data name="PluginManagementPage.AddDecryptorButton.Content" xml:space="preserve">
     <value>Add Decryptor</value>
   </data>
+  <data name="PluginManagementPage.AddResourceProcessorButton.Content" xml:space="preserve">
+    <value>Add Processor</value>
+  </data>
   <data name="PluginManagementPage.Directory.EmptyText" xml:space="preserve">
     <value>No plugins match the current filters.</value>
   </data>
@@ -4362,6 +4401,12 @@
   <data name="PluginManagementPage.OpenLocationFailedMessage" xml:space="preserve">
     <value>Unable to open the plugin location.</value>
   </data>
+  <data name="PluginManagementPage.Delete.PrimaryButton" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="PluginManagementPage.Delete.CloseButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
   <data name="PluginManagementPage.DecryptorDelete.Title" xml:space="preserve">
     <value>Delete Decryptor Plugin</value>
   </data>
@@ -4373,6 +4418,12 @@
   </data>
   <data name="PluginManagementPage.DecryptorDelete.CloseButton" xml:space="preserve">
     <value>Cancel</value>
+  </data>
+  <data name="PluginManagementPage.ProcessorDelete.Title" xml:space="preserve">
+    <value>Delete Resource Processor Plugin</value>
+  </data>
+  <data name="PluginManagementPage.ProcessorDelete.Description.Format" xml:space="preserve">
+    <value>Delete "{0}" ({1})? This removes the resource processor manifest from the user directory.</value>
   </data>
   <data name="PluginManagementPage.DecryptorLoadFailedMessage" xml:space="preserve">
     <value>Failed to load the decryptor plugin directory.</value>
@@ -4391,5 +4442,98 @@
   </data>
   <data name="PluginManagementPage.DecryptorDeleteFailedMessage" xml:space="preserve">
     <value>Failed to delete the decryptor plugin.</value>
+  </data>
+  <data name="PluginManagementPage.ProcessorSaveSucceededMessage.Format" xml:space="preserve">
+    <value>Saved resource processor plugin "{0}".</value>
+  </data>
+  <data name="PluginManagementPage.ProcessorSaveFailedMessage" xml:space="preserve">
+    <value>Failed to save the resource processor plugin.</value>
+  </data>
+  <data name="PluginManagementPage.ProcessorDeleteSucceededMessage.Format" xml:space="preserve">
+    <value>Deleted resource processor plugin "{0}".</value>
+  </data>
+  <data name="PluginManagementPage.ProcessorDeleteFailedMessage" xml:space="preserve">
+    <value>Failed to delete the resource processor plugin.</value>
+  </data>
+  <data name="ResourceProcessorEditor.NewTitle" xml:space="preserve">
+    <value>Add Resource Processor Plugin</value>
+  </data>
+  <data name="ResourceProcessorEditor.EditTitle.Format" xml:space="preserve">
+    <value>Edit Resource Processor Plugin - {0}</value>
+  </data>
+  <data name="ResourceProcessorEditor.PrimaryButton" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="ResourceProcessorEditor.CloseButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="ResourceProcessorEditor.Id.Label" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="ResourceProcessorEditor.Id.Placeholder" xml:space="preserve">
+    <value>For example export.texture.png-processor</value>
+  </data>
+  <data name="ResourceProcessorEditor.DisplayName.Label" xml:space="preserve">
+    <value>Display name</value>
+  </data>
+  <data name="ResourceProcessorEditor.DisplayName.Placeholder" xml:space="preserve">
+    <value>For example Texture PNG Processor</value>
+  </data>
+  <data name="ResourceProcessorEditor.Version.Label" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="ResourceProcessorEditor.Version.Placeholder" xml:space="preserve">
+    <value>1.0.0</value>
+  </data>
+  <data name="ResourceProcessorEditor.Description.Label" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="ResourceProcessorEditor.Description.Placeholder" xml:space="preserve">
+    <value>Describe the resources and export stage this processor is intended for.</value>
+  </data>
+  <data name="ResourceProcessorEditor.ResourceKinds.Label" xml:space="preserve">
+    <value>Resource kind slots</value>
+  </data>
+  <data name="ResourceProcessorEditor.ExecutablePath.Label" xml:space="preserve">
+    <value>Executable</value>
+  </data>
+  <data name="ResourceProcessorEditor.ExecutablePath.Placeholder" xml:space="preserve">
+    <value>For example tools\processor.exe or python</value>
+  </data>
+  <data name="ResourceProcessorEditor.WorkingDirectoryPath.Label" xml:space="preserve">
+    <value>Working directory</value>
+  </data>
+  <data name="ResourceProcessorEditor.WorkingDirectoryPath.Placeholder" xml:space="preserve">
+    <value>Directory relative to the manifest; optional</value>
+  </data>
+  <data name="ResourceProcessorEditor.Timeout.Label" xml:space="preserve">
+    <value>Timeout ms</value>
+  </data>
+  <data name="ResourceProcessorEditor.Timeout.Placeholder" xml:space="preserve">
+    <value>15000</value>
+  </data>
+  <data name="ResourceProcessorEditor.Arguments.Label" xml:space="preserve">
+    <value>Process arguments</value>
+  </data>
+  <data name="ResourceProcessorEditor.Arguments.Placeholder" xml:space="preserve">
+    <value>One argument per line. Supports placeholders such as {inputPath}, {outputPath}, and {resultPath}.</value>
+  </data>
+  <data name="ResourceProcessorEditor.Validation.IdRequired" xml:space="preserve">
+    <value>Enter a resource processor identifier.</value>
+  </data>
+  <data name="ResourceProcessorEditor.Validation.DisplayNameRequired" xml:space="preserve">
+    <value>Enter a resource processor display name.</value>
+  </data>
+  <data name="ResourceProcessorEditor.Validation.ResourceKindsRequired" xml:space="preserve">
+    <value>Select at least one resource kind.</value>
+  </data>
+  <data name="ResourceProcessorEditor.Validation.ExecutablePathRequired" xml:space="preserve">
+    <value>Enter an executable path or command.</value>
+  </data>
+  <data name="ResourceProcessorEditor.Validation.TimeoutInvalid" xml:space="preserve">
+    <value>The timeout must be greater than 0.</value>
+  </data>
+  <data name="ResourceProcessorEditor.Validation.ArgumentsRequired" xml:space="preserve">
+    <value>Provide at least one process argument.</value>
   </data>
 </root>

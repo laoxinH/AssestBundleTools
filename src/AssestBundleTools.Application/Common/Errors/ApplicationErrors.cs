@@ -501,6 +501,94 @@ public static class ApplicationErrors
             severity: ErrorSeverity.Error,
             messageToken: "Error.Bundle.Decryptor.Catalog.DeleteFailed");
 
+    public static AppError ResourceProcessorCatalogIdRequired() =>
+        new(
+            code: "Bundle.ResourceProcessor.Catalog.IdRequired",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Bundle.ResourceProcessor.Catalog.IdRequired");
+
+    public static AppError ResourceProcessorCatalogDisplayNameRequired() =>
+        new(
+            code: "Bundle.ResourceProcessor.Catalog.DisplayNameRequired",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Bundle.ResourceProcessor.Catalog.DisplayNameRequired");
+
+    public static AppError ResourceProcessorCatalogResourceKindsRequired() =>
+        new(
+            code: "Bundle.ResourceProcessor.Catalog.ResourceKindsRequired",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Bundle.ResourceProcessor.Catalog.ResourceKindsRequired");
+
+    public static AppError ResourceProcessorCatalogExecutablePathRequired() =>
+        new(
+            code: "Bundle.ResourceProcessor.Catalog.ExecutablePathRequired",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Bundle.ResourceProcessor.Catalog.ExecutablePathRequired");
+
+    public static AppError ResourceProcessorCatalogProcessArgumentsRequired() =>
+        new(
+            code: "Bundle.ResourceProcessor.Catalog.ProcessArgumentsRequired",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Bundle.ResourceProcessor.Catalog.ProcessArgumentsRequired");
+
+    public static AppError ResourceProcessorCatalogTimeoutInvalid() =>
+        new(
+            code: "Bundle.ResourceProcessor.Catalog.TimeoutInvalid",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Bundle.ResourceProcessor.Catalog.TimeoutInvalid");
+
+    public static AppError ResourceProcessorCatalogNotFound(string processorId) =>
+        new(
+            code: "Bundle.ResourceProcessor.Catalog.NotFound",
+            category: ErrorCategory.NotFound,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.ResourceProcessor.Catalog.NotFound",
+            parameters: CreateParameters(("ProcessorId", processorId)));
+
+    public static AppError ResourceProcessorCatalogReadOnly(string processorId) =>
+        new(
+            code: "Bundle.ResourceProcessor.Catalog.ReadOnly",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Bundle.ResourceProcessor.Catalog.ReadOnly",
+            parameters: CreateParameters(("ProcessorId", processorId)));
+
+    public static AppError ResourceProcessorCatalogAlreadyExists(string processorId) =>
+        new(
+            code: "Bundle.ResourceProcessor.Catalog.AlreadyExists",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Bundle.ResourceProcessor.Catalog.AlreadyExists",
+            parameters: CreateParameters(("ProcessorId", processorId)));
+
+    public static AppError ResourceProcessorCatalogSaveVerificationFailed(string processorId) =>
+        new(
+            code: "Bundle.ResourceProcessor.Catalog.SaveVerificationFailed",
+            category: ErrorCategory.SerializationFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.ResourceProcessor.Catalog.SaveVerificationFailed",
+            parameters: CreateParameters(("ProcessorId", processorId)));
+
+    public static AppError ResourceProcessorCatalogSaveFailed() =>
+        new(
+            code: "Bundle.ResourceProcessor.Catalog.SaveFailed",
+            category: ErrorCategory.IoFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.ResourceProcessor.Catalog.SaveFailed");
+
+    public static AppError ResourceProcessorCatalogDeleteFailed() =>
+        new(
+            code: "Bundle.ResourceProcessor.Catalog.DeleteFailed",
+            category: ErrorCategory.IoFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.ResourceProcessor.Catalog.DeleteFailed");
+
     public static AppError SourceFilePathRequired() =>
         new(
             code: "Asset.Replace.SourceFilePathRequired",

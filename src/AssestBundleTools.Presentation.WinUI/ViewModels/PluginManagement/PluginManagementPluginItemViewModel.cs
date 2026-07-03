@@ -33,9 +33,9 @@ public sealed record PluginManagementPluginItemViewModel(
     public Visibility SecondaryBadgeVisibility =>
         string.IsNullOrWhiteSpace(SecondaryBadgeText) ? Visibility.Collapsed : Visibility.Visible;
 
-    public Visibility EditVisibility => IsDecryptor ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility EditVisibility => Visibility.Visible;
 
-    public Visibility DeleteVisibility => IsDecryptor ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility DeleteVisibility => Visibility.Visible;
 
     public bool MatchesTypeFilter(string filterKey)
     {

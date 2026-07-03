@@ -67,11 +67,14 @@ public sealed class PluginManagementPageContractTests
             "SettingsDiagnostics",
             "SettingsDiagnosticsViewModel.cs"));
 
-        Assert.Contains("ItemsSource=\"{x:Bind ViewModel.VisiblePlugins", pluginPage);
-        Assert.Contains("SelectedItem=\"{x:Bind ViewModel.SelectedPlugin", pluginPage);
+        Assert.Contains("ItemsSource=\"{x:Bind ViewModel.VisibleDecryptorPlugins", pluginPage);
+        Assert.Contains("ItemsSource=\"{x:Bind ViewModel.VisibleResourceProcessorPlugins", pluginPage);
         Assert.Contains("OnAddDecryptorButtonClick", pluginPageCode);
+        Assert.Contains("OnAddResourceProcessorButtonClick", pluginPageCode);
         Assert.Contains("AssetBundleDecryptorEditorDialogContent", pluginPageCode);
+        Assert.Contains("ResourceProcessorEditorDialogContent", pluginPageCode);
         Assert.Contains("ViewModel.DeleteDecryptorAsync", pluginPageCode);
+        Assert.Contains("ViewModel.DeleteResourceProcessorAsync", pluginPageCode);
         Assert.DoesNotContain("DecryptorCatalogTitleText", settingsPage);
         Assert.DoesNotContain("AssetBundleDecryptorCatalogService", settingsViewModel);
         Assert.DoesNotContain("DecryptorEntries", settingsViewModel);
@@ -98,6 +101,8 @@ public sealed class PluginManagementPageContractTests
 
         Assert.Contains("IAssetBundleDecryptorCatalogService", viewModel);
         Assert.Contains("IResourceProcessorCatalogService", viewModel);
+        Assert.Contains("VisibleDecryptorPlugins", viewModel);
+        Assert.Contains("VisibleResourceProcessorPlugins", viewModel);
         Assert.Contains("BuildAutoDetectDecryptor", viewModel);
         Assert.Contains("BuildResourceProcessor", viewModel);
         Assert.Contains("PluginManagementFilterKeys.Texture2D", presenter);

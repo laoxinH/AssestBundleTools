@@ -25,6 +25,7 @@ public sealed partial class PluginManagementViewModel : ObservableObject
     private readonly IPathNavigationService _pathNavigationService;
     private readonly PluginManagementPluginPresenter _pluginPresenter;
     private readonly Dictionary<string, AssetBundleDecryptorCatalogEntryDto> _decryptorEntriesById = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, ResourceProcessorCatalogEntryDto> _resourceProcessorEntriesById = new(StringComparer.OrdinalIgnoreCase);
     private string _searchText = string.Empty;
     private string _selectedDiagnosticText = string.Empty;
     private bool _isLoading;
@@ -61,6 +62,10 @@ public sealed partial class PluginManagementViewModel : ObservableObject
     public ObservableCollection<PluginManagementPluginItemViewModel> Plugins { get; } = new();
 
     public ObservableCollection<PluginManagementPluginItemViewModel> VisiblePlugins { get; } = new();
+
+    public ObservableCollection<PluginManagementPluginItemViewModel> VisibleDecryptorPlugins { get; } = new();
+
+    public ObservableCollection<PluginManagementPluginItemViewModel> VisibleResourceProcessorPlugins { get; } = new();
 
     public ObservableCollection<PluginManagementFilterOptionViewModel> TypeFilters { get; }
 
@@ -129,6 +134,10 @@ public sealed partial class PluginManagementViewModel : ObservableObject
 
     public bool HasVisiblePlugins => VisiblePlugins.Count > 0;
 
+    public bool HasVisibleDecryptorPlugins => VisibleDecryptorPlugins.Count > 0;
+
+    public bool HasVisibleResourceProcessorPlugins => VisibleResourceProcessorPlugins.Count > 0;
+
     public bool HasSelectedPlugin => SelectedPlugin is not null;
 
     public bool CanEditSelectedPlugin => SelectedPlugin?.CanEdit == true;
@@ -142,6 +151,10 @@ public sealed partial class PluginManagementViewModel : ObservableObject
         !string.IsNullOrWhiteSpace(SelectedPlugin?.ResourceProcessorEntry?.ExecutablePath);
 
     public Visibility EmptyStateVisibility => HasVisiblePlugins ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility DecryptorGroupVisibility => HasVisibleDecryptorPlugins ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility ResourceProcessorGroupVisibility => HasVisibleResourceProcessorPlugins ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility DetailsVisibility => HasSelectedPlugin ? Visibility.Visible : Visibility.Collapsed;
 
@@ -195,6 +208,17 @@ public sealed partial class PluginManagementViewModel : ObservableObject
         return _decryptorEntriesById.TryGetValue(decryptorId.Trim(), out entry);
     }
 
+    public bool TryGetResourceProcessorEntry(string processorId, out ResourceProcessorCatalogEntryDto? entry)
+    {
+        if (string.IsNullOrWhiteSpace(processorId))
+        {
+            entry = null;
+            return false;
+        }
+
+        return _resourceProcessorEntriesById.TryGetValue(processorId.Trim(), out entry);
+    }
+
     public async Task<bool> SaveDecryptorAsync(
         UpsertAssetBundleDecryptorCommand command,
         CancellationToken cancellationToken = default)
@@ -240,6 +264,55 @@ public sealed partial class PluginManagementViewModel : ObservableObject
             _localizationService.GetFormattedString(
                 ResourceKeys.PluginManagementDecryptorDeleteSucceededMessageFormat,
                 _pluginPresenter.GetDecryptorDisplayName(entry.Definition.Id)),
+            AppNotificationSeverity.Success);
+        return true;
+    }
+
+    public async Task<bool> SaveResourceProcessorAsync(
+        UpsertResourceProcessorCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _resourceProcessorCatalogService.UpsertAsync(command, cancellationToken);
+        if (!TryGetValue(result, out var savedEntry, ResourceKeys.PluginManagementProcessorSaveFailedMessage) ||
+            savedEntry is null)
+        {
+            return false;
+        }
+
+        await RefreshCatalogAsync(cancellationToken);
+        _appNotificationService.Show(
+            GetString(ResourceKeys.AppNotificationSuccessTitle),
+            _localizationService.GetFormattedString(
+                ResourceKeys.PluginManagementProcessorSaveSucceededMessageFormat,
+                ResolveProcessorDisplayName(savedEntry)),
+            AppNotificationSeverity.Success);
+        return true;
+    }
+
+    public async Task<bool> DeleteResourceProcessorAsync(
+        string processorId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!TryGetResourceProcessorEntry(processorId, out var entry) ||
+            entry is null)
+        {
+            return false;
+        }
+
+        var result = await _resourceProcessorCatalogService.DeleteAsync(
+            new DeleteResourceProcessorCommand(processorId),
+            cancellationToken);
+        if (!TryGetValue(result, ResourceKeys.PluginManagementProcessorDeleteFailedMessage))
+        {
+            return false;
+        }
+
+        await RefreshCatalogAsync(cancellationToken);
+        _appNotificationService.Show(
+            GetString(ResourceKeys.AppNotificationSuccessTitle),
+            _localizationService.GetFormattedString(
+                ResourceKeys.PluginManagementProcessorDeleteSucceededMessageFormat,
+                ResolveProcessorDisplayName(entry)),
             AppNotificationSeverity.Success);
         return true;
     }
@@ -305,6 +378,7 @@ public sealed partial class PluginManagementViewModel : ObservableObject
     {
         var selectedId = SelectedPlugin?.Id;
         _decryptorEntriesById.Clear();
+        _resourceProcessorEntriesById.Clear();
         Plugins.Clear();
 
         Plugins.Add(_pluginPresenter.BuildAutoDetectDecryptor());
@@ -316,6 +390,7 @@ public sealed partial class PluginManagementViewModel : ObservableObject
 
         foreach (var entry in processorEntries)
         {
+            _resourceProcessorEntriesById[entry.Id] = entry;
             Plugins.Add(_pluginPresenter.BuildResourceProcessor(entry));
         }
 
@@ -342,11 +417,21 @@ public sealed partial class PluginManagementViewModel : ObservableObject
 
         var selectedId = SelectedPlugin?.Id;
         VisiblePlugins.Clear();
+        VisibleDecryptorPlugins.Clear();
+        VisibleResourceProcessorPlugins.Clear();
         foreach (var plugin in candidates
                      .OrderBy(static plugin => plugin.IsDecryptor ? 0 : 1)
                      .ThenBy(static plugin => plugin.DisplayName, StringComparer.OrdinalIgnoreCase))
         {
             VisiblePlugins.Add(plugin);
+            if (plugin.IsDecryptor)
+            {
+                VisibleDecryptorPlugins.Add(plugin);
+            }
+            else
+            {
+                VisibleResourceProcessorPlugins.Add(plugin);
+            }
         }
 
         if (VisiblePlugins.Count == 0)
@@ -412,7 +497,11 @@ public sealed partial class PluginManagementViewModel : ObservableObject
     private void NotifyListState()
     {
         OnPropertyChanged(nameof(HasVisiblePlugins));
+        OnPropertyChanged(nameof(HasVisibleDecryptorPlugins));
+        OnPropertyChanged(nameof(HasVisibleResourceProcessorPlugins));
         OnPropertyChanged(nameof(EmptyStateVisibility));
+        OnPropertyChanged(nameof(DecryptorGroupVisibility));
+        OnPropertyChanged(nameof(ResourceProcessorGroupVisibility));
         NotifySelectionState();
     }
 
@@ -427,6 +516,23 @@ public sealed partial class PluginManagementViewModel : ObservableObject
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
+
+    private string ResolveProcessorDisplayName(ResourceProcessorCatalogEntryDto entry)
+    {
+        var resourceKindText = entry.ResourceKinds.Count == 0
+            ? GetString(ResourceKeys.PluginManagementResourceKindUnknown)
+            : string.Join(
+                ", ",
+                entry.ResourceKinds.Select(_pluginPresenter.GetResourceKindDisplayName));
+
+        return entry.IsBuiltIn
+            ? _localizationService.GetFormattedString(
+                ResourceKeys.PluginManagementResourceProcessorDisplayNameFormat,
+                resourceKindText)
+            : string.IsNullOrWhiteSpace(entry.DisplayName)
+                ? entry.Id
+                : entry.DisplayName;
+    }
 
     private bool TryGetValue<T>(
         Result<T> result,

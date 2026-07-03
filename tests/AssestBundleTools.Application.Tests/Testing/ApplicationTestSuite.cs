@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Tests.Bundles.Commands;
 using AssestBundleTools.Application.Tests.Bundles.Queries;
 using AssestBundleTools.Application.Tests.Assets.Queries;
 using AssestBundleTools.Application.Tests.Editing;
@@ -33,6 +34,18 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(GetResourceProcessorCatalogEntriesHandlerTests.HandleAsync_ShouldReturnCancelled_WhenTokenIsCancelled),
             GetResourceProcessorCatalogEntriesHandlerTests.HandleAsync_ShouldReturnCancelled_WhenTokenIsCancelled);
+        await RunTestAsync(
+            failures,
+            nameof(ResourceProcessorCatalogHandlerTests.Upsert_ShouldSaveUserManagedProcessor_WhenDefinitionIsValid),
+            ResourceProcessorCatalogHandlerTests.Upsert_ShouldSaveUserManagedProcessor_WhenDefinitionIsValid);
+        await RunTestAsync(
+            failures,
+            nameof(ResourceProcessorCatalogHandlerTests.Upsert_ShouldReturnValidationFailure_WhenResourceKindsAreMissing),
+            ResourceProcessorCatalogHandlerTests.Upsert_ShouldReturnValidationFailure_WhenResourceKindsAreMissing);
+        await RunTestAsync(
+            failures,
+            nameof(ResourceProcessorCatalogHandlerTests.Delete_ShouldRejectReadOnlyProcessor),
+            ResourceProcessorCatalogHandlerTests.Delete_ShouldRejectReadOnlyProcessor);
         await RunTestAsync(
             failures,
             nameof(GetAssetEditDraftRestorePlanHandlerTests.HandleAsync_ShouldReturnFailure_WhenWorkspaceKeyIsBlank),

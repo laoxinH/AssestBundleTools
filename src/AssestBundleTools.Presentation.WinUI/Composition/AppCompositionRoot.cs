@@ -17,6 +17,7 @@ using AssestBundleTools.Application.Workspace.Commands;
 using AssestBundleTools.Application.Workspace.Queries;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Infrastructure.Bundles.Decryption;
+using AssestBundleTools.Infrastructure.Bundles.Processing;
 using AssestBundleTools.Infrastructure.Bundles.Previewing;
 using AssestBundleTools.Infrastructure.Bundles.Previewing.Audio;
 using AssestBundleTools.Infrastructure.Bundles.Previewing.Spine;
@@ -71,6 +72,7 @@ internal static class AppCompositionRoot
         var assetBundleDecryptorRegistry = new ReloadableAssetBundleDecryptorRegistry();
         Action reloadAssetBundleDecryptorRegistry = () => assetBundleDecryptorRegistry.Reload();
         var assetBundleDecryptorCatalogStore = new FileSystemAssetBundleDecryptorCatalogStore();
+        var resourceProcessorCatalogStore = new FileSystemResourceProcessorCatalogStore();
 
         var workspaceImportSourceDiscoveryService = new FileSystemWorkspaceImportSourceDiscoveryService();
         var workspaceImportFileSystemService = new FileSystemWorkspaceImportFileSystemService();
@@ -243,7 +245,9 @@ internal static class AppCompositionRoot
         var getAssetBundleDecryptorCatalogEntriesHandler = new GetAssetBundleDecryptorCatalogEntriesHandler(assetBundleDecryptorCatalogStore);
         var upsertAssetBundleDecryptorHandler = new UpsertAssetBundleDecryptorHandler(assetBundleDecryptorCatalogStore);
         var deleteAssetBundleDecryptorHandler = new DeleteAssetBundleDecryptorHandler(assetBundleDecryptorCatalogStore);
-        var getResourceProcessorCatalogEntriesHandler = new GetResourceProcessorCatalogEntriesHandler();
+        var getResourceProcessorCatalogEntriesHandler = new GetResourceProcessorCatalogEntriesHandler(resourceProcessorCatalogStore);
+        var upsertResourceProcessorHandler = new UpsertResourceProcessorHandler(resourceProcessorCatalogStore);
+        var deleteResourceProcessorHandler = new DeleteResourceProcessorHandler(resourceProcessorCatalogStore);
         var assetEditDraftStore = new WorkspaceChangeSetAssetEditDraftStore(
             workspaceCatalogStore,
             workspaceDataStoreFactory);
@@ -315,7 +319,9 @@ internal static class AppCompositionRoot
             deleteHandler: deleteAssetBundleDecryptorHandler,
             onCatalogChanged: reloadAssetBundleDecryptorRegistry);
         var resourceProcessorCatalogService = new ResourceProcessorCatalogService(
-            getResourceProcessorCatalogEntriesHandler);
+            getResourceProcessorCatalogEntriesHandler,
+            upsertResourceProcessorHandler,
+            deleteResourceProcessorHandler);
         var appInteractionFeedbackService = new AppInteractionFeedbackService();
         var workspaceDialogService = new WorkspaceDialogService(
             localizationService,

@@ -166,8 +166,8 @@ internal sealed class PluginManagementPluginPresenter
                 resourceKindText),
             IsDecryptor: false,
             IsReadOnly: entry.IsReadOnly,
-            CanEdit: false,
-            CanDelete: false,
+            CanEdit: !entry.IsReadOnly,
+            CanDelete: !entry.IsReadOnly,
             DetailItems: details,
             DiagnosticText: GetString(ResourceKeys.PluginManagementDiagnosticNotRun),
             DecryptorEntry: null,
@@ -198,7 +198,7 @@ internal sealed class PluginManagementPluginPresenter
         ResourceProcessorCatalogEntryDto entry,
         string resourceKindText)
     {
-        if (entry.Id.StartsWith("resource.processor.", StringComparison.OrdinalIgnoreCase))
+        if (entry.IsBuiltIn)
         {
             return _localizationService.GetFormattedString(
                 ResourceKeys.PluginManagementResourceProcessorDisplayNameFormat,

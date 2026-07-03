@@ -4062,6 +4062,42 @@
   <data name="Error.Bundle.Decryptor.Catalog.DeleteFailed" xml:space="preserve">
     <value>解密器删除失败，请稍后重试或查看设置与诊断。</value>
   </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.IdRequired" xml:space="preserve">
+    <value>请输入资源处理器标识。</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.DisplayNameRequired" xml:space="preserve">
+    <value>请输入资源处理器显示名称。</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.ResourceKindsRequired" xml:space="preserve">
+    <value>请至少选择一种资源类型。</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.ExecutablePathRequired" xml:space="preserve">
+    <value>请输入资源处理器可执行入口路径或命令。</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.ProcessArgumentsRequired" xml:space="preserve">
+    <value>请至少提供一条处理参数。</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.TimeoutInvalid" xml:space="preserve">
+    <value>资源处理器超时时间必须大于 0。</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.NotFound" xml:space="preserve">
+    <value>未找到资源处理器定义：{0}</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.ReadOnly" xml:space="preserve">
+    <value>资源处理器为只读定义，不能直接修改：{0}</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.AlreadyExists" xml:space="preserve">
+    <value>已存在同标识的资源处理器定义：{0}</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.SaveVerificationFailed" xml:space="preserve">
+    <value>资源处理器已写入，但保存校验未通过：{0}</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.SaveFailed" xml:space="preserve">
+    <value>资源处理器保存失败，请稍后重试或查看设置与诊断。</value>
+  </data>
+  <data name="Error.Bundle.ResourceProcessor.Catalog.DeleteFailed" xml:space="preserve">
+    <value>资源处理器删除失败，请稍后重试或查看设置与诊断。</value>
+  </data>
   <data name="Error.Workspace.Import.MetadataNotFound" xml:space="preserve">
     <value>未找到工作区元数据，无法继续导入：{0}</value>
   </data>
@@ -4230,6 +4266,9 @@
   <data name="PluginManagementPage.AddDecryptorButton.Content" xml:space="preserve">
     <value>新增解密插件</value>
   </data>
+  <data name="PluginManagementPage.AddResourceProcessorButton.Content" xml:space="preserve">
+    <value>新增处理插件</value>
+  </data>
   <data name="PluginManagementPage.Directory.EmptyText" xml:space="preserve">
     <value>没有匹配的插件。</value>
   </data>
@@ -4362,6 +4401,12 @@
   <data name="PluginManagementPage.OpenLocationFailedMessage" xml:space="preserve">
     <value>无法打开该插件的位置。</value>
   </data>
+  <data name="PluginManagementPage.Delete.PrimaryButton" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="PluginManagementPage.Delete.CloseButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
   <data name="PluginManagementPage.DecryptorDelete.Title" xml:space="preserve">
     <value>删除解密插件</value>
   </data>
@@ -4373,6 +4418,12 @@
   </data>
   <data name="PluginManagementPage.DecryptorDelete.CloseButton" xml:space="preserve">
     <value>取消</value>
+  </data>
+  <data name="PluginManagementPage.ProcessorDelete.Title" xml:space="preserve">
+    <value>删除资源处理插件</value>
+  </data>
+  <data name="PluginManagementPage.ProcessorDelete.Description.Format" xml:space="preserve">
+    <value>确定删除“{0}”（{1}）吗？该操作会移除用户目录中的资源处理器 manifest。</value>
   </data>
   <data name="PluginManagementPage.DecryptorLoadFailedMessage" xml:space="preserve">
     <value>加载解密插件目录失败。</value>
@@ -4391,5 +4442,98 @@
   </data>
   <data name="PluginManagementPage.DecryptorDeleteFailedMessage" xml:space="preserve">
     <value>删除解密插件失败。</value>
+  </data>
+  <data name="PluginManagementPage.ProcessorSaveSucceededMessage.Format" xml:space="preserve">
+    <value>已保存资源处理插件“{0}”。</value>
+  </data>
+  <data name="PluginManagementPage.ProcessorSaveFailedMessage" xml:space="preserve">
+    <value>保存资源处理插件失败。</value>
+  </data>
+  <data name="PluginManagementPage.ProcessorDeleteSucceededMessage.Format" xml:space="preserve">
+    <value>已删除资源处理插件“{0}”。</value>
+  </data>
+  <data name="PluginManagementPage.ProcessorDeleteFailedMessage" xml:space="preserve">
+    <value>删除资源处理插件失败。</value>
+  </data>
+  <data name="ResourceProcessorEditor.NewTitle" xml:space="preserve">
+    <value>新增资源处理插件</value>
+  </data>
+  <data name="ResourceProcessorEditor.EditTitle.Format" xml:space="preserve">
+    <value>编辑资源处理插件 - {0}</value>
+  </data>
+  <data name="ResourceProcessorEditor.PrimaryButton" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="ResourceProcessorEditor.CloseButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="ResourceProcessorEditor.Id.Label" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="ResourceProcessorEditor.Id.Placeholder" xml:space="preserve">
+    <value>例如 export.texture.png-processor</value>
+  </data>
+  <data name="ResourceProcessorEditor.DisplayName.Label" xml:space="preserve">
+    <value>显示名称</value>
+  </data>
+  <data name="ResourceProcessorEditor.DisplayName.Placeholder" xml:space="preserve">
+    <value>例如 Texture PNG Processor</value>
+  </data>
+  <data name="ResourceProcessorEditor.Version.Label" xml:space="preserve">
+    <value>版本</value>
+  </data>
+  <data name="ResourceProcessorEditor.Version.Placeholder" xml:space="preserve">
+    <value>1.0.0</value>
+  </data>
+  <data name="ResourceProcessorEditor.Description.Label" xml:space="preserve">
+    <value>描述</value>
+  </data>
+  <data name="ResourceProcessorEditor.Description.Placeholder" xml:space="preserve">
+    <value>说明该处理器适合的资源和导出阶段用途。</value>
+  </data>
+  <data name="ResourceProcessorEditor.ResourceKinds.Label" xml:space="preserve">
+    <value>资源类型槽</value>
+  </data>
+  <data name="ResourceProcessorEditor.ExecutablePath.Label" xml:space="preserve">
+    <value>可执行入口</value>
+  </data>
+  <data name="ResourceProcessorEditor.ExecutablePath.Placeholder" xml:space="preserve">
+    <value>例如 tools\processor.exe 或 python</value>
+  </data>
+  <data name="ResourceProcessorEditor.WorkingDirectoryPath.Label" xml:space="preserve">
+    <value>工作目录</value>
+  </data>
+  <data name="ResourceProcessorEditor.WorkingDirectoryPath.Placeholder" xml:space="preserve">
+    <value>相对 manifest 的目录，可留空</value>
+  </data>
+  <data name="ResourceProcessorEditor.Timeout.Label" xml:space="preserve">
+    <value>超时 ms</value>
+  </data>
+  <data name="ResourceProcessorEditor.Timeout.Placeholder" xml:space="preserve">
+    <value>15000</value>
+  </data>
+  <data name="ResourceProcessorEditor.Arguments.Label" xml:space="preserve">
+    <value>处理参数</value>
+  </data>
+  <data name="ResourceProcessorEditor.Arguments.Placeholder" xml:space="preserve">
+    <value>每行一个参数，可使用 {inputPath}、{outputPath}、{resultPath} 等占位符。</value>
+  </data>
+  <data name="ResourceProcessorEditor.Validation.IdRequired" xml:space="preserve">
+    <value>请输入资源处理器标识。</value>
+  </data>
+  <data name="ResourceProcessorEditor.Validation.DisplayNameRequired" xml:space="preserve">
+    <value>请输入资源处理器显示名称。</value>
+  </data>
+  <data name="ResourceProcessorEditor.Validation.ResourceKindsRequired" xml:space="preserve">
+    <value>请至少选择一种资源类型。</value>
+  </data>
+  <data name="ResourceProcessorEditor.Validation.ExecutablePathRequired" xml:space="preserve">
+    <value>请输入可执行入口路径或命令。</value>
+  </data>
+  <data name="ResourceProcessorEditor.Validation.TimeoutInvalid" xml:space="preserve">
+    <value>超时时间必须大于 0。</value>
+  </data>
+  <data name="ResourceProcessorEditor.Validation.ArgumentsRequired" xml:space="preserve">
+    <value>请至少提供一条处理参数。</value>
   </data>
 </root>

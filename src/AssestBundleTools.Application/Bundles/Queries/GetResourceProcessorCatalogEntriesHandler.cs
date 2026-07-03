@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Results;
 
@@ -10,13 +11,12 @@ namespace AssestBundleTools.Application.Bundles.Queries;
 public sealed class GetResourceProcessorCatalogEntriesHandler
     : IQueryHandler<GetResourceProcessorCatalogEntriesQuery, Result<IReadOnlyList<ResourceProcessorCatalogEntryDto>>>
 {
-    private static readonly IReadOnlyList<ResourceProcessorCatalogEntryDto> BuiltInEntries =
-    [
-        CreatePlaceholder("resource.processor.texture2d.cli", "Texture2D"),
-        CreatePlaceholder("resource.processor.audio.cli", "Audio"),
-        CreatePlaceholder("resource.processor.atlas.cli", "Atlas"),
-        CreatePlaceholder("resource.processor.skel.cli", "Skel")
-    ];
+    private readonly IResourceProcessorCatalogStore _catalogStore;
+
+    public GetResourceProcessorCatalogEntriesHandler(IResourceProcessorCatalogStore catalogStore)
+    {
+        _catalogStore = catalogStore ?? throw new ArgumentNullException(nameof(catalogStore));
+    }
 
     public Task<Result<IReadOnlyList<ResourceProcessorCatalogEntryDto>>> HandleAsync(
         GetResourceProcessorCatalogEntriesQuery query,
@@ -27,35 +27,6 @@ public sealed class GetResourceProcessorCatalogEntriesHandler
             return Task.FromResult(Result<IReadOnlyList<ResourceProcessorCatalogEntryDto>>.Cancelled());
         }
 
-        return Task.FromResult(Result<IReadOnlyList<ResourceProcessorCatalogEntryDto>>.Success(BuiltInEntries));
+        return Task.FromResult(Result<IReadOnlyList<ResourceProcessorCatalogEntryDto>>.Success(_catalogStore.Load()));
     }
-
-    private static ResourceProcessorCatalogEntryDto CreatePlaceholder(
-        string id,
-        string resourceKind) =>
-        new(
-            id,
-            id,
-            Version: "1.0.0",
-            Description: string.Empty,
-            ResourceProcessorKind.ExternalProcess,
-            [resourceKind],
-            ResourceProcessorStatus.Available,
-            IsBuiltIn: true,
-            IsReadOnly: true,
-            ManifestFilePath: null,
-            ExecutablePath: null,
-            WorkingDirectoryPath: null,
-            TimeoutMs: 15000,
-            ProcessArguments:
-            [
-                "--input",
-                "{inputPath}",
-                "--output",
-                "{outputPath}",
-                "--result",
-                "{resultPath}",
-                "--resource-kind",
-                "{resourceKind}"
-            ]);
 }

@@ -44,6 +44,9 @@ public sealed partial class PluginManagementPage : Page
         PluginDirectoryTitleText.Text = UiText.Get(ResourceKeys.PluginManagementDirectoryTitle);
         PluginDirectoryHintText.Text = UiText.Get(ResourceKeys.PluginManagementDirectoryHint);
         AddDecryptorButtonText.Text = UiText.Get(ResourceKeys.PluginManagementAddDecryptorButton);
+        AddResourceProcessorButtonText.Text = UiText.Get(ResourceKeys.PluginManagementAddResourceProcessorButton);
+        DecryptorGroupTitleText.Text = UiText.Get(ResourceKeys.PluginManagementTypeImportDecryptor);
+        ResourceProcessorGroupTitleText.Text = UiText.Get(ResourceKeys.PluginManagementTypeExportProcessor);
         PluginDirectoryEmptyText.Text = UiText.Get(ResourceKeys.PluginManagementDirectoryEmptyText);
         PluginDetailsEmptyText.Text = UiText.Get(ResourceKeys.PluginManagementDetailsEmptyText);
         EditSelectedPluginButtonText.Text = UiText.Get(ResourceKeys.PluginManagementEditButton);
@@ -70,51 +73,82 @@ public sealed partial class PluginManagementPage : Page
         await ViewModel.RefreshCatalogAsync();
     }
 
+    private void OnPluginListSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.AddedItems.FirstOrDefault() is PluginManagementPluginItemViewModel plugin)
+        {
+            ViewModel.SelectedPlugin = plugin;
+        }
+    }
+
     private async void OnAddDecryptorButtonClick(object sender, RoutedEventArgs e)
     {
         await ShowDecryptorEditorDialogAsync(entryId: null);
     }
 
+    private async void OnAddResourceProcessorButtonClick(object sender, RoutedEventArgs e)
+    {
+        await ShowResourceProcessorEditorDialogAsync(entryId: null);
+    }
+
     private async void OnEditSelectedPluginButtonClick(object sender, RoutedEventArgs e)
     {
-        if (ViewModel.SelectedPlugin?.DecryptorEntry is null)
+        if (ViewModel.SelectedPlugin?.DecryptorEntry is not null)
         {
+            await ShowDecryptorEditorDialogAsync(ViewModel.SelectedPlugin.Id);
             return;
         }
 
-        await ShowDecryptorEditorDialogAsync(ViewModel.SelectedPlugin.Id);
+        if (ViewModel.SelectedPlugin?.ResourceProcessorEntry is not null)
+        {
+            await ShowResourceProcessorEditorDialogAsync(ViewModel.SelectedPlugin.Id);
+        }
     }
 
     private async void OnDeleteSelectedPluginButtonClick(object sender, RoutedEventArgs e)
     {
         if (XamlRoot is null ||
-            ViewModel.SelectedPlugin?.DecryptorEntry is not { } entry)
+            ViewModel.SelectedPlugin is null)
         {
             return;
         }
 
+        var selectedPlugin = ViewModel.SelectedPlugin;
+        var isDecryptor = selectedPlugin.DecryptorEntry is not null;
         var dialog = new ContentDialog
         {
             XamlRoot = XamlRoot,
-            Title = UiText.Get(ResourceKeys.PluginManagementDecryptorDeleteTitle),
-            PrimaryButtonText = UiText.Get(ResourceKeys.PluginManagementDecryptorDeletePrimaryButton),
-            CloseButtonText = UiText.Get(ResourceKeys.PluginManagementDecryptorDeleteCloseButton),
+            Title = UiText.Get(isDecryptor
+                ? ResourceKeys.PluginManagementDecryptorDeleteTitle
+                : ResourceKeys.PluginManagementProcessorDeleteTitle),
+            PrimaryButtonText = UiText.Get(ResourceKeys.PluginManagementDeletePrimaryButton),
+            CloseButtonText = UiText.Get(ResourceKeys.PluginManagementDeleteCloseButton),
             DefaultButton = ContentDialogButton.Close,
             Content = new TextBlock
             {
                 Text = UiText.GetFormatted(
-                    ResourceKeys.PluginManagementDecryptorDeleteDescriptionFormat,
-                    entry.Definition.DisplayName,
-                    entry.Definition.Id),
+                    isDecryptor
+                        ? ResourceKeys.PluginManagementDecryptorDeleteDescriptionFormat
+                        : ResourceKeys.PluginManagementProcessorDeleteDescriptionFormat,
+                    selectedPlugin.DisplayName,
+                    selectedPlugin.Id),
                 TextWrapping = TextWrapping.WrapWholeWords
             }
         };
 
         var result = await dialog.ShowAsync();
-        if (result == ContentDialogResult.Primary)
+        if (result != ContentDialogResult.Primary)
         {
-            await ViewModel.DeleteDecryptorAsync(entry.Definition.Id);
+            return;
         }
+
+        if (isDecryptor)
+        {
+            await ViewModel.DeleteDecryptorAsync(selectedPlugin.Id);
+            return;
+        }
+
+        await ViewModel.DeleteResourceProcessorAsync(selectedPlugin.Id);
     }
 
     private void OnValidateSelectedPluginButtonClick(object sender, RoutedEventArgs e)
@@ -199,5 +233,56 @@ public sealed partial class PluginManagementPage : Page
         }
 
         await ViewModel.SaveDecryptorAsync(submittedCommand);
+    }
+
+    private async Task ShowResourceProcessorEditorDialogAsync(string? entryId)
+    {
+        if (XamlRoot is null)
+        {
+            return;
+        }
+
+        var editor = new ResourceProcessorEditorDialogContent();
+        string? dialogTargetDisplayName = entryId;
+        if (!string.IsNullOrWhiteSpace(entryId) &&
+            ViewModel.TryGetResourceProcessorEntry(entryId, out var entry) &&
+            entry is not null)
+        {
+            editor.ApplyEntry(entry);
+            dialogTargetDisplayName = entry.DisplayName;
+        }
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = string.IsNullOrWhiteSpace(entryId)
+                ? UiText.Get(ResourceKeys.ResourceProcessorEditorNewTitle)
+                : UiText.GetFormatted(ResourceKeys.ResourceProcessorEditorEditTitleFormat, dialogTargetDisplayName ?? entryId),
+            PrimaryButtonText = UiText.Get(ResourceKeys.ResourceProcessorEditorPrimaryButton),
+            CloseButtonText = UiText.Get(ResourceKeys.ResourceProcessorEditorCloseButton),
+            DefaultButton = ContentDialogButton.Primary,
+            Content = editor
+        };
+
+        UpsertResourceProcessorCommand? submittedCommand = null;
+        dialog.PrimaryButtonClick += (_, args) =>
+        {
+            if (!editor.TryCreateCommand(out var command) || command is null)
+            {
+                args.Cancel = true;
+                submittedCommand = null;
+                return;
+            }
+
+            submittedCommand = command;
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result != ContentDialogResult.Primary || submittedCommand is null)
+        {
+            return;
+        }
+
+        await ViewModel.SaveResourceProcessorAsync(submittedCommand);
     }
 }

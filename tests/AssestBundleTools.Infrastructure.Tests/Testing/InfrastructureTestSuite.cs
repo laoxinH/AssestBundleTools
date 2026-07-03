@@ -1,5 +1,6 @@
 using AssestBundleTools.Infrastructure.Tests.Bundles.Decryption;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Internal;
+using AssestBundleTools.Infrastructure.Tests.Bundles.Processing;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Reading;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Previewing;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Persistence;
@@ -419,6 +420,14 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(ExternalProcessAssetBundleDecryptorTests.DecryptAsync_ShouldAppendUniqueSegments_WhenCustomWorkingDirectoryIsProvided),
             ExternalProcessAssetBundleDecryptorTests.DecryptAsync_ShouldAppendUniqueSegments_WhenCustomWorkingDirectoryIsProvided);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemResourceProcessorCatalogStoreTests.Load_ShouldIncludeBuiltInSlots_AndUserManagedProcessors),
+            FileSystemResourceProcessorCatalogStoreTests.Load_ShouldIncludeBuiltInSlots_AndUserManagedProcessors);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemResourceProcessorCatalogStoreTests.DeleteUserManagedProcessor_ShouldRemoveManifest),
+            FileSystemResourceProcessorCatalogStoreTests.DeleteUserManagedProcessor_ShouldRemoveManifest);
 
         if (failures.Count == 0)
         {
