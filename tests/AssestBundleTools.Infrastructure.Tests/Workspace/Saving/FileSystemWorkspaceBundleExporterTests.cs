@@ -15,6 +15,7 @@ namespace AssestBundleTools.Infrastructure.Tests.Workspace.Saving;
 internal static class FileSystemWorkspaceBundleExporterTests
 {
     private const string RealSampleBundlePath = @"D:\project\测试ab\char_2014_nian_cfa#1_20260503_231150.ab";
+    private const string AstcSampleBundlePath = @"D:\project\测试ab\char_1001_amiya2_sale#16.ab";
 
     public static async Task ExportAsync_ShouldFail_WhenNoObjectWriteItemsAreProvided()
     {
@@ -185,6 +186,79 @@ internal static class FileSystemWorkspaceBundleExporterTests
         TestAssert.Equal(1, exportedTexture.Height, "Exported Texture2D should use replacement image height.");
     }
 
+    public static async Task ExportAsync_ShouldFallbackTexture2DToRgba32_WhenTargetFormatCannotBeEncoded()
+    {
+        if (!File.Exists(AstcSampleBundlePath))
+        {
+            Console.WriteLine($"[SKIP] ASTC sample bundle not found: {AstcSampleBundlePath}");
+            return;
+        }
+
+        if (!Environment.Is64BitProcess)
+        {
+            Console.WriteLine("[SKIP] Real sample bundle export requires a 64-bit process.");
+            return;
+        }
+
+        using var scope = new TemporaryDirectoryScope();
+        var sourcePath = Path.Combine(scope.DirectoryPath, "cache", Path.GetFileName(AstcSampleBundlePath));
+        var outputPath = Path.Combine(scope.DirectoryPath, "exports", Path.GetFileName(AstcSampleBundlePath));
+        Directory.CreateDirectory(Path.GetDirectoryName(sourcePath)!);
+        File.Copy(AstcSampleBundlePath, sourcePath);
+
+        var probe = ProbeFirstTextureWithFormat(sourcePath, (int)TextureFormat.ASTC_RGB_6x6);
+        if (probe is null)
+        {
+            Console.WriteLine($"[SKIP] Sample bundle contains no ASTC_RGB_6x6 Texture2D: {AstcSampleBundlePath}");
+            return;
+        }
+
+        var payloadPath = Path.Combine(scope.DirectoryPath, "texture.png");
+        await File.WriteAllBytesAsync(payloadPath, CreateTinyPngPayload());
+
+        var exporter = new FileSystemWorkspaceBundleExporter();
+        var result = await exporter.ExportAsync(new WorkspaceBundleExportRequestDto(
+            WorkspaceId: new WorkspaceId("workspace"),
+            WorkspaceDisplayName: "Workspace",
+            BundleId: new BundleId("bundle"),
+            BundleDisplayName: Path.GetFileName(sourcePath),
+            OutputFilePath: outputPath,
+            SourceArtifactPath: sourcePath,
+            BundleCacheKey: "bundle-cache-key",
+            ChangeItems: Array.Empty<AssestBundleTools.Application.Workspace.Dtos.WorkspaceChangeItemDto>(),
+            AssetWriteItems:
+            [
+                new WorkspaceBundleAssetWriteItemDto(
+                    BundleId: new BundleId("bundle"),
+                    AssetId: new AssetId("asset-astc-texture"),
+                    AssetName: probe.AssetName,
+                    AssetType: AssetType.Texture2D,
+                    AssetTypeDisplayName: nameof(AssetType.Texture2D),
+                    SerializedFileName: probe.SerializedFileName,
+                    PathId: probe.PathId,
+                    SourceKind: "file",
+                    SourceFilePath: payloadPath)
+            ],
+            ProcessorSelections: Array.Empty<WorkspaceExportProcessorSelectionDto>(),
+            ProcessorResults: Array.Empty<WorkspaceResourceProcessorExecutionResultDto>(),
+            OperationId: "operation"));
+
+        if (result.IsFailure)
+        {
+            Console.WriteLine($"[INFO] ASTC Texture2D write failed detail: {result.Errors[0].Parameters.GetValueOrDefault("Detail")}");
+        }
+
+        TestAssert.True(result.IsSuccess, "Object-level export should fall back to RGBA32 when the target Texture2D format cannot be encoded.");
+        var exportedTexture = ReadTextureProbe(outputPath, probe.SerializedFileName, probe.PathId);
+        TestAssert.True(exportedTexture is not null, "Exported Texture2D should be readable.");
+        TestAssert.Equal(1, exportedTexture!.Width, "Exported Texture2D should use replacement image width.");
+        TestAssert.Equal(1, exportedTexture.Height, "Exported Texture2D should use replacement image height.");
+        TestAssert.Equal(
+            (int)TextureFormat.RGBA32,
+            exportedTexture.Format,
+            "Exported Texture2D should use RGBA32 when the original target format cannot be re-encoded.");
+    }
+
     private static TextAssetProbe? ProbeFirstWritableTextAsset(string bundlePath)
     {
         var assetsManager = CreateAssetsManager();
@@ -245,7 +319,53 @@ internal static class FileSystemWorkspaceBundleExporterTests
                         AssetsToolsFieldReader.ReadString(AssetsToolsFieldReader.TryGetField(baseField, "m_Name")) ??
                         $"Texture2D {assetInfo.PathId}",
                         texture.m_Width,
-                        texture.m_Height);
+                        texture.m_Height,
+                        texture.m_TextureFormat);
+                }
+            }
+
+            return null;
+        }
+        finally
+        {
+            assetsManager.UnloadAll(unloadClassData: false);
+        }
+    }
+
+    private static TextureProbe? ProbeFirstTextureWithFormat(
+        string bundlePath,
+        int textureFormat)
+    {
+        var assetsManager = CreateAssetsManager();
+        try
+        {
+            var bundleInstance = assetsManager.LoadBundleFile(bundlePath, unpackIfPacked: true);
+            foreach (var serializedFile in LoadSerializedFiles(assetsManager, bundleInstance))
+            {
+                foreach (var assetInfo in serializedFile.file.GetAssetsOfType(AssetClassID.Texture2D))
+                {
+                    var baseField = AssetsToolsFieldReader.TryGetBaseField(assetsManager, serializedFile, assetInfo);
+                    if (baseField is null)
+                    {
+                        continue;
+                    }
+
+                    var texture = TextureFile.ReadTextureFile(baseField);
+                    if (texture.m_Width <= 0 ||
+                        texture.m_Height <= 0 ||
+                        texture.m_TextureFormat != textureFormat)
+                    {
+                        continue;
+                    }
+
+                    return new TextureProbe(
+                        serializedFile.name,
+                        assetInfo.PathId,
+                        AssetsToolsFieldReader.ReadString(AssetsToolsFieldReader.TryGetField(baseField, "m_Name")) ??
+                        $"Texture2D {assetInfo.PathId}",
+                        texture.m_Width,
+                        texture.m_Height,
+                        texture.m_TextureFormat);
                 }
             }
 
@@ -313,7 +433,8 @@ internal static class FileSystemWorkspaceBundleExporterTests
                 AssetsToolsFieldReader.ReadString(AssetsToolsFieldReader.TryGetField(baseField, "m_Name")) ??
                 $"Texture2D {assetInfo.PathId}",
                 texture.m_Width,
-                texture.m_Height);
+                texture.m_Height,
+                texture.m_TextureFormat);
         }
         finally
         {
@@ -369,5 +490,6 @@ internal static class FileSystemWorkspaceBundleExporterTests
         long PathId,
         string AssetName,
         int Width,
-        int Height);
+        int Height,
+        int Format);
 }

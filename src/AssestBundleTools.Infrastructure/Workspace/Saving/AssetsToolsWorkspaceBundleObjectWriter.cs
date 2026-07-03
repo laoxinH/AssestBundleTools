@@ -23,6 +23,8 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
     private const string StageWriteUncompressed = "write-uncompressed";
     private const string StageRepackBundle = "repack-bundle";
     private const string StageWriteFinalUncompressed = "write-final-uncompressed";
+    private const int TextureEncodeQuality = 90;
+    private const TextureFormat TextureEncodeFallbackFormat = TextureFormat.RGBA32;
 
     public static Result<object> Write(
         string sourcePath,
@@ -365,7 +367,17 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
         try
         {
             var texture = TextureFile.ReadTextureFile(baseField);
-            texture.EncodeTextureImage(payloadPath, quality: 90);
+            try
+            {
+                texture.EncodeTextureImage(payloadPath, TextureEncodeQuality);
+            }
+            catch (NotSupportedException)
+            {
+                texture = TextureFile.ReadTextureFile(baseField);
+                texture.m_TextureFormat = (int)TextureEncodeFallbackFormat;
+                texture.EncodeTextureImage(payloadPath, TextureEncodeQuality);
+            }
+
             texture.WriteTo(baseField);
             return Result<object>.Success(new object());
         }

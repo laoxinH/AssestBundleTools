@@ -146,6 +146,10 @@ internal static class InfrastructureTestSuite
             FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTexture2DObject_WhenRealSampleBundleIsAvailable);
         await RunTestAsync(
             failures,
+            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldFallbackTexture2DToRgba32_WhenTargetFormatCannotBeEncoded),
+            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldFallbackTexture2DToRgba32_WhenTargetFormatCannotBeEncoded);
+        await RunTestAsync(
+            failures,
             nameof(FileSystemWorkspaceBundleExportManifestStoreTests.SaveAsync_ShouldWriteReadableBundleExportManifest_WithHashesAndProcessors),
             FileSystemWorkspaceBundleExportManifestStoreTests.SaveAsync_ShouldWriteReadableBundleExportManifest_WithHashesAndProcessors);
         await RunTestAsync(
