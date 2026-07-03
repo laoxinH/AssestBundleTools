@@ -310,22 +310,20 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     }
 
     private IEnumerable<WorkspaceExportProcessorOptionViewModel> CreateProcessorOptions(
-        string resourceProcessorId,
+        string resourceKind,
         IReadOnlyList<ResourceProcessorCatalogEntryDto> catalogEntries)
     {
         yield return new WorkspaceExportProcessorOptionViewModel(
-            $"{resourceProcessorId}:none",
+            $"{resourceKind}:none",
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogProcessorNone),
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogProcessorNoneDescription));
 
-        foreach (var entry in catalogEntries.Where(entry => IsCompatibleResourceProcessor(entry, resourceProcessorId)))
+        foreach (var entry in catalogEntries.Where(entry => IsCompatibleResourceProcessor(entry, resourceKind)))
         {
             yield return new WorkspaceExportProcessorOptionViewModel(
                 entry.Id,
-                ResolveProcessorDisplayName(entry),
-                string.IsNullOrWhiteSpace(entry.Description)
-                    ? _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogProcessorCliPlaceholderDescription)
-                    : entry.Description);
+                ResolveProcessorDisplayName(entry, resourceKind),
+                ResolveProcessorDescription(entry, resourceKind));
         }
     }
 
@@ -341,13 +339,40 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
                        StringComparison.OrdinalIgnoreCase));
     }
 
-    private string ResolveProcessorDisplayName(ResourceProcessorCatalogEntryDto entry)
+    private string ResolveProcessorDisplayName(
+        ResourceProcessorCatalogEntryDto entry,
+        string resourceKind)
     {
-        return entry.Id.StartsWith("resource.processor.", StringComparison.OrdinalIgnoreCase)
-            ? _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogProcessorCliPlaceholder)
+        return entry.IsBuiltIn
+            ? _localizationService.GetFormattedString(
+                ResourceKeys.PluginManagementResourceProcessorDisplayNameFormat,
+                ResolveResourceKindDisplayName(resourceKind))
             : string.IsNullOrWhiteSpace(entry.DisplayName)
                 ? entry.Id
                 : entry.DisplayName;
+    }
+
+    private string ResolveProcessorDescription(
+        ResourceProcessorCatalogEntryDto entry,
+        string resourceKind)
+    {
+        return string.IsNullOrWhiteSpace(entry.Description)
+            ? _localizationService.GetFormattedString(
+                ResourceKeys.PluginManagementResourceProcessorDescriptionFormat,
+                ResolveResourceKindDisplayName(resourceKind))
+            : entry.Description;
+    }
+
+    private string ResolveResourceKindDisplayName(string resourceKind)
+    {
+        return NormalizeResourceKind(resourceKind) switch
+        {
+            "texture2d" => _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorTexture2D),
+            "audio" => _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAudio),
+            "atlas" => _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAtlas),
+            "skel" => _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorSkel),
+            _ => resourceKind
+        };
     }
 
     private static string NormalizeResourceKind(string value) =>

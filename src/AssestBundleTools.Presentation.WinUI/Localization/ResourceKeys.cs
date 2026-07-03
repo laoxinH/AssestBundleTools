@@ -599,8 +599,6 @@ public static class ResourceKeys
     public const string WorkspaceExportDialogResourceProcessorSkelDescription = "WorkspaceExportDialog.ResourceProcessor.SkelDescription";
     public const string WorkspaceExportDialogProcessorNone = "WorkspaceExportDialog.ProcessorNone";
     public const string WorkspaceExportDialogProcessorNoneDescription = "WorkspaceExportDialog.ProcessorNoneDescription";
-    public const string WorkspaceExportDialogProcessorCliPlaceholder = "WorkspaceExportDialog.ProcessorCliPlaceholder";
-    public const string WorkspaceExportDialogProcessorCliPlaceholderDescription = "WorkspaceExportDialog.ProcessorCliPlaceholderDescription";
     public const string WorkspaceExportDialogBundleSectionTitle = "WorkspaceExportDialog.BundleSection.Title";
     public const string WorkspaceExportDialogBundleSectionHint = "WorkspaceExportDialog.BundleSection.Hint";
     public const string WorkspaceExportDialogBundleSearchPlaceholder = "WorkspaceExportDialog.BundleSearch.Placeholder";

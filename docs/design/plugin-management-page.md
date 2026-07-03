@@ -256,6 +256,7 @@ executable ...
 
 - 始终提供“无处理器”。
 - 只列出支持该资源类型的可用导出处理插件。
+- 处理器下拉项必须显示 catalog 项的真实 `displayName / description`；内置兜底槽也要按资源类型显示为 `Texture2D CLI 处理器` 等具体名称，不得统一显示成泛化的 `CLI 处理器` 占位项。
 - 不在导出窗口新增、编辑、删除插件；只提供跳转到插件管理页的轻量入口。
 - 插件不可用时不进入可选列表；如果用户偏好指向不可用插件，回退“无处理器”并给出非阻断提示。
 
@@ -344,7 +345,7 @@ Presentation 不得：
 - Application 新增导出资源处理器 catalog DTO / 查询 / 保存 / 删除契约，首阶段提供 `Texture2D / Audio / Atlas / Skel` 的只读 CLI 占位目录项。
 - Infrastructure 新增基于 manifest 的导出资源处理器 catalog store；用户管理目录为 `%LocalAppData%/AssestBundleTools/resource-processors/`，应用只读目录为 `<app-base-directory>/resource-processors/`。
 - 插件管理页支持新增、编辑和删除用户管理的导出资源处理器；编辑器按当前稳定资源类型槽选择 `resourceKinds`，并按每行一个参数维护 `processArguments`。
-- 工作区导出窗口已改为从资源处理器 catalog 按资源类型槽加载可用处理器，并保留“无处理器”选项。
+- 工作区导出窗口已改为从资源处理器 catalog 按资源类型槽加载可用处理器，显示真实 catalog 名称与说明，并保留“无处理器”选项。
 - 已补 Shell / 设置页迁移 / 导出窗口 catalog 消费 / Application catalog 查询的回归测试与本地化资源。
 
 仍待后续阶段：

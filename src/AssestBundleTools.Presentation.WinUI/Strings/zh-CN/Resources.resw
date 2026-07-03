@@ -4188,12 +4188,6 @@
   <data name="WorkspaceExportDialog.ProcessorNoneDescription" xml:space="preserve">
     <value>直接导出当前资源包，不应用额外格式处理。</value>
   </data>
-  <data name="WorkspaceExportDialog.ProcessorCliPlaceholder" xml:space="preserve">
-    <value>CLI 处理器</value>
-  </data>
-  <data name="WorkspaceExportDialog.ProcessorCliPlaceholderDescription" xml:space="preserve">
-    <value>预留给该资源类型的 CLI 型预处理器。</value>
-  </data>
   <data name="WorkspaceExportDialog.BundleSection.Title" xml:space="preserve">
     <value>资源包范围</value>
   </data>
@@ -4336,7 +4330,7 @@
     <value>{0} CLI 处理器</value>
   </data>
   <data name="PluginManagementPage.ResourceProcessor.Description.Format" xml:space="preserve">
-    <value>为 {0} 资源预留的导出前 CLI 处理器目录项。</value>
+    <value>用于 {0} 资源导出前处理的 CLI 处理器目录项。</value>
   </data>
   <data name="PluginManagementPage.Timeout.Format" xml:space="preserve">
     <value>{0} ms</value>

@@ -90,7 +90,8 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("bundle.DisplayName.Contains(query", viewModel);
         Assert.Contains("IReadOnlyList<ResourceProcessorCatalogEntryDto>? resourceProcessorCatalogEntries", viewModel);
         Assert.Contains("IsCompatibleResourceProcessor", viewModel);
-        Assert.Contains("WorkspaceExportDialogProcessorCliPlaceholder", viewModel);
+        Assert.Contains("PluginManagementResourceProcessorDisplayNameFormat", viewModel);
+        Assert.Contains("ResolveProcessorDescription", viewModel);
         Assert.Contains("WorkspaceExportDialogResourceProcessorTexture2D", viewModel);
         Assert.Contains("WorkspaceExportDialogResourceProcessorAudio", viewModel);
         Assert.Contains("WorkspaceExportDialogResourceProcessorAtlas", viewModel);

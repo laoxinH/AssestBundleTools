@@ -4188,12 +4188,6 @@
   <data name="WorkspaceExportDialog.ProcessorNoneDescription" xml:space="preserve">
     <value>Export bundles directly without any extra format processing.</value>
   </data>
-  <data name="WorkspaceExportDialog.ProcessorCliPlaceholder" xml:space="preserve">
-    <value>CLI processor</value>
-  </data>
-  <data name="WorkspaceExportDialog.ProcessorCliPlaceholderDescription" xml:space="preserve">
-    <value>Reserved for a CLI-style preprocessor for this resource type.</value>
-  </data>
   <data name="WorkspaceExportDialog.BundleSection.Title" xml:space="preserve">
     <value>Bundle Scope</value>
   </data>
@@ -4336,7 +4330,7 @@
     <value>{0} CLI Processor</value>
   </data>
   <data name="PluginManagementPage.ResourceProcessor.Description.Format" xml:space="preserve">
-    <value>Reserved export pre-processing CLI entry for {0} resources.</value>
+    <value>CLI resource processor entry for {0} export pre-processing.</value>
   </data>
   <data name="PluginManagementPage.Timeout.Format" xml:space="preserve">
     <value>{0} ms</value>
