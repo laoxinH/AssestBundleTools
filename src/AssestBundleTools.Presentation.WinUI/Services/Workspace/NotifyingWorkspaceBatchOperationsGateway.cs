@@ -44,18 +44,11 @@ internal sealed class NotifyingWorkspaceBatchOperationsGateway : IWorkspaceBatch
         CancellationToken cancellationToken = default) =>
         _inner.GetWorkspaceSavePreviewAsync(query, cancellationToken);
 
-    public async Task<Result<WorkspaceSaveExecutionResultDto>> SaveWorkspaceAsNewBundleAsync(
+    // 保存检查点尚未落地前，导出结果只由导出窗口消费，避免主工作台误刷新旧资产标签。
+    public Task<Result<WorkspaceSaveExecutionResultDto>> SaveWorkspaceAsNewBundleAsync(
         SaveWorkspaceAsNewBundleCommand command,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await _inner.SaveWorkspaceAsNewBundleAsync(command, cancellationToken);
-        NotifyIfSucceeded(
-            result,
-            command.WorkspaceId,
-            WorkspaceOperationChangeKind.Save,
-            reason: WorkspaceOperationChangeReason.SaveCheckpointChanged);
-        return result;
-    }
+        CancellationToken cancellationToken = default) =>
+        _inner.SaveWorkspaceAsNewBundleAsync(command, cancellationToken);
 
     public Task<Result<WorkspaceBatchExtractionPreviewDto>> GetWorkspaceBatchExtractionPreviewAsync(
         GetWorkspaceBatchExtractionPreviewQuery query,

@@ -44,7 +44,7 @@ WorkspaceExportWindow 收集选择
   -> AB 写包阶段，跨 bundle 受控并行，同 bundle 单 writer
   -> 输出 AB 导出修改清单 JSON
   -> SaveExecutionCompleted / Failed 操作记录与检查点
-  -> Presentation 通过操作通知和任务结果刷新
+  -> Presentation 消费任务结果；检查点落地后再广播已提交操作通知
 ```
 
 核心约束：
@@ -574,7 +574,8 @@ Presentation 回归优先覆盖：
 
 - 工作区导出窗口提交命令时携带选中 bundle 和每个资源类型槽的 processor selection。
 - 导出任务使用 `SaveRebuild` profile，并在执行中禁用重复提交。
-- 完成后通过操作变更通知刷新保存预览 / 变更投影，而不是直接重扫 AB。
+- 当前导出完成后只由导出窗口消费执行结果；保存检查点和 `Committed` 状态落地前，不广播 workspace-wide 操作变更，避免主工作台误刷新旧资产标签。
+- 后续检查点落地后，通过精确的已提交操作通知刷新保存预览 / 变更投影，而不是直接重扫 AB。
 
 测试边界：
 

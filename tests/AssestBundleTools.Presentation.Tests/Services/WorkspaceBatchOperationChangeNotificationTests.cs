@@ -21,6 +21,36 @@ namespace AssestBundleTools.Presentation.Tests.Services;
 public sealed class WorkspaceBatchOperationChangeNotificationTests
 {
     [Fact]
+    public async Task SaveWorkspaceAsNewBundleAsync_ShouldNotNotifyWorkspaceWideRefresh_BeforeCheckpointSupport()
+    {
+        var workspaceId = new WorkspaceId("workspace-save-no-refresh-before-checkpoint");
+        var notifier = new WorkspaceOperationChangeNotifier();
+        var receivedEvents = new List<WorkspaceOperationChangedEventArgs>();
+        notifier.WorkspaceOperationsChanged += (_, e) => receivedEvents.Add(e);
+        var gateway = new NotifyingWorkspaceBatchOperationsGateway(
+            new SuccessfulWorkspaceBatchOperationsGateway(
+                new WorkspaceSaveExecutionResultDto(
+                    workspaceId,
+                    "Workspace",
+                    @"C:\Exports",
+                    PlannedBundleCount: 1,
+                    TotalChangeCount: 1,
+                    CompletedAtUtc: DateTimeOffset.UtcNow,
+                    Status: WorkspaceSaveExecutionStatusDto.Succeeded,
+                    SucceededBundleCount: 1,
+                    WrittenBundleCount: 1)),
+            notifier);
+
+        var result = await gateway.SaveWorkspaceAsNewBundleAsync(
+            new SaveWorkspaceAsNewBundleCommand(
+                workspaceId,
+                OutputDirectory: @"C:\Exports"));
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(receivedEvents);
+    }
+
+    [Fact]
     public async Task ExecuteWorkspaceBatchReplacementAsync_ShouldNotifyAssociatedAssetRefresh_WhenImpactRegistryFindsDependents()
     {
         var workspaceId = new WorkspaceId("workspace-batch-associated-impact-notify");
@@ -91,11 +121,18 @@ public sealed class WorkspaceBatchOperationChangeNotificationTests
 
     private sealed class SuccessfulWorkspaceBatchOperationsGateway : IWorkspaceBatchOperationsGateway
     {
+        private readonly WorkspaceSaveExecutionResultDto? _saveResult;
         private readonly WorkspaceBatchReplacementResultDto _replacementResult;
 
         public SuccessfulWorkspaceBatchOperationsGateway(WorkspaceBatchReplacementResultDto replacementResult)
         {
             _replacementResult = replacementResult;
+        }
+
+        public SuccessfulWorkspaceBatchOperationsGateway(WorkspaceSaveExecutionResultDto saveResult)
+        {
+            _saveResult = saveResult;
+            _replacementResult = CreateDefaultReplacementResult(saveResult.WorkspaceId);
         }
 
         public Task<Result<WorkspaceChangeSummaryDto>> GetWorkspaceChangeSummaryAsync(
@@ -111,7 +148,8 @@ public sealed class WorkspaceBatchOperationChangeNotificationTests
         public Task<Result<WorkspaceSaveExecutionResultDto>> SaveWorkspaceAsNewBundleAsync(
             SaveWorkspaceAsNewBundleCommand command,
             CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
+            Task.FromResult(Result<WorkspaceSaveExecutionResultDto>.Success(
+                _saveResult ?? throw new NotSupportedException()));
 
         public Task<Result<WorkspaceBatchExtractionPreviewDto>> GetWorkspaceBatchExtractionPreviewAsync(
             GetWorkspaceBatchExtractionPreviewQuery query,
@@ -132,6 +170,20 @@ public sealed class WorkspaceBatchOperationChangeNotificationTests
             ExecuteWorkspaceBatchReplacementCommand command,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(Result<WorkspaceBatchReplacementResultDto>.Success(_replacementResult));
+
+        private static WorkspaceBatchReplacementResultDto CreateDefaultReplacementResult(WorkspaceId workspaceId) =>
+            new(
+                workspaceId,
+                @"C:\Exports",
+                WorkspaceBatchReplacementMatchingMode.Heuristic,
+                RequestedCandidateCount: 0,
+                ReplacedAssetCount: 0,
+                SkippedAssetCount: 0,
+                FailedAssetCount: 0,
+                ProcessedBundleCount: 0,
+                ProcessedSpineGroupCount: 0,
+                CompletedAtUtc: DateTimeOffset.UtcNow,
+                ItemResults: Array.Empty<WorkspaceBatchReplacementItemResultDto>());
     }
 
     private sealed class TestAssociatedAssetImpactRegistry : IWorkspaceAssociatedAssetImpactRegistry
