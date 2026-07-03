@@ -126,6 +126,11 @@ public sealed class WinUIFilePickerService : IFilePickerService
         return Task.FromResult(PickExportDirectory(cancellationToken));
     }
 
+    public Task<string?> PickWorkspaceExportOutputDirectoryAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(PickExportDirectory(cancellationToken));
+    }
+
     public async Task<string?> PickReplacementSourceFileAsync(
         AssetType targetAssetType,
         CancellationToken cancellationToken = default)

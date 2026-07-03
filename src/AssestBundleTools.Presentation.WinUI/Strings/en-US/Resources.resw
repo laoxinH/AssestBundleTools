@@ -3871,7 +3871,19 @@
     <value>Failed to read the batch export manifest: {0}. Detail: {1}</value>
   </data>
   <data name="Error.Bundle.Save.NoCandidates" xml:space="preserve">
-    <value>No bundles are available for the save skeleton in the current workspace: {0}</value>
+    <value>No bundles are available for export in the current workspace: {0}</value>
+  </data>
+  <data name="Error.Bundle.Save.ArtifactMissing" xml:space="preserve">
+    <value>The bundle is missing a standardized writable input: {0}. Diagnostic: {1}</value>
+  </data>
+  <data name="Error.Bundle.Save.OutputBlocked" xml:space="preserve">
+    <value>The target AB output path is not writable: {0}. Diagnostic: {1}</value>
+  </data>
+  <data name="Error.Bundle.Save.WriteFailed" xml:space="preserve">
+    <value>Failed to write the AB file: {0}. Detail: {1}</value>
+  </data>
+  <data name="Error.Bundle.Save.ManifestWriteFailed" xml:space="preserve">
+    <value>Failed to write the AB export manifest: {0}. Detail: {1}</value>
   </data>
   <data name="Error.Bundle.Decrypt.Failed" xml:space="preserve">
     <value>Bundle decryption failed. Decryptor: {0}. Detail: {1}</value>
@@ -4155,6 +4167,9 @@
   <data name="WorkspaceExportDialog.ResourceProcessorSection.Hint" xml:space="preserve">
     <value>Choose which resource categories should participate in the preprocessing chain.</value>
   </data>
+  <data name="WorkspaceExportDialog.ExportToWorkspaceDirectory" xml:space="preserve">
+    <value>Export to workspace output directory</value>
+  </data>
   <data name="WorkspaceExportDialog.OutputDirectory.Label" xml:space="preserve">
     <value>Output directory</value>
   </data>
@@ -4225,7 +4240,25 @@
     <value>Changes {0}, modified {1}, extracted {2}, workspace replacement {3}, file replacement {4}</value>
   </data>
   <data name="WorkspaceExportDialog.ExecutionDeferred" xml:space="preserve">
-    <value>The real export path is not wired yet. This window currently provides the export plan only.</value>
+    <value>The export task has not started.</value>
+  </data>
+  <data name="WorkspaceExportDialog.ExecutionFailed" xml:space="preserve">
+    <value>The export did not complete. Check the error message or diagnostics.</value>
+  </data>
+  <data name="WorkspaceExportDialog.ExecutionCompleted.Format" xml:space="preserve">
+    <value>Export completed: {0} bundles written, {1} failed.</value>
+  </data>
+  <data name="WorkspaceExportDialog.StatusTitle" xml:space="preserve">
+    <value>Export workspace bundles</value>
+  </data>
+  <data name="WorkspaceExportDialog.StatusPreparing" xml:space="preserve">
+    <value>Preparing export plan</value>
+  </data>
+  <data name="WorkspaceExportDialog.StatusBundle.Format" xml:space="preserve">
+    <value>Writing {0}, succeeded {1}, failed {2}</value>
+  </data>
+  <data name="WorkspaceExportDialog.CompletedMessage.Format" xml:space="preserve">
+    <value>Workspace export completed: {0} bundles written, {1} failed. Manifest: {2}</value>
   </data>
   <data name="Shell.PluginManagementNavItem.Content" xml:space="preserve">
     <value>Plugins</value>

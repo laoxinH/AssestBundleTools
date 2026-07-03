@@ -26,6 +26,7 @@ public sealed partial class WorkspaceExportDialogContent : UserControl
         ClearBundleSelectionButton.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogClearBundleSelectionButton);
         ResourceProcessorSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorSectionTitle);
         ResourceProcessorSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorSectionHint);
+        ExportToWorkspaceDirectoryCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogExportToWorkspaceDirectory);
         OutputDirectoryLabelText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogOutputDirectoryLabel);
     }
 

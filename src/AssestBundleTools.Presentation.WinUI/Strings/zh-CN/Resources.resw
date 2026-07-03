@@ -3871,7 +3871,19 @@
     <value>读取批量导出清单失败：{0}。详情：{1}</value>
   </data>
   <data name="Error.Bundle.Save.NoCandidates" xml:space="preserve">
-    <value>当前工作区没有可执行保存骨架的资源包：{0}</value>
+    <value>当前工作区没有可导出的资源包：{0}</value>
+  </data>
+  <data name="Error.Bundle.Save.ArtifactMissing" xml:space="preserve">
+    <value>资源包缺少可写出的标准化输入：{0}。诊断：{1}</value>
+  </data>
+  <data name="Error.Bundle.Save.OutputBlocked" xml:space="preserve">
+    <value>目标 AB 输出路径不可写：{0}。诊断：{1}</value>
+  </data>
+  <data name="Error.Bundle.Save.WriteFailed" xml:space="preserve">
+    <value>写出 AB 文件失败：{0}。详情：{1}</value>
+  </data>
+  <data name="Error.Bundle.Save.ManifestWriteFailed" xml:space="preserve">
+    <value>写出 AB 导出清单失败：{0}。详情：{1}</value>
   </data>
   <data name="Error.Bundle.Decrypt.Failed" xml:space="preserve">
     <value>资源包解密失败。解密器：{0}。详情：{1}</value>
@@ -4155,6 +4167,9 @@
   <data name="WorkspaceExportDialog.ResourceProcessorSection.Hint" xml:space="preserve">
     <value>选择需要纳入预处理链路的资源类型。</value>
   </data>
+  <data name="WorkspaceExportDialog.ExportToWorkspaceDirectory" xml:space="preserve">
+    <value>导出到工作区输出目录</value>
+  </data>
   <data name="WorkspaceExportDialog.OutputDirectory.Label" xml:space="preserve">
     <value>输出目录</value>
   </data>
@@ -4225,7 +4240,25 @@
     <value>变更 {0}，修改 {1}，提取 {2}，工作区替换 {3}，文件替换 {4}</value>
   </data>
   <data name="WorkspaceExportDialog.ExecutionDeferred" xml:space="preserve">
-    <value>真实导出逻辑尚未接入，当前仅完成导出窗口和计划预览。</value>
+    <value>导出任务尚未开始。</value>
+  </data>
+  <data name="WorkspaceExportDialog.ExecutionFailed" xml:space="preserve">
+    <value>导出未完成，请查看错误提示或诊断信息。</value>
+  </data>
+  <data name="WorkspaceExportDialog.ExecutionCompleted.Format" xml:space="preserve">
+    <value>导出完成：写出 {0} 个资源包，失败 {1} 个。</value>
+  </data>
+  <data name="WorkspaceExportDialog.StatusTitle" xml:space="preserve">
+    <value>导出工作区资源包</value>
+  </data>
+  <data name="WorkspaceExportDialog.StatusPreparing" xml:space="preserve">
+    <value>正在准备导出计划</value>
+  </data>
+  <data name="WorkspaceExportDialog.StatusBundle.Format" xml:space="preserve">
+    <value>正在写出 {0}，已成功 {1}，失败 {2}</value>
+  </data>
+  <data name="WorkspaceExportDialog.CompletedMessage.Format" xml:space="preserve">
+    <value>工作区导出完成：写出 {0} 个资源包，失败 {1} 个。清单：{2}</value>
   </data>
   <data name="Shell.PluginManagementNavItem.Content" xml:space="preserve">
     <value>插件管理</value>

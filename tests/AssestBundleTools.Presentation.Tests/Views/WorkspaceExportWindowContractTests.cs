@@ -39,6 +39,13 @@ public sealed class WorkspaceExportWindowContractTests
             "Views",
             "BundleExplorer",
             "WorkspaceExportWindow.xaml"));
+        var windowCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "WorkspaceExportWindow.xaml.cs"));
         var contentXaml = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "src",
@@ -65,7 +72,14 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("IResourceProcessorCatalogService", coordinator);
         Assert.Contains("_resourceProcessorCatalogService.GetEntriesAsync()", coordinator);
         Assert.Contains("processorCatalogEntries", coordinator);
+        Assert.Contains("IFilePickerService", coordinator);
+        Assert.Contains("IBackgroundWorkScheduler", coordinator);
+        Assert.Contains("BackgroundWorkProfile.SaveRebuild", coordinator);
+        Assert.Contains("PickWorkspaceExportOutputDirectoryAsync", coordinator);
+        Assert.Contains("SaveWorkspaceAsNewBundleAsync", coordinator);
+        Assert.Contains("Path.Combine(dataRootPath.Trim(), \"exports\")", coordinator);
         Assert.Contains("<shared:AppNotificationPresenter", windowXaml);
+        Assert.Contains("StartExportRequested", windowCode);
         Assert.Contains("Text=\"{Binding BundleSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}\"", contentXaml);
         Assert.Contains("ItemsSource=\"{Binding BundleSortOptions}\"", contentXaml);
         Assert.Contains("SelectedItem=\"{Binding SelectedBundleSortOption, Mode=TwoWay}\"", contentXaml);
@@ -73,6 +87,7 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("Visibility=\"{Binding HeaderVisibility}\"", contentXaml);
         Assert.Contains("Visibility=\"{Binding BundleVisibility}\"", contentXaml);
         Assert.Contains("ItemsSource=\"{Binding ResourceProcessors}\"", contentXaml);
+        Assert.Contains("IsChecked=\"{Binding ExportToWorkspaceDirectory, Mode=TwoWay}\"", contentXaml);
         Assert.Contains("ItemsSource=\"{Binding Processors}\"", contentXaml);
         Assert.Contains("SelectedItem=\"{Binding SelectedProcessor, Mode=TwoWay}\"", contentXaml);
         Assert.Contains("ResourceProcessorSectionTitleText", contentXaml);
@@ -89,6 +104,7 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("AppendTimeGroupedVisibleBundles", viewModel);
         Assert.Contains("bundle.DisplayName.Contains(query", viewModel);
         Assert.Contains("IReadOnlyList<ResourceProcessorCatalogEntryDto>? resourceProcessorCatalogEntries", viewModel);
+        Assert.Contains("CreateSubmission", viewModel);
         Assert.Contains("IsCompatibleResourceProcessor", viewModel);
         Assert.Contains("PluginManagementResourceProcessorDisplayNameFormat", viewModel);
         Assert.Contains("ResolveProcessorDescription", viewModel);

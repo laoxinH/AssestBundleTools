@@ -17,13 +17,15 @@
 - 保存预览和保存执行骨架已经读取现有 `cache/bundles` 标准化 artifact 输入图，并通过 `IWorkspaceSaveOutputProbe` 做输出路径 preflight。
 - `SaveRebuild` 后台 profile 已存在，工作区导出窗口可以复用统一后台任务调度。
 - 普通批量提取已经具备“单个后台任务 + 跨 AB 受控并行 + 同 AB 内顺序 + 输出 manifest”的成熟范式。
+- 工作区导出窗口已接到真实 `SaveRebuild` 后台任务：默认输出到 `<workspaceDataRootPath>/exports`，取消“导出到工作区输出目录”后点击开始导出会打开输出目录选择器。
+- `SaveWorkspaceAsNewBundleCommand` 已携带输出目录、选中资源包、资源处理器选择、工作区 artifact 上下文和执行进度回调。
+- Application 已通过 `IWorkspaceBundleExporter` / `IWorkspaceBundleExportManifestStore` 编排第一阶段真实导出：按选中 bundle 有界并发写出，汇总 `Succeeded / PartiallySucceeded / Failed` 结果，并在有成功输出时写出 `_abt-bundle-export-manifest.json`。
+- Infrastructure 第一阶段已实现标准化 artifact 的文件级 AB 输出、同目录临时文件提升、MD5 / SHA-256 记录和 AB 导出 manifest 原子写出。
 
 尚未实现：
 
-- 保存 / 导出命令携带资源包选择和资源处理器选择。
 - 资源处理器真实执行、result JSON 解析、失败回填和取消终止。
-- 真实 AB 可变副本、资源替换写入、写包与原子输出。
-- AB 输出后的导出修改清单 JSON。
+- 真实 AB 可变副本、资源替换写入和对象级 AssetsTools 写包；当前第一阶段先把可复用标准化 artifact 作为 AB 文件级输出输入。
 - 保存检查点、部分成功和取消 / 回滚语义。
 
 ## 3. 设计结论
@@ -108,23 +110,25 @@ Infrastructure 不负责：
 
 ## 5. 应用层命令与 DTO
 
-现有 `SaveWorkspaceAsNewBundleCommand` 后续应演进为真实执行命令，或由新命令委托到同一执行服务。目标形态：
+当前先复用 `SaveWorkspaceAsNewBundleCommand` 作为工作区导出执行命令，后续如果引入独立 `ExecuteWorkspaceExportCommand`，也应委托到同一执行服务。当前 / 目标字段如下：
 
 ```text
-ExecuteWorkspaceExportCommand
+SaveWorkspaceAsNewBundleCommand / ExecuteWorkspaceExportCommand
   workspaceId
   workspaceKey
   workspaceDataRootPath
   outputDirectory
   selectedBundleIds[]
   processorSelections[]
+  progress
+  bundleWriteConcurrency?
   outputConflictPolicy
 
 WorkspaceExportProcessorSelectionDto
   resourceKind
   processorId?          # null 或空表示无处理器
 
-WorkspaceExportExecutionResultDto
+WorkspaceSaveExecutionResultDto / WorkspaceExportExecutionResultDto
   workspaceId
   outputDirectory
   status                # Succeeded / Partial / Failed / Cancelled
@@ -333,7 +337,7 @@ IWorkspaceBundleExporter
   ExportAsync(WorkspaceBundleExportRequest request, CancellationToken cancellationToken)
 ```
 
-Infrastructure 的实现消费标准化 artifact 和有效变更载荷，负责真实 AssetsTools Writer 或后续可替换写包器。Application 只消费结构化结果。
+Infrastructure 的当前实现已经消费标准化 artifact 并做文件级 AB 输出；后续对象级实现继续在同一端口内消费有效变更载荷和处理器输出，负责真实 AssetsTools Writer 或可替换写包器。Application 只消费结构化结果。
 
 ### 8.2 写包并发
 
@@ -529,7 +533,7 @@ Export.Operation.CommitFailed
 工作区真实导出只向 Presentation 调度器提交一个 `SaveRebuild` profile 任务：
 
 ```text
-BackgroundWorkRequest<Result<WorkspaceExportExecutionResultDto>>
+BackgroundWorkRequest<Result<WorkspaceSaveExecutionResultDto>>
   Profile = SaveRebuild
   SemanticKind = WorkspaceMutation
   Priority = Visible
@@ -549,15 +553,16 @@ Application 回归优先覆盖：
 - 导出命令会拒绝缺失工作区、空资源包选择、不可用处理器和不支持资源类型。
 - 导出计划只包含用户选择的资源包，并保留 `bundleId / bundleCacheKey / outputPath`。
 - 资源处理器选择中的“无处理器”不会进入执行队列。
-- 资源处理器 fake executor 的有界并发、失败回填、取消和稳定结果排序。
-- bundle writer fake executor 的跨 bundle 并发、同 bundle 串行、部分成功和输出摘要。
+- 当前第一阶段覆盖选中 bundle 写出、processor selection 透传、bundle writer 跨 bundle 有界并发和输出摘要。
+- 后续补资源处理器 fake executor 的有界并发、失败回填、取消和稳定结果排序。
 - 部分成功时只提交成功 bundle 的检查点。
 
 Infrastructure 回归优先覆盖：
 
 - 资源处理器 result JSON 解析、非法路径拒绝、stdout / stderr 诊断捕获和超时终止。
-- AB 导出 manifest 原子写入、读取、hash / size 记录和 schema round-trip。
-- 输出临时文件提升、目标已存在 blocker、确认覆盖后的替换路径。
+- 当前第一阶段覆盖标准化 artifact 文件级输出、同目录临时文件提升、MD5 / SHA-256 记录和 AB 导出 manifest 原子写入。
+- 后续补资源处理器 result JSON 解析、非法路径拒绝、stdout / stderr 诊断捕获和超时终止。
+- 后续补目标已存在 blocker、确认覆盖后的替换路径和对象级 AssetsTools Writer。
 
 Presentation 回归优先覆盖：
 
@@ -575,16 +580,16 @@ Presentation 回归优先覆盖：
 
 建议按以下顺序实现：
 
-1. 扩展 Application 导出命令 DTO，携带资源包范围和资源处理器选择。
-2. 抽出真实导出计划构建服务，复用现有保存预览的 artifact 输入和输出 preflight。
-3. 定义资源处理器执行端口和 result DTO，先用 fake executor 补 Application 并发与失败回归。
-4. 在 Infrastructure 接入外部 CLI 资源处理器执行与 result JSON 解析。
-5. 定义 `IWorkspaceBundleExporter`，先用 fake writer 补 Application 写包 orchestration。
-6. 接入真实 AssetsTools 写包实现和单 bundle 临时输出提升。
-7. 新增 AB 导出 manifest store，写出 `_abt-bundle-export-manifest.json`。
-8. 接入保存检查点和操作记录 committed 状态。
-9. 将工作区导出窗口的开始按钮接到真实 `SaveRebuild` 后台任务。
-10. 补 Presentation、本地化和端到端手动验证。
+1. [已落地] 扩展 Application 导出命令 DTO，携带资源包范围和资源处理器选择。
+2. [已落地] 复用现有保存预览的 artifact 输入和输出 preflight 构建第一阶段导出计划。
+3. [待补] 定义资源处理器执行端口和 result DTO，先用 fake executor 补 Application 并发与失败回归。
+4. [待补] 在 Infrastructure 接入外部 CLI 资源处理器执行与 result JSON 解析。
+5. [已落地] 定义 `IWorkspaceBundleExporter`，Application 编排 bundle writer 有界并发。
+6. [已部分落地] Infrastructure 已接入标准化 artifact 文件级输出和单 bundle 临时输出提升；后续补真实 AssetsTools 对象级写包。
+7. [已落地] 新增 AB 导出 manifest store，写出 `_abt-bundle-export-manifest.json`。
+8. [待补] 接入保存检查点和操作记录 committed 状态。
+9. [已落地] 将工作区导出窗口的开始按钮接到真实 `SaveRebuild` 后台任务。
+10. [进行中] 补 Presentation、本地化、自动化回归和端到端手动验证。
 
 ## 15. 收口结论
 

@@ -251,6 +251,48 @@ public static class ApplicationErrors
             parameters: CreateParameters(("WorkspaceId", workspaceId.ToString())),
             isUserActionable: true);
 
+    public static AppError BundleExportArtifactMissing(string bundleDisplayName, string? diagnosticCode = null) =>
+        new(
+            code: "Bundle.Save.ArtifactMissing",
+            category: ErrorCategory.NotFound,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.ArtifactMissing",
+            parameters: CreateParameters(
+                ("BundleDisplayName", bundleDisplayName),
+                ("DiagnosticCode", diagnosticCode)),
+            isUserActionable: true);
+
+    public static AppError BundleExportOutputBlocked(string outputPath, string? diagnosticCode = null) =>
+        new(
+            code: "Bundle.Save.OutputBlocked",
+            category: ErrorCategory.Conflict,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Bundle.Save.OutputBlocked",
+            parameters: CreateParameters(
+                ("OutputPath", outputPath),
+                ("DiagnosticCode", diagnosticCode)),
+            isUserActionable: true);
+
+    public static AppError BundleExportWriteFailed(string outputPath, string? detail = null) =>
+        new(
+            code: "Bundle.Save.WriteFailed",
+            category: ErrorCategory.IoFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.WriteFailed",
+            parameters: CreateParameters(
+                ("OutputPath", outputPath),
+                ("Detail", detail)));
+
+    public static AppError BundleExportManifestWriteFailed(string outputPath, string? detail = null) =>
+        new(
+            code: "Bundle.Save.ManifestWriteFailed",
+            category: ErrorCategory.IoFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.ManifestWriteFailed",
+            parameters: CreateParameters(
+                ("OutputPath", outputPath),
+                ("Detail", detail)));
+
     public static AppError BundleDecryptionFailed(string decryptorId, string? detail = null) =>
         new(
             code: "Bundle.Decrypt.Failed",

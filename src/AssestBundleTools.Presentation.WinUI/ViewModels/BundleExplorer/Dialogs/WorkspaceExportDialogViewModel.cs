@@ -20,6 +20,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     private string _validationText = string.Empty;
     private string _primaryButtonText = string.Empty;
     private string _bundleSearchText = string.Empty;
+    private bool _exportToWorkspaceDirectory = true;
     private bool _isLoading;
     private bool _isExecuting;
     private WorkspaceExportBundleSortOptionViewModel? _selectedBundleSortOption;
@@ -115,6 +116,12 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         private set => SetProperty(ref _isExecuting, value);
     }
 
+    public bool ExportToWorkspaceDirectory
+    {
+        get => _exportToWorkspaceDirectory;
+        set => SetProperty(ref _exportToWorkspaceDirectory, value);
+    }
+
     public WorkspaceExportBundleSortOptionViewModel? SelectedBundleSortOption
     {
         get => _selectedBundleSortOption;
@@ -150,6 +157,63 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         IsExecuting = false;
         ValidationText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogExecutionDeferred);
         PrimaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPrimaryButton);
+    }
+
+    public void SetExecuting()
+    {
+        IsExecuting = true;
+        ValidationText = string.Empty;
+    }
+
+    public void ApplySelectedOutputDirectory(string outputDirectory)
+    {
+        if (!string.IsNullOrWhiteSpace(outputDirectory))
+        {
+            OutputDirectoryText = outputDirectory.Trim();
+        }
+    }
+
+    public void ApplyExecutionCancelled()
+    {
+        IsExecuting = false;
+        ValidationText = string.Empty;
+        PrimaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPrimaryButton);
+    }
+
+    public void ApplyExecutionUnavailable()
+    {
+        IsExecuting = false;
+        ValidationText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogExecutionFailed);
+        PrimaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPrimaryButton);
+    }
+
+    public void ApplyExecutionResult(WorkspaceSaveExecutionResultDto result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+
+        IsExecuting = false;
+        OutputDirectoryText = result.OutputDirectory;
+        ValidationText = _localizationService.GetFormattedString(
+            ResourceKeys.WorkspaceExportDialogExecutionCompletedFormat,
+            result.WrittenBundleCount,
+            result.FailedBundleCount);
+        PrimaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPrimaryButton);
+    }
+
+    public WorkspaceExportDialogSubmission CreateSubmission()
+    {
+        var selectedBundleIds = Bundles
+            .Where(static bundle => bundle.IsSelected)
+            .Select(static bundle => bundle.BundleId)
+            .ToArray();
+        var processorSelections = ResourceProcessors
+            .Select(static processor => CreateProcessorSelection(processor))
+            .ToArray();
+
+        return new WorkspaceExportDialogSubmission(
+            ExportToWorkspaceDirectory,
+            selectedBundleIds,
+            processorSelections);
     }
 
     private void OnBundleSelectionChanged(object? sender, EventArgs e)
@@ -377,6 +441,23 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
 
     private static string NormalizeResourceKind(string value) =>
         value.Trim().Replace("-", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
+
+    private static WorkspaceExportProcessorSelectionDto CreateProcessorSelection(
+        WorkspaceExportResourceProcessorOptionViewModel processor)
+    {
+        var selectedProcessorId = processor.IsEnabled
+            ? processor.SelectedProcessor?.Id
+            : null;
+        if (selectedProcessorId is not null &&
+            selectedProcessorId.EndsWith(":none", StringComparison.OrdinalIgnoreCase))
+        {
+            selectedProcessorId = null;
+        }
+
+        return new WorkspaceExportProcessorSelectionDto(
+            NormalizeResourceKind(processor.Id),
+            selectedProcessorId);
+    }
 
     private static IReadOnlyDictionary<BundleId, DateTimeOffset> BuildBundleLastChangedAtLookup(
         WorkspaceChangeSummaryDto? changeSummary)

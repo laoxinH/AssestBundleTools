@@ -1,4 +1,6 @@
 using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Saving.Dtos;
+using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.Tests.Testing;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
@@ -44,6 +46,51 @@ public sealed class WorkspaceExportDialogViewModelTests
         Assert.Equal("Processes Texture2D PNG payloads before bundle export.", manifestProcessor.Description);
     }
 
+    [Fact]
+    public void CreateSubmission_ShouldPreserveBundleAndProcessorSelections()
+    {
+        var viewModel = new WorkspaceExportDialogViewModel(
+            new TestLocalizationService(),
+            changeSummary: null,
+            savePreview: new WorkspaceSavePreviewDto(
+                WorkspaceId: new("workspace-export"),
+                WorkspaceDisplayName: "Workspace Export",
+                OutputDirectory: @"D:\Workspace\exports",
+                PlannedBundleCount: 2,
+                TotalChangeCount: 2,
+                ModifiedAssetCount: 2,
+                ExtractedAssetCount: 0,
+                WorkspaceReplacementCount: 0,
+                FileReplacementCount: 2,
+                BundlePlans:
+                [
+                    CreateBundlePlan("bundle-alpha", "Alpha.ab"),
+                    CreateBundlePlan("bundle-beta", "Beta.ab")
+                ]),
+            resourceProcessorCatalogEntries:
+            [
+                CreateProcessor(
+                    id: "resource.processor.texture.png",
+                    displayName: "Texture PNG Processor",
+                    description: "Processes Texture2D payloads.",
+                    resourceKinds: ["Texture2D"],
+                    isBuiltIn: false)
+            ]);
+
+        viewModel.Bundles.Single(bundle => bundle.BundleId.Value == "bundle-beta").IsSelected = false;
+        var textureSlot = viewModel.ResourceProcessors.Single(static slot => slot.Id == "texture2d");
+        textureSlot.SelectedProcessor = textureSlot.Processors.Single(static processor => processor.Id == "resource.processor.texture.png");
+        var audioSlot = viewModel.ResourceProcessors.Single(static slot => slot.Id == "audio");
+        audioSlot.IsEnabled = false;
+
+        var submission = viewModel.CreateSubmission();
+
+        Assert.True(submission.ExportToWorkspaceDirectory);
+        Assert.Equal("bundle-alpha", Assert.Single(submission.SelectedBundleIds).Value);
+        Assert.Equal("resource.processor.texture.png", submission.ProcessorSelections.Single(selection => selection.ResourceKind == "texture2d").ProcessorId);
+        Assert.Null(submission.ProcessorSelections.Single(selection => selection.ResourceKind == "audio").ProcessorId);
+    }
+
     private static ResourceProcessorCatalogEntryDto CreateProcessor(
         string id,
         string displayName,
@@ -67,4 +114,15 @@ public sealed class WorkspaceExportDialogViewModelTests
             TimeoutMs: 15000,
             ProcessArguments: ["--input", "{inputPath}"]);
     }
+
+    private static WorkspaceSaveBundlePlanDto CreateBundlePlan(string bundleId, string displayName) =>
+        new(
+            BundleId: new BundleId(bundleId),
+            BundleDisplayName: displayName,
+            OutputFilePath: $@"D:\Workspace\exports\{displayName}",
+            ChangeCount: 1,
+            ModifiedAssetCount: 1,
+            ExtractedAssetCount: 0,
+            WorkspaceReplacementCount: 0,
+            FileReplacementCount: 1);
 }

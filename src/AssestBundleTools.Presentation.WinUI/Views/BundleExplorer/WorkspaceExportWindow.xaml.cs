@@ -21,6 +21,8 @@ public sealed partial class WorkspaceExportWindow : Window
     private const int SwRestore = 9;
     private AppWindow? _appWindow;
 
+    public event EventHandler? StartExportRequested;
+
     public WorkspaceExportWindow(
         WorkspaceExportDialogViewModel viewModel,
         IAppNotificationService notificationService)
@@ -60,11 +62,7 @@ public sealed partial class WorkspaceExportWindow : Window
 
     private void OnStartExportButtonClick(object sender, RoutedEventArgs e)
     {
-        ViewModel.MarkExportExecutionDeferred();
-        NotificationService.Show(
-            UiText.Get(ResourceKeys.AppNotificationInfoTitle),
-            UiText.Get(ResourceKeys.WorkspaceExportDialogExecutionDeferred),
-            AppNotificationSeverity.Informational);
+        StartExportRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnCancelButtonClick(object sender, RoutedEventArgs e) => Close();

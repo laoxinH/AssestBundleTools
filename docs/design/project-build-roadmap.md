@@ -105,6 +105,7 @@ tests/
 - 已完成 GameObject 第一版信息浏览预览：Infrastructure 输出对象基础字段、Transform 摘要、组件列表与常见组件引用的 JSON sidecar，Application 缓存命中后水化为专用 DTO，Presentation 通过独立 Formatter / ViewModel / 控件渲染，并复用详情依赖图进行资源跳转，不在 UI 层解析 AB 或渲染场景
 - 已完成 MonoBehaviour 第一版信息浏览预览并按真实样本补强：Infrastructure 输出对象名、启用状态、MonoScript 摘要、字段分组、常见 Unity 序列化容器、前若干字段和 PPtr 引用的 JSON sidecar，Application 缓存命中后水化为专用 DTO，Presentation 通过独立 Formatter / ViewModel / 控件渲染，并复用详情依赖图进行资源跳转；MonoScript 类名无法解析时只显示未解析脚本 PathId，不在 UI 层解析 AB 或推断脚本业务语义
 - 已完成 AnimatorController 第一版信息浏览预览：Infrastructure 输出控制器名、Layer / Parameter 计数、`m_Controller` 常量区中的 StateMachine / State / Transition / BlendTree / Value 摘要，以及 `m_AnimationClips` 等 PPtr 引用 JSON sidecar，Application 缓存命中后水化为专用 DTO，Presentation 通过独立 Formatter / ViewModel / 控件渲染，并复用详情依赖图进行资源跳转；真实样本中 `m_AnimatorLayers / m_AnimatorParameters` 常为空，首版以 `m_Controller` 常量区摘要为主，不做状态机画布或动画播放模拟
+- 已完成工作区真实导出第一阶段：导出窗口默认可输出到 `<workspaceDataRootPath>/exports`，取消工作区输出后会在开始导出时打开目录选择器；导出任务复用 `SaveRebuild` 后台调度，Application 按选中资源包和资源处理器选择编排有界 bundle writer，Infrastructure 先以标准化 artifact 文件级输出修改后的 AB 占位实现，并写出包含 MD5 / SHA-256、processor selection 和 bundle 结果的 `_abt-bundle-export-manifest.json`；后续补 CLI 资源处理器执行、对象级 AssetsTools 写包和保存检查点
 
 ## 3. 总体实施原则
 
@@ -130,7 +131,7 @@ tests/
 | M7 | 标签页浏览骨架 | 已完成 | 打通资源包标签页浏览、复用与关闭 |
 | M8 | 提取与替换流程骨架 | 骨架已完成，下一步回归主线 | 打通提取、工作区替换候选、文件替换候选、应用/撤销、资产多选快捷提取与变更摘要骨架 |
 | M9 | 真实 AB 读取接入 | 阶段性收口 | 用真实解析能力替换假实现，并完成当前高价值预览主线 |
-| M10 | 保存与重建能力 | 前置设计进行中 | 实现另存为、变更输出、资源处理器、真实写包、AB 输出 manifest 与校验 |
+| M10 | 保存与重建能力 | 第一阶段真实导出已接入 | 实现另存为、变更输出、资源处理器、真实写包、AB 输出 manifest 与校验 |
 | M11 | 测试、诊断与打包 | 待开始 | 补测试、日志、设置、发布准备 |
 
 ## 5. 各阶段详细规划

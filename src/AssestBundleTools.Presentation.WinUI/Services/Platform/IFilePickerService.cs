@@ -62,6 +62,12 @@ public interface IFilePickerService
     Task<string?> PickWorkspaceBatchReplacementSourceDirectoryAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// 为工作区导出保存选择 AB 输出目录。
+    /// 返回 <see langword="null"/> 表示用户主动取消，不应视为错误。
+    /// </summary>
+    Task<string?> PickWorkspaceExportOutputDirectoryAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// 为当前资源替换流程选择一个外部文件来源。
     /// 返回 <see langword="null"/> 表示用户主动取消，不应视为错误。
     /// </summary>

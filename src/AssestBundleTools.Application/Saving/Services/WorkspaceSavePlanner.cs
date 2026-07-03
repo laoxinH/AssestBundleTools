@@ -1,5 +1,6 @@
 using System.IO;
 using AssestBundleTools.Application.Saving.Dtos;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Workspace;
 
@@ -77,7 +78,8 @@ internal static class WorkspaceSavePlanner
                     WorkspaceReplacementCount: items.Count(static item => !string.IsNullOrWhiteSpace(item.WorkspaceReplacementSourceAssetName)),
                     FileReplacementCount: items.Count(static item => !string.IsNullOrWhiteSpace(item.FileReplacementSourceFileName)),
                     ArtifactInput: artifactInput,
-                    OutputPreflight: outputPreflight);
+                    OutputPreflight: outputPreflight,
+                    ChangeItems: items);
             })
             .ToArray();
         var outputReadyBundleCount = bundlePlans.Count(static plan => plan.OutputPreflight.Readiness == WorkspaceSaveOutputReadiness.Ready);
@@ -187,7 +189,8 @@ internal sealed record PlannedWorkspaceBundleSave(
     int WorkspaceReplacementCount,
     int FileReplacementCount,
     WorkspaceSaveBundleArtifactInput ArtifactInput,
-    WorkspaceSaveBundleOutputPreflight OutputPreflight);
+    WorkspaceSaveBundleOutputPreflight OutputPreflight,
+    IReadOnlyList<WorkspaceChangeItemDto> ChangeItems);
 
 internal sealed record WorkspaceSaveBundleOutputPreflight(
     WorkspaceSaveOutputReadiness Readiness,

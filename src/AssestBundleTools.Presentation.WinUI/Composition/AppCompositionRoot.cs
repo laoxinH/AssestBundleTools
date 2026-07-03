@@ -95,6 +95,8 @@ internal static class AppCompositionRoot
         var bundleArtifactSessionInvalidator = new AssetsToolsBundleArtifactSessionInvalidator();
         var spineAnimationRuntimePreviewService = new SpineAnimationRuntimePreviewService();
         var workspaceSaveOutputProbe = new FileSystemWorkspaceSaveOutputProbe();
+        var workspaceBundleExporter = new FileSystemWorkspaceBundleExporter();
+        var workspaceBundleExportManifestStore = new FileSystemWorkspaceBundleExportManifestStore();
 
         var openWorkspaceHandler = new OpenWorkspaceHandler(
             workspaceSessionRegistry: workspaceSessionRegistry,
@@ -156,7 +158,9 @@ internal static class AppCompositionRoot
         var saveWorkspaceAsNewBundleHandler = new SaveWorkspaceAsNewBundleHandler(
             workspaceSessionRegistry,
             workspaceDataStoreFactory,
-            workspaceSaveOutputProbe);
+            workspaceSaveOutputProbe,
+            workspaceBundleExporter,
+            workspaceBundleExportManifestStore);
         var assetExtractionFileStore = new FileSystemAssetExtractionFileStore();
         var workspaceExportManifestStore = new FileSystemWorkspaceExportManifestStore();
         var workspaceBatchReplacementSourceFileProbe = new FileSystemWorkspaceBatchReplacementSourceFileProbe();

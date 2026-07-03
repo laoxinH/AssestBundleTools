@@ -220,18 +220,28 @@
                 </Grid>
             </Border>
             <Border Grid.Row="1" Style="{StaticResource WorkspaceExportPanelCardStyle}" Translation="0,0,8">
-                <Grid ColumnSpacing="10">
+                <Grid ColumnSpacing="10" RowSpacing="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
+                    <CheckBox
+                        x:Name="ExportToWorkspaceDirectoryCheckBox"
+                        Grid.ColumnSpan="2"
+                        IsChecked="{Binding ExportToWorkspaceDirectory, Mode=TwoWay}" />
                     <Border
+                        Grid.Row="1"
                         Padding="10,4"
                         Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                         CornerRadius="8">
                         <TextBlock x:Name="OutputDirectoryLabelText" FontSize="12" FontWeight="SemiBold" />
                     </Border>
                     <TextBlock
+                        Grid.Row="1"
                         Grid.Column="1"
                         VerticalAlignment="Center"
                         Text="{Binding OutputDirectoryText}"

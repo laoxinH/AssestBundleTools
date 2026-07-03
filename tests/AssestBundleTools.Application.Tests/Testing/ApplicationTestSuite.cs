@@ -487,6 +487,14 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldReportArtifactInputCounts_WhenContextIsProvided),
             SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldReportArtifactInputCounts_WhenContextIsProvided);
+        await RunTestAsync(
+            failures,
+            nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldExportSelectedBundles_AndSaveManifest),
+            SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldExportSelectedBundles_AndSaveManifest);
+        await RunTestAsync(
+            failures,
+            nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldWriteManifest_ForPartialBundleSuccess),
+            SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldWriteManifest_ForPartialBundleSuccess);
 
         if (failures.Count == 0)
         {
