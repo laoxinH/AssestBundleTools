@@ -42,6 +42,11 @@ public sealed record AssetPreviewDto(
     public AssetPreviewTextDisplayDto? TextDisplay { get; init; }
 
     /// <summary>
+    /// 完整预览内容引用；Presentation 只能把它传回 Application 查询，不能自行解析缓存路径。
+    /// </summary>
+    public AssetPreviewFullContentReferenceDto? FullContentReference { get; init; }
+
+    /// <summary>
     /// 完整文本内容，供 Application 结构化解析过渡使用；Presentation 不得直接绑定该字段。
     /// </summary>
     public string? FullTextContent { get; init; }

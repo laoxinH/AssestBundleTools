@@ -231,6 +231,14 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldExposeBoundedDisplayText_ForLongFileReplacementTextAsset);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldReadChunk_FromPreviewCacheReference),
+            GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldReadChunk_FromPreviewCacheReference);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldClampRequestedLength_ToChunkBudget),
+            GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldClampRequestedLength_ToChunkBudget);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldRoundTripCachedImageOverlay_WhenPreviewCacheStillMatches),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldRoundTripCachedImageOverlay_WhenPreviewCacheStillMatches);
         await RunTestAsync(

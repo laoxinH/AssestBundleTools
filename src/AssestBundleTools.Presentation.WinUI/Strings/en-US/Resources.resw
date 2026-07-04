@@ -3876,6 +3876,15 @@
   <data name="Error.Asset.Extract.PayloadUnavailable" xml:space="preserve">
     <value>No writable extraction payload could be generated: {0}</value>
   </data>
+  <data name="Error.Asset.Preview.FullContentReferenceInvalid" xml:space="preserve">
+    <value>The full preview content reference is invalid. Generate the preview again.</value>
+  </data>
+  <data name="Error.Asset.Preview.TextChunkRangeInvalid" xml:space="preserve">
+    <value>The text preview range is invalid. Select the range to view again.</value>
+  </data>
+  <data name="Error.Asset.Preview.FullContentUnavailable" xml:space="preserve">
+    <value>The full preview content is unavailable or has been cleared: {0}</value>
+  </data>
   <data name="Error.Asset.Extract.WriteFailed" xml:space="preserve">
     <value>Failed to write the extracted file: {0}. Detail: {1}</value>
   </data>

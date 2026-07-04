@@ -3876,6 +3876,15 @@
   <data name="Error.Asset.Extract.PayloadUnavailable" xml:space="preserve">
     <value>未能生成可写出的提取内容：{0}</value>
   </data>
+  <data name="Error.Asset.Preview.FullContentReferenceInvalid" xml:space="preserve">
+    <value>完整预览内容引用无效，请重新生成预览。</value>
+  </data>
+  <data name="Error.Asset.Preview.TextChunkRangeInvalid" xml:space="preserve">
+    <value>文本预览读取范围无效，请重新选择要查看的范围。</value>
+  </data>
+  <data name="Error.Asset.Preview.FullContentUnavailable" xml:space="preserve">
+    <value>完整预览内容不可用或已被清理：{0}</value>
+  </data>
   <data name="Error.Asset.Extract.WriteFailed" xml:space="preserve">
     <value>写出提取文件失败：{0}。详情：{1}</value>
   </data>

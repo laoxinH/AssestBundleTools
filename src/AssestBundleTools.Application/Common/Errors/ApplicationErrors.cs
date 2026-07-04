@@ -185,6 +185,31 @@ public static class ApplicationErrors
             parameters: CreateParameters(("AssetId", assetId.ToString())),
             isUserActionable: true);
 
+    public static AppError AssetPreviewFullContentReferenceInvalid() =>
+        new(
+            code: "Asset.Preview.FullContentReferenceInvalid",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.Preview.FullContentReferenceInvalid",
+            isUserActionable: true);
+
+    public static AppError AssetPreviewTextChunkRangeInvalid() =>
+        new(
+            code: "Asset.Preview.TextChunkRangeInvalid",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.Preview.TextChunkRangeInvalid",
+            isUserActionable: true);
+
+    public static AppError AssetPreviewFullContentUnavailable(string previewCacheKey) =>
+        new(
+            code: "Asset.Preview.FullContentUnavailable",
+            category: ErrorCategory.NotFound,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.Preview.FullContentUnavailable",
+            parameters: CreateParameters(("PreviewCacheKey", previewCacheKey)),
+            isUserActionable: true);
+
     public static AppError AssetExtractionWriteFailed(string outputPath, string? detail = null) =>
         new(
             code: "Asset.Extract.WriteFailed",

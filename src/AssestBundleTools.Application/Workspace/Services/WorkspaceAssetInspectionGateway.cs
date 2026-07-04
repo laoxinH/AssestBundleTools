@@ -13,17 +13,20 @@ public sealed class WorkspaceAssetInspectionGateway : IWorkspaceAssetInspectionG
 {
     private readonly GetAssetDetailsHandler _getAssetDetailsHandler;
     private readonly GetAssetPreviewHandler _getAssetPreviewHandler;
+    private readonly LoadPreviewTextChunkHandler _loadPreviewTextChunkHandler;
     private readonly LoadSpineAssetGroupDetailsHandler _loadSpineAssetGroupDetailsHandler;
     private readonly OpenAssetInPaneHandler _openAssetInPaneHandler;
 
     public WorkspaceAssetInspectionGateway(
         GetAssetDetailsHandler getAssetDetailsHandler,
         GetAssetPreviewHandler getAssetPreviewHandler,
+        LoadPreviewTextChunkHandler loadPreviewTextChunkHandler,
         LoadSpineAssetGroupDetailsHandler loadSpineAssetGroupDetailsHandler,
         OpenAssetInPaneHandler openAssetInPaneHandler)
     {
         _getAssetDetailsHandler = getAssetDetailsHandler ?? throw new ArgumentNullException(nameof(getAssetDetailsHandler));
         _getAssetPreviewHandler = getAssetPreviewHandler ?? throw new ArgumentNullException(nameof(getAssetPreviewHandler));
+        _loadPreviewTextChunkHandler = loadPreviewTextChunkHandler ?? throw new ArgumentNullException(nameof(loadPreviewTextChunkHandler));
         _loadSpineAssetGroupDetailsHandler = loadSpineAssetGroupDetailsHandler ?? throw new ArgumentNullException(nameof(loadSpineAssetGroupDetailsHandler));
         _openAssetInPaneHandler = openAssetInPaneHandler ?? throw new ArgumentNullException(nameof(openAssetInPaneHandler));
     }
@@ -37,6 +40,11 @@ public sealed class WorkspaceAssetInspectionGateway : IWorkspaceAssetInspectionG
         GetAssetPreviewQuery query,
         CancellationToken cancellationToken = default) =>
         _getAssetPreviewHandler.HandleAsync(query, cancellationToken);
+
+    public Task<Result<AssetPreviewTextChunkDto>> LoadPreviewTextChunkAsync(
+        LoadPreviewTextChunkQuery query,
+        CancellationToken cancellationToken = default) =>
+        _loadPreviewTextChunkHandler.HandleAsync(query, cancellationToken);
 
     public Task<Result<SpineAssetGroupDetailsDto>> LoadSpineAssetGroupDetailsAsync(
         LoadSpineAssetGroupDetailsQuery query,

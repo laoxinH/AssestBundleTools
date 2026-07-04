@@ -256,6 +256,7 @@ internal static class AssetPreviewDtoMapper
             ImageFocus: HydrateImageFocus(descriptor.ImageFocus, imageFocusContent))
         {
             TextDisplay = textDisplay.Metadata,
+            FullContentReference = CreatePreviewCacheReference(descriptor, content.LongLength),
             FullTextContent = fullTextContent
         };
     }
@@ -297,4 +298,13 @@ internal static class AssetPreviewDtoMapper
         return previewKind is AssetPreviewKind.Image or AssetPreviewKind.Audio or AssetPreviewKind.Binary;
     }
 
+    private static AssetPreviewFullContentReferenceDto CreatePreviewCacheReference(
+        PreviewCacheDescriptorDto descriptor,
+        long contentLength) =>
+        new(
+            AssetPreviewFullContentReferenceKind.PreviewCache,
+            descriptor.ContentType,
+            contentLength,
+            descriptor.WorkspaceKey,
+            descriptor.PreviewCacheKey);
 }

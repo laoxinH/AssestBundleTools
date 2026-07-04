@@ -533,7 +533,7 @@ cache/
 
 - `previewInfoItems` 只承载轻量补充信息，不承载音频波形点、atlas 矩形集合、模型默认相机等结构化富预览数据。
 - `imageOverlay / imageFocus` 仅用于图片类预览中与主 PNG 同源的轻量结构化数据；更复杂的富预览元数据仍应进入 sidecar metadata。
-- `Text` 预览缓存当前过渡实现会保存完整规范化文本载荷；`AssetPreviewDto.TextContent` 只作为 Presentation 有界展示文本，展示样本由统一 `AssetPreviewTextDisplayPolicy` 生成，并通过 `TextDisplay` 暴露截断和行数字段。结构化 Application 消费者应读取 `FullTextContent ?? TextContent`，避免 Spine atlas / JSON skeleton 等长文本被 UI 截断策略破坏。影响文本载荷语义或展示预算的变更需要递增 `generatorVersion` 或预算策略版本，让旧截断缓存自动失效。后续完整文本查看 / 编辑应按 [asset-preview-payload-contract.md](asset-preview-payload-contract.md) 迁移到 payload reference 和分块读取，不再要求 Presentation 可见 DTO 携带完整文本。
+- `Text` 预览缓存当前过渡实现会保存完整规范化文本载荷；`AssetPreviewDto.TextContent` 只作为 Presentation 有界展示文本，展示样本由统一 `AssetPreviewTextDisplayPolicy` 生成，并通过 `TextDisplay` 暴露截断和行数字段。preview-cache-backed 文本预览会额外暴露 `FullContentReference`，完整查看只能把该 reference 传回 Application 的 `LoadPreviewTextChunkQuery` 读取有限片段，Presentation 不得自行解析缓存路径。结构化 Application 消费者当前仍可读取 `FullTextContent ?? TextContent`，避免 Spine atlas / JSON skeleton 等长文本被 UI 截断策略破坏；这是过渡形态，后续应迁移到内部 payload reader 或 reference query。影响文本载荷语义或展示预算的变更需要递增 `generatorVersion` 或预算策略版本，让旧截断缓存自动失效。后续完整文本查看 / 编辑应按 [asset-preview-payload-contract.md](asset-preview-payload-contract.md) 继续补真正分块 / 流式读取、文件替换源 reference、工作区 staging reference 和编辑草稿 reference。
 - Mesh 预览的轻量几何 sidecar 当前包含顶点、边、submesh 摘要、UV0、通道摘要以及用于贴图化预览的三角面索引；Presentation 只能消费该 DTO 与关联贴图缓存载荷，不得为了补贴图效果直接解析 AB。
 - 当预览能力从 `Image / Text / Summary` 扩展到 `Audio / Model / Atlas` 时，应把这类结构化数据写入 `relativeMetadataPath` 指向的 sidecar metadata 文件。
 - `previewKind` 必须保持通用枚举语义，避免为某一个 Unity 资源类型直接设计专用缓存目录结构。

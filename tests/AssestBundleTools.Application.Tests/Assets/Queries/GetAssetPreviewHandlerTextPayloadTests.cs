@@ -58,6 +58,18 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(fullTextContent.Length, preview.TextDisplay?.FullCharacterCount, "Text display metadata should preserve the full character count.");
         TestAssert.Equal(maxDisplayCharacters, preview.TextDisplay?.MaxDisplayCharacters, "Text display metadata should expose the active character budget.");
         TestAssert.Equal(
+            AssetPreviewFullContentReferenceKind.PreviewCache,
+            preview.FullContentReference?.Kind,
+            "Generated text preview should expose a preview-cache full content reference.");
+        TestAssert.Equal(
+            previewCacheStore.LastSavedPayload?.Descriptor.PreviewCacheKey,
+            preview.FullContentReference?.PreviewCacheKey,
+            "Full content reference should identify the saved preview cache payload.");
+        TestAssert.Equal(
+            Encoding.UTF8.GetByteCount(fullTextContent),
+            preview.FullContentReference?.ContentLength,
+            "Full content reference should expose raw payload length.");
+        TestAssert.Equal(
             maxDisplayCharacters,
             ReadInt64PreviewInfo(preview, AssetPreviewInfoKey.TextDisplayCharacterCount),
             "Preview info should expose the bounded text display character count.");
@@ -105,6 +117,14 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(fullTextContent[..maxDisplayCharacters], preview.TextContent, "Cached display text should use the same leading bounded slice.");
         TestAssert.Equal(fullTextContent, preview.FullTextContent, "Application consumers should still receive full cached text.");
         TestAssert.True(preview.TextDisplay?.IsTruncated == true, "Cached long text metadata should mark the display as truncated.");
+        TestAssert.Equal(
+            AssetPreviewFullContentReferenceKind.PreviewCache,
+            preview.FullContentReference?.Kind,
+            "Cached text preview should expose a preview-cache full content reference.");
+        TestAssert.Equal(
+            previewCachePayload.Descriptor.PreviewCacheKey,
+            preview.FullContentReference?.PreviewCacheKey,
+            "Cached full content reference should identify the cached payload.");
         TestAssert.Equal(
             maxDisplayCharacters,
             ReadInt64PreviewInfo(preview, AssetPreviewInfoKey.TextDisplayCharacterCount),
@@ -235,6 +255,80 @@ internal static partial class GetAssetPreviewHandlerTests
             ReadInt64PreviewInfo(preview, AssetPreviewInfoKey.TextFullCharacterCount),
             "Replacement preview info should expose the full text character count.");
         TestAssert.Equal(longReplacementText, preview.FullTextContent, "Structured consumers should still receive the full replacement text.");
+    }
+
+    public static async Task LoadPreviewTextChunkHandler_ShouldReadChunk_FromPreviewCacheReference()
+    {
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        const string fullTextContent = "0123456789abcdef";
+        var previewCachePayload = CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            fullTextContent,
+            generatorVersion: "generator-1");
+        var previewCacheStore = new TestPreviewCacheStore(previewCachePayload);
+        var handler = new LoadPreviewTextChunkHandler(new TestWorkspaceDataStoreFactory(
+            new TestBundleIndexCacheStore([bundleCacheEntry]),
+            previewCacheStore));
+        var reference = new AssetPreviewFullContentReferenceDto(
+            AssetPreviewFullContentReferenceKind.PreviewCache,
+            "text/plain; charset=utf-8",
+            ContentLength: 0,
+            query.WorkspaceKey,
+            previewCachePayload.Descriptor.PreviewCacheKey);
+
+        var result = await handler.HandleAsync(new LoadPreviewTextChunkQuery(
+            query.WorkspaceDataRootPath,
+            reference,
+            Offset: 4,
+            Length: 6));
+
+        TestAssert.True(result.IsSuccess, "Text chunk loading should succeed for a cached text preview reference.");
+        var chunk = result.Value ?? throw new InvalidOperationException("Expected text chunk result.");
+        TestAssert.Equal("456789", chunk.Text, "Chunk text should match the requested range.");
+        TestAssert.Equal(4, chunk.Offset, "Chunk should report the effective offset.");
+        TestAssert.Equal(6, chunk.Length, "Chunk should report the returned character count.");
+        TestAssert.Equal(fullTextContent.Length, chunk.TotalLength, "Chunk should report the full normalized text length.");
+        TestAssert.True(chunk.HasMore, "Chunk should report that more text remains.");
+        TestAssert.Equal(
+            Encoding.UTF8.GetByteCount(fullTextContent),
+            chunk.Reference.ContentLength,
+            "Chunk reference should refresh the raw payload length.");
+    }
+
+    public static async Task LoadPreviewTextChunkHandler_ShouldClampRequestedLength_ToChunkBudget()
+    {
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        var fullTextContent = new string('x', LoadPreviewTextChunkHandler.MaxChunkLength + 128);
+        var previewCachePayload = CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            fullTextContent,
+            generatorVersion: "generator-1");
+        var previewCacheStore = new TestPreviewCacheStore(previewCachePayload);
+        var handler = new LoadPreviewTextChunkHandler(new TestWorkspaceDataStoreFactory(
+            new TestBundleIndexCacheStore([bundleCacheEntry]),
+            previewCacheStore));
+        var reference = new AssetPreviewFullContentReferenceDto(
+            AssetPreviewFullContentReferenceKind.PreviewCache,
+            "text/plain; charset=utf-8",
+            ContentLength: 0,
+            query.WorkspaceKey,
+            previewCachePayload.Descriptor.PreviewCacheKey);
+
+        var result = await handler.HandleAsync(new LoadPreviewTextChunkQuery(
+            query.WorkspaceDataRootPath,
+            reference,
+            Offset: 0,
+            Length: LoadPreviewTextChunkHandler.MaxChunkLength + 128));
+
+        TestAssert.True(result.IsSuccess, "Oversized text chunk requests should be clamped rather than failing.");
+        var chunk = result.Value ?? throw new InvalidOperationException("Expected text chunk result.");
+        TestAssert.Equal(LoadPreviewTextChunkHandler.MaxChunkLength, chunk.Length, "Chunk length should be clamped to the handler budget.");
+        TestAssert.Equal(LoadPreviewTextChunkHandler.MaxChunkLength, chunk.Text.Length, "Returned text should match the chunk budget.");
+        TestAssert.True(chunk.HasMore, "Clamped chunk should report remaining text.");
     }
 
     private static long? ReadInt64PreviewInfo(AssetPreviewDto preview, AssetPreviewInfoKey key)

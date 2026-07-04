@@ -147,6 +147,7 @@ internal static class AppCompositionRoot
             bundleArtifactCachePrunePolicy,
             bundleArtifactCachePrunePolicy,
             replacementPreviewSourceProvider);
+        var loadPreviewTextChunkHandler = new LoadPreviewTextChunkHandler(workspaceDataStoreFactory);
         var loadSpineAssetGroupDetailsHandler = new LoadSpineAssetGroupDetailsHandler(
             workspaceSessionRegistry,
             getAssetPreviewHandler,
@@ -272,6 +273,7 @@ internal static class AppCompositionRoot
         var workspaceAssetInspectionGateway = new WorkspaceAssetInspectionGateway(
             getAssetDetailsHandler: getAssetDetailsHandler,
             getAssetPreviewHandler: getAssetPreviewHandler,
+            loadPreviewTextChunkHandler: loadPreviewTextChunkHandler,
             loadSpineAssetGroupDetailsHandler: loadSpineAssetGroupDetailsHandler,
             openAssetInPaneHandler: openAssetInPaneHandler);
         var workspaceOperationChangeNotifier = new WorkspaceOperationChangeNotifier();
