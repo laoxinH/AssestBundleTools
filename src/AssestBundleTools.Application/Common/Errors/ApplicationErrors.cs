@@ -201,6 +201,14 @@ public static class ApplicationErrors
             messageToken: "Error.Asset.Preview.TextChunkRangeInvalid",
             isUserActionable: true);
 
+    public static AppError AssetPreviewTextSearchQueryInvalid() =>
+        new(
+            code: "Asset.Preview.TextSearchQueryInvalid",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.Preview.TextSearchQueryInvalid",
+            isUserActionable: true);
+
     public static AppError AssetPreviewFullContentUnavailable(string previewCacheKey) =>
         new(
             code: "Asset.Preview.FullContentUnavailable",

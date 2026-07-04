@@ -15,6 +15,7 @@ public sealed class WorkspaceAssetInspectionGateway : IWorkspaceAssetInspectionG
     private readonly GetAssetPreviewHandler _getAssetPreviewHandler;
     private readonly LoadPreviewTextChunkHandler _loadPreviewTextChunkHandler;
     private readonly LoadPreviewTextLinesHandler _loadPreviewTextLinesHandler;
+    private readonly SearchPreviewTextHandler _searchPreviewTextHandler;
     private readonly LoadSpineAssetGroupDetailsHandler _loadSpineAssetGroupDetailsHandler;
     private readonly OpenAssetInPaneHandler _openAssetInPaneHandler;
 
@@ -23,6 +24,7 @@ public sealed class WorkspaceAssetInspectionGateway : IWorkspaceAssetInspectionG
         GetAssetPreviewHandler getAssetPreviewHandler,
         LoadPreviewTextChunkHandler loadPreviewTextChunkHandler,
         LoadPreviewTextLinesHandler loadPreviewTextLinesHandler,
+        SearchPreviewTextHandler searchPreviewTextHandler,
         LoadSpineAssetGroupDetailsHandler loadSpineAssetGroupDetailsHandler,
         OpenAssetInPaneHandler openAssetInPaneHandler)
     {
@@ -30,6 +32,7 @@ public sealed class WorkspaceAssetInspectionGateway : IWorkspaceAssetInspectionG
         _getAssetPreviewHandler = getAssetPreviewHandler ?? throw new ArgumentNullException(nameof(getAssetPreviewHandler));
         _loadPreviewTextChunkHandler = loadPreviewTextChunkHandler ?? throw new ArgumentNullException(nameof(loadPreviewTextChunkHandler));
         _loadPreviewTextLinesHandler = loadPreviewTextLinesHandler ?? throw new ArgumentNullException(nameof(loadPreviewTextLinesHandler));
+        _searchPreviewTextHandler = searchPreviewTextHandler ?? throw new ArgumentNullException(nameof(searchPreviewTextHandler));
         _loadSpineAssetGroupDetailsHandler = loadSpineAssetGroupDetailsHandler ?? throw new ArgumentNullException(nameof(loadSpineAssetGroupDetailsHandler));
         _openAssetInPaneHandler = openAssetInPaneHandler ?? throw new ArgumentNullException(nameof(openAssetInPaneHandler));
     }
@@ -53,6 +56,11 @@ public sealed class WorkspaceAssetInspectionGateway : IWorkspaceAssetInspectionG
         LoadPreviewTextLinesQuery query,
         CancellationToken cancellationToken = default) =>
         _loadPreviewTextLinesHandler.HandleAsync(query, cancellationToken);
+
+    public Task<Result<AssetPreviewTextSearchResultDto>> SearchPreviewTextAsync(
+        SearchPreviewTextQuery query,
+        CancellationToken cancellationToken = default) =>
+        _searchPreviewTextHandler.HandleAsync(query, cancellationToken);
 
     public Task<Result<SpineAssetGroupDetailsDto>> LoadSpineAssetGroupDetailsAsync(
         LoadSpineAssetGroupDetailsQuery query,

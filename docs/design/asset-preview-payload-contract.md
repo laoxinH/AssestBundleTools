@@ -47,7 +47,7 @@ Application 负责：
 - 定义预览预算策略、DTO 契约、诊断语义和本地化消息 token。
 - 统一解析“当前有效内容”：原始资源、工作区替换、文件替换、编辑草稿和 Spine 组组成文件草稿都应进入同一套 preview source resolution。
 - 对所有 preview generator 输出做展示裁剪、集合截断、摘要降级和诊断补充。
-- 提供 `LoadPreviewTextChunkQuery`、`LoadPreviewTextLinesQuery`、后续 `SearchPreviewTextQuery`、`FormatPreviewTextRangeQuery` 等按需读取契约。
+- 提供 `LoadPreviewTextChunkQuery`、`LoadPreviewTextLinesQuery`、`SearchPreviewTextQuery`、后续 `FormatPreviewTextRangeQuery` 等按需读取契约。
 
 ### 3.3 Infrastructure
 
@@ -98,7 +98,7 @@ payload reference 可以指向：
 
 Presentation 只能把 reference 传回 Application query，不能自行拼路径读取。
 
-当前已落地的过渡形态是 `AssetPreviewFullContentReferenceDto`：它记录 `Kind / ContentType / ContentLength` 以及按来源区分的引用字段。`PreviewCache` 使用 `WorkspaceKey / PreviewCacheKey` 指向 `cache/previews` payload；`FileReplacement` 使用 `SourcePath` 指向当前文件替换 / override 来源，但 Presentation 仍只能把 reference 传回 Application query，不能自行读取文件。`LoadPreviewTextChunkQuery` 已经可以通过 Application gateway 读取有界文本片段，当前 offset / length 以规范化后的字符位置为单位；`LoadPreviewTextLinesQuery` 已经可以读取规范化行范围，服务后续行号、滚动和编辑器虚拟化。`IPreviewCacheStore.LoadTextChunk / LoadTextLines` 是预览缓存完整文本读取边界，`IReplacementPreviewSourceProvider.LoadFileTextChunkAsync / LoadFileTextLinesAsync` 是文件替换文本读取边界；真实 Infrastructure 实现必须优先分块 / 流式读取，避免为了普通分块查询把整个 payload 拷贝进内存。
+当前已落地的过渡形态是 `AssetPreviewFullContentReferenceDto`：它记录 `Kind / ContentType / ContentLength` 以及按来源区分的引用字段。`PreviewCache` 使用 `WorkspaceKey / PreviewCacheKey` 指向 `cache/previews` payload；`FileReplacement` 使用 `SourcePath` 指向当前文件替换 / override 来源，但 Presentation 仍只能把 reference 传回 Application query，不能自行读取文件。`LoadPreviewTextChunkQuery` 已经可以通过 Application gateway 读取有界文本片段，当前 offset / length 以规范化后的字符位置为单位；`LoadPreviewTextLinesQuery` 已经可以读取规范化行范围，服务后续行号、滚动和编辑器虚拟化；`SearchPreviewTextQuery` 已经可以返回有界匹配列表、匹配行列、有限行片段和 `HasMore`。`IPreviewCacheStore.LoadTextChunk / LoadTextLines / SearchText` 是预览缓存完整文本读取边界，`IReplacementPreviewSourceProvider.LoadFileTextChunkAsync / LoadFileTextLinesAsync / SearchFileTextAsync` 是文件替换文本读取边界；真实 Infrastructure 实现必须优先分块 / 流式读取，避免为了普通分块、分行或搜索查询把整个 payload 拷贝进内存。
 
 ### 4.3 诊断和预算结果
 
@@ -251,11 +251,11 @@ Preview.FullContentUnavailable
 当前进度：
 
 - preview-cache-backed 的 `Text` 预览已返回 `FullContentReference`，普通展示仍通过 `TextContent / TextDisplay` 保持有界。
-- 已新增 `LoadPreviewTextChunkQuery / LoadPreviewTextLinesQuery` 和 Application gateway 入口，可在不暴露缓存路径给 Presentation 的前提下读取最大预算内文本块或行范围。
-- `JsonPreviewCacheStore` 已实现 `LoadTextChunk / LoadTextLines` 流式读取：常规新缓存会优先使用 `TextFullCharacterCount / TextEstimatedFullLineCount` 元数据作为总长度 / 总行数，旧缓存缺失该元数据时才扫描剩余文本计算。
-- 文件替换 `TextAsset` 预览已返回 `FileReplacement` reference；`LoadPreviewTextChunkHandler / LoadPreviewTextLinesHandler` 会通过 `IReplacementPreviewSourceProvider` 读取替换文件的规范化文本块或行范围，真实文件实现会保留 `.skel` 非 JSON 视为二进制的保护语义。
+- 已新增 `LoadPreviewTextChunkQuery / LoadPreviewTextLinesQuery / SearchPreviewTextQuery` 和 Application gateway 入口，可在不暴露缓存路径给 Presentation 的前提下读取最大预算内文本块、行范围或有限搜索结果。
+- `JsonPreviewCacheStore` 已实现 `LoadTextChunk / LoadTextLines / SearchText` 流式读取：常规新缓存会优先使用 `TextFullCharacterCount / TextEstimatedFullLineCount` 元数据作为总长度 / 总行数，旧缓存缺失该元数据时才扫描剩余文本计算；搜索返回有限匹配和 `HasMore`，匹配行片段本身也有长度上限。
+- 文件替换 `TextAsset` 预览已返回 `FileReplacement` reference；`LoadPreviewTextChunkHandler / LoadPreviewTextLinesHandler / SearchPreviewTextHandler` 会通过 `IReplacementPreviewSourceProvider` 读取替换文件的规范化文本块、行范围或搜索结果，真实文件实现会保留 `.skel` 非 JSON 视为二进制的保护语义。
 - 工作区 staging 替换源和未来编辑草稿还没有自己的 reference 类型；这些路径的结构化 Application 消费仍暂时依赖 `FullTextContent` 过渡字段。
-- 当前仍未建立持久行索引、随机行跳转和搜索索引；大 offset / 大 line index 查询是顺序跳过，内存安全但还不是最终的快速跳转形态。
+- 当前仍未建立持久行索引、随机行跳转和搜索索引；大 offset / 大 line index 查询以及搜索仍是顺序扫描，内存安全但还不是最终的快速跳转 / 高频搜索形态。
 
 验收：
 
@@ -352,18 +352,18 @@ Preview.FullContentUnavailable
 - atlas `TextAsset` 替换为巨大 / JSON 错输入时，Spine 组详情会快速返回诊断并跳过 texture page、overlay 和 runtime 尝试。
 - 普通文本预览已开始收敛到 Application 层统一 `AssetPreviewTextDisplayPolicy`：原始生成 / 缓存恢复 / 文件替换文本预览共享同一字符数与行数展示预算，并输出 `TextDisplay` 元数据；Presentation 文本 presenter 也保留同一预算兜底，避免异常路径把超长文本直接绑定到 UI。
 - `TextDisplay` 元数据已投影为稳定 `AssetPreviewInfoItemDto`：详情信息卡可以显示预览字符数、完整字符数、预览行数、估计完整行数和是否截断；原始生成、缓存恢复和文件替换预览路径共享同一投影 helper。
-- preview-cache-backed 的文本预览已带 `FullContentReference`，并提供 `LoadPreviewTextChunkQuery / LoadPreviewTextLinesQuery`；Presentation 可以把 reference 传回 Application 读取有界文本块或行范围，而不需要自行解析缓存路径。真实 JSON preview cache store 已覆盖 `LoadTextChunk / LoadTextLines` 为流式读取，避免常规完整文本查看为了分块重新载入全量 payload。
-- 文件替换 `TextAsset` 的普通展示文本已做有界裁剪，并已返回 `FileReplacement` 完整内容 reference；完整文本查看可通过同一组 query 按块或按行读取替换来源文件。`FullTextContent` 仍暂时保留给 Application 内部结构化处理和导出链路使用，工作区 staging 和编辑草稿的完整文本 reference 仍属于后续迁移范围。
+- preview-cache-backed 的文本预览已带 `FullContentReference`，并提供 `LoadPreviewTextChunkQuery / LoadPreviewTextLinesQuery / SearchPreviewTextQuery`；Presentation 可以把 reference 传回 Application 读取有界文本块、行范围或有限搜索结果，而不需要自行解析缓存路径。真实 JSON preview cache store 已覆盖 `LoadTextChunk / LoadTextLines / SearchText` 为流式读取，避免常规完整文本查看和搜索为了分块重新载入全量 payload。
+- 文件替换 `TextAsset` 的普通展示文本已做有界裁剪，并已返回 `FileReplacement` 完整内容 reference；完整文本查看可通过同一组 query 按块、按行或搜索读取替换来源文件。`FullTextContent` 仍暂时保留给 Application 内部结构化处理和导出链路使用，工作区 staging 和编辑草稿的完整文本 reference 仍属于后续迁移范围。
 - Spine runtime adapter 已在 V3.8 / V4.2 的预览和 playback session 前加入 atlas 输入 guard。
 
 推荐下一步继续沿阶段 3 做边界收口，然后回到阶段 2/4 的能力扩展：
 
 1. 为工作区 staging 替换源和未来文本编辑草稿补充 `FullContentReference` 类型，逐步减少 `FullTextContent` 在普通预览 DTO 中继续承担完整文本传递职责。
-2. 为完整文本查看补可取消的后台行索引构建和搜索 query：现有按行读取仍是顺序扫描，后续应把大 line index 跳转切到索引辅助，再扩展到分块搜索与 JSON 范围格式化。
+2. 为完整文本查看补可取消的后台行索引构建和索引辅助搜索：现有按行读取与搜索仍是顺序扫描，后续应把大 line index 跳转和高频搜索切到索引辅助，再扩展到 JSON 范围格式化。
 3. 继续盘点结构化大集合和诊断文本，优先关注 TypeTree 字段树、CLI result JSON、外部工具 stdout / stderr 和插件诊断，确保它们也有预算和 reference / sidecar 边界。
 4. 在文本链路边界稳定后，进入阶段 2：把 Spine atlas 现有 guard 迁入统一 policy，并扩展到 skel JSON、TypeTree、图片、音频、Mesh 和 CLI result JSON。
 
-当前阶段性建议：下一步优先做 staging / draft reference 扩展，并补后台行索引与搜索 query；这样完整文本查看才能从“可安全读块 / 读行”继续推进到“可快速跳转、搜索和编辑”的工作面基础。
+当前阶段性建议：下一步优先做 staging / draft reference 扩展，并补后台行索引与索引辅助搜索；这样完整文本查看才能从“可安全读块 / 读行 / 搜索”继续推进到“可快速跳转、频繁搜索和编辑”的工作面基础。
 
 ## 11. 待决问题
 

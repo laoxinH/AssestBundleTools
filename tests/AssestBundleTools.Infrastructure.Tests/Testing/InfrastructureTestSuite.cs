@@ -66,6 +66,14 @@ internal static class InfrastructureTestSuite
             JsonPreviewCacheStoreTests.LoadTextLines_ShouldReadNormalizedLineRange_FromPayloadFile);
         await RunTestAsync(
             failures,
+            nameof(JsonPreviewCacheStoreTests.SearchText_ShouldFindBoundedMatches_FromPayloadFile),
+            JsonPreviewCacheStoreTests.SearchText_ShouldFindBoundedMatches_FromPayloadFile);
+        await RunTestAsync(
+            failures,
+            nameof(JsonPreviewCacheStoreTests.SearchText_ShouldReturnTruncatedLineSnippet_ForVeryLongLine),
+            JsonPreviewCacheStoreTests.SearchText_ShouldReturnTruncatedLineSnippet_ForVeryLongLine);
+        await RunTestAsync(
+            failures,
             nameof(JsonPreviewCacheStoreTests.GetUsage_ShouldReturnPreviewEntriesAndTotalSize),
             JsonPreviewCacheStoreTests.GetUsage_ShouldReturnPreviewEntriesAndTotalSize);
         await RunTestAsync(
@@ -350,8 +358,16 @@ internal static class InfrastructureTestSuite
             FileSystemReplacementPreviewSourceProviderTests.LoadFileTextLinesAsync_ShouldReadNormalizedLineRange_ForTextAssetFile);
         await RunTestAsync(
             failures,
+            nameof(FileSystemReplacementPreviewSourceProviderTests.SearchFileTextAsync_ShouldFindBoundedMatches_ForTextAssetFile),
+            FileSystemReplacementPreviewSourceProviderTests.SearchFileTextAsync_ShouldFindBoundedMatches_ForTextAssetFile);
+        await RunTestAsync(
+            failures,
             nameof(FileSystemReplacementPreviewSourceProviderTests.LoadFileTextChunkAsync_ShouldRejectBinarySkelTextAssetFile),
             FileSystemReplacementPreviewSourceProviderTests.LoadFileTextChunkAsync_ShouldRejectBinarySkelTextAssetFile);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemReplacementPreviewSourceProviderTests.SearchFileTextAsync_ShouldRejectBinarySkelTextAssetFile),
+            FileSystemReplacementPreviewSourceProviderTests.SearchFileTextAsync_ShouldRejectBinarySkelTextAssetFile);
         await RunTestAsync(
             failures,
             nameof(FileSystemReplacementPreviewSourceProviderTests.LoadFilePreviewAsync_ShouldReturnImagePayload_ForTextureReplacement),

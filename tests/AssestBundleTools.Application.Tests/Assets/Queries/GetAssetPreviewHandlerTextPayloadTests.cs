@@ -492,6 +492,97 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(LoadPreviewTextLinesHandler.MaxLineCount, replacementPreviewSourceProvider.LastTextLinesLineCount, "Oversized line requests should be clamped before provider execution.");
     }
 
+    public static async Task SearchPreviewTextHandler_ShouldFindBoundedMatches_FromPreviewCacheReference()
+    {
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        const string fullTextContent = "Alpha\nbeta target\nTARGET again\ntail target";
+        var previewCachePayload = CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            fullTextContent,
+            generatorVersion: "generator-1");
+        var previewCacheStore = new TestPreviewCacheStore(previewCachePayload);
+        var handler = new SearchPreviewTextHandler(new TestWorkspaceDataStoreFactory(
+            new TestBundleIndexCacheStore([bundleCacheEntry]),
+            previewCacheStore));
+        var reference = new AssetPreviewFullContentReferenceDto(
+            AssetPreviewFullContentReferenceKind.PreviewCache,
+            "text/plain; charset=utf-8",
+            ContentLength: 0,
+            query.WorkspaceKey,
+            previewCachePayload.Descriptor.PreviewCacheKey);
+
+        var result = await handler.HandleAsync(new SearchPreviewTextQuery(
+            query.WorkspaceDataRootPath,
+            reference,
+            SearchText: "target",
+            StartLineIndex: 0,
+            MaxMatchCount: 2,
+            MatchCase: false));
+
+        TestAssert.True(result.IsSuccess, "Text search should succeed for a cached text preview reference.");
+        var search = result.Value ?? throw new InvalidOperationException("Expected text search result.");
+        TestAssert.Equal(2, search.Matches.Count, "Search result should respect the requested match budget.");
+        TestAssert.Equal(1, search.Matches[0].LineIndex, "Search should report the first matching line index.");
+        TestAssert.Equal(5, search.Matches[0].ColumnIndex, "Search should report the first match column.");
+        TestAssert.Equal("beta target", search.Matches[0].LineText, "Search should include a bounded line snippet.");
+        TestAssert.Equal(2, search.Matches[1].LineIndex, "Case-insensitive search should match uppercase text.");
+        TestAssert.True(search.HasMore, "Search should report more matches beyond the requested budget.");
+        TestAssert.Equal(4, search.TotalScannedLineCount, "Search should scan until it confirms another match exists.");
+        TestAssert.Equal(0, previewCacheStore.LoadCallCount, "Search should not hydrate the full preview payload.");
+        TestAssert.Equal(1, previewCacheStore.SearchTextCallCount, "Preview cache store should serve one search request.");
+    }
+
+    public static async Task SearchPreviewTextHandler_ShouldFindMatches_FromFileReplacementReference()
+    {
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        const string sourcePath = @"C:\Imports\large-atlas.json";
+        const string fullTextContent = "target ignored by start\nTarget exact\nTarget extra";
+        var previewCacheStore = new TestPreviewCacheStore(CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            "cached text should not be used",
+            generatorVersion: "generator-1"));
+        var replacementPreviewSourceProvider = new TestReplacementPreviewSourceProvider(
+            Result<AssetPreviewContentDto>.Success(new AssetPreviewContentDto(
+                Kind: AssetPreviewKind.Text,
+                ContentType: "text/plain; charset=utf-8",
+                Content: Encoding.UTF8.GetBytes(fullTextContent))));
+        var handler = new SearchPreviewTextHandler(
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore),
+            replacementPreviewSourceProvider);
+        var reference = new AssetPreviewFullContentReferenceDto(
+            AssetPreviewFullContentReferenceKind.FileReplacement,
+            "text/plain; charset=utf-8",
+            ContentLength: 0,
+            WorkspaceKey: string.Empty,
+            SourcePath: sourcePath);
+
+        var result = await handler.HandleAsync(new SearchPreviewTextQuery(
+            query.WorkspaceDataRootPath,
+            reference,
+            SearchText: "Target",
+            StartLineIndex: 1,
+            MaxMatchCount: SearchPreviewTextHandler.MaxMatchCount + 16,
+            MatchCase: true));
+
+        TestAssert.True(result.IsSuccess, "Text search should succeed for a file replacement reference.");
+        var search = result.Value ?? throw new InvalidOperationException("Expected text search result.");
+        TestAssert.Equal(2, search.Matches.Count, "Replacement search should find matches after the requested start line.");
+        TestAssert.Equal(1, search.Matches[0].LineIndex, "Replacement search should preserve original line indices.");
+        TestAssert.Equal("Target exact", search.Matches[0].LineText, "Replacement search should include the matched line.");
+        TestAssert.False(search.HasMore, "Replacement search should report no overflow when the clamped budget is enough.");
+        TestAssert.Equal(0, previewCacheStore.LoadCallCount, "Replacement search should not hydrate preview cache.");
+        TestAssert.Equal(1, replacementPreviewSourceProvider.SearchFileTextCallCount, "Replacement source provider should serve one search request.");
+        TestAssert.Equal(sourcePath, replacementPreviewSourceProvider.LastSearchSourceFilePath, "Replacement source provider should receive source path.");
+        TestAssert.Equal(SearchPreviewTextHandler.MaxMatchCount, replacementPreviewSourceProvider.LastSearchMaxMatchCount, "Oversized search requests should be clamped before provider execution.");
+        TestAssert.True(replacementPreviewSourceProvider.LastSearchMatchCase, "Replacement source provider should receive match-case option.");
+    }
+
     private static long? ReadInt64PreviewInfo(AssetPreviewDto preview, AssetPreviewInfoKey key)
     {
         return preview.PreviewInfoItems?

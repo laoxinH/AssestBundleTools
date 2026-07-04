@@ -153,6 +153,9 @@ internal static class AppCompositionRoot
         var loadPreviewTextLinesHandler = new LoadPreviewTextLinesHandler(
             workspaceDataStoreFactory,
             replacementPreviewSourceProvider);
+        var searchPreviewTextHandler = new SearchPreviewTextHandler(
+            workspaceDataStoreFactory,
+            replacementPreviewSourceProvider);
         var loadSpineAssetGroupDetailsHandler = new LoadSpineAssetGroupDetailsHandler(
             workspaceSessionRegistry,
             getAssetPreviewHandler,
@@ -280,6 +283,7 @@ internal static class AppCompositionRoot
             getAssetPreviewHandler: getAssetPreviewHandler,
             loadPreviewTextChunkHandler: loadPreviewTextChunkHandler,
             loadPreviewTextLinesHandler: loadPreviewTextLinesHandler,
+            searchPreviewTextHandler: searchPreviewTextHandler,
             loadSpineAssetGroupDetailsHandler: loadSpineAssetGroupDetailsHandler,
             openAssetInPaneHandler: openAssetInPaneHandler);
         var workspaceOperationChangeNotifier = new WorkspaceOperationChangeNotifier();

@@ -251,6 +251,14 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.LoadPreviewTextLinesHandler_ShouldReadLines_FromFileReplacementReference);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.SearchPreviewTextHandler_ShouldFindBoundedMatches_FromPreviewCacheReference),
+            GetAssetPreviewHandlerTests.SearchPreviewTextHandler_ShouldFindBoundedMatches_FromPreviewCacheReference);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetPreviewHandlerTests.SearchPreviewTextHandler_ShouldFindMatches_FromFileReplacementReference),
+            GetAssetPreviewHandlerTests.SearchPreviewTextHandler_ShouldFindMatches_FromFileReplacementReference);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldRoundTripCachedImageOverlay_WhenPreviewCacheStillMatches),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldRoundTripCachedImageOverlay_WhenPreviewCacheStillMatches);
         await RunTestAsync(

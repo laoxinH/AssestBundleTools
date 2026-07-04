@@ -25,4 +25,12 @@ public interface IReplacementPreviewSourceProvider
         int startLineIndex,
         int lineCount,
         CancellationToken cancellationToken = default);
+
+    Task<Result<ReplacementTextSearchResultDto>> SearchFileTextAsync(
+        string sourceFilePath,
+        string searchText,
+        int startLineIndex,
+        int maxMatchCount,
+        bool matchCase,
+        CancellationToken cancellationToken = default);
 }

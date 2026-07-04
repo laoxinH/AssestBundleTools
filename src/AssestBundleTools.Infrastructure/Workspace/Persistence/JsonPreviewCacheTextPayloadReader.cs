@@ -88,6 +88,51 @@ internal static class JsonPreviewCacheTextPayloadReader
         }
     }
 
+    public static PreviewCacheTextSearchResultDto? TrySearch(
+        PreviewCacheDescriptorDto descriptor,
+        string payloadFilePath,
+        long payloadLength,
+        string searchText,
+        int startLineIndex,
+        int maxMatchCount,
+        bool matchCase)
+    {
+        try
+        {
+            using var stream = JsonWorkspaceFileStorageHelper.OpenSharedReadStream(payloadFilePath);
+            using var reader = CreateReader(stream);
+            var lineReader = new NormalizedLineReader(reader);
+
+            var skippedLineCount = SkipLines(lineReader, startLineIndex);
+            var result = SearchLines(
+                lineReader,
+                searchText,
+                skippedLineCount,
+                maxMatchCount,
+                matchCase);
+
+            return new PreviewCacheTextSearchResultDto(
+                descriptor,
+                result.Matches,
+                skippedLineCount,
+                skippedLineCount + result.ScannedLineCount,
+                result.HasMore,
+                payloadLength);
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (DecoderFallbackException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
     private static StreamReader CreateReader(Stream stream) =>
         new(
             stream,
@@ -188,6 +233,50 @@ internal static class JsonPreviewCacheTextPayloadReader
         return count;
     }
 
+    private static TextSearchReadResult SearchLines(
+        NormalizedLineReader reader,
+        string searchText,
+        int startLineIndex,
+        int maxMatchCount,
+        bool matchCase)
+    {
+        var matches = new List<AssetPreviewTextSearchMatchDto>(Math.Min(maxMatchCount, 64));
+        var comparison = matchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+        var lineIndex = startLineIndex;
+        var scannedLineCount = 0;
+
+        while (reader.TryReadLine(out var line))
+        {
+            scannedLineCount++;
+            var columnIndex = line.IndexOf(searchText, comparison);
+            while (columnIndex >= 0)
+            {
+                if (matches.Count >= maxMatchCount)
+                {
+                    return new TextSearchReadResult(matches, scannedLineCount, HasMore: true);
+                }
+
+                matches.Add(CreateSearchMatch(lineIndex, columnIndex, line));
+                columnIndex = line.IndexOf(searchText, columnIndex + Math.Max(1, searchText.Length), comparison);
+            }
+
+            lineIndex++;
+        }
+
+        return new TextSearchReadResult(matches, scannedLineCount, HasMore: false);
+    }
+
+    private static AssetPreviewTextSearchMatchDto CreateSearchMatch(
+        int lineIndex,
+        int columnIndex,
+        string line)
+    {
+        const int maxLineTextLength = 1024;
+        var isTruncated = line.Length > maxLineTextLength;
+        var lineText = isTruncated ? line[..maxLineTextLength] : line;
+        return new AssetPreviewTextSearchMatchDto(lineIndex, columnIndex, lineText, isTruncated);
+    }
+
     private static bool TryReadNormalizedCharacter(TextReader reader, out char character)
     {
         var value = reader.Read();
@@ -254,4 +343,9 @@ internal static class JsonPreviewCacheTextPayloadReader
             return true;
         }
     }
+
+    private readonly record struct TextSearchReadResult(
+        IReadOnlyList<AssetPreviewTextSearchMatchDto> Matches,
+        int ScannedLineCount,
+        bool HasMore);
 }

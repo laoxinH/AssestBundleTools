@@ -3882,6 +3882,9 @@
   <data name="Error.Asset.Preview.TextChunkRangeInvalid" xml:space="preserve">
     <value>文本预览读取范围无效，请重新选择要查看的范围。</value>
   </data>
+  <data name="Error.Asset.Preview.TextSearchQueryInvalid" xml:space="preserve">
+    <value>文本预览搜索条件无效，请缩短关键词或重新输入。</value>
+  </data>
   <data name="Error.Asset.Preview.FullContentUnavailable" xml:space="preserve">
     <value>完整预览内容不可用或已被清理：{0}</value>
   </data>

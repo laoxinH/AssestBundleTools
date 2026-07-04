@@ -110,6 +110,28 @@ public sealed class FileSystemReplacementPreviewSourceProvider : IReplacementPre
             cancellationToken));
     }
 
+    public Task<Result<ReplacementTextSearchResultDto>> SearchFileTextAsync(
+        string sourceFilePath,
+        string searchText,
+        int startLineIndex,
+        int maxMatchCount,
+        bool matchCase,
+        CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromResult(Result<ReplacementTextSearchResultDto>.Cancelled());
+        }
+
+        return Task.Run(() => FileSystemReplacementTextSearchReader.Search(
+            sourceFilePath,
+            searchText,
+            startLineIndex,
+            maxMatchCount,
+            matchCase,
+            cancellationToken));
+    }
+
     private static string ResolveImageContentType(string path)
     {
         return Path.GetExtension(path).Trim().ToLowerInvariant() switch

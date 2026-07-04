@@ -168,6 +168,83 @@ internal static class JsonPreviewCacheStoreTests
         TestAssert.Equal(System.Text.Encoding.UTF8.GetByteCount(sourceText), result.ContentLength, "Line range should expose raw payload file length.");
     }
 
+    public static void SearchText_ShouldFindBoundedMatches_FromPayloadFile()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonPreviewCacheStore(temporaryDirectory.DirectoryPath);
+        const string sourceText = "Header\r\nalpha target\rTARGET upper\ntail target\n";
+        var display = AssetPreviewTextDisplayPolicy.CreateDisplay(
+            sourceText.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n'));
+        var descriptor = CreateDescriptor(
+            workspaceKey: "workspace-a",
+            previewCacheKey: "preview-text-search",
+            bundleCacheKey: "bundle-cache-text",
+            relativePayloadPath: "payloads/text/preview-text-search.txt") with
+        {
+            PreviewKind = AssetPreviewKind.Text.ToString(),
+            ContentType = "text/plain; charset=utf-8",
+            PreviewInfoItems = AssetPreviewTextDisplayPolicy.AppendDisplayInfoItems(
+                null,
+                display.Metadata)
+        };
+
+        store.Save(new PreviewCachePayloadDto(
+            descriptor,
+            System.Text.Encoding.UTF8.GetBytes(sourceText)));
+
+        var search = store.SearchText(
+            "workspace-a",
+            "preview-text-search",
+            searchText: "target",
+            startLineIndex: 1,
+            maxMatchCount: 2,
+            matchCase: false);
+
+        var result = TestAssert.NotNull(search, "Text search should be readable from the stored preview payload.");
+        TestAssert.Equal(2, result.Matches.Count, "Search should return the requested match budget.");
+        TestAssert.Equal(1, result.StartLineIndex, "Search should report the effective start line.");
+        TestAssert.Equal(1, result.Matches[0].LineIndex, "Search should report normalized line indices.");
+        TestAssert.Equal("alpha target", result.Matches[0].LineText, "Search should normalize CRLF before matching.");
+        TestAssert.Equal(2, result.Matches[1].LineIndex, "Case-insensitive search should match normalized CR lines.");
+        TestAssert.True(result.HasMore, "Search should report additional matches beyond the budget.");
+        TestAssert.Equal(4, result.TotalScannedLineCount, "Search should scan until an extra match proves overflow.");
+        TestAssert.Equal(System.Text.Encoding.UTF8.GetByteCount(sourceText), result.ContentLength, "Search should expose raw payload file length.");
+    }
+
+    public static void SearchText_ShouldReturnTruncatedLineSnippet_ForVeryLongLine()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonPreviewCacheStore(temporaryDirectory.DirectoryPath);
+        var sourceText = new string('a', 1200) + "needle";
+        var descriptor = CreateDescriptor(
+            workspaceKey: "workspace-a",
+            previewCacheKey: "preview-text-search-long-line",
+            bundleCacheKey: "bundle-cache-text",
+            relativePayloadPath: "payloads/text/preview-text-search-long-line.txt") with
+        {
+            PreviewKind = AssetPreviewKind.Text.ToString(),
+            ContentType = "text/plain; charset=utf-8"
+        };
+
+        store.Save(new PreviewCachePayloadDto(
+            descriptor,
+            System.Text.Encoding.UTF8.GetBytes(sourceText)));
+
+        var search = store.SearchText(
+            "workspace-a",
+            "preview-text-search-long-line",
+            searchText: "needle",
+            startLineIndex: 0,
+            maxMatchCount: 1,
+            matchCase: true);
+
+        var result = TestAssert.NotNull(search, "Text search should handle very long lines.");
+        var match = TestAssert.Single(result.Matches);
+        TestAssert.Equal(1200, match.ColumnIndex, "Search should preserve the real match column even when line text is truncated.");
+        TestAssert.Equal(1024, match.LineText.Length, "Search line snippet should be bounded.");
+        TestAssert.True(match.IsLineTextTruncated, "Search should mark truncated line snippets.");
+    }
+
     public static void GetUsage_ShouldReturnPreviewEntriesAndTotalSize()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();

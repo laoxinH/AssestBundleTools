@@ -1,4 +1,5 @@
 using System.Text;
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 
 namespace AssestBundleTools.Application.Workspace.Services;
@@ -75,6 +76,78 @@ public interface IPreviewCacheStore
             safeLineCount,
             fullText.Length == 0 ? 0 : allLines.Length,
             payload.Content.LongLength);
+    }
+
+    PreviewCacheTextSearchResultDto? SearchText(
+        string workspaceKey,
+        string previewCacheKey,
+        string searchText,
+        int startLineIndex,
+        int maxMatchCount,
+        bool matchCase)
+    {
+        if (string.IsNullOrEmpty(searchText) ||
+            startLineIndex < 0 ||
+            maxMatchCount <= 0)
+        {
+            return null;
+        }
+
+        var payload = Load(workspaceKey, previewCacheKey);
+        if (payload is null)
+        {
+            return null;
+        }
+
+        var fullText = Encoding.UTF8.GetString(payload.Content)
+            .Replace("\r\n", "\n")
+            .Replace('\r', '\n');
+        var allLines = fullText.Length == 0
+            ? Array.Empty<string>()
+            : fullText.Split('\n');
+        var matches = new List<AssetPreviewTextSearchMatchDto>(Math.Min(maxMatchCount, 64));
+        var comparison = matchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+        var hasMore = false;
+        var scannedLineCount = 0;
+
+        for (var index = Math.Min(startLineIndex, allLines.Length); index < allLines.Length; index++)
+        {
+            scannedLineCount++;
+            var line = allLines[index];
+            var columnIndex = line.IndexOf(searchText, comparison);
+            while (columnIndex >= 0)
+            {
+                if (matches.Count >= maxMatchCount)
+                {
+                    hasMore = true;
+                    break;
+                }
+
+                matches.Add(CreateSearchMatch(index, columnIndex, line));
+                columnIndex = line.IndexOf(searchText, columnIndex + Math.Max(1, searchText.Length), comparison);
+            }
+
+            if (hasMore)
+            {
+                break;
+            }
+        }
+
+        return new PreviewCacheTextSearchResultDto(
+            payload.Descriptor,
+            matches,
+            Math.Min(startLineIndex, allLines.Length),
+            Math.Min(startLineIndex, allLines.Length) + scannedLineCount,
+            hasMore,
+            payload.Content.LongLength);
+    }
+
+    private static AssetPreviewTextSearchMatchDto CreateSearchMatch(int lineIndex, int columnIndex, string line)
+    {
+        const int maxLineTextLength = 1024;
+        var isTruncated = line.Length > maxLineTextLength;
+        var lineText = isTruncated ? line[..maxLineTextLength] : line;
+        return new AssetPreviewTextSearchMatchDto(lineIndex, columnIndex, lineText, isTruncated);
     }
 
     IReadOnlyList<PreviewCacheDescriptorDto> LoadDescriptors(string workspaceKey);

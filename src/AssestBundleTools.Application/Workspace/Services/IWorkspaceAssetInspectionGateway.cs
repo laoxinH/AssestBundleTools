@@ -27,6 +27,10 @@ public interface IWorkspaceAssetInspectionGateway
         LoadPreviewTextLinesQuery query,
         CancellationToken cancellationToken = default);
 
+    Task<Result<AssetPreviewTextSearchResultDto>> SearchPreviewTextAsync(
+        SearchPreviewTextQuery query,
+        CancellationToken cancellationToken = default);
+
     Task<Result<SpineAssetGroupDetailsDto>> LoadSpineAssetGroupDetailsAsync(
         LoadSpineAssetGroupDetailsQuery query,
         CancellationToken cancellationToken = default);

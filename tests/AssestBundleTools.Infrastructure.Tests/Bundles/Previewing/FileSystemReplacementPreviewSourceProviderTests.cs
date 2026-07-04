@@ -118,6 +118,35 @@ internal static class FileSystemReplacementPreviewSourceProviderTests
         TestAssert.Equal(atlasPath, lines.SourcePath, "Line range should keep the normalized source path.");
     }
 
+    public static async Task SearchFileTextAsync_ShouldFindBoundedMatches_ForTextAssetFile()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        Directory.CreateDirectory(temporaryDirectory.DirectoryPath);
+        var atlasPath = Path.Combine(temporaryDirectory.DirectoryPath, "hero.atlas");
+        const string sourceText = "page.png\r\nregion target\rTARGET region\ntail target\n";
+        await File.WriteAllTextAsync(atlasPath, sourceText, Encoding.UTF8);
+
+        var provider = new FileSystemReplacementPreviewSourceProvider();
+
+        var result = await provider.SearchFileTextAsync(
+            atlasPath,
+            searchText: "target",
+            startLineIndex: 1,
+            maxMatchCount: 2,
+            matchCase: false);
+
+        TestAssert.True(result.IsSuccess, "Readable atlas files should support text search.");
+        var search = TestAssert.NotNull(result.Value, "Successful search should include a result.");
+        TestAssert.Equal(2, search.Matches.Count, "Search should return the requested match budget.");
+        TestAssert.Equal(1, search.Matches[0].LineIndex, "Search should report normalized line indices.");
+        TestAssert.Equal("region target", search.Matches[0].LineText, "Search should normalize line endings before matching.");
+        TestAssert.Equal(2, search.Matches[1].LineIndex, "Case-insensitive search should match uppercase text.");
+        TestAssert.True(search.HasMore, "Search should report more matches beyond the requested budget.");
+        TestAssert.Equal(4, search.TotalScannedLineCount, "Search should scan until an extra match proves overflow.");
+        TestAssert.Equal(new FileInfo(atlasPath).Length, search.ContentLength, "Search should report source file bytes.");
+        TestAssert.Equal(atlasPath, search.SourcePath, "Search should keep the normalized source path.");
+    }
+
     public static async Task LoadFileTextChunkAsync_ShouldRejectBinarySkelTextAssetFile()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();
@@ -133,6 +162,25 @@ internal static class FileSystemReplacementPreviewSourceProviderTests
             length: 16);
 
         TestAssert.True(result.IsFailure, "Binary skeleton files should not be exposed as text chunks.");
+    }
+
+    public static async Task SearchFileTextAsync_ShouldRejectBinarySkelTextAssetFile()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        Directory.CreateDirectory(temporaryDirectory.DirectoryPath);
+        var skeletonPath = Path.Combine(temporaryDirectory.DirectoryPath, "hero.skel");
+        await File.WriteAllBytesAsync(skeletonPath, [0x00, 0x01, 0x7F, 0x02]);
+
+        var provider = new FileSystemReplacementPreviewSourceProvider();
+
+        var result = await provider.SearchFileTextAsync(
+            skeletonPath,
+            searchText: "target",
+            startLineIndex: 0,
+            maxMatchCount: 4,
+            matchCase: false);
+
+        TestAssert.True(result.IsFailure, "Binary skeleton files should not be exposed as text search payloads.");
     }
 
     public static async Task LoadFilePreviewAsync_ShouldReturnImagePayload_ForTextureReplacement()

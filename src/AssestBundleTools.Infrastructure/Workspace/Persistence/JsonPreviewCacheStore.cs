@@ -72,34 +72,16 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
             return null;
         }
 
-        var descriptorFilePath = _storagePaths.GetPreviewDescriptorFilePath(workspaceKey, previewCacheKey);
-        var descriptor = JsonWorkspaceFileStorageHelper.TryReadJson<PreviewCacheDescriptorDto>(
-            descriptorFilePath,
-            JsonWorkspaceSerialization.SerializerOptions);
-        if (descriptor is null)
+        var payload = TryResolveTextPayload(workspaceKey, previewCacheKey);
+        if (payload is null)
         {
             return null;
         }
 
-        if (!string.Equals(descriptor.PreviewKind, AssetPreviewKind.Text.ToString(), StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-
-        var payloadFilePath = TryResolvePayloadFilePath(
-            workspaceKey,
-            previewCacheKey,
-            descriptor.RelativePayloadPath);
-        if (string.IsNullOrWhiteSpace(payloadFilePath) || !File.Exists(payloadFilePath))
-        {
-            return null;
-        }
-
-        var payloadLength = GetFileSize(payloadFilePath);
         return JsonPreviewCacheTextPayloadReader.TryReadChunk(
-            descriptor,
-            payloadFilePath,
-            payloadLength,
+            payload.Value.Descriptor,
+            payload.Value.PayloadFilePath,
+            payload.Value.PayloadLength,
             offset,
             length);
     }
@@ -118,36 +100,49 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
             return null;
         }
 
-        var descriptorFilePath = _storagePaths.GetPreviewDescriptorFilePath(workspaceKey, previewCacheKey);
-        var descriptor = JsonWorkspaceFileStorageHelper.TryReadJson<PreviewCacheDescriptorDto>(
-            descriptorFilePath,
-            JsonWorkspaceSerialization.SerializerOptions);
-        if (descriptor is null)
+        var payload = TryResolveTextPayload(workspaceKey, previewCacheKey);
+        if (payload is null)
         {
             return null;
         }
 
-        if (!string.Equals(descriptor.PreviewKind, AssetPreviewKind.Text.ToString(), StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-
-        var payloadFilePath = TryResolvePayloadFilePath(
-            workspaceKey,
-            previewCacheKey,
-            descriptor.RelativePayloadPath);
-        if (string.IsNullOrWhiteSpace(payloadFilePath) || !File.Exists(payloadFilePath))
-        {
-            return null;
-        }
-
-        var payloadLength = GetFileSize(payloadFilePath);
         return JsonPreviewCacheTextPayloadReader.TryReadLines(
-            descriptor,
-            payloadFilePath,
-            payloadLength,
+            payload.Value.Descriptor,
+            payload.Value.PayloadFilePath,
+            payload.Value.PayloadLength,
             startLineIndex,
             lineCount);
+    }
+
+    public PreviewCacheTextSearchResultDto? SearchText(
+        string workspaceKey,
+        string previewCacheKey,
+        string searchText,
+        int startLineIndex,
+        int maxMatchCount,
+        bool matchCase)
+    {
+        if (string.IsNullOrEmpty(searchText) ||
+            startLineIndex < 0 ||
+            maxMatchCount <= 0)
+        {
+            return null;
+        }
+
+        var payload = TryResolveTextPayload(workspaceKey, previewCacheKey);
+        if (payload is null)
+        {
+            return null;
+        }
+
+        return JsonPreviewCacheTextPayloadReader.TrySearch(
+            payload.Value.Descriptor,
+            payload.Value.PayloadFilePath,
+            payload.Value.PayloadLength,
+            searchText,
+            startLineIndex,
+            maxMatchCount,
+            matchCase);
     }
 
     public IReadOnlyList<PreviewCacheDescriptorDto> LoadDescriptors(string workspaceKey)
@@ -430,6 +425,29 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
         }
     }
 
+    private PreviewCacheTextPayloadReference? TryResolveTextPayload(
+        string workspaceKey,
+        string previewCacheKey)
+    {
+        var descriptorFilePath = _storagePaths.GetPreviewDescriptorFilePath(workspaceKey, previewCacheKey);
+        var descriptor = JsonWorkspaceFileStorageHelper.TryReadJson<PreviewCacheDescriptorDto>(
+            descriptorFilePath,
+            JsonWorkspaceSerialization.SerializerOptions);
+        if (descriptor is null ||
+            !string.Equals(descriptor.PreviewKind, AssetPreviewKind.Text.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var payloadFilePath = TryResolvePayloadFilePath(
+            workspaceKey,
+            previewCacheKey,
+            descriptor.RelativePayloadPath);
+        return string.IsNullOrWhiteSpace(payloadFilePath) || !File.Exists(payloadFilePath)
+            ? null
+            : new PreviewCacheTextPayloadReference(descriptor, payloadFilePath, GetFileSize(payloadFilePath));
+    }
+
     private byte[]? TryReadOptionalImageFocusPayload(
         string workspaceKey,
         string previewCacheKey,
@@ -465,4 +483,8 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
         }
     }
 
+    private readonly record struct PreviewCacheTextPayloadReference(
+        PreviewCacheDescriptorDto Descriptor,
+        string PayloadFilePath,
+        long PayloadLength);
 }

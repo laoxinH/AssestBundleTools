@@ -384,6 +384,10 @@ internal static partial class GetAssetPreviewHandlerTests
 
         public int LoadTextLinesCallCount => Volatile.Read(ref _loadTextLinesCallCount);
 
+        private int _searchTextCallCount;
+
+        public int SearchTextCallCount => Volatile.Read(ref _searchTextCallCount);
+
         public PreviewCachePayloadDto? LastSavedPayload { get; private set; }
 
         public PreviewCachePruneRequestDto? LastPruneRequest { get; private set; }
@@ -473,6 +477,71 @@ internal static partial class GetAssetPreviewHandlerTests
                     safeStartLineIndex,
                     safeLineCount,
                     allLines.Length,
+                    _payload.Content.LongLength);
+            }
+        }
+
+        public PreviewCacheTextSearchResultDto? SearchText(
+            string workspaceKey,
+            string previewCacheKey,
+            string searchText,
+            int startLineIndex,
+            int maxMatchCount,
+            bool matchCase)
+        {
+            Interlocked.Increment(ref _searchTextCallCount);
+            lock (_syncRoot)
+            {
+                if (_payload is null ||
+                    !string.Equals(_payload.Descriptor.WorkspaceKey, workspaceKey, StringComparison.OrdinalIgnoreCase) ||
+                    !string.Equals(_payload.Descriptor.PreviewCacheKey, previewCacheKey, StringComparison.OrdinalIgnoreCase) ||
+                    string.IsNullOrEmpty(searchText) ||
+                    startLineIndex < 0 ||
+                    maxMatchCount <= 0)
+                {
+                    return null;
+                }
+
+                var fullText = Encoding.UTF8.GetString(_payload.Content)
+                    .Replace("\r\n", "\n", StringComparison.Ordinal)
+                    .Replace('\r', '\n');
+                var allLines = fullText.Length == 0
+                    ? Array.Empty<string>()
+                    : fullText.Split('\n');
+                var matches = new List<AssetPreviewTextSearchMatchDto>();
+                var comparison = matchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+                var hasMore = false;
+                var scannedLineCount = 0;
+
+                for (var lineIndex = Math.Min(startLineIndex, allLines.Length); lineIndex < allLines.Length; lineIndex++)
+                {
+                    scannedLineCount++;
+                    var line = allLines[lineIndex];
+                    var columnIndex = line.IndexOf(searchText, comparison);
+                    while (columnIndex >= 0)
+                    {
+                        if (matches.Count >= maxMatchCount)
+                        {
+                            hasMore = true;
+                            break;
+                        }
+
+                        matches.Add(new AssetPreviewTextSearchMatchDto(lineIndex, columnIndex, line, IsLineTextTruncated: false));
+                        columnIndex = line.IndexOf(searchText, columnIndex + Math.Max(1, searchText.Length), comparison);
+                    }
+
+                    if (hasMore)
+                    {
+                        break;
+                    }
+                }
+
+                return new PreviewCacheTextSearchResultDto(
+                    _payload.Descriptor,
+                    matches,
+                    Math.Min(startLineIndex, allLines.Length),
+                    Math.Min(startLineIndex, allLines.Length) + scannedLineCount,
+                    hasMore,
                     _payload.Content.LongLength);
             }
         }
@@ -662,6 +731,8 @@ internal static partial class GetAssetPreviewHandlerTests
 
         public int LoadFileTextLinesCallCount { get; private set; }
 
+        public int SearchFileTextCallCount { get; private set; }
+
         public AssetDetailsDto? LastTargetDetails { get; private set; }
 
         public string? LastSourceFilePath { get; private set; }
@@ -677,6 +748,16 @@ internal static partial class GetAssetPreviewHandlerTests
         public int LastTextLinesStartLineIndex { get; private set; }
 
         public int LastTextLinesLineCount { get; private set; }
+
+        public string? LastSearchSourceFilePath { get; private set; }
+
+        public string? LastSearchText { get; private set; }
+
+        public int LastSearchStartLineIndex { get; private set; }
+
+        public int LastSearchMaxMatchCount { get; private set; }
+
+        public bool LastSearchMatchCase { get; private set; }
 
         public Task<Result<AssetPreviewContentDto>> LoadFilePreviewAsync(
             AssetDetailsDto targetDetails,
@@ -768,6 +849,72 @@ internal static partial class GetAssetPreviewHandlerTests
                 safeStartLineIndex,
                 safeLineCount,
                 allLines.Length,
+                previewContent.Content.LongLength)));
+        }
+
+        public Task<Result<ReplacementTextSearchResultDto>> SearchFileTextAsync(
+            string sourceFilePath,
+            string searchText,
+            int startLineIndex,
+            int maxMatchCount,
+            bool matchCase,
+            CancellationToken cancellationToken = default)
+        {
+            SearchFileTextCallCount++;
+            LastSearchSourceFilePath = sourceFilePath;
+            LastSearchText = searchText;
+            LastSearchStartLineIndex = startLineIndex;
+            LastSearchMaxMatchCount = maxMatchCount;
+            LastSearchMatchCase = matchCase;
+
+            if (!_result.IsSuccess ||
+                _result.Value is not { Kind: AssetPreviewKind.Text } previewContent)
+            {
+                return Task.FromResult(Result<ReplacementTextSearchResultDto>.Failure(
+                    ApplicationErrors.BundlePreviewGenerationFailed(sourceFilePath)));
+            }
+
+            var fullText = Encoding.UTF8.GetString(previewContent.Content)
+                .Replace("\r\n", "\n", StringComparison.Ordinal)
+                .Replace('\r', '\n');
+            var allLines = fullText.Length == 0
+                ? Array.Empty<string>()
+                : fullText.Split('\n');
+            var matches = new List<AssetPreviewTextSearchMatchDto>();
+            var comparison = matchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            var hasMore = false;
+            var scannedLineCount = 0;
+
+            for (var lineIndex = Math.Min(startLineIndex, allLines.Length); lineIndex < allLines.Length; lineIndex++)
+            {
+                scannedLineCount++;
+                var line = allLines[lineIndex];
+                var columnIndex = line.IndexOf(searchText, comparison);
+                while (columnIndex >= 0)
+                {
+                    if (matches.Count >= maxMatchCount)
+                    {
+                        hasMore = true;
+                        break;
+                    }
+
+                    matches.Add(new AssetPreviewTextSearchMatchDto(lineIndex, columnIndex, line, IsLineTextTruncated: false));
+                    columnIndex = line.IndexOf(searchText, columnIndex + Math.Max(1, searchText.Length), comparison);
+                }
+
+                if (hasMore)
+                {
+                    break;
+                }
+            }
+
+            return Task.FromResult(Result<ReplacementTextSearchResultDto>.Success(new ReplacementTextSearchResultDto(
+                sourceFilePath,
+                previewContent.ContentType,
+                matches,
+                Math.Min(startLineIndex, allLines.Length),
+                Math.Min(startLineIndex, allLines.Length) + scannedLineCount,
+                hasMore,
                 previewContent.Content.LongLength)));
         }
     }
