@@ -1,4 +1,3 @@
-using System.Text;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
@@ -11,12 +10,14 @@ namespace AssestBundleTools.Infrastructure.Workspace.Persistence;
 public sealed class JsonPreviewCacheStore : IPreviewCacheStore
 {
     private readonly JsonWorkspaceStoragePaths _storagePaths;
+    private readonly JsonPreviewCacheTextAccessor _textAccessor;
 
     public JsonPreviewCacheStore(string? rootDirectoryPath = null)
     {
         _storagePaths = string.IsNullOrWhiteSpace(rootDirectoryPath)
             ? JsonWorkspaceStoragePaths.CreateDefault()
             : new JsonWorkspaceStoragePaths(rootDirectoryPath);
+        _textAccessor = new JsonPreviewCacheTextAccessor(_storagePaths);
     }
 
     public PreviewCachePayloadDto? Load(string workspaceKey, string previewCacheKey)
@@ -62,61 +63,15 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
         string workspaceKey,
         string previewCacheKey,
         int offset,
-        int length)
-    {
-        if (string.IsNullOrWhiteSpace(workspaceKey) ||
-            string.IsNullOrWhiteSpace(previewCacheKey) ||
-            offset < 0 ||
-            length <= 0)
-        {
-            return null;
-        }
-
-        var payload = TryResolveTextPayload(workspaceKey, previewCacheKey);
-        if (payload is null)
-        {
-            return null;
-        }
-
-        return JsonPreviewCacheTextPayloadReader.TryReadChunk(
-            payload.Value.Descriptor,
-            payload.Value.PayloadFilePath,
-            payload.Value.PayloadLength,
-            offset,
-            length);
-    }
+        int length) =>
+        _textAccessor.LoadTextChunk(workspaceKey, previewCacheKey, offset, length);
 
     public PreviewCacheTextLineRangeDto? LoadTextLines(
         string workspaceKey,
         string previewCacheKey,
         int startLineIndex,
-        int lineCount)
-    {
-        if (string.IsNullOrWhiteSpace(workspaceKey) ||
-            string.IsNullOrWhiteSpace(previewCacheKey) ||
-            startLineIndex < 0 ||
-            lineCount <= 0)
-        {
-            return null;
-        }
-
-        var payload = TryResolveTextPayload(workspaceKey, previewCacheKey);
-        if (payload is null)
-        {
-            return null;
-        }
-
-        return JsonPreviewCacheTextPayloadReader.TryReadLines(
-            payload.Value.Descriptor,
-            payload.Value.PayloadFilePath,
-            payload.Value.PayloadLength,
-            startLineIndex,
-            lineCount,
-            JsonPreviewCacheTextLineIndex.Load(
-                payload.Value.Descriptor,
-                payload.Value.PayloadFilePath,
-                payload.Value.PayloadLength));
-    }
+        int lineCount) =>
+        _textAccessor.LoadTextLines(workspaceKey, previewCacheKey, startLineIndex, lineCount);
 
     public PreviewCacheTextSearchResultDto? SearchText(
         string workspaceKey,
@@ -124,34 +79,8 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
         string searchText,
         int startLineIndex,
         int maxMatchCount,
-        bool matchCase)
-    {
-        if (string.IsNullOrEmpty(searchText) ||
-            startLineIndex < 0 ||
-            maxMatchCount <= 0)
-        {
-            return null;
-        }
-
-        var payload = TryResolveTextPayload(workspaceKey, previewCacheKey);
-        if (payload is null)
-        {
-            return null;
-        }
-
-        return JsonPreviewCacheTextPayloadReader.TrySearch(
-            payload.Value.Descriptor,
-            payload.Value.PayloadFilePath,
-            payload.Value.PayloadLength,
-            searchText,
-            startLineIndex,
-            maxMatchCount,
-            matchCase,
-            JsonPreviewCacheTextLineIndex.Load(
-                payload.Value.Descriptor,
-                payload.Value.PayloadFilePath,
-                payload.Value.PayloadLength));
-    }
+        bool matchCase) =>
+        _textAccessor.SearchText(workspaceKey, previewCacheKey, searchText, startLineIndex, maxMatchCount, matchCase);
 
     public IReadOnlyList<PreviewCacheDescriptorDto> LoadDescriptors(string workspaceKey)
     {
@@ -446,29 +375,6 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
         }
     }
 
-    private PreviewCacheTextPayloadReference? TryResolveTextPayload(
-        string workspaceKey,
-        string previewCacheKey)
-    {
-        var descriptorFilePath = _storagePaths.GetPreviewDescriptorFilePath(workspaceKey, previewCacheKey);
-        var descriptor = JsonWorkspaceFileStorageHelper.TryReadJson<PreviewCacheDescriptorDto>(
-            descriptorFilePath,
-            JsonWorkspaceSerialization.SerializerOptions);
-        if (descriptor is null ||
-            !string.Equals(descriptor.PreviewKind, AssetPreviewKind.Text.ToString(), StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-
-        var payloadFilePath = TryResolvePayloadFilePath(
-            workspaceKey,
-            previewCacheKey,
-            descriptor.RelativePayloadPath);
-        return string.IsNullOrWhiteSpace(payloadFilePath) || !File.Exists(payloadFilePath)
-            ? null
-            : new PreviewCacheTextPayloadReference(descriptor, payloadFilePath, GetFileSize(payloadFilePath));
-    }
-
     private byte[]? TryReadOptionalImageFocusPayload(
         string workspaceKey,
         string previewCacheKey,
@@ -503,9 +409,4 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
             return 0;
         }
     }
-
-    private readonly record struct PreviewCacheTextPayloadReference(
-        PreviewCacheDescriptorDto Descriptor,
-        string PayloadFilePath,
-        long PayloadLength);
 }

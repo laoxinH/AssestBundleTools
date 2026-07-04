@@ -227,13 +227,17 @@ internal static class JsonPreviewCacheStoreTests
             sidecarFilePath,
             JsonWorkspaceSerialization.SerializerOptions);
         var index = TestAssert.NotNull(sidecar, "Line index sidecar should be valid JSON.");
-        TestAssert.Equal(1, index.SchemaVersion, "Line index schema should be versioned.");
+        TestAssert.Equal(2, index.SchemaVersion, "Line index schema should be versioned.");
         TestAssert.Equal(descriptor.PreviewCacheKey, index.PreviewCacheKey, "Line index should be scoped to the preview cache key.");
         TestAssert.Equal(descriptor.RelativePayloadPath, index.RelativePayloadPath, "Line index should record payload identity.");
         TestAssert.Equal(display.Metadata.EstimatedFullLineCount, index.TotalLineCount, "Line index should record normalized full line count.");
+        TestAssert.Equal(sourceText.Length, index.TotalCharacterCount, "Line index should record normalized full character count.");
         TestAssert.True(
             index.Anchors.Any(static anchor => anchor.LineIndex == JsonPreviewCacheTextLineIndex.DefaultAnchorInterval),
             "Line index should contain a sparse anchor beyond the first line.");
+        TestAssert.True(
+            index.CharacterAnchors.Any(static anchor => anchor.CharacterOffset == JsonPreviewCacheTextLineIndex.DefaultCharacterAnchorInterval),
+            "Line index should contain a sparse character anchor beyond the first character window.");
 
         var lineRange = store.LoadTextLines(
             "workspace-a",
@@ -247,6 +251,42 @@ internal static class JsonPreviewCacheStoreTests
             TestAssert.Single(result.Lines),
             "Indexed line reading should seek from the nearest anchor and return the requested line.");
         TestAssert.Equal(display.Metadata.EstimatedFullLineCount, result.TotalLineCount, "Indexed line reading should preserve total line count.");
+    }
+
+    public static void LoadTextChunk_ShouldReadFromCharacterIndexSidecar_ForLargeOffset()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonPreviewCacheStore(temporaryDirectory.DirectoryPath);
+        var sourceText = new string('a', JsonPreviewCacheTextLineIndex.DefaultCharacterAnchorInterval + 3) + "TARGET-tail";
+        var descriptor = CreateTextDescriptor(
+            workspaceKey: "workspace-a",
+            previewCacheKey: "preview-text-character-index",
+            relativePayloadPath: "payloads/text/preview-text-character-index.txt");
+
+        store.Save(new PreviewCachePayloadDto(
+            descriptor,
+            System.Text.Encoding.UTF8.GetBytes(sourceText)));
+        var payloadFilePath = store.ResolvePayloadFilePath(descriptor)
+            ?? throw new InvalidOperationException("Expected payload file path.");
+        var sidecar = JsonWorkspaceFileStorageHelper.TryReadJson<JsonPreviewCacheTextLineIndexDto>(
+            JsonPreviewCacheTextLineIndex.GetSidecarFilePath(payloadFilePath),
+            JsonWorkspaceSerialization.SerializerOptions);
+        var index = TestAssert.NotNull(sidecar, "Character index sidecar should be readable.");
+        TestAssert.True(
+            index.CharacterAnchors.Any(static anchor => anchor.CharacterOffset == JsonPreviewCacheTextLineIndex.DefaultCharacterAnchorInterval),
+            "Character index sidecar should contain an anchor at the first large offset window.");
+
+        var chunk = store.LoadTextChunk(
+            "workspace-a",
+            "preview-text-character-index",
+            offset: JsonPreviewCacheTextLineIndex.DefaultCharacterAnchorInterval + 3,
+            length: 6);
+
+        var result = TestAssert.NotNull(chunk, "Large offset text chunk should be readable from the indexed payload.");
+        TestAssert.Equal("TARGET", result.Text, "Chunk reading should seek from the nearest character anchor and return the requested text.");
+        TestAssert.Equal(JsonPreviewCacheTextLineIndex.DefaultCharacterAnchorInterval + 3, result.Offset, "Chunk should report requested offset.");
+        TestAssert.Equal(6, result.Length, "Chunk should report returned character count.");
+        TestAssert.Equal(sourceText.Length, result.TotalLength, "Chunk should use indexed total character count when metadata is missing.");
     }
 
     public static void LoadTextLines_ShouldFallback_WhenTextLineIndexSidecarIsMissing()

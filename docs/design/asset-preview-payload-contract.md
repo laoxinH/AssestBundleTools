@@ -98,7 +98,7 @@ payload reference 可以指向：
 
 Presentation 只能把 reference 传回 Application query，不能自行拼路径读取。
 
-当前已落地的过渡形态是 `AssetPreviewFullContentReferenceDto`：它记录 `Kind / ContentType / ContentLength` 以及按来源区分的引用字段。`PreviewCache` 使用 `WorkspaceKey / PreviewCacheKey` 指向 `cache/previews` payload；`FileReplacement` 使用 `SourcePath` 指向当前文件替换 / override 来源；工作区内“从另一个资产替换”的 TextAsset 预览不新增 reference kind，而是继承源资产 Text 预览的 `PreviewCache` reference。Presentation 仍只能把 reference 传回 Application query，不能自行读取缓存路径或替换文件。`LoadPreviewTextChunkQuery` 已经可以通过 Application gateway 读取有界文本片段，当前 offset / length 以规范化后的字符位置为单位；`LoadPreviewTextLinesQuery` 已经可以读取规范化行范围，服务后续行号、滚动和编辑器虚拟化；`SearchPreviewTextQuery` 已经可以返回有界匹配列表、匹配行列、有限行片段和 `HasMore`。`IPreviewCacheStore.LoadTextChunk / LoadTextLines / SearchText` 是预览缓存完整文本读取边界，`IReplacementPreviewSourceProvider.LoadFileTextChunkAsync / LoadFileTextLinesAsync / SearchFileTextAsync` 是文件替换文本读取边界；真实 Infrastructure 实现必须优先分块 / 流式读取，避免为了普通分块、分行或搜索查询把整个 payload 拷贝进内存。
+当前已落地的过渡形态是 `AssetPreviewFullContentReferenceDto`：它记录 `Kind / ContentType / ContentLength` 以及按来源区分的引用字段。`PreviewCache` 使用 `WorkspaceKey / PreviewCacheKey` 指向 `cache/previews` payload；`FileReplacement` 使用 `SourcePath` 指向当前文件替换 / override 来源；工作区内“从另一个资产替换”的 TextAsset 预览不新增 reference kind，而是继承源资产 Text 预览的 `PreviewCache` reference。Presentation 仍只能把 reference 传回 Application query，不能自行读取缓存路径或替换文件。`LoadPreviewTextChunkQuery` 已经可以通过 Application gateway 读取有界文本片段，当前 offset / length 以规范化后的字符位置为单位；`LoadPreviewTextLinesQuery` 已经可以读取规范化行范围，服务后续行号、滚动和编辑器虚拟化；`SearchPreviewTextQuery` 已经可以返回有界匹配列表、匹配行列、有限行片段和 `HasMore`。`IPreviewCacheStore.LoadTextChunk / LoadTextLines / SearchText` 是预览缓存完整文本读取边界，`IReplacementPreviewSourceProvider.LoadFileTextChunkAsync / LoadFileTextLinesAsync / SearchFileTextAsync` 是文件替换文本读取边界；真实 Infrastructure 实现必须优先分块 / 流式读取，并在 preview cache 文本 payload 写入时生成可重建的 `*.lines.json` 稀疏索引 sidecar。该 sidecar 当前为 schema v2，包含行锚点与规范化字符 offset 锚点，`LoadTextChunk / LoadTextLines / SearchText` 会从最近锚点继续扫描；sidecar 缺失、版本不匹配或 payload 身份不匹配时自动退回顺序扫描，避免为了普通分块、分行或搜索查询把整个 payload 拷贝进内存。
 
 ### 4.3 诊断和预算结果
 
@@ -252,11 +252,11 @@ Preview.FullContentUnavailable
 
 - preview-cache-backed 的 `Text` 预览已返回 `FullContentReference`，普通展示仍通过 `TextContent / TextDisplay` 保持有界。
 - 已新增 `LoadPreviewTextChunkQuery / LoadPreviewTextLinesQuery / SearchPreviewTextQuery` 和 Application gateway 入口，可在不暴露缓存路径给 Presentation 的前提下读取最大预算内文本块、行范围或有限搜索结果。
-- `JsonPreviewCacheStore` 已实现 `LoadTextChunk / LoadTextLines / SearchText` 流式读取：常规新缓存会优先使用 `TextFullCharacterCount / TextEstimatedFullLineCount` 元数据作为总长度 / 总行数，旧缓存缺失该元数据时才扫描剩余文本计算；搜索返回有限匹配和 `HasMore`，匹配行片段本身也有长度上限。新写入的 `Text` preview payload 会在同目录生成可重建的 `*.lines.json` 稀疏行索引 sidecar，例如 `payload.txt -> payload.lines.json`；`LoadTextLines / SearchText` 可先跳到最近行锚点再继续顺序读取，sidecar 缺失、版本不匹配或 payload 身份不匹配时会自动退回原顺序扫描。
+- `JsonPreviewCacheStore` 已实现 `LoadTextChunk / LoadTextLines / SearchText` 流式读取：常规新缓存会优先使用 `TextFullCharacterCount / TextEstimatedFullLineCount` 元数据作为总长度 / 总行数，旧缓存缺失该元数据时才扫描剩余文本计算；搜索返回有限匹配和 `HasMore`，匹配行片段本身也有长度上限。新写入的 `Text` preview payload 会在同目录生成可重建的 `*.lines.json` 稀疏索引 sidecar，例如 `payload.txt -> payload.lines.json`；schema v2 同时记录行锚点和规范化字符 offset 锚点，`LoadTextChunk / LoadTextLines / SearchText` 可先跳到最近锚点再继续顺序读取，sidecar 缺失、版本不匹配或 payload 身份不匹配时会自动退回原顺序扫描。
 - 文件替换 `TextAsset` 预览已返回 `FileReplacement` reference；`LoadPreviewTextChunkHandler / LoadPreviewTextLinesHandler / SearchPreviewTextHandler` 会通过 `IReplacementPreviewSourceProvider` 读取替换文件的规范化文本块、行范围或搜索结果，真实文件实现会保留 `.skel` 非 JSON 视为二进制的保护语义。
 - 工作区内 TextAsset 替换源会先读取源资产有效预览，并继承源 Text 预览的 `PreviewCache` reference；因此替换后的目标资产也可以通过同一组 chunk / lines / search query 按需读取源文本，不需要 Presentation 识别源资产身份。
 - 真正由 staging / draft store 背书的未来文本编辑草稿还没有自己的 reference 类型；这些路径的结构化 Application 消费仍暂时依赖 `FullTextContent` 过渡字段。
-- 当前只完成了 preview cache 文本 payload 的稀疏行锚点索引；它能降低大 line index 读取和从指定行开始搜索时的前置跳过成本，但尚未覆盖字符 offset 随机索引、搜索倒排索引、draft / staging 文本索引或后台可取消重建。大 offset chunk 查询和全文搜索仍可能顺序扫描，内存安全但还不是最终的快速跳转 / 高频搜索形态。
+- 当前 preview cache 文本 payload 已具备稀疏行锚点和字符 offset 锚点索引；它能降低大 line index 读取、大 offset chunk 读取和从指定行开始搜索时的前置跳过成本。尚未覆盖搜索倒排索引、draft / staging 文本索引或后台可取消重建；全文搜索仍可能顺序扫描，内存安全但还不是最终的高频搜索形态。
 
 验收：
 
@@ -353,23 +353,23 @@ Preview.FullContentUnavailable
 - atlas `TextAsset` 替换为巨大 / JSON 错输入时，Spine 组详情会快速返回诊断并跳过 texture page、overlay 和 runtime 尝试。
 - 普通文本预览已开始收敛到 Application 层统一 `AssetPreviewTextDisplayPolicy`：原始生成 / 缓存恢复 / 文件替换文本预览共享同一字符数与行数展示预算，并输出 `TextDisplay` 元数据；Presentation 文本 presenter 也保留同一预算兜底，避免异常路径把超长文本直接绑定到 UI。
 - `TextDisplay` 元数据已投影为稳定 `AssetPreviewInfoItemDto`：详情信息卡可以显示预览字符数、完整字符数、预览行数、估计完整行数和是否截断；原始生成、缓存恢复和文件替换预览路径共享同一投影 helper。
-- preview-cache-backed 的文本预览已带 `FullContentReference`，并提供 `LoadPreviewTextChunkQuery / LoadPreviewTextLinesQuery / SearchPreviewTextQuery`；Presentation 可以把 reference 传回 Application 读取有界文本块、行范围或有限搜索结果，而不需要自行解析缓存路径。真实 JSON preview cache store 已覆盖 `LoadTextChunk / LoadTextLines / SearchText` 为流式读取，并为新 Text payload 写入 payload 文件名派生的 `*.lines.json` 稀疏行索引 sidecar；缺失或失效时仍可顺序扫描回退，避免常规完整文本查看和搜索为了分块重新载入全量 payload。
+- preview-cache-backed 的文本预览已带 `FullContentReference`，并提供 `LoadPreviewTextChunkQuery / LoadPreviewTextLinesQuery / SearchPreviewTextQuery`；Presentation 可以把 reference 传回 Application 读取有界文本块、行范围或有限搜索结果，而不需要自行解析缓存路径。真实 JSON preview cache store 已覆盖 `LoadTextChunk / LoadTextLines / SearchText` 为流式读取，并为新 Text payload 写入 payload 文件名派生的 `*.lines.json` 稀疏索引 sidecar；schema v2 同时保存行锚点和字符 offset 锚点，chunk / lines / search 都会优先从最近锚点继续扫描，缺失或失效时仍可顺序扫描回退，避免常规完整文本查看和搜索为了分块重新载入全量 payload。
 - 文件替换 `TextAsset` 的普通展示文本已做有界裁剪，并已返回 `FileReplacement` 完整内容 reference；完整文本查看可通过同一组 query 按块、按行或搜索读取替换来源文件。工作区内 TextAsset 替换源已复用源资产 `PreviewCache` reference，目标资产无需暴露完整源文本给 Presentation 也能继续分块、分行和搜索。`FullTextContent` 仍暂时保留给 Application 内部结构化处理和导出链路使用，staging / 编辑草稿的完整文本 reference 仍属于后续迁移范围。
 - Spine runtime adapter 已在 V3.8 / V4.2 的预览和 playback session 前加入 atlas 输入 guard。
 
 推荐下一步继续沿阶段 3 做边界收口，然后回到阶段 2/4 的能力扩展：
 
 1. 为未来文本编辑草稿和其它 staging-backed 文本载荷补充 `FullContentReference` 类型，逐步减少 `FullTextContent` 在普通预览 DTO 中继续承担完整文本传递职责。
-2. 在当前 `*.lines.json` 稀疏行索引基础上继续补可取消的后台索引重建、字符 offset 随机索引和索引辅助搜索：现有 chunk 和全文搜索仍可能顺序扫描，后续应把大文本跳转、高频搜索和 JSON 范围格式化逐步切到索引辅助。
+2. 在当前 `*.lines.json` 行 / 字符稀疏索引基础上继续补可取消的后台索引重建和索引辅助搜索：现有全文搜索仍可能顺序扫描，后续应把高频搜索、搜索结果缓存和 JSON 范围格式化逐步切到索引辅助。
 3. 继续盘点结构化大集合和诊断文本，优先关注 TypeTree 字段树、CLI result JSON、外部工具 stdout / stderr 和插件诊断，确保它们也有预算和 reference / sidecar 边界。
 4. 在文本链路边界稳定后，进入阶段 2：把 Spine atlas 现有 guard 迁入统一 policy，并扩展到 skel JSON、TypeTree、图片、音频、Mesh 和 CLI result JSON。
 
-当前阶段性建议：下一步优先做 draft / staging-backed reference 扩展，并补后台行索引与索引辅助搜索；这样完整文本查看才能从“可安全读块 / 读行 / 搜索”继续推进到“可快速跳转、频繁搜索和编辑”的工作面基础。
+当前阶段性建议：下一步优先做 draft / staging-backed reference 扩展，并补后台可取消索引重建与索引辅助搜索；这样完整文本查看才能从“可安全读块 / 读行 / 搜索”继续推进到“可快速跳转、频繁搜索和编辑”的工作面基础。
 
 ## 11. 待决问题
 
 - 预算默认值是否允许用户在“设置与诊断”中调整，还是仅作为开发常量。
-- 完整文本查看的 chunk 单位采用字节、字符还是行；不同编码下如何快速建立稳定行索引。
+- 完整文本查看的 chunk 对外继续采用规范化字符 offset 和行范围；后续需要细化不同编码、超大文本和编辑草稿下的索引重建 / 复用策略。
 - 未来文本编辑控件选型和大文本虚拟化能力，需要在实现前做单独技术 spike。
 - JSON 美化是否需要支持真正流式格式化，还是第一阶段只支持预算内全量格式化和预算外只读摘要。
 - 完整文本草稿和 preview sidecar 的缓存、prune、恢复和操作记录引用关系如何细化。

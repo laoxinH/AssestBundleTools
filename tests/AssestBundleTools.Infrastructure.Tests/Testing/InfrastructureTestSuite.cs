@@ -74,6 +74,10 @@ internal static class InfrastructureTestSuite
             JsonPreviewCacheStoreTests.Save_ShouldWriteTextLineIndexSidecar_ForTextPreviewPayload);
         await RunTestAsync(
             failures,
+            nameof(JsonPreviewCacheStoreTests.LoadTextChunk_ShouldReadFromCharacterIndexSidecar_ForLargeOffset),
+            JsonPreviewCacheStoreTests.LoadTextChunk_ShouldReadFromCharacterIndexSidecar_ForLargeOffset);
+        await RunTestAsync(
+            failures,
             nameof(JsonPreviewCacheStoreTests.LoadTextLines_ShouldFallback_WhenTextLineIndexSidecarIsMissing),
             JsonPreviewCacheStoreTests.LoadTextLines_ShouldFallback_WhenTextLineIndexSidecarIsMissing);
         await RunTestAsync(

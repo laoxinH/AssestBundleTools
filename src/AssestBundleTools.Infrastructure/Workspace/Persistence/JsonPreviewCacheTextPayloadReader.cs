@@ -14,16 +14,24 @@ internal static class JsonPreviewCacheTextPayloadReader
         string payloadFilePath,
         long payloadLength,
         int offset,
-        int length)
+        int length,
+        JsonPreviewCacheTextLineIndexDto? lineIndex = null)
     {
         try
         {
+            var anchor = ResolveCharacterAnchor(lineIndex, offset);
             using var stream = JsonWorkspaceFileStorageHelper.OpenSharedReadStream(payloadFilePath);
+            if (anchor.ByteOffset > 0)
+            {
+                stream.Seek(anchor.ByteOffset, SeekOrigin.Begin);
+            }
+
             using var reader = CreateReader(stream);
 
-            var skipped = SkipNormalizedCharacters(reader, offset);
+            var skipped = anchor.CharacterOffset + SkipNormalizedCharacters(reader, offset - anchor.CharacterOffset);
             var text = ReadNormalizedCharacters(reader, length, out var readLength);
             var totalLength = ResolveKnownFullCharacterCount(descriptor)
+                ?? ResolveIndexedFullCharacterCount(lineIndex)
                 ?? skipped + readLength + CountRemainingNormalizedCharacters(reader);
 
             return new PreviewCacheTextChunkDto(
@@ -182,6 +190,38 @@ internal static class JsonPreviewCacheTextPayloadReader
         return lineIndex?.TotalLineCount is >= 0
             ? lineIndex.TotalLineCount
             : null;
+    }
+
+    private static int? ResolveIndexedFullCharacterCount(JsonPreviewCacheTextLineIndexDto? lineIndex)
+    {
+        return lineIndex?.TotalCharacterCount is >= 0
+            ? lineIndex.TotalCharacterCount
+            : null;
+    }
+
+    private static JsonPreviewCacheTextCharacterAnchorDto ResolveCharacterAnchor(
+        JsonPreviewCacheTextLineIndexDto? lineIndex,
+        int targetCharacterOffset)
+    {
+        if (lineIndex?.CharacterAnchors is not { Count: > 0 })
+        {
+            return new JsonPreviewCacheTextCharacterAnchorDto(0, 0);
+        }
+
+        JsonPreviewCacheTextCharacterAnchorDto anchor = new(0, 0);
+        foreach (var candidate in lineIndex.CharacterAnchors)
+        {
+            if (candidate.CharacterOffset < 0 ||
+                candidate.ByteOffset < 0 ||
+                candidate.CharacterOffset > targetCharacterOffset)
+            {
+                break;
+            }
+
+            anchor = candidate;
+        }
+
+        return anchor;
     }
 
     private static JsonPreviewCacheTextLineIndexAnchorDto ResolveAnchor(
