@@ -299,7 +299,7 @@ relatedOperationId
 3. 同一目标资源的多次替换形成顺序栈，新的替换可以 `supersedesOperationId` 指向上一次仍生效的替换。
 4. 物化状态只采用该目标资源最新的未撤销替换。
 
-当前第一版已把 `Texture2D` 作为修改链路的首个稳定类型接入：文件替换和工作区内替换都会先形成操作记录和运行时待保存状态，详情预览再按当前物化出的有效替换来源投影图片载荷；目标资产的 `BundleId / AssetId / PathId / Unity 类型` 等原始身份不随预览来源改变。右键 `修改` 与资源详情操作区 `修改` 共用同一个文件来源快捷入口，会选择图片文件并立即追加新的 `ReplaceFromFile` 操作；显式候选选择仍属于页面级待应用状态，不作为最终事实。后续 `Sprite / Spine / Mesh / Material` 等类型应复用同一“操作记录 -> 有效读模型 -> 预览投影”链路，而不是各自维护独立 UI 状态。
+当前第一版已把 `Texture2D` 作为修改链路的首个稳定类型接入：文件替换和工作区内替换都会先形成操作记录和运行时待保存状态，详情预览再按当前物化出的有效替换来源投影图片载荷；目标资产的 `BundleId / AssetId / PathId / Unity 类型` 等原始身份不随预览来源改变。右键 `替换文件` 与资源详情操作区 `替换文件` 共用同一个文件来源快捷入口，会选择图片文件并立即追加新的 `ReplaceFromFile` 操作；显式候选选择仍属于页面级待应用状态，不作为最终事实。后续 `Sprite / Spine / Mesh / Material` 等类型应复用同一“操作记录 -> 有效读模型 -> 预览投影”链路，而不是各自维护独立 UI 状态。
 
 后续任何替换或修改入口都必须遵守当前关联资源同步模型：先由 Application 追加或更新 `operations[]`，再由 notifying gateway 发布带 `reason / primaryTargets / relatedTargets / implicitAffectedTargets / operationIds` 的操作通知，随后 Presentation 先刷新轻量操作投影，再按统一预览失效策略刷新富预览。不得为了某个资源类型的局部体验，在 handler、ViewModel 或控件中直接读写 `staging/changes`、手动互刷关联资源，或让预览加载完成决定撤销 / 重做按钮事实状态。
 

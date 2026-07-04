@@ -34,8 +34,29 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
         Assert.Contains("x:Name=\"ExtractButton\"", xaml);
         Assert.Contains("x:Name=\"ModifyButton\"", xaml);
         Assert.Contains("IsEnabled=\"{x:Bind ViewModel.CanModify, Mode=OneWay}\"", xaml);
+        Assert.Contains("Text=\"{x:Bind ViewModel.ModifyButtonText, Mode=OneWay}\"", xaml);
+        Assert.Contains("Glyph=\"{x:Bind ViewModel.ModifyButtonIconGlyph, Mode=OneWay}\"", xaml);
         Assert.DoesNotContain("x:Name=\"ApplyReplacementButton\"", xaml);
         Assert.DoesNotContain("x:Name=\"UndoReplacementButton\"", xaml);
+    }
+
+    [Fact]
+    public void AssetPaneContextMenu_ShouldSeparateFileReplacementAndEditText()
+    {
+        var code = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "AssetPaneView.ContextActions.cs"));
+
+        Assert.Contains("ResourceKeys.AssetPaneViewContextReplaceText", code);
+        Assert.Contains("ResourceKeys.AssetPaneViewContextEditText", code);
+        Assert.Contains("ConfigureAssetRowContextFlyout(", code);
+        Assert.Contains("sender as MenuFlyout,", code);
     }
 
     [Fact]

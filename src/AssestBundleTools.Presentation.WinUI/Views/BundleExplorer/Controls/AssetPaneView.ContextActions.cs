@@ -1,5 +1,6 @@
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Domain.Assets;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -9,12 +10,17 @@ public sealed partial class AssetPaneView
 {
     private void OnAssetRowContextFlyoutOpening(object sender, object e)
     {
-        ConfigureAssetRowContextFlyout(sender as MenuFlyout);
+        var flyout = sender as MenuFlyout;
+        ConfigureAssetRowContextFlyout(
+            flyout,
+            ResolveAssetRowModifyTextResourceKey(flyout));
     }
 
     private void OnSpineGroupRowContextFlyoutOpening(object sender, object e)
     {
-        ConfigureAssetRowContextFlyout(sender as MenuFlyout);
+        ConfigureAssetRowContextFlyout(
+            sender as MenuFlyout,
+            ResourceKeys.AssetPaneViewContextEditText);
     }
 
     private void OnOpenAssetPaneItemInNewWindowMenuItemClick(object sender, RoutedEventArgs e)
@@ -53,7 +59,7 @@ public sealed partial class AssetPaneView
         FocusCurrentListView();
     }
 
-    private void ConfigureAssetRowContextFlyout(MenuFlyout? flyout)
+    private void ConfigureAssetRowContextFlyout(MenuFlyout? flyout, string replaceCommandTextResourceKey)
     {
         if (flyout is null)
         {
@@ -73,7 +79,7 @@ public sealed partial class AssetPaneView
                     item.Text = UiText.Get(ResourceKeys.InspectorExtractButton);
                     break;
                 case "ReplaceAssetPaneItemMenuItem":
-                    item.Text = UiText.Get(ResourceKeys.AssetPaneViewContextReplaceText);
+                    item.Text = UiText.Get(replaceCommandTextResourceKey);
                     item.IsEnabled = canExecute;
                     break;
                 case "EnterAssetPaneItemMultiSelectionMenuItem":
@@ -81,6 +87,18 @@ public sealed partial class AssetPaneView
                     break;
             }
         }
+    }
+
+    private static string ResolveAssetRowModifyTextResourceKey(MenuFlyout? flyout)
+    {
+        var target = flyout?.Items
+            .OfType<MenuFlyoutItem>()
+            .Select(static item => item.Tag)
+            .OfType<AssetListEntryViewModel>()
+            .FirstOrDefault();
+        return target?.Item.AssetType == AssetType.Sprite
+            ? ResourceKeys.AssetPaneViewContextEditText
+            : ResourceKeys.AssetPaneViewContextReplaceText;
     }
 
     private bool TrySelectContextTarget(

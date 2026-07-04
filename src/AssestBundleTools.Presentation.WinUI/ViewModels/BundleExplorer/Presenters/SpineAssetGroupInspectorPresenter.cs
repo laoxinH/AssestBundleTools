@@ -16,6 +16,8 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Present
 /// </summary>
 internal sealed class SpineAssetGroupInspectorPresenter
 {
+    private const string EditGlyph = "\uE70F";
+
     private readonly IBundleExplorerBundlePaneHost _bundlePane;
     private readonly ILocalizationService _localizationService;
     private readonly AssetPreviewDisplayFormatter _assetPreviewDisplayFormatter;
@@ -81,7 +83,9 @@ internal sealed class SpineAssetGroupInspectorPresenter
                 parts,
                 canManageRecords: true,
                 _workspaceIdProvider()),
-            canModify: parts.Length > 0);
+            canModify: parts.Length > 0,
+            modifyButtonText: GetString(ResourceKeys.InspectorModifyButton),
+            modifyButtonIconGlyph: EditGlyph);
         groupTab.Inspector.SpineAtlasPageSelector.Apply(
             groupTab.AtlasPageOptions,
             groupTab.SelectedAtlasPageOption);

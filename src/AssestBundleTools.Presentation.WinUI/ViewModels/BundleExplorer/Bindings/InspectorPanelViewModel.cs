@@ -30,6 +30,8 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     private string _replacementSourceText = string.Empty;
     private string _replacementStatusText = string.Empty;
     private string _changeSummaryText = string.Empty;
+    private string _modifyButtonText = string.Empty;
+    private string _modifyButtonIconGlyph = "\uE8AC";
     private bool _canExtract;
     private bool _canSelectFileReplacementSource;
     private bool _canSelectReplacementSource;
@@ -138,6 +140,18 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     {
         get => _changeSummaryText;
         set => SetProperty(ref _changeSummaryText, value);
+    }
+
+    public string ModifyButtonText
+    {
+        get => _modifyButtonText;
+        set => SetProperty(ref _modifyButtonText, value);
+    }
+
+    public string ModifyButtonIconGlyph
+    {
+        get => _modifyButtonIconGlyph;
+        set => SetProperty(ref _modifyButtonIconGlyph, value);
     }
 
     public bool CanExtract
@@ -285,6 +299,8 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         ReplacementSourceText = string.Empty;
         ReplacementStatusText = string.Empty;
         ChangeSummaryText = string.Empty;
+        ModifyButtonText = string.Empty;
+        ModifyButtonIconGlyph = "\uE8AC";
         CanExtract = false;
         CanSelectFileReplacementSource = false;
         CanSelectReplacementSource = false;
@@ -331,7 +347,9 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         IEnumerable<BundleExternalDependencyViewModel> bundleExternalDependencies,
         bool canRedoReplacement = false,
         IEnumerable<InspectorChangeRecordViewModel>? changeRecords = null,
-        bool? canModify = null)
+        bool? canModify = null,
+        string? modifyButtonText = null,
+        string? modifyButtonIconGlyph = null)
     {
         AssetName = assetName;
         BundleDisplayName = bundleDisplayName;
@@ -346,6 +364,8 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         ReplacementSourceText = replacementSourceText;
         ReplacementStatusText = replacementStatusText;
         ChangeSummaryText = changeSummaryText;
+        ModifyButtonText = modifyButtonText ?? string.Empty;
+        ModifyButtonIconGlyph = modifyButtonIconGlyph ?? "\uE8AC";
         CanExtract = canExtract;
         CanSelectFileReplacementSource = canSelectFileReplacementSource;
         CanSelectReplacementSource = canSelectReplacementSource;

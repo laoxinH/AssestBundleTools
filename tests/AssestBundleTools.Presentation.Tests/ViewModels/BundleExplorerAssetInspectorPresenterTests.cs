@@ -97,6 +97,60 @@ public sealed class BundleExplorerAssetInspectorPresenterTests
     }
 
     [Fact]
+    public void PresentAssetDocumentTab_ShouldLabelOrdinaryModifyActionAsFileReplacement()
+    {
+        var localizationService = new TestLocalizationService();
+        var bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
+        var presenter = new BundleExplorerAssetInspectorPresenter(bundlePane, localizationService);
+        var assetTab = new AssetDocumentTabViewModel(
+            new BundleId("bundle-text"),
+            new AssetId("asset-text"),
+            "config.json",
+            InspectorInformationTextSetFactory.Create(localizationService));
+        var details = CreateAssetDetails(
+            WorkspaceId.New(),
+            assetTab.BundleId,
+            assetTab.AssetId) with
+        {
+            Name = "config.json",
+            AssetType = AssetType.TextAsset,
+            AssetTypeDisplayName = "TextAsset"
+        };
+
+        presenter.PresentAssetDocumentTab(assetTab, details, canEdit: true, isBusy: false);
+
+        Assert.Equal(ResourceKeys.InspectorReplaceFileButton, assetTab.Inspector.ModifyButtonText);
+        Assert.Equal("\uE8AC", assetTab.Inspector.ModifyButtonIconGlyph);
+    }
+
+    [Fact]
+    public void PresentAssetDocumentTab_ShouldKeepSpriteModifyActionAsEditEntry()
+    {
+        var localizationService = new TestLocalizationService();
+        var bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
+        var presenter = new BundleExplorerAssetInspectorPresenter(bundlePane, localizationService);
+        var assetTab = new AssetDocumentTabViewModel(
+            new BundleId("bundle-sprite"),
+            new AssetId("asset-sprite"),
+            "hero",
+            InspectorInformationTextSetFactory.Create(localizationService));
+        var details = CreateAssetDetails(
+            WorkspaceId.New(),
+            assetTab.BundleId,
+            assetTab.AssetId) with
+        {
+            Name = "hero",
+            AssetType = AssetType.Sprite,
+            AssetTypeDisplayName = "Sprite"
+        };
+
+        presenter.PresentAssetDocumentTab(assetTab, details, canEdit: true, isBusy: false);
+
+        Assert.Equal(ResourceKeys.InspectorModifyButton, assetTab.Inspector.ModifyButtonText);
+        Assert.Equal("\uE70F", assetTab.Inspector.ModifyButtonIconGlyph);
+    }
+
+    [Fact]
     public void SpineGroupPresenter_ShouldEnableModifyWithoutEnablingReplacementSourceSelection()
     {
         var localizationService = new TestLocalizationService();
@@ -130,6 +184,8 @@ public sealed class BundleExplorerAssetInspectorPresenterTests
 
         Assert.True(groupTab.Inspector.CanModify);
         Assert.False(groupTab.Inspector.CanSelectFileReplacementSource);
+        Assert.Equal(ResourceKeys.InspectorModifyButton, groupTab.Inspector.ModifyButtonText);
+        Assert.Equal("\uE70F", groupTab.Inspector.ModifyButtonIconGlyph);
 
         presenter.SyncInspectorActionStates(groupTab.Inspector, groupTab, isBusy: true);
 

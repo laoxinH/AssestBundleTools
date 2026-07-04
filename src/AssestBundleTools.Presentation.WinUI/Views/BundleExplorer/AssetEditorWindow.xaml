@@ -183,15 +183,19 @@
 
                                 <Button
                                     x:Name="ModifyButton"
+                                    AutomationProperties.Name="{x:Bind ViewModel.Inspector.ModifyButtonText, Mode=OneWay}"
                                     Click="OnModifyButtonClick"
                                     IsEnabled="{x:Bind ViewModel.Inspector.CanModify, Mode=OneWay}"
-                                    Style="{StaticResource WorkspaceOperationButtonStyle}">
+                                    Style="{StaticResource WorkspaceOperationButtonStyle}"
+                                    ToolTipService.ToolTip="{x:Bind ViewModel.Inspector.ModifyButtonText, Mode=OneWay}">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon
                                             FontFamily="Segoe Fluent Icons"
                                             FontSize="12"
-                                            Glyph="&#xE70F;" />
-                                        <TextBlock x:Name="ModifyButtonText" />
+                                            Glyph="{x:Bind ViewModel.Inspector.ModifyButtonIconGlyph, Mode=OneWay}" />
+                                        <TextBlock
+                                            x:Name="ModifyButtonText"
+                                            Text="{x:Bind ViewModel.Inspector.ModifyButtonText, Mode=OneWay}" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>

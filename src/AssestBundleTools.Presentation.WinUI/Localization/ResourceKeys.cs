@@ -752,6 +752,7 @@ public static class ResourceKeys
     public const string AssetPaneViewSpineGroupStateDiagnosticsFormat = "AssetPaneView.SpineGroupState.Diagnostics.Format";
     public const string AssetPaneViewEmptyStateHintText = "AssetPaneView.EmptyStateHintText.Text";
     public const string AssetPaneViewContextReplaceText = "AssetPaneView.Context.Replace.Text";
+    public const string AssetPaneViewContextEditText = "AssetPaneView.Context.Edit.Text";
     public const string AssetPaneViewContextEnterMultiSelectionText = "AssetPaneView.Context.EnterMultiSelection.Text";
 
     public const string ErrorBundleDecryptorCatalogIdRequired = "Error.Bundle.Decryptor.Catalog.IdRequired";
@@ -1320,6 +1321,7 @@ public static class ResourceKeys
     public const string InspectorChangeSummaryTitle = "InspectorPanelView.ChangeSummaryTitleText.Text";
     public const string InspectorExtractButton = "InspectorPanelView.ExtractButton.Content";
     public const string InspectorModifyButton = "InspectorPanelView.ModifyButton.Content";
+    public const string InspectorReplaceFileButton = "InspectorPanelView.ReplaceFileButton.Content";
     public const string InspectorSelectFileReplacementButton = "InspectorPanelView.SelectFileReplacementButton.Content";
     public const string InspectorSelectReplacementButton = "InspectorPanelView.SelectReplacementButton.Content";
     public const string InspectorApplyReplacementButton = "InspectorPanelView.ApplyReplacementButton.Content";

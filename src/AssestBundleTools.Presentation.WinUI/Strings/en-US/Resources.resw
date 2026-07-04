@@ -1231,6 +1231,9 @@
     <value>Switch a bundle on the left, adjust search, or change views to refresh the list shown in this pane.</value>
   </data>
   <data name="AssetPaneView.Context.Replace.Text" xml:space="preserve">
+    <value>Replace File</value>
+  </data>
+  <data name="AssetPaneView.Context.Edit.Text" xml:space="preserve">
     <value>Edit</value>
   </data>
   <data name="AssetPaneView.Context.EnterMultiSelection.Text" xml:space="preserve">
@@ -2609,6 +2612,9 @@
   </data>
   <data name="InspectorPanelView.ModifyButton.Content" xml:space="preserve">
     <value>Edit</value>
+  </data>
+  <data name="InspectorPanelView.ReplaceFileButton.Content" xml:space="preserve">
+    <value>Replace File</value>
   </data>
   <data name="InspectorPanelView.SelectReplacementButton.Content" xml:space="preserve">
     <value>Workspace Source</value>

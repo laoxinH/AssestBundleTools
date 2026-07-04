@@ -1231,7 +1231,10 @@
     <value>切换左侧 Bundle 节点、调整搜索或切换视图后，这里会刷新为对应列表。</value>
   </data>
   <data name="AssetPaneView.Context.Replace.Text" xml:space="preserve">
-    <value>修改</value>
+    <value>替换文件</value>
+  </data>
+  <data name="AssetPaneView.Context.Edit.Text" xml:space="preserve">
+    <value>编辑</value>
   </data>
   <data name="AssetPaneView.Context.EnterMultiSelection.Text" xml:space="preserve">
     <value>进入多选</value>
@@ -2608,7 +2611,10 @@
     <value>提取</value>
   </data>
   <data name="InspectorPanelView.ModifyButton.Content" xml:space="preserve">
-    <value>修改</value>
+    <value>编辑</value>
+  </data>
+  <data name="InspectorPanelView.ReplaceFileButton.Content" xml:space="preserve">
+    <value>替换文件</value>
   </data>
   <data name="InspectorPanelView.SelectReplacementButton.Content" xml:space="preserve">
     <value>工作区来源</value>

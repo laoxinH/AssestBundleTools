@@ -18,6 +18,9 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Present
 /// </summary>
 internal sealed class BundleExplorerAssetInspectorPresenter
 {
+    private const string EditGlyph = "\uE70F";
+    private const string ReplaceFileGlyph = "\uE8AC";
+
     private static readonly AssetType[] PreferredAssetTypeOrder =
     [
         AssetType.Texture2D,
@@ -193,7 +196,9 @@ internal sealed class BundleExplorerAssetInspectorPresenter
             changeRecords: _changeRecordPresenter.CreateChangeRecords(
                 details,
                 canManageChangeRecords),
-            canModify: canEdit && !isBusy && details.CanReplaceFromFile);
+            canModify: canEdit && !isBusy && details.CanReplaceFromFile,
+            modifyButtonText: ResolveModifyButtonText(details),
+            modifyButtonIconGlyph: ResolveModifyButtonIconGlyph(details));
     }
 
     public void SyncInspectorActionStates(
@@ -245,6 +250,16 @@ internal sealed class BundleExplorerAssetInspectorPresenter
             OpenButtonText: GetString(ResourceKeys.InspectorResolvedAssetOpenButton),
             OpenButtonToolTipText: GetString(ResourceKeys.InspectorResolvedAssetOpenButtonToolTip));
     }
+
+    private string ResolveModifyButtonText(AssetDetailsDto details) =>
+        details.AssetType == AssetType.Sprite
+            ? GetString(ResourceKeys.InspectorModifyButton)
+            : GetString(ResourceKeys.InspectorReplaceFileButton);
+
+    private static string ResolveModifyButtonIconGlyph(AssetDetailsDto details) =>
+        details.AssetType == AssetType.Sprite
+            ? EditGlyph
+            : ReplaceFileGlyph;
 
     /// <summary>
     /// Bundle 外部依赖的友好名称已经在基础设施层做过一轮解析，

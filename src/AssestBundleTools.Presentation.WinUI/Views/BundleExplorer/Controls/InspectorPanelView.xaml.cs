@@ -248,7 +248,6 @@ public sealed partial class InspectorPanelView : UserControl
         ApplySelectedReplacementButton.Content = UiText.Get(ResourceKeys.InspectorApplyReplacementButton);
 
         ApplyActionButtonText(ExtractButton, ExtractButtonText, ResourceKeys.InspectorExtractButton);
-        ApplyActionButtonText(ModifyButton, ModifyButtonText, ResourceKeys.InspectorModifyButton);
     }
 
     private static void ApplyActionButtonText(Button button, TextBlock textBlock, string resourceKey)
