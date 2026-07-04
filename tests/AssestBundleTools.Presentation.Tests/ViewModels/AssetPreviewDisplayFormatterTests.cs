@@ -74,6 +74,59 @@ public sealed class AssetPreviewDisplayFormatterTests
     }
 
     [Fact]
+    public void BuildPreviewInfoRows_ShouldProjectTextDisplayMetadata()
+    {
+        var formatter = new AssetPreviewDisplayFormatter(new TestLocalizationService());
+        AssetPreviewInfoItemDto[] items =
+        [
+            new(
+                AssetPreviewInfoKey.TextDisplayCharacterCount,
+                AssetPreviewInfoValueKind.Integer,
+                Int64Value: 24000),
+            new(
+                AssetPreviewInfoKey.TextFullCharacterCount,
+                AssetPreviewInfoValueKind.Integer,
+                Int64Value: 1200000),
+            new(
+                AssetPreviewInfoKey.TextDisplayLineCount,
+                AssetPreviewInfoValueKind.Integer,
+                Int64Value: 1000),
+            new(
+                AssetPreviewInfoKey.TextEstimatedFullLineCount,
+                AssetPreviewInfoValueKind.Integer,
+                Int64Value: 48000),
+            new(
+                AssetPreviewInfoKey.TextDisplayTruncated,
+                AssetPreviewInfoValueKind.Boolean,
+                BooleanValue: true)
+        ];
+
+        var rows = formatter.BuildPreviewInfoRows(items);
+
+        Assert.Equal(5, rows.Count);
+        Assert.Contains(
+            rows,
+            static row => row.Label == "InspectorPanelView.PreviewInfo.TextDisplayCharacterCount.Label" &&
+                          row.Value == "24000");
+        Assert.Contains(
+            rows,
+            static row => row.Label == "InspectorPanelView.PreviewInfo.TextFullCharacterCount.Label" &&
+                          row.Value == "1200000");
+        Assert.Contains(
+            rows,
+            static row => row.Label == "InspectorPanelView.PreviewInfo.TextDisplayLineCount.Label" &&
+                          row.Value == "1000");
+        Assert.Contains(
+            rows,
+            static row => row.Label == "InspectorPanelView.PreviewInfo.TextEstimatedFullLineCount.Label" &&
+                          row.Value == "48000");
+        Assert.Contains(
+            rows,
+            static row => row.Label == "InspectorPanelView.PreviewInfo.TextDisplayTruncated.Label" &&
+                          row.Value == ResourceKeys.InspectorBooleanTrue);
+    }
+
+    [Fact]
     public void BuildSpritePreviewOverlayDisplayState_ShouldProjectOverlayGeometry_AndBadgeText()
     {
         var formatter = new AssetPreviewDisplayFormatter(new TestLocalizationService());

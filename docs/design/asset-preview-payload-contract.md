@@ -340,17 +340,18 @@ Preview.FullContentUnavailable
 
 - atlas `TextAsset` 替换为巨大 / JSON 错输入时，Spine 组详情会快速返回诊断并跳过 texture page、overlay 和 runtime 尝试。
 - 普通文本预览已开始收敛到 Application 层统一 `AssetPreviewTextDisplayPolicy`：原始生成 / 缓存恢复 / 文件替换文本预览共享同一字符数与行数展示预算，并输出 `TextDisplay` 元数据；Presentation 文本 presenter 也保留同一预算兜底，避免异常路径把超长文本直接绑定到 UI。
+- `TextDisplay` 元数据已投影为稳定 `AssetPreviewInfoItemDto`：详情信息卡可以显示预览字符数、完整字符数、预览行数、估计完整行数和是否截断；原始生成、缓存恢复和文件替换预览路径共享同一投影 helper。
 - 文件替换 `TextAsset` 的普通展示文本已做有界裁剪，同时保留完整内容供 Application 内部结构化处理和导出链路使用；完整文本仍属于过渡形态，后续迁移到 payload reference / chunk query。
 - Spine runtime adapter 已在 V3.8 / V4.2 的预览和 playback session 前加入 atlas 输入 guard。
 
-推荐下一步按阶段 1 开始：
+推荐下一步继续完成阶段 1 收口，并为阶段 3 铺路：
 
-1. 继续盘点当前所有 `AssetPreviewDto` 生产和消费路径，列出仍携带完整 payload 的字段和结构化大集合。
-2. 将 `TextDisplay` 元数据投影到详情信息卡或文本预览工具区，让用户知道当前显示已截断、完整大小和估计行数。
-3. 设计 `FullContentReference` 过渡字段和 `LoadPreviewTextChunkQuery`，为阶段 3 的完整文本分块读取铺路。
-4. 扩大 Application 与 Presentation 回归，确认普通预览、替换预览、缓存恢复和异常 Presentation 路径行为一致。
+1. 继续盘点当前所有 `AssetPreviewDto` 生产和消费路径，列出仍携带完整 payload 的字段和结构化大集合，优先关注 `FullTextContent`、结构化字段树和插件 / 外部工具诊断。
+2. 设计 `FullContentReference` 过渡字段和 `LoadPreviewTextChunkQuery`，让普通预览 DTO 不再需要携带完整大文本，同时为完整文本查看、搜索和编辑建立 Application query 边界。
+3. 扩大 Application 与 Presentation 回归，覆盖短文本、长文本、缓存恢复、文件替换、工作区替换、异常 Presentation 兜底以及 info item 去重行为。
+4. 在阶段 1 文本链路稳定后，进入阶段 2：把 Spine atlas 现有 guard 迁入统一 policy，并扩展到 skel JSON、TypeTree、图片、音频、Mesh 和 CLI result JSON。
 
-阶段 1 完成后，再推进阶段 2 的各类型 parser / codec guard 扩面。
+当前阶段性建议：下一步优先做 `FullContentReference / LoadPreviewTextChunkQuery` 的设计与最小实现；这能直接支撑后续大文本完整查看、JSON 美化编辑和行号虚拟化，同时减少 `FullTextContent` 过渡字段继续扩散的风险。
 
 ## 11. 待决问题
 

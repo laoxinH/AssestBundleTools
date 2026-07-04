@@ -244,7 +244,9 @@ internal static class AssetPreviewDtoMapper
             BinaryContent: null,
             TextContent: textDisplay.TextContent,
             PreviewPayloadFilePath: previewPayloadFilePath,
-            PreviewInfoItems: descriptor.PreviewInfoItems,
+            PreviewInfoItems: AssetPreviewTextDisplayPolicy.AppendDisplayInfoItems(
+                descriptor.PreviewInfoItems,
+                textDisplay.Metadata),
             PreviewMessage: descriptor.PreviewMessage,
             PreferredDisplaySizeInBytes: descriptor.PreferredDisplaySizeInBytes,
             IsFromCache: isFromCache,

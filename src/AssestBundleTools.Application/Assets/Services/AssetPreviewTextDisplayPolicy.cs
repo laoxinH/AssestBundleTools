@@ -31,6 +31,44 @@ public static class AssetPreviewTextDisplayPolicy
         return new AssetPreviewTextDisplayResult(displayText, metadata);
     }
 
+    public static IReadOnlyList<AssetPreviewInfoItemDto> AppendDisplayInfoItems(
+        IReadOnlyList<AssetPreviewInfoItemDto>? items,
+        AssetPreviewTextDisplayDto metadata)
+    {
+        var result = items is { Count: > 0 }
+            ? new List<AssetPreviewInfoItemDto>(items)
+            : new List<AssetPreviewInfoItemDto>();
+        var existingKeys = result.Select(static item => item.Key).ToHashSet();
+
+        AddInteger(
+            result,
+            existingKeys,
+            AssetPreviewInfoKey.TextDisplayCharacterCount,
+            metadata.DisplayCharacterCount);
+        AddInteger(
+            result,
+            existingKeys,
+            AssetPreviewInfoKey.TextFullCharacterCount,
+            metadata.FullCharacterCount);
+        AddInteger(
+            result,
+            existingKeys,
+            AssetPreviewInfoKey.TextDisplayLineCount,
+            metadata.DisplayLineCount);
+        AddInteger(
+            result,
+            existingKeys,
+            AssetPreviewInfoKey.TextEstimatedFullLineCount,
+            metadata.EstimatedFullLineCount);
+        AddBoolean(
+            result,
+            existingKeys,
+            AssetPreviewInfoKey.TextDisplayTruncated,
+            metadata.IsTruncated);
+
+        return result;
+    }
+
     private static string NormalizeLineEndings(string textContent) =>
         textContent.Replace("\r\n", "\n").Replace('\r', '\n');
 
@@ -84,6 +122,40 @@ public static class AssetPreviewTextDisplayPolicy
         }
 
         return lineCount;
+    }
+
+    private static void AddInteger(
+        List<AssetPreviewInfoItemDto> items,
+        HashSet<AssetPreviewInfoKey> existingKeys,
+        AssetPreviewInfoKey key,
+        long value)
+    {
+        if (!existingKeys.Add(key))
+        {
+            return;
+        }
+
+        items.Add(new AssetPreviewInfoItemDto(
+            key,
+            AssetPreviewInfoValueKind.Integer,
+            Int64Value: value));
+    }
+
+    private static void AddBoolean(
+        List<AssetPreviewInfoItemDto> items,
+        HashSet<AssetPreviewInfoKey> existingKeys,
+        AssetPreviewInfoKey key,
+        bool value)
+    {
+        if (!existingKeys.Add(key))
+        {
+            return;
+        }
+
+        items.Add(new AssetPreviewInfoItemDto(
+            key,
+            AssetPreviewInfoValueKind.Boolean,
+            BooleanValue: value));
     }
 }
 

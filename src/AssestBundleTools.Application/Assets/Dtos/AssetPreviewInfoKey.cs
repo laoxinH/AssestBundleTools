@@ -14,6 +14,12 @@ public enum AssetPreviewInfoKey
     PreviewOutputFormat = 2,
     SerializedObjectSize = 3,
 
+    TextDisplayCharacterCount = 10,
+    TextFullCharacterCount = 11,
+    TextDisplayLineCount = 12,
+    TextEstimatedFullLineCount = 13,
+    TextDisplayTruncated = 14,
+
     TextureFormatId = 20,
     TextureMipCount = 21,
     TextureDecodedSize = 22,

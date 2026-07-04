@@ -2877,6 +2877,21 @@
   <data name="InspectorPanelView.PreviewInfo.SerializedObjectSize.Label" xml:space="preserve">
     <value>Serialized Object Size</value>
   </data>
+  <data name="InspectorPanelView.PreviewInfo.TextDisplayCharacterCount.Label" xml:space="preserve">
+    <value>Preview Character Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextFullCharacterCount.Label" xml:space="preserve">
+    <value>Full Character Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextDisplayLineCount.Label" xml:space="preserve">
+    <value>Preview Line Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextEstimatedFullLineCount.Label" xml:space="preserve">
+    <value>Estimated Full Line Count</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextDisplayTruncated.Label" xml:space="preserve">
+    <value>Preview Truncated</value>
+  </data>
   <data name="InspectorPanelView.PreviewInfo.TextureFormatId.Label" xml:space="preserve">
     <value>Texture Format ID</value>
   </data>

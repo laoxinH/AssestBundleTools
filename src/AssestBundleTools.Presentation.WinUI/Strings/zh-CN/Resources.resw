@@ -2877,6 +2877,21 @@
   <data name="InspectorPanelView.PreviewInfo.SerializedObjectSize.Label" xml:space="preserve">
     <value>资源记录大小</value>
   </data>
+  <data name="InspectorPanelView.PreviewInfo.TextDisplayCharacterCount.Label" xml:space="preserve">
+    <value>预览字符数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextFullCharacterCount.Label" xml:space="preserve">
+    <value>完整字符数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextDisplayLineCount.Label" xml:space="preserve">
+    <value>预览行数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextEstimatedFullLineCount.Label" xml:space="preserve">
+    <value>估计完整行数</value>
+  </data>
+  <data name="InspectorPanelView.PreviewInfo.TextDisplayTruncated.Label" xml:space="preserve">
+    <value>预览已截断</value>
+  </data>
   <data name="InspectorPanelView.PreviewInfo.TextureFormatId.Label" xml:space="preserve">
     <value>纹理格式 ID</value>
   </data>

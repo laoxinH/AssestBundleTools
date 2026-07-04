@@ -192,7 +192,11 @@ internal sealed class ReplacementEffectivePreviewResolver
             BinaryContent: usesBinaryPayload ? previewContent.Content : null,
             TextContent: textDisplay?.TextContent,
             PreviewPayloadFilePath: previewPayloadFilePath,
-            PreviewInfoItems: previewContent.PreviewInfoItems,
+            PreviewInfoItems: textDisplay is null
+                ? previewContent.PreviewInfoItems
+                : AssetPreviewTextDisplayPolicy.AppendDisplayInfoItems(
+                    previewContent.PreviewInfoItems,
+                    textDisplay.Metadata),
             PreviewMessage: previewContent.PreviewMessage,
             PreferredDisplaySizeInBytes: previewContent.PreferredDisplaySizeInBytes,
             IsFromCache: isFromCache,

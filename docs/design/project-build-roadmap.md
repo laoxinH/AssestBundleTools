@@ -637,6 +637,7 @@ src/AssestBundleTools.Application/
   - 图像预览：`Texture2D`、`Sprite`
     `Sprite` 当前已在源贴图预览上叠加裁切框、pivot 点和 9-slice border 辅助线，并额外提供裁切结果卡片；这些数据随预览缓存一起落盘和命中复用。
   - 文本预览：`TextAsset`、`Shader`
+    普通文本预览当前已统一由 `AssetPreviewTextDisplayPolicy` 控制可绑定展示预算；原始生成、缓存恢复和文件替换预览都会输出有界 `TextContent`、过渡期完整 `FullTextContent` 和 `TextDisplay` 元数据，并将预览字符数、完整字符数、预览行数、估计完整行数、是否截断投影到检查器预览信息行。后续继续按 [asset-preview-payload-contract.md](asset-preview-payload-contract.md) 迁移到 `FullContentReference / LoadPreviewTextChunkQuery`，减少完整大文本继续停留在普通预览 DTO 中。
   - 音频预览：`AudioClip`
   - 半可视化摘要预览：`Material`、`AnimationClip`、`Font`、`GameObject`、`MonoBehaviour`、`AnimatorController`
     `Material` 当前会展示 Shader、TexEnv、颜色与数值属性；Shader PPtr 会按依赖图尝试定位到 `Shader` 资产并展示解析状态；TexEnv 行会按依赖图解析 `Texture2D / Sprite` 并通过现有预览查询管线加载前若干缩略图，同时把 `_MainTex` 或首个可用贴图提升为主纹理平面预览，并在存在 `_Color` 时做低透明度 tint 参考叠加；另会基于常见属性名补充材质语义候选提示，但不模拟 Shader 渲染，未匹配时展示内部或外部引用未解析状态。

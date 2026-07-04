@@ -57,6 +57,17 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.True(preview.TextDisplay?.IsTruncated == true, "Text display metadata should mark generated long text as truncated.");
         TestAssert.Equal(fullTextContent.Length, preview.TextDisplay?.FullCharacterCount, "Text display metadata should preserve the full character count.");
         TestAssert.Equal(maxDisplayCharacters, preview.TextDisplay?.MaxDisplayCharacters, "Text display metadata should expose the active character budget.");
+        TestAssert.Equal(
+            maxDisplayCharacters,
+            ReadInt64PreviewInfo(preview, AssetPreviewInfoKey.TextDisplayCharacterCount),
+            "Preview info should expose the bounded text display character count.");
+        TestAssert.Equal(
+            fullTextContent.Length,
+            ReadInt64PreviewInfo(preview, AssetPreviewInfoKey.TextFullCharacterCount),
+            "Preview info should expose the full text character count.");
+        TestAssert.True(
+            ReadBooleanPreviewInfo(preview, AssetPreviewInfoKey.TextDisplayTruncated) == true,
+            "Preview info should expose text display truncation.");
         TestAssert.Equal(fullTextContent, preview.FullTextContent, "Application consumers should receive the full structured text.");
         TestAssert.Equal(fullTextContent, previewCacheStore.GetSavedTextContent(), "Preview cache should persist full text payloads.");
         TestAssert.Equal(1, previewCacheStore.SaveCallCount, "Generated long text should be written to preview cache once.");
@@ -94,6 +105,14 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(fullTextContent[..maxDisplayCharacters], preview.TextContent, "Cached display text should use the same leading bounded slice.");
         TestAssert.Equal(fullTextContent, preview.FullTextContent, "Application consumers should still receive full cached text.");
         TestAssert.True(preview.TextDisplay?.IsTruncated == true, "Cached long text metadata should mark the display as truncated.");
+        TestAssert.Equal(
+            maxDisplayCharacters,
+            ReadInt64PreviewInfo(preview, AssetPreviewInfoKey.TextDisplayCharacterCount),
+            "Cached preview info should expose the bounded text display character count.");
+        TestAssert.Equal(
+            fullTextContent.Length,
+            ReadInt64PreviewInfo(preview, AssetPreviewInfoKey.TextFullCharacterCount),
+            "Cached preview info should expose the full text character count.");
         TestAssert.Equal(resolvedPayloadFilePath, preview.PreviewPayloadFilePath, "Cached preview should keep the resolved payload reference path.");
     }
 
@@ -145,6 +164,14 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(maxDisplayLineCount, preview.TextDisplay?.DisplayLineCount, "Text display metadata should report the displayed line count.");
         TestAssert.Equal(lines.Length, preview.TextDisplay?.EstimatedFullLineCount, "Text display metadata should report the estimated full line count.");
         TestAssert.True(preview.TextDisplay?.IsTruncated == true, "Line-budget truncation should be reported.");
+        TestAssert.Equal(
+            maxDisplayLineCount,
+            ReadInt64PreviewInfo(preview, AssetPreviewInfoKey.TextDisplayLineCount),
+            "Preview info should expose the displayed line count.");
+        TestAssert.Equal(
+            lines.Length,
+            ReadInt64PreviewInfo(preview, AssetPreviewInfoKey.TextEstimatedFullLineCount),
+            "Preview info should expose the estimated full line count.");
         TestAssert.Equal(fullTextContent, preview.FullTextContent, "Full text should remain available for Application consumers.");
     }
 
@@ -199,6 +226,28 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(longReplacementText[..maxDisplayCharacters], preview.TextContent, "Replacement display text should use the leading bounded slice.");
         TestAssert.True(preview.TextDisplay?.IsTruncated == true, "Replacement text metadata should mark the display as truncated.");
         TestAssert.Equal(longReplacementText.Length, preview.TextDisplay?.FullCharacterCount, "Replacement text metadata should preserve the full character count.");
+        TestAssert.Equal(
+            maxDisplayCharacters,
+            ReadInt64PreviewInfo(preview, AssetPreviewInfoKey.TextDisplayCharacterCount),
+            "Replacement preview info should expose the bounded text display character count.");
+        TestAssert.Equal(
+            longReplacementText.Length,
+            ReadInt64PreviewInfo(preview, AssetPreviewInfoKey.TextFullCharacterCount),
+            "Replacement preview info should expose the full text character count.");
         TestAssert.Equal(longReplacementText, preview.FullTextContent, "Structured consumers should still receive the full replacement text.");
+    }
+
+    private static long? ReadInt64PreviewInfo(AssetPreviewDto preview, AssetPreviewInfoKey key)
+    {
+        return preview.PreviewInfoItems?
+            .FirstOrDefault(item => item.Key == key)?
+            .Int64Value;
+    }
+
+    private static bool? ReadBooleanPreviewInfo(AssetPreviewDto preview, AssetPreviewInfoKey key)
+    {
+        return preview.PreviewInfoItems?
+            .FirstOrDefault(item => item.Key == key)?
+            .BooleanValue;
     }
 }
