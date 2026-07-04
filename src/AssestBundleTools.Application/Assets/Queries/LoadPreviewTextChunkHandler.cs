@@ -2,6 +2,8 @@ using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Replacement.Dtos;
+using AssestBundleTools.Application.Replacement.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 
@@ -15,10 +17,14 @@ public sealed class LoadPreviewTextChunkHandler : IQueryHandler<LoadPreviewTextC
     public const int MaxChunkLength = 32768;
 
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
+    private readonly IReplacementPreviewSourceProvider? _replacementPreviewSourceProvider;
 
-    public LoadPreviewTextChunkHandler(IWorkspaceDataStoreFactory workspaceDataStoreFactory)
+    public LoadPreviewTextChunkHandler(
+        IWorkspaceDataStoreFactory workspaceDataStoreFactory,
+        IReplacementPreviewSourceProvider? replacementPreviewSourceProvider = null)
     {
         _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
+        _replacementPreviewSourceProvider = replacementPreviewSourceProvider;
     }
 
     public Task<Result<AssetPreviewTextChunkDto>> HandleAsync(
@@ -36,10 +42,7 @@ public sealed class LoadPreviewTextChunkHandler : IQueryHandler<LoadPreviewTextC
                 ApplicationErrors.WorkspaceOpenDataRootPathRequired()));
         }
 
-        if (query.Reference is null ||
-            query.Reference.Kind != AssetPreviewFullContentReferenceKind.PreviewCache ||
-            string.IsNullOrWhiteSpace(query.Reference.WorkspaceKey) ||
-            string.IsNullOrWhiteSpace(query.Reference.PreviewCacheKey))
+        if (query.Reference is null)
         {
             return Task.FromResult(Result<AssetPreviewTextChunkDto>.Failure(
                 ApplicationErrors.AssetPreviewFullContentReferenceInvalid()));
@@ -51,8 +54,31 @@ public sealed class LoadPreviewTextChunkHandler : IQueryHandler<LoadPreviewTextC
                 ApplicationErrors.AssetPreviewTextChunkRangeInvalid()));
         }
 
-        var previewCacheStore = _workspaceDataStoreFactory.CreatePreviewCacheStore(query.WorkspaceDataRootPath);
         var requestedLength = Math.Min(query.Length, MaxChunkLength);
+        return query.Reference.Kind switch
+        {
+            AssetPreviewFullContentReferenceKind.PreviewCache => LoadPreviewCacheTextChunk(query, requestedLength),
+            AssetPreviewFullContentReferenceKind.FileReplacement => LoadFileReplacementTextChunkAsync(
+                query,
+                requestedLength,
+                cancellationToken),
+            _ => Task.FromResult(Result<AssetPreviewTextChunkDto>.Failure(
+                ApplicationErrors.AssetPreviewFullContentReferenceInvalid()))
+        };
+    }
+
+    private Task<Result<AssetPreviewTextChunkDto>> LoadPreviewCacheTextChunk(
+        LoadPreviewTextChunkQuery query,
+        int requestedLength)
+    {
+        if (string.IsNullOrWhiteSpace(query.Reference.WorkspaceKey) ||
+            string.IsNullOrWhiteSpace(query.Reference.PreviewCacheKey))
+        {
+            return Task.FromResult(Result<AssetPreviewTextChunkDto>.Failure(
+                ApplicationErrors.AssetPreviewFullContentReferenceInvalid()));
+        }
+
+        var previewCacheStore = _workspaceDataStoreFactory.CreatePreviewCacheStore(query.WorkspaceDataRootPath);
         var chunk = previewCacheStore.LoadTextChunk(
             query.Reference.WorkspaceKey,
             query.Reference.PreviewCacheKey,
@@ -79,6 +105,59 @@ public sealed class LoadPreviewTextChunkHandler : IQueryHandler<LoadPreviewTextC
             chunk.Length,
             totalLength,
             chunk.Offset + chunk.Length < totalLength)));
+    }
+
+    private async Task<Result<AssetPreviewTextChunkDto>> LoadFileReplacementTextChunkAsync(
+        LoadPreviewTextChunkQuery query,
+        int requestedLength,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(query.Reference.SourcePath))
+        {
+            return Result<AssetPreviewTextChunkDto>.Failure(
+                ApplicationErrors.AssetPreviewFullContentReferenceInvalid());
+        }
+
+        if (_replacementPreviewSourceProvider is null)
+        {
+            return Result<AssetPreviewTextChunkDto>.Failure(
+                ApplicationErrors.AssetPreviewFullContentUnavailable(query.Reference.SourcePath));
+        }
+
+        var chunkResult = await _replacementPreviewSourceProvider.LoadFileTextChunkAsync(
+            query.Reference.SourcePath,
+            query.Offset,
+            requestedLength,
+            cancellationToken);
+        if (chunkResult.IsCancelled)
+        {
+            return Result<AssetPreviewTextChunkDto>.Cancelled();
+        }
+
+        if (!chunkResult.IsSuccess || chunkResult.Value is null)
+        {
+            return Result<AssetPreviewTextChunkDto>.Failure(
+                chunkResult.Errors.Count > 0
+                    ? chunkResult.Errors
+                    : [ApplicationErrors.AssetPreviewFullContentUnavailable(query.Reference.SourcePath)]);
+        }
+
+        var chunk = chunkResult.Value;
+        var totalLength = Math.Max(chunk.TotalLength, chunk.Offset + chunk.Length);
+        var effectiveReference = query.Reference with
+        {
+            ContentType = chunk.ContentType,
+            ContentLength = chunk.ContentLength,
+            SourcePath = chunk.SourcePath
+        };
+
+        return Result<AssetPreviewTextChunkDto>.Success(new AssetPreviewTextChunkDto(
+            effectiveReference,
+            chunk.Text,
+            chunk.Offset,
+            chunk.Length,
+            totalLength,
+            chunk.Offset + chunk.Length < totalLength));
     }
 
     private static int ResolveTotalLength(PreviewCacheTextChunkDto chunk)

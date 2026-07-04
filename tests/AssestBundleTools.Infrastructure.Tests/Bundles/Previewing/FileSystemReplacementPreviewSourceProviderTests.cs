@@ -62,6 +62,51 @@ internal static class FileSystemReplacementPreviewSourceProviderTests
         TestAssert.Equal(4L, infoItem.Int64Value ?? 0L, "Binary preview size should match the source file length.");
     }
 
+    public static async Task LoadFileTextChunkAsync_ShouldReadNormalizedTextRange_ForTextAssetFile()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        Directory.CreateDirectory(temporaryDirectory.DirectoryPath);
+        var atlasPath = Path.Combine(temporaryDirectory.DirectoryPath, "hero.atlas");
+        const string sourceText = "hero.png\r\nsize: 512, 256\r\nformat: RGBA8888\r\n";
+        await File.WriteAllTextAsync(atlasPath, sourceText, Encoding.UTF8);
+
+        var provider = new FileSystemReplacementPreviewSourceProvider();
+
+        var result = await provider.LoadFileTextChunkAsync(
+            atlasPath,
+            offset: 9,
+            length: 14);
+
+        TestAssert.True(result.IsSuccess, "Readable atlas files should support text chunk loading.");
+        var chunk = TestAssert.NotNull(result.Value, "Successful chunk loading should include a text chunk.");
+        TestAssert.Equal("size: 512, 25", chunk.Text, "Chunk text should use normalized line endings before slicing.");
+        TestAssert.Equal(9, chunk.Offset, "Chunk offset should report the normalized text offset.");
+        TestAssert.Equal(14, chunk.Length, "Chunk length should report the returned normalized character count.");
+        TestAssert.Equal(
+            sourceText.Replace("\r\n", "\n", StringComparison.Ordinal).Length,
+            chunk.TotalLength,
+            "Chunk total length should report normalized full text length.");
+        TestAssert.Equal(new FileInfo(atlasPath).Length, chunk.ContentLength, "Chunk content length should report source file bytes.");
+        TestAssert.Equal(atlasPath, chunk.SourcePath, "Chunk should keep the normalized source path.");
+    }
+
+    public static async Task LoadFileTextChunkAsync_ShouldRejectBinarySkelTextAssetFile()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        Directory.CreateDirectory(temporaryDirectory.DirectoryPath);
+        var skeletonPath = Path.Combine(temporaryDirectory.DirectoryPath, "hero.skel");
+        await File.WriteAllBytesAsync(skeletonPath, [0x00, 0x01, 0x7F, 0x02]);
+
+        var provider = new FileSystemReplacementPreviewSourceProvider();
+
+        var result = await provider.LoadFileTextChunkAsync(
+            skeletonPath,
+            offset: 0,
+            length: 16);
+
+        TestAssert.True(result.IsFailure, "Binary skeleton files should not be exposed as text chunks.");
+    }
+
     public static async Task LoadFilePreviewAsync_ShouldReturnImagePayload_ForTextureReplacement()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();

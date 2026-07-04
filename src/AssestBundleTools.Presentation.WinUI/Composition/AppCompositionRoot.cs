@@ -147,7 +147,9 @@ internal static class AppCompositionRoot
             bundleArtifactCachePrunePolicy,
             bundleArtifactCachePrunePolicy,
             replacementPreviewSourceProvider);
-        var loadPreviewTextChunkHandler = new LoadPreviewTextChunkHandler(workspaceDataStoreFactory);
+        var loadPreviewTextChunkHandler = new LoadPreviewTextChunkHandler(
+            workspaceDataStoreFactory,
+            replacementPreviewSourceProvider);
         var loadSpineAssetGroupDetailsHandler = new LoadSpineAssetGroupDetailsHandler(
             workspaceSessionRegistry,
             getAssetPreviewHandler,

@@ -160,6 +160,18 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(query.AssetId, preview.AssetId, "Override preview should keep the target asset identity.");
         TestAssert.Equal(AssetPreviewKind.Text, preview.Kind, "TextAsset overrides should expose text preview content.");
         TestAssert.Equal(atlasText, preview.FullTextContent, "Override text should be available to structured text readers.");
+        TestAssert.Equal(
+            AssetPreviewFullContentReferenceKind.FileReplacement,
+            preview.FullContentReference?.Kind,
+            "Override text should expose a file-replacement full content reference.");
+        TestAssert.Equal(
+            overrideFilePath,
+            preview.FullContentReference?.SourcePath,
+            "Override full content reference should carry the draft source path.");
+        TestAssert.Equal(
+            Encoding.UTF8.GetByteCount(atlasText),
+            preview.FullContentReference?.ContentLength,
+            "Override full content reference should expose the replacement text payload length.");
         TestAssert.Equal(overrideFilePath, preview.PreviewPayloadFilePath, "Override preview should expose the draft source path.");
         TestAssert.Equal(1, replacementPreviewSourceProvider.LoadFilePreviewCallCount, "Override preview should read exactly one external file source.");
         TestAssert.Equal(AssetType.TextAsset, replacementPreviewSourceProvider.LastTargetDetails?.AssetType, "Override target details should preserve the indexed asset type.");
@@ -219,6 +231,18 @@ internal static partial class GetAssetPreviewHandlerTests
         var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
         TestAssert.Equal(AssetPreviewKind.Text, preview.Kind, "TextAsset replacement preview should be text.");
         TestAssert.Equal(atlasText, preview.FullTextContent, "TextAsset replacement preview should expose full text.");
+        TestAssert.Equal(
+            AssetPreviewFullContentReferenceKind.FileReplacement,
+            preview.FullContentReference?.Kind,
+            "TextAsset replacement preview should expose a file-replacement full content reference.");
+        TestAssert.Equal(
+            replacementFilePath,
+            preview.FullContentReference?.SourcePath,
+            "TextAsset replacement full content reference should carry the selected source path.");
+        TestAssert.Equal(
+            Encoding.UTF8.GetByteCount(atlasText),
+            preview.FullContentReference?.ContentLength,
+            "TextAsset replacement full content reference should expose the replacement text payload length.");
         TestAssert.Equal(replacementFilePath, preview.PreviewPayloadFilePath, "TextAsset replacement preview should expose the selected source path.");
         TestAssert.Equal(1, replacementPreviewSourceProvider.LoadFilePreviewCallCount, "TextAsset replacement preview should load one file source.");
         TestAssert.Equal(0, decryptor.DecryptCallCount, "TextAsset file preview should not decrypt the original bundle.");

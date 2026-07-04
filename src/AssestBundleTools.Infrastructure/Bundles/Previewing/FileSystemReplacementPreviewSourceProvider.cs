@@ -3,6 +3,7 @@ using System.Text;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Services;
 using AssestBundleTools.Domain.Assets;
 
@@ -71,6 +72,24 @@ public sealed class FileSystemReplacementPreviewSourceProvider : IReplacementPre
             return Result<AssetPreviewContentDto>.Failure(
                 ApplicationErrors.BundlePreviewGenerationFailed(sourceFilePath, ex.GetType().Name));
         }
+    }
+
+    public Task<Result<ReplacementTextChunkDto>> LoadFileTextChunkAsync(
+        string sourceFilePath,
+        int offset,
+        int length,
+        CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromResult(Result<ReplacementTextChunkDto>.Cancelled());
+        }
+
+        return Task.Run(() => FileSystemReplacementTextChunkReader.Load(
+            sourceFilePath,
+            offset,
+            length,
+            cancellationToken));
     }
 
     private static string ResolveImageContentType(string path)

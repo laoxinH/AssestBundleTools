@@ -602,17 +602,29 @@ internal static partial class GetAssetPreviewHandlerTests
     private sealed class TestReplacementPreviewSourceProvider : IReplacementPreviewSourceProvider
     {
         private readonly Result<AssetPreviewContentDto> _result;
+        private readonly Result<ReplacementTextChunkDto>? _textChunkResult;
 
-        public TestReplacementPreviewSourceProvider(Result<AssetPreviewContentDto> result)
+        public TestReplacementPreviewSourceProvider(
+            Result<AssetPreviewContentDto> result,
+            Result<ReplacementTextChunkDto>? textChunkResult = null)
         {
             _result = result;
+            _textChunkResult = textChunkResult;
         }
 
         public int LoadFilePreviewCallCount { get; private set; }
 
+        public int LoadFileTextChunkCallCount { get; private set; }
+
         public AssetDetailsDto? LastTargetDetails { get; private set; }
 
         public string? LastSourceFilePath { get; private set; }
+
+        public string? LastTextChunkSourceFilePath { get; private set; }
+
+        public int LastTextChunkOffset { get; private set; }
+
+        public int LastTextChunkLength { get; private set; }
 
         public Task<Result<AssetPreviewContentDto>> LoadFilePreviewAsync(
             AssetDetailsDto targetDetails,
@@ -623,6 +635,48 @@ internal static partial class GetAssetPreviewHandlerTests
             LastTargetDetails = targetDetails;
             LastSourceFilePath = sourceFilePath;
             return Task.FromResult(_result);
+        }
+
+        public Task<Result<ReplacementTextChunkDto>> LoadFileTextChunkAsync(
+            string sourceFilePath,
+            int offset,
+            int length,
+            CancellationToken cancellationToken = default)
+        {
+            LoadFileTextChunkCallCount++;
+            LastTextChunkSourceFilePath = sourceFilePath;
+            LastTextChunkOffset = offset;
+            LastTextChunkLength = length;
+
+            if (_textChunkResult is { } textChunkResult)
+            {
+                return Task.FromResult(textChunkResult);
+            }
+
+            if (!_result.IsSuccess ||
+                _result.Value is not { Kind: AssetPreviewKind.Text } previewContent)
+            {
+                return Task.FromResult(Result<ReplacementTextChunkDto>.Failure(
+                    ApplicationErrors.BundlePreviewGenerationFailed(sourceFilePath)));
+            }
+
+            var fullText = Encoding.UTF8.GetString(previewContent.Content)
+                .Replace("\r\n", "\n", StringComparison.Ordinal)
+                .Replace('\r', '\n');
+            var safeOffset = Math.Min(offset, fullText.Length);
+            var safeLength = Math.Min(length, fullText.Length - safeOffset);
+            var text = safeLength <= 0
+                ? string.Empty
+                : fullText.Substring(safeOffset, safeLength);
+
+            return Task.FromResult(Result<ReplacementTextChunkDto>.Success(new ReplacementTextChunkDto(
+                sourceFilePath,
+                previewContent.ContentType,
+                text,
+                safeOffset,
+                safeLength,
+                fullText.Length,
+                previewContent.Content.LongLength)));
         }
     }
 }

@@ -254,6 +254,18 @@ internal static partial class GetAssetPreviewHandlerTests
             longReplacementText.Length,
             ReadInt64PreviewInfo(preview, AssetPreviewInfoKey.TextFullCharacterCount),
             "Replacement preview info should expose the full text character count.");
+        TestAssert.Equal(
+            AssetPreviewFullContentReferenceKind.FileReplacement,
+            preview.FullContentReference?.Kind,
+            "Long replacement text should expose a file-replacement full content reference.");
+        TestAssert.Equal(
+            replacementFilePath,
+            preview.FullContentReference?.SourcePath,
+            "Long replacement text reference should carry the selected source path.");
+        TestAssert.Equal(
+            Encoding.UTF8.GetByteCount(longReplacementText),
+            preview.FullContentReference?.ContentLength,
+            "Long replacement text reference should expose the replacement payload length.");
         TestAssert.Equal(longReplacementText, preview.FullTextContent, "Structured consumers should still receive the full replacement text.");
     }
 
@@ -296,6 +308,63 @@ internal static partial class GetAssetPreviewHandlerTests
             chunk.Reference.ContentLength,
             "Chunk reference should refresh the raw payload length.");
         TestAssert.Equal(0, previewCacheStore.LoadCallCount, "Chunk loading should not hydrate the full preview payload.");
+    }
+
+    public static async Task LoadPreviewTextChunkHandler_ShouldReadChunk_FromFileReplacementReference()
+    {
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        const string sourcePath = @"C:\Imports\large-atlas.json";
+        const string fullTextContent = "0123456789abcdef";
+        var previewCacheStore = new TestPreviewCacheStore(CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            "cached text should not be used",
+            generatorVersion: "generator-1"));
+        var replacementPreviewSourceProvider = new TestReplacementPreviewSourceProvider(
+            Result<AssetPreviewContentDto>.Success(new AssetPreviewContentDto(
+                Kind: AssetPreviewKind.Text,
+                ContentType: "text/plain; charset=utf-8",
+                Content: Encoding.UTF8.GetBytes(fullTextContent))));
+        var handler = new LoadPreviewTextChunkHandler(
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore),
+            replacementPreviewSourceProvider);
+        var reference = new AssetPreviewFullContentReferenceDto(
+            AssetPreviewFullContentReferenceKind.FileReplacement,
+            "text/plain; charset=utf-8",
+            ContentLength: 0,
+            WorkspaceKey: string.Empty,
+            SourcePath: sourcePath);
+
+        var result = await handler.HandleAsync(new LoadPreviewTextChunkQuery(
+            query.WorkspaceDataRootPath,
+            reference,
+            Offset: 4,
+            Length: 6));
+
+        TestAssert.True(result.IsSuccess, "Text chunk loading should succeed for a file replacement reference.");
+        var chunk = result.Value ?? throw new InvalidOperationException("Expected text chunk result.");
+        TestAssert.Equal("456789", chunk.Text, "Replacement chunk text should match the requested range.");
+        TestAssert.Equal(4, chunk.Offset, "Replacement chunk should report the effective offset.");
+        TestAssert.Equal(6, chunk.Length, "Replacement chunk should report the returned character count.");
+        TestAssert.Equal(fullTextContent.Length, chunk.TotalLength, "Replacement chunk should report the full normalized text length.");
+        TestAssert.True(chunk.HasMore, "Replacement chunk should report that more text remains.");
+        TestAssert.Equal(
+            AssetPreviewFullContentReferenceKind.FileReplacement,
+            chunk.Reference.Kind,
+            "Chunk response should preserve file replacement reference kind.");
+        TestAssert.Equal(sourcePath, chunk.Reference.SourcePath, "Chunk response should preserve the source path.");
+        TestAssert.Equal(
+            Encoding.UTF8.GetByteCount(fullTextContent),
+            chunk.Reference.ContentLength,
+            "Chunk response should refresh replacement payload length.");
+        TestAssert.Equal(0, previewCacheStore.LoadCallCount, "Replacement chunk loading should not hydrate preview cache.");
+        TestAssert.Equal(1, replacementPreviewSourceProvider.LoadFileTextChunkCallCount, "Replacement source provider should serve one text chunk.");
+        TestAssert.Equal(sourcePath, replacementPreviewSourceProvider.LastTextChunkSourceFilePath, "Replacement source provider should receive the source path.");
+        TestAssert.Equal(4, replacementPreviewSourceProvider.LastTextChunkOffset, "Replacement source provider should receive the requested offset.");
+        TestAssert.Equal(6, replacementPreviewSourceProvider.LastTextChunkLength, "Replacement source provider should receive the requested length.");
     }
 
     public static async Task LoadPreviewTextChunkHandler_ShouldClampRequestedLength_ToChunkBudget()

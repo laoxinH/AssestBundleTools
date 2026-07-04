@@ -235,6 +235,10 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldReadChunk_FromPreviewCacheReference);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldReadChunk_FromFileReplacementReference),
+            GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldReadChunk_FromFileReplacementReference);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldClampRequestedLength_ToChunkBudget),
             GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldClampRequestedLength_ToChunkBudget);
         await RunTestAsync(

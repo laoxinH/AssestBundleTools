@@ -338,6 +338,14 @@ internal static class InfrastructureTestSuite
             FileSystemReplacementPreviewSourceProviderTests.LoadFilePreviewAsync_ShouldReturnBinary_ForBinarySkelTextAsset);
         await RunTestAsync(
             failures,
+            nameof(FileSystemReplacementPreviewSourceProviderTests.LoadFileTextChunkAsync_ShouldReadNormalizedTextRange_ForTextAssetFile),
+            FileSystemReplacementPreviewSourceProviderTests.LoadFileTextChunkAsync_ShouldReadNormalizedTextRange_ForTextAssetFile);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemReplacementPreviewSourceProviderTests.LoadFileTextChunkAsync_ShouldRejectBinarySkelTextAssetFile),
+            FileSystemReplacementPreviewSourceProviderTests.LoadFileTextChunkAsync_ShouldRejectBinarySkelTextAssetFile);
+        await RunTestAsync(
+            failures,
             nameof(FileSystemReplacementPreviewSourceProviderTests.LoadFilePreviewAsync_ShouldReturnImagePayload_ForTextureReplacement),
             FileSystemReplacementPreviewSourceProviderTests.LoadFilePreviewAsync_ShouldReturnImagePayload_ForTextureReplacement);
         await RunTestAsync(

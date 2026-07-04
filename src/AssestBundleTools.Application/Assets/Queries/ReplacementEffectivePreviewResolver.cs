@@ -208,9 +208,24 @@ internal sealed class ReplacementEffectivePreviewResolver
             ImageFocus: previewContent.ImageFocus)
         {
             TextDisplay = textDisplay?.Metadata,
+            FullContentReference = textDisplay is null || string.IsNullOrWhiteSpace(previewPayloadFilePath)
+                ? null
+                : CreateFileReplacementReference(
+                    previewContent,
+                    previewPayloadFilePath),
             FullTextContent = fullTextContent
         };
     }
+
+    private static AssetPreviewFullContentReferenceDto CreateFileReplacementReference(
+        AssetPreviewContentDto previewContent,
+        string sourcePath) =>
+        new(
+            AssetPreviewFullContentReferenceKind.FileReplacement,
+            previewContent.ContentType,
+            previewContent.Content.LongLength,
+            WorkspaceKey: string.Empty,
+            SourcePath: sourcePath);
 
     private static AssetPreviewDto BuildFallbackSummaryPreview(
         GetAssetPreviewQuery query,
