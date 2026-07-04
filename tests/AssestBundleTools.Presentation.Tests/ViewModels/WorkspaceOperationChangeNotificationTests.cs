@@ -840,6 +840,28 @@ public sealed class WorkspaceOperationChangeNotificationTests
                     command.DraftMode ?? "text-content",
                     DateTimeOffset.UtcNow)));
 
+        public Task<Result<AssetTextEditDraftUpdatedResultDto>> UpdateTextAssetEditDraftAsync(
+            UpdateTextAssetEditDraftCommand command,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result<AssetTextEditDraftUpdatedResultDto>.Success(
+                new AssetTextEditDraftUpdatedResultDto(
+                    command.WorkspaceId,
+                    command.BundleId,
+                    command.AssetId,
+                    "text",
+                    AssetType.TextAsset,
+                    AssetType.TextAsset.ToString(),
+                    command.DraftId,
+                    command.DraftMode ?? "text-content",
+                    new AssetPreviewFullContentReferenceDto(
+                        AssetPreviewFullContentReferenceKind.EditDraft,
+                        "text/plain",
+                        command.TextContent.Length,
+                        command.WorkspaceKey,
+                        DraftId: command.DraftId,
+                        DraftMode: command.DraftMode ?? "text-content"),
+                    DateTimeOffset.UtcNow)));
+
         public Task<Result<AssetTextEditDraftDiscardedResultDto>> DiscardTextAssetEditDraftAsync(
             DiscardTextAssetEditDraftCommand command,
             CancellationToken cancellationToken = default) =>

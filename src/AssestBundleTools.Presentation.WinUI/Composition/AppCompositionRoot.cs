@@ -246,6 +246,10 @@ internal static class AppCompositionRoot
             getAssetPreviewHandler,
             loadPreviewTextChunkHandler,
             workspaceTextEditOperationRecorder);
+        var updateTextAssetEditDraftHandler = new UpdateTextAssetEditDraftHandler(
+            workspaceSessionRegistry,
+            workspaceDataStoreFactory,
+            workspaceTextEditOperationRecorder);
         var applyTextAssetEditDraftHandler = new ApplyTextAssetEditDraftHandler(
             workspaceSessionRegistry,
             workspaceSessionRegistry,
@@ -315,6 +319,7 @@ internal static class AppCompositionRoot
             redoAssetReplacementHandler: redoAssetReplacementHandler,
             applySpriteEditHandler: applySpriteEditHandler,
             createTextAssetEditDraftHandler: createTextAssetEditDraftHandler,
+            updateTextAssetEditDraftHandler: updateTextAssetEditDraftHandler,
             applyTextAssetEditDraftHandler: applyTextAssetEditDraftHandler,
             discardTextAssetEditDraftHandler: discardTextAssetEditDraftHandler,
             deleteWorkspaceOperationRecordHandler: deleteWorkspaceOperationRecordHandler);

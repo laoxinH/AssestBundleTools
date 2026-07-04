@@ -134,6 +134,11 @@ public sealed partial class AssetEditorWindowViewModel
 
     public async Task<bool> ApplyTextEditAsync()
     {
+        if (DocumentGroup.ActiveAssetTab?.TextEditDraft?.CanSave != true)
+        {
+            return false;
+        }
+
         var applied = await _assetActionCoordinator.ApplyTextAssetEditDraftAsync();
         if (applied)
         {

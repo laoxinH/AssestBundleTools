@@ -2638,7 +2638,10 @@
     <value>退出</value>
   </data>
   <data name="TextAssetEditor.ReadOnlyHint.Text" xml:space="preserve">
-    <value>只读文本编辑器草稿视图。当前阶段支持大文本行号和搜索，正文修改会在下一阶段接入。</value>
+    <value>大文本只读草稿视图。当前阶段支持行号和搜索，正文修改需等待后续虚拟化编辑器。</value>
+  </data>
+  <data name="TextAssetEditor.InlineEditHint.Text" xml:space="preserve">
+    <value>小文本草稿编辑。保存会先更新草稿，再追加文本编辑操作记录。</value>
   </data>
   <data name="TextAssetEditor.LineStatus.Format" xml:space="preserve">
     <value>已加载 {0} / {1} 行</value>
@@ -2648,6 +2651,12 @@
   </data>
   <data name="TextAssetEditor.SearchButton.ToolTip" xml:space="preserve">
     <value>搜索</value>
+  </data>
+  <data name="TextAssetEditor.UnsavedDialog.Title" xml:space="preserve">
+    <value>保存当前文本编辑？</value>
+  </data>
+  <data name="TextAssetEditor.UnsavedDialog.Description" xml:space="preserve">
+    <value>当前文本草稿存在未保存修改。保存会写入草稿并追加一条文本编辑操作记录；不保存会丢弃本次编辑会话。</value>
   </data>
   <data name="InspectorPanelView.ExitSpriteEditButton.Content" xml:space="preserve">
     <value>退出</value>
@@ -3848,6 +3857,9 @@
   </data>
   <data name="Error.Asset.EditDraft.InvalidGeometry" xml:space="preserve">
     <value>当前 Sprite 裁切参数无效，请调整裁切框后再保存。</value>
+  </data>
+  <data name="Error.Asset.EditDraft.TextLengthExceeded" xml:space="preserve">
+    <value>当前文本超过可内联编辑上限（{0} 字符），请使用只读查看或等待后续大文本编辑器。</value>
   </data>
   <data name="Error.Asset.EditDraft.AssociatedAssetNotFound" xml:space="preserve">
     <value>当前 Sprite 未关联到所选资源，无法保存关联替换。</value>

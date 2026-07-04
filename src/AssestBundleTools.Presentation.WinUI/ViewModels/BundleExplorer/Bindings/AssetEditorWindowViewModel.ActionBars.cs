@@ -35,7 +35,7 @@ public sealed partial class AssetEditorWindowViewModel
         IsTextEditModeActive ? Visibility.Visible : Visibility.Collapsed;
 
     public bool CanSaveTextEdit =>
-        DocumentGroup.ActiveAssetTab?.TextEditDraft?.CanApply == true && !IsBusy;
+        DocumentGroup.ActiveAssetTab?.TextEditDraft?.CanSave == true && !IsBusy;
 
     public bool CanSaveSpineEdit =>
         DocumentGroup.ActiveSpineGroupTab?.CanSaveSpineEdit == true;
@@ -111,6 +111,46 @@ public sealed partial class AssetEditorWindowViewModel
             nameof(InspectorPreviewImageViewModel.CanRedoSpriteEdit) or
             nameof(InspectorPreviewImageViewModel.HasUnsavedSpriteEditChanges) or
             nameof(InspectorPreviewImageViewModel.SpriteEditActionBarEditVisibility))
+        {
+            NotifyActionBarStates();
+        }
+    }
+
+    private void ObserveActiveTextEditDraft()
+    {
+        var nextDraft = DocumentGroup.ActiveAssetTab?.TextEditDraft;
+        if (ReferenceEquals(_observedTextEditDraft, nextDraft))
+        {
+            return;
+        }
+
+        if (_observedTextEditDraft is not null)
+        {
+            _observedTextEditDraft.PropertyChanged -= OnObservedTextEditDraftPropertyChanged;
+        }
+
+        _observedTextEditDraft = nextDraft;
+        if (_observedTextEditDraft is not null)
+        {
+            _observedTextEditDraft.PropertyChanged += OnObservedTextEditDraftPropertyChanged;
+        }
+    }
+
+    private void ClearObservedTextEditDraft()
+    {
+        if (_observedTextEditDraft is null)
+        {
+            return;
+        }
+
+        _observedTextEditDraft.PropertyChanged -= OnObservedTextEditDraftPropertyChanged;
+        _observedTextEditDraft = null;
+    }
+
+    private void OnObservedTextEditDraftPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(TextAssetEditDraftViewModel.HasUnsavedChanges) or
+            nameof(TextAssetEditDraftViewModel.CanSave))
         {
             NotifyActionBarStates();
         }

@@ -73,6 +73,14 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(WorkspaceChangeSetAssetEditDraftStoreTests.Load_ShouldReturnNull_WhenChangeSetWorkspaceDoesNotMatchLookup),
             WorkspaceChangeSetAssetEditDraftStoreTests.Load_ShouldReturnNull_WhenChangeSetWorkspaceDoesNotMatchLookup);
+        await RunTestAsync(
+            failures,
+            nameof(TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldSavePayload_AndAppendUpdatedOperation),
+            TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldSavePayload_AndAppendUpdatedOperation);
+        await RunTestAsync(
+            failures,
+            nameof(TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldRejectLargeInlinePayload),
+            TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldRejectLargeInlinePayload);
         await RunTestAsync(failures, nameof(RegisterWorkspaceCatalogEntry_ShouldReturnFailure_WhenSourcePathIsBlank), RegisterWorkspaceCatalogEntry_ShouldReturnFailure_WhenSourcePathIsBlank);
         await RunTestAsync(failures, nameof(RegisterWorkspaceCatalogEntry_ShouldPreserveExistingPinnedState_AndNormalizeDisplayName), RegisterWorkspaceCatalogEntry_ShouldPreserveExistingPinnedState_AndNormalizeDisplayName);
         await RunTestAsync(failures, nameof(SetWorkspaceCatalogEntryPinnedState_ShouldReturnFailure_WhenWorkspaceKeyIsBlank), SetWorkspaceCatalogEntryPinnedState_ShouldReturnFailure_WhenWorkspaceKeyIsBlank);

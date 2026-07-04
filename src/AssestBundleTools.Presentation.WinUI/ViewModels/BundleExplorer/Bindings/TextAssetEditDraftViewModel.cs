@@ -3,14 +3,16 @@ using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Editing.Dtos;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
+using Microsoft.UI.Xaml;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
-/// 文本编辑器第一阶段的 draft-backed 只读文本工作面。
+/// 文本编辑器第一阶段的 draft-backed 文本工作面。
 /// </summary>
 public sealed class TextAssetEditDraftViewModel : ObservableObject
 {
@@ -24,6 +26,8 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     private readonly string _lineStatusFormat;
     private string _statusText = string.Empty;
     private string _searchText = string.Empty;
+    private string _editableText = string.Empty;
+    private string _lastSavedText = string.Empty;
     private bool _isBusy;
 
     public TextAssetEditDraftViewModel(
@@ -33,6 +37,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         string workspaceDataRootPath,
         string titleText,
         string readOnlyHintText,
+        string inlineEditHintText,
         string lineStatusFormat)
     {
         _draft = draft ?? throw new ArgumentNullException(nameof(draft));
@@ -41,6 +46,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         _workspaceDataRootPath = workspaceDataRootPath ?? throw new ArgumentNullException(nameof(workspaceDataRootPath));
         TitleText = titleText;
         ReadOnlyHintText = readOnlyHintText;
+        InlineEditHintText = inlineEditHintText;
         _lineStatusFormat = string.IsNullOrWhiteSpace(lineStatusFormat) ? "{0} / {1}" : lineStatusFormat;
     }
 
@@ -50,11 +56,23 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
 
     public bool CanApply => _draft.CanApply;
 
+    public bool IsInlineEditEnabled => _draft.CanEditInline;
+
+    public Visibility ReadOnlyViewVisibility =>
+        IsInlineEditEnabled ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility EditableViewVisibility =>
+        IsInlineEditEnabled ? Visibility.Visible : Visibility.Collapsed;
+
     public AssetPreviewFullContentReferenceDto Reference => _draft.Reference;
 
     public string TitleText { get; }
 
     public string ReadOnlyHintText { get; }
+
+    public string InlineEditHintText { get; }
+
+    public string ModeHintText => IsInlineEditEnabled ? InlineEditHintText : ReadOnlyHintText;
 
     public string StatusText
     {
@@ -74,6 +92,25 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         }
     }
 
+    public string EditableText
+    {
+        get => _editableText;
+        set
+        {
+            if (SetProperty(ref _editableText, value ?? string.Empty))
+            {
+                OnPropertyChanged(nameof(HasUnsavedChanges));
+                OnPropertyChanged(nameof(CanSave));
+            }
+        }
+    }
+
+    public bool HasUnsavedChanges =>
+        IsInlineEditEnabled &&
+        !string.Equals(EditableText, _lastSavedText, StringComparison.Ordinal);
+
+    public bool CanSave => CanApply && HasUnsavedChanges;
+
     public bool IsBusy
     {
         get => _isBusy;
@@ -91,6 +128,15 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     public ObservableCollection<TextAssetEditLineViewModel> Lines { get; } = new();
 
     public ObservableCollection<TextAssetEditSearchMatchViewModel> SearchMatches { get; } = new();
+
+    public async Task InitializeAsync(CancellationToken cancellationToken = default)
+    {
+        await LoadInitialLinesAsync(cancellationToken);
+        if (IsInlineEditEnabled)
+        {
+            await LoadEditableTextAsync(cancellationToken);
+        }
+    }
 
     public async Task LoadInitialLinesAsync(CancellationToken cancellationToken = default)
     {
@@ -139,10 +185,23 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         }
     }
 
+    public void MarkSaved()
+    {
+        _lastSavedText = EditableText;
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+        OnPropertyChanged(nameof(CanSave));
+    }
+
     public async Task SearchAsync(CancellationToken cancellationToken = default)
     {
         if (!CanSearch)
         {
+            return;
+        }
+
+        if (IsInlineEditEnabled)
+        {
+            SearchEditableText();
             return;
         }
 
@@ -178,6 +237,97 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private async Task LoadEditableTextAsync(CancellationToken cancellationToken)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var text = await LoadFullEditableTextAsync(cancellationToken);
+            if (text is null)
+            {
+                EditableText = string.Empty;
+                MarkSaved();
+                return;
+            }
+
+            EditableText = text;
+            _lastSavedText = EditableText;
+            OnPropertyChanged(nameof(HasUnsavedChanges));
+            OnPropertyChanged(nameof(CanSave));
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task<string?> LoadFullEditableTextAsync(CancellationToken cancellationToken)
+    {
+        var builder = new System.Text.StringBuilder();
+        var offset = 0;
+        while (offset < AssetTextEditPolicy.InlineEditableTextLength)
+        {
+            var result = await _backgroundTaskRunner.RunAsync(
+                token => _workspaceAssetInspectionGateway.LoadPreviewTextChunkAsync(
+                    new LoadPreviewTextChunkQuery(
+                        _workspaceDataRootPath,
+                        _draft.Reference,
+                        offset,
+                        LoadPreviewTextChunkHandler.MaxChunkLength),
+                    token),
+                cancellationToken);
+            if (!result.IsSuccess || result.Value is null)
+            {
+                return null;
+            }
+
+            var chunk = result.Value;
+            builder.Append(chunk.Text);
+            offset = chunk.Offset + chunk.Length;
+            if (!chunk.HasMore || chunk.Length == 0)
+            {
+                return builder.ToString();
+            }
+        }
+
+        return builder.ToString();
+    }
+
+    private void SearchEditableText()
+    {
+        var searchText = SearchText.Trim();
+        if (searchText.Length == 0)
+        {
+            return;
+        }
+
+        SearchMatches.Clear();
+        var lines = EditableText.Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n')
+            .Split('\n');
+        var comparison = StringComparison.CurrentCultureIgnoreCase;
+        for (var lineIndex = 0; lineIndex < lines.Length && SearchMatches.Count < SearchMatchCount; lineIndex++)
+        {
+            var line = lines[lineIndex];
+            var columnIndex = line.IndexOf(searchText, comparison);
+            if (columnIndex < 0)
+            {
+                continue;
+            }
+
+            SearchMatches.Add(new TextAssetEditSearchMatchViewModel(
+                string.Create(
+                    CultureInfo.CurrentCulture,
+                    $"{lineIndex + 1}:{columnIndex + 1}"),
+                line));
         }
     }
 }

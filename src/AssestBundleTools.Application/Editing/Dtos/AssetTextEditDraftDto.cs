@@ -20,4 +20,5 @@ public sealed record AssetTextEditDraftDto(
     AssetPreviewFullContentReferenceDto Reference,
     DateTimeOffset UpdatedAtUtc,
     bool CanApply,
-    string? Summary = null);
+    string? Summary = null,
+    bool CanEditInline = false);

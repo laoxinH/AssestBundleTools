@@ -302,6 +302,11 @@ public sealed class BundleExplorerViewModelResolvedAssetNavigationTests
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
+        public Task<Result<AssetTextEditDraftUpdatedResultDto>> UpdateTextAssetEditDraftAsync(
+            UpdateTextAssetEditDraftCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
         public Task<Result<AssetTextEditDraftDiscardedResultDto>> DiscardTextAssetEditDraftAsync(
             DiscardTextAssetEditDraftCommand command,
             CancellationToken cancellationToken = default) =>

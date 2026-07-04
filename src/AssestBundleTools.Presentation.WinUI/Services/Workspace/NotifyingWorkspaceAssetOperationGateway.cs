@@ -178,6 +178,22 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         return result;
     }
 
+    public async Task<Result<AssetTextEditDraftUpdatedResultDto>> UpdateTextAssetEditDraftAsync(
+        UpdateTextAssetEditDraftCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _inner.UpdateTextAssetEditDraftAsync(command, cancellationToken);
+        NotifyIfSucceeded(
+            result,
+            command.WorkspaceId,
+            WorkspaceOperationChangeKind.Edit,
+            ExpandAffectedAssets(
+                command.WorkspaceId,
+                CreateAffectedAsset(command.BundleId, command.AssetId)),
+            WorkspaceOperationChangeReason.EditApplied);
+        return result;
+    }
+
     public async Task<Result<AssetTextEditAppliedResultDto>> ApplyTextAssetEditDraftAsync(
         ApplyTextAssetEditDraftCommand command,
         CancellationToken cancellationToken = default)

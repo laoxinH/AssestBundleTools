@@ -831,6 +831,15 @@ public static class ApplicationErrors
             parameters: CreateParameters(("AssetId", assetId.ToString())),
             isUserActionable: true);
 
+    public static AppError AssetEditDraftTextLengthExceeded(int maxLength) =>
+        new(
+            code: "Asset.EditDraft.TextLengthExceeded",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.EditDraft.TextLengthExceeded",
+            parameters: CreateParameters(("MaxLength", maxLength)),
+            isUserActionable: true);
+
     public static AppError AssetEditAssociatedAssetNotFound(AssetId ownerAssetId, AssetId associatedAssetId) =>
         new(
             code: "Asset.EditDraft.AssociatedAssetNotFound",

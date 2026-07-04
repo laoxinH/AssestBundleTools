@@ -2638,7 +2638,10 @@
     <value>Exit</value>
   </data>
   <data name="TextAssetEditor.ReadOnlyHint.Text" xml:space="preserve">
-    <value>Read-only text edit draft view. This phase supports large-text lines and search; editing the body will be added next.</value>
+    <value>Read-only large-text draft view. This phase supports lines and search; body editing waits for the virtualized editor.</value>
+  </data>
+  <data name="TextAssetEditor.InlineEditHint.Text" xml:space="preserve">
+    <value>Small-text draft editing. Saving updates the draft first, then records a text edit operation.</value>
   </data>
   <data name="TextAssetEditor.LineStatus.Format" xml:space="preserve">
     <value>Loaded {0} / {1} lines</value>
@@ -2648,6 +2651,12 @@
   </data>
   <data name="TextAssetEditor.SearchButton.ToolTip" xml:space="preserve">
     <value>Search</value>
+  </data>
+  <data name="TextAssetEditor.UnsavedDialog.Title" xml:space="preserve">
+    <value>Save current text edit?</value>
+  </data>
+  <data name="TextAssetEditor.UnsavedDialog.Description" xml:space="preserve">
+    <value>The current text draft has unsaved changes. Saving writes the draft and adds a text edit operation; choosing Don't Save discards this edit session.</value>
   </data>
   <data name="InspectorPanelView.ExitSpriteEditButton.Content" xml:space="preserve">
     <value>Exit</value>
@@ -3848,6 +3857,9 @@
   </data>
   <data name="Error.Asset.EditDraft.InvalidGeometry" xml:space="preserve">
     <value>The current Sprite crop geometry is invalid. Adjust the crop frame and save again.</value>
+  </data>
+  <data name="Error.Asset.EditDraft.TextLengthExceeded" xml:space="preserve">
+    <value>The text exceeds the inline editing limit ({0} characters). Use read-only viewing for now or wait for the large-text editor.</value>
   </data>
   <data name="Error.Asset.EditDraft.AssociatedAssetNotFound" xml:space="preserve">
     <value>The selected linked asset is not associated with the current Sprite and cannot be saved.</value>

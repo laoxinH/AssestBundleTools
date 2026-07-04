@@ -141,7 +141,9 @@ public sealed class CreateTextAssetEditDraftHandler : ICommandHandler<CreateText
             reference,
             updatedAtUtc,
             CanApply: targetDetails.AssetType == AssetType.TextAsset,
-            Summary: targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString());
+            Summary: targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString(),
+            CanEditInline: targetDetails.AssetType == AssetType.TextAsset &&
+                textContent.Length <= AssetTextEditPolicy.InlineEditableTextLength);
 
         _operationRecorder?.RecordDraftCreated(command, targetDetails, draft);
         return Result<AssetTextEditDraftDto>.Success(draft);

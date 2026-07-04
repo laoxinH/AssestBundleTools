@@ -110,6 +110,53 @@ public sealed class WorkspaceTextEditOperationRecorder
         store.Save(updatedChangeSet);
     }
 
+    public void RecordDraftUpdated(
+        UpdateTextAssetEditDraftCommand command,
+        AssetDetailsDto targetDetails,
+        AssetTextEditDraftUpdatedResultDto result)
+    {
+        if (!TryLoadChangeSet(command.WorkspaceKey, command.WorkspaceDataRootPath, out var workspaceKey, out var store, out var changeSet))
+        {
+            return;
+        }
+
+        var normalizedChangeSet = changeSet ?? WorkspaceChangeSetDto.Empty(workspaceKey);
+        var sourceFingerprint = ResolveDraftSourceFingerprint(
+            normalizedChangeSet,
+            result.DraftId,
+            result.DraftMode) ??
+            CreateSourceFingerprint(targetDetails, targetDetails.PreferredDisplaySizeInBytes ?? targetDetails.SizeInBytes);
+        var updatedChangeSet = UpsertDraftDescriptor(
+            normalizedChangeSet,
+            result.DraftId,
+            result.DraftMode,
+            sourceFingerprint,
+            result.UpdatedAtUtc,
+            targetDetails.Name,
+            targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString());
+
+        updatedChangeSet = _operationLogService.AppendOperation(
+            updatedChangeSet,
+            new WorkspaceOperationAppendRequestDto(
+                WorkspaceKey: workspaceKey,
+                OperationKind: WorkspaceOperationKind.EditDraftUpdated,
+                Status: WorkspaceOperationStatus.Applied,
+                Target: CreateTarget(targetDetails),
+                Source: new WorkspaceOperationSourceDto(
+                    SourceKind: SourceKindDraft,
+                    DraftId: result.DraftId,
+                    DraftMode: result.DraftMode),
+                Result: new WorkspaceOperationResultDto(
+                    DraftId: result.DraftId,
+                    AffectedBundleIds: [targetDetails.BundleId.Value],
+                    AffectedAssetIds: [targetDetails.AssetId.Value]),
+                CreatedAtUtc: result.UpdatedAtUtc,
+                AppliedAtUtc: result.UpdatedAtUtc,
+                CompletedAtUtc: result.UpdatedAtUtc));
+
+        store.Save(updatedChangeSet);
+    }
+
     public void RecordDraftDiscarded(
         DiscardTextAssetEditDraftCommand command,
         AssetDetailsDto targetDetails,
@@ -179,14 +226,16 @@ public sealed class WorkspaceTextEditOperationRecorder
         string sourceDescription,
         string? summary)
     {
+        var normalizedDraftId = draftId.Trim();
+        var normalizedDraftMode = draftMode.Trim();
         var descriptors = (changeSet.EditDrafts ?? Array.Empty<WorkspaceAssetEditDraftDescriptorDto>())
             .Where(descriptor =>
-                !string.Equals(descriptor.DraftId, draftId, StringComparison.Ordinal) ||
-                !string.Equals(descriptor.DraftMode, draftMode, StringComparison.Ordinal))
+                !string.Equals(descriptor.DraftId?.Trim(), normalizedDraftId, StringComparison.Ordinal) ||
+                !string.Equals(descriptor.DraftMode?.Trim(), normalizedDraftMode, StringComparison.Ordinal))
             .Append(new WorkspaceAssetEditDraftDescriptorDto(
-                DraftId: draftId,
-                DraftMode: draftMode,
-                SourceFingerprint: sourceFingerprint,
+                DraftId: normalizedDraftId,
+                DraftMode: normalizedDraftMode,
+                SourceFingerprint: sourceFingerprint.Trim(),
                 UpdatedAtUtc: timestamp,
                 SourceDescription: sourceDescription,
                 Summary: summary))
@@ -198,15 +247,31 @@ public sealed class WorkspaceTextEditOperationRecorder
         };
     }
 
+    private static string? ResolveDraftSourceFingerprint(
+        WorkspaceChangeSetDto changeSet,
+        string draftId,
+        string draftMode)
+    {
+        var normalizedDraftId = draftId.Trim();
+        var normalizedDraftMode = draftMode.Trim();
+        return (changeSet.EditDrafts ?? Array.Empty<WorkspaceAssetEditDraftDescriptorDto>())
+            .FirstOrDefault(descriptor =>
+                string.Equals(descriptor.DraftId?.Trim(), normalizedDraftId, StringComparison.Ordinal) &&
+                string.Equals(descriptor.DraftMode?.Trim(), normalizedDraftMode, StringComparison.Ordinal))
+            ?.SourceFingerprint;
+    }
+
     private static WorkspaceChangeSetDto RemoveDraftDescriptor(
         WorkspaceChangeSetDto changeSet,
         string draftId,
         string draftMode)
     {
+        var normalizedDraftId = draftId.Trim();
+        var normalizedDraftMode = draftMode.Trim();
         var descriptors = (changeSet.EditDrafts ?? Array.Empty<WorkspaceAssetEditDraftDescriptorDto>())
             .Where(descriptor =>
-                !string.Equals(descriptor.DraftId, draftId, StringComparison.Ordinal) ||
-                !string.Equals(descriptor.DraftMode, draftMode, StringComparison.Ordinal))
+                !string.Equals(descriptor.DraftId?.Trim(), normalizedDraftId, StringComparison.Ordinal) ||
+                !string.Equals(descriptor.DraftMode?.Trim(), normalizedDraftMode, StringComparison.Ordinal))
             .ToArray();
 
         return changeSet with
@@ -266,7 +331,7 @@ public sealed class WorkspaceTextEditOperationRecorder
             .Select(static record => record.DraftId)
             .FirstOrDefault(static draftId => !string.IsNullOrWhiteSpace(draftId));
 
-    private static string CreateSourceFingerprint(AssetDetailsDto targetDetails, long contentLength) =>
+    public static string CreateSourceFingerprint(AssetDetailsDto targetDetails, long contentLength) =>
         string.Concat(
             targetDetails.BundleId.Value,
             ":",

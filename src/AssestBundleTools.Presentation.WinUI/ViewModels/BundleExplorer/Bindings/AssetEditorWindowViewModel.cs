@@ -44,6 +44,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
     private readonly InspectorInformationTextSet _inspectorInformationTextSet;
     private readonly InspectorPanelViewModel _emptyInspector;
     private InspectorPreviewImageViewModel? _observedSpriteEditImage;
+    private TextAssetEditDraftViewModel? _observedTextEditDraft;
     private bool _isBusy;
 
     public AssetEditorWindowViewModel(
@@ -243,6 +244,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
     public void Dispose()
     {
         ClearObservedSpriteEditImage();
+        ClearObservedTextEditDraft();
         _pendingProjectionCoordinator.Dispose();
         _operationChangeRefreshCoordinator.Dispose();
         _spineGroupDetailsRefreshScheduler.Dispose();
@@ -444,6 +446,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         }
 
         ObserveActiveSpriteEditImage();
+        ObserveActiveTextEditDraft();
         NotifyActionStates();
         NotifyActionBarStates();
         OnPropertyChanged(nameof(Inspector));

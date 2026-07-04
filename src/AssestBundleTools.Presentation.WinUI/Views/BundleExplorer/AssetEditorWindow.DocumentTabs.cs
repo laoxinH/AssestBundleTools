@@ -151,7 +151,7 @@ public sealed partial class AssetEditorWindow
 
         if (documentTab.AssetTab?.IsTextEditModeActive == true)
         {
-            return await ViewModel.ExitTextEditModeForActiveAssetAsync();
+            return await TryExitTextEditModeAsync();
         }
 
         return await TryExitSpineEditModeAsync();

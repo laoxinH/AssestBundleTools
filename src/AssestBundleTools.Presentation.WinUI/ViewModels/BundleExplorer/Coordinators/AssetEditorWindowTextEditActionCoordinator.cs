@@ -86,8 +86,9 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
                 workspaceSummary.WorkspaceDataRootPath,
                 details.Name,
                 GetString(ResourceKeys.TextAssetEditorReadOnlyHint),
+                GetString(ResourceKeys.TextAssetEditorInlineEditHint),
                 GetString(ResourceKeys.TextAssetEditorLineStatusFormat));
-            await draftViewModel.LoadInitialLinesAsync();
+            await draftViewModel.InitializeAsync();
             return draftViewModel;
         }
         finally
@@ -112,6 +113,26 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
         _setBusy(true);
         try
         {
+            if (draft.HasUnsavedChanges)
+            {
+                var updateCommand = new UpdateTextAssetEditDraftCommand(
+                    workspaceSummary.WorkspaceId,
+                    workspaceKey,
+                    workspaceDataRootPath,
+                    details.BundleId,
+                    details.AssetId,
+                    draft.DraftId,
+                    draft.DraftMode,
+                    draft.EditableText);
+                var updateResult = await _backgroundTaskRunner.RunAsync(
+                    token => _workspaceAssetOperationGateway.UpdateTextAssetEditDraftAsync(updateCommand, token));
+                if (!updateResult.IsSuccess)
+                {
+                    _operationFeedbackBridge.AppendResultFailure(updateResult.Errors);
+                    return false;
+                }
+            }
+
             var command = new ApplyTextAssetEditDraftCommand(
                 workspaceSummary.WorkspaceId,
                 workspaceKey,

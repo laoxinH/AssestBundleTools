@@ -166,7 +166,7 @@ public sealed partial class AssetEditorWindow
                 return;
             }
 
-            if (!await ViewModel.ExitTextEditModeForActiveAssetAsync())
+            if (!await TryExitTextEditModeAsync())
             {
                 return;
             }
