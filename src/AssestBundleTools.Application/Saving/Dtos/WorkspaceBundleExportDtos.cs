@@ -20,7 +20,8 @@ public sealed record WorkspaceBundleExportRequestDto(
     string OperationId,
     WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.PreserveOriginal,
     WorkspaceBundleExportOutputConflictPolicyDto OutputConflictPolicy = WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting,
-    string? OriginalCompression = null);
+    string? OriginalCompression = null,
+    string? BundleSessionCacheKey = null);
 
 public sealed record WorkspaceBundleExportResultDto(
     BundleId BundleId,

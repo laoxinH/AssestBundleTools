@@ -368,6 +368,7 @@ internal static class AssetsToolsBundleLoadedSessionCacheTests
             new AssetsManager(),
             bundleInstance: null!,
             Array.Empty<AssetsFileInstance>(),
+            new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase),
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
     }
 }

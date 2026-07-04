@@ -35,20 +35,15 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
                 ApplicationErrors.BundleExportWriteFailed(request.OutputFilePath, "Save.BundleWrite.NoObjectChanges"));
         }
 
-        var assetsManager = new AssetsManager
-        {
-            UseQuickLookup = true,
-            UseTemplateFieldCache = true,
-            UseMonoTemplateFieldCache = true
-        };
-
+        AssetsToolsBundleLoadedSession? session = null;
         try
         {
-            var bundleInstance = BundleExportWriteDiagnostics.ExecuteStage(
+            session = BundleExportWriteDiagnostics.ExecuteStage(
                 StageLoadBundle,
                 request,
-                () => assetsManager.LoadBundleFile(sourcePath, unpackIfPacked: true));
-            var serializedFiles = LoadSerializedFiles(assetsManager, bundleInstance);
+                () => AssetsToolsBundleLoadService.LoadIsolated(sourcePath));
+            var bundleInstance = session.BundleInstance;
+            var serializedFiles = LoadSerializedFiles(session);
             var applyResult = BundleExportWriteDiagnostics.ExecuteStage(
                 StageApplyChanges,
                 request,
@@ -57,7 +52,7 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
                     foreach (var writeItem in request.AssetWriteItems)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-                        var result = ApplyWriteItem(assetsManager, serializedFiles, writeItem);
+                        var result = ApplyWriteItem(session.AssetsManager, serializedFiles, writeItem);
                         if (result.IsFailure)
                         {
                             return result;
@@ -96,7 +91,7 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
         }
         finally
         {
-            assetsManager.UnloadAll(unloadClassData: false);
+            session?.Dispose();
         }
     }
 
@@ -174,24 +169,43 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
     }
 
     private static IReadOnlyList<LoadedSerializedFile> LoadSerializedFiles(
-        AssetsManager assetsManager,
-        BundleFileInstance bundleInstance)
+        AssetsToolsBundleLoadedSession session)
     {
         var serializedFiles = new List<LoadedSerializedFile>();
-        var directoryInfos = bundleInstance.file.BlockAndDirInfo.DirectoryInfos;
-        for (var index = 0; index < directoryInfos.Count; index++)
+        foreach (var serializedFile in session.SerializedFiles)
         {
-            if (!bundleInstance.file.IsAssetsFile(index))
+            if (!TryResolveDirectoryIndex(session, serializedFile, out var directoryIndex))
             {
                 continue;
             }
 
             serializedFiles.Add(new LoadedSerializedFile(
-                assetsManager.LoadAssetsFileFromBundle(bundleInstance, index, loadDeps: false),
-                index));
+                serializedFile,
+                directoryIndex));
         }
 
         return serializedFiles;
+    }
+
+    private static bool TryResolveDirectoryIndex(
+        AssetsToolsBundleLoadedSession session,
+        AssetsFileInstance serializedFile,
+        out int directoryIndex)
+    {
+        if (!string.IsNullOrWhiteSpace(serializedFile.name) &&
+            session.SerializedFileDirectoryIndexLookup.TryGetValue(serializedFile.name, out directoryIndex))
+        {
+            return true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(serializedFile.path) &&
+            session.SerializedFileDirectoryIndexLookup.TryGetValue(serializedFile.path, out directoryIndex))
+        {
+            return true;
+        }
+
+        directoryIndex = -1;
+        return false;
     }
 
     private static void ApplyModifiedSerializedFiles(

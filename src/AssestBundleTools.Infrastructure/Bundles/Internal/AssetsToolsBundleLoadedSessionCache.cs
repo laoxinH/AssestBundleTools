@@ -26,7 +26,7 @@ internal sealed class AssetsToolsBundleLoadedSessionCache : IDisposable
     public static AssetsToolsBundleLoadedSessionCache Shared { get; } = new();
 
     public AssetsToolsBundleLoadedSessionCache()
-        : this(AssetsToolsBundleLoadedSession.Load, DefaultIdleRetention)
+        : this(AssetsToolsBundleLoadService.LoadIsolated, DefaultIdleRetention)
     {
     }
 

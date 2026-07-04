@@ -130,6 +130,7 @@ internal static class BundleExportWriteDiagnostics
                 $"stage={stage}",
                 $"bundle={request.BundleDisplayName}",
                 $"changes={request.AssetWriteItems.Count}",
+                $"sessionKey={FormatSessionCacheKey(request.BundleSessionCacheKey)}",
                 $"sourceSize={FormatFileSize(request.SourceArtifactPath)}",
                 $"process={FormatProcessArchitecture()}",
                 FormatManagedMemory(),
@@ -164,6 +165,7 @@ internal static class BundleExportWriteDiagnostics
                 $"stage={stage}",
                 $"bundle={request.BundleDisplayName}",
                 $"changes={request.AssetWriteItems.Count}",
+                $"sessionKey={FormatSessionCacheKey(request.BundleSessionCacheKey)}",
                 $"sourceSize={FormatFileSize(request.SourceArtifactPath)}",
                 $"compression={context.Compression}",
                 $"directoryCount={context.DirectoryCount}",
@@ -193,6 +195,11 @@ internal static class BundleExportWriteDiagnostics
             return "unavailable";
         }
     }
+
+    private static string FormatSessionCacheKey(string? sessionCacheKey) =>
+        string.IsNullOrWhiteSpace(sessionCacheKey)
+            ? "none"
+            : sessionCacheKey.Trim();
 
     private static string NormalizeDiagnosticText(string? value) =>
         string.IsNullOrWhiteSpace(value)
