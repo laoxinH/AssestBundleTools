@@ -37,6 +37,8 @@
   工作区操作后真实目标资源、隐式依赖资源、聚合资源文档和独立编辑窗口之间的通用同步模型。
 - [background-task-scheduling.md](background-task-scheduling.md)
   导入、预览、提取、导出和后续保存 / 重建的统一后台任务调度、并发闸门、进度与状态条边界。
+- [asset-preview-payload-contract.md](asset-preview-payload-contract.md)
+  所有资源预览的载荷预算、DTO 安全边界、完整文本按需查看 / 编辑承载和阶段性加固计划。
 - [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md)
   工作区真实导出 / 保存重建的执行计划、资源处理器并发、AB 写包并发、检查点和 AB 输出 manifest 契约。
 - [workspace-batch-extraction-dialog.md](workspace-batch-extraction-dialog.md)

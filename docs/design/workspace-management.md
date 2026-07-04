@@ -533,7 +533,7 @@ cache/
 
 - `previewInfoItems` 只承载轻量补充信息，不承载音频波形点、atlas 矩形集合、模型默认相机等结构化富预览数据。
 - `imageOverlay / imageFocus` 仅用于图片类预览中与主 PNG 同源的轻量结构化数据；更复杂的富预览元数据仍应进入 sidecar metadata。
-- `Text` 预览缓存必须保存完整规范化文本载荷；`AssetPreviewDto.TextContent` 只作为 Presentation 有界展示文本，结构化 Application 消费者应读取 `FullTextContent ?? TextContent`，避免 Spine atlas / JSON skeleton 等长文本被 UI 截断策略破坏。影响文本载荷语义的变更需要递增 `generatorVersion`，让旧截断缓存自动失效。
+- `Text` 预览缓存当前过渡实现会保存完整规范化文本载荷；`AssetPreviewDto.TextContent` 只作为 Presentation 有界展示文本，结构化 Application 消费者应读取 `FullTextContent ?? TextContent`，避免 Spine atlas / JSON skeleton 等长文本被 UI 截断策略破坏。影响文本载荷语义的变更需要递增 `generatorVersion`，让旧截断缓存自动失效。后续完整文本查看 / 编辑应按 [asset-preview-payload-contract.md](asset-preview-payload-contract.md) 迁移到 payload reference 和分块读取，不再要求 Presentation 可见 DTO 携带完整文本。
 - Mesh 预览的轻量几何 sidecar 当前包含顶点、边、submesh 摘要、UV0、通道摘要以及用于贴图化预览的三角面索引；Presentation 只能消费该 DTO 与关联贴图缓存载荷，不得为了补贴图效果直接解析 AB。
 - 当预览能力从 `Image / Text / Summary` 扩展到 `Audio / Model / Atlas` 时，应把这类结构化数据写入 `relativeMetadataPath` 指向的 sidecar metadata 文件。
 - `previewKind` 必须保持通用枚举语义，避免为某一个 Unity 资源类型直接设计专用缓存目录结构。

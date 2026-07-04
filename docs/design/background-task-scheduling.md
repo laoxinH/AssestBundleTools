@@ -25,6 +25,7 @@
 本文档不覆盖：
 
 - 具体 AB 解析、Unity 字段树读取、外部解密器协议或图片 / 音频 / Mesh / Spine 预览生成细节。
+- 预览 DTO 的大小预算、完整文本按需读取、文本编辑承载和各类型 parser / codec 前置 guard，详见 [asset-preview-payload-contract.md](asset-preview-payload-contract.md)。
 - 工作区操作记录的事实模型，仍以 [workspace-recoverable-operation-records.md](workspace-recoverable-operation-records.md) 为准。
 - 标准化 bundle 物理缓存和 loaded-session 缓存的完整实现细节，仍以 [workspace-management.md](workspace-management.md) 的缓存边界为准。
 
@@ -53,6 +54,7 @@
 5. 调度器不是新的业务状态源。Shell 状态条是瞬时 UI；操作记录、变更页、保存预览和重启恢复仍由工作区读模型和操作记录驱动。
 6. 调度器不是第二套物理线程池。它默认仍使用 .NET ThreadPool 或现有 runner，新增的是任务描述、优先级、并发闸门、进度、取消和观测策略。
 7. 当前导入 worker 池不得上移到 Presentation。导入的 bundle 粒度并行属于 Application 内部用例实现，Presentation 只调度“处理当前工作区导入”这一外层任务。
+8. 后台任务只解决执行线程和调度顺序，不替代预览载荷安全。任何返回给 WinUI 绑定、布局或 renderer 的预览 DTO 都必须先经过 Application 定义的展示预算；完整文本、完整字段树和大媒体载荷应通过 sidecar / payload reference / 分块查询按需读取。
 
 ## 5. 分层职责
 
