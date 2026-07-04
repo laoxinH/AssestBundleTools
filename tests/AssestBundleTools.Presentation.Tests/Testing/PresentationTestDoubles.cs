@@ -302,6 +302,9 @@ internal sealed class TestWorkspaceAssetInspectionGateway : IWorkspaceAssetInspe
     public Func<LoadPreviewTextChunkQuery, Task<Result<AssetPreviewTextChunkDto>>> LoadPreviewTextChunkHandler { get; init; } =
         _ => throw new NotSupportedException();
 
+    public Func<LoadPreviewTextLinesQuery, Task<Result<AssetPreviewTextLineRangeDto>>> LoadPreviewTextLinesHandler { get; init; } =
+        _ => throw new NotSupportedException();
+
     public Func<LoadSpineAssetGroupDetailsQuery, Task<Result<SpineAssetGroupDetailsDto>>> LoadSpineAssetGroupDetailsHandler { get; init; } =
         _ => throw new NotSupportedException();
 
@@ -319,6 +322,11 @@ internal sealed class TestWorkspaceAssetInspectionGateway : IWorkspaceAssetInspe
         LoadPreviewTextChunkQuery query,
         CancellationToken cancellationToken = default) =>
         LoadPreviewTextChunkHandler(query);
+
+    public Task<Result<AssetPreviewTextLineRangeDto>> LoadPreviewTextLinesAsync(
+        LoadPreviewTextLinesQuery query,
+        CancellationToken cancellationToken = default) =>
+        LoadPreviewTextLinesHandler(query);
 
     public Task<Result<SpineAssetGroupDetailsDto>> LoadSpineAssetGroupDetailsAsync(
         LoadSpineAssetGroupDetailsQuery query,

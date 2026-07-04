@@ -14,6 +14,7 @@ public sealed class WorkspaceAssetInspectionGateway : IWorkspaceAssetInspectionG
     private readonly GetAssetDetailsHandler _getAssetDetailsHandler;
     private readonly GetAssetPreviewHandler _getAssetPreviewHandler;
     private readonly LoadPreviewTextChunkHandler _loadPreviewTextChunkHandler;
+    private readonly LoadPreviewTextLinesHandler _loadPreviewTextLinesHandler;
     private readonly LoadSpineAssetGroupDetailsHandler _loadSpineAssetGroupDetailsHandler;
     private readonly OpenAssetInPaneHandler _openAssetInPaneHandler;
 
@@ -21,12 +22,14 @@ public sealed class WorkspaceAssetInspectionGateway : IWorkspaceAssetInspectionG
         GetAssetDetailsHandler getAssetDetailsHandler,
         GetAssetPreviewHandler getAssetPreviewHandler,
         LoadPreviewTextChunkHandler loadPreviewTextChunkHandler,
+        LoadPreviewTextLinesHandler loadPreviewTextLinesHandler,
         LoadSpineAssetGroupDetailsHandler loadSpineAssetGroupDetailsHandler,
         OpenAssetInPaneHandler openAssetInPaneHandler)
     {
         _getAssetDetailsHandler = getAssetDetailsHandler ?? throw new ArgumentNullException(nameof(getAssetDetailsHandler));
         _getAssetPreviewHandler = getAssetPreviewHandler ?? throw new ArgumentNullException(nameof(getAssetPreviewHandler));
         _loadPreviewTextChunkHandler = loadPreviewTextChunkHandler ?? throw new ArgumentNullException(nameof(loadPreviewTextChunkHandler));
+        _loadPreviewTextLinesHandler = loadPreviewTextLinesHandler ?? throw new ArgumentNullException(nameof(loadPreviewTextLinesHandler));
         _loadSpineAssetGroupDetailsHandler = loadSpineAssetGroupDetailsHandler ?? throw new ArgumentNullException(nameof(loadSpineAssetGroupDetailsHandler));
         _openAssetInPaneHandler = openAssetInPaneHandler ?? throw new ArgumentNullException(nameof(openAssetInPaneHandler));
     }
@@ -45,6 +48,11 @@ public sealed class WorkspaceAssetInspectionGateway : IWorkspaceAssetInspectionG
         LoadPreviewTextChunkQuery query,
         CancellationToken cancellationToken = default) =>
         _loadPreviewTextChunkHandler.HandleAsync(query, cancellationToken);
+
+    public Task<Result<AssetPreviewTextLineRangeDto>> LoadPreviewTextLinesAsync(
+        LoadPreviewTextLinesQuery query,
+        CancellationToken cancellationToken = default) =>
+        _loadPreviewTextLinesHandler.HandleAsync(query, cancellationToken);
 
     public Task<Result<SpineAssetGroupDetailsDto>> LoadSpineAssetGroupDetailsAsync(
         LoadSpineAssetGroupDetailsQuery query,

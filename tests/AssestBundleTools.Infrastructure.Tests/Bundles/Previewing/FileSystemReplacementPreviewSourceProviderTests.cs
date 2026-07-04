@@ -90,6 +90,34 @@ internal static class FileSystemReplacementPreviewSourceProviderTests
         TestAssert.Equal(atlasPath, chunk.SourcePath, "Chunk should keep the normalized source path.");
     }
 
+    public static async Task LoadFileTextLinesAsync_ShouldReadNormalizedLineRange_ForTextAssetFile()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        Directory.CreateDirectory(temporaryDirectory.DirectoryPath);
+        var atlasPath = Path.Combine(temporaryDirectory.DirectoryPath, "hero.atlas");
+        const string sourceText = "line-0\r\nline-1\rline-2\nline-3\n";
+        await File.WriteAllTextAsync(atlasPath, sourceText, Encoding.UTF8);
+
+        var provider = new FileSystemReplacementPreviewSourceProvider();
+
+        var result = await provider.LoadFileTextLinesAsync(
+            atlasPath,
+            startLineIndex: 2,
+            lineCount: 8);
+
+        TestAssert.True(result.IsSuccess, "Readable atlas files should support text line loading.");
+        var lines = TestAssert.NotNull(result.Value, "Successful line loading should include a line range.");
+        TestAssert.Equal(3, lines.Lines.Count, "Line range should clamp to available lines.");
+        TestAssert.Equal("line-2", lines.Lines[0], "Line range should normalize CR before slicing.");
+        TestAssert.Equal("line-3", lines.Lines[1], "Line range should preserve LF lines.");
+        TestAssert.Equal(string.Empty, lines.Lines[2], "Line range should preserve trailing empty line.");
+        TestAssert.Equal(2, lines.StartLineIndex, "Line range should report requested start line.");
+        TestAssert.Equal(3, lines.LineCount, "Line range should report returned line count.");
+        TestAssert.Equal(5, lines.TotalLineCount, "Line range should count trailing empty line when source ends with newline.");
+        TestAssert.Equal(new FileInfo(atlasPath).Length, lines.ContentLength, "Line range should report source file bytes.");
+        TestAssert.Equal(atlasPath, lines.SourcePath, "Line range should keep the normalized source path.");
+    }
+
     public static async Task LoadFileTextChunkAsync_ShouldRejectBinarySkelTextAssetFile()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();

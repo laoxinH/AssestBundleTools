@@ -62,6 +62,10 @@ internal static class InfrastructureTestSuite
             JsonPreviewCacheStoreTests.LoadTextChunk_ShouldReadNormalizedTextRange_FromPayloadFile);
         await RunTestAsync(
             failures,
+            nameof(JsonPreviewCacheStoreTests.LoadTextLines_ShouldReadNormalizedLineRange_FromPayloadFile),
+            JsonPreviewCacheStoreTests.LoadTextLines_ShouldReadNormalizedLineRange_FromPayloadFile);
+        await RunTestAsync(
+            failures,
             nameof(JsonPreviewCacheStoreTests.GetUsage_ShouldReturnPreviewEntriesAndTotalSize),
             JsonPreviewCacheStoreTests.GetUsage_ShouldReturnPreviewEntriesAndTotalSize);
         await RunTestAsync(
@@ -340,6 +344,10 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(FileSystemReplacementPreviewSourceProviderTests.LoadFileTextChunkAsync_ShouldReadNormalizedTextRange_ForTextAssetFile),
             FileSystemReplacementPreviewSourceProviderTests.LoadFileTextChunkAsync_ShouldReadNormalizedTextRange_ForTextAssetFile);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemReplacementPreviewSourceProviderTests.LoadFileTextLinesAsync_ShouldReadNormalizedLineRange_ForTextAssetFile),
+            FileSystemReplacementPreviewSourceProviderTests.LoadFileTextLinesAsync_ShouldReadNormalizedLineRange_ForTextAssetFile);
         await RunTestAsync(
             failures,
             nameof(FileSystemReplacementPreviewSourceProviderTests.LoadFileTextChunkAsync_ShouldRejectBinarySkelTextAssetFile),

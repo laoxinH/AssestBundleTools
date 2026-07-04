@@ -127,6 +127,47 @@ internal static class JsonPreviewCacheStoreTests
         TestAssert.Equal(System.Text.Encoding.UTF8.GetByteCount(sourceText), result.ContentLength, "Chunk should expose raw payload file length.");
     }
 
+    public static void LoadTextLines_ShouldReadNormalizedLineRange_FromPayloadFile()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonPreviewCacheStore(temporaryDirectory.DirectoryPath);
+        const string sourceText = "line-0\r\nline-1\rline-2\nline-3\n";
+        const string normalizedText = "line-0\nline-1\nline-2\nline-3\n";
+        var display = AssetPreviewTextDisplayPolicy.CreateDisplay(normalizedText);
+        var descriptor = CreateDescriptor(
+            workspaceKey: "workspace-a",
+            previewCacheKey: "preview-text-lines",
+            bundleCacheKey: "bundle-cache-text",
+            relativePayloadPath: "payloads/text/preview-text-lines.txt") with
+        {
+            PreviewKind = AssetPreviewKind.Text.ToString(),
+            ContentType = "text/plain; charset=utf-8",
+            PreviewInfoItems = AssetPreviewTextDisplayPolicy.AppendDisplayInfoItems(
+                null,
+                display.Metadata)
+        };
+
+        store.Save(new PreviewCachePayloadDto(
+            descriptor,
+            System.Text.Encoding.UTF8.GetBytes(sourceText)));
+
+        var lineRange = store.LoadTextLines(
+            "workspace-a",
+            "preview-text-lines",
+            startLineIndex: 1,
+            lineCount: 3);
+
+        var result = TestAssert.NotNull(lineRange, "Text lines should be readable from the stored preview payload.");
+        TestAssert.Equal(3, result.Lines.Count, "Line range should return requested lines.");
+        TestAssert.Equal("line-1", result.Lines[0], "Line range should normalize CRLF before slicing.");
+        TestAssert.Equal("line-2", result.Lines[1], "Line range should normalize CR before slicing.");
+        TestAssert.Equal("line-3", result.Lines[2], "Line range should preserve LF lines.");
+        TestAssert.Equal(1, result.StartLineIndex, "Line range should report requested start line.");
+        TestAssert.Equal(3, result.LineCount, "Line range should report returned line count.");
+        TestAssert.Equal(5, result.TotalLineCount, "Line range should count trailing empty line when payload ends with newline.");
+        TestAssert.Equal(System.Text.Encoding.UTF8.GetByteCount(sourceText), result.ContentLength, "Line range should expose raw payload file length.");
+    }
+
     public static void GetUsage_ShouldReturnPreviewEntriesAndTotalSize()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();

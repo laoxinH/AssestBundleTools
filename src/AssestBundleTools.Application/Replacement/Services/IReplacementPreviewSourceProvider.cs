@@ -19,4 +19,10 @@ public interface IReplacementPreviewSourceProvider
         int offset,
         int length,
         CancellationToken cancellationToken = default);
+
+    Task<Result<ReplacementTextLineRangeDto>> LoadFileTextLinesAsync(
+        string sourceFilePath,
+        int startLineIndex,
+        int lineCount,
+        CancellationToken cancellationToken = default);
 }

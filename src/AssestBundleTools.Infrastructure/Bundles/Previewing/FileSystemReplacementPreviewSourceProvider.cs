@@ -92,6 +92,24 @@ public sealed class FileSystemReplacementPreviewSourceProvider : IReplacementPre
             cancellationToken));
     }
 
+    public Task<Result<ReplacementTextLineRangeDto>> LoadFileTextLinesAsync(
+        string sourceFilePath,
+        int startLineIndex,
+        int lineCount,
+        CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromResult(Result<ReplacementTextLineRangeDto>.Cancelled());
+        }
+
+        return Task.Run(() => FileSystemReplacementTextChunkReader.LoadLines(
+            sourceFilePath,
+            startLineIndex,
+            lineCount,
+            cancellationToken));
+    }
+
     private static string ResolveImageContentType(string path)
     {
         return Path.GetExtension(path).Trim().ToLowerInvariant() switch

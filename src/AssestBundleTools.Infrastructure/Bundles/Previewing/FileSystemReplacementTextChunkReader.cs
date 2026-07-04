@@ -94,6 +94,87 @@ internal static class FileSystemReplacementTextChunkReader
         }
     }
 
+    public static Result<ReplacementTextLineRangeDto> LoadLines(
+        string sourceFilePath,
+        int startLineIndex,
+        int lineCount,
+        CancellationToken cancellationToken)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Result<ReplacementTextLineRangeDto>.Cancelled();
+        }
+
+        if (string.IsNullOrWhiteSpace(sourceFilePath))
+        {
+            return Result<ReplacementTextLineRangeDto>.Failure(
+                ApplicationErrors.BundlePreviewGenerationFailed(sourceFilePath, "Replacement source path is empty."));
+        }
+
+        if (startLineIndex < 0 || lineCount <= 0)
+        {
+            return Result<ReplacementTextLineRangeDto>.Failure(
+                ApplicationErrors.AssetPreviewTextChunkRangeInvalid());
+        }
+
+        var normalizedPath = sourceFilePath.Trim();
+        try
+        {
+            if (!File.Exists(normalizedPath))
+            {
+                return Result<ReplacementTextLineRangeDto>.Failure(
+                    ApplicationErrors.BundlePreviewGenerationFailed(normalizedPath, "Replacement source file was not found."));
+            }
+
+            var fileInfo = new FileInfo(normalizedPath);
+            using var stream = new FileStream(
+                normalizedPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete,
+                bufferSize: 4096,
+                useAsync: false);
+            var encodingInfo = DetectEncoding(stream);
+            if (ShouldKeepSkelBinary(normalizedPath, stream, encodingInfo))
+            {
+                return Result<ReplacementTextLineRangeDto>.Failure(
+                    ApplicationErrors.BundlePreviewGenerationFailed(normalizedPath, "Replacement text source is binary."));
+            }
+
+            stream.Position = encodingInfo.PreambleLength;
+            using var reader = new StreamReader(
+                stream,
+                encodingInfo.Encoding,
+                detectEncodingFromByteOrderMarks: false,
+                bufferSize: 4096,
+                leaveOpen: false);
+            var lineReader = new NormalizedLineReader(reader);
+
+            var skippedLineCount = SkipLines(lineReader, startLineIndex, cancellationToken);
+            var lines = ReadLines(lineReader, lineCount, cancellationToken);
+            var remainingLineCount = CountRemainingLines(lineReader, cancellationToken);
+            var totalLineCount = skippedLineCount + lines.Count + remainingLineCount;
+
+            return Result<ReplacementTextLineRangeDto>.Success(new ReplacementTextLineRangeDto(
+                normalizedPath,
+                TextContentType,
+                lines,
+                skippedLineCount,
+                lines.Count,
+                totalLineCount,
+                fileInfo.Length));
+        }
+        catch (OperationCanceledException)
+        {
+            return Result<ReplacementTextLineRangeDto>.Cancelled();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or DecoderFallbackException or InvalidDataException)
+        {
+            return Result<ReplacementTextLineRangeDto>.Failure(
+                ApplicationErrors.BundlePreviewGenerationFailed(normalizedPath, ex.GetType().Name));
+        }
+    }
+
     private static int SkipCharacters(
         TextReader reader,
         int count,
@@ -132,6 +213,50 @@ internal static class FileSystemReplacementTextChunkReader
     {
         var remaining = 0;
         while (TryReadNormalizedCharacter(reader, out _))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            remaining++;
+        }
+
+        return remaining;
+    }
+
+    private static int SkipLines(
+        NormalizedLineReader reader,
+        int lineCount,
+        CancellationToken cancellationToken)
+    {
+        var skipped = 0;
+        while (skipped < lineCount && reader.TryReadLine(out _))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            skipped++;
+        }
+
+        return skipped;
+    }
+
+    private static IReadOnlyList<string> ReadLines(
+        NormalizedLineReader reader,
+        int lineCount,
+        CancellationToken cancellationToken)
+    {
+        var lines = new List<string>(Math.Min(lineCount, 256));
+        while (lines.Count < lineCount && reader.TryReadLine(out var line))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            lines.Add(line);
+        }
+
+        return lines;
+    }
+
+    private static int CountRemainingLines(
+        NormalizedLineReader reader,
+        CancellationToken cancellationToken)
+    {
+        var remaining = 0;
+        while (reader.TryReadLine(out _))
         {
             cancellationToken.ThrowIfCancellationRequested();
             remaining++;
@@ -254,4 +379,47 @@ internal static class FileSystemReplacementTextChunkReader
     private readonly record struct TextEncodingInfo(
         Encoding Encoding,
         int PreambleLength);
+
+    private sealed class NormalizedLineReader
+    {
+        private readonly TextReader _reader;
+        private bool _hasPendingFinalEmptyLine;
+
+        public NormalizedLineReader(TextReader reader)
+        {
+            _reader = reader;
+        }
+
+        public bool TryReadLine(out string line)
+        {
+            if (_hasPendingFinalEmptyLine)
+            {
+                _hasPendingFinalEmptyLine = false;
+                line = string.Empty;
+                return true;
+            }
+
+            var builder = new StringBuilder();
+            while (TryReadNormalizedCharacter(_reader, out var character))
+            {
+                if (character == '\n')
+                {
+                    _hasPendingFinalEmptyLine = _reader.Peek() < 0;
+                    line = builder.ToString();
+                    return true;
+                }
+
+                builder.Append(character);
+            }
+
+            if (builder.Length == 0)
+            {
+                line = string.Empty;
+                return false;
+            }
+
+            line = builder.ToString();
+            return true;
+        }
+    }
 }

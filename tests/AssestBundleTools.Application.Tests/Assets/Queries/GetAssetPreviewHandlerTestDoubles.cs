@@ -380,6 +380,10 @@ internal static partial class GetAssetPreviewHandlerTests
 
         public int LoadCallCount => Volatile.Read(ref _loadCallCount);
 
+        private int _loadTextLinesCallCount;
+
+        public int LoadTextLinesCallCount => Volatile.Read(ref _loadTextLinesCallCount);
+
         public PreviewCachePayloadDto? LastSavedPayload { get; private set; }
 
         public PreviewCachePruneRequestDto? LastPruneRequest { get; private set; }
@@ -429,6 +433,46 @@ internal static partial class GetAssetPreviewHandlerTests
                     safeOffset,
                     safeLength,
                     fullText.Length,
+                    _payload.Content.LongLength);
+            }
+        }
+
+        public PreviewCacheTextLineRangeDto? LoadTextLines(
+            string workspaceKey,
+            string previewCacheKey,
+            int startLineIndex,
+            int lineCount)
+        {
+            Interlocked.Increment(ref _loadTextLinesCallCount);
+            lock (_syncRoot)
+            {
+                if (_payload is null ||
+                    !string.Equals(_payload.Descriptor.WorkspaceKey, workspaceKey, StringComparison.OrdinalIgnoreCase) ||
+                    !string.Equals(_payload.Descriptor.PreviewCacheKey, previewCacheKey, StringComparison.OrdinalIgnoreCase) ||
+                    startLineIndex < 0 ||
+                    lineCount <= 0)
+                {
+                    return null;
+                }
+
+                var fullText = Encoding.UTF8.GetString(_payload.Content)
+                    .Replace("\r\n", "\n")
+                    .Replace('\r', '\n');
+                var allLines = fullText.Length == 0
+                    ? Array.Empty<string>()
+                    : fullText.Split('\n');
+                var safeStartLineIndex = Math.Min(startLineIndex, allLines.Length);
+                var safeLineCount = Math.Min(lineCount, allLines.Length - safeStartLineIndex);
+                var lines = safeLineCount <= 0
+                    ? Array.Empty<string>()
+                    : allLines.Skip(safeStartLineIndex).Take(safeLineCount).ToArray();
+
+                return new PreviewCacheTextLineRangeDto(
+                    _payload.Descriptor,
+                    lines,
+                    safeStartLineIndex,
+                    safeLineCount,
+                    allLines.Length,
                     _payload.Content.LongLength);
             }
         }
@@ -616,6 +660,8 @@ internal static partial class GetAssetPreviewHandlerTests
 
         public int LoadFileTextChunkCallCount { get; private set; }
 
+        public int LoadFileTextLinesCallCount { get; private set; }
+
         public AssetDetailsDto? LastTargetDetails { get; private set; }
 
         public string? LastSourceFilePath { get; private set; }
@@ -625,6 +671,12 @@ internal static partial class GetAssetPreviewHandlerTests
         public int LastTextChunkOffset { get; private set; }
 
         public int LastTextChunkLength { get; private set; }
+
+        public string? LastTextLinesSourceFilePath { get; private set; }
+
+        public int LastTextLinesStartLineIndex { get; private set; }
+
+        public int LastTextLinesLineCount { get; private set; }
 
         public Task<Result<AssetPreviewContentDto>> LoadFilePreviewAsync(
             AssetDetailsDto targetDetails,
@@ -676,6 +728,46 @@ internal static partial class GetAssetPreviewHandlerTests
                 safeOffset,
                 safeLength,
                 fullText.Length,
+                previewContent.Content.LongLength)));
+        }
+
+        public Task<Result<ReplacementTextLineRangeDto>> LoadFileTextLinesAsync(
+            string sourceFilePath,
+            int startLineIndex,
+            int lineCount,
+            CancellationToken cancellationToken = default)
+        {
+            LoadFileTextLinesCallCount++;
+            LastTextLinesSourceFilePath = sourceFilePath;
+            LastTextLinesStartLineIndex = startLineIndex;
+            LastTextLinesLineCount = lineCount;
+
+            if (!_result.IsSuccess ||
+                _result.Value is not { Kind: AssetPreviewKind.Text } previewContent)
+            {
+                return Task.FromResult(Result<ReplacementTextLineRangeDto>.Failure(
+                    ApplicationErrors.BundlePreviewGenerationFailed(sourceFilePath)));
+            }
+
+            var fullText = Encoding.UTF8.GetString(previewContent.Content)
+                .Replace("\r\n", "\n", StringComparison.Ordinal)
+                .Replace('\r', '\n');
+            var allLines = fullText.Length == 0
+                ? Array.Empty<string>()
+                : fullText.Split('\n');
+            var safeStartLineIndex = Math.Min(startLineIndex, allLines.Length);
+            var safeLineCount = Math.Min(lineCount, allLines.Length - safeStartLineIndex);
+            var lines = safeLineCount <= 0
+                ? Array.Empty<string>()
+                : allLines.Skip(safeStartLineIndex).Take(safeLineCount).ToArray();
+
+            return Task.FromResult(Result<ReplacementTextLineRangeDto>.Success(new ReplacementTextLineRangeDto(
+                sourceFilePath,
+                previewContent.ContentType,
+                lines,
+                safeStartLineIndex,
+                safeLineCount,
+                allLines.Length,
                 previewContent.Content.LongLength)));
         }
     }

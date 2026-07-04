@@ -401,6 +401,97 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.True(chunk.HasMore, "Clamped chunk should report remaining text.");
     }
 
+    public static async Task LoadPreviewTextLinesHandler_ShouldReadLines_FromPreviewCacheReference()
+    {
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        const string fullTextContent = "line-0\nline-1\nline-2\nline-3";
+        var previewCachePayload = CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            fullTextContent,
+            generatorVersion: "generator-1");
+        var previewCacheStore = new TestPreviewCacheStore(previewCachePayload);
+        var handler = new LoadPreviewTextLinesHandler(new TestWorkspaceDataStoreFactory(
+            new TestBundleIndexCacheStore([bundleCacheEntry]),
+            previewCacheStore));
+        var reference = new AssetPreviewFullContentReferenceDto(
+            AssetPreviewFullContentReferenceKind.PreviewCache,
+            "text/plain; charset=utf-8",
+            ContentLength: 0,
+            query.WorkspaceKey,
+            previewCachePayload.Descriptor.PreviewCacheKey);
+
+        var result = await handler.HandleAsync(new LoadPreviewTextLinesQuery(
+            query.WorkspaceDataRootPath,
+            reference,
+            StartLineIndex: 1,
+            LineCount: 2));
+
+        TestAssert.True(result.IsSuccess, "Text line loading should succeed for a cached text preview reference.");
+        var lines = result.Value ?? throw new InvalidOperationException("Expected text line result.");
+        TestAssert.Equal(2, lines.Lines.Count, "Line range should return the requested line count.");
+        TestAssert.Equal("line-1", lines.Lines[0], "Line range should start at the requested line index.");
+        TestAssert.Equal("line-2", lines.Lines[1], "Line range should preserve line order.");
+        TestAssert.Equal(1, lines.StartLineIndex, "Line range should report the effective start line.");
+        TestAssert.Equal(2, lines.LineCount, "Line range should report returned line count.");
+        TestAssert.Equal(4, lines.TotalLineCount, "Line range should report full normalized line count.");
+        TestAssert.True(lines.HasMore, "Line range should report remaining lines.");
+        TestAssert.Equal(0, previewCacheStore.LoadCallCount, "Line loading should not hydrate the full preview payload.");
+        TestAssert.Equal(1, previewCacheStore.LoadTextLinesCallCount, "Preview cache store should serve one line range.");
+    }
+
+    public static async Task LoadPreviewTextLinesHandler_ShouldReadLines_FromFileReplacementReference()
+    {
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        const string sourcePath = @"C:\Imports\large-atlas.json";
+        const string fullTextContent = "line-0\nline-1\nline-2\nline-3";
+        var previewCacheStore = new TestPreviewCacheStore(CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            "cached text should not be used",
+            generatorVersion: "generator-1"));
+        var replacementPreviewSourceProvider = new TestReplacementPreviewSourceProvider(
+            Result<AssetPreviewContentDto>.Success(new AssetPreviewContentDto(
+                Kind: AssetPreviewKind.Text,
+                ContentType: "text/plain; charset=utf-8",
+                Content: Encoding.UTF8.GetBytes(fullTextContent))));
+        var handler = new LoadPreviewTextLinesHandler(
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore),
+            replacementPreviewSourceProvider);
+        var reference = new AssetPreviewFullContentReferenceDto(
+            AssetPreviewFullContentReferenceKind.FileReplacement,
+            "text/plain; charset=utf-8",
+            ContentLength: 0,
+            WorkspaceKey: string.Empty,
+            SourcePath: sourcePath);
+
+        var result = await handler.HandleAsync(new LoadPreviewTextLinesQuery(
+            query.WorkspaceDataRootPath,
+            reference,
+            StartLineIndex: 2,
+            LineCount: 8));
+
+        TestAssert.True(result.IsSuccess, "Text line loading should succeed for a file replacement reference.");
+        var lines = result.Value ?? throw new InvalidOperationException("Expected text line result.");
+        TestAssert.Equal(2, lines.Lines.Count, "Replacement line range should clamp to available lines.");
+        TestAssert.Equal("line-2", lines.Lines[0], "Replacement line range should start at requested line.");
+        TestAssert.Equal("line-3", lines.Lines[1], "Replacement line range should preserve order.");
+        TestAssert.Equal(2, lines.StartLineIndex, "Replacement line range should report effective start line.");
+        TestAssert.Equal(2, lines.LineCount, "Replacement line range should report returned line count.");
+        TestAssert.Equal(4, lines.TotalLineCount, "Replacement line range should report full line count.");
+        TestAssert.False(lines.HasMore, "Replacement line range should report no remaining lines at EOF.");
+        TestAssert.Equal(0, previewCacheStore.LoadCallCount, "Replacement line loading should not hydrate preview cache.");
+        TestAssert.Equal(0, previewCacheStore.LoadTextLinesCallCount, "Replacement line loading should not ask preview cache for lines.");
+        TestAssert.Equal(1, replacementPreviewSourceProvider.LoadFileTextLinesCallCount, "Replacement source provider should serve one line range.");
+        TestAssert.Equal(sourcePath, replacementPreviewSourceProvider.LastTextLinesSourceFilePath, "Replacement source provider should receive source path.");
+        TestAssert.Equal(2, replacementPreviewSourceProvider.LastTextLinesStartLineIndex, "Replacement source provider should receive requested start line.");
+        TestAssert.Equal(LoadPreviewTextLinesHandler.MaxLineCount, replacementPreviewSourceProvider.LastTextLinesLineCount, "Oversized line requests should be clamped before provider execution.");
+    }
+
     private static long? ReadInt64PreviewInfo(AssetPreviewDto preview, AssetPreviewInfoKey key)
     {
         return preview.PreviewInfoItems?

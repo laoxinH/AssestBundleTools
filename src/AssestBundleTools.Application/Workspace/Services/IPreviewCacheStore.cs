@@ -41,6 +41,42 @@ public interface IPreviewCacheStore
             payload.Content.LongLength);
     }
 
+    PreviewCacheTextLineRangeDto? LoadTextLines(
+        string workspaceKey,
+        string previewCacheKey,
+        int startLineIndex,
+        int lineCount)
+    {
+        if (startLineIndex < 0 || lineCount <= 0)
+        {
+            return null;
+        }
+
+        var payload = Load(workspaceKey, previewCacheKey);
+        if (payload is null)
+        {
+            return null;
+        }
+
+        var fullText = Encoding.UTF8.GetString(payload.Content)
+            .Replace("\r\n", "\n")
+            .Replace('\r', '\n');
+        var allLines = fullText.Split('\n');
+        var safeStartLineIndex = Math.Min(startLineIndex, allLines.Length);
+        var safeLineCount = Math.Min(lineCount, allLines.Length - safeStartLineIndex);
+        var lines = safeLineCount <= 0
+            ? Array.Empty<string>()
+            : allLines.Skip(safeStartLineIndex).Take(safeLineCount).ToArray();
+
+        return new PreviewCacheTextLineRangeDto(
+            payload.Descriptor,
+            lines,
+            safeStartLineIndex,
+            safeLineCount,
+            fullText.Length == 0 ? 0 : allLines.Length,
+            payload.Content.LongLength);
+    }
+
     IReadOnlyList<PreviewCacheDescriptorDto> LoadDescriptors(string workspaceKey);
 
     string? ResolvePayloadFilePath(PreviewCacheDescriptorDto descriptor);
