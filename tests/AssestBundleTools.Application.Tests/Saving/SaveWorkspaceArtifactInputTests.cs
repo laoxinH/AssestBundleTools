@@ -75,6 +75,7 @@ internal static partial class SaveWorkspaceHandlersTests
         TestAssert.True(alphaPlan.HasStandardizedArtifact, "Existing materialized artifact should be marked as resolved.");
         TestAssert.Equal(alphaArtifactPath, alphaPlan.ArtifactBundlePath, "Plan should expose the standardized bundle path.");
         TestAssert.False(string.IsNullOrWhiteSpace(alphaPlan.BundleSessionCacheKey), "Plan should expose loaded-session identity.");
+        TestAssert.Equal("LZMA", alphaPlan.OriginalCompression, "Plan should expose cached original compression for preserve-original export.");
         TestAssert.Equal(null, alphaPlan.ArtifactDiagnosticCode, "Resolved artifact should not expose a diagnostic code.");
 
         var zetaPlan = preview.BundlePlans[1];
@@ -216,7 +217,8 @@ internal static partial class SaveWorkspaceHandlersTests
         TestAssert.Equal(1, execution.WrittenBundleCount, "Selected bundle should be written.");
         TestAssert.Equal(@"D:\Exports\_abt-bundle-export-manifest.json", execution.ExportManifestPath, "Manifest path should be returned.");
         TestAssert.Equal(alphaBundleId, TestAssert.Single(exporter.Requests).BundleId, "Exporter should receive only the selected bundle.");
-        TestAssert.Equal(WorkspaceBundleExportCompressionModeDto.FastLz4, exporter.Requests[0].CompressionMode, "Exporter should receive the default fast compression mode.");
+        TestAssert.Equal(WorkspaceBundleExportCompressionModeDto.PreserveOriginal, exporter.Requests[0].CompressionMode, "Exporter should receive the default preserve-original compression mode.");
+        TestAssert.Equal("LZMA", exporter.Requests[0].OriginalCompression, "Exporter should receive cached original compression from the save plan.");
         TestAssert.Equal("resource.processor.texture.png", TestAssert.Single(exporter.Requests[0].ProcessorSelections).ProcessorId, "Processor selections should be forwarded to exporter.");
         TestAssert.Equal("HeroTexture", TestAssert.Single(processorExecutor.WorkItems).AssetName, "File-backed Texture2D changes should create resource processor work items.");
         TestAssert.Equal("resource.processor.texture.png", TestAssert.Single(exporter.Requests[0].ProcessorResults).ProcessorId, "Processor execution results should be forwarded to exporter.");
@@ -540,7 +542,8 @@ internal static partial class SaveWorkspaceHandlersTests
             Dependencies: Array.Empty<string>(),
             Assets: Array.Empty<BundleIndexAssetCacheEntryDto>(),
             DecryptorId: AssetBundleDecryptorIds.BuiltInPassThrough,
-            DecryptorVersion: "1.0.0");
+            DecryptorVersion: "1.0.0",
+            OriginalCompression: "LZMA");
     }
 
     private static BundleArtifactManifestDto CreateArtifactManifest(

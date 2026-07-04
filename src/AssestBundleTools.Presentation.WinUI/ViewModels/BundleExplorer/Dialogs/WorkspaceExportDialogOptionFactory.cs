@@ -36,7 +36,7 @@ internal sealed class WorkspaceExportDialogOptionFactory
                     ResourceKeys.WorkspaceExportDialogBundleSummaryFormat,
                     plan.ChangeCount,
                     plan.ModifiedAssetCount,
-                    plan.ExtractedAssetCount,
+                    ResolveOriginalCompressionDisplayName(plan.OriginalCompression),
                     plan.WorkspaceReplacementCount,
                     plan.FileReplacementCount),
                 plan.ChangeCount,
@@ -88,13 +88,21 @@ internal sealed class WorkspaceExportDialogOptionFactory
     public IEnumerable<WorkspaceExportCompressionOptionViewModel> CreateCompressionOptions()
     {
         yield return new WorkspaceExportCompressionOptionViewModel(
-            WorkspaceBundleExportCompressionModeDto.FastLz4,
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionFastLz4),
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionFastLz4Description));
-        yield return new WorkspaceExportCompressionOptionViewModel(
             WorkspaceBundleExportCompressionModeDto.PreserveOriginal,
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionPreserveOriginal),
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionPreserveOriginalDescription));
+        yield return new WorkspaceExportCompressionOptionViewModel(
+            WorkspaceBundleExportCompressionModeDto.Lzma,
+            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionLzma),
+            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionLzmaDescription));
+        yield return new WorkspaceExportCompressionOptionViewModel(
+            WorkspaceBundleExportCompressionModeDto.Lz4,
+            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionLz4),
+            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionLz4Description));
+        yield return new WorkspaceExportCompressionOptionViewModel(
+            WorkspaceBundleExportCompressionModeDto.FastLz4,
+            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionFastLz4),
+            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionFastLz4Description));
         yield return new WorkspaceExportCompressionOptionViewModel(
             WorkspaceBundleExportCompressionModeDto.Uncompressed,
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionUncompressed),
@@ -182,6 +190,16 @@ internal sealed class WorkspaceExportDialogOptionFactory
             "skel" => _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorSkel),
             _ => resourceKind
         };
+    }
+
+    private string ResolveOriginalCompressionDisplayName(string? originalCompression)
+    {
+        if (string.IsNullOrWhiteSpace(originalCompression))
+        {
+            return _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionUnknown);
+        }
+
+        return originalCompression.Trim();
     }
 
     private static string NormalizeResourceKind(string value) =>

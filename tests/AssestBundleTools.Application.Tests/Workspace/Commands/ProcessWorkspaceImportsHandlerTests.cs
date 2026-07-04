@@ -322,7 +322,8 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
                         LogicalPath: request.LogicalPath,
                         ParserVersion: "parser-1",
                         Dependencies: Array.Empty<string>(),
-                        Assets: Array.Empty<AssetBundleReadAssetDto>())));
+                        Assets: Array.Empty<AssetBundleReadAssetDto>(),
+                        OriginalCompression: "LZMA")));
             }
         };
         var handler = new ProcessWorkspaceImportsHandler(
@@ -345,6 +346,7 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         TestAssert.Equal("char_151_myrtle.ab", savedEntry.DisplayName, "Bundle display name should come from the imported source file, not the normalized artifact file.");
         TestAssert.Equal(logicalPath, savedEntry.LogicalPath, "Logical path should still preserve the discovered workspace-relative path.");
         TestAssert.Equal(sourcePath, savedEntry.SourceFingerprint.SourcePath, "Source fingerprint should continue to point at the imported source.");
+        TestAssert.Equal("LZMA", savedEntry.OriginalCompression, "Bundle index cache should preserve the compression reported by the loadAB reader path.");
         TestAssert.Equal(1, reader.ReadCallCount, "Import should still read the resolved normalized artifact once.");
         TestAssert.Equal(normalizedBundlePath, capturedReadRequest?.BundlePath ?? string.Empty, "Reader should still consume the normalized artifact path.");
     }

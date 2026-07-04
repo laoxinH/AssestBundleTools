@@ -18,8 +18,9 @@ public sealed record WorkspaceBundleExportRequestDto(
     IReadOnlyList<WorkspaceExportProcessorSelectionDto> ProcessorSelections,
     IReadOnlyList<WorkspaceResourceProcessorExecutionResultDto> ProcessorResults,
     string OperationId,
-    WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.FastLz4,
-    WorkspaceBundleExportOutputConflictPolicyDto OutputConflictPolicy = WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting);
+    WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.PreserveOriginal,
+    WorkspaceBundleExportOutputConflictPolicyDto OutputConflictPolicy = WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting,
+    string? OriginalCompression = null);
 
 public sealed record WorkspaceBundleExportResultDto(
     BundleId BundleId,
@@ -34,7 +35,7 @@ public sealed record WorkspaceBundleExportResultDto(
     string? WrittenFileMd5 = null,
     string? WrittenFileSha256 = null,
     IReadOnlyList<WorkspaceBundleProcessorExecutionSummaryDto>? ProcessorResults = null,
-    WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.FastLz4,
+    WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.PreserveOriginal,
     string? OriginalCompression = null,
     string? WrittenCompression = null);
 

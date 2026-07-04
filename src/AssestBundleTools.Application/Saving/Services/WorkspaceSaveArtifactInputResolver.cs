@@ -76,7 +76,10 @@ internal sealed class WorkspaceSaveArtifactInputResolver
                 indexEntry.DecryptorVersion,
                 accessedAtUtc);
 
-            resolvedInputs[bundleId.Value] = ToSaveArtifactInput(indexEntry.BundleCacheKey, artifactResolution);
+            resolvedInputs[bundleId.Value] = ToSaveArtifactInput(
+                indexEntry.BundleCacheKey,
+                indexEntry.OriginalCompression,
+                artifactResolution);
         }
 
         return resolvedInputs;
@@ -95,6 +98,7 @@ internal sealed class WorkspaceSaveArtifactInputResolver
 
     private static WorkspaceSaveBundleArtifactInput ToSaveArtifactInput(
         string bundleCacheKey,
+        string? originalCompression,
         WorkspaceBundleArtifactExistingInputResolutionDto artifactResolution)
     {
         if (artifactResolution.Input is not null)
@@ -104,7 +108,8 @@ internal sealed class WorkspaceSaveArtifactInputResolver
                 HasStandardizedArtifact: true,
                 ArtifactBundlePath: artifactResolution.Input.ResolvedBundlePath,
                 BundleSessionCacheKey: artifactResolution.Input.BundleSessionCacheKey,
-                ArtifactDiagnosticCode: null);
+                ArtifactDiagnosticCode: null,
+                OriginalCompression: originalCompression);
         }
 
         return WorkspaceSaveBundleArtifactInput.Unresolved(
@@ -124,7 +129,8 @@ internal sealed record WorkspaceSaveBundleArtifactInput(
     bool HasStandardizedArtifact,
     string? ArtifactBundlePath,
     string? BundleSessionCacheKey,
-    string? ArtifactDiagnosticCode)
+    string? ArtifactDiagnosticCode,
+    string? OriginalCompression = null)
 {
     public static WorkspaceSaveBundleArtifactInput Unresolved(
         string? bundleCacheKey,
@@ -134,5 +140,6 @@ internal sealed record WorkspaceSaveBundleArtifactInput(
             HasStandardizedArtifact: false,
             ArtifactBundlePath: null,
             BundleSessionCacheKey: null,
-            ArtifactDiagnosticCode: diagnosticCode);
+            ArtifactDiagnosticCode: diagnosticCode,
+            OriginalCompression: null);
 }

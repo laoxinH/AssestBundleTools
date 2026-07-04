@@ -596,8 +596,13 @@ public static class ResourceKeys
     public const string WorkspaceExportDialogCompressionFastLz4Description = "WorkspaceExportDialog.Compression.FastLz4Description";
     public const string WorkspaceExportDialogCompressionPreserveOriginal = "WorkspaceExportDialog.Compression.PreserveOriginal";
     public const string WorkspaceExportDialogCompressionPreserveOriginalDescription = "WorkspaceExportDialog.Compression.PreserveOriginalDescription";
+    public const string WorkspaceExportDialogCompressionLz4 = "WorkspaceExportDialog.Compression.Lz4";
+    public const string WorkspaceExportDialogCompressionLz4Description = "WorkspaceExportDialog.Compression.Lz4Description";
+    public const string WorkspaceExportDialogCompressionLzma = "WorkspaceExportDialog.Compression.Lzma";
+    public const string WorkspaceExportDialogCompressionLzmaDescription = "WorkspaceExportDialog.Compression.LzmaDescription";
     public const string WorkspaceExportDialogCompressionUncompressed = "WorkspaceExportDialog.Compression.Uncompressed";
     public const string WorkspaceExportDialogCompressionUncompressedDescription = "WorkspaceExportDialog.Compression.UncompressedDescription";
+    public const string WorkspaceExportDialogCompressionUnknown = "WorkspaceExportDialog.Compression.Unknown";
     public const string WorkspaceExportDialogResourceProcessorTexture2D = "WorkspaceExportDialog.ResourceProcessor.Texture2D";
     public const string WorkspaceExportDialogResourceProcessorTexture2DDescription = "WorkspaceExportDialog.ResourceProcessor.Texture2DDescription";
     public const string WorkspaceExportDialogResourceProcessorAudio = "WorkspaceExportDialog.ResourceProcessor.Audio";

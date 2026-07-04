@@ -25,6 +25,6 @@ public sealed record WorkspaceSaveBundleExecutionResultDto(
     string? DiagnosticCode = null,
     string? DiagnosticDetail = null,
     IReadOnlyList<WorkspaceBundleProcessorExecutionSummaryDto>? ProcessorResults = null,
-    WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.FastLz4,
+    WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.PreserveOriginal,
     string? OriginalCompression = null,
     string? WrittenCompression = null);

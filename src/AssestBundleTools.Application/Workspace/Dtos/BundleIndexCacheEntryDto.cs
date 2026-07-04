@@ -22,4 +22,5 @@ public sealed record BundleIndexCacheEntryDto(
     IReadOnlyList<BundleIndexAssetCacheEntryDto> Assets,
     string? DecryptorId = null,
     string? DecryptorVersion = null,
-    IReadOnlyList<string>? SerializedFileNames = null);
+    IReadOnlyList<string>? SerializedFileNames = null,
+    string? OriginalCompression = null);

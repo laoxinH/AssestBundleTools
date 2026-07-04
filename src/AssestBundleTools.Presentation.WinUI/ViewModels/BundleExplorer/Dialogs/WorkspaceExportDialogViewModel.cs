@@ -51,7 +51,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         CompressionOptions = new ObservableCollection<WorkspaceExportCompressionOptionViewModel>(
             _optionFactory.CreateCompressionOptions());
         _selectedCompressionOption = CompressionOptions.FirstOrDefault(static option =>
-            option.Mode == WorkspaceBundleExportCompressionModeDto.FastLz4);
+            option.Mode == WorkspaceBundleExportCompressionModeDto.PreserveOriginal);
         _selectedBundleSortOption = BundleSortOptions.FirstOrDefault();
         foreach (var bundle in Bundles)
         {
@@ -237,7 +237,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
             ExportToWorkspaceDirectory,
             selectedBundleIds,
             processorSelections,
-            SelectedCompressionOption?.Mode ?? WorkspaceBundleExportCompressionModeDto.FastLz4,
+            SelectedCompressionOption?.Mode ?? WorkspaceBundleExportCompressionModeDto.PreserveOriginal,
             OverwriteExistingFiles
                 ? WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting
                 : WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists);

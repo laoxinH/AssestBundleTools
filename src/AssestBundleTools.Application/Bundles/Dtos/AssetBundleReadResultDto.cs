@@ -9,4 +9,5 @@ public sealed record AssetBundleReadResultDto(
     string ParserVersion,
     IReadOnlyList<string> Dependencies,
     IReadOnlyList<AssetBundleReadAssetDto> Assets,
-    IReadOnlyList<string>? SerializedFileNames = null);
+    IReadOnlyList<string>? SerializedFileNames = null,
+    string? OriginalCompression = null);

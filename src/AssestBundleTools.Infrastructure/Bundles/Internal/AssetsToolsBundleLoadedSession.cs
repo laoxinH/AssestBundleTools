@@ -33,6 +33,8 @@ internal sealed class AssetsToolsBundleLoadedSession : IDisposable
 
     public SemaphoreSlim ExecutionGate { get; } = new(1, 1);
 
+    public string OriginalCompression => BundleInstance.originalCompression.ToString();
+
     public static AssetsToolsBundleLoadedSession Load(string bundlePath)
     {
         var assetsManager = new AssetsManager

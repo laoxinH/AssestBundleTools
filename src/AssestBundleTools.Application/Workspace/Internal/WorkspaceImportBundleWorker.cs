@@ -277,7 +277,8 @@ internal sealed class WorkspaceImportBundleWorker
                 .ToArray(),
             DecryptorId: artifactResolution.Decryptor.Id,
             DecryptorVersion: artifactResolution.Decryptor.Version,
-            SerializedFileNames: readResult.SerializedFileNames);
+            SerializedFileNames: readResult.SerializedFileNames,
+            OriginalCompression: readResult.OriginalCompression);
     }
 
     private static string ResolveImportedBundleDisplayName(

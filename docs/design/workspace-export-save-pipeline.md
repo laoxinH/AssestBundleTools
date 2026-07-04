@@ -22,7 +22,7 @@
 - Application 已通过 `IWorkspaceBundleExporter` / `IWorkspaceBundleExportManifestStore` 编排第一阶段真实导出：按选中 bundle 有界并发写出，汇总 `Succeeded / PartiallySucceeded / Failed` 结果，并在有成功输出时写出 `_abt-bundle-export-manifest.json`。
 - Application 已定义 `IWorkspaceResourceProcessorExecutor` 和处理器执行 DTO；保存执行会校验资源处理器选择、构建文件替换载荷的资源处理 work item、按有界并发执行、稳定排序结果，并在处理器失败时阻断所属 bundle 写包。
 - Infrastructure 已接入外部 CLI 资源处理器执行：按 catalog 中的 `executablePath / processArguments / timeoutMs` 启动进程，展开占位符，解析 result JSON，校验输出路径范围，捕获诊断并支持取消时终止进程。
-- Infrastructure 已把单 bundle writer 从 artifact 文件级复制推进到首版对象级 AssetsTools 写包：从标准化 artifact 独立加载 AB，按 `serializedFileName + pathId` 定位对象，消费文件替换、同 bundle 工作区内替换、Sprite 几何编辑和资源处理器输出载荷，先写入带 replacer 的未压缩 bundle，再按导出压缩策略重新打包、提升输出文件并以单次读取记录 MD5 / SHA-256。导出窗口默认使用 `FastLz4` 降低 LZMA 源包重压缩耗时，并保留“保持原压缩”和“不压缩”选项。
+- Infrastructure 已把单 bundle writer 从 artifact 文件级复制推进到首版对象级 AssetsTools 写包：从标准化 artifact 独立加载 AB，按 `serializedFileName + pathId` 定位对象，消费文件替换、同 bundle 工作区内替换、Sprite 几何编辑和资源处理器输出载荷，先写入带 replacer 的未压缩 bundle，再按导出压缩策略重新打包、提升输出文件并以单次读取记录 MD5 / SHA-256。导出窗口默认使用“保持原压缩”，原始压缩格式来自导入 / 预览重载共用的 loadAB Reader 链路并写入 bundle index 缓存；用户也可以显式选择 `LZMA / LZ4 / LZ4Fast / Uncompressed`。
 - AB 导出 manifest 已记录每个 bundle 的资源处理器结果摘要，包括资源类型、处理器 id、状态、输入 / 成功 / 失败计数、result JSON 路径和诊断。
 
 尚未实现：
@@ -123,7 +123,7 @@ SaveWorkspaceAsNewBundleCommand / ExecuteWorkspaceExportCommand
   outputDirectory
   selectedBundleIds[]
   processorSelections[]
-  compressionMode        # FastLz4 / PreserveOriginal / Uncompressed
+  compressionMode        # PreserveOriginal / Lzma / Lz4 / FastLz4 / Uncompressed
   progress
   bundleWriteConcurrency?
   outputConflictPolicy   # ReplaceExisting / FailIfExists
@@ -344,7 +344,14 @@ IWorkspaceBundleExporter
   ExportAsync(WorkspaceBundleExportRequest request, CancellationToken cancellationToken)
 ```
 
-Infrastructure 的当前实现已经在同一端口内消费标准化 artifact、有效变更载荷和处理器输出。写包器按 `WorkspaceBundleAssetWriteItemDto` 中的对象身份查找 serialized file 与 path id，调用 AssetsTools replacer 修改对象；未压缩目标直接 `Write`，压缩目标先 `Write` 出带 replacer 的未压缩临时 bundle，再读回并按请求压缩格式 `Pack` 到最终临时文件。真实样本验证显示，直接对原始压缩 `AssetBundleFile` 执行 `Pack` 不会消费 replacer，导出内容会保持旧对象数据；因此当前未压缩中间文件是保证对象级替换真实生效的写包物化步骤。该临时文件写入系统临时目录，不暴露在用户选择的导出目录；默认请求压缩格式为 `LZ4Fast`，可选择保持源包原压缩或输出未压缩 AB。`Texture2D` 写入会先尝试按原纹理格式编码；若原格式编码器不支持，则回退到 `RGBA32`，保持“能导出真实替换内容”优先。Application 只消费结构化结果。
+Infrastructure 的当前实现已经在同一端口内消费标准化 artifact、有效变更载荷和处理器输出。写包器按 `WorkspaceBundleAssetWriteItemDto` 中的对象身份查找 serialized file 与 path id，调用 AssetsTools replacer 修改对象；未压缩目标直接 `Write`，压缩目标先 `Write` 出带 replacer 的未压缩临时 bundle，再读回并按请求压缩格式 `Pack` 到最终临时文件。真实样本验证显示，直接对原始压缩 `AssetBundleFile` 执行 `Pack` 不会消费 replacer，导出内容会保持旧对象数据；因此当前未压缩中间文件是保证对象级替换真实生效的写包物化步骤。该临时文件写入系统临时目录，不暴露在用户选择的导出目录；默认请求压缩格式为保持原压缩，用户可显式选择 `LZMA / LZ4 / LZ4Fast / Uncompressed`。`Texture2D` 写入会先尝试按原纹理格式编码；若原格式编码器不支持，则回退到 `RGBA32`，保持“能导出真实替换内容”优先。Application 只消费结构化结果。
+
+压缩策略约束：
+
+- 导出窗口默认选中 `PreserveOriginal`，避免用户没有明确选择时改变 AB 压缩格式。
+- `PreserveOriginal` 使用 bundle index 缓存中的 `originalCompression`，该字段由导入和预览重载共用的 AssetsTools loadAB 会话读取 `BundleFileInstance.originalCompression` 后写入；保存预览只从工作区缓存解析并透传，不在导出阶段重新读取原始源包。
+- 当旧工作区缓存缺少 `originalCompression` 时，Reader parser version 提升会触发索引重建；若仍遇到遗留 / 损坏缓存，Infrastructure writer 才允许以当前已加载 artifact 的压缩信息作为兼容回退，并继续在 manifest 中记录实际使用值。
+- 显式策略 `Lzma / Lz4 / FastLz4 / Uncompressed` 分别映射到 AssetsTools 的 `LZMA / LZ4 / LZ4Fast / None`，manifest 同时记录请求策略、原压缩和实际写出压缩。
 
 ### 8.2 写包并发
 
@@ -360,7 +367,7 @@ BundleWriterWorkerCount
 - 同一 bundle 的读取、变更应用和写包串行。
 - 不同 bundle 可以并行写包。
 - writer 运行进程应优先使用 `x64`；`x86` 进程会被 32 位地址空间限制放大大 bundle、Texture2D 编码和压缩重打包时的 `OutOfMemoryException` 风险，不能仅用系统剩余物理内存判断是否安全。
-- 压缩 bundle 的当前 AssetsTools 写包路径会产生完整未压缩临时文件，并在重打包前读回；这会让保持 LZMA 的单包导出耗时明显高于纯对象编码。默认 `FastLz4` 用更快的 LZ4Fast 重打包换取导出速度，manifest 会记录请求压缩策略、源压缩和实际写出压缩，后续仍可继续评估更低 IO 的物化方式。
+- 压缩 bundle 的当前 AssetsTools 写包路径会产生完整未压缩临时文件，并在重打包前读回；这会让保持 LZMA 的单包导出耗时明显高于纯对象编码。默认 `PreserveOriginal` 保证格式不被隐式改变；需要提速时用户可显式选择 `FastLz4` 用更快的 LZ4Fast 重打包换取导出速度，manifest 会记录请求压缩策略、源压缩和实际写出压缩，后续仍可继续评估更低 IO 的物化方式。
 - 写包阶段可以复用标准化 artifact identity 和 loaded-session single-flight，但 writer 必须持有独占写入上下文，不得共享可变对象。
 - 输出提升以单 bundle 为原子边界：临时文件完整写出并验证后，才移动或替换最终路径。
 - 如果某个 bundle 失败，不影响已经成功输出的其他 bundle；最终结果为 `Partial`。
@@ -483,9 +490,9 @@ Writer 诊断 detail 应包含失败阶段，例如 `load-bundle / apply-changes
       "outputRelativePath": "characters.ab",
       "outputPath": "D:/Exports/Game/characters.ab",
       "status": "succeeded",
-      "compressionMode": "FastLz4",
+      "compressionMode": "PreserveOriginal",
       "originalCompression": "LZMA",
-      "writtenCompression": "LZ4Fast",
+      "writtenCompression": "LZMA",
       "checkpointId": "checkpoint-id",
       "changeCounts": {
         "total": 3,

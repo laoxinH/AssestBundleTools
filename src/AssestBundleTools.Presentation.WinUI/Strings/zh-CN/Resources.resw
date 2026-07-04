@@ -4204,13 +4204,28 @@
     <value>保持原压缩</value>
   </data>
   <data name="WorkspaceExportDialog.Compression.PreserveOriginalDescription" xml:space="preserve">
-    <value>沿用源 AB 压缩格式，LZMA 包导出会更慢。</value>
+    <value>沿用导入时记录的源 AB 压缩格式，避免意外改变输出包格式。</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.Lz4" xml:space="preserve">
+    <value>LZ4</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.Lz4Description" xml:space="preserve">
+    <value>写出标准 LZ4 压缩 AB，兼顾读取速度与文件体积。</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.Lzma" xml:space="preserve">
+    <value>LZMA</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.LzmaDescription" xml:space="preserve">
+    <value>写出 LZMA 压缩 AB，文件更小但导出耗时更长。</value>
   </data>
   <data name="WorkspaceExportDialog.Compression.Uncompressed" xml:space="preserve">
     <value>不压缩</value>
   </data>
   <data name="WorkspaceExportDialog.Compression.UncompressedDescription" xml:space="preserve">
     <value>写出未压缩 AB，速度快但文件体积最大。</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.Unknown" xml:space="preserve">
+    <value>未知</value>
   </data>
   <data name="WorkspaceExportDialog.ResourceProcessor.Texture2D" xml:space="preserve">
     <value>Texture2D</value>
@@ -4276,7 +4291,7 @@
     <value>已选择 {0} 个资源包，{1} 项变更，应用修改 {2} 项，替换 {3} 项，提取记录 {4} 项。</value>
   </data>
   <data name="WorkspaceExportDialog.BundleSummary.Format" xml:space="preserve">
-    <value>变更 {0}，修改 {1}，提取 {2}，工作区替换 {3}，文件替换 {4}</value>
+    <value>变更 {0}，修改 {1}，原压缩 {2}，工作区替换 {3}，文件替换 {4}</value>
   </data>
   <data name="WorkspaceExportDialog.ExecutionDeferred" xml:space="preserve">
     <value>导出任务尚未开始。</value>

@@ -4204,13 +4204,28 @@
     <value>Preserve original</value>
   </data>
   <data name="WorkspaceExportDialog.Compression.PreserveOriginalDescription" xml:space="preserve">
-    <value>Keeps the source AB compression; LZMA bundles take longer to export.</value>
+    <value>Keeps the source AB compression recorded at import time to avoid changing the output format unexpectedly.</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.Lz4" xml:space="preserve">
+    <value>LZ4</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.Lz4Description" xml:space="preserve">
+    <value>Writes standard LZ4-compressed AB files, balancing load speed and size.</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.Lzma" xml:space="preserve">
+    <value>LZMA</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.LzmaDescription" xml:space="preserve">
+    <value>Writes LZMA-compressed AB files; smaller output but slower export.</value>
   </data>
   <data name="WorkspaceExportDialog.Compression.Uncompressed" xml:space="preserve">
     <value>Uncompressed</value>
   </data>
   <data name="WorkspaceExportDialog.Compression.UncompressedDescription" xml:space="preserve">
     <value>Writes uncompressed AB files; fastest but produces the largest output.</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.Unknown" xml:space="preserve">
+    <value>Unknown</value>
   </data>
   <data name="WorkspaceExportDialog.ResourceProcessor.Texture2D" xml:space="preserve">
     <value>Texture2D</value>
@@ -4276,7 +4291,7 @@
     <value>{0} bundles selected, {1} changes, {2} applied modifications, {3} replacements, {4} extraction records.</value>
   </data>
   <data name="WorkspaceExportDialog.BundleSummary.Format" xml:space="preserve">
-    <value>Changes {0}, modified {1}, extracted {2}, workspace replacement {3}, file replacement {4}</value>
+    <value>Changes {0}, modified {1}, original compression {2}, workspace replacement {3}, file replacement {4}</value>
   </data>
   <data name="WorkspaceExportDialog.ExecutionDeferred" xml:space="preserve">
     <value>The export task has not started.</value>

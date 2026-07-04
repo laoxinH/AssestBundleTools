@@ -77,10 +77,11 @@ internal static class WorkspaceSavePlanner
                     ModifiedAssetCount: items.Count(static item => item.IsModified),
                     ExtractedAssetCount: items.Count(static item => item.LastExtractedAtUtc.HasValue),
                     WorkspaceReplacementCount: items.Count(static item => !string.IsNullOrWhiteSpace(item.WorkspaceReplacementSourceAssetName)),
-                    FileReplacementCount: items.Count(static item => !string.IsNullOrWhiteSpace(item.FileReplacementSourceFileName)),
-                    ArtifactInput: artifactInput,
-                    OutputPreflight: outputPreflight,
-                    ChangeItems: items);
+                FileReplacementCount: items.Count(static item => !string.IsNullOrWhiteSpace(item.FileReplacementSourceFileName)),
+                ArtifactInput: artifactInput,
+                OutputPreflight: outputPreflight,
+                ChangeItems: items,
+                OriginalCompression: artifactInput.OriginalCompression);
             })
             .ToArray();
         var outputReadyBundleCount = bundlePlans.Count(static plan => plan.OutputPreflight.Readiness == WorkspaceSaveOutputReadiness.Ready);
@@ -201,7 +202,8 @@ internal sealed record PlannedWorkspaceBundleSave(
     int FileReplacementCount,
     WorkspaceSaveBundleArtifactInput ArtifactInput,
     WorkspaceSaveBundleOutputPreflight OutputPreflight,
-    IReadOnlyList<WorkspaceChangeItemDto> ChangeItems);
+    IReadOnlyList<WorkspaceChangeItemDto> ChangeItems,
+    string? OriginalCompression = null);
 
 internal sealed record WorkspaceSaveBundleOutputPreflight(
     WorkspaceSaveOutputReadiness Readiness,

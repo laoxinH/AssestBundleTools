@@ -257,7 +257,8 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
                         ProcessorResults: processorBatchResult.ResolveResults(selectedPlan.BundleId),
                         OperationId: operationId,
                         CompressionMode: command.CompressionMode,
-                        OutputConflictPolicy: command.OutputConflictPolicy),
+                        OutputConflictPolicy: command.OutputConflictPolicy,
+                        OriginalCompression: selectedPlan.OriginalCompression),
                     cancellationToken);
 
                 if (exportResult.IsCancelled)

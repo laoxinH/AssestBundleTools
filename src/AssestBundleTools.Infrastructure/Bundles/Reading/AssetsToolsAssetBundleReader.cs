@@ -18,9 +18,9 @@ namespace AssestBundleTools.Infrastructure.Bundles.Reading;
 /// </remarks>
 public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
 {
-    // 资源包索引当前新增外部资产级 PPtr 占位、工作区级 CAB 反查和 GameObject 组件聚合依赖，
+    // 资源包索引当前新增原始压缩格式，保存导出需要从缓存传递该值而不是在写包阶段重新推断，
     // 需要提升版本以触发旧索引缓存自动重建。
-    private const string ParserVersion = "assetstools.net/3.0.4-dependency-graph.7";
+    private const string ParserVersion = "assetstools.net/3.0.4-dependency-graph.8";
 
     private static readonly HashSet<AssetClassID> MetadataOnlyAssetClassIds =
     [
@@ -111,7 +111,8 @@ public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
                     ParserVersion: CacheParserVersion,
                     Dependencies: readGraph.BundleDependencies,
                     Assets: readGraph.Assets,
-                    SerializedFileNames: readGraph.SerializedFileNames);
+                    SerializedFileNames: readGraph.SerializedFileNames,
+                    OriginalCompression: session.OriginalCompression);
 
                 return Result<AssetBundleReadResultDto>.Success(result);
             }

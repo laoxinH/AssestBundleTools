@@ -162,6 +162,10 @@ internal static class InfrastructureTestSuite
             FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldPreserveOriginalCompression_WhenRequested);
         await RunTestAsync(
             failures,
+            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldWriteExplicitLz4Compression_WhenRequested),
+            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldWriteExplicitLz4Compression_WhenRequested);
+        await RunTestAsync(
+            failures,
             nameof(FileSystemWorkspaceBundleExportManifestStoreTests.SaveAsync_ShouldWriteReadableBundleExportManifest_WithHashesAndProcessors),
             FileSystemWorkspaceBundleExportManifestStoreTests.SaveAsync_ShouldWriteReadableBundleExportManifest_WithHashesAndProcessors);
         await RunTestAsync(

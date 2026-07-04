@@ -21,4 +21,5 @@ public sealed record WorkspaceSaveBundlePlanDto(
     string? ArtifactDiagnosticCode = null,
     WorkspaceSaveOutputReadiness OutputReadiness = WorkspaceSaveOutputReadiness.NotProbed,
     bool IsOutputWriteBlocked = false,
-    string? OutputDiagnosticCode = null);
+    string? OutputDiagnosticCode = null,
+    string? OriginalCompression = null);

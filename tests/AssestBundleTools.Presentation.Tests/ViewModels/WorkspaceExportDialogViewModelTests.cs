@@ -86,11 +86,13 @@ public sealed class WorkspaceExportDialogViewModelTests
         var submission = viewModel.CreateSubmission();
 
         Assert.True(submission.ExportToWorkspaceDirectory);
-        Assert.Equal(WorkspaceBundleExportCompressionModeDto.FastLz4, submission.CompressionMode);
+        Assert.Equal(WorkspaceBundleExportCompressionModeDto.PreserveOriginal, submission.CompressionMode);
         Assert.Equal(WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting, submission.OutputConflictPolicy);
         Assert.Equal("bundle-alpha", Assert.Single(submission.SelectedBundleIds).Value);
         Assert.Equal("resource.processor.texture.png", submission.ProcessorSelections.Single(selection => selection.ResourceKind == "texture2d").ProcessorId);
         Assert.Null(submission.ProcessorSelections.Single(selection => selection.ResourceKind == "audio").ProcessorId);
+        Assert.Contains("LZMA", viewModel.Bundles.Single(bundle => bundle.BundleId.Value == "bundle-alpha").SummaryText);
+        Assert.DoesNotContain("extracted", viewModel.Bundles.Single(bundle => bundle.BundleId.Value == "bundle-alpha").SummaryText, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -232,5 +234,6 @@ public sealed class WorkspaceExportDialogViewModelTests
             ModifiedAssetCount: 1,
             ExtractedAssetCount: 0,
             WorkspaceReplacementCount: 0,
-            FileReplacementCount: 1);
+            FileReplacementCount: 1,
+            OriginalCompression: "LZMA");
 }
