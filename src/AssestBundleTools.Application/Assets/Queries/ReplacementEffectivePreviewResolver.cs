@@ -1,5 +1,6 @@
 using System.Text;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Messages;
 using AssestBundleTools.Application.Common.Results;
@@ -16,7 +17,6 @@ namespace AssestBundleTools.Application.Assets.Queries;
 /// </summary>
 internal sealed class ReplacementEffectivePreviewResolver
 {
-    private const int MaxTextDisplayCharacters = 24000;
     private const string TextContentType = "text/plain; charset=utf-8";
 
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
@@ -179,9 +179,9 @@ internal sealed class ReplacementEffectivePreviewResolver
         var fullTextContent = usesBinaryPayload
             ? null
             : Encoding.UTF8.GetString(previewContent.Content);
-        var displayTextContent = fullTextContent is null
+        var textDisplay = fullTextContent is null
             ? null
-            : TrimTextDisplayContent(fullTextContent);
+            : AssetPreviewTextDisplayPolicy.CreateDisplay(fullTextContent);
 
         return new AssetPreviewDto(
             WorkspaceId: query.WorkspaceId,
@@ -190,7 +190,7 @@ internal sealed class ReplacementEffectivePreviewResolver
             Kind: previewContent.Kind,
             ContentType: previewContent.ContentType,
             BinaryContent: usesBinaryPayload ? previewContent.Content : null,
-            TextContent: displayTextContent,
+            TextContent: textDisplay?.TextContent,
             PreviewPayloadFilePath: previewPayloadFilePath,
             PreviewInfoItems: previewContent.PreviewInfoItems,
             PreviewMessage: previewContent.PreviewMessage,
@@ -203,16 +203,9 @@ internal sealed class ReplacementEffectivePreviewResolver
             ImageOverlay: previewContent.ImageOverlay,
             ImageFocus: previewContent.ImageFocus)
         {
+            TextDisplay = textDisplay?.Metadata,
             FullTextContent = fullTextContent
         };
-    }
-
-    private static string TrimTextDisplayContent(string textContent)
-    {
-        var normalizedText = textContent.Replace("\r\n", "\n").Replace('\r', '\n');
-        return normalizedText.Length <= MaxTextDisplayCharacters
-            ? normalizedText
-            : normalizedText[..MaxTextDisplayCharacters];
     }
 
     private static AssetPreviewDto BuildFallbackSummaryPreview(

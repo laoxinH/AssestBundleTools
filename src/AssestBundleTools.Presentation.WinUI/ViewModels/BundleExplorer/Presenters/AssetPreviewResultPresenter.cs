@@ -27,7 +27,7 @@ internal sealed class AssetPreviewResultPresenter
     private readonly GameObjectPreviewDisplayFormatter _gameObjectPreviewDisplayFormatter;
     private readonly MonoBehaviourPreviewDisplayFormatter _monoBehaviourPreviewDisplayFormatter;
     private readonly AnimatorControllerPreviewDisplayFormatter _animatorControllerPreviewDisplayFormatter;
-    private readonly PreviewDiagnosticDisplayTextResolver _previewDiagnosticDisplayTextResolver;
+    private readonly AssetPreviewBasicPresenter _basicPresenter;
 
     public AssetPreviewResultPresenter(
         MeshTextureOverlayPreviewLoader meshTextureOverlayPreviewLoader,
@@ -47,7 +47,7 @@ internal sealed class AssetPreviewResultPresenter
         _gameObjectPreviewDisplayFormatter = new GameObjectPreviewDisplayFormatter(_localizationService);
         _monoBehaviourPreviewDisplayFormatter = new MonoBehaviourPreviewDisplayFormatter(_localizationService);
         _animatorControllerPreviewDisplayFormatter = new AnimatorControllerPreviewDisplayFormatter(_localizationService);
-        _previewDiagnosticDisplayTextResolver = new PreviewDiagnosticDisplayTextResolver(_localizationService);
+        _basicPresenter = new AssetPreviewBasicPresenter(_localizationService, _assetPreviewDisplayFormatter);
     }
 
     public async Task<bool> TryApplyAsync(
@@ -81,7 +81,7 @@ internal sealed class AssetPreviewResultPresenter
             case AssetPreviewKind.Image:
                 return await TryApplyImagePreviewAsync(assetTab, details, previewRequest, preview, previewInfoRows);
             case AssetPreviewKind.Text:
-                ApplyTextPreview(assetTab.Inspector, preview, previewInfoRows);
+                _basicPresenter.ApplyTextPreview(assetTab.Inspector, preview, previewInfoRows);
                 return true;
             case AssetPreviewKind.Audio:
                 return await TryApplyAudioPreviewAsync(assetTab, details, previewRequest, preview, previewInfoRows);
@@ -121,7 +121,7 @@ internal sealed class AssetPreviewResultPresenter
                 ApplyAnimatorControllerPreview(assetTab.Inspector, details, preview, previewInfoRows);
                 return true;
             case AssetPreviewKind.Summary:
-                ApplySummaryPreview(assetTab.Inspector, preview, previewInfoRows);
+                _basicPresenter.ApplySummaryPreview(assetTab.Inspector, preview, previewInfoRows);
                 return true;
             default:
                 ApplyUnavailablePreview(assetTab.Inspector, preview.Diagnostic);
@@ -133,8 +133,7 @@ internal sealed class AssetPreviewResultPresenter
         InspectorPanelViewModel inspector,
         AssetPreviewDiagnosticDto diagnostic)
     {
-        inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
-        ApplyPreviewDiagnostic(inspector, diagnostic);
+        _basicPresenter.ApplyUnavailablePreview(inspector, diagnostic);
     }
 
     private async Task<bool> TryApplyImagePreviewAsync(
@@ -172,26 +171,8 @@ internal sealed class AssetPreviewResultPresenter
             assetTab.TryApplySpriteEditModeRequest();
         }
 
-        ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
+        _basicPresenter.ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
         return true;
-    }
-
-    private void ApplyTextPreview(
-        InspectorPanelViewModel inspector,
-        AssetPreviewDto preview,
-        IReadOnlyList<InspectorInfoRowViewModel> previewInfoRows)
-    {
-        if (string.IsNullOrWhiteSpace(preview.TextContent))
-        {
-            ApplyUnavailablePreview(inspector, preview.Diagnostic);
-            return;
-        }
-
-        inspector.ApplyTextPreview(
-            preview.TextContent,
-            previewInfoRows,
-            preview.PreviewPayloadFilePath);
-        ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
     }
 
     private async Task<bool> TryApplyAudioPreviewAsync(
@@ -223,7 +204,7 @@ internal sealed class AssetPreviewResultPresenter
                 preview.PreviewInfoItems,
                 preview.PreferredDisplaySizeInBytes),
             preview.PreviewPayloadFilePath);
-        ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
+        _basicPresenter.ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
         return true;
     }
 
@@ -260,7 +241,7 @@ internal sealed class AssetPreviewResultPresenter
             _assetPreviewDisplayFormatter.BuildMeshPreviewDisplayState(preview, details),
             preview.PreviewPayloadFilePath,
             textureOverlayContent);
-        ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
+        _basicPresenter.ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
         return true;
     }
 
@@ -299,7 +280,7 @@ internal sealed class AssetPreviewResultPresenter
             _materialPreviewDisplayFormatter.BuildDisplayState(preview.Material, details, textureThumbnailSources),
             preview.PreviewPayloadFilePath,
             textureThumbnailSources);
-        ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
+        _basicPresenter.ApplyPreviewDiagnostic(assetTab.Inspector, preview.Diagnostic);
         return true;
     }
 
@@ -372,7 +353,7 @@ internal sealed class AssetPreviewResultPresenter
             previewInfoRows,
             _animationClipPreviewDisplayFormatter.BuildDisplayState(preview.AnimationClip, details.Name),
             preview.PreviewPayloadFilePath);
-        ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
+        _basicPresenter.ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
     }
 
     private void ApplyFontPreview(
@@ -392,7 +373,7 @@ internal sealed class AssetPreviewResultPresenter
             previewInfoRows,
             _fontPreviewDisplayFormatter.BuildDisplayState(preview.Font, details.Name),
             preview.PreviewPayloadFilePath);
-        ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
+        _basicPresenter.ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
     }
 
     private void ApplyGameObjectPreview(
@@ -412,7 +393,7 @@ internal sealed class AssetPreviewResultPresenter
             previewInfoRows,
             _gameObjectPreviewDisplayFormatter.BuildDisplayState(preview.GameObject, details),
             preview.PreviewPayloadFilePath);
-        ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
+        _basicPresenter.ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
     }
 
     private void ApplyMonoBehaviourPreview(
@@ -432,7 +413,7 @@ internal sealed class AssetPreviewResultPresenter
             previewInfoRows,
             _monoBehaviourPreviewDisplayFormatter.BuildDisplayState(preview.MonoBehaviour, details),
             preview.PreviewPayloadFilePath);
-        ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
+        _basicPresenter.ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
     }
 
     private void ApplyAnimatorControllerPreview(
@@ -452,41 +433,7 @@ internal sealed class AssetPreviewResultPresenter
             previewInfoRows,
             _animatorControllerPreviewDisplayFormatter.BuildDisplayState(preview.AnimatorController, details),
             preview.PreviewPayloadFilePath);
-        ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
-    }
-
-    private void ApplySummaryPreview(
-        InspectorPanelViewModel inspector,
-        AssetPreviewDto preview,
-        IReadOnlyList<InspectorInfoRowViewModel> previewInfoRows)
-    {
-        var summaryText = !string.IsNullOrWhiteSpace(preview.TextContent)
-            ? preview.TextContent
-            : _assetPreviewDisplayFormatter.BuildPreviewMessageText(preview.PreviewMessage);
-
-        if (string.IsNullOrWhiteSpace(summaryText))
-        {
-            ApplyUnavailablePreview(inspector, preview.Diagnostic);
-            return;
-        }
-
-        inspector.ApplySummaryPreview(
-            summaryText,
-            previewInfoRows,
-            preview.PreviewPayloadFilePath);
-        ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
-    }
-
-    private void ApplyPreviewDiagnostic(
-        InspectorPanelViewModel inspector,
-        AssetPreviewDiagnosticDto diagnostic)
-    {
-        inspector.ApplyPreviewDiagnostic(
-            cacheStatusText: _previewDiagnosticDisplayTextResolver.GetCacheStatusText(diagnostic.CacheStatus),
-            fallbackReasonText: _previewDiagnosticDisplayTextResolver.GetFallbackReasonText(diagnostic.FallbackReason),
-            diagnosticDetailText: LocalizedMessageDisplayFormatter.Format(
-                diagnostic.DetailMessage,
-                _localizationService));
+        _basicPresenter.ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
     }
 
     private async Task<SpriteFocusPreviewDisplayState?> CreateSpriteFocusPreviewDisplayStateAsync(AssetPreviewDto preview)

@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Common.Messages;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Workspace.Dtos;
@@ -454,6 +455,68 @@ public sealed class BundleExplorerAssetPreviewCoordinatorTests
         await WaitUntilAsync(() => secondTab.Inspector.Preview.PreviewText == "summary");
 
         await Task.WhenAll(firstLoad, secondLoad);
+    }
+
+    [Fact]
+    public async Task LoadInspectorPreviewAsync_ShouldApplyBoundedTextDisplay_WhenPreviewTextExceedsBudget()
+    {
+        var workspaceId = WorkspaceId.New();
+        var bundleId = new BundleId("bundle-ui");
+        var assetId = new AssetId("asset-text");
+        var localizationService = new TestLocalizationService();
+        var appLogService = new TestAppLogService();
+        var workspaceContextService = new TestWorkspaceContextService();
+        var workspaceRequest = PresentationTestDataFactory.CreateNavigationRequest("PreviewLongText");
+        var workspaceSummary = CreateWorkspaceSummary(workspaceId, workspaceRequest);
+        workspaceContextService.RegisterOrActivateWorkspace(
+            workspaceSummary,
+            workspaceRequest.WorkspaceDataRootPath,
+            workspaceRequest.AssetBundleDecryptorId);
+        var workspaceShell = new BundleExplorerWorkspaceShellViewModel(
+            localizationService,
+            workspaceContextService,
+            new TestAssetBundleDecryptorRegistry());
+        workspaceShell.ApplyWorkspace(workspaceSummary, workspaceRequest);
+        var longText = new string('x', AssetPreviewTextDisplayPolicy.MaxDisplayCharacters + 128);
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            GetAssetPreviewHandler = query =>
+                Task.FromResult(Result<AssetPreviewDto>.Success(new AssetPreviewDto(
+                    WorkspaceId: query.WorkspaceId,
+                    BundleId: query.BundleId,
+                    AssetId: query.AssetId,
+                    Kind: AssetPreviewKind.Text,
+                    ContentType: "text/plain",
+                    TextContent: longText,
+                    BinaryContent: null,
+                    PreviewPayloadFilePath: null,
+                    PreviewInfoItems: Array.Empty<AssetPreviewInfoItemDto>(),
+                    PreviewMessage: null,
+                    PreferredDisplaySizeInBytes: null,
+                    IsFromCache: false,
+                    GeneratedAtUtc: DateTimeOffset.UtcNow,
+                    Diagnostic: new AssetPreviewDiagnosticDto(
+                        AssetPreviewCacheStatusKind.Missing,
+                        AssetPreviewFallbackReasonKind.None))))
+        };
+        var coordinator = new BundleExplorerAssetPreviewCoordinator(
+            inspectionGateway,
+            workspaceContextService,
+            workspaceShell,
+            appLogService,
+            localizationService,
+            new TestBackgroundTaskRunner());
+        var assetTab = CreateAssetTab(bundleId, assetId, localizationService);
+        var details = CreateAssetDetails(workspaceId, bundleId, assetId);
+        assetTab.ApplyDetails(details);
+
+        await coordinator.LoadInspectorPreviewAsync(
+            assetTab,
+            details,
+            static _ => "failed");
+
+        Assert.Equal(AssetPreviewTextDisplayPolicy.MaxDisplayCharacters, assetTab.Inspector.Preview.PreviewText.Length);
+        Assert.Equal(longText[..AssetPreviewTextDisplayPolicy.MaxDisplayCharacters], assetTab.Inspector.Preview.PreviewText);
     }
 
 }

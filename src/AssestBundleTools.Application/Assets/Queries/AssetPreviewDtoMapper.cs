@@ -1,14 +1,13 @@
 using System.Text;
 using System.Text.Json;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
 
 namespace AssestBundleTools.Application.Assets.Queries;
 
 internal static class AssetPreviewDtoMapper
 {
-    private const int MaxTextDisplayCharacters = 24000;
-
     private static readonly JsonSerializerOptions SidecarJsonSerializerOptions = new(JsonSerializerDefaults.Web);
 
     public static AssetPreviewDto MapPreviewDto(
@@ -235,7 +234,7 @@ internal static class AssetPreviewDtoMapper
         AssetPreviewDiagnosticDto diagnostic)
     {
         var fullTextContent = Encoding.UTF8.GetString(content);
-        var displayTextContent = TrimTextDisplayContent(fullTextContent);
+        var textDisplay = AssetPreviewTextDisplayPolicy.CreateDisplay(fullTextContent);
         return new AssetPreviewDto(
             WorkspaceId: query.WorkspaceId,
             BundleId: query.BundleId,
@@ -243,7 +242,7 @@ internal static class AssetPreviewDtoMapper
             Kind: previewKind,
             ContentType: descriptor.ContentType,
             BinaryContent: null,
-            TextContent: displayTextContent,
+            TextContent: textDisplay.TextContent,
             PreviewPayloadFilePath: previewPayloadFilePath,
             PreviewInfoItems: descriptor.PreviewInfoItems,
             PreviewMessage: descriptor.PreviewMessage,
@@ -254,6 +253,7 @@ internal static class AssetPreviewDtoMapper
             ImageOverlay: descriptor.ImageOverlay,
             ImageFocus: HydrateImageFocus(descriptor.ImageFocus, imageFocusContent))
         {
+            TextDisplay = textDisplay.Metadata,
             FullTextContent = fullTextContent
         };
     }
@@ -295,11 +295,4 @@ internal static class AssetPreviewDtoMapper
         return previewKind is AssetPreviewKind.Image or AssetPreviewKind.Audio or AssetPreviewKind.Binary;
     }
 
-    private static string TrimTextDisplayContent(string textContent)
-    {
-        var normalizedText = textContent.Replace("\r\n", "\n").Replace('\r', '\n');
-        return normalizedText.Length <= MaxTextDisplayCharacters
-            ? normalizedText
-            : normalizedText[..MaxTextDisplayCharacters];
-    }
 }
