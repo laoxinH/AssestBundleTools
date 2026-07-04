@@ -83,4 +83,50 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
         TestAssert.False(result.IsHandled, "Null skeleton data from the V42 parser should be treated as unhandled.");
         TestAssert.False(result.IsCancelled, "Null skeleton data from the V42 parser should not be treated as cancellation.");
     }
+
+    public static async Task TryBuildPreviewAsync_ShouldRejectOversizedJsonAtlasBeforeRuntimeParse()
+    {
+        var service = new SpineAnimationRuntimePreviewService();
+        var oversizedJsonAtlas = "{" + new string('a', 1_050_000) + "}";
+
+        var result = await service.TryBuildPreviewAsync(new SpineAnimationRuntimePreviewRequestDto(
+            GroupKey: "assets/hero/hero",
+            SkeletonAsset: CreateSkeletonPart("Hero.json"),
+            SkeletonJson: """
+                {
+                  "skeleton": { "spine": "4.2.74" },
+                  "bones": [{ "name": "root" }],
+                  "slots": [
+                    { "name": "body-slot", "bone": "root", "attachment": "body" }
+                  ],
+                  "skins": [
+                    {
+                      "name": "default",
+                      "attachments": {
+                        "body-slot": {
+                          "body": {
+                            "type": "region",
+                            "path": "body",
+                            "width": 32,
+                            "height": 32
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "animations": { "idle": {} }
+                }
+                """,
+            Runtime: new SpineAnimationRuntimeDto(
+                SpineVersion: "4.2.74",
+                Major: 4,
+                Minor: 2,
+                AdapterKey: "V42",
+                SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable),
+            AtlasPages: Array.Empty<SpineAtlasPageDto>(),
+            AtlasTexts: [oversizedJsonAtlas]));
+
+        TestAssert.False(result.IsHandled, "Oversized JSON atlas input should be rejected before entering the official runtime parser.");
+        TestAssert.False(result.IsCancelled, "Rejected oversized atlas input should not be treated as cancellation.");
+    }
 }

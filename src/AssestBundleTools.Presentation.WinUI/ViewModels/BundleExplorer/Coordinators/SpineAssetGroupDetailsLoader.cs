@@ -16,11 +16,14 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordin
 /// </summary>
 internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoader
 {
+    private static readonly TimeSpan DefaultDetailsQueryTimeout = TimeSpan.FromSeconds(45);
+
     private readonly IWorkspaceAssetInspectionGateway _workspaceAssetInspectionGateway;
     private readonly IWorkspaceContextService _workspaceContextService;
     private readonly IBundleExplorerWorkspaceShellHost _workspaceShell;
     private readonly IBackgroundWorkScheduler _backgroundWorkScheduler;
     private readonly ILocalizationService? _localizationService;
+    private readonly TimeSpan _detailsQueryTimeout;
 
     public SpineAssetGroupDetailsLoader(
         IWorkspaceAssetInspectionGateway workspaceAssetInspectionGateway,
@@ -28,7 +31,8 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
         IBundleExplorerWorkspaceShellHost workspaceShell,
         IBackgroundTaskRunner backgroundTaskRunner,
         IBackgroundWorkScheduler? backgroundWorkScheduler = null,
-        ILocalizationService? localizationService = null)
+        ILocalizationService? localizationService = null,
+        TimeSpan? detailsQueryTimeout = null)
     {
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
@@ -38,6 +42,7 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
             backgroundTaskRunner,
             NullAppBackgroundTaskStatusService.Instance);
         _localizationService = localizationService;
+        _detailsQueryTimeout = NormalizeDetailsQueryTimeout(detailsQueryTimeout);
     }
 
     public async Task<SpineAssetGroupDetailsLoadResult?> LoadAsync(
@@ -65,7 +70,9 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
                     BundleCacheKey = query.BundleId.Value,
                     ResourceKey = query.GroupId,
                     StatusTitle = CreatePreviewStatusTitle(groupTab.DisplayName),
-                    ShowInStatusBar = _localizationService is not null
+                    ShowInStatusBar = _localizationService is not null,
+                    Timeout = _detailsQueryTimeout,
+                    ReleaseProfileGateOnCallerCancellation = true
                 },
                 cancellationToken);
             if (!result.IsSuccess || result.Value is null)
@@ -130,7 +137,9 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
                     BundleCacheKey = diagnosticsQuery.BundleId.Value,
                     ResourceKey = diagnosticsQuery.GroupId,
                     StatusTitle = CreatePreviewStatusTitle(previewDetails.Group.DisplayName),
-                    ShowInStatusBar = _localizationService is not null
+                    ShowInStatusBar = _localizationService is not null,
+                    Timeout = _detailsQueryTimeout,
+                    ReleaseProfileGateOnCallerCancellation = true
                 },
                 cancellationToken);
             return result.IsSuccess ? result.Value : null;
@@ -288,7 +297,9 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
                 BundleCacheKey = previewQuery.BundleId.Value,
                 ResourceKey = previewQuery.AssetId.Value,
                 StatusTitle = CreatePreviewStatusTitle(ResolveTexturePreviewDisplayName(atlasPage)),
-                ShowInStatusBar = _localizationService is not null
+                ShowInStatusBar = _localizationService is not null,
+                Timeout = _detailsQueryTimeout,
+                ReleaseProfileGateOnCallerCancellation = true
             },
             cancellationToken);
         if (!previewResult.IsSuccess ||
@@ -422,4 +433,9 @@ internal sealed class SpineAssetGroupDetailsLoader : ISpineAssetGroupDetailsLoad
                 SpineAssetGroupDiagnosticKind.SkeletonJsonParseFailed or
                 SpineAssetGroupDiagnosticKind.AtlasPreviewUnavailable or
                 SpineAssetGroupDiagnosticKind.AtlasParseFailed);
+
+    private static TimeSpan NormalizeDetailsQueryTimeout(TimeSpan? detailsQueryTimeout) =>
+        detailsQueryTimeout is { } timeout && timeout > TimeSpan.Zero
+            ? timeout
+            : DefaultDetailsQueryTimeout;
 }

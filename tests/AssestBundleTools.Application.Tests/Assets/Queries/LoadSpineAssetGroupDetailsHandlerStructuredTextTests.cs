@@ -82,4 +82,65 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
         var region = TestAssert.Single(page.Regions);
         TestAssert.Equal("head", region.Name, "Regions should come from the full atlas text.");
     }
+
+    public static async Task HandleAsync_ShouldRejectLargeJsonAtlasText_WithoutRuntimePreview()
+    {
+        var workspaceId = new WorkspaceId("workspace-a");
+        var spineBundleId = new BundleId("bundle.spine");
+        var skeletonAssetId = new AssetId("skeleton-hero");
+        var atlasAssetId = new AssetId("atlas-hero");
+        var spineAssets = CreateAssetList(
+            workspaceId,
+            spineBundleId,
+            "spine.ab",
+            CreateItem(spineBundleId, skeletonAssetId.Value, "Assets/Hero/Hero.json", AssetType.TextAsset),
+            CreateItem(spineBundleId, atlasAssetId.Value, "Assets/Hero/Hero.atlas", AssetType.TextAsset),
+            CreateItem(spineBundleId, "texture-hero", "Assets/Hero/hero.png", AssetType.Texture2D));
+        var oversizedJson = "{" + new string('a', 1_050_000) + "}";
+        var skeletonJson = """
+            {
+              "skeleton": { "spine": "4.2.74" },
+              "bones": [{ "name": "root" }],
+              "slots": [{ "name": "slot", "bone": "root", "attachment": "body" }],
+              "skins": { "default": { "slot": { "body": { "type": "region", "path": "body" } } } },
+              "animations": { "idle": {} }
+            }
+            """;
+        var previewHandler = new TestAssetPreviewHandler(query =>
+        {
+            if (query.AssetId.Equals(skeletonAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(query, skeletonJson));
+            }
+
+            if (query.AssetId.Equals(atlasAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(
+                    query,
+                    oversizedJson[..24000],
+                    oversizedJson));
+            }
+
+            return Result<AssetPreviewDto>.Success(CreateImagePreview(query, 512, 256));
+        });
+        var runtimePreviewService = new TestSpineAnimationRuntimePreviewService(_ =>
+            throw new InvalidOperationException("Invalid atlas text should not reach the runtime preview adapter."));
+        var handler = new LoadSpineAssetGroupDetailsHandler(
+            new TestWorkspaceSessionRegistry(workspaceId, [spineAssets]),
+            previewHandler,
+            runtimePreviewService);
+
+        var result = await handler.HandleAsync(CreateQuery(workspaceId, spineBundleId));
+
+        TestAssert.True(result.IsSuccess, "Invalid large atlas text should finish with diagnostics instead of hanging preview loading.");
+        var details = result.Value ?? throw new InvalidOperationException("Expected Spine group details.");
+        TestAssert.Empty(details.AtlasPages, "Oversized JSON should not be parsed as an atlas page.");
+        TestAssert.Equal(2, previewHandler.HandleCallCount, "Only skeleton summary and atlas text should be read; texture/runtime preview should be skipped.");
+        TestAssert.Equal(0, runtimePreviewService.HandleCallCount, "Runtime adapter should not receive invalid atlas text.");
+        var diagnostic = TestAssert.Single(details.Diagnostics);
+        TestAssert.Equal(
+            SpineAssetGroupDiagnosticKind.AtlasParseFailed,
+            diagnostic.Kind,
+            "Invalid JSON supplied as an atlas replacement should be reported as an atlas parse diagnostic.");
+    }
 }

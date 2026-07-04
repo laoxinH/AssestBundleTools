@@ -4,9 +4,30 @@ namespace AssestBundleTools.Application.Assets.Queries;
 
 internal static class SpineAtlasTextParser
 {
-    public static IReadOnlyList<SpineAtlasPageDto> Parse(string? atlasText)
+    private const int MaxStructuredAtlasTextCharacters = 4_000_000;
+    private const int MaxAtlasLines = 120_000;
+    private const int MaxAtlasPages = 512;
+    private const int MaxAtlasRegions = 50_000;
+
+    public static bool CanAttemptStructuredParse(string? atlasText)
     {
         if (string.IsNullOrWhiteSpace(atlasText))
+        {
+            return false;
+        }
+
+        if (atlasText.Length > MaxStructuredAtlasTextCharacters ||
+            LooksLikeJsonObject(atlasText))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static IReadOnlyList<SpineAtlasPageDto> Parse(string? atlasText)
+    {
+        if (!CanAttemptStructuredParse(atlasText))
         {
             return Array.Empty<SpineAtlasPageDto>();
         }
@@ -15,9 +36,17 @@ internal static class SpineAtlasTextParser
         PageBuilder? currentPage = null;
         RegionBuilder? currentRegion = null;
         var expectingPage = true;
+        var lineCount = 0;
+        var regionCount = 0;
 
-        foreach (var rawLine in EnumerateLines(atlasText))
+        foreach (var rawLine in EnumerateLines(atlasText!))
         {
+            lineCount++;
+            if (lineCount > MaxAtlasLines)
+            {
+                break;
+            }
+
             var line = rawLine.Trim();
             if (line.Length == 0)
             {
@@ -34,6 +63,11 @@ internal static class SpineAtlasTextParser
 
             if (expectingPage || currentPage is null)
             {
+                if (pageBuilders.Count >= MaxAtlasPages)
+                {
+                    break;
+                }
+
                 currentPage = new PageBuilder(line);
                 pageBuilders.Add(currentPage);
                 currentRegion = null;
@@ -41,13 +75,35 @@ internal static class SpineAtlasTextParser
                 continue;
             }
 
+            if (regionCount >= MaxAtlasRegions)
+            {
+                break;
+            }
+
             currentRegion = new RegionBuilder(line, currentPage.Name);
             currentPage.Regions.Add(currentRegion);
+            regionCount++;
         }
 
         return pageBuilders
+            .Where(static page => page.HasStructuredAtlasContent)
             .Select(static page => page.Build())
             .ToArray();
+    }
+
+    private static bool LooksLikeJsonObject(string atlasText)
+    {
+        foreach (var character in atlasText)
+        {
+            if (char.IsWhiteSpace(character))
+            {
+                continue;
+            }
+
+            return character == '{';
+        }
+
+        return false;
     }
 
     private static void ApplyKeyValue(
@@ -209,6 +265,12 @@ internal static class SpineAtlasTextParser
 
         public List<RegionBuilder> Regions { get; } = [];
 
+        public bool HasStructuredAtlasContent =>
+            !string.IsNullOrWhiteSpace(Name) &&
+            (Width.HasValue ||
+             Height.HasValue ||
+             Regions.Any(static region => region.HasStructuredAtlasContent));
+
         public SpineAtlasPageDto Build() =>
             new(
                 Name,
@@ -238,6 +300,13 @@ internal static class SpineAtlasTextParser
         public int Height { get; set; }
 
         public bool IsRotated { get; set; }
+
+        public bool HasStructuredAtlasContent =>
+            Width > 0 ||
+            Height > 0 ||
+            X != 0 ||
+            Y != 0 ||
+            IsRotated;
 
         public SpineAtlasRegionDto Build() =>
             new(Name, PageName, X, Y, Width, Height, IsRotated);

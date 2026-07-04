@@ -17,7 +17,7 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter
             return SpineAnimationRuntimePlaybackSessionResultDto.Cancelled;
         }
 
-        if (source.AtlasTexts is not { Count: > 0 } ||
+        if (!SpineRuntimeAtlasInputGuard.CanAttemptRuntimeParse(source.AtlasTexts) ||
             (string.IsNullOrWhiteSpace(source.SkeletonJson) &&
              source.SkeletonBinaryContent is not { Length: > 0 }))
         {

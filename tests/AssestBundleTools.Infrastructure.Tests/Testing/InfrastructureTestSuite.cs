@@ -438,6 +438,10 @@ internal static class InfrastructureTestSuite
             SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldReturnNotHandled_WhenV42ParserReturnsNullSkeletonData);
         await RunTestAsync(
             failures,
+            nameof(SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldRejectOversizedJsonAtlasBeforeRuntimeParse),
+            SpineAnimationRuntimePreviewServiceTests.TryBuildPreviewAsync_ShouldRejectOversizedJsonAtlasBeforeRuntimeParse);
+        await RunTestAsync(
+            failures,
             nameof(SpineRuntimeSamplingPolicyTests.CreateSampleTimes_ShouldKeepHalfSpeedPlaybackDense_ForLargeOfficialRuntimeMesh),
             SpineRuntimeSamplingPolicyTests.CreateSampleTimes_ShouldKeepHalfSpeedPlaybackDense_ForLargeOfficialRuntimeMesh);
         await RunTestAsync(

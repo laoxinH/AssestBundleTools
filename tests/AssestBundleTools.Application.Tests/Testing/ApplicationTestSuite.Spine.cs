@@ -72,6 +72,10 @@ internal static partial class ApplicationTestSuite
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseAtlasFromFullTextContent_WhenDisplayTextIsBounded);
         await RunTestAsync(
             failures,
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldRejectLargeJsonAtlasText_WithoutRuntimePreview),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldRejectLargeJsonAtlasText_WithoutRuntimePreview);
+        await RunTestAsync(
+            failures,
             nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseJsonSkeletonSummary_FromPreviewPipeline),
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseJsonSkeletonSummary_FromPreviewPipeline);
         await RunTestAsync(

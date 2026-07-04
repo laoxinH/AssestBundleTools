@@ -22,7 +22,7 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter :
             return SpineAnimationRuntimePreviewResultDto.Cancelled;
         }
 
-        if (request.AtlasTexts is not { Count: > 0 } ||
+        if (!SpineRuntimeAtlasInputGuard.CanAttemptRuntimeParse(request.AtlasTexts) ||
             (string.IsNullOrWhiteSpace(request.SkeletonJson) &&
              request.SkeletonBinaryContent is not { Length: > 0 }))
         {
