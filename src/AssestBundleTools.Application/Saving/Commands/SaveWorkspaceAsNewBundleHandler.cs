@@ -254,7 +254,8 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
                             processorBatchResult.ResolveResults(selectedPlan.BundleId)),
                         ProcessorSelections: processorSelections,
                         ProcessorResults: processorBatchResult.ResolveResults(selectedPlan.BundleId),
-                        OperationId: operationId),
+                        OperationId: operationId,
+                        CompressionMode: command.CompressionMode),
                     cancellationToken);
 
                 if (exportResult.IsCancelled)
@@ -497,7 +498,10 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
             WrittenFileLastWriteTimeUtc: exportResult.WrittenFileLastWriteTimeUtc,
             WrittenFileMd5: exportResult.WrittenFileMd5,
             WrittenFileSha256: exportResult.WrittenFileSha256,
-            ProcessorResults: exportResult.ProcessorResults);
+            ProcessorResults: exportResult.ProcessorResults,
+            CompressionMode: exportResult.CompressionMode,
+            OriginalCompression: exportResult.OriginalCompression,
+            WrittenCompression: exportResult.WrittenCompression);
 
     private static WorkspaceSaveBundleExecutionResultDto CreateFailedBundleResult(
         PlannedWorkspaceBundleSave selectedPlan,

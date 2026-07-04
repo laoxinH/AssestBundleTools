@@ -38,7 +38,10 @@ internal static class FileSystemWorkspaceBundleExportManifestStoreTests
                     WrittenFileHash: "sha256",
                     WrittenFileLastWriteTimeUtc: DateTimeOffset.Parse("2026-07-03T08:01:00Z"),
                     WrittenFileMd5: "md5",
-                    WrittenFileSha256: "sha256")
+                    WrittenFileSha256: "sha256",
+                    CompressionMode: WorkspaceBundleExportCompressionModeDto.FastLz4,
+                    OriginalCompression: "LZMA",
+                    WrittenCompression: "LZ4Fast")
             },
             ProcessorSelections: new[]
             {
@@ -66,6 +69,9 @@ internal static class FileSystemWorkspaceBundleExportManifestStoreTests
         TestAssert.Equal("sha256", bundle.WrittenFileSha256, "Manifest should keep SHA-256.");
         TestAssert.Equal("SHA256", bundle.WrittenFileHashAlgorithm, "Manifest should keep primary hash algorithm.");
         TestAssert.Equal("sha256", bundle.WrittenFileHash, "Manifest should keep primary hash.");
+        TestAssert.Equal("FastLz4", bundle.CompressionMode, "Manifest should keep requested compression mode.");
+        TestAssert.Equal("LZMA", bundle.OriginalCompression, "Manifest should keep original compression.");
+        TestAssert.Equal("LZ4Fast", bundle.WrittenCompression, "Manifest should keep written compression.");
         TestAssert.Equal(2, manifest.ProcessorSelections.Count, "Manifest should keep processor selection count.");
         TestAssert.Equal("texture2d", manifest.ProcessorSelections[0].ResourceKind, "Manifest should keep selected resource kind.");
         TestAssert.Equal("resource.processor.texture.cli", manifest.ProcessorSelections[0].ProcessorId, "Manifest should keep selected processor id.");

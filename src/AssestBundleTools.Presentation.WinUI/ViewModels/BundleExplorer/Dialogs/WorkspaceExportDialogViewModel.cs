@@ -24,6 +24,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     private bool _isLoading;
     private bool _isExecuting;
     private WorkspaceExportBundleSortOptionViewModel? _selectedBundleSortOption;
+    private WorkspaceExportCompressionOptionViewModel? _selectedCompressionOption;
 
     public WorkspaceExportDialogViewModel(
         ILocalizationService localizationService,
@@ -50,6 +51,10 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         };
         ResourceProcessors = new ObservableCollection<WorkspaceExportResourceProcessorOptionViewModel>(
             CreateResourceProcessorOptions(resourceProcessorCatalogEntries ?? Array.Empty<ResourceProcessorCatalogEntryDto>()));
+        CompressionOptions = new ObservableCollection<WorkspaceExportCompressionOptionViewModel>(
+            CreateCompressionOptions());
+        _selectedCompressionOption = CompressionOptions.FirstOrDefault(static option =>
+            option.Mode == WorkspaceBundleExportCompressionModeDto.FastLz4);
         _selectedBundleSortOption = BundleSortOptions.FirstOrDefault();
         foreach (var bundle in Bundles)
         {
@@ -67,6 +72,8 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     public ObservableCollection<WorkspaceExportBundleSortOptionViewModel> BundleSortOptions { get; }
 
     public ObservableCollection<WorkspaceExportResourceProcessorOptionViewModel> ResourceProcessors { get; }
+
+    public ObservableCollection<WorkspaceExportCompressionOptionViewModel> CompressionOptions { get; }
 
     public string OutputDirectoryText
     {
@@ -159,6 +166,12 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         PrimaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPrimaryButton);
     }
 
+    public WorkspaceExportCompressionOptionViewModel? SelectedCompressionOption
+    {
+        get => _selectedCompressionOption;
+        set => SetProperty(ref _selectedCompressionOption, value);
+    }
+
     public void SetExecuting()
     {
         IsExecuting = true;
@@ -220,7 +233,8 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         return new WorkspaceExportDialogSubmission(
             ExportToWorkspaceDirectory,
             selectedBundleIds,
-            processorSelections);
+            processorSelections,
+            SelectedCompressionOption?.Mode ?? WorkspaceBundleExportCompressionModeDto.FastLz4);
     }
 
     private void OnBundleSelectionChanged(object? sender, EventArgs e)
@@ -396,6 +410,22 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
                 ResolveProcessorDisplayName(entry, resourceKind),
                 ResolveProcessorDescription(entry, resourceKind));
         }
+    }
+
+    private IEnumerable<WorkspaceExportCompressionOptionViewModel> CreateCompressionOptions()
+    {
+        yield return new WorkspaceExportCompressionOptionViewModel(
+            WorkspaceBundleExportCompressionModeDto.FastLz4,
+            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionFastLz4),
+            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionFastLz4Description));
+        yield return new WorkspaceExportCompressionOptionViewModel(
+            WorkspaceBundleExportCompressionModeDto.PreserveOriginal,
+            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionPreserveOriginal),
+            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionPreserveOriginalDescription));
+        yield return new WorkspaceExportCompressionOptionViewModel(
+            WorkspaceBundleExportCompressionModeDto.Uncompressed,
+            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionUncompressed),
+            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionUncompressedDescription));
     }
 
     private static bool IsCompatibleResourceProcessor(

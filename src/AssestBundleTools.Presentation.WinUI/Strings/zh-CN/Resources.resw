@@ -4188,6 +4188,27 @@
   <data name="WorkspaceExportDialog.OutputDirectory.Label" xml:space="preserve">
     <value>输出目录</value>
   </data>
+  <data name="WorkspaceExportDialog.CompressionMode.Label" xml:space="preserve">
+    <value>压缩策略</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.FastLz4" xml:space="preserve">
+    <value>快速 LZ4</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.FastLz4Description" xml:space="preserve">
+    <value>优先缩短导出时间，输出包压缩格式会变为 LZ4Fast。</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.PreserveOriginal" xml:space="preserve">
+    <value>保持原压缩</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.PreserveOriginalDescription" xml:space="preserve">
+    <value>沿用源 AB 压缩格式，LZMA 包导出会更慢。</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.Uncompressed" xml:space="preserve">
+    <value>不压缩</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.UncompressedDescription" xml:space="preserve">
+    <value>写出未压缩 AB，速度快但文件体积最大。</value>
+  </data>
   <data name="WorkspaceExportDialog.ResourceProcessor.Texture2D" xml:space="preserve">
     <value>Texture2D</value>
   </data>

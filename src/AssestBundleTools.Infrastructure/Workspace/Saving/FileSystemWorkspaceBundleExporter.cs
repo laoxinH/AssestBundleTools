@@ -76,7 +76,10 @@ public sealed class FileSystemWorkspaceBundleExporter : IWorkspaceBundleExporter
                     WrittenFileLastWriteTimeUtc: new DateTimeOffset(fileInfo.LastWriteTimeUtc, TimeSpan.Zero),
                     WrittenFileMd5: hashes.Md5,
                     WrittenFileSha256: hashes.Sha256,
-                    ProcessorResults: SummarizeProcessorResults(request.ProcessorResults)));
+                    ProcessorResults: SummarizeProcessorResults(request.ProcessorResults),
+                    CompressionMode: request.CompressionMode,
+                    OriginalCompression: writeResult.Value?.OriginalCompression,
+                    WrittenCompression: writeResult.Value?.WrittenCompression));
         }
         catch (OperationCanceledException)
         {
@@ -114,22 +117,29 @@ public sealed class FileSystemWorkspaceBundleExporter : IWorkspaceBundleExporter
         string outputPath,
         CancellationToken cancellationToken)
     {
-        await using var md5Stream = new FileStream(
+        await using var inputStream = new FileStream(
             outputPath,
             FileMode.Open,
             FileAccess.Read,
             FileShare.Read);
-        var md5 = await MD5.HashDataAsync(md5Stream, cancellationToken);
+        using var md5 = IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.MD5);
+        using var sha256 = IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256);
+        var buffer = new byte[1024 * 128];
+        while (true)
+        {
+            var bytesRead = await inputStream.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken);
+            if (bytesRead == 0)
+            {
+                break;
+            }
 
-        await using var sha256Stream = new FileStream(
-            outputPath,
-            FileMode.Open,
-            FileAccess.Read,
-            FileShare.Read);
-        var sha256 = await SHA256.HashDataAsync(sha256Stream, cancellationToken);
+            md5.AppendData(buffer, 0, bytesRead);
+            sha256.AppendData(buffer, 0, bytesRead);
+        }
+
         return new WorkspaceBundleExportFileHashes(
-            Convert.ToHexString(md5).ToLowerInvariant(),
-            Convert.ToHexString(sha256).ToLowerInvariant());
+            Convert.ToHexString(md5.GetHashAndReset()).ToLowerInvariant(),
+            Convert.ToHexString(sha256.GetHashAndReset()).ToLowerInvariant());
     }
 
     private static void TryDeleteTemporaryFile(string? temporaryFilePath)

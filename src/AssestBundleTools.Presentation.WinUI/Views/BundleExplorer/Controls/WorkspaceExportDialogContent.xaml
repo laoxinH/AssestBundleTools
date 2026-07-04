@@ -224,6 +224,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -247,6 +248,32 @@
                         Text="{Binding OutputDirectoryText}"
                         TextTrimming="CharacterEllipsis"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <Border
+                        Grid.Row="2"
+                        Padding="10,4"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        CornerRadius="8">
+                        <TextBlock x:Name="CompressionModeLabelText" FontSize="12" FontWeight="SemiBold" />
+                    </Border>
+                    <ComboBox
+                        Grid.Row="2"
+                        Grid.Column="1"
+                        HorizontalAlignment="Stretch"
+                        ItemsSource="{Binding CompressionOptions}"
+                        SelectedItem="{Binding SelectedCompressionOption, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Spacing="2">
+                                    <TextBlock FontWeight="SemiBold" Text="{Binding DisplayName}" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding Description}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                 </Grid>
             </Border>
         </Grid>

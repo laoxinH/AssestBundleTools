@@ -26,7 +26,7 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
     private const int TextureEncodeQuality = 90;
     private const TextureFormat TextureEncodeFallbackFormat = TextureFormat.RGBA32;
 
-    public static Result<object> Write(
+    public static Result<WorkspaceBundleObjectWriteResult> Write(
         string sourcePath,
         string temporaryFilePath,
         WorkspaceBundleExportRequestDto request,
@@ -34,7 +34,7 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
     {
         if (request.AssetWriteItems.Count == 0)
         {
-            return Result<object>.Failure(
+            return Result<WorkspaceBundleObjectWriteResult>.Failure(
                 ApplicationErrors.BundleExportWriteFailed(request.OutputFilePath, "Save.BundleWrite.NoObjectChanges"));
         }
 
@@ -71,15 +71,17 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
                 });
             if (applyResult.IsFailure)
             {
-                return applyResult;
+                return Result<WorkspaceBundleObjectWriteResult>.Failure(applyResult.Errors);
             }
 
             BundleExportWriteDiagnostics.ExecuteStage(
                 StageApplyChanges,
                 request,
                 () => ApplyModifiedSerializedFiles(bundleInstance, serializedFiles));
-            WriteBundleWithReplacers(bundleInstance, temporaryFilePath, request);
-            return Result<object>.Success(new object());
+            var writtenCompression = WriteBundleWithReplacers(bundleInstance, temporaryFilePath, request);
+            return Result<WorkspaceBundleObjectWriteResult>.Success(new WorkspaceBundleObjectWriteResult(
+                bundleInstance.originalCompression.ToString(),
+                writtenCompression.ToString()));
         }
         catch (OperationCanceledException)
         {
@@ -87,7 +89,7 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
         }
         catch (Exception exception) when (BundleExportWriteDiagnostics.IsDiagnosableWriteException(exception))
         {
-            return Result<object>.Failure(
+            return Result<WorkspaceBundleObjectWriteResult>.Failure(
                 ApplicationErrors.BundleExportWriteFailed(
                     request.OutputFilePath,
                     BundleExportWriteDiagnostics.ResolveTopLevelDetail("write-bundle", request, exception)));
@@ -98,18 +100,19 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
         }
     }
 
-    private static void WriteBundleWithReplacers(
+    private static AssetBundleCompressionType WriteBundleWithReplacers(
         BundleFileInstance bundleInstance,
         string temporaryFilePath,
         WorkspaceBundleExportRequestDto request)
     {
-        if (bundleInstance.originalCompression == AssetBundleCompressionType.None)
+        var targetCompression = ResolveTargetCompression(bundleInstance.originalCompression, request.CompressionMode);
+        if (targetCompression == AssetBundleCompressionType.None)
         {
             WriteUncompressedBundle(bundleInstance.file, temporaryFilePath, StageWriteFinalUncompressed, request);
-            return;
+            return targetCompression;
         }
 
-        var uncompressedTemporaryFilePath = CreateSiblingTemporaryFilePath(temporaryFilePath, ".uncompressed");
+        var uncompressedTemporaryFilePath = CreateScratchTemporaryFilePath(temporaryFilePath, ".uncompressed");
         try
         {
             WriteUncompressedBundle(bundleInstance.file, uncompressedTemporaryFilePath, StageWriteUncompressed, request);
@@ -133,7 +136,7 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
                     StageRepackBundle,
                     request,
                     BundleExportStageContext.FromBundle(bundleInstance),
-                    () => uncompressedBundle.Pack(writer, bundleInstance.originalCompression, blockDirAtEnd: false, progress: null));
+                    () => uncompressedBundle.Pack(writer, targetCompression, blockDirAtEnd: false, progress: null));
             }
             finally
             {
@@ -144,7 +147,19 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
         {
             TryDeleteTemporaryFile(uncompressedTemporaryFilePath);
         }
+
+        return targetCompression;
     }
+
+    private static AssetBundleCompressionType ResolveTargetCompression(
+        AssetBundleCompressionType originalCompression,
+        WorkspaceBundleExportCompressionModeDto compressionMode) =>
+        compressionMode switch
+        {
+            WorkspaceBundleExportCompressionModeDto.FastLz4 => AssetBundleCompressionType.LZ4Fast,
+            WorkspaceBundleExportCompressionModeDto.Uncompressed => AssetBundleCompressionType.None,
+            _ => originalCompression
+        };
 
     private static void WriteUncompressedBundle(
         AssetBundleFile bundleFile,
@@ -484,14 +499,15 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
             ? string.Empty
             : sourceKind.Trim().ToLowerInvariant();
 
-    private static string CreateSiblingTemporaryFilePath(
+    private static string CreateScratchTemporaryFilePath(
         string outputPath,
         string suffix)
     {
-        var outputDirectory = Path.GetDirectoryName(outputPath);
         var fileName = Path.GetFileName(outputPath);
+        var scratchDirectory = Path.Combine(Path.GetTempPath(), "AssestBundleTools", "bundle-export");
+        Directory.CreateDirectory(scratchDirectory);
         return Path.Combine(
-            string.IsNullOrWhiteSpace(outputDirectory) ? Environment.CurrentDirectory : outputDirectory,
+            scratchDirectory,
             $".{fileName}.{Guid.NewGuid():N}{suffix}");
     }
 

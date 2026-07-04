@@ -4188,6 +4188,27 @@
   <data name="WorkspaceExportDialog.OutputDirectory.Label" xml:space="preserve">
     <value>Output directory</value>
   </data>
+  <data name="WorkspaceExportDialog.CompressionMode.Label" xml:space="preserve">
+    <value>Compression</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.FastLz4" xml:space="preserve">
+    <value>Fast LZ4</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.FastLz4Description" xml:space="preserve">
+    <value>Prioritizes export speed; output bundles are written as LZ4Fast.</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.PreserveOriginal" xml:space="preserve">
+    <value>Preserve original</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.PreserveOriginalDescription" xml:space="preserve">
+    <value>Keeps the source AB compression; LZMA bundles take longer to export.</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.Uncompressed" xml:space="preserve">
+    <value>Uncompressed</value>
+  </data>
+  <data name="WorkspaceExportDialog.Compression.UncompressedDescription" xml:space="preserve">
+    <value>Writes uncompressed AB files; fastest but produces the largest output.</value>
+  </data>
   <data name="WorkspaceExportDialog.ResourceProcessor.Texture2D" xml:space="preserve">
     <value>Texture2D</value>
   </data>

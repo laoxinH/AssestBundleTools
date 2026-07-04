@@ -216,6 +216,7 @@ internal static partial class SaveWorkspaceHandlersTests
         TestAssert.Equal(1, execution.WrittenBundleCount, "Selected bundle should be written.");
         TestAssert.Equal(@"D:\Exports\_abt-bundle-export-manifest.json", execution.ExportManifestPath, "Manifest path should be returned.");
         TestAssert.Equal(alphaBundleId, TestAssert.Single(exporter.Requests).BundleId, "Exporter should receive only the selected bundle.");
+        TestAssert.Equal(WorkspaceBundleExportCompressionModeDto.FastLz4, exporter.Requests[0].CompressionMode, "Exporter should receive the default fast compression mode.");
         TestAssert.Equal("resource.processor.texture.png", TestAssert.Single(exporter.Requests[0].ProcessorSelections).ProcessorId, "Processor selections should be forwarded to exporter.");
         TestAssert.Equal("HeroTexture", TestAssert.Single(processorExecutor.WorkItems).AssetName, "File-backed Texture2D changes should create resource processor work items.");
         TestAssert.Equal("resource.processor.texture.png", TestAssert.Single(exporter.Requests[0].ProcessorResults).ProcessorId, "Processor execution results should be forwarded to exporter.");
@@ -693,7 +694,10 @@ internal static partial class SaveWorkspaceHandlersTests
                                 .Select(static path => path!)
                                 .ToArray(),
                             Diagnostics: Array.Empty<WorkspaceResourceProcessorDiagnosticDto>()))
-                        .ToArray())));
+                        .ToArray(),
+                    CompressionMode: request.CompressionMode,
+                    OriginalCompression: "LZMA",
+                    WrittenCompression: "LZ4Fast")));
         }
     }
 

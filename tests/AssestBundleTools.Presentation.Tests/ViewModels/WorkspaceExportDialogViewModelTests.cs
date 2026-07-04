@@ -86,6 +86,7 @@ public sealed class WorkspaceExportDialogViewModelTests
         var submission = viewModel.CreateSubmission();
 
         Assert.True(submission.ExportToWorkspaceDirectory);
+        Assert.Equal(WorkspaceBundleExportCompressionModeDto.FastLz4, submission.CompressionMode);
         Assert.Equal("bundle-alpha", Assert.Single(submission.SelectedBundleIds).Value);
         Assert.Equal("resource.processor.texture.png", submission.ProcessorSelections.Single(selection => selection.ResourceKind == "texture2d").ProcessorId);
         Assert.Null(submission.ProcessorSelections.Single(selection => selection.ResourceKind == "audio").ProcessorId);

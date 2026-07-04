@@ -143,7 +143,8 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
             WorkspaceKey: workspaceKey,
             WorkspaceDataRootPath: workspaceDataRootPath,
             SelectedBundleIds: submission.SelectedBundleIds,
-            ProcessorSelections: submission.ProcessorSelections);
+            ProcessorSelections: submission.ProcessorSelections,
+            CompressionMode: submission.CompressionMode);
 
         Result<WorkspaceSaveExecutionResultDto> result;
         try

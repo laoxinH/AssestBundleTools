@@ -15,4 +15,5 @@ public sealed record SaveWorkspaceAsNewBundleCommand(
     IReadOnlyList<BundleId>? SelectedBundleIds = null,
     IReadOnlyList<WorkspaceExportProcessorSelectionDto>? ProcessorSelections = null,
     IProgress<WorkspaceSaveExecutionProgressDto>? Progress = null,
-    int? BundleWriteConcurrency = null);
+    int? BundleWriteConcurrency = null,
+    WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.FastLz4);

@@ -17,7 +17,8 @@ public sealed record WorkspaceBundleExportRequestDto(
     IReadOnlyList<WorkspaceBundleAssetWriteItemDto> AssetWriteItems,
     IReadOnlyList<WorkspaceExportProcessorSelectionDto> ProcessorSelections,
     IReadOnlyList<WorkspaceResourceProcessorExecutionResultDto> ProcessorResults,
-    string OperationId);
+    string OperationId,
+    WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.FastLz4);
 
 public sealed record WorkspaceBundleExportResultDto(
     BundleId BundleId,
@@ -31,7 +32,10 @@ public sealed record WorkspaceBundleExportResultDto(
     DateTimeOffset WrittenFileLastWriteTimeUtc,
     string? WrittenFileMd5 = null,
     string? WrittenFileSha256 = null,
-    IReadOnlyList<WorkspaceBundleProcessorExecutionSummaryDto>? ProcessorResults = null);
+    IReadOnlyList<WorkspaceBundleProcessorExecutionSummaryDto>? ProcessorResults = null,
+    WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.FastLz4,
+    string? OriginalCompression = null,
+    string? WrittenCompression = null);
 
 public sealed record WorkspaceBundleExportManifestSaveRequestDto(
     WorkspaceId WorkspaceId,
@@ -76,7 +80,10 @@ public sealed record WorkspaceBundleExportManifestItemDto(
     string? DiagnosticDetail,
     string? WrittenFileMd5 = null,
     string? WrittenFileSha256 = null,
-    IReadOnlyList<WorkspaceBundleExportManifestProcessorResultDto>? ProcessorResults = null);
+    IReadOnlyList<WorkspaceBundleExportManifestProcessorResultDto>? ProcessorResults = null,
+    string? CompressionMode = null,
+    string? OriginalCompression = null,
+    string? WrittenCompression = null);
 
 public sealed record WorkspaceBundleExportManifestProcessorSelectionDto(
     string ResourceKind,

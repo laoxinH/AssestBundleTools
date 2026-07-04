@@ -18,11 +18,11 @@
 - `SaveRebuild` 后台 profile 已存在，工作区导出窗口可以复用统一后台任务调度。
 - 普通批量提取已经具备“单个后台任务 + 跨 AB 受控并行 + 同 AB 内顺序 + 输出 manifest”的成熟范式。
 - 工作区导出窗口已接到真实 `SaveRebuild` 后台任务：默认输出到 `<workspaceDataRootPath>/exports`，取消“导出到工作区输出目录”后点击开始导出会打开输出目录选择器。
-- `SaveWorkspaceAsNewBundleCommand` 已携带输出目录、选中资源包、资源处理器选择、工作区 artifact 上下文和执行进度回调。
+- `SaveWorkspaceAsNewBundleCommand` 已携带输出目录、选中资源包、资源处理器选择、导出压缩策略、工作区 artifact 上下文和执行进度回调。
 - Application 已通过 `IWorkspaceBundleExporter` / `IWorkspaceBundleExportManifestStore` 编排第一阶段真实导出：按选中 bundle 有界并发写出，汇总 `Succeeded / PartiallySucceeded / Failed` 结果，并在有成功输出时写出 `_abt-bundle-export-manifest.json`。
 - Application 已定义 `IWorkspaceResourceProcessorExecutor` 和处理器执行 DTO；保存执行会校验资源处理器选择、构建文件替换载荷的资源处理 work item、按有界并发执行、稳定排序结果，并在处理器失败时阻断所属 bundle 写包。
 - Infrastructure 已接入外部 CLI 资源处理器执行：按 catalog 中的 `executablePath / processArguments / timeoutMs` 启动进程，展开占位符，解析 result JSON，校验输出路径范围，捕获诊断并支持取消时终止进程。
-- Infrastructure 已把单 bundle writer 从 artifact 文件级复制推进到首版对象级 AssetsTools 写包：从标准化 artifact 独立加载 AB，按 `serializedFileName + pathId` 定位对象，消费文件替换、同 bundle 工作区内替换、Sprite 几何编辑和资源处理器输出载荷，先写入带 replacer 的未压缩 bundle，再按原压缩方式重新打包、提升输出文件并记录 MD5 / SHA-256。
+- Infrastructure 已把单 bundle writer 从 artifact 文件级复制推进到首版对象级 AssetsTools 写包：从标准化 artifact 独立加载 AB，按 `serializedFileName + pathId` 定位对象，消费文件替换、同 bundle 工作区内替换、Sprite 几何编辑和资源处理器输出载荷，先写入带 replacer 的未压缩 bundle，再按导出压缩策略重新打包、提升输出文件并以单次读取记录 MD5 / SHA-256。导出窗口默认使用 `FastLz4` 降低 LZMA 源包重压缩耗时，并保留“保持原压缩”和“不压缩”选项。
 - AB 导出 manifest 已记录每个 bundle 的资源处理器结果摘要，包括资源类型、处理器 id、状态、输入 / 成功 / 失败计数、result JSON 路径和诊断。
 
 尚未实现：
@@ -49,7 +49,7 @@ WorkspaceExportWindow 收集选择
 
 核心约束：
 
-1. Presentation 只收集资源包范围、输出目录和资源处理器选择，不运行 CLI、不读写 AB、不生成 manifest。
+1. Presentation 只收集资源包范围、输出目录、资源处理器选择和压缩策略，不运行 CLI、不读写 AB、不生成 manifest。
 2. Application 负责编排计划、操作记录、进度、取消、失败分类、检查点和稳定 DTO。
 3. Infrastructure 负责外部进程执行、result JSON 解析、AB Reader / Writer、临时文件、原子写出和 manifest 文件 IO。
 4. 同一资源包内写包必须串行；不同资源包可以并行。
@@ -63,8 +63,8 @@ WorkspaceExportWindow 收集选择
 
 Presentation 负责：
 
-- 在工作区导出窗口展示保存预览、资源包范围和资源处理器选择。
-- 生成命令输入 DTO：选中的 `bundleId[]`、输出目录、每个资源类型槽的 `processorId?`。
+- 在工作区导出窗口展示保存预览、资源包范围、资源处理器选择和压缩策略。
+- 生成命令输入 DTO：选中的 `bundleId[]`、输出目录、每个资源类型槽的 `processorId?` 和 `compressionMode`。
 - 提交一个 `BackgroundWorkRequest<Result<WorkspaceExportExecutionResultDto>>`。
 - 使用 `BackgroundWorkProfile.SaveRebuild`、`WorkspaceMutation` 语义和可取消任务。
 - 将 Application 返回的结构化结果格式化为本地化摘要、toast、日志和窗口状态。
@@ -123,6 +123,7 @@ SaveWorkspaceAsNewBundleCommand / ExecuteWorkspaceExportCommand
   outputDirectory
   selectedBundleIds[]
   processorSelections[]
+  compressionMode        # FastLz4 / PreserveOriginal / Uncompressed
   progress
   bundleWriteConcurrency?
   outputConflictPolicy
@@ -343,7 +344,7 @@ IWorkspaceBundleExporter
   ExportAsync(WorkspaceBundleExportRequest request, CancellationToken cancellationToken)
 ```
 
-Infrastructure 的当前实现已经在同一端口内消费标准化 artifact、有效变更载荷和处理器输出。写包器按 `WorkspaceBundleAssetWriteItemDto` 中的对象身份查找 serialized file 与 path id，调用 AssetsTools replacer 修改对象；未压缩源包直接 `Write`，压缩源包先 `Write` 出带 replacer 的未压缩临时 bundle，再读回并按原压缩格式 `Pack` 到最终临时文件。真实样本验证显示，直接对原始压缩 `AssetBundleFile` 执行 `Pack` 不会消费 replacer，导出内容会保持旧对象数据；因此当前未压缩中间文件是保证对象级替换真实生效的写包物化步骤。`Texture2D` 写入会先尝试按原纹理格式编码；若原格式编码器不支持，则回退到 `RGBA32`，保持“能导出真实替换内容”优先。Application 只消费结构化结果。
+Infrastructure 的当前实现已经在同一端口内消费标准化 artifact、有效变更载荷和处理器输出。写包器按 `WorkspaceBundleAssetWriteItemDto` 中的对象身份查找 serialized file 与 path id，调用 AssetsTools replacer 修改对象；未压缩目标直接 `Write`，压缩目标先 `Write` 出带 replacer 的未压缩临时 bundle，再读回并按请求压缩格式 `Pack` 到最终临时文件。真实样本验证显示，直接对原始压缩 `AssetBundleFile` 执行 `Pack` 不会消费 replacer，导出内容会保持旧对象数据；因此当前未压缩中间文件是保证对象级替换真实生效的写包物化步骤。该临时文件写入系统临时目录，不暴露在用户选择的导出目录；默认请求压缩格式为 `LZ4Fast`，可选择保持源包原压缩或输出未压缩 AB。`Texture2D` 写入会先尝试按原纹理格式编码；若原格式编码器不支持，则回退到 `RGBA32`，保持“能导出真实替换内容”优先。Application 只消费结构化结果。
 
 ### 8.2 写包并发
 
@@ -359,7 +360,7 @@ BundleWriterWorkerCount
 - 同一 bundle 的读取、变更应用和写包串行。
 - 不同 bundle 可以并行写包。
 - writer 运行进程应优先使用 `x64`；`x86` 进程会被 32 位地址空间限制放大大 bundle、Texture2D 编码和压缩重打包时的 `OutOfMemoryException` 风险，不能仅用系统剩余物理内存判断是否安全。
-- 压缩 bundle 的当前 AssetsTools 写包路径会产生完整未压缩临时文件，并在重打包前读回；这会让 LZMA 源包的单包导出耗时明显高于纯对象编码。后续优化应优先补充阶段耗时诊断，再评估更低 IO 的物化方式、可选输出压缩策略，以及最终文件 hash 的单次读取计算。
+- 压缩 bundle 的当前 AssetsTools 写包路径会产生完整未压缩临时文件，并在重打包前读回；这会让保持 LZMA 的单包导出耗时明显高于纯对象编码。默认 `FastLz4` 用更快的 LZ4Fast 重打包换取导出速度，manifest 会记录请求压缩策略、源压缩和实际写出压缩，后续仍可继续评估更低 IO 的物化方式。
 - 写包阶段可以复用标准化 artifact identity 和 loaded-session single-flight，但 writer 必须持有独占写入上下文，不得共享可变对象。
 - 输出提升以单 bundle 为原子边界：临时文件完整写出并验证后，才移动或替换最终路径。
 - 如果某个 bundle 失败，不影响已经成功输出的其他 bundle；最终结果为 `Partial`。
@@ -482,6 +483,9 @@ Writer 诊断 detail 应包含失败阶段，例如 `load-bundle / apply-changes
       "outputRelativePath": "characters.ab",
       "outputPath": "D:/Exports/Game/characters.ab",
       "status": "succeeded",
+      "compressionMode": "FastLz4",
+      "originalCompression": "LZMA",
+      "writtenCompression": "LZ4Fast",
       "checkpointId": "checkpoint-id",
       "changeCounts": {
         "total": 3,

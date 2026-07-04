@@ -115,7 +115,10 @@ public sealed class FileSystemWorkspaceBundleExportManifestStore : IWorkspaceBun
                     summary.FailedCount,
                     summary.ResultPaths,
                     summary.Diagnostics))
-                .ToArray());
+                .ToArray(),
+            CompressionMode: result.CompressionMode.ToString(),
+            OriginalCompression: result.OriginalCompression,
+            WrittenCompression: result.WrittenCompression);
     }
 
     private static async Task WriteJsonAtomicallyAsync<T>(

@@ -28,6 +28,7 @@ public sealed partial class WorkspaceExportDialogContent : UserControl
         ResourceProcessorSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorSectionHint);
         ExportToWorkspaceDirectoryCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogExportToWorkspaceDirectory);
         OutputDirectoryLabelText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogOutputDirectoryLabel);
+        CompressionModeLabelText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogCompressionModeLabel);
     }
 
     private void OnSelectAllBundlesButtonClick(object sender, RoutedEventArgs e) =>

@@ -180,6 +180,11 @@ internal static class FileSystemWorkspaceBundleExporterTests
         }
 
         TestAssert.True(result.IsSuccess, "Object-level export should succeed for a writable Texture2D in the real sample bundle.");
+        TestAssert.Equal(
+            WorkspaceBundleExportCompressionModeDto.FastLz4,
+            result.Value!.CompressionMode,
+            "Real sample export should use the fast compression mode by default.");
+        TestAssert.Equal("LZ4Fast", result.Value.WrittenCompression, "Fast export should write an LZ4Fast bundle.");
         var exportedTexture = ReadTextureProbe(outputPath, probe.SerializedFileName, probe.PathId);
         TestAssert.True(exportedTexture is not null, "Exported Texture2D should be readable.");
         TestAssert.Equal(1, exportedTexture!.Width, "Exported Texture2D should use replacement image width.");
@@ -257,6 +262,74 @@ internal static class FileSystemWorkspaceBundleExporterTests
             (int)TextureFormat.RGBA32,
             exportedTexture.Format,
             "Exported Texture2D should use RGBA32 when the original target format cannot be re-encoded.");
+    }
+
+    public static async Task ExportAsync_ShouldPreserveOriginalCompression_WhenRequested()
+    {
+        if (!File.Exists(AstcSampleBundlePath))
+        {
+            Console.WriteLine($"[SKIP] ASTC sample bundle not found: {AstcSampleBundlePath}");
+            return;
+        }
+
+        if (!Environment.Is64BitProcess)
+        {
+            Console.WriteLine("[SKIP] Real sample bundle export requires a 64-bit process.");
+            return;
+        }
+
+        using var scope = new TemporaryDirectoryScope();
+        var sourcePath = Path.Combine(scope.DirectoryPath, "cache", Path.GetFileName(AstcSampleBundlePath));
+        var outputPath = Path.Combine(scope.DirectoryPath, "exports", Path.GetFileName(AstcSampleBundlePath));
+        Directory.CreateDirectory(Path.GetDirectoryName(sourcePath)!);
+        File.Copy(AstcSampleBundlePath, sourcePath);
+
+        var probe = ProbeFirstWritableTextAsset(sourcePath);
+        if (probe is null)
+        {
+            Console.WriteLine($"[SKIP] Sample bundle contains no readable TextAsset: {AstcSampleBundlePath}");
+            return;
+        }
+
+        var payloadPath = Path.Combine(scope.DirectoryPath, "payload.txt");
+        var replacementText = $"abt-compression-smoke-{Guid.NewGuid():N}";
+        await File.WriteAllTextAsync(payloadPath, replacementText, Encoding.UTF8);
+
+        var exporter = new FileSystemWorkspaceBundleExporter();
+        var result = await exporter.ExportAsync(new WorkspaceBundleExportRequestDto(
+            WorkspaceId: new WorkspaceId("workspace"),
+            WorkspaceDisplayName: "Workspace",
+            BundleId: new BundleId("bundle"),
+            BundleDisplayName: Path.GetFileName(sourcePath),
+            OutputFilePath: outputPath,
+            SourceArtifactPath: sourcePath,
+            BundleCacheKey: "bundle-cache-key",
+            ChangeItems: Array.Empty<AssestBundleTools.Application.Workspace.Dtos.WorkspaceChangeItemDto>(),
+            AssetWriteItems:
+            [
+                new WorkspaceBundleAssetWriteItemDto(
+                    BundleId: new BundleId("bundle"),
+                    AssetId: new AssetId("asset-text"),
+                    AssetName: probe.AssetName,
+                    AssetType: AssetType.TextAsset,
+                    AssetTypeDisplayName: nameof(AssetType.TextAsset),
+                    SerializedFileName: probe.SerializedFileName,
+                    PathId: probe.PathId,
+                    SourceKind: "file",
+                    SourceFilePath: payloadPath)
+            ],
+            ProcessorSelections: Array.Empty<WorkspaceExportProcessorSelectionDto>(),
+            ProcessorResults: Array.Empty<WorkspaceResourceProcessorExecutionResultDto>(),
+            OperationId: "operation",
+            CompressionMode: WorkspaceBundleExportCompressionModeDto.PreserveOriginal));
+
+        TestAssert.True(result.IsSuccess, "Preserve-original export should still succeed.");
+        TestAssert.Equal("LZMA", result.Value!.OriginalCompression, "Sample should expose its original LZMA compression.");
+        TestAssert.Equal("LZMA", result.Value.WrittenCompression, "Preserve-original export should keep LZMA compression.");
+        TestAssert.Equal(
+            replacementText,
+            ReadTextAsset(outputPath, probe.SerializedFileName, probe.PathId),
+            "Preserve-original export should still persist object replacement content.");
     }
 
     private static TextAssetProbe? ProbeFirstWritableTextAsset(string bundlePath)
