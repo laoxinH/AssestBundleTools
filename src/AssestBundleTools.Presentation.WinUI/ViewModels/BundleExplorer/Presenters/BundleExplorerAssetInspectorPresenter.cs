@@ -198,7 +198,12 @@ internal sealed class BundleExplorerAssetInspectorPresenter
                 canManageChangeRecords),
             canModify: canEdit && !isBusy && details.CanReplaceFromFile,
             modifyButtonText: ResolveModifyButtonText(details),
-            modifyButtonIconGlyph: ResolveModifyButtonIconGlyph(details));
+            modifyButtonIconGlyph: ResolveModifyButtonIconGlyph(details),
+            canEditText: canEdit && !isBusy && CanUseTextEditor(details),
+            editButtonText: CanUseTextEditor(details)
+                ? GetString(ResourceKeys.InspectorModifyButton)
+                : string.Empty,
+            editButtonIconGlyph: EditGlyph);
     }
 
     public void SyncInspectorActionStates(
@@ -218,6 +223,7 @@ internal sealed class BundleExplorerAssetInspectorPresenter
             inspector.CanUndoReplacement = false;
             inspector.CanRedoReplacement = false;
             inspector.CanModify = false;
+            inspector.CanEditText = false;
             return;
         }
 
@@ -231,6 +237,7 @@ internal sealed class BundleExplorerAssetInspectorPresenter
         inspector.CanUndoReplacement = !isBusy && assetTab.CanEdit && HasAppliedReplacement(details);
         inspector.CanRedoReplacement = !isBusy && assetTab.CanEdit && details.CanRedoReplacement;
         inspector.CanModify = !isBusy && assetTab.CanEdit && details.CanReplaceFromFile;
+        inspector.CanEditText = !isBusy && assetTab.CanEdit && CanUseTextEditor(details);
     }
 
     private AssetDependencyViewModel MapDependency(AssetDependencyDto dependency)
@@ -260,6 +267,10 @@ internal sealed class BundleExplorerAssetInspectorPresenter
         details.AssetType == AssetType.Sprite
             ? EditGlyph
             : ReplaceFileGlyph;
+
+    private static bool CanUseTextEditor(AssetDetailsDto details) =>
+        details.AssetType == AssetType.TextAsset ||
+        string.Equals(details.AssetTypeDisplayName, "Shader", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Bundle 外部依赖的友好名称已经在基础设施层做过一轮解析，

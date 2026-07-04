@@ -634,6 +634,9 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
             localizationService,
             new BundleExplorerOperationFeedbackBridge(appLogService, notificationService, localizationService),
             modificationActionHandler,
+            gateway,
+            new TestWorkspaceAssetInspectionGateway(),
+            InlineBackgroundTaskRunner.Instance,
             () => null,
             () => spineGroupTab,
             () => spineGroupTab.Inspector,
@@ -909,6 +912,21 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
 
         public Task<Result<AssetSpriteEditAppliedResultDto>> ApplySpriteEditAsync(
             ApplySpriteEditCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<AssetTextEditDraftDto>> CreateTextAssetEditDraftAsync(
+            CreateTextAssetEditDraftCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<AssetTextEditAppliedResultDto>> ApplyTextAssetEditDraftAsync(
+            ApplyTextAssetEditDraftCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<AssetTextEditDraftDiscardedResultDto>> DiscardTextAssetEditDraftAsync(
+            DiscardTextAssetEditDraftCommand command,
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 

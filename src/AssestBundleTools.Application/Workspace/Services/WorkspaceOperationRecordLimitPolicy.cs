@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Application.Editing.Services;
 
 namespace AssestBundleTools.Application.Workspace.Services;
 
@@ -68,6 +69,7 @@ internal sealed class WorkspaceOperationRecordLimitPolicy
         ProtectLatestExtractionOperations(operations, protectedOperationIds);
         ProtectEffectiveReplacementOperations(operations, protectedOperationIds);
         ProtectLatestSpriteEditOperations(operations, protectedOperationIds);
+        ProtectLatestTextEditOperations(operations, protectedOperationIds);
         return protectedOperationIds;
     }
 
@@ -143,6 +145,25 @@ internal sealed class WorkspaceOperationRecordLimitPolicy
             .Where(static operation => operation.Status == WorkspaceOperationStatus.Applied)
             .Where(static operation => operation.OperationKind == WorkspaceOperationKind.EditDraftApplied)
             .Where(static operation => operation.Result?.SpriteEditGeometry is not null)
+            .Where(static operation => TryCreateTargetKey(operation.Target, out _))
+            .GroupBy(static operation => CreateTargetKey(operation.Target!), StringComparer.Ordinal)
+            .Select(static group => group.OrderByDescending(operation => operation.Sequence).First()))
+        {
+            protectedOperationIds.Add(latestEdit.OperationId);
+        }
+    }
+
+    private static void ProtectLatestTextEditOperations(
+        IReadOnlyList<WorkspaceOperationRecordDto> operations,
+        ISet<string> protectedOperationIds)
+    {
+        foreach (var latestEdit in operations
+            .Where(static operation => operation.Status == WorkspaceOperationStatus.Applied)
+            .Where(static operation => operation.OperationKind == WorkspaceOperationKind.EditDraftApplied)
+            .Where(static operation => string.Equals(
+                operation.Source?.DraftMode,
+                WorkspaceTextEditOperationRecorder.TextDraftMode,
+                StringComparison.Ordinal))
             .Where(static operation => TryCreateTargetKey(operation.Target, out _))
             .GroupBy(static operation => CreateTargetKey(operation.Target!), StringComparer.Ordinal)
             .Select(static group => group.OrderByDescending(operation => operation.Sequence).First()))

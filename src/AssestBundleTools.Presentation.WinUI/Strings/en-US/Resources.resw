@@ -2631,6 +2631,24 @@
   <data name="InspectorPanelView.ApplySpineEditButton.Content" xml:space="preserve">
     <value>Save Spine Edit</value>
   </data>
+  <data name="TextAssetEditor.ApplyButton.Content" xml:space="preserve">
+    <value>Save Text Edit</value>
+  </data>
+  <data name="TextAssetEditor.ExitButton.Content" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="TextAssetEditor.ReadOnlyHint.Text" xml:space="preserve">
+    <value>Read-only text edit draft view. This phase supports large-text lines and search; editing the body will be added next.</value>
+  </data>
+  <data name="TextAssetEditor.LineStatus.Format" xml:space="preserve">
+    <value>Loaded {0} / {1} lines</value>
+  </data>
+  <data name="TextAssetEditor.Search.PlaceholderText" xml:space="preserve">
+    <value>Search text</value>
+  </data>
+  <data name="TextAssetEditor.SearchButton.ToolTip" xml:space="preserve">
+    <value>Search</value>
+  </data>
   <data name="InspectorPanelView.ExitSpriteEditButton.Content" xml:space="preserve">
     <value>Exit</value>
   </data>
@@ -2775,6 +2793,9 @@
   <data name="InspectorPanelView.ChangeRecord.SpriteEdit.Title" xml:space="preserve">
     <value>Sprite Edit</value>
   </data>
+  <data name="InspectorPanelView.ChangeRecord.TextEdit.Title" xml:space="preserve">
+    <value>Text Edit</value>
+  </data>
   <data name="InspectorPanelView.ChangeRecord.AssociatedFileReplacement.Title" xml:space="preserve">
     <value>Linked Asset Edit</value>
   </data>
@@ -2795,6 +2816,9 @@
   </data>
   <data name="InspectorPanelView.ChangeRecord.SpriteEdit.Source" xml:space="preserve">
     <value>Crop / Pivot</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.TextEdit.Source" xml:space="preserve">
+    <value>Text draft</value>
   </data>
   <data name="InspectorPanelView.ChangeRecord.Time.Format" xml:space="preserve">
     <value>Time: {0}</value>

@@ -250,6 +250,8 @@ public sealed partial class CachedWorkspaceSessionRegistry
 
         public AppliedSpriteEditState? AppliedSpriteEdit { get; set; }
 
+        public AppliedTextEditState? AppliedTextEdit { get; set; }
+
         public List<AppliedReplacementSnapshot?> ReplacementUndoStack { get; } = [];
 
         public List<AppliedReplacementSnapshot?> ReplacementRedoStack { get; } = [];
@@ -273,6 +275,11 @@ public sealed partial class CachedWorkspaceSessionRegistry
         string DraftId,
         string DraftMode,
         WorkspaceSpriteEditGeometryDto Geometry,
+        DateTimeOffset AppliedAtUtc);
+
+    private sealed record AppliedTextEditState(
+        string DraftId,
+        string DraftMode,
         DateTimeOffset AppliedAtUtc);
 
     private sealed record AppliedReplacementSnapshot(
@@ -348,12 +355,27 @@ public sealed partial class CachedWorkspaceSessionRegistry
         RefreshModifiedState(assetState);
     }
 
+    private static void ApplyTextEditState(
+        CachedAssetState assetState,
+        AppliedTextEditState textEdit)
+    {
+        assetState.AppliedTextEdit = textEdit;
+        RefreshModifiedState(assetState);
+    }
+
+    private static void ClearTextEditState(CachedAssetState assetState)
+    {
+        assetState.AppliedTextEdit = null;
+        RefreshModifiedState(assetState);
+    }
+
     private static void RefreshModifiedState(CachedAssetState assetState)
     {
         assetState.IsModified =
             assetState.AppliedWorkspaceReplacement is not null ||
             assetState.AppliedFileReplacement is not null ||
-            assetState.AppliedSpriteEdit is not null;
+            assetState.AppliedSpriteEdit is not null ||
+            assetState.AppliedTextEdit is not null;
     }
 
     private static AppliedReplacementSnapshot? PopReplacementSnapshot(

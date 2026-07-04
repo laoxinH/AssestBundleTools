@@ -802,6 +802,57 @@ public sealed class WorkspaceOperationChangeNotificationTests
                     command.Geometry,
                     DateTimeOffset.UtcNow)));
 
+        public Task<Result<AssetTextEditDraftDto>> CreateTextAssetEditDraftAsync(
+            CreateTextAssetEditDraftCommand command,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result<AssetTextEditDraftDto>.Success(
+                new AssetTextEditDraftDto(
+                    command.WorkspaceId,
+                    command.BundleId,
+                    command.AssetId,
+                    "text",
+                    AssetType.TextAsset,
+                    AssetType.TextAsset.ToString(),
+                    "draft-text",
+                    command.DraftMode ?? "text-content",
+                    new AssetPreviewFullContentReferenceDto(
+                        AssetPreviewFullContentReferenceKind.EditDraft,
+                        "text/plain",
+                        0,
+                        command.WorkspaceKey,
+                        DraftId: "draft-text",
+                        DraftMode: command.DraftMode ?? "text-content"),
+                    DateTimeOffset.UtcNow,
+                    CanApply: true)));
+
+        public Task<Result<AssetTextEditAppliedResultDto>> ApplyTextAssetEditDraftAsync(
+            ApplyTextAssetEditDraftCommand command,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result<AssetTextEditAppliedResultDto>.Success(
+                new AssetTextEditAppliedResultDto(
+                    command.WorkspaceId,
+                    command.BundleId,
+                    command.AssetId,
+                    "text",
+                    AssetType.TextAsset,
+                    AssetType.TextAsset.ToString(),
+                    command.DraftId,
+                    command.DraftMode ?? "text-content",
+                    DateTimeOffset.UtcNow)));
+
+        public Task<Result<AssetTextEditDraftDiscardedResultDto>> DiscardTextAssetEditDraftAsync(
+            DiscardTextAssetEditDraftCommand command,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result<AssetTextEditDraftDiscardedResultDto>.Success(
+                new AssetTextEditDraftDiscardedResultDto(
+                    command.WorkspaceId,
+                    command.BundleId,
+                    command.AssetId,
+                    "text",
+                    command.DraftId,
+                    command.DraftMode ?? "text-content",
+                    DateTimeOffset.UtcNow)));
+
         public Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(
             DeleteWorkspaceOperationRecordCommand command,
             CancellationToken cancellationToken = default) =>

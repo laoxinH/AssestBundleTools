@@ -1,4 +1,5 @@
 using System.IO;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Workspace;
@@ -53,6 +54,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
             ApplyPersistedUndoReplacementOperation(workspaceState, operation);
             ApplyPersistedRedoReplacementOperation(workspaceState, operation);
             ApplyPersistedSpriteEditOperation(workspaceState, operation);
+            ApplyPersistedTextEditOperation(workspaceState, operation);
         }
     }
 
@@ -65,6 +67,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
             assetState.AppliedWorkspaceReplacement = null;
             assetState.AppliedFileReplacement = null;
             assetState.AppliedSpriteEdit = null;
+            assetState.AppliedTextEdit = null;
             assetState.ReplacementUndoStack.Clear();
             assetState.ReplacementRedoStack.Clear();
         }
@@ -275,6 +278,37 @@ public sealed partial class CachedWorkspaceSessionRegistry
                 operation.Source?.DraftId ?? operation.Result.DraftId ?? operation.OperationId,
                 operation.Source?.DraftMode ?? "sprite-geometry",
                 operation.Result.SpriteEditGeometry,
+                operation.AppliedAtUtc ?? operation.CompletedAtUtc ?? operation.CreatedAtUtc));
+    }
+
+    private static void ApplyPersistedTextEditOperation(
+        WorkspaceSessionState workspaceState,
+        WorkspaceOperationRecordDto operation)
+    {
+        if (operation.OperationKind != WorkspaceOperationKind.EditDraftApplied ||
+            !string.Equals(
+                operation.Source?.DraftMode,
+                WorkspaceTextEditOperationRecorder.TextDraftMode,
+                StringComparison.Ordinal) ||
+            string.IsNullOrWhiteSpace(operation.Target?.BundleId) ||
+            string.IsNullOrWhiteSpace(operation.Target.AssetId) ||
+            !workspaceState.BundlesById.TryGetValue(operation.Target.BundleId, out var targetBundleState))
+        {
+            return;
+        }
+
+        var targetAssetState = targetBundleState.Assets.FirstOrDefault(asset =>
+            string.Equals(asset.AssetId.Value, operation.Target.AssetId, StringComparison.Ordinal));
+        if (targetAssetState is null || targetAssetState.AssetType != AssetType.TextAsset)
+        {
+            return;
+        }
+
+        ApplyTextEditState(
+            targetAssetState,
+            new AppliedTextEditState(
+                operation.Source?.DraftId ?? operation.Result?.DraftId ?? operation.OperationId,
+                operation.Source?.DraftMode ?? WorkspaceTextEditOperationRecorder.TextDraftMode,
                 operation.AppliedAtUtc ?? operation.CompletedAtUtc ?? operation.CreatedAtUtc));
     }
 }

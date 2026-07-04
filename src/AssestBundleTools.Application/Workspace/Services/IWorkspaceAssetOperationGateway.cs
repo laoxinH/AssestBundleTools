@@ -52,6 +52,18 @@ public interface IWorkspaceAssetOperationGateway
         ApplySpriteEditCommand command,
         CancellationToken cancellationToken = default);
 
+    Task<Result<AssetTextEditDraftDto>> CreateTextAssetEditDraftAsync(
+        CreateTextAssetEditDraftCommand command,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<AssetTextEditAppliedResultDto>> ApplyTextAssetEditDraftAsync(
+        ApplyTextAssetEditDraftCommand command,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<AssetTextEditDraftDiscardedResultDto>> DiscardTextAssetEditDraftAsync(
+        DiscardTextAssetEditDraftCommand command,
+        CancellationToken cancellationToken = default);
+
     Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(
         DeleteWorkspaceOperationRecordCommand command,
         CancellationToken cancellationToken = default);

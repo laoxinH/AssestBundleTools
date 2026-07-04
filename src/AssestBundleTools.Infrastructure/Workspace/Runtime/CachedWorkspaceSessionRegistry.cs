@@ -20,6 +20,7 @@ public sealed partial class CachedWorkspaceSessionRegistry :
     IWorkspaceAssociatedAssetImpactRegistry,
     IWorkspaceReplacementRedoSessionRegistry,
     IWorkspaceSpriteEditSessionRegistry,
+    IWorkspaceTextEditSessionRegistry,
     IWorkspaceOperationReplaySessionRegistry
 {
     private readonly object _syncRoot = new();
@@ -236,7 +237,10 @@ public sealed partial class CachedWorkspaceSessionRegistry :
                 CanRedoReplacement: assetState.ReplacementRedoStack.Count > 0,
                 ChangeRecords: BuildAssetChangeRecords(workspaceState, bundleState, assetState),
                 SpriteEditGeometry: assetState.AppliedSpriteEdit?.Geometry,
-                SpriteEditAppliedAtUtc: assetState.AppliedSpriteEdit?.AppliedAtUtc);
+                SpriteEditAppliedAtUtc: assetState.AppliedSpriteEdit?.AppliedAtUtc,
+                TextEditDraftId: assetState.AppliedTextEdit?.DraftId,
+                TextEditDraftMode: assetState.AppliedTextEdit?.DraftMode,
+                TextEditAppliedAtUtc: assetState.AppliedTextEdit?.AppliedAtUtc);
 
             return true;
         }
@@ -400,7 +404,8 @@ public sealed partial class CachedWorkspaceSessionRegistry :
         var workspaceReplacementAppliedAtUtc = assetState.AppliedWorkspaceReplacement?.AppliedAtUtc;
         var fileReplacementAppliedAtUtc = assetState.AppliedFileReplacement?.AppliedAtUtc;
         var spriteEditAppliedAtUtc = assetState.AppliedSpriteEdit?.AppliedAtUtc;
-        var lastChangedAtUtc = new[] { assetState.LastExtractedAtUtc, workspaceReplacementAppliedAtUtc, fileReplacementAppliedAtUtc, spriteEditAppliedAtUtc }
+        var textEditAppliedAtUtc = assetState.AppliedTextEdit?.AppliedAtUtc;
+        var lastChangedAtUtc = new[] { assetState.LastExtractedAtUtc, workspaceReplacementAppliedAtUtc, fileReplacementAppliedAtUtc, spriteEditAppliedAtUtc, textEditAppliedAtUtc }
             .Where(static timestamp => timestamp.HasValue)
             .Select(static timestamp => timestamp!.Value)
             .OrderByDescending(static timestamp => timestamp)
@@ -410,7 +415,8 @@ public sealed partial class CachedWorkspaceSessionRegistry :
                                assetState.LastExtractedAtUtc.HasValue ||
                                workspaceReplacementAppliedAtUtc.HasValue ||
                                fileReplacementAppliedAtUtc.HasValue ||
-                               spriteEditAppliedAtUtc.HasValue;
+                               spriteEditAppliedAtUtc.HasValue ||
+                               textEditAppliedAtUtc.HasValue;
         if (!hasTrackedChange)
         {
             return null;

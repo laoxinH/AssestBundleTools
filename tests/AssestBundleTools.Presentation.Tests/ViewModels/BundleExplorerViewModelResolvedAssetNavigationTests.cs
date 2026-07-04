@@ -292,6 +292,21 @@ public sealed class BundleExplorerViewModelResolvedAssetNavigationTests
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
+        public Task<Result<AssetTextEditDraftDto>> CreateTextAssetEditDraftAsync(
+            CreateTextAssetEditDraftCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<AssetTextEditAppliedResultDto>> ApplyTextAssetEditDraftAsync(
+            ApplyTextAssetEditDraftCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<AssetTextEditDraftDiscardedResultDto>> DiscardTextAssetEditDraftAsync(
+            DiscardTextAssetEditDraftCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
         public Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(
             DeleteWorkspaceOperationRecordCommand command,
             CancellationToken cancellationToken = default) =>

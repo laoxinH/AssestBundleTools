@@ -133,10 +133,18 @@
                     AvailablePreviewSurfaceMinHeight="340"
                     FixedPreviewSurfaceHeight="520"
                     UseAvailablePreviewSpace="True"
+                    Visibility="{x:Bind ViewModel.PreviewSurfaceVisibility, Mode=OneWay}"
                     ViewModel="{x:Bind ViewModel.Inspector, Mode=OneWay}"
                     OpenPreviewLocationRequested="OnPreviewSurfaceOpenPreviewLocationRequested"
                     SpriteTextureReplacementRequested="OnPreviewSurfaceSpriteTextureReplacementRequested"
                     ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested" />
+
+                <controls:TextAssetEditDraftView
+                    MinHeight="340"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Visibility="{x:Bind ViewModel.TextEditPanelVisibility, Mode=OneWay}"
+                    ViewModel="{x:Bind ViewModel.ActiveTextEditDraft, Mode=OneWay}" />
 
                 <controls:SpriteEditGeometryPanelView
                     Grid.Row="1"
@@ -196,6 +204,31 @@
                                         <TextBlock
                                             x:Name="ModifyButtonText"
                                             Text="{x:Bind ViewModel.Inspector.ModifyButtonText, Mode=OneWay}" />
+                                    </StackPanel>
+                                </Button>
+
+                                <Border
+                                    Width="1"
+                                    Height="16"
+                                    Margin="2,0"
+                                    VerticalAlignment="Center"
+                                    Background="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                    Visibility="{x:Bind ViewModel.Inspector.EditButtonVisibility, Mode=OneWay}" />
+
+                                <Button
+                                    x:Name="EditTextButton"
+                                    AutomationProperties.Name="{x:Bind ViewModel.Inspector.EditButtonText, Mode=OneWay}"
+                                    Click="OnEditTextButtonClick"
+                                    IsEnabled="{x:Bind ViewModel.Inspector.CanEditText, Mode=OneWay}"
+                                    Style="{StaticResource WorkspaceOperationButtonStyle}"
+                                    ToolTipService.ToolTip="{x:Bind ViewModel.Inspector.EditButtonText, Mode=OneWay}"
+                                    Visibility="{x:Bind ViewModel.Inspector.EditButtonVisibility, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="12"
+                                            Glyph="{x:Bind ViewModel.Inspector.EditButtonIconGlyph, Mode=OneWay}" />
+                                        <TextBlock Text="{x:Bind ViewModel.Inspector.EditButtonText, Mode=OneWay}" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -361,6 +394,45 @@
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
+
+                            <StackPanel
+                                Orientation="Horizontal"
+                                Spacing="0"
+                                Visibility="{x:Bind ViewModel.TextEditActionBarVisibility, Mode=OneWay}">
+                                <Button
+                                    x:Name="SaveTextEditButton"
+                                    Click="OnSaveTextEditButtonClick"
+                                    IsEnabled="{x:Bind ViewModel.CanSaveTextEdit, Mode=OneWay}"
+                                    Style="{StaticResource WorkspaceOperationButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="12"
+                                            Glyph="&#xE74E;" />
+                                        <TextBlock x:Name="SaveTextEditButtonText" />
+                                    </StackPanel>
+                                </Button>
+
+                                <Border
+                                    Width="1"
+                                    Height="16"
+                                    Margin="2,0"
+                                    VerticalAlignment="Center"
+                                    Background="{ThemeResource ControlStrokeColorDefaultBrush}" />
+
+                                <Button
+                                    x:Name="ExitTextEditButton"
+                                    Click="OnExitTextEditButtonClick"
+                                    Style="{StaticResource WorkspaceOperationButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="12"
+                                            Glyph="&#xE72B;" />
+                                        <TextBlock x:Name="ExitTextEditButtonText" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
                         </Grid>
                     </ScrollViewer>
                 </Border>
@@ -378,6 +450,7 @@
                     ViewModel="{x:Bind ViewModel.Inspector, Mode=OneWay}"
                     ApplyReplacementRequested="OnInspectorApplyReplacementRequested"
                     ExtractRequested="OnInspectorExtractRequested"
+                    EditRequested="OnInspectorEditRequested"
                     ModifyFromFileReplacementSourceRequested="OnInspectorModifyFromFileReplacementSourceRequested"
                     OpenPreviewLocationRequested="OnInspectorOpenPreviewLocationRequested"
                     RedoReplacementRequested="OnInspectorRedoReplacementRequested"

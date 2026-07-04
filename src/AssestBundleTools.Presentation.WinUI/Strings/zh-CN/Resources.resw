@@ -2631,6 +2631,24 @@
   <data name="InspectorPanelView.ApplySpineEditButton.Content" xml:space="preserve">
     <value>保存 Spine 编辑</value>
   </data>
+  <data name="TextAssetEditor.ApplyButton.Content" xml:space="preserve">
+    <value>保存文本编辑</value>
+  </data>
+  <data name="TextAssetEditor.ExitButton.Content" xml:space="preserve">
+    <value>退出</value>
+  </data>
+  <data name="TextAssetEditor.ReadOnlyHint.Text" xml:space="preserve">
+    <value>只读文本编辑器草稿视图。当前阶段支持大文本行号和搜索，正文修改会在下一阶段接入。</value>
+  </data>
+  <data name="TextAssetEditor.LineStatus.Format" xml:space="preserve">
+    <value>已加载 {0} / {1} 行</value>
+  </data>
+  <data name="TextAssetEditor.Search.PlaceholderText" xml:space="preserve">
+    <value>搜索文本</value>
+  </data>
+  <data name="TextAssetEditor.SearchButton.ToolTip" xml:space="preserve">
+    <value>搜索</value>
+  </data>
   <data name="InspectorPanelView.ExitSpriteEditButton.Content" xml:space="preserve">
     <value>退出</value>
   </data>
@@ -2775,6 +2793,9 @@
   <data name="InspectorPanelView.ChangeRecord.SpriteEdit.Title" xml:space="preserve">
     <value>Sprite 编辑</value>
   </data>
+  <data name="InspectorPanelView.ChangeRecord.TextEdit.Title" xml:space="preserve">
+    <value>文本编辑</value>
+  </data>
   <data name="InspectorPanelView.ChangeRecord.AssociatedFileReplacement.Title" xml:space="preserve">
     <value>关联资源修改</value>
   </data>
@@ -2795,6 +2816,9 @@
   </data>
   <data name="InspectorPanelView.ChangeRecord.SpriteEdit.Source" xml:space="preserve">
     <value>裁切框 / Pivot</value>
+  </data>
+  <data name="InspectorPanelView.ChangeRecord.TextEdit.Source" xml:space="preserve">
+    <value>文本草稿</value>
   </data>
   <data name="InspectorPanelView.ChangeRecord.Time.Format" xml:space="preserve">
     <value>时间：{0}</value>

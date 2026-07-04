@@ -1288,6 +1288,7 @@ public static class ResourceKeys
     public const string InspectorChangeRecordFileReplacementTitle = "InspectorPanelView.ChangeRecord.FileReplacement.Title";
     public const string InspectorChangeRecordWorkspaceReplacementTitle = "InspectorPanelView.ChangeRecord.WorkspaceReplacement.Title";
     public const string InspectorChangeRecordSpriteEditTitle = "InspectorPanelView.ChangeRecord.SpriteEdit.Title";
+    public const string InspectorChangeRecordTextEditTitle = "InspectorPanelView.ChangeRecord.TextEdit.Title";
     public const string InspectorChangeRecordAssociatedFileReplacementTitle = "InspectorPanelView.ChangeRecord.AssociatedFileReplacement.Title";
     public const string InspectorChangeRecordEffectiveBadge = "InspectorPanelView.ChangeRecord.EffectiveBadge";
     public const string InspectorChangeRecordRedoBadge = "InspectorPanelView.ChangeRecord.RedoBadge";
@@ -1295,6 +1296,7 @@ public static class ResourceKeys
     public const string InspectorChangeRecordSourceFormat = "InspectorPanelView.ChangeRecord.Source.Format";
     public const string InspectorChangeRecordTargetFormat = "InspectorPanelView.ChangeRecord.Target.Format";
     public const string InspectorChangeRecordSpriteEditSource = "InspectorPanelView.ChangeRecord.SpriteEdit.Source";
+    public const string InspectorChangeRecordTextEditSource = "InspectorPanelView.ChangeRecord.TextEdit.Source";
     public const string InspectorChangeRecordTimeFormat = "InspectorPanelView.ChangeRecord.Time.Format";
     public const string InspectorPreviewDiagnosticCacheStatusHit = "InspectorPanelView.PreviewDiagnostic.CacheStatus.Hit";
     public const string InspectorPreviewDiagnosticCacheStatusMissing = "InspectorPanelView.PreviewDiagnostic.CacheStatus.Missing";
@@ -1328,6 +1330,12 @@ public static class ResourceKeys
     public const string InspectorApplySpriteEditButton = "InspectorPanelView.ApplySpriteEditButton.Content";
     public const string InspectorApplySpineEditButton = "InspectorPanelView.ApplySpineEditButton.Content";
     public const string InspectorExitSpriteEditButton = "InspectorPanelView.ExitSpriteEditButton.Content";
+    public const string TextAssetEditorApplyButton = "TextAssetEditor.ApplyButton.Content";
+    public const string TextAssetEditorExitButton = "TextAssetEditor.ExitButton.Content";
+    public const string TextAssetEditorReadOnlyHint = "TextAssetEditor.ReadOnlyHint.Text";
+    public const string TextAssetEditorLineStatusFormat = "TextAssetEditor.LineStatus.Format";
+    public const string TextAssetEditorSearchPlaceholder = "TextAssetEditor.Search.PlaceholderText";
+    public const string TextAssetEditorSearchButtonToolTip = "TextAssetEditor.SearchButton.ToolTip";
     public const string InspectorUnsavedSpriteEditDialogTitle = "InspectorPanelView.SpriteEdit.UnsavedDialog.Title";
     public const string InspectorUnsavedSpriteEditDialogDescription = "InspectorPanelView.SpriteEdit.UnsavedDialog.Description";
     public const string InspectorUnsavedSpineEditDialogTitle = "InspectorPanelView.SpineEdit.UnsavedDialog.Title";

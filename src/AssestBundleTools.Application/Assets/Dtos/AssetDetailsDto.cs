@@ -43,4 +43,7 @@ public sealed record AssetDetailsDto(
     bool CanRedoReplacement = false,
     IReadOnlyList<AssetChangeRecordDto>? ChangeRecords = null,
     WorkspaceSpriteEditGeometryDto? SpriteEditGeometry = null,
-    DateTimeOffset? SpriteEditAppliedAtUtc = null);
+    DateTimeOffset? SpriteEditAppliedAtUtc = null,
+    string? TextEditDraftId = null,
+    string? TextEditDraftMode = null,
+    DateTimeOffset? TextEditAppliedAtUtc = null);

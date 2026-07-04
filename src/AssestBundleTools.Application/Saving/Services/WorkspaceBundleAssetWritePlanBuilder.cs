@@ -16,12 +16,14 @@ internal sealed class WorkspaceBundleAssetWritePlanBuilder
     private const string SourceKindFile = "file";
     private const string SourceKindWorkspace = "workspace";
     private const string SourceKindSpriteEdit = "sprite-edit";
+    private const string SourceKindTextDraft = "text-draft";
 
     private readonly IWorkspaceDataStoreFactory? _workspaceDataStoreFactory;
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly AssestBundleTools.Domain.Workspace.WorkspaceId _workspaceId;
     private readonly WorkspaceReplacementStateMaterializer _replacementStateMaterializer = new();
     private readonly WorkspaceSpriteEditStateMaterializer _spriteEditStateMaterializer = new();
+    private readonly WorkspaceTextEditStateMaterializer _textEditStateMaterializer = new();
 
     public WorkspaceBundleAssetWritePlanBuilder(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
@@ -42,7 +44,7 @@ internal sealed class WorkspaceBundleAssetWritePlanBuilder
         ArgumentNullException.ThrowIfNull(selectedPlan);
 
         var items = TryLoadChangeSet(workspaceKey, workspaceDataRootPath, out var changeSet) && changeSet is not null
-            ? BuildFromChangeSet(selectedPlan, changeSet)
+            ? BuildFromChangeSet(selectedPlan, changeSet, workspaceKey, workspaceDataRootPath)
             : BuildFromChangeItems(selectedPlan);
         return ApplyProcessorOutputs(items, processorResults);
     }
@@ -74,7 +76,9 @@ internal sealed class WorkspaceBundleAssetWritePlanBuilder
 
     private IReadOnlyList<WorkspaceBundleAssetWriteItemDto> BuildFromChangeSet(
         PlannedWorkspaceBundleSave selectedPlan,
-        WorkspaceChangeSetDto changeSet)
+        WorkspaceChangeSetDto changeSet,
+        string? workspaceKey,
+        string? workspaceDataRootPath)
     {
         var items = new List<WorkspaceBundleAssetWriteItemDto>();
         foreach (var replacement in _replacementStateMaterializer.Materialize(changeSet).EffectiveReplacements)
@@ -92,6 +96,17 @@ internal sealed class WorkspaceBundleAssetWritePlanBuilder
         {
             if (!TargetBelongsToBundle(edit.Target, selectedPlan.BundleId) ||
                 !TryCreateSpriteEditItem(edit, out var item))
+            {
+                continue;
+            }
+
+            items.Add(item);
+        }
+
+        foreach (var edit in _textEditStateMaterializer.Materialize(changeSet).EffectiveEdits)
+        {
+            if (!TargetBelongsToBundle(edit.Target, selectedPlan.BundleId) ||
+                !TryCreateTextEditItem(edit, workspaceKey, workspaceDataRootPath, out var item))
             {
                 continue;
             }
@@ -228,6 +243,39 @@ internal sealed class WorkspaceBundleAssetWritePlanBuilder
         return true;
     }
 
+    private static bool TryCreateTextEditItem(
+        WorkspaceEffectiveTextEditDto edit,
+        string? workspaceKey,
+        string? workspaceDataRootPath,
+        out WorkspaceBundleAssetWriteItemDto item)
+    {
+        item = default!;
+        if (string.IsNullOrWhiteSpace(workspaceKey) ||
+            string.IsNullOrWhiteSpace(workspaceDataRootPath) ||
+            string.IsNullOrWhiteSpace(edit.DraftId) ||
+            !TryCreateTargetIdentity(edit.Target, out var targetIdentity))
+        {
+            return false;
+        }
+
+        item = new WorkspaceBundleAssetWriteItemDto(
+            targetIdentity.BundleId,
+            targetIdentity.AssetId,
+            targetIdentity.AssetName,
+            targetIdentity.AssetType,
+            targetIdentity.AssetTypeDisplayName,
+            targetIdentity.SerializedFileName,
+            targetIdentity.PathId,
+            SourceKindTextDraft,
+            DraftId: edit.DraftId,
+            DraftMode: edit.DraftMode ?? WorkspaceTextEditOperationRecorder.TextDraftMode,
+            WorkspaceKey: workspaceKey.Trim(),
+            WorkspaceDataRootPath: workspaceDataRootPath.Trim(),
+            OperationId: edit.OperationId,
+            Sequence: edit.Sequence);
+        return true;
+    }
+
     private static IReadOnlyList<WorkspaceBundleAssetWriteItemDto> ApplyProcessorOutputs(
         IReadOnlyList<WorkspaceBundleAssetWriteItemDto> items,
         IReadOnlyList<WorkspaceResourceProcessorExecutionResultDto> processorResults)
@@ -285,6 +333,7 @@ internal sealed class WorkspaceBundleAssetWritePlanBuilder
         NormalizeSourceKind(sourceKind) switch
         {
             SourceKindSpriteEdit => 0,
+            SourceKindTextDraft => 0,
             SourceKindFile => 1,
             SourceKindWorkspace => 1,
             _ => 9

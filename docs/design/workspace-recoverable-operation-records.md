@@ -81,7 +81,7 @@ checkpoints[]      # 后续：保存 / 导出检查点
 - 完整跨操作全局 redo 栈；当前只实现目标资源级替换 redo，用于重做最近一次被撤销的替换，或从资源详情变更卡片重新应用某条历史替换记录。
 - 保存后跨输出包自动反向写回。
 - 自动删除用户已经导出的外部文件。
-- 完整编辑草稿生命周期；当前只落地文本 payload 存取底座，尚未实现文本编辑器创建 / 更新 / 恢复 / 丢弃 / 应用流程。
+- 完整正文编辑器；当前只落地文本 payload 存取底座，以及 `TextAsset / Shader` 独立窗口化只读编辑壳、草稿创建、TextAsset 应用和退出丢弃。正文草稿更新、编辑撤销 / 重做、JSON 格式化编辑、Shader 写回和完整恢复进入编辑态仍按后续阶段推进。
 - 多人协作或跨进程同时编辑同一工作区。
 - 直接把操作记录当作用户可见文案来源。
 
@@ -90,7 +90,7 @@ checkpoints[]      # 后续：保存 / 导出检查点
 - **操作记录**：用户或系统确认执行的一次可恢复动作，例如提取、替换、应用草稿、撤销替换。
 - **操作事实流**：按 `sequence` 递增保存的 `operations[]`。
 - **物化变更摘要**：由操作事实流计算出的当前工作区待保存 / 待展示状态，对应现有 `WorkspaceChangeSummaryDto` 和 `changes[]`。
-- **编辑草稿**：尚未应用到工作区变更队列的临时编辑内容。当前描述元数据保存在 `editDrafts[]`，文本类大载荷可保存在 `staging/drafts`，但草稿生命周期仍未接入完整编辑器模型。
+- **编辑草稿**：尚未应用到工作区变更队列的临时编辑内容。当前描述元数据保存在 `editDrafts[]`，文本类大载荷保存在 `staging/drafts`；`TextAsset / Shader` 第一阶段已接入创建和丢弃，`TextAsset` 已接入应用，正文更新和 Shader 写回仍待后续阶段。
 - **检查点**：保存 / 导出动作成功后产生的边界，用来标记哪些操作已经被外部输出消费。
 
 ## 6. 操作记录模型
@@ -344,13 +344,14 @@ relatedOperationId
 
 编辑草稿分为“草稿描述”“轻量已应用结果”和“大载荷草稿内容”三层。
 
-当前已落地的是描述层、Sprite 几何的轻量已应用结果，以及文本类大载荷草稿的文件背书底座：
+当前已落地的是描述层、Sprite 几何的轻量已应用结果，以及文本类大载荷草稿的文件背书和 TextAsset 第一阶段应用链路：
 
 - `editDrafts[]`
 - `WorkspaceAssetEditDraftDescriptorDto`
 - `AssetEditDraftRestorePlan`
 - `AssetPreviewFullContentReferenceKind.EditDraft`
 - `IAssetEditDraftTextStore`
+- `CreateTextAssetEditDraft / ApplyTextAssetEditDraft / DiscardTextAssetEditDraft`
 - `WorkspaceOperationKind.EditDraftApplied`
 - `WorkspaceOperationResultDto.SpriteEditGeometry`
 
@@ -372,7 +373,18 @@ Spine 编辑草稿预览不得绕过有效读模型。编辑态预览输入为�
 - 草稿描述 sidecar 为 `text-draft.json`，用于校验 `workspaceKey / draftId / draftMode`、内容类型、长度和来源指纹。
 - 行 / 字符稀疏索引 sidecar 为 `text.lines.json`，供完整文本查看、行号、搜索和后续文本编辑器虚拟化复用。
 - `AssetPreviewFullContentReferenceKind.EditDraft` 只能作为 Application query 的引用参数；Presentation 不得直接读取 `staging/drafts`。
-- 该 store 只保存 payload，不决定草稿是否可恢复、是否已应用或是否应丢弃；这些仍由 `editDrafts[]` 描述和后续操作记录表达。
+- 该 store 只保存 payload，不决定草稿是否可恢复、是否已应用或是否应丢弃；这些仍由 `editDrafts[]` 描述和操作记录表达。
+
+当前 `TextAsset / Shader` 编辑器第一阶段规则：
+
+1. `替换文件` 与 `编辑` 是两个独立入口；文件替换继续生成 `ReplaceFromFile`，文本编辑只通过资源编辑窗口的文本编辑模式进入。
+2. 打开文本编辑模式时，Application 创建 `text-content` 草稿，写入 `staging/drafts/<workspaceKey>/<draftId>/text-content/`，并追加 `EditDraftCreated`；Presentation 只保存 `draftId / draftMode` 和 `EditDraft` reference。
+3. 文本编辑第一阶段的 UI 是只读大文本工作面：初始加载有限行数、展示行号、执行有限搜索；所有读取和搜索必须回到 Application query，Presentation 不直接读草稿文件。
+4. TextAsset 保存时追加 `EditDraftApplied`，`source.sourceKind=draft`、`source.draftMode=text-content`、`source.draftId=<draftId>`；运行时读模型把该草稿物化为目标资产当前有效文本编辑，变更分段显示 `TextEdit` 记录。
+5. Shader 当前可以进入只读工作面，但 `CanApply=false`，保存按钮保持禁用；只有接入 Shader 写回适配器后才能追加可生效的文本编辑记录。
+6. 用户点击退出，或关闭处于文本编辑模式的资源标签 / 编辑窗口时，若草稿尚未应用，应追加 `EditDraftDiscarded` 并从 `editDrafts[]` 移除该草稿描述；这只清理草稿生命周期，不删除已应用操作引用仍需要的 payload。
+7. 当前阶段尚未生成 `EditDraftUpdated`；正文编辑落地后，输入改动应先写入 draft store 并追加 / 合并 `EditDraftUpdated`，保存再追加 `EditDraftApplied`。
+8. 保存 / 导出写包从操作事实流物化 TextAsset 当前有效 `text-content` 草稿，并由对象写包适配器读取草稿 payload 写入 TextAsset 的 `m_Script`。替换或编辑命令本身不得提前改写 AB。
 
 后续大载荷编辑操作记录应引用草稿，不直接保存草稿内容：
 

@@ -162,6 +162,54 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         return result;
     }
 
+    public async Task<Result<AssetTextEditDraftDto>> CreateTextAssetEditDraftAsync(
+        CreateTextAssetEditDraftCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _inner.CreateTextAssetEditDraftAsync(command, cancellationToken);
+        NotifyIfSucceeded(
+            result,
+            command.WorkspaceId,
+            WorkspaceOperationChangeKind.Edit,
+            ExpandAffectedAssets(
+                command.WorkspaceId,
+                CreateAffectedAsset(command.BundleId, command.AssetId)),
+            WorkspaceOperationChangeReason.EditApplied);
+        return result;
+    }
+
+    public async Task<Result<AssetTextEditAppliedResultDto>> ApplyTextAssetEditDraftAsync(
+        ApplyTextAssetEditDraftCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _inner.ApplyTextAssetEditDraftAsync(command, cancellationToken);
+        NotifyIfSucceeded(
+            result,
+            command.WorkspaceId,
+            WorkspaceOperationChangeKind.Edit,
+            ExpandAffectedAssets(
+                command.WorkspaceId,
+                CreateAffectedAsset(command.BundleId, command.AssetId)),
+            WorkspaceOperationChangeReason.EditApplied);
+        return result;
+    }
+
+    public async Task<Result<AssetTextEditDraftDiscardedResultDto>> DiscardTextAssetEditDraftAsync(
+        DiscardTextAssetEditDraftCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _inner.DiscardTextAssetEditDraftAsync(command, cancellationToken);
+        NotifyIfSucceeded(
+            result,
+            command.WorkspaceId,
+            WorkspaceOperationChangeKind.Edit,
+            ExpandAffectedAssets(
+                command.WorkspaceId,
+                CreateAffectedAsset(command.BundleId, command.AssetId)),
+            WorkspaceOperationChangeReason.EditApplied);
+        return result;
+    }
+
     public async Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(
         DeleteWorkspaceOperationRecordCommand command,
         CancellationToken cancellationToken = default)

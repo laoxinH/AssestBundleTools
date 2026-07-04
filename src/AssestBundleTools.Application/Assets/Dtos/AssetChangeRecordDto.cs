@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
 
 namespace AssestBundleTools.Application.Assets.Dtos;
@@ -34,7 +35,7 @@ public sealed record AssetChangeRecordDto(
         bool isRelatedOperation = false)
     {
         ArgumentNullException.ThrowIfNull(operation);
-        var kind = MapKind(operation.OperationKind);
+        var kind = MapKind(operation);
         if (isRelatedOperation && kind == AssetChangeRecordKind.FileReplacement)
         {
             kind = AssetChangeRecordKind.AssociatedFileReplacement;
@@ -57,7 +58,7 @@ public sealed record AssetChangeRecordDto(
                     AssetChangeRecordKind.AssociatedFileReplacement,
             DraftId: operation.Source?.DraftId ?? operation.Result?.DraftId,
             DraftMode: operation.Source?.DraftMode,
-            IsEffectiveEdit: isEffectiveOperation && kind == AssetChangeRecordKind.SpriteEdit,
+            IsEffectiveEdit: isEffectiveOperation && kind is AssetChangeRecordKind.SpriteEdit or AssetChangeRecordKind.TextEdit,
             TargetBundleId: operation.Target?.BundleId,
             TargetAssetId: operation.Target?.AssetId,
             TargetAssetName: operation.Target?.AssetName,
@@ -65,13 +66,32 @@ public sealed record AssetChangeRecordDto(
             IsRelatedOperation: isRelatedOperation);
     }
 
-    private static AssetChangeRecordKind MapKind(WorkspaceOperationKind operationKind) =>
-        operationKind switch
+    private static AssetChangeRecordKind MapKind(WorkspaceOperationRecordDto operation) =>
+        operation.OperationKind switch
         {
             WorkspaceOperationKind.ReplaceFromFile => AssetChangeRecordKind.FileReplacement,
             WorkspaceOperationKind.ReplaceFromWorkspace => AssetChangeRecordKind.WorkspaceReplacement,
             WorkspaceOperationKind.ExtractAsset => AssetChangeRecordKind.Extraction,
-            WorkspaceOperationKind.EditDraftApplied => AssetChangeRecordKind.SpriteEdit,
+            WorkspaceOperationKind.EditDraftApplied => MapEditDraftKind(operation),
             _ => AssetChangeRecordKind.Unknown
         };
+
+    private static AssetChangeRecordKind MapEditDraftKind(WorkspaceOperationRecordDto operation)
+    {
+        if (string.Equals(
+                operation.Source?.DraftMode,
+                WorkspaceSpriteEditOperationRecorder.SpriteGeometryDraftMode,
+                StringComparison.Ordinal) ||
+            operation.Result?.SpriteEditGeometry is not null)
+        {
+            return AssetChangeRecordKind.SpriteEdit;
+        }
+
+        return string.Equals(
+                operation.Source?.DraftMode,
+                WorkspaceTextEditOperationRecorder.TextDraftMode,
+                StringComparison.Ordinal)
+            ? AssetChangeRecordKind.TextEdit
+            : AssetChangeRecordKind.Unknown;
+    }
 }

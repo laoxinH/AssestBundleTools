@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Domain.Assets;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -106,6 +107,64 @@ public sealed partial class AssetEditorWindowViewModel
         return applied;
     }
 
+    public async Task<bool> RequestTextEditModeForActiveAssetAsync()
+    {
+        var assetTab = DocumentGroup.ActiveAssetTab;
+        if (assetTab?.Details is null || !CanUseTextEditor(assetTab.Details))
+        {
+            return false;
+        }
+
+        if (assetTab.TextEditDraft is null)
+        {
+            var draft = await _assetActionCoordinator.CreateTextAssetEditDraftAsync();
+            if (draft is null)
+            {
+                return false;
+            }
+
+            assetTab.StartTextEditMode(draft);
+        }
+
+        NotifyActionStates();
+        NotifyActionBarStates();
+        OnPropertyChanged(nameof(Inspector));
+        return true;
+    }
+
+    public async Task<bool> ApplyTextEditAsync()
+    {
+        var applied = await _assetActionCoordinator.ApplyTextAssetEditDraftAsync();
+        if (applied)
+        {
+            DocumentGroup.ActiveAssetTab?.ExitTextEditMode(clearDraftReference: false);
+            NotifyActionStates();
+            NotifyActionBarStates();
+        }
+
+        return applied;
+    }
+
+    public async Task<bool> ExitTextEditModeForActiveAssetAsync()
+    {
+        if (DocumentGroup.ActiveAssetTab?.TextEditDraft is null)
+        {
+            return true;
+        }
+
+        var discarded = await _assetActionCoordinator.DiscardTextAssetEditDraftAsync();
+        if (!discarded)
+        {
+            return false;
+        }
+
+        DocumentGroup.ActiveAssetTab?.ExitTextEditMode(clearDraftReference: true);
+        NotifyActionStates();
+        NotifyActionBarStates();
+        OnPropertyChanged(nameof(Inspector));
+        return true;
+    }
+
     public async Task ExitSpineEditModeForActiveGroupAsync(bool discardChanges)
     {
         var spineGroupTab = DocumentGroup.ActiveSpineGroupTab;
@@ -184,4 +243,8 @@ public sealed partial class AssetEditorWindowViewModel
         OnPropertyChanged(nameof(Inspector));
         return true;
     }
+
+    private static bool CanUseTextEditor(AssetDetailsDto details) =>
+        details.AssetType == AssetType.TextAsset ||
+        string.Equals(details.AssetTypeDisplayName, "Shader", StringComparison.OrdinalIgnoreCase);
 }

@@ -356,6 +356,8 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         ApplyActionButtonText(ExitSpineEditButton, ExitSpineEditButtonText, ResourceKeys.InspectorExitSpriteEditButton);
         ApplyActionButtonText(UndoSpineEditButton, UndoSpineEditButtonText, ResourceKeys.InspectorUndoReplacementButton);
         ApplyActionButtonText(RedoSpineEditButton, RedoSpineEditButtonText, ResourceKeys.InspectorRedoReplacementButton);
+        ApplyActionButtonText(SaveTextEditButton, SaveTextEditButtonText, ResourceKeys.TextAssetEditorApplyButton);
+        ApplyActionButtonText(ExitTextEditButton, ExitTextEditButtonText, ResourceKeys.TextAssetEditorExitButton);
     }
 
     private async Task<bool> TryExitSpriteEditModeAsync()

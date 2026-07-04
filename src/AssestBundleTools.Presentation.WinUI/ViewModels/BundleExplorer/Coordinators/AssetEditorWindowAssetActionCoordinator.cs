@@ -22,6 +22,7 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
     private readonly ILocalizationService _localizationService;
     private readonly BundleExplorerOperationFeedbackBridge _operationFeedbackBridge;
     private readonly BundleExplorerAssetModificationActionHandler _modificationActionHandler;
+    private readonly AssetEditorWindowTextEditActionCoordinator _textEditActionCoordinator;
     private readonly Func<AssetDocumentTabViewModel?> _activeAssetTabProvider;
     private readonly Func<SpineAssetGroupDocumentTabViewModel?> _activeSpineGroupTabProvider;
     private readonly Func<InspectorPanelViewModel> _inspectorProvider;
@@ -36,6 +37,9 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
         ILocalizationService localizationService,
         BundleExplorerOperationFeedbackBridge operationFeedbackBridge,
         BundleExplorerAssetModificationActionHandler modificationActionHandler,
+        IWorkspaceAssetOperationGateway workspaceAssetOperationGateway,
+        IWorkspaceAssetInspectionGateway workspaceAssetInspectionGateway,
+        IBackgroundTaskRunner backgroundTaskRunner,
         Func<AssetDocumentTabViewModel?> activeAssetTabProvider,
         Func<SpineAssetGroupDocumentTabViewModel?> activeSpineGroupTabProvider,
         Func<InspectorPanelViewModel> inspectorProvider,
@@ -55,6 +59,16 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
         _isBusyProvider = isBusyProvider ?? throw new ArgumentNullException(nameof(isBusyProvider));
         _setBusy = setBusy ?? throw new ArgumentNullException(nameof(setBusy));
         _reapplyAssetDocumentState = reapplyAssetDocumentState ?? throw new ArgumentNullException(nameof(reapplyAssetDocumentState));
+        _textEditActionCoordinator = new AssetEditorWindowTextEditActionCoordinator(
+            _workspaceShell,
+            _localizationService,
+            _operationFeedbackBridge,
+            workspaceAssetOperationGateway,
+            workspaceAssetInspectionGateway,
+            backgroundTaskRunner,
+            _activeAssetTabProvider,
+            TryGetActiveAssetCommandContext,
+            _setBusy);
     }
 
     public void OpenCurrentPreviewLocation()
@@ -326,6 +340,15 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
             _setBusy,
             _operationFeedbackBridge.AppendResultFailure);
     }
+
+    public Task<TextAssetEditDraftViewModel?> CreateTextAssetEditDraftAsync() =>
+        _textEditActionCoordinator.CreateTextAssetEditDraftAsync();
+
+    public Task<bool> ApplyTextAssetEditDraftAsync() =>
+        _textEditActionCoordinator.ApplyTextAssetEditDraftAsync();
+
+    public Task<bool> DiscardTextAssetEditDraftAsync() =>
+        _textEditActionCoordinator.DiscardTextAssetEditDraftAsync();
 
     public async Task DeleteChangeRecordAsync(string? operationId)
     {

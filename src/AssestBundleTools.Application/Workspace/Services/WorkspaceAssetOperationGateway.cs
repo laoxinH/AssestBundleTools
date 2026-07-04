@@ -25,6 +25,9 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
     private readonly UndoAssetReplacementHandler _undoAssetReplacementHandler;
     private readonly RedoAssetReplacementHandler _redoAssetReplacementHandler;
     private readonly ApplySpriteEditHandler _applySpriteEditHandler;
+    private readonly CreateTextAssetEditDraftHandler _createTextAssetEditDraftHandler;
+    private readonly ApplyTextAssetEditDraftHandler _applyTextAssetEditDraftHandler;
+    private readonly DiscardTextAssetEditDraftHandler _discardTextAssetEditDraftHandler;
     private readonly DeleteWorkspaceOperationRecordHandler _deleteWorkspaceOperationRecordHandler;
 
     public WorkspaceAssetOperationGateway(
@@ -37,6 +40,9 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         UndoAssetReplacementHandler undoAssetReplacementHandler,
         RedoAssetReplacementHandler redoAssetReplacementHandler,
         ApplySpriteEditHandler applySpriteEditHandler,
+        CreateTextAssetEditDraftHandler createTextAssetEditDraftHandler,
+        ApplyTextAssetEditDraftHandler applyTextAssetEditDraftHandler,
+        DiscardTextAssetEditDraftHandler discardTextAssetEditDraftHandler,
         DeleteWorkspaceOperationRecordHandler deleteWorkspaceOperationRecordHandler)
     {
         _extractAssetHandler = extractAssetHandler ?? throw new ArgumentNullException(nameof(extractAssetHandler));
@@ -48,6 +54,9 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         _undoAssetReplacementHandler = undoAssetReplacementHandler ?? throw new ArgumentNullException(nameof(undoAssetReplacementHandler));
         _redoAssetReplacementHandler = redoAssetReplacementHandler ?? throw new ArgumentNullException(nameof(redoAssetReplacementHandler));
         _applySpriteEditHandler = applySpriteEditHandler ?? throw new ArgumentNullException(nameof(applySpriteEditHandler));
+        _createTextAssetEditDraftHandler = createTextAssetEditDraftHandler ?? throw new ArgumentNullException(nameof(createTextAssetEditDraftHandler));
+        _applyTextAssetEditDraftHandler = applyTextAssetEditDraftHandler ?? throw new ArgumentNullException(nameof(applyTextAssetEditDraftHandler));
+        _discardTextAssetEditDraftHandler = discardTextAssetEditDraftHandler ?? throw new ArgumentNullException(nameof(discardTextAssetEditDraftHandler));
         _deleteWorkspaceOperationRecordHandler = deleteWorkspaceOperationRecordHandler ?? throw new ArgumentNullException(nameof(deleteWorkspaceOperationRecordHandler));
     }
 
@@ -95,6 +104,21 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         ApplySpriteEditCommand command,
         CancellationToken cancellationToken = default) =>
         _applySpriteEditHandler.HandleAsync(command, cancellationToken);
+
+    public Task<Result<AssetTextEditDraftDto>> CreateTextAssetEditDraftAsync(
+        CreateTextAssetEditDraftCommand command,
+        CancellationToken cancellationToken = default) =>
+        _createTextAssetEditDraftHandler.HandleAsync(command, cancellationToken);
+
+    public Task<Result<AssetTextEditAppliedResultDto>> ApplyTextAssetEditDraftAsync(
+        ApplyTextAssetEditDraftCommand command,
+        CancellationToken cancellationToken = default) =>
+        _applyTextAssetEditDraftHandler.HandleAsync(command, cancellationToken);
+
+    public Task<Result<AssetTextEditDraftDiscardedResultDto>> DiscardTextAssetEditDraftAsync(
+        DiscardTextAssetEditDraftCommand command,
+        CancellationToken cancellationToken = default) =>
+        _discardTextAssetEditDraftHandler.HandleAsync(command, cancellationToken);
 
     public Task<Result<WorkspaceOperationRecordDeletedResultDto>> DeleteWorkspaceOperationRecordAsync(
         DeleteWorkspaceOperationRecordCommand command,

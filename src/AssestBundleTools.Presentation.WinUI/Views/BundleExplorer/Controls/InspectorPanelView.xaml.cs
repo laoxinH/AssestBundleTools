@@ -106,6 +106,8 @@ public sealed partial class InspectorPanelView : UserControl
 
     public event EventHandler? ModifyFromFileReplacementSourceRequested;
 
+    public event EventHandler? EditRequested;
+
     public event EventHandler? ApplyReplacementRequested;
 
     public event EventHandler<InspectorChangeRecordActionRequestedEventArgs>? UndoReplacementRequested;
@@ -146,6 +148,14 @@ public sealed partial class InspectorPanelView : UserControl
         if (ViewModel?.CanModify == true)
         {
             ModifyFromFileReplacementSourceRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private void OnEditButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel?.CanEditText == true)
+        {
+            EditRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 

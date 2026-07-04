@@ -35,6 +35,7 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
     private long _previewRequestVersion;
     private AssetPreviewRequest? _activePreviewRequest;
     private AssetDocumentEditDraftReference? _editDraftReference;
+    private TextAssetEditDraftViewModel? _textEditDraft;
     private bool _isRestoringPreviewImageDisplayOptions;
     private bool _isRestoringPreviewMeshDisplayOptions;
     private bool _isSpriteEditModeRequested;
@@ -116,6 +117,20 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
     public AssetDocumentEditDraftReference? EditDraftReference => _editDraftReference;
 
     public bool HasEditDraft => _editDraftReference is not null;
+
+    public TextAssetEditDraftViewModel? TextEditDraft
+    {
+        get => _textEditDraft;
+        private set
+        {
+            if (SetProperty(ref _textEditDraft, value))
+            {
+                OnPropertyChanged(nameof(IsTextEditModeActive));
+            }
+        }
+    }
+
+    public bool IsTextEditModeActive => TextEditDraft is not null;
 
     public bool IsSpriteEditModeRequested => _isSpriteEditModeRequested;
 
@@ -216,6 +231,25 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
     public void ClearEditDraftReference()
     {
         SetEditDraftReference(null);
+    }
+
+    public void StartTextEditMode(TextAssetEditDraftViewModel textEditDraft)
+    {
+        ArgumentNullException.ThrowIfNull(textEditDraft);
+
+        TextEditDraft = textEditDraft;
+        SetEditDraftReference(new AssetDocumentEditDraftReference(
+            textEditDraft.DraftId,
+            textEditDraft.DraftMode));
+    }
+
+    public void ExitTextEditMode(bool clearDraftReference)
+    {
+        TextEditDraft = null;
+        if (clearDraftReference)
+        {
+            ClearEditDraftReference();
+        }
     }
 
     public void RequestSpriteEditMode()

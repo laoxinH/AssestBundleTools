@@ -761,6 +761,31 @@
                                     Text="{x:Bind ViewModel.ModifyButtonText, Mode=OneWay}" />
                             </StackPanel>
                         </Button>
+
+                        <Border
+                            Width="1"
+                            Height="16"
+                            Margin="7,0"
+                            VerticalAlignment="Center"
+                            Background="{ThemeResource ControlStrokeColorDefaultBrush}"
+                            Visibility="{x:Bind ViewModel.EditButtonVisibility, Mode=OneWay}" />
+
+                        <Button
+                            x:Name="EditButton"
+                            AutomationProperties.Name="{x:Bind ViewModel.EditButtonText, Mode=OneWay}"
+                            Click="OnEditButtonClick"
+                            IsEnabled="{x:Bind ViewModel.CanEditText, Mode=OneWay}"
+                            Style="{StaticResource WorkspaceOperationButtonStyle}"
+                            ToolTipService.ToolTip="{x:Bind ViewModel.EditButtonText, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.EditButtonVisibility, Mode=OneWay}">
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <FontIcon
+                                    FontFamily="Segoe Fluent Icons"
+                                    FontSize="12"
+                                    Glyph="{x:Bind ViewModel.EditButtonIconGlyph, Mode=OneWay}" />
+                                <TextBlock Text="{x:Bind ViewModel.EditButtonText, Mode=OneWay}" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Border>
             </Grid>

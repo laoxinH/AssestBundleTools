@@ -32,6 +32,8 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     private string _changeSummaryText = string.Empty;
     private string _modifyButtonText = string.Empty;
     private string _modifyButtonIconGlyph = "\uE8AC";
+    private string _editButtonText = string.Empty;
+    private string _editButtonIconGlyph = "\uE70F";
     private bool _canExtract;
     private bool _canSelectFileReplacementSource;
     private bool _canSelectReplacementSource;
@@ -39,6 +41,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     private bool _canUndoReplacement;
     private bool _canRedoReplacement;
     private bool _canModify;
+    private bool _canEditText;
     private bool _hasSelection;
     private int _selectedSectionIndex;
     private readonly InspectorInformationCardPresenter _informationCardPresenter;
@@ -154,6 +157,24 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         set => SetProperty(ref _modifyButtonIconGlyph, value);
     }
 
+    public string EditButtonText
+    {
+        get => _editButtonText;
+        set
+        {
+            if (SetProperty(ref _editButtonText, value))
+            {
+                OnPropertyChanged(nameof(EditButtonVisibility));
+            }
+        }
+    }
+
+    public string EditButtonIconGlyph
+    {
+        get => _editButtonIconGlyph;
+        set => SetProperty(ref _editButtonIconGlyph, value);
+    }
+
     public bool CanExtract
     {
         get => _canExtract;
@@ -195,6 +216,17 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         get => _canModify;
         set => SetProperty(ref _canModify, value);
     }
+
+    public bool CanEditText
+    {
+        get => _canEditText;
+        set => SetProperty(ref _canEditText, value);
+    }
+
+    public Visibility EditButtonVisibility =>
+        string.IsNullOrWhiteSpace(EditButtonText)
+            ? Visibility.Collapsed
+            : Visibility.Visible;
 
     /// <summary>
     /// 右侧详情区的页签位置属于页面级浏览状态，
@@ -301,6 +333,8 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         ChangeSummaryText = string.Empty;
         ModifyButtonText = string.Empty;
         ModifyButtonIconGlyph = "\uE8AC";
+        EditButtonText = string.Empty;
+        EditButtonIconGlyph = "\uE70F";
         CanExtract = false;
         CanSelectFileReplacementSource = false;
         CanSelectReplacementSource = false;
@@ -308,6 +342,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         CanUndoReplacement = false;
         CanRedoReplacement = false;
         CanModify = false;
+        CanEditText = false;
         AssetDependencies.Clear();
         ReferencedByDependencies.Clear();
         DependencyClosureItems.Clear();
@@ -349,7 +384,10 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         IEnumerable<InspectorChangeRecordViewModel>? changeRecords = null,
         bool? canModify = null,
         string? modifyButtonText = null,
-        string? modifyButtonIconGlyph = null)
+        string? modifyButtonIconGlyph = null,
+        bool canEditText = false,
+        string? editButtonText = null,
+        string? editButtonIconGlyph = null)
     {
         AssetName = assetName;
         BundleDisplayName = bundleDisplayName;
@@ -366,6 +404,8 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         ChangeSummaryText = changeSummaryText;
         ModifyButtonText = modifyButtonText ?? string.Empty;
         ModifyButtonIconGlyph = modifyButtonIconGlyph ?? "\uE8AC";
+        EditButtonText = editButtonText ?? string.Empty;
+        EditButtonIconGlyph = editButtonIconGlyph ?? "\uE70F";
         CanExtract = canExtract;
         CanSelectFileReplacementSource = canSelectFileReplacementSource;
         CanSelectReplacementSource = canSelectReplacementSource;
@@ -373,6 +413,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         CanUndoReplacement = canUndoReplacement;
         CanRedoReplacement = canRedoReplacement;
         CanModify = canModify ?? canSelectFileReplacementSource;
+        CanEditText = canEditText;
 
         ReplaceCollection(AssetDependencies, assetDependencies);
         ReplaceCollection(ReferencedByDependencies, referencedByDependencies);

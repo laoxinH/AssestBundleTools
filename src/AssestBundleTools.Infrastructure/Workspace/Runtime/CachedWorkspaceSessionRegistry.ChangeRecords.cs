@@ -12,6 +12,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
 {
     private readonly WorkspaceReplacementStateMaterializer _replacementStateMaterializer = new();
     private readonly WorkspaceSpriteEditStateMaterializer _spriteEditStateMaterializer = new();
+    private readonly WorkspaceTextEditStateMaterializer _textEditStateMaterializer = new();
 
     private IReadOnlyList<AssetChangeRecordDto> BuildAssetChangeRecords(
         WorkspaceSessionState workspaceState,
@@ -66,6 +67,10 @@ public sealed partial class CachedWorkspaceSessionRegistry
             changeSet,
             bundleId.Value,
             assetId.Value);
+        var effectiveTextEditOperationId = _textEditStateMaterializer.FindLatestEffectiveTextEditOperationId(
+            changeSet,
+            bundleId.Value,
+            assetId.Value);
         var implicitDependencyAssetKeys = GetImplicitDependencyAssetKeys(workspaceState, bundleId, assetState);
 
         foreach (var operation in operations
@@ -81,7 +86,8 @@ public sealed partial class CachedWorkspaceSessionRegistry
             var record = AssetChangeRecordDto.FromOperation(
                 operation,
                 effectiveReplacementOperationIds.Contains(operation.OperationId) ||
-                string.Equals(operation.OperationId, effectiveSpriteEditOperationId, StringComparison.Ordinal),
+                string.Equals(operation.OperationId, effectiveSpriteEditOperationId, StringComparison.Ordinal) ||
+                string.Equals(operation.OperationId, effectiveTextEditOperationId, StringComparison.Ordinal),
                 isRelatedOperation);
             if (record.Kind != AssetChangeRecordKind.Unknown)
             {
@@ -131,6 +137,17 @@ public sealed partial class CachedWorkspaceSessionRegistry
                 AppliedAtUtc: spriteEdit.AppliedAtUtc,
                 DraftId: spriteEdit.DraftId,
                 DraftMode: spriteEdit.DraftMode,
+                IsEffectiveEdit: true));
+        }
+
+        if (assetState.AppliedTextEdit is { } textEdit)
+        {
+            records.Add(new AssetChangeRecordDto(
+                Kind: AssetChangeRecordKind.TextEdit,
+                CreatedAtUtc: textEdit.AppliedAtUtc,
+                AppliedAtUtc: textEdit.AppliedAtUtc,
+                DraftId: textEdit.DraftId,
+                DraftMode: textEdit.DraftMode,
                 IsEffectiveEdit: true));
         }
 

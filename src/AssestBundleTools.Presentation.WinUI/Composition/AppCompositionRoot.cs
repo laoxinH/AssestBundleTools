@@ -237,6 +237,23 @@ internal static class AppCompositionRoot
             workspaceSessionRegistry,
             workspaceSessionRegistry,
             workspaceSpriteEditOperationRecorder);
+        var workspaceTextEditOperationRecorder = new WorkspaceTextEditOperationRecorder(
+            workspaceDataStoreFactory,
+            workspaceOperationLogService);
+        var createTextAssetEditDraftHandler = new CreateTextAssetEditDraftHandler(
+            workspaceSessionRegistry,
+            workspaceDataStoreFactory,
+            getAssetPreviewHandler,
+            loadPreviewTextChunkHandler,
+            workspaceTextEditOperationRecorder);
+        var applyTextAssetEditDraftHandler = new ApplyTextAssetEditDraftHandler(
+            workspaceSessionRegistry,
+            workspaceSessionRegistry,
+            workspaceTextEditOperationRecorder);
+        var discardTextAssetEditDraftHandler = new DiscardTextAssetEditDraftHandler(
+            workspaceSessionRegistry,
+            workspaceDataStoreFactory,
+            workspaceTextEditOperationRecorder);
         var deleteWorkspaceOperationRecordHandler = new DeleteWorkspaceOperationRecordHandler(
             workspaceSessionRegistry,
             workspaceDataStoreFactory,
@@ -297,6 +314,9 @@ internal static class AppCompositionRoot
             undoAssetReplacementHandler: undoAssetReplacementHandler,
             redoAssetReplacementHandler: redoAssetReplacementHandler,
             applySpriteEditHandler: applySpriteEditHandler,
+            createTextAssetEditDraftHandler: createTextAssetEditDraftHandler,
+            applyTextAssetEditDraftHandler: applyTextAssetEditDraftHandler,
+            discardTextAssetEditDraftHandler: discardTextAssetEditDraftHandler,
             deleteWorkspaceOperationRecordHandler: deleteWorkspaceOperationRecordHandler);
         var workspaceAssetOperationGateway = new NotifyingWorkspaceAssetOperationGateway(
             workspaceAssetOperationGatewayCore,

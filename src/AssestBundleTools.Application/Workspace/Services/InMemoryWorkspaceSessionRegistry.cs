@@ -12,7 +12,7 @@ namespace AssestBundleTools.Application.Workspace.Services;
 /// <summary>
 /// 基于内存的临时工作区注册表，用于 M2 阶段打通用例与假数据链路。
 /// </summary>
-public sealed partial class InMemoryWorkspaceSessionRegistry : IWorkspaceSessionRegistry, IWorkspaceReplacementRedoSessionRegistry, IWorkspaceSpriteEditSessionRegistry
+public sealed partial class InMemoryWorkspaceSessionRegistry : IWorkspaceSessionRegistry, IWorkspaceReplacementRedoSessionRegistry, IWorkspaceSpriteEditSessionRegistry, IWorkspaceTextEditSessionRegistry
 {
     private readonly object _syncRoot = new();
     private readonly Dictionary<string, WorkspaceSessionState> _workspaceStates = new(StringComparer.Ordinal);
@@ -199,7 +199,10 @@ public sealed partial class InMemoryWorkspaceSessionRegistry : IWorkspaceSession
                 WorkspaceReplacementSourceAssetId: assetState.AppliedWorkspaceReplacement?.SourceAssetId,
                 CanRedoReplacement: assetState.ReplacementRedoStack.Count > 0,
                 SpriteEditGeometry: assetState.AppliedSpriteEdit?.Geometry,
-                SpriteEditAppliedAtUtc: assetState.AppliedSpriteEdit?.AppliedAtUtc);
+                SpriteEditAppliedAtUtc: assetState.AppliedSpriteEdit?.AppliedAtUtc,
+                TextEditDraftId: assetState.AppliedTextEdit?.DraftId,
+                TextEditDraftMode: assetState.AppliedTextEdit?.DraftMode,
+                TextEditAppliedAtUtc: assetState.AppliedTextEdit?.AppliedAtUtc);
 
             return true;
         }
@@ -384,7 +387,8 @@ public sealed partial class InMemoryWorkspaceSessionRegistry : IWorkspaceSession
         var workspaceReplacementAppliedAtUtc = assetState.AppliedWorkspaceReplacement?.AppliedAtUtc;
         var fileReplacementAppliedAtUtc = assetState.AppliedFileReplacement?.AppliedAtUtc;
         var spriteEditAppliedAtUtc = assetState.AppliedSpriteEdit?.AppliedAtUtc;
-        var lastChangedAtUtc = new[] { assetState.LastExtractedAtUtc, workspaceReplacementAppliedAtUtc, fileReplacementAppliedAtUtc, spriteEditAppliedAtUtc }
+        var textEditAppliedAtUtc = assetState.AppliedTextEdit?.AppliedAtUtc;
+        var lastChangedAtUtc = new[] { assetState.LastExtractedAtUtc, workspaceReplacementAppliedAtUtc, fileReplacementAppliedAtUtc, spriteEditAppliedAtUtc, textEditAppliedAtUtc }
             .Where(static timestamp => timestamp.HasValue)
             .Select(static timestamp => timestamp!.Value)
             .OrderByDescending(static timestamp => timestamp)
@@ -394,7 +398,8 @@ public sealed partial class InMemoryWorkspaceSessionRegistry : IWorkspaceSession
                                assetState.LastExtractedAtUtc.HasValue ||
                                workspaceReplacementAppliedAtUtc.HasValue ||
                                fileReplacementAppliedAtUtc.HasValue ||
-                               spriteEditAppliedAtUtc.HasValue;
+                               spriteEditAppliedAtUtc.HasValue ||
+                               textEditAppliedAtUtc.HasValue;
 
         if (!hasTrackedChange)
         {

@@ -6,7 +6,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 public sealed partial class AssetEditorWindowViewModel
 {
     public Visibility NormalActionBarVisibility =>
-        IsSpriteEditModeActive || IsSpineEditModeActive
+        IsSpriteEditModeActive || IsSpineEditModeActive || IsTextEditModeActive
             ? Visibility.Collapsed
             : Visibility.Visible;
 
@@ -21,6 +21,21 @@ public sealed partial class AssetEditorWindowViewModel
 
     public Visibility SpineEditActionBarVisibility =>
         IsSpineEditModeActive ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility TextEditPanelVisibility =>
+        IsTextEditModeActive ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility PreviewSurfaceVisibility =>
+        IsTextEditModeActive ? Visibility.Collapsed : Visibility.Visible;
+
+    public TextAssetEditDraftViewModel? ActiveTextEditDraft =>
+        DocumentGroup.ActiveAssetTab?.TextEditDraft;
+
+    public Visibility TextEditActionBarVisibility =>
+        IsTextEditModeActive ? Visibility.Visible : Visibility.Collapsed;
+
+    public bool CanSaveTextEdit =>
+        DocumentGroup.ActiveAssetTab?.TextEditDraft?.CanApply == true && !IsBusy;
 
     public bool CanSaveSpineEdit =>
         DocumentGroup.ActiveSpineGroupTab?.CanSaveSpineEdit == true;
@@ -37,6 +52,9 @@ public sealed partial class AssetEditorWindowViewModel
     private bool IsSpineEditModeActive =>
         DocumentGroup.ActiveSpineGroupTab?.IsSpineEditModeActive == true;
 
+    private bool IsTextEditModeActive =>
+        DocumentGroup.ActiveAssetTab?.IsTextEditModeActive == true;
+
     private void NotifyActionBarStates()
     {
         OnPropertyChanged(nameof(NormalActionBarVisibility));
@@ -44,6 +62,11 @@ public sealed partial class AssetEditorWindowViewModel
         OnPropertyChanged(nameof(SpineEditPanelVisibility));
         OnPropertyChanged(nameof(ActiveSpineEditDraft));
         OnPropertyChanged(nameof(SpineEditActionBarVisibility));
+        OnPropertyChanged(nameof(TextEditPanelVisibility));
+        OnPropertyChanged(nameof(PreviewSurfaceVisibility));
+        OnPropertyChanged(nameof(ActiveTextEditDraft));
+        OnPropertyChanged(nameof(TextEditActionBarVisibility));
+        OnPropertyChanged(nameof(CanSaveTextEdit));
         OnPropertyChanged(nameof(CanSaveSpineEdit));
         OnPropertyChanged(nameof(CanUndoSpineEdit));
         OnPropertyChanged(nameof(CanRedoSpineEdit));
