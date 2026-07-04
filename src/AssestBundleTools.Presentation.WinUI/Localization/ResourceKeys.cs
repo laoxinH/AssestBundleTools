@@ -589,6 +589,7 @@ public static class ResourceKeys
     public const string WorkspaceExportDialogResourceProcessorSectionTitle = "WorkspaceExportDialog.ResourceProcessorSection.Title";
     public const string WorkspaceExportDialogResourceProcessorSectionHint = "WorkspaceExportDialog.ResourceProcessorSection.Hint";
     public const string WorkspaceExportDialogExportToWorkspaceDirectory = "WorkspaceExportDialog.ExportToWorkspaceDirectory";
+    public const string WorkspaceExportDialogOverwriteExistingFiles = "WorkspaceExportDialog.OverwriteExistingFiles";
     public const string WorkspaceExportDialogOutputDirectoryLabel = "WorkspaceExportDialog.OutputDirectory.Label";
     public const string WorkspaceExportDialogCompressionModeLabel = "WorkspaceExportDialog.CompressionMode.Label";
     public const string WorkspaceExportDialogCompressionFastLz4 = "WorkspaceExportDialog.Compression.FastLz4";
@@ -628,6 +629,12 @@ public static class ResourceKeys
     public const string WorkspaceExportDialogStatusPreparing = "WorkspaceExportDialog.StatusPreparing";
     public const string WorkspaceExportDialogStatusBundleFormat = "WorkspaceExportDialog.StatusBundle.Format";
     public const string WorkspaceExportDialogCompletedMessageFormat = "WorkspaceExportDialog.CompletedMessage.Format";
+    public const string WorkspaceExportDialogOutputFileAlreadyExists = "WorkspaceExportDialog.Output.FileAlreadyExists";
+    public const string WorkspaceExportDialogOutputTargetIsDirectory = "WorkspaceExportDialog.Output.TargetIsDirectory";
+    public const string WorkspaceExportDialogOutputDirectoryBlockedByFile = "WorkspaceExportDialog.Output.DirectoryBlockedByFile";
+    public const string WorkspaceExportDialogOutputInvalidPath = "WorkspaceExportDialog.Output.InvalidPath";
+    public const string WorkspaceExportDialogOutputProbeFailed = "WorkspaceExportDialog.Output.ProbeFailed";
+    public const string WorkspaceExportDialogOutputUnknownFailureFormat = "WorkspaceExportDialog.Output.UnknownFailure.Format";
     public const string BundleExplorerPageLeftPanelTitle = "BundleExplorerPage.LeftPanelTitleText.Text";
     public const string BundleExplorerPageBundleSearchTextBoxPlaceholder = "BundleExplorerPage.BundleSearchTextBox.PlaceholderText";
     public const string BundleExplorerPageNewWorkspaceButton = "BundleExplorerPage.NewWorkspaceButton.Content";

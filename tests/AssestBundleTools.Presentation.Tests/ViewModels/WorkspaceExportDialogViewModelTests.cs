@@ -87,9 +87,38 @@ public sealed class WorkspaceExportDialogViewModelTests
 
         Assert.True(submission.ExportToWorkspaceDirectory);
         Assert.Equal(WorkspaceBundleExportCompressionModeDto.FastLz4, submission.CompressionMode);
+        Assert.Equal(WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting, submission.OutputConflictPolicy);
         Assert.Equal("bundle-alpha", Assert.Single(submission.SelectedBundleIds).Value);
         Assert.Equal("resource.processor.texture.png", submission.ProcessorSelections.Single(selection => selection.ResourceKind == "texture2d").ProcessorId);
         Assert.Null(submission.ProcessorSelections.Single(selection => selection.ResourceKind == "audio").ProcessorId);
+    }
+
+    [Fact]
+    public void CreateSubmission_ShouldUseFailIfExists_WhenOverwriteIsDisabled()
+    {
+        var viewModel = new WorkspaceExportDialogViewModel(
+            new TestLocalizationService(),
+            changeSummary: null,
+            savePreview: new WorkspaceSavePreviewDto(
+                WorkspaceId: new("workspace-export"),
+                WorkspaceDisplayName: "Workspace Export",
+                OutputDirectory: @"D:\Workspace\exports",
+                PlannedBundleCount: 1,
+                TotalChangeCount: 1,
+                ModifiedAssetCount: 1,
+                ExtractedAssetCount: 0,
+                WorkspaceReplacementCount: 0,
+                FileReplacementCount: 1,
+                BundlePlans:
+                [
+                    CreateBundlePlan("bundle-alpha", "Alpha.ab")
+                ]));
+
+        viewModel.OverwriteExistingFiles = false;
+
+        var submission = viewModel.CreateSubmission();
+
+        Assert.Equal(WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists, submission.OutputConflictPolicy);
     }
 
     [Fact]
@@ -128,8 +157,46 @@ public sealed class WorkspaceExportDialogViewModelTests
 
         Assert.Contains(ResourceKeys.WorkspaceExportDialogExecutionCompletedWithDiagnosticsFormat, viewModel.ValidationText);
         Assert.Contains("Alpha.ab", viewModel.ValidationText);
-        Assert.Contains("Bundle.Save.WriteFailed", viewModel.ValidationText);
+        Assert.Contains(ResourceKeys.WorkspaceExportDialogOutputUnknownFailureFormat, viewModel.ValidationText);
         Assert.Contains("format=DXT5(12)", viewModel.ValidationText);
+    }
+
+    [Fact]
+    public void ApplyExecutionResult_ShouldFormatExistingOutputDiagnosticAsFriendlyText()
+    {
+        var viewModel = new WorkspaceExportDialogViewModel(
+            new TestLocalizationService(),
+            changeSummary: null,
+            savePreview: null);
+
+        viewModel.ApplyExecutionResult(new WorkspaceSaveExecutionResultDto(
+            WorkspaceId: new("workspace-export"),
+            WorkspaceDisplayName: "Workspace Export",
+            OutputDirectory: @"D:\Workspace\exports",
+            PlannedBundleCount: 1,
+            TotalChangeCount: 1,
+            CompletedAtUtc: DateTimeOffset.UtcNow,
+            Status: WorkspaceSaveExecutionStatusDto.Failed,
+            SucceededBundleCount: 0,
+            FailedBundleCount: 1,
+            WrittenBundleCount: 0,
+            BundleResults:
+            [
+                new WorkspaceSaveBundleExecutionResultDto(
+                    BundleId: new BundleId("bundle-alpha"),
+                    BundleDisplayName: "Alpha.ab",
+                    OutputFilePath: @"D:\Workspace\exports\Alpha.ab",
+                    Status: WorkspaceSaveBundleExecutionStatusDto.Failed,
+                    ChangeCount: 1,
+                    ModifiedAssetCount: 1,
+                    WorkspaceReplacementCount: 0,
+                    FileReplacementCount: 1,
+                    DiagnosticCode: "Bundle.Save.OutputBlocked",
+                    DiagnosticDetail: "OutputPath=D:\\Workspace\\exports\\Alpha.ab; DiagnosticCode=Save.Output.FileAlreadyExists")
+            ]));
+
+        Assert.Contains(ResourceKeys.WorkspaceExportDialogOutputFileAlreadyExists, viewModel.ValidationText);
+        Assert.DoesNotContain("Save.Output.FileAlreadyExists", viewModel.ValidationText);
     }
 
     private static ResourceProcessorCatalogEntryDto CreateProcessor(

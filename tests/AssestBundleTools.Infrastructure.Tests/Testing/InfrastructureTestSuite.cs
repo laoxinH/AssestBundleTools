@@ -142,6 +142,14 @@ internal static class InfrastructureTestSuite
             FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTextAssetObject_WhenRealSampleBundleIsAvailable);
         await RunTestAsync(
             failures,
+            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldReplaceExistingOutput_WhenOverwriteIsEnabled),
+            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldReplaceExistingOutput_WhenOverwriteIsEnabled);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldFailWhenOutputExists_AndOverwriteIsDisabled),
+            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldFailWhenOutputExists_AndOverwriteIsDisabled);
+        await RunTestAsync(
+            failures,
             nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTexture2DObject_WhenRealSampleBundleIsAvailable),
             FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTexture2DObject_WhenRealSampleBundleIsAvailable);
         await RunTestAsync(

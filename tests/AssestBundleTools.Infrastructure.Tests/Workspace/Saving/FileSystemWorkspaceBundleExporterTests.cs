@@ -117,6 +117,144 @@ internal static class FileSystemWorkspaceBundleExporterTests
             "Exported AB should persist the replacement TextAsset content after bundle repack.");
     }
 
+    public static async Task ExportAsync_ShouldReplaceExistingOutput_WhenOverwriteIsEnabled()
+    {
+        if (!File.Exists(RealSampleBundlePath))
+        {
+            Console.WriteLine($"[SKIP] Sample bundle not found: {RealSampleBundlePath}");
+            return;
+        }
+
+        if (!Environment.Is64BitProcess)
+        {
+            Console.WriteLine("[SKIP] Real sample bundle export requires a 64-bit process.");
+            return;
+        }
+
+        using var scope = new TemporaryDirectoryScope();
+        var sourcePath = Path.Combine(scope.DirectoryPath, "cache", Path.GetFileName(RealSampleBundlePath));
+        var outputPath = Path.Combine(scope.DirectoryPath, "exports", Path.GetFileName(RealSampleBundlePath));
+        Directory.CreateDirectory(Path.GetDirectoryName(sourcePath)!);
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+        File.Copy(RealSampleBundlePath, sourcePath);
+        await File.WriteAllTextAsync(outputPath, "old-output", Encoding.UTF8);
+
+        var probe = ProbeFirstWritableTextAsset(sourcePath);
+        if (probe is null)
+        {
+            Console.WriteLine($"[SKIP] Sample bundle contains no readable TextAsset: {RealSampleBundlePath}");
+            return;
+        }
+
+        var payloadPath = Path.Combine(scope.DirectoryPath, "payload.txt");
+        var replacementText = $"abt-overwrite-smoke-{Guid.NewGuid():N}";
+        await File.WriteAllTextAsync(payloadPath, replacementText, Encoding.UTF8);
+
+        var exporter = new FileSystemWorkspaceBundleExporter();
+        var result = await exporter.ExportAsync(new WorkspaceBundleExportRequestDto(
+            WorkspaceId: new WorkspaceId("workspace"),
+            WorkspaceDisplayName: "Workspace",
+            BundleId: new BundleId("bundle"),
+            BundleDisplayName: Path.GetFileName(sourcePath),
+            OutputFilePath: outputPath,
+            SourceArtifactPath: sourcePath,
+            BundleCacheKey: "bundle-cache-key",
+            ChangeItems: Array.Empty<AssestBundleTools.Application.Workspace.Dtos.WorkspaceChangeItemDto>(),
+            AssetWriteItems:
+            [
+                new WorkspaceBundleAssetWriteItemDto(
+                    BundleId: new BundleId("bundle"),
+                    AssetId: new AssetId("asset-text"),
+                    AssetName: probe.AssetName,
+                    AssetType: AssetType.TextAsset,
+                    AssetTypeDisplayName: nameof(AssetType.TextAsset),
+                    SerializedFileName: probe.SerializedFileName,
+                    PathId: probe.PathId,
+                    SourceKind: "file",
+                    SourceFilePath: payloadPath)
+            ],
+            ProcessorSelections: Array.Empty<WorkspaceExportProcessorSelectionDto>(),
+            ProcessorResults: Array.Empty<WorkspaceResourceProcessorExecutionResultDto>(),
+            OperationId: "operation"));
+
+        TestAssert.True(result.IsSuccess, "Overwrite-enabled export should replace an existing output file.");
+        TestAssert.False(
+            string.Equals("old-output", await File.ReadAllTextAsync(outputPath), StringComparison.Ordinal),
+            "Existing output file should be replaced by a real bundle.");
+        TestAssert.Equal(
+            replacementText,
+            ReadTextAsset(outputPath, probe.SerializedFileName, probe.PathId),
+            "Replaced output AB should contain the new TextAsset payload.");
+    }
+
+    public static async Task ExportAsync_ShouldFailWhenOutputExists_AndOverwriteIsDisabled()
+    {
+        if (!File.Exists(RealSampleBundlePath))
+        {
+            Console.WriteLine($"[SKIP] Sample bundle not found: {RealSampleBundlePath}");
+            return;
+        }
+
+        if (!Environment.Is64BitProcess)
+        {
+            Console.WriteLine("[SKIP] Real sample bundle export requires a 64-bit process.");
+            return;
+        }
+
+        using var scope = new TemporaryDirectoryScope();
+        var sourcePath = Path.Combine(scope.DirectoryPath, "cache", Path.GetFileName(RealSampleBundlePath));
+        var outputPath = Path.Combine(scope.DirectoryPath, "exports", Path.GetFileName(RealSampleBundlePath));
+        Directory.CreateDirectory(Path.GetDirectoryName(sourcePath)!);
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+        File.Copy(RealSampleBundlePath, sourcePath);
+        await File.WriteAllTextAsync(outputPath, "old-output", Encoding.UTF8);
+
+        var probe = ProbeFirstWritableTextAsset(sourcePath);
+        if (probe is null)
+        {
+            Console.WriteLine($"[SKIP] Sample bundle contains no readable TextAsset: {RealSampleBundlePath}");
+            return;
+        }
+
+        var payloadPath = Path.Combine(scope.DirectoryPath, "payload.txt");
+        await File.WriteAllTextAsync(payloadPath, "blocked-overwrite", Encoding.UTF8);
+
+        var exporter = new FileSystemWorkspaceBundleExporter();
+        var result = await exporter.ExportAsync(new WorkspaceBundleExportRequestDto(
+            WorkspaceId: new WorkspaceId("workspace"),
+            WorkspaceDisplayName: "Workspace",
+            BundleId: new BundleId("bundle"),
+            BundleDisplayName: Path.GetFileName(sourcePath),
+            OutputFilePath: outputPath,
+            SourceArtifactPath: sourcePath,
+            BundleCacheKey: "bundle-cache-key",
+            ChangeItems: Array.Empty<AssestBundleTools.Application.Workspace.Dtos.WorkspaceChangeItemDto>(),
+            AssetWriteItems:
+            [
+                new WorkspaceBundleAssetWriteItemDto(
+                    BundleId: new BundleId("bundle"),
+                    AssetId: new AssetId("asset-text"),
+                    AssetName: probe.AssetName,
+                    AssetType: AssetType.TextAsset,
+                    AssetTypeDisplayName: nameof(AssetType.TextAsset),
+                    SerializedFileName: probe.SerializedFileName,
+                    PathId: probe.PathId,
+                    SourceKind: "file",
+                    SourceFilePath: payloadPath)
+            ],
+            ProcessorSelections: Array.Empty<WorkspaceExportProcessorSelectionDto>(),
+            ProcessorResults: Array.Empty<WorkspaceResourceProcessorExecutionResultDto>(),
+            OperationId: "operation",
+            OutputConflictPolicy: WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists));
+
+        TestAssert.True(result.IsFailure, "Overwrite-disabled export should fail when the final output already exists.");
+        TestAssert.Equal(
+            "old-output",
+            await File.ReadAllTextAsync(outputPath),
+            "Existing output file should remain untouched when overwrite is disabled.");
+        TestAssert.Equal("Bundle.Save.WriteFailed", result.Errors[0].Code, "Exporter should return a structured write failure.");
+    }
+
     public static async Task ExportAsync_ShouldRewriteTexture2DObject_WhenRealSampleBundleIsAvailable()
     {
         if (!File.Exists(RealSampleBundlePath))

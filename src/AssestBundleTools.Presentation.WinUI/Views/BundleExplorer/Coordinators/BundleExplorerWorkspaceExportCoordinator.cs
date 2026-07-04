@@ -9,6 +9,7 @@ using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using Microsoft.UI.Xaml;
 using System.IO;
 
@@ -24,6 +25,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
     private readonly IBackgroundWorkScheduler _backgroundWorkScheduler;
     private readonly IAppNotificationService _appNotificationService;
     private readonly ILocalizationService _localizationService;
+    private readonly WorkspaceExportFailureDisplayFormatter _failureDisplayFormatter;
     private WorkspaceExportWindow? _activeWindow;
 
     public BundleExplorerWorkspaceExportCoordinator(
@@ -44,6 +46,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
         _backgroundWorkScheduler = backgroundWorkScheduler ?? throw new ArgumentNullException(nameof(backgroundWorkScheduler));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+        _failureDisplayFormatter = new WorkspaceExportFailureDisplayFormatter(_localizationService);
     }
 
     public async Task ShowAsync()
@@ -73,7 +76,8 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
                 workspaceSummary.WorkspaceId,
                 OutputDirectory: workspaceExportDirectory,
                 WorkspaceKey: workspaceKey,
-                WorkspaceDataRootPath: workspaceDataRootPath));
+                WorkspaceDataRootPath: workspaceDataRootPath,
+                OutputConflictPolicy: WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting));
         if (!TryGetValue(savePreviewResult, out var savePreview))
         {
             return;
@@ -144,7 +148,8 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
             WorkspaceDataRootPath: workspaceDataRootPath,
             SelectedBundleIds: submission.SelectedBundleIds,
             ProcessorSelections: submission.ProcessorSelections,
-            CompressionMode: submission.CompressionMode);
+            CompressionMode: submission.CompressionMode,
+            OutputConflictPolicy: submission.OutputConflictPolicy);
 
         Result<WorkspaceSaveExecutionResultDto> result;
         try
@@ -302,12 +307,19 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
         notificationService.Show(title, message, severity);
     }
 
-    private string FormatError(AppError error) =>
-        error.Parameters.Count > 0
+    private string FormatError(AppError error)
+    {
+        if (_failureDisplayFormatter.TryFormat(error, out var exportFailureMessage))
+        {
+            return exportFailureMessage;
+        }
+
+        return error.Parameters.Count > 0
             ? _localizationService.GetFormattedString(
                 error.MessageToken,
                 error.Parameters.Values.Select(static value => value ?? string.Empty).ToArray())
             : GetString(error.MessageToken);
+    }
 
     private string? BuildFailureDetail(WorkspaceSaveExecutionResultDto executionResult)
     {
@@ -318,11 +330,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
             return null;
         }
 
-        return _localizationService.GetFormattedString(
-            ResourceKeys.WorkspaceExportDialogFailureDetailFormat,
-            failedBundle.BundleDisplayName,
-            string.IsNullOrWhiteSpace(failedBundle.DiagnosticCode) ? "-" : failedBundle.DiagnosticCode,
-            string.IsNullOrWhiteSpace(failedBundle.DiagnosticDetail) ? "-" : failedBundle.DiagnosticDetail);
+        return _failureDisplayFormatter.Format(failedBundle);
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);

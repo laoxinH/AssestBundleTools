@@ -62,6 +62,14 @@ public sealed class WorkspaceExportWindowContractTests
             "BundleExplorer",
             "Dialogs",
             "WorkspaceExportDialogViewModel.cs"));
+        var optionFactory = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "ViewModels",
+            "BundleExplorer",
+            "Dialogs",
+            "WorkspaceExportDialogOptionFactory.cs"));
 
         Assert.Contains("var windowNotificationService = new AppNotificationService();", coordinator);
         Assert.Contains("new WorkspaceExportWindow(viewModel, windowNotificationService)", coordinator);
@@ -97,21 +105,22 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.DoesNotContain("OutputSectionTitleText", contentXaml);
         Assert.Contains("RefreshPlanSummary();", viewModel);
         Assert.Contains("RefreshVisibleBundles();", viewModel);
-        Assert.Contains("WorkspaceExportDialogBundleSortByTime", viewModel);
-        Assert.Contains("WorkspaceExportDialogBundleSortByName", viewModel);
         Assert.Contains("WorkspaceExportDialogBundleGroupRecent", viewModel);
         Assert.Contains("WorkspaceExportDialogBundleGroupPrevious", viewModel);
         Assert.Contains("AppendTimeGroupedVisibleBundles", viewModel);
         Assert.Contains("bundle.DisplayName.Contains(query", viewModel);
         Assert.Contains("IReadOnlyList<ResourceProcessorCatalogEntryDto>? resourceProcessorCatalogEntries", viewModel);
         Assert.Contains("CreateSubmission", viewModel);
-        Assert.Contains("IsCompatibleResourceProcessor", viewModel);
-        Assert.Contains("PluginManagementResourceProcessorDisplayNameFormat", viewModel);
-        Assert.Contains("ResolveProcessorDescription", viewModel);
-        Assert.Contains("WorkspaceExportDialogResourceProcessorTexture2D", viewModel);
-        Assert.Contains("WorkspaceExportDialogResourceProcessorAudio", viewModel);
-        Assert.Contains("WorkspaceExportDialogResourceProcessorAtlas", viewModel);
-        Assert.Contains("WorkspaceExportDialogResourceProcessorSkel", viewModel);
+        Assert.Contains("WorkspaceExportDialogOptionFactory", viewModel);
+        Assert.Contains("WorkspaceExportDialogBundleSortByTime", optionFactory);
+        Assert.Contains("WorkspaceExportDialogBundleSortByName", optionFactory);
+        Assert.Contains("IsCompatibleResourceProcessor", optionFactory);
+        Assert.Contains("PluginManagementResourceProcessorDisplayNameFormat", optionFactory);
+        Assert.Contains("ResolveProcessorDescription", optionFactory);
+        Assert.Contains("WorkspaceExportDialogResourceProcessorTexture2D", optionFactory);
+        Assert.Contains("WorkspaceExportDialogResourceProcessorAudio", optionFactory);
+        Assert.Contains("WorkspaceExportDialogResourceProcessorAtlas", optionFactory);
+        Assert.Contains("WorkspaceExportDialogResourceProcessorSkel", optionFactory);
     }
 
     private static string FindRepositoryRoot()

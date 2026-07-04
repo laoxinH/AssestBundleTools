@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Domain.Workspace;
 
 namespace AssestBundleTools.Application.Saving.Queries;
@@ -9,4 +10,5 @@ public sealed record GetWorkspaceSavePreviewQuery(
     WorkspaceId WorkspaceId,
     string? OutputDirectory = null,
     string? WorkspaceKey = null,
-    string? WorkspaceDataRootPath = null);
+    string? WorkspaceDataRootPath = null,
+    WorkspaceBundleExportOutputConflictPolicyDto OutputConflictPolicy = WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting);

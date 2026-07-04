@@ -23,6 +23,7 @@ internal static class WorkspaceSavePlanner
         IWorkspaceSaveOutputProbe? outputProbe = null,
         string? workspaceKey = null,
         string? workspaceDataRootPath = null,
+        WorkspaceBundleExportOutputConflictPolicyDto outputConflictPolicy = WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting,
         DateTimeOffset? plannedAtUtc = null)
     {
         ArgumentNullException.ThrowIfNull(workspaceSessionRegistry);
@@ -67,7 +68,7 @@ internal static class WorkspaceSavePlanner
                 var items = group.ToArray();
                 var artifactInput = ResolveArtifactInput(artifactInputs, group.Key.BundleId);
                 var outputFilePath = Path.Combine(resolvedOutputDirectory, group.Key.BundleDisplayName);
-                var outputPreflight = ResolveOutputPreflight(outputProbe, outputFilePath);
+                var outputPreflight = ResolveOutputPreflight(outputProbe, outputFilePath, outputConflictPolicy);
                 return new PlannedWorkspaceBundleSave(
                     BundleId: group.Key.BundleId,
                     BundleDisplayName: group.Key.BundleDisplayName,
@@ -138,7 +139,8 @@ internal static class WorkspaceSavePlanner
 
     private static WorkspaceSaveBundleOutputPreflight ResolveOutputPreflight(
         IWorkspaceSaveOutputProbe? outputProbe,
-        string outputFilePath)
+        string outputFilePath,
+        WorkspaceBundleExportOutputConflictPolicyDto outputConflictPolicy)
     {
         if (outputProbe is null)
         {
@@ -149,6 +151,15 @@ internal static class WorkspaceSavePlanner
         }
 
         var result = outputProbe.Probe(new WorkspaceSaveOutputProbeRequest(outputFilePath));
+        if (outputConflictPolicy == WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting &&
+            result.Readiness == WorkspaceSaveOutputReadiness.FileAlreadyExists)
+        {
+            return new WorkspaceSaveBundleOutputPreflight(
+                WorkspaceSaveOutputReadiness.Ready,
+                IsWriteBlocked: false,
+                DiagnosticCode: result.DiagnosticCode);
+        }
+
         return new WorkspaceSaveBundleOutputPreflight(
             result.Readiness,
             result.IsWriteBlocked,

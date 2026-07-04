@@ -7,4 +7,5 @@ public sealed record WorkspaceExportDialogSubmission(
     bool ExportToWorkspaceDirectory,
     IReadOnlyList<BundleId> SelectedBundleIds,
     IReadOnlyList<WorkspaceExportProcessorSelectionDto> ProcessorSelections,
-    WorkspaceBundleExportCompressionModeDto CompressionMode);
+    WorkspaceBundleExportCompressionModeDto CompressionMode,
+    WorkspaceBundleExportOutputConflictPolicyDto OutputConflictPolicy);

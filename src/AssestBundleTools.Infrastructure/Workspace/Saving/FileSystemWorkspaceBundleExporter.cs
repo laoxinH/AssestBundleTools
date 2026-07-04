@@ -58,7 +58,10 @@ public sealed class FileSystemWorkspaceBundleExporter : IWorkspaceBundleExporter
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            File.Move(temporaryFilePath, outputPath, overwrite: false);
+            File.Move(
+                temporaryFilePath,
+                outputPath,
+                overwrite: request.OutputConflictPolicy == WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting);
             temporaryFilePath = null;
 
             var fileInfo = new FileInfo(outputPath);

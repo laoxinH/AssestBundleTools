@@ -54,7 +54,8 @@ public sealed class GetWorkspaceSavePreviewHandler : IQueryHandler<GetWorkspaceS
             _artifactInputResolver,
             _outputProbe,
             query.WorkspaceKey,
-            query.WorkspaceDataRootPath);
+            query.WorkspaceDataRootPath,
+            query.OutputConflictPolicy);
         var bundlePlans = plan.BundlePlans
             .Select(bundlePlan => new WorkspaceSaveBundlePlanDto(
                 BundleId: bundlePlan.BundleId,

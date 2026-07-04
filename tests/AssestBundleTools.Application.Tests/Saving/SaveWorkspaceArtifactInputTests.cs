@@ -227,6 +227,60 @@ internal static partial class SaveWorkspaceHandlersTests
         TestAssert.Equal("abc123-sha256", bundleResult.WrittenFileSha256, "Execution should preserve exported AB SHA-256.");
     }
 
+    public static async Task SaveWorkspaceAsNewBundleHandler_ShouldBlockExistingOutput_WhenOverwriteIsDisabled()
+    {
+        const string workspaceKey = "workspace-save-key";
+        const string workspaceDataRootPath = @"D:\WorkspaceData";
+
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle-alpha");
+        var indexEntry = CreateBundleIndexEntry(workspaceKey, "bundle-cache-alpha", bundleId, "Alpha.ab");
+        var artifactStore = new TestBundleArtifactStore(
+        [
+            CreateArtifactManifest(
+                workspaceKey,
+                indexEntry.BundleCacheKey,
+                @"D:\WorkspaceData\cache\bundles\workspace-save-key\bundle-cache-alpha\normalized.bundle",
+                indexEntry.SourceFingerprint)
+        ]);
+        var registry = new TestWorkspaceSessionRegistry
+        {
+            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(
+                workspaceId,
+                [
+                    CreateChangeItem(
+                        bundleId: bundleId,
+                        assetId: new AssetId("asset-1"),
+                        bundleDisplayName: "Alpha.ab",
+                        assetName: "HeroTexture",
+                        isModified: true)
+                ])
+        };
+        var exporter = new RecordingBundleExporter();
+        var outputProbe = new BlockingWorkspaceSaveOutputProbe("Alpha.ab");
+        var handler = new SaveWorkspaceAsNewBundleHandler(
+            registry,
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([indexEntry]),
+                artifactStore),
+            outputProbe,
+            exporter,
+            new RecordingBundleExportManifestStore());
+
+        var result = await handler.HandleAsync(new SaveWorkspaceAsNewBundleCommand(
+            workspaceId,
+            OutputDirectory: @"D:\Exports",
+            WorkspaceKey: workspaceKey,
+            WorkspaceDataRootPath: workspaceDataRootPath,
+            OutputConflictPolicy: WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists));
+
+        TestAssert.True(result.IsFailure, "Save execution should fail before writing when overwrite is disabled and output exists.");
+        TestAssert.Empty(exporter.Requests, "Blocked output should not enter the bundle exporter.");
+        var error = TestAssert.Single(result.Errors);
+        TestAssert.Equal("Bundle.Save.OutputBlocked", error.Code, "Blocked output should return the structured output conflict error.");
+        TestAssert.Equal("Save.Output.FileAlreadyExists", error.Parameters.GetValueOrDefault("DiagnosticCode"), "Existing-file diagnostic should be preserved.");
+    }
+
     public static async Task SaveWorkspaceAsNewBundleHandler_ShouldForwardObjectWriteItems_FromOperationRecords()
     {
         const string workspaceKey = "workspace-save-key";
@@ -620,6 +674,23 @@ internal static partial class SaveWorkspaceHandlersTests
     {
         public WorkspaceSaveOutputProbeResult Probe(WorkspaceSaveOutputProbeRequest request) =>
             WorkspaceSaveOutputProbeResult.Ready();
+    }
+
+    private sealed class BlockingWorkspaceSaveOutputProbe : IWorkspaceSaveOutputProbe
+    {
+        private readonly string _blockedFileName;
+
+        public BlockingWorkspaceSaveOutputProbe(string blockedFileName)
+        {
+            _blockedFileName = blockedFileName;
+        }
+
+        public WorkspaceSaveOutputProbeResult Probe(WorkspaceSaveOutputProbeRequest request) =>
+            string.Equals(Path.GetFileName(request.OutputFilePath), _blockedFileName, StringComparison.OrdinalIgnoreCase)
+                ? WorkspaceSaveOutputProbeResult.Blocked(
+                    WorkspaceSaveOutputReadiness.FileAlreadyExists,
+                    "Save.Output.FileAlreadyExists")
+                : WorkspaceSaveOutputProbeResult.Ready();
     }
 
     private sealed class TestWorkspaceChangeStore : IWorkspaceChangeStore

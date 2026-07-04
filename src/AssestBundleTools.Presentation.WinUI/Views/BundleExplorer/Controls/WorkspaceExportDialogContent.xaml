@@ -225,6 +225,7 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -234,29 +235,34 @@
                         x:Name="ExportToWorkspaceDirectoryCheckBox"
                         Grid.ColumnSpan="2"
                         IsChecked="{Binding ExportToWorkspaceDirectory, Mode=TwoWay}" />
-                    <Border
+                    <CheckBox
+                        x:Name="OverwriteExistingFilesCheckBox"
                         Grid.Row="1"
+                        Grid.ColumnSpan="2"
+                        IsChecked="{Binding OverwriteExistingFiles, Mode=TwoWay}" />
+                    <Border
+                        Grid.Row="2"
                         Padding="10,4"
                         Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                         CornerRadius="8">
                         <TextBlock x:Name="OutputDirectoryLabelText" FontSize="12" FontWeight="SemiBold" />
                     </Border>
                     <TextBlock
-                        Grid.Row="1"
+                        Grid.Row="2"
                         Grid.Column="1"
                         VerticalAlignment="Center"
                         Text="{Binding OutputDirectoryText}"
                         TextTrimming="CharacterEllipsis"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     <Border
-                        Grid.Row="2"
+                        Grid.Row="3"
                         Padding="10,4"
                         Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                         CornerRadius="8">
                         <TextBlock x:Name="CompressionModeLabelText" FontSize="12" FontWeight="SemiBold" />
                     </Border>
                     <ComboBox
-                        Grid.Row="2"
+                        Grid.Row="3"
                         Grid.Column="1"
                         HorizontalAlignment="Stretch"
                         ItemsSource="{Binding CompressionOptions}"

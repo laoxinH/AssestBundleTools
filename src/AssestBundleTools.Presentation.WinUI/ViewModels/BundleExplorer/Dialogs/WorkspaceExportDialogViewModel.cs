@@ -5,9 +5,9 @@ using System.Linq;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
-using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
@@ -15,12 +15,15 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs
 public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
 {
     private readonly ILocalizationService _localizationService;
+    private readonly WorkspaceExportFailureDisplayFormatter _failureDisplayFormatter;
+    private readonly WorkspaceExportDialogOptionFactory _optionFactory;
     private string _outputDirectoryText = string.Empty;
     private string _planSummaryText = string.Empty;
     private string _validationText = string.Empty;
     private string _primaryButtonText = string.Empty;
     private string _bundleSearchText = string.Empty;
     private bool _exportToWorkspaceDirectory = true;
+    private bool _overwriteExistingFiles = true;
     private bool _isLoading;
     private bool _isExecuting;
     private WorkspaceExportBundleSortOptionViewModel? _selectedBundleSortOption;
@@ -33,26 +36,20 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         IReadOnlyList<ResourceProcessorCatalogEntryDto>? resourceProcessorCatalogEntries = null)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+        _failureDisplayFormatter = new WorkspaceExportFailureDisplayFormatter(_localizationService);
+        _optionFactory = new WorkspaceExportDialogOptionFactory(_localizationService);
         _outputDirectoryText = savePreview?.OutputDirectory ?? string.Empty;
         _primaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPrimaryButton);
 
-        var bundleLastChangedAtLookup = BuildBundleLastChangedAtLookup(changeSummary);
         Bundles = new ObservableCollection<WorkspaceExportBundleOptionViewModel>(
-            CreateBundleOptions(savePreview, bundleLastChangedAtLookup));
+            _optionFactory.CreateBundleOptions(savePreview, changeSummary));
         VisibleBundles = new ObservableCollection<WorkspaceExportBundleListItemViewModel>();
-        BundleSortOptions = new ObservableCollection<WorkspaceExportBundleSortOptionViewModel>
-        {
-            new(
-                "time",
-                _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogBundleSortByTime)),
-            new(
-                "name",
-                _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogBundleSortByName))
-        };
+        BundleSortOptions = new ObservableCollection<WorkspaceExportBundleSortOptionViewModel>(
+            _optionFactory.CreateBundleSortOptions());
         ResourceProcessors = new ObservableCollection<WorkspaceExportResourceProcessorOptionViewModel>(
-            CreateResourceProcessorOptions(resourceProcessorCatalogEntries ?? Array.Empty<ResourceProcessorCatalogEntryDto>()));
+            _optionFactory.CreateResourceProcessorOptions(resourceProcessorCatalogEntries ?? Array.Empty<ResourceProcessorCatalogEntryDto>()));
         CompressionOptions = new ObservableCollection<WorkspaceExportCompressionOptionViewModel>(
-            CreateCompressionOptions());
+            _optionFactory.CreateCompressionOptions());
         _selectedCompressionOption = CompressionOptions.FirstOrDefault(static option =>
             option.Mode == WorkspaceBundleExportCompressionModeDto.FastLz4);
         _selectedBundleSortOption = BundleSortOptions.FirstOrDefault();
@@ -127,6 +124,12 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     {
         get => _exportToWorkspaceDirectory;
         set => SetProperty(ref _exportToWorkspaceDirectory, value);
+    }
+
+    public bool OverwriteExistingFiles
+    {
+        get => _overwriteExistingFiles;
+        set => SetProperty(ref _overwriteExistingFiles, value);
     }
 
     public WorkspaceExportBundleSortOptionViewModel? SelectedBundleSortOption
@@ -227,14 +230,17 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
             .Select(static bundle => bundle.BundleId)
             .ToArray();
         var processorSelections = ResourceProcessors
-            .Select(static processor => CreateProcessorSelection(processor))
+            .Select(processor => _optionFactory.CreateProcessorSelection(processor))
             .ToArray();
 
         return new WorkspaceExportDialogSubmission(
             ExportToWorkspaceDirectory,
             selectedBundleIds,
             processorSelections,
-            SelectedCompressionOption?.Mode ?? WorkspaceBundleExportCompressionModeDto.FastLz4);
+            SelectedCompressionOption?.Mode ?? WorkspaceBundleExportCompressionModeDto.FastLz4,
+            OverwriteExistingFiles
+                ? WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting
+                : WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists);
     }
 
     private void OnBundleSelectionChanged(object? sender, EventArgs e)
@@ -336,166 +342,6 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         }
     }
 
-    private IEnumerable<WorkspaceExportBundleOptionViewModel> CreateBundleOptions(
-        WorkspaceSavePreviewDto? savePreview,
-        IReadOnlyDictionary<BundleId, DateTimeOffset> bundleLastChangedAtLookup)
-    {
-        if (savePreview is null)
-        {
-            yield break;
-        }
-
-        foreach (var plan in savePreview.BundlePlans)
-        {
-            yield return new WorkspaceExportBundleOptionViewModel(
-                plan.BundleId,
-                plan.BundleDisplayName,
-                plan.OutputFilePath,
-                _localizationService.GetFormattedString(
-                    ResourceKeys.WorkspaceExportDialogBundleSummaryFormat,
-                    plan.ChangeCount,
-                    plan.ModifiedAssetCount,
-                    plan.ExtractedAssetCount,
-                    plan.WorkspaceReplacementCount,
-                    plan.FileReplacementCount),
-                plan.ChangeCount,
-                plan.ModifiedAssetCount,
-                plan.ExtractedAssetCount,
-                plan.WorkspaceReplacementCount,
-                plan.FileReplacementCount,
-                bundleLastChangedAtLookup.TryGetValue(plan.BundleId, out var lastChangedAtUtc)
-                    ? lastChangedAtUtc
-                    : null);
-        }
-    }
-
-    private IEnumerable<WorkspaceExportResourceProcessorOptionViewModel> CreateResourceProcessorOptions(
-        IReadOnlyList<ResourceProcessorCatalogEntryDto> catalogEntries)
-    {
-        yield return new WorkspaceExportResourceProcessorOptionViewModel(
-            "texture2d",
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorTexture2D),
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorTexture2DDescription),
-            CreateProcessorOptions("texture2d", catalogEntries));
-        yield return new WorkspaceExportResourceProcessorOptionViewModel(
-            "audio",
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAudio),
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAudioDescription),
-            CreateProcessorOptions("audio", catalogEntries));
-        yield return new WorkspaceExportResourceProcessorOptionViewModel(
-            "atlas",
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAtlas),
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAtlasDescription),
-            CreateProcessorOptions("atlas", catalogEntries));
-        yield return new WorkspaceExportResourceProcessorOptionViewModel(
-            "skel",
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorSkel),
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorSkelDescription),
-            CreateProcessorOptions("skel", catalogEntries));
-    }
-
-    private IEnumerable<WorkspaceExportProcessorOptionViewModel> CreateProcessorOptions(
-        string resourceKind,
-        IReadOnlyList<ResourceProcessorCatalogEntryDto> catalogEntries)
-    {
-        yield return new WorkspaceExportProcessorOptionViewModel(
-            $"{resourceKind}:none",
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogProcessorNone),
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogProcessorNoneDescription));
-
-        foreach (var entry in catalogEntries.Where(entry => IsCompatibleResourceProcessor(entry, resourceKind)))
-        {
-            yield return new WorkspaceExportProcessorOptionViewModel(
-                entry.Id,
-                ResolveProcessorDisplayName(entry, resourceKind),
-                ResolveProcessorDescription(entry, resourceKind));
-        }
-    }
-
-    private IEnumerable<WorkspaceExportCompressionOptionViewModel> CreateCompressionOptions()
-    {
-        yield return new WorkspaceExportCompressionOptionViewModel(
-            WorkspaceBundleExportCompressionModeDto.FastLz4,
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionFastLz4),
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionFastLz4Description));
-        yield return new WorkspaceExportCompressionOptionViewModel(
-            WorkspaceBundleExportCompressionModeDto.PreserveOriginal,
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionPreserveOriginal),
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionPreserveOriginalDescription));
-        yield return new WorkspaceExportCompressionOptionViewModel(
-            WorkspaceBundleExportCompressionModeDto.Uncompressed,
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionUncompressed),
-            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionUncompressedDescription));
-    }
-
-    private static bool IsCompatibleResourceProcessor(
-        ResourceProcessorCatalogEntryDto entry,
-        string resourceProcessorId)
-    {
-        return entry.Status == ResourceProcessorStatus.Available &&
-               entry.ResourceKinds.Any(resourceKind =>
-                   string.Equals(
-                       NormalizeResourceKind(resourceKind),
-                       NormalizeResourceKind(resourceProcessorId),
-                       StringComparison.OrdinalIgnoreCase));
-    }
-
-    private string ResolveProcessorDisplayName(
-        ResourceProcessorCatalogEntryDto entry,
-        string resourceKind)
-    {
-        return entry.IsBuiltIn
-            ? _localizationService.GetFormattedString(
-                ResourceKeys.PluginManagementResourceProcessorDisplayNameFormat,
-                ResolveResourceKindDisplayName(resourceKind))
-            : string.IsNullOrWhiteSpace(entry.DisplayName)
-                ? entry.Id
-                : entry.DisplayName;
-    }
-
-    private string ResolveProcessorDescription(
-        ResourceProcessorCatalogEntryDto entry,
-        string resourceKind)
-    {
-        return string.IsNullOrWhiteSpace(entry.Description)
-            ? _localizationService.GetFormattedString(
-                ResourceKeys.PluginManagementResourceProcessorDescriptionFormat,
-                ResolveResourceKindDisplayName(resourceKind))
-            : entry.Description;
-    }
-
-    private string ResolveResourceKindDisplayName(string resourceKind)
-    {
-        return NormalizeResourceKind(resourceKind) switch
-        {
-            "texture2d" => _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorTexture2D),
-            "audio" => _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAudio),
-            "atlas" => _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorAtlas),
-            "skel" => _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogResourceProcessorSkel),
-            _ => resourceKind
-        };
-    }
-
-    private static string NormalizeResourceKind(string value) =>
-        value.Trim().Replace("-", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
-
-    private static WorkspaceExportProcessorSelectionDto CreateProcessorSelection(
-        WorkspaceExportResourceProcessorOptionViewModel processor)
-    {
-        var selectedProcessorId = processor.IsEnabled
-            ? processor.SelectedProcessor?.Id
-            : null;
-        if (selectedProcessorId is not null &&
-            selectedProcessorId.EndsWith(":none", StringComparison.OrdinalIgnoreCase))
-        {
-            selectedProcessorId = null;
-        }
-
-        return new WorkspaceExportProcessorSelectionDto(
-            NormalizeResourceKind(processor.Id),
-            selectedProcessorId);
-    }
-
     private string? BuildFailureDetail(WorkspaceSaveExecutionResultDto result)
     {
         var failedBundle = result.BundleResults.FirstOrDefault(static bundle =>
@@ -505,26 +351,6 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
             return null;
         }
 
-        return _localizationService.GetFormattedString(
-            ResourceKeys.WorkspaceExportDialogFailureDetailFormat,
-            failedBundle.BundleDisplayName,
-            string.IsNullOrWhiteSpace(failedBundle.DiagnosticCode) ? "-" : failedBundle.DiagnosticCode,
-            string.IsNullOrWhiteSpace(failedBundle.DiagnosticDetail) ? "-" : failedBundle.DiagnosticDetail);
-    }
-
-    private static IReadOnlyDictionary<BundleId, DateTimeOffset> BuildBundleLastChangedAtLookup(
-        WorkspaceChangeSummaryDto? changeSummary)
-    {
-        if (changeSummary is null)
-        {
-            return new Dictionary<BundleId, DateTimeOffset>();
-        }
-
-        return changeSummary.Items
-            .Where(static item => item.LastChangedAtUtc is not null)
-            .GroupBy(static item => item.BundleId)
-            .ToDictionary(
-                static group => group.Key,
-                static group => group.Max(static item => item.LastChangedAtUtc!.Value));
+        return _failureDisplayFormatter.Format(failedBundle);
     }
 }

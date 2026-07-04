@@ -3877,7 +3877,7 @@
     <value>The bundle is missing a standardized writable input: {0}. Diagnostic: {1}</value>
   </data>
   <data name="Error.Bundle.Save.OutputBlocked" xml:space="preserve">
-    <value>The target AB output path is not writable: {0}. Diagnostic: {1}</value>
+    <value>The target AB output path is not writable: {0}. Check the output directory or choose another location.</value>
   </data>
   <data name="Error.Bundle.Save.WriteFailed" xml:space="preserve">
     <value>Failed to write the AB file: {0}. Detail: {1}</value>
@@ -4185,6 +4185,9 @@
   <data name="WorkspaceExportDialog.ExportToWorkspaceDirectory" xml:space="preserve">
     <value>Export to workspace output directory</value>
   </data>
+  <data name="WorkspaceExportDialog.OverwriteExistingFiles" xml:space="preserve">
+    <value>Overwrite existing files with the same name</value>
+  </data>
   <data name="WorkspaceExportDialog.OutputDirectory.Label" xml:space="preserve">
     <value>Output directory</value>
   </data>
@@ -4288,7 +4291,7 @@
     <value>Export completed: {0} bundles written, {1} failed. First failure: {2}</value>
   </data>
   <data name="WorkspaceExportDialog.FailureDetail.Format" xml:space="preserve">
-    <value>{0}, diagnostic: {1}, detail: {2}</value>
+    <value>{0}, reason: {1}</value>
   </data>
   <data name="WorkspaceExportDialog.StatusTitle" xml:space="preserve">
     <value>Export workspace bundles</value>
@@ -4301,6 +4304,24 @@
   </data>
   <data name="WorkspaceExportDialog.CompletedMessage.Format" xml:space="preserve">
     <value>Workspace export completed: {0} bundles written, {1} failed. Manifest: {2}</value>
+  </data>
+  <data name="WorkspaceExportDialog.Output.FileAlreadyExists" xml:space="preserve">
+    <value>The output directory already contains a file with the same name. Enable overwrite or choose another output directory.</value>
+  </data>
+  <data name="WorkspaceExportDialog.Output.TargetIsDirectory" xml:space="preserve">
+    <value>The target path is an existing folder, so the AB file cannot be written.</value>
+  </data>
+  <data name="WorkspaceExportDialog.Output.DirectoryBlockedByFile" xml:space="preserve">
+    <value>One output directory segment is blocked by an existing file.</value>
+  </data>
+  <data name="WorkspaceExportDialog.Output.InvalidPath" xml:space="preserve">
+    <value>The output path is invalid. Choose a writable local directory.</value>
+  </data>
+  <data name="WorkspaceExportDialog.Output.ProbeFailed" xml:space="preserve">
+    <value>Failed to check the output path. Verify directory permissions and disk state.</value>
+  </data>
+  <data name="WorkspaceExportDialog.Output.UnknownFailure.Format" xml:space="preserve">
+    <value>{0}. Detail: {1}</value>
   </data>
   <data name="Shell.PluginManagementNavItem.Content" xml:space="preserve">
     <value>Plugins</value>

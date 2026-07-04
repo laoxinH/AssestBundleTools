@@ -18,7 +18,8 @@ public sealed record WorkspaceBundleExportRequestDto(
     IReadOnlyList<WorkspaceExportProcessorSelectionDto> ProcessorSelections,
     IReadOnlyList<WorkspaceResourceProcessorExecutionResultDto> ProcessorResults,
     string OperationId,
-    WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.FastLz4);
+    WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.FastLz4,
+    WorkspaceBundleExportOutputConflictPolicyDto OutputConflictPolicy = WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting);
 
 public sealed record WorkspaceBundleExportResultDto(
     BundleId BundleId,

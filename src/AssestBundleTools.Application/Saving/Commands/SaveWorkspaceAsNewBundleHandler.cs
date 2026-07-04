@@ -73,7 +73,8 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
             _artifactInputResolver,
             _outputProbe,
             command.WorkspaceKey,
-            command.WorkspaceDataRootPath);
+            command.WorkspaceDataRootPath,
+            command.OutputConflictPolicy);
         if (plan.BundlePlans.Count == 0)
         {
             return Result<WorkspaceSaveExecutionResultDto>.Failure(ApplicationErrors.NoSaveCandidates(command.WorkspaceId));
@@ -255,7 +256,8 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
                         ProcessorSelections: processorSelections,
                         ProcessorResults: processorBatchResult.ResolveResults(selectedPlan.BundleId),
                         OperationId: operationId,
-                        CompressionMode: command.CompressionMode),
+                        CompressionMode: command.CompressionMode,
+                        OutputConflictPolicy: command.OutputConflictPolicy),
                     cancellationToken);
 
                 if (exportResult.IsCancelled)

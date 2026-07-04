@@ -126,7 +126,7 @@ SaveWorkspaceAsNewBundleCommand / ExecuteWorkspaceExportCommand
   compressionMode        # FastLz4 / PreserveOriginal / Uncompressed
   progress
   bundleWriteConcurrency?
-  outputConflictPolicy
+  outputConflictPolicy   # ReplaceExisting / FailIfExists
 
 WorkspaceExportProcessorSelectionDto
   resourceKind
@@ -149,15 +149,15 @@ WorkspaceSaveExecutionResultDto / WorkspaceExportExecutionResultDto
 
 `selectedBundleIds[]` 必须来自保存预览中的稳定 `BundleId`，不得用显示名或输出路径作为事实身份。`processorSelections[]` 必须按资源类型槽表达；导出窗口里的“无处理器”在命令中应投影为 `processorId = null`，不要把 UI 内部的 `texture2d:none` 伪 id 持久化到 Application。
 
-输出冲突策略第一版建议：
+输出冲突策略第一版：
 
 ```text
 OutputConflictPolicy
-  FailIfExists        # 默认，保留当前 preflight blocker 语义
-  ReplaceConfirmed    # 用户已确认覆盖，写临时文件成功后再替换
+  ReplaceExisting     # 默认，写临时文件成功后再替换已有输出文件
+  FailIfExists        # 用户关闭覆盖时保留 preflight blocker 语义
 ```
 
-真实写包入口不得在未确认覆盖时覆盖已有 AB 文件。即使用户确认覆盖，也必须先写临时文件并验证成功，再替换最终路径。
+导出窗口默认勾选“覆盖已有同名文件”，保存预览和执行命令都按 `ReplaceExisting` 计算同名文件冲突；用户取消勾选后，Application 在 preflight 阶段把已有同名文件视为阻断。真实写包入口不得在未确认覆盖时覆盖已有 AB 文件。即使用户确认覆盖，也必须先写临时文件并验证成功，再替换最终路径。Presentation 负责把 `Save.Output.FileAlreadyExists` 等稳定诊断映射成用户友好提示，不直接向用户暴露英文错误码。
 
 ## 6. 导出计划
 

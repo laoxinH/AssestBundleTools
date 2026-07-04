@@ -41,7 +41,9 @@ internal static partial class SaveWorkspaceHandlersTests
         var workspaceId = CreateWorkspaceId();
         var handler = new GetWorkspaceSavePreviewHandler(new TestWorkspaceSessionRegistry());
 
-        var result = await handler.HandleAsync(new GetWorkspaceSavePreviewQuery(workspaceId));
+        var result = await handler.HandleAsync(new GetWorkspaceSavePreviewQuery(
+            workspaceId,
+            OutputConflictPolicy: WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists));
 
         TestAssert.True(result.IsSuccess, "Preview should still succeed when the workspace has no staged save changes.");
         var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
@@ -84,7 +86,9 @@ internal static partial class SaveWorkspaceHandlersTests
         };
         var handler = new GetWorkspaceSavePreviewHandler(registry);
 
-        var result = await handler.HandleAsync(new GetWorkspaceSavePreviewQuery(workspaceId));
+        var result = await handler.HandleAsync(new GetWorkspaceSavePreviewQuery(
+            workspaceId,
+            OutputConflictPolicy: WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists));
 
         TestAssert.True(result.IsSuccess, "Save preview should succeed when staged changes exist.");
         var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
@@ -143,7 +147,9 @@ internal static partial class SaveWorkspaceHandlersTests
             registry,
             outputProbe: outputProbe);
 
-        var result = await handler.HandleAsync(new GetWorkspaceSavePreviewQuery(workspaceId));
+        var result = await handler.HandleAsync(new GetWorkspaceSavePreviewQuery(
+            workspaceId,
+            OutputConflictPolicy: WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists));
 
         TestAssert.True(result.IsSuccess, "Save preview should succeed while exposing output preflight blockers.");
         var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
@@ -161,6 +167,40 @@ internal static partial class SaveWorkspaceHandlersTests
         var zetaPlan = preview.BundlePlans[1];
         TestAssert.Equal(WorkspaceSaveOutputReadiness.Ready, zetaPlan.OutputReadiness, "Non-existing output path should be marked ready.");
         TestAssert.False(zetaPlan.IsOutputWriteBlocked, "Ready output path should not block real writing.");
+    }
+
+    public static async Task GetWorkspaceSavePreviewHandler_ShouldTreatExistingFilesAsReady_WhenOverwriteIsEnabled()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var outputProbe = new TestWorkspaceSaveOutputProbe();
+        outputProbe.BlockedFileNames.Add("Alpha.ab");
+        var registry = new TestWorkspaceSessionRegistry
+        {
+            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(
+                workspaceId,
+                [
+                    CreateChangeItem(
+                        bundleId: new BundleId("bundle-alpha"),
+                        assetId: new AssetId("asset-1"),
+                        bundleDisplayName: "Alpha.ab",
+                        assetName: "ConfigText",
+                        isModified: true)
+                ])
+        };
+        var handler = new GetWorkspaceSavePreviewHandler(
+            registry,
+            outputProbe: outputProbe);
+
+        var result = await handler.HandleAsync(new GetWorkspaceSavePreviewQuery(workspaceId));
+
+        TestAssert.True(result.IsSuccess, "Default overwrite preview should succeed.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(1, preview.OutputReadyBundleCount, "Existing files should be writable when overwrite is enabled.");
+        TestAssert.Equal(0, preview.OutputBlockedBundleCount, "Existing files should not block the default overwrite flow.");
+        var plan = TestAssert.Single(preview.BundlePlans);
+        TestAssert.Equal(WorkspaceSaveOutputReadiness.Ready, plan.OutputReadiness, "Existing-file readiness should be projected as ready.");
+        TestAssert.False(plan.IsOutputWriteBlocked, "Existing files should not block when overwrite is enabled.");
+        TestAssert.Equal("Save.Output.FileAlreadyExists", plan.OutputDiagnosticCode, "Diagnostic should remain available for observability.");
     }
 
     public static async Task SaveWorkspaceAsNewBundleHandler_ShouldReturnFailure_WhenWorkspaceDoesNotExist()
@@ -269,7 +309,9 @@ internal static partial class SaveWorkspaceHandlersTests
             registry,
             outputProbe: outputProbe);
 
-        var result = await handler.HandleAsync(new SaveWorkspaceAsNewBundleCommand(workspaceId));
+        var result = await handler.HandleAsync(new SaveWorkspaceAsNewBundleCommand(
+            workspaceId,
+            OutputConflictPolicy: WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists));
 
         TestAssert.True(result.IsSuccess, "Current save skeleton should still return an execution summary.");
         var execution = result.Value ?? throw new InvalidOperationException("Expected save execution result.");

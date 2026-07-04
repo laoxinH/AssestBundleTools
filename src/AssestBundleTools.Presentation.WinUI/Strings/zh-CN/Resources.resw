@@ -3877,7 +3877,7 @@
     <value>资源包缺少可写出的标准化输入：{0}。诊断：{1}</value>
   </data>
   <data name="Error.Bundle.Save.OutputBlocked" xml:space="preserve">
-    <value>目标 AB 输出路径不可写：{0}。诊断：{1}</value>
+    <value>目标 AB 输出路径不可写：{0}。请检查输出目录是否可写，或选择其他目录。</value>
   </data>
   <data name="Error.Bundle.Save.WriteFailed" xml:space="preserve">
     <value>写出 AB 文件失败：{0}。详情：{1}</value>
@@ -4185,6 +4185,9 @@
   <data name="WorkspaceExportDialog.ExportToWorkspaceDirectory" xml:space="preserve">
     <value>导出到工作区输出目录</value>
   </data>
+  <data name="WorkspaceExportDialog.OverwriteExistingFiles" xml:space="preserve">
+    <value>覆盖已有同名文件</value>
+  </data>
   <data name="WorkspaceExportDialog.OutputDirectory.Label" xml:space="preserve">
     <value>输出目录</value>
   </data>
@@ -4288,7 +4291,7 @@
     <value>导出完成：写出 {0} 个资源包，失败 {1} 个。首个失败：{2}</value>
   </data>
   <data name="WorkspaceExportDialog.FailureDetail.Format" xml:space="preserve">
-    <value>{0}，诊断：{1}，详情：{2}</value>
+    <value>{0}，原因：{1}</value>
   </data>
   <data name="WorkspaceExportDialog.StatusTitle" xml:space="preserve">
     <value>导出工作区资源包</value>
@@ -4301,6 +4304,24 @@
   </data>
   <data name="WorkspaceExportDialog.CompletedMessage.Format" xml:space="preserve">
     <value>工作区导出完成：写出 {0} 个资源包，失败 {1} 个。清单：{2}</value>
+  </data>
+  <data name="WorkspaceExportDialog.Output.FileAlreadyExists" xml:space="preserve">
+    <value>输出目录中已经存在同名文件。请勾选“覆盖已有同名文件”，或选择其他输出目录。</value>
+  </data>
+  <data name="WorkspaceExportDialog.Output.TargetIsDirectory" xml:space="preserve">
+    <value>目标位置已经存在同名文件夹，无法写出 AB 文件。</value>
+  </data>
+  <data name="WorkspaceExportDialog.Output.DirectoryBlockedByFile" xml:space="preserve">
+    <value>输出目录路径中的某一级被同名文件占用，无法创建目录。</value>
+  </data>
+  <data name="WorkspaceExportDialog.Output.InvalidPath" xml:space="preserve">
+    <value>输出路径无效，请选择可写入的本地目录。</value>
+  </data>
+  <data name="WorkspaceExportDialog.Output.ProbeFailed" xml:space="preserve">
+    <value>检查输出路径时失败，请确认目录权限和磁盘状态。</value>
+  </data>
+  <data name="WorkspaceExportDialog.Output.UnknownFailure.Format" xml:space="preserve">
+    <value>{0}。详情：{1}</value>
   </data>
   <data name="Shell.PluginManagementNavItem.Content" xml:space="preserve">
     <value>插件管理</value>

@@ -465,6 +465,10 @@ internal static partial class ApplicationTestSuite
             SaveWorkspaceHandlersTests.GetWorkspaceSavePreviewHandler_ShouldExposeOutputPreflightBlockers);
         await RunTestAsync(
             failures,
+            nameof(SaveWorkspaceHandlersTests.GetWorkspaceSavePreviewHandler_ShouldTreatExistingFilesAsReady_WhenOverwriteIsEnabled),
+            SaveWorkspaceHandlersTests.GetWorkspaceSavePreviewHandler_ShouldTreatExistingFilesAsReady_WhenOverwriteIsEnabled);
+        await RunTestAsync(
+            failures,
             nameof(SaveWorkspaceHandlersTests.GetWorkspaceSavePreviewHandler_ShouldResolveExistingArtifactInputs_FromWorkspaceCache),
             SaveWorkspaceHandlersTests.GetWorkspaceSavePreviewHandler_ShouldResolveExistingArtifactInputs_FromWorkspaceCache);
         await RunTestAsync(
@@ -491,6 +495,10 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldExportSelectedBundles_AndSaveManifest),
             SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldExportSelectedBundles_AndSaveManifest);
+        await RunTestAsync(
+            failures,
+            nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldBlockExistingOutput_WhenOverwriteIsDisabled),
+            SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldBlockExistingOutput_WhenOverwriteIsDisabled);
         await RunTestAsync(
             failures,
             nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldForwardObjectWriteItems_FromOperationRecords),
