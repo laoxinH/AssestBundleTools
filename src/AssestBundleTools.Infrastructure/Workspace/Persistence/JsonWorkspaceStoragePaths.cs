@@ -25,6 +25,7 @@ internal sealed class JsonWorkspaceStoragePaths
         PreviewCacheRootDirectoryPath = Path.Combine(CacheDirectoryPath, "previews");
         StagingDirectoryPath = Path.Combine(RootDirectoryPath, "staging");
         WorkspaceChangesDirectoryPath = Path.Combine(StagingDirectoryPath, "changes");
+        WorkspaceDraftsDirectoryPath = Path.Combine(StagingDirectoryPath, "drafts");
     }
 
     public string RootDirectoryPath { get; }
@@ -46,6 +47,8 @@ internal sealed class JsonWorkspaceStoragePaths
     public string StagingDirectoryPath { get; }
 
     public string WorkspaceChangesDirectoryPath { get; }
+
+    public string WorkspaceDraftsDirectoryPath { get; }
 
     public string GetMetadataFilePath(string workspaceKey)
     {
@@ -133,6 +136,18 @@ internal sealed class JsonWorkspaceStoragePaths
     public string GetWorkspaceChangeFilePath(string workspaceKey)
     {
         return Path.Combine(WorkspaceChangesDirectoryPath, $"{NormalizeFileSegment(workspaceKey, nameof(workspaceKey))}.json");
+    }
+
+    public string GetAssetEditDraftDirectoryPath(
+        string workspaceKey,
+        string draftId,
+        string draftMode)
+    {
+        return Path.Combine(
+            WorkspaceDraftsDirectoryPath,
+            NormalizeFileSegment(workspaceKey, nameof(workspaceKey)),
+            NormalizeFileSegment(draftId, nameof(draftId)),
+            NormalizeFileSegment(draftMode, nameof(draftMode)));
     }
 
     private static string NormalizeFileSegment(string value, string parameterName)

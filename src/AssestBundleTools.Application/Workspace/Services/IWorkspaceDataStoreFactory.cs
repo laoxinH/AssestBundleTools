@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Assets.Services;
+using AssestBundleTools.Application.Editing.Services;
 
 namespace AssestBundleTools.Application.Workspace.Services;
 
@@ -22,6 +23,9 @@ public interface IWorkspaceDataStoreFactory
     IPreviewCacheStore CreatePreviewCacheStore(string? rootDirectoryPath = null);
 
     IWorkspaceChangeStore CreateWorkspaceChangeStore(string? rootDirectoryPath = null);
+
+    IAssetEditDraftTextStore CreateAssetEditDraftTextStore(string? rootDirectoryPath = null) =>
+        NoOpAssetEditDraftTextStore.Instance;
 
     string GetDefaultRootDirectoryPath();
 }

@@ -14,6 +14,8 @@
   当前只保存编辑草稿描述元数据，不保存草稿内容。
 - `WorkspaceChangeSetAssetEditDraftStore`
   当前从工作区变更暂存层读取 `editDrafts[]`，用于窗口恢复提示前的草稿候选预检。
+- `JsonAssetEditDraftTextStore`
+  当前从 `staging/drafts/<workspaceKey>/<draftId>/<draftMode>/` 保存和读取文本草稿 payload，供完整文本 chunk / lines / search query 使用；它不替代 `editDrafts[]` 描述和 `operations[]` 事实流。
 - `CachedWorkspaceSessionRegistry`
   当前在运行时保存 `LastExtractedAtUtc / AppliedWorkspaceReplacement / AppliedFileReplacement`，并由这些状态生成 `WorkspaceChangeSummaryDto`。
 
@@ -34,13 +36,14 @@ staging/
     <workspaceKey>.json       # 操作记录、当前物化变更摘要、草稿描述
   drafts/
     <workspaceKey>/
-      <draftId>/...           # 后续真实草稿内容
+      <draftId>/
+        <draftMode>/...       # 真实草稿大载荷，例如文本草稿 payload
   operation-payloads/
     <workspaceKey>/
       <operationId>/...       # 后续大载荷或长操作中间产物
 ```
 
-当前阶段先扩展 `staging/changes/<workspaceKey>.json`，不急于创建新存储文件。后续真实草稿内容或大操作载荷再落到 `drafts/` 与 `operation-payloads/`。
+当前阶段已经扩展 `staging/changes/<workspaceKey>.json` 作为操作事实与草稿描述来源，并新增文本草稿 payload store 作为 `staging/drafts/` 的首个大载荷承载点。后续其它真实草稿内容或大操作载荷继续落到 `drafts/` 与 `operation-payloads/`，但生命周期和事实语义仍必须由描述与操作记录驱动。
 
 推荐演进后的 `WorkspaceChangeSetDto` 逻辑结构：
 
@@ -78,7 +81,7 @@ checkpoints[]      # 后续：保存 / 导出检查点
 - 完整跨操作全局 redo 栈；当前只实现目标资源级替换 redo，用于重做最近一次被撤销的替换，或从资源详情变更卡片重新应用某条历史替换记录。
 - 保存后跨输出包自动反向写回。
 - 自动删除用户已经导出的外部文件。
-- 真实编辑草稿内容格式。
+- 完整编辑草稿生命周期；当前只落地文本 payload 存取底座，尚未实现文本编辑器创建 / 更新 / 恢复 / 丢弃 / 应用流程。
 - 多人协作或跨进程同时编辑同一工作区。
 - 直接把操作记录当作用户可见文案来源。
 
@@ -87,7 +90,7 @@ checkpoints[]      # 后续：保存 / 导出检查点
 - **操作记录**：用户或系统确认执行的一次可恢复动作，例如提取、替换、应用草稿、撤销替换。
 - **操作事实流**：按 `sequence` 递增保存的 `operations[]`。
 - **物化变更摘要**：由操作事实流计算出的当前工作区待保存 / 待展示状态，对应现有 `WorkspaceChangeSummaryDto` 和 `changes[]`。
-- **编辑草稿**：尚未应用到工作区变更队列的临时编辑内容。当前只保存描述元数据。
+- **编辑草稿**：尚未应用到工作区变更队列的临时编辑内容。当前描述元数据保存在 `editDrafts[]`，文本类大载荷可保存在 `staging/drafts`，但草稿生命周期仍未接入完整编辑器模型。
 - **检查点**：保存 / 导出动作成功后产生的边界，用来标记哪些操作已经被外部输出消费。
 
 ## 6. 操作记录模型
@@ -339,13 +342,15 @@ relatedOperationId
 
 ### 7.4 编辑草稿
 
-编辑草稿分为“草稿描述”“轻量已应用结果”和后续“大载荷草稿内容”三层。
+编辑草稿分为“草稿描述”“轻量已应用结果”和“大载荷草稿内容”三层。
 
-当前已落地的是描述层和 Sprite 几何的轻量已应用结果：
+当前已落地的是描述层、Sprite 几何的轻量已应用结果，以及文本类大载荷草稿的文件背书底座：
 
 - `editDrafts[]`
 - `WorkspaceAssetEditDraftDescriptorDto`
 - `AssetEditDraftRestorePlan`
+- `AssetPreviewFullContentReferenceKind.EditDraft`
+- `IAssetEditDraftTextStore`
 - `WorkspaceOperationKind.EditDraftApplied`
 - `WorkspaceOperationResultDto.SpriteEditGeometry`
 
@@ -361,6 +366,14 @@ Spine 编辑第一阶段属于“组成文件替换草稿”，而不是新的 U
 
 Spine 编辑草稿预览不得绕过有效读模型。编辑态预览输入为原始 Spine 组详情叠加当前未保存草稿文件；保存后的预览输入为工作区操作记录物化出的 skeleton、atlas 和 texture page 当前有效载荷。若组成文件不匹配、缺少 page、atlas 声明尺寸与图片尺寸不一致或 runtime adapter 无法解释，Application 应返回结构化诊断，Presentation 只展示诊断和稳定摘要回退，不把外部解析异常或原始 stdout/stderr 作为主提示。实际 AB 对象替换和写包仍只在后续保存 / 重建 / 统一导出阶段消费这些组成资产替换记录。
 
+当前文本草稿 payload 存储规则：
+
+- 草稿文本保存在 `staging/drafts/<workspaceKey>/<draftId>/<draftMode>/text.txt`。
+- 草稿描述 sidecar 为 `text-draft.json`，用于校验 `workspaceKey / draftId / draftMode`、内容类型、长度和来源指纹。
+- 行 / 字符稀疏索引 sidecar 为 `text.lines.json`，供完整文本查看、行号、搜索和后续文本编辑器虚拟化复用。
+- `AssetPreviewFullContentReferenceKind.EditDraft` 只能作为 Application query 的引用参数；Presentation 不得直接读取 `staging/drafts`。
+- 该 store 只保存 payload，不决定草稿是否可恢复、是否已应用或是否应丢弃；这些仍由 `editDrafts[]` 描述和后续操作记录表达。
+
 后续大载荷编辑操作记录应引用草稿，不直接保存草稿内容：
 
 - `EditDraftCreated`
@@ -373,7 +386,7 @@ Spine 编辑草稿预览不得绕过有效读模型。编辑态预览输入为�
 - 窗口 / 标签恢复只携带轻量 `EditDraftReference`。
 - 真正恢复草稿前必须先走 `GetAssetEditDraftRestorePlanHandler`。
 - 只有 `Restorable` 草稿才能重新挂回标签或进入编辑器。
-- 草稿内容后续应放在 `staging/drafts/<workspaceKey>/<draftId>/`，不得写入 `openAssetTabs[]` 或 `operations[]`。
+- 草稿内容应放在 `staging/drafts/<workspaceKey>/<draftId>/<draftMode>/`，不得写入 `openAssetTabs[]` 或 `operations[]`。
 
 ### 7.5 保存与重建
 
@@ -536,7 +549,7 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 - 已让 Sprite 裁切框 / pivot 几何通过 `EditDraftApplied` 追加操作记录，并在 `Result.SpriteEditGeometry` 中保存轻量几何。
 - `editDrafts[]` 继续保存草稿描述、指纹和摘要；当前 Sprite 几何不生成单独草稿内容文件。
 - 操作记录引用 `draftId / draftMode`，保存 / 导出阶段后续应从物化状态读取有效 Sprite 几何。
-- 大载荷草稿内容落到 `staging/drafts/` 后，再补真实恢复 / 丢弃 / 应用流程。
+- 文本类大载荷草稿内容已具备 `staging/drafts/` 文件背书与完整文本 query 读取能力；后续仍需补文本编辑器 UI、草稿创建 / 更新 / 恢复 / 丢弃 / 应用流程，以及这些流程与 `editDrafts[] / operations[]` 的一致性。
 
 ### 第五阶段：保存检查点
 

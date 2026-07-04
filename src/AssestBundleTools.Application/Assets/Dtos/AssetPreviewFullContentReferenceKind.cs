@@ -6,5 +6,6 @@ namespace AssestBundleTools.Application.Assets.Dtos;
 public enum AssetPreviewFullContentReferenceKind
 {
     PreviewCache = 0,
-    FileReplacement = 1
+    FileReplacement = 1,
+    EditDraft = 2
 }

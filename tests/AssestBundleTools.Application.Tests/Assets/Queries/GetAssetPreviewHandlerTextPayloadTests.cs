@@ -367,6 +367,63 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(6, replacementPreviewSourceProvider.LastTextChunkLength, "Replacement source provider should receive the requested length.");
     }
 
+    public static async Task LoadPreviewTextChunkHandler_ShouldReadChunk_FromEditDraftReference()
+    {
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        const string draftId = "draft-text-1";
+        const string draftMode = "text";
+        const string fullTextContent = "draft-0123456789";
+        var previewCacheStore = new TestPreviewCacheStore(CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            "cached text should not be used",
+            generatorVersion: "generator-1"));
+        var draftTextStore = new TestAssetEditDraftTextStore(CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            fullTextContent,
+            generatorVersion: "draft-generator"));
+        var replacementPreviewSourceProvider = new TestReplacementPreviewSourceProvider(
+            Result<AssetPreviewContentDto>.Success(new AssetPreviewContentDto(
+                Kind: AssetPreviewKind.Text,
+                ContentType: "text/plain; charset=utf-8",
+                Content: Encoding.UTF8.GetBytes("replacement text should not be used"))));
+        var handler = new LoadPreviewTextChunkHandler(
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore,
+                assetEditDraftTextStore: draftTextStore),
+            replacementPreviewSourceProvider);
+        var reference = new AssetPreviewFullContentReferenceDto(
+            AssetPreviewFullContentReferenceKind.EditDraft,
+            "text/plain; charset=utf-8",
+            ContentLength: 0,
+            query.WorkspaceKey,
+            DraftId: draftId,
+            DraftMode: draftMode);
+
+        var result = await handler.HandleAsync(new LoadPreviewTextChunkQuery(
+            query.WorkspaceDataRootPath,
+            reference,
+            Offset: 6,
+            Length: 6));
+
+        TestAssert.True(result.IsSuccess, "Text chunk loading should succeed for an edit draft reference.");
+        var chunk = result.Value ?? throw new InvalidOperationException("Expected text chunk result.");
+        TestAssert.Equal("012345", chunk.Text, "Draft chunk text should match the requested range.");
+        TestAssert.Equal(6, chunk.Offset, "Draft chunk should report the requested offset.");
+        TestAssert.Equal(6, chunk.Length, "Draft chunk should report returned character count.");
+        TestAssert.Equal(fullTextContent.Length, chunk.TotalLength, "Draft chunk should report full normalized text length.");
+        TestAssert.True(chunk.HasMore, "Draft chunk should report remaining text.");
+        TestAssert.Equal(AssetPreviewFullContentReferenceKind.EditDraft, chunk.Reference.Kind, "Chunk response should preserve edit draft reference kind.");
+        TestAssert.Equal(draftId, chunk.Reference.DraftId, "Chunk response should preserve draft id.");
+        TestAssert.Equal(draftMode, chunk.Reference.DraftMode, "Chunk response should preserve draft mode.");
+        TestAssert.Equal(0, previewCacheStore.LoadCallCount, "Draft chunk loading should not hydrate preview cache.");
+        TestAssert.Equal(0, replacementPreviewSourceProvider.LoadFileTextChunkCallCount, "Draft chunk loading should not read file replacement source.");
+        TestAssert.Equal(1, draftTextStore.LoadTextChunkCallCount, "Draft text store should serve one text chunk.");
+    }
+
     public static async Task LoadPreviewTextChunkHandler_ShouldClampRequestedLength_ToChunkBudget()
     {
         var query = CreateQuery();
@@ -492,6 +549,50 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(LoadPreviewTextLinesHandler.MaxLineCount, replacementPreviewSourceProvider.LastTextLinesLineCount, "Oversized line requests should be clamped before provider execution.");
     }
 
+    public static async Task LoadPreviewTextLinesHandler_ShouldReadLines_FromEditDraftReference()
+    {
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        const string fullTextContent = "line-0\nline-1\nline-2\nline-3";
+        var previewCacheStore = new TestPreviewCacheStore(CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            "cached text should not be used",
+            generatorVersion: "generator-1"));
+        var draftTextStore = new TestAssetEditDraftTextStore(CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            fullTextContent,
+            generatorVersion: "draft-generator"));
+        var handler = new LoadPreviewTextLinesHandler(new TestWorkspaceDataStoreFactory(
+            new TestBundleIndexCacheStore([bundleCacheEntry]),
+            previewCacheStore,
+            assetEditDraftTextStore: draftTextStore));
+        var reference = new AssetPreviewFullContentReferenceDto(
+            AssetPreviewFullContentReferenceKind.EditDraft,
+            "text/plain; charset=utf-8",
+            ContentLength: 0,
+            query.WorkspaceKey,
+            DraftId: "draft-text-1",
+            DraftMode: "text");
+
+        var result = await handler.HandleAsync(new LoadPreviewTextLinesQuery(
+            query.WorkspaceDataRootPath,
+            reference,
+            StartLineIndex: 1,
+            LineCount: 2));
+
+        TestAssert.True(result.IsSuccess, "Text line loading should succeed for an edit draft reference.");
+        var lines = result.Value ?? throw new InvalidOperationException("Expected text line result.");
+        TestAssert.Equal(2, lines.Lines.Count, "Draft line range should return requested lines.");
+        TestAssert.Equal("line-1", lines.Lines[0], "Draft line range should start at requested line.");
+        TestAssert.Equal("line-2", lines.Lines[1], "Draft line range should preserve order.");
+        TestAssert.Equal(1, lines.StartLineIndex, "Draft line range should report effective start line.");
+        TestAssert.True(lines.HasMore, "Draft line range should report remaining lines.");
+        TestAssert.Equal(0, previewCacheStore.LoadTextLinesCallCount, "Draft line loading should not ask preview cache for lines.");
+        TestAssert.Equal(1, draftTextStore.LoadTextLinesCallCount, "Draft text store should serve one line range.");
+    }
+
     public static async Task SearchPreviewTextHandler_ShouldFindBoundedMatches_FromPreviewCacheReference()
     {
         var query = CreateQuery();
@@ -581,6 +682,51 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(sourcePath, replacementPreviewSourceProvider.LastSearchSourceFilePath, "Replacement source provider should receive source path.");
         TestAssert.Equal(SearchPreviewTextHandler.MaxMatchCount, replacementPreviewSourceProvider.LastSearchMaxMatchCount, "Oversized search requests should be clamped before provider execution.");
         TestAssert.True(replacementPreviewSourceProvider.LastSearchMatchCase, "Replacement source provider should receive match-case option.");
+    }
+
+    public static async Task SearchPreviewTextHandler_ShouldFindMatches_FromEditDraftReference()
+    {
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        const string fullTextContent = "target skipped\nTarget one\nTarget two";
+        var previewCacheStore = new TestPreviewCacheStore(CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            "cached text should not be used",
+            generatorVersion: "generator-1"));
+        var draftTextStore = new TestAssetEditDraftTextStore(CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            fullTextContent,
+            generatorVersion: "draft-generator"));
+        var handler = new SearchPreviewTextHandler(new TestWorkspaceDataStoreFactory(
+            new TestBundleIndexCacheStore([bundleCacheEntry]),
+            previewCacheStore,
+            assetEditDraftTextStore: draftTextStore));
+        var reference = new AssetPreviewFullContentReferenceDto(
+            AssetPreviewFullContentReferenceKind.EditDraft,
+            "text/plain; charset=utf-8",
+            ContentLength: 0,
+            query.WorkspaceKey,
+            DraftId: "draft-text-1",
+            DraftMode: "text");
+
+        var result = await handler.HandleAsync(new SearchPreviewTextQuery(
+            query.WorkspaceDataRootPath,
+            reference,
+            SearchText: "Target",
+            StartLineIndex: 1,
+            MaxMatchCount: 1,
+            MatchCase: true));
+
+        TestAssert.True(result.IsSuccess, "Text search should succeed for an edit draft reference.");
+        var search = result.Value ?? throw new InvalidOperationException("Expected text search result.");
+        var match = TestAssert.Single(search.Matches);
+        TestAssert.Equal(1, match.LineIndex, "Draft search should preserve original line indices.");
+        TestAssert.Equal("Target one", match.LineText, "Draft search should include matched line text.");
+        TestAssert.True(search.HasMore, "Draft search should report overflow beyond requested match budget.");
+        TestAssert.Equal(0, previewCacheStore.SearchTextCallCount, "Draft search should not ask preview cache.");
+        TestAssert.Equal(1, draftTextStore.SearchTextCallCount, "Draft text store should serve one search request.");
     }
 
     private static long? ReadInt64PreviewInfo(AssetPreviewDto preview, AssetPreviewInfoKey key)

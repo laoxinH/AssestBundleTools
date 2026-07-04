@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Assets.Services;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Workspace.Services;
 
 namespace AssestBundleTools.Infrastructure.Workspace.Persistence;
@@ -41,6 +42,13 @@ public sealed class JsonWorkspaceDataStoreFactory : IWorkspaceDataStoreFactory
         return string.IsNullOrWhiteSpace(rootDirectoryPath)
             ? new JsonWorkspaceChangeStore()
             : new JsonWorkspaceChangeStore(rootDirectoryPath);
+    }
+
+    public IAssetEditDraftTextStore CreateAssetEditDraftTextStore(string? rootDirectoryPath = null)
+    {
+        return string.IsNullOrWhiteSpace(rootDirectoryPath)
+            ? new JsonAssetEditDraftTextStore()
+            : new JsonAssetEditDraftTextStore(rootDirectoryPath);
     }
 
     public string GetDefaultRootDirectoryPath()

@@ -243,6 +243,10 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldReadChunk_FromFileReplacementReference);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldReadChunk_FromEditDraftReference),
+            GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldReadChunk_FromEditDraftReference);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldClampRequestedLength_ToChunkBudget),
             GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldClampRequestedLength_ToChunkBudget);
         await RunTestAsync(
@@ -255,12 +259,20 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.LoadPreviewTextLinesHandler_ShouldReadLines_FromFileReplacementReference);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.LoadPreviewTextLinesHandler_ShouldReadLines_FromEditDraftReference),
+            GetAssetPreviewHandlerTests.LoadPreviewTextLinesHandler_ShouldReadLines_FromEditDraftReference);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.SearchPreviewTextHandler_ShouldFindBoundedMatches_FromPreviewCacheReference),
             GetAssetPreviewHandlerTests.SearchPreviewTextHandler_ShouldFindBoundedMatches_FromPreviewCacheReference);
         await RunTestAsync(
             failures,
             nameof(GetAssetPreviewHandlerTests.SearchPreviewTextHandler_ShouldFindMatches_FromFileReplacementReference),
             GetAssetPreviewHandlerTests.SearchPreviewTextHandler_ShouldFindMatches_FromFileReplacementReference);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetPreviewHandlerTests.SearchPreviewTextHandler_ShouldFindMatches_FromEditDraftReference),
+            GetAssetPreviewHandlerTests.SearchPreviewTextHandler_ShouldFindMatches_FromEditDraftReference);
         await RunTestAsync(
             failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldRoundTripCachedImageOverlay_WhenPreviewCacheStillMatches),

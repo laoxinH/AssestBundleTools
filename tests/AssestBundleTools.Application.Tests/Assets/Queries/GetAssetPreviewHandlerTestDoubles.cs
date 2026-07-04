@@ -5,6 +5,8 @@ using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Editing.Dtos;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Services;
@@ -183,15 +185,18 @@ internal static partial class GetAssetPreviewHandlerTests
         private readonly IBundleArtifactStore _bundleArtifactStore;
         private readonly IBundleIndexCacheStore _bundleIndexCacheStore;
         private readonly IPreviewCacheStore _previewCacheStore;
+        private readonly IAssetEditDraftTextStore _assetEditDraftTextStore;
 
         public TestWorkspaceDataStoreFactory(
             IBundleIndexCacheStore bundleIndexCacheStore,
             IPreviewCacheStore previewCacheStore,
-            IBundleArtifactStore? bundleArtifactStore = null)
+            IBundleArtifactStore? bundleArtifactStore = null,
+            IAssetEditDraftTextStore? assetEditDraftTextStore = null)
         {
             _bundleArtifactStore = bundleArtifactStore ?? new TestBundleArtifactStore();
             _bundleIndexCacheStore = bundleIndexCacheStore;
             _previewCacheStore = previewCacheStore;
+            _assetEditDraftTextStore = assetEditDraftTextStore ?? NoOpAssetEditDraftTextStore.Instance;
         }
 
         public IBundleArtifactStore CreateBundleArtifactStore(string? rootDirectoryPath = null) => _bundleArtifactStore;
@@ -201,6 +206,8 @@ internal static partial class GetAssetPreviewHandlerTests
         public IPreviewCacheStore CreatePreviewCacheStore(string? rootDirectoryPath = null) => _previewCacheStore;
 
         public IWorkspaceChangeStore CreateWorkspaceChangeStore(string? rootDirectoryPath = null) => throw new NotSupportedException();
+
+        public IAssetEditDraftTextStore CreateAssetEditDraftTextStore(string? rootDirectoryPath = null) => _assetEditDraftTextStore;
 
         public string GetDefaultRootDirectoryPath() => @"D:\WorkspaceData";
     }
@@ -357,6 +364,165 @@ internal static partial class GetAssetPreviewHandlerTests
         public void Delete(string workspaceKey, string bundleCacheKey) => throw new NotSupportedException();
 
         public void DeleteWorkspace(string workspaceKey) => throw new NotSupportedException();
+    }
+
+    private sealed class TestAssetEditDraftTextStore : IAssetEditDraftTextStore
+    {
+        private readonly PreviewCachePayloadDto _payload;
+
+        public TestAssetEditDraftTextStore(PreviewCachePayloadDto payload)
+        {
+            _payload = payload;
+        }
+
+        public int LoadTextChunkCallCount { get; private set; }
+
+        public int LoadTextLinesCallCount { get; private set; }
+
+        public int SearchTextCallCount { get; private set; }
+
+        public PreviewCacheTextChunkDto? LoadTextChunk(
+            string workspaceKey,
+            string draftId,
+            string draftMode,
+            int offset,
+            int length)
+        {
+            LoadTextChunkCallCount++;
+            return ReadTextChunk(workspaceKey, offset, length);
+        }
+
+        public PreviewCacheTextLineRangeDto? LoadTextLines(
+            string workspaceKey,
+            string draftId,
+            string draftMode,
+            int startLineIndex,
+            int lineCount)
+        {
+            LoadTextLinesCallCount++;
+            return ReadTextLines(workspaceKey, startLineIndex, lineCount);
+        }
+
+        public PreviewCacheTextSearchResultDto? SearchText(
+            string workspaceKey,
+            string draftId,
+            string draftMode,
+            string searchText,
+            int startLineIndex,
+            int maxMatchCount,
+            bool matchCase)
+        {
+            SearchTextCallCount++;
+            return ReadTextSearch(workspaceKey, searchText, startLineIndex, maxMatchCount, matchCase);
+        }
+
+        public void SaveTextPayload(AssetEditDraftTextPayloadDto payload) => throw new NotSupportedException();
+
+        public void Delete(string workspaceKey, string draftId, string draftMode) => throw new NotSupportedException();
+
+        private PreviewCacheTextChunkDto? ReadTextChunk(string workspaceKey, int offset, int length)
+        {
+            if (!string.Equals(_payload.Descriptor.WorkspaceKey, workspaceKey, StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            var fullText = DecodeText();
+            var safeOffset = Math.Min(offset, fullText.Length);
+            var safeLength = Math.Min(length, fullText.Length - safeOffset);
+            var text = safeLength <= 0
+                ? string.Empty
+                : fullText.Substring(safeOffset, safeLength);
+            return new PreviewCacheTextChunkDto(
+                _payload.Descriptor,
+                text,
+                safeOffset,
+                safeLength,
+                fullText.Length,
+                _payload.Content.LongLength);
+        }
+
+        private PreviewCacheTextLineRangeDto? ReadTextLines(string workspaceKey, int startLineIndex, int lineCount)
+        {
+            if (!string.Equals(_payload.Descriptor.WorkspaceKey, workspaceKey, StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            var fullText = DecodeText();
+            var allLines = fullText.Length == 0
+                ? Array.Empty<string>()
+                : fullText.Split('\n');
+            var safeStartLineIndex = Math.Min(startLineIndex, allLines.Length);
+            var safeLineCount = Math.Min(lineCount, allLines.Length - safeStartLineIndex);
+            var lines = safeLineCount <= 0
+                ? Array.Empty<string>()
+                : allLines.Skip(safeStartLineIndex).Take(safeLineCount).ToArray();
+            return new PreviewCacheTextLineRangeDto(
+                _payload.Descriptor,
+                lines,
+                safeStartLineIndex,
+                safeLineCount,
+                allLines.Length,
+                _payload.Content.LongLength);
+        }
+
+        private PreviewCacheTextSearchResultDto? ReadTextSearch(
+            string workspaceKey,
+            string searchText,
+            int startLineIndex,
+            int maxMatchCount,
+            bool matchCase)
+        {
+            if (!string.Equals(_payload.Descriptor.WorkspaceKey, workspaceKey, StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            var fullText = DecodeText();
+            var allLines = fullText.Length == 0
+                ? Array.Empty<string>()
+                : fullText.Split('\n');
+            var matches = new List<AssetPreviewTextSearchMatchDto>();
+            var comparison = matchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            var scannedLineCount = 0;
+            var hasMore = false;
+            for (var lineIndex = Math.Min(startLineIndex, allLines.Length); lineIndex < allLines.Length; lineIndex++)
+            {
+                scannedLineCount++;
+                var line = allLines[lineIndex];
+                var columnIndex = line.IndexOf(searchText, comparison);
+                while (columnIndex >= 0)
+                {
+                    if (matches.Count >= maxMatchCount)
+                    {
+                        hasMore = true;
+                        break;
+                    }
+
+                    matches.Add(new AssetPreviewTextSearchMatchDto(lineIndex, columnIndex, line, IsLineTextTruncated: false));
+                    columnIndex = line.IndexOf(searchText, columnIndex + Math.Max(1, searchText.Length), comparison);
+                }
+
+                if (hasMore)
+                {
+                    break;
+                }
+            }
+
+            return new PreviewCacheTextSearchResultDto(
+                _payload.Descriptor,
+                matches,
+                Math.Min(startLineIndex, allLines.Length),
+                Math.Min(startLineIndex, allLines.Length) + scannedLineCount,
+                hasMore,
+                _payload.Content.LongLength);
+        }
+
+        private string DecodeText() =>
+            Encoding.UTF8.GetString(_payload.Content)
+                .Replace("\r\n", "\n", StringComparison.Ordinal)
+                .Replace('\r', '\n');
     }
 
     private sealed class TestPreviewCacheStore : IPreviewCacheStore

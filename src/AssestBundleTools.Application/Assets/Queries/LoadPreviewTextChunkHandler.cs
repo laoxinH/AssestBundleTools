@@ -62,6 +62,7 @@ public sealed class LoadPreviewTextChunkHandler : IQueryHandler<LoadPreviewTextC
                 query,
                 requestedLength,
                 cancellationToken),
+            AssetPreviewFullContentReferenceKind.EditDraft => LoadEditDraftTextChunk(query, requestedLength),
             _ => Task.FromResult(Result<AssetPreviewTextChunkDto>.Failure(
                 ApplicationErrors.AssetPreviewFullContentReferenceInvalid()))
         };
@@ -158,6 +159,49 @@ public sealed class LoadPreviewTextChunkHandler : IQueryHandler<LoadPreviewTextC
             chunk.Length,
             totalLength,
             chunk.Offset + chunk.Length < totalLength));
+    }
+
+    private Task<Result<AssetPreviewTextChunkDto>> LoadEditDraftTextChunk(
+        LoadPreviewTextChunkQuery query,
+        int requestedLength)
+    {
+        if (string.IsNullOrWhiteSpace(query.Reference.WorkspaceKey) ||
+            string.IsNullOrWhiteSpace(query.Reference.DraftId) ||
+            string.IsNullOrWhiteSpace(query.Reference.DraftMode))
+        {
+            return Task.FromResult(Result<AssetPreviewTextChunkDto>.Failure(
+                ApplicationErrors.AssetPreviewFullContentReferenceInvalid()));
+        }
+
+        var draftTextStore = _workspaceDataStoreFactory.CreateAssetEditDraftTextStore(query.WorkspaceDataRootPath);
+        var chunk = draftTextStore.LoadTextChunk(
+            query.Reference.WorkspaceKey,
+            query.Reference.DraftId,
+            query.Reference.DraftMode,
+            query.Offset,
+            requestedLength);
+        if (chunk is null)
+        {
+            return Task.FromResult(Result<AssetPreviewTextChunkDto>.Failure(
+                ApplicationErrors.AssetPreviewFullContentUnavailable(query.Reference.DraftId)));
+        }
+
+        var totalLength = ResolveTotalLength(chunk);
+        var effectiveReference = query.Reference with
+        {
+            ContentType = chunk.Descriptor.ContentType,
+            ContentLength = chunk.ContentLength,
+            DraftId = query.Reference.DraftId,
+            DraftMode = query.Reference.DraftMode
+        };
+
+        return Task.FromResult(Result<AssetPreviewTextChunkDto>.Success(new AssetPreviewTextChunkDto(
+            effectiveReference,
+            chunk.Text,
+            chunk.Offset,
+            chunk.Length,
+            totalLength,
+            chunk.Offset + chunk.Length < totalLength)));
     }
 
     private static int ResolveTotalLength(PreviewCacheTextChunkDto chunk)

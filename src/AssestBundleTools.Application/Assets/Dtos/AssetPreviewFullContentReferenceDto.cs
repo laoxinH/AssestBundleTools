@@ -9,4 +9,6 @@ public sealed record AssetPreviewFullContentReferenceDto(
     long ContentLength,
     string WorkspaceKey,
     string? PreviewCacheKey = null,
-    string? SourcePath = null);
+    string? SourcePath = null,
+    string? DraftId = null,
+    string? DraftMode = null);

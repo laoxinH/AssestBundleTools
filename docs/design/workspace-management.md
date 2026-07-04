@@ -234,6 +234,13 @@ Presentation 层保留两个协同层次：
             <result-file>
     changes/
       <workspace-key>.json
+    drafts/
+      <workspace-key>/
+        <draft-id>/
+          <draft-mode>/
+            text-draft.json
+            text.txt
+            text.lines.json
 ```
 
 其中：
@@ -258,6 +265,8 @@ Presentation 层保留两个协同层次：
   后续稳定实现中，`staging/decrypt` 只承载单次解密执行的临时文件和结果文件；可复用的标准化资源包应晋升到 `cache/bundles`。
 - `staging/changes/...`
   负责保存结构化变更暂存，不与轻量元数据混写。
+- `staging/drafts/...`
+  负责保存真实编辑草稿的大载荷内容，不写入工作区元数据、浏览标签状态或 `operations[]`。当前已落地文本草稿 payload 底座：`JsonAssetEditDraftTextStore` 会按 `workspaceKey + draftId + draftMode` 保存 `text.txt`、`text-draft.json` 描述和 `text.lines.json` 稀疏索引，供 Application 的完整文本 chunk / lines / search query 按需读取。该目录仍属于变更暂存层；草稿描述、恢复候选和最终应用 / 丢弃语义继续由 `staging/changes/<workspaceKey>.json` 的 `editDrafts[] / operations[]` 管理。
 
 补充约束：
 
@@ -387,7 +396,7 @@ Spine 组列表是跨资产、跨资源包的派生读模型，不应在每次�
 
 独立资源编辑窗口只有一个资产文档标签时，单标签拖出窗口外不应创建新的等价独立窗口并关闭原窗口；该手势应按取消拖出处理，保留原窗口与原标签上下文。
 
-编辑草稿的真实状态不写入 `openAssetTabs[]` 或 `openAssetEditorWindows[]`。当前 Application 层只提供最小草稿恢复候选读模型：`IAssetEditDraftStore` 按 `workspaceKey + draftId + draftMode` 读取草稿描述元数据，`GetAssetEditDraftRestorePlanHandler` 再用轻量引用里的 `SourceFingerprint` 判断该标记是可恢复、缺失、来源不匹配、已过期还是引用无效。Presentation 弹窗当前会在显示前通过 `AssetEditDraftRestorePlanGateway` 读取该计划，并把数量摘要用于恢复提示和重复弹窗判定；当预检计划可用时，执行恢复只把预检为可恢复的轻量标记带回新标签，缺失、来源不匹配、已过期和引用无效的草稿标记不会继续保留。组合根已接入 `WorkspaceChangeSetAssetEditDraftStore`，从 `staging/changes/<workspaceKey>.json` 的 `editDrafts[]` 描述列表读取草稿元数据。该流程不读取真实草稿内容，也不提交、丢弃或合并草稿；后续真实草稿队列和持久化实现应继续落在 `staging/changes` 或等价变更暂存层，并与工作区轻量元数据分离。
+编辑草稿的真实状态不写入 `openAssetTabs[]` 或 `openAssetEditorWindows[]`。当前 Application 层提供两类互补边界：`IAssetEditDraftStore` 按 `workspaceKey + draftId + draftMode` 读取草稿描述元数据，`GetAssetEditDraftRestorePlanHandler` 再用轻量引用里的 `SourceFingerprint` 判断该标记是可恢复、缺失、来源不匹配、已过期还是引用无效；`IAssetEditDraftTextStore` 按相同身份读取 `staging/drafts` 中的完整文本草稿块、行范围和搜索结果，用于后续大文本查看 / 编辑承载。Presentation 弹窗当前会在显示前通过 `AssetEditDraftRestorePlanGateway` 读取描述层计划，并把数量摘要用于恢复提示和重复弹窗判定；当预检计划可用时，执行恢复只把预检为可恢复的轻量标记带回新标签，缺失、来源不匹配、已过期和引用无效的草稿标记不会继续保留。组合根已接入 `WorkspaceChangeSetAssetEditDraftStore`，从 `staging/changes/<workspaceKey>.json` 的 `editDrafts[]` 描述列表读取草稿元数据。该恢复提示流程当前不读取真实草稿内容，也不提交、丢弃或合并草稿；后续真实草稿队列和持久化实现应继续落在 `staging/changes` 与 `staging/drafts` 的协作边界中，并与工作区轻量元数据分离。
 
 补充约束：
 
@@ -587,7 +596,7 @@ cache/
 
 该列表服务于恢复提示里的候选预检：恢复提示只需要知道草稿标记是否仍可定位、是否与来源指纹匹配、是否过期，以及可展示的轻量说明。预检计划可用时，执行窗口恢复只允许保留预检为可恢复的轻量标记。真实草稿内容、合并策略、确认 / 丢弃队列和保存应用语义仍由后续编辑器模型定义。
 
-真实草稿内容后续应进入 `staging/drafts/<workspaceKey>/<draftId>/`，真实长操作或大载荷中间产物后续应进入 `staging/operation-payloads/<workspaceKey>/<operationId>/`，不得塞入工作区元数据或资源包浏览状态。
+真实草稿内容应进入 `staging/drafts/<workspaceKey>/<draftId>/<draftMode>/`，真实长操作或大载荷中间产物后续应进入 `staging/operation-payloads/<workspaceKey>/<operationId>/`，不得塞入工作区元数据或资源包浏览状态。当前文本草稿 payload store 已可保存和按需读取完整文本，但它还不是草稿生命周期的事实来源；编辑器创建 / 更新 / 恢复 / 丢弃草稿时，仍必须同步维护 `editDrafts[]` 描述和后续操作记录。
 
 ### 5.6 缓存失效规则
 

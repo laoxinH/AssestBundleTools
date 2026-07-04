@@ -60,6 +60,7 @@ public sealed class LoadPreviewTextLinesHandler : IQueryHandler<LoadPreviewTextL
                 query,
                 requestedLineCount,
                 cancellationToken),
+            AssetPreviewFullContentReferenceKind.EditDraft => LoadEditDraftTextLines(query, requestedLineCount),
             _ => Task.FromResult(Result<AssetPreviewTextLineRangeDto>.Failure(
                 ApplicationErrors.AssetPreviewFullContentReferenceInvalid()))
         };
@@ -156,5 +157,48 @@ public sealed class LoadPreviewTextLinesHandler : IQueryHandler<LoadPreviewTextL
             lines.LineCount,
             totalLineCount,
             lines.StartLineIndex + lines.LineCount < totalLineCount));
+    }
+
+    private Task<Result<AssetPreviewTextLineRangeDto>> LoadEditDraftTextLines(
+        LoadPreviewTextLinesQuery query,
+        int requestedLineCount)
+    {
+        if (string.IsNullOrWhiteSpace(query.Reference.WorkspaceKey) ||
+            string.IsNullOrWhiteSpace(query.Reference.DraftId) ||
+            string.IsNullOrWhiteSpace(query.Reference.DraftMode))
+        {
+            return Task.FromResult(Result<AssetPreviewTextLineRangeDto>.Failure(
+                ApplicationErrors.AssetPreviewFullContentReferenceInvalid()));
+        }
+
+        var draftTextStore = _workspaceDataStoreFactory.CreateAssetEditDraftTextStore(query.WorkspaceDataRootPath);
+        var lines = draftTextStore.LoadTextLines(
+            query.Reference.WorkspaceKey,
+            query.Reference.DraftId,
+            query.Reference.DraftMode,
+            query.StartLineIndex,
+            requestedLineCount);
+        if (lines is null)
+        {
+            return Task.FromResult(Result<AssetPreviewTextLineRangeDto>.Failure(
+                ApplicationErrors.AssetPreviewFullContentUnavailable(query.Reference.DraftId)));
+        }
+
+        var totalLineCount = Math.Max(lines.TotalLineCount, lines.StartLineIndex + lines.LineCount);
+        var effectiveReference = query.Reference with
+        {
+            ContentType = lines.Descriptor.ContentType,
+            ContentLength = lines.ContentLength,
+            DraftId = query.Reference.DraftId,
+            DraftMode = query.Reference.DraftMode
+        };
+
+        return Task.FromResult(Result<AssetPreviewTextLineRangeDto>.Success(new AssetPreviewTextLineRangeDto(
+            effectiveReference,
+            lines.Lines,
+            lines.StartLineIndex,
+            lines.LineCount,
+            totalLineCount,
+            lines.StartLineIndex + lines.LineCount < totalLineCount)));
     }
 }

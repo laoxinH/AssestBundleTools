@@ -67,6 +67,7 @@ public sealed class SearchPreviewTextHandler : IQueryHandler<SearchPreviewTextQu
                 query,
                 requestedMatchCount,
                 cancellationToken),
+            AssetPreviewFullContentReferenceKind.EditDraft => SearchEditDraftText(query, requestedMatchCount),
             _ => Task.FromResult(Result<AssetPreviewTextSearchResultDto>.Failure(
                 ApplicationErrors.AssetPreviewFullContentReferenceInvalid()))
         };
@@ -166,6 +167,51 @@ public sealed class SearchPreviewTextHandler : IQueryHandler<SearchPreviewTextQu
             result.StartLineIndex,
             result.TotalScannedLineCount,
             result.HasMore));
+    }
+
+    private Task<Result<AssetPreviewTextSearchResultDto>> SearchEditDraftText(
+        SearchPreviewTextQuery query,
+        int requestedMatchCount)
+    {
+        if (string.IsNullOrWhiteSpace(query.Reference.WorkspaceKey) ||
+            string.IsNullOrWhiteSpace(query.Reference.DraftId) ||
+            string.IsNullOrWhiteSpace(query.Reference.DraftMode))
+        {
+            return Task.FromResult(Result<AssetPreviewTextSearchResultDto>.Failure(
+                ApplicationErrors.AssetPreviewFullContentReferenceInvalid()));
+        }
+
+        var draftTextStore = _workspaceDataStoreFactory.CreateAssetEditDraftTextStore(query.WorkspaceDataRootPath);
+        var result = draftTextStore.SearchText(
+            query.Reference.WorkspaceKey,
+            query.Reference.DraftId,
+            query.Reference.DraftMode,
+            query.SearchText,
+            query.StartLineIndex,
+            requestedMatchCount,
+            query.MatchCase);
+        if (result is null)
+        {
+            return Task.FromResult(Result<AssetPreviewTextSearchResultDto>.Failure(
+                ApplicationErrors.AssetPreviewFullContentUnavailable(query.Reference.DraftId)));
+        }
+
+        var effectiveReference = query.Reference with
+        {
+            ContentType = result.Descriptor.ContentType,
+            ContentLength = result.ContentLength,
+            DraftId = query.Reference.DraftId,
+            DraftMode = query.Reference.DraftMode
+        };
+
+        return Task.FromResult(Result<AssetPreviewTextSearchResultDto>.Success(new AssetPreviewTextSearchResultDto(
+            effectiveReference,
+            query.SearchText,
+            query.MatchCase,
+            result.Matches,
+            result.StartLineIndex,
+            result.TotalScannedLineCount,
+            result.HasMore)));
     }
 
     private static bool IsValidSearchText(string? searchText)

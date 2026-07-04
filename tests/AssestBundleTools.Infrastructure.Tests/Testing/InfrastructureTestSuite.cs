@@ -50,6 +50,18 @@ internal static class InfrastructureTestSuite
             JsonWorkspaceChangeStoreTests.Save_ShouldReplaceChangeSet_WhenExistingFileHasSharedReadLease);
         await RunTestAsync(
             failures,
+            nameof(JsonAssetEditDraftTextStoreTests.SaveTextPayload_ShouldReadChunkLinesAndSearch_FromDraftPayload),
+            JsonAssetEditDraftTextStoreTests.SaveTextPayload_ShouldReadChunkLinesAndSearch_FromDraftPayload);
+        await RunTestAsync(
+            failures,
+            nameof(JsonAssetEditDraftTextStoreTests.Delete_ShouldRemoveDraftPayload),
+            JsonAssetEditDraftTextStoreTests.Delete_ShouldRemoveDraftPayload);
+        await RunTestAsync(
+            failures,
+            nameof(JsonAssetEditDraftTextStoreTests.SaveTextPayload_ShouldRejectInvalidDraftPathSegments),
+            JsonAssetEditDraftTextStoreTests.SaveTextPayload_ShouldRejectInvalidDraftPathSegments);
+        await RunTestAsync(
+            failures,
             nameof(JsonPreviewCacheStoreTests.Save_ShouldRoundTripDescriptorAndPayload),
             JsonPreviewCacheStoreTests.Save_ShouldRoundTripDescriptorAndPayload);
         await RunTestAsync(
