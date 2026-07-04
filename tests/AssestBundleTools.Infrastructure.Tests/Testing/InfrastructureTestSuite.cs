@@ -58,12 +58,28 @@ internal static class InfrastructureTestSuite
             JsonPreviewCacheStoreTests.Delete_ShouldRemoveDescriptorPayload_AndPruneEmptyPayloadDirectory);
         await RunTestAsync(
             failures,
+            nameof(JsonPreviewCacheStoreTests.Delete_ShouldRemoveTextLineIndexSidecar),
+            JsonPreviewCacheStoreTests.Delete_ShouldRemoveTextLineIndexSidecar);
+        await RunTestAsync(
+            failures,
             nameof(JsonPreviewCacheStoreTests.LoadTextChunk_ShouldReadNormalizedTextRange_FromPayloadFile),
             JsonPreviewCacheStoreTests.LoadTextChunk_ShouldReadNormalizedTextRange_FromPayloadFile);
         await RunTestAsync(
             failures,
             nameof(JsonPreviewCacheStoreTests.LoadTextLines_ShouldReadNormalizedLineRange_FromPayloadFile),
             JsonPreviewCacheStoreTests.LoadTextLines_ShouldReadNormalizedLineRange_FromPayloadFile);
+        await RunTestAsync(
+            failures,
+            nameof(JsonPreviewCacheStoreTests.Save_ShouldWriteTextLineIndexSidecar_ForTextPreviewPayload),
+            JsonPreviewCacheStoreTests.Save_ShouldWriteTextLineIndexSidecar_ForTextPreviewPayload);
+        await RunTestAsync(
+            failures,
+            nameof(JsonPreviewCacheStoreTests.LoadTextLines_ShouldFallback_WhenTextLineIndexSidecarIsMissing),
+            JsonPreviewCacheStoreTests.LoadTextLines_ShouldFallback_WhenTextLineIndexSidecarIsMissing);
+        await RunTestAsync(
+            failures,
+            nameof(JsonPreviewCacheStoreTests.Save_ShouldKeepTextLineIndexSidecars_IsolatedByPayloadFile),
+            JsonPreviewCacheStoreTests.Save_ShouldKeepTextLineIndexSidecars_IsolatedByPayloadFile);
         await RunTestAsync(
             failures,
             nameof(JsonPreviewCacheStoreTests.SearchText_ShouldFindBoundedMatches_FromPayloadFile),
@@ -76,6 +92,10 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(JsonPreviewCacheStoreTests.GetUsage_ShouldReturnPreviewEntriesAndTotalSize),
             JsonPreviewCacheStoreTests.GetUsage_ShouldReturnPreviewEntriesAndTotalSize);
+        await RunTestAsync(
+            failures,
+            nameof(JsonPreviewCacheStoreTests.GetUsage_ShouldIncludeTextLineIndexSidecarSize),
+            JsonPreviewCacheStoreTests.GetUsage_ShouldIncludeTextLineIndexSidecarSize);
         await RunTestAsync(
             failures,
             nameof(JsonPreviewCacheStoreTests.Prune_ShouldDeleteOldestPreviewEntries_WhenCountLimitIsExceeded),

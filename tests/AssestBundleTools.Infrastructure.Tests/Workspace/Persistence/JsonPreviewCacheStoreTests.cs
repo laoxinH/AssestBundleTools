@@ -89,6 +89,33 @@ internal static class JsonPreviewCacheStoreTests
         TestAssert.False(Directory.Exists(payloadDirectoryPath), "Empty payload directory should be pruned after deletion.");
     }
 
+    public static void Delete_ShouldRemoveTextLineIndexSidecar()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonPreviewCacheStore(temporaryDirectory.DirectoryPath);
+        var descriptor = CreateDescriptor(
+            workspaceKey: "workspace-a",
+            previewCacheKey: "preview-delete-text-index",
+            bundleCacheKey: "bundle-cache-delete",
+            relativePayloadPath: "payloads/text/preview-delete-text-index.txt") with
+        {
+            PreviewKind = AssetPreviewKind.Text.ToString(),
+            ContentType = "text/plain; charset=utf-8"
+        };
+
+        store.Save(new PreviewCachePayloadDto(
+            descriptor,
+            System.Text.Encoding.UTF8.GetBytes("line-0\nline-1")));
+        var payloadFilePath = store.ResolvePayloadFilePath(descriptor)
+            ?? throw new InvalidOperationException("Expected payload file path.");
+        var sidecarFilePath = JsonPreviewCacheTextLineIndex.GetSidecarFilePath(payloadFilePath);
+        TestAssert.True(File.Exists(sidecarFilePath), "Line index sidecar should exist before deletion.");
+
+        store.Delete("workspace-a", "preview-delete-text-index");
+
+        TestAssert.False(File.Exists(sidecarFilePath), "Deleting a text preview cache entry should remove its line index sidecar.");
+    }
+
     public static void LoadTextChunk_ShouldReadNormalizedTextRange_FromPayloadFile()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();
@@ -166,6 +193,149 @@ internal static class JsonPreviewCacheStoreTests
         TestAssert.Equal(3, result.LineCount, "Line range should report returned line count.");
         TestAssert.Equal(5, result.TotalLineCount, "Line range should count trailing empty line when payload ends with newline.");
         TestAssert.Equal(System.Text.Encoding.UTF8.GetByteCount(sourceText), result.ContentLength, "Line range should expose raw payload file length.");
+    }
+
+    public static void Save_ShouldWriteTextLineIndexSidecar_ForTextPreviewPayload()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonPreviewCacheStore(temporaryDirectory.DirectoryPath);
+        var sourceText = string.Join('\n', Enumerable.Range(0, JsonPreviewCacheTextLineIndex.DefaultAnchorInterval + 3)
+            .Select(static index => $"line-{index:D4}"));
+        var display = AssetPreviewTextDisplayPolicy.CreateDisplay(sourceText);
+        var descriptor = CreateDescriptor(
+            workspaceKey: "workspace-a",
+            previewCacheKey: "preview-text-index",
+            bundleCacheKey: "bundle-cache-text",
+            relativePayloadPath: "payloads/text/preview-text-index.txt") with
+        {
+            PreviewKind = AssetPreviewKind.Text.ToString(),
+            ContentType = "text/plain; charset=utf-8",
+            PreviewInfoItems = AssetPreviewTextDisplayPolicy.AppendDisplayInfoItems(
+                null,
+                display.Metadata)
+        };
+
+        store.Save(new PreviewCachePayloadDto(
+            descriptor,
+            System.Text.Encoding.UTF8.GetBytes(sourceText)));
+        var payloadFilePath = store.ResolvePayloadFilePath(descriptor)
+            ?? throw new InvalidOperationException("Expected payload file path.");
+        var sidecarFilePath = JsonPreviewCacheTextLineIndex.GetSidecarFilePath(payloadFilePath);
+
+        TestAssert.True(File.Exists(sidecarFilePath), "Text preview save should write a line index sidecar.");
+        var sidecar = JsonWorkspaceFileStorageHelper.TryReadJson<JsonPreviewCacheTextLineIndexDto>(
+            sidecarFilePath,
+            JsonWorkspaceSerialization.SerializerOptions);
+        var index = TestAssert.NotNull(sidecar, "Line index sidecar should be valid JSON.");
+        TestAssert.Equal(1, index.SchemaVersion, "Line index schema should be versioned.");
+        TestAssert.Equal(descriptor.PreviewCacheKey, index.PreviewCacheKey, "Line index should be scoped to the preview cache key.");
+        TestAssert.Equal(descriptor.RelativePayloadPath, index.RelativePayloadPath, "Line index should record payload identity.");
+        TestAssert.Equal(display.Metadata.EstimatedFullLineCount, index.TotalLineCount, "Line index should record normalized full line count.");
+        TestAssert.True(
+            index.Anchors.Any(static anchor => anchor.LineIndex == JsonPreviewCacheTextLineIndex.DefaultAnchorInterval),
+            "Line index should contain a sparse anchor beyond the first line.");
+
+        var lineRange = store.LoadTextLines(
+            "workspace-a",
+            "preview-text-index",
+            startLineIndex: JsonPreviewCacheTextLineIndex.DefaultAnchorInterval + 1,
+            lineCount: 1);
+
+        var result = TestAssert.NotNull(lineRange, "Indexed line range should still be readable.");
+        TestAssert.Equal(
+            $"line-{JsonPreviewCacheTextLineIndex.DefaultAnchorInterval + 1:D4}",
+            TestAssert.Single(result.Lines),
+            "Indexed line reading should seek from the nearest anchor and return the requested line.");
+        TestAssert.Equal(display.Metadata.EstimatedFullLineCount, result.TotalLineCount, "Indexed line reading should preserve total line count.");
+    }
+
+    public static void LoadTextLines_ShouldFallback_WhenTextLineIndexSidecarIsMissing()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonPreviewCacheStore(temporaryDirectory.DirectoryPath);
+        const string sourceText = "line-0\nline-1\nline-2";
+        var descriptor = CreateDescriptor(
+            workspaceKey: "workspace-a",
+            previewCacheKey: "preview-text-missing-index",
+            bundleCacheKey: "bundle-cache-text",
+            relativePayloadPath: "payloads/text/preview-text-missing-index.txt") with
+        {
+            PreviewKind = AssetPreviewKind.Text.ToString(),
+            ContentType = "text/plain; charset=utf-8"
+        };
+
+        store.Save(new PreviewCachePayloadDto(
+            descriptor,
+            System.Text.Encoding.UTF8.GetBytes(sourceText)));
+        var payloadFilePath = store.ResolvePayloadFilePath(descriptor)
+            ?? throw new InvalidOperationException("Expected payload file path.");
+        File.Delete(JsonPreviewCacheTextLineIndex.GetSidecarFilePath(payloadFilePath));
+
+        var lineRange = store.LoadTextLines(
+            "workspace-a",
+            "preview-text-missing-index",
+            startLineIndex: 1,
+            lineCount: 2);
+
+        var result = TestAssert.NotNull(lineRange, "Text line loading should remain compatible with old caches.");
+        TestAssert.Equal(2, result.Lines.Count, "Fallback line loading should return requested lines.");
+        TestAssert.Equal("line-1", result.Lines[0], "Fallback line loading should read line one.");
+        TestAssert.Equal("line-2", result.Lines[1], "Fallback line loading should read line two.");
+        TestAssert.Equal(3, result.TotalLineCount, "Fallback line loading should scan total line count when metadata is missing.");
+    }
+
+    public static void Save_ShouldKeepTextLineIndexSidecars_IsolatedByPayloadFile()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonPreviewCacheStore(temporaryDirectory.DirectoryPath);
+        var firstDescriptor = CreateTextDescriptor(
+            workspaceKey: "workspace-a",
+            previewCacheKey: "preview-text-index-a",
+            relativePayloadPath: "payloads/text/shared-a.txt");
+        var secondDescriptor = CreateTextDescriptor(
+            workspaceKey: "workspace-a",
+            previewCacheKey: "preview-text-index-b",
+            relativePayloadPath: "payloads/text/shared-b.txt");
+
+        store.Save(new PreviewCachePayloadDto(
+            firstDescriptor,
+            System.Text.Encoding.UTF8.GetBytes("a-0\na-1")));
+        store.Save(new PreviewCachePayloadDto(
+            secondDescriptor,
+            System.Text.Encoding.UTF8.GetBytes("b-0\nb-1\nb-2")));
+
+        var firstPayloadFilePath = store.ResolvePayloadFilePath(firstDescriptor)
+            ?? throw new InvalidOperationException("Expected first payload file path.");
+        var secondPayloadFilePath = store.ResolvePayloadFilePath(secondDescriptor)
+            ?? throw new InvalidOperationException("Expected second payload file path.");
+        var firstSidecarPath = JsonPreviewCacheTextLineIndex.GetSidecarFilePath(firstPayloadFilePath);
+        var secondSidecarPath = JsonPreviewCacheTextLineIndex.GetSidecarFilePath(secondPayloadFilePath);
+
+        TestAssert.True(File.Exists(firstSidecarPath), "First text preview should keep its own line index sidecar.");
+        TestAssert.True(File.Exists(secondSidecarPath), "Second text preview should keep its own line index sidecar.");
+        TestAssert.True(
+            !string.Equals(firstSidecarPath, secondSidecarPath, StringComparison.OrdinalIgnoreCase),
+            "Text line index sidecars should be isolated by payload file name.");
+
+        var firstLineRange = store.LoadTextLines(
+            "workspace-a",
+            "preview-text-index-a",
+            startLineIndex: 1,
+            lineCount: 1);
+        var secondLineRange = store.LoadTextLines(
+            "workspace-a",
+            "preview-text-index-b",
+            startLineIndex: 2,
+            lineCount: 1);
+
+        TestAssert.Equal(
+            "a-1",
+            TestAssert.Single(TestAssert.NotNull(firstLineRange, "First indexed line range should be readable.").Lines),
+            "First payload should read from its own sidecar.");
+        TestAssert.Equal(
+            "b-2",
+            TestAssert.Single(TestAssert.NotNull(secondLineRange, "Second indexed line range should be readable.").Lines),
+            "Second payload should read from its own sidecar.");
     }
 
     public static void SearchText_ShouldFindBoundedMatches_FromPayloadFile()
@@ -268,6 +438,36 @@ internal static class JsonPreviewCacheStoreTests
         TestAssert.Equal("preview-usage", entry.PreviewCacheKey, "Usage entry should expose preview cache key.");
         TestAssert.Equal("bundle-cache-usage", entry.BundleCacheKey, "Usage entry should expose bundle cache key.");
         TestAssert.True(entry.SizeInBytes >= 5, "Entry size should include payload and descriptor bytes.");
+    }
+
+    public static void GetUsage_ShouldIncludeTextLineIndexSidecarSize()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonPreviewCacheStore(temporaryDirectory.DirectoryPath);
+        var descriptor = CreateDescriptor(
+            workspaceKey: "workspace-a",
+            previewCacheKey: "preview-usage-text-index",
+            bundleCacheKey: "bundle-cache-usage",
+            relativePayloadPath: "payloads/text/preview-usage-text-index.txt") with
+        {
+            PreviewKind = AssetPreviewKind.Text.ToString(),
+            ContentType = "text/plain; charset=utf-8"
+        };
+
+        store.Save(new PreviewCachePayloadDto(
+            descriptor,
+            System.Text.Encoding.UTF8.GetBytes("line-0\nline-1\nline-2")));
+        var payloadFilePath = store.ResolvePayloadFilePath(descriptor)
+            ?? throw new InvalidOperationException("Expected payload file path.");
+        var sidecarFilePath = JsonPreviewCacheTextLineIndex.GetSidecarFilePath(payloadFilePath);
+        var sidecarSize = new FileInfo(sidecarFilePath).Length;
+
+        var usage = store.GetUsage("workspace-a");
+
+        var entry = TestAssert.Single(usage.Entries);
+        TestAssert.True(sidecarSize > 0, "Line index sidecar should have a measurable file size.");
+        TestAssert.True(entry.SizeInBytes >= sidecarSize, "Usage entry size should include text line index sidecar bytes.");
+        TestAssert.True(usage.TotalSizeInBytes >= sidecarSize, "Total usage should include text line index sidecar bytes.");
     }
 
     public static void Prune_ShouldDeleteOldestPreviewEntries_WhenCountLimitIsExceeded()
@@ -440,6 +640,22 @@ internal static class JsonPreviewCacheStoreTests
                 RelativePayloadPath: Path.Combine(previewCacheKey, "focus.png"),
                 PixelWidth: 80,
                 PixelHeight: 48));
+    }
+
+    private static PreviewCacheDescriptorDto CreateTextDescriptor(
+        string workspaceKey,
+        string previewCacheKey,
+        string relativePayloadPath)
+    {
+        return CreateDescriptor(
+            workspaceKey,
+            previewCacheKey,
+            bundleCacheKey: "bundle-cache-text",
+            relativePayloadPath) with
+        {
+            PreviewKind = AssetPreviewKind.Text.ToString(),
+            ContentType = "text/plain; charset=utf-8"
+        };
     }
 
     private static void AssertBytesEqual(byte[] expected, byte[] actual, string message)

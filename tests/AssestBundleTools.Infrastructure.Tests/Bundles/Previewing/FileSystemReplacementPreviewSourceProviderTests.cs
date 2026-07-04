@@ -79,7 +79,7 @@ internal static class FileSystemReplacementPreviewSourceProviderTests
 
         TestAssert.True(result.IsSuccess, "Readable atlas files should support text chunk loading.");
         var chunk = TestAssert.NotNull(result.Value, "Successful chunk loading should include a text chunk.");
-        TestAssert.Equal("size: 512, 25", chunk.Text, "Chunk text should use normalized line endings before slicing.");
+        TestAssert.Equal("size: 512, 256", chunk.Text, "Chunk text should use normalized line endings before slicing.");
         TestAssert.Equal(9, chunk.Offset, "Chunk offset should report the normalized text offset.");
         TestAssert.Equal(14, chunk.Length, "Chunk length should report the returned normalized character count.");
         TestAssert.Equal(

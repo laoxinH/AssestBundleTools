@@ -53,17 +53,25 @@ internal static class JsonPreviewCacheTextPayloadReader
         string payloadFilePath,
         long payloadLength,
         int startLineIndex,
-        int lineCount)
+        int lineCount,
+        JsonPreviewCacheTextLineIndexDto? lineIndex = null)
     {
         try
         {
+            var anchor = ResolveAnchor(lineIndex, startLineIndex);
             using var stream = JsonWorkspaceFileStorageHelper.OpenSharedReadStream(payloadFilePath);
+            if (anchor.ByteOffset > 0)
+            {
+                stream.Seek(anchor.ByteOffset, SeekOrigin.Begin);
+            }
+
             using var reader = CreateReader(stream);
             var lineReader = new NormalizedLineReader(reader);
 
-            var skippedLineCount = SkipLines(lineReader, startLineIndex);
+            var skippedLineCount = anchor.LineIndex + SkipLines(lineReader, startLineIndex - anchor.LineIndex);
             var lines = ReadLines(lineReader, lineCount);
             var totalLineCount = ResolveKnownFullLineCount(descriptor)
+                ?? ResolveIndexedFullLineCount(lineIndex)
                 ?? skippedLineCount + lines.Count + CountRemainingLines(lineReader);
 
             return new PreviewCacheTextLineRangeDto(
@@ -95,27 +103,35 @@ internal static class JsonPreviewCacheTextPayloadReader
         string searchText,
         int startLineIndex,
         int maxMatchCount,
-        bool matchCase)
+        bool matchCase,
+        JsonPreviewCacheTextLineIndexDto? lineIndex = null)
     {
         try
         {
+            var anchor = ResolveAnchor(lineIndex, startLineIndex);
             using var stream = JsonWorkspaceFileStorageHelper.OpenSharedReadStream(payloadFilePath);
+            if (anchor.ByteOffset > 0)
+            {
+                stream.Seek(anchor.ByteOffset, SeekOrigin.Begin);
+            }
+
             using var reader = CreateReader(stream);
             var lineReader = new NormalizedLineReader(reader);
 
-            var skippedLineCount = SkipLines(lineReader, startLineIndex);
+            var skippedFromAnchor = SkipLines(lineReader, startLineIndex - anchor.LineIndex);
+            var effectiveStartLineIndex = anchor.LineIndex + skippedFromAnchor;
             var result = SearchLines(
                 lineReader,
                 searchText,
-                skippedLineCount,
+                effectiveStartLineIndex,
                 maxMatchCount,
                 matchCase);
 
             return new PreviewCacheTextSearchResultDto(
                 descriptor,
                 result.Matches,
-                skippedLineCount,
-                skippedLineCount + result.ScannedLineCount,
+                effectiveStartLineIndex,
+                effectiveStartLineIndex + result.ScannedLineCount,
                 result.HasMore,
                 payloadLength);
         }
@@ -159,6 +175,38 @@ internal static class JsonPreviewCacheTextPayloadReader
         return value is >= 0 and <= int.MaxValue
             ? (int)value.Value
             : null;
+    }
+
+    private static int? ResolveIndexedFullLineCount(JsonPreviewCacheTextLineIndexDto? lineIndex)
+    {
+        return lineIndex?.TotalLineCount is >= 0
+            ? lineIndex.TotalLineCount
+            : null;
+    }
+
+    private static JsonPreviewCacheTextLineIndexAnchorDto ResolveAnchor(
+        JsonPreviewCacheTextLineIndexDto? lineIndex,
+        int targetLineIndex)
+    {
+        if (lineIndex?.Anchors is not { Count: > 0 })
+        {
+            return new JsonPreviewCacheTextLineIndexAnchorDto(0, 0);
+        }
+
+        JsonPreviewCacheTextLineIndexAnchorDto anchor = new(0, 0);
+        foreach (var candidate in lineIndex.Anchors)
+        {
+            if (candidate.LineIndex < 0 ||
+                candidate.ByteOffset < 0 ||
+                candidate.LineIndex > targetLineIndex)
+            {
+                break;
+            }
+
+            anchor = candidate;
+        }
+
+        return anchor;
     }
 
     private static int SkipNormalizedCharacters(TextReader reader, int count)

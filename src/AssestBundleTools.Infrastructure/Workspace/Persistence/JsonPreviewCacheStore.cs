@@ -111,7 +111,11 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
             payload.Value.PayloadFilePath,
             payload.Value.PayloadLength,
             startLineIndex,
-            lineCount);
+            lineCount,
+            JsonPreviewCacheTextLineIndex.Load(
+                payload.Value.Descriptor,
+                payload.Value.PayloadFilePath,
+                payload.Value.PayloadLength));
     }
 
     public PreviewCacheTextSearchResultDto? SearchText(
@@ -142,7 +146,11 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
             searchText,
             startLineIndex,
             maxMatchCount,
-            matchCase);
+            matchCase,
+            JsonPreviewCacheTextLineIndex.Load(
+                payload.Value.Descriptor,
+                payload.Value.PayloadFilePath,
+                payload.Value.PayloadLength));
     }
 
     public IReadOnlyList<PreviewCacheDescriptorDto> LoadDescriptors(string workspaceKey)
@@ -277,6 +285,17 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
             descriptor,
             JsonWorkspaceSerialization.SerializerOptions);
         JsonWorkspaceFileStorageHelper.WriteBytesAtomically(payloadFilePath, previewCachePayload.Content);
+        if (string.Equals(descriptor.PreviewKind, AssetPreviewKind.Text.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            JsonPreviewCacheTextLineIndex.Save(
+                descriptor,
+                payloadFilePath,
+                previewCachePayload.Content);
+        }
+        else
+        {
+            JsonPreviewCacheTextLineIndex.Delete(payloadFilePath);
+        }
 
         if (previewCachePayload.ImageFocusContent is { Length: > 0 } &&
             !string.IsNullOrWhiteSpace(descriptor.ImageFocus?.RelativePayloadPath))
@@ -317,6 +336,7 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
         }
 
         JsonWorkspaceFileStorageHelper.DeleteFileIfExists(payloadFilePath);
+        JsonPreviewCacheTextLineIndex.Delete(payloadFilePath);
         if (!string.IsNullOrWhiteSpace(descriptor.ImageFocus?.RelativePayloadPath))
         {
             var imageFocusPayloadFilePath = TryResolvePayloadFilePath(
@@ -386,6 +406,7 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
         if (!string.IsNullOrWhiteSpace(payloadFilePath))
         {
             sizeInBytes += GetFileSize(payloadFilePath);
+            sizeInBytes += JsonPreviewCacheTextLineIndex.GetSizeInBytes(payloadFilePath);
         }
 
         if (!string.IsNullOrWhiteSpace(descriptor.ImageFocus?.RelativePayloadPath))
