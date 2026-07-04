@@ -130,7 +130,7 @@ internal static class JsonWorkspaceFileStorageHelper
     private static string CreateTemporaryFilePath(string filePath) =>
         $"{filePath}.{Guid.NewGuid():N}.tmp";
 
-    private static FileStream OpenSharedReadStream(string filePath) =>
+    public static FileStream OpenSharedReadStream(string filePath) =>
         new(
             filePath,
             FileMode.Open,

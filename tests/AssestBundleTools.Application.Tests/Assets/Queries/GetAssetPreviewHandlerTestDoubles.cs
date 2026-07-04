@@ -376,6 +376,10 @@ internal static partial class GetAssetPreviewHandlerTests
 
         public int SaveCallCount => Volatile.Read(ref _saveCallCount);
 
+        private int _loadCallCount;
+
+        public int LoadCallCount => Volatile.Read(ref _loadCallCount);
+
         public PreviewCachePayloadDto? LastSavedPayload { get; private set; }
 
         public PreviewCachePruneRequestDto? LastPruneRequest { get; private set; }
@@ -386,6 +390,7 @@ internal static partial class GetAssetPreviewHandlerTests
 
         public PreviewCachePayloadDto? Load(string workspaceKey, string previewCacheKey)
         {
+            Interlocked.Increment(ref _loadCallCount);
             lock (_syncRoot)
             {
                 return _payload is not null &&
@@ -393,6 +398,38 @@ internal static partial class GetAssetPreviewHandlerTests
                        string.Equals(_payload.Descriptor.PreviewCacheKey, previewCacheKey, StringComparison.OrdinalIgnoreCase)
                     ? _payload
                     : null;
+            }
+        }
+
+        public PreviewCacheTextChunkDto? LoadTextChunk(string workspaceKey, string previewCacheKey, int offset, int length)
+        {
+            lock (_syncRoot)
+            {
+                if (_payload is null ||
+                    !string.Equals(_payload.Descriptor.WorkspaceKey, workspaceKey, StringComparison.OrdinalIgnoreCase) ||
+                    !string.Equals(_payload.Descriptor.PreviewCacheKey, previewCacheKey, StringComparison.OrdinalIgnoreCase) ||
+                    offset < 0 ||
+                    length <= 0)
+                {
+                    return null;
+                }
+
+                var fullText = Encoding.UTF8.GetString(_payload.Content)
+                    .Replace("\r\n", "\n")
+                    .Replace('\r', '\n');
+                var safeOffset = Math.Min(offset, fullText.Length);
+                var safeLength = Math.Min(length, fullText.Length - safeOffset);
+                var text = safeLength <= 0
+                    ? string.Empty
+                    : fullText.Substring(safeOffset, safeLength);
+
+                return new PreviewCacheTextChunkDto(
+                    _payload.Descriptor,
+                    text,
+                    safeOffset,
+                    safeLength,
+                    fullText.Length,
+                    _payload.Content.LongLength);
             }
         }
 

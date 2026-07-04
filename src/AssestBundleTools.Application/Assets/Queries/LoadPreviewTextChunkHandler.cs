@@ -1,8 +1,8 @@
-using System.Text;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 
 namespace AssestBundleTools.Application.Assets.Queries;
@@ -52,36 +52,46 @@ public sealed class LoadPreviewTextChunkHandler : IQueryHandler<LoadPreviewTextC
         }
 
         var previewCacheStore = _workspaceDataStoreFactory.CreatePreviewCacheStore(query.WorkspaceDataRootPath);
-        var payload = previewCacheStore.Load(query.Reference.WorkspaceKey, query.Reference.PreviewCacheKey);
-        if (payload is null ||
-            !string.Equals(payload.Descriptor.PreviewKind, AssetPreviewKind.Text.ToString(), StringComparison.OrdinalIgnoreCase))
+        var requestedLength = Math.Min(query.Length, MaxChunkLength);
+        var chunk = previewCacheStore.LoadTextChunk(
+            query.Reference.WorkspaceKey,
+            query.Reference.PreviewCacheKey,
+            query.Offset,
+            requestedLength);
+        if (chunk is null ||
+            !string.Equals(chunk.Descriptor.PreviewKind, AssetPreviewKind.Text.ToString(), StringComparison.OrdinalIgnoreCase))
         {
             return Task.FromResult(Result<AssetPreviewTextChunkDto>.Failure(
                 ApplicationErrors.AssetPreviewFullContentUnavailable(query.Reference.PreviewCacheKey)));
         }
 
-        var fullText = Encoding.UTF8.GetString(payload.Content)
-            .Replace("\r\n", "\n")
-            .Replace('\r', '\n');
-        var safeOffset = Math.Min(query.Offset, fullText.Length);
-        var requestedLength = Math.Min(query.Length, MaxChunkLength);
-        var safeLength = Math.Min(requestedLength, fullText.Length - safeOffset);
-        var chunkText = safeLength <= 0
-            ? string.Empty
-            : fullText.Substring(safeOffset, safeLength);
-        var totalLength = fullText.Length;
+        var totalLength = ResolveTotalLength(chunk);
         var effectiveReference = query.Reference with
         {
-            ContentType = payload.Descriptor.ContentType,
-            ContentLength = payload.Content.LongLength
+            ContentType = chunk.Descriptor.ContentType,
+            ContentLength = chunk.ContentLength
         };
 
         return Task.FromResult(Result<AssetPreviewTextChunkDto>.Success(new AssetPreviewTextChunkDto(
             effectiveReference,
-            chunkText,
-            safeOffset,
-            safeLength,
+            chunk.Text,
+            chunk.Offset,
+            chunk.Length,
             totalLength,
-            safeOffset + safeLength < totalLength)));
+            chunk.Offset + chunk.Length < totalLength)));
+    }
+
+    private static int ResolveTotalLength(PreviewCacheTextChunkDto chunk)
+    {
+        var minimumLength = chunk.Offset + chunk.Length;
+        var metadataLength = chunk.Descriptor.PreviewInfoItems?
+            .FirstOrDefault(static item => item.Key == AssetPreviewInfoKey.TextFullCharacterCount)
+            ?.Int64Value;
+        if (metadataLength is >= 0 and <= int.MaxValue)
+        {
+            return Math.Max((int)metadataLength.Value, minimumLength);
+        }
+
+        return Math.Max(chunk.TotalLength, minimumLength);
     }
 }

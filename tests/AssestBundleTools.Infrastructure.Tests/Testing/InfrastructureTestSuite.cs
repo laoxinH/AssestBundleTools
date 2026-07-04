@@ -58,6 +58,10 @@ internal static class InfrastructureTestSuite
             JsonPreviewCacheStoreTests.Delete_ShouldRemoveDescriptorPayload_AndPruneEmptyPayloadDirectory);
         await RunTestAsync(
             failures,
+            nameof(JsonPreviewCacheStoreTests.LoadTextChunk_ShouldReadNormalizedTextRange_FromPayloadFile),
+            JsonPreviewCacheStoreTests.LoadTextChunk_ShouldReadNormalizedTextRange_FromPayloadFile);
+        await RunTestAsync(
+            failures,
             nameof(JsonPreviewCacheStoreTests.GetUsage_ShouldReturnPreviewEntriesAndTotalSize),
             JsonPreviewCacheStoreTests.GetUsage_ShouldReturnPreviewEntriesAndTotalSize);
         await RunTestAsync(

@@ -295,6 +295,7 @@ internal static partial class GetAssetPreviewHandlerTests
             Encoding.UTF8.GetByteCount(fullTextContent),
             chunk.Reference.ContentLength,
             "Chunk reference should refresh the raw payload length.");
+        TestAssert.Equal(0, previewCacheStore.LoadCallCount, "Chunk loading should not hydrate the full preview payload.");
     }
 
     public static async Task LoadPreviewTextChunkHandler_ShouldClampRequestedLength_ToChunkBudget()

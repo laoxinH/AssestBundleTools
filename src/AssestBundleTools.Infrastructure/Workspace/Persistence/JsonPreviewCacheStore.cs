@@ -1,3 +1,5 @@
+using System.Text;
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 
@@ -54,6 +56,47 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
             descriptor);
 
         return new PreviewCachePayloadDto(descriptor, payload, imageFocusPayload);
+    }
+
+    public PreviewCacheTextChunkDto? LoadTextChunk(
+        string workspaceKey,
+        string previewCacheKey,
+        int offset,
+        int length)
+    {
+        if (string.IsNullOrWhiteSpace(workspaceKey) ||
+            string.IsNullOrWhiteSpace(previewCacheKey) ||
+            offset < 0 ||
+            length <= 0)
+        {
+            return null;
+        }
+
+        var descriptorFilePath = _storagePaths.GetPreviewDescriptorFilePath(workspaceKey, previewCacheKey);
+        var descriptor = JsonWorkspaceFileStorageHelper.TryReadJson<PreviewCacheDescriptorDto>(
+            descriptorFilePath,
+            JsonWorkspaceSerialization.SerializerOptions);
+        if (descriptor is null)
+        {
+            return null;
+        }
+
+        if (!string.Equals(descriptor.PreviewKind, AssetPreviewKind.Text.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var payloadFilePath = TryResolvePayloadFilePath(
+            workspaceKey,
+            previewCacheKey,
+            descriptor.RelativePayloadPath);
+        if (string.IsNullOrWhiteSpace(payloadFilePath) || !File.Exists(payloadFilePath))
+        {
+            return null;
+        }
+
+        var payloadLength = GetFileSize(payloadFilePath);
+        return TryReadTextChunk(descriptor, payloadFilePath, payloadLength, offset, length);
     }
 
     public IReadOnlyList<PreviewCacheDescriptorDto> LoadDescriptors(string workspaceKey)
@@ -369,5 +412,122 @@ public sealed class JsonPreviewCacheStore : IPreviewCacheStore
         {
             return 0;
         }
+    }
+
+    private static PreviewCacheTextChunkDto? TryReadTextChunk(
+        PreviewCacheDescriptorDto descriptor,
+        string payloadFilePath,
+        long payloadLength,
+        int offset,
+        int length)
+    {
+        try
+        {
+            using var stream = JsonWorkspaceFileStorageHelper.OpenSharedReadStream(payloadFilePath);
+            using var reader = new StreamReader(
+                stream,
+                Encoding.UTF8,
+                detectEncodingFromByteOrderMarks: false,
+                bufferSize: 4096,
+                leaveOpen: false);
+
+            var skipped = SkipNormalizedCharacters(reader, offset);
+            var text = ReadNormalizedCharacters(reader, length, out var readLength);
+            var totalLength = ResolveKnownFullCharacterCount(descriptor)
+                ?? skipped + readLength + CountRemainingNormalizedCharacters(reader);
+
+            return new PreviewCacheTextChunkDto(
+                descriptor,
+                text,
+                skipped,
+                readLength,
+                totalLength,
+                payloadLength);
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (DecoderFallbackException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    private static int? ResolveKnownFullCharacterCount(PreviewCacheDescriptorDto descriptor)
+    {
+        var value = descriptor.PreviewInfoItems?
+            .FirstOrDefault(static item => item.Key == AssetPreviewInfoKey.TextFullCharacterCount)
+            ?.Int64Value;
+        return value is >= 0 and <= int.MaxValue
+            ? (int)value.Value
+            : null;
+    }
+
+    private static int SkipNormalizedCharacters(TextReader reader, int count)
+    {
+        var skipped = 0;
+        while (skipped < count && TryReadNormalizedCharacter(reader, out _))
+        {
+            skipped++;
+        }
+
+        return skipped;
+    }
+
+    private static string ReadNormalizedCharacters(
+        TextReader reader,
+        int count,
+        out int readLength)
+    {
+        var builder = new StringBuilder(Math.Min(count, 4096));
+        readLength = 0;
+
+        while (readLength < count && TryReadNormalizedCharacter(reader, out var character))
+        {
+            builder.Append(character);
+            readLength++;
+        }
+
+        return builder.ToString();
+    }
+
+    private static int CountRemainingNormalizedCharacters(TextReader reader)
+    {
+        var count = 0;
+        while (TryReadNormalizedCharacter(reader, out _))
+        {
+            count++;
+        }
+
+        return count;
+    }
+
+    private static bool TryReadNormalizedCharacter(TextReader reader, out char character)
+    {
+        var value = reader.Read();
+        if (value < 0)
+        {
+            character = '\0';
+            return false;
+        }
+
+        character = (char)value;
+        if (character != '\r')
+        {
+            return true;
+        }
+
+        if (reader.Peek() == '\n')
+        {
+            reader.Read();
+        }
+
+        character = '\n';
+        return true;
     }
 }

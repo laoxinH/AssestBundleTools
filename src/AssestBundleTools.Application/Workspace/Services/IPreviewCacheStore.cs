@@ -1,3 +1,4 @@
+using System.Text;
 using AssestBundleTools.Application.Workspace.Dtos;
 
 namespace AssestBundleTools.Application.Workspace.Services;
@@ -8,6 +9,37 @@ namespace AssestBundleTools.Application.Workspace.Services;
 public interface IPreviewCacheStore
 {
     PreviewCachePayloadDto? Load(string workspaceKey, string previewCacheKey);
+
+    PreviewCacheTextChunkDto? LoadTextChunk(string workspaceKey, string previewCacheKey, int offset, int length)
+    {
+        if (offset < 0 || length <= 0)
+        {
+            return null;
+        }
+
+        var payload = Load(workspaceKey, previewCacheKey);
+        if (payload is null)
+        {
+            return null;
+        }
+
+        var fullText = Encoding.UTF8.GetString(payload.Content)
+            .Replace("\r\n", "\n")
+            .Replace('\r', '\n');
+        var safeOffset = Math.Min(offset, fullText.Length);
+        var safeLength = Math.Min(length, fullText.Length - safeOffset);
+        var chunkText = safeLength <= 0
+            ? string.Empty
+            : fullText.Substring(safeOffset, safeLength);
+
+        return new PreviewCacheTextChunkDto(
+            payload.Descriptor,
+            chunkText,
+            safeOffset,
+            safeLength,
+            fullText.Length,
+            payload.Content.LongLength);
+    }
 
     IReadOnlyList<PreviewCacheDescriptorDto> LoadDescriptors(string workspaceKey);
 

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Infrastructure.Tests.Testing;
 using AssestBundleTools.Infrastructure.Workspace.Persistence;
@@ -86,6 +87,44 @@ internal static class JsonPreviewCacheStoreTests
         TestAssert.True(!File.Exists(payloadFilePath), "Payload file should be removed together with descriptor.");
         TestAssert.True(!File.Exists(Path.Combine(payloadDirectoryPath!, "focus.png")), "Image focus payload file should be removed together with descriptor.");
         TestAssert.False(Directory.Exists(payloadDirectoryPath), "Empty payload directory should be pruned after deletion.");
+    }
+
+    public static void LoadTextChunk_ShouldReadNormalizedTextRange_FromPayloadFile()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonPreviewCacheStore(temporaryDirectory.DirectoryPath);
+        const string sourceText = "line-1\r\nline-2\rline-3\nline-4";
+        const string normalizedText = "line-1\nline-2\nline-3\nline-4";
+        var display = AssetPreviewTextDisplayPolicy.CreateDisplay(normalizedText);
+        var descriptor = CreateDescriptor(
+            workspaceKey: "workspace-a",
+            previewCacheKey: "preview-text-chunk",
+            bundleCacheKey: "bundle-cache-text",
+            relativePayloadPath: "payloads/text/preview-text-chunk.txt") with
+        {
+            PreviewKind = AssetPreviewKind.Text.ToString(),
+            ContentType = "text/plain; charset=utf-8",
+            PreviewInfoItems = AssetPreviewTextDisplayPolicy.AppendDisplayInfoItems(
+                null,
+                display.Metadata)
+        };
+
+        store.Save(new PreviewCachePayloadDto(
+            descriptor,
+            System.Text.Encoding.UTF8.GetBytes(sourceText)));
+
+        var chunk = store.LoadTextChunk(
+            "workspace-a",
+            "preview-text-chunk",
+            offset: 7,
+            length: 6);
+
+        var result = TestAssert.NotNull(chunk, "Text chunk should be readable from the stored preview payload.");
+        TestAssert.Equal("line-2", result.Text, "Chunk text should use normalized newline character offsets.");
+        TestAssert.Equal(7, result.Offset, "Chunk should report the requested normalized offset.");
+        TestAssert.Equal(6, result.Length, "Chunk should report the returned character count.");
+        TestAssert.Equal(normalizedText.Length, result.TotalLength, "Chunk should use text display metadata for total normalized length.");
+        TestAssert.Equal(System.Text.Encoding.UTF8.GetByteCount(sourceText), result.ContentLength, "Chunk should expose raw payload file length.");
     }
 
     public static void GetUsage_ShouldReturnPreviewEntriesAndTotalSize()
