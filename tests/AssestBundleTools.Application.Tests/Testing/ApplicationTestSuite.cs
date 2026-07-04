@@ -231,6 +231,10 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldExposeBoundedDisplayText_ForLongFileReplacementTextAsset);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldReuseSourceTextReference_ForWorkspaceReplacementTextAsset),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldReuseSourceTextReference_ForWorkspaceReplacementTextAsset);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldReadChunk_FromPreviewCacheReference),
             GetAssetPreviewHandlerTests.LoadPreviewTextChunkHandler_ShouldReadChunk_FromPreviewCacheReference);
         await RunTestAsync(

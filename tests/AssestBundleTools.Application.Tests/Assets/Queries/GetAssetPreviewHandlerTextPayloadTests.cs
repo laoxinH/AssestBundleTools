@@ -473,7 +473,7 @@ internal static partial class GetAssetPreviewHandlerTests
             query.WorkspaceDataRootPath,
             reference,
             StartLineIndex: 2,
-            LineCount: 8));
+            LineCount: LoadPreviewTextLinesHandler.MaxLineCount + 16));
 
         TestAssert.True(result.IsSuccess, "Text line loading should succeed for a file replacement reference.");
         var lines = result.Value ?? throw new InvalidOperationException("Expected text line result.");
