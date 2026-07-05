@@ -64,7 +64,7 @@
 Monaco 主实现已经进入 `TextDocumentSurfaceView`，后续工程化收口必须满足：
 
 - Monaco 静态资源随应用离线打包，不依赖公网 CDN。
-- WebView2 用户数据目录由应用显式管理，避免污染用户默认浏览器状态；当前第一阶段仍使用 WebView2 默认环境初始化，必须在下一阶段补齐显式目录和初始化诊断。
+- WebView2 用户数据目录由应用显式管理，避免污染用户默认浏览器状态；当前 WinUI 投影未暴露桌面 `CreationProperties / CoreWebView2Environment.CreateAsync(...)` 环境重载，`TextDocumentSurfaceView` 在首次初始化前通过进程级 `WEBVIEW2_USER_DATA_FOLDER` 绑定到应用私有目录。
 - JS bridge 只传递有界 payload、range、patch 和命令结果，不传递缓存路径、替换源路径或 staging 路径。
 - 初始打开只加载受控范围或受控模型；当前 TextAsset 保存仍使用 Monaco 全缓冲安全预算，超过预算的大文本必须等 patch 草稿命令落地后再开放正文保存。
 - 搜索、跳转、格式化和保存通过 Application query / command；前端只展示结果和提交 patch。
@@ -107,7 +107,8 @@ Monaco 主实现已经进入 `TextDocumentSurfaceView`，后续工程化收口�
 - 已把检查器文本预览和资源编辑窗口统一到 Monaco 主实现。
 - 已接入 Ctrl+F、Ctrl+H、Ctrl+S、撤销 / 重做、行号、minimap、JSON / atlas / Shader 基础染色。
 - 已把编辑输入桥接改为 dirty 信号 + 保存 / 搜索前按需同步正文，避免 12 MB 级文本在每次键入时都完整回传到 .NET。
-- 待补：显式 WebView2 user data folder、WebView2 初始化失败本地化诊断、运行时缺失提示、Monaco 资源裁剪、真实 UI 压力样本验证。
+- 已补 WebView2 用户数据目录显式绑定、离线 Monaco 资源缺失、WebView2 初始化失败、host 页面加载失败和 JS bridge 超时的本地化 fallback 诊断；在当前 WinUI WebView2 投影限制下，用户数据目录通过进程级 `WEBVIEW2_USER_DATA_FOLDER` 在初始化前设置。
+- 待补：Runtime 缺失的安装 / 修复指引、更细可复制诊断、Monaco 资源裁剪、主题同步和真实 UI 压力样本验证。
 
 ### 阶段 C：大文本虚拟化编辑和 patch 草稿
 

@@ -1340,6 +1340,12 @@ public static class ResourceKeys
     public const string TextAssetEditorLoadMoreLinesButton = "TextAssetEditor.LoadMoreLinesButton.Content";
     public const string TextAssetEditorUnsavedDialogTitle = "TextAssetEditor.UnsavedDialog.Title";
     public const string TextAssetEditorUnsavedDialogDescription = "TextAssetEditor.UnsavedDialog.Description";
+    public const string TextDocumentSurfaceFallbackTitle = "TextDocumentSurface.Fallback.Title";
+    public const string TextDocumentSurfaceFallbackInitializing = "TextDocumentSurface.Fallback.Initializing";
+    public const string TextDocumentSurfaceFallbackAssetsMissing = "TextDocumentSurface.Fallback.AssetsMissing";
+    public const string TextDocumentSurfaceFallbackInitializationFailed = "TextDocumentSurface.Fallback.InitializationFailed";
+    public const string TextDocumentSurfaceFallbackHostLoadFailed = "TextDocumentSurface.Fallback.HostLoadFailed";
+    public const string TextDocumentSurfaceFallbackBridgeTimeout = "TextDocumentSurface.Fallback.BridgeTimeout";
     public const string InspectorUnsavedSpriteEditDialogTitle = "InspectorPanelView.SpriteEdit.UnsavedDialog.Title";
     public const string InspectorUnsavedSpriteEditDialogDescription = "InspectorPanelView.SpriteEdit.UnsavedDialog.Description";
     public const string InspectorUnsavedSpineEditDialogTitle = "InspectorPanelView.SpineEdit.UnsavedDialog.Title";

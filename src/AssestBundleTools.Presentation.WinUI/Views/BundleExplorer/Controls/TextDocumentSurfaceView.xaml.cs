@@ -10,6 +10,7 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 public sealed partial class TextDocumentSurfaceView : UserControl
 {
     private const string WebViewVirtualHostName = "abt-text-editor.local";
+    private const int WebViewBridgeReadyTimeoutSeconds = 8;
 
     public static readonly DependencyProperty LinesProperty =
         DependencyProperty.Register(
@@ -113,7 +114,9 @@ public sealed partial class TextDocumentSurfaceView : UserControl
     private bool _isSendingDocument;
     private bool _isApplyingWebViewText;
     private bool _webMessageHandlerAttached;
+    private bool _webNavigationHandlerAttached;
     private bool _hasUnsynchronizedWebViewChanges;
+    private int _webViewNavigationVersion;
     private readonly Dictionary<string, TaskCompletionSource<string>> _documentTextRequests = new();
     private string _lastSentText = string.Empty;
     private string _lastSentLanguage = string.Empty;
@@ -131,6 +134,8 @@ public sealed partial class TextDocumentSurfaceView : UserControl
     {
         InitializeComponent();
         LoadMoreLinesButtonText.Text = UiText.Get(ResourceKeys.TextAssetEditorLoadMoreLinesButton);
+        FallbackDiagnosticTitleText.Text = UiText.Get(ResourceKeys.TextDocumentSurfaceFallbackTitle);
+        FallbackDiagnosticDescriptionText.Text = UiText.Get(ResourceKeys.TextDocumentSurfaceFallbackInitializing);
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
@@ -226,14 +231,14 @@ public sealed partial class TextDocumentSurfaceView : UserControl
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        DetachWebMessageHandler();
+        DetachWebViewHandlers();
     }
 
     private async Task TryInitializeWebViewAsync()
     {
         if (EditorWebView.CoreWebView2 is not null)
         {
-            AttachWebMessageHandler(EditorWebView.CoreWebView2);
+            AttachWebViewHandlers(EditorWebView.CoreWebView2);
             if (_isWebViewReady)
             {
                 SendDocumentToWebView(force: true);
@@ -248,18 +253,19 @@ public sealed partial class TextDocumentSurfaceView : UserControl
 
         try
         {
+            var monacoRoot = TextDocumentWebViewEnvironmentProvider.ResolveMonacoAssetRoot();
+            if (!Directory.Exists(monacoRoot))
+            {
+                ShowFallback(ResourceKeys.TextDocumentSurfaceFallbackAssetsMissing);
+                return;
+            }
+
+            TextDocumentWebViewEnvironmentProvider.EnsureUserDataFolderConfigured();
             await EditorWebView.EnsureCoreWebView2Async();
             var coreWebView = EditorWebView.CoreWebView2;
             if (coreWebView is null)
             {
-                ShowFallback();
-                return;
-            }
-
-            var monacoRoot = Path.Combine(AppContext.BaseDirectory, "Assets", "Monaco");
-            if (!Directory.Exists(monacoRoot))
-            {
-                ShowFallback();
+                ShowFallback(ResourceKeys.TextDocumentSurfaceFallbackInitializationFailed);
                 return;
             }
 
@@ -269,35 +275,78 @@ public sealed partial class TextDocumentSurfaceView : UserControl
                 WebViewVirtualHostName,
                 monacoRoot,
                 CoreWebView2HostResourceAccessKind.Allow);
-            AttachWebMessageHandler(coreWebView);
+            AttachWebViewHandlers(coreWebView);
+            _isWebViewReady = false;
+            var navigationVersion = ++_webViewNavigationVersion;
             EditorWebView.Source = new Uri($"https://{WebViewVirtualHostName}/abt-editor-host.html");
+            QueueBridgeReadyTimeoutCheck(navigationVersion);
         }
         catch
         {
-            ShowFallback();
+            ShowFallback(ResourceKeys.TextDocumentSurfaceFallbackInitializationFailed);
         }
     }
 
-    private void AttachWebMessageHandler(CoreWebView2 coreWebView)
+    private void AttachWebViewHandlers(CoreWebView2 coreWebView)
     {
+        if (!_webMessageHandlerAttached)
+        {
+            coreWebView.WebMessageReceived += OnWebMessageReceived;
+            _webMessageHandlerAttached = true;
+        }
+
+        if (!_webNavigationHandlerAttached)
+        {
+            coreWebView.NavigationCompleted += OnNavigationCompleted;
+            _webNavigationHandlerAttached = true;
+        }
+    }
+
+    private void DetachWebViewHandlers()
+    {
+        if (EditorWebView.CoreWebView2 is null)
+        {
+            return;
+        }
+
         if (_webMessageHandlerAttached)
         {
-            return;
+            EditorWebView.CoreWebView2.WebMessageReceived -= OnWebMessageReceived;
+            _webMessageHandlerAttached = false;
         }
 
-        coreWebView.WebMessageReceived += OnWebMessageReceived;
-        _webMessageHandlerAttached = true;
+        if (_webNavigationHandlerAttached)
+        {
+            EditorWebView.CoreWebView2.NavigationCompleted -= OnNavigationCompleted;
+            _webNavigationHandlerAttached = false;
+        }
     }
 
-    private void DetachWebMessageHandler()
+    private void OnNavigationCompleted(
+        CoreWebView2 sender,
+        CoreWebView2NavigationCompletedEventArgs args)
     {
-        if (!_webMessageHandlerAttached || EditorWebView.CoreWebView2 is null)
+        if (!args.IsSuccess && !_isWebViewReady)
         {
-            return;
+            ShowFallback(ResourceKeys.TextDocumentSurfaceFallbackHostLoadFailed);
         }
+    }
 
-        EditorWebView.CoreWebView2.WebMessageReceived -= OnWebMessageReceived;
-        _webMessageHandlerAttached = false;
+    private void QueueBridgeReadyTimeoutCheck(int navigationVersion)
+    {
+        _ = CheckBridgeReadyTimeoutAsync(navigationVersion);
+    }
+
+    private async Task CheckBridgeReadyTimeoutAsync(int navigationVersion)
+    {
+        await Task.Delay(TimeSpan.FromSeconds(WebViewBridgeReadyTimeoutSeconds));
+        _ = DispatcherQueue.TryEnqueue(() =>
+        {
+            if (navigationVersion == _webViewNavigationVersion && !_isWebViewReady)
+            {
+                ShowFallback(ResourceKeys.TextDocumentSurfaceFallbackBridgeTimeout);
+            }
+        });
     }
 
     private void OnWebMessageReceived(CoreWebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
@@ -314,6 +363,7 @@ public sealed partial class TextDocumentSurfaceView : UserControl
         {
             case "ready":
                 _isWebViewReady = true;
+                ++_webViewNavigationVersion;
                 FallbackSurface.Visibility = Visibility.Collapsed;
                 EditorWebView.Visibility = Visibility.Visible;
                 SendDocumentToWebView(force: true);
@@ -496,9 +546,11 @@ public sealed partial class TextDocumentSurfaceView : UserControl
         await Task.CompletedTask;
     }
 
-    private void ShowFallback()
+    private void ShowFallback(string descriptionResourceKey)
     {
         _isWebViewReady = false;
+        ++_webViewNavigationVersion;
+        FallbackDiagnosticDescriptionText.Text = UiText.Get(descriptionResourceKey);
         EditorWebView.Visibility = Visibility.Collapsed;
         FallbackSurface.Visibility = Visibility.Visible;
     }

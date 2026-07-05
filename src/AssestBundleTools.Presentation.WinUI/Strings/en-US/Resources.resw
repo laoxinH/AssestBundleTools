@@ -2661,6 +2661,24 @@
   <data name="TextAssetEditor.UnsavedDialog.Description" xml:space="preserve">
     <value>The current text draft has unsaved changes. Saving writes the draft and adds a text edit operation; choosing Don't Save discards this edit session.</value>
   </data>
+  <data name="TextDocumentSurface.Fallback.Title" xml:space="preserve">
+    <value>The text editor switched to compatibility mode</value>
+  </data>
+  <data name="TextDocumentSurface.Fallback.Initializing" xml:space="preserve">
+    <value>Initializing the Monaco text editor.</value>
+  </data>
+  <data name="TextDocumentSurface.Fallback.AssetsMissing" xml:space="preserve">
+    <value>The offline Monaco editor assets were not found, so the native text view is being used.</value>
+  </data>
+  <data name="TextDocumentSurface.Fallback.InitializationFailed" xml:space="preserve">
+    <value>The WebView2 text editor could not be initialized, so the native text view is being used.</value>
+  </data>
+  <data name="TextDocumentSurface.Fallback.HostLoadFailed" xml:space="preserve">
+    <value>The text editor page could not be loaded, so the native text view is being used.</value>
+  </data>
+  <data name="TextDocumentSurface.Fallback.BridgeTimeout" xml:space="preserve">
+    <value>The text editor script did not respond in time, so the native text view is being used.</value>
+  </data>
   <data name="InspectorPanelView.ExitSpriteEditButton.Content" xml:space="preserve">
     <value>Exit</value>
   </data>

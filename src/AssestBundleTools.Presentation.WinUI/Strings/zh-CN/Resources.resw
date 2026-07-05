@@ -2661,6 +2661,24 @@
   <data name="TextAssetEditor.UnsavedDialog.Description" xml:space="preserve">
     <value>当前文本草稿存在未保存修改。保存会写入草稿并追加一条文本编辑操作记录；不保存会丢弃本次编辑会话。</value>
   </data>
+  <data name="TextDocumentSurface.Fallback.Title" xml:space="preserve">
+    <value>文本编辑器已切换到兼容模式</value>
+  </data>
+  <data name="TextDocumentSurface.Fallback.Initializing" xml:space="preserve">
+    <value>正在初始化 Monaco 文本编辑器。</value>
+  </data>
+  <data name="TextDocumentSurface.Fallback.AssetsMissing" xml:space="preserve">
+    <value>未找到离线 Monaco 编辑器资源，已使用原生文本视图。</value>
+  </data>
+  <data name="TextDocumentSurface.Fallback.InitializationFailed" xml:space="preserve">
+    <value>WebView2 文本编辑器初始化失败，已使用原生文本视图。</value>
+  </data>
+  <data name="TextDocumentSurface.Fallback.HostLoadFailed" xml:space="preserve">
+    <value>文本编辑器页面加载失败，已使用原生文本视图。</value>
+  </data>
+  <data name="TextDocumentSurface.Fallback.BridgeTimeout" xml:space="preserve">
+    <value>文本编辑器脚本未及时响应，已使用原生文本视图。</value>
+  </data>
   <data name="InspectorPanelView.ExitSpriteEditButton.Content" xml:space="preserve">
     <value>退出</value>
   </data>

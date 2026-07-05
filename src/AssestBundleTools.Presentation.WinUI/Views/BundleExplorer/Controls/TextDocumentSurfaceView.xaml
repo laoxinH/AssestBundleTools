@@ -28,11 +28,40 @@
             Visibility="Collapsed"
             RowSpacing="8">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
+            <Border
+                Padding="10"
+                Background="{ThemeResource ControlFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="6">
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="10">
+                    <FontIcon
+                        VerticalAlignment="Top"
+                        FontFamily="Segoe Fluent Icons"
+                        FontSize="14"
+                        Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                        Glyph="&#xE946;" />
+                    <StackPanel Spacing="2">
+                        <TextBlock
+                            x:Name="FallbackDiagnosticTitleText"
+                            FontWeight="SemiBold" />
+                        <TextBlock
+                            x:Name="FallbackDiagnosticDescriptionText"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextWrapping="WrapWholeWords" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <Grid
+                Grid.Row="1"
                 MinHeight="0"
                 ColumnSpacing="12"
                 Visibility="{Binding ReadOnlyViewVisibility, ElementName=Root, Mode=OneWay}">
@@ -90,6 +119,7 @@
             </Grid>
 
             <Grid
+                Grid.Row="1"
                 MinHeight="0"
                 ColumnSpacing="12"
                 Visibility="{Binding EditableViewVisibility, ElementName=Root, Mode=OneWay}">
@@ -133,7 +163,7 @@
             </Grid>
 
             <Grid
-                Grid.Row="1"
+                Grid.Row="2"
                 ColumnSpacing="10"
                 Visibility="{Binding FooterVisibility, ElementName=Root, Mode=OneWay}">
                 <Grid.ColumnDefinitions>
