@@ -3,6 +3,7 @@ using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Editing.Commands;
 using AssestBundleTools.Application.Editing.Dtos;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
@@ -109,18 +110,26 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
             !string.IsNullOrWhiteSpace(draftReference.DraftId) &&
             !string.IsNullOrWhiteSpace(draftReference.DraftMode))
         {
-            var command = new OpenTextAssetEditDraftCommand(
-                workspaceSummary.WorkspaceId,
-                workspaceKey,
-                workspaceDataRootPath,
-                details.BundleId,
-                details.AssetId,
-                draftReference.DraftId,
-                draftReference.DraftMode,
-                draftReference.SourceFingerprint);
-            var result = await _backgroundTaskRunner.RunAsync(
-                token => _workspaceAssetOperationGateway.OpenTextAssetEditDraftAsync(command, token));
-            return result;
+            if (draftReference.IsAppliedBaseline &&
+                !DoesDetailsPointToDraft(details, draftReference))
+            {
+                assetTab.ClearEditDraftReference();
+            }
+            else
+            {
+                var command = new OpenTextAssetEditDraftCommand(
+                    workspaceSummary.WorkspaceId,
+                    workspaceKey,
+                    workspaceDataRootPath,
+                    details.BundleId,
+                    details.AssetId,
+                    draftReference.DraftId,
+                    draftReference.DraftMode,
+                    draftReference.SourceFingerprint);
+                var result = await _backgroundTaskRunner.RunAsync(
+                    token => _workspaceAssetOperationGateway.OpenTextAssetEditDraftAsync(command, token));
+                return result;
+            }
         }
 
         var createCommand = new CreateTextAssetEditDraftCommand(
@@ -294,6 +303,21 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
     private static bool IsTextEditorSupported(AssetDetailsDto details) =>
         details.AssetType == AssetType.TextAsset ||
         string.Equals(details.AssetTypeDisplayName, "Shader", StringComparison.OrdinalIgnoreCase);
+
+    private static bool DoesDetailsPointToDraft(
+        AssetDetailsDto details,
+        AssetDocumentEditDraftReference draftReference) =>
+        !string.IsNullOrWhiteSpace(details.TextEditDraftId) &&
+        string.Equals(details.TextEditDraftId.Trim(), draftReference.DraftId, StringComparison.Ordinal) &&
+        string.Equals(
+            NormalizeTextDraftMode(details.TextEditDraftMode),
+            NormalizeTextDraftMode(draftReference.DraftMode),
+            StringComparison.Ordinal);
+
+    private static string NormalizeTextDraftMode(string? draftMode) =>
+        string.IsNullOrWhiteSpace(draftMode)
+            ? WorkspaceTextEditOperationRecorder.TextDraftMode
+            : draftMode.Trim();
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
 }

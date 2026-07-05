@@ -149,7 +149,9 @@ public sealed class AssetEditorWindowStateStoreTests
                                 "draft-1",
                                 "text",
                                 "source-v1",
-                                "Text draft"),
+                                "Text draft",
+                                IsAppliedBaseline: true,
+                                DraftRevision: 5),
                             InspectorScrollState: new WorkspaceInspectorScrollStateDto(
                                 DetailsSection: new WorkspaceInspectorSectionScrollPositionDto(0d, 136d)))),
                     new AssetEditorWindowDocumentTabSnapshot(
@@ -192,7 +194,9 @@ public sealed class AssetEditorWindowStateStoreTests
                             "draft-1",
                             "text",
                             "source-v1",
-                            "Text draft"),
+                            "Text draft",
+                            IsAppliedBaseline: true,
+                            DraftRevision: 5),
                         InspectorScrollState: new WorkspaceInspectorScrollStateDto(
                             DetailsSection: new WorkspaceInspectorSectionScrollPositionDto(0d, 136d),
                             SectionSelector: new WorkspaceInspectorSectionScrollPositionDto(14d, 0d)))
@@ -237,6 +241,8 @@ public sealed class AssetEditorWindowStateStoreTests
         Assert.Equal("text", assetTab.EditDraftReference?.DraftMode);
         Assert.Equal("source-v1", assetTab.EditDraftReference?.SourceFingerprint);
         Assert.Equal("Text draft", assetTab.EditDraftReference?.SourceDescription);
+        Assert.True(assetTab.EditDraftReference?.IsAppliedBaseline);
+        Assert.Equal(5, assetTab.EditDraftReference?.DraftRevision);
         Assert.Equal(14d, assetTab.InspectorScrollState?.SectionSelector?.HorizontalOffset);
         Assert.Equal(0d, assetTab.InspectorScrollState?.SectionSelector?.VerticalOffset);
         Assert.Equal(0d, assetTab.InspectorScrollState?.DetailsSection?.HorizontalOffset);

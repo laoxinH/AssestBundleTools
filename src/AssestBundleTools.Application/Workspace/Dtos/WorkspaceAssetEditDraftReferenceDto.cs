@@ -11,5 +11,7 @@ public sealed record WorkspaceAssetEditDraftReferenceDto(
     string DraftId,
     string DraftMode,
     string? SourceFingerprint = null,
-    string? SourceDescription = null);
+    string? SourceDescription = null,
+    bool IsAppliedBaseline = false,
+    int? DraftRevision = null);
 

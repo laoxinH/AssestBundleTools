@@ -59,6 +59,63 @@ public sealed class AssetDocumentTabViewModelTests
         Assert.Equal("text-content", assetTab.EditDraftReference?.DraftMode);
         Assert.Equal("source-v3", assetTab.EditDraftReference?.SourceFingerprint);
         Assert.Equal("story.json", assetTab.EditDraftReference?.SourceDescription);
+        Assert.False(assetTab.EditDraftReference?.IsAppliedBaseline);
+        Assert.Null(assetTab.EditDraftReference?.DraftRevision);
+    }
+
+    [Fact]
+    public void ApplyDetails_ShouldPromoteMatchingTextDraftReferenceToAppliedBaseline()
+    {
+        var assetTab = CreateAssetTab();
+        assetTab.SetEditDraftReference(new AssetDocumentEditDraftReference(
+            "draft-text-1",
+            "text-content",
+            "source-v3",
+            "story.json"));
+
+        assetTab.ApplyDetails(CreateTextAssetDetails(
+            textEditDraftId: "draft-text-1",
+            textEditDraftMode: "text-content",
+            textEditDraftRevision: 2));
+
+        Assert.True(assetTab.HasEditDraft);
+        Assert.True(assetTab.EditDraftReference?.IsAppliedBaseline);
+        Assert.Equal(2, assetTab.EditDraftReference?.DraftRevision);
+    }
+
+    [Fact]
+    public void ApplyDetails_ShouldKeepUnappliedDraftReferenceWhenNoTextEditIsEffective()
+    {
+        var assetTab = CreateAssetTab();
+        assetTab.SetEditDraftReference(new AssetDocumentEditDraftReference(
+            "draft-text-1",
+            "text-content",
+            "source-v3",
+            "story.json"));
+
+        assetTab.ApplyDetails(CreateTextAssetDetails());
+
+        Assert.True(assetTab.HasEditDraft);
+        Assert.False(assetTab.EditDraftReference?.IsAppliedBaseline);
+        Assert.Null(assetTab.EditDraftReference?.DraftRevision);
+    }
+
+    [Fact]
+    public void ApplyDetails_ShouldClearStaleAppliedBaselineReferenceWhenLastTextEditRecordIsRemoved()
+    {
+        var assetTab = CreateAssetTab();
+        assetTab.SetEditDraftReference(new AssetDocumentEditDraftReference(
+            "draft-text-1",
+            "text-content",
+            "source-v3",
+            "story.json",
+            IsAppliedBaseline: true,
+            DraftRevision: 2));
+
+        assetTab.ApplyDetails(CreateTextAssetDetails());
+
+        Assert.False(assetTab.HasEditDraft);
+        Assert.Null(assetTab.EditDraftReference);
     }
 
     private static AssetDocumentTabViewModel CreateAssetTab()
@@ -119,5 +176,40 @@ public sealed class AssetDocumentTabViewModelTests
             "inline",
             "deferred",
             "{0} / {1}");
+    }
+
+    private static AssetDetailsDto CreateTextAssetDetails(
+        string? textEditDraftId = null,
+        string? textEditDraftMode = null,
+        int? textEditDraftRevision = null)
+    {
+        return new AssetDetailsDto(
+            WorkspaceId: new Domain.Workspace.WorkspaceId("workspace-session"),
+            BundleId: new BundleId("bundle-a"),
+            AssetId: new AssetId("asset-1"),
+            Name: "story.json",
+            AssetPath: "Assets/story.json",
+            ContainerPath: "Assets",
+            AssetType: AssetType.TextAsset,
+            SizeInBytes: 1024,
+            PreferredDisplaySizeInBytes: null,
+            PathId: 1001,
+            IsModified: textEditDraftId is not null,
+            CanExtract: true,
+            CanReplaceFromFile: true,
+            CanReplaceFromWorkspace: true,
+            WorkspaceReplacementSourceBundleDisplayName: null,
+            WorkspaceReplacementSourceAssetName: null,
+            WorkspaceReplacementSourceAssetType: null,
+            FileReplacementSourceFileName: null,
+            FileReplacementSourcePath: null,
+            FileReplacementSourceAssetType: null,
+            LastExtractedAtUtc: null,
+            Dependencies: Array.Empty<AssetDependencyDto>(),
+            AssetTypeDisplayName: AssetType.TextAsset.ToString(),
+            TextEditDraftId: textEditDraftId,
+            TextEditDraftMode: textEditDraftMode,
+            TextEditAppliedAtUtc: textEditDraftId is null ? null : DateTimeOffset.UtcNow,
+            TextEditDraftRevision: textEditDraftRevision);
     }
 }

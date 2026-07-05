@@ -43,7 +43,9 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
                 "draft-asset-button",
                 "text",
                 "source-v1",
-                "Text draft"));
+                "Text draft",
+                IsAppliedBaseline: true,
+                DraftRevision: 3));
         context.BundleTab.AddAssetTab(assetTab, activate: true);
 
         context.Coordinator.PersistWorkspaceBrowserStateNow();
@@ -72,6 +74,8 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         Assert.Equal("text", assetTabState.EditDraftReference?.DraftMode);
         Assert.Equal("source-v1", assetTabState.EditDraftReference?.SourceFingerprint);
         Assert.Equal("Text draft", assetTabState.EditDraftReference?.SourceDescription);
+        Assert.True(assetTabState.EditDraftReference?.IsAppliedBaseline);
+        Assert.Equal(3, assetTabState.EditDraftReference?.DraftRevision);
     }
 
     [Fact]

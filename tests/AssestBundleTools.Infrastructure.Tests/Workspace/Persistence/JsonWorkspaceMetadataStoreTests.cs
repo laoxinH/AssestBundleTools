@@ -58,7 +58,9 @@ internal static class JsonWorkspaceMetadataStoreTests
                                 "draft-main",
                                 "text",
                                 "source-v1",
-                                "Main tab draft"))
+                                "Main tab draft",
+                                IsAppliedBaseline: true,
+                                DraftRevision: 7))
                     ],
                     ActiveAssetTabId: "asset-009",
                     AssetListViewMode: "SpineGroups",
@@ -227,6 +229,8 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.Equal("text", loadedAssetTab.EditDraftReference?.DraftMode, "Asset tab draft mode should round-trip.");
         TestAssert.Equal("source-v1", loadedAssetTab.EditDraftReference?.SourceFingerprint, "Asset tab draft source should round-trip.");
         TestAssert.Equal("Main tab draft", loadedAssetTab.EditDraftReference?.SourceDescription, "Asset tab draft description should round-trip.");
+        TestAssert.True(loadedAssetTab.EditDraftReference?.IsAppliedBaseline == true, "Asset tab draft applied baseline should round-trip.");
+        TestAssert.Equal(7, loadedAssetTab.EditDraftReference?.DraftRevision ?? 0, "Asset tab draft revision should round-trip.");
 
         var loadedSpineGroupTab = TestAssert.Single(loadedBundleTab.OpenSpineGroupTabs!);
         TestAssert.Equal("Special", loadedSpineGroupTab.PreviewState?.SelectedAnimationName, "Spine animation should round-trip.");

@@ -20,7 +20,9 @@ internal static class AssetDocumentEditDraftReferenceMapper
             draftReference.DraftId.Trim(),
             draftReference.DraftMode.Trim(),
             Normalize(draftReference.SourceFingerprint),
-            Normalize(draftReference.SourceDescription));
+            Normalize(draftReference.SourceDescription),
+            draftReference.IsAppliedBaseline,
+            draftReference.DraftRevision);
     }
 
     public static WorkspaceAssetEditDraftReferenceDto? ToDto(
@@ -37,7 +39,9 @@ internal static class AssetDocumentEditDraftReferenceMapper
             draftReference.DraftId.Trim(),
             draftReference.DraftMode.Trim(),
             Normalize(draftReference.SourceFingerprint),
-            Normalize(draftReference.SourceDescription));
+            Normalize(draftReference.SourceDescription),
+            draftReference.IsAppliedBaseline,
+            draftReference.DraftRevision);
     }
 
     public static AssetEditDraftReferenceDto ToRestorePlanDto(
