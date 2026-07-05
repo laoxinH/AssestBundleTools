@@ -117,6 +117,32 @@ public sealed class AssetEditorWindowOperationRefreshContractTests
         Assert.Contains("DiscardTextAssetEditDraftAsync", exitMethod);
     }
 
+    [Fact]
+    public void TextEditCoordinator_ShouldPromoteDraftBaseline_AfterPayloadUpdate()
+    {
+        var coordinatorCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "ViewModels",
+                "BundleExplorer",
+                "Coordinators",
+                "AssetEditorWindowTextEditActionCoordinator.cs"));
+
+        var applyMethod = coordinatorCode[
+            coordinatorCode.IndexOf("public async Task<bool> ApplyTextAssetEditDraftAsync()", StringComparison.Ordinal)..coordinatorCode.IndexOf(
+                "public async Task<bool> DiscardTextAssetEditDraftAsync()",
+                StringComparison.Ordinal)];
+        var markSavedIndex = applyMethod.IndexOf("draft.MarkSaved();", StringComparison.Ordinal);
+        var applyCommandIndex = applyMethod.IndexOf("var command = new ApplyTextAssetEditDraftCommand", StringComparison.Ordinal);
+
+        Assert.Contains("RangeEdits: [draft.CreateFullDocumentRangeEdit()]", applyMethod);
+        Assert.True(markSavedIndex >= 0, "Text draft baseline should be promoted after payload update.");
+        Assert.True(applyCommandIndex >= 0, "Text draft apply command should still be issued.");
+        Assert.True(markSavedIndex < applyCommandIndex, "Draft baseline should be promoted before apply so retry uses the latest draft payload.");
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

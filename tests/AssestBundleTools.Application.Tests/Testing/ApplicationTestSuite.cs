@@ -79,6 +79,14 @@ internal static partial class ApplicationTestSuite
             TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldSavePayload_AndAppendUpdatedOperation);
         await RunTestAsync(
             failures,
+            nameof(TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldApplyRangeEdits_ToExistingPayload),
+            TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldApplyRangeEdits_ToExistingPayload);
+        await RunTestAsync(
+            failures,
+            nameof(TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldRejectInvalidRangeEdit),
+            TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldRejectInvalidRangeEdit);
+        await RunTestAsync(
+            failures,
             nameof(TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldRejectLargeInlinePayload),
             TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldRejectLargeInlinePayload);
         await RunTestAsync(

@@ -91,6 +91,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
 
     private bool IsEditable =>
         CanApply &&
+        _draft.CanEditInline &&
         _draft.AssetType == AssetType.TextAsset &&
         _draft.Reference.ContentLength <= MonacoEditableTextLength;
 
@@ -262,6 +263,9 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         OnPropertyChanged(nameof(HasUnsavedChanges));
         OnPropertyChanged(nameof(CanSave));
     }
+
+    public TextAssetEditDraftRangeEditDto CreateFullDocumentRangeEdit() =>
+        new(0, NormalizeTextContent(_lastSavedText).Length, EditableText);
 
     public void MarkEditorDirty()
     {
@@ -479,4 +483,8 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
 
         return "plaintext";
     }
+
+    private static string NormalizeTextContent(string textContent) =>
+        textContent.Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n');
 }

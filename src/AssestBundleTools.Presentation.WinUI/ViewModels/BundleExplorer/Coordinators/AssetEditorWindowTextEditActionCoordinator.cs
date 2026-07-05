@@ -175,7 +175,8 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
                     details.AssetId,
                     draft.DraftId,
                     draft.DraftMode,
-                    draft.EditableText);
+                    TextContent: null,
+                    RangeEdits: [draft.CreateFullDocumentRangeEdit()]);
                 var updateResult = await _backgroundTaskRunner.RunAsync(
                     token => _workspaceAssetOperationGateway.UpdateTextAssetEditDraftAsync(updateCommand, token));
                 if (!updateResult.IsSuccess)
@@ -183,6 +184,8 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
                     _operationFeedbackBridge.AppendResultFailure(updateResult.Errors);
                     return false;
                 }
+
+                draft.MarkSaved();
             }
 
             var command = new ApplyTextAssetEditDraftCommand(

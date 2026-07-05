@@ -3891,6 +3891,12 @@
   <data name="Error.Asset.EditDraft.TextLengthExceeded" xml:space="preserve">
     <value>当前文本超过可内联编辑上限（{0} 字符），请使用只读查看或等待后续大文本编辑器。</value>
   </data>
+  <data name="Error.Asset.EditDraft.TextUpdatePayloadInvalid" xml:space="preserve">
+    <value>文本草稿更新内容无效，请重新打开编辑器后再保存。</value>
+  </data>
+  <data name="Error.Asset.EditDraft.TextPatchRangeInvalid" xml:space="preserve">
+    <value>文本草稿补丁范围无效（起点 {0}，长度 {1}），请重新打开编辑器后再保存。</value>
+  </data>
   <data name="Error.Asset.EditDraft.AssociatedAssetNotFound" xml:space="preserve">
     <value>当前 Sprite 未关联到所选资源，无法保存关联替换。</value>
   </data>

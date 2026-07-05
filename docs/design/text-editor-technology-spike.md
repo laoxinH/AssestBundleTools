@@ -56,7 +56,7 @@
 - `TextAsset / Shader` 编辑窗口已从独立 `ListView / TextBox` 组合迁移到 `TextDocumentSurfaceView`。
 - `TextDocumentSurfaceView` 已接入 WebView2 + 离线 Monaco 静态资源作为主实现，原生 WinUI 行列表 / `TextBox` 只作为 WebView2 初始化失败、Runtime 缺失或静态资源缺失时的 fallback。
 - Monaco 主实现已统一普通预览和编辑窗口的行号、语法染色、查找 / 替换入口、Ctrl+F、Ctrl+H、Ctrl+S、撤销 / 重做和 VS Code 风格文本面。`.json / .skel` 走 JSON 语言，`.atlas` 走类 ini 语言，Shader 临时映射到 C++ 风格高亮。
-- 当前保存仍沿用 `UpdateTextAssetEditDraft -> ApplyTextAssetEditDraft` 的全量文本命令；Monaco 输入变更只通过 JS bridge 通知 dirty 状态，保存 / 搜索前才同步一次正文，避免每次按键跨 WebView 边界搬运整段文本。应用层预算已从旧 `TextBox` 小文本上限提升到 Monaco 全缓冲编辑安全上限。真正无限大文本编辑仍需阶段 C 的 patch 草稿命令后才能彻底放开。
+- 当前保存已进入 `RangeEdit` 草稿命令第一阶段：`UpdateTextAssetEditDraft` 支持“全文正文”或“范围补丁”二选一输入，Application 会从 draft text store 分块读取当前草稿、验证无重叠 range、合并后统一写回 payload 并追加 `EditDraftUpdated` 操作记录；资源编辑窗口保存已切到一个全文范围替换 patch。Monaco 输入变更仍只通过 JS bridge 通知 dirty 状态，保存 / 搜索前才同步一次正文，避免每次按键跨 WebView 边界搬运整段文本。真正大文本编辑不进入 ViewModel 字符串，还需要后续接入 Monaco 增量 range patch 桥接和 patch-backed draft store。
 - 当前 WebView2 host 第一阶段使用默认环境初始化；显式 user data folder 和更细初始化诊断保留到下一阶段补齐。
 
 ## 6. Monaco 工程化条件
@@ -126,6 +126,26 @@ Monaco 主实现已经进入 `TextDocumentSurfaceView`，后续工程化收口�
 - 大文本编辑不需要整段进入 ViewModel 字符串。
 - 保存后普通预览、资源编辑窗口和导出写包都读取已应用草稿。
 - 未保存状态、关闭确认、恢复打开和多窗口同资产策略一致。
+
+当前进度：
+
+- 已完成 `TextAssetEditDraftRangeEditDto` 与 `UpdateTextAssetEditDraftCommand.RangeEdits` 第一阶段契约；命令校验要求 `TextContent` 与 `RangeEdits` 二选一，补丁范围使用 .NET / Monaco 一致的 UTF-16 字符索引。
+- 已完成 Application 合并路径：通过 `IAssetEditDraftTextStore.LoadTextChunk` 分块读取当前草稿，按倒序应用 range，验证越界 / 重叠 / 空 payload / 超预算，并复用原有 draft payload、descriptor 和 `EditDraftUpdated` 操作记录链路。
+- 已完成 UI 保存入口切换：当前窗口保存会提交一个“从 0 到已保存全文长度”的全文替换 patch，以便所有文本保存先经过同一 patch 命令入口。
+- 已补应用层回归测试覆盖 range 合并、非法 range 拒绝、长度预算和操作记录保存。
+
+仍未完成：
+
+- Monaco 端尚未提交真实增量 range patch；当前保存仍会在保存时同步新全文，并生成单个全文替换 patch。
+- Draft text store 仍是完整 payload 写入，Application 侧 patch 合并仍需要读出现有草稿文本后重写 payload；后续需要 patch-backed / chunk-backed 存储或后台流式合并，才能真正取消 12 MB+ 文本的整段 .NET 字符串生命周期。
+- 大文本正文保存仍受 `AssetTextEditPolicy.InlineEditableTextLength` 预算保护；在增量桥接和存储策略完成前，不开放无限大文本编辑保存。
+
+下一步：
+
+1. 让 Monaco host 收集 `onDidChangeModelContent` 的 range changes，并通过 JS bridge 提交 `start / length / text / versionId`。
+2. Application 增加版本 / 基线校验，避免多个编辑窗口或 stale patch 覆盖较新的草稿。
+3. 设计 patch-backed draft store：保留 base payload + patch log 或 chunk rewrite 策略，减少保存时的整段字符串和整文件重写。
+4. 完成后再做 12 MB+ atlas / skel / json 真实压力样本记录，统一验证打开、搜索、替换、保存、重新打开、导出写包和恢复草稿。
 
 ### 阶段 D：搜索 / 跳转 / JSON 格式化
 

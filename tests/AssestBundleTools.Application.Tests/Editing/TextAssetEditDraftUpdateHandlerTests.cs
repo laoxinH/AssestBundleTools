@@ -87,6 +87,113 @@ internal static class TextAssetEditDraftUpdateHandlerTests
         TestAssert.Equal(existingFingerprint, descriptor.SourceFingerprint, "Draft update should preserve the existing source fingerprint.");
     }
 
+    public static async Task UpdateTextAssetEditDraftHandler_ShouldApplyRangeEdits_ToExistingPayload()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        const string workspaceKey = "workspace-a";
+        const string workspaceDataRootPath = @"D:\WorkspaceData\A";
+        var bundleId = new BundleId("bundle.text");
+        var assetId = new AssetId("asset.text");
+        const string existingFingerprint = "source-fingerprint-v1";
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            assetId,
+            AssetType.TextAsset,
+            "story.atlas"));
+        var changeStore = new TestWorkspaceChangeStore
+        {
+            ChangeSet = new WorkspaceChangeSetDto(
+                WorkspaceKey: workspaceKey,
+                UpdatedAtUtc: new DateTimeOffset(2026, 6, 1, 10, 0, 0, TimeSpan.Zero),
+                Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+                EditDrafts:
+                [
+                    new WorkspaceAssetEditDraftDescriptorDto(
+                        DraftId: "draft-1",
+                        DraftMode: WorkspaceTextEditOperationRecorder.TextDraftMode,
+                        SourceFingerprint: existingFingerprint,
+                        UpdatedAtUtc: new DateTimeOffset(2026, 6, 1, 10, 0, 0, TimeSpan.Zero))
+                ],
+                Operations: Array.Empty<WorkspaceOperationRecordDto>())
+        };
+        var draftTextStore = new TestAssetEditDraftTextStore
+        {
+            CurrentText = "alpha\nbeta\ngamma"
+        };
+        var dataStoreFactory = new TestWorkspaceDataStoreFactory(changeStore, draftTextStore);
+        var recorder = new WorkspaceTextEditOperationRecorder(dataStoreFactory, new WorkspaceOperationLogService());
+        var handler = new UpdateTextAssetEditDraftHandler(registry, dataStoreFactory, recorder);
+
+        var result = await handler.HandleAsync(new UpdateTextAssetEditDraftCommand(
+            workspaceId,
+            workspaceKey,
+            workspaceDataRootPath,
+            bundleId,
+            assetId,
+            "draft-1",
+            WorkspaceTextEditOperationRecorder.TextDraftMode,
+            TextContent: null,
+            RangeEdits:
+            [
+                new TextAssetEditDraftRangeEditDto(6, 4, "BETA"),
+                new TextAssetEditDraftRangeEditDto(16, 0, "\nomega")
+            ]));
+
+        TestAssert.True(result.IsSuccess, "Range edit update should succeed.");
+        var payload = draftTextStore.LastSavedPayload ?? throw new InvalidOperationException("Expected saved payload.");
+        TestAssert.Equal("alpha\nBETA\ngamma\nomega", payload.TextContent, "Range edits should be applied against the existing draft text.");
+        TestAssert.True(draftTextStore.LoadTextChunkCallCount > 0, "Patch updates should read the existing draft payload.");
+        TestAssert.Equal(existingFingerprint, payload.SourceFingerprint, "Patch updates should preserve the existing source fingerprint.");
+
+        var savedOperation = TestAssert.Single(changeStore.SavedChangeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>());
+        TestAssert.Equal(WorkspaceOperationKind.EditDraftUpdated, savedOperation.OperationKind, "Patch update should append the same draft-updated operation.");
+    }
+
+    public static async Task UpdateTextAssetEditDraftHandler_ShouldRejectInvalidRangeEdit()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleId = new BundleId("bundle.text");
+        var assetId = new AssetId("asset.text");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            assetId,
+            AssetType.TextAsset,
+            "story.atlas"));
+        var changeStore = new TestWorkspaceChangeStore();
+        var draftTextStore = new TestAssetEditDraftTextStore
+        {
+            CurrentText = "alpha"
+        };
+        var dataStoreFactory = new TestWorkspaceDataStoreFactory(changeStore, draftTextStore);
+        var handler = new UpdateTextAssetEditDraftHandler(registry, dataStoreFactory);
+
+        var result = await handler.HandleAsync(new UpdateTextAssetEditDraftCommand(
+            workspaceId,
+            "workspace-a",
+            @"D:\WorkspaceData\A",
+            bundleId,
+            assetId,
+            "draft-1",
+            WorkspaceTextEditOperationRecorder.TextDraftMode,
+            TextContent: null,
+            RangeEdits: [new TextAssetEditDraftRangeEditDto(20, 1, "x")]));
+
+        TestAssert.True(result.IsFailure, "Invalid patch ranges should be rejected.");
+        TestAssert.Equal(
+            "Asset.EditDraft.TextPatchRangeInvalid",
+            TestAssert.Single(result.Errors).Code,
+            "Invalid patch ranges should use the documented validation error.");
+        TestAssert.Equal(0, draftTextStore.SaveTextPayloadCallCount, "Rejected patch update should not save draft payload.");
+        if (changeStore.SavedChangeSet is not null)
+        {
+            throw new InvalidOperationException("Rejected patch update should not save the workspace change set.");
+        }
+    }
+
     public static async Task ApplyTextAssetEditDraftHandler_ShouldPreserveExistingDraftSourceFingerprint()
     {
         var workspaceId = new WorkspaceId("workspace-session-1");
@@ -330,6 +437,10 @@ internal static class TextAssetEditDraftUpdateHandlerTests
     {
         public int SaveTextPayloadCallCount { get; private set; }
 
+        public int LoadTextChunkCallCount { get; private set; }
+
+        public string? CurrentText { get; init; }
+
         public AssetEditDraftTextPayloadDto? LastSavedPayload { get; private set; }
 
         public PreviewCacheTextChunkDto? LoadTextChunk(
@@ -337,8 +448,42 @@ internal static class TextAssetEditDraftUpdateHandlerTests
             string draftId,
             string draftMode,
             int offset,
-            int length) =>
-            throw new NotSupportedException();
+            int length)
+        {
+            LoadTextChunkCallCount++;
+            if (CurrentText is null ||
+                offset < 0 ||
+                offset > CurrentText.Length ||
+                length <= 0)
+            {
+                return null;
+            }
+
+            var chunkText = CurrentText.Substring(offset, Math.Min(length, CurrentText.Length - offset));
+            return new PreviewCacheTextChunkDto(
+                new PreviewCacheDescriptorDto(
+                    WorkspaceKey: workspaceKey,
+                    PreviewCacheKey: $"draft.{draftMode}.{draftId}",
+                    BundleCacheKey: "draft:test",
+                    AssetId: null,
+                    PreviewKind: AssetPreviewKind.Text.ToString(),
+                    ContentType: "text/plain; charset=utf-8",
+                    RelativePayloadPath: "text.txt",
+                    SourceFingerprint: new WorkspaceFileFingerprintDto(
+                        SourcePath: "draft:test",
+                        FileSizeInBytes: CurrentText.Length,
+                        LastWriteTimeUtc: new DateTimeOffset(2026, 6, 1, 10, 0, 0, TimeSpan.Zero),
+                        ContentHash: "test"),
+                    GeneratedAtUtc: new DateTimeOffset(2026, 6, 1, 10, 0, 0, TimeSpan.Zero),
+                    GeneratorVersion: "test",
+                    PreviewInfoItems: null,
+                    PreferredDisplaySizeInBytes: CurrentText.Length),
+                chunkText,
+                offset,
+                chunkText.Length,
+                CurrentText.Length,
+                CurrentText.Length);
+        }
 
         public PreviewCacheTextLineRangeDto? LoadTextLines(
             string workspaceKey,

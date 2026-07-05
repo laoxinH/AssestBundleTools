@@ -789,6 +789,10 @@ public static class ResourceKeys
     public const string ErrorAssetEditDraftIdRequired = "Error.Asset.EditDraft.IdRequired";
     public const string ErrorAssetEditDraftModeRequired = "Error.Asset.EditDraft.ModeRequired";
     public const string ErrorAssetEditDraftInvalidGeometry = "Error.Asset.EditDraft.InvalidGeometry";
+    public const string ErrorAssetEditDraftTextLengthExceeded = "Error.Asset.EditDraft.TextLengthExceeded";
+    public const string ErrorAssetEditDraftTextUpdatePayloadInvalid = "Error.Asset.EditDraft.TextUpdatePayloadInvalid";
+    public const string ErrorAssetEditDraftTextPatchRangeInvalid = "Error.Asset.EditDraft.TextPatchRangeInvalid";
+    public const string ErrorAssetEditDraftAssociatedAssetNotFound = "Error.Asset.EditDraft.AssociatedAssetNotFound";
     public const string ErrorAssetEditDraftNotFound = "Error.Asset.EditDraft.NotFound";
     public const string ErrorAssetEditDraftSourceMismatch = "Error.Asset.EditDraft.SourceMismatch";
     public const string ErrorAssetEditDraftExpired = "Error.Asset.EditDraft.Expired";

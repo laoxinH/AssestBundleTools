@@ -840,6 +840,23 @@ public static class ApplicationErrors
             parameters: CreateParameters(("MaxLength", maxLength)),
             isUserActionable: true);
 
+    public static AppError AssetEditDraftTextUpdatePayloadInvalid() =>
+        new(
+            code: "Asset.EditDraft.TextUpdatePayloadInvalid",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.EditDraft.TextUpdatePayloadInvalid",
+            isUserActionable: true);
+
+    public static AppError AssetEditDraftTextPatchRangeInvalid(int start, int length) =>
+        new(
+            code: "Asset.EditDraft.TextPatchRangeInvalid",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.EditDraft.TextPatchRangeInvalid",
+            parameters: CreateParameters(("Start", start), ("Length", length)),
+            isUserActionable: true);
+
     public static AppError AssetEditAssociatedAssetNotFound(AssetId ownerAssetId, AssetId associatedAssetId) =>
         new(
             code: "Asset.EditDraft.AssociatedAssetNotFound",
