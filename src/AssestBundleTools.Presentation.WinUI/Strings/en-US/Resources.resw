@@ -2679,6 +2679,12 @@
   <data name="TextDocumentSurface.Fallback.BridgeTimeout" xml:space="preserve">
     <value>The text editor script did not respond in time, so the native text view is being used.</value>
   </data>
+  <data name="TextDocumentSurface.Fallback.ProcessFailed" xml:space="preserve">
+    <value>The WebView2 text editor process exited unexpectedly, so the native text view is being used.</value>
+  </data>
+  <data name="TextDocumentSurface.Fallback.CopyDiagnosticButton.Content" xml:space="preserve">
+    <value>Copy Diagnostic</value>
+  </data>
   <data name="InspectorPanelView.ExitSpriteEditButton.Content" xml:space="preserve">
     <value>Exit</value>
   </data>

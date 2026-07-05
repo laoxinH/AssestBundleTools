@@ -1346,6 +1346,8 @@ public static class ResourceKeys
     public const string TextDocumentSurfaceFallbackInitializationFailed = "TextDocumentSurface.Fallback.InitializationFailed";
     public const string TextDocumentSurfaceFallbackHostLoadFailed = "TextDocumentSurface.Fallback.HostLoadFailed";
     public const string TextDocumentSurfaceFallbackBridgeTimeout = "TextDocumentSurface.Fallback.BridgeTimeout";
+    public const string TextDocumentSurfaceFallbackProcessFailed = "TextDocumentSurface.Fallback.ProcessFailed";
+    public const string TextDocumentSurfaceFallbackCopyDiagnosticButton = "TextDocumentSurface.Fallback.CopyDiagnosticButton.Content";
     public const string InspectorUnsavedSpriteEditDialogTitle = "InspectorPanelView.SpriteEdit.UnsavedDialog.Title";
     public const string InspectorUnsavedSpriteEditDialogDescription = "InspectorPanelView.SpriteEdit.UnsavedDialog.Description";
     public const string InspectorUnsavedSpineEditDialogTitle = "InspectorPanelView.SpineEdit.UnsavedDialog.Title";

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Text.Json;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Windows.ApplicationModel.DataTransfer;
 using Microsoft.Web.WebView2.Core;
 using AssestBundleTools.Presentation.WinUI.Localization;
 
@@ -115,9 +116,12 @@ public sealed partial class TextDocumentSurfaceView : UserControl
     private bool _isApplyingWebViewText;
     private bool _webMessageHandlerAttached;
     private bool _webNavigationHandlerAttached;
+    private bool _webProcessFailedHandlerAttached;
     private bool _hasUnsynchronizedWebViewChanges;
     private int _webViewNavigationVersion;
     private readonly Dictionary<string, TaskCompletionSource<string>> _documentTextRequests = new();
+    private string _fallbackDiagnosticText = string.Empty;
+    private string _lastSentTheme = string.Empty;
     private string _lastSentText = string.Empty;
     private string _lastSentLanguage = string.Empty;
     private bool _lastSentReadOnly = true;
@@ -134,95 +138,41 @@ public sealed partial class TextDocumentSurfaceView : UserControl
     {
         InitializeComponent();
         LoadMoreLinesButtonText.Text = UiText.Get(ResourceKeys.TextAssetEditorLoadMoreLinesButton);
+        CopyFallbackDiagnosticButtonText.Text = UiText.Get(ResourceKeys.TextDocumentSurfaceFallbackCopyDiagnosticButton);
         FallbackDiagnosticTitleText.Text = UiText.Get(ResourceKeys.TextDocumentSurfaceFallbackTitle);
         FallbackDiagnosticDescriptionText.Text = UiText.Get(ResourceKeys.TextDocumentSurfaceFallbackInitializing);
+        ActualThemeChanged += OnActualThemeChanged;
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
 
-    public IEnumerable? Lines
-    {
-        get => (IEnumerable?)GetValue(LinesProperty);
-        set => SetValue(LinesProperty, value);
-    }
+    public IEnumerable? Lines { get => (IEnumerable?)GetValue(LinesProperty); set => SetValue(LinesProperty, value); }
 
-    public IEnumerable? SearchMatches
-    {
-        get => (IEnumerable?)GetValue(SearchMatchesProperty);
-        set => SetValue(SearchMatchesProperty, value);
-    }
+    public IEnumerable? SearchMatches { get => (IEnumerable?)GetValue(SearchMatchesProperty); set => SetValue(SearchMatchesProperty, value); }
 
-    public string EditableText
-    {
-        get => (string)GetValue(EditableTextProperty);
-        set => SetValue(EditableTextProperty, value);
-    }
+    public string EditableText { get => (string)GetValue(EditableTextProperty); set => SetValue(EditableTextProperty, value); }
 
-    public string StatusText
-    {
-        get => (string)GetValue(StatusTextProperty);
-        set => SetValue(StatusTextProperty, value);
-    }
+    public string StatusText { get => (string)GetValue(StatusTextProperty); set => SetValue(StatusTextProperty, value); }
 
-    public Visibility ReadOnlyViewVisibility
-    {
-        get => (Visibility)GetValue(ReadOnlyViewVisibilityProperty);
-        set => SetValue(ReadOnlyViewVisibilityProperty, value);
-    }
+    public Visibility ReadOnlyViewVisibility { get => (Visibility)GetValue(ReadOnlyViewVisibilityProperty); set => SetValue(ReadOnlyViewVisibilityProperty, value); }
 
-    public Visibility EditableViewVisibility
-    {
-        get => (Visibility)GetValue(EditableViewVisibilityProperty);
-        set => SetValue(EditableViewVisibilityProperty, value);
-    }
+    public Visibility EditableViewVisibility { get => (Visibility)GetValue(EditableViewVisibilityProperty); set => SetValue(EditableViewVisibilityProperty, value); }
 
-    public Visibility SearchResultsVisibility
-    {
-        get => (Visibility)GetValue(SearchResultsVisibilityProperty);
-        set => SetValue(SearchResultsVisibilityProperty, value);
-    }
+    public Visibility SearchResultsVisibility { get => (Visibility)GetValue(SearchResultsVisibilityProperty); set => SetValue(SearchResultsVisibilityProperty, value); }
 
-    public GridLength SearchResultsColumnWidth
-    {
-        get => (GridLength)GetValue(SearchResultsColumnWidthProperty);
-        set => SetValue(SearchResultsColumnWidthProperty, value);
-    }
+    public GridLength SearchResultsColumnWidth { get => (GridLength)GetValue(SearchResultsColumnWidthProperty); set => SetValue(SearchResultsColumnWidthProperty, value); }
 
-    public Visibility FooterVisibility
-    {
-        get => (Visibility)GetValue(FooterVisibilityProperty);
-        set => SetValue(FooterVisibilityProperty, value);
-    }
+    public Visibility FooterVisibility { get => (Visibility)GetValue(FooterVisibilityProperty); set => SetValue(FooterVisibilityProperty, value); }
 
-    public bool CanLoadMoreLines
-    {
-        get => (bool)GetValue(CanLoadMoreLinesProperty);
-        set => SetValue(CanLoadMoreLinesProperty, value);
-    }
+    public bool CanLoadMoreLines { get => (bool)GetValue(CanLoadMoreLinesProperty); set => SetValue(CanLoadMoreLinesProperty, value); }
 
-    public Visibility LoadMoreLinesButtonVisibility
-    {
-        get => (Visibility)GetValue(LoadMoreLinesButtonVisibilityProperty);
-        set => SetValue(LoadMoreLinesButtonVisibilityProperty, value);
-    }
+    public Visibility LoadMoreLinesButtonVisibility { get => (Visibility)GetValue(LoadMoreLinesButtonVisibilityProperty); set => SetValue(LoadMoreLinesButtonVisibilityProperty, value); }
 
-    public string DocumentText
-    {
-        get => (string)GetValue(DocumentTextProperty);
-        set => SetValue(DocumentTextProperty, value);
-    }
+    public string DocumentText { get => (string)GetValue(DocumentTextProperty); set => SetValue(DocumentTextProperty, value); }
 
-    public string DocumentLanguage
-    {
-        get => (string)GetValue(DocumentLanguageProperty);
-        set => SetValue(DocumentLanguageProperty, value);
-    }
+    public string DocumentLanguage { get => (string)GetValue(DocumentLanguageProperty); set => SetValue(DocumentLanguageProperty, value); }
 
-    public bool IsReadOnly
-    {
-        get => (bool)GetValue(IsReadOnlyProperty);
-        set => SetValue(IsReadOnlyProperty, value);
-    }
+    public bool IsReadOnly { get => (bool)GetValue(IsReadOnlyProperty); set => SetValue(IsReadOnlyProperty, value); }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
@@ -232,6 +182,11 @@ public sealed partial class TextDocumentSurfaceView : UserControl
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         DetachWebViewHandlers();
+    }
+
+    private void OnActualThemeChanged(FrameworkElement sender, object args)
+    {
+        SendThemeToWebView(force: true);
     }
 
     private async Task TryInitializeWebViewAsync()
@@ -300,6 +255,12 @@ public sealed partial class TextDocumentSurfaceView : UserControl
             coreWebView.NavigationCompleted += OnNavigationCompleted;
             _webNavigationHandlerAttached = true;
         }
+
+        if (!_webProcessFailedHandlerAttached)
+        {
+            coreWebView.ProcessFailed += OnCoreWebViewProcessFailed;
+            _webProcessFailedHandlerAttached = true;
+        }
     }
 
     private void DetachWebViewHandlers()
@@ -320,6 +281,12 @@ public sealed partial class TextDocumentSurfaceView : UserControl
             EditorWebView.CoreWebView2.NavigationCompleted -= OnNavigationCompleted;
             _webNavigationHandlerAttached = false;
         }
+
+        if (_webProcessFailedHandlerAttached)
+        {
+            EditorWebView.CoreWebView2.ProcessFailed -= OnCoreWebViewProcessFailed;
+            _webProcessFailedHandlerAttached = false;
+        }
     }
 
     private void OnNavigationCompleted(
@@ -330,6 +297,15 @@ public sealed partial class TextDocumentSurfaceView : UserControl
         {
             ShowFallback(ResourceKeys.TextDocumentSurfaceFallbackHostLoadFailed);
         }
+    }
+
+    private void OnCoreWebViewProcessFailed(
+        CoreWebView2 sender,
+        CoreWebView2ProcessFailedEventArgs args)
+    {
+        ShowFallback(
+            ResourceKeys.TextDocumentSurfaceFallbackProcessFailed,
+            detail: args.ProcessFailedKind.ToString());
     }
 
     private void QueueBridgeReadyTimeoutCheck(int navigationVersion)
@@ -366,6 +342,7 @@ public sealed partial class TextDocumentSurfaceView : UserControl
                 ++_webViewNavigationVersion;
                 FallbackSurface.Visibility = Visibility.Collapsed;
                 EditorWebView.Visibility = Visibility.Visible;
+                SendThemeToWebView(force: true);
                 SendDocumentToWebView(force: true);
                 break;
             case "contentChanged":
@@ -411,6 +388,18 @@ public sealed partial class TextDocumentSurfaceView : UserControl
     private void OnLoadMoreLinesButtonClick(object sender, RoutedEventArgs e)
     {
         LoadMoreLinesRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnCopyFallbackDiagnosticButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_fallbackDiagnosticText))
+        {
+            return;
+        }
+
+        var package = new DataPackage();
+        package.SetText(_fallbackDiagnosticText);
+        Clipboard.SetContent(package);
     }
 
     public async Task<string?> GetCurrentDocumentTextAsync()
@@ -546,11 +535,42 @@ public sealed partial class TextDocumentSurfaceView : UserControl
         await Task.CompletedTask;
     }
 
-    private void ShowFallback(string descriptionResourceKey)
+    private void SendThemeToWebView(bool force)
+    {
+        if (!_isWebViewReady || EditorWebView.CoreWebView2 is null)
+        {
+            return;
+        }
+
+        var theme = ActualTheme == ElementTheme.Dark ? "dark" : "light";
+        if (!force && string.Equals(theme, _lastSentTheme, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var message = JsonSerializer.Serialize(new
+        {
+            type = "setTheme",
+            theme
+        });
+        EditorWebView.CoreWebView2.PostWebMessageAsJson(message);
+        _lastSentTheme = theme;
+    }
+
+    private void ShowFallback(string descriptionResourceKey, string? detail = null)
     {
         _isWebViewReady = false;
         ++_webViewNavigationVersion;
-        FallbackDiagnosticDescriptionText.Text = UiText.Get(descriptionResourceKey);
+        var description = UiText.Get(descriptionResourceKey);
+        FallbackDiagnosticDescriptionText.Text = description;
+        _fallbackDiagnosticText = string.IsNullOrWhiteSpace(detail)
+            ? description
+            : string.Format(
+                System.Globalization.CultureInfo.CurrentCulture,
+                "{0}{1}{2}",
+                description,
+                Environment.NewLine,
+                detail);
         EditorWebView.Visibility = Visibility.Collapsed;
         FallbackSurface.Visibility = Visibility.Visible;
     }

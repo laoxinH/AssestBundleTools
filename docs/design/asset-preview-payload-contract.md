@@ -283,14 +283,14 @@ Preview.FullContentUnavailable
 
 - 已新增正式文本编辑第一阶段：独立 `编辑` 命令、资源编辑窗口中的文本编辑模式、draft-backed 文本工作面、预算内正文编辑和本地化状态提示。
 - WebView2 + 离线 Monaco 已作为主 surface 承载普通文本预览和 TextAsset 编辑，提供行号、基础语法染色、Ctrl+F / Ctrl+H / Ctrl+S、撤销 / 重做和 minimap；编辑输入只回传 dirty 状态，保存 / 搜索前按需同步正文；原生 WinUI 行号 / 搜索 / `TextBox` 工作面只作为 WebView2 或 Monaco 不可用时的 fallback。
-- `TextDocumentSurfaceView` 已补 WebView2 用户数据目录显式绑定和 fallback 诊断：当前 WinUI WebView2 投影不暴露桌面 `CreationProperties / CoreWebView2Environment.CreateAsync(...)` 环境重载，因此在首次初始化前用进程级 `WEBVIEW2_USER_DATA_FOLDER` 指向应用私有目录；离线 Monaco 资源缺失、WebView2 初始化失败、host 页面加载失败和 JS bridge 超时都会回退到原生文本视图并显示本地化主提示。
+- `TextDocumentSurfaceView` 已补 WebView2 用户数据目录显式绑定、主题同步和 fallback 诊断：当前 WinUI WebView2 投影不暴露桌面 `CreationProperties / CoreWebView2Environment.CreateAsync(...)` 环境重载，因此在首次初始化前用进程级 `WEBVIEW2_USER_DATA_FOLDER` 指向应用私有目录；离线 Monaco 资源缺失、WebView2 初始化失败、host 页面加载失败、JS bridge 超时和 WebView2 进程异常退出都会回退到原生文本视图并显示本地化主提示，fallback surface 可复制诊断。
 - 文本编辑模式不复用 `替换文件` 入口；`替换文件` 仍只负责外部文件替换，`编辑` 负责打开或激活窗口化文本编辑壳。
 - `CreateTextAssetEditDraft / UpdateTextAssetEditDraft / ApplyTextAssetEditDraft / DiscardTextAssetEditDraft` 已接入工作区命令网关；创建写 `editDrafts[]`，小型 TextAsset 正文保存写 `EditDraftUpdated` 后再写 `EditDraftApplied`，退出或关闭未应用编辑态写 `EditDraftDiscarded`。
 - `OpenTextAssetEditDraft` 已接入工作区命令网关；当资产标签携带 `EditDraftReference` 时，编辑入口会优先按 `workspaceKey + draftId + draftMode` 打开既有草稿，校验 descriptor、source fingerprint、过期时间和 payload 后返回同一个 `EditDraft` reference，并把 descriptor 的 source fingerprint / source description 回传给资产标签，不追加新的 `EditDraftCreated`。若引用存在但 payload 缺失或诊断失败，UI 显示结构化失败，不静默创建新草稿覆盖问题。
 - 文本编辑读取、搜索和草稿生命周期命令均通过 Application gateway 和 Presentation 后台 runner 执行，Presentation 不直接读取 staging 或 preview cache 路径。
 - TextAsset 已进入保存 / 导出写包计划，导出对象写包会从 `text-content` 草稿读取并写入 `m_Script`；Shader 当前作为只读大文本查看和搜索进入窗口壳，正文应用等待 Shader 写回适配器。
 - TextAsset 正文编辑当前仍有明确的全缓冲安全预算，只承载 `AssetTextEditPolicy.InlineEditableTextLength` 以内内容；超过预算的 TextAsset 与 Shader 均保持只读查看 / 搜索，后续 patch 草稿命令落地前不得把超大文本整段绑定到 ViewModel 或单次 WebView 消息。
-- 当前 `TextBox` 已收在 `TextDocumentSurfaceView` 内部，属于 WebView2 / Monaco 不可用时的 fallback；常规文本预览和 TextAsset 编辑已由 Monaco 主实现承载。下一步不应继续扩展 fallback 的编辑能力，而应补 WebView2 Runtime 缺失修复指引、Monaco 资源裁剪 / 主题同步、patch 草稿保存和 JSON / atlas / skel 格式工具。
+- 当前 `TextBox` 已收在 `TextDocumentSurfaceView` 内部，属于 WebView2 / Monaco 不可用时的 fallback；常规文本预览和 TextAsset 编辑已由 Monaco 主实现承载。下一步不应继续扩展 fallback 的编辑能力，而应补 WebView2 Runtime 缺失修复指引、Monaco 资源裁剪、patch 草稿保存和 JSON / atlas / skel 格式工具。
 - 文本编辑态退出、关闭标签或关闭资源编辑窗口时，若存在未保存正文，必须复用保存 / 丢弃 / 取消确认；未应用草稿干净退出可直接丢弃未应用草稿描述。已应用 baseline 草稿重新打开后，退出或丢弃本次未保存 UI 改动只退出编辑态并保留草稿引用与 payload，不能调用 `DiscardTextAssetEditDraft` 删除仍被已应用操作和导出写包引用的内容。
 
 验收：
@@ -378,7 +378,7 @@ Preview.FullContentUnavailable
 
 推荐下一步继续沿阶段 4 的 Monaco 文本编辑器工程化和大文本编辑能力推进，然后回到阶段 2/3 做更广的预览边界收口：
 
-1. 补 WebView2 + Monaco 工程化剩余项：Runtime 缺失安装 / 修复指引、可复制初始化诊断、Monaco 资源裁剪、主题同步和 UI 压力样本验证。
+1. 补 WebView2 + Monaco 工程化剩余项：Runtime 缺失安装 / 修复指引、更完整的可复制环境诊断、Monaco 资源裁剪和 UI 压力样本验证。
 2. 在当前 Monaco 全缓冲编辑基础上接入 patch 草稿保存：分块缓冲 / range edit 命令、保存前差异摘要、未保存状态恢复，并保证超大文本不需要整段进入 ViewModel 字符串或单次 WebView 消息。
 3. 给 TextAsset 编辑器补保存前差异摘要、撤销 / 重做和多窗口同资产冲突策略；当前已能按正文脏状态提示保存 / 丢弃 / 取消，后续需要把该状态接入恢复队列和多窗口同步。
 4. 接入 JSON 美化 / 压缩 / 校验、行跳转和格式化错误定位；大型 JSON 先提供只读结构索引、范围格式化或预算外诊断，不做全量 pretty print。
@@ -387,7 +387,7 @@ Preview.FullContentUnavailable
 7. 继续盘点其它 staging-backed 文本载荷、结构化大集合和诊断文本，优先关注 TypeTree 字段树、CLI result JSON、外部工具 stdout / stderr 和插件诊断，确保它们也有预算和 reference / sidecar 边界。
 8. 在文本链路边界稳定后，进入阶段 2：把 Spine atlas 现有 guard 迁入统一 policy，并扩展到 skel JSON、TypeTree、图片、音频、Mesh 和 CLI result JSON。
 
-当前阶段性建议：下一步优先做 Monaco 工程化手动测试，确认正常启动后 `%LocalAppData%\AssestBundleTools\WebView2\TextEditor` 会生成 WebView2 用户数据、临时移除输出目录中的 `Assets\Monaco` 会显示本地化兼容模式提示并回退到原生文本视图、12 MB JSON / atlas / skel 样本打开和关闭仍不阻塞主窗口；测试通过后继续补 Runtime 缺失安装指引、可复制初始化诊断、主题同步和资源裁剪，再进入 patch 草稿保存与 JSON 格式化 / 校验。
+当前阶段性建议：下一步优先做 Monaco 工程化手动测试，确认正常启动后 `%LocalAppData%\AssestBundleTools\WebView2\TextEditor` 会生成 WebView2 用户数据、切换应用浅色 / 深色主题后 Monaco 背景和语法色跟随变化、临时移除输出目录中的 `Assets\Monaco` 会显示本地化兼容模式提示且“复制诊断”可用、12 MB JSON / atlas / skel 样本打开和关闭仍不阻塞主窗口；测试通过后继续补 Runtime 缺失安装指引、更完整的可复制环境诊断和资源裁剪，再进入 patch 草稿保存与 JSON 格式化 / 校验。
 
 ## 11. 待决问题
 

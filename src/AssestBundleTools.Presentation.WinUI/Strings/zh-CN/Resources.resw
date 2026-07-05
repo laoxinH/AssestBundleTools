@@ -2679,6 +2679,12 @@
   <data name="TextDocumentSurface.Fallback.BridgeTimeout" xml:space="preserve">
     <value>文本编辑器脚本未及时响应，已使用原生文本视图。</value>
   </data>
+  <data name="TextDocumentSurface.Fallback.ProcessFailed" xml:space="preserve">
+    <value>WebView2 文本编辑器进程异常退出，已使用原生文本视图。</value>
+  </data>
+  <data name="TextDocumentSurface.Fallback.CopyDiagnosticButton.Content" xml:space="preserve">
+    <value>复制诊断</value>
+  </data>
   <data name="InspectorPanelView.ExitSpriteEditButton.Content" xml:space="preserve">
     <value>退出</value>
   </data>

@@ -18,7 +18,7 @@
             CornerRadius="8">
             <webview2:WebView2
                 x:Name="EditorWebView"
-                DefaultBackgroundColor="White" />
+                DefaultBackgroundColor="Transparent" />
         </Border>
 
         <Grid
@@ -39,16 +39,21 @@
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="6">
-                <StackPanel
-                    Orientation="Horizontal"
-                    Spacing="10">
+                <Grid ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
                     <FontIcon
                         VerticalAlignment="Top"
                         FontFamily="Segoe Fluent Icons"
                         FontSize="14"
                         Foreground="{ThemeResource SystemFillColorCautionBrush}"
                         Glyph="&#xE946;" />
-                    <StackPanel Spacing="2">
+                    <StackPanel
+                        Grid.Column="1"
+                        Spacing="2">
                         <TextBlock
                             x:Name="FallbackDiagnosticTitleText"
                             FontWeight="SemiBold" />
@@ -57,7 +62,22 @@
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             TextWrapping="WrapWholeWords" />
                     </StackPanel>
-                </StackPanel>
+                    <Button
+                        x:Name="CopyFallbackDiagnosticButton"
+                        Grid.Column="2"
+                        Click="OnCopyFallbackDiagnosticButtonClick"
+                        Style="{StaticResource WorkspaceOperationButtonStyle}">
+                        <StackPanel
+                            Orientation="Horizontal"
+                            Spacing="6">
+                            <FontIcon
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="12"
+                                Glyph="&#xE8C8;" />
+                            <TextBlock x:Name="CopyFallbackDiagnosticButtonText" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
             </Border>
 
             <Grid

@@ -68,7 +68,7 @@ Monaco 主实现已经进入 `TextDocumentSurfaceView`，后续工程化收口�
 - JS bridge 只传递有界 payload、range、patch 和命令结果，不传递缓存路径、替换源路径或 staging 路径。
 - 初始打开只加载受控范围或受控模型；当前 TextAsset 保存仍使用 Monaco 全缓冲安全预算，超过预算的大文本必须等 patch 草稿命令落地后再开放正文保存。
 - 搜索、跳转、格式化和保存通过 Application query / command；前端只展示结果和提交 patch。
-- Runtime 缺失、初始化失败和 bridge 异常都有本地化主提示和可复制诊断。
+- Runtime 缺失、初始化失败和 bridge 异常都有本地化主提示和可复制诊断；当前已提供 fallback 诊断复制入口，Runtime 缺失还需补安装 / 修复指引。
 - 保留原生 fallback surface，保证预览和只读查看在 WebView2 不可用时仍可工作。
 
 ## 7. 后续阶段计划
@@ -108,7 +108,8 @@ Monaco 主实现已经进入 `TextDocumentSurfaceView`，后续工程化收口�
 - 已接入 Ctrl+F、Ctrl+H、Ctrl+S、撤销 / 重做、行号、minimap、JSON / atlas / Shader 基础染色。
 - 已把编辑输入桥接改为 dirty 信号 + 保存 / 搜索前按需同步正文，避免 12 MB 级文本在每次键入时都完整回传到 .NET。
 - 已补 WebView2 用户数据目录显式绑定、离线 Monaco 资源缺失、WebView2 初始化失败、host 页面加载失败和 JS bridge 超时的本地化 fallback 诊断；在当前 WinUI WebView2 投影限制下，用户数据目录通过进程级 `WEBVIEW2_USER_DATA_FOLDER` 在初始化前设置。
-- 待补：Runtime 缺失的安装 / 修复指引、更细可复制诊断、Monaco 资源裁剪、主题同步和真实 UI 压力样本验证。
+- 已补 Monaco light / dark 主题定义，并由 `TextDocumentSurfaceView` 按 WinUI `ActualTheme` 通过 JS bridge 同步；WebView2 进程异常退出会回退原生文本视图，fallback surface 已提供复制诊断入口。
+- 待补：Runtime 缺失的安装 / 修复指引、更完整的可复制环境诊断、Monaco 资源裁剪和真实 UI 压力样本验证。
 
 ### 阶段 C：大文本虚拟化编辑和 patch 草稿
 

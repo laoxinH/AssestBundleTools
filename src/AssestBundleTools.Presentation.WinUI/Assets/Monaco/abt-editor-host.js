@@ -6,6 +6,7 @@
   let suppressChange = false;
   let currentLanguage = 'plaintext';
   let currentReadOnly = true;
+  let currentTheme = 'light';
 
   function post(message) {
     if (vscode) {
@@ -33,33 +34,12 @@
   function createEditor() {
     require.config({ paths: { vs: './vs' } });
     require(['vs/editor/editor.main'], function () {
-      monaco.editor.defineTheme('abt-light', {
-        base: 'vs',
-        inherit: true,
-        rules: [
-          { token: 'string.key.json', foreground: '0f5f8a' },
-          { token: 'string.value.json', foreground: '7a3f00' },
-          { token: 'number', foreground: '0f6cbd' },
-          { token: 'keyword', foreground: '8a2be2' }
-        ],
-        colors: {
-          'editor.background': '#ffffff',
-          'editor.foreground': '#1f1f1f',
-          'editorLineNumber.foreground': '#8a8a8a',
-          'editorLineNumber.activeForeground': '#d70021',
-          'editorCursor.foreground': '#d70021',
-          'editor.selectionBackground': '#add6ff',
-          'editor.findMatchBackground': '#ffdf7e',
-          'editor.findMatchHighlightBackground': '#fff2b8',
-          'editor.lineHighlightBackground': '#f7f7f7',
-          'editorGutter.background': '#ffffff'
-        }
-      });
+      defineThemes();
 
       editor = monaco.editor.create(document.getElementById('editor'), {
         value: '',
         language: 'plaintext',
-        theme: 'abt-light',
+        theme: resolveThemeName(currentTheme),
         readOnly: true,
         automaticLayout: true,
         fontFamily: '"Cascadia Mono", Consolas, "Courier New", monospace',
@@ -117,6 +97,67 @@
     });
   }
 
+  function defineThemes() {
+    monaco.editor.defineTheme('abt-light', {
+      base: 'vs',
+      inherit: true,
+      rules: [
+        { token: 'string.key.json', foreground: '0f5f8a' },
+        { token: 'string.value.json', foreground: '7a3f00' },
+        { token: 'number', foreground: '0f6cbd' },
+        { token: 'keyword', foreground: '8a2be2' }
+      ],
+      colors: {
+        'editor.background': '#ffffff',
+        'editor.foreground': '#1f1f1f',
+        'editorLineNumber.foreground': '#8a8a8a',
+        'editorLineNumber.activeForeground': '#d70021',
+        'editorCursor.foreground': '#d70021',
+        'editor.selectionBackground': '#add6ff',
+        'editor.findMatchBackground': '#ffdf7e',
+        'editor.findMatchHighlightBackground': '#fff2b8',
+        'editor.lineHighlightBackground': '#f7f7f7',
+        'editorGutter.background': '#ffffff'
+      }
+    });
+
+    monaco.editor.defineTheme('abt-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'string.key.json', foreground: '7dd3fc' },
+        { token: 'string.value.json', foreground: 'fbbf24' },
+        { token: 'number', foreground: '93c5fd' },
+        { token: 'keyword', foreground: 'c084fc' }
+      ],
+      colors: {
+        'editor.background': '#1f1f1f',
+        'editor.foreground': '#f3f3f3',
+        'editorLineNumber.foreground': '#858585',
+        'editorLineNumber.activeForeground': '#ff99a8',
+        'editorCursor.foreground': '#ff99a8',
+        'editor.selectionBackground': '#264f78',
+        'editor.findMatchBackground': '#8a6b1f',
+        'editor.findMatchHighlightBackground': '#5f4b1a',
+        'editor.lineHighlightBackground': '#2a2a2a',
+        'editorGutter.background': '#1f1f1f'
+      }
+    });
+  }
+
+  function resolveThemeName(theme) {
+    return theme === 'dark' ? 'abt-dark' : 'abt-light';
+  }
+
+  function setTheme(theme) {
+    currentTheme = theme === 'dark' ? 'dark' : 'light';
+    document.documentElement.style.background = currentTheme === 'dark' ? '#1f1f1f' : '#ffffff';
+    document.body.style.background = currentTheme === 'dark' ? '#1f1f1f' : '#ffffff';
+    if (editor) {
+      monaco.editor.setTheme(resolveThemeName(currentTheme));
+    }
+  }
+
   function setDocument(payload) {
     if (!editor) {
       return;
@@ -172,6 +213,9 @@
           break;
         case 'setReadOnly':
           setReadOnly(message.readOnly);
+          break;
+        case 'setTheme':
+          setTheme(message.theme);
           break;
         case 'focus':
           if (editor) {
