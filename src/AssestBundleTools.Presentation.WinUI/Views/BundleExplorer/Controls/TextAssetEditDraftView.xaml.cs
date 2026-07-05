@@ -20,6 +20,8 @@ public sealed partial class TextAssetEditDraftView : UserControl
         ApplyLocalizedText();
     }
 
+    public event EventHandler? SaveRequested;
+
     public TextAssetEditDraftViewModel? ViewModel
     {
         get => (TextAssetEditDraftViewModel?)GetValue(ViewModelProperty);
@@ -30,6 +32,7 @@ public sealed partial class TextAssetEditDraftView : UserControl
     {
         if (dependencyObject is TextAssetEditDraftView view)
         {
+            view.TextEditorSurface.ResetPendingDocumentChanges();
             view.Bindings.Update();
         }
     }
@@ -38,7 +41,10 @@ public sealed partial class TextAssetEditDraftView : UserControl
     {
         if (ViewModel is not null)
         {
-            await ViewModel.SearchAsync();
+            if (await SynchronizeEditorTextAsync())
+            {
+                await ViewModel.SearchAsync();
+            }
         }
     }
 
@@ -48,6 +54,34 @@ public sealed partial class TextAssetEditDraftView : UserControl
         {
             await ViewModel.LoadMoreLinesAsync();
         }
+    }
+
+    private void OnSaveRequested(object? sender, EventArgs e)
+    {
+        ViewModel?.SetEditorTextFromSurface(TextEditorSurface.EditableText);
+        SaveRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnDocumentChanged(object? sender, EventArgs e)
+    {
+        ViewModel?.MarkEditorDirty();
+    }
+
+    public async Task<bool> SynchronizeEditorTextAsync()
+    {
+        if (ViewModel is null)
+        {
+            return true;
+        }
+
+        var text = await TextEditorSurface.GetCurrentDocumentTextAsync();
+        if (text is null)
+        {
+            return false;
+        }
+
+        ViewModel.SetEditorTextFromSurface(text);
+        return true;
     }
 
     private void ApplyLocalizedText()

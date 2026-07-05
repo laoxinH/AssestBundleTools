@@ -5,5 +5,5 @@ namespace AssestBundleTools.Application.Editing.Services;
 /// </summary>
 public static class AssetTextEditPolicy
 {
-    public const int InlineEditableTextLength = 262_144;
+    public const int InlineEditableTextLength = 32 * 1024 * 1024;
 }

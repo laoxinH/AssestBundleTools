@@ -379,8 +379,8 @@ Spine 编辑草稿预览不得绕过有效读模型。编辑态预览输入为�
 
 1. `替换文件` 与 `编辑` 是两个独立入口；文件替换继续生成 `ReplaceFromFile`，文本编辑只通过资源编辑窗口的文本编辑模式进入。
 2. 打开文本编辑模式时，如果资产标签没有可用草稿引用，Application 创建 `text-content` 草稿，写入 `staging/drafts/<workspaceKey>/<draftId>/text-content/`，并追加 `EditDraftCreated`；Presentation 保存 `draftId / draftMode / sourceFingerprint / sourceDescription` 和 `EditDraft` reference。如果资产标签已经携带 `EditDraftReference`，Application 通过 `OpenTextAssetEditDraft` 校验 descriptor、source fingerprint、过期时间和 payload 后返回既有 `EditDraft` reference，不追加新的 `EditDraftCreated`，也不覆盖草稿 payload。
-3. 文本编辑第一阶段的 UI 对小型 TextAsset 开放正文编辑，对大型文本和 Shader 降级为只读大文本工作面：初始加载一页有限行数，用户可显式加载后续行页，展示行号并执行有限搜索；所有读取、分页和搜索必须回到 Application query，Presentation 不直接读草稿文件。
-4. 小型 TextAsset 的正文编辑预算由 `AssetTextEditPolicy.InlineEditableTextLength` 定义；超过预算的正文更新必须被 `UpdateTextAssetEditDraft` 拒绝，并保持 draft payload 与 `operations[]` 不变，直到虚拟化 / patch 编辑器落地。
+3. 文本编辑第一阶段的 UI 以 WebView2 + 离线 Monaco 作为主 surface，对预算内 TextAsset 开放正文编辑，对超过全缓冲安全预算的文本和 Shader 降级为只读查看 / 搜索；原生行列表与 `TextBox` 仅作为 WebView2 或 Monaco 不可用时的 fallback。所有读取、分页和搜索必须回到 Application query，Presentation 不直接读草稿文件。
+4. TextAsset 正文编辑预算由 `AssetTextEditPolicy.InlineEditableTextLength` 定义；超过预算的正文更新必须被 `UpdateTextAssetEditDraft` 拒绝，并保持 draft payload 与 `operations[]` 不变，直到虚拟化 / patch 编辑器落地。
 5. TextAsset 保存时，若正文相对打开基线存在未保存修改，Presentation 先调用 `UpdateTextAssetEditDraft` 覆盖 draft payload 并追加 `EditDraftUpdated`，再调用 `ApplyTextAssetEditDraft` 追加 `EditDraftApplied`；两条记录的 `source.sourceKind=draft`、`source.draftMode=text-content`、`source.draftId=<draftId>` 均指向同一个草稿。`UpdateTextAssetEditDraft / ApplyTextAssetEditDraft` 必须保留已有 descriptor source fingerprint；只有缺失 descriptor 时才允许按目标资产构造兜底指纹。
 6. 运行时读模型只把 `EditDraftApplied` 物化为目标资产当前有效文本编辑，变更分段显示 `TextEdit` 记录；`EditDraftCreated / EditDraftUpdated / EditDraftDiscarded` 只表达草稿生命周期，不单独让目标资源进入有效已修改状态。
 7. Shader 当前可以进入只读工作面，但 `CanApply=false`，保存按钮保持禁用；只有接入 Shader 写回适配器后才能追加可生效的文本编辑记录。

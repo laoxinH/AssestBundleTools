@@ -140,11 +140,13 @@
                     ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested" />
 
                 <controls:TextAssetEditDraftView
+                    x:Name="TextEditDraftView"
                     MinHeight="340"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
                     Visibility="{x:Bind ViewModel.TextEditPanelVisibility, Mode=OneWay}"
-                    ViewModel="{x:Bind ViewModel.ActiveTextEditDraft, Mode=OneWay}" />
+                    ViewModel="{x:Bind ViewModel.ActiveTextEditDraft, Mode=OneWay}"
+                    SaveRequested="OnTextEditSaveRequested" />
 
                 <controls:SpriteEditGeometryPanelView
                     Grid.Row="1"

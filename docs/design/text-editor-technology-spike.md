@@ -35,8 +35,8 @@
 
 1. 长期正式编辑器目标采用 `WebView2 + Monaco`，追求 VS Code 风格的大文本编辑体验。
 2. 立即阶段不直接把业务写死到 WebView2；先建立 `TextDocumentSurfaceView` 作为 Presentation 统一文本 surface。
-3. 当前 `TextDocumentSurfaceView` 的实现采用原生 WinUI 虚拟化列表 + 有预算的小文本 `TextBox`，用于收束现有检查器文本预览和资源编辑窗口。
-4. Monaco 接入必须作为 `TextDocumentSurfaceView` 的内部实现或并列实现进入，不得改变 Application 侧 `LoadPreviewTextChunk / LoadPreviewTextLines / SearchPreviewText / draft command` 边界。
+3. 当前 `TextDocumentSurfaceView` 已采用 WebView2 + 离线 Monaco 作为主实现，原生 WinUI 行列表 + 有预算的 `TextBox` 只作为故障 fallback。
+4. Monaco 只作为 `TextDocumentSurfaceView` 内部实现接入，不改变 Application 侧 `LoadPreviewTextChunk / LoadPreviewTextLines / SearchPreviewText / draft command` 边界。
 5. WebView2 启动失败、Runtime 缺失、Monaco 静态资源缺失、JS bridge 初始化失败时必须降级到原生 fallback surface，并显示本地化诊断。
 
 ## 5. 当前迁移边界
@@ -44,7 +44,7 @@
 已建立的边界：
 
 - `TextDocumentSurfaceView`
-  Presentation 统一文本承载控件，当前支持只读行列表、搜索结果列、小文本编辑框、状态栏和加载更多事件。
+  Presentation 统一文本承载控件，当前以 WebView2 + 离线 Monaco 承载预览和编辑，并保留只读行列表、搜索结果列、小文本编辑框、状态栏和加载更多事件作为 fallback。
 - `TextDocumentLineViewModel`
   普通预览和编辑器共享的行显示模型。
 - `TextDocumentSearchMatchViewModel`
@@ -54,17 +54,19 @@
 
 - 检查器普通 `Text` 预览已从 `ScrollViewer + TextBlock` 迁移到 `TextDocumentSurfaceView`。
 - `TextAsset / Shader` 编辑窗口已从独立 `ListView / TextBox` 组合迁移到 `TextDocumentSurfaceView`。
-- 小文本编辑仍使用有预算的 WinUI `TextBox` fallback；它是临时内部实现，不是最终大文本编辑器。
-- 大文本 / Shader 仍保持只读行号、分页加载和有限搜索，直到 patch 草稿编辑落地。
+- `TextDocumentSurfaceView` 已接入 WebView2 + 离线 Monaco 静态资源作为主实现，原生 WinUI 行列表 / `TextBox` 只作为 WebView2 初始化失败、Runtime 缺失或静态资源缺失时的 fallback。
+- Monaco 主实现已统一普通预览和编辑窗口的行号、语法染色、查找 / 替换入口、Ctrl+F、Ctrl+H、Ctrl+S、撤销 / 重做和 VS Code 风格文本面。`.json / .skel` 走 JSON 语言，`.atlas` 走类 ini 语言，Shader 临时映射到 C++ 风格高亮。
+- 当前保存仍沿用 `UpdateTextAssetEditDraft -> ApplyTextAssetEditDraft` 的全量文本命令；Monaco 输入变更只通过 JS bridge 通知 dirty 状态，保存 / 搜索前才同步一次正文，避免每次按键跨 WebView 边界搬运整段文本。应用层预算已从旧 `TextBox` 小文本上限提升到 Monaco 全缓冲编辑安全上限。真正无限大文本编辑仍需阶段 C 的 patch 草稿命令后才能彻底放开。
+- 当前 WebView2 host 第一阶段使用默认环境初始化；显式 user data folder 和更细初始化诊断保留到下一阶段补齐。
 
-## 6. Monaco 接入条件
+## 6. Monaco 工程化条件
 
-进入 Monaco 原型前必须满足：
+Monaco 主实现已经进入 `TextDocumentSurfaceView`，后续工程化收口必须满足：
 
 - Monaco 静态资源随应用离线打包，不依赖公网 CDN。
-- WebView2 用户数据目录由应用显式管理，避免污染用户默认浏览器状态。
+- WebView2 用户数据目录由应用显式管理，避免污染用户默认浏览器状态；当前第一阶段仍使用 WebView2 默认环境初始化，必须在下一阶段补齐显式目录和初始化诊断。
 - JS bridge 只传递有界 payload、range、patch 和命令结果，不传递缓存路径、替换源路径或 staging 路径。
-- 初始打开只加载受控范围或受控模型；大文本通过 Application query 分块补充。
+- 初始打开只加载受控范围或受控模型；当前 TextAsset 保存仍使用 Monaco 全缓冲安全预算，超过预算的大文本必须等 patch 草稿命令落地后再开放正文保存。
 - 搜索、跳转、格式化和保存通过 Application query / command；前端只展示结果和提交 patch。
 - Runtime 缺失、初始化失败和 bridge 异常都有本地化主提示和可复制诊断。
 - 保留原生 fallback surface，保证预览和只读查看在 WebView2 不可用时仍可工作。
@@ -91,13 +93,21 @@
 
 - 新增 Monaco 静态资源包和 WebView2 host 原型。
 - 完成 editor 初始化、主题同步、只读模型加载、搜索、跳转和错误降级。
-- 不接入保存，不替换默认 surface。
+- 接入 Ctrl+S 到现有保存命令，替换默认 surface，同时保留原生 fallback。
 
 验收：
 
 - 打开 12 MB JSON / atlas 样本不阻塞主 UI。
 - Runtime / 静态资源缺失时回退到原生 surface。
 - 所有内容读取仍经 Application query。
+
+当前进度：
+
+- 已完成离线 Monaco 资源打包与 `TextDocumentSurfaceView` WebView2 host。
+- 已把检查器文本预览和资源编辑窗口统一到 Monaco 主实现。
+- 已接入 Ctrl+F、Ctrl+H、Ctrl+S、撤销 / 重做、行号、minimap、JSON / atlas / Shader 基础染色。
+- 已把编辑输入桥接改为 dirty 信号 + 保存 / 搜索前按需同步正文，避免 12 MB 级文本在每次键入时都完整回传到 .NET。
+- 待补：显式 WebView2 user data folder、WebView2 初始化失败本地化诊断、运行时缺失提示、Monaco 资源裁剪、真实 UI 压力样本验证。
 
 ### 阶段 C：大文本虚拟化编辑和 patch 草稿
 

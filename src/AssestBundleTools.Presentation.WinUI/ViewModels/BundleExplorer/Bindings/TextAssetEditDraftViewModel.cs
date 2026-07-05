@@ -5,6 +5,7 @@ using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Workspace.Services;
+using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
 using Microsoft.UI.Xaml;
@@ -18,6 +19,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
 {
     private const int LinePageSize = 200;
     private const int SearchMatchCount = 50;
+    private const int MonacoEditableTextLength = AssetTextEditPolicy.InlineEditableTextLength;
 
     private readonly IWorkspaceAssetInspectionGateway _workspaceAssetInspectionGateway;
     private readonly IBackgroundTaskRunner _backgroundTaskRunner;
@@ -31,6 +33,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     private int _nextLineIndex;
     private bool _hasMoreLines;
     private bool _isBusy;
+    private bool _hasPendingEditorTextChanges;
 
     public TextAssetEditDraftViewModel(
         AssetTextEditDraftDto draft,
@@ -67,10 +70,10 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     public bool IsInlineEditEnabled => _draft.CanEditInline;
 
     public Visibility ReadOnlyViewVisibility =>
-        IsInlineEditEnabled ? Visibility.Collapsed : Visibility.Visible;
+        IsEditable ? Visibility.Collapsed : Visibility.Visible;
 
     public Visibility EditableViewVisibility =>
-        IsInlineEditEnabled ? Visibility.Visible : Visibility.Collapsed;
+        IsEditable ? Visibility.Visible : Visibility.Collapsed;
 
     public AssetPreviewFullContentReferenceDto Reference => _draft.Reference;
 
@@ -81,6 +84,15 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     public string InlineEditHintText { get; }
 
     public string ModeHintText => IsInlineEditEnabled ? InlineEditHintText : ReadOnlyHintText;
+
+    public string DocumentLanguage => DetectLanguage(TitleText, _draft.AssetTypeDisplayName);
+
+    public bool IsReadOnly => !IsEditable;
+
+    private bool IsEditable =>
+        CanApply &&
+        _draft.AssetType == AssetType.TextAsset &&
+        _draft.Reference.ContentLength <= MonacoEditableTextLength;
 
     public string StatusText
     {
@@ -113,6 +125,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         {
             if (SetProperty(ref _editableText, value ?? string.Empty))
             {
+                OnPropertyChanged(nameof(IsReadOnly));
                 OnPropertyChanged(nameof(HasUnsavedChanges));
                 OnPropertyChanged(nameof(CanSave));
             }
@@ -120,8 +133,9 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     }
 
     public bool HasUnsavedChanges =>
-        IsInlineEditEnabled &&
-        !string.Equals(EditableText, _lastSavedText, StringComparison.Ordinal);
+        IsEditable &&
+        (_hasPendingEditorTextChanges ||
+        !string.Equals(EditableText, _lastSavedText, StringComparison.Ordinal));
 
     public bool CanSave => CanApply && HasUnsavedChanges;
 
@@ -134,16 +148,17 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(CanSearch));
                 OnPropertyChanged(nameof(CanLoadMoreLines));
+                OnPropertyChanged(nameof(CanSave));
             }
         }
     }
 
     public bool CanSearch => !IsBusy && !string.IsNullOrWhiteSpace(SearchText);
 
-    public bool CanLoadMoreLines => !IsInlineEditEnabled && !IsBusy && _hasMoreLines;
+    public bool CanLoadMoreLines => !IsEditable && !IsBusy && _hasMoreLines;
 
     public Visibility LoadMoreLinesButtonVisibility =>
-        !IsInlineEditEnabled && _hasMoreLines ? Visibility.Visible : Visibility.Collapsed;
+        !IsEditable && _hasMoreLines ? Visibility.Visible : Visibility.Collapsed;
 
     public ObservableCollection<TextDocumentLineViewModel> Lines { get; } = new();
 
@@ -158,10 +173,8 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         await LoadInitialLinesAsync(cancellationToken);
-        if (IsInlineEditEnabled)
-        {
-            await LoadEditableTextAsync(cancellationToken);
-        }
+        await LoadEditableTextAsync(cancellationToken);
+        NotifyDocumentEditState();
     }
 
     public async Task LoadInitialLinesAsync(CancellationToken cancellationToken = default)
@@ -245,8 +258,28 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     public void MarkSaved()
     {
         _lastSavedText = EditableText;
+        _hasPendingEditorTextChanges = false;
         OnPropertyChanged(nameof(HasUnsavedChanges));
         OnPropertyChanged(nameof(CanSave));
+    }
+
+    public void MarkEditorDirty()
+    {
+        if (!IsEditable || _hasPendingEditorTextChanges)
+        {
+            return;
+        }
+
+        _hasPendingEditorTextChanges = true;
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+        OnPropertyChanged(nameof(CanSave));
+    }
+
+    public void SetEditorTextFromSurface(string text)
+    {
+        _hasPendingEditorTextChanges = false;
+        EditableText = text ?? string.Empty;
+        NotifyDocumentEditState();
     }
 
     public async Task SearchAsync(CancellationToken cancellationToken = default)
@@ -256,7 +289,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
             return;
         }
 
-        if (IsInlineEditEnabled)
+        if (IsEditable)
         {
             SearchEditableText();
             return;
@@ -321,8 +354,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
 
             EditableText = text;
             _lastSavedText = EditableText;
-            OnPropertyChanged(nameof(HasUnsavedChanges));
-            OnPropertyChanged(nameof(CanSave));
+            NotifyDocumentEditState();
         }
         finally
         {
@@ -334,7 +366,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     {
         var builder = new System.Text.StringBuilder();
         var offset = 0;
-        while (offset < AssetTextEditPolicy.InlineEditableTextLength)
+        while (offset < MonacoEditableTextLength)
         {
             var result = await _backgroundTaskRunner.RunAsync(
                 token => _workspaceAssetInspectionGateway.LoadPreviewTextChunkAsync(
@@ -412,5 +444,39 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         _hasMoreLines = value;
         OnPropertyChanged(nameof(CanLoadMoreLines));
         OnPropertyChanged(nameof(LoadMoreLinesButtonVisibility));
+    }
+
+    private void NotifyDocumentEditState()
+    {
+        OnPropertyChanged(nameof(ReadOnlyViewVisibility));
+        OnPropertyChanged(nameof(EditableViewVisibility));
+        OnPropertyChanged(nameof(IsReadOnly));
+        OnPropertyChanged(nameof(DocumentLanguage));
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+        OnPropertyChanged(nameof(CanSave));
+        OnPropertyChanged(nameof(CanLoadMoreLines));
+        OnPropertyChanged(nameof(LoadMoreLinesButtonVisibility));
+    }
+
+    private static string DetectLanguage(string titleText, string? assetTypeDisplayName)
+    {
+        var extension = Path.GetExtension(titleText);
+        if (extension.Equals(".json", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".skel", StringComparison.OrdinalIgnoreCase))
+        {
+            return "json";
+        }
+
+        if (extension.Equals(".atlas", StringComparison.OrdinalIgnoreCase))
+        {
+            return "atlas";
+        }
+
+        if (string.Equals(assetTypeDisplayName, "Shader", StringComparison.OrdinalIgnoreCase))
+        {
+            return "shader";
+        }
+
+        return "plaintext";
     }
 }

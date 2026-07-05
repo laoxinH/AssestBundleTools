@@ -709,7 +709,10 @@
 
                 <controls:TextDocumentSurfaceView
                     Margin="8,0,8,8"
+                    DocumentLanguage="{x:Bind ViewModel.Preview.PreviewTextLanguage, Mode=OneWay}"
+                    DocumentText="{x:Bind ViewModel.Preview.PreviewText, Mode=OneWay}"
                     FooterVisibility="Collapsed"
+                    IsReadOnly="True"
                     Lines="{x:Bind ViewModel.Preview.PreviewTextLines, Mode=OneWay}"
                     Visibility="{x:Bind ViewModel.Preview.PreviewTextVisibility, Mode=OneWay}" />
 

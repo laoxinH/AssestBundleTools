@@ -165,12 +165,12 @@ Preview.FullContentUnavailable
 - 编辑态保存时追加可恢复操作记录，仍由保存 / 重建链路消费；不直接覆盖原始 AB。
 - JSON 美化、压缩、校验、atlas 校验等格式工具都是编辑器命令，必须走后台任务和预算策略。
 - 格式化命令默认只对可承受范围执行；对大 JSON 提供范围格式化、结构折叠或只读结构索引等渐进能力。
-- 文本编辑体验长期参考 VS Code / Monaco 的交互标准：行号 gutter、当前行高亮、搜索 / 替换、跳转行号、缩略滚动条、括号 / JSON 结构辅助、主题一致性和键盘快捷键都应作为正式编辑器方向；实现时仍必须保持仓库分层边界，编辑器只渲染当前可见范围或受控缓冲区，内容读取、搜索、格式化、保存和草稿生命周期继续通过 Application query / command。技术 spike 已在 [text-editor-technology-spike.md](text-editor-technology-spike.md) 收束：长期正式编辑器目标采用 WebView2 + Monaco，当前阶段先以原生 WinUI `TextDocumentSurfaceView` 作为共享 fallback surface 收拢现有文本预览和编辑窗口，Monaco 后续只能作为该 surface 的内部实现或并列实现接入，不能绕过 Application query / command。
+- 文本编辑体验长期参考 VS Code / Monaco 的交互标准：行号 gutter、当前行高亮、搜索 / 替换、跳转行号、缩略滚动条、括号 / JSON 结构辅助、主题一致性和键盘快捷键都应作为正式编辑器方向；实现时仍必须保持仓库分层边界，编辑器只渲染当前可见范围或受控缓冲区，内容读取、搜索、格式化、保存和草稿生命周期继续通过 Application query / command。技术 spike 已在 [text-editor-technology-spike.md](text-editor-technology-spike.md) 收束：当前主实现采用 WebView2 + 离线 Monaco，并封装在 `TextDocumentSurfaceView` 内；原生 WinUI 行列表 / `TextBox` 只作为 fallback surface，不得绕过 Application query / command。
 - 未保存草稿、撤销 / 重做、关闭确认和多窗口显示同一文本时的状态归属，应沿用资源编辑窗口的页面级状态和工作区操作记录规则。
 
 当前第一阶段已经落地独立 `编辑` 入口和窗口化编辑壳：`TextAsset / Shader` 可以从检查器或资源编辑窗口进入 draft-backed 文本工作面。打开编辑器会创建 `text-content` 草稿并写入 `editDrafts[]`；如果标签已经携带可恢复的 `EditDraftReference`，则优先通过 `OpenTextAssetEditDraft` 读取既有草稿 payload 和 descriptor，不重新创建或覆盖草稿。草稿创建、恢复打开、正文更新和保存应用必须保留同一个 descriptor `source fingerprint`，并把它投影回资产标签的 `EditDraftReference`，避免窗口快照恢复时把自身草稿误判为来源不匹配。小型 `TextAsset` 在 `AssetTextEditPolicy.InlineEditableTextLength` 预算内开放正文编辑，保存时先用 `UpdateTextAssetEditDraft` 覆盖 draft payload 并追加 `EditDraftUpdated`，再用 `ApplyTextAssetEditDraft` 追加 `EditDraftApplied`；大型文本和 `Shader` 仍降级为只读行号 / 分页加载 / 有限搜索视图。文本读取、分页、搜索、草稿创建、草稿恢复打开、草稿更新、保存应用和退出丢弃都通过 Application query / command 与后台 runner 执行。退出或关闭正在编辑的标签 / 窗口时，若存在未保存正文会提示保存 / 丢弃 / 取消；未应用草稿的丢弃会追加 `EditDraftDiscarded` 并清理对应草稿描述。已应用 TextAsset 草稿再次进入编辑态后会作为 `IsAppliedBaseline` 打开；用户无修改退出或选择丢弃本次未保存 UI 改动时，只退出编辑态并保留草稿引用和 payload，避免删除仍被 `EditDraftApplied` 和导出写包消费的内容。`TextAsset` 保存后的草稿已经进入当前有效读模型、预览刷新策略和统一导出写包计划：`GetAssetPreview` 会在没有更高优先级文件替换 / 工作区替换时读取已应用 `TextEditDraftId` 对应的 `EditDraft` reference，普通详情和资源编辑窗口刷新也会把 `TextEditDraftId / TextEditDraftMode / TextEditAppliedAtUtc` 变化视为有效预览变化。`Shader` 当前只进入只读文本工作面，保存按钮按 `CanApply=false` 禁用，后续接入 Shader 字段写回适配后再允许应用。
 
-当前 Presentation 承载也已完成第一轮收口：检查器普通 `Text` 预览不再使用独立 `ScrollViewer + TextBlock` 直接显示展示字符串，而是把 Application 返回的有界展示文本拆成 `TextDocumentLineViewModel` 并交给 `TextDocumentSurfaceView`；资源编辑窗口的只读行号 / 搜索结果和小文本编辑框也迁移到同一 surface。该 surface 当前是原生 WinUI fallback 实现，后续 Monaco 接入必须替换或并列实现这层 surface，而不是重新在检查器或编辑窗口里散落新的 WebView2 入口。
+当前 Presentation 承载也已完成 Monaco 主实现收口：检查器普通 `Text` 预览不再使用独立 `ScrollViewer + TextBlock` 直接显示展示字符串，而是把 Application 返回的有界展示文本交给 `TextDocumentSurfaceView`；资源编辑窗口的正文、查找 / 替换和快捷键也迁移到同一 surface。`TextDocumentSurfaceView` 当前以 WebView2 + 离线 Monaco 为主实现，原生 WinUI 行列表 / `TextBox` 只作为 WebView2 初始化失败、Runtime 缺失或静态资源缺失时的 fallback。Monaco 已承载统一行号、基础语法染色、Ctrl+F、Ctrl+H、Ctrl+S、撤销 / 重做和 minimap；`.json / .skel` 走 JSON 语言，`.atlas` 走类 ini 语言，Shader 临时映射到 C++ 风格高亮。编辑输入只通过 JS bridge 回传 dirty 状态，保存 / 搜索前才同步一次正文，避免每次键入都搬运整段文本。保存仍沿用现有全量 draft 更新命令，应用层预算提升到 Monaco 全缓冲安全上限；真正无限大文本编辑必须等 patch 草稿命令落地后再开放。
 
 ## 6. 各资源类型预算方向
 
@@ -261,7 +261,7 @@ Preview.FullContentUnavailable
 - `JsonPreviewCacheStore` 已实现 `LoadTextChunk / LoadTextLines / SearchText` 流式读取：常规新缓存会优先使用 `TextFullCharacterCount / TextEstimatedFullLineCount` 元数据作为总长度 / 总行数，旧缓存缺失该元数据时才扫描剩余文本计算；搜索返回有限匹配和 `HasMore`，匹配行片段本身也有长度上限。新写入的 `Text` preview payload 会在同目录生成可重建的 `*.lines.json` 稀疏索引 sidecar，例如 `payload.txt -> payload.lines.json`；schema v2 同时记录行锚点和规范化字符 offset 锚点，`LoadTextChunk / LoadTextLines / SearchText` 可先跳到最近锚点再继续顺序读取，sidecar 缺失、版本不匹配或 payload 身份不匹配时会自动退回原顺序扫描。
 - 文件替换 `TextAsset` 预览已返回 `FileReplacement` reference；`LoadPreviewTextChunkHandler / LoadPreviewTextLinesHandler / SearchPreviewTextHandler` 会通过 `IReplacementPreviewSourceProvider` 读取替换文件的规范化文本块、行范围或搜索结果，真实文件实现会保留 `.skel` 非 JSON 视为二进制的保护语义。
 - 工作区内 TextAsset 替换源会先读取源资产有效预览，并继承源 Text 预览的 `PreviewCache` reference；因此替换后的目标资产也可以通过同一组 chunk / lines / search query 按需读取源文本，不需要 Presentation 识别源资产身份。
-- staging / draft store 背书的文本草稿已新增 `EditDraft` reference 类型；`LoadPreviewTextChunkHandler / LoadPreviewTextLinesHandler / SearchPreviewTextHandler` 会通过 `IAssetEditDraftTextStore` 读取 `workspaceKey + draftId + draftMode` 对应草稿 payload。当前第一阶段已经把 `TextAsset / Shader` 的独立 `编辑` 命令、窗口化文本编辑壳、只读大文本行号 / 分页加载 / 搜索视图接入该 reference：UI 创建草稿时写入 `editDrafts[]`，从窗口快照恢复出的可用 `EditDraftReference` 会通过 `OpenTextAssetEditDraft` 校验 descriptor、source fingerprint、过期时间和 payload 后进入编辑态，小型 TextAsset 正文保存先写 `EditDraftUpdated` 再写 `EditDraftApplied`，创建、更新和应用阶段都会保留 descriptor 原始 source fingerprint，当前有效读模型、预览刷新策略和导出写包都会消费 `text-content` 草稿，退出或关闭未应用文本编辑态时追加 `EditDraftDiscarded` 并清理草稿描述；已应用 baseline 草稿退出编辑态时必须保留 payload。现有检查器文本预览和编辑窗口已迁移到统一 `TextDocumentSurfaceView`；VS Code 风格 Monaco 原型、JSON 格式化编辑、大文本虚拟化 patch 保存和 Shader 写回仍在阶段 4 后续。
+- staging / draft store 背书的文本草稿已新增 `EditDraft` reference 类型；`LoadPreviewTextChunkHandler / LoadPreviewTextLinesHandler / SearchPreviewTextHandler` 会通过 `IAssetEditDraftTextStore` 读取 `workspaceKey + draftId + draftMode` 对应草稿 payload。当前第一阶段已经把 `TextAsset / Shader` 的独立 `编辑` 命令、窗口化文本编辑壳、只读大文本行号 / 分页加载 / 搜索视图接入该 reference：UI 创建草稿时写入 `editDrafts[]`，从窗口快照恢复出的可用 `EditDraftReference` 会通过 `OpenTextAssetEditDraft` 校验 descriptor、source fingerprint、过期时间和 payload 后进入编辑态，预算内 TextAsset 正文保存先写 `EditDraftUpdated` 再写 `EditDraftApplied`，创建、更新和应用阶段都会保留 descriptor 原始 source fingerprint，当前有效读模型、预览刷新策略和导出写包都会消费 `text-content` 草稿，退出或关闭未应用文本编辑态时追加 `EditDraftDiscarded` 并清理草稿描述；已应用 baseline 草稿退出编辑态时必须保留 payload。现有检查器文本预览和编辑窗口已迁移到统一 `TextDocumentSurfaceView`，并以 WebView2 + 离线 Monaco 作为主实现；JSON 格式化编辑、大文本虚拟化 patch 保存和 Shader 写回仍在阶段 4 后续。
 - 当前 preview cache 和 edit draft 文本 payload 已具备稀疏行锚点和字符 offset 锚点索引；它能降低大 line index 读取、大 offset chunk 读取和从指定行开始搜索时的前置跳过成本。尚未覆盖搜索倒排索引、后台可取消重建、文件替换来源的持久索引或 JSON 范围格式化索引；全文搜索仍可能顺序扫描，内存安全但还不是最终的高频搜索形态。
 
 验收：
@@ -281,15 +281,15 @@ Preview.FullContentUnavailable
 
 当前进度：
 
-- 已新增正式文本编辑第一阶段：独立 `编辑` 命令、资源编辑窗口中的文本编辑模式、draft-backed 行号 / 搜索视图、小文本正文编辑和本地化状态提示。
-- 大文本 / Shader 只读草稿视图当前已支持按 Application `LoadPreviewTextLinesQuery` 分页加载后续行，状态区显示累计已加载行数；该能力只是虚拟化编辑器前置底座，不代表最终编辑体验。
+- 已新增正式文本编辑第一阶段：独立 `编辑` 命令、资源编辑窗口中的文本编辑模式、draft-backed 文本工作面、预算内正文编辑和本地化状态提示。
+- WebView2 + 离线 Monaco 已作为主 surface 承载普通文本预览和 TextAsset 编辑，提供行号、基础语法染色、Ctrl+F / Ctrl+H / Ctrl+S、撤销 / 重做和 minimap；编辑输入只回传 dirty 状态，保存 / 搜索前按需同步正文；原生 WinUI 行号 / 搜索 / `TextBox` 工作面只作为 WebView2 或 Monaco 不可用时的 fallback。
 - 文本编辑模式不复用 `替换文件` 入口；`替换文件` 仍只负责外部文件替换，`编辑` 负责打开或激活窗口化文本编辑壳。
 - `CreateTextAssetEditDraft / UpdateTextAssetEditDraft / ApplyTextAssetEditDraft / DiscardTextAssetEditDraft` 已接入工作区命令网关；创建写 `editDrafts[]`，小型 TextAsset 正文保存写 `EditDraftUpdated` 后再写 `EditDraftApplied`，退出或关闭未应用编辑态写 `EditDraftDiscarded`。
 - `OpenTextAssetEditDraft` 已接入工作区命令网关；当资产标签携带 `EditDraftReference` 时，编辑入口会优先按 `workspaceKey + draftId + draftMode` 打开既有草稿，校验 descriptor、source fingerprint、过期时间和 payload 后返回同一个 `EditDraft` reference，并把 descriptor 的 source fingerprint / source description 回传给资产标签，不追加新的 `EditDraftCreated`。若引用存在但 payload 缺失或诊断失败，UI 显示结构化失败，不静默创建新草稿覆盖问题。
 - 文本编辑读取、搜索和草稿生命周期命令均通过 Application gateway 和 Presentation 后台 runner 执行，Presentation 不直接读取 staging 或 preview cache 路径。
 - TextAsset 已进入保存 / 导出写包计划，导出对象写包会从 `text-content` 草稿读取并写入 `m_Script`；Shader 当前作为只读大文本查看和搜索进入窗口壳，正文应用等待 Shader 写回适配器。
-- 小文本编辑当前使用有明确预算上限的普通 WinUI `TextBox`，只承载 `AssetTextEditPolicy.InlineEditableTextLength` 以内内容；超过预算的 TextAsset 与 Shader 均展示只读行号 / 搜索视图，后续虚拟化编辑器落地前不得把大文本整段绑定到 `TextBox`。
-- 当前 `TextBox` 已收在 `TextDocumentSurfaceView` 内部，属于可替换 fallback；后续 WebView2 + Monaco 原型通过后，优先把小文本编辑、大文本只读和大文本 patch 编辑逐步迁到 Monaco 实现，并保留原生 fallback 用于 Runtime / 静态资源 / bridge 初始化失败。
+- TextAsset 正文编辑当前仍有明确的全缓冲安全预算，只承载 `AssetTextEditPolicy.InlineEditableTextLength` 以内内容；超过预算的 TextAsset 与 Shader 均保持只读查看 / 搜索，后续 patch 草稿命令落地前不得把超大文本整段绑定到 ViewModel 或单次 WebView 消息。
+- 当前 `TextBox` 已收在 `TextDocumentSurfaceView` 内部，属于 WebView2 / Monaco 不可用时的 fallback；常规文本预览和 TextAsset 编辑已由 Monaco 主实现承载。下一步不应继续扩展 fallback 的编辑能力，而应补 Monaco 初始化诊断、显式 user data folder、patch 草稿保存和 JSON / atlas / skel 格式工具。
 - 文本编辑态退出、关闭标签或关闭资源编辑窗口时，若存在未保存正文，必须复用保存 / 丢弃 / 取消确认；未应用草稿干净退出可直接丢弃未应用草稿描述。已应用 baseline 草稿重新打开后，退出或丢弃本次未保存 UI 改动只退出编辑态并保留草稿引用与 payload，不能调用 `DiscardTextAssetEditDraft` 删除仍被已应用操作和导出写包引用的内容。
 
 验收：
@@ -377,8 +377,8 @@ Preview.FullContentUnavailable
 
 推荐下一步继续沿阶段 3 做边界收口，然后回到阶段 2/4 的能力扩展：
 
-1. 在现有小文本编辑和草稿恢复打开基础上接入虚拟化大文本编辑器：分块缓冲 / patch 写入命令、行号同步、范围搜索、未保存状态恢复，并保证大文本仍不整段绑定到普通 `TextBox`。
-2. 按 [text-editor-technology-spike.md](text-editor-technology-spike.md) 做 WebView2 + Monaco 离线原型：静态资源打包、用户数据目录、主题同步、只读模型加载、搜索 / 跳转和 fallback 诊断先完成，暂不接保存。
+1. 在当前 Monaco 全缓冲编辑基础上接入 patch 草稿保存：分块缓冲 / range edit 命令、保存前差异摘要、未保存状态恢复，并保证超大文本不需要整段进入 ViewModel 字符串或单次 WebView 消息。
+2. 补 WebView2 + Monaco 工程化收口：显式 user data folder、Runtime 缺失诊断、静态资源缺失诊断、Monaco 资源裁剪、主题同步和 UI 压力样本验证。
 3. 给 TextAsset 编辑器补保存前差异摘要、撤销 / 重做和多窗口同资产冲突策略；当前已能按正文脏状态提示保存 / 丢弃 / 取消，后续需要把该状态接入恢复队列和多窗口同步。
 4. 接入 JSON 美化 / 压缩 / 校验、行跳转和格式化错误定位；大型 JSON 先提供只读结构索引、范围格式化或预算外诊断，不做全量 pretty print。
 5. 为 Shader 增加真实写回适配器，再把 `CanApply=false` 的只读入口升级为可保存入口。

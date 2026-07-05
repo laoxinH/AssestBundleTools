@@ -18,6 +18,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Assets\Monaco\**\*.*" />
+    <PRIResource Remove="Assets\Monaco\**\*.*" />
+    <None Remove="Assets\Monaco\**\*.*" />
     <Content Include="Assets\SplashScreen.scale-200.png" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\Square150x150Logo.scale-200.png" />
@@ -64,4 +67,14 @@
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
   </PropertyGroup>
+
+  <Target Name="CopyMonacoEditorAssets" AfterTargets="Build">
+    <ItemGroup>
+      <_MonacoEditorAsset Include="Assets\Monaco\**\*.*" />
+    </ItemGroup>
+    <Copy
+      SourceFiles="@(_MonacoEditorAsset)"
+      DestinationFiles="@(_MonacoEditorAsset->'$(OutDir)Assets\Monaco\%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true" />
+  </Target>
 </Project>

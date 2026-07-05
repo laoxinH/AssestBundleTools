@@ -56,11 +56,15 @@
         </Grid>
 
         <controls:TextDocumentSurfaceView
+            x:Name="TextEditorSurface"
             Grid.Row="1"
             MinHeight="0"
             CanLoadMoreLines="{x:Bind ViewModel.CanLoadMoreLines, Mode=OneWay}"
+            DocumentLanguage="{x:Bind ViewModel.DocumentLanguage, Mode=OneWay}"
+            DocumentText="{x:Bind ViewModel.EditableText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
             EditableText="{x:Bind ViewModel.EditableText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
             EditableViewVisibility="{x:Bind ViewModel.EditableViewVisibility, Mode=OneWay}"
+            IsReadOnly="{x:Bind ViewModel.IsReadOnly, Mode=OneWay}"
             Lines="{x:Bind ViewModel.Lines, Mode=OneWay}"
             LoadMoreLinesButtonVisibility="{x:Bind ViewModel.LoadMoreLinesButtonVisibility, Mode=OneWay}"
             ReadOnlyViewVisibility="{x:Bind ViewModel.ReadOnlyViewVisibility, Mode=OneWay}"
@@ -68,6 +72,8 @@
             SearchResultsColumnWidth="{x:Bind ViewModel.SearchResultsColumnWidth, Mode=OneWay}"
             SearchResultsVisibility="{x:Bind ViewModel.SearchResultsVisibility, Mode=OneWay}"
             StatusText="{x:Bind ViewModel.StatusText, Mode=OneWay}"
-            LoadMoreLinesRequested="OnLoadMoreLinesRequested" />
+            DocumentChanged="OnDocumentChanged"
+            LoadMoreLinesRequested="OnLoadMoreLinesRequested"
+            SaveRequested="OnSaveRequested" />
     </Grid>
 </UserControl>

@@ -395,9 +395,10 @@ public sealed class InspectorPanelViewModelTests
     {
         var viewModel = CreateViewModel();
 
-        viewModel.ApplyTextPreview("first\r\nsecond\nthird");
+        viewModel.ApplyTextPreview("first\r\nsecond\nthird", previewPayloadFilePath: "story.atlas");
 
         Assert.Equal("first\r\nsecond\nthird", viewModel.Preview.PreviewText);
+        Assert.Equal("atlas", viewModel.Preview.PreviewTextLanguage);
         Assert.Equal(3, viewModel.Preview.PreviewTextLines.Count);
         Assert.Equal("1", viewModel.Preview.PreviewTextLines[0].LineNumberText);
         Assert.Equal("first", viewModel.Preview.PreviewTextLines[0].Text);

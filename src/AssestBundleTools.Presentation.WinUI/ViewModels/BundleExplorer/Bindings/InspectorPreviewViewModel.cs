@@ -15,6 +15,7 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
 {
     private string _previewStatusText = string.Empty;
     private string _previewText = string.Empty;
+    private string _previewTextLanguage = "plaintext";
     private string _previewPayloadFilePath = string.Empty;
     private string _previewCacheStatusText = string.Empty;
     private string _previewFallbackReasonText = string.Empty;
@@ -55,6 +56,12 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
     {
         get => _previewText;
         private set => SetProperty(ref _previewText, value);
+    }
+
+    public string PreviewTextLanguage
+    {
+        get => _previewTextLanguage;
+        private set => SetProperty(ref _previewTextLanguage, value);
     }
 
     public ObservableCollection<TextDocumentLineViewModel> PreviewTextLines { get; } = new();
@@ -348,6 +355,7 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         _previewInfoRows = CloneRows(previewInfoRows);
         PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
         PreviewText = textContent;
+        PreviewTextLanguage = DetectTextLanguage(previewPayloadFilePath, textContent);
         ApplyPreviewTextLines(textContent);
         NotifyPreviewStateChanged();
     }
@@ -370,6 +378,7 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         IsPreviewLoading = false;
         PreviewStatusText = string.Empty;
         PreviewText = string.Empty;
+        PreviewTextLanguage = "plaintext";
         PreviewTextLines.Clear();
         PreviewPayloadFilePath = string.Empty;
         Image.Clear();
@@ -461,6 +470,32 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
                 line));
             lineIndex++;
         }
+    }
+
+    private static string DetectTextLanguage(string? previewPayloadFilePath, string? textContent)
+    {
+        var extension = string.IsNullOrWhiteSpace(previewPayloadFilePath)
+            ? string.Empty
+            : Path.GetExtension(previewPayloadFilePath.Trim());
+        if (extension.Equals(".json", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".skel", StringComparison.OrdinalIgnoreCase))
+        {
+            return "json";
+        }
+
+        if (extension.Equals(".atlas", StringComparison.OrdinalIgnoreCase))
+        {
+            return "atlas";
+        }
+
+        var trimmed = textContent?.TrimStart();
+        if (!string.IsNullOrEmpty(trimmed) &&
+            (trimmed[0] == '{' || trimmed[0] == '['))
+        {
+            return "json";
+        }
+
+        return "plaintext";
     }
 
     private static bool UsesFixedPreviewSurfaceHeightFor(AssetPreviewKind previewKind)

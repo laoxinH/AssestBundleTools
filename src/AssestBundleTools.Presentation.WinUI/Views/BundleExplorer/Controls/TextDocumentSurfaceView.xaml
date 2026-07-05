@@ -6,147 +6,164 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:webview2="using:Microsoft.UI.Xaml.Controls"
     xmlns:viewModels="using:AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings"
     mc:Ignorable="d">
 
-    <Grid
-        RowSpacing="8">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <Grid>
+        <Border
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8">
+            <webview2:WebView2
+                x:Name="EditorWebView"
+                DefaultBackgroundColor="White" />
+        </Border>
 
         <Grid
-            MinHeight="0"
-            ColumnSpacing="12"
-            Visibility="{Binding ReadOnlyViewVisibility, ElementName=Root, Mode=OneWay}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="{Binding SearchResultsColumnWidth, ElementName=Root, Mode=OneWay}" />
-            </Grid.ColumnDefinitions>
+            x:Name="FallbackSurface"
+            Padding="12"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            Visibility="Collapsed"
+            RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-            <ListView
+            <Grid
                 MinHeight="0"
-                ItemsSource="{Binding Lines, ElementName=Root, Mode=OneWay}"
-                SelectionMode="None">
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="viewModels:TextDocumentLineViewModel">
-                        <Grid ColumnSpacing="10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="58" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock
-                                HorizontalAlignment="Right"
-                                FontFamily="Cascadia Mono, Consolas"
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="{x:Bind LineNumberText}" />
-                            <TextBlock
-                                Grid.Column="1"
-                                FontFamily="Cascadia Mono, Consolas"
-                                Text="{x:Bind Text}"
-                                TextTrimming="CharacterEllipsis" />
-                        </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
+                ColumnSpacing="12"
+                Visibility="{Binding ReadOnlyViewVisibility, ElementName=Root, Mode=OneWay}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="{Binding SearchResultsColumnWidth, ElementName=Root, Mode=OneWay}" />
+                </Grid.ColumnDefinitions>
 
-            <ListView
-                Grid.Column="1"
+                <ListView
+                    MinHeight="0"
+                    ItemsSource="{Binding Lines, ElementName=Root, Mode=OneWay}"
+                    SelectionMode="None">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="viewModels:TextDocumentLineViewModel">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="58" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    HorizontalAlignment="Right"
+                                    FontFamily="Cascadia Mono, Consolas"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    Text="{x:Bind LineNumberText}" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    FontFamily="Cascadia Mono, Consolas"
+                                    Text="{x:Bind Text}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <ListView
+                    Grid.Column="1"
+                    MinHeight="0"
+                    ItemsSource="{Binding SearchMatches, ElementName=Root, Mode=OneWay}"
+                    SelectionMode="None"
+                    Visibility="{Binding SearchResultsVisibility, ElementName=Root, Mode=OneWay}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="viewModels:TextDocumentSearchMatchViewModel">
+                            <StackPanel Spacing="2">
+                                <TextBlock
+                                    FontFamily="Cascadia Mono, Consolas"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind LocationText}" />
+                                <TextBlock
+                                    Text="{x:Bind LineText}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+
+            <Grid
                 MinHeight="0"
-                ItemsSource="{Binding SearchMatches, ElementName=Root, Mode=OneWay}"
-                SelectionMode="None"
-                Visibility="{Binding SearchResultsVisibility, ElementName=Root, Mode=OneWay}">
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="viewModels:TextDocumentSearchMatchViewModel">
-                        <StackPanel Spacing="2">
-                            <TextBlock
-                                FontFamily="Cascadia Mono, Consolas"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{x:Bind LocationText}" />
-                            <TextBlock
-                                Text="{x:Bind LineText}"
-                                TextTrimming="CharacterEllipsis" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-        </Grid>
+                ColumnSpacing="12"
+                Visibility="{Binding EditableViewVisibility, ElementName=Root, Mode=OneWay}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="{Binding SearchResultsColumnWidth, ElementName=Root, Mode=OneWay}" />
+                </Grid.ColumnDefinitions>
 
-        <Grid
-            MinHeight="0"
-            ColumnSpacing="12"
-            Visibility="{Binding EditableViewVisibility, ElementName=Root, Mode=OneWay}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="{Binding SearchResultsColumnWidth, ElementName=Root, Mode=OneWay}" />
-            </Grid.ColumnDefinitions>
+                <TextBox
+                    AcceptsReturn="True"
+                    FontFamily="Cascadia Mono, Consolas"
+                    HorizontalAlignment="Stretch"
+                    IsSpellCheckEnabled="False"
+                    MinHeight="0"
+                    ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                    ScrollViewer.VerticalScrollBarVisibility="Auto"
+                    Text="{Binding EditableText, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    TextWrapping="NoWrap"
+                    VerticalAlignment="Stretch" />
 
-            <TextBox
-                AcceptsReturn="True"
-                FontFamily="Cascadia Mono, Consolas"
-                HorizontalAlignment="Stretch"
-                IsSpellCheckEnabled="False"
-                MinHeight="0"
-                ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                ScrollViewer.VerticalScrollBarVisibility="Auto"
-                Text="{Binding EditableText, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                TextWrapping="NoWrap"
-                VerticalAlignment="Stretch" />
+                <ListView
+                    Grid.Column="1"
+                    MinHeight="0"
+                    ItemsSource="{Binding SearchMatches, ElementName=Root, Mode=OneWay}"
+                    SelectionMode="None"
+                    Visibility="{Binding SearchResultsVisibility, ElementName=Root, Mode=OneWay}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="viewModels:TextDocumentSearchMatchViewModel">
+                            <StackPanel Spacing="2">
+                                <TextBlock
+                                    FontFamily="Cascadia Mono, Consolas"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind LocationText}" />
+                                <TextBlock
+                                    Text="{x:Bind LineText}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
 
-            <ListView
-                Grid.Column="1"
-                MinHeight="0"
-                ItemsSource="{Binding SearchMatches, ElementName=Root, Mode=OneWay}"
-                SelectionMode="None"
-                Visibility="{Binding SearchResultsVisibility, ElementName=Root, Mode=OneWay}">
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="viewModels:TextDocumentSearchMatchViewModel">
-                        <StackPanel Spacing="2">
-                            <TextBlock
-                                FontFamily="Cascadia Mono, Consolas"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{x:Bind LocationText}" />
-                            <TextBlock
-                                Text="{x:Bind LineText}"
-                                TextTrimming="CharacterEllipsis" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-        </Grid>
+            <Grid
+                Grid.Row="1"
+                ColumnSpacing="10"
+                Visibility="{Binding FooterVisibility, ElementName=Root, Mode=OneWay}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-        <Grid
-            Grid.Row="1"
-            ColumnSpacing="10"
-            Visibility="{Binding FooterVisibility, ElementName=Root, Mode=OneWay}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{Binding StatusText, ElementName=Root, Mode=OneWay}" />
 
-            <TextBlock
-                VerticalAlignment="Center"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="{Binding StatusText, ElementName=Root, Mode=OneWay}" />
-
-            <Button
-                x:Name="LoadMoreLinesButton"
-                Grid.Column="1"
-                Click="OnLoadMoreLinesButtonClick"
-                IsEnabled="{Binding CanLoadMoreLines, ElementName=Root, Mode=OneWay}"
-                Style="{StaticResource WorkspaceOperationButtonStyle}"
-                Visibility="{Binding LoadMoreLinesButtonVisibility, ElementName=Root, Mode=OneWay}">
-                <StackPanel
-                    Orientation="Horizontal"
-                    Spacing="6">
-                    <FontIcon
-                        FontFamily="Segoe Fluent Icons"
-                        FontSize="12"
-                        Glyph="&#xE70D;" />
-                    <TextBlock x:Name="LoadMoreLinesButtonText" />
-                </StackPanel>
-            </Button>
+                <Button
+                    x:Name="LoadMoreLinesButton"
+                    Grid.Column="1"
+                    Click="OnLoadMoreLinesButtonClick"
+                    IsEnabled="{Binding CanLoadMoreLines, ElementName=Root, Mode=OneWay}"
+                    Style="{StaticResource WorkspaceOperationButtonStyle}"
+                    Visibility="{Binding LoadMoreLinesButtonVisibility, ElementName=Root, Mode=OneWay}">
+                    <StackPanel
+                        Orientation="Horizontal"
+                        Spacing="6">
+                        <FontIcon
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="12"
+                            Glyph="&#xE70D;" />
+                        <TextBlock x:Name="LoadMoreLinesButtonText" />
+                    </StackPanel>
+                </Button>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

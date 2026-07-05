@@ -13,6 +13,11 @@ public sealed partial class AssetEditorWindow
 
     private async void OnSaveTextEditButtonClick(object sender, RoutedEventArgs e)
     {
+        await ApplyTextEditFromSurfaceAsync();
+    }
+
+    private async void OnTextEditSaveRequested(object sender, EventArgs e)
+    {
         await ViewModel.ApplyTextEditAsync();
     }
 
@@ -58,7 +63,7 @@ public sealed partial class AssetEditorWindow
         var result = await dialog.ShowAsync();
         if (result == ContentDialogResult.Primary)
         {
-            return await ViewModel.ApplyTextEditAsync();
+            return await ApplyTextEditFromSurfaceAsync(exitWhenClean: true);
         }
 
         if (result == ContentDialogResult.Secondary)
@@ -67,5 +72,22 @@ public sealed partial class AssetEditorWindow
         }
 
         return false;
+    }
+
+    private async Task<bool> ApplyTextEditFromSurfaceAsync(bool exitWhenClean = false)
+    {
+        if (!await TextEditDraftView.SynchronizeEditorTextAsync())
+        {
+            return false;
+        }
+
+        if (ViewModel.DocumentGroup.ActiveAssetTab?.TextEditDraft?.CanSave == true)
+        {
+            return await ViewModel.ApplyTextEditAsync();
+        }
+
+        return exitWhenClean
+            ? await ViewModel.ExitTextEditModeForActiveAssetAsync()
+            : false;
     }
 }
