@@ -20,6 +20,7 @@
         <Grid ColumnSpacing="10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="300" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
@@ -36,15 +37,33 @@
                     TextTrimming="CharacterEllipsis" />
             </StackPanel>
 
+            <Button
+                x:Name="LoadFullEditButton"
+                Grid.Column="1"
+                Click="OnLoadFullEditButtonClick"
+                IsEnabled="{x:Bind ViewModel.CanLoadFullEdit, Mode=OneWay}"
+                Style="{StaticResource WorkspaceOperationButtonStyle}"
+                Visibility="{x:Bind ViewModel.LoadFullEditButtonVisibility, Mode=OneWay}">
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="6">
+                    <FontIcon
+                        FontFamily="Segoe Fluent Icons"
+                        FontSize="12"
+                        Glyph="&#xE7C3;" />
+                    <TextBlock x:Name="LoadFullEditButtonText" />
+                </StackPanel>
+            </Button>
+
             <TextBox
                 x:Name="SearchBox"
-                Grid.Column="1"
+                Grid.Column="2"
                 PlaceholderText=""
                 Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
             <Button
                 x:Name="SearchButton"
-                Grid.Column="2"
+                Grid.Column="3"
                 Click="OnSearchButtonClick"
                 IsEnabled="{x:Bind ViewModel.CanSearch, Mode=OneWay}"
                 Style="{StaticResource WorkspaceOperationButtonStyle}">
@@ -61,7 +80,7 @@
             MinHeight="0"
             CanLoadMoreLines="{x:Bind ViewModel.CanLoadMoreLines, Mode=OneWay}"
             DocumentLanguage="{x:Bind ViewModel.DocumentLanguage, Mode=OneWay}"
-            DocumentText="{x:Bind ViewModel.EditableText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            DocumentText="{x:Bind ViewModel.DocumentText, Mode=OneWay}"
             EditableText="{x:Bind ViewModel.EditableText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
             EditableViewVisibility="{x:Bind ViewModel.EditableViewVisibility, Mode=OneWay}"
             IsReadOnly="{x:Bind ViewModel.IsReadOnly, Mode=OneWay}"

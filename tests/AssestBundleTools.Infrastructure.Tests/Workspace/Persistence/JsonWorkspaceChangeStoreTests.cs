@@ -36,7 +36,14 @@ internal static class JsonWorkspaceChangeStoreTests
                     UpdatedAtUtc: updatedAtUtc,
                     ExpiresAtUtc: expiresAtUtc,
                     SourceDescription: "Text draft",
-                    Summary: "Draft summary")
+                    Summary: "Draft summary",
+                    SourceReference: new WorkspaceAssetEditDraftSourceReferenceDto(
+                        Kind: "PreviewCache",
+                        ContentType: "text/plain; charset=utf-8",
+                        ContentLength: 4096,
+                        WorkspaceKey: "workspace-a",
+                        PreviewCacheKey: "preview-text-1"),
+                    IsPayloadMaterialized: false)
             ]);
 
         store.Save(changeSet);
@@ -55,6 +62,12 @@ internal static class JsonWorkspaceChangeStoreTests
         TestAssert.Equal(expiresAtUtc, draft.ExpiresAtUtc, "Draft expiration should round-trip.");
         TestAssert.Equal("Text draft", draft.SourceDescription, "Draft source description should round-trip.");
         TestAssert.Equal("Draft summary", draft.Summary, "Draft summary should round-trip.");
+        TestAssert.Equal(false, draft.IsPayloadMaterialized, "Draft payload materialized flag should round-trip.");
+        var sourceReference = draft.SourceReference ??
+            throw new InvalidOperationException("Draft source reference should round-trip.");
+        TestAssert.Equal("PreviewCache", sourceReference.Kind, "Draft source reference kind should round-trip.");
+        TestAssert.Equal("preview-text-1", sourceReference.PreviewCacheKey, "Draft source preview cache key should round-trip.");
+        TestAssert.Equal(4096L, sourceReference.ContentLength, "Draft source content length should round-trip.");
     }
 
     public static void Save_ShouldRoundTripOperationRecords_AsStringEnums()

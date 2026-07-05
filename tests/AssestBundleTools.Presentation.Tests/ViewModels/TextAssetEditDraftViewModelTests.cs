@@ -57,6 +57,62 @@ public sealed class TextAssetEditDraftViewModelTests
     }
 
     [Fact]
+    public async Task InitializeAsync_ShouldDeferFullTextLoad_ForLargeDeferredDraft()
+    {
+        var lineQueries = new List<LoadPreviewTextLinesQuery>();
+        var chunkQueries = new List<LoadPreviewTextChunkQuery>();
+        var reference = new AssetPreviewFullContentReferenceDto(
+            AssetPreviewFullContentReferenceKind.PreviewCache,
+            "text/plain; charset=utf-8",
+            12 * 1024 * 1024,
+            "workspace-a",
+            PreviewCacheKey: "preview-large-text");
+        var gateway = new TestWorkspaceAssetInspectionGateway
+        {
+            LoadPreviewTextLinesHandler = query =>
+            {
+                lineQueries.Add(query);
+                return Task.FromResult(Result<AssetPreviewTextLineRangeDto>.Success(CreateLineRange(
+                    reference,
+                    query.StartLineIndex,
+                    200,
+                    totalLineCount: 5000,
+                    hasMore: true)));
+            },
+            LoadPreviewTextChunkHandler = query =>
+            {
+                chunkQueries.Add(query);
+                return Task.FromResult(Result<AssetPreviewTextChunkDto>.Success(new AssetPreviewTextChunkDto(
+                    reference,
+                    "full text",
+                    query.Offset,
+                    "full text".Length,
+                    "full text".Length,
+                    HasMore: false)));
+            }
+        };
+        var viewModel = CreateViewModel(
+            reference,
+            gateway,
+            canEditInline: true,
+            isMaterialized: false);
+
+        await viewModel.InitializeAsync();
+
+        Assert.Single(lineQueries);
+        Assert.Empty(chunkQueries);
+        Assert.True(viewModel.CanLoadFullEdit);
+        Assert.Equal(Visibility.Visible, viewModel.LoadFullEditButtonVisibility);
+        Assert.Equal(Visibility.Visible, viewModel.ReadOnlyViewVisibility);
+
+        await viewModel.LoadFullEditAsync();
+
+        Assert.Single(chunkQueries);
+        Assert.False(viewModel.CanLoadFullEdit);
+        Assert.Equal(Visibility.Visible, viewModel.EditableViewVisibility);
+    }
+
+    [Fact]
     public void CreateSaveRangeEdits_ShouldUsePendingSurfaceRangeEdits()
     {
         var reference = CreateReference();
@@ -141,7 +197,8 @@ public sealed class TextAssetEditDraftViewModelTests
     private static TextAssetEditDraftViewModel CreateViewModel(
         AssetPreviewFullContentReferenceDto reference,
         TestWorkspaceAssetInspectionGateway gateway,
-        bool canEditInline = false) =>
+        bool canEditInline = false,
+        bool isMaterialized = true) =>
         new(
             new AssetTextEditDraftDto(
                 WorkspaceId: new WorkspaceId("workspace-session"),
@@ -158,12 +215,14 @@ public sealed class TextAssetEditDraftViewModelTests
                 Summary: "TextAsset",
                 CanEditInline: canEditInline,
                 SourceFingerprint: "source-v1",
-                SourceDescription: "story.json"),
+                SourceDescription: "story.json",
+                IsMaterialized: isMaterialized),
             gateway,
             new TestBackgroundTaskRunner(),
             @"D:\WorkspaceData\A",
             "story.json",
             "read only",
             "inline",
+            "deferred",
             "loaded {0} / {1}");
 }

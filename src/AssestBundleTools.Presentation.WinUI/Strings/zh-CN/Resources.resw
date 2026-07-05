@@ -2643,6 +2643,9 @@
   <data name="TextAssetEditor.InlineEditHint.Text" xml:space="preserve">
     <value>小文本草稿编辑。保存会先更新草稿，再追加文本编辑操作记录。</value>
   </data>
+  <data name="TextAssetEditor.DeferredEditHint.Text" xml:space="preserve">
+    <value>已快速打开大文本预览。需要修改时再加载完整编辑。</value>
+  </data>
   <data name="TextAssetEditor.LineStatus.Format" xml:space="preserve">
     <value>已加载 {0} / {1} 行</value>
   </data>
@@ -2651,6 +2654,12 @@
   </data>
   <data name="TextAssetEditor.SearchButton.ToolTip" xml:space="preserve">
     <value>搜索</value>
+  </data>
+  <data name="TextAssetEditor.LoadFullEditButton.Content" xml:space="preserve">
+    <value>加载完整编辑</value>
+  </data>
+  <data name="TextAssetEditor.LoadFullEditButton.ToolTip" xml:space="preserve">
+    <value>按需加载完整正文并切换到可编辑模式</value>
   </data>
   <data name="TextAssetEditor.LoadMoreLinesButton.Content" xml:space="preserve">
     <value>加载更多</value>

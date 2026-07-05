@@ -103,12 +103,24 @@ internal static partial class ApplicationTestSuite
             TextAssetEditDraftUpdateHandlerTests.RecordDraftCreated_ShouldPersistDraftDtoSourceFingerprint);
         await RunTestAsync(
             failures,
+            nameof(TextAssetEditDraftUpdateHandlerTests.RecordDraftCreated_ShouldPersistDeferredSourceReference),
+            TextAssetEditDraftUpdateHandlerTests.RecordDraftCreated_ShouldPersistDeferredSourceReference);
+        await RunTestAsync(
+            failures,
             nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldReturnExistingDraftReference),
             TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldReturnExistingDraftReference);
         await RunTestAsync(
             failures,
             nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldFail_WhenPayloadIsMissing),
             TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldFail_WhenPayloadIsMissing);
+        await RunTestAsync(
+            failures,
+            nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldRestoreDeferredSourceReference_WhenPayloadIsMissing),
+            TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldRestoreDeferredSourceReference_WhenPayloadIsMissing);
+        await RunTestAsync(
+            failures,
+            nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldFail_WhenMaterializedPayloadIsMissing),
+            TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldFail_WhenMaterializedPayloadIsMissing);
         await RunTestAsync(failures, nameof(RegisterWorkspaceCatalogEntry_ShouldReturnFailure_WhenSourcePathIsBlank), RegisterWorkspaceCatalogEntry_ShouldReturnFailure_WhenSourcePathIsBlank);
         await RunTestAsync(failures, nameof(RegisterWorkspaceCatalogEntry_ShouldPreserveExistingPinnedState_AndNormalizeDisplayName), RegisterWorkspaceCatalogEntry_ShouldPreserveExistingPinnedState_AndNormalizeDisplayName);
         await RunTestAsync(failures, nameof(SetWorkspaceCatalogEntryPinnedState_ShouldReturnFailure_WhenWorkspaceKeyIsBlank), SetWorkspaceCatalogEntryPinnedState_ShouldReturnFailure_WhenWorkspaceKeyIsBlank);

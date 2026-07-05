@@ -48,6 +48,17 @@ public sealed partial class TextAssetEditDraftView : UserControl
         }
     }
 
+    private async void OnLoadFullEditButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is null)
+        {
+            return;
+        }
+
+        await ViewModel.LoadFullEditAsync();
+        Bindings.Update();
+    }
+
     private async void OnLoadMoreLinesRequested(object? sender, EventArgs e)
     {
         if (ViewModel is not null)
@@ -73,6 +84,11 @@ public sealed partial class TextAssetEditDraftView : UserControl
             return true;
         }
 
+        if (ViewModel.IsReadOnly)
+        {
+            return true;
+        }
+
         return await SynchronizeFullEditorTextAsync();
     }
 
@@ -81,6 +97,11 @@ public sealed partial class TextAssetEditDraftView : UserControl
         if (ViewModel is null)
         {
             return true;
+        }
+
+        if (ViewModel.ShouldSaveFullTextContent)
+        {
+            return await SynchronizeFullEditorTextAsync();
         }
 
         var rangeEditSync = await TextEditorSurface.GetPendingRangeEditsAsync();
@@ -126,6 +147,8 @@ public sealed partial class TextAssetEditDraftView : UserControl
     private void ApplyLocalizedText()
     {
         SearchBox.PlaceholderText = UiText.Get(ResourceKeys.TextAssetEditorSearchPlaceholder);
+        LoadFullEditButtonText.Text = UiText.Get(ResourceKeys.TextAssetEditorLoadFullEditButton);
+        ToolTipService.SetToolTip(LoadFullEditButton, UiText.Get(ResourceKeys.TextAssetEditorLoadFullEditButtonToolTip));
         ToolTipService.SetToolTip(SearchButton, UiText.Get(ResourceKeys.TextAssetEditorSearchButtonToolTip));
     }
 }

@@ -146,6 +146,7 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
             titleText,
             GetString(ResourceKeys.TextAssetEditorReadOnlyHint),
             GetString(ResourceKeys.TextAssetEditorInlineEditHint),
+            GetString(ResourceKeys.TextAssetEditorDeferredEditHint),
             GetString(ResourceKeys.TextAssetEditorLineStatusFormat));
     }
 
@@ -175,9 +176,9 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
                     details.AssetId,
                     draft.DraftId,
                     draft.DraftMode,
-                    TextContent: null,
-                    RangeEdits: draft.CreateSaveRangeEdits(),
-                    PatchBaseline: draft.CreateSavePatchBaseline());
+                    TextContent: draft.ShouldSaveFullTextContent ? draft.CreateSaveTextContent() : null,
+                    RangeEdits: draft.ShouldSaveFullTextContent ? null : draft.CreateSaveRangeEdits(),
+                    PatchBaseline: draft.ShouldSaveFullTextContent ? null : draft.CreateSavePatchBaseline());
                 var updateResult = await _backgroundTaskRunner.RunAsync(
                     token => _workspaceAssetOperationGateway.UpdateTextAssetEditDraftAsync(updateCommand, token));
                 if (!updateResult.IsSuccess)

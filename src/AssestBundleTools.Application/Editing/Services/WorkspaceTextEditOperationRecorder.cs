@@ -47,7 +47,11 @@ public sealed class WorkspaceTextEditOperationRecorder
             sourceFingerprint,
             timestamp,
             targetDetails.Name,
-            draft.Summary);
+            draft.Summary,
+            draft.IsMaterialized
+                ? null
+                : TextAssetEditDraftSourceReferenceMapper.ToWorkspaceReference(draft.Reference),
+            isPayloadMaterialized: draft.IsMaterialized);
 
         updatedChangeSet = _operationLogService.AppendOperation(
             updatedChangeSet,
@@ -94,7 +98,8 @@ public sealed class WorkspaceTextEditOperationRecorder
             sourceFingerprint,
             result.AppliedAtUtc,
             targetDetails.Name,
-            targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString());
+            targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString(),
+            isPayloadMaterialized: true);
 
         updatedChangeSet = _operationLogService.AppendOperation(
             updatedChangeSet,
@@ -142,7 +147,8 @@ public sealed class WorkspaceTextEditOperationRecorder
             sourceFingerprint,
             result.UpdatedAtUtc,
             targetDetails.Name,
-            targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString());
+            targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString(),
+            isPayloadMaterialized: true);
 
         updatedChangeSet = _operationLogService.AppendOperation(
             updatedChangeSet,
@@ -233,10 +239,16 @@ public sealed class WorkspaceTextEditOperationRecorder
         string sourceFingerprint,
         DateTimeOffset timestamp,
         string sourceDescription,
-        string? summary)
+        string? summary,
+        WorkspaceAssetEditDraftSourceReferenceDto? sourceReference = null,
+        bool? isPayloadMaterialized = null)
     {
         var normalizedDraftId = draftId.Trim();
         var normalizedDraftMode = draftMode.Trim();
+        var existingDescriptor = (changeSet.EditDrafts ?? Array.Empty<WorkspaceAssetEditDraftDescriptorDto>())
+            .FirstOrDefault(descriptor =>
+                string.Equals(descriptor.DraftId?.Trim(), normalizedDraftId, StringComparison.Ordinal) &&
+                string.Equals(descriptor.DraftMode?.Trim(), normalizedDraftMode, StringComparison.Ordinal));
         var descriptors = (changeSet.EditDrafts ?? Array.Empty<WorkspaceAssetEditDraftDescriptorDto>())
             .Where(descriptor =>
                 !string.Equals(descriptor.DraftId?.Trim(), normalizedDraftId, StringComparison.Ordinal) ||
@@ -247,7 +259,9 @@ public sealed class WorkspaceTextEditOperationRecorder
                 SourceFingerprint: sourceFingerprint.Trim(),
                 UpdatedAtUtc: timestamp,
                 SourceDescription: sourceDescription,
-                Summary: summary))
+                Summary: summary,
+                SourceReference: sourceReference ?? existingDescriptor?.SourceReference,
+                IsPayloadMaterialized: isPayloadMaterialized ?? existingDescriptor?.IsPayloadMaterialized))
             .ToArray();
 
         return changeSet with

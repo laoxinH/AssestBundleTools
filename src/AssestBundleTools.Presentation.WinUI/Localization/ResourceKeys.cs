@@ -1339,9 +1339,12 @@ public static class ResourceKeys
     public const string TextAssetEditorExitButton = "TextAssetEditor.ExitButton.Content";
     public const string TextAssetEditorReadOnlyHint = "TextAssetEditor.ReadOnlyHint.Text";
     public const string TextAssetEditorInlineEditHint = "TextAssetEditor.InlineEditHint.Text";
+    public const string TextAssetEditorDeferredEditHint = "TextAssetEditor.DeferredEditHint.Text";
     public const string TextAssetEditorLineStatusFormat = "TextAssetEditor.LineStatus.Format";
     public const string TextAssetEditorSearchPlaceholder = "TextAssetEditor.Search.PlaceholderText";
     public const string TextAssetEditorSearchButtonToolTip = "TextAssetEditor.SearchButton.ToolTip";
+    public const string TextAssetEditorLoadFullEditButton = "TextAssetEditor.LoadFullEditButton.Content";
+    public const string TextAssetEditorLoadFullEditButtonToolTip = "TextAssetEditor.LoadFullEditButton.ToolTip";
     public const string TextAssetEditorLoadMoreLinesButton = "TextAssetEditor.LoadMoreLinesButton.Content";
     public const string TextAssetEditorUnsavedDialogTitle = "TextAssetEditor.UnsavedDialog.Title";
     public const string TextAssetEditorUnsavedDialogDescription = "TextAssetEditor.UnsavedDialog.Description";

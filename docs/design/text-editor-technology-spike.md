@@ -56,7 +56,8 @@
 - `TextAsset / Shader` 编辑窗口已从独立 `ListView / TextBox` 组合迁移到 `TextDocumentSurfaceView`。
 - `TextDocumentSurfaceView` 已接入 WebView2 + 离线 Monaco 静态资源作为主实现，原生 WinUI 行列表 / `TextBox` 只作为 WebView2 初始化失败、Runtime 缺失或静态资源缺失时的 fallback。
 - Monaco 主实现已统一普通预览和编辑窗口的行号、语法染色、查找 / 替换入口、Ctrl+F、Ctrl+H、Ctrl+S、撤销 / 重做和 VS Code 风格文本面。`.json / .skel` 走 JSON 语言，`.atlas` 走类 ini 语言，Shader 临时映射到 C++ 风格高亮。
-- 当前保存已进入 `RangeEdit` 草稿命令第二阶段：`UpdateTextAssetEditDraft` 支持“全文正文”或“范围补丁”二选一输入；范围补丁会携带 `ContentLength + SHA-256` 基线并委托 `IAssetEditDraftTextStore.ApplyTextPatch` 校验、合并、写回 payload 与重建行 / 字符索引，Application handler 只负责命令校验、错误映射和 `EditDraftUpdated` 操作记录；资源编辑窗口保存会优先从 Monaco host 请求基于当前编辑器基线和当前文本差异计算出的最小 range patch，WebView2 / Monaco 不可用或 patch 基线不匹配时才回退全文同步。当前 `JsonAssetEditDraftTextStore` 已具备 store 级文件 patch 写入边界，但实现仍会读写完整 payload；真正取消 12 MB+ 文本整段 .NET 字符串生命周期还需要后续 patch log / chunk rewrite。
+- 当前保存已进入 `RangeEdit` 草稿命令第二阶段：`UpdateTextAssetEditDraft` 支持“全文正文”或“范围补丁”二选一输入；范围补丁会携带 `ContentLength + SHA-256` 基线并委托 `IAssetEditDraftTextStore.ApplyTextPatch` 校验、合并、写回 payload 与重建行 / 字符索引，Application handler 只负责命令校验、错误映射和 `EditDraftUpdated` 操作记录；资源编辑窗口保存会优先从 Monaco host 请求基于当前编辑器基线和当前文本差异计算出的最小 range patch，WebView2 / Monaco 不可用、patch 基线不匹配，或草稿尚未物化时才回退全文同步。当前 `JsonAssetEditDraftTextStore` 已具备 store 级文件 patch 写入边界，但实现仍会读写完整 payload；真正取消 12 MB+ 文本整段 .NET 字符串生命周期还需要后续 patch log / chunk rewrite。
+- 大文本打开已完成“快速进入 + 按需全文编辑”第一层长期边界：`CreateTextAssetEditDraft` 对超过 `AssetTextEditPolicy.AutoMaterializeTextLength` 的文本不再立即复制全文到 `staging/drafts`，而是在 `editDrafts[].sourceReference` 中记录源 `PreviewCache / FileReplacement / EditDraft` 引用并标记 `isPayloadMaterialized=false`；编辑窗口初始化只读取首屏行并向 Monaco 发送有界只读文本快照，用户点击“加载完整编辑”后才按 chunk 读取完整正文并切换到可编辑 Monaco 模型。未物化草稿首次保存走全文 `TextContent` 路径生成真实 draft payload 并标记物化，已物化草稿继续优先走 range patch，且 payload 缺失时不会回退旧源引用。
 - 当前 WebView2 host 第一阶段使用默认环境初始化；显式 user data folder 和更细初始化诊断保留到下一阶段补齐。
 
 ## 6. Monaco 工程化条件
@@ -66,7 +67,7 @@ Monaco 主实现已经进入 `TextDocumentSurfaceView`，后续工程化收口�
 - Monaco 静态资源随应用离线打包，不依赖公网 CDN；应用输出只复制项目文件中的 `MonacoEditorAsset` 白名单，避免完整语言包或 worker 在资源更新后被误带入发布产物。
 - WebView2 用户数据目录由应用显式管理，避免污染用户默认浏览器状态；当前 WinUI 投影未暴露桌面 `CreationProperties / CoreWebView2Environment.CreateAsync(...)` 环境重载，`TextDocumentSurfaceView` 在首次初始化前通过进程级 `WEBVIEW2_USER_DATA_FOLDER` 绑定到应用私有目录。
 - JS bridge 只传递有界 payload、range、patch 和命令结果，不传递缓存路径、替换源路径或 staging 路径。
-- 初始打开只加载受控范围或受控模型；当前 TextAsset 保存仍使用 Monaco 全缓冲安全预算，超过预算的大文本必须等 patch 草稿命令落地后再开放正文保存。
+- 初始打开只加载受控范围或受控模型；预算内大文本允许用户显式加载完整编辑，超过 `AssetTextEditPolicy.InlineEditableTextLength` 的文本仍保持只读 / 搜索，等待 patch-backed / chunk-backed draft store 完成后再开放正文保存。
 - 搜索、跳转、格式化和保存通过 Application query / command；前端只展示结果和提交 patch。
 - Runtime 缺失、初始化失败和 bridge 异常都有本地化主提示和可复制诊断；当前已提供 fallback 诊断复制入口和 Runtime 缺失安装 / 修复指引。
 - 保留原生 fallback surface，保证预览和只读查看在 WebView2 不可用时仍可工作。
@@ -107,6 +108,7 @@ Monaco 主实现已经进入 `TextDocumentSurfaceView`，后续工程化收口�
 - 已把检查器文本预览和资源编辑窗口统一到 Monaco 主实现。
 - 已接入 Ctrl+F、Ctrl+H、Ctrl+S、撤销 / 重做、行号、minimap、JSON / atlas / Shader 基础染色。
 - 已把编辑输入桥接改为 dirty 信号 + 保存 / 搜索前按需同步正文，避免 12 MB 级文本在每次键入时都完整回传到 .NET。
+- 已把文本编辑模式拆成“打开草稿”和“加载完整编辑”两步：大文本创建草稿只保存源引用，打开编辑窗口不再等待完整文本物化；首屏行号 / 搜索立即可用，预算内全文编辑由“加载完整编辑”按钮显式触发。
 - 已补 WebView2 用户数据目录显式绑定、离线 Monaco 资源缺失、WebView2 初始化失败、host 页面加载失败和 JS bridge 超时的本地化 fallback 诊断；在当前 WinUI WebView2 投影限制下，用户数据目录通过进程级 `WEBVIEW2_USER_DATA_FOLDER` 在初始化前设置。
 - 已补 Monaco light / dark 主题定义，并由 `TextDocumentSurfaceView` 按 WinUI `ActualTheme` 通过 JS bridge 同步；WebView2 进程异常退出会回退原生文本视图，fallback surface 已提供复制诊断入口。
 - 已补 WebView2 Runtime 预探测：Runtime 不可用时显示安装 / 修复指引并回退原生文本视图；复制诊断会包含 Runtime 版本或失败信息、Monaco 资源目录、WebView2 用户数据目录、主题、语言和当前文档状态。
@@ -134,12 +136,13 @@ Monaco 主实现已经进入 `TextDocumentSurfaceView`，后续工程化收口�
 - 已完成 UI 保存入口切换：当前窗口按钮保存和 Ctrl+S 会走同一 surface 同步路径，优先提交 Monaco 基于保存基线生成的最小 range patch；fallback surface 或 stale patch 基线会退回“从 0 到已保存全文长度”的全文替换 patch。
 - 已完成 Monaco bridge 第一阶段：host 保存基线由 `setDocument / markSaved` 管理，保存时通过 `getPendingRangeEdits` 返回 `start / length / text / versionId / baseLength`，Presentation 只把 range patch 放进草稿 VM 的短期状态，不再在 Ctrl+S 消息里携带全文。
 - 已补应用层回归测试覆盖 store 级 patch 委托、非法 range 映射、stale patch 基线拒绝、长度预算和操作记录保存；已补 Infrastructure 回归测试覆盖 `JsonAssetEditDraftTextStore.ApplyTextPatch` 对 payload、descriptor、行 / 字符索引 sidecar 的一致更新，以及 stale baseline 不改写 payload。
+- 已补懒物化草稿边界：`editDrafts[]` 可保存 `sourceReference / isPayloadMaterialized`，`OpenTextAssetEditDraft` 只在 payload 尚不存在且 descriptor 明确未物化时恢复为 deferred draft；Presentation 初始化 deferred draft 只读首屏行，按需加载完整编辑。首次保存 deferred draft 时走全文物化，避免对尚不存在的 payload 提交 range patch。
 
 仍未完成：
 
 - Monaco 端尚未提交逐输入事件组成的 patch log；当前第一阶段是在保存时由 host 对基线文本和当前文本做最小差异，生成单个 range patch。
 - Draft text store 已承接 patch 合并职责，但当前 JSON 实现仍是文件级原子 patch：在 store 内读出现有 payload、合并 range、重写 payload 并重建索引。后续需要 patch-backed / chunk-backed 存储或后台流式合并，才能真正取消 12 MB+ 文本的整段 .NET 字符串生命周期。
-- 大文本正文保存仍受 `AssetTextEditPolicy.InlineEditableTextLength` 预算保护；在增量桥接和存储策略完成前，不开放无限大文本编辑保存。
+- 大文本正文保存仍受 `AssetTextEditPolicy.InlineEditableTextLength` 预算保护；当前优化目标是避免进入编辑模式时自动读取 / 复制全文，而不是开放无限大文本编辑保存。
 
 下一步：
 
@@ -165,6 +168,6 @@ Monaco 主实现已经进入 `TextDocumentSurfaceView`，后续工程化收口�
 
 - 不允许 Presentation 直接读取 preview cache、替换文件或 staging draft 路径。
 - 不允许 WebView2 前端持有真实本地文件路径。
-- 不允许把完整大文本放入长期 ViewModel 字符串属性。
+- 不允许进入编辑模式时自动把完整大文本放入长期 ViewModel 字符串属性；只有用户明确点击“加载完整编辑”且内容仍在 `InlineEditableTextLength` 预算内时，才允许短期全缓冲 Monaco 模型。
 - 不允许把 WebView2 初始化失败变成整个编辑窗口不可用；必须 fallback。
-- 不允许在未完成 patch 草稿前开放大文本正文保存。
+- 不允许在未完成 patch-backed / chunk-backed draft store 前开放超过 `InlineEditableTextLength` 的文本正文保存。

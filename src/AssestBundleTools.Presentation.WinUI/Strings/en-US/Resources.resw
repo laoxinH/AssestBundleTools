@@ -2643,6 +2643,9 @@
   <data name="TextAssetEditor.InlineEditHint.Text" xml:space="preserve">
     <value>Small-text draft editing. Saving updates the draft first, then records a text edit operation.</value>
   </data>
+  <data name="TextAssetEditor.DeferredEditHint.Text" xml:space="preserve">
+    <value>Large text opened in fast preview. Load full edit only when you need to change it.</value>
+  </data>
   <data name="TextAssetEditor.LineStatus.Format" xml:space="preserve">
     <value>Loaded {0} / {1} lines</value>
   </data>
@@ -2651,6 +2654,12 @@
   </data>
   <data name="TextAssetEditor.SearchButton.ToolTip" xml:space="preserve">
     <value>Search</value>
+  </data>
+  <data name="TextAssetEditor.LoadFullEditButton.Content" xml:space="preserve">
+    <value>Load Full Edit</value>
+  </data>
+  <data name="TextAssetEditor.LoadFullEditButton.ToolTip" xml:space="preserve">
+    <value>Load the full text and switch to editable mode on demand</value>
   </data>
   <data name="TextAssetEditor.LoadMoreLinesButton.Content" xml:space="preserve">
     <value>Load More</value>

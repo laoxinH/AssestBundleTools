@@ -117,6 +117,7 @@ public sealed class AssetDocumentTabViewModelTests
             "story.json",
             "read only",
             "inline",
+            "deferred",
             "{0} / {1}");
     }
 }

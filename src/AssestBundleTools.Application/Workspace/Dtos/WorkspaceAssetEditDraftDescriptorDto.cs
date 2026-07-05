@@ -13,4 +13,6 @@ public sealed record WorkspaceAssetEditDraftDescriptorDto(
     DateTimeOffset UpdatedAtUtc,
     DateTimeOffset? ExpiresAtUtc = null,
     string? SourceDescription = null,
-    string? Summary = null);
+    string? Summary = null,
+    WorkspaceAssetEditDraftSourceReferenceDto? SourceReference = null,
+    bool? IsPayloadMaterialized = null);

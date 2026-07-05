@@ -24,4 +24,5 @@ public sealed record AssetTextEditDraftDto(
     bool CanEditInline = false,
     bool IsAppliedBaseline = false,
     string? SourceFingerprint = null,
-    string? SourceDescription = null);
+    string? SourceDescription = null,
+    bool IsMaterialized = true);

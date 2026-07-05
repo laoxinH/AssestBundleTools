@@ -100,21 +100,21 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
             draftMode,
             offset: 0,
             length: 1);
-        if (firstChunk is null)
+        var materialized = firstChunk is not null;
+        var reference = materialized
+            ? CreateMaterializedReference(firstChunk!, workspaceKey, draftId, draftMode)
+            : descriptor.IsPayloadMaterialized == false
+                ? TextAssetEditDraftSourceReferenceMapper.ToPreviewReference(descriptor.SourceReference)
+                : null;
+        if (reference is null)
         {
             return Task.FromResult(Result<AssetTextEditDraftDto>.Failure(
                 ApplicationErrors.AssetPreviewFullContentUnavailable(draftId)));
         }
 
-        var contentLength = firstChunk.ContentLength;
-        var fullCharacterCount = ResolveFullCharacterCount(firstChunk);
-        var reference = new AssetPreviewFullContentReferenceDto(
-            AssetPreviewFullContentReferenceKind.EditDraft,
-            firstChunk.Descriptor.ContentType,
-            contentLength,
-            workspaceKey,
-            DraftId: draftId,
-            DraftMode: draftMode);
+        var fullCharacterCount = materialized
+            ? ResolveFullCharacterCount(firstChunk!)
+            : ResolveFullCharacterCount(reference);
 
         var draft = new AssetTextEditDraftDto(
             command.WorkspaceId,
@@ -133,7 +133,8 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
                 fullCharacterCount <= AssetTextEditPolicy.InlineEditableTextLength,
             IsAppliedBaseline: IsCurrentAppliedDraft(targetDetails, draftId, draftMode),
             SourceFingerprint: descriptor.SourceFingerprint?.Trim(),
-            SourceDescription: descriptor.SourceDescription?.Trim());
+            SourceDescription: descriptor.SourceDescription?.Trim(),
+            IsMaterialized: materialized);
 
         return Task.FromResult(Result<AssetTextEditDraftDto>.Success(draft));
     }
@@ -192,6 +193,26 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
 
         return Math.Max(chunk.TotalLength, minimumLength);
     }
+
+    private static int ResolveFullCharacterCount(AssetPreviewFullContentReferenceDto reference)
+    {
+        return reference.ContentLength is >= 0 and <= int.MaxValue
+            ? (int)reference.ContentLength
+            : int.MaxValue;
+    }
+
+    private static AssetPreviewFullContentReferenceDto CreateMaterializedReference(
+        PreviewCacheTextChunkDto firstChunk,
+        string workspaceKey,
+        string draftId,
+        string draftMode) =>
+        new(
+            AssetPreviewFullContentReferenceKind.EditDraft,
+            firstChunk.Descriptor.ContentType,
+            firstChunk.ContentLength,
+            workspaceKey,
+            DraftId: draftId,
+            DraftMode: draftMode);
 
     private static string NormalizeDraftMode(string draftMode) =>
         string.IsNullOrWhiteSpace(draftMode)

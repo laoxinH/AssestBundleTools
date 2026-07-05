@@ -13,7 +13,7 @@ using AssestBundleTools.Domain.Common.Errors;
 namespace AssestBundleTools.Application.Editing.Commands;
 
 /// <summary>
-/// 创建 TextAsset 编辑草稿并初始化 draft-backed 文本 payload。
+/// 创建 TextAsset 编辑草稿；大文本先记录源引用，等用户明确进入全文编辑时再物化 payload。
 /// </summary>
 public sealed class CreateTextAssetEditDraftHandler : ICommandHandler<CreateTextAssetEditDraftCommand, Result<AssetTextEditDraftDto>>
 {
@@ -86,32 +86,97 @@ public sealed class CreateTextAssetEditDraftHandler : ICommandHandler<CreateText
         }
 
         var preview = previewResult.Value;
-        var textContentResult = await ResolveDraftTextContentAsync(
-            command.WorkspaceDataRootPath,
-            preview,
-            cancellationToken);
-        if (textContentResult.IsCancelled)
-        {
-            return Result<AssetTextEditDraftDto>.Cancelled();
-        }
-
-        var textContent = textContentResult.Value;
-        if (textContent is null)
-        {
-            return Result<AssetTextEditDraftDto>.Failure(
-                textContentResult.Errors.Count > 0
-                    ? textContentResult.Errors
-                    : [ApplicationErrors.AssetPreviewFullContentUnavailable(command.AssetId.Value)]);
-        }
-
         var updatedAtUtc = DateTimeOffset.UtcNow;
         var draftId = NormalizeOptional(command.DraftId) ?? CreateDraftId();
         var draftMode = NormalizeOptional(command.DraftMode) ?? WorkspaceTextEditOperationRecorder.TextDraftMode;
         var contentType = string.IsNullOrWhiteSpace(preview.ContentType)
             ? "text/plain; charset=utf-8"
             : preview.ContentType.Trim();
-        var draftTextStore = _workspaceDataStoreFactory.CreateAssetEditDraftTextStore(command.WorkspaceDataRootPath.Trim());
         var sourceFingerprint = CreatePreviewFingerprint(preview);
+        var createReferenceResult = await CreateDraftReferenceAsync(
+            command,
+            targetDetails,
+            preview,
+            draftId,
+            draftMode,
+            contentType,
+            updatedAtUtc,
+            sourceFingerprint,
+            cancellationToken);
+        if (createReferenceResult.IsCancelled)
+        {
+            return Result<AssetTextEditDraftDto>.Cancelled();
+        }
+
+        if (!createReferenceResult.IsSuccess || createReferenceResult.Value is not { } draftReference)
+        {
+            return Result<AssetTextEditDraftDto>.Failure(
+                createReferenceResult.Errors.Count > 0
+                    ? createReferenceResult.Errors
+                    : [ApplicationErrors.AssetPreviewFullContentUnavailable(command.AssetId.Value)]);
+        }
+
+        var draft = new AssetTextEditDraftDto(
+            command.WorkspaceId,
+            command.BundleId,
+            command.AssetId,
+            targetDetails.Name,
+            targetDetails.AssetType,
+            targetDetails.AssetTypeDisplayName,
+            draftId,
+            draftMode,
+            draftReference.Reference,
+            updatedAtUtc,
+            CanApply: targetDetails.AssetType == AssetType.TextAsset,
+            Summary: targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString(),
+            CanEditInline: targetDetails.AssetType == AssetType.TextAsset &&
+                draftReference.Reference.ContentLength <= AssetTextEditPolicy.InlineEditableTextLength,
+            SourceFingerprint: sourceFingerprint,
+            SourceDescription: targetDetails.Name,
+            IsMaterialized: draftReference.IsMaterialized);
+
+        _operationRecorder?.RecordDraftCreated(command, targetDetails, draft);
+        return Result<AssetTextEditDraftDto>.Success(draft);
+    }
+
+    private async Task<Result<DraftReferenceCreationResult>> CreateDraftReferenceAsync(
+        CreateTextAssetEditDraftCommand command,
+        AssetDetailsDto targetDetails,
+        AssetPreviewDto preview,
+        string draftId,
+        string draftMode,
+        string contentType,
+        DateTimeOffset updatedAtUtc,
+        string sourceFingerprint,
+        CancellationToken cancellationToken)
+    {
+        if (!ShouldMaterializeOnCreate(preview) &&
+            preview.FullContentReference is { } sourceReference)
+        {
+            return Result<DraftReferenceCreationResult>.Success(new DraftReferenceCreationResult(
+                sourceReference,
+                IsMaterialized: false));
+        }
+
+        var textContentResult = await ResolveDraftTextContentAsync(
+            command.WorkspaceDataRootPath,
+            preview,
+            cancellationToken);
+        if (textContentResult.IsCancelled)
+        {
+            return Result<DraftReferenceCreationResult>.Cancelled();
+        }
+
+        var textContent = textContentResult.Value;
+        if (textContent is null)
+        {
+            return Result<DraftReferenceCreationResult>.Failure(
+                textContentResult.Errors.Count > 0
+                    ? textContentResult.Errors
+                    : [ApplicationErrors.AssetPreviewFullContentUnavailable(command.AssetId.Value)]);
+        }
+
+        var draftTextStore = _workspaceDataStoreFactory.CreateAssetEditDraftTextStore(command.WorkspaceDataRootPath.Trim());
         draftTextStore.SaveTextPayload(new AssetEditDraftTextPayloadDto(
             command.WorkspaceKey.Trim(),
             draftId,
@@ -130,26 +195,9 @@ public sealed class CreateTextAssetEditDraftHandler : ICommandHandler<CreateText
             command.WorkspaceKey.Trim(),
             DraftId: draftId,
             DraftMode: draftMode);
-        var draft = new AssetTextEditDraftDto(
-            command.WorkspaceId,
-            command.BundleId,
-            command.AssetId,
-            targetDetails.Name,
-            targetDetails.AssetType,
-            targetDetails.AssetTypeDisplayName,
-            draftId,
-            draftMode,
+        return Result<DraftReferenceCreationResult>.Success(new DraftReferenceCreationResult(
             reference,
-            updatedAtUtc,
-            CanApply: targetDetails.AssetType == AssetType.TextAsset,
-            Summary: targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString(),
-            CanEditInline: targetDetails.AssetType == AssetType.TextAsset &&
-                textContent.Length <= AssetTextEditPolicy.InlineEditableTextLength,
-            SourceFingerprint: sourceFingerprint,
-            SourceDescription: targetDetails.Name);
-
-        _operationRecorder?.RecordDraftCreated(command, targetDetails, draft);
-        return Result<AssetTextEditDraftDto>.Success(draft);
+            IsMaterialized: true));
     }
 
     private static AppError? ValidateCommand(CreateTextAssetEditDraftCommand command)
@@ -182,6 +230,10 @@ public sealed class CreateTextAssetEditDraftHandler : ICommandHandler<CreateText
     private static bool CanCreateTextDraft(AssetDetailsDto details) =>
         details.AssetType == AssetType.TextAsset ||
         string.Equals(details.AssetTypeDisplayName, "Shader", StringComparison.OrdinalIgnoreCase);
+
+    private static bool ShouldMaterializeOnCreate(AssetPreviewDto preview) =>
+        preview.FullContentReference is null ||
+        preview.FullContentReference.ContentLength <= AssetTextEditPolicy.AutoMaterializeTextLength;
 
     private async Task<Result<string>> ResolveDraftTextContentAsync(
         string workspaceDataRootPath,
@@ -262,4 +314,8 @@ public sealed class CreateTextAssetEditDraftHandler : ICommandHandler<CreateText
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private sealed record DraftReferenceCreationResult(
+        AssetPreviewFullContentReferenceDto Reference,
+        bool IsMaterialized);
 }

@@ -136,6 +136,123 @@ internal static class TextAssetEditDraftOpenHandlerTests
             "Missing payload should return a full-content unavailable error.");
     }
 
+    public static async Task OpenTextAssetEditDraftHandler_ShouldRestoreDeferredSourceReference_WhenPayloadIsMissing()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        const string workspaceKey = "workspace-a";
+        var bundleId = new BundleId("bundle.text");
+        var assetId = new AssetId("asset.text");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            assetId,
+            AssetType.TextAsset,
+            "large.atlas"));
+        var sourceReference = new WorkspaceAssetEditDraftSourceReferenceDto(
+            nameof(AssetPreviewFullContentReferenceKind.PreviewCache),
+            "text/plain; charset=utf-8",
+            12 * 1024 * 1024,
+            workspaceKey,
+            PreviewCacheKey: "preview-large-text");
+        var changeStore = new TestWorkspaceChangeStore
+        {
+            ChangeSet = new WorkspaceChangeSetDto(
+                WorkspaceKey: workspaceKey,
+                UpdatedAtUtc: DateTimeOffset.UtcNow,
+                Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+                EditDrafts:
+                [
+                    new WorkspaceAssetEditDraftDescriptorDto(
+                        "draft-deferred",
+                        WorkspaceTextEditOperationRecorder.TextDraftMode,
+                        "source-v1",
+                        DateTimeOffset.UtcNow,
+                        SourceReference: sourceReference,
+                        IsPayloadMaterialized: false)
+                ],
+                Operations: Array.Empty<WorkspaceOperationRecordDto>())
+        };
+        var handler = new OpenTextAssetEditDraftHandler(
+            registry,
+            new TestWorkspaceDataStoreFactory(changeStore, new TestAssetEditDraftTextStore()));
+
+        var result = await handler.HandleAsync(new OpenTextAssetEditDraftCommand(
+            workspaceId,
+            workspaceKey,
+            @"D:\WorkspaceData\A",
+            bundleId,
+            assetId,
+            "draft-deferred",
+            WorkspaceTextEditOperationRecorder.TextDraftMode,
+            "source-v1"));
+
+        TestAssert.True(result.IsSuccess, "Deferred text draft should reopen from its source reference without a materialized payload.");
+        var draft = result.Value ?? throw new InvalidOperationException("Expected draft result.");
+        TestAssert.Equal(AssetPreviewFullContentReferenceKind.PreviewCache, draft.Reference.Kind, "Source reference kind should be restored.");
+        TestAssert.Equal("preview-large-text", draft.Reference.PreviewCacheKey, "Preview cache key should be restored.");
+        TestAssert.False(draft.IsMaterialized, "Deferred source reference should not be marked as materialized.");
+        TestAssert.True(draft.CanEditInline, "Large but budgeted TextAsset can still be loaded for full editing on demand.");
+    }
+
+    public static async Task OpenTextAssetEditDraftHandler_ShouldFail_WhenMaterializedPayloadIsMissing()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        const string workspaceKey = "workspace-a";
+        var bundleId = new BundleId("bundle.text");
+        var assetId = new AssetId("asset.text");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            assetId,
+            AssetType.TextAsset,
+            "edited.atlas"));
+        var sourceReference = new WorkspaceAssetEditDraftSourceReferenceDto(
+            nameof(AssetPreviewFullContentReferenceKind.PreviewCache),
+            "text/plain; charset=utf-8",
+            12 * 1024 * 1024,
+            workspaceKey,
+            PreviewCacheKey: "preview-original-text");
+        var changeStore = new TestWorkspaceChangeStore
+        {
+            ChangeSet = new WorkspaceChangeSetDto(
+                WorkspaceKey: workspaceKey,
+                UpdatedAtUtc: DateTimeOffset.UtcNow,
+                Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+                EditDrafts:
+                [
+                    new WorkspaceAssetEditDraftDescriptorDto(
+                        "draft-materialized",
+                        WorkspaceTextEditOperationRecorder.TextDraftMode,
+                        "source-v1",
+                        DateTimeOffset.UtcNow,
+                        SourceReference: sourceReference,
+                        IsPayloadMaterialized: true)
+                ],
+                Operations: Array.Empty<WorkspaceOperationRecordDto>())
+        };
+        var handler = new OpenTextAssetEditDraftHandler(
+            registry,
+            new TestWorkspaceDataStoreFactory(changeStore, new TestAssetEditDraftTextStore()));
+
+        var result = await handler.HandleAsync(new OpenTextAssetEditDraftCommand(
+            workspaceId,
+            workspaceKey,
+            @"D:\WorkspaceData\A",
+            bundleId,
+            assetId,
+            "draft-materialized",
+            WorkspaceTextEditOperationRecorder.TextDraftMode,
+            "source-v1"));
+
+        TestAssert.True(result.IsFailure, "Materialized draft should not fall back to the original source reference when its payload is missing.");
+        TestAssert.Equal(
+            "Asset.Preview.FullContentUnavailable",
+            TestAssert.Single(result.Errors).Code,
+            "Missing materialized payload should remain a full-content unavailable error.");
+    }
+
     private static PreviewCacheTextChunkDto CreateChunk(
         string workspaceKey,
         string draftId,

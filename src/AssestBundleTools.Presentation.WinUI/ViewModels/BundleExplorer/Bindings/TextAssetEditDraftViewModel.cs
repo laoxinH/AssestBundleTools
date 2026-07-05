@@ -1,7 +1,5 @@
 using System.Collections.ObjectModel;
-using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
-using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Workspace.Services;
@@ -13,9 +11,9 @@ using Microsoft.UI.Xaml;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 /// <summary>
-/// 文本编辑器第一阶段的 draft-backed 文本工作面。
+/// 文本编辑器 draft-backed 工作面；大文本默认快速预览，按需进入全文编辑。
 /// </summary>
-public sealed class TextAssetEditDraftViewModel : ObservableObject
+public sealed partial class TextAssetEditDraftViewModel : ObservableObject
 {
     private const int LinePageSize = 200;
     private const int SearchMatchCount = 50;
@@ -30,11 +28,14 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     private string _statusText = string.Empty;
     private string _searchText = string.Empty;
     private string _editableText = string.Empty;
+    private string _documentText = string.Empty;
     private string _lastSavedText = string.Empty;
     private int _nextLineIndex;
     private bool _hasMoreLines;
     private bool _isBusy;
     private bool _hasPendingEditorTextChanges;
+    private bool _isFullEditLoaded;
+    private bool _isDraftMaterialized;
 
     public TextAssetEditDraftViewModel(
         AssetTextEditDraftDto draft,
@@ -44,15 +45,18 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         string titleText,
         string readOnlyHintText,
         string inlineEditHintText,
+        string deferredEditHintText,
         string lineStatusFormat)
     {
         _draft = draft ?? throw new ArgumentNullException(nameof(draft));
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
         _backgroundTaskRunner = backgroundTaskRunner ?? throw new ArgumentNullException(nameof(backgroundTaskRunner));
         _workspaceDataRootPath = workspaceDataRootPath ?? throw new ArgumentNullException(nameof(workspaceDataRootPath));
+        _isDraftMaterialized = draft.IsMaterialized;
         TitleText = titleText;
         ReadOnlyHintText = readOnlyHintText;
         InlineEditHintText = inlineEditHintText;
+        DeferredEditHintText = deferredEditHintText;
         _lineStatusFormat = string.IsNullOrWhiteSpace(lineStatusFormat) ? "{0} / {1}" : lineStatusFormat;
     }
 
@@ -70,11 +74,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
 
     public bool IsInlineEditEnabled => _draft.CanEditInline;
 
-    public Visibility ReadOnlyViewVisibility =>
-        IsEditable ? Visibility.Collapsed : Visibility.Visible;
-
-    public Visibility EditableViewVisibility =>
-        IsEditable ? Visibility.Visible : Visibility.Collapsed;
+    public bool ShouldSaveFullTextContent => !_isDraftMaterialized;
 
     public AssetPreviewFullContentReferenceDto Reference => _draft.Reference;
 
@@ -84,17 +84,43 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
 
     public string InlineEditHintText { get; }
 
-    public string ModeHintText => IsInlineEditEnabled ? InlineEditHintText : ReadOnlyHintText;
+    public string DeferredEditHintText { get; }
+
+    public string ModeHintText =>
+        IsEditable ? InlineEditHintText :
+        CanShowLoadFullEdit ? DeferredEditHintText :
+        ReadOnlyHintText;
 
     public string DocumentLanguage => TextAssetEditLanguageResolver.DetectLanguage(TitleText, _draft.AssetTypeDisplayName);
+
+    public string DocumentText => IsEditable ? EditableText : _documentText;
 
     public bool IsReadOnly => !IsEditable;
 
     private bool IsEditable =>
+        _isFullEditLoaded &&
         CanApply &&
         _draft.CanEditInline &&
         _draft.AssetType == AssetType.TextAsset &&
         _draft.Reference.ContentLength <= MonacoEditableTextLength;
+
+    public Visibility ReadOnlyViewVisibility =>
+        IsEditable ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility EditableViewVisibility =>
+        IsEditable ? Visibility.Visible : Visibility.Collapsed;
+
+    private bool CanShowLoadFullEdit =>
+        !_isFullEditLoaded &&
+        CanApply &&
+        _draft.CanEditInline &&
+        _draft.AssetType == AssetType.TextAsset &&
+        _draft.Reference.ContentLength <= MonacoEditableTextLength;
+
+    public bool CanLoadFullEdit => CanShowLoadFullEdit && !IsBusy;
+
+    public Visibility LoadFullEditButtonVisibility =>
+        CanShowLoadFullEdit ? Visibility.Visible : Visibility.Collapsed;
 
     public string StatusText
     {
@@ -127,6 +153,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         {
             if (SetProperty(ref _editableText, value ?? string.Empty))
             {
+                OnPropertyChanged(nameof(DocumentText));
                 OnPropertyChanged(nameof(IsReadOnly));
                 OnPropertyChanged(nameof(HasUnsavedChanges));
                 OnPropertyChanged(nameof(CanSave));
@@ -151,6 +178,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(CanSearch));
                 OnPropertyChanged(nameof(CanLoadMoreLines));
+                OnPropertyChanged(nameof(CanLoadFullEdit));
                 OnPropertyChanged(nameof(CanSave));
             }
         }
@@ -176,86 +204,12 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         await LoadInitialLinesAsync(cancellationToken);
-        await LoadEditableTextAsync(cancellationToken);
+        if (ShouldAutoLoadFullEdit())
+        {
+            await LoadFullEditAsync(cancellationToken);
+        }
+
         NotifyDocumentEditState();
-    }
-
-    public async Task LoadInitialLinesAsync(CancellationToken cancellationToken = default)
-    {
-        await LoadLinePageAsync(startLineIndex: 0, reset: true, cancellationToken);
-    }
-
-    public async Task LoadMoreLinesAsync(CancellationToken cancellationToken = default)
-    {
-        if (!CanLoadMoreLines)
-        {
-            return;
-        }
-
-        await LoadLinePageAsync(_nextLineIndex, reset: false, cancellationToken);
-    }
-
-    private async Task LoadLinePageAsync(
-        int startLineIndex,
-        bool reset,
-        CancellationToken cancellationToken)
-    {
-        if (IsBusy)
-        {
-            return;
-        }
-
-        IsBusy = true;
-        try
-        {
-            var result = await _backgroundTaskRunner.RunAsync(
-                token => _workspaceAssetInspectionGateway.LoadPreviewTextLinesAsync(
-                    new LoadPreviewTextLinesQuery(
-                        _workspaceDataRootPath,
-                        _draft.Reference,
-                        startLineIndex,
-                        LinePageSize),
-                    token),
-                cancellationToken);
-            if (!result.IsSuccess || result.Value is null)
-            {
-                if (reset)
-                {
-                    Lines.Clear();
-                    _nextLineIndex = 0;
-                    StatusText = string.Empty;
-                    SetHasMoreLines(false);
-                }
-
-                return;
-            }
-
-            if (reset)
-            {
-                Lines.Clear();
-            }
-
-            var lineIndex = result.Value.StartLineIndex;
-            foreach (var line in result.Value.Lines)
-            {
-                Lines.Add(new TextDocumentLineViewModel(
-                    (lineIndex + 1).ToString(CultureInfo.CurrentCulture),
-                    line));
-                lineIndex++;
-            }
-
-            _nextLineIndex = result.Value.StartLineIndex + result.Value.LineCount;
-            SetHasMoreLines(result.Value.HasMore && result.Value.LineCount > 0);
-            StatusText = string.Format(
-                CultureInfo.CurrentCulture,
-                _lineStatusFormat,
-                Lines.Count,
-                result.Value.TotalLineCount);
-        }
-        finally
-        {
-            IsBusy = false;
-        }
     }
 
     public void MarkSaved()
@@ -270,11 +224,14 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         }
 
         _lastSavedText = EditableText;
+        _isDraftMaterialized = true;
         _patchState.Clear();
         _hasPendingEditorTextChanges = false;
         OnPropertyChanged(nameof(HasUnsavedChanges));
         OnPropertyChanged(nameof(CanSave));
     }
+
+    public string CreateSaveTextContent() => EditableText;
 
     public IReadOnlyList<TextAssetEditDraftRangeEditDto> CreateSaveRangeEdits() =>
         _patchState.CreateSaveRangeEdits(_lastSavedText, EditableText);
@@ -305,6 +262,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
 
     public void SetEditorTextFromSurface(string text)
     {
+        MarkFullEditLoaded();
         _patchState.Clear();
         _hasPendingEditorTextChanges = false;
         EditableText = text ?? string.Empty;
@@ -315,162 +273,27 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         IReadOnlyList<TextAssetEditDraftRangeEditDto> rangeEdits,
         TextAssetEditDraftPatchBaselineDto baseline)
     {
+        MarkFullEditLoaded();
         _patchState.Set(rangeEdits ?? [], baseline);
         _hasPendingEditorTextChanges = false;
         OnPropertyChanged(nameof(HasUnsavedChanges));
         OnPropertyChanged(nameof(CanSave));
     }
 
-    public async Task SearchAsync(CancellationToken cancellationToken = default)
+    private bool ShouldAutoLoadFullEdit() =>
+        _isDraftMaterialized &&
+        CanShowLoadFullEdit &&
+        _draft.Reference.ContentLength <= AssetTextEditPolicy.AutoMaterializeTextLength;
+
+    private void MarkFullEditLoaded()
     {
-        if (!CanSearch)
+        if (_isFullEditLoaded)
         {
             return;
         }
 
-        if (IsEditable)
-        {
-            SearchEditableText();
-            return;
-        }
-
-        IsBusy = true;
-        try
-        {
-            var result = await _backgroundTaskRunner.RunAsync(
-                token => _workspaceAssetInspectionGateway.SearchPreviewTextAsync(
-                    new SearchPreviewTextQuery(
-                        _workspaceDataRootPath,
-                        _draft.Reference,
-                        SearchText.Trim(),
-                        StartLineIndex: 0,
-                        MaxMatchCount: SearchMatchCount,
-                        MatchCase: false),
-                    token),
-                cancellationToken);
-            if (!result.IsSuccess || result.Value is null)
-            {
-                SearchMatches.Clear();
-                NotifySearchResultState();
-                return;
-            }
-
-            SearchMatches.Clear();
-            foreach (var match in result.Value.Matches)
-            {
-                SearchMatches.Add(new TextDocumentSearchMatchViewModel(
-                    string.Create(
-                        CultureInfo.CurrentCulture,
-                        $"{match.LineIndex + 1}:{match.ColumnIndex + 1}"),
-                    match.LineText));
-            }
-
-            NotifySearchResultState();
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    private async Task LoadEditableTextAsync(CancellationToken cancellationToken)
-    {
-        if (IsBusy)
-        {
-            return;
-        }
-
-        IsBusy = true;
-        try
-        {
-            var text = await LoadFullEditableTextAsync(cancellationToken);
-            if (text is null)
-            {
-                EditableText = string.Empty;
-                MarkSaved();
-                return;
-            }
-
-            EditableText = text;
-            _lastSavedText = EditableText;
-            NotifyDocumentEditState();
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    private async Task<string?> LoadFullEditableTextAsync(CancellationToken cancellationToken)
-    {
-        var builder = new System.Text.StringBuilder();
-        var offset = 0;
-        while (offset < MonacoEditableTextLength)
-        {
-            var result = await _backgroundTaskRunner.RunAsync(
-                token => _workspaceAssetInspectionGateway.LoadPreviewTextChunkAsync(
-                    new LoadPreviewTextChunkQuery(
-                        _workspaceDataRootPath,
-                        _draft.Reference,
-                        offset,
-                        LoadPreviewTextChunkHandler.MaxChunkLength),
-                    token),
-                cancellationToken);
-            if (!result.IsSuccess || result.Value is null)
-            {
-                return null;
-            }
-
-            var chunk = result.Value;
-            builder.Append(chunk.Text);
-            offset = chunk.Offset + chunk.Length;
-            if (!chunk.HasMore || chunk.Length == 0)
-            {
-                return builder.ToString();
-            }
-        }
-
-        return builder.ToString();
-    }
-
-    private void SearchEditableText()
-    {
-        var searchText = SearchText.Trim();
-        if (searchText.Length == 0)
-        {
-            SearchMatches.Clear();
-            NotifySearchResultState();
-            return;
-        }
-
-        SearchMatches.Clear();
-        var lines = EditableText.Replace("\r\n", "\n", StringComparison.Ordinal)
-            .Replace('\r', '\n')
-            .Split('\n');
-        var comparison = StringComparison.CurrentCultureIgnoreCase;
-        for (var lineIndex = 0; lineIndex < lines.Length && SearchMatches.Count < SearchMatchCount; lineIndex++)
-        {
-            var line = lines[lineIndex];
-            var columnIndex = line.IndexOf(searchText, comparison);
-            if (columnIndex < 0)
-            {
-                continue;
-            }
-
-            SearchMatches.Add(new TextDocumentSearchMatchViewModel(
-                string.Create(
-                    CultureInfo.CurrentCulture,
-                    $"{lineIndex + 1}:{columnIndex + 1}"),
-                line));
-        }
-
-        NotifySearchResultState();
-    }
-
-    private void NotifySearchResultState()
-    {
-        OnPropertyChanged(nameof(SearchResultsVisibility));
-        OnPropertyChanged(nameof(SearchResultsColumnWidth));
+        _isFullEditLoaded = true;
+        NotifyDocumentEditState();
     }
 
     private void SetHasMoreLines(bool value)
@@ -485,16 +308,25 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         OnPropertyChanged(nameof(LoadMoreLinesButtonVisibility));
     }
 
+    private void NotifySearchResultState()
+    {
+        OnPropertyChanged(nameof(SearchResultsVisibility));
+        OnPropertyChanged(nameof(SearchResultsColumnWidth));
+    }
+
     private void NotifyDocumentEditState()
     {
         OnPropertyChanged(nameof(ReadOnlyViewVisibility));
         OnPropertyChanged(nameof(EditableViewVisibility));
         OnPropertyChanged(nameof(IsReadOnly));
+        OnPropertyChanged(nameof(DocumentText));
         OnPropertyChanged(nameof(DocumentLanguage));
+        OnPropertyChanged(nameof(ModeHintText));
+        OnPropertyChanged(nameof(CanLoadFullEdit));
+        OnPropertyChanged(nameof(LoadFullEditButtonVisibility));
         OnPropertyChanged(nameof(HasUnsavedChanges));
         OnPropertyChanged(nameof(CanSave));
         OnPropertyChanged(nameof(CanLoadMoreLines));
         OnPropertyChanged(nameof(LoadMoreLinesButtonVisibility));
     }
-
 }
