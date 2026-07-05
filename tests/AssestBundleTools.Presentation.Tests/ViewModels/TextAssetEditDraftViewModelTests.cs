@@ -2,6 +2,7 @@ using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Editing.Dtos;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
@@ -67,15 +68,20 @@ public sealed class TextAssetEditDraftViewModelTests
 
         viewModel.SetEditorRangeEditsFromSurface(
             [new TextAssetEditDraftRangeEditDto(6, 4, "BETA")],
-            baseLength: "alpha beta".Length);
+            TextAssetEditDraftPatchBaseline.Create("alpha beta"));
 
         var edits = viewModel.CreateSaveRangeEdits();
+        var baseline = viewModel.CreateSavePatchBaseline();
 
         Assert.True(viewModel.CanSave);
         Assert.Single(edits);
         Assert.Equal(6, edits[0].Start);
         Assert.Equal(4, edits[0].Length);
         Assert.Equal("BETA", edits[0].Text);
+        Assert.Equal("alpha beta".Length, baseline.ContentLength);
+        Assert.Equal(
+            TextAssetEditDraftPatchBaseline.Create("alpha beta").ContentSha256,
+            baseline.ContentSha256);
 
         viewModel.MarkSaved();
 
@@ -94,7 +100,7 @@ public sealed class TextAssetEditDraftViewModelTests
         viewModel.SetEditorTextFromSurface("alpha gamma");
         viewModel.SetEditorRangeEditsFromSurface(
             [new TextAssetEditDraftRangeEditDto(6, 4, "BETA")],
-            baseLength: 1);
+            TextAssetEditDraftPatchBaseline.Create("x"));
 
         var edits = viewModel.CreateSaveRangeEdits();
 

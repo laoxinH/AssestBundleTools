@@ -139,7 +139,8 @@ internal static class TextAssetEditDraftUpdateHandlerTests
             [
                 new TextAssetEditDraftRangeEditDto(6, 4, "BETA"),
                 new TextAssetEditDraftRangeEditDto(16, 0, "\nomega")
-            ]));
+            ],
+            PatchBaseline: TextAssetEditDraftPatchBaseline.Create("alpha\nbeta\ngamma")));
 
         TestAssert.True(result.IsSuccess, "Range edit update should succeed.");
         var payload = draftTextStore.LastSavedPayload ?? throw new InvalidOperationException("Expected saved payload.");
@@ -180,7 +181,8 @@ internal static class TextAssetEditDraftUpdateHandlerTests
             "draft-1",
             WorkspaceTextEditOperationRecorder.TextDraftMode,
             TextContent: null,
-            RangeEdits: [new TextAssetEditDraftRangeEditDto(20, 1, "x")]));
+            RangeEdits: [new TextAssetEditDraftRangeEditDto(20, 1, "x")],
+            PatchBaseline: TextAssetEditDraftPatchBaseline.Create("alpha")));
 
         TestAssert.True(result.IsFailure, "Invalid patch ranges should be rejected.");
         TestAssert.Equal(
@@ -191,6 +193,50 @@ internal static class TextAssetEditDraftUpdateHandlerTests
         if (changeStore.SavedChangeSet is not null)
         {
             throw new InvalidOperationException("Rejected patch update should not save the workspace change set.");
+        }
+    }
+
+    public static async Task UpdateTextAssetEditDraftHandler_ShouldRejectStaleRangePatchBaseline()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleId = new BundleId("bundle.text");
+        var assetId = new AssetId("asset.text");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            assetId,
+            AssetType.TextAsset,
+            "story.atlas"));
+        var changeStore = new TestWorkspaceChangeStore();
+        var draftTextStore = new TestAssetEditDraftTextStore
+        {
+            CurrentText = "alpha\nchanged"
+        };
+        var dataStoreFactory = new TestWorkspaceDataStoreFactory(changeStore, draftTextStore);
+        var handler = new UpdateTextAssetEditDraftHandler(registry, dataStoreFactory);
+
+        var result = await handler.HandleAsync(new UpdateTextAssetEditDraftCommand(
+            workspaceId,
+            "workspace-a",
+            @"D:\WorkspaceData\A",
+            bundleId,
+            assetId,
+            "draft-1",
+            WorkspaceTextEditOperationRecorder.TextDraftMode,
+            TextContent: null,
+            RangeEdits: [new TextAssetEditDraftRangeEditDto(6, 7, "BETA")],
+            PatchBaseline: TextAssetEditDraftPatchBaseline.Create("alpha\nbeta")));
+
+        TestAssert.True(result.IsFailure, "Patch update should reject stale editor baselines.");
+        TestAssert.Equal(
+            "Asset.EditDraft.TextPatchBaselineMismatch",
+            TestAssert.Single(result.Errors).Code,
+            "Stale patch baselines should use the documented concurrency error.");
+        TestAssert.Equal(0, draftTextStore.SaveTextPayloadCallCount, "Rejected stale patch should not save draft payload.");
+        if (changeStore.SavedChangeSet is not null)
+        {
+            throw new InvalidOperationException("Rejected stale patch should not save the workspace change set.");
         }
     }
 

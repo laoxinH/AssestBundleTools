@@ -87,6 +87,10 @@ internal static partial class ApplicationTestSuite
             TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldRejectInvalidRangeEdit);
         await RunTestAsync(
             failures,
+            nameof(TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldRejectStaleRangePatchBaseline),
+            TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldRejectStaleRangePatchBaseline);
+        await RunTestAsync(
+            failures,
             nameof(TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldRejectLargeInlinePayload),
             TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldRejectLargeInlinePayload);
         await RunTestAsync(

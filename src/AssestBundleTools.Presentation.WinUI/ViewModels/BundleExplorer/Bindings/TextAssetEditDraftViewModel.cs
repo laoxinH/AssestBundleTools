@@ -279,8 +279,17 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     public IReadOnlyList<TextAssetEditDraftRangeEditDto> CreateSaveRangeEdits() =>
         _patchState.CreateSaveRangeEdits(_lastSavedText, EditableText);
 
-    public bool CanUseEditorRangeEditBase(int baseLength) =>
-        TextAssetEditDraftPatchState.IsMatchingBaseLength(_lastSavedText, baseLength);
+    public TextAssetEditDraftPatchBaselineDto CreateSavePatchBaseline() =>
+        _patchState.CreateSavePatchBaseline(_lastSavedText);
+
+    public bool CanUseEditorRangeEditBase(int baseLength)
+    {
+        var baseline = CreateCurrentPatchBaseline();
+        return baseline.ContentLength == baseLength;
+    }
+
+    public TextAssetEditDraftPatchBaselineDto CreateCurrentPatchBaseline() =>
+        TextAssetEditDraftPatchBaseline.Create(_lastSavedText);
 
     public void MarkEditorDirty()
     {
@@ -304,9 +313,9 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
 
     public void SetEditorRangeEditsFromSurface(
         IReadOnlyList<TextAssetEditDraftRangeEditDto> rangeEdits,
-        int baseLength)
+        TextAssetEditDraftPatchBaselineDto baseline)
     {
-        _patchState.Set(rangeEdits ?? [], baseLength);
+        _patchState.Set(rangeEdits ?? [], baseline);
         _hasPendingEditorTextChanges = false;
         OnPropertyChanged(nameof(HasUnsavedChanges));
         OnPropertyChanged(nameof(CanSave));

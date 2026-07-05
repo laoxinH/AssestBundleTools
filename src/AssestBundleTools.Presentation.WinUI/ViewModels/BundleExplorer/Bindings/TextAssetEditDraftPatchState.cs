@@ -1,42 +1,48 @@
 using AssestBundleTools.Application.Editing.Dtos;
+using AssestBundleTools.Application.Editing.Services;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 internal sealed class TextAssetEditDraftPatchState
 {
     private IReadOnlyList<TextAssetEditDraftRangeEditDto>? _pendingRangeEdits;
-    private int? _pendingRangeEditBaseLength;
+    private TextAssetEditDraftPatchBaselineDto? _pendingPatchBaseline;
 
     public bool HasPendingRangeEdits => (_pendingRangeEdits?.Count ?? 0) > 0;
 
     public void Clear()
     {
         _pendingRangeEdits = null;
-        _pendingRangeEditBaseLength = null;
+        _pendingPatchBaseline = null;
     }
 
     public void Set(
         IReadOnlyList<TextAssetEditDraftRangeEditDto> rangeEdits,
-        int baseLength)
+        TextAssetEditDraftPatchBaselineDto baseline)
     {
         _pendingRangeEdits = rangeEdits.Count > 0
             ? rangeEdits.ToArray()
             : null;
-        _pendingRangeEditBaseLength = rangeEdits.Count > 0 ? baseLength : null;
+        _pendingPatchBaseline = rangeEdits.Count > 0 ? baseline : null;
     }
-
-    public static bool IsMatchingBaseLength(string lastSavedText, int baseLength) =>
-        NormalizeTextContent(lastSavedText).Length == baseLength;
 
     public IReadOnlyList<TextAssetEditDraftRangeEditDto> CreateSaveRangeEdits(
         string lastSavedText,
         string editableText)
     {
-        var normalizedSavedText = NormalizeTextContent(lastSavedText);
-        return HasPendingRangeEdits && _pendingRangeEditBaseLength == normalizedSavedText.Length
+        var baseline = TextAssetEditDraftPatchBaseline.Create(lastSavedText);
+        return HasPendingRangeEdits &&
+            _pendingPatchBaseline is not null &&
+            baseline.ContentLength == _pendingPatchBaseline.ContentLength &&
+            string.Equals(baseline.ContentSha256, _pendingPatchBaseline.ContentSha256, StringComparison.OrdinalIgnoreCase)
             ? _pendingRangeEdits!
-            : [new TextAssetEditDraftRangeEditDto(0, normalizedSavedText.Length, editableText)];
+            : [new TextAssetEditDraftRangeEditDto(0, baseline.ContentLength, editableText)];
     }
+
+    public TextAssetEditDraftPatchBaselineDto CreateSavePatchBaseline(string lastSavedText) =>
+        HasPendingRangeEdits && _pendingPatchBaseline is not null
+            ? _pendingPatchBaseline
+            : TextAssetEditDraftPatchBaseline.Create(lastSavedText);
 
     public string? TryApplyToSavedText(string lastSavedText)
     {

@@ -857,6 +857,14 @@ public static class ApplicationErrors
             parameters: CreateParameters(("Start", start), ("Length", length)),
             isUserActionable: true);
 
+    public static AppError AssetEditDraftTextPatchBaselineMismatch() =>
+        new(
+            code: "Asset.EditDraft.TextPatchBaselineMismatch",
+            category: ErrorCategory.Concurrency,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.EditDraft.TextPatchBaselineMismatch",
+            isUserActionable: true);
+
     public static AppError AssetEditAssociatedAssetNotFound(AssetId ownerAssetId, AssetId associatedAssetId) =>
         new(
             code: "Asset.EditDraft.AssociatedAssetNotFound",

@@ -17,4 +17,5 @@ public sealed record UpdateTextAssetEditDraftCommand(
     string DraftId,
     string? DraftMode,
     string? TextContent,
-    IReadOnlyList<TextAssetEditDraftRangeEditDto>? RangeEdits = null);
+    IReadOnlyList<TextAssetEditDraftRangeEditDto>? RangeEdits = null,
+    TextAssetEditDraftPatchBaselineDto? PatchBaseline = null);

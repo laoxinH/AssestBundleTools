@@ -3897,6 +3897,9 @@
   <data name="Error.Asset.EditDraft.TextPatchRangeInvalid" xml:space="preserve">
     <value>The text draft patch range is invalid (start {0}, length {1}). Reopen the editor and save again.</value>
   </data>
+  <data name="Error.Asset.EditDraft.TextPatchBaselineMismatch" xml:space="preserve">
+    <value>The text draft changed while this editor was open. Reopen or synchronize the editor, then save again.</value>
+  </data>
   <data name="Error.Asset.EditDraft.AssociatedAssetNotFound" xml:space="preserve">
     <value>The selected linked asset is not associated with the current Sprite and cannot be saved.</value>
   </data>

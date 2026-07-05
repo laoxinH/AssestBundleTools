@@ -154,6 +154,16 @@ public sealed class UpdateTextAssetEditDraftHandler
             return ApplicationErrors.AssetEditDraftTextUpdatePayloadInvalid();
         }
 
+        if (hasTextContent && command.PatchBaseline is not null)
+        {
+            return ApplicationErrors.AssetEditDraftTextUpdatePayloadInvalid();
+        }
+
+        if (hasRangeEdits && !IsValidPatchBaseline(command.PatchBaseline))
+        {
+            return ApplicationErrors.AssetEditDraftTextUpdatePayloadInvalid();
+        }
+
         if (hasTextContent && command.TextContent!.Length > AssetTextEditPolicy.InlineEditableTextLength)
         {
             return ApplicationErrors.AssetEditDraftTextLengthExceeded(AssetTextEditPolicy.InlineEditableTextLength);
@@ -178,6 +188,15 @@ public sealed class UpdateTextAssetEditDraftHandler
         return null;
     }
 
+    private static bool IsValidPatchBaseline(TextAssetEditDraftPatchBaselineDto? baseline) =>
+        baseline is not null &&
+        baseline.ContentLength >= 0 &&
+        baseline.ContentSha256.Length == 64 &&
+        baseline.ContentSha256.All(static character =>
+            character is >= '0' and <= '9' ||
+            character is >= 'a' and <= 'f' ||
+            character is >= 'A' and <= 'F');
+
     private Result<string> ResolveUpdatedTextContent(
         UpdateTextAssetEditDraftCommand command,
         string workspaceKey,
@@ -194,6 +213,11 @@ public sealed class UpdateTextAssetEditDraftHandler
         if (!currentTextResult.IsSuccess || currentTextResult.Value is null)
         {
             return currentTextResult;
+        }
+
+        if (!TextAssetEditDraftPatchBaseline.Matches(currentTextResult.Value, command.PatchBaseline!))
+        {
+            return Result<string>.Failure(ApplicationErrors.AssetEditDraftTextPatchBaselineMismatch());
         }
 
         return ApplyRangeEdits(

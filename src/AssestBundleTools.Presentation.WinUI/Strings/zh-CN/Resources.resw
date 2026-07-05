@@ -3897,6 +3897,9 @@
   <data name="Error.Asset.EditDraft.TextPatchRangeInvalid" xml:space="preserve">
     <value>文本草稿补丁范围无效（起点 {0}，长度 {1}），请重新打开编辑器后再保存。</value>
   </data>
+  <data name="Error.Asset.EditDraft.TextPatchBaselineMismatch" xml:space="preserve">
+    <value>文本草稿内容已经变化，请重新打开或同步编辑器后再保存。</value>
+  </data>
   <data name="Error.Asset.EditDraft.AssociatedAssetNotFound" xml:space="preserve">
     <value>当前 Sprite 未关联到所选资源，无法保存关联替换。</value>
   </data>

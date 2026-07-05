@@ -87,7 +87,7 @@ public sealed partial class TextAssetEditDraftView : UserControl
         if (rangeEditSync is { Edits.Count: > 0 } &&
             ViewModel.CanUseEditorRangeEditBase(rangeEditSync.BaseLength))
         {
-            ViewModel.SetEditorRangeEditsFromSurface(rangeEditSync.Edits, rangeEditSync.BaseLength);
+            ViewModel.SetEditorRangeEditsFromSurface(rangeEditSync.Edits, ViewModel.CreateCurrentPatchBaseline());
             return true;
         }
 
