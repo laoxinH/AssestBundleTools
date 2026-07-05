@@ -290,7 +290,7 @@ Preview.FullContentUnavailable
 - 文本编辑读取、搜索和草稿生命周期命令均通过 Application gateway 和 Presentation 后台 runner 执行，Presentation 不直接读取 staging 或 preview cache 路径。
 - TextAsset 已进入保存 / 导出写包计划，导出对象写包会从 `text-content` 草稿读取并写入 `m_Script`；Shader 当前作为只读大文本查看和搜索进入窗口壳，正文应用等待 Shader 写回适配器。
 - TextAsset 正文编辑当前仍有明确的全缓冲安全预算，只承载 `AssetTextEditPolicy.InlineEditableTextLength` 以内内容；超过预算的 TextAsset 与 Shader 均保持只读查看 / 搜索，后续 patch 草稿命令落地前不得把超大文本整段绑定到 ViewModel 或单次 WebView 消息。
-- 当前 `TextBox` 已收在 `TextDocumentSurfaceView` 内部，属于 WebView2 / Monaco 不可用时的 fallback；常规文本预览和 TextAsset 编辑已由 Monaco 主实现承载。下一步不应继续扩展 fallback 的编辑能力，而应补 Monaco 资源裁剪、真实压力样本验证、patch 草稿保存和 JSON / atlas / skel 格式工具。
+- 当前 `TextBox` 已收在 `TextDocumentSurfaceView` 内部，属于 WebView2 / Monaco 不可用时的 fallback；常规文本预览和 TextAsset 编辑已由 Monaco 主实现承载。Monaco 资源裁剪已完成：仓库和构建输出只保留当前 host 实际需要的 editor core、JSON、`cpp / ini` token、通用 / JSON worker、默认与 `zh-cn` NLS。下一步不应继续扩展 fallback 的编辑能力，而应进入 patch 草稿保存和 JSON / atlas / skel 格式工具；12 MB+ atlas / skel / json 的真实 UI 压力样本放到主要功能完成后的统一手测阶段。
 - 文本编辑态退出、关闭标签或关闭资源编辑窗口时，若存在未保存正文，必须复用保存 / 丢弃 / 取消确认；未应用草稿干净退出可直接丢弃未应用草稿描述。已应用 baseline 草稿重新打开后，退出或丢弃本次未保存 UI 改动只退出编辑态并保留草稿引用与 payload，不能调用 `DiscardTextAssetEditDraft` 删除仍被已应用操作和导出写包引用的内容。
 
 验收：
@@ -378,7 +378,7 @@ Preview.FullContentUnavailable
 
 推荐下一步继续沿阶段 4 的 Monaco 文本编辑器工程化和大文本编辑能力推进，然后回到阶段 2/3 做更广的预览边界收口：
 
-1. 补 WebView2 + Monaco 工程化剩余项：Monaco 资源裁剪、真实 UI 压力样本验证，以及后续如有需要的更细 Runtime 安装入口。
+1. 补 WebView2 + Monaco 工程化剩余项：主功能完成后统一记录真实 UI 压力样本，以及后续如有需要的更细 Runtime 安装入口。
 2. 在当前 Monaco 全缓冲编辑基础上接入 patch 草稿保存：分块缓冲 / range edit 命令、保存前差异摘要、未保存状态恢复，并保证超大文本不需要整段进入 ViewModel 字符串或单次 WebView 消息。
 3. 给 TextAsset 编辑器补保存前差异摘要、撤销 / 重做和多窗口同资产冲突策略；当前已能按正文脏状态提示保存 / 丢弃 / 取消，后续需要把该状态接入恢复队列和多窗口同步。
 4. 接入 JSON 美化 / 压缩 / 校验、行跳转和格式化错误定位；大型 JSON 先提供只读结构索引、范围格式化或预算外诊断，不做全量 pretty print。
@@ -387,7 +387,7 @@ Preview.FullContentUnavailable
 7. 继续盘点其它 staging-backed 文本载荷、结构化大集合和诊断文本，优先关注 TypeTree 字段树、CLI result JSON、外部工具 stdout / stderr 和插件诊断，确保它们也有预算和 reference / sidecar 边界。
 8. 在文本链路边界稳定后，进入阶段 2：把 Spine atlas 现有 guard 迁入统一 policy，并扩展到 skel JSON、TypeTree、图片、音频、Mesh 和 CLI result JSON。
 
-当前阶段性建议：下一步优先做 Monaco 工程化手动测试，确认正常启动后 `%LocalAppData%\AssestBundleTools\WebView2\TextEditor` 会生成 WebView2 用户数据、切换应用浅色 / 深色主题后 Monaco 背景和语法色跟随变化、临时移除输出目录中的 `Assets\Monaco` 会显示本地化兼容模式提示且“复制诊断”包含 Runtime / 路径 / 文档状态、12 MB JSON / atlas / skel 样本打开和关闭仍不阻塞主窗口；测试通过后继续做 Monaco 资源裁剪和真实压力样本记录，再进入 patch 草稿保存与 JSON 格式化 / 校验。
+当前阶段性建议：下一步进入 patch 草稿保存与 JSON 格式化 / 校验。主要功能完成后再统一做 Monaco 工程化手动测试：确认正常启动后 `%LocalAppData%\AssestBundleTools\WebView2\TextEditor` 会生成 WebView2 用户数据、切换应用浅色 / 深色主题后 Monaco 背景和语法色跟随变化、临时移除输出目录中的 `Assets\Monaco` 会显示本地化兼容模式提示且“复制诊断”包含 Runtime / 路径 / 文档状态、12 MB JSON / atlas / skel 样本打开和关闭仍不阻塞主窗口。
 
 ## 11. 待决问题
 

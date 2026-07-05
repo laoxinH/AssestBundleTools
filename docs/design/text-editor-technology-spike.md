@@ -63,7 +63,7 @@
 
 Monaco 主实现已经进入 `TextDocumentSurfaceView`，后续工程化收口必须满足：
 
-- Monaco 静态资源随应用离线打包，不依赖公网 CDN。
+- Monaco 静态资源随应用离线打包，不依赖公网 CDN；应用输出只复制项目文件中的 `MonacoEditorAsset` 白名单，避免完整语言包或 worker 在资源更新后被误带入发布产物。
 - WebView2 用户数据目录由应用显式管理，避免污染用户默认浏览器状态；当前 WinUI 投影未暴露桌面 `CreationProperties / CoreWebView2Environment.CreateAsync(...)` 环境重载，`TextDocumentSurfaceView` 在首次初始化前通过进程级 `WEBVIEW2_USER_DATA_FOLDER` 绑定到应用私有目录。
 - JS bridge 只传递有界 payload、range、patch 和命令结果，不传递缓存路径、替换源路径或 staging 路径。
 - 初始打开只加载受控范围或受控模型；当前 TextAsset 保存仍使用 Monaco 全缓冲安全预算，超过预算的大文本必须等 patch 草稿命令落地后再开放正文保存。
@@ -110,7 +110,8 @@ Monaco 主实现已经进入 `TextDocumentSurfaceView`，后续工程化收口�
 - 已补 WebView2 用户数据目录显式绑定、离线 Monaco 资源缺失、WebView2 初始化失败、host 页面加载失败和 JS bridge 超时的本地化 fallback 诊断；在当前 WinUI WebView2 投影限制下，用户数据目录通过进程级 `WEBVIEW2_USER_DATA_FOLDER` 在初始化前设置。
 - 已补 Monaco light / dark 主题定义，并由 `TextDocumentSurfaceView` 按 WinUI `ActualTheme` 通过 JS bridge 同步；WebView2 进程异常退出会回退原生文本视图，fallback surface 已提供复制诊断入口。
 - 已补 WebView2 Runtime 预探测：Runtime 不可用时显示安装 / 修复指引并回退原生文本视图；复制诊断会包含 Runtime 版本或失败信息、Monaco 资源目录、WebView2 用户数据目录、主题、语言和当前文档状态。
-- 待补：Monaco 资源裁剪、真实 UI 压力样本验证，以及后续若需要的更细运行时安装入口。
+- 已完成 Monaco 资源裁剪：当前仓库保留 host、license、editor core、JSON language service、通用 editor worker、JSON worker、`cpp / ini` basic-language token、默认 NLS 与 `zh-cn` NLS；`AssestBundleTools.Presentation.WinUI.csproj` 在构建时先清理输出目录中的 `Assets\Monaco`，再通过 `MonacoEditorAsset` 白名单复制资源，防止未用语言、CSS/HTML/TS worker、多余 NLS 包或增量构建残留进入输出目录。
+- 待补：主功能完成后统一做真实 UI 压力样本验证，以及后续若需要的更细运行时安装入口。
 
 ### 阶段 C：大文本虚拟化编辑和 patch 草稿
 

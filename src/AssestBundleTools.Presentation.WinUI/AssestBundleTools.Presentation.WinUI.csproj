@@ -68,13 +68,38 @@
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Monaco 通过显式白名单复制，避免重新生成资源后把未用语言带入应用输出。 -->
+    <MonacoEditorAsset Include="Assets\Monaco\abt-editor-host.html" />
+    <MonacoEditorAsset Include="Assets\Monaco\abt-editor-host.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\LICENSE.monaco-editor.txt" />
+    <MonacoEditorAsset Include="Assets\Monaco\ThirdPartyNotices.monaco-editor.txt" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\loader.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\editor.api-CalNCsUg.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\workers-DcJshg-q.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\lspLanguageFeatures-kM9O9rjY.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\monaco.contribution-DO3azKX8.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\monaco.contribution-qLAYrEOP.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\monaco.contribution-EcChJV6a.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\monaco.contribution-D2OdxNBt.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\jsonMode-DULH5oaX.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\cpp-CkKPQIni.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\ini-CsNwO04R.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\nls.messages-loader.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\nls.messages.js.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\nls.messages.zh-cn.js.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\editor\editor.main.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\editor\editor.main.css" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\assets\editor.worker-Be8ye1pW.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\assets\json.worker-DKiEKt88.js" />
+    <MonacoEditorAsset Include="Assets\Monaco\vs\basic-languages\monaco.contribution.js" />
+  </ItemGroup>
+
   <Target Name="CopyMonacoEditorAssets" AfterTargets="Build">
-    <ItemGroup>
-      <_MonacoEditorAsset Include="Assets\Monaco\**\*.*" />
-    </ItemGroup>
+    <RemoveDir Directories="$(OutDir)Assets\Monaco" Condition="Exists('$(OutDir)Assets\Monaco')" />
     <Copy
-      SourceFiles="@(_MonacoEditorAsset)"
-      DestinationFiles="@(_MonacoEditorAsset->'$(OutDir)Assets\Monaco\%(RecursiveDir)%(Filename)%(Extension)')"
+      SourceFiles="@(MonacoEditorAsset)"
+      DestinationFiles="@(MonacoEditorAsset->'$(OutDir)%(Identity)')"
       SkipUnchangedFiles="true" />
   </Target>
 </Project>

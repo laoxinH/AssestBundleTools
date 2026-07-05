@@ -27,4 +27,9 @@
     <ProjectReference Include="..\..\src\AssestBundleTools.Presentation.WinUI\AssestBundleTools.Presentation.WinUI.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Remove=".build-check\**;artifacts\**;bin\**;obj\**" />
+    <None Remove=".build-check\**;artifacts\**;bin\**;obj\**" />
+  </ItemGroup>
+
 </Project>
