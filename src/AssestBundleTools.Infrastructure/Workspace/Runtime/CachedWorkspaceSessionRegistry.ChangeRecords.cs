@@ -148,7 +148,8 @@ public sealed partial class CachedWorkspaceSessionRegistry
                 AppliedAtUtc: textEdit.AppliedAtUtc,
                 DraftId: textEdit.DraftId,
                 DraftMode: textEdit.DraftMode,
-                IsEffectiveEdit: true));
+                IsEffectiveEdit: true,
+                DraftRevision: textEdit.DraftRevision));
         }
 
         return records

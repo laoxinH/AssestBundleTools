@@ -156,7 +156,8 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
                 AppliedAtUtc: textEditAppliedAtUtc,
                 DraftId: details.TextEditDraftId,
                 DraftMode: details.TextEditDraftMode,
-                IsEffectiveEdit: true));
+                IsEffectiveEdit: true,
+                DraftRevision: details.TextEditDraftRevision));
         }
 
         return records;

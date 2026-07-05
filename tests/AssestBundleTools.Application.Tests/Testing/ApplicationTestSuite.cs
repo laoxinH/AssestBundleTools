@@ -103,6 +103,10 @@ internal static partial class ApplicationTestSuite
             TextAssetEditDraftUpdateHandlerTests.ApplyTextAssetEditDraftHandler_ShouldPreserveExistingDraftSourceFingerprint);
         await RunTestAsync(
             failures,
+            nameof(TextAssetEditDraftUpdateHandlerTests.ApplyTextAssetEditDraftHandler_ShouldRecordAppliedDraftRevision),
+            TextAssetEditDraftUpdateHandlerTests.ApplyTextAssetEditDraftHandler_ShouldRecordAppliedDraftRevision);
+        await RunTestAsync(
+            failures,
             nameof(TextAssetEditDraftUpdateHandlerTests.RecordDraftCreated_ShouldPersistDraftDtoSourceFingerprint),
             TextAssetEditDraftUpdateHandlerTests.RecordDraftCreated_ShouldPersistDraftDtoSourceFingerprint);
         await RunTestAsync(

@@ -8,11 +8,11 @@ namespace AssestBundleTools.Infrastructure.Workspace.Persistence;
 internal sealed class JsonAssetEditDraftTextSourceReader
 {
     private readonly JsonWorkspaceStoragePaths _storagePaths;
-    private readonly Func<string, string, string, JsonAssetEditDraftTextPayloadReference?> _draftResolver;
+    private readonly Func<string, string, string, int?, JsonAssetEditDraftTextPayloadReference?> _draftResolver;
 
     public JsonAssetEditDraftTextSourceReader(
         JsonWorkspaceStoragePaths storagePaths,
-        Func<string, string, string, JsonAssetEditDraftTextPayloadReference?> draftResolver)
+        Func<string, string, string, int?, JsonAssetEditDraftTextPayloadReference?> draftResolver)
     {
         _storagePaths = storagePaths ?? throw new ArgumentNullException(nameof(storagePaths));
         _draftResolver = draftResolver ?? throw new ArgumentNullException(nameof(draftResolver));
@@ -163,7 +163,8 @@ internal sealed class JsonAssetEditDraftTextSourceReader
         var sourcePayload = _draftResolver(
             sourceReference.WorkspaceKey,
             sourceReference.DraftId,
-            sourceReference.DraftMode);
+            sourceReference.DraftMode,
+            sourceReference.DraftRevision);
         return sourcePayload?.CompositeReader?.CreateReader() ??
             (!string.IsNullOrWhiteSpace(sourcePayload?.PayloadFilePath)
                 ? CreateUtf8FileReader(sourcePayload.Value.PayloadFilePath!)

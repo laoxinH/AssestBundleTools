@@ -166,6 +166,7 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
         _setBusy(true);
         try
         {
+            int? appliedDraftRevision = null;
             if (draft.HasUnsavedChanges)
             {
                 var updateCommand = new UpdateTextAssetEditDraftCommand(
@@ -187,7 +188,8 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
                     return false;
                 }
 
-                draft.MarkSaved();
+                appliedDraftRevision = updateResult.Value?.DraftRevision;
+                draft.MarkSaved(updateResult.Value?.Reference);
             }
 
             var command = new ApplyTextAssetEditDraftCommand(
@@ -197,7 +199,8 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
                 details.BundleId,
                 details.AssetId,
                 draft.DraftId,
-                draft.DraftMode);
+                draft.DraftMode,
+                appliedDraftRevision ?? draft.Reference.DraftRevision);
             var result = await _backgroundTaskRunner.RunAsync(
                 token => _workspaceAssetOperationGateway.ApplyTextAssetEditDraftAsync(command, token));
             if (!result.IsSuccess)

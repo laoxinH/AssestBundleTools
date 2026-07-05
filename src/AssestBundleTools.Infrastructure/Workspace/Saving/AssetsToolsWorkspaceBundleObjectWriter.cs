@@ -441,7 +441,8 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
                 writeItem.DraftId.Trim(),
                 draftMode,
                 offset,
-                TextDraftChunkLength);
+                TextDraftChunkLength,
+                writeItem.DraftRevision);
             if (chunk is null)
             {
                 return null;

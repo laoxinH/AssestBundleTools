@@ -119,6 +119,7 @@ public sealed record WorkspaceBundleAssetWriteItemDto(
     WorkspaceSpriteEditGeometryDto? SpriteEditGeometry = null,
     string? DraftId = null,
     string? DraftMode = null,
+    int? DraftRevision = null,
     string? WorkspaceKey = null,
     string? WorkspaceDataRootPath = null,
     string? OperationId = null,

@@ -93,7 +93,8 @@ internal static partial class GetAssetPreviewHandlerTests
         IReadOnlyList<AssetDependencyDto>? textureAssociations = null,
         string? textEditDraftId = null,
         string? textEditDraftMode = null,
-        DateTimeOffset? textEditAppliedAtUtc = null)
+        DateTimeOffset? textEditAppliedAtUtc = null,
+        int? textEditDraftRevision = null)
     {
         var hasFileReplacement = !string.IsNullOrWhiteSpace(fileReplacementSourcePath);
         var hasWorkspaceReplacement = workspaceReplacementSourceBundleId.HasValue &&
@@ -127,7 +128,8 @@ internal static partial class GetAssetPreviewHandlerTests
             WorkspaceReplacementSourceAssetId: workspaceReplacementSourceAssetId,
             TextEditDraftId: textEditDraftId,
             TextEditDraftMode: textEditDraftMode,
-            TextEditAppliedAtUtc: textEditAppliedAtUtc);
+            TextEditAppliedAtUtc: textEditAppliedAtUtc,
+            TextEditDraftRevision: textEditDraftRevision);
     }
 
     private static BundleIndexAssetCacheEntryDto CreateAssetCacheEntry(string assetId)

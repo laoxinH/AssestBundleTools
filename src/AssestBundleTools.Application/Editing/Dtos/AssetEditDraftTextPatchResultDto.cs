@@ -16,11 +16,12 @@ public sealed record AssetEditDraftTextPatchResultDto(
     AssetEditDraftTextPatchStatus Status,
     int TextLength = 0,
     long ContentLength = 0,
+    int? Revision = null,
     int? InvalidRangeStart = null,
     int? InvalidRangeLength = null)
 {
-    public static AssetEditDraftTextPatchResultDto Applied(int textLength, long contentLength) =>
-        new(AssetEditDraftTextPatchStatus.Applied, textLength, contentLength);
+    public static AssetEditDraftTextPatchResultDto Applied(int textLength, long contentLength, int revision) =>
+        new(AssetEditDraftTextPatchStatus.Applied, textLength, contentLength, revision);
 
     public static AssetEditDraftTextPatchResultDto NotFound() =>
         new(AssetEditDraftTextPatchStatus.NotFound);

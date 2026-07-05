@@ -18,4 +18,5 @@ public sealed record AssetTextEditDraftUpdatedResultDto(
     string DraftId,
     string DraftMode,
     AssetPreviewFullContentReferenceDto Reference,
-    DateTimeOffset UpdatedAtUtc);
+    DateTimeOffset UpdatedAtUtc,
+    int? DraftRevision = null);

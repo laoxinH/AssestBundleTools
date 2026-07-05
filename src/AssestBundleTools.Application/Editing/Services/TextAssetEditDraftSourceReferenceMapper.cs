@@ -27,7 +27,8 @@ internal static class TextAssetEditDraftSourceReferenceMapper
             NormalizeOptional(reference.PreviewCacheKey),
             NormalizeOptional(reference.SourcePath),
             NormalizeOptional(reference.DraftId),
-            NormalizeOptional(reference.DraftMode));
+            NormalizeOptional(reference.DraftMode),
+            reference.DraftRevision);
     }
 
     public static AssetPreviewFullContentReferenceDto? ToPreviewReference(
@@ -53,7 +54,8 @@ internal static class TextAssetEditDraftSourceReferenceMapper
             NormalizeOptional(reference.PreviewCacheKey),
             NormalizeOptional(reference.SourcePath),
             NormalizeOptional(reference.DraftId),
-            NormalizeOptional(reference.DraftMode));
+            NormalizeOptional(reference.DraftMode),
+            reference.DraftRevision);
     }
 
     private static string NormalizeRequired(string? value) =>

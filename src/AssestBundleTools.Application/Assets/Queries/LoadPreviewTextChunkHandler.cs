@@ -179,7 +179,8 @@ public sealed class LoadPreviewTextChunkHandler : IQueryHandler<LoadPreviewTextC
             query.Reference.DraftId,
             query.Reference.DraftMode,
             query.Offset,
-            requestedLength);
+            requestedLength,
+            query.Reference.DraftRevision);
         if (chunk is null)
         {
             return Task.FromResult(Result<AssetPreviewTextChunkDto>.Failure(
@@ -192,7 +193,8 @@ public sealed class LoadPreviewTextChunkHandler : IQueryHandler<LoadPreviewTextC
             ContentType = chunk.Descriptor.ContentType,
             ContentLength = chunk.ContentLength,
             DraftId = query.Reference.DraftId,
-            DraftMode = query.Reference.DraftMode
+            DraftMode = query.Reference.DraftMode,
+            DraftRevision = query.Reference.DraftRevision
         };
 
         return Task.FromResult(Result<AssetPreviewTextChunkDto>.Success(new AssetPreviewTextChunkDto(

@@ -381,14 +381,18 @@ internal static partial class GetAssetPreviewHandlerTests
 
         public int SearchTextCallCount { get; private set; }
 
+        public int? LastRevision { get; private set; }
+
         public PreviewCacheTextChunkDto? LoadTextChunk(
             string workspaceKey,
             string draftId,
             string draftMode,
             int offset,
-            int length)
+            int length,
+            int? revision = null)
         {
             LoadTextChunkCallCount++;
+            LastRevision = revision;
             return ReadTextChunk(workspaceKey, offset, length);
         }
 
@@ -397,9 +401,11 @@ internal static partial class GetAssetPreviewHandlerTests
             string draftId,
             string draftMode,
             int startLineIndex,
-            int lineCount)
+            int lineCount,
+            int? revision = null)
         {
             LoadTextLinesCallCount++;
+            LastRevision = revision;
             return ReadTextLines(workspaceKey, startLineIndex, lineCount);
         }
 
@@ -410,9 +416,11 @@ internal static partial class GetAssetPreviewHandlerTests
             string searchText,
             int startLineIndex,
             int maxMatchCount,
-            bool matchCase)
+            bool matchCase,
+            int? revision = null)
         {
             SearchTextCallCount++;
+            LastRevision = revision;
             return ReadTextSearch(workspaceKey, searchText, startLineIndex, maxMatchCount, matchCase);
         }
 

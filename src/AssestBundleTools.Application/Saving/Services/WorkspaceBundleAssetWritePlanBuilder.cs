@@ -269,6 +269,7 @@ internal sealed class WorkspaceBundleAssetWritePlanBuilder
             SourceKindTextDraft,
             DraftId: edit.DraftId,
             DraftMode: edit.DraftMode ?? WorkspaceTextEditOperationRecorder.TextDraftMode,
+            DraftRevision: edit.DraftRevision,
             WorkspaceKey: workspaceKey.Trim(),
             WorkspaceDataRootPath: workspaceDataRootPath.Trim(),
             OperationId: edit.OperationId,

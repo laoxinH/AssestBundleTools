@@ -342,6 +342,7 @@ public sealed partial class InMemoryWorkspaceSessionRegistry
     private sealed record AppliedTextEditState(
         string DraftId,
         string DraftMode,
+        int? DraftRevision,
         DateTimeOffset AppliedAtUtc);
 
     private sealed record AppliedReplacementSnapshot(

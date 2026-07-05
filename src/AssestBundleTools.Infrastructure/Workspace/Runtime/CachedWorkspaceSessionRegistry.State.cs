@@ -280,6 +280,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
     private sealed record AppliedTextEditState(
         string DraftId,
         string DraftMode,
+        int? DraftRevision,
         DateTimeOffset AppliedAtUtc);
 
     private sealed record AppliedReplacementSnapshot(

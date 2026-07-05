@@ -61,6 +61,7 @@ public sealed class ApplyTextAssetEditDraftHandler : ICommandHandler<ApplyTextAs
                 command.AssetId,
                 command.DraftId.Trim(),
                 NormalizeDraftMode(command.DraftMode),
+                command.DraftRevision,
                 out var result) ||
             result is null)
         {

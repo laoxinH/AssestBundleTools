@@ -16,4 +16,5 @@ public sealed record AssetTextEditAppliedResultDto(
     string? AssetTypeDisplayName,
     string DraftId,
     string DraftMode,
-    DateTimeOffset AppliedAtUtc);
+    DateTimeOffset AppliedAtUtc,
+    int? DraftRevision = null);

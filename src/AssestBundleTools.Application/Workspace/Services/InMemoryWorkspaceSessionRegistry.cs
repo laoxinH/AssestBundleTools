@@ -202,7 +202,8 @@ public sealed partial class InMemoryWorkspaceSessionRegistry : IWorkspaceSession
                 SpriteEditAppliedAtUtc: assetState.AppliedSpriteEdit?.AppliedAtUtc,
                 TextEditDraftId: assetState.AppliedTextEdit?.DraftId,
                 TextEditDraftMode: assetState.AppliedTextEdit?.DraftMode,
-                TextEditAppliedAtUtc: assetState.AppliedTextEdit?.AppliedAtUtc);
+                TextEditAppliedAtUtc: assetState.AppliedTextEdit?.AppliedAtUtc,
+                TextEditDraftRevision: assetState.AppliedTextEdit?.DraftRevision);
 
             return true;
         }

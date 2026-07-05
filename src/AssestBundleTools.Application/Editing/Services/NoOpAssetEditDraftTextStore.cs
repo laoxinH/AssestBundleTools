@@ -19,14 +19,16 @@ public sealed class NoOpAssetEditDraftTextStore : IAssetEditDraftTextStore
         string draftId,
         string draftMode,
         int offset,
-        int length) => null;
+        int length,
+        int? revision = null) => null;
 
     public PreviewCacheTextLineRangeDto? LoadTextLines(
         string workspaceKey,
         string draftId,
         string draftMode,
         int startLineIndex,
-        int lineCount) => null;
+        int lineCount,
+        int? revision = null) => null;
 
     public PreviewCacheTextSearchResultDto? SearchText(
         string workspaceKey,
@@ -35,7 +37,8 @@ public sealed class NoOpAssetEditDraftTextStore : IAssetEditDraftTextStore
         string searchText,
         int startLineIndex,
         int maxMatchCount,
-        bool matchCase) => null;
+        bool matchCase,
+        int? revision = null) => null;
 
     public void SaveTextPayload(AssetEditDraftTextPayloadDto payload)
     {

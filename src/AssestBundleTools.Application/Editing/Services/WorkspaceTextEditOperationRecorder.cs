@@ -116,7 +116,8 @@ public sealed class WorkspaceTextEditOperationRecorder
                 Result: new WorkspaceOperationResultDto(
                     DraftId: result.DraftId,
                     AffectedBundleIds: [targetDetails.BundleId.Value],
-                    AffectedAssetIds: [targetDetails.AssetId.Value]),
+                    AffectedAssetIds: [targetDetails.AssetId.Value],
+                    DraftRevision: result.DraftRevision),
                 CreatedAtUtc: result.AppliedAtUtc,
                 AppliedAtUtc: result.AppliedAtUtc,
                 CompletedAtUtc: result.AppliedAtUtc));
@@ -164,7 +165,8 @@ public sealed class WorkspaceTextEditOperationRecorder
                 Result: new WorkspaceOperationResultDto(
                     DraftId: result.DraftId,
                     AffectedBundleIds: [targetDetails.BundleId.Value],
-                    AffectedAssetIds: [targetDetails.AssetId.Value]),
+                    AffectedAssetIds: [targetDetails.AssetId.Value],
+                    DraftRevision: result.DraftRevision),
                 CreatedAtUtc: result.UpdatedAtUtc,
                 AppliedAtUtc: result.UpdatedAtUtc,
                 CompletedAtUtc: result.UpdatedAtUtc));

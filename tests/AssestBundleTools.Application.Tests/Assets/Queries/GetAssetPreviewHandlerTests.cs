@@ -256,6 +256,7 @@ internal static partial class GetAssetPreviewHandlerTests
         const string editedText = "hero.png\nsize: 512,256\nhead\n  xy: 1, 2\n";
         const string draftId = "draft-text-1";
         const string draftMode = "text-content";
+        const int draftRevision = 2;
         var appliedAtUtc = new DateTimeOffset(2026, 7, 5, 9, 0, 0, TimeSpan.Zero);
 
         var query = CreateQuery();
@@ -296,7 +297,8 @@ internal static partial class GetAssetPreviewHandlerTests
                     assetType: AssetType.TextAsset,
                     textEditDraftId: draftId,
                     textEditDraftMode: draftMode,
-                    textEditAppliedAtUtc: appliedAtUtc)
+                    textEditAppliedAtUtc: appliedAtUtc,
+                    textEditDraftRevision: draftRevision)
             ]),
             new TestWorkspaceDataStoreFactory(
                 new TestBundleIndexCacheStore([bundleCacheEntry]),
@@ -318,8 +320,10 @@ internal static partial class GetAssetPreviewHandlerTests
             "Applied text edit preview should expose an edit-draft full content reference.");
         TestAssert.Equal(draftId, preview.FullContentReference?.DraftId, "Edit-draft reference should carry the applied draft id.");
         TestAssert.Equal(draftMode, preview.FullContentReference?.DraftMode, "Edit-draft reference should carry the applied draft mode.");
+        TestAssert.Equal(draftRevision, preview.FullContentReference?.DraftRevision, "Edit-draft reference should carry the applied draft revision.");
         TestAssert.Equal(appliedAtUtc, preview.GeneratedAtUtc, "Applied text edit preview should use the applied timestamp.");
         TestAssert.Equal(1, draftTextStore.LoadTextChunkCallCount, "Applied text edit preview should read the draft text store.");
+        TestAssert.Equal(draftRevision, draftTextStore.LastRevision, "Applied text edit preview should read the revision selected by operation replay.");
         TestAssert.Equal(0, previewCacheStore.LoadCallCount, "Applied text edit preview should not read stale original preview cache.");
         TestAssert.Equal(0, decryptor.DecryptCallCount, "Applied text edit preview should not decrypt the original bundle.");
         TestAssert.Equal(0, generator.GenerateCallCount, "Applied text edit preview should not generate original preview content.");

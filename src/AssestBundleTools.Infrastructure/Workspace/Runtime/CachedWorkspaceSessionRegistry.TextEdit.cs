@@ -14,6 +14,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
         AssetId assetId,
         string draftId,
         string draftMode,
+        int? draftRevision,
         out AssetTextEditAppliedResultDto? editResult)
     {
         lock (_syncRoot)
@@ -38,6 +39,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
                 new AppliedTextEditState(
                     normalizedDraftId,
                     normalizedDraftMode,
+                    draftRevision,
                     appliedAtUtc));
 
             editResult = new AssetTextEditAppliedResultDto(
@@ -49,7 +51,8 @@ public sealed partial class CachedWorkspaceSessionRegistry
                 AssetTypeDisplayName: assetState.AssetTypeDisplayName,
                 DraftId: normalizedDraftId,
                 DraftMode: normalizedDraftMode,
-                AppliedAtUtc: appliedAtUtc);
+                AppliedAtUtc: appliedAtUtc,
+                DraftRevision: draftRevision);
 
             return true;
         }

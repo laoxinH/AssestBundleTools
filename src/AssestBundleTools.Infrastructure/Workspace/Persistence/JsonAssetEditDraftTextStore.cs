@@ -32,7 +32,11 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
             : new JsonWorkspaceStoragePaths(rootDirectoryPath);
         _sourceReader = new JsonAssetEditDraftTextSourceReader(
             _storagePaths,
-            (workspaceKey, draftId, draftMode) => TryResolvePayload(workspaceKey, draftId, draftMode));
+            (workspaceKey, draftId, draftMode, revision) => TryResolvePayload(
+                workspaceKey,
+                draftId,
+                draftMode,
+                revision: revision));
         _baseSnapshotWriter = new JsonAssetEditDraftTextBaseSnapshotWriter(_sourceReader);
     }
 
@@ -41,14 +45,15 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
         string draftId,
         string draftMode,
         int offset,
-        int length)
+        int length,
+        int? revision = null)
     {
         if (offset < 0 || length <= 0)
         {
             return null;
         }
 
-        var payload = TryResolvePayload(workspaceKey, draftId, draftMode);
+        var payload = TryResolvePayload(workspaceKey, draftId, draftMode, revision: revision);
         if (payload is null)
         {
             return null;
@@ -70,14 +75,15 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
         string draftId,
         string draftMode,
         int startLineIndex,
-        int lineCount)
+        int lineCount,
+        int? revision = null)
     {
         if (startLineIndex < 0 || lineCount <= 0)
         {
             return null;
         }
 
-        var payload = TryResolvePayload(workspaceKey, draftId, draftMode);
+        var payload = TryResolvePayload(workspaceKey, draftId, draftMode, revision: revision);
         if (payload is null)
         {
             return null;
@@ -101,7 +107,8 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
         string searchText,
         int startLineIndex,
         int maxMatchCount,
-        bool matchCase)
+        bool matchCase,
+        int? revision = null)
     {
         if (string.IsNullOrEmpty(searchText) ||
             startLineIndex < 0 ||
@@ -110,7 +117,7 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
             return null;
         }
 
-        var payload = TryResolvePayload(workspaceKey, draftId, draftMode);
+        var payload = TryResolvePayload(workspaceKey, draftId, draftMode, revision: revision);
         if (payload is null)
         {
             return null;
@@ -227,7 +234,10 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
                 patchManifestFilePath,
                 updatedManifest,
                 JsonWorkspaceSerialization.SerializerOptions);
-            return AssetEditDraftTextPatchResultDto.Applied(statistics.TextLength, statistics.ContentLength);
+            return AssetEditDraftTextPatchResultDto.Applied(
+                statistics.TextLength,
+                statistics.ContentLength,
+                updatedManifest.Patches?.Count ?? 0);
         }
     }
 
@@ -254,7 +264,8 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
         string workspaceKey,
         string draftId,
         string draftMode,
-        WorkspaceAssetEditDraftSourceReferenceDto? sourceReference = null)
+        WorkspaceAssetEditDraftSourceReferenceDto? sourceReference = null,
+        int? revision = null)
     {
         var draftDirectoryPath = TryGetDraftDirectoryPath(workspaceKey, draftId, draftMode);
         if (string.IsNullOrWhiteSpace(draftDirectoryPath))
@@ -275,6 +286,7 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
         if (manifest is not null &&
             IsValidPatchManifest(manifest, workspaceKey, draftId, draftMode))
         {
+            manifest = ApplyRevision(manifest, revision);
             var manifestDescriptor = descriptor is not null && IsMatchingDescriptor(descriptor, workspaceKey, draftId, draftMode)
                 ? descriptor
                 : CreateDescriptorFromManifest(manifest);
@@ -478,6 +490,58 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
             SourceDescription = patch.SourceDescription ?? baseManifest.SourceDescription,
             Summary = patch.Summary ?? baseManifest.Summary
         };
+    }
+
+    private JsonAssetEditDraftTextPatchManifestDto ApplyRevision(
+        JsonAssetEditDraftTextPatchManifestDto manifest,
+        int? revision)
+    {
+        if (revision is null)
+        {
+            return manifest;
+        }
+
+        var patchCount = manifest.Patches?.Count ?? 0;
+        var normalizedRevision = Math.Clamp(revision.Value, 0, patchCount);
+        if (normalizedRevision == patchCount)
+        {
+            return manifest;
+        }
+
+        var revisedManifest = manifest with
+        {
+            Patches = (manifest.Patches ?? Array.Empty<JsonAssetEditDraftTextPatchEntryDto>())
+                .Take(normalizedRevision)
+                .ToArray()
+        };
+        var baseReaderFactory = CreateBaseReaderFactory(
+            GetDraftDirectoryPath(manifest.WorkspaceKey, manifest.DraftId, manifest.DraftMode),
+            revisedManifest);
+        if (baseReaderFactory is null)
+        {
+            return revisedManifest;
+        }
+
+        using var reader = new JsonAssetEditDraftTextCompositeReader(baseReaderFactory, revisedManifest).CreateReader();
+        if (reader is null)
+        {
+            return revisedManifest;
+        }
+
+        var statistics = JsonAssetEditDraftTextReadSupport.CalculateStatistics(
+            reader,
+            int.MaxValue,
+            out _);
+        return statistics is null
+            ? revisedManifest
+            : revisedManifest with
+            {
+                TextLength = statistics.TextLength,
+                ContentLength = statistics.ContentLength,
+                LineCount = statistics.LineCount,
+                ContentSha256 = statistics.ContentSha256,
+                UpdatedAtUtc = revisedManifest.Patches.LastOrDefault()?.AppliedAtUtc ?? manifest.UpdatedAtUtc
+            };
     }
 
     private JsonAssetEditDraftTextPatchManifestDto CreatePayloadBaseManifest(

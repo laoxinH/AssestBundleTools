@@ -13,14 +13,16 @@ public interface IAssetEditDraftTextStore
         string draftId,
         string draftMode,
         int offset,
-        int length);
+        int length,
+        int? revision = null);
 
     PreviewCacheTextLineRangeDto? LoadTextLines(
         string workspaceKey,
         string draftId,
         string draftMode,
         int startLineIndex,
-        int lineCount);
+        int lineCount,
+        int? revision = null);
 
     PreviewCacheTextSearchResultDto? SearchText(
         string workspaceKey,
@@ -29,7 +31,8 @@ public interface IAssetEditDraftTextStore
         string searchText,
         int startLineIndex,
         int maxMatchCount,
-        bool matchCase);
+        bool matchCase,
+        int? revision = null);
 
     void SaveTextPayload(AssetEditDraftTextPayloadDto payload);
 

@@ -177,7 +177,8 @@ public sealed class LoadPreviewTextLinesHandler : IQueryHandler<LoadPreviewTextL
             query.Reference.DraftId,
             query.Reference.DraftMode,
             query.StartLineIndex,
-            requestedLineCount);
+            requestedLineCount,
+            query.Reference.DraftRevision);
         if (lines is null)
         {
             return Task.FromResult(Result<AssetPreviewTextLineRangeDto>.Failure(
@@ -190,7 +191,8 @@ public sealed class LoadPreviewTextLinesHandler : IQueryHandler<LoadPreviewTextL
             ContentType = lines.Descriptor.ContentType,
             ContentLength = lines.ContentLength,
             DraftId = query.Reference.DraftId,
-            DraftMode = query.Reference.DraftMode
+            DraftMode = query.Reference.DraftMode,
+            DraftRevision = query.Reference.DraftRevision
         };
 
         return Task.FromResult(Result<AssetPreviewTextLineRangeDto>.Success(new AssetPreviewTextLineRangeDto(

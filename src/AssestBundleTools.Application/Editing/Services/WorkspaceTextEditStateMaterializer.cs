@@ -31,7 +31,8 @@ public sealed class WorkspaceTextEditStateMaterializer
                 operation.Target!,
                 draftId,
                 draftMode,
-                operation.AppliedAtUtc ?? operation.CompletedAtUtc ?? operation.CreatedAtUtc);
+                operation.AppliedAtUtc ?? operation.CompletedAtUtc ?? operation.CreatedAtUtc,
+                operation.Result?.DraftRevision);
         }
 
         return new WorkspaceTextEditMaterializedStateDto(
@@ -121,4 +122,5 @@ public sealed record WorkspaceEffectiveTextEditDto(
     WorkspaceOperationTargetDto Target,
     string DraftId,
     string DraftMode,
-    DateTimeOffset AppliedAtUtc);
+    DateTimeOffset AppliedAtUtc,
+    int? DraftRevision = null);

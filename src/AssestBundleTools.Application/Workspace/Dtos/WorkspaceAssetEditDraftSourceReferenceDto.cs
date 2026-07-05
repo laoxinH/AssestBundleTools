@@ -11,4 +11,5 @@ public sealed record WorkspaceAssetEditDraftSourceReferenceDto(
     string? PreviewCacheKey = null,
     string? SourcePath = null,
     string? DraftId = null,
-    string? DraftMode = null);
+    string? DraftMode = null,
+    int? DraftRevision = null);

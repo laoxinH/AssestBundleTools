@@ -298,6 +298,16 @@ internal static class JsonAssetEditDraftTextStoreTests
 
         TestAssert.Equal(AssetEditDraftTextPatchStatus.Applied, first.Status, "First patch should be accepted.");
         TestAssert.Equal(AssetEditDraftTextPatchStatus.Applied, second.Status, "Second patch should be accepted against patched baseline.");
+        TestAssert.Equal(1, first.Revision, "First patch should expose revision 1.");
+        TestAssert.Equal(2, second.Revision, "Second patch should expose revision 2.");
+        var firstRevisionChunk = TestAssert.NotNull(
+            store.LoadTextChunk("workspace-a", "draft-multi-patch", "text", 0, 64, revision: first.Revision),
+            "First patch revision should be readable.");
+        TestAssert.Equal("alpha\nBETA\ngamma", firstRevisionChunk.Text, "Revision 1 should replay only the first patch.");
+        var baseRevisionChunk = TestAssert.NotNull(
+            store.LoadTextChunk("workspace-a", "draft-multi-patch", "text", 0, 64, revision: 0),
+            "Base revision should be readable.");
+        TestAssert.Equal("alpha\nbeta\ngamma", baseRevisionChunk.Text, "Revision 0 should expose the stable base text.");
         var chunk = TestAssert.NotNull(
             store.LoadTextChunk("workspace-a", "draft-multi-patch", "text", 0, 64),
             "Multi-patch draft should be readable.");

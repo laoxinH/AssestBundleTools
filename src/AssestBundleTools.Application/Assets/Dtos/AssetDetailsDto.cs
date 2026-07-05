@@ -46,4 +46,5 @@ public sealed record AssetDetailsDto(
     DateTimeOffset? SpriteEditAppliedAtUtc = null,
     string? TextEditDraftId = null,
     string? TextEditDraftMode = null,
-    DateTimeOffset? TextEditAppliedAtUtc = null);
+    DateTimeOffset? TextEditAppliedAtUtc = null,
+    int? TextEditDraftRevision = null);

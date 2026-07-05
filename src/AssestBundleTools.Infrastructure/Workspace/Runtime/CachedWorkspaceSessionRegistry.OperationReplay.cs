@@ -309,6 +309,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
             new AppliedTextEditState(
                 operation.Source?.DraftId ?? operation.Result?.DraftId ?? operation.OperationId,
                 operation.Source?.DraftMode ?? WorkspaceTextEditOperationRecorder.TextDraftMode,
+                operation.Result?.DraftRevision,
                 operation.AppliedAtUtc ?? operation.CompletedAtUtc ?? operation.CreatedAtUtc));
     }
 }

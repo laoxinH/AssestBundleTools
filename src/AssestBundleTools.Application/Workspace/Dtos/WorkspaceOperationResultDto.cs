@@ -14,4 +14,5 @@ public sealed record WorkspaceOperationResultDto(
     IReadOnlyList<string>? AffectedAssetIds = null,
     int? CompletedCount = null,
     int? FailedCount = null,
-    WorkspaceSpriteEditGeometryDto? SpriteEditGeometry = null);
+    WorkspaceSpriteEditGeometryDto? SpriteEditGeometry = null,
+    int? DraftRevision = null);

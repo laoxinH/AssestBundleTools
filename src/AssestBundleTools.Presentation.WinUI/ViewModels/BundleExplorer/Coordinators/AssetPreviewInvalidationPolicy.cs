@@ -47,6 +47,7 @@ internal static class AssetPreviewInvalidationPolicy
                    previousDetails.TextEditDraftMode,
                    currentDetails.TextEditDraftMode,
                    StringComparison.Ordinal) ||
+               previousDetails.TextEditDraftRevision != currentDetails.TextEditDraftRevision ||
                previousDetails.TextEditAppliedAtUtc != currentDetails.TextEditAppliedAtUtc ||
                GetLatestTextEditRecordTimestamp(previousDetails) !=
                GetLatestTextEditRecordTimestamp(currentDetails) ||

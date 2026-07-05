@@ -93,10 +93,11 @@ public sealed class UpdateTextAssetEditDraftHandler
         var reference = new AssetPreviewFullContentReferenceDto(
             AssetPreviewFullContentReferenceKind.EditDraft,
             contentType,
-            contentLengthResult.Value,
+            contentLengthResult.Value.ContentLength,
             workspaceKey,
             DraftId: draftId,
-            DraftMode: draftMode);
+            DraftMode: draftMode,
+            DraftRevision: contentLengthResult.Value.DraftRevision);
         var result = new AssetTextEditDraftUpdatedResultDto(
             command.WorkspaceId,
             command.BundleId,
@@ -107,7 +108,8 @@ public sealed class UpdateTextAssetEditDraftHandler
             draftId,
             draftMode,
             reference,
-            updatedAtUtc);
+            updatedAtUtc,
+            contentLengthResult.Value.DraftRevision);
 
         _operationRecorder?.RecordDraftUpdated(command, targetDetails, result);
         return Task.FromResult(Result<AssetTextEditDraftUpdatedResultDto>.Success(result));
@@ -196,7 +198,7 @@ public sealed class UpdateTextAssetEditDraftHandler
             character is >= 'a' and <= 'f' ||
             character is >= 'A' and <= 'F');
 
-    private static Result<long> SaveUpdatedTextContent(
+    private static Result<UpdatedTextContentResult> SaveUpdatedTextContent(
         UpdateTextAssetEditDraftCommand command,
         string workspaceKey,
         string draftId,
@@ -221,7 +223,9 @@ public sealed class UpdateTextAssetEditDraftHandler
                 SourceFingerprint: sourceFingerprint,
                 SourceDescription: targetDetails.Name,
                 Summary: targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString()));
-            return Result<long>.Success(Encoding.UTF8.GetByteCount(normalizedText));
+            return Result<UpdatedTextContentResult>.Success(new UpdatedTextContentResult(
+                Encoding.UTF8.GetByteCount(normalizedText),
+                DraftRevision: 0));
         }
 
         var patchResult = draftTextStore.ApplyTextPatch(new AssetEditDraftTextPatchDto(
@@ -239,18 +243,20 @@ public sealed class UpdateTextAssetEditDraftHandler
             SourceReference: sourceReference));
         return patchResult.Status switch
         {
-            AssetEditDraftTextPatchStatus.Applied => Result<long>.Success(patchResult.ContentLength),
-            AssetEditDraftTextPatchStatus.NotFound => Result<long>.Failure(
+            AssetEditDraftTextPatchStatus.Applied => Result<UpdatedTextContentResult>.Success(new UpdatedTextContentResult(
+                patchResult.ContentLength,
+                patchResult.Revision)),
+            AssetEditDraftTextPatchStatus.NotFound => Result<UpdatedTextContentResult>.Failure(
                 ApplicationErrors.AssetEditDraftNotFound(workspaceKey, draftId, draftMode)),
-            AssetEditDraftTextPatchStatus.BaselineMismatch => Result<long>.Failure(
+            AssetEditDraftTextPatchStatus.BaselineMismatch => Result<UpdatedTextContentResult>.Failure(
                 ApplicationErrors.AssetEditDraftTextPatchBaselineMismatch()),
-            AssetEditDraftTextPatchStatus.RangeInvalid => Result<long>.Failure(
+            AssetEditDraftTextPatchStatus.RangeInvalid => Result<UpdatedTextContentResult>.Failure(
                 ApplicationErrors.AssetEditDraftTextPatchRangeInvalid(
                     patchResult.InvalidRangeStart ?? -1,
                     patchResult.InvalidRangeLength ?? -1)),
-            AssetEditDraftTextPatchStatus.LengthExceeded => Result<long>.Failure(
+            AssetEditDraftTextPatchStatus.LengthExceeded => Result<UpdatedTextContentResult>.Failure(
                 ApplicationErrors.AssetEditDraftTextLengthExceeded(AssetTextEditPolicy.InlineEditableTextLength)),
-            _ => Result<long>.Failure(ApplicationErrors.AssetEditDraftTextUpdatePayloadInvalid())
+            _ => Result<UpdatedTextContentResult>.Failure(ApplicationErrors.AssetEditDraftTextUpdatePayloadInvalid())
         };
     }
 
@@ -299,4 +305,8 @@ public sealed class UpdateTextAssetEditDraftHandler
     private static string NormalizeTextContent(string textContent) =>
         textContent.Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
+
+    private readonly record struct UpdatedTextContentResult(
+        long ContentLength,
+        int? DraftRevision);
 }

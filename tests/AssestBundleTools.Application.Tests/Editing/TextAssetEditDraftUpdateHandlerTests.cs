@@ -363,6 +363,58 @@ internal static class TextAssetEditDraftUpdateHandlerTests
         TestAssert.Equal(existingFingerprint, descriptor.SourceFingerprint, "Draft apply should preserve the existing source fingerprint for restore validation.");
     }
 
+    public static async Task ApplyTextAssetEditDraftHandler_ShouldRecordAppliedDraftRevision()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        const string workspaceKey = "workspace-a";
+        const string workspaceDataRootPath = @"D:\WorkspaceData\A";
+        var bundleId = new BundleId("bundle.text");
+        var assetId = new AssetId("asset.text");
+        const int draftRevision = 3;
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            assetId,
+            AssetType.TextAsset,
+            "story.json"));
+        var changeStore = new TestWorkspaceChangeStore
+        {
+            ChangeSet = new WorkspaceChangeSetDto(
+                WorkspaceKey: workspaceKey,
+                UpdatedAtUtc: new DateTimeOffset(2026, 6, 1, 10, 0, 0, TimeSpan.Zero),
+                Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+                EditDrafts:
+                [
+                    new WorkspaceAssetEditDraftDescriptorDto(
+                        DraftId: "draft-1",
+                        DraftMode: WorkspaceTextEditOperationRecorder.TextDraftMode,
+                        SourceFingerprint: "source-v1",
+                        UpdatedAtUtc: new DateTimeOffset(2026, 6, 1, 10, 0, 0, TimeSpan.Zero))
+                ],
+                Operations: Array.Empty<WorkspaceOperationRecordDto>())
+        };
+        var dataStoreFactory = new TestWorkspaceDataStoreFactory(changeStore, new TestAssetEditDraftTextStore());
+        var recorder = new WorkspaceTextEditOperationRecorder(dataStoreFactory, new WorkspaceOperationLogService());
+        var handler = new ApplyTextAssetEditDraftHandler(registry, registry, recorder);
+
+        var result = await handler.HandleAsync(new ApplyTextAssetEditDraftCommand(
+            workspaceId,
+            workspaceKey,
+            workspaceDataRootPath,
+            bundleId,
+            assetId,
+            "draft-1",
+            WorkspaceTextEditOperationRecorder.TextDraftMode,
+            draftRevision));
+
+        TestAssert.True(result.IsSuccess, "Applying a TextAsset draft revision should succeed.");
+        TestAssert.Equal(draftRevision, result.Value?.DraftRevision, "Apply result should carry the requested draft revision.");
+        var savedOperation = TestAssert.Single(changeStore.SavedChangeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>());
+        TestAssert.Equal(WorkspaceOperationKind.EditDraftApplied, savedOperation.OperationKind, "Draft apply should append an applied operation.");
+        TestAssert.Equal(draftRevision, savedOperation.Result?.DraftRevision, "Applied operation should persist the exact draft revision.");
+    }
+
     public static Task RecordDraftCreated_ShouldPersistDraftDtoSourceFingerprint()
     {
         var workspaceId = new WorkspaceId("workspace-session-1");
@@ -626,7 +678,8 @@ internal static class TextAssetEditDraftUpdateHandlerTests
             string draftId,
             string draftMode,
             int offset,
-            int length)
+            int length,
+            int? revision = null)
         {
             LoadTextChunkCallCount++;
             if (CurrentText is null ||
@@ -668,7 +721,8 @@ internal static class TextAssetEditDraftUpdateHandlerTests
             string draftId,
             string draftMode,
             int startLineIndex,
-            int lineCount) =>
+            int lineCount,
+            int? revision = null) =>
             throw new NotSupportedException();
 
         public PreviewCacheTextSearchResultDto? SearchText(
@@ -678,7 +732,8 @@ internal static class TextAssetEditDraftUpdateHandlerTests
             string searchText,
             int startLineIndex,
             int maxMatchCount,
-            bool matchCase) =>
+            bool matchCase,
+            int? revision = null) =>
             throw new NotSupportedException();
 
         public void SaveTextPayload(AssetEditDraftTextPayloadDto payload)
@@ -736,7 +791,7 @@ internal static class TextAssetEditDraftUpdateHandlerTests
                 patch.SourceFingerprint,
                 patch.SourceDescription,
                 patch.Summary);
-            return AssetEditDraftTextPatchResultDto.Applied(patchedText.Length, patchedText.Length);
+            return AssetEditDraftTextPatchResultDto.Applied(patchedText.Length, patchedText.Length, revision: 1);
         }
 
         public void Delete(string workspaceKey, string draftId, string draftMode) =>
@@ -777,6 +832,7 @@ internal static class TextAssetEditDraftUpdateHandlerTests
             AssetId assetId,
             string draftId,
             string draftMode,
+            int? draftRevision,
             out AssetTextEditAppliedResultDto? editResult)
         {
             TryApplyTextEditCallCount++;
@@ -795,7 +851,8 @@ internal static class TextAssetEditDraftUpdateHandlerTests
                 details.AssetTypeDisplayName,
                 draftId,
                 draftMode,
-                new DateTimeOffset(2026, 6, 2, 10, 0, 0, TimeSpan.Zero));
+                new DateTimeOffset(2026, 6, 2, 10, 0, 0, TimeSpan.Zero),
+                draftRevision);
             return true;
         }
 

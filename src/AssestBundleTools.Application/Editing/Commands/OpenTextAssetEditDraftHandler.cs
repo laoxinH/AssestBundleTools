@@ -94,15 +94,23 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
         }
 
         var draftTextStore = _workspaceDataStoreFactory.CreateAssetEditDraftTextStore(command.WorkspaceDataRootPath.Trim());
+        var isAppliedBaseline = IsCurrentAppliedDraft(targetDetails, draftId, draftMode);
+        var appliedDraftRevision = isAppliedBaseline ? targetDetails.TextEditDraftRevision : null;
         var firstChunk = draftTextStore.LoadTextChunk(
             workspaceKey,
             draftId,
             draftMode,
             offset: 0,
-            length: 1);
+            length: 1,
+            revision: appliedDraftRevision);
         var materialized = firstChunk is not null;
         var reference = materialized
-            ? CreateMaterializedReference(firstChunk!, workspaceKey, draftId, draftMode)
+            ? CreateMaterializedReference(
+                firstChunk!,
+                workspaceKey,
+                draftId,
+                draftMode,
+                appliedDraftRevision)
             : descriptor.IsPayloadMaterialized == false
                 ? TextAssetEditDraftSourceReferenceMapper.ToPreviewReference(descriptor.SourceReference)
                 : null;
@@ -131,7 +139,7 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
             Summary: descriptor.Summary ?? targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString(),
             CanEditInline: targetDetails.AssetType == AssetType.TextAsset &&
                 fullCharacterCount <= AssetTextEditPolicy.InlineEditableTextLength,
-            IsAppliedBaseline: IsCurrentAppliedDraft(targetDetails, draftId, draftMode),
+            IsAppliedBaseline: isAppliedBaseline,
             SourceFingerprint: descriptor.SourceFingerprint?.Trim(),
             SourceDescription: descriptor.SourceDescription?.Trim(),
             IsMaterialized: materialized);
@@ -205,14 +213,16 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
         PreviewCacheTextChunkDto firstChunk,
         string workspaceKey,
         string draftId,
-        string draftMode) =>
+        string draftMode,
+        int? draftRevision) =>
         new(
             AssetPreviewFullContentReferenceKind.EditDraft,
             firstChunk.Descriptor.ContentType,
             firstChunk.ContentLength,
             workspaceKey,
             DraftId: draftId,
-            DraftMode: draftMode);
+            DraftMode: draftMode,
+            DraftRevision: draftRevision);
 
     private static string NormalizeDraftMode(string draftMode) =>
         string.IsNullOrWhiteSpace(draftMode)

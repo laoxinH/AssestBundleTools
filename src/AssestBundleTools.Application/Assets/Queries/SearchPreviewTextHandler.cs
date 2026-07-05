@@ -201,7 +201,8 @@ public sealed class SearchPreviewTextHandler : IQueryHandler<SearchPreviewTextQu
             ContentType = result.Descriptor.ContentType,
             ContentLength = result.ContentLength,
             DraftId = query.Reference.DraftId,
-            DraftMode = query.Reference.DraftMode
+            DraftMode = query.Reference.DraftMode,
+            DraftRevision = query.Reference.DraftRevision
         };
 
         return Task.FromResult(Result<AssetPreviewTextSearchResultDto>.Success(new AssetPreviewTextSearchResultDto(

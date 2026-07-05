@@ -392,7 +392,8 @@ internal static class TextAssetEditDraftOpenHandlerTests
             string draftId,
             string draftMode,
             int offset,
-            int length) =>
+            int length,
+            int? revision = null) =>
             Chunk;
 
         public PreviewCacheTextLineRangeDto? LoadTextLines(
@@ -400,7 +401,8 @@ internal static class TextAssetEditDraftOpenHandlerTests
             string draftId,
             string draftMode,
             int startLineIndex,
-            int lineCount) =>
+            int lineCount,
+            int? revision = null) =>
             throw new NotSupportedException();
 
         public PreviewCacheTextSearchResultDto? SearchText(
@@ -410,7 +412,8 @@ internal static class TextAssetEditDraftOpenHandlerTests
             string searchText,
             int startLineIndex,
             int maxMatchCount,
-            bool matchCase) =>
+            bool matchCase,
+            int? revision = null) =>
             throw new NotSupportedException();
 
         public void SaveTextPayload(AssetEditDraftTextPayloadDto payload) =>

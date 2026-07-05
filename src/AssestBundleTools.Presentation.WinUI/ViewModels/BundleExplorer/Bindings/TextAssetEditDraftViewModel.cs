@@ -25,6 +25,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
     private readonly AssetTextEditDraftDto _draft;
     private readonly string _lineStatusFormat;
     private readonly TextAssetEditDraftPatchState _patchState = new();
+    private AssetPreviewFullContentReferenceDto _reference;
     private string _statusText = string.Empty;
     private string _searchText = string.Empty;
     private string _editableText = string.Empty;
@@ -52,6 +53,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
         _backgroundTaskRunner = backgroundTaskRunner ?? throw new ArgumentNullException(nameof(backgroundTaskRunner));
         _workspaceDataRootPath = workspaceDataRootPath ?? throw new ArgumentNullException(nameof(workspaceDataRootPath));
+        _reference = draft.Reference;
         _isDraftMaterialized = draft.IsMaterialized;
         TitleText = titleText;
         ReadOnlyHintText = readOnlyHintText;
@@ -74,7 +76,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
 
     public bool IsInlineEditEnabled => _draft.CanEditInline;
 
-    public AssetPreviewFullContentReferenceDto Reference => _draft.Reference;
+    public AssetPreviewFullContentReferenceDto Reference => _reference;
 
     public string TitleText { get; }
 
@@ -100,7 +102,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
         CanApply &&
         _draft.CanEditInline &&
         _draft.AssetType == AssetType.TextAsset &&
-        _draft.Reference.ContentLength <= MonacoEditableTextLength;
+        Reference.ContentLength <= MonacoEditableTextLength;
 
     public Visibility ReadOnlyViewVisibility =>
         IsEditable ? Visibility.Collapsed : Visibility.Visible;
@@ -113,7 +115,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
         CanApply &&
         _draft.CanEditInline &&
         _draft.AssetType == AssetType.TextAsset &&
-        _draft.Reference.ContentLength <= MonacoEditableTextLength;
+        Reference.ContentLength <= MonacoEditableTextLength;
 
     public bool CanLoadFullEdit => CanShowLoadFullEdit && !IsBusy;
 
@@ -210,7 +212,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
         NotifyDocumentEditState();
     }
 
-    public void MarkSaved()
+    public void MarkSaved(AssetPreviewFullContentReferenceDto? reference = null)
     {
         if (_patchState.HasPendingRangeEdits)
         {
@@ -219,6 +221,12 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
             {
                 EditableText = updatedText;
             }
+        }
+
+        if (reference is not null)
+        {
+            _reference = reference;
+            OnPropertyChanged(nameof(Reference));
         }
 
         _lastSavedText = EditableText;

@@ -16,5 +16,6 @@ public interface IWorkspaceTextEditSessionRegistry
         AssetId assetId,
         string draftId,
         string draftMode,
+        int? draftRevision,
         out AssetTextEditAppliedResultDto? editResult);
 }

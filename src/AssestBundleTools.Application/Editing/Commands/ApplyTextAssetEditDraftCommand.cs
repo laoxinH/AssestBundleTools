@@ -14,4 +14,5 @@ public sealed record ApplyTextAssetEditDraftCommand(
     BundleId BundleId,
     AssetId AssetId,
     string DraftId,
-    string? DraftMode = null);
+    string? DraftMode = null,
+    int? DraftRevision = null);

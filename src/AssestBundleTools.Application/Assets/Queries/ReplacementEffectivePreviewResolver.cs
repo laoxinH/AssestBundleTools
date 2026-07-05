@@ -101,7 +101,8 @@ internal sealed class ReplacementEffectivePreviewResolver
                     query,
                     details,
                     details.TextEditDraftId,
-                    details.TextEditDraftMode);
+                    details.TextEditDraftMode,
+                    details.TextEditDraftRevision);
             }
         }
         finally
@@ -184,7 +185,8 @@ internal sealed class ReplacementEffectivePreviewResolver
         GetAssetPreviewQuery query,
         AssetDetailsDto details,
         string draftId,
-        string? draftMode)
+        string? draftMode,
+        int? draftRevision)
     {
         var normalizedDraftId = draftId.Trim();
         var normalizedDraftMode = string.IsNullOrWhiteSpace(draftMode)
@@ -196,7 +198,8 @@ internal sealed class ReplacementEffectivePreviewResolver
             normalizedDraftId,
             normalizedDraftMode,
             offset: 0,
-            length: AssetPreviewTextDisplayPolicy.MaxDisplayCharacters);
+            length: AssetPreviewTextDisplayPolicy.MaxDisplayCharacters,
+            revision: draftRevision);
         if (chunk is null)
         {
             return Result<AssetPreviewDto>.Success(BuildFallbackSummaryPreview(
@@ -217,6 +220,7 @@ internal sealed class ReplacementEffectivePreviewResolver
             query.WorkspaceKey,
             normalizedDraftId,
             normalizedDraftMode,
+            draftRevision,
             chunk.Text,
             fullCharacterCount);
         var isTruncatedByChunk = chunk.Offset + chunk.Length < fullCharacterCount;
@@ -260,7 +264,8 @@ internal sealed class ReplacementEffectivePreviewResolver
                 chunk.ContentLength,
                 query.WorkspaceKey,
                 DraftId: normalizedDraftId,
-                DraftMode: normalizedDraftMode),
+                DraftMode: normalizedDraftMode,
+                DraftRevision: draftRevision),
             FullTextContent = structuredDraftText
         });
     }
@@ -270,6 +275,7 @@ internal sealed class ReplacementEffectivePreviewResolver
         string workspaceKey,
         string draftId,
         string draftMode,
+        int? draftRevision,
         string firstChunkText,
         int fullCharacterCount)
     {
@@ -288,7 +294,8 @@ internal sealed class ReplacementEffectivePreviewResolver
                 draftId,
                 draftMode,
                 offset,
-                Math.Min(LoadPreviewTextChunkHandler.MaxChunkLength, fullCharacterCount - offset));
+                Math.Min(LoadPreviewTextChunkHandler.MaxChunkLength, fullCharacterCount - offset),
+                revision: draftRevision);
             if (chunk is null || chunk.Length == 0)
             {
                 break;

@@ -25,7 +25,8 @@ public sealed record AssetChangeRecordDto(
     string? TargetAssetId = null,
     string? TargetAssetName = null,
     string? TargetAssetType = null,
-    bool IsRelatedOperation = false)
+    bool IsRelatedOperation = false,
+    int? DraftRevision = null)
 {
     public DateTimeOffset DisplayTimestampUtc => AppliedAtUtc ?? CreatedAtUtc;
 
@@ -58,6 +59,7 @@ public sealed record AssetChangeRecordDto(
                     AssetChangeRecordKind.AssociatedFileReplacement,
             DraftId: operation.Source?.DraftId ?? operation.Result?.DraftId,
             DraftMode: operation.Source?.DraftMode,
+            DraftRevision: operation.Result?.DraftRevision,
             IsEffectiveEdit: isEffectiveOperation && kind is AssetChangeRecordKind.SpriteEdit or AssetChangeRecordKind.TextEdit,
             TargetBundleId: operation.Target?.BundleId,
             TargetAssetId: operation.Target?.AssetId,
