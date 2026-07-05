@@ -2670,6 +2670,9 @@
   <data name="TextDocumentSurface.Fallback.AssetsMissing" xml:space="preserve">
     <value>The offline Monaco editor assets were not found, so the native text view is being used.</value>
   </data>
+  <data name="TextDocumentSurface.Fallback.RuntimeUnavailable" xml:space="preserve">
+    <value>No usable Microsoft Edge WebView2 Runtime was detected. The native text view is being used; install or repair the WebView2 Runtime and restart the app to use the Monaco editor.</value>
+  </data>
   <data name="TextDocumentSurface.Fallback.InitializationFailed" xml:space="preserve">
     <value>The WebView2 text editor could not be initialized, so the native text view is being used.</value>
   </data>

@@ -1343,6 +1343,7 @@ public static class ResourceKeys
     public const string TextDocumentSurfaceFallbackTitle = "TextDocumentSurface.Fallback.Title";
     public const string TextDocumentSurfaceFallbackInitializing = "TextDocumentSurface.Fallback.Initializing";
     public const string TextDocumentSurfaceFallbackAssetsMissing = "TextDocumentSurface.Fallback.AssetsMissing";
+    public const string TextDocumentSurfaceFallbackRuntimeUnavailable = "TextDocumentSurface.Fallback.RuntimeUnavailable";
     public const string TextDocumentSurfaceFallbackInitializationFailed = "TextDocumentSurface.Fallback.InitializationFailed";
     public const string TextDocumentSurfaceFallbackHostLoadFailed = "TextDocumentSurface.Fallback.HostLoadFailed";
     public const string TextDocumentSurfaceFallbackBridgeTimeout = "TextDocumentSurface.Fallback.BridgeTimeout";

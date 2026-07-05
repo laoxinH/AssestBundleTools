@@ -127,11 +127,8 @@ public sealed partial class TextDocumentSurfaceView : UserControl
     private bool _lastSentReadOnly = true;
 
     public event EventHandler? LoadMoreLinesRequested;
-
     public event EventHandler? EditableTextChanged;
-
     public event EventHandler? DocumentChanged;
-
     public event EventHandler? SaveRequested;
 
     public TextDocumentSurfaceView()
@@ -174,10 +171,7 @@ public sealed partial class TextDocumentSurfaceView : UserControl
 
     public bool IsReadOnly { get => (bool)GetValue(IsReadOnlyProperty); set => SetValue(IsReadOnlyProperty, value); }
 
-    private async void OnLoaded(object sender, RoutedEventArgs e)
-    {
-        await TryInitializeWebViewAsync();
-    }
+    private async void OnLoaded(object sender, RoutedEventArgs e) => await TryInitializeWebViewAsync();
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
@@ -215,6 +209,16 @@ public sealed partial class TextDocumentSurfaceView : UserControl
                 return;
             }
 
+            var runtimeProbe = TextDocumentWebViewEnvironmentProvider.ProbeRuntime();
+            if (!runtimeProbe.IsAvailable)
+            {
+                ShowFallback(
+                    ResourceKeys.TextDocumentSurfaceFallbackRuntimeUnavailable,
+                    detail: runtimeProbe.ErrorCode,
+                    runtimeProbe: runtimeProbe);
+                return;
+            }
+
             TextDocumentWebViewEnvironmentProvider.EnsureUserDataFolderConfigured();
             await EditorWebView.EnsureCoreWebView2Async();
             var coreWebView = EditorWebView.CoreWebView2;
@@ -234,7 +238,7 @@ public sealed partial class TextDocumentSurfaceView : UserControl
             _isWebViewReady = false;
             var navigationVersion = ++_webViewNavigationVersion;
             EditorWebView.Source = new Uri($"https://{WebViewVirtualHostName}/abt-editor-host.html");
-            QueueBridgeReadyTimeoutCheck(navigationVersion);
+            _ = CheckBridgeReadyTimeoutAsync(navigationVersion);
         }
         catch
         {
@@ -306,11 +310,6 @@ public sealed partial class TextDocumentSurfaceView : UserControl
         ShowFallback(
             ResourceKeys.TextDocumentSurfaceFallbackProcessFailed,
             detail: args.ProcessFailedKind.ToString());
-    }
-
-    private void QueueBridgeReadyTimeoutCheck(int navigationVersion)
-    {
-        _ = CheckBridgeReadyTimeoutAsync(navigationVersion);
     }
 
     private async Task CheckBridgeReadyTimeoutAsync(int navigationVersion)
@@ -492,7 +491,7 @@ public sealed partial class TextDocumentSurfaceView : UserControl
         _hasUnsynchronizedWebViewChanges = false;
     }
 
-    private async void SendDocumentToWebView(bool force)
+    private void SendDocumentToWebView(bool force)
     {
         if (!_isWebViewReady || EditorWebView.CoreWebView2 is null || _isSendingDocument)
         {
@@ -531,8 +530,6 @@ public sealed partial class TextDocumentSurfaceView : UserControl
         {
             _isSendingDocument = false;
         }
-
-        await Task.CompletedTask;
     }
 
     private void SendThemeToWebView(bool force)
@@ -557,20 +554,24 @@ public sealed partial class TextDocumentSurfaceView : UserControl
         _lastSentTheme = theme;
     }
 
-    private void ShowFallback(string descriptionResourceKey, string? detail = null)
+    private void ShowFallback(
+        string descriptionResourceKey,
+        string? detail = null,
+        TextDocumentWebViewRuntimeProbe? runtimeProbe = null)
     {
         _isWebViewReady = false;
         ++_webViewNavigationVersion;
         var description = UiText.Get(descriptionResourceKey);
         FallbackDiagnosticDescriptionText.Text = description;
-        _fallbackDiagnosticText = string.IsNullOrWhiteSpace(detail)
-            ? description
-            : string.Format(
-                System.Globalization.CultureInfo.CurrentCulture,
-                "{0}{1}{2}",
-                description,
-                Environment.NewLine,
-                detail);
+        _fallbackDiagnosticText = TextDocumentSurfaceDiagnostics.BuildFallbackDiagnostic(
+            descriptionResourceKey,
+            description,
+            detail,
+            runtimeProbe,
+            ActualTheme,
+            DocumentLanguage,
+            IsReadOnly,
+            DocumentText?.Length ?? 0);
         EditorWebView.Visibility = Visibility.Collapsed;
         FallbackSurface.Visibility = Visibility.Visible;
     }

@@ -1,3 +1,5 @@
+using Microsoft.Web.WebView2.Core;
+
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 internal static class TextDocumentWebViewEnvironmentProvider
@@ -35,7 +37,25 @@ internal static class TextDocumentWebViewEnvironmentProvider
         }
     }
 
-    private static string ResolveUserDataFolder()
+    public static TextDocumentWebViewRuntimeProbe ProbeRuntime()
+    {
+        try
+        {
+            var version = CoreWebView2Environment.GetAvailableBrowserVersionString();
+            return string.IsNullOrWhiteSpace(version)
+                ? TextDocumentWebViewRuntimeProbe.Unavailable("EmptyVersion", 0, string.Empty)
+                : TextDocumentWebViewRuntimeProbe.Available(version);
+        }
+        catch (Exception exception)
+        {
+            return TextDocumentWebViewRuntimeProbe.Unavailable(
+                exception.GetType().Name,
+                exception.HResult,
+                exception.Message);
+        }
+    }
+
+    public static string ResolveUserDataFolder()
     {
         var localApplicationDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         if (string.IsNullOrWhiteSpace(localApplicationDataPath))

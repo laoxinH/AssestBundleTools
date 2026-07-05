@@ -2670,6 +2670,9 @@
   <data name="TextDocumentSurface.Fallback.AssetsMissing" xml:space="preserve">
     <value>未找到离线 Monaco 编辑器资源，已使用原生文本视图。</value>
   </data>
+  <data name="TextDocumentSurface.Fallback.RuntimeUnavailable" xml:space="preserve">
+    <value>未检测到可用的 Microsoft Edge WebView2 Runtime。已使用原生文本视图；如需 Monaco 编辑体验，请安装或修复 WebView2 Runtime 后重启应用。</value>
+  </data>
   <data name="TextDocumentSurface.Fallback.InitializationFailed" xml:space="preserve">
     <value>WebView2 文本编辑器初始化失败，已使用原生文本视图。</value>
   </data>
