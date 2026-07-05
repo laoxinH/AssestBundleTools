@@ -46,6 +46,54 @@ public sealed class AssetEditorWindowOperationRefreshContractTests
         Assert.DoesNotContain("ReloadSpineGroupDetailsAsync", applyMethod);
     }
 
+    [Fact]
+    public void TextEditActionBar_ShouldRefreshWhenDraftOrBusyStateChanges()
+    {
+        var actionsCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "ViewModels",
+                "BundleExplorer",
+                "Bindings",
+                "AssetEditorWindowViewModel.Actions.cs"));
+        var viewModelCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "ViewModels",
+                "BundleExplorer",
+                "Bindings",
+                "AssetEditorWindowViewModel.cs"));
+
+        var requestMethod = actionsCode[
+            actionsCode.IndexOf("public async Task<bool> RequestTextEditModeForActiveAssetAsync()", StringComparison.Ordinal)..actionsCode.IndexOf(
+                "public async Task<bool> ApplyTextEditAsync()",
+                StringComparison.Ordinal)];
+        var applyMethod = actionsCode[
+            actionsCode.IndexOf("public async Task<bool> ApplyTextEditAsync()", StringComparison.Ordinal)..actionsCode.IndexOf(
+                "public async Task<bool> ExitTextEditModeForActiveAssetAsync()",
+                StringComparison.Ordinal)];
+        var exitMethod = actionsCode[
+            actionsCode.IndexOf("public async Task<bool> ExitTextEditModeForActiveAssetAsync()", StringComparison.Ordinal)..actionsCode.IndexOf(
+                "public async Task ExitSpineEditModeForActiveGroupAsync",
+                StringComparison.Ordinal)];
+        var busySetter = viewModelCode[
+            viewModelCode.IndexOf("public bool IsBusy", StringComparison.Ordinal)..viewModelCode.IndexOf(
+                "public void Dispose()",
+                StringComparison.Ordinal)];
+
+        Assert.Contains("assetTab.StartTextEditMode(draft);", requestMethod);
+        Assert.Contains("ObserveActiveTextEditDraft();", requestMethod);
+        Assert.Contains("DocumentGroup.ActiveAssetTab?.ExitTextEditMode(clearDraftReference: false);", applyMethod);
+        Assert.Contains("ObserveActiveTextEditDraft();", applyMethod);
+        Assert.Contains("DocumentGroup.ActiveAssetTab?.ExitTextEditMode(clearDraftReference: true);", exitMethod);
+        Assert.Contains("ObserveActiveTextEditDraft();", exitMethod);
+        Assert.Contains("NotifyActionBarStates();", busySetter);
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

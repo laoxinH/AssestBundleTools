@@ -236,6 +236,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             if (SetProperty(ref _isBusy, value))
             {
                 NotifyActionStates();
+                NotifyActionBarStates();
                 _operationChangeRefreshCoordinator.HandleBusyStateChanged(value);
             }
         }

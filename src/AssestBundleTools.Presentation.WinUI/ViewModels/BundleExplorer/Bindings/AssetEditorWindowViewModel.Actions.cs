@@ -124,6 +124,7 @@ public sealed partial class AssetEditorWindowViewModel
             }
 
             assetTab.StartTextEditMode(draft);
+            ObserveActiveTextEditDraft();
         }
 
         NotifyActionStates();
@@ -143,6 +144,7 @@ public sealed partial class AssetEditorWindowViewModel
         if (applied)
         {
             DocumentGroup.ActiveAssetTab?.ExitTextEditMode(clearDraftReference: false);
+            ObserveActiveTextEditDraft();
             NotifyActionStates();
             NotifyActionBarStates();
         }
@@ -164,6 +166,7 @@ public sealed partial class AssetEditorWindowViewModel
         }
 
         DocumentGroup.ActiveAssetTab?.ExitTextEditMode(clearDraftReference: true);
+        ObserveActiveTextEditDraft();
         NotifyActionStates();
         NotifyActionBarStates();
         OnPropertyChanged(nameof(Inspector));
