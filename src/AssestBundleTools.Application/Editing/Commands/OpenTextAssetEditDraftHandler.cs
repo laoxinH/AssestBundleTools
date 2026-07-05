@@ -95,7 +95,9 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
 
         var draftTextStore = _workspaceDataStoreFactory.CreateAssetEditDraftTextStore(command.WorkspaceDataRootPath.Trim());
         var isAppliedBaseline = IsCurrentAppliedDraft(targetDetails, draftId, draftMode);
-        var appliedDraftRevision = isAppliedBaseline ? targetDetails.TextEditDraftRevision : null;
+        var appliedDraftRevision = isAppliedBaseline
+            ? targetDetails.TextEditDraftRevision ?? command.DraftRevision
+            : null;
         var firstChunk = draftTextStore.LoadTextChunk(
             workspaceKey,
             draftId,

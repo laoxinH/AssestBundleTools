@@ -100,10 +100,99 @@ public sealed class AssetEditorWindowTextEditActionCoordinatorTests
         Assert.Equal("draft-current", operationGateway.LastOpenCommand?.DraftId);
         Assert.Equal(WorkspaceTextEditOperationRecorder.TextDraftMode, operationGateway.LastOpenCommand?.DraftMode);
         Assert.Null(operationGateway.LastOpenCommand?.SourceFingerprint);
+        Assert.Equal(1, operationGateway.LastOpenCommand?.DraftRevision);
         Assert.Null(operationGateway.LastCreateCommand);
         Assert.Equal(1, draft.Reference.DraftRevision);
         Assert.Equal("draft-current", assetTab.Details?.TextEditDraftId);
         Assert.Null(assetTab.EditDraftReference);
+
+        bool TryGetAssetCommandContext(
+            Func<AssetDocumentTabViewModel, AssetDetailsDto, bool> canExecute,
+            [NotNullWhen(true)] out WorkspaceSummaryDto? summary,
+            [NotNullWhen(true)] out AssetDocumentTabViewModel? tab,
+            [NotNullWhen(true)] out AssetDetailsDto? activeDetails)
+        {
+            summary = workspaceSummary;
+            tab = assetTab;
+            activeDetails = assetTab.Details;
+            return activeDetails is not null && canExecute(assetTab, activeDetails);
+        }
+    }
+
+    [Fact]
+    public async Task OpenOrCreateTextAssetEditDraftAsync_ShouldPinCurrentRevision_WhenSameDraftRolledBack()
+    {
+        var workspaceSummary = new WorkspaceSummaryDto(
+            WorkspaceId: new WorkspaceId("workspace-session"),
+            DisplayName: "Workspace",
+            SourcePath: @"C:\Workspace\Source",
+            Mode: WorkspaceMode.SinglePane,
+            ActivePaneId: PaneId.New(),
+            BundleCount: 1,
+            AssetCount: 1,
+            OpenedAtUtc: DateTimeOffset.UtcNow,
+            WorkspaceKey: "workspace-key",
+            WorkspaceDataRootPath: @"C:\Workspace\Data");
+        var staleDetails = CreateTextAssetDetails(
+            textEditDraftId: "draft-text",
+            textEditDraftMode: WorkspaceTextEditOperationRecorder.TextDraftMode,
+            textEditDraftRevision: 4);
+        var currentDetails = CreateTextAssetDetails(
+            textEditDraftId: "draft-text",
+            textEditDraftMode: WorkspaceTextEditOperationRecorder.TextDraftMode,
+            textEditDraftRevision: 3);
+        var assetTab = new AssetDocumentTabViewModel(
+            staleDetails.BundleId,
+            staleDetails.AssetId,
+            staleDetails.Name,
+            InspectorInformationTextSetFactory.Create(new TestLocalizationService()));
+        assetTab.SetEditDraftReference(new AssetDocumentEditDraftReference(
+            "draft-text",
+            WorkspaceTextEditOperationRecorder.TextDraftMode,
+            "source-text",
+            "story.atlas",
+            IsAppliedBaseline: true,
+            DraftRevision: 4));
+        assetTab.ApplyDetails(staleDetails);
+
+        var operationGateway = new RecordingWorkspaceAssetOperationGateway
+        {
+            OpenDraftHandler = command => Task.FromResult(Result<AssetTextEditDraftDto>.Success(CreateDraft(command)))
+        };
+        var inspectionGateway = new TestWorkspaceAssetInspectionGateway
+        {
+            GetAssetDetailsHandler = _ => Task.FromResult(Result<AssetDetailsDto>.Success(currentDetails)),
+            LoadPreviewTextLinesHandler = query => Task.FromResult(Result<AssetPreviewTextLineRangeDto>.Success(
+                new AssetPreviewTextLineRangeDto(
+                    query.Reference,
+                    ["current"],
+                    StartLineIndex: 0,
+                    LineCount: 1,
+                    TotalLineCount: 1,
+                    HasMore: false)))
+        };
+        var coordinator = new AssetEditorWindowTextEditActionCoordinator(
+            new TestWorkspaceShellHost(workspaceSummary),
+            new TestLocalizationService(),
+            new BundleExplorerOperationFeedbackBridge(
+                new TestAppLogService(),
+                new TestAppNotificationService(),
+                new TestLocalizationService()),
+            operationGateway,
+            inspectionGateway,
+            new TestBackgroundTaskRunner(),
+            () => assetTab,
+            TryGetAssetCommandContext,
+            _ => { });
+
+        var draft = await coordinator.OpenOrCreateTextAssetEditDraftAsync();
+
+        Assert.NotNull(draft);
+        Assert.Equal("draft-text", operationGateway.LastOpenCommand?.DraftId);
+        Assert.Equal("source-text", operationGateway.LastOpenCommand?.SourceFingerprint);
+        Assert.Equal(3, operationGateway.LastOpenCommand?.DraftRevision);
+        Assert.Equal(3, draft.Reference.DraftRevision);
+        Assert.Equal(3, assetTab.Details?.TextEditDraftRevision);
 
         bool TryGetAssetCommandContext(
             Func<AssetDocumentTabViewModel, AssetDetailsDto, bool> canExecute,
@@ -127,7 +216,7 @@ public sealed class AssetEditorWindowTextEditActionCoordinatorTests
             command.WorkspaceKey,
             DraftId: command.DraftId,
             DraftMode: command.DraftMode,
-            DraftRevision: 1);
+            DraftRevision: command.DraftRevision ?? 1);
 
         return new AssetTextEditDraftDto(
             command.WorkspaceId,

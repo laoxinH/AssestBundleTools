@@ -1,4 +1,6 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Queries;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Domain.Assets;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -113,6 +115,19 @@ public sealed partial class AssetEditorWindowViewModel
         if (assetTab?.Details is null || !CanUseTextEditor(assetTab.Details))
         {
             return false;
+        }
+
+        if (assetTab.TextEditDraft is { HasUnsavedChanges: false, IsAppliedBaseline: true } &&
+            !await TryRefreshAssetDocumentDetailsBeforeReopeningTextEditAsync(assetTab))
+        {
+            return false;
+        }
+
+        if (assetTab.TextEditDraft is { } existingDraft &&
+            ShouldReopenTextEditDraft(assetTab.Details, existingDraft))
+        {
+            assetTab.ExitTextEditMode(clearDraftReference: false);
+            ObserveActiveTextEditDraft();
         }
 
         if (assetTab.TextEditDraft is null)
@@ -267,4 +282,55 @@ public sealed partial class AssetEditorWindowViewModel
     private static bool CanUseTextEditor(AssetDetailsDto details) =>
         details.AssetType == AssetType.TextAsset ||
         string.Equals(details.AssetTypeDisplayName, "Shader", StringComparison.OrdinalIgnoreCase);
+
+    private async Task<bool> TryRefreshAssetDocumentDetailsBeforeReopeningTextEditAsync(
+        AssetDocumentTabViewModel assetTab)
+    {
+        if (_workspaceShell.WorkspaceSummary is not { } workspaceSummary)
+        {
+            return false;
+        }
+
+        var detailsResult = await _backgroundTaskRunner.RunAsync(
+            token => _workspaceAssetInspectionGateway.GetAssetDetailsAsync(
+                new GetAssetDetailsQuery(
+                    workspaceSummary.WorkspaceId,
+                    assetTab.BundleId,
+                    assetTab.AssetId),
+                token));
+        if (!TryGetValue(detailsResult, out var details))
+        {
+            return false;
+        }
+
+        ReapplyAssetDocumentState(assetTab, details);
+        return true;
+    }
+
+    private static bool ShouldReopenTextEditDraft(
+        AssetDetailsDto details,
+        TextAssetEditDraftViewModel draft)
+    {
+        if (!draft.IsAppliedBaseline || draft.HasUnsavedChanges)
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(details.TextEditDraftId))
+        {
+            return true;
+        }
+
+        return !string.Equals(details.TextEditDraftId.Trim(), draft.DraftId, StringComparison.Ordinal) ||
+               !string.Equals(
+                   NormalizeTextDraftMode(details.TextEditDraftMode),
+                   NormalizeTextDraftMode(draft.DraftMode),
+                   StringComparison.Ordinal) ||
+               details.TextEditDraftRevision != draft.Reference.DraftRevision;
+    }
+
+    private static string NormalizeTextDraftMode(string? draftMode) =>
+        string.IsNullOrWhiteSpace(draftMode)
+            ? WorkspaceTextEditOperationRecorder.TextDraftMode
+            : draftMode.Trim();
 }

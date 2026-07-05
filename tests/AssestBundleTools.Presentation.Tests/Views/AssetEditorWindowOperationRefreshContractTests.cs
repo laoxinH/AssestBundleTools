@@ -86,6 +86,8 @@ public sealed class AssetEditorWindowOperationRefreshContractTests
                 StringComparison.Ordinal)];
 
         Assert.Contains("assetTab.StartTextEditMode(draft);", requestMethod);
+        Assert.Contains("TryRefreshAssetDocumentDetailsBeforeReopeningTextEditAsync(assetTab)", requestMethod);
+        Assert.Contains("ShouldReopenTextEditDraft(assetTab.Details, existingDraft)", requestMethod);
         Assert.Contains("ObserveActiveTextEditDraft();", requestMethod);
         Assert.Contains("DocumentGroup.ActiveAssetTab?.ExitTextEditMode(clearDraftReference: false);", applyMethod);
         Assert.Contains("ObserveActiveTextEditDraft();", applyMethod);

@@ -15,4 +15,5 @@ public sealed record OpenTextAssetEditDraftCommand(
     AssetId AssetId,
     string DraftId,
     string DraftMode,
-    string? SourceFingerprint = null);
+    string? SourceFingerprint = null,
+    int? DraftRevision = null);

@@ -119,6 +119,10 @@ internal static partial class ApplicationTestSuite
             TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldReturnExistingDraftReference);
         await RunTestAsync(
             failures,
+            nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldUseRequestedDraftRevision_WhenAppliedBaselineIsPinned),
+            TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldUseRequestedDraftRevision_WhenAppliedBaselineIsPinned);
+        await RunTestAsync(
+            failures,
             nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldFail_WhenPayloadIsMissing),
             TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldFail_WhenPayloadIsMissing);
         await RunTestAsync(

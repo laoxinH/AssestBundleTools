@@ -189,7 +189,8 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
             details.AssetId,
             draftReference.DraftId,
             draftReference.DraftMode,
-            draftReference.SourceFingerprint);
+            draftReference.SourceFingerprint,
+            draftReference.DraftRevision);
         return _backgroundTaskRunner.RunAsync(
             token => _workspaceAssetOperationGateway.OpenTextAssetEditDraftAsync(command, token));
     }
