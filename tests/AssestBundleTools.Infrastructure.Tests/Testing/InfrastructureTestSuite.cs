@@ -62,6 +62,22 @@ internal static class InfrastructureTestSuite
             JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldUpdatePayloadDescriptorAndLineIndex);
         await RunTestAsync(
             failures,
+            nameof(JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldAppendPatchLog_WithoutRewritingPayloadFile),
+            JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldAppendPatchLog_WithoutRewritingPayloadFile);
+        await RunTestAsync(
+            failures,
+            nameof(JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldCreatePatchBackedDraft_FromDeferredSourceReference),
+            JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldCreatePatchBackedDraft_FromDeferredSourceReference);
+        await RunTestAsync(
+            failures,
+            nameof(JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldApplySubsequentPatchLogEntries),
+            JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldApplySubsequentPatchLogEntries);
+        await RunTestAsync(
+            failures,
+            nameof(JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldUseNormalizedOffsets_ForDeferredCrlfSource),
+            JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldUseNormalizedOffsets_ForDeferredCrlfSource);
+        await RunTestAsync(
+            failures,
             nameof(JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldRejectStaleBaseline_WithoutChangingPayload),
             JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldRejectStaleBaseline_WithoutChangingPayload);
         await RunTestAsync(

@@ -74,8 +74,6 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
 
     public bool IsInlineEditEnabled => _draft.CanEditInline;
 
-    public bool ShouldSaveFullTextContent => !_isDraftMaterialized;
-
     public AssetPreviewFullContentReferenceDto Reference => _draft.Reference;
 
     public string TitleText { get; }
@@ -230,8 +228,6 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
         OnPropertyChanged(nameof(HasUnsavedChanges));
         OnPropertyChanged(nameof(CanSave));
     }
-
-    public string CreateSaveTextContent() => EditableText;
 
     public IReadOnlyList<TextAssetEditDraftRangeEditDto> CreateSaveRangeEdits() =>
         _patchState.CreateSaveRangeEdits(_lastSavedText, EditableText);

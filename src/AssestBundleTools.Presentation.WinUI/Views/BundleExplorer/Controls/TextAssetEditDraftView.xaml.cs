@@ -99,11 +99,6 @@ public sealed partial class TextAssetEditDraftView : UserControl
             return true;
         }
 
-        if (ViewModel.ShouldSaveFullTextContent)
-        {
-            return await SynchronizeFullEditorTextAsync();
-        }
-
         var rangeEditSync = await TextEditorSurface.GetPendingRangeEditsAsync();
         if (rangeEditSync is { Edits.Count: > 0 } &&
             ViewModel.CanUseEditorRangeEditBase(rangeEditSync.BaseLength))

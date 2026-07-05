@@ -68,6 +68,11 @@ public sealed class UpdateTextAssetEditDraftHandler
             WorkspaceTextEditOperationRecorder.CreateSourceFingerprint(
                 targetDetails,
                 targetDetails.PreferredDisplaySizeInBytes ?? targetDetails.SizeInBytes);
+        var sourceReference = ResolveDraftSourceReference(
+            workspaceKey,
+            command.WorkspaceDataRootPath,
+            draftId,
+            draftMode);
         var draftTextStore = _workspaceDataStoreFactory.CreateAssetEditDraftTextStore(command.WorkspaceDataRootPath.Trim());
         var contentLengthResult = SaveUpdatedTextContent(
             command,
@@ -77,6 +82,7 @@ public sealed class UpdateTextAssetEditDraftHandler
             contentType,
             updatedAtUtc,
             sourceFingerprint,
+            sourceReference,
             targetDetails,
             draftTextStore);
         if (!contentLengthResult.IsSuccess)
@@ -198,6 +204,7 @@ public sealed class UpdateTextAssetEditDraftHandler
         string contentType,
         DateTimeOffset updatedAtUtc,
         string sourceFingerprint,
+        WorkspaceAssetEditDraftSourceReferenceDto? sourceReference,
         AssetDetailsDto targetDetails,
         IAssetEditDraftTextStore draftTextStore)
     {
@@ -228,7 +235,8 @@ public sealed class UpdateTextAssetEditDraftHandler
             AssetTextEditPolicy.InlineEditableTextLength,
             SourceFingerprint: sourceFingerprint,
             SourceDescription: targetDetails.Name,
-            Summary: targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString()));
+            Summary: targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString(),
+            SourceReference: sourceReference));
         return patchResult.Status switch
         {
             AssetEditDraftTextPatchStatus.Applied => Result<long>.Success(patchResult.ContentLength),
@@ -270,6 +278,22 @@ public sealed class UpdateTextAssetEditDraftHandler
                 string.Equals(descriptor.DraftId?.Trim(), draftId, StringComparison.Ordinal) &&
                 string.Equals(descriptor.DraftMode?.Trim(), draftMode, StringComparison.Ordinal))
             ?.SourceFingerprint;
+    }
+
+    private WorkspaceAssetEditDraftSourceReferenceDto? ResolveDraftSourceReference(
+        string workspaceKey,
+        string workspaceDataRootPath,
+        string draftId,
+        string draftMode)
+    {
+        var changeSet = _workspaceDataStoreFactory
+            .CreateWorkspaceChangeStore(workspaceDataRootPath.Trim())
+            .Load(workspaceKey.Trim());
+        return (changeSet?.EditDrafts ?? Array.Empty<WorkspaceAssetEditDraftDescriptorDto>())
+            .FirstOrDefault(descriptor =>
+                string.Equals(descriptor.DraftId?.Trim(), draftId, StringComparison.Ordinal) &&
+                string.Equals(descriptor.DraftMode?.Trim(), draftMode, StringComparison.Ordinal))
+            ?.SourceReference;
     }
 
     private static string NormalizeTextContent(string textContent) =>

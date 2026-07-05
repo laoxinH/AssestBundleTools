@@ -1,5 +1,8 @@
+using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Editing.Services;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Infrastructure.Tests.Testing;
 using AssestBundleTools.Infrastructure.Workspace.Persistence;
 
@@ -155,6 +158,211 @@ internal static class JsonAssetEditDraftTextStoreTests
                 matchCase: true),
             "Patched search index should be readable.");
         TestAssert.Equal(3, TestAssert.Single(search.Matches).LineIndex, "Search should see appended patched content.");
+    }
+
+    public static void ApplyTextPatch_ShouldAppendPatchLog_WithoutRewritingPayloadFile()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonAssetEditDraftTextStore(temporaryDirectory.DirectoryPath);
+
+        store.SaveTextPayload(new AssetEditDraftTextPayloadDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-log",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            TextContent: "alpha\nbeta\ngamma",
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 9, 0, 0, TimeSpan.Zero)));
+        var payloadPath = Path.Combine(
+            temporaryDirectory.DirectoryPath,
+            "staging",
+            "drafts",
+            "workspace-a",
+            "draft-log",
+            "text",
+            "text.txt");
+        var payloadBefore = File.ReadAllText(payloadPath);
+
+        var result = store.ApplyTextPatch(new AssetEditDraftTextPatchDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-log",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            RangeEdits: [new TextAssetEditDraftRangeEditDto(6, 4, "BETA")],
+            Baseline: TextAssetEditDraftPatchBaseline.Create("alpha\nbeta\ngamma"),
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 10, 0, 0, TimeSpan.Zero),
+            MaxTextLength: 1024));
+
+        TestAssert.Equal(AssetEditDraftTextPatchStatus.Applied, result.Status, "Patch should be accepted.");
+        TestAssert.Equal(payloadBefore, File.ReadAllText(payloadPath), "Patch-backed save should not rewrite the base payload file.");
+        TestAssert.True(
+            File.Exists(Path.Combine(Path.GetDirectoryName(payloadPath)!, "text-patches.json")),
+            "Patch-backed save should persist a patch manifest.");
+        var chunk = TestAssert.NotNull(
+            store.LoadTextChunk("workspace-a", "draft-log", "text", 0, 64),
+            "Patched draft should be readable through the composite view.");
+        TestAssert.Equal("alpha\nBETA\ngamma", chunk.Text, "Composite view should apply the patch over the base payload.");
+    }
+
+    public static void ApplyTextPatch_ShouldCreatePatchBackedDraft_FromDeferredSourceReference()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var previewStore = new JsonPreviewCacheStore(temporaryDirectory.DirectoryPath);
+        const string sourceText = "alpha\nbeta\ngamma";
+        var display = AssetPreviewTextDisplayPolicy.CreateDisplay(sourceText);
+        var descriptor = new PreviewCacheDescriptorDto(
+            WorkspaceKey: "workspace-a",
+            PreviewCacheKey: "preview-source",
+            BundleCacheKey: "bundle-a",
+            AssetId: "asset-a",
+            PreviewKind: AssetPreviewKind.Text.ToString(),
+            ContentType: "text/plain; charset=utf-8",
+            RelativePayloadPath: "payloads/source.txt",
+            SourceFingerprint: new WorkspaceFileFingerprintDto(
+                SourcePath: "source",
+                FileSizeInBytes: System.Text.Encoding.UTF8.GetByteCount(sourceText),
+                LastWriteTimeUtc: new DateTimeOffset(2026, 7, 4, 8, 0, 0, TimeSpan.Zero),
+                ContentHash: "source-v1"),
+            GeneratedAtUtc: new DateTimeOffset(2026, 7, 4, 8, 0, 0, TimeSpan.Zero),
+            GeneratorVersion: "test",
+            PreviewInfoItems: AssetPreviewTextDisplayPolicy.AppendDisplayInfoItems(null, display.Metadata));
+        previewStore.Save(new PreviewCachePayloadDto(
+            descriptor,
+            System.Text.Encoding.UTF8.GetBytes(sourceText)));
+
+        var store = new JsonAssetEditDraftTextStore(temporaryDirectory.DirectoryPath);
+        var result = store.ApplyTextPatch(new AssetEditDraftTextPatchDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-deferred",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            RangeEdits: [new TextAssetEditDraftRangeEditDto(6, 4, "BETA")],
+            Baseline: TextAssetEditDraftPatchBaseline.Create(sourceText),
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 10, 0, 0, TimeSpan.Zero),
+            MaxTextLength: 1024,
+            SourceReference: new WorkspaceAssetEditDraftSourceReferenceDto(
+                nameof(AssetPreviewFullContentReferenceKind.PreviewCache),
+                "text/plain; charset=utf-8",
+                System.Text.Encoding.UTF8.GetByteCount(sourceText),
+                "workspace-a",
+                PreviewCacheKey: "preview-source")));
+
+        TestAssert.Equal(AssetEditDraftTextPatchStatus.Applied, result.Status, "Deferred source patch should be accepted.");
+        var draftDirectory = Path.Combine(
+            temporaryDirectory.DirectoryPath,
+            "staging",
+            "drafts",
+            "workspace-a",
+            "draft-deferred",
+            "text");
+        TestAssert.False(File.Exists(Path.Combine(draftDirectory, "text.txt")), "Deferred patch should not materialize a full draft payload.");
+        TestAssert.True(File.Exists(Path.Combine(draftDirectory, "text-base.txt")), "Deferred patch should persist a stable base snapshot.");
+        TestAssert.True(File.Exists(Path.Combine(draftDirectory, "text-patches.json")), "Deferred patch should persist patch manifest.");
+        previewStore.Delete("workspace-a", "preview-source");
+        var chunk = TestAssert.NotNull(
+            store.LoadTextChunk("workspace-a", "draft-deferred", "text", 0, 64),
+            "Deferred patched draft should be readable through the composite view after source cache is removed.");
+        TestAssert.Equal("alpha\nBETA\ngamma", chunk.Text, "Composite view should apply deferred patch over source reference.");
+    }
+
+    public static void ApplyTextPatch_ShouldApplySubsequentPatchLogEntries()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonAssetEditDraftTextStore(temporaryDirectory.DirectoryPath);
+
+        store.SaveTextPayload(new AssetEditDraftTextPayloadDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-multi-patch",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            TextContent: "alpha\nbeta\ngamma",
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 9, 0, 0, TimeSpan.Zero)));
+
+        var first = store.ApplyTextPatch(new AssetEditDraftTextPatchDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-multi-patch",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            RangeEdits: [new TextAssetEditDraftRangeEditDto(6, 4, "BETA")],
+            Baseline: TextAssetEditDraftPatchBaseline.Create("alpha\nbeta\ngamma"),
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 10, 0, 0, TimeSpan.Zero),
+            MaxTextLength: 1024));
+        var second = store.ApplyTextPatch(new AssetEditDraftTextPatchDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-multi-patch",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            RangeEdits: [new TextAssetEditDraftRangeEditDto("alpha\nBETA\ngamma".Length, 0, "\nomega")],
+            Baseline: TextAssetEditDraftPatchBaseline.Create("alpha\nBETA\ngamma"),
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 11, 0, 0, TimeSpan.Zero),
+            MaxTextLength: 1024));
+
+        TestAssert.Equal(AssetEditDraftTextPatchStatus.Applied, first.Status, "First patch should be accepted.");
+        TestAssert.Equal(AssetEditDraftTextPatchStatus.Applied, second.Status, "Second patch should be accepted against patched baseline.");
+        var chunk = TestAssert.NotNull(
+            store.LoadTextChunk("workspace-a", "draft-multi-patch", "text", 0, 64),
+            "Multi-patch draft should be readable.");
+        TestAssert.Equal("alpha\nBETA\ngamma\nomega", chunk.Text, "Composite view should replay all patch log entries in order.");
+    }
+
+    public static void ApplyTextPatch_ShouldUseNormalizedOffsets_ForDeferredCrlfSource()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var previewStore = new JsonPreviewCacheStore(temporaryDirectory.DirectoryPath);
+        const string sourceText = "alpha\r\nbeta\r\ngamma";
+        var display = AssetPreviewTextDisplayPolicy.CreateDisplay(sourceText);
+        var descriptor = new PreviewCacheDescriptorDto(
+            WorkspaceKey: "workspace-a",
+            PreviewCacheKey: "preview-crlf",
+            BundleCacheKey: "bundle-a",
+            AssetId: "asset-a",
+            PreviewKind: AssetPreviewKind.Text.ToString(),
+            ContentType: "text/plain; charset=utf-8",
+            RelativePayloadPath: "payloads/source-crlf.txt",
+            SourceFingerprint: new WorkspaceFileFingerprintDto(
+                SourcePath: "source-crlf",
+                FileSizeInBytes: System.Text.Encoding.UTF8.GetByteCount(sourceText),
+                LastWriteTimeUtc: new DateTimeOffset(2026, 7, 4, 8, 0, 0, TimeSpan.Zero),
+                ContentHash: "source-crlf-v1"),
+            GeneratedAtUtc: new DateTimeOffset(2026, 7, 4, 8, 0, 0, TimeSpan.Zero),
+            GeneratorVersion: "test",
+            PreviewInfoItems: AssetPreviewTextDisplayPolicy.AppendDisplayInfoItems(null, display.Metadata));
+        previewStore.Save(new PreviewCachePayloadDto(
+            descriptor,
+            System.Text.Encoding.UTF8.GetBytes(sourceText)));
+
+        var store = new JsonAssetEditDraftTextStore(temporaryDirectory.DirectoryPath);
+        var first = store.ApplyTextPatch(new AssetEditDraftTextPatchDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-crlf-deferred",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            RangeEdits: [new TextAssetEditDraftRangeEditDto(6, 4, "BETA")],
+            Baseline: TextAssetEditDraftPatchBaseline.Create("alpha\nbeta\ngamma"),
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 10, 0, 0, TimeSpan.Zero),
+            MaxTextLength: 1024,
+            SourceReference: new WorkspaceAssetEditDraftSourceReferenceDto(
+                nameof(AssetPreviewFullContentReferenceKind.PreviewCache),
+                "text/plain; charset=utf-8",
+                System.Text.Encoding.UTF8.GetByteCount(sourceText),
+                "workspace-a",
+                PreviewCacheKey: "preview-crlf")));
+        previewStore.Delete("workspace-a", "preview-crlf");
+        var second = store.ApplyTextPatch(new AssetEditDraftTextPatchDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-crlf-deferred",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            RangeEdits: [new TextAssetEditDraftRangeEditDto("alpha\nBETA\n".Length, 5, "GAMMA")],
+            Baseline: TextAssetEditDraftPatchBaseline.Create("alpha\nBETA\ngamma"),
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 11, 0, 0, TimeSpan.Zero),
+            MaxTextLength: 1024));
+
+        TestAssert.Equal(AssetEditDraftTextPatchStatus.Applied, first.Status, "Deferred CRLF source patch should be accepted.");
+        TestAssert.Equal(AssetEditDraftTextPatchStatus.Applied, second.Status, "Deferred manifest should remain editable without passing source reference again.");
+        var chunk = TestAssert.NotNull(
+            store.LoadTextChunk("workspace-a", "draft-crlf-deferred", "text", 0, 64),
+            "Deferred CRLF patched draft should be readable.");
+        TestAssert.Equal("alpha\nBETA\nGAMMA", chunk.Text, "Patch offsets should use normalized text coordinates, not raw CRLF file coordinates.");
     }
 
     public static void ApplyTextPatch_ShouldRejectStaleBaseline_WithoutChangingPayload()

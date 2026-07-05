@@ -1,3 +1,5 @@
+using AssestBundleTools.Application.Workspace.Dtos;
+
 namespace AssestBundleTools.Application.Editing.Dtos;
 
 /// <summary>
@@ -14,4 +16,5 @@ public sealed record AssetEditDraftTextPatchDto(
     int MaxTextLength,
     string? SourceFingerprint = null,
     string? SourceDescription = null,
-    string? Summary = null);
+    string? Summary = null,
+    WorkspaceAssetEditDraftSourceReferenceDto? SourceReference = null);

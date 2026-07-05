@@ -156,6 +156,72 @@ internal static class TextAssetEditDraftUpdateHandlerTests
         TestAssert.Equal(WorkspaceOperationKind.EditDraftUpdated, savedOperation.OperationKind, "Patch update should append the same draft-updated operation.");
     }
 
+    public static async Task UpdateTextAssetEditDraftHandler_ShouldPassDeferredSourceReference_ToPatchStore()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        const string workspaceKey = "workspace-a";
+        const string workspaceDataRootPath = @"D:\WorkspaceData\A";
+        var bundleId = new BundleId("bundle.text");
+        var assetId = new AssetId("asset.text");
+        var sourceReference = new WorkspaceAssetEditDraftSourceReferenceDto(
+            nameof(AssetPreviewFullContentReferenceKind.PreviewCache),
+            "text/plain; charset=utf-8",
+            4096,
+            workspaceKey,
+            PreviewCacheKey: "preview-source");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            assetId,
+            AssetType.TextAsset,
+            "large.atlas"));
+        var changeStore = new TestWorkspaceChangeStore
+        {
+            ChangeSet = new WorkspaceChangeSetDto(
+                WorkspaceKey: workspaceKey,
+                UpdatedAtUtc: new DateTimeOffset(2026, 6, 1, 10, 0, 0, TimeSpan.Zero),
+                Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+                EditDrafts:
+                [
+                    new WorkspaceAssetEditDraftDescriptorDto(
+                        DraftId: "draft-deferred",
+                        DraftMode: WorkspaceTextEditOperationRecorder.TextDraftMode,
+                        SourceFingerprint: "source-v1",
+                        UpdatedAtUtc: new DateTimeOffset(2026, 6, 1, 10, 0, 0, TimeSpan.Zero),
+                        SourceReference: sourceReference,
+                        IsPayloadMaterialized: false)
+                ],
+                Operations: Array.Empty<WorkspaceOperationRecordDto>())
+        };
+        var draftTextStore = new TestAssetEditDraftTextStore
+        {
+            CurrentText = "alpha\nbeta\ngamma"
+        };
+        var dataStoreFactory = new TestWorkspaceDataStoreFactory(changeStore, draftTextStore);
+        var handler = new UpdateTextAssetEditDraftHandler(registry, dataStoreFactory);
+
+        var result = await handler.HandleAsync(new UpdateTextAssetEditDraftCommand(
+            workspaceId,
+            workspaceKey,
+            workspaceDataRootPath,
+            bundleId,
+            assetId,
+            "draft-deferred",
+            WorkspaceTextEditOperationRecorder.TextDraftMode,
+            TextContent: null,
+            RangeEdits: [new TextAssetEditDraftRangeEditDto(6, 4, "BETA")],
+            PatchBaseline: TextAssetEditDraftPatchBaseline.Create("alpha\nbeta\ngamma")));
+
+        TestAssert.True(result.IsSuccess, "Deferred range edit update should succeed.");
+        TestAssert.Equal(0, draftTextStore.SaveTextPayloadCallCount, "Deferred range edit should not use full payload overwrite.");
+        TestAssert.Equal(1, draftTextStore.ApplyTextPatchCallCount, "Deferred range edit should still use patch store.");
+        TestAssert.Equal(
+            "preview-source",
+            draftTextStore.LastAppliedPatch?.SourceReference?.PreviewCacheKey,
+            "Patch store should receive deferred source reference for first patch-backed save.");
+    }
+
     public static async Task UpdateTextAssetEditDraftHandler_ShouldRejectInvalidRangeEdit()
     {
         var workspaceId = new WorkspaceId("workspace-session-1");
