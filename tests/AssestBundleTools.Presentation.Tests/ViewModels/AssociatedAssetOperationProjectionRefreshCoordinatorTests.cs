@@ -1,6 +1,7 @@
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
@@ -146,6 +147,50 @@ public sealed class AssociatedAssetOperationProjectionRefreshCoordinatorTests
         Assert.Equal("hero-skeleton", assetTab.Details.ChangeRecords[0].TargetAssetId);
     }
 
+    [Fact]
+    public async Task RefreshAssetDocumentOperationProjectionAsync_ShouldUpdateTextEditRevisionProjection()
+    {
+        var localizationService = new TestLocalizationService();
+        var bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
+        var assetPresenter = new BundleExplorerAssetInspectorPresenter(bundlePane, localizationService);
+        var spinePresenter = new SpineAssetGroupInspectorPresenter(bundlePane, localizationService);
+        var previousRecord = CreateTextEditRecord("draft-text", revision: 2);
+        var currentRecord = CreateTextEditRecord("draft-text", revision: 1);
+        var previousDetails = CreateTextAssetDetails(
+            textEditDraftId: "draft-text",
+            textEditDraftRevision: 2,
+            previousRecord);
+        var assetTab = new AssetDocumentTabViewModel(
+            previousDetails.BundleId,
+            previousDetails.AssetId,
+            previousDetails.Name,
+            InspectorInformationTextSetFactory.Create(localizationService));
+        assetPresenter.PresentAssetDocumentTab(assetTab, previousDetails, canEdit: true, isBusy: false);
+        Assert.Equal(2, assetTab.Details?.TextEditDraftRevision);
+
+        var gateway = new TestWorkspaceAssetInspectionGateway
+        {
+            GetAssetDetailsHandler = _ => Task.FromResult(Result<AssetDetailsDto>.Success(CreateTextAssetDetails(
+                textEditDraftId: "draft-text",
+                textEditDraftRevision: 1,
+                currentRecord)))
+        };
+        var coordinator = new AssociatedAssetOperationProjectionRefreshCoordinator(
+            gateway,
+            new TestBackgroundTaskRunner(),
+            assetPresenter,
+            spinePresenter,
+            () => new WorkspaceId("workspace"),
+            () => false,
+            _ => { });
+
+        var updated = await coordinator.RefreshAssetDocumentOperationProjectionAsync(assetTab);
+
+        Assert.True(updated);
+        Assert.Equal(1, assetTab.Details?.TextEditDraftRevision);
+        Assert.Equal(1, Assert.Single(assetTab.Details?.ChangeRecords ?? []).DraftRevision);
+    }
+
     private static SpineAssetGroupDto CreateSpineGroup(AssetChangeRecordDto textureChangeRecord)
     {
         var bundleId = new BundleId("bundle-ui");
@@ -240,4 +285,55 @@ public sealed class AssociatedAssetOperationProjectionRefreshCoordinatorTests
             Dependencies: [],
             CanRedoReplacement: !changeRecord.IsEffectiveReplacement,
             ChangeRecords: [changeRecord]);
+
+    private static AssetChangeRecordDto CreateTextEditRecord(string draftId, int revision) =>
+        new(
+            AssetChangeRecordKind.TextEdit,
+            CreatedAtUtc: DateTimeOffset.UnixEpoch.AddSeconds(revision),
+            AppliedAtUtc: DateTimeOffset.UnixEpoch.AddSeconds(revision),
+            OperationId: $"edit-{revision}",
+            Sequence: revision,
+            DraftId: draftId,
+            DraftMode: WorkspaceTextEditOperationRecorder.TextDraftMode,
+            IsEffectiveEdit: true,
+            TargetBundleId: "bundle-text",
+            TargetAssetId: "asset-text",
+            TargetAssetName: "story.atlas",
+            TargetAssetType: AssetType.TextAsset.ToString(),
+            DraftRevision: revision);
+
+    private static AssetDetailsDto CreateTextAssetDetails(
+        string textEditDraftId,
+        int textEditDraftRevision,
+        AssetChangeRecordDto changeRecord) =>
+        new(
+            WorkspaceId: new WorkspaceId("workspace"),
+            BundleId: new BundleId("bundle-text"),
+            AssetId: new AssetId("asset-text"),
+            Name: "story.atlas",
+            AssetPath: "Assets/story.atlas",
+            ContainerPath: "CAB",
+            AssetType: AssetType.TextAsset,
+            AssetTypeDisplayName: AssetType.TextAsset.ToString(),
+            SerializedFileName: "text.ab",
+            PathId: 2,
+            SizeInBytes: 1,
+            PreferredDisplaySizeInBytes: null,
+            IsModified: true,
+            CanExtract: true,
+            CanReplaceFromFile: true,
+            CanReplaceFromWorkspace: true,
+            WorkspaceReplacementSourceBundleDisplayName: null,
+            WorkspaceReplacementSourceAssetName: null,
+            WorkspaceReplacementSourceAssetType: null,
+            FileReplacementSourceFileName: null,
+            FileReplacementSourcePath: null,
+            FileReplacementSourceAssetType: null,
+            LastExtractedAtUtc: null,
+            Dependencies: [],
+            ChangeRecords: [changeRecord],
+            TextEditDraftId: textEditDraftId,
+            TextEditDraftMode: WorkspaceTextEditOperationRecorder.TextDraftMode,
+            TextEditAppliedAtUtc: changeRecord.AppliedAtUtc,
+            TextEditDraftRevision: textEditDraftRevision);
 }

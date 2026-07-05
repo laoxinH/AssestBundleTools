@@ -225,6 +225,10 @@ internal sealed class AssociatedAssetOperationProjectionRefreshCoordinator
         return previousDetails.IsModified == currentDetails.IsModified &&
                previousDetails.CanRedoReplacement == currentDetails.CanRedoReplacement &&
                previousDetails.LastExtractedAtUtc == currentDetails.LastExtractedAtUtc &&
+               string.Equals(previousDetails.TextEditDraftId, currentDetails.TextEditDraftId, StringComparison.Ordinal) &&
+               string.Equals(previousDetails.TextEditDraftMode, currentDetails.TextEditDraftMode, StringComparison.Ordinal) &&
+               previousDetails.TextEditDraftRevision == currentDetails.TextEditDraftRevision &&
+               previousDetails.TextEditAppliedAtUtc == currentDetails.TextEditAppliedAtUtc &&
                string.Equals(previousDetails.FileReplacementSourceFileName, currentDetails.FileReplacementSourceFileName, StringComparison.Ordinal) &&
                string.Equals(previousDetails.FileReplacementSourcePath, currentDetails.FileReplacementSourcePath, StringComparison.Ordinal) &&
                string.Equals(previousDetails.WorkspaceReplacementSourceBundleId?.Value, currentDetails.WorkspaceReplacementSourceBundleId?.Value, StringComparison.Ordinal) &&
@@ -251,7 +255,10 @@ internal sealed class AssociatedAssetOperationProjectionRefreshCoordinator
                 leftRecord.Sequence != rightRecord.Sequence ||
                 leftRecord.IsEffectiveReplacement != rightRecord.IsEffectiveReplacement ||
                 leftRecord.IsEffectiveEdit != rightRecord.IsEffectiveEdit ||
+                leftRecord.DraftRevision != rightRecord.DraftRevision ||
                 !string.Equals(leftRecord.OperationId, rightRecord.OperationId, StringComparison.Ordinal) ||
+                !string.Equals(leftRecord.DraftId, rightRecord.DraftId, StringComparison.Ordinal) ||
+                !string.Equals(leftRecord.DraftMode, rightRecord.DraftMode, StringComparison.Ordinal) ||
                 !string.Equals(leftRecord.TargetBundleId, rightRecord.TargetBundleId, StringComparison.Ordinal) ||
                 !string.Equals(leftRecord.TargetAssetId, rightRecord.TargetAssetId, StringComparison.Ordinal))
             {

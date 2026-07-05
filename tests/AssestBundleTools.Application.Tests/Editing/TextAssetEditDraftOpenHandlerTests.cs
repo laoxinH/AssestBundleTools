@@ -32,7 +32,8 @@ internal static class TextAssetEditDraftOpenHandlerTests
             AssetType.TextAsset,
             "story.json",
             textEditDraftId: "draft-1",
-            textEditDraftMode: WorkspaceTextEditOperationRecorder.TextDraftMode));
+            textEditDraftMode: WorkspaceTextEditOperationRecorder.TextDraftMode,
+            textEditDraftRevision: 2));
         var changeStore = new TestWorkspaceChangeStore
         {
             ChangeSet = new WorkspaceChangeSetDto(
@@ -74,9 +75,11 @@ internal static class TextAssetEditDraftOpenHandlerTests
         TestAssert.Equal(AssetPreviewFullContentReferenceKind.EditDraft, draft.Reference.Kind, "Opened draft should return an edit draft reference.");
         TestAssert.Equal("draft-1", draft.Reference.DraftId, "Reference draft id should match.");
         TestAssert.Equal(WorkspaceTextEditOperationRecorder.TextDraftMode, draft.Reference.DraftMode, "Reference draft mode should match.");
+        TestAssert.Equal(2, draft.Reference.DraftRevision, "Reference should pin the current applied draft revision.");
         TestAssert.Equal(6L, draft.Reference.ContentLength, "Reference should reflect draft payload length.");
         TestAssert.True(draft.CanEditInline, "Small TextAsset draft should be inline editable.");
         TestAssert.True(draft.IsAppliedBaseline, "Current applied text edit draft should be marked as an applied baseline.");
+        TestAssert.Equal(2, draftTextStore.LastChunkRevision, "Opening an applied draft should read the current revision instead of the draft head.");
         TestAssert.Equal("source-v1", draft.SourceFingerprint, "Opened draft should expose descriptor source fingerprint.");
         TestAssert.Equal("story.json", draft.SourceDescription, "Opened draft should expose descriptor source description.");
         TestAssert.Equal(workspaceDataRootPath, dataStoreFactory.LastChangeStoreRootPath, "Handler should use requested data root for change set.");
@@ -298,7 +301,8 @@ internal static class TextAssetEditDraftOpenHandlerTests
         AssetType assetType,
         string assetName,
         string? textEditDraftId = null,
-        string? textEditDraftMode = null) =>
+        string? textEditDraftMode = null,
+        int? textEditDraftRevision = null) =>
         new(
             WorkspaceId: workspaceId,
             BundleId: bundleId,
@@ -323,7 +327,8 @@ internal static class TextAssetEditDraftOpenHandlerTests
             LastExtractedAtUtc: null,
             Dependencies: Array.Empty<AssetDependencyDto>(),
             TextEditDraftId: textEditDraftId,
-            TextEditDraftMode: textEditDraftMode);
+            TextEditDraftMode: textEditDraftMode,
+            TextEditDraftRevision: textEditDraftRevision);
 
     private sealed class TestWorkspaceDataStoreFactory : IWorkspaceDataStoreFactory
     {
@@ -387,14 +392,19 @@ internal static class TextAssetEditDraftOpenHandlerTests
     {
         public PreviewCacheTextChunkDto? Chunk { get; init; }
 
+        public int? LastChunkRevision { get; private set; }
+
         public PreviewCacheTextChunkDto? LoadTextChunk(
             string workspaceKey,
             string draftId,
             string draftMode,
             int offset,
             int length,
-            int? revision = null) =>
-            Chunk;
+            int? revision = null)
+        {
+            LastChunkRevision = revision;
+            return Chunk;
+        }
 
         public PreviewCacheTextLineRangeDto? LoadTextLines(
             string workspaceKey,

@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Editing.Commands;
 using AssestBundleTools.Application.Editing.Dtos;
@@ -74,11 +75,22 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
         _setBusy(true);
         try
         {
+            var activeAssetTab = _activeAssetTabProvider();
+            var detailsResult = await LoadCurrentDetailsAsync(workspaceSummary, activeAssetTab, details);
+            if (!detailsResult.IsSuccess || detailsResult.Value is null)
+            {
+                _operationFeedbackBridge.AppendResultFailure(detailsResult.Errors);
+                return null;
+            }
+
+            details = detailsResult.Value;
+            activeAssetTab?.ApplyDetails(details);
+
             var result = await OpenExistingDraftOrCreateNewAsync(
                 workspaceSummary,
                 workspaceKey,
                 workspaceDataRootPath,
-                _activeAssetTabProvider(),
+                activeAssetTab,
                 details);
             if (!result.IsSuccess || result.Value is null)
             {
@@ -99,6 +111,22 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
         }
     }
 
+    private Task<Result<AssetDetailsDto>> LoadCurrentDetailsAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        AssetDocumentTabViewModel? assetTab,
+        AssetDetailsDto details)
+    {
+        var bundleId = assetTab?.BundleId ?? details.BundleId;
+        var assetId = assetTab?.AssetId ?? details.AssetId;
+        return _backgroundTaskRunner.RunAsync(
+            token => _workspaceAssetInspectionGateway.GetAssetDetailsAsync(
+                new GetAssetDetailsQuery(
+                    workspaceSummary.WorkspaceId,
+                    bundleId,
+                    assetId),
+                token));
+    }
+
     private async Task<Result<AssetTextEditDraftDto>> OpenExistingDraftOrCreateNewAsync(
         WorkspaceSummaryDto workspaceSummary,
         string workspaceKey,
@@ -106,29 +134,33 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
         AssetDocumentTabViewModel? assetTab,
         AssetDetailsDto details)
     {
-        if (assetTab?.EditDraftReference is { } draftReference &&
-            !string.IsNullOrWhiteSpace(draftReference.DraftId) &&
-            !string.IsNullOrWhiteSpace(draftReference.DraftMode))
+        var currentAppliedReference = CreateAppliedDraftReference(details, assetTab?.EditDraftReference);
+        if (currentAppliedReference is not null)
+        {
+            return await OpenDraftReferenceAsync(
+                workspaceSummary,
+                workspaceKey,
+                workspaceDataRootPath,
+                details,
+                currentAppliedReference);
+        }
+
+        if (assetTab?.EditDraftReference is { } draftReference)
         {
             if (draftReference.IsAppliedBaseline &&
                 !DoesDetailsPointToDraft(details, draftReference))
             {
                 assetTab.ClearEditDraftReference();
             }
-            else
+            else if (!string.IsNullOrWhiteSpace(draftReference.DraftId) &&
+                !string.IsNullOrWhiteSpace(draftReference.DraftMode))
             {
-                var command = new OpenTextAssetEditDraftCommand(
-                    workspaceSummary.WorkspaceId,
+                return await OpenDraftReferenceAsync(
+                    workspaceSummary,
                     workspaceKey,
                     workspaceDataRootPath,
-                    details.BundleId,
-                    details.AssetId,
-                    draftReference.DraftId,
-                    draftReference.DraftMode,
-                    draftReference.SourceFingerprint);
-                var result = await _backgroundTaskRunner.RunAsync(
-                    token => _workspaceAssetOperationGateway.OpenTextAssetEditDraftAsync(command, token));
-                return result;
+                    details,
+                    draftReference);
             }
         }
 
@@ -140,6 +172,26 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
             details.AssetId);
         return await _backgroundTaskRunner.RunAsync(
             token => _workspaceAssetOperationGateway.CreateTextAssetEditDraftAsync(createCommand, token));
+    }
+
+    private Task<Result<AssetTextEditDraftDto>> OpenDraftReferenceAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        string workspaceKey,
+        string workspaceDataRootPath,
+        AssetDetailsDto details,
+        AssetDocumentEditDraftReference draftReference)
+    {
+        var command = new OpenTextAssetEditDraftCommand(
+            workspaceSummary.WorkspaceId,
+            workspaceKey,
+            workspaceDataRootPath,
+            details.BundleId,
+            details.AssetId,
+            draftReference.DraftId,
+            draftReference.DraftMode,
+            draftReference.SourceFingerprint);
+        return _backgroundTaskRunner.RunAsync(
+            token => _workspaceAssetOperationGateway.OpenTextAssetEditDraftAsync(command, token));
     }
 
     private TextAssetEditDraftViewModel CreateDraftViewModel(
@@ -165,7 +217,7 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
                 out var workspaceSummary,
                 out var workspaceKey,
                 out var workspaceDataRootPath,
-                out _,
+                out var assetTab,
                 out var details,
                 out var draft))
         {
@@ -217,6 +269,17 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
             {
                 _operationFeedbackBridge.AppendResultFailure(result.Errors);
                 return false;
+            }
+
+            if (result.Value is { } appliedResult)
+            {
+                assetTab.SetEditDraftReference(new AssetDocumentEditDraftReference(
+                    appliedResult.DraftId,
+                    appliedResult.DraftMode,
+                    draft.SourceFingerprint,
+                    draft.SourceDescription,
+                    IsAppliedBaseline: true,
+                    DraftRevision: appliedResult.DraftRevision));
             }
 
             return true;
@@ -313,6 +376,35 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
             NormalizeTextDraftMode(details.TextEditDraftMode),
             NormalizeTextDraftMode(draftReference.DraftMode),
             StringComparison.Ordinal);
+
+    private static AssetDocumentEditDraftReference? CreateAppliedDraftReference(
+        AssetDetailsDto details,
+        AssetDocumentEditDraftReference? existingReference)
+    {
+        if (string.IsNullOrWhiteSpace(details.TextEditDraftId))
+        {
+            return null;
+        }
+
+        var draftId = details.TextEditDraftId.Trim();
+        var draftMode = NormalizeTextDraftMode(details.TextEditDraftMode);
+        var matchingExistingReference = existingReference is not null &&
+            string.Equals(existingReference.DraftId, draftId, StringComparison.Ordinal) &&
+            string.Equals(
+                NormalizeTextDraftMode(existingReference.DraftMode),
+                draftMode,
+                StringComparison.Ordinal)
+                ? existingReference
+                : null;
+
+        return new AssetDocumentEditDraftReference(
+            draftId,
+            draftMode,
+            matchingExistingReference?.SourceFingerprint,
+            matchingExistingReference?.SourceDescription,
+            IsAppliedBaseline: true,
+            DraftRevision: details.TextEditDraftRevision);
+    }
 
     private static string NormalizeTextDraftMode(string? draftMode) =>
         string.IsNullOrWhiteSpace(draftMode)
