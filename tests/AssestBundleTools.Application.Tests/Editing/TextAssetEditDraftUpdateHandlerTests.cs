@@ -143,10 +143,14 @@ internal static class TextAssetEditDraftUpdateHandlerTests
             PatchBaseline: TextAssetEditDraftPatchBaseline.Create("alpha\nbeta\ngamma")));
 
         TestAssert.True(result.IsSuccess, "Range edit update should succeed.");
-        var payload = draftTextStore.LastSavedPayload ?? throw new InvalidOperationException("Expected saved payload.");
-        TestAssert.Equal("alpha\nBETA\ngamma\nomega", payload.TextContent, "Range edits should be applied against the existing draft text.");
-        TestAssert.True(draftTextStore.LoadTextChunkCallCount > 0, "Patch updates should read the existing draft payload.");
-        TestAssert.Equal(existingFingerprint, payload.SourceFingerprint, "Patch updates should preserve the existing source fingerprint.");
+        TestAssert.Equal(0, draftTextStore.SaveTextPayloadCallCount, "Patch updates should not use full payload overwrite.");
+        TestAssert.Equal(1, draftTextStore.ApplyTextPatchCallCount, "Patch updates should be delegated to the draft text store.");
+        var patch = draftTextStore.LastAppliedPatch ?? throw new InvalidOperationException("Expected patch payload.");
+        TestAssert.Equal(workspaceKey, patch.WorkspaceKey, "Patch should keep the workspace key.");
+        TestAssert.Equal("draft-1", patch.DraftId, "Patch should keep the draft id.");
+        TestAssert.Equal(existingFingerprint, patch.SourceFingerprint, "Patch updates should preserve the existing source fingerprint.");
+        TestAssert.Equal(2, patch.RangeEdits.Count, "Patch updates should forward the requested range edits.");
+        TestAssert.Equal("alpha\nBETA\ngamma\nomega".Length, result.Value?.Reference.ContentLength, "Patch result should expose store-reported content length.");
 
         var savedOperation = TestAssert.Single(changeStore.SavedChangeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>());
         TestAssert.Equal(WorkspaceOperationKind.EditDraftUpdated, savedOperation.OperationKind, "Patch update should append the same draft-updated operation.");
@@ -485,9 +489,13 @@ internal static class TextAssetEditDraftUpdateHandlerTests
 
         public int LoadTextChunkCallCount { get; private set; }
 
+        public int ApplyTextPatchCallCount { get; private set; }
+
         public string? CurrentText { get; init; }
 
         public AssetEditDraftTextPayloadDto? LastSavedPayload { get; private set; }
+
+        public AssetEditDraftTextPatchDto? LastAppliedPatch { get; private set; }
 
         public PreviewCacheTextChunkDto? LoadTextChunk(
             string workspaceKey,
@@ -553,6 +561,58 @@ internal static class TextAssetEditDraftUpdateHandlerTests
         {
             SaveTextPayloadCallCount++;
             LastSavedPayload = payload;
+        }
+
+        public AssetEditDraftTextPatchResultDto ApplyTextPatch(AssetEditDraftTextPatchDto patch)
+        {
+            ApplyTextPatchCallCount++;
+            LastAppliedPatch = patch;
+            if (CurrentText is null)
+            {
+                return AssetEditDraftTextPatchResultDto.NotFound();
+            }
+
+            if (!TextAssetEditDraftPatchBaseline.Matches(CurrentText, patch.Baseline))
+            {
+                return AssetEditDraftTextPatchResultDto.BaselineMismatch();
+            }
+
+            var currentText = CurrentText;
+            var builder = new System.Text.StringBuilder(currentText);
+            var orderedEdits = patch.RangeEdits
+                .OrderByDescending(static edit => edit.Start)
+                .ToArray();
+            var nextStart = currentText.Length;
+            foreach (var edit in orderedEdits)
+            {
+                if (edit.Start > currentText.Length ||
+                    edit.Length > currentText.Length - edit.Start ||
+                    edit.Start + edit.Length > nextStart)
+                {
+                    return AssetEditDraftTextPatchResultDto.RangeInvalid(edit.Start, edit.Length);
+                }
+
+                builder.Remove(edit.Start, edit.Length);
+                builder.Insert(edit.Start, edit.Text.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n'));
+                nextStart = edit.Start;
+                if (builder.Length > patch.MaxTextLength)
+                {
+                    return AssetEditDraftTextPatchResultDto.LengthExceeded();
+                }
+            }
+
+            var patchedText = builder.ToString();
+            LastSavedPayload = new AssetEditDraftTextPayloadDto(
+                patch.WorkspaceKey,
+                patch.DraftId,
+                patch.DraftMode,
+                patch.ContentType,
+                patchedText,
+                patch.UpdatedAtUtc,
+                patch.SourceFingerprint,
+                patch.SourceDescription,
+                patch.Summary);
+            return AssetEditDraftTextPatchResultDto.Applied(patchedText.Length, patchedText.Length);
         }
 
         public void Delete(string workspaceKey, string draftId, string draftMode) =>

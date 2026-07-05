@@ -58,6 +58,22 @@ internal static class InfrastructureTestSuite
             JsonAssetEditDraftTextStoreTests.Delete_ShouldRemoveDraftPayload);
         await RunTestAsync(
             failures,
+            nameof(JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldUpdatePayloadDescriptorAndLineIndex),
+            JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldUpdatePayloadDescriptorAndLineIndex);
+        await RunTestAsync(
+            failures,
+            nameof(JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldRejectStaleBaseline_WithoutChangingPayload),
+            JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldRejectStaleBaseline_WithoutChangingPayload);
+        await RunTestAsync(
+            failures,
+            nameof(JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldRejectInvalidRange_WithoutChangingPayload),
+            JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldRejectInvalidRange_WithoutChangingPayload);
+        await RunTestAsync(
+            failures,
+            nameof(JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldRejectLengthExceeded_WithoutChangingPayload),
+            JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldRejectLengthExceeded_WithoutChangingPayload);
+        await RunTestAsync(
+            failures,
             nameof(JsonAssetEditDraftTextStoreTests.SaveTextPayload_ShouldRejectInvalidDraftPathSegments),
             JsonAssetEditDraftTextStoreTests.SaveTextPayload_ShouldRejectInvalidDraftPathSegments);
         await RunTestAsync(

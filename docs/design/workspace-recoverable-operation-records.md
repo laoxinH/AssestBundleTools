@@ -372,6 +372,7 @@ Spine 编辑草稿预览不得绕过有效读模型。编辑态预览输入为�
 - 草稿文本保存在 `staging/drafts/<workspaceKey>/<draftId>/<draftMode>/text.txt`。
 - 草稿描述 sidecar 为 `text-draft.json`，用于校验 `workspaceKey / draftId / draftMode`、内容类型、长度和来源指纹。
 - 行 / 字符稀疏索引 sidecar 为 `text.lines.json`，供完整文本查看、行号、搜索和后续文本编辑器虚拟化复用。
+- `IAssetEditDraftTextStore.ApplyTextPatch` 是 range patch 的稳定写入边界：调用方提交补丁、基线和预算，store 负责校验基线、合并 range、写 payload 并同步 sidecar。当前 JSON 实现是文件级受锁 patch，仍会重写完整 payload；后续可在该边界下替换为 patch log 或 chunk rewrite。
 - `AssetPreviewFullContentReferenceKind.EditDraft` 只能作为 Application query 的引用参数；Presentation 不得直接读取 `staging/drafts`。
 - 该 store 只保存 payload，不决定草稿是否可恢复、是否已应用或是否应丢弃；这些仍由 `editDrafts[]` 描述和操作记录表达。
 
@@ -381,7 +382,7 @@ Spine 编辑草稿预览不得绕过有效读模型。编辑态预览输入为�
 2. 打开文本编辑模式时，如果资产标签没有可用草稿引用，Application 创建 `text-content` 草稿，写入 `staging/drafts/<workspaceKey>/<draftId>/text-content/`，并追加 `EditDraftCreated`；Presentation 保存 `draftId / draftMode / sourceFingerprint / sourceDescription` 和 `EditDraft` reference。如果资产标签已经携带 `EditDraftReference`，Application 通过 `OpenTextAssetEditDraft` 校验 descriptor、source fingerprint、过期时间和 payload 后返回既有 `EditDraft` reference，不追加新的 `EditDraftCreated`，也不覆盖草稿 payload。
 3. 文本编辑第一阶段的 UI 以 WebView2 + 离线 Monaco 作为主 surface，对预算内 TextAsset 开放正文编辑，对超过全缓冲安全预算的文本和 Shader 降级为只读查看 / 搜索；原生行列表与 `TextBox` 仅作为 WebView2 或 Monaco 不可用时的 fallback。所有读取、分页和搜索必须回到 Application query，Presentation 不直接读草稿文件。
 4. TextAsset 正文编辑预算由 `AssetTextEditPolicy.InlineEditableTextLength` 定义；超过预算的正文更新必须被 `UpdateTextAssetEditDraft` 拒绝，并保持 draft payload 与 `operations[]` 不变，直到虚拟化 / patch 编辑器落地。
-5. TextAsset 保存时，若正文相对打开基线存在未保存修改，Presentation 先调用 `UpdateTextAssetEditDraft` 覆盖 draft payload 并追加 `EditDraftUpdated`，再调用 `ApplyTextAssetEditDraft` 追加 `EditDraftApplied`；两条记录的 `source.sourceKind=draft`、`source.draftMode=text-content`、`source.draftId=<draftId>` 均指向同一个草稿。`UpdateTextAssetEditDraft / ApplyTextAssetEditDraft` 必须保留已有 descriptor source fingerprint；只有缺失 descriptor 时才允许按目标资产构造兜底指纹。
+5. TextAsset 保存时，若正文相对打开基线存在未保存修改，Presentation 先调用 `UpdateTextAssetEditDraft` 写入 draft payload 并追加 `EditDraftUpdated`，再调用 `ApplyTextAssetEditDraft` 追加 `EditDraftApplied`；全文正文保存走 `SaveTextPayload`，Monaco range patch 保存走 `ApplyTextPatch`。两条操作记录的 `source.sourceKind=draft`、`source.draftMode=text-content`、`source.draftId=<draftId>` 均指向同一个草稿。`UpdateTextAssetEditDraft / ApplyTextAssetEditDraft` 必须保留已有 descriptor source fingerprint；只有缺失 descriptor 时才允许按目标资产构造兜底指纹。
 6. 运行时读模型只把 `EditDraftApplied` 物化为目标资产当前有效文本编辑，变更分段显示 `TextEdit` 记录；`EditDraftCreated / EditDraftUpdated / EditDraftDiscarded` 只表达草稿生命周期，不单独让目标资源进入有效已修改状态。
 7. Shader 当前可以进入只读工作面，但 `CanApply=false`，保存按钮保持禁用；只有接入 Shader 写回适配器后才能追加可生效的文本编辑记录。
 8. 用户点击退出，或关闭处于文本编辑模式的资源标签 / 编辑窗口时，若存在未保存正文，必须提示保存 / 丢弃 / 取消；未应用草稿选择丢弃或干净退出时追加 `EditDraftDiscarded` 并从 `editDrafts[]` 移除该草稿描述。已应用 baseline 草稿重新进入编辑态后，退出或丢弃本次未保存 UI 改动只关闭编辑态并保留 `EditDraftReference` 与 payload，不能删除已被 `EditDraftApplied` 和保存 / 导出写包引用的草稿内容。

@@ -266,7 +266,7 @@ Presentation 层保留两个协同层次：
 - `staging/changes/...`
   负责保存结构化变更暂存，不与轻量元数据混写。
 - `staging/drafts/...`
-  负责保存真实编辑草稿的大载荷内容，不写入工作区元数据、浏览标签状态或 `operations[]`。当前已落地文本草稿 payload 底座：`JsonAssetEditDraftTextStore` 会按 `workspaceKey + draftId + draftMode` 保存 `text.txt`、`text-draft.json` 描述和 `text.lines.json` 稀疏索引，供 Application 的完整文本 chunk / lines / search query 按需读取。该目录仍属于变更暂存层；草稿描述、恢复候选和最终应用 / 丢弃语义继续由 `staging/changes/<workspaceKey>.json` 的 `editDrafts[] / operations[]` 管理。
+  负责保存真实编辑草稿的大载荷内容，不写入工作区元数据、浏览标签状态或 `operations[]`。当前已落地文本草稿 payload 底座：`JsonAssetEditDraftTextStore` 会按 `workspaceKey + draftId + draftMode` 保存 `text.txt`、`text-draft.json` 描述和 `text.lines.json` 稀疏索引，供 Application 的完整文本 chunk / lines / search query 按需读取；range patch 保存通过 `IAssetEditDraftTextStore.ApplyTextPatch` 委托 store 在同草稿写锁下更新 payload、descriptor 与索引 sidecar。该目录仍属于变更暂存层；草稿描述、恢复候选和最终应用 / 丢弃语义继续由 `staging/changes/<workspaceKey>.json` 的 `editDrafts[] / operations[]` 管理。
 
 补充约束：
 

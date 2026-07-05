@@ -41,6 +41,9 @@ public sealed class NoOpAssetEditDraftTextStore : IAssetEditDraftTextStore
     {
     }
 
+    public AssetEditDraftTextPatchResultDto ApplyTextPatch(AssetEditDraftTextPatchDto patch) =>
+        AssetEditDraftTextPatchResultDto.NotFound();
+
     public void Delete(string workspaceKey, string draftId, string draftMode)
     {
     }

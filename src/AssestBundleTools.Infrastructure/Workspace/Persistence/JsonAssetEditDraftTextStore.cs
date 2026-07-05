@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Services;
@@ -15,6 +16,7 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
     private const string DescriptorFileName = "text-draft.json";
     private const string PayloadFileName = "text.txt";
     private const string GeneratorVersion = "edit-draft-text-v1";
+    private static readonly ConcurrentDictionary<string, object> DraftWriteLocks = new(StringComparer.OrdinalIgnoreCase);
 
     private readonly JsonWorkspaceStoragePaths _storagePaths;
 
@@ -119,12 +121,80 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
         var payloadFilePath = Path.Combine(draftDirectoryPath, PayloadFileName);
         var content = Encoding.UTF8.GetBytes(NormalizeTextContent(payload.TextContent ?? string.Empty));
 
-        JsonWorkspaceFileStorageHelper.WriteJsonAtomically(
-            descriptorFilePath,
-            descriptor,
-            JsonWorkspaceSerialization.SerializerOptions);
-        JsonWorkspaceFileStorageHelper.WriteBytesAtomically(payloadFilePath, content);
-        JsonPreviewCacheTextLineIndex.Save(descriptor, payloadFilePath, content);
+        lock (GetDraftWriteLock(draftDirectoryPath))
+        {
+            JsonWorkspaceFileStorageHelper.WriteJsonAtomically(
+                descriptorFilePath,
+                descriptor,
+                JsonWorkspaceSerialization.SerializerOptions);
+            JsonWorkspaceFileStorageHelper.WriteBytesAtomically(payloadFilePath, content);
+            JsonPreviewCacheTextLineIndex.Save(descriptor, payloadFilePath, content);
+        }
+    }
+
+    public AssetEditDraftTextPatchResultDto ApplyTextPatch(AssetEditDraftTextPatchDto patch)
+    {
+        ArgumentNullException.ThrowIfNull(patch);
+        ArgumentException.ThrowIfNullOrWhiteSpace(patch.WorkspaceKey);
+        ArgumentException.ThrowIfNullOrWhiteSpace(patch.DraftId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(patch.DraftMode);
+
+        var draftDirectoryPath = GetDraftDirectoryPath(
+            patch.WorkspaceKey,
+            patch.DraftId,
+            patch.DraftMode);
+        var descriptorFilePath = Path.Combine(draftDirectoryPath, DescriptorFileName);
+        var payloadFilePath = Path.Combine(draftDirectoryPath, PayloadFileName);
+
+        lock (GetDraftWriteLock(draftDirectoryPath))
+        {
+            var descriptor = JsonWorkspaceFileStorageHelper.TryReadJson<PreviewCacheDescriptorDto>(
+                descriptorFilePath,
+                JsonWorkspaceSerialization.SerializerOptions);
+            var payloadBytes = JsonWorkspaceFileStorageHelper.TryReadBytes(payloadFilePath);
+            if (descriptor is null ||
+                payloadBytes is null ||
+                !IsMatchingPayloadDescriptor(descriptor, patch))
+            {
+                return AssetEditDraftTextPatchResultDto.NotFound();
+            }
+
+            var currentText = NormalizeTextContent(Encoding.UTF8.GetString(payloadBytes));
+            if (!TextAssetEditDraftPatchBaseline.Matches(currentText, patch.Baseline))
+            {
+                return AssetEditDraftTextPatchResultDto.BaselineMismatch();
+            }
+
+            var appliedTextResult = ApplyRangeEdits(
+                currentText,
+                patch.RangeEdits ?? Array.Empty<TextAssetEditDraftRangeEditDto>(),
+                patch.MaxTextLength);
+            if (appliedTextResult.Status != AssetEditDraftTextPatchStatus.Applied ||
+                appliedTextResult.TextContent is null)
+            {
+                return appliedTextResult.ToPatchResult();
+            }
+
+            var patchedText = appliedTextResult.TextContent;
+            var patchedContent = Encoding.UTF8.GetBytes(patchedText);
+            var patchedDescriptor = CreateDescriptor(
+                patch.WorkspaceKey,
+                patch.DraftId,
+                patch.DraftMode,
+                patch.ContentType,
+                patchedText,
+                patch.UpdatedAtUtc,
+                patch.SourceFingerprint,
+                patch.SourceDescription,
+                patch.Summary);
+            JsonWorkspaceFileStorageHelper.WriteJsonAtomically(
+                descriptorFilePath,
+                patchedDescriptor,
+                JsonWorkspaceSerialization.SerializerOptions);
+            JsonWorkspaceFileStorageHelper.WriteBytesAtomically(payloadFilePath, patchedContent);
+            JsonPreviewCacheTextLineIndex.Save(patchedDescriptor, payloadFilePath, patchedContent);
+            return AssetEditDraftTextPatchResultDto.Applied(patchedText.Length, patchedContent.Length);
+        }
     }
 
     public void Delete(string workspaceKey, string draftId, string draftMode)
@@ -175,33 +245,97 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
             GetFileSize(payloadFilePath));
     }
 
-    private PreviewCacheDescriptorDto CreateDescriptor(AssetEditDraftTextPayloadDto payload)
+    private PreviewCacheDescriptorDto CreateDescriptor(AssetEditDraftTextPayloadDto payload) =>
+        CreateDescriptor(
+            payload.WorkspaceKey,
+            payload.DraftId,
+            payload.DraftMode,
+            payload.ContentType,
+            NormalizeTextContent(payload.TextContent ?? string.Empty),
+            payload.UpdatedAtUtc,
+            payload.SourceFingerprint,
+            payload.SourceDescription,
+            payload.Summary);
+
+    private PreviewCacheDescriptorDto CreateDescriptor(
+        string workspaceKey,
+        string draftId,
+        string draftMode,
+        string contentType,
+        string normalizedText,
+        DateTimeOffset updatedAtUtc,
+        string? sourceFingerprint,
+        string? sourceDescription,
+        string? summary)
     {
-        var normalizedText = NormalizeTextContent(payload.TextContent ?? string.Empty);
-        var normalizedContentType = string.IsNullOrWhiteSpace(payload.ContentType)
+        var normalizedContentType = string.IsNullOrWhiteSpace(contentType)
             ? "text/plain; charset=utf-8"
-            : payload.ContentType.Trim();
+            : contentType.Trim();
         var display = AssetPreviewTextDisplayPolicy.CreateDisplay(normalizedText);
 
         return new PreviewCacheDescriptorDto(
-            WorkspaceKey: payload.WorkspaceKey.Trim(),
-            PreviewCacheKey: CreatePreviewCacheKey(payload.DraftId, payload.DraftMode),
-            BundleCacheKey: $"draft:{payload.DraftId.Trim()}",
+            WorkspaceKey: workspaceKey.Trim(),
+            PreviewCacheKey: CreatePreviewCacheKey(draftId, draftMode),
+            BundleCacheKey: $"draft:{draftId.Trim()}",
             AssetId: null,
             PreviewKind: AssetPreviewKind.Text.ToString(),
             ContentType: normalizedContentType,
             RelativePayloadPath: PayloadFileName,
             SourceFingerprint: new WorkspaceFileFingerprintDto(
-                SourcePath: $"draft:{payload.DraftId.Trim()}:{payload.DraftMode.Trim()}",
+                SourcePath: $"draft:{draftId.Trim()}:{draftMode.Trim()}",
                 FileSizeInBytes: Encoding.UTF8.GetByteCount(normalizedText),
-                LastWriteTimeUtc: payload.UpdatedAtUtc,
-                ContentHash: payload.SourceFingerprint),
-            GeneratedAtUtc: payload.UpdatedAtUtc,
+                LastWriteTimeUtc: updatedAtUtc,
+                ContentHash: sourceFingerprint),
+            GeneratedAtUtc: updatedAtUtc,
             GeneratorVersion: GeneratorVersion,
             PreviewInfoItems: AssetPreviewTextDisplayPolicy.AppendDisplayInfoItems(
                 null,
                 display.Metadata),
             PreferredDisplaySizeInBytes: Encoding.UTF8.GetByteCount(display.TextContent));
+    }
+
+    private static bool IsMatchingPayloadDescriptor(
+        PreviewCacheDescriptorDto descriptor,
+        AssetEditDraftTextPatchDto patch) =>
+        string.Equals(descriptor.WorkspaceKey, patch.WorkspaceKey.Trim(), StringComparison.Ordinal) &&
+        string.Equals(descriptor.PreviewCacheKey, CreatePreviewCacheKey(patch.DraftId, patch.DraftMode), StringComparison.Ordinal) &&
+        string.Equals(descriptor.PreviewKind, AssetPreviewKind.Text.ToString(), StringComparison.OrdinalIgnoreCase);
+
+    private static TextPatchApplyResult ApplyRangeEdits(
+        string currentText,
+        IReadOnlyList<TextAssetEditDraftRangeEditDto> rangeEdits,
+        int maxTextLength)
+    {
+        if (currentText.Length > maxTextLength)
+        {
+            return TextPatchApplyResult.LengthExceeded();
+        }
+
+        var builder = new StringBuilder(currentText);
+        var orderedEdits = rangeEdits
+            .OrderByDescending(static edit => edit.Start)
+            .ToArray();
+        var nextStart = currentText.Length;
+
+        foreach (var edit in orderedEdits)
+        {
+            if (edit.Start > currentText.Length ||
+                edit.Length > currentText.Length - edit.Start ||
+                edit.Start + edit.Length > nextStart)
+            {
+                return TextPatchApplyResult.RangeInvalid(edit.Start, edit.Length);
+            }
+
+            builder.Remove(edit.Start, edit.Length);
+            builder.Insert(edit.Start, NormalizeTextContent(edit.Text));
+            nextStart = edit.Start;
+            if (builder.Length > maxTextLength)
+            {
+                return TextPatchApplyResult.LengthExceeded();
+            }
+        }
+
+        return TextPatchApplyResult.Applied(builder.ToString());
     }
 
     private string GetDraftDirectoryPath(
@@ -244,6 +378,9 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
         textContent.Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
 
+    private static object GetDraftWriteLock(string draftDirectoryPath) =>
+        DraftWriteLocks.GetOrAdd(Path.GetFullPath(draftDirectoryPath), static _ => new object());
+
     private static long GetFileSize(string filePath)
     {
         try
@@ -264,4 +401,30 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
         PreviewCacheDescriptorDto Descriptor,
         string PayloadFilePath,
         long PayloadLength);
+
+    private sealed record TextPatchApplyResult(
+        AssetEditDraftTextPatchStatus Status,
+        string? TextContent = null,
+        int? InvalidRangeStart = null,
+        int? InvalidRangeLength = null)
+    {
+        public static TextPatchApplyResult Applied(string textContent) =>
+            new(AssetEditDraftTextPatchStatus.Applied, textContent);
+
+        public static TextPatchApplyResult RangeInvalid(int start, int length) =>
+            new(AssetEditDraftTextPatchStatus.RangeInvalid, InvalidRangeStart: start, InvalidRangeLength: length);
+
+        public static TextPatchApplyResult LengthExceeded() =>
+            new(AssetEditDraftTextPatchStatus.LengthExceeded);
+
+        public AssetEditDraftTextPatchResultDto ToPatchResult() =>
+            Status switch
+            {
+                AssetEditDraftTextPatchStatus.RangeInvalid => AssetEditDraftTextPatchResultDto.RangeInvalid(
+                    InvalidRangeStart ?? -1,
+                    InvalidRangeLength ?? -1),
+                AssetEditDraftTextPatchStatus.LengthExceeded => AssetEditDraftTextPatchResultDto.LengthExceeded(),
+                _ => AssetEditDraftTextPatchResultDto.NotFound()
+            };
+    }
 }

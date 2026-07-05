@@ -33,5 +33,7 @@ public interface IAssetEditDraftTextStore
 
     void SaveTextPayload(AssetEditDraftTextPayloadDto payload);
 
+    AssetEditDraftTextPatchResultDto ApplyTextPatch(AssetEditDraftTextPatchDto patch);
+
     void Delete(string workspaceKey, string draftId, string draftMode);
 }

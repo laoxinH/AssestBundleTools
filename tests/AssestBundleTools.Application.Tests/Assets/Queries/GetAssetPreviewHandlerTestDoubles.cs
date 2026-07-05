@@ -418,6 +418,9 @@ internal static partial class GetAssetPreviewHandlerTests
 
         public void SaveTextPayload(AssetEditDraftTextPayloadDto payload) => throw new NotSupportedException();
 
+        public AssetEditDraftTextPatchResultDto ApplyTextPatch(AssetEditDraftTextPatchDto patch) =>
+            throw new NotSupportedException();
+
         public void Delete(string workspaceKey, string draftId, string draftMode) => throw new NotSupportedException();
 
         private PreviewCacheTextChunkDto? ReadTextChunk(string workspaceKey, int offset, int length)

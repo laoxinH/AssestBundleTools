@@ -299,6 +299,9 @@ internal static class TextAssetEditDraftOpenHandlerTests
         public void SaveTextPayload(AssetEditDraftTextPayloadDto payload) =>
             throw new NotSupportedException();
 
+        public AssetEditDraftTextPatchResultDto ApplyTextPatch(AssetEditDraftTextPatchDto patch) =>
+            throw new NotSupportedException();
+
         public void Delete(string workspaceKey, string draftId, string draftMode) =>
             throw new NotSupportedException();
     }

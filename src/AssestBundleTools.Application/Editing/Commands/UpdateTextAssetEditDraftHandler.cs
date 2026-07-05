@@ -64,37 +64,30 @@ public sealed class UpdateTextAssetEditDraftHandler
         var draftMode = NormalizeDraftMode(command.DraftMode);
         var updatedAtUtc = DateTimeOffset.UtcNow;
         var contentType = ResolveContentType(targetDetails.AssetTypeDisplayName);
-        var draftTextStore = _workspaceDataStoreFactory.CreateAssetEditDraftTextStore(command.WorkspaceDataRootPath.Trim());
-        var textResult = ResolveUpdatedTextContent(command, workspaceKey, draftId, draftMode, draftTextStore);
-        if (textResult.IsCancelled)
-        {
-            return Task.FromResult(Result<AssetTextEditDraftUpdatedResultDto>.Cancelled());
-        }
-
-        if (!textResult.IsSuccess || textResult.Value is null)
-        {
-            return Task.FromResult(Result<AssetTextEditDraftUpdatedResultDto>.Failure(textResult.Errors));
-        }
-
         var sourceFingerprint = ResolveDraftSourceFingerprint(workspaceKey, command.WorkspaceDataRootPath, draftId, draftMode) ??
             WorkspaceTextEditOperationRecorder.CreateSourceFingerprint(
                 targetDetails,
                 targetDetails.PreferredDisplaySizeInBytes ?? targetDetails.SizeInBytes);
-        draftTextStore.SaveTextPayload(new AssetEditDraftTextPayloadDto(
+        var draftTextStore = _workspaceDataStoreFactory.CreateAssetEditDraftTextStore(command.WorkspaceDataRootPath.Trim());
+        var contentLengthResult = SaveUpdatedTextContent(
+            command,
             workspaceKey,
             draftId,
             draftMode,
             contentType,
-            textResult.Value,
             updatedAtUtc,
-            SourceFingerprint: sourceFingerprint,
-            SourceDescription: targetDetails.Name,
-            Summary: targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString()));
+            sourceFingerprint,
+            targetDetails,
+            draftTextStore);
+        if (!contentLengthResult.IsSuccess)
+        {
+            return Task.FromResult(Result<AssetTextEditDraftUpdatedResultDto>.Failure(contentLengthResult.Errors));
+        }
 
         var reference = new AssetPreviewFullContentReferenceDto(
             AssetPreviewFullContentReferenceKind.EditDraft,
             contentType,
-            Encoding.UTF8.GetByteCount(textResult.Value),
+            contentLengthResult.Value,
             workspaceKey,
             DraftId: draftId,
             DraftMode: draftMode);
@@ -197,111 +190,60 @@ public sealed class UpdateTextAssetEditDraftHandler
             character is >= 'a' and <= 'f' ||
             character is >= 'A' and <= 'F');
 
-    private Result<string> ResolveUpdatedTextContent(
+    private static Result<long> SaveUpdatedTextContent(
         UpdateTextAssetEditDraftCommand command,
         string workspaceKey,
         string draftId,
         string draftMode,
+        string contentType,
+        DateTimeOffset updatedAtUtc,
+        string sourceFingerprint,
+        AssetDetailsDto targetDetails,
         IAssetEditDraftTextStore draftTextStore)
     {
         if (command.TextContent is not null)
         {
-            return Result<string>.Success(NormalizeTextContent(command.TextContent));
-        }
-
-        var currentTextResult = LoadCurrentDraftText(workspaceKey, draftId, draftMode, draftTextStore);
-        if (!currentTextResult.IsSuccess || currentTextResult.Value is null)
-        {
-            return currentTextResult;
-        }
-
-        if (!TextAssetEditDraftPatchBaseline.Matches(currentTextResult.Value, command.PatchBaseline!))
-        {
-            return Result<string>.Failure(ApplicationErrors.AssetEditDraftTextPatchBaselineMismatch());
-        }
-
-        return ApplyRangeEdits(
-            currentTextResult.Value,
-            command.RangeEdits ?? Array.Empty<TextAssetEditDraftRangeEditDto>());
-    }
-
-    private static Result<string> LoadCurrentDraftText(
-        string workspaceKey,
-        string draftId,
-        string draftMode,
-        IAssetEditDraftTextStore draftTextStore)
-    {
-        var builder = new StringBuilder();
-        var offset = 0;
-
-        while (builder.Length <= AssetTextEditPolicy.InlineEditableTextLength)
-        {
-            var chunk = draftTextStore.LoadTextChunk(
+            var normalizedText = NormalizeTextContent(command.TextContent);
+            draftTextStore.SaveTextPayload(new AssetEditDraftTextPayloadDto(
                 workspaceKey,
                 draftId,
                 draftMode,
-                offset,
-                AssetTextEditPolicy.RangeEditReadChunkLength);
-            if (chunk is null)
-            {
-                return Result<string>.Failure(ApplicationErrors.AssetEditDraftNotFound(workspaceKey, draftId, draftMode));
-            }
-
-            if (chunk.TotalLength > AssetTextEditPolicy.InlineEditableTextLength)
-            {
-                return Result<string>.Failure(
-                    ApplicationErrors.AssetEditDraftTextLengthExceeded(AssetTextEditPolicy.InlineEditableTextLength));
-            }
-
-            builder.Append(chunk.Text);
-            offset = chunk.Offset + chunk.Length;
-            if (builder.Length > AssetTextEditPolicy.InlineEditableTextLength)
-            {
-                return Result<string>.Failure(
-                    ApplicationErrors.AssetEditDraftTextLengthExceeded(AssetTextEditPolicy.InlineEditableTextLength));
-            }
-
-            if (offset >= chunk.TotalLength || chunk.Length == 0)
-            {
-                return Result<string>.Success(builder.ToString());
-            }
+                contentType,
+                normalizedText,
+                updatedAtUtc,
+                SourceFingerprint: sourceFingerprint,
+                SourceDescription: targetDetails.Name,
+                Summary: targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString()));
+            return Result<long>.Success(Encoding.UTF8.GetByteCount(normalizedText));
         }
 
-        return Result<string>.Failure(
-            ApplicationErrors.AssetEditDraftTextLengthExceeded(AssetTextEditPolicy.InlineEditableTextLength));
-    }
-
-    private static Result<string> ApplyRangeEdits(
-        string currentText,
-        IReadOnlyList<TextAssetEditDraftRangeEditDto> rangeEdits)
-    {
-        var builder = new StringBuilder(currentText);
-        var orderedEdits = rangeEdits
-            .OrderByDescending(static edit => edit.Start)
-            .ToArray();
-        var nextStart = currentText.Length;
-
-        foreach (var edit in orderedEdits)
+        var patchResult = draftTextStore.ApplyTextPatch(new AssetEditDraftTextPatchDto(
+            workspaceKey,
+            draftId,
+            draftMode,
+            contentType,
+            command.RangeEdits ?? Array.Empty<TextAssetEditDraftRangeEditDto>(),
+            command.PatchBaseline!,
+            updatedAtUtc,
+            AssetTextEditPolicy.InlineEditableTextLength,
+            SourceFingerprint: sourceFingerprint,
+            SourceDescription: targetDetails.Name,
+            Summary: targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString()));
+        return patchResult.Status switch
         {
-            if (edit.Start > currentText.Length ||
-                edit.Length > currentText.Length - edit.Start ||
-                edit.Start + edit.Length > nextStart)
-            {
-                return Result<string>.Failure(
-                    ApplicationErrors.AssetEditDraftTextPatchRangeInvalid(edit.Start, edit.Length));
-            }
-
-            builder.Remove(edit.Start, edit.Length);
-            builder.Insert(edit.Start, NormalizeTextContent(edit.Text));
-            nextStart = edit.Start;
-            if (builder.Length > AssetTextEditPolicy.InlineEditableTextLength)
-            {
-                return Result<string>.Failure(
-                    ApplicationErrors.AssetEditDraftTextLengthExceeded(AssetTextEditPolicy.InlineEditableTextLength));
-            }
-        }
-
-        return Result<string>.Success(builder.ToString());
+            AssetEditDraftTextPatchStatus.Applied => Result<long>.Success(patchResult.ContentLength),
+            AssetEditDraftTextPatchStatus.NotFound => Result<long>.Failure(
+                ApplicationErrors.AssetEditDraftNotFound(workspaceKey, draftId, draftMode)),
+            AssetEditDraftTextPatchStatus.BaselineMismatch => Result<long>.Failure(
+                ApplicationErrors.AssetEditDraftTextPatchBaselineMismatch()),
+            AssetEditDraftTextPatchStatus.RangeInvalid => Result<long>.Failure(
+                ApplicationErrors.AssetEditDraftTextPatchRangeInvalid(
+                    patchResult.InvalidRangeStart ?? -1,
+                    patchResult.InvalidRangeLength ?? -1)),
+            AssetEditDraftTextPatchStatus.LengthExceeded => Result<long>.Failure(
+                ApplicationErrors.AssetEditDraftTextLengthExceeded(AssetTextEditPolicy.InlineEditableTextLength)),
+            _ => Result<long>.Failure(ApplicationErrors.AssetEditDraftTextUpdatePayloadInvalid())
+        };
     }
 
     private static string NormalizeDraftMode(string? draftMode) =>
