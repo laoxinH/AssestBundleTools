@@ -1337,6 +1337,7 @@ public static class ResourceKeys
     public const string TextAssetEditorLineStatusFormat = "TextAssetEditor.LineStatus.Format";
     public const string TextAssetEditorSearchPlaceholder = "TextAssetEditor.Search.PlaceholderText";
     public const string TextAssetEditorSearchButtonToolTip = "TextAssetEditor.SearchButton.ToolTip";
+    public const string TextAssetEditorLoadMoreLinesButton = "TextAssetEditor.LoadMoreLinesButton.Content";
     public const string TextAssetEditorUnsavedDialogTitle = "TextAssetEditor.UnsavedDialog.Title";
     public const string TextAssetEditorUnsavedDialogDescription = "TextAssetEditor.UnsavedDialog.Description";
     public const string InspectorUnsavedSpriteEditDialogTitle = "InspectorPanelView.SpriteEdit.UnsavedDialog.Title";

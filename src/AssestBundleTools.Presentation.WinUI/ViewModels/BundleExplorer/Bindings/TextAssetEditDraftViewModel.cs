@@ -16,7 +16,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 /// </summary>
 public sealed class TextAssetEditDraftViewModel : ObservableObject
 {
-    private const int InitialLineCount = 200;
+    private const int LinePageSize = 200;
     private const int SearchMatchCount = 50;
 
     private readonly IWorkspaceAssetInspectionGateway _workspaceAssetInspectionGateway;
@@ -28,6 +28,8 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     private string _searchText = string.Empty;
     private string _editableText = string.Empty;
     private string _lastSavedText = string.Empty;
+    private int _nextLineIndex;
+    private bool _hasMoreLines;
     private bool _isBusy;
 
     public TextAssetEditDraftViewModel(
@@ -131,11 +133,17 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
             if (SetProperty(ref _isBusy, value))
             {
                 OnPropertyChanged(nameof(CanSearch));
+                OnPropertyChanged(nameof(CanLoadMoreLines));
             }
         }
     }
 
     public bool CanSearch => !IsBusy && !string.IsNullOrWhiteSpace(SearchText);
+
+    public bool CanLoadMoreLines => !IsInlineEditEnabled && !IsBusy && _hasMoreLines;
+
+    public Visibility LoadMoreLinesButtonVisibility =>
+        !IsInlineEditEnabled && _hasMoreLines ? Visibility.Visible : Visibility.Collapsed;
 
     public ObservableCollection<TextAssetEditLineViewModel> Lines { get; } = new();
 
@@ -158,6 +166,24 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
 
     public async Task LoadInitialLinesAsync(CancellationToken cancellationToken = default)
     {
+        await LoadLinePageAsync(startLineIndex: 0, reset: true, cancellationToken);
+    }
+
+    public async Task LoadMoreLinesAsync(CancellationToken cancellationToken = default)
+    {
+        if (!CanLoadMoreLines)
+        {
+            return;
+        }
+
+        await LoadLinePageAsync(_nextLineIndex, reset: false, cancellationToken);
+    }
+
+    private async Task LoadLinePageAsync(
+        int startLineIndex,
+        bool reset,
+        CancellationToken cancellationToken)
+    {
         if (IsBusy)
         {
             return;
@@ -171,17 +197,28 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
                     new LoadPreviewTextLinesQuery(
                         _workspaceDataRootPath,
                         _draft.Reference,
-                        StartLineIndex: 0,
-                        LineCount: InitialLineCount),
+                        startLineIndex,
+                        LinePageSize),
                     token),
                 cancellationToken);
             if (!result.IsSuccess || result.Value is null)
             {
-                StatusText = string.Empty;
+                if (reset)
+                {
+                    Lines.Clear();
+                    _nextLineIndex = 0;
+                    StatusText = string.Empty;
+                    SetHasMoreLines(false);
+                }
+
                 return;
             }
 
-            Lines.Clear();
+            if (reset)
+            {
+                Lines.Clear();
+            }
+
             var lineIndex = result.Value.StartLineIndex;
             foreach (var line in result.Value.Lines)
             {
@@ -191,10 +228,12 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
                 lineIndex++;
             }
 
+            _nextLineIndex = result.Value.StartLineIndex + result.Value.LineCount;
+            SetHasMoreLines(result.Value.HasMore && result.Value.LineCount > 0);
             StatusText = string.Format(
                 CultureInfo.CurrentCulture,
                 _lineStatusFormat,
-                result.Value.LineCount,
+                Lines.Count,
                 result.Value.TotalLineCount);
         }
         finally
@@ -361,5 +400,17 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(SearchResultsVisibility));
         OnPropertyChanged(nameof(SearchResultsColumnWidth));
+    }
+
+    private void SetHasMoreLines(bool value)
+    {
+        if (_hasMoreLines == value)
+        {
+            return;
+        }
+
+        _hasMoreLines = value;
+        OnPropertyChanged(nameof(CanLoadMoreLines));
+        OnPropertyChanged(nameof(LoadMoreLinesButtonVisibility));
     }
 }

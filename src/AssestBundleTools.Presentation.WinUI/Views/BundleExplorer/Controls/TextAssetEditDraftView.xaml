@@ -159,9 +159,36 @@
             </ListView>
         </Grid>
 
-        <TextBlock
+        <Grid
             Grid.Row="2"
-            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-            Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
+            ColumnSpacing="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock
+                VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
+
+            <Button
+                x:Name="LoadMoreLinesButton"
+                Grid.Column="1"
+                Click="OnLoadMoreLinesButtonClick"
+                IsEnabled="{x:Bind ViewModel.CanLoadMoreLines, Mode=OneWay}"
+                Style="{StaticResource WorkspaceOperationButtonStyle}"
+                Visibility="{x:Bind ViewModel.LoadMoreLinesButtonVisibility, Mode=OneWay}">
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="6">
+                    <FontIcon
+                        FontFamily="Segoe Fluent Icons"
+                        FontSize="12"
+                        Glyph="&#xE70D;" />
+                    <TextBlock x:Name="LoadMoreLinesButtonText" />
+                </StackPanel>
+            </Button>
+        </Grid>
     </Grid>
 </UserControl>

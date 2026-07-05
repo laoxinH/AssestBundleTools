@@ -12,7 +12,7 @@ public sealed partial class TextAssetEditDraftView : UserControl
             nameof(ViewModel),
             typeof(TextAssetEditDraftViewModel),
             typeof(TextAssetEditDraftView),
-            new PropertyMetadata(null));
+            new PropertyMetadata(null, OnViewModelChanged));
 
     public TextAssetEditDraftView()
     {
@@ -26,6 +26,14 @@ public sealed partial class TextAssetEditDraftView : UserControl
         set => SetValue(ViewModelProperty, value);
     }
 
+    private static void OnViewModelChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
+    {
+        if (dependencyObject is TextAssetEditDraftView view)
+        {
+            view.Bindings.Update();
+        }
+    }
+
     private async void OnSearchButtonClick(object sender, RoutedEventArgs e)
     {
         if (ViewModel is not null)
@@ -34,9 +42,18 @@ public sealed partial class TextAssetEditDraftView : UserControl
         }
     }
 
+    private async void OnLoadMoreLinesButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not null)
+        {
+            await ViewModel.LoadMoreLinesAsync();
+        }
+    }
+
     private void ApplyLocalizedText()
     {
         SearchBox.PlaceholderText = UiText.Get(ResourceKeys.TextAssetEditorSearchPlaceholder);
         ToolTipService.SetToolTip(SearchButton, UiText.Get(ResourceKeys.TextAssetEditorSearchButtonToolTip));
+        LoadMoreLinesButtonText.Text = UiText.Get(ResourceKeys.TextAssetEditorLoadMoreLinesButton);
     }
 }
