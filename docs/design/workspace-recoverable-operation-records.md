@@ -81,7 +81,7 @@ checkpoints[]      # 后续：保存 / 导出检查点
 - 完整跨操作全局 redo 栈；当前只实现目标资源级替换 redo，用于重做最近一次被撤销的替换，或从资源详情变更卡片重新应用某条历史替换记录。
 - 保存后跨输出包自动反向写回。
 - 自动删除用户已经导出的外部文件。
-- 完整正文编辑器；当前只落地文本 payload 存取底座，以及 `TextAsset / Shader` 独立窗口化文本编辑壳、草稿创建、小型 TextAsset 草稿更新与应用、退出 / 关闭确认和丢弃。大文本虚拟化编辑、编辑撤销 / 重做、JSON 格式化编辑、Shader 写回和完整恢复进入编辑态仍按后续阶段推进。
+- 完整正文编辑器；当前只落地文本 payload 存取底座，以及 `TextAsset / Shader` 独立窗口化文本编辑壳、草稿创建、恢复打开已有文本草稿、小型 TextAsset 草稿更新与应用、退出 / 关闭确认和未应用草稿丢弃。大文本虚拟化编辑、编辑撤销 / 重做、JSON 格式化编辑、Shader 写回和非文本草稿完整恢复仍按后续阶段推进。
 - 多人协作或跨进程同时编辑同一工作区。
 - 直接把操作记录当作用户可见文案来源。
 
@@ -90,7 +90,7 @@ checkpoints[]      # 后续：保存 / 导出检查点
 - **操作记录**：用户或系统确认执行的一次可恢复动作，例如提取、替换、应用草稿、撤销替换。
 - **操作事实流**：按 `sequence` 递增保存的 `operations[]`。
 - **物化变更摘要**：由操作事实流计算出的当前工作区待保存 / 待展示状态，对应现有 `WorkspaceChangeSummaryDto` 和 `changes[]`。
-- **编辑草稿**：尚未应用到工作区变更队列的临时编辑内容。当前描述元数据保存在 `editDrafts[]`，文本类大载荷保存在 `staging/drafts`；`TextAsset / Shader` 第一阶段已接入创建和丢弃，`TextAsset` 已接入应用，正文更新和 Shader 写回仍待后续阶段。
+- **编辑草稿**：尚未应用到工作区变更队列的临时编辑内容。当前描述元数据保存在 `editDrafts[]`，文本类大载荷保存在 `staging/drafts`；`TextAsset / Shader` 第一阶段已接入创建、恢复打开和未应用草稿丢弃，`TextAsset` 已接入正文更新与应用，Shader 写回仍待后续阶段。草稿 descriptor 的 source fingerprint 是恢复校验输入，创建、更新、应用和重新打开草稿时不得随 payload 内容更新而重写成另一个身份。
 - **检查点**：保存 / 导出动作成功后产生的边界，用来标记哪些操作已经被外部输出消费。
 
 ## 6. 操作记录模型
@@ -378,13 +378,13 @@ Spine 编辑草稿预览不得绕过有效读模型。编辑态预览输入为�
 当前 `TextAsset / Shader` 编辑器第一阶段规则：
 
 1. `替换文件` 与 `编辑` 是两个独立入口；文件替换继续生成 `ReplaceFromFile`，文本编辑只通过资源编辑窗口的文本编辑模式进入。
-2. 打开文本编辑模式时，Application 创建 `text-content` 草稿，写入 `staging/drafts/<workspaceKey>/<draftId>/text-content/`，并追加 `EditDraftCreated`；Presentation 只保存 `draftId / draftMode` 和 `EditDraft` reference。
+2. 打开文本编辑模式时，如果资产标签没有可用草稿引用，Application 创建 `text-content` 草稿，写入 `staging/drafts/<workspaceKey>/<draftId>/text-content/`，并追加 `EditDraftCreated`；Presentation 保存 `draftId / draftMode / sourceFingerprint / sourceDescription` 和 `EditDraft` reference。如果资产标签已经携带 `EditDraftReference`，Application 通过 `OpenTextAssetEditDraft` 校验 descriptor、source fingerprint、过期时间和 payload 后返回既有 `EditDraft` reference，不追加新的 `EditDraftCreated`，也不覆盖草稿 payload。
 3. 文本编辑第一阶段的 UI 对小型 TextAsset 开放正文编辑，对大型文本和 Shader 降级为只读大文本工作面：初始加载有限行数、展示行号、执行有限搜索；所有读取和搜索必须回到 Application query，Presentation 不直接读草稿文件。
 4. 小型 TextAsset 的正文编辑预算由 `AssetTextEditPolicy.InlineEditableTextLength` 定义；超过预算的正文更新必须被 `UpdateTextAssetEditDraft` 拒绝，并保持 draft payload 与 `operations[]` 不变，直到虚拟化 / patch 编辑器落地。
-5. TextAsset 保存时，若正文相对打开基线存在未保存修改，Presentation 先调用 `UpdateTextAssetEditDraft` 覆盖 draft payload 并追加 `EditDraftUpdated`，再调用 `ApplyTextAssetEditDraft` 追加 `EditDraftApplied`；两条记录的 `source.sourceKind=draft`、`source.draftMode=text-content`、`source.draftId=<draftId>` 均指向同一个草稿。
+5. TextAsset 保存时，若正文相对打开基线存在未保存修改，Presentation 先调用 `UpdateTextAssetEditDraft` 覆盖 draft payload 并追加 `EditDraftUpdated`，再调用 `ApplyTextAssetEditDraft` 追加 `EditDraftApplied`；两条记录的 `source.sourceKind=draft`、`source.draftMode=text-content`、`source.draftId=<draftId>` 均指向同一个草稿。`UpdateTextAssetEditDraft / ApplyTextAssetEditDraft` 必须保留已有 descriptor source fingerprint；只有缺失 descriptor 时才允许按目标资产构造兜底指纹。
 6. 运行时读模型只把 `EditDraftApplied` 物化为目标资产当前有效文本编辑，变更分段显示 `TextEdit` 记录；`EditDraftCreated / EditDraftUpdated / EditDraftDiscarded` 只表达草稿生命周期，不单独让目标资源进入有效已修改状态。
 7. Shader 当前可以进入只读工作面，但 `CanApply=false`，保存按钮保持禁用；只有接入 Shader 写回适配器后才能追加可生效的文本编辑记录。
-8. 用户点击退出，或关闭处于文本编辑模式的资源标签 / 编辑窗口时，若存在未保存正文，必须提示保存 / 丢弃 / 取消；选择丢弃或草稿干净退出时追加 `EditDraftDiscarded` 并从 `editDrafts[]` 移除该草稿描述。这只清理草稿生命周期，不删除已应用操作引用仍需要的 payload。
+8. 用户点击退出，或关闭处于文本编辑模式的资源标签 / 编辑窗口时，若存在未保存正文，必须提示保存 / 丢弃 / 取消；未应用草稿选择丢弃或干净退出时追加 `EditDraftDiscarded` 并从 `editDrafts[]` 移除该草稿描述。已应用 baseline 草稿重新进入编辑态后，退出或丢弃本次未保存 UI 改动只关闭编辑态并保留 `EditDraftReference` 与 payload，不能删除已被 `EditDraftApplied` 和保存 / 导出写包引用的草稿内容。
 9. 已应用 TextAsset 草稿是目标资产当前有效内容的一种来源。`GetAssetPreview` 在没有更高优先级文件替换 / 工作区替换时，必须通过 `IAssetEditDraftTextStore` 读取 `TextEditDraftId / TextEditDraftMode` 对应的 `EditDraft` reference，并返回有界 `TextContent`、完整内容 reference 和可供结构化消费者使用的完整小文本；Presentation 侧的预览失效策略必须把 `TextEditDraftId / TextEditDraftMode / TextEditAppliedAtUtc` 变化视为需要重载有效预览。
 10. 保存 / 导出写包从操作事实流物化 TextAsset 当前有效 `text-content` 草稿，并由对象写包适配器读取草稿 payload 写入 TextAsset 的 `m_Script`。替换或编辑命令本身不得提前改写 AB。
 
@@ -400,6 +400,8 @@ Spine 编辑草稿预览不得绕过有效读模型。编辑态预览输入为�
 - 窗口 / 标签恢复只携带轻量 `EditDraftReference`。
 - 真正恢复草稿前必须先走 `GetAssetEditDraftRestorePlanHandler`。
 - 只有 `Restorable` 草稿才能重新挂回标签或进入编辑器。
+- 文本草稿进入编辑器时还必须通过 `OpenTextAssetEditDraft` 再次校验 descriptor、source fingerprint、过期时间和 payload 是否存在；校验失败应显示结构化诊断，不静默创建新草稿替代。
+- `OpenTextAssetEditDraft` 成功后必须把 descriptor 的 source fingerprint 和 source description 重新写回标签级 `EditDraftReference`，后续窗口快照继续携带同一个校验身份。
 - 草稿内容应放在 `staging/drafts/<workspaceKey>/<draftId>/<draftMode>/`，不得写入 `openAssetTabs[]` 或 `operations[]`。
 
 ### 7.5 保存与重建

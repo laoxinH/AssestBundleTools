@@ -81,6 +81,22 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldRejectLargeInlinePayload),
             TextAssetEditDraftUpdateHandlerTests.UpdateTextAssetEditDraftHandler_ShouldRejectLargeInlinePayload);
+        await RunTestAsync(
+            failures,
+            nameof(TextAssetEditDraftUpdateHandlerTests.ApplyTextAssetEditDraftHandler_ShouldPreserveExistingDraftSourceFingerprint),
+            TextAssetEditDraftUpdateHandlerTests.ApplyTextAssetEditDraftHandler_ShouldPreserveExistingDraftSourceFingerprint);
+        await RunTestAsync(
+            failures,
+            nameof(TextAssetEditDraftUpdateHandlerTests.RecordDraftCreated_ShouldPersistDraftDtoSourceFingerprint),
+            TextAssetEditDraftUpdateHandlerTests.RecordDraftCreated_ShouldPersistDraftDtoSourceFingerprint);
+        await RunTestAsync(
+            failures,
+            nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldReturnExistingDraftReference),
+            TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldReturnExistingDraftReference);
+        await RunTestAsync(
+            failures,
+            nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldFail_WhenPayloadIsMissing),
+            TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldFail_WhenPayloadIsMissing);
         await RunTestAsync(failures, nameof(RegisterWorkspaceCatalogEntry_ShouldReturnFailure_WhenSourcePathIsBlank), RegisterWorkspaceCatalogEntry_ShouldReturnFailure_WhenSourcePathIsBlank);
         await RunTestAsync(failures, nameof(RegisterWorkspaceCatalogEntry_ShouldPreserveExistingPinnedState_AndNormalizeDisplayName), RegisterWorkspaceCatalogEntry_ShouldPreserveExistingPinnedState_AndNormalizeDisplayName);
         await RunTestAsync(failures, nameof(SetWorkspaceCatalogEntryPinnedState_ShouldReturnFailure_WhenWorkspaceKeyIsBlank), SetWorkspaceCatalogEntryPinnedState_ShouldReturnFailure_WhenWorkspaceKeyIsBlank);

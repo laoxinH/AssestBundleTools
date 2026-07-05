@@ -4,6 +4,7 @@ using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Editing.Services;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Common.Errors;
@@ -63,6 +64,10 @@ public sealed class UpdateTextAssetEditDraftHandler
         var updatedAtUtc = DateTimeOffset.UtcNow;
         var contentType = ResolveContentType(targetDetails.AssetTypeDisplayName);
         var normalizedTextContent = NormalizeTextContent(command.TextContent);
+        var sourceFingerprint = ResolveDraftSourceFingerprint(workspaceKey, command.WorkspaceDataRootPath, draftId, draftMode) ??
+            WorkspaceTextEditOperationRecorder.CreateSourceFingerprint(
+                targetDetails,
+                targetDetails.PreferredDisplaySizeInBytes ?? targetDetails.SizeInBytes);
         var draftTextStore = _workspaceDataStoreFactory.CreateAssetEditDraftTextStore(command.WorkspaceDataRootPath.Trim());
         draftTextStore.SaveTextPayload(new AssetEditDraftTextPayloadDto(
             workspaceKey,
@@ -71,9 +76,7 @@ public sealed class UpdateTextAssetEditDraftHandler
             contentType,
             normalizedTextContent,
             updatedAtUtc,
-            SourceFingerprint: WorkspaceTextEditOperationRecorder.CreateSourceFingerprint(
-                targetDetails,
-                targetDetails.PreferredDisplaySizeInBytes ?? targetDetails.SizeInBytes),
+            SourceFingerprint: sourceFingerprint,
             SourceDescription: targetDetails.Name,
             Summary: targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString()));
 
@@ -146,6 +149,22 @@ public sealed class UpdateTextAssetEditDraftHandler
         string.Equals(assetTypeDisplayName, "Shader", StringComparison.OrdinalIgnoreCase)
             ? "text/x-shader; charset=utf-8"
             : "text/plain; charset=utf-8";
+
+    private string? ResolveDraftSourceFingerprint(
+        string workspaceKey,
+        string workspaceDataRootPath,
+        string draftId,
+        string draftMode)
+    {
+        var changeSet = _workspaceDataStoreFactory
+            .CreateWorkspaceChangeStore(workspaceDataRootPath.Trim())
+            .Load(workspaceKey.Trim());
+        return (changeSet?.EditDrafts ?? Array.Empty<WorkspaceAssetEditDraftDescriptorDto>())
+            .FirstOrDefault(descriptor =>
+                string.Equals(descriptor.DraftId?.Trim(), draftId, StringComparison.Ordinal) &&
+                string.Equals(descriptor.DraftMode?.Trim(), draftMode, StringComparison.Ordinal))
+            ?.SourceFingerprint;
+    }
 
     private static string NormalizeTextContent(string textContent) =>
         textContent.Replace("\r\n", "\n", StringComparison.Ordinal)

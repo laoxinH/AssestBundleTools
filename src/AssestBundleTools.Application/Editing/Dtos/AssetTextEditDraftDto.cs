@@ -21,4 +21,7 @@ public sealed record AssetTextEditDraftDto(
     DateTimeOffset UpdatedAtUtc,
     bool CanApply,
     string? Summary = null,
-    bool CanEditInline = false);
+    bool CanEditInline = false,
+    bool IsAppliedBaseline = false,
+    string? SourceFingerprint = null,
+    string? SourceDescription = null);

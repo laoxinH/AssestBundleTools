@@ -111,6 +111,7 @@ public sealed class CreateTextAssetEditDraftHandler : ICommandHandler<CreateText
             ? "text/plain; charset=utf-8"
             : preview.ContentType.Trim();
         var draftTextStore = _workspaceDataStoreFactory.CreateAssetEditDraftTextStore(command.WorkspaceDataRootPath.Trim());
+        var sourceFingerprint = CreatePreviewFingerprint(preview);
         draftTextStore.SaveTextPayload(new AssetEditDraftTextPayloadDto(
             command.WorkspaceKey.Trim(),
             draftId,
@@ -118,7 +119,7 @@ public sealed class CreateTextAssetEditDraftHandler : ICommandHandler<CreateText
             contentType,
             textContent,
             updatedAtUtc,
-            SourceFingerprint: CreatePreviewFingerprint(preview),
+            SourceFingerprint: sourceFingerprint,
             SourceDescription: targetDetails.Name,
             Summary: targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString()));
 
@@ -143,7 +144,9 @@ public sealed class CreateTextAssetEditDraftHandler : ICommandHandler<CreateText
             CanApply: targetDetails.AssetType == AssetType.TextAsset,
             Summary: targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString(),
             CanEditInline: targetDetails.AssetType == AssetType.TextAsset &&
-                textContent.Length <= AssetTextEditPolicy.InlineEditableTextLength);
+                textContent.Length <= AssetTextEditPolicy.InlineEditableTextLength,
+            SourceFingerprint: sourceFingerprint,
+            SourceDescription: targetDetails.Name);
 
         _operationRecorder?.RecordDraftCreated(command, targetDetails, draft);
         return Result<AssetTextEditDraftDto>.Success(draft);

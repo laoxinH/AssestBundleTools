@@ -37,11 +37,14 @@ public sealed class WorkspaceTextEditOperationRecorder
         }
 
         var timestamp = draft.UpdatedAtUtc;
+        var sourceFingerprint = string.IsNullOrWhiteSpace(draft.SourceFingerprint)
+            ? CreateSourceFingerprint(targetDetails, draft.Reference.ContentLength)
+            : draft.SourceFingerprint.Trim();
         var updatedChangeSet = UpsertDraftDescriptor(
             changeSet ?? WorkspaceChangeSetDto.Empty(workspaceKey),
             draft.DraftId,
             draft.DraftMode,
-            sourceFingerprint: CreateSourceFingerprint(targetDetails, draft.Reference.ContentLength),
+            sourceFingerprint,
             timestamp,
             targetDetails.Name,
             draft.Summary);
@@ -78,11 +81,17 @@ public sealed class WorkspaceTextEditOperationRecorder
             return;
         }
 
+        var normalizedChangeSet = changeSet ?? WorkspaceChangeSetDto.Empty(workspaceKey);
+        var sourceFingerprint = ResolveDraftSourceFingerprint(
+            normalizedChangeSet,
+            result.DraftId,
+            result.DraftMode) ??
+            CreateSourceFingerprint(targetDetails, targetDetails.PreferredDisplaySizeInBytes ?? targetDetails.SizeInBytes);
         var updatedChangeSet = UpsertDraftDescriptor(
-            changeSet ?? WorkspaceChangeSetDto.Empty(workspaceKey),
+            normalizedChangeSet,
             result.DraftId,
             result.DraftMode,
-            sourceFingerprint: CreateSourceFingerprint(targetDetails, targetDetails.PreferredDisplaySizeInBytes ?? targetDetails.SizeInBytes),
+            sourceFingerprint,
             result.AppliedAtUtc,
             targetDetails.Name,
             targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString());

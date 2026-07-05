@@ -89,9 +89,32 @@ public sealed class AssetEditorWindowOperationRefreshContractTests
         Assert.Contains("ObserveActiveTextEditDraft();", requestMethod);
         Assert.Contains("DocumentGroup.ActiveAssetTab?.ExitTextEditMode(clearDraftReference: false);", applyMethod);
         Assert.Contains("ObserveActiveTextEditDraft();", applyMethod);
-        Assert.Contains("DocumentGroup.ActiveAssetTab?.ExitTextEditMode(clearDraftReference: true);", exitMethod);
+        Assert.Contains("assetTab?.ExitTextEditMode(clearDraftReference: true);", exitMethod);
         Assert.Contains("ObserveActiveTextEditDraft();", exitMethod);
         Assert.Contains("NotifyActionBarStates();", busySetter);
+    }
+
+    [Fact]
+    public void TextEditExit_ShouldNotDiscardAppliedBaseline_WhenClean()
+    {
+        var actionsCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "ViewModels",
+                "BundleExplorer",
+                "Bindings",
+                "AssetEditorWindowViewModel.Actions.cs"));
+
+        var exitMethod = actionsCode[
+            actionsCode.IndexOf("public async Task<bool> ExitTextEditModeForActiveAssetAsync()", StringComparison.Ordinal)..actionsCode.IndexOf(
+                "public async Task ExitSpineEditModeForActiveGroupAsync",
+                StringComparison.Ordinal)];
+
+        Assert.Contains("draft.IsAppliedBaseline", exitMethod);
+        Assert.Contains("assetTab?.ExitTextEditMode(clearDraftReference: false);", exitMethod);
+        Assert.Contains("DiscardTextAssetEditDraftAsync", exitMethod);
     }
 
     private static string FindRepositoryRoot()

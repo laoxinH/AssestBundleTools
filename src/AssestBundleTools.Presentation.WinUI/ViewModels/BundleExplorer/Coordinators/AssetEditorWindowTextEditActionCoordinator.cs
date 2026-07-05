@@ -1,6 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Editing.Commands;
+using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
@@ -49,15 +51,21 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
         _setBusy = setBusy ?? throw new ArgumentNullException(nameof(setBusy));
     }
 
-    public async Task<TextAssetEditDraftViewModel?> CreateTextAssetEditDraftAsync()
+    public async Task<TextAssetEditDraftViewModel?> OpenOrCreateTextAssetEditDraftAsync()
     {
         if (!_tryGetAssetCommandContext(
                 static (_, details) => IsTextEditorSupported(details),
                 out var workspaceSummary,
                 out _,
-                out var details) ||
-            string.IsNullOrWhiteSpace(workspaceSummary.WorkspaceKey) ||
-            string.IsNullOrWhiteSpace(workspaceSummary.WorkspaceDataRootPath))
+                out var details))
+        {
+            return null;
+        }
+
+        var workspaceKey = workspaceSummary.WorkspaceKey?.Trim();
+        var workspaceDataRootPath = workspaceSummary.WorkspaceDataRootPath?.Trim();
+        if (string.IsNullOrWhiteSpace(workspaceKey) ||
+            string.IsNullOrWhiteSpace(workspaceDataRootPath))
         {
             return null;
         }
@@ -65,29 +73,22 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
         _setBusy(true);
         try
         {
-            var command = new CreateTextAssetEditDraftCommand(
-                workspaceSummary.WorkspaceId,
-                workspaceSummary.WorkspaceKey,
-                workspaceSummary.WorkspaceDataRootPath,
-                details.BundleId,
-                details.AssetId);
-            var result = await _backgroundTaskRunner.RunAsync(
-                token => _workspaceAssetOperationGateway.CreateTextAssetEditDraftAsync(command, token));
+            var result = await OpenExistingDraftOrCreateNewAsync(
+                workspaceSummary,
+                workspaceKey,
+                workspaceDataRootPath,
+                _activeAssetTabProvider(),
+                details);
             if (!result.IsSuccess || result.Value is null)
             {
                 _operationFeedbackBridge.AppendResultFailure(result.Errors);
                 return null;
             }
 
-            var draftViewModel = new TextAssetEditDraftViewModel(
+            var draftViewModel = CreateDraftViewModel(
                 result.Value,
-                _workspaceAssetInspectionGateway,
-                _backgroundTaskRunner,
-                workspaceSummary.WorkspaceDataRootPath,
-                details.Name,
-                GetString(ResourceKeys.TextAssetEditorReadOnlyHint),
-                GetString(ResourceKeys.TextAssetEditorInlineEditHint),
-                GetString(ResourceKeys.TextAssetEditorLineStatusFormat));
+                workspaceDataRootPath,
+                details.Name);
             await draftViewModel.InitializeAsync();
             return draftViewModel;
         }
@@ -95,6 +96,57 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
         {
             _setBusy(false);
         }
+    }
+
+    private async Task<Result<AssetTextEditDraftDto>> OpenExistingDraftOrCreateNewAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        string workspaceKey,
+        string workspaceDataRootPath,
+        AssetDocumentTabViewModel? assetTab,
+        AssetDetailsDto details)
+    {
+        if (assetTab?.EditDraftReference is { } draftReference &&
+            !string.IsNullOrWhiteSpace(draftReference.DraftId) &&
+            !string.IsNullOrWhiteSpace(draftReference.DraftMode))
+        {
+            var command = new OpenTextAssetEditDraftCommand(
+                workspaceSummary.WorkspaceId,
+                workspaceKey,
+                workspaceDataRootPath,
+                details.BundleId,
+                details.AssetId,
+                draftReference.DraftId,
+                draftReference.DraftMode,
+                draftReference.SourceFingerprint);
+            var result = await _backgroundTaskRunner.RunAsync(
+                token => _workspaceAssetOperationGateway.OpenTextAssetEditDraftAsync(command, token));
+            return result;
+        }
+
+        var createCommand = new CreateTextAssetEditDraftCommand(
+            workspaceSummary.WorkspaceId,
+            workspaceKey,
+            workspaceDataRootPath,
+            details.BundleId,
+            details.AssetId);
+        return await _backgroundTaskRunner.RunAsync(
+            token => _workspaceAssetOperationGateway.CreateTextAssetEditDraftAsync(createCommand, token));
+    }
+
+    private TextAssetEditDraftViewModel CreateDraftViewModel(
+        AssetTextEditDraftDto draft,
+        string workspaceDataRootPath,
+        string titleText)
+    {
+        return new TextAssetEditDraftViewModel(
+            draft,
+            _workspaceAssetInspectionGateway,
+            _backgroundTaskRunner,
+            workspaceDataRootPath,
+            titleText,
+            GetString(ResourceKeys.TextAssetEditorReadOnlyHint),
+            GetString(ResourceKeys.TextAssetEditorInlineEditHint),
+            GetString(ResourceKeys.TextAssetEditorLineStatusFormat));
     }
 
     public async Task<bool> ApplyTextAssetEditDraftAsync()

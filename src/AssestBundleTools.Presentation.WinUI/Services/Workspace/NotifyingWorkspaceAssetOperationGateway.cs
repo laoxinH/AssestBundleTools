@@ -178,6 +178,11 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         return result;
     }
 
+    public Task<Result<AssetTextEditDraftDto>> OpenTextAssetEditDraftAsync(
+        OpenTextAssetEditDraftCommand command,
+        CancellationToken cancellationToken = default) =>
+        _inner.OpenTextAssetEditDraftAsync(command, cancellationToken);
+
     public async Task<Result<AssetTextEditDraftUpdatedResultDto>> UpdateTextAssetEditDraftAsync(
         UpdateTextAssetEditDraftCommand command,
         CancellationToken cancellationToken = default)

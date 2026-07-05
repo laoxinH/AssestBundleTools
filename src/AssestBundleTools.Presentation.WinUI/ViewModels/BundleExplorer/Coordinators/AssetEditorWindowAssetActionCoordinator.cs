@@ -341,8 +341,8 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
             _operationFeedbackBridge.AppendResultFailure);
     }
 
-    public Task<TextAssetEditDraftViewModel?> CreateTextAssetEditDraftAsync() =>
-        _textEditActionCoordinator.CreateTextAssetEditDraftAsync();
+    public Task<TextAssetEditDraftViewModel?> OpenOrCreateTextAssetEditDraftAsync() =>
+        _textEditActionCoordinator.OpenOrCreateTextAssetEditDraftAsync();
 
     public Task<bool> ApplyTextAssetEditDraftAsync() =>
         _textEditActionCoordinator.ApplyTextAssetEditDraftAsync();

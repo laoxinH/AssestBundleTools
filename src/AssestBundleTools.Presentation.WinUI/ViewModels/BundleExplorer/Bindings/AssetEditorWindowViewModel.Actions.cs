@@ -117,7 +117,7 @@ public sealed partial class AssetEditorWindowViewModel
 
         if (assetTab.TextEditDraft is null)
         {
-            var draft = await _assetActionCoordinator.CreateTextAssetEditDraftAsync();
+            var draft = await _assetActionCoordinator.OpenOrCreateTextAssetEditDraftAsync();
             if (draft is null)
             {
                 return false;
@@ -154,8 +154,20 @@ public sealed partial class AssetEditorWindowViewModel
 
     public async Task<bool> ExitTextEditModeForActiveAssetAsync()
     {
-        if (DocumentGroup.ActiveAssetTab?.TextEditDraft is null)
+        var assetTab = DocumentGroup.ActiveAssetTab;
+        var draft = assetTab?.TextEditDraft;
+        if (draft is null)
         {
+            return true;
+        }
+
+        if (draft.IsAppliedBaseline)
+        {
+            assetTab?.ExitTextEditMode(clearDraftReference: false);
+            ObserveActiveTextEditDraft();
+            NotifyActionStates();
+            NotifyActionBarStates();
+            OnPropertyChanged(nameof(Inspector));
             return true;
         }
 
@@ -165,7 +177,7 @@ public sealed partial class AssetEditorWindowViewModel
             return false;
         }
 
-        DocumentGroup.ActiveAssetTab?.ExitTextEditMode(clearDraftReference: true);
+        assetTab?.ExitTextEditMode(clearDraftReference: true);
         ObserveActiveTextEditDraft();
         NotifyActionStates();
         NotifyActionBarStates();

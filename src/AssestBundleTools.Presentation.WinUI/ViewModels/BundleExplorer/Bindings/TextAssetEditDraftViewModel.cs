@@ -56,6 +56,12 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
 
     public bool CanApply => _draft.CanApply;
 
+    public bool IsAppliedBaseline => _draft.IsAppliedBaseline;
+
+    public string? SourceFingerprint => _draft.SourceFingerprint;
+
+    public string? SourceDescription => _draft.SourceDescription;
+
     public bool IsInlineEditEnabled => _draft.CanEditInline;
 
     public Visibility ReadOnlyViewVisibility =>

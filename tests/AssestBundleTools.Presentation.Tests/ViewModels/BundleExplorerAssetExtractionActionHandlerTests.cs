@@ -920,6 +920,11 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
+        public Task<Result<AssetTextEditDraftDto>> OpenTextAssetEditDraftAsync(
+            OpenTextAssetEditDraftCommand command,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
         public Task<Result<AssetTextEditAppliedResultDto>> ApplyTextAssetEditDraftAsync(
             ApplyTextAssetEditDraftCommand command,
             CancellationToken cancellationToken = default) =>

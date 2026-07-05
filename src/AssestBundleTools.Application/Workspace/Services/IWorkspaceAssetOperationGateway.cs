@@ -56,6 +56,10 @@ public interface IWorkspaceAssetOperationGateway
         CreateTextAssetEditDraftCommand command,
         CancellationToken cancellationToken = default);
 
+    Task<Result<AssetTextEditDraftDto>> OpenTextAssetEditDraftAsync(
+        OpenTextAssetEditDraftCommand command,
+        CancellationToken cancellationToken = default);
+
     Task<Result<AssetTextEditDraftUpdatedResultDto>> UpdateTextAssetEditDraftAsync(
         UpdateTextAssetEditDraftCommand command,
         CancellationToken cancellationToken = default);

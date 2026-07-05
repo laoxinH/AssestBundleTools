@@ -70,6 +70,7 @@ internal static class TextAssetEditDraftUpdateHandlerTests
         TestAssert.Equal(WorkspaceTextEditOperationRecorder.TextDraftMode, payload.DraftMode, "Draft payload should use text-content mode.");
         TestAssert.Equal("line 1\nline 2", payload.TextContent, "Draft payload should normalize CRLF line endings.");
         TestAssert.Equal("text/plain; charset=utf-8", payload.ContentType, "TextAsset draft content type should be text.");
+        TestAssert.Equal(existingFingerprint, payload.SourceFingerprint, "Draft payload should preserve the existing source fingerprint.");
 
         var savedOperation = TestAssert.Single(changeStore.SavedChangeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>());
         TestAssert.Equal(WorkspaceOperationKind.EditDraftUpdated, savedOperation.OperationKind, "Draft text update should append an update operation.");
@@ -84,6 +85,112 @@ internal static class TextAssetEditDraftUpdateHandlerTests
         TestAssert.Equal("draft-1", descriptor.DraftId, "Draft descriptor should be normalized and upserted.");
         TestAssert.Equal(WorkspaceTextEditOperationRecorder.TextDraftMode, descriptor.DraftMode, "Draft descriptor mode should be normalized.");
         TestAssert.Equal(existingFingerprint, descriptor.SourceFingerprint, "Draft update should preserve the existing source fingerprint.");
+    }
+
+    public static async Task ApplyTextAssetEditDraftHandler_ShouldPreserveExistingDraftSourceFingerprint()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        const string workspaceKey = "workspace-a";
+        const string workspaceDataRootPath = @"D:\WorkspaceData\A";
+        var bundleId = new BundleId("bundle.text");
+        var assetId = new AssetId("asset.text");
+        const string existingFingerprint = "source-fingerprint-v1";
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            assetId,
+            AssetType.TextAsset,
+            "story.json"));
+        var changeStore = new TestWorkspaceChangeStore
+        {
+            ChangeSet = new WorkspaceChangeSetDto(
+                WorkspaceKey: workspaceKey,
+                UpdatedAtUtc: new DateTimeOffset(2026, 6, 1, 10, 0, 0, TimeSpan.Zero),
+                Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+                EditDrafts:
+                [
+                    new WorkspaceAssetEditDraftDescriptorDto(
+                        DraftId: "draft-1",
+                        DraftMode: WorkspaceTextEditOperationRecorder.TextDraftMode,
+                        SourceFingerprint: existingFingerprint,
+                        UpdatedAtUtc: new DateTimeOffset(2026, 6, 1, 10, 0, 0, TimeSpan.Zero))
+                ],
+                Operations: Array.Empty<WorkspaceOperationRecordDto>())
+        };
+        var dataStoreFactory = new TestWorkspaceDataStoreFactory(changeStore, new TestAssetEditDraftTextStore());
+        var recorder = new WorkspaceTextEditOperationRecorder(dataStoreFactory, new WorkspaceOperationLogService());
+        var handler = new ApplyTextAssetEditDraftHandler(registry, registry, recorder);
+
+        var result = await handler.HandleAsync(new ApplyTextAssetEditDraftCommand(
+            workspaceId,
+            workspaceKey,
+            workspaceDataRootPath,
+            bundleId,
+            assetId,
+            "draft-1",
+            WorkspaceTextEditOperationRecorder.TextDraftMode));
+
+        TestAssert.True(result.IsSuccess, "Applying a TextAsset draft should succeed.");
+        TestAssert.Equal(1, registry.TryApplyTextEditCallCount, "Registry should receive the applied text edit.");
+
+        var descriptor = TestAssert.Single(changeStore.SavedChangeSet?.EditDrafts ?? Array.Empty<WorkspaceAssetEditDraftDescriptorDto>());
+        TestAssert.Equal("draft-1", descriptor.DraftId, "Applied draft descriptor should be kept.");
+        TestAssert.Equal(WorkspaceTextEditOperationRecorder.TextDraftMode, descriptor.DraftMode, "Applied draft descriptor mode should be kept.");
+        TestAssert.Equal(existingFingerprint, descriptor.SourceFingerprint, "Draft apply should preserve the existing source fingerprint for restore validation.");
+    }
+
+    public static Task RecordDraftCreated_ShouldPersistDraftDtoSourceFingerprint()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        const string workspaceKey = "workspace-a";
+        const string workspaceDataRootPath = @"D:\WorkspaceData\A";
+        var bundleId = new BundleId("bundle.text");
+        var assetId = new AssetId("asset.text");
+        const string sourceFingerprint = "preview-source-v1";
+        var changeStore = new TestWorkspaceChangeStore();
+        var dataStoreFactory = new TestWorkspaceDataStoreFactory(changeStore, new TestAssetEditDraftTextStore());
+        var recorder = new WorkspaceTextEditOperationRecorder(dataStoreFactory, new WorkspaceOperationLogService());
+        var details = CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            assetId,
+            AssetType.TextAsset,
+            "story.json");
+        var draft = new AssetTextEditDraftDto(
+            workspaceId,
+            bundleId,
+            assetId,
+            "story.json",
+            AssetType.TextAsset,
+            AssetType.TextAsset.ToString(),
+            "draft-1",
+            WorkspaceTextEditOperationRecorder.TextDraftMode,
+            new AssetPreviewFullContentReferenceDto(
+                AssetPreviewFullContentReferenceKind.EditDraft,
+                "text/plain; charset=utf-8",
+                128,
+                workspaceKey,
+                DraftId: "draft-1",
+                DraftMode: WorkspaceTextEditOperationRecorder.TextDraftMode),
+            new DateTimeOffset(2026, 6, 3, 10, 0, 0, TimeSpan.Zero),
+            CanApply: true,
+            SourceFingerprint: sourceFingerprint,
+            SourceDescription: "story.json");
+
+        recorder.RecordDraftCreated(
+            new CreateTextAssetEditDraftCommand(
+                workspaceId,
+                workspaceKey,
+                workspaceDataRootPath,
+                bundleId,
+                assetId),
+            details,
+            draft);
+
+        var descriptor = TestAssert.Single(changeStore.SavedChangeSet?.EditDrafts ?? Array.Empty<WorkspaceAssetEditDraftDescriptorDto>());
+        TestAssert.Equal(sourceFingerprint, descriptor.SourceFingerprint, "Draft creation should persist the same source fingerprint returned to Presentation.");
+        return Task.CompletedTask;
     }
 
     public static async Task UpdateTextAssetEditDraftHandler_ShouldRejectLargeInlinePayload()
@@ -261,9 +368,11 @@ internal static class TextAssetEditDraftUpdateHandlerTests
             throw new NotSupportedException();
     }
 
-    private sealed class TestWorkspaceSessionRegistry : IWorkspaceSessionRegistry
+    private sealed class TestWorkspaceSessionRegistry : IWorkspaceSessionRegistry, IWorkspaceTextEditSessionRegistry
     {
         private readonly Dictionary<(string BundleId, string AssetId), AssetDetailsDto> _assetDetails = new();
+
+        public int TryApplyTextEditCallCount { get; private set; }
 
         public void RegisterAssetDetails(AssetDetailsDto details)
         {
@@ -286,6 +395,34 @@ internal static class TextAssetEditDraftUpdateHandlerTests
             AssetId assetId,
             out AssetDetailsDto? assetDetails) =>
             _assetDetails.TryGetValue((bundleId.Value, assetId.Value), out assetDetails);
+
+        public bool TryApplyTextEdit(
+            WorkspaceId workspaceId,
+            BundleId bundleId,
+            AssetId assetId,
+            string draftId,
+            string draftMode,
+            out AssetTextEditAppliedResultDto? editResult)
+        {
+            TryApplyTextEditCallCount++;
+            if (!_assetDetails.TryGetValue((bundleId.Value, assetId.Value), out var details))
+            {
+                editResult = null;
+                return false;
+            }
+
+            editResult = new AssetTextEditAppliedResultDto(
+                workspaceId,
+                bundleId,
+                assetId,
+                details.Name,
+                details.AssetType,
+                details.AssetTypeDisplayName,
+                draftId,
+                draftMode,
+                new DateTimeOffset(2026, 6, 2, 10, 0, 0, TimeSpan.Zero));
+            return true;
+        }
 
         public bool TryGetBundleTree(WorkspaceId workspaceId, out IReadOnlyList<BundleTreeNodeDto> bundleTree) =>
             throw new NotSupportedException();

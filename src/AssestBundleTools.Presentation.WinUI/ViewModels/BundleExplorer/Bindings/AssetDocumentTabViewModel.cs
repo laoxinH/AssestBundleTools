@@ -240,7 +240,9 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
         TextEditDraft = textEditDraft;
         SetEditDraftReference(new AssetDocumentEditDraftReference(
             textEditDraft.DraftId,
-            textEditDraft.DraftMode));
+            textEditDraft.DraftMode,
+            textEditDraft.SourceFingerprint,
+            textEditDraft.SourceDescription));
     }
 
     public void ExitTextEditMode(bool clearDraftReference)
