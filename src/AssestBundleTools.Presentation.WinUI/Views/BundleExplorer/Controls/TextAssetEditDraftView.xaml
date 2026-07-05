@@ -9,8 +9,8 @@
     mc:Ignorable="d">
 
     <Grid
-        Padding="14"
-        Background="{ThemeResource LayerFillColorDefaultBrush}"
+        Padding="18,16,18,10"
+        Background="Transparent"
         RowSpacing="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -21,7 +21,7 @@
         <Grid ColumnSpacing="10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="260" />
+                <ColumnDefinition Width="300" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
@@ -58,15 +58,17 @@
 
         <Grid
             Grid.Row="1"
+            MinHeight="0"
             ColumnSpacing="12"
             Visibility="{x:Bind ViewModel.ReadOnlyViewVisibility, Mode=OneWay}">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="*" MinWidth="220" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="{x:Bind ViewModel.SearchResultsColumnWidth, Mode=OneWay}" />
             </Grid.ColumnDefinitions>
 
             <ListView
                 x:Name="LineListView"
+                MinHeight="0"
                 ItemsSource="{x:Bind ViewModel.Lines, Mode=OneWay}"
                 SelectionMode="None">
                 <ListView.ItemTemplate>
@@ -93,8 +95,10 @@
 
             <ListView
                 Grid.Column="1"
+                MinHeight="0"
                 ItemsSource="{x:Bind ViewModel.SearchMatches, Mode=OneWay}"
-                SelectionMode="None">
+                SelectionMode="None"
+                Visibility="{x:Bind ViewModel.SearchResultsVisibility, Mode=OneWay}">
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="viewModels:TextAssetEditSearchMatchViewModel">
                         <StackPanel Spacing="2">
@@ -113,11 +117,12 @@
 
         <Grid
             Grid.Row="1"
+            MinHeight="0"
             ColumnSpacing="12"
             Visibility="{x:Bind ViewModel.EditableViewVisibility, Mode=OneWay}">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="*" MinWidth="220" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="{x:Bind ViewModel.SearchResultsColumnWidth, Mode=OneWay}" />
             </Grid.ColumnDefinitions>
 
             <TextBox
@@ -125,6 +130,7 @@
                 FontFamily="Cascadia Mono, Consolas"
                 HorizontalAlignment="Stretch"
                 IsSpellCheckEnabled="False"
+                MinHeight="0"
                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
                 ScrollViewer.VerticalScrollBarVisibility="Auto"
                 Text="{x:Bind ViewModel.EditableText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -133,8 +139,10 @@
 
             <ListView
                 Grid.Column="1"
+                MinHeight="0"
                 ItemsSource="{x:Bind ViewModel.SearchMatches, Mode=OneWay}"
-                SelectionMode="None">
+                SelectionMode="None"
+                Visibility="{x:Bind ViewModel.SearchResultsVisibility, Mode=OneWay}">
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="viewModels:TextAssetEditSearchMatchViewModel">
                         <StackPanel Spacing="2">

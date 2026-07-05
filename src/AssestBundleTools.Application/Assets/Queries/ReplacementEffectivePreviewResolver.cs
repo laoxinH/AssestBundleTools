@@ -4,6 +4,7 @@ using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Messages;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Replacement.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
@@ -20,13 +21,16 @@ internal sealed class ReplacementEffectivePreviewResolver
     private const string TextContentType = "text/plain; charset=utf-8";
 
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
+    private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
     private readonly IReplacementPreviewSourceProvider? _replacementPreviewSourceProvider;
 
     public ReplacementEffectivePreviewResolver(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
+        IWorkspaceDataStoreFactory workspaceDataStoreFactory,
         IReplacementPreviewSourceProvider? replacementPreviewSourceProvider)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
+        _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
         _replacementPreviewSourceProvider = replacementPreviewSourceProvider;
     }
 
@@ -88,6 +92,16 @@ internal sealed class ReplacementEffectivePreviewResolver
                     replacementPreviewStack,
                     loadPreviewAsync,
                     cancellationToken);
+            }
+
+            if (assetType == AssetType.TextAsset &&
+                !string.IsNullOrWhiteSpace(details.TextEditDraftId))
+            {
+                return TryLoadTextEditDraftPreview(
+                    query,
+                    details,
+                    details.TextEditDraftId,
+                    details.TextEditDraftMode);
             }
         }
         finally
@@ -164,6 +178,127 @@ internal sealed class ReplacementEffectivePreviewResolver
             BundleId = targetQuery.BundleId,
             AssetId = targetQuery.AssetId
         });
+    }
+
+    private Result<AssetPreviewDto>? TryLoadTextEditDraftPreview(
+        GetAssetPreviewQuery query,
+        AssetDetailsDto details,
+        string draftId,
+        string? draftMode)
+    {
+        var normalizedDraftId = draftId.Trim();
+        var normalizedDraftMode = string.IsNullOrWhiteSpace(draftMode)
+            ? WorkspaceTextEditOperationRecorder.TextDraftMode
+            : draftMode.Trim();
+        var draftTextStore = _workspaceDataStoreFactory.CreateAssetEditDraftTextStore(query.WorkspaceDataRootPath);
+        var chunk = draftTextStore.LoadTextChunk(
+            query.WorkspaceKey,
+            normalizedDraftId,
+            normalizedDraftMode,
+            offset: 0,
+            length: AssetPreviewTextDisplayPolicy.MaxDisplayCharacters);
+        if (chunk is null)
+        {
+            return Result<AssetPreviewDto>.Success(BuildFallbackSummaryPreview(
+                query,
+                AssetPreviewMessageKey.GenerationFailed,
+                new AssetPreviewDiagnosticDto(
+                    AssetPreviewCacheStatusKind.Missing,
+                    AssetPreviewFallbackReasonKind.GenerationFailed,
+                    AppErrorLocalizedMessageMapper.CreateFromFirstError(
+                    [
+                        ApplicationErrors.AssetPreviewFullContentUnavailable(normalizedDraftId)
+                    ]))));
+        }
+
+        var fullCharacterCount = ResolveDraftTextFullCharacterCount(chunk);
+        var fullDraftText = LoadStructuredDraftText(
+            draftTextStore,
+            query.WorkspaceKey,
+            normalizedDraftId,
+            normalizedDraftMode,
+            chunk.Text,
+            fullCharacterCount);
+        var isTruncatedByChunk = chunk.Offset + chunk.Length < fullCharacterCount;
+        var textDisplay = AssetPreviewTextDisplayPolicy.CreateDisplay(chunk.Text);
+        var metadata = textDisplay.Metadata with
+        {
+            DisplayCharacterCount = textDisplay.TextContent.Length,
+            FullCharacterCount = fullCharacterCount,
+            IsTruncated = isTruncatedByChunk || textDisplay.Metadata.IsTruncated
+        };
+        var structuredDraftText = fullDraftText.Length >= fullCharacterCount
+            ? fullDraftText
+            : null;
+
+        return Result<AssetPreviewDto>.Success(new AssetPreviewDto(
+            WorkspaceId: query.WorkspaceId,
+            BundleId: query.BundleId,
+            AssetId: query.AssetId,
+            Kind: AssetPreviewKind.Text,
+            ContentType: chunk.Descriptor.ContentType,
+            BinaryContent: null,
+            TextContent: textDisplay.TextContent,
+            PreviewPayloadFilePath: null,
+            PreviewInfoItems: AssetPreviewTextDisplayPolicy.AppendDisplayInfoItems(
+                chunk.Descriptor.PreviewInfoItems,
+                metadata),
+            PreviewMessage: chunk.Descriptor.PreviewMessage,
+            PreferredDisplaySizeInBytes: details.PreferredDisplaySizeInBytes,
+            IsFromCache: false,
+            GeneratedAtUtc: details.TextEditAppliedAtUtc ?? DateTimeOffset.UtcNow,
+            Diagnostic: new AssetPreviewDiagnosticDto(
+                AssetPreviewCacheStatusKind.Missing,
+                AssetPreviewFallbackReasonKind.None),
+            ImageOverlay: null,
+            ImageFocus: null)
+        {
+            TextDisplay = metadata,
+            FullContentReference = new AssetPreviewFullContentReferenceDto(
+                AssetPreviewFullContentReferenceKind.EditDraft,
+                chunk.Descriptor.ContentType,
+                chunk.ContentLength,
+                query.WorkspaceKey,
+                DraftId: normalizedDraftId,
+                DraftMode: normalizedDraftMode),
+            FullTextContent = structuredDraftText
+        });
+    }
+
+    private static string LoadStructuredDraftText(
+        IAssetEditDraftTextStore draftTextStore,
+        string workspaceKey,
+        string draftId,
+        string draftMode,
+        string firstChunkText,
+        int fullCharacterCount)
+    {
+        if (fullCharacterCount <= firstChunkText.Length ||
+            fullCharacterCount > AssetTextEditPolicy.InlineEditableTextLength)
+        {
+            return firstChunkText;
+        }
+
+        var builder = new StringBuilder(firstChunkText);
+        var offset = firstChunkText.Length;
+        while (offset < fullCharacterCount)
+        {
+            var chunk = draftTextStore.LoadTextChunk(
+                workspaceKey,
+                draftId,
+                draftMode,
+                offset,
+                Math.Min(LoadPreviewTextChunkHandler.MaxChunkLength, fullCharacterCount - offset));
+            if (chunk is null || chunk.Length == 0)
+            {
+                break;
+            }
+
+            builder.Append(chunk.Text);
+            offset = chunk.Offset + chunk.Length;
+        }
+
+        return builder.ToString();
     }
 
     private static AssetPreviewDto MapReplacementPreviewDto(
@@ -263,6 +398,20 @@ internal sealed class ReplacementEffectivePreviewResolver
 
     private static bool IsFileReplacementPreviewSupported(AssetType assetType) =>
         assetType is AssetType.Texture2D or AssetType.TextAsset or AssetType.AudioClip;
+
+    private static int ResolveDraftTextFullCharacterCount(PreviewCacheTextChunkDto chunk)
+    {
+        var minimumLength = chunk.Offset + chunk.Length;
+        var metadataLength = chunk.Descriptor.PreviewInfoItems?
+            .FirstOrDefault(static item => item.Key == AssetPreviewInfoKey.TextFullCharacterCount)
+            ?.Int64Value;
+        if (metadataLength is >= 0 and <= int.MaxValue)
+        {
+            return Math.Max((int)metadataLength.Value, minimumLength);
+        }
+
+        return Math.Max(chunk.TotalLength, minimumLength);
+    }
 
     private static AssetDetailsDto CreateTargetDetails(
         GetAssetPreviewQuery query,

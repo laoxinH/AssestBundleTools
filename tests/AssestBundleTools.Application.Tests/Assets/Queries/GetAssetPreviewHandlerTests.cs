@@ -250,6 +250,82 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(0, previewCacheStore.SaveCallCount, "TextAsset file preview should not rewrite original preview cache.");
     }
 
+    public static async Task HandleAsync_ShouldUseAppliedTextEditDraftPreview_ForTextAsset()
+    {
+        const string originalText = "hero.png\nsize: 256,128\n";
+        const string editedText = "hero.png\nsize: 512,256\nhead\n  xy: 1, 2\n";
+        const string draftId = "draft-text-1";
+        const string draftMode = "text-content";
+        var appliedAtUtc = new DateTimeOffset(2026, 7, 5, 9, 0, 0, TimeSpan.Zero);
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        bundleCacheEntry = bundleCacheEntry with
+        {
+            Assets =
+            [
+                bundleCacheEntry.Assets[0] with
+                {
+                    AssetType = AssetType.TextAsset.ToString(),
+                    AssetTypeDisplayName = AssetType.TextAsset.ToString(),
+                    AssetPath = "Assets/Hero/Hero.atlas",
+                    AssetName = "Hero.atlas"
+                }
+            ]
+        };
+        var originalPreviewPayload = CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            originalText,
+            generatorVersion: "generator-1");
+        var draftPreviewPayload = CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            editedText,
+            generatorVersion: "edit-draft-text-v1");
+        var previewCacheStore = new TestPreviewCacheStore(originalPreviewPayload);
+        var draftTextStore = new TestAssetEditDraftTextStore(draftPreviewPayload);
+        var decryptor = new TestAssetBundleDecryptor(CreatePassThroughDecryptorDescriptor());
+        var generator = new TestAssetPreviewGenerator();
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(
+            [
+                CreateAssetDetails(
+                    query,
+                    name: "Hero.atlas",
+                    assetType: AssetType.TextAsset,
+                    textEditDraftId: draftId,
+                    textEditDraftMode: draftMode,
+                    textEditAppliedAtUtc: appliedAtUtc)
+            ]),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore,
+                assetEditDraftTextStore: draftTextStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService());
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Applied TextAsset edit draft should provide the current effective preview.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(AssetPreviewKind.Text, preview.Kind, "Applied text edit preview should be text.");
+        TestAssert.Equal(editedText, preview.FullTextContent, "Applied text edit preview should expose the edited draft text.");
+        TestAssert.Equal(
+            AssetPreviewFullContentReferenceKind.EditDraft,
+            preview.FullContentReference?.Kind,
+            "Applied text edit preview should expose an edit-draft full content reference.");
+        TestAssert.Equal(draftId, preview.FullContentReference?.DraftId, "Edit-draft reference should carry the applied draft id.");
+        TestAssert.Equal(draftMode, preview.FullContentReference?.DraftMode, "Edit-draft reference should carry the applied draft mode.");
+        TestAssert.Equal(appliedAtUtc, preview.GeneratedAtUtc, "Applied text edit preview should use the applied timestamp.");
+        TestAssert.Equal(1, draftTextStore.LoadTextChunkCallCount, "Applied text edit preview should read the draft text store.");
+        TestAssert.Equal(0, previewCacheStore.LoadCallCount, "Applied text edit preview should not read stale original preview cache.");
+        TestAssert.Equal(0, decryptor.DecryptCallCount, "Applied text edit preview should not decrypt the original bundle.");
+        TestAssert.Equal(0, generator.GenerateCallCount, "Applied text edit preview should not generate original preview content.");
+        TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Applied text edit preview should not rewrite original preview cache.");
+    }
+
     public static async Task HandleAsync_ShouldUseFileReplacementPreview_ForAudioClip()
     {
         const string replacementFilePath = @"C:\Imports\hero-voice.wav";

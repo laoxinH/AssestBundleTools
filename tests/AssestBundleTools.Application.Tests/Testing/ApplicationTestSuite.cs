@@ -211,6 +211,10 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldUseFileReplacementPreview_ForTextAsset);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUseAppliedTextEditDraftPreview_ForTextAsset),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldUseAppliedTextEditDraftPreview_ForTextAsset);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUseFileReplacementPreview_ForAudioClip),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldUseFileReplacementPreview_ForAudioClip);
         await RunTestAsync(

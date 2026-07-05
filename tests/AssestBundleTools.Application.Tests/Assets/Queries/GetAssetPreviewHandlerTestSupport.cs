@@ -90,7 +90,10 @@ internal static partial class GetAssetPreviewHandlerTests
         string? workspaceReplacementSourceBundleDisplayName = null,
         string? workspaceReplacementSourceAssetName = null,
         IReadOnlyList<AssetDependencyDto>? dependencies = null,
-        IReadOnlyList<AssetDependencyDto>? textureAssociations = null)
+        IReadOnlyList<AssetDependencyDto>? textureAssociations = null,
+        string? textEditDraftId = null,
+        string? textEditDraftMode = null,
+        DateTimeOffset? textEditAppliedAtUtc = null)
     {
         var hasFileReplacement = !string.IsNullOrWhiteSpace(fileReplacementSourcePath);
         var hasWorkspaceReplacement = workspaceReplacementSourceBundleId.HasValue &&
@@ -106,7 +109,7 @@ internal static partial class GetAssetPreviewHandlerTests
             SizeInBytes: 256,
             PreferredDisplaySizeInBytes: 256,
             PathId: 12345,
-            IsModified: hasFileReplacement || hasWorkspaceReplacement,
+            IsModified: hasFileReplacement || hasWorkspaceReplacement || textEditAppliedAtUtc.HasValue,
             CanExtract: true,
             CanReplaceFromFile: true,
             CanReplaceFromWorkspace: true,
@@ -121,7 +124,10 @@ internal static partial class GetAssetPreviewHandlerTests
             AssetTypeDisplayName: assetType.ToString(),
             TextureAssociations: textureAssociations,
             WorkspaceReplacementSourceBundleId: workspaceReplacementSourceBundleId,
-            WorkspaceReplacementSourceAssetId: workspaceReplacementSourceAssetId);
+            WorkspaceReplacementSourceAssetId: workspaceReplacementSourceAssetId,
+            TextEditDraftId: textEditDraftId,
+            TextEditDraftMode: textEditDraftMode,
+            TextEditAppliedAtUtc: textEditAppliedAtUtc);
     }
 
     private static BundleIndexAssetCacheEntryDto CreateAssetCacheEntry(string assetId)

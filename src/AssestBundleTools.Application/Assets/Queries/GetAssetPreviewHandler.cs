@@ -59,6 +59,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
         _previewCachePrunePolicy = previewCachePrunePolicy ?? NoOpPreviewCachePrunePolicy.Instance;
         _replacementEffectivePreviewResolver = new ReplacementEffectivePreviewResolver(
             _workspaceSessionRegistry,
+            _workspaceDataStoreFactory,
             replacementPreviewSourceProvider);
     }
 

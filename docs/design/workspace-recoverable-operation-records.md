@@ -385,7 +385,8 @@ Spine 编辑草稿预览不得绕过有效读模型。编辑态预览输入为�
 6. 运行时读模型只把 `EditDraftApplied` 物化为目标资产当前有效文本编辑，变更分段显示 `TextEdit` 记录；`EditDraftCreated / EditDraftUpdated / EditDraftDiscarded` 只表达草稿生命周期，不单独让目标资源进入有效已修改状态。
 7. Shader 当前可以进入只读工作面，但 `CanApply=false`，保存按钮保持禁用；只有接入 Shader 写回适配器后才能追加可生效的文本编辑记录。
 8. 用户点击退出，或关闭处于文本编辑模式的资源标签 / 编辑窗口时，若存在未保存正文，必须提示保存 / 丢弃 / 取消；选择丢弃或草稿干净退出时追加 `EditDraftDiscarded` 并从 `editDrafts[]` 移除该草稿描述。这只清理草稿生命周期，不删除已应用操作引用仍需要的 payload。
-9. 保存 / 导出写包从操作事实流物化 TextAsset 当前有效 `text-content` 草稿，并由对象写包适配器读取草稿 payload 写入 TextAsset 的 `m_Script`。替换或编辑命令本身不得提前改写 AB。
+9. 已应用 TextAsset 草稿是目标资产当前有效内容的一种来源。`GetAssetPreview` 在没有更高优先级文件替换 / 工作区替换时，必须通过 `IAssetEditDraftTextStore` 读取 `TextEditDraftId / TextEditDraftMode` 对应的 `EditDraft` reference，并返回有界 `TextContent`、完整内容 reference 和可供结构化消费者使用的完整小文本；Presentation 侧的预览失效策略必须把 `TextEditDraftId / TextEditDraftMode / TextEditAppliedAtUtc` 变化视为需要重载有效预览。
+10. 保存 / 导出写包从操作事实流物化 TextAsset 当前有效 `text-content` 草稿，并由对象写包适配器读取草稿 payload 写入 TextAsset 的 `m_Script`。替换或编辑命令本身不得提前改写 AB。
 
 后续大载荷编辑操作记录应引用草稿，不直接保存草稿内容：
 

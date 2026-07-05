@@ -36,6 +36,35 @@ public sealed class AssetPreviewInvalidationPolicyTests
         Assert.True(changed);
     }
 
+    [Fact]
+    public void HasEffectivePreviewProjectionChanged_ShouldDetectAppliedTextEditChange()
+    {
+        var workspaceId = new WorkspaceId("workspace-preview-invalidation");
+        var bundleId = new BundleId("bundle-ui");
+        var assetId = new AssetId("asset-atlas");
+        var previousDetails = BundleExplorerPreviewTestSupport.CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            assetId) with
+        {
+            AssetType = AssetType.TextAsset,
+            AssetTypeDisplayName = AssetType.TextAsset.ToString()
+        };
+        var currentDetails = previousDetails with
+        {
+            IsModified = true,
+            TextEditDraftId = "draft-text-1",
+            TextEditDraftMode = "text-content",
+            TextEditAppliedAtUtc = new DateTimeOffset(2026, 7, 5, 9, 0, 0, TimeSpan.Zero)
+        };
+
+        var changed = AssetPreviewInvalidationPolicy.HasEffectivePreviewProjectionChanged(
+            previousDetails,
+            currentDetails);
+
+        Assert.True(changed);
+    }
+
     private static AssetDetailsDto CreateSpriteDetailsWithAssociatedRecord(
         WorkspaceId workspaceId,
         BundleId bundleId,

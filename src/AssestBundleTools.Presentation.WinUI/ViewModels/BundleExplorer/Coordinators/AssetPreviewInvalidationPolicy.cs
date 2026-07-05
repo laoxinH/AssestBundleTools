@@ -39,6 +39,17 @@ internal static class AssetPreviewInvalidationPolicy
                    StringComparison.Ordinal) ||
                !Equals(previousDetails.SpriteEditGeometry, currentDetails.SpriteEditGeometry) ||
                previousDetails.SpriteEditAppliedAtUtc != currentDetails.SpriteEditAppliedAtUtc ||
+               !string.Equals(
+                   previousDetails.TextEditDraftId,
+                   currentDetails.TextEditDraftId,
+                   StringComparison.Ordinal) ||
+               !string.Equals(
+                   previousDetails.TextEditDraftMode,
+                   currentDetails.TextEditDraftMode,
+                   StringComparison.Ordinal) ||
+               previousDetails.TextEditAppliedAtUtc != currentDetails.TextEditAppliedAtUtc ||
+               GetLatestTextEditRecordTimestamp(previousDetails) !=
+               GetLatestTextEditRecordTimestamp(currentDetails) ||
                GetLatestSpriteEditRecordTimestamp(previousDetails) !=
                GetLatestSpriteEditRecordTimestamp(currentDetails);
     }
@@ -71,6 +82,15 @@ internal static class AssetPreviewInvalidationPolicy
     {
         return details.ChangeRecords?
             .Where(static record => record.Kind == AssetChangeRecordKind.SpriteEdit)
+            .OrderByDescending(static record => record.DisplayTimestampUtc)
+            .Select(static record => (DateTimeOffset?)record.DisplayTimestampUtc)
+            .FirstOrDefault();
+    }
+
+    private static DateTimeOffset? GetLatestTextEditRecordTimestamp(AssetDetailsDto details)
+    {
+        return details.ChangeRecords?
+            .Where(static record => record.Kind == AssetChangeRecordKind.TextEdit)
             .OrderByDescending(static record => record.DisplayTimestampUtc)
             .Select(static record => (DateTimeOffset?)record.DisplayTimestampUtc)
             .FirstOrDefault();

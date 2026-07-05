@@ -167,7 +167,7 @@ Preview.FullContentUnavailable
 - 格式化命令默认只对可承受范围执行；对大 JSON 提供范围格式化、结构折叠或只读结构索引等渐进能力。
 - 未保存草稿、撤销 / 重做、关闭确认和多窗口显示同一文本时的状态归属，应沿用资源编辑窗口的页面级状态和工作区操作记录规则。
 
-当前第一阶段已经落地独立 `编辑` 入口和窗口化编辑壳：`TextAsset / Shader` 可以从检查器或资源编辑窗口进入 draft-backed 文本工作面。打开编辑器会创建 `text-content` 草稿并写入 `editDrafts[]`；小型 `TextAsset` 在 `AssetTextEditPolicy.InlineEditableTextLength` 预算内开放正文编辑，保存时先用 `UpdateTextAssetEditDraft` 覆盖 draft payload 并追加 `EditDraftUpdated`，再用 `ApplyTextAssetEditDraft` 追加 `EditDraftApplied`；大型文本和 `Shader` 仍降级为只读行号 / 有限搜索视图。文本读取、搜索、草稿创建、草稿更新、保存应用和退出丢弃都通过 Application query / command 与后台 runner 执行。退出或关闭正在编辑的标签 / 窗口时，若存在未保存正文会提示保存 / 丢弃 / 取消；丢弃会追加 `EditDraftDiscarded` 并清理对应草稿描述。`TextAsset` 保存后的草稿已经进入当前有效读模型和统一导出写包计划；`Shader` 当前只进入只读文本工作面，保存按钮按 `CanApply=false` 禁用，后续接入 Shader 字段写回适配后再允许应用。
+当前第一阶段已经落地独立 `编辑` 入口和窗口化编辑壳：`TextAsset / Shader` 可以从检查器或资源编辑窗口进入 draft-backed 文本工作面。打开编辑器会创建 `text-content` 草稿并写入 `editDrafts[]`；小型 `TextAsset` 在 `AssetTextEditPolicy.InlineEditableTextLength` 预算内开放正文编辑，保存时先用 `UpdateTextAssetEditDraft` 覆盖 draft payload 并追加 `EditDraftUpdated`，再用 `ApplyTextAssetEditDraft` 追加 `EditDraftApplied`；大型文本和 `Shader` 仍降级为只读行号 / 有限搜索视图。文本读取、搜索、草稿创建、草稿更新、保存应用和退出丢弃都通过 Application query / command 与后台 runner 执行。退出或关闭正在编辑的标签 / 窗口时，若存在未保存正文会提示保存 / 丢弃 / 取消；丢弃会追加 `EditDraftDiscarded` 并清理对应草稿描述。`TextAsset` 保存后的草稿已经进入当前有效读模型、预览刷新策略和统一导出写包计划：`GetAssetPreview` 会在没有更高优先级文件替换 / 工作区替换时读取已应用 `TextEditDraftId` 对应的 `EditDraft` reference，普通详情和资源编辑窗口刷新也会把 `TextEditDraftId / TextEditDraftMode / TextEditAppliedAtUtc` 变化视为有效预览变化。`Shader` 当前只进入只读文本工作面，保存按钮按 `CanApply=false` 禁用，后续接入 Shader 字段写回适配后再允许应用。
 
 ## 6. 各资源类型预算方向
 
@@ -258,7 +258,7 @@ Preview.FullContentUnavailable
 - `JsonPreviewCacheStore` 已实现 `LoadTextChunk / LoadTextLines / SearchText` 流式读取：常规新缓存会优先使用 `TextFullCharacterCount / TextEstimatedFullLineCount` 元数据作为总长度 / 总行数，旧缓存缺失该元数据时才扫描剩余文本计算；搜索返回有限匹配和 `HasMore`，匹配行片段本身也有长度上限。新写入的 `Text` preview payload 会在同目录生成可重建的 `*.lines.json` 稀疏索引 sidecar，例如 `payload.txt -> payload.lines.json`；schema v2 同时记录行锚点和规范化字符 offset 锚点，`LoadTextChunk / LoadTextLines / SearchText` 可先跳到最近锚点再继续顺序读取，sidecar 缺失、版本不匹配或 payload 身份不匹配时会自动退回原顺序扫描。
 - 文件替换 `TextAsset` 预览已返回 `FileReplacement` reference；`LoadPreviewTextChunkHandler / LoadPreviewTextLinesHandler / SearchPreviewTextHandler` 会通过 `IReplacementPreviewSourceProvider` 读取替换文件的规范化文本块、行范围或搜索结果，真实文件实现会保留 `.skel` 非 JSON 视为二进制的保护语义。
 - 工作区内 TextAsset 替换源会先读取源资产有效预览，并继承源 Text 预览的 `PreviewCache` reference；因此替换后的目标资产也可以通过同一组 chunk / lines / search query 按需读取源文本，不需要 Presentation 识别源资产身份。
-- staging / draft store 背书的文本草稿已新增 `EditDraft` reference 类型；`LoadPreviewTextChunkHandler / LoadPreviewTextLinesHandler / SearchPreviewTextHandler` 会通过 `IAssetEditDraftTextStore` 读取 `workspaceKey + draftId + draftMode` 对应草稿 payload。当前第一阶段已经把 `TextAsset / Shader` 的独立 `编辑` 命令、窗口化文本编辑壳、只读大文本行号 / 搜索视图接入该 reference：UI 创建草稿时写入 `editDrafts[]`，小型 TextAsset 正文保存先写 `EditDraftUpdated` 再写 `EditDraftApplied`，当前有效读模型 / 导出写包消费 `text-content` 草稿，退出或关闭未应用文本编辑态时追加 `EditDraftDiscarded` 并清理草稿描述。恢复进入编辑态、JSON 格式化编辑、大文本虚拟化编辑和 Shader 写回仍在阶段 4 后续。
+- staging / draft store 背书的文本草稿已新增 `EditDraft` reference 类型；`LoadPreviewTextChunkHandler / LoadPreviewTextLinesHandler / SearchPreviewTextHandler` 会通过 `IAssetEditDraftTextStore` 读取 `workspaceKey + draftId + draftMode` 对应草稿 payload。当前第一阶段已经把 `TextAsset / Shader` 的独立 `编辑` 命令、窗口化文本编辑壳、只读大文本行号 / 搜索视图接入该 reference：UI 创建草稿时写入 `editDrafts[]`，小型 TextAsset 正文保存先写 `EditDraftUpdated` 再写 `EditDraftApplied`，当前有效读模型、预览刷新策略和导出写包都会消费 `text-content` 草稿，退出或关闭未应用文本编辑态时追加 `EditDraftDiscarded` 并清理草稿描述。恢复进入编辑态、JSON 格式化编辑、大文本虚拟化编辑和 Shader 写回仍在阶段 4 后续。
 - 当前 preview cache 和 edit draft 文本 payload 已具备稀疏行锚点和字符 offset 锚点索引；它能降低大 line index 读取、大 offset chunk 读取和从指定行开始搜索时的前置跳过成本。尚未覆盖搜索倒排索引、后台可取消重建、文件替换来源的持久索引或 JSON 范围格式化索引；全文搜索仍可能顺序扫描，内存安全但还不是最终的高频搜索形态。
 
 验收：
@@ -289,7 +289,7 @@ Preview.FullContentUnavailable
 验收：
 
 - 第一阶段验收：`TextAsset / Shader` 有独立 `编辑` 入口；打开编辑器不会阻塞主 UI；大文本只读视图支持行号和有限搜索；小型 TextAsset 可以编辑正文并在保存时写入 `EditDraftUpdated -> EditDraftApplied`；退出和关闭会确认或丢弃未应用草稿；TextAsset 保存会在 `变更` 分段显示文本编辑记录，并在导出写包中消费同一草稿内容。
-- 后续完整验收：小型 JSON 可以美化编辑；大型 JSON 不会一次性 pretty print 到 UI；正文编辑态撤销 / 重做、未保存确认、关闭窗口确认和多窗口同资产刷新符合资源编辑窗口规则；文本修改后，普通预览、Spine 组有效预览和导出写包都消费同一当前有效内容。
+- 后续完整验收：小型 JSON 可以美化编辑；大型 JSON 不会一次性 pretty print 到 UI；正文编辑态撤销 / 重做、未保存确认、关闭窗口确认和多窗口同资产刷新符合资源编辑窗口规则；文本修改后，普通预览、Spine 组有效预览和导出写包都消费同一当前有效内容。当前普通资产预览和资源编辑窗口已识别已应用 TextAsset 草稿；Spine 组详情继续依赖现有文本预览管线读取有效文本，后续需用真实 atlas / skeleton 编辑样本验证组合预览。
 
 ### 阶段 5：Presenter 与控件承载加固
 

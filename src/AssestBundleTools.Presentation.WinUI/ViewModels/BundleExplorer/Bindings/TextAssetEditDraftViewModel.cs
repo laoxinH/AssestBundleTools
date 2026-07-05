@@ -87,6 +87,12 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         {
             if (SetProperty(ref _searchText, value))
             {
+                if (string.IsNullOrWhiteSpace(_searchText))
+                {
+                    SearchMatches.Clear();
+                    NotifySearchResultState();
+                }
+
                 OnPropertyChanged(nameof(CanSearch));
             }
         }
@@ -128,6 +134,12 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     public ObservableCollection<TextAssetEditLineViewModel> Lines { get; } = new();
 
     public ObservableCollection<TextAssetEditSearchMatchViewModel> SearchMatches { get; } = new();
+
+    public Visibility SearchResultsVisibility =>
+        SearchMatches.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+    public GridLength SearchResultsColumnWidth =>
+        SearchMatches.Count > 0 ? new GridLength(280) : new GridLength(0);
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
@@ -221,6 +233,8 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
                 cancellationToken);
             if (!result.IsSuccess || result.Value is null)
             {
+                SearchMatches.Clear();
+                NotifySearchResultState();
                 return;
             }
 
@@ -233,6 +247,8 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
                         $"{match.LineIndex + 1}:{match.ColumnIndex + 1}"),
                     match.LineText));
             }
+
+            NotifySearchResultState();
         }
         finally
         {
@@ -306,6 +322,8 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         var searchText = SearchText.Trim();
         if (searchText.Length == 0)
         {
+            SearchMatches.Clear();
+            NotifySearchResultState();
             return;
         }
 
@@ -329,5 +347,13 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
                     $"{lineIndex + 1}:{columnIndex + 1}"),
                 line));
         }
+
+        NotifySearchResultState();
+    }
+
+    private void NotifySearchResultState()
+    {
+        OnPropertyChanged(nameof(SearchResultsVisibility));
+        OnPropertyChanged(nameof(SearchResultsColumnWidth));
     }
 }
