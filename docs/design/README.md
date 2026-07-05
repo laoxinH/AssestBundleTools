@@ -4,7 +4,7 @@
 
 本文档用于收束 `docs/design` 下的文档状态，明确哪些文档是当前规范入口，哪些是专题记录，哪些仅作为历史兼容入口保留。
 
-当前状态更新时间：2026-07-03。当前开发重心已经进入 M10 真实导出 / 保存重建：后台任务、资源处理器并发、AB 写包并发和输出 manifest 契约已固化，首版对象级 AssetsTools 写包已经接入，下一步继续补保存检查点、Committed 状态、取消 / 部分成功恢复语义和更多资源类型。
+当前状态更新时间：2026-07-05。当前开发重心已经进入 M10 真实导出 / 保存重建与文本编辑器收口并行阶段：后台任务、资源处理器并发、AB 写包并发和输出 manifest 契约已固化，首版对象级 AssetsTools 写包已经接入；文本预览 / 编辑已开始向统一 text surface 收束，正式 VS Code 风格编辑器目标采用 WebView2 + Monaco，下一步继续补保存检查点、Committed 状态、取消 / 部分成功恢复语义、更多资源类型和 Monaco 原型。
 
 ## 2. 当前规范入口
 
@@ -39,6 +39,8 @@
   导入、预览、提取、导出和后续保存 / 重建的统一后台任务调度、并发闸门、进度与状态条边界。
 - [asset-preview-payload-contract.md](asset-preview-payload-contract.md)
   所有资源预览的载荷预算、DTO 安全边界、完整文本按需查看 / 编辑承载和阶段性加固计划。
+- [text-editor-technology-spike.md](text-editor-technology-spike.md)
+  VS Code 风格文本编辑器技术选型、WebView2 + Monaco 目标方案、原生 fallback surface 和后续 patch / JSON 格式化阶段计划。
 - [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md)
   工作区真实导出 / 保存重建的执行计划、资源处理器并发、AB 写包并发、检查点和 AB 输出 manifest 契约。
 - [workspace-batch-extraction-dialog.md](workspace-batch-extraction-dialog.md)
@@ -75,7 +77,7 @@
 - M8 提取与替换流程骨架已完成第一轮：候选、替换状态、撤销、批量预览和保存骨架已经有稳定承载面。
 - M9 真实读取、缓存、依赖图和富预览主线已完成阶段性收口；Spine 预览达到基础播放、动画 / skin 切换、状态恢复和 D3D 默认渲染的可继续使用状态。
 - M10 真实保存与重建已完成首版真实导出链路：CLI 资源处理器、对象级 AssetsTools 写包、AB 输出 manifest 和基础回归已接入；保存检查点、Committed 状态、取消 / 部分成功恢复语义和更广资源类型仍在推进中。
-- 当前不再优先扩展新的预览类型或大改工作台布局。
+- 当前不再优先扩展新的预览类型或大改工作台布局；文本相关工作优先沿统一 `TextDocumentSurfaceView` 和 Monaco 原型推进，避免检查器预览、资源编辑窗口和后续大文本编辑继续分叉。
 
 ## 6. 下一步开发主线
 

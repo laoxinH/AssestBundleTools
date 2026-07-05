@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
@@ -54,6 +56,8 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         get => _previewText;
         private set => SetProperty(ref _previewText, value);
     }
+
+    public ObservableCollection<TextDocumentLineViewModel> PreviewTextLines { get; } = new();
 
     /// <summary>
     /// 该路径只用于“打开预览文件所在位置”这类壳层动作，不参与业务判断。
@@ -344,6 +348,7 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         _previewInfoRows = CloneRows(previewInfoRows);
         PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
         PreviewText = textContent;
+        ApplyPreviewTextLines(textContent);
         NotifyPreviewStateChanged();
     }
 
@@ -365,6 +370,7 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         IsPreviewLoading = false;
         PreviewStatusText = string.Empty;
         PreviewText = string.Empty;
+        PreviewTextLines.Clear();
         PreviewPayloadFilePath = string.Empty;
         Image.Clear();
         Mesh.Clear();
@@ -435,6 +441,26 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         return cards is { Count: > 0 }
             ? cards.ToArray()
             : Array.Empty<InspectorInfoCardViewModel>();
+    }
+
+    private void ApplyPreviewTextLines(string? textContent)
+    {
+        PreviewTextLines.Clear();
+        if (string.IsNullOrEmpty(textContent))
+        {
+            return;
+        }
+
+        var normalizedText = textContent.Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n');
+        var lineIndex = 0;
+        foreach (var line in normalizedText.Split('\n'))
+        {
+            PreviewTextLines.Add(new TextDocumentLineViewModel(
+                (lineIndex + 1).ToString(CultureInfo.CurrentCulture),
+                line));
+            lineIndex++;
+        }
     }
 
     private static bool UsesFixedPreviewSurfaceHeightFor(AssetPreviewKind previewKind)

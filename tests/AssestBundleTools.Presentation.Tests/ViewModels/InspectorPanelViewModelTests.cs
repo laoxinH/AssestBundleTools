@@ -391,6 +391,27 @@ public sealed class InspectorPanelViewModelTests
     }
 
     [Fact]
+    public void ApplyTextPreview_ShouldProjectBoundedTextIntoSharedTextDocumentLines()
+    {
+        var viewModel = CreateViewModel();
+
+        viewModel.ApplyTextPreview("first\r\nsecond\nthird");
+
+        Assert.Equal("first\r\nsecond\nthird", viewModel.Preview.PreviewText);
+        Assert.Equal(3, viewModel.Preview.PreviewTextLines.Count);
+        Assert.Equal("1", viewModel.Preview.PreviewTextLines[0].LineNumberText);
+        Assert.Equal("first", viewModel.Preview.PreviewTextLines[0].Text);
+        Assert.Equal("2", viewModel.Preview.PreviewTextLines[1].LineNumberText);
+        Assert.Equal("second", viewModel.Preview.PreviewTextLines[1].Text);
+        Assert.Equal("3", viewModel.Preview.PreviewTextLines[2].LineNumberText);
+        Assert.Equal("third", viewModel.Preview.PreviewTextLines[2].Text);
+
+        viewModel.Clear("Empty");
+
+        Assert.Empty(viewModel.Preview.PreviewTextLines);
+    }
+
+    [Fact]
     public void RestoreInspectorScrollState_ShouldRestoreCapturedSectionOffsets()
     {
         var viewModel = CreateViewModel();

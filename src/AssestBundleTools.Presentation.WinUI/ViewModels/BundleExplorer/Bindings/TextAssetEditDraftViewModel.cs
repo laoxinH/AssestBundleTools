@@ -145,9 +145,9 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     public Visibility LoadMoreLinesButtonVisibility =>
         !IsInlineEditEnabled && _hasMoreLines ? Visibility.Visible : Visibility.Collapsed;
 
-    public ObservableCollection<TextAssetEditLineViewModel> Lines { get; } = new();
+    public ObservableCollection<TextDocumentLineViewModel> Lines { get; } = new();
 
-    public ObservableCollection<TextAssetEditSearchMatchViewModel> SearchMatches { get; } = new();
+    public ObservableCollection<TextDocumentSearchMatchViewModel> SearchMatches { get; } = new();
 
     public Visibility SearchResultsVisibility =>
         SearchMatches.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -222,7 +222,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
             var lineIndex = result.Value.StartLineIndex;
             foreach (var line in result.Value.Lines)
             {
-                Lines.Add(new TextAssetEditLineViewModel(
+                Lines.Add(new TextDocumentLineViewModel(
                     (lineIndex + 1).ToString(CultureInfo.CurrentCulture),
                     line));
                 lineIndex++;
@@ -286,7 +286,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
             SearchMatches.Clear();
             foreach (var match in result.Value.Matches)
             {
-                SearchMatches.Add(new TextAssetEditSearchMatchViewModel(
+                SearchMatches.Add(new TextDocumentSearchMatchViewModel(
                     string.Create(
                         CultureInfo.CurrentCulture,
                         $"{match.LineIndex + 1}:{match.ColumnIndex + 1}"),
@@ -386,7 +386,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
                 continue;
             }
 
-            SearchMatches.Add(new TextAssetEditSearchMatchViewModel(
+            SearchMatches.Add(new TextDocumentSearchMatchViewModel(
                 string.Create(
                     CultureInfo.CurrentCulture,
                     $"{lineIndex + 1}:{columnIndex + 1}"),

@@ -42,7 +42,7 @@ public sealed partial class TextAssetEditDraftView : UserControl
         }
     }
 
-    private async void OnLoadMoreLinesButtonClick(object sender, RoutedEventArgs e)
+    private async void OnLoadMoreLinesRequested(object? sender, EventArgs e)
     {
         if (ViewModel is not null)
         {
@@ -54,6 +54,5 @@ public sealed partial class TextAssetEditDraftView : UserControl
     {
         SearchBox.PlaceholderText = UiText.Get(ResourceKeys.TextAssetEditorSearchPlaceholder);
         ToolTipService.SetToolTip(SearchButton, UiText.Get(ResourceKeys.TextAssetEditorSearchButtonToolTip));
-        LoadMoreLinesButtonText.Text = UiText.Get(ResourceKeys.TextAssetEditorLoadMoreLinesButton);
     }
 }

@@ -707,19 +707,11 @@
                     </Grid>
                 </StackPanel>
 
-                <ScrollViewer
-                    HorizontalScrollBarVisibility="Auto"
-                    HorizontalScrollMode="Enabled"
-                    VerticalScrollBarVisibility="Auto"
-                    VerticalScrollMode="Enabled"
-                    Visibility="{x:Bind ViewModel.Preview.PreviewTextVisibility, Mode=OneWay}"
-                    ZoomMode="Disabled">
-                    <TextBlock
-                        FontFamily="Cascadia Mono"
-                        FontSize="13"
-                        Text="{x:Bind ViewModel.Preview.PreviewText, Mode=OneWay}"
-                        TextWrapping="Wrap" />
-                </ScrollViewer>
+                <controls:TextDocumentSurfaceView
+                    Margin="8,0,8,8"
+                    FooterVisibility="Collapsed"
+                    Lines="{x:Bind ViewModel.Preview.PreviewTextLines, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.Preview.PreviewTextVisibility, Mode=OneWay}" />
 
                 <StackPanel
                     HorizontalAlignment="Center"
