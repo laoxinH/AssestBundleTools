@@ -75,6 +75,29 @@ public sealed class MonacoEditorAssetsContractTests
         Assert.DoesNotContain("<_MonacoEditorAsset Include=\"Assets\\Monaco\\**\\*.*\" />", projectFile);
     }
 
+    [Fact]
+    public void MonacoHost_ShouldExposeRangePatchBridgeWithoutSaveTextPayload()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var hostScript = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Assets",
+            "Monaco",
+            "abt-editor-host.js"));
+
+        Assert.Contains("case 'getPendingRangeEdits':", hostScript);
+        Assert.Contains("type: 'documentRangeEdits'", hostScript);
+        Assert.Contains("case 'markSaved':", hostScript);
+        Assert.Contains("baselineText = getEditorText();", hostScript);
+
+        var saveCommandIndex = hostScript.IndexOf("type: 'saveRequested'", StringComparison.Ordinal);
+        var saveCommandEndIndex = hostScript.IndexOf("});", saveCommandIndex, StringComparison.Ordinal);
+        var saveCommand = hostScript[saveCommandIndex..saveCommandEndIndex];
+        Assert.DoesNotContain("text:", saveCommand);
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

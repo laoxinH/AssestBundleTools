@@ -58,7 +58,6 @@ public sealed partial class TextAssetEditDraftView : UserControl
 
     private void OnSaveRequested(object? sender, EventArgs e)
     {
-        ViewModel?.SetEditorTextFromSurface(TextEditorSurface.EditableText);
         SaveRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -74,6 +73,24 @@ public sealed partial class TextAssetEditDraftView : UserControl
             return true;
         }
 
+        return await SynchronizeFullEditorTextAsync();
+    }
+
+    public async Task<bool> SynchronizeEditorSaveAsync()
+    {
+        if (ViewModel is null)
+        {
+            return true;
+        }
+
+        var rangeEditSync = await TextEditorSurface.GetPendingRangeEditsAsync();
+        if (rangeEditSync is { Edits.Count: > 0 } &&
+            ViewModel.CanUseEditorRangeEditBase(rangeEditSync.BaseLength))
+        {
+            ViewModel.SetEditorRangeEditsFromSurface(rangeEditSync.Edits, rangeEditSync.BaseLength);
+            return true;
+        }
+
         var text = await TextEditorSurface.GetCurrentDocumentTextAsync();
         if (text is null)
         {
@@ -82,6 +99,28 @@ public sealed partial class TextAssetEditDraftView : UserControl
 
         ViewModel.SetEditorTextFromSurface(text);
         return true;
+    }
+
+    private async Task<bool> SynchronizeFullEditorTextAsync()
+    {
+        if (ViewModel is null)
+        {
+            return true;
+        }
+
+        var text = await TextEditorSurface.GetCurrentDocumentTextAsync();
+        if (text is null)
+        {
+            return false;
+        }
+
+        ViewModel.SetEditorTextFromSurface(text);
+        return true;
+    }
+
+    public void AcceptSynchronizedEditorText()
+    {
+        TextEditorSurface.AcceptCurrentDocumentAsSaved();
     }
 
     private void ApplyLocalizedText()

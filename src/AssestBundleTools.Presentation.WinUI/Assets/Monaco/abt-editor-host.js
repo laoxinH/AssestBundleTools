@@ -7,6 +7,7 @@
   let currentLanguage = 'plaintext';
   let currentReadOnly = true;
   let currentTheme = 'light';
+  let baselineText = '';
 
   function post(message) {
     if (vscode) {
@@ -68,8 +69,7 @@
 
       editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function () {
         post({
-          type: 'saveRequested',
-          text: editor.getValue()
+          type: 'saveRequested'
         });
       });
 
@@ -86,7 +86,10 @@
           return;
         }
 
-        post({ type: 'contentChanged' });
+        post({
+          type: 'contentChanged',
+          versionId: getModelVersionId()
+        });
       });
 
       window.addEventListener('resize', function () {
@@ -163,11 +166,12 @@
       return;
     }
 
-    const text = payload && typeof payload.text === 'string' ? payload.text : '';
+    const text = normalizeText(payload && typeof payload.text === 'string' ? payload.text : '');
     const language = normalizeLanguage(payload && payload.language);
     const readOnly = !!(payload && payload.readOnly);
     currentLanguage = language;
     currentReadOnly = readOnly;
+    baselineText = text;
 
     suppressChange = true;
     const model = editor.getModel();
@@ -184,6 +188,70 @@
     });
     suppressChange = false;
     editor.layout();
+  }
+
+  function normalizeText(text) {
+    return (text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  }
+
+  function getEditorText() {
+    const model = editor && editor.getModel();
+    if (!model) {
+      return '';
+    }
+
+    return normalizeText(model.getValue(monaco.editor.EndOfLinePreference.LF));
+  }
+
+  function getModelVersionId() {
+    const model = editor && editor.getModel();
+    return model ? model.getVersionId() : 0;
+  }
+
+  function getPendingRangeEdits() {
+    if (!editor || currentReadOnly) {
+      return [];
+    }
+
+    const currentText = getEditorText();
+    if (currentText === baselineText) {
+      return [];
+    }
+
+    const maxPrefixLength = Math.min(baselineText.length, currentText.length);
+    let prefixLength = 0;
+    while (
+      prefixLength < maxPrefixLength &&
+      baselineText.charCodeAt(prefixLength) === currentText.charCodeAt(prefixLength)
+    ) {
+      prefixLength++;
+    }
+
+    let baselineEnd = baselineText.length;
+    let currentEnd = currentText.length;
+    while (
+      baselineEnd > prefixLength &&
+      currentEnd > prefixLength &&
+      baselineText.charCodeAt(baselineEnd - 1) === currentText.charCodeAt(currentEnd - 1)
+    ) {
+      baselineEnd--;
+      currentEnd--;
+    }
+
+    return [{
+      start: prefixLength,
+      length: baselineEnd - prefixLength,
+      text: currentText.slice(prefixLength, currentEnd)
+    }];
+  }
+
+  function markSaved() {
+    if (!editor) {
+      baselineText = '';
+      return;
+    }
+
+    baselineText = getEditorText();
   }
 
   function setReadOnly(readOnly) {
@@ -225,11 +293,23 @@
         case 'formatDocument':
           formatDocument();
           break;
+        case 'markSaved':
+          markSaved();
+          break;
+        case 'getPendingRangeEdits':
+          post({
+            type: 'documentRangeEdits',
+            requestId: message.requestId,
+            baseLength: baselineText.length,
+            versionId: getModelVersionId(),
+            edits: getPendingRangeEdits()
+          });
+          break;
         case 'getDocumentText':
           post({
             type: 'documentText',
             requestId: message.requestId,
-            text: editor ? editor.getValue() : ''
+            text: editor ? getEditorText() : ''
           });
           break;
       }

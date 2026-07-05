@@ -55,6 +55,55 @@ public sealed class TextAssetEditDraftViewModelTests
         Assert.Equal("loaded 350 / 350", viewModel.StatusText);
     }
 
+    [Fact]
+    public void CreateSaveRangeEdits_ShouldUsePendingSurfaceRangeEdits()
+    {
+        var reference = CreateReference();
+        var gateway = new TestWorkspaceAssetInspectionGateway();
+        var viewModel = CreateViewModel(reference, gateway, canEditInline: true);
+        viewModel.SetEditorTextFromSurface("alpha beta");
+        viewModel.MarkSaved();
+        viewModel.MarkEditorDirty();
+
+        viewModel.SetEditorRangeEditsFromSurface(
+            [new TextAssetEditDraftRangeEditDto(6, 4, "BETA")],
+            baseLength: "alpha beta".Length);
+
+        var edits = viewModel.CreateSaveRangeEdits();
+
+        Assert.True(viewModel.CanSave);
+        Assert.Single(edits);
+        Assert.Equal(6, edits[0].Start);
+        Assert.Equal(4, edits[0].Length);
+        Assert.Equal("BETA", edits[0].Text);
+
+        viewModel.MarkSaved();
+
+        Assert.False(viewModel.HasUnsavedChanges);
+        Assert.Equal("alpha BETA", viewModel.EditableText);
+    }
+
+    [Fact]
+    public void CreateSaveRangeEdits_ShouldFallbackToFullPatch_WhenPendingRangeBaseIsStale()
+    {
+        var reference = CreateReference();
+        var gateway = new TestWorkspaceAssetInspectionGateway();
+        var viewModel = CreateViewModel(reference, gateway, canEditInline: true);
+        viewModel.SetEditorTextFromSurface("alpha beta");
+        viewModel.MarkSaved();
+        viewModel.SetEditorTextFromSurface("alpha gamma");
+        viewModel.SetEditorRangeEditsFromSurface(
+            [new TextAssetEditDraftRangeEditDto(6, 4, "BETA")],
+            baseLength: 1);
+
+        var edits = viewModel.CreateSaveRangeEdits();
+
+        Assert.Single(edits);
+        Assert.Equal(0, edits[0].Start);
+        Assert.Equal("alpha beta".Length, edits[0].Length);
+        Assert.Equal("alpha gamma", edits[0].Text);
+    }
+
     private static AssetPreviewFullContentReferenceDto CreateReference() =>
         new(
             AssetPreviewFullContentReferenceKind.EditDraft,
@@ -85,7 +134,8 @@ public sealed class TextAssetEditDraftViewModelTests
 
     private static TextAssetEditDraftViewModel CreateViewModel(
         AssetPreviewFullContentReferenceDto reference,
-        TestWorkspaceAssetInspectionGateway gateway) =>
+        TestWorkspaceAssetInspectionGateway gateway,
+        bool canEditInline = false) =>
         new(
             new AssetTextEditDraftDto(
                 WorkspaceId: new WorkspaceId("workspace-session"),
@@ -100,7 +150,7 @@ public sealed class TextAssetEditDraftViewModelTests
                 UpdatedAtUtc: DateTimeOffset.UtcNow,
                 CanApply: true,
                 Summary: "TextAsset",
-                CanEditInline: false,
+                CanEditInline: canEditInline,
                 SourceFingerprint: "source-v1",
                 SourceDescription: "story.json"),
             gateway,

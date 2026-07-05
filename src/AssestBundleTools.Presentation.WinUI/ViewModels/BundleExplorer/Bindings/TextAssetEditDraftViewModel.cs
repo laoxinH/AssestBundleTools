@@ -26,6 +26,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
     private readonly string _workspaceDataRootPath;
     private readonly AssetTextEditDraftDto _draft;
     private readonly string _lineStatusFormat;
+    private readonly TextAssetEditDraftPatchState _patchState = new();
     private string _statusText = string.Empty;
     private string _searchText = string.Empty;
     private string _editableText = string.Empty;
@@ -85,7 +86,7 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
 
     public string ModeHintText => IsInlineEditEnabled ? InlineEditHintText : ReadOnlyHintText;
 
-    public string DocumentLanguage => DetectLanguage(TitleText, _draft.AssetTypeDisplayName);
+    public string DocumentLanguage => TextAssetEditLanguageResolver.DetectLanguage(TitleText, _draft.AssetTypeDisplayName);
 
     public bool IsReadOnly => !IsEditable;
 
@@ -135,7 +136,8 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
 
     public bool HasUnsavedChanges =>
         IsEditable &&
-        (_hasPendingEditorTextChanges ||
+        (_patchState.HasPendingRangeEdits ||
+        _hasPendingEditorTextChanges ||
         !string.Equals(EditableText, _lastSavedText, StringComparison.Ordinal));
 
     public bool CanSave => CanApply && HasUnsavedChanges;
@@ -258,14 +260,27 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
 
     public void MarkSaved()
     {
+        if (_patchState.HasPendingRangeEdits)
+        {
+            var updatedText = _patchState.TryApplyToSavedText(_lastSavedText);
+            if (updatedText is not null)
+            {
+                EditableText = updatedText;
+            }
+        }
+
         _lastSavedText = EditableText;
+        _patchState.Clear();
         _hasPendingEditorTextChanges = false;
         OnPropertyChanged(nameof(HasUnsavedChanges));
         OnPropertyChanged(nameof(CanSave));
     }
 
-    public TextAssetEditDraftRangeEditDto CreateFullDocumentRangeEdit() =>
-        new(0, NormalizeTextContent(_lastSavedText).Length, EditableText);
+    public IReadOnlyList<TextAssetEditDraftRangeEditDto> CreateSaveRangeEdits() =>
+        _patchState.CreateSaveRangeEdits(_lastSavedText, EditableText);
+
+    public bool CanUseEditorRangeEditBase(int baseLength) =>
+        TextAssetEditDraftPatchState.IsMatchingBaseLength(_lastSavedText, baseLength);
 
     public void MarkEditorDirty()
     {
@@ -281,9 +296,20 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
 
     public void SetEditorTextFromSurface(string text)
     {
+        _patchState.Clear();
         _hasPendingEditorTextChanges = false;
         EditableText = text ?? string.Empty;
         NotifyDocumentEditState();
+    }
+
+    public void SetEditorRangeEditsFromSurface(
+        IReadOnlyList<TextAssetEditDraftRangeEditDto> rangeEdits,
+        int baseLength)
+    {
+        _patchState.Set(rangeEdits ?? [], baseLength);
+        _hasPendingEditorTextChanges = false;
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+        OnPropertyChanged(nameof(CanSave));
     }
 
     public async Task SearchAsync(CancellationToken cancellationToken = default)
@@ -462,29 +488,4 @@ public sealed class TextAssetEditDraftViewModel : ObservableObject
         OnPropertyChanged(nameof(LoadMoreLinesButtonVisibility));
     }
 
-    private static string DetectLanguage(string titleText, string? assetTypeDisplayName)
-    {
-        var extension = Path.GetExtension(titleText);
-        if (extension.Equals(".json", StringComparison.OrdinalIgnoreCase) ||
-            extension.Equals(".skel", StringComparison.OrdinalIgnoreCase))
-        {
-            return "json";
-        }
-
-        if (extension.Equals(".atlas", StringComparison.OrdinalIgnoreCase))
-        {
-            return "atlas";
-        }
-
-        if (string.Equals(assetTypeDisplayName, "Shader", StringComparison.OrdinalIgnoreCase))
-        {
-            return "shader";
-        }
-
-        return "plaintext";
-    }
-
-    private static string NormalizeTextContent(string textContent) =>
-        textContent.Replace("\r\n", "\n", StringComparison.Ordinal)
-            .Replace('\r', '\n');
 }
