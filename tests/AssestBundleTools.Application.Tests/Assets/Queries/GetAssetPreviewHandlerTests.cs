@@ -330,6 +330,86 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Applied text edit preview should not rewrite original preview cache.");
     }
 
+    public static async Task HandleAsync_ShouldUseOperationTextEditRevision_WhenSessionProjectionIsStale()
+    {
+        const string originalText = "hero.png\nsize: 256,128\n";
+        const string editedText = "hero.png\nsize: 512,256\nhead\n  xy: 1, 2\n";
+        const string draftId = "draft-text-1";
+        const string draftMode = "text-content";
+        var appliedAtUtc = new DateTimeOffset(2026, 7, 5, 9, 0, 0, TimeSpan.Zero);
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        bundleCacheEntry = bundleCacheEntry with
+        {
+            Assets =
+            [
+                bundleCacheEntry.Assets[0] with
+                {
+                    AssetType = AssetType.TextAsset.ToString(),
+                    AssetTypeDisplayName = AssetType.TextAsset.ToString(),
+                    AssetPath = "Assets/Hero/Hero.atlas",
+                    AssetName = "Hero.atlas"
+                }
+            ]
+        };
+        var originalPreviewPayload = CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            originalText,
+            generatorVersion: "generator-1");
+        var draftPreviewPayload = CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            editedText,
+            generatorVersion: "edit-draft-text-v1");
+        var previewCacheStore = new TestPreviewCacheStore(originalPreviewPayload);
+        var draftTextStore = new TestAssetEditDraftTextStore(draftPreviewPayload);
+        var changeSet = new WorkspaceChangeSetDto(
+            WorkspaceKey: query.WorkspaceKey,
+            UpdatedAtUtc: appliedAtUtc,
+            Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+            Operations:
+            [
+                CreateAppliedTextEditOperation(query, draftId, draftMode, draftRevision: 1, sequence: 1, appliedAtUtc),
+                CreateAppliedTextEditOperation(query, draftId, draftMode, draftRevision: 2, sequence: 2, appliedAtUtc.AddSeconds(1))
+            ]);
+        var decryptor = new TestAssetBundleDecryptor(CreatePassThroughDecryptorDescriptor());
+        var generator = new TestAssetPreviewGenerator();
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(
+            [
+                CreateAssetDetails(
+                    query,
+                    name: "Hero.atlas",
+                    assetType: AssetType.TextAsset,
+                    textEditDraftId: draftId,
+                    textEditDraftMode: draftMode,
+                    textEditAppliedAtUtc: appliedAtUtc.AddSeconds(2),
+                    textEditDraftRevision: 3)
+            ]),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore,
+                assetEditDraftTextStore: draftTextStore,
+                workspaceChangeStore: new TestWorkspaceChangeStore(changeSet)),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService());
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Text preview should use the current operation fact when session projection is stale.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(AssetPreviewKind.Text, preview.Kind, "Applied text edit preview should be text.");
+        TestAssert.Equal(2, draftTextStore.LastRevision, "Preview should read the operation fact revision instead of stale session revision.");
+        TestAssert.Equal(2, preview.FullContentReference?.DraftRevision, "Preview full content reference should pin the current effective revision.");
+        TestAssert.Equal(appliedAtUtc.AddSeconds(1), preview.GeneratedAtUtc, "Preview timestamp should come from the effective operation fact.");
+        TestAssert.Equal(0, previewCacheStore.LoadCallCount, "Effective text edit preview should not read stale original preview cache.");
+        TestAssert.Equal(0, decryptor.DecryptCallCount, "Effective text edit preview should not decrypt the original bundle.");
+        TestAssert.Equal(0, generator.GenerateCallCount, "Effective text edit preview should not generate original preview content.");
+    }
+
     public static async Task HandleAsync_ShouldUseFileReplacementPreview_ForAudioClip()
     {
         const string replacementFilePath = @"C:\Imports\hero-voice.wav";

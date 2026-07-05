@@ -59,6 +59,44 @@ public sealed class WorkspaceTextEditStateMaterializer
             .FirstOrDefault();
     }
 
+    public WorkspaceEffectiveTextEditDto? FindEffectiveTextEdit(
+        WorkspaceChangeSetDto? changeSet,
+        string bundleId,
+        string assetId)
+    {
+        if (!TryCreateTargetKey(bundleId, assetId, out var targetKey))
+        {
+            return null;
+        }
+
+        return Materialize(changeSet)
+            .EffectiveEdits
+            .Where(edit => TargetMatches(edit.Target, targetKey))
+            .OrderByDescending(static edit => edit.Sequence)
+            .FirstOrDefault();
+    }
+
+    public bool ContainsTextEditOperation(
+        WorkspaceChangeSetDto? changeSet,
+        string bundleId,
+        string assetId)
+    {
+        if (!TryCreateTargetKey(bundleId, assetId, out var targetKey))
+        {
+            return false;
+        }
+
+        return (changeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>())
+            .Any(operation =>
+                operation is not null &&
+                IsTextEditOperationKind(operation.OperationKind) &&
+                TargetMatches(operation.Target, targetKey) &&
+                string.Equals(
+                    operation.Source?.DraftMode,
+                    WorkspaceTextEditOperationRecorder.TextDraftMode,
+                    StringComparison.Ordinal));
+    }
+
     private static IReadOnlyList<WorkspaceOperationRecordDto> NormalizeTextEditOperations(
         WorkspaceChangeSetDto? changeSet) =>
         (changeSet?.Operations ?? Array.Empty<WorkspaceOperationRecordDto>())
@@ -109,6 +147,13 @@ public sealed class WorkspaceTextEditStateMaterializer
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static bool IsTextEditOperationKind(WorkspaceOperationKind operationKind) =>
+        operationKind is
+            WorkspaceOperationKind.EditDraftCreated or
+            WorkspaceOperationKind.EditDraftUpdated or
+            WorkspaceOperationKind.EditDraftApplied or
+            WorkspaceOperationKind.EditDraftDiscarded;
 
     private readonly record struct TextEditTargetKey(string BundleId, string AssetId);
 }

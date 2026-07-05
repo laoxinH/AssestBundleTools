@@ -36,6 +36,10 @@ internal static partial class ApplicationTestSuite
             GetResourceProcessorCatalogEntriesHandlerTests.HandleAsync_ShouldReturnCancelled_WhenTokenIsCancelled);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUseOperationTextEditRevision_WhenSessionProjectionIsStale),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldUseOperationTextEditRevision_WhenSessionProjectionIsStale);
+        await RunTestAsync(
+            failures,
             nameof(ResourceProcessorCatalogHandlerTests.Upsert_ShouldSaveUserManagedProcessor_WhenDefinitionIsValid),
             ResourceProcessorCatalogHandlerTests.Upsert_ShouldSaveUserManagedProcessor_WhenDefinitionIsValid);
         await RunTestAsync(
@@ -125,6 +129,18 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldPreferRequestedRevision_WhenSessionProjectionIsStale),
             TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldPreferRequestedRevision_WhenSessionProjectionIsStale);
+        await RunTestAsync(
+            failures,
+            nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldUseOperationRevision_WhenRequestedRevisionWasDeleted),
+            TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldUseOperationRevision_WhenRequestedRevisionWasDeleted);
+        await RunTestAsync(
+            failures,
+            nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldUseOperationDraft_WhenAppliedBaselineReferenceIsStale),
+            TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldUseOperationDraft_WhenAppliedBaselineReferenceIsStale);
+        await RunTestAsync(
+            failures,
+            nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldRejectStaleAppliedBaseline_WhenNoOperationFactRemains),
+            TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldRejectStaleAppliedBaseline_WhenNoOperationFactRemains);
         await RunTestAsync(
             failures,
             nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldFail_WhenPayloadIsMissing),

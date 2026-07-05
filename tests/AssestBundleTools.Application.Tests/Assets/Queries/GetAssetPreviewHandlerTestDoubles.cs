@@ -186,17 +186,20 @@ internal static partial class GetAssetPreviewHandlerTests
         private readonly IBundleIndexCacheStore _bundleIndexCacheStore;
         private readonly IPreviewCacheStore _previewCacheStore;
         private readonly IAssetEditDraftTextStore _assetEditDraftTextStore;
+        private readonly IWorkspaceChangeStore _workspaceChangeStore;
 
         public TestWorkspaceDataStoreFactory(
             IBundleIndexCacheStore bundleIndexCacheStore,
             IPreviewCacheStore previewCacheStore,
             IBundleArtifactStore? bundleArtifactStore = null,
-            IAssetEditDraftTextStore? assetEditDraftTextStore = null)
+            IAssetEditDraftTextStore? assetEditDraftTextStore = null,
+            IWorkspaceChangeStore? workspaceChangeStore = null)
         {
             _bundleArtifactStore = bundleArtifactStore ?? new TestBundleArtifactStore();
             _bundleIndexCacheStore = bundleIndexCacheStore;
             _previewCacheStore = previewCacheStore;
             _assetEditDraftTextStore = assetEditDraftTextStore ?? NoOpAssetEditDraftTextStore.Instance;
+            _workspaceChangeStore = workspaceChangeStore ?? NoOpWorkspaceChangeStore.Instance;
         }
 
         public IBundleArtifactStore CreateBundleArtifactStore(string? rootDirectoryPath = null) => _bundleArtifactStore;
@@ -205,11 +208,42 @@ internal static partial class GetAssetPreviewHandlerTests
 
         public IPreviewCacheStore CreatePreviewCacheStore(string? rootDirectoryPath = null) => _previewCacheStore;
 
-        public IWorkspaceChangeStore CreateWorkspaceChangeStore(string? rootDirectoryPath = null) => throw new NotSupportedException();
+        public IWorkspaceChangeStore CreateWorkspaceChangeStore(string? rootDirectoryPath = null) => _workspaceChangeStore;
 
         public IAssetEditDraftTextStore CreateAssetEditDraftTextStore(string? rootDirectoryPath = null) => _assetEditDraftTextStore;
 
         public string GetDefaultRootDirectoryPath() => @"D:\WorkspaceData";
+    }
+
+    private sealed class TestWorkspaceChangeStore : IWorkspaceChangeStore
+    {
+        private readonly WorkspaceChangeSetDto? _changeSet;
+
+        public TestWorkspaceChangeStore(WorkspaceChangeSetDto? changeSet)
+        {
+            _changeSet = changeSet;
+        }
+
+        public WorkspaceChangeSetDto? Load(string workspaceKey) => _changeSet;
+
+        public void Save(WorkspaceChangeSetDto changeSet) => throw new NotSupportedException();
+
+        public void Delete(string workspaceKey) => throw new NotSupportedException();
+    }
+
+    private sealed class NoOpWorkspaceChangeStore : IWorkspaceChangeStore
+    {
+        public static readonly NoOpWorkspaceChangeStore Instance = new();
+
+        private NoOpWorkspaceChangeStore()
+        {
+        }
+
+        public WorkspaceChangeSetDto? Load(string workspaceKey) => null;
+
+        public void Save(WorkspaceChangeSetDto changeSet) => throw new NotSupportedException();
+
+        public void Delete(string workspaceKey) => throw new NotSupportedException();
     }
 
     private sealed class TestBundleArtifactStore : IBundleArtifactStore

@@ -8,6 +8,7 @@ using AssestBundleTools.Application.Bundles;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
@@ -131,6 +132,41 @@ internal static partial class GetAssetPreviewHandlerTests
             TextEditAppliedAtUtc: textEditAppliedAtUtc,
             TextEditDraftRevision: textEditDraftRevision);
     }
+
+    private static WorkspaceOperationRecordDto CreateAppliedTextEditOperation(
+        GetAssetPreviewQuery query,
+        string draftId,
+        string draftMode,
+        int draftRevision,
+        long sequence,
+        DateTimeOffset appliedAtUtc) =>
+        new(
+            OperationId: $"text-edit-{sequence}",
+            Sequence: sequence,
+            OperationKind: WorkspaceOperationKind.EditDraftApplied,
+            Status: WorkspaceOperationStatus.Applied,
+            WorkspaceKey: query.WorkspaceKey,
+            Target: new WorkspaceOperationTargetDto(
+                BundleId: query.BundleId.Value,
+                AssetId: query.AssetId.Value,
+                AssetName: "Hero.atlas",
+                AssetType: AssetType.TextAsset.ToString(),
+                AssetTypeDisplayName: AssetType.TextAsset.ToString()),
+            Source: new WorkspaceOperationSourceDto(
+                SourceKind: "draft",
+                DraftId: draftId,
+                DraftMode: string.IsNullOrWhiteSpace(draftMode)
+                    ? WorkspaceTextEditOperationRecorder.TextDraftMode
+                    : draftMode.Trim()),
+            PreviousState: null,
+            Result: new WorkspaceOperationResultDto(
+                DraftId: draftId,
+                AffectedBundleIds: [query.BundleId.Value],
+                AffectedAssetIds: [query.AssetId.Value],
+                DraftRevision: draftRevision),
+            CreatedAtUtc: appliedAtUtc,
+            AppliedAtUtc: appliedAtUtc,
+            CompletedAtUtc: appliedAtUtc);
 
     private static BundleIndexAssetCacheEntryDto CreateAssetCacheEntry(string assetId)
     {

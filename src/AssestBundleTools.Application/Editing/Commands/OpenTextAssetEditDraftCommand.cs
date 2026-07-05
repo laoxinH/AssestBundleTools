@@ -16,4 +16,5 @@ public sealed record OpenTextAssetEditDraftCommand(
     string DraftId,
     string DraftMode,
     string? SourceFingerprint = null,
-    int? DraftRevision = null);
+    int? DraftRevision = null,
+    bool IsAppliedBaseline = false);

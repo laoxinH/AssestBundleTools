@@ -18,6 +18,7 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
+    private readonly WorkspaceTextEditStateMaterializer _textEditStateMaterializer = new();
 
     public OpenTextAssetEditDraftHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
@@ -66,42 +67,76 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
                 ApplicationErrors.AssetEditDraftNotFound(workspaceKey, draftId, draftMode)));
         }
 
+        var effectiveTextEdit = _textEditStateMaterializer.FindEffectiveTextEdit(
+            changeSet,
+            command.BundleId.Value,
+            command.AssetId.Value);
+        var hasTextEditOperationFact = _textEditStateMaterializer.ContainsTextEditOperation(
+            changeSet,
+            command.BundleId.Value,
+            command.AssetId.Value);
+        var resolvedDraftId = draftId;
+        var resolvedDraftMode = draftMode;
+        int? appliedDraftRevision = null;
+        var isAppliedBaseline = false;
+        var shouldValidateSourceFingerprint = true;
+        if (command.IsAppliedBaseline)
+        {
+            if (effectiveTextEdit is not null)
+            {
+                resolvedDraftId = effectiveTextEdit.DraftId;
+                resolvedDraftMode = NormalizeDraftMode(effectiveTextEdit.DraftMode);
+                appliedDraftRevision = effectiveTextEdit.DraftRevision;
+                isAppliedBaseline = true;
+                shouldValidateSourceFingerprint = string.Equals(draftId, resolvedDraftId, StringComparison.Ordinal) &&
+                    string.Equals(draftMode, resolvedDraftMode, StringComparison.Ordinal);
+            }
+            else if (!hasTextEditOperationFact &&
+                     IsCurrentAppliedDraft(targetDetails, draftId, draftMode))
+            {
+                appliedDraftRevision = command.DraftRevision ?? targetDetails.TextEditDraftRevision;
+                isAppliedBaseline = true;
+            }
+            else
+            {
+                return Task.FromResult(Result<AssetTextEditDraftDto>.Failure(
+                    ApplicationErrors.AssetEditDraftSourceMismatch(workspaceKey, draftId, draftMode)));
+            }
+        }
+
         var descriptor = (changeSet.EditDrafts ?? Array.Empty<WorkspaceAssetEditDraftDescriptorDto>())
             .FirstOrDefault(item =>
-                string.Equals(item.DraftId?.Trim(), draftId, StringComparison.Ordinal) &&
-                string.Equals(item.DraftMode?.Trim(), draftMode, StringComparison.Ordinal));
+                string.Equals(item.DraftId?.Trim(), resolvedDraftId, StringComparison.Ordinal) &&
+                string.Equals(item.DraftMode?.Trim(), resolvedDraftMode, StringComparison.Ordinal));
         if (descriptor is null)
         {
             return Task.FromResult(Result<AssetTextEditDraftDto>.Failure(
-                ApplicationErrors.AssetEditDraftNotFound(workspaceKey, draftId, draftMode)));
+                ApplicationErrors.AssetEditDraftNotFound(workspaceKey, resolvedDraftId, resolvedDraftMode)));
         }
 
-        if (!string.IsNullOrWhiteSpace(command.SourceFingerprint) &&
+        if (shouldValidateSourceFingerprint &&
+            !string.IsNullOrWhiteSpace(command.SourceFingerprint) &&
             !string.Equals(
                 command.SourceFingerprint.Trim(),
                 descriptor.SourceFingerprint?.Trim(),
                 StringComparison.Ordinal))
         {
             return Task.FromResult(Result<AssetTextEditDraftDto>.Failure(
-                ApplicationErrors.AssetEditDraftSourceMismatch(workspaceKey, draftId, draftMode)));
+                ApplicationErrors.AssetEditDraftSourceMismatch(workspaceKey, resolvedDraftId, resolvedDraftMode)));
         }
 
         if (descriptor.ExpiresAtUtc is { } expiresAtUtc &&
             expiresAtUtc <= DateTimeOffset.UtcNow)
         {
             return Task.FromResult(Result<AssetTextEditDraftDto>.Failure(
-                ApplicationErrors.AssetEditDraftExpired(workspaceKey, draftId, draftMode)));
+                ApplicationErrors.AssetEditDraftExpired(workspaceKey, resolvedDraftId, resolvedDraftMode)));
         }
 
         var draftTextStore = _workspaceDataStoreFactory.CreateAssetEditDraftTextStore(command.WorkspaceDataRootPath.Trim());
-        var isAppliedBaseline = IsCurrentAppliedDraft(targetDetails, draftId, draftMode);
-        var appliedDraftRevision = isAppliedBaseline
-            ? command.DraftRevision ?? targetDetails.TextEditDraftRevision
-            : null;
         var firstChunk = draftTextStore.LoadTextChunk(
             workspaceKey,
-            draftId,
-            draftMode,
+            resolvedDraftId,
+            resolvedDraftMode,
             offset: 0,
             length: 1,
             revision: appliedDraftRevision);
@@ -110,8 +145,8 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
             ? CreateMaterializedReference(
                 firstChunk!,
                 workspaceKey,
-                draftId,
-                draftMode,
+                resolvedDraftId,
+                resolvedDraftMode,
                 appliedDraftRevision)
             : descriptor.IsPayloadMaterialized == false
                 ? TextAssetEditDraftSourceReferenceMapper.ToPreviewReference(descriptor.SourceReference)
@@ -119,7 +154,7 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
         if (reference is null)
         {
             return Task.FromResult(Result<AssetTextEditDraftDto>.Failure(
-                ApplicationErrors.AssetPreviewFullContentUnavailable(draftId)));
+                ApplicationErrors.AssetPreviewFullContentUnavailable(resolvedDraftId)));
         }
 
         var fullCharacterCount = materialized
@@ -133,8 +168,8 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
             targetDetails.Name,
             targetDetails.AssetType,
             targetDetails.AssetTypeDisplayName,
-            draftId,
-            draftMode,
+            resolvedDraftId,
+            resolvedDraftMode,
             reference,
             descriptor.UpdatedAtUtc,
             CanApply: targetDetails.AssetType == AssetType.TextAsset,

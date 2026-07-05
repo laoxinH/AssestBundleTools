@@ -139,12 +139,26 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
             assetTab?.EditDraftReference);
         if (currentAppliedReference is not null)
         {
-            return await OpenDraftReferenceAsync(
+            var appliedDraftResult = await OpenDraftReferenceAsync(
                 workspaceSummary,
                 workspaceKey,
                 workspaceDataRootPath,
                 details,
-                currentAppliedReference);
+                currentAppliedReference,
+                isAppliedBaseline: true);
+            if (!appliedDraftResult.IsSuccess &&
+                appliedDraftResult.Errors.Any(static error =>
+                    string.Equals(error.Code, "Asset.EditDraft.SourceMismatch", StringComparison.Ordinal)))
+            {
+                assetTab?.ClearEditDraftReference();
+                return await CreateTextAssetEditDraftAsync(
+                    workspaceSummary,
+                    workspaceKey,
+                    workspaceDataRootPath,
+                    details);
+            }
+
+            return appliedDraftResult;
         }
 
         if (assetTab?.EditDraftReference is { } draftReference)
@@ -162,10 +176,24 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
                     workspaceKey,
                     workspaceDataRootPath,
                     details,
-                    draftReference);
+                    draftReference,
+                    isAppliedBaseline: false);
             }
         }
 
+        return await CreateTextAssetEditDraftAsync(
+            workspaceSummary,
+            workspaceKey,
+            workspaceDataRootPath,
+            details);
+    }
+
+    private async Task<Result<AssetTextEditDraftDto>> CreateTextAssetEditDraftAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        string workspaceKey,
+        string workspaceDataRootPath,
+        AssetDetailsDto details)
+    {
         var createCommand = new CreateTextAssetEditDraftCommand(
             workspaceSummary.WorkspaceId,
             workspaceKey,
@@ -181,7 +209,8 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
         string workspaceKey,
         string workspaceDataRootPath,
         AssetDetailsDto details,
-        AssetDocumentEditDraftReference draftReference)
+        AssetDocumentEditDraftReference draftReference,
+        bool isAppliedBaseline)
     {
         var command = new OpenTextAssetEditDraftCommand(
             workspaceSummary.WorkspaceId,
@@ -192,7 +221,8 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
             draftReference.DraftId,
             draftReference.DraftMode,
             draftReference.SourceFingerprint,
-            draftReference.DraftRevision);
+            draftReference.DraftRevision,
+            isAppliedBaseline);
         return _backgroundTaskRunner.RunAsync(
             token => _workspaceAssetOperationGateway.OpenTextAssetEditDraftAsync(command, token));
     }

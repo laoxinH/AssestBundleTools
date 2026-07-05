@@ -23,6 +23,7 @@ internal sealed class ReplacementEffectivePreviewResolver
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
     private readonly IReplacementPreviewSourceProvider? _replacementPreviewSourceProvider;
+    private readonly TextEditEffectivePreviewReferenceResolver _textEditEffectivePreviewReferenceResolver;
 
     public ReplacementEffectivePreviewResolver(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
@@ -32,6 +33,7 @@ internal sealed class ReplacementEffectivePreviewResolver
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
         _replacementPreviewSourceProvider = replacementPreviewSourceProvider;
+        _textEditEffectivePreviewReferenceResolver = new TextEditEffectivePreviewReferenceResolver(_workspaceDataStoreFactory);
     }
 
     public async Task<Result<AssetPreviewDto>?> TryLoadAsync(
@@ -95,14 +97,19 @@ internal sealed class ReplacementEffectivePreviewResolver
             }
 
             if (assetType == AssetType.TextAsset &&
-                !string.IsNullOrWhiteSpace(details.TextEditDraftId))
+                _textEditEffectivePreviewReferenceResolver.TryResolve(
+                    query,
+                    details,
+                    out var textEditReference) &&
+                textEditReference is not null)
             {
                 return TryLoadTextEditDraftPreview(
                     query,
                     details,
-                    details.TextEditDraftId,
-                    details.TextEditDraftMode,
-                    details.TextEditDraftRevision);
+                    textEditReference.DraftId,
+                    textEditReference.DraftMode,
+                    textEditReference.DraftRevision,
+                    textEditReference.GeneratedAtUtc);
             }
         }
         finally
@@ -186,7 +193,8 @@ internal sealed class ReplacementEffectivePreviewResolver
         AssetDetailsDto details,
         string draftId,
         string? draftMode,
-        int? draftRevision)
+        int? draftRevision,
+        DateTimeOffset? generatedAtUtc)
     {
         var normalizedDraftId = draftId.Trim();
         var normalizedDraftMode = string.IsNullOrWhiteSpace(draftMode)
@@ -250,7 +258,7 @@ internal sealed class ReplacementEffectivePreviewResolver
             PreviewMessage: chunk.Descriptor.PreviewMessage,
             PreferredDisplaySizeInBytes: details.PreferredDisplaySizeInBytes,
             IsFromCache: false,
-            GeneratedAtUtc: details.TextEditAppliedAtUtc ?? DateTimeOffset.UtcNow,
+            GeneratedAtUtc: generatedAtUtc ?? details.TextEditAppliedAtUtc ?? DateTimeOffset.UtcNow,
             Diagnostic: new AssetPreviewDiagnosticDto(
                 AssetPreviewCacheStatusKind.Missing,
                 AssetPreviewFallbackReasonKind.None),
