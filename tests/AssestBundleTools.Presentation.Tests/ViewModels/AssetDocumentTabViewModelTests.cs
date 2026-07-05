@@ -118,6 +118,29 @@ public sealed class AssetDocumentTabViewModelTests
         Assert.Null(assetTab.EditDraftReference);
     }
 
+    [Fact]
+    public void ApplyDetails_ShouldMoveAppliedBaselineReferenceToCurrentRevision()
+    {
+        var assetTab = CreateAssetTab();
+        assetTab.SetEditDraftReference(new AssetDocumentEditDraftReference(
+            "draft-text-1",
+            "text-content",
+            "source-v3",
+            "story.json",
+            IsAppliedBaseline: true,
+            DraftRevision: 4));
+
+        assetTab.ApplyDetails(CreateTextAssetDetails(
+            textEditDraftId: "draft-text-1",
+            textEditDraftMode: "text-content",
+            textEditDraftRevision: 3));
+
+        Assert.True(assetTab.HasEditDraft);
+        Assert.True(assetTab.EditDraftReference?.IsAppliedBaseline);
+        Assert.Equal(3, assetTab.EditDraftReference?.DraftRevision);
+        Assert.Equal("source-v3", assetTab.EditDraftReference?.SourceFingerprint);
+    }
+
     private static AssetDocumentTabViewModel CreateAssetTab()
     {
         var localizationService = new TestLocalizationService();

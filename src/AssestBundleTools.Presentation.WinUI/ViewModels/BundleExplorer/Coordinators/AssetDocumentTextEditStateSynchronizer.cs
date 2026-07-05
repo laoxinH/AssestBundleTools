@@ -1,5 +1,4 @@
 using AssestBundleTools.Application.Assets.Dtos;
-using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
@@ -23,10 +22,12 @@ internal static class AssetDocumentTextEditStateSynchronizer
             return;
         }
 
-        var isSameDraft = DoesDetailsPointToDraft(details, draft.DraftId, draft.DraftMode);
         if (!draft.HasUnsavedChanges &&
-            (!isSameDraft ||
-            draft.Reference.DraftRevision != details.TextEditDraftRevision))
+            !AssetDocumentTextEditEffectiveReferenceResolver.DetailsPointToDraftRevision(
+                details,
+                draft.DraftId,
+                draft.DraftMode,
+                draft.Reference.DraftRevision))
         {
             assetTab.ExitTextEditMode(clearDraftReference: false);
         }
@@ -42,11 +43,14 @@ internal static class AssetDocumentTextEditStateSynchronizer
             return;
         }
 
-        if (DoesDetailsPointToDraft(details, draftReference.DraftId, draftReference.DraftMode))
+        if (AssetDocumentTextEditEffectiveReferenceResolver.DetailsPointToDraft(
+                details,
+                draftReference.DraftId,
+                draftReference.DraftMode))
         {
             assetTab.SetEditDraftReference(draftReference with
             {
-                DraftMode = NormalizeTextDraftMode(details.TextEditDraftMode),
+                DraftMode = AssetDocumentTextEditEffectiveReferenceResolver.NormalizeDraftMode(details.TextEditDraftMode),
                 IsAppliedBaseline = true,
                 DraftRevision = details.TextEditDraftRevision
             });
@@ -59,20 +63,4 @@ internal static class AssetDocumentTextEditStateSynchronizer
             assetTab.ClearEditDraftReference();
         }
     }
-
-    private static bool DoesDetailsPointToDraft(
-        AssetDetailsDto details,
-        string draftId,
-        string draftMode) =>
-        !string.IsNullOrWhiteSpace(details.TextEditDraftId) &&
-        string.Equals(details.TextEditDraftId.Trim(), draftId, StringComparison.Ordinal) &&
-        string.Equals(
-            NormalizeTextDraftMode(details.TextEditDraftMode),
-            NormalizeTextDraftMode(draftMode),
-            StringComparison.Ordinal);
-
-    private static string NormalizeTextDraftMode(string? draftMode) =>
-        string.IsNullOrWhiteSpace(draftMode)
-            ? WorkspaceTextEditOperationRecorder.TextDraftMode
-            : draftMode.Trim();
 }

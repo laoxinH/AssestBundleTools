@@ -134,7 +134,9 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
         AssetDocumentTabViewModel? assetTab,
         AssetDetailsDto details)
     {
-        var currentAppliedReference = CreateAppliedDraftReference(details, assetTab?.EditDraftReference);
+        var currentAppliedReference = AssetDocumentTextEditEffectiveReferenceResolver.CreateAppliedReference(
+            details,
+            assetTab?.EditDraftReference);
         if (currentAppliedReference is not null)
         {
             return await OpenDraftReferenceAsync(
@@ -148,7 +150,7 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
         if (assetTab?.EditDraftReference is { } draftReference)
         {
             if (draftReference.IsAppliedBaseline &&
-                !DoesDetailsPointToDraft(details, draftReference))
+                !AssetDocumentTextEditEffectiveReferenceResolver.DetailsPointToDraft(details, draftReference))
             {
                 assetTab.ClearEditDraftReference();
             }
@@ -367,50 +369,6 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
     private static bool IsTextEditorSupported(AssetDetailsDto details) =>
         details.AssetType == AssetType.TextAsset ||
         string.Equals(details.AssetTypeDisplayName, "Shader", StringComparison.OrdinalIgnoreCase);
-
-    private static bool DoesDetailsPointToDraft(
-        AssetDetailsDto details,
-        AssetDocumentEditDraftReference draftReference) =>
-        !string.IsNullOrWhiteSpace(details.TextEditDraftId) &&
-        string.Equals(details.TextEditDraftId.Trim(), draftReference.DraftId, StringComparison.Ordinal) &&
-        string.Equals(
-            NormalizeTextDraftMode(details.TextEditDraftMode),
-            NormalizeTextDraftMode(draftReference.DraftMode),
-            StringComparison.Ordinal);
-
-    private static AssetDocumentEditDraftReference? CreateAppliedDraftReference(
-        AssetDetailsDto details,
-        AssetDocumentEditDraftReference? existingReference)
-    {
-        if (string.IsNullOrWhiteSpace(details.TextEditDraftId))
-        {
-            return null;
-        }
-
-        var draftId = details.TextEditDraftId.Trim();
-        var draftMode = NormalizeTextDraftMode(details.TextEditDraftMode);
-        var matchingExistingReference = existingReference is not null &&
-            string.Equals(existingReference.DraftId, draftId, StringComparison.Ordinal) &&
-            string.Equals(
-                NormalizeTextDraftMode(existingReference.DraftMode),
-                draftMode,
-                StringComparison.Ordinal)
-                ? existingReference
-                : null;
-
-        return new AssetDocumentEditDraftReference(
-            draftId,
-            draftMode,
-            matchingExistingReference?.SourceFingerprint,
-            matchingExistingReference?.SourceDescription,
-            IsAppliedBaseline: true,
-            DraftRevision: details.TextEditDraftRevision);
-    }
-
-    private static string NormalizeTextDraftMode(string? draftMode) =>
-        string.IsNullOrWhiteSpace(draftMode)
-            ? WorkspaceTextEditOperationRecorder.TextDraftMode
-            : draftMode.Trim();
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
 }

@@ -150,6 +150,66 @@ internal static class TextAssetEditDraftOpenHandlerTests
         TestAssert.Equal(3, result.Value?.Reference.DraftRevision, "Returned reference should preserve the requested applied baseline revision.");
     }
 
+    public static async Task OpenTextAssetEditDraftHandler_ShouldPreferRequestedRevision_WhenSessionProjectionIsStale()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        const string workspaceKey = "workspace-a";
+        const string workspaceDataRootPath = @"D:\WorkspaceData\A";
+        var bundleId = new BundleId("bundle.text");
+        var assetId = new AssetId("asset.text");
+        var updatedAtUtc = new DateTimeOffset(2026, 7, 4, 10, 0, 0, TimeSpan.Zero);
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            assetId,
+            AssetType.TextAsset,
+            "story.json",
+            textEditDraftId: "draft-1",
+            textEditDraftMode: WorkspaceTextEditOperationRecorder.TextDraftMode,
+            textEditDraftRevision: 4));
+        var changeStore = new TestWorkspaceChangeStore
+        {
+            ChangeSet = new WorkspaceChangeSetDto(
+                WorkspaceKey: workspaceKey,
+                UpdatedAtUtc: updatedAtUtc,
+                Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+                EditDrafts:
+                [
+                    new WorkspaceAssetEditDraftDescriptorDto(
+                        DraftId: "draft-1",
+                        DraftMode: WorkspaceTextEditOperationRecorder.TextDraftMode,
+                        SourceFingerprint: "source-v1",
+                        UpdatedAtUtc: updatedAtUtc,
+                        SourceDescription: "story.json",
+                        Summary: "TextAsset")
+                ],
+                Operations: Array.Empty<WorkspaceOperationRecordDto>())
+        };
+        var draftTextStore = new TestAssetEditDraftTextStore
+        {
+            Chunk = CreateChunk(workspaceKey, "draft-1", WorkspaceTextEditOperationRecorder.TextDraftMode, "edited")
+        };
+        var handler = new OpenTextAssetEditDraftHandler(
+            registry,
+            new TestWorkspaceDataStoreFactory(changeStore, draftTextStore));
+
+        var result = await handler.HandleAsync(new OpenTextAssetEditDraftCommand(
+            workspaceId,
+            workspaceKey,
+            workspaceDataRootPath,
+            bundleId,
+            assetId,
+            "draft-1",
+            WorkspaceTextEditOperationRecorder.TextDraftMode,
+            SourceFingerprint: null,
+            DraftRevision: 3));
+
+        TestAssert.True(result.IsSuccess, "Pinned applied draft should open successfully even when session projection is stale.");
+        TestAssert.Equal(3, draftTextStore.LastChunkRevision, "Explicit current revision from the operation projection must win over stale session details.");
+        TestAssert.Equal(3, result.Value?.Reference.DraftRevision, "Returned reference should preserve the current effective revision.");
+    }
+
     public static async Task OpenTextAssetEditDraftHandler_ShouldFail_WhenPayloadIsMissing()
     {
         var workspaceId = new WorkspaceId("workspace-session-1");

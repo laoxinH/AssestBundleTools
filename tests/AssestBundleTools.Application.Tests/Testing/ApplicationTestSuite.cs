@@ -123,6 +123,10 @@ internal static partial class ApplicationTestSuite
             TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldUseRequestedDraftRevision_WhenAppliedBaselineIsPinned);
         await RunTestAsync(
             failures,
+            nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldPreferRequestedRevision_WhenSessionProjectionIsStale),
+            TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldPreferRequestedRevision_WhenSessionProjectionIsStale);
+        await RunTestAsync(
+            failures,
             nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldFail_WhenPayloadIsMissing),
             TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldFail_WhenPayloadIsMissing);
         await RunTestAsync(

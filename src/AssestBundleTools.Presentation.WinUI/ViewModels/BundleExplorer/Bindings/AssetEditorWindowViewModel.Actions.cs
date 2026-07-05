@@ -1,7 +1,7 @@
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
-using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
@@ -316,21 +316,10 @@ public sealed partial class AssetEditorWindowViewModel
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(details.TextEditDraftId))
-        {
-            return true;
-        }
-
-        return !string.Equals(details.TextEditDraftId.Trim(), draft.DraftId, StringComparison.Ordinal) ||
-               !string.Equals(
-                   NormalizeTextDraftMode(details.TextEditDraftMode),
-                   NormalizeTextDraftMode(draft.DraftMode),
-                   StringComparison.Ordinal) ||
-               details.TextEditDraftRevision != draft.Reference.DraftRevision;
+        return !AssetDocumentTextEditEffectiveReferenceResolver.DetailsPointToDraftRevision(
+            details,
+            draft.DraftId,
+            draft.DraftMode,
+            draft.Reference.DraftRevision);
     }
-
-    private static string NormalizeTextDraftMode(string? draftMode) =>
-        string.IsNullOrWhiteSpace(draftMode)
-            ? WorkspaceTextEditOperationRecorder.TextDraftMode
-            : draftMode.Trim();
 }
