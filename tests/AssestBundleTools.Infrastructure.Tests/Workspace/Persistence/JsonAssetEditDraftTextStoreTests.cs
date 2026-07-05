@@ -314,6 +314,63 @@ internal static class JsonAssetEditDraftTextStoreTests
         TestAssert.Equal("alpha\nBETA\ngamma\nomega", chunk.Text, "Composite view should replay all patch log entries in order.");
     }
 
+    public static void ApplyTextPatch_ShouldBranchFromRequestedRevision_WhenHeadIsNewer()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonAssetEditDraftTextStore(temporaryDirectory.DirectoryPath);
+
+        store.SaveTextPayload(new AssetEditDraftTextPayloadDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-branch",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            TextContent: "alpha\nbeta\ngamma",
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 9, 0, 0, TimeSpan.Zero)));
+
+        var first = store.ApplyTextPatch(new AssetEditDraftTextPatchDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-branch",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            RangeEdits: [new TextAssetEditDraftRangeEditDto(6, 4, "BETA")],
+            Baseline: TextAssetEditDraftPatchBaseline.Create("alpha\nbeta\ngamma"),
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 10, 0, 0, TimeSpan.Zero),
+            MaxTextLength: 1024));
+        var second = store.ApplyTextPatch(new AssetEditDraftTextPatchDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-branch",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            RangeEdits: [new TextAssetEditDraftRangeEditDto("alpha\nBETA\ngamma".Length, 0, "\nomega")],
+            Baseline: TextAssetEditDraftPatchBaseline.Create("alpha\nBETA\ngamma"),
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 11, 0, 0, TimeSpan.Zero),
+            MaxTextLength: 1024));
+
+        var branch = store.ApplyTextPatch(new AssetEditDraftTextPatchDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-branch",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            RangeEdits: [new TextAssetEditDraftRangeEditDto("alpha\nBETA\ngamma".Length, 0, "\ndelta")],
+            Baseline: TextAssetEditDraftPatchBaseline.Create("alpha\nBETA\ngamma"),
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 12, 0, 0, TimeSpan.Zero),
+            MaxTextLength: 1024,
+            BaseRevision: first.Revision));
+
+        TestAssert.Equal(AssetEditDraftTextPatchStatus.Applied, first.Status, "First patch should be accepted.");
+        TestAssert.Equal(AssetEditDraftTextPatchStatus.Applied, second.Status, "Second patch should be accepted before branching.");
+        TestAssert.Equal(AssetEditDraftTextPatchStatus.Applied, branch.Status, "Branch patch should be accepted against requested revision.");
+        TestAssert.Equal(2, branch.Revision, "Branch patch should replace the abandoned tail and become the new head revision.");
+
+        var chunk = TestAssert.NotNull(
+            store.LoadTextChunk("workspace-a", "draft-branch", "text", 0, 64),
+            "Branched draft should be readable.");
+        TestAssert.Equal(
+            "alpha\nBETA\ngamma\ndelta",
+            chunk.Text,
+            "Branch save should continue from revision 1 instead of the stale head revision.");
+    }
+
     public static void ApplyTextPatch_ShouldUseNormalizedOffsets_ForDeferredCrlfSource()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();

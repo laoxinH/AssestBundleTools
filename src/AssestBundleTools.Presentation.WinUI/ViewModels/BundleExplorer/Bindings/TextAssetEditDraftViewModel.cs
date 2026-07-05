@@ -287,7 +287,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
     private bool ShouldAutoLoadFullEdit() =>
         _isDraftMaterialized &&
         CanShowLoadFullEdit &&
-        _draft.Reference.ContentLength <= AssetTextEditPolicy.AutoMaterializeTextLength;
+        Reference.ContentLength <= AssetTextEditPolicy.AutoMaterializeTextLength;
 
     private void MarkFullEditLoaded()
     {

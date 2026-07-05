@@ -179,7 +179,8 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
                     draft.DraftMode,
                     TextContent: null,
                     RangeEdits: draft.CreateSaveRangeEdits(),
-                    PatchBaseline: draft.CreateSavePatchBaseline());
+                    PatchBaseline: draft.CreateSavePatchBaseline(),
+                    BaseDraftRevision: draft.Reference.DraftRevision);
                 var updateResult = await _backgroundTaskRunner.RunAsync(
                     token => _workspaceAssetOperationGateway.UpdateTextAssetEditDraftAsync(updateCommand, token));
                 if (!updateResult.IsSuccess)

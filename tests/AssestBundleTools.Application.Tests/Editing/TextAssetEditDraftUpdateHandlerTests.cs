@@ -140,7 +140,8 @@ internal static class TextAssetEditDraftUpdateHandlerTests
                 new TextAssetEditDraftRangeEditDto(6, 4, "BETA"),
                 new TextAssetEditDraftRangeEditDto(16, 0, "\nomega")
             ],
-            PatchBaseline: TextAssetEditDraftPatchBaseline.Create("alpha\nbeta\ngamma")));
+            PatchBaseline: TextAssetEditDraftPatchBaseline.Create("alpha\nbeta\ngamma"),
+            BaseDraftRevision: 7));
 
         TestAssert.True(result.IsSuccess, "Range edit update should succeed.");
         TestAssert.Equal(0, draftTextStore.SaveTextPayloadCallCount, "Patch updates should not use full payload overwrite.");
@@ -149,6 +150,7 @@ internal static class TextAssetEditDraftUpdateHandlerTests
         TestAssert.Equal(workspaceKey, patch.WorkspaceKey, "Patch should keep the workspace key.");
         TestAssert.Equal("draft-1", patch.DraftId, "Patch should keep the draft id.");
         TestAssert.Equal(existingFingerprint, patch.SourceFingerprint, "Patch updates should preserve the existing source fingerprint.");
+        TestAssert.Equal(7, patch.BaseRevision, "Patch updates should carry the editor baseline draft revision.");
         TestAssert.Equal(2, patch.RangeEdits.Count, "Patch updates should forward the requested range edits.");
         TestAssert.Equal("alpha\nBETA\ngamma\nomega".Length, result.Value?.Reference.ContentLength, "Patch result should expose store-reported content length.");
 

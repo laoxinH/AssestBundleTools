@@ -1,5 +1,6 @@
 using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Assets;
@@ -163,6 +164,7 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(details);
 
+        AlignTextEditStateWithDetails(details);
         Details = details;
         DisplayName = string.IsNullOrWhiteSpace(details.Name)
             ? AssetId.Value
@@ -428,5 +430,30 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
         }
 
         PreviewMeshDisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void AlignTextEditStateWithDetails(AssetDetailsDto details)
+    {
+        if (TextEditDraft is null ||
+            !TextEditDraft.IsAppliedBaseline)
+        {
+            return;
+        }
+
+        var isSameDraft =
+            !string.IsNullOrWhiteSpace(details.TextEditDraftId) &&
+            string.Equals(details.TextEditDraftId.Trim(), TextEditDraft.DraftId, StringComparison.Ordinal) &&
+            string.Equals(
+                string.IsNullOrWhiteSpace(details.TextEditDraftMode)
+                    ? WorkspaceTextEditOperationRecorder.TextDraftMode
+                    : details.TextEditDraftMode.Trim(),
+                TextEditDraft.DraftMode,
+                StringComparison.Ordinal);
+        if (!TextEditDraft.HasUnsavedChanges &&
+            (!isSameDraft ||
+            TextEditDraft.Reference.DraftRevision != details.TextEditDraftRevision))
+        {
+            ExitTextEditMode(clearDraftReference: false);
+        }
     }
 }

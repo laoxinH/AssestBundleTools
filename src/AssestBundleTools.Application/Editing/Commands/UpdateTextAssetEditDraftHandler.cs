@@ -240,7 +240,8 @@ public sealed class UpdateTextAssetEditDraftHandler
             SourceFingerprint: sourceFingerprint,
             SourceDescription: targetDetails.Name,
             Summary: targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString(),
-            SourceReference: sourceReference));
+            SourceReference: sourceReference,
+            BaseRevision: command.BaseDraftRevision));
         return patchResult.Status switch
         {
             AssetEditDraftTextPatchStatus.Applied => Result<UpdatedTextContentResult>.Success(new UpdatedTextContentResult(

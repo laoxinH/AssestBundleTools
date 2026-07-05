@@ -17,4 +17,5 @@ public sealed record AssetEditDraftTextPatchDto(
     string? SourceFingerprint = null,
     string? SourceDescription = null,
     string? Summary = null,
-    WorkspaceAssetEditDraftSourceReferenceDto? SourceReference = null);
+    WorkspaceAssetEditDraftSourceReferenceDto? SourceReference = null,
+    int? BaseRevision = null);

@@ -25,7 +25,7 @@ public sealed partial class TextAssetEditDraftViewModel
                 token => _workspaceAssetInspectionGateway.SearchPreviewTextAsync(
                     new SearchPreviewTextQuery(
                         _workspaceDataRootPath,
-                        _draft.Reference,
+                        Reference,
                         SearchText.Trim(),
                         StartLineIndex: 0,
                         MaxMatchCount: SearchMatchCount,

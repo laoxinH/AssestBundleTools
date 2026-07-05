@@ -48,7 +48,7 @@ public sealed partial class TextAssetEditDraftViewModel
                 token => _workspaceAssetInspectionGateway.LoadPreviewTextLinesAsync(
                     new LoadPreviewTextLinesQuery(
                         _workspaceDataRootPath,
-                        _draft.Reference,
+                        Reference,
                         startLineIndex,
                         LinePageSize),
                     token),
@@ -132,7 +132,7 @@ public sealed partial class TextAssetEditDraftViewModel
                 token => _workspaceAssetInspectionGateway.LoadPreviewTextChunkAsync(
                     new LoadPreviewTextChunkQuery(
                         _workspaceDataRootPath,
-                        _draft.Reference,
+                        Reference,
                         offset,
                         LoadPreviewTextChunkHandler.MaxChunkLength),
                     token),

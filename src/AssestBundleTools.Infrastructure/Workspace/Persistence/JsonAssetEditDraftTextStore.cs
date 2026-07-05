@@ -185,7 +185,12 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
 
         lock (GetDraftWriteLock(draftDirectoryPath))
         {
-            var payload = TryResolvePayload(patch.WorkspaceKey, patch.DraftId, patch.DraftMode, patch.SourceReference);
+            var payload = TryResolvePayload(
+                patch.WorkspaceKey,
+                patch.DraftId,
+                patch.DraftMode,
+                patch.SourceReference,
+                patch.BaseRevision);
             if (payload is null ||
                 !IsMatchingPayloadDescriptor(payload.Value.Descriptor, patch))
             {
@@ -287,9 +292,6 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
             IsValidPatchManifest(manifest, workspaceKey, draftId, draftMode))
         {
             manifest = ApplyRevision(manifest, revision);
-            var manifestDescriptor = descriptor is not null && IsMatchingDescriptor(descriptor, workspaceKey, draftId, draftMode)
-                ? descriptor
-                : CreateDescriptorFromManifest(manifest);
             var baseReaderFactory = CreateBaseReaderFactory(draftDirectoryPath, manifest);
             if (baseReaderFactory is null)
             {
@@ -297,7 +299,7 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
             }
 
             return new JsonAssetEditDraftTextPayloadReference(
-                manifestDescriptor,
+                CreateDescriptorFromManifest(manifest),
                 ResolveManifestBaseFilePath(draftDirectoryPath, manifest),
                 manifest.ContentLength,
                 manifest,
