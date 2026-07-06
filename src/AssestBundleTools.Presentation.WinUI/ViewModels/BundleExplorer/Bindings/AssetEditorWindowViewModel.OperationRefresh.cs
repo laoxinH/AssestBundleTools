@@ -20,7 +20,6 @@ public sealed partial class AssetEditorWindowViewModel
                 .ToArray();
         foreach (var assetTab in assetTabs)
         {
-            await _operationProjectionRefreshCoordinator.RefreshAssetDocumentOperationProjectionAsync(assetTab);
             await RefreshAssetDocumentDetailsAsync(assetTab);
         }
 
@@ -64,7 +63,7 @@ public sealed partial class AssetEditorWindowViewModel
             return;
         }
 
-        var previewInvalidationBaseline = assetTab.ConsumePreviewInvalidationBaseline() ?? assetTab.Details;
+        var previewInvalidationBaseline = assetTab.Details;
         var shouldReloadPreview = AssetPreviewInvalidationPolicy.HasEffectivePreviewProjectionChanged(
             previewInvalidationBaseline,
             details);

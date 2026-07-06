@@ -83,7 +83,6 @@ internal sealed class BundleExplorerOperationReadModelRefreshHandler
             {
                 foreach (var assetTab in matchedAssetTabs)
                 {
-                    await _operationProjectionRefreshCoordinator.RefreshAssetDocumentOperationProjectionAsync(assetTab);
                     await _assetDocumentTabCoordinator.RefreshAssetDocumentTabDetailsAsync(assetTab);
                 }
             }

@@ -301,7 +301,7 @@ relatedOperationId
 
 当前第一版已把 `Texture2D` 作为修改链路的首个稳定类型接入：文件替换和工作区内替换都会先形成操作记录和运行时待保存状态，详情预览再按当前物化出的有效替换来源投影图片载荷；目标资产的 `BundleId / AssetId / PathId / Unity 类型` 等原始身份不随预览来源改变。右键 `替换文件` 与资源详情操作区 `替换文件` 共用同一个文件来源快捷入口，会选择图片文件并立即追加新的 `ReplaceFromFile` 操作；显式候选选择仍属于页面级待应用状态，不作为最终事实。后续 `Sprite / Spine / Mesh / Material` 等类型应复用同一“操作记录 -> 有效读模型 -> 预览投影”链路，而不是各自维护独立 UI 状态。
 
-后续任何替换或修改入口都必须遵守当前关联资源同步模型：先由 Application 追加或更新 `operations[]`，再由 notifying gateway 发布带 `reason / primaryTargets / relatedTargets / implicitAffectedTargets / operationIds` 的操作通知，随后 Presentation 先刷新轻量操作投影，再按统一预览失效策略刷新富预览。不得为了某个资源类型的局部体验，在 handler、ViewModel 或控件中直接读写 `staging/changes`、手动互刷关联资源，或让预览加载完成决定撤销 / 重做按钮事实状态。
+后续任何替换或修改入口都必须遵守当前关联资源同步模型：先由 Application 追加或更新 `operations[]`，再由 notifying gateway 发布带 `reason / primaryTargets / relatedTargets / implicitAffectedTargets / operationIds` 的操作通知，随后 Presentation 刷新操作读模型（普通资产重读完整详情，Spine 组先刷新组成资产轻量投影），再按统一预览失效策略刷新富预览。不得为了某个资源类型的局部体验，在 handler、ViewModel 或控件中直接读写 `staging/changes`、手动互刷关联资源，或让预览加载完成决定撤销 / 重做按钮事实状态。
 
 当编辑入口已经提供草稿实时富预览时，保存动作不应再作为固定富预览刷新触发器。保存只追加 / 更新操作事实并退出草稿态；Presentation 通过操作通知刷新 `ChangeRecords / CanUndo / CanRedo / IsEffective` 等轻量投影。富预览只在保存后的物化有效输入与已加载草稿预览输入不同、草稿预览未成功加载，或统一预览输入签名变化时重新加载。
 
@@ -553,8 +553,8 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 - 已让工作区打开时把 `Applied ExtractAsset` 操作物化回资源 `LastExtractedAtUtc`，用于重启后恢复已提取状态。
 - 已在 Presentation 层增加工作区操作变更通知管线：组合根用 notifying gateway 包装 `IWorkspaceAssetOperationGateway / IWorkspaceBatchOperationsGateway`，单资源提取、Spine 组提取、普通批量提取、替换、撤销替换和保存 / 导出执行成功后会发布当前 `WorkspaceId` 的读模型失效事件。订阅者包括：
   - 批处理页：活动工作区匹配时自动重新读取 `WorkspaceChangeSummaryDto / SavePreview / BatchPreview`。
-  - 主工作台资源详情区：通过 `WorkspaceOperationChangeRefreshCoordinator` 合并通知。通知携带资产目标时，只重读命中的资源详情、关联 Spine 详情和当前资产列表中对应行的状态；通知未携带目标时才回退到重读当前工作区已打开的全部资源 / Spine 详情标签。这样批量操作后未激活标签的“变更”页签仍能更新，同时单资源修改不会触发无关预览任务；操作记录变化不重载资产 / Spine 列表，避免提取完成后打断列表滚动、筛选和选择状态。普通资产文档和 Spine 组的操作通知都已拆成轻量操作投影刷新和富预览刷新两步：普通资产先刷新 `ChangeRecords / CanRedoReplacement / replacement source` 等轻量字段，Spine 组先刷新组成资产 `ChangeRecords` 并重投影变更按钮，再按文档标签页内输入签名合并重型预览；同一批 skeleton / atlas / texture page 替换通知只会排入一次最新预览刷新，且预览刷新不得用旧快照覆盖已更新的操作投影。纯 `Extraction` 通知只刷新轻量操作投影和列表行提取状态，不应排入普通资产预览重载，也不应让 Spine 组进入 animation details / preview loading；同一次 Spine 组提取产生多个组成资源记录时，刷新协调器必须按打开的 Spine 组聚合为一次操作投影刷新，且该轻量刷新只能更新 `ChangeSummary / ChangeRecords / action states`，不能重新应用当前 preview surface，避免 skeleton / atlas / texture page 分别重投影造成预览闪烁。
-  - 独立资源编辑窗口：订阅同一通知；通知携带资产目标时只重读窗口内命中的资产或关联 Spine 资源组，窗口化场景不再依赖发起操作的一侧手动重投影。窗口内普通资产、Spine 编辑草稿来源变化和操作通知后的组刷新同样先同步轻量操作投影，再按文档标签页合并富预览刷新，替换来源、变更记录和操作按钮状态保持即时重投影。
+  - 主工作台资源详情区：通过 `WorkspaceOperationChangeRefreshCoordinator` 合并通知。通知携带资产目标时，只重读命中的资源详情、关联 Spine 详情和当前资产列表中对应行的状态；通知未携带目标时才回退到重读当前工作区已打开的全部资源 / Spine 详情标签。这样批量操作后未激活标签的“变更”页签仍能更新，同时单资源修改不会触发无关预览任务；操作记录变化不重载资产 / Spine 列表，避免提取完成后打断列表滚动、筛选和选择状态。普通资产文档通知直接重读完整详情，并用同一份详情更新 `ChangeRecords / CanRedoReplacement / replacement source` 等操作读模型字段和判断富预览失效；Spine 组先刷新组成资产 `ChangeRecords` 并重投影变更按钮，再按文档标签页内输入签名合并重型预览；同一批 skeleton / atlas / texture page 替换通知只会排入一次最新预览刷新，且预览刷新不得用旧快照覆盖已更新的操作投影。纯 `Extraction` 通知只刷新操作读模型和列表行提取状态，不应排入普通资产预览重载，也不应让 Spine 组进入 animation details / preview loading；同一次 Spine 组提取产生多个组成资源记录时，刷新协调器必须按打开的 Spine 组聚合为一次操作投影刷新，且该轻量刷新只能更新 `ChangeSummary / ChangeRecords / action states`，不能重新应用当前 preview surface，避免 skeleton / atlas / texture page 分别重投影造成预览闪烁。
+  - 独立资源编辑窗口：订阅同一通知；通知携带资产目标时只重读窗口内命中的资产或关联 Spine 资源组，窗口化场景不再依赖发起操作的一侧手动重投影。窗口内普通资产重读完整详情，Spine 编辑草稿来源变化和操作通知后的组刷新仍先同步轻量组成资产投影，再按文档标签页合并富预览刷新，替换来源、变更记录和操作按钮状态保持即时重投影。
   操作入口只负责执行命令、清理本地候选状态和展示结果反馈，不再在提取 / 替换 / 撤销成功后手动调用页面刷新回调；非持久化的候选来源选择仍允许即时重投影当前详情。
 - 操作通知事件已从单纯 `AffectedAssets` 兼容集合演进为携带 `Reason / OperationIds / PrimaryTargets / RelatedTargets / ImplicitAffectedTargets` 的读模型失效契约。旧刷新协调器仍可消费 `AffectedAssets`，但后续替换、编辑、删除记录和关联资源修改必须优先填充新字段；撤销 / 重做 / 删除记录必须尽量携带被操作的 `operationId`，新替换应用应在 Application 结果 DTO 演进后返回新建 operation id 并纳入通知。
 - 已在 Presentation 层增加 `workspaceId + operationId` 维度的瞬时 pending tracker，用于检查器变更卡片撤销 / 重做 / 删除执行期间的 loading / disabled 投影。该状态会同步到真实目标、关联资源、Spine 聚合组以及主窗口 / 独立资源编辑窗口中的同一 `operationId` 可见卡片，但不写入 `operations[]`，也不改变持久化 `Pending / Applied / Undone` 等操作事实状态。
@@ -585,7 +585,7 @@ UndoReplacement(op-11) Applied, targetOperationId = op-10
 - Presentation 可以维护 Shell 级后台任务状态条来展示运行中任务进度；该状态条属于瞬时 UI 状态，不得作为恢复、撤销、批处理历史或变更摘要的数据来源。
 - 页面或窗口订阅操作通知时必须按 `WorkspaceId` 过滤，并在自身忙碌时合并为一次待刷新请求；统一使用 `WorkspaceOperationChangeRefreshCoordinator`，不要在新的操作 handler 中新增“成功后刷新某个页面”的回调。
 - 发起操作的 handler 可以更新仅存在于当前 UI 的瞬时状态，例如清理待替换候选；已持久化的提取 / 替换 / 撤销 / 保存状态必须通过通知后的读模型重读来反映到详情页和批处理页。通知携带资产目标时，应先通过应用层关联影响查询扩展到依赖这些目标的资源，再由页面 / 窗口按目标局部刷新。
-- 后续新增替换、编辑、删除记录或关联资源修改入口时，必须沿用当前“操作事实 -> 带原因和目标角色的通知 -> 轻量操作投影 -> 富预览失效策略”链路；若某个入口无法提供足够的 `operationId` 或目标角色，应先扩展 Application 结果 DTO 或查询契约，而不是在 Presentation 中猜测目标或补手动刷新。
+- 后续新增替换、编辑、删除记录或关联资源修改入口时，必须沿用当前“操作事实 -> 带原因和目标角色的通知 -> 操作读模型刷新 -> 富预览失效策略”链路；若某个入口无法提供足够的 `operationId` 或目标角色，应先扩展 Application 结果 DTO 或查询契约，而不是在 Presentation 中猜测目标或补手动刷新。
 - 工作区元数据只保存轻量浏览状态；操作记录属于 `staging/changes`。
 - 预览缓存仍是可重建缓存，不得成为撤销事实来源。
 - 外部工具 stdout / stderr 只能作为诊断 detail，不进入操作主提示。

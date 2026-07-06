@@ -137,36 +137,34 @@ reason
 ```text
 Application 写入 operations[] 事实
   -> Notifying gateway 发布带 reason / targets / operationIds 的通知
-  -> 轻量操作投影先刷新
+  -> 操作读模型刷新
+     （普通资产重读完整详情；Spine 组先刷新组成资产轻量投影）
   -> 富预览按 invalidation policy 异步刷新
 ```
 
 ## 6. 轻量操作投影刷新
 
-应新增通用轻量刷新路径，职责是只刷新操作事实相关展示，不触发重型预览生成。
+操作读模型刷新当前分为两类：普通资产文档直接重读完整资产详情，并由同一份详情重投影变更页和判断富预览是否失效；Spine 组文档保留独立的组成资产轻量投影刷新，避免组级变更按钮等待 animation preview details 完整重载。
 
-推荐能力：
+Spine 组轻量能力：
 
 ```text
-RefreshOperationProjectionAsync(workspaceId, affectedTargets, operationIds)
+RefreshSpineGroupOperationProjectionAsync(workspaceId, affectedTargets, operationIds)
 ```
 
 返回或应用内容包括：
 
-- 单资产 `ChangeRecords`
-- 单资产 `CanRedoReplacement`
-- 当前有效替换 operation id
-- 当前有效编辑 operation id
-- 删除记录后的可见记录集合
 - 聚合文档中组成资产的轻量 `ChangeRecords`
+- 组成资产当前替换来源和提取时间等轻量字段
+- 组级变更卡片按钮状态
 
 刷新规则：
 
-1. 普通资产文档命中目标资产时，重读该资产轻量详情并重投影变更页。
-2. 普通资产文档命中隐式依赖目标时，重读当前资产轻量详情，以便展示关联替换记录。
+1. 普通资产文档命中目标资产或隐式依赖目标时，重读完整资产详情并重投影变更页。
+2. 普通资产文档的富预览是否刷新，由旧详情和新详情交给 preview invalidation policy 判断，不再额外维护“先轻量投影、后完整刷新”的中间详情。
 3. 聚合资源文档命中任一组成资产时，只先刷新组成资产轻量详情并更新聚合文档 `Parts[].ChangeRecords`。
 4. 轻量刷新完成后立即更新按钮、badge 和卡片可见性。
-5. 富预览是否刷新由后续 preview invalidation policy 判断。
+5. Spine 组富预览是否刷新由后续 preview invalidation policy 判断。
 
 对于 Spine 组，第一步不应等待 animation preview details 完整重载；只要 skeleton / atlas / texture page 组成资产的 `ChangeRecords` 更新，就应立即重投影组级 `变更` 分段。
 
@@ -271,18 +269,18 @@ Pending 清除规则：
   -> operations[] 追加 / 删除 / 物化
   -> 操作通知发布
   -> 所有宿主按 workspaceId 过滤
-  -> 轻量操作投影刷新
+  -> 操作读模型刷新
   -> 清除 pending，更新按钮与卡片
   -> 按预览输入变化异步刷新富预览
 ```
 
-主窗口和独立窗口必须消费同一通知契约。不同窗口可以独立调度预览，但轻量操作投影应尽量保持同一事实状态。
+主窗口和独立窗口必须消费同一通知契约。不同窗口可以独立调度预览，但操作读模型应尽量保持同一事实状态。
 
 如果某窗口处于全局 busy：
 
 - 不应完全阻塞 pending 显示。
 - 可以延后重型预览刷新。
-- 轻量操作投影刷新应尽量允许在命令成功后尽快执行，避免按钮状态长时间停留旧值。
+- 操作读模型刷新应尽量允许在命令成功后尽快执行，避免按钮状态长时间停留旧值。
 
 ## 11. 与现有实现的迁移路径
 
@@ -296,12 +294,12 @@ Pending 清除规则：
 
 ### 第二阶段：拆轻量操作投影刷新
 
-- 已在 Presentation 层新增 `AssociatedAssetOperationProjectionRefreshCoordinator`，作为轻量刷新协调器，独立于预览加载协调器。
-- 已让普通资产文档在命中操作通知时先刷新 `ChangeRecords / CanRedoReplacement / IsModified / replacement source` 等轻量操作投影，再走原有完整详情和预览刷新流程。
+- 已在 Presentation 层保留 `AssociatedAssetOperationProjectionRefreshCoordinator`，作为 Spine 组组成资产轻量刷新协调器，独立于预览加载协调器。
+- 普通资产文档在命中操作通知时直接重读完整资产详情，并用同一份新详情更新 `ChangeRecords / CanRedoReplacement / IsModified / replacement source` 等操作读模型字段和判断富预览失效，避免维护两套资产详情刷新路径。
 - 已让 Spine 聚合资源文档在操作通知后优先刷新组成资产 `ChangeRecords`，并重新投影组级变更页按钮状态。
 - 已让主窗口和独立资源编辑窗口在 Spine 组命中操作通知时先执行轻量操作投影刷新，再排 animation details 重载。
 - 已为 Spine 预览调度拆出“仅刷新富预览”的入口，避免预览重载前用主面板旧快照覆盖已经更新的轻量操作投影。
-- 当前关联影响扩展已覆盖所有可展示直接反向引用资源，`Texture2D` 只是首个稳定验证类型；`.atlas / .skel / .json` 等 `TextAsset` 以及其他直接引用目标也应通过同一通知扩展和轻量投影刷新路径同步。
+- 当前关联影响扩展已覆盖所有可展示直接反向引用资源，`Texture2D` 只是首个稳定验证类型；`.atlas / .skel / .json` 等 `TextAsset` 以及其他直接引用目标也应通过同一通知扩展和操作读模型刷新路径同步。
 - 统一通知 DTO 演进仍属于后续阶段；pending tracker 已在 Presentation 层先行落地为瞬时 UI 状态，不进入 Application 操作事实流。
 
 ### 第三阶段：演进通知 DTO（已落地基础实现）
@@ -335,7 +333,7 @@ Presentation：
 - 命令失败后，两侧 pending 清除且按钮恢复旧状态。
 - 主窗口和独立窗口同时打开同一目标 / 关联资源时，轻量投影同步刷新。
 - 预览刷新失败不回滚按钮状态。
-- busy 状态只延后重型预览，不长期阻塞轻量操作投影。
+- busy 状态只延后重型预览，不长期阻塞操作读模型刷新。
 
 回归范围应优先覆盖稳定契约：DTO 字段、按钮状态、pending 状态、刷新调用边界和预览失败后的状态保持；不要断言具体 loading 文案或偶发调度顺序。
 
@@ -344,8 +342,8 @@ Presentation：
 后续实现关联资源同步时，默认按以下原则执行：
 
 1. 操作事实优先，预览展示其次。
-2. 变更页按钮状态必须来自轻量操作投影，不来自重型预览完成事件。
+2. 变更页按钮状态必须来自操作读模型，不来自重型预览完成事件。
 3. 关联资源、聚合资源和多窗口共享同一操作事实与 pending 语义。
 4. Spine 只是这套模型中的复杂聚合资源案例，不应拥有独立的同步规则。
 5. 新增资源类型的关联预览必须接入同一同步模型，而不是在 ViewModel 中手写局部互刷。
-6. 后续所有替换、编辑和删除记录修改都必须发布带 `reason / targets / operationIds` 的操作通知，并先刷新轻量操作投影；不得在操作 handler 中恢复“成功后直接刷新某个页面或某个资源类型”的手写回调。
+6. 后续所有替换、编辑和删除记录修改都必须发布带 `reason / targets / operationIds` 的操作通知，并先刷新操作读模型；不得在操作 handler 中恢复“成功后直接刷新某个页面或某个资源类型”的手写回调。

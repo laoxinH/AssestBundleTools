@@ -13,13 +13,12 @@ using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 
 /// <summary>
-/// 刷新关联资源的轻量操作投影，避免变更记录按钮等待重型预览重载。
+/// 刷新 Spine 组关联资源的轻量操作投影，避免变更记录按钮等待重型预览重载。
 /// </summary>
 internal sealed class AssociatedAssetOperationProjectionRefreshCoordinator
 {
     private readonly IWorkspaceAssetInspectionGateway _workspaceAssetInspectionGateway;
     private readonly IBackgroundTaskRunner _backgroundTaskRunner;
-    private readonly BundleExplorerAssetInspectorPresenter _assetInspectorPresenter;
     private readonly SpineAssetGroupInspectorPresenter _spineGroupInspectorPresenter;
     private readonly Func<WorkspaceId?> _workspaceIdProvider;
     private readonly Func<bool> _isBusyProvider;
@@ -28,7 +27,6 @@ internal sealed class AssociatedAssetOperationProjectionRefreshCoordinator
     public AssociatedAssetOperationProjectionRefreshCoordinator(
         IWorkspaceAssetInspectionGateway workspaceAssetInspectionGateway,
         IBackgroundTaskRunner backgroundTaskRunner,
-        BundleExplorerAssetInspectorPresenter assetInspectorPresenter,
         SpineAssetGroupInspectorPresenter spineGroupInspectorPresenter,
         Func<WorkspaceId?> workspaceIdProvider,
         Func<bool> isBusyProvider,
@@ -36,45 +34,10 @@ internal sealed class AssociatedAssetOperationProjectionRefreshCoordinator
     {
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
         _backgroundTaskRunner = backgroundTaskRunner ?? throw new ArgumentNullException(nameof(backgroundTaskRunner));
-        _assetInspectorPresenter = assetInspectorPresenter ?? throw new ArgumentNullException(nameof(assetInspectorPresenter));
         _spineGroupInspectorPresenter = spineGroupInspectorPresenter ?? throw new ArgumentNullException(nameof(spineGroupInspectorPresenter));
         _workspaceIdProvider = workspaceIdProvider ?? throw new ArgumentNullException(nameof(workspaceIdProvider));
         _isBusyProvider = isBusyProvider ?? throw new ArgumentNullException(nameof(isBusyProvider));
         _appendResultFailure = appendResultFailure ?? throw new ArgumentNullException(nameof(appendResultFailure));
-    }
-
-    public async Task<bool> RefreshAssetDocumentOperationProjectionAsync(
-        AssetDocumentTabViewModel assetTab)
-    {
-        ArgumentNullException.ThrowIfNull(assetTab);
-
-        var workspaceId = _workspaceIdProvider();
-        if (!workspaceId.HasValue)
-        {
-            return false;
-        }
-
-        var detailsResult = await GetAssetDetailsAsync(
-            workspaceId.Value,
-            assetTab.BundleId,
-            assetTab.AssetId);
-        if (!TryGetValue(detailsResult, out var details))
-        {
-            return false;
-        }
-
-        if (HasSameOperationProjection(assetTab.Details, details))
-        {
-            return false;
-        }
-
-        assetTab.ApplyOperationProjection(details);
-        _assetInspectorPresenter.PresentAssetDocumentTab(
-            assetTab,
-            details,
-            canEdit: assetTab.CanEdit,
-            isBusy: _isBusyProvider());
-        return true;
     }
 
     public async Task<bool> RefreshSpineGroupOperationProjectionAsync(
@@ -213,59 +176,4 @@ internal sealed class AssociatedAssetOperationProjectionRefreshCoordinator
                     assetId),
                 token));
 
-    private static bool HasSameOperationProjection(
-        AssetDetailsDto? previousDetails,
-        AssetDetailsDto currentDetails)
-    {
-        if (previousDetails is null)
-        {
-            return false;
-        }
-
-        return previousDetails.IsModified == currentDetails.IsModified &&
-               previousDetails.CanRedoReplacement == currentDetails.CanRedoReplacement &&
-               previousDetails.LastExtractedAtUtc == currentDetails.LastExtractedAtUtc &&
-               string.Equals(previousDetails.TextEditDraftId, currentDetails.TextEditDraftId, StringComparison.Ordinal) &&
-               string.Equals(previousDetails.TextEditDraftMode, currentDetails.TextEditDraftMode, StringComparison.Ordinal) &&
-               previousDetails.TextEditDraftRevision == currentDetails.TextEditDraftRevision &&
-               previousDetails.TextEditAppliedAtUtc == currentDetails.TextEditAppliedAtUtc &&
-               string.Equals(previousDetails.FileReplacementSourceFileName, currentDetails.FileReplacementSourceFileName, StringComparison.Ordinal) &&
-               string.Equals(previousDetails.FileReplacementSourcePath, currentDetails.FileReplacementSourcePath, StringComparison.Ordinal) &&
-               string.Equals(previousDetails.WorkspaceReplacementSourceBundleId?.Value, currentDetails.WorkspaceReplacementSourceBundleId?.Value, StringComparison.Ordinal) &&
-               string.Equals(previousDetails.WorkspaceReplacementSourceAssetId?.Value, currentDetails.WorkspaceReplacementSourceAssetId?.Value, StringComparison.Ordinal) &&
-               HasSameChangeRecords(previousDetails.ChangeRecords, currentDetails.ChangeRecords);
-    }
-
-    private static bool HasSameChangeRecords(
-        IReadOnlyList<AssetChangeRecordDto>? left,
-        IReadOnlyList<AssetChangeRecordDto>? right)
-    {
-        var leftRecords = left ?? Array.Empty<AssetChangeRecordDto>();
-        var rightRecords = right ?? Array.Empty<AssetChangeRecordDto>();
-        if (leftRecords.Count != rightRecords.Count)
-        {
-            return false;
-        }
-
-        for (var index = 0; index < leftRecords.Count; index++)
-        {
-            var leftRecord = leftRecords[index];
-            var rightRecord = rightRecords[index];
-            if (leftRecord.Kind != rightRecord.Kind ||
-                leftRecord.Sequence != rightRecord.Sequence ||
-                leftRecord.IsEffectiveReplacement != rightRecord.IsEffectiveReplacement ||
-                leftRecord.IsEffectiveEdit != rightRecord.IsEffectiveEdit ||
-                leftRecord.DraftRevision != rightRecord.DraftRevision ||
-                !string.Equals(leftRecord.OperationId, rightRecord.OperationId, StringComparison.Ordinal) ||
-                !string.Equals(leftRecord.DraftId, rightRecord.DraftId, StringComparison.Ordinal) ||
-                !string.Equals(leftRecord.DraftMode, rightRecord.DraftMode, StringComparison.Ordinal) ||
-                !string.Equals(leftRecord.TargetBundleId, rightRecord.TargetBundleId, StringComparison.Ordinal) ||
-                !string.Equals(leftRecord.TargetAssetId, rightRecord.TargetAssetId, StringComparison.Ordinal))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
 }

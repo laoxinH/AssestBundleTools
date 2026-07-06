@@ -108,8 +108,6 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
 
     public AssetDetailsDto? Details { get; private set; }
 
-    internal AssetDetailsDto? PendingPreviewInvalidationBaseline { get; private set; }
-
     public WorkspaceReplacementCandidateDto? PendingWorkspaceReplacementCandidate { get; private set; }
 
     public FileReplacementCandidateDto? PendingFileReplacementCandidate { get; private set; }
@@ -173,19 +171,6 @@ public sealed class AssetDocumentTabViewModel : ObservableObject
             "{0} [{1}]",
             DisplayName,
             AssetId.Value);
-    }
-
-    internal void ApplyOperationProjection(AssetDetailsDto details)
-    {
-        PendingPreviewInvalidationBaseline ??= Details;
-        ApplyDetails(details);
-    }
-
-    internal AssetDetailsDto? ConsumePreviewInvalidationBaseline()
-    {
-        var baseline = PendingPreviewInvalidationBaseline;
-        PendingPreviewInvalidationBaseline = null;
-        return baseline;
     }
 
     public void UpdatePendingWorkspaceReplacementCandidate(WorkspaceReplacementCandidateDto? candidate)

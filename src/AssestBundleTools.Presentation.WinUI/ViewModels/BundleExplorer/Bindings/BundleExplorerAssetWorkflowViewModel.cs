@@ -202,7 +202,6 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         var operationProjectionRefreshCoordinator = new AssociatedAssetOperationProjectionRefreshCoordinator(
             workspaceAssetInspectionGateway,
             backgroundTaskRunner,
-            _assetInspectorPresenter,
             _spineGroupInspectorPresenter,
             () => _workspaceShell.WorkspaceSummary?.WorkspaceId,
             () => IsBusy,

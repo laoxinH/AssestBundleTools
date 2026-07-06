@@ -357,7 +357,7 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
     }
 
     [Fact]
-    public async Task RefreshAssetDocumentTabDetailsAsync_ShouldReloadPreview_WhenOperationProjectionAlreadyUpdatedDetails()
+    public async Task RefreshAssetDocumentTabDetailsAsync_ShouldReloadPreview_WhenEffectivePreviewProjectionChanged()
     {
         var workspaceId = WorkspaceId.New();
         var bundleId = new BundleId("bundle-ui");
@@ -398,7 +398,6 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
         assetTab.Inspector.ShowPreviewMessage("loaded");
         context.BundleTab.AddAssetTab(assetTab, activate: true);
 
-        assetTab.ApplyOperationProjection(refreshedDetails);
         await coordinator.RefreshAssetDocumentTabDetailsAsync(assetTab);
         await WaitUntilAsync(() => previewQueryAssetIds.Count > 0);
 
