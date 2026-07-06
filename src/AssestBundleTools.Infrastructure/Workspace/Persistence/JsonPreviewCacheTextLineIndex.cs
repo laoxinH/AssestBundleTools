@@ -61,6 +61,68 @@ internal static class JsonPreviewCacheTextLineIndex
         return index;
     }
 
+    public static JsonPreviewCacheTextLineIndexDto? LoadOrCreate(
+        PreviewCacheDescriptorDto descriptor,
+        string payloadFilePath,
+        long payloadLength)
+    {
+        var index = Load(descriptor, payloadFilePath, payloadLength);
+        if (index is not null)
+        {
+            return index;
+        }
+
+        try
+        {
+            if (!File.Exists(payloadFilePath))
+            {
+                return null;
+            }
+
+            var content = File.ReadAllBytes(payloadFilePath);
+            if (content.LongLength != payloadLength)
+            {
+                return null;
+            }
+
+            Save(descriptor, payloadFilePath, content);
+            return Load(descriptor, payloadFilePath, payloadLength);
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    public static JsonPreviewCacheTextCharacterAnchorDto ResolveCharacterAnchor(
+        JsonPreviewCacheTextLineIndexDto? lineIndex,
+        int targetCharacterOffset)
+    {
+        if (lineIndex?.CharacterAnchors is not { Count: > 0 })
+        {
+            return new JsonPreviewCacheTextCharacterAnchorDto(0, 0);
+        }
+
+        JsonPreviewCacheTextCharacterAnchorDto anchor = new(0, 0);
+        foreach (var candidate in lineIndex.CharacterAnchors)
+        {
+            if (candidate.CharacterOffset < 0 ||
+                candidate.ByteOffset < 0 ||
+                candidate.CharacterOffset > targetCharacterOffset)
+            {
+                break;
+            }
+
+            anchor = candidate;
+        }
+
+        return anchor;
+    }
+
     public static void Delete(string payloadFilePath)
     {
         if (string.IsNullOrWhiteSpace(payloadFilePath))

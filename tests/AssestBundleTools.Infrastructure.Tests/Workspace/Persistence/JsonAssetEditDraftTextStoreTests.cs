@@ -404,6 +404,53 @@ internal static class JsonAssetEditDraftTextStoreTests
         TestAssert.Equal("alpha\nBETA\ngamma\nomega", chunk.Text, "Composite view should replay all patch log entries in order.");
     }
 
+    public static void ApplyTextPatch_ShouldReadOffsetChunk_FromPatchBackedDraft()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonAssetEditDraftTextStore(temporaryDirectory.DirectoryPath);
+        var sourceText = string.Concat(
+            Enumerable.Range(0, 9000).Select(index => $"line-{index:D4}: abcdefghijklmnopqrstuvwxyz\n"));
+
+        store.SaveTextPayload(new AssetEditDraftTextPayloadDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-offset-chunk",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            TextContent: sourceText,
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 9, 0, 0, TimeSpan.Zero)));
+
+        var patchOffset = sourceText.IndexOf("line-4500", StringComparison.Ordinal);
+        var result = store.ApplyTextPatch(new AssetEditDraftTextPatchDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-offset-chunk",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            RangeEdits: [new TextAssetEditDraftRangeEditDto(patchOffset, 9, "LINE-4500")],
+            Baseline: TextAssetEditDraftPatchBaseline.Create(sourceText),
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 10, 0, 0, TimeSpan.Zero),
+            MaxTextLength: sourceText.Length + 16));
+
+        TestAssert.Equal(AssetEditDraftTextPatchStatus.Applied, result.Status, "Large patch-backed draft should be accepted.");
+        var requestedOffset = patchOffset - 20;
+        var chunk = TestAssert.NotNull(
+            store.LoadTextChunk("workspace-a", "draft-offset-chunk", "text", requestedOffset, 80),
+            "Patch-backed draft should support direct offset chunk reads.");
+
+        var expected = sourceText[..patchOffset] + "LINE-4500" + sourceText[(patchOffset + 9)..];
+        TestAssert.Equal(requestedOffset, chunk.Offset, "Chunk offset should remain the requested composite text offset.");
+        TestAssert.Equal(expected.Substring(requestedOffset, 80), chunk.Text, "Offset chunk should be read from the patched composite text.");
+
+        var sidecarPath = Path.Combine(
+            temporaryDirectory.DirectoryPath,
+            "staging",
+            "drafts",
+            "workspace-a",
+            "draft-offset-chunk",
+            "text",
+            "text.lines.json");
+        TestAssert.True(File.Exists(sidecarPath), "Patch-backed payload reads should create or reuse a character anchor sidecar.");
+    }
+
     public static void ApplyTextPatch_ShouldBranchFromRequestedRevision_WhenHeadIsNewer()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();

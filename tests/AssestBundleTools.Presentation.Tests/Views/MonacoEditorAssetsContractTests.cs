@@ -82,8 +82,6 @@ public sealed class MonacoEditorAssetsContractTests
 
         Assert.Contains("case 'getPendingRangeEdits':", hostScript);
         Assert.Contains("type: 'documentRangeEdits'", hostScript);
-        Assert.Contains("const hostVersion = '20260707-streaming-diff-diagnostics';", hostScript);
-        Assert.Contains("diagnostics: rangeEditResult.diagnostics", hostScript);
         Assert.Contains("case 'markSaved':", hostScript);
         Assert.Contains("baselineText = getEditorText();", hostScript);
         Assert.Contains("createRangeEditFromTexts(baselineText, currentText)", hostScript);
@@ -104,10 +102,9 @@ public sealed class MonacoEditorAssetsContractTests
         Assert.Contains("baselineText = streamingBaselineChunks.join('');", hostScript);
         Assert.Contains("function createRangeEditFromTexts(savedText, currentText)", hostScript);
 
-        var pendingRangeEditsFunction = ExtractFunction(hostScript, "function getPendingRangeEditResult");
+        var pendingRangeEditsFunction = ExtractFunction(hostScript, "function getPendingRangeEdits");
         Assert.Contains("const currentText = getEditorText();", pendingRangeEditsFunction);
         Assert.Contains("createRangeEditFromTexts(baselineText, currentText)", pendingRangeEditsFunction);
-        Assert.Contains("createRangeEditDiagnostics(edits, currentText)", pendingRangeEditsFunction);
         Assert.DoesNotContain("rangeOffset", pendingRangeEditsFunction);
         Assert.DoesNotContain("pendingStreamingRangeEdit", pendingRangeEditsFunction);
     }
@@ -119,8 +116,6 @@ public sealed class MonacoEditorAssetsContractTests
 
         Assert.Contains("function ensureModelUsesLf(model)", hostScript);
         Assert.Contains("model.setEOL(monaco.editor.EndOfLineSequence.LF);", hostScript);
-        Assert.Contains("function createRangeEditDiagnostics(edits, currentText)", hostScript);
-        Assert.Contains("textHead: previewText(edit.text, 48)", hostScript);
 
         var setDocumentFunction = ExtractFunction(hostScript, "function setDocument");
         Assert.Contains("ensureModelUsesLf(model);", setDocumentFunction);
@@ -152,53 +147,7 @@ public sealed class MonacoEditorAssetsContractTests
             "Monaco",
             "abt-editor-host.html"));
 
-        Assert.Contains("abt-editor-host.js?v=20260707-streaming-diff-diagnostics", hostPage);
-    }
-
-    [Fact]
-    public void TextEditorSurface_ShouldWriteRangePatchDiagnostics()
-    {
-        var repositoryRoot = FindRepositoryRoot();
-        var bridgeCode = File.ReadAllText(Path.Combine(
-            repositoryRoot,
-            "src",
-            "AssestBundleTools.Presentation.WinUI",
-            "Views",
-            "BundleExplorer",
-            "Controls",
-            "TextDocumentSurfaceView.WebBridge.cs"));
-        var draftViewCode = File.ReadAllText(Path.Combine(
-            repositoryRoot,
-            "src",
-            "AssestBundleTools.Presentation.WinUI",
-            "Views",
-            "BundleExplorer",
-            "Controls",
-            "TextAssetEditDraftView.xaml.cs"));
-        var coordinatorCode = File.ReadAllText(Path.Combine(
-            repositoryRoot,
-            "src",
-            "AssestBundleTools.Presentation.WinUI",
-            "ViewModels",
-            "BundleExplorer",
-            "Coordinators",
-            "AssetEditorWindowTextEditActionCoordinator.cs"));
-        var diagnosticsCode = File.ReadAllText(Path.Combine(
-            repositoryRoot,
-            "src",
-            "AssestBundleTools.Presentation.WinUI",
-            "Diagnostics",
-            "TextEditRangePatchDiagnostics.cs"));
-
-        Assert.Contains("[TextEditRangePatch]", diagnosticsCode);
-        Assert.Contains("TryReadDiagnosticsJson(root)", bridgeCode);
-        Assert.Contains("DiagnosticsJson", bridgeCode);
-        Assert.Contains("TextEditRangePatchDiagnostics.Write(", bridgeCode);
-        Assert.Contains("save sync received", draftViewCode);
-        Assert.Contains("save sync accepted surface range edits", draftViewCode);
-        Assert.Contains("TextEditRangePatchDiagnostics.FormatRangeEdits(rangeEditSync.Edits)", draftViewCode);
-        Assert.Contains("update command", coordinatorCode);
-        Assert.Contains("TextEditRangePatchDiagnostics.FormatRangeEdits(rangeEdits)", coordinatorCode);
+        Assert.Contains("abt-editor-host.js?v=20260707-streaming-cachefix", hostPage);
     }
 
     [Fact]

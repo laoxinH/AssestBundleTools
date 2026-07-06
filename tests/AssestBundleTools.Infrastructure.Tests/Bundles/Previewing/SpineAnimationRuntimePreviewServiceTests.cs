@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Infrastructure.Bundles.Previewing.Spine;
@@ -942,6 +943,7 @@ internal static partial class SpineAnimationRuntimePreviewServiceTests
 
         public SpineAnimationRuntimePreviewResultDto TryBuildPreview(
             SpineAnimationRuntimePreviewRequestDto request,
+            IAssetPreviewTextSourceReader textSourceReader,
             CancellationToken cancellationToken)
         {
             CallCount++;

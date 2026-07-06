@@ -1,6 +1,5 @@
 using System.Text.Json;
 using AssestBundleTools.Application.Editing.Dtos;
-using AssestBundleTools.Presentation.WinUI.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.Web.WebView2.Core;
 
@@ -255,10 +254,7 @@ public sealed partial class TextDocumentSurfaceView
             ? versionIdElement.GetInt32()
             : 0;
         var edits = ReadRangeEdits(root);
-        var diagnosticsJson = TryReadDiagnosticsJson(root);
-        TextEditRangePatchDiagnostics.Write(
-            $"bridge response baseLength={baseLength} versionId={versionId} edits={TextEditRangePatchDiagnostics.FormatRangeEdits(edits)} host={diagnosticsJson}");
-        completion.TrySetResult(new TextDocumentSurfaceRangeEditSyncResult(edits, baseLength, versionId, diagnosticsJson));
+        completion.TrySetResult(new TextDocumentSurfaceRangeEditSyncResult(edits, baseLength, versionId));
     }
 
     private static bool TryGetRequestId(JsonElement root, out string requestId)
@@ -303,17 +299,6 @@ public sealed partial class TextDocumentSurfaceView
         }
 
         return edits;
-    }
-
-    private static string TryReadDiagnosticsJson(JsonElement root)
-    {
-        if (!root.TryGetProperty("diagnostics", out var diagnosticsElement) ||
-            diagnosticsElement.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
-        {
-            return "{}";
-        }
-
-        return diagnosticsElement.GetRawText();
     }
 
     private void ApplyWebViewText(string text)
@@ -463,5 +448,4 @@ public sealed partial class TextDocumentSurfaceView
 internal sealed record TextDocumentSurfaceRangeEditSyncResult(
     IReadOnlyList<TextAssetEditDraftRangeEditDto> Edits,
     int BaseLength,
-    int VersionId,
-    string DiagnosticsJson = "{}");
+    int VersionId);

@@ -349,6 +349,10 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
             draftMode,
             sourceReference,
             baseSnapshot);
+        JsonPreviewCacheTextLineIndex.LoadOrCreate(
+            CreateDescriptorFromManifest(baseManifest),
+            baseSnapshotFilePath,
+            baseManifest.ContentLength);
 
         return new JsonAssetEditDraftTextPayloadReference(
             CreateDescriptorFromManifest(baseManifest),
@@ -356,7 +360,10 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
             baseManifest.ContentLength,
             baseManifest,
             new JsonAssetEditDraftTextCompositeReader(
-                () => JsonAssetEditDraftTextSourceReader.CreateUtf8FileReader(baseSnapshotFilePath),
+                JsonAssetEditDraftTextBaseReaderFactory.FromUtf8File(
+                    baseSnapshotFilePath,
+                    CreateDescriptorFromManifest(baseManifest),
+                    baseManifest.ContentLength),
                 baseManifest));
     }
 
@@ -617,7 +624,7 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
             UpdatedAtUtc: DateTimeOffset.UtcNow);
     }
 
-    private Func<TextReader?>? CreateBaseReaderFactory(
+    private JsonAssetEditDraftTextBaseReaderFactory? CreateBaseReaderFactory(
         string draftDirectoryPath,
         JsonAssetEditDraftTextPatchManifestDto manifest)
     {
@@ -625,13 +632,19 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
         {
             var payloadFilePath = Path.Combine(draftDirectoryPath, PayloadFileName);
             return File.Exists(payloadFilePath)
-                ? () => JsonAssetEditDraftTextSourceReader.CreateUtf8FileReader(payloadFilePath)
+                ? JsonAssetEditDraftTextBaseReaderFactory.FromUtf8File(
+                    payloadFilePath,
+                    CreateDescriptorFromManifest(manifest),
+                    manifest.BaseContentLength)
                 : null;
         }
 
         var baseSnapshotFilePath = Path.Combine(draftDirectoryPath, BaseSnapshotFileName);
         return File.Exists(baseSnapshotFilePath)
-            ? () => JsonAssetEditDraftTextSourceReader.CreateUtf8FileReader(baseSnapshotFilePath)
+            ? JsonAssetEditDraftTextBaseReaderFactory.FromUtf8File(
+                baseSnapshotFilePath,
+                CreateDescriptorFromManifest(manifest),
+                manifest.BaseContentLength)
             : null;
     }
 
@@ -676,9 +689,10 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
             UpdatedAtUtc: payload.Descriptor.GeneratedAtUtc);
 
         return new JsonAssetEditDraftTextCompositeReader(
-            () => string.IsNullOrWhiteSpace(payload.PayloadFilePath)
-                ? null
-                : JsonAssetEditDraftTextSourceReader.CreateUtf8FileReader(payload.PayloadFilePath),
+            JsonAssetEditDraftTextBaseReaderFactory.FromUtf8File(
+                payload.PayloadFilePath!,
+                payload.Descriptor,
+                payload.PayloadLength),
             manifest);
     }
 

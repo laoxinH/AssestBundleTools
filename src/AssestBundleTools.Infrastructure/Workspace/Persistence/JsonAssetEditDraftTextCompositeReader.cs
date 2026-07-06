@@ -5,12 +5,19 @@ namespace AssestBundleTools.Infrastructure.Workspace.Persistence;
 
 internal sealed class JsonAssetEditDraftTextCompositeReader
 {
-    private readonly Func<TextReader?> _baseReaderFactory;
+    private readonly JsonAssetEditDraftTextBaseReaderFactory _baseReaderFactory;
     private readonly JsonAssetEditDraftTextPatchManifestDto _manifest;
     private readonly IReadOnlyList<JsonAssetEditDraftTextPiece> _pieces;
 
     public JsonAssetEditDraftTextCompositeReader(
         Func<TextReader?> baseReaderFactory,
+        JsonAssetEditDraftTextPatchManifestDto manifest)
+        : this(JsonAssetEditDraftTextBaseReaderFactory.FromTextReaderFactory(baseReaderFactory), manifest)
+    {
+    }
+
+    public JsonAssetEditDraftTextCompositeReader(
+        JsonAssetEditDraftTextBaseReaderFactory baseReaderFactory,
         JsonAssetEditDraftTextPatchManifestDto manifest)
     {
         _baseReaderFactory = baseReaderFactory ?? throw new ArgumentNullException(nameof(baseReaderFactory));
@@ -28,20 +35,20 @@ internal sealed class JsonAssetEditDraftTextCompositeReader
             return null;
         }
 
-        using var reader = CreateReader();
+        var cursor = JsonAssetEditDraftTextPieceTable.ResolveCursor(_pieces, offset);
+        using var reader = CreateReader(cursor);
         if (reader is null)
         {
             return null;
         }
 
-        var skipped = JsonAssetEditDraftTextReadSupport.SkipCharacters(reader, offset);
         var text = JsonAssetEditDraftTextReadSupport.ReadCharacters(reader, length, out var readLength);
         return new PreviewCacheTextChunkDto(
             descriptor,
             text,
-            skipped,
+            cursor.CompositeOffset,
             readLength,
-            Math.Max(_manifest.TextLength, skipped + readLength),
+            Math.Max(_manifest.TextLength, cursor.CompositeOffset + readLength),
             _manifest.ContentLength);
     }
 
@@ -148,12 +155,24 @@ internal sealed class JsonAssetEditDraftTextCompositeReader
 
     public TextReader? CreateReader() => CreateReader(_pieces);
 
-    private TextReader? CreateReader(IReadOnlyList<JsonAssetEditDraftTextPiece> pieces)
+    private TextReader? CreateReader(JsonAssetEditDraftTextPieceCursor cursor)
     {
-        var baseReader = _baseReaderFactory();
+        var baseReader = _baseReaderFactory.CreateReader(cursor.BasePosition);
         return baseReader is null
             ? null
-            : new JsonAssetEditDraftTextPieceReader(baseReader, pieces);
+            : new JsonAssetEditDraftTextPieceReader(
+                baseReader.Value.Reader,
+                _pieces,
+                cursor,
+                baseReader.Value.CharacterOffset);
+    }
+
+    private TextReader? CreateReader(IReadOnlyList<JsonAssetEditDraftTextPiece> pieces)
+    {
+        var baseReader = _baseReaderFactory.CreateReader(characterOffset: 0);
+        return baseReader is null
+            ? null
+            : new JsonAssetEditDraftTextPieceReader(baseReader.Value.Reader, pieces);
     }
 }
 
@@ -162,3 +181,76 @@ internal sealed record TextAssetEditDraftPatchStatisticsDto(
     int LineCount,
     long ContentLength,
     string ContentSha256);
+
+internal sealed class JsonAssetEditDraftTextBaseReaderFactory
+{
+    private readonly Func<int, JsonAssetEditDraftTextBaseReader?> _readerFactory;
+
+    private JsonAssetEditDraftTextBaseReaderFactory(Func<int, JsonAssetEditDraftTextBaseReader?> readerFactory)
+    {
+        _readerFactory = readerFactory;
+    }
+
+    public static JsonAssetEditDraftTextBaseReaderFactory FromTextReaderFactory(Func<TextReader?> readerFactory)
+    {
+        ArgumentNullException.ThrowIfNull(readerFactory);
+        return new JsonAssetEditDraftTextBaseReaderFactory(_ =>
+        {
+            var reader = readerFactory();
+            return reader is null
+                ? null
+                : new JsonAssetEditDraftTextBaseReader(reader, CharacterOffset: 0);
+        });
+    }
+
+    public static JsonAssetEditDraftTextBaseReaderFactory FromUtf8File(
+        string filePath,
+        PreviewCacheDescriptorDto descriptor,
+        long payloadLength)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+        ArgumentNullException.ThrowIfNull(descriptor);
+        return new JsonAssetEditDraftTextBaseReaderFactory(characterOffset =>
+            CreateUtf8FileReader(filePath, descriptor, payloadLength, characterOffset));
+    }
+
+    public JsonAssetEditDraftTextBaseReader? CreateReader(int characterOffset) =>
+        _readerFactory(Math.Max(0, characterOffset));
+
+    private static JsonAssetEditDraftTextBaseReader? CreateUtf8FileReader(
+        string filePath,
+        PreviewCacheDescriptorDto descriptor,
+        long payloadLength,
+        int characterOffset)
+    {
+        try
+        {
+            var index = JsonPreviewCacheTextLineIndex.LoadOrCreate(
+                descriptor,
+                filePath,
+                payloadLength);
+            var anchor = JsonPreviewCacheTextLineIndex.ResolveCharacterAnchor(index, characterOffset);
+            var stream = JsonWorkspaceFileStorageHelper.OpenSharedReadStream(filePath);
+            if (anchor.ByteOffset > 0)
+            {
+                stream.Seek(anchor.ByteOffset, SeekOrigin.Begin);
+            }
+
+            return new JsonAssetEditDraftTextBaseReader(
+                JsonAssetEditDraftTextSourceReader.CreateUtf8Reader(stream),
+                anchor.CharacterOffset);
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+}
+
+internal readonly record struct JsonAssetEditDraftTextBaseReader(
+    TextReader Reader,
+    int CharacterOffset);

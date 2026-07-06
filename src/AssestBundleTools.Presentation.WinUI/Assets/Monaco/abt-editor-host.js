@@ -2,7 +2,6 @@
   'use strict';
 
   const vscode = window.chrome && window.chrome.webview;
-  const hostVersion = '20260707-streaming-diff-diagnostics';
   let editor = null;
   let suppressChange = false;
   let currentLanguage = 'plaintext';
@@ -318,30 +317,21 @@
     return model ? model.getVersionId() : 0;
   }
 
-  function getPendingRangeEditResult() {
+  function getPendingRangeEdits() {
     if (!editor || currentReadOnly) {
-      return {
-        edits: [],
-        diagnostics: createRangeEditDiagnostics([], '')
-      };
+      return [];
     }
 
     const currentText = getEditorText();
-    let edits;
     if (baselineInfo && baselineText.length !== baselineInfo.contentLength) {
-      edits = [{
+      return [{
         start: 0,
         length: baselineInfo.contentLength,
         text: currentText
       }];
-    } else {
-      edits = createRangeEditFromTexts(baselineText, currentText);
     }
 
-    return {
-      edits,
-      diagnostics: createRangeEditDiagnostics(edits, currentText)
-    };
+    return createRangeEditFromTexts(baselineText, currentText);
   }
 
   function createRangeEditFromTexts(savedText, currentText) {
@@ -374,47 +364,6 @@
       length: baselineEnd - prefixLength,
       text: currentText.slice(prefixLength, currentEnd)
     }];
-  }
-
-  function createRangeEditDiagnostics(edits, currentText) {
-    return {
-      hostVersion,
-      modelVersionId: getModelVersionId(),
-      currentReadOnly,
-      isStreamingDocument,
-      usesStreamingBaseline: !!baselineInfo,
-      baselineLength: baselineText.length,
-      baselineInfoLength: baselineInfo ? baselineInfo.contentLength : null,
-      currentLength: currentText.length,
-      streamingTextLength,
-      editCount: edits.length,
-      edits: edits.map(summarizeRangeEdit)
-    };
-  }
-
-  function summarizeRangeEdit(edit) {
-    return {
-      start: edit.start,
-      length: edit.length,
-      textLength: edit.text.length,
-      textHead: previewText(edit.text, 48),
-      textTail: previewTail(edit.text, 48)
-    };
-  }
-
-  function previewText(text, maxLength) {
-    return String(text || '')
-      .slice(0, maxLength)
-      .replace(/\n/g, '\\n')
-      .replace(/\t/g, '\\t');
-  }
-
-  function previewTail(text, maxLength) {
-    const value = String(text || '');
-    return value
-      .slice(Math.max(0, value.length - maxLength))
-      .replace(/\n/g, '\\n')
-      .replace(/\t/g, '\\t');
   }
 
   function markSaved() {
@@ -508,18 +457,15 @@
             markSaved();
           }
           break;
-        case 'getPendingRangeEdits': {
-          const rangeEditResult = getPendingRangeEditResult();
+        case 'getPendingRangeEdits':
           post({
             type: 'documentRangeEdits',
             requestId: message.requestId,
             baseLength: baselineInfo ? baselineInfo.contentLength : baselineText.length,
             versionId: getModelVersionId(),
-            diagnostics: rangeEditResult.diagnostics,
-            edits: rangeEditResult.edits
+            edits: getPendingRangeEdits()
           });
           break;
-        }
         case 'getDocumentText':
           post({
             type: 'documentText',

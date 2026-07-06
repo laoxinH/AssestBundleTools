@@ -31,6 +31,76 @@ internal static class JsonAssetEditDraftTextPieceTable
         return pieces;
     }
 
+    public static JsonAssetEditDraftTextPieceCursor ResolveCursor(
+        IReadOnlyList<JsonAssetEditDraftTextPiece> pieces,
+        int targetOffset)
+    {
+        if (targetOffset <= 0)
+        {
+            return new JsonAssetEditDraftTextPieceCursor(0, 0, 0, 0);
+        }
+
+        var compositeOffset = 0;
+        for (var index = 0; index < pieces.Count; index++)
+        {
+            var piece = pieces[index];
+            var nextCompositeOffset = compositeOffset + piece.Length;
+            if (targetOffset < nextCompositeOffset)
+            {
+                return new JsonAssetEditDraftTextPieceCursor(
+                    index,
+                    targetOffset - compositeOffset,
+                    ResolveBasePosition(pieces, index, targetOffset - compositeOffset),
+                    targetOffset);
+            }
+
+            compositeOffset = nextCompositeOffset;
+        }
+
+        return new JsonAssetEditDraftTextPieceCursor(
+            pieces.Count,
+            0,
+            ResolveLastBaseEnd(pieces),
+            compositeOffset);
+    }
+
+    private static int ResolveBasePosition(
+        IReadOnlyList<JsonAssetEditDraftTextPiece> pieces,
+        int pieceIndex,
+        int pieceOffset)
+    {
+        var piece = pieces[pieceIndex];
+        if (piece.InsertedText is null)
+        {
+            return piece.BaseStart + pieceOffset;
+        }
+
+        for (var index = pieceIndex + 1; index < pieces.Count; index++)
+        {
+            var nextPiece = pieces[index];
+            if (nextPiece.InsertedText is null)
+            {
+                return nextPiece.BaseStart;
+            }
+        }
+
+        return ResolveLastBaseEnd(pieces);
+    }
+
+    private static int ResolveLastBaseEnd(IReadOnlyList<JsonAssetEditDraftTextPiece> pieces)
+    {
+        for (var index = pieces.Count - 1; index >= 0; index--)
+        {
+            var piece = pieces[index];
+            if (piece.InsertedText is null)
+            {
+                return piece.BaseStart + piece.Length;
+            }
+        }
+
+        return 0;
+    }
+
     public static IReadOnlyList<JsonAssetEditDraftTextPiece>? TryApplyRangeEdits(
         IReadOnlyList<JsonAssetEditDraftTextPiece> pieces,
         IReadOnlyList<TextAssetEditDraftRangeEditDto> rangeEdits,
@@ -129,3 +199,9 @@ internal sealed record JsonAssetEditDraftTextPiece(
             ? Base(BaseStart + start, length)
             : Insert(InsertedText.Substring(start, length));
 }
+
+internal readonly record struct JsonAssetEditDraftTextPieceCursor(
+    int PieceIndex,
+    int PieceOffset,
+    int BasePosition,
+    int CompositeOffset);

@@ -171,7 +171,7 @@ internal sealed class JsonAssetEditDraftTextSourceReader
                 : null);
     }
 
-    private static StreamReader CreateUtf8Reader(Stream stream) =>
+    internal static StreamReader CreateUtf8Reader(Stream stream) =>
         new(
             stream,
             Encoding.UTF8,

@@ -19,7 +19,7 @@ internal static class JsonPreviewCacheTextPayloadReader
     {
         try
         {
-            var anchor = ResolveCharacterAnchor(lineIndex, offset);
+            var anchor = JsonPreviewCacheTextLineIndex.ResolveCharacterAnchor(lineIndex, offset);
             using var stream = JsonWorkspaceFileStorageHelper.OpenSharedReadStream(payloadFilePath);
             if (anchor.ByteOffset > 0)
             {
@@ -197,31 +197,6 @@ internal static class JsonPreviewCacheTextPayloadReader
         return lineIndex?.TotalCharacterCount is >= 0
             ? lineIndex.TotalCharacterCount
             : null;
-    }
-
-    private static JsonPreviewCacheTextCharacterAnchorDto ResolveCharacterAnchor(
-        JsonPreviewCacheTextLineIndexDto? lineIndex,
-        int targetCharacterOffset)
-    {
-        if (lineIndex?.CharacterAnchors is not { Count: > 0 })
-        {
-            return new JsonPreviewCacheTextCharacterAnchorDto(0, 0);
-        }
-
-        JsonPreviewCacheTextCharacterAnchorDto anchor = new(0, 0);
-        foreach (var candidate in lineIndex.CharacterAnchors)
-        {
-            if (candidate.CharacterOffset < 0 ||
-                candidate.ByteOffset < 0 ||
-                candidate.CharacterOffset > targetCharacterOffset)
-            {
-                break;
-            }
-
-            anchor = candidate;
-        }
-
-        return anchor;
     }
 
     private static JsonPreviewCacheTextLineIndexAnchorDto ResolveAnchor(

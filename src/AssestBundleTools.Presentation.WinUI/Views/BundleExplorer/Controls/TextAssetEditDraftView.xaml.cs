@@ -2,7 +2,6 @@ using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using AssestBundleTools.Application.Editing.Dtos;
-using AssestBundleTools.Presentation.WinUI.Diagnostics;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
@@ -193,35 +192,11 @@ public sealed partial class TextAssetEditDraftView : UserControl
         }
 
         var rangeEditSync = await TextEditorSurface.GetPendingRangeEditsAsync();
-        if (rangeEditSync is null)
+        if (rangeEditSync is { Edits.Count: > 0 } &&
+            ViewModel.CanUseEditorRangeEditBase(rangeEditSync.BaseLength))
         {
-            TextEditRangePatchDiagnostics.Write(
-                $"save sync returned null streaming={ViewModel.UsesStreamingDocumentModel} unsaved={ViewModel.HasUnsavedChanges}");
-        }
-        else
-        {
-            var currentBaseline = ViewModel.CreateCurrentPatchBaseline();
-            var canUseRangeEditBase = ViewModel.CanUseEditorRangeEditBase(rangeEditSync.BaseLength);
-            TextEditRangePatchDiagnostics.Write(
-                "save sync received " +
-                $"streaming={ViewModel.UsesStreamingDocumentModel} unsaved={ViewModel.HasUnsavedChanges} " +
-                $"surfaceBaseLength={rangeEditSync.BaseLength} versionId={rangeEditSync.VersionId} " +
-                $"viewModelBaselineLength={currentBaseline.ContentLength} viewModelBaselineHash={TextEditRangePatchDiagnostics.FormatHash(currentBaseline.ContentSha256)} " +
-                $"canUseBase={canUseRangeEditBase} edits={TextEditRangePatchDiagnostics.FormatRangeEdits(rangeEditSync.Edits)} " +
-                $"host={rangeEditSync.DiagnosticsJson}");
-
-            if (rangeEditSync.Edits.Count > 0 && canUseRangeEditBase)
-            {
-                ViewModel.SetEditorRangeEditsFromSurface(rangeEditSync.Edits, currentBaseline);
-                TextEditRangePatchDiagnostics.Write("save sync accepted surface range edits");
-                return true;
-            }
-        }
-
-        if (rangeEditSync is { Edits.Count: > 0 })
-        {
-            TextEditRangePatchDiagnostics.Write(
-                $"save sync rejected surface range edits streaming={ViewModel.UsesStreamingDocumentModel}");
+            ViewModel.SetEditorRangeEditsFromSurface(rangeEditSync.Edits, ViewModel.CreateCurrentPatchBaseline());
+            return true;
         }
 
         if (ViewModel.UsesStreamingDocumentModel)

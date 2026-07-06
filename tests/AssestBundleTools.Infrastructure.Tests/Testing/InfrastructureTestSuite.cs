@@ -82,6 +82,10 @@ internal static class InfrastructureTestSuite
             JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldApplySubsequentPatchLogEntries);
         await RunTestAsync(
             failures,
+            nameof(JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldReadOffsetChunk_FromPatchBackedDraft),
+            JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldReadOffsetChunk_FromPatchBackedDraft);
+        await RunTestAsync(
+            failures,
             nameof(JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldBranchFromRequestedRevision_WhenHeadIsNewer),
             JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldBranchFromRequestedRevision_WhenHeadIsNewer);
         await RunTestAsync(

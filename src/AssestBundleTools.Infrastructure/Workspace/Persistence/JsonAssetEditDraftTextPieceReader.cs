@@ -12,9 +12,25 @@ internal sealed class JsonAssetEditDraftTextPieceReader : TextReader
     public JsonAssetEditDraftTextPieceReader(
         TextReader baseReader,
         IReadOnlyList<JsonAssetEditDraftTextPiece> pieces)
+        : this(
+            baseReader,
+            pieces,
+            new JsonAssetEditDraftTextPieceCursor(0, 0, 0, 0),
+            baseCharacterOffset: 0)
+    {
+    }
+
+    public JsonAssetEditDraftTextPieceReader(
+        TextReader baseReader,
+        IReadOnlyList<JsonAssetEditDraftTextPiece> pieces,
+        JsonAssetEditDraftTextPieceCursor cursor,
+        int baseCharacterOffset)
     {
         _baseReader = baseReader;
         _pieces = pieces;
+        _pieceIndex = cursor.PieceIndex;
+        _pieceOffset = cursor.PieceOffset;
+        _basePosition = baseCharacterOffset;
     }
 
     public override int Peek()
@@ -61,9 +77,10 @@ internal sealed class JsonAssetEditDraftTextPieceReader : TextReader
                 return piece.InsertedText[_pieceOffset++];
             }
 
-            if (_basePosition < piece.BaseStart)
+            var targetBaseStart = piece.BaseStart + _pieceOffset;
+            if (_basePosition < targetBaseStart)
             {
-                SkipBase(piece.BaseStart - _basePosition);
+                SkipBase(targetBaseStart - _basePosition);
             }
 
             if (!JsonAssetEditDraftTextReadSupport.TryReadNormalizedCharacter(_baseReader, out var character))
