@@ -24,6 +24,7 @@ internal sealed class ReplacementEffectivePreviewResolver
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
     private readonly IReplacementPreviewSourceProvider? _replacementPreviewSourceProvider;
     private readonly WorkspaceTextEditEffectiveReferenceResolver _textEditEffectiveReferenceResolver;
+    private readonly WorkspaceTextAssetContentStateMaterializer _textAssetContentStateMaterializer = new();
 
     public ReplacementEffectivePreviewResolver(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
@@ -75,6 +76,27 @@ internal sealed class ReplacementEffectivePreviewResolver
 
         try
         {
+            if (assetType == AssetType.TextAsset &&
+                TryResolveTextAssetEffectiveContent(
+                    query.WorkspaceKey,
+                    query.WorkspaceDataRootPath,
+                    query.BundleId.Value,
+                    query.AssetId.Value,
+                    out var textAssetContent,
+                    out var hasTargetContentOperationFacts) &&
+                hasTargetContentOperationFacts)
+            {
+                return textAssetContent is null
+                    ? null
+                    : await TryLoadTextAssetEffectiveContentPreviewAsync(
+                        query,
+                        details,
+                        textAssetContent,
+                        replacementPreviewStack,
+                        loadPreviewAsync,
+                        cancellationToken);
+            }
+
             if (!string.IsNullOrWhiteSpace(details.FileReplacementSourcePath))
             {
                 return await TryLoadFileReplacementPreviewAsync(
@@ -119,6 +141,93 @@ internal sealed class ReplacementEffectivePreviewResolver
         }
 
         return null;
+    }
+
+    private bool TryResolveTextAssetEffectiveContent(
+        string? workspaceKey,
+        string? workspaceDataRootPath,
+        string bundleId,
+        string assetId,
+        out WorkspaceEffectiveTextAssetContentDto? content,
+        out bool hasTargetContentOperationFacts)
+    {
+        content = null;
+        hasTargetContentOperationFacts = false;
+        if (string.IsNullOrWhiteSpace(workspaceKey) ||
+            string.IsNullOrWhiteSpace(workspaceDataRootPath))
+        {
+            return false;
+        }
+
+        var normalizedWorkspaceKey = workspaceKey.Trim();
+        WorkspaceChangeSetDto? changeSet;
+        try
+        {
+            var store = _workspaceDataStoreFactory.CreateWorkspaceChangeStore(workspaceDataRootPath.Trim());
+            changeSet = store.Load(normalizedWorkspaceKey);
+        }
+        catch (NotSupportedException)
+        {
+            return false;
+        }
+
+        if (changeSet is null ||
+            !string.Equals(changeSet.WorkspaceKey?.Trim(), normalizedWorkspaceKey, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        hasTargetContentOperationFacts = _textAssetContentStateMaterializer.ContainsTextAssetContentOperation(
+            changeSet,
+            bundleId,
+            assetId);
+        content = _textAssetContentStateMaterializer.FindEffectiveContent(
+            changeSet,
+            bundleId,
+            assetId);
+        return true;
+    }
+
+    private async Task<Result<AssetPreviewDto>?> TryLoadTextAssetEffectiveContentPreviewAsync(
+        GetAssetPreviewQuery query,
+        AssetDetailsDto details,
+        WorkspaceEffectiveTextAssetContentDto content,
+        HashSet<string> replacementPreviewStack,
+        Func<GetAssetPreviewQuery, HashSet<string>, CancellationToken, Task<Result<AssetPreviewDto>>> loadPreviewAsync,
+        CancellationToken cancellationToken)
+    {
+        return content.Kind switch
+        {
+            WorkspaceTextAssetContentKind.FileReplacement => string.IsNullOrWhiteSpace(content.ReplacementSource?.SourceFilePath)
+                ? null
+                : await TryLoadFileReplacementPreviewAsync(
+                    query,
+                    details,
+                    content.ReplacementSource.SourceFilePath,
+                    cancellationToken),
+            WorkspaceTextAssetContentKind.WorkspaceReplacement => TryParseWorkspaceReplacementSource(
+                    content.ReplacementSource,
+                    out var sourceBundleId,
+                    out var sourceAssetId)
+                ? await TryLoadWorkspaceReplacementPreviewAsync(
+                    query,
+                    sourceBundleId,
+                    sourceAssetId,
+                    replacementPreviewStack,
+                    loadPreviewAsync,
+                    cancellationToken)
+                : null,
+            WorkspaceTextAssetContentKind.TextEdit => string.IsNullOrWhiteSpace(content.DraftId)
+                ? null
+                : TryLoadTextEditDraftPreview(
+                    query,
+                    details,
+                    content.DraftId,
+                    content.DraftMode,
+                    content.DraftRevision,
+                    content.AppliedAtUtc),
+            _ => null
+        };
     }
 
     private async Task<Result<AssetPreviewDto>?> TryLoadFileReplacementPreviewAsync(
@@ -407,6 +516,22 @@ internal sealed class ReplacementEffectivePreviewResolver
         return Enum.TryParse<AssetType>(assetType, ignoreCase: true, out var parsedAssetType)
             ? parsedAssetType
             : AssetType.Unknown;
+    }
+
+    private static bool TryParseWorkspaceReplacementSource(
+        WorkspaceOperationSourceDto? source,
+        out BundleId bundleId,
+        out AssetId assetId)
+    {
+        if (BundleId.TryParse(source?.SourceBundleId, out bundleId) &&
+            AssetId.TryParse(source?.SourceAssetId, out assetId))
+        {
+            return true;
+        }
+
+        bundleId = default;
+        assetId = default;
+        return false;
     }
 
     private static string CreateTargetKey(string bundleId, string assetId) =>

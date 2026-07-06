@@ -151,7 +151,8 @@ public sealed partial class CachedWorkspaceSessionRegistry
                     sourceFilePath,
                     sourceFileName,
                     ParseAssetType(operation.Source.SourceAssetType ?? targetAssetState.AssetType.ToString()),
-                    operation.AppliedAtUtc ?? operation.CompletedAtUtc ?? operation.CreatedAtUtc)));
+                    operation.AppliedAtUtc ?? operation.CompletedAtUtc ?? operation.CreatedAtUtc),
+                TextEdit: null));
     }
 
     private static void ApplyPersistedWorkspaceReplacement(
@@ -184,7 +185,8 @@ public sealed partial class CachedWorkspaceSessionRegistry
                     sourceAssetState.Name,
                     sourceAssetState.AssetType,
                     operation.AppliedAtUtc ?? operation.CompletedAtUtc ?? operation.CreatedAtUtc),
-                FileReplacement: null));
+                FileReplacement: null,
+                TextEdit: null));
     }
 
     private static void ApplyPersistedUndoReplacementOperation(

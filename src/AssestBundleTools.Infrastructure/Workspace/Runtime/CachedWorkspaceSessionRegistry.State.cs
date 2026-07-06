@@ -285,7 +285,8 @@ public sealed partial class CachedWorkspaceSessionRegistry
 
     private sealed record AppliedReplacementSnapshot(
         AppliedWorkspaceReplacementState? WorkspaceReplacement,
-        AppliedFileReplacementState? FileReplacement);
+        AppliedFileReplacementState? FileReplacement,
+        AppliedTextEditState? TextEdit);
 
     private static void ApplyReplacementSnapshot(
         CachedAssetState assetState,
@@ -294,6 +295,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
         assetState.ReplacementUndoStack.Add(CaptureReplacementSnapshot(assetState));
         assetState.ReplacementRedoStack.Clear();
         RestoreReplacementSnapshot(assetState, replacementSnapshot);
+        ClearTextEditState(assetState);
     }
 
     private static void UndoReplacementSnapshot(CachedAssetState assetState)
@@ -323,14 +325,16 @@ public sealed partial class CachedWorkspaceSessionRegistry
     private static AppliedReplacementSnapshot? CaptureReplacementSnapshot(CachedAssetState assetState)
     {
         if (assetState.AppliedWorkspaceReplacement is null &&
-            assetState.AppliedFileReplacement is null)
+            assetState.AppliedFileReplacement is null &&
+            assetState.AppliedTextEdit is null)
         {
             return null;
         }
 
         return new AppliedReplacementSnapshot(
             assetState.AppliedWorkspaceReplacement,
-            assetState.AppliedFileReplacement);
+            assetState.AppliedFileReplacement,
+            assetState.AppliedTextEdit);
     }
 
     private static void RestoreReplacementSnapshot(
@@ -339,6 +343,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
     {
         assetState.AppliedWorkspaceReplacement = replacementSnapshot?.WorkspaceReplacement;
         assetState.AppliedFileReplacement = replacementSnapshot?.FileReplacement;
+        assetState.AppliedTextEdit = replacementSnapshot?.TextEdit;
         RefreshModifiedState(assetState);
     }
 
@@ -361,6 +366,10 @@ public sealed partial class CachedWorkspaceSessionRegistry
         AppliedTextEditState textEdit)
     {
         assetState.AppliedTextEdit = textEdit;
+        assetState.AppliedWorkspaceReplacement = null;
+        assetState.AppliedFileReplacement = null;
+        assetState.ReplacementUndoStack.Clear();
+        assetState.ReplacementRedoStack.Clear();
         RefreshModifiedState(assetState);
     }
 

@@ -81,7 +81,8 @@ public sealed partial class InMemoryWorkspaceSessionRegistry
                         normalizedSourcePath,
                         sourceFileName,
                         sourceAssetType,
-                        appliedAtUtc)));
+                        appliedAtUtc),
+                    TextEdit: null));
 
             replacementResult = new AssetFileReplacementResultDto(
                 WorkspaceId: workspaceState.Summary.WorkspaceId,
@@ -131,7 +132,8 @@ public sealed partial class InMemoryWorkspaceSessionRegistry
                         sourceAssetState.Name,
                         sourceAssetState.AssetType,
                         replacedAtUtc),
-                    FileReplacement: null));
+                    FileReplacement: null,
+                    TextEdit: null));
 
             replacementResult = new AssetReplacementResultDto(
                 WorkspaceId: workspaceState.Summary.WorkspaceId,

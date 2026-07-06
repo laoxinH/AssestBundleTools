@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Replacement.Services;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
@@ -24,6 +25,7 @@ internal sealed class WorkspaceBundleAssetWritePlanBuilder
     private readonly WorkspaceReplacementStateMaterializer _replacementStateMaterializer = new();
     private readonly WorkspaceSpriteEditStateMaterializer _spriteEditStateMaterializer = new();
     private readonly WorkspaceTextEditStateMaterializer _textEditStateMaterializer = new();
+    private readonly WorkspaceTextAssetContentStateMaterializer _textAssetContentStateMaterializer = new();
 
     public WorkspaceBundleAssetWritePlanBuilder(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
@@ -81,9 +83,23 @@ internal sealed class WorkspaceBundleAssetWritePlanBuilder
         string? workspaceDataRootPath)
     {
         var items = new List<WorkspaceBundleAssetWriteItemDto>();
+        var textAssetContentKeys = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var content in _textAssetContentStateMaterializer.Materialize(changeSet).EffectiveContents)
+        {
+            if (!TargetBelongsToBundle(content.Target, selectedPlan.BundleId) ||
+                !TryCreateTextAssetContentItem(content, workspaceKey, workspaceDataRootPath, out var item))
+            {
+                continue;
+            }
+
+            items.Add(item);
+            textAssetContentKeys.Add(CreateTargetKey(content.Target));
+        }
+
         foreach (var replacement in _replacementStateMaterializer.Materialize(changeSet).EffectiveReplacements)
         {
             if (!TargetBelongsToBundle(replacement.Target, selectedPlan.BundleId) ||
+                textAssetContentKeys.Contains(CreateTargetKey(replacement.Target)) ||
                 !TryCreateReplacementItem(replacement, out var item))
             {
                 continue;
@@ -106,6 +122,7 @@ internal sealed class WorkspaceBundleAssetWritePlanBuilder
         foreach (var edit in _textEditStateMaterializer.Materialize(changeSet).EffectiveEdits)
         {
             if (!TargetBelongsToBundle(edit.Target, selectedPlan.BundleId) ||
+                textAssetContentKeys.Contains(CreateTargetKey(edit.Target)) ||
                 !TryCreateTextEditItem(edit, workspaceKey, workspaceDataRootPath, out var item))
             {
                 continue;
@@ -115,6 +132,47 @@ internal sealed class WorkspaceBundleAssetWritePlanBuilder
         }
 
         return NormalizeItems(items);
+    }
+
+    private bool TryCreateTextAssetContentItem(
+        WorkspaceEffectiveTextAssetContentDto content,
+        string? workspaceKey,
+        string? workspaceDataRootPath,
+        out WorkspaceBundleAssetWriteItemDto item)
+    {
+        item = default!;
+        if (!TryCreateTargetIdentity(content.Target, out var targetIdentity) ||
+            targetIdentity.AssetType != AssetType.TextAsset)
+        {
+            return false;
+        }
+
+        return content.Kind switch
+        {
+            WorkspaceTextAssetContentKind.FileReplacement or WorkspaceTextAssetContentKind.WorkspaceReplacement =>
+                content.ReplacementSource is not null &&
+                TryCreateReplacementItem(
+                    new AssestBundleTools.Application.Replacement.Dtos.WorkspaceEffectiveReplacementDto(
+                        content.OperationId,
+                        content.Sequence,
+                        content.Target,
+                        content.ReplacementSource,
+                        content.AppliedAtUtc),
+                    out item),
+            WorkspaceTextAssetContentKind.TextEdit => TryCreateTextEditItem(
+                new WorkspaceEffectiveTextEditDto(
+                    content.OperationId,
+                    content.Sequence,
+                    content.Target,
+                    content.DraftId ?? string.Empty,
+                    content.DraftMode ?? WorkspaceTextEditOperationRecorder.TextDraftMode,
+                    content.AppliedAtUtc,
+                    content.DraftRevision),
+                workspaceKey,
+                workspaceDataRootPath,
+                out item),
+            _ => false
+        };
     }
 
     private IReadOnlyList<WorkspaceBundleAssetWriteItemDto> BuildFromChangeItems(
@@ -344,6 +402,9 @@ internal sealed class WorkspaceBundleAssetWritePlanBuilder
         WorkspaceOperationTargetDto target,
         BundleId bundleId) =>
         string.Equals(target.BundleId, bundleId.Value, StringComparison.Ordinal);
+
+    private static string CreateTargetKey(WorkspaceOperationTargetDto target) =>
+        string.Concat(target.BundleId, "\n", target.AssetId);
 
     private static bool TryCreateTargetIdentity(
         WorkspaceOperationTargetDto? target,

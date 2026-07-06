@@ -283,6 +283,92 @@ internal static class CachedWorkspaceSessionRegistryOperationRestoreTests
         TestAssert.True(changeRecord.IsEffectiveEdit, "Restored Sprite edit should be marked effective.");
     }
 
+    public static void OpenWorkspace_ShouldMarkOnlyLatestTextAssetContentOperationEffective()
+    {
+        var workspaceKey = "workspace-a";
+        var bundleId = "bundle.text";
+        var assetId = "asset.atlas";
+        var now = new DateTimeOffset(2026, 7, 6, 13, 0, 0, TimeSpan.Zero);
+        var cacheEntry = new BundleIndexCacheEntryDto(
+            WorkspaceKey: workspaceKey,
+            BundleCacheKey: "bundle-cache-text",
+            BundleId: bundleId,
+            DisplayName: "text.ab",
+            LogicalPath: "text.ab",
+            SourceFingerprint: new WorkspaceFileFingerprintDto("text.ab", 100, DateTimeOffset.UnixEpoch, "hash"),
+            CachedAtUtc: DateTimeOffset.UnixEpoch,
+            ParserVersion: "test",
+            ToolVersion: "test",
+            Dependencies: Array.Empty<string>(),
+            Assets:
+            [
+                CreateAsset(assetId, "Hero.atlas", AssetType.TextAsset, "TextAsset", pathId: 10)
+            ],
+            SerializedFileNames: ["CAB-text"]);
+        var target = new WorkspaceOperationTargetDto(
+            BundleId: bundleId,
+            AssetId: assetId,
+            AssetName: "Hero.atlas",
+            AssetType: AssetType.TextAsset.ToString(),
+            AssetTypeDisplayName: AssetType.TextAsset.ToString());
+        var changeSet = new WorkspaceChangeSetDto(
+            WorkspaceKey: workspaceKey,
+            UpdatedAtUtc: now,
+            Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+            EditDrafts: Array.Empty<WorkspaceAssetEditDraftDescriptorDto>(),
+            SchemaVersion: WorkspaceChangeSetDto.CurrentSchemaVersion,
+            OperationSequence: 3,
+            Operations:
+            [
+                CreateTextEditOperation(workspaceKey, target, "edit-1", "draft-atlas", revision: 1, sequence: 1, now),
+                new WorkspaceOperationRecordDto(
+                    OperationId: "replace-atlas",
+                    Sequence: 2,
+                    OperationKind: WorkspaceOperationKind.ReplaceFromFile,
+                    Status: WorkspaceOperationStatus.Applied,
+                    WorkspaceKey: workspaceKey,
+                    Target: target,
+                    Source: new WorkspaceOperationSourceDto(
+                        SourceKind: "file",
+                        SourceFilePath: @"C:\Imports\hero.atlas",
+                        SourceFileName: "hero.atlas",
+                        SourceAssetType: AssetType.TextAsset.ToString()),
+                    PreviousState: null,
+                    Result: null,
+                    CreatedAtUtc: now.AddSeconds(1),
+                    AppliedAtUtc: now.AddSeconds(1)),
+                CreateTextEditOperation(workspaceKey, target, "edit-2", "draft-atlas", revision: 2, sequence: 3, now.AddSeconds(2))
+            ]);
+        var registry = new CachedWorkspaceSessionRegistry(
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([cacheEntry]),
+                new TestWorkspaceChangeStore(changeSet)),
+            new WorkspaceOperationLogService());
+
+        var summary = registry.OpenWorkspace(new WorkspaceSessionOpenRequestDto(
+            WorkspaceKey: workspaceKey,
+            WorkspacePath: "workspace",
+            WorkspaceDataRootPath: "data",
+            WorkspaceDisplayName: "Workspace A",
+            InitialMode: WorkspaceMode.SinglePane));
+        var hasDetails = registry.TryGetAssetDetails(
+            summary.WorkspaceId,
+            new BundleId(bundleId),
+            new AssetId(assetId),
+            out var details);
+
+        TestAssert.True(hasDetails, "TextAsset details should be available.");
+        TestAssert.Equal(null, details!.FileReplacementSourcePath, "A later text edit should clear the current file replacement projection.");
+        TestAssert.Equal("draft-atlas", details.TextEditDraftId, "The later text edit draft should be the current edit projection.");
+        TestAssert.Equal(2, details.TextEditDraftRevision, "The later text edit revision should be current.");
+        var records = details.ChangeRecords ?? Array.Empty<AssetChangeRecordDto>();
+        var replacementRecord = TestAssert.Single(records.Where(static record => record.Kind == AssetChangeRecordKind.FileReplacement));
+        var editRecords = records.Where(static record => record.Kind == AssetChangeRecordKind.TextEdit).ToArray();
+        TestAssert.False(replacementRecord.IsEffectiveReplacement, "The older file replacement should remain history, not current content.");
+        TestAssert.Equal(1, editRecords.Count(static record => record.IsEffectiveEdit), "Only one text edit record should be marked effective.");
+        TestAssert.Equal("edit-2", editRecords.Single(static record => record.IsEffectiveEdit).OperationId, "The latest text edit should be effective.");
+    }
+
     public static void TryGetAssetDetails_ShouldProjectDependencyReplacement_AsAssociatedChangeRecord()
     {
         var workspaceKey = "workspace-a";
@@ -461,6 +547,33 @@ internal static class CachedWorkspaceSessionRegistryOperationRestoreTests
             AssetTypeDisplayName: displayType,
             Dependencies: dependencies ?? Array.Empty<BundleIndexAssetDependencyCacheEntryDto>(),
             IncludeInAssetList: true);
+
+    private static WorkspaceOperationRecordDto CreateTextEditOperation(
+        string workspaceKey,
+        WorkspaceOperationTargetDto target,
+        string operationId,
+        string draftId,
+        int revision,
+        long sequence,
+        DateTimeOffset timestamp) =>
+        new(
+            OperationId: operationId,
+            Sequence: sequence,
+            OperationKind: WorkspaceOperationKind.EditDraftApplied,
+            Status: WorkspaceOperationStatus.Applied,
+            WorkspaceKey: workspaceKey,
+            Target: target,
+            Source: new WorkspaceOperationSourceDto(
+                SourceKind: "draft",
+                DraftId: draftId,
+                DraftMode: "text-content"),
+            PreviousState: null,
+            Result: new WorkspaceOperationResultDto(
+                DraftId: draftId,
+                DraftRevision: revision),
+            CreatedAtUtc: timestamp,
+            AppliedAtUtc: timestamp,
+            CompletedAtUtc: timestamp);
 
     private sealed class TestWorkspaceDataStoreFactory : IWorkspaceDataStoreFactory
     {

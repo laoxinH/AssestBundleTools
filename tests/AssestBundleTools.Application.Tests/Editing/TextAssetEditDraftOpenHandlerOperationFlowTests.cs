@@ -135,4 +135,109 @@ internal static partial class TextAssetEditDraftOpenHandlerTests
             TestAssert.Single(result.Errors).Code,
             "Stale applied baseline should be rejected so Presentation can create a fresh original-backed draft.");
     }
+
+    public static async Task OpenTextAssetEditDraftHandler_ShouldRejectOlderTextEditBaseline_WhenLaterReplacementIsEffective()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        const string workspaceKey = "workspace-a";
+        const string workspaceDataRootPath = @"D:\WorkspaceData\A";
+        var bundleId = new BundleId("bundle.text");
+        var assetId = new AssetId("asset.text");
+        var updatedAtUtc = new DateTimeOffset(2026, 7, 6, 14, 0, 0, TimeSpan.Zero);
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            assetId,
+            AssetType.TextAsset,
+            "story.json",
+            textEditDraftId: "draft-1",
+            textEditDraftMode: WorkspaceTextEditOperationRecorder.TextDraftMode,
+            textEditDraftRevision: 1));
+        var changeStore = new TestWorkspaceChangeStore
+        {
+            ChangeSet = new WorkspaceChangeSetDto(
+                WorkspaceKey: workspaceKey,
+                UpdatedAtUtc: updatedAtUtc,
+                Changes: Array.Empty<WorkspaceChangeRecordDto>(),
+                EditDrafts:
+                [
+                    new WorkspaceAssetEditDraftDescriptorDto(
+                        DraftId: "draft-1",
+                        DraftMode: WorkspaceTextEditOperationRecorder.TextDraftMode,
+                        SourceFingerprint: "source-v1",
+                        UpdatedAtUtc: updatedAtUtc)
+                ],
+                OperationSequence: 2,
+                Operations:
+                [
+                    CreateAppliedTextEditOperation(
+                        workspaceKey,
+                        bundleId,
+                        assetId,
+                        "draft-1",
+                        draftRevision: 1,
+                        sequence: 1,
+                        updatedAtUtc),
+                    CreateAppliedFileReplacementOperation(
+                        workspaceKey,
+                        bundleId,
+                        assetId,
+                        sourceFilePath: @"C:\Imports\story.json",
+                        sequence: 2,
+                        updatedAtUtc.AddSeconds(1))
+                ])
+        };
+        var handler = new OpenTextAssetEditDraftHandler(
+            registry,
+            new TestWorkspaceDataStoreFactory(changeStore, new TestAssetEditDraftTextStore()));
+
+        var result = await handler.HandleAsync(new OpenTextAssetEditDraftCommand(
+            workspaceId,
+            workspaceKey,
+            workspaceDataRootPath,
+            bundleId,
+            assetId,
+            "draft-1",
+            WorkspaceTextEditOperationRecorder.TextDraftMode,
+            SourceFingerprint: null,
+            DraftRevision: 1,
+            IsAppliedBaseline: true));
+
+        TestAssert.True(result.IsFailure, "A later replacement should invalidate the older applied edit baseline.");
+        TestAssert.Equal(
+            "Asset.EditDraft.SourceMismatch",
+            TestAssert.Single(result.Errors).Code,
+            "Presentation should create a fresh draft from the latest replacement preview.");
+    }
+
+    private static WorkspaceOperationRecordDto CreateAppliedFileReplacementOperation(
+        string workspaceKey,
+        BundleId bundleId,
+        AssetId assetId,
+        string sourceFilePath,
+        long sequence,
+        DateTimeOffset timestamp) =>
+        new(
+            OperationId: $"file-replacement-{sequence}",
+            Sequence: sequence,
+            OperationKind: WorkspaceOperationKind.ReplaceFromFile,
+            Status: WorkspaceOperationStatus.Applied,
+            WorkspaceKey: workspaceKey,
+            Target: new WorkspaceOperationTargetDto(
+                BundleId: bundleId.Value,
+                AssetId: assetId.Value,
+                AssetName: "story.json",
+                AssetType: AssetType.TextAsset.ToString(),
+                AssetTypeDisplayName: AssetType.TextAsset.ToString()),
+            Source: new WorkspaceOperationSourceDto(
+                SourceKind: "file",
+                SourceFilePath: sourceFilePath,
+                SourceFileName: Path.GetFileName(sourceFilePath),
+                SourceAssetType: AssetType.TextAsset.ToString()),
+            PreviousState: null,
+            Result: new WorkspaceOperationResultDto(ReplacementSourceKind: "file"),
+            CreatedAtUtc: timestamp,
+            AppliedAtUtc: timestamp,
+            CompletedAtUtc: timestamp);
 }

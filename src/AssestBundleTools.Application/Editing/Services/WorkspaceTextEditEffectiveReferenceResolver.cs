@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 
@@ -11,6 +12,7 @@ public sealed class WorkspaceTextEditEffectiveReferenceResolver
 {
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
     private readonly WorkspaceTextEditStateMaterializer _textEditStateMaterializer = new();
+    private readonly WorkspaceTextAssetContentStateMaterializer _textAssetContentStateMaterializer = new();
 
     public WorkspaceTextEditEffectiveReferenceResolver(IWorkspaceDataStoreFactory workspaceDataStoreFactory)
     {
@@ -44,20 +46,34 @@ public sealed class WorkspaceTextEditEffectiveReferenceResolver
         {
             var normalizedBundleId = bundleId.Trim();
             var normalizedAssetId = assetId.Trim();
-            var effectiveTextEdit = _textEditStateMaterializer.FindEffectiveTextEdit(
+            var effectiveContent = _textAssetContentStateMaterializer.FindEffectiveContent(
                 changeSet,
                 normalizedBundleId,
                 normalizedAssetId);
-            if (effectiveTextEdit is not null)
+            if (effectiveContent is { Kind: WorkspaceTextAssetContentKind.TextEdit })
             {
                 return new WorkspaceTextEditEffectiveReferenceResolution(
                     new WorkspaceTextEditEffectiveReferenceDto(
-                        effectiveTextEdit.DraftId,
-                        NormalizeDraftMode(effectiveTextEdit.DraftMode),
-                        effectiveTextEdit.DraftRevision,
-                        effectiveTextEdit.AppliedAtUtc,
-                        effectiveTextEdit.OperationId),
+                        effectiveContent.DraftId!,
+                        NormalizeDraftMode(effectiveContent.DraftMode),
+                        effectiveContent.DraftRevision,
+                        effectiveContent.AppliedAtUtc,
+                        effectiveContent.OperationId),
                     HasTextEditOperationFact: true,
+                    WorkspaceTextEditEffectiveReferenceSource.OperationFact);
+            }
+
+            if (effectiveContent is
+                {
+                    Kind: WorkspaceTextAssetContentKind.FileReplacement or WorkspaceTextAssetContentKind.WorkspaceReplacement
+                })
+            {
+                return new WorkspaceTextEditEffectiveReferenceResolution(
+                    Reference: null,
+                    HasTextEditOperationFact: _textEditStateMaterializer.ContainsTextEditOperation(
+                        changeSet,
+                        normalizedBundleId,
+                        normalizedAssetId),
                     WorkspaceTextEditEffectiveReferenceSource.OperationFact);
             }
 

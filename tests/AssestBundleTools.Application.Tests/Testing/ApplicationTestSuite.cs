@@ -3,6 +3,7 @@ using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Tests.Bundles.Commands;
 using AssestBundleTools.Application.Tests.Bundles.Queries;
 using AssestBundleTools.Application.Tests.Assets.Queries;
+using AssestBundleTools.Application.Tests.Assets.Services;
 using AssestBundleTools.Application.Tests.Editing;
 using AssestBundleTools.Application.Tests.Replacement;
 using AssestBundleTools.Application.Tests.Saving;
@@ -38,6 +39,26 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUseOperationTextEditRevision_WhenSessionProjectionIsStale),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldUseOperationTextEditRevision_WhenSessionProjectionIsStale);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUseLaterFileReplacement_WhenTextEditOperationIsOlder),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldUseLaterFileReplacement_WhenTextEditOperationIsOlder);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUseLaterTextEdit_WhenFileReplacementOperationIsOlder),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldUseLaterTextEdit_WhenFileReplacementOperationIsOlder);
+        await RunTestAsync(
+            failures,
+            nameof(WorkspaceTextAssetContentStateMaterializerTests.Materialize_ShouldSelectLatestReplacementOverOlderTextEdit),
+            WorkspaceTextAssetContentStateMaterializerTests.Materialize_ShouldSelectLatestReplacementOverOlderTextEdit);
+        await RunTestAsync(
+            failures,
+            nameof(WorkspaceTextAssetContentStateMaterializerTests.Materialize_ShouldSelectLatestTextEditOverOlderReplacement),
+            WorkspaceTextAssetContentStateMaterializerTests.Materialize_ShouldSelectLatestTextEditOverOlderReplacement);
+        await RunTestAsync(
+            failures,
+            nameof(WorkspaceTextAssetContentStateMaterializerTests.Materialize_ShouldRestorePreviousTextEdit_WhenLaterReplacementIsUndone),
+            WorkspaceTextAssetContentStateMaterializerTests.Materialize_ShouldRestorePreviousTextEdit_WhenLaterReplacementIsUndone);
         await RunTestAsync(
             failures,
             nameof(ResourceProcessorCatalogHandlerTests.Upsert_ShouldSaveUserManagedProcessor_WhenDefinitionIsValid),
@@ -145,6 +166,10 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldRejectStaleAppliedBaseline_WhenOperationHistoryHasNoEffectiveEdit),
             TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldRejectStaleAppliedBaseline_WhenOperationHistoryHasNoEffectiveEdit);
+        await RunTestAsync(
+            failures,
+            nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldRejectOlderTextEditBaseline_WhenLaterReplacementIsEffective),
+            TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldRejectOlderTextEditBaseline_WhenLaterReplacementIsEffective);
         await RunTestAsync(
             failures,
             nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldFail_WhenPayloadIsMissing),

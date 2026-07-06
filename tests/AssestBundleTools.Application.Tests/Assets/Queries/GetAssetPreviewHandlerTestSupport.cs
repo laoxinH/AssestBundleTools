@@ -168,6 +168,35 @@ internal static partial class GetAssetPreviewHandlerTests
             AppliedAtUtc: appliedAtUtc,
             CompletedAtUtc: appliedAtUtc);
 
+    private static WorkspaceOperationRecordDto CreateAppliedFileReplacementOperation(
+        GetAssetPreviewQuery query,
+        string sourceFilePath,
+        long sequence,
+        DateTimeOffset appliedAtUtc) =>
+        new(
+            OperationId: $"file-replacement-{sequence}",
+            Sequence: sequence,
+            OperationKind: WorkspaceOperationKind.ReplaceFromFile,
+            Status: WorkspaceOperationStatus.Applied,
+            WorkspaceKey: query.WorkspaceKey,
+            Target: new WorkspaceOperationTargetDto(
+                BundleId: query.BundleId.Value,
+                AssetId: query.AssetId.Value,
+                AssetName: "Hero.atlas",
+                AssetType: AssetType.TextAsset.ToString(),
+                AssetTypeDisplayName: AssetType.TextAsset.ToString()),
+            Source: new WorkspaceOperationSourceDto(
+                SourceKind: "file",
+                SourceFilePath: sourceFilePath,
+                SourceFileName: Path.GetFileName(sourceFilePath),
+                SourceAssetType: AssetType.TextAsset.ToString()),
+            PreviousState: null,
+            Result: new WorkspaceOperationResultDto(
+                ReplacementSourceKind: "file"),
+            CreatedAtUtc: appliedAtUtc,
+            AppliedAtUtc: appliedAtUtc,
+            CompletedAtUtc: appliedAtUtc);
+
     private static BundleIndexAssetCacheEntryDto CreateAssetCacheEntry(string assetId)
     {
         return new BundleIndexAssetCacheEntryDto(

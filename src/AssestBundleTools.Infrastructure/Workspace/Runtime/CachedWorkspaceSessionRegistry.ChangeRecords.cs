@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Replacement.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
@@ -13,6 +14,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
     private readonly WorkspaceReplacementStateMaterializer _replacementStateMaterializer = new();
     private readonly WorkspaceSpriteEditStateMaterializer _spriteEditStateMaterializer = new();
     private readonly WorkspaceTextEditStateMaterializer _textEditStateMaterializer = new();
+    private readonly WorkspaceTextAssetContentStateMaterializer _textAssetContentStateMaterializer = new();
 
     private IReadOnlyList<AssetChangeRecordDto> BuildAssetChangeRecords(
         WorkspaceSessionState workspaceState,
@@ -58,19 +60,24 @@ public sealed partial class CachedWorkspaceSessionRegistry
             .Where(static operation => operation is not null)
             .Where(static operation => operation.Status == WorkspaceOperationStatus.Applied)
             .ToArray();
-        var effectiveReplacementOperationIds = _replacementStateMaterializer
-            .Materialize(changeSet)
-            .EffectiveReplacements
-            .Select(static replacement => replacement.OperationId)
-            .ToHashSet(StringComparer.Ordinal);
+        var effectiveReplacementOperationIds = CreateEffectiveReplacementOperationIds(
+            changeSet,
+            bundleId.Value,
+            assetId.Value,
+            assetState.AssetType);
         var effectiveSpriteEditOperationId = _spriteEditStateMaterializer.FindLatestEffectiveSpriteEditOperationId(
             changeSet,
             bundleId.Value,
             assetId.Value);
-        var effectiveTextEditOperationId = _textEditStateMaterializer.FindLatestEffectiveTextEditOperationId(
-            changeSet,
-            bundleId.Value,
-            assetId.Value);
+        var effectiveTextEditOperationId = assetState.AssetType == AssetType.TextAsset
+            ? _textAssetContentStateMaterializer.FindLatestEffectiveTextEditOperationId(
+                changeSet,
+                bundleId.Value,
+                assetId.Value)
+            : _textEditStateMaterializer.FindLatestEffectiveTextEditOperationId(
+                changeSet,
+                bundleId.Value,
+                assetId.Value);
         var implicitDependencyAssetKeys = GetImplicitDependencyAssetKeys(workspaceState, bundleId, assetState);
 
         foreach (var operation in operations
@@ -94,6 +101,30 @@ public sealed partial class CachedWorkspaceSessionRegistry
                 yield return record;
             }
         }
+    }
+
+    private ISet<string> CreateEffectiveReplacementOperationIds(
+        WorkspaceChangeSetDto? changeSet,
+        string bundleId,
+        string assetId,
+        AssetType assetType)
+    {
+        if (assetType == AssetType.TextAsset)
+        {
+            var replacementOperationId = _textAssetContentStateMaterializer.FindLatestEffectiveReplacementOperationId(
+                changeSet,
+                bundleId,
+                assetId);
+            return string.IsNullOrWhiteSpace(replacementOperationId)
+                ? new HashSet<string>(StringComparer.Ordinal)
+                : new HashSet<string>([replacementOperationId], StringComparer.Ordinal);
+        }
+
+        return _replacementStateMaterializer
+            .Materialize(changeSet)
+            .EffectiveReplacements
+            .Select(static replacement => replacement.OperationId)
+            .ToHashSet(StringComparer.Ordinal);
     }
 
     private static IReadOnlyList<AssetChangeRecordDto> BuildRuntimeAssetChangeRecordFallback(CachedAssetState assetState)

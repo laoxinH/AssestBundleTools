@@ -410,6 +410,166 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(0, generator.GenerateCallCount, "Effective text edit preview should not generate original preview content.");
     }
 
+    public static async Task HandleAsync_ShouldUseLaterFileReplacement_WhenTextEditOperationIsOlder()
+    {
+        const string draftText = "hero.png\nsize: 256,128\n";
+        const string replacementText = "hero.png\nsize: 512,256\n";
+        const string replacementFilePath = @"C:\Imports\hero.atlas";
+        var appliedAtUtc = new DateTimeOffset(2026, 7, 6, 13, 0, 0, TimeSpan.Zero);
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        bundleCacheEntry = bundleCacheEntry with
+        {
+            Assets =
+            [
+                bundleCacheEntry.Assets[0] with
+                {
+                    AssetType = AssetType.TextAsset.ToString(),
+                    AssetTypeDisplayName = AssetType.TextAsset.ToString(),
+                    AssetPath = "Assets/Hero/Hero.atlas",
+                    AssetName = "Hero.atlas"
+                }
+            ]
+        };
+        var draftPreviewPayload = CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            draftText,
+            generatorVersion: "edit-draft-text-v1");
+        var previewCacheStore = new TestPreviewCacheStore();
+        var draftTextStore = new TestAssetEditDraftTextStore(draftPreviewPayload);
+        var replacementPreviewSourceProvider = new TestReplacementPreviewSourceProvider(
+            Result<AssetPreviewContentDto>.Success(new AssetPreviewContentDto(
+                Kind: AssetPreviewKind.Text,
+                ContentType: "text/plain; charset=utf-8",
+                Content: Encoding.UTF8.GetBytes(replacementText))));
+        var changeSet = new WorkspaceChangeSetDto(
+            WorkspaceKey: query.WorkspaceKey,
+            UpdatedAtUtc: appliedAtUtc,
+            Changes: [],
+            Operations:
+            [
+                CreateAppliedTextEditOperation(query, "draft-text-1", "text-content", draftRevision: 1, sequence: 1, appliedAtUtc),
+                CreateAppliedFileReplacementOperation(query, replacementFilePath, sequence: 2, appliedAtUtc.AddSeconds(1))
+            ]);
+        var decryptor = new TestAssetBundleDecryptor(CreatePassThroughDecryptorDescriptor());
+        var generator = new TestAssetPreviewGenerator();
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(
+            [
+                CreateAssetDetails(
+                    query,
+                    name: "Hero.atlas",
+                    assetType: AssetType.TextAsset,
+                    fileReplacementSourceFileName: "hero.atlas",
+                    fileReplacementSourcePath: replacementFilePath,
+                    textEditDraftId: "draft-text-1",
+                    textEditDraftMode: "text-content",
+                    textEditAppliedAtUtc: appliedAtUtc,
+                    textEditDraftRevision: 1)
+            ]),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore,
+                assetEditDraftTextStore: draftTextStore,
+                workspaceChangeStore: new TestWorkspaceChangeStore(changeSet)),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService(),
+            replacementPreviewSourceProvider: replacementPreviewSourceProvider);
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "A later replacement should provide the effective TextAsset preview.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(replacementText, preview.FullTextContent, "Preview should use the later replacement text.");
+        TestAssert.Equal(AssetPreviewFullContentReferenceKind.FileReplacement, preview.FullContentReference?.Kind, "Preview reference should point to the replacement file.");
+        TestAssert.Equal(replacementFilePath, preview.FullContentReference?.SourcePath, "Preview reference should carry the replacement source path.");
+        TestAssert.Equal(1, replacementPreviewSourceProvider.LoadFilePreviewCallCount, "Replacement source should be read once.");
+        TestAssert.Equal(0, draftTextStore.LoadTextChunkCallCount, "Older text edit draft should not be read.");
+    }
+
+    public static async Task HandleAsync_ShouldUseLaterTextEdit_WhenFileReplacementOperationIsOlder()
+    {
+        const string replacementText = "hero.png\nsize: 512,256\n";
+        const string editedText = "hero.png\nsize: 1024,512\nhead\n  xy: 1, 2\n";
+        const string replacementFilePath = @"C:\Imports\hero.atlas";
+        var appliedAtUtc = new DateTimeOffset(2026, 7, 6, 13, 0, 0, TimeSpan.Zero);
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        bundleCacheEntry = bundleCacheEntry with
+        {
+            Assets =
+            [
+                bundleCacheEntry.Assets[0] with
+                {
+                    AssetType = AssetType.TextAsset.ToString(),
+                    AssetTypeDisplayName = AssetType.TextAsset.ToString(),
+                    AssetPath = "Assets/Hero/Hero.atlas",
+                    AssetName = "Hero.atlas"
+                }
+            ]
+        };
+        var draftPreviewPayload = CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            editedText,
+            generatorVersion: "edit-draft-text-v1");
+        var previewCacheStore = new TestPreviewCacheStore();
+        var draftTextStore = new TestAssetEditDraftTextStore(draftPreviewPayload);
+        var replacementPreviewSourceProvider = new TestReplacementPreviewSourceProvider(
+            Result<AssetPreviewContentDto>.Success(new AssetPreviewContentDto(
+                Kind: AssetPreviewKind.Text,
+                ContentType: "text/plain; charset=utf-8",
+                Content: Encoding.UTF8.GetBytes(replacementText))));
+        var changeSet = new WorkspaceChangeSetDto(
+            WorkspaceKey: query.WorkspaceKey,
+            UpdatedAtUtc: appliedAtUtc,
+            Changes: [],
+            Operations:
+            [
+                CreateAppliedFileReplacementOperation(query, replacementFilePath, sequence: 1, appliedAtUtc),
+                CreateAppliedTextEditOperation(query, "draft-text-2", "text-content", draftRevision: 2, sequence: 2, appliedAtUtc.AddSeconds(1))
+            ]);
+        var decryptor = new TestAssetBundleDecryptor(CreatePassThroughDecryptorDescriptor());
+        var generator = new TestAssetPreviewGenerator();
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(
+            [
+                CreateAssetDetails(
+                    query,
+                    name: "Hero.atlas",
+                    assetType: AssetType.TextAsset,
+                    fileReplacementSourceFileName: "hero.atlas",
+                    fileReplacementSourcePath: replacementFilePath,
+                    textEditDraftId: "draft-text-2",
+                    textEditDraftMode: "text-content",
+                    textEditAppliedAtUtc: appliedAtUtc.AddSeconds(1),
+                    textEditDraftRevision: 2)
+            ]),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore,
+                assetEditDraftTextStore: draftTextStore,
+                workspaceChangeStore: new TestWorkspaceChangeStore(changeSet)),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService(),
+            replacementPreviewSourceProvider: replacementPreviewSourceProvider);
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "A later text edit should provide the effective TextAsset preview.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(editedText, preview.FullTextContent, "Preview should use the later text edit draft.");
+        TestAssert.Equal(AssetPreviewFullContentReferenceKind.EditDraft, preview.FullContentReference?.Kind, "Preview reference should point to the edit draft.");
+        TestAssert.Equal(2, preview.FullContentReference?.DraftRevision, "Preview should pin the later edit revision.");
+        TestAssert.Equal(0, replacementPreviewSourceProvider.LoadFilePreviewCallCount, "Older replacement source should not be read.");
+        TestAssert.Equal(1, draftTextStore.LoadTextChunkCallCount, "Text edit draft should be read once.");
+    }
+
     public static async Task HandleAsync_ShouldUseFileReplacementPreview_ForAudioClip()
     {
         const string replacementFilePath = @"C:\Imports\hero-voice.wav";

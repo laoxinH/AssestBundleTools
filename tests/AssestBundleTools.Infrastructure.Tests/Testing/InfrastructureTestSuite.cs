@@ -322,6 +322,10 @@ internal static class InfrastructureTestSuite
             CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMaterializePersistedSpriteEditOperation_FromChangeSet);
         await RunTestAsync(
             failures,
+            nameof(CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMarkOnlyLatestTextAssetContentOperationEffective),
+            CachedWorkspaceSessionRegistryOperationRestoreTests.OpenWorkspace_ShouldMarkOnlyLatestTextAssetContentOperationEffective);
+        await RunTestAsync(
+            failures,
             nameof(CachedWorkspaceSessionRegistryOperationRestoreTests.TryGetAssetDetails_ShouldProjectDependencyReplacement_AsAssociatedChangeRecord),
             CachedWorkspaceSessionRegistryOperationRestoreTests.TryGetAssetDetails_ShouldProjectDependencyReplacement_AsAssociatedChangeRecord);
         await RunTestAsync(

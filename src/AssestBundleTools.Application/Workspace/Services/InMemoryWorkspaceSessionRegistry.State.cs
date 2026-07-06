@@ -347,7 +347,8 @@ public sealed partial class InMemoryWorkspaceSessionRegistry
 
     private sealed record AppliedReplacementSnapshot(
         AppliedWorkspaceReplacementState? WorkspaceReplacement,
-        AppliedFileReplacementState? FileReplacement);
+        AppliedFileReplacementState? FileReplacement,
+        AppliedTextEditState? TextEdit);
 
     private static void ApplyReplacementSnapshot(
         SampleAssetState assetState,
@@ -356,6 +357,7 @@ public sealed partial class InMemoryWorkspaceSessionRegistry
         assetState.ReplacementUndoStack.Add(CaptureReplacementSnapshot(assetState));
         assetState.ReplacementRedoStack.Clear();
         RestoreReplacementSnapshot(assetState, replacementSnapshot);
+        ClearTextEditState(assetState);
     }
 
     private static void UndoReplacementSnapshot(SampleAssetState assetState)
@@ -385,14 +387,16 @@ public sealed partial class InMemoryWorkspaceSessionRegistry
     private static AppliedReplacementSnapshot? CaptureReplacementSnapshot(SampleAssetState assetState)
     {
         if (assetState.AppliedWorkspaceReplacement is null &&
-            assetState.AppliedFileReplacement is null)
+            assetState.AppliedFileReplacement is null &&
+            assetState.AppliedTextEdit is null)
         {
             return null;
         }
 
         return new AppliedReplacementSnapshot(
             assetState.AppliedWorkspaceReplacement,
-            assetState.AppliedFileReplacement);
+            assetState.AppliedFileReplacement,
+            assetState.AppliedTextEdit);
     }
 
     private static void RestoreReplacementSnapshot(
@@ -401,6 +405,7 @@ public sealed partial class InMemoryWorkspaceSessionRegistry
     {
         assetState.AppliedWorkspaceReplacement = replacementSnapshot?.WorkspaceReplacement;
         assetState.AppliedFileReplacement = replacementSnapshot?.FileReplacement;
+        assetState.AppliedTextEdit = replacementSnapshot?.TextEdit;
         RefreshModifiedState(assetState);
     }
 
@@ -417,6 +422,16 @@ public sealed partial class InMemoryWorkspaceSessionRegistry
         AppliedTextEditState textEdit)
     {
         assetState.AppliedTextEdit = textEdit;
+        assetState.AppliedWorkspaceReplacement = null;
+        assetState.AppliedFileReplacement = null;
+        assetState.ReplacementUndoStack.Clear();
+        assetState.ReplacementRedoStack.Clear();
+        RefreshModifiedState(assetState);
+    }
+
+    private static void ClearTextEditState(SampleAssetState assetState)
+    {
+        assetState.AppliedTextEdit = null;
         RefreshModifiedState(assetState);
     }
 
