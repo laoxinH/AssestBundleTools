@@ -140,6 +140,10 @@ internal static partial class ApplicationTestSuite
             TextAssetEditDraftUpdateHandlerTests.RecordDraftCreated_ShouldPersistDeferredSourceReference);
         await RunTestAsync(
             failures,
+            nameof(TextAssetEditDraftUpdateHandlerTests.RecordDraftCreated_ShouldPersistDeferredFileReplacementSourceReference),
+            TextAssetEditDraftUpdateHandlerTests.RecordDraftCreated_ShouldPersistDeferredFileReplacementSourceReference);
+        await RunTestAsync(
+            failures,
             nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldReturnExistingDraftReference),
             TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldReturnExistingDraftReference);
         await RunTestAsync(

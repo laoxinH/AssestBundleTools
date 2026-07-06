@@ -308,6 +308,52 @@ internal static class JsonAssetEditDraftTextStoreTests
         TestAssert.Equal(editedText, chunk.Text, "Materialized fallback should preserve the editor text.");
     }
 
+    public static void ApplyTextPatch_ShouldCreatePatchBackedDraft_FromDeferredFileReplacementSourceReference()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var sourceFilePath = Path.Combine(temporaryDirectory.DirectoryPath, "large-atlas.json");
+        const string sourceText = "alpha\nbeta\ngamma";
+        Directory.CreateDirectory(temporaryDirectory.DirectoryPath);
+        File.WriteAllText(sourceFilePath, sourceText);
+
+        var store = new JsonAssetEditDraftTextStore(temporaryDirectory.DirectoryPath);
+        var result = store.ApplyTextPatch(new AssetEditDraftTextPatchDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-file-replacement",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            RangeEdits: [new TextAssetEditDraftRangeEditDto(6, 4, "BETA")],
+            Baseline: TextAssetEditDraftPatchBaseline.Create(sourceText),
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 10, 0, 0, TimeSpan.Zero),
+            MaxTextLength: 1024,
+            SourceReference: new WorkspaceAssetEditDraftSourceReferenceDto(
+                nameof(AssetPreviewFullContentReferenceKind.FileReplacement),
+                "text/plain; charset=utf-8",
+                System.Text.Encoding.UTF8.GetByteCount(sourceText),
+                "workspace-a",
+                SourcePath: sourceFilePath)));
+
+        TestAssert.Equal(
+            AssetEditDraftTextPatchStatus.Applied,
+            result.Status,
+            "Deferred file replacement source patch should be accepted.");
+        var draftDirectory = Path.Combine(
+            temporaryDirectory.DirectoryPath,
+            "staging",
+            "drafts",
+            "workspace-a",
+            "draft-file-replacement",
+            "text");
+        TestAssert.False(File.Exists(Path.Combine(draftDirectory, "text.txt")), "Deferred file replacement patch should not materialize a full draft payload.");
+        TestAssert.True(File.Exists(Path.Combine(draftDirectory, "text-base.txt")), "Deferred file replacement patch should persist a stable base snapshot.");
+        TestAssert.True(File.Exists(Path.Combine(draftDirectory, "text-patches.json")), "Deferred file replacement patch should persist patch manifest.");
+        File.Delete(sourceFilePath);
+        var chunk = TestAssert.NotNull(
+            store.LoadTextChunk("workspace-a", "draft-file-replacement", "text", 0, 64),
+            "Deferred file replacement patched draft should be readable after the source file is removed.");
+        TestAssert.Equal("alpha\nBETA\ngamma", chunk.Text, "Composite view should apply file replacement patch over stable base snapshot.");
+    }
+
     public static void ApplyTextPatch_ShouldApplySubsequentPatchLogEntries()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();

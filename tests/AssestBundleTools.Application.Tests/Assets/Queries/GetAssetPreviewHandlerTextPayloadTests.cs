@@ -263,6 +263,10 @@ internal static partial class GetAssetPreviewHandlerTests
             preview.FullContentReference?.SourcePath,
             "Long replacement text reference should carry the selected source path.");
         TestAssert.Equal(
+            query.WorkspaceKey,
+            preview.FullContentReference?.WorkspaceKey,
+            "Long replacement text reference should carry the workspace key for deferred edit drafts.");
+        TestAssert.Equal(
             Encoding.UTF8.GetByteCount(longReplacementText),
             preview.FullContentReference?.ContentLength,
             "Long replacement text reference should expose the replacement payload length.");

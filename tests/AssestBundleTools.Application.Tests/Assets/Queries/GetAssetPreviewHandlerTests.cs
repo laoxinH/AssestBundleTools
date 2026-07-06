@@ -240,6 +240,10 @@ internal static partial class GetAssetPreviewHandlerTests
             preview.FullContentReference?.SourcePath,
             "TextAsset replacement full content reference should carry the selected source path.");
         TestAssert.Equal(
+            query.WorkspaceKey,
+            preview.FullContentReference?.WorkspaceKey,
+            "TextAsset replacement full content reference should carry the workspace key for deferred edit drafts.");
+        TestAssert.Equal(
             Encoding.UTF8.GetByteCount(atlasText),
             preview.FullContentReference?.ContentLength,
             "TextAsset replacement full content reference should expose the replacement text payload length.");

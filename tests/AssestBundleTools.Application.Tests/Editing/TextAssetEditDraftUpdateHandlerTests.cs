@@ -528,6 +528,66 @@ internal static class TextAssetEditDraftUpdateHandlerTests
         return Task.CompletedTask;
     }
 
+    public static Task RecordDraftCreated_ShouldPersistDeferredFileReplacementSourceReference()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        const string workspaceKey = "workspace-a";
+        const string workspaceDataRootPath = @"D:\WorkspaceData\A";
+        const string replacementFilePath = @"C:\Imports\large-atlas.json";
+        var bundleId = new BundleId("bundle.text");
+        var assetId = new AssetId("asset.text");
+        var changeStore = new TestWorkspaceChangeStore();
+        var recorder = new WorkspaceTextEditOperationRecorder(
+            new TestWorkspaceDataStoreFactory(changeStore, new TestAssetEditDraftTextStore()),
+            new WorkspaceOperationLogService());
+        var details = CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            assetId,
+            AssetType.TextAsset,
+            "large.atlas");
+        var draft = new AssetTextEditDraftDto(
+            workspaceId,
+            bundleId,
+            assetId,
+            "large.atlas",
+            AssetType.TextAsset,
+            AssetType.TextAsset.ToString(),
+            "draft-file-replacement",
+            WorkspaceTextEditOperationRecorder.TextDraftMode,
+            new AssetPreviewFullContentReferenceDto(
+                AssetPreviewFullContentReferenceKind.FileReplacement,
+                "text/plain; charset=utf-8",
+                12 * 1024 * 1024,
+                workspaceKey,
+                SourcePath: replacementFilePath),
+            new DateTimeOffset(2026, 6, 3, 10, 0, 0, TimeSpan.Zero),
+            CanApply: true,
+            SourceFingerprint: "file-source-v1",
+            SourceDescription: "large.atlas",
+            IsMaterialized: false);
+
+        recorder.RecordDraftCreated(
+            new CreateTextAssetEditDraftCommand(
+                workspaceId,
+                workspaceKey,
+                workspaceDataRootPath,
+                bundleId,
+                assetId),
+            details,
+            draft);
+
+        var descriptor = TestAssert.Single(changeStore.SavedChangeSet?.EditDrafts ?? Array.Empty<WorkspaceAssetEditDraftDescriptorDto>());
+        var sourceReference = descriptor.SourceReference ??
+            throw new InvalidOperationException("Deferred file replacement draft should persist its source reference.");
+        TestAssert.Equal(false, descriptor.IsPayloadMaterialized, "Deferred file replacement descriptor should record that payload is not materialized.");
+        TestAssert.Equal(nameof(AssetPreviewFullContentReferenceKind.FileReplacement), sourceReference.Kind, "Source reference kind should be stored as a stable string.");
+        TestAssert.Equal(workspaceKey, sourceReference.WorkspaceKey, "Source reference workspace key should be stored.");
+        TestAssert.Equal(replacementFilePath, sourceReference.SourcePath, "Source reference should carry the replacement source path.");
+        TestAssert.Equal(12 * 1024 * 1024, sourceReference.ContentLength, "Source reference content length should be stored.");
+        return Task.CompletedTask;
+    }
+
     public static async Task UpdateTextAssetEditDraftHandler_ShouldRejectLargeInlinePayload()
     {
         var workspaceId = new WorkspaceId("workspace-session-1");

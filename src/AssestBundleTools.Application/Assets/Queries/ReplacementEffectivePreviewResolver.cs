@@ -471,6 +471,7 @@ internal sealed class ReplacementEffectivePreviewResolver
             FullContentReference = textDisplay is null || string.IsNullOrWhiteSpace(previewPayloadFilePath)
                 ? null
                 : CreateFileReplacementReference(
+                    query.WorkspaceKey,
                     previewContent,
                     previewPayloadFilePath),
             FullTextContent = fullTextContent
@@ -478,13 +479,14 @@ internal sealed class ReplacementEffectivePreviewResolver
     }
 
     private static AssetPreviewFullContentReferenceDto CreateFileReplacementReference(
+        string workspaceKey,
         AssetPreviewContentDto previewContent,
         string sourcePath) =>
         new(
             AssetPreviewFullContentReferenceKind.FileReplacement,
             previewContent.ContentType,
             previewContent.Content.LongLength,
-            WorkspaceKey: string.Empty,
+            WorkspaceKey: workspaceKey.Trim(),
             SourcePath: sourcePath);
 
     private static AssetPreviewDto BuildFallbackSummaryPreview(
