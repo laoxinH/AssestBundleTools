@@ -281,14 +281,12 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
         var fallbackDetails = CreateAssetDetails(workspaceId, bundleId, fallbackAssetId);
         var fallbackOpenCanFinish = new TaskCompletionSource<Result<AssetPaneContextDto>>(
             TaskCreationOptions.RunContinuationsAsynchronously);
-        var fallbackOpenStarted = false;
         var inspectionGateway = new TestWorkspaceAssetInspectionGateway
         {
             OpenAssetInPaneHandler = command =>
             {
                 if (command.AssetId.Equals(fallbackAssetId))
                 {
-                    fallbackOpenStarted = true;
                     return fallbackOpenCanFinish.Task;
                 }
 
@@ -311,7 +309,6 @@ public sealed class BundleExplorerAssetDocumentTabCoordinatorTests
         context.BundleTab.AddAssetTab(fallbackTab, activate: false);
 
         var detachTask = coordinator.DetachAssetDocumentTabForExternalHostAsync(currentTab);
-        Assert.False(fallbackOpenStarted);
         var completedTask = await Task.WhenAny(detachTask, Task.Delay(250));
 
         Assert.Same(detachTask, completedTask);

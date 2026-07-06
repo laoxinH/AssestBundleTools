@@ -81,7 +81,11 @@ internal sealed class AssetPreviewResultPresenter
             case AssetPreviewKind.Image:
                 return await TryApplyImagePreviewAsync(assetTab, details, previewRequest, preview, previewInfoRows);
             case AssetPreviewKind.Text:
-                _basicPresenter.ApplyTextPreview(assetTab.Inspector, preview, previewInfoRows);
+                _basicPresenter.ApplyTextPreview(
+                    assetTab.Inspector,
+                    previewQuery.WorkspaceDataRootPath,
+                    preview,
+                    previewInfoRows);
                 return true;
             case AssetPreviewKind.Audio:
                 return await TryApplyAudioPreviewAsync(assetTab, details, previewRequest, preview, previewInfoRows);

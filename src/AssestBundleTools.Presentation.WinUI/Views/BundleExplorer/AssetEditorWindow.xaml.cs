@@ -222,6 +222,11 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         ViewModel.OpenCurrentPreviewLocation();
     }
 
+    private async void OnInspectorLoadMoreTextRequested(object sender, EventArgs e)
+    {
+        await ViewModel.LoadMorePreviewTextLinesAsync();
+    }
+
     private async void OnInspectorSelectFileReplacementSourceRequested(object sender, EventArgs e)
     {
         await ViewModel.SelectFileReplacementSourceAsync();
@@ -273,6 +278,11 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
     private void OnPreviewSurfaceOpenPreviewLocationRequested(object sender, EventArgs e)
     {
         ViewModel.OpenCurrentPreviewLocation();
+    }
+
+    private async void OnPreviewSurfaceLoadMoreTextRequested(object sender, EventArgs e)
+    {
+        await ViewModel.LoadMorePreviewTextLinesAsync();
     }
 
     private async void OnPreviewSurfaceSpriteTextureReplacementRequested(object sender, EventArgs e)

@@ -68,6 +68,11 @@ internal sealed class BundleExplorerAssetPreviewLoadCoordinator
         LoadForegroundPreview(assetTab, promoteLoadingPreview: true);
     }
 
+    public Task LoadMorePreviewTextLinesAsync(AssetDocumentTabViewModel? assetTab) =>
+        assetTab is null
+            ? Task.CompletedTask
+            : _assetPreviewCoordinator.LoadMorePreviewTextLinesAsync(assetTab);
+
     public void DemotePreviewToBackgroundPrewarm(
         AssetDocumentTabViewModel? assetTab,
         IEnumerable<AssetDocumentTabViewModel> assetTabs)

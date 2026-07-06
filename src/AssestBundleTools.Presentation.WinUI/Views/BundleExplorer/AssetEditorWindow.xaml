@@ -135,6 +135,7 @@
                     UseAvailablePreviewSpace="True"
                     Visibility="{x:Bind ViewModel.PreviewSurfaceVisibility, Mode=OneWay}"
                     ViewModel="{x:Bind ViewModel.Inspector, Mode=OneWay}"
+                    LoadMoreTextRequested="OnPreviewSurfaceLoadMoreTextRequested"
                     OpenPreviewLocationRequested="OnPreviewSurfaceOpenPreviewLocationRequested"
                     SpriteTextureReplacementRequested="OnPreviewSurfaceSpriteTextureReplacementRequested"
                     ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested" />
@@ -459,6 +460,7 @@
                     ExtractRequested="OnInspectorExtractRequested"
                     EditRequested="OnInspectorEditRequested"
                     ModifyFromFileReplacementSourceRequested="OnInspectorModifyFromFileReplacementSourceRequested"
+                    LoadMoreTextRequested="OnInspectorLoadMoreTextRequested"
                     OpenPreviewLocationRequested="OnInspectorOpenPreviewLocationRequested"
                     RedoReplacementRequested="OnInspectorRedoReplacementRequested"
                     DeleteChangeRecordRequested="OnInspectorDeleteChangeRecordRequested"

@@ -295,6 +295,9 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             : Task.CompletedTask;
     }
 
+    public Task LoadMorePreviewTextLinesAsync() =>
+        _assetPreviewLoadCoordinator.LoadMorePreviewTextLinesAsync(DocumentGroup.ActiveAssetTab);
+
     public async Task OpenResolvedAssetAsync(ResolvedAssetNavigationTarget? target)
     {
         if (target is null || IsBusy)

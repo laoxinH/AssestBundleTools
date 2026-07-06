@@ -205,4 +205,161 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
             diagnostic.Kind,
             "Missing full atlas text should be reported as unavailable rather than parsed from a display sample.");
     }
+
+    public static async Task HandleAsync_ShouldParseAtlasFromFullContentReference_WhenDisplayTextIsTruncated()
+    {
+        var workspaceId = new WorkspaceId("workspace-a");
+        var spineBundleId = new BundleId("bundle.spine");
+        var skeletonAssetId = new AssetId("skeleton-hero");
+        var atlasAssetId = new AssetId("atlas-hero");
+        var spineAssets = CreateAssetList(
+            workspaceId,
+            spineBundleId,
+            "spine.ab",
+            CreateItem(spineBundleId, skeletonAssetId.Value, "Assets/Hero/Hero.json", AssetType.TextAsset),
+            CreateItem(spineBundleId, atlasAssetId.Value, "Assets/Hero/Hero.atlas", AssetType.TextAsset),
+            CreateItem(spineBundleId, "texture-hero", "Assets/Hero/hero.png", AssetType.Texture2D));
+        var displayAtlasText = "hero.png\nsize: 512,256\n";
+        var fullAtlasText = """
+            hero.png
+            size: 512,256
+            head
+              xy: 12, 16
+              size: 32, 48
+            """;
+        var skeletonJson = """
+            {
+              "skeleton": { "spine": "3.8.99" },
+              "bones": [{ "name": "root" }],
+              "slots": [],
+              "skins": {},
+              "animations": {}
+            }
+            """;
+        var atlasReference = new AssetPreviewFullContentReferenceDto(
+            AssetPreviewFullContentReferenceKind.PreviewCache,
+            "text/plain",
+            fullAtlasText.Length,
+            "workspace-key",
+            PreviewCacheKey: "atlas-cache");
+        var chunkHandler = new TestPreviewTextChunkHandler();
+        chunkHandler.Add("atlas-cache", fullAtlasText);
+        var previewHandler = new TestAssetPreviewHandler(query =>
+        {
+            if (query.AssetId.Equals(skeletonAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(query, skeletonJson));
+            }
+
+            if (query.AssetId.Equals(atlasAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(
+                    query,
+                    displayAtlasText,
+                    isDisplayTruncated: true,
+                    fullContentReference: atlasReference));
+            }
+
+            return Result<AssetPreviewDto>.Success(CreateImagePreview(query, 512, 256));
+        });
+        var handler = new LoadSpineAssetGroupDetailsHandler(
+            new TestWorkspaceSessionRegistry(workspaceId, [spineAssets]),
+            previewHandler,
+            chunkHandler);
+
+        var result = await handler.HandleAsync(CreateQuery(workspaceId, spineBundleId));
+
+        TestAssert.True(result.IsSuccess, "Spine atlas details should load full atlas text from the preview content reference.");
+        var details = result.Value ?? throw new InvalidOperationException("Expected Spine group details.");
+        var page = TestAssert.Single(details.AtlasPages);
+        TestAssert.Equal("hero.png", page.Name, "Atlas page should come from reference-backed full text.");
+        var region = TestAssert.Single(page.Regions);
+        TestAssert.Equal("head", region.Name, "Atlas regions should come from reference-backed full text.");
+        TestAssert.True(chunkHandler.HandleCallCount > 0, "Reference-backed atlas parsing should read through the chunk query.");
+    }
+
+    public static async Task HandleAsync_ShouldPassReferenceBackedTextSources_ToRuntimePreview()
+    {
+        var workspaceId = new WorkspaceId("workspace-a");
+        var spineBundleId = new BundleId("bundle.spine");
+        var skeletonAssetId = new AssetId("skeleton-hero");
+        var atlasAssetId = new AssetId("atlas-hero");
+        var spineAssets = CreateAssetList(
+            workspaceId,
+            spineBundleId,
+            "spine.ab",
+            CreateItem(spineBundleId, skeletonAssetId.Value, "Assets/Hero/Hero.json", AssetType.TextAsset),
+            CreateItem(spineBundleId, atlasAssetId.Value, "Assets/Hero/Hero.atlas", AssetType.TextAsset),
+            CreateItem(spineBundleId, "texture-hero", "Assets/Hero/hero.png", AssetType.Texture2D));
+        var atlasText = """
+            hero.png
+            size: 512,256
+            head
+              xy: 12, 16
+              size: 32, 48
+            """;
+        var skeletonJson = """
+            {
+              "skeleton": { "spine": "3.8.99" },
+              "bones": [{ "name": "root" }],
+              "slots": [],
+              "skins": {},
+              "animations": {}
+            }
+            """;
+        var atlasReference = new AssetPreviewFullContentReferenceDto(
+            AssetPreviewFullContentReferenceKind.PreviewCache,
+            "text/plain",
+            atlasText.Length,
+            "workspace-key",
+            PreviewCacheKey: "atlas-cache");
+        var skeletonReference = new AssetPreviewFullContentReferenceDto(
+            AssetPreviewFullContentReferenceKind.PreviewCache,
+            "application/json",
+            skeletonJson.Length,
+            "workspace-key",
+            PreviewCacheKey: "skeleton-cache");
+        var chunkHandler = new TestPreviewTextChunkHandler();
+        chunkHandler.Add("atlas-cache", atlasText);
+        chunkHandler.Add("skeleton-cache", skeletonJson);
+        var previewHandler = new TestAssetPreviewHandler(query =>
+        {
+            if (query.AssetId.Equals(skeletonAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(
+                    query,
+                    skeletonJson[..Math.Min(24, skeletonJson.Length)],
+                    isDisplayTruncated: true,
+                    fullContentReference: skeletonReference));
+            }
+
+            if (query.AssetId.Equals(atlasAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(
+                    query,
+                    atlasText[..Math.Min(24, atlasText.Length)],
+                    isDisplayTruncated: true,
+                    fullContentReference: atlasReference));
+            }
+
+            return Result<AssetPreviewDto>.Success(CreateImagePreview(query, 512, 256));
+        });
+        var runtimePreviewService = new TestSpineAnimationRuntimePreviewService(request =>
+        {
+            TestAssert.Equal(null, request.SkeletonJson, "Reference-backed skeleton text should not be forced into the runtime request string.");
+            TestAssert.True(request.SkeletonJsonSource is not null, "Runtime request should carry a skeleton text source.");
+            TestAssert.Equal(1, request.AtlasTextSources?.Count ?? 0, "Runtime request should carry atlas text sources.");
+            return SpineAnimationRuntimePreviewResultDto.NotHandled;
+        });
+        var handler = new LoadSpineAssetGroupDetailsHandler(
+            new TestWorkspaceSessionRegistry(workspaceId, [spineAssets]),
+            previewHandler,
+            chunkHandler,
+            runtimePreviewService);
+
+        var result = await handler.HandleAsync(CreateQuery(workspaceId, spineBundleId));
+
+        TestAssert.True(result.IsSuccess, "Reference-backed Spine details should complete.");
+        TestAssert.Equal(1, runtimePreviewService.HandleCallCount, "Runtime preview should receive the reference-backed text sources.");
+    }
 }

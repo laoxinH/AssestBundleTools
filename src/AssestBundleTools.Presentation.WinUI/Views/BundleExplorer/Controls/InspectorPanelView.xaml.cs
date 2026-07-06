@@ -120,6 +120,8 @@ public sealed partial class InspectorPanelView : UserControl
 
     public event EventHandler? SpriteTextureReplacementRequested;
 
+    public event EventHandler? LoadMoreTextRequested;
+
     public event EventHandler<ResolvedAssetOpenRequestedEventArgs>? ResolvedAssetOpenRequested;
 
     public event EventHandler<SpineAtlasPageSelectionRequestedEventArgs>? SpineAtlasPageSelectionRequested;
@@ -182,6 +184,11 @@ public sealed partial class InspectorPanelView : UserControl
     private void OnPreviewSurfaceSpriteTextureReplacementRequested(object? sender, EventArgs e)
     {
         SpriteTextureReplacementRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnPreviewSurfaceLoadMoreTextRequested(object? sender, EventArgs e)
+    {
+        LoadMoreTextRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnPreviewSurfaceResolvedAssetOpenRequested(

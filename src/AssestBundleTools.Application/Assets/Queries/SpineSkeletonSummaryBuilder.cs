@@ -11,11 +11,14 @@ namespace AssestBundleTools.Application.Assets.Queries;
 internal sealed class SpineSkeletonSummaryBuilder
 {
     private readonly IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>> _assetPreviewQueryHandler;
+    private readonly AssetPreviewStructuredTextLoader _structuredTextLoader;
 
     public SpineSkeletonSummaryBuilder(
-        IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>> assetPreviewQueryHandler)
+        IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>> assetPreviewQueryHandler,
+        AssetPreviewStructuredTextLoader structuredTextLoader)
     {
         _assetPreviewQueryHandler = assetPreviewQueryHandler ?? throw new ArgumentNullException(nameof(assetPreviewQueryHandler));
+        _structuredTextLoader = structuredTextLoader ?? throw new ArgumentNullException(nameof(structuredTextLoader));
     }
 
     public async Task<SkeletonSummaryResult> BuildAsync(
@@ -45,7 +48,11 @@ internal sealed class SpineSkeletonSummaryBuilder
                         return SkeletonSummaryResult.Cancelled;
                     }
 
-                    if (TryReadSkeletonJson(ambiguousPreviewResult, out var ambiguousSkeletonJson) &&
+                    if (TryReadSkeletonJson(
+                            query,
+                            ambiguousPreviewResult,
+                            out var ambiguousSkeletonJson,
+                            cancellationToken) &&
                         TryCreateJsonSummary(skeletonAsset, ambiguousSkeletonJson, out var ambiguousJsonSummary))
                     {
                         summaries.Add(ambiguousJsonSummary);
@@ -65,7 +72,7 @@ internal sealed class SpineSkeletonSummaryBuilder
                 return SkeletonSummaryResult.Cancelled;
             }
 
-            if (!TryReadSkeletonJson(previewResult, out var skeletonJson))
+            if (!TryReadSkeletonJson(query, previewResult, out var skeletonJson, cancellationToken))
             {
                 diagnostics.Add(CreateDiagnostic(
                     SpineAssetGroupDiagnosticKind.SkeletonPreviewUnavailable,
@@ -89,10 +96,33 @@ internal sealed class SpineSkeletonSummaryBuilder
         return new SkeletonSummaryResult(false, summaries, diagnostics);
     }
 
-    private static bool TryReadSkeletonJson(
+    private bool TryReadSkeletonJson(
+        LoadSpineAssetGroupDetailsQuery query,
         Result<AssetPreviewDto> previewResult,
-        out string skeletonJson) =>
-        AssetPreviewStructuredTextReader.TryReadText(previewResult, out skeletonJson);
+        out string skeletonJson,
+        CancellationToken cancellationToken)
+    {
+        skeletonJson = string.Empty;
+        if (!_structuredTextLoader.TryCreateSource(
+                previewResult,
+                query.WorkspaceDataRootPath,
+                out var source))
+        {
+            return false;
+        }
+
+        var readResult = _structuredTextLoader.ReadText(
+            source,
+            AssetPreviewStructuredTextLoader.MaxStructuredJsonCharacters,
+            cancellationToken);
+        if (readResult.IsCancelled || string.IsNullOrWhiteSpace(readResult.Text))
+        {
+            return false;
+        }
+
+        skeletonJson = readResult.Text;
+        return true;
+    }
 
     private static bool TryCreateJsonSummary(
         SpineAssetGroupPartDto skeletonAsset,

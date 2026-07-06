@@ -15,8 +15,10 @@ internal sealed partial class SpineAnimationPreviewBuilder
         SpineAssetGroupPartDto skeletonAsset,
         string groupKey,
         string? skeletonJson,
+        AssetPreviewTextSourceDto? skeletonJsonSource,
         IReadOnlyList<SpineAtlasPageDto> atlasPages,
         IReadOnlyList<string> atlasTexts,
+        IReadOnlyList<AssetPreviewTextSourceDto> atlasTextSources,
         byte[]? skeletonBinaryContent,
         CancellationToken cancellationToken)
     {
@@ -44,7 +46,9 @@ internal sealed partial class SpineAnimationPreviewBuilder
                 atlasPages,
                 atlasTexts,
                 skeletonBinaryContent,
-                IncludeSampledFrames: false),
+                IncludeSampledFrames: false,
+                SkeletonJsonSource: skeletonJsonSource,
+                AtlasTextSources: atlasTextSources),
             cancellationToken);
         if (result.IsCancelled ||
             !result.IsHandled ||
@@ -66,7 +70,9 @@ internal sealed partial class SpineAnimationPreviewBuilder
                     result.Preview.Runtime ?? runtime,
                     atlasPages,
                     atlasTexts,
-                    skeletonBinaryContent)
+                    skeletonBinaryContent,
+                    SkeletonJsonSource: skeletonJsonSource,
+                    AtlasTextSources: atlasTextSources)
             }
         };
     }

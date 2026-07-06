@@ -206,9 +206,18 @@ public sealed partial class InspectorPanelViewModel
     public void ApplyTextPreview(
         string textContent,
         IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
-        string? previewPayloadFilePath = null)
+        string? previewPayloadFilePath = null,
+        AssetPreviewFullContentReferenceDto? reference = null,
+        string? workspaceDataRootPath = null,
+        bool hasMoreLines = false)
     {
-        Preview.ApplyTextPreview(textContent, previewInfoRows, previewPayloadFilePath);
+        Preview.ApplyTextPreview(
+            textContent,
+            previewInfoRows,
+            previewPayloadFilePath,
+            reference,
+            workspaceDataRootPath,
+            hasMoreLines);
         RebuildInformationCards();
     }
 

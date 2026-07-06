@@ -1,12 +1,27 @@
+using AssestBundleTools.Application.Assets.Dtos;
+
 namespace AssestBundleTools.Infrastructure.Bundles.Previewing.Spine;
 
 internal static class SpineRuntimeAtlasInputGuard
 {
     private const int MaxRuntimeAtlasTextCharacters = 4_000_000;
+    private const int MaxRuntimeAtlasSourceCharacters = 16_000_000;
     private const int MaxRuntimeAtlasLineCount = 120_000;
 
     public static bool CanAttemptRuntimeParse(IReadOnlyList<string>? atlasTexts)
     {
+        return CanAttemptRuntimeParse(atlasTexts, atlasSources: null);
+    }
+
+    public static bool CanAttemptRuntimeParse(
+        IReadOnlyList<string>? atlasTexts,
+        IReadOnlyList<AssetPreviewTextSourceDto>? atlasSources)
+    {
+        if (atlasSources is { Count: > 0 })
+        {
+            return CanAttemptRuntimeParseSources(atlasSources);
+        }
+
         if (atlasTexts is not { Count: > 0 })
         {
             return false;
@@ -22,6 +37,37 @@ internal static class SpineRuntimeAtlasInputGuard
 
             hasCandidate = true;
             if (!CanAttemptRuntimeParse(atlasText))
+            {
+                return false;
+            }
+        }
+
+        return hasCandidate;
+    }
+
+    private static bool CanAttemptRuntimeParseSources(IReadOnlyList<AssetPreviewTextSourceDto> atlasSources)
+    {
+        var hasCandidate = false;
+        foreach (var source in atlasSources)
+        {
+            if (!string.IsNullOrWhiteSpace(source.InlineText))
+            {
+                hasCandidate = true;
+                if (!CanAttemptRuntimeParse(source.InlineText))
+                {
+                    return false;
+                }
+
+                continue;
+            }
+
+            if (source.Reference is null)
+            {
+                continue;
+            }
+
+            hasCandidate = true;
+            if (source.ContentLength is > MaxRuntimeAtlasSourceCharacters)
             {
                 return false;
             }

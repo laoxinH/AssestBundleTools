@@ -12,14 +12,25 @@ public sealed class SpineAnimationRuntimePreviewService :
 {
     private readonly IReadOnlyDictionary<string, ISpineAnimationRuntimeAdapter> _adaptersByKey;
     private readonly IReadOnlyDictionary<string, ISpineAnimationRuntimePlaybackAdapter> _playbackAdaptersByKey;
+    private readonly IAssetPreviewTextSourceReader _textSourceReader;
 
     public SpineAnimationRuntimePreviewService()
-        : this([new V38SpineAnimationRuntimeAdapter(), new V42SpineAnimationRuntimeAdapter()])
+        : this(
+            [new V38SpineAnimationRuntimeAdapter(), new V42SpineAnimationRuntimeAdapter()],
+            new InlineAssetPreviewTextSourceReader())
     {
     }
 
-    internal SpineAnimationRuntimePreviewService(IReadOnlyList<ISpineAnimationRuntimeAdapter> adapters)
+    public SpineAnimationRuntimePreviewService(IAssetPreviewTextSourceReader textSourceReader)
+        : this([new V38SpineAnimationRuntimeAdapter(), new V42SpineAnimationRuntimeAdapter()], textSourceReader)
     {
+    }
+
+    internal SpineAnimationRuntimePreviewService(
+        IReadOnlyList<ISpineAnimationRuntimeAdapter> adapters,
+        IAssetPreviewTextSourceReader? textSourceReader = null)
+    {
+        _textSourceReader = textSourceReader ?? new InlineAssetPreviewTextSourceReader();
         _adaptersByKey = adapters.ToDictionary(static adapter => adapter.AdapterKey, StringComparer.Ordinal);
         _playbackAdaptersByKey = adapters
             .OfType<ISpineAnimationRuntimePlaybackAdapter>()
@@ -41,17 +52,17 @@ public sealed class SpineAnimationRuntimePreviewService :
         if (string.IsNullOrWhiteSpace(adapterKey) ||
             !_adaptersByKey.TryGetValue(adapterKey, out var adapter))
         {
-            return Task.FromResult(TryBuildBinaryPreviewWithAnyAdapter(request, cancellationToken));
+            return Task.FromResult(TryBuildPreviewWithAnyAdapter(request, cancellationToken));
         }
 
-        return Task.FromResult(adapter.TryBuildPreview(request, cancellationToken));
+        return Task.FromResult(adapter.TryBuildPreview(request, _textSourceReader, cancellationToken));
     }
 
-    private SpineAnimationRuntimePreviewResultDto TryBuildBinaryPreviewWithAnyAdapter(
+    private SpineAnimationRuntimePreviewResultDto TryBuildPreviewWithAnyAdapter(
         SpineAnimationRuntimePreviewRequestDto request,
         CancellationToken cancellationToken)
     {
-        if (request.SkeletonBinaryContent is not { Length: > 0 })
+        if (!HasSkeletonInput(request))
         {
             return SpineAnimationRuntimePreviewResultDto.NotHandled;
         }
@@ -63,7 +74,7 @@ public sealed class SpineAnimationRuntimePreviewService :
                 return SpineAnimationRuntimePreviewResultDto.Cancelled;
             }
 
-            var result = adapter.TryBuildPreview(request, cancellationToken);
+            var result = adapter.TryBuildPreview(request, _textSourceReader, cancellationToken);
             if (result.IsHandled || result.IsCancelled)
             {
                 return result;
@@ -133,23 +144,23 @@ public sealed class SpineAnimationRuntimePreviewService :
         if (string.IsNullOrWhiteSpace(adapterKey) ||
             !_playbackAdaptersByKey.TryGetValue(adapterKey, out var adapter))
         {
-            var binaryResult = TryCreateBinarySessionWithAnyAdapter(source, cancellationToken);
-            return binaryResult.IsHandled || binaryResult.IsCancelled
-                ? binaryResult
+            var fallbackAdapterResult = TryCreateSessionWithAnyAdapter(source, cancellationToken);
+            return fallbackAdapterResult.IsHandled || fallbackAdapterResult.IsCancelled
+                ? fallbackAdapterResult
                 : TryCreateSampledFallbackSession(source, cancellationToken);
         }
 
-        var adapterResult = adapter.TryCreatePlaybackSession(source, cancellationToken);
+        var adapterResult = adapter.TryCreatePlaybackSession(source, _textSourceReader, cancellationToken);
         return adapterResult.IsHandled || adapterResult.IsCancelled
             ? adapterResult
             : TryCreateSampledFallbackSession(source, cancellationToken);
     }
 
-    private SpineAnimationRuntimePlaybackSessionResultDto TryCreateBinarySessionWithAnyAdapter(
+    private SpineAnimationRuntimePlaybackSessionResultDto TryCreateSessionWithAnyAdapter(
         SpineAnimationRuntimePlaybackSourceDto source,
         CancellationToken cancellationToken)
     {
-        if (source.SkeletonBinaryContent is not { Length: > 0 })
+        if (!HasSkeletonInput(source))
         {
             return SpineAnimationRuntimePlaybackSessionResultDto.NotHandled;
         }
@@ -161,7 +172,7 @@ public sealed class SpineAnimationRuntimePreviewService :
                 return SpineAnimationRuntimePlaybackSessionResultDto.Cancelled;
             }
 
-            var result = adapter.TryCreatePlaybackSession(source, cancellationToken);
+            var result = adapter.TryCreatePlaybackSession(source, _textSourceReader, cancellationToken);
             if (result.IsHandled || result.IsCancelled)
             {
                 return result;
@@ -170,6 +181,16 @@ public sealed class SpineAnimationRuntimePreviewService :
 
         return SpineAnimationRuntimePlaybackSessionResultDto.NotHandled;
     }
+
+    private static bool HasSkeletonInput(SpineAnimationRuntimePreviewRequestDto request) =>
+        request.SkeletonBinaryContent is { Length: > 0 } ||
+        !string.IsNullOrWhiteSpace(request.SkeletonJson) ||
+        request.SkeletonJsonSource is not null;
+
+    private static bool HasSkeletonInput(SpineAnimationRuntimePlaybackSourceDto source) =>
+        source.SkeletonBinaryContent is { Length: > 0 } ||
+        !string.IsNullOrWhiteSpace(source.SkeletonJson) ||
+        source.SkeletonJsonSource is not null;
 
     private static SpineAnimationRuntimePlaybackSessionResultDto TryCreateSampledFallbackSession(
         SpineAnimationRuntimePlaybackSourceDto source,

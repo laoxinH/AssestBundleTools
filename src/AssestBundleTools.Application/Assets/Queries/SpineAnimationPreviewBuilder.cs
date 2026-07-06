@@ -9,12 +9,15 @@ namespace AssestBundleTools.Application.Assets.Queries;
 internal sealed partial class SpineAnimationPreviewBuilder
 {
     private readonly IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>> _assetPreviewQueryHandler;
+    private readonly AssetPreviewStructuredTextLoader _structuredTextLoader;
 
     public SpineAnimationPreviewBuilder(
         IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>> assetPreviewQueryHandler,
+        AssetPreviewStructuredTextLoader structuredTextLoader,
         ISpineAnimationRuntimePreviewService? runtimePreviewService = null)
     {
         _assetPreviewQueryHandler = assetPreviewQueryHandler ?? throw new ArgumentNullException(nameof(assetPreviewQueryHandler));
+        _structuredTextLoader = structuredTextLoader ?? throw new ArgumentNullException(nameof(structuredTextLoader));
         _runtimePreviewService = runtimePreviewService ?? NoOpRuntimePreviewService;
     }
 
@@ -24,6 +27,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
         IReadOnlyList<SpineAssetGroupPartDto> skeletonAssets,
         IReadOnlyList<SpineAtlasPageDto> atlasPages,
         IReadOnlyList<string> atlasTexts,
+        IReadOnlyList<AssetPreviewTextSourceDto> atlasTextSources,
         CancellationToken cancellationToken)
     {
         var diagnostics = new List<SpineAssetGroupDiagnosticDto>();
@@ -41,6 +45,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
                 jsonSkeletonAsset,
                 atlasPages,
                 atlasTexts,
+                atlasTextSources,
                 cancellationToken);
         }
 
@@ -56,6 +61,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
             binarySkeletonAsset,
             atlasPages,
             atlasTexts,
+            atlasTextSources,
             cancellationToken);
     }
 
@@ -65,6 +71,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
         SpineAssetGroupPartDto skeletonAsset,
         IReadOnlyList<SpineAtlasPageDto> atlasPages,
         IReadOnlyList<string> atlasTexts,
+        IReadOnlyList<AssetPreviewTextSourceDto> atlasTextSources,
         CancellationToken cancellationToken)
     {
         var previewResult = await _assetPreviewQueryHandler.HandleAsync(
@@ -75,7 +82,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
             return SpineAnimationPreviewBuildResult.Cancelled;
         }
 
-        if (!TryReadSkeletonJson(previewResult, out var skeletonJson))
+        if (!TryCreateSkeletonTextSource(query, previewResult, out var skeletonJsonSource))
         {
             return SpineAnimationPreviewBuildResult.Empty;
         }
@@ -83,9 +90,10 @@ internal sealed partial class SpineAnimationPreviewBuilder
         return await BuildJsonSkeletonPreviewFromTextAsync(
             skeletonAsset,
             groupKey,
-            skeletonJson,
+            skeletonJsonSource,
             atlasPages,
             atlasTexts,
+            atlasTextSources,
             query.LoadMode,
             cancellationToken);
     }
@@ -93,18 +101,21 @@ internal sealed partial class SpineAnimationPreviewBuilder
     private async Task<SpineAnimationPreviewBuildResult> BuildJsonSkeletonPreviewFromTextAsync(
         SpineAssetGroupPartDto skeletonAsset,
         string groupKey,
-        string skeletonJson,
+        AssetPreviewTextSourceDto skeletonJsonSource,
         IReadOnlyList<SpineAtlasPageDto> atlasPages,
         IReadOnlyList<string> atlasTexts,
+        IReadOnlyList<AssetPreviewTextSourceDto> atlasTextSources,
         SpineAssetGroupDetailsLoadMode loadMode,
         CancellationToken cancellationToken)
     {
         var runtimePreviewResult = await TryBuildRuntimePreviewAsync(
             skeletonAsset,
             groupKey,
-            skeletonJson,
+            skeletonJsonSource.InlineText,
+            skeletonJsonSource,
             atlasPages,
             atlasTexts,
+            atlasTextSources,
             skeletonBinaryContent: null,
             cancellationToken);
         if (runtimePreviewResult.IsCancelled)
@@ -126,16 +137,28 @@ internal sealed partial class SpineAnimationPreviewBuilder
             return SpineAnimationPreviewBuildResult.EmptyWithDiagnostics(runtimePreviewResult.Diagnostics);
         }
 
-        return TryBuildPreview(
+        var skeletonJson = ReadSkeletonJsonForApplicationFallback(skeletonJsonSource, cancellationToken);
+        if (skeletonJson.IsCancelled)
+        {
+            return SpineAnimationPreviewBuildResult.Cancelled;
+        }
+
+        if (!string.IsNullOrWhiteSpace(skeletonJson.Text) &&
+            TryBuildPreview(
             skeletonAsset,
             groupKey,
-            skeletonJson,
+            skeletonJson.Text,
+            skeletonJsonSource,
             atlasPages,
             atlasTexts,
+            atlasTextSources,
             out var preview,
-            out var previewDiagnostics)
-            ? new SpineAnimationPreviewBuildResult(false, preview, previewDiagnostics)
-            : SpineAnimationPreviewBuildResult.EmptyWithDiagnostics(previewDiagnostics);
+            out var previewDiagnostics))
+        {
+            return new SpineAnimationPreviewBuildResult(false, preview, previewDiagnostics);
+        }
+
+        return SpineAnimationPreviewBuildResult.Empty;
     }
 
     private async Task<SpineAnimationPreviewBuildResult> BuildBinarySkeletonPreviewAsync(
@@ -144,6 +167,7 @@ internal sealed partial class SpineAnimationPreviewBuilder
         SpineAssetGroupPartDto skeletonAsset,
         IReadOnlyList<SpineAtlasPageDto> atlasPages,
         IReadOnlyList<string> atlasTexts,
+        IReadOnlyList<AssetPreviewTextSourceDto> atlasTextSources,
         CancellationToken cancellationToken)
     {
         var previewResult = await _assetPreviewQueryHandler.HandleAsync(
@@ -160,8 +184,10 @@ internal sealed partial class SpineAnimationPreviewBuilder
                 skeletonAsset,
                 groupKey,
                 skeletonJson: null,
+                skeletonJsonSource: null,
                 atlasPages,
                 atlasTexts,
+                atlasTextSources,
                 skeletonBinaryContent,
                 cancellationToken);
             if (runtimePreviewResult.IsCancelled)
@@ -177,15 +203,33 @@ internal sealed partial class SpineAnimationPreviewBuilder
                     runtimePreviewResult.Diagnostics);
             }
         }
-        else if (TryReadSkeletonJson(previewResult, out var skeletonJson) &&
-                 LooksLikeJsonObject(skeletonJson))
+        else if (TryCreateSkeletonTextSource(query, previewResult, out var skeletonJsonSource))
         {
+            var skeletonJson = ReadSkeletonJsonForApplicationFallback(skeletonJsonSource, cancellationToken);
+            if (skeletonJson.IsCancelled)
+            {
+                return SpineAnimationPreviewBuildResult.Cancelled;
+            }
+
+            if (string.IsNullOrWhiteSpace(skeletonJson.Text) ||
+                !LooksLikeJsonObject(skeletonJson.Text))
+            {
+                return SpineAnimationPreviewBuildResult.EmptyWithDiagnostics(
+                [
+                    CreateUnsupportedFeatureDiagnostic(
+                        groupKey,
+                        skeletonAsset,
+                        SpineAnimationUnsupportedFeatureKind.BinarySkeleton)
+                ]);
+            }
+
             var jsonPreviewResult = await BuildJsonSkeletonPreviewFromTextAsync(
                 skeletonAsset,
                 groupKey,
-                skeletonJson,
+                skeletonJsonSource,
                 atlasPages,
                 atlasTexts,
+                atlasTextSources,
                 query.LoadMode,
                 cancellationToken);
             if (jsonPreviewResult.IsCancelled ||
@@ -209,8 +253,10 @@ internal sealed partial class SpineAnimationPreviewBuilder
         SpineAssetGroupPartDto skeletonAsset,
         string groupKey,
         string skeletonJson,
+        AssetPreviewTextSourceDto skeletonJsonSource,
         IReadOnlyList<SpineAtlasPageDto> atlasPages,
         IReadOnlyList<string> atlasTexts,
+        IReadOnlyList<AssetPreviewTextSourceDto> atlasTextSources,
         out SpineAnimationPreviewDto? preview,
         out IReadOnlyList<SpineAssetGroupDiagnosticDto> diagnostics)
     {
@@ -261,7 +307,9 @@ internal sealed partial class SpineAnimationPreviewBuilder
                     SampledFallback: new SpineAnimationSampledPlaybackSourceDto(
                         skinPreviews,
                         activeSkinPreview.SetupFrame,
-                        activeSkinPreview.Animations))
+                        activeSkinPreview.Animations),
+                    SkeletonJsonSource: skeletonJsonSource,
+                    AtlasTextSources: atlasTextSources)
             };
             return true;
         }
@@ -284,6 +332,34 @@ internal sealed partial class SpineAnimationPreviewBuilder
         }
 
         return false;
+    }
+
+    private bool TryCreateSkeletonTextSource(
+        LoadSpineAssetGroupDetailsQuery query,
+        Result<AssetPreviewDto> previewResult,
+        out AssetPreviewTextSourceDto skeletonJsonSource) =>
+        _structuredTextLoader.TryCreateSource(
+            previewResult,
+            query.WorkspaceDataRootPath,
+            out skeletonJsonSource);
+
+    private SkeletonJsonReadResult ReadSkeletonJsonForApplicationFallback(
+        AssetPreviewTextSourceDto skeletonJsonSource,
+        CancellationToken cancellationToken)
+    {
+        var readResult = _structuredTextLoader.ReadText(
+            skeletonJsonSource,
+            AssetPreviewStructuredTextLoader.MaxStructuredJsonCharacters,
+            cancellationToken);
+        return readResult.IsCancelled
+            ? SkeletonJsonReadResult.Cancelled
+            : new SkeletonJsonReadResult(false, readResult.Text ?? string.Empty);
+    }
+
+    private sealed record SkeletonJsonReadResult(bool IsCancelled, string Text)
+    {
+        public static SkeletonJsonReadResult Cancelled { get; } =
+            new(true, string.Empty);
     }
 
 }

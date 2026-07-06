@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
-using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -21,8 +21,12 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
     private string _previewFallbackReasonText = string.Empty;
     private string _previewDiagnosticDetailText = string.Empty;
     private string _previewStateBadgeText = string.Empty;
+    private AssetPreviewFullContentReferenceDto? _previewTextReference;
+    private string _previewTextWorkspaceDataRootPath = string.Empty;
     private AssetPreviewKind _previewKind;
     private bool _isPreviewLoading;
+    private bool _isPreviewTextLoadingMore;
+    private bool _hasMorePreviewTextLines;
     private bool _hasSelection;
     private bool _isCurrentAssetModified;
     private IReadOnlyList<InspectorInfoRowViewModel> _previewInfoRows = Array.Empty<InspectorInfoRowViewModel>();
@@ -65,6 +69,21 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
     }
 
     public ObservableCollection<TextDocumentLineViewModel> PreviewTextLines { get; } = new();
+
+    public bool CanLoadMorePreviewTextLines =>
+        _previewKind == AssetPreviewKind.Text &&
+        !_isPreviewLoading &&
+        !_isPreviewTextLoadingMore &&
+        _hasMorePreviewTextLines &&
+        _previewTextReference is not null &&
+        !string.IsNullOrWhiteSpace(_previewTextWorkspaceDataRootPath);
+
+    public Visibility LoadMorePreviewTextLinesButtonVisibility =>
+        _previewKind == AssetPreviewKind.Text &&
+        _hasMorePreviewTextLines &&
+        _previewTextReference is not null
+            ? Visibility.Visible
+            : Visibility.Collapsed;
 
     /// <summary>
     /// 该路径只用于“打开预览文件所在位置”这类壳层动作，不参与业务判断。
@@ -345,21 +364,6 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         NotifyPreviewStateChanged();
     }
 
-    internal void ApplyTextPreview(
-        string textContent,
-        IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
-        string? previewPayloadFilePath = null)
-    {
-        ResetState();
-        _previewKind = AssetPreviewKind.Text;
-        _previewInfoRows = CloneRows(previewInfoRows);
-        PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
-        PreviewText = textContent;
-        PreviewTextLanguage = DetectTextLanguage(previewPayloadFilePath, textContent);
-        ApplyPreviewTextLines(textContent);
-        NotifyPreviewStateChanged();
-    }
-
     internal void ApplySummaryPreview(
         string summaryText,
         IReadOnlyList<InspectorInfoRowViewModel>? previewInfoRows = null,
@@ -380,6 +384,10 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         PreviewText = string.Empty;
         PreviewTextLanguage = "plaintext";
         PreviewTextLines.Clear();
+        _previewTextReference = null;
+        _previewTextWorkspaceDataRootPath = string.Empty;
+        _hasMorePreviewTextLines = false;
+        _isPreviewTextLoadingMore = false;
         PreviewPayloadFilePath = string.Empty;
         Image.Clear();
         Mesh.Clear();
@@ -424,6 +432,8 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         OnPropertyChanged(nameof(UsesFixedPreviewSurfaceHeight));
         OnPropertyChanged(nameof(PreviewStateBadgeVisibility));
         NotifyAudioPreviewPresentationChanged();
+        OnPropertyChanged(nameof(CanLoadMorePreviewTextLines));
+        OnPropertyChanged(nameof(LoadMorePreviewTextLinesButtonVisibility));
     }
 
     private static string NormalizePreviewInfoText(string? previewInfoText) =>
@@ -450,52 +460,6 @@ public sealed partial class InspectorPreviewViewModel : ObservableObject
         return cards is { Count: > 0 }
             ? cards.ToArray()
             : Array.Empty<InspectorInfoCardViewModel>();
-    }
-
-    private void ApplyPreviewTextLines(string? textContent)
-    {
-        PreviewTextLines.Clear();
-        if (string.IsNullOrEmpty(textContent))
-        {
-            return;
-        }
-
-        var normalizedText = textContent.Replace("\r\n", "\n", StringComparison.Ordinal)
-            .Replace('\r', '\n');
-        var lineIndex = 0;
-        foreach (var line in normalizedText.Split('\n'))
-        {
-            PreviewTextLines.Add(new TextDocumentLineViewModel(
-                (lineIndex + 1).ToString(CultureInfo.CurrentCulture),
-                line));
-            lineIndex++;
-        }
-    }
-
-    private static string DetectTextLanguage(string? previewPayloadFilePath, string? textContent)
-    {
-        var extension = string.IsNullOrWhiteSpace(previewPayloadFilePath)
-            ? string.Empty
-            : Path.GetExtension(previewPayloadFilePath.Trim());
-        if (extension.Equals(".json", StringComparison.OrdinalIgnoreCase) ||
-            extension.Equals(".skel", StringComparison.OrdinalIgnoreCase))
-        {
-            return "json";
-        }
-
-        if (extension.Equals(".atlas", StringComparison.OrdinalIgnoreCase))
-        {
-            return "atlas";
-        }
-
-        var trimmed = textContent?.TrimStart();
-        if (!string.IsNullOrEmpty(trimmed) &&
-            (trimmed[0] == '{' || trimmed[0] == '['))
-        {
-            return "json";
-        }
-
-        return "plaintext";
     }
 
     private static bool UsesFixedPreviewSurfaceHeightFor(AssetPreviewKind previewKind)

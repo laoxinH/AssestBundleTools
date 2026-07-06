@@ -9,16 +9,19 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter
 {
     public SpineAnimationRuntimePlaybackSessionResultDto TryCreatePlaybackSession(
         SpineAnimationRuntimePlaybackSourceDto source,
+        IAssetPreviewTextSourceReader textSourceReader,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(textSourceReader);
         if (cancellationToken.IsCancellationRequested)
         {
             return SpineAnimationRuntimePlaybackSessionResultDto.Cancelled;
         }
 
-        if (!SpineRuntimeAtlasInputGuard.CanAttemptRuntimeParse(source.AtlasTexts) ||
+        if (!SpineRuntimeAtlasInputGuard.CanAttemptRuntimeParse(source.AtlasTexts, source.AtlasTextSources) ||
             (string.IsNullOrWhiteSpace(source.SkeletonJson) &&
+             source.SkeletonJsonSource is null &&
              source.SkeletonBinaryContent is not { Length: > 0 }))
         {
             return SpineAnimationRuntimePlaybackSessionResultDto.NotHandled;
@@ -26,7 +29,7 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter
 
         try
         {
-            var skeletonData = ReadSkeletonData(source);
+            var skeletonData = ReadSkeletonData(source, textSourceReader);
             if (cancellationToken.IsCancellationRequested)
             {
                 return SpineAnimationRuntimePlaybackSessionResultDto.Cancelled;
@@ -51,15 +54,11 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter
         }
     }
 
-    private static Runtime.SkeletonData? ReadSkeletonData(SpineAnimationRuntimePlaybackSourceDto source)
+    private static Runtime.SkeletonData? ReadSkeletonData(
+        SpineAnimationRuntimePlaybackSourceDto source,
+        IAssetPreviewTextSourceReader textSourceReader)
     {
-        var atlases = source.AtlasTexts
-            .Where(static text => !string.IsNullOrWhiteSpace(text))
-            .Select(static text => new Runtime.Atlas(
-                new StringReader(text),
-                string.Empty,
-                new NoOpTextureLoader()))
-            .ToArray();
+        var atlases = CreateAtlases(source.AtlasTexts, source.AtlasTextSources, textSourceReader);
         if (source.SkeletonBinaryContent is { Length: > 0 } skeletonBinaryContent)
         {
             var binaryLoader = new Runtime.SkeletonBinary(atlases);
@@ -67,13 +66,17 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter
             return binaryLoader.ReadSkeletonData(stream);
         }
 
-        if (string.IsNullOrWhiteSpace(source.SkeletonJson))
+        if (string.IsNullOrWhiteSpace(source.SkeletonJson) &&
+            source.SkeletonJsonSource is null)
         {
             throw new InvalidDataException("Skeleton JSON or binary content is required.");
         }
 
         var jsonLoader = new Runtime.SkeletonJson(atlases);
-        using var reader = new StringReader(source.SkeletonJson);
+        using var reader = OpenSkeletonJsonReader(
+            source.SkeletonJson,
+            source.SkeletonJsonSource,
+            textSourceReader);
         return jsonLoader.ReadSkeletonData(reader);
     }
 

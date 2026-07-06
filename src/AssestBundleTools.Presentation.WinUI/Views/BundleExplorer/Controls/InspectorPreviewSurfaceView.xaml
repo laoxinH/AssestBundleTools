@@ -709,11 +709,13 @@
 
                 <controls:TextDocumentSurfaceView
                     Margin="8,0,8,8"
+                    CanLoadMoreLines="{x:Bind ViewModel.Preview.CanLoadMorePreviewTextLines, Mode=OneWay}"
                     DocumentLanguage="{x:Bind ViewModel.Preview.PreviewTextLanguage, Mode=OneWay}"
                     DocumentText="{x:Bind ViewModel.Preview.PreviewText, Mode=OneWay}"
-                    FooterVisibility="Collapsed"
                     IsReadOnly="True"
                     Lines="{x:Bind ViewModel.Preview.PreviewTextLines, Mode=OneWay}"
+                    LoadMoreLinesButtonVisibility="{x:Bind ViewModel.Preview.LoadMorePreviewTextLinesButtonVisibility, Mode=OneWay}"
+                    LoadMoreLinesRequested="OnPreviewTextLoadMoreLinesRequested"
                     Visibility="{x:Bind ViewModel.Preview.PreviewTextVisibility, Mode=OneWay}" />
 
                 <StackPanel

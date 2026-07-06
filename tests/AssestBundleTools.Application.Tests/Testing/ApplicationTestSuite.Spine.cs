@@ -80,6 +80,14 @@ internal static partial class ApplicationTestSuite
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldRejectTruncatedAtlasDisplayText_WhenFullTextIsUnavailable);
         await RunTestAsync(
             failures,
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseAtlasFromFullContentReference_WhenDisplayTextIsTruncated),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseAtlasFromFullContentReference_WhenDisplayTextIsTruncated);
+        await RunTestAsync(
+            failures,
+            nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldPassReferenceBackedTextSources_ToRuntimePreview),
+            LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldPassReferenceBackedTextSources_ToRuntimePreview);
+        await RunTestAsync(
+            failures,
             nameof(LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseJsonSkeletonSummary_FromPreviewPipeline),
             LoadSpineAssetGroupDetailsHandlerTests.HandleAsync_ShouldParseJsonSkeletonSummary_FromPreviewPipeline);
         await RunTestAsync(

@@ -13,7 +13,9 @@ public sealed record SpineAnimationRuntimePlaybackSourceDto(
     IReadOnlyList<SpineAtlasPageDto> AtlasPages,
     IReadOnlyList<string> AtlasTexts,
     byte[]? SkeletonBinaryContent = null,
-    SpineAnimationSampledPlaybackSourceDto? SampledFallback = null);
+    SpineAnimationSampledPlaybackSourceDto? SampledFallback = null,
+    AssetPreviewTextSourceDto? SkeletonJsonSource = null,
+    IReadOnlyList<AssetPreviewTextSourceDto>? AtlasTextSources = null);
 
 public sealed record SpineAnimationSampledPlaybackSourceDto(
     IReadOnlyList<SpineAnimationSkinPreviewDto> SkinPreviews,

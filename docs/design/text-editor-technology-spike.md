@@ -44,7 +44,7 @@
 已建立的边界：
 
 - `TextDocumentSurfaceView`
-  Presentation 统一文本承载控件，当前以 WebView2 + 离线 Monaco 承载预览和编辑，并保留只读行列表、搜索结果列、小文本编辑框、状态栏和加载更多事件作为 fallback。
+  Presentation 统一文本承载控件，当前以 WebView2 + 离线 Monaco 承载预览和编辑，并保留只读行列表、搜索结果列、小文本编辑框、状态栏和加载更多事件作为 fallback。普通文本预览的“加载更多”也经该控件发出事件，由页面 / 窗口协调器调用 `LoadPreviewTextLinesQuery` 追加行范围，和编辑器的分块加载共享同一 Application query 边界。
 - `TextDocumentLineViewModel`
   普通预览和编辑器共享的行显示模型。
 - `TextDocumentSearchMatchViewModel`
@@ -52,7 +52,7 @@
 
 当前迁移状态：
 
-- 检查器普通 `Text` 预览已从 `ScrollViewer + TextBlock` 迁移到 `TextDocumentSurfaceView`。
+- 检查器普通 `Text` 预览已从 `ScrollViewer + TextBlock` 迁移到 `TextDocumentSurfaceView`，并在展示文本被截断且存在 `FullContentReference` 时通过 `LoadPreviewTextLinesQuery` 支持按行追加预览内容。
 - `TextAsset / Shader` 编辑窗口已从独立 `ListView / TextBox` 组合迁移到 `TextDocumentSurfaceView`。
 - `TextDocumentSurfaceView` 已接入 WebView2 + 离线 Monaco 静态资源作为主实现，原生 WinUI 行列表 / `TextBox` 只作为 WebView2 初始化失败、Runtime 缺失或静态资源缺失时的 fallback。
 - Monaco 主实现已统一普通预览和编辑窗口的行号、语法染色、查找 / 替换入口、Ctrl+F、Ctrl+H、Ctrl+S、撤销 / 重做和 VS Code 风格文本面。`.json / .skel` 走 JSON 语言，`.atlas` 走类 ini 语言，Shader 临时映射到 C++ 风格高亮。

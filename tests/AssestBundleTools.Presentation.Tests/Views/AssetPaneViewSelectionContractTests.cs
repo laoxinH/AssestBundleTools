@@ -369,22 +369,31 @@ public sealed class AssetPaneViewSelectionContractTests
     [Fact]
     public void BundleExplorerPage_AssetPaneModifyContextMenu_ShouldRouteSpriteToEditorAndFallbackToFileModification()
     {
-        var code = File.ReadAllText(
+        var repositoryRoot = FindRepositoryRoot();
+        var actionCode = File.ReadAllText(
             Path.Combine(
-                FindRepositoryRoot(),
+                repositoryRoot,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "BundleExplorerPage.InspectorActions.cs"));
+        var pageCode = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
                 "src",
                 "AssestBundleTools.Presentation.WinUI",
                 "Views",
                 "BundleExplorer",
                 "BundleExplorerPage.xaml.cs"));
-        var handler = code[
-            code.IndexOf("private async void OnPrimaryPaneReplaceSelectedAssetRequested", StringComparison.Ordinal)..
-            code.IndexOf("private async void OnInspectorSelectFileReplacementSourceRequested", StringComparison.Ordinal)];
+        var handler = actionCode[
+            actionCode.IndexOf("private async void OnPrimaryPaneReplaceSelectedAssetRequested", StringComparison.Ordinal)..
+            actionCode.IndexOf("private async void OnInspectorSelectFileReplacementSourceRequested", StringComparison.Ordinal)];
 
         Assert.Contains("HandleMainAssetSelectionChangedAsync", handler);
         Assert.Contains("OpenSpriteAssetEditWindowAsync", handler);
         Assert.Contains("ModifySelectedAssetAsync", handler);
-        Assert.Contains("ModifyFromFileReplacementSourceAsync", code);
+        Assert.Contains("ModifyFromFileReplacementSourceAsync", pageCode);
         Assert.DoesNotContain("SelectFileReplacementSourceAsync", handler);
         Assert.DoesNotContain("SelectWorkspaceReplacementSourceAsync", handler);
     }

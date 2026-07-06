@@ -603,6 +603,15 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
                 "Views",
                 "BundleExplorer",
                 "Controls",
+                "InspectorPreviewSurfaceView.Actions.cs"));
+        var previewSurfaceMainCode = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
                 "InspectorPreviewSurfaceView.xaml.cs"));
 
         Assert.Contains("x:Name=\"SpriteEditResetOriginalButton\"", previewSurfaceXaml);
@@ -614,8 +623,8 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
         Assert.Contains("OnSpriteEditFullSizeButtonClick", previewSurfaceXaml);
         Assert.Contains("ResetSpriteEditGeometryToOriginal()", previewSurfaceCode);
         Assert.Contains("UseFullImageForSpriteEditGeometry()", previewSurfaceCode);
-        Assert.Contains("InspectorSpriteEditResetOriginalToolTip", previewSurfaceCode);
-        Assert.Contains("InspectorSpriteEditFullSizeToolTip", previewSurfaceCode);
+        Assert.Contains("InspectorSpriteEditResetOriginalToolTip", previewSurfaceMainCode);
+        Assert.Contains("InspectorSpriteEditFullSizeToolTip", previewSurfaceMainCode);
         Assert.Contains("AutomationProperties.SetName(button, text)", previewSurfaceCode);
     }
 

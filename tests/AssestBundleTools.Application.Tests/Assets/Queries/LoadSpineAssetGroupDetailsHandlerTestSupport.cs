@@ -22,13 +22,17 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
         GetAssetPreviewQuery query,
         string text,
         string? fullTextContent = null,
-        bool isDisplayTruncated = false) =>
+        bool isDisplayTruncated = false,
+        AssetPreviewFullContentReferenceDto? fullContentReference = null) =>
         CreatePreview(query, AssetPreviewKind.Text, text) with
         {
             FullTextContent = fullTextContent,
+            FullContentReference = fullContentReference,
             TextDisplay = new AssetPreviewTextDisplayDto(
                 DisplayCharacterCount: text.Length,
-                FullCharacterCount: isDisplayTruncated ? text.Length + 1 : text.Length,
+                FullCharacterCount: fullContentReference is not null
+                    ? (int)Math.Min(fullContentReference.ContentLength, int.MaxValue)
+                    : isDisplayTruncated ? text.Length + 1 : text.Length,
                 DisplayLineCount: CountLines(text),
                 EstimatedFullLineCount: CountLines(text) + (isDisplayTruncated ? 1 : 0),
                 IsTruncated: isDisplayTruncated,
@@ -244,6 +248,55 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
             return Task.FromResult(cancellationToken.IsCancellationRequested
                 ? SpineAnimationRuntimePreviewResultDto.Cancelled
                 : _handler(request));
+        }
+    }
+
+    private sealed class TestPreviewTextChunkHandler :
+        IQueryHandler<LoadPreviewTextChunkQuery, Result<AssetPreviewTextChunkDto>>
+    {
+        private readonly Dictionary<string, string> _textByKey = new(StringComparer.Ordinal);
+
+        public int HandleCallCount { get; private set; }
+
+        public void Add(string key, string text)
+        {
+            _textByKey[key] = text;
+        }
+
+        public Task<Result<AssetPreviewTextChunkDto>> HandleAsync(
+            LoadPreviewTextChunkQuery query,
+            CancellationToken cancellationToken = default)
+        {
+            HandleCallCount++;
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Task.FromResult(Result<AssetPreviewTextChunkDto>.Cancelled());
+            }
+
+            var key = query.Reference.PreviewCacheKey ??
+                      query.Reference.SourcePath ??
+                      query.Reference.DraftId ??
+                      string.Empty;
+            if (!_textByKey.TryGetValue(key, out var text))
+            {
+                return Task.FromResult(Result<AssetPreviewTextChunkDto>.Failure(
+                    new Domain.Common.Errors.AppError(
+                        "Test.TextMissing",
+                        Domain.Common.Errors.ErrorCategory.NotFound,
+                        Domain.Common.Errors.ErrorSeverity.Error,
+                        "Test.TextMissing")));
+            }
+
+            var offset = Math.Clamp(query.Offset, 0, text.Length);
+            var length = Math.Min(query.Length, text.Length - offset);
+            var chunkText = length <= 0 ? string.Empty : text.Substring(offset, length);
+            return Task.FromResult(Result<AssetPreviewTextChunkDto>.Success(new AssetPreviewTextChunkDto(
+                query.Reference,
+                chunkText,
+                offset,
+                chunkText.Length,
+                text.Length,
+                offset + chunkText.Length < text.Length)));
         }
     }
 

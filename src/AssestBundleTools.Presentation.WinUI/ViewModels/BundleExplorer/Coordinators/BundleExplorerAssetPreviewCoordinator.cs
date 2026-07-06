@@ -19,6 +19,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordin
 internal sealed class BundleExplorerAssetPreviewCoordinator
 {
     private static readonly TimeSpan DefaultPreviewQueryTimeout = TimeSpan.FromSeconds(45);
+    private const int PreviewTextLoadMoreLineCount = 512;
 
     private readonly IWorkspaceAssetInspectionGateway _workspaceAssetInspectionGateway;
     private readonly IWorkspaceContextService _workspaceContextService;
@@ -136,6 +137,42 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         finally
         {
             assetTab.CompletePreviewRequest(previewRequest);
+        }
+    }
+
+    public async Task LoadMorePreviewTextLinesAsync(AssetDocumentTabViewModel assetTab)
+    {
+        ArgumentNullException.ThrowIfNull(assetTab);
+
+        var preview = assetTab.Inspector.Preview;
+        if (!preview.CanLoadMorePreviewTextLines)
+        {
+            return;
+        }
+
+        var query = preview.CreateLoadMorePreviewTextLinesQuery(PreviewTextLoadMoreLineCount);
+        if (query is null)
+        {
+            return;
+        }
+
+        preview.SetPreviewTextLoadingMore(true);
+        try
+        {
+            var result = await _workspaceAssetInspectionGateway.LoadPreviewTextLinesAsync(
+                query,
+                CancellationToken.None);
+            if (!result.IsSuccess || result.Value is null)
+            {
+                preview.AppendPreviewTextLines(Array.Empty<string>(), hasMoreLines: false);
+                return;
+            }
+
+            preview.AppendPreviewTextLines(result.Value.Lines, result.Value.HasMore);
+        }
+        finally
+        {
+            preview.SetPreviewTextLoadingMore(false);
         }
     }
 

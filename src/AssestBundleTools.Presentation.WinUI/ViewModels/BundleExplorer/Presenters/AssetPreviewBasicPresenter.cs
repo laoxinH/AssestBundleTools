@@ -34,6 +34,7 @@ internal sealed class AssetPreviewBasicPresenter
 
     public void ApplyTextPreview(
         InspectorPanelViewModel inspector,
+        string workspaceDataRootPath,
         AssetPreviewDto preview,
         IReadOnlyList<InspectorInfoRowViewModel> previewInfoRows)
     {
@@ -47,7 +48,11 @@ internal sealed class AssetPreviewBasicPresenter
         inspector.ApplyTextPreview(
             safeDisplayText.TextContent,
             previewInfoRows,
-            preview.PreviewPayloadFilePath);
+            preview.PreviewPayloadFilePath,
+            preview.FullContentReference,
+            workspaceDataRootPath,
+            preview.TextDisplay?.IsTruncated == true &&
+            preview.FullContentReference is not null);
         ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
     }
 

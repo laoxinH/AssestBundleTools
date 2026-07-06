@@ -460,6 +460,11 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
 
     public void OpenCurrentPreviewLocation() => _assetCommandCoordinator.OpenCurrentPreviewLocation();
 
+    public Task LoadMorePreviewTextLinesAsync() =>
+        ActiveAssetDocumentTab is null
+            ? Task.CompletedTask
+            : _assetPreviewCoordinator.LoadMorePreviewTextLinesAsync(ActiveAssetDocumentTab);
+
     public Task<bool> LocateActiveDocumentInPrimaryPaneAsync() =>
         _activeDocumentLocator.LocateActiveDocumentAsync();
 

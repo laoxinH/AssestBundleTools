@@ -168,6 +168,7 @@
                                 FixedPreviewSurfaceHeight="320"
                                 IsPreviewActive="{x:Bind ShowDetailsPreview, Mode=OneWay}"
                                 ViewModel="{x:Bind ViewModel, Mode=OneWay}"
+                                LoadMoreTextRequested="OnPreviewSurfaceLoadMoreTextRequested"
                                 OpenPreviewLocationRequested="OnPreviewSurfaceOpenPreviewLocationRequested"
                                 SpriteTextureReplacementRequested="OnPreviewSurfaceSpriteTextureReplacementRequested"
                                 ResolvedAssetOpenRequested="OnPreviewSurfaceResolvedAssetOpenRequested"

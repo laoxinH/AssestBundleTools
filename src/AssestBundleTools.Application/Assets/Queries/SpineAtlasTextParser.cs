@@ -32,6 +32,13 @@ internal static class SpineAtlasTextParser
             return Array.Empty<SpineAtlasPageDto>();
         }
 
+        using var reader = new StringReader(atlasText!);
+        return Parse(reader);
+    }
+
+    public static IReadOnlyList<SpineAtlasPageDto> Parse(TextReader reader)
+    {
+        ArgumentNullException.ThrowIfNull(reader);
         var pageBuilders = new List<PageBuilder>();
         PageBuilder? currentPage = null;
         RegionBuilder? currentRegion = null;
@@ -39,7 +46,7 @@ internal static class SpineAtlasTextParser
         var lineCount = 0;
         var regionCount = 0;
 
-        foreach (var rawLine in EnumerateLines(atlasText!))
+        while (reader.ReadLine() is { } rawLine)
         {
             lineCount++;
             if (lineCount > MaxAtlasLines)
@@ -89,6 +96,18 @@ internal static class SpineAtlasTextParser
             .Where(static page => page.HasStructuredAtlasContent)
             .Select(static page => page.Build())
             .ToArray();
+    }
+
+    public static bool CanAttemptStructuredParse(AssetPreviewTextSourceDto source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        if (!string.IsNullOrWhiteSpace(source.InlineText))
+        {
+            return CanAttemptStructuredParse(source.InlineText);
+        }
+
+        return source.Reference is not null &&
+               source.ContentLength is null or <= MaxStructuredAtlasTextCharacters;
     }
 
     private static bool LooksLikeJsonObject(string atlasText)
@@ -158,15 +177,6 @@ internal static class SpineAtlasTextParser
         if (key.Equals("rotate", StringComparison.OrdinalIgnoreCase))
         {
             region.IsRotated = ResolveRotateValue(value);
-        }
-    }
-
-    private static IEnumerable<string> EnumerateLines(string value)
-    {
-        using var reader = new StringReader(value);
-        while (reader.ReadLine() is { } line)
-        {
-            yield return line;
         }
     }
 

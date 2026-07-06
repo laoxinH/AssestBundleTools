@@ -1,5 +1,6 @@
 using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Services;
 using Runtime = AssestBundleTools.Infrastructure.ThirdParty.Spine.V42;
 
 namespace AssestBundleTools.Infrastructure.Bundles.Previewing.Spine;
@@ -14,16 +15,19 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter :
 
     public SpineAnimationRuntimePreviewResultDto TryBuildPreview(
         SpineAnimationRuntimePreviewRequestDto request,
+        IAssetPreviewTextSourceReader textSourceReader,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(textSourceReader);
         if (cancellationToken.IsCancellationRequested)
         {
             return SpineAnimationRuntimePreviewResultDto.Cancelled;
         }
 
-        if (!SpineRuntimeAtlasInputGuard.CanAttemptRuntimeParse(request.AtlasTexts) ||
+        if (!SpineRuntimeAtlasInputGuard.CanAttemptRuntimeParse(request.AtlasTexts, request.AtlasTextSources) ||
             (string.IsNullOrWhiteSpace(request.SkeletonJson) &&
+             request.SkeletonJsonSource is null &&
              request.SkeletonBinaryContent is not { Length: > 0 }))
         {
             return SpineAnimationRuntimePreviewResultDto.NotHandled;
@@ -31,7 +35,7 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter :
 
         try
         {
-            var skeletonData = ReadSkeletonData(request);
+            var skeletonData = ReadSkeletonData(request, textSourceReader);
             if (skeletonData is null ||
                 !IsV42Skeleton(skeletonData.Version))
             {
@@ -77,32 +81,6 @@ internal sealed partial class V42SpineAnimationRuntimeAdapter :
         {
             return SpineAnimationRuntimePreviewResultDto.NotHandled;
         }
-    }
-
-    private static Runtime.SkeletonData? ReadSkeletonData(SpineAnimationRuntimePreviewRequestDto request)
-    {
-        var atlases = request.AtlasTexts
-            .Where(static text => !string.IsNullOrWhiteSpace(text))
-            .Select(static text => new Runtime.Atlas(
-                new StringReader(text),
-                string.Empty,
-                new NoOpTextureLoader()))
-            .ToArray();
-        if (request.SkeletonBinaryContent is { Length: > 0 } skeletonBinaryContent)
-        {
-            var binaryLoader = new Runtime.SkeletonBinary(atlases);
-            using var stream = new MemoryStream(skeletonBinaryContent);
-            return binaryLoader.ReadSkeletonData(stream);
-        }
-
-        if (string.IsNullOrWhiteSpace(request.SkeletonJson))
-        {
-            throw new InvalidDataException("Skeleton JSON or binary content is required.");
-        }
-
-        var jsonLoader = new Runtime.SkeletonJson(atlases);
-        using var reader = new StringReader(request.SkeletonJson);
-        return jsonLoader.ReadSkeletonData(reader);
     }
 
     private static bool IsV42Skeleton(string? spineVersion)

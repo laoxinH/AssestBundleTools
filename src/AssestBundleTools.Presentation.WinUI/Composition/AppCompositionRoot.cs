@@ -93,7 +93,6 @@ internal static class AppCompositionRoot
         var assetPreviewGenerator = new AssetsToolsAssetPreviewGenerator(audioPayloadTranscodingService);
         var replacementPreviewSourceProvider = new FileSystemReplacementPreviewSourceProvider();
         var bundleArtifactSessionInvalidator = new AssetsToolsBundleArtifactSessionInvalidator();
-        var spineAnimationRuntimePreviewService = new SpineAnimationRuntimePreviewService();
         var workspaceSaveOutputProbe = new FileSystemWorkspaceSaveOutputProbe();
         var workspaceBundleExporter = new FileSystemWorkspaceBundleExporter();
         var workspaceBundleExportManifestStore = new FileSystemWorkspaceBundleExportManifestStore();
@@ -150,6 +149,8 @@ internal static class AppCompositionRoot
         var loadPreviewTextChunkHandler = new LoadPreviewTextChunkHandler(
             workspaceDataStoreFactory,
             replacementPreviewSourceProvider);
+        var spineAnimationRuntimePreviewService = new SpineAnimationRuntimePreviewService(
+            new AssetPreviewTextSourceReader(loadPreviewTextChunkHandler));
         var loadPreviewTextLinesHandler = new LoadPreviewTextLinesHandler(
             workspaceDataStoreFactory,
             replacementPreviewSourceProvider);
@@ -159,6 +160,7 @@ internal static class AppCompositionRoot
         var loadSpineAssetGroupDetailsHandler = new LoadSpineAssetGroupDetailsHandler(
             workspaceSessionRegistry,
             getAssetPreviewHandler,
+            loadPreviewTextChunkHandler,
             spineAnimationRuntimePreviewService);
         var getWorkspaceChangeSummaryHandler = new GetWorkspaceChangeSummaryHandler(workspaceSessionRegistry);
         var getWorkspaceSavePreviewHandler = new GetWorkspaceSavePreviewHandler(

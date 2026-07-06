@@ -16,20 +16,39 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>> _assetPreviewQueryHandler;
     private readonly SpineAssetGroupTextureDiagnosticBuilder _textureDiagnosticBuilder;
+    private readonly AssetPreviewStructuredTextLoader _structuredTextLoader;
     private readonly SpineSkeletonSummaryBuilder _skeletonSummaryBuilder;
     private readonly SpineAnimationPreviewBuilder _animationPreviewBuilder;
 
     public LoadSpineAssetGroupDetailsHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
         IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>> assetPreviewQueryHandler,
+        ISpineAnimationRuntimePreviewService? spineAnimationRuntimePreviewService)
+        : this(
+            workspaceSessionRegistry,
+            assetPreviewQueryHandler,
+            loadPreviewTextChunkHandler: null,
+            spineAnimationRuntimePreviewService)
+    {
+    }
+
+    public LoadSpineAssetGroupDetailsHandler(
+        IWorkspaceSessionRegistry workspaceSessionRegistry,
+        IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>> assetPreviewQueryHandler,
+        IQueryHandler<LoadPreviewTextChunkQuery, Result<AssetPreviewTextChunkDto>>? loadPreviewTextChunkHandler = null,
         ISpineAnimationRuntimePreviewService? spineAnimationRuntimePreviewService = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _assetPreviewQueryHandler = assetPreviewQueryHandler ?? throw new ArgumentNullException(nameof(assetPreviewQueryHandler));
         _textureDiagnosticBuilder = new SpineAssetGroupTextureDiagnosticBuilder(_assetPreviewQueryHandler);
-        _skeletonSummaryBuilder = new SpineSkeletonSummaryBuilder(_assetPreviewQueryHandler);
+        _structuredTextLoader = new AssetPreviewStructuredTextLoader(
+            loadPreviewTextChunkHandler ?? new PreviewResultInlineTextChunkHandler());
+        _skeletonSummaryBuilder = new SpineSkeletonSummaryBuilder(
+            _assetPreviewQueryHandler,
+            _structuredTextLoader);
         _animationPreviewBuilder = new SpineAnimationPreviewBuilder(
             _assetPreviewQueryHandler,
+            _structuredTextLoader,
             spineAnimationRuntimePreviewService);
     }
 
@@ -91,6 +110,7 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
 
         var atlasPages = new List<SpineAtlasPageDto>();
         var atlasTexts = new List<string>();
+        var atlasTextSources = new List<AssetPreviewTextSourceDto>();
         var diagnostics = new List<SpineAssetGroupDiagnosticDto>(group.Diagnostics);
         var skeletonSummaryResult = await BuildSkeletonSummariesAsync(
             query,
@@ -117,14 +137,14 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
                 return Result<SpineAssetGroupDetailsDto>.Cancelled();
             }
 
-            if (!TryReadAtlasText(atlasPreviewResult, out var atlasText))
+            if (!TryCreateAtlasTextSource(query, atlasPreviewResult, out var atlasTextSource))
             {
                 diagnostics.Add(CreateDiagnostic(SpineAssetGroupDiagnosticKind.AtlasPreviewUnavailable, group.GroupKey, atlasAsset));
                 continue;
             }
 
             var parsedPages = SpineAtlasTexturePageMatcher.AttachTexturePageAssets(
-                SpineAtlasTextParser.Parse(atlasText),
+                _structuredTextLoader.ParseAtlas(atlasTextSource, cancellationToken),
                 group.TexturePageAssets);
             if (parsedPages.Count == 0)
             {
@@ -132,7 +152,12 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
                 continue;
             }
 
-            atlasTexts.Add(atlasText);
+            if (!string.IsNullOrWhiteSpace(atlasTextSource.InlineText))
+            {
+                atlasTexts.Add(atlasTextSource.InlineText);
+            }
+
+            atlasTextSources.Add(atlasTextSource);
             if (ShouldBuildTextureDiagnostics(query))
             {
                 var textureDiagnostics = await _textureDiagnosticBuilder.BuildAsync(
@@ -158,6 +183,7 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
             group.SkeletonAssets,
             atlasPages,
             atlasTexts,
+            atlasTextSources,
             cancellationToken);
         if (animationPreviewResult.IsCancelled)
         {
@@ -179,6 +205,7 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
         IReadOnlyList<SpineAssetGroupPartDto> skeletonAssets,
         IReadOnlyList<SpineAtlasPageDto> atlasPages,
         IReadOnlyList<string> atlasTexts,
+        IReadOnlyList<AssetPreviewTextSourceDto> atlasTextSources,
         CancellationToken cancellationToken)
     {
         if (query.LoadMode == SpineAssetGroupDetailsLoadMode.ExtractionPlan)
@@ -192,6 +219,7 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
             skeletonAssets,
             atlasPages,
             atlasTexts,
+            atlasTextSources,
             cancellationToken);
     }
 
@@ -297,10 +325,14 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
         return new AssetListCollectionResult(false, assetLists);
     }
 
-    private static bool TryReadAtlasText(
+    private bool TryCreateAtlasTextSource(
+        LoadSpineAssetGroupDetailsQuery query,
         Result<AssetPreviewDto> atlasPreviewResult,
-        out string atlasText) =>
-        AssetPreviewStructuredTextReader.TryReadText(atlasPreviewResult, out atlasText);
+        out AssetPreviewTextSourceDto atlasTextSource) =>
+        _structuredTextLoader.TryCreateSource(
+            atlasPreviewResult,
+            query.WorkspaceDataRootPath,
+            out atlasTextSource);
 
     private static SpineAssetGroupDiagnosticDto CreateDiagnostic(
         SpineAssetGroupDiagnosticKind kind,
@@ -327,5 +359,15 @@ public sealed class LoadSpineAssetGroupDetailsHandler : IQueryHandler<LoadSpineA
     {
         public static AssetListCollectionResult Cancelled { get; } =
             new(true, Array.Empty<AssetListResultDto>());
+    }
+
+    private sealed class PreviewResultInlineTextChunkHandler :
+        IQueryHandler<LoadPreviewTextChunkQuery, Result<AssetPreviewTextChunkDto>>
+    {
+        public Task<Result<AssetPreviewTextChunkDto>> HandleAsync(
+            LoadPreviewTextChunkQuery query,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result<AssetPreviewTextChunkDto>.Failure(
+                ApplicationErrors.AssetPreviewFullContentReferenceInvalid()));
     }
 }

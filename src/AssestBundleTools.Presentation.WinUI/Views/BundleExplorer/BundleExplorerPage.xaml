@@ -1648,6 +1648,7 @@
                         Grid.Row="2"
                         ExtractRequested="OnInspectorExtractRequested"
                         EditRequested="OnInspectorEditRequested"
+                        LoadMoreTextRequested="OnInspectorLoadMoreTextRequested"
                         OpenPreviewLocationRequested="OnInspectorOpenPreviewLocationRequested"
                         ResolvedAssetOpenRequested="OnInspectorResolvedAssetOpenRequested"
                         ModifyFromFileReplacementSourceRequested="OnInspectorModifyFromFileReplacementSourceRequested"
