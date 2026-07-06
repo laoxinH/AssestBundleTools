@@ -51,4 +51,10 @@ internal static class TestAssert
 
         return items[0];
     }
+
+    public static T Single<T>(IEnumerable<T> items)
+    {
+        var materialized = items.ToArray();
+        return Single(materialized);
+    }
 }

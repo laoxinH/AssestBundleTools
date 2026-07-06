@@ -264,6 +264,50 @@ internal static class JsonAssetEditDraftTextStoreTests
         TestAssert.Equal("alpha\nBETA\ngamma", chunk.Text, "Composite view should apply deferred patch over source reference.");
     }
 
+    public static void ApplyTextPatch_ShouldMaterializeFullReplacement_WhenDeferredSourceCacheWasPruned()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonAssetEditDraftTextStore(temporaryDirectory.DirectoryPath);
+        const string sourceText = "alpha\nbeta\ngamma";
+        const string editedText = "alpha\nBETA\ngamma";
+
+        var result = store.ApplyTextPatch(new AssetEditDraftTextPatchDto(
+            WorkspaceKey: "workspace-a",
+            DraftId: "draft-pruned-source",
+            DraftMode: "text",
+            ContentType: "text/plain; charset=utf-8",
+            RangeEdits: [new TextAssetEditDraftRangeEditDto(0, sourceText.Length, editedText)],
+            Baseline: TextAssetEditDraftPatchBaseline.Create(sourceText),
+            UpdatedAtUtc: new DateTimeOffset(2026, 7, 4, 10, 0, 0, TimeSpan.Zero),
+            MaxTextLength: 1024,
+            SourceReference: new WorkspaceAssetEditDraftSourceReferenceDto(
+                nameof(AssetPreviewFullContentReferenceKind.PreviewCache),
+                "text/plain; charset=utf-8",
+                System.Text.Encoding.UTF8.GetByteCount(sourceText),
+                "workspace-a",
+                PreviewCacheKey: "preview-source-pruned")));
+
+        TestAssert.Equal(
+            AssetEditDraftTextPatchStatus.Applied,
+            result.Status,
+            "Full replacement patch should still save when the deferred preview cache source was pruned.");
+        TestAssert.Equal(0, result.Revision, "Materialized fallback should expose the payload base revision.");
+        var draftDirectory = Path.Combine(
+            temporaryDirectory.DirectoryPath,
+            "staging",
+            "drafts",
+            "workspace-a",
+            "draft-pruned-source",
+            "text");
+        TestAssert.True(File.Exists(Path.Combine(draftDirectory, "text.txt")), "Fallback should materialize a self-contained draft payload.");
+        TestAssert.False(File.Exists(Path.Combine(draftDirectory, "text-base.txt")), "Fallback should not create a deferred base snapshot without source text.");
+        TestAssert.False(File.Exists(Path.Combine(draftDirectory, "text-patches.json")), "Fallback payload should not depend on a patch manifest.");
+        var chunk = TestAssert.NotNull(
+            store.LoadTextChunk("workspace-a", "draft-pruned-source", "text", 0, 64),
+            "Materialized fallback draft should be readable.");
+        TestAssert.Equal(editedText, chunk.Text, "Materialized fallback should preserve the editor text.");
+    }
+
     public static void ApplyTextPatch_ShouldApplySubsequentPatchLogEntries()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();

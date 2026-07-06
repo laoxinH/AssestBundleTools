@@ -181,6 +181,7 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
             patch.DraftId,
             patch.DraftMode);
         var descriptorFilePath = Path.Combine(draftDirectoryPath, DescriptorFileName);
+        var payloadFilePath = Path.Combine(draftDirectoryPath, PayloadFileName);
         var patchManifestFilePath = Path.Combine(draftDirectoryPath, PatchManifestFileName);
 
         lock (GetDraftWriteLock(draftDirectoryPath))
@@ -191,8 +192,18 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
                 patch.DraftMode,
                 patch.SourceReference,
                 patch.BaseRevision);
-            if (payload is null ||
-                !IsMatchingPayloadDescriptor(payload.Value.Descriptor, patch))
+            if (payload is null)
+            {
+                var materializedResult = JsonAssetEditDraftTextFullReplacementMaterializer.TryMaterialize(
+                    patch,
+                    descriptorFilePath,
+                    payloadFilePath,
+                    patchManifestFilePath,
+                    GeneratorVersion);
+                return materializedResult ?? AssetEditDraftTextPatchResultDto.NotFound();
+            }
+
+            if (!IsMatchingPayloadDescriptor(payload.Value.Descriptor, patch))
             {
                 return AssetEditDraftTextPatchResultDto.NotFound();
             }

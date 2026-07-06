@@ -33,6 +33,17 @@ internal static class TestAssert
         return items[0];
     }
 
+    public static T NotNull<T>(T? value, string message)
+        where T : class
+    {
+        if (value is null)
+        {
+            throw new InvalidOperationException(message);
+        }
+
+        return value;
+    }
+
     public static void Equal<T>(T expected, T actual, string message)
     {
         if (!EqualityComparer<T>.Default.Equals(expected, actual))

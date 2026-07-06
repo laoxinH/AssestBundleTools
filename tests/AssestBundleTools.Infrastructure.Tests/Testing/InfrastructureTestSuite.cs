@@ -70,6 +70,10 @@ internal static class InfrastructureTestSuite
             JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldCreatePatchBackedDraft_FromDeferredSourceReference);
         await RunTestAsync(
             failures,
+            nameof(JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldMaterializeFullReplacement_WhenDeferredSourceCacheWasPruned),
+            JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldMaterializeFullReplacement_WhenDeferredSourceCacheWasPruned);
+        await RunTestAsync(
+            failures,
             nameof(JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldApplySubsequentPatchLogEntries),
             JsonAssetEditDraftTextStoreTests.ApplyTextPatch_ShouldApplySubsequentPatchLogEntries);
         await RunTestAsync(
