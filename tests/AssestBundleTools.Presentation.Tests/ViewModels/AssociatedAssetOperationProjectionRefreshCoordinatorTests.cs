@@ -7,6 +7,7 @@ using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.Tests.Testing;
+using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
@@ -77,6 +78,49 @@ public sealed class AssociatedAssetOperationProjectionRefreshCoordinatorTests
         Assert.Equal("existing-preview-loading", groupTab.Inspector.Preview.PreviewStatusText);
     }
 
+    [Fact]
+    public async Task RefreshSpineGroupOperationProjectionAsync_ShouldUpdateTextEditRecordsForAffectedAtlas()
+    {
+        var localizationService = new TestLocalizationService();
+        var bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
+        var presenter = new SpineAssetGroupInspectorPresenter(bundlePane, localizationService);
+        var group = CreateSpineGroupWithAtlasTextEditRecord(CreateTextEditRecord(revision: 1));
+        var groupTab = new SpineAssetGroupDocumentTabViewModel(
+            group,
+            InspectorInformationTextSetFactory.Create(localizationService));
+        presenter.PresentSpineGroupDocumentTab(groupTab);
+
+        var gateway = new TestWorkspaceAssetInspectionGateway
+        {
+            GetAssetDetailsHandler = query => Task.FromResult(Result<AssetDetailsDto>.Success(CreateAssetDetails(
+                query.BundleId,
+                query.AssetId,
+                "hero.atlas",
+                AssetType.TextAsset,
+                "TextAsset",
+                CreateTextEditRecord(revision: 2, query.BundleId.Value, query.AssetId.Value))))
+        };
+        var coordinator = new AssociatedAssetOperationProjectionRefreshCoordinator(
+            gateway,
+            new TestBackgroundTaskRunner(),
+            presenter,
+            () => new WorkspaceId("workspace"),
+            () => false,
+            _ => { });
+
+        var updated = await coordinator.RefreshSpineGroupOperationProjectionAsync(
+            groupTab,
+            [new WorkspaceOperationAffectedAsset(new BundleId("bundle-ui"), new AssetId("hero-atlas"))]);
+
+        Assert.True(updated);
+        Assert.NotNull(groupTab.Item.AtlasAssets[0].ChangeRecords);
+        var refreshedRecord = Assert.Single(groupTab.Item.AtlasAssets[0].ChangeRecords!);
+        Assert.Equal(2, refreshedRecord.DraftRevision);
+        var inspectorRecord = Assert.Single(groupTab.Inspector.ChangeRecords);
+        Assert.Equal(ResourceKeys.InspectorChangeRecordTextEditTitle, inspectorRecord.TitleText);
+        Assert.Contains("hero.atlas", inspectorRecord.SecondaryText, StringComparison.Ordinal);
+    }
+
     private static SpineAssetGroupDto CreateSpineGroup(AssetChangeRecordDto textureChangeRecord)
     {
         var bundleId = new BundleId("bundle-ui");
@@ -121,6 +165,54 @@ public sealed class AssociatedAssetOperationProjectionRefreshCoordinatorTests
                     AssetType.Texture2D,
                     "Texture2D",
                     ChangeRecords: [textureChangeRecord])
+            ],
+            Diagnostics: []);
+    }
+
+    private static SpineAssetGroupDto CreateSpineGroupWithAtlasTextEditRecord(AssetChangeRecordDto atlasChangeRecord)
+    {
+        var bundleId = new BundleId("bundle-ui");
+        return new SpineAssetGroupDto(
+            "hero",
+            bundleId,
+            "Hero",
+            "characters/hero",
+            SkeletonAssets:
+            [
+                new SpineAssetGroupPartDto(
+                    SpineAssetGroupPartRole.Skeleton,
+                    bundleId,
+                    new AssetId("hero-json"),
+                    "ui.ab",
+                    "hero.json",
+                    "Assets/hero.json",
+                    AssetType.TextAsset,
+                    "TextAsset")
+            ],
+            AtlasAssets:
+            [
+                new SpineAssetGroupPartDto(
+                    SpineAssetGroupPartRole.Atlas,
+                    bundleId,
+                    new AssetId("hero-atlas"),
+                    "ui.ab",
+                    "hero.atlas",
+                    "Assets/hero.atlas",
+                    AssetType.TextAsset,
+                    "TextAsset",
+                    ChangeRecords: [atlasChangeRecord])
+            ],
+            TexturePageAssets:
+            [
+                new SpineAssetGroupPartDto(
+                    SpineAssetGroupPartRole.TexturePage,
+                    bundleId,
+                    new AssetId("hero-texture"),
+                    "ui.ab",
+                    "hero.png",
+                    "Assets/hero.png",
+                    AssetType.Texture2D,
+                    "Texture2D")
             ],
             Diagnostics: []);
     }
@@ -171,5 +263,23 @@ public sealed class AssociatedAssetOperationProjectionRefreshCoordinatorTests
             Dependencies: [],
             CanRedoReplacement: !changeRecord.IsEffectiveReplacement,
             ChangeRecords: [changeRecord]);
+
+    private static AssetChangeRecordDto CreateTextEditRecord(
+        int revision,
+        string targetBundleId = "bundle-ui",
+        string targetAssetId = "hero-atlas") =>
+        new(
+            AssetChangeRecordKind.TextEdit,
+            CreatedAtUtc: DateTimeOffset.UnixEpoch.AddMinutes(revision),
+            AppliedAtUtc: DateTimeOffset.UnixEpoch.AddMinutes(revision),
+            OperationId: $"edit-atlas-{revision}",
+            IsEffectiveEdit: true,
+            DraftId: "draft-atlas",
+            DraftMode: "text-content",
+            DraftRevision: revision,
+            TargetBundleId: targetBundleId,
+            TargetAssetId: targetAssetId,
+            TargetAssetName: "hero.atlas",
+            TargetAssetType: AssetType.TextAsset.ToString());
 
 }

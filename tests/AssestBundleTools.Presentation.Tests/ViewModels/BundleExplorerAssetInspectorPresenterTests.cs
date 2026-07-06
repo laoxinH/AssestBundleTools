@@ -253,6 +253,60 @@ public sealed class BundleExplorerAssetInspectorPresenterTests
     }
 
     [Fact]
+    public void SpineGroupPresenter_ShouldProjectPartTextEditRecordsWithTargetDetails()
+    {
+        var localizationService = new TestLocalizationService();
+        var bundlePane = new BundleExplorerBundlePaneViewModel(localizationService);
+        var presenter = new SpineAssetGroupInspectorPresenter(bundlePane, localizationService);
+        var bundleId = new BundleId("bundle-spine");
+        var appliedAtUtc = new DateTimeOffset(2026, 7, 6, 12, 0, 0, TimeSpan.Zero);
+        var groupTab = new SpineAssetGroupDocumentTabViewModel(
+            new SpineAssetGroupDto(
+                GroupId: "hero",
+                BundleId: bundleId,
+                DisplayName: "hero",
+                GroupKey: "characters/hero",
+                SkeletonAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                AtlasAssets:
+                [
+                    new SpineAssetGroupPartDto(
+                        SpineAssetGroupPartRole.Atlas,
+                        bundleId,
+                        new AssetId("hero-atlas"),
+                        "spine.ab",
+                        "hero.atlas",
+                        "Assets/hero.atlas",
+                        AssetType.TextAsset,
+                        "TextAsset",
+                        ChangeRecords:
+                        [
+                            new AssetChangeRecordDto(
+                                AssetChangeRecordKind.TextEdit,
+                                CreatedAtUtc: appliedAtUtc,
+                                AppliedAtUtc: appliedAtUtc,
+                                OperationId: "edit-atlas",
+                                IsEffectiveEdit: true,
+                                DraftId: "draft-atlas",
+                                DraftMode: "text-content",
+                                DraftRevision: 3)
+                        ])
+                ],
+                TexturePageAssets: Array.Empty<SpineAssetGroupPartDto>(),
+                Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>()),
+            InspectorInformationTextSetFactory.Create(localizationService));
+
+        presenter.PresentSpineGroupDocumentTab(groupTab);
+
+        var record = Assert.Single(groupTab.Inspector.ChangeRecords);
+        Assert.Equal(ResourceKeys.InspectorChangeRecordTextEditTitle, record.TitleText);
+        Assert.Equal("bundle-spine", record.TargetBundleId);
+        Assert.Equal("hero-atlas", record.TargetAssetId);
+        Assert.Equal("hero.atlas", record.TargetAssetName);
+        Assert.Contains("hero.atlas", record.SecondaryText, StringComparison.Ordinal);
+        Assert.True(record.ShowsDeleteRecord);
+    }
+
+    [Fact]
     public void ChangeRecordPresenters_ShouldProjectPendingState_ForSameOperationAcrossAssetAndSpineGroup()
     {
         var localizationService = new TestLocalizationService();

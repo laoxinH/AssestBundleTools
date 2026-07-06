@@ -162,6 +162,53 @@ public sealed class WorkspaceOperationChangeNotificationTests
     }
 
     [Fact]
+    public async Task ApplyTextAssetEditDraftAsync_ShouldNotifyAssociatedAssetRefresh_WhenImpactRegistryFindsDependents()
+    {
+        var workspaceId = new WorkspaceId("workspace-associated-text-edit-notify");
+        var atlasBundleId = new BundleId("bundle-1");
+        var atlasAssetId = new AssetId("atlas-1");
+        var spineGroupAssetId = new AssetId("spine-group-1");
+        var notifier = new WorkspaceOperationChangeNotifier();
+        var receivedEvents = new List<WorkspaceOperationChangedEventArgs>();
+        notifier.WorkspaceOperationsChanged += (_, e) => receivedEvents.Add(e);
+        var gateway = new NotifyingWorkspaceAssetOperationGateway(
+            new SuccessfulWorkspaceAssetOperationGateway(),
+            notifier,
+            new TestAssociatedAssetImpactRegistry(
+                new WorkspaceAssociatedAssetImpactDto(
+                    atlasBundleId,
+                    spineGroupAssetId,
+                    "HeroSpine",
+                    AssetType.Unknown,
+                    PathId: 42,
+                    AssetTypeDisplayName: "SpineGroup")));
+
+        var result = await gateway.ApplyTextAssetEditDraftAsync(
+            new ApplyTextAssetEditDraftCommand(
+                workspaceId,
+                "workspace-key",
+                @"C:\Workspace",
+                atlasBundleId,
+                atlasAssetId,
+                "draft-atlas",
+                "text-content",
+                DraftRevision: 2));
+
+        Assert.True(result.IsSuccess);
+        var notification = Assert.Single(receivedEvents);
+        Assert.Equal(WorkspaceOperationChangeKind.Edit, notification.ChangeKind);
+        Assert.Contains(notification.AffectedAssets, affected =>
+            affected.BundleId.Equals(atlasBundleId) &&
+            affected.AssetId.Equals(atlasAssetId) &&
+            affected.Role == WorkspaceOperationAffectedAssetRole.PrimaryTarget);
+        Assert.Contains(notification.AffectedAssets, affected =>
+            affected.BundleId.Equals(atlasBundleId) &&
+            affected.AssetId.Equals(spineGroupAssetId) &&
+            affected.Role == WorkspaceOperationAffectedAssetRole.ImplicitAffectedTarget);
+        Assert.Equal(WorkspaceOperationChangeReason.EditApplied, notification.Reason);
+    }
+
+    [Fact]
     public async Task UndoAssetReplacementAsync_ShouldNotifyAssociatedAssetRefresh_WhenProjectedRecordResolvesTarget()
     {
         var workspaceId = new WorkspaceId("workspace-associated-undo-notify");
@@ -879,7 +926,7 @@ public sealed class WorkspaceOperationChangeNotificationTests
                     new AssetPreviewFullContentReferenceDto(
                         AssetPreviewFullContentReferenceKind.EditDraft,
                         "text/plain",
-                        command.TextContent.Length,
+                        command.TextContent?.Length ?? 0,
                         command.WorkspaceKey,
                         DraftId: command.DraftId,
                         DraftMode: command.DraftMode ?? "text-content"),

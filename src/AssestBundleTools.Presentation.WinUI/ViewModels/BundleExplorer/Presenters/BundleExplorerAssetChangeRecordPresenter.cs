@@ -265,6 +265,13 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
                 : string.Concat(targetText, Environment.NewLine, record.SourceFilePath.Trim());
         }
 
+        if (record.Kind == AssetChangeRecordKind.TextEdit &&
+            record.IsRelatedOperation)
+        {
+            var target = ResolveDisplayValue(record.TargetAssetName ?? record.TargetAssetId);
+            return _localizationService.GetFormattedString(ResourceKeys.InspectorChangeRecordTargetFormat, target);
+        }
+
         return string.Empty;
     }
 

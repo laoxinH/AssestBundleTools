@@ -17,7 +17,8 @@ internal static class SpineAssetGroupPreviewInputSignature
                 part.AssetId.Value,
                 ResolveEffectiveSourcePath(groupTab, part),
                 ResolveEffectiveSourceFileName(groupTab, part),
-                ResolveEffectiveSourceAssetType(groupTab, part)))
+                ResolveEffectiveSourceAssetType(groupTab, part),
+                ResolveEffectiveTextEditSignature(part)))
             .OrderBy(static value => value, StringComparer.Ordinal)
             .ToArray();
 
@@ -81,6 +82,27 @@ internal static class SpineAssetGroupPreviewInputSignature
         }
 
         return (part.FileReplacementSourceAssetType ?? part.AssetType).ToString();
+    }
+
+    private static string ResolveEffectiveTextEditSignature(SpineAssetGroupPartDto part)
+    {
+        var effectiveTextEdit = part.ChangeRecords?
+            .Where(static record => record.Kind == AssetChangeRecordKind.TextEdit && record.IsEffectiveEdit)
+            .OrderByDescending(static record => record.Sequence)
+            .ThenByDescending(static record => record.DisplayTimestampUtc)
+            .FirstOrDefault();
+        if (effectiveTextEdit is null)
+        {
+            return string.Empty;
+        }
+
+        return string.Join(
+            "\u001c",
+            effectiveTextEdit.OperationId ?? string.Empty,
+            effectiveTextEdit.DraftId ?? string.Empty,
+            effectiveTextEdit.DraftMode ?? string.Empty,
+            effectiveTextEdit.DraftRevision?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
+            effectiveTextEdit.DisplayTimestampUtc.UtcTicks.ToString(System.Globalization.CultureInfo.InvariantCulture));
     }
 
     private static string NormalizeSourcePath(string? sourcePath) =>
