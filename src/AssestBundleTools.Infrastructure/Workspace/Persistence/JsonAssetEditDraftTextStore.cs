@@ -242,7 +242,10 @@ public sealed class JsonAssetEditDraftTextStore : IAssetEditDraftTextStore
             return AssetEditDraftTextPatchResultDto.Applied(
                 statistics.TextLength,
                 statistics.ContentLength,
-                updatedManifest.Patches?.Count ?? 0);
+                updatedManifest.Patches?.Count ?? 0,
+                new TextAssetEditDraftPatchBaselineDto(
+                    statistics.TextLength,
+                    statistics.ContentSha256));
         }
     }
 

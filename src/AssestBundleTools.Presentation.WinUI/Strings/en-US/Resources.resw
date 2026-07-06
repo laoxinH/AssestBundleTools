@@ -2644,7 +2644,7 @@
     <value>Small-text draft editing. Saving updates the draft first, then records a text edit operation.</value>
   </data>
   <data name="TextAssetEditor.DeferredEditHint.Text" xml:space="preserve">
-    <value>Large text opened in fast preview. Load full edit only when you need to change it.</value>
+    <value>Opened the first page quickly. Full editing is being prepared in the background.</value>
   </data>
   <data name="TextAssetEditor.LineStatus.Format" xml:space="preserve">
     <value>Loaded {0} / {1} lines</value>
@@ -2659,7 +2659,7 @@
     <value>Load Full Edit</value>
   </data>
   <data name="TextAssetEditor.LoadFullEditButton.ToolTip" xml:space="preserve">
-    <value>Load the full text and switch to editable mode on demand</value>
+    <value>Retry loading the full text and switch to editable mode</value>
   </data>
   <data name="TextAssetEditor.LoadMoreLinesButton.Content" xml:space="preserve">
     <value>Load More</value>

@@ -1,5 +1,7 @@
+using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
@@ -14,10 +16,15 @@ public sealed partial class TextAssetEditDraftView : UserControl
             typeof(TextAssetEditDraftView),
             new PropertyMetadata(null, OnViewModelChanged));
 
+    private bool _hasRequestedAutomaticFullEdit;
+    private TextAssetEditDraftViewModel? _observedViewModel;
+
     public TextAssetEditDraftView()
     {
         InitializeComponent();
         ApplyLocalizedText();
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
     }
 
     public event EventHandler? SaveRequested;
@@ -32,8 +39,12 @@ public sealed partial class TextAssetEditDraftView : UserControl
     {
         if (dependencyObject is TextAssetEditDraftView view)
         {
+            view.UnobserveViewModel();
+            view._hasRequestedAutomaticFullEdit = false;
+            view.ObserveViewModel(e.NewValue as TextAssetEditDraftViewModel);
             view.Bindings.Update();
             view.TextEditorSurface.ResetPendingDocumentChanges(forceRefreshDocument: true);
+            _ = view.TryLoadFullEditWithStreamingAsync();
         }
     }
 
@@ -55,8 +66,37 @@ public sealed partial class TextAssetEditDraftView : UserControl
             return;
         }
 
-        await ViewModel.LoadFullEditAsync();
+        await ViewModel.LoadFullEditAsync(TextEditorSurface);
         Bindings.Update();
+    }
+
+    private async void OnStreamingDocumentReady(object? sender, EventArgs e)
+    {
+        await TryLoadFullEditWithStreamingAsync();
+    }
+
+    private async void OnObservedViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(TextAssetEditDraftViewModel.CanLoadFullEdit))
+        {
+            await TryLoadFullEditWithStreamingAsync();
+        }
+    }
+
+    private async void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (!ReferenceEquals(_observedViewModel, ViewModel))
+        {
+            UnobserveViewModel();
+            ObserveViewModel(ViewModel);
+        }
+
+        await TryLoadFullEditWithStreamingAsync();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        UnobserveViewModel();
     }
 
     private async void OnLoadMoreLinesRequested(object? sender, EventArgs e)
@@ -77,6 +117,43 @@ public sealed partial class TextAssetEditDraftView : UserControl
         ViewModel?.MarkEditorDirty();
     }
 
+    private void ObserveViewModel(TextAssetEditDraftViewModel? viewModel)
+    {
+        _observedViewModel = viewModel;
+        if (_observedViewModel is not null)
+        {
+            _observedViewModel.PropertyChanged += OnObservedViewModelPropertyChanged;
+        }
+    }
+
+    private void UnobserveViewModel()
+    {
+        if (_observedViewModel is not null)
+        {
+            _observedViewModel.PropertyChanged -= OnObservedViewModelPropertyChanged;
+            _observedViewModel = null;
+        }
+    }
+
+    private async Task TryLoadFullEditWithStreamingAsync()
+    {
+        if (ViewModel is null ||
+            _hasRequestedAutomaticFullEdit ||
+            !TextEditorSurface.CanStreamDocument ||
+            !ViewModel.CanLoadFullEdit)
+        {
+            return;
+        }
+
+        _hasRequestedAutomaticFullEdit = true;
+        await ViewModel.LoadFullEditAsync(TextEditorSurface);
+        Bindings.Update();
+        if (ViewModel.CanLoadFullEdit)
+        {
+            _hasRequestedAutomaticFullEdit = false;
+        }
+    }
+
     public async Task<bool> SynchronizeEditorTextAsync()
     {
         if (ViewModel is null)
@@ -89,12 +166,22 @@ public sealed partial class TextAssetEditDraftView : UserControl
             return true;
         }
 
+        if (ViewModel.UsesStreamingDocumentModel)
+        {
+            return true;
+        }
+
         return await SynchronizeFullEditorTextAsync();
     }
 
     public async Task<bool> SynchronizeEditorSaveAsync()
     {
         if (ViewModel is null)
+        {
+            return true;
+        }
+
+        if (ViewModel.UsesStreamingDocumentModel && !ViewModel.HasUnsavedChanges)
         {
             return true;
         }
@@ -134,9 +221,9 @@ public sealed partial class TextAssetEditDraftView : UserControl
         return true;
     }
 
-    public void AcceptSynchronizedEditorText()
+    public void AcceptSynchronizedEditorText(TextAssetEditDraftPatchBaselineDto? baseline = null)
     {
-        TextEditorSurface.AcceptCurrentDocumentAsSaved();
+        TextEditorSurface.AcceptCurrentDocumentAsSaved(baseline);
     }
 
     private void ApplyLocalizedText()

@@ -4,10 +4,12 @@ using Microsoft.UI.Xaml.Controls;
 using Windows.ApplicationModel.DataTransfer;
 using Microsoft.Web.WebView2.Core;
 using AssestBundleTools.Presentation.WinUI.Localization;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Application.Editing.Dtos;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
-public sealed partial class TextDocumentSurfaceView : UserControl
+public sealed partial class TextDocumentSurfaceView : UserControl, ITextDocumentStreamingSink
 {
     private const string WebViewVirtualHostName = "abt-text-editor.local";
     private const int WebViewBridgeReadyTimeoutSeconds = 8;
@@ -112,6 +114,8 @@ public sealed partial class TextDocumentSurfaceView : UserControl
 
     private bool _isWebViewReady;
     private bool _isSendingDocument;
+    private bool _isStreamingDocument;
+    private bool _hasStreamingDocumentModel;
     private bool _isApplyingWebViewText;
     private bool _webMessageHandlerAttached;
     private bool _webNavigationHandlerAttached;
@@ -130,6 +134,7 @@ public sealed partial class TextDocumentSurfaceView : UserControl
     public event EventHandler? EditableTextChanged;
     public event EventHandler? DocumentChanged;
     public event EventHandler? SaveRequested;
+    public event EventHandler? StreamingDocumentReady;
 
     public TextDocumentSurfaceView()
     {
@@ -170,6 +175,8 @@ public sealed partial class TextDocumentSurfaceView : UserControl
     public string DocumentLanguage { get => (string)GetValue(DocumentLanguageProperty); set => SetValue(DocumentLanguageProperty, value); }
 
     public bool IsReadOnly { get => (bool)GetValue(IsReadOnlyProperty); set => SetValue(IsReadOnlyProperty, value); }
+
+    public bool CanStreamDocument => _isWebViewReady && EditorWebView.CoreWebView2 is not null;
 
     private async void OnLoaded(object sender, RoutedEventArgs e) => await TryInitializeWebViewAsync();
 

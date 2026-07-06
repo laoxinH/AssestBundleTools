@@ -166,6 +166,42 @@ public sealed class TextAssetEditDraftViewModelTests
         Assert.Equal("alpha gamma", edits[0].Text);
     }
 
+    [Fact]
+    public async Task LoadFullEditAsync_ShouldStreamChunks_WhenSurfaceSupportsStreaming()
+    {
+        var chunkQueries = new List<LoadPreviewTextChunkQuery>();
+        var reference = CreateReference() with { ContentLength = 12 };
+        var gateway = new TestWorkspaceAssetInspectionGateway
+        {
+            LoadPreviewTextChunkHandler = query =>
+            {
+                chunkQueries.Add(query);
+                var text = query.Offset == 0 ? "alpha " : "beta";
+                return Task.FromResult(Result<AssetPreviewTextChunkDto>.Success(new AssetPreviewTextChunkDto(
+                    reference,
+                    text,
+                    query.Offset,
+                    text.Length,
+                    "alpha beta".Length,
+                    HasMore: query.Offset == 0)));
+            }
+        };
+        var viewModel = CreateViewModel(reference, gateway, canEditInline: true);
+        var sink = new TestTextDocumentStreamingSink();
+
+        await viewModel.LoadFullEditAsync(sink);
+
+        Assert.Equal(2, chunkQueries.Count);
+        Assert.Equal(["alpha ", "beta"], sink.Chunks);
+        Assert.True(sink.Ended);
+        Assert.True(viewModel.UsesStreamingDocumentModel);
+        Assert.False(viewModel.CanLoadFullEdit);
+        Assert.Equal("alpha beta".Length, viewModel.CurrentPatchBaseline?.ContentLength);
+        Assert.Equal(
+            TextAssetEditDraftPatchBaseline.Create("alpha beta").ContentSha256,
+            viewModel.CurrentPatchBaseline?.ContentSha256);
+    }
+
     private static AssetPreviewFullContentReferenceDto CreateReference() =>
         new(
             AssetPreviewFullContentReferenceKind.EditDraft,
@@ -225,4 +261,39 @@ public sealed class TextAssetEditDraftViewModelTests
             "inline",
             "deferred",
             "loaded {0} / {1}");
+
+    private sealed class TestTextDocumentStreamingSink : ITextDocumentStreamingSink
+    {
+        public bool CanStreamDocument { get; init; } = true;
+
+        public List<string> Chunks { get; } = new();
+
+        public bool Ended { get; private set; }
+
+        public Task BeginStreamingDocumentAsync(
+            string language,
+            long expectedLength,
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task AppendDocumentChunkAsync(
+            string text,
+            CancellationToken cancellationToken = default)
+        {
+            Chunks.Add(text);
+            return Task.CompletedTask;
+        }
+
+        public Task EndStreamingDocumentAsync(
+            TextAssetEditDraftPatchBaselineDto baseline,
+            bool readOnly,
+            CancellationToken cancellationToken = default)
+        {
+            Ended = true;
+            return Task.CompletedTask;
+        }
+
+        public Task CancelStreamingDocumentAsync(CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+    }
 }

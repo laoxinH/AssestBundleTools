@@ -37,6 +37,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
     private bool _hasPendingEditorTextChanges;
     private bool _isFullEditLoaded;
     private bool _isDraftMaterialized;
+    private bool _usesStreamingDocumentModel;
 
     public TextAssetEditDraftViewModel(
         AssetTextEditDraftDto draft,
@@ -169,6 +170,10 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
 
     public bool CanSave => CanApply && HasUnsavedChanges;
 
+    public bool UsesStreamingDocumentModel => _usesStreamingDocumentModel;
+
+    public TextAssetEditDraftPatchBaselineDto? CurrentPatchBaseline { get; private set; }
+
     public bool IsBusy
     {
         get => _isBusy;
@@ -204,15 +209,17 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         await LoadInitialLinesAsync(cancellationToken);
-        if (ShouldAutoLoadFullEdit())
+        if (ShouldAutoLoadFullEditWithoutStreamingSurface())
         {
-            await LoadFullEditAsync(cancellationToken);
+            await LoadFullEditAsync(cancellationToken: cancellationToken);
         }
 
         NotifyDocumentEditState();
     }
 
-    public void MarkSaved(AssetPreviewFullContentReferenceDto? reference = null)
+    public void MarkSaved(
+        AssetPreviewFullContentReferenceDto? reference = null,
+        TextAssetEditDraftPatchBaselineDto? patchBaseline = null)
     {
         if (_patchState.HasPendingRangeEdits)
         {
@@ -229,9 +236,23 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
             OnPropertyChanged(nameof(Reference));
         }
 
-        _lastSavedText = EditableText;
+        if (!_usesStreamingDocumentModel)
+        {
+            _lastSavedText = EditableText;
+        }
+
         _isDraftMaterialized = true;
+        CurrentPatchBaseline = patchBaseline ??
+            (_usesStreamingDocumentModel
+                ? CurrentPatchBaseline
+                : TextAssetEditDraftPatchBaseline.Create(_lastSavedText));
+
         _patchState.Clear();
+        if (CurrentPatchBaseline is not null)
+        {
+            _patchState.SetSavedBaseline(CurrentPatchBaseline);
+        }
+
         _hasPendingEditorTextChanges = false;
         OnPropertyChanged(nameof(HasUnsavedChanges));
         OnPropertyChanged(nameof(CanSave));
@@ -250,7 +271,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
     }
 
     public TextAssetEditDraftPatchBaselineDto CreateCurrentPatchBaseline() =>
-        TextAssetEditDraftPatchBaseline.Create(_lastSavedText);
+        CurrentPatchBaseline ?? TextAssetEditDraftPatchBaseline.Create(_lastSavedText);
 
     public void MarkEditorDirty()
     {
@@ -267,6 +288,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
     public void SetEditorTextFromSurface(string text)
     {
         MarkFullEditLoaded();
+        _usesStreamingDocumentModel = false;
         _patchState.Clear();
         _hasPendingEditorTextChanges = false;
         EditableText = text ?? string.Empty;
@@ -284,7 +306,19 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
         OnPropertyChanged(nameof(CanSave));
     }
 
-    private bool ShouldAutoLoadFullEdit() =>
+    public void MarkStreamingEditLoaded(TextAssetEditDraftPatchBaselineDto baseline)
+    {
+        MarkFullEditLoaded();
+        _usesStreamingDocumentModel = true;
+        _lastSavedText = string.Empty;
+        EditableText = string.Empty;
+        CurrentPatchBaseline = baseline;
+        _patchState.SetSavedBaseline(baseline);
+        _hasPendingEditorTextChanges = false;
+        NotifyDocumentEditState();
+    }
+
+    private bool ShouldAutoLoadFullEditWithoutStreamingSurface() =>
         _isDraftMaterialized &&
         CanShowLoadFullEdit &&
         Reference.ContentLength <= AssetTextEditPolicy.AutoMaterializeTextLength;

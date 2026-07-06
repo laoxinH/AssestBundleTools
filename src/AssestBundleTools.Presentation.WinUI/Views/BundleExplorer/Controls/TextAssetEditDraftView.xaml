@@ -93,6 +93,7 @@
             StatusText="{x:Bind ViewModel.StatusText, Mode=OneWay}"
             DocumentChanged="OnDocumentChanged"
             LoadMoreLinesRequested="OnLoadMoreLinesRequested"
-            SaveRequested="OnSaveRequested" />
+            SaveRequested="OnSaveRequested"
+            StreamingDocumentReady="OnStreamingDocumentReady" />
     </Grid>
 </UserControl>

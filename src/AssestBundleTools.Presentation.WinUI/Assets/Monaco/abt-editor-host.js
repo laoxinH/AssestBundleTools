@@ -8,6 +8,10 @@
   let currentReadOnly = true;
   let currentTheme = 'light';
   let baselineText = '';
+  let baselineInfo = null;
+  let isStreamingDocument = false;
+  let streamingDocumentDirty = false;
+  let streamingTextLength = 0;
 
   function post(message) {
     if (vscode) {
@@ -90,6 +94,9 @@
           type: 'contentChanged',
           versionId: getModelVersionId()
         });
+        if (baselineInfo) {
+          streamingDocumentDirty = true;
+        }
       });
 
       window.addEventListener('resize', function () {
@@ -172,6 +179,10 @@
     currentLanguage = language;
     currentReadOnly = readOnly;
     baselineText = text;
+    baselineInfo = null;
+    isStreamingDocument = false;
+    streamingDocumentDirty = false;
+    streamingTextLength = 0;
 
     suppressChange = true;
     const model = editor.getModel();
@@ -188,6 +199,92 @@
     });
     suppressChange = false;
     editor.layout();
+    updateLargeDocumentOptions(text.length);
+  }
+
+  function beginStreamingDocument(payload) {
+    if (!editor) {
+      return;
+    }
+
+    const language = normalizeLanguage(payload && payload.language);
+    const readOnly = !!(payload && payload.readOnly);
+    currentLanguage = language;
+    currentReadOnly = readOnly;
+    baselineText = '';
+    baselineInfo = null;
+    isStreamingDocument = true;
+    streamingDocumentDirty = false;
+    streamingTextLength = 0;
+
+    suppressChange = true;
+    const model = editor.getModel();
+    if (model) {
+      monaco.editor.setModelLanguage(model, language);
+      model.setValue('');
+    } else {
+      editor.setModel(monaco.editor.createModel('', language));
+    }
+
+    editor.updateOptions({
+      readOnly,
+      domReadOnly: readOnly
+    });
+    updateLargeDocumentOptions(Number(payload && payload.expectedLength) || 0);
+    suppressChange = false;
+    editor.layout();
+  }
+
+  function appendDocumentChunk(payload) {
+    if (!editor || !isStreamingDocument) {
+      return;
+    }
+
+    const model = editor.getModel();
+    if (!model) {
+      return;
+    }
+
+    const text = normalizeText(payload && typeof payload.text === 'string' ? payload.text : '');
+    if (!text) {
+      return;
+    }
+
+    suppressChange = true;
+    const lineCount = model.getLineCount();
+    const endColumn = model.getLineMaxColumn(lineCount);
+    model.applyEdits(
+      [{
+        range: new monaco.Range(lineCount, endColumn, lineCount, endColumn),
+        text,
+        forceMoveMarkers: true
+      }],
+      false);
+    suppressChange = false;
+    streamingTextLength += text.length;
+  }
+
+  function endStreamingDocument(payload) {
+    if (!editor || !isStreamingDocument) {
+      return;
+    }
+
+    baselineInfo = payload && payload.baseline
+      ? {
+          contentLength: Number(payload.baseline.contentLength) || 0,
+          contentSha256: String(payload.baseline.contentSha256 || '')
+        }
+      : null;
+    baselineText = '';
+    isStreamingDocument = false;
+    streamingDocumentDirty = false;
+    streamingTextLength = baselineInfo ? baselineInfo.contentLength : streamingTextLength;
+    currentReadOnly = !!(payload && payload.readOnly);
+    editor.updateOptions({
+      readOnly: currentReadOnly,
+      domReadOnly: currentReadOnly
+    });
+    updateLargeDocumentOptions(streamingTextLength);
   }
 
   function normalizeText(text) {
@@ -214,8 +311,20 @@
     }
 
     const currentText = getEditorText();
-    if (currentText === baselineText) {
+    if (baselineInfo && !streamingDocumentDirty && isTextMatchingBaselineInfo(currentText, baselineInfo)) {
       return [];
+    }
+
+    if (!baselineInfo && currentText === baselineText) {
+      return [];
+    }
+
+    if (baselineInfo) {
+      return [{
+        start: 0,
+        length: baselineInfo.contentLength,
+        text: currentText
+      }];
     }
 
     const maxPrefixLength = Math.min(baselineText.length, currentText.length);
@@ -248,10 +357,35 @@
   function markSaved() {
     if (!editor) {
       baselineText = '';
+      baselineInfo = null;
+      streamingDocumentDirty = false;
       return;
     }
 
     baselineText = getEditorText();
+    baselineInfo = null;
+    streamingDocumentDirty = false;
+  }
+
+  function updateLargeDocumentOptions(length) {
+    if (!editor) {
+      return;
+    }
+
+    const isLarge = length >= 2 * 1024 * 1024;
+    editor.updateOptions({
+      minimap: { enabled: !isLarge },
+      folding: !isLarge,
+      renderWhitespace: 'none',
+      occurrencesHighlight: !isLarge,
+      selectionHighlight: !isLarge,
+      links: !isLarge,
+      codeLens: false
+    });
+  }
+
+  function isTextMatchingBaselineInfo(text, baseline) {
+    return baseline && text.length === baseline.contentLength;
   }
 
   function setReadOnly(readOnly) {
@@ -279,6 +413,15 @@
         case 'setDocument':
           setDocument(message);
           break;
+        case 'beginStreamingDocument':
+          beginStreamingDocument(message);
+          break;
+        case 'appendDocumentChunk':
+          appendDocumentChunk(message);
+          break;
+        case 'endStreamingDocument':
+          endStreamingDocument(message);
+          break;
         case 'setReadOnly':
           setReadOnly(message.readOnly);
           break;
@@ -294,13 +437,22 @@
           formatDocument();
           break;
         case 'markSaved':
-          markSaved();
+          if (message.baseline) {
+            baselineText = '';
+            baselineInfo = {
+              contentLength: Number(message.baseline.contentLength) || 0,
+              contentSha256: String(message.baseline.contentSha256 || '')
+            };
+            streamingDocumentDirty = false;
+          } else {
+            markSaved();
+          }
           break;
         case 'getPendingRangeEdits':
           post({
             type: 'documentRangeEdits',
             requestId: message.requestId,
-            baseLength: baselineText.length,
+            baseLength: baselineInfo ? baselineInfo.contentLength : baselineText.length,
             versionId: getModelVersionId(),
             edits: getPendingRangeEdits()
           });

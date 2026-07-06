@@ -7,6 +7,7 @@ internal sealed class TextAssetEditDraftPatchState
 {
     private IReadOnlyList<TextAssetEditDraftRangeEditDto>? _pendingRangeEdits;
     private TextAssetEditDraftPatchBaselineDto? _pendingPatchBaseline;
+    private TextAssetEditDraftPatchBaselineDto? _savedPatchBaseline;
 
     public bool HasPendingRangeEdits => (_pendingRangeEdits?.Count ?? 0) > 0;
 
@@ -14,6 +15,11 @@ internal sealed class TextAssetEditDraftPatchState
     {
         _pendingRangeEdits = null;
         _pendingPatchBaseline = null;
+    }
+
+    public void SetSavedBaseline(TextAssetEditDraftPatchBaselineDto baseline)
+    {
+        _savedPatchBaseline = baseline;
     }
 
     public void Set(
@@ -30,7 +36,7 @@ internal sealed class TextAssetEditDraftPatchState
         string lastSavedText,
         string editableText)
     {
-        var baseline = TextAssetEditDraftPatchBaseline.Create(lastSavedText);
+        var baseline = CreateBaseline(lastSavedText);
         return HasPendingRangeEdits &&
             _pendingPatchBaseline is not null &&
             baseline.ContentLength == _pendingPatchBaseline.ContentLength &&
@@ -42,7 +48,7 @@ internal sealed class TextAssetEditDraftPatchState
     public TextAssetEditDraftPatchBaselineDto CreateSavePatchBaseline(string lastSavedText) =>
         HasPendingRangeEdits && _pendingPatchBaseline is not null
             ? _pendingPatchBaseline
-            : TextAssetEditDraftPatchBaseline.Create(lastSavedText);
+            : CreateBaseline(lastSavedText);
 
     public string? TryApplyToSavedText(string lastSavedText)
     {
@@ -78,4 +84,7 @@ internal sealed class TextAssetEditDraftPatchState
     private static string NormalizeTextContent(string textContent) =>
         textContent.Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
+
+    private TextAssetEditDraftPatchBaselineDto CreateBaseline(string textContent) =>
+        _savedPatchBaseline ?? TextAssetEditDraftPatchBaseline.Create(textContent);
 }

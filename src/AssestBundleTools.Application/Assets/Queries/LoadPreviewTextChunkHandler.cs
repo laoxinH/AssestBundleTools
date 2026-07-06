@@ -14,7 +14,7 @@ namespace AssestBundleTools.Application.Assets.Queries;
 /// </summary>
 public sealed class LoadPreviewTextChunkHandler : IQueryHandler<LoadPreviewTextChunkQuery, Result<AssetPreviewTextChunkDto>>
 {
-    public const int MaxChunkLength = 32768;
+    public const int MaxChunkLength = 256 * 1024;
 
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
     private readonly IReplacementPreviewSourceProvider? _replacementPreviewSourceProvider;

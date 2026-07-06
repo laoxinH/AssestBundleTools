@@ -136,7 +136,7 @@ public sealed class AssetEditorWindowOperationRefreshContractTests
             coordinatorCode.IndexOf("public async Task<bool> ApplyTextAssetEditDraftAsync()", StringComparison.Ordinal)..coordinatorCode.IndexOf(
                 "public async Task<bool> DiscardTextAssetEditDraftAsync()",
                 StringComparison.Ordinal)];
-        var markSavedIndex = applyMethod.IndexOf("draft.MarkSaved(updateResult.Value?.Reference);", StringComparison.Ordinal);
+        var markSavedIndex = applyMethod.IndexOf("draft.MarkSaved(updateResult.Value?.Reference, updateResult.Value?.PatchBaseline);", StringComparison.Ordinal);
         var applyCommandIndex = applyMethod.IndexOf("var command = new ApplyTextAssetEditDraftCommand", StringComparison.Ordinal);
 
         Assert.Contains("TextContent: null", applyMethod);

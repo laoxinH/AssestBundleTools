@@ -109,7 +109,8 @@ public sealed class UpdateTextAssetEditDraftHandler
             draftMode,
             reference,
             updatedAtUtc,
-            contentLengthResult.Value.DraftRevision);
+            contentLengthResult.Value.DraftRevision,
+            contentLengthResult.Value.PatchBaseline);
 
         _operationRecorder?.RecordDraftUpdated(command, targetDetails, result);
         return Task.FromResult(Result<AssetTextEditDraftUpdatedResultDto>.Success(result));
@@ -223,9 +224,11 @@ public sealed class UpdateTextAssetEditDraftHandler
                 SourceFingerprint: sourceFingerprint,
                 SourceDescription: targetDetails.Name,
                 Summary: targetDetails.AssetTypeDisplayName ?? targetDetails.AssetType.ToString()));
+            var baseline = TextAssetEditDraftPatchBaseline.Create(normalizedText);
             return Result<UpdatedTextContentResult>.Success(new UpdatedTextContentResult(
                 Encoding.UTF8.GetByteCount(normalizedText),
-                DraftRevision: 0));
+                DraftRevision: 0,
+                baseline));
         }
 
         var patchResult = draftTextStore.ApplyTextPatch(new AssetEditDraftTextPatchDto(
@@ -246,7 +249,8 @@ public sealed class UpdateTextAssetEditDraftHandler
         {
             AssetEditDraftTextPatchStatus.Applied => Result<UpdatedTextContentResult>.Success(new UpdatedTextContentResult(
                 patchResult.ContentLength,
-                patchResult.Revision)),
+                patchResult.Revision,
+                patchResult.Baseline)),
             AssetEditDraftTextPatchStatus.NotFound => Result<UpdatedTextContentResult>.Failure(
                 ApplicationErrors.AssetEditDraftNotFound(workspaceKey, draftId, draftMode)),
             AssetEditDraftTextPatchStatus.BaselineMismatch => Result<UpdatedTextContentResult>.Failure(
@@ -309,5 +313,6 @@ public sealed class UpdateTextAssetEditDraftHandler
 
     private readonly record struct UpdatedTextContentResult(
         long ContentLength,
-        int? DraftRevision);
+        int? DraftRevision,
+        TextAssetEditDraftPatchBaselineDto? PatchBaseline);
 }

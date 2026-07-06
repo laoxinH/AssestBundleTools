@@ -12,7 +12,7 @@ public sealed partial class TextAssetEditDraftViewModel
             return;
         }
 
-        if (IsEditable)
+        if (IsEditable && !UsesStreamingDocumentModel)
         {
             SearchEditableText();
             return;

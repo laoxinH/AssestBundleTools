@@ -284,7 +284,7 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
                 }
 
                 appliedDraftRevision = updateResult.Value?.DraftRevision;
-                draft.MarkSaved(updateResult.Value?.Reference);
+                draft.MarkSaved(updateResult.Value?.Reference, updateResult.Value?.PatchBaseline);
             }
 
             var command = new ApplyTextAssetEditDraftCommand(

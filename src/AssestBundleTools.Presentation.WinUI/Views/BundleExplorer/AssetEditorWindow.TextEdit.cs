@@ -88,7 +88,7 @@ public sealed partial class AssetEditorWindow
             var applied = await ViewModel.ApplyTextEditAsync();
             if (applied && hadUnsavedChanges)
             {
-                TextEditDraftView.AcceptSynchronizedEditorText();
+                TextEditDraftView.AcceptSynchronizedEditorText(draft?.CurrentPatchBaseline);
             }
 
             return applied;

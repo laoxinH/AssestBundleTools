@@ -28,6 +28,7 @@ public sealed partial class TextDocumentSurfaceView
                 EditorWebView.Visibility = Visibility.Visible;
                 SendThemeToWebView(force: true);
                 SendDocumentToWebView(force: true);
+                StreamingDocumentReady?.Invoke(this, EventArgs.Empty);
                 break;
             case "contentChanged":
                 _hasUnsynchronizedWebViewChanges = true;
@@ -119,17 +120,108 @@ public sealed partial class TextDocumentSurfaceView
         }
     }
 
-    internal void AcceptCurrentDocumentAsSaved()
+    internal void AcceptCurrentDocumentAsSaved(TextAssetEditDraftPatchBaselineDto? baseline)
     {
         _hasUnsynchronizedWebViewChanges = false;
         if (_isWebViewReady && EditorWebView.CoreWebView2 is not null)
         {
             var message = JsonSerializer.Serialize(new
             {
-                type = "markSaved"
+                type = "markSaved",
+                baseline = baseline is null
+                    ? null
+                    : new
+                    {
+                        contentLength = baseline.ContentLength,
+                        contentSha256 = baseline.ContentSha256
+                    }
             });
             EditorWebView.CoreWebView2.PostWebMessageAsJson(message);
         }
+    }
+
+    public Task BeginStreamingDocumentAsync(
+        string language,
+        long expectedLength,
+        CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested || !CanStreamDocument)
+        {
+            return Task.CompletedTask;
+        }
+
+        _isStreamingDocument = true;
+        _hasStreamingDocumentModel = false;
+        _hasUnsynchronizedWebViewChanges = false;
+        _isSentDocumentCacheValid = false;
+        var message = JsonSerializer.Serialize(new
+        {
+            type = "beginStreamingDocument",
+            language = string.IsNullOrWhiteSpace(language) ? "plaintext" : language.Trim(),
+            readOnly = true,
+            expectedLength = expectedLength < 0 ? 0 : expectedLength
+        });
+        EditorWebView.CoreWebView2!.PostWebMessageAsJson(message);
+        return Task.CompletedTask;
+    }
+
+    public Task AppendDocumentChunkAsync(
+        string text,
+        CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested || !CanStreamDocument || !_isStreamingDocument)
+        {
+            return Task.CompletedTask;
+        }
+
+        var message = JsonSerializer.Serialize(new
+        {
+            type = "appendDocumentChunk",
+            text = text ?? string.Empty
+        });
+        EditorWebView.CoreWebView2!.PostWebMessageAsJson(message);
+        return Task.CompletedTask;
+    }
+
+    public Task EndStreamingDocumentAsync(
+        TextAssetEditDraftPatchBaselineDto baseline,
+        bool readOnly,
+        CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested || !CanStreamDocument)
+        {
+            _isStreamingDocument = false;
+            return Task.CompletedTask;
+        }
+
+        var language = string.IsNullOrWhiteSpace(DocumentLanguage) ? "plaintext" : DocumentLanguage.Trim();
+        var message = JsonSerializer.Serialize(new
+        {
+            type = "endStreamingDocument",
+            readOnly,
+            baseline = new
+            {
+                contentLength = baseline.ContentLength,
+                contentSha256 = baseline.ContentSha256
+            }
+        });
+        EditorWebView.CoreWebView2!.PostWebMessageAsJson(message);
+        _isStreamingDocument = false;
+        _hasStreamingDocumentModel = true;
+        _lastSentText = DocumentText ?? string.Empty;
+        _lastSentLanguage = language;
+        _lastSentReadOnly = readOnly;
+        _isSentDocumentCacheValid = true;
+        return Task.CompletedTask;
+    }
+
+    public Task CancelStreamingDocumentAsync(CancellationToken cancellationToken = default)
+    {
+        _isStreamingDocument = false;
+        _hasStreamingDocumentModel = false;
+        SendDocumentToWebView(force: true);
+
+        return Task.CompletedTask;
     }
 
     private void ResolveDocumentTextRequest(JsonElement root)
@@ -215,6 +307,7 @@ public sealed partial class TextDocumentSurfaceView
         try
         {
             _hasUnsynchronizedWebViewChanges = false;
+            _hasStreamingDocumentModel = false;
             _lastSentText = text;
             _lastSentLanguage = string.IsNullOrWhiteSpace(DocumentLanguage)
                 ? "plaintext"
@@ -254,6 +347,7 @@ public sealed partial class TextDocumentSurfaceView
         DependencyPropertyChangedEventArgs e)
     {
         if (dependencyObject is TextDocumentSurfaceView view &&
+            !view._isStreamingDocument &&
             !view._isApplyingWebViewText &&
             !view._hasUnsynchronizedWebViewChanges)
         {
@@ -264,6 +358,7 @@ public sealed partial class TextDocumentSurfaceView
     public void ResetPendingDocumentChanges(bool forceRefreshDocument = false)
     {
         _hasUnsynchronizedWebViewChanges = false;
+        _hasStreamingDocumentModel = false;
         if (forceRefreshDocument)
         {
             SendDocumentToWebView(force: true);
@@ -275,6 +370,16 @@ public sealed partial class TextDocumentSurfaceView
         if (!_isWebViewReady || EditorWebView.CoreWebView2 is null || _isSendingDocument)
         {
             return;
+        }
+
+        if (_hasStreamingDocumentModel && !force)
+        {
+            return;
+        }
+
+        if (force)
+        {
+            _hasStreamingDocumentModel = false;
         }
 
         var text = DocumentText ?? string.Empty;

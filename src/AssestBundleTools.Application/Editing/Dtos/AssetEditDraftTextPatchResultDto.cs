@@ -18,10 +18,15 @@ public sealed record AssetEditDraftTextPatchResultDto(
     long ContentLength = 0,
     int? Revision = null,
     int? InvalidRangeStart = null,
-    int? InvalidRangeLength = null)
+    int? InvalidRangeLength = null,
+    TextAssetEditDraftPatchBaselineDto? Baseline = null)
 {
-    public static AssetEditDraftTextPatchResultDto Applied(int textLength, long contentLength, int revision) =>
-        new(AssetEditDraftTextPatchStatus.Applied, textLength, contentLength, revision);
+    public static AssetEditDraftTextPatchResultDto Applied(
+        int textLength,
+        long contentLength,
+        int revision,
+        TextAssetEditDraftPatchBaselineDto? baseline = null) =>
+        new(AssetEditDraftTextPatchStatus.Applied, textLength, contentLength, revision, Baseline: baseline);
 
     public static AssetEditDraftTextPatchResultDto NotFound() =>
         new(AssetEditDraftTextPatchStatus.NotFound);
