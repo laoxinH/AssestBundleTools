@@ -8,6 +8,7 @@ using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
+using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -171,13 +172,25 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
             else if (!string.IsNullOrWhiteSpace(draftReference.DraftId) &&
                 !string.IsNullOrWhiteSpace(draftReference.DraftMode))
             {
-                return await OpenDraftReferenceAsync(
+                var draftResult = await OpenDraftReferenceAsync(
                     workspaceSummary,
                     workspaceKey,
                     workspaceDataRootPath,
                     details,
                     draftReference,
                     isAppliedBaseline: false);
+                if (!draftResult.IsSuccess &&
+                    ShouldRecreateDraftFromCurrentEffectiveBaseline(details, draftResult.Errors))
+                {
+                    assetTab.ClearEditDraftReference();
+                    return await CreateTextAssetEditDraftAsync(
+                        workspaceSummary,
+                        workspaceKey,
+                        workspaceDataRootPath,
+                        details);
+                }
+
+                return draftResult;
             }
         }
 
@@ -399,6 +412,28 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
     private static bool IsTextEditorSupported(AssetDetailsDto details) =>
         details.AssetType == AssetType.TextAsset ||
         string.Equals(details.AssetTypeDisplayName, "Shader", StringComparison.OrdinalIgnoreCase);
+
+    private static bool ShouldRecreateDraftFromCurrentEffectiveBaseline(
+        AssetDetailsDto details,
+        IReadOnlyList<AppError> errors)
+    {
+        if (!HasCurrentEffectiveBaseline(details))
+        {
+            return false;
+        }
+
+        return errors.Any(static error =>
+            string.Equals(error.Code, "Asset.Preview.FullContentUnavailable", StringComparison.Ordinal) ||
+            string.Equals(error.Code, "Asset.EditDraft.NotFound", StringComparison.Ordinal) ||
+            string.Equals(error.Code, "Asset.EditDraft.SourceMismatch", StringComparison.Ordinal) ||
+            string.Equals(error.Code, "Asset.EditDraft.Expired", StringComparison.Ordinal));
+    }
+
+    private static bool HasCurrentEffectiveBaseline(AssetDetailsDto details) =>
+        !string.IsNullOrWhiteSpace(details.FileReplacementSourcePath) ||
+        details.WorkspaceReplacementSourceBundleId is not null ||
+        details.WorkspaceReplacementSourceAssetId is not null ||
+        !string.IsNullOrWhiteSpace(details.TextEditDraftId);
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
 }
