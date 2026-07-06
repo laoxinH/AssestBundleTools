@@ -2634,6 +2634,12 @@
   <data name="TextAssetEditor.ApplyButton.Content" xml:space="preserve">
     <value>保存文本编辑</value>
   </data>
+  <data name="TextAssetEditor.LoadingEditButton.Content" xml:space="preserve">
+    <value>正在加载文本</value>
+  </data>
+  <data name="TextAssetEditor.LoadingEditButton.ToolTip" xml:space="preserve">
+    <value>完整文本仍在加载，完成后才能保存编辑。</value>
+  </data>
   <data name="TextAssetEditor.ExitButton.Content" xml:space="preserve">
     <value>退出</value>
   </data>

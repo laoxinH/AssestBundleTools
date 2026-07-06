@@ -19,6 +19,7 @@ namespace AssestBundleTools.Application.Assets.Queries;
 internal sealed class ReplacementEffectivePreviewResolver
 {
     private const string TextContentType = "text/plain; charset=utf-8";
+    private const int StructuredDraftTextInlineLimit = 1 * 1024 * 1024;
 
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
@@ -398,7 +399,7 @@ internal sealed class ReplacementEffectivePreviewResolver
         int fullCharacterCount)
     {
         if (fullCharacterCount <= firstChunkText.Length ||
-            fullCharacterCount > AssetTextEditPolicy.InlineEditableTextLength)
+            fullCharacterCount > StructuredDraftTextInlineLimit)
         {
             return firstChunkText;
         }

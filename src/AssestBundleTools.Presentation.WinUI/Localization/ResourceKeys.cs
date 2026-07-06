@@ -1336,6 +1336,8 @@ public static class ResourceKeys
     public const string InspectorApplySpineEditButton = "InspectorPanelView.ApplySpineEditButton.Content";
     public const string InspectorExitSpriteEditButton = "InspectorPanelView.ExitSpriteEditButton.Content";
     public const string TextAssetEditorApplyButton = "TextAssetEditor.ApplyButton.Content";
+    public const string TextAssetEditorLoadingEditButton = "TextAssetEditor.LoadingEditButton.Content";
+    public const string TextAssetEditorLoadingEditButtonToolTip = "TextAssetEditor.LoadingEditButton.ToolTip";
     public const string TextAssetEditorExitButton = "TextAssetEditor.ExitButton.Content";
     public const string TextAssetEditorReadOnlyHint = "TextAssetEditor.ReadOnlyHint.Text";
     public const string TextAssetEditorInlineEditHint = "TextAssetEditor.InlineEditHint.Text";

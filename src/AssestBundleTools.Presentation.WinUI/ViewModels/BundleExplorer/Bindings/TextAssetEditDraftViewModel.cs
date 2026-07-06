@@ -36,6 +36,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
     private bool _isBusy;
     private bool _hasPendingEditorTextChanges;
     private bool _isFullEditLoaded;
+    private bool _isFullEditLoading;
     private bool _isDraftMaterialized;
     private bool _usesStreamingDocumentModel;
 
@@ -123,6 +124,18 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
     public Visibility LoadFullEditButtonVisibility =>
         CanShowLoadFullEdit ? Visibility.Visible : Visibility.Collapsed;
 
+    public bool IsFullEditLoading
+    {
+        get => _isFullEditLoading;
+        private set
+        {
+            if (SetProperty(ref _isFullEditLoading, value))
+            {
+                OnPropertyChanged(nameof(CanSave));
+            }
+        }
+    }
+
     public string StatusText
     {
         get => _statusText;
@@ -168,7 +181,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
         _hasPendingEditorTextChanges ||
         !string.Equals(EditableText, _lastSavedText, StringComparison.Ordinal));
 
-    public bool CanSave => CanApply && HasUnsavedChanges;
+    public bool CanSave => CanApply && HasUnsavedChanges && !IsFullEditLoading;
 
     public bool UsesStreamingDocumentModel => _usesStreamingDocumentModel;
 
@@ -362,6 +375,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
         OnPropertyChanged(nameof(ModeHintText));
         OnPropertyChanged(nameof(CanLoadFullEdit));
         OnPropertyChanged(nameof(LoadFullEditButtonVisibility));
+        OnPropertyChanged(nameof(IsFullEditLoading));
         OnPropertyChanged(nameof(HasUnsavedChanges));
         OnPropertyChanged(nameof(CanSave));
         OnPropertyChanged(nameof(CanLoadMoreLines));

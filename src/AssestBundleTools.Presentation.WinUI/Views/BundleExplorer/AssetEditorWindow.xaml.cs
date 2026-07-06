@@ -299,6 +299,13 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
             UpdateWindowTitle();
         }
 
+        if (e.PropertyName is nameof(AssetEditorWindowViewModel.SaveTextEditButtonContentKey) or
+            nameof(AssetEditorWindowViewModel.SaveTextEditButtonToolTipKey) or
+            nameof(AssetEditorWindowViewModel.IsTextEditLoading))
+        {
+            ApplySaveTextEditButtonText();
+        }
+
         Bindings.Update();
     }
 
@@ -356,7 +363,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         ApplyActionButtonText(ExitSpineEditButton, ExitSpineEditButtonText, ResourceKeys.InspectorExitSpriteEditButton);
         ApplyActionButtonText(UndoSpineEditButton, UndoSpineEditButtonText, ResourceKeys.InspectorUndoReplacementButton);
         ApplyActionButtonText(RedoSpineEditButton, RedoSpineEditButtonText, ResourceKeys.InspectorRedoReplacementButton);
-        ApplyActionButtonText(SaveTextEditButton, SaveTextEditButtonText, ResourceKeys.TextAssetEditorApplyButton);
+        ApplySaveTextEditButtonText();
         ApplyActionButtonText(ExitTextEditButton, ExitTextEditButtonText, ResourceKeys.TextAssetEditorExitButton);
     }
 
@@ -462,6 +469,14 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         textBlock.Text = text;
         AutomationProperties.SetName(button, text);
         ToolTipService.SetToolTip(button, text);
+    }
+
+    private void ApplySaveTextEditButtonText()
+    {
+        var text = UiText.Get(ViewModel.SaveTextEditButtonContentKey);
+        SaveTextEditButtonText.Text = text;
+        AutomationProperties.SetName(SaveTextEditButton, text);
+        ToolTipService.SetToolTip(SaveTextEditButton, UiText.Get(ViewModel.SaveTextEditButtonToolTipKey));
     }
 
     private void UpdateWindowTitle()

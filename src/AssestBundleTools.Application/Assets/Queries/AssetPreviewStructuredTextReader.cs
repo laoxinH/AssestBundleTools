@@ -16,12 +16,30 @@ internal static class AssetPreviewStructuredTextReader
             return false;
         }
 
-        text = ResolveText(preview);
+        if (!string.IsNullOrWhiteSpace(preview.FullTextContent))
+        {
+            text = preview.FullTextContent;
+            return true;
+        }
+
+        if (preview.TextDisplay?.IsTruncated == true)
+        {
+            return false;
+        }
+
+        text = preview.TextContent ?? string.Empty;
         return !string.IsNullOrWhiteSpace(text);
     }
 
-    public static string ResolveText(AssetPreviewDto preview) =>
-        string.IsNullOrWhiteSpace(preview.FullTextContent)
-            ? preview.TextContent ?? string.Empty
-            : preview.FullTextContent;
+    public static string ResolveText(AssetPreviewDto preview)
+    {
+        if (!string.IsNullOrWhiteSpace(preview.FullTextContent))
+        {
+            return preview.FullTextContent;
+        }
+
+        return preview.TextDisplay?.IsTruncated == true
+            ? string.Empty
+            : preview.TextContent ?? string.Empty;
+    }
 }

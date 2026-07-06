@@ -320,6 +320,10 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldUseAppliedTextEditDraftPreview_ForTextAsset);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldKeepLargeAppliedTextEditPreviewBounded),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldKeepLargeAppliedTextEditPreviewBounded);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldIgnoreStaleTextEditProjection_WhenOperationHistoryHasNoEffectiveEdit),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldIgnoreStaleTextEditProjection_WhenOperationHistoryHasNoEffectiveEdit);
         await RunTestAsync(

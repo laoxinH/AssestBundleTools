@@ -99,6 +99,31 @@ public sealed class MonacoEditorAssetsContractTests
     }
 
     [Fact]
+    public void MonacoHost_ShouldTrackStreamingRangeEditsWithoutFullDocumentReplacement()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var hostScript = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Assets",
+            "Monaco",
+            "abt-editor-host.js"));
+
+        Assert.Contains("let pendingStreamingRangeEdit = null;", hostScript);
+        Assert.Contains("trackStreamingContentChanges(event && event.changes);", hostScript);
+        Assert.Contains("mergeStreamingRangeEdit", hostScript);
+        Assert.Contains("getCurrentTextByOffsetRange(", hostScript);
+
+        var baselineBranchStart = hostScript.IndexOf("if (baselineInfo) {", StringComparison.Ordinal);
+        var baselineBranchEnd = hostScript.IndexOf("const currentText = getEditorText();", baselineBranchStart, StringComparison.Ordinal);
+        var baselineBranch = hostScript[baselineBranchStart..baselineBranchEnd];
+        Assert.Contains("pendingStreamingRangeEdit.baselineStart", baselineBranch);
+        Assert.Contains("pendingStreamingRangeEdit.currentEnd", baselineBranch);
+        Assert.DoesNotContain("text: currentText", baselineBranch);
+    }
+
+    [Fact]
     public void TextEditorSurface_ShouldInvalidateSentDocumentCacheAfterWebViewEdits()
     {
         var repositoryRoot = FindRepositoryRoot();

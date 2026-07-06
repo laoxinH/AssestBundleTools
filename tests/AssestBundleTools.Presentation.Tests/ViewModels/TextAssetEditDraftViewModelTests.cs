@@ -202,6 +202,47 @@ public sealed class TextAssetEditDraftViewModelTests
             viewModel.CurrentPatchBaseline?.ContentSha256);
     }
 
+    [Fact]
+    public async Task LoadFullEditAsync_ShouldExposeLoadingState_WhileStreamingDocumentLoads()
+    {
+        var firstChunkRequested = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowFirstChunk = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var reference = CreateReference() with { ContentLength = 12 };
+        var gateway = new TestWorkspaceAssetInspectionGateway
+        {
+            LoadPreviewTextChunkHandler = async query =>
+            {
+                firstChunkRequested.TrySetResult(true);
+                await allowFirstChunk.Task;
+                return Result<AssetPreviewTextChunkDto>.Success(new AssetPreviewTextChunkDto(
+                    reference,
+                    "alpha beta",
+                    query.Offset,
+                    "alpha beta".Length,
+                    "alpha beta".Length,
+                    HasMore: false));
+            }
+        };
+        var viewModel = CreateViewModel(reference, gateway, canEditInline: true);
+        var sink = new TestTextDocumentStreamingSink();
+
+        var loadTask = viewModel.LoadFullEditAsync(sink);
+        await AssertCompletesAsync(firstChunkRequested.Task);
+
+        Assert.True(viewModel.IsFullEditLoading);
+        Assert.False(viewModel.CanSave);
+
+        allowFirstChunk.SetResult(true);
+        await loadTask;
+
+        Assert.False(viewModel.IsFullEditLoading);
+        Assert.False(viewModel.CanSave);
+
+        viewModel.MarkEditorDirty();
+
+        Assert.True(viewModel.CanSave);
+    }
+
     private static AssetPreviewFullContentReferenceDto CreateReference() =>
         new(
             AssetPreviewFullContentReferenceKind.EditDraft,
@@ -261,6 +302,13 @@ public sealed class TextAssetEditDraftViewModelTests
             "inline",
             "deferred",
             "loaded {0} / {1}");
+
+    private static async Task AssertCompletesAsync(Task task)
+    {
+        var completed = await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(5)));
+        Assert.Same(task, completed);
+        await task;
+    }
 
     private sealed class TestTextDocumentStreamingSink : ITextDocumentStreamingSink
     {

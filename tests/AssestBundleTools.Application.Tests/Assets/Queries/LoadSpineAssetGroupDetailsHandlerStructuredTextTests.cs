@@ -143,4 +143,66 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
             diagnostic.Kind,
             "Invalid JSON supplied as an atlas replacement should be reported as an atlas parse diagnostic.");
     }
+
+    public static async Task HandleAsync_ShouldRejectTruncatedAtlasDisplayText_WhenFullTextIsUnavailable()
+    {
+        var workspaceId = new WorkspaceId("workspace-a");
+        var spineBundleId = new BundleId("bundle.spine");
+        var skeletonAssetId = new AssetId("skeleton-hero");
+        var atlasAssetId = new AssetId("atlas-hero");
+        var spineAssets = CreateAssetList(
+            workspaceId,
+            spineBundleId,
+            "spine.ab",
+            CreateItem(spineBundleId, skeletonAssetId.Value, "Assets/Hero/Hero.json", AssetType.TextAsset),
+            CreateItem(spineBundleId, atlasAssetId.Value, "Assets/Hero/Hero.atlas", AssetType.TextAsset),
+            CreateItem(spineBundleId, "texture-hero", "Assets/Hero/hero.png", AssetType.Texture2D));
+        var truncatedAtlasText = """
+            hero.png
+            size: 512,256
+            head
+              xy: 12, 16
+            """;
+        var skeletonJson = """
+            {
+              "skeleton": { "spine": "3.8.99" },
+              "bones": [{ "name": "root" }],
+              "slots": [],
+              "skins": {},
+              "animations": {}
+            }
+            """;
+        var previewHandler = new TestAssetPreviewHandler(query =>
+        {
+            if (query.AssetId.Equals(skeletonAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(query, skeletonJson));
+            }
+
+            if (query.AssetId.Equals(atlasAssetId))
+            {
+                return Result<AssetPreviewDto>.Success(CreateTextPreview(
+                    query,
+                    truncatedAtlasText,
+                    isDisplayTruncated: true));
+            }
+
+            return Result<AssetPreviewDto>.Success(CreateImagePreview(query, 512, 256));
+        });
+        var handler = new LoadSpineAssetGroupDetailsHandler(
+            new TestWorkspaceSessionRegistry(workspaceId, [spineAssets]),
+            previewHandler);
+
+        var result = await handler.HandleAsync(CreateQuery(workspaceId, spineBundleId));
+
+        TestAssert.True(result.IsSuccess, "Truncated atlas display text should finish with diagnostics instead of parsing a partial atlas.");
+        var details = result.Value ?? throw new InvalidOperationException("Expected Spine group details.");
+        TestAssert.Empty(details.AtlasPages, "Truncated display text must not be parsed as complete atlas content.");
+        TestAssert.Equal(2, previewHandler.HandleCallCount, "Texture preview should be skipped when atlas text is incomplete.");
+        var diagnostic = TestAssert.Single(details.Diagnostics);
+        TestAssert.Equal(
+            SpineAssetGroupDiagnosticKind.AtlasPreviewUnavailable,
+            diagnostic.Kind,
+            "Missing full atlas text should be reported as unavailable rather than parsed from a display sample.");
+    }
 }

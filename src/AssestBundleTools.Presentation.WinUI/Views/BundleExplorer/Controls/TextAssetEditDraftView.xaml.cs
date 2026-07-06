@@ -181,6 +181,11 @@ public sealed partial class TextAssetEditDraftView : UserControl
             return true;
         }
 
+        if (ViewModel.IsFullEditLoading)
+        {
+            return false;
+        }
+
         if (ViewModel.UsesStreamingDocumentModel && !ViewModel.HasUnsavedChanges)
         {
             return true;
@@ -192,6 +197,11 @@ public sealed partial class TextAssetEditDraftView : UserControl
         {
             ViewModel.SetEditorRangeEditsFromSurface(rangeEditSync.Edits, ViewModel.CreateCurrentPatchBaseline());
             return true;
+        }
+
+        if (ViewModel.UsesStreamingDocumentModel)
+        {
+            return false;
         }
 
         var text = await TextEditorSurface.GetCurrentDocumentTextAsync();

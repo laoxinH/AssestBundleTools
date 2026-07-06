@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using System.ComponentModel;
+using AssestBundleTools.Presentation.WinUI.Localization;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 
@@ -34,8 +35,26 @@ public sealed partial class AssetEditorWindowViewModel
     public Visibility TextEditActionBarVisibility =>
         IsTextEditModeActive ? Visibility.Visible : Visibility.Collapsed;
 
+    public bool IsTextEditLoading =>
+        DocumentGroup.ActiveAssetTab?.TextEditDraft?.IsFullEditLoading == true;
+
+    public Visibility TextEditLoadingVisibility =>
+        IsTextEditLoading ? Visibility.Visible : Visibility.Collapsed;
+
+    public string SaveTextEditButtonContentKey =>
+        IsTextEditLoading
+            ? ResourceKeys.TextAssetEditorLoadingEditButton
+            : ResourceKeys.TextAssetEditorApplyButton;
+
+    public string SaveTextEditButtonToolTipKey =>
+        IsTextEditLoading
+            ? ResourceKeys.TextAssetEditorLoadingEditButtonToolTip
+            : ResourceKeys.TextAssetEditorApplyButton;
+
     public bool CanSaveTextEdit =>
-        DocumentGroup.ActiveAssetTab?.TextEditDraft?.CanSave == true && !IsBusy;
+        DocumentGroup.ActiveAssetTab?.TextEditDraft?.CanSave == true &&
+        !IsTextEditLoading &&
+        !IsBusy;
 
     public bool CanSaveSpineEdit =>
         DocumentGroup.ActiveSpineGroupTab?.CanSaveSpineEdit == true;
@@ -66,6 +85,10 @@ public sealed partial class AssetEditorWindowViewModel
         OnPropertyChanged(nameof(PreviewSurfaceVisibility));
         OnPropertyChanged(nameof(ActiveTextEditDraft));
         OnPropertyChanged(nameof(TextEditActionBarVisibility));
+        OnPropertyChanged(nameof(IsTextEditLoading));
+        OnPropertyChanged(nameof(TextEditLoadingVisibility));
+        OnPropertyChanged(nameof(SaveTextEditButtonContentKey));
+        OnPropertyChanged(nameof(SaveTextEditButtonToolTipKey));
         OnPropertyChanged(nameof(CanSaveTextEdit));
         OnPropertyChanged(nameof(CanSaveSpineEdit));
         OnPropertyChanged(nameof(CanUndoSpineEdit));
@@ -150,7 +173,8 @@ public sealed partial class AssetEditorWindowViewModel
     private void OnObservedTextEditDraftPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(TextAssetEditDraftViewModel.HasUnsavedChanges) or
-            nameof(TextAssetEditDraftViewModel.CanSave))
+            nameof(TextAssetEditDraftViewModel.CanSave) or
+            nameof(TextAssetEditDraftViewModel.IsFullEditLoading))
         {
             NotifyActionBarStates();
         }

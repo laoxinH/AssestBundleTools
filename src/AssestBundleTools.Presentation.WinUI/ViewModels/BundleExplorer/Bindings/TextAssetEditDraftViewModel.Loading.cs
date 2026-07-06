@@ -33,13 +33,21 @@ public sealed partial class TextAssetEditDraftViewModel
             return;
         }
 
-        if (streamingSink?.CanStreamDocument == true)
+        IsFullEditLoading = true;
+        try
         {
-            await LoadEditableTextStreamingAsync(streamingSink, cancellationToken);
-            return;
-        }
+            if (streamingSink?.CanStreamDocument == true)
+            {
+                await LoadEditableTextStreamingAsync(streamingSink, cancellationToken);
+                return;
+            }
 
-        await LoadEditableTextAsync(cancellationToken);
+            await LoadEditableTextAsync(cancellationToken);
+        }
+        finally
+        {
+            IsFullEditLoading = false;
+        }
     }
 
     private async Task LoadLinePageAsync(

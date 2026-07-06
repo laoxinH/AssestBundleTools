@@ -70,7 +70,7 @@ Infrastructure 负责：
 - 二进制只承载已确认可直接展示的小型 payload，例如缩略图、转码后音频片段或当前帧贴图；原始大文件通过 sidecar reference 读取。
 - 几何数据只承载预览所需子集；过大 Mesh、过多动画曲线、过多 TypeTree 字段应回退为计数摘要和诊断。
 
-当前 `AssetPreviewDto.TextContent` 已作为展示字段使用，应保持有界。`FullTextContent` 属于过渡字段，后续应逐步替换为 payload reference 或只在 Application 内部消费；Presentation 不得直接绑定该字段。
+当前 `AssetPreviewDto.TextContent` 已作为展示字段使用，应保持有界。`FullTextContent` 属于过渡字段，后续应逐步替换为 payload reference 或只在 Application 内部消费；Presentation 不得直接绑定该字段。Application 内部结构化解析只能消费 `FullTextContent` 或明确未截断的展示文本；当 `TextDisplay.IsTruncated=true` 且没有完整文本时，解析器必须返回结构化诊断或跳过解析，不能把截断样本当作完整 atlas / skeleton / JSON 输入。
 
 ### 4.2 完整载荷引用
 

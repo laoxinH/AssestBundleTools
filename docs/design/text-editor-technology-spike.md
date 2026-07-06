@@ -56,7 +56,7 @@
 - `TextAsset / Shader` 编辑窗口已从独立 `ListView / TextBox` 组合迁移到 `TextDocumentSurfaceView`。
 - `TextDocumentSurfaceView` 已接入 WebView2 + 离线 Monaco 静态资源作为主实现，原生 WinUI 行列表 / `TextBox` 只作为 WebView2 初始化失败、Runtime 缺失或静态资源缺失时的 fallback。
 - Monaco 主实现已统一普通预览和编辑窗口的行号、语法染色、查找 / 替换入口、Ctrl+F、Ctrl+H、Ctrl+S、撤销 / 重做和 VS Code 风格文本面。`.json / .skel` 走 JSON 语言，`.atlas` 走类 ini 语言，Shader 临时映射到 C++ 风格高亮。
-- 当前保存已进入 `RangeEdit + patch-backed draft store` 阶段：`UpdateTextAssetEditDraft` 仍保留“全文正文”兼容入口，但资源编辑窗口保存统一提交范围补丁；范围补丁携带 `ContentLength + SHA-256` 基线并委托 `IAssetEditDraftTextStore.ApplyTextPatch` 校验、合并、更新 descriptor 和追加 `EditDraftUpdated` 操作记录。`JsonAssetEditDraftTextStore` 当前以完整 payload 或稳定 `text-base.txt` 快照为基线，写入 `text-patches.json` patch manifest，不再为每次保存重写当前完整 `text.txt`；读取 chunk、行范围、搜索、重新打开、有效预览和导出消费同一个 composite reader，因此保存后的当前文本可以在不物化当前完整 payload 文件的情况下被后续链路读取。
+- 当前保存已进入 `RangeEdit + patch-backed draft store` 阶段：`UpdateTextAssetEditDraft` 仍保留“全文正文”兼容入口，但资源编辑窗口保存统一提交范围补丁；范围补丁携带 `ContentLength + SHA-256` 基线并委托 `IAssetEditDraftTextStore.ApplyTextPatch` 校验、合并、更新 descriptor 和追加 `EditDraftUpdated` 操作记录。`JsonAssetEditDraftTextStore` 当前以完整 payload 或稳定 `text-base.txt` 快照为基线，写入 `text-patches.json` patch manifest，不再为每次保存重写当前完整 `text.txt`；读取 chunk、行范围、搜索、重新打开、有效预览和导出消费同一个 composite reader，因此保存后的当前文本可以在不物化当前完整 payload 文件的情况下被后续链路读取。流式大文本由 Monaco host 在 `onDidChangeModelContent` 中维护基于保存基线坐标的合并脏区间，保存时只回传该区间文本；若流式模型无法取得 range edit，Presentation 保存入口拒绝退回全文同步。
 - 大文本打开已完成“快速进入 + 自动流式全文编辑”第一层长期边界：`CreateTextAssetEditDraft` 对超过 `AssetTextEditPolicy.AutoMaterializeTextLength` 的文本不再立即复制全文到 `staging/drafts`，而是在 `editDrafts[].sourceReference` 中记录源 `PreviewCache / FileReplacement / EditDraft` 引用并标记 `isPayloadMaterialized=false`；编辑窗口初始化只读取首屏行，WebView bridge ready 后复用 `LoadPreviewTextChunkQuery` 按 chunk 追加到 Monaco 模型，并在完成时以 `ContentLength + SHA-256` 作为保存基线。未物化草稿首次保存会用 `sourceReference` 定位源并流式写出规范化 `text-base.txt`，再追加 `text-patches.json`，不再强制走全文 `TextContent` 生成当前完整 draft payload；“加载完整编辑”按钮仅保留为 WebView 未 ready、fallback 或流式失败后的手动补救入口。当前仍是 Monaco 完整前端模型，不是无限大虚拟编辑器。
 - 当前 WebView2 host 第一阶段使用默认环境初始化；显式 user data folder 和更细初始化诊断保留到下一阶段补齐。
 
@@ -133,16 +133,16 @@ Monaco 主实现已经进入 `TextDocumentSurfaceView`，后续工程化收口�
 
 - 已完成 `TextAssetEditDraftRangeEditDto` 与 `UpdateTextAssetEditDraftCommand.RangeEdits` 第一阶段契约；命令校验要求 `TextContent` 与 `RangeEdits` 二选一，补丁范围使用 .NET / Monaco 一致的 UTF-16 字符索引。
 - 已完成 store 级 patch-backed 写入边界：Application 命令通过 `IAssetEditDraftTextStore.ApplyTextPatch` 提交 range patch，store 按 `ContentLength + SHA-256` 校验基线，再把补丁追加到 `text-patches.json` manifest；descriptor 的长度、行数、hash、摘要和 `isPayloadMaterialized` 由 composite reader 计算后更新。已有 `text.txt` payload 不会被本次 patch 保存重写；未物化草稿会先根据 `editDrafts[].sourceReference` 流式写出稳定 `text-base.txt`，后续保存和恢复只依赖 draft 目录内的 base snapshot 与 manifest。handler 只把 store 状态映射为 `Asset.EditDraft.TextPatchBaselineMismatch / TextPatchRangeInvalid / TextLengthExceeded / NotFound` 等结构化错误，并复用原有 `EditDraftUpdated` 操作记录链路。stale patch 不写 manifest 或操作记录。
-- 已完成 UI 保存入口切换：当前窗口按钮保存和 Ctrl+S 会走同一 surface 同步路径，优先提交 Monaco 基于保存基线生成的最小 range patch；fallback surface 或无法取得最小 patch 时会退回“从 0 到已保存全文长度”的全文替换 range patch，但仍通过 `RangeEdits` 进入 patch store，不再用 `TextContent` 物化路径作为常规保存。
-- 已完成 Monaco bridge 第一阶段：host 保存基线由 `setDocument / markSaved` 管理，保存时通过 `getPendingRangeEdits` 返回 `start / length / text / versionId / baseLength`，Presentation 只把 range patch 放进草稿 VM 的短期状态，不再在 Ctrl+S 消息里携带全文。
+- 已完成 UI 保存入口切换：当前窗口按钮保存和 Ctrl+S 会走同一 surface 同步路径，优先提交 Monaco 基于保存基线生成的 range patch；非流式 fallback surface 或无法取得最小 patch 时可退回“从 0 到已保存全文长度”的全文替换 range patch，但仍通过 `RangeEdits` 进入 patch store，不再用 `TextContent` 物化路径作为常规保存。流式大文本不会走全文同步 fallback。
+- 已完成 Monaco bridge 第一阶段：host 保存基线由 `setDocument / markSaved` 管理，保存时通过 `getPendingRangeEdits` 返回 `start / length / text / versionId / baseLength`，Presentation 只把 range patch 放进草稿 VM 的短期状态，不再在 Ctrl+S 消息里携带全文。对流式加载文档，host 不持有完整 baselineText，而是跟踪单个基线坐标合并脏区间并从当前 Monaco model 按 offset 取该区间文本，避免保存时为了生成补丁读取整篇 currentText。
 - 已完成自动流式加载第一阶段：`TextDocumentSurfaceView` 暴露 streaming sink，资源编辑窗口进入预算内 TextAsset 编辑态后在 WebView ready 时自动从 Application chunk query 读取并追加到 Monaco；Presentation 不持有完整 `_lastSavedText`，保存基线由 Application/store 返回的 patch baseline 维护。大文档加载时会关闭 Monaco 高成本展示功能，初始化 chunk 不进入 undo 栈。
 - 已补应用层回归测试覆盖 store 级 patch 委托、非法 range 映射、stale patch 基线拒绝、长度预算和操作记录保存；已补 Infrastructure 回归测试覆盖 `JsonAssetEditDraftTextStore.ApplyTextPatch` 对 payload、descriptor、行 / 字符索引 sidecar 的一致更新，以及 stale baseline 不改写 payload。
 - 已补懒物化草稿边界：`editDrafts[]` 可保存 `sourceReference / isPayloadMaterialized`，`OpenTextAssetEditDraft` 只在 payload 尚不存在且 descriptor 明确未物化时恢复为 deferred draft；Presentation 初始化 deferred draft 只读首屏行，并在 WebView ready 后自动按 chunk 填充 Monaco。首次保存 deferred draft 时由 Application 把 descriptor 的 `sourceReference` 传给 store，store 流式写出稳定 base snapshot 并生成 patch manifest，避免为了首个补丁先生成当前完整 payload，同时避免保存后继续依赖 preview cache 或外部源。
 
 仍未完成：
 
-- Monaco 端尚未提交逐输入事件组成的 patch log；当前第一阶段是在保存时由 host 对基线文本和当前文本做最小差异，生成单个 range patch。
-- 当前 patch-backed store 采用 base + patch manifest + composite reader，可以避免每次保存重写完整 draft payload；但 Monaco 仍需要形成前端完整文本模型，streaming dirty fallback 也仍可能在保存时形成全文替换 range patch。后续若要接近 VS Code 大文件体验，需要继续推进前端分块/虚拟模型、逐输入 patch log 压缩和 manifest compaction / chunk rewrite。
+- Monaco 端尚未提交完整逐输入 patch log；非流式文本仍是在保存时由 host 对基线文本和当前文本做最小差异，生成单个 range patch。流式文本已改为逐输入维护单个合并脏区间，但远距离多处修改仍会合并成一个较大的区间，而不是多个独立 range edits。
+- 当前 patch-backed store 采用 base + patch manifest + composite reader，可以避免每次保存重写完整 draft payload；但 Monaco 仍需要形成前端完整文本模型。后续若要接近 VS Code 大文件体验，需要继续推进前端分块/虚拟模型、多 range patch log 压缩和 manifest compaction / chunk rewrite。
 - 大文本正文保存仍受 `AssetTextEditPolicy.InlineEditableTextLength` 预算保护；当前优化目标是先把草稿持久化和读取链路从全文 payload 重写中解耦，而不是立即开放无限大文本编辑保存。
 
 下一步：

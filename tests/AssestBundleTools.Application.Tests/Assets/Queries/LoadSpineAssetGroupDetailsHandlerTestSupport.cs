@@ -21,10 +21,19 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
     private static AssetPreviewDto CreateTextPreview(
         GetAssetPreviewQuery query,
         string text,
-        string? fullTextContent = null) =>
+        string? fullTextContent = null,
+        bool isDisplayTruncated = false) =>
         CreatePreview(query, AssetPreviewKind.Text, text) with
         {
-            FullTextContent = fullTextContent
+            FullTextContent = fullTextContent,
+            TextDisplay = new AssetPreviewTextDisplayDto(
+                DisplayCharacterCount: text.Length,
+                FullCharacterCount: isDisplayTruncated ? text.Length + 1 : text.Length,
+                DisplayLineCount: CountLines(text),
+                EstimatedFullLineCount: CountLines(text) + (isDisplayTruncated ? 1 : 0),
+                IsTruncated: isDisplayTruncated,
+                MaxDisplayCharacters: AssetPreviewTextDisplayPolicy.MaxDisplayCharacters,
+                MaxDisplayLineCount: AssetPreviewTextDisplayPolicy.MaxDisplayLineCount)
         };
 
     private static AssetPreviewDto CreateSummaryPreview(GetAssetPreviewQuery query, string text) =>
@@ -103,6 +112,25 @@ internal static partial class LoadSpineAssetGroupDetailsHandlerTests
             Diagnostic: new AssetPreviewDiagnosticDto(
                 AssetPreviewCacheStatusKind.Missing,
                 AssetPreviewFallbackReasonKind.None));
+
+    private static int CountLines(string text)
+    {
+        if (text.Length == 0)
+        {
+            return 0;
+        }
+
+        var lineCount = 1;
+        foreach (var character in text)
+        {
+            if (character == '\n')
+            {
+                lineCount++;
+            }
+        }
+
+        return lineCount;
+    }
 
     private static LoadSpineAssetGroupDetailsQuery CreateQuery(
         WorkspaceId workspaceId,

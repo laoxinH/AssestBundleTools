@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Bundles;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Common.Errors;
@@ -332,6 +333,85 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.Equal(0, decryptor.DecryptCallCount, "Applied text edit preview should not decrypt the original bundle.");
         TestAssert.Equal(0, generator.GenerateCallCount, "Applied text edit preview should not generate original preview content.");
         TestAssert.Equal(0, previewCacheStore.SaveCallCount, "Applied text edit preview should not rewrite original preview cache.");
+    }
+
+    public static async Task HandleAsync_ShouldKeepLargeAppliedTextEditPreviewBounded()
+    {
+        const string originalText = "hero.png\nsize: 256,128\n";
+        const string draftId = "draft-text-1";
+        const string draftMode = "text-content";
+        const int draftRevision = 3;
+        var editedText = new string('x', (1024 * 1024) + 1);
+        var appliedAtUtc = new DateTimeOffset(2026, 7, 5, 9, 0, 0, TimeSpan.Zero);
+
+        var query = CreateQuery();
+        var bundleCacheEntry = CreateBundleCacheEntry(query.WorkspaceKey, query.BundleId.Value, query.AssetId.Value);
+        bundleCacheEntry = bundleCacheEntry with
+        {
+            Assets =
+            [
+                bundleCacheEntry.Assets[0] with
+                {
+                    AssetType = AssetType.TextAsset.ToString(),
+                    AssetTypeDisplayName = AssetType.TextAsset.ToString(),
+                    AssetPath = "Assets/Hero/Hero.atlas",
+                    AssetName = "Hero.atlas"
+                }
+            ]
+        };
+        var originalPreviewPayload = CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            originalText,
+            generatorVersion: "generator-1");
+        var draftPreviewPayload = CreateTextPreviewPayload(
+            bundleCacheEntry,
+            query.AssetId.Value,
+            editedText,
+            generatorVersion: "edit-draft-text-v1");
+        var previewCacheStore = new TestPreviewCacheStore(originalPreviewPayload);
+        var draftTextStore = new TestAssetEditDraftTextStore(draftPreviewPayload);
+        var decryptor = new TestAssetBundleDecryptor(CreatePassThroughDecryptorDescriptor());
+        var generator = new TestAssetPreviewGenerator();
+        var handler = new GetAssetPreviewHandler(
+            new TestWorkspaceSessionRegistry(
+            [
+                CreateAssetDetails(
+                    query,
+                    name: "Hero.atlas",
+                    assetType: AssetType.TextAsset,
+                    textEditDraftId: draftId,
+                    textEditDraftMode: draftMode,
+                    textEditAppliedAtUtc: appliedAtUtc,
+                    textEditDraftRevision: draftRevision)
+            ]),
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([bundleCacheEntry]),
+                previewCacheStore,
+                assetEditDraftTextStore: draftTextStore),
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            generator,
+            new TestAudioPayloadTranscodingService());
+
+        var result = await handler.HandleAsync(query);
+
+        TestAssert.True(result.IsSuccess, "Large applied TextAsset edit draft should still provide bounded preview text.");
+        var preview = result.Value ?? throw new InvalidOperationException("Expected preview result.");
+        TestAssert.Equal(AssetPreviewKind.Text, preview.Kind, "Large applied text edit preview should remain text.");
+        TestAssert.Equal(
+            AssetPreviewTextDisplayPolicy.MaxDisplayCharacters,
+            preview.TextContent?.Length ?? 0,
+            "Large applied text edit preview should keep the foreground display bounded.");
+        TestAssert.Equal(null, preview.FullTextContent, "Large applied text edit preview should not eagerly stitch full structured text.");
+        TestAssert.Equal(
+            AssetPreviewFullContentReferenceKind.EditDraft,
+            preview.FullContentReference?.Kind,
+            "Large applied text edit preview should expose a deferred edit-draft reference.");
+        TestAssert.Equal(1, draftTextStore.LoadTextChunkCallCount, "Large applied text edit preview should read only the display chunk.");
+        TestAssert.Equal(draftRevision, draftTextStore.LastRevision, "Large applied text edit preview should read the effective revision.");
+        TestAssert.Equal(0, previewCacheStore.LoadCallCount, "Large applied text edit preview should not read stale original preview cache.");
+        TestAssert.Equal(0, decryptor.DecryptCallCount, "Large applied text edit preview should not decrypt the original bundle.");
+        TestAssert.Equal(0, generator.GenerateCallCount, "Large applied text edit preview should not generate original preview content.");
     }
 
     public static async Task HandleAsync_ShouldUseOperationTextEditRevision_WhenSessionProjectionIsStale()

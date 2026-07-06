@@ -76,6 +76,11 @@ public sealed partial class AssetEditorWindow
 
     private async Task<bool> ApplyTextEditFromSurfaceAsync(bool exitWhenClean = false)
     {
+        if (ViewModel.DocumentGroup.ActiveAssetTab?.TextEditDraft?.IsFullEditLoading == true)
+        {
+            return false;
+        }
+
         if (!await TextEditDraftView.SynchronizeEditorSaveAsync())
         {
             return false;

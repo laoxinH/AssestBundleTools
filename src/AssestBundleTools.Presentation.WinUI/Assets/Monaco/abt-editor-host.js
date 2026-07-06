@@ -10,7 +10,7 @@
   let baselineText = '';
   let baselineInfo = null;
   let isStreamingDocument = false;
-  let streamingDocumentDirty = false;
+  let pendingStreamingRangeEdit = null;
   let streamingTextLength = 0;
 
   function post(message) {
@@ -85,7 +85,7 @@
         editor.getAction('actions.find').run();
       });
 
-      editor.onDidChangeModelContent(function () {
+      editor.onDidChangeModelContent(function (event) {
         if (suppressChange) {
           return;
         }
@@ -95,7 +95,7 @@
           versionId: getModelVersionId()
         });
         if (baselineInfo) {
-          streamingDocumentDirty = true;
+          trackStreamingContentChanges(event && event.changes);
         }
       });
 
@@ -181,7 +181,7 @@
     baselineText = text;
     baselineInfo = null;
     isStreamingDocument = false;
-    streamingDocumentDirty = false;
+    pendingStreamingRangeEdit = null;
     streamingTextLength = 0;
 
     suppressChange = true;
@@ -214,7 +214,7 @@
     baselineText = '';
     baselineInfo = null;
     isStreamingDocument = true;
-    streamingDocumentDirty = false;
+    pendingStreamingRangeEdit = null;
     streamingTextLength = 0;
 
     suppressChange = true;
@@ -277,7 +277,7 @@
       : null;
     baselineText = '';
     isStreamingDocument = false;
-    streamingDocumentDirty = false;
+    pendingStreamingRangeEdit = null;
     streamingTextLength = baselineInfo ? baselineInfo.contentLength : streamingTextLength;
     currentReadOnly = !!(payload && payload.readOnly);
     editor.updateOptions({
@@ -305,26 +305,167 @@
     return model ? model.getVersionId() : 0;
   }
 
+  function trackStreamingContentChanges(changes) {
+    if (!baselineInfo) {
+      return;
+    }
+
+    if (!Array.isArray(changes) || changes.length === 0) {
+      pendingStreamingRangeEdit = {
+        baselineStart: 0,
+        baselineEnd: baselineInfo.contentLength,
+        currentStart: 0,
+        currentEnd: streamingTextLength
+      };
+      return;
+    }
+
+    const orderedChanges = changes
+      .slice()
+      .sort(function (left, right) {
+        return (Number(left.rangeOffset) || 0) - (Number(right.rangeOffset) || 0);
+      });
+    let offsetShift = 0;
+    for (const change of orderedChanges) {
+      const rangeOffset = Math.max(0, Number(change.rangeOffset) || 0);
+      const rangeLength = Math.max(0, Number(change.rangeLength) || 0);
+      const text = normalizeText(typeof change.text === 'string' ? change.text : '');
+      mergeStreamingRangeEdit(rangeOffset + offsetShift, rangeLength, text.length);
+      offsetShift += text.length - rangeLength;
+    }
+  }
+
+  function mergeStreamingRangeEdit(changeStart, oldLength, newLength) {
+    const changeEnd = changeStart + oldLength;
+    const replacementEnd = changeStart + newLength;
+    const oldDocumentLength = streamingTextLength;
+
+    if (!pendingStreamingRangeEdit) {
+      pendingStreamingRangeEdit = {
+        baselineStart: clampOffset(changeStart, 0, oldDocumentLength),
+        baselineEnd: clampOffset(changeEnd, 0, oldDocumentLength),
+        currentStart: changeStart,
+        currentEnd: replacementEnd
+      };
+      streamingTextLength = Math.max(0, streamingTextLength + newLength - oldLength);
+      return;
+    }
+
+    const edit = pendingStreamingRangeEdit;
+    const delta = (edit.currentEnd - edit.currentStart) - (edit.baselineEnd - edit.baselineStart);
+    const baselineStart = mapCurrentOffsetToBaseline(changeStart, edit, delta, false);
+    const baselineEnd = mapCurrentOffsetToBaseline(changeEnd, edit, delta, true);
+    const transformedCurrentStart = transformOffsetAfterChange(
+      edit.currentStart,
+      changeStart,
+      changeEnd,
+      newLength,
+      false);
+    const transformedCurrentEnd = transformOffsetAfterChange(
+      edit.currentEnd,
+      changeStart,
+      changeEnd,
+      newLength,
+      true);
+
+    pendingStreamingRangeEdit = {
+      baselineStart: clampOffset(
+        Math.min(edit.baselineStart, baselineStart),
+        0,
+        baselineInfo.contentLength),
+      baselineEnd: clampOffset(
+        Math.max(edit.baselineEnd, baselineEnd),
+        0,
+        baselineInfo.contentLength),
+      currentStart: Math.max(0, Math.min(transformedCurrentStart, changeStart)),
+      currentEnd: Math.max(0, Math.max(transformedCurrentEnd, replacementEnd))
+    };
+    streamingTextLength = Math.max(0, streamingTextLength + newLength - oldLength);
+  }
+
+  function mapCurrentOffsetToBaseline(offset, edit, delta, isEnd) {
+    if (isEnd) {
+      if (offset <= edit.currentStart) {
+        return offset;
+      }
+
+      if (offset >= edit.currentEnd) {
+        return offset === edit.currentEnd ? edit.baselineEnd : offset - delta;
+      }
+
+      return edit.baselineEnd;
+    }
+
+    if (offset <= edit.currentStart) {
+      return offset;
+    }
+
+    if (offset >= edit.currentEnd) {
+      return offset === edit.currentEnd ? edit.baselineEnd : offset - delta;
+    }
+
+    return edit.baselineStart;
+  }
+
+  function transformOffsetAfterChange(offset, changeStart, changeEnd, newLength, isEnd) {
+    const delta = newLength - (changeEnd - changeStart);
+    if (offset < changeStart) {
+      return offset;
+    }
+
+    if (offset > changeEnd) {
+      return offset + delta;
+    }
+
+    return isEnd ? changeStart + newLength : changeStart;
+  }
+
+  function getCurrentTextByOffsetRange(start, end) {
+    const model = editor && editor.getModel();
+    if (!model) {
+      return '';
+    }
+
+    const safeStart = clampOffset(start, 0, streamingTextLength);
+    const safeEnd = clampOffset(end, safeStart, streamingTextLength);
+    const startPosition = model.getPositionAt(safeStart);
+    const endPosition = model.getPositionAt(safeEnd);
+    return normalizeText(model.getValueInRange(
+      new monaco.Range(
+        startPosition.lineNumber,
+        startPosition.column,
+        endPosition.lineNumber,
+        endPosition.column),
+      monaco.editor.EndOfLinePreference.LF));
+  }
+
+  function clampOffset(value, minimum, maximum) {
+    const numericValue = Number(value) || 0;
+    return Math.max(minimum, Math.min(maximum, numericValue));
+  }
+
   function getPendingRangeEdits() {
     if (!editor || currentReadOnly) {
       return [];
     }
 
-    const currentText = getEditorText();
-    if (baselineInfo && !streamingDocumentDirty && isTextMatchingBaselineInfo(currentText, baselineInfo)) {
-      return [];
-    }
-
-    if (!baselineInfo && currentText === baselineText) {
-      return [];
-    }
-
     if (baselineInfo) {
+      if (!pendingStreamingRangeEdit) {
+        return [];
+      }
+
       return [{
-        start: 0,
-        length: baselineInfo.contentLength,
-        text: currentText
+        start: pendingStreamingRangeEdit.baselineStart,
+        length: pendingStreamingRangeEdit.baselineEnd - pendingStreamingRangeEdit.baselineStart,
+        text: getCurrentTextByOffsetRange(
+          pendingStreamingRangeEdit.currentStart,
+          pendingStreamingRangeEdit.currentEnd)
       }];
+    }
+
+    const currentText = getEditorText();
+    if (currentText === baselineText) {
+      return [];
     }
 
     const maxPrefixLength = Math.min(baselineText.length, currentText.length);
@@ -358,13 +499,13 @@
     if (!editor) {
       baselineText = '';
       baselineInfo = null;
-      streamingDocumentDirty = false;
+      pendingStreamingRangeEdit = null;
       return;
     }
 
     baselineText = getEditorText();
     baselineInfo = null;
-    streamingDocumentDirty = false;
+    pendingStreamingRangeEdit = null;
   }
 
   function updateLargeDocumentOptions(length) {
@@ -382,10 +523,6 @@
       links: !isLarge,
       codeLens: false
     });
-  }
-
-  function isTextMatchingBaselineInfo(text, baseline) {
-    return baseline && text.length === baseline.contentLength;
   }
 
   function setReadOnly(readOnly) {
@@ -443,7 +580,8 @@
               contentLength: Number(message.baseline.contentLength) || 0,
               contentSha256: String(message.baseline.contentSha256 || '')
             };
-            streamingDocumentDirty = false;
+            pendingStreamingRangeEdit = null;
+            streamingTextLength = baselineInfo.contentLength;
           } else {
             markSaved();
           }
