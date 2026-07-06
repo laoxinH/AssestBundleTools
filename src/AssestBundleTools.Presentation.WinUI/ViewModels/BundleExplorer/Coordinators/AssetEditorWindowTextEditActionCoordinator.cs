@@ -9,6 +9,7 @@ using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Common.Errors;
+using AssestBundleTools.Presentation.WinUI.Diagnostics;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -276,6 +277,13 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
             int? appliedDraftRevision = null;
             if (draft.HasUnsavedChanges)
             {
+                var rangeEdits = draft.CreateSaveRangeEdits();
+                var patchBaseline = draft.CreateSavePatchBaseline();
+                TextEditRangePatchDiagnostics.Write(
+                    "update command " +
+                    $"draftId={draft.DraftId} draftMode={draft.DraftMode} " +
+                    $"baselineLength={patchBaseline.ContentLength} baselineHash={TextEditRangePatchDiagnostics.FormatHash(patchBaseline.ContentSha256)} " +
+                    $"rangeEdits={TextEditRangePatchDiagnostics.FormatRangeEdits(rangeEdits)}");
                 var updateCommand = new UpdateTextAssetEditDraftCommand(
                     workspaceSummary.WorkspaceId,
                     workspaceKey,
@@ -285,8 +293,8 @@ internal sealed class AssetEditorWindowTextEditActionCoordinator
                     draft.DraftId,
                     draft.DraftMode,
                     TextContent: null,
-                    RangeEdits: draft.CreateSaveRangeEdits(),
-                    PatchBaseline: draft.CreateSavePatchBaseline(),
+                    RangeEdits: rangeEdits,
+                    PatchBaseline: patchBaseline,
                     BaseDraftRevision: draft.Reference.DraftRevision);
                 var updateResult = await _backgroundTaskRunner.RunAsync(
                     token => _workspaceAssetOperationGateway.UpdateTextAssetEditDraftAsync(updateCommand, token));

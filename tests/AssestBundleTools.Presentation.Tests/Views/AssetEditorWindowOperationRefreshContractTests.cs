@@ -140,8 +140,10 @@ public sealed class AssetEditorWindowOperationRefreshContractTests
         var applyCommandIndex = applyMethod.IndexOf("var command = new ApplyTextAssetEditDraftCommand", StringComparison.Ordinal);
 
         Assert.Contains("TextContent: null", applyMethod);
-        Assert.Contains("RangeEdits: draft.CreateSaveRangeEdits()", applyMethod);
-        Assert.Contains("PatchBaseline: draft.CreateSavePatchBaseline()", applyMethod);
+        Assert.Contains("var rangeEdits = draft.CreateSaveRangeEdits();", applyMethod);
+        Assert.Contains("var patchBaseline = draft.CreateSavePatchBaseline();", applyMethod);
+        Assert.Contains("RangeEdits: rangeEdits", applyMethod);
+        Assert.Contains("PatchBaseline: patchBaseline", applyMethod);
         Assert.True(markSavedIndex >= 0, "Text draft baseline should be promoted after payload update.");
         Assert.True(applyCommandIndex >= 0, "Text draft apply command should still be issued.");
         Assert.True(markSavedIndex < applyCommandIndex, "Draft baseline should be promoted before apply so retry uses the latest draft payload.");
