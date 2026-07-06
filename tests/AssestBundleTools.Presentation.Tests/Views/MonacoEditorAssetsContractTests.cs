@@ -98,6 +98,57 @@ public sealed class MonacoEditorAssetsContractTests
         Assert.DoesNotContain("text:", saveCommand);
     }
 
+    [Fact]
+    public void TextEditorSurface_ShouldInvalidateSentDocumentCacheAfterWebViewEdits()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var bridgeCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Controls",
+            "TextDocumentSurfaceView.WebBridge.cs"));
+        var draftViewCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Controls",
+            "TextAssetEditDraftView.xaml.cs"));
+        var windowTextEditCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "AssetEditorWindow.TextEdit.cs"));
+
+        var contentChangedBlockStart = bridgeCode.IndexOf("case \"contentChanged\":", StringComparison.Ordinal);
+        var contentChangedBlockEnd = bridgeCode.IndexOf("break;", contentChangedBlockStart, StringComparison.Ordinal);
+        var contentChangedBlock = bridgeCode[contentChangedBlockStart..contentChangedBlockEnd];
+        Assert.Contains("_hasUnsynchronizedWebViewChanges = true;", contentChangedBlock);
+        Assert.Contains("_isSentDocumentCacheValid = false;", contentChangedBlock);
+
+        Assert.Contains("private bool _isSentDocumentCacheValid;", File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Controls",
+            "TextDocumentSurfaceView.xaml.cs")));
+        Assert.Contains("ResetPendingDocumentChanges(bool forceRefreshDocument = false)", bridgeCode);
+        Assert.Contains("_isSentDocumentCacheValid &&", bridgeCode);
+        Assert.Contains("SendDocumentToWebView(force: true);", bridgeCode);
+        Assert.Contains("view.Bindings.Update();", draftViewCode);
+        Assert.Contains("ResetPendingDocumentChanges(forceRefreshDocument: true);", draftViewCode);
+        Assert.Contains("var hadUnsavedChanges = draft?.HasUnsavedChanges == true;", windowTextEditCode);
+        Assert.Contains("if (applied && hadUnsavedChanges)", windowTextEditCode);
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

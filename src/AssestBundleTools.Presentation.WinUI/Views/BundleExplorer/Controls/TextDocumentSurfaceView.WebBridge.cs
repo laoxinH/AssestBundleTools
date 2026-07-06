@@ -31,6 +31,7 @@ public sealed partial class TextDocumentSurfaceView
                 break;
             case "contentChanged":
                 _hasUnsynchronizedWebViewChanges = true;
+                _isSentDocumentCacheValid = false;
                 DocumentChanged?.Invoke(this, EventArgs.Empty);
                 break;
             case "documentText":
@@ -219,6 +220,7 @@ public sealed partial class TextDocumentSurfaceView
                 ? "plaintext"
                 : DocumentLanguage.Trim();
             _lastSentReadOnly = IsReadOnly;
+            _isSentDocumentCacheValid = true;
             DocumentText = text;
             EditableText = text;
         }
@@ -259,9 +261,13 @@ public sealed partial class TextDocumentSurfaceView
         }
     }
 
-    public void ResetPendingDocumentChanges()
+    public void ResetPendingDocumentChanges(bool forceRefreshDocument = false)
     {
         _hasUnsynchronizedWebViewChanges = false;
+        if (forceRefreshDocument)
+        {
+            SendDocumentToWebView(force: true);
+        }
     }
 
     private void SendDocumentToWebView(bool force)
@@ -277,6 +283,7 @@ public sealed partial class TextDocumentSurfaceView
             : DocumentLanguage.Trim();
         var readOnly = IsReadOnly;
         if (!force &&
+            _isSentDocumentCacheValid &&
             string.Equals(text, _lastSentText, StringComparison.Ordinal) &&
             string.Equals(language, _lastSentLanguage, StringComparison.Ordinal) &&
             readOnly == _lastSentReadOnly)
@@ -298,6 +305,7 @@ public sealed partial class TextDocumentSurfaceView
             _lastSentText = text;
             _lastSentLanguage = language;
             _lastSentReadOnly = readOnly;
+            _isSentDocumentCacheValid = true;
         }
         finally
         {

@@ -32,8 +32,8 @@ public sealed partial class TextAssetEditDraftView : UserControl
     {
         if (dependencyObject is TextAssetEditDraftView view)
         {
-            view.TextEditorSurface.ResetPendingDocumentChanges();
             view.Bindings.Update();
+            view.TextEditorSurface.ResetPendingDocumentChanges(forceRefreshDocument: true);
         }
     }
 

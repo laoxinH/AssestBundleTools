@@ -82,10 +82,11 @@ public sealed partial class AssetEditorWindow
         }
 
         var draft = ViewModel.DocumentGroup.ActiveAssetTab?.TextEditDraft;
+        var hadUnsavedChanges = draft?.HasUnsavedChanges == true;
         if (draft?.CanSave == true)
         {
             var applied = await ViewModel.ApplyTextEditAsync();
-            if (!draft.HasUnsavedChanges)
+            if (applied && hadUnsavedChanges)
             {
                 TextEditDraftView.AcceptSynchronizedEditorText();
             }

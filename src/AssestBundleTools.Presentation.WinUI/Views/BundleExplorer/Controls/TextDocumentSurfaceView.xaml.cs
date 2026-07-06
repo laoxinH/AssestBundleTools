@@ -124,6 +124,7 @@ public sealed partial class TextDocumentSurfaceView : UserControl
     private string _lastSentText = string.Empty;
     private string _lastSentLanguage = string.Empty;
     private bool _lastSentReadOnly = true;
+    private bool _isSentDocumentCacheValid;
 
     public event EventHandler? LoadMoreLinesRequested;
     public event EventHandler? EditableTextChanged;
