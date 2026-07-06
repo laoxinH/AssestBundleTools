@@ -709,7 +709,8 @@ internal static partial class GetAssetPreviewHandlerTests
             ContentLength: 0,
             query.WorkspaceKey,
             DraftId: "draft-text-1",
-            DraftMode: "text");
+            DraftMode: "text",
+            DraftRevision: 7);
 
         var result = await handler.HandleAsync(new SearchPreviewTextQuery(
             query.WorkspaceDataRootPath,
@@ -727,6 +728,7 @@ internal static partial class GetAssetPreviewHandlerTests
         TestAssert.True(search.HasMore, "Draft search should report overflow beyond requested match budget.");
         TestAssert.Equal(0, previewCacheStore.SearchTextCallCount, "Draft search should not ask preview cache.");
         TestAssert.Equal(1, draftTextStore.SearchTextCallCount, "Draft text store should serve one search request.");
+        TestAssert.Equal(7, draftTextStore.LastRevision, "Draft search should read the same revision as preview and editor opening.");
     }
 
     private static long? ReadInt64PreviewInfo(AssetPreviewDto preview, AssetPreviewInfoKey key)

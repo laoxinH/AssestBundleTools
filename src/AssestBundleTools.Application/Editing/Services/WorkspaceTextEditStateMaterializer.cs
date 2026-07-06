@@ -91,10 +91,17 @@ public sealed class WorkspaceTextEditStateMaterializer
                 operation is not null &&
                 IsTextEditOperationKind(operation.OperationKind) &&
                 TargetMatches(operation.Target, targetKey) &&
-                string.Equals(
-                    operation.Source?.DraftMode,
-                    WorkspaceTextEditOperationRecorder.TextDraftMode,
-                    StringComparison.Ordinal));
+                IsTextContentDraftOperation(operation));
+    }
+
+    public static bool IsTextContentDraftOperation(WorkspaceOperationRecordDto operation)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+
+        return string.Equals(
+            operation.Source?.DraftMode?.Trim(),
+            WorkspaceTextEditOperationRecorder.TextDraftMode,
+            StringComparison.Ordinal);
     }
 
     private static IReadOnlyList<WorkspaceOperationRecordDto> NormalizeTextEditOperations(
@@ -103,10 +110,7 @@ public sealed class WorkspaceTextEditStateMaterializer
             .Where(static operation => operation is not null)
             .Where(static operation => operation.Status == WorkspaceOperationStatus.Applied)
             .Where(static operation => operation.OperationKind == WorkspaceOperationKind.EditDraftApplied)
-            .Where(static operation => string.Equals(
-                operation.Source?.DraftMode,
-                WorkspaceTextEditOperationRecorder.TextDraftMode,
-                StringComparison.Ordinal))
+            .Where(IsTextContentDraftOperation)
             .OrderBy(static operation => operation.Sequence)
             .ToArray();
 

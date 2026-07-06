@@ -286,10 +286,7 @@ public sealed partial class CachedWorkspaceSessionRegistry
         WorkspaceOperationRecordDto operation)
     {
         if (operation.OperationKind != WorkspaceOperationKind.EditDraftApplied ||
-            !string.Equals(
-                operation.Source?.DraftMode,
-                WorkspaceTextEditOperationRecorder.TextDraftMode,
-                StringComparison.Ordinal) ||
+            !WorkspaceTextEditStateMaterializer.IsTextContentDraftOperation(operation) ||
             string.IsNullOrWhiteSpace(operation.Target?.BundleId) ||
             string.IsNullOrWhiteSpace(operation.Target.AssetId) ||
             !workspaceState.BundlesById.TryGetValue(operation.Target.BundleId, out var targetBundleState))

@@ -23,7 +23,7 @@ internal sealed class ReplacementEffectivePreviewResolver
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
     private readonly IReplacementPreviewSourceProvider? _replacementPreviewSourceProvider;
-    private readonly TextEditEffectivePreviewReferenceResolver _textEditEffectivePreviewReferenceResolver;
+    private readonly WorkspaceTextEditEffectiveReferenceResolver _textEditEffectiveReferenceResolver;
 
     public ReplacementEffectivePreviewResolver(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
@@ -33,7 +33,7 @@ internal sealed class ReplacementEffectivePreviewResolver
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
         _replacementPreviewSourceProvider = replacementPreviewSourceProvider;
-        _textEditEffectivePreviewReferenceResolver = new TextEditEffectivePreviewReferenceResolver(_workspaceDataStoreFactory);
+        _textEditEffectiveReferenceResolver = new WorkspaceTextEditEffectiveReferenceResolver(_workspaceDataStoreFactory);
     }
 
     public async Task<Result<AssetPreviewDto>?> TryLoadAsync(
@@ -97,11 +97,12 @@ internal sealed class ReplacementEffectivePreviewResolver
             }
 
             if (assetType == AssetType.TextAsset &&
-                _textEditEffectivePreviewReferenceResolver.TryResolve(
-                    query,
-                    details,
-                    out var textEditReference) &&
-                textEditReference is not null)
+                _textEditEffectiveReferenceResolver.ResolveFromStore(
+                    query.WorkspaceKey,
+                    query.WorkspaceDataRootPath,
+                    query.BundleId.Value,
+                    query.AssetId.Value,
+                    details).Reference is { } textEditReference)
             {
                 return TryLoadTextEditDraftPreview(
                     query,
@@ -109,7 +110,7 @@ internal sealed class ReplacementEffectivePreviewResolver
                     textEditReference.DraftId,
                     textEditReference.DraftMode,
                     textEditReference.DraftRevision,
-                    textEditReference.GeneratedAtUtc);
+                    textEditReference.AppliedAtUtc);
             }
         }
         finally

@@ -143,6 +143,10 @@ internal static partial class ApplicationTestSuite
             TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldRejectStaleAppliedBaseline_WhenNoOperationFactRemains);
         await RunTestAsync(
             failures,
+            nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldRejectStaleAppliedBaseline_WhenOperationHistoryHasNoEffectiveEdit),
+            TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldRejectStaleAppliedBaseline_WhenOperationHistoryHasNoEffectiveEdit);
+        await RunTestAsync(
+            failures,
             nameof(TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldFail_WhenPayloadIsMissing),
             TextAssetEditDraftOpenHandlerTests.OpenTextAssetEditDraftHandler_ShouldFail_WhenPayloadIsMissing);
         await RunTestAsync(
@@ -285,6 +289,10 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUseAppliedTextEditDraftPreview_ForTextAsset),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldUseAppliedTextEditDraftPreview_ForTextAsset);
+        await RunTestAsync(
+            failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldIgnoreStaleTextEditProjection_WhenOperationHistoryHasNoEffectiveEdit),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldIgnoreStaleTextEditProjection_WhenOperationHistoryHasNoEffectiveEdit);
         await RunTestAsync(
             failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUseFileReplacementPreview_ForAudioClip),

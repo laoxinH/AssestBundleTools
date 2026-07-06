@@ -18,7 +18,7 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
-    private readonly WorkspaceTextEditStateMaterializer _textEditStateMaterializer = new();
+    private readonly WorkspaceTextEditEffectiveReferenceResolver _textEditEffectiveReferenceResolver;
 
     public OpenTextAssetEditDraftHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
@@ -26,6 +26,7 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
+        _textEditEffectiveReferenceResolver = new WorkspaceTextEditEffectiveReferenceResolver(_workspaceDataStoreFactory);
     }
 
     public Task<Result<AssetTextEditDraftDto>> HandleAsync(
@@ -67,14 +68,11 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
                 ApplicationErrors.AssetEditDraftNotFound(workspaceKey, draftId, draftMode)));
         }
 
-        var effectiveTextEdit = _textEditStateMaterializer.FindEffectiveTextEdit(
+        var effectiveReferenceResolution = _textEditEffectiveReferenceResolver.Resolve(
             changeSet,
             command.BundleId.Value,
-            command.AssetId.Value);
-        var hasTextEditOperationFact = _textEditStateMaterializer.ContainsTextEditOperation(
-            changeSet,
-            command.BundleId.Value,
-            command.AssetId.Value);
+            command.AssetId.Value,
+            targetDetails);
         var resolvedDraftId = draftId;
         var resolvedDraftMode = draftMode;
         int? appliedDraftRevision = null;
@@ -82,20 +80,24 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
         var shouldValidateSourceFingerprint = true;
         if (command.IsAppliedBaseline)
         {
-            if (effectiveTextEdit is not null)
+            if (effectiveReferenceResolution.Reference is { } effectiveTextEdit)
             {
+                var requestedReferenceMatches = string.Equals(draftId, effectiveTextEdit.DraftId, StringComparison.Ordinal) &&
+                    string.Equals(draftMode, NormalizeDraftMode(effectiveTextEdit.DraftMode), StringComparison.Ordinal);
+                if (!requestedReferenceMatches &&
+                    effectiveReferenceResolution.Source == WorkspaceTextEditEffectiveReferenceSource.AssetDetailsProjection)
+                {
+                    return Task.FromResult(Result<AssetTextEditDraftDto>.Failure(
+                        ApplicationErrors.AssetEditDraftSourceMismatch(workspaceKey, draftId, draftMode)));
+                }
+
                 resolvedDraftId = effectiveTextEdit.DraftId;
                 resolvedDraftMode = NormalizeDraftMode(effectiveTextEdit.DraftMode);
-                appliedDraftRevision = effectiveTextEdit.DraftRevision;
+                appliedDraftRevision = effectiveReferenceResolution.Source == WorkspaceTextEditEffectiveReferenceSource.AssetDetailsProjection
+                    ? command.DraftRevision ?? effectiveTextEdit.DraftRevision
+                    : effectiveTextEdit.DraftRevision;
                 isAppliedBaseline = true;
-                shouldValidateSourceFingerprint = string.Equals(draftId, resolvedDraftId, StringComparison.Ordinal) &&
-                    string.Equals(draftMode, resolvedDraftMode, StringComparison.Ordinal);
-            }
-            else if (!hasTextEditOperationFact &&
-                     IsCurrentAppliedDraft(targetDetails, draftId, draftMode))
-            {
-                appliedDraftRevision = command.DraftRevision ?? targetDetails.TextEditDraftRevision;
-                isAppliedBaseline = true;
+                shouldValidateSourceFingerprint = requestedReferenceMatches;
             }
             else
             {
@@ -266,16 +268,4 @@ public sealed class OpenTextAssetEditDraftHandler : ICommandHandler<OpenTextAsse
             ? WorkspaceTextEditOperationRecorder.TextDraftMode
             : draftMode.Trim();
 
-    private static bool IsCurrentAppliedDraft(
-        AssetDetailsDto details,
-        string draftId,
-        string draftMode) =>
-        !string.IsNullOrWhiteSpace(details.TextEditDraftId) &&
-        string.Equals(details.TextEditDraftId.Trim(), draftId, StringComparison.Ordinal) &&
-        string.Equals(
-            string.IsNullOrWhiteSpace(details.TextEditDraftMode)
-                ? WorkspaceTextEditOperationRecorder.TextDraftMode
-                : details.TextEditDraftMode.Trim(),
-            draftMode,
-            StringComparison.Ordinal);
 }

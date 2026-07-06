@@ -189,7 +189,8 @@ public sealed class SearchPreviewTextHandler : IQueryHandler<SearchPreviewTextQu
             query.SearchText,
             query.StartLineIndex,
             requestedMatchCount,
-            query.MatchCase);
+            query.MatchCase,
+            query.Reference.DraftRevision);
         if (result is null)
         {
             return Task.FromResult(Result<AssetPreviewTextSearchResultDto>.Failure(
