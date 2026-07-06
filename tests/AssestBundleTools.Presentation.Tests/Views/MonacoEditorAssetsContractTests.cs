@@ -78,19 +78,13 @@ public sealed class MonacoEditorAssetsContractTests
     [Fact]
     public void MonacoHost_ShouldExposeRangePatchBridgeWithoutSaveTextPayload()
     {
-        var repositoryRoot = FindRepositoryRoot();
-        var hostScript = File.ReadAllText(Path.Combine(
-            repositoryRoot,
-            "src",
-            "AssestBundleTools.Presentation.WinUI",
-            "Assets",
-            "Monaco",
-            "abt-editor-host.js"));
+        var hostScript = ReadMonacoHostScript();
 
         Assert.Contains("case 'getPendingRangeEdits':", hostScript);
         Assert.Contains("type: 'documentRangeEdits'", hostScript);
         Assert.Contains("case 'markSaved':", hostScript);
         Assert.Contains("baselineText = getEditorText();", hostScript);
+        Assert.Contains("createRangeEditFromTexts(baselineText, currentText)", hostScript);
 
         var saveCommandIndex = hostScript.IndexOf("type: 'saveRequested'", StringComparison.Ordinal);
         var saveCommandEndIndex = hostScript.IndexOf("});", saveCommandIndex, StringComparison.Ordinal);
@@ -99,28 +93,61 @@ public sealed class MonacoEditorAssetsContractTests
     }
 
     [Fact]
-    public void MonacoHost_ShouldTrackStreamingRangeEditsWithoutFullDocumentReplacement()
+    public void MonacoHost_ShouldCreateStreamingRangeEditsFromFinalLfText()
+    {
+        var hostScript = ReadMonacoHostScript();
+
+        Assert.Contains("let streamingBaselineChunks = [];", hostScript);
+        Assert.Contains("streamingBaselineChunks.push(text);", hostScript);
+        Assert.Contains("baselineText = streamingBaselineChunks.join('');", hostScript);
+        Assert.Contains("function createRangeEditFromTexts(savedText, currentText)", hostScript);
+
+        var pendingRangeEditsFunction = ExtractFunction(hostScript, "function getPendingRangeEdits");
+        Assert.Contains("const currentText = getEditorText();", pendingRangeEditsFunction);
+        Assert.Contains("createRangeEditFromTexts(baselineText, currentText)", pendingRangeEditsFunction);
+        Assert.DoesNotContain("rangeOffset", pendingRangeEditsFunction);
+        Assert.DoesNotContain("pendingStreamingRangeEdit", pendingRangeEditsFunction);
+    }
+
+    [Fact]
+    public void MonacoHost_ShouldUseLfTextForStreamingRangePatches()
+    {
+        var hostScript = ReadMonacoHostScript();
+
+        Assert.Contains("function ensureModelUsesLf(model)", hostScript);
+        Assert.Contains("model.setEOL(monaco.editor.EndOfLineSequence.LF);", hostScript);
+
+        var setDocumentFunction = ExtractFunction(hostScript, "function setDocument");
+        Assert.Contains("ensureModelUsesLf(model);", setDocumentFunction);
+        Assert.Contains("ensureModelUsesLf(nextModel);", setDocumentFunction);
+
+        var beginStreamingFunction = ExtractFunction(hostScript, "function beginStreamingDocument");
+        Assert.Contains("ensureModelUsesLf(model);", beginStreamingFunction);
+        Assert.Contains("ensureModelUsesLf(nextModel);", beginStreamingFunction);
+
+        var appendChunkFunction = ExtractFunction(hostScript, "function appendDocumentChunk");
+        Assert.Contains("ensureModelUsesLf(model);", appendChunkFunction);
+        Assert.Contains("model.applyEdits(", appendChunkFunction);
+        Assert.Contains("streamingBaselineChunks.push(text);", appendChunkFunction);
+
+        Assert.DoesNotContain("trackStreamingContentChanges", hostScript);
+        Assert.DoesNotContain("pendingStreamingRangeEdit", hostScript);
+        Assert.DoesNotContain("Number(change && change.rangeOffset)", hostScript);
+    }
+
+    [Fact]
+    public void MonacoHostPage_ShouldVersionHostScriptForWebViewCacheInvalidation()
     {
         var repositoryRoot = FindRepositoryRoot();
-        var hostScript = File.ReadAllText(Path.Combine(
+        var hostPage = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "src",
             "AssestBundleTools.Presentation.WinUI",
             "Assets",
             "Monaco",
-            "abt-editor-host.js"));
+            "abt-editor-host.html"));
 
-        Assert.Contains("let pendingStreamingRangeEdit = null;", hostScript);
-        Assert.Contains("trackStreamingContentChanges(event && event.changes);", hostScript);
-        Assert.Contains("mergeStreamingRangeEdit", hostScript);
-        Assert.Contains("getCurrentTextByOffsetRange(", hostScript);
-
-        var baselineBranchStart = hostScript.IndexOf("if (baselineInfo) {", StringComparison.Ordinal);
-        var baselineBranchEnd = hostScript.IndexOf("const currentText = getEditorText();", baselineBranchStart, StringComparison.Ordinal);
-        var baselineBranch = hostScript[baselineBranchStart..baselineBranchEnd];
-        Assert.Contains("pendingStreamingRangeEdit.baselineStart", baselineBranch);
-        Assert.Contains("pendingStreamingRangeEdit.currentEnd", baselineBranch);
-        Assert.DoesNotContain("text: currentText", baselineBranch);
+        Assert.Contains("abt-editor-host.js?v=", hostPage);
     }
 
     [Fact]
@@ -189,5 +216,28 @@ public sealed class MonacoEditorAssetsContractTests
         }
 
         throw new DirectoryNotFoundException("Repository root was not found from the test output directory.");
+    }
+
+    private static string ReadMonacoHostScript()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        return File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Assets",
+            "Monaco",
+            "abt-editor-host.js"));
+    }
+
+    private static string ExtractFunction(string source, string declaration)
+    {
+        var startIndex = source.IndexOf(declaration, StringComparison.Ordinal);
+        Assert.True(startIndex >= 0, $"{declaration} was not found.");
+
+        var nextFunctionIndex = source.IndexOf("\n  function ", startIndex + declaration.Length, StringComparison.Ordinal);
+        return nextFunctionIndex >= 0
+            ? source[startIndex..nextFunctionIndex]
+            : source[startIndex..];
     }
 }

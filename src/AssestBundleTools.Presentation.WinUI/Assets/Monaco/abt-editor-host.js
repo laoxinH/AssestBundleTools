@@ -10,8 +10,8 @@
   let baselineText = '';
   let baselineInfo = null;
   let isStreamingDocument = false;
-  let pendingStreamingRangeEdit = null;
   let streamingTextLength = 0;
+  let streamingBaselineChunks = [];
 
   function post(message) {
     if (vscode) {
@@ -94,9 +94,6 @@
           type: 'contentChanged',
           versionId: getModelVersionId()
         });
-        if (baselineInfo) {
-          trackStreamingContentChanges(event && event.changes);
-        }
       });
 
       window.addEventListener('resize', function () {
@@ -168,6 +165,12 @@
     }
   }
 
+  function ensureModelUsesLf(model) {
+    if (model) {
+      model.setEOL(monaco.editor.EndOfLineSequence.LF);
+    }
+  }
+
   function setDocument(payload) {
     if (!editor) {
       return;
@@ -181,16 +184,19 @@
     baselineText = text;
     baselineInfo = null;
     isStreamingDocument = false;
-    pendingStreamingRangeEdit = null;
     streamingTextLength = 0;
+    streamingBaselineChunks = [];
 
     suppressChange = true;
     const model = editor.getModel();
     if (model) {
       monaco.editor.setModelLanguage(model, language);
       model.setValue(text);
+      ensureModelUsesLf(model);
     } else {
-      editor.setModel(monaco.editor.createModel(text, language));
+      const nextModel = monaco.editor.createModel(text, language);
+      ensureModelUsesLf(nextModel);
+      editor.setModel(nextModel);
     }
 
     editor.updateOptions({
@@ -214,16 +220,19 @@
     baselineText = '';
     baselineInfo = null;
     isStreamingDocument = true;
-    pendingStreamingRangeEdit = null;
     streamingTextLength = 0;
+    streamingBaselineChunks = [];
 
     suppressChange = true;
     const model = editor.getModel();
     if (model) {
       monaco.editor.setModelLanguage(model, language);
       model.setValue('');
+      ensureModelUsesLf(model);
     } else {
-      editor.setModel(monaco.editor.createModel('', language));
+      const nextModel = monaco.editor.createModel('', language);
+      ensureModelUsesLf(nextModel);
+      editor.setModel(nextModel);
     }
 
     editor.updateOptions({
@@ -251,6 +260,7 @@
     }
 
     suppressChange = true;
+    ensureModelUsesLf(model);
     const lineCount = model.getLineCount();
     const endColumn = model.getLineMaxColumn(lineCount);
     model.applyEdits(
@@ -260,7 +270,9 @@
         forceMoveMarkers: true
       }],
       false);
+    ensureModelUsesLf(model);
     suppressChange = false;
+    streamingBaselineChunks.push(text);
     streamingTextLength += text.length;
   }
 
@@ -275,10 +287,10 @@
           contentSha256: String(payload.baseline.contentSha256 || '')
         }
       : null;
-    baselineText = '';
+    baselineText = streamingBaselineChunks.join('');
+    streamingBaselineChunks = [];
     isStreamingDocument = false;
-    pendingStreamingRangeEdit = null;
-    streamingTextLength = baselineInfo ? baselineInfo.contentLength : streamingTextLength;
+    streamingTextLength = baselineInfo ? baselineInfo.contentLength : baselineText.length;
     currentReadOnly = !!(payload && payload.readOnly);
     editor.updateOptions({
       readOnly: currentReadOnly,
@@ -305,184 +317,43 @@
     return model ? model.getVersionId() : 0;
   }
 
-  function trackStreamingContentChanges(changes) {
-    if (!baselineInfo) {
-      return;
-    }
-
-    if (!Array.isArray(changes) || changes.length === 0) {
-      pendingStreamingRangeEdit = {
-        baselineStart: 0,
-        baselineEnd: baselineInfo.contentLength,
-        currentStart: 0,
-        currentEnd: streamingTextLength
-      };
-      return;
-    }
-
-    const orderedChanges = changes
-      .slice()
-      .sort(function (left, right) {
-        return (Number(left.rangeOffset) || 0) - (Number(right.rangeOffset) || 0);
-      });
-    let offsetShift = 0;
-    for (const change of orderedChanges) {
-      const rangeOffset = Math.max(0, Number(change.rangeOffset) || 0);
-      const rangeLength = Math.max(0, Number(change.rangeLength) || 0);
-      const text = normalizeText(typeof change.text === 'string' ? change.text : '');
-      mergeStreamingRangeEdit(rangeOffset + offsetShift, rangeLength, text.length);
-      offsetShift += text.length - rangeLength;
-    }
-  }
-
-  function mergeStreamingRangeEdit(changeStart, oldLength, newLength) {
-    const changeEnd = changeStart + oldLength;
-    const replacementEnd = changeStart + newLength;
-    const oldDocumentLength = streamingTextLength;
-
-    if (!pendingStreamingRangeEdit) {
-      pendingStreamingRangeEdit = {
-        baselineStart: clampOffset(changeStart, 0, oldDocumentLength),
-        baselineEnd: clampOffset(changeEnd, 0, oldDocumentLength),
-        currentStart: changeStart,
-        currentEnd: replacementEnd
-      };
-      streamingTextLength = Math.max(0, streamingTextLength + newLength - oldLength);
-      return;
-    }
-
-    const edit = pendingStreamingRangeEdit;
-    const delta = (edit.currentEnd - edit.currentStart) - (edit.baselineEnd - edit.baselineStart);
-    const baselineStart = mapCurrentOffsetToBaseline(changeStart, edit, delta, false);
-    const baselineEnd = mapCurrentOffsetToBaseline(changeEnd, edit, delta, true);
-    const transformedCurrentStart = transformOffsetAfterChange(
-      edit.currentStart,
-      changeStart,
-      changeEnd,
-      newLength,
-      false);
-    const transformedCurrentEnd = transformOffsetAfterChange(
-      edit.currentEnd,
-      changeStart,
-      changeEnd,
-      newLength,
-      true);
-
-    pendingStreamingRangeEdit = {
-      baselineStart: clampOffset(
-        Math.min(edit.baselineStart, baselineStart),
-        0,
-        baselineInfo.contentLength),
-      baselineEnd: clampOffset(
-        Math.max(edit.baselineEnd, baselineEnd),
-        0,
-        baselineInfo.contentLength),
-      currentStart: Math.max(0, Math.min(transformedCurrentStart, changeStart)),
-      currentEnd: Math.max(0, Math.max(transformedCurrentEnd, replacementEnd))
-    };
-    streamingTextLength = Math.max(0, streamingTextLength + newLength - oldLength);
-  }
-
-  function mapCurrentOffsetToBaseline(offset, edit, delta, isEnd) {
-    if (isEnd) {
-      if (offset <= edit.currentStart) {
-        return offset;
-      }
-
-      if (offset >= edit.currentEnd) {
-        return offset === edit.currentEnd ? edit.baselineEnd : offset - delta;
-      }
-
-      return edit.baselineEnd;
-    }
-
-    if (offset <= edit.currentStart) {
-      return offset;
-    }
-
-    if (offset >= edit.currentEnd) {
-      return offset === edit.currentEnd ? edit.baselineEnd : offset - delta;
-    }
-
-    return edit.baselineStart;
-  }
-
-  function transformOffsetAfterChange(offset, changeStart, changeEnd, newLength, isEnd) {
-    const delta = newLength - (changeEnd - changeStart);
-    if (offset < changeStart) {
-      return offset;
-    }
-
-    if (offset > changeEnd) {
-      return offset + delta;
-    }
-
-    return isEnd ? changeStart + newLength : changeStart;
-  }
-
-  function getCurrentTextByOffsetRange(start, end) {
-    const model = editor && editor.getModel();
-    if (!model) {
-      return '';
-    }
-
-    const safeStart = clampOffset(start, 0, streamingTextLength);
-    const safeEnd = clampOffset(end, safeStart, streamingTextLength);
-    const startPosition = model.getPositionAt(safeStart);
-    const endPosition = model.getPositionAt(safeEnd);
-    return normalizeText(model.getValueInRange(
-      new monaco.Range(
-        startPosition.lineNumber,
-        startPosition.column,
-        endPosition.lineNumber,
-        endPosition.column),
-      monaco.editor.EndOfLinePreference.LF));
-  }
-
-  function clampOffset(value, minimum, maximum) {
-    const numericValue = Number(value) || 0;
-    return Math.max(minimum, Math.min(maximum, numericValue));
-  }
-
   function getPendingRangeEdits() {
     if (!editor || currentReadOnly) {
       return [];
     }
 
-    if (baselineInfo) {
-      if (!pendingStreamingRangeEdit) {
-        return [];
-      }
-
+    const currentText = getEditorText();
+    if (baselineInfo && baselineText.length !== baselineInfo.contentLength) {
       return [{
-        start: pendingStreamingRangeEdit.baselineStart,
-        length: pendingStreamingRangeEdit.baselineEnd - pendingStreamingRangeEdit.baselineStart,
-        text: getCurrentTextByOffsetRange(
-          pendingStreamingRangeEdit.currentStart,
-          pendingStreamingRangeEdit.currentEnd)
+        start: 0,
+        length: baselineInfo.contentLength,
+        text: currentText
       }];
     }
 
-    const currentText = getEditorText();
-    if (currentText === baselineText) {
+    return createRangeEditFromTexts(baselineText, currentText);
+  }
+
+  function createRangeEditFromTexts(savedText, currentText) {
+    if (currentText === savedText) {
       return [];
     }
 
-    const maxPrefixLength = Math.min(baselineText.length, currentText.length);
+    const maxPrefixLength = Math.min(savedText.length, currentText.length);
     let prefixLength = 0;
     while (
       prefixLength < maxPrefixLength &&
-      baselineText.charCodeAt(prefixLength) === currentText.charCodeAt(prefixLength)
+      savedText.charCodeAt(prefixLength) === currentText.charCodeAt(prefixLength)
     ) {
       prefixLength++;
     }
 
-    let baselineEnd = baselineText.length;
+    let baselineEnd = savedText.length;
     let currentEnd = currentText.length;
     while (
       baselineEnd > prefixLength &&
       currentEnd > prefixLength &&
-      baselineText.charCodeAt(baselineEnd - 1) === currentText.charCodeAt(currentEnd - 1)
+      savedText.charCodeAt(baselineEnd - 1) === currentText.charCodeAt(currentEnd - 1)
     ) {
       baselineEnd--;
       currentEnd--;
@@ -499,13 +370,13 @@
     if (!editor) {
       baselineText = '';
       baselineInfo = null;
-      pendingStreamingRangeEdit = null;
+      streamingBaselineChunks = [];
       return;
     }
 
     baselineText = getEditorText();
     baselineInfo = null;
-    pendingStreamingRangeEdit = null;
+    streamingBaselineChunks = [];
   }
 
   function updateLargeDocumentOptions(length) {
@@ -575,13 +446,13 @@
           break;
         case 'markSaved':
           if (message.baseline) {
-            baselineText = '';
+            baselineText = getEditorText();
             baselineInfo = {
               contentLength: Number(message.baseline.contentLength) || 0,
               contentSha256: String(message.baseline.contentSha256 || '')
             };
-            pendingStreamingRangeEdit = null;
             streamingTextLength = baselineInfo.contentLength;
+            streamingBaselineChunks = [];
           } else {
             markSaved();
           }
