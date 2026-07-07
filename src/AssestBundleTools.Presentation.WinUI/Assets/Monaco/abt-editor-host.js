@@ -109,10 +109,16 @@
       base: 'vs',
       inherit: true,
       rules: [
-        { token: 'string.key.json', foreground: '0f5f8a' },
-        { token: 'string.value.json', foreground: '7a3f00' },
+        { token: 'string.key.json', foreground: '005f8f' },
+        { token: 'string.value.json', foreground: '8a4b00' },
+        { token: 'string.json', foreground: '8a4b00' },
+        { token: 'number.json', foreground: '0f6cbd' },
         { token: 'number', foreground: '0f6cbd' },
-        { token: 'keyword', foreground: '8a2be2' }
+        { token: 'keyword.json', foreground: '7a3fa1' },
+        { token: 'keyword', foreground: '7a3fa1' },
+        { token: 'delimiter.bracket.json', foreground: '188038' },
+        { token: 'delimiter.colon.json', foreground: '6b7280' },
+        { token: 'delimiter.comma.json', foreground: '6b7280' }
       ],
       colors: {
         'editor.background': '#ffffff',
@@ -134,8 +140,14 @@
       rules: [
         { token: 'string.key.json', foreground: '7dd3fc' },
         { token: 'string.value.json', foreground: 'fbbf24' },
+        { token: 'string.json', foreground: 'fbbf24' },
+        { token: 'number.json', foreground: '93c5fd' },
         { token: 'number', foreground: '93c5fd' },
-        { token: 'keyword', foreground: 'c084fc' }
+        { token: 'keyword.json', foreground: 'c084fc' },
+        { token: 'keyword', foreground: 'c084fc' },
+        { token: 'delimiter.bracket.json', foreground: '86efac' },
+        { token: 'delimiter.colon.json', foreground: 'a1a1aa' },
+        { token: 'delimiter.comma.json', foreground: 'a1a1aa' }
       ],
       colors: {
         'editor.background': '#1f1f1f',

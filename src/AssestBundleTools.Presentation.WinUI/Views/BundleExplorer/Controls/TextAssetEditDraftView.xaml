@@ -17,7 +17,9 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid ColumnSpacing="10">
+        <Grid
+            ColumnSpacing="10"
+            Visibility="{x:Bind ViewModel.HeaderVisibility, Mode=OneWay}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />

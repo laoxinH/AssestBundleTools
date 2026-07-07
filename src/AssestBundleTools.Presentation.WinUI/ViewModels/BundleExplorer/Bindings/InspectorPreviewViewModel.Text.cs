@@ -100,27 +100,12 @@ public sealed partial class InspectorPreviewViewModel
 
     private static string DetectTextLanguage(string? previewPayloadFilePath, string? textContent)
     {
-        var extension = string.IsNullOrWhiteSpace(previewPayloadFilePath)
+        var titleText = string.IsNullOrWhiteSpace(previewPayloadFilePath)
             ? string.Empty
-            : Path.GetExtension(previewPayloadFilePath.Trim());
-        if (extension.Equals(".json", StringComparison.OrdinalIgnoreCase) ||
-            extension.Equals(".skel", StringComparison.OrdinalIgnoreCase))
-        {
-            return "json";
-        }
-
-        if (extension.Equals(".atlas", StringComparison.OrdinalIgnoreCase))
-        {
-            return "atlas";
-        }
-
-        var trimmed = textContent?.TrimStart();
-        if (!string.IsNullOrEmpty(trimmed) &&
-            (trimmed[0] == '{' || trimmed[0] == '['))
-        {
-            return "json";
-        }
-
-        return "plaintext";
+            : Path.GetFileName(previewPayloadFilePath.Trim());
+        return TextAssetEditLanguageResolver.DetectLanguage(
+            titleText,
+            assetTypeDisplayName: null,
+            textContent);
     }
 }

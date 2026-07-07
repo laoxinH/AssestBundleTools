@@ -243,6 +243,22 @@ public sealed class TextAssetEditDraftViewModelTests
         Assert.True(viewModel.CanSave);
     }
 
+    [Fact]
+    public void DocumentLanguage_ShouldPreferJsonContent_WhenAtlasNamedTextContainsJson()
+    {
+        var reference = CreateReference();
+        var gateway = new TestWorkspaceAssetInspectionGateway();
+        var viewModel = CreateViewModel(
+            reference,
+            gateway,
+            canEditInline: true,
+            assetName: "build_char_2025_shu.atlas");
+
+        viewModel.SetEditorTextFromSurface("{\n  \"name\": \"Lancet-2\"\n}");
+
+        Assert.Equal("json", viewModel.DocumentLanguage);
+    }
+
     private static AssetPreviewFullContentReferenceDto CreateReference() =>
         new(
             AssetPreviewFullContentReferenceKind.EditDraft,
@@ -275,13 +291,14 @@ public sealed class TextAssetEditDraftViewModelTests
         AssetPreviewFullContentReferenceDto reference,
         TestWorkspaceAssetInspectionGateway gateway,
         bool canEditInline = false,
-        bool isMaterialized = true) =>
+        bool isMaterialized = true,
+        string assetName = "story.json") =>
         new(
             new AssetTextEditDraftDto(
                 WorkspaceId: new WorkspaceId("workspace-session"),
                 BundleId: new BundleId("bundle-a"),
                 AssetId: new AssetId("asset-1"),
-                AssetName: "story.json",
+                AssetName: assetName,
                 AssetType: AssetType.TextAsset,
                 AssetTypeDisplayName: AssetType.TextAsset.ToString(),
                 DraftId: "draft-text-1",
@@ -297,7 +314,7 @@ public sealed class TextAssetEditDraftViewModelTests
             gateway,
             new TestBackgroundTaskRunner(),
             @"D:\WorkspaceData\A",
-            "story.json",
+            assetName,
             "read only",
             "inline",
             "deferred",

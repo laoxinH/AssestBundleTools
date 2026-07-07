@@ -93,7 +93,13 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
         CanShowLoadFullEdit ? DeferredEditHintText :
         ReadOnlyHintText;
 
-    public string DocumentLanguage => TextAssetEditLanguageResolver.DetectLanguage(TitleText, _draft.AssetTypeDisplayName);
+    public Visibility HeaderVisibility =>
+        IsEditable ? Visibility.Collapsed : Visibility.Visible;
+
+    public string DocumentLanguage => TextAssetEditLanguageResolver.DetectLanguage(
+        TitleText,
+        _draft.AssetTypeDisplayName,
+        IsEditable ? DocumentText : _documentText);
 
     public string DocumentText => IsEditable ? EditableText : _documentText;
 
@@ -168,6 +174,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
             if (SetProperty(ref _editableText, value ?? string.Empty))
             {
                 OnPropertyChanged(nameof(DocumentText));
+                OnPropertyChanged(nameof(DocumentLanguage));
                 OnPropertyChanged(nameof(IsReadOnly));
                 OnPropertyChanged(nameof(HasUnsavedChanges));
                 OnPropertyChanged(nameof(CanSave));
@@ -372,6 +379,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
         OnPropertyChanged(nameof(IsReadOnly));
         OnPropertyChanged(nameof(DocumentText));
         OnPropertyChanged(nameof(DocumentLanguage));
+        OnPropertyChanged(nameof(HeaderVisibility));
         OnPropertyChanged(nameof(ModeHintText));
         OnPropertyChanged(nameof(CanLoadFullEdit));
         OnPropertyChanged(nameof(LoadFullEditButtonVisibility));

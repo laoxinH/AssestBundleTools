@@ -147,7 +147,23 @@ public sealed class MonacoEditorAssetsContractTests
             "Monaco",
             "abt-editor-host.html"));
 
-        Assert.Contains("abt-editor-host.js?v=20260707-streaming-cachefix", hostPage);
+        Assert.Contains("abt-editor-host.js?v=20260707-editor-visual-refresh", hostPage);
+    }
+
+    [Fact]
+    public void TextAssetEditDraftView_ShouldHideLegacyHeaderInEditableMode()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var draftViewXaml = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Controls",
+            "TextAssetEditDraftView.xaml"));
+
+        Assert.Contains("Visibility=\"{x:Bind ViewModel.HeaderVisibility, Mode=OneWay}\"", draftViewXaml);
     }
 
     [Fact]
