@@ -238,6 +238,14 @@ internal static class InfrastructureTestSuite
             BundleExportWriteDiagnosticsTests.ResolveTopLevelDetail_ShouldIncludeStageProcessSourceSizeAndException);
         await RunTestAsync(
             failures,
+            nameof(SpriteEditGeometryWriterProjectionTests.Create_ShouldConvertTopOriginGeometry_ToUnitySpriteFields),
+            SpriteEditGeometryWriterProjectionTests.Create_ShouldConvertTopOriginGeometry_ToUnitySpriteFields);
+        await RunTestAsync(
+            failures,
+            nameof(SpriteEditGeometryWriterProjectionTests.Create_ShouldNormalizePivot_WhenTargetSpriteUsesNormalizedPivot),
+            SpriteEditGeometryWriterProjectionTests.Create_ShouldNormalizePivot_WhenTargetSpriteUsesNormalizedPivot);
+        await RunTestAsync(
+            failures,
             nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTextAssetObject_WhenRealSampleBundleIsAvailable),
             FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTextAssetObject_WhenRealSampleBundleIsAvailable);
         await RunTestAsync(
@@ -252,6 +260,10 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTexture2DObject_WhenRealSampleBundleIsAvailable),
             FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTexture2DObject_WhenRealSampleBundleIsAvailable);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteSpriteGeometry_WhenRealSampleBundleIsAvailable),
+            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteSpriteGeometry_WhenRealSampleBundleIsAvailable);
         await RunTestAsync(
             failures,
             nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldFallbackTexture2DToRgba32_WhenTargetFormatCannotBeEncoded),

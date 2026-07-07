@@ -1,13 +1,10 @@
-using System.Text;
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
-using AssestBundleTools.Application.Editing.Services;
 using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Infrastructure.Bundles.Internal;
-using AssestBundleTools.Infrastructure.Workspace.Persistence;
 
 namespace AssestBundleTools.Infrastructure.Workspace.Saving;
 
@@ -20,7 +17,6 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
     private const string SourceKindWorkspace = "workspace";
     private const string SourceKindSpriteEdit = "sprite-edit";
     private const string SourceKindTextDraft = "text-draft";
-    private const int TextDraftChunkLength = 32768;
     private const string StageLoadBundle = "load-bundle";
     private const string StageApplyChanges = "apply-changes";
     private const string StageWriteUncompressed = "write-uncompressed";
@@ -254,8 +250,8 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
         {
             SourceKindFile => ApplyExternalPayload(baseField, writeItem, payloadPath),
             SourceKindWorkspace => ApplyWorkspacePayload(assetsManager, serializedFiles, baseField, writeItem),
-            SourceKindSpriteEdit => ApplySpriteEditPayload(baseField, writeItem),
-            SourceKindTextDraft => ApplyTextDraftPayload(baseField, writeItem),
+            SourceKindSpriteEdit => AssetsToolsSpriteEditPayloadWriter.Apply(baseField, writeItem),
+            SourceKindTextDraft => AssetsToolsTextAssetPayloadWriter.ApplyDraft(baseField, writeItem),
             _ => Result<object>.Failure(ApplicationErrors.BundleExportWriteFailed(
                 writeItem.AssetName,
                 "Save.BundleWrite.UnsupportedSourceKind"))
@@ -285,7 +281,7 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
 
         return writeItem.AssetType switch
         {
-            AssetType.TextAsset => ApplyTextAssetPayload(baseField, writeItem, payloadPath),
+            AssetType.TextAsset => AssetsToolsTextAssetPayloadWriter.ApplyFilePayload(baseField, writeItem, payloadPath),
             AssetType.Texture2D => AssetsToolsTexturePayloadWriter.Apply(baseField, writeItem, payloadPath),
             _ => Result<object>.Failure(ApplicationErrors.BundleExportWriteFailed(
                 writeItem.AssetName,
@@ -331,133 +327,6 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
         return Result<object>.Success(new object());
     }
 
-    private static Result<object> ApplySpriteEditPayload(
-        AssetTypeValueField baseField,
-        WorkspaceBundleAssetWriteItemDto writeItem)
-    {
-        if (writeItem.SpriteEditGeometry is null || writeItem.AssetType != AssetType.Sprite)
-        {
-            return Result<object>.Failure(
-                ApplicationErrors.BundleExportWriteFailed(
-                    writeItem.AssetName,
-                    "Save.BundleWrite.UnsupportedSpriteEdit"));
-        }
-
-        var rectField = AssetsToolsFieldReader.TryGetField(baseField, "m_Rect");
-        if (rectField is null)
-        {
-            return Result<object>.Failure(
-                ApplicationErrors.BundleExportWriteFailed(
-                    writeItem.AssetName,
-                    "Save.BundleWrite.SpriteRectUnavailable"));
-        }
-
-        var geometry = writeItem.SpriteEditGeometry;
-        SetFloat(rectField, "x", geometry.RegionX);
-        SetFloat(rectField, "y", geometry.RegionY);
-        SetFloat(rectField, "width", geometry.RegionWidth);
-        SetFloat(rectField, "height", geometry.RegionHeight);
-
-        var pivotField = AssetsToolsFieldReader.TryGetField(baseField, "m_Pivot");
-        if (pivotField is not null)
-        {
-            SetFloat(pivotField, "x", geometry.PivotX);
-            SetFloat(pivotField, "y", geometry.PivotY);
-        }
-
-        return Result<object>.Success(new object());
-    }
-
-    private static Result<object> ApplyTextAssetPayload(
-        AssetTypeValueField baseField,
-        WorkspaceBundleAssetWriteItemDto writeItem,
-        string payloadPath)
-    {
-        return ApplyTextAssetPayload(baseField, writeItem.AssetName, File.ReadAllText(payloadPath, Encoding.UTF8));
-    }
-
-    private static Result<object> ApplyTextDraftPayload(
-        AssetTypeValueField baseField,
-        WorkspaceBundleAssetWriteItemDto writeItem)
-    {
-        if (writeItem.AssetType != AssetType.TextAsset)
-        {
-            return Result<object>.Failure(
-                ApplicationErrors.BundleExportWriteFailed(
-                    writeItem.AssetName,
-                    "Save.BundleWrite.UnsupportedTextDraft"));
-        }
-
-        var text = LoadTextDraftContent(writeItem);
-        if (text is null)
-        {
-            return Result<object>.Failure(
-                ApplicationErrors.BundleExportWriteFailed(
-                    writeItem.AssetName,
-                    "Save.BundleWrite.TextDraftMissing"));
-        }
-
-        return ApplyTextAssetPayload(baseField, writeItem.AssetName, text);
-    }
-
-    private static Result<object> ApplyTextAssetPayload(
-        AssetTypeValueField baseField,
-        string assetName,
-        string text)
-    {
-        var scriptField = AssetsToolsFieldReader.TryGetField(baseField, "m_Script");
-        if (scriptField is null)
-        {
-            return Result<object>.Failure(
-                ApplicationErrors.BundleExportWriteFailed(
-                    assetName,
-                    "Save.BundleWrite.TextAssetScriptUnavailable"));
-        }
-
-        scriptField.AsString = text;
-        return Result<object>.Success(new object());
-    }
-
-    private static string? LoadTextDraftContent(WorkspaceBundleAssetWriteItemDto writeItem)
-    {
-        if (string.IsNullOrWhiteSpace(writeItem.WorkspaceKey) ||
-            string.IsNullOrWhiteSpace(writeItem.WorkspaceDataRootPath) ||
-            string.IsNullOrWhiteSpace(writeItem.DraftId))
-        {
-            return null;
-        }
-
-        var draftMode = string.IsNullOrWhiteSpace(writeItem.DraftMode)
-            ? WorkspaceTextEditOperationRecorder.TextDraftMode
-            : writeItem.DraftMode.Trim();
-        var store = new JsonAssetEditDraftTextStore(writeItem.WorkspaceDataRootPath.Trim());
-        var builder = new StringBuilder();
-        var offset = 0;
-
-        while (true)
-        {
-            var chunk = store.LoadTextChunk(
-                writeItem.WorkspaceKey.Trim(),
-                writeItem.DraftId.Trim(),
-                draftMode,
-                offset,
-                TextDraftChunkLength,
-                writeItem.DraftRevision);
-            if (chunk is null)
-            {
-                return null;
-            }
-
-            builder.Append(chunk.Text);
-            offset = chunk.Offset + chunk.Length;
-            var totalLength = Math.Max(chunk.TotalLength, offset);
-            if (offset >= totalLength || chunk.Length == 0)
-            {
-                return builder.ToString();
-            }
-        }
-    }
-
     private static void CopyMutableAssetFields(
         AssetTypeValueField targetBaseField,
         AssetTypeValueField sourceBaseField)
@@ -487,18 +356,6 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
         !string.IsNullOrWhiteSpace(writeItem.ProcessorOutputPath)
             ? writeItem.ProcessorOutputPath
             : writeItem.SourceFilePath;
-
-    private static void SetFloat(
-        AssetTypeValueField parent,
-        string fieldName,
-        double value)
-    {
-        var field = AssetsToolsFieldReader.TryGetField(parent, fieldName);
-        if (field is not null)
-        {
-            field.AsFloat = (float)value;
-        }
-    }
 
     private static string NormalizeSourceKind(string? sourceKind) =>
         string.IsNullOrWhiteSpace(sourceKind)

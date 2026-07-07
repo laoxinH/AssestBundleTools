@@ -686,6 +686,10 @@ internal static partial class ApplicationTestSuite
             SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldForwardObjectWriteItems_FromOperationRecords);
         await RunTestAsync(
             failures,
+            nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldForwardSpriteEditWriteItems_FromOperationRecords),
+            SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldForwardSpriteEditWriteItems_FromOperationRecords);
+        await RunTestAsync(
+            failures,
             nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldSkipBundleWrite_WhenResourceProcessorFails),
             SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldSkipBundleWrite_WhenResourceProcessorFails);
         await RunTestAsync(

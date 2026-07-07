@@ -12,7 +12,7 @@ using AssestBundleTools.Infrastructure.Workspace.Saving;
 
 namespace AssestBundleTools.Infrastructure.Tests.Workspace.Saving;
 
-internal static class FileSystemWorkspaceBundleExporterTests
+internal static partial class FileSystemWorkspaceBundleExporterTests
 {
     private const string RealSampleBundlePath = @"D:\project\测试ab\char_2014_nian_cfa#1_20260503_231150.ab";
     private const string AstcSampleBundlePath = @"D:\project\测试ab\char_1001_amiya2_sale#16.ab";
@@ -773,4 +773,5 @@ internal static class FileSystemWorkspaceBundleExporterTests
         int Width,
         int Height,
         int Format);
+
 }
