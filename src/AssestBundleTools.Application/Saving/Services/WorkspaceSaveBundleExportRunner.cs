@@ -51,7 +51,7 @@ internal sealed class WorkspaceSaveBundleExportRunner
             ActiveBundleWriteCount: 0,
             CompletedBundleCount: 0));
 
-        var tasks = selectedPlans.Select(async selectedPlan =>
+        var tasks = selectedPlans.Select(selectedPlan => Task.Run(async () =>
         {
             if (processorBatchResult.FailedBundleDiagnostics.TryGetValue(selectedPlan.BundleId.Value, out var processorFailure))
             {
@@ -187,7 +187,7 @@ internal sealed class WorkspaceSaveBundleExportRunner
                     FailedBundleCount: Volatile.Read(ref failedCount)));
                 semaphore.Release();
             }
-        });
+        }, cancellationToken)).ToArray();
 
         var unorderedResults = await Task.WhenAll(tasks);
         var orderByBundleId = selectedPlans
