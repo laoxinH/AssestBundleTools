@@ -83,11 +83,18 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("IFilePickerService", coordinator);
         Assert.Contains("IBackgroundWorkScheduler", coordinator);
         Assert.Contains("BackgroundWorkProfile.SaveRebuild", coordinator);
+        Assert.Contains("_backgroundWorkScheduler.StartAsync", coordinator);
+        Assert.Contains("_activeExportHandle?.Cancel()", coordinator);
         Assert.Contains("PickWorkspaceExportOutputDirectoryAsync", coordinator);
         Assert.Contains("SaveWorkspaceAsNewBundleAsync", coordinator);
         Assert.Contains("Path.Combine(dataRootPath.Trim(), \"exports\")", coordinator);
         Assert.Contains("<shared:AppNotificationPresenter", windowXaml);
+        Assert.Contains("Value=\"{Binding ExecutionProgressValue}\"", windowXaml);
+        Assert.Contains("Visibility=\"{Binding ExecutionProgressVisibility}\"", windowXaml);
+        Assert.Contains("IsEnabled=\"{Binding CanUseSecondaryButton}\"", windowXaml);
+        Assert.Contains("IsEnabled=\"{Binding CanStartExport}\"", windowXaml);
         Assert.Contains("StartExportRequested", windowCode);
+        Assert.Contains("CancelExportRequested", windowCode);
         Assert.Contains("Text=\"{Binding BundleSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}\"", contentXaml);
         Assert.Contains("ItemsSource=\"{Binding BundleSortOptions}\"", contentXaml);
         Assert.Contains("SelectedItem=\"{Binding SelectedBundleSortOption, Mode=TwoWay}\"", contentXaml);

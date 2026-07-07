@@ -27,6 +27,7 @@
 - Infrastructure catalog 已提供内置 `resource.processor.audio.fmod-fsb5` 资源处理器：运行目录中存在内置 wrapper 且能发现 `fsbankcl.exe` 时标记为可用，按既有 CLI 协议把音频替换源编码为 FSB5；缺失 FMOD CLI 时该处理器保持不可用，用户仍可通过插件管理页配置自定义音频处理器。该处理器适用于原始容器为 FSB5 的目标或用户明确需要转码的场景，不再是 WAV 等原容器可直接匹配写入时的强制前置条件。
 - AB 导出 manifest 已记录每个 bundle 的资源处理器结果摘要，包括资源类型、处理器 id、状态、输入 / 成功 / 失败计数、result JSON 路径和诊断。
 - 工作区导出窗口会把资源处理器槽启用状态与选择、是否导出到工作区输出目录、是否覆盖同名文件、压缩策略和音频写入模式保存到当前工作区 metadata 中，下次打开同一工作区时恢复；首次默认只勾选“最近修改”资源包，且“导出到工作区输出目录”和“覆盖已有同名文件”均不默认勾选。
+- 工作区导出窗口摘要区会显示同一 `SaveRebuild` 后台任务的进度文本和进度条；执行中窗口内取消按钮必须调用后台任务取消句柄，而不是只关闭导出窗口。
 
 尚未实现：
 
@@ -70,6 +71,7 @@ Presentation 负责：
 - 生成命令输入 DTO：选中的 `bundleId[]`、输出目录、每个资源类型槽的 `processorId?` 和 `compressionMode`。
 - 提交一个 `BackgroundWorkRequest<Result<WorkspaceExportExecutionResultDto>>`。
 - 使用 `BackgroundWorkProfile.SaveRebuild`、`WorkspaceMutation` 语义和可取消任务。
+- 在导出窗口摘要中投影后台任务进度，并把窗口取消按钮连接到当前后台任务取消句柄。
 - 将 Application 返回的结构化结果格式化为本地化摘要、toast、日志和窗口状态。
 
 Presentation 不负责：

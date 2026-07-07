@@ -10,6 +10,7 @@ using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using System.IO;
 
@@ -27,6 +28,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
     private readonly ILocalizationService _localizationService;
     private readonly WorkspaceExportFailureDisplayFormatter _failureDisplayFormatter;
     private WorkspaceExportWindow? _activeWindow;
+    private BackgroundWorkHandle<Result<WorkspaceSaveExecutionResultDto>>? _activeExportHandle;
 
     public BundleExplorerWorkspaceExportCoordinator(
         BundleExplorerPage owner,
@@ -105,6 +107,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
         App.CurrentApp.RegisterAuxiliaryWindow(window, _owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null);
         _activeWindow = window;
         window.StartExportRequested += OnStartExportRequested;
+        window.CancelExportRequested += OnCancelExportRequested;
         window.Closed += OnWindowClosed;
         window.Activate();
 
@@ -113,9 +116,18 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
             await ExecuteExportAsync(workspaceSummary, workspaceKey, workspaceDataRootPath, viewModel);
         }
 
+        void OnCancelExportRequested(object? sender, EventArgs args)
+        {
+            if (_activeExportHandle?.Cancel() == true)
+            {
+                viewModel.ApplyExecutionCancellationRequested();
+            }
+        }
+
         void OnWindowClosed(object sender, WindowEventArgs args)
         {
             window.StartExportRequested -= OnStartExportRequested;
+            window.CancelExportRequested -= OnCancelExportRequested;
             window.Closed -= OnWindowClosed;
             if (ReferenceEquals(_activeWindow, window))
             {
@@ -147,7 +159,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
 
         viewModel.ApplySelectedOutputDirectory(outputDirectory);
         PersistWorkspaceExportSettings(submission.ExportSettings);
-        viewModel.SetExecuting();
+        viewModel.SetExecuting(submission.SelectedBundleIds.Count);
         var commandTemplate = new SaveWorkspaceAsNewBundleCommand(
             workspaceSummary.WorkspaceId,
             OutputDirectory: outputDirectory,
@@ -160,16 +172,21 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
             AudioWriteMode: submission.AudioWriteMode);
 
         Result<WorkspaceSaveExecutionResultDto> result;
+        BackgroundWorkHandle<Result<WorkspaceSaveExecutionResultDto>>? exportHandle = null;
         try
         {
-            result = await _backgroundWorkScheduler.RunAsync(
+            exportHandle = _backgroundWorkScheduler.StartAsync(
                 new BackgroundWorkRequest<Result<WorkspaceSaveExecutionResultDto>>(
                     BackgroundWorkProfile.SaveRebuild,
                     context =>
                     {
                         var command = commandTemplate with
                         {
-                            Progress = new WorkspaceSaveExecutionProgressBridge(context.Progress, _localizationService)
+                            Progress = new WorkspaceSaveExecutionProgressBridge(
+                                context.Progress,
+                                viewModel,
+                                _owner.DispatcherQueue,
+                                _localizationService)
                         };
                         return _workspaceBatchOperationsGateway.SaveWorkspaceAsNewBundleAsync(
                             command,
@@ -184,6 +201,8 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
                     TotalCount = submission.SelectedBundleIds.Count,
                     CanCancel = true
                 });
+            _activeExportHandle = exportHandle;
+            result = await exportHandle.ResultTask;
         }
         catch (OperationCanceledException)
         {
@@ -198,6 +217,13 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
                 GetString(ResourceKeys.CommonUnexpectedFailure),
                 AppNotificationSeverity.Error);
             return;
+        }
+        finally
+        {
+            if (exportHandle is not null && ReferenceEquals(_activeExportHandle, exportHandle))
+            {
+                _activeExportHandle = null;
+            }
         }
 
         if (result.IsCancelled)
@@ -373,13 +399,19 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
     private sealed class WorkspaceSaveExecutionProgressBridge : IProgress<WorkspaceSaveExecutionProgressDto>
     {
         private readonly IBackgroundWorkProgress _progress;
+        private readonly WorkspaceExportDialogViewModel _viewModel;
+        private readonly DispatcherQueue _dispatcherQueue;
         private readonly ILocalizationService _localizationService;
 
         public WorkspaceSaveExecutionProgressBridge(
             IBackgroundWorkProgress progress,
+            WorkspaceExportDialogViewModel viewModel,
+            DispatcherQueue dispatcherQueue,
             ILocalizationService localizationService)
         {
             _progress = progress ?? throw new ArgumentNullException(nameof(progress));
+            _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+            _dispatcherQueue = dispatcherQueue ?? throw new ArgumentNullException(nameof(dispatcherQueue));
             _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         }
 
@@ -397,6 +429,8 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
                     value.SucceededBundleCount,
                     value.FailedBundleCount);
             _progress.ReportProgress(completedCount, totalCount, detail);
+            _dispatcherQueue.TryEnqueue(() =>
+                _viewModel.ApplyExecutionProgress(completedCount, totalCount, detail));
         }
     }
 }

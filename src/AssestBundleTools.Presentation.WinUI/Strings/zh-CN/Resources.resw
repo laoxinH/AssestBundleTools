@@ -4434,6 +4434,9 @@
   <data name="WorkspaceExportDialog.ExecutionFailed" xml:space="preserve">
     <value>导出未完成，请查看错误提示或诊断信息。</value>
   </data>
+  <data name="WorkspaceExportDialog.ExecutionCancellationRequested" xml:space="preserve">
+    <value>正在取消导出任务，请等待当前写出步骤停止。</value>
+  </data>
   <data name="WorkspaceExportDialog.ExecutionCompleted.Format" xml:space="preserve">
     <value>导出完成：写出 {0} 个资源包，失败 {1} 个。</value>
   </data>

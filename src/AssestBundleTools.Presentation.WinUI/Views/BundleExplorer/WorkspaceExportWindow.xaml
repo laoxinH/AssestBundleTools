@@ -105,6 +105,27 @@
                             Text="{Binding PlanSummaryText}"
                             TextWrapping="WrapWholeWords"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <Grid
+                            Margin="0,2,0,0"
+                            RowSpacing="3"
+                            Visibility="{Binding ExecutionProgressVisibility}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <ProgressBar
+                                Height="3"
+                                Minimum="0"
+                                Maximum="100"
+                                Value="{Binding ExecutionProgressValue}"
+                                IsIndeterminate="{Binding IsExecutionProgressIndeterminate}" />
+                            <TextBlock
+                                Grid.Row="1"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="{Binding ExecutionProgressText}"
+                                TextTrimming="CharacterEllipsis" />
+                        </Grid>
                         <TextBlock
                             Text="{Binding ValidationText}"
                             TextWrapping="WrapWholeWords"
@@ -117,6 +138,8 @@
                         MinHeight="38"
                         FontSize="13"
                         VerticalAlignment="Center"
+                        Content="{Binding SecondaryButtonText}"
+                        IsEnabled="{Binding CanUseSecondaryButton}"
                         Click="OnCancelButtonClick" />
                     <Button
                         x:Name="StartExportButton"
@@ -127,7 +150,7 @@
                         VerticalAlignment="Center"
                         Content="{Binding PrimaryButtonText}"
                         Click="OnStartExportButtonClick"
-                        IsEnabled="{Binding HasExportTargets}"
+                        IsEnabled="{Binding CanStartExport}"
                         Style="{StaticResource AccentButtonStyle}" />
                 </Grid>
             </Border>

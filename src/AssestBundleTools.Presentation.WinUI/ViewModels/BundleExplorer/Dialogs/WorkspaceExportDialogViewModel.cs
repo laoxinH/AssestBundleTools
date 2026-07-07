@@ -9,6 +9,7 @@ using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
+using Microsoft.UI.Xaml;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
 
@@ -21,12 +22,18 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     private string _planSummaryText = string.Empty;
     private string _validationText = string.Empty;
     private string _primaryButtonText = string.Empty;
+    private string _secondaryButtonText = string.Empty;
+    private string _executionProgressText = string.Empty;
     private string _bundleSearchText = string.Empty;
     private bool _exportToWorkspaceDirectory;
     private bool _overwriteExistingFiles;
     private bool _forceAudioPayloadWrite;
     private bool _isLoading;
     private bool _isExecuting;
+    private bool _isExecutionCancellationRequested;
+    private bool _isExecutionProgressIndeterminate;
+    private double _executionProgressValue;
+    private Visibility _executionProgressVisibility = Visibility.Collapsed;
     private WorkspaceExportBundleSortOptionViewModel? _selectedBundleSortOption;
     private WorkspaceExportCompressionOptionViewModel? _selectedCompressionOption;
 
@@ -42,6 +49,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         _optionFactory = new WorkspaceExportDialogOptionFactory(_localizationService);
         _outputDirectoryText = savePreview?.OutputDirectory ?? string.Empty;
         _primaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPrimaryButton);
+        _secondaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCloseButton);
 
         Bundles = new ObservableCollection<WorkspaceExportBundleOptionViewModel>(
             _optionFactory.CreateBundleOptions(savePreview, changeSummary));
@@ -99,6 +107,36 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         private set => SetProperty(ref _primaryButtonText, value);
     }
 
+    public string SecondaryButtonText
+    {
+        get => _secondaryButtonText;
+        private set => SetProperty(ref _secondaryButtonText, value);
+    }
+
+    public string ExecutionProgressText
+    {
+        get => _executionProgressText;
+        private set => SetProperty(ref _executionProgressText, value);
+    }
+
+    public double ExecutionProgressValue
+    {
+        get => _executionProgressValue;
+        private set => SetProperty(ref _executionProgressValue, value);
+    }
+
+    public bool IsExecutionProgressIndeterminate
+    {
+        get => _isExecutionProgressIndeterminate;
+        private set => SetProperty(ref _isExecutionProgressIndeterminate, value);
+    }
+
+    public Visibility ExecutionProgressVisibility
+    {
+        get => _executionProgressVisibility;
+        private set => SetProperty(ref _executionProgressVisibility, value);
+    }
+
     public string BundleSearchText
     {
         get => _bundleSearchText;
@@ -120,7 +158,26 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     public bool IsExecuting
     {
         get => _isExecuting;
-        private set => SetProperty(ref _isExecuting, value);
+        private set
+        {
+            if (SetProperty(ref _isExecuting, value))
+            {
+                OnPropertyChanged(nameof(CanStartExport));
+                OnPropertyChanged(nameof(CanUseSecondaryButton));
+            }
+        }
+    }
+
+    public bool IsExecutionCancellationRequested
+    {
+        get => _isExecutionCancellationRequested;
+        private set
+        {
+            if (SetProperty(ref _isExecutionCancellationRequested, value))
+            {
+                OnPropertyChanged(nameof(CanUseSecondaryButton));
+            }
+        }
     }
 
     public bool ExportToWorkspaceDirectory
@@ -166,6 +223,10 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
 
     public bool HasExportTargets => Bundles.Any(static bundle => bundle.IsSelected);
 
+    public bool CanStartExport => HasExportTargets && !IsExecuting;
+
+    public bool CanUseSecondaryButton => !IsExecuting || !IsExecutionCancellationRequested;
+
     public void SelectAllBundles()
     {
         foreach (var bundle in VisibleBundles.Select(static item => item.Bundle).OfType<WorkspaceExportBundleOptionViewModel>())
@@ -185,8 +246,11 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     public void MarkExportExecutionDeferred()
     {
         IsExecuting = false;
+        IsExecutionCancellationRequested = false;
+        HideExecutionProgress();
         ValidationText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogExecutionDeferred);
         PrimaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPrimaryButton);
+        SecondaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCloseButton);
     }
 
     public WorkspaceExportCompressionOptionViewModel? SelectedCompressionOption
@@ -195,10 +259,40 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         set => SetProperty(ref _selectedCompressionOption, value);
     }
 
-    public void SetExecuting()
+    public void SetExecuting(int totalCount)
     {
         IsExecuting = true;
+        IsExecutionCancellationRequested = false;
         ValidationText = string.Empty;
+        PrimaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPrimaryButton);
+        SecondaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCloseButton);
+        ApplyExecutionProgress(
+            completedCount: 0,
+            totalCount: Math.Max(1, totalCount),
+            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogStatusPreparing));
+    }
+
+    public void ApplyExecutionProgress(int completedCount, int totalCount, string? detail)
+    {
+        var safeTotalCount = Math.Max(1, totalCount);
+        var safeCompletedCount = Math.Clamp(completedCount, 0, safeTotalCount);
+        ExecutionProgressText = string.IsNullOrWhiteSpace(detail)
+            ? _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogStatusPreparing)
+            : detail.Trim();
+        ExecutionProgressValue = safeCompletedCount * 100d / safeTotalCount;
+        IsExecutionProgressIndeterminate = false;
+        ExecutionProgressVisibility = Visibility.Visible;
+    }
+
+    public void ApplyExecutionCancellationRequested()
+    {
+        if (!IsExecuting)
+        {
+            return;
+        }
+
+        IsExecutionCancellationRequested = true;
+        ValidationText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogExecutionCancellationRequested);
     }
 
     public void ApplySelectedOutputDirectory(string outputDirectory)
@@ -212,15 +306,21 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     public void ApplyExecutionCancelled()
     {
         IsExecuting = false;
+        IsExecutionCancellationRequested = false;
+        HideExecutionProgress();
         ValidationText = string.Empty;
         PrimaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPrimaryButton);
+        SecondaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCloseButton);
     }
 
     public void ApplyExecutionUnavailable()
     {
         IsExecuting = false;
+        IsExecutionCancellationRequested = false;
+        HideExecutionProgress();
         ValidationText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogExecutionFailed);
         PrimaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPrimaryButton);
+        SecondaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCloseButton);
     }
 
     public void ApplyExecutionResult(WorkspaceSaveExecutionResultDto result)
@@ -228,6 +328,8 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(result);
 
         IsExecuting = false;
+        IsExecutionCancellationRequested = false;
+        HideExecutionProgress();
         OutputDirectoryText = result.OutputDirectory;
         var failureDetail = BuildFailureDetail(result);
         ValidationText = string.IsNullOrWhiteSpace(failureDetail)
@@ -241,6 +343,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
                 result.FailedBundleCount,
                 failureDetail);
         PrimaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPrimaryButton);
+        SecondaryButtonText = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCloseButton);
     }
 
     public WorkspaceExportDialogSubmission CreateSubmission()
@@ -326,7 +429,16 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     private void OnBundleSelectionChanged(object? sender, EventArgs e)
     {
         OnPropertyChanged(nameof(HasExportTargets));
+        OnPropertyChanged(nameof(CanStartExport));
         RefreshPlanSummary();
+    }
+
+    private void HideExecutionProgress()
+    {
+        ExecutionProgressText = string.Empty;
+        ExecutionProgressValue = 0d;
+        IsExecutionProgressIndeterminate = false;
+        ExecutionProgressVisibility = Visibility.Collapsed;
     }
 
     private void RefreshPlanSummary()

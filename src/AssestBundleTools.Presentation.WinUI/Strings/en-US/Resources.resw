@@ -4434,6 +4434,9 @@
   <data name="WorkspaceExportDialog.ExecutionFailed" xml:space="preserve">
     <value>The export did not complete. Check the error message or diagnostics.</value>
   </data>
+  <data name="WorkspaceExportDialog.ExecutionCancellationRequested" xml:space="preserve">
+    <value>Cancelling the export task. Wait for the current write step to stop.</value>
+  </data>
   <data name="WorkspaceExportDialog.ExecutionCompleted.Format" xml:space="preserve">
     <value>Export completed: {0} bundles written, {1} failed.</value>
   </data>

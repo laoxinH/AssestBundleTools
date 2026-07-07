@@ -23,6 +23,8 @@ public sealed partial class WorkspaceExportWindow : Window
 
     public event EventHandler? StartExportRequested;
 
+    public event EventHandler? CancelExportRequested;
+
     public WorkspaceExportWindow(
         WorkspaceExportDialogViewModel viewModel,
         IAppNotificationService notificationService)
@@ -65,7 +67,16 @@ public sealed partial class WorkspaceExportWindow : Window
         StartExportRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    private void OnCancelButtonClick(object sender, RoutedEventArgs e) => Close();
+    private void OnCancelButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.IsExecuting)
+        {
+            CancelExportRequested?.Invoke(this, EventArgs.Empty);
+            return;
+        }
+
+        Close();
+    }
 
     private void OnClosed(object sender, WindowEventArgs args)
     {
@@ -85,7 +96,6 @@ public sealed partial class WorkspaceExportWindow : Window
         WindowTitleText.Text = title;
         WindowSubtitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogHeaderHint);
         PlanSummaryTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogPreviewSectionTitle);
-        CancelButton.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogCloseButton);
     }
 
     private void TryInitializeWindowChromeAndLayout()

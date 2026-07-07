@@ -6,6 +6,7 @@ using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.Tests.Testing;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
+using Microsoft.UI.Xaml;
 
 namespace AssestBundleTools.Presentation.Tests.ViewModels;
 
@@ -238,6 +239,51 @@ public sealed class WorkspaceExportDialogViewModelTests
 
         Assert.Equal(WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer, submission.AudioWriteMode);
         Assert.Equal(ResourceKeys.WorkspaceExportDialogForceAudioPayloadWriteWarning, viewModel.ForceAudioWarningText);
+    }
+
+    [Fact]
+    public void ExecutionProgress_ShouldDriveSummaryProgressAndCancellationState()
+    {
+        var viewModel = new WorkspaceExportDialogViewModel(
+            new TestLocalizationService(),
+            changeSummary: null,
+            savePreview: new WorkspaceSavePreviewDto(
+                WorkspaceId: new("workspace-export"),
+                WorkspaceDisplayName: "Workspace Export",
+                OutputDirectory: @"D:\Workspace\exports",
+                PlannedBundleCount: 2,
+                TotalChangeCount: 2,
+                ModifiedAssetCount: 2,
+                ExtractedAssetCount: 0,
+                WorkspaceReplacementCount: 0,
+                FileReplacementCount: 2,
+                BundlePlans:
+                [
+                    CreateBundlePlan("bundle-alpha", "Alpha.ab"),
+                    CreateBundlePlan("bundle-beta", "Beta.ab")
+                ]));
+
+        viewModel.SetExecuting(totalCount: 2);
+        viewModel.ApplyExecutionProgress(1, 2, "Writing Alpha.ab");
+
+        Assert.True(viewModel.IsExecuting);
+        Assert.False(viewModel.CanStartExport);
+        Assert.True(viewModel.CanUseSecondaryButton);
+        Assert.Equal(Visibility.Visible, viewModel.ExecutionProgressVisibility);
+        Assert.Equal(50d, viewModel.ExecutionProgressValue);
+        Assert.Equal("Writing Alpha.ab", viewModel.ExecutionProgressText);
+
+        viewModel.ApplyExecutionCancellationRequested();
+
+        Assert.True(viewModel.IsExecutionCancellationRequested);
+        Assert.False(viewModel.CanUseSecondaryButton);
+        Assert.Equal(ResourceKeys.WorkspaceExportDialogExecutionCancellationRequested, viewModel.ValidationText);
+
+        viewModel.ApplyExecutionCancelled();
+
+        Assert.False(viewModel.IsExecuting);
+        Assert.True(viewModel.CanStartExport);
+        Assert.Equal(Visibility.Collapsed, viewModel.ExecutionProgressVisibility);
     }
 
     [Fact]

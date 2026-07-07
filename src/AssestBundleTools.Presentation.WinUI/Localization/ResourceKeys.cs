@@ -629,6 +629,7 @@ public static class ResourceKeys
     public const string WorkspaceExportDialogBundleSummaryFormat = "WorkspaceExportDialog.BundleSummary.Format";
     public const string WorkspaceExportDialogExecutionDeferred = "WorkspaceExportDialog.ExecutionDeferred";
     public const string WorkspaceExportDialogExecutionFailed = "WorkspaceExportDialog.ExecutionFailed";
+    public const string WorkspaceExportDialogExecutionCancellationRequested = "WorkspaceExportDialog.ExecutionCancellationRequested";
     public const string WorkspaceExportDialogExecutionCompletedFormat = "WorkspaceExportDialog.ExecutionCompleted.Format";
     public const string WorkspaceExportDialogExecutionCompletedWithDiagnosticsFormat = "WorkspaceExportDialog.ExecutionCompleted.WithDiagnostics.Format";
     public const string WorkspaceExportDialogFailureDetailFormat = "WorkspaceExportDialog.FailureDetail.Format";
