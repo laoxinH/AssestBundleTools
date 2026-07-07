@@ -230,12 +230,14 @@ public sealed class TextAssetEditDraftViewModelTests
         await AssertCompletesAsync(firstChunkRequested.Task);
 
         Assert.True(viewModel.IsFullEditLoading);
+        Assert.Equal(Visibility.Collapsed, viewModel.HeaderVisibility);
         Assert.False(viewModel.CanSave);
 
         allowFirstChunk.SetResult(true);
         await loadTask;
 
         Assert.False(viewModel.IsFullEditLoading);
+        Assert.Equal(Visibility.Collapsed, viewModel.HeaderVisibility);
         Assert.False(viewModel.CanSave);
 
         viewModel.MarkEditorDirty();

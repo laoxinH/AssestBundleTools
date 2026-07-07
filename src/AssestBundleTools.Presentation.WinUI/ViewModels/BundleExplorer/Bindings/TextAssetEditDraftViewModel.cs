@@ -94,7 +94,7 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
         ReadOnlyHintText;
 
     public Visibility HeaderVisibility =>
-        IsEditable ? Visibility.Collapsed : Visibility.Visible;
+        IsEditable || IsFullEditLoading ? Visibility.Collapsed : Visibility.Visible;
 
     public string DocumentLanguage => TextAssetEditLanguageResolver.DetectLanguage(
         TitleText,
@@ -137,6 +137,10 @@ public sealed partial class TextAssetEditDraftViewModel : ObservableObject
         {
             if (SetProperty(ref _isFullEditLoading, value))
             {
+                OnPropertyChanged(nameof(HeaderVisibility));
+                OnPropertyChanged(nameof(ModeHintText));
+                OnPropertyChanged(nameof(CanLoadFullEdit));
+                OnPropertyChanged(nameof(LoadFullEditButtonVisibility));
                 OnPropertyChanged(nameof(CanSave));
             }
         }
