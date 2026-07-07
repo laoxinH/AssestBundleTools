@@ -1,5 +1,7 @@
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Saving.Dtos;
+using AssestBundleTools.Application.Workspace.Dtos;
+using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.Tests.Testing;
 using AssestBundleTools.Presentation.WinUI.Localization;
@@ -77,6 +79,8 @@ public sealed class WorkspaceExportDialogViewModelTests
                     isBuiltIn: false)
             ]);
 
+        viewModel.ExportToWorkspaceDirectory = true;
+        viewModel.OverwriteExistingFiles = true;
         viewModel.Bundles.Single(bundle => bundle.BundleId.Value == "bundle-beta").IsSelected = false;
         var textureSlot = viewModel.ResourceProcessors.Single(static slot => slot.Id == "texture2d");
         textureSlot.SelectedProcessor = textureSlot.Processors.Single(static processor => processor.Id == "resource.processor.texture.png");
@@ -92,8 +96,103 @@ public sealed class WorkspaceExportDialogViewModelTests
         Assert.Equal("bundle-alpha", Assert.Single(submission.SelectedBundleIds).Value);
         Assert.Equal("resource.processor.texture.png", submission.ProcessorSelections.Single(selection => selection.ResourceKind == "texture2d").ProcessorId);
         Assert.Null(submission.ProcessorSelections.Single(selection => selection.ResourceKind == "audio").ProcessorId);
+        Assert.True(submission.ExportSettings.ExportToWorkspaceDirectory);
+        Assert.True(submission.ExportSettings.OverwriteExistingFiles);
+        Assert.Equal(
+            "resource.processor.texture.png",
+            submission.ExportSettings.ProcessorSettings!.Single(setting => setting.ResourceKind == "texture2d").ProcessorId);
+        Assert.False(submission.ExportSettings.ProcessorSettings!.Single(setting => setting.ResourceKind == "audio").IsEnabled);
         Assert.Contains("LZMA", viewModel.Bundles.Single(bundle => bundle.BundleId.Value == "bundle-alpha").SummaryText);
         Assert.DoesNotContain("extracted", viewModel.Bundles.Single(bundle => bundle.BundleId.Value == "bundle-alpha").SummaryText, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Constructor_ShouldDefaultToRecentChangedBundlesOnly()
+    {
+        var latestChangedAtUtc = new DateTimeOffset(2026, 7, 7, 8, 0, 0, TimeSpan.Zero);
+        var viewModel = new WorkspaceExportDialogViewModel(
+            new TestLocalizationService(),
+            changeSummary: CreateChangeSummary(
+                ("bundle-recent", latestChangedAtUtc),
+                ("bundle-previous", latestChangedAtUtc.AddDays(-2))),
+            savePreview: new WorkspaceSavePreviewDto(
+                WorkspaceId: new("workspace-export"),
+                WorkspaceDisplayName: "Workspace Export",
+                OutputDirectory: @"D:\Workspace\exports",
+                PlannedBundleCount: 3,
+                TotalChangeCount: 3,
+                ModifiedAssetCount: 3,
+                ExtractedAssetCount: 0,
+                WorkspaceReplacementCount: 0,
+                FileReplacementCount: 3,
+                BundlePlans:
+                [
+                    CreateBundlePlan("bundle-recent", "Recent.ab"),
+                    CreateBundlePlan("bundle-previous", "Previous.ab"),
+                    CreateBundlePlan("bundle-undated", "Undated.ab")
+                ]));
+
+        Assert.True(viewModel.Bundles.Single(bundle => bundle.BundleId.Value == "bundle-recent").IsSelected);
+        Assert.False(viewModel.Bundles.Single(bundle => bundle.BundleId.Value == "bundle-previous").IsSelected);
+        Assert.False(viewModel.Bundles.Single(bundle => bundle.BundleId.Value == "bundle-undated").IsSelected);
+        Assert.Equal("bundle-recent", Assert.Single(viewModel.CreateSubmission().SelectedBundleIds).Value);
+    }
+
+    [Fact]
+    public void Constructor_ShouldRestoreWorkspaceExportSettings()
+    {
+        var viewModel = new WorkspaceExportDialogViewModel(
+            new TestLocalizationService(),
+            changeSummary: null,
+            savePreview: new WorkspaceSavePreviewDto(
+                WorkspaceId: new("workspace-export"),
+                WorkspaceDisplayName: "Workspace Export",
+                OutputDirectory: @"D:\Workspace\exports",
+                PlannedBundleCount: 1,
+                TotalChangeCount: 1,
+                ModifiedAssetCount: 1,
+                ExtractedAssetCount: 0,
+                WorkspaceReplacementCount: 0,
+                FileReplacementCount: 1,
+                BundlePlans:
+                [
+                    CreateBundlePlan("bundle-alpha", "Alpha.ab")
+                ]),
+            resourceProcessorCatalogEntries:
+            [
+                CreateProcessor(
+                    id: "resource.processor.texture.png",
+                    displayName: "Texture PNG Processor",
+                    description: "Processes Texture2D payloads.",
+                    resourceKinds: ["Texture2D"],
+                    isBuiltIn: false)
+            ],
+            exportSettings: new WorkspaceExportSettingsSnapshotDto(
+                ExportToWorkspaceDirectory: true,
+                OverwriteExistingFiles: true,
+                CompressionMode: WorkspaceBundleExportCompressionModeDto.Lz4,
+                AudioWriteMode: WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer,
+                ProcessorSettings:
+                [
+                    new WorkspaceExportProcessorSettingSnapshotDto("Texture2D", true, "resource.processor.texture.png"),
+                    new WorkspaceExportProcessorSettingSnapshotDto("audio", false, null)
+                ]));
+
+        var textureSlot = viewModel.ResourceProcessors.Single(static slot => slot.Id == "texture2d");
+        var audioSlot = viewModel.ResourceProcessors.Single(static slot => slot.Id == "audio");
+
+        Assert.True(viewModel.ExportToWorkspaceDirectory);
+        Assert.True(viewModel.OverwriteExistingFiles);
+        Assert.True(viewModel.ForceAudioPayloadWrite);
+        Assert.Equal(WorkspaceBundleExportCompressionModeDto.Lz4, viewModel.SelectedCompressionOption?.Mode);
+        Assert.Equal("resource.processor.texture.png", textureSlot.SelectedProcessor?.Id);
+        Assert.False(audioSlot.IsEnabled);
+
+        var submission = viewModel.CreateSubmission();
+
+        Assert.Equal(WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting, submission.OutputConflictPolicy);
+        Assert.Equal(WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer, submission.AudioWriteMode);
+        Assert.Equal(WorkspaceBundleExportCompressionModeDto.Lz4, submission.ExportSettings.CompressionMode);
     }
 
     [Fact]
@@ -117,11 +216,10 @@ public sealed class WorkspaceExportDialogViewModelTests
                     CreateBundlePlan("bundle-alpha", "Alpha.ab")
                 ]));
 
-        viewModel.OverwriteExistingFiles = false;
-
         var submission = viewModel.CreateSubmission();
 
         Assert.Equal(WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists, submission.OutputConflictPolicy);
+        Assert.False(submission.ExportSettings.OverwriteExistingFiles);
     }
 
     [Fact]
@@ -255,4 +353,37 @@ public sealed class WorkspaceExportDialogViewModelTests
             WorkspaceReplacementCount: 0,
             FileReplacementCount: 1,
             OriginalCompression: "LZMA");
+
+    private static WorkspaceChangeSummaryDto CreateChangeSummary(
+        params (string BundleId, DateTimeOffset LastChangedAtUtc)[] changes)
+    {
+        return new WorkspaceChangeSummaryDto(
+            WorkspaceId: new("workspace-export"),
+            WorkspaceDisplayName: "Workspace Export",
+            SourcePath: @"C:\Workspace",
+            BundleCount: changes.Length,
+            AssetCount: changes.Length,
+            TotalChangeCount: changes.Length,
+            ModifiedAssetCount: changes.Length,
+            ExtractedAssetCount: 0,
+            WorkspaceReplacementCount: 0,
+            FileReplacementCount: changes.Length,
+            Items: changes
+                .Select((change, index) => new WorkspaceChangeItemDto(
+                    BundleId: new BundleId(change.BundleId),
+                    AssetId: new AssetId($"asset-{index}"),
+                    BundleDisplayName: $"{change.BundleId}.ab",
+                    AssetName: $"Asset {index}",
+                    AssetType: AssetType.Texture2D,
+                    IsModified: true,
+                    LastExtractedAtUtc: null,
+                    WorkspaceReplacementSourceBundleDisplayName: null,
+                    WorkspaceReplacementSourceAssetName: null,
+                    WorkspaceReplacementAppliedAtUtc: null,
+                    FileReplacementSourceFileName: $"asset-{index}.png",
+                    FileReplacementSourcePath: $@"C:\Replacements\asset-{index}.png",
+                    FileReplacementAppliedAtUtc: change.LastChangedAtUtc,
+                    LastChangedAtUtc: change.LastChangedAtUtc))
+                .ToArray());
+    }
 }

@@ -17,7 +17,8 @@ public sealed class WorkspaceExportBundleOptionViewModel : ObservableObject
         int extractedAssetCount,
         int workspaceReplacementCount,
         int fileReplacementCount,
-        DateTimeOffset? lastChangedAtUtc)
+        DateTimeOffset? lastChangedAtUtc,
+        bool isSelected = true)
     {
         BundleId = bundleId;
         DisplayName = displayName;
@@ -29,6 +30,7 @@ public sealed class WorkspaceExportBundleOptionViewModel : ObservableObject
         WorkspaceReplacementCount = workspaceReplacementCount;
         FileReplacementCount = fileReplacementCount;
         LastChangedAtUtc = lastChangedAtUtc;
+        _isSelected = isSelected;
     }
 
     public event EventHandler? SelectionChanged;

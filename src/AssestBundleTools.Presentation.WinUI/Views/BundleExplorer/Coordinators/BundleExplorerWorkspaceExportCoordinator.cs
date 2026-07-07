@@ -63,6 +63,11 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
         }
 
         var workspaceExportDirectory = ResolveWorkspaceExportDirectory(workspaceSummary, workspaceDataRootPath);
+        var browserState = _workspaceContextService.GetCurrentWorkspaceBrowserState();
+        var exportSettings = browserState?.ExportSettings;
+        var previewConflictPolicy = exportSettings?.OverwriteExistingFiles == true
+            ? WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting
+            : WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists;
 
         var changeSummaryResult = await _workspaceBatchOperationsGateway.GetWorkspaceChangeSummaryAsync(
             new GetWorkspaceChangeSummaryQuery(workspaceSummary.WorkspaceId));
@@ -77,7 +82,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
                 OutputDirectory: workspaceExportDirectory,
                 WorkspaceKey: workspaceKey,
                 WorkspaceDataRootPath: workspaceDataRootPath,
-                OutputConflictPolicy: WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting));
+                OutputConflictPolicy: previewConflictPolicy));
         if (!TryGetValue(savePreviewResult, out var savePreview))
         {
             return;
@@ -93,7 +98,8 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
             _localizationService,
             changeSummary,
             savePreview,
-            processorCatalogEntries);
+            processorCatalogEntries,
+            exportSettings);
         var windowNotificationService = new AppNotificationService();
         var window = new WorkspaceExportWindow(viewModel, windowNotificationService);
         App.CurrentApp.RegisterAuxiliaryWindow(window, _owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null);
@@ -140,6 +146,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
         }
 
         viewModel.ApplySelectedOutputDirectory(outputDirectory);
+        PersistWorkspaceExportSettings(submission.ExportSettings);
         viewModel.SetExecuting();
         var commandTemplate = new SaveWorkspaceAsNewBundleCommand(
             workspaceSummary.WorkspaceId,
@@ -217,6 +224,33 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
             title,
             message,
             severity);
+    }
+
+    private void PersistWorkspaceExportSettings(WorkspaceExportSettingsSnapshotDto exportSettings)
+    {
+        var browserState = _workspaceContextService.GetCurrentWorkspaceBrowserState()
+                           ?? CreateEmptyBrowserState(exportSettings);
+        _workspaceContextService.UpdateCurrentWorkspaceBrowserState(browserState with
+        {
+            ExportSettings = exportSettings
+        });
+    }
+
+    private static WorkspaceBrowserStateSnapshotDto CreateEmptyBrowserState(
+        WorkspaceExportSettingsSnapshotDto exportSettings)
+    {
+        return new WorkspaceBrowserStateSnapshotDto(
+            BundleSearchKeyword: string.Empty,
+            AssetSearchKeyword: string.Empty,
+            AssetTypeFilter: null,
+            ShowModifiedOnly: false,
+            ShowPreviewableOnly: false,
+            OpenBundleTabs: Array.Empty<WorkspaceMetadataBundleTabDto>(),
+            ActiveBundleTabId: null,
+            LastBundleId: null,
+            LastAssetId: null,
+            OpenAssetEditorWindows: null,
+            ExportSettings: exportSettings);
     }
 
     private string BuildExecutionNotificationMessage(WorkspaceSaveExecutionResultDto executionResult)

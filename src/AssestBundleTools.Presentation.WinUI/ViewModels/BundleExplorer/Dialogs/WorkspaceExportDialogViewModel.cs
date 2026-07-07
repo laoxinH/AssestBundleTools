@@ -22,8 +22,8 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     private string _validationText = string.Empty;
     private string _primaryButtonText = string.Empty;
     private string _bundleSearchText = string.Empty;
-    private bool _exportToWorkspaceDirectory = true;
-    private bool _overwriteExistingFiles = true;
+    private bool _exportToWorkspaceDirectory;
+    private bool _overwriteExistingFiles;
     private bool _forceAudioPayloadWrite;
     private bool _isLoading;
     private bool _isExecuting;
@@ -34,7 +34,8 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         ILocalizationService localizationService,
         WorkspaceChangeSummaryDto? changeSummary,
         WorkspaceSavePreviewDto? savePreview,
-        IReadOnlyList<ResourceProcessorCatalogEntryDto>? resourceProcessorCatalogEntries = null)
+        IReadOnlyList<ResourceProcessorCatalogEntryDto>? resourceProcessorCatalogEntries = null,
+        WorkspaceExportSettingsSnapshotDto? exportSettings = null)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _failureDisplayFormatter = new WorkspaceExportFailureDisplayFormatter(_localizationService);
@@ -54,6 +55,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         _selectedCompressionOption = CompressionOptions.FirstOrDefault(static option =>
             option.Mode == WorkspaceBundleExportCompressionModeDto.PreserveOriginal);
         _selectedBundleSortOption = BundleSortOptions.FirstOrDefault();
+        ApplyExportSettings(exportSettings);
         foreach (var bundle in Bundles)
         {
             bundle.SelectionChanged += OnBundleSelectionChanged;
@@ -250,19 +252,76 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         var processorSelections = ResourceProcessors
             .Select(processor => _optionFactory.CreateProcessorSelection(processor))
             .ToArray();
+        var compressionMode = SelectedCompressionOption?.Mode ?? WorkspaceBundleExportCompressionModeDto.PreserveOriginal;
+        var audioWriteMode = ForceAudioPayloadWrite
+            ? WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer
+            : WorkspaceBundleExportAudioWriteModeDto.MatchOriginalContainer;
+        var exportSettings = new WorkspaceExportSettingsSnapshotDto(
+            ExportToWorkspaceDirectory,
+            OverwriteExistingFiles,
+            compressionMode,
+            audioWriteMode,
+            ResourceProcessors
+                .Select(processor => _optionFactory.CreateProcessorSettingSnapshot(processor))
+                .ToArray());
 
         return new WorkspaceExportDialogSubmission(
             ExportToWorkspaceDirectory,
             selectedBundleIds,
             processorSelections,
-            SelectedCompressionOption?.Mode ?? WorkspaceBundleExportCompressionModeDto.PreserveOriginal,
+            compressionMode,
             OverwriteExistingFiles
                 ? WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting
                 : WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists,
-            ForceAudioPayloadWrite
-                ? WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer
-                : WorkspaceBundleExportAudioWriteModeDto.MatchOriginalContainer);
+            audioWriteMode,
+            exportSettings);
     }
+
+    private void ApplyExportSettings(WorkspaceExportSettingsSnapshotDto? exportSettings)
+    {
+        if (exportSettings is null)
+        {
+            return;
+        }
+
+        ExportToWorkspaceDirectory = exportSettings.ExportToWorkspaceDirectory;
+        OverwriteExistingFiles = exportSettings.OverwriteExistingFiles;
+        ForceAudioPayloadWrite = exportSettings.AudioWriteMode == WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer;
+        SelectedCompressionOption = CompressionOptions.FirstOrDefault(option => option.Mode == exportSettings.CompressionMode)
+                                    ?? CompressionOptions.FirstOrDefault(static option =>
+                                        option.Mode == WorkspaceBundleExportCompressionModeDto.PreserveOriginal);
+        ApplyProcessorSettings(exportSettings.ProcessorSettings ?? Array.Empty<WorkspaceExportProcessorSettingSnapshotDto>());
+    }
+
+    private void ApplyProcessorSettings(IReadOnlyList<WorkspaceExportProcessorSettingSnapshotDto> processorSettings)
+    {
+        if (processorSettings.Count == 0)
+        {
+            return;
+        }
+
+        var settingLookup = processorSettings
+            .Where(static setting => !string.IsNullOrWhiteSpace(setting.ResourceKind))
+            .GroupBy(static setting => NormalizeResourceKind(setting.ResourceKind))
+            .ToDictionary(static group => group.Key, static group => group.Last());
+        foreach (var slot in ResourceProcessors)
+        {
+            if (!settingLookup.TryGetValue(NormalizeResourceKind(slot.Id), out var setting))
+            {
+                continue;
+            }
+
+            slot.IsEnabled = setting.IsEnabled;
+            slot.SelectedProcessor = string.IsNullOrWhiteSpace(setting.ProcessorId)
+                ? slot.Processors.FirstOrDefault()
+                : slot.Processors.FirstOrDefault(processor =>
+                    string.Equals(processor.Id, setting.ProcessorId, StringComparison.OrdinalIgnoreCase))
+                  ?? slot.Processors.FirstOrDefault();
+        }
+    }
+
+    private static string NormalizeResourceKind(string value) =>
+        value.Trim().Replace("-", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
 
     private void OnBundleSelectionChanged(object? sender, EventArgs e)
     {

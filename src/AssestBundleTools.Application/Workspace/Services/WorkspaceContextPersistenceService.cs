@@ -76,7 +76,8 @@ public sealed class WorkspaceContextPersistenceService : IWorkspaceContextPersis
                 ? existingMetadata?.AssetBundleDecryptorId
                 : request.AssetBundleDecryptorId.Trim(),
             ExcludedBundleSourcePaths: existingMetadata?.ExcludedBundleSourcePaths,
-            OpenAssetEditorWindows: existingMetadata?.OpenAssetEditorWindows);
+            OpenAssetEditorWindows: existingMetadata?.OpenAssetEditorWindows,
+            ExportSettings: existingMetadata?.ExportSettings);
 
         metadataStore.Save(metadata);
     }
@@ -113,7 +114,8 @@ public sealed class WorkspaceContextPersistenceService : IWorkspaceContextPersis
                 ? existingMetadata?.AssetBundleDecryptorId
                 : request.AssetBundleDecryptorId.Trim(),
             ExcludedBundleSourcePaths: existingMetadata?.ExcludedBundleSourcePaths,
-            OpenAssetEditorWindows: request.BrowserState.OpenAssetEditorWindows);
+            OpenAssetEditorWindows: request.BrowserState.OpenAssetEditorWindows,
+            ExportSettings: request.BrowserState.ExportSettings ?? existingMetadata?.ExportSettings);
 
         metadataStore.Save(metadata);
     }
@@ -142,6 +144,7 @@ public sealed class WorkspaceContextPersistenceService : IWorkspaceContextPersis
             ActiveBundleTabId: metadata.ActiveBundleTabId,
             LastBundleId: metadata.LastBundleId,
             LastAssetId: metadata.LastAssetId,
-            OpenAssetEditorWindows: metadata.OpenAssetEditorWindows);
+            OpenAssetEditorWindows: metadata.OpenAssetEditorWindows,
+            ExportSettings: metadata.ExportSettings);
     }
 }

@@ -296,6 +296,10 @@ internal static partial class ApplicationTestSuite
             WorkspaceContextPersistenceServiceTests.SaveWorkspaceActivationMetadata_ShouldPreserveExistingAssetEditorWindowSnapshots);
         await RunTestAsync(
             failures,
+            nameof(WorkspaceContextPersistenceServiceTests.SaveWorkspaceBrowserState_ShouldPreserveExistingExportSettings_WhenSnapshotOmitsExportSettings),
+            WorkspaceContextPersistenceServiceTests.SaveWorkspaceBrowserState_ShouldPreserveExistingExportSettings_WhenSnapshotOmitsExportSettings);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldReturnFallbackSummary_WhenDecryptionFails),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldReturnFallbackSummary_WhenDecryptionFails);
         await RunTestAsync(

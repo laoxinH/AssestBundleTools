@@ -1,5 +1,6 @@
 using AssestBundleTools.Application.Tests.TestDoubles;
 using AssestBundleTools.Application.Tests.Testing;
+using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 
@@ -16,6 +17,9 @@ internal static class WorkspaceContextPersistenceServiceTests
         var metadataStore = new TestWorkspaceMetadataStore(existingMetadata);
         var service = CreateService(metadataStore);
         var editorWindows = CreateEditorWindows("window-1");
+        var exportSettings = CreateExportSettings(
+            exportToWorkspaceDirectory: true,
+            overwriteExistingFiles: true);
 
         service.SaveWorkspaceBrowserState(new WorkspaceBrowserStateSaveRequestDto(
             WorkspaceKey: workspaceKey,
@@ -33,10 +37,12 @@ internal static class WorkspaceContextPersistenceServiceTests
                 ActiveBundleTabId: null,
                 LastBundleId: "bundle-a",
                 LastAssetId: "asset-a",
-                OpenAssetEditorWindows: editorWindows)));
+                OpenAssetEditorWindows: editorWindows,
+                ExportSettings: exportSettings)));
 
         var savedMetadata = metadataStore.LastSavedMetadata ?? throw new InvalidOperationException("Expected saved metadata.");
         TestAssert.Equal(editorWindows, savedMetadata.OpenAssetEditorWindows, "Asset editor windows should be persisted from browser state.");
+        AssertExportSettings(exportSettings, savedMetadata.ExportSettings, "Export settings should be persisted from browser state.");
         TestAssert.Equal(@"D:\Exports", savedMetadata.LastOutputDirectory, "Non-browser metadata fields should be preserved.");
         TestAssert.Equal("decryptor-a", savedMetadata.AssetBundleDecryptorId, "Existing decryptor should be preserved when request omits it.");
 
@@ -46,6 +52,10 @@ internal static class WorkspaceContextPersistenceServiceTests
             editorWindows,
             restoredBrowserState.OpenAssetEditorWindows,
             "Asset editor windows should map back into browser state snapshots.");
+        AssertExportSettings(
+            exportSettings,
+            restoredBrowserState.ExportSettings,
+            "Export settings should map back into browser state snapshots.");
         return Task.CompletedTask;
     }
 
@@ -53,7 +63,13 @@ internal static class WorkspaceContextPersistenceServiceTests
     {
         const string workspaceKey = "workspace-a";
         var editorWindows = CreateEditorWindows("window-1");
-        var metadataStore = new TestWorkspaceMetadataStore(CreateMetadata(workspaceKey, editorWindows));
+        var exportSettings = CreateExportSettings(
+            exportToWorkspaceDirectory: true,
+            overwriteExistingFiles: true);
+        var metadataStore = new TestWorkspaceMetadataStore(CreateMetadata(
+            workspaceKey,
+            editorWindows,
+            exportSettings));
         var service = CreateService(metadataStore);
 
         service.SaveWorkspaceActivationMetadata(new WorkspaceActivationMetadataSaveRequestDto(
@@ -69,6 +85,47 @@ internal static class WorkspaceContextPersistenceServiceTests
             editorWindows,
             savedMetadata.OpenAssetEditorWindows,
             "Activation metadata save should preserve existing asset editor windows.");
+        AssertExportSettings(
+            exportSettings,
+            savedMetadata.ExportSettings,
+            "Activation metadata save should preserve existing export settings.");
+        return Task.CompletedTask;
+    }
+
+    public static Task SaveWorkspaceBrowserState_ShouldPreserveExistingExportSettings_WhenSnapshotOmitsExportSettings()
+    {
+        const string workspaceKey = "workspace-a";
+        var exportSettings = CreateExportSettings(
+            exportToWorkspaceDirectory: true,
+            overwriteExistingFiles: false);
+        var metadataStore = new TestWorkspaceMetadataStore(CreateMetadata(
+            workspaceKey,
+            openAssetEditorWindows: null,
+            exportSettings: exportSettings));
+        var service = CreateService(metadataStore);
+
+        service.SaveWorkspaceBrowserState(new WorkspaceBrowserStateSaveRequestDto(
+            WorkspaceKey: workspaceKey,
+            WorkspaceDataRootPath: @"D:\WorkspaceData",
+            DisplayName: "Example Workspace",
+            SourcePath: @"C:\Workspace",
+            AssetBundleDecryptorId: null,
+            BrowserState: new WorkspaceBrowserStateSnapshotDto(
+                BundleSearchKeyword: string.Empty,
+                AssetSearchKeyword: string.Empty,
+                AssetTypeFilter: null,
+                ShowModifiedOnly: false,
+                ShowPreviewableOnly: false,
+                OpenBundleTabs: Array.Empty<WorkspaceMetadataBundleTabDto>(),
+                ActiveBundleTabId: null,
+                LastBundleId: null,
+                LastAssetId: null)));
+
+        var savedMetadata = metadataStore.LastSavedMetadata ?? throw new InvalidOperationException("Expected saved metadata.");
+        AssertExportSettings(
+            exportSettings,
+            savedMetadata.ExportSettings,
+            "Browser state save should preserve existing export settings when a snapshot does not carry them.");
         return Task.CompletedTask;
     }
 
@@ -82,7 +139,8 @@ internal static class WorkspaceContextPersistenceServiceTests
 
     private static WorkspaceMetadataDto CreateMetadata(
         string workspaceKey,
-        IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? openAssetEditorWindows)
+        IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? openAssetEditorWindows,
+        WorkspaceExportSettingsSnapshotDto? exportSettings = null)
     {
         return new WorkspaceMetadataDto(
             WorkspaceKey: workspaceKey,
@@ -103,7 +161,45 @@ internal static class WorkspaceContextPersistenceServiceTests
             ImportedSources: Array.Empty<WorkspaceImportedSourceDto>(),
             AssetBundleDecryptorId: "decryptor-a",
             ExcludedBundleSourcePaths: Array.Empty<string>(),
-            OpenAssetEditorWindows: openAssetEditorWindows);
+            OpenAssetEditorWindows: openAssetEditorWindows,
+            ExportSettings: exportSettings);
+    }
+
+    private static WorkspaceExportSettingsSnapshotDto CreateExportSettings(
+        bool exportToWorkspaceDirectory,
+        bool overwriteExistingFiles)
+    {
+        return new WorkspaceExportSettingsSnapshotDto(
+            ExportToWorkspaceDirectory: exportToWorkspaceDirectory,
+            OverwriteExistingFiles: overwriteExistingFiles,
+            CompressionMode: WorkspaceBundleExportCompressionModeDto.Lz4,
+            AudioWriteMode: WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer,
+            ProcessorSettings:
+            [
+                new WorkspaceExportProcessorSettingSnapshotDto("audio", true, "resource.processor.audio.fmod-fsb5"),
+                new WorkspaceExportProcessorSettingSnapshotDto("texture2d", false, null)
+            ]);
+    }
+
+    private static void AssertExportSettings(
+        WorkspaceExportSettingsSnapshotDto expected,
+        WorkspaceExportSettingsSnapshotDto? actual,
+        string message)
+    {
+        var restored = TestAssert.NotNull(actual, message);
+        TestAssert.Equal(expected.ExportToWorkspaceDirectory, restored.ExportToWorkspaceDirectory, message);
+        TestAssert.Equal(expected.OverwriteExistingFiles, restored.OverwriteExistingFiles, message);
+        TestAssert.Equal(expected.CompressionMode, restored.CompressionMode, message);
+        TestAssert.Equal(expected.AudioWriteMode, restored.AudioWriteMode, message);
+        TestAssert.Equal(expected.ProcessorSettings?.Count ?? 0, restored.ProcessorSettings?.Count ?? 0, message);
+        TestAssert.Equal(
+            expected.ProcessorSettings![0].ProcessorId,
+            restored.ProcessorSettings![0].ProcessorId,
+            message);
+        TestAssert.Equal(
+            expected.ProcessorSettings[1].IsEnabled,
+            restored.ProcessorSettings[1].IsEnabled,
+            message);
     }
 
     private static IReadOnlyList<WorkspaceAssetEditorWindowStateDto> CreateEditorWindows(string assetName)

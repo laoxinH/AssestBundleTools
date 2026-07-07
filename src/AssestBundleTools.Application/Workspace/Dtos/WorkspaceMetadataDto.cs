@@ -28,4 +28,5 @@ public sealed record WorkspaceMetadataDto(
     IReadOnlyList<WorkspaceImportedSourceDto>? ImportedSources = null,
     string? AssetBundleDecryptorId = null,
     IReadOnlyList<string>? ExcludedBundleSourcePaths = null,
-    IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? OpenAssetEditorWindows = null);
+    IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? OpenAssetEditorWindows = null,
+    WorkspaceExportSettingsSnapshotDto? ExportSettings = null);

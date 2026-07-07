@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Infrastructure.Tests.Testing;
 using AssestBundleTools.Infrastructure.Workspace.Persistence;
@@ -171,7 +172,17 @@ internal static class JsonWorkspaceMetadataStoreTests
                     ],
                     ActiveDocumentKind: WorkspaceAssetEditorWindowDocumentTabDto.SpineGroupKind,
                     ActiveSpineGroupId: "spine-group:bundle-001:hero")
-            ]);
+            ],
+            ExportSettings: new WorkspaceExportSettingsSnapshotDto(
+                ExportToWorkspaceDirectory: true,
+                OverwriteExistingFiles: true,
+                CompressionMode: WorkspaceBundleExportCompressionModeDto.Lz4,
+                AudioWriteMode: WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer,
+                ProcessorSettings:
+                [
+                    new WorkspaceExportProcessorSettingSnapshotDto("audio", true, "resource.processor.audio.fmod-fsb5"),
+                    new WorkspaceExportProcessorSettingSnapshotDto("texture2d", false, null)
+                ]));
 
         store.Save(metadata);
         var loadedMetadata = store.Load("workspace-a");
@@ -192,6 +203,26 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.False(restoredMetadata.ShowPreviewableOnly, "Previewable-only flag should round-trip.");
         TestAssert.Equal("bundle-001", restoredMetadata.ActiveBundleTabId, "Active bundle tab should round-trip.");
         TestAssert.Equal("decryptor-a", restoredMetadata.AssetBundleDecryptorId, "Decryptor id should round-trip.");
+        var restoredExportSettings = TestAssert.NotNull(
+            restoredMetadata.ExportSettings,
+            "Export settings should round-trip.");
+        TestAssert.True(restoredExportSettings.ExportToWorkspaceDirectory, "Export workspace directory flag should round-trip.");
+        TestAssert.True(restoredExportSettings.OverwriteExistingFiles, "Overwrite flag should round-trip.");
+        TestAssert.Equal(
+            WorkspaceBundleExportCompressionModeDto.Lz4,
+            restoredExportSettings.CompressionMode,
+            "Export compression mode should round-trip.");
+        TestAssert.Equal(
+            WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer,
+            restoredExportSettings.AudioWriteMode,
+            "Audio write mode should round-trip.");
+        var restoredAudioProcessor = TestAssert.Single(restoredExportSettings.ProcessorSettings!.Where(static setting =>
+            setting.ResourceKind == "audio"));
+        TestAssert.True(restoredAudioProcessor.IsEnabled, "Audio processor enabled state should round-trip.");
+        TestAssert.Equal(
+            "resource.processor.audio.fmod-fsb5",
+            restoredAudioProcessor.ProcessorId,
+            "Audio processor id should round-trip.");
         TestAssert.Equal(
             @"C:\Bundles\characters\ignored.ab",
             TestAssert.Single(restoredMetadata.ExcludedBundleSourcePaths!).Trim(),

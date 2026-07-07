@@ -17,4 +17,5 @@ public sealed record WorkspaceBrowserStateSnapshotDto(
     string? ActiveBundleTabId,
     string? LastBundleId,
     string? LastAssetId,
-    IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? OpenAssetEditorWindows = null);
+    IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? OpenAssetEditorWindows = null,
+    WorkspaceExportSettingsSnapshotDto? ExportSettings = null);

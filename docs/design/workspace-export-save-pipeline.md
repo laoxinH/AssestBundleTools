@@ -17,7 +17,7 @@
 - 保存预览和保存执行骨架已经读取现有 `cache/bundles` 标准化 artifact 输入图，并通过 `IWorkspaceSaveOutputProbe` 做输出路径 preflight。
 - `SaveRebuild` 后台 profile 已存在，工作区导出窗口可以复用统一后台任务调度。
 - 普通批量提取已经具备“单个后台任务 + 跨 AB 受控并行 + 同 AB 内顺序 + 输出 manifest”的成熟范式。
-- 工作区导出窗口已接到真实 `SaveRebuild` 后台任务：默认输出到 `<workspaceDataRootPath>/exports`，取消“导出到工作区输出目录”后点击开始导出会打开输出目录选择器。
+- 工作区导出窗口已接到真实 `SaveRebuild` 后台任务：首次打开默认不勾选“导出到工作区输出目录”，点击开始导出会打开输出目录选择器；用户勾选后输出到 `<workspaceDataRootPath>/exports`，该选择会随当前工作区导出设置恢复。
 - `SaveWorkspaceAsNewBundleCommand` 已携带输出目录、选中资源包、资源处理器选择、导出压缩策略、工作区 artifact 上下文和执行进度回调。
 - Application 已通过 `IWorkspaceBundleExporter` / `IWorkspaceBundleExportManifestStore` 编排第一阶段真实导出：按选中 bundle 有界并发写出，汇总 `Succeeded / PartiallySucceeded / Failed` 结果，并在有成功输出时写出 `_abt-bundle-export-manifest.json`。
 - Application 已定义 `IWorkspaceResourceProcessorExecutor` 和处理器执行 DTO；保存执行会校验资源处理器选择、构建文件替换载荷的资源处理 work item、按有界并发执行、稳定排序结果，并在处理器失败时阻断所属 bundle 写包。
@@ -26,6 +26,7 @@
 - 对象级 writer 已覆盖 `AudioClip` 外部流写回：写包端优先消费资源处理器输出，默认从原始 `m_AudioData` 或 `m_Resource` 头部识别音频容器，并要求替换载荷容器与原容器一致，再将数据追加到原 bundle 内 `.resS / .resource` 条目末尾，更新 `m_Resource.m_Source / m_Offset / m_Size` 并清空内联音频数据。原容器未知或容器不一致会稳定失败；导出窗口提供“强制写入音频载荷”风险选项，启用后可跳过原容器匹配写入已知替换容器，同时提示输出 AB 可能无法被 Unity 正确播放。
 - Infrastructure catalog 已提供内置 `resource.processor.audio.fmod-fsb5` 资源处理器：运行目录中存在内置 wrapper 且能发现 `fsbankcl.exe` 时标记为可用，按既有 CLI 协议把音频替换源编码为 FSB5；缺失 FMOD CLI 时该处理器保持不可用，用户仍可通过插件管理页配置自定义音频处理器。该处理器适用于原始容器为 FSB5 的目标或用户明确需要转码的场景，不再是 WAV 等原容器可直接匹配写入时的强制前置条件。
 - AB 导出 manifest 已记录每个 bundle 的资源处理器结果摘要，包括资源类型、处理器 id、状态、输入 / 成功 / 失败计数、result JSON 路径和诊断。
+- 工作区导出窗口会把资源处理器槽启用状态与选择、是否导出到工作区输出目录、是否覆盖同名文件、压缩策略和音频写入模式保存到当前工作区 metadata 中，下次打开同一工作区时恢复；首次默认只勾选“最近修改”资源包，且“导出到工作区输出目录”和“覆盖已有同名文件”均不默认勾选。
 
 尚未实现：
 
@@ -65,7 +66,7 @@ WorkspaceExportWindow 收集选择
 
 Presentation 负责：
 
-- 在工作区导出窗口展示保存预览、资源包范围、资源处理器选择和压缩策略。
+- 在工作区导出窗口展示保存预览、资源包范围、资源处理器选择、压缩策略和可恢复导出设置。
 - 生成命令输入 DTO：选中的 `bundleId[]`、输出目录、每个资源类型槽的 `processorId?` 和 `compressionMode`。
 - 提交一个 `BackgroundWorkRequest<Result<WorkspaceExportExecutionResultDto>>`。
 - 使用 `BackgroundWorkProfile.SaveRebuild`、`WorkspaceMutation` 语义和可取消任务。
@@ -155,11 +156,11 @@ WorkspaceSaveExecutionResultDto / WorkspaceExportExecutionResultDto
 
 ```text
 OutputConflictPolicy
-  ReplaceExisting     # 默认，写临时文件成功后再替换已有输出文件
-  FailIfExists        # 用户关闭覆盖时保留 preflight blocker 语义
+  ReplaceExisting     # 用户明确启用覆盖时，写临时文件成功后再替换已有输出文件
+  FailIfExists        # 默认，保留 preflight blocker 语义
 ```
 
-导出窗口默认勾选“覆盖已有同名文件”，保存预览和执行命令都按 `ReplaceExisting` 计算同名文件冲突；用户取消勾选后，Application 在 preflight 阶段把已有同名文件视为阻断。真实写包入口不得在未确认覆盖时覆盖已有 AB 文件。即使用户确认覆盖，也必须先写临时文件并验证成功，再替换最终路径。Presentation 负责把 `Save.Output.FileAlreadyExists` 等稳定诊断映射成用户友好提示，不直接向用户暴露英文错误码。
+导出窗口首次默认不勾选“覆盖已有同名文件”，保存预览和执行命令按 `FailIfExists` 计算同名文件冲突；用户勾选后，后续同一工作区打开导出窗口会恢复该选择，并按 `ReplaceExisting` 重新作为预览和执行命令的冲突策略。真实写包入口不得在未确认覆盖时覆盖已有 AB 文件。即使用户确认覆盖，也必须先写临时文件并验证成功，再替换最终路径。Presentation 负责把 `Save.Output.FileAlreadyExists` 等稳定诊断映射成用户友好提示，不直接向用户暴露英文错误码。
 
 ## 6. 导出计划
 
@@ -175,7 +176,7 @@ ValidateWorkspace
 
 ### 6.1 资源包范围
 
-- 默认只导出用户勾选的资源包。
+- 默认只导出用户勾选的资源包；导出窗口首次打开时只默认勾选“最近修改”分组中的资源包，避免较早修改被无意一起写出。
 - 如果勾选资源包中没有待保存操作，应保留在计划摘要中并标记为 `SkippedNoChanges`，不进入写包 worker。
 - 如果某个资源包缺少标准化 artifact，计划阶段标记为阻断诊断；第一版真实执行不在写包阶段隐式触发解密 / materialize。
 

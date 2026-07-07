@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Saving.Dtos;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Domain.Bundles;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
@@ -9,4 +10,5 @@ public sealed record WorkspaceExportDialogSubmission(
     IReadOnlyList<WorkspaceExportProcessorSelectionDto> ProcessorSelections,
     WorkspaceBundleExportCompressionModeDto CompressionMode,
     WorkspaceBundleExportOutputConflictPolicyDto OutputConflictPolicy,
-    WorkspaceBundleExportAudioWriteModeDto AudioWriteMode);
+    WorkspaceBundleExportAudioWriteModeDto AudioWriteMode,
+    WorkspaceExportSettingsSnapshotDto ExportSettings);

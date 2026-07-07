@@ -26,8 +26,12 @@ internal sealed class WorkspaceExportDialogOptionFactory
         }
 
         var bundleLastChangedAtLookup = BuildBundleLastChangedAtLookup(changeSummary);
+        var defaultSelectedBundleIds = BuildRecentBundleSelectionLookup(savePreview.BundlePlans, bundleLastChangedAtLookup);
         foreach (var plan in savePreview.BundlePlans)
         {
+            var lastChangedAtUtc = bundleLastChangedAtLookup.TryGetValue(plan.BundleId, out var resolvedLastChangedAtUtc)
+                ? resolvedLastChangedAtUtc
+                : (DateTimeOffset?)null;
             yield return new WorkspaceExportBundleOptionViewModel(
                 plan.BundleId,
                 plan.BundleDisplayName,
@@ -44,9 +48,8 @@ internal sealed class WorkspaceExportDialogOptionFactory
                 plan.ExtractedAssetCount,
                 plan.WorkspaceReplacementCount,
                 plan.FileReplacementCount,
-                bundleLastChangedAtLookup.TryGetValue(plan.BundleId, out var lastChangedAtUtc)
-                    ? lastChangedAtUtc
-                    : null);
+                lastChangedAtUtc,
+                defaultSelectedBundleIds.Contains(plan.BundleId));
         }
     }
 
@@ -112,18 +115,18 @@ internal sealed class WorkspaceExportDialogOptionFactory
     public WorkspaceExportProcessorSelectionDto CreateProcessorSelection(
         WorkspaceExportResourceProcessorOptionViewModel processor)
     {
-        var selectedProcessorId = processor.IsEnabled
-            ? processor.SelectedProcessor?.Id
-            : null;
-        if (selectedProcessorId is not null &&
-            selectedProcessorId.EndsWith(":none", StringComparison.OrdinalIgnoreCase))
-        {
-            selectedProcessorId = null;
-        }
-
         return new WorkspaceExportProcessorSelectionDto(
             NormalizeResourceKind(processor.Id),
-            selectedProcessorId);
+            ResolveSelectedProcessorId(processor));
+    }
+
+    public WorkspaceExportProcessorSettingSnapshotDto CreateProcessorSettingSnapshot(
+        WorkspaceExportResourceProcessorOptionViewModel processor)
+    {
+        return new WorkspaceExportProcessorSettingSnapshotDto(
+            NormalizeResourceKind(processor.Id),
+            processor.IsEnabled,
+            ResolveSelectedProcessorId(processor));
     }
 
     private IEnumerable<WorkspaceExportProcessorOptionViewModel> CreateProcessorOptions(
@@ -204,6 +207,46 @@ internal sealed class WorkspaceExportDialogOptionFactory
 
     private static string NormalizeResourceKind(string value) =>
         value.Trim().Replace("-", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
+
+    private static string? ResolveSelectedProcessorId(WorkspaceExportResourceProcessorOptionViewModel processor)
+    {
+        var selectedProcessorId = processor.IsEnabled
+            ? processor.SelectedProcessor?.Id
+            : null;
+        if (selectedProcessorId is not null &&
+            selectedProcessorId.EndsWith(":none", StringComparison.OrdinalIgnoreCase))
+        {
+            selectedProcessorId = null;
+        }
+
+        return selectedProcessorId;
+    }
+
+    private static IReadOnlySet<BundleId> BuildRecentBundleSelectionLookup(
+        IReadOnlyList<WorkspaceSaveBundlePlanDto> bundlePlans,
+        IReadOnlyDictionary<BundleId, DateTimeOffset> bundleLastChangedAtLookup)
+    {
+        if (bundlePlans.Count == 0)
+        {
+            return new HashSet<BundleId>();
+        }
+
+        if (bundleLastChangedAtLookup.Count == 0)
+        {
+            return bundlePlans
+                .Select(static plan => plan.BundleId)
+                .ToHashSet();
+        }
+
+        var latestChangedAt = bundleLastChangedAtLookup.Values.Max();
+        var recentCutoff = latestChangedAt.AddHours(-24);
+        return bundlePlans
+            .Where(plan =>
+                bundleLastChangedAtLookup.TryGetValue(plan.BundleId, out var lastChangedAtUtc) &&
+                lastChangedAtUtc >= recentCutoff)
+            .Select(static plan => plan.BundleId)
+            .ToHashSet();
+    }
 
     private static IReadOnlyDictionary<BundleId, DateTimeOffset> BuildBundleLastChangedAtLookup(
         WorkspaceChangeSummaryDto? changeSummary)
