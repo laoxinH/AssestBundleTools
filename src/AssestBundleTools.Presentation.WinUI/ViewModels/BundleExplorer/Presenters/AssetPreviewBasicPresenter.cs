@@ -36,7 +36,8 @@ internal sealed class AssetPreviewBasicPresenter
         InspectorPanelViewModel inspector,
         string workspaceDataRootPath,
         AssetPreviewDto preview,
-        IReadOnlyList<InspectorInfoRowViewModel> previewInfoRows)
+        IReadOnlyList<InspectorInfoRowViewModel> previewInfoRows,
+        string? assetName = null)
     {
         if (string.IsNullOrWhiteSpace(preview.TextContent))
         {
@@ -52,7 +53,8 @@ internal sealed class AssetPreviewBasicPresenter
             preview.FullContentReference,
             workspaceDataRootPath,
             preview.TextDisplay?.IsTruncated == true &&
-            preview.FullContentReference is not null);
+            preview.FullContentReference is not null,
+            assetName);
         ApplyPreviewDiagnostic(inspector, preview.Diagnostic);
     }
 

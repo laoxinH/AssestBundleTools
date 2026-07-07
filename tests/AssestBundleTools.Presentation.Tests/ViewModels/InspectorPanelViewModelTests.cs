@@ -413,6 +413,18 @@ public sealed class InspectorPanelViewModelTests
     }
 
     [Fact]
+    public void ApplyTextPreview_ShouldDetectLanguageFromAssetName_WhenPayloadPathIsUnavailable()
+    {
+        var viewModel = CreateViewModel();
+
+        viewModel.ApplyTextPreview(
+            "char_2025_shu.png\nsize: 380,380\nformat: RGBA8888",
+            assetName: "char_2025_shu.atlas");
+
+        Assert.Equal("atlas", viewModel.Preview.PreviewTextLanguage);
+    }
+
+    [Fact]
     public void RestoreInspectorScrollState_ShouldRestoreCapturedSectionOffsets()
     {
         var viewModel = CreateViewModel();

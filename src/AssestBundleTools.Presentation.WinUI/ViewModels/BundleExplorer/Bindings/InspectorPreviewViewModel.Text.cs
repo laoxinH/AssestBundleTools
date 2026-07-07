@@ -12,7 +12,8 @@ public sealed partial class InspectorPreviewViewModel
         string? previewPayloadFilePath = null,
         AssetPreviewFullContentReferenceDto? reference = null,
         string? workspaceDataRootPath = null,
-        bool hasMoreLines = false)
+        bool hasMoreLines = false,
+        string? assetName = null)
     {
         ResetState();
         _previewKind = AssetPreviewKind.Text;
@@ -22,7 +23,7 @@ public sealed partial class InspectorPreviewViewModel
         _hasMorePreviewTextLines = reference is not null && hasMoreLines;
         PreviewPayloadFilePath = NormalizePreviewPayloadFilePath(previewPayloadFilePath);
         PreviewText = textContent;
-        PreviewTextLanguage = DetectTextLanguage(previewPayloadFilePath, textContent);
+        PreviewTextLanguage = DetectTextLanguage(previewPayloadFilePath, assetName, textContent);
         ApplyPreviewTextLines(textContent);
         NotifyPreviewStateChanged();
     }
@@ -98,13 +99,23 @@ public sealed partial class InspectorPreviewViewModel
         OnPropertyChanged(nameof(LoadMorePreviewTextLinesButtonVisibility));
     }
 
-    private static string DetectTextLanguage(string? previewPayloadFilePath, string? textContent)
+    private static string DetectTextLanguage(string? previewPayloadFilePath, string? assetName, string? textContent)
     {
         var titleText = string.IsNullOrWhiteSpace(previewPayloadFilePath)
             ? string.Empty
             : Path.GetFileName(previewPayloadFilePath.Trim());
-        return TextAssetEditLanguageResolver.DetectLanguage(
+        var detectedLanguage = TextAssetEditLanguageResolver.DetectLanguage(
             titleText,
+            assetTypeDisplayName: null,
+            textContent);
+        if (!string.Equals(detectedLanguage, "plaintext", StringComparison.OrdinalIgnoreCase) ||
+            string.IsNullOrWhiteSpace(assetName))
+        {
+            return detectedLanguage;
+        }
+
+        return TextAssetEditLanguageResolver.DetectLanguage(
+            assetName.Trim(),
             assetTypeDisplayName: null,
             textContent);
     }

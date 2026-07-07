@@ -1338,6 +1338,8 @@ public static class ResourceKeys
     public const string TextAssetEditorApplyButton = "TextAssetEditor.ApplyButton.Content";
     public const string TextAssetEditorLoadingEditButton = "TextAssetEditor.LoadingEditButton.Content";
     public const string TextAssetEditorLoadingEditButtonToolTip = "TextAssetEditor.LoadingEditButton.ToolTip";
+    public const string TextAssetEditorSavingEditButton = "TextAssetEditor.SavingEditButton.Content";
+    public const string TextAssetEditorSavingEditButtonToolTip = "TextAssetEditor.SavingEditButton.ToolTip";
     public const string TextAssetEditorExitButton = "TextAssetEditor.ExitButton.Content";
     public const string TextAssetEditorReadOnlyHint = "TextAssetEditor.ReadOnlyHint.Text";
     public const string TextAssetEditorInlineEditHint = "TextAssetEditor.InlineEditHint.Text";

@@ -311,7 +311,9 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
 
         if (e.PropertyName is nameof(AssetEditorWindowViewModel.SaveTextEditButtonContentKey) or
             nameof(AssetEditorWindowViewModel.SaveTextEditButtonToolTipKey) or
-            nameof(AssetEditorWindowViewModel.IsTextEditLoading))
+            nameof(AssetEditorWindowViewModel.IsTextEditLoading) or
+            nameof(AssetEditorWindowViewModel.IsTextEditSaving) or
+            nameof(AssetEditorWindowViewModel.IsTextEditBusy))
         {
             ApplySaveTextEditButtonText();
         }

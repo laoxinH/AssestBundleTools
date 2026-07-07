@@ -85,7 +85,8 @@ internal sealed class AssetPreviewResultPresenter
                     assetTab.Inspector,
                     previewQuery.WorkspaceDataRootPath,
                     preview,
-                    previewInfoRows);
+                    previewInfoRows,
+                    details.Name);
                 return true;
             case AssetPreviewKind.Audio:
                 return await TryApplyAudioPreviewAsync(assetTab, details, previewRequest, preview, previewInfoRows);

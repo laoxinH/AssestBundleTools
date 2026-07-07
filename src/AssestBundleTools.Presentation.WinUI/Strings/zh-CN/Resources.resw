@@ -2640,6 +2640,12 @@
   <data name="TextAssetEditor.LoadingEditButton.ToolTip" xml:space="preserve">
     <value>完整文本仍在加载，完成后才能保存编辑。</value>
   </data>
+  <data name="TextAssetEditor.SavingEditButton.Content" xml:space="preserve">
+    <value>正在保存文本</value>
+  </data>
+  <data name="TextAssetEditor.SavingEditButton.ToolTip" xml:space="preserve">
+    <value>文本编辑正在保存，请稍候。</value>
+  </data>
   <data name="TextAssetEditor.ExitButton.Content" xml:space="preserve">
     <value>退出</value>
   </data>

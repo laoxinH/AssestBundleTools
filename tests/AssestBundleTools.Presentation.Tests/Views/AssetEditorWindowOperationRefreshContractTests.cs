@@ -74,6 +74,10 @@ public sealed class AssetEditorWindowOperationRefreshContractTests
                 StringComparison.Ordinal)];
         var applyMethod = actionsCode[
             actionsCode.IndexOf("public async Task<bool> ApplyTextEditAsync()", StringComparison.Ordinal)..actionsCode.IndexOf(
+                "internal bool TryBeginTextEditSaveOperation()",
+                StringComparison.Ordinal)];
+        var saveOperationMethods = actionsCode[
+            actionsCode.IndexOf("internal bool TryBeginTextEditSaveOperation()", StringComparison.Ordinal)..actionsCode.IndexOf(
                 "public async Task<bool> ExitTextEditModeForActiveAssetAsync()",
                 StringComparison.Ordinal)];
         var exitMethod = actionsCode[
@@ -91,9 +95,45 @@ public sealed class AssetEditorWindowOperationRefreshContractTests
         Assert.Contains("ObserveActiveTextEditDraft();", requestMethod);
         Assert.Contains("DocumentGroup.ActiveAssetTab?.ExitTextEditMode(clearDraftReference: false);", applyMethod);
         Assert.Contains("ObserveActiveTextEditDraft();", applyMethod);
+        Assert.Contains("IsTextEditLoading", applyMethod);
+        Assert.Contains("IsBusy", applyMethod);
+        Assert.Contains("SetTextEditSaving(true);", saveOperationMethods);
+        Assert.Contains("SetTextEditSaving(false);", saveOperationMethods);
         Assert.Contains("assetTab?.ExitTextEditMode(clearDraftReference: true);", exitMethod);
         Assert.Contains("ObserveActiveTextEditDraft();", exitMethod);
         Assert.Contains("NotifyActionBarStates();", busySetter);
+    }
+
+    [Fact]
+    public void TextEditSaveButton_ShouldShowBusyProgressWhileSaving()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var actionBarCode = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "ViewModels",
+                "BundleExplorer",
+                "Bindings",
+                "AssetEditorWindowViewModel.ActionBars.cs"));
+        var xaml = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "AssetEditorWindow.xaml"));
+
+        Assert.Contains("public bool IsTextEditSaving", actionBarCode);
+        Assert.Contains("public bool IsTextEditBusy => IsTextEditLoading || IsTextEditSaving;", actionBarCode);
+        Assert.Contains("ResourceKeys.TextAssetEditorSavingEditButton", actionBarCode);
+        Assert.Contains("ResourceKeys.TextAssetEditorSavingEditButtonToolTip", actionBarCode);
+        Assert.Contains("!IsTextEditBusy", actionBarCode);
+        Assert.Contains("IsActive=\"{x:Bind ViewModel.IsTextEditBusy, Mode=OneWay}\"", xaml);
+        Assert.Contains("Visibility=\"{x:Bind ViewModel.TextEditBusyVisibility, Mode=OneWay}\"", xaml);
+        Assert.Contains("Visibility=\"{x:Bind ViewModel.SaveTextEditIconVisibility, Mode=OneWay}\"", xaml);
     }
 
     [Fact]

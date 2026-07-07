@@ -38,22 +38,36 @@ public sealed partial class AssetEditorWindowViewModel
     public bool IsTextEditLoading =>
         DocumentGroup.ActiveAssetTab?.TextEditDraft?.IsFullEditLoading == true;
 
+    public bool IsTextEditSaving => _isTextEditSaving;
+
+    public bool IsTextEditBusy => IsTextEditLoading || IsTextEditSaving;
+
+    public Visibility TextEditBusyVisibility =>
+        IsTextEditBusy ? Visibility.Visible : Visibility.Collapsed;
+
     public Visibility TextEditLoadingVisibility =>
-        IsTextEditLoading ? Visibility.Visible : Visibility.Collapsed;
+        TextEditBusyVisibility;
+
+    public Visibility SaveTextEditIconVisibility =>
+        IsTextEditBusy ? Visibility.Collapsed : Visibility.Visible;
 
     public string SaveTextEditButtonContentKey =>
-        IsTextEditLoading
+        IsTextEditSaving
+            ? ResourceKeys.TextAssetEditorSavingEditButton
+            : IsTextEditLoading
             ? ResourceKeys.TextAssetEditorLoadingEditButton
             : ResourceKeys.TextAssetEditorApplyButton;
 
     public string SaveTextEditButtonToolTipKey =>
-        IsTextEditLoading
+        IsTextEditSaving
+            ? ResourceKeys.TextAssetEditorSavingEditButtonToolTip
+            : IsTextEditLoading
             ? ResourceKeys.TextAssetEditorLoadingEditButtonToolTip
             : ResourceKeys.TextAssetEditorApplyButton;
 
     public bool CanSaveTextEdit =>
         DocumentGroup.ActiveAssetTab?.TextEditDraft?.CanSave == true &&
-        !IsTextEditLoading &&
+        !IsTextEditBusy &&
         !IsBusy;
 
     public bool CanSaveSpineEdit =>
@@ -86,7 +100,11 @@ public sealed partial class AssetEditorWindowViewModel
         OnPropertyChanged(nameof(ActiveTextEditDraft));
         OnPropertyChanged(nameof(TextEditActionBarVisibility));
         OnPropertyChanged(nameof(IsTextEditLoading));
+        OnPropertyChanged(nameof(IsTextEditSaving));
+        OnPropertyChanged(nameof(IsTextEditBusy));
+        OnPropertyChanged(nameof(TextEditBusyVisibility));
         OnPropertyChanged(nameof(TextEditLoadingVisibility));
+        OnPropertyChanged(nameof(SaveTextEditIconVisibility));
         OnPropertyChanged(nameof(SaveTextEditButtonContentKey));
         OnPropertyChanged(nameof(SaveTextEditButtonToolTipKey));
         OnPropertyChanged(nameof(CanSaveTextEdit));
@@ -178,5 +196,16 @@ public sealed partial class AssetEditorWindowViewModel
         {
             NotifyActionBarStates();
         }
+    }
+
+    private void SetTextEditSaving(bool value)
+    {
+        if (_isTextEditSaving == value)
+        {
+            return;
+        }
+
+        _isTextEditSaving = value;
+        NotifyActionBarStates();
     }
 }

@@ -150,21 +150,55 @@ public sealed partial class AssetEditorWindowViewModel
 
     public async Task<bool> ApplyTextEditAsync()
     {
-        if (DocumentGroup.ActiveAssetTab?.TextEditDraft?.CanSave != true)
+        if (DocumentGroup.ActiveAssetTab?.TextEditDraft?.CanSave != true ||
+            IsTextEditLoading ||
+            IsBusy)
         {
             return false;
         }
 
-        var applied = await _assetActionCoordinator.ApplyTextAssetEditDraftAsync();
-        if (applied)
+        var ownsSavingState = !IsTextEditSaving;
+        if (ownsSavingState)
         {
-            DocumentGroup.ActiveAssetTab?.ExitTextEditMode(clearDraftReference: false);
-            ObserveActiveTextEditDraft();
-            NotifyActionStates();
-            NotifyActionBarStates();
+            SetTextEditSaving(true);
         }
 
-        return applied;
+        try
+        {
+            var applied = await _assetActionCoordinator.ApplyTextAssetEditDraftAsync();
+            if (applied)
+            {
+                DocumentGroup.ActiveAssetTab?.ExitTextEditMode(clearDraftReference: false);
+                ObserveActiveTextEditDraft();
+                NotifyActionStates();
+                NotifyActionBarStates();
+            }
+
+            return applied;
+        }
+        finally
+        {
+            if (ownsSavingState)
+            {
+                SetTextEditSaving(false);
+            }
+        }
+    }
+
+    internal bool TryBeginTextEditSaveOperation()
+    {
+        if (IsTextEditSaving || IsTextEditLoading || IsBusy)
+        {
+            return false;
+        }
+
+        SetTextEditSaving(true);
+        return true;
+    }
+
+    internal void EndTextEditSaveOperation()
+    {
+        SetTextEditSaving(false);
     }
 
     public async Task<bool> ExitTextEditModeForActiveAssetAsync()

@@ -209,7 +209,8 @@ public sealed partial class InspectorPanelViewModel
         string? previewPayloadFilePath = null,
         AssetPreviewFullContentReferenceDto? reference = null,
         string? workspaceDataRootPath = null,
-        bool hasMoreLines = false)
+        bool hasMoreLines = false,
+        string? assetName = null)
     {
         Preview.ApplyTextPreview(
             textContent,
@@ -217,7 +218,8 @@ public sealed partial class InspectorPanelViewModel
             previewPayloadFilePath,
             reference,
             workspaceDataRootPath,
-            hasMoreLines);
+            hasMoreLines,
+            assetName);
         RebuildInformationCards();
     }
 

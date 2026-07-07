@@ -46,6 +46,7 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
     private InspectorPreviewImageViewModel? _observedSpriteEditImage;
     private TextAssetEditDraftViewModel? _observedTextEditDraft;
     private bool _isBusy;
+    private bool _isTextEditSaving;
 
     public AssetEditorWindowViewModel(
         AssetDocumentTabViewModel initialAssetTab,

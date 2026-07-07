@@ -76,31 +76,38 @@ public sealed partial class AssetEditorWindow
 
     private async Task<bool> ApplyTextEditFromSurfaceAsync(bool exitWhenClean = false)
     {
-        if (ViewModel.DocumentGroup.ActiveAssetTab?.TextEditDraft?.IsFullEditLoading == true)
+        if (!ViewModel.TryBeginTextEditSaveOperation())
         {
             return false;
         }
 
-        if (!await TextEditDraftView.SynchronizeEditorSaveAsync())
+        try
         {
-            return false;
-        }
-
-        var draft = ViewModel.DocumentGroup.ActiveAssetTab?.TextEditDraft;
-        var hadUnsavedChanges = draft?.HasUnsavedChanges == true;
-        if (draft?.CanSave == true)
-        {
-            var applied = await ViewModel.ApplyTextEditAsync();
-            if (applied && hadUnsavedChanges)
+            if (!await TextEditDraftView.SynchronizeEditorSaveAsync())
             {
-                TextEditDraftView.AcceptSynchronizedEditorText(draft?.CurrentPatchBaseline);
+                return false;
             }
 
-            return applied;
-        }
+            var draft = ViewModel.DocumentGroup.ActiveAssetTab?.TextEditDraft;
+            var hadUnsavedChanges = draft?.HasUnsavedChanges == true;
+            if (draft?.CanSave == true)
+            {
+                var applied = await ViewModel.ApplyTextEditAsync();
+                if (applied && hadUnsavedChanges)
+                {
+                    TextEditDraftView.AcceptSynchronizedEditorText(draft?.CurrentPatchBaseline);
+                }
 
-        return exitWhenClean
-            ? await ViewModel.ExitTextEditModeForActiveAssetAsync()
-            : false;
+                return applied;
+            }
+
+            return exitWhenClean
+                ? await ViewModel.ExitTextEditModeForActiveAssetAsync()
+                : false;
+        }
+        finally
+        {
+            ViewModel.EndTextEditSaveOperation();
+        }
     }
 }

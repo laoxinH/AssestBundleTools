@@ -2640,6 +2640,12 @@
   <data name="TextAssetEditor.LoadingEditButton.ToolTip" xml:space="preserve">
     <value>The full text is still loading. Editing can be saved after loading completes.</value>
   </data>
+  <data name="TextAssetEditor.SavingEditButton.Content" xml:space="preserve">
+    <value>Saving Text</value>
+  </data>
+  <data name="TextAssetEditor.SavingEditButton.ToolTip" xml:space="preserve">
+    <value>The text edit is being saved.</value>
+  </data>
   <data name="TextAssetEditor.ExitButton.Content" xml:space="preserve">
     <value>Exit</value>
   </data>

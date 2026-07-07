@@ -411,12 +411,13 @@
                                         <ProgressRing
                                             Width="12"
                                             Height="12"
-                                            IsActive="{x:Bind ViewModel.IsTextEditLoading, Mode=OneWay}"
-                                            Visibility="{x:Bind ViewModel.TextEditLoadingVisibility, Mode=OneWay}" />
+                                            IsActive="{x:Bind ViewModel.IsTextEditBusy, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.TextEditBusyVisibility, Mode=OneWay}" />
                                         <FontIcon
                                             FontFamily="Segoe Fluent Icons"
                                             FontSize="12"
-                                            Glyph="&#xE74E;" />
+                                            Glyph="&#xE74E;"
+                                            Visibility="{x:Bind ViewModel.SaveTextEditIconVisibility, Mode=OneWay}" />
                                         <TextBlock x:Name="SaveTextEditButtonText" />
                                     </StackPanel>
                                 </Button>
