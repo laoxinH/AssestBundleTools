@@ -219,81 +219,57 @@
                     </ListView>
                 </Grid>
             </Border>
-            <Border Grid.Row="1" Style="{StaticResource WorkspaceExportPanelCardStyle}" Translation="0,0,8">
-                <Grid ColumnSpacing="10" RowSpacing="8">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+            <Border
+                Grid.Row="1"
+                Padding="16,14"
+                Style="{StaticResource WorkspaceExportPanelCardStyle}"
+                Translation="0,0,8">
+                <Grid ColumnSpacing="18">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="292" />
                     </Grid.ColumnDefinitions>
-                    <CheckBox
-                        x:Name="ExportToWorkspaceDirectoryCheckBox"
-                        Grid.ColumnSpan="2"
-                        IsChecked="{Binding ExportToWorkspaceDirectory, Mode=TwoWay}" />
-                    <CheckBox
-                        x:Name="OverwriteExistingFilesCheckBox"
-                        Grid.Row="1"
-                        Grid.ColumnSpan="2"
-                        IsChecked="{Binding OverwriteExistingFiles, Mode=TwoWay}" />
-                    <CheckBox
-                        x:Name="ForceAudioPayloadWriteCheckBox"
-                        Grid.Row="2"
-                        Grid.ColumnSpan="2"
-                        IsChecked="{Binding ForceAudioPayloadWrite, Mode=TwoWay}" />
-                    <TextBlock
-                        Grid.Row="3"
-                        Grid.ColumnSpan="2"
-                        FontSize="12"
-                        Foreground="{ThemeResource SystemFillColorCautionBrush}"
-                        Text="{Binding ForceAudioWarningText}"
-                        TextWrapping="WrapWholeWords" />
-                    <Border
-                        Grid.Row="4"
-                        Padding="10,4"
-                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                        CornerRadius="8">
-                        <TextBlock x:Name="OutputDirectoryLabelText" FontSize="12" FontWeight="SemiBold" />
-                    </Border>
-                    <TextBlock
-                        Grid.Row="4"
-                        Grid.Column="1"
-                        VerticalAlignment="Center"
-                        Text="{Binding OutputDirectoryText}"
-                        TextTrimming="CharacterEllipsis"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                    <Border
-                        Grid.Row="5"
-                        Padding="10,4"
-                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                        CornerRadius="8">
-                        <TextBlock x:Name="CompressionModeLabelText" FontSize="12" FontWeight="SemiBold" />
-                    </Border>
-                    <ComboBox
-                        Grid.Row="5"
-                        Grid.Column="1"
-                        HorizontalAlignment="Stretch"
-                        ItemsSource="{Binding CompressionOptions}"
-                        SelectedItem="{Binding SelectedCompressionOption, Mode=TwoWay}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Spacing="2">
-                                    <TextBlock FontWeight="SemiBold" Text="{Binding DisplayName}" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="{Binding Description}"
-                                        TextTrimming="CharacterEllipsis" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
+                    <StackPanel Spacing="6">
+                        <CheckBox
+                            x:Name="ExportToWorkspaceDirectoryCheckBox"
+                            IsChecked="{Binding ExportToWorkspaceDirectory, Mode=TwoWay}" />
+                        <CheckBox
+                            x:Name="OverwriteExistingFilesCheckBox"
+                            IsChecked="{Binding OverwriteExistingFiles, Mode=TwoWay}" />
+                        <CheckBox
+                            x:Name="ForceAudioPayloadWriteCheckBox"
+                            IsChecked="{Binding ForceAudioPayloadWrite, Mode=TwoWay}" />
+                        <TextBlock
+                            Margin="34,-2,0,0"
+                            FontSize="12"
+                            Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                            Text="{Binding ForceAudioWarningText}"
+                            TextWrapping="WrapWholeWords" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="6">
+                        <TextBlock
+                            x:Name="CompressionModeLabelText"
+                            FontSize="12"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <ComboBox
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{Binding CompressionOptions}"
+                            SelectedItem="{Binding SelectedCompressionOption, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock FontWeight="SemiBold" Text="{Binding DisplayName}" />
+                                        <TextBlock
+                                            FontSize="12"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{Binding Description}"
+                                            TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
                 </Grid>
             </Border>
         </Grid>

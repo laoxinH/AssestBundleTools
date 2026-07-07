@@ -29,7 +29,6 @@ public sealed partial class WorkspaceExportDialogContent : UserControl
         ExportToWorkspaceDirectoryCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogExportToWorkspaceDirectory);
         OverwriteExistingFilesCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogOverwriteExistingFiles);
         ForceAudioPayloadWriteCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogForceAudioPayloadWrite);
-        OutputDirectoryLabelText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogOutputDirectoryLabel);
         CompressionModeLabelText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogCompressionModeLabel);
     }
 

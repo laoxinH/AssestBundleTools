@@ -4326,9 +4326,6 @@
   <data name="WorkspaceExportDialog.AudioPayloadContainerMismatch" xml:space="preserve">
     <value>The replacement audio payload does not match the original container. Use the same audio container, or enable forced audio payload write after confirming the risk.</value>
   </data>
-  <data name="WorkspaceExportDialog.OutputDirectory.Label" xml:space="preserve">
-    <value>Output directory</value>
-  </data>
   <data name="WorkspaceExportDialog.CompressionMode.Label" xml:space="preserve">
     <value>Compression</value>
   </data>

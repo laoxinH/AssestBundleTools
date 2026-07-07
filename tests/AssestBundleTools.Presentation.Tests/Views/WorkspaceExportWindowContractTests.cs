@@ -98,6 +98,8 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("IsChecked=\"{Binding ExportToWorkspaceDirectory, Mode=TwoWay}\"", contentXaml);
         Assert.Contains("ItemsSource=\"{Binding Processors}\"", contentXaml);
         Assert.Contains("SelectedItem=\"{Binding SelectedProcessor, Mode=TwoWay}\"", contentXaml);
+        Assert.DoesNotContain("OutputDirectoryText", contentXaml);
+        Assert.DoesNotContain("OutputDirectoryLabelText", contentXaml);
         Assert.Contains("ResourceProcessorSectionTitleText", contentXaml);
         Assert.DoesNotContain("x:Name=\"ProcessorSectionTitleText\"", contentXaml);
         Assert.DoesNotContain("ItemsSource=\"{Binding RecentChanges}\"", contentXaml);

@@ -593,7 +593,6 @@ public static class ResourceKeys
     public const string WorkspaceExportDialogForceAudioPayloadWrite = "WorkspaceExportDialog.ForceAudioPayloadWrite";
     public const string WorkspaceExportDialogForceAudioPayloadWriteWarning = "WorkspaceExportDialog.ForceAudioPayloadWriteWarning";
     public const string WorkspaceExportDialogAudioPayloadContainerMismatch = "WorkspaceExportDialog.AudioPayloadContainerMismatch";
-    public const string WorkspaceExportDialogOutputDirectoryLabel = "WorkspaceExportDialog.OutputDirectory.Label";
     public const string WorkspaceExportDialogCompressionModeLabel = "WorkspaceExportDialog.CompressionMode.Label";
     public const string WorkspaceExportDialogCompressionFastLz4 = "WorkspaceExportDialog.Compression.FastLz4";
     public const string WorkspaceExportDialogCompressionFastLz4Description = "WorkspaceExportDialog.Compression.FastLz4Description";

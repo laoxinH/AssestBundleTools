@@ -4326,9 +4326,6 @@
   <data name="WorkspaceExportDialog.AudioPayloadContainerMismatch" xml:space="preserve">
     <value>音频替换载荷与原始容器不一致。请使用相同容器的音频文件，或在确认风险后启用强制写入音频载荷。</value>
   </data>
-  <data name="WorkspaceExportDialog.OutputDirectory.Label" xml:space="preserve">
-    <value>输出目录</value>
-  </data>
   <data name="WorkspaceExportDialog.CompressionMode.Label" xml:space="preserve">
     <value>压缩策略</value>
   </data>
