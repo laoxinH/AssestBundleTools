@@ -8,4 +8,5 @@ public sealed record WorkspaceExportDialogSubmission(
     IReadOnlyList<BundleId> SelectedBundleIds,
     IReadOnlyList<WorkspaceExportProcessorSelectionDto> ProcessorSelections,
     WorkspaceBundleExportCompressionModeDto CompressionMode,
-    WorkspaceBundleExportOutputConflictPolicyDto OutputConflictPolicy);
+    WorkspaceBundleExportOutputConflictPolicyDto OutputConflictPolicy,
+    WorkspaceBundleExportAudioWriteModeDto AudioWriteMode);

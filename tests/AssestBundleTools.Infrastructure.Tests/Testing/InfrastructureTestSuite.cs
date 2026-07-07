@@ -626,8 +626,16 @@ internal static class InfrastructureTestSuite
             FileSystemResourceProcessorExecutorTests.ExecuteAsync_ShouldRunBuiltInFmodWrapper_AndProduceFsbResult);
         await RunTestAsync(
             failures,
-            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteAudioClipResource_WhenRealSampleBundleIsAvailable),
-            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteAudioClipResource_WhenRealSampleBundleIsAvailable);
+            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteAudioClipResource_WhenReplacementMatchesOriginalContainer),
+            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteAudioClipResource_WhenReplacementMatchesOriginalContainer);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRejectAudioClipResource_WhenReplacementContainerMismatchesOriginal),
+            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRejectAudioClipResource_WhenReplacementContainerMismatchesOriginal);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldForceRewriteAudioClipResource_WhenReplacementContainerMismatchesOriginal),
+            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldForceRewriteAudioClipResource_WhenReplacementContainerMismatchesOriginal);
 
         if (failures.Count == 0)
         {

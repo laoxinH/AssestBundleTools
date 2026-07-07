@@ -367,10 +367,15 @@ internal static partial class SaveWorkspaceHandlersTests
             workspaceId,
             OutputDirectory: @"D:\Exports",
             WorkspaceKey: workspaceKey,
-            WorkspaceDataRootPath: workspaceDataRootPath));
+            WorkspaceDataRootPath: workspaceDataRootPath,
+            AudioWriteMode: WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer));
 
         TestAssert.True(result.IsSuccess, "Save execution should succeed with object write item payloads.");
         var request = TestAssert.Single(exporter.Requests);
+        TestAssert.Equal(
+            WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer,
+            request.AudioWriteMode,
+            "Save command audio write mode should be forwarded to the bundle exporter.");
         var writeItem = TestAssert.Single(request.AssetWriteItems);
         TestAssert.Equal(bundleId, writeItem.BundleId, "Write item should keep target bundle identity.");
         TestAssert.Equal(assetId, writeItem.AssetId, "Write item should keep target asset identity.");

@@ -4317,6 +4317,15 @@
   <data name="WorkspaceExportDialog.OverwriteExistingFiles" xml:space="preserve">
     <value>覆盖已有同名文件</value>
   </data>
+  <data name="WorkspaceExportDialog.ForceAudioPayloadWrite" xml:space="preserve">
+    <value>强制写入音频载荷</value>
+  </data>
+  <data name="WorkspaceExportDialog.ForceAudioPayloadWriteWarning" xml:space="preserve">
+    <value>启用后会忽略原始音频容器匹配检查，可能导出 Unity 无法正确播放的 AB。</value>
+  </data>
+  <data name="WorkspaceExportDialog.AudioPayloadContainerMismatch" xml:space="preserve">
+    <value>音频替换载荷与原始容器不一致。请使用相同容器的音频文件，或在确认风险后启用强制写入音频载荷。</value>
+  </data>
   <data name="WorkspaceExportDialog.OutputDirectory.Label" xml:space="preserve">
     <value>输出目录</value>
   </data>

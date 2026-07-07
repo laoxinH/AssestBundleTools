@@ -4317,6 +4317,15 @@
   <data name="WorkspaceExportDialog.OverwriteExistingFiles" xml:space="preserve">
     <value>Overwrite existing files with the same name</value>
   </data>
+  <data name="WorkspaceExportDialog.ForceAudioPayloadWrite" xml:space="preserve">
+    <value>Force audio payload write</value>
+  </data>
+  <data name="WorkspaceExportDialog.ForceAudioPayloadWriteWarning" xml:space="preserve">
+    <value>When enabled, the original audio container check is ignored and the exported bundle may not play correctly in Unity.</value>
+  </data>
+  <data name="WorkspaceExportDialog.AudioPayloadContainerMismatch" xml:space="preserve">
+    <value>The replacement audio payload does not match the original container. Use the same audio container, or enable forced audio payload write after confirming the risk.</value>
+  </data>
   <data name="WorkspaceExportDialog.OutputDirectory.Label" xml:space="preserve">
     <value>Output directory</value>
   </data>

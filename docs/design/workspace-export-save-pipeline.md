@@ -23,14 +23,14 @@
 - Application 已定义 `IWorkspaceResourceProcessorExecutor` 和处理器执行 DTO；保存执行会校验资源处理器选择、构建文件替换载荷的资源处理 work item、按有界并发执行、稳定排序结果，并在处理器失败时阻断所属 bundle 写包。
 - Infrastructure 已接入外部 CLI 资源处理器执行：按 catalog 中的 `executablePath / processArguments / timeoutMs` 启动进程，展开占位符，解析 result JSON，校验输出路径范围，捕获诊断并支持取消时终止进程。
 - Infrastructure 已把单 bundle writer 从 artifact 文件级复制推进到对象级 AssetsTools 写包：从标准化 artifact 通过统一 `AssetsToolsBundleLoadService` 创建独占写入 session，按 `serializedFileName + pathId` 定位对象，消费文件替换、同 bundle 工作区内替换、Sprite 几何编辑和资源处理器输出载荷，先写入带 replacer 的未压缩 bundle，再按导出压缩策略重新打包、提升输出文件并以单次读取记录 MD5 / SHA-256。导出窗口默认使用“保持原压缩”，原始压缩格式来自导入 / 预览重载共用的 loadAB Reader 链路并写入 bundle index 缓存；用户也可以显式选择 `LZMA / LZ4 / LZ4Fast / Uncompressed`。
-- 对象级 writer 已覆盖 `AudioClip` 的 FSB5 载荷写回：写包端优先消费资源处理器输出，要求载荷为 FSB5，将数据追加到原 bundle 内 `.resS / .resource` 条目末尾，并更新 `m_Resource.m_Source / m_Offset / m_Size`、`m_LoadType` 和 `m_CompressionFormat`。WAV / MP3 / OGG 等替换源需要先经资源处理器转为 FSB5，writer 不直接运行转码。
-- Infrastructure catalog 已提供内置 `resource.processor.audio.fmod-fsb5` 资源处理器：运行目录中存在内置 wrapper 且能发现 `fsbankcl.exe` 时标记为可用，按既有 CLI 协议把音频替换源编码为 FSB5；缺失 FMOD CLI 时该处理器保持不可用，用户仍可通过插件管理页配置自定义音频处理器。
+- 对象级 writer 已覆盖 `AudioClip` 外部流写回：写包端优先消费资源处理器输出，默认从原始 `m_AudioData` 或 `m_Resource` 头部识别音频容器，并要求替换载荷容器与原容器一致，再将数据追加到原 bundle 内 `.resS / .resource` 条目末尾，更新 `m_Resource.m_Source / m_Offset / m_Size` 并清空内联音频数据。原容器未知或容器不一致会稳定失败；导出窗口提供“强制写入音频载荷”风险选项，启用后可跳过原容器匹配写入已知替换容器，同时提示输出 AB 可能无法被 Unity 正确播放。
+- Infrastructure catalog 已提供内置 `resource.processor.audio.fmod-fsb5` 资源处理器：运行目录中存在内置 wrapper 且能发现 `fsbankcl.exe` 时标记为可用，按既有 CLI 协议把音频替换源编码为 FSB5；缺失 FMOD CLI 时该处理器保持不可用，用户仍可通过插件管理页配置自定义音频处理器。该处理器适用于原始容器为 FSB5 的目标或用户明确需要转码的场景，不再是 WAV 等原容器可直接匹配写入时的强制前置条件。
 - AB 导出 manifest 已记录每个 bundle 的资源处理器结果摘要，包括资源类型、处理器 id、状态、输入 / 成功 / 失败计数、result JSON 路径和诊断。
 
 尚未实现：
 
 - 资源处理器输入目前只覆盖文件替换载荷；工作区内替换、编辑草稿和后续有效载荷端口仍需接入同一资源处理计划。
-- 对象级 writer 当前覆盖 `TextAsset` 文本载荷、`Texture2D` 图片载荷、同 bundle 工作区内对象复制、Sprite `m_Rect / m_Pivot` 几何写入和 `AudioClip` FSB5 外部流写回；`Texture2D` 写入优先保持目标对象原 `m_TextureFormat`，当 AssetsTools 编码器不支持原格式（例如 ASTC）时回退为 Unity 通用的 `RGBA32` 再写入，因此可导出但输出体积可能增大；跨 bundle 工作区内替换、Mesh / Material / MonoBehaviour 等更多对象类型和更完整的格式转换仍需后续扩展。
+- 对象级 writer 当前覆盖 `TextAsset` 文本载荷、`Texture2D` 图片载荷、同 bundle 工作区内对象复制、Sprite `m_Rect / m_Pivot` 几何写入和 `AudioClip` 按原容器匹配的外部流写回；`Texture2D` 写入优先保持目标对象原 `m_TextureFormat`，当 AssetsTools 编码器不支持原格式（例如 ASTC）时回退为 Unity 通用的 `RGBA32` 再写入，因此可导出但输出体积可能增大；跨 bundle 工作区内替换、Mesh / Material / MonoBehaviour 等更多对象类型和更完整的格式转换仍需后续扩展。
 - 保存检查点、部分成功和取消 / 回滚语义。
 
 ## 3. 设计结论
@@ -230,6 +230,8 @@ BuildResourceProcessingItems
 当前已落地的第一版处理器阶段先消费 `WorkspaceChangeItemDto.FileReplacementSourcePath` 代表的文件替换载荷，并将处理器输出作为 `WorkspaceResourceProcessorExecutionResultDto` 传给后续 writer 端口和 manifest。对象级 writer 已消费成功处理项的 `outputPath` 作为优先载荷：同一资源存在处理器输出时，写包阶段使用处理器输出替换原始文件替换路径；没有处理器输出时，回退到工作区有效替换源。
 
 内置音频处理器 `resource.processor.audio.fmod-fsb5` 是第一版内置 CLI 处理器示例：它本身仍通过通用资源处理器执行端口启动，wrapper 负责调用 FMOD `fsbankcl.exe`、生成 FSB5 输出和写入 result JSON。catalog 只在 wrapper 与 `fsbankcl.exe` 均可发现时把它标记为可用；否则保持不可用，避免导出窗口选择后才在执行期失败。`fsbankcl.exe` 默认可放在 `%LOCALAPPDATA%/AssestBundleTools/tools/fmod/`、应用输出目录的 `tools/fmod/` 或应用输出根目录，也可以通过 `PATH` 暴露。
+
+AudioClip writer 的默认策略是“匹配原始容器”：它从目标对象当前内联音频或资源流头部识别原容器，替换源或处理器输出也按头部识别，只有二者一致时才写回。容器不一致会返回稳定诊断 `Save.BundleWrite.AudioPayloadContainerMismatch`，Presentation 负责显示本地化说明。导出窗口的“强制写入音频载荷”会把 `AudioWriteMode` 置为 `ForcePayloadContainer`，在替换载荷容器可识别时跳过原容器匹配；这是显式风险选项，可能导出 Unity 无法播放的 AB，因此 UI 必须在启用状态下显示警告。
 
 ### 7.1 处理项粒度
 
@@ -585,7 +587,7 @@ Application 回归优先覆盖：
 - 导出命令会拒绝缺失工作区、空资源包选择、不可用处理器和不支持资源类型。
 - 导出计划只包含用户选择的资源包，并保留 `bundleId / bundleCacheKey / outputPath`。
 - 资源处理器选择中的“无处理器”不会进入执行队列。
-- AudioClip 文件替换选择内置 FMOD 处理器时，Application 应生成 `audio` resource work item，并把成功处理器 `outputPath` 投影为写包项的优先载荷。
+- AudioClip 文件替换选择内置 FMOD 处理器时，Application 应生成 `audio` resource work item，并把成功处理器 `outputPath` 投影为写包项的优先载荷；导出窗口的强制音频写入选项应透传为 `AudioWriteMode`，默认保持按原容器匹配。
 - 当前第一阶段覆盖选中 bundle 写出、processor selection 透传、文件替换载荷的资源处理 work item 构建、处理器结果透传、失败回填、失败 bundle 跳过写包、bundle writer 跨 bundle 有界并发、对象级写包项透传和输出摘要。
 - 后续补资源处理器取消、工作区内替换 / 编辑草稿有效载荷的更多资源类型和跨 bundle 写包回归。
 - 部分成功时只提交成功 bundle 的检查点。
@@ -593,12 +595,12 @@ Application 回归优先覆盖：
 Infrastructure 回归优先覆盖：
 
 - 资源处理器 result JSON 解析、非法路径拒绝、stdout / stderr 诊断捕获和超时终止。
-- 当前第一阶段覆盖空对象写入拒绝、真实样本 TextAsset / Texture2D / Sprite / AudioClip 对象级写入后读回、Texture2D ASTC 回退、AudioClip FSB5 写入 `.resS / .resource` 后读回、同目录临时文件提升、MD5 / SHA-256 记录、资源处理器 result JSON 解析、内置 FMOD wrapper 协议和 AB 导出 manifest 原子写入。
+- 当前第一阶段覆盖空对象写入拒绝、真实样本 TextAsset / Texture2D / Sprite / AudioClip 对象级写入后读回、Texture2D ASTC 回退、AudioClip 按原容器匹配写入 `.resS / .resource`、容器不匹配拒绝和强制写入风险分支、同目录临时文件提升、MD5 / SHA-256 记录、资源处理器 result JSON 解析、内置 FMOD wrapper 协议和 AB 导出 manifest 原子写入。
 - 后续补目标已存在 blocker、确认覆盖后的替换路径、workspace replacement 的真实样本回归和更多 AssetsTools Writer 类型。
 
 Presentation 回归优先覆盖：
 
-- 工作区导出窗口提交命令时携带选中 bundle 和每个资源类型槽的 processor selection。
+- 工作区导出窗口提交命令时携带选中 bundle、每个资源类型槽的 processor selection、压缩策略和音频写入模式。
 - 导出任务使用 `SaveRebuild` profile，并在执行中禁用重复提交。
 - 当前导出完成后只由导出窗口消费执行结果；保存检查点和 `Committed` 状态落地前，不广播 workspace-wide 操作变更，避免主工作台误刷新旧资产标签。
 - 后续检查点落地后，通过精确的已提交操作通知刷新保存预览 / 变更投影，而不是直接重扫 AB。

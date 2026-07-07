@@ -98,6 +98,12 @@ internal sealed class WorkspaceExportFailureDisplayFormatter
             return true;
         }
 
+        if (ContainsDiagnostic(value, "Save.BundleWrite.AudioPayloadContainerMismatch"))
+        {
+            reason = _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogAudioPayloadContainerMismatch);
+            return true;
+        }
+
         reason = string.Empty;
         return false;
     }

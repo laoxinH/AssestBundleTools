@@ -259,7 +259,8 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
                         CompressionMode: command.CompressionMode,
                         OutputConflictPolicy: command.OutputConflictPolicy,
                         OriginalCompression: selectedPlan.OriginalCompression,
-                        BundleSessionCacheKey: selectedPlan.ArtifactInput.BundleSessionCacheKey),
+                        BundleSessionCacheKey: selectedPlan.ArtifactInput.BundleSessionCacheKey,
+                        AudioWriteMode: command.AudioWriteMode),
                     cancellationToken);
 
                 if (exportResult.IsCancelled)

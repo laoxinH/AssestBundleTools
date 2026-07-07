@@ -24,6 +24,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     private string _bundleSearchText = string.Empty;
     private bool _exportToWorkspaceDirectory = true;
     private bool _overwriteExistingFiles = true;
+    private bool _forceAudioPayloadWrite;
     private bool _isLoading;
     private bool _isExecuting;
     private WorkspaceExportBundleSortOptionViewModel? _selectedBundleSortOption;
@@ -131,6 +132,23 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         get => _overwriteExistingFiles;
         set => SetProperty(ref _overwriteExistingFiles, value);
     }
+
+    public bool ForceAudioPayloadWrite
+    {
+        get => _forceAudioPayloadWrite;
+        set
+        {
+            if (SetProperty(ref _forceAudioPayloadWrite, value))
+            {
+                OnPropertyChanged(nameof(ForceAudioWarningText));
+            }
+        }
+    }
+
+    public string ForceAudioWarningText =>
+        ForceAudioPayloadWrite
+            ? _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogForceAudioPayloadWriteWarning)
+            : string.Empty;
 
     public WorkspaceExportBundleSortOptionViewModel? SelectedBundleSortOption
     {
@@ -240,7 +258,10 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
             SelectedCompressionOption?.Mode ?? WorkspaceBundleExportCompressionModeDto.PreserveOriginal,
             OverwriteExistingFiles
                 ? WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting
-                : WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists);
+                : WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists,
+            ForceAudioPayloadWrite
+                ? WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer
+                : WorkspaceBundleExportAudioWriteModeDto.MatchOriginalContainer);
     }
 
     private void OnBundleSelectionChanged(object? sender, EventArgs e)

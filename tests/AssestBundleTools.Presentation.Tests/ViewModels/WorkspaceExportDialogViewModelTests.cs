@@ -88,6 +88,7 @@ public sealed class WorkspaceExportDialogViewModelTests
         Assert.True(submission.ExportToWorkspaceDirectory);
         Assert.Equal(WorkspaceBundleExportCompressionModeDto.PreserveOriginal, submission.CompressionMode);
         Assert.Equal(WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting, submission.OutputConflictPolicy);
+        Assert.Equal(WorkspaceBundleExportAudioWriteModeDto.MatchOriginalContainer, submission.AudioWriteMode);
         Assert.Equal("bundle-alpha", Assert.Single(submission.SelectedBundleIds).Value);
         Assert.Equal("resource.processor.texture.png", submission.ProcessorSelections.Single(selection => selection.ResourceKind == "texture2d").ProcessorId);
         Assert.Null(submission.ProcessorSelections.Single(selection => selection.ResourceKind == "audio").ProcessorId);
@@ -121,6 +122,24 @@ public sealed class WorkspaceExportDialogViewModelTests
         var submission = viewModel.CreateSubmission();
 
         Assert.Equal(WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists, submission.OutputConflictPolicy);
+    }
+
+    [Fact]
+    public void CreateSubmission_ShouldUseForcedAudioWriteMode_WhenForceAudioPayloadWriteIsEnabled()
+    {
+        var viewModel = new WorkspaceExportDialogViewModel(
+            new TestLocalizationService(),
+            changeSummary: null,
+            savePreview: null);
+
+        Assert.Equal(string.Empty, viewModel.ForceAudioWarningText);
+
+        viewModel.ForceAudioPayloadWrite = true;
+
+        var submission = viewModel.CreateSubmission();
+
+        Assert.Equal(WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer, submission.AudioWriteMode);
+        Assert.Equal(ResourceKeys.WorkspaceExportDialogForceAudioPayloadWriteWarning, viewModel.ForceAudioWarningText);
     }
 
     [Fact]

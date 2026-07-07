@@ -47,6 +47,52 @@ internal sealed class AssetsToolsBundleResourceDataWriteContext
             payload.LongLength));
     }
 
+    public bool TryReadPayloadHeader(
+        string? resourceSource,
+        long resourceOffset,
+        long resourceSize,
+        int headerSize,
+        out byte[] header)
+    {
+        header = Array.Empty<byte>();
+        if (resourceOffset < 0 ||
+            resourceSize <= 0 ||
+            headerSize <= 0)
+        {
+            return false;
+        }
+
+        var resourceIndex = ResolveResourceFileIndex(resourceSource);
+        if (resourceIndex < 0)
+        {
+            return false;
+        }
+
+        var resourceFile = GetOrLoadResourceFile(resourceIndex);
+        if (resourceOffset > resourceFile.Content.Length)
+        {
+            return false;
+        }
+
+        var readSize = (int)Math.Min(Math.Min(resourceSize, headerSize), resourceFile.Content.Length - resourceOffset);
+        if (readSize <= 0)
+        {
+            return false;
+        }
+
+        var originalPosition = resourceFile.Content.Position;
+        try
+        {
+            resourceFile.Content.Position = resourceOffset;
+            header = new byte[readSize];
+            return resourceFile.Content.Read(header, 0, readSize) == readSize;
+        }
+        finally
+        {
+            resourceFile.Content.Position = originalPosition;
+        }
+    }
+
     public void ApplyModifiedFiles()
     {
         var directoryInfos = _bundleFile.BlockAndDirInfo.DirectoryInfos;

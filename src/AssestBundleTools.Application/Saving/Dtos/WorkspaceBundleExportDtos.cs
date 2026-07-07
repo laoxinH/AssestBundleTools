@@ -21,7 +21,8 @@ public sealed record WorkspaceBundleExportRequestDto(
     WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.PreserveOriginal,
     WorkspaceBundleExportOutputConflictPolicyDto OutputConflictPolicy = WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting,
     string? OriginalCompression = null,
-    string? BundleSessionCacheKey = null);
+    string? BundleSessionCacheKey = null,
+    WorkspaceBundleExportAudioWriteModeDto AudioWriteMode = WorkspaceBundleExportAudioWriteModeDto.MatchOriginalContainer);
 
 public sealed record WorkspaceBundleExportResultDto(
     BundleId BundleId,

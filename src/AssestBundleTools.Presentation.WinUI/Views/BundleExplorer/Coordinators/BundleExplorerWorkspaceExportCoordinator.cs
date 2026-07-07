@@ -149,7 +149,8 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
             SelectedBundleIds: submission.SelectedBundleIds,
             ProcessorSelections: submission.ProcessorSelections,
             CompressionMode: submission.CompressionMode,
-            OutputConflictPolicy: submission.OutputConflictPolicy);
+            OutputConflictPolicy: submission.OutputConflictPolicy,
+            AudioWriteMode: submission.AudioWriteMode);
 
         Result<WorkspaceSaveExecutionResultDto> result;
         try

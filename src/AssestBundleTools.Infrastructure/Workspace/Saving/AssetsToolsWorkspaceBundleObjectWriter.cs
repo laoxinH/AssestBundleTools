@@ -53,7 +53,12 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
                     foreach (var writeItem in request.AssetWriteItems)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-                        var result = ApplyWriteItem(session.AssetsManager, serializedFiles, resourceDataContext, writeItem);
+                        var result = ApplyWriteItem(
+                            session.AssetsManager,
+                            serializedFiles,
+                            resourceDataContext,
+                            writeItem,
+                            request.AudioWriteMode);
                         if (result.IsFailure)
                         {
                             return result;
@@ -230,7 +235,8 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
         AssetsManager assetsManager,
         IReadOnlyList<LoadedSerializedFile> serializedFiles,
         AssetsToolsBundleResourceDataWriteContext resourceDataContext,
-        WorkspaceBundleAssetWriteItemDto writeItem)
+        WorkspaceBundleAssetWriteItemDto writeItem,
+        WorkspaceBundleExportAudioWriteModeDto audioWriteMode)
     {
         var serializedFile = FindSerializedFile(serializedFiles, writeItem.SerializedFileName);
         if (serializedFile is null ||
@@ -254,7 +260,7 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
         var payloadPath = ResolvePayloadPath(writeItem);
         var result = NormalizeSourceKind(writeItem.SourceKind) switch
         {
-            SourceKindFile => ApplyExternalPayload(baseField, writeItem, payloadPath, resourceDataContext),
+            SourceKindFile => ApplyExternalPayload(baseField, writeItem, payloadPath, resourceDataContext, audioWriteMode),
             SourceKindWorkspace => ApplyWorkspacePayload(assetsManager, serializedFiles, baseField, writeItem),
             SourceKindSpriteEdit => AssetsToolsSpriteEditPayloadWriter.Apply(baseField, writeItem),
             SourceKindTextDraft => AssetsToolsTextAssetPayloadWriter.ApplyDraft(baseField, writeItem),
@@ -276,7 +282,8 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
         AssetTypeValueField baseField,
         WorkspaceBundleAssetWriteItemDto writeItem,
         string? payloadPath,
-        AssetsToolsBundleResourceDataWriteContext resourceDataContext)
+        AssetsToolsBundleResourceDataWriteContext resourceDataContext,
+        WorkspaceBundleExportAudioWriteModeDto audioWriteMode)
     {
         if (string.IsNullOrWhiteSpace(payloadPath) || !File.Exists(payloadPath))
         {
@@ -290,7 +297,12 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
         {
             AssetType.TextAsset => AssetsToolsTextAssetPayloadWriter.ApplyFilePayload(baseField, writeItem, payloadPath),
             AssetType.Texture2D => AssetsToolsTexturePayloadWriter.Apply(baseField, writeItem, payloadPath),
-            AssetType.AudioClip => AssetsToolsAudioClipPayloadWriter.Apply(baseField, writeItem, payloadPath, resourceDataContext),
+            AssetType.AudioClip => AssetsToolsAudioClipPayloadWriter.Apply(
+                baseField,
+                writeItem,
+                payloadPath,
+                resourceDataContext,
+                audioWriteMode),
             _ => Result<object>.Failure(ApplicationErrors.BundleExportWriteFailed(
                 writeItem.AssetName,
                 $"Save.BundleWrite.UnsupportedAssetType.{writeItem.AssetType}"))
