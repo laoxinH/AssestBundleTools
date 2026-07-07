@@ -217,6 +217,38 @@ public sealed class MonacoEditorAssetsContractTests
         Assert.Contains("if (applied && hadUnsavedChanges)", windowTextEditCode);
     }
 
+    [Fact]
+    public void TextAssetEditDraftView_ShouldCancelStaleStreamingLoadWhenDraftChanges()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var draftViewCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Controls",
+            "TextAssetEditDraftView.xaml.cs"));
+        var bridgeCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Controls",
+            "TextDocumentSurfaceView.WebBridge.cs"));
+
+        Assert.Contains("private CancellationTokenSource? _fullEditLoadCancellation;", draftViewCode);
+        Assert.Contains("view.CancelFullEditLoad();", draftViewCode);
+        Assert.Contains("CancelFullEditLoad();", draftViewCode);
+        Assert.Contains("var viewModel = ViewModel;", draftViewCode);
+        Assert.Contains("ReferenceEquals(ViewModel, viewModel)", draftViewCode);
+        Assert.Contains("catch (OperationCanceledException) when (cancellation.IsCancellationRequested)", draftViewCode);
+        Assert.Contains("_ = TextEditorSurface.CancelStreamingDocumentAsync();", draftViewCode);
+        Assert.DoesNotContain("if (ViewModel.CanLoadFullEdit)", draftViewCode);
+        Assert.DoesNotContain("CoreWebView2!", bridgeCode);
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

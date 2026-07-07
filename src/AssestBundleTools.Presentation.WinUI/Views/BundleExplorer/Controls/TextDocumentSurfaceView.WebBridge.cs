@@ -145,7 +145,8 @@ public sealed partial class TextDocumentSurfaceView
         long expectedLength,
         CancellationToken cancellationToken = default)
     {
-        if (cancellationToken.IsCancellationRequested || !CanStreamDocument)
+        var coreWebView = EditorWebView.CoreWebView2;
+        if (cancellationToken.IsCancellationRequested || !CanStreamDocument || coreWebView is null)
         {
             return Task.CompletedTask;
         }
@@ -161,7 +162,7 @@ public sealed partial class TextDocumentSurfaceView
             readOnly = true,
             expectedLength = expectedLength < 0 ? 0 : expectedLength
         });
-        EditorWebView.CoreWebView2!.PostWebMessageAsJson(message);
+        coreWebView.PostWebMessageAsJson(message);
         return Task.CompletedTask;
     }
 
@@ -169,7 +170,8 @@ public sealed partial class TextDocumentSurfaceView
         string text,
         CancellationToken cancellationToken = default)
     {
-        if (cancellationToken.IsCancellationRequested || !CanStreamDocument || !_isStreamingDocument)
+        var coreWebView = EditorWebView.CoreWebView2;
+        if (cancellationToken.IsCancellationRequested || !CanStreamDocument || !_isStreamingDocument || coreWebView is null)
         {
             return Task.CompletedTask;
         }
@@ -179,7 +181,7 @@ public sealed partial class TextDocumentSurfaceView
             type = "appendDocumentChunk",
             text = text ?? string.Empty
         });
-        EditorWebView.CoreWebView2!.PostWebMessageAsJson(message);
+        coreWebView.PostWebMessageAsJson(message);
         return Task.CompletedTask;
     }
 
@@ -188,7 +190,8 @@ public sealed partial class TextDocumentSurfaceView
         bool readOnly,
         CancellationToken cancellationToken = default)
     {
-        if (cancellationToken.IsCancellationRequested || !CanStreamDocument)
+        var coreWebView = EditorWebView.CoreWebView2;
+        if (cancellationToken.IsCancellationRequested || !CanStreamDocument || coreWebView is null)
         {
             _isStreamingDocument = false;
             return Task.CompletedTask;
@@ -205,7 +208,7 @@ public sealed partial class TextDocumentSurfaceView
                 contentSha256 = baseline.ContentSha256
             }
         });
-        EditorWebView.CoreWebView2!.PostWebMessageAsJson(message);
+        coreWebView.PostWebMessageAsJson(message);
         _isStreamingDocument = false;
         _hasStreamingDocumentModel = true;
         _lastSentText = DocumentText ?? string.Empty;

@@ -18,6 +18,7 @@ public sealed partial class TextAssetEditDraftView : UserControl
 
     private bool _hasRequestedAutomaticFullEdit;
     private TextAssetEditDraftViewModel? _observedViewModel;
+    private CancellationTokenSource? _fullEditLoadCancellation;
 
     public TextAssetEditDraftView()
     {
@@ -39,6 +40,7 @@ public sealed partial class TextAssetEditDraftView : UserControl
     {
         if (dependencyObject is TextAssetEditDraftView view)
         {
+            view.CancelFullEditLoad();
             view.UnobserveViewModel();
             view._hasRequestedAutomaticFullEdit = false;
             view.ObserveViewModel(e.NewValue as TextAssetEditDraftViewModel);
@@ -61,13 +63,30 @@ public sealed partial class TextAssetEditDraftView : UserControl
 
     private async void OnLoadFullEditButtonClick(object sender, RoutedEventArgs e)
     {
-        if (ViewModel is null)
+        var viewModel = ViewModel;
+        if (viewModel is null)
         {
             return;
         }
 
-        await ViewModel.LoadFullEditAsync(TextEditorSurface);
-        Bindings.Update();
+        CancelFullEditLoad();
+        var cancellation = CreateFullEditLoadCancellation();
+        try
+        {
+            await viewModel.LoadFullEditAsync(TextEditorSurface, cancellation.Token);
+            if (!cancellation.IsCancellationRequested &&
+                ReferenceEquals(ViewModel, viewModel))
+            {
+                Bindings.Update();
+            }
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            CompleteFullEditLoad(cancellation);
+        }
     }
 
     private async void OnStreamingDocumentReady(object? sender, EventArgs e)
@@ -96,6 +115,7 @@ public sealed partial class TextAssetEditDraftView : UserControl
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        CancelFullEditLoad();
         UnobserveViewModel();
     }
 
@@ -137,21 +157,81 @@ public sealed partial class TextAssetEditDraftView : UserControl
 
     private async Task TryLoadFullEditWithStreamingAsync()
     {
-        if (ViewModel is null ||
+        var viewModel = ViewModel;
+        if (viewModel is null ||
             _hasRequestedAutomaticFullEdit ||
             !TextEditorSurface.CanStreamDocument ||
-            !ViewModel.CanLoadFullEdit)
+            !viewModel.CanLoadFullEdit)
         {
             return;
         }
 
         _hasRequestedAutomaticFullEdit = true;
-        await ViewModel.LoadFullEditAsync(TextEditorSurface);
-        Bindings.Update();
-        if (ViewModel.CanLoadFullEdit)
+        CancelFullEditLoad();
+        var cancellation = CreateFullEditLoadCancellation();
+        try
         {
-            _hasRequestedAutomaticFullEdit = false;
+            await viewModel.LoadFullEditAsync(TextEditorSurface, cancellation.Token);
+            if (cancellation.IsCancellationRequested ||
+                !ReferenceEquals(ViewModel, viewModel))
+            {
+                if (ReferenceEquals(ViewModel, viewModel) &&
+                    viewModel.CanLoadFullEdit)
+                {
+                    _hasRequestedAutomaticFullEdit = false;
+                }
+
+                return;
+            }
+
+            Bindings.Update();
+            if (viewModel.CanLoadFullEdit)
+            {
+                _hasRequestedAutomaticFullEdit = false;
+            }
         }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+            if (ReferenceEquals(ViewModel, viewModel) &&
+                viewModel.CanLoadFullEdit)
+            {
+                _hasRequestedAutomaticFullEdit = false;
+            }
+        }
+        finally
+        {
+            CompleteFullEditLoad(cancellation);
+        }
+    }
+
+    private CancellationTokenSource CreateFullEditLoadCancellation()
+    {
+        var cancellation = new CancellationTokenSource();
+        _fullEditLoadCancellation = cancellation;
+        return cancellation;
+    }
+
+    private void CancelFullEditLoad()
+    {
+        var cancellation = _fullEditLoadCancellation;
+        if (cancellation is null)
+        {
+            return;
+        }
+
+        _fullEditLoadCancellation = null;
+        cancellation.Cancel();
+        _ = TextEditorSurface.CancelStreamingDocumentAsync();
+    }
+
+    private void CompleteFullEditLoad(CancellationTokenSource cancellation)
+    {
+        if (ReferenceEquals(_fullEditLoadCancellation, cancellation))
+        {
+            _fullEditLoadCancellation = null;
+        }
+
+        cancellation.Dispose();
     }
 
     public async Task<bool> SynchronizeEditorTextAsync()
