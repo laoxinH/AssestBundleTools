@@ -4458,6 +4458,30 @@
   <data name="WorkspaceExportDialog.CompletedMessage.Format" xml:space="preserve">
     <value>工作区导出完成：写出 {0} 个资源包，失败 {1} 个。清单：{2}</value>
   </data>
+  <data name="WorkspaceExportDialog.Log.BundleWritePlan.Format" xml:space="preserve">
+    <value>导出写包计划：选择 {0} 个资源包，AB 写包并发度 {1}。</value>
+  </data>
+  <data name="WorkspaceExportDialog.Log.BundleWriteStarted.Format" xml:space="preserve">
+    <value>开始写出 AB：{0}，活跃写入 {1}/{2}，线程 {3}，输出：{4}</value>
+  </data>
+  <data name="WorkspaceExportDialog.Log.BundleWriteFinished.Format" xml:space="preserve">
+    <value>完成写出 AB：{0}，状态 {1}，耗时 {2} ms，剩余活跃写入 {3}/{4}。</value>
+  </data>
+  <data name="WorkspaceExportDialog.Log.BundleWriteSkipped.Format" xml:space="preserve">
+    <value>跳过写出 AB：{0}，资源处理失败：{1}，已完成 {2} 个。</value>
+  </data>
+  <data name="WorkspaceExportDialog.Log.Status.Succeeded" xml:space="preserve">
+    <value>成功</value>
+  </data>
+  <data name="WorkspaceExportDialog.Log.Status.Failed" xml:space="preserve">
+    <value>失败</value>
+  </data>
+  <data name="WorkspaceExportDialog.Log.Status.Cancelled" xml:space="preserve">
+    <value>已取消</value>
+  </data>
+  <data name="WorkspaceExportDialog.Log.Status.Unknown" xml:space="preserve">
+    <value>未知</value>
+  </data>
   <data name="WorkspaceExportDialog.Output.FileAlreadyExists" xml:space="preserve">
     <value>输出目录中已经存在同名文件。请勾选“覆盖已有同名文件”，或选择其他输出目录。</value>
   </data>

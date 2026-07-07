@@ -230,6 +230,95 @@ internal static partial class SaveWorkspaceHandlersTests
         TestAssert.Equal("abc123-sha256", bundleResult.WrittenFileSha256, "Execution should preserve exported AB SHA-256.");
     }
 
+    public static async Task SaveWorkspaceAsNewBundleHandler_ShouldReportBundleWriteDiagnostics()
+    {
+        const string workspaceKey = "workspace-save-key";
+        const string workspaceDataRootPath = @"D:\WorkspaceData";
+
+        var workspaceId = CreateWorkspaceId();
+        var alphaBundleId = new BundleId("bundle-alpha");
+        var zetaBundleId = new BundleId("bundle-zeta");
+        var alphaIndexEntry = CreateBundleIndexEntry(workspaceKey, "bundle-cache-alpha", alphaBundleId, "Alpha.ab");
+        var zetaIndexEntry = CreateBundleIndexEntry(workspaceKey, "bundle-cache-zeta", zetaBundleId, "zeta.ab");
+        var artifactStore = new TestBundleArtifactStore(
+        [
+            CreateArtifactManifest(
+                workspaceKey,
+                alphaIndexEntry.BundleCacheKey,
+                @"D:\WorkspaceData\cache\bundles\workspace-save-key\bundle-cache-alpha\normalized.bundle",
+                alphaIndexEntry.SourceFingerprint),
+            CreateArtifactManifest(
+                workspaceKey,
+                zetaIndexEntry.BundleCacheKey,
+                @"D:\WorkspaceData\cache\bundles\workspace-save-key\bundle-cache-zeta\normalized.bundle",
+                zetaIndexEntry.SourceFingerprint)
+        ]);
+        var registry = new TestWorkspaceSessionRegistry
+        {
+            WorkspaceChangeSummary = CreateWorkspaceChangeSummary(
+                workspaceId,
+                [
+                    CreateChangeItem(
+                        bundleId: alphaBundleId,
+                        assetId: new AssetId("asset-1"),
+                        bundleDisplayName: "Alpha.ab",
+                        assetName: "ConfigText",
+                        isModified: true),
+                    CreateChangeItem(
+                        bundleId: zetaBundleId,
+                        assetId: new AssetId("asset-2"),
+                        bundleDisplayName: "zeta.ab",
+                        assetName: "EnemyPortrait",
+                        isModified: true)
+                ])
+        };
+        var exporter = new CoordinatedBundleExporter(expectedStartedCount: 2);
+        var diagnostics = new RecordingProgress<WorkspaceSaveExecutionDiagnosticDto>();
+        var handler = new SaveWorkspaceAsNewBundleHandler(
+            registry,
+            new TestWorkspaceDataStoreFactory(
+                new TestBundleIndexCacheStore([alphaIndexEntry, zetaIndexEntry]),
+                artifactStore),
+            new ReadyWorkspaceSaveOutputProbe(),
+            exporter,
+            new RecordingBundleExportManifestStore());
+
+        var executionTask = handler.HandleAsync(new SaveWorkspaceAsNewBundleCommand(
+            workspaceId,
+            OutputDirectory: @"D:\Exports",
+            WorkspaceKey: workspaceKey,
+            WorkspaceDataRootPath: workspaceDataRootPath,
+            BundleWriteConcurrency: 2,
+            Diagnostics: diagnostics));
+        var bothWritersStarted = await Task.WhenAny(
+            exporter.StartedThresholdTask,
+            Task.Delay(TimeSpan.FromSeconds(5))) == exporter.StartedThresholdTask;
+        exporter.Release();
+
+        var result = await executionTask;
+
+        TestAssert.True(result.IsSuccess, "Export should complete after the coordinated exporter is released.");
+        TestAssert.True(bothWritersStarted, "Both bundle writers should be able to enter the exporter before the first one completes.");
+        var diagnosticSnapshot = diagnostics.Snapshot();
+        TestAssert.True(
+            diagnosticSnapshot.Any(static diagnostic =>
+                diagnostic.Kind == WorkspaceSaveExecutionDiagnosticKindDto.BundleWritePlan &&
+                diagnostic.BundleWriteConcurrency == 2 &&
+                diagnostic.TotalBundleCount == 2),
+            "Diagnostics should report the selected bundle count and resolved bundle writer concurrency.");
+        TestAssert.True(
+            diagnosticSnapshot.Any(static diagnostic =>
+                diagnostic.Kind == WorkspaceSaveExecutionDiagnosticKindDto.BundleWriteStarted &&
+                diagnostic.ActiveBundleWriteCount == 2),
+            "Diagnostics should expose the active writer count so parallel bundle writes are observable.");
+        TestAssert.Equal(
+            2,
+            diagnosticSnapshot.Count(static diagnostic =>
+                diagnostic.Kind == WorkspaceSaveExecutionDiagnosticKindDto.BundleWriteFinished &&
+                diagnostic.Status == WorkspaceSaveBundleExecutionStatusDto.Succeeded.ToString()),
+            "Diagnostics should report one finished event for each written bundle.");
+    }
+
     public static async Task SaveWorkspaceAsNewBundleHandler_ShouldBlockExistingOutput_WhenOverwriteIsDisabled()
     {
         const string workspaceKey = "workspace-save-key";
@@ -747,39 +836,95 @@ internal static partial class SaveWorkspaceHandlersTests
             }
 
             return Task.FromResult(Result<WorkspaceBundleExportResultDto>.Success(
-                new WorkspaceBundleExportResultDto(
-                    BundleId: request.BundleId,
-                    BundleDisplayName: request.BundleDisplayName,
-                    OutputFilePath: request.OutputFilePath,
-                    SourceArtifactPath: request.SourceArtifactPath,
-                    BundleCacheKey: request.BundleCacheKey,
-                    WrittenFileSizeInBytes: 4096,
-                    WrittenFileHashAlgorithm: "SHA256",
-                    WrittenFileHash: "abc123-sha256",
-                    WrittenFileLastWriteTimeUtc: new DateTimeOffset(2026, 7, 3, 8, 0, 0, TimeSpan.Zero),
-                    WrittenFileMd5: "abc123-md5",
-                    WrittenFileSha256: "abc123-sha256",
-                    ProcessorResults: request.ProcessorResults
-                        .GroupBy(static result => new { result.ResourceKind, result.ProcessorId })
-                        .Select(static group => new WorkspaceBundleProcessorExecutionSummaryDto(
-                            group.Key.ResourceKind,
-                            group.Key.ProcessorId,
-                            WorkspaceResourceProcessorStatusDto.Succeeded,
-                            InputCount: group.Count(),
-                            ProcessedCount: group.Count(),
-                            FailedCount: 0,
-                            ResultPaths: group
-                                .Select(static result => result.ResultPath)
-                                .Where(static path => !string.IsNullOrWhiteSpace(path))
-                                .Select(static path => path!)
-                                .ToArray(),
-                            Diagnostics: Array.Empty<WorkspaceResourceProcessorDiagnosticDto>()))
-                        .ToArray(),
-                    CompressionMode: request.CompressionMode,
-                    OriginalCompression: "LZMA",
-                    WrittenCompression: "LZ4Fast")));
+                CreateSuccessfulExportResult(request)));
         }
     }
+
+    private sealed class CoordinatedBundleExporter : IWorkspaceBundleExporter
+    {
+        private readonly TaskCompletionSource _release = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _startedThreshold = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly int _expectedStartedCount;
+        private int _startedCount;
+
+        public CoordinatedBundleExporter(int expectedStartedCount)
+        {
+            _expectedStartedCount = expectedStartedCount;
+        }
+
+        public Task StartedThresholdTask => _startedThreshold.Task;
+
+        public void Release() => _release.TrySetResult();
+
+        public async Task<Result<WorkspaceBundleExportResultDto>> ExportAsync(
+            WorkspaceBundleExportRequestDto request,
+            CancellationToken cancellationToken = default)
+        {
+            if (Interlocked.Increment(ref _startedCount) >= _expectedStartedCount)
+            {
+                _startedThreshold.TrySetResult();
+            }
+
+            await _release.Task;
+            cancellationToken.ThrowIfCancellationRequested();
+            return Result<WorkspaceBundleExportResultDto>.Success(CreateSuccessfulExportResult(request));
+        }
+    }
+
+    private sealed class RecordingProgress<T> : IProgress<T>
+    {
+        private readonly object _gate = new();
+        private readonly List<T> _values = [];
+
+        public void Report(T value)
+        {
+            lock (_gate)
+            {
+                _values.Add(value);
+            }
+        }
+
+        public IReadOnlyList<T> Snapshot()
+        {
+            lock (_gate)
+            {
+                return _values.ToArray();
+            }
+        }
+    }
+
+    private static WorkspaceBundleExportResultDto CreateSuccessfulExportResult(WorkspaceBundleExportRequestDto request) =>
+        new(
+            BundleId: request.BundleId,
+            BundleDisplayName: request.BundleDisplayName,
+            OutputFilePath: request.OutputFilePath,
+            SourceArtifactPath: request.SourceArtifactPath,
+            BundleCacheKey: request.BundleCacheKey,
+            WrittenFileSizeInBytes: 4096,
+            WrittenFileHashAlgorithm: "SHA256",
+            WrittenFileHash: "abc123-sha256",
+            WrittenFileLastWriteTimeUtc: new DateTimeOffset(2026, 7, 3, 8, 0, 0, TimeSpan.Zero),
+            WrittenFileMd5: "abc123-md5",
+            WrittenFileSha256: "abc123-sha256",
+            ProcessorResults: request.ProcessorResults
+                .GroupBy(static result => new { result.ResourceKind, result.ProcessorId })
+                .Select(static group => new WorkspaceBundleProcessorExecutionSummaryDto(
+                    group.Key.ResourceKind,
+                    group.Key.ProcessorId,
+                    WorkspaceResourceProcessorStatusDto.Succeeded,
+                    InputCount: group.Count(),
+                    ProcessedCount: group.Count(),
+                    FailedCount: 0,
+                    ResultPaths: group
+                        .Select(static result => result.ResultPath)
+                        .Where(static path => !string.IsNullOrWhiteSpace(path))
+                        .Select(static path => path!)
+                        .ToArray(),
+                    Diagnostics: Array.Empty<WorkspaceResourceProcessorDiagnosticDto>()))
+                .ToArray(),
+            CompressionMode: request.CompressionMode,
+            OriginalCompression: "LZMA",
+            WrittenCompression: "LZ4Fast");
 
     private static ResourceProcessorCatalogEntryDto CreateResourceProcessor(
         string processorId,

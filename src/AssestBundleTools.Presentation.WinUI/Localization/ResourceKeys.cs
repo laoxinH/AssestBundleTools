@@ -637,6 +637,14 @@ public static class ResourceKeys
     public const string WorkspaceExportDialogStatusPreparing = "WorkspaceExportDialog.StatusPreparing";
     public const string WorkspaceExportDialogStatusBundleFormat = "WorkspaceExportDialog.StatusBundle.Format";
     public const string WorkspaceExportDialogCompletedMessageFormat = "WorkspaceExportDialog.CompletedMessage.Format";
+    public const string WorkspaceExportDialogLogBundleWritePlanFormat = "WorkspaceExportDialog.Log.BundleWritePlan.Format";
+    public const string WorkspaceExportDialogLogBundleWriteStartedFormat = "WorkspaceExportDialog.Log.BundleWriteStarted.Format";
+    public const string WorkspaceExportDialogLogBundleWriteFinishedFormat = "WorkspaceExportDialog.Log.BundleWriteFinished.Format";
+    public const string WorkspaceExportDialogLogBundleWriteSkippedFormat = "WorkspaceExportDialog.Log.BundleWriteSkipped.Format";
+    public const string WorkspaceExportDialogLogStatusSucceeded = "WorkspaceExportDialog.Log.Status.Succeeded";
+    public const string WorkspaceExportDialogLogStatusFailed = "WorkspaceExportDialog.Log.Status.Failed";
+    public const string WorkspaceExportDialogLogStatusCancelled = "WorkspaceExportDialog.Log.Status.Cancelled";
+    public const string WorkspaceExportDialogLogStatusUnknown = "WorkspaceExportDialog.Log.Status.Unknown";
     public const string WorkspaceExportDialogOutputFileAlreadyExists = "WorkspaceExportDialog.Output.FileAlreadyExists";
     public const string WorkspaceExportDialogOutputTargetIsDirectory = "WorkspaceExportDialog.Output.TargetIsDirectory";
     public const string WorkspaceExportDialogOutputDirectoryBlockedByFile = "WorkspaceExportDialog.Output.DirectoryBlockedByFile";

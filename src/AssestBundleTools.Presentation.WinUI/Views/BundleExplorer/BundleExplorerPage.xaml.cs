@@ -86,6 +86,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             App.CurrentApp.ResourceProcessorCatalogService,
             App.CurrentApp.FilePickerService,
             App.CurrentApp.BackgroundWorkScheduler,
+            App.CurrentApp.AppLogService,
             App.CurrentApp.AppNotificationService,
             App.CurrentApp.LocalizationService);
         ViewModel.SetAssetEditorWindowStateSnapshotProvider(

@@ -4458,6 +4458,30 @@
   <data name="WorkspaceExportDialog.CompletedMessage.Format" xml:space="preserve">
     <value>Workspace export completed: {0} bundles written, {1} failed. Manifest: {2}</value>
   </data>
+  <data name="WorkspaceExportDialog.Log.BundleWritePlan.Format" xml:space="preserve">
+    <value>Bundle write plan: {0} bundles selected, AB writer concurrency {1}.</value>
+  </data>
+  <data name="WorkspaceExportDialog.Log.BundleWriteStarted.Format" xml:space="preserve">
+    <value>Started AB write: {0}, active writers {1}/{2}, thread {3}, output: {4}</value>
+  </data>
+  <data name="WorkspaceExportDialog.Log.BundleWriteFinished.Format" xml:space="preserve">
+    <value>Finished AB write: {0}, status {1}, elapsed {2} ms, active writers remaining {3}/{4}.</value>
+  </data>
+  <data name="WorkspaceExportDialog.Log.BundleWriteSkipped.Format" xml:space="preserve">
+    <value>Skipped AB write: {0}, resource processing failed: {1}, completed {2}.</value>
+  </data>
+  <data name="WorkspaceExportDialog.Log.Status.Succeeded" xml:space="preserve">
+    <value>succeeded</value>
+  </data>
+  <data name="WorkspaceExportDialog.Log.Status.Failed" xml:space="preserve">
+    <value>failed</value>
+  </data>
+  <data name="WorkspaceExportDialog.Log.Status.Cancelled" xml:space="preserve">
+    <value>cancelled</value>
+  </data>
+  <data name="WorkspaceExportDialog.Log.Status.Unknown" xml:space="preserve">
+    <value>unknown</value>
+  </data>
   <data name="WorkspaceExportDialog.Output.FileAlreadyExists" xml:space="preserve">
     <value>The output directory already contains a file with the same name. Enable overwrite or choose another output directory.</value>
   </data>

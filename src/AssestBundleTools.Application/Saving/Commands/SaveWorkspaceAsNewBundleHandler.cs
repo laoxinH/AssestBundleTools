@@ -134,7 +134,11 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
                 return Result<WorkspaceSaveExecutionResultDto>.Failure(processorResult.Errors);
             }
 
-            bundleResults = await ExportBundlesAsync(
+            var bundleExportRunner = new WorkspaceSaveBundleExportRunner(
+                _workspaceSessionRegistry,
+                _workspaceDataStoreFactory,
+                _bundleExporter);
+            bundleResults = await bundleExportRunner.ExportAsync(
                 plan,
                 selectedPlans,
                 processorSelections,
@@ -194,127 +198,6 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
 
         return Result<WorkspaceSaveExecutionResultDto>.Success(
             CreateExecutionResult(plan, selectedPlans, bundleResults, manifestPath, completedAtUtc));
-    }
-
-    private async Task<IReadOnlyList<WorkspaceSaveBundleExecutionResultDto>> ExportBundlesAsync(
-        WorkspaceSavePlan plan,
-        IReadOnlyList<PlannedWorkspaceBundleSave> selectedPlans,
-        IReadOnlyList<WorkspaceExportProcessorSelectionDto> processorSelections,
-        WorkspaceResourceProcessorBatchResult processorBatchResult,
-        string operationId,
-        SaveWorkspaceAsNewBundleCommand command,
-        CancellationToken cancellationToken)
-    {
-        var concurrency = ResolveBundleWriteConcurrency(command.BundleWriteConcurrency, selectedPlans.Count);
-        var assetWritePlanBuilder = new WorkspaceBundleAssetWritePlanBuilder(
-            _workspaceSessionRegistry,
-            plan.WorkspaceId,
-            _workspaceDataStoreFactory);
-        var semaphore = new SemaphoreSlim(concurrency, concurrency);
-        var completedCount = 0;
-        var succeededCount = 0;
-        var failedCount = 0;
-        var tasks = selectedPlans.Select(async selectedPlan =>
-        {
-            if (processorBatchResult.FailedBundleDiagnostics.TryGetValue(selectedPlan.BundleId.Value, out var processorFailure))
-            {
-                Interlocked.Increment(ref failedCount);
-                Interlocked.Increment(ref completedCount);
-                return CreateFailedBundleResult(
-                    selectedPlan,
-                    processorFailure,
-                    WorkspaceSaveResourceProcessorRunner.SummarizeResults(
-                        processorBatchResult.ResolveResults(selectedPlan.BundleId)));
-            }
-
-            await semaphore.WaitAsync(cancellationToken);
-            try
-            {
-                command.Progress?.Report(new WorkspaceSaveExecutionProgressDto(
-                    WorkspaceSaveExecutionStageDto.BundleWriting,
-                    CompletedBundleCount: Volatile.Read(ref completedCount),
-                    TotalBundleCount: selectedPlans.Count,
-                    CurrentBundleDisplayName: selectedPlan.BundleDisplayName,
-                    SucceededBundleCount: Volatile.Read(ref succeededCount),
-                    FailedBundleCount: Volatile.Read(ref failedCount)));
-
-                var exportResult = await _bundleExporter!.ExportAsync(
-                    new WorkspaceBundleExportRequestDto(
-                        WorkspaceId: plan.WorkspaceId,
-                        WorkspaceDisplayName: plan.WorkspaceDisplayName,
-                        BundleId: selectedPlan.BundleId,
-                        BundleDisplayName: selectedPlan.BundleDisplayName,
-                        OutputFilePath: selectedPlan.OutputFilePath,
-                        SourceArtifactPath: selectedPlan.ArtifactInput.ArtifactBundlePath!,
-                        BundleCacheKey: selectedPlan.ArtifactInput.BundleCacheKey,
-                        ChangeItems: selectedPlan.ChangeItems,
-                        AssetWriteItems: assetWritePlanBuilder.Build(
-                            selectedPlan,
-                            command.WorkspaceKey,
-                            command.WorkspaceDataRootPath,
-                            processorBatchResult.ResolveResults(selectedPlan.BundleId)),
-                        ProcessorSelections: processorSelections,
-                        ProcessorResults: processorBatchResult.ResolveResults(selectedPlan.BundleId),
-                        OperationId: operationId,
-                        CompressionMode: command.CompressionMode,
-                        OutputConflictPolicy: command.OutputConflictPolicy,
-                        OriginalCompression: selectedPlan.OriginalCompression,
-                        BundleSessionCacheKey: selectedPlan.ArtifactInput.BundleSessionCacheKey,
-                        AudioWriteMode: command.AudioWriteMode),
-                    cancellationToken);
-
-                if (exportResult.IsCancelled)
-                {
-                    throw new OperationCanceledException(cancellationToken);
-                }
-
-                var bundleResult = exportResult.IsSuccess && exportResult.Value is not null
-                    ? CreateSuccessfulBundleResult(selectedPlan, exportResult.Value)
-                    : CreateFailedBundleResult(selectedPlan, exportResult.Errors.FirstOrDefault());
-
-                if (bundleResult.Status == WorkspaceSaveBundleExecutionStatusDto.Succeeded)
-                {
-                    Interlocked.Increment(ref succeededCount);
-                }
-                else
-                {
-                    Interlocked.Increment(ref failedCount);
-                }
-
-                return bundleResult;
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception exception)
-            {
-                Interlocked.Increment(ref failedCount);
-                return CreateFailedBundleResult(
-                    selectedPlan,
-                    ApplicationErrors.BundleExportWriteFailed(selectedPlan.OutputFilePath, exception.GetType().Name));
-            }
-            finally
-            {
-                var completed = Interlocked.Increment(ref completedCount);
-                command.Progress?.Report(new WorkspaceSaveExecutionProgressDto(
-                    WorkspaceSaveExecutionStageDto.BundleWriting,
-                    CompletedBundleCount: completed,
-                    TotalBundleCount: selectedPlans.Count,
-                    CurrentBundleDisplayName: selectedPlan.BundleDisplayName,
-                    SucceededBundleCount: Volatile.Read(ref succeededCount),
-                    FailedBundleCount: Volatile.Read(ref failedCount)));
-                semaphore.Release();
-            }
-        });
-
-        var unorderedResults = await Task.WhenAll(tasks);
-        var orderByBundleId = selectedPlans
-            .Select((selectedPlan, index) => (selectedPlan.BundleId.Value, Index: index))
-            .ToDictionary(static item => item.Value, static item => item.Index, StringComparer.Ordinal);
-        return unorderedResults
-            .OrderBy(result => orderByBundleId.TryGetValue(result.BundleId.Value, out var index) ? index : int.MaxValue)
-            .ToArray();
     }
 
     private static WorkspaceSaveExecutionResultDto CreateSummaryResult(
@@ -483,68 +366,4 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
             .ToArray();
     }
 
-    private static WorkspaceSaveBundleExecutionResultDto CreateSuccessfulBundleResult(
-        PlannedWorkspaceBundleSave selectedPlan,
-        WorkspaceBundleExportResultDto exportResult) =>
-        new(
-            BundleId: selectedPlan.BundleId,
-            BundleDisplayName: selectedPlan.BundleDisplayName,
-            OutputFilePath: exportResult.OutputFilePath,
-            Status: WorkspaceSaveBundleExecutionStatusDto.Succeeded,
-            ChangeCount: selectedPlan.ChangeCount,
-            ModifiedAssetCount: selectedPlan.ModifiedAssetCount,
-            WorkspaceReplacementCount: selectedPlan.WorkspaceReplacementCount,
-            FileReplacementCount: selectedPlan.FileReplacementCount,
-            SourceArtifactPath: exportResult.SourceArtifactPath,
-            BundleCacheKey: exportResult.BundleCacheKey,
-            WrittenFileSizeInBytes: exportResult.WrittenFileSizeInBytes,
-            WrittenFileHashAlgorithm: exportResult.WrittenFileHashAlgorithm,
-            WrittenFileHash: exportResult.WrittenFileHash,
-            WrittenFileLastWriteTimeUtc: exportResult.WrittenFileLastWriteTimeUtc,
-            WrittenFileMd5: exportResult.WrittenFileMd5,
-            WrittenFileSha256: exportResult.WrittenFileSha256,
-            ProcessorResults: exportResult.ProcessorResults,
-            CompressionMode: exportResult.CompressionMode,
-            OriginalCompression: exportResult.OriginalCompression,
-            WrittenCompression: exportResult.WrittenCompression);
-
-    private static WorkspaceSaveBundleExecutionResultDto CreateFailedBundleResult(
-        PlannedWorkspaceBundleSave selectedPlan,
-        Domain.Common.Errors.AppError? error,
-        IReadOnlyList<WorkspaceBundleProcessorExecutionSummaryDto>? processorResults = null) =>
-        new(
-            BundleId: selectedPlan.BundleId,
-            BundleDisplayName: selectedPlan.BundleDisplayName,
-            OutputFilePath: selectedPlan.OutputFilePath,
-            Status: WorkspaceSaveBundleExecutionStatusDto.Failed,
-            ChangeCount: selectedPlan.ChangeCount,
-            ModifiedAssetCount: selectedPlan.ModifiedAssetCount,
-            WorkspaceReplacementCount: selectedPlan.WorkspaceReplacementCount,
-            FileReplacementCount: selectedPlan.FileReplacementCount,
-            SourceArtifactPath: selectedPlan.ArtifactInput.ArtifactBundlePath,
-            BundleCacheKey: selectedPlan.ArtifactInput.BundleCacheKey,
-            DiagnosticCode: error?.Code,
-            DiagnosticDetail: error is null
-                ? null
-                : string.Join(
-                    "; ",
-                    error.Parameters
-                        .Where(static parameter => parameter.Value is not null)
-                        .Select(static parameter => $"{parameter.Key}={parameter.Value}")),
-            ProcessorResults: processorResults);
-
-    private static int ResolveBundleWriteConcurrency(int? requestedConcurrency, int selectedBundleCount)
-    {
-        if (selectedBundleCount <= 1)
-        {
-            return 1;
-        }
-
-        if (requestedConcurrency.HasValue)
-        {
-            return Math.Clamp(requestedConcurrency.Value, 1, selectedBundleCount);
-        }
-
-        return Math.Clamp(Environment.ProcessorCount / 2, 1, Math.Min(4, selectedBundleCount));
-    }
 }

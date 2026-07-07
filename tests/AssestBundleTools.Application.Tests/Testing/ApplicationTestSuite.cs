@@ -682,6 +682,10 @@ internal static partial class ApplicationTestSuite
             SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldExportSelectedBundles_AndSaveManifest);
         await RunTestAsync(
             failures,
+            nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldReportBundleWriteDiagnostics),
+            SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldReportBundleWriteDiagnostics);
+        await RunTestAsync(
+            failures,
             nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldBlockExistingOutput_WhenOverwriteIsDisabled),
             SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldBlockExistingOutput_WhenOverwriteIsDisabled);
         await RunTestAsync(

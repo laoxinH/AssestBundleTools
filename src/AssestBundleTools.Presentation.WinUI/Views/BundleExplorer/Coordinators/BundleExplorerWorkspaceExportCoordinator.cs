@@ -24,6 +24,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
     private readonly IResourceProcessorCatalogService _resourceProcessorCatalogService;
     private readonly IFilePickerService _filePickerService;
     private readonly IBackgroundWorkScheduler _backgroundWorkScheduler;
+    private readonly IAppLogService _appLogService;
     private readonly IAppNotificationService _appNotificationService;
     private readonly ILocalizationService _localizationService;
     private readonly WorkspaceExportFailureDisplayFormatter _failureDisplayFormatter;
@@ -37,6 +38,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
         IResourceProcessorCatalogService resourceProcessorCatalogService,
         IFilePickerService filePickerService,
         IBackgroundWorkScheduler backgroundWorkScheduler,
+        IAppLogService appLogService,
         IAppNotificationService appNotificationService,
         ILocalizationService localizationService)
     {
@@ -46,6 +48,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
         _resourceProcessorCatalogService = resourceProcessorCatalogService ?? throw new ArgumentNullException(nameof(resourceProcessorCatalogService));
         _filePickerService = filePickerService ?? throw new ArgumentNullException(nameof(filePickerService));
         _backgroundWorkScheduler = backgroundWorkScheduler ?? throw new ArgumentNullException(nameof(backgroundWorkScheduler));
+        _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _failureDisplayFormatter = new WorkspaceExportFailureDisplayFormatter(_localizationService);
@@ -185,6 +188,10 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
                             Progress = new WorkspaceSaveExecutionProgressBridge(
                                 context.Progress,
                                 viewModel,
+                                _owner.DispatcherQueue,
+                                _localizationService),
+                            Diagnostics = new WorkspaceSaveExecutionDiagnosticLogBridge(
+                                _appLogService,
                                 _owner.DispatcherQueue,
                                 _localizationService)
                         };
