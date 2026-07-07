@@ -102,4 +102,19 @@
       DestinationFiles="@(MonacoEditorAsset->'$(OutDir)%(Identity)')"
       SkipUnchangedFiles="true" />
   </Target>
+
+  <Target Name="CopyBuiltInAudioResourceProcessors" AfterTargets="Build">
+    <MSBuild
+      Projects="..\AssestBundleTools.Audio.FmodProcessor\AssestBundleTools.Audio.FmodProcessor.csproj"
+      Targets="Build"
+      Properties="Configuration=$(Configuration);Platform=$(Platform)" />
+    <ItemGroup>
+      <BuiltInAudioResourceProcessor Include="..\AssestBundleTools.Audio.FmodProcessor\bin\$(Configuration)\net8.0\AssestBundleTools.Audio.FmodProcessor.*" />
+      <BuiltInAudioResourceProcessor Include="..\AssestBundleTools.Audio.FmodProcessor\bin\$(Platform)\$(Configuration)\net8.0\AssestBundleTools.Audio.FmodProcessor.*" />
+    </ItemGroup>
+    <Copy
+      SourceFiles="@(BuiltInAudioResourceProcessor)"
+      DestinationFiles="@(BuiltInAudioResourceProcessor->'$(OutDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true" />
+  </Target>
 </Project>

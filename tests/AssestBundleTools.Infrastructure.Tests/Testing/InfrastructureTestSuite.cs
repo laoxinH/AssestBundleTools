@@ -620,6 +620,14 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(FileSystemResourceProcessorExecutorTests.ExecuteAsync_ShouldRejectOutputPathOutsideStaging),
             FileSystemResourceProcessorExecutorTests.ExecuteAsync_ShouldRejectOutputPathOutsideStaging);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemResourceProcessorExecutorTests.ExecuteAsync_ShouldRunBuiltInFmodWrapper_AndProduceFsbResult),
+            FileSystemResourceProcessorExecutorTests.ExecuteAsync_ShouldRunBuiltInFmodWrapper_AndProduceFsbResult);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteAudioClipResource_WhenRealSampleBundleIsAvailable),
+            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteAudioClipResource_WhenRealSampleBundleIsAvailable);
 
         if (failures.Count == 0)
         {

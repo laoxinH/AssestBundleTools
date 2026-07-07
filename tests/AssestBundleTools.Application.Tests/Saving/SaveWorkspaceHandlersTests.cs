@@ -349,7 +349,8 @@ internal static partial class SaveWorkspaceHandlersTests
         bool isModified,
         bool extracted = false,
         string? workspaceReplacementSourceAssetName = null,
-        string? fileReplacementSourceFileName = null)
+        string? fileReplacementSourceFileName = null,
+        AssetType assetType = AssetType.Texture2D)
     {
         var changedAtUtc = new DateTimeOffset(2026, 4, 29, 9, 0, 0, TimeSpan.Zero);
         var extractedAtUtc = extracted ? changedAtUtc.AddMinutes(-5) : (DateTimeOffset?)null;
@@ -358,7 +359,7 @@ internal static partial class SaveWorkspaceHandlersTests
             AssetId: assetId,
             BundleDisplayName: bundleDisplayName,
             AssetName: assetName,
-            AssetType: AssetType.Texture2D,
+            AssetType: assetType,
             IsModified: isModified,
             LastExtractedAtUtc: extractedAtUtc,
             WorkspaceReplacementSourceBundleDisplayName: string.IsNullOrWhiteSpace(workspaceReplacementSourceAssetName) ? null : "SourceBundle",

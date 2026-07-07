@@ -10,6 +10,8 @@ namespace AssestBundleTools.Infrastructure.Bundles.Processing;
 /// </summary>
 public sealed class FileSystemResourceProcessorCatalogStore : IResourceProcessorCatalogStore
 {
+    private const string BuiltInAudioFmodProcessorId = "resource.processor.audio.fmod-fsb5";
+
     private static readonly IReadOnlyList<string> DefaultProcessArguments =
     [
         "--input",
@@ -39,7 +41,7 @@ public sealed class FileSystemResourceProcessorCatalogStore : IResourceProcessor
         var entries = new List<ResourceProcessorCatalogEntryDto>
         {
             CreateBuiltInSlot("resource.processor.texture2d.cli", "Texture2D"),
-            CreateBuiltInSlot("resource.processor.audio.cli", "Audio"),
+            CreateBuiltInAudioFmodProcessor(),
             CreateBuiltInSlot("resource.processor.atlas.cli", "Atlas"),
             CreateBuiltInSlot("resource.processor.skel.cli", "Skel")
         };
@@ -174,6 +176,97 @@ public sealed class FileSystemResourceProcessorCatalogStore : IResourceProcessor
             WorkingDirectoryPath: null,
             TimeoutMs: 15000,
             ProcessArguments: DefaultProcessArguments);
+    }
+
+    private static ResourceProcessorCatalogEntryDto CreateBuiltInAudioFmodProcessor()
+    {
+        var wrapperPath = ResolveFirstExistingPath(ResourceProcessorDiscoveryPaths.GetBuiltInFmodWrapperCandidates());
+        var fsbankPath = ResolveFirstExistingPath(ResourceProcessorDiscoveryPaths.GetFmodFsbankExecutableCandidates());
+        var isAvailable = !string.IsNullOrWhiteSpace(wrapperPath) && !string.IsNullOrWhiteSpace(fsbankPath);
+
+        return new ResourceProcessorCatalogEntryDto(
+            BuiltInAudioFmodProcessorId,
+            BuiltInAudioFmodProcessorId,
+            Version: "1.0.0",
+            Description: string.Empty,
+            ResourceProcessorKind.ExternalProcess,
+            ["Audio"],
+            isAvailable ? ResourceProcessorStatus.Available : ResourceProcessorStatus.Unavailable,
+            IsBuiltIn: true,
+            IsReadOnly: true,
+            ManifestFilePath: null,
+            ExecutablePath: wrapperPath,
+            WorkingDirectoryPath: null,
+            TimeoutMs: 60000,
+            ProcessArguments:
+            [
+                "--input",
+                "{inputPath}",
+                "--output",
+                "{outputPath}",
+                "--result",
+                "{resultPath}",
+                "--fsbank",
+                fsbankPath ?? string.Empty
+            ]);
+    }
+
+    private static string? ResolveFirstExistingPath(IEnumerable<string> candidates)
+    {
+        foreach (var candidate in candidates)
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                continue;
+            }
+
+            var trimmedCandidate = candidate.Trim();
+            if (Path.IsPathRooted(trimmedCandidate) && File.Exists(trimmedCandidate))
+            {
+                return Path.GetFullPath(trimmedCandidate);
+            }
+
+            if (!Path.IsPathRooted(trimmedCandidate))
+            {
+                var pathCandidate = ResolveFromPathEnvironment(trimmedCandidate);
+                if (!string.IsNullOrWhiteSpace(pathCandidate))
+                {
+                    return pathCandidate;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static string? ResolveFromPathEnvironment(string fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName) || fileName.Contains(Path.DirectorySeparatorChar) || fileName.Contains(Path.AltDirectorySeparatorChar))
+        {
+            return null;
+        }
+
+        var path = Environment.GetEnvironmentVariable("PATH");
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        foreach (var directory in path.Split(Path.PathSeparator))
+        {
+            if (string.IsNullOrWhiteSpace(directory))
+            {
+                continue;
+            }
+
+            var candidatePath = Path.Combine(directory.Trim(), fileName);
+            if (File.Exists(candidatePath))
+            {
+                return Path.GetFullPath(candidatePath);
+            }
+        }
+
+        return null;
     }
 
     private static ResourceProcessorManifest? ReadManifest(string manifestFilePath)

@@ -18,6 +18,10 @@ internal static class FileSystemResourceProcessorCatalogStoreTests
         TestAssert.True(
             entries.Any(static entry => entry.IsBuiltIn && entry.ResourceKinds.Contains("Texture2D", StringComparer.OrdinalIgnoreCase)),
             "Built-in Texture2D resource processor slot should be present.");
+        var audioEntry = entries.FirstOrDefault(static entry => string.Equals(entry.Id, "resource.processor.audio.fmod-fsb5", StringComparison.OrdinalIgnoreCase));
+        audioEntry = TestAssert.NotNull(audioEntry, "Built-in FMOD audio resource processor should be present.");
+        TestAssert.True(audioEntry.IsReadOnly, "Built-in FMOD audio resource processor should be read-only.");
+        TestAssert.Equal("Audio", audioEntry.ResourceKinds[0], "Built-in FMOD audio resource processor should target the audio resource slot.");
         var userEntry = entries.FirstOrDefault(static entry => string.Equals(entry.Id, "export.texture.png-processor", StringComparison.OrdinalIgnoreCase));
         userEntry = TestAssert.NotNull(userEntry, "Saved user resource processor should be loaded from the manifest directory.");
         TestAssert.False(userEntry.IsReadOnly, "User manifest entries should be editable.");

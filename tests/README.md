@@ -24,7 +24,7 @@
 - Presentation 统一后台任务调度第一阶段：`IBackgroundWorkScheduler` 会复用底层 runner、把可见任务进度投影到状态服务，并按 `BatchExtraction` profile 串行多选 / 批处理提取任务、按 `Maintenance` profile 串行缓存清理任务；调度器已提供 `StartAsync`、`BackgroundWorkHandle<T>`、当前任务快照、`TasksChanged` 和 `TryCancel`，状态条服务会对可取消当前任务暴露取消入口，并能回调调度器取消同一个后台任务；工作区导入处理阶段已通过 `WorkspaceImport` profile 运行，并把 Application 导入进度同步投影到状态条；普通预览 / 后台预热已通过 `PreviewForeground / PreviewPrewarm` profile 运行，前台资产预览、Spine 组详情和当前贴图页载荷会投影轻量 Shell 状态，后台预热保持静默，Spine runtime 当前帧已通过独立 `SpineRuntimeFrame` profile 运行，预览超时放弃后会等底层任务真实结束再释放 profile 闸门；快速切换资产详情标签时当前标签优先进入前台预览，旧活动标签降级为后台预热，后台预热按最近激活 / 最近打开优先，前台预览调用方取消可释放 `PreviewForeground` profile 槽；预览 worker 总数已接入设置页自动 / `1-4` 固定值；预览 `OutOfMemory` 会以专用摘要诊断回退并短期暂停同 bundle 后台预热，前台成功预览后恢复；`cache/bundles` 标准化 bundle artifact 已接入导入 / 预览 / 提取 / Spine 详情共享路径，Application artifact 生成阶段已按资源包键 single-flight，Infrastructure 内部 `AssetsToolsBundleLoadedSessionCache` 已接入 loaded-session single-flight / lease / 滑动 TTL / 默认容量上限 / 内存压力退避 / artifact 主动失效，并由 Reader、预览生成器和经预览管线导出的提取按标准化 artifact identity 共享，减少同一 bundle 的重复加载；标准化 artifact 当前支持显式清理和偏好驱动自动容量治理
 - 资源编辑窗口模式中的打开冲突解析：主窗口和独立资源编辑窗口已存在同一资源文档标签时，优先解析到可激活的已有宿主和目标标签，避免重复创建窗口或标签；独立窗口单标签拖出策略会阻止创建等价新窗口
 - 替换链路中的候选类型解析、来源路径校验、缺失资源失败、类型不匹配、工作区候选空集失败、单资源文件/工作区替换、右键 / 检查器 `替换文件` 立即选择文件并应用、撤销替换、目标资源级重做替换、Texture2D 有效替换预览，以及批量替换 manifest/启发式计划、真实文件替换执行、支持/跳过混合结果摘要
-- 保存链路中的保存前预览空态/资源包分组聚合、现有标准化 artifact 输入图解析、目标输出路径 preflight blockers、保存执行的缺失工作区 / 无候选失败 / 执行摘要、选中资源包真实导出、processor selection 透传、文件替换载荷的资源处理器 work item 构建、处理器结果透传、失败处理器阻断所属 bundle 写包、对象级写包项构建、TextAsset / Texture2D 写后读回、Texture2D 原格式不可编码时的 RGBA32 回退、AB 导出 manifest 写出、处理器结果摘要和 MD5 / SHA-256 记录
+- 保存链路中的保存前预览空态/资源包分组聚合、现有标准化 artifact 输入图解析、目标输出路径 preflight blockers、保存执行的缺失工作区 / 无候选失败 / 执行摘要、选中资源包真实导出、processor selection 透传、文件替换载荷的资源处理器 work item 构建、AudioClip 处理器输出投影、处理器结果透传、失败处理器阻断所属 bundle 写包、对象级写包项构建、TextAsset / Texture2D / Sprite / AudioClip 写后读回、Texture2D 原格式不可编码时的 RGBA32 回退、AudioClip FSB5 写入 `.resS / .resource`、AB 导出 manifest 写出、处理器结果摘要和 MD5 / SHA-256 记录
 - 工作区目录相关 `Infrastructure` 持久化关键路径（当前也通过零依赖控制台 runner 执行）
 - 缓存型工作区运行时依赖图中的反向引用、依赖闭包、Mesh 贴图关联，以及外部 `PPtr` 占位到当前工作区已导入资产的跨 Bundle 解析
 - 缓存型工作区运行时资产列表中的动态类型 Facet、隐藏图节点排除、以及 `Unknown + Unity 类型名` 的资产级筛选
@@ -59,8 +59,8 @@
 - 已稳定、已文档化的行为契约，以及已经确认的回归缺陷，应在同一变更中补齐或更新自动化测试。
 - 对骨架、占位或过渡态流程，只测试当前已经实现且文档已承认的行为，不提前在测试中定义未来语义。
 - 当前替换链路的测试边界先停留在候选解析、兼容性、摘要、已定义失败和当前命令结果。
-- 当前保存链路的测试边界先停留在保存前预览、资源包聚合、现有 artifact 输入图解析、执行骨架结果和当前已定义失败。
-- 真实写包、最终持久化失败分类、取消/回滚、不可替换等更深语义，等对应实现和文档契约落地后再继续补测试。
+- 当前保存链路的测试边界覆盖保存前预览、资源包聚合、现有 artifact 输入图解析、执行骨架结果、当前已定义失败，以及已落地对象类型的真实写包读回。
+- 最终持久化失败细分、取消/回滚、不可替换等更深语义，等对应实现和文档契约落地后再继续补测试。
 
 默认依赖与副作用限制：
 
@@ -104,6 +104,6 @@
 - 工作区可恢复操作记录接入保存链路后，补来源缺失 / 指纹不匹配恢复计划、按目标资源撤销栈的当前会话精确回退、Sprite 编辑真实写包消费和保存检查点回归
 - 提取主线已补单资源文本 / 图片真实写出、Mesh OBJ / 静态 FBX 导出、结构化 JSON 摘要导出、MonoBehaviour TypeTree JSON 字段树 / 摘要 JSON / YAML / 原始字段文本导出、单资源保存文件名保留、批量提取操作记录、Spine 资源组 skeleton / atlas / 主贴图 / alpha 贴图整组提取、文件写出端口和提取记录重启恢复回归；后续补命名冲突、取消、失败分类、输出文件缺失恢复诊断和批处理结果明细回归
 - 替换主线已落地 Texture2D 的记录、有效预览、右键 / 检查器 `替换文件` 快捷入口一致性、独立变更记录、局部预览刷新、资产列表已修改状态即时刷新和目标资源级撤销 / 重做回归；后续继续补文件来源兼容性诊断、来源缺失 / 指纹不匹配恢复计划、批量替换结果明细、更多资源类型有效预览和真实写包消费回归
-- 保存 / 重建已进入第一阶段真实导出：工作区导出窗口可选择导出到工作区输出目录或自选目录，`SaveRebuild` 后台任务会按选中资源包并发写出修改后的 AB 并生成 `_abt-bundle-export-manifest.json`；CLI 资源处理器端口、真实外部进程执行、result JSON 解析、非法输出路径拒绝、处理器结果摘要、失败回填、对象级 AssetsTools 写包、TextAsset / Texture2D 写后读回和 ASTC 等 Texture2D 原格式不可编码时的 RGBA32 回退回归已落地；后续按 `docs/design/workspace-export-save-pipeline.md` 继续补 Sprite / workspace replacement 真实样本回归、更多资源类型、最终冲突确认、缺失 artifact materialization、取消 / 回滚和保存检查点回归
+- 保存 / 重建已进入第一阶段真实导出：工作区导出窗口可选择导出到工作区输出目录或自选目录，`SaveRebuild` 后台任务会按选中资源包并发写出修改后的 AB 并生成 `_abt-bundle-export-manifest.json`；CLI 资源处理器端口、真实外部进程执行、result JSON 解析、非法输出路径拒绝、处理器结果摘要、失败回填、内置 FMOD 音频处理器协议、对象级 AssetsTools 写包、TextAsset / Texture2D / Sprite / AudioClip 写后读回、ASTC 等 Texture2D 原格式不可编码时的 RGBA32 回退，以及 AudioClip FSB5 写入 `.resS / .resource` 回归已落地；后续按 `docs/design/workspace-export-save-pipeline.md` 继续补 workspace replacement 跨 bundle 真实样本回归、更多资源类型、最终冲突确认、缺失 artifact materialization、取消 / 回滚和保存检查点回归
 - 更完整的工作区激活，以及替换/保存链路在真实写包与最终持久化语义落地后的深层回归
 - 结构化错误与资源键的更细粒度自动校验

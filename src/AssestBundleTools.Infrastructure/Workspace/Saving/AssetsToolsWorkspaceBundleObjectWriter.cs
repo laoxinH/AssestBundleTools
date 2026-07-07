@@ -44,6 +44,7 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
                 () => AssetsToolsBundleLoadService.LoadIsolated(sourcePath));
             var bundleInstance = session.BundleInstance;
             var serializedFiles = LoadSerializedFiles(session);
+            var resourceDataContext = new AssetsToolsBundleResourceDataWriteContext(bundleInstance.file);
             var applyResult = BundleExportWriteDiagnostics.ExecuteStage(
                 StageApplyChanges,
                 request,
@@ -52,7 +53,7 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
                     foreach (var writeItem in request.AssetWriteItems)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-                        var result = ApplyWriteItem(session.AssetsManager, serializedFiles, writeItem);
+                        var result = ApplyWriteItem(session.AssetsManager, serializedFiles, resourceDataContext, writeItem);
                         if (result.IsFailure)
                         {
                             return result;
@@ -69,7 +70,11 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
             BundleExportWriteDiagnostics.ExecuteStage(
                 StageApplyChanges,
                 request,
-                () => ApplyModifiedSerializedFiles(bundleInstance, serializedFiles));
+                () =>
+                {
+                    ApplyModifiedSerializedFiles(bundleInstance, serializedFiles);
+                    resourceDataContext.ApplyModifiedFiles();
+                });
             var originalCompression = AssetsToolsBundleCompressionPolicy.ResolveOriginalCompression(
                 request.OriginalCompression,
                 bundleInstance.originalCompression);
@@ -224,6 +229,7 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
     private static Result<object> ApplyWriteItem(
         AssetsManager assetsManager,
         IReadOnlyList<LoadedSerializedFile> serializedFiles,
+        AssetsToolsBundleResourceDataWriteContext resourceDataContext,
         WorkspaceBundleAssetWriteItemDto writeItem)
     {
         var serializedFile = FindSerializedFile(serializedFiles, writeItem.SerializedFileName);
@@ -248,7 +254,7 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
         var payloadPath = ResolvePayloadPath(writeItem);
         var result = NormalizeSourceKind(writeItem.SourceKind) switch
         {
-            SourceKindFile => ApplyExternalPayload(baseField, writeItem, payloadPath),
+            SourceKindFile => ApplyExternalPayload(baseField, writeItem, payloadPath, resourceDataContext),
             SourceKindWorkspace => ApplyWorkspacePayload(assetsManager, serializedFiles, baseField, writeItem),
             SourceKindSpriteEdit => AssetsToolsSpriteEditPayloadWriter.Apply(baseField, writeItem),
             SourceKindTextDraft => AssetsToolsTextAssetPayloadWriter.ApplyDraft(baseField, writeItem),
@@ -269,7 +275,8 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
     private static Result<object> ApplyExternalPayload(
         AssetTypeValueField baseField,
         WorkspaceBundleAssetWriteItemDto writeItem,
-        string? payloadPath)
+        string? payloadPath,
+        AssetsToolsBundleResourceDataWriteContext resourceDataContext)
     {
         if (string.IsNullOrWhiteSpace(payloadPath) || !File.Exists(payloadPath))
         {
@@ -283,6 +290,7 @@ internal static class AssetsToolsWorkspaceBundleObjectWriter
         {
             AssetType.TextAsset => AssetsToolsTextAssetPayloadWriter.ApplyFilePayload(baseField, writeItem, payloadPath),
             AssetType.Texture2D => AssetsToolsTexturePayloadWriter.Apply(baseField, writeItem, payloadPath),
+            AssetType.AudioClip => AssetsToolsAudioClipPayloadWriter.Apply(baseField, writeItem, payloadPath, resourceDataContext),
             _ => Result<object>.Failure(ApplicationErrors.BundleExportWriteFailed(
                 writeItem.AssetName,
                 $"Save.BundleWrite.UnsupportedAssetType.{writeItem.AssetType}"))
