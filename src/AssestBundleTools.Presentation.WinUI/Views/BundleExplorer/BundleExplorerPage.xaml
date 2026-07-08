@@ -61,10 +61,10 @@
             <Setter Property="Width" Value="24" />
             <Setter Property="Height" Value="24" />
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
-            <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorSecondaryBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="0" />
         </Style>
 
         <!-- 工作台顶部所有操作入口统一走同一套 chip 模板，
@@ -267,7 +267,7 @@
 
         <ScrollViewer
             Grid.Row="1"
-            HorizontalScrollBarVisibility="Auto"
+            HorizontalScrollBarVisibility="Hidden"
             HorizontalScrollMode="Enabled"
             VerticalScrollBarVisibility="Disabled"
             VerticalScrollMode="Disabled"
@@ -515,18 +515,23 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="viewModels:WorkspaceStatusChipViewModel">
                             <Border
+                                MinHeight="44"
+                                Height="44"
                                 Margin="0,0,8,0"
-                                Padding="10,7"
+                                Padding="10,0"
+                                VerticalAlignment="Center"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 CornerRadius="10">
-                                <Grid ColumnSpacing="8">
+                                <Grid
+                                    ColumnSpacing="8"
+                                    VerticalAlignment="Center">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
                                     <FontIcon
-                                        Margin="0,1,0,0"
+                                        VerticalAlignment="Center"
                                         FontFamily="Segoe Fluent Icons"
                                         FontSize="12"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -534,6 +539,7 @@
 
                                     <StackPanel
                                         Grid.Column="1"
+                                        VerticalAlignment="Center"
                                         Spacing="1">
                                         <TextBlock
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
