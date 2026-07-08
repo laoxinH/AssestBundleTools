@@ -17,10 +17,10 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 /// </summary>
 public sealed partial class WorkspaceBatchExtractionWindow : Window
 {
-    private const int InitialWidth = 1536;
-    private const int InitialHeight = 1024;
+    private const int InitialWidth = 1520;
+    private const int InitialHeight = 920;
     private const int MinimumWidth = 1180;
-    private const int MinimumHeight = 780;
+    private const int MinimumHeight = 760;
     private const int SwShow = 5;
     private const int SwRestore = 9;
     private readonly WorkspaceBatchExtractionDialogContent _content;

@@ -13,10 +13,10 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 
 public sealed partial class WorkspaceExportWindow : Window
 {
-    private const int InitialWidth = 1500;
-    private const int InitialHeight = 900;
-    private const int MinimumWidth = 1080;
-    private const int MinimumHeight = 720;
+    private const int InitialWidth = 1520;
+    private const int InitialHeight = 920;
+    private const int MinimumWidth = 1180;
+    private const int MinimumHeight = 760;
     private const int SwShow = 5;
     private const int SwRestore = 9;
     private AppWindow? _appWindow;

@@ -48,37 +48,41 @@
 
         <Grid
             Grid.Row="1"
-            Padding="48,20,48,24"
-            RowSpacing="16">
+            Padding="48,14,48,20"
+            RowSpacing="12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <Grid ColumnSpacing="18">
+            <Grid ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Border
-                    Width="56"
-                    Height="56"
+                    Width="48"
+                    Height="48"
                     VerticalAlignment="Center"
                     Background="{ThemeResource AccentFillColorDefaultBrush}"
-                    CornerRadius="14">
+                    CornerRadius="12">
                     <FontIcon
                         VerticalAlignment="Center"
                         FontFamily="Segoe Fluent Icons"
-                        FontSize="30"
+                        FontSize="26"
                         Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                         Glyph="&#xE8A5;" />
                 </Border>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
-                    <TextBlock x:Name="WindowTitleText" FontSize="30" FontWeight="SemiBold" />
+                    <TextBlock
+                        x:Name="WindowTitleText"
+                        FontSize="28"
+                        FontWeight="SemiBold"
+                        TextWrapping="WrapWholeWords" />
                     <TextBlock
                         x:Name="WindowSubtitleText"
-                        FontSize="14"
+                        FontSize="13"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         TextWrapping="WrapWholeWords" />
                 </StackPanel>
