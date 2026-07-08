@@ -93,7 +93,18 @@
 
                 <StackPanel
                     Orientation="Horizontal"
-                    Spacing="6">
+                    Spacing="8">
+                    <Border
+                        x:Name="SourceSectionTitleIcon"
+                        Style="{StaticResource BatchReplacementCardTitleIconStyle}">
+                        <FontIcon
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="11"
+                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                            Glyph="&#xE8B7;" />
+                    </Border>
                     <TextBlock
                         x:Name="SourceSectionTitleText"
                         VerticalAlignment="Center"

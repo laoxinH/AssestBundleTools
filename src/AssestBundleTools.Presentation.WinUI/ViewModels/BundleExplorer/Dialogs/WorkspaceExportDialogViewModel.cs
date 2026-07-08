@@ -24,7 +24,6 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     private string _primaryButtonText = string.Empty;
     private string _secondaryButtonText = string.Empty;
     private string _executionProgressText = string.Empty;
-    private string _bundleSearchText = string.Empty;
     private bool _exportToWorkspaceDirectory;
     private bool _overwriteExistingFiles;
     private bool _forceAudioPayloadWrite;
@@ -34,7 +33,6 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     private bool _isExecutionProgressIndeterminate;
     private double _executionProgressValue;
     private Visibility _executionProgressVisibility = Visibility.Collapsed;
-    private WorkspaceExportBundleSortOptionViewModel? _selectedBundleSortOption;
     private WorkspaceExportCompressionOptionViewModel? _selectedCompressionOption;
 
     public WorkspaceExportDialogViewModel(
@@ -137,18 +135,6 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         private set => SetProperty(ref _executionProgressVisibility, value);
     }
 
-    public string BundleSearchText
-    {
-        get => _bundleSearchText;
-        set
-        {
-            if (SetProperty(ref _bundleSearchText, value ?? string.Empty))
-            {
-                RefreshVisibleBundles();
-            }
-        }
-    }
-
     public bool IsLoading
     {
         get => _isLoading;
@@ -213,44 +199,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     public Visibility ForceAudioWarningVisibility =>
         ForceAudioPayloadWrite ? Visibility.Visible : Visibility.Collapsed;
 
-    public string SelectedBundleCountText =>
-        _localizationService.GetFormattedString(
-            ResourceKeys.WorkspaceExportDialogSelectedBundleCountFormat,
-            Bundles.Count(static bundle => bundle.IsSelected));
-
-    public WorkspaceExportBundleSortOptionViewModel? SelectedBundleSortOption
-    {
-        get => _selectedBundleSortOption;
-        set
-        {
-            if (SetProperty(ref _selectedBundleSortOption, value))
-            {
-                RefreshVisibleBundles();
-            }
-        }
-    }
-
-    public bool HasExportTargets => Bundles.Any(static bundle => bundle.IsSelected);
-
-    public bool CanStartExport => HasExportTargets && !IsExecuting;
-
     public bool CanUseSecondaryButton => !IsExecuting || !IsExecutionCancellationRequested;
-
-    public void SelectAllBundles()
-    {
-        foreach (var bundle in VisibleBundles.Select(static item => item.Bundle).OfType<WorkspaceExportBundleOptionViewModel>())
-        {
-            bundle.IsSelected = true;
-        }
-    }
-
-    public void ClearBundleSelection()
-    {
-        foreach (var bundle in VisibleBundles.Select(static item => item.Bundle).OfType<WorkspaceExportBundleOptionViewModel>())
-        {
-            bundle.IsSelected = false;
-        }
-    }
 
     public void MarkExportExecutionDeferred()
     {
@@ -435,113 +384,12 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     private static string NormalizeResourceKind(string value) =>
         value.Trim().Replace("-", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
 
-    private void OnBundleSelectionChanged(object? sender, EventArgs e)
-    {
-        OnPropertyChanged(nameof(HasExportTargets));
-        OnPropertyChanged(nameof(CanStartExport));
-        OnPropertyChanged(nameof(SelectedBundleCountText));
-        RefreshPlanSummary();
-    }
-
     private void HideExecutionProgress()
     {
         ExecutionProgressText = string.Empty;
         ExecutionProgressValue = 0d;
         IsExecutionProgressIndeterminate = false;
         ExecutionProgressVisibility = Visibility.Collapsed;
-    }
-
-    private void RefreshPlanSummary()
-    {
-        var selectedBundles = Bundles
-            .Where(static bundle => bundle.IsSelected)
-            .ToArray();
-        PlanSummaryText = _localizationService.GetFormattedString(
-            ResourceKeys.WorkspaceExportDialogPlanSummaryFormat,
-            selectedBundles.Length,
-            selectedBundles.Sum(static bundle => bundle.ChangeCount),
-            selectedBundles.Sum(static bundle => bundle.ModifiedAssetCount),
-            selectedBundles.Sum(static bundle => bundle.WorkspaceReplacementCount + bundle.FileReplacementCount),
-            selectedBundles.Sum(static bundle => bundle.ExtractedAssetCount));
-    }
-
-    private void RefreshVisibleBundles()
-    {
-        var query = BundleSearchText.Trim();
-        var candidates = Bundles.AsEnumerable();
-        if (!string.IsNullOrWhiteSpace(query))
-        {
-            candidates = candidates.Where(bundle =>
-                bundle.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                bundle.OutputPath.Contains(query, StringComparison.OrdinalIgnoreCase));
-        }
-
-        candidates = SelectedBundleSortOption?.Id == "name"
-            ? candidates
-                .OrderBy(static bundle => bundle.DisplayName, StringComparer.OrdinalIgnoreCase)
-                .ThenByDescending(static bundle => bundle.LastChangedAtUtc ?? DateTimeOffset.MinValue)
-            : candidates
-                .OrderByDescending(static bundle => bundle.LastChangedAtUtc ?? DateTimeOffset.MinValue)
-                .ThenBy(static bundle => bundle.DisplayName, StringComparer.OrdinalIgnoreCase);
-
-        var orderedBundles = candidates.ToArray();
-        VisibleBundles.Clear();
-        if (SelectedBundleSortOption?.Id == "time" && string.IsNullOrWhiteSpace(query))
-        {
-            AppendTimeGroupedVisibleBundles(orderedBundles);
-            return;
-        }
-
-        foreach (var bundle in orderedBundles)
-        {
-            VisibleBundles.Add(new WorkspaceExportBundleListItemViewModel(bundle));
-        }
-    }
-
-    private void AppendTimeGroupedVisibleBundles(IReadOnlyList<WorkspaceExportBundleOptionViewModel> orderedBundles)
-    {
-        if (orderedBundles.Count == 0)
-        {
-            return;
-        }
-
-        var latestChangedAt = orderedBundles
-            .Select(static bundle => bundle.LastChangedAtUtc)
-            .Where(static value => value is not null)
-            .Max();
-        var recentCutoff = latestChangedAt?.AddHours(-24);
-        var recentBundles = recentCutoff is null
-            ? Array.Empty<WorkspaceExportBundleOptionViewModel>()
-            : orderedBundles
-                .Where(bundle => bundle.LastChangedAtUtc >= recentCutoff)
-                .ToArray();
-        var previousBundles = recentCutoff is null
-            ? orderedBundles
-            : orderedBundles
-                .Where(bundle => bundle.LastChangedAtUtc < recentCutoff || bundle.LastChangedAtUtc is null)
-                .ToArray();
-
-        if (recentBundles.Length > 0)
-        {
-            VisibleBundles.Add(new WorkspaceExportBundleListItemViewModel(
-                bundle: null,
-                _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogBundleGroupRecent)));
-            foreach (var bundle in recentBundles)
-            {
-                VisibleBundles.Add(new WorkspaceExportBundleListItemViewModel(bundle));
-            }
-        }
-
-        if (previousBundles.Count > 0)
-        {
-            VisibleBundles.Add(new WorkspaceExportBundleListItemViewModel(
-                bundle: null,
-                _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogBundleGroupPrevious)));
-            foreach (var bundle in previousBundles)
-            {
-                VisibleBundles.Add(new WorkspaceExportBundleListItemViewModel(bundle));
-            }
-        }
     }
 
     private string? BuildFailureDetail(WorkspaceSaveExecutionResultDto result)

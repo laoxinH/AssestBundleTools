@@ -140,6 +140,42 @@ public sealed class WorkspaceExportDialogViewModelTests
     }
 
     [Fact]
+    public void BundleEmptyStateVisibility_ShouldTrackVisibleBundleList()
+    {
+        var emptyViewModel = new WorkspaceExportDialogViewModel(
+            new TestLocalizationService(),
+            changeSummary: null,
+            savePreview: null);
+
+        Assert.Equal(Visibility.Visible, emptyViewModel.BundleEmptyStateVisibility);
+
+        var populatedViewModel = new WorkspaceExportDialogViewModel(
+            new TestLocalizationService(),
+            changeSummary: null,
+            savePreview: new WorkspaceSavePreviewDto(
+                WorkspaceId: new("workspace-export"),
+                WorkspaceDisplayName: "Workspace Export",
+                OutputDirectory: @"D:\Workspace\exports",
+                PlannedBundleCount: 1,
+                TotalChangeCount: 1,
+                ModifiedAssetCount: 1,
+                ExtractedAssetCount: 0,
+                WorkspaceReplacementCount: 0,
+                FileReplacementCount: 1,
+                BundlePlans:
+                [
+                    CreateBundlePlan("bundle-alpha", "Alpha.ab")
+                ]));
+
+        Assert.Equal(Visibility.Collapsed, populatedViewModel.BundleEmptyStateVisibility);
+
+        populatedViewModel.BundleSearchText = "missing bundle";
+
+        Assert.Empty(populatedViewModel.VisibleBundles);
+        Assert.Equal(Visibility.Visible, populatedViewModel.BundleEmptyStateVisibility);
+    }
+
+    [Fact]
     public void Constructor_ShouldRestoreWorkspaceExportSettings()
     {
         var viewModel = new WorkspaceExportDialogViewModel(

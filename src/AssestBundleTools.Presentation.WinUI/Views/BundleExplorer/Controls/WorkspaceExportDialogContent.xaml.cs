@@ -30,6 +30,8 @@ public sealed partial class WorkspaceExportDialogContent : UserControl
         BundleSearchTextBox.PlaceholderText = UiText.Get(ResourceKeys.WorkspaceExportDialogBundleSearchPlaceholder);
         SelectAllBundlesButton.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogSelectAllBundlesButton);
         ClearBundleSelectionButton.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogClearBundleSelectionButton);
+        BundleEmptyStateTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogBundleEmptyTitle);
+        BundleEmptyStateDetailText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogBundleEmptyDetail);
         ResourceProcessorSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorSectionTitle);
         ResourceProcessorSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorSectionHint);
         ResourceProcessorHelpText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorHelpText);

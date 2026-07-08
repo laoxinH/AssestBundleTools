@@ -54,14 +54,51 @@ public sealed class WorkspaceExportWindowContractTests
             "BundleExplorer",
             "Controls",
             "WorkspaceExportDialogContent.xaml"));
-        var viewModel = File.ReadAllText(Path.Combine(
+        var contentCode = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "src",
             "AssestBundleTools.Presentation.WinUI",
-            "ViewModels",
+            "Views",
             "BundleExplorer",
-            "Dialogs",
-            "WorkspaceExportDialogViewModel.cs"));
+            "Controls",
+            "WorkspaceExportDialogContent.xaml.cs"));
+        var viewModel = string.Concat(
+            File.ReadAllText(Path.Combine(
+                repositoryRoot,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "ViewModels",
+                "BundleExplorer",
+                "Dialogs",
+                "WorkspaceExportDialogViewModel.cs")),
+            File.ReadAllText(Path.Combine(
+                repositoryRoot,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "ViewModels",
+                "BundleExplorer",
+                "Dialogs",
+                "WorkspaceExportDialogViewModel.Bundles.cs")));
+        var resourceKeys = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Localization",
+            "ResourceKeys.cs"));
+        var zhResources = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Strings",
+            "zh-CN",
+            "Resources.resw"));
+        var enResources = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Strings",
+            "en-US",
+            "Resources.resw"));
         var optionFactory = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "src",
@@ -101,6 +138,17 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("ItemsSource=\"{Binding VisibleBundles}\"", contentXaml);
         Assert.Contains("Visibility=\"{Binding HeaderVisibility}\"", contentXaml);
         Assert.Contains("Visibility=\"{Binding BundleVisibility}\"", contentXaml);
+        Assert.Contains("BundleEmptyStateTitleText", contentXaml);
+        Assert.Contains("BundleEmptyStateDetailText", contentXaml);
+        Assert.Contains("Visibility=\"{Binding BundleEmptyStateVisibility}\"", contentXaml);
+        Assert.Contains("WorkspaceExportDialogBundleEmptyTitle", contentCode);
+        Assert.Contains("WorkspaceExportDialogBundleEmptyDetail", contentCode);
+        Assert.Contains("WorkspaceExportDialogBundleEmptyTitle", resourceKeys);
+        Assert.Contains("WorkspaceExportDialogBundleEmptyDetail", resourceKeys);
+        Assert.Contains("WorkspaceExportDialog.Bundle.EmptyTitle", zhResources);
+        Assert.Contains("WorkspaceExportDialog.Bundle.EmptyDetail", zhResources);
+        Assert.Contains("WorkspaceExportDialog.Bundle.EmptyTitle", enResources);
+        Assert.Contains("WorkspaceExportDialog.Bundle.EmptyDetail", enResources);
         Assert.Contains("ItemsSource=\"{Binding ResourceProcessors}\"", contentXaml);
         Assert.Contains("IsChecked=\"{Binding ExportToWorkspaceDirectory, Mode=TwoWay}\"", contentXaml);
         Assert.Contains("ItemsSource=\"{Binding Processors}\"", contentXaml);
@@ -116,6 +164,7 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("RefreshVisibleBundles();", viewModel);
         Assert.Contains("WorkspaceExportDialogBundleGroupRecent", viewModel);
         Assert.Contains("WorkspaceExportDialogBundleGroupPrevious", viewModel);
+        Assert.Contains("BundleEmptyStateVisibility", viewModel);
         Assert.Contains("AppendTimeGroupedVisibleBundles", viewModel);
         Assert.Contains("bundle.DisplayName.Contains(query", viewModel);
         Assert.Contains("IReadOnlyList<ResourceProcessorCatalogEntryDto>? resourceProcessorCatalogEntries", viewModel);

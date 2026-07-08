@@ -130,128 +130,167 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Text="{Binding SelectedBundleCountText}" />
                 </Grid>
-                <ListView
+                <Grid
                     Grid.Row="3"
-                    ItemsSource="{Binding VisibleBundles}"
-                    SelectionMode="None"
-                    ScrollViewer.VerticalScrollBarVisibility="Auto">
-                    <ListView.ItemContainerStyle>
-                        <Style TargetType="ListViewItem">
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                            <Setter Property="MinHeight" Value="0" />
-                            <Setter Property="Padding" Value="0" />
-                            <Setter Property="Margin" Value="0" />
-                        </Style>
-                    </ListView.ItemContainerStyle>
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <Grid>
-                                <Border
-                                    Margin="0,4,0,2"
-                                    Padding="8,2"
-                                    Visibility="{Binding HeaderVisibility}">
-                                    <Grid ColumnSpacing="10">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock
-                                            VerticalAlignment="Center"
-                                            FontSize="11"
-                                            FontWeight="SemiBold"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{Binding HeaderText}" />
-                                    </Grid>
-                                </Border>
-                                <Grid
-                                    MinHeight="88"
-                                    Padding="8"
-                                    ColumnSpacing="10"
-                                    Visibility="{Binding BundleVisibility}">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="32" />
-                                        <ColumnDefinition Width="38" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="70" />
-                                    </Grid.ColumnDefinitions>
-                                    <CheckBox
-                                        Width="28"
-                                        MinWidth="0"
-                                        Padding="0"
-                                        VerticalAlignment="Center"
-                                        IsChecked="{Binding Bundle.IsSelected, Mode=TwoWay}" />
+                    MinHeight="0">
+                    <ListView
+                        ItemsSource="{Binding VisibleBundles}"
+                        SelectionMode="None"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="MinHeight" Value="0" />
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Margin" Value="0" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
                                     <Border
-                                        Grid.Column="1"
-                                        Width="30"
-                                        Height="34"
-                                        VerticalAlignment="Center"
-                                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="4">
-                                        <FontIcon
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            FontFamily="Segoe Fluent Icons"
-                                            FontSize="18"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Glyph="&#xE8A5;" />
-                                    </Border>
-                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="3">
-                                        <TextBlock
-                                            FontSize="14"
-                                            FontWeight="SemiBold"
-                                            Text="{Binding Bundle.DisplayName}"
-                                            TextTrimming="CharacterEllipsis" />
-                                        <TextBlock
-                                            FontSize="12"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{Binding Bundle.SummaryText}"
-                                            TextTrimming="CharacterEllipsis" />
-                                        <TextBlock
-                                            FontSize="12"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{Binding Bundle.OutputPath}"
-                                            TextTrimming="CharacterEllipsis" />
-                                    </StackPanel>
-                                    <StackPanel
-                                        Grid.Column="3"
-                                        VerticalAlignment="Center"
-                                        HorizontalAlignment="Right"
-                                        Spacing="8">
-                                        <Border
-                                            Padding="9,2"
-                                            Background="{ThemeResource AccentFillColorDefaultBrush}"
-                                            CornerRadius="10"
-                                            Visibility="{Binding Bundle.ModifiedStatusVisibility}">
+                                        Margin="0,4,0,2"
+                                        Padding="8,2"
+                                        Visibility="{Binding HeaderVisibility}">
+                                        <Grid ColumnSpacing="10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
                                             <TextBlock
-                                                FontSize="11"
-                                                FontWeight="SemiBold"
-                                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                                Text="{Binding Bundle.StatusText}" />
-                                        </Border>
-                                        <Border
-                                            Padding="9,2"
-                                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                            CornerRadius="10"
-                                            Visibility="{Binding Bundle.UnmodifiedStatusVisibility}">
-                                            <TextBlock
+                                                VerticalAlignment="Center"
                                                 FontSize="11"
                                                 FontWeight="SemiBold"
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Text="{Binding Bundle.StatusText}" />
+                                                Text="{Binding HeaderText}" />
+                                        </Grid>
+                                    </Border>
+                                    <Grid
+                                        MinHeight="88"
+                                        Padding="8"
+                                        ColumnSpacing="10"
+                                        Visibility="{Binding BundleVisibility}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="32" />
+                                            <ColumnDefinition Width="38" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="70" />
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox
+                                            Width="28"
+                                            MinWidth="0"
+                                            Padding="0"
+                                            VerticalAlignment="Center"
+                                            IsChecked="{Binding Bundle.IsSelected, Mode=TwoWay}" />
+                                        <Border
+                                            Grid.Column="1"
+                                            Width="30"
+                                            Height="34"
+                                            VerticalAlignment="Center"
+                                            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="4">
+                                            <FontIcon
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                FontFamily="Segoe Fluent Icons"
+                                                FontSize="18"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Glyph="&#xE8A5;" />
                                         </Border>
-                                        <TextBlock
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="3">
+                                            <TextBlock
+                                                FontSize="14"
+                                                FontWeight="SemiBold"
+                                                Text="{Binding Bundle.DisplayName}"
+                                                TextTrimming="CharacterEllipsis" />
+                                            <TextBlock
+                                                FontSize="12"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="{Binding Bundle.SummaryText}"
+                                                TextTrimming="CharacterEllipsis" />
+                                            <TextBlock
+                                                FontSize="12"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="{Binding Bundle.OutputPath}"
+                                                TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <StackPanel
+                                            Grid.Column="3"
+                                            VerticalAlignment="Center"
                                             HorizontalAlignment="Right"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{Binding Bundle.LastChangedLocalTimeText}"
-                                            Visibility="{Binding Bundle.LastChangedLocalTimeVisibility}" />
-                                    </StackPanel>
+                                            Spacing="8">
+                                            <Border
+                                                Padding="9,2"
+                                                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                CornerRadius="10"
+                                                Visibility="{Binding Bundle.ModifiedStatusVisibility}">
+                                                <TextBlock
+                                                    FontSize="11"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                                    Text="{Binding Bundle.StatusText}" />
+                                            </Border>
+                                            <Border
+                                                Padding="9,2"
+                                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                CornerRadius="10"
+                                                Visibility="{Binding Bundle.UnmodifiedStatusVisibility}">
+                                                <TextBlock
+                                                    FontSize="11"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    Text="{Binding Bundle.StatusText}" />
+                                            </Border>
+                                            <TextBlock
+                                                HorizontalAlignment="Right"
+                                                FontSize="12"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="{Binding Bundle.LastChangedLocalTimeText}"
+                                                Visibility="{Binding Bundle.LastChangedLocalTimeVisibility}" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Rectangle Height="1" VerticalAlignment="Bottom" Fill="{ThemeResource CardStrokeColorDefaultBrush}" />
                                 </Grid>
-                                <Rectangle Height="1" VerticalAlignment="Bottom" Fill="{ThemeResource CardStrokeColorDefaultBrush}" />
-                            </Grid>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        MaxWidth="320"
+                        Spacing="10"
+                        Visibility="{Binding BundleEmptyStateVisibility}">
+                        <Border
+                            Width="56"
+                            Height="48"
+                            HorizontalAlignment="Center"
+                            Background="{ThemeResource AccentFillColorTertiaryBrush}"
+                            CornerRadius="12">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="28"
+                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                Glyph="&#xE8B7;" />
+                        </Border>
+                        <TextBlock
+                            x:Name="BundleEmptyStateTitleText"
+                            HorizontalAlignment="Center"
+                            FontSize="15"
+                            FontWeight="SemiBold"
+                            TextAlignment="Center"
+                            TextWrapping="WrapWholeWords" />
+                        <TextBlock
+                            x:Name="BundleEmptyStateDetailText"
+                            HorizontalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            FontSize="13"
+                            TextAlignment="Center"
+                            TextWrapping="WrapWholeWords" />
+                    </StackPanel>
+                </Grid>
             </Grid>
         </Border>
 

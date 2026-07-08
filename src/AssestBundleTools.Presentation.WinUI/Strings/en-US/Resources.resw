@@ -4443,6 +4443,12 @@
   <data name="WorkspaceExportDialog.ClearBundleSelectionButton" xml:space="preserve">
     <value>Clear</value>
   </data>
+  <data name="WorkspaceExportDialog.Bundle.EmptyTitle" xml:space="preserve">
+    <value>No bundles to export</value>
+  </data>
+  <data name="WorkspaceExportDialog.Bundle.EmptyDetail" xml:space="preserve">
+    <value>This workspace has no modified bundles, or the current search has no matches.</value>
+  </data>
   <data name="WorkspaceExportDialog.SelectedBundleCount.Format" xml:space="preserve">
     <value>{0} selected</value>
   </data>

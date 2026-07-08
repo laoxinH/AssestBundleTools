@@ -162,6 +162,8 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
             "WorkspaceBatchReplacementDialogContent.xaml.cs"));
 
         Assert.Contains("BatchReplacementHelpButtonStyle", contentXaml);
+        Assert.Contains("SourceSectionTitleIcon", contentXaml);
+        Assert.Contains("BatchReplacementCardTitleIconStyle", contentXaml);
         Assert.Contains("<Setter Property=\"Width\" Value=\"16\" />", contentXaml);
         Assert.Contains("<Setter Property=\"Height\" Value=\"16\" />", contentXaml);
         Assert.Contains("<Setter Property=\"Background\" Value=\"{ThemeResource SubtleFillColorTransparentBrush}\" />", contentXaml);

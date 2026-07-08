@@ -632,6 +632,8 @@ public static class ResourceKeys
     public const string WorkspaceExportDialogBundleGroupPrevious = "WorkspaceExportDialog.BundleGroup.Previous";
     public const string WorkspaceExportDialogSelectAllBundlesButton = "WorkspaceExportDialog.SelectAllBundlesButton";
     public const string WorkspaceExportDialogClearBundleSelectionButton = "WorkspaceExportDialog.ClearBundleSelectionButton";
+    public const string WorkspaceExportDialogBundleEmptyTitle = "WorkspaceExportDialog.Bundle.EmptyTitle";
+    public const string WorkspaceExportDialogBundleEmptyDetail = "WorkspaceExportDialog.Bundle.EmptyDetail";
     public const string WorkspaceExportDialogSelectedBundleCountFormat = "WorkspaceExportDialog.SelectedBundleCount.Format";
     public const string WorkspaceExportDialogBundleStatusModified = "WorkspaceExportDialog.BundleStatus.Modified";
     public const string WorkspaceExportDialogBundleStatusUnmodified = "WorkspaceExportDialog.BundleStatus.Unmodified";
