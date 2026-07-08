@@ -44,6 +44,30 @@ public sealed class BundleExplorerToolbarContractTests
         Assert.Contains("VerticalAlignment=\"Center\"", pageXaml);
     }
 
+    [Fact]
+    public void WorkspaceToolbarButtons_ShouldCenterIconTextGroups()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var pageXaml = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "BundleExplorerPage.xaml"));
+
+        var centerAlignmentCount = CountOccurrences(
+            pageXaml,
+            "<Setter Property=\"HorizontalContentAlignment\" Value=\"Center\" />");
+        var actionsStart = pageXaml.IndexOf("x:Name=\"CreateWorkspaceChipButton\"", StringComparison.Ordinal);
+        var actionsEnd = pageXaml.IndexOf("<ItemsControl", actionsStart, StringComparison.Ordinal);
+        var actionsXaml = pageXaml[actionsStart..actionsEnd];
+
+        Assert.True(centerAlignmentCount >= 2);
+        Assert.Contains("<ColumnDefinition Width=\"Auto\" />", actionsXaml);
+        Assert.DoesNotContain("<ColumnDefinition Width=\"*\" />", actionsXaml);
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
@@ -59,5 +83,18 @@ public sealed class BundleExplorerToolbarContractTests
         }
 
         throw new DirectoryNotFoundException("Repository root was not found from the test output directory.");
+    }
+
+    private static int CountOccurrences(string value, string pattern)
+    {
+        var count = 0;
+        var index = 0;
+        while ((index = value.IndexOf(pattern, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += pattern.Length;
+        }
+
+        return count;
     }
 }
