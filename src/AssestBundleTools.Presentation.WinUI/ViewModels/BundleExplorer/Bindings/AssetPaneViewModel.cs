@@ -26,6 +26,7 @@ public sealed partial class AssetPaneViewModel : ObservableObject
     private bool _showPreviewableOnly;
     private bool _supportsBatchExtractionQuickAction;
     private bool _isBusy;
+    private bool _isListLoading;
     private bool _isAssetMultiSelectionMode;
     private bool _isSpineGroupMultiSelectionMode;
     private PaneId _paneId;
@@ -95,6 +96,18 @@ public sealed partial class AssetPaneViewModel : ObservableObject
     {
         get => _emptyStateText;
         set => SetProperty(ref _emptyStateText, value);
+    }
+
+    public bool IsListLoading
+    {
+        get => _isListLoading;
+        private set
+        {
+            if (SetProperty(ref _isListLoading, value))
+            {
+                NotifyListStateChanged();
+            }
+        }
     }
 
     /// <summary>
@@ -286,6 +299,14 @@ public sealed partial class AssetPaneViewModel : ObservableObject
 
     public Visibility EmptyStateVisibility => CurrentVisibleItemCount == 0 ? Visibility.Visible : Visibility.Collapsed;
 
+    public Visibility EmptyStateLoadingVisibility =>
+        IsListLoading && CurrentVisibleItemCount == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility EmptyStateIconVisibility =>
+        !IsListLoading && CurrentVisibleItemCount == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+    public string EmptyStateIconGlyph => IsSpineGroupViewMode ? "\uE8B7" : "\uE8A5";
+
     public Visibility AssetFilterVisibility => IsAssetViewMode ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility MultiSelectionQuickActionsVisibility =>
@@ -419,6 +440,7 @@ public sealed partial class AssetPaneViewModel : ObservableObject
         OnPropertyChanged(nameof(IsAssetViewMode));
         OnPropertyChanged(nameof(IsSpineGroupViewMode));
         OnPropertyChanged(nameof(AssetFilterVisibility));
+        OnPropertyChanged(nameof(EmptyStateIconGlyph));
         OnPropertyChanged(nameof(SelectedItemCount));
         OnPropertyChanged(nameof(HasSelectedItems));
         OnPropertyChanged(nameof(HasMultipleSelection));

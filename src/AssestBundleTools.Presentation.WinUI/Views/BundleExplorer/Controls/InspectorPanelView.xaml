@@ -82,16 +82,43 @@
 
     <Grid>
         <Border
-            Padding="14"
+            x:Name="InspectorEmptyStateCard"
+            MaxWidth="360"
+            Padding="20"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Center"
             Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-            CornerRadius="10"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="16"
             Visibility="{x:Bind ViewModel.EmptyStateVisibility, Mode=OneWay}">
-            <StackPanel Spacing="8">
+            <StackPanel
+                HorizontalAlignment="Center"
+                Spacing="10">
+                <Border
+                    Width="52"
+                    Height="52"
+                    HorizontalAlignment="Center"
+                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                    CornerRadius="14">
+                    <FontIcon
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontFamily="Segoe Fluent Icons"
+                        FontSize="25"
+                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                        Glyph="&#xE8A5;" />
+                </Border>
                 <TextBlock
                     x:Name="EmptyStateTitleText"
+                    HorizontalAlignment="Center"
+                    TextAlignment="Center"
                     Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    HorizontalAlignment="Center"
+                    MaxWidth="300"
+                    TextAlignment="Center"
                     Text="{x:Bind ViewModel.EmptyStateText, Mode=OneWay}"
                     TextWrapping="WrapWholeWords" />
             </StackPanel>

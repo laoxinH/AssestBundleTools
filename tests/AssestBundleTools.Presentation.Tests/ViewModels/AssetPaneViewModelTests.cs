@@ -166,6 +166,32 @@ public sealed class AssetPaneViewModelTests
     }
 
     [Fact]
+    public void LoadingState_ShouldUseProgressEmptyStateUntilItemsArrive()
+    {
+        var viewModel = new AssetPaneViewModel();
+
+        viewModel.BeginAssetListLoading("ui.ab", "loading");
+
+        Assert.True(viewModel.IsListLoading);
+        Assert.Equal(Visibility.Visible, viewModel.EmptyStateVisibility);
+        Assert.Equal(Visibility.Visible, viewModel.EmptyStateLoadingVisibility);
+        Assert.Equal(Visibility.Collapsed, viewModel.EmptyStateIconVisibility);
+
+        viewModel.ReplaceItems("ui.ab", [CreateAssetEntry("asset-1")], "empty");
+
+        Assert.False(viewModel.IsListLoading);
+        Assert.Equal(Visibility.Collapsed, viewModel.EmptyStateVisibility);
+        Assert.Equal(Visibility.Collapsed, viewModel.EmptyStateLoadingVisibility);
+
+        viewModel.ReplaceItems("ui.ab", [], "empty");
+
+        Assert.False(viewModel.IsListLoading);
+        Assert.Equal(Visibility.Visible, viewModel.EmptyStateVisibility);
+        Assert.Equal(Visibility.Collapsed, viewModel.EmptyStateLoadingVisibility);
+        Assert.Equal(Visibility.Visible, viewModel.EmptyStateIconVisibility);
+    }
+
+    [Fact]
     public void SelectedAsset_ShouldCollapseToSingleSelectionState_WhenSetProgrammatically()
     {
         var viewModel = new AssetPaneViewModel();

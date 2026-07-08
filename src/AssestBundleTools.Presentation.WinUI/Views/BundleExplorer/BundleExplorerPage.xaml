@@ -811,19 +811,79 @@
                     <Grid
                         Grid.Row="2"
                         MinHeight="0">
-                        <TextBlock
-                            x:Name="NoWorkspaceText"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateText, Mode=OneWay}"
-                            TextWrapping="WrapWholeWords"
-                            Visibility="{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateVisibility, Mode=OneWay}" />
+                        <Border
+                            x:Name="BundlePaneEmptyStateCard"
+                            MaxWidth="260"
+                            Padding="18"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            Visibility="{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateVisibility, Mode=OneWay}">
+                            <StackPanel
+                                HorizontalAlignment="Center"
+                                Spacing="10">
+                                <Border
+                                    Width="48"
+                                    Height="48"
+                                    HorizontalAlignment="Center"
+                                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                    CornerRadius="14">
+                                    <FontIcon
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontFamily="Segoe Fluent Icons"
+                                        FontSize="23"
+                                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                        Glyph="&#xE8B7;" />
+                                </Border>
+                                <TextBlock
+                                    x:Name="NoWorkspaceText"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateText, Mode=OneWay}"
+                                    TextAlignment="Center"
+                                    TextWrapping="WrapWholeWords" />
+                            </StackPanel>
+                        </Border>
 
-                        <TextBlock
-                            x:Name="BundleSearchEmptyStateText"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="{x:Bind ViewModel.BundlePane.BundleSearchEmptyStateText, Mode=OneWay}"
-                            TextWrapping="WrapWholeWords"
-                            Visibility="{x:Bind ViewModel.BundlePane.BundleSearchEmptyStateVisibility, Mode=OneWay}" />
+                        <Border
+                            x:Name="BundleSearchEmptyStateCard"
+                            MaxWidth="260"
+                            Padding="18"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            Visibility="{x:Bind ViewModel.BundlePane.BundleSearchEmptyStateVisibility, Mode=OneWay}">
+                            <StackPanel
+                                HorizontalAlignment="Center"
+                                Spacing="10">
+                                <Border
+                                    Width="48"
+                                    Height="48"
+                                    HorizontalAlignment="Center"
+                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                    CornerRadius="14">
+                                    <FontIcon
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontFamily="Segoe Fluent Icons"
+                                        FontSize="22"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Glyph="&#xE721;" />
+                                </Border>
+                                <TextBlock
+                                    x:Name="BundleSearchEmptyStateText"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind ViewModel.BundlePane.BundleSearchEmptyStateText, Mode=OneWay}"
+                                    TextAlignment="Center"
+                                    TextWrapping="WrapWholeWords" />
+                            </StackPanel>
+                        </Border>
 
                         <ScrollViewer
                             MinHeight="0"

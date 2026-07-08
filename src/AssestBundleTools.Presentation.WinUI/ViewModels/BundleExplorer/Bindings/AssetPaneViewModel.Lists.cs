@@ -29,6 +29,7 @@ public sealed partial class AssetPaneViewModel
     {
         CurrentBundleDisplayName = currentBundleDisplayName;
         EmptyStateText = emptyStateText;
+        IsListLoading = false;
         _assetList.ReplaceItems(
             items,
             preferredSelectedAssetId,
@@ -49,6 +50,7 @@ public sealed partial class AssetPaneViewModel
         var selectedGroupId = SelectedSpineGroup?.Item.GroupId;
         CurrentBundleDisplayName = currentBundleDisplayName;
         EmptyStateText = emptyStateText;
+        IsListLoading = false;
         _spineGroupList.ReplaceItems(items, selectedGroupId);
         SetSpineGroupMultiSelectionMode(false);
         OnPropertyChanged(nameof(CanToggleSearch));
@@ -61,6 +63,7 @@ public sealed partial class AssetPaneViewModel
     {
         CurrentBundleDisplayName = currentBundleDisplayName;
         EmptyStateText = loadingStateText;
+        IsListLoading = true;
         _assetList.Clear();
         SetAssetMultiSelectionMode(false);
         OnPropertyChanged(nameof(SelectedAsset));
@@ -73,6 +76,7 @@ public sealed partial class AssetPaneViewModel
     {
         CurrentBundleDisplayName = currentBundleDisplayName;
         EmptyStateText = loadingStateText;
+        IsListLoading = true;
         _spineGroupList.Clear();
         SetSpineGroupMultiSelectionMode(false);
         OnPropertyChanged(nameof(SelectedSpineGroup));
@@ -85,6 +89,7 @@ public sealed partial class AssetPaneViewModel
     {
         CurrentBundleDisplayName = string.Empty;
         EmptyStateText = emptyStateText;
+        IsListLoading = false;
         _assetList.Clear();
         _spineGroupList.Clear();
         SetAssetMultiSelectionMode(false);
@@ -102,6 +107,9 @@ public sealed partial class AssetPaneViewModel
         OnPropertyChanged(nameof(AssetListVisibility));
         OnPropertyChanged(nameof(SpineGroupListVisibility));
         OnPropertyChanged(nameof(EmptyStateVisibility));
+        OnPropertyChanged(nameof(EmptyStateLoadingVisibility));
+        OnPropertyChanged(nameof(EmptyStateIconVisibility));
+        OnPropertyChanged(nameof(EmptyStateIconGlyph));
         OnPropertyChanged(nameof(MultiSelectionQuickActionsVisibility));
     }
 
