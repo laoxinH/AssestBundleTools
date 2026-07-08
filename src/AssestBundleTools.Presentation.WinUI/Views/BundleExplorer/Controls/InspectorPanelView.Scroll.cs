@@ -140,6 +140,7 @@ public sealed partial class InspectorPanelView
             nameof(InspectorPanelViewModel.DetailsVisibility) or
             nameof(InspectorPanelViewModel.DetailsSectionVisibility) or
             nameof(InspectorPanelViewModel.DependenciesSectionVisibility) or
+            nameof(InspectorPanelViewModel.ReplacementSectionTabVisibility) or
             nameof(InspectorPanelViewModel.ReplacementSectionVisibility) or
             nameof(InspectorPanelViewModel.ChangesSectionVisibility)))
         {

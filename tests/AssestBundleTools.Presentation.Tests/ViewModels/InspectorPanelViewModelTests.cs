@@ -51,6 +51,43 @@ public sealed class InspectorPanelViewModelTests
     }
 
     [Fact]
+    public void ReplacementSection_ShouldStayHiddenForRegularAssets()
+    {
+        var viewModel = CreateViewModel();
+
+        viewModel.RestoreSelectedSection("replacement");
+
+        Assert.False(viewModel.IsReplacementSectionAvailable);
+        Assert.True(viewModel.IsDetailsSectionSelected);
+        Assert.Equal("details", viewModel.SelectedSectionKey);
+        Assert.Equal(Visibility.Collapsed, viewModel.ReplacementSectionTabVisibility);
+        Assert.Equal(Visibility.Collapsed, viewModel.ReplacementSectionVisibility);
+    }
+
+    [Fact]
+    public void ReplacementSection_ShouldBeSelectableOnlyWhileAvailable()
+    {
+        var viewModel = CreateViewModel();
+
+        viewModel.SetReplacementSectionAvailability(true);
+        viewModel.SelectReplacementSection();
+
+        Assert.True(viewModel.IsReplacementSectionAvailable);
+        Assert.True(viewModel.IsReplacementSectionSelected);
+        Assert.Equal("replacement", viewModel.SelectedSectionKey);
+        Assert.Equal(Visibility.Visible, viewModel.ReplacementSectionTabVisibility);
+        Assert.Equal(Visibility.Visible, viewModel.ReplacementSectionVisibility);
+
+        viewModel.SetReplacementSectionAvailability(false);
+
+        Assert.False(viewModel.IsReplacementSectionAvailable);
+        Assert.True(viewModel.IsDetailsSectionSelected);
+        Assert.Equal("details", viewModel.SelectedSectionKey);
+        Assert.Equal(Visibility.Collapsed, viewModel.ReplacementSectionTabVisibility);
+        Assert.Equal(Visibility.Collapsed, viewModel.ReplacementSectionVisibility);
+    }
+
+    [Fact]
     public void Apply_ShouldExposeSeparateChangeRecords()
     {
         var viewModel = CreateViewModel();

@@ -11,11 +11,6 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 /// </summary>
 public sealed partial class InspectorPanelViewModel : ObservableObject
 {
-    private const string DetailsSectionKey = "details";
-    private const string DependenciesSectionKey = "dependencies";
-    private const string ReplacementSectionKey = "replacement";
-    private const string ChangesSectionKey = "changes";
-
     private string _emptyStateText = string.Empty;
     private string _assetName = string.Empty;
     private string _bundleDisplayName = string.Empty;
@@ -43,7 +38,6 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     private bool _canModify;
     private bool _canEditText;
     private bool _hasSelection;
-    private int _selectedSectionIndex;
     private readonly InspectorInformationCardPresenter _informationCardPresenter;
 
     public InspectorPanelViewModel(InspectorInformationTextSet informationTextSet)
@@ -228,33 +222,6 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
             ? Visibility.Collapsed
             : Visibility.Visible;
 
-    /// <summary>
-    /// 右侧详情区的页签位置属于页面级浏览状态，
-    /// 因此这里直接把选中的索引挂在 ViewModel 上，便于运行期切换和工作区恢复复用。
-    /// </summary>
-    public int SelectedSectionIndex
-    {
-        get => _selectedSectionIndex;
-        set
-        {
-            var normalizedSectionIndex = NormalizeSectionIndex(value);
-            if (SetProperty(ref _selectedSectionIndex, normalizedSectionIndex))
-            {
-                NotifySectionSelectionStateChanged();
-            }
-        }
-    }
-
-    public string SelectedSectionKey => GetSectionKey(SelectedSectionIndex);
-
-    public bool IsDetailsSectionSelected => SelectedSectionIndex == 0;
-
-    public bool IsDependenciesSectionSelected => SelectedSectionIndex == 1;
-
-    public bool IsReplacementSectionSelected => SelectedSectionIndex == 2;
-
-    public bool IsChangesSectionSelected => SelectedSectionIndex == 3;
-
     public ObservableCollection<AssetDependencyViewModel> AssetDependencies { get; } = new();
 
     public ObservableCollection<AssetDependencyViewModel> ReferencedByDependencies { get; } = new();
@@ -284,14 +251,6 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     public Visibility DetailsVisibility => HasSelection ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility EmptyStateVisibility => HasSelection ? Visibility.Collapsed : Visibility.Visible;
-
-    public Visibility DetailsSectionVisibility => SelectedSectionIndex == 0 ? Visibility.Visible : Visibility.Collapsed;
-
-    public Visibility DependenciesSectionVisibility => SelectedSectionIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
-
-    public Visibility ReplacementSectionVisibility => SelectedSectionIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
-
-    public Visibility ChangesSectionVisibility => SelectedSectionIndex == 3 ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility AssetDependenciesVisibility => AssetDependencies.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
@@ -343,6 +302,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         CanRedoReplacement = false;
         CanModify = false;
         CanEditText = false;
+        IsReplacementSectionAvailable = false;
         AssetDependencies.Clear();
         ReferencedByDependencies.Clear();
         DependencyClosureItems.Clear();
@@ -441,16 +401,6 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         NotifyChangeRecordStateChanged();
     }
 
-    public void RestoreSelectedSection(string? sectionKey)
-    {
-        SelectedSectionIndex = GetSectionIndex(sectionKey);
-    }
-
-    public void SelectReplacementSection()
-    {
-        SelectedSectionIndex = GetSectionIndex(ReplacementSectionKey);
-    }
-
     private void RebuildInformationCards()
     {
         _informationCardPresenter.RebuildInformationCards(
@@ -479,57 +429,6 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(ChangeRecordsListVisibility));
         OnPropertyChanged(nameof(ChangeRecordsEmptyStateVisibility));
-    }
-
-    /// <summary>
-    /// 分段切换条和内容区显隐都依赖同一组选中状态。
-    /// 当前详情页已经把“概览 + 预览”合并到同一页，因此恢复时也要兼容旧版 overview / preview 键。
-    /// </summary>
-    private void NotifySectionSelectionStateChanged()
-    {
-        OnPropertyChanged(nameof(SelectedSectionKey));
-        OnPropertyChanged(nameof(IsDetailsSectionSelected));
-        OnPropertyChanged(nameof(IsDependenciesSectionSelected));
-        OnPropertyChanged(nameof(IsReplacementSectionSelected));
-        OnPropertyChanged(nameof(IsChangesSectionSelected));
-        OnPropertyChanged(nameof(DetailsSectionVisibility));
-        OnPropertyChanged(nameof(DependenciesSectionVisibility));
-        OnPropertyChanged(nameof(ReplacementSectionVisibility));
-        OnPropertyChanged(nameof(ChangesSectionVisibility));
-    }
-
-    private static int GetSectionIndex(string? sectionKey)
-    {
-        return sectionKey?.Trim().ToLowerInvariant() switch
-        {
-            "overview" => 0,
-            "preview" => 0,
-            DependenciesSectionKey => 1,
-            ReplacementSectionKey => 2,
-            ChangesSectionKey => 3,
-            _ => 0
-        };
-    }
-
-    private static string GetSectionKey(int sectionIndex)
-    {
-        return NormalizeSectionIndex(sectionIndex) switch
-        {
-            1 => DependenciesSectionKey,
-            2 => ReplacementSectionKey,
-            3 => ChangesSectionKey,
-            _ => DetailsSectionKey
-        };
-    }
-
-    private static int NormalizeSectionIndex(int sectionIndex)
-    {
-        return sectionIndex switch
-        {
-            < 0 => 0,
-            > 3 => 3,
-            _ => sectionIndex
-        };
     }
 
     private static string NormalizePathValue(string path)

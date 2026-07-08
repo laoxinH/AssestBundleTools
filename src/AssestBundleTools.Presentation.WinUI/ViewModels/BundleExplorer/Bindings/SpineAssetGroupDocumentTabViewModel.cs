@@ -108,6 +108,7 @@ public sealed class SpineAssetGroupDocumentTabViewModel : ObservableObject
         {
             if (SetProperty(ref _spineEditDraft, value))
             {
+                Inspector.SetReplacementSectionAvailability(value is not null);
                 OnPropertyChanged(nameof(IsSpineEditModeActive));
                 OnPropertyChanged(nameof(SpineEditPanelVisibility));
                 OnPropertyChanged(nameof(SpineEditActionBarVisibility));
