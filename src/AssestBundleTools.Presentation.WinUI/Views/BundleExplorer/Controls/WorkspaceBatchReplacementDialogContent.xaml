@@ -14,7 +14,7 @@
         <Style
             x:Key="DialogSectionTitleTextStyle"
             TargetType="TextBlock">
-            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontSize" Value="17" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="TextWrapping" Value="WrapWholeWords" />
         </Style>
@@ -31,22 +31,22 @@
             <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="Padding" Value="18" />
+            <Setter Property="Padding" Value="14" />
             <Setter Property="Shadow" Value="{StaticResource BatchReplacementCardShadow}" />
         </Style>
         <Style
             x:Key="BatchReplacementCardTitleIconStyle"
             TargetType="Border">
-            <Setter Property="Width" Value="22" />
-            <Setter Property="Height" Value="22" />
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
             <Setter Property="Background" Value="{ThemeResource AccentFillColorTertiaryBrush}" />
             <Setter Property="CornerRadius" Value="6" />
         </Style>
         <Style
             x:Key="BatchReplacementCompactButtonStyle"
             TargetType="Button">
-            <Setter Property="MinHeight" Value="36" />
-            <Setter Property="MinWidth" Value="84" />
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="MinWidth" Value="78" />
             <Setter Property="Padding" Value="12,0" />
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="FontSize" Value="13" />
@@ -70,7 +70,7 @@
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         MinHeight="0"
-        RowSpacing="18">
+        RowSpacing="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -80,8 +80,8 @@
             Style="{StaticResource BatchReplacementPanelCardStyle}"
             Translation="0,0,8">
             <Grid
-                ColumnSpacing="18"
-                RowSpacing="12">
+                ColumnSpacing="16"
+                RowSpacing="8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -120,12 +120,12 @@
                     Spacing="12">
                     <Button
                         x:Name="ChooseSourceDirectoryButton"
-                        Width="116"
+                        Width="110"
                         Click="OnChooseSourceDirectoryButtonClick"
                         Style="{StaticResource BatchReplacementCompactButtonStyle}" />
                     <Button
                         x:Name="RefreshPlanButton"
-                        Width="108"
+                        Width="104"
                         Click="OnRefreshPlanButtonClick"
                         IsEnabled="{Binding HasSourceDirectory}"
                         Style="{StaticResource BatchReplacementCompactButtonStyle}" />
@@ -139,7 +139,7 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <Border
-                        Padding="12,5"
+                        Padding="11,4"
                         VerticalAlignment="Center"
                         Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                         CornerRadius="8">
@@ -164,7 +164,7 @@
         <Grid
             Grid.Row="1"
             MinHeight="0"
-            ColumnSpacing="18">
+            ColumnSpacing="16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="55*" MinWidth="400" />
                 <ColumnDefinition Width="100*" MinWidth="620" />
@@ -175,7 +175,7 @@
                 Translation="0,0,8">
                 <Grid
                     MinHeight="0"
-                    RowSpacing="14">
+                    RowSpacing="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -191,7 +191,7 @@
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 FontFamily="Segoe Fluent Icons"
-                                FontSize="12"
+                                FontSize="11"
                                 Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                 Glyph="&#xE8A5;" />
                         </Border>
@@ -203,7 +203,7 @@
                                 Style="{StaticResource DialogSectionTitleTextStyle}" />
                             <TextBlock
                                 x:Name="BundleSectionHintText"
-                                FontSize="13"
+                                FontSize="12"
                                 Style="{StaticResource DialogSecondaryTextStyle}" />
                         </StackPanel>
                     </Grid>
@@ -211,7 +211,7 @@
                     <StackPanel
                         Grid.Row="1"
                         Orientation="Horizontal"
-                        Spacing="10">
+                        Spacing="8">
                         <Button
                             x:Name="SelectAllBundlesButton"
                             Click="OnSelectAllBundlesButtonClick"
@@ -224,8 +224,8 @@
                             Style="{StaticResource BatchReplacementCompactButtonStyle}" />
                         <ToggleButton
                             x:Name="ChangedBundlesOnlyToggleButton"
-                            MinHeight="36"
-                            MinWidth="98"
+                            MinHeight="34"
+                            MinWidth="92"
                             Padding="12,0"
                             CornerRadius="8"
                             FontSize="13"
@@ -252,9 +252,9 @@
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <Border
-                                        MinHeight="76"
-                                        Margin="0,0,0,8"
-                                        Padding="10,8"
+                                        MinHeight="62"
+                                        Margin="0,0,0,6"
+                                        Padding="8,6"
                                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                         BorderThickness="1"
@@ -262,7 +262,7 @@
                                         <Grid ColumnSpacing="10">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="32" />
-                                                <ColumnDefinition Width="38" />
+                                                <ColumnDefinition Width="34" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
@@ -274,8 +274,8 @@
                                                 IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                             <Border
                                                 Grid.Column="1"
-                                                Width="30"
-                                                Height="34"
+                                                Width="28"
+                                                Height="32"
                                                 VerticalAlignment="Center"
                                                 BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                                 BorderThickness="1"
@@ -284,7 +284,7 @@
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"
                                                     FontFamily="Segoe Fluent Icons"
-                                                    FontSize="18"
+                                                    FontSize="16"
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                     Glyph="&#xE8A5;" />
                                             </Border>
@@ -319,11 +319,11 @@
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             MaxWidth="300"
-                            Spacing="10"
+                            Spacing="8"
                             Visibility="{Binding BundleEmptyVisibility}">
                             <Border
-                                Width="56"
-                                Height="48"
+                                Width="48"
+                                Height="40"
                                 HorizontalAlignment="Center"
                                 Background="{ThemeResource AccentFillColorTertiaryBrush}"
                                 CornerRadius="12">
@@ -331,14 +331,14 @@
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     FontFamily="Segoe Fluent Icons"
-                                    FontSize="28"
+                                    FontSize="24"
                                     Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                     Glyph="&#xE8B7;" />
                             </Border>
                             <TextBlock
                                 x:Name="BundleEmptyTitleText"
                                 HorizontalAlignment="Center"
-                                FontSize="15"
+                                FontSize="14"
                                 FontWeight="SemiBold"
                                 TextAlignment="Center"
                                 TextWrapping="WrapWholeWords" />
@@ -346,7 +346,7 @@
                                 x:Name="BundleEmptyDetailText"
                                 HorizontalAlignment="Center"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                FontSize="13"
+                                FontSize="12"
                                 TextAlignment="Center"
                                 TextWrapping="WrapWholeWords" />
                         </StackPanel>
@@ -360,7 +360,7 @@
                 Translation="0,0,8">
                 <Grid
                     MinHeight="0"
-                    RowSpacing="14">
+                    RowSpacing="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -376,7 +376,7 @@
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 FontFamily="Segoe Fluent Icons"
-                                FontSize="12"
+                                FontSize="11"
                                 Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                 Glyph="&#xE8EF;" />
                         </Border>
@@ -388,29 +388,29 @@
                                 Style="{StaticResource DialogSectionTitleTextStyle}" />
                             <TextBlock
                                 x:Name="CandidateSectionHintText"
-                                FontSize="13"
+                                FontSize="12"
                                 Style="{StaticResource DialogSecondaryTextStyle}" />
                         </StackPanel>
                     </Grid>
 
                     <Grid
                         Grid.Row="1"
-                        ColumnSpacing="12">
+                        ColumnSpacing="10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="168" />
-                            <ColumnDefinition Width="168" />
+                            <ColumnDefinition Width="156" />
+                            <ColumnDefinition Width="156" />
                         </Grid.ColumnDefinitions>
                         <AutoSuggestBox
                             x:Name="CandidateSearchBox"
-                            MinHeight="38"
+                            MinHeight="36"
                             IsEnabled="{Binding HasCandidates}"
                             QueryIcon="Find"
                             Text="{Binding CandidateSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <ComboBox
                             x:Name="StatusFilterComboBox"
                             Grid.Column="1"
-                            MinHeight="38"
+                            MinHeight="36"
                             HorizontalAlignment="Stretch"
                             IsEnabled="{Binding HasCandidates}"
                             ItemsSource="{Binding StatusFilters}"
@@ -424,7 +424,7 @@
                         <Button
                             x:Name="TypeFilterButton"
                             Grid.Column="2"
-                            MinHeight="38"
+                            MinHeight="36"
                             HorizontalAlignment="Stretch"
                             IsEnabled="{Binding HasCandidates}"
                             Style="{StaticResource BatchReplacementCompactButtonStyle}">
@@ -495,13 +495,13 @@
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <Border
-                                        MinHeight="84"
-                                        Padding="12,8"
+                                        MinHeight="66"
+                                        Padding="10,6"
                                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                         BorderThickness="0,0,0,1">
                                         <Grid ColumnSpacing="12">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="34" />
+                                                <ColumnDefinition Width="32" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
@@ -515,9 +515,9 @@
                                             <StackPanel
                                                 Grid.Column="1"
                                                 VerticalAlignment="Center"
-                                                Spacing="3">
+                                                Spacing="2">
                                                 <TextBlock
-                                                    FontSize="14"
+                                                    FontSize="13"
                                                     FontWeight="SemiBold"
                                                     Text="{Binding AssetName}"
                                                     TextTrimming="CharacterEllipsis" />
@@ -534,7 +534,7 @@
                                             </StackPanel>
                                             <Border
                                                 Grid.Column="2"
-                                                Padding="9,3"
+                                                Padding="8,2"
                                                 VerticalAlignment="Top"
                                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -555,11 +555,11 @@
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             MaxWidth="360"
-                            Spacing="10"
+                            Spacing="8"
                             Visibility="{Binding CandidateEmptyVisibility}">
                             <Border
-                                Width="56"
-                                Height="48"
+                                Width="48"
+                                Height="40"
                                 HorizontalAlignment="Center"
                                 Background="{ThemeResource AccentFillColorTertiaryBrush}"
                                 CornerRadius="12">
@@ -567,14 +567,14 @@
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     FontFamily="Segoe Fluent Icons"
-                                    FontSize="28"
+                                    FontSize="24"
                                     Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                     Glyph="&#xE8B7;" />
                             </Border>
                             <TextBlock
                                 x:Name="CandidateEmptyTitleText"
                                 HorizontalAlignment="Center"
-                                FontSize="15"
+                                FontSize="14"
                                 FontWeight="SemiBold"
                                 TextAlignment="Center"
                                 TextWrapping="WrapWholeWords" />
@@ -582,7 +582,7 @@
                                 x:Name="CandidateEmptyDetailText"
                                 HorizontalAlignment="Center"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                FontSize="13"
+                                FontSize="12"
                                 TextAlignment="Center"
                                 TextWrapping="WrapWholeWords" />
                         </StackPanel>

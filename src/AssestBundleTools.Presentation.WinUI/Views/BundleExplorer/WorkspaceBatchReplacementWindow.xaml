@@ -61,29 +61,29 @@
         <Grid
             Grid.Row="1"
             MinHeight="0"
-            Padding="48,20,48,24"
-            RowSpacing="16">
+            Padding="48,14,48,20"
+            RowSpacing="12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <Grid ColumnSpacing="18">
+            <Grid ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Border
-                    Width="56"
-                    Height="56"
+                    Width="48"
+                    Height="48"
                     VerticalAlignment="Center"
                     Background="{ThemeResource AccentFillColorDefaultBrush}"
-                    CornerRadius="14">
+                    CornerRadius="12">
                     <FontIcon
                         VerticalAlignment="Center"
                         FontFamily="Segoe Fluent Icons"
-                        FontSize="30"
+                        FontSize="26"
                         Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                         Glyph="&#xE8A5;" />
                 </Border>
@@ -93,13 +93,13 @@
                     Spacing="4">
                     <TextBlock
                         x:Name="WindowTitleText"
-                        FontSize="30"
+                        FontSize="28"
                         FontWeight="SemiBold"
                         TextWrapping="WrapWholeWords" />
                     <TextBlock
                         x:Name="WindowSubtitleText"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        FontSize="14"
+                        FontSize="13"
                         TextWrapping="WrapWholeWords" />
                 </StackPanel>
             </Grid>
@@ -115,13 +115,13 @@
 
             <Border
                 Grid.Row="2"
-                MinHeight="78"
-                Padding="18,12"
+                MinHeight="70"
+                Padding="16,10"
                 Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="12">
-                <Grid ColumnSpacing="18">
+                <Grid ColumnSpacing="16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
@@ -130,17 +130,17 @@
                     </Grid.ColumnDefinitions>
 
                     <Border
-                        Width="40"
-                        Height="40"
+                        Width="36"
+                        Height="36"
                         VerticalAlignment="Center"
                         Background="{ThemeResource AccentFillColorTertiaryBrush}"
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
-                        CornerRadius="10">
+                        CornerRadius="9">
                         <FontIcon
                             VerticalAlignment="Center"
                             FontFamily="Segoe Fluent Icons"
-                            FontSize="20"
+                            FontSize="18"
                             Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                             Glyph="&#xE8A5;" />
                     </Border>
@@ -187,7 +187,7 @@
                         x:Name="CancelButton"
                         Grid.Column="2"
                         Width="128"
-                        MinHeight="42"
+                        MinHeight="40"
                         FontSize="13"
                         VerticalAlignment="Center"
                         Click="OnCancelButtonClick" />
@@ -195,7 +195,7 @@
                         x:Name="StartReplacementButton"
                         Grid.Column="3"
                         Width="156"
-                        MinHeight="42"
+                        MinHeight="40"
                         FontSize="13"
                         VerticalAlignment="Center"
                         Content="{Binding PrimaryButtonText}"
