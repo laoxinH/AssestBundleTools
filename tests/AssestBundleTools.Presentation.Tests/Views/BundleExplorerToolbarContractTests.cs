@@ -34,6 +34,10 @@ public sealed class BundleExplorerToolbarContractTests
             "BundleExplorerPage.xaml"));
 
         Assert.Contains("ItemsSource=\"{x:Bind ViewModel.WorkspaceShell.WorkspaceStatusChips, Mode=OneWay}\"", pageXaml);
+        Assert.Contains("x:Key=\"WorkspacePrimaryActionChipButtonStyle\"", pageXaml);
+        Assert.Contains("x:Key=\"WorkspaceSecondaryActionChipButtonStyle\"", pageXaml);
+        Assert.Contains("<Setter Property=\"Height\" Value=\"44\" />", pageXaml);
+        Assert.DoesNotContain("<Setter Property=\"MinHeight\" Value=\"40\" />", pageXaml);
         Assert.Contains("MinHeight=\"44\"", pageXaml);
         Assert.Contains("Height=\"44\"", pageXaml);
         Assert.Contains("Padding=\"10,0\"", pageXaml);

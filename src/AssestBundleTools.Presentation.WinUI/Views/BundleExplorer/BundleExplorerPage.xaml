@@ -182,6 +182,7 @@
             TargetType="Button">
             <Setter Property="Padding" Value="10,8" />
             <Setter Property="MinHeight" Value="44" />
+            <Setter Property="Height" Value="44" />
             <Setter Property="MinWidth" Value="118" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -192,10 +193,12 @@
             BasedOn="{StaticResource WorkspaceChipButtonBaseStyle}"
             TargetType="Button">
             <Setter Property="Padding" Value="10,8" />
-            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="MinHeight" Value="44" />
+            <Setter Property="Height" Value="44" />
             <Setter Property="MinWidth" Value="92" />
             <Setter Property="FontSize" Value="12.5" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
 
         <Style
