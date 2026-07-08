@@ -48,37 +48,37 @@
 
         <Grid
             Grid.Row="1"
-            Padding="48,28,48,32"
-            RowSpacing="20">
+            Padding="48,20,48,24"
+            RowSpacing="16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <Grid ColumnSpacing="24">
+            <Grid ColumnSpacing="18">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Border
-                    Width="64"
-                    Height="64"
+                    Width="56"
+                    Height="56"
                     VerticalAlignment="Center"
                     Background="{ThemeResource AccentFillColorDefaultBrush}"
-                    CornerRadius="16">
+                    CornerRadius="14">
                     <FontIcon
                         VerticalAlignment="Center"
                         FontFamily="Segoe Fluent Icons"
-                        FontSize="34"
+                        FontSize="30"
                         Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                         Glyph="&#xE8A5;" />
                 </Border>
-                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
-                    <TextBlock x:Name="WindowTitleText" FontSize="34" FontWeight="SemiBold" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                    <TextBlock x:Name="WindowTitleText" FontSize="30" FontWeight="SemiBold" />
                     <TextBlock
                         x:Name="WindowSubtitleText"
-                        FontSize="15"
+                        FontSize="14"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         TextWrapping="WrapWholeWords" />
                 </StackPanel>
@@ -93,13 +93,13 @@
 
             <Border
                 Grid.Row="2"
-                MinHeight="88"
-                Padding="22,14"
+                MinHeight="78"
+                Padding="18,12"
                 Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="12">
-                <Grid ColumnSpacing="20">
+                <Grid ColumnSpacing="18">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
@@ -107,19 +107,19 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <Border
-                        Width="46"
-                        Height="46"
+                        Width="40"
+                        Height="40"
                         VerticalAlignment="Center"
                         Background="{ThemeResource AccentFillColorTertiaryBrush}"
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="10">
                         <FontIcon
-                            VerticalAlignment="Center"
-                            FontFamily="Segoe Fluent Icons"
-                            FontSize="22"
-                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                            Glyph="&#xE8A5;" />
+                        VerticalAlignment="Center"
+                        FontFamily="Segoe Fluent Icons"
+                        FontSize="20"
+                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                        Glyph="&#xE8A5;" />
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                         <TextBlock x:Name="PlanSummaryTitleText" FontSize="13" FontWeight="SemiBold" />
@@ -156,8 +156,8 @@
                     <Button
                         x:Name="CancelButton"
                         Grid.Column="2"
-                        Width="132"
-                        MinHeight="44"
+                        Width="128"
+                        MinHeight="42"
                         FontSize="13"
                         VerticalAlignment="Center"
                         Content="{Binding SecondaryButtonText}"
@@ -166,8 +166,8 @@
                     <Button
                         x:Name="StartExportButton"
                         Grid.Column="3"
-                        Width="160"
-                        MinHeight="44"
+                        Width="156"
+                        MinHeight="42"
                         FontSize="13"
                         VerticalAlignment="Center"
                         Content="{Binding PrimaryButtonText}"
