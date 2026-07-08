@@ -28,7 +28,8 @@ public sealed partial class WorkspaceBatchExtractionDialogContent : UserControl
         BundleSearchTextBox.PlaceholderText = UiText.Get(ResourceKeys.WorkspaceBatchExtractionDialogBundleSearchPlaceholder);
         SelectAllBundlesButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchExtractionDialogSelectAllBundlesButton);
         ClearBundleSelectionButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchExtractionDialogClearBundleSelectionButton);
-        BundleEmptyStateText.Text = UiText.Get(ResourceKeys.WorkspaceBatchExtractionDialogBundleEmptyState);
+        BundleEmptyStateTitleText.Text = UiText.Get(ResourceKeys.WorkspaceBatchExtractionDialogBundleEmptyState);
+        BundleEmptyStateDetailText.Text = UiText.Get(ResourceKeys.WorkspaceBatchExtractionDialogBundleEmptyDetail);
 
         CategorySectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceBatchExtractionDialogCategorySectionTitle);
         CategorySectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceBatchExtractionDialogCategorySectionHint);

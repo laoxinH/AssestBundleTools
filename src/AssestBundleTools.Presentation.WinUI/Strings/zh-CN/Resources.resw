@@ -609,6 +609,9 @@
   <data name="WorkspaceBatchExtractionDialog.Bundle.EmptyState" xml:space="preserve">
     <value>没有匹配的资源包。</value>
   </data>
+  <data name="WorkspaceBatchExtractionDialog.Bundle.EmptyDetail" xml:space="preserve">
+    <value>调整搜索条件，或确认当前工作区已有可提取资源包。</value>
+  </data>
   <data name="WorkspaceBatchExtractionDialog.Bundle.AssetCount.Format" xml:space="preserve">
     <value>{0} 项</value>
   </data>

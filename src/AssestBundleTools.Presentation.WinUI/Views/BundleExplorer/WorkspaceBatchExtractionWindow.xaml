@@ -61,7 +61,7 @@
         <Grid
             Grid.Row="1"
             MinHeight="0"
-            Padding="44,24,44,32"
+            Padding="48,14,48,20"
             RowSpacing="12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -69,17 +69,37 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <Grid>
-                <StackPanel Spacing="10">
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border
+                    Width="48"
+                    Height="48"
+                    VerticalAlignment="Center"
+                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                    CornerRadius="12">
+                    <FontIcon
+                        VerticalAlignment="Center"
+                        FontFamily="Segoe Fluent Icons"
+                        FontSize="26"
+                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                        Glyph="&#xE8A5;" />
+                </Border>
+                <StackPanel
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Spacing="4">
                     <TextBlock
                         x:Name="WindowTitleText"
-                        FontSize="34"
+                        FontSize="28"
                         FontWeight="SemiBold"
                         TextWrapping="WrapWholeWords" />
                     <TextBlock
                         x:Name="WindowSubtitleText"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        FontSize="15"
+                        FontSize="13"
                         TextWrapping="WrapWholeWords" />
                 </StackPanel>
             </Grid>

@@ -179,6 +179,67 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
     }
 
     [Fact]
+    public void WorkspaceBatchExtractionLayout_ShouldExposeTitleIconAndEmptyStateDetail()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var windowXaml = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "WorkspaceBatchExtractionWindow.xaml"));
+        var contentXaml = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Controls",
+            "WorkspaceBatchExtractionDialogContent.xaml"));
+        var contentCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Controls",
+            "WorkspaceBatchExtractionDialogContent.xaml.cs"));
+        var resourceKeys = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Localization",
+            "ResourceKeys.cs"));
+        var zhResources = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Strings",
+            "zh-CN",
+            "Resources.resw"));
+        var enResources = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Strings",
+            "en-US",
+            "Resources.resw"));
+
+        Assert.Contains("AccentFillColorDefaultBrush", windowXaml);
+        Assert.Contains("TextOnAccentFillColorPrimaryBrush", windowXaml);
+        Assert.Contains("Glyph=\"&#xE8A5;\"", windowXaml);
+        Assert.Contains("BatchExtractionCardTitleIconStyle", contentXaml);
+        Assert.Contains("BundleEmptyStateTitleText", contentXaml);
+        Assert.Contains("BundleEmptyStateDetailText", contentXaml);
+        Assert.Contains("Glyph=\"&#xE8B7;\"", contentXaml);
+        Assert.Contains("WorkspaceBatchExtractionDialogBundleEmptyDetail", contentCode);
+        Assert.Contains("WorkspaceBatchExtractionDialogBundleEmptyDetail", resourceKeys);
+        Assert.Contains("WorkspaceBatchExtractionDialog.Bundle.EmptyDetail", zhResources);
+        Assert.Contains("WorkspaceBatchExtractionDialog.Bundle.EmptyDetail", enResources);
+    }
+
+    [Fact]
     public void WorkspaceBatchExtractionPreview_ShouldBeDeferredAndRunAsSilentTransientRead()
     {
         var repositoryRoot = FindRepositoryRoot();

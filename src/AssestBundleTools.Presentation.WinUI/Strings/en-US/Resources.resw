@@ -609,6 +609,9 @@
   <data name="WorkspaceBatchExtractionDialog.Bundle.EmptyState" xml:space="preserve">
     <value>No matching bundles.</value>
   </data>
+  <data name="WorkspaceBatchExtractionDialog.Bundle.EmptyDetail" xml:space="preserve">
+    <value>Adjust the search, or confirm this workspace has extractable bundles.</value>
+  </data>
   <data name="WorkspaceBatchExtractionDialog.Bundle.AssetCount.Format" xml:space="preserve">
     <value>{0} items</value>
   </data>

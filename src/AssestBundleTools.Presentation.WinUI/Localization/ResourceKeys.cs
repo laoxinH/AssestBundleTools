@@ -488,6 +488,7 @@ public static class ResourceKeys
     public const string WorkspaceBatchExtractionDialogSelectAllBundlesButton = "WorkspaceBatchExtractionDialog.SelectAllBundlesButton";
     public const string WorkspaceBatchExtractionDialogClearBundleSelectionButton = "WorkspaceBatchExtractionDialog.ClearBundleSelectionButton";
     public const string WorkspaceBatchExtractionDialogBundleEmptyState = "WorkspaceBatchExtractionDialog.Bundle.EmptyState";
+    public const string WorkspaceBatchExtractionDialogBundleEmptyDetail = "WorkspaceBatchExtractionDialog.Bundle.EmptyDetail";
     public const string WorkspaceBatchExtractionDialogBundleAssetCountFormat = "WorkspaceBatchExtractionDialog.Bundle.AssetCount.Format";
     public const string WorkspaceBatchExtractionDialogSelectedBundleSummaryFormat = "WorkspaceBatchExtractionDialog.SelectedBundleSummary.Format";
     public const string WorkspaceBatchExtractionDialogCategorySectionTitle = "WorkspaceBatchExtractionDialog.CategorySection.Title";

@@ -14,7 +14,7 @@
         <Style
             x:Key="DialogSectionTitleTextStyle"
             TargetType="TextBlock">
-            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontSize" Value="18" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="TextWrapping" Value="WrapWholeWords" />
         </Style>
@@ -30,9 +30,17 @@
             <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
             <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="18,28" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="18" />
             <Setter Property="Shadow" Value="{StaticResource BatchExtractionCardShadow}" />
+        </Style>
+        <Style
+            x:Key="BatchExtractionCardTitleIconStyle"
+            TargetType="Border">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Background" Value="{ThemeResource AccentFillColorTertiaryBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
         </Style>
         <Style
             x:Key="BatchExtractionCompactButtonStyle"
@@ -77,14 +85,31 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <StackPanel Spacing="4">
-                        <TextBlock
-                            x:Name="BundleSectionTitleText"
-                            Style="{StaticResource DialogSectionTitleTextStyle}" />
-                        <TextBlock
-                            x:Name="BundleSectionHintText"
-                            Style="{StaticResource DialogSecondaryTextStyle}" />
-                    </StackPanel>
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource BatchExtractionCardTitleIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                Glyph="&#xE8A5;" />
+                        </Border>
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="BundleSectionTitleText"
+                                Style="{StaticResource DialogSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="BundleSectionHintText"
+                                Style="{StaticResource DialogSecondaryTextStyle}" />
+                        </StackPanel>
+                    </Grid>
 
                     <StackPanel
                         Grid.Column="1"
@@ -176,12 +201,41 @@
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <TextBlock
-                        x:Name="BundleEmptyStateText"
+                    <StackPanel
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        Style="{StaticResource DialogSecondaryTextStyle}"
-                        Visibility="{Binding BundleEmptyStateVisibility}" />
+                        MaxWidth="320"
+                        Spacing="10"
+                        Visibility="{Binding BundleEmptyStateVisibility}">
+                        <Border
+                            Width="56"
+                            Height="48"
+                            HorizontalAlignment="Center"
+                            Background="{ThemeResource AccentFillColorTertiaryBrush}"
+                            CornerRadius="12">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="28"
+                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                Glyph="&#xE8B7;" />
+                        </Border>
+                        <TextBlock
+                            x:Name="BundleEmptyStateTitleText"
+                            HorizontalAlignment="Center"
+                            FontSize="15"
+                            FontWeight="SemiBold"
+                            TextAlignment="Center"
+                            TextWrapping="WrapWholeWords" />
+                        <TextBlock
+                            x:Name="BundleEmptyStateDetailText"
+                            HorizontalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            FontSize="13"
+                            TextAlignment="Center"
+                            TextWrapping="WrapWholeWords" />
+                    </StackPanel>
                 </Grid>
 
                 <TextBlock
@@ -211,14 +265,31 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <StackPanel Spacing="4">
-                        <TextBlock
-                            x:Name="CategorySectionTitleText"
-                            Style="{StaticResource DialogSectionTitleTextStyle}" />
-                        <TextBlock
-                            x:Name="CategorySectionHintText"
-                            Style="{StaticResource DialogSecondaryTextStyle}" />
-                    </StackPanel>
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource BatchExtractionCardTitleIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                Glyph="&#xE8EF;" />
+                        </Border>
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="CategorySectionTitleText"
+                                Style="{StaticResource DialogSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="CategorySectionHintText"
+                                Style="{StaticResource DialogSecondaryTextStyle}" />
+                        </StackPanel>
+                    </Grid>
 
                     <ScrollViewer
                         Grid.Row="1"
