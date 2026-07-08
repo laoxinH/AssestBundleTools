@@ -589,6 +589,7 @@ public static class ResourceKeys
     public const string WorkspaceExportDialogResourceProcessorSectionTitle = "WorkspaceExportDialog.ResourceProcessorSection.Title";
     public const string WorkspaceExportDialogResourceProcessorSectionHint = "WorkspaceExportDialog.ResourceProcessorSection.Hint";
     public const string WorkspaceExportDialogResourceProcessorHelpText = "WorkspaceExportDialog.ResourceProcessorSection.HelpText";
+    public const string WorkspaceExportDialogResourceProcessorHelpToolTip = "WorkspaceExportDialog.ResourceProcessorSection.Help.ToolTip";
     public const string WorkspaceExportDialogExportOptionsSectionTitle = "WorkspaceExportDialog.ExportOptionsSection.Title";
     public const string WorkspaceExportDialogExportToWorkspaceDirectory = "WorkspaceExportDialog.ExportToWorkspaceDirectory";
     public const string WorkspaceExportDialogOverwriteExistingFiles = "WorkspaceExportDialog.OverwriteExistingFiles";

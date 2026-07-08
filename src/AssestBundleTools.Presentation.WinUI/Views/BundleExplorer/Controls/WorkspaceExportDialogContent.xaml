@@ -296,16 +296,22 @@
                                 Style="{StaticResource WorkspaceExportSecondaryTextStyle}" />
                         </StackPanel>
                         <StackPanel
+                            x:Name="ResourceProcessorHelpHost"
                             Grid.Column="2"
                             VerticalAlignment="Center"
                             Orientation="Horizontal"
-                            Spacing="6">
+                            Spacing="6"
+                            Background="Transparent"
+                            PointerEntered="OnResourceProcessorHelpPointerEntered"
+                            PointerExited="OnResourceProcessorHelpPointerExited"
+                            ToolTipService.Placement="Right">
                             <TextBlock
                                 x:Name="ResourceProcessorHelpText"
                                 FontWeight="SemiBold"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 TextTrimming="CharacterEllipsis" />
                             <FontIcon
+                                x:Name="ResourceProcessorHelpIcon"
                                 FontFamily="Segoe Fluent Icons"
                                 FontSize="15"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -398,14 +404,31 @@
                                 IsChecked="{Binding OverwriteExistingFiles, Mode=TwoWay}" />
                             <CheckBox
                                 x:Name="ForceAudioPayloadWriteCheckBox"
-                                IsChecked="{Binding ForceAudioPayloadWrite, Mode=TwoWay}" />
-                            <TextBlock
-                                Margin="34,-2,0,0"
-                                FontSize="12"
-                                Foreground="{ThemeResource SystemFillColorCautionBrush}"
-                                Text="{Binding ForceAudioWarningText}"
-                                TextWrapping="WrapWholeWords"
-                                Visibility="{Binding ForceAudioWarningVisibility}" />
+                                IsChecked="{Binding ForceAudioPayloadWrite, Mode=TwoWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock
+                                        x:Name="ForceAudioPayloadWriteText"
+                                        VerticalAlignment="Center" />
+                                    <Border
+                                        x:Name="ForceAudioPayloadWriteHelpHost"
+                                        Width="20"
+                                        Height="20"
+                                        VerticalAlignment="Center"
+                                        Background="Transparent"
+                                        PointerEntered="OnForceAudioPayloadWriteHelpPointerEntered"
+                                        PointerExited="OnForceAudioPayloadWriteHelpPointerExited"
+                                        ToolTipService.Placement="Right">
+                                        <FontIcon
+                                            x:Name="ForceAudioPayloadWriteHelpIcon"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="14"
+                                            Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                            Glyph="&#xE946;" />
+                                    </Border>
+                                </StackPanel>
+                            </CheckBox>
                         </StackPanel>
                     </StackPanel>
                 </Border>

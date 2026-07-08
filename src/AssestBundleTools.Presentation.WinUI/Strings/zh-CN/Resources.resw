@@ -4314,6 +4314,9 @@
   <data name="WorkspaceExportDialog.ResourceProcessorSection.HelpText" xml:space="preserve">
     <value>预处理链路说明</value>
   </data>
+  <data name="WorkspaceExportDialog.ResourceProcessorSection.Help.ToolTip" xml:space="preserve">
+    <value>预处理链路会在写出 AB 前调用对应资源处理器，用于贴图、音频、Spine atlas/skel 等资源的格式转换；未启用的资源类型会直接随当前资源包导出。</value>
+  </data>
   <data name="WorkspaceExportDialog.ExportOptionsSection.Title" xml:space="preserve">
     <value>导出选项</value>
   </data>

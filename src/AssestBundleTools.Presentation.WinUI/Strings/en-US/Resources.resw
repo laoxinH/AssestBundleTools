@@ -4314,6 +4314,9 @@
   <data name="WorkspaceExportDialog.ResourceProcessorSection.HelpText" xml:space="preserve">
     <value>Preprocessing chain</value>
   </data>
+  <data name="WorkspaceExportDialog.ResourceProcessorSection.Help.ToolTip" xml:space="preserve">
+    <value>The preprocessing chain invokes the matching resource processor before AB writing, handling format conversion for textures, audio, Spine atlas/skel data, and similar resources. Disabled resource types are exported directly with the current bundle content.</value>
+  </data>
   <data name="WorkspaceExportDialog.ExportOptionsSection.Title" xml:space="preserve">
     <value>Export Options</value>
   </data>
