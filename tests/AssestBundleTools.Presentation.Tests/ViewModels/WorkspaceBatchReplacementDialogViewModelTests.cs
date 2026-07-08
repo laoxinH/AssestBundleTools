@@ -6,6 +6,7 @@ using AssestBundleTools.Presentation.Tests.Testing;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
+using Microsoft.UI.Xaml;
 
 namespace AssestBundleTools.Presentation.Tests.ViewModels;
 
@@ -21,6 +22,8 @@ public sealed class WorkspaceBatchReplacementDialogViewModelTests
         Assert.Equal(
             new[] { "char_452_bstalk_unveiling#4", "hero_mesh" },
             viewModel.FilteredCandidates.Select(static candidate => candidate.AssetName).ToArray());
+        Assert.Equal(Visibility.Visible, viewModel.CandidateListVisibility);
+        Assert.Equal(Visibility.Visible, viewModel.BundleListVisibility);
         Assert.Equal(
             WorkspaceBatchReplacementMatchStatus.Changed.ToString(),
             viewModel.SelectedStatusFilter?.Key);
@@ -46,6 +49,7 @@ public sealed class WorkspaceBatchReplacementDialogViewModelTests
         viewModel.Bundles.Single(bundle => string.Equals(bundle.BundleId.Value, "bundle-spine", StringComparison.Ordinal)).IsSelected = false;
 
         Assert.Empty(viewModel.FilteredCandidates);
+        Assert.Equal(Visibility.Collapsed, viewModel.CandidateListVisibility);
         Assert.Equal(3, viewModel.Candidates.Count);
     }
 
@@ -99,6 +103,10 @@ public sealed class WorkspaceBatchReplacementDialogViewModelTests
         Assert.False(viewModel.HasBundles);
         Assert.False(viewModel.HasCandidates);
         Assert.False(viewModel.CanSubmit);
+        Assert.Equal(Visibility.Visible, viewModel.BundleEmptyVisibility);
+        Assert.Equal(Visibility.Visible, viewModel.CandidateEmptyVisibility);
+        Assert.Equal(Visibility.Collapsed, viewModel.BundleListVisibility);
+        Assert.Equal(Visibility.Collapsed, viewModel.CandidateListVisibility);
         Assert.Equal(ResourceKeys.WorkspaceBatchReplacementDialogPrimaryButton, viewModel.PrimaryButtonText);
     }
 

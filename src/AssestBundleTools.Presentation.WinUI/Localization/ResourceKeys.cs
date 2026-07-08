@@ -549,6 +549,8 @@ public static class ResourceKeys
     public const string WorkspaceBatchReplacementDialogSelectAllBundlesButton = "WorkspaceBatchReplacementDialog.SelectAllBundlesButton";
     public const string WorkspaceBatchReplacementDialogClearBundleSelectionButton = "WorkspaceBatchReplacementDialog.ClearBundleSelectionButton";
     public const string WorkspaceBatchReplacementDialogChangedBundlesOnlyButton = "WorkspaceBatchReplacementDialog.ChangedBundlesOnlyButton";
+    public const string WorkspaceBatchReplacementDialogBundleEmptyTitle = "WorkspaceBatchReplacementDialog.Bundle.EmptyTitle";
+    public const string WorkspaceBatchReplacementDialogBundleEmptyDetail = "WorkspaceBatchReplacementDialog.Bundle.EmptyDetail";
     public const string WorkspaceBatchReplacementDialogCandidateSectionTitle = "WorkspaceBatchReplacementDialog.CandidateSection.Title";
     public const string WorkspaceBatchReplacementDialogCandidateSectionHint = "WorkspaceBatchReplacementDialog.CandidateSection.Hint";
     public const string WorkspaceBatchReplacementDialogCandidateSearchPlaceholder = "WorkspaceBatchReplacementDialog.CandidateSearch.Placeholder";
@@ -557,6 +559,8 @@ public static class ResourceKeys
     public const string WorkspaceBatchReplacementDialogTypeFilterSpine = "WorkspaceBatchReplacementDialog.TypeFilter.Spine";
     public const string WorkspaceBatchReplacementDialogTypeFilterSelectedFormat = "WorkspaceBatchReplacementDialog.TypeFilter.Selected.Format";
     public const string WorkspaceBatchReplacementDialogSourceEmptyState = "WorkspaceBatchReplacementDialog.Source.EmptyState";
+    public const string WorkspaceBatchReplacementDialogCandidateEmptyTitle = "WorkspaceBatchReplacementDialog.Candidate.EmptyTitle";
+    public const string WorkspaceBatchReplacementDialogCandidateEmptyDetail = "WorkspaceBatchReplacementDialog.Candidate.EmptyDetail";
     public const string WorkspaceBatchReplacementDialogPreviewSectionTitle = "WorkspaceBatchReplacementDialog.PreviewSection.Title";
     public const string WorkspaceBatchReplacementDialogPreviewWaiting = "WorkspaceBatchReplacementDialog.Preview.Waiting";
     public const string WorkspaceBatchReplacementDialogPreviewLoading = "WorkspaceBatchReplacementDialog.Preview.Loading";

@@ -53,10 +53,13 @@ public sealed partial class WorkspaceBatchReplacementDialogContent : UserControl
         SelectAllBundlesButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSelectAllBundlesButton);
         ClearBundleSelectionButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogClearBundleSelectionButton);
         ChangedBundlesOnlyToggleButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogChangedBundlesOnlyButton);
+        BundleEmptyTitleText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogBundleEmptyTitle);
+        BundleEmptyDetailText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogBundleEmptyDetail);
         CandidateSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogCandidateSectionTitle);
         CandidateSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogCandidateSectionHint);
         CandidateSearchBox.PlaceholderText = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogCandidateSearchPlaceholder);
-        SourceEmptyStateText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogSourceEmptyState);
+        CandidateEmptyTitleText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogCandidateEmptyTitle);
+        CandidateEmptyDetailText.Text = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogCandidateEmptyDetail);
         TypeFilterListView.ItemsSource = ViewModel.TypeFilters;
     }
 

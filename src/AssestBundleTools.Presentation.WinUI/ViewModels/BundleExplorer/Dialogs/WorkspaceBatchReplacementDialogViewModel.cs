@@ -135,6 +135,14 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
 
     public Visibility SourceEmptyVisibility => HasSourceDirectory ? Visibility.Collapsed : Visibility.Visible;
 
+    public Visibility BundleListVisibility => FilteredBundles.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility BundleEmptyVisibility => HasSourceDirectory ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility CandidateListVisibility => FilteredCandidates.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility CandidateEmptyVisibility => HasSourceDirectory ? Visibility.Collapsed : Visibility.Visible;
+
     public bool HasCandidates => Candidates.Count > 0;
 
     public bool HasBundles => Bundles.Count > 0;
@@ -196,7 +204,7 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
             ? GetString(ResourceKeys.WorkspaceBatchReplacementDialogPreviewLoading)
             : GetString(ResourceKeys.WorkspaceBatchReplacementDialogSourceNotSelected);
         PrimaryButtonText = GetString(ResourceKeys.WorkspaceBatchReplacementDialogPrimaryButton);
-        OnPropertyChanged(nameof(SourceEmptyVisibility));
+        NotifySourceContentStateChanged();
     }
 
     public void SetPlanLoading()
@@ -259,6 +267,7 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
         OnPropertyChanged(nameof(HasCandidates));
         OnPropertyChanged(nameof(HasBundles));
         OnPropertyChanged(nameof(CanSubmit));
+        NotifyListVisibilityChanged();
     }
 
     public void ApplyPlanUnavailable()
@@ -282,6 +291,7 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
         OnPropertyChanged(nameof(HasCandidates));
         OnPropertyChanged(nameof(HasBundles));
         OnPropertyChanged(nameof(CanSubmit));
+        NotifyListVisibilityChanged();
     }
 
     public void SelectAllBundles()
@@ -308,6 +318,21 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel : Observabl
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
+
+    private void NotifySourceContentStateChanged()
+    {
+        OnPropertyChanged(nameof(SourceEmptyVisibility));
+        OnPropertyChanged(nameof(BundleEmptyVisibility));
+        OnPropertyChanged(nameof(CandidateEmptyVisibility));
+    }
+
+    private void NotifyListVisibilityChanged()
+    {
+        OnPropertyChanged(nameof(BundleListVisibility));
+        OnPropertyChanged(nameof(BundleEmptyVisibility));
+        OnPropertyChanged(nameof(CandidateListVisibility));
+        OnPropertyChanged(nameof(CandidateEmptyVisibility));
+    }
 
     private IReadOnlyList<WorkspaceBatchReplacementCandidateViewModel> CreateDisplayCandidates(
         IReadOnlyList<WorkspaceBatchReplacementCandidateDto> candidates)

@@ -792,6 +792,12 @@
   <data name="WorkspaceBatchReplacementDialog.ChangedBundlesOnlyButton" xml:space="preserve">
     <value>Changed only</value>
   </data>
+  <data name="WorkspaceBatchReplacementDialog.Bundle.EmptyTitle" xml:space="preserve">
+    <value>No source directory selected</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Bundle.EmptyDetail" xml:space="preserve">
+    <value>Select a source directory to load the bundle list.</value>
+  </data>
   <data name="WorkspaceBatchReplacementDialog.CandidateSection.Title" xml:space="preserve">
     <value>Replacement Candidates</value>
   </data>
@@ -814,6 +820,12 @@
     <value>{0} types</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Source.EmptyState" xml:space="preserve">
+    <value>Select a source directory to show replacement candidates here.</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Candidate.EmptyTitle" xml:space="preserve">
+    <value>Waiting for source directory</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Candidate.EmptyDetail" xml:space="preserve">
     <value>Select a source directory to show replacement candidates here.</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.PreviewSection.Title" xml:space="preserve">

@@ -14,7 +14,7 @@
         <Style
             x:Key="DialogSectionTitleTextStyle"
             TargetType="TextBlock">
-            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontSize" Value="18" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="TextWrapping" Value="WrapWholeWords" />
         </Style>
@@ -30,15 +30,23 @@
             <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
             <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="CornerRadius" Value="12" />
             <Setter Property="Padding" Value="18" />
             <Setter Property="Shadow" Value="{StaticResource BatchReplacementCardShadow}" />
         </Style>
         <Style
+            x:Key="BatchReplacementCardTitleIconStyle"
+            TargetType="Border">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Background" Value="{ThemeResource AccentFillColorTertiaryBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+        <Style
             x:Key="BatchReplacementCompactButtonStyle"
             TargetType="Button">
-            <Setter Property="MinHeight" Value="34" />
-            <Setter Property="MinWidth" Value="78" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="MinWidth" Value="84" />
             <Setter Property="Padding" Value="12,0" />
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="FontSize" Value="13" />
@@ -62,7 +70,7 @@
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         MinHeight="0"
-        RowSpacing="14">
+        RowSpacing="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -71,63 +79,67 @@
         <Border
             Style="{StaticResource BatchReplacementPanelCardStyle}"
             Translation="0,0,8">
-            <Grid RowSpacing="10">
+            <Grid
+                ColumnSpacing="18"
+                RowSpacing="12">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <Grid ColumnSpacing="12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Spacing="4">
-                        <StackPanel
-                            Orientation="Horizontal"
-                            Spacing="6">
-                            <TextBlock
-                                x:Name="SourceSectionTitleText"
-                                VerticalAlignment="Center"
-                                Style="{StaticResource DialogSectionTitleTextStyle}" />
-                            <Button
-                                x:Name="SourceSectionHelpButton"
-                                Style="{StaticResource BatchReplacementHelpButtonStyle}"
-                                PointerEntered="OnSourceSectionHelpButtonPointerEntered"
-                                PointerExited="OnSourceSectionHelpButtonPointerExited"
-                                ToolTipService.Placement="Right">
-                                <FontIcon
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    FontFamily="Segoe Fluent Icons"
-                                    FontSize="9"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Glyph="&#xE897;" />
-                            </Button>
-                        </StackPanel>
-                    </StackPanel>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="6">
+                    <TextBlock
+                        x:Name="SourceSectionTitleText"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource DialogSectionTitleTextStyle}" />
+                    <Button
+                        x:Name="SourceSectionHelpButton"
+                        Style="{StaticResource BatchReplacementHelpButtonStyle}"
+                        PointerEntered="OnSourceSectionHelpButtonPointerEntered"
+                        PointerExited="OnSourceSectionHelpButtonPointerExited"
+                        ToolTipService.Placement="Right">
+                        <FontIcon
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="9"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Glyph="&#xE897;" />
+                    </Button>
+                </StackPanel>
+
+                <StackPanel
+                    Grid.Column="1"
+                    Orientation="Horizontal"
+                    Spacing="12">
                     <Button
                         x:Name="ChooseSourceDirectoryButton"
-                        Grid.Column="1"
+                        Width="116"
                         Click="OnChooseSourceDirectoryButtonClick"
                         Style="{StaticResource BatchReplacementCompactButtonStyle}" />
                     <Button
                         x:Name="RefreshPlanButton"
-                        Grid.Column="2"
+                        Width="108"
                         Click="OnRefreshPlanButtonClick"
                         IsEnabled="{Binding HasSourceDirectory}"
                         Style="{StaticResource BatchReplacementCompactButtonStyle}" />
-                </Grid>
+                </StackPanel>
 
                 <Grid
                     Grid.Row="1"
-                    ColumnSpacing="10">
+                    ColumnSpacing="12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <Border
-                        Padding="10,4"
+                        Padding="12,5"
                         VerticalAlignment="Center"
                         Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                         CornerRadius="8">
@@ -152,12 +164,10 @@
         <Grid
             Grid.Row="1"
             MinHeight="0"
-            ColumnSpacing="14">
+            ColumnSpacing="18">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition
-                    Width="360"
-                    MinWidth="320" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="55*" MinWidth="400" />
+                <ColumnDefinition Width="100*" MinWidth="620" />
             </Grid.ColumnDefinitions>
 
             <Border
@@ -165,25 +175,43 @@
                 Translation="0,0,8">
                 <Grid
                     MinHeight="0"
-                    RowSpacing="12">
+                    RowSpacing="14">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <StackPanel Spacing="4">
-                        <TextBlock
-                            x:Name="BundleSectionTitleText"
-                            Style="{StaticResource DialogSectionTitleTextStyle}" />
-                        <TextBlock
-                            x:Name="BundleSectionHintText"
-                            Style="{StaticResource DialogSecondaryTextStyle}" />
-                    </StackPanel>
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource BatchReplacementCardTitleIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                Glyph="&#xE8A5;" />
+                        </Border>
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="BundleSectionTitleText"
+                                Style="{StaticResource DialogSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="BundleSectionHintText"
+                                FontSize="13"
+                                Style="{StaticResource DialogSecondaryTextStyle}" />
+                        </StackPanel>
+                    </Grid>
 
                     <StackPanel
                         Grid.Row="1"
                         Orientation="Horizontal"
-                        Spacing="8">
+                        Spacing="10">
                         <Button
                             x:Name="SelectAllBundlesButton"
                             Click="OnSelectAllBundlesButtonClick"
@@ -196,8 +224,8 @@
                             Style="{StaticResource BatchReplacementCompactButtonStyle}" />
                         <ToggleButton
                             x:Name="ChangedBundlesOnlyToggleButton"
-                            MinHeight="34"
-                            MinWidth="92"
+                            MinHeight="36"
+                            MinWidth="98"
                             Padding="12,0"
                             CornerRadius="8"
                             FontSize="13"
@@ -205,64 +233,124 @@
                             IsChecked="{Binding ShowChangedBundlesOnly, Mode=TwoWay}" />
                     </StackPanel>
 
-                    <ListView
+                    <Grid
                         Grid.Row="2"
-                        ItemsSource="{Binding FilteredBundles}"
-                        SelectionMode="None">
-                        <ListView.ItemContainerStyle>
-                            <Style TargetType="ListViewItem">
-                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                <Setter Property="MinHeight" Value="62" />
-                                <Setter Property="Padding" Value="0" />
-                            </Style>
-                        </ListView.ItemContainerStyle>
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Grid
-                                        Padding="6"
-                                        ColumnSpacing="10">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="34" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <CheckBox
-                                            Width="28"
-                                            MinWidth="0"
-                                            Padding="0"
-                                            VerticalAlignment="Center"
-                                            IsChecked="{Binding IsSelected, Mode=TwoWay}" />
-                                        <StackPanel
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            Spacing="3">
+                        MinHeight="0">
+                        <ListView
+                            ItemsSource="{Binding FilteredBundles}"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto"
+                            SelectionMode="None"
+                            Visibility="{Binding BundleListVisibility}">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="MinHeight" Value="0" />
+                                    <Setter Property="Margin" Value="0" />
+                                    <Setter Property="Padding" Value="0" />
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border
+                                        MinHeight="76"
+                                        Margin="0,0,0,8"
+                                        Padding="10,8"
+                                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="8">
+                                        <Grid ColumnSpacing="10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="32" />
+                                                <ColumnDefinition Width="38" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox
+                                                Width="28"
+                                                MinWidth="0"
+                                                Padding="0"
+                                                VerticalAlignment="Center"
+                                                IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                            <Border
+                                                Grid.Column="1"
+                                                Width="30"
+                                                Height="34"
+                                                VerticalAlignment="Center"
+                                                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="4">
+                                                <FontIcon
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    FontFamily="Segoe Fluent Icons"
+                                                    FontSize="18"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    Glyph="&#xE8A5;" />
+                                            </Border>
+                                            <StackPanel
+                                                Grid.Column="2"
+                                                VerticalAlignment="Center"
+                                                Spacing="3">
+                                                <TextBlock
+                                                    FontSize="14"
+                                                    FontWeight="SemiBold"
+                                                    Text="{Binding DisplayName}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                                <TextBlock
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    FontSize="12"
+                                                    Text="{Binding LogicalPath}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
                                             <TextBlock
-                                                FontSize="13"
-                                                FontWeight="SemiBold"
-                                                Text="{Binding DisplayName}"
-                                                TextTrimming="CharacterEllipsis" />
-                                            <TextBlock
+                                                Grid.Column="3"
+                                                VerticalAlignment="Center"
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                FontSize="12"
-                                                Text="{Binding LogicalPath}"
-                                                TextTrimming="CharacterEllipsis" />
-                                        </StackPanel>
-                                        <TextBlock
-                                            Grid.Column="2"
-                                            VerticalAlignment="Center"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            FontSize="12"
-                                            Text="{Binding CountText}" />
-                                    </Grid>
-                                    <Rectangle
-                                        Height="1"
-                                        VerticalAlignment="Bottom"
-                                        Fill="{ThemeResource CardStrokeColorDefaultBrush}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
+                                                FontSize="13"
+                                                Text="{Binding CountText}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            MaxWidth="300"
+                            Spacing="10"
+                            Visibility="{Binding BundleEmptyVisibility}">
+                            <Border
+                                Width="56"
+                                Height="48"
+                                HorizontalAlignment="Center"
+                                Background="{ThemeResource AccentFillColorTertiaryBrush}"
+                                CornerRadius="12">
+                                <FontIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontFamily="Segoe Fluent Icons"
+                                    FontSize="28"
+                                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                    Glyph="&#xE8B7;" />
+                            </Border>
+                            <TextBlock
+                                x:Name="BundleEmptyTitleText"
+                                HorizontalAlignment="Center"
+                                FontSize="15"
+                                FontWeight="SemiBold"
+                                TextAlignment="Center"
+                                TextWrapping="WrapWholeWords" />
+                            <TextBlock
+                                x:Name="BundleEmptyDetailText"
+                                HorizontalAlignment="Center"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                FontSize="13"
+                                TextAlignment="Center"
+                                TextWrapping="WrapWholeWords" />
+                        </StackPanel>
+                    </Grid>
                 </Grid>
             </Border>
 
@@ -272,39 +360,58 @@
                 Translation="0,0,8">
                 <Grid
                     MinHeight="0"
-                    RowSpacing="12">
+                    RowSpacing="14">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <StackPanel Spacing="4">
-                        <TextBlock
-                            x:Name="CandidateSectionTitleText"
-                            Style="{StaticResource DialogSectionTitleTextStyle}" />
-                        <TextBlock
-                            x:Name="CandidateSectionHintText"
-                            Style="{StaticResource DialogSecondaryTextStyle}" />
-                    </StackPanel>
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource BatchReplacementCardTitleIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                Glyph="&#xE8EF;" />
+                        </Border>
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="CandidateSectionTitleText"
+                                Style="{StaticResource DialogSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="CandidateSectionHintText"
+                                FontSize="13"
+                                Style="{StaticResource DialogSecondaryTextStyle}" />
+                        </StackPanel>
+                    </Grid>
 
                     <Grid
                         Grid.Row="1"
-                        ColumnSpacing="8">
+                        ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="168" />
+                            <ColumnDefinition Width="168" />
                         </Grid.ColumnDefinitions>
                         <AutoSuggestBox
                             x:Name="CandidateSearchBox"
-                            Height="36"
+                            MinHeight="38"
                             IsEnabled="{Binding HasCandidates}"
-                            Text="{Binding CandidateSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            QueryIcon="Find" />
+                            QueryIcon="Find"
+                            Text="{Binding CandidateSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <ComboBox
                             x:Name="StatusFilterComboBox"
                             Grid.Column="1"
-                            Width="132"
+                            MinHeight="38"
+                            HorizontalAlignment="Stretch"
                             IsEnabled="{Binding HasCandidates}"
                             ItemsSource="{Binding StatusFilters}"
                             SelectedItem="{Binding SelectedStatusFilter, Mode=TwoWay}">
@@ -317,7 +424,8 @@
                         <Button
                             x:Name="TypeFilterButton"
                             Grid.Column="2"
-                            Width="132"
+                            MinHeight="38"
+                            HorizontalAlignment="Stretch"
                             IsEnabled="{Binding HasCandidates}"
                             Style="{StaticResource BatchReplacementCompactButtonStyle}">
                             <Grid ColumnSpacing="8">
@@ -339,7 +447,7 @@
                             <Button.Flyout>
                                 <Flyout Placement="BottomEdgeAlignedLeft">
                                     <Border
-                                        MinWidth="160"
+                                        MinWidth="180"
                                         Padding="8"
                                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                                         <ListView
@@ -373,20 +481,25 @@
                         MinHeight="0">
                         <ListView
                             ItemsSource="{Binding FilteredCandidates}"
-                            SelectionMode="None">
+                            ScrollViewer.VerticalScrollBarVisibility="Auto"
+                            SelectionMode="None"
+                            Visibility="{Binding CandidateListVisibility}">
                             <ListView.ItemContainerStyle>
                                 <Style TargetType="ListViewItem">
                                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                    <Setter Property="MinHeight" Value="78" />
+                                    <Setter Property="MinHeight" Value="0" />
+                                    <Setter Property="Margin" Value="0" />
                                     <Setter Property="Padding" Value="0" />
                                 </Style>
                             </ListView.ItemContainerStyle>
                             <ListView.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid>
-                                        <Grid
-                                            Padding="8,8"
-                                            ColumnSpacing="12">
+                                    <Border
+                                        MinHeight="84"
+                                        Padding="12,8"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        BorderThickness="0,0,0,1">
+                                        <Grid ColumnSpacing="12">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="34" />
                                                 <ColumnDefinition Width="*" />
@@ -404,7 +517,7 @@
                                                 VerticalAlignment="Center"
                                                 Spacing="3">
                                                 <TextBlock
-                                                    FontSize="13"
+                                                    FontSize="14"
                                                     FontWeight="SemiBold"
                                                     Text="{Binding AssetName}"
                                                     TextTrimming="CharacterEllipsis" />
@@ -421,30 +534,58 @@
                                             </StackPanel>
                                             <Border
                                                 Grid.Column="2"
-                                                Padding="8,3"
+                                                Padding="9,3"
                                                 VerticalAlignment="Top"
                                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                                CornerRadius="8">
+                                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="10">
                                                 <TextBlock
                                                     FontSize="12"
+                                                    FontWeight="SemiBold"
                                                     Text="{Binding StatusText}" />
                                             </Border>
                                         </Grid>
-                                        <Rectangle
-                                            Height="1"
-                                            VerticalAlignment="Bottom"
-                                            Fill="{ThemeResource CardStrokeColorDefaultBrush}" />
-                                    </Grid>
+                                    </Border>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
 
-                        <TextBlock
-                            x:Name="SourceEmptyStateText"
+                        <StackPanel
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            Style="{StaticResource DialogSecondaryTextStyle}"
-                            Visibility="{Binding SourceEmptyVisibility}" />
+                            MaxWidth="360"
+                            Spacing="10"
+                            Visibility="{Binding CandidateEmptyVisibility}">
+                            <Border
+                                Width="56"
+                                Height="48"
+                                HorizontalAlignment="Center"
+                                Background="{ThemeResource AccentFillColorTertiaryBrush}"
+                                CornerRadius="12">
+                                <FontIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontFamily="Segoe Fluent Icons"
+                                    FontSize="28"
+                                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                    Glyph="&#xE8B7;" />
+                            </Border>
+                            <TextBlock
+                                x:Name="CandidateEmptyTitleText"
+                                HorizontalAlignment="Center"
+                                FontSize="15"
+                                FontWeight="SemiBold"
+                                TextAlignment="Center"
+                                TextWrapping="WrapWholeWords" />
+                            <TextBlock
+                                x:Name="CandidateEmptyDetailText"
+                                HorizontalAlignment="Center"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                FontSize="13"
+                                TextAlignment="Center"
+                                TextWrapping="WrapWholeWords" />
+                        </StackPanel>
                     </Grid>
                 </Grid>
             </Border>

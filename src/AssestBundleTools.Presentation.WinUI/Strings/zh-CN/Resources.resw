@@ -792,6 +792,12 @@
   <data name="WorkspaceBatchReplacementDialog.ChangedBundlesOnlyButton" xml:space="preserve">
     <value>仅已变更</value>
   </data>
+  <data name="WorkspaceBatchReplacementDialog.Bundle.EmptyTitle" xml:space="preserve">
+    <value>尚未选择来源目录</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Bundle.EmptyDetail" xml:space="preserve">
+    <value>选择来源目录后可加载资源包列表。</value>
+  </data>
   <data name="WorkspaceBatchReplacementDialog.CandidateSection.Title" xml:space="preserve">
     <value>替换候选</value>
   </data>
@@ -814,6 +820,12 @@
     <value>已选 {0} 类</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.Source.EmptyState" xml:space="preserve">
+    <value>选择来源目录后会在这里显示替换候选。</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Candidate.EmptyTitle" xml:space="preserve">
+    <value>等待来源目录</value>
+  </data>
+  <data name="WorkspaceBatchReplacementDialog.Candidate.EmptyDetail" xml:space="preserve">
     <value>选择来源目录后会在这里显示替换候选。</value>
   </data>
   <data name="WorkspaceBatchReplacementDialog.PreviewSection.Title" xml:space="preserve">

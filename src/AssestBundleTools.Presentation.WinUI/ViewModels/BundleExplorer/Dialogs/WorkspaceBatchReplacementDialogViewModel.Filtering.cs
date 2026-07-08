@@ -58,6 +58,9 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel
 
             FilteredBundles.Add(bundle);
         }
+
+        OnPropertyChanged(nameof(BundleListVisibility));
+        OnPropertyChanged(nameof(BundleEmptyVisibility));
     }
 
     private void ApplyCandidateFilters()
@@ -108,6 +111,9 @@ public sealed partial class WorkspaceBatchReplacementDialogViewModel
 
             FilteredCandidates.Add(candidate);
         }
+
+        OnPropertyChanged(nameof(CandidateListVisibility));
+        OnPropertyChanged(nameof(CandidateEmptyVisibility));
     }
 
     private WorkspaceBatchReplacementFilterOptionViewModel? SelectDefaultStatusFilter(string? previousKey)
