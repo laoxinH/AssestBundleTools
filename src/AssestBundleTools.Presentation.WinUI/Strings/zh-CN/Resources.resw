@@ -4311,6 +4311,12 @@
   <data name="WorkspaceExportDialog.ResourceProcessorSection.Hint" xml:space="preserve">
     <value>选择需要纳入预处理链路的资源类型。</value>
   </data>
+  <data name="WorkspaceExportDialog.ResourceProcessorSection.HelpText" xml:space="preserve">
+    <value>预处理链路说明</value>
+  </data>
+  <data name="WorkspaceExportDialog.ExportOptionsSection.Title" xml:space="preserve">
+    <value>导出选项</value>
+  </data>
   <data name="WorkspaceExportDialog.ExportToWorkspaceDirectory" xml:space="preserve">
     <value>导出到工作区输出目录</value>
   </data>
@@ -4418,6 +4424,15 @@
   </data>
   <data name="WorkspaceExportDialog.ClearBundleSelectionButton" xml:space="preserve">
     <value>清空</value>
+  </data>
+  <data name="WorkspaceExportDialog.SelectedBundleCount.Format" xml:space="preserve">
+    <value>已选择 {0} 项</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleStatus.Modified" xml:space="preserve">
+    <value>修改</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleStatus.Unmodified" xml:space="preserve">
+    <value>未修改</value>
   </data>
   <data name="WorkspaceExportDialog.PreviewSection.Title" xml:space="preserve">
     <value>计划摘要</value>

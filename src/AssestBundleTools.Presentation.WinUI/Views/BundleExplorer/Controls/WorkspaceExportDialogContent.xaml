@@ -12,9 +12,15 @@
     <UserControl.Resources>
         <ThemeShadow x:Key="WorkspaceExportCardShadow" />
         <Style x:Key="WorkspaceExportSectionTitleTextStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontSize" Value="19" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="TextWrapping" Value="WrapWholeWords" />
+        </Style>
+        <Style x:Key="WorkspaceExportCardTitleIconStyle" TargetType="Border">
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Background" Value="{ThemeResource AccentFillColorTertiaryBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
         </Style>
         <Style x:Key="WorkspaceExportSecondaryTextStyle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -24,75 +30,117 @@
             <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
             <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="18" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="Padding" Value="22" />
             <Setter Property="Shadow" Value="{StaticResource WorkspaceExportCardShadow}" />
         </Style>
         <Style x:Key="WorkspaceExportCompactButtonStyle" TargetType="Button">
-            <Setter Property="MinHeight" Value="34" />
-            <Setter Property="MinWidth" Value="78" />
-            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="MinHeight" Value="38" />
+            <Setter Property="MinWidth" Value="88" />
+            <Setter Property="Padding" Value="14,0" />
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="FontSize" Value="13" />
         </Style>
+        <DataTemplate x:Key="WorkspaceExportComboBoxItemTemplate">
+            <StackPanel Spacing="2" MaxWidth="360">
+                <TextBlock FontWeight="SemiBold" Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+                <TextBlock
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    MaxLines="1"
+                    Text="{Binding Description}"
+                    TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+        </DataTemplate>
     </UserControl.Resources>
 
-    <Grid ColumnSpacing="14">
+    <Grid ColumnSpacing="20">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="420" MinWidth="360" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" MinWidth="460" />
+            <ColumnDefinition Width="105*" MinWidth="520" />
         </Grid.ColumnDefinitions>
 
         <Border Style="{StaticResource WorkspaceExportPanelCardStyle}" Translation="0,0,8">
-            <Grid RowSpacing="12">
+            <Grid RowSpacing="16">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <StackPanel Spacing="4">
-                    <TextBlock
-                        x:Name="BundleSectionTitleText"
-                        Style="{StaticResource WorkspaceExportSectionTitleTextStyle}" />
-                    <TextBlock
-                        x:Name="BundleSectionHintText"
-                        Style="{StaticResource WorkspaceExportSecondaryTextStyle}" />
-                </StackPanel>
-                <Grid Grid.Row="1" ColumnSpacing="8">
+                <Grid ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource WorkspaceExportCardTitleIconStyle}">
+                        <FontIcon
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="13"
+                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                            Glyph="&#xE8A5;" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="4">
+                        <TextBlock
+                            x:Name="BundleSectionTitleText"
+                            Style="{StaticResource WorkspaceExportSectionTitleTextStyle}" />
+                        <TextBlock
+                            x:Name="BundleSectionHintText"
+                            Style="{StaticResource WorkspaceExportSecondaryTextStyle}" />
+                    </StackPanel>
+                </Grid>
+                <Grid Grid.Row="1" ColumnSpacing="12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="180" />
                     </Grid.ColumnDefinitions>
                     <TextBox
                         x:Name="BundleSearchTextBox"
+                        MinHeight="40"
                         Text="{Binding BundleSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     <ComboBox
                         Grid.Column="1"
+                        MinHeight="40"
                         HorizontalAlignment="Stretch"
                         ItemsSource="{Binding BundleSortOptions}"
                         SelectedItem="{Binding SelectedBundleSortOption, Mode=TwoWay}"
                         DisplayMemberPath="DisplayName" />
                 </Grid>
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
-                    <Button
-                        x:Name="SelectAllBundlesButton"
-                        Click="OnSelectAllBundlesButtonClick"
-                        Style="{StaticResource WorkspaceExportCompactButtonStyle}" />
-                    <Button
-                        x:Name="ClearBundleSelectionButton"
-                        Click="OnClearBundleSelectionButtonClick"
-                        Style="{StaticResource WorkspaceExportCompactButtonStyle}" />
-                </StackPanel>
+                <Grid Grid.Row="2" ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button
+                            x:Name="SelectAllBundlesButton"
+                            Click="OnSelectAllBundlesButtonClick"
+                            Style="{StaticResource WorkspaceExportCompactButtonStyle}" />
+                        <Button
+                            x:Name="ClearBundleSelectionButton"
+                            Click="OnClearBundleSelectionButtonClick"
+                            Style="{StaticResource WorkspaceExportCompactButtonStyle}" />
+                    </StackPanel>
+                    <TextBlock
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{Binding SelectedBundleCountText}" />
+                </Grid>
                 <ListView
                     Grid.Row="3"
                     ItemsSource="{Binding VisibleBundles}"
-                    SelectionMode="None">
+                    SelectionMode="None"
+                    ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ListView.ItemContainerStyle>
                         <Style TargetType="ListViewItem">
                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                             <Setter Property="MinHeight" Value="0" />
                             <Setter Property="Padding" Value="0" />
+                            <Setter Property="Margin" Value="0" />
                         </Style>
                     </ListView.ItemContainerStyle>
                     <ListView.ItemTemplate>
@@ -121,13 +169,15 @@
                                     </Grid>
                                 </Border>
                                 <Grid
-                                    MinHeight="78"
-                                    Padding="8"
+                                    MinHeight="100"
+                                    Padding="8,10"
                                     ColumnSpacing="12"
                                     Visibility="{Binding BundleVisibility}">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="34" />
+                                        <ColumnDefinition Width="32" />
+                                        <ColumnDefinition Width="42" />
                                         <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="74" />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox
                                         Width="28"
@@ -135,10 +185,72 @@
                                         Padding="0"
                                         VerticalAlignment="Center"
                                         IsChecked="{Binding Bundle.IsSelected, Mode=TwoWay}" />
-                                    <StackPanel Grid.Column="1" Spacing="3">
-                                        <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding Bundle.DisplayName}" />
-                                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{Binding Bundle.SummaryText}" />
-                                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{Binding Bundle.OutputPath}" TextTrimming="CharacterEllipsis" />
+                                    <Border
+                                        Grid.Column="1"
+                                        Width="32"
+                                        Height="38"
+                                        VerticalAlignment="Center"
+                                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="4">
+                                        <FontIcon
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="20"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Glyph="&#xE8A5;" />
+                                    </Border>
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="4">
+                                        <TextBlock
+                                            FontSize="14"
+                                            FontWeight="SemiBold"
+                                            Text="{Binding Bundle.DisplayName}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            FontSize="12"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{Binding Bundle.SummaryText}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            FontSize="12"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{Binding Bundle.OutputPath}"
+                                            TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                    <StackPanel
+                                        Grid.Column="3"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Right"
+                                        Spacing="8">
+                                        <Border
+                                            Padding="10,3"
+                                            Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                            CornerRadius="10"
+                                            Visibility="{Binding Bundle.ModifiedStatusVisibility}">
+                                            <TextBlock
+                                                FontSize="11"
+                                                FontWeight="SemiBold"
+                                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                                Text="{Binding Bundle.StatusText}" />
+                                        </Border>
+                                        <Border
+                                            Padding="10,3"
+                                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                            CornerRadius="10"
+                                            Visibility="{Binding Bundle.UnmodifiedStatusVisibility}">
+                                            <TextBlock
+                                                FontSize="11"
+                                                FontWeight="SemiBold"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="{Binding Bundle.StatusText}" />
+                                        </Border>
+                                        <TextBlock
+                                            HorizontalAlignment="Right"
+                                            FontSize="12"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{Binding Bundle.LastChangedLocalTimeText}"
+                                            Visibility="{Binding Bundle.LastChangedLocalTimeVisibility}" />
                                     </StackPanel>
                                 </Grid>
                                 <Rectangle Height="1" VerticalAlignment="Bottom" Fill="{ThemeResource CardStrokeColorDefaultBrush}" />
@@ -149,36 +261,76 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Column="1" RowSpacing="14">
+        <Grid Grid.Column="1" RowSpacing="20">
             <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
+                <RowDefinition Height="2.1*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Border Style="{StaticResource WorkspaceExportPanelCardStyle}" Translation="0,0,8">
-                <Grid RowSpacing="12">
+                <Grid RowSpacing="16">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <StackPanel Spacing="4">
-                        <TextBlock
-                            x:Name="ResourceProcessorSectionTitleText"
-                            Style="{StaticResource WorkspaceExportSectionTitleTextStyle}" />
-                        <TextBlock
-                            x:Name="ResourceProcessorSectionHintText"
-                            Style="{StaticResource WorkspaceExportSecondaryTextStyle}" />
-                    </StackPanel>
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource WorkspaceExportCardTitleIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="13"
+                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                Glyph="&#xE713;" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock
+                                x:Name="ResourceProcessorSectionTitleText"
+                                Style="{StaticResource WorkspaceExportSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="ResourceProcessorSectionHintText"
+                                Style="{StaticResource WorkspaceExportSecondaryTextStyle}" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="6">
+                            <TextBlock
+                                x:Name="ResourceProcessorHelpText"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <FontIcon
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Glyph="&#xE946;" />
+                        </StackPanel>
+                    </Grid>
                     <ListView
                         Grid.Row="1"
                         ItemsSource="{Binding ResourceProcessors}"
-                        SelectionMode="None">
+                        SelectionMode="None"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="MinHeight" Value="0" />
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Margin" Value="0" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid Padding="8" ColumnSpacing="12">
+                                <Grid MinHeight="84" Padding="8,8" ColumnSpacing="12">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="34" />
+                                        <ColumnDefinition Width="32" />
                                         <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="210" />
+                                        <ColumnDefinition Width="330" />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox
                                         Width="28"
@@ -186,92 +338,107 @@
                                         Padding="0"
                                         VerticalAlignment="Center"
                                         IsChecked="{Binding IsEnabled, Mode=TwoWay}" />
-                                    <StackPanel Grid.Column="1" Spacing="3">
-                                        <TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding DisplayName}" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="{Binding DisplayName}" />
                                         <TextBlock
                                             FontSize="12"
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            MaxLines="2"
                                             Text="{Binding Description}"
                                             TextWrapping="WrapWholeWords" />
                                     </StackPanel>
                                     <ComboBox
                                         Grid.Column="2"
+                                        MinHeight="58"
                                         VerticalAlignment="Center"
                                         HorizontalAlignment="Stretch"
                                         ItemsSource="{Binding Processors}"
-                                        SelectedItem="{Binding SelectedProcessor, Mode=TwoWay}">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Spacing="2">
-                                                    <TextBlock FontWeight="SemiBold" Text="{Binding DisplayName}" />
-                                                    <TextBlock
-                                                        FontSize="12"
-                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                        Text="{Binding Description}"
-                                                        TextTrimming="CharacterEllipsis" />
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
+                                        ItemTemplate="{StaticResource WorkspaceExportComboBoxItemTemplate}"
+                                        SelectedItem="{Binding SelectedProcessor, Mode=TwoWay}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
                 </Grid>
             </Border>
-            <Border
-                Grid.Row="1"
-                Padding="16,14"
-                Style="{StaticResource WorkspaceExportPanelCardStyle}"
-                Translation="0,0,8">
-                <Grid ColumnSpacing="18">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="292" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Spacing="6">
-                        <CheckBox
-                            x:Name="ExportToWorkspaceDirectoryCheckBox"
-                            IsChecked="{Binding ExportToWorkspaceDirectory, Mode=TwoWay}" />
-                        <CheckBox
-                            x:Name="OverwriteExistingFilesCheckBox"
-                            IsChecked="{Binding OverwriteExistingFiles, Mode=TwoWay}" />
-                        <CheckBox
-                            x:Name="ForceAudioPayloadWriteCheckBox"
-                            IsChecked="{Binding ForceAudioPayloadWrite, Mode=TwoWay}" />
-                        <TextBlock
-                            Margin="34,-2,0,0"
-                            FontSize="12"
-                            Foreground="{ThemeResource SystemFillColorCautionBrush}"
-                            Text="{Binding ForceAudioWarningText}"
-                            TextWrapping="WrapWholeWords" />
+            <Grid Grid.Row="1" ColumnSpacing="20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="85*" />
+                    <ColumnDefinition Width="115*" />
+                </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource WorkspaceExportPanelCardStyle}" Translation="0,0,8">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Style="{StaticResource WorkspaceExportCardTitleIconStyle}">
+                                <FontIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontFamily="Segoe Fluent Icons"
+                                    FontSize="13"
+                                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                    Glyph="&#xE9D5;" />
+                            </Border>
+                            <TextBlock
+                                x:Name="ExportOptionsSectionTitleText"
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource WorkspaceExportSectionTitleTextStyle}" />
+                        </Grid>
+                        <StackPanel Spacing="6">
+                            <CheckBox
+                                x:Name="ExportToWorkspaceDirectoryCheckBox"
+                                IsChecked="{Binding ExportToWorkspaceDirectory, Mode=TwoWay}" />
+                            <CheckBox
+                                x:Name="OverwriteExistingFilesCheckBox"
+                                IsChecked="{Binding OverwriteExistingFiles, Mode=TwoWay}" />
+                            <CheckBox
+                                x:Name="ForceAudioPayloadWriteCheckBox"
+                                IsChecked="{Binding ForceAudioPayloadWrite, Mode=TwoWay}" />
+                            <TextBlock
+                                Margin="34,-2,0,0"
+                                FontSize="12"
+                                Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                Text="{Binding ForceAudioWarningText}"
+                                TextWrapping="WrapWholeWords"
+                                Visibility="{Binding ForceAudioWarningVisibility}" />
+                        </StackPanel>
                     </StackPanel>
-                    <StackPanel Grid.Column="1" Spacing="6">
-                        <TextBlock
-                            x:Name="CompressionModeLabelText"
-                            FontSize="12"
-                            FontWeight="SemiBold"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource WorkspaceExportPanelCardStyle}" Translation="0,0,8">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Style="{StaticResource WorkspaceExportCardTitleIconStyle}">
+                                <FontIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontFamily="Segoe Fluent Icons"
+                                    FontSize="13"
+                                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                    Glyph="&#xE8C7;" />
+                            </Border>
+                            <TextBlock
+                                x:Name="CompressionModeLabelText"
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource WorkspaceExportSectionTitleTextStyle}" />
+                        </Grid>
                         <ComboBox
+                            MinHeight="58"
                             HorizontalAlignment="Stretch"
                             ItemsSource="{Binding CompressionOptions}"
-                            SelectedItem="{Binding SelectedCompressionOption, Mode=TwoWay}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Spacing="2">
-                                        <TextBlock FontWeight="SemiBold" Text="{Binding DisplayName}" />
-                                        <TextBlock
-                                            FontSize="12"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{Binding Description}"
-                                            TextTrimming="CharacterEllipsis" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                            ItemTemplate="{StaticResource WorkspaceExportComboBoxItemTemplate}"
+                            SelectedItem="{Binding SelectedCompressionOption, Mode=TwoWay}" />
                     </StackPanel>
-                </Grid>
-            </Border>
+                </Border>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

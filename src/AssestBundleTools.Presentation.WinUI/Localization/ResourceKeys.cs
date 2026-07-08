@@ -588,6 +588,8 @@ public static class ResourceKeys
     public const string WorkspaceExportDialogCloseButton = "WorkspaceExportDialog.CloseButton";
     public const string WorkspaceExportDialogResourceProcessorSectionTitle = "WorkspaceExportDialog.ResourceProcessorSection.Title";
     public const string WorkspaceExportDialogResourceProcessorSectionHint = "WorkspaceExportDialog.ResourceProcessorSection.Hint";
+    public const string WorkspaceExportDialogResourceProcessorHelpText = "WorkspaceExportDialog.ResourceProcessorSection.HelpText";
+    public const string WorkspaceExportDialogExportOptionsSectionTitle = "WorkspaceExportDialog.ExportOptionsSection.Title";
     public const string WorkspaceExportDialogExportToWorkspaceDirectory = "WorkspaceExportDialog.ExportToWorkspaceDirectory";
     public const string WorkspaceExportDialogOverwriteExistingFiles = "WorkspaceExportDialog.OverwriteExistingFiles";
     public const string WorkspaceExportDialogForceAudioPayloadWrite = "WorkspaceExportDialog.ForceAudioPayloadWrite";
@@ -624,6 +626,9 @@ public static class ResourceKeys
     public const string WorkspaceExportDialogBundleGroupPrevious = "WorkspaceExportDialog.BundleGroup.Previous";
     public const string WorkspaceExportDialogSelectAllBundlesButton = "WorkspaceExportDialog.SelectAllBundlesButton";
     public const string WorkspaceExportDialogClearBundleSelectionButton = "WorkspaceExportDialog.ClearBundleSelectionButton";
+    public const string WorkspaceExportDialogSelectedBundleCountFormat = "WorkspaceExportDialog.SelectedBundleCount.Format";
+    public const string WorkspaceExportDialogBundleStatusModified = "WorkspaceExportDialog.BundleStatus.Modified";
+    public const string WorkspaceExportDialogBundleStatusUnmodified = "WorkspaceExportDialog.BundleStatus.Unmodified";
     public const string WorkspaceExportDialogPreviewSectionTitle = "WorkspaceExportDialog.PreviewSection.Title";
     public const string WorkspaceExportDialogPlanSummaryFormat = "WorkspaceExportDialog.PlanSummary.Format";
     public const string WorkspaceExportDialogBundleSummaryFormat = "WorkspaceExportDialog.BundleSummary.Format";

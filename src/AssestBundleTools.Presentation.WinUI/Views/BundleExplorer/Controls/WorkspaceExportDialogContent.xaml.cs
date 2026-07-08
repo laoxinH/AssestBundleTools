@@ -26,6 +26,8 @@ public sealed partial class WorkspaceExportDialogContent : UserControl
         ClearBundleSelectionButton.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogClearBundleSelectionButton);
         ResourceProcessorSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorSectionTitle);
         ResourceProcessorSectionHintText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorSectionHint);
+        ResourceProcessorHelpText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorHelpText);
+        ExportOptionsSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogExportOptionsSectionTitle);
         ExportToWorkspaceDirectoryCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogExportToWorkspaceDirectory);
         OverwriteExistingFilesCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogOverwriteExistingFiles);
         ForceAudioPayloadWriteCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogForceAudioPayloadWrite);

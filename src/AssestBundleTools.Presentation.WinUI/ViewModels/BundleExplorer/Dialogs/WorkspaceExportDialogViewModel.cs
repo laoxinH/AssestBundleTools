@@ -200,6 +200,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
             if (SetProperty(ref _forceAudioPayloadWrite, value))
             {
                 OnPropertyChanged(nameof(ForceAudioWarningText));
+                OnPropertyChanged(nameof(ForceAudioWarningVisibility));
             }
         }
     }
@@ -208,6 +209,14 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         ForceAudioPayloadWrite
             ? _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogForceAudioPayloadWriteWarning)
             : string.Empty;
+
+    public Visibility ForceAudioWarningVisibility =>
+        ForceAudioPayloadWrite ? Visibility.Visible : Visibility.Collapsed;
+
+    public string SelectedBundleCountText =>
+        _localizationService.GetFormattedString(
+            ResourceKeys.WorkspaceExportDialogSelectedBundleCountFormat,
+            Bundles.Count(static bundle => bundle.IsSelected));
 
     public WorkspaceExportBundleSortOptionViewModel? SelectedBundleSortOption
     {
@@ -430,6 +439,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(HasExportTargets));
         OnPropertyChanged(nameof(CanStartExport));
+        OnPropertyChanged(nameof(SelectedBundleCountText));
         RefreshPlanSummary();
     }
 

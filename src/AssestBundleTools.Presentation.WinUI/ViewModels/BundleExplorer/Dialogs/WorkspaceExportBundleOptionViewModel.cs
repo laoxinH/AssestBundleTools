@@ -1,5 +1,7 @@
+using System.Globalization;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Common.Support;
+using Microsoft.UI.Xaml;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
 
@@ -12,6 +14,7 @@ public sealed class WorkspaceExportBundleOptionViewModel : ObservableObject
         string displayName,
         string outputPath,
         string summaryText,
+        string statusText,
         int changeCount,
         int modifiedAssetCount,
         int extractedAssetCount,
@@ -24,6 +27,7 @@ public sealed class WorkspaceExportBundleOptionViewModel : ObservableObject
         DisplayName = displayName;
         OutputPath = outputPath;
         SummaryText = summaryText;
+        StatusText = statusText;
         ChangeCount = changeCount;
         ModifiedAssetCount = modifiedAssetCount;
         ExtractedAssetCount = extractedAssetCount;
@@ -43,6 +47,8 @@ public sealed class WorkspaceExportBundleOptionViewModel : ObservableObject
 
     public string SummaryText { get; }
 
+    public string StatusText { get; }
+
     public int ChangeCount { get; }
 
     public int ModifiedAssetCount { get; }
@@ -54,6 +60,20 @@ public sealed class WorkspaceExportBundleOptionViewModel : ObservableObject
     public int FileReplacementCount { get; }
 
     public DateTimeOffset? LastChangedAtUtc { get; }
+
+    public bool IsModified => ChangeCount > 0;
+
+    public Visibility ModifiedStatusVisibility => IsModified ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility UnmodifiedStatusVisibility => IsModified ? Visibility.Collapsed : Visibility.Visible;
+
+    public string LastChangedLocalTimeText =>
+        LastChangedAtUtc is null
+            ? string.Empty
+            : LastChangedAtUtc.Value.ToLocalTime().ToString("HH:mm", CultureInfo.CurrentCulture);
+
+    public Visibility LastChangedLocalTimeVisibility =>
+        LastChangedAtUtc is null ? Visibility.Collapsed : Visibility.Visible;
 
     public bool IsSelected
     {

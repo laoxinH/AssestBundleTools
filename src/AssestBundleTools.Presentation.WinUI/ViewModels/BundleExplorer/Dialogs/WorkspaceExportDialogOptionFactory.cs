@@ -43,6 +43,7 @@ internal sealed class WorkspaceExportDialogOptionFactory
                     ResolveOriginalCompressionDisplayName(plan.OriginalCompression),
                     plan.WorkspaceReplacementCount,
                     plan.FileReplacementCount),
+                ResolveBundleStatusText(plan.ChangeCount),
                 plan.ChangeCount,
                 plan.ModifiedAssetCount,
                 plan.ExtractedAssetCount,
@@ -204,6 +205,12 @@ internal sealed class WorkspaceExportDialogOptionFactory
 
         return originalCompression.Trim();
     }
+
+    private string ResolveBundleStatusText(int changeCount) =>
+        _localizationService.GetRequiredString(
+            changeCount > 0
+                ? ResourceKeys.WorkspaceExportDialogBundleStatusModified
+                : ResourceKeys.WorkspaceExportDialogBundleStatusUnmodified);
 
     private static string NormalizeResourceKind(string value) =>
         value.Trim().Replace("-", string.Empty, StringComparison.Ordinal).ToLowerInvariant();

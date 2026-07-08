@@ -4311,6 +4311,12 @@
   <data name="WorkspaceExportDialog.ResourceProcessorSection.Hint" xml:space="preserve">
     <value>Choose which resource categories should participate in the preprocessing chain.</value>
   </data>
+  <data name="WorkspaceExportDialog.ResourceProcessorSection.HelpText" xml:space="preserve">
+    <value>Preprocessing chain</value>
+  </data>
+  <data name="WorkspaceExportDialog.ExportOptionsSection.Title" xml:space="preserve">
+    <value>Export Options</value>
+  </data>
   <data name="WorkspaceExportDialog.ExportToWorkspaceDirectory" xml:space="preserve">
     <value>Export to workspace output directory</value>
   </data>
@@ -4418,6 +4424,15 @@
   </data>
   <data name="WorkspaceExportDialog.ClearBundleSelectionButton" xml:space="preserve">
     <value>Clear</value>
+  </data>
+  <data name="WorkspaceExportDialog.SelectedBundleCount.Format" xml:space="preserve">
+    <value>{0} selected</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleStatus.Modified" xml:space="preserve">
+    <value>Modified</value>
+  </data>
+  <data name="WorkspaceExportDialog.BundleStatus.Unmodified" xml:space="preserve">
+    <value>Unmodified</value>
   </data>
   <data name="WorkspaceExportDialog.PreviewSection.Title" xml:space="preserve">
     <value>Plan Summary</value>
