@@ -153,7 +153,6 @@
                                     <Grid ColumnSpacing="10">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
                                         <TextBlock
                                             VerticalAlignment="Center"
@@ -161,11 +160,6 @@
                                             FontWeight="SemiBold"
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                             Text="{Binding HeaderText}" />
-                                        <Rectangle
-                                            Grid.Column="1"
-                                            Height="1"
-                                            VerticalAlignment="Center"
-                                            Fill="{ThemeResource CardStrokeColorDefaultBrush}" />
                                     </Grid>
                                 </Border>
                                 <Grid
