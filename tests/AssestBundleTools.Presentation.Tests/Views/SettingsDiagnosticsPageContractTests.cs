@@ -38,6 +38,12 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("x:Name=\"PerformanceCacheSettingsPanel\"", pageXaml);
         Assert.Contains("x:Name=\"DiagnosticsSettingsPanel\"", pageXaml);
         Assert.Contains("x:Name=\"LogCenterPanel\"", pageXaml);
+        Assert.Contains("x:Key=\"SettingsDiagnosticsContentColumnStyle\"", pageXaml);
+        Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=WorkspaceSettingsPanel}\"", pageXaml);
+        Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=PreferenceSettingsPanel}\"", pageXaml);
+        Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=PerformanceCacheSettingsPanel}\"", pageXaml);
+        Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=DiagnosticsSettingsPanel}\"", pageXaml);
+        Assert.DoesNotContain("MaxWidth=\"900\"", pageXaml);
         Assert.Contains("Visibility=\"Collapsed\"", pageXaml);
         Assert.Contains("<shared:LogPanel", pageXaml);
         Assert.Contains("ShowSettingsSubPage", pageCode);
