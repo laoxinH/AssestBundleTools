@@ -71,6 +71,10 @@ public sealed class PluginManagementPageContractTests
         Assert.Contains("ItemsSource=\"{x:Bind ViewModel.VisibleResourceProcessorPlugins", pluginPage);
         Assert.Contains("PluginManagementToolbarSurfaceStyle", pluginPage);
         Assert.Contains("PluginManagementCatalogStatChipStyle", pluginPage);
+        Assert.Contains("PluginManagementListViewItemStyle", pluginPage);
+        Assert.Contains("x:Name=\"HoverOverlay\"", pluginPage);
+        Assert.Contains("x:Name=\"SelectedOverlay\"", pluginPage);
+        Assert.Contains("x:Name=\"SelectedAccent\"", pluginPage);
         Assert.Contains("PluginManagementHeaderIconButtonStyle", pluginPage);
         Assert.Contains("x:Name=\"AddPluginMenuButton\"", pluginPage);
         Assert.Contains("x:Name=\"AddDecryptorMenuFlyoutItem\"", pluginPage);
