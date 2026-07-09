@@ -88,6 +88,18 @@
         </Style>
 
         <Style
+            x:Key="SettingsDiagnosticsCompactActionButtonStyle"
+            TargetType="Button">
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="MinWidth" Value="96" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style
             x:Key="SettingsDiagnosticsWorkspaceIconBadgeStyle"
             TargetType="Border">
             <Setter Property="Width" Value="46" />
@@ -499,7 +511,7 @@
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="32" />
                                                 <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="190" />
                                             </Grid.ColumnDefinitions>
 
                                             <FontIcon
@@ -526,6 +538,7 @@
                                                 Spacing="10">
                                                 <ToggleSwitch
                                                     x:Name="RestoreLastWorkspaceOnStartupToggleSwitch"
+                                                    HorizontalAlignment="Right"
                                                     VerticalAlignment="Center"
                                                     IsOn="{x:Bind ViewModel.RestoreLastWorkspaceOnStartup, Mode=TwoWay}" />
                                             </StackPanel>
@@ -830,13 +843,13 @@
                                                 Spacing="8">
                                                 <Button
                                                     Command="{x:Bind ViewModel.BundleArtifactCache.RefreshCommand, Mode=OneWay}"
-                                                    Style="{StaticResource WorkspaceInlineActionButtonStyle}">
+                                                    Style="{StaticResource SettingsDiagnosticsCompactActionButtonStyle}">
                                                     <StackPanel
                                                         Orientation="Horizontal"
-                                                        Spacing="8">
+                                                        Spacing="7">
                                                         <FontIcon
                                                             FontFamily="Segoe Fluent Icons"
-                                                            FontSize="14"
+                                                            FontSize="13"
                                                             Glyph="&#xE72C;" />
                                                         <TextBlock
                                                             x:Name="RefreshBundleArtifactCacheButtonText"
@@ -846,13 +859,13 @@
 
                                                 <Button
                                                     Command="{x:Bind ViewModel.BundleArtifactCache.ClearCommand, Mode=OneWay}"
-                                                    Style="{StaticResource WorkspaceInlineActionButtonStyle}">
+                                                    Style="{StaticResource SettingsDiagnosticsCompactActionButtonStyle}">
                                                     <StackPanel
                                                         Orientation="Horizontal"
-                                                        Spacing="8">
+                                                        Spacing="7">
                                                         <FontIcon
                                                             FontFamily="Segoe Fluent Icons"
-                                                            FontSize="14"
+                                                            FontSize="13"
                                                             Glyph="&#xE74D;" />
                                                         <TextBlock
                                                             x:Name="ClearBundleArtifactCacheButtonText"
@@ -868,7 +881,7 @@
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="32" />
                                                 <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="190" />
                                             </Grid.ColumnDefinitions>
 
                                             <FontIcon
@@ -890,6 +903,7 @@
                                             <ToggleSwitch
                                                 x:Name="BundleArtifactCacheAutoPruneToggleSwitch"
                                                 Grid.Column="2"
+                                                HorizontalAlignment="Right"
                                                 VerticalAlignment="Center"
                                                 IsOn="{x:Bind ViewModel.BundleArtifactCache.AutoPruneEnabled, Mode=TwoWay}" />
                                         </Grid>
