@@ -59,9 +59,9 @@ public sealed partial class SettingsDiagnosticsPage : Page
         StartupBehaviorTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsStartupBehaviorTitle);
         StartupBehaviorHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsStartupBehaviorHint);
         RestoreLastWorkspaceOnStartupLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRestoreLastWorkspaceToggleHeader);
-        RestoreLastWorkspaceOnStartupDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRestoreLastWorkspaceToggleDescription);
+        RestoreLastWorkspaceOnStartupDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRestoreLastWorkspaceRowDescription);
         RecentWorkspaceOpenBehaviorLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorLabel);
-        RecentWorkspaceOpenBehaviorDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorDescription);
+        RecentWorkspaceOpenBehaviorDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorRowDescription);
         RecentWorkspaceOpenBehaviorComboBox.ItemsSource = new[]
         {
             UiText.Get(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorOptionCurrentWindow),
@@ -69,7 +69,7 @@ public sealed partial class SettingsDiagnosticsPage : Page
             UiText.Get(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorOptionAskEveryTime)
         };
         AssetEditorCloseBehaviorLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAssetEditorCloseBehaviorLabel);
-        AssetEditorCloseBehaviorDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAssetEditorCloseBehaviorDescription);
+        AssetEditorCloseBehaviorDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAssetEditorCloseBehaviorRowDescription);
         AssetEditorCloseBehaviorComboBox.ItemsSource = new[]
         {
             UiText.Get(ResourceKeys.SettingsDiagnosticsAssetEditorCloseBehaviorOptionReturnToMainWindow),
@@ -78,18 +78,19 @@ public sealed partial class SettingsDiagnosticsPage : Page
         WorkspaceImportPerformanceTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportPerformanceTitle);
         WorkspaceImportPerformanceHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportPerformanceHint);
         WorkspaceImportWorkerCountLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountLabel);
-        WorkspaceImportWorkerCountDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountDescription);
+        WorkspaceImportWorkerCountDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountRowDescription);
         PreviewWorkerCountLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountLabel);
-        PreviewWorkerCountDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountDescription);
+        PreviewWorkerCountDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountRowDescription);
         OperationRecordsTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordsTitle);
         OperationRecordsHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordsHint);
         OperationRecordLimitLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitLabel);
-        OperationRecordLimitDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitDescription);
+        OperationRecordLimitDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitRowDescription);
         BundleArtifactCacheTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheTitle);
         BundleArtifactCacheHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheHint);
         BundleArtifactCacheAutoPruneLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheAutoPruneHeader);
-        BundleArtifactCacheAutoPruneDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheAutoPruneDescription);
+        BundleArtifactCacheAutoPruneDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheAutoPruneRowDescription);
         BundleArtifactCacheMaximumSizeLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeLabel);
+        BundleArtifactCacheMaximumSizeDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeRowDescription);
         RefreshBundleArtifactCacheButtonText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheRefreshButton);
         ClearBundleArtifactCacheButtonText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheClearButton);
         ResponsibilityTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsResponsibilityTitle);

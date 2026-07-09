@@ -3352,7 +3352,7 @@
     <value>Startup &amp; Window Behavior</value>
   </data>
   <data name="SettingsDiagnosticsPage.StartupBehaviorHintText.Text" xml:space="preserve">
-    <value>This section keeps startup restore and console recent-workspace opening behavior in one place, instead of scattering window rules across dialogs and pages.</value>
+    <value>Manage startup restore and recent-workspace opening behavior.</value>
   </data>
   <data name="SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartupToggle.Header" xml:space="preserve">
     <value>Restore last workspace on startup</value>
@@ -3360,11 +3360,17 @@
   <data name="SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartupToggle.Description" xml:space="preserve">
     <value>When enabled, the app restores the most recently active available workspace during startup. When disabled, the app always opens in the console first.</value>
   </data>
+  <data name="SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartup.RowDescription" xml:space="preserve">
+    <value>Restore the latest available workspace at startup.</value>
+  </data>
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Label" xml:space="preserve">
     <value>Console recent-workspace open behavior</value>
   </data>
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Description" xml:space="preserve">
     <value>Controls how recent workspaces reopen from the console: always reuse the current window, always open a new one, or ask every time.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.RowDescription" xml:space="preserve">
+    <value>Choose how recent workspaces open by default.</value>
   </data>
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Option.CurrentWindow" xml:space="preserve">
     <value>Default current</value>
@@ -3381,6 +3387,9 @@
   <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.Description" xml:space="preserve">
     <value>Controls what happens when tabs or windows are closed in independent asset editor windows. Return to main window reuses the move-to-main-window flow; direct close only removes the tabs from that editor window.</value>
   </data>
+  <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.RowDescription" xml:space="preserve">
+    <value>Choose where asset editor windows go when closed.</value>
+  </data>
   <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.Option.ReturnToMainWindow" xml:space="preserve">
     <value>Return to main window</value>
   </data>
@@ -3391,13 +3400,16 @@
     <value>Import Performance</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceImportPerformance.Hint" xml:space="preserve">
-    <value>Controls how many background workers bundle import can use. Automatic mode selects 1 to 4 workers from the CPU count; manual values are useful when disk or external decryptor load is high.</value>
+    <value>Tune import and preview concurrency.</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Label" xml:space="preserve">
     <value>Import worker count</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Description" xml:space="preserve">
     <value>Automatic mode follows the repository default concurrency rule. A fixed value overrides the automatic choice, while still capping each workspace import at 4 workers.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.RowDescription" xml:space="preserve">
+    <value>Control background worker concurrency for imports.</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.Automatic" xml:space="preserve">
     <value>Automatic</value>
@@ -3420,6 +3432,9 @@
   <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Description" xml:space="preserve">
     <value>Automatic mode derives 1 to 4 preview slots from the CPU count. A fixed value limits the total concurrency for active previews and background prewarm, while the active tab always keeps the foreground slot.</value>
   </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.RowDescription" xml:space="preserve">
+    <value>Control preview and prewarm concurrency.</value>
+  </data>
   <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Option.Automatic" xml:space="preserve">
     <value>Automatic</value>
   </data>
@@ -3439,13 +3454,16 @@
     <value>Workspace Operation Records</value>
   </data>
   <data name="SettingsDiagnosticsPage.OperationRecords.Hint" xml:space="preserve">
-    <value>Limit persisted operation records so extraction, edit, undo, and redo history cannot grow forever. Effective replacements and latest extractions are retained first.</value>
+    <value>Set how many workspace operation records are retained.</value>
   </data>
   <data name="SettingsDiagnosticsPage.OperationRecordLimit.Label" xml:space="preserve">
     <value>Record retention limit</value>
   </data>
   <data name="SettingsDiagnosticsPage.OperationRecordLimit.Description" xml:space="preserve">
     <value>When the limit is exceeded, older non-critical records are trimmed first. Raise the limit to keep a longer undo/redo history.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.RowDescription" xml:space="preserve">
+    <value>Limit undo, redo, and extraction records.</value>
   </data>
   <data name="SettingsDiagnosticsPage.OperationRecordLimit.Option.OneHundred" xml:space="preserve">
     <value>100 records</value>
@@ -3481,7 +3499,7 @@
     <value>Current Workspace Cache</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Hint" xml:space="preserve">
-    <value>Review standardized bundle and preview cache usage for the current workspace, and clear these rebuildable derived artifacts.</value>
+    <value>Review and clear rebuildable cache for the current workspace.</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Target.Format" xml:space="preserve">
     <value>Current workspace: {0}</value>
@@ -3504,8 +3522,14 @@
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.AutoPrune.Description" xml:space="preserve">
     <value>After import, preview, or extraction generates a standardized bundle or preview cache, the oldest derived entries of that cache type are pruned to this limit. The freshly generated bundle or preview entry is protected.</value>
   </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.AutoPrune.RowDescription" xml:space="preserve">
+    <value>Prune rebuildable cache entries above the limit.</value>
+  </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Label" xml:space="preserve">
     <value>Current workspace capacity limit</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.RowDescription" xml:space="preserve">
+    <value>Set the cache capacity limit for each workspace.</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Option.OneGb" xml:space="preserve">
     <value>1 GB</value>

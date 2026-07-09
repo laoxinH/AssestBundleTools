@@ -59,12 +59,32 @@
         </Style>
 
         <Style
+            x:Key="SettingsDiagnosticsSettingDescriptionTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="MaxLines" Value="2" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="TextWrapping" Value="WrapWholeWords" />
+        </Style>
+
+        <Style
             x:Key="SettingsDiagnosticsSettingValueTextStyle"
             TargetType="TextBlock">
             <Setter Property="MinWidth" Value="84" />
             <Setter Property="HorizontalAlignment" Value="Right" />
             <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
             <Setter Property="TextAlignment" Value="Right" />
+        </Style>
+
+        <Style
+            x:Key="SettingsDiagnosticsSettingIconStyle"
+            TargetType="FontIcon">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
         <Style
@@ -409,11 +429,17 @@
                                     <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
                                         <Grid ColumnSpacing="22">
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="32" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
 
+                                            <FontIcon
+                                                Glyph="&#xE777;"
+                                                Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+
                                             <StackPanel
+                                                Grid.Column="1"
                                                 MinWidth="0"
                                                 Spacing="3">
                                                 <TextBlock
@@ -421,11 +447,11 @@
                                                     Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
                                                 <TextBlock
                                                     x:Name="RestoreLastWorkspaceOnStartupDescriptionText"
-                                                    Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
                                             </StackPanel>
 
                                             <StackPanel
-                                                Grid.Column="1"
+                                                Grid.Column="2"
                                                 VerticalAlignment="Center"
                                                 HorizontalAlignment="Right"
                                                 Orientation="Horizontal"
@@ -441,11 +467,17 @@
                                     <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
                                         <Grid ColumnSpacing="22">
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="32" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
 
+                                            <FontIcon
+                                                Glyph="&#xE8A7;"
+                                                Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+
                                             <StackPanel
+                                                Grid.Column="1"
                                                 MinWidth="0"
                                                 Spacing="3">
                                                 <TextBlock
@@ -453,12 +485,12 @@
                                                     Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
                                                 <TextBlock
                                                     x:Name="RecentWorkspaceOpenBehaviorDescriptionText"
-                                                    Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
                                             </StackPanel>
 
                                             <ComboBox
                                                 x:Name="RecentWorkspaceOpenBehaviorComboBox"
-                                                Grid.Column="1"
+                                                Grid.Column="2"
                                                 Width="246"
                                                 VerticalAlignment="Center"
                                                 SelectedIndex="{x:Bind ViewModel.RecentWorkspaceOpenBehaviorSelectedIndex, Mode=TwoWay}" />
@@ -468,11 +500,17 @@
                                     <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
                                         <Grid ColumnSpacing="22">
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="32" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
 
+                                            <FontIcon
+                                                Glyph="&#xE70F;"
+                                                Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+
                                             <StackPanel
+                                                Grid.Column="1"
                                                 MinWidth="0"
                                                 Spacing="3">
                                                 <TextBlock
@@ -480,12 +518,12 @@
                                                     Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
                                                 <TextBlock
                                                     x:Name="AssetEditorCloseBehaviorDescriptionText"
-                                                    Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
                                             </StackPanel>
 
                                             <ComboBox
                                                 x:Name="AssetEditorCloseBehaviorComboBox"
-                                                Grid.Column="1"
+                                                Grid.Column="2"
                                                 Width="246"
                                                 VerticalAlignment="Center"
                                                 SelectedIndex="{x:Bind ViewModel.AssetEditorCloseBehaviorSelectedIndex, Mode=TwoWay}" />
@@ -506,11 +544,17 @@
                                     <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
                                         <Grid ColumnSpacing="22">
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="32" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="360" />
                                             </Grid.ColumnDefinitions>
 
+                                            <FontIcon
+                                                Glyph="&#xE81C;"
+                                                Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+
                                             <StackPanel
+                                                Grid.Column="1"
                                                 MinWidth="0"
                                                 Spacing="3">
                                                 <TextBlock
@@ -518,11 +562,11 @@
                                                     Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
                                                 <TextBlock
                                                     x:Name="OperationRecordLimitDescriptionText"
-                                                    Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
                                             </StackPanel>
 
                                             <Grid
-                                                Grid.Column="1"
+                                                Grid.Column="2"
                                                 VerticalAlignment="Center"
                                                 RowSpacing="6">
                                                 <Grid.RowDefinitions>
@@ -575,11 +619,17 @@
                                     <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
                                         <Grid ColumnSpacing="22">
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="32" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="360" />
                                             </Grid.ColumnDefinitions>
 
+                                            <FontIcon
+                                                Glyph="&#xE9D9;"
+                                                Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+
                                             <StackPanel
+                                                Grid.Column="1"
                                                 MinWidth="0"
                                                 Spacing="3">
                                                 <TextBlock
@@ -587,11 +637,11 @@
                                                     Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
                                                 <TextBlock
                                                     x:Name="WorkspaceImportWorkerCountDescriptionText"
-                                                    Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
                                             </StackPanel>
 
                                             <Grid
-                                                Grid.Column="1"
+                                                Grid.Column="2"
                                                 VerticalAlignment="Center"
                                                 RowSpacing="6">
                                                 <Grid.RowDefinitions>
@@ -618,11 +668,17 @@
                                     <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
                                         <Grid ColumnSpacing="22">
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="32" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="360" />
                                             </Grid.ColumnDefinitions>
 
+                                            <FontIcon
+                                                Glyph="&#xE7B3;"
+                                                Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+
                                             <StackPanel
+                                                Grid.Column="1"
                                                 MinWidth="0"
                                                 Spacing="3">
                                                 <TextBlock
@@ -630,11 +686,11 @@
                                                     Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
                                                 <TextBlock
                                                     x:Name="PreviewWorkerCountDescriptionText"
-                                                    Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
                                             </StackPanel>
 
                                             <Grid
-                                                Grid.Column="1"
+                                                Grid.Column="2"
                                                 VerticalAlignment="Center"
                                                 RowSpacing="6">
                                                 <Grid.RowDefinitions>
@@ -672,11 +728,17 @@
                                     <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
                                         <Grid ColumnSpacing="22">
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="32" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
 
+                                            <FontIcon
+                                                Glyph="&#xE8B7;"
+                                                Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+
                                             <StackPanel
+                                                Grid.Column="1"
                                                 MinWidth="0"
                                                 Spacing="4">
                                                 <TextBlock
@@ -693,7 +755,7 @@
                                             </StackPanel>
 
                                             <StackPanel
-                                                Grid.Column="1"
+                                                Grid.Column="2"
                                                 VerticalAlignment="Center"
                                                 HorizontalAlignment="Right"
                                                 Orientation="Horizontal"
@@ -736,11 +798,17 @@
                                     <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
                                         <Grid ColumnSpacing="22">
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="32" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
 
+                                            <FontIcon
+                                                Glyph="&#xE74D;"
+                                                Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+
                                             <StackPanel
+                                                Grid.Column="1"
                                                 MinWidth="0"
                                                 Spacing="3">
                                                 <TextBlock
@@ -748,12 +816,12 @@
                                                     Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
                                                 <TextBlock
                                                     x:Name="BundleArtifactCacheAutoPruneDescriptionText"
-                                                    Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
                                             </StackPanel>
 
                                             <ToggleSwitch
                                                 x:Name="BundleArtifactCacheAutoPruneToggleSwitch"
-                                                Grid.Column="1"
+                                                Grid.Column="2"
                                                 VerticalAlignment="Center"
                                                 IsOn="{x:Bind ViewModel.BundleArtifactCache.AutoPruneEnabled, Mode=TwoWay}" />
                                         </Grid>
@@ -762,20 +830,29 @@
                                     <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
                                         <Grid ColumnSpacing="22">
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="32" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="360" />
                                             </Grid.ColumnDefinitions>
 
+                                            <FontIcon
+                                                Glyph="&#xE8D4;"
+                                                Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+
                                             <StackPanel
+                                                Grid.Column="1"
                                                 MinWidth="0"
                                                 Spacing="3">
                                                 <TextBlock
                                                     x:Name="BundleArtifactCacheMaximumSizeLabelText"
                                                     Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                                <TextBlock
+                                                    x:Name="BundleArtifactCacheMaximumSizeDescriptionText"
+                                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
                                             </StackPanel>
 
                                             <Grid
-                                                Grid.Column="1"
+                                                Grid.Column="2"
                                                 VerticalAlignment="Center"
                                                 RowSpacing="6">
                                                 <Grid.RowDefinitions>

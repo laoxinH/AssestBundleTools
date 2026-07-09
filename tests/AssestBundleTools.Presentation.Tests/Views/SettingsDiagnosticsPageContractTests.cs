@@ -48,8 +48,11 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=DiagnosticsSettingsPanel}\"", pageXaml);
         Assert.DoesNotContain("MaxWidth=\"900\"", pageXaml);
         Assert.Contains("x:Key=\"SettingsDiagnosticsSettingRowStyle\"", pageXaml);
+        Assert.Contains("x:Key=\"SettingsDiagnosticsSettingIconStyle\"", pageXaml);
+        Assert.Contains("x:Key=\"SettingsDiagnosticsSettingDescriptionTextStyle\"", pageXaml);
         Assert.Contains("x:Name=\"RecentWorkspaceOpenBehaviorComboBox\"", pageXaml);
         Assert.Contains("x:Name=\"AssetEditorCloseBehaviorComboBox\"", pageXaml);
+        Assert.Contains("x:Name=\"BundleArtifactCacheMaximumSizeDescriptionText\"", pageXaml);
         Assert.Contains("OperationRecordLimitSliderValue", pageXaml);
         Assert.Contains("WorkspaceImportWorkerCountSliderValue", pageXaml);
         Assert.Contains("PreviewWorkerCountSliderValue", pageXaml);
@@ -60,6 +63,8 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("ShowSettingsSubPage", pageCode);
         Assert.Contains("OnSettingsSubPageNavigationSelectionChanged", pageCode);
         Assert.Contains("SettingsDiagnosticsNavLogs", resourceKeys);
+        Assert.Contains("SettingsDiagnosticsRestoreLastWorkspaceRowDescription", resourceKeys);
+        Assert.Contains("SettingsDiagnosticsBundleArtifactCacheMaximumSizeRowDescription", resourceKeys);
     }
 
     private static string FindRepositoryRoot()

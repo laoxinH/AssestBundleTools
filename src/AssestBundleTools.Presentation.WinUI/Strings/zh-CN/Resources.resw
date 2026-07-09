@@ -3352,7 +3352,7 @@
     <value>启动与窗口行为</value>
   </data>
   <data name="SettingsDiagnosticsPage.StartupBehaviorHintText.Text" xml:space="preserve">
-    <value>这里集中管理启动恢复和控制台最近工作区的打开策略，避免把窗口行为分散到多个页面和临时弹框中。</value>
+    <value>管理启动恢复与最近工作区打开策略。</value>
   </data>
   <data name="SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartupToggle.Header" xml:space="preserve">
     <value>启动时恢复上次工作区</value>
@@ -3360,11 +3360,17 @@
   <data name="SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartupToggle.Description" xml:space="preserve">
     <value>开启后，应用启动时会优先恢复最近一次活动且仍可用的工作区；关闭后，应用始终先进入控制台。</value>
   </data>
+  <data name="SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartup.RowDescription" xml:space="preserve">
+    <value>启动时自动恢复最近可用的工作区。</value>
+  </data>
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Label" xml:space="preserve">
     <value>控制台最近工作区打开方式</value>
   </data>
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Description" xml:space="preserve">
     <value>用于控制从控制台再次打开最近工作区时的默认窗口策略，可固定复用当前窗口、固定派生新窗口，或每次再次确认。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.RowDescription" xml:space="preserve">
+    <value>选择最近工作区默认如何打开。</value>
   </data>
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Option.CurrentWindow" xml:space="preserve">
     <value>默认当前</value>
@@ -3381,6 +3387,9 @@
   <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.Description" xml:space="preserve">
     <value>控制独立资源编辑窗口中关闭标签或窗口时的行为。回到主窗口会复用“移动到主窗口”链路，直接关闭只移除当前窗口内的标签。</value>
   </data>
+  <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.RowDescription" xml:space="preserve">
+    <value>选择关闭资源编辑窗口时的去向。</value>
+  </data>
   <data name="SettingsDiagnosticsPage.AssetEditorCloseBehavior.Option.ReturnToMainWindow" xml:space="preserve">
     <value>回到主窗口</value>
   </data>
@@ -3391,13 +3400,16 @@
     <value>导入性能</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceImportPerformance.Hint" xml:space="preserve">
-    <value>这里控制资源包导入时的后台 worker 数。默认自动模式会按机器核心数选择 1 到 4 个 worker；手动值适合在磁盘或外部解密器压力较高时降载。</value>
+    <value>调整导入和预览相关并发。</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Label" xml:space="preserve">
     <value>导入 worker 数量</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Description" xml:space="preserve">
     <value>自动模式会遵循仓库默认并发规则；固定数量会覆盖自动推导，但单工作区仍不会超过 4 个 worker。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.RowDescription" xml:space="preserve">
+    <value>控制导入时后台 worker 并发。</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceImportWorkerCount.Option.Automatic" xml:space="preserve">
     <value>自动</value>
@@ -3420,6 +3432,9 @@
   <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Description" xml:space="preserve">
     <value>自动模式会按机器核心数推导 1 到 4 个预览槽；固定数量会限制资源详情和后台预热的总并发，其中当前激活标签始终保留前台槽。</value>
   </data>
+  <data name="SettingsDiagnosticsPage.PreviewWorkerCount.RowDescription" xml:space="preserve">
+    <value>控制资源预览和预热并发。</value>
+  </data>
   <data name="SettingsDiagnosticsPage.PreviewWorkerCount.Option.Automatic" xml:space="preserve">
     <value>自动</value>
   </data>
@@ -3439,13 +3454,16 @@
     <value>工作区操作记录</value>
   </data>
   <data name="SettingsDiagnosticsPage.OperationRecords.Hint" xml:space="preserve">
-    <value>限制持久化操作记录数量，避免提取、修改和撤销记录长期无限增长；当前生效替换和最近提取会被优先保留。</value>
+    <value>设置工作区操作记录保留数量。</value>
   </data>
   <data name="SettingsDiagnosticsPage.OperationRecordLimit.Label" xml:space="preserve">
     <value>记录保留上限</value>
   </data>
   <data name="SettingsDiagnosticsPage.OperationRecordLimit.Description" xml:space="preserve">
     <value>超过上限时会优先裁剪较旧的非关键记录。调高上限可保留更长的撤销/重做历史。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.OperationRecordLimit.RowDescription" xml:space="preserve">
+    <value>限制撤销、重做和提取记录数量。</value>
   </data>
   <data name="SettingsDiagnosticsPage.OperationRecordLimit.Option.OneHundred" xml:space="preserve">
     <value>100 条</value>
@@ -3481,7 +3499,7 @@
     <value>当前工作区缓存</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Hint" xml:space="preserve">
-    <value>查看当前工作区的标准化资源包和预览缓存占用，并可清理这些可重建派生产物。</value>
+    <value>查看并清理当前工作区可重建缓存。</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.Target.Format" xml:space="preserve">
     <value>当前工作区：{0}</value>
@@ -3504,8 +3522,14 @@
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.AutoPrune.Description" xml:space="preserve">
     <value>导入、预览或提取生成标准化 bundle 或预览缓存后，按当前容量上限清理各自最旧的派生产物；刚生成的 bundle 或预览项会被保护。</value>
   </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.AutoPrune.RowDescription" xml:space="preserve">
+    <value>自动清理超出容量上限的可重建缓存。</value>
+  </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Label" xml:space="preserve">
     <value>当前工作区容量上限</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.RowDescription" xml:space="preserve">
+    <value>设置单个工作区缓存容量上限。</value>
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.MaximumSize.Option.OneGb" xml:space="preserve">
     <value>1 GB</value>
