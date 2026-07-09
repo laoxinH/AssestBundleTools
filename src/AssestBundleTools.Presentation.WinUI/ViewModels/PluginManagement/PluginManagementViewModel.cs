@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using AssestBundleTools.Application.Bundles.Commands;
 using AssestBundleTools.Application.Bundles.Dtos;
@@ -138,12 +139,11 @@ public sealed partial class PluginManagementViewModel : ObservableObject
 
     public bool HasVisibleResourceProcessorPlugins => VisibleResourceProcessorPlugins.Count > 0;
 
-    public string VisiblePluginSummaryText =>
-        _localizationService.GetFormattedString(
-            ResourceKeys.PluginManagementCatalogSummaryFormat,
-            VisiblePlugins.Count,
-            VisibleDecryptorPlugins.Count,
-            VisibleResourceProcessorPlugins.Count);
+    public string VisiblePluginCountText => VisiblePlugins.Count.ToString(CultureInfo.CurrentCulture);
+
+    public string VisibleDecryptorPluginCountText => VisibleDecryptorPlugins.Count.ToString(CultureInfo.CurrentCulture);
+
+    public string VisibleResourceProcessorPluginCountText => VisibleResourceProcessorPlugins.Count.ToString(CultureInfo.CurrentCulture);
 
     public bool HasSelectedPlugin => SelectedPlugin is not null;
 

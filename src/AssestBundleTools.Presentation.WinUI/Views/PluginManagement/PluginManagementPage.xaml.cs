@@ -4,7 +4,10 @@ using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.PluginManagement;
 using AssestBundleTools.Presentation.WinUI.Views.PluginManagement.Controls;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Input;
 using Windows.ApplicationModel.DataTransfer;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.PluginManagement;
@@ -14,6 +17,8 @@ namespace AssestBundleTools.Presentation.WinUI.Views.PluginManagement;
 /// </summary>
 public sealed partial class PluginManagementPage : Page
 {
+    private ToolTip? _pluginDirectoryHelpToolTip;
+
     public PluginManagementPage()
     {
         ViewModel = new PluginManagementViewModel(
@@ -42,7 +47,15 @@ public sealed partial class PluginManagementPage : Page
         SearchTextBox.PlaceholderText = UiText.Get(ResourceKeys.PluginManagementSearchPlaceholder);
         RefreshCatalogButtonText.Text = UiText.Get(ResourceKeys.PluginManagementRefreshButton);
         PluginDirectoryTitleText.Text = UiText.Get(ResourceKeys.PluginManagementDirectoryTitle);
-        PluginDirectoryHintText.Text = UiText.Get(ResourceKeys.PluginManagementDirectoryHint);
+        PluginDirectoryHelpText.Text = UiText.Get(ResourceKeys.PluginManagementDirectoryHelpText);
+        var pluginDirectoryHelpToolTipText = UiText.Get(ResourceKeys.PluginManagementDirectoryHint);
+        _pluginDirectoryHelpToolTip = CreateImmediateInfoToolTip(pluginDirectoryHelpToolTipText);
+        ToolTipService.SetToolTip(PluginDirectoryHelpHost, _pluginDirectoryHelpToolTip);
+        AutomationProperties.SetName(PluginDirectoryHelpHost, PluginDirectoryHelpText.Text);
+        AutomationProperties.SetHelpText(PluginDirectoryHelpHost, pluginDirectoryHelpToolTipText);
+        PluginDirectoryAllCountLabelText.Text = UiText.Get(ResourceKeys.PluginManagementCatalogAllCountLabel);
+        PluginDirectoryDecryptorCountLabelText.Text = UiText.Get(ResourceKeys.PluginManagementCatalogDecryptorCountLabel);
+        PluginDirectoryProcessorCountLabelText.Text = UiText.Get(ResourceKeys.PluginManagementCatalogProcessorCountLabel);
         AddDecryptorButtonText.Text = UiText.Get(ResourceKeys.PluginManagementAddDecryptorButton);
         AddResourceProcessorButtonText.Text = UiText.Get(ResourceKeys.PluginManagementAddResourceProcessorButton);
         DecryptorGroupTitleText.Text = UiText.Get(ResourceKeys.PluginManagementTypeImportDecryptor);
@@ -73,6 +86,35 @@ public sealed partial class PluginManagementPage : Page
     private async void OnRefreshCatalogButtonClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.RefreshCatalogAsync();
+    }
+
+    private static ToolTip CreateImmediateInfoToolTip(string text) =>
+        new()
+        {
+            MaxWidth = 360,
+            Placement = PlacementMode.Right,
+            Content = new TextBlock
+            {
+                MaxWidth = 320,
+                FontSize = 12,
+                LineHeight = 18,
+                Text = text,
+                TextWrapping = TextWrapping.WrapWholeWords
+            }
+        };
+
+    private void OnPluginDirectoryHelpPointerEntered(object sender, PointerRoutedEventArgs e) =>
+        SetImmediateToolTipOpen(_pluginDirectoryHelpToolTip, true);
+
+    private void OnPluginDirectoryHelpPointerExited(object sender, PointerRoutedEventArgs e) =>
+        SetImmediateToolTipOpen(_pluginDirectoryHelpToolTip, false);
+
+    private static void SetImmediateToolTipOpen(ToolTip? toolTip, bool isOpen)
+    {
+        if (toolTip is not null)
+        {
+            toolTip.IsOpen = isOpen;
+        }
     }
 
     private void OnPluginListSelectionChanged(object sender, SelectionChangedEventArgs e)

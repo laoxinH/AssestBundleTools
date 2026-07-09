@@ -4593,8 +4593,17 @@
   <data name="PluginManagementPage.Directory.Hint" xml:space="preserve">
     <value>查看、筛选和维护当前可用的 CLI 插件。</value>
   </data>
-  <data name="PluginManagementPage.CatalogSummary.Format" xml:space="preserve">
-    <value>{0} 个插件 · 解密 {1} · 处理 {2}</value>
+  <data name="PluginManagementPage.Directory.HelpText" xml:space="preserve">
+    <value>目录说明</value>
+  </data>
+  <data name="PluginManagementPage.CatalogSummary.AllLabel" xml:space="preserve">
+    <value>全部</value>
+  </data>
+  <data name="PluginManagementPage.CatalogSummary.DecryptorLabel" xml:space="preserve">
+    <value>解密</value>
+  </data>
+  <data name="PluginManagementPage.CatalogSummary.ProcessorLabel" xml:space="preserve">
+    <value>处理</value>
   </data>
   <data name="PluginManagementPage.AddDecryptorButton.Content" xml:space="preserve">
     <value>新增解密插件</value>

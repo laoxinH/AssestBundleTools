@@ -56,7 +56,9 @@ public sealed partial class PluginManagementViewModel
         OnPropertyChanged(nameof(HasVisiblePlugins));
         OnPropertyChanged(nameof(HasVisibleDecryptorPlugins));
         OnPropertyChanged(nameof(HasVisibleResourceProcessorPlugins));
-        OnPropertyChanged(nameof(VisiblePluginSummaryText));
+        OnPropertyChanged(nameof(VisiblePluginCountText));
+        OnPropertyChanged(nameof(VisibleDecryptorPluginCountText));
+        OnPropertyChanged(nameof(VisibleResourceProcessorPluginCountText));
         OnPropertyChanged(nameof(EmptyStateVisibility));
         OnPropertyChanged(nameof(DecryptorGroupVisibility));
         OnPropertyChanged(nameof(ResourceProcessorGroupVisibility));

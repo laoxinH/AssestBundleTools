@@ -70,8 +70,15 @@ public sealed class PluginManagementPageContractTests
         Assert.Contains("ItemsSource=\"{x:Bind ViewModel.VisibleDecryptorPlugins", pluginPage);
         Assert.Contains("ItemsSource=\"{x:Bind ViewModel.VisibleResourceProcessorPlugins", pluginPage);
         Assert.Contains("PluginManagementToolbarSurfaceStyle", pluginPage);
-        Assert.Contains("PluginManagementSummaryBadgeStyle", pluginPage);
-        Assert.Contains("Text=\"{x:Bind ViewModel.VisiblePluginSummaryText, Mode=OneWay}\"", pluginPage);
+        Assert.Contains("PluginManagementCatalogStatChipStyle", pluginPage);
+        Assert.Contains("PluginManagementAddPluginButtonStyle", pluginPage);
+        Assert.Contains("x:Name=\"PluginDirectoryHelpHost\"", pluginPage);
+        Assert.Contains("PointerEntered=\"OnPluginDirectoryHelpPointerEntered\"", pluginPage);
+        Assert.Contains("Text=\"{x:Bind ViewModel.VisiblePluginCountText, Mode=OneWay}\"", pluginPage);
+        Assert.Contains("Text=\"{x:Bind ViewModel.VisibleDecryptorPluginCountText, Mode=OneWay}\"", pluginPage);
+        Assert.Contains("Text=\"{x:Bind ViewModel.VisibleResourceProcessorPluginCountText, Mode=OneWay}\"", pluginPage);
+        Assert.Contains("CreateImmediateInfoToolTip", pluginPageCode);
+        Assert.Contains("ToolTipService.SetToolTip(PluginDirectoryHelpHost", pluginPageCode);
         Assert.Contains("x:Name=\"PluginDirectoryEmptyTitleText\"", pluginPage);
         Assert.Contains("x:Name=\"PluginDetailsEmptyTitleText\"", pluginPage);
         Assert.Contains("Glyph=\"{x:Bind ViewModel.SelectedPluginIconGlyph, Mode=OneWay}\"", pluginPage);
@@ -109,7 +116,9 @@ public sealed class PluginManagementPageContractTests
         Assert.Contains("IResourceProcessorCatalogService", viewModel);
         Assert.Contains("VisibleDecryptorPlugins", viewModel);
         Assert.Contains("VisibleResourceProcessorPlugins", viewModel);
-        Assert.Contains("VisiblePluginSummaryText", viewModel);
+        Assert.Contains("VisiblePluginCountText", viewModel);
+        Assert.Contains("VisibleDecryptorPluginCountText", viewModel);
+        Assert.Contains("VisibleResourceProcessorPluginCountText", viewModel);
         Assert.Contains("SelectedPluginIconGlyph", viewModel);
         Assert.Contains("BuildAutoDetectDecryptor", viewModel);
         Assert.Contains("BuildResourceProcessor", viewModel);

@@ -50,13 +50,49 @@
             <Setter Property="FontSize" Value="13" />
         </Style>
         <Style
-            x:Key="PluginManagementSummaryBadgeStyle"
+            x:Key="PluginManagementCatalogStatChipStyle"
             TargetType="Border">
-            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="Padding" Value="9,5" />
             <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Background" Value="{ThemeResource LayerFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+        <Style
+            x:Key="PluginManagementCatalogStatCountTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="MinWidth" Value="18" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+            <Setter Property="TextAlignment" Value="Center" />
+        </Style>
+        <Style
+            x:Key="PluginManagementCatalogStatLabelTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+        </Style>
+        <Style
+            x:Key="PluginManagementAddPluginButtonStyle"
+            TargetType="Button"
+            BasedOn="{StaticResource WorkspaceInlineActionButtonStyle}">
+            <Setter Property="MinHeight" Value="44" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
             <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
             <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style
+            x:Key="PluginManagementAddPluginIconStyle"
+            TargetType="Border">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Background" Value="{ThemeResource AccentFillColorDefaultBrush}" />
             <Setter Property="CornerRadius" Value="8" />
         </Style>
         <Style
@@ -287,60 +323,152 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Grid ColumnSpacing="10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Spacing="4">
+                    <Grid RowSpacing="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="8">
                             <TextBlock
                                 x:Name="PluginDirectoryTitleText"
+                                VerticalAlignment="Center"
                                 Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                            <TextBlock
-                                x:Name="PluginDirectoryHintText"
-                                Style="{StaticResource PluginManagementSecondaryTextStyle}" />
-                            <Border Style="{StaticResource PluginManagementSummaryBadgeStyle}">
+                            <StackPanel
+                                x:Name="PluginDirectoryHelpHost"
+                                VerticalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="5"
+                                Background="Transparent"
+                                PointerEntered="OnPluginDirectoryHelpPointerEntered"
+                                PointerExited="OnPluginDirectoryHelpPointerExited"
+                                ToolTipService.Placement="Right">
                                 <TextBlock
+                                    x:Name="PluginDirectoryHelpText"
                                     FontSize="12"
+                                    FontWeight="SemiBold"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="{x:Bind ViewModel.VisiblePluginSummaryText, Mode=OneWay}" />
+                                    TextTrimming="CharacterEllipsis" />
+                                <FontIcon
+                                    FontFamily="Segoe Fluent Icons"
+                                    FontSize="13"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Glyph="&#xE946;" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Row="1"
+                            Orientation="Horizontal"
+                            Spacing="6">
+                            <Border Style="{StaticResource PluginManagementCatalogStatChipStyle}">
+                                <StackPanel
+                                    Orientation="Horizontal"
+                                    Spacing="5">
+                                    <TextBlock
+                                        Style="{StaticResource PluginManagementCatalogStatCountTextStyle}"
+                                        Text="{x:Bind ViewModel.VisiblePluginCountText, Mode=OneWay}" />
+                                    <TextBlock
+                                        x:Name="PluginDirectoryAllCountLabelText"
+                                        VerticalAlignment="Center"
+                                        Style="{StaticResource PluginManagementCatalogStatLabelTextStyle}" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource PluginManagementCatalogStatChipStyle}">
+                                <StackPanel
+                                    Orientation="Horizontal"
+                                    Spacing="5">
+                                    <TextBlock
+                                        Style="{StaticResource PluginManagementCatalogStatCountTextStyle}"
+                                        Text="{x:Bind ViewModel.VisibleDecryptorPluginCountText, Mode=OneWay}" />
+                                    <TextBlock
+                                        x:Name="PluginDirectoryDecryptorCountLabelText"
+                                        VerticalAlignment="Center"
+                                        Style="{StaticResource PluginManagementCatalogStatLabelTextStyle}" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource PluginManagementCatalogStatChipStyle}">
+                                <StackPanel
+                                    Orientation="Horizontal"
+                                    Spacing="5">
+                                    <TextBlock
+                                        Style="{StaticResource PluginManagementCatalogStatCountTextStyle}"
+                                        Text="{x:Bind ViewModel.VisibleResourceProcessorPluginCountText, Mode=OneWay}" />
+                                    <TextBlock
+                                        x:Name="PluginDirectoryProcessorCountLabelText"
+                                        VerticalAlignment="Center"
+                                        Style="{StaticResource PluginManagementCatalogStatLabelTextStyle}" />
+                                </StackPanel>
                             </Border>
                         </StackPanel>
 
-                        <Button
-                            Grid.Column="1"
-                            Style="{StaticResource PluginManagementCompactButtonStyle}"
-                            Click="OnAddDecryptorButtonClick">
-                            <StackPanel
-                                Orientation="Horizontal"
-                                Spacing="8">
-                                <FontIcon
-                                    FontFamily="Segoe Fluent Icons"
-                                    FontSize="14"
-                                    Glyph="&#xE710;" />
-                                <TextBlock
-                                    x:Name="AddDecryptorButtonText"
-                                    VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
+                        <Grid
+                            Grid.Row="2"
+                            ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
-                        <Button
-                            Grid.Column="2"
-                            Style="{StaticResource PluginManagementCompactButtonStyle}"
-                            Click="OnAddResourceProcessorButtonClick">
-                            <StackPanel
-                                Orientation="Horizontal"
-                                Spacing="8">
-                                <FontIcon
-                                    FontFamily="Segoe Fluent Icons"
-                                    FontSize="14"
-                                    Glyph="&#xE710;" />
-                                <TextBlock
-                                    x:Name="AddResourceProcessorButtonText"
-                                    VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
+                            <Button
+                                Style="{StaticResource PluginManagementAddPluginButtonStyle}"
+                                Click="OnAddDecryptorButtonClick">
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Style="{StaticResource PluginManagementAddPluginIconStyle}">
+                                        <FontIcon
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="13"
+                                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                            Glyph="&#xE710;" />
+                                    </Border>
+                                    <TextBlock
+                                        x:Name="AddDecryptorButtonText"
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        FontWeight="SemiBold"
+                                        TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </Button>
+
+                            <Button
+                                Grid.Column="1"
+                                Style="{StaticResource PluginManagementAddPluginButtonStyle}"
+                                Click="OnAddResourceProcessorButtonClick">
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Style="{StaticResource PluginManagementAddPluginIconStyle}">
+                                        <FontIcon
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="13"
+                                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                            Glyph="&#xE710;" />
+                                    </Border>
+                                    <TextBlock
+                                        x:Name="AddResourceProcessorButtonText"
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        FontWeight="SemiBold"
+                                        TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </Button>
+                        </Grid>
                     </Grid>
 
                     <StackPanel
