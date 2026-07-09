@@ -3304,7 +3304,22 @@
     <value>Preferences / Logs / Diagnostics</value>
   </data>
   <data name="SettingsDiagnosticsPage.PageSubtitleText.Text" xml:space="preserve">
-    <value>This page now centralizes detailed runtime logs and will continue to host language switching, log export, and environment diagnostics. The main workspace keeps only lightweight action feedback.</value>
+    <value>Settings are grouped by workspace, preferences, performance cache, diagnostics, and the log center so runtime logs no longer compete with everyday preferences.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Navigation.Workspace" xml:space="preserve">
+    <value>Workspace</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Navigation.Preferences" xml:space="preserve">
+    <value>Preferences</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Navigation.PerformanceCache" xml:space="preserve">
+    <value>Performance &amp; Cache</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Navigation.Diagnostics" xml:space="preserve">
+    <value>Diagnostics</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Navigation.Logs" xml:space="preserve">
+    <value>Log Center</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceStatusTitleText.Text" xml:space="preserve">
     <value>Active Workspace</value>

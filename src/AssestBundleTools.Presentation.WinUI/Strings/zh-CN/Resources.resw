@@ -3304,7 +3304,22 @@
     <value>偏好 / 日志 / 诊断</value>
   </data>
   <data name="SettingsDiagnosticsPage.PageSubtitleText.Text" xml:space="preserve">
-    <value>这里统一承接详细运行日志、后续语言切换、日志导出与环境诊断信息；主工作区只保留必要的即时操作反馈。</value>
+    <value>按工作区、偏好、性能缓存、诊断说明和日志中心分组管理设置，避免把运行日志和常用偏好混在同一视图里。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Navigation.Workspace" xml:space="preserve">
+    <value>工作区</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Navigation.Preferences" xml:space="preserve">
+    <value>偏好</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Navigation.PerformanceCache" xml:space="preserve">
+    <value>性能与缓存</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Navigation.Diagnostics" xml:space="preserve">
+    <value>诊断说明</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Navigation.Logs" xml:space="preserve">
+    <value>日志中心</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceStatusTitleText.Text" xml:space="preserve">
     <value>活动工作区</value>

@@ -304,6 +304,11 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsPageTitle = "SettingsDiagnosticsPage.PageTitleText.Text";
     public const string SettingsDiagnosticsPageEyebrow = "SettingsDiagnosticsPage.PageEyebrowText.Text";
     public const string SettingsDiagnosticsPageSubtitle = "SettingsDiagnosticsPage.PageSubtitleText.Text";
+    public const string SettingsDiagnosticsNavWorkspace = "SettingsDiagnosticsPage.Navigation.Workspace";
+    public const string SettingsDiagnosticsNavPreferences = "SettingsDiagnosticsPage.Navigation.Preferences";
+    public const string SettingsDiagnosticsNavPerformanceCache = "SettingsDiagnosticsPage.Navigation.PerformanceCache";
+    public const string SettingsDiagnosticsNavDiagnostics = "SettingsDiagnosticsPage.Navigation.Diagnostics";
+    public const string SettingsDiagnosticsNavLogs = "SettingsDiagnosticsPage.Navigation.Logs";
     public const string SettingsDiagnosticsWorkspaceStatusTitle = "SettingsDiagnosticsPage.WorkspaceStatusTitleText.Text";
     public const string SettingsDiagnosticsWorkspaceStatusHint = "SettingsDiagnosticsPage.WorkspaceStatusHintText.Text";
     public const string SettingsDiagnosticsActiveWorkspaceEmpty = "SettingsDiagnosticsPage.ActiveWorkspaceEmptyText.Text";

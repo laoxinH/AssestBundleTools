@@ -13,6 +13,44 @@
     VerticalAlignment="Stretch"
     mc:Ignorable="d">
 
+    <Page.Resources>
+        <ThemeShadow x:Key="SettingsDiagnosticsPanelShadow" />
+
+        <Style
+            x:Key="SettingsDiagnosticsSurfaceStyle"
+            TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Shadow" Value="{StaticResource SettingsDiagnosticsPanelShadow}" />
+        </Style>
+
+        <Style
+            x:Key="SettingsDiagnosticsGroupCardStyle"
+            TargetType="Border">
+            <Setter Property="Padding" Value="18" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <Style
+            x:Key="SettingsDiagnosticsSecondaryTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="TextWrapping" Value="WrapWholeWords" />
+        </Style>
+
+        <Style
+            x:Key="SettingsDiagnosticsMutedTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorTertiaryBrush}" />
+            <Setter Property="TextWrapping" Value="WrapWholeWords" />
+        </Style>
+    </Page.Resources>
+
     <Grid
         Padding="24,20,14,24"
         RowSpacing="16">
@@ -40,515 +78,561 @@
                 x:Name="PageSubtitleText"
                 Grid.Row="1"
                 MaxWidth="980"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                TextWrapping="WrapWholeWords" />
+                Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
         </Grid>
 
         <Border
             Grid.Row="1"
             MinHeight="0"
-            Style="{StaticResource SettingsSectionCardStyle}"
-            Padding="0">
-            <Grid
-                MinHeight="0"
-                ColumnSpacing="16"
-                Padding="16">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.05*" />
-                    <ColumnDefinition Width="1.95*" />
-                </Grid.ColumnDefinitions>
+            Style="{StaticResource SettingsDiagnosticsSurfaceStyle}">
+            <NavigationView
+                x:Name="SettingsSubPageNavigationView"
+                AlwaysShowHeader="False"
+                Background="Transparent"
+                CompactPaneLength="48"
+                IsBackButtonVisible="Collapsed"
+                IsPaneOpen="True"
+                IsPaneToggleButtonVisible="False"
+                IsSettingsVisible="False"
+                OpenPaneLength="232"
+                PaneDisplayMode="Left"
+                SelectionChanged="OnSettingsSubPageNavigationSelectionChanged">
+                <NavigationView.MenuItems>
+                    <NavigationViewItem
+                        x:Name="SettingsWorkspaceNavItem"
+                        Tag="workspace">
+                        <NavigationViewItem.Icon>
+                            <SymbolIcon Symbol="Folder" />
+                        </NavigationViewItem.Icon>
+                    </NavigationViewItem>
+                    <NavigationViewItem
+                        x:Name="SettingsPreferencesNavItem"
+                        Tag="preferences">
+                        <NavigationViewItem.Icon>
+                            <SymbolIcon Symbol="Setting" />
+                        </NavigationViewItem.Icon>
+                    </NavigationViewItem>
+                    <NavigationViewItem
+                        x:Name="SettingsPerformanceCacheNavItem"
+                        Tag="performance-cache">
+                        <NavigationViewItem.Icon>
+                            <FontIcon
+                                FontFamily="Segoe Fluent Icons"
+                                Glyph="&#xE9D9;" />
+                        </NavigationViewItem.Icon>
+                    </NavigationViewItem>
+                    <NavigationViewItem
+                        x:Name="SettingsDiagnosticsNavItem"
+                        Tag="diagnostics">
+                        <NavigationViewItem.Icon>
+                            <FontIcon
+                                FontFamily="Segoe Fluent Icons"
+                                Glyph="&#xE946;" />
+                        </NavigationViewItem.Icon>
+                    </NavigationViewItem>
+                    <NavigationViewItem
+                        x:Name="SettingsLogsNavItem"
+                        Tag="logs">
+                        <NavigationViewItem.Icon>
+                            <FontIcon
+                                FontFamily="Segoe Fluent Icons"
+                                Glyph="&#xE9D5;" />
+                        </NavigationViewItem.Icon>
+                    </NavigationViewItem>
+                </NavigationView.MenuItems>
 
-                <ScrollViewer
+                <Grid
                     MinHeight="0"
-                    VerticalScrollMode="Enabled"
-                    VerticalScrollBarVisibility="Auto"
-                    HorizontalScrollMode="Disabled"
-                    HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Spacing="16">
-                        <Border
-                            Style="{StaticResource SettingsInsetCardStyle}"
-                            Padding="16">
-                            <StackPanel Spacing="12">
-                                <StackPanel Spacing="6">
-                                    <TextBlock
-                                        x:Name="WorkspaceStatusTitleText"
-                                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                                    <TextBlock
-                                        x:Name="WorkspaceStatusHintText"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        TextWrapping="WrapWholeWords" />
-                                </StackPanel>
+                    Padding="16">
+                    <ScrollViewer
+                        x:Name="WorkspaceSettingsPanel"
+                        MinHeight="0"
+                        HorizontalScrollBarVisibility="Disabled"
+                        HorizontalScrollMode="Disabled"
+                        VerticalScrollBarVisibility="Auto"
+                        VerticalScrollMode="Enabled">
+                        <StackPanel
+                            MaxWidth="900"
+                            Spacing="14">
+                            <Border Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
+                                <StackPanel Spacing="12">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock
+                                            x:Name="WorkspaceStatusTitleText"
+                                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                        <TextBlock
+                                            x:Name="WorkspaceStatusHintText"
+                                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                    </StackPanel>
 
-                                <StackPanel
-                                    Spacing="8"
-                                    Visibility="{x:Bind ViewModel.ActiveWorkspaceVisibility, Mode=OneWay}">
-                                    <Grid ColumnSpacing="12">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
+                                    <StackPanel
+                                        Spacing="8"
+                                        Visibility="{x:Bind ViewModel.ActiveWorkspaceVisibility, Mode=OneWay}">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock
+                                                FontWeight="SemiBold"
+                                                Text="{x:Bind ViewModel.ActiveWorkspaceDisplayName, Mode=OneWay}"
+                                                TextTrimming="CharacterEllipsis" />
+
+                                            <StackPanel
+                                                Grid.Column="1"
+                                                HorizontalAlignment="Right"
+                                                Spacing="6">
+                                                <Border
+                                                    Padding="8,3"
+                                                    VerticalAlignment="Center"
+                                                    Style="{StaticResource ExplorerTreeBadgeStyle}">
+                                                    <TextBlock
+                                                        FontSize="11"
+                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                        Text="{x:Bind ViewModel.ActiveWorkspacePrimaryBadgeText, Mode=OneWay}" />
+                                                </Border>
+
+                                                <Border
+                                                    Padding="8,3"
+                                                    VerticalAlignment="Center"
+                                                    Style="{StaticResource ExplorerTreeBadgeStyle}"
+                                                    Visibility="{x:Bind ViewModel.ActiveWorkspaceSecondaryBadgeVisibility, Mode=OneWay}">
+                                                    <TextBlock
+                                                        FontSize="11"
+                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                        Text="{x:Bind ViewModel.ActiveWorkspaceSecondaryBadgeText, Mode=OneWay}" />
+                                                </Border>
+                                            </StackPanel>
+                                        </Grid>
 
                                         <TextBlock
-                                            Text="{x:Bind ViewModel.ActiveWorkspaceDisplayName, Mode=OneWay}"
-                                            FontWeight="SemiBold"
-                                            TextTrimming="CharacterEllipsis" />
+                                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}"
+                                            Text="{x:Bind ViewModel.ActiveWorkspaceSourceSummary, Mode=OneWay}" />
+                                        <TextBlock
+                                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}"
+                                            Text="{x:Bind ViewModel.ActiveWorkspaceDataRootSummary, Mode=OneWay}" />
+                                        <TextBlock
+                                            Text="{x:Bind ViewModel.ActiveWorkspaceSessionSummary, Mode=OneWay}"
+                                            TextWrapping="WrapWholeWords" />
+                                        <TextBlock
+                                            Style="{StaticResource SettingsDiagnosticsMutedTextStyle}"
+                                            Text="{x:Bind ViewModel.ActiveWorkspaceAvailabilitySummary, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.ActiveWorkspaceAvailabilityVisibility, Mode=OneWay}" />
 
                                         <StackPanel
-                                            Grid.Column="1"
-                                            HorizontalAlignment="Right"
-                                            Spacing="6">
-                                            <Border
-                                                Style="{StaticResource ExplorerTreeBadgeStyle}"
-                                                Padding="8,3"
-                                                VerticalAlignment="Center">
-                                                <TextBlock
-                                                    FontSize="11"
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Text="{x:Bind ViewModel.ActiveWorkspacePrimaryBadgeText, Mode=OneWay}" />
-                                            </Border>
+                                            Orientation="Horizontal"
+                                            Spacing="8">
+                                            <Button
+                                                Command="{x:Bind ViewModel.ImportBundleFilesCommand, Mode=OneWay}"
+                                                Style="{StaticResource WorkspaceInlineActionButtonStyle}">
+                                                <StackPanel
+                                                    Orientation="Horizontal"
+                                                    Spacing="8">
+                                                    <FontIcon
+                                                        FontFamily="Segoe Fluent Icons"
+                                                        FontSize="14"
+                                                        Glyph="&#xE8A5;" />
+                                                    <TextBlock
+                                                        x:Name="ActiveWorkspaceImportBundleFilesButtonText"
+                                                        VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
 
-                                            <Border
-                                                Style="{StaticResource ExplorerTreeBadgeStyle}"
-                                                Padding="8,3"
-                                                VerticalAlignment="Center"
-                                                Visibility="{x:Bind ViewModel.ActiveWorkspaceSecondaryBadgeVisibility, Mode=OneWay}">
-                                                <TextBlock
-                                                    FontSize="11"
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Text="{x:Bind ViewModel.ActiveWorkspaceSecondaryBadgeText, Mode=OneWay}" />
-                                            </Border>
+                                            <Button
+                                                Command="{x:Bind ViewModel.ImportBundleDirectoryCommand, Mode=OneWay}"
+                                                Style="{StaticResource WorkspaceInlineActionButtonStyle}">
+                                                <StackPanel
+                                                    Orientation="Horizontal"
+                                                    Spacing="8">
+                                                    <FontIcon
+                                                        FontFamily="Segoe Fluent Icons"
+                                                        FontSize="14"
+                                                        Glyph="&#xE838;" />
+                                                    <TextBlock
+                                                        x:Name="ActiveWorkspaceImportBundleDirectoryButtonText"
+                                                        VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
                                         </StackPanel>
-                                    </Grid>
+                                    </StackPanel>
 
                                     <TextBlock
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="{x:Bind ViewModel.ActiveWorkspaceSourceSummary, Mode=OneWay}"
+                                        x:Name="ActiveWorkspaceEmptyText"
+                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}"
+                                        Visibility="{x:Bind ViewModel.ActiveWorkspaceEmptyVisibility, Mode=OneWay}" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
+                                <StackPanel Spacing="12">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock
+                                            x:Name="WorkspaceCatalogTitleText"
+                                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                        <TextBlock
+                                            x:Name="WorkspaceCatalogHintText"
+                                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                    </StackPanel>
+
+                                    <TextBlock
+                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}"
+                                        Text="{x:Bind ViewModel.WorkspaceCatalogSummaryText, Mode=OneWay}" />
+
+                                    <ItemsControl
+                                        ItemsSource="{x:Bind ViewModel.WorkspaceEntries, Mode=OneWay}"
+                                        Visibility="{x:Bind ViewModel.WorkspaceEntryListVisibility, Mode=OneWay}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="viewModels:SettingsWorkspaceEntryItemViewModel">
+                                                <Border
+                                                    Margin="0,0,0,8"
+                                                    Padding="12"
+                                                    Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
+                                                    <StackPanel Spacing="8">
+                                                        <Grid ColumnSpacing="12">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <TextBlock
+                                                                FontWeight="SemiBold"
+                                                                Text="{x:Bind DisplayName}"
+                                                                TextTrimming="CharacterEllipsis" />
+
+                                                            <StackPanel
+                                                                Grid.Column="1"
+                                                                HorizontalAlignment="Right"
+                                                                Spacing="6">
+                                                                <Border
+                                                                    Padding="8,3"
+                                                                    VerticalAlignment="Center"
+                                                                    Style="{StaticResource ExplorerTreeBadgeStyle}">
+                                                                    <TextBlock
+                                                                        FontSize="11"
+                                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                        Text="{x:Bind PrimaryBadgeText}" />
+                                                                </Border>
+                                                                <Border
+                                                                    Padding="8,3"
+                                                                    VerticalAlignment="Center"
+                                                                    Style="{StaticResource ExplorerTreeBadgeStyle}"
+                                                                    Visibility="{x:Bind SecondaryBadgeVisibility}">
+                                                                    <TextBlock
+                                                                        FontSize="11"
+                                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                        Text="{x:Bind SecondaryBadgeText}" />
+                                                                </Border>
+                                                            </StackPanel>
+                                                        </Grid>
+
+                                                        <TextBlock
+                                                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}"
+                                                            Text="{x:Bind SourceSummary}" />
+                                                        <TextBlock
+                                                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}"
+                                                            Text="{x:Bind LastActivatedSummary}" />
+                                                        <TextBlock
+                                                            Style="{StaticResource SettingsDiagnosticsMutedTextStyle}"
+                                                            Text="{x:Bind AvailabilitySummary}"
+                                                            Visibility="{x:Bind AvailabilitySummaryVisibility}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <TextBlock
+                                        x:Name="WorkspaceCatalogEmptyText"
+                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}"
+                                        Visibility="{x:Bind ViewModel.WorkspaceEntryEmptyVisibility, Mode=OneWay}" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <ScrollViewer
+                        x:Name="PreferenceSettingsPanel"
+                        MinHeight="0"
+                        HorizontalScrollBarVisibility="Disabled"
+                        HorizontalScrollMode="Disabled"
+                        VerticalScrollBarVisibility="Auto"
+                        VerticalScrollMode="Enabled"
+                        Visibility="Collapsed">
+                        <StackPanel
+                            MaxWidth="900"
+                            Spacing="14">
+                            <Border Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
+                                <StackPanel Spacing="12">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock
+                                            x:Name="StartupBehaviorTitleText"
+                                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                        <TextBlock
+                                            x:Name="StartupBehaviorHintText"
+                                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                    </StackPanel>
+
+                                    <ToggleSwitch
+                                        x:Name="RestoreLastWorkspaceOnStartupToggleSwitch"
+                                        IsOn="{x:Bind ViewModel.RestoreLastWorkspaceOnStartup, Mode=TwoWay}" />
+
+                                    <TextBlock
+                                        x:Name="RestoreLastWorkspaceOnStartupDescriptionText"
+                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+
+                                    <TextBlock
+                                        x:Name="RecentWorkspaceOpenBehaviorLabelText"
+                                        FontWeight="SemiBold" />
+
+                                    <RadioButtons
+                                        x:Name="RecentWorkspaceOpenBehaviorRadioButtons"
+                                        MaxColumns="3"
+                                        SelectedIndex="{x:Bind ViewModel.RecentWorkspaceOpenBehaviorSelectedIndex, Mode=TwoWay}" />
+
+                                    <TextBlock
+                                        x:Name="RecentWorkspaceOpenBehaviorDescriptionText"
+                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+
+                                    <TextBlock
+                                        x:Name="AssetEditorCloseBehaviorLabelText"
+                                        FontWeight="SemiBold" />
+
+                                    <RadioButtons
+                                        x:Name="AssetEditorCloseBehaviorRadioButtons"
+                                        MaxColumns="2"
+                                        SelectedIndex="{x:Bind ViewModel.AssetEditorCloseBehaviorSelectedIndex, Mode=TwoWay}" />
+
+                                    <TextBlock
+                                        x:Name="AssetEditorCloseBehaviorDescriptionText"
+                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
+                                <StackPanel Spacing="12">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock
+                                            x:Name="OperationRecordsTitleText"
+                                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                        <TextBlock
+                                            x:Name="OperationRecordsHintText"
+                                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                    </StackPanel>
+
+                                    <TextBlock
+                                        x:Name="OperationRecordLimitLabelText"
+                                        FontWeight="SemiBold" />
+
+                                    <RadioButtons
+                                        x:Name="OperationRecordLimitRadioButtons"
+                                        MaxColumns="4"
+                                        SelectedIndex="{x:Bind ViewModel.OperationRecordLimitSelectedIndex, Mode=TwoWay}" />
+
+                                    <TextBlock
+                                        x:Name="OperationRecordLimitDescriptionText"
+                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <ScrollViewer
+                        x:Name="PerformanceCacheSettingsPanel"
+                        MinHeight="0"
+                        HorizontalScrollBarVisibility="Disabled"
+                        HorizontalScrollMode="Disabled"
+                        VerticalScrollBarVisibility="Auto"
+                        VerticalScrollMode="Enabled"
+                        Visibility="Collapsed">
+                        <StackPanel
+                            MaxWidth="900"
+                            Spacing="14">
+                            <Border Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
+                                <StackPanel Spacing="12">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock
+                                            x:Name="WorkspaceImportPerformanceTitleText"
+                                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                        <TextBlock
+                                            x:Name="WorkspaceImportPerformanceHintText"
+                                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                    </StackPanel>
+
+                                    <TextBlock
+                                        x:Name="WorkspaceImportWorkerCountLabelText"
+                                        FontWeight="SemiBold" />
+
+                                    <RadioButtons
+                                        x:Name="WorkspaceImportWorkerCountRadioButtons"
+                                        MaxColumns="3"
+                                        SelectedIndex="{x:Bind ViewModel.WorkspaceImportWorkerCountSelectedIndex, Mode=TwoWay}" />
+
+                                    <TextBlock
+                                        x:Name="WorkspaceImportWorkerCountDescriptionText"
+                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+
+                                    <TextBlock
+                                        x:Name="PreviewWorkerCountLabelText"
+                                        FontWeight="SemiBold" />
+
+                                    <RadioButtons
+                                        x:Name="PreviewWorkerCountRadioButtons"
+                                        MaxColumns="3"
+                                        SelectedIndex="{x:Bind ViewModel.PreviewWorkerCountSelectedIndex, Mode=TwoWay}" />
+
+                                    <TextBlock
+                                        x:Name="PreviewWorkerCountDescriptionText"
+                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
+                                <StackPanel Spacing="12">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock
+                                            x:Name="BundleArtifactCacheTitleText"
+                                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                        <TextBlock
+                                            x:Name="BundleArtifactCacheHintText"
+                                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                    </StackPanel>
+
+                                    <TextBlock
+                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}"
+                                        Text="{x:Bind ViewModel.BundleArtifactCache.TargetText, Mode=OneWay}" />
+                                    <TextBlock
+                                        FontWeight="SemiBold"
+                                        Text="{x:Bind ViewModel.BundleArtifactCache.SummaryText, Mode=OneWay}"
                                         TextWrapping="WrapWholeWords" />
                                     <TextBlock
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="{x:Bind ViewModel.ActiveWorkspaceDataRootSummary, Mode=OneWay}"
-                                        TextWrapping="WrapWholeWords" />
+                                        Style="{StaticResource SettingsDiagnosticsMutedTextStyle}"
+                                        Text="{x:Bind ViewModel.BundleArtifactCache.LastResultText, Mode=OneWay}"
+                                        Visibility="{x:Bind ViewModel.BundleArtifactCache.LastResultVisibility, Mode=OneWay}" />
+
+                                    <ToggleSwitch
+                                        x:Name="BundleArtifactCacheAutoPruneToggleSwitch"
+                                        IsOn="{x:Bind ViewModel.BundleArtifactCache.AutoPruneEnabled, Mode=TwoWay}" />
+
                                     <TextBlock
-                                        Text="{x:Bind ViewModel.ActiveWorkspaceSessionSummary, Mode=OneWay}"
-                                        TextWrapping="WrapWholeWords" />
+                                        x:Name="BundleArtifactCacheAutoPruneDescriptionText"
+                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+
                                     <TextBlock
-                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                        Text="{x:Bind ViewModel.ActiveWorkspaceAvailabilitySummary, Mode=OneWay}"
-                                        TextWrapping="WrapWholeWords"
-                                        Visibility="{x:Bind ViewModel.ActiveWorkspaceAvailabilityVisibility, Mode=OneWay}" />
+                                        x:Name="BundleArtifactCacheMaximumSizeLabelText"
+                                        FontWeight="SemiBold" />
+
+                                    <RadioButtons
+                                        x:Name="BundleArtifactCacheMaximumSizeRadioButtons"
+                                        MaxColumns="3"
+                                        SelectedIndex="{x:Bind ViewModel.BundleArtifactCache.MaximumSizeSelectedIndex, Mode=TwoWay}" />
 
                                     <StackPanel
                                         Orientation="Horizontal"
                                         Spacing="8">
                                         <Button
-                                            Style="{StaticResource WorkspaceInlineActionButtonStyle}"
-                                            Command="{x:Bind ViewModel.ImportBundleFilesCommand, Mode=OneWay}">
+                                            Command="{x:Bind ViewModel.BundleArtifactCache.RefreshCommand, Mode=OneWay}"
+                                            Style="{StaticResource WorkspaceInlineActionButtonStyle}">
                                             <StackPanel
                                                 Orientation="Horizontal"
                                                 Spacing="8">
                                                 <FontIcon
                                                     FontFamily="Segoe Fluent Icons"
                                                     FontSize="14"
-                                                    Glyph="&#xE8A5;" />
+                                                    Glyph="&#xE72C;" />
                                                 <TextBlock
-                                                    x:Name="ActiveWorkspaceImportBundleFilesButtonText"
+                                                    x:Name="RefreshBundleArtifactCacheButtonText"
                                                     VerticalAlignment="Center" />
                                             </StackPanel>
                                         </Button>
 
                                         <Button
-                                            Style="{StaticResource WorkspaceInlineActionButtonStyle}"
-                                            Command="{x:Bind ViewModel.ImportBundleDirectoryCommand, Mode=OneWay}">
+                                            Command="{x:Bind ViewModel.BundleArtifactCache.ClearCommand, Mode=OneWay}"
+                                            Style="{StaticResource WorkspaceInlineActionButtonStyle}">
                                             <StackPanel
                                                 Orientation="Horizontal"
                                                 Spacing="8">
                                                 <FontIcon
                                                     FontFamily="Segoe Fluent Icons"
                                                     FontSize="14"
-                                                    Glyph="&#xE838;" />
+                                                    Glyph="&#xE74D;" />
                                                 <TextBlock
-                                                    x:Name="ActiveWorkspaceImportBundleDirectoryButtonText"
+                                                    x:Name="ClearBundleArtifactCacheButtonText"
                                                     VerticalAlignment="Center" />
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>
                                 </StackPanel>
-
-                                <TextBlock
-                                    x:Name="ActiveWorkspaceEmptyText"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    TextWrapping="WrapWholeWords"
-                                    Visibility="{x:Bind ViewModel.ActiveWorkspaceEmptyVisibility, Mode=OneWay}" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border
-                            Style="{StaticResource SettingsInsetCardStyle}"
-                            Padding="16">
-                            <StackPanel Spacing="12">
-                                <StackPanel Spacing="6">
-                                    <TextBlock
-                                        x:Name="WorkspaceCatalogTitleText"
-                                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                                    <TextBlock
-                                        x:Name="WorkspaceCatalogHintText"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        TextWrapping="WrapWholeWords" />
-                                </StackPanel>
-
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="{x:Bind ViewModel.WorkspaceCatalogSummaryText, Mode=OneWay}"
-                                    TextWrapping="WrapWholeWords" />
-
-                                <ItemsControl
-                                    ItemsSource="{x:Bind ViewModel.WorkspaceEntries, Mode=OneWay}"
-                                    Visibility="{x:Bind ViewModel.WorkspaceEntryListVisibility, Mode=OneWay}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="viewModels:SettingsWorkspaceEntryItemViewModel">
-                                            <Border
-                                                Margin="0,0,0,8"
-                                                Padding="12"
-                                                Style="{StaticResource SettingsSectionCardStyle}">
-                                                <StackPanel Spacing="8">
-                                                    <Grid ColumnSpacing="12">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="Auto" />
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <TextBlock
-                                                            FontWeight="SemiBold"
-                                                            Text="{x:Bind DisplayName}"
-                                                            TextTrimming="CharacterEllipsis" />
-
-                                                        <StackPanel
-                                                            Grid.Column="1"
-                                                            HorizontalAlignment="Right"
-                                                            Spacing="6">
-                                                            <Border
-                                                                Style="{StaticResource ExplorerTreeBadgeStyle}"
-                                                                Padding="8,3"
-                                                                VerticalAlignment="Center">
-                                                                <TextBlock
-                                                                    FontSize="11"
-                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                                    Text="{x:Bind PrimaryBadgeText}" />
-                                                            </Border>
-                                                            <Border
-                                                                Style="{StaticResource ExplorerTreeBadgeStyle}"
-                                                                Padding="8,3"
-                                                                VerticalAlignment="Center"
-                                                                Visibility="{x:Bind SecondaryBadgeVisibility}">
-                                                                <TextBlock
-                                                                    FontSize="11"
-                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                                    Text="{x:Bind SecondaryBadgeText}" />
-                                                            </Border>
-                                                        </StackPanel>
-                                                    </Grid>
-
-                                                    <TextBlock
-                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                        Text="{x:Bind SourceSummary}"
-                                                        TextWrapping="WrapWholeWords" />
-                                                    <TextBlock
-                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                        Text="{x:Bind LastActivatedSummary}"
-                                                        TextWrapping="WrapWholeWords" />
-                                                    <TextBlock
-                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                                        Text="{x:Bind AvailabilitySummary}"
-                                                        TextWrapping="WrapWholeWords"
-                                                        Visibility="{x:Bind AvailabilitySummaryVisibility}" />
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-
-                                <TextBlock
-                                    x:Name="WorkspaceCatalogEmptyText"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    TextWrapping="WrapWholeWords"
-                                    Visibility="{x:Bind ViewModel.WorkspaceEntryEmptyVisibility, Mode=OneWay}" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border
-                            Style="{StaticResource SettingsInsetCardStyle}"
-                            Padding="16">
-                            <StackPanel Spacing="12">
-                                <StackPanel Spacing="6">
-                                    <TextBlock
-                                        x:Name="StartupBehaviorTitleText"
-                                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                                    <TextBlock
-                                        x:Name="StartupBehaviorHintText"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        TextWrapping="WrapWholeWords" />
-                                </StackPanel>
-
-                                <ToggleSwitch
-                                    x:Name="RestoreLastWorkspaceOnStartupToggleSwitch"
-                                    IsOn="{x:Bind ViewModel.RestoreLastWorkspaceOnStartup, Mode=TwoWay}" />
-
-                                <TextBlock
-                                    x:Name="RestoreLastWorkspaceOnStartupDescriptionText"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    TextWrapping="WrapWholeWords" />
-
-                                <TextBlock
-                                    x:Name="RecentWorkspaceOpenBehaviorLabelText"
-                                    FontWeight="SemiBold" />
-
-                                <RadioButtons
-                                    x:Name="RecentWorkspaceOpenBehaviorRadioButtons"
-                                    MaxColumns="3"
-                                    SelectedIndex="{x:Bind ViewModel.RecentWorkspaceOpenBehaviorSelectedIndex, Mode=TwoWay}" />
-
-                                <TextBlock
-                                    x:Name="RecentWorkspaceOpenBehaviorDescriptionText"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    TextWrapping="WrapWholeWords" />
-
-                                <TextBlock
-                                    x:Name="AssetEditorCloseBehaviorLabelText"
-                                    FontWeight="SemiBold" />
-
-                                <RadioButtons
-                                    x:Name="AssetEditorCloseBehaviorRadioButtons"
-                                    MaxColumns="2"
-                                    SelectedIndex="{x:Bind ViewModel.AssetEditorCloseBehaviorSelectedIndex, Mode=TwoWay}" />
-
-                                <TextBlock
-                                    x:Name="AssetEditorCloseBehaviorDescriptionText"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    TextWrapping="WrapWholeWords" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border
-                            Style="{StaticResource SettingsInsetCardStyle}"
-                            Padding="16">
-                            <StackPanel Spacing="12">
-                                <StackPanel Spacing="6">
-                                    <TextBlock
-                                        x:Name="OperationRecordsTitleText"
-                                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                                    <TextBlock
-                                        x:Name="OperationRecordsHintText"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        TextWrapping="WrapWholeWords" />
-                                </StackPanel>
-
-                                <TextBlock
-                                    x:Name="OperationRecordLimitLabelText"
-                                    FontWeight="SemiBold" />
-
-                                <RadioButtons
-                                    x:Name="OperationRecordLimitRadioButtons"
-                                    MaxColumns="4"
-                                    SelectedIndex="{x:Bind ViewModel.OperationRecordLimitSelectedIndex, Mode=TwoWay}" />
-
-                                <TextBlock
-                                    x:Name="OperationRecordLimitDescriptionText"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    TextWrapping="WrapWholeWords" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border
-                            Style="{StaticResource SettingsInsetCardStyle}"
-                            Padding="16">
-                            <StackPanel Spacing="12">
-                                <StackPanel Spacing="6">
-                                    <TextBlock
-                                        x:Name="BundleArtifactCacheTitleText"
-                                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                                    <TextBlock
-                                        x:Name="BundleArtifactCacheHintText"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        TextWrapping="WrapWholeWords" />
-                                </StackPanel>
-
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="{x:Bind ViewModel.BundleArtifactCache.TargetText, Mode=OneWay}"
-                                    TextWrapping="WrapWholeWords" />
-                                <TextBlock
-                                    FontWeight="SemiBold"
-                                    Text="{x:Bind ViewModel.BundleArtifactCache.SummaryText, Mode=OneWay}"
-                                    TextWrapping="WrapWholeWords" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    Text="{x:Bind ViewModel.BundleArtifactCache.LastResultText, Mode=OneWay}"
-                                    TextWrapping="WrapWholeWords"
-                                    Visibility="{x:Bind ViewModel.BundleArtifactCache.LastResultVisibility, Mode=OneWay}" />
-
-                                <ToggleSwitch
-                                    x:Name="BundleArtifactCacheAutoPruneToggleSwitch"
-                                    IsOn="{x:Bind ViewModel.BundleArtifactCache.AutoPruneEnabled, Mode=TwoWay}" />
-
-                                <TextBlock
-                                    x:Name="BundleArtifactCacheAutoPruneDescriptionText"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    TextWrapping="WrapWholeWords" />
-
-                                <TextBlock
-                                    x:Name="BundleArtifactCacheMaximumSizeLabelText"
-                                    FontWeight="SemiBold" />
-
-                                <RadioButtons
-                                    x:Name="BundleArtifactCacheMaximumSizeRadioButtons"
-                                    MaxColumns="3"
-                                    SelectedIndex="{x:Bind ViewModel.BundleArtifactCache.MaximumSizeSelectedIndex, Mode=TwoWay}" />
-
-                                <StackPanel
-                                    Orientation="Horizontal"
-                                    Spacing="8">
-                                    <Button
-                                        Style="{StaticResource WorkspaceInlineActionButtonStyle}"
-                                        Command="{x:Bind ViewModel.BundleArtifactCache.RefreshCommand, Mode=OneWay}">
-                                        <StackPanel
-                                            Orientation="Horizontal"
-                                            Spacing="8">
-                                            <FontIcon
-                                                FontFamily="Segoe Fluent Icons"
-                                                FontSize="14"
-                                                Glyph="&#xE72C;" />
-                                            <TextBlock
-                                                x:Name="RefreshBundleArtifactCacheButtonText"
-                                                VerticalAlignment="Center" />
-                                        </StackPanel>
-                                    </Button>
-
-                                    <Button
-                                        Style="{StaticResource WorkspaceInlineActionButtonStyle}"
-                                        Command="{x:Bind ViewModel.BundleArtifactCache.ClearCommand, Mode=OneWay}">
-                                        <StackPanel
-                                            Orientation="Horizontal"
-                                            Spacing="8">
-                                            <FontIcon
-                                                FontFamily="Segoe Fluent Icons"
-                                                FontSize="14"
-                                                Glyph="&#xE74D;" />
-                                            <TextBlock
-                                                x:Name="ClearBundleArtifactCacheButtonText"
-                                                VerticalAlignment="Center" />
-                                        </StackPanel>
-                                    </Button>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <Border
-                            Style="{StaticResource SettingsInsetCardStyle}"
-                            Padding="16">
-                            <StackPanel Spacing="12">
-                                <StackPanel Spacing="6">
-                                    <TextBlock
-                                        x:Name="WorkspaceImportPerformanceTitleText"
-                                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                                    <TextBlock
-                                        x:Name="WorkspaceImportPerformanceHintText"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        TextWrapping="WrapWholeWords" />
-                                </StackPanel>
-
-                                <TextBlock
-                                    x:Name="WorkspaceImportWorkerCountLabelText"
-                                    FontWeight="SemiBold" />
-
-                                <RadioButtons
-                                    x:Name="WorkspaceImportWorkerCountRadioButtons"
-                                    MaxColumns="3"
-                                    SelectedIndex="{x:Bind ViewModel.WorkspaceImportWorkerCountSelectedIndex, Mode=TwoWay}" />
-
-                                <TextBlock
-                                    x:Name="WorkspaceImportWorkerCountDescriptionText"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    TextWrapping="WrapWholeWords" />
-
-                                <TextBlock
-                                    x:Name="PreviewWorkerCountLabelText"
-                                    FontWeight="SemiBold" />
-
-                                <RadioButtons
-                                    x:Name="PreviewWorkerCountRadioButtons"
-                                    MaxColumns="3"
-                                    SelectedIndex="{x:Bind ViewModel.PreviewWorkerCountSelectedIndex, Mode=TwoWay}" />
-
-                                <TextBlock
-                                    x:Name="PreviewWorkerCountDescriptionText"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    TextWrapping="WrapWholeWords" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border
-                            Style="{StaticResource SettingsInsetCardStyle}"
-                            Padding="16">
-                            <StackPanel Spacing="8">
-                                <TextBlock
-                                    x:Name="ResponsibilityTitleText"
-                                    Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                                <TextBlock
-                                    x:Name="ResponsibilityBodyText"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    TextWrapping="WrapWholeWords" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border
-                            Style="{StaticResource SettingsInsetCardStyle}"
-                            Padding="16">
-                            <StackPanel Spacing="8">
-                                <TextBlock
-                                    x:Name="DiagnosticsTitleText"
-                                    Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                                <TextBlock
-                                    x:Name="DiagnosticsBodyText"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    TextWrapping="WrapWholeWords" />
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
-
-                <Border
-                    Grid.Column="1"
-                    MinHeight="0"
-                    Style="{StaticResource SettingsInsetCardStyle}"
-                    Padding="0">
-                    <Grid RowSpacing="12">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-
-                        <StackPanel
-                            Padding="16,16,16,0"
-                            Spacing="6">
-                            <TextBlock
-                                x:Name="LogCenterTitleText"
-                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                            <TextBlock
-                                x:Name="LogCenterHintText"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                TextWrapping="WrapWholeWords" />
+                            </Border>
                         </StackPanel>
+                    </ScrollViewer>
 
-                        <Grid
-                            Grid.Row="1"
-                            MinHeight="0"
-                            Padding="16,0,16,16">
-                            <shared:LogPanel
-                                ViewModel="{x:Bind ViewModel.LogPanel, Mode=OneWay}" />
-                        </Grid>
+                    <ScrollViewer
+                        x:Name="DiagnosticsSettingsPanel"
+                        MinHeight="0"
+                        HorizontalScrollBarVisibility="Disabled"
+                        HorizontalScrollMode="Disabled"
+                        VerticalScrollBarVisibility="Auto"
+                        VerticalScrollMode="Enabled"
+                        Visibility="Collapsed">
+                        <StackPanel
+                            MaxWidth="900"
+                            Spacing="14">
+                            <Border Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
+                                <StackPanel Spacing="8">
+                                    <TextBlock
+                                        x:Name="ResponsibilityTitleText"
+                                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                    <TextBlock
+                                        x:Name="ResponsibilityBodyText"
+                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
+                                <StackPanel Spacing="8">
+                                    <TextBlock
+                                        x:Name="DiagnosticsTitleText"
+                                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                    <TextBlock
+                                        x:Name="DiagnosticsBodyText"
+                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <Grid
+                        x:Name="LogCenterPanel"
+                        MinHeight="0"
+                        Visibility="Collapsed">
+                        <Border
+                            Padding="18"
+                            Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
+                            <Grid RowSpacing="12">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock
+                                        x:Name="LogCenterTitleText"
+                                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                    <TextBlock
+                                        x:Name="LogCenterHintText"
+                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                </StackPanel>
+
+                                <shared:LogPanel
+                                    Grid.Row="1"
+                                    MinHeight="0"
+                                    ViewModel="{x:Bind ViewModel.LogPanel, Mode=OneWay}" />
+                            </Grid>
+                        </Border>
                     </Grid>
-                </Border>
-            </Grid>
+                </Grid>
+            </NavigationView>
         </Border>
     </Grid>
 </Page>

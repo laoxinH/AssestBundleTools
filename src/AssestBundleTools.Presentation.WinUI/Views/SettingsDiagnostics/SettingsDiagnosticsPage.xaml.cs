@@ -1,5 +1,6 @@
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.SettingsDiagnostics;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.SettingsDiagnostics;
@@ -9,6 +10,12 @@ namespace AssestBundleTools.Presentation.WinUI.Views.SettingsDiagnostics;
 /// </summary>
 public sealed partial class SettingsDiagnosticsPage : Page
 {
+    private const string WorkspaceSubPageTag = "workspace";
+    private const string PreferencesSubPageTag = "preferences";
+    private const string PerformanceCacheSubPageTag = "performance-cache";
+    private const string DiagnosticsSubPageTag = "diagnostics";
+    private const string LogsSubPageTag = "logs";
+
     public SettingsDiagnosticsPage()
     {
         ViewModel = new SettingsDiagnosticsViewModel(
@@ -23,6 +30,8 @@ public sealed partial class SettingsDiagnosticsPage : Page
 
         InitializeComponent();
         ApplyLocalizedText();
+        SettingsSubPageNavigationView.SelectedItem = SettingsWorkspaceNavItem;
+        ShowSettingsSubPage(WorkspaceSubPageTag);
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
@@ -34,6 +43,11 @@ public sealed partial class SettingsDiagnosticsPage : Page
         PageEyebrowText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPageEyebrow);
         PageTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPageTitle);
         PageSubtitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPageSubtitle);
+        SettingsWorkspaceNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavWorkspace);
+        SettingsPreferencesNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavPreferences);
+        SettingsPerformanceCacheNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavPerformanceCache);
+        SettingsDiagnosticsNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavDiagnostics);
+        SettingsLogsNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavLogs);
         WorkspaceStatusTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceStatusTitle);
         WorkspaceStatusHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceStatusHint);
         ActiveWorkspaceImportBundleFilesButtonText.Text = UiText.Get(ResourceKeys.WorkspaceImportFilesButtonText);
@@ -116,6 +130,30 @@ public sealed partial class SettingsDiagnosticsPage : Page
         LogCenterTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsLogCenterTitle);
         LogCenterHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsLogCenterHint);
     }
+
+    private void OnSettingsSubPageNavigationSelectionChanged(
+        NavigationView sender,
+        NavigationViewSelectionChangedEventArgs args)
+    {
+        if (args.SelectedItemContainer?.Tag is string selectedTag)
+        {
+            ShowSettingsSubPage(selectedTag);
+        }
+    }
+
+    private void ShowSettingsSubPage(string selectedTag)
+    {
+        WorkspaceSettingsPanel.Visibility = IsSubPageSelected(selectedTag, WorkspaceSubPageTag);
+        PreferenceSettingsPanel.Visibility = IsSubPageSelected(selectedTag, PreferencesSubPageTag);
+        PerformanceCacheSettingsPanel.Visibility = IsSubPageSelected(selectedTag, PerformanceCacheSubPageTag);
+        DiagnosticsSettingsPanel.Visibility = IsSubPageSelected(selectedTag, DiagnosticsSubPageTag);
+        LogCenterPanel.Visibility = IsSubPageSelected(selectedTag, LogsSubPageTag);
+    }
+
+    private static Visibility IsSubPageSelected(string selectedTag, string targetTag) =>
+        string.Equals(selectedTag, targetTag, StringComparison.Ordinal)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
 
     private async void OnLoaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
