@@ -954,12 +954,6 @@
   <data name="Common.DiscardButton" xml:space="preserve">
     <value>不保存</value>
   </data>
-  <data name="WorkspaceImport.Button.Files.Text" xml:space="preserve">
-    <value>文件导入</value>
-  </data>
-  <data name="WorkspaceImport.Button.Directory.Text" xml:space="preserve">
-    <value>目录导入</value>
-  </data>
   <data name="WorkspaceImport.Log.BundleFilesRegistered.Format" xml:space="preserve">
     <value>已为工作区“{0}”登记 {1} 个资源包文件，本次新增 {2} 条来源记录。</value>
   </data>
@@ -3310,13 +3304,13 @@
     <value>活动工作区</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceStatusHintText.Text" xml:space="preserve">
-    <value>这里同步显示当前窗口会话所依赖的活动工作区摘要，便于在批处理、诊断和后续保存链路里确认上下文是否正确。</value>
+    <value>查看当前窗口正在使用的工作区上下文。</value>
   </data>
   <data name="SettingsDiagnosticsPage.ActiveWorkspaceEmptyText.Text" xml:space="preserve">
     <value>当前没有活动工作区。进入工作台并打开工作区后，这里会自动同步显示当前会话摘要。</value>
   </data>
   <data name="SettingsDiagnosticsPage.ActiveWorkspaceSessionSummary.Format" xml:space="preserve">
-    <value>当前会话已加载 {0} 个资源包 / {1} 个资源，打开时间：{2}</value>
+    <value>已加载 {0} 个资源包 / {1} 个资源，打开于 {2}</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceCatalogTitleText.Text" xml:space="preserve">
     <value>工作区目录</value>

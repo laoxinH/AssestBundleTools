@@ -148,8 +148,6 @@ public static class ResourceKeys
     public const string CommonByteSizeDetailedMegabytesWithBytesFormat = "Common.ByteSize.Detailed.MegabytesWithBytes.Format";
     public const string CommonByteSizeDetailedKilobytesWithBytesFormat = "Common.ByteSize.Detailed.KilobytesWithBytes.Format";
     public const string CommonByteSizeDetailedBytesFormat = "Common.ByteSize.Detailed.Bytes.Format";
-    public const string WorkspaceImportFilesButtonText = "WorkspaceImport.Button.Files.Text";
-    public const string WorkspaceImportDirectoryButtonText = "WorkspaceImport.Button.Directory.Text";
     public const string WorkspaceImportLogBundleFilesRegisteredFormat = "WorkspaceImport.Log.BundleFilesRegistered.Format";
     public const string WorkspaceImportLogBundleDirectoryRegisteredFormat = "WorkspaceImport.Log.BundleDirectoryRegistered.Format";
     public const string WorkspaceImportLogDragDropRegisteredFormat = "WorkspaceImport.Log.DragDropRegistered.Format";

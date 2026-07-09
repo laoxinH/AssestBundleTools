@@ -24,7 +24,6 @@ public sealed partial class SettingsDiagnosticsPage : Page
             App.CurrentApp.AppPreferencesService,
             App.CurrentApp.WorkspaceContextService,
             App.CurrentApp.LocalizationService,
-            App.CurrentApp.WorkspaceImportCoordinatorService,
             App.CurrentApp.WorkspaceCacheMaintenanceGateway,
             App.CurrentApp.BackgroundWorkScheduler);
 
@@ -48,8 +47,6 @@ public sealed partial class SettingsDiagnosticsPage : Page
         SettingsLogsNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavLogs);
         WorkspaceStatusTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceStatusTitle);
         WorkspaceStatusHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceStatusHint);
-        ActiveWorkspaceImportBundleFilesButtonText.Text = UiText.Get(ResourceKeys.WorkspaceImportFilesButtonText);
-        ActiveWorkspaceImportBundleDirectoryButtonText.Text = UiText.Get(ResourceKeys.WorkspaceImportDirectoryButtonText);
         ActiveWorkspaceEmptyText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsActiveWorkspaceEmpty);
         WorkspaceCatalogTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceCatalogTitle);
         WorkspaceCatalogHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceCatalogHint);

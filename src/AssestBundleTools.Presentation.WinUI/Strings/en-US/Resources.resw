@@ -954,12 +954,6 @@
   <data name="Common.DiscardButton" xml:space="preserve">
     <value>Don't Save</value>
   </data>
-  <data name="WorkspaceImport.Button.Files.Text" xml:space="preserve">
-    <value>Import Files</value>
-  </data>
-  <data name="WorkspaceImport.Button.Directory.Text" xml:space="preserve">
-    <value>Import Folder</value>
-  </data>
   <data name="WorkspaceImport.Log.BundleFilesRegistered.Format" xml:space="preserve">
     <value>Registered {1} bundle files for workspace \"{0}\". Added {2} new source records in this pass.</value>
   </data>
@@ -3310,13 +3304,13 @@
     <value>Active Workspace</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceStatusHintText.Text" xml:space="preserve">
-    <value>This area mirrors the active workspace summary used by the current window so batch tasks, diagnostics, and later save flows can verify the correct context.</value>
+    <value>Review the workspace context used by this window.</value>
   </data>
   <data name="SettingsDiagnosticsPage.ActiveWorkspaceEmptyText.Text" xml:space="preserve">
     <value>No active workspace is loaded. After you open a workspace in the workbench, its session summary will appear here automatically.</value>
   </data>
   <data name="SettingsDiagnosticsPage.ActiveWorkspaceSessionSummary.Format" xml:space="preserve">
-    <value>The current session has loaded {0} bundles / {1} assets. Opened at: {2}</value>
+    <value>{0} bundles / {1} assets loaded, opened {2}</value>
   </data>
   <data name="SettingsDiagnosticsPage.WorkspaceCatalogTitleText.Text" xml:space="preserve">
     <value>Workspace Catalog</value>

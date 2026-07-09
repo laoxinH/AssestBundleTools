@@ -21,7 +21,6 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
     private readonly IAppPreferencesService _appPreferencesService;
     private readonly IWorkspaceContextService _workspaceContextService;
     private readonly ILocalizationService _localizationService;
-    private readonly IWorkspaceImportCoordinatorService _workspaceImportCoordinatorService;
     private string _activeWorkspaceDisplayName = string.Empty;
     private string _activeWorkspacePrimaryBadgeText = string.Empty;
     private string _activeWorkspaceSecondaryBadgeText = string.Empty;
@@ -36,7 +35,6 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
         IAppPreferencesService appPreferencesService,
         IWorkspaceContextService workspaceContextService,
         ILocalizationService localizationService,
-        IWorkspaceImportCoordinatorService workspaceImportCoordinatorService,
         IWorkspaceCacheMaintenanceGateway workspaceCacheMaintenanceGateway,
         IBackgroundWorkScheduler backgroundWorkScheduler)
     {
@@ -45,7 +43,6 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
         _appPreferencesService = appPreferencesService ?? throw new ArgumentNullException(nameof(appPreferencesService));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
-        _workspaceImportCoordinatorService = workspaceImportCoordinatorService ?? throw new ArgumentNullException(nameof(workspaceImportCoordinatorService));
         BundleArtifactCache = new SettingsWorkspaceCacheViewModel(
             workspaceCacheMaintenanceGateway,
             _workspaceContextService,
@@ -56,12 +53,6 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
             backgroundWorkScheduler);
 
         LogPanel = _appLogService.LogPanel;
-        ImportBundleFilesCommand = new AsyncRelayCommand(
-            executeAsync: RequestBundleFileImportAsync,
-            canExecute: () => HasActiveWorkspace);
-        ImportBundleDirectoryCommand = new AsyncRelayCommand(
-            executeAsync: RequestBundleDirectoryImportAsync,
-            canExecute: () => HasActiveWorkspace);
         _restoreLastWorkspaceOnStartup = _appPreferencesService.RestoreLastWorkspaceOnStartup;
         _recentWorkspaceOpenBehaviorSelectedIndex =
             SettingsDiagnosticsPreferenceOptionMapper.ConvertRecentWorkspaceOpenBehaviorToSelectedIndex(
@@ -89,10 +80,6 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
     public ObservableCollection<SettingsWorkspaceEntryItemViewModel> WorkspaceEntries { get; } = new();
 
     public SettingsWorkspaceCacheViewModel BundleArtifactCache { get; }
-
-    public AsyncRelayCommand ImportBundleFilesCommand { get; }
-
-    public AsyncRelayCommand ImportBundleDirectoryCommand { get; }
 
     public string ActiveWorkspaceDisplayName
     {
@@ -291,16 +278,6 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
         RefreshWorkspaceContext();
     }
 
-    private async Task RequestBundleFileImportAsync()
-    {
-        await _workspaceImportCoordinatorService.RequestBundleFileImportAsync();
-    }
-
-    private async Task RequestBundleDirectoryImportAsync()
-    {
-        await _workspaceImportCoordinatorService.RequestBundleDirectoryImportAsync();
-    }
-
     private void NotifyWorkspaceState()
     {
         OnPropertyChanged(nameof(HasActiveWorkspace));
@@ -311,8 +288,6 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
         OnPropertyChanged(nameof(ActiveWorkspaceAvailabilityVisibility));
         OnPropertyChanged(nameof(WorkspaceEntryListVisibility));
         OnPropertyChanged(nameof(WorkspaceEntryEmptyVisibility));
-        ImportBundleFilesCommand.NotifyCanExecuteChanged();
-        ImportBundleDirectoryCommand.NotifyCanExecuteChanged();
     }
 
     private string FormatTimestamp(DateTimeOffset timestamp) =>
