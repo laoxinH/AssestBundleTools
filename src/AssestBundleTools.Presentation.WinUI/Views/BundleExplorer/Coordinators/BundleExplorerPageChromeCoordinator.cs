@@ -23,7 +23,6 @@ public sealed partial class BundleExplorerPage
 
         public void ApplyLocalizedText()
         {
-            _owner.PageEyebrowText.Text = UiText.Get(ResourceKeys.BundleExplorerPageEyebrow);
             _owner.PageTitleText.Text = UiText.Get(ResourceKeys.BundleExplorerPageTitle);
             _owner.CreateWorkspaceChipText.Text = UiText.Get(ResourceKeys.BundleExplorerPageNewWorkspaceButton);
             _owner.OpenWorkspaceChipText.Text = UiText.Get(ResourceKeys.BundleExplorerPageOpenWorkspaceButton);

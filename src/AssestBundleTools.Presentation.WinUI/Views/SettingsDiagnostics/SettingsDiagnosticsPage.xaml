@@ -110,27 +110,9 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid RowSpacing="8">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-
-            <StackPanel Spacing="8">
-                <TextBlock
-                    x:Name="PageEyebrowText"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <TextBlock
-                    x:Name="PageTitleText"
-                    Style="{StaticResource WorkspacePageTitleTextStyle}" />
-            </StackPanel>
-
-            <TextBlock
-                x:Name="PageSubtitleText"
-                Grid.Row="1"
-                MaxWidth="980"
-                Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
-        </Grid>
+        <TextBlock
+            x:Name="PageTitleText"
+            Style="{StaticResource WorkspacePageTitleTextStyle}" />
 
         <Border
             Grid.Row="1"

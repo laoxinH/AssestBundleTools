@@ -192,12 +192,6 @@
   <data name="HomePage.PageTitleText.Text" xml:space="preserve">
     <value>控制台</value>
   </data>
-  <data name="HomePage.PageSubtitleText.Text" xml:space="preserve">
-    <value>从这里创建、打开或恢复工作区。确认后会进入正式工作台；如果需要切换入口，也可以从工作台返回这里继续操作。</value>
-  </data>
-  <data name="HomePage.BadgeText.Text" xml:space="preserve">
-    <value>控制台</value>
-  </data>
   <data name="HomePage.QuickActionsTitleText.Text" xml:space="preserve">
     <value>快速开始</value>
   </data>
@@ -455,9 +449,6 @@
   </data>
   <data name="BundleExplorerPage.PageTitleText.Text" xml:space="preserve">
     <value>工作台</value>
-  </data>
-  <data name="BundleExplorerPage.PageEyebrowText.Text" xml:space="preserve">
-    <value>主工作区 / 资源浏览</value>
   </data>
   <data name="BundleExplorerPage.NewWorkspaceButton.Content" xml:space="preserve">
     <value>新建工作区</value>
@@ -3300,12 +3291,6 @@
   <data name="SettingsDiagnosticsPage.PageTitleText.Text" xml:space="preserve">
     <value>设置与诊断</value>
   </data>
-  <data name="SettingsDiagnosticsPage.PageEyebrowText.Text" xml:space="preserve">
-    <value>偏好 / 日志 / 诊断</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.PageSubtitleText.Text" xml:space="preserve">
-    <value>按工作区、偏好、性能缓存、诊断说明和日志中心分组管理设置，避免把运行日志和常用偏好混在同一视图里。</value>
-  </data>
   <data name="SettingsDiagnosticsPage.Navigation.Workspace" xml:space="preserve">
     <value>工作区</value>
   </data>
@@ -4613,12 +4598,6 @@
   </data>
   <data name="PluginManagementPage.PageTitleText.Text" xml:space="preserve">
     <value>插件管理</value>
-  </data>
-  <data name="PluginManagementPage.PageEyebrowText.Text" xml:space="preserve">
-    <value>工作区 / 扩展</value>
-  </data>
-  <data name="PluginManagementPage.PageSubtitleText.Text" xml:space="preserve">
-    <value>管理导入解密插件和导出资源处理插件。</value>
   </data>
   <data name="PluginManagementPage.SearchTextBox.PlaceholderText" xml:space="preserve">
     <value>搜索插件、id 或命令路径</value>

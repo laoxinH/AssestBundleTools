@@ -192,12 +192,6 @@
   <data name="HomePage.PageTitleText.Text" xml:space="preserve">
     <value>Console</value>
   </data>
-  <data name="HomePage.PageSubtitleText.Text" xml:space="preserve">
-    <value>Create, open, or resume a workspace here. After confirmation, the window enters the workbench; when needed, the workbench can return here to re-organize workspace entry actions.</value>
-  </data>
-  <data name="HomePage.BadgeText.Text" xml:space="preserve">
-    <value>Console</value>
-  </data>
   <data name="HomePage.QuickActionsTitleText.Text" xml:space="preserve">
     <value>Quick Start</value>
   </data>
@@ -455,9 +449,6 @@
   </data>
   <data name="BundleExplorerPage.PageTitleText.Text" xml:space="preserve">
     <value>Workbench</value>
-  </data>
-  <data name="BundleExplorerPage.PageEyebrowText.Text" xml:space="preserve">
-    <value>Main Workspace / Asset Browsing</value>
   </data>
   <data name="BundleExplorerPage.NewWorkspaceButton.Content" xml:space="preserve">
     <value>New Workspace</value>
@@ -3300,12 +3291,6 @@
   <data name="SettingsDiagnosticsPage.PageTitleText.Text" xml:space="preserve">
     <value>Settings &amp; Diagnostics</value>
   </data>
-  <data name="SettingsDiagnosticsPage.PageEyebrowText.Text" xml:space="preserve">
-    <value>Preferences / Logs / Diagnostics</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.PageSubtitleText.Text" xml:space="preserve">
-    <value>Settings are grouped by workspace, preferences, performance cache, diagnostics, and the log center so runtime logs no longer compete with everyday preferences.</value>
-  </data>
   <data name="SettingsDiagnosticsPage.Navigation.Workspace" xml:space="preserve">
     <value>Workspace</value>
   </data>
@@ -4613,12 +4598,6 @@
   </data>
   <data name="PluginManagementPage.PageTitleText.Text" xml:space="preserve">
     <value>Plugin Management</value>
-  </data>
-  <data name="PluginManagementPage.PageEyebrowText.Text" xml:space="preserve">
-    <value>Workspace / Extensions</value>
-  </data>
-  <data name="PluginManagementPage.PageSubtitleText.Text" xml:space="preserve">
-    <value>Manage import decryptor plugins and export resource processor plugins.</value>
   </data>
   <data name="PluginManagementPage.SearchTextBox.PlaceholderText" xml:space="preserve">
     <value>Search plugins, ids, or command paths</value>

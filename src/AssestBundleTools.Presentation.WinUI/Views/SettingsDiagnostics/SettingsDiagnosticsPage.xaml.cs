@@ -40,9 +40,7 @@ public sealed partial class SettingsDiagnosticsPage : Page
 
     private void ApplyLocalizedText()
     {
-        PageEyebrowText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPageEyebrow);
         PageTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPageTitle);
-        PageSubtitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPageSubtitle);
         SettingsWorkspaceNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavWorkspace);
         SettingsPreferencesNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavPreferences);
         SettingsPerformanceCacheNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavPerformanceCache);

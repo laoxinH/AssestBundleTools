@@ -48,9 +48,7 @@ public static class ResourceKeys
     public const string AppStatusBarTaskProfileExport = "AppStatusBar.Task.Profile.Export";
     public const string AppStatusBarTaskProfileSaveRebuild = "AppStatusBar.Task.Profile.SaveRebuild";
     public const string AppStatusBarTaskProfileMaintenance = "AppStatusBar.Task.Profile.Maintenance";
-    public const string HomePageBadgeText = "HomePage.BadgeText.Text";
     public const string HomePageTitle = "HomePage.PageTitleText.Text";
-    public const string HomePageSubtitle = "HomePage.PageSubtitleText.Text";
     public const string HomePageQuickActionsTitle = "HomePage.QuickActionsTitleText.Text";
     public const string HomePageQuickActionHint = "HomePage.QuickActionHintText.Text";
     public const string HomePageNewWorkspaceButton = "HomePage.NewWorkspaceButton.Content";
@@ -197,8 +195,6 @@ public static class ResourceKeys
     public const string LogPanelClearButtonContent = "LogPanel.ClearButton.Content";
 
     public const string PluginManagementPageTitle = "PluginManagementPage.PageTitleText.Text";
-    public const string PluginManagementPageEyebrow = "PluginManagementPage.PageEyebrowText.Text";
-    public const string PluginManagementPageSubtitle = "PluginManagementPage.PageSubtitleText.Text";
     public const string PluginManagementSearchPlaceholder = "PluginManagementPage.SearchTextBox.PlaceholderText";
     public const string PluginManagementRefreshButton = "PluginManagementPage.RefreshButton.Content";
     public const string PluginManagementDirectoryTitle = "PluginManagementPage.Directory.Title";
@@ -302,8 +298,6 @@ public static class ResourceKeys
     public const string ResourceProcessorEditorValidationArgumentsRequired = "ResourceProcessorEditor.Validation.ArgumentsRequired";
 
     public const string SettingsDiagnosticsPageTitle = "SettingsDiagnosticsPage.PageTitleText.Text";
-    public const string SettingsDiagnosticsPageEyebrow = "SettingsDiagnosticsPage.PageEyebrowText.Text";
-    public const string SettingsDiagnosticsPageSubtitle = "SettingsDiagnosticsPage.PageSubtitleText.Text";
     public const string SettingsDiagnosticsNavWorkspace = "SettingsDiagnosticsPage.Navigation.Workspace";
     public const string SettingsDiagnosticsNavPreferences = "SettingsDiagnosticsPage.Navigation.Preferences";
     public const string SettingsDiagnosticsNavPerformanceCache = "SettingsDiagnosticsPage.Navigation.PerformanceCache";
@@ -500,7 +494,6 @@ public static class ResourceKeys
     public const string BundleExplorerPreviewAudioDecodeFailed = "BundleExplorer.Preview.AudioDecodeFailed";
     public const string BundleExplorerPreviewUnexpectedDisplayFailure = "BundleExplorer.Preview.UnexpectedDisplayFailure";
     public const string BundleExplorerPreviewLoadTimedOut = "BundleExplorer.Preview.LoadTimedOut";
-    public const string BundleExplorerPageEyebrow = "BundleExplorerPage.PageEyebrowText.Text";
     public const string BundleExplorerPageTitle = "BundleExplorerPage.PageTitleText.Text";
     public const string BundleExplorerPageRefreshButton = "BundleExplorerPage.RefreshButton.Content";
     public const string BundleExplorerPageBatchExtractButton = "BundleExplorerPage.BatchExtractButton.Content";

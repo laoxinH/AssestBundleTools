@@ -41,9 +41,7 @@ public sealed partial class PluginManagementPage : Page
 
     private void ApplyLocalizedText()
     {
-        PageEyebrowText.Text = UiText.Get(ResourceKeys.PluginManagementPageEyebrow);
         PageTitleText.Text = UiText.Get(ResourceKeys.PluginManagementPageTitle);
-        PageSubtitleText.Text = UiText.Get(ResourceKeys.PluginManagementPageSubtitle);
         SearchTextBox.PlaceholderText = UiText.Get(ResourceKeys.PluginManagementSearchPlaceholder);
         RefreshCatalogButtonText.Text = UiText.Get(ResourceKeys.PluginManagementRefreshButton);
         PluginDirectoryTitleText.Text = UiText.Get(ResourceKeys.PluginManagementDirectoryTitle);

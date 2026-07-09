@@ -21,21 +21,11 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Spacing="8">
-            <TextBlock
-                x:Name="PageBadgeText"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-            <TextBlock
-                x:Name="PageTitleText"
-                FontSize="46"
-                FontWeight="SemiBold"
-                TextWrapping="WrapWholeWords" />
-            <TextBlock
-                x:Name="PageSubtitleText"
-                MaxWidth="920"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                TextWrapping="WrapWholeWords" />
-        </StackPanel>
+        <TextBlock
+            x:Name="PageTitleText"
+            FontSize="46"
+            FontWeight="SemiBold"
+            TextWrapping="WrapWholeWords" />
 
         <Border
             Grid.Row="1"

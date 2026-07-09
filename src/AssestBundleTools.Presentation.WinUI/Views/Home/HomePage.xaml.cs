@@ -309,9 +309,7 @@ public sealed partial class HomePage : Page
 
     private void ApplyLocalizedText()
     {
-        PageBadgeText.Text = UiText.Get(ResourceKeys.HomePageBadgeText);
         PageTitleText.Text = UiText.Get(ResourceKeys.HomePageTitle);
-        PageSubtitleText.Text = UiText.Get(ResourceKeys.HomePageSubtitle);
         QuickActionsTitleText.Text = UiText.Get(ResourceKeys.HomePageQuickActionsTitle);
         QuickActionHintText.Text = UiText.Get(ResourceKeys.HomePageQuickActionHint);
         NewWorkspaceButtonText.Text = UiText.Get(ResourceKeys.HomePageNewWorkspaceButton);
