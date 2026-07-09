@@ -39,6 +39,9 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("x:Name=\"DiagnosticsSettingsPanel\"", pageXaml);
         Assert.Contains("x:Name=\"LogCenterPanel\"", pageXaml);
         Assert.Contains("x:Key=\"SettingsDiagnosticsContentColumnStyle\"", pageXaml);
+        Assert.Contains("x:Key=\"SettingsDiagnosticsSurfaceStyle\"", pageXaml);
+        Assert.Contains("<Setter Property=\"Background\" Value=\"Transparent\" />", pageXaml);
+        Assert.DoesNotContain("SettingsDiagnosticsPanelShadow", pageXaml);
         Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=WorkspaceSettingsPanel}\"", pageXaml);
         Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=PreferenceSettingsPanel}\"", pageXaml);
         Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=PerformanceCacheSettingsPanel}\"", pageXaml);
