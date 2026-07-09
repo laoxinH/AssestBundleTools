@@ -45,6 +45,33 @@
         </Style>
 
         <Style
+            x:Key="SettingsDiagnosticsSettingRowStyle"
+            TargetType="Border">
+            <Setter Property="MinHeight" Value="72" />
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="Background" Value="{ThemeResource LayerFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <Style
+            x:Key="SettingsDiagnosticsSettingTitleTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="TextWrapping" Value="WrapWholeWords" />
+        </Style>
+
+        <Style
+            x:Key="SettingsDiagnosticsSettingValueTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="MinWidth" Value="84" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="TextAlignment" Value="Right" />
+        </Style>
+
+        <Style
             x:Key="SettingsDiagnosticsSecondaryTextStyle"
             TargetType="TextBlock">
             <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -374,76 +401,152 @@
                             Style="{StaticResource SettingsDiagnosticsContentColumnStyle}">
                             <StackPanel Spacing="14">
                                 <Border Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
-                                <StackPanel Spacing="12">
-                                    <StackPanel Spacing="6">
-                                        <TextBlock
-                                            x:Name="StartupBehaviorTitleText"
-                                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                                        <TextBlock
-                                            x:Name="StartupBehaviorHintText"
-                                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                    <StackPanel Spacing="12">
+                                        <StackPanel Spacing="6">
+                                            <TextBlock
+                                                x:Name="StartupBehaviorTitleText"
+                                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                            <TextBlock
+                                                x:Name="StartupBehaviorHintText"
+                                                Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                        </StackPanel>
+
+                                        <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
+                                            <Grid ColumnSpacing="18">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel
+                                                    MinWidth="0"
+                                                    Spacing="4">
+                                                    <TextBlock
+                                                        x:Name="RestoreLastWorkspaceOnStartupLabelText"
+                                                        Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                                    <TextBlock
+                                                        x:Name="RestoreLastWorkspaceOnStartupDescriptionText"
+                                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                                </StackPanel>
+
+                                                <ToggleSwitch
+                                                    x:Name="RestoreLastWorkspaceOnStartupToggleSwitch"
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    IsOn="{x:Bind ViewModel.RestoreLastWorkspaceOnStartup, Mode=TwoWay}" />
+                                            </Grid>
+                                        </Border>
+
+                                        <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
+                                            <Grid ColumnSpacing="18">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel
+                                                    MinWidth="0"
+                                                    Spacing="4">
+                                                    <TextBlock
+                                                        x:Name="RecentWorkspaceOpenBehaviorLabelText"
+                                                        Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                                    <TextBlock
+                                                        x:Name="RecentWorkspaceOpenBehaviorDescriptionText"
+                                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                                </StackPanel>
+
+                                                <ComboBox
+                                                    x:Name="RecentWorkspaceOpenBehaviorComboBox"
+                                                    Grid.Column="1"
+                                                    Width="230"
+                                                    VerticalAlignment="Center"
+                                                    SelectedIndex="{x:Bind ViewModel.RecentWorkspaceOpenBehaviorSelectedIndex, Mode=TwoWay}" />
+                                            </Grid>
+                                        </Border>
+
+                                        <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
+                                            <Grid ColumnSpacing="18">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel
+                                                    MinWidth="0"
+                                                    Spacing="4">
+                                                    <TextBlock
+                                                        x:Name="AssetEditorCloseBehaviorLabelText"
+                                                        Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                                    <TextBlock
+                                                        x:Name="AssetEditorCloseBehaviorDescriptionText"
+                                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                                </StackPanel>
+
+                                                <ComboBox
+                                                    x:Name="AssetEditorCloseBehaviorComboBox"
+                                                    Grid.Column="1"
+                                                    Width="230"
+                                                    VerticalAlignment="Center"
+                                                    SelectedIndex="{x:Bind ViewModel.AssetEditorCloseBehaviorSelectedIndex, Mode=TwoWay}" />
+                                            </Grid>
+                                        </Border>
                                     </StackPanel>
-
-                                    <ToggleSwitch
-                                        x:Name="RestoreLastWorkspaceOnStartupToggleSwitch"
-                                        IsOn="{x:Bind ViewModel.RestoreLastWorkspaceOnStartup, Mode=TwoWay}" />
-
-                                    <TextBlock
-                                        x:Name="RestoreLastWorkspaceOnStartupDescriptionText"
-                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
-
-                                    <TextBlock
-                                        x:Name="RecentWorkspaceOpenBehaviorLabelText"
-                                        FontWeight="SemiBold" />
-
-                                    <RadioButtons
-                                        x:Name="RecentWorkspaceOpenBehaviorRadioButtons"
-                                        MaxColumns="3"
-                                        SelectedIndex="{x:Bind ViewModel.RecentWorkspaceOpenBehaviorSelectedIndex, Mode=TwoWay}" />
-
-                                    <TextBlock
-                                        x:Name="RecentWorkspaceOpenBehaviorDescriptionText"
-                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
-
-                                    <TextBlock
-                                        x:Name="AssetEditorCloseBehaviorLabelText"
-                                        FontWeight="SemiBold" />
-
-                                    <RadioButtons
-                                        x:Name="AssetEditorCloseBehaviorRadioButtons"
-                                        MaxColumns="2"
-                                        SelectedIndex="{x:Bind ViewModel.AssetEditorCloseBehaviorSelectedIndex, Mode=TwoWay}" />
-
-                                    <TextBlock
-                                        x:Name="AssetEditorCloseBehaviorDescriptionText"
-                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
-                                </StackPanel>
                                 </Border>
 
                                 <Border Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
-                                <StackPanel Spacing="12">
-                                    <StackPanel Spacing="6">
-                                        <TextBlock
-                                            x:Name="OperationRecordsTitleText"
-                                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                                        <TextBlock
-                                            x:Name="OperationRecordsHintText"
-                                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                    <StackPanel Spacing="12">
+                                        <StackPanel Spacing="6">
+                                            <TextBlock
+                                                x:Name="OperationRecordsTitleText"
+                                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                            <TextBlock
+                                                x:Name="OperationRecordsHintText"
+                                                Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                        </StackPanel>
+
+                                        <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
+                                            <Grid ColumnSpacing="18">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="320" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel
+                                                    MinWidth="0"
+                                                    Spacing="4">
+                                                    <TextBlock
+                                                        x:Name="OperationRecordLimitLabelText"
+                                                        Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                                    <TextBlock
+                                                        x:Name="OperationRecordLimitDescriptionText"
+                                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                                </StackPanel>
+
+                                                <Grid
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    RowSpacing="6">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
+
+                                                    <TextBlock
+                                                        Style="{StaticResource SettingsDiagnosticsSettingValueTextStyle}"
+                                                        Text="{x:Bind ViewModel.OperationRecordLimitSelectedText, Mode=OneWay}" />
+                                                    <Slider
+                                                        Grid.Row="1"
+                                                        IsThumbToolTipEnabled="False"
+                                                        Maximum="3"
+                                                        Minimum="0"
+                                                        StepFrequency="1"
+                                                        SnapsTo="StepValues"
+                                                        TickFrequency="1"
+                                                        Value="{x:Bind ViewModel.OperationRecordLimitSliderValue, Mode=TwoWay}" />
+                                                </Grid>
+                                            </Grid>
+                                        </Border>
                                     </StackPanel>
-
-                                    <TextBlock
-                                        x:Name="OperationRecordLimitLabelText"
-                                        FontWeight="SemiBold" />
-
-                                    <RadioButtons
-                                        x:Name="OperationRecordLimitRadioButtons"
-                                        MaxColumns="4"
-                                        SelectedIndex="{x:Bind ViewModel.OperationRecordLimitSelectedIndex, Mode=TwoWay}" />
-
-                                    <TextBlock
-                                        x:Name="OperationRecordLimitDescriptionText"
-                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
-                                </StackPanel>
                                 </Border>
                             </StackPanel>
                         </Border>
@@ -462,120 +565,229 @@
                             Style="{StaticResource SettingsDiagnosticsContentColumnStyle}">
                             <StackPanel Spacing="14">
                                 <Border Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
-                                <StackPanel Spacing="12">
-                                    <StackPanel Spacing="6">
-                                        <TextBlock
-                                            x:Name="WorkspaceImportPerformanceTitleText"
-                                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                                        <TextBlock
-                                            x:Name="WorkspaceImportPerformanceHintText"
-                                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                    <StackPanel Spacing="12">
+                                        <StackPanel Spacing="6">
+                                            <TextBlock
+                                                x:Name="WorkspaceImportPerformanceTitleText"
+                                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                            <TextBlock
+                                                x:Name="WorkspaceImportPerformanceHintText"
+                                                Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                        </StackPanel>
+
+                                        <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
+                                            <Grid ColumnSpacing="18">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="320" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel
+                                                    MinWidth="0"
+                                                    Spacing="4">
+                                                    <TextBlock
+                                                        x:Name="WorkspaceImportWorkerCountLabelText"
+                                                        Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                                    <TextBlock
+                                                        x:Name="WorkspaceImportWorkerCountDescriptionText"
+                                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                                </StackPanel>
+
+                                                <Grid
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    RowSpacing="6">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
+
+                                                    <TextBlock
+                                                        Style="{StaticResource SettingsDiagnosticsSettingValueTextStyle}"
+                                                        Text="{x:Bind ViewModel.WorkspaceImportWorkerCountSelectedText, Mode=OneWay}" />
+                                                    <Slider
+                                                        Grid.Row="1"
+                                                        IsThumbToolTipEnabled="False"
+                                                        Maximum="4"
+                                                        Minimum="0"
+                                                        StepFrequency="1"
+                                                        SnapsTo="StepValues"
+                                                        TickFrequency="1"
+                                                        Value="{x:Bind ViewModel.WorkspaceImportWorkerCountSliderValue, Mode=TwoWay}" />
+                                                </Grid>
+                                            </Grid>
+                                        </Border>
+
+                                        <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
+                                            <Grid ColumnSpacing="18">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="320" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel
+                                                    MinWidth="0"
+                                                    Spacing="4">
+                                                    <TextBlock
+                                                        x:Name="PreviewWorkerCountLabelText"
+                                                        Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                                    <TextBlock
+                                                        x:Name="PreviewWorkerCountDescriptionText"
+                                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                                </StackPanel>
+
+                                                <Grid
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    RowSpacing="6">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
+
+                                                    <TextBlock
+                                                        Style="{StaticResource SettingsDiagnosticsSettingValueTextStyle}"
+                                                        Text="{x:Bind ViewModel.PreviewWorkerCountSelectedText, Mode=OneWay}" />
+                                                    <Slider
+                                                        Grid.Row="1"
+                                                        IsThumbToolTipEnabled="False"
+                                                        Maximum="4"
+                                                        Minimum="0"
+                                                        StepFrequency="1"
+                                                        SnapsTo="StepValues"
+                                                        TickFrequency="1"
+                                                        Value="{x:Bind ViewModel.PreviewWorkerCountSliderValue, Mode=TwoWay}" />
+                                                </Grid>
+                                            </Grid>
+                                        </Border>
                                     </StackPanel>
-
-                                    <TextBlock
-                                        x:Name="WorkspaceImportWorkerCountLabelText"
-                                        FontWeight="SemiBold" />
-
-                                    <RadioButtons
-                                        x:Name="WorkspaceImportWorkerCountRadioButtons"
-                                        MaxColumns="3"
-                                        SelectedIndex="{x:Bind ViewModel.WorkspaceImportWorkerCountSelectedIndex, Mode=TwoWay}" />
-
-                                    <TextBlock
-                                        x:Name="WorkspaceImportWorkerCountDescriptionText"
-                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
-
-                                    <TextBlock
-                                        x:Name="PreviewWorkerCountLabelText"
-                                        FontWeight="SemiBold" />
-
-                                    <RadioButtons
-                                        x:Name="PreviewWorkerCountRadioButtons"
-                                        MaxColumns="3"
-                                        SelectedIndex="{x:Bind ViewModel.PreviewWorkerCountSelectedIndex, Mode=TwoWay}" />
-
-                                    <TextBlock
-                                        x:Name="PreviewWorkerCountDescriptionText"
-                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
-                                </StackPanel>
                                 </Border>
 
                                 <Border Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
-                                <StackPanel Spacing="12">
-                                    <StackPanel Spacing="6">
+                                    <StackPanel Spacing="12">
+                                        <StackPanel Spacing="6">
+                                            <TextBlock
+                                                x:Name="BundleArtifactCacheTitleText"
+                                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                            <TextBlock
+                                                x:Name="BundleArtifactCacheHintText"
+                                                Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                        </StackPanel>
+
                                         <TextBlock
-                                            x:Name="BundleArtifactCacheTitleText"
-                                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}"
+                                            Text="{x:Bind ViewModel.BundleArtifactCache.TargetText, Mode=OneWay}" />
                                         <TextBlock
-                                            x:Name="BundleArtifactCacheHintText"
-                                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                            FontWeight="SemiBold"
+                                            Text="{x:Bind ViewModel.BundleArtifactCache.SummaryText, Mode=OneWay}"
+                                            TextWrapping="WrapWholeWords" />
+                                        <TextBlock
+                                            Style="{StaticResource SettingsDiagnosticsMutedTextStyle}"
+                                            Text="{x:Bind ViewModel.BundleArtifactCache.LastResultText, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.BundleArtifactCache.LastResultVisibility, Mode=OneWay}" />
+
+                                        <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
+                                            <Grid ColumnSpacing="18">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel
+                                                    MinWidth="0"
+                                                    Spacing="4">
+                                                    <TextBlock
+                                                        x:Name="BundleArtifactCacheAutoPruneLabelText"
+                                                        Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                                    <TextBlock
+                                                        x:Name="BundleArtifactCacheAutoPruneDescriptionText"
+                                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                                                </StackPanel>
+
+                                                <ToggleSwitch
+                                                    x:Name="BundleArtifactCacheAutoPruneToggleSwitch"
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    IsOn="{x:Bind ViewModel.BundleArtifactCache.AutoPruneEnabled, Mode=TwoWay}" />
+                                            </Grid>
+                                        </Border>
+
+                                        <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
+                                            <Grid ColumnSpacing="18">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="320" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel
+                                                    MinWidth="0"
+                                                    Spacing="4">
+                                                    <TextBlock
+                                                        x:Name="BundleArtifactCacheMaximumSizeLabelText"
+                                                        Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                                </StackPanel>
+
+                                                <Grid
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    RowSpacing="6">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
+
+                                                    <TextBlock
+                                                        Style="{StaticResource SettingsDiagnosticsSettingValueTextStyle}"
+                                                        Text="{x:Bind ViewModel.BundleArtifactCache.MaximumSizeSelectedText, Mode=OneWay}" />
+                                                    <Slider
+                                                        Grid.Row="1"
+                                                        IsThumbToolTipEnabled="False"
+                                                        Maximum="4"
+                                                        Minimum="0"
+                                                        StepFrequency="1"
+                                                        SnapsTo="StepValues"
+                                                        TickFrequency="1"
+                                                        Value="{x:Bind ViewModel.BundleArtifactCache.MaximumSizeSliderValue, Mode=TwoWay}" />
+                                                </Grid>
+                                            </Grid>
+                                        </Border>
+
+                                        <StackPanel
+                                            Orientation="Horizontal"
+                                            Spacing="8">
+                                            <Button
+                                                Command="{x:Bind ViewModel.BundleArtifactCache.RefreshCommand, Mode=OneWay}"
+                                                Style="{StaticResource WorkspaceInlineActionButtonStyle}">
+                                                <StackPanel
+                                                    Orientation="Horizontal"
+                                                    Spacing="8">
+                                                    <FontIcon
+                                                        FontFamily="Segoe Fluent Icons"
+                                                        FontSize="14"
+                                                        Glyph="&#xE72C;" />
+                                                    <TextBlock
+                                                        x:Name="RefreshBundleArtifactCacheButtonText"
+                                                        VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button
+                                                Command="{x:Bind ViewModel.BundleArtifactCache.ClearCommand, Mode=OneWay}"
+                                                Style="{StaticResource WorkspaceInlineActionButtonStyle}">
+                                                <StackPanel
+                                                    Orientation="Horizontal"
+                                                    Spacing="8">
+                                                    <FontIcon
+                                                        FontFamily="Segoe Fluent Icons"
+                                                        FontSize="14"
+                                                        Glyph="&#xE74D;" />
+                                                    <TextBlock
+                                                        x:Name="ClearBundleArtifactCacheButtonText"
+                                                        VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
                                     </StackPanel>
-
-                                    <TextBlock
-                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}"
-                                        Text="{x:Bind ViewModel.BundleArtifactCache.TargetText, Mode=OneWay}" />
-                                    <TextBlock
-                                        FontWeight="SemiBold"
-                                        Text="{x:Bind ViewModel.BundleArtifactCache.SummaryText, Mode=OneWay}"
-                                        TextWrapping="WrapWholeWords" />
-                                    <TextBlock
-                                        Style="{StaticResource SettingsDiagnosticsMutedTextStyle}"
-                                        Text="{x:Bind ViewModel.BundleArtifactCache.LastResultText, Mode=OneWay}"
-                                        Visibility="{x:Bind ViewModel.BundleArtifactCache.LastResultVisibility, Mode=OneWay}" />
-
-                                    <ToggleSwitch
-                                        x:Name="BundleArtifactCacheAutoPruneToggleSwitch"
-                                        IsOn="{x:Bind ViewModel.BundleArtifactCache.AutoPruneEnabled, Mode=TwoWay}" />
-
-                                    <TextBlock
-                                        x:Name="BundleArtifactCacheAutoPruneDescriptionText"
-                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
-
-                                    <TextBlock
-                                        x:Name="BundleArtifactCacheMaximumSizeLabelText"
-                                        FontWeight="SemiBold" />
-
-                                    <RadioButtons
-                                        x:Name="BundleArtifactCacheMaximumSizeRadioButtons"
-                                        MaxColumns="3"
-                                        SelectedIndex="{x:Bind ViewModel.BundleArtifactCache.MaximumSizeSelectedIndex, Mode=TwoWay}" />
-
-                                    <StackPanel
-                                        Orientation="Horizontal"
-                                        Spacing="8">
-                                        <Button
-                                            Command="{x:Bind ViewModel.BundleArtifactCache.RefreshCommand, Mode=OneWay}"
-                                            Style="{StaticResource WorkspaceInlineActionButtonStyle}">
-                                            <StackPanel
-                                                Orientation="Horizontal"
-                                                Spacing="8">
-                                                <FontIcon
-                                                    FontFamily="Segoe Fluent Icons"
-                                                    FontSize="14"
-                                                    Glyph="&#xE72C;" />
-                                                <TextBlock
-                                                    x:Name="RefreshBundleArtifactCacheButtonText"
-                                                    VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Button>
-
-                                        <Button
-                                            Command="{x:Bind ViewModel.BundleArtifactCache.ClearCommand, Mode=OneWay}"
-                                            Style="{StaticResource WorkspaceInlineActionButtonStyle}">
-                                            <StackPanel
-                                                Orientation="Horizontal"
-                                                Spacing="8">
-                                                <FontIcon
-                                                    FontFamily="Segoe Fluent Icons"
-                                                    FontSize="14"
-                                                    Glyph="&#xE74D;" />
-                                                <TextBlock
-                                                    x:Name="ClearBundleArtifactCacheButtonText"
-                                                    VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Button>
-                                    </StackPanel>
-                                </StackPanel>
                                 </Border>
                             </StackPanel>
                         </Border>

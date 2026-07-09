@@ -102,15 +102,31 @@ public sealed partial class SettingsDiagnosticsViewModel
             var workerCount = SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToWorkspaceImportWorkerCount(selectedIndex);
             if (_appPreferencesService.TrySetWorkspaceImportWorkerCount(workerCount))
             {
-                SetProperty(ref _workspaceImportWorkerCountSelectedIndex, selectedIndex);
+                if (SetProperty(ref _workspaceImportWorkerCountSelectedIndex, selectedIndex))
+                {
+                    OnPropertyChanged(nameof(WorkspaceImportWorkerCountSliderValue));
+                    OnPropertyChanged(nameof(WorkspaceImportWorkerCountSelectedText));
+                }
+
                 return;
             }
 
             _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountSaveFailedMessage));
             ShowErrorNotification(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountSaveFailedMessage);
             OnPropertyChanged();
+            OnPropertyChanged(nameof(WorkspaceImportWorkerCountSliderValue));
+            OnPropertyChanged(nameof(WorkspaceImportWorkerCountSelectedText));
         }
     }
+
+    public double WorkspaceImportWorkerCountSliderValue
+    {
+        get => WorkspaceImportWorkerCountSelectedIndex;
+        set => WorkspaceImportWorkerCountSelectedIndex = CoerceSliderIndex(value);
+    }
+
+    public string WorkspaceImportWorkerCountSelectedText => GetString(GetWorkspaceImportWorkerCountOptionKey(
+        WorkspaceImportWorkerCountSelectedIndex));
 
     public int PreviewWorkerCountSelectedIndex
     {
@@ -126,15 +142,31 @@ public sealed partial class SettingsDiagnosticsViewModel
             var workerCount = SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToPreviewWorkerCount(selectedIndex);
             if (_appPreferencesService.TrySetPreviewWorkerCount(workerCount))
             {
-                SetProperty(ref _previewWorkerCountSelectedIndex, selectedIndex);
+                if (SetProperty(ref _previewWorkerCountSelectedIndex, selectedIndex))
+                {
+                    OnPropertyChanged(nameof(PreviewWorkerCountSliderValue));
+                    OnPropertyChanged(nameof(PreviewWorkerCountSelectedText));
+                }
+
                 return;
             }
 
             _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountSaveFailedMessage));
             ShowErrorNotification(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountSaveFailedMessage);
             OnPropertyChanged();
+            OnPropertyChanged(nameof(PreviewWorkerCountSliderValue));
+            OnPropertyChanged(nameof(PreviewWorkerCountSelectedText));
         }
     }
+
+    public double PreviewWorkerCountSliderValue
+    {
+        get => PreviewWorkerCountSelectedIndex;
+        set => PreviewWorkerCountSelectedIndex = CoerceSliderIndex(value);
+    }
+
+    public string PreviewWorkerCountSelectedText => GetString(GetPreviewWorkerCountOptionKey(
+        PreviewWorkerCountSelectedIndex));
 
     public int OperationRecordLimitSelectedIndex
     {
@@ -151,13 +183,66 @@ public sealed partial class SettingsDiagnosticsViewModel
             var operationRecordLimit = SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToOperationRecordLimit(selectedIndex);
             if (_appPreferencesService.TrySetOperationRecordLimit(operationRecordLimit))
             {
-                SetProperty(ref _operationRecordLimitSelectedIndex, selectedIndex);
+                if (SetProperty(ref _operationRecordLimitSelectedIndex, selectedIndex))
+                {
+                    OnPropertyChanged(nameof(OperationRecordLimitSliderValue));
+                    OnPropertyChanged(nameof(OperationRecordLimitSelectedText));
+                }
+
                 return;
             }
 
             _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsOperationRecordLimitSaveFailedMessage));
             ShowErrorNotification(ResourceKeys.SettingsDiagnosticsOperationRecordLimitSaveFailedMessage);
             OnPropertyChanged();
+            OnPropertyChanged(nameof(OperationRecordLimitSliderValue));
+            OnPropertyChanged(nameof(OperationRecordLimitSelectedText));
         }
+    }
+
+    public double OperationRecordLimitSliderValue
+    {
+        get => OperationRecordLimitSelectedIndex;
+        set => OperationRecordLimitSelectedIndex = CoerceSliderIndex(value);
+    }
+
+    public string OperationRecordLimitSelectedText => GetString(GetOperationRecordLimitOptionKey(
+        OperationRecordLimitSelectedIndex));
+
+    private static int CoerceSliderIndex(double value) => (int)Math.Round(value, MidpointRounding.AwayFromZero);
+
+    private static string GetWorkspaceImportWorkerCountOptionKey(int selectedIndex)
+    {
+        return selectedIndex switch
+        {
+            1 => ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionOne,
+            2 => ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionTwo,
+            3 => ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionThree,
+            4 => ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionFour,
+            _ => ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionAutomatic
+        };
+    }
+
+    private static string GetPreviewWorkerCountOptionKey(int selectedIndex)
+    {
+        return selectedIndex switch
+        {
+            1 => ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionOne,
+            2 => ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionTwo,
+            3 => ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionThree,
+            4 => ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionFour,
+            _ => ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionAutomatic
+        };
+    }
+
+    private static string GetOperationRecordLimitOptionKey(int selectedIndex)
+    {
+        return selectedIndex switch
+        {
+            0 => ResourceKeys.SettingsDiagnosticsOperationRecordLimitOptionOneHundred,
+            2 => ResourceKeys.SettingsDiagnosticsOperationRecordLimitOptionFiveHundred,
+            3 => ResourceKeys.SettingsDiagnosticsOperationRecordLimitOptionOneThousand,
+            _ => ResourceKeys.SettingsDiagnosticsOperationRecordLimitOptionTwoHundredFifty
+        };
     }
 }

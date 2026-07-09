@@ -58,11 +58,11 @@ public sealed partial class SettingsDiagnosticsPage : Page
         WorkspaceCatalogEmptyText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceCatalogEmpty);
         StartupBehaviorTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsStartupBehaviorTitle);
         StartupBehaviorHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsStartupBehaviorHint);
-        RestoreLastWorkspaceOnStartupToggleSwitch.Header = UiText.Get(ResourceKeys.SettingsDiagnosticsRestoreLastWorkspaceToggleHeader);
+        RestoreLastWorkspaceOnStartupLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRestoreLastWorkspaceToggleHeader);
         RestoreLastWorkspaceOnStartupDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRestoreLastWorkspaceToggleDescription);
         RecentWorkspaceOpenBehaviorLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorLabel);
         RecentWorkspaceOpenBehaviorDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorDescription);
-        RecentWorkspaceOpenBehaviorRadioButtons.ItemsSource = new[]
+        RecentWorkspaceOpenBehaviorComboBox.ItemsSource = new[]
         {
             UiText.Get(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorOptionCurrentWindow),
             UiText.Get(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorOptionNewWindow),
@@ -70,7 +70,7 @@ public sealed partial class SettingsDiagnosticsPage : Page
         };
         AssetEditorCloseBehaviorLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAssetEditorCloseBehaviorLabel);
         AssetEditorCloseBehaviorDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAssetEditorCloseBehaviorDescription);
-        AssetEditorCloseBehaviorRadioButtons.ItemsSource = new[]
+        AssetEditorCloseBehaviorComboBox.ItemsSource = new[]
         {
             UiText.Get(ResourceKeys.SettingsDiagnosticsAssetEditorCloseBehaviorOptionReturnToMainWindow),
             UiText.Get(ResourceKeys.SettingsDiagnosticsAssetEditorCloseBehaviorOptionDirectClose)
@@ -79,48 +79,17 @@ public sealed partial class SettingsDiagnosticsPage : Page
         WorkspaceImportPerformanceHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportPerformanceHint);
         WorkspaceImportWorkerCountLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountLabel);
         WorkspaceImportWorkerCountDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountDescription);
-        WorkspaceImportWorkerCountRadioButtons.ItemsSource = new[]
-        {
-            UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionAutomatic),
-            UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionOne),
-            UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionTwo),
-            UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionThree),
-            UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountOptionFour)
-        };
         PreviewWorkerCountLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountLabel);
         PreviewWorkerCountDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountDescription);
-        PreviewWorkerCountRadioButtons.ItemsSource = new[]
-        {
-            UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionAutomatic),
-            UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionOne),
-            UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionTwo),
-            UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionThree),
-            UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountOptionFour)
-        };
         OperationRecordsTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordsTitle);
         OperationRecordsHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordsHint);
         OperationRecordLimitLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitLabel);
         OperationRecordLimitDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitDescription);
-        OperationRecordLimitRadioButtons.ItemsSource = new[]
-        {
-            UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitOptionOneHundred),
-            UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitOptionTwoHundredFifty),
-            UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitOptionFiveHundred),
-            UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitOptionOneThousand)
-        };
         BundleArtifactCacheTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheTitle);
         BundleArtifactCacheHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheHint);
-        BundleArtifactCacheAutoPruneToggleSwitch.Header = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheAutoPruneHeader);
+        BundleArtifactCacheAutoPruneLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheAutoPruneHeader);
         BundleArtifactCacheAutoPruneDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheAutoPruneDescription);
         BundleArtifactCacheMaximumSizeLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeLabel);
-        BundleArtifactCacheMaximumSizeRadioButtons.ItemsSource = new[]
-        {
-            UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeOptionOneGb),
-            UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeOptionTwoGb),
-            UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeOptionFourGb),
-            UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeOptionEightGb),
-            UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeOptionSixteenGb)
-        };
         RefreshBundleArtifactCacheButtonText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheRefreshButton);
         ClearBundleArtifactCacheButtonText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheClearButton);
         ResponsibilityTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsResponsibilityTitle);

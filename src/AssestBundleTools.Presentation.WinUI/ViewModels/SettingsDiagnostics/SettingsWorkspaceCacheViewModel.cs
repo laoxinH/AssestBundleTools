@@ -129,14 +129,29 @@ public sealed class SettingsWorkspaceCacheViewModel : ObservableObject, IDisposa
 
             if (_appPreferencesService.TrySetBundleArtifactCacheMaximumSizeInBytes(maximumSizeInBytes))
             {
-                SetProperty(ref _maximumSizeSelectedIndex, selectedIndex);
+                if (SetProperty(ref _maximumSizeSelectedIndex, selectedIndex))
+                {
+                    OnPropertyChanged(nameof(MaximumSizeSliderValue));
+                    OnPropertyChanged(nameof(MaximumSizeSelectedText));
+                }
+
                 return;
             }
 
             ShowFailure(ResourceKeys.SettingsDiagnosticsBundleArtifactCachePreferenceSaveFailedMessage);
             OnPropertyChanged();
+            OnPropertyChanged(nameof(MaximumSizeSliderValue));
+            OnPropertyChanged(nameof(MaximumSizeSelectedText));
         }
     }
+
+    public double MaximumSizeSliderValue
+    {
+        get => MaximumSizeSelectedIndex;
+        set => MaximumSizeSelectedIndex = (int)Math.Round(value, MidpointRounding.AwayFromZero);
+    }
+
+    public string MaximumSizeSelectedText => GetString(GetMaximumSizeOptionKey(MaximumSizeSelectedIndex));
 
     public bool HasActiveWorkspace => TryResolveCurrentWorkspaceScope(out _, out _, out _);
 
@@ -351,6 +366,18 @@ public sealed class SettingsWorkspaceCacheViewModel : ObservableObject, IDisposa
     private bool CanRefresh() => !_isBusy && HasActiveWorkspace;
 
     private bool CanClear() => !_isBusy && HasActiveWorkspace && HasCacheEntries;
+
+    private static string GetMaximumSizeOptionKey(int selectedIndex)
+    {
+        return selectedIndex switch
+        {
+            0 => ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeOptionOneGb,
+            1 => ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeOptionTwoGb,
+            3 => ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeOptionEightGb,
+            4 => ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeOptionSixteenGb,
+            _ => ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeOptionFourGb
+        };
+    }
 
     private void NotifyCacheState()
     {

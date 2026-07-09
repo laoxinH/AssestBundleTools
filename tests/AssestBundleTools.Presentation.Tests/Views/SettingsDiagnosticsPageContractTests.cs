@@ -44,6 +44,14 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=PerformanceCacheSettingsPanel}\"", pageXaml);
         Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=DiagnosticsSettingsPanel}\"", pageXaml);
         Assert.DoesNotContain("MaxWidth=\"900\"", pageXaml);
+        Assert.Contains("x:Key=\"SettingsDiagnosticsSettingRowStyle\"", pageXaml);
+        Assert.Contains("x:Name=\"RecentWorkspaceOpenBehaviorComboBox\"", pageXaml);
+        Assert.Contains("x:Name=\"AssetEditorCloseBehaviorComboBox\"", pageXaml);
+        Assert.Contains("OperationRecordLimitSliderValue", pageXaml);
+        Assert.Contains("WorkspaceImportWorkerCountSliderValue", pageXaml);
+        Assert.Contains("PreviewWorkerCountSliderValue", pageXaml);
+        Assert.Contains("MaximumSizeSliderValue", pageXaml);
+        Assert.DoesNotContain("<RadioButtons", pageXaml);
         Assert.Contains("Visibility=\"Collapsed\"", pageXaml);
         Assert.Contains("<shared:LogPanel", pageXaml);
         Assert.Contains("ShowSettingsSubPage", pageCode);
