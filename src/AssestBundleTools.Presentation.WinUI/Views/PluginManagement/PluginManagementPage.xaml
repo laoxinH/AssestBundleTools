@@ -75,25 +75,21 @@
             <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
         </Style>
         <Style
-            x:Key="PluginManagementAddPluginButtonStyle"
+            x:Key="PluginManagementHeaderIconButtonStyle"
             TargetType="Button"
-            BasedOn="{StaticResource WorkspaceInlineActionButtonStyle}">
-            <Setter Property="MinHeight" Value="44" />
-            <Setter Property="MinWidth" Value="0" />
-            <Setter Property="Padding" Value="8" />
+            BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="MinWidth" Value="32" />
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
             <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
-            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-        </Style>
-        <Style
-            x:Key="PluginManagementAddPluginIconStyle"
-            TargetType="Border">
-            <Setter Property="Width" Value="28" />
-            <Setter Property="Height" Value="28" />
-            <Setter Property="Background" Value="{ThemeResource AccentFillColorDefaultBrush}" />
-            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style
             x:Key="PluginManagementInlineDividerStyle"
@@ -327,39 +323,79 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <StackPanel
-                            VerticalAlignment="Center"
-                            Orientation="Horizontal"
-                            Spacing="8">
-                            <TextBlock
-                                x:Name="PluginDirectoryTitleText"
-                                VerticalAlignment="Center"
-                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
                             <StackPanel
-                                x:Name="PluginDirectoryHelpHost"
+                                MinWidth="0"
                                 VerticalAlignment="Center"
                                 Orientation="Horizontal"
-                                Spacing="5"
-                                Background="Transparent"
-                                PointerEntered="OnPluginDirectoryHelpPointerEntered"
-                                PointerExited="OnPluginDirectoryHelpPointerExited"
-                                ToolTipService.Placement="Right">
+                                Spacing="8">
                                 <TextBlock
-                                    x:Name="PluginDirectoryHelpText"
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    x:Name="PluginDirectoryTitleText"
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource WorkspaceSectionTitleTextStyle}"
                                     TextTrimming="CharacterEllipsis" />
+                                <StackPanel
+                                    x:Name="PluginDirectoryHelpHost"
+                                    VerticalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Spacing="5"
+                                    Background="Transparent"
+                                    PointerEntered="OnPluginDirectoryHelpPointerEntered"
+                                    PointerExited="OnPluginDirectoryHelpPointerExited"
+                                    ToolTipService.Placement="Right">
+                                    <TextBlock
+                                        x:Name="PluginDirectoryHelpText"
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <FontIcon
+                                        FontFamily="Segoe Fluent Icons"
+                                        FontSize="13"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Glyph="&#xE946;" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Button
+                                x:Name="AddPluginMenuButton"
+                                Grid.Column="1"
+                                Style="{StaticResource PluginManagementHeaderIconButtonStyle}">
+                                <Button.Flyout>
+                                    <MenuFlyout>
+                                        <MenuFlyoutItem
+                                            x:Name="AddDecryptorMenuFlyoutItem"
+                                            Click="OnAddDecryptorMenuFlyoutItemClick">
+                                            <MenuFlyoutItem.Icon>
+                                                <FontIcon
+                                                    FontFamily="Segoe Fluent Icons"
+                                                    Glyph="&#xE710;" />
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                        <MenuFlyoutItem
+                                            x:Name="AddResourceProcessorMenuFlyoutItem"
+                                            Click="OnAddResourceProcessorMenuFlyoutItemClick">
+                                            <MenuFlyoutItem.Icon>
+                                                <FontIcon
+                                                    FontFamily="Segoe Fluent Icons"
+                                                    Glyph="&#xE710;" />
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                    </MenuFlyout>
+                                </Button.Flyout>
                                 <FontIcon
                                     FontFamily="Segoe Fluent Icons"
-                                    FontSize="13"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Glyph="&#xE946;" />
-                            </StackPanel>
-                        </StackPanel>
+                                    FontSize="16"
+                                    Glyph="&#xE710;" />
+                            </Button>
+                        </Grid>
 
                         <StackPanel
                             Grid.Row="1"
@@ -406,69 +442,6 @@
                             </Border>
                         </StackPanel>
 
-                        <Grid
-                            Grid.Row="2"
-                            ColumnSpacing="10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <Button
-                                Style="{StaticResource PluginManagementAddPluginButtonStyle}"
-                                Click="OnAddDecryptorButtonClick">
-                                <Grid ColumnSpacing="8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <Border Style="{StaticResource PluginManagementAddPluginIconStyle}">
-                                        <FontIcon
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            FontFamily="Segoe Fluent Icons"
-                                            FontSize="13"
-                                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                            Glyph="&#xE710;" />
-                                    </Border>
-                                    <TextBlock
-                                        x:Name="AddDecryptorButtonText"
-                                        Grid.Column="1"
-                                        VerticalAlignment="Center"
-                                        FontWeight="SemiBold"
-                                        TextTrimming="CharacterEllipsis" />
-                                </Grid>
-                            </Button>
-
-                            <Button
-                                Grid.Column="1"
-                                Style="{StaticResource PluginManagementAddPluginButtonStyle}"
-                                Click="OnAddResourceProcessorButtonClick">
-                                <Grid ColumnSpacing="8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <Border Style="{StaticResource PluginManagementAddPluginIconStyle}">
-                                        <FontIcon
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            FontFamily="Segoe Fluent Icons"
-                                            FontSize="13"
-                                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                            Glyph="&#xE710;" />
-                                    </Border>
-                                    <TextBlock
-                                        x:Name="AddResourceProcessorButtonText"
-                                        Grid.Column="1"
-                                        VerticalAlignment="Center"
-                                        FontWeight="SemiBold"
-                                        TextTrimming="CharacterEllipsis" />
-                                </Grid>
-                            </Button>
-                        </Grid>
                     </Grid>
 
                     <StackPanel

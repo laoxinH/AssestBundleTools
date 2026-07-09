@@ -207,6 +207,7 @@ public static class ResourceKeys
     public const string PluginManagementCatalogAllCountLabel = "PluginManagementPage.CatalogSummary.AllLabel";
     public const string PluginManagementCatalogDecryptorCountLabel = "PluginManagementPage.CatalogSummary.DecryptorLabel";
     public const string PluginManagementCatalogProcessorCountLabel = "PluginManagementPage.CatalogSummary.ProcessorLabel";
+    public const string PluginManagementAddPluginMenuButtonToolTip = "PluginManagementPage.AddPluginMenuButton.ToolTip";
     public const string PluginManagementAddDecryptorButton = "PluginManagementPage.AddDecryptorButton.Content";
     public const string PluginManagementAddResourceProcessorButton = "PluginManagementPage.AddResourceProcessorButton.Content";
     public const string PluginManagementDirectoryEmptyTitle = "PluginManagementPage.Directory.EmptyTitle";

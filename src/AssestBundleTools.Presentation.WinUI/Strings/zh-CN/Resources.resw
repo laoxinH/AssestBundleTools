@@ -4605,6 +4605,9 @@
   <data name="PluginManagementPage.CatalogSummary.ProcessorLabel" xml:space="preserve">
     <value>处理</value>
   </data>
+  <data name="PluginManagementPage.AddPluginMenuButton.ToolTip" xml:space="preserve">
+    <value>新增插件</value>
+  </data>
   <data name="PluginManagementPage.AddDecryptorButton.Content" xml:space="preserve">
     <value>新增解密插件</value>
   </data>

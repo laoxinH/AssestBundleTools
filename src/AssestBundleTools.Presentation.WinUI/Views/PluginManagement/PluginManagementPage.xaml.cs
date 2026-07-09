@@ -56,8 +56,11 @@ public sealed partial class PluginManagementPage : Page
         PluginDirectoryAllCountLabelText.Text = UiText.Get(ResourceKeys.PluginManagementCatalogAllCountLabel);
         PluginDirectoryDecryptorCountLabelText.Text = UiText.Get(ResourceKeys.PluginManagementCatalogDecryptorCountLabel);
         PluginDirectoryProcessorCountLabelText.Text = UiText.Get(ResourceKeys.PluginManagementCatalogProcessorCountLabel);
-        AddDecryptorButtonText.Text = UiText.Get(ResourceKeys.PluginManagementAddDecryptorButton);
-        AddResourceProcessorButtonText.Text = UiText.Get(ResourceKeys.PluginManagementAddResourceProcessorButton);
+        var addPluginMenuButtonToolTip = UiText.Get(ResourceKeys.PluginManagementAddPluginMenuButtonToolTip);
+        ToolTipService.SetToolTip(AddPluginMenuButton, addPluginMenuButtonToolTip);
+        AutomationProperties.SetName(AddPluginMenuButton, addPluginMenuButtonToolTip);
+        AddDecryptorMenuFlyoutItem.Text = UiText.Get(ResourceKeys.PluginManagementAddDecryptorButton);
+        AddResourceProcessorMenuFlyoutItem.Text = UiText.Get(ResourceKeys.PluginManagementAddResourceProcessorButton);
         DecryptorGroupTitleText.Text = UiText.Get(ResourceKeys.PluginManagementTypeImportDecryptor);
         ResourceProcessorGroupTitleText.Text = UiText.Get(ResourceKeys.PluginManagementTypeExportProcessor);
         PluginDirectoryEmptyTitleText.Text = UiText.Get(ResourceKeys.PluginManagementDirectoryEmptyTitle);
@@ -125,12 +128,12 @@ public sealed partial class PluginManagementPage : Page
         }
     }
 
-    private async void OnAddDecryptorButtonClick(object sender, RoutedEventArgs e)
+    private async void OnAddDecryptorMenuFlyoutItemClick(object sender, RoutedEventArgs e)
     {
         await ShowDecryptorEditorDialogAsync(entryId: null);
     }
 
-    private async void OnAddResourceProcessorButtonClick(object sender, RoutedEventArgs e)
+    private async void OnAddResourceProcessorMenuFlyoutItemClick(object sender, RoutedEventArgs e)
     {
         await ShowResourceProcessorEditorDialogAsync(entryId: null);
     }

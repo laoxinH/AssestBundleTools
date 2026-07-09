@@ -71,7 +71,10 @@ public sealed class PluginManagementPageContractTests
         Assert.Contains("ItemsSource=\"{x:Bind ViewModel.VisibleResourceProcessorPlugins", pluginPage);
         Assert.Contains("PluginManagementToolbarSurfaceStyle", pluginPage);
         Assert.Contains("PluginManagementCatalogStatChipStyle", pluginPage);
-        Assert.Contains("PluginManagementAddPluginButtonStyle", pluginPage);
+        Assert.Contains("PluginManagementHeaderIconButtonStyle", pluginPage);
+        Assert.Contains("x:Name=\"AddPluginMenuButton\"", pluginPage);
+        Assert.Contains("x:Name=\"AddDecryptorMenuFlyoutItem\"", pluginPage);
+        Assert.Contains("x:Name=\"AddResourceProcessorMenuFlyoutItem\"", pluginPage);
         Assert.Contains("x:Name=\"PluginDirectoryHelpHost\"", pluginPage);
         Assert.Contains("PointerEntered=\"OnPluginDirectoryHelpPointerEntered\"", pluginPage);
         Assert.Contains("Text=\"{x:Bind ViewModel.VisiblePluginCountText, Mode=OneWay}\"", pluginPage);
@@ -82,8 +85,9 @@ public sealed class PluginManagementPageContractTests
         Assert.Contains("x:Name=\"PluginDirectoryEmptyTitleText\"", pluginPage);
         Assert.Contains("x:Name=\"PluginDetailsEmptyTitleText\"", pluginPage);
         Assert.Contains("Glyph=\"{x:Bind ViewModel.SelectedPluginIconGlyph, Mode=OneWay}\"", pluginPage);
-        Assert.Contains("OnAddDecryptorButtonClick", pluginPageCode);
-        Assert.Contains("OnAddResourceProcessorButtonClick", pluginPageCode);
+        Assert.Contains("ToolTipService.SetToolTip(AddPluginMenuButton", pluginPageCode);
+        Assert.Contains("OnAddDecryptorMenuFlyoutItemClick", pluginPageCode);
+        Assert.Contains("OnAddResourceProcessorMenuFlyoutItemClick", pluginPageCode);
         Assert.Contains("AssetBundleDecryptorEditorDialogContent", pluginPageCode);
         Assert.Contains("ResourceProcessorEditorDialogContent", pluginPageCode);
         Assert.Contains("ViewModel.DeleteDecryptorAsync", pluginPageCode);

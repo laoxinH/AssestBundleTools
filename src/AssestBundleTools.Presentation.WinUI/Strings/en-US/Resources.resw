@@ -4605,6 +4605,9 @@
   <data name="PluginManagementPage.CatalogSummary.ProcessorLabel" xml:space="preserve">
     <value>Process</value>
   </data>
+  <data name="PluginManagementPage.AddPluginMenuButton.ToolTip" xml:space="preserve">
+    <value>Add Plugin</value>
+  </data>
   <data name="PluginManagementPage.AddDecryptorButton.Content" xml:space="preserve">
     <value>Add Decryptor</value>
   </data>
