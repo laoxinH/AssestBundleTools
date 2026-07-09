@@ -4593,14 +4593,23 @@
   <data name="PluginManagementPage.Directory.Hint" xml:space="preserve">
     <value>Review, filter, and maintain the available CLI plugins.</value>
   </data>
+  <data name="PluginManagementPage.CatalogSummary.Format" xml:space="preserve">
+    <value>{0} plugins · {1} decryptors · {2} processors</value>
+  </data>
   <data name="PluginManagementPage.AddDecryptorButton.Content" xml:space="preserve">
     <value>Add Decryptor</value>
   </data>
   <data name="PluginManagementPage.AddResourceProcessorButton.Content" xml:space="preserve">
     <value>Add Processor</value>
   </data>
+  <data name="PluginManagementPage.Directory.EmptyTitle" xml:space="preserve">
+    <value>No Matching Plugins</value>
+  </data>
   <data name="PluginManagementPage.Directory.EmptyText" xml:space="preserve">
     <value>No plugins match the current filters.</value>
+  </data>
+  <data name="PluginManagementPage.Details.EmptyTitle" xml:space="preserve">
+    <value>Waiting for Selection</value>
   </data>
   <data name="PluginManagementPage.Details.EmptyText" xml:space="preserve">
     <value>Select a plugin on the left to view details.</value>

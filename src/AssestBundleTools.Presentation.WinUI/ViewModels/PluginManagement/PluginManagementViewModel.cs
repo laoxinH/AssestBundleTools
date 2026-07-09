@@ -138,7 +138,16 @@ public sealed partial class PluginManagementViewModel : ObservableObject
 
     public bool HasVisibleResourceProcessorPlugins => VisibleResourceProcessorPlugins.Count > 0;
 
+    public string VisiblePluginSummaryText =>
+        _localizationService.GetFormattedString(
+            ResourceKeys.PluginManagementCatalogSummaryFormat,
+            VisiblePlugins.Count,
+            VisibleDecryptorPlugins.Count,
+            VisibleResourceProcessorPlugins.Count);
+
     public bool HasSelectedPlugin => SelectedPlugin is not null;
+
+    public string SelectedPluginIconGlyph => SelectedPlugin?.IsDecryptor == true ? "\uE8B7" : "\uE8A5";
 
     public bool CanEditSelectedPlugin => SelectedPlugin?.CanEdit == true;
 
@@ -445,74 +454,6 @@ public sealed partial class PluginManagementViewModel : ObservableObject
         }
 
         NotifyListState();
-    }
-
-    private IEnumerable<PluginManagementFilterOptionViewModel> CreateTypeFilters()
-    {
-        yield return new PluginManagementFilterOptionViewModel(
-            PluginManagementFilterKeys.All,
-            GetString(ResourceKeys.PluginManagementTypeFilterAll));
-        yield return new PluginManagementFilterOptionViewModel(
-            PluginManagementFilterKeys.ImportDecryptor,
-            GetString(ResourceKeys.PluginManagementTypeImportDecryptor));
-        yield return new PluginManagementFilterOptionViewModel(
-            PluginManagementFilterKeys.ExportProcessor,
-            GetString(ResourceKeys.PluginManagementTypeExportProcessor));
-        yield return new PluginManagementFilterOptionViewModel(
-            PluginManagementFilterKeys.Texture2D,
-            GetString(ResourceKeys.WorkspaceExportDialogResourceProcessorTexture2D));
-        yield return new PluginManagementFilterOptionViewModel(
-            PluginManagementFilterKeys.Audio,
-            GetString(ResourceKeys.WorkspaceExportDialogResourceProcessorAudio));
-        yield return new PluginManagementFilterOptionViewModel(
-            PluginManagementFilterKeys.Atlas,
-            GetString(ResourceKeys.WorkspaceExportDialogResourceProcessorAtlas));
-        yield return new PluginManagementFilterOptionViewModel(
-            PluginManagementFilterKeys.Skel,
-            GetString(ResourceKeys.WorkspaceExportDialogResourceProcessorSkel));
-    }
-
-    private IEnumerable<PluginManagementFilterOptionViewModel> CreateStatusFilters()
-    {
-        yield return new PluginManagementFilterOptionViewModel(
-            PluginManagementFilterKeys.All,
-            GetString(ResourceKeys.PluginManagementStatusFilterAll));
-        yield return new PluginManagementFilterOptionViewModel(
-            PluginManagementFilterKeys.Available,
-            GetString(ResourceKeys.PluginManagementStatusAvailable));
-        yield return new PluginManagementFilterOptionViewModel(
-            PluginManagementFilterKeys.Warning,
-            GetString(ResourceKeys.PluginManagementStatusWarning));
-        yield return new PluginManagementFilterOptionViewModel(
-            PluginManagementFilterKeys.Unavailable,
-            GetString(ResourceKeys.PluginManagementStatusUnavailable));
-        yield return new PluginManagementFilterOptionViewModel(
-            PluginManagementFilterKeys.ReadOnly,
-            GetString(ResourceKeys.PluginManagementBadgeReadOnly));
-        yield return new PluginManagementFilterOptionViewModel(
-            PluginManagementFilterKeys.UserManaged,
-            GetString(ResourceKeys.PluginManagementBadgeUserManaged));
-    }
-
-    private void NotifyListState()
-    {
-        OnPropertyChanged(nameof(HasVisiblePlugins));
-        OnPropertyChanged(nameof(HasVisibleDecryptorPlugins));
-        OnPropertyChanged(nameof(HasVisibleResourceProcessorPlugins));
-        OnPropertyChanged(nameof(EmptyStateVisibility));
-        OnPropertyChanged(nameof(DecryptorGroupVisibility));
-        OnPropertyChanged(nameof(ResourceProcessorGroupVisibility));
-        NotifySelectionState();
-    }
-
-    private void NotifySelectionState()
-    {
-        OnPropertyChanged(nameof(HasSelectedPlugin));
-        OnPropertyChanged(nameof(CanEditSelectedPlugin));
-        OnPropertyChanged(nameof(CanDeleteSelectedPlugin));
-        OnPropertyChanged(nameof(CanOpenSelectedPluginLocation));
-        OnPropertyChanged(nameof(DetailsVisibility));
-        OnPropertyChanged(nameof(DetailsEmptyVisibility));
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);

@@ -47,7 +47,9 @@ public sealed partial class PluginManagementPage : Page
         AddResourceProcessorButtonText.Text = UiText.Get(ResourceKeys.PluginManagementAddResourceProcessorButton);
         DecryptorGroupTitleText.Text = UiText.Get(ResourceKeys.PluginManagementTypeImportDecryptor);
         ResourceProcessorGroupTitleText.Text = UiText.Get(ResourceKeys.PluginManagementTypeExportProcessor);
+        PluginDirectoryEmptyTitleText.Text = UiText.Get(ResourceKeys.PluginManagementDirectoryEmptyTitle);
         PluginDirectoryEmptyText.Text = UiText.Get(ResourceKeys.PluginManagementDirectoryEmptyText);
+        PluginDetailsEmptyTitleText.Text = UiText.Get(ResourceKeys.PluginManagementDetailsEmptyTitle);
         PluginDetailsEmptyText.Text = UiText.Get(ResourceKeys.PluginManagementDetailsEmptyText);
         EditSelectedPluginButtonText.Text = UiText.Get(ResourceKeys.PluginManagementEditButton);
         ValidateSelectedPluginButtonText.Text = UiText.Get(ResourceKeys.PluginManagementValidateButton);
