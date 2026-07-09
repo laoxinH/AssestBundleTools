@@ -115,10 +115,17 @@ public sealed class BundleExplorerBundlePaneViewModel : ObservableObject, IBundl
                 ? GetString(ResourceKeys.BundleExplorerSelectionNone)
                 : BundleSearchKeyword.Trim());
 
+    public string BundleSearchEmptyStateTitleText =>
+        GetString(ResourceKeys.BundleExplorerBundleSearchEmptyStateTitle);
+
     /// <summary>
     /// 左侧资源包区域的空状态文案。
     /// 未打开工作区时提示先打开工作区；已打开但没有资源包时提示当前工作区为空。
     /// </summary>
+    public string BundlePaneEmptyStateTitleText => _hasWorkspace
+        ? GetString(ResourceKeys.BundleExplorerEmptyWorkspaceTitle)
+        : GetString(ResourceKeys.BundleExplorerNoWorkspaceTitle);
+
     public string BundlePaneEmptyStateText => _hasWorkspace
         ? GetString(ResourceKeys.BundleExplorerEmptyWorkspace)
         : GetString(ResourceKeys.BundleExplorerNoWorkspace);
@@ -368,6 +375,7 @@ public sealed class BundleExplorerBundlePaneViewModel : ObservableObject, IBundl
     {
         OnPropertyChanged(nameof(CanToggleBundleSearch));
         OnPropertyChanged(nameof(CanToggleBundlePaneCollapse));
+        OnPropertyChanged(nameof(BundlePaneEmptyStateTitleText));
         OnPropertyChanged(nameof(BundlePaneEmptyStateText));
         NotifyBundleCollectionStateChanged();
     }

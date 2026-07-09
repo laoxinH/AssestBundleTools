@@ -133,6 +133,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         PrimaryPane.ConfigurePane(
             PaneId.New(),
             GetString(ResourceKeys.BundleExplorerPrimaryPaneTitle),
+            GetString(ResourceKeys.BundleExplorerNoAssetsTitle),
             GetString(ResourceKeys.BundleExplorerNoAssets));
         _assetDocumentTabCoordinator = new BundleExplorerAssetDocumentTabCoordinator(
             workspaceAssetInspectionGateway,
@@ -305,7 +306,7 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         _documentWorkspace.SetActiveBundleTab(null);
         _bundlePane.SetSelectedBundle(null);
         _assetDocumentHostCoordinator.ResetEmptyInspector();
-        PrimaryPane.ClearItems(ResolvePrimaryPaneEmptyStateText());
+        PrimaryPane.ClearItems(ResolvePrimaryPaneEmptyStateTitle(), ResolvePrimaryPaneEmptyStateText());
         _documentWorkspace.NotifyAssetDocumentHostStateChanged();
         _requestWorkspaceBrowserStatePersistence();
     }
@@ -529,6 +530,12 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             noWorkspaceText: GetString(ResourceKeys.BundleExplorerNoWorkspace),
             emptyWorkspaceText: GetString(ResourceKeys.BundleExplorerEmptyWorkspace),
             noOpenTabsText: GetString(ResourceKeys.BundleExplorerNoOpenTabs));
+
+    private string ResolvePrimaryPaneEmptyStateTitle()
+        => _bundlePane.ResolvePrimaryPaneEmptyStateText(
+            noWorkspaceText: GetString(ResourceKeys.BundleExplorerNoWorkspaceTitle),
+            emptyWorkspaceText: GetString(ResourceKeys.BundleExplorerEmptyWorkspaceTitle),
+            noOpenTabsText: GetString(ResourceKeys.BundleExplorerNoOpenTabsTitle));
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
 

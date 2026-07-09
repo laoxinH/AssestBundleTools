@@ -1243,7 +1243,7 @@
     <value>{0} diagnostics</value>
   </data>
   <data name="AssetPaneView.EmptyStateHintText.Text" xml:space="preserve">
-    <value>Switch a bundle on the left, adjust search, or change views to refresh the list shown in this pane.</value>
+    <value>Select a bundle on the left, adjust search, or switch views to refresh this list.</value>
   </data>
   <data name="AssetPaneView.Context.Replace.Text" xml:space="preserve">
     <value>Replace File</value>
@@ -1267,7 +1267,7 @@
     <value>Changes</value>
   </data>
   <data name="InspectorPanelView.EmptyStateTitleText.Text" xml:space="preserve">
-    <value>Waiting For Selection</value>
+    <value>Waiting for Selection</value>
   </data>
   <data name="InspectorPanelView.AssetNameLabelText.Text" xml:space="preserve">
     <value>Name</value>
@@ -3552,6 +3552,9 @@
   <data name="Diagnostics.Log.EmptyState" xml:space="preserve">
     <value>Application-level runtime logs, error records, and later diagnostic exports will appear here.</value>
   </data>
+  <data name="BundleExplorer.EmptyState.BundleSearchNoMatch.Title" xml:space="preserve">
+    <value>No Matching Bundles</value>
+  </data>
   <data name="BundleExplorer.EmptyState.BundleSearchNoMatch.Format" xml:space="preserve">
     <value>No bundles matched "{0}". Try a different keyword.</value>
   </data>
@@ -3588,29 +3591,50 @@
   <data name="BundleExplorer.Pane.PrimaryTitle" xml:space="preserve">
     <value>Asset List</value>
   </data>
+  <data name="BundleExplorer.EmptyState.NoWorkspaceTitle" xml:space="preserve">
+    <value>No Workspace Loaded</value>
+  </data>
   <data name="BundleExplorer.EmptyState.NoWorkspace" xml:space="preserve">
     <value>No workspace is loaded yet. Create a new workspace or open an existing one before browsing resources.</value>
   </data>
+  <data name="BundleExplorer.EmptyState.EmptyWorkspaceTitle" xml:space="preserve">
+    <value>Empty Workspace</value>
+  </data>
   <data name="BundleExplorer.EmptyState.EmptyWorkspace" xml:space="preserve">
-    <value>This workspace is still empty and does not contain any imported bundles yet. Later, AB resources can be added through drag-and-drop import or browser-based import.</value>
+    <value>This workspace has no imported bundles yet. Drop in AB files or folders, or use an import entry to add resources.</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.NoAssetsTitle" xml:space="preserve">
+    <value>No Assets to Show</value>
   </data>
   <data name="BundleExplorer.EmptyState.NoAssets" xml:space="preserve">
     <value>No assets are available for the current bundle and filter combination.</value>
   </data>
+  <data name="BundleExplorer.EmptyState.NoSpineGroupsTitle" xml:space="preserve">
+    <value>No Spine Groups</value>
+  </data>
   <data name="BundleExplorer.EmptyState.NoSpineGroups" xml:space="preserve">
     <value>No recognizable Spine groups are available for the current bundle and search.</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.LoadingAssetsTitle" xml:space="preserve">
+    <value>Preparing Asset List</value>
   </data>
   <data name="BundleExplorer.EmptyState.LoadingAssets" xml:space="preserve">
     <value>Loading assets for the current bundle...</value>
   </data>
+  <data name="BundleExplorer.EmptyState.LoadingSpineGroupsTitle" xml:space="preserve">
+    <value>Preparing Spine Groups</value>
+  </data>
   <data name="BundleExplorer.EmptyState.LoadingSpineGroups" xml:space="preserve">
     <value>Loading Spine groups for the current bundle...</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.NoOpenTabsTitle" xml:space="preserve">
+    <value>Waiting for a Bundle</value>
   </data>
   <data name="BundleExplorer.EmptyState.NoOpenTabs" xml:space="preserve">
     <value>No bundle tabs are open yet. Click a bundle on the left to start browsing.</value>
   </data>
   <data name="BundleExplorer.Inspector.EmptyState" xml:space="preserve">
-    <value>Select an asset to view details, extraction actions, workspace replacement state, file replacement state, and change summary.</value>
+    <value>Select an asset to view preview, basic information, dependencies, replacement state, and change summary.</value>
   </data>
   <data name="BundleExplorer.Selection.None" xml:space="preserve">
     <value>No asset selected</value>

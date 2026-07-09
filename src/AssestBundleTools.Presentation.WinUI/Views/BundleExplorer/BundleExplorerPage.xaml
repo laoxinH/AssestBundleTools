@@ -56,6 +56,62 @@
         </Style>
 
         <Style
+            x:Key="WorkbenchEmptyStateCardStyle"
+            TargetType="Border">
+            <Setter Property="MaxWidth" Value="292" />
+            <Setter Property="Padding" Value="20" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <Style
+            x:Key="WorkbenchEmptyStateIconBadgeStyle"
+            TargetType="Border">
+            <Setter Property="Width" Value="48" />
+            <Setter Property="Height" Value="48" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <Style
+            x:Key="WorkbenchEmptyStateIconStyle"
+            TargetType="FontIcon">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons" />
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="Foreground" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+        </Style>
+
+        <Style
+            x:Key="WorkbenchEmptyStateTitleTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="TextWrapping" Value="WrapWholeWords" />
+        </Style>
+
+        <Style
+            x:Key="WorkbenchEmptyStateBodyTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="TextWrapping" Value="WrapWholeWords" />
+        </Style>
+
+        <Style
             x:Key="WorkspaceChipIconBadgeStyle"
             TargetType="Border">
             <Setter Property="Width" Value="24" />
@@ -813,75 +869,49 @@
                         MinHeight="0">
                         <Border
                             x:Name="BundlePaneEmptyStateCard"
-                            MaxWidth="260"
-                            Padding="18"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                            BorderThickness="1"
-                            CornerRadius="14"
+                            Style="{StaticResource WorkbenchEmptyStateCardStyle}"
                             Visibility="{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateVisibility, Mode=OneWay}">
                             <StackPanel
                                 HorizontalAlignment="Center"
-                                Spacing="10">
+                                Spacing="12">
                                 <Border
-                                    Width="48"
-                                    Height="48"
-                                    HorizontalAlignment="Center"
-                                    Background="{ThemeResource AccentFillColorDefaultBrush}"
-                                    CornerRadius="14">
+                                    Style="{StaticResource WorkbenchEmptyStateIconBadgeStyle}">
                                     <FontIcon
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontFamily="Segoe Fluent Icons"
-                                        FontSize="23"
-                                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                        Style="{StaticResource WorkbenchEmptyStateIconStyle}"
                                         Glyph="&#xE8B7;" />
                                 </Border>
                                 <TextBlock
+                                    x:Name="BundlePaneEmptyStateTitleText"
+                                    Style="{StaticResource WorkbenchEmptyStateTitleTextStyle}"
+                                    Text="{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateTitleText, Mode=OneWay}" />
+                                <TextBlock
                                     x:Name="NoWorkspaceText"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateText, Mode=OneWay}"
-                                    TextAlignment="Center"
-                                    TextWrapping="WrapWholeWords" />
+                                    Style="{StaticResource WorkbenchEmptyStateBodyTextStyle}"
+                                    Text="{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateText, Mode=OneWay}" />
                             </StackPanel>
                         </Border>
 
                         <Border
                             x:Name="BundleSearchEmptyStateCard"
-                            MaxWidth="260"
-                            Padding="18"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                            BorderThickness="1"
-                            CornerRadius="14"
+                            Style="{StaticResource WorkbenchEmptyStateCardStyle}"
                             Visibility="{x:Bind ViewModel.BundlePane.BundleSearchEmptyStateVisibility, Mode=OneWay}">
                             <StackPanel
                                 HorizontalAlignment="Center"
-                                Spacing="10">
+                                Spacing="12">
                                 <Border
-                                    Width="48"
-                                    Height="48"
-                                    HorizontalAlignment="Center"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    CornerRadius="14">
+                                    Style="{StaticResource WorkbenchEmptyStateIconBadgeStyle}">
                                     <FontIcon
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontFamily="Segoe Fluent Icons"
-                                        FontSize="22"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Style="{StaticResource WorkbenchEmptyStateIconStyle}"
                                         Glyph="&#xE721;" />
                                 </Border>
                                 <TextBlock
+                                    x:Name="BundleSearchEmptyStateTitleText"
+                                    Style="{StaticResource WorkbenchEmptyStateTitleTextStyle}"
+                                    Text="{x:Bind ViewModel.BundlePane.BundleSearchEmptyStateTitleText, Mode=OneWay}" />
+                                <TextBlock
                                     x:Name="BundleSearchEmptyStateText"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="{x:Bind ViewModel.BundlePane.BundleSearchEmptyStateText, Mode=OneWay}"
-                                    TextAlignment="Center"
-                                    TextWrapping="WrapWholeWords" />
+                                    Style="{StaticResource WorkbenchEmptyStateBodyTextStyle}"
+                                    Text="{x:Bind ViewModel.BundlePane.BundleSearchEmptyStateText, Mode=OneWay}" />
                             </StackPanel>
                         </Border>
 

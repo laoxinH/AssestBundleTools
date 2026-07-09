@@ -214,6 +214,7 @@ internal sealed class BundleExplorerAssetPaneCoordinator
             {
                 pane.BeginSpineGroupListLoading(
                     bundleNode.DisplayName,
+                    GetString(ResourceKeys.BundleExplorerLoadingSpineGroupsTitle),
                     GetString(ResourceKeys.BundleExplorerLoadingSpineGroups));
             }
 
@@ -228,6 +229,7 @@ internal sealed class BundleExplorerAssetPaneCoordinator
         {
             pane.BeginAssetListLoading(
                 bundleNode.DisplayName,
+                GetString(ResourceKeys.BundleExplorerLoadingAssetsTitle),
                 GetString(ResourceKeys.BundleExplorerLoadingAssets));
         }
 
@@ -260,6 +262,7 @@ internal sealed class BundleExplorerAssetPaneCoordinator
         pane.ReplaceItems(
             currentBundleDisplayName: bundleNode.DisplayName,
             items: entries,
+            emptyStateTitleText: GetString(ResourceKeys.BundleExplorerNoAssetsTitle),
             emptyStateText: GetString(ResourceKeys.BundleExplorerNoAssets),
             preferredSelectedAssetId: string.IsNullOrWhiteSpace(preferredSelectedAssetId)
                 ? null
@@ -305,6 +308,7 @@ internal sealed class BundleExplorerAssetPaneCoordinator
         pane.ReplaceSpineGroups(
             currentBundleDisplayName: bundleNode.DisplayName,
             items: entries,
+            emptyStateTitleText: GetString(ResourceKeys.BundleExplorerNoSpineGroupsTitle),
             emptyStateText: GetString(ResourceKeys.BundleExplorerNoSpineGroups));
 
         _appLogService.AppendInfo(_localizationService.GetFormattedString(
@@ -318,8 +322,11 @@ internal sealed class BundleExplorerAssetPaneCoordinator
     private void ClearPaneItems(AssetPaneViewModel pane, bool clearInspectorOnEmpty)
     {
         InvalidatePaneLoad(pane);
-        pane.ClearItems(GetString(
-            pane.IsSpineGroupViewMode
+        pane.ClearItems(
+            GetString(pane.IsSpineGroupViewMode
+                ? ResourceKeys.BundleExplorerNoSpineGroupsTitle
+                : ResourceKeys.BundleExplorerNoAssetsTitle),
+            GetString(pane.IsSpineGroupViewMode
                 ? ResourceKeys.BundleExplorerNoSpineGroups
                 : ResourceKeys.BundleExplorerNoAssets));
 

@@ -379,6 +379,7 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsLogCenterTitle = "SettingsDiagnosticsPage.LogCenterTitleText.Text";
     public const string SettingsDiagnosticsLogCenterHint = "SettingsDiagnosticsPage.LogCenterHintText.Text";
 
+    public const string BundleExplorerBundleSearchEmptyStateTitle = "BundleExplorer.EmptyState.BundleSearchNoMatch.Title";
     public const string BundleExplorerBundleSearchEmptyStateFormat = "BundleExplorer.EmptyState.BundleSearchNoMatch.Format";
     public const string BundleExplorerStatusWorkspaceLabel = "BundleExplorer.Status.Workspace.Label";
     public const string BundleExplorerStatusBundleCountLabel = "BundleExplorer.Status.BundleCount.Label";
@@ -391,12 +392,19 @@ public static class ResourceKeys
     public const string BundleExplorerStatusSelectionLabel = "BundleExplorer.Status.Selection.Label";
     public const string BundleExplorerStatusNotLoaded = "BundleExplorer.Status.NotLoaded";
     public const string BundleExplorerPrimaryPaneTitle = "BundleExplorer.Pane.PrimaryTitle";
+    public const string BundleExplorerNoWorkspaceTitle = "BundleExplorer.EmptyState.NoWorkspaceTitle";
     public const string BundleExplorerNoWorkspace = "BundleExplorer.EmptyState.NoWorkspace";
+    public const string BundleExplorerEmptyWorkspaceTitle = "BundleExplorer.EmptyState.EmptyWorkspaceTitle";
     public const string BundleExplorerEmptyWorkspace = "BundleExplorer.EmptyState.EmptyWorkspace";
+    public const string BundleExplorerNoAssetsTitle = "BundleExplorer.EmptyState.NoAssetsTitle";
     public const string BundleExplorerNoAssets = "BundleExplorer.EmptyState.NoAssets";
+    public const string BundleExplorerNoSpineGroupsTitle = "BundleExplorer.EmptyState.NoSpineGroupsTitle";
     public const string BundleExplorerNoSpineGroups = "BundleExplorer.EmptyState.NoSpineGroups";
+    public const string BundleExplorerLoadingAssetsTitle = "BundleExplorer.EmptyState.LoadingAssetsTitle";
     public const string BundleExplorerLoadingAssets = "BundleExplorer.EmptyState.LoadingAssets";
+    public const string BundleExplorerLoadingSpineGroupsTitle = "BundleExplorer.EmptyState.LoadingSpineGroupsTitle";
     public const string BundleExplorerLoadingSpineGroups = "BundleExplorer.EmptyState.LoadingSpineGroups";
+    public const string BundleExplorerNoOpenTabsTitle = "BundleExplorer.EmptyState.NoOpenTabsTitle";
     public const string BundleExplorerNoOpenTabs = "BundleExplorer.EmptyState.NoOpenTabs";
     public const string BundleExplorerInspectorEmpty = "BundleExplorer.Inspector.EmptyState";
     public const string BundleExplorerSelectionNone = "BundleExplorer.Selection.None";

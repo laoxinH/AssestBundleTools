@@ -78,49 +78,113 @@
                 Value="SemiBold" />
         </Style>
 
+        <Style
+            x:Key="InspectorEmptyStateCardStyle"
+            TargetType="Border">
+            <Setter
+                Property="MaxWidth"
+                Value="390" />
+            <Setter
+                Property="Padding"
+                Value="24,22" />
+            <Setter
+                Property="HorizontalAlignment"
+                Value="Center" />
+            <Setter
+                Property="VerticalAlignment"
+                Value="Center" />
+            <Setter
+                Property="Background"
+                Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter
+                Property="BorderBrush"
+                Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter
+                Property="BorderThickness"
+                Value="1" />
+            <Setter
+                Property="CornerRadius"
+                Value="8" />
+        </Style>
+
+        <Style
+            x:Key="InspectorEmptyStateTitleTextStyle"
+            TargetType="TextBlock">
+            <Setter
+                Property="FontSize"
+                Value="15" />
+            <Setter
+                Property="FontWeight"
+                Value="SemiBold" />
+            <Setter
+                Property="Foreground"
+                Value="{ThemeResource TextFillColorPrimaryBrush}" />
+            <Setter
+                Property="HorizontalAlignment"
+                Value="Center" />
+            <Setter
+                Property="TextAlignment"
+                Value="Center" />
+            <Setter
+                Property="TextWrapping"
+                Value="WrapWholeWords" />
+        </Style>
+
+        <Style
+            x:Key="InspectorEmptyStateBodyTextStyle"
+            TargetType="TextBlock">
+            <Setter
+                Property="FontSize"
+                Value="13" />
+            <Setter
+                Property="Foreground"
+                Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter
+                Property="HorizontalAlignment"
+                Value="Center" />
+            <Setter
+                Property="MaxWidth"
+                Value="320" />
+            <Setter
+                Property="TextAlignment"
+                Value="Center" />
+            <Setter
+                Property="TextWrapping"
+                Value="WrapWholeWords" />
+        </Style>
+
     </UserControl.Resources>
 
     <Grid>
         <Border
             x:Name="InspectorEmptyStateCard"
-            MaxWidth="360"
-            Padding="20"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Center"
-            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="1"
-            CornerRadius="16"
+            Style="{StaticResource InspectorEmptyStateCardStyle}"
             Visibility="{x:Bind ViewModel.EmptyStateVisibility, Mode=OneWay}">
             <StackPanel
                 HorizontalAlignment="Center"
-                Spacing="10">
+                Spacing="12">
                 <Border
                     Width="52"
                     Height="52"
                     HorizontalAlignment="Center"
-                    Background="{ThemeResource AccentFillColorDefaultBrush}"
-                    CornerRadius="14">
+                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
                     <FontIcon
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         FontFamily="Segoe Fluent Icons"
-                        FontSize="25"
-                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                        FontSize="23"
+                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                         Glyph="&#xE8A5;" />
                 </Border>
                 <TextBlock
                     x:Name="EmptyStateTitleText"
-                    HorizontalAlignment="Center"
-                    TextAlignment="Center"
-                    Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                    Style="{StaticResource InspectorEmptyStateTitleTextStyle}" />
                 <TextBlock
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    HorizontalAlignment="Center"
-                    MaxWidth="300"
-                    TextAlignment="Center"
-                    Text="{x:Bind ViewModel.EmptyStateText, Mode=OneWay}"
-                    TextWrapping="WrapWholeWords" />
+                    Style="{StaticResource InspectorEmptyStateBodyTextStyle}"
+                    Text="{x:Bind ViewModel.EmptyStateText, Mode=OneWay}" />
             </StackPanel>
         </Border>
 

@@ -17,6 +17,7 @@ public sealed partial class AssetPaneViewModel
         ReplaceItems(
             currentBundleDisplayName,
             items,
+            EmptyStateTitleText,
             emptyStateText,
             preferredSelectedAssetId: null);
     }
@@ -27,7 +28,23 @@ public sealed partial class AssetPaneViewModel
         string emptyStateText,
         AssetId? preferredSelectedAssetId)
     {
+        ReplaceItems(
+            currentBundleDisplayName,
+            items,
+            EmptyStateTitleText,
+            emptyStateText,
+            preferredSelectedAssetId);
+    }
+
+    public void ReplaceItems(
+        string currentBundleDisplayName,
+        IEnumerable<AssetListEntryViewModel> items,
+        string emptyStateTitleText,
+        string emptyStateText,
+        AssetId? preferredSelectedAssetId)
+    {
         CurrentBundleDisplayName = currentBundleDisplayName;
+        EmptyStateTitleText = emptyStateTitleText;
         EmptyStateText = emptyStateText;
         IsListLoading = false;
         _assetList.ReplaceItems(
@@ -47,8 +64,22 @@ public sealed partial class AssetPaneViewModel
         IEnumerable<SpineAssetGroupEntryViewModel> items,
         string emptyStateText)
     {
+        ReplaceSpineGroups(
+            currentBundleDisplayName,
+            items,
+            EmptyStateTitleText,
+            emptyStateText);
+    }
+
+    public void ReplaceSpineGroups(
+        string currentBundleDisplayName,
+        IEnumerable<SpineAssetGroupEntryViewModel> items,
+        string emptyStateTitleText,
+        string emptyStateText)
+    {
         var selectedGroupId = SelectedSpineGroup?.Item.GroupId;
         CurrentBundleDisplayName = currentBundleDisplayName;
+        EmptyStateTitleText = emptyStateTitleText;
         EmptyStateText = emptyStateText;
         IsListLoading = false;
         _spineGroupList.ReplaceItems(items, selectedGroupId);
@@ -61,7 +92,16 @@ public sealed partial class AssetPaneViewModel
 
     public void BeginAssetListLoading(string currentBundleDisplayName, string loadingStateText)
     {
+        BeginAssetListLoading(currentBundleDisplayName, EmptyStateTitleText, loadingStateText);
+    }
+
+    public void BeginAssetListLoading(
+        string currentBundleDisplayName,
+        string loadingStateTitleText,
+        string loadingStateText)
+    {
         CurrentBundleDisplayName = currentBundleDisplayName;
+        EmptyStateTitleText = loadingStateTitleText;
         EmptyStateText = loadingStateText;
         IsListLoading = true;
         _assetList.Clear();
@@ -74,7 +114,16 @@ public sealed partial class AssetPaneViewModel
 
     public void BeginSpineGroupListLoading(string currentBundleDisplayName, string loadingStateText)
     {
+        BeginSpineGroupListLoading(currentBundleDisplayName, EmptyStateTitleText, loadingStateText);
+    }
+
+    public void BeginSpineGroupListLoading(
+        string currentBundleDisplayName,
+        string loadingStateTitleText,
+        string loadingStateText)
+    {
         CurrentBundleDisplayName = currentBundleDisplayName;
+        EmptyStateTitleText = loadingStateTitleText;
         EmptyStateText = loadingStateText;
         IsListLoading = true;
         _spineGroupList.Clear();
@@ -87,7 +136,13 @@ public sealed partial class AssetPaneViewModel
 
     public void ClearItems(string emptyStateText)
     {
+        ClearItems(EmptyStateTitleText, emptyStateText);
+    }
+
+    public void ClearItems(string emptyStateTitleText, string emptyStateText)
+    {
         CurrentBundleDisplayName = string.Empty;
+        EmptyStateTitleText = emptyStateTitleText;
         EmptyStateText = emptyStateText;
         IsListLoading = false;
         _assetList.Clear();
@@ -107,6 +162,7 @@ public sealed partial class AssetPaneViewModel
         OnPropertyChanged(nameof(AssetListVisibility));
         OnPropertyChanged(nameof(SpineGroupListVisibility));
         OnPropertyChanged(nameof(EmptyStateVisibility));
+        OnPropertyChanged(nameof(EmptyStateTitleText));
         OnPropertyChanged(nameof(EmptyStateLoadingVisibility));
         OnPropertyChanged(nameof(EmptyStateIconVisibility));
         OnPropertyChanged(nameof(EmptyStateIconGlyph));

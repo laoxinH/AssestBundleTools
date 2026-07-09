@@ -47,19 +47,53 @@ public sealed class WorkspacePaneEmptyStateContractTests
             "AssetPaneViewModel.Lists.cs"));
 
         Assert.Contains("x:Name=\"BundlePaneEmptyStateCard\"", pageXaml);
+        Assert.Contains("x:Name=\"BundlePaneEmptyStateTitleText\"", pageXaml);
+        Assert.Contains("Text=\"{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateTitleText, Mode=OneWay}\"", pageXaml);
         Assert.Contains("x:Name=\"BundleSearchEmptyStateCard\"", pageXaml);
+        Assert.Contains("x:Name=\"BundleSearchEmptyStateTitleText\"", pageXaml);
+        Assert.Contains("Style=\"{StaticResource WorkbenchEmptyStateCardStyle}\"", pageXaml);
         Assert.Contains("x:Name=\"AssetPaneEmptyStateCard\"", assetPaneXaml);
+        Assert.Contains("Style=\"{StaticResource AssetPaneEmptyStateCardStyle}\"", assetPaneXaml);
+        Assert.Contains("Text=\"{x:Bind ViewModel.EmptyStateTitleText, Mode=OneWay}\"", assetPaneXaml);
         Assert.Contains("Visibility=\"{x:Bind ViewModel.EmptyStateLoadingVisibility, Mode=OneWay}\"", assetPaneXaml);
         Assert.Contains("Glyph=\"{x:Bind ViewModel.EmptyStateIconGlyph, Mode=OneWay}\"", assetPaneXaml);
         Assert.Contains("x:Name=\"InspectorEmptyStateCard\"", inspectorXaml);
+        Assert.Contains("Style=\"{StaticResource InspectorEmptyStateCardStyle}\"", inspectorXaml);
         Assert.Contains("public bool IsListLoading", assetPaneViewModel);
+        Assert.Contains("public string EmptyStateTitleText", assetPaneViewModel);
         Assert.Contains("IsListLoading = true;", assetPaneListViewModel);
         Assert.Contains("IsListLoading = false;", assetPaneListViewModel);
     }
 
     private static string FindRepositoryRoot()
     {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        var configuredRoot = Environment.GetEnvironmentVariable("ASSESTBUNDLETOOLS_REPOSITORY_ROOT");
+        if (!string.IsNullOrWhiteSpace(configuredRoot))
+        {
+            var configuredRepositoryRoot = TryFindRepositoryRoot(new DirectoryInfo(configuredRoot));
+            if (configuredRepositoryRoot is not null)
+            {
+                return configuredRepositoryRoot;
+            }
+        }
+
+        var repositoryRoot = TryFindRepositoryRoot(new DirectoryInfo(AppContext.BaseDirectory));
+        if (repositoryRoot is not null)
+        {
+            return repositoryRoot;
+        }
+
+        repositoryRoot = TryFindRepositoryRoot(new DirectoryInfo(Environment.CurrentDirectory));
+        if (repositoryRoot is not null)
+        {
+            return repositoryRoot;
+        }
+
+        throw new DirectoryNotFoundException("Repository root was not found from the test output directory.");
+    }
+
+    private static string? TryFindRepositoryRoot(DirectoryInfo? directory)
+    {
         while (directory is not null)
         {
             if (Directory.Exists(Path.Combine(directory.FullName, "src", "AssestBundleTools.Presentation.WinUI")) &&
@@ -71,6 +105,6 @@ public sealed class WorkspacePaneEmptyStateContractTests
             directory = directory.Parent;
         }
 
-        throw new DirectoryNotFoundException("Repository root was not found from the test output directory.");
+        return null;
     }
 }

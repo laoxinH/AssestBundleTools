@@ -1243,7 +1243,7 @@
     <value>{0} 条诊断</value>
   </data>
   <data name="AssetPaneView.EmptyStateHintText.Text" xml:space="preserve">
-    <value>切换左侧 Bundle 节点、调整搜索或切换视图后，这里会刷新为对应列表。</value>
+    <value>选择左侧资源包、调整搜索或切换视图后，这里会刷新对应列表。</value>
   </data>
   <data name="AssetPaneView.Context.Replace.Text" xml:space="preserve">
     <value>替换文件</value>
@@ -3552,6 +3552,9 @@
   <data name="Diagnostics.Log.EmptyState" xml:space="preserve">
     <value>这里会显示应用级运行日志、错误记录以及后续导出的诊断信息。</value>
   </data>
+  <data name="BundleExplorer.EmptyState.BundleSearchNoMatch.Title" xml:space="preserve">
+    <value>未找到匹配资源包</value>
+  </data>
   <data name="BundleExplorer.EmptyState.BundleSearchNoMatch.Format" xml:space="preserve">
     <value>未找到与“{0}”匹配的资源包，请尝试其他关键词。</value>
   </data>
@@ -3588,29 +3591,50 @@
   <data name="BundleExplorer.Pane.PrimaryTitle" xml:space="preserve">
     <value>资产列表</value>
   </data>
+  <data name="BundleExplorer.EmptyState.NoWorkspaceTitle" xml:space="preserve">
+    <value>尚未加载工作区</value>
+  </data>
   <data name="BundleExplorer.EmptyState.NoWorkspace" xml:space="preserve">
     <value>尚未加载任何工作区。请先新建工作区或打开已有工作区，再开始浏览资源。</value>
   </data>
+  <data name="BundleExplorer.EmptyState.EmptyWorkspaceTitle" xml:space="preserve">
+    <value>空工作区</value>
+  </data>
   <data name="BundleExplorer.EmptyState.EmptyWorkspace" xml:space="preserve">
-    <value>当前工作区还是空的，尚未导入任何资源包。后续可通过拖拽导入或浏览器导入把 AB 资源加入工作区。</value>
+    <value>当前工作区尚未导入资源包。可拖入 AB 文件或目录，也可以使用导入入口加入资源。</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.NoAssetsTitle" xml:space="preserve">
+    <value>暂无可显示资源</value>
   </data>
   <data name="BundleExplorer.EmptyState.NoAssets" xml:space="preserve">
     <value>当前 Bundle 在此筛选条件下没有可显示的资源。</value>
   </data>
+  <data name="BundleExplorer.EmptyState.NoSpineGroupsTitle" xml:space="preserve">
+    <value>暂无 Spine 资源组</value>
+  </data>
   <data name="BundleExplorer.EmptyState.NoSpineGroups" xml:space="preserve">
     <value>当前 Bundle 在此搜索条件下没有可识别的 Spine 资源组。</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.LoadingAssetsTitle" xml:space="preserve">
+    <value>正在准备资源列表</value>
   </data>
   <data name="BundleExplorer.EmptyState.LoadingAssets" xml:space="preserve">
     <value>正在加载当前 Bundle 的资源列表...</value>
   </data>
+  <data name="BundleExplorer.EmptyState.LoadingSpineGroupsTitle" xml:space="preserve">
+    <value>正在准备 Spine 组</value>
+  </data>
   <data name="BundleExplorer.EmptyState.LoadingSpineGroups" xml:space="preserve">
     <value>正在加载当前 Bundle 的 Spine 资源组...</value>
+  </data>
+  <data name="BundleExplorer.EmptyState.NoOpenTabsTitle" xml:space="preserve">
+    <value>等待打开资源包</value>
   </data>
   <data name="BundleExplorer.EmptyState.NoOpenTabs" xml:space="preserve">
     <value>当前还没有打开任何资源包标签页，请从左侧资源包列表单击一个资源包开始浏览。</value>
   </data>
   <data name="BundleExplorer.Inspector.EmptyState" xml:space="preserve">
-    <value>选择一个资源后，这里会显示详情、提取、工作区替换、文件替换和变更摘要。</value>
+    <value>选择一个资源后，这里会显示预览、基础信息、依赖、替换状态和变更摘要。</value>
   </data>
   <data name="BundleExplorer.Selection.None" xml:space="preserve">
     <value>尚未选择资源</value>

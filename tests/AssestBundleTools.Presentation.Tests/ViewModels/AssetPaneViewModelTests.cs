@@ -170,22 +170,35 @@ public sealed class AssetPaneViewModelTests
     {
         var viewModel = new AssetPaneViewModel();
 
-        viewModel.BeginAssetListLoading("ui.ab", "loading");
+        viewModel.BeginAssetListLoading("ui.ab", "Loading assets", "loading");
 
         Assert.True(viewModel.IsListLoading);
+        Assert.Equal("Loading assets", viewModel.EmptyStateTitleText);
         Assert.Equal(Visibility.Visible, viewModel.EmptyStateVisibility);
         Assert.Equal(Visibility.Visible, viewModel.EmptyStateLoadingVisibility);
         Assert.Equal(Visibility.Collapsed, viewModel.EmptyStateIconVisibility);
 
-        viewModel.ReplaceItems("ui.ab", [CreateAssetEntry("asset-1")], "empty");
+        viewModel.ReplaceItems(
+            "ui.ab",
+            [CreateAssetEntry("asset-1")],
+            "No assets",
+            "empty",
+            preferredSelectedAssetId: null);
 
         Assert.False(viewModel.IsListLoading);
+        Assert.Equal("No assets", viewModel.EmptyStateTitleText);
         Assert.Equal(Visibility.Collapsed, viewModel.EmptyStateVisibility);
         Assert.Equal(Visibility.Collapsed, viewModel.EmptyStateLoadingVisibility);
 
-        viewModel.ReplaceItems("ui.ab", [], "empty");
+        viewModel.ReplaceItems(
+            "ui.ab",
+            [],
+            "No assets",
+            "empty",
+            preferredSelectedAssetId: null);
 
         Assert.False(viewModel.IsListLoading);
+        Assert.Equal("No assets", viewModel.EmptyStateTitleText);
         Assert.Equal(Visibility.Visible, viewModel.EmptyStateVisibility);
         Assert.Equal(Visibility.Collapsed, viewModel.EmptyStateLoadingVisibility);
         Assert.Equal(Visibility.Visible, viewModel.EmptyStateIconVisibility);

@@ -19,6 +19,7 @@ public sealed partial class AssetPaneViewModel : ObservableObject
     private string _paneTitle = string.Empty;
     private string _currentBundleDisplayName = string.Empty;
     private string _searchKeyword = string.Empty;
+    private string _emptyStateTitleText = string.Empty;
     private string _emptyStateText = string.Empty;
     private AssetPaneViewMode _viewMode;
     private bool _isSearchExpanded;
@@ -96,6 +97,12 @@ public sealed partial class AssetPaneViewModel : ObservableObject
     {
         get => _emptyStateText;
         set => SetProperty(ref _emptyStateText, value);
+    }
+
+    public string EmptyStateTitleText
+    {
+        get => _emptyStateTitleText;
+        set => SetProperty(ref _emptyStateTitleText, value);
     }
 
     public bool IsListLoading
@@ -319,13 +326,6 @@ public sealed partial class AssetPaneViewModel : ObservableObject
 
     private int CurrentVisibleItemCount =>
         IsSpineGroupViewMode ? _spineGroupList.VisibleCount : _assetList.VisibleCount;
-
-    public void ConfigurePane(PaneId paneId, string paneTitle, string emptyStateText)
-    {
-        PaneId = paneId;
-        PaneTitle = paneTitle;
-        EmptyStateText = emptyStateText;
-    }
 
     /// <summary>
     /// 切换资产列表搜索框的展开状态。

@@ -254,6 +254,7 @@ internal sealed class BundleExplorerWorkspaceBindingCoordinator
         _assetWorkflow.PrimaryPane.ConfigurePane(
             workspaceSummary.ActivePaneId,
             GetString(ResourceKeys.BundleExplorerPrimaryPaneTitle),
+            GetString(ResourceKeys.BundleExplorerNoAssetsTitle),
             GetString(ResourceKeys.BundleExplorerNoAssets));
         _bundlePane.RebuildBundleGroups(bundleTree);
         _documentWorkspace.Clear();
