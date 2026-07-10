@@ -58,7 +58,8 @@ public sealed class MainWindowChromeContractTests
         Assert.DoesNotContain("<NavigationView.PaneHeader>", shellXaml);
         Assert.Contains("CompactPaneLength=\"48\"", shellXaml);
         Assert.Contains("IsPaneToggleButtonVisible=\"True\"", shellXaml);
-        Assert.Contains("PaneDisplayMode=\"LeftCompact\"", shellXaml);
+        Assert.Contains("PaneDisplayMode=\"Left\"", shellXaml);
+        Assert.DoesNotContain("PaneDisplayMode=\"LeftCompact\"", shellXaml);
         Assert.DoesNotContain("PaneTitleText", string.Concat(shellXaml, shellCode));
         Assert.DoesNotContain("PaneSubtitleText", string.Concat(shellXaml, shellCode));
         Assert.DoesNotContain("MainWindowSubtitle", resourceKeys);
