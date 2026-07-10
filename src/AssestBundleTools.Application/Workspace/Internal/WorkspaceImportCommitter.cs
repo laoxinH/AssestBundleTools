@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Bundles;
 using AssestBundleTools.Application.Common.Messages;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
@@ -108,21 +109,14 @@ internal sealed class WorkspaceImportCommitter
                 _bundleArtifactSessionInvalidator);
         }
 
-        var decryptor = plan.DecryptorResolution.Decryptor;
-        if (plan.DecryptorResolution.ShouldPersistResolvedDecryptorId &&
-            indexedBundleCount + reusedBundleCount > 0 &&
-            !string.Equals(plan.Metadata.AssetBundleDecryptorId, decryptor.Descriptor.Id, StringComparison.OrdinalIgnoreCase))
-        {
-            plan.MetadataStore.Save(plan.Metadata with
-            {
-                AssetBundleDecryptorId = decryptor.Descriptor.Id
-            });
-        }
+        var resolvedDecryptorId = plan.DecryptorResolution.UsedAutoDetection
+            ? AssetBundleDecryptorIds.BuiltInAutoDetect
+            : plan.DecryptorResolution.Decryptor.Descriptor.Id;
 
         return new WorkspaceImportProcessingResultDto(
             WorkspaceKey: plan.Metadata.WorkspaceKey,
             WorkspaceDisplayName: plan.Metadata.DisplayName,
-            ResolvedDecryptorId: decryptor.Descriptor.Id,
+            ResolvedDecryptorId: resolvedDecryptorId,
             UsedAutoDetection: plan.DecryptorResolution.UsedAutoDetection,
             AutoDetectionDiagnostic: plan.DecryptorResolution.AutoDetectionDiagnostic,
             RegisteredSourceCount: plan.ImportedSources.Count,

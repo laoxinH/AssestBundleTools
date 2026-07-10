@@ -24,6 +24,7 @@ internal sealed class WorkspaceImportBundleWorker
     public async Task<WorkspaceImportBundleWorkResult> ExecuteAsync(
         WorkspaceImportProcessingPlan plan,
         DiscoveredWorkspaceImportFileDto discoveredFile,
+        IAssetBundleDecryptor decryptor,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -37,7 +38,8 @@ internal sealed class WorkspaceImportBundleWorker
             bundleCacheKey,
             sourceFingerprint,
             existingCacheEntry,
-            plan);
+            plan,
+            decryptor);
         if (cacheDecision.CanReuse)
         {
             return new WorkspaceImportBundleWorkResult(
@@ -51,7 +53,6 @@ internal sealed class WorkspaceImportBundleWorker
                 IssueDiagnostic: null);
         }
 
-        var decryptor = plan.DecryptorResolution.Decryptor;
         var artifactResult = await WorkspaceBundleArtifactResolver.ResolveAsync(
             plan.BundleArtifactStore,
             decryptor,
@@ -145,7 +146,8 @@ internal sealed class WorkspaceImportBundleWorker
         string bundleCacheKey,
         WorkspaceFileFingerprintDto sourceFingerprint,
         BundleIndexCacheEntryDto? existingCacheEntry,
-        WorkspaceImportProcessingPlan plan)
+        WorkspaceImportProcessingPlan plan,
+        IAssetBundleDecryptor decryptor)
     {
         if (existingCacheEntry is null)
         {
@@ -162,7 +164,7 @@ internal sealed class WorkspaceImportBundleWorker
         var reuseDecision = BundleIndexCacheReusePolicy.Evaluate(
             existingCacheEntry,
             sourceFingerprint,
-            plan.DecryptorResolution.Decryptor.Descriptor,
+            decryptor.Descriptor,
             plan.CurrentToolVersion,
             _assetBundleReader);
         return new CacheDecision(

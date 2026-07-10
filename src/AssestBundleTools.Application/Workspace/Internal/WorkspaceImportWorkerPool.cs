@@ -15,8 +15,8 @@ internal sealed class WorkspaceImportWorkerPool
         WorkspaceImportProcessingPlan plan,
         CancellationToken cancellationToken)
     {
-        var candidateFiles = plan.DecryptorResolution.CandidateFiles;
-        if (candidateFiles.Count == 0)
+        var bundleCandidates = plan.DecryptorResolution.BundleCandidates;
+        if (bundleCandidates.Count == 0)
         {
             plan.Command.Progress?.Report(new WorkspaceImportProgressDto(
                 WorkspaceImportProgressStage.ProcessingBundles,
@@ -29,27 +29,31 @@ internal sealed class WorkspaceImportWorkerPool
         plan.Command.Progress?.Report(new WorkspaceImportProgressDto(
             WorkspaceImportProgressStage.ProcessingBundles,
             CompletedBundleCount: 0,
-            TotalBundleCount: candidateFiles.Count,
+            TotalBundleCount: bundleCandidates.Count,
             CurrentBundleLogicalPath: null));
 
         if (plan.ExecutionOptions.BundleWorkerCount <= 1)
         {
-            return await ExecuteSerialAsync(plan, candidateFiles, cancellationToken);
+            return await ExecuteSerialAsync(plan, bundleCandidates, cancellationToken);
         }
 
-        return await ExecuteParallelAsync(plan, candidateFiles, cancellationToken);
+        return await ExecuteParallelAsync(plan, bundleCandidates, cancellationToken);
     }
 
     private async Task<IReadOnlyList<WorkspaceImportBundleWorkResult>> ExecuteSerialAsync(
         WorkspaceImportProcessingPlan plan,
-        IReadOnlyList<DiscoveredWorkspaceImportFileDto> candidateFiles,
+        IReadOnlyList<WorkspaceImportBundleCandidate> bundleCandidates,
         CancellationToken cancellationToken)
     {
-        var results = new List<WorkspaceImportBundleWorkResult>(candidateFiles.Count);
-        foreach (var candidateFile in candidateFiles)
+        var results = new List<WorkspaceImportBundleWorkResult>(bundleCandidates.Count);
+        foreach (var candidate in bundleCandidates)
         {
-            results.Add(await _workspaceImportBundleWorker.ExecuteAsync(plan, candidateFile, cancellationToken));
-            ReportBundleCompleted(plan, results.Count, candidateFiles.Count, candidateFile);
+            results.Add(await _workspaceImportBundleWorker.ExecuteAsync(
+                plan,
+                candidate.File,
+                candidate.Decryptor,
+                cancellationToken));
+            ReportBundleCompleted(plan, results.Count, bundleCandidates.Count, candidate.File);
         }
 
         return results;
@@ -57,16 +61,16 @@ internal sealed class WorkspaceImportWorkerPool
 
     private async Task<IReadOnlyList<WorkspaceImportBundleWorkResult>> ExecuteParallelAsync(
         WorkspaceImportProcessingPlan plan,
-        IReadOnlyList<DiscoveredWorkspaceImportFileDto> candidateFiles,
+        IReadOnlyList<WorkspaceImportBundleCandidate> bundleCandidates,
         CancellationToken cancellationToken)
     {
-        var workerCount = Math.Min(plan.ExecutionOptions.BundleWorkerCount, candidateFiles.Count);
-        var results = new WorkspaceImportBundleWorkResult?[candidateFiles.Count];
+        var workerCount = Math.Min(plan.ExecutionOptions.BundleWorkerCount, bundleCandidates.Count);
+        var results = new WorkspaceImportBundleWorkResult?[bundleCandidates.Count];
         var sharedIndex = new WorkerIndexBox { NextIndex = -1 };
         var progressState = new WorkerProgressBox();
         var tasks = Enumerable.Range(0, workerCount)
             .Select(_ => Task.Run(
-                () => ExecuteWorkerLoopAsync(plan, candidateFiles, results, sharedIndex, progressState, cancellationToken),
+                () => ExecuteWorkerLoopAsync(plan, bundleCandidates, results, sharedIndex, progressState, cancellationToken),
                 cancellationToken))
             .ToArray();
         await Task.WhenAll(tasks);
@@ -80,7 +84,7 @@ internal sealed class WorkspaceImportWorkerPool
 
     private async Task ExecuteWorkerLoopAsync(
         WorkspaceImportProcessingPlan plan,
-        IReadOnlyList<DiscoveredWorkspaceImportFileDto> candidateFiles,
+        IReadOnlyList<WorkspaceImportBundleCandidate> bundleCandidates,
         WorkspaceImportBundleWorkResult?[] results,
         WorkerIndexBox nextIndexBox,
         WorkerProgressBox progressState,
@@ -91,17 +95,19 @@ internal sealed class WorkspaceImportWorkerPool
             cancellationToken.ThrowIfCancellationRequested();
 
             var candidateIndex = Interlocked.Increment(ref nextIndexBox.NextIndex);
-            if (candidateIndex >= candidateFiles.Count)
+            if (candidateIndex >= bundleCandidates.Count)
             {
                 return;
             }
 
+            var candidate = bundleCandidates[candidateIndex];
             results[candidateIndex] = await _workspaceImportBundleWorker.ExecuteAsync(
                 plan,
-                candidateFiles[candidateIndex],
+                candidate.File,
+                candidate.Decryptor,
                 cancellationToken);
             var completedCount = Interlocked.Increment(ref progressState.CompletedCount);
-            ReportBundleCompleted(plan, completedCount, candidateFiles.Count, candidateFiles[candidateIndex]);
+            ReportBundleCompleted(plan, completedCount, bundleCandidates.Count, candidate.File);
         }
     }
 

@@ -4,7 +4,7 @@
 
 本文档用于收束 `docs/design` 下的文档状态，明确哪些文档是当前规范入口，哪些是专题记录，哪些仅作为历史兼容入口保留。
 
-当前状态更新时间：2026-07-11。当前开发重心已经进入 M10 真实导出 / 保存重建与文本编辑器收口并行阶段：后台任务、资源处理器并发、AB 写包并发和输出 manifest 契约已固化，首版对象级 AssetsTools 写包已经接入；来源 bundle codec 的识别、解密和导出回写协议已落地，并提供内置 Arknights LZ4AK CLI。文本预览 / 编辑已开始向统一 text surface 收束，正式 VS Code 风格编辑器目标采用 WebView2 + Monaco，下一步继续补保存检查点、Committed 状态、取消 / 部分成功恢复语义、更多资源类型和 Monaco 原型。
+当前状态更新时间：2026-07-11。当前开发重心已经进入 M10 真实导出 / 保存重建与文本编辑器收口并行阶段：后台任务、资源处理器并发、AB 写包并发和输出 manifest 契约已固化，首版对象级 AssetsTools 写包已经接入；来源 bundle codec 的逐 AB 识别、解密和导出回写协议已落地，并提供内置 Arknights LZ4AK CLI。文本预览 / 编辑已开始向统一 text surface 收束，正式 VS Code 风格编辑器目标采用 WebView2 + Monaco，下一步继续补保存检查点、Committed 状态、取消 / 部分成功恢复语义、更多资源类型和 Monaco 原型。
 
 ## 2. 当前规范入口
 

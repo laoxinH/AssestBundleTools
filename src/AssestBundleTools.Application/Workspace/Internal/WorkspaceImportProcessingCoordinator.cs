@@ -109,8 +109,8 @@ internal sealed class WorkspaceImportProcessingCoordinator
 
         command.Progress?.Report(new WorkspaceImportProgressDto(
             WorkspaceImportProgressStage.Committing,
-            CompletedBundleCount: planResult.Value.DecryptorResolution.CandidateFiles.Count,
-            TotalBundleCount: planResult.Value.DecryptorResolution.CandidateFiles.Count,
+            CompletedBundleCount: planResult.Value.DecryptorResolution.BundleCandidates.Count,
+            TotalBundleCount: planResult.Value.DecryptorResolution.BundleCandidates.Count,
             CurrentBundleLogicalPath: null));
 
         var commitStopwatch = Stopwatch.StartNew();

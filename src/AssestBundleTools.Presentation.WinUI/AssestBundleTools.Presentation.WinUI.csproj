@@ -119,19 +119,29 @@
   </Target>
 
   <Target Name="CopyBuiltInAssetBundleCodecs" AfterTargets="Build">
+    <PropertyGroup>
+      <BuiltInAssetBundleCodecRuntimeIdentifier Condition="'$(Platform)' == 'x86'">win-x86</BuiltInAssetBundleCodecRuntimeIdentifier>
+      <BuiltInAssetBundleCodecRuntimeIdentifier Condition="'$(Platform)' == 'ARM64'">win-arm64</BuiltInAssetBundleCodecRuntimeIdentifier>
+      <BuiltInAssetBundleCodecRuntimeIdentifier Condition="'$(BuiltInAssetBundleCodecRuntimeIdentifier)' == ''">win-x64</BuiltInAssetBundleCodecRuntimeIdentifier>
+      <BuiltInAssetBundleCodecPublishDirectory>$([System.IO.Path]::GetFullPath('$(OutDir)codecs\arknights\'))</BuiltInAssetBundleCodecPublishDirectory>
+    </PropertyGroup>
+    <ItemGroup>
+      <LegacyBuiltInAssetBundleCodec Include="$(OutDir)AssestBundleTools.BundleCodec.Arknights.*" />
+      <LegacyBuiltInAssetBundleCodec Include="$(OutDir)K4os.Compression.LZ4.dll" />
+    </ItemGroup>
+    <Delete Files="@(LegacyBuiltInAssetBundleCodec)" />
+    <RemoveDir Directories="$(BuiltInAssetBundleCodecPublishDirectory)" />
     <MSBuild
       Projects="..\AssestBundleTools.BundleCodec.Arknights\AssestBundleTools.BundleCodec.Arknights.csproj"
-      Targets="Build"
-      Properties="Configuration=$(Configuration);Platform=$(Platform)" />
-    <ItemGroup>
-      <BuiltInAssetBundleCodec Include="..\AssestBundleTools.BundleCodec.Arknights\bin\$(Configuration)\net8.0\AssestBundleTools.BundleCodec.Arknights.*" />
-      <BuiltInAssetBundleCodec Include="..\AssestBundleTools.BundleCodec.Arknights\bin\$(Platform)\$(Configuration)\net8.0\AssestBundleTools.BundleCodec.Arknights.*" />
-      <BuiltInAssetBundleCodec Include="..\AssestBundleTools.BundleCodec.Arknights\bin\$(Configuration)\net8.0\K4os.Compression.LZ4.dll" />
-      <BuiltInAssetBundleCodec Include="..\AssestBundleTools.BundleCodec.Arknights\bin\$(Platform)\$(Configuration)\net8.0\K4os.Compression.LZ4.dll" />
-    </ItemGroup>
-    <Copy
-      SourceFiles="@(BuiltInAssetBundleCodec)"
-      DestinationFiles="@(BuiltInAssetBundleCodec->'$(OutDir)%(Filename)%(Extension)')"
-      SkipUnchangedFiles="true" />
+      Targets="Restore"
+      Condition="!Exists('..\AssestBundleTools.BundleCodec.Arknights\obj\project.assets.json')"
+      Properties="Configuration=$(Configuration);RuntimeIdentifier=$(BuiltInAssetBundleCodecRuntimeIdentifier);SelfContained=true;PublishSingleFile=true" />
+    <MSBuild
+      Projects="..\AssestBundleTools.BundleCodec.Arknights\AssestBundleTools.BundleCodec.Arknights.csproj"
+      Targets="Publish"
+      Properties="Configuration=$(Configuration);RuntimeIdentifier=$(BuiltInAssetBundleCodecRuntimeIdentifier);SelfContained=true;PublishSingleFile=true;DebugType=None;PublishDir=$(BuiltInAssetBundleCodecPublishDirectory)" />
+    <Error
+      Condition="!Exists('$(BuiltInAssetBundleCodecPublishDirectory)AssestBundleTools.BundleCodec.Arknights.exe')"
+      Text="Built-in Arknights bundle codec publish output is missing." />
   </Target>
 </Project>

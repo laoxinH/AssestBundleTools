@@ -11,7 +11,10 @@ internal static class BuiltInArknightsLz4AkDecryptorFactory
 
     public static IAssetBundleDecryptor CreateDecryptor()
     {
-        var applicationDirectory = AppContext.BaseDirectory;
+        var applicationDirectory = Path.Combine(
+            AppContext.BaseDirectory,
+            "codecs",
+            "arknights");
         return new ExternalProcessAssetBundleDecryptor(
             CreateManifest(),
             applicationDirectory,

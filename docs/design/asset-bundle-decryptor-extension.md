@@ -135,7 +135,7 @@ Infrastructure 负责所有具体实现细节，例如：
 
 Presentation 只负责：
 
-- 在工作区级别让用户查看或选择可用解密器
+- 在工作区级别让用户选择“自动识别”策略或显式固定解密器
 - 在新建工作区向导中选择默认解密器，并在打开已有工作区时只读展示当前配置
 - 展示解密失败、识别失败和导入结果
 - 在“插件管理”页承载解密器目录管理、发现结果与诊断信息
@@ -299,12 +299,20 @@ Presentation 不负责：
 真实导入链路当前按下面的顺序演进：
 
 1. 工作区入口记录导入来源
-2. 根据用户配置或自动识别选择解密器
+2. 根据工作区策略为每个 AB 独立选择实际解密器
 3. 解密到 `staging/decrypt/...`
 4. 将可复用结果晋升或写入 `cache/bundles/...` 标准化资源包缓存
 5. 真实 `IAssetBundleReader` 读取标准化资源包 artifact
 6. 把解析索引写入 `cache/bundle-index/...`
 7. 在工作台真正请求时按需生成预览，并把预览派生内容写入 `cache/previews/...`
+
+自动识别与持久化规则：
+
+- `builtin.auto-detect` 是持久化的工作区策略，不是一次性迁移状态；不得在识别后把工作区元数据改成某个具体 codec 或 `PassThrough`。
+- 每个待导入 AB 都独立执行所有支持自动识别的 codec Probe，并按该文件上的 `isMatch + confidence + 稳定顺序` 选择实际 codec。
+- 某个 AB 的所有 codec 都成功 Probe 且不匹配时，该文件使用 `PassThrough`；其他 AB 的识别结果不受影响。
+- 某个 AB 存在 Probe 执行失败且没有其他匹配时，本轮仍可对该文件尝试 `PassThrough`，但诊断必须保留失败证据，后续刷新仍会重新 Probe。
+- 实际 codec 的 id / version 只写入该 AB 的标准化 artifact 与 bundle index，继续参与缓存失效、预览重建和导出回写。
 
 缓存失效时除了原始 AB 指纹外，还应纳入：
 
@@ -374,7 +382,7 @@ Presentation 不负责：
 
 本轮已完成：
 
-- 内置只读 `builtin.arknights-lz4ak` CLI，提供真实 UnityFS Probe、LZ4AK 解密和标准 AB 逆向回写。
+- 内置只读 `builtin.arknights-lz4ak` CLI，提供真实 UnityFS Probe、LZ4AK 解密和标准 AB 逆向回写；应用构建时按目标平台发布为自包含单文件并放入独立 `codecs/arknights` 目录，不能与 WinUI 自包含运行时共用 framework-dependent apphost。
 - Probe 以 UnityFS header、blocks-info 和数据 block 的压缩类型 / 实际解码结果为证据，不依赖文件名。
 - 外部进程 manifest 增加可选 `encryptArguments`，Application 增加窄 `IAssetBundleEncryptor` 端口。
 - SaveRebuild 在标准 writer 成功后按 artifact 的来源 decryptor 自动执行可选回写，并把 codec 身份写入导出结果与 manifest。

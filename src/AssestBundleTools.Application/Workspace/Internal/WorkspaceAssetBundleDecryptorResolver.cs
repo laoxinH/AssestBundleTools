@@ -72,10 +72,12 @@ internal static class WorkspaceAssetBundleDecryptorResolver
                 new WorkspaceImportDecryptorResolutionResult(
                     Decryptor: explicitDecryptorResult.Value,
                     UsedAutoDetection: false,
-                    ShouldPersistResolvedDecryptorId: false,
                     AutoDetectionDiagnostic: null,
-                    SelectedProbeSummary: null,
-                    ProbeTelemetry: WorkspaceImportProbeTelemetry.None));
+                    ProbeTelemetry: WorkspaceImportProbeTelemetry.None,
+                    ResolvedDecryptorsBySourcePath: discoveredFiles.ToDictionary(
+                        static file => file.SourcePath,
+                        _ => explicitDecryptorResult.Value,
+                        StringComparer.OrdinalIgnoreCase)));
         }
 
         var fallbackDecryptor = FindFallbackDecryptor(assetBundleDecryptorRegistry);
@@ -95,15 +97,17 @@ internal static class WorkspaceAssetBundleDecryptorResolver
                 new WorkspaceImportDecryptorResolutionResult(
                     Decryptor: fallbackDecryptor,
                     UsedAutoDetection: true,
-                    ShouldPersistResolvedDecryptorId: true,
                     AutoDetectionDiagnostic: CreateAutoDetectionDiagnostic(
                         discoveredFiles.Count,
-                        fallbackDecryptor.Descriptor.Id,
-                        usedFallbackDecryptor: true,
+                        AssetBundleDecryptorIds.BuiltInAutoDetect,
+                        usedFallbackDecryptor: discoveredFiles.Count > 0,
                         probeSummaries: Array.Empty<WorkspaceImportDecryptorProbeSummary>(),
-                        selectedProbeDecryptorId: null),
-                    SelectedProbeSummary: null,
-                    ProbeTelemetry: WorkspaceImportProbeTelemetry.None));
+                        selectedProbeDecryptorIds: Array.Empty<string>()),
+                    ProbeTelemetry: WorkspaceImportProbeTelemetry.None,
+                    ResolvedDecryptorsBySourcePath: discoveredFiles.ToDictionary(
+                        static file => file.SourcePath,
+                        _ => fallbackDecryptor,
+                        StringComparer.OrdinalIgnoreCase)));
         }
 
         var probeSummaries = new List<WorkspaceImportDecryptorProbeSummary>(probeCandidates.Length);
@@ -117,31 +121,52 @@ internal static class WorkspaceAssetBundleDecryptorResolver
         }
         probeStopwatch.Stop();
 
-        var bestMatchedCandidate = probeSummaries
-            .Where(static summary => summary.MatchedFileCount > 0)
-            .OrderByDescending(static summary => summary.MatchedFileCount)
-            .ThenByDescending(static summary => summary.TotalConfidence)
-            .ThenByDescending(static summary => summary.SuccessfulProbeCount)
-            .ThenBy(summary => summary.Decryptor.Descriptor.DisplayName, StringComparer.OrdinalIgnoreCase)
-            .FirstOrDefault();
-        var selectedDecryptor = bestMatchedCandidate?.Decryptor ?? fallbackDecryptor;
+        var resolvedDecryptorsBySourcePath = discoveredFiles.ToDictionary(
+            static file => file.SourcePath,
+            file => ResolveFileDecryptor(file.SourcePath, probeSummaries) ?? fallbackDecryptor,
+            StringComparer.OrdinalIgnoreCase);
+        var selectedProbeDecryptorIds = resolvedDecryptorsBySourcePath.Values
+            .Where(static decryptor => !decryptor.Descriptor.IsFallback)
+            .Select(static decryptor => decryptor.Descriptor.Id)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
         return Result<WorkspaceImportDecryptorResolutionResult>.Success(
             new WorkspaceImportDecryptorResolutionResult(
-                Decryptor: selectedDecryptor,
+                Decryptor: fallbackDecryptor,
                 UsedAutoDetection: true,
-                ShouldPersistResolvedDecryptorId: true,
                 AutoDetectionDiagnostic: CreateAutoDetectionDiagnostic(
                     discoveredFiles.Count,
-                    selectedDecryptor.Descriptor.Id,
-                    usedFallbackDecryptor: bestMatchedCandidate is null,
+                    AssetBundleDecryptorIds.BuiltInAutoDetect,
+                    usedFallbackDecryptor: resolvedDecryptorsBySourcePath.Values.Any(static decryptor =>
+                        decryptor.Descriptor.IsFallback),
                     probeSummaries,
-                    bestMatchedCandidate?.Decryptor.Descriptor.Id),
-                SelectedProbeSummary: bestMatchedCandidate,
+                    selectedProbeDecryptorIds),
                 ProbeTelemetry: new WorkspaceImportProbeTelemetry(
                     DurationMs: probeStopwatch.ElapsedMilliseconds,
                     DecryptorCount: probeSummaries.Count,
-                    FileEvaluationCount: probeSummaries.Sum(static summary => summary.FileResults.Count))));
+                    FileEvaluationCount: probeSummaries.Sum(static summary => summary.FileResults.Count)),
+                ResolvedDecryptorsBySourcePath: resolvedDecryptorsBySourcePath));
+    }
+
+    private static IAssetBundleDecryptor? ResolveFileDecryptor(
+        string sourcePath,
+        IReadOnlyList<WorkspaceImportDecryptorProbeSummary> probeSummaries)
+    {
+        return probeSummaries
+            .Select(summary => new
+            {
+                summary.Decryptor,
+                FileResult = summary.FileResults.FirstOrDefault(result =>
+                    string.Equals(result.SourcePath, sourcePath, StringComparison.OrdinalIgnoreCase))
+            })
+            .Where(static candidate =>
+                candidate.FileResult is { IsSuccessful: true, IsMatch: true })
+            .OrderByDescending(static candidate => candidate.FileResult!.Confidence)
+            .ThenBy(static candidate => candidate.Decryptor.Descriptor.DisplayName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static candidate => candidate.Decryptor.Descriptor.Id, StringComparer.OrdinalIgnoreCase)
+            .Select(static candidate => candidate.Decryptor)
+            .FirstOrDefault();
     }
 
     internal static async Task<WorkspaceImportDecryptorProbeSummary> ProbeDecryptorAsync(
@@ -280,7 +305,7 @@ internal static class WorkspaceAssetBundleDecryptorResolver
         string selectedDecryptorId,
         bool usedFallbackDecryptor,
         IReadOnlyList<WorkspaceImportDecryptorProbeSummary> probeSummaries,
-        string? selectedProbeDecryptorId)
+        IReadOnlyCollection<string> selectedProbeDecryptorIds)
     {
         // 自动识别诊断只表达“为什么最终选择了这个解密器”，
         // 不携带 UI 文本，方便后续在日志页或独立诊断面板中复用。
@@ -292,10 +317,9 @@ internal static class WorkspaceAssetBundleDecryptorResolver
                 MatchedFileCount: summary.MatchedFileCount,
                 SuccessfulProbeCount: summary.SuccessfulProbeCount,
                 TotalConfidence: summary.TotalConfidence,
-                WasSelected: string.Equals(
+                WasSelected: selectedProbeDecryptorIds.Contains(
                     summary.Decryptor.Descriptor.Id,
-                    selectedProbeDecryptorId,
-                    StringComparison.OrdinalIgnoreCase),
+                    StringComparer.OrdinalIgnoreCase),
                 SampleMessages: summary.SampleMessages,
                 DetectedFormatIds: summary.FileResults
                     .Select(static result => result.FormatId)
@@ -322,10 +346,15 @@ internal static class WorkspaceAssetBundleDecryptorResolver
 internal sealed record WorkspaceImportDecryptorResolutionResult(
     IAssetBundleDecryptor Decryptor,
     bool UsedAutoDetection,
-    bool ShouldPersistResolvedDecryptorId,
     WorkspaceImportAutoDetectionDiagnosticDto? AutoDetectionDiagnostic,
-    WorkspaceImportDecryptorProbeSummary? SelectedProbeSummary,
-    WorkspaceImportProbeTelemetry ProbeTelemetry);
+    WorkspaceImportProbeTelemetry ProbeTelemetry,
+    IReadOnlyDictionary<string, IAssetBundleDecryptor> ResolvedDecryptorsBySourcePath)
+{
+    public IAssetBundleDecryptor ResolveForSourcePath(string sourcePath) =>
+        ResolvedDecryptorsBySourcePath.TryGetValue(sourcePath, out var decryptor)
+            ? decryptor
+            : Decryptor;
+}
 
 internal sealed record WorkspaceImportDecryptorProbeSummary(
     IAssetBundleDecryptor Decryptor,

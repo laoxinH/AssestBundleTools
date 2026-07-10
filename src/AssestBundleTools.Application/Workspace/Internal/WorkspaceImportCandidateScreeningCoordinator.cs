@@ -14,7 +14,7 @@ namespace AssestBundleTools.Application.Workspace.Internal;
 /// <remarks>
 /// 这里承接自动识别里的前两层：
 /// 1. 导入源识别：先用轻量直检尽早命中普通 AB，或剔除明显无效输入；
-/// 2. 解密器识别：对无法直判的来源继续执行工作区级解密器自动识别或显式解密器探测。
+/// 2. 解密器识别：自动策略下为每个候选 AB 独立选择实际解密器；显式策略继续使用固定解密器。
 ///
 /// Reader 路径识别和缓存命中识别仍留在后续处理阶段，
 /// 这样职责边界会更清晰，也便于后续继续扩展新的识别策略。
@@ -67,6 +67,34 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
             }
         }
 
+        if (IsAutoDetectionMode(configuredDecryptorId))
+        {
+            var autoDetectionFiles = candidateFiles.Values
+                .Concat(unresolvedFiles)
+                .OrderBy(static file => file.LogicalPath, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(static file => file.SourcePath, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+            var autoResolutionResult = await WorkspaceAssetBundleDecryptorResolver.ResolveForWorkspaceImportAsync(
+                _assetBundleDecryptorRegistry,
+                AssetBundleDecryptorIds.BuiltInAutoDetect,
+                autoDetectionFiles,
+                cancellationToken);
+            if (!autoResolutionResult.IsSuccess || autoResolutionResult.Value is null)
+            {
+                return Result<WorkspaceImportCandidateScreeningResult>.Failure(autoResolutionResult.Errors);
+            }
+
+            var autoResolution = autoResolutionResult.Value;
+            return Result<WorkspaceImportCandidateScreeningResult>.Success(
+                new WorkspaceImportCandidateScreeningResult(
+                    Decryptor: autoResolution.Decryptor,
+                    UsedAutoDetection: true,
+                    AutoDetectionDiagnostic: autoResolution.AutoDetectionDiagnostic,
+                    BundleCandidates: BuildBundleCandidates(autoDetectionFiles, autoResolution),
+                    ScreenedOutDiagnostics: issueDiagnostics,
+                    ProbeTelemetry: autoResolution.ProbeTelemetry));
+        }
+
         var decryptorResolutionResult = await ResolveDecryptorAsync(
             configuredDecryptorId,
             unresolvedFiles,
@@ -88,12 +116,13 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
             new WorkspaceImportCandidateScreeningResult(
                 Decryptor: decryptorResolution.Decryptor,
                 UsedAutoDetection: decryptorResolution.UsedAutoDetection,
-                ShouldPersistResolvedDecryptorId: decryptorResolution.ShouldPersistResolvedDecryptorId,
                 AutoDetectionDiagnostic: decryptorResolution.AutoDetectionDiagnostic,
-                CandidateFiles: candidateFiles.Values
+                BundleCandidates: BuildBundleCandidates(
+                    candidateFiles.Values
                     .OrderBy(file => file.LogicalPath, StringComparer.OrdinalIgnoreCase)
                     .ThenBy(file => file.SourcePath, StringComparer.OrdinalIgnoreCase)
                     .ToArray(),
+                    decryptorResolution),
                 ScreenedOutDiagnostics: issueDiagnostics,
                 ProbeTelemetry: probeTelemetry));
     }
@@ -119,10 +148,12 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
                 new WorkspaceImportDecryptorResolutionResult(
                     Decryptor: explicitDecryptorResult.Value,
                     UsedAutoDetection: false,
-                    ShouldPersistResolvedDecryptorId: false,
                     AutoDetectionDiagnostic: null,
-                    SelectedProbeSummary: null,
-                    ProbeTelemetry: WorkspaceImportProbeTelemetry.None));
+                    ProbeTelemetry: WorkspaceImportProbeTelemetry.None,
+                    ResolvedDecryptorsBySourcePath: unresolvedFiles.ToDictionary(
+                        static file => file.SourcePath,
+                        _ => explicitDecryptorResult.Value,
+                        StringComparer.OrdinalIgnoreCase)));
         }
 
         return await WorkspaceAssetBundleDecryptorResolver.ResolveForWorkspaceImportAsync(
@@ -133,7 +164,7 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
     }
 
     /// <summary>
-    /// 对“直检未能判断”的来源继续执行工作区级解密器识别。
+    /// 对“直检未能判断”的来源继续执行显式解密器识别。
     /// 规则保持保守：
     /// 1. 自动识别或回退解密器未命中时，直接筛除；
     /// 2. 显式解密器且支持 Probe 时，以 Probe 结果为准；
@@ -179,24 +210,16 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
             return probeTelemetry;
         }
 
-        var probeSummary = decryptorResolution.SelectedProbeSummary;
-        if (probeSummary is null ||
-            !string.Equals(
-                probeSummary.Decryptor.Descriptor.Id,
-                decryptor.Descriptor.Id,
-                StringComparison.OrdinalIgnoreCase))
-        {
-            var probeStopwatch = Stopwatch.StartNew();
-            probeSummary = await WorkspaceAssetBundleDecryptorResolver.ProbeDecryptorAsync(
-                decryptor,
-                unresolvedFiles,
-                cancellationToken);
-            probeStopwatch.Stop();
-            probeTelemetry = probeTelemetry.Add(
-                probeStopwatch.ElapsedMilliseconds,
-                decryptorCount: 1,
-                fileEvaluationCount: probeSummary.FileResults.Count);
-        }
+        var probeStopwatch = Stopwatch.StartNew();
+        var probeSummary = await WorkspaceAssetBundleDecryptorResolver.ProbeDecryptorAsync(
+            decryptor,
+            unresolvedFiles,
+            cancellationToken);
+        probeStopwatch.Stop();
+        probeTelemetry = probeTelemetry.Add(
+            probeStopwatch.ElapsedMilliseconds,
+            decryptorCount: 1,
+            fileEvaluationCount: probeSummary.FileResults.Count);
 
         var fileResultsByPath = probeSummary.FileResults
             .ToDictionary(fileResult => fileResult.SourcePath, StringComparer.OrdinalIgnoreCase);
@@ -263,13 +286,28 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
             AssetBundleDecryptorIds.BuiltInAutoDetect,
             StringComparison.OrdinalIgnoreCase);
     }
+
+    private static bool IsAutoDetectionMode(string? decryptorId) =>
+        string.IsNullOrWhiteSpace(decryptorId) || IsBuiltInAutoDetect(decryptorId.Trim());
+
+    private static IReadOnlyList<WorkspaceImportBundleCandidate> BuildBundleCandidates(
+        IReadOnlyList<DiscoveredWorkspaceImportFileDto> files,
+        WorkspaceImportDecryptorResolutionResult resolution) =>
+        files
+            .Select(file => new WorkspaceImportBundleCandidate(
+                File: file,
+                Decryptor: resolution.ResolveForSourcePath(file.SourcePath)))
+            .ToArray();
 }
 
 internal sealed record WorkspaceImportCandidateScreeningResult(
     IAssetBundleDecryptor Decryptor,
     bool UsedAutoDetection,
-    bool ShouldPersistResolvedDecryptorId,
     WorkspaceImportAutoDetectionDiagnosticDto? AutoDetectionDiagnostic,
-    IReadOnlyList<DiscoveredWorkspaceImportFileDto> CandidateFiles,
+    IReadOnlyList<WorkspaceImportBundleCandidate> BundleCandidates,
     IReadOnlyList<WorkspaceImportIssueDiagnosticDto> ScreenedOutDiagnostics,
     WorkspaceImportProbeTelemetry ProbeTelemetry);
+
+internal sealed record WorkspaceImportBundleCandidate(
+    DiscoveredWorkspaceImportFileDto File,
+    IAssetBundleDecryptor Decryptor);
