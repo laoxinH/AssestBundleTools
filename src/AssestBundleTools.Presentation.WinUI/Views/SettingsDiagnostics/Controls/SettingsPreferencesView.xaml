@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="AssestBundleTools.Presentation.WinUI.Views.SettingsDiagnostics.Controls.SettingsPreferencesView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    HorizontalAlignment="Stretch"
+    VerticalAlignment="Stretch"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <ResourceDictionary Source="ms-appx:///Views/SettingsDiagnostics/SettingsDiagnosticsResources.xaml" />
+    </UserControl.Resources>
+
+    <ScrollViewer
+        x:Name="PreferenceSettingsScrollViewer"
+        MinHeight="0"
+        HorizontalScrollBarVisibility="Disabled"
+        HorizontalScrollMode="Disabled"
+        VerticalScrollBarVisibility="Auto"
+        VerticalScrollMode="Enabled">
+        <Border
+            Width="{Binding ViewportWidth, ElementName=PreferenceSettingsScrollViewer}"
+            Style="{StaticResource SettingsDiagnosticsContentColumnStyle}">
+            <StackPanel Spacing="26">
+                <StackPanel Spacing="8">
+                    <StackPanel Spacing="4">
+                        <TextBlock
+                            x:Name="StartupBehaviorTitleText"
+                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                        <TextBlock
+                            x:Name="StartupBehaviorHintText"
+                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                    </StackPanel>
+
+                    <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
+                        <Grid ColumnSpacing="22">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="190" />
+                            </Grid.ColumnDefinitions>
+
+                            <FontIcon
+                                Glyph="&#xE777;"
+                                Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+
+                            <StackPanel
+                                Grid.Column="1"
+                                MinWidth="0"
+                                Spacing="3">
+                                <TextBlock
+                                    x:Name="RestoreLastWorkspaceOnStartupLabelText"
+                                    Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                <TextBlock
+                                    x:Name="RestoreLastWorkspaceOnStartupDescriptionText"
+                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
+                            </StackPanel>
+
+                            <ToggleSwitch
+                                x:Name="RestoreLastWorkspaceOnStartupToggleSwitch"
+                                Grid.Column="2"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                IsOn="{x:Bind ViewModel.RestoreLastWorkspaceOnStartup, Mode=TwoWay}" />
+                        </Grid>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
+                        <Grid ColumnSpacing="22">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <FontIcon
+                                Glyph="&#xE8A7;"
+                                Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+
+                            <StackPanel
+                                Grid.Column="1"
+                                MinWidth="0"
+                                Spacing="3">
+                                <TextBlock
+                                    x:Name="RecentWorkspaceOpenBehaviorLabelText"
+                                    Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                <TextBlock
+                                    x:Name="RecentWorkspaceOpenBehaviorDescriptionText"
+                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
+                            </StackPanel>
+
+                            <ComboBox
+                                x:Name="RecentWorkspaceOpenBehaviorComboBox"
+                                Grid.Column="2"
+                                Width="246"
+                                VerticalAlignment="Center"
+                                SelectedIndex="{x:Bind ViewModel.RecentWorkspaceOpenBehaviorSelectedIndex, Mode=TwoWay}" />
+                        </Grid>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
+                        <Grid ColumnSpacing="22">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <FontIcon
+                                Glyph="&#xE70F;"
+                                Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+
+                            <StackPanel
+                                Grid.Column="1"
+                                MinWidth="0"
+                                Spacing="3">
+                                <TextBlock
+                                    x:Name="AssetEditorCloseBehaviorLabelText"
+                                    Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                <TextBlock
+                                    x:Name="AssetEditorCloseBehaviorDescriptionText"
+                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
+                            </StackPanel>
+
+                            <ComboBox
+                                x:Name="AssetEditorCloseBehaviorComboBox"
+                                Grid.Column="2"
+                                Width="246"
+                                VerticalAlignment="Center"
+                                SelectedIndex="{x:Bind ViewModel.AssetEditorCloseBehaviorSelectedIndex, Mode=TwoWay}" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Spacing="8">
+                    <StackPanel Spacing="4">
+                        <TextBlock
+                            x:Name="OperationRecordsTitleText"
+                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                        <TextBlock
+                            x:Name="OperationRecordsHintText"
+                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                    </StackPanel>
+
+                    <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
+                        <Grid ColumnSpacing="22">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="360" />
+                            </Grid.ColumnDefinitions>
+
+                            <FontIcon
+                                Glyph="&#xE81C;"
+                                Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+
+                            <StackPanel
+                                Grid.Column="1"
+                                MinWidth="0"
+                                Spacing="3">
+                                <TextBlock
+                                    x:Name="OperationRecordLimitLabelText"
+                                    Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                <TextBlock
+                                    x:Name="OperationRecordLimitDescriptionText"
+                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
+                            </StackPanel>
+
+                            <Grid
+                                Grid.Column="2"
+                                VerticalAlignment="Center"
+                                RowSpacing="6">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Style="{StaticResource SettingsDiagnosticsSettingValueTextStyle}"
+                                    Text="{x:Bind ViewModel.OperationRecordLimitSelectedText, Mode=OneWay}" />
+                                <Slider
+                                    Grid.Row="1"
+                                    IsThumbToolTipEnabled="False"
+                                    Maximum="3"
+                                    Minimum="0"
+                                    StepFrequency="1"
+                                    SnapsTo="StepValues"
+                                    TickFrequency="1"
+                                    Value="{x:Bind ViewModel.OperationRecordLimitSliderValue, Mode=TwoWay}" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </ScrollViewer>
+</UserControl>

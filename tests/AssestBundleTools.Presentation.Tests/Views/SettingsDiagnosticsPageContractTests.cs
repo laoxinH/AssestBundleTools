@@ -20,6 +20,29 @@ public sealed class SettingsDiagnosticsPageContractTests
             "Views",
             "SettingsDiagnostics",
             "SettingsDiagnosticsPage.xaml.cs"));
+        var preferencesXaml = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "SettingsDiagnostics",
+            "Controls",
+            "SettingsPreferencesView.xaml"));
+        var preferencesCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "SettingsDiagnostics",
+            "Controls",
+            "SettingsPreferencesView.xaml.cs"));
+        var pageResources = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "SettingsDiagnostics",
+            "SettingsDiagnosticsResources.xaml"));
         var resourceKeys = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "src",
@@ -38,21 +61,27 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("x:Name=\"PerformanceCacheSettingsPanel\"", pageXaml);
         Assert.Contains("x:Name=\"LogCenterPanel\"", pageXaml);
         Assert.DoesNotContain("x:Name=\"DiagnosticsSettingsPanel\"", pageXaml);
-        Assert.Contains("x:Key=\"SettingsDiagnosticsContentColumnStyle\"", pageXaml);
-        Assert.Contains("x:Key=\"SettingsDiagnosticsSurfaceStyle\"", pageXaml);
-        Assert.Contains("<Setter Property=\"Background\" Value=\"Transparent\" />", pageXaml);
+        Assert.Contains("SettingsDiagnosticsResources.xaml", pageXaml);
+        Assert.Contains("SettingsDiagnosticsResources.xaml", preferencesXaml);
+        Assert.Contains("new SettingsPreferencesView(ViewModel)", pageCode);
+        Assert.Contains("x:Key=\"SettingsDiagnosticsContentColumnStyle\"", pageResources);
+        Assert.Contains("x:Key=\"SettingsDiagnosticsSurfaceStyle\"", pageResources);
+        Assert.Contains("<Setter Property=\"Background\" Value=\"Transparent\" />", pageResources);
         Assert.DoesNotContain("SettingsDiagnosticsPanelShadow", pageXaml);
         Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=WorkspaceSettingsPanel}\"", pageXaml);
-        Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=PreferenceSettingsPanel}\"", pageXaml);
+        Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=PreferenceSettingsScrollViewer}\"", preferencesXaml);
         Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=PerformanceCacheSettingsPanel}\"", pageXaml);
-        Assert.DoesNotContain("MaxWidth=\"900\"", pageXaml);
-        Assert.Contains("x:Key=\"SettingsDiagnosticsSettingRowStyle\"", pageXaml);
-        Assert.Contains("x:Key=\"SettingsDiagnosticsSettingIconStyle\"", pageXaml);
-        Assert.Contains("x:Key=\"SettingsDiagnosticsSettingDescriptionTextStyle\"", pageXaml);
-        Assert.Contains("x:Name=\"RecentWorkspaceOpenBehaviorComboBox\"", pageXaml);
-        Assert.Contains("x:Name=\"AssetEditorCloseBehaviorComboBox\"", pageXaml);
+        Assert.DoesNotContain("MaxWidth=\"900\"", string.Concat(pageXaml, preferencesXaml));
+        Assert.Contains("x:Key=\"SettingsDiagnosticsSettingRowStyle\"", pageResources);
+        Assert.Contains("x:Key=\"SettingsDiagnosticsSettingIconStyle\"", pageResources);
+        Assert.Contains("x:Key=\"SettingsDiagnosticsSettingDescriptionTextStyle\"", pageResources);
+        Assert.Contains("x:Name=\"RecentWorkspaceOpenBehaviorComboBox\"", preferencesXaml);
+        Assert.Contains("x:Name=\"AssetEditorCloseBehaviorComboBox\"", preferencesXaml);
+        Assert.Contains("x:Name=\"RestoreLastWorkspaceOnStartupToggleSwitch\"", preferencesXaml);
+        Assert.Contains("x:Name=\"BundleArtifactCacheAutoPruneToggleSwitch\"", pageXaml);
+        Assert.DoesNotContain("FlowDirection=\"RightToLeft\"", string.Concat(pageXaml, preferencesXaml));
         Assert.Contains("x:Name=\"BundleArtifactCacheMaximumSizeDescriptionText\"", pageXaml);
-        Assert.Contains("OperationRecordLimitSliderValue", pageXaml);
+        Assert.Contains("OperationRecordLimitSliderValue", preferencesXaml);
         Assert.Contains("WorkspaceImportWorkerCountSliderValue", pageXaml);
         Assert.Contains("PreviewWorkerCountSliderValue", pageXaml);
         Assert.Contains("MaximumSizeSliderValue", pageXaml);
@@ -61,6 +90,7 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("<shared:LogPanel", pageXaml);
         Assert.Contains("ShowSettingsSubPage", pageCode);
         Assert.Contains("OnSettingsSubPageNavigationSelectionChanged", pageCode);
+        Assert.Contains("SettingsDiagnosticsRestoreLastWorkspaceToggleHeader", preferencesCode);
         Assert.Contains("SettingsDiagnosticsNavLogs", resourceKeys);
         Assert.Contains("SettingsDiagnosticsRestoreLastWorkspaceRowDescription", resourceKeys);
         Assert.Contains("SettingsDiagnosticsBundleArtifactCacheMaximumSizeRowDescription", resourceKeys);
