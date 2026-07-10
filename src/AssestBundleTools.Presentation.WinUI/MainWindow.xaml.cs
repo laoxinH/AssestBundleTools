@@ -74,6 +74,7 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
             var windowHandle = WindowNative.GetWindowHandle(this);
             var windowId = Win32Interop.GetWindowIdFromWindow(windowHandle);
             _appWindow = AppWindow.GetFromWindowId(windowId);
+            TryApplyWindowIcon();
 
             ExtendsContentIntoTitleBar = true;
             SetTitleBar(AppTitleBar);
@@ -96,6 +97,26 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
         {
             StartupDiagnostics.Log($"Window chrome initialization failed: {ex}");
             Debug.WriteLine($"Window chrome initialization failed: {ex}");
+        }
+    }
+
+    private void TryApplyWindowIcon()
+    {
+        var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.ico");
+        if (_appWindow is null || !File.Exists(iconPath))
+        {
+            StartupDiagnostics.Log($"Window icon was not found: {iconPath}");
+            return;
+        }
+
+        try
+        {
+            _appWindow.SetIcon(iconPath);
+        }
+        catch (Exception ex)
+        {
+            StartupDiagnostics.Log($"Window icon initialization failed: {ex}");
+            Debug.WriteLine($"Window icon initialization failed: {ex}");
         }
     }
 

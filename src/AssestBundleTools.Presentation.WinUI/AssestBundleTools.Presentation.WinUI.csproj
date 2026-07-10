@@ -6,6 +6,7 @@
     <RootNamespace>AssestBundleTools.Presentation.WinUI</RootNamespace>
     <AssemblyName>AssestBundleTools.Presentation.WinUI</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
     <Platforms>x86;x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
     <PublishProfile>win-$(Platform).pubxml</PublishProfile>
@@ -26,9 +27,15 @@
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\Square150x150Logo.scale-200.png" />
     <Content Include="Assets\Square44x44Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-16_altform-unplated.png" />
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-32_altform-unplated.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-48_altform-unplated.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-256_altform-unplated.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Content Include="Assets\AppLogo.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Assets\AppIcon.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
@@ -65,8 +72,8 @@
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <!-- 主应用仍依赖反射式 JSON 与 COM 激活；迁移到源生成上下文前不可启用裁剪。 -->
+    <PublishTrimmed>False</PublishTrimmed>
   </PropertyGroup>
 
   <ItemGroup>
@@ -108,6 +115,7 @@
     <MSBuild
       Projects="..\AssestBundleTools.Audio.FmodProcessor\AssestBundleTools.Audio.FmodProcessor.csproj"
       Targets="Build"
+      RemoveProperties="RuntimeIdentifier;SelfContained;PublishSingleFile;PublishTrimmed;PublishReadyToRun"
       Properties="Configuration=$(Configuration);Platform=$(Platform)" />
     <ItemGroup>
       <BuiltInAudioResourceProcessor Include="..\AssestBundleTools.Audio.FmodProcessor\bin\$(Configuration)\net8.0\AssestBundleTools.Audio.FmodProcessor.*" />
@@ -167,5 +175,39 @@
     <Error
       Condition="!Exists('$(BuiltInCrossCoreCodecPublishDirectory)AssestBundleTools.BundleCodec.CrossCore.exe')"
       Text="Built-in CrossCore bundle codec publish output is missing." />
+  </Target>
+
+  <Target Name="CopyBuiltInExtensionsToPublish" AfterTargets="Publish" Condition="'$(PublishDir)' != ''">
+    <ItemGroup>
+      <BuiltInAudioResourceProcessorPublishFile Include="$(OutDir)AssestBundleTools.Audio.FmodProcessor.*" />
+      <BuiltInAssetBundleCodecPublishFile Include="$(OutDir)codecs\**\*.*" />
+    </ItemGroup>
+    <Copy
+      SourceFiles="@(BuiltInAudioResourceProcessorPublishFile)"
+      DestinationFiles="@(BuiltInAudioResourceProcessorPublishFile->'$(PublishDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true" />
+    <Copy
+      SourceFiles="@(BuiltInAssetBundleCodecPublishFile)"
+      DestinationFiles="@(BuiltInAssetBundleCodecPublishFile->'$(PublishDir)codecs\%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target
+    Name="AddBuiltInExtensionsToAppxPackage"
+    BeforeTargets="_ComputeAppxPackagePayload"
+    DependsOnTargets="CopyBuiltInAudioResourceProcessors;CopyBuiltInAssetBundleCodecs">
+    <ItemGroup>
+      <BuiltInAudioResourceProcessorAppxFile Include="$(OutDir)AssestBundleTools.Audio.FmodProcessor.*" />
+      <BuiltInAssetBundleCodecAppxFile Include="$(OutDir)codecs\**\*.*" />
+    </ItemGroup>
+    <ItemGroup>
+      <BuiltInAudioResourceProcessorAppxFile Update="@(BuiltInAudioResourceProcessorAppxFile)">
+        <TargetPath>%(Filename)%(Extension)</TargetPath>
+      </BuiltInAudioResourceProcessorAppxFile>
+      <BuiltInAssetBundleCodecAppxFile Update="@(BuiltInAssetBundleCodecAppxFile)">
+        <TargetPath>codecs\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+      </BuiltInAssetBundleCodecAppxFile>
+      <AppxPackagePayload Include="@(BuiltInAudioResourceProcessorAppxFile);@(BuiltInAssetBundleCodecAppxFile)" />
+    </ItemGroup>
   </Target>
 </Project>

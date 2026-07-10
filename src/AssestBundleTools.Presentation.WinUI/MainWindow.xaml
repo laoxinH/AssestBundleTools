@@ -23,12 +23,24 @@
                 <ColumnDefinition x:Name="RightInsetColumn" Width="0" />
             </Grid.ColumnDefinitions>
 
-            <TextBlock
-                x:Name="WindowTitleText"
+            <StackPanel
                 Grid.Column="1"
                 Margin="16,0"
                 VerticalAlignment="Center"
-                Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                Orientation="Horizontal"
+                Spacing="8">
+                <Image
+                    x:Name="WindowTitleIcon"
+                    Width="20"
+                    Height="20"
+                    VerticalAlignment="Center"
+                    Source="ms-appx:///Assets/AppLogo.png"
+                    Stretch="Uniform" />
+                <TextBlock
+                    x:Name="WindowTitleText"
+                    VerticalAlignment="Center"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}" />
+            </StackPanel>
         </Grid>
 
         <ContentControl

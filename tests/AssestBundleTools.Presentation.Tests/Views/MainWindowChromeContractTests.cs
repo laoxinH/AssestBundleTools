@@ -16,6 +16,11 @@ public sealed class MainWindowChromeContractTests
             "src",
             "AssestBundleTools.Presentation.WinUI",
             "MainWindow.xaml.cs"));
+        var presentationProject = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "AssestBundleTools.Presentation.WinUI.csproj"));
         var shellXaml = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "src",
@@ -55,6 +60,23 @@ public sealed class MainWindowChromeContractTests
         Assert.Contains("TitleBarHeightOption.Standard", mainWindowCode);
         Assert.DoesNotContain("TitleBarHeightOption.Tall", mainWindowCode);
         Assert.DoesNotContain("WindowSubtitleText", string.Concat(mainWindowXaml, mainWindowCode));
+        Assert.Contains("x:Name=\"WindowTitleIcon\"", mainWindowXaml);
+        Assert.Contains("Source=\"ms-appx:///Assets/AppLogo.png\"", mainWindowXaml);
+        Assert.Contains("TryApplyWindowIcon();", mainWindowCode);
+        Assert.Contains("_appWindow.SetIcon(iconPath);", mainWindowCode);
+        Assert.Contains("<ApplicationIcon>Assets\\AppIcon.ico</ApplicationIcon>", presentationProject);
+        Assert.Contains("<PublishTrimmed>False</PublishTrimmed>", presentationProject);
+        Assert.Contains("Name=\"CopyBuiltInExtensionsToPublish\" AfterTargets=\"Publish\"", presentationProject);
+        Assert.Contains("$(PublishDir)codecs\\%(RecursiveDir)%(Filename)%(Extension)", presentationProject);
+        Assert.Contains("Name=\"AddBuiltInExtensionsToAppxPackage\"", presentationProject);
+        Assert.Contains("BeforeTargets=\"_ComputeAppxPackagePayload\"", presentationProject);
+        Assert.Contains("<TargetPath>codecs\\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>", presentationProject);
+        Assert.True(File.Exists(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Assets",
+            "AppIcon.ico")));
         Assert.DoesNotContain("<NavigationView.PaneHeader>", shellXaml);
         Assert.Contains("CompactPaneLength=\"48\"", shellXaml);
         Assert.Contains("IsPaneToggleButtonVisible=\"True\"", shellXaml);
