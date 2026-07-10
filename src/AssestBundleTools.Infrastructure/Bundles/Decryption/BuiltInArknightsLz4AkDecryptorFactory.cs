@@ -7,7 +7,7 @@ namespace AssestBundleTools.Infrastructure.Bundles.Decryption;
 internal static class BuiltInArknightsLz4AkDecryptorFactory
 {
     private const string Version = "1.0.0";
-    private const string ExecutableFileName = "AssestBundleTools.BundleCodec.Arknights.exe";
+    private const string ExecutableFileName = @".\AssestBundleTools.BundleCodec.Arknights.exe";
 
     public static IAssetBundleDecryptor CreateDecryptor()
     {

@@ -28,6 +28,15 @@ internal static class ExternalProcessAssetBundleDecryptorTests
         TestAssert.True(entry.IsBuiltIn, "Built-in Arknights catalog entry should be marked built-in.");
         TestAssert.True(entry.IsReadOnly, "Built-in Arknights catalog entry should be read-only.");
         TestAssert.True(entry.Definition.EncryptArguments is { Count: > 0 }, "Built-in catalog entry should expose encrypt arguments.");
+        var codecDirectoryPath = Path.Combine(temporaryDirectory.DirectoryPath, "codecs", "arknights");
+        var resolvedPath = ExternalProcessAssetBundleDecryptorSupport.ResolveExecutablePath(
+            entry.Definition.ExecutablePath,
+            codecDirectoryPath);
+
+        TestAssert.Equal(
+            Path.GetFullPath(Path.Combine(codecDirectoryPath, "AssestBundleTools.BundleCodec.Arknights.exe")),
+            resolvedPath,
+            "Built-in codec executable should resolve from its application codec directory instead of PATH.");
     }
 
     public static void DecryptAsync_ShouldUseBundleScopedWorkspaceStagingPath_WhenWorkspaceDataRootIsProvided()

@@ -272,7 +272,7 @@ Presentation 不负责：
 
 补充约束：
 
-- `executablePath` 可以是 PATH 上的命令，也可以是相对 manifest 的可执行文件路径
+- `executablePath` 可以是 PATH 上的命令，也可以是相对 manifest 的可执行文件路径；为避免纯文件名歧义，不含目录分隔符的值（如 `python`）按 PATH 命令解析，插件目录内的可执行文件必须写成 `./tool`、`.\tool.exe` 或其他包含目录分隔符的相对路径，绝对路径保持原样
 - `decryptArguments` 必填
 - `probeArguments` 只有在支持自动识别时才需要提供
 - `encryptArguments` 可选；提供后插件必须保证 `decrypt -> encrypt -> decrypt` 的 bundle 内容回环一致性
