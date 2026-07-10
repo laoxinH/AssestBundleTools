@@ -205,7 +205,7 @@
     <value>打开最近工作区</value>
   </data>
   <data name="HomePage.QuickActionHintText.Text" xml:space="preserve">
-    <value>新建或打开工作区时，会先进入一个集中配置面板。确认后当前窗口会切换到正式工作台；如果选择新建窗口，则会在新的主窗口中直接进入对应工作区。</value>
+    <value>创建或打开工作区后进入工作台；最近工作区会按窗口策略恢复。</value>
   </data>
   <data name="HomePage.RecentOpenedTitleText.Text" xml:space="preserve">
     <value>工作区列表</value>
@@ -214,10 +214,10 @@
     <value>最近操作</value>
   </data>
   <data name="HomePage.RecentWorkspaceEmptyState.Text" xml:space="preserve">
-    <value>还没有已登记的工作区。你可以先新建一个工作区，或选择一个已有目录开始。</value>
+    <value>暂无工作区。新建一个空工作区，或打开已有工作区目录。</value>
   </data>
   <data name="HomePage.RecentActivityEmptyState.Text" xml:space="preserve">
-    <value>还没有最近操作记录。后续打开工作区和执行操作后，这里会显示摘要。</value>
+    <value>暂无操作记录。打开工作区或执行任务后会显示在这里。</value>
   </data>
   <data name="HomePage.RecentWorkspace.CurrentBadge" xml:space="preserve">
     <value>当前</value>

@@ -205,7 +205,7 @@
     <value>Open Latest Workspace</value>
   </data>
   <data name="HomePage.QuickActionHintText.Text" xml:space="preserve">
-    <value>When creating or opening a workspace, the app uses a single setup panel. After confirmation, the current window switches to the workbench; if a new window is chosen, that workspace opens directly in a new main window.</value>
+    <value>Create or open a workspace to enter the workbench. Recent workspaces follow your window preference.</value>
   </data>
   <data name="HomePage.RecentOpenedTitleText.Text" xml:space="preserve">
     <value>Workspace List</value>
@@ -214,10 +214,10 @@
     <value>Recent Activity</value>
   </data>
   <data name="HomePage.RecentWorkspaceEmptyState.Text" xml:space="preserve">
-    <value>No registered workspaces yet. Create one first, or pick an existing directory to get started.</value>
+    <value>No workspaces yet. Create an empty workspace, or open an existing workspace directory.</value>
   </data>
   <data name="HomePage.RecentActivityEmptyState.Text" xml:space="preserve">
-    <value>No recent activity yet. Once a workspace is opened and actions are performed, summaries will appear here.</value>
+    <value>No activity yet. Open a workspace or run a task to see updates here.</value>
   </data>
   <data name="HomePage.RecentWorkspace.CurrentBadge" xml:space="preserve">
     <value>Current</value>
