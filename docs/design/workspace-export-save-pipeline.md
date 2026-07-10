@@ -136,6 +136,7 @@ SaveWorkspaceAsNewBundleCommand / ExecuteWorkspaceExportCommand
   progress
   bundleWriteConcurrency?
   outputConflictPolicy   # ReplaceExisting / FailIfExists
+  useSourceCodec         # true 时按来源 codec 回写；false 时输出标准 AB
 
 WorkspaceExportProcessorSelectionDto
   resourceKind
@@ -364,9 +365,10 @@ Infrastructure 的当前实现已经在同一端口内消费标准化 artifact�
 来源 codec 回写规则：
 
 - 保存计划从现有 bundle index / artifact 身份读取 `decryptorId / decryptorVersion`，与标准化 artifact 路径一起透传给 writer 端口。
-- `PassThrough` 或不支持 Encrypt 的旧插件直接提升标准 writer 输出。
-- 同 id、同 version 且实现 `IAssetBundleEncryptor` 的来源插件默认在标准 writer 输出后执行 Encrypt。
-- codec 声明支持 Encrypt，但实现缺失、版本不一致、进程失败、result JSON 非法或输出缺失时，当前 bundle 失败，不提升标准临时文件。
+- 导出窗口提供“按照原加密导出”选项并默认勾选；该选项作为 `UseSourceCodec = true` 持久化到工作区导出设置。旧快照缺少该字段时也必须恢复为 `true`，避免升级后静默改变既有导出格式。
+- `UseSourceCodec = true` 时，同 id、同 version 且声明支持 Encrypt 并实现 `IAssetBundleEncryptor` 的来源插件在标准 writer 输出后执行 Encrypt；`PassThrough` 或明确不支持 Encrypt 的旧插件直接提升标准 writer 输出。
+- `UseSourceCodec = false` 时，Application 不向 writer 透传来源 codec 身份，直接提升标准 writer 输出；最终 manifest 的 `OutputCodecId / OutputCodecVersion` 为空。
+- 仅当 `UseSourceCodec = true` 时，codec 未注册、版本不一致，或 codec 声明支持 Encrypt 但实现缺失、进程失败、result JSON 非法、输出缺失，当前 bundle 才会失败且不提升标准临时文件。
 - 标准 writer 临时文件和 codec 输出临时文件都必须在失败 / 取消后清理；最终目标仍保持单 bundle 原子提升。
 - `WrittenCompression` 描述进入 codec 前的标准 AB 压缩策略；`OutputCodecId / OutputCodecVersion` 描述最终文件的来源格式回写，两个维度不能合并成一个字符串。
 
@@ -614,6 +616,7 @@ Application 回归优先覆盖：
 - 导出计划只包含用户选择的资源包，并保留 `bundleId / bundleCacheKey / outputPath`。
 - 资源处理器选择中的“无处理器”不会进入执行队列。
 - AudioClip 文件替换选择内置 FMOD 处理器时，Application 应生成 `audio` resource work item，并把成功处理器 `outputPath` 投影为写包项的优先载荷；导出窗口的强制音频写入选项应透传为 `AudioWriteMode`，默认保持按原容器匹配。
+- “按照原加密导出”默认开启并持久化；开启时透传来源 codec 身份，关闭时 writer 请求中的来源 codec 身份为空并输出标准 AB。
 - 当前第一阶段覆盖选中 bundle 写出、processor selection 透传、文件替换载荷的资源处理 work item 构建、处理器结果透传、失败回填、失败 bundle 跳过写包、bundle writer 跨 bundle 有界并发、对象级写包项透传和输出摘要。
 - 后续补资源处理器取消、工作区内替换 / 编辑草稿有效载荷的更多资源类型和跨 bundle 写包回归。
 - 部分成功时只提交成功 bundle 的检查点。
@@ -627,7 +630,7 @@ Infrastructure 回归优先覆盖：
 
 Presentation 回归优先覆盖：
 
-- 工作区导出窗口提交命令时携带选中 bundle、每个资源类型槽的 processor selection、压缩策略和音频写入模式。
+- 工作区导出窗口提交命令时携带选中 bundle、每个资源类型槽的 processor selection、压缩策略、音频写入模式和 `UseSourceCodec`。
 - 导出任务使用 `SaveRebuild` profile，并在执行中禁用重复提交。
 - 当前导出完成后只由导出窗口消费执行结果；保存检查点和 `Committed` 状态落地前，不广播 workspace-wide 操作变更，避免主工作台误刷新旧资产标签。
 - 后续检查点落地后，通过精确的已提交操作通知刷新保存预览 / 变更投影，而不是直接重扫 AB。

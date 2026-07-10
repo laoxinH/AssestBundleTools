@@ -178,7 +178,8 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
             ProcessorSelections: submission.ProcessorSelections,
             CompressionMode: submission.CompressionMode,
             OutputConflictPolicy: submission.OutputConflictPolicy,
-            AudioWriteMode: submission.AudioWriteMode);
+            AudioWriteMode: submission.AudioWriteMode,
+            UseSourceCodec: submission.UseSourceCodec);
 
         Result<WorkspaceSaveExecutionResultDto> result;
         BackgroundWorkHandle<Result<WorkspaceSaveExecutionResultDto>>? exportHandle = null;

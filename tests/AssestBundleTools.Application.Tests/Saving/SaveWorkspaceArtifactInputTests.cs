@@ -236,6 +236,19 @@ internal static partial class SaveWorkspaceHandlersTests
         var bundleResult = TestAssert.Single(execution.BundleResults);
         TestAssert.Equal("abc123-md5", bundleResult.WrittenFileMd5, "Execution should preserve exported AB MD5.");
         TestAssert.Equal("abc123-sha256", bundleResult.WrittenFileSha256, "Execution should preserve exported AB SHA-256.");
+
+        var standardBundleResult = await handler.HandleAsync(new SaveWorkspaceAsNewBundleCommand(
+            workspaceId,
+            OutputDirectory: @"D:\StandardExports",
+            WorkspaceKey: workspaceKey,
+            WorkspaceDataRootPath: workspaceDataRootPath,
+            SelectedBundleIds: [zetaBundleId],
+            UseSourceCodec: false));
+
+        TestAssert.True(standardBundleResult.IsSuccess, "Export should succeed when source codec encoding is disabled.");
+        TestAssert.Equal(2, exporter.Requests.Count, "Both export requests should reach the writer.");
+        TestAssert.Equal(null, exporter.Requests[1].SourceCodecId, "Disabled source encoding should omit the source codec id.");
+        TestAssert.Equal(null, exporter.Requests[1].SourceCodecVersion, "Disabled source encoding should omit the source codec version.");
     }
 
     public static async Task SaveWorkspaceAsNewBundleHandler_ShouldBlockExistingOutput_WhenOverwriteIsDisabled()

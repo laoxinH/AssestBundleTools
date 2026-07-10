@@ -127,8 +127,12 @@ internal sealed class WorkspaceSaveBundleExportRunner
                         AudioWriteMode: command.AudioWriteMode,
                         WorkspaceKey: command.WorkspaceKey,
                         WorkspaceDataRootPath: command.WorkspaceDataRootPath,
-                        SourceCodecId: selectedPlan.ArtifactInput.SourceCodecId,
-                        SourceCodecVersion: selectedPlan.ArtifactInput.SourceCodecVersion),
+                        SourceCodecId: command.UseSourceCodec
+                            ? selectedPlan.ArtifactInput.SourceCodecId
+                            : null,
+                        SourceCodecVersion: command.UseSourceCodec
+                            ? selectedPlan.ArtifactInput.SourceCodecVersion
+                            : null),
                     cancellationToken);
 
                 if (exportResult.IsCancelled)

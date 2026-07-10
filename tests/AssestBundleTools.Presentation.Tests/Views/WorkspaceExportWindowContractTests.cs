@@ -153,7 +153,12 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("WorkspaceExportDialog.Bundle.EmptyTitle", enResources);
         Assert.Contains("WorkspaceExportDialog.Bundle.EmptyDetail", enResources);
         Assert.Contains("ItemsSource=\"{Binding ResourceProcessors}\"", contentXaml);
+        Assert.Contains("IsChecked=\"{Binding UseSourceCodec, Mode=TwoWay}\"", contentXaml);
         Assert.Contains("IsChecked=\"{Binding ExportToWorkspaceDirectory, Mode=TwoWay}\"", contentXaml);
+        Assert.Contains("WorkspaceExportDialogUseSourceCodec", contentCode);
+        Assert.Contains("WorkspaceExportDialogUseSourceCodec", resourceKeys);
+        Assert.Contains("WorkspaceExportDialog.UseSourceCodec", zhResources);
+        Assert.Contains("WorkspaceExportDialog.UseSourceCodec", enResources);
         Assert.Contains("ItemsSource=\"{Binding Processors}\"", contentXaml);
         Assert.Contains("SelectedItem=\"{Binding SelectedProcessor, Mode=TwoWay}\"", contentXaml);
         Assert.DoesNotContain("OutputDirectoryText", contentXaml);

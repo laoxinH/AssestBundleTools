@@ -35,6 +35,10 @@ internal static class InfrastructureTestSuite
             JsonWorkspaceCatalogStoreTests.Save_ShouldRoundTripCatalogSnapshot);
         await RunTestAsync(
             failures,
+            nameof(JsonWorkspaceMetadataStoreTests.Load_ShouldDefaultUseSourceCodec_ForLegacyExportSettings),
+            JsonWorkspaceMetadataStoreTests.Load_ShouldDefaultUseSourceCodec_ForLegacyExportSettings);
+        await RunTestAsync(
+            failures,
             nameof(JsonWorkspaceMetadataStoreTests.Save_ShouldRoundTripWorkspaceMetadata),
             JsonWorkspaceMetadataStoreTests.Save_ShouldRoundTripWorkspaceMetadata);
         await RunTestAsync(

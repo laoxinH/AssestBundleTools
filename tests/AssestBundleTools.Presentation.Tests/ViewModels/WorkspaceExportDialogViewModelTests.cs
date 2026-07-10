@@ -94,6 +94,7 @@ public sealed class WorkspaceExportDialogViewModelTests
         Assert.Equal(WorkspaceBundleExportCompressionModeDto.PreserveOriginal, submission.CompressionMode);
         Assert.Equal(WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting, submission.OutputConflictPolicy);
         Assert.Equal(WorkspaceBundleExportAudioWriteModeDto.MatchOriginalContainer, submission.AudioWriteMode);
+        Assert.True(submission.UseSourceCodec);
         Assert.Equal("bundle-alpha", Assert.Single(submission.SelectedBundleIds).Value);
         Assert.Equal("resource.processor.texture.png", submission.ProcessorSelections.Single(selection => selection.ResourceKind == "texture2d").ProcessorId);
         Assert.Null(submission.ProcessorSelections.Single(selection => selection.ResourceKind == "audio").ProcessorId);
@@ -213,7 +214,8 @@ public sealed class WorkspaceExportDialogViewModelTests
                 [
                     new WorkspaceExportProcessorSettingSnapshotDto("Texture2D", true, "resource.processor.texture.png"),
                     new WorkspaceExportProcessorSettingSnapshotDto("audio", false, null)
-                ]));
+                ],
+                UseSourceCodec: false));
 
         var textureSlot = viewModel.ResourceProcessors.Single(static slot => slot.Id == "texture2d");
         var audioSlot = viewModel.ResourceProcessors.Single(static slot => slot.Id == "audio");
@@ -221,6 +223,7 @@ public sealed class WorkspaceExportDialogViewModelTests
         Assert.True(viewModel.ExportToWorkspaceDirectory);
         Assert.True(viewModel.OverwriteExistingFiles);
         Assert.True(viewModel.ForceAudioPayloadWrite);
+        Assert.False(viewModel.UseSourceCodec);
         Assert.Equal(WorkspaceBundleExportCompressionModeDto.Lz4, viewModel.SelectedCompressionOption?.Mode);
         Assert.Equal("resource.processor.texture.png", textureSlot.SelectedProcessor?.Id);
         Assert.False(audioSlot.IsEnabled);
@@ -229,6 +232,7 @@ public sealed class WorkspaceExportDialogViewModelTests
 
         Assert.Equal(WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting, submission.OutputConflictPolicy);
         Assert.Equal(WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer, submission.AudioWriteMode);
+        Assert.False(submission.UseSourceCodec);
         Assert.Equal(WorkspaceBundleExportCompressionModeDto.Lz4, submission.ExportSettings.CompressionMode);
     }
 
@@ -254,6 +258,7 @@ public sealed class WorkspaceExportDialogViewModelTests
         viewModel.ExportToWorkspaceDirectory = true;
         viewModel.OverwriteExistingFiles = true;
         viewModel.ForceAudioPayloadWrite = true;
+        viewModel.UseSourceCodec = false;
         viewModel.SelectedCompressionOption = viewModel.CompressionOptions.Single(static option =>
             option.Mode == WorkspaceBundleExportCompressionModeDto.Lz4);
         var textureSlot = viewModel.ResourceProcessors.Single(static slot => slot.Id == "texture2d");
@@ -263,11 +268,12 @@ public sealed class WorkspaceExportDialogViewModelTests
 
         var snapshot = viewModel.CaptureExportSettings();
 
-        Assert.Equal(6, settingsChangedCount);
+        Assert.Equal(7, settingsChangedCount);
         Assert.True(snapshot.ExportToWorkspaceDirectory);
         Assert.True(snapshot.OverwriteExistingFiles);
         Assert.Equal(WorkspaceBundleExportCompressionModeDto.Lz4, snapshot.CompressionMode);
         Assert.Equal(WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer, snapshot.AudioWriteMode);
+        Assert.False(snapshot.UseSourceCodec);
         var textureSetting = snapshot.ProcessorSettings!.Single(static setting => setting.ResourceKind == "texture2d");
         Assert.False(textureSetting.IsEnabled);
         Assert.Equal("resource.processor.texture.png", textureSetting.ProcessorId);

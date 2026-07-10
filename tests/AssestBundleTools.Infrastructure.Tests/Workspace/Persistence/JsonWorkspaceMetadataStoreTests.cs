@@ -1,3 +1,4 @@
+using System.Text.Json;
 using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Infrastructure.Tests.Testing;
@@ -7,6 +8,26 @@ namespace AssestBundleTools.Infrastructure.Tests.Workspace.Persistence;
 
 internal static class JsonWorkspaceMetadataStoreTests
 {
+    public static void Load_ShouldDefaultUseSourceCodec_ForLegacyExportSettings()
+    {
+        const string legacyJson = """
+            {
+              "exportToWorkspaceDirectory": false,
+              "overwriteExistingFiles": false,
+              "compressionMode": 0,
+              "audioWriteMode": 0
+            }
+            """;
+
+        var settings = JsonSerializer.Deserialize<WorkspaceExportSettingsSnapshotDto>(
+            legacyJson,
+            JsonWorkspaceSerialization.SerializerOptions);
+
+        TestAssert.True(
+            TestAssert.NotNull(settings, "Legacy export settings should deserialize.").UseSourceCodec,
+            "Legacy export settings should keep source codec encoding enabled.");
+    }
+
     public static void Save_ShouldRoundTripWorkspaceMetadata()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();
@@ -182,7 +203,8 @@ internal static class JsonWorkspaceMetadataStoreTests
                 [
                     new WorkspaceExportProcessorSettingSnapshotDto("audio", true, "resource.processor.audio.fmod-fsb5"),
                     new WorkspaceExportProcessorSettingSnapshotDto("texture2d", false, null)
-                ]));
+                ],
+                UseSourceCodec: false));
 
         store.Save(metadata);
         var loadedMetadata = store.Load("workspace-a");
@@ -216,6 +238,7 @@ internal static class JsonWorkspaceMetadataStoreTests
             WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer,
             restoredExportSettings.AudioWriteMode,
             "Audio write mode should round-trip.");
+        TestAssert.False(restoredExportSettings.UseSourceCodec, "Source codec setting should round-trip.");
         var restoredAudioProcessor = TestAssert.Single(restoredExportSettings.ProcessorSettings!.Where(static setting =>
             setting.ResourceKind == "audio"));
         TestAssert.True(restoredAudioProcessor.IsEnabled, "Audio processor enabled state should round-trip.");

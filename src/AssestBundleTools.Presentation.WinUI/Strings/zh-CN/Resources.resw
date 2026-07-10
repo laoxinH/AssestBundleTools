@@ -4460,6 +4460,9 @@
   <data name="WorkspaceExportDialog.ExportOptionsSection.Title" xml:space="preserve">
     <value>导出选项</value>
   </data>
+  <data name="WorkspaceExportDialog.UseSourceCodec" xml:space="preserve">
+    <value>按照原加密导出</value>
+  </data>
   <data name="WorkspaceExportDialog.ExportToWorkspaceDirectory" xml:space="preserve">
     <value>导出到工作区输出目录</value>
   </data>

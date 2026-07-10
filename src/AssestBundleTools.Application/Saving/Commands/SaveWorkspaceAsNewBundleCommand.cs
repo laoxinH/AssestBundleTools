@@ -19,4 +19,5 @@ public sealed record SaveWorkspaceAsNewBundleCommand(
     WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.PreserveOriginal,
     WorkspaceBundleExportOutputConflictPolicyDto OutputConflictPolicy = WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting,
     WorkspaceBundleExportAudioWriteModeDto AudioWriteMode = WorkspaceBundleExportAudioWriteModeDto.MatchOriginalContainer,
-    IProgress<WorkspaceSaveExecutionDiagnosticDto>? Diagnostics = null);
+    IProgress<WorkspaceSaveExecutionDiagnosticDto>? Diagnostics = null,
+    bool UseSourceCodec = true);

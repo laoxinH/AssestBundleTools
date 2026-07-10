@@ -28,6 +28,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     private bool _exportToWorkspaceDirectory;
     private bool _overwriteExistingFiles;
     private bool _forceAudioPayloadWrite;
+    private bool _useSourceCodec = true;
     private bool _isLoading;
     private bool _isExecuting;
     private bool _isExecutionCancellationRequested;
@@ -208,6 +209,18 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         }
     }
 
+    public bool UseSourceCodec
+    {
+        get => _useSourceCodec;
+        set
+        {
+            if (SetProperty(ref _useSourceCodec, value))
+            {
+                RaiseExportSettingsChanged();
+            }
+        }
+    }
+
     public string ForceAudioWarningText =>
         ForceAudioPayloadWrite
             ? _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogForceAudioPayloadWriteWarning)
@@ -347,6 +360,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
                 ? WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting
                 : WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists,
             exportSettings.AudioWriteMode,
+            exportSettings.UseSourceCodec,
             exportSettings);
     }
 
@@ -357,13 +371,14 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
             ? WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer
             : WorkspaceBundleExportAudioWriteModeDto.MatchOriginalContainer;
         return new WorkspaceExportSettingsSnapshotDto(
-            ExportToWorkspaceDirectory,
-            OverwriteExistingFiles,
-            compressionMode,
-            audioWriteMode,
-            ResourceProcessors
+            ExportToWorkspaceDirectory: ExportToWorkspaceDirectory,
+            OverwriteExistingFiles: OverwriteExistingFiles,
+            CompressionMode: compressionMode,
+            AudioWriteMode: audioWriteMode,
+            ProcessorSettings: ResourceProcessors
                 .Select(processor => _optionFactory.CreateProcessorSettingSnapshot(processor))
-                .ToArray());
+                .ToArray(),
+            UseSourceCodec: UseSourceCodec);
     }
 
     private void ApplyExportSettings(WorkspaceExportSettingsSnapshotDto? exportSettings)
@@ -376,6 +391,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         ExportToWorkspaceDirectory = exportSettings.ExportToWorkspaceDirectory;
         OverwriteExistingFiles = exportSettings.OverwriteExistingFiles;
         ForceAudioPayloadWrite = exportSettings.AudioWriteMode == WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer;
+        UseSourceCodec = exportSettings.UseSourceCodec;
         SelectedCompressionOption = CompressionOptions.FirstOrDefault(option => option.Mode == exportSettings.CompressionMode)
                                     ?? CompressionOptions.FirstOrDefault(static option =>
                                         option.Mode == WorkspaceBundleExportCompressionModeDto.PreserveOriginal);

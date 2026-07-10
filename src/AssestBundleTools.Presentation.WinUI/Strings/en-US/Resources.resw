@@ -4460,6 +4460,9 @@
   <data name="WorkspaceExportDialog.ExportOptionsSection.Title" xml:space="preserve">
     <value>Export Options</value>
   </data>
+  <data name="WorkspaceExportDialog.UseSourceCodec" xml:space="preserve">
+    <value>Use source encryption</value>
+  </data>
   <data name="WorkspaceExportDialog.ExportToWorkspaceDirectory" xml:space="preserve">
     <value>Export to workspace output directory</value>
   </data>

@@ -41,6 +41,7 @@ public sealed partial class WorkspaceExportDialogContent : UserControl
         AutomationProperties.SetName(ResourceProcessorHelpHost, ResourceProcessorHelpText.Text);
         AutomationProperties.SetHelpText(ResourceProcessorHelpHost, resourceProcessorHelpToolTipText);
         ExportOptionsSectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogExportOptionsSectionTitle);
+        UseSourceCodecCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogUseSourceCodec);
         ExportToWorkspaceDirectoryCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogExportToWorkspaceDirectory);
         OverwriteExistingFilesCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogOverwriteExistingFiles);
         ForceAudioPayloadWriteText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogForceAudioPayloadWrite);

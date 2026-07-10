@@ -430,6 +430,9 @@
                         </Grid>
                         <StackPanel Spacing="4">
                             <CheckBox
+                                x:Name="UseSourceCodecCheckBox"
+                                IsChecked="{Binding UseSourceCodec, Mode=TwoWay}" />
+                            <CheckBox
                                 x:Name="ExportToWorkspaceDirectoryCheckBox"
                                 IsChecked="{Binding ExportToWorkspaceDirectory, Mode=TwoWay}" />
                             <CheckBox

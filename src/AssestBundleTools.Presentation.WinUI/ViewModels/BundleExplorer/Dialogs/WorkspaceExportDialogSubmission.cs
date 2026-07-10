@@ -11,4 +11,5 @@ public sealed record WorkspaceExportDialogSubmission(
     WorkspaceBundleExportCompressionModeDto CompressionMode,
     WorkspaceBundleExportOutputConflictPolicyDto OutputConflictPolicy,
     WorkspaceBundleExportAudioWriteModeDto AudioWriteMode,
+    bool UseSourceCodec,
     WorkspaceExportSettingsSnapshotDto ExportSettings);
