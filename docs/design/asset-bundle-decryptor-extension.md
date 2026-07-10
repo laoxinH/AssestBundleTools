@@ -1,12 +1,13 @@
-# AssestBundleTools 资源包解密扩展设计
+# AssestBundleTools 资源包解密与回写扩展设计
 
 ## 1. 文档目的
 
-本文档用于约束“真实 AB 导入前的解密扩展层”设计，目标如下：
+本文档用于约束“真实 AB 导入前的解密扩展层”和“真实 AB 导出后的来源格式回写层”设计，目标如下：
 
 - 不把某个游戏或某种 AB 的解密逻辑硬编码进主导入流程
 - 让真实 Reader 始终只面对“已可读取的资源包文件”
-- 允许后续通过内置实现或外部进程扩展解密能力
+- 允许通过内置 CLI 或外部进程扩展识别、解密和可选加密能力
+- 让导出 writer 始终先生成标准可读 AB，再由来源 codec 按需回写游戏私有格式
 - 保持 Clean Architecture 边界清晰，避免 UI、Application、Infrastructure 职责混乱
 
 本文档与以下设计配套使用：
@@ -77,6 +78,25 @@
 - 真正的解密输出文件与探测结果仍应留在 `staging / cache` 层，不回写工作区元数据
 - `cache/bundles` 中的标准化 artifact 不是用户源文件副本，也不是撤销 / 恢复事实来源；源文件指纹、解密器身份、解密器版本或标准化版本变化时必须重建
 
+### 2.4 “加密”是可选的来源格式回写能力
+
+游戏私有 AB 不一定使用密码学加密。例如明日方舟 LZ4AK 实际是 UnityFS 压缩块编码变体：sequence token 的高低半字节互换，match offset 使用大端序，并可能使用压缩类型 `4 / 5` 标记。
+
+因此本扩展点保留产品和现有代码中的“解密器”命名，但按以下语义处理：
+
+- `Probe`：判断来源是否属于该游戏 / 格式，并返回置信度和可选结构化证据。
+- `Decrypt`：把私有来源转换为 Reader 可读取的标准 bundle。
+- `Encrypt`：可选能力，把 writer 生成的标准 bundle 回写为该游戏可消费的私有格式。
+
+`Encrypt` 不得与导出资源处理器混用。资源处理器修改单个资产载荷，bundle encryptor 在对象级写包和标准压缩完成后处理整个 AB 文件。
+
+兼容规则：
+
+- 现有只实现 `IAssetBundleDecryptor` 的内置实现、测试替身和外部插件继续有效。
+- 需要回写能力的实现额外实现 `IAssetBundleEncryptor`；不把新方法强加到所有旧实现。
+- `AssetBundleDecryptorDescriptorDto.SupportsEncryption` 只表示能力声明；真实执行还必须校验接口、插件版本和命令配置一致。
+- `PassThrough` 不声明加密能力，标准来源导出后保持标准 bundle。
+
 ## 3. 推荐分层
 
 ### 3.1 Application
@@ -84,11 +104,14 @@
 Application 层只定义稳定端口与数据结构，例如：
 
 - `IAssetBundleDecryptor`
+- `IAssetBundleEncryptor`
 - `IAssetBundleDecryptorRegistry`
 - `AssetBundleDecryptorDescriptorDto`
 - `AssetBundleDecryptorProbeRequestDto`
 - `AssetBundleDecryptionRequestDto`
 - `AssetBundleDecryptionResultDto`
+- `AssetBundleEncryptionRequestDto`
+- `AssetBundleEncryptionResultDto`
 
 Application 不负责：
 
@@ -143,7 +166,7 @@ Presentation 不负责：
 - 主程序通过 manifest 发现它
 - 主程序通过命令行参数把 `input/output/result/workspace` 等路径传给它
 - 外部进程把执行结果写入 `result` JSON 文件
-- 主程序读取结果文件并生成 `AssetBundleDecryptionResultDto`
+- 主程序读取结果文件并生成 Probe、Decrypt 或 Encrypt 对应的应用层 DTO
 
 推荐参数占位符：
 
@@ -154,6 +177,45 @@ Presentation 不负责：
 - `{workspaceDataRootPath}`
 - `{manifestDirectory}`
 
+命令能力使用同一组占位符和同一套进程超时 / 取消规则：
+
+- `probeArguments`：可选；存在时参与自动识别。
+- `decryptArguments`：必填；把来源转换为标准 bundle。
+- `encryptArguments`：可选；把标准 bundle 回写为游戏格式。
+
+`probe` result JSON：
+
+```json
+{
+  "schemaVersion": 1,
+  "isMatch": true,
+  "confidence": 100,
+  "formatId": "game.example.bundle-v1",
+  "evidence": [ "unityfs.custom-block-type" ],
+  "message": "optional diagnostic fallback"
+}
+```
+
+其中 `formatId / evidence` 是可选稳定语义，不是用户界面文案。主程序按 `isMatch + confidence` 选择解密器，并保留证据用于诊断；插件不得仅凭文件扩展名返回高置信度。
+
+`decrypt / encrypt` result JSON 共用以下最小结构：
+
+```json
+{
+  "schemaVersion": 1,
+  "isSuccess": true,
+  "outputPath": "D:/.../output.bundle",
+  "message": "optional diagnostic fallback"
+}
+```
+
+规则：
+
+- 退出码、result JSON 和输出文件必须同时成功；stdout / stderr 只作为诊断 detail。
+- `outputPath` 省略时使用调用方传入的 `{outputPath}`。
+- 输出必须等于调用方给定路径或位于本次隔离 working directory 内，不能借 result JSON 越权返回任意文件。
+- result JSON 缺失、解析失败、输出缺失、超时和取消均返回结构化失败。
+
 这样即使外部进程是 Python，也可以通过：
 
 - `executablePath = "python"`
@@ -163,10 +225,11 @@ Presentation 不负责：
 
 ## 4.3 Manifest 结构
 
-当前推荐 manifest 字段如下：
+当前推荐 manifest 字段如下。`schemaVersion` 缺失时按首版兼容格式读取；`encryptArguments` 缺失或为空表示只支持导入解密：
 
 ```json
 {
+  "schemaVersion": 1,
   "id": "game.example.decryptor",
   "displayName": "Example Game Decryptor",
   "version": "1.0.0",
@@ -193,6 +256,16 @@ Presentation 不负责：
     "{outputPath}",
     "--result",
     "{resultPath}"
+  ],
+  "encryptArguments": [
+    "{manifestDirectory}\\decrypt.py",
+    "encrypt",
+    "--input",
+    "{inputPath}",
+    "--output",
+    "{outputPath}",
+    "--result",
+    "{resultPath}"
   ]
 }
 ```
@@ -202,7 +275,10 @@ Presentation 不负责：
 - `executablePath` 可以是 PATH 上的命令，也可以是相对 manifest 的可执行文件路径
 - `decryptArguments` 必填
 - `probeArguments` 只有在支持自动识别时才需要提供
+- `encryptArguments` 可选；提供后插件必须保证 `decrypt -> encrypt -> decrypt` 的 bundle 内容回环一致性
 - 当前阶段 manifest 读取失败或字段不完整时，主程序应跳过该项，而不是阻断整个应用启动
+
+为兼容现有插件，`supportsAutoDetection` 暂时保留；保存新定义时它必须与 `probeArguments` 是否存在保持一致。后续若升级 manifest schema，可改为从命令是否存在推导能力，但本阶段不为删除一个布尔字段引入破坏性迁移。
 
 ## 5. 默认发现位置
 
@@ -237,6 +313,27 @@ Presentation 不负责：
 - `normalizerVersion`
 
 否则同一个源文件在切换解密器实现后，旧缓存可能继续误命中。
+
+## 6.1 与真实导出的关系
+
+真实导出固定采用以下次序：
+
+```text
+标准化 artifact
+  -> AssetsTools 对象级修改和标准 AB 写包
+  -> 来源 decryptor 可选 Encrypt
+  -> 输出校验 / hash
+  -> 原子提升到最终路径
+```
+
+约束：
+
+- 保存计划从 bundle index / artifact 身份透传实际 `decryptorId + decryptorVersion`，不重新猜测输出 codec。
+- 只有当前 registry 中同 id、同 version 的实现明确支持 `IAssetBundleEncryptor` 时才执行回写。
+- 声明支持但实现 / 命令缺失、版本不一致或 encrypt 失败时，该 bundle 导出失败；不能静默输出看似成功但游戏不可读的标准 AB。
+- 不支持 Encrypt 的旧解密器仍可导出标准 AB，并在 manifest 中不记录输出 codec。
+- Encrypt 输入是 writer 的临时标准 AB，输出也是临时文件；成功校验后才替换最终目标。
+- `_abt-bundle-export-manifest.json` 应记录 `outputCodecId / outputCodecVersion`，让外部工具区分“标准 AB”与“已回写游戏格式 AB”。
 
 ## 7. 当前落地范围
 
@@ -275,6 +372,13 @@ Presentation 不负责：
   - 结构化摘要预览：`GameObject`、`MonoBehaviour`、`AnimatorController`、`Font`、`SpriteAtlas`
   - 通用摘要回退：其余可读取资源类型
 
+本轮已完成：
+
+- 内置只读 `builtin.arknights-lz4ak` CLI，提供真实 UnityFS Probe、LZ4AK 解密和标准 AB 逆向回写。
+- Probe 以 UnityFS header、blocks-info 和数据 block 的压缩类型 / 实际解码结果为证据，不依赖文件名。
+- 外部进程 manifest 增加可选 `encryptArguments`，Application 增加窄 `IAssetBundleEncryptor` 端口。
+- SaveRebuild 在标准 writer 成功后按 artifact 的来源 decryptor 自动执行可选回写，并把 codec 身份写入导出结果与 manifest。
+
 当前明确暂不实现：
 
 - 自动识别结果的完整 UI 诊断与冲突决策流程
@@ -285,8 +389,7 @@ Presentation 不负责：
 
 建议按下面顺序继续推进：
 
-1. 明确工作区级“自动检测 / 指定解密器 / 仅直读”策略，并定义冲突处理规则
-2. 基于当前已回写的 `lastAccessedAtUtc`、已落地的 usage / LRU prune、设置页显式清理入口和偏好驱动自动触发策略，为 `cache/bundles` 补齐更细清理诊断
-3. 补齐更完整的失败诊断与自动识别结果表达
-4. 将真实导出 / 写包入口也改为优先消费标准化 artifact，而不是重新走源文件解密
-5. 最后再评估是否需要更通用的插件安装与签名机制
+1. 为自动识别冲突补用户可见诊断与显式决策入口；当前仍按命中数、置信度和稳定次序选择。
+2. 为有密钥或多 profile 的 codec 评估受控参数 / profile 持久化，禁止把密钥直接写入 artifact manifest。
+3. 基于当前 usage / LRU prune 和设置页显式清理入口，为 `cache/bundles` 补齐更细清理诊断。
+4. 最后再评估是否需要更通用的插件安装、签名和权限隔离机制。

@@ -82,6 +82,9 @@ internal sealed class PluginManagementPluginPresenter
             Detail(ResourceKeys.PluginManagementDetailVersionLabel, NormalizeVersion(entry.Definition.Version)),
             Detail(ResourceKeys.PluginManagementDetailTypeLabel, GetString(ResourceKeys.PluginManagementTypeImportDecryptor)),
             Detail(ResourceKeys.PluginManagementDetailAutoDetectionLabel, FormatBoolean(entry.Definition.SupportsAutoDetection)),
+            Detail(
+                ResourceKeys.PluginManagementDetailEncryptionLabel,
+                FormatBoolean(entry.Definition.EncryptArguments is { Count: > 0 })),
             Detail(ResourceKeys.PluginManagementDetailFallbackLabel, FormatBoolean(entry.Definition.IsFallback)),
             Detail(ResourceKeys.PluginManagementDetailTimeoutLabel, FormatTimeout(entry.Definition.TimeoutMs))
         };
@@ -90,6 +93,10 @@ internal sealed class PluginManagementPluginPresenter
         AddDetailIfPresent(details, ResourceKeys.PluginManagementDetailManifestPathLabel, entry.ManifestFilePath);
         AddDetailIfPresent(details, ResourceKeys.PluginManagementDetailProbeArgumentsLabel, JoinArguments(entry.Definition.ProbeArguments));
         AddDetailIfPresent(details, ResourceKeys.PluginManagementDetailDecryptArgumentsLabel, JoinArguments(entry.Definition.DecryptArguments));
+        AddDetailIfPresent(
+            details,
+            ResourceKeys.PluginManagementDetailEncryptArgumentsLabel,
+            JoinArguments(entry.Definition.EncryptArguments ?? Array.Empty<string>()));
 
         return new PluginManagementPluginItemViewModel(
             Id: entry.Definition.Id,

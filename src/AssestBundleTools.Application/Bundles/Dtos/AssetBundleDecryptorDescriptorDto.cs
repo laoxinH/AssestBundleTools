@@ -10,4 +10,5 @@ public sealed record AssetBundleDecryptorDescriptorDto(
     AssetBundleDecryptorKind Kind,
     bool SupportsAutoDetection,
     bool IsFallback,
-    string? Description);
+    string? Description,
+    bool SupportsEncryption = false);

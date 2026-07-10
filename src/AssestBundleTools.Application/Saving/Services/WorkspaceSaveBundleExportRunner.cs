@@ -124,7 +124,11 @@ internal sealed class WorkspaceSaveBundleExportRunner
                         OutputConflictPolicy: command.OutputConflictPolicy,
                         OriginalCompression: selectedPlan.OriginalCompression,
                         BundleSessionCacheKey: selectedPlan.ArtifactInput.BundleSessionCacheKey,
-                        AudioWriteMode: command.AudioWriteMode),
+                        AudioWriteMode: command.AudioWriteMode,
+                        WorkspaceKey: command.WorkspaceKey,
+                        WorkspaceDataRootPath: command.WorkspaceDataRootPath,
+                        SourceCodecId: selectedPlan.ArtifactInput.SourceCodecId,
+                        SourceCodecVersion: selectedPlan.ArtifactInput.SourceCodecVersion),
                     cancellationToken);
 
                 if (exportResult.IsCancelled)
@@ -221,7 +225,9 @@ internal sealed class WorkspaceSaveBundleExportRunner
             ProcessorResults: exportResult.ProcessorResults,
             CompressionMode: exportResult.CompressionMode,
             OriginalCompression: exportResult.OriginalCompression,
-            WrittenCompression: exportResult.WrittenCompression);
+            WrittenCompression: exportResult.WrittenCompression,
+            OutputCodecId: exportResult.OutputCodecId,
+            OutputCodecVersion: exportResult.OutputCodecVersion);
 
     private static WorkspaceSaveBundleExecutionResultDto CreateFailedBundleResult(
         PlannedWorkspaceBundleSave selectedPlan,

@@ -14,4 +14,5 @@ public sealed record AssetBundleDecryptorDefinitionDto(
     string? WorkingDirectoryPath,
     int TimeoutMs,
     IReadOnlyList<string> ProbeArguments,
-    IReadOnlyList<string> DecryptArguments);
+    IReadOnlyList<string> DecryptArguments,
+    IReadOnlyList<string>? EncryptArguments = null);

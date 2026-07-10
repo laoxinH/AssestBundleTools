@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Text.Json;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Common.Messages;
@@ -16,28 +14,32 @@ namespace AssestBundleTools.Infrastructure.Bundles.Decryption;
 /// 当前实现不关心外部工具使用 Python、.NET 或其他语言，
 /// 主程序只负责传递标准化的文件路径和读取结果文件。
 /// </remarks>
-internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecryptor
+internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecryptor, IAssetBundleEncryptor
 {
     private readonly AssetBundleExternalProcessDecryptorManifest _manifest;
     private readonly string _manifestDirectoryPath;
+    private readonly ExternalAssetBundleCodecProcessRunner _processRunner;
 
     internal ExternalProcessAssetBundleDecryptor(
         AssetBundleExternalProcessDecryptorManifest manifest,
-        string manifestDirectoryPath)
+        string manifestDirectoryPath,
+        AssetBundleDecryptorKind kind = AssetBundleDecryptorKind.ExternalProcess)
     {
         _manifest = manifest ?? throw new ArgumentNullException(nameof(manifest));
         _manifestDirectoryPath = string.IsNullOrWhiteSpace(manifestDirectoryPath)
             ? throw new ArgumentException("Manifest directory path is required.", nameof(manifestDirectoryPath))
             : Path.GetFullPath(manifestDirectoryPath);
+        _processRunner = new ExternalAssetBundleCodecProcessRunner(_manifest, _manifestDirectoryPath);
 
         Descriptor = new AssetBundleDecryptorDescriptorDto(
             Id: _manifest.Id,
             DisplayName: _manifest.DisplayName,
             Version: _manifest.Version,
-            Kind: AssetBundleDecryptorKind.ExternalProcess,
+            Kind: kind,
             SupportsAutoDetection: _manifest.SupportsAutoDetection,
             IsFallback: _manifest.IsFallback,
-            Description: _manifest.Description);
+            Description: _manifest.Description,
+            SupportsEncryption: _manifest.EncryptArguments.Count > 0);
     }
 
     public AssetBundleDecryptorDescriptorDto Descriptor { get; }
@@ -67,7 +69,7 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
             workingDirectoryPath,
             $"{ExternalProcessAssetBundleDecryptorSupport.SanitizeFileComponent(_manifest.Id)}.probe.{Guid.NewGuid():N}.json");
 
-        var executionResult = await ExecuteProcessAsync(
+        var executionResult = await _processRunner.ExecuteAsync(
             arguments: _manifest.ProbeArguments,
             sourcePath: request.SourcePath,
             outputPath: string.Empty,
@@ -115,7 +117,9 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
                 Confidence: Math.Clamp(payload.Confidence, 0, 100),
                 DiagnosticMessage: string.IsNullOrWhiteSpace(payload.Message)
                     ? null
-                    : new LocalizedMessageDto(FallbackText: payload.Message.Trim()));
+                    : new LocalizedMessageDto(FallbackText: payload.Message.Trim()),
+                FormatId: string.IsNullOrWhiteSpace(payload.FormatId) ? null : payload.FormatId.Trim(),
+                Evidence: NormalizeEvidence(payload.Evidence));
         }
         finally
         {
@@ -148,8 +152,9 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
         var outputFilePath = Path.Combine(
             workingDirectoryPath,
             ResolveOutputFileName(request.SourcePath, request.PreferredOutputFileName));
+        ExternalProcessAssetBundleDecryptorSupport.DeleteFileIfExists(outputFilePath);
 
-        var executionResult = await ExecuteProcessAsync(
+        var executionResult = await _processRunner.ExecuteAsync(
             arguments: _manifest.DecryptArguments,
             sourcePath: request.SourcePath,
             outputPath: outputFilePath,
@@ -195,6 +200,13 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
             var resolvedOutputPath = string.IsNullOrWhiteSpace(payload.OutputPath)
                 ? outputFilePath
                 : ExternalProcessAssetBundleDecryptorSupport.ResolvePath(payload.OutputPath, workingDirectoryPath);
+            if (!ExternalProcessAssetBundleDecryptorSupport.PathsEqual(resolvedOutputPath, outputFilePath) &&
+                !ExternalProcessAssetBundleDecryptorSupport.IsPathWithinOrEqual(resolvedOutputPath, workingDirectoryPath))
+            {
+                return Result<AssetBundleDecryptionResultDto>.Failure(
+                    ApplicationErrors.BundleDecryptionInvalidResult(Descriptor.Id, "OutputPathOutsideWorkingDirectory"));
+            }
+
             if (!File.Exists(resolvedOutputPath))
             {
                 return Result<AssetBundleDecryptionResultDto>.Failure(
@@ -218,128 +230,102 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
         }
     }
 
-    private async Task<ExternalProcessExecutionResult> ExecuteProcessAsync(
-        IReadOnlyList<string> arguments,
-        string sourcePath,
-        string outputPath,
-        string resultPath,
-        string workspaceKey,
-        string workspaceDataRootPath,
-        string workingDirectoryPath,
-        CancellationToken cancellationToken)
+    public async Task<Result<AssetBundleEncryptionResultDto>> EncryptAsync(
+        AssetBundleEncryptionRequestDto request,
+        CancellationToken cancellationToken = default)
     {
-        Process? process = null;
-        CancellationTokenSource? timeoutCancellationTokenSource = null;
-        CancellationTokenSource? linkedCancellationTokenSource = null;
+        ArgumentNullException.ThrowIfNull(request);
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.SourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.OutputPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.WorkspaceKey);
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.WorkspaceDataRootPath);
+
+        if (_manifest.EncryptArguments.Count == 0)
+        {
+            return Result<AssetBundleEncryptionResultDto>.Failure(
+                ApplicationErrors.BundleExportCodecEncryptionUnsupported(Descriptor.Id));
+        }
+
+        var workingDirectoryPath = ResolveEncryptionWorkingDirectory(request);
+        Directory.CreateDirectory(workingDirectoryPath);
+        var resultFilePath = Path.Combine(
+            workingDirectoryPath,
+            $"{ExternalProcessAssetBundleDecryptorSupport.SanitizeFileComponent(_manifest.Id)}.encrypt.{Guid.NewGuid():N}.json");
+        var outputFilePath = Path.GetFullPath(request.OutputPath);
+        Directory.CreateDirectory(Path.GetDirectoryName(outputFilePath) ?? workingDirectoryPath);
+        ExternalProcessAssetBundleDecryptorSupport.DeleteFileIfExists(outputFilePath);
+
+        var executionResult = await _processRunner.ExecuteAsync(
+            arguments: _manifest.EncryptArguments,
+            sourcePath: request.SourcePath,
+            outputPath: outputFilePath,
+            resultPath: resultFilePath,
+            workspaceKey: request.WorkspaceKey,
+            workspaceDataRootPath: request.WorkspaceDataRootPath,
+            workingDirectoryPath: workingDirectoryPath,
+            cancellationToken: cancellationToken);
 
         try
         {
-            process = new Process();
-            process.StartInfo.FileName = ExternalProcessAssetBundleDecryptorSupport.ResolveExecutablePath(_manifest.ExecutablePath, _manifestDirectoryPath);
-            process.StartInfo.WorkingDirectory = workingDirectoryPath;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = true;
-            process.StartInfo.RedirectStandardError = true;
-            process.StartInfo.RedirectStandardOutput = true;
-
-            foreach (var argument in ExpandArguments(
-                         arguments,
-                         sourcePath,
-                         outputPath,
-                         resultPath,
-                         workspaceKey,
-                         workspaceDataRootPath))
+            if (!executionResult.IsSuccess)
             {
-                process.StartInfo.ArgumentList.Add(argument);
+                return Result<AssetBundleEncryptionResultDto>.Failure(
+                    CreateEncryptionExecutionError(executionResult));
             }
 
-            process.Start();
-
-            if (_manifest.TimeoutMs > 0)
+            if (!File.Exists(resultFilePath))
             {
-                timeoutCancellationTokenSource = new CancellationTokenSource(_manifest.TimeoutMs);
-                linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
-                    cancellationToken,
-                    timeoutCancellationTokenSource.Token);
+                return Result<AssetBundleEncryptionResultDto>.Failure(
+                    ApplicationErrors.BundleExportCodecResultFileMissing(Descriptor.Id));
             }
 
-            var effectiveCancellationToken = linkedCancellationTokenSource?.Token ?? cancellationToken;
-            var standardOutputTask = process.StandardOutput.ReadToEndAsync(effectiveCancellationToken);
-            var standardErrorTask = process.StandardError.ReadToEndAsync(effectiveCancellationToken);
-            await process.WaitForExitAsync(effectiveCancellationToken);
-
-            var standardOutput = await standardOutputTask;
-            var standardError = await standardErrorTask;
-
-            if (process.ExitCode != 0)
+            var payload = ExternalProcessAssetBundleDecryptorSupport
+                .ReadJsonFile<AssetBundleExternalProcessDecryptPayload>(resultFilePath);
+            if (payload is null)
             {
-                var detail = string.IsNullOrWhiteSpace(standardError)
-                    ? standardOutput
-                    : standardError;
-                return new ExternalProcessExecutionResult(
-                    IsSuccess: false,
-                    Detail: string.IsNullOrWhiteSpace(detail) ? null : detail.Trim(),
-                    FailureKind: ExternalProcessExecutionFailureKind.ProcessExited,
-                    ExitCode: process.ExitCode);
+                return Result<AssetBundleEncryptionResultDto>.Failure(
+                    ApplicationErrors.BundleExportCodecResultFileInvalid(Descriptor.Id));
             }
 
-            return new ExternalProcessExecutionResult(
-                IsSuccess: true,
-                Detail: null,
-                FailureKind: ExternalProcessExecutionFailureKind.None,
-                ExitCode: 0);
-        }
-        catch (OperationCanceledException)
-            when (timeoutCancellationTokenSource is not null &&
-                  timeoutCancellationTokenSource.IsCancellationRequested &&
-                  !cancellationToken.IsCancellationRequested)
-        {
-            ExternalProcessAssetBundleDecryptorSupport.TryTerminateProcess(process);
-            return new ExternalProcessExecutionResult(
-                IsSuccess: false,
-                Detail: null,
-                FailureKind: ExternalProcessExecutionFailureKind.TimedOut,
-                ExitCode: 0);
-        }
-        catch (OperationCanceledException)
-        {
-            ExternalProcessAssetBundleDecryptorSupport.TryTerminateProcess(process);
-            throw;
-        }
-        catch (Exception)
-        {
-            ExternalProcessAssetBundleDecryptorSupport.TryTerminateProcess(process);
-            return new ExternalProcessExecutionResult(
-                IsSuccess: false,
-                Detail: null,
-                FailureKind: ExternalProcessExecutionFailureKind.Exception,
-                ExitCode: 0);
+            if (!payload.IsSuccess)
+            {
+                return Result<AssetBundleEncryptionResultDto>.Failure(
+                    ApplicationErrors.BundleExportCodecEncryptionFailed(
+                        Descriptor.Id,
+                        string.IsNullOrWhiteSpace(payload.Message) ? null : payload.Message.Trim()));
+            }
+
+            var resolvedOutputPath = string.IsNullOrWhiteSpace(payload.OutputPath)
+                ? outputFilePath
+                : ExternalProcessAssetBundleDecryptorSupport.ResolvePath(payload.OutputPath, workingDirectoryPath);
+            if (!ExternalProcessAssetBundleDecryptorSupport.PathsEqual(resolvedOutputPath, outputFilePath) &&
+                !ExternalProcessAssetBundleDecryptorSupport.IsPathWithinOrEqual(resolvedOutputPath, workingDirectoryPath))
+            {
+                return Result<AssetBundleEncryptionResultDto>.Failure(
+                    ApplicationErrors.BundleExportCodecResultFileInvalid(
+                        Descriptor.Id,
+                        "OutputPathOutsideWorkingDirectory"));
+            }
+
+            if (!File.Exists(resolvedOutputPath))
+            {
+                return Result<AssetBundleEncryptionResultDto>.Failure(
+                    ApplicationErrors.BundleExportCodecOutputMissing(Descriptor.Id));
+            }
+
+            return Result<AssetBundleEncryptionResultDto>.Success(
+                new AssetBundleEncryptionResultDto(
+                    Encryptor: Descriptor,
+                    ResolvedBundlePath: resolvedOutputPath,
+                    BundleFingerprint: AssetBundleFileFingerprintFactory.Create(resolvedOutputPath),
+                    DiagnosticMessage: string.IsNullOrWhiteSpace(payload.Message)
+                        ? null
+                        : new LocalizedMessageDto(FallbackText: payload.Message.Trim())));
         }
         finally
         {
-            linkedCancellationTokenSource?.Dispose();
-            timeoutCancellationTokenSource?.Dispose();
-            process?.Dispose();
-        }
-    }
-
-    private IEnumerable<string> ExpandArguments(
-        IReadOnlyList<string> arguments,
-        string sourcePath,
-        string outputPath,
-        string resultPath,
-        string workspaceKey,
-        string workspaceDataRootPath)
-    {
-        foreach (var argument in arguments)
-        {
-            yield return argument
-                .Replace("{inputPath}", Path.GetFullPath(sourcePath), StringComparison.Ordinal)
-                .Replace("{outputPath}", outputPath, StringComparison.Ordinal)
-                .Replace("{resultPath}", resultPath, StringComparison.Ordinal)
-                .Replace("{workspaceKey}", workspaceKey, StringComparison.Ordinal)
-                .Replace("{workspaceDataRootPath}", workspaceDataRootPath, StringComparison.Ordinal)
-                .Replace("{manifestDirectory}", _manifestDirectoryPath, StringComparison.Ordinal);
+            ExternalProcessAssetBundleDecryptorSupport.DeleteFileIfExists(resultFilePath);
         }
     }
 
@@ -347,7 +333,8 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
         string sourcePath,
         string? workspaceKey,
         string? workspaceDataRootPath,
-        string? requestWorkingDirectoryPath = null)
+        string? requestWorkingDirectoryPath = null,
+        string stageDirectoryName = "decrypt")
     {
         if (!string.IsNullOrWhiteSpace(requestWorkingDirectoryPath)) return Path.GetFullPath(requestWorkingDirectoryPath);
         if (!string.IsNullOrWhiteSpace(_manifest.WorkingDirectoryPath)) return ExternalProcessAssetBundleDecryptorSupport.ResolvePath(_manifest.WorkingDirectoryPath, _manifestDirectoryPath);
@@ -358,13 +345,13 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
             return Path.Combine(
                 Path.GetFullPath(workspaceDataRootPath),
                 "staging",
-                "decrypt");
+                stageDirectoryName);
         }
 
         return Path.Combine(
             Path.GetTempPath(),
             "AssestBundleTools",
-            "decrypt");
+            stageDirectoryName);
     }
 
     private string ResolveDecryptionWorkingDirectory(AssetBundleDecryptionRequestDto request)
@@ -384,6 +371,23 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
     {
         if (!string.IsNullOrWhiteSpace(request.BundleCacheKey)) return ExternalProcessAssetBundleDecryptorSupport.SanitizeDirectoryComponent(request.BundleCacheKey);
         return ExternalProcessAssetBundleDecryptorSupport.ComputeStableSourcePathKey(request.SourcePath);
+    }
+
+    private string ResolveEncryptionWorkingDirectory(AssetBundleEncryptionRequestDto request)
+    {
+        var rootDirectoryPath = ResolveWorkingDirectory(
+            request.SourcePath,
+            request.WorkspaceKey,
+            request.WorkspaceDataRootPath,
+            request.WorkingDirectoryPath,
+            stageDirectoryName: "encrypt");
+        return Path.Combine(
+            rootDirectoryPath,
+            ExternalProcessAssetBundleDecryptorSupport.SanitizeDirectoryComponent(request.WorkspaceKey),
+            ExternalProcessAssetBundleDecryptorSupport.SanitizeDirectoryComponent(_manifest.Id),
+            string.IsNullOrWhiteSpace(request.BundleCacheKey)
+                ? ExternalProcessAssetBundleDecryptorSupport.ComputeStableSourcePathKey(request.SourcePath)
+                : ExternalProcessAssetBundleDecryptorSupport.SanitizeDirectoryComponent(request.BundleCacheKey));
     }
 
     private static string ResolveOutputFileName(string sourcePath, string? preferredOutputFileName)
@@ -416,6 +420,32 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
             _ => null
         };
     }
+
+    private AppError CreateEncryptionExecutionError(ExternalProcessExecutionResult executionResult)
+    {
+        return executionResult.FailureKind switch
+        {
+            ExternalProcessExecutionFailureKind.ProcessExited
+                when string.IsNullOrWhiteSpace(executionResult.Detail) =>
+                ApplicationErrors.BundleExportCodecProcessExited(
+                    Descriptor.Id,
+                    executionResult.ExitCode),
+            ExternalProcessExecutionFailureKind.TimedOut =>
+                ApplicationErrors.BundleExportCodecTimedOut(Descriptor.Id, _manifest.TimeoutMs),
+            ExternalProcessExecutionFailureKind.Exception =>
+                ApplicationErrors.BundleExportCodecExecutionFailed(Descriptor.Id),
+            _ => ApplicationErrors.BundleExportCodecEncryptionFailed(
+                Descriptor.Id,
+                executionResult.Detail)
+        };
+    }
+
+    private static IReadOnlyList<string> NormalizeEvidence(IReadOnlyList<string>? evidence) =>
+        (evidence ?? Array.Empty<string>())
+        .Where(static item => !string.IsNullOrWhiteSpace(item))
+        .Select(static item => item.Trim())
+        .Distinct(StringComparer.Ordinal)
+        .ToArray();
 
     private LocalizedMessageDto? CreateProbeExecutionMessage(ExternalProcessExecutionResult executionResult)
     {

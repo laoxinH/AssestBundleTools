@@ -12,4 +12,6 @@ public sealed record WorkspaceImportDecryptorProbeDiagnosticDto(
     int SuccessfulProbeCount,
     int TotalConfidence,
     bool WasSelected,
-    IReadOnlyList<LocalizedMessageDto> SampleMessages);
+    IReadOnlyList<LocalizedMessageDto> SampleMessages,
+    IReadOnlyList<string>? DetectedFormatIds = null,
+    IReadOnlyList<string>? Evidence = null);

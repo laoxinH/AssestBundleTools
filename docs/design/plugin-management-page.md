@@ -10,7 +10,7 @@
 
 ### 2.1 纳入范围
 
-- 导入解密插件：现有 `IAssetBundleDecryptor / IAssetBundleDecryptorRegistry`、外部进程解密器 manifest、用户可管理解密器目录项。
+- 导入解密插件：现有 `IAssetBundleDecryptor / IAssetBundleDecryptorRegistry`、可选 `IAssetBundleEncryptor`、外部进程解密器 manifest、用户可管理解密器目录项。
 - 导出资源处理插件：保存为新包 / 工作区导出时按资源类型选择的 CLI 预处理器。
 - 插件发现、列表、搜索、按类型筛选、查看详情、新增、编辑、删除、刷新、复制诊断信息。
 - 插件可用性诊断：manifest 是否可读、必填字段是否完整、可执行文件是否可解析、是否只读、是否支持自动识别或指定资源类型。
@@ -150,8 +150,8 @@ executable ...
 
 - id、显示名称、版本、描述。
 - manifest 路径、可执行路径、工作目录。
-- timeout、probe 参数、decrypt 参数。
-- 是否支持自动识别、是否 fallback、是否只读。
+- timeout、probe 参数、decrypt 参数、可选 encrypt 参数。
+- 是否支持自动识别、是否支持导出回写、是否 fallback、是否只读。
 - 最近一次验证诊断。
 
 操作：
@@ -271,6 +271,8 @@ WorkspaceExportDialogViewModel 选择资源包与每类处理器
   -> 保存写包继续消费处理后的载荷
 ```
 
+带 Encrypt 能力的同一目录项还会在 SaveRebuild 标准写包完成后作为来源 bundle codec 使用。它不是“导出处理”资源槽：导出资源处理器处理 Texture2D / Audio 等单项载荷，来源 codec 处理完整 AB 文件。插件管理页应在导入解密详情中展示 `支持导出回写`，并允许用户管理项维护 `encryptArguments`。
+
 真实导出 / 保存重建阶段的完整多线程设计、处理器执行阶段、AB 写包阶段和 `_abt-bundle-export-manifest.json` 输出契约见 [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md)。插件管理页只维护资源处理器 catalog；处理器并发、失败是否阻断 bundle、取消终止、处理后载荷如何进入写包，都属于 Application 导出用例与 Infrastructure 执行端口职责。
 
 资源处理器的失败语义必须结构化：
@@ -349,6 +351,12 @@ Presentation 不得：
 - 插件管理页支持新增、编辑和删除用户管理的导出资源处理器；编辑器按当前稳定资源类型槽选择 `resourceKinds`，并按每行一个参数维护 `processArguments`。
 - 工作区导出窗口已改为从资源处理器 catalog 按资源类型槽加载可用处理器，显示真实 catalog 名称与说明，并保留“无处理器”选项。
 - 已补 Shell / 设置页迁移 / 导出窗口 catalog 消费 / Application catalog 查询的回归测试与本地化资源。
+
+本轮已完成扩展：
+
+- 解密器 manifest 增加可选 `encryptArguments`，旧 manifest 继续兼容。
+- 内置只读 Arknights LZ4AK CLI 作为导入解密目录项展示，并同时声明自动识别与导出回写能力。
+- 解密器编辑器增加可选 encrypt 参数；为空表示仅支持导入。
 
 仍待后续阶段：
 

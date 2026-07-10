@@ -2,7 +2,7 @@
 
 ## 1. 文档目的
 
-本文档定义工作区导出窗口进入真实 AB 输出后的应用层流程、后台任务边界、多线程策略、导出资源处理器执行协议、AB 写包并发策略，以及输出完成后写出的 AB 导出修改清单 JSON。
+本文档定义工作区导出窗口进入真实 AB 输出后的应用层流程、后台任务边界、多线程策略、导出资源处理器执行协议、AB 写包并发策略、来源 bundle codec 回写，以及输出完成后写出的 AB 导出修改清单 JSON。
 
 这里的“工作区导出”指用户在当前工作区中选择已修改资源包，应用工作区替换 / 编辑 / 资源处理器结果后，保存为新的 AssetBundle 文件。它与普通资源批量提取不同：批量提取输出 PNG / 文本 / OBJ / JSON 等外部资源文件，当前真实导出输出的是修改后的 AB 文件。
 
@@ -26,6 +26,7 @@
 - 对象级 writer 已覆盖 `AudioClip` 外部流写回：写包端优先消费资源处理器输出，默认从原始 `m_AudioData` 或 `m_Resource` 头部识别音频容器，并要求替换载荷容器与原容器一致，再将数据追加到原 bundle 内 `.resS / .resource` 条目末尾，更新 `m_Resource.m_Source / m_Offset / m_Size` 并清空内联音频数据。原容器未知或容器不一致会稳定失败；导出窗口提供“强制写入音频载荷”风险选项，启用后可跳过原容器匹配写入已知替换容器，同时提示输出 AB 可能无法被 Unity 正确播放。
 - Infrastructure catalog 已提供内置 `resource.processor.audio.fmod-fsb5` 资源处理器：运行目录中存在内置 wrapper 且能发现 `fsbankcl.exe` 时标记为可用，按既有 CLI 协议把音频替换源编码为 FSB5；缺失 FMOD CLI 时该处理器保持不可用，用户仍可通过插件管理页配置自定义音频处理器。该处理器适用于原始容器为 FSB5 的目标或用户明确需要转码的场景，不再是 WAV 等原容器可直接匹配写入时的强制前置条件。
 - AB 导出 manifest 已记录每个 bundle 的资源处理器结果摘要，包括资源类型、处理器 id、状态、输入 / 成功 / 失败计数、result JSON 路径和诊断。
+- bundle artifact 已保留实际 `decryptorId / decryptorVersion`；本轮在 writer 生成标准 AB 后，若同版本来源解密器实现可选 `IAssetBundleEncryptor`，会先回写游戏格式再校验、提升和计算输出 hash，并在 manifest 记录 output codec 身份。
 - 工作区导出窗口会在资源处理器槽启用状态或选择、是否导出到工作区输出目录、是否覆盖同名文件、压缩策略、音频写入模式发生变化时，立即保存到当前工作区 metadata 中，不依赖用户点击“开始导出”；下次打开同一工作区时恢复。首次默认只勾选“最近修改”资源包，且“导出到工作区输出目录”和“覆盖已有同名文件”均不默认勾选。
 - 工作区导出窗口摘要区会显示同一 `SaveRebuild` 后台任务的进度文本和进度条；执行中窗口内取消按钮必须调用后台任务取消句柄，而不是只关闭导出窗口。
 
@@ -46,6 +47,7 @@ WorkspaceExportWindow 收集选择
   -> SaveExecutionStarted 操作记录
   -> 资源处理器阶段，跨 bundle / resource item 受控并行
   -> AB 写包阶段，跨 bundle 受控并行，同 bundle 单 writer
+  -> 可选来源 codec 回写，仍属于同 bundle writer 原子边界
   -> 输出 AB 导出修改清单 JSON
   -> SaveExecutionCompleted / Failed 操作记录与检查点
   -> Presentation 消费任务结果；检查点落地后再广播已提交操作通知
@@ -60,6 +62,7 @@ WorkspaceExportWindow 收集选择
 5. 资源处理器可以跨资源包和资源项并行，但必须使用有界并发、独立 staging 路径和结构化结果。
 6. 批量导出以“单 bundle 原子、整批可部分成功”为第一版策略；失败 bundle 不标记为已提交检查点。
 7. 新增 AB 导出 manifest 与普通资源提取的 `_abt-export-manifest.json` 分开，避免两个场景互相误读。
+8. bundle codec 回写处理整个 writer 输出，不属于按资产类型执行的资源处理器；两者不得共用选择槽或 work item。
 
 ## 4. 分层职责
 
@@ -107,6 +110,7 @@ Infrastructure 负责：
 - 为每次处理器调用创建唯一 `inputPath / outputPath / resultPath` staging 文件。
 - 解析处理器 result JSON，捕获 stdout / stderr 作为诊断明细。
 - 通过真实 AB Reader / Writer 消费标准化 artifact、有效替换载荷和处理器输出，生成新的 AB 文件。
+- 在标准 writer 输出后按保存计划给出的来源 codec 身份执行可选 Encrypt；不在 Infrastructure 重新探测输出格式。
 - 写临时输出、验证大小 / hash、按策略原子提升到最终路径。
 - 原子写出 `_abt-bundle-export-manifest.json`。
 
@@ -344,6 +348,8 @@ WorkspaceBundleWriteWorkItem
   tempOutputFilePath
   effectiveAssetChanges[]
   processorOutputs[]
+  sourceCodecId?
+  sourceCodecVersion?
 ```
 
 写包端口建议在 Application 中定义：
@@ -354,6 +360,15 @@ IWorkspaceBundleExporter
 ```
 
 Infrastructure 的当前实现已经在同一端口内消费标准化 artifact、有效变更载荷和处理器输出。写包器按 `WorkspaceBundleAssetWriteItemDto` 中的对象身份查找 serialized file 与 path id，调用 AssetsTools replacer 修改对象；未压缩目标直接 `Write`，压缩目标先 `Write` 出带 replacer 的未压缩临时 bundle，再读回并按请求压缩格式 `Pack` 到最终临时文件。真实样本验证显示，直接对原始压缩 `AssetBundleFile` 执行 `Pack` 不会消费 replacer，导出内容会保持旧对象数据；因此当前未压缩中间文件是保证对象级替换真实生效的写包物化步骤。该临时文件写入系统临时目录，不暴露在用户选择的导出目录；默认请求压缩格式为保持原压缩，用户可显式选择 `LZMA / LZ4 / LZ4Fast / Uncompressed`。`Texture2D` 写入会先尝试按原纹理格式编码；若原格式编码器不支持，则回退到 `RGBA32`，保持“能导出真实替换内容”优先。Application 只消费结构化结果。
+
+来源 codec 回写规则：
+
+- 保存计划从现有 bundle index / artifact 身份读取 `decryptorId / decryptorVersion`，与标准化 artifact 路径一起透传给 writer 端口。
+- `PassThrough` 或不支持 Encrypt 的旧插件直接提升标准 writer 输出。
+- 同 id、同 version 且实现 `IAssetBundleEncryptor` 的来源插件默认在标准 writer 输出后执行 Encrypt。
+- codec 声明支持 Encrypt，但实现缺失、版本不一致、进程失败、result JSON 非法或输出缺失时，当前 bundle 失败，不提升标准临时文件。
+- 标准 writer 临时文件和 codec 输出临时文件都必须在失败 / 取消后清理；最终目标仍保持单 bundle 原子提升。
+- `WrittenCompression` 描述进入 codec 前的标准 AB 压缩策略；`OutputCodecId / OutputCodecVersion` 描述最终文件的来源格式回写，两个维度不能合并成一个字符串。
 
 加载链路约束：
 
@@ -398,6 +413,7 @@ BundleWriterWorkerCount
 - 最后写入时间。
 - MD5。
 - SHA-256。
+- 可选 `outputCodecId / outputCodecVersion`。
 
 MD5 用于与已有批量替换 manifest 的轻量变更判定习惯保持一致；SHA-256 用于后续传给外部应用 / 插件时提供更稳的内容身份。
 
@@ -449,6 +465,10 @@ Bundle.Save.ResourceProcessor.UnsupportedResourceKind
 Bundle.Save.ResourceProcessor.ExecutionFailed
 Bundle.Save.ResourceProcessor.ResultInvalid
 Bundle.Save.WriteFailed
+Bundle.Save.Codec.NotFound
+Bundle.Save.Codec.VersionMismatch
+Bundle.Save.Codec.EncryptionUnsupported
+Bundle.Save.Codec.EncryptionFailed
 Export.Bundle.OutputValidationFailed
 Export.Manifest.WriteFailed
 Export.Operation.CommitFailed
@@ -509,6 +529,8 @@ Writer 诊断 detail 应包含失败阶段，例如 `load-bundle / apply-changes
       "compressionMode": "PreserveOriginal",
       "originalCompression": "LZMA",
       "writtenCompression": "LZMA",
+      "outputCodecId": "builtin.arknights-lz4ak",
+      "outputCodecVersion": "1.0.0",
       "checkpointId": "checkpoint-id",
       "changeCounts": {
         "total": 3,
@@ -549,6 +571,7 @@ Writer 诊断 detail 应包含失败阶段，例如 `load-bundle / apply-changes
 - `outputRelativePath` 是相对 `outputRoot` 的稳定路径，供外部工具迁移目录时使用。
 - `outputPath` 是本机绝对路径，方便同机后处理插件直接执行。
 - `sourceArtifactPath` 可以帮助诊断，但外部工具不得把它当作可修改源。
+- `outputCodecId / outputCodecVersion` 仅在最终文件确实经过来源 codec 回写后存在；为空表示最终文件是标准 AB。
 - `checkpointId` 只对成功 bundle 存在；失败 bundle 不应伪造检查点。
 - `diagnostics[]` 使用稳定 `code / severity / parameters`，可选保留外部工具 fallback message。
 
@@ -599,6 +622,7 @@ Infrastructure 回归优先覆盖：
 
 - 资源处理器 result JSON 解析、非法路径拒绝、stdout / stderr 诊断捕获和超时终止。
 - 当前第一阶段覆盖空对象写入拒绝、真实样本 TextAsset / Texture2D / Sprite / AudioClip 对象级写入后读回、Texture2D ASTC 回退、AudioClip 按原容器匹配写入 `.resS / .resource`、容器不匹配拒绝和强制写入风险分支、同目录临时文件提升、MD5 / SHA-256 记录、资源处理器 result JSON 解析、内置 FMOD wrapper 协议和 AB 导出 manifest 原子写入。
+- bundle codec 回归应覆盖：来源 codec 身份透传、同版本可选 Encrypt 调用、版本不一致 / 能力缺失失败、最终 hash 基于加密后文件，以及 Arknights 真实样本 `Probe -> Decrypt` 和 `标准 AB -> Encrypt -> Decrypt` 回环。
 - 后续补目标已存在 blocker、确认覆盖后的替换路径、workspace replacement 的真实样本回归和更多 AssetsTools Writer 类型。
 
 Presentation 回归优先覆盖：

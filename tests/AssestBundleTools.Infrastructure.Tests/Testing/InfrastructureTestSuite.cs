@@ -259,6 +259,10 @@ internal static class InfrastructureTestSuite
             FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTextAssetObject_WhenRealSampleBundleIsAvailable);
         await RunTestAsync(
             failures,
+            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldApplySourceCodec_AfterStandardObjectWrite),
+            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldApplySourceCodec_AfterStandardObjectWrite);
+        await RunTestAsync(
+            failures,
             nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldReplaceExistingOutput_WhenOverwriteIsEnabled),
             FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldReplaceExistingOutput_WhenOverwriteIsEnabled);
         await RunTestAsync(
@@ -607,12 +611,28 @@ internal static class InfrastructureTestSuite
             AssetsToolsMeshTopologyBuilderTests.BuildTriangles_ShouldSkipIndicesOutsidePreviewVertexRange);
         await RunTestAsync(
             failures,
+            nameof(ExternalProcessAssetBundleDecryptorTests.RegistryAndCatalog_ShouldExposeBuiltInArknightsCodec_AsReadOnlyEncryptor),
+            ExternalProcessAssetBundleDecryptorTests.RegistryAndCatalog_ShouldExposeBuiltInArknightsCodec_AsReadOnlyEncryptor);
+        await RunTestAsync(
+            failures,
             nameof(ExternalProcessAssetBundleDecryptorTests.DecryptAsync_ShouldUseBundleScopedWorkspaceStagingPath_WhenWorkspaceDataRootIsProvided),
             ExternalProcessAssetBundleDecryptorTests.DecryptAsync_ShouldUseBundleScopedWorkspaceStagingPath_WhenWorkspaceDataRootIsProvided);
         await RunTestAsync(
             failures,
             nameof(ExternalProcessAssetBundleDecryptorTests.DecryptAsync_ShouldAppendUniqueSegments_WhenCustomWorkingDirectoryIsProvided),
             ExternalProcessAssetBundleDecryptorTests.DecryptAsync_ShouldAppendUniqueSegments_WhenCustomWorkingDirectoryIsProvided);
+        await RunTestAsync(
+            failures,
+            nameof(ExternalProcessAssetBundleDecryptorTests.EncryptAsync_ShouldRunOptionalEncryptCommand_AndReturnRequestedOutput),
+            ExternalProcessAssetBundleDecryptorTests.EncryptAsync_ShouldRunOptionalEncryptCommand_AndReturnRequestedOutput);
+        await RunTestAsync(
+            failures,
+            nameof(ArknightsBundleCodecTests.EncryptAndDecrypt_ShouldRoundTripSyntheticUnityFsBundle),
+            ArknightsBundleCodecTests.EncryptAndDecrypt_ShouldRoundTripSyntheticUnityFsBundle);
+        await RunTestAsync(
+            failures,
+            nameof(ArknightsBundleCodecTests.ProbeAndRoundTrip_ShouldHandleRealLz4AkSample_WhenAvailable),
+            ArknightsBundleCodecTests.ProbeAndRoundTrip_ShouldHandleRealLz4AkSample_WhenAvailable);
         await RunTestAsync(
             failures,
             nameof(FileSystemResourceProcessorCatalogStoreTests.Load_ShouldIncludeBuiltInSlots_AndUserManagedProcessors),

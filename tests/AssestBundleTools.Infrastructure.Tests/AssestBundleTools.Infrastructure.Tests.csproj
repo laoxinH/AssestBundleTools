@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\AssestBundleTools.BundleCodec.Arknights\AssestBundleTools.BundleCodec.Arknights.csproj" />
     <ProjectReference Include="..\..\src\AssestBundleTools.Infrastructure\AssestBundleTools.Infrastructure.csproj" />
   </ItemGroup>
 

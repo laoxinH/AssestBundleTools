@@ -77,8 +77,11 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
         DecryptorTimeoutTextBox.Text = entry.Definition.TimeoutMs.ToString(System.Globalization.CultureInfo.CurrentCulture);
         SupportsAutoDetectionCheckBox.IsChecked = entry.Definition.SupportsAutoDetection;
         IsFallbackCheckBox.IsChecked = entry.Definition.IsFallback;
-        DecryptorProbeArgumentsTextBox.Text = string.Join(Environment.NewLine, entry.Definition.ProbeArguments);
-        DecryptorDecryptArgumentsTextBox.Text = string.Join(Environment.NewLine, entry.Definition.DecryptArguments);
+        ArgumentsEditor.ProbeArguments = string.Join(Environment.NewLine, entry.Definition.ProbeArguments);
+        ArgumentsEditor.DecryptArguments = string.Join(Environment.NewLine, entry.Definition.DecryptArguments);
+        ArgumentsEditor.EncryptArguments = string.Join(
+            Environment.NewLine,
+            entry.Definition.EncryptArguments ?? Array.Empty<string>());
     }
 
     public bool TryCreateCommand(out UpsertAssetBundleDecryptorCommand? command)
@@ -91,7 +94,7 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
         var displayName = DecryptorDisplayNameTextBox.Text.Trim();
         var executablePath = DecryptorExecutablePathTextBox.Text.Trim();
         var timeoutText = DecryptorTimeoutTextBox.Text.Trim();
-        var decryptArguments = SplitArguments(DecryptorDecryptArgumentsTextBox.Text);
+        var decryptArguments = SplitArguments(ArgumentsEditor.DecryptArguments);
 
         if (string.IsNullOrWhiteSpace(decryptorId))
         {
@@ -137,9 +140,7 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
         {
             hasValidationError = true;
             firstInvalidStep = FirstInvalidStep(firstInvalidStep, ArgumentsStepIndex);
-            ShowValidationMessage(
-                DecryptorDecryptArgumentsTextBox,
-                DecryptorDecryptArgumentsValidationTextBlock,
+            ArgumentsEditor.ShowDecryptValidation(
                 UiText.Get(ResourceKeys.AssetBundleDecryptorEditorValidationDecryptArgumentsRequired));
         }
 
@@ -166,8 +167,9 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
                 ? null
                 : DecryptorWorkingDirectoryPathTextBox.Text.Trim(),
             TimeoutMs: timeoutMs,
-            ProbeArguments: SplitArguments(DecryptorProbeArgumentsTextBox.Text),
-            DecryptArguments: decryptArguments);
+            ProbeArguments: SplitArguments(ArgumentsEditor.ProbeArguments),
+            DecryptArguments: decryptArguments,
+            EncryptArguments: SplitArguments(ArgumentsEditor.EncryptArguments));
 
         command = new UpsertAssetBundleDecryptorCommand(
             Definition: definition,
@@ -201,12 +203,6 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
         DecryptorTimeoutLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorTimeoutLabel);
         DecryptorTimeoutTextBox.PlaceholderText = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorTimeoutPlaceholder);
         DecryptorTimeoutDescriptionText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorTimeoutDescription);
-        DecryptorProbeArgumentsLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorProbeArgumentsLabel);
-        DecryptorProbeArgumentsTextBox.PlaceholderText = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorProbeArgumentsPlaceholder);
-        DecryptorProbeArgumentsDescriptionText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorProbeArgumentsDescription);
-        DecryptorDecryptArgumentsLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorDecryptArgumentsLabel);
-        DecryptorDecryptArgumentsTextBox.PlaceholderText = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorDecryptArgumentsPlaceholder);
-        DecryptorDecryptArgumentsDescriptionText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorDecryptArgumentsDescription);
         SupportsAutoDetectionLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorSupportsAutoDetectionLabel);
         SupportsAutoDetectionDescriptionText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorSupportsAutoDetectionDescription);
         IsFallbackLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorIsFallbackLabel);
@@ -219,7 +215,7 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
         ClearValidationMessage(DecryptorDisplayNameTextBox, DecryptorDisplayNameValidationTextBlock);
         ClearValidationMessage(DecryptorExecutablePathTextBox, DecryptorExecutablePathValidationTextBlock);
         ClearValidationMessage(DecryptorTimeoutTextBox, DecryptorTimeoutValidationTextBlock);
-        ClearValidationMessage(DecryptorDecryptArgumentsTextBox, DecryptorDecryptArgumentsValidationTextBlock);
+        ArgumentsEditor.ClearDecryptValidation();
     }
 
     private bool ValidateCurrentStep()
@@ -285,14 +281,12 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
 
     private bool ValidateArgumentsStep()
     {
-        if (SplitArguments(DecryptorDecryptArgumentsTextBox.Text).Count > 0)
+        if (SplitArguments(ArgumentsEditor.DecryptArguments).Count > 0)
         {
             return true;
         }
 
-        ShowValidationMessage(
-            DecryptorDecryptArgumentsTextBox,
-            DecryptorDecryptArgumentsValidationTextBlock,
+        ArgumentsEditor.ShowDecryptValidation(
             UiText.Get(ResourceKeys.AssetBundleDecryptorEditorValidationDecryptArgumentsRequired));
         return false;
     }

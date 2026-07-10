@@ -4118,6 +4118,36 @@
   <data name="Error.Bundle.Decrypt.ExecutionFailed" xml:space="preserve">
     <value>Bundle decryptor "{0}" could not be executed. Check the executable path, permissions, or runtime dependencies.</value>
   </data>
+  <data name="Error.Bundle.Save.Codec.NotFound" xml:space="preserve">
+    <value>Bundle source codec not found: {0}</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.VersionMismatch" xml:space="preserve">
+    <value>Bundle source codec "{0}" has the wrong version. Expected {1}; found {2}.</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.EncryptionUnsupported" xml:space="preserve">
+    <value>Bundle source codec "{0}" does not support export encoding.</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.EncryptionFailed" xml:space="preserve">
+    <value>Bundle source codec "{0}" failed to encode the exported bundle. Details: {1}</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.ResultFileMissing" xml:space="preserve">
+    <value>Bundle source codec "{0}" did not produce a result file.</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.ResultFileInvalid" xml:space="preserve">
+    <value>Bundle source codec "{0}" returned an invalid result. Details: {1}</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.OutputMissing" xml:space="preserve">
+    <value>Bundle source codec "{0}" did not produce an encoded bundle.</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.ProcessExited" xml:space="preserve">
+    <value>Bundle source codec "{0}" exited unexpectedly with code {1}.</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.TimedOut" xml:space="preserve">
+    <value>Bundle source codec "{0}" timed out after {1} ms.</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.ExecutionFailed" xml:space="preserve">
+    <value>Bundle source codec "{0}" could not be started. Check its executable path, permissions, and runtime dependencies.</value>
+  </data>
   <data name="Error.Presentation.OwnerWindowUnavailable" xml:space="preserve">
     <value>The current window is not available yet, so the picker cannot be opened.</value>
   </data>
@@ -4147,6 +4177,12 @@
   </data>
   <data name="AssetBundleDecryptor.BuiltIn.PassThrough.Description" xml:space="preserve">
     <value>Do not transform the bundle source; pass it directly to the reader.</value>
+  </data>
+  <data name="AssetBundleDecryptor.BuiltIn.Arknights.DisplayName" xml:space="preserve">
+    <value>Arknights LZ4AK</value>
+  </data>
+  <data name="AssetBundleDecryptor.BuiltIn.Arknights.Description" xml:space="preserve">
+    <value>Detect and decrypt Arknights LZ4AK UnityFS bundles, then restore the game format during export.</value>
   </data>
   <data name="AssetBundleDecryptorEditor.Title.New" xml:space="preserve">
     <value>Add Decryptor</value>
@@ -4240,6 +4276,15 @@
   </data>
   <data name="AssetBundleDecryptorEditor.DecryptArguments.Placeholder" xml:space="preserve">
     <value>One argument per line. At least one line is required.</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.EncryptArguments.Label" xml:space="preserve">
+    <value>Export Encoding Arguments</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.EncryptArguments.Description" xml:space="preserve">
+    <value>Optional. Restore a standard bundle to the game-specific format.</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.EncryptArguments.Placeholder" xml:space="preserve">
+    <value>One argument per line. Leave empty when export encoding is unsupported.</value>
   </data>
   <data name="AssetBundleDecryptorEditor.SupportsAutoDetection.Label" xml:space="preserve">
     <value>Supports auto detection</value>
@@ -4757,6 +4802,9 @@
   <data name="PluginManagementPage.Detail.AutoDetection.Label" xml:space="preserve">
     <value>Auto detection</value>
   </data>
+  <data name="PluginManagementPage.Detail.Encryption.Label" xml:space="preserve">
+    <value>Export encoding</value>
+  </data>
   <data name="PluginManagementPage.Detail.Fallback.Label" xml:space="preserve">
     <value>Fallback</value>
   </data>
@@ -4777,6 +4825,9 @@
   </data>
   <data name="PluginManagementPage.Detail.DecryptArguments.Label" xml:space="preserve">
     <value>Decrypt arguments</value>
+  </data>
+  <data name="PluginManagementPage.Detail.EncryptArguments.Label" xml:space="preserve">
+    <value>Export encoding arguments</value>
   </data>
   <data name="PluginManagementPage.Detail.ResourceKinds.Label" xml:space="preserve">
     <value>Resource kinds</value>

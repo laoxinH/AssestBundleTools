@@ -117,4 +117,21 @@
       DestinationFiles="@(BuiltInAudioResourceProcessor->'$(OutDir)%(Filename)%(Extension)')"
       SkipUnchangedFiles="true" />
   </Target>
+
+  <Target Name="CopyBuiltInAssetBundleCodecs" AfterTargets="Build">
+    <MSBuild
+      Projects="..\AssestBundleTools.BundleCodec.Arknights\AssestBundleTools.BundleCodec.Arknights.csproj"
+      Targets="Build"
+      Properties="Configuration=$(Configuration);Platform=$(Platform)" />
+    <ItemGroup>
+      <BuiltInAssetBundleCodec Include="..\AssestBundleTools.BundleCodec.Arknights\bin\$(Configuration)\net8.0\AssestBundleTools.BundleCodec.Arknights.*" />
+      <BuiltInAssetBundleCodec Include="..\AssestBundleTools.BundleCodec.Arknights\bin\$(Platform)\$(Configuration)\net8.0\AssestBundleTools.BundleCodec.Arknights.*" />
+      <BuiltInAssetBundleCodec Include="..\AssestBundleTools.BundleCodec.Arknights\bin\$(Configuration)\net8.0\K4os.Compression.LZ4.dll" />
+      <BuiltInAssetBundleCodec Include="..\AssestBundleTools.BundleCodec.Arknights\bin\$(Platform)\$(Configuration)\net8.0\K4os.Compression.LZ4.dll" />
+    </ItemGroup>
+    <Copy
+      SourceFiles="@(BuiltInAssetBundleCodec)"
+      DestinationFiles="@(BuiltInAssetBundleCodec->'$(OutDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true" />
+  </Target>
 </Project>

@@ -22,7 +22,11 @@ public sealed record WorkspaceBundleExportRequestDto(
     WorkspaceBundleExportOutputConflictPolicyDto OutputConflictPolicy = WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting,
     string? OriginalCompression = null,
     string? BundleSessionCacheKey = null,
-    WorkspaceBundleExportAudioWriteModeDto AudioWriteMode = WorkspaceBundleExportAudioWriteModeDto.MatchOriginalContainer);
+    WorkspaceBundleExportAudioWriteModeDto AudioWriteMode = WorkspaceBundleExportAudioWriteModeDto.MatchOriginalContainer,
+    string? WorkspaceKey = null,
+    string? WorkspaceDataRootPath = null,
+    string? SourceCodecId = null,
+    string? SourceCodecVersion = null);
 
 public sealed record WorkspaceBundleExportResultDto(
     BundleId BundleId,
@@ -39,7 +43,9 @@ public sealed record WorkspaceBundleExportResultDto(
     IReadOnlyList<WorkspaceBundleProcessorExecutionSummaryDto>? ProcessorResults = null,
     WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.PreserveOriginal,
     string? OriginalCompression = null,
-    string? WrittenCompression = null);
+    string? WrittenCompression = null,
+    string? OutputCodecId = null,
+    string? OutputCodecVersion = null);
 
 public sealed record WorkspaceBundleExportManifestSaveRequestDto(
     WorkspaceId WorkspaceId,
@@ -87,7 +93,9 @@ public sealed record WorkspaceBundleExportManifestItemDto(
     IReadOnlyList<WorkspaceBundleExportManifestProcessorResultDto>? ProcessorResults = null,
     string? CompressionMode = null,
     string? OriginalCompression = null,
-    string? WrittenCompression = null);
+    string? WrittenCompression = null,
+    string? OutputCodecId = null,
+    string? OutputCodecVersion = null);
 
 public sealed record WorkspaceBundleExportManifestProcessorSelectionDto(
     string ResourceKind,

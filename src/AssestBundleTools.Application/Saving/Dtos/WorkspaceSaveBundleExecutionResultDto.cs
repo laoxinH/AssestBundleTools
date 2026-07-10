@@ -27,4 +27,6 @@ public sealed record WorkspaceSaveBundleExecutionResultDto(
     IReadOnlyList<WorkspaceBundleProcessorExecutionSummaryDto>? ProcessorResults = null,
     WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.PreserveOriginal,
     string? OriginalCompression = null,
-    string? WrittenCompression = null);
+    string? WrittenCompression = null,
+    string? OutputCodecId = null,
+    string? OutputCodecVersion = null);

@@ -15,6 +15,7 @@ public sealed class FileSystemAssetBundleDecryptorRegistry : IAssetBundleDecrypt
     {
         var decryptors = new List<IAssetBundleDecryptor>
         {
+            BuiltInArknightsLz4AkDecryptorFactory.CreateDecryptor(),
             new PassThroughAssetBundleDecryptor()
         };
 

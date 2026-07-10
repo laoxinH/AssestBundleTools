@@ -97,7 +97,7 @@ internal static class AppCompositionRoot
         var replacementPreviewSourceProvider = new FileSystemReplacementPreviewSourceProvider();
         var bundleArtifactSessionInvalidator = new AssetsToolsBundleArtifactSessionInvalidator();
         var workspaceSaveOutputProbe = new FileSystemWorkspaceSaveOutputProbe();
-        var workspaceBundleExporter = new FileSystemWorkspaceBundleExporter();
+        var workspaceBundleExporter = new FileSystemWorkspaceBundleExporter(assetBundleDecryptorRegistry);
         var workspaceBundleExportManifestStore = new FileSystemWorkspaceBundleExportManifestStore();
         var workspaceResourceProcessorExecutor = new FileSystemResourceProcessorExecutor();
 

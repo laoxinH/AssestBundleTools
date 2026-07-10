@@ -15,4 +15,9 @@ public static class AssetBundleDecryptorIds
     /// 表示“不做任何转换，直接把源文件交给 Reader”的内置回退解密器。
     /// </summary>
     public const string BuiltInPassThrough = "builtin.pass-through";
+
+    /// <summary>
+    /// 表示内置的明日方舟 UnityFS LZ4AK bundle codec。
+    /// </summary>
+    public const string BuiltInArknightsLz4Ak = "builtin.arknights-lz4ak";
 }

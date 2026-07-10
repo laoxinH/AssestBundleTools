@@ -74,7 +74,9 @@ public sealed class GetWorkspaceSavePreviewHandler : IQueryHandler<GetWorkspaceS
                 OutputReadiness: bundlePlan.OutputPreflight.Readiness,
                 IsOutputWriteBlocked: bundlePlan.OutputPreflight.IsWriteBlocked,
                 OutputDiagnosticCode: bundlePlan.OutputPreflight.DiagnosticCode,
-                OriginalCompression: bundlePlan.OriginalCompression))
+                OriginalCompression: bundlePlan.OriginalCompression,
+                SourceCodecId: bundlePlan.ArtifactInput.SourceCodecId,
+                SourceCodecVersion: bundlePlan.ArtifactInput.SourceCodecVersion))
             .ToArray();
 
         var preview = new WorkspaceSavePreviewDto(

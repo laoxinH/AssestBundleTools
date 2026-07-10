@@ -41,7 +41,9 @@ internal static class FileSystemWorkspaceBundleExportManifestStoreTests
                     WrittenFileSha256: "sha256",
                     CompressionMode: WorkspaceBundleExportCompressionModeDto.FastLz4,
                     OriginalCompression: "LZMA",
-                    WrittenCompression: "LZ4Fast")
+                    WrittenCompression: "LZ4Fast",
+                    OutputCodecId: "builtin.arknights-lz4ak",
+                    OutputCodecVersion: "1.0.0")
             },
             ProcessorSelections: new[]
             {
@@ -72,6 +74,8 @@ internal static class FileSystemWorkspaceBundleExportManifestStoreTests
         TestAssert.Equal("FastLz4", bundle.CompressionMode, "Manifest should keep requested compression mode.");
         TestAssert.Equal("LZMA", bundle.OriginalCompression, "Manifest should keep original compression.");
         TestAssert.Equal("LZ4Fast", bundle.WrittenCompression, "Manifest should keep written compression.");
+        TestAssert.Equal("builtin.arknights-lz4ak", bundle.OutputCodecId, "Manifest should keep output codec id.");
+        TestAssert.Equal("1.0.0", bundle.OutputCodecVersion, "Manifest should keep output codec version.");
         TestAssert.Equal(2, manifest.ProcessorSelections.Count, "Manifest should keep processor selection count.");
         TestAssert.Equal("texture2d", manifest.ProcessorSelections[0].ResourceKind, "Manifest should keep selected resource kind.");
         TestAssert.Equal("resource.processor.texture.cli", manifest.ProcessorSelections[0].ProcessorId, "Manifest should keep selected processor id.");

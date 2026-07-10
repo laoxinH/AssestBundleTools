@@ -32,6 +32,14 @@ public static class AssetBundleDecryptorDisplayText
             return localizationService.GetRequiredString(ResourceKeys.AssetBundleDecryptorBuiltInPassThroughDisplayName);
         }
 
+        if (string.Equals(
+                decryptorId?.Trim(),
+                AssetBundleDecryptorIds.BuiltInArknightsLz4Ak,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return localizationService.GetRequiredString(ResourceKeys.AssetBundleDecryptorBuiltInArknightsDisplayName);
+        }
+
         return string.IsNullOrWhiteSpace(decryptorId)
             ? localizationService.GetRequiredString(ResourceKeys.AssetBundleDecryptorBuiltInPassThroughDisplayName)
             : decryptorId.Trim();
@@ -59,6 +67,11 @@ public static class AssetBundleDecryptorDisplayText
         if (IsBuiltInAutoDetect(descriptor))
         {
             return localizationService.GetRequiredString(ResourceKeys.AssetBundleDecryptorBuiltInAutoDetectDisplayName);
+        }
+
+        if (IsBuiltInArknights(descriptor))
+        {
+            return localizationService.GetRequiredString(ResourceKeys.AssetBundleDecryptorBuiltInArknightsDisplayName);
         }
 
         return IsBuiltInPassThrough(descriptor)
@@ -93,6 +106,11 @@ public static class AssetBundleDecryptorDisplayText
         if (IsBuiltInPassThrough(descriptor))
         {
             return localizationService.GetRequiredString(ResourceKeys.AssetBundleDecryptorBuiltInPassThroughDescription);
+        }
+
+        if (IsBuiltInArknights(descriptor))
+        {
+            return localizationService.GetRequiredString(ResourceKeys.AssetBundleDecryptorBuiltInArknightsDescription);
         }
 
         return string.IsNullOrWhiteSpace(descriptor.Description)
@@ -154,5 +172,14 @@ public static class AssetBundleDecryptorDisplayText
     {
         return descriptor.Kind == AssetBundleDecryptorKind.BuiltIn &&
                string.Equals(descriptor.Id, AssetBundleDecryptorIds.BuiltInAutoDetect, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsBuiltInArknights(AssetBundleDecryptorDescriptorDto descriptor)
+    {
+        return descriptor.Kind == AssetBundleDecryptorKind.BuiltIn &&
+               string.Equals(
+                   descriptor.Id,
+                   AssetBundleDecryptorIds.BuiltInArknightsLz4Ak,
+                   StringComparison.OrdinalIgnoreCase);
     }
 }

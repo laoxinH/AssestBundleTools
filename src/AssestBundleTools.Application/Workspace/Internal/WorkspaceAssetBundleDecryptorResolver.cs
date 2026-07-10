@@ -187,7 +187,9 @@ internal static class WorkspaceAssetBundleDecryptorResolver
                 IsSuccessful: probeResult.IsSuccessful,
                 IsMatch: probeResult.IsMatch,
                 Confidence: Math.Clamp(probeResult.Confidence, 0, 100),
-                Message: probeResult.DiagnosticMessage));
+                Message: probeResult.DiagnosticMessage,
+                FormatId: probeResult.FormatId,
+                Evidence: probeResult.Evidence));
             CollectSampleMessage(sampleMessages, probeResult.DiagnosticMessage);
 
             if (probeResult.IsSuccessful)
@@ -294,7 +296,19 @@ internal static class WorkspaceAssetBundleDecryptorResolver
                     summary.Decryptor.Descriptor.Id,
                     selectedProbeDecryptorId,
                     StringComparison.OrdinalIgnoreCase),
-                SampleMessages: summary.SampleMessages))
+                SampleMessages: summary.SampleMessages,
+                DetectedFormatIds: summary.FileResults
+                    .Select(static result => result.FormatId)
+                    .Where(static value => !string.IsNullOrWhiteSpace(value))
+                    .Select(static value => value!.Trim())
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray(),
+                Evidence: summary.FileResults
+                    .SelectMany(static result => result.Evidence ?? Array.Empty<string>())
+                    .Where(static value => !string.IsNullOrWhiteSpace(value))
+                    .Select(static value => value.Trim())
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray()))
             .ToArray();
 
         return new WorkspaceImportAutoDetectionDiagnosticDto(
@@ -326,4 +340,6 @@ internal sealed record WorkspaceImportDecryptorProbeFileResult(
     bool IsSuccessful,
     bool IsMatch,
     int Confidence,
-    LocalizedMessageDto? Message);
+    LocalizedMessageDto? Message,
+    string? FormatId = null,
+    IReadOnlyList<string>? Evidence = null);

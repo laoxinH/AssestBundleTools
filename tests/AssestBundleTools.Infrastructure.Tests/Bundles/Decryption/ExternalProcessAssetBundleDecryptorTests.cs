@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Bundles;
 using AssestBundleTools.Infrastructure.Bundles.Decryption;
 using AssestBundleTools.Infrastructure.Tests.Testing;
 
@@ -6,6 +7,29 @@ namespace AssestBundleTools.Infrastructure.Tests.Bundles.Decryption;
 
 internal static class ExternalProcessAssetBundleDecryptorTests
 {
+    public static void RegistryAndCatalog_ShouldExposeBuiltInArknightsCodec_AsReadOnlyEncryptor()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var registry = new FileSystemAssetBundleDecryptorRegistry([temporaryDirectory.DirectoryPath]);
+        var catalog = new FileSystemAssetBundleDecryptorCatalogStore([temporaryDirectory.DirectoryPath]);
+
+        TestAssert.True(
+            registry.TryGet(AssetBundleDecryptorIds.BuiltInArknightsLz4Ak, out var decryptor),
+            "Registry should always expose the built-in Arknights codec.");
+        TestAssert.True(decryptor.Descriptor.SupportsAutoDetection, "Built-in Arknights codec should participate in auto detection.");
+        TestAssert.True(decryptor.Descriptor.SupportsEncryption, "Built-in Arknights codec should advertise export encoding.");
+        TestAssert.True(decryptor is AssestBundleTools.Application.Bundles.Services.IAssetBundleEncryptor, "Built-in Arknights codec should implement the optional encryptor port.");
+
+        var entry = catalog.Load().Single(item =>
+            string.Equals(
+                item.Definition.Id,
+                AssetBundleDecryptorIds.BuiltInArknightsLz4Ak,
+                StringComparison.OrdinalIgnoreCase));
+        TestAssert.True(entry.IsBuiltIn, "Built-in Arknights catalog entry should be marked built-in.");
+        TestAssert.True(entry.IsReadOnly, "Built-in Arknights catalog entry should be read-only.");
+        TestAssert.True(entry.Definition.EncryptArguments is { Count: > 0 }, "Built-in catalog entry should expose encrypt arguments.");
+    }
+
     public static void DecryptAsync_ShouldUseBundleScopedWorkspaceStagingPath_WhenWorkspaceDataRootIsProvided()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();
@@ -71,6 +95,34 @@ internal static class ExternalProcessAssetBundleDecryptorTests
             "Custom working directory should still append bundle-scoped uniqueness segments.");
     }
 
+    public static void EncryptAsync_ShouldRunOptionalEncryptCommand_AndReturnRequestedOutput()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var sourcePath = Path.Combine(temporaryDirectory.DirectoryPath, "standard.bundle");
+        var outputPath = Path.Combine(temporaryDirectory.DirectoryPath, "encoded.bundle");
+        Directory.CreateDirectory(temporaryDirectory.DirectoryPath);
+        File.WriteAllText(sourcePath, "standard-bundle");
+        var decryptor = CreateDecryptor(temporaryDirectory.DirectoryPath);
+
+        var result = decryptor.EncryptAsync(new AssetBundleEncryptionRequestDto(
+            SourcePath: sourcePath,
+            OutputPath: outputPath,
+            WorkspaceKey: "workspace-c",
+            WorkspaceDataRootPath: temporaryDirectory.DirectoryPath,
+            BundleCacheKey: "bundle-cache-003")).GetAwaiter().GetResult();
+
+        TestAssert.True(result.IsSuccess, "Optional external encrypt command should succeed.");
+        var encryptionResult = TestAssert.NotNull(result.Value, "Successful encryption should return a value.");
+        TestAssert.Equal(
+            Path.GetFullPath(outputPath),
+            Path.GetFullPath(encryptionResult.ResolvedBundlePath),
+            "Encrypt command should return the requested output path.");
+        TestAssert.Equal(
+            "standard-bundle",
+            File.ReadAllText(outputPath),
+            "Encrypt command should receive the standard bundle input.");
+    }
+
     private static ExternalProcessAssetBundleDecryptor CreateDecryptor(string manifestDirectoryPath)
     {
         return new ExternalProcessAssetBundleDecryptor(
@@ -85,6 +137,12 @@ internal static class ExternalProcessAssetBundleDecryptorTests
                     "-NoProfile",
                     "-Command",
                     "$output = '{outputPath}'; $result = '{resultPath}'; Set-Content -LiteralPath $output -Value 'bundle'; Set-Content -LiteralPath $result -Value '{\"isSuccess\":true}'"
+                ],
+                EncryptArguments =
+                [
+                    "-NoProfile",
+                    "-Command",
+                    "$inputPath = '{inputPath}'; $output = '{outputPath}'; $result = '{resultPath}'; Copy-Item -LiteralPath $inputPath -Destination $output; Set-Content -LiteralPath $result -Value '{\"isSuccess\":true}'"
                 ]
             },
             manifestDirectoryPath);

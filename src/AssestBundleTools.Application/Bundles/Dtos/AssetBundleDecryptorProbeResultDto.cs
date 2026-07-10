@@ -9,4 +9,6 @@ public sealed record AssetBundleDecryptorProbeResultDto(
     bool IsSuccessful,
     bool IsMatch,
     int Confidence,
-    LocalizedMessageDto? DiagnosticMessage);
+    LocalizedMessageDto? DiagnosticMessage,
+    string? FormatId = null,
+    IReadOnlyList<string>? Evidence = null);

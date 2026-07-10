@@ -219,6 +219,14 @@ internal static partial class SaveWorkspaceHandlersTests
         TestAssert.Equal(alphaBundleId, TestAssert.Single(exporter.Requests).BundleId, "Exporter should receive only the selected bundle.");
         TestAssert.Equal(WorkspaceBundleExportCompressionModeDto.PreserveOriginal, exporter.Requests[0].CompressionMode, "Exporter should receive the default preserve-original compression mode.");
         TestAssert.Equal("LZMA", exporter.Requests[0].OriginalCompression, "Exporter should receive cached original compression from the save plan.");
+        TestAssert.Equal(
+            AssetBundleDecryptorIds.BuiltInPassThrough,
+            exporter.Requests[0].SourceCodecId,
+            "Exporter should receive the source codec id from the bundle index.");
+        TestAssert.Equal(
+            "1.0.0",
+            exporter.Requests[0].SourceCodecVersion,
+            "Exporter should receive the source codec version from the bundle index.");
         TestAssert.True(!string.IsNullOrWhiteSpace(exporter.Requests[0].BundleSessionCacheKey), "Exporter should receive the artifact loaded-session identity for isolated writer load diagnostics.");
         TestAssert.Equal("resource.processor.texture.png", TestAssert.Single(exporter.Requests[0].ProcessorSelections).ProcessorId, "Processor selections should be forwarded to exporter.");
         TestAssert.Equal("HeroTexture", TestAssert.Single(processorExecutor.WorkItems).AssetName, "File-backed Texture2D changes should create resource processor work items.");

@@ -916,6 +916,7 @@ src/AssestBundleTools.Application/
 - 已完成 `WorkspaceBrowserService` 的 D-02 第二轮收口：底层单一 `WorkspaceBrowserGateway` 已拆为 `WorkspaceExplorerGateway / WorkspaceAssetInspectionGateway / WorkspaceAssetOperationGateway / WorkspaceBatchOperationsGateway` 四个能力簇网关，`WorkspaceImportCoordinatorService`、`BatchTasksViewModel` 与多组 `BundleExplorer` 协调器也已改为依赖对应窄接口
 - 已完成 D-02 第三轮收口：`WorkspaceBrowserService / WorkspaceCatalogService` 已从主注入链移除，`App.xaml.cs` 当前直接暴露 `WorkspaceExplorer / AssetInspection / AssetOperation / BatchOperations / Catalog` 五组窄网关，`BundleExplorerPage`、`BatchTasksPage` 与 `HomePage` 也已按需直接消费对应接口
 - 已完成资源包解密扩展基础框架、工作区级解密器选择与解密器管理页，为“加密 AB -> 解密 -> Reader 读取”链路预留稳定插入点，并支持外部进程解密器清单的新增、编辑、删除与重新加载
+- 已把解密扩展增强为可选双向 bundle codec：外部 manifest 支持 `probe / decrypt / encrypt`，内置只读 Arknights LZ4AK CLI 可按 UnityFS block 特征自动识别并完成解密 / 回写；SaveRebuild 会沿 artifact 的来源 codec 身份执行导出回写，并在输出 manifest 中记录 codec id / version
 - 已开始把工作区已选解密器真正接到真实导入处理链路，并将真实导入文件写入 `BundleIndexCacheStore` 后再由缓存型会话驱动资源包列表
 - 已完成 M9 第二子阶段的第一轮落地：`AssetsTools.NET` 已接入到 Infrastructure Reader，资产列表与基础详情已来自真实 AB 解析结果
 - 已完成 M9 第二子阶段的第二轮落地：资源包索引缓存已支持按资源包命中复用、失效重建与缺失清理，并纳入解密器版本维度

@@ -4118,6 +4118,36 @@
   <data name="Error.Bundle.Decrypt.ExecutionFailed" xml:space="preserve">
     <value>资源包解密器“{0}”无法执行，请检查可执行路径、权限或运行时依赖。</value>
   </data>
+  <data name="Error.Bundle.Save.Codec.NotFound" xml:space="preserve">
+    <value>未找到资源包来源 codec：{0}</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.VersionMismatch" xml:space="preserve">
+    <value>资源包来源 codec“{0}”版本不一致；需要 {1}，当前为 {2}。</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.EncryptionUnsupported" xml:space="preserve">
+    <value>资源包来源 codec“{0}”未提供导出回写能力。</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.EncryptionFailed" xml:space="preserve">
+    <value>资源包来源 codec“{0}”回写失败。详情：{1}</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.ResultFileMissing" xml:space="preserve">
+    <value>资源包来源 codec“{0}”未生成结果文件。</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.ResultFileInvalid" xml:space="preserve">
+    <value>资源包来源 codec“{0}”返回的结果无效。详情：{1}</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.OutputMissing" xml:space="preserve">
+    <value>资源包来源 codec“{0}”未生成回写后的资源包。</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.ProcessExited" xml:space="preserve">
+    <value>资源包来源 codec“{0}”异常退出，退出码：{1}。</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.TimedOut" xml:space="preserve">
+    <value>资源包来源 codec“{0}”在 {1} 毫秒后超时。</value>
+  </data>
+  <data name="Error.Bundle.Save.Codec.ExecutionFailed" xml:space="preserve">
+    <value>资源包来源 codec“{0}”无法执行，请检查可执行路径、权限或运行时依赖。</value>
+  </data>
   <data name="Error.Presentation.OwnerWindowUnavailable" xml:space="preserve">
     <value>当前窗口尚未就绪，暂时无法打开选择器。</value>
   </data>
@@ -4147,6 +4177,12 @@
   </data>
   <data name="AssetBundleDecryptor.BuiltIn.PassThrough.Description" xml:space="preserve">
     <value>不对资源包做变换，直接把原始文件交给读取器。</value>
+  </data>
+  <data name="AssetBundleDecryptor.BuiltIn.Arknights.DisplayName" xml:space="preserve">
+    <value>明日方舟 LZ4AK</value>
+  </data>
+  <data name="AssetBundleDecryptor.BuiltIn.Arknights.Description" xml:space="preserve">
+    <value>自动识别并解密明日方舟 LZ4AK UnityFS 资源包，导出时可回写为游戏格式。</value>
   </data>
   <data name="AssetBundleDecryptorEditor.Title.New" xml:space="preserve">
     <value>新增解密器</value>
@@ -4240,6 +4276,15 @@
   </data>
   <data name="AssetBundleDecryptorEditor.DecryptArguments.Placeholder" xml:space="preserve">
     <value>每行一个参数，至少保留一行</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.EncryptArguments.Label" xml:space="preserve">
+    <value>导出回写参数</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.EncryptArguments.Description" xml:space="preserve">
+    <value>可选；把标准 AB 回写为游戏私有格式。</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.EncryptArguments.Placeholder" xml:space="preserve">
+    <value>每行一个参数；留空表示不支持导出回写</value>
   </data>
   <data name="AssetBundleDecryptorEditor.SupportsAutoDetection.Label" xml:space="preserve">
     <value>支持自动识别</value>
@@ -4757,6 +4802,9 @@
   <data name="PluginManagementPage.Detail.AutoDetection.Label" xml:space="preserve">
     <value>自动识别</value>
   </data>
+  <data name="PluginManagementPage.Detail.Encryption.Label" xml:space="preserve">
+    <value>导出回写</value>
+  </data>
   <data name="PluginManagementPage.Detail.Fallback.Label" xml:space="preserve">
     <value>回退项</value>
   </data>
@@ -4777,6 +4825,9 @@
   </data>
   <data name="PluginManagementPage.Detail.DecryptArguments.Label" xml:space="preserve">
     <value>解密参数</value>
+  </data>
+  <data name="PluginManagementPage.Detail.EncryptArguments.Label" xml:space="preserve">
+    <value>导出回写参数</value>
   </data>
   <data name="PluginManagementPage.Detail.ResourceKinds.Label" xml:space="preserve">
     <value>资源类型</value>

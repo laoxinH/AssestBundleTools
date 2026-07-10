@@ -22,4 +22,6 @@ public sealed record WorkspaceSaveBundlePlanDto(
     WorkspaceSaveOutputReadiness OutputReadiness = WorkspaceSaveOutputReadiness.NotProbed,
     bool IsOutputWriteBlocked = false,
     string? OutputDiagnosticCode = null,
-    string? OriginalCompression = null);
+    string? OriginalCompression = null,
+    string? SourceCodecId = null,
+    string? SourceCodecVersion = null);

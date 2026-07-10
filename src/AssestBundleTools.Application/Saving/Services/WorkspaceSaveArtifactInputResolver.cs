@@ -79,6 +79,8 @@ internal sealed class WorkspaceSaveArtifactInputResolver
             resolvedInputs[bundleId.Value] = ToSaveArtifactInput(
                 indexEntry.BundleCacheKey,
                 indexEntry.OriginalCompression,
+                indexEntry.DecryptorId,
+                indexEntry.DecryptorVersion,
                 artifactResolution);
         }
 
@@ -99,6 +101,8 @@ internal sealed class WorkspaceSaveArtifactInputResolver
     private static WorkspaceSaveBundleArtifactInput ToSaveArtifactInput(
         string bundleCacheKey,
         string? originalCompression,
+        string? sourceCodecId,
+        string? sourceCodecVersion,
         WorkspaceBundleArtifactExistingInputResolutionDto artifactResolution)
     {
         if (artifactResolution.Input is not null)
@@ -109,7 +113,9 @@ internal sealed class WorkspaceSaveArtifactInputResolver
                 ArtifactBundlePath: artifactResolution.Input.ResolvedBundlePath,
                 BundleSessionCacheKey: artifactResolution.Input.BundleSessionCacheKey,
                 ArtifactDiagnosticCode: null,
-                OriginalCompression: originalCompression);
+                OriginalCompression: originalCompression,
+                SourceCodecId: sourceCodecId,
+                SourceCodecVersion: sourceCodecVersion);
         }
 
         return WorkspaceSaveBundleArtifactInput.Unresolved(
@@ -130,7 +136,9 @@ internal sealed record WorkspaceSaveBundleArtifactInput(
     string? ArtifactBundlePath,
     string? BundleSessionCacheKey,
     string? ArtifactDiagnosticCode,
-    string? OriginalCompression = null)
+    string? OriginalCompression = null,
+    string? SourceCodecId = null,
+    string? SourceCodecVersion = null)
 {
     public static WorkspaceSaveBundleArtifactInput Unresolved(
         string? bundleCacheKey,
@@ -141,5 +149,7 @@ internal sealed record WorkspaceSaveBundleArtifactInput(
             ArtifactBundlePath: null,
             BundleSessionCacheKey: null,
             ArtifactDiagnosticCode: diagnosticCode,
-            OriginalCompression: null);
+            OriginalCompression: null,
+            SourceCodecId: null,
+            SourceCodecVersion: null);
 }

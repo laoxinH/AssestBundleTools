@@ -1,4 +1,6 @@
 using System.Security.Cryptography;
+using AssestBundleTools.Application.Bundles.Dtos;
+using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Saving.Dtos;
@@ -15,6 +17,13 @@ namespace AssestBundleTools.Infrastructure.Workspace.Saving;
 public sealed class FileSystemWorkspaceBundleExporter : IWorkspaceBundleExporter
 {
     private const string HashAlgorithm = "SHA256";
+    private readonly IAssetBundleDecryptorRegistry? _assetBundleDecryptorRegistry;
+
+    public FileSystemWorkspaceBundleExporter(
+        IAssetBundleDecryptorRegistry? assetBundleDecryptorRegistry = null)
+    {
+        _assetBundleDecryptorRegistry = assetBundleDecryptorRegistry;
+    }
 
     public async Task<Result<WorkspaceBundleExportResultDto>> ExportAsync(
         WorkspaceBundleExportRequestDto request,
@@ -29,7 +38,9 @@ public sealed class FileSystemWorkspaceBundleExporter : IWorkspaceBundleExporter
 
         var outputPath = NormalizePath(request.OutputFilePath);
         var sourcePath = NormalizePath(request.SourceArtifactPath);
-        string? temporaryFilePath = null;
+        string? standardTemporaryFilePath = null;
+        string? codecTemporaryFilePath = null;
+        string? promotionFilePath = null;
         try
         {
             if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
@@ -50,19 +61,40 @@ public sealed class FileSystemWorkspaceBundleExporter : IWorkspaceBundleExporter
                 Directory.CreateDirectory(outputDirectory);
             }
 
-            temporaryFilePath = CreateTemporaryFilePath(outputPath);
-            var writeResult = AssetsToolsWorkspaceBundleObjectWriter.Write(sourcePath, temporaryFilePath, request, cancellationToken);
+            standardTemporaryFilePath = CreateTemporaryFilePath(outputPath, "standard");
+            var writeResult = AssetsToolsWorkspaceBundleObjectWriter.Write(
+                sourcePath,
+                standardTemporaryFilePath,
+                request,
+                cancellationToken);
             if (writeResult.IsFailure)
             {
                 return Result<WorkspaceBundleExportResultDto>.Failure(writeResult.Errors);
             }
 
+            var codecResult = await ApplySourceCodecAsync(
+                request,
+                standardTemporaryFilePath,
+                outputPath,
+                cancellationToken);
+            if (codecResult.IsCancelled)
+            {
+                return Result<WorkspaceBundleExportResultDto>.Cancelled();
+            }
+
+            if (codecResult.IsFailure || codecResult.Value is null)
+            {
+                return Result<WorkspaceBundleExportResultDto>.Failure(codecResult.Errors);
+            }
+
+            codecTemporaryFilePath = codecResult.Value.CodecTemporaryFilePath;
+            promotionFilePath = codecResult.Value.PromotionFilePath;
             cancellationToken.ThrowIfCancellationRequested();
             File.Move(
-                temporaryFilePath,
+                promotionFilePath,
                 outputPath,
                 overwrite: request.OutputConflictPolicy == WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting);
-            temporaryFilePath = null;
+            promotionFilePath = null;
 
             var fileInfo = new FileInfo(outputPath);
             var hashes = await ComputeHashesAsync(outputPath, cancellationToken);
@@ -82,18 +114,24 @@ public sealed class FileSystemWorkspaceBundleExporter : IWorkspaceBundleExporter
                     ProcessorResults: SummarizeProcessorResults(request.ProcessorResults),
                     CompressionMode: request.CompressionMode,
                     OriginalCompression: writeResult.Value?.OriginalCompression,
-                    WrittenCompression: writeResult.Value?.WrittenCompression));
+                    WrittenCompression: writeResult.Value?.WrittenCompression,
+                    OutputCodecId: codecResult.Value.OutputCodecId,
+                    OutputCodecVersion: codecResult.Value.OutputCodecVersion));
         }
         catch (OperationCanceledException)
         {
-            TryDeleteTemporaryFile(temporaryFilePath);
             return Result<WorkspaceBundleExportResultDto>.Cancelled();
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException or PathTooLongException)
         {
-            TryDeleteTemporaryFile(temporaryFilePath);
             return Result<WorkspaceBundleExportResultDto>.Failure(
                 ApplicationErrors.BundleExportWriteFailed(outputPath ?? request.OutputFilePath, exception.GetType().Name));
+        }
+        finally
+        {
+            TryDeleteTemporaryFile(promotionFilePath);
+            TryDeleteTemporaryFile(codecTemporaryFilePath);
+            TryDeleteTemporaryFile(standardTemporaryFilePath);
         }
     }
 
@@ -107,13 +145,128 @@ public sealed class FileSystemWorkspaceBundleExporter : IWorkspaceBundleExporter
         return Path.GetFullPath(path.Trim());
     }
 
-    private static string CreateTemporaryFilePath(string outputPath)
+    private async Task<Result<WorkspaceBundleCodecOutput>> ApplySourceCodecAsync(
+        WorkspaceBundleExportRequestDto request,
+        string standardBundlePath,
+        string outputPath,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.SourceCodecId))
+        {
+            return Result<WorkspaceBundleCodecOutput>.Success(
+                WorkspaceBundleCodecOutput.Standard(standardBundlePath));
+        }
+
+        var codecId = request.SourceCodecId.Trim();
+        if (_assetBundleDecryptorRegistry is null ||
+            !_assetBundleDecryptorRegistry.TryGet(codecId, out var decryptor))
+        {
+            return Result<WorkspaceBundleCodecOutput>.Failure(
+                ApplicationErrors.BundleExportCodecNotFound(codecId));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.SourceCodecVersion) &&
+            !string.Equals(
+                request.SourceCodecVersion.Trim(),
+                decryptor.Descriptor.Version,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return Result<WorkspaceBundleCodecOutput>.Failure(
+                ApplicationErrors.BundleExportCodecVersionMismatch(
+                    codecId,
+                    request.SourceCodecVersion.Trim(),
+                    decryptor.Descriptor.Version));
+        }
+
+        if (!decryptor.Descriptor.SupportsEncryption)
+        {
+            return Result<WorkspaceBundleCodecOutput>.Success(
+                WorkspaceBundleCodecOutput.Standard(standardBundlePath));
+        }
+
+        if (decryptor is not IAssetBundleEncryptor encryptor)
+        {
+            return Result<WorkspaceBundleCodecOutput>.Failure(
+                ApplicationErrors.BundleExportCodecEncryptionUnsupported(codecId));
+        }
+
+        var codecOutputPath = CreateTemporaryFilePath(outputPath, "encoded");
+        var workingDirectoryPath = ResolveCodecWorkingDirectory(request, outputPath);
+        var encryptionResult = await encryptor.EncryptAsync(
+            new AssetBundleEncryptionRequestDto(
+                SourcePath: standardBundlePath,
+                OutputPath: codecOutputPath,
+                WorkspaceKey: string.IsNullOrWhiteSpace(request.WorkspaceKey)
+                    ? request.WorkspaceId.Value
+                    : request.WorkspaceKey,
+                WorkspaceDataRootPath: string.IsNullOrWhiteSpace(request.WorkspaceDataRootPath)
+                    ? Path.GetDirectoryName(outputPath) ?? Environment.CurrentDirectory
+                    : request.WorkspaceDataRootPath,
+                BundleCacheKey: request.BundleCacheKey,
+                WorkingDirectoryPath: workingDirectoryPath),
+            cancellationToken);
+        if (encryptionResult.IsCancelled)
+        {
+            TryDeleteTemporaryFile(codecOutputPath);
+            return Result<WorkspaceBundleCodecOutput>.Cancelled();
+        }
+
+        if (encryptionResult.IsFailure || encryptionResult.Value is null)
+        {
+            TryDeleteTemporaryFile(codecOutputPath);
+            return Result<WorkspaceBundleCodecOutput>.Failure(encryptionResult.Errors);
+        }
+
+        var resolvedPath = Path.GetFullPath(encryptionResult.Value.ResolvedBundlePath);
+        if (!File.Exists(resolvedPath))
+        {
+            TryDeleteTemporaryFile(codecOutputPath);
+            return Result<WorkspaceBundleCodecOutput>.Failure(
+                ApplicationErrors.BundleExportCodecOutputMissing(codecId));
+        }
+
+        if (!PathsEqual(resolvedPath, codecOutputPath))
+        {
+            File.Copy(resolvedPath, codecOutputPath, overwrite: true);
+            TryDeleteTemporaryFile(resolvedPath);
+        }
+
+        return Result<WorkspaceBundleCodecOutput>.Success(
+            new WorkspaceBundleCodecOutput(
+                PromotionFilePath: codecOutputPath,
+                CodecTemporaryFilePath: codecOutputPath,
+                OutputCodecId: decryptor.Descriptor.Id,
+                OutputCodecVersion: decryptor.Descriptor.Version));
+    }
+
+    private static string ResolveCodecWorkingDirectory(
+        WorkspaceBundleExportRequestDto request,
+        string outputPath)
+    {
+        var root = string.IsNullOrWhiteSpace(request.WorkspaceDataRootPath)
+            ? Path.GetDirectoryName(outputPath) ?? Environment.CurrentDirectory
+            : Path.GetFullPath(request.WorkspaceDataRootPath);
+        return Path.Combine(
+            root,
+            "staging",
+            "exports",
+            string.IsNullOrWhiteSpace(request.OperationId) ? "unknown" : request.OperationId,
+            "bundle-codec");
+    }
+
+    private static bool PathsEqual(string left, string right) =>
+        string.Equals(
+            Path.GetFullPath(left),
+            Path.GetFullPath(right),
+            StringComparison.OrdinalIgnoreCase);
+
+    private static string CreateTemporaryFilePath(string outputPath, string purpose)
     {
         var outputDirectory = Path.GetDirectoryName(outputPath);
         var fileName = Path.GetFileName(outputPath);
         return Path.Combine(
             string.IsNullOrWhiteSpace(outputDirectory) ? Environment.CurrentDirectory : outputDirectory,
-            $".{fileName}.{Guid.NewGuid():N}.tmp");
+            $".{fileName}.{Guid.NewGuid():N}.{purpose}.tmp");
     }
 
     private static async Task<WorkspaceBundleExportFileHashes> ComputeHashesAsync(
@@ -163,6 +316,16 @@ public sealed class FileSystemWorkspaceBundleExporter : IWorkspaceBundleExporter
     }
 
     private sealed record WorkspaceBundleExportFileHashes(string Md5, string Sha256);
+
+    private sealed record WorkspaceBundleCodecOutput(
+        string PromotionFilePath,
+        string? CodecTemporaryFilePath,
+        string? OutputCodecId,
+        string? OutputCodecVersion)
+    {
+        public static WorkspaceBundleCodecOutput Standard(string path) =>
+            new(path, null, null, null);
+    }
 
     private static IReadOnlyList<WorkspaceBundleProcessorExecutionSummaryDto> SummarizeProcessorResults(
         IReadOnlyList<WorkspaceResourceProcessorExecutionResultDto>? processorResults)

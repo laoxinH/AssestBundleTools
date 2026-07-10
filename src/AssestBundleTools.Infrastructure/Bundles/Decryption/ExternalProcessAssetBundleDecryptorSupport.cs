@@ -74,6 +74,17 @@ internal static class ExternalProcessAssetBundleDecryptorSupport
             StringComparison.OrdinalIgnoreCase);
     }
 
+    public static bool IsPathWithinOrEqual(string path, string rootPath)
+    {
+        var normalizedPath = Path.GetFullPath(path);
+        var normalizedRoot = Path.GetFullPath(rootPath)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        return string.Equals(normalizedPath, normalizedRoot, StringComparison.OrdinalIgnoreCase) ||
+               normalizedPath.StartsWith(
+                   normalizedRoot + Path.DirectorySeparatorChar,
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
     public static void DeleteFileIfExists(string filePath)
     {
         try

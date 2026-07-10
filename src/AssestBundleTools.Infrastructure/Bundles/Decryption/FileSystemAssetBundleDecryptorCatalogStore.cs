@@ -28,6 +28,7 @@ public sealed class FileSystemAssetBundleDecryptorCatalogStore : IAssetBundleDec
     {
         var entries = new List<AssetBundleDecryptorCatalogEntryDto>
         {
+            BuiltInArknightsLz4AkDecryptorFactory.CreateCatalogEntry(),
             CreateBuiltInPassThroughEntry()
         };
 
@@ -108,7 +109,8 @@ public sealed class FileSystemAssetBundleDecryptorCatalogStore : IAssetBundleDec
                 : definition.WorkingDirectoryPath.Trim(),
             TimeoutMs = definition.TimeoutMs,
             ProbeArguments = NormalizeArguments(definition.ProbeArguments),
-            DecryptArguments = NormalizeArguments(definition.DecryptArguments)
+            DecryptArguments = NormalizeArguments(definition.DecryptArguments),
+            EncryptArguments = NormalizeArguments(definition.EncryptArguments ?? Array.Empty<string>())
         };
 
         JsonWorkspaceFileStorageHelper.WriteJsonAtomically(
@@ -159,7 +161,8 @@ public sealed class FileSystemAssetBundleDecryptorCatalogStore : IAssetBundleDec
                 WorkingDirectoryPath: null,
                 TimeoutMs: 0,
                 ProbeArguments: Array.Empty<string>(),
-                DecryptArguments: Array.Empty<string>()),
+                DecryptArguments: Array.Empty<string>(),
+                EncryptArguments: Array.Empty<string>()),
             Kind: PassThroughAssetBundleDecryptor.DefaultDescriptor.Kind,
             IsBuiltIn: true,
             IsReadOnly: true,
@@ -194,7 +197,8 @@ public sealed class FileSystemAssetBundleDecryptorCatalogStore : IAssetBundleDec
             WorkingDirectoryPath: manifest.WorkingDirectoryPath,
             TimeoutMs: manifest.TimeoutMs,
             ProbeArguments: manifest.ProbeArguments.ToArray(),
-            DecryptArguments: manifest.DecryptArguments.ToArray());
+            DecryptArguments: manifest.DecryptArguments.ToArray(),
+            EncryptArguments: manifest.EncryptArguments.ToArray());
     }
 
     private static IReadOnlyList<string> NormalizeArguments(IReadOnlyList<string> arguments)

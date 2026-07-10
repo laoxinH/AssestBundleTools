@@ -455,6 +455,96 @@ public static class ApplicationErrors
             messageToken: "Error.Bundle.Decrypt.ExecutionFailed",
             parameters: CreateParameters(("DecryptorId", decryptorId)));
 
+    public static AppError BundleExportCodecNotFound(string codecId) =>
+        new(
+            code: "Bundle.Save.Codec.NotFound",
+            category: ErrorCategory.NotFound,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.Codec.NotFound",
+            parameters: CreateParameters(("CodecId", codecId)));
+
+    public static AppError BundleExportCodecVersionMismatch(
+        string codecId,
+        string expectedVersion,
+        string actualVersion) =>
+        new(
+            code: "Bundle.Save.Codec.VersionMismatch",
+            category: ErrorCategory.Configuration,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.Codec.VersionMismatch",
+            parameters: CreateParameters(
+                ("CodecId", codecId),
+                ("ExpectedVersion", expectedVersion),
+                ("ActualVersion", actualVersion)));
+
+    public static AppError BundleExportCodecEncryptionUnsupported(string codecId) =>
+        new(
+            code: "Bundle.Save.Codec.EncryptionUnsupported",
+            category: ErrorCategory.Unsupported,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.Codec.EncryptionUnsupported",
+            parameters: CreateParameters(("CodecId", codecId)));
+
+    public static AppError BundleExportCodecEncryptionFailed(string codecId, string? detail = null) =>
+        new(
+            code: "Bundle.Save.Codec.EncryptionFailed",
+            category: ErrorCategory.ExternalDependency,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.Codec.EncryptionFailed",
+            parameters: CreateParameters(("CodecId", codecId), ("Detail", detail)));
+
+    public static AppError BundleExportCodecResultFileMissing(string codecId) =>
+        new(
+            code: "Bundle.Save.Codec.ResultFileMissing",
+            category: ErrorCategory.ParseFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.Codec.ResultFileMissing",
+            parameters: CreateParameters(("CodecId", codecId)));
+
+    public static AppError BundleExportCodecResultFileInvalid(string codecId, string? detail = null) =>
+        new(
+            code: "Bundle.Save.Codec.ResultFileInvalid",
+            category: ErrorCategory.ParseFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.Codec.ResultFileInvalid",
+            parameters: CreateParameters(("CodecId", codecId), ("Detail", detail)));
+
+    public static AppError BundleExportCodecOutputMissing(string codecId) =>
+        new(
+            code: "Bundle.Save.Codec.OutputMissing",
+            category: ErrorCategory.NotFound,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.Codec.OutputMissing",
+            parameters: CreateParameters(("CodecId", codecId)));
+
+    public static AppError BundleExportCodecProcessExited(string codecId, int exitCode) =>
+        new(
+            code: "Bundle.Save.Codec.ProcessExited",
+            category: ErrorCategory.ExternalDependency,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.Codec.ProcessExited",
+            parameters: CreateParameters(
+                ("CodecId", codecId),
+                ("ExitCode", exitCode.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+
+    public static AppError BundleExportCodecTimedOut(string codecId, int timeoutMs) =>
+        new(
+            code: "Bundle.Save.Codec.TimedOut",
+            category: ErrorCategory.Timeout,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.Codec.TimedOut",
+            parameters: CreateParameters(
+                ("CodecId", codecId),
+                ("TimeoutMs", timeoutMs.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+
+    public static AppError BundleExportCodecExecutionFailed(string codecId) =>
+        new(
+            code: "Bundle.Save.Codec.ExecutionFailed",
+            category: ErrorCategory.ExternalDependency,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.Save.Codec.ExecutionFailed",
+            parameters: CreateParameters(("CodecId", codecId)));
+
     public static AppError BundleDecryptorFallbackNotFound() =>
         new(
             code: "Bundle.Decryptor.FallbackNotFound",

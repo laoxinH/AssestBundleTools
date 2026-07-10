@@ -118,7 +118,9 @@ public sealed class FileSystemWorkspaceBundleExportManifestStore : IWorkspaceBun
                 .ToArray(),
             CompressionMode: result.CompressionMode.ToString(),
             OriginalCompression: result.OriginalCompression,
-            WrittenCompression: result.WrittenCompression);
+            WrittenCompression: result.WrittenCompression,
+            OutputCodecId: result.OutputCodecId,
+            OutputCodecVersion: result.OutputCodecVersion);
     }
 
     private static async Task WriteJsonAtomicallyAsync<T>(

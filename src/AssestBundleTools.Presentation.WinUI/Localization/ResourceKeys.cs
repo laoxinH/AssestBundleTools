@@ -234,6 +234,7 @@ public static class ResourceKeys
     public const string PluginManagementDetailTypeLabel = "PluginManagementPage.Detail.Type.Label";
     public const string PluginManagementDetailStatusLabel = "PluginManagementPage.Detail.Status.Label";
     public const string PluginManagementDetailAutoDetectionLabel = "PluginManagementPage.Detail.AutoDetection.Label";
+    public const string PluginManagementDetailEncryptionLabel = "PluginManagementPage.Detail.Encryption.Label";
     public const string PluginManagementDetailFallbackLabel = "PluginManagementPage.Detail.Fallback.Label";
     public const string PluginManagementDetailTimeoutLabel = "PluginManagementPage.Detail.Timeout.Label";
     public const string PluginManagementDetailExecutablePathLabel = "PluginManagementPage.Detail.ExecutablePath.Label";
@@ -241,6 +242,7 @@ public static class ResourceKeys
     public const string PluginManagementDetailManifestPathLabel = "PluginManagementPage.Detail.ManifestPath.Label";
     public const string PluginManagementDetailProbeArgumentsLabel = "PluginManagementPage.Detail.ProbeArguments.Label";
     public const string PluginManagementDetailDecryptArgumentsLabel = "PluginManagementPage.Detail.DecryptArguments.Label";
+    public const string PluginManagementDetailEncryptArgumentsLabel = "PluginManagementPage.Detail.EncryptArguments.Label";
     public const string PluginManagementDetailResourceKindsLabel = "PluginManagementPage.Detail.ResourceKinds.Label";
     public const string PluginManagementDetailArgumentsLabel = "PluginManagementPage.Detail.Arguments.Label";
     public const string PluginManagementDiagnosticSectionTitle = "PluginManagementPage.Diagnostic.SectionTitle";
@@ -753,6 +755,8 @@ public static class ResourceKeys
     public const string AssetBundleDecryptorBuiltInAutoDetectDescription = "AssetBundleDecryptor.BuiltIn.AutoDetect.Description";
     public const string AssetBundleDecryptorBuiltInPassThroughDisplayName = "AssetBundleDecryptor.BuiltIn.PassThrough.DisplayName";
     public const string AssetBundleDecryptorBuiltInPassThroughDescription = "AssetBundleDecryptor.BuiltIn.PassThrough.Description";
+    public const string AssetBundleDecryptorBuiltInArknightsDisplayName = "AssetBundleDecryptor.BuiltIn.Arknights.DisplayName";
+    public const string AssetBundleDecryptorBuiltInArknightsDescription = "AssetBundleDecryptor.BuiltIn.Arknights.Description";
     public const string AssetBundleDecryptorEditorNewTitle = "AssetBundleDecryptorEditor.Title.New";
     public const string AssetBundleDecryptorEditorEditTitleFormat = "AssetBundleDecryptorEditor.Title.Edit.Format";
     public const string AssetBundleDecryptorEditorPrimaryButton = "AssetBundleDecryptorEditor.PrimaryButton";
@@ -784,6 +788,9 @@ public static class ResourceKeys
     public const string AssetBundleDecryptorEditorDecryptArgumentsLabel = "AssetBundleDecryptorEditor.DecryptArguments.Label";
     public const string AssetBundleDecryptorEditorDecryptArgumentsDescription = "AssetBundleDecryptorEditor.DecryptArguments.Description";
     public const string AssetBundleDecryptorEditorDecryptArgumentsPlaceholder = "AssetBundleDecryptorEditor.DecryptArguments.Placeholder";
+    public const string AssetBundleDecryptorEditorEncryptArgumentsLabel = "AssetBundleDecryptorEditor.EncryptArguments.Label";
+    public const string AssetBundleDecryptorEditorEncryptArgumentsDescription = "AssetBundleDecryptorEditor.EncryptArguments.Description";
+    public const string AssetBundleDecryptorEditorEncryptArgumentsPlaceholder = "AssetBundleDecryptorEditor.EncryptArguments.Placeholder";
     public const string AssetBundleDecryptorEditorSupportsAutoDetectionLabel = "AssetBundleDecryptorEditor.SupportsAutoDetection.Label";
     public const string AssetBundleDecryptorEditorSupportsAutoDetectionDescription = "AssetBundleDecryptorEditor.SupportsAutoDetection.Description";
     public const string AssetBundleDecryptorEditorIsFallbackLabel = "AssetBundleDecryptorEditor.IsFallback.Label";
@@ -841,6 +848,16 @@ public static class ResourceKeys
     public const string ErrorBundleDecryptorFallbackNotFound = "Error.Bundle.Decryptor.FallbackNotFound";
     public const string ErrorBundleSourceMissing = "Error.Bundle.SourceMissing";
     public const string ErrorBundleDecryptExecutionFailed = "Error.Bundle.Decrypt.ExecutionFailed";
+    public const string ErrorBundleSaveCodecNotFound = "Error.Bundle.Save.Codec.NotFound";
+    public const string ErrorBundleSaveCodecVersionMismatch = "Error.Bundle.Save.Codec.VersionMismatch";
+    public const string ErrorBundleSaveCodecEncryptionUnsupported = "Error.Bundle.Save.Codec.EncryptionUnsupported";
+    public const string ErrorBundleSaveCodecEncryptionFailed = "Error.Bundle.Save.Codec.EncryptionFailed";
+    public const string ErrorBundleSaveCodecResultFileMissing = "Error.Bundle.Save.Codec.ResultFileMissing";
+    public const string ErrorBundleSaveCodecResultFileInvalid = "Error.Bundle.Save.Codec.ResultFileInvalid";
+    public const string ErrorBundleSaveCodecOutputMissing = "Error.Bundle.Save.Codec.OutputMissing";
+    public const string ErrorBundleSaveCodecProcessExited = "Error.Bundle.Save.Codec.ProcessExited";
+    public const string ErrorBundleSaveCodecTimedOut = "Error.Bundle.Save.Codec.TimedOut";
+    public const string ErrorBundleSaveCodecExecutionFailed = "Error.Bundle.Save.Codec.ExecutionFailed";
     public const string ErrorBundleReadFormatUnrecognized = "Error.Bundle.Read.FormatUnrecognized";
     public const string ErrorBundleReadNoCompatibleReader = "Error.Bundle.Read.NoCompatibleReader";
     public const string ErrorBundleReadUnexpected = "Error.Bundle.Read.Unexpected";
