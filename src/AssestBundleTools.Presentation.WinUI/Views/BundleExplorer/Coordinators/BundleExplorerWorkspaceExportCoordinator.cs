@@ -109,6 +109,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
         var window = new WorkspaceExportWindow(viewModel, windowNotificationService);
         App.CurrentApp.RegisterAuxiliaryWindow(window, _owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null);
         _activeWindow = window;
+        viewModel.ExportSettingsChanged += OnExportSettingsChanged;
         window.StartExportRequested += OnStartExportRequested;
         window.CancelExportRequested += OnCancelExportRequested;
         window.Closed += OnWindowClosed;
@@ -127,8 +128,14 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
             }
         }
 
+        void OnExportSettingsChanged(object? sender, EventArgs args)
+        {
+            PersistWorkspaceExportSettings(viewModel.CaptureExportSettings());
+        }
+
         void OnWindowClosed(object sender, WindowEventArgs args)
         {
+            viewModel.ExportSettingsChanged -= OnExportSettingsChanged;
             window.StartExportRequested -= OnStartExportRequested;
             window.CancelExportRequested -= OnCancelExportRequested;
             window.Closed -= OnWindowClosed;
@@ -161,7 +168,6 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
         }
 
         viewModel.ApplySelectedOutputDirectory(outputDirectory);
-        PersistWorkspaceExportSettings(submission.ExportSettings);
         viewModel.SetExecuting(submission.SelectedBundleIds.Count);
         var commandTemplate = new SaveWorkspaceAsNewBundleCommand(
             workspaceSummary.WorkspaceId,

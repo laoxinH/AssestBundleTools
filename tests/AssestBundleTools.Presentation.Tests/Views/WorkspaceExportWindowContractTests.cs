@@ -122,6 +122,9 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("BackgroundWorkProfile.SaveRebuild", coordinator);
         Assert.Contains("_backgroundWorkScheduler.StartAsync", coordinator);
         Assert.Contains("_activeExportHandle?.Cancel()", coordinator);
+        Assert.Contains("viewModel.ExportSettingsChanged += OnExportSettingsChanged;", coordinator);
+        Assert.Contains("PersistWorkspaceExportSettings(viewModel.CaptureExportSettings());", coordinator);
+        Assert.Contains("viewModel.ExportSettingsChanged -= OnExportSettingsChanged;", coordinator);
         Assert.Contains("PickWorkspaceExportOutputDirectoryAsync", coordinator);
         Assert.Contains("SaveWorkspaceAsNewBundleAsync", coordinator);
         Assert.Contains("Path.Combine(dataRootPath.Trim(), \"exports\")", coordinator);

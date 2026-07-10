@@ -118,7 +118,7 @@ internal sealed class WorkspaceExportDialogOptionFactory
     {
         return new WorkspaceExportProcessorSelectionDto(
             NormalizeResourceKind(processor.Id),
-            ResolveSelectedProcessorId(processor));
+            processor.IsEnabled ? ResolveConfiguredProcessorId(processor) : null);
     }
 
     public WorkspaceExportProcessorSettingSnapshotDto CreateProcessorSettingSnapshot(
@@ -127,7 +127,7 @@ internal sealed class WorkspaceExportDialogOptionFactory
         return new WorkspaceExportProcessorSettingSnapshotDto(
             NormalizeResourceKind(processor.Id),
             processor.IsEnabled,
-            ResolveSelectedProcessorId(processor));
+            ResolveConfiguredProcessorId(processor));
     }
 
     private IEnumerable<WorkspaceExportProcessorOptionViewModel> CreateProcessorOptions(
@@ -215,11 +215,9 @@ internal sealed class WorkspaceExportDialogOptionFactory
     private static string NormalizeResourceKind(string value) =>
         value.Trim().Replace("-", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
 
-    private static string? ResolveSelectedProcessorId(WorkspaceExportResourceProcessorOptionViewModel processor)
+    private static string? ResolveConfiguredProcessorId(WorkspaceExportResourceProcessorOptionViewModel processor)
     {
-        var selectedProcessorId = processor.IsEnabled
-            ? processor.SelectedProcessor?.Id
-            : null;
+        var selectedProcessorId = processor.SelectedProcessor?.Id;
         if (selectedProcessorId is not null &&
             selectedProcessorId.EndsWith(":none", StringComparison.OrdinalIgnoreCase))
         {

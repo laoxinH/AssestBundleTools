@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Saving.Dtos;
@@ -62,6 +63,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
             option.Mode == WorkspaceBundleExportCompressionModeDto.PreserveOriginal);
         _selectedBundleSortOption = BundleSortOptions.FirstOrDefault();
         ApplyExportSettings(exportSettings);
+        ObserveResourceProcessorSettings();
         foreach (var bundle in Bundles)
         {
             bundle.SelectionChanged += OnBundleSelectionChanged;
@@ -70,6 +72,8 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         RefreshVisibleBundles();
         RefreshPlanSummary();
     }
+
+    public event EventHandler? ExportSettingsChanged;
 
     public ObservableCollection<WorkspaceExportBundleOptionViewModel> Bundles { get; }
 
@@ -169,13 +173,25 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     public bool ExportToWorkspaceDirectory
     {
         get => _exportToWorkspaceDirectory;
-        set => SetProperty(ref _exportToWorkspaceDirectory, value);
+        set
+        {
+            if (SetProperty(ref _exportToWorkspaceDirectory, value))
+            {
+                RaiseExportSettingsChanged();
+            }
+        }
     }
 
     public bool OverwriteExistingFiles
     {
         get => _overwriteExistingFiles;
-        set => SetProperty(ref _overwriteExistingFiles, value);
+        set
+        {
+            if (SetProperty(ref _overwriteExistingFiles, value))
+            {
+                RaiseExportSettingsChanged();
+            }
+        }
     }
 
     public bool ForceAudioPayloadWrite
@@ -187,6 +203,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(ForceAudioWarningText));
                 OnPropertyChanged(nameof(ForceAudioWarningVisibility));
+                RaiseExportSettingsChanged();
             }
         }
     }
@@ -214,7 +231,13 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     public WorkspaceExportCompressionOptionViewModel? SelectedCompressionOption
     {
         get => _selectedCompressionOption;
-        set => SetProperty(ref _selectedCompressionOption, value);
+        set
+        {
+            if (SetProperty(ref _selectedCompressionOption, value))
+            {
+                RaiseExportSettingsChanged();
+            }
+        }
     }
 
     public void SetExecuting(int totalCount)
@@ -313,11 +336,27 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         var processorSelections = ResourceProcessors
             .Select(processor => _optionFactory.CreateProcessorSelection(processor))
             .ToArray();
+        var exportSettings = CaptureExportSettings();
+
+        return new WorkspaceExportDialogSubmission(
+            ExportToWorkspaceDirectory,
+            selectedBundleIds,
+            processorSelections,
+            exportSettings.CompressionMode,
+            OverwriteExistingFiles
+                ? WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting
+                : WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists,
+            exportSettings.AudioWriteMode,
+            exportSettings);
+    }
+
+    public WorkspaceExportSettingsSnapshotDto CaptureExportSettings()
+    {
         var compressionMode = SelectedCompressionOption?.Mode ?? WorkspaceBundleExportCompressionModeDto.PreserveOriginal;
         var audioWriteMode = ForceAudioPayloadWrite
             ? WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer
             : WorkspaceBundleExportAudioWriteModeDto.MatchOriginalContainer;
-        var exportSettings = new WorkspaceExportSettingsSnapshotDto(
+        return new WorkspaceExportSettingsSnapshotDto(
             ExportToWorkspaceDirectory,
             OverwriteExistingFiles,
             compressionMode,
@@ -325,17 +364,6 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
             ResourceProcessors
                 .Select(processor => _optionFactory.CreateProcessorSettingSnapshot(processor))
                 .ToArray());
-
-        return new WorkspaceExportDialogSubmission(
-            ExportToWorkspaceDirectory,
-            selectedBundleIds,
-            processorSelections,
-            compressionMode,
-            OverwriteExistingFiles
-                ? WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting
-                : WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists,
-            audioWriteMode,
-            exportSettings);
     }
 
     private void ApplyExportSettings(WorkspaceExportSettingsSnapshotDto? exportSettings)
@@ -383,6 +411,25 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
 
     private static string NormalizeResourceKind(string value) =>
         value.Trim().Replace("-", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
+
+    private void ObserveResourceProcessorSettings()
+    {
+        foreach (var resourceProcessor in ResourceProcessors)
+        {
+            resourceProcessor.PropertyChanged += OnResourceProcessorPropertyChanged;
+        }
+    }
+
+    private void OnResourceProcessorPropertyChanged(object? sender, PropertyChangedEventArgs args)
+    {
+        if (args.PropertyName is nameof(WorkspaceExportResourceProcessorOptionViewModel.IsEnabled) or
+            nameof(WorkspaceExportResourceProcessorOptionViewModel.SelectedProcessor))
+        {
+            RaiseExportSettingsChanged();
+        }
+    }
+
+    private void RaiseExportSettingsChanged() => ExportSettingsChanged?.Invoke(this, EventArgs.Empty);
 
     private void HideExecutionProgress()
     {

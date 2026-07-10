@@ -233,6 +233,49 @@ public sealed class WorkspaceExportDialogViewModelTests
     }
 
     [Fact]
+    public void PersistedSettings_ShouldNotifyImmediatelyWhenChanged()
+    {
+        var viewModel = new WorkspaceExportDialogViewModel(
+            new TestLocalizationService(),
+            changeSummary: null,
+            savePreview: null,
+            resourceProcessorCatalogEntries:
+            [
+                CreateProcessor(
+                    id: "resource.processor.texture.png",
+                    displayName: "Texture PNG Processor",
+                    description: "Processes Texture2D payloads.",
+                    resourceKinds: ["Texture2D"],
+                    isBuiltIn: false)
+            ]);
+        var settingsChangedCount = 0;
+        viewModel.ExportSettingsChanged += (_, _) => settingsChangedCount++;
+
+        viewModel.ExportToWorkspaceDirectory = true;
+        viewModel.OverwriteExistingFiles = true;
+        viewModel.ForceAudioPayloadWrite = true;
+        viewModel.SelectedCompressionOption = viewModel.CompressionOptions.Single(static option =>
+            option.Mode == WorkspaceBundleExportCompressionModeDto.Lz4);
+        var textureSlot = viewModel.ResourceProcessors.Single(static slot => slot.Id == "texture2d");
+        textureSlot.IsEnabled = false;
+        textureSlot.SelectedProcessor = textureSlot.Processors.Single(static processor =>
+            processor.Id == "resource.processor.texture.png");
+
+        var snapshot = viewModel.CaptureExportSettings();
+
+        Assert.Equal(6, settingsChangedCount);
+        Assert.True(snapshot.ExportToWorkspaceDirectory);
+        Assert.True(snapshot.OverwriteExistingFiles);
+        Assert.Equal(WorkspaceBundleExportCompressionModeDto.Lz4, snapshot.CompressionMode);
+        Assert.Equal(WorkspaceBundleExportAudioWriteModeDto.ForcePayloadContainer, snapshot.AudioWriteMode);
+        var textureSetting = snapshot.ProcessorSettings!.Single(static setting => setting.ResourceKind == "texture2d");
+        Assert.False(textureSetting.IsEnabled);
+        Assert.Equal("resource.processor.texture.png", textureSetting.ProcessorId);
+        Assert.Null(viewModel.CreateSubmission().ProcessorSelections.Single(static selection =>
+            selection.ResourceKind == "texture2d").ProcessorId);
+    }
+
+    [Fact]
     public void CreateSubmission_ShouldUseFailIfExists_WhenOverwriteIsDisabled()
     {
         var viewModel = new WorkspaceExportDialogViewModel(
