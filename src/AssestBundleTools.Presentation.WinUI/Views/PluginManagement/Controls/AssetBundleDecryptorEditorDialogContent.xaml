@@ -5,6 +5,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    HorizontalAlignment="Stretch"
+    Width="600"
+    MaxWidth="600"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -16,143 +19,547 @@
             <Setter Property="TextWrapping" Value="WrapWholeWords" />
             <Setter Property="Visibility" Value="Collapsed" />
         </Style>
+
+        <Style
+            x:Key="PluginEditorSecondaryTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="TextWrapping" Value="WrapWholeWords" />
+        </Style>
+
+        <Style
+            x:Key="PluginEditorCardStyle"
+            TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+        </Style>
+
+        <Style
+            x:Key="PluginEditorRowIconStyle"
+            TargetType="Border">
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+
+        <Style
+            x:Key="PluginEditorSingleLineTextBoxStyle"
+            TargetType="TextBox">
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
     </UserControl.Resources>
 
     <ScrollViewer
         x:Name="FormScrollViewer"
         MaxHeight="680"
-        HorizontalScrollMode="Disabled"
         HorizontalScrollBarVisibility="Disabled"
+        HorizontalScrollMode="Disabled"
         VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="16">
-            <Border
-                Style="{StaticResource SettingsInsetCardStyle}"
-                Padding="18">
-                <StackPanel Spacing="12">
-                    <Grid ColumnSpacing="12">
+        <StackPanel Spacing="12">
+            <Border Style="{StaticResource PluginEditorCardStyle}">
+                <StackPanel>
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14"
+                        RowSpacing="6">
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
                         </Grid.ColumnDefinitions>
 
-                        <StackPanel Spacing="6">
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE8AC;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
                             <TextBlock
                                 x:Name="DecryptorIdLabelText"
-                                Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                            <TextBox x:Name="DecryptorIdTextBox" />
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="DecryptorIdDescriptionText"
+                                MaxLines="1"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="2"
+                            Spacing="6">
+                            <TextBox
+                                x:Name="DecryptorIdTextBox"
+                                Style="{StaticResource PluginEditorSingleLineTextBoxStyle}" />
                             <TextBlock
                                 x:Name="DecryptorIdValidationTextBlock"
                                 Style="{StaticResource DecryptorEditorValidationTextStyle}" />
                         </StackPanel>
+                    </Grid>
+
+                    <Border
+                        Height="1"
+                        Margin="64,0,0,0"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14"
+                        RowSpacing="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE946;" />
+                        </Border>
 
                         <StackPanel
                             Grid.Column="1"
-                            Spacing="6">
+                            Spacing="2">
                             <TextBlock
                                 x:Name="DecryptorDisplayNameLabelText"
-                                Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                            <TextBox x:Name="DecryptorDisplayNameTextBox" />
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="DecryptorDisplayNameDescriptionText"
+                                MaxLines="1"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="2"
+                            Spacing="6">
+                            <TextBox
+                                x:Name="DecryptorDisplayNameTextBox"
+                                Style="{StaticResource PluginEditorSingleLineTextBoxStyle}" />
                             <TextBlock
                                 x:Name="DecryptorDisplayNameValidationTextBlock"
                                 Style="{StaticResource DecryptorEditorValidationTextStyle}" />
                         </StackPanel>
                     </Grid>
 
-                    <Grid ColumnSpacing="12">
+                    <Border
+                        Height="1"
+                        Margin="64,0,0,0"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14">
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
                         </Grid.ColumnDefinitions>
 
-                        <StackPanel Spacing="6">
-                            <TextBlock
-                                x:Name="DecryptorVersionLabelText"
-                                Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                            <TextBox x:Name="DecryptorVersionTextBox" />
-                        </StackPanel>
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE787;" />
+                        </Border>
 
                         <StackPanel
                             Grid.Column="1"
-                            Spacing="6">
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="DecryptorVersionLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="DecryptorVersionDescriptionText"
+                                MaxLines="1"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <TextBox
+                            x:Name="DecryptorVersionTextBox"
+                            Grid.Column="2"
+                            Style="{StaticResource PluginEditorSingleLineTextBoxStyle}" />
+                    </Grid>
+
+                    <Border
+                        Height="1"
+                        Margin="64,0,0,0"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14"
+                        RowSpacing="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE916;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
                             <TextBlock
                                 x:Name="DecryptorTimeoutLabelText"
-                                Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                            <TextBox x:Name="DecryptorTimeoutTextBox" InputScope="Number" />
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="DecryptorTimeoutDescriptionText"
+                                MaxLines="1"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="2"
+                            Spacing="6">
+                            <TextBox
+                                x:Name="DecryptorTimeoutTextBox"
+                                InputScope="Number"
+                                Style="{StaticResource PluginEditorSingleLineTextBoxStyle}" />
                             <TextBlock
                                 x:Name="DecryptorTimeoutValidationTextBlock"
                                 Style="{StaticResource DecryptorEditorValidationTextStyle}" />
                         </StackPanel>
                     </Grid>
 
-                    <StackPanel Spacing="6">
-                        <TextBlock
-                            x:Name="DecryptorDescriptionLabelText"
-                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
+                    <Border
+                        Height="1"
+                        Margin="64,0,0,0"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE70B;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="DecryptorDescriptionLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="DecryptorDescriptionHintText"
+                                MaxLines="2"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
                         <TextBox
                             x:Name="DecryptorDescriptionTextBox"
+                            Grid.Column="2"
                             AcceptsReturn="True"
-                            MinHeight="70"
+                            MinHeight="72"
                             TextWrapping="Wrap" />
-                    </StackPanel>
+                    </Grid>
                 </StackPanel>
             </Border>
 
-            <Border
-                Style="{StaticResource SettingsInsetCardStyle}"
-                Padding="18">
-                <StackPanel Spacing="12">
-                    <StackPanel Spacing="6">
-                        <TextBlock
-                            x:Name="DecryptorExecutablePathLabelText"
-                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                        <TextBox x:Name="DecryptorExecutablePathTextBox" />
-                        <TextBlock
-                            x:Name="DecryptorExecutablePathValidationTextBlock"
-                            Style="{StaticResource DecryptorEditorValidationTextStyle}" />
-                    </StackPanel>
+            <Border Style="{StaticResource PluginEditorCardStyle}">
+                <StackPanel>
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14"
+                        RowSpacing="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
+                        </Grid.ColumnDefinitions>
 
-                    <StackPanel Spacing="6">
-                        <TextBlock
-                            x:Name="DecryptorWorkingDirectoryPathLabelText"
-                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                        <TextBox x:Name="DecryptorWorkingDirectoryPathTextBox" />
-                    </StackPanel>
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE756;" />
+                        </Border>
 
-                    <StackPanel Spacing="8">
-                        <CheckBox x:Name="SupportsAutoDetectionCheckBox" />
-                        <CheckBox x:Name="IsFallbackCheckBox" />
-                    </StackPanel>
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="DecryptorExecutablePathLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="DecryptorExecutablePathDescriptionText"
+                                MaxLines="1"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="2"
+                            Spacing="6">
+                            <TextBox
+                                x:Name="DecryptorExecutablePathTextBox"
+                                Style="{StaticResource PluginEditorSingleLineTextBoxStyle}" />
+                            <TextBlock
+                                x:Name="DecryptorExecutablePathValidationTextBlock"
+                                Style="{StaticResource DecryptorEditorValidationTextStyle}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Border
+                        Height="1"
+                        Margin="64,0,0,0"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE838;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="DecryptorWorkingDirectoryPathLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="DecryptorWorkingDirectoryPathDescriptionText"
+                                MaxLines="1"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <TextBox
+                            x:Name="DecryptorWorkingDirectoryPathTextBox"
+                            Grid.Column="2"
+                            Style="{StaticResource PluginEditorSingleLineTextBoxStyle}" />
+                    </Grid>
+
+                    <Border
+                        Height="1"
+                        Margin="64,0,0,0"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE950;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="SupportsAutoDetectionLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="SupportsAutoDetectionDescriptionText"
+                                MaxLines="1"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <CheckBox
+                            x:Name="SupportsAutoDetectionCheckBox"
+                            Grid.Column="2"
+                            VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Border
+                        Height="1"
+                        Margin="64,0,0,0"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE8D7;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="IsFallbackLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="IsFallbackDescriptionText"
+                                MaxLines="1"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <CheckBox
+                            x:Name="IsFallbackCheckBox"
+                            Grid.Column="2"
+                            VerticalAlignment="Center" />
+                    </Grid>
                 </StackPanel>
             </Border>
 
-            <Border
-                Style="{StaticResource SettingsInsetCardStyle}"
-                Padding="18">
-                <StackPanel Spacing="12">
-                    <StackPanel Spacing="6">
-                        <TextBlock
-                            x:Name="DecryptorProbeArgumentsLabelText"
-                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
+            <Border Style="{StaticResource PluginEditorCardStyle}">
+                <StackPanel>
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE8A5;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="DecryptorProbeArgumentsLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="DecryptorProbeArgumentsDescriptionText"
+                                MaxLines="2"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
                         <TextBox
                             x:Name="DecryptorProbeArgumentsTextBox"
+                            Grid.Column="2"
                             AcceptsReturn="True"
-                            MinHeight="92"
+                            MinHeight="88"
                             TextWrapping="Wrap" />
-                    </StackPanel>
+                    </Grid>
 
-                    <StackPanel Spacing="6">
-                        <TextBlock
-                            x:Name="DecryptorDecryptArgumentsLabelText"
-                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                        <TextBox
-                            x:Name="DecryptorDecryptArgumentsTextBox"
-                            AcceptsReturn="True"
-                            MinHeight="120"
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            x:Name="DecryptorDecryptArgumentsValidationTextBlock"
-                            Style="{StaticResource DecryptorEditorValidationTextStyle}" />
-                    </StackPanel>
+                    <Border
+                        Height="1"
+                        Margin="64,0,0,0"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14"
+                        RowSpacing="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE7C3;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="DecryptorDecryptArgumentsLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="DecryptorDecryptArgumentsDescriptionText"
+                                MaxLines="2"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="2"
+                            Spacing="6">
+                            <TextBox
+                                x:Name="DecryptorDecryptArgumentsTextBox"
+                                AcceptsReturn="True"
+                                MinHeight="112"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                x:Name="DecryptorDecryptArgumentsValidationTextBlock"
+                                Style="{StaticResource DecryptorEditorValidationTextStyle}" />
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
             </Border>
         </StackPanel>

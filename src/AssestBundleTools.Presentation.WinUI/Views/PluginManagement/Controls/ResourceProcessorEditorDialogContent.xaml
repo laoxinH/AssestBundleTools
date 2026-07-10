@@ -5,6 +5,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    HorizontalAlignment="Stretch"
+    Width="600"
+    MaxWidth="600"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -16,162 +19,480 @@
             <Setter Property="TextWrapping" Value="WrapWholeWords" />
             <Setter Property="Visibility" Value="Collapsed" />
         </Style>
+
+        <Style
+            x:Key="PluginEditorSecondaryTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="TextWrapping" Value="WrapWholeWords" />
+        </Style>
+
+        <Style
+            x:Key="PluginEditorCardStyle"
+            TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+        </Style>
+
+        <Style
+            x:Key="PluginEditorRowIconStyle"
+            TargetType="Border">
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+
+        <Style
+            x:Key="PluginEditorSingleLineTextBoxStyle"
+            TargetType="TextBox">
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
     </UserControl.Resources>
 
     <ScrollViewer
         x:Name="FormScrollViewer"
         MaxHeight="680"
-        HorizontalScrollMode="Disabled"
         HorizontalScrollBarVisibility="Disabled"
+        HorizontalScrollMode="Disabled"
         VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="16">
-            <Border
-                Style="{StaticResource SettingsInsetCardStyle}"
-                Padding="18">
-                <StackPanel Spacing="12">
-                    <Grid ColumnSpacing="12">
+        <StackPanel Spacing="12">
+            <Border Style="{StaticResource PluginEditorCardStyle}">
+                <StackPanel>
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14"
+                        RowSpacing="6">
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
                         </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE8AC;" />
+                        </Border>
 
-                        <StackPanel Spacing="6">
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
                             <TextBlock
                                 x:Name="ProcessorIdLabelText"
-                                Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                            <TextBox x:Name="ProcessorIdTextBox" />
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="ProcessorIdDescriptionText"
+                                MaxLines="1"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="2"
+                            Spacing="6">
+                            <TextBox
+                                x:Name="ProcessorIdTextBox"
+                                Style="{StaticResource PluginEditorSingleLineTextBoxStyle}" />
                             <TextBlock
                                 x:Name="ProcessorIdValidationTextBlock"
                                 Style="{StaticResource ResourceProcessorEditorValidationTextStyle}" />
                         </StackPanel>
+                    </Grid>
+
+                    <Border
+                        Height="1"
+                        Margin="64,0,0,0"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14"
+                        RowSpacing="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE946;" />
+                        </Border>
 
                         <StackPanel
                             Grid.Column="1"
-                            Spacing="6">
+                            Spacing="2">
                             <TextBlock
                                 x:Name="ProcessorDisplayNameLabelText"
-                                Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                            <TextBox x:Name="ProcessorDisplayNameTextBox" />
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="ProcessorDisplayNameDescriptionText"
+                                MaxLines="1"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="2"
+                            Spacing="6">
+                            <TextBox
+                                x:Name="ProcessorDisplayNameTextBox"
+                                Style="{StaticResource PluginEditorSingleLineTextBoxStyle}" />
                             <TextBlock
                                 x:Name="ProcessorDisplayNameValidationTextBlock"
                                 Style="{StaticResource ResourceProcessorEditorValidationTextStyle}" />
                         </StackPanel>
                     </Grid>
 
-                    <Grid ColumnSpacing="12">
+                    <Border
+                        Height="1"
+                        Margin="64,0,0,0"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14">
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
                         </Grid.ColumnDefinitions>
 
-                        <StackPanel Spacing="6">
-                            <TextBlock
-                                x:Name="ProcessorVersionLabelText"
-                                Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                            <TextBox x:Name="ProcessorVersionTextBox" />
-                        </StackPanel>
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE787;" />
+                        </Border>
 
                         <StackPanel
                             Grid.Column="1"
-                            Spacing="6">
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="ProcessorVersionLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="ProcessorVersionDescriptionText"
+                                MaxLines="1"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <TextBox
+                            x:Name="ProcessorVersionTextBox"
+                            Grid.Column="2"
+                            Style="{StaticResource PluginEditorSingleLineTextBoxStyle}" />
+                    </Grid>
+
+                    <Border
+                        Height="1"
+                        Margin="64,0,0,0"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14"
+                        RowSpacing="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE916;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
                             <TextBlock
                                 x:Name="ProcessorTimeoutLabelText"
-                                Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                            <TextBox x:Name="ProcessorTimeoutTextBox" InputScope="Number" />
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="ProcessorTimeoutDescriptionText"
+                                MaxLines="1"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="2"
+                            Spacing="6">
+                            <TextBox
+                                x:Name="ProcessorTimeoutTextBox"
+                                InputScope="Number"
+                                Style="{StaticResource PluginEditorSingleLineTextBoxStyle}" />
                             <TextBlock
                                 x:Name="ProcessorTimeoutValidationTextBlock"
                                 Style="{StaticResource ResourceProcessorEditorValidationTextStyle}" />
                         </StackPanel>
                     </Grid>
 
-                    <StackPanel Spacing="6">
-                        <TextBlock
-                            x:Name="ProcessorDescriptionLabelText"
-                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
+                    <Border
+                        Height="1"
+                        Margin="64,0,0,0"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE70B;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="ProcessorDescriptionLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="ProcessorDescriptionHintText"
+                                MaxLines="2"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
                         <TextBox
                             x:Name="ProcessorDescriptionTextBox"
+                            Grid.Column="2"
                             AcceptsReturn="True"
-                            MinHeight="70"
+                            MinHeight="72"
                             TextWrapping="Wrap" />
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-
-            <Border
-                Style="{StaticResource SettingsInsetCardStyle}"
-                Padding="18">
-                <StackPanel Spacing="12">
-                    <TextBlock
-                        x:Name="ProcessorResourceKindsLabelText"
-                        Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                    <Grid ColumnSpacing="12" RowSpacing="8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <CheckBox x:Name="Texture2DCheckBox" />
-                        <CheckBox
-                            x:Name="AudioCheckBox"
-                            Grid.Column="1" />
-                        <CheckBox
-                            x:Name="AtlasCheckBox"
-                            Grid.Row="1" />
-                        <CheckBox
-                            x:Name="SkelCheckBox"
-                            Grid.Row="1"
-                            Grid.Column="1" />
                     </Grid>
-                    <TextBlock
-                        x:Name="ProcessorResourceKindsValidationTextBlock"
-                        Style="{StaticResource ResourceProcessorEditorValidationTextStyle}" />
                 </StackPanel>
             </Border>
 
-            <Border
-                Style="{StaticResource SettingsInsetCardStyle}"
-                Padding="18">
-                <StackPanel Spacing="12">
-                    <StackPanel Spacing="6">
-                        <TextBlock
-                            x:Name="ProcessorExecutablePathLabelText"
-                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                        <TextBox x:Name="ProcessorExecutablePathTextBox" />
-                        <TextBlock
-                            x:Name="ProcessorExecutablePathValidationTextBlock"
-                            Style="{StaticResource ResourceProcessorEditorValidationTextStyle}" />
-                    </StackPanel>
+            <Border Style="{StaticResource PluginEditorCardStyle}">
+                <StackPanel>
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14"
+                        RowSpacing="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE8A5;" />
+                        </Border>
 
-                    <StackPanel Spacing="6">
-                        <TextBlock
-                            x:Name="ProcessorWorkingDirectoryPathLabelText"
-                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                        <TextBox x:Name="ProcessorWorkingDirectoryPathTextBox" />
-                    </StackPanel>
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="ProcessorResourceKindsLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="ProcessorResourceKindsDescriptionText"
+                                MaxLines="2"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="2"
+                            Spacing="6">
+                            <Grid ColumnSpacing="10" RowSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <CheckBox x:Name="Texture2DCheckBox" />
+                                <CheckBox
+                                    x:Name="AudioCheckBox"
+                                    Grid.Column="1" />
+                                <CheckBox
+                                    x:Name="AtlasCheckBox"
+                                    Grid.Row="1" />
+                                <CheckBox
+                                    x:Name="SkelCheckBox"
+                                    Grid.Row="1"
+                                    Grid.Column="1" />
+                            </Grid>
+                            <TextBlock
+                                x:Name="ProcessorResourceKindsValidationTextBlock"
+                                Style="{StaticResource ResourceProcessorEditorValidationTextStyle}" />
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
             </Border>
 
-            <Border
-                Style="{StaticResource SettingsInsetCardStyle}"
-                Padding="18">
-                <StackPanel Spacing="12">
-                    <StackPanel Spacing="6">
-                        <TextBlock
-                            x:Name="ProcessorArgumentsLabelText"
-                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
+            <Border Style="{StaticResource PluginEditorCardStyle}">
+                <StackPanel>
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14"
+                        RowSpacing="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE756;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="ProcessorExecutablePathLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="ProcessorExecutablePathDescriptionText"
+                                MaxLines="1"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="2"
+                            Spacing="6">
+                            <TextBox
+                                x:Name="ProcessorExecutablePathTextBox"
+                                Style="{StaticResource PluginEditorSingleLineTextBoxStyle}" />
+                            <TextBlock
+                                x:Name="ProcessorExecutablePathValidationTextBlock"
+                                Style="{StaticResource ResourceProcessorEditorValidationTextStyle}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Border
+                        Height="1"
+                        Margin="64,0,0,0"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE838;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="ProcessorWorkingDirectoryPathLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="ProcessorWorkingDirectoryPathDescriptionText"
+                                MaxLines="1"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
                         <TextBox
-                            x:Name="ProcessorArgumentsTextBox"
-                            AcceptsReturn="True"
-                            MinHeight="140"
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            x:Name="ProcessorArgumentsValidationTextBlock"
-                            Style="{StaticResource ResourceProcessorEditorValidationTextStyle}" />
-                    </StackPanel>
+                            x:Name="ProcessorWorkingDirectoryPathTextBox"
+                            Grid.Column="2"
+                            Style="{StaticResource PluginEditorSingleLineTextBoxStyle}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource PluginEditorCardStyle}">
+                <StackPanel>
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14"
+                        RowSpacing="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource PluginEditorRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE7C3;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="ProcessorArgumentsLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="ProcessorArgumentsDescriptionText"
+                                MaxLines="2"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource PluginEditorSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="2"
+                            Spacing="6">
+                            <TextBox
+                                x:Name="ProcessorArgumentsTextBox"
+                                AcceptsReturn="True"
+                                MinHeight="140"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                x:Name="ProcessorArgumentsValidationTextBlock"
+                                Style="{StaticResource ResourceProcessorEditorValidationTextStyle}" />
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
             </Border>
         </StackPanel>

@@ -130,24 +130,35 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
     {
         DecryptorIdLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorIdLabel);
         DecryptorIdTextBox.PlaceholderText = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorIdPlaceholder);
+        DecryptorIdDescriptionText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorIdDescription);
         DecryptorDisplayNameLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorDisplayNameLabel);
         DecryptorDisplayNameTextBox.PlaceholderText = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorDisplayNamePlaceholder);
+        DecryptorDisplayNameDescriptionText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorDisplayNameDescription);
         DecryptorVersionLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorVersionLabel);
         DecryptorVersionTextBox.PlaceholderText = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorVersionPlaceholder);
+        DecryptorVersionDescriptionText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorVersionDescription);
         DecryptorDescriptionLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorDescriptionLabel);
         DecryptorDescriptionTextBox.PlaceholderText = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorDescriptionPlaceholder);
+        DecryptorDescriptionHintText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorDescriptionDescription);
         DecryptorExecutablePathLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorExecutablePathLabel);
         DecryptorExecutablePathTextBox.PlaceholderText = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorExecutablePathPlaceholder);
+        DecryptorExecutablePathDescriptionText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorExecutablePathDescription);
         DecryptorWorkingDirectoryPathLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorWorkingDirectoryPathLabel);
         DecryptorWorkingDirectoryPathTextBox.PlaceholderText = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorWorkingDirectoryPathPlaceholder);
+        DecryptorWorkingDirectoryPathDescriptionText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorWorkingDirectoryPathDescription);
         DecryptorTimeoutLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorTimeoutLabel);
         DecryptorTimeoutTextBox.PlaceholderText = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorTimeoutPlaceholder);
+        DecryptorTimeoutDescriptionText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorTimeoutDescription);
         DecryptorProbeArgumentsLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorProbeArgumentsLabel);
         DecryptorProbeArgumentsTextBox.PlaceholderText = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorProbeArgumentsPlaceholder);
+        DecryptorProbeArgumentsDescriptionText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorProbeArgumentsDescription);
         DecryptorDecryptArgumentsLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorDecryptArgumentsLabel);
         DecryptorDecryptArgumentsTextBox.PlaceholderText = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorDecryptArgumentsPlaceholder);
-        SupportsAutoDetectionCheckBox.Content = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorSupportsAutoDetectionLabel);
-        IsFallbackCheckBox.Content = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorIsFallbackLabel);
+        DecryptorDecryptArgumentsDescriptionText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorDecryptArgumentsDescription);
+        SupportsAutoDetectionLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorSupportsAutoDetectionLabel);
+        SupportsAutoDetectionDescriptionText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorSupportsAutoDetectionDescription);
+        IsFallbackLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorIsFallbackLabel);
+        IsFallbackDescriptionText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorIsFallbackDescription);
     }
 
     private void ClearValidationMessages()

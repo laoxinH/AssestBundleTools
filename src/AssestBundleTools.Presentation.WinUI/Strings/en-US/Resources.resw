@@ -4163,11 +4163,17 @@
   <data name="AssetBundleDecryptorEditor.Id.Label" xml:space="preserve">
     <value>Identifier</value>
   </data>
+  <data name="AssetBundleDecryptorEditor.Id.Description" xml:space="preserve">
+    <value>Unique identifier for this decryptor plugin.</value>
+  </data>
   <data name="AssetBundleDecryptorEditor.Id.Placeholder" xml:space="preserve">
     <value>For example: game.example.decryptor</value>
   </data>
   <data name="AssetBundleDecryptorEditor.DisplayName.Label" xml:space="preserve">
     <value>Display Name</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.DisplayName.Description" xml:space="preserve">
+    <value>Shown in plugin lists and diagnostics.</value>
   </data>
   <data name="AssetBundleDecryptorEditor.DisplayName.Placeholder" xml:space="preserve">
     <value>For example: Example Game Decryptor</value>
@@ -4175,11 +4181,17 @@
   <data name="AssetBundleDecryptorEditor.Version.Label" xml:space="preserve">
     <value>Version</value>
   </data>
+  <data name="AssetBundleDecryptorEditor.Version.Description" xml:space="preserve">
+    <value>Tracks this plugin manifest version.</value>
+  </data>
   <data name="AssetBundleDecryptorEditor.Version.Placeholder" xml:space="preserve">
     <value>For example: 1.0.0</value>
   </data>
   <data name="AssetBundleDecryptorEditor.Description.Label" xml:space="preserve">
     <value>Description</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Description.Description" xml:space="preserve">
+    <value>Describe the target bundles or game.</value>
   </data>
   <data name="AssetBundleDecryptorEditor.Description.Placeholder" xml:space="preserve">
     <value>Describe when this decryptor should be used</value>
@@ -4187,11 +4199,17 @@
   <data name="AssetBundleDecryptorEditor.ExecutablePath.Label" xml:space="preserve">
     <value>Executable</value>
   </data>
+  <data name="AssetBundleDecryptorEditor.ExecutablePath.Description" xml:space="preserve">
+    <value>Use a command name or executable path.</value>
+  </data>
   <data name="AssetBundleDecryptorEditor.ExecutablePath.Placeholder" xml:space="preserve">
     <value>For example: python or decryptor.exe</value>
   </data>
   <data name="AssetBundleDecryptorEditor.WorkingDirectoryPath.Label" xml:space="preserve">
     <value>Working Directory</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.WorkingDirectoryPath.Description" xml:space="preserve">
+    <value>Leave empty to use the manifest folder.</value>
   </data>
   <data name="AssetBundleDecryptorEditor.WorkingDirectoryPath.Placeholder" xml:space="preserve">
     <value>Leave empty to use the manifest directory</value>
@@ -4199,11 +4217,17 @@
   <data name="AssetBundleDecryptorEditor.Timeout.Label" xml:space="preserve">
     <value>Timeout (ms)</value>
   </data>
+  <data name="AssetBundleDecryptorEditor.Timeout.Description" xml:space="preserve">
+    <value>Limits how long the process may run.</value>
+  </data>
   <data name="AssetBundleDecryptorEditor.Timeout.Placeholder" xml:space="preserve">
     <value>For example: 15000</value>
   </data>
   <data name="AssetBundleDecryptorEditor.ProbeArguments.Label" xml:space="preserve">
     <value>Probe Arguments</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.ProbeArguments.Description" xml:space="preserve">
+    <value>Arguments used to probe import sources.</value>
   </data>
   <data name="AssetBundleDecryptorEditor.ProbeArguments.Placeholder" xml:space="preserve">
     <value>One argument per line. Optional.</value>
@@ -4211,14 +4235,23 @@
   <data name="AssetBundleDecryptorEditor.DecryptArguments.Label" xml:space="preserve">
     <value>Decrypt Arguments</value>
   </data>
+  <data name="AssetBundleDecryptorEditor.DecryptArguments.Description" xml:space="preserve">
+    <value>Arguments passed when decrypting bundles.</value>
+  </data>
   <data name="AssetBundleDecryptorEditor.DecryptArguments.Placeholder" xml:space="preserve">
     <value>One argument per line. At least one line is required.</value>
   </data>
   <data name="AssetBundleDecryptorEditor.SupportsAutoDetection.Label" xml:space="preserve">
     <value>Supports auto detection</value>
   </data>
+  <data name="AssetBundleDecryptorEditor.SupportsAutoDetection.Description" xml:space="preserve">
+    <value>Joins automatic matching during import.</value>
+  </data>
   <data name="AssetBundleDecryptorEditor.IsFallback.Label" xml:space="preserve">
     <value>Use as fallback decryptor</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.IsFallback.Description" xml:space="preserve">
+    <value>Used when auto detection finds no match.</value>
   </data>
   <data name="AssetBundleDecryptorEditor.Validation.IdRequired" xml:space="preserve">
     <value>Enter a decryptor identifier.</value>
@@ -4838,11 +4871,17 @@
   <data name="ResourceProcessorEditor.Id.Label" xml:space="preserve">
     <value>Id</value>
   </data>
+  <data name="ResourceProcessorEditor.Id.Description" xml:space="preserve">
+    <value>Unique identifier for this processor plugin.</value>
+  </data>
   <data name="ResourceProcessorEditor.Id.Placeholder" xml:space="preserve">
     <value>For example export.texture.png-processor</value>
   </data>
   <data name="ResourceProcessorEditor.DisplayName.Label" xml:space="preserve">
     <value>Display name</value>
+  </data>
+  <data name="ResourceProcessorEditor.DisplayName.Description" xml:space="preserve">
+    <value>Shown in plugin lists and export flow.</value>
   </data>
   <data name="ResourceProcessorEditor.DisplayName.Placeholder" xml:space="preserve">
     <value>For example Texture PNG Processor</value>
@@ -4850,11 +4889,17 @@
   <data name="ResourceProcessorEditor.Version.Label" xml:space="preserve">
     <value>Version</value>
   </data>
+  <data name="ResourceProcessorEditor.Version.Description" xml:space="preserve">
+    <value>Tracks this plugin manifest version.</value>
+  </data>
   <data name="ResourceProcessorEditor.Version.Placeholder" xml:space="preserve">
     <value>1.0.0</value>
   </data>
   <data name="ResourceProcessorEditor.Description.Label" xml:space="preserve">
     <value>Description</value>
+  </data>
+  <data name="ResourceProcessorEditor.Description.Description" xml:space="preserve">
+    <value>Describe the target resources and stage.</value>
   </data>
   <data name="ResourceProcessorEditor.Description.Placeholder" xml:space="preserve">
     <value>Describe the resources and export stage this processor is intended for.</value>
@@ -4862,8 +4907,14 @@
   <data name="ResourceProcessorEditor.ResourceKinds.Label" xml:space="preserve">
     <value>Resource kind slots</value>
   </data>
+  <data name="ResourceProcessorEditor.ResourceKinds.Description" xml:space="preserve">
+    <value>Select the export resource kinds this processor can handle.</value>
+  </data>
   <data name="ResourceProcessorEditor.ExecutablePath.Label" xml:space="preserve">
     <value>Executable</value>
+  </data>
+  <data name="ResourceProcessorEditor.ExecutablePath.Description" xml:space="preserve">
+    <value>Use a command name or executable path.</value>
   </data>
   <data name="ResourceProcessorEditor.ExecutablePath.Placeholder" xml:space="preserve">
     <value>For example tools\processor.exe or python</value>
@@ -4871,17 +4922,26 @@
   <data name="ResourceProcessorEditor.WorkingDirectoryPath.Label" xml:space="preserve">
     <value>Working directory</value>
   </data>
+  <data name="ResourceProcessorEditor.WorkingDirectoryPath.Description" xml:space="preserve">
+    <value>Leave empty to use the manifest folder.</value>
+  </data>
   <data name="ResourceProcessorEditor.WorkingDirectoryPath.Placeholder" xml:space="preserve">
     <value>Directory relative to the manifest; optional</value>
   </data>
   <data name="ResourceProcessorEditor.Timeout.Label" xml:space="preserve">
     <value>Timeout ms</value>
   </data>
+  <data name="ResourceProcessorEditor.Timeout.Description" xml:space="preserve">
+    <value>Limits how long the process may run.</value>
+  </data>
   <data name="ResourceProcessorEditor.Timeout.Placeholder" xml:space="preserve">
     <value>15000</value>
   </data>
   <data name="ResourceProcessorEditor.Arguments.Label" xml:space="preserve">
     <value>Process arguments</value>
+  </data>
+  <data name="ResourceProcessorEditor.Arguments.Description" xml:space="preserve">
+    <value>Arguments passed to the external processor.</value>
   </data>
   <data name="ResourceProcessorEditor.Arguments.Placeholder" xml:space="preserve">
     <value>One argument per line. Supports placeholders such as {inputPath}, {outputPath}, and {resultPath}.</value>

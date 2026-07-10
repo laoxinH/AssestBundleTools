@@ -150,25 +150,34 @@ public sealed partial class ResourceProcessorEditorDialogContent : UserControl
     {
         ProcessorIdLabelText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorIdLabel);
         ProcessorIdTextBox.PlaceholderText = UiText.Get(ResourceKeys.ResourceProcessorEditorIdPlaceholder);
+        ProcessorIdDescriptionText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorIdDescription);
         ProcessorDisplayNameLabelText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorDisplayNameLabel);
         ProcessorDisplayNameTextBox.PlaceholderText = UiText.Get(ResourceKeys.ResourceProcessorEditorDisplayNamePlaceholder);
+        ProcessorDisplayNameDescriptionText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorDisplayNameDescription);
         ProcessorVersionLabelText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorVersionLabel);
         ProcessorVersionTextBox.PlaceholderText = UiText.Get(ResourceKeys.ResourceProcessorEditorVersionPlaceholder);
+        ProcessorVersionDescriptionText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorVersionDescription);
         ProcessorDescriptionLabelText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorDescriptionLabel);
         ProcessorDescriptionTextBox.PlaceholderText = UiText.Get(ResourceKeys.ResourceProcessorEditorDescriptionPlaceholder);
+        ProcessorDescriptionHintText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorDescriptionDescription);
         ProcessorResourceKindsLabelText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorResourceKindsLabel);
+        ProcessorResourceKindsDescriptionText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorResourceKindsDescription);
         Texture2DCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorTexture2D);
         AudioCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorAudio);
         AtlasCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorAtlas);
         SkelCheckBox.Content = UiText.Get(ResourceKeys.WorkspaceExportDialogResourceProcessorSkel);
         ProcessorExecutablePathLabelText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorExecutablePathLabel);
         ProcessorExecutablePathTextBox.PlaceholderText = UiText.Get(ResourceKeys.ResourceProcessorEditorExecutablePathPlaceholder);
+        ProcessorExecutablePathDescriptionText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorExecutablePathDescription);
         ProcessorWorkingDirectoryPathLabelText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorWorkingDirectoryPathLabel);
         ProcessorWorkingDirectoryPathTextBox.PlaceholderText = UiText.Get(ResourceKeys.ResourceProcessorEditorWorkingDirectoryPathPlaceholder);
+        ProcessorWorkingDirectoryPathDescriptionText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorWorkingDirectoryPathDescription);
         ProcessorTimeoutLabelText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorTimeoutLabel);
         ProcessorTimeoutTextBox.PlaceholderText = UiText.Get(ResourceKeys.ResourceProcessorEditorTimeoutPlaceholder);
+        ProcessorTimeoutDescriptionText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorTimeoutDescription);
         ProcessorArgumentsLabelText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorArgumentsLabel);
         ProcessorArgumentsTextBox.PlaceholderText = UiText.Get(ResourceKeys.ResourceProcessorEditorArgumentsPlaceholder);
+        ProcessorArgumentsDescriptionText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorArgumentsDescription);
     }
 
     private IReadOnlyList<string> GetSelectedResourceKinds()

@@ -4163,11 +4163,17 @@
   <data name="AssetBundleDecryptorEditor.Id.Label" xml:space="preserve">
     <value>解密器标识</value>
   </data>
+  <data name="AssetBundleDecryptorEditor.Id.Description" xml:space="preserve">
+    <value>用于唯一识别这个解密插件。</value>
+  </data>
   <data name="AssetBundleDecryptorEditor.Id.Placeholder" xml:space="preserve">
     <value>例如：game.example.decryptor</value>
   </data>
   <data name="AssetBundleDecryptorEditor.DisplayName.Label" xml:space="preserve">
     <value>显示名称</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.DisplayName.Description" xml:space="preserve">
+    <value>显示在插件列表和诊断中。</value>
   </data>
   <data name="AssetBundleDecryptorEditor.DisplayName.Placeholder" xml:space="preserve">
     <value>例如：Example Game Decryptor</value>
@@ -4175,11 +4181,17 @@
   <data name="AssetBundleDecryptorEditor.Version.Label" xml:space="preserve">
     <value>版本</value>
   </data>
+  <data name="AssetBundleDecryptorEditor.Version.Description" xml:space="preserve">
+    <value>记录插件清单版本。</value>
+  </data>
   <data name="AssetBundleDecryptorEditor.Version.Placeholder" xml:space="preserve">
     <value>例如：1.0.0</value>
   </data>
   <data name="AssetBundleDecryptorEditor.Description.Label" xml:space="preserve">
     <value>说明</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.Description.Description" xml:space="preserve">
+    <value>说明适用资源包或游戏场景。</value>
   </data>
   <data name="AssetBundleDecryptorEditor.Description.Placeholder" xml:space="preserve">
     <value>简要说明这个解密器适用于什么场景</value>
@@ -4187,11 +4199,17 @@
   <data name="AssetBundleDecryptorEditor.ExecutablePath.Label" xml:space="preserve">
     <value>可执行入口</value>
   </data>
+  <data name="AssetBundleDecryptorEditor.ExecutablePath.Description" xml:space="preserve">
+    <value>填写命令名或可执行文件路径。</value>
+  </data>
   <data name="AssetBundleDecryptorEditor.ExecutablePath.Placeholder" xml:space="preserve">
     <value>例如：python 或 decryptor.exe</value>
   </data>
   <data name="AssetBundleDecryptorEditor.WorkingDirectoryPath.Label" xml:space="preserve">
     <value>工作目录</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.WorkingDirectoryPath.Description" xml:space="preserve">
+    <value>留空时使用清单所在目录。</value>
   </data>
   <data name="AssetBundleDecryptorEditor.WorkingDirectoryPath.Placeholder" xml:space="preserve">
     <value>留空则跟随清单目录</value>
@@ -4199,11 +4217,17 @@
   <data name="AssetBundleDecryptorEditor.Timeout.Label" xml:space="preserve">
     <value>超时时间（毫秒）</value>
   </data>
+  <data name="AssetBundleDecryptorEditor.Timeout.Description" xml:space="preserve">
+    <value>限制外部进程最长运行时间。</value>
+  </data>
   <data name="AssetBundleDecryptorEditor.Timeout.Placeholder" xml:space="preserve">
     <value>例如：15000</value>
   </data>
   <data name="AssetBundleDecryptorEditor.ProbeArguments.Label" xml:space="preserve">
     <value>探测参数</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.ProbeArguments.Description" xml:space="preserve">
+    <value>导入前用于探测可处理资源。</value>
   </data>
   <data name="AssetBundleDecryptorEditor.ProbeArguments.Placeholder" xml:space="preserve">
     <value>每行一个参数，可留空</value>
@@ -4211,14 +4235,23 @@
   <data name="AssetBundleDecryptorEditor.DecryptArguments.Label" xml:space="preserve">
     <value>解密参数</value>
   </data>
+  <data name="AssetBundleDecryptorEditor.DecryptArguments.Description" xml:space="preserve">
+    <value>实际解密资源包时传入。</value>
+  </data>
   <data name="AssetBundleDecryptorEditor.DecryptArguments.Placeholder" xml:space="preserve">
     <value>每行一个参数，至少保留一行</value>
   </data>
   <data name="AssetBundleDecryptorEditor.SupportsAutoDetection.Label" xml:space="preserve">
     <value>支持自动识别</value>
   </data>
+  <data name="AssetBundleDecryptorEditor.SupportsAutoDetection.Description" xml:space="preserve">
+    <value>导入时参与自动匹配。</value>
+  </data>
   <data name="AssetBundleDecryptorEditor.IsFallback.Label" xml:space="preserve">
     <value>作为回退解密器</value>
+  </data>
+  <data name="AssetBundleDecryptorEditor.IsFallback.Description" xml:space="preserve">
+    <value>未命中自动识别时使用。</value>
   </data>
   <data name="AssetBundleDecryptorEditor.Validation.IdRequired" xml:space="preserve">
     <value>请输入解密器标识。</value>
@@ -4838,11 +4871,17 @@
   <data name="ResourceProcessorEditor.Id.Label" xml:space="preserve">
     <value>Id</value>
   </data>
+  <data name="ResourceProcessorEditor.Id.Description" xml:space="preserve">
+    <value>用于唯一识别这个处理插件。</value>
+  </data>
   <data name="ResourceProcessorEditor.Id.Placeholder" xml:space="preserve">
     <value>例如 export.texture.png-processor</value>
   </data>
   <data name="ResourceProcessorEditor.DisplayName.Label" xml:space="preserve">
     <value>显示名称</value>
+  </data>
+  <data name="ResourceProcessorEditor.DisplayName.Description" xml:space="preserve">
+    <value>显示在插件列表和导出流程中。</value>
   </data>
   <data name="ResourceProcessorEditor.DisplayName.Placeholder" xml:space="preserve">
     <value>例如 Texture PNG Processor</value>
@@ -4850,11 +4889,17 @@
   <data name="ResourceProcessorEditor.Version.Label" xml:space="preserve">
     <value>版本</value>
   </data>
+  <data name="ResourceProcessorEditor.Version.Description" xml:space="preserve">
+    <value>记录插件清单版本。</value>
+  </data>
   <data name="ResourceProcessorEditor.Version.Placeholder" xml:space="preserve">
     <value>1.0.0</value>
   </data>
   <data name="ResourceProcessorEditor.Description.Label" xml:space="preserve">
     <value>描述</value>
+  </data>
+  <data name="ResourceProcessorEditor.Description.Description" xml:space="preserve">
+    <value>说明适用资源和导出阶段。</value>
   </data>
   <data name="ResourceProcessorEditor.Description.Placeholder" xml:space="preserve">
     <value>说明该处理器适合的资源和导出阶段用途。</value>
@@ -4862,8 +4907,14 @@
   <data name="ResourceProcessorEditor.ResourceKinds.Label" xml:space="preserve">
     <value>资源类型槽</value>
   </data>
+  <data name="ResourceProcessorEditor.ResourceKinds.Description" xml:space="preserve">
+    <value>选择此处理器可接入的导出资源类型。</value>
+  </data>
   <data name="ResourceProcessorEditor.ExecutablePath.Label" xml:space="preserve">
     <value>可执行入口</value>
+  </data>
+  <data name="ResourceProcessorEditor.ExecutablePath.Description" xml:space="preserve">
+    <value>填写命令名或可执行文件路径。</value>
   </data>
   <data name="ResourceProcessorEditor.ExecutablePath.Placeholder" xml:space="preserve">
     <value>例如 tools\processor.exe 或 python</value>
@@ -4871,17 +4922,26 @@
   <data name="ResourceProcessorEditor.WorkingDirectoryPath.Label" xml:space="preserve">
     <value>工作目录</value>
   </data>
+  <data name="ResourceProcessorEditor.WorkingDirectoryPath.Description" xml:space="preserve">
+    <value>留空时使用清单所在目录。</value>
+  </data>
   <data name="ResourceProcessorEditor.WorkingDirectoryPath.Placeholder" xml:space="preserve">
     <value>相对 manifest 的目录，可留空</value>
   </data>
   <data name="ResourceProcessorEditor.Timeout.Label" xml:space="preserve">
     <value>超时 ms</value>
   </data>
+  <data name="ResourceProcessorEditor.Timeout.Description" xml:space="preserve">
+    <value>限制外部进程最长运行时间。</value>
+  </data>
   <data name="ResourceProcessorEditor.Timeout.Placeholder" xml:space="preserve">
     <value>15000</value>
   </data>
   <data name="ResourceProcessorEditor.Arguments.Label" xml:space="preserve">
     <value>处理参数</value>
+  </data>
+  <data name="ResourceProcessorEditor.Arguments.Description" xml:space="preserve">
+    <value>导出处理时传入外部程序。</value>
   </data>
   <data name="ResourceProcessorEditor.Arguments.Placeholder" xml:space="preserve">
     <value>每行一个参数，可使用 {inputPath}、{outputPath}、{resultPath} 等占位符。</value>
